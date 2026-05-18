@@ -34,7 +34,7 @@ const initialForm = (customerEmail) => ({
   breed: "",
   manualSpecies: "",
   manualBreed: "",
-  age: "",
+  birthdate: "",
   notes: "",
   customer_email: customerEmail || "",
 });
@@ -50,6 +50,7 @@ const CustomerPets = () => {
   const [pageLoading, setPageLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [deletingId, setDeletingId] = useState(null);
+  const [restoringId, setRestoringId] = useState(null);
 
   const [searchTerm, setSearchTerm] = useState("");
   const [speciesFilter, setSpeciesFilter] = useState("all");
@@ -60,21 +61,6 @@ const CustomerPets = () => {
   const [medicalHistory, setMedicalHistory] = useState([]);
   const [historyLoading, setHistoryLoading] = useState(false);
   const [historyError, setHistoryError] = useState("");
-
-  const safeArray = (value) => {
-    if (Array.isArray(value)) return value;
-    if (Array.isArray(value?.pets)) return value.pets;
-    if (Array.isArray(value?.data)) return value.data;
-    if (Array.isArray(value?.data?.data)) return value.data.data;
-    if (Array.isArray(value?.records)) return value.records;
-    if (Array.isArray(value?.result)) return value.result;
-    if (Array.isArray(value?.results)) return value.results;
-    if (Array.isArray(value?.history)) return value.history;
-    if (Array.isArray(value?.medical_history)) return value.medical_history;
-    if (Array.isArray(value?.medicalHistory)) return value.medicalHistory;
-    if (Array.isArray(value?.appointments)) return value.appointments;
-    return [];
-  };
 
   const showMessage = (type, text) => {
     setMessage({ type, text });
@@ -88,7 +74,27 @@ const CustomerPets = () => {
   const getPetName = (pet) => pet?.name || pet?.pet_name || "Unnamed Pet";
   const getPetSpecies = (pet) => pet?.species || pet?.type || pet?.pet_species || "Pet";
   const getPetBreed = (pet) => pet?.breed || pet?.pet_breed || "No breed";
-  const getPetAge = (pet) => pet?.age || pet?.pet_age || "N/A";
+  const getPetBirthdate = (pet) => pet?.birthdate || pet?.birth_date || pet?.date_of_birth || "";
+  const getPetAge = (pet) => {
+    const birthdate = getPetBirthdate(pet);
+
+    if (!birthdate) return "N/A";
+
+    const birth = new Date(`${String(birthdate).slice(0, 10)}T00:00:00`);
+    const today = new Date();
+
+    if (Number.isNaN(birth.getTime()) || birth > today) return "N/A";
+
+    let age = today.getFullYear() - birth.getFullYear();
+    const monthDiff = today.getMonth() - birth.getMonth();
+
+    if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birth.getDate())) {
+      age -= 1;
+    }
+
+    return age <= 0 ? "Less than 1 year" : `${age} ${age === 1 ? "year" : "years"}`;
+  };
+
   const getPetNotes = (pet) =>
     pet?.notes ||
     pet?.medical_notes ||
@@ -154,6 +160,21 @@ const CustomerPets = () => {
       "Veterinary Staff",
     status: record?.status || "completed",
   });
+
+  const safeArray = (value) => {
+    if (Array.isArray(value)) return value;
+    if (Array.isArray(value?.pets)) return value.pets;
+    if (Array.isArray(value?.data)) return value.data;
+    if (Array.isArray(value?.data?.data)) return value.data.data;
+    if (Array.isArray(value?.records)) return value.records;
+    if (Array.isArray(value?.result)) return value.result;
+    if (Array.isArray(value?.results)) return value.results;
+    if (Array.isArray(value?.history)) return value.history;
+    if (Array.isArray(value?.medical_history)) return value.medical_history;
+    if (Array.isArray(value?.medicalHistory)) return value.medicalHistory;
+    if (Array.isArray(value?.appointments)) return value.appointments;
+    return [];
+  };
 
   const fetchPets = useCallback(async ({ silent = false } = {}) => {
     try {
@@ -260,11 +281,11 @@ const CustomerPets = () => {
 
   const validateForm = () => {
     if (!formData.name.trim()) return "Pet name is required.";
-    if (!formData.species) return "Please select pet species.";
+    if (!formData.species) return "Please select type of pet.";
 
     // Validate manual species if required
     if (isManualSpeciesRequired(formData.species) && !formData.manualSpecies?.trim()) {
-      return "Please specify the species when 'Other' is selected.";
+      return "Please specify the type of pet when 'Other' is selected.";
     }
 
     // Validate breed selection
@@ -280,8 +301,18 @@ const CustomerPets = () => {
       return "Please specify the breed for custom species.";
     }
 
-    if (formData.age && Number(formData.age) < 0) {
-      return "Age cannot be negative.";
+    if (formData.birthdate) {
+      const selectedBirthdate = new Date(`${formData.birthdate}T00:00:00`);
+      const today = new Date();
+      today.setHours(23, 59, 59, 999);
+
+      if (Number.isNaN(selectedBirthdate.getTime())) {
+        return "Please enter a valid birthdate.";
+      }
+
+      if (selectedBirthdate > today) {
+        return "Birthdate cannot be in the future.";
+      }
     }
 
     return "";
@@ -330,7 +361,8 @@ const CustomerPets = () => {
         name: formData.name?.trim(),
         species: resolveFinalSpecies(formData.species, formData.manualSpecies),
         breed: resolveFinalBreed(formData.breed, formData.manualBreed),
-        age: formData.age ? Number(formData.age) : null,
+        birthdate: formData.birthdate || null,
+        birth_date: formData.birthdate || null,
         notes: formData.notes?.trim() || null,
         customer_email: customerEmail,
       };
@@ -392,6 +424,36 @@ const CustomerPets = () => {
       showMessage("error", errorMessage);
     } finally {
       setDeletingId(null);
+    }
+  };
+
+  const handleUnarchive = async (id) => {
+    if (!window.confirm("Restore this pet to your active pets list?")) {
+      return;
+    }
+
+    try {
+      setRestoringId(id);
+
+      await apiRequest(`/customer/pets/${id}/unarchive`, {
+        method: "POST",
+      });
+
+      await fetchPets({ silent: true });
+      await fetchArchivedPets();
+      showMessage("success", "Pet restored successfully.");
+    } catch (error) {
+      console.error("Failed to restore pet:", error);
+
+      const errorMessage =
+        error?.response?.data?.message ||
+        error?.response?.data?.error ||
+        error?.message ||
+        "Failed to restore pet. Please try again.";
+
+      showMessage("error", errorMessage);
+    } finally {
+      setRestoringId(null);
     }
   };
 
@@ -492,7 +554,7 @@ const CustomerPets = () => {
           </span>
           <div>
             <strong>{stats.speciesCount}</strong>
-            <p>Species Types</p>
+            <p>Pet Types</p>
           </div>
         </article>
 
@@ -542,14 +604,14 @@ const CustomerPets = () => {
             </label>
 
             <label>
-              Species <small>*</small>
+              Type of Pet <small>*</small>
               <select
                 name="species"
                 value={formData.species}
                 onChange={handleChange}
                 required
               >
-                <option value="">Select Species</option>
+                <option value="">Select type of pet</option>
                 {speciesOptions.map((species) => (
                   <option key={species} value={species}>
                     {species}
@@ -558,13 +620,12 @@ const CustomerPets = () => {
               </select>
             </label>
 
-            {/* Manual species input for "Other" species */}
             {isManualSpeciesRequired(formData.species) && (
               <label>
-                Species Details <small>*</small>
+                Type of Pet Details <small>*</small>
                 <input
                   name="manualSpecies"
-                  placeholder="Enter species (e.g., Ferret, Turtle, etc.)"
+                  placeholder="Enter type of pet (e.g., Ferret, Turtle, etc.)"
                   value={formData.manualSpecies}
                   onChange={handleChange}
                   required
@@ -572,7 +633,6 @@ const CustomerPets = () => {
               </label>
             )}
 
-            {/* Breed selection */}
             {formData.species && !isManualSpeciesRequired(formData.species) && (
               <label>
                 Breed <small>*</small>
@@ -592,7 +652,6 @@ const CustomerPets = () => {
               </label>
             )}
 
-            {/* Manual breed input for "Others" breed or custom species */}
             {(isManualBreedRequired(formData.breed) || isManualSpeciesRequired(formData.species)) && (
               <label>
                 Breed Details <small>*</small>
@@ -612,13 +671,12 @@ const CustomerPets = () => {
 
             <div className="pets-form-row">
               <label>
-                Age
+                Birthdate
                 <input
-                  name="age"
-                  type="number"
-                  min="0"
-                  placeholder="Age"
-                  value={formData.age}
+                  name="birthdate"
+                  type="date"
+                  max={new Date().toISOString().slice(0, 10)}
+                  value={formData.birthdate}
                   onChange={handleChange}
                 />
               </label>
@@ -675,7 +733,7 @@ const CustomerPets = () => {
               <FaSearch />
               <input
                 type="text"
-                placeholder="Search pet, species, breed, notes..."
+                placeholder="Search pet, type of pet, breed, notes..."
                 value={searchTerm}
                 onChange={(event) => setSearchTerm(event.target.value)}
               />
@@ -692,7 +750,7 @@ const CustomerPets = () => {
               value={speciesFilter}
               onChange={(event) => setSpeciesFilter(event.target.value)}
             >
-              <option value="all">All Species</option>
+              <option value="all">All Pet Types</option>
               {speciesOptions.map((species) => (
                 <option key={species} value={species}>
                   {species}
@@ -742,6 +800,11 @@ const CustomerPets = () => {
                         Age: {getPetAge(pet)}
                       </span>
 
+                      <span>
+                        <FaCalendarAlt />
+                        Birthdate: {getPetBirthdate(pet) ? formatDate(getPetBirthdate(pet)) : "N/A"}
+                      </span>
+
                       {activeTab === "archived" && pet.archived_at && (
                         <span>
                           <FaCalendarAlt />
@@ -768,7 +831,7 @@ const CustomerPets = () => {
                         <FaFileMedical />
                         {activeTab === "archived" ? "View History" : "Medical History"}
                       </button>
-                      
+
                       {activeTab === "active" && (
                         <button
                           className="pet-archive-btn"
@@ -778,6 +841,18 @@ const CustomerPets = () => {
                         >
                           <FaArchive />
                           {deletingId === pet.id ? "Archiving..." : "Archive"}
+                        </button>
+                      )}
+
+                      {activeTab === "archived" && (
+                        <button
+                          className="pet-archive-btn"
+                          type="button"
+                          onClick={() => handleUnarchive(pet.id)}
+                          disabled={restoringId === pet.id}
+                        >
+                          <FaSyncAlt />
+                          {restoringId === pet.id ? "Restoring..." : "Restore Pet"}
                         </button>
                       )}
                     </div>

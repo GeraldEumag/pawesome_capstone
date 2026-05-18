@@ -92,6 +92,33 @@ const HotelForm = () => {
 
   const selectedPet = pets.find((pet) => String(pet.id) === String(bookingForm.pet_id));
 
+  const calculateAge = (birthdate) => {
+    if (!birthdate) return null;
+    const today = new Date();
+    const birth = new Date(birthdate);
+    let age = today.getFullYear() - birth.getFullYear();
+    const monthDiff = today.getMonth() - birth.getMonth();
+    if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birth.getDate())) {
+      age--;
+    }
+    if (age <= 0) return "Less than 1 year";
+    return `${age} year${age > 1 ? "s" : ""}`;
+  };
+
+  const getPetDisplayInfo = (pet) => {
+    if (!pet) return null;
+    const typeOfPet = pet.species || pet.type || "Pet";
+    const birthdate = pet.birthdate || pet.birth_date || pet.date_of_birth;
+    const age = calculateAge(birthdate);
+    return {
+      typeOfPet,
+      birthdate,
+      age,
+    };
+  };
+
+  const petDisplayInfo = getPetDisplayInfo(selectedPet);
+
   const handleRoomSelect = (room) => {
     setSelectedRoom(room);
     setBookingForm(prev => ({ ...prev, hotel_room_id: room.id }));
@@ -345,11 +372,29 @@ const HotelForm = () => {
                 <label>Saved Pet</label>
                 <select name="pet_id" value={bookingForm.pet_id} onChange={handleChange}>
                   <option value="">Enter pet details manually</option>
-                  {pets.map((pet) => (
-                    <option key={pet.id} value={pet.id}>{pet.name}</option>
-                  ))}
+                  {pets.map((pet) => {
+                    const info = getPetDisplayInfo(pet);
+                    return (
+                      <option key={pet.id} value={pet.id}>
+                        {pet.name} — {info?.typeOfPet || "Pet"}
+                        {info?.age ? ` (${info.age})` : ""}
+                      </option>
+                    );
+                  })}
                 </select>
               </div>
+
+              {selectedPet && petDisplayInfo && (
+                <div className="hotel-selected-pet-info">
+                  <p><strong>Type of Pet:</strong> {petDisplayInfo.typeOfPet}</p>
+                  {petDisplayInfo.birthdate && (
+                    <p><strong>Birthdate:</strong> {new Date(petDisplayInfo.birthdate).toLocaleDateString()}</p>
+                  )}
+                  {petDisplayInfo.age && (
+                    <p><strong>Age:</strong> {petDisplayInfo.age}</p>
+                  )}
+                </div>
+              )}
 
               {!bookingForm.pet_id && (
                 <>
@@ -359,7 +404,7 @@ const HotelForm = () => {
                   </div>
                   <div className="form-row">
                     <div className="form-group">
-                      <label>Pet Type *</label>
+                      <label>Type of Pet *</label>
                       <input type="text" name="pet_type" value={bookingForm.pet_type} onChange={handleChange} required placeholder="Dog, cat, etc." />
                     </div>
                     <div className="form-group">
@@ -370,7 +415,6 @@ const HotelForm = () => {
                 </>
               )}
 
-              
               <div className="form-row">
                 <div className="form-group">
                   <label>Check-in Date *</label>

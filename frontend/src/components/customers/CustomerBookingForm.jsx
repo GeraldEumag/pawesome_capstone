@@ -51,6 +51,31 @@ const CustomerBookingForm = () => {
   const [roomsLoading, setRoomsLoading] = useState(false);
   const [selectedPet, setSelectedPet] = useState(null);
 
+  const calculateAge = (birthdate) => {
+    if (!birthdate) return null;
+    const today = new Date();
+    const birth = new Date(birthdate);
+    let age = today.getFullYear() - birth.getFullYear();
+    const monthDiff = today.getMonth() - birth.getMonth();
+    if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birth.getDate())) {
+      age--;
+    }
+    if (age <= 0) return "Less than 1 year";
+    return `${age} year${age > 1 ? "s" : ""}`;
+  };
+
+  const getPetDisplayInfo = (pet) => {
+    if (!pet) return null;
+    const typeOfPet = pet.species || pet.type || "Pet";
+    const birthdate = pet.birthdate || pet.birth_date || pet.date_of_birth;
+    const age = calculateAge(birthdate);
+    return {
+      typeOfPet,
+      birthdate,
+      age,
+    };
+  };
+
   const compatibilityServiceType =
     formData.service_type === "hotel"
       ? "petHotel"
@@ -230,7 +255,7 @@ const CustomerBookingForm = () => {
     }
 
     if (compatibility && !compatibility.isValid) {
-      alert(serviceEligibilityMessage || "This service is not available for this pet species.");
+      alert(serviceEligibilityMessage || "This service is not available for this pet type.");
       return;
     }
 
@@ -362,12 +387,15 @@ const CustomerBookingForm = () => {
                   required
                 >
                   <option value="">Select your pet</option>
-                  {pets.map((pet) => (
-                    <option key={pet.id} value={pet.id}>
-                      {pet.name} — {pet.species}
-                      {pet.breed ? ` (${pet.breed})` : ""}
-                    </option>
-                  ))}
+                  {pets.map((pet) => {
+                    const info = getPetDisplayInfo(pet);
+                    return (
+                      <option key={pet.id} value={pet.id}>
+                        {pet.name} — {info?.typeOfPet || "Pet"}
+                        {info?.age ? ` (${info.age})` : ""}
+                      </option>
+                    );
+                  })}
                 </select>
               )}
             </label>
@@ -390,6 +418,18 @@ const CustomerBookingForm = () => {
                 </select>
               </div>
             </label>
+
+            {selectedPet && (
+              <div className="selected-pet-info">
+                <p><strong>Type of Pet:</strong> {getPetDisplayInfo(selectedPet)?.typeOfPet}</p>
+                {getPetDisplayInfo(selectedPet)?.birthdate && (
+                  <p><strong>Birthdate:</strong> {new Date(getPetDisplayInfo(selectedPet).birthdate).toLocaleDateString()}</p>
+                )}
+                {getPetDisplayInfo(selectedPet)?.age && (
+                  <p><strong>Age:</strong> {getPetDisplayInfo(selectedPet).age}</p>
+                )}
+              </div>
+            )}
 
             {selectedPet && serviceEligibilityMessage && (
               <div
@@ -437,7 +477,7 @@ const CustomerBookingForm = () => {
                     <div className="loading-rooms">Loading available rooms...</div>
                   ) : availableRooms.length === 0 ? (
                     <div className="no-rooms-message">
-                      <p>No specialized boarding room is available for this pet species. Please contact receptionist for manual assistance.</p>
+                      <p>No specialized boarding room is available for this pet type. Please contact receptionist for manual assistance.</p>
                     </div>
                   ) : (
                     <select

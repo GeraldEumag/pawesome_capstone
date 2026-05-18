@@ -882,6 +882,7 @@ Route::middleware(['auth.api', 'throttle:api', 'role:customer'])->prefix('custom
     Route::put('/{id}', [PetController::class, 'update'])->whereNumber('id');
     Route::delete('/{id}', [PetController::class, 'destroy'])->whereNumber('id');
     Route::post('/{id}/archive', [PetController::class, 'archive'])->whereNumber('id');
+    Route::post('/{id}/unarchive', [PetController::class, 'unarchive'])->whereNumber('id');
 });
 
 // Customer Vet Routes (View own appointments, create new)

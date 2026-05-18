@@ -74,6 +74,8 @@ class PetController extends Controller
             'name' => 'required|string|max:255',
             'species' => 'required|string|max:255',
             'breed' => 'nullable|string|max:255',
+            'birthdate' => 'nullable|date|before_or_equal:today',
+            'birth_date' => 'nullable|date|before_or_equal:today',
             'age' => 'nullable|integer|min:0',
             'gender' => 'nullable|string|max:50',
             'notes' => 'nullable|string',
@@ -97,7 +99,9 @@ class PetController extends Controller
             'name' => $validated['name'],
             'species' => $validated['species'],
             'breed' => $validated['breed'] ?? null,
-            'age' => $validated['age'] ?? null,
+            'birthdate' => $validated['birthdate'] ?? $validated['birth_date'] ?? null,
+            'birth_date' => $validated['birth_date'] ?? $validated['birthdate'] ?? null,
+            'age' => null,
             'gender' => $validated['gender'] ?? null,
             'notes' => $validated['notes'] ?? null,
         ]);
@@ -125,6 +129,8 @@ class PetController extends Controller
             'name' => 'required|string|max:255',
             'species' => 'required|string|max:255',
             'breed' => 'nullable|string|max:255',
+            'birthdate' => 'nullable|date|before_or_equal:today',
+            'birth_date' => 'nullable|date|before_or_equal:today',
             'age' => 'nullable|integer|min:0',
             'gender' => 'nullable|string|max:50',
             'notes' => 'nullable|string',
@@ -135,6 +141,10 @@ class PetController extends Controller
         if ($request->user()?->role === 'customer' && !$this->customerOwnsPet($request, $pet)) {
             return response()->json(['message' => 'Pet not found'], 404);
         }
+
+        $validated['birthdate'] = $validated['birthdate'] ?? $validated['birth_date'] ?? null;
+        $validated['birth_date'] = $validated['birth_date'] ?? $validated['birthdate'] ?? null;
+        $validated['age'] = null;
 
         $pet->update($validated);
 
@@ -317,10 +327,14 @@ class PetController extends Controller
      */
     public function unarchive(Request $request, $id)
     {
-        $pet = Pet::findOrFail($id);
+        $pet = Pet::withTrashed()->findOrFail($id);
 
         if ($request->user()?->role === 'customer' && !$this->customerOwnsPet($request, $pet)) {
             return response()->json(['message' => 'Pet not found'], 404);
+        }
+
+        if ($pet->trashed()) {
+            $pet->restore();
         }
 
         $pet->update([

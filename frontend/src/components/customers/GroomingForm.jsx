@@ -67,10 +67,38 @@ const GroomingForm = () => {
   }, [fetchAppointments, fetchPets]);
 
   const selectedPet = pets.find((pet) => String(pet.id) === String(formData.pet_id));
+
+  const calculateAge = (birthdate) => {
+    if (!birthdate) return null;
+    const today = new Date();
+    const birth = new Date(birthdate);
+    let age = today.getFullYear() - birth.getFullYear();
+    const monthDiff = today.getMonth() - birth.getMonth();
+    if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birth.getDate())) {
+      age--;
+    }
+    if (age <= 0) return "Less than 1 year";
+    return `${age} year${age > 1 ? "s" : ""}`;
+  };
+
+  const getPetDisplayInfo = (pet) => {
+    if (!pet) return null;
+    const typeOfPet = pet.species || pet.type || "Pet";
+    const birthdate = pet.birthdate || pet.birth_date || pet.date_of_birth;
+    const age = calculateAge(birthdate);
+    return {
+      typeOfPet,
+      birthdate,
+      age,
+    };
+  };
+
+  const petDisplayInfo = getPetDisplayInfo(selectedPet);
+
   const compatibility = selectedPet
     ? validateServiceCompatibility(selectedPet.species || selectedPet.type, "grooming")
     : null;
-  const speciesMessage = selectedPet && compatibility && !compatibility.isValid
+  const typeMessage = selectedPet && compatibility && !compatibility.isValid
     ? compatibility.message || getUnavailableServiceMessage(selectedPet.species || selectedPet.type, "grooming")
     : "";
 
@@ -129,7 +157,7 @@ const GroomingForm = () => {
     }
 
     if (compatibility && !compatibility.isValid) {
-      alert(speciesMessage || "This service is not available for this pet species.");
+      alert(typeMessage || "This service is not available for this pet type.");
       return;
     }
 
@@ -224,17 +252,33 @@ const GroomingForm = () => {
               required
             >
               <option value="">Select active pet</option>
-              {pets.map((pet) => (
-                <option key={pet.id} value={pet.id}>
-                  {pet.name} - {pet.species || pet.type || "Pet"}
-                </option>
-              ))}
+              {pets.map((pet) => {
+                const info = getPetDisplayInfo(pet);
+                return (
+                  <option key={pet.id} value={pet.id}>
+                    {pet.name} — {info?.typeOfPet || "Pet"}
+                    {info?.age ? ` (${info.age})` : ""}
+                  </option>
+                );
+              })}
             </select>
 
-            {speciesMessage && (
+            {selectedPet && petDisplayInfo && (
+              <div className="grooming-selected-pet-info">
+                <p><strong>Type of Pet:</strong> {petDisplayInfo.typeOfPet}</p>
+                {petDisplayInfo.birthdate && (
+                  <p><strong>Birthdate:</strong> {new Date(petDisplayInfo.birthdate).toLocaleDateString()}</p>
+                )}
+                {petDisplayInfo.age && (
+                  <p><strong>Age:</strong> {petDisplayInfo.age}</p>
+                )}
+              </div>
+            )}
+
+            {typeMessage && (
               <div className="no-availability">
                 <span>⚠</span>
-                <span>{speciesMessage}</span>
+                <span>{typeMessage}</span>
               </div>
             )}
 

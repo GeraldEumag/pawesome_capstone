@@ -171,9 +171,31 @@ const CustomerBookings = () => {
   };
 
   const getPetName = (pet) => pet?.name || pet?.pet_name || "Unnamed Pet";
-  const getPetSpecies = (pet) => pet?.species || pet?.type || pet?.pet_type || "Pet";
+  const getPetType = (pet) => pet?.species || pet?.type || pet?.pet_type || "Pet";
   const getPetBreed = (pet) => pet?.breed || "Unknown breed";
-  const getPetAge = (pet) => pet?.age || pet?.pet_age || "N/A";
+
+  const calculateAge = (birthdate) => {
+    if (!birthdate) return null;
+    const today = new Date();
+    const birth = new Date(birthdate);
+    let age = today.getFullYear() - birth.getFullYear();
+    const monthDiff = today.getMonth() - birth.getMonth();
+    if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birth.getDate())) {
+      age--;
+    }
+    if (age <= 0) return "Less than 1 year";
+    return `${age} year${age > 1 ? "s" : ""}`;
+  };
+
+  const getPetAge = (pet) => {
+    const birthdate = pet?.birthdate || pet?.birth_date || pet?.date_of_birth;
+    if (birthdate) {
+      return calculateAge(birthdate);
+    }
+    return pet?.age || pet?.pet_age || "N/A";
+  };
+
+  const getPetBirthdate = (pet) => pet?.birthdate || pet?.birth_date || pet?.date_of_birth;
   const getPetWeight = (pet) => pet?.weight || pet?.pet_weight || "N/A";
 
   // Helper functions for hotel booking data
@@ -218,17 +240,15 @@ const CustomerBookings = () => {
     return pets.find((pet) => String(pet.id) === String(formData.pet_id));
   }, [pets, formData.pet_id]);
 
-  // Text normalization helper function
-  function normalizeText(value) {
+  const normalizeText = (value) => {
     return String(value || "")
       .toLowerCase()
       .trim()
       .replace(/\s+/g, "_");
-  }
+  };
 
-  // Helper function for species-based room type options
   const getSpeciesRoomTypeOptions = useCallback((pet) => {
-    const species = normalizeText(getPetSpecies(pet));
+    const species = normalizeText(getPetType(pet));
 
     if (species === "dog") {
       return [
@@ -259,7 +279,6 @@ const CustomerBookings = () => {
     ];
   }, []);
 
-  // Memo for active room type options based on selected pet
   const activeRoomTypeOptions = useMemo(() => {
     return getSpeciesRoomTypeOptions(selectedPet);
   }, [selectedPet, getSpeciesRoomTypeOptions]);
@@ -375,19 +394,19 @@ const CustomerBookings = () => {
     Number(room?.daily_rate || room?.rate || room?.price || room?.amount || 0);
 
   const isUnsupportedBoardingPet = (pet) => {
-    const species = normalizeText(getPetSpecies(pet));
+    const species = normalizeText(getPetType(pet));
     return species === "fish" || species === "reptile";
   };
 
   const getUnsupportedBoardingMessage = (pet) => {
-    const species = getPetSpecies(pet);
+    const species = getPetType(pet);
     return `${species} cannot be accommodated in Pet Hotel rooms. Please contact staff for special arrangements.`;
   };
 
   const isRoomCompatibleWithPet = (room, pet) => {
     if (!pet || !room) return false;
 
-    const species = normalizeText(getPetSpecies(pet));
+    const species = normalizeText(getPetType(pet));
     const roomType = getRoomType(room);
 
     if (species === "dog") {
@@ -446,7 +465,6 @@ const CustomerBookings = () => {
     });
   };
 
-  // Calculate total for Pet Hotel bookings
   const calculateHotelTotal = () => {
     if (!selectedRoom) return 0;
 
@@ -757,14 +775,6 @@ const CustomerBookings = () => {
     setPreviewUrl(null);
     setErrorMessage("");
 
-    // Reset availability states
-    setVeterinaryAvailability(null);
-    setGroomingAvailability(null);
-    setBoardingAvailability(null);
-    setSelectedTimeSlot("");
-    setSelectedRoom(null);
-    setSelectedRoomType("");
-
     setFormData({
       customer_name: customerName,
       customer_email: customerEmail,
@@ -818,7 +828,6 @@ const CustomerBookings = () => {
 
     if (errorMessage) setErrorMessage("");
 
-    // Trigger availability checking when date or service changes for vet bookings
     if (selectedBooking === "Vet" && (name === "request_date" || name === "service_name")) {
       const updatedFormData = { ...formData, [name]: value };
       if (updatedFormData.request_date) {
@@ -826,14 +835,12 @@ const CustomerBookings = () => {
       }
     }
 
-    // Trigger availability checking when date changes for grooming bookings
     if (selectedBooking === "Groom" && name === "request_date") {
       if (value) {
         fetchGroomingAvailability(value);
       }
     }
 
-    // Trigger availability checking when dates change for hotel bookings
     if (selectedBooking === "Hotel" && (name === "request_date" || name === "check_out_date")) {
       const updatedFormData = { ...formData, [name]: value };
       if (updatedFormData.request_date && updatedFormData.check_out_date) {
@@ -929,11 +936,10 @@ const CustomerBookings = () => {
     setPreviewUrl(null);
   };
 
-const fetchVeterinaryAvailability = async (date, serviceName) => {
+  const fetchVeterinaryAvailability = async (date, serviceName) => {
     try {
       setAvailabilityLoading(true);
 
-      // Find service ID from vet services
       const service = vetServices.find((s) => s.name === serviceName);
       const serviceId = service?.id;
 
@@ -999,7 +1005,7 @@ const fetchVeterinaryAvailability = async (date, serviceName) => {
 
       const params = new URLSearchParams({
         pet_id: String(pet.id),
-        species: normalizeText(getPetSpecies(pet)),
+        species: normalizeText(getPetType(pet)),
         check_in_date: checkIn,
         check_out_date: checkOut,
       });
@@ -1080,7 +1086,6 @@ const fetchVeterinaryAvailability = async (date, serviceName) => {
     }
     if (!formData.request_date) return "Please select a preferred date.";
 
-    // For veterinary bookings, ensure time slot is selected and available
     if (selectedBooking === "Vet") {
       if (!selectedTimeSlot) return "Please select an available time slot.";
       if (veterinaryAvailability && !veterinaryAvailability.slots?.find((slot) => slot.time === selectedTimeSlot && slot.available)) {
@@ -1088,14 +1093,12 @@ const fetchVeterinaryAvailability = async (date, serviceName) => {
       }
     }
 
-    // For grooming bookings, check availability
     if (selectedBooking === "Groom") {
       if (groomingAvailability && !groomingAvailability.available) {
         return "This grooming date is already reserved. Please choose another date.";
       }
     }
 
-    // For hotel bookings, ensure room is selected and available
     if (selectedBooking === "Hotel") {
       if (!selectedPet) return "Please select a pet first.";
 
@@ -1116,7 +1119,7 @@ const fetchVeterinaryAvailability = async (date, serviceName) => {
       if (!selectedRoom) return "Please select an available compatible room.";
 
       if (!isRoomCompatibleWithPet(selectedRoom, selectedPet)) {
-        const species = normalizeText(getPetSpecies(selectedPet));
+        const species = normalizeText(getPetType(selectedPet));
 
         if (species === "dog") return "Dogs can only be accommodated in kennels.";
         if (species === "cat") return "Cats can only be accommodated in catteries.";
@@ -1186,7 +1189,6 @@ const fetchVeterinaryAvailability = async (date, serviceName) => {
     try {
       setSubmitting(true);
 
-      // Handle Hotel booking submission separately
       if (selectedBooking === "Hotel") {
         const hotelPayload = {
           pet_id: formData.pet_id,
@@ -1222,7 +1224,6 @@ const fetchVeterinaryAvailability = async (date, serviceName) => {
         return;
       }
 
-      // Handle Vet and Grooming submissions
       const payload = {
         customer_name: formData.customer_name,
         customer_email: customerEmail || formData.customer_email,
@@ -1573,11 +1574,15 @@ const fetchVeterinaryAvailability = async (date, serviceName) => {
                       >
                         <option value="">Choose your pet...</option>
 
-                        {pets.map((pet, index) => (
-                          <option key={pet.id || index} value={pet.id}>
-                            {getPetName(pet)} • {getPetSpecies(pet)} • {getPetBreed(pet)}
-                          </option>
-                        ))}
+                        {pets.map((pet, index) => {
+                          const age = getPetAge(pet);
+                          return (
+                            <option key={pet.id || index} value={pet.id}>
+                              {getPetName(pet)} — {getPetType(pet)}
+                              {age !== "N/A" ? ` (${age})` : ""}
+                            </option>
+                          );
+                        })}
                       </select>
                     ) : (
                       <div className="pet-select-empty">
@@ -1594,13 +1599,19 @@ const fetchVeterinaryAvailability = async (date, serviceName) => {
                         <strong>{getPetName(selectedPet)}</strong>
                       </div>
                       <div>
-                        <small>Species</small>
-                        <strong>{getPetSpecies(selectedPet)}</strong>
+                        <small>Type of Pet</small>
+                        <strong>{getPetType(selectedPet)}</strong>
                       </div>
                       <div>
                         <small>Breed</small>
                         <strong>{getPetBreed(selectedPet)}</strong>
                       </div>
+                      {getPetBirthdate(selectedPet) && (
+                        <div>
+                          <small>Birthdate</small>
+                          <strong>{new Date(getPetBirthdate(selectedPet)).toLocaleDateString()}</strong>
+                        </div>
+                      )}
                       <div>
                         <small>Age</small>
                         <strong>{getPetAge(selectedPet)}</strong>

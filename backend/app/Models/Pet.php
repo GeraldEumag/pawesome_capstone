@@ -8,7 +8,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Pet extends Model
 {
-    use HasFactory;
+    use HasFactory, SoftDeletes;
 
     protected $fillable = [
         'customer_id',
@@ -16,6 +16,8 @@ class Pet extends Model
         'type',
         'species',
         'breed',
+        'birthdate',
+        'birth_date',
         'age',
         'gender',
         'image',
@@ -25,7 +27,12 @@ class Pet extends Model
         'archived_by',
     ];
 
-    protected $dates = ['deleted_at', 'archived_at'];
+    protected $dates = ['deleted_at', 'archived_at', 'birthdate', 'birth_date'];
+
+    protected $casts = [
+        'birthdate' => 'date',
+        'birth_date' => 'date',
+    ];
 
     /**
      * Scope to get only active pets

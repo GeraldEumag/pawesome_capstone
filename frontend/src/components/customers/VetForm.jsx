@@ -58,6 +58,34 @@ const VetForm = () => {
   }, [fetchAppointments, fetchPets]);
 
   const selectedPet = pets.find((pet) => String(pet.id) === String(formData.pet_id));
+
+  const calculateAge = (birthdate) => {
+    if (!birthdate) return null;
+    const today = new Date();
+    const birth = new Date(birthdate);
+    let age = today.getFullYear() - birth.getFullYear();
+    const monthDiff = today.getMonth() - birth.getMonth();
+    if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birth.getDate())) {
+      age--;
+    }
+    if (age <= 0) return "Less than 1 year";
+    return `${age} year${age > 1 ? "s" : ""}`;
+  };
+
+  const getPetDisplayInfo = (pet) => {
+    if (!pet) return null;
+    const typeOfPet = pet.species || pet.type || "Pet";
+    const birthdate = pet.birthdate || pet.birth_date || pet.date_of_birth;
+    const age = calculateAge(birthdate);
+    return {
+      typeOfPet,
+      birthdate,
+      age,
+    };
+  };
+
+  const petDisplayInfo = getPetDisplayInfo(selectedPet);
+
   const compatibility = selectedPet
     ? validateServiceCompatibility(selectedPet.species || selectedPet.type, "veterinary")
     : null;
@@ -91,7 +119,7 @@ const VetForm = () => {
       }
 
       if (compatibility && !compatibility.isValid) {
-        alert(compatibility.message || "This service is not available for this pet species.");
+        alert(compatibility.message || "This service is not available for this pet type.");
         return;
       }
 
@@ -164,12 +192,28 @@ const VetForm = () => {
               required
             >
               <option value="">Select active pet</option>
-              {pets.map((pet) => (
-                <option key={pet.id} value={pet.id}>
-                  {pet.name} - {pet.species || pet.type || "Pet"}
-                </option>
-              ))}
+              {pets.map((pet) => {
+                const info = getPetDisplayInfo(pet);
+                return (
+                  <option key={pet.id} value={pet.id}>
+                    {pet.name} — {info?.typeOfPet || "Pet"}
+                    {info?.age ? ` (${info.age})` : ""}
+                  </option>
+                );
+              })}
             </select>
+
+            {selectedPet && petDisplayInfo && (
+              <div className="vet-selected-pet-info">
+                <p><strong>Type of Pet:</strong> {petDisplayInfo.typeOfPet}</p>
+                {petDisplayInfo.birthdate && (
+                  <p><strong>Birthdate:</strong> {new Date(petDisplayInfo.birthdate).toLocaleDateString()}</p>
+                )}
+                {petDisplayInfo.age && (
+                  <p><strong>Age:</strong> {petDisplayInfo.age}</p>
+                )}
+              </div>
+            )}
 
             {selectedPet && serviceMessage && (
               <div className="vet-service-note">{serviceMessage}</div>
@@ -177,7 +221,7 @@ const VetForm = () => {
 
             {selectedPet && compatibility && !compatibility.isValid && (
               <div className="vet-service-note error">
-                {compatibility.message || "This service is not available for this pet species."}
+                {compatibility.message || "This service is not available for this pet type."}
               </div>
             )}
 

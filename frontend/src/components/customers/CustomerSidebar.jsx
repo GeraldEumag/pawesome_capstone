@@ -9,6 +9,7 @@ import {
   faBone,
   faCalendarAlt,
   faCreditCard,
+  faCalendarPlus,
 } from "@fortawesome/free-solid-svg-icons";
 import "./CustomerSidebar.css";
 
@@ -33,6 +34,11 @@ const CustomerSidebar = () => {
       to: "/customer/pets",
       label: "My Pets",
       icon: faPaw,
+    },
+    {
+      to: "/customer/bookings",
+      label: "Book Services",
+      icon: faCalendarPlus,
     },
     {
       to: "/customer/requests",
