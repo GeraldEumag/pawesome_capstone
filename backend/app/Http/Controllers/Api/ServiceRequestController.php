@@ -316,7 +316,9 @@ class ServiceRequestController extends Controller
 
         // Cancel related room reservation if this is a hotel/boarding request
         if ($serviceRequest->request_type === 'hotel' || $serviceRequest->request_type === 'boarding') {
-            $reservation = \App\Models\BoardingRoomReservation::where('service_request_id', $serviceRequest->id)->first();
+            $reservation = \App\Models\BoardingRoomReservation::where('source_type', 'service_request')
+                ->where('source_id', $serviceRequest->id)
+                ->first();
             if ($reservation) {
                 $reservation->update(['status' => 'cancelled']);
             }
@@ -376,7 +378,7 @@ class ServiceRequestController extends Controller
                 $room = \App\Models\BoardingRoom::find($serviceRequest->boarding_room_id);
                 if ($room) {
                     // Check availability one more time before creating reservation
-                    $existingReservations = \App\Models\BoardingRoomReservation::where('boarding_room_id', $room->id)
+                    $existingReservations = \App\Models\BoardingRoomReservation::where('room_id', $room->id)
                         ->where('check_in_date', '<', $serviceRequest->check_out_date ?? $serviceRequest->check_in_date)
                         ->where('check_out_date', '>', $serviceRequest->check_in_date ?? $serviceRequest->check_in_date)
                         ->whereIn('status', ['pending', 'approved', 'scheduled', 'checked_in'])
@@ -387,8 +389,9 @@ class ServiceRequestController extends Controller
                     if ($availableRooms > 0) {
                         // Create room reservation
                         $reservation = \App\Models\BoardingRoomReservation::create([
-                            'boarding_room_id' => $room->id,
-                            'service_request_id' => $serviceRequest->id,
+                            'room_id' => $room->id,
+                            'source_type' => 'service_request',
+                            'source_id' => $serviceRequest->id,
                             'pet_id' => $serviceRequest->pet_id,
                             'customer_id' => $serviceRequest->customer_id,
                             'check_in_date' => $serviceRequest->check_in_date ?? $serviceRequest->check_in_date,

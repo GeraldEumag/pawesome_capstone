@@ -35,7 +35,7 @@ class BoardingRoom extends Model
      */
     public function reservations(): HasMany
     {
-        return $this->hasMany(BoardingRoomReservation::class, 'boarding_room_id');
+        return $this->hasMany(BoardingRoomReservation::class, 'room_id');
     }
 
     /**

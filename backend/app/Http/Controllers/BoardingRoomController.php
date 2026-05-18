@@ -100,7 +100,7 @@ class BoardingRoomController extends Controller
             }
 
             $rooms = $roomsQuery->orderBy('daily_rate')->get();
-            $reservationRoomColumn = 'boarding_room_id';
+            $reservationRoomColumn = 'room_id';
 
             $availableRooms = $rooms->map(function ($room) use ($checkIn, $checkOut, $reservationRoomColumn) {
                 $blockingReservationCount = 0;
@@ -218,7 +218,7 @@ class BoardingRoomController extends Controller
             }
 
             // Check availability one more time before approving
-            $existingReservations = BoardingRoomReservation::where('boarding_room_id', $room->id)
+            $existingReservations = BoardingRoomReservation::where('room_id', $room->id)
                 ->where('check_in_date', '<', $serviceRequest->check_out_date ?? $serviceRequest->check_in_date)
                 ->where('check_out_date', '>', $serviceRequest->check_in_date ?? $serviceRequest->check_in_date)
                 ->whereIn('status', ['pending', 'approved', 'scheduled', 'checked_in'])
@@ -236,8 +236,9 @@ class BoardingRoomController extends Controller
 
             // Create room reservation
             $reservation = BoardingRoomReservation::create([
-                'boarding_room_id' => $room->id,
-                'service_request_id' => $serviceRequest->id,
+                'room_id' => $room->id,
+                'source_type' => 'pet_hotel',
+                'source_id' => $serviceRequest->id,
                 'pet_id' => $serviceRequest->pet_id,
                 'customer_id' => $serviceRequest->customer_id,
                 'check_in_date' => $serviceRequest->check_in_date ?? $serviceRequest->check_in_date,
@@ -309,7 +310,9 @@ class BoardingRoomController extends Controller
         ]);
 
         // Cancel related room reservation if it exists
-        $reservation = BoardingRoomReservation::where('service_request_id', $serviceRequest->id)->first();
+        $reservation = BoardingRoomReservation::where('source_type', 'pet_hotel')
+            ->where('source_id', $serviceRequest->id)
+            ->first();
         if ($reservation) {
             $reservation->update(['status' => 'cancelled']);
         }

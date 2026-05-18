@@ -93,6 +93,7 @@ class BoardingAddOnInventoryService
                     'movement_type' => 'boarding_addon_usage',
                     'type' => 'deduction',
                     'quantity' => $requiredQuantity,
+                    'delta' => -$requiredQuantity,
                     'previous_stock' => $previousStock,
                     'new_stock' => $newStock,
                     'reference_id' => $boarding->id,
@@ -101,7 +102,7 @@ class BoardingAddOnInventoryService
                     'performed_by' => Auth::user()?->name ?: 'System',
                     'role' => $performedByRole,
                     'user_id' => Auth::id(),
-                    'details' => [
+                    'details' => json_encode([
                         'booking_id' => $boarding->id,
                         'add_on_id' => $bookingAddOn->add_on_id,
                         'add_on_name' => $bookingAddOn->name,
@@ -112,7 +113,7 @@ class BoardingAddOnInventoryService
                         'calculated_quantity' => $requiredQuantity,
                         'pet_name' => $boarding->pet_name,
                         'customer_name' => $boarding->customer_name
-                    ]
+                    ])
                 ]);
 
                 // Update booking add-on with deduction info
@@ -188,6 +189,7 @@ class BoardingAddOnInventoryService
                     'movement_type' => 'boarding_addon_restore',
                     'type' => 'restoration',
                     'quantity' => $deductedQuantity,
+                    'delta' => $deductedQuantity,
                     'previous_stock' => $previousStock,
                     'new_stock' => $newStock,
                     'reference_id' => $boarding->id,
@@ -196,7 +198,7 @@ class BoardingAddOnInventoryService
                     'performed_by' => Auth::user()?->name ?: 'System',
                     'role' => $performedByRole,
                     'user_id' => Auth::id(),
-                    'details' => [
+                    'details' => json_encode([
                         'booking_id' => $boarding->id,
                         'add_on_id' => $bookingAddOn->add_on_id,
                         'add_on_name' => $bookingAddOn->name,
@@ -207,7 +209,7 @@ class BoardingAddOnInventoryService
                         'restored_quantity' => $deductedQuantity,
                         'pet_name' => $boarding->pet_name,
                         'customer_name' => $boarding->customer_name
-                    ]
+                    ])
                 ]);
 
                 // Update booking add-on with restoration info

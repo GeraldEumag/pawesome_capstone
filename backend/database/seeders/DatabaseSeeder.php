@@ -22,6 +22,7 @@ class DatabaseSeeder extends Seeder
             ChatbotFaqSeeder::class,
             CashierTestDataSeeder::class, // Test data for cashier features
             VeterinaryServicesSeeder::class,
+            BoardingRoomsSeederFixed::class, // Seed boarding rooms for hotel bookings
             PawesomeLiveDemoSeeder::class,
             AddOnsSeeder::class, // Seed add-ons with missing items
             AddOnInventoryMappingSeeder::class, // Map add-ons to inventory items

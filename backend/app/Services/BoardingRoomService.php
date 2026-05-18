@@ -169,9 +169,9 @@ class BoardingRoomService
 
             // Create the reservation
             $reservation = BoardingRoomReservation::create([
-                'boarding_room_id' => $roomId,
-                'boarding_booking_id' => $sourceType === 'pet_hotel' ? $sourceId : null,
-                'service_request_id' => $sourceType === 'service_request' ? $sourceId : null,
+                'room_id' => $roomId,
+                'source_type' => $sourceType,
+                'source_id' => $sourceId,
                 'pet_id' => $petId,
                 'customer_id' => $customerId,
                 'check_in_date' => $checkInDate,

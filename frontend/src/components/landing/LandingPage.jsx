@@ -127,13 +127,12 @@ const LandingPage = () => {
                 Premium Pet Care & Veterinary Services
               </span>
 
-              <h1>Modern pet care made simple, trusted, and personal.</h1>
+              <h1>Trusted pet care made simple.</h1>
 
               <p>
-                Pawesome Retreat Inc. provides professional veterinary services,
-                pet hotel boarding, grooming, day care, supplies, and
-                customer-friendly reservation support in one reliable pet care
-                center.
+                Pawesome Retreat Inc. provides veterinary services, pet hotel
+                boarding, grooming, day care, supplies, and customer-friendly
+                reservation support in one reliable pet care center.
               </p>
 
               <div className="landing-hero-buttons">
@@ -184,7 +183,7 @@ const LandingPage = () => {
         <section className="landing-trust-strip" aria-label="Business highlights">
           <div>
             <strong>Veterinary Services</strong>
-            <span>Consultation, vaccination, laboratory support</span>
+            <span>Consultation, vaccination, and laboratory support</span>
           </div>
 
           <div>
@@ -223,7 +222,7 @@ const LandingPage = () => {
           <div className="landing-about-card">
             <div className="landing-about-copy">
               <span className="landing-eyebrow">About Pawesome Retreat</span>
-              <h2>A professional care center built around pets and their owners.</h2>
+              <h2>A care center built around pets and their owners.</h2>
               <p>
                 Pawesome Retreat Inc. is a pet care facility offering Pet Hotel,
                 Grooming, Supplies, and Veterinary Clinic services. The center

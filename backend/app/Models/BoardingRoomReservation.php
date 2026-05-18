@@ -11,9 +11,7 @@ class BoardingRoomReservation extends Model
     use HasFactory;
 
     protected $fillable = [
-        'boarding_room_id',
-        'boarding_booking_id',
-        'service_request_id',
+        'room_id',
         'source_type',
         'source_id',
         'pet_id',
@@ -33,7 +31,7 @@ class BoardingRoomReservation extends Model
      */
     public function room(): BelongsTo
     {
-        return $this->belongsTo(BoardingRoom::class, 'boarding_room_id');
+        return $this->belongsTo(BoardingRoom::class, 'room_id');
     }
 
     /**

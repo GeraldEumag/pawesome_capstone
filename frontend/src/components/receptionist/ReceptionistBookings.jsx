@@ -645,7 +645,10 @@ const ReceptionistBookings = () => {
       let endpoint = "";
 
       if (booking.type === "hotel") {
-        endpoint = `/boardings/available-rooms?check_in=${targetDate}&check_out=${targetDate}`;
+        // For hotel bookings, we need pet_id and species
+        const petId = booking.raw?.pet_id || booking.petId;
+        const species = booking.petType?.toLowerCase() || booking.raw?.pet?.species?.toLowerCase();
+        endpoint = `/boarding/rooms/available?check_in_date=${targetDate}&check_out_date=${targetDate}&pet_id=${petId}&species=${species}`;
       } else if (booking.type === "vet") {
         endpoint = `/receptionist/appointment/list?from_date=${targetDate}&to_date=${targetDate}`;
       } else if (booking.type === "grooming") {
@@ -655,14 +658,15 @@ const ReceptionistBookings = () => {
       const data = await apiRequest(endpoint);
 
       setAvailability({
-        available: data?.available !== false,
+        available: data?.success !== false,
         message: data?.message || "Availability route is reachable.",
         details: data,
       });
-    } catch {
+    } catch (err) {
+      console.error("Availability check error:", err);
       setAvailability({
         available: false,
-        message: "Unable to verify availability. Please refresh and try again.",
+        message: err.message || "Unable to verify availability. Please refresh and try again.",
         details: null,
       });
     } finally {

@@ -187,6 +187,14 @@ const CustomerDashboard = () => {
       )
     : recentPets;
 
+  const customerDashboardClasses = [
+    "customer-dashboard",
+    sidebarCollapsed ? "collapsed" : "",
+    theme === "dark" ? "dark" : "",
+  ]
+    .filter(Boolean)
+    .join(" ");
+
   const getBookingProgress = (status) => {
     const steps = [
       { key: "requested", label: "Requested" },
@@ -228,7 +236,7 @@ const CustomerDashboard = () => {
   ];
 
   return (
-    <div className={`customer-dashboard ${sidebarCollapsed ? "collapsed" : ""}`}>
+    <div className={customerDashboardClasses}>
       <CustomerSidebar
         collapsed={sidebarCollapsed}
         onToggleCollapse={() => setSidebarCollapsed((prev) => !prev)}

@@ -39,6 +39,21 @@ const INITIAL_FORM = {
   emergencyContactNumber: "",
 };
 
+const SUFFIX_OPTIONS = [
+  { value: "", label: "None" },
+  { value: "Jr.", label: "Jr." },
+  { value: "Sr.", label: "Sr." },
+  { value: "II", label: "II" },
+  { value: "III", label: "III" },
+  { value: "IV", label: "IV" },
+  { value: "V", label: "V" },
+  { value: "VI", label: "VI" },
+  { value: "VII", label: "VII" },
+  { value: "VIII", label: "VIII" },
+  { value: "IX", label: "IX" },
+  { value: "X", label: "X" },
+];
+
 const STEPS = [
   {
     id: 1,
@@ -299,23 +314,27 @@ const Register = () => {
     setFormError("");
     setSuccessMessage("");
 
+    const normalizedSuffix = formData.suffix.trim() || null;
+
     try {
       const response = await apiRequest("/auth/register", {
         method: "POST",
         body: JSON.stringify({
           name: fullName,
           first_name: formData.firstName.trim(),
-          middle_name: formData.middleName.trim(),
+          middle_name: formData.middleName.trim() || null,
           last_name: formData.lastName.trim(),
-          suffix: formData.suffix.trim(),
+          suffix: normalizedSuffix,
           email: formData.emailAddress.trim(),
           username: formData.username.trim(),
           password: formData.password,
           password_confirmation: formData.confirmPassword,
-          phone: formData.contactNumber.trim(),
+          phone: formData.contactNumber.trim() || null,
           date_of_birth: formData.dateOfBirth || null,
-          emergency_contact_person: formData.emergencyContactPerson.trim(),
-          emergency_contact_number: formData.emergencyContactNumber.trim(),
+          emergency_contact_person:
+            formData.emergencyContactPerson.trim() || null,
+          emergency_contact_number:
+            formData.emergencyContactNumber.trim() || null,
           role: "customer",
         }),
       });
@@ -337,7 +356,7 @@ const Register = () => {
         "middle_name",
         user.middle_name || formData.middleName.trim()
       );
-      localStorage.setItem("suffix", user.suffix || formData.suffix.trim());
+      localStorage.setItem("suffix", user.suffix || formData.suffix.trim() || "");
 
       setSuccessMessage(
         "Registration successful. Redirecting to your customer dashboard..."
@@ -528,14 +547,19 @@ const Register = () => {
 
                   <div className="register-form-group">
                     <label htmlFor="suffix">Suffix</label>
-                    <input
+                    <select
                       id="suffix"
                       name="suffix"
-                      type="text"
                       value={formData.suffix}
                       onChange={handleChange}
-                      placeholder="Jr., Sr., III"
-                    />
+                      autoComplete="honorific-suffix"
+                    >
+                      {SUFFIX_OPTIONS.map((suffix) => (
+                        <option key={suffix.label} value={suffix.value}>
+                          {suffix.label}
+                        </option>
+                      ))}
+                    </select>
                   </div>
 
                   <div className="register-form-group">

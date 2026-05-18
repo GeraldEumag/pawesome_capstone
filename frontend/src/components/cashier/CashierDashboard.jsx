@@ -337,6 +337,14 @@ const CashierDashboard = () => {
     { label: "View Reports", icon: faHeadset, link: "/cashier/reports", tone: "gold" },
   ];
 
+  const cashierDashboardClasses = [
+    "app-dashboard",
+    "cashier-dashboard",
+    theme === "dark" ? "dark" : "",
+  ]
+    .filter(Boolean)
+    .join(" ");
+
   const handleEndShift = async () => {
     if (!actualCashCount) {
       setShiftMessage("Please enter actual cash count.");
@@ -892,7 +900,7 @@ Thank you for choosing Pawesome!
   }, [theme, showOverview, fetchDashboardData]);
 
   return (
-    <div className="app-dashboard cashier-dashboard">
+    <div className={cashierDashboardClasses}>
       <CashierSidebar />
 
       <main className="app-main">

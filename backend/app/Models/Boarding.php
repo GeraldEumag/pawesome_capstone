@@ -171,7 +171,8 @@ class Boarding extends Model
      */
     public function roomReservation(): HasOne
     {
-        return $this->hasOne(BoardingRoomReservation::class, 'boarding_booking_id');
+        return $this->hasOne(BoardingRoomReservation::class, 'source_id')
+            ->where('source_type', 'vet_boarding');
     }
 
     /**
@@ -179,7 +180,8 @@ class Boarding extends Model
      */
     public function roomReservations(): HasMany
     {
-        return $this->hasMany(BoardingRoomReservation::class, 'boarding_booking_id');
+        return $this->hasMany(BoardingRoomReservation::class, 'source_id')
+            ->where('source_type', 'vet_boarding');
     }
 
     /**

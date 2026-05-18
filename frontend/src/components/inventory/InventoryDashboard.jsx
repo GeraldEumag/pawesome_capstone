@@ -148,8 +148,16 @@ const InventoryDashboard = () => {
 
   const pieColors = ["#ff5f93", "#f59e0b", "#ef4444"];
 
+  const inventoryDashboardClasses = [
+    "inventory-dashboard",
+    sidebarCollapsed ? "collapsed" : "",
+    theme === "dark" ? "dark" : "",
+  ]
+    .filter(Boolean)
+    .join(" ");
+
   return (
-    <div className={`inventory-dashboard ${sidebarCollapsed ? "collapsed" : ""}`}>
+    <div className={inventoryDashboardClasses}>
       <InventorySidebar
         collapsed={sidebarCollapsed}
         onToggleCollapse={() => setSidebarCollapsed((prev) => !prev)}

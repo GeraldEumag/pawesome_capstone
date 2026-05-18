@@ -275,17 +275,17 @@ class ServiceBillingService
     /**
      * Create base service billing item when service is created
      */
-    public static function createBaseServiceItem(string $serviceType, int $serviceId, string $description, float $price, int $petId = null): ServiceItemUsage
+    public static function createBaseServiceItem(string $serviceType, int $serviceId, string $description, float $price, ?int $petId = null): ServiceItemUsage
     {
         $item = ServiceItemUsage::create([
             'service_type' => $serviceType,
             'service_id' => $serviceId,
             'pet_id' => $petId,
-            'inventory_item_id' => null, // Base service has no inventory item
-            'batch_id' => null, // Base service has no batch
+            'inventory_item_id' => null,
+            'batch_id' => null,
             'quantity_used' => 1,
             'unit' => 'service',
-            'used_by' => 0, // System created (0 = system)
+            'used_by' => Auth::id() ?? null, // Use authenticated user ID or null
             'notes' => 'Base service charge',
             // Billing fields
             'item_type' => ServiceItemUsage::ITEM_BASE_SERVICE,
@@ -295,8 +295,6 @@ class ServiceBillingService
             'is_billable' => true,
             'is_paid' => false,
         ]);
-
-        self::syncServicePaymentState($serviceType, $serviceId);
 
         return $item;
     }
