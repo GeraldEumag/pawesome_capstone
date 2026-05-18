@@ -110,7 +110,7 @@ const CashierHistory = () => {
       if (!silent) setLoading(true);
       else setRefreshing(true);
 
-      const response = await apiRequest("/cashier/payments/verification-history");
+      const response = await apiRequest("/cashier/payments");
       const paymentsData = normalizeList(response, ["data", "payments", "history"]);
       
       setPaymentVerifications(paymentsData);
@@ -131,7 +131,7 @@ const CashierHistory = () => {
       if (!silent) setLoading(true);
       else setRefreshing(true);
 
-      const response = await apiRequest("/cashier/receipts/history");
+      const response = await apiRequest("/cashier/reports/receipts");
       const receiptsData = normalizeList(response, ["data", "receipts", "history"]);
       
       setReceipts(receiptsData);
@@ -152,7 +152,7 @@ const CashierHistory = () => {
       if (!silent) setLoading(true);
       else setRefreshing(true);
 
-      const response = await apiRequest("/cashier/payments/rejected-history");
+      const response = await apiRequest("/cashier/reports/rejected-payments");
       const rejectedData = normalizeList(response, ["data", "rejected", "history"]);
       
       setRejectedPayments(rejectedData);

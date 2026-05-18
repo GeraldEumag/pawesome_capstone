@@ -234,7 +234,14 @@ const PayrollReports = () => {
             };
           }
         } else {
-          result = await apiRequest(`/admin/payroll/reports?${params.toString()}`);
+          try {
+            result = await apiRequest(`/payroll/reports/overview?${params.toString()}`);
+          } catch (reportError) {
+            const records = await apiRequest(`/payroll?${params.toString()}`);
+            result = {
+              payrolls: normalizeList(records, ["data", "records", "items", "payrolls"]),
+            };
+          }
         }
         const normalized = normalizePayload(result);
 

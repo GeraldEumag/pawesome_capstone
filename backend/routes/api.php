@@ -50,7 +50,6 @@ use App\Http\Controllers\Api\ServiceRequestController;
 use App\Http\Controllers\Api\ReceptionistCustomerController;
 use App\Http\Controllers\Api\SecureFileController;
 use App\Http\Controllers\Api\ReceptionistPetController;
-use App\Http\Controllers\Api\NotificationController as ApiNotificationController;
 use App\Http\Controllers\ReceptionistRequestController;
 use Illuminate\Support\Facades\Route;
 
@@ -187,6 +186,22 @@ Route::middleware(['auth.api', 'throttle:api', 'role:admin'])->prefix('admin')->
     Route::get('reports/service-requests', [ReportsController::class, 'serviceRequests']);
     Route::get('reports/logistics', [ReportsController::class, 'logistics']);
     Route::get('reports/reception', [ReportsController::class, 'reception']);
+
+    // Login Log Routes
+    Route::get('login-logs', [LoginLogController::class, 'index']);
+    Route::get('login-logs/statistics', [LoginLogController::class, 'statistics']);
+    Route::get('login-logs/recent', [LoginLogController::class, 'recent']);
+    Route::get('login-logs/user/{userId}', [LoginLogController::class, 'userLogs']);
+
+    // Activity Log Routes
+    Route::get('activity-logs', [ActivityLogController::class, 'index']);
+    Route::get('activity-logs/statistics', [ActivityLogController::class, 'statistics']);
+    Route::get('activity-logs/filters', [ActivityLogController::class, 'filters']);
+    Route::get('activity-logs/{id}', [ActivityLogController::class, 'show']);
+    Route::get('activity-logs/user/{userId}', [ActivityLogController::class, 'userLogs']);
+
+    // Appointments overview (for History.jsx admin history view)
+    Route::get('appointments', [AppointmentController::class, 'index']);
 
     // Dynamic routes with ID parameters
     Route::get('customers/{id}', [CustomersController::class, 'show']);
@@ -358,12 +373,17 @@ Route::middleware(['auth.api', 'throttle:api', 'role:receptionist'])->prefix('re
     Route::get('dashboard', [ReceptionistDashboardController::class, 'overview']);
     Route::get('appointments', [ReceptionistDashboardController::class, 'appointments']);
     Route::get('customers', [ReceptionistDashboardController::class, 'customers']);
+    Route::post('customers', [ReceptionistCustomerController::class, 'store']);
     
     // IMPORTANT: Static routes must come before dynamic routes
     Route::get('appointment/list', [AppointmentController::class, 'index']);
     Route::get('veterinarians/available', [AppointmentController::class, 'availableVeterinarians']);
     Route::get('customer-orders/pending', [ReceptionistCustomerOrderController::class, 'pending']);
+    Route::get('orders/approval-history', [ReceptionistCustomerOrderController::class, 'approvalHistory']);
     Route::get('requests/pending', [ReceptionistRequestController::class, 'pending']);
+    Route::get('requests/approval-history', [ReceptionistRequestController::class, 'approvalHistory']);
+    Route::get('requests/rejected-history', [ReceptionistRequestController::class, 'rejectedHistory']);
+    Route::get('scheduling/history', [ReceptionistRequestController::class, 'schedulingHistory']);
     Route::get('boarding-requests/pending', [BoardingController::class, 'pending']);
     Route::get('medical-confinements/pending-admission', [MedicalConfinementController::class, 'pendingAdmission']);
     Route::get('boarding/inventory-items', [BoardingController::class, 'getAvailableInventoryItems']);
@@ -413,12 +433,6 @@ Route::middleware(['auth.api', 'throttle:api', 'role:receptionist'])->prefix('re
     Route::post('appointments/{id}/reschedule', [AppointmentController::class, 'reschedule']);
     Route::post('appointments/{id}/cancel', [AppointmentController::class, 'cancel']);
     Route::get('veterinarians/{id}/schedule', [AppointmentController::class, 'veterinarianSchedule']);
-    
-    // Customer Order actions
-    Route::get('customer-orders/{id}', [ReceptionistCustomerOrderController::class, 'show']);
-    Route::post('customer-orders/{id}/approve', [ReceptionistCustomerOrderController::class, 'approve']);
-    Route::post('customer-orders/{id}/reject', [ReceptionistCustomerOrderController::class, 'reject']);
-    Route::post('customer-orders/{id}/cancel', [ReceptionistCustomerOrderController::class, 'cancel']);
     
     // Service Request actions
     Route::post('requests/{id}/approve', [ReceptionistRequestController::class, 'approve']);
@@ -540,6 +554,16 @@ Route::middleware(['auth.api', 'throttle:api', 'role:manager'])->prefix('manager
     Route::get('staff/{id}/payroll', [ApiPayrollController::class, 'index']);
 });
 
+// Payroll Routes (Admin access)
+Route::middleware(['auth.api', 'throttle:api', 'role:admin,manager'])->prefix('payroll')->group(function () {
+    Route::get('/', [ApiPayrollController::class, 'index']);
+    Route::post('/generate', [ApiPayrollController::class, 'generate']);
+    Route::get('/reports/overview', [ReportsController::class, 'payrollReports']);
+    Route::post('/{id}/approve', [ApiPayrollController::class, 'approve']);
+    Route::post('/{id}/release', [ApiPayrollController::class, 'markAsPaid']);
+    Route::get('/{id}', [ApiPayrollController::class, 'show']);
+});
+
 // Attendance Routes (Admin and Manager)
 Route::middleware(['auth.api', 'throttle:api', 'role:admin,manager'])->prefix('attendance')->group(function () {
     Route::get('/', [AttendanceController::class, 'index']);
@@ -588,12 +612,6 @@ Route::middleware(['auth.api', 'throttle:api', 'role:admin'])->prefix('admin/sal
     Route::delete('/{id}', [SalaryController::class, 'destroy']);
 });
 
-// Role-based Notifications API Routes
-Route::middleware(['auth.api', 'throttle:api'])->prefix('notifications')->group(function () {
-    Route::get('/', [ApiNotificationController::class, 'index']);
-    Route::patch('/{notification}/read', [ApiNotificationController::class, 'markAsRead']);
-    Route::patch('/read-all', [ApiNotificationController::class, 'markAllAsRead']);
-});
 
 // Employee self-service routes
 Route::middleware(['auth.api', 'throttle:api'])->group(function () {

@@ -93,7 +93,7 @@ const History = () => {
       if (!silent) setLoading(true);
       else setRefreshing(true);
 
-      const response = await apiRequest("/admin/logs/activity");
+      const response = await apiRequest("/admin/activity-logs");
       const logsData = normalizeList(response, ["data", "logs", "history"]);
       
       setActivityLogs(logsData);
@@ -114,7 +114,7 @@ const History = () => {
       if (!silent) setLoading(true);
       else setRefreshing(true);
 
-      const response = await apiRequest("/admin/logs/login");
+      const response = await apiRequest("/admin/login-logs");
       const logsData = normalizeList(response, ["data", "logs", "history"]);
       
       setLoginLogs(logsData);
@@ -135,7 +135,7 @@ const History = () => {
       if (!silent) setLoading(true);
       else setRefreshing(true);
 
-      const response = await apiRequest("/admin/logs/chatbot");
+      const response = await apiRequest("/admin/chatbot/logs");
       const logsData = normalizeList(response, ["data", "logs", "history"]);
       
       setChatbotLogs(logsData);
@@ -156,7 +156,7 @@ const History = () => {
       if (!silent) setLoading(true);
       else setRefreshing(true);
 
-      const response = await apiRequest("/admin/logs/inventory");
+      const response = await apiRequest("/inventory/logs");
       const logsData = normalizeList(response, ["data", "logs", "history"]);
       
       setInventoryLogs(logsData);
@@ -177,7 +177,7 @@ const History = () => {
       if (!silent) setLoading(true);
       else setRefreshing(true);
 
-      const response = await apiRequest("/admin/logs/sales");
+      const response = await apiRequest("/cashier/transactions");
       const logsData = normalizeList(response, ["data", "logs", "history"]);
       
       setSalesLogs(logsData);
@@ -198,7 +198,7 @@ const History = () => {
       if (!silent) setLoading(true);
       else setRefreshing(true);
 
-      const response = await apiRequest("/admin/logs/appointments");
+      const response = await apiRequest("/admin/appointments");
       const logsData = normalizeList(response, ["data", "logs", "history"]);
       
       setAppointmentLogs(logsData);

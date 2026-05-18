@@ -827,7 +827,7 @@ Thank you for choosing Pawesome!
 
   const handleMarkBoardingAsPaid = async (id) => {
     try {
-      await apiRequest(`/boardings/${id}/pay`, "POST");
+      await apiRequest(`/cashier/boarding-payments/${id}/verify`, "POST");
       alert("Payment confirmed successfully.");
       fetchDashboardData({ silent: true });
     } catch (err) {
