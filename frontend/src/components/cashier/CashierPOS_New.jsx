@@ -76,6 +76,9 @@ const discountedPrice = (p) => {
   return disc > 0 ? price * (1 - disc / 100) : price;
 };
 
+const priceWithVAT = (p) => discountedPrice(p) * (1 + TAX_RATE);
+const vatPerUnit   = (p) => discountedPrice(p) * TAX_RATE;
+
 const stockStatus = (stock) => {
   const q = getAvailableStock({ available_stock: stock });
   if (q <= 0) return { label: "Out of Stock", type: "out" };
@@ -1591,10 +1594,10 @@ const CashierPOS = () => {
     setOrderType("walk-in");
   }, []);
 
-  /* Totals */
+  /* Totals (VAT-inclusive pricing) */
   const subtotal = useMemo(() =>
-    cart.reduce((sum, i) => sum + discountedPrice(i) * i.quantity, 0), [cart]);
-  const tax = useMemo(() => subtotal * TAX_RATE, [subtotal]);
+    cart.reduce((sum, i) => sum + priceWithVAT(i) * i.quantity, 0), [cart]);
+  const tax = useMemo(() => subtotal * TAX_RATE / (1 + TAX_RATE), [subtotal]);
   const discountAmt = useMemo(() => {
     if (!validatedVoucher) return 0;
     const { type, value } = validatedVoucher;
@@ -1692,11 +1695,9 @@ const CashierPOS = () => {
         date: new Date().toLocaleString("en-PH", { month: "short", day: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit" }),
       };
       setRecentSale(receipt);
-      setCompletedReceipt(receipt);
-      addToast("Payment successful!", "success");
+      addToast("Payment successful! Click View Receipt to print.", "success");
       clearOrder();
       fetchProducts({ silent: true });
-      window.setTimeout(() => handlePrint(receipt), 250);
     } catch (err) {
       addToast(err.message || "Checkout failed. Please try again.", "error");
     } finally {
@@ -1706,15 +1707,19 @@ const CashierPOS = () => {
 
   /* Print receipt */
   const handlePrint = (receiptOverride = null) => {
-    const receiptToPrint = receiptOverride || completedReceipt;
-    if (!receiptToPrint) return;
+    const receiptToPrint = (receiptOverride && Array.isArray(receiptOverride.items)) ? receiptOverride : completedReceipt;
+    if (!receiptToPrint || !Array.isArray(receiptToPrint.items)) return;
     const w = window.open("", "_blank", "width=420,height=700");
     if (!w) { addToast("Allow pop-ups to print receipt", "warn"); return; }
-    const itemsHtml = receiptToPrint.items.map(i => `
+    const itemsHtml = receiptToPrint.items.map(i => {
+      const itemVatPrice = (i.unit_price || 0) * (1 + TAX_RATE);
+      const itemVatTotal = itemVatPrice * i.quantity;
+      return `
       <tr>
-        <td>${i.item_name} × ${i.quantity}</td>
-        <td style="text-align:right">${fmt(i.unit_price * i.quantity)}</td>
-      </tr>`).join("");
+        <td>${i.item_name} × ${i.quantity}<br><small>${fmt(itemVatPrice)} each (VAT incl.)</small></td>
+        <td style="text-align:right">${fmt(itemVatTotal)}</td>
+      </tr>`;
+    }).join("");
     w.document.write(`<!DOCTYPE html><html><head><title>Receipt</title>
       <style>
         body{font-family:'Courier New',monospace;padding:20px;max-width:360px;margin:auto}
@@ -1741,7 +1746,7 @@ const CashierPOS = () => {
       <table>${itemsHtml}</table>
       <hr>
       <table>
-        <tr><td>Subtotal</td><td style="text-align:right">${fmt(receiptToPrint.subtotal)}</td></tr>
+        <tr><td>Subtotal (incl. VAT)</td><td style="text-align:right">${fmt(receiptToPrint.subtotal)}</td></tr>
         <tr><td>VAT 12%</td><td style="text-align:right">${fmt(receiptToPrint.tax)}</td></tr>
         <tr><td>Discount</td><td style="text-align:right">-${fmt(receiptToPrint.discount)}</td></tr>
         <tr class="total-row"><td>TOTAL</td><td style="text-align:right">${fmt(receiptToPrint.total)}</td></tr>
@@ -1940,8 +1945,8 @@ const CashierPOS = () => {
                       <ProductBody>
                         <ProductName title={product.name}>{product.name}</ProductName>
                         <PriceRow>
-                          <PriceMain>{fmt(dPrice)}</PriceMain>
-                          {hasDisc && <PriceOld>{fmt(product.price)}</PriceOld>}
+                          <PriceMain>{fmt(priceWithVAT(product))}</PriceMain>
+                          {hasDisc && <PriceOld>{fmt(product.price * (1 + TAX_RATE))}</PriceOld>}
                         </PriceRow>
                         <StockBadge $type={ss.type}>{ss.label}</StockBadge>
                         <AddToCartBtn
@@ -1993,7 +1998,7 @@ const CashierPOS = () => {
                   <CartItem key={item.id}>
                     <CartItemInfo>
                       <CartItemName title={item.name}>{item.name}</CartItemName>
-                      <CartItemPrice>{fmt(discountedPrice(item))} each</CartItemPrice>
+                      <CartItemPrice>{fmt(priceWithVAT(item))} each · VAT {fmt(vatPerUnit(item))}</CartItemPrice>
                     </CartItemInfo>
 
                     <QtyControl>
@@ -2015,7 +2020,7 @@ const CashierPOS = () => {
                       </QtyBtn>
                     </QtyControl>
 
-                    <CartItemTotal>{fmt(discountedPrice(item) * item.quantity)}</CartItemTotal>
+                    <CartItemTotal>{fmt(priceWithVAT(item) * item.quantity)}</CartItemTotal>
 
                     <RemoveBtn onClick={() => removeFromCart(item.id)}>
                       <FontAwesomeIcon icon={faXmark} />
@@ -2057,7 +2062,7 @@ const CashierPOS = () => {
             {/* Summary */}
             <SummarySection>
               <SummaryRow $muted>
-                <span>Subtotal</span>
+                <span>Subtotal (incl. VAT)</span>
                 <span>{fmt(subtotal)}</span>
               </SummaryRow>
               <SummaryRow $muted>
@@ -2076,6 +2081,12 @@ const CashierPOS = () => {
                 <TotalLabel>Total</TotalLabel>
                 <TotalAmount>{fmt(total)}</TotalAmount>
               </SummaryTotal>
+              {showPaymentSection && paymentMethod === "Cash" && (Number(amountReceived) || 0) >= total && (
+                <ChangeRow style={{ marginTop: 6 }}>
+                  <ChangeLabel>Change</ChangeLabel>
+                  <ChangeAmount>{fmt(change)}</ChangeAmount>
+                </ChangeRow>
+              )}
             </SummarySection>
 
             {/* Payment */}
@@ -2115,25 +2126,12 @@ const CashierPOS = () => {
                       />
                     </AmountRow>
                     <QuickAmounts>
-                      {QUICK_AMOUNTS.filter(a => a >= total || a === Math.ceil(total / 50) * 50)
-                        .slice(0, 6).map(a => (
-                          <QuickBtn key={a} onClick={() => setAmountReceived(String(a))}>
-                            ₱{a.toLocaleString()}
-                          </QuickBtn>
-                        ))}
-                      {/* Always show a few quick amounts */}
                       {QUICK_AMOUNTS.map(a => (
-                        <QuickBtn key={`q-${a}`} onClick={() => setAmountReceived(String(a))}>
-                          ₱{a.toLocaleString()}
+                        <QuickBtn key={a} onClick={() => setAmountReceived(String((Number(amountReceived) || 0) + a))}>
+                          +₱{a.toLocaleString()}
                         </QuickBtn>
-                      )).slice(0, 6)}
+                      ))}
                     </QuickAmounts>
-                    {(Number(amountReceived) || 0) >= total && (
-                      <ChangeRow>
-                        <ChangeLabel>Change</ChangeLabel>
-                        <ChangeAmount>{fmt(change)}</ChangeAmount>
-                      </ChangeRow>
-                    )}
                   </>
                 )}
 
@@ -2243,19 +2241,24 @@ const CashierPOS = () => {
 
                 <ReceiptDivider />
 
-                {completedReceipt.items.map((item, idx) => (
-                  <ReceiptItemRow key={idx}>
-                    <div className="item-name">{item.item_name}</div>
-                    <div className="item-meta">
-                      <span>{item.quantity} × {fmt(item.unit_price)}</span>
-                      <span>{fmt(item.unit_price * item.quantity)}</span>
-                    </div>
-                  </ReceiptItemRow>
-                ))}
+                {completedReceipt.items.map((item, idx) => {
+                  const itemVatPrice = (item.unit_price || 0) * (1 + TAX_RATE);
+                  const itemVatTotal = itemVatPrice * item.quantity;
+                  const itemVatAmt = (item.unit_price || 0) * TAX_RATE * item.quantity;
+                  return (
+                    <ReceiptItemRow key={idx}>
+                      <div className="item-name">{item.item_name}</div>
+                      <div className="item-meta">
+                        <span>{item.quantity} × {fmt(itemVatPrice)} (VAT {fmt(itemVatAmt)})</span>
+                        <span>{fmt(itemVatTotal)}</span>
+                      </div>
+                    </ReceiptItemRow>
+                  );
+                })}
 
                 <ReceiptDivider />
 
-                <ReceiptRow><span>Subtotal</span><span>{fmt(completedReceipt.subtotal)}</span></ReceiptRow>
+                <ReceiptRow><span>Subtotal (incl. VAT)</span><span>{fmt(completedReceipt.subtotal)}</span></ReceiptRow>
                 <ReceiptRow><span>VAT 12%</span><span>{fmt(completedReceipt.tax)}</span></ReceiptRow>
                 <ReceiptRow><span>Discount</span><span>-{fmt(completedReceipt.discount)}</span></ReceiptRow>
                 <ReceiptTotal>
@@ -2279,7 +2282,7 @@ const CashierPOS = () => {
                 onClick={() => setCompletedReceipt(null)}>
                 Close
               </SecBtn>
-              <CheckoutBtn style={{ flex: 2, height: 40, fontSize: 13 }} onClick={handlePrint}>
+              <CheckoutBtn style={{ flex: 2, height: 40, fontSize: 13 }} onClick={() => handlePrint()}>
                 <FontAwesomeIcon icon={faPrint} /> Print Receipt
               </CheckoutBtn>
             </ModalFooter>
