@@ -185,6 +185,8 @@ Route::middleware(['auth.api', 'throttle:api', 'role:admin'])->prefix('admin')->
     Route::get('reports/orders', [ReportsController::class, 'orders']);
     Route::get('reports/services', [ReportsController::class, 'serviceRequests']);
     Route::get('reports/service-requests', [ReportsController::class, 'serviceRequests']);
+    Route::get('reports/payroll', [ReportsController::class, 'payrollReports']);
+    Route::get('reports/system-health', [ReportsController::class, 'systemHealth']);
     Route::get('reports/logistics', [ReportsController::class, 'logistics']);
     Route::get('reports/reception', [ReportsController::class, 'reception']);
 
@@ -227,8 +229,8 @@ Route::middleware(['auth.api', 'throttle:api', 'role:customer'])->prefix('custom
     Route::get('transactions', [PortalController::class, 'transactions']);
     Route::get('purchases', [PortalController::class, 'purchases']);
     Route::post('appointments', [PortalController::class, 'bookAppointment']);
-    Route::get('boardings', [PortalController::class, 'boardings']);
-    Route::post('boardings', [PortalController::class, 'bookBoarding']);
+    Route::get('boardings', [BoardingController::class, 'index']);
+    Route::post('boardings', [BoardingController::class, 'store']);
     Route::get('services', [PortalController::class, 'services']);
     Route::post('chatbot', [PortalController::class, 'chatbot']);
 
@@ -265,6 +267,9 @@ Route::middleware(['auth.api', 'throttle:api', 'role:customer'])->prefix('custom
 
     Route::get('boarding-requests', [BoardingController::class, 'index']);
     Route::post('boarding-requests', [BoardingController::class, 'store']);
+    Route::get('boardings/available-rooms', [BoardingController::class, 'availableRooms']);
+    Route::get('boardings/{id}', [BoardingController::class, 'show']);
+    Route::post('boardings/{id}/cancel', [BoardingController::class, 'cancel']);
     Route::get('boarding-requests/{id}', [BoardingController::class, 'show']);
     Route::post('boarding-requests/{id}/cancel', [BoardingController::class, 'cancel']);
     Route::post('boarding-requests/{id}/payment-proof', [BoardingController::class, 'uploadPaymentProof']);
@@ -788,24 +793,6 @@ Route::middleware(['auth.api', 'throttle:api', 'role:admin'])->prefix('admin/boa
     
     // Dynamic routes with ID parameters
     Route::get('/{id}', [BoardingController::class, 'show']);
-});
-
-// Customer Boarding Routes (View own reservations, create new)
-// Public GET endpoint for customer boardings (allows email parameter for unauthenticated access)
-Route::middleware('throttle:api')->prefix('customer/boardings')->group(function () {
-    Route::get('/', [BoardingController::class, 'index']);
-});
-
-// Authenticated customer boarding routes
-Route::middleware(['auth.api', 'throttle:api', 'role:customer'])->prefix('customer/boardings')->group(function () {
-    Route::post('/', [BoardingController::class, 'store']);
-    
-    // IMPORTANT: Static routes must come before dynamic routes
-    Route::get('/available-rooms', [BoardingController::class, 'availableRooms']);
-    
-    // Dynamic routes with ID parameters
-    Route::get('/{id}', [BoardingController::class, 'show']);
-    Route::post('/{id}/cancel', [BoardingController::class, 'cancel']);
 });
 
 // Vet Boarding Routes (View current boarders for emergency access)

@@ -7,6 +7,7 @@ use App\Models\BoardingRoomReservation;
 use App\Models\Pet;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 
 class BoardingRoomService
 {
@@ -167,17 +168,27 @@ class BoardingRoomService
                 return ['success' => false, 'message' => 'Pet species is not compatible with this room'];
             }
 
-            // Create the reservation
-            $reservation = BoardingRoomReservation::create([
-                'room_id' => $roomId,
-                'source_type' => $sourceType,
-                'source_id' => $sourceId,
+            $reservationData = [
                 'pet_id' => $petId,
                 'customer_id' => $customerId,
                 'check_in_date' => $checkInDate,
                 'check_out_date' => $checkOutDate,
                 'status' => 'pending',
-            ]);
+            ];
+
+            $reservationData[Schema::hasColumn('boarding_room_reservations', 'room_id') ? 'room_id' : 'boarding_room_id'] = $roomId;
+
+            if (Schema::hasColumn('boarding_room_reservations', 'source_type')) {
+                $reservationData['source_type'] = $sourceType;
+            }
+
+            if (Schema::hasColumn('boarding_room_reservations', 'source_id')) {
+                $reservationData['source_id'] = $sourceId;
+            } elseif (Schema::hasColumn('boarding_room_reservations', 'boarding_booking_id')) {
+                $reservationData['boarding_booking_id'] = $sourceId;
+            }
+
+            $reservation = BoardingRoomReservation::create($reservationData);
 
             return [
                 'success' => true,

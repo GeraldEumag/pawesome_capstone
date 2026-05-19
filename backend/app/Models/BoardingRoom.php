@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Support\Facades\Schema;
 
 class BoardingRoom extends Model
 {
@@ -35,7 +36,11 @@ class BoardingRoom extends Model
      */
     public function reservations(): HasMany
     {
-        return $this->hasMany(BoardingRoomReservation::class, 'room_id');
+        $foreignKey = Schema::hasColumn('boarding_room_reservations', 'room_id')
+            ? 'room_id'
+            : 'boarding_room_id';
+
+        return $this->hasMany(BoardingRoomReservation::class, $foreignKey);
     }
 
     /**

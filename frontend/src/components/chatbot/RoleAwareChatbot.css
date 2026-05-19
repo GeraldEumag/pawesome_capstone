@@ -5,9 +5,9 @@
 }
 
 .rbac-chatbot.widget {
-  bottom: 24px;
+  bottom: 5.5rem;
   position: fixed;
-  right: 24px;
+  right: 1.5rem;
 }
 
 .rbac-chatbot.embedded {

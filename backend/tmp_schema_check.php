@@ -1,0 +1,15 @@
+<?php
+
+require __DIR__ . '/vendor/autoload.php';
+
+$app = require __DIR__ . '/bootstrap/app.php';
+$app->make(Illuminate\Contracts\Console\Kernel::class)->bootstrap();
+
+foreach (['boarding_room_reservations', 'boarding_rooms', 'hotel_rooms', 'boardings'] as $table) {
+    echo $table . ': ';
+    if (!Illuminate\Support\Facades\Schema::hasTable($table)) {
+        echo "missing\n";
+        continue;
+    }
+    echo implode(', ', Illuminate\Support\Facades\Schema::getColumnListing($table)) . "\n";
+}

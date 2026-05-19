@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
+use Illuminate\Support\Facades\Schema;
 
 class Boarding extends Model
 {
@@ -171,8 +172,16 @@ class Boarding extends Model
      */
     public function roomReservation(): HasOne
     {
-        return $this->hasOne(BoardingRoomReservation::class, 'source_id')
-            ->where('source_type', 'vet_boarding');
+        $foreignKey = Schema::hasColumn('boarding_room_reservations', 'source_id')
+            ? 'source_id'
+            : 'boarding_booking_id';
+        $relation = $this->hasOne(BoardingRoomReservation::class, $foreignKey);
+
+        if (Schema::hasColumn('boarding_room_reservations', 'source_type')) {
+            $relation->whereIn('source_type', ['pet_hotel', 'vet_boarding']);
+        }
+
+        return $relation;
     }
 
     /**
@@ -180,8 +189,16 @@ class Boarding extends Model
      */
     public function roomReservations(): HasMany
     {
-        return $this->hasMany(BoardingRoomReservation::class, 'source_id')
-            ->where('source_type', 'vet_boarding');
+        $foreignKey = Schema::hasColumn('boarding_room_reservations', 'source_id')
+            ? 'source_id'
+            : 'boarding_booking_id';
+        $relation = $this->hasMany(BoardingRoomReservation::class, $foreignKey);
+
+        if (Schema::hasColumn('boarding_room_reservations', 'source_type')) {
+            $relation->whereIn('source_type', ['pet_hotel', 'vet_boarding']);
+        }
+
+        return $relation;
     }
 
     /**

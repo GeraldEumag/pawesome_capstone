@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Boarding;
 use App\Models\BoardingCareLog;
+use App\Models\BoardingRoom;
 use App\Models\HotelRoom;
 use App\Models\Pet;
 use App\Models\Customer;
@@ -21,6 +22,7 @@ use App\Services\ServiceBillingService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Str;
@@ -58,7 +60,21 @@ class BoardingController extends Controller
 
         $customerId = $this->currentCustomerId($request);
 
-        return $customerId && (int) $boarding->customer_id === (int) $customerId;
+        if (!$customerId) {
+            return false;
+        }
+
+        if ((int) $boarding->customer_id === (int) $customerId) {
+            return true;
+        }
+
+        if ($boarding->pet_id && Pet::where('id', $boarding->pet_id)->where('customer_id', $customerId)->exists()) {
+            return true;
+        }
+
+        return Schema::hasColumn('boardings', 'customer_email')
+            && $request->user()?->email
+            && $boarding->customer_email === $request->user()->email;
     }
 
     /**
@@ -67,35 +83,75 @@ class BoardingController extends Controller
     public function index(Request $request): JsonResponse
     {
         try {
-            $email = $request->query('email');
-
             $query = Boarding::query();
-
-            /*
-             Filter by authenticated customer first if available.
-             If no auth user, fall back to customer email query.
-             Use customer relationship if boardings table has customer_id only.
-            */
             $user = $request->user();
 
-            if ($user && isset($user->id)) {
-                if ($user->role === 'customer' && Schema::hasColumn('boardings', 'customer_id')) {
-                    $customerId = $this->currentCustomerId($request);
+            if ($user?->role === 'customer') {
+                $customerId = $this->currentCustomerId($request);
 
-                    if ($customerId) {
-                        $query->where('customer_id', $customerId);
-                    } else {
+                if (!$customerId) {
+                    $query->whereRaw('1 = 0');
+                } else {
+                    $petIds = Pet::where('customer_id', $customerId)->pluck('id');
+                    $canMatchCustomer = Schema::hasColumn('boardings', 'customer_id');
+                    $canMatchPet = $petIds->isNotEmpty() && Schema::hasColumn('boardings', 'pet_id');
+                    $canMatchEmail = Schema::hasColumn('boardings', 'customer_email') && $user->email;
+
+                    if (!$canMatchCustomer && !$canMatchPet && !$canMatchEmail) {
                         $query->whereRaw('1 = 0');
                     }
-                }
-            } elseif ($email) {
-                if (Schema::hasColumn('boardings', 'customer_email')) {
-                    $query->where('customer_email', $email);
-                } else {
-                    $query->whereHas('customer', function ($customerQuery) use ($email) {
-                        $customerQuery->where('email', $email);
+
+                    $query->where(function ($customerQuery) use ($customerId, $petIds, $user, $canMatchCustomer, $canMatchPet, $canMatchEmail) {
+                        if ($canMatchCustomer) {
+                            $customerQuery->where('customer_id', $customerId);
+                        }
+
+                        if ($canMatchPet) {
+                            $method = $canMatchCustomer ? 'orWhereIn' : 'whereIn';
+                            $customerQuery->{$method}('pet_id', $petIds);
+                        }
+
+                        if ($canMatchEmail) {
+                            $method = $canMatchCustomer || $canMatchPet ? 'orWhere' : 'where';
+                            $customerQuery->{$method}('customer_email', $user->email);
+                        }
                     });
                 }
+            } elseif (!$user && $request->filled('email')) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Authentication is required to load customer boardings.',
+                    'data' => [],
+                ], 401);
+            }
+
+            // Filter by status
+            if ($request->has('status')) {
+                $query->where('status', $request->status);
+            }
+
+            // Filter by date range
+            if ($request->has('date_from')) {
+                $query->where('check_in', '>=', $request->date_from);
+            }
+            if ($request->has('date_to')) {
+                $query->where('check_out', '<=', $request->date_to);
+            }
+
+            if ($user?->role !== 'customer') {
+                // Filter by customer for staff/admin views only. Customer routes are always scoped above.
+                if ($request->has('customer_id') && Schema::hasColumn('boardings', 'customer_id')) {
+                    $query->where('customer_id', $request->customer_id);
+                }
+
+                if ($request->has('pet_id')) {
+                    $query->where('pet_id', $request->pet_id);
+                }
+            }
+
+            // Current boarders only
+            if ($request->has('current')) {
+                $query->current();
             }
 
             /*
@@ -132,59 +188,27 @@ class BoardingController extends Controller
                 $query->with($with);
             }
 
-            // Filter by status
-            if ($request->has('status')) {
-                $query->where('status', $request->status);
-            }
-
-            // Filter by date range
-            if ($request->has('date_from')) {
-                $query->where('check_in', '>=', $request->date_from);
-            }
-            if ($request->has('date_to')) {
-                $query->where('check_out', '<=', $request->date_to);
-            }
-
-            // Filter by customer
-            if ($request->has('customer_id')) {
-                $query->where('customer_id', $request->customer_id);
-            }
-
-            // Filter by pet
-            if ($request->has('pet_id')) {
-                $query->where('pet_id', $request->pet_id);
-            }
-
-            // Current boarders only
-            if ($request->has('current')) {
-                $query->current();
-            }
-
             $boardings = $query
                 ->orderByDesc('created_at')
                 ->get();
 
             return response()->json([
                 'success' => true,
-                'boardings' => $boardings,
                 'data' => $boardings,
+                'boardings' => $boardings,
             ]);
         } catch (\Throwable $e) {
-            \Log::error('Customer boarding index error', [
+            Log::error('Failed to load customer boardings', [
                 'message' => $e->getMessage(),
-                'line' => $e->getLine(),
                 'file' => $e->getFile(),
-                'trace' => $e->getTraceAsString(),
-                'email' => $request->query('email'),
-                'user_id' => optional($request->user())->id,
+                'line' => $e->getLine(),
             ]);
 
             return response()->json([
                 'success' => false,
                 'message' => 'Failed to load customer boardings.',
-                'boardings' => [],
                 'data' => [],
-                'debug' => app()->environment('local') ? $e->getMessage() : null,
+                'boardings' => [],
             ], 500);
         }
     }
@@ -962,39 +986,104 @@ class BoardingController extends Controller
     public function availableRooms(Request $request): JsonResponse
     {
         $validator = Validator::make($request->all(), [
-            'check_in' => 'required|date|after_or_equal:today',
-            'check_out' => 'required|date|after:check_in',
+            'check_in' => 'nullable|date|after_or_equal:today',
+            'check_out' => 'nullable|date|after:check_in',
+            'check_in_date' => 'nullable|date|after_or_equal:today',
+            'check_out_date' => 'nullable|date|after:check_in_date',
+            'pet_id' => 'nullable|exists:pets,id',
+            'species' => 'nullable|string|max:100',
             'size' => 'nullable|in:small,medium,large',
-            'type' => 'nullable|in:standard,deluxe,suite',
+            'type' => 'nullable|string|max:100',
+            'room_type' => 'nullable|string|max:100',
         ]);
 
         if ($validator->fails()) {
             return response()->json(['errors' => $validator->errors()], 422);
         }
 
-        $query = HotelRoom::query();
+        $checkIn = $request->query('check_in') ?: $request->query('check_in_date');
+        $checkOut = $request->query('check_out') ?: $request->query('check_out_date');
 
-        if ($request->has('size')) {
-            $query->bySize($request->size);
+        if (!$checkIn || !$checkOut) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Check-in and check-out dates are required.',
+                'available_rooms' => [],
+                'rooms' => [],
+            ], 422);
         }
 
-        if ($request->has('type')) {
-            $query->byType($request->type);
+        $pet = $request->filled('pet_id') ? Pet::find($request->pet_id) : null;
+        $species = strtolower(trim((string) ($request->query('species') ?: $pet?->species ?: $pet?->type ?: '')));
+
+        $allowedRoomTypes = match ($species) {
+            'dog' => ['dog_standard', 'dog_large', 'dog_family'],
+            'cat' => ['cat_condo', 'cat_suite'],
+            'bird' => ['small_pet'],
+            default => [],
+        };
+
+        if (!$allowedRoomTypes) {
+            return response()->json([
+                'success' => true,
+                'message' => $species ? ucfirst($species) . ' cannot be accommodated in Pet Hotel rooms.' : 'Select a pet to view compatible rooms.',
+                'available_rooms' => [],
+                'rooms' => [],
+                'check_in' => $checkIn,
+                'check_out' => $checkOut,
+            ]);
         }
 
-        $rooms = $query->get();
-        $availableRooms = [];
+        $roomType = $request->query('room_type') ?: $request->query('type');
+        if ($roomType && in_array($roomType, $allowedRoomTypes, true)) {
+            $allowedRoomTypes = [$roomType];
+        }
 
-        foreach ($rooms as $room) {
-            if ($room instanceof HotelRoom && $room->isAvailableForDates($request->check_in, $request->check_out)) {
-                $availableRooms[] = $room;
+        if ($request->filled('size') && in_array($species, ['dog', 'cat'], true)) {
+            $size = strtolower((string) $request->query('size'));
+            if (in_array($size, ['small', 'medium'], true)) {
+                $allowedRoomTypes = array_values(array_intersect($allowedRoomTypes, ['dog_standard', 'cat_condo']));
+            } elseif (in_array($size, ['large'], true)) {
+                $allowedRoomTypes = array_values(array_intersect($allowedRoomTypes, ['dog_large', 'dog_family', 'cat_suite']));
             }
         }
 
+        $roomsQuery = BoardingRoom::query()->whereIn('room_type', $allowedRoomTypes);
+        if (Schema::hasColumn('boarding_rooms', 'is_active')) {
+            $roomsQuery->where('is_active', true);
+        }
+        if (Schema::hasColumn('boarding_rooms', 'customer_selectable')) {
+            $roomsQuery->where('customer_selectable', true);
+        }
+
+        $reservationRoomColumn = Schema::hasColumn('boarding_room_reservations', 'room_id')
+            ? 'room_id'
+            : (Schema::hasColumn('boarding_room_reservations', 'boarding_room_id') ? 'boarding_room_id' : null);
+
+        $availableRooms = $roomsQuery->orderBy('daily_rate')->get()->map(function ($room) use ($checkIn, $checkOut, $reservationRoomColumn) {
+            $blockingCount = 0;
+
+            if ($reservationRoomColumn && Schema::hasTable('boarding_room_reservations')) {
+                $blockingCount = DB::table('boarding_room_reservations')
+                    ->where($reservationRoomColumn, $room->id)
+                    ->whereNotIn('status', ['rejected', 'cancelled', 'checked_out', 'completed'])
+                    ->where('check_in_date', '<', $checkOut)
+                    ->where('check_out_date', '>', $checkIn)
+                    ->count();
+            }
+
+            $room->available = $blockingCount < (int) ($room->total_rooms ?? 1);
+            $room->available_rooms = max(0, (int) ($room->total_rooms ?? 1) - $blockingCount);
+
+            return $room;
+        })->values();
+
         return response()->json([
+            'success' => true,
             'available_rooms' => $availableRooms,
-            'check_in' => $request->check_in,
-            'check_out' => $request->check_out,
+            'rooms' => $availableRooms,
+            'check_in' => $checkIn,
+            'check_out' => $checkOut,
         ]);
     }
 

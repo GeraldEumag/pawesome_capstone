@@ -411,57 +411,51 @@ const AdminDashboard = () => {
               <h1>{pageCopy.title}</h1>
               <p>{pageCopy.subtitle}</p>
             </div>
-          </div>
 
           <div className="search-group admin-status-strip">
-            <span className="status-strip-pill">
-              <strong>{completionRate}%</strong> completion
-            </span>
-            <span className="status-strip-pill">
-              <strong>{activeUserRate}%</strong> active users
-            </span>
             <span className="status-strip-pill role-pill">
               {role.toUpperCase()}
             </span>
           </div>
+        </div>
 
-          <div className="navbar-actions">
-            {showOverview && (
-              <button
-                className={`admin-icon-btn admin-refresh-btn ${
-                  refreshing ? "refreshing" : ""
-                }`}
-                type="button"
-                onClick={() => fetchDashboardData({ silent: true })}
-                disabled={refreshing}
-                title="Refresh dashboard"
-              >
-                <FontAwesomeIcon icon={refreshing ? faSpinner : faRotateRight} />
-              </button>
-            )}
-
-            <DashboardProfile
-              name={name}
-              role="Administrator"
-              image={profilePhoto}
-              onUpload={handleProfilePhotoUpload}
-            />
-
-            <NotificationDropdown role="admin" />
-
+        <div className="navbar-actions">
+          {showOverview && (
             <button
-              className="theme-toggle-btn"
+              className={`admin-icon-btn admin-refresh-btn ${
+                refreshing ? "refreshing" : ""
+              }`}
               type="button"
-              onClick={toggle}
-              title="Toggle theme"
+              onClick={() => fetchDashboardData({ silent: true })}
+              disabled={refreshing}
+              title="Refresh dashboard"
             >
-              <FontAwesomeIcon icon={theme === "light" ? faMoon : faSun} />
+              <FontAwesomeIcon icon={refreshing ? faSpinner : faRotateRight} />
             </button>
-          </div>
-        </header>
+          )}
 
-        {showOverview ? (
-          <>
+          <DashboardProfile
+            name={name}
+            role="Administrator"
+            image={profilePhoto}
+            onUpload={handleProfilePhotoUpload}
+          />
+
+          <NotificationDropdown role="admin" />
+
+          <button
+            className="theme-toggle-btn"
+            type="button"
+            onClick={toggle}
+            title="Toggle theme"
+          >
+            <FontAwesomeIcon icon={theme === "light" ? faMoon : faSun} />
+          </button>
+        </div>
+      </header>
+
+      {showOverview ? (
+        <>
             {loading ? (
               <div className="admin-loading-state">
                 <FontAwesomeIcon icon={faSpinner} className="admin-spin" />

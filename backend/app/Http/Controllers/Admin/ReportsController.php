@@ -155,6 +155,8 @@ class ReportsController extends Controller
 
         return response()->json([
             'success' => true,
+            'section' => 'overview',
+            'last_updated' => now()->format('Y-m-d H:i:s'),
             'summary' => $payload['summary'],
             'data' => $payload,
             'charts' => [],
@@ -468,6 +470,8 @@ class ReportsController extends Controller
 
         return response()->json([
             'success' => true,
+            'section' => 'payroll',
+            'last_updated' => now()->format('Y-m-d H:i:s'),
             'data' => [
                 'summary' => [
                     'total_payroll' => round($totalPayroll, 2),
@@ -483,6 +487,76 @@ class ReportsController extends Controller
                 'payrolls' => $payrolls,
             ],
             'generated_at' => now()->toIso8601String(),
+        ]);
+    }
+
+    public function systemHealth(Request $request)
+    {
+        $usersByRole = $this->dateRange(DB::table('users'), $request, 'users.created_at')
+            ->select('role', DB::raw('COUNT(*) as total'))
+            ->groupBy('role')
+            ->orderBy('role')
+            ->get();
+        $recentActions = collect($this->recentActions($request));
+        $notifications = collect();
+        $unreadNotifications = 0;
+
+        if ($this->tableExists('notifications')) {
+            $notificationQuery = $this->dateRange(DB::table('notifications'), $request, 'notifications.created_at');
+            $notifications = $notificationQuery
+                ->select([
+                    'id',
+                    DB::raw($this->firstAvailableColumn('notifications', ['type'], '"notification"') . ' as type'),
+                    DB::raw($this->firstAvailableColumn('notifications', ['title', 'subject'], '"Notification"') . ' as title'),
+                    DB::raw($this->firstAvailableColumn('notifications', ['message', 'body'], 'NULL') . ' as message'),
+                    DB::raw($this->firstAvailableColumn('notifications', ['read_at'], 'NULL') . ' as read_at'),
+                    'created_at',
+                ])
+                ->latest('notifications.created_at')
+                ->limit(100)
+                ->get();
+
+            if (Schema::hasColumn('notifications', 'read_at')) {
+                $unreadNotifications = (int) DB::table('notifications')->whereNull('read_at')->count();
+            }
+        }
+
+        $summary = [
+            'total_users' => (int) User::count(),
+            'admin_users' => (int) User::where('role', 'admin')->count(),
+            'roles_tracked' => $usersByRole->count(),
+            'audit_logs' => $recentActions->count(),
+            'notifications' => $notifications->count(),
+            'unread_notifications' => $unreadNotifications,
+        ];
+
+        $table = $recentActions->isNotEmpty()
+            ? $recentActions
+            : $notifications->map(fn ($notification) => [
+                'id' => $notification->id,
+                'action' => $notification->title,
+                'description' => $notification->message,
+                'role' => $notification->type,
+                'created_at' => $notification->created_at,
+            ])->values();
+
+        return response()->json([
+            'success' => true,
+            'section' => 'system-health',
+            'last_updated' => now()->format('Y-m-d H:i:s'),
+            'summary' => $summary,
+            'charts' => [
+                'users_by_role' => $usersByRole,
+            ],
+            'table' => $table,
+            'data' => [
+                'summary' => $summary,
+                'users_by_role' => $usersByRole,
+                'audit_logs' => $recentActions,
+                'notifications' => $notifications,
+            ],
+            'filters' => $this->activeFilters($request),
+            'message' => null,
         ]);
     }
 

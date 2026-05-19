@@ -100,7 +100,9 @@ class BoardingRoomController extends Controller
             }
 
             $rooms = $roomsQuery->orderBy('daily_rate')->get();
-            $reservationRoomColumn = 'room_id';
+            $reservationRoomColumn = Schema::hasColumn('boarding_room_reservations', 'room_id')
+                ? 'room_id'
+                : (Schema::hasColumn('boarding_room_reservations', 'boarding_room_id') ? 'boarding_room_id' : null);
 
             $availableRooms = $rooms->map(function ($room) use ($checkIn, $checkOut, $reservationRoomColumn) {
                 $blockingReservationCount = 0;

@@ -42,6 +42,8 @@
   min-height: 100vh;
   padding: 2rem;
   padding-top: 132px;
+  padding-bottom: 4rem;
+  overflow-y: auto;
 }
 
 /* NAVBAR */

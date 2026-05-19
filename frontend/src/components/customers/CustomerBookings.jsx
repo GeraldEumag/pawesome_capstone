@@ -547,15 +547,28 @@ const CustomerBookings = () => {
           setRefreshing(true);
         }
 
-        if (!customerEmail) {
-          setBookings([]);
-          return;
+        const [requestsResult, boardingsResult] = await Promise.allSettled([
+          apiRequest("/customer/my-requests"),
+          apiRequest("/customer/boardings"),
+        ]);
+
+        if (requestsResult.status === "rejected") {
+          console.error("Failed to load customer requests:", {
+            message: requestsResult.reason?.message,
+            status: requestsResult.reason?.status,
+            response: requestsResult.reason?.response,
+            url: requestsResult.reason?.url,
+          });
         }
 
-        const [requestsResult, boardingsResult] = await Promise.allSettled([
-          apiRequest(`/customer/my-requests?email=${encodeURIComponent(customerEmail)}`),
-          apiRequest(`/customer/boardings?email=${encodeURIComponent(customerEmail)}`),
-        ]);
+        if (boardingsResult.status === "rejected") {
+          console.error("Failed to load customer boardings:", {
+            message: boardingsResult.reason?.message,
+            status: boardingsResult.reason?.status,
+            response: boardingsResult.reason?.response,
+            url: boardingsResult.reason?.url,
+          });
+        }
 
         const requests =
           requestsResult.status === "fulfilled"
@@ -639,9 +652,20 @@ const CustomerBookings = () => {
         });
 
         setBookings(combinedBookings);
-        setErrorMessage("");
+        setErrorMessage(
+          requestsResult.status === "rejected" && boardingsResult.status === "rejected"
+            ? "Failed to load your bookings. Please refresh the page."
+            : boardingsResult.status === "rejected"
+              ? "Failed to load your Pet Hotel reservations. Other bookings are still shown."
+              : ""
+        );
       } catch (error) {
-        console.error("Error fetching bookings:", error);
+        console.error("Error fetching bookings:", {
+          message: error?.message,
+          status: error?.status,
+          response: error?.response,
+          url: error?.url,
+        });
         setErrorMessage("Failed to load your bookings. Please refresh the page.");
       } finally {
         setLoading(false);

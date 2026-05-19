@@ -75,9 +75,15 @@ const HotelForm = () => {
     try {
       setLoading(true);
       setError("");
-      const data = await apiRequest("/customer/boarding-requests");
+      const data = await apiRequest("/customer/boardings");
       setMyBookings(normalizeList(data, ["boarding_requests", "boardings"]));
     } catch (err) {
+      console.error("Failed to load customer boardings:", {
+        message: err?.message,
+        status: err?.status,
+        response: err?.response,
+        url: err?.url,
+      });
       setError(err.message || "Failed to load boarding requests.");
       setMyBookings([]);
     } finally {
@@ -160,7 +166,7 @@ const HotelForm = () => {
         notes: bookingForm.notes,
       };
 
-      await apiRequest("/customer/boarding-requests", {
+      await apiRequest("/customer/boardings", {
         method: "POST",
         body: JSON.stringify(payload),
       });

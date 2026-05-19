@@ -118,7 +118,11 @@ export const apiRequest = async (endpoint, methodOrOptions = "GET", data = null,
         Object.values(result?.errors || {}).flat().join(" ") ||
         "Request failed.";
 
-      throw new Error(message);
+      const error = new Error(message);
+      error.status = response.status;
+      error.response = result;
+      error.url = url;
+      throw error;
     }
 
     return result;

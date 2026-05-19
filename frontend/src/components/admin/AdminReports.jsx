@@ -1,23 +1,22 @@
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
-  faArrowRight,
+  faBox,
   faCalendarCheck,
   faChartLine,
   faClipboardList,
+  faCreditCard,
   faFileCsv,
   faFileExcel,
   faFilePdf,
-  faFilter,
+  faHeartbeat,
   faMagnifyingGlass,
   faMoneyBillWave,
-  faPaw,
-  faPeopleGroup,
-  faReceipt,
   faRotateRight,
+  faShieldHalved,
   faSpinner,
+  faStethoscope,
   faTimes,
-  faTruck,
   faUsers,
 } from "@fortawesome/free-solid-svg-icons";
 import {
@@ -32,691 +31,634 @@ import {
 } from "recharts";
 import { apiRequest } from "../../api/client";
 import { formatCurrency } from "../../utils/currency";
-import { normalizeList } from "../../utils/normalizeList";
-import StandardSummaryCards from "../shared/StandardSummaryCards";
 import StandardTable from "../shared/StandardTable";
-import {
-  exportToCSV,
-  exportToPDF,
-  exportToExcel,
-  filterByDateRange,
-  filterByStatus,
-  getDateRangePreset,
-} from "../../utils/reportExport";
-import OrderReports from "./OrderReports";
-import PaymentReports from "./PaymentReports";
-import ServiceRequestReports from "./ServiceRequestReports";
-import LogisticsReports from "./LogisticsReports";
-import CustomerReport from "./CustomerReport";
-import CashierAdminReports from "./CashierAdminReports";
-import InventoryAdminReports from "./InventoryAdminReports";
-import ManagerAdminReports from "./ManagerAdminReports";
-import VeterinaryAdminReports from "./VeterinaryAdminReports";
-import PayrollReports from "./PayrollReports";
+import { exportToCSV, exportToExcel, exportToPDF, getDateRangePreset } from "../../utils/reportExport";
 import "./AdminReports.css";
 
-const safeNumber = (value) => Number(value || 0);
-const searchable = (value) => String(value ?? "").toLowerCase();
-
-const REPORT_TABS = [
+const SECTION_CONFIG = [
   {
-    key: "overview",
-    label: "Overview",
-    description: "Executive summary",
+    key: "executive",
+    label: "Executive Summary",
+    endpoint: "/admin/reports/overview",
     icon: faChartLine,
-  },
-  {
-    key: "cashier",
-    label: "Cashier",
-    description: "Cashier activity",
-    icon: faMoneyBillWave,
-  },
-  {
-    key: "inventory",
-    label: "Inventory",
-    description: "Stock monitoring",
-    icon: faPaw,
-  },
-  {
-    key: "manager",
-    label: "Manager",
-    description: "Executive analytics",
-    icon: faPeopleGroup,
-  },
-  {
-    key: "veterinary",
-    label: "Veterinary",
-    description: "Medical services",
-    icon: faCalendarCheck,
+    tableKeys: ["pending_operations", "recent_actions", "transactions"],
+    tableTitle: "Priority Activity",
   },
   {
     key: "orders",
-    label: "Orders",
-    description: "Sales and order flow",
-    icon: faReceipt,
+    label: "Sales / Orders",
+    endpoint: "/admin/reports/orders",
+    icon: faMoneyBillWave,
+    tableKeys: ["orders", "sales", "transactions"],
+    tableTitle: "Order Records",
   },
   {
     key: "payments",
     label: "Payments",
-    description: "Payment verification",
-    icon: faMoneyBillWave,
+    endpoint: "/admin/reports/payments",
+    icon: faCreditCard,
+    tableKeys: ["payments", "payment_verifications", "transactions"],
+    tableTitle: "Payment Records",
   },
   {
     key: "services",
-    label: "Services",
-    description: "Booking and requests",
+    label: "Services / Bookings",
+    endpoint: "/admin/reports/services",
     icon: faClipboardList,
+    tableKeys: ["requests", "appointments", "boardings"],
+    tableTitle: "Booking Records",
   },
   {
-    key: "logistics",
-    label: "Logistics",
-    description: "Shipment tracking",
-    icon: faTruck,
+    key: "inventory",
+    label: "Inventory",
+    endpoint: "/admin/reports/inventory",
+    icon: faBox,
+    tableKeys: ["logs", "items", "fast_moving_products"],
+    tableTitle: "Inventory Records",
   },
   {
     key: "customers",
     label: "Customers",
-    description: "Customer analytics",
+    endpoint: "/admin/reports/customers",
     icon: faUsers,
+    tableKeys: ["customers", "orders", "data"],
+    tableTitle: "Customer Records",
+  },
+  {
+    key: "veterinary",
+    label: "Veterinary",
+    endpoint: "/admin/reports/veterinary",
+    icon: faStethoscope,
+    tableKeys: ["appointments", "medical_confinements", "service_breakdown"],
+    tableTitle: "Veterinary Records",
+  },
+  {
+    key: "cashier",
+    label: "Cashier / POS",
+    endpoint: "/admin/reports/cashier",
+    icon: faMoneyBillWave,
+    tableKeys: ["transactions", "payment_verifications", "orders"],
+    tableTitle: "Cashier Records",
   },
   {
     key: "payroll",
-    label: "Payroll",
-    description: "Salary analytics",
-    icon: faPeopleGroup,
+    label: "Staff / Payroll",
+    endpoint: "/admin/reports/payroll",
+    icon: faCalendarCheck,
+    tableKeys: ["payrolls", "topEarners", "departmentBreakdown"],
+    tableTitle: "Payroll Records",
+  },
+  {
+    key: "system",
+    label: "System Health / Audit Logs",
+    endpoint: "/admin/reports/system-health",
+    icon: faShieldHalved,
+    tableKeys: ["audit_logs", "users_by_role", "notifications"],
+    tableTitle: "System Records",
   },
 ];
 
+const DATE_PRESETS = [
+  { key: "today", label: "Today" },
+  { key: "7d", label: "7 days" },
+  { key: "30d", label: "30 days" },
+  { key: "month", label: "This month" },
+];
+
+const STATUS_OPTIONS = [
+  "all",
+  "pending",
+  "approved",
+  "scheduled",
+  "completed",
+  "paid",
+  "rejected",
+  "cancelled",
+];
+
+const safeArray = (value) => (Array.isArray(value) ? value : []);
+const searchable = (value) => String(value ?? "").toLowerCase();
+const titleize = (value) =>
+  String(value || "Metric")
+    .replace(/_/g, " ")
+    .replace(/\b\w/g, (letter) => letter.toUpperCase());
+
+const unwrapPayload = (res) => {
+  if (res?.data?.data && typeof res.data.data === "object" && !Array.isArray(res.data.data)) {
+    return { ...res.data.data, success: res.success ?? res.data.success, summary: res.summary ?? res.data.summary ?? res.data.data.summary, charts: res.charts ?? res.data.charts ?? res.data.data.charts };
+  }
+
+  if (res?.data && typeof res.data === "object" && !Array.isArray(res.data)) {
+    return { ...res.data, success: res.success ?? res.data.success, summary: res.summary ?? res.data.summary, charts: res.charts ?? res.data.charts };
+  }
+
+  return res || {};
+};
+
+export const normalizeReportResponse = (res, tableKeys = []) => {
+  const payload = unwrapPayload(res);
+  const nestedData = payload.data && typeof payload.data === "object" ? payload.data : {};
+
+  let table = [];
+  for (const key of tableKeys) {
+    if (Array.isArray(payload[key])) {
+      table = payload[key];
+      break;
+    }
+    if (Array.isArray(nestedData[key])) {
+      table = nestedData[key];
+      break;
+    }
+  }
+
+  if (table.length === 0) {
+    table = Array.isArray(payload.table)
+      ? payload.table
+      : Array.isArray(nestedData.table)
+        ? nestedData.table
+        : Array.isArray(payload.data)
+          ? payload.data
+          : [];
+  }
+
+  return {
+    success: payload.success !== false,
+    section: payload.section || nestedData.section || null,
+    summary: payload.summary || nestedData.summary || {},
+    charts: payload.charts || nestedData.charts || {},
+    table,
+    lastUpdated:
+      payload.last_updated ||
+      payload.lastUpdated ||
+      payload.generated_at ||
+      nestedData.last_updated ||
+      nestedData.generated_at ||
+      null,
+  };
+};
+
+const getPresetRange = (preset) => {
+  const today = new Date();
+  const toDate = today.toISOString().slice(0, 10);
+
+  if (preset === "today") {
+    return { startDate: toDate, endDate: toDate };
+  }
+
+  if (preset === "7d" || preset === "30d") {
+    const days = preset === "7d" ? 6 : 29;
+    const from = new Date(today);
+    from.setDate(today.getDate() - days);
+    return { startDate: from.toISOString().slice(0, 10), endDate: toDate };
+  }
+
+  return getDateRangePreset("month");
+};
+
+const getNumericValue = (summary, keys) => {
+  for (const key of keys) {
+    if (summary?.[key] !== undefined && summary?.[key] !== null) return Number(summary[key]) || 0;
+  }
+  return 0;
+};
+
+const formatReportTimestamp = (timestamp) => {
+  const parsed = new Date(String(timestamp).replace(" ", "T"));
+  return Number.isNaN(parsed.getTime()) ? new Date().toLocaleString("en-PH") : parsed.toLocaleString("en-PH");
+};
+
+const buildColumns = (rows) => {
+  const priority = [
+    "id",
+    "date",
+    "created_at",
+    "customer_name",
+    "customer_display",
+    "customer",
+    "service_name",
+    "associated_record",
+    "item_name",
+    "status",
+    "payment_status",
+    "amount",
+    "total_amount",
+  ];
+  const keys = [...new Set(rows.flatMap((row) => Object.keys(row || {})))];
+  const ordered = [...priority.filter((key) => keys.includes(key)), ...keys.filter((key) => !priority.includes(key))];
+
+  return ordered.slice(0, 8).map((key) => ({
+    key,
+    label: titleize(key),
+    sortable: true,
+    format: key.includes("amount") || key.includes("revenue") || key.includes("payroll") ? "currency" : key.includes("date") || key.endsWith("_at") ? "datetime" : undefined,
+  }));
+};
+
 const AdminReports = () => {
-  const [activeTab, setActiveTab] = useState("overview");
-  const [reportData, setReportData] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const [activeSection, setActiveSection] = useState("executive");
+  const [reports, setReports] = useState({});
+  const [overview, setOverview] = useState(null);
+  const [loading, setLoading] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState("");
   const [lastUpdated, setLastUpdated] = useState("");
-
   const [searchTerm, setSearchTerm] = useState("");
-  const [startDate, setStartDate] = useState("");
-  const [endDate, setEndDate] = useState("");
+  const [datePreset, setDatePreset] = useState("month");
   const [statusFilter, setStatusFilter] = useState("all");
-  const [roleFilter, setRoleFilter] = useState("all");
+  const [paymentStatusFilter, setPaymentStatusFilter] = useState("all");
 
-  const [rawTransactions, setRawTransactions] = useState([]);
-  const [rawAppointments, setRawAppointments] = useState([]);
-  const [rawUsers, setRawUsers] = useState([]);
+  const activeConfig = SECTION_CONFIG.find((section) => section.key === activeSection) || SECTION_CONFIG[0];
+  const activeReport = reports[activeSection] || { summary: {}, charts: {}, table: [] };
+  const executiveSummary = overview?.summary || activeReport.summary || {};
 
-  const normalizeOverview = (result) => {
-    const data = result?.data?.summary || result?.data || result?.summary || result || {};
+  const buildEndpoint = useCallback(
+    (config) => {
+      const params = new URLSearchParams();
+      const range = getPresetRange(datePreset);
 
-    return {
-      total_revenue: safeNumber(data.total_revenue),
-      total_transactions: safeNumber(data.total_transactions || data.total_orders),
-      total_customers: safeNumber(data.total_customers),
-      new_customers: safeNumber(data.new_customers || data.active_customers),
-      total_users: safeNumber(data.total_users),
-      today_transactions: safeNumber(data.today_transactions),
-      today_revenue: safeNumber(data.today_revenue),
-      total_pets: safeNumber(data.total_pets),
-      total_appointments: safeNumber(data.total_appointments),
-      completed_appointments: safeNumber(
-        data.completed_appointments || data.completed_services
-      ),
-      total_inventory_items: safeNumber(data.total_inventory_items),
-      low_stock_items: safeNumber(data.low_stock_items),
-      out_of_stock_items: safeNumber(data.out_of_stock_items),
-      total_staff: safeNumber(data.total_staff),
-      active_staff: safeNumber(data.active_staff),
-      staff_on_leave: safeNumber(data.staff_on_leave),
-      inactive_staff: safeNumber(data.inactive_staff),
-      active_roles: safeNumber(data.active_roles || 0),
-      monthly_revenue_total: safeNumber(data.monthly_revenue),
-      monthly_revenue_trend: normalizeList(data.monthly_revenue_trend, [
-        "data",
-        "records",
-        "items",
-      ]),
-      top_services: normalizeList(data.top_services, ["data", "records", "items"]),
-      top_customers: normalizeList(data.top_customers, ["data", "records", "items"]),
-      transactions: normalizeList(data.transactions, ["data", "records", "items"]),
-      appointments: normalizeList(data.appointments, ["data", "records", "items"]),
-      users: normalizeList(data.users, ["data", "records", "items"]),
-    };
-  };
+      if (range.startDate) params.set("from", range.startDate);
+      if (range.endDate) params.set("to", range.endDate);
+      if (statusFilter !== "all") params.set("status", statusFilter);
+      if (paymentStatusFilter !== "all") params.set("payment_status", paymentStatusFilter);
 
-  const fetchReportData = useCallback(async ({ silent = false } = {}) => {
-    try {
-      if (silent) {
-        setRefreshing(true);
-      } else {
-        setLoading(true);
+      const query = params.toString();
+      return query ? `${config.endpoint}?${query}` : config.endpoint;
+    },
+    [datePreset, paymentStatusFilter, statusFilter]
+  );
+
+  const fetchReport = useCallback(
+    async (sectionKey = activeSection, { silent = false } = {}) => {
+      const config = SECTION_CONFIG.find((section) => section.key === sectionKey) || SECTION_CONFIG[0];
+
+      try {
+        if (silent) {
+          setRefreshing(true);
+        } else {
+          setLoading(true);
+        }
+        setError("");
+
+        const response = await apiRequest(buildEndpoint(config));
+        const normalized = normalizeReportResponse(response, config.tableKeys);
+        const timestamp = normalized.lastUpdated || new Date().toISOString();
+
+        setReports((previous) => ({
+          ...previous,
+          [sectionKey]: normalized,
+        }));
+
+        if (sectionKey === "executive") {
+          setOverview(normalized);
+        }
+
+        setLastUpdated(formatReportTimestamp(timestamp));
+      } catch (err) {
+        console.error(`${config.label} report fetch failed:`, {
+          message: err?.message,
+          status: err?.status,
+          response: err?.response,
+          url: err?.url,
+        });
+        setError(err.message || `Failed to load ${config.label}.`);
+      } finally {
+        setLoading(false);
+        setRefreshing(false);
       }
-
-      setError("");
-
-      const result = await apiRequest("/admin/reports/overview");
-      const safeData = normalizeOverview(result);
-
-      setReportData(safeData);
-      setRawTransactions(safeData.transactions);
-      setRawAppointments(safeData.appointments);
-      setRawUsers(safeData.users);
-      setLastUpdated(new Date().toLocaleString("en-PH"));
-    } catch (err) {
-      console.error("Admin reports overview error:", err);
-      setError(err.message || "Failed to load report data.");
-
-      const emptyData = normalizeOverview({});
-      setReportData(emptyData);
-      setRawTransactions([]);
-      setRawAppointments([]);
-      setRawUsers([]);
-    } finally {
-      setLoading(false);
-      setRefreshing(false);
-    }
-  }, []);
+    },
+    [activeSection, buildEndpoint]
+  );
 
   useEffect(() => {
-    const preset = getDateRangePreset("month");
-    setStartDate(preset.startDate);
-    setEndDate(preset.endDate);
-  }, []);
+    fetchReport(activeSection);
+  }, [activeSection, fetchReport]);
 
   useEffect(() => {
-    fetchReportData();
-  }, [fetchReportData]);
-
-  const getFilteredData = useCallback(() => {
-    let filtered = {
-      transactions: [...rawTransactions],
-      appointments: [...rawAppointments],
-      users: [...rawUsers],
-    };
-
-    if (startDate || endDate) {
-      filtered.transactions = filterByDateRange(
-        filtered.transactions,
-        "date",
-        startDate,
-        endDate
-      );
-      filtered.appointments = filterByDateRange(
-        filtered.appointments,
-        "date",
-        startDate,
-        endDate
-      );
+    if (activeSection !== "executive" && !overview) {
+      fetchReport("executive", { silent: true });
     }
+  }, [activeSection, fetchReport, overview]);
 
-    if (statusFilter !== "all") {
-      filtered.transactions = filterByStatus(filtered.transactions, "status", statusFilter);
-      filtered.appointments = filterByStatus(filtered.appointments, "status", statusFilter);
-    }
+  const filteredRows = useMemo(() => {
+    const rows = safeArray(activeReport.table);
+    const search = searchTerm.trim().toLowerCase();
 
-    if (roleFilter !== "all") {
-      filtered.users = filtered.users.filter((user) => user.role === roleFilter);
-    }
+    if (!search) return rows;
 
-    if (searchTerm.trim()) {
-      const search = searchTerm.trim().toLowerCase();
-
-      filtered.transactions = filtered.transactions.filter(
-        (item) =>
-          searchable(item.id).includes(search) ||
-          searchable(item.transaction_number).includes(search) ||
-          searchable(item.customer).includes(search) ||
-          searchable(item.customer_name).includes(search) ||
-          searchable(item.type).includes(search) ||
-          searchable(item.status).includes(search)
-      );
-
-      filtered.appointments = filtered.appointments.filter(
-        (item) =>
-          searchable(item.id).includes(search) ||
-          searchable(item.customer).includes(search) ||
-          searchable(item.customer_name).includes(search) ||
-          searchable(item.service).includes(search) ||
-          searchable(item.service_name).includes(search) ||
-          searchable(item.pet).includes(search) ||
-          searchable(item.pet_name).includes(search) ||
-          searchable(item.status).includes(search)
-      );
-
-      filtered.users = filtered.users.filter(
-        (item) =>
-          searchable(item.id).includes(search) ||
-          searchable(item.name).includes(search) ||
-          searchable(item.email).includes(search) ||
-          searchable(item.role).includes(search)
-      );
-    }
-
-    return filtered;
-  }, [
-    rawTransactions,
-    rawAppointments,
-    rawUsers,
-    searchTerm,
-    startDate,
-    endDate,
-    statusFilter,
-    roleFilter,
-  ]);
-
-  const filteredData = useMemo(() => getFilteredData(), [getFilteredData]);
-
-  const handleDateChange = (key, value) => {
-    if (key === "startDate") setStartDate(value);
-    if (key === "endDate") setEndDate(value);
-  };
-
-  const handleClearFilters = () => {
-    const preset = getDateRangePreset("month");
-
-    setSearchTerm("");
-    setStatusFilter("all");
-    setRoleFilter("all");
-    setStartDate(preset.startDate);
-    setEndDate(preset.endDate);
-  };
-
-  const exportColumns = [
-    { key: "id", label: "ID" },
-    { key: "customer", label: "Customer" },
-    { key: "type", label: "Type" },
-    { key: "date", label: "Date", format: "date" },
-    { key: "amount", label: "Amount", format: "currency" },
-    { key: "status", label: "Status" },
-  ];
-
-  const handleExportCSV = () => {
-    exportToCSV(filteredData.transactions, exportColumns, "admin-overview-transactions");
-  };
-
-  const handleExportPDF = () => {
-    exportToPDF(
-      filteredData.transactions,
-      exportColumns,
-      "Admin Overview Transactions",
-      "admin-overview-transactions"
+    return rows.filter((row) =>
+      Object.values(row || {}).some((value) => searchable(value).includes(search))
     );
-  };
+  }, [activeReport.table, searchTerm]);
 
-  const handleExportExcel = () => {
-    exportToExcel(filteredData.transactions, exportColumns, "admin-overview-transactions");
-  };
+  const tableColumns = useMemo(() => buildColumns(filteredRows), [filteredRows]);
 
-  const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+  const statusChart = useMemo(() => {
+    const map = new Map();
+    filteredRows.forEach((row) => {
+      const status = row?.status || row?.payment_status || row?.role || "record";
+      map.set(status, (map.get(status) || 0) + 1);
+    });
+    return Array.from(map.entries()).map(([name, count]) => ({ name: titleize(name), count }));
+  }, [filteredRows]);
 
-  const monthlyTrend = useMemo(() => {
-    return normalizeList(reportData?.monthly_revenue_trend, ["data", "records", "items"]).map(
-      (item) => ({
-        month:
-          item.month_name ||
-          item.label ||
-          monthNames[(Number(item.month || 1) || 1) - 1] ||
-          "N/A",
-        revenue: safeNumber(item.total || item.revenue || item.amount),
-      })
-    );
-  }, [reportData]);
+  const summaryCards = useMemo(() => {
+    const summary = activeReport.summary || {};
+    const keys = Object.keys(summary).filter((key) => typeof summary[key] !== "object").slice(0, 6);
 
-  const summaryCards = [
+    if (keys.length === 0) {
+      return [
+        { key: "rows", label: "Report Rows", value: filteredRows.length },
+        { key: "status_count", label: "Status Groups", value: statusChart.length },
+      ];
+    }
+
+    return keys.map((key) => {
+      const value = summary[key];
+      const isCurrency = key.includes("revenue") || key.includes("amount") || key.includes("payroll") || key.includes("salary");
+      return {
+        key,
+        label: titleize(key),
+        value: isCurrency ? formatCurrency(Number(value) || 0) : value ?? 0,
+      };
+    });
+  }, [activeReport.summary, filteredRows.length, statusChart.length]);
+
+  const headerKpis = [
     {
-      id: "total-revenue",
       label: "Total Revenue",
-      value: formatCurrency(reportData?.total_revenue || 0),
-      icon: "faMoneyBillWave",
-      color: "primary",
-      trend: "up",
-      change: "Live",
+      value: formatCurrency(getNumericValue(executiveSummary, ["total_revenue", "today_revenue"])),
+      icon: faMoneyBillWave,
     },
     {
-      id: "total-transactions",
-      label: "Transactions",
-      value: reportData?.total_transactions || 0,
-      icon: "faChartLine",
-      color: "secondary",
-      trend: "up",
-      change: "Live",
+      label: "Pending Payments",
+      value: getNumericValue(executiveSummary, ["pending_payments", "pending_payment_proofs"]),
+      icon: faCreditCard,
     },
     {
-      id: "total-customers",
-      label: "Customers",
-      value: reportData?.total_customers || 0,
-      icon: "faUsers",
-      color: "success",
-      trend: "up",
-      change: `${reportData?.new_customers || 0} new`,
+      label: "Pending Bookings",
+      value: getNumericValue(executiveSummary, ["pending_approvals", "pending_requests"]),
+      icon: faClipboardList,
     },
     {
-      id: "appointments",
-      label: "Appointments",
-      value: reportData?.total_appointments || 0,
-      icon: "faCalendarCheck",
-      color: "warning",
-      trend: "up",
-      change: `${reportData?.completed_appointments || 0} completed`,
+      label: "Low Stock Items",
+      value: getNumericValue(executiveSummary, ["low_stock_items"]),
+      icon: faBox,
     },
     {
-      id: "inventory-alerts",
-      label: "Low Stock",
-      value: reportData?.low_stock_items || 0,
-      icon: "faBoxOpen",
-      color: reportData?.low_stock_items > 0 ? "danger" : "success",
-      trend: "neutral",
-      change: `${reportData?.out_of_stock_items || 0} out`,
+      label: "Completed Services",
+      value: getNumericValue(executiveSummary, ["completed_services", "completed_appointments"]),
+      icon: faHeartbeat,
+    },
+    {
+      label: "Total Customers",
+      value: getNumericValue(executiveSummary, ["total_customers"]),
+      icon: faUsers,
     },
   ];
 
-  const tableColumns = [
-    { key: "id", label: "ID", sortable: true },
-    { key: "customer", label: "Customer", sortable: true },
-    { key: "type", label: "Type", sortable: true },
-    { key: "date", label: "Date", format: "date", sortable: true },
-    { key: "amount", label: "Amount", format: "currency", sortable: true },
-    { key: "status", label: "Status", sortable: true },
-  ];
+  const exportColumns = tableColumns.length ? tableColumns : [{ key: "id", label: "ID" }];
 
-  const activeTabInfo = REPORT_TABS.find((tab) => tab.key === activeTab) || REPORT_TABS[0];
-
-  const renderOverview = () => {
-    if (loading) {
-      return (
-        <div className="reports-state-card">
-          <FontAwesomeIcon icon={faSpinner} spin />
-          <h3>Loading reports...</h3>
-          <p>Please wait while the system fetches live report data.</p>
-        </div>
-      );
-    }
-
-    if (error) {
-      return (
-        <div className="reports-state-card error">
-          <FontAwesomeIcon icon={faTimes} />
-          <h3>Unable to load reports</h3>
-          <p>{error}</p>
-          <button type="button" onClick={() => fetchReportData()}>
-            Retry
-          </button>
-        </div>
-      );
-    }
-
-    return (
-      <div className="admin-overview-content">
-        <section className="admin-report-filter-card">
-          <div className="admin-report-search">
-            <FontAwesomeIcon icon={faMagnifyingGlass} />
-            <input
-              type="text"
-              value={searchTerm}
-              placeholder="Search transactions, customers, services, users..."
-              onChange={(event) => setSearchTerm(event.target.value)}
-            />
-            {searchTerm && (
-              <button type="button" onClick={() => setSearchTerm("")}>
-                <FontAwesomeIcon icon={faTimes} />
-              </button>
-            )}
-          </div>
-
-          <div className="admin-report-filter-grid">
-            <label>
-              Start Date
-              <input
-                type="date"
-                value={startDate}
-                onChange={(event) => handleDateChange("startDate", event.target.value)}
-              />
-            </label>
-
-            <label>
-              End Date
-              <input
-                type="date"
-                value={endDate}
-                onChange={(event) => handleDateChange("endDate", event.target.value)}
-              />
-            </label>
-
-            <label>
-              Status
-              <select
-                value={statusFilter}
-                onChange={(event) => setStatusFilter(event.target.value)}
-              >
-                <option value="all">All Status</option>
-                <option value="completed">Completed</option>
-                <option value="pending">Pending</option>
-                <option value="approved">Approved</option>
-                <option value="cancelled">Cancelled</option>
-                <option value="rejected">Rejected</option>
-                <option value="in-progress">In Progress</option>
-              </select>
-            </label>
-
-            <label>
-              Role
-              <select
-                value={roleFilter}
-                onChange={(event) => setRoleFilter(event.target.value)}
-              >
-                <option value="all">All Roles</option>
-                <option value="admin">Admin</option>
-                <option value="manager">Manager</option>
-                <option value="cashier">Cashier</option>
-                <option value="receptionist">Receptionist</option>
-                <option value="veterinary">Veterinary</option>
-                <option value="inventory">Inventory</option>
-                <option value="customer">Customer</option>
-              </select>
-            </label>
-          </div>
-
-          <div className="admin-report-actions">
-            <button type="button" className="ghost-btn" onClick={handleClearFilters}>
-              <FontAwesomeIcon icon={faFilter} />
-              Clear Filters
-            </button>
-            <button type="button" onClick={handleExportCSV}>
-              <FontAwesomeIcon icon={faFileCsv} />
-              CSV
-            </button>
-            <button type="button" onClick={handleExportExcel}>
-              <FontAwesomeIcon icon={faFileExcel} />
-              Excel
-            </button>
-            <button type="button" onClick={handleExportPDF}>
-              <FontAwesomeIcon icon={faFilePdf} />
-              PDF
-            </button>
-          </div>
-        </section>
-
-        <StandardSummaryCards cards={summaryCards} />
-
-        <section className="admin-report-grid">
-          <div className="chart-section premium-report-panel">
-            <div className="report-panel-heading">
-              <div>
-                <h3>Monthly Revenue Trend</h3>
-                <p>Revenue movement based on live backend data.</p>
-              </div>
-            </div>
-
-            <div className="admin-chart-box">
-              {monthlyTrend.length === 0 ? (
-                <div className="reports-empty-mini">
-                  <FontAwesomeIcon icon={faChartLine} />
-                  <p>No monthly trend data available.</p>
-                </div>
-              ) : (
-                <ResponsiveContainer width="100%" height={320}>
-                  <BarChart data={monthlyTrend}>
-                    <CartesianGrid strokeDasharray="3 3" vertical={false} />
-                    <XAxis dataKey="month" />
-                    <YAxis />
-                    <Tooltip formatter={(value) => formatCurrency(value)} />
-                    <Bar dataKey="revenue" name="Revenue" radius={[12, 12, 0, 0]}>
-                      {monthlyTrend.map((item, index) => (
-                        <Cell
-                          key={item.month}
-                          fill={["#ff5f93", "#ff8db5", "#ffc8dd", "#fb7185"][index % 4]}
-                        />
-                      ))}
-                    </Bar>
-                  </BarChart>
-                </ResponsiveContainer>
-              )}
-            </div>
-          </div>
-
-          <div className="premium-report-panel report-health-panel">
-            <div className="report-panel-heading">
-              <div>
-                <h3>Report Health</h3>
-                <p>Quick snapshot of available report records.</p>
-              </div>
-            </div>
-
-            <div className="report-health-list">
-              <div>
-                <span>Transactions</span>
-                <strong>{filteredData.transactions.length}</strong>
-              </div>
-              <div>
-                <span>Appointments</span>
-                <strong>{filteredData.appointments.length}</strong>
-              </div>
-              <div>
-                <span>Users</span>
-                <strong>{filteredData.users.length}</strong>
-              </div>
-              <div>
-                <span>Pets</span>
-                <strong>{reportData?.total_pets || 0}</strong>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        <section className="premium-report-panel data-table-section">
-          <div className="report-panel-heading">
-            <div>
-              <h3>Recent Transactions</h3>
-              <p>
-                Showing {filteredData.transactions.length} filtered transaction record(s).
-              </p>
-            </div>
-          </div>
-
-          <StandardTable
-            columns={tableColumns}
-            data={filteredData.transactions}
-            emptyMessage="No transactions found"
-          />
-        </section>
-      </div>
-    );
-  };
-
-  const renderActiveTab = () => {
-    switch (activeTab) {
-      case "overview":
-        return renderOverview();
-      case "cashier":
-        return <CashierAdminReports />;
-      case "inventory":
-        return <InventoryAdminReports />;
-      case "manager":
-        return <ManagerAdminReports />;
-      case "veterinary":
-        return <VeterinaryAdminReports />;
-      case "orders":
-        return <OrderReports />;
-      case "payments":
-        return <PaymentReports />;
-      case "services":
-        return <ServiceRequestReports />;
-      case "logistics":
-        return <LogisticsReports />;
-      case "customers":
-        return <CustomerReport />;
-      case "payroll":
-        return <PayrollReports />;
-      default:
-        return renderOverview();
-    }
-  };
+  const refreshActive = () => fetchReport(activeSection, { silent: true });
 
   return (
     <main className="admin-reports-page">
       <section className="reports-hero">
         <div>
           <span className="reports-eyebrow">
-            <FontAwesomeIcon icon={activeTabInfo.icon} />
+            <FontAwesomeIcon icon={activeConfig.icon} />
             Admin Analytics
           </span>
           <h1>Reports Center</h1>
           <p>
-            Monitor sales, payments, service requests, logistics, customers, and payroll
-            in one professional reporting workspace.
+            A live reporting workspace for revenue, payments, bookings, inventory, customers, staff, and system health.
           </p>
           <small>Last updated: {lastUpdated || "Not refreshed yet"}</small>
         </div>
 
         <div className="reports-hero-actions">
+          <span className="admin-role-badge">
+            <FontAwesomeIcon icon={faShieldHalved} />
+            System Role: Admin
+          </span>
           <button
             type="button"
             className={`refresh-report-btn ${refreshing ? "refreshing" : ""}`}
-            onClick={() => fetchReportData({ silent: true })}
-            disabled={refreshing}
+            onClick={refreshActive}
+            disabled={refreshing || loading}
           >
             <FontAwesomeIcon icon={refreshing ? faSpinner : faRotateRight} />
-            {refreshing ? "Refreshing..." : "Refresh Overview"}
+            {refreshing ? "Refreshing..." : "Refresh"}
           </button>
         </div>
       </section>
 
-      <section className="reports-quick-grid">
-        {REPORT_TABS.map((tab) => (
-          <button
-            key={tab.key}
-            type="button"
-            className={`reports-quick-card ${activeTab === tab.key ? "active" : ""}`}
-            onClick={() => setActiveTab(tab.key)}
-          >
+      <section className="reports-kpi-grid" aria-label="Live report KPIs">
+        {headerKpis.map((kpi) => (
+          <article className="reports-kpi-card" key={kpi.label}>
             <span>
-              <FontAwesomeIcon icon={tab.icon} />
+              <FontAwesomeIcon icon={kpi.icon} />
             </span>
             <div>
-              <strong>{tab.label}</strong>
-              <p>{tab.description}</p>
+              <strong>{kpi.value}</strong>
+              <p>{kpi.label}</p>
             </div>
-            <FontAwesomeIcon icon={faArrowRight} />
-          </button>
+          </article>
         ))}
       </section>
 
-      <section className="admin-reports-navigation">
+      <section className="admin-reports-navigation" aria-label="Report categories">
         <nav className="nav-tabs">
-          {REPORT_TABS.map((tab) => (
+          {SECTION_CONFIG.map((section) => (
             <button
-              key={tab.key}
+              key={section.key}
               type="button"
-              className={`nav-tab ${activeTab === tab.key ? "active" : ""}`}
-              onClick={() => setActiveTab(tab.key)}
+              className={`nav-tab ${activeSection === section.key ? "active" : ""}`}
+              onClick={() => {
+                setActiveSection(section.key);
+                setSearchTerm("");
+              }}
             >
-              <FontAwesomeIcon icon={tab.icon} />
-              {tab.label}
+              <FontAwesomeIcon icon={section.icon} />
+              {section.label}
             </button>
           ))}
         </nav>
       </section>
 
-      <section className="reports-content">{renderActiveTab()}</section>
+      <section className="admin-report-filter-card">
+        <div className="admin-report-search">
+          <FontAwesomeIcon icon={faMagnifyingGlass} />
+          <input
+            type="text"
+            value={searchTerm}
+            placeholder={`Search ${activeConfig.tableTitle.toLowerCase()} only...`}
+            onChange={(event) => setSearchTerm(event.target.value)}
+          />
+          {searchTerm && (
+            <button type="button" onClick={() => setSearchTerm("")} aria-label="Clear search">
+              <FontAwesomeIcon icon={faTimes} />
+            </button>
+          )}
+        </div>
+
+        <div className="admin-report-filter-grid compact">
+          <label>
+            Date Range
+            <select value={datePreset} onChange={(event) => setDatePreset(event.target.value)}>
+              {DATE_PRESETS.map((preset) => (
+                <option key={preset.key} value={preset.key}>
+                  {preset.label}
+                </option>
+              ))}
+            </select>
+          </label>
+          <label>
+            Status
+            <select value={statusFilter} onChange={(event) => setStatusFilter(event.target.value)}>
+              {STATUS_OPTIONS.map((status) => (
+                <option key={status} value={status}>
+                  {titleize(status)}
+                </option>
+              ))}
+            </select>
+          </label>
+          <label>
+            Payment Status
+            <select value={paymentStatusFilter} onChange={(event) => setPaymentStatusFilter(event.target.value)}>
+              {STATUS_OPTIONS.map((status) => (
+                <option key={status} value={status}>
+                  {titleize(status)}
+                </option>
+              ))}
+            </select>
+          </label>
+        </div>
+      </section>
+
+      {error && (
+        <section className="reports-state-card error compact-state">
+          <FontAwesomeIcon icon={faTimes} />
+          <div>
+            <h3>Unable to refresh {activeConfig.label}</h3>
+            <p>{error} Previous report data remains visible when available.</p>
+          </div>
+          <button type="button" onClick={refreshActive}>Retry</button>
+        </section>
+      )}
+
+      {loading && !activeReport.table?.length ? (
+        <section className="reports-skeleton-grid">
+          {[1, 2, 3].map((item) => (
+            <div className="reports-skeleton-card" key={item} />
+          ))}
+        </section>
+      ) : (
+        <section className="reports-content">
+          <div className="reports-section-heading">
+            <div>
+              <span className="reports-eyebrow">
+                <FontAwesomeIcon icon={activeConfig.icon} />
+                {activeConfig.label}
+              </span>
+              <h2>{activeConfig.label}</h2>
+              <p>{filteredRows.length} row(s) in the current table view.</p>
+            </div>
+            <div className="table-action-group">
+              <button type="button" onClick={() => exportToCSV(filteredRows, exportColumns, `admin-${activeSection}-report`)}>
+                <FontAwesomeIcon icon={faFileCsv} />
+                CSV
+              </button>
+              <button type="button" onClick={() => exportToExcel(filteredRows, exportColumns, `admin-${activeSection}-report`)}>
+                <FontAwesomeIcon icon={faFileExcel} />
+                Excel
+              </button>
+              <button type="button" onClick={() => exportToPDF(filteredRows, exportColumns, activeConfig.label, `admin-${activeSection}-report`)}>
+                <FontAwesomeIcon icon={faFilePdf} />
+                PDF
+              </button>
+            </div>
+          </div>
+
+          <section className="reports-summary-grid">
+            {summaryCards.map((card) => (
+              <article className="reports-summary-card" key={card.key}>
+                <span>{card.label}</span>
+                <strong>{card.value}</strong>
+              </article>
+            ))}
+          </section>
+
+          <section className="admin-report-grid">
+            <article className="premium-report-panel">
+              <div className="report-panel-heading">
+                <div>
+                  <h3>Status Breakdown</h3>
+                  <p>Counts are calculated from the current live table rows.</p>
+                </div>
+              </div>
+              {statusChart.length === 0 ? (
+                <div className="reports-empty-mini">
+                  <FontAwesomeIcon icon={faChartLine} />
+                  <p>No chart data available for this report.</p>
+                </div>
+              ) : (
+                <ResponsiveContainer width="100%" height={280}>
+                  <BarChart data={statusChart}>
+                    <CartesianGrid strokeDasharray="3 3" vertical={false} />
+                    <XAxis dataKey="name" />
+                    <YAxis allowDecimals={false} />
+                    <Tooltip />
+                    <Bar dataKey="count" radius={[10, 10, 0, 0]}>
+                      {statusChart.map((item, index) => (
+                        <Cell key={item.name} fill={["#ff5f93", "#ff8db5", "#fb7185", "#f472b6"][index % 4]} />
+                      ))}
+                    </Bar>
+                  </BarChart>
+                </ResponsiveContainer>
+              )}
+            </article>
+
+            <article className="premium-report-panel report-health-panel">
+              <div className="report-panel-heading">
+                <div>
+                  <h3>Report Snapshot</h3>
+                  <p>Useful live-data context for this section.</p>
+                </div>
+              </div>
+              <div className="report-health-list">
+                <div>
+                  <span>Endpoint</span>
+                  <strong>{activeConfig.endpoint}</strong>
+                </div>
+                <div>
+                  <span>Rows</span>
+                  <strong>{filteredRows.length}</strong>
+                </div>
+                <div>
+                  <span>Filters</span>
+                  <strong>{datePreset}</strong>
+                </div>
+              </div>
+            </article>
+          </section>
+
+          <section className="premium-report-panel data-table-section">
+            <div className="report-panel-heading">
+              <div>
+                <h3>{activeConfig.tableTitle}</h3>
+                <p>Search and filters apply to this table only.</p>
+              </div>
+            </div>
+            <StandardTable
+              columns={tableColumns}
+              data={filteredRows}
+              loading={loading}
+              emptyMessage={`No ${activeConfig.label.toLowerCase()} records found for the selected filters.`}
+              pageSize={12}
+            />
+          </section>
+        </section>
+      )}
     </main>
   );
 };

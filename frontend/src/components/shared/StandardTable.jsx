@@ -105,6 +105,12 @@ const StandardTable = ({
     return value || '-';
   };
 
+  const getRowKey = (item, index) => {
+    const rowId = item?.id ?? item?.uuid ?? item?.reference_number ?? index;
+    const rowSource = item?.source ?? item?.type ?? item?.role ?? "row";
+    return `${rowSource}-${rowId}-${(currentPage - 1) * pageSize + index}`;
+  };
+
   const tableClasses = [
     'standard-table',
     striped && 'striped',
@@ -151,7 +157,7 @@ const StandardTable = ({
         </thead>
         <tbody>
           {paginatedData.map((item, index) => (
-            <tr key={item.id || index} className="table-row">
+            <tr key={getRowKey(item, index)} className="table-row">
               {columns.map((column) => (
                 <td key={column.key} className={column.className || ''}>
                   {renderCell(column, item, index)}

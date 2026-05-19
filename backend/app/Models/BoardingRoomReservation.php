@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Support\Facades\Schema;
 
 class BoardingRoomReservation extends Model
 {
@@ -12,8 +13,11 @@ class BoardingRoomReservation extends Model
 
     protected $fillable = [
         'room_id',
+        'boarding_room_id',
         'source_type',
         'source_id',
+        'boarding_booking_id',
+        'service_request_id',
         'pet_id',
         'customer_id',
         'check_in_date',
@@ -31,7 +35,11 @@ class BoardingRoomReservation extends Model
      */
     public function room(): BelongsTo
     {
-        return $this->belongsTo(BoardingRoom::class, 'room_id');
+        $foreignKey = Schema::hasColumn('boarding_room_reservations', 'room_id')
+            ? 'room_id'
+            : 'boarding_room_id';
+
+        return $this->belongsTo(BoardingRoom::class, $foreignKey);
     }
 
     /**
