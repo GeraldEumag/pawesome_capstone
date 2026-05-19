@@ -197,6 +197,48 @@ class ReceptionistRequestController extends Controller
         ]);
     }
 
+    public function approvalHistory()
+    {
+        $requests = ServiceRequest::whereIn('status', ['approved', 'completed', 'paid'])
+            ->latest()
+            ->get()
+            ->map(fn ($item) => $this->formatRequest($item));
+
+        return response()->json([
+            'success' => true,
+            'approvals' => $requests
+        ]);
+    }
+
+    public function schedulingHistory()
+    {
+        $requests = ServiceRequest::whereIn('status', ['scheduled', 'confirmed', 'rescheduled', 'approved'])
+            ->where(function ($query) {
+                $query->whereNotNull('preferred_date')->orWhereNotNull('request_date');
+            })
+            ->latest()
+            ->get()
+            ->map(fn ($item) => $this->formatRequest($item));
+
+        return response()->json([
+            'success' => true,
+            'history' => $requests
+        ]);
+    }
+
+    public function rejectedHistory()
+    {
+        $requests = ServiceRequest::whereIn('status', ['rejected', 'cancelled', 'canceled'])
+            ->latest()
+            ->get()
+            ->map(fn ($item) => $this->formatRequest($item));
+
+        return response()->json([
+            'success' => true,
+            'rejected' => $requests
+        ]);
+    }
+
     public function store(Request $request)
     {
         $validated = $request->validate([

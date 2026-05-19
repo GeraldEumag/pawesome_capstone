@@ -16,6 +16,8 @@ const AddProductModal = ({ isOpen, onClose, onSuccess, editItem = null }) => {
     price: "",
     status: "In stock",
     description: "",
+    photo: null,
+    photoFile: null,
     // Batch fields
     batch_no: "",
     batch_quantity: "",
@@ -23,6 +25,7 @@ const AddProductModal = ({ isOpen, onClose, onSuccess, editItem = null }) => {
   });
 
   const [errors, setErrors] = useState({});
+  const [photoPreview, setPhotoPreview] = useState(null);
 
   useEffect(() => {
     if (editItem) {
@@ -37,7 +40,10 @@ const AddProductModal = ({ isOpen, onClose, onSuccess, editItem = null }) => {
         price: editItem.price?.toString() || "",
         status: editItem.status || "In stock",
         description: editItem.description || "",
+        photo: editItem.photo_url || editItem.photo || null,
+        photoFile: null,
       });
+      setPhotoPreview(editItem.photo_url || editItem.photo || null);
     } else {
       setFormData({
         name: "",
@@ -50,10 +56,13 @@ const AddProductModal = ({ isOpen, onClose, onSuccess, editItem = null }) => {
         price: "",
         status: "In stock",
         description: "",
+        photo: null,
+        photoFile: null,
         batch_no: "",
         batch_quantity: "",
         received_date: new Date().toISOString().split('T')[0],
       });
+      setPhotoPreview(null);
     }
     setErrors({});
   }, [editItem, isOpen]);
@@ -65,6 +74,23 @@ const AddProductModal = ({ isOpen, onClose, onSuccess, editItem = null }) => {
     if (errors[name]) {
       setErrors((prev) => ({ ...prev, [name]: null }));
     }
+  };
+
+  const handlePhotoChange = (e) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setFormData((prev) => ({ ...prev, photoFile: file }));
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setPhotoPreview(reader.result);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handleRemovePhoto = () => {
+    setFormData((prev) => ({ ...prev, photo: null, photoFile: null }));
+    setPhotoPreview(null);
   };
 
   const validateForm = () => {
@@ -95,12 +121,24 @@ const AddProductModal = ({ isOpen, onClose, onSuccess, editItem = null }) => {
       reorder_level: parseInt(formData.reorder_level) || 10,
       price: parseFloat(formData.price),
     };
+    delete data.photoFile;
+    if (formData.photoFile instanceof File) {
+      data.photo = formData.photoFile;
+    }
 
     try {
       if (editItem) {
-        await inventoryApi.updateItem(editItem.id, data);
+        if (data.photo instanceof File) {
+          await inventoryApi.updateItemWithPhoto(editItem.id, data);
+        } else {
+          await inventoryApi.updateItem(editItem.id, data);
+        }
       } else {
-        await inventoryApi.createItem(data);
+        if (data.photo instanceof File) {
+          await inventoryApi.createItemWithPhoto(data);
+        } else {
+          await inventoryApi.createItem(data);
+        }
       }
       onSuccess?.();
       onClose();
@@ -332,6 +370,41 @@ const AddProductModal = ({ isOpen, onClose, onSuccess, editItem = null }) => {
                   placeholder="Product description, notes, or special instructions..."
                   rows="3"
                 />
+              </div>
+            </div>
+
+            <div className="form-section">
+              <h4>📸 Product Photo</h4>
+              <div className="photo-upload-area">
+                {photoPreview ? (
+                  <div className="photo-preview-container">
+                    <img
+                      src={photoPreview}
+                      alt="Product preview"
+                      className="photo-preview-img"
+                    />
+                    <button
+                      type="button"
+                      className="btn-remove-photo"
+                      onClick={handleRemovePhoto}
+                    >
+                      Remove Photo
+                    </button>
+                  </div>
+                ) : (
+                  <label className="photo-upload-label">
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={handlePhotoChange}
+                      className="photo-input"
+                    />
+                    <div className="photo-upload-placeholder">
+                      <span>Click to upload product photo</span>
+                      <small>JPEG, PNG, GIF up to 5MB</small>
+                    </div>
+                  </label>
+                )}
               </div>
             </div>
 

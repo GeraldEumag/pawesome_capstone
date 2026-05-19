@@ -16,6 +16,8 @@ import {
   faBell,
   faSync,
   faArchive,
+  faImage,
+  faEye,
 } from '@fortawesome/free-solid-svg-icons';
 import { inventoryApi } from '../../api/inventory';
 import { normalizeList } from '../../api/client';
@@ -56,7 +58,9 @@ const INITIAL_FORM_DATA = {
   brand: '',
   supplier: '',
   description: '',
-  location: ''
+  location: '',
+  photo: null,
+  photoFile: null,
 };
 
 const InventoryManagement = () => {
@@ -72,6 +76,8 @@ const InventoryManagement = () => {
   const [formData, setFormData] = useState(INITIAL_FORM_DATA);
   const [formTouched, setFormTouched] = useState({});
   const [saving, setSaving] = useState(false);
+  const [photoPreview, setPhotoPreview] = useState(null);
+  const [viewPhotoUrl, setViewPhotoUrl] = useState(null);
   
   // Filters
   const [searchTerm, setSearchTerm] = useState('');
@@ -215,6 +221,7 @@ const InventoryManagement = () => {
     setEditingItem(null);
     setFormData(INITIAL_FORM_DATA);
     setFormTouched({});
+    setPhotoPreview(null);
     setShowModal(true);
   };
 
@@ -231,10 +238,32 @@ const InventoryManagement = () => {
       brand: item.brand || '',
       supplier: item.supplier || '',
       description: item.description || '',
-      location: item.location || ''
+      location: item.location || '',
+      photo: item.photo_url || item.photo || null,
+      photoFile: null,
     });
+    setPhotoPreview(item.photo_url || item.photo || null);
     setFormTouched({});
     setShowModal(true);
+  };
+
+  // Handle photo file selection
+  const handlePhotoChange = (e) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setFormData(prev => ({ ...prev, photoFile: file }));
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setPhotoPreview(reader.result);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  // Remove selected photo
+  const handleRemovePhoto = () => {
+    setFormData(prev => ({ ...prev, photo: null, photoFile: null }));
+    setPhotoPreview(null);
   };
 
   // Save item (create or update)
@@ -262,13 +291,26 @@ const InventoryManagement = () => {
         quantity: parseInt(formData.stock_quantity) || 0,
         stock_quantity: parseInt(formData.stock_quantity) || 0,
       };
+      delete payload.photoFile;
+      
+      if (formData.photoFile instanceof File) {
+        payload.photo = formData.photoFile;
+      }
       
       if (editingItem) {
         // Update existing item
-        await inventoryApi.updateItem(editingItem.id, payload);
+        if (payload.photo instanceof File) {
+          await inventoryApi.updateItemWithPhoto(editingItem.id, payload);
+        } else {
+          await inventoryApi.updateItem(editingItem.id, payload);
+        }
       } else {
         // Create new item
-        await inventoryApi.createItem(payload);
+        if (payload.photo instanceof File) {
+          await inventoryApi.createItemWithPhoto(payload);
+        } else {
+          await inventoryApi.createItem(payload);
+        }
       }
 
       await fetchInventory();
@@ -277,6 +319,7 @@ const InventoryManagement = () => {
       setFormData(INITIAL_FORM_DATA);
       setEditingItem(null);
       setFormTouched({});
+      setPhotoPreview(null);
 
       addActivityLog(
         editingItem ? "update" : "create",
@@ -624,6 +667,24 @@ const InventoryManagement = () => {
                       </button>
                     ) : (
                       <>
+                        <button
+                          className={`btn-icon view-photo ${!item.photo_url ? 'no-photo' : ''}`}
+                          onClick={() => {
+                            if (item.photo_url) {
+                              setViewPhotoUrl(item.photo_url);
+                            } else {
+                              setToast({
+                                show: true,
+                                type: 'info',
+                                title: 'No Photo',
+                                message: `${item.name} does not have a product photo.`,
+                              });
+                            }
+                          }}
+                          title={item.photo_url ? 'View Photo' : 'No Photo Available'}
+                        >
+                          <FontAwesomeIcon icon={faEye} />
+                        </button>
                         <button className="btn-icon edit" onClick={() => handleEdit(item)} title="Edit">
                           <FontAwesomeIcon icon={faEdit} />
                         </button>
@@ -804,6 +865,44 @@ const InventoryManagement = () => {
                 />
               </div>
 
+              {/* Photo Upload */}
+              <div className="form-group full-width">
+                <label>Product Photo</label>
+                <div className="photo-upload-area">
+                  {photoPreview ? (
+                    <div className="photo-preview-container">
+                      <img
+                        src={photoPreview}
+                        alt="Product preview"
+                        className="photo-preview-img"
+                        onClick={() => setViewPhotoUrl(photoPreview)}
+                      />
+                      <button
+                        type="button"
+                        className="btn btn-secondary btn-remove-photo"
+                        onClick={handleRemovePhoto}
+                      >
+                        <FontAwesomeIcon icon={faTrash} /> Remove Photo
+                      </button>
+                    </div>
+                  ) : (
+                    <label className="photo-upload-label">
+                      <input
+                        type="file"
+                        accept="image/*"
+                        onChange={handlePhotoChange}
+                        className="photo-input"
+                      />
+                      <div className="photo-upload-placeholder">
+                        <FontAwesomeIcon icon={faImage} size="2x" />
+                        <span>Click to upload product photo</span>
+                        <small>JPEG, PNG, GIF up to 5MB</small>
+                      </div>
+                    </label>
+                  )}
+                </div>
+              </div>
+
               <div className="form-actions">
                 <button type="button" className="btn btn-secondary" onClick={() => setShowModal(false)}>
                   Cancel
@@ -826,6 +925,25 @@ const InventoryManagement = () => {
         message={toast.message}
         onClose={() => setToast(prev => ({ ...prev, show: false }))}
       />
+
+      {/* Photo View Modal */}
+      {viewPhotoUrl && (
+        <div className="modal-overlay" onClick={() => setViewPhotoUrl(null)}>
+          <div className="modal-content photo-view-modal" onClick={e => e.stopPropagation()}>
+            <div className="modal-header">
+              <h2>
+                <FontAwesomeIcon icon={faImage} /> Product Photo
+              </h2>
+              <button className="btn-close" onClick={() => setViewPhotoUrl(null)}>
+                <FontAwesomeIcon icon={faTimes} />
+              </button>
+            </div>
+            <div className="photo-view-body">
+              <img src={viewPhotoUrl} alt="Product" className="photo-view-img" />
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Archive Confirmation Modal */}
       <DeleteConfirmModal

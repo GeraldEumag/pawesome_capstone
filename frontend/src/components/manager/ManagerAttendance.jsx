@@ -506,7 +506,7 @@ const ManagerAttendance = () => {
 
     try {
       await apiRequest(`/manager/attendance/${selectedAttendance.id}/remarks`, {
-        method: "PATCH",
+        method: "POST",
         body: JSON.stringify({
           remarks: remarksForm.remarks,
         }),
@@ -549,7 +549,7 @@ const ManagerAttendance = () => {
 
     try {
       await apiRequest(`/manager/attendance/${record.id}/review`, {
-        method: "PATCH",
+        method: "POST",
         body: JSON.stringify({
           review_status: "reviewed",
         }),

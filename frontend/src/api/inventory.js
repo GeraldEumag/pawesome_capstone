@@ -202,6 +202,37 @@ export const inventoryApi = {
   },
 
   /**
+   * Creates a new inventory item with a photo file (multipart/form-data).
+   * @async
+   * @param {Object} data - Item data
+   * @param {File} [data.photo] - Product photo file
+   * @returns {Promise<Object>} Created inventory item
+   * @throws {Error} When validation fails or request fails
+   */
+  createItemWithPhoto: async (data) => {
+    validateData(data, "create item");
+    try {
+      const formData = new FormData();
+      Object.entries(data).forEach(([key, value]) => {
+        if (value !== undefined && value !== null) {
+          if (key === "photo" && value instanceof File) {
+            formData.append("photo", value);
+          } else {
+            formData.append(key, typeof value === "object" ? JSON.stringify(value) : String(value));
+          }
+        }
+      });
+      return await apiRequest("/inventory/items", {
+        method: "POST",
+        body: formData,
+      });
+    } catch (error) {
+      console.error("[InventoryAPI] Failed to create item with photo:", error.message);
+      throw error;
+    }
+  },
+
+  /**
    * Updates an existing inventory item.
    * @async
    * @param {string|number} id - Inventory item ID
@@ -223,6 +254,42 @@ export const inventoryApi = {
       });
     } catch (error) {
       console.error(`[InventoryAPI] Failed to update item ${id}:`, error.message);
+      throw error;
+    }
+  },
+
+  /**
+   * Updates an existing inventory item with a photo file (multipart/form-data).
+   * @async
+   * @param {string|number} id - Inventory item ID
+   * @param {Object} data - Updated item data
+   * @param {File} [data.photo] - Product photo file
+   * @returns {Promise<Object>} Updated inventory item
+   * @throws {Error} When item not found, validation fails, or request fails
+   */
+  updateItemWithPhoto: async (id, data) => {
+    validateId(id, "Item ID");
+    validateData(data, "update item");
+    try {
+      const formData = new FormData();
+      Object.entries(data).forEach(([key, value]) => {
+        if (value !== undefined && value !== null) {
+          if (key === "photo" && value instanceof File) {
+            formData.append("photo", value);
+          } else {
+            formData.append(key, typeof value === "object" ? JSON.stringify(value) : String(value));
+          }
+        }
+      });
+      // Laravel method spoofing: PHP doesn't parse multipart files on PUT,
+      // so we POST with _method=PUT to route to the PUT handler
+      formData.append("_method", "PUT");
+      return await apiRequest(`/inventory/items/${id}`, {
+        method: "POST",
+        body: formData,
+      });
+    } catch (error) {
+      console.error(`[InventoryAPI] Failed to update item ${id} with photo:`, error.message);
       throw error;
     }
   },

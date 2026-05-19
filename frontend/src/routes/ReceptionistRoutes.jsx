@@ -17,7 +17,6 @@ const AppointmentList = lazy(() => import("../components/receptionist/Receptioni
 const CheckInForm = lazy(() => import("../components/receptionist/ReceptionistCheckInForm"));
 const CheckOutForm = lazy(() => import("../components/receptionist/ReceptionistCheckOutForm"));
 const Reports = lazy(() => import("../components/customers/CustomerReports"));
-const CustomerOrders = lazy(() => import("../components/receptionist/ReceptionistCustomerOrders"));
 const Approvals = lazy(() => import("../components/receptionist/ReceptionistApprovals"));
 const ReceptionistHistory = lazy(() => import("../components/receptionist/ReceptionistHistory"));
 
@@ -49,7 +48,6 @@ const ReceptionistRoutes = () => (
         <Route path="bookings/vet" element={<VetAppointments />} />
         <Route path="bookings/grooming" element={<Grooming />} />
         <Route path="customers" element={<CustomerManagement />} />
-        <Route path="orders" element={<CustomerOrders />} />
         <Route path="approvals" element={<Approvals />} />
         <Route path="history" element={<ReceptionistHistory />} />
         <Route path="profile" element={<ProfileSettings />} />

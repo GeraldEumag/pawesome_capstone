@@ -517,7 +517,7 @@ const PayrollManagement = () => {
         await payrollApi.approve(payroll.rawId);
       } catch (primaryError) {
         await apiRequest(`/manager/payroll/${payroll.rawId}/approve`, {
-          method: "PATCH",
+          method: "POST",
           body: JSON.stringify({
             status: "approved",
           }),
@@ -547,7 +547,7 @@ const PayrollManagement = () => {
         await payrollApi.markAsPaid(payroll.rawId);
       } catch (primaryError) {
         await apiRequest(`/manager/payroll/${payroll.rawId}/release`, {
-          method: "PATCH",
+          method: "POST",
           body: JSON.stringify({
             status: "released",
           }),

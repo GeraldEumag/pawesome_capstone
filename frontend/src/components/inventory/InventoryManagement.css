@@ -1277,3 +1277,115 @@
   border-radius: 999px !important;
 }
 
+/* ===== PHOTO UPLOAD ===== */
+
+.photo-upload-area {
+  border: 2px dashed rgba(255, 95, 147, 0.3);
+  border-radius: 12px;
+  padding: 16px;
+  background: rgba(255, 241, 247, 0.4);
+}
+
+.photo-upload-label {
+  display: block;
+  cursor: pointer;
+  margin: 0;
+}
+
+.photo-input {
+  display: none;
+}
+
+.photo-upload-placeholder {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 24px;
+  color: #ff5f93;
+  text-align: center;
+}
+
+.photo-upload-placeholder span {
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.photo-upload-placeholder small {
+  font-size: 12px;
+  color: #9ca3af;
+}
+
+.photo-preview-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+}
+
+.photo-preview-img {
+  max-width: 200px;
+  max-height: 200px;
+  border-radius: 12px;
+  object-fit: cover;
+  cursor: pointer;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  border: 2px solid rgba(255, 95, 147, 0.2);
+}
+
+.btn-remove-photo {
+  background: #fef2f2 !important;
+  color: #ef4444 !important;
+  border: 1px solid #fecaca !important;
+}
+
+.btn-remove-photo:hover {
+  background: #ef4444 !important;
+  color: white !important;
+}
+
+/* View photo button in table */
+.btn-icon.view-photo {
+  background: #f0fdf4;
+  color: #22c55e;
+}
+
+.btn-icon.view-photo:hover {
+  background: #22c55e;
+  color: white;
+}
+
+.btn-icon.view-photo.no-photo {
+  background: #f3f4f6;
+  color: #9ca3af;
+  cursor: help;
+}
+
+.btn-icon.view-photo.no-photo:hover {
+  background: #e5e7eb;
+  color: #6b7280;
+}
+
+/* Photo view modal */
+.photo-view-modal {
+  max-width: 600px !important;
+  height: auto !important;
+  max-height: 85vh !important;
+}
+
+.photo-view-body {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  background: #f9fafb;
+}
+
+.photo-view-img {
+  max-width: 100%;
+  max-height: 60vh;
+  border-radius: 12px;
+  object-fit: contain;
+}
+

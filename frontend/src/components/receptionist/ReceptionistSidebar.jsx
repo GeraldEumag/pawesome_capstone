@@ -10,7 +10,6 @@ import {
   faHotel,
   faCut,
   faRobot,
-  faShoppingCart,
   faCheckCircle,
   faCalendarCheck,
   faHistory,
@@ -86,16 +85,6 @@ const ReceptionistSidebar = () => {
             >
               <FontAwesomeIcon icon={faUser} />
               <span>Customer Profile</span>
-            </NavLink>
-          </li>
-          <li className="nav-item">
-            <NavLink
-              to="/receptionist/orders"
-              end
-              className={({ isActive }) => (isActive ? "active" : "")}
-            >
-              <FontAwesomeIcon icon={faShoppingCart} />
-              <span>Customer Orders</span>
             </NavLink>
           </li>
           <li className="nav-item">

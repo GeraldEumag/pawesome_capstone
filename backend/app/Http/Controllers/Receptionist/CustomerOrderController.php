@@ -86,6 +86,11 @@ class CustomerOrderController extends Controller
         return $this->index($request->merge(['status' => 'pending']));
     }
 
+    public function approvalHistory(Request $request)
+    {
+        return $this->index($request->merge(['status' => 'approved']));
+    }
+
     public function show($id)
     {
         $user = Auth::user();
