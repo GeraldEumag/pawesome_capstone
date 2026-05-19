@@ -73,12 +73,33 @@ class InventoryController extends Controller
     }
 
     /**
+     * Handle photo file upload for inventory items
+     */
+    private function handlePhotoUpload(Request $request, array $data): array
+    {
+        if ($request->hasFile('photo')) {
+            $file = $request->file('photo');
+            if ($file->isValid()) {
+                $uploadDir = public_path('uploads/inventory');
+                if (!is_dir($uploadDir)) {
+                    mkdir($uploadDir, 0755, true);
+                }
+                $filename = 'inv_' . time() . '_' . uniqid() . '.' . $file->getClientOriginalExtension();
+                $file->move($uploadDir, $filename);
+                $data['photo'] = 'uploads/inventory/' . $filename;
+            }
+        }
+        return $data;
+    }
+
+    /**
      * Store a newly created inventory item
      */
     public function store(Request $request)
     {
         try {
-            $result = $this->inventoryService->createItem($request->all());
+            $data = $this->handlePhotoUpload($request, $request->all());
+            $result = $this->inventoryService->createItem($data);
             return response()->json($result, 201);
         } catch (ValidationException $e) {
             return response()->json(['errors' => $e->errors()], 422);
@@ -105,7 +126,8 @@ class InventoryController extends Controller
     public function update(Request $request, $id)
     {
         try {
-            $result = $this->inventoryService->updateItem($id, $request->all());
+            $data = $this->handlePhotoUpload($request, $request->all());
+            $result = $this->inventoryService->updateItem($id, $data);
             return response()->json($result);
         } catch (ValidationException $e) {
             return response()->json(['errors' => $e->errors()], 422);

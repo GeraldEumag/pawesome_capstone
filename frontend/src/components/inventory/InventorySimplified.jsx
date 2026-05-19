@@ -10,6 +10,7 @@ import {
   faCheckCircle,
   faTimes,
   faEye,
+  faImage,
   faBoxes,
   faBell,
   faFilter,
@@ -65,6 +66,7 @@ const InventorySimplified = () => {
   const [selectedItem, setSelectedItem] = useState(null);
   const [showArchiveModal, setShowArchiveModal] = useState(false);
   const [archiveReason, setArchiveReason] = useState('');
+  const [viewPhotoUrl, setViewPhotoUrl] = useState(null);
   
   // Toast state
   const [toast, setToast] = useState({
@@ -413,22 +415,40 @@ const InventorySimplified = () => {
                     {getStatusBadge(item)}
                   </td>
                   <td className="actions-cell">
-                    <button 
-                      className="btn-icon btn-view" 
+                    <button
+                      className={`btn-icon btn-view-photo ${!item.photo_url ? 'no-photo' : ''}`}
+                      onClick={() => {
+                        if (item.photo_url) {
+                          setViewPhotoUrl(item.photo_url);
+                        } else {
+                          setToast({
+                            show: true,
+                            type: 'info',
+                            title: 'No Photo',
+                            message: `${item.name} does not have a product photo.`,
+                          });
+                        }
+                      }}
+                      title={item.photo_url ? 'View Photo' : 'No Photo Available'}
+                    >
+                      <FontAwesomeIcon icon={faImage} />
+                    </button>
+                    <button
+                      className="btn-icon btn-view"
                       onClick={() => handleViewDetails(item)}
                       title="View Details"
                     >
                       <FontAwesomeIcon icon={faEye} />
                     </button>
-                    <button 
-                      className="btn-icon btn-edit" 
+                    <button
+                      className="btn-icon btn-edit"
                       onClick={() => handleViewDetails(item)}
                       title="Edit Item"
                     >
                       <FontAwesomeIcon icon={faEdit} />
                     </button>
-                    <button 
-                      className="btn-icon btn-archive" 
+                    <button
+                      className="btn-icon btn-archive"
                       onClick={() => handleArchive(item)}
                       title="Archive Item"
                       disabled={activeTab === 'archived'}
@@ -458,6 +478,19 @@ const InventorySimplified = () => {
             
             <div className="modal-body">
               <div className="details-grid">
+                {/* Photo */}
+                {selectedItem.photo_url && (
+                  <div className="details-section photo-section">
+                    <h3>Product Photo</h3>
+                    <img
+                      src={selectedItem.photo_url}
+                      alt={selectedItem.name}
+                      className="details-photo"
+                      onClick={() => setViewPhotoUrl(selectedItem.photo_url)}
+                    />
+                  </div>
+                )}
+
                 {/* Basic Info */}
                 <div className="details-section">
                   <h3>Basic Information</h3>
@@ -507,6 +540,25 @@ const InventorySimplified = () => {
                   </div>
                 )}
               </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Photo View Modal */}
+      {viewPhotoUrl && (
+        <div className="modal-overlay" onClick={() => setViewPhotoUrl(null)}>
+          <div className="modal-content photo-view-modal" onClick={e => e.stopPropagation()}>
+            <div className="modal-header">
+              <h2>
+                <FontAwesomeIcon icon={faImage} /> Product Photo
+              </h2>
+              <button className="btn-close" onClick={() => setViewPhotoUrl(null)}>
+                <FontAwesomeIcon icon={faTimes} />
+              </button>
+            </div>
+            <div className="modal-body photo-view-body">
+              <img src={viewPhotoUrl} alt="Product" className="photo-view-img" />
             </div>
           </div>
         </div>

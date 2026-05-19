@@ -125,6 +125,7 @@ Route::middleware(['auth.api', 'throttle:api', 'role:admin'])->prefix('admin')->
     Route::get('inventory/items/{id}', [InventoryController::class, 'show']); // Frontend compatibility
     Route::put('inventory/{id}', [InventoryController::class, 'update']);
     Route::put('inventory/items/{id}', [InventoryController::class, 'update']); // Frontend compatibility
+    Route::post('inventory/items/{id}', [InventoryController::class, 'update']); // Multipart file workaround
     Route::delete('inventory/{id}', [InventoryController::class, 'destroy']);
     Route::delete('inventory/items/{id}', [InventoryController::class, 'destroy']); // Frontend compatibility
     Route::post('inventory/{id}/archive', [InventoryController::class, 'archive']); // Archive with reason
@@ -501,6 +502,7 @@ Route::middleware(['auth.api', 'throttle:api', 'role:admin,inventory'])->prefix(
     // Dynamic routes with ID parameters
     Route::get('items/{id}', [InventoryDashboardController::class, 'showItem']);
     Route::put('items/{id}', [InventoryDashboardController::class, 'updateItem']);
+    Route::post('items/{id}', [InventoryDashboardController::class, 'updateItem']); // Multipart file workaround
     Route::delete('items/{id}', [InventoryDashboardController::class, 'destroyItem']);
     Route::patch('items/{id}/archive', [InventoryController::class, 'archive']);
     Route::patch('items/{id}/restore', [InventoryController::class, 'unarchive']);

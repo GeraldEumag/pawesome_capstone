@@ -519,10 +519,31 @@ class DashboardController extends Controller
         ]);
     }
 
+    /**
+     * Handle photo file upload for inventory items
+     */
+    private function handlePhotoUpload(Request $request, array $data): array
+    {
+        if ($request->hasFile('photo')) {
+            $file = $request->file('photo');
+            if ($file->isValid()) {
+                $uploadDir = public_path('uploads/inventory');
+                if (!is_dir($uploadDir)) {
+                    mkdir($uploadDir, 0755, true);
+                }
+                $filename = 'inv_' . time() . '_' . uniqid() . '.' . $file->getClientOriginalExtension();
+                $file->move($uploadDir, $filename);
+                $data['photo'] = 'uploads/inventory/' . $filename;
+            }
+        }
+        return $data;
+    }
+
     public function storeItem(Request $request)
     {
         try {
-            $result = $this->inventoryService->createItem($request->all());
+            $data = $this->handlePhotoUpload($request, $request->all());
+            $result = $this->inventoryService->createItem($data);
             return response()->json($result, 201);
         } catch (\Exception $e) {
             return response()->json(['errors' => [$e->getMessage()]], 422);
@@ -532,7 +553,8 @@ class DashboardController extends Controller
     public function updateItem(Request $request, $id)
     {
         try {
-            $result = $this->inventoryService->updateItem($id, $request->all());
+            $data = $this->handlePhotoUpload($request, $request->all());
+            $result = $this->inventoryService->updateItem($id, $data);
             return response()->json($result);
         } catch (\Exception $e) {
             return response()->json(['errors' => [$e->getMessage()]], 422);

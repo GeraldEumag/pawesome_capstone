@@ -16,6 +16,7 @@ class InventoryItem extends Model
         'brand',
         'supplier',
         'description',
+        'photo',
         'stock',
         'reorder_level',
         'price',
@@ -34,6 +35,8 @@ class InventoryItem extends Model
         'service_item_usage_snapshot',
         'payment_snapshot',
     ];
+
+    protected $appends = ['photo_url'];
 
     /**
      * Category to SKU prefix mapping
@@ -464,5 +467,21 @@ class InventoryItem extends Model
     public function isArchived(): bool
     {
         return $this->status === 'archived';
+    }
+
+    /**
+     * Get full URL for product photo
+     */
+    public function getPhotoUrlAttribute(): ?string
+    {
+        if (empty($this->photo)) {
+            return null;
+        }
+
+        if (str_starts_with($this->photo, 'http')) {
+            return $this->photo;
+        }
+
+        return asset($this->photo);
     }
 }
