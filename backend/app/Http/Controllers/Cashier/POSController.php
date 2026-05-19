@@ -231,7 +231,7 @@ class POSController extends Controller
             ->where('status', 'active')
             ->whereNull('archived_at')
             ->where('is_sellable', true)
-            ->select('id', 'sku', 'name', 'category', 'price', 'stock', 'description', 'status')
+            ->select('id', 'sku', 'name', 'category', 'price', 'stock', 'description', 'status', 'photo')
             ->orderBy('name')
             ->get()
             ->map(function ($item) {
@@ -249,6 +249,7 @@ class POSController extends Controller
                     'is_available' => $item->stock > 0,
                     'category' => $item->category ?: $this->getCategoryFromSku($item->sku),
                     'description' => $item->description,
+                    'photo_url' => $item->photo_url,
                     'status' => $item->status,
                     'type' => 'product',
                     'inStock' => $item->stock > 0,

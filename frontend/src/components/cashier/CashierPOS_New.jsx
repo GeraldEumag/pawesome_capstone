@@ -63,7 +63,7 @@ const normProduct = (p, i) => {
     stock_status: availableStock > 0 ? "in_stock" : "out_of_stock",
     is_available: availableStock > 0,
     category: normCat(p?.category || p?.product_category || p?.type),
-    image: p?.image || p?.image_url || p?.photo || "",
+    image: p?.photo_url || p?.image || p?.image_url || p?.photo || "",
     barcode: p?.barcode || p?.sku || p?.item_code || "",
     discount: toNumber(p?.discount ?? p?.discount_percent ?? 0),
     raw: p,
@@ -517,6 +517,55 @@ const ProductGrid = styled.div`
   }
 `;
 
+const PhotoModalOverlay = styled.div`
+  position: fixed;
+  inset: 0;
+  z-index: 2000;
+  background: rgba(0,0,0,0.75);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  animation: ${fadeIn} 0.2s ease both;
+`;
+
+const PhotoModalBox = styled.div`
+  position: relative;
+  background: #fff;
+  border-radius: 16px;
+  padding: 16px;
+  max-width: 640px;
+  width: 100%;
+  box-shadow: 0 24px 60px rgba(0,0,0,0.3);
+`;
+
+const PhotoModalImg = styled.img`
+  width: 100%;
+  max-height: 70vh;
+  object-fit: contain;
+  border-radius: 12px;
+  display: block;
+`;
+
+const PhotoModalClose = styled.button`
+  position: absolute;
+  top: -12px;
+  right: -12px;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  border: none;
+  background: #111827;
+  color: #fff;
+  font-size: 18px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.15s;
+  &:hover { background: #E91E63; }
+`;
+
 const ProductCard = styled.article`
   background: var(--color-surface-solid);
   border-radius: 12px;
@@ -538,16 +587,16 @@ const ProductCard = styled.article`
 `;
 
 const ProductThumb = styled.div`
-  height: 120px;
+  height: 160px;
   background: var(--pos-surface);
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 28px;
+  font-size: 36px;
   color: #D1D5DB;
   position: relative;
   overflow: hidden;
-  img { width: 100%; height: 100%; object-fit: cover; }
+  img { width: 100%; height: 100%; object-fit: cover; cursor: zoom-in; }
 `;
 
 const DiscountChip = styled.span`
@@ -1355,6 +1404,7 @@ const CashierPOS = () => {
   const [toasts, setToasts]               = useState([]);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [showNavMenu, setShowNavMenu] = useState(false);
+  const [viewPhotoUrl, setViewPhotoUrl] = useState(null);
 
   const searchRef = useRef(null);
   const navMenuRef = useRef(null);
@@ -1936,7 +1986,7 @@ const CashierPOS = () => {
                     >
                       <ProductThumb>
                         {product.image
-                          ? <img src={product.image} alt={product.name} />
+                          ? <img src={product.image} alt={product.name} onClick={(e) => { e.stopPropagation(); setViewPhotoUrl(product.image); }} />
                           : <FontAwesomeIcon icon={faBoxOpen} />}
                         {hasDisc && <DiscountChip>-{product.discount}%</DiscountChip>}
                         {cartItem && <CartQtyBadge>{cartItem.quantity}</CartQtyBadge>}
@@ -2288,6 +2338,18 @@ const CashierPOS = () => {
             </ModalFooter>
           </Modal>
         </Overlay>
+      )}
+
+      {/* ── Photo View Modal ──────────────────────────────────── */}
+      {viewPhotoUrl && (
+        <PhotoModalOverlay onClick={() => setViewPhotoUrl(null)}>
+          <PhotoModalBox onClick={(e) => e.stopPropagation()}>
+            <PhotoModalClose onClick={() => setViewPhotoUrl(null)}>
+              <FontAwesomeIcon icon={faXmark} />
+            </PhotoModalClose>
+            <PhotoModalImg src={viewPhotoUrl} alt="Product" />
+          </PhotoModalBox>
+        </PhotoModalOverlay>
       )}
 
       {/* ── Toasts ──────────────────────────────────────────────── */}

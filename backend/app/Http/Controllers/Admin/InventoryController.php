@@ -602,6 +602,7 @@ class InventoryController extends Controller
                     'is_sellable' => $item->is_sellable,
                     'brand' => $item->brand,
                     'supplier' => $item->supplier,
+                    'photo_url' => $item->photo_url,
                 ];
             });
 

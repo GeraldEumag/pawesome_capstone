@@ -106,7 +106,7 @@ class InventorySyncService {
       inStock: Number(stockValue) > 0,
       sku: product.sku || product.barcode || product.item_code || "",
       description: product.description || "",
-      image: product.image || this.getProductEmoji(product.name || ""),
+      image: product.photo_url || product.image || this.getProductEmoji(product.name || ""),
       rating: 4.5,
       reviews: Math.floor(Math.random() * 200) + 50,
       discount: Number(product.discount || product.discount_percent || 0),
