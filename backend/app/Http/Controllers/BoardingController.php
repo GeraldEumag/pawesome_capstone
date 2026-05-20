@@ -325,7 +325,7 @@ class BoardingController extends Controller
         $finalTotal = $totalAmount + $addOnSubtotal;
 
         $customer = Customer::find($request->customer_id);
-        $initialPaymentStatus = DB::getDriverName() === 'sqlite' ? 'pending' : 'unpaid';
+        $initialPaymentStatus = DB::connection()->getDriverName() === 'sqlite' ? 'pending' : 'unpaid';
 
         // Determine status based on approval requirements
         $status = 'pending';
@@ -561,10 +561,10 @@ class BoardingController extends Controller
     /**
      * Archive boarding reservation (replaces delete)
      */
-    public function destroy($id): JsonResponse
+    public function destroy(Request $request, $id): JsonResponse
     {
         $boarding = Boarding::findOrFail($id);
-        
+
         // Check for active dependencies before archiving
         if ($boarding->status === 'active' || $boarding->status === 'checked_in') {
             return response()->json([
@@ -572,12 +572,12 @@ class BoardingController extends Controller
                 'message' => 'Cannot archive active boarding reservation. Please complete or cancel the reservation first.'
             ], 422);
         }
-        
+
         // Archive the boarding reservation
         $boarding->update([
             'status' => 'archived',
             'archived_at' => now(),
-            'archived_by' => auth()->id(),
+            'archived_by' => $request->user()?->id,
             'archive_reason' => 'Archived via boarding management'
         ]);
         
@@ -800,7 +800,7 @@ class BoardingController extends Controller
     /**
      * Check in guest
      */
-    public function checkIn($id): JsonResponse
+    public function checkIn(Request $request, $id): JsonResponse
     {
         $boarding = Boarding::findOrFail($id);
 
@@ -809,31 +809,31 @@ class BoardingController extends Controller
         }
 
         $oldStatus = $boarding->status;
-        
+
         // Initialize inventory service
         $addOnInventoryService = new BoardingAddOnInventoryService();
-        
+
         // Process check-in and inventory deduction in transaction
-        $result = DB::transaction(function () use ($boarding, $oldStatus, $addOnInventoryService) {
+        $result = DB::transaction(function () use ($boarding, $oldStatus, $addOnInventoryService, $request) {
             $boarding->update([
                 'status' => 'in_care',
                 'actual_check_in' => now(),
                 'checked_in_at' => now(),
-                'checked_in_by' => request()->user()?->id,
+                'checked_in_by' => $request->user()?->id,
             ]);
             $boarding->hotelRoom?->update(['status' => 'occupied']);
 
             BoardingCareLog::create([
                 'boarding_id' => $boarding->id,
-                'logged_by' => request()->user()?->id,
+                'logged_by' => $request->user()?->id,
                 'log_type' => 'general_update',
                 'title' => 'Pet checked in',
-                'notes' => request('notes', 'Pet checked in for boarding care.'),
+                'notes' => $request->input('notes', 'Pet checked in for boarding care.'),
             ]);
 
             // Deduct inventory for add-ons if not already deducted
             $inventoryResult = $addOnInventoryService->deductAddOnInventory($boarding, 'receptionist');
-            
+
             return [
                 'boarding' => $boarding,
                 'inventory_result' => $inventoryResult
@@ -1023,7 +1023,7 @@ class BoardingController extends Controller
             default => [],
         };
 
-        if (!$allowedRoomTypes) {
+        if (empty($allowedRoomTypes)) {
             return response()->json([
                 'success' => true,
                 'message' => $species ? ucfirst($species) . ' cannot be accommodated in Pet Hotel rooms.' : 'Select a pet to view compatible rooms.',
@@ -1319,8 +1319,10 @@ class BoardingController extends Controller
         $daysInMonth = $startDate->daysInMonth;
 
         // Calculate room nights and revenue
-        $boardings = Boarding::whereBetween('check_in', [$startDate, $endDate])
-            ->orWhereBetween('check_out', [$startDate, $endDate])
+        $boardings = Boarding::where(function ($query) use ($startDate, $endDate) {
+                $query->whereBetween('check_in', [$startDate, $endDate])
+                    ->orWhereBetween('check_out', [$startDate, $endDate]);
+            })
             ->whereIn('status', ['confirmed', 'checked_in', 'checked_out'])
             ->get();
 

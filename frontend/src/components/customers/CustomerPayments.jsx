@@ -358,11 +358,11 @@ const CustomerPayments = () => {
             <tbody>
               {loading ? (
                 <tr>
-                  <td colSpan="9">Loading payments...</td>
+                  <td colSpan="8">Loading payments...</td>
                 </tr>
               ) : payments.length === 0 ? (
                 <tr>
-                  <td colSpan="9">
+                  <td colSpan="8">
                     No approved orders or service requests ready for payment yet.
                   </td>
                 </tr>

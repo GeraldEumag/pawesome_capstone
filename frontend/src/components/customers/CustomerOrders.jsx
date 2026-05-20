@@ -549,12 +549,6 @@ const CustomerOrders = () => {
                 ? "No orders match your search criteria."
                 : "You haven't placed any store orders yet."}
             </p>
-            <button 
-              onClick={() => window.location.href = "/customer/store"}
-              className="shop-now-btn"
-            >
-              Start Shopping
-            </button>
           </div>
         ) : (
           filteredOrders.map((order) => (

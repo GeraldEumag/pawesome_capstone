@@ -14,7 +14,7 @@ import {
 } from "@fortawesome/free-solid-svg-icons";
 import "./CustomerSidebar.css";
 
-const CustomerSidebar = () => {
+const CustomerSidebar = ({ collapsed, onToggleCollapse }) => {
   const navigate = useNavigate();
 
   const handleLogout = async () => {
@@ -61,7 +61,7 @@ const CustomerSidebar = () => {
   ];
 
   return (
-    <aside className="app-sidebar customer-sidebar">
+    <aside className={`app-sidebar customer-sidebar ${collapsed ? "collapsed" : ""}`}>
       <div className="sidebar-header">
         <div className="sidebar-logo">
           <FontAwesomeIcon icon={faBone} />

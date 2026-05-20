@@ -11,21 +11,32 @@ const CustomerUserInfo = () => {
   });
 
   useEffect(() => {
+    const name = localStorage.getItem("name") || "Customer";
+    const email = localStorage.getItem("email") || "No email";
     const storedUser = localStorage.getItem("user");
+
+    let phone = "";
+    let address = "";
+    let memberSince = "";
+
     if (storedUser) {
       try {
         const userData = JSON.parse(storedUser);
-        setUser({
-          name: `${userData.first_name || ""} ${userData.last_name || ""}`.trim() || "Customer",
-          email: userData.email || "No email",
-          phone: userData.phone || "",
-          address: userData.address ? `${userData.address}, ${userData.city || ""}, ${userData.state || ""} ${userData.zip_code || ""}` : "",
-          memberSince: userData.created_at ? new Date(userData.created_at).toLocaleDateString('en-US', { month: 'long', year: 'numeric' }) : "",
-        });
+        phone = userData.phone || "";
+        address = userData.address ? `${userData.address}, ${userData.city || ""}, ${userData.state || ""} ${userData.zip_code || ""}` : "";
+        memberSince = userData.created_at ? new Date(userData.created_at).toLocaleDateString('en-US', { month: 'long', year: 'numeric' }) : "";
       } catch (error) {
         console.error("Failed to parse user data:", error);
       }
     }
+
+    setUser({
+      name,
+      email,
+      phone,
+      address,
+      memberSince,
+    });
   }, []);
 
   return (

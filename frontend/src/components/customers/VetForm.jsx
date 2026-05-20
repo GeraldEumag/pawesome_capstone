@@ -33,7 +33,8 @@ const VetForm = () => {
       const data = await apiRequest(`/customer/my-requests?email=${customerEmail}`);
       
       // Filter only vet requests
-      const vetOnly = data.requests.filter(item => item.type === "vet");
+      const requests = Array.isArray(data?.requests) ? data.requests : Array.isArray(data) ? data : [];
+      const vetOnly = requests.filter(item => item.type === "vet");
       setAppointments(vetOnly);
     } catch (error) {
       console.error("Failed to load vet appointments:", error);

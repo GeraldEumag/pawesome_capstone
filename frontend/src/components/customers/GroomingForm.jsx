@@ -41,7 +41,8 @@ const GroomingForm = () => {
       const data = await apiRequest(`/customer/my-requests?email=${customerEmail}`);
 
       // Filter only grooming requests
-      const groomingOnly = data.requests.filter(item => item.type === "grooming");
+      const requests = Array.isArray(data?.requests) ? data.requests : Array.isArray(data) ? data : [];
+      const groomingOnly = requests.filter(item => item.type === "grooming");
       
       setAppointments(groomingOnly);
     } catch (error) {

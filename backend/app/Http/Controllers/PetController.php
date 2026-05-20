@@ -327,14 +327,10 @@ class PetController extends Controller
      */
     public function unarchive(Request $request, $id)
     {
-        $pet = Pet::withTrashed()->findOrFail($id);
+        $pet = Pet::findOrFail($id);
 
         if ($request->user()?->role === 'customer' && !$this->customerOwnsPet($request, $pet)) {
             return response()->json(['message' => 'Pet not found'], 404);
-        }
-
-        if ($pet->trashed()) {
-            $pet->restore();
         }
 
         $pet->update([
