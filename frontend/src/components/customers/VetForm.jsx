@@ -5,6 +5,7 @@ import {
   validateServiceCompatibility,
   getSpecialCareWarning,
 } from "../../config/petServiceRules";
+import { showAlert, showSuccess, showError } from "../../utils/alert";
 
 const VetForm = () => {
   const [activeTab, setActiveTab] = useState("book");
@@ -114,12 +115,12 @@ const VetForm = () => {
 
     try {
       if (!formData.pet_id) {
-        alert("Please select an active pet for this appointment.");
+        showAlert("Please select an active pet for this appointment.");
         return;
       }
 
       if (compatibility && !compatibility.isValid) {
-        alert(compatibility.message || "This service is not available for this pet type.");
+        showAlert(compatibility.message || "This service is not available for this pet type.");
         return;
       }
 
@@ -131,7 +132,7 @@ const VetForm = () => {
       });
 
       if (data.success) {
-        alert("Vet appointment submitted! Waiting for receptionist approval.");
+        showSuccess("Vet appointment submitted! Waiting for receptionist approval.");
 
         setFormData({
           customer_name: customerName,
@@ -148,10 +149,10 @@ const VetForm = () => {
         await fetchAppointments();
         setActiveTab("my");
       } else {
-        alert(data.message || "Failed to submit vet appointment");
+        showAlert(data.message || "Failed to submit vet appointment");
       }
     } catch (error) {
-      alert("Failed to submit vet appointment");
+      showError("Failed to submit vet appointment");
     } finally {
       setLoading(false);
     }

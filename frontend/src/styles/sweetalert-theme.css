@@ -1,0 +1,101 @@
+/* SweetAlert2 Light Clean Card Theme */
+
+@import "sweetalert2/dist/sweetalert2.min.css";
+
+.swal2-light-popup {
+  border-radius: 16px !important;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.12), 0 4px 16px rgba(0, 0, 0, 0.06) !important;
+  padding: 24px !important;
+  font-family: inherit !important;
+}
+
+.swal2-light-title {
+  font-size: 1.35rem !important;
+  font-weight: 700 !important;
+  color: #1f2937 !important;
+  margin-bottom: 8px !important;
+}
+
+.swal2-light-text {
+  font-size: 1rem !important;
+  color: #4b5563 !important;
+  line-height: 1.6 !important;
+}
+
+.swal2-light-confirm {
+  background-color: #3b82f6 !important;
+  color: #fff !important;
+  border-radius: 10px !important;
+  padding: 10px 24px !important;
+  font-weight: 600 !important;
+  font-size: 0.95rem !important;
+  border: none !important;
+  box-shadow: 0 2px 8px rgba(59, 130, 246, 0.3) !important;
+  transition: transform 0.15s ease, box-shadow 0.15s ease !important;
+  cursor: pointer !important;
+}
+
+.swal2-light-confirm:hover {
+  transform: translateY(-1px) !important;
+  box-shadow: 0 4px 14px rgba(59, 130, 246, 0.4) !important;
+}
+
+.swal2-light-confirm-danger {
+  background-color: #ef4444 !important;
+  box-shadow: 0 2px 8px rgba(239, 68, 68, 0.3) !important;
+}
+
+.swal2-light-confirm-danger:hover {
+  background-color: #dc2626 !important;
+  box-shadow: 0 4px 14px rgba(220, 38, 38, 0.4) !important;
+}
+
+.swal2-light-cancel {
+  background-color: #f3f4f6 !important;
+  color: #374151 !important;
+  border-radius: 10px !important;
+  padding: 10px 24px !important;
+  font-weight: 600 !important;
+  font-size: 0.95rem !important;
+  border: 1px solid #e5e7eb !important;
+  transition: transform 0.15s ease, background-color 0.15s ease !important;
+  cursor: pointer !important;
+}
+
+.swal2-light-cancel:hover {
+  background-color: #e5e7eb !important;
+  transform: translateY(-1px) !important;
+}
+
+/* Backdrop */
+.swal2-backdrop-show {
+  background: rgba(15, 23, 42, 0.45) !important;
+  backdrop-filter: blur(4px) !important;
+}
+
+/* Close button */
+.swal2-close {
+  color: #9ca3af !important;
+  transition: color 0.15s ease !important;
+}
+
+.swal2-close:hover {
+  color: #374151 !important;
+}
+
+/* Icon sizing */
+.swal2-icon {
+  width: 64px !important;
+  height: 64px !important;
+  margin-bottom: 16px !important;
+}
+
+.swal2-icon .swal2-icon-content {
+  font-size: 2.4rem !important;
+}
+
+/* Actions row spacing */
+.swal2-actions {
+  gap: 10px !important;
+  margin-top: 20px !important;
+}

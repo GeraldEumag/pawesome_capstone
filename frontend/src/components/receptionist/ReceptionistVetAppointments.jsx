@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { showConfirm } from "../../utils/alert";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
   faStethoscope,
@@ -129,7 +130,7 @@ const VetAppointments = () => {
 
   // Cancel appointment
   const handleCancel = async (appointmentId, reason = "Cancelled by receptionist") => {
-    if (!window.confirm("Are you sure you want to cancel this appointment?")) {
+    if (!(await showConfirm("Are you sure you want to cancel this appointment?"))) {
       return;
     }
     

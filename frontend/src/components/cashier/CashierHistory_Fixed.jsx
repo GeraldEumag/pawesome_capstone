@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useState } from "react";
+import { showAlert } from "../../utils/alert";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
   faSearch,
@@ -283,7 +284,7 @@ const CashierHistory = () => {
 
   const handleExport = () => {
     // TODO: Implement export functionality
-    alert("Export feature coming soon!");
+    showAlert("Export feature coming soon!");
   };
 
   if (loading) {

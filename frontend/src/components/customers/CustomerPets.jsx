@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useState } from "react";
+import { showConfirm } from "../../utils/alert";
 import {
   FaArchive,
   FaCalendarAlt,
@@ -392,9 +393,9 @@ const CustomerPets = () => {
 
   const handleArchive = async (id) => {
     if (
-      !window.confirm(
+      !(await showConfirm(
         "Archive this pet? It will no longer appear in booking forms, but previous records will remain available."
-      )
+      ))
     ) {
       return;
     }
@@ -428,7 +429,7 @@ const CustomerPets = () => {
   };
 
   const handleUnarchive = async (id) => {
-    if (!window.confirm("Restore this pet to your active pets list?")) {
+    if (!(await showConfirm("Restore this pet to your active pets list?"))) {
       return;
     }
 

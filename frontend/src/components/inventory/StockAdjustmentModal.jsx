@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { inventoryApi } from "../../api/inventory";
 import "./StockAdjustmentModal.css";
+import { showAlert, showError } from "../../utils/alert";
 
 const StockAdjustmentModal = ({ isOpen, onClose, item, onSuccess }) => {
   const [adjustmentType, setAdjustmentType] = useState("add"); // 'add', 'remove'
@@ -52,12 +53,12 @@ const StockAdjustmentModal = ({ isOpen, onClose, item, onSuccess }) => {
 
   const handleSubmit = async () => {
     if (Number(quantity) <= 0) {
-      alert("Please enter quantity greater than 0.");
+      showAlert("Please enter quantity greater than 0.");
       return;
     }
 
     if (!reason) {
-      alert("Please select a reason.");
+      showAlert("Please select a reason.");
       return;
     }
 
@@ -89,7 +90,7 @@ const StockAdjustmentModal = ({ isOpen, onClose, item, onSuccess }) => {
       // Show specific error message from backend or generic message
       const errorMsg = err.message || "Failed to adjust stock. Please try again.";
       setError(errorMsg);
-      alert(`Error: ${errorMsg}`);
+      showError(`Error: ${errorMsg}`);
     } finally {
       setLoading(false);
     }

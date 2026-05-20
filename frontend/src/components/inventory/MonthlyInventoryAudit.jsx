@@ -5,6 +5,7 @@ import jsPDF from "jspdf";
 import "jspdf-autotable";
 import * as XLSX from "xlsx";
 import "./MonthlyInventoryAudit.css";
+import { showAlert, showSuccess, showError } from "../../utils/alert";
 
 const getCurrentMonth = () => {
   const now = new Date();
@@ -150,7 +151,7 @@ const MonthlyInventoryAudit = () => {
   const updateItem = (id, field, value) => {
     // Validate negative stock
     if (field === "actual_stock" && Number(value) < 0) {
-      alert("Actual stock cannot be negative!");
+      showAlert("Actual stock cannot be negative!");
       return;
     }
 
@@ -222,7 +223,7 @@ const MonthlyInventoryAudit = () => {
     const checkedItems = items.filter((auditRow) => auditRow.actual_stock !== null && auditRow.actual_stock !== "");
 
     if (checkedItems.length === 0) {
-      alert("Please enter actual stock for at least one item.");
+      showAlert("Please enter actual stock for at least one item.");
       return;
     }
 
@@ -231,7 +232,7 @@ const MonthlyInventoryAudit = () => {
     );
 
     if (invalid) {
-      alert(`Please add a reason for discrepancy: ${invalid.item?.name || 'Unknown item'}`);
+      showAlert(`Please add a reason for discrepancy: ${invalid.item?.name || 'Unknown item'}`);
       return;
     }
 
@@ -250,11 +251,11 @@ const MonthlyInventoryAudit = () => {
         })),
       });
 
-      alert("Monthly inventory audit saved successfully.");
+      showSuccess("Monthly inventory audit saved successfully.");
       fetchAuditItems();
     } catch (err) {
       console.error("Failed to save monthly audit:", err);
-      alert(err?.response?.data?.message || "Failed to save monthly audit.");
+      showError(err?.response?.data?.message || "Failed to save monthly audit.");
     } finally {
       setSaving(false);
     }
@@ -264,7 +265,7 @@ const MonthlyInventoryAudit = () => {
     const checkedItems = items.filter((auditRow) => auditRow.actual_stock !== null && auditRow.actual_stock !== "");
     
     if (checkedItems.length === 0) {
-      alert("No checked items to export.");
+      showAlert("No checked items to export.");
       return;
     }
 
@@ -296,7 +297,7 @@ const MonthlyInventoryAudit = () => {
     const checkedItems = items.filter((auditRow) => auditRow.actual_stock !== null && auditRow.actual_stock !== "");
     
     if (checkedItems.length === 0) {
-      alert("No checked items to export.");
+      showAlert("No checked items to export.");
       return;
     }
 
@@ -370,7 +371,7 @@ const MonthlyInventoryAudit = () => {
     const checkedItems = items.filter((auditRow) => auditRow.actual_stock !== null && auditRow.actual_stock !== "");
     
     if (checkedItems.length === 0) {
-      alert("No checked items to export.");
+      showAlert("No checked items to export.");
       return;
     }
 

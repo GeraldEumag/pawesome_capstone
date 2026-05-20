@@ -11,6 +11,7 @@ import {
 import "./CustomerRequestStatus.css";
 import { apiRequest } from "../../api/client";
 import { normalizeList } from "../../utils/normalizeList";
+import { showSuccess, showError } from "../../utils/alert";
 
 const safeLower = (value) => {
   if (value === null || value === undefined) return "";
@@ -145,9 +146,9 @@ const CustomerRequestStatus = () => {
         await apiRequest(`/customer/requests/${item.id}/payment-proof`, "POST", formData);
       }
       await fetchRequests();
-      alert("Payment proof uploaded. Your payment is pending cashier verification.");
+      showSuccess("Payment proof uploaded. Your payment is pending cashier verification.");
     } catch (error) {
-      alert(error.message || "Failed to upload payment proof.");
+      showError(error.message || "Failed to upload payment proof.");
     } finally {
       setUploadingId(null);
     }

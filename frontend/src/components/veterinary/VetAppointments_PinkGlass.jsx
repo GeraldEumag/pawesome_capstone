@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useState } from "react";
+import { showConfirm } from "../../utils/alert";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
   faCalendarAlt,
@@ -1028,7 +1029,7 @@ const VetAppointments = () => {
       return;
     }
 
-    const confirmCancel = window.confirm(
+    const confirmCancel = await showConfirm(
       "Cancel this appointment? This will update its status to cancelled."
     );
 

@@ -38,6 +38,7 @@ import "./CashierDashboard.css";
 import { apiRequest, uploadProfilePhoto } from "../../api/client";
 import { formatCurrency } from "../../utils/currency";
 import { useTheme } from "../../utils/theme";
+import { showAlert, showSuccess, showError } from "../../utils/alert";
 
 const toNumber = (value) => {
   const num = Number(value);
@@ -86,7 +87,7 @@ const CashierDashboard = () => {
       localStorage.setItem("profile_photo", data.url || data.profile_photo);
       window.location.reload();
     } catch (err) {
-      alert("Failed to upload profile photo: " + err.message);
+      showError("Failed to upload profile photo: " + err.message);
     }
   };
 
@@ -432,7 +433,7 @@ const CashierDashboard = () => {
   const handleExportTransactions = (format = 'csv') => {
     const transactions = dashboardData?.recent_sales || [];
     if (transactions.length === 0) {
-      alert("No transactions to export");
+      showAlert("No transactions to export");
       return;
     }
 
@@ -572,7 +573,7 @@ const CashierDashboard = () => {
 
   const handleGenerateReceipt = async () => {
     if (!receiptTransactionId) {
-      alert("Please enter a transaction ID");
+      showAlert("Please enter a transaction ID");
       return;
     }
 
@@ -608,7 +609,7 @@ Thank you for choosing Pawesome!
       setShowReceiptModal(false);
       setReceiptTransactionId("");
     } catch (err) {
-      alert("Failed to generate receipt: " + (err.message || "Unknown error"));
+      showError("Failed to generate receipt: " + (err.message || "Unknown error"));
     }
   };
 
@@ -627,7 +628,7 @@ Thank you for choosing Pawesome!
 
   const handleHandover = async () => {
     if (!handoverNote.trim()) {
-      alert("Please add a handover note");
+      showAlert("Please add a handover note");
       return;
     }
 
@@ -643,17 +644,17 @@ Thank you for choosing Pawesome!
         body: JSON.stringify(handoverData),
       });
 
-      alert("Handover note saved successfully.");
+      showSuccess("Handover note saved successfully.");
       setHandoverNote("");
       setShowHandoverModal(false);
     } catch (err) {
-      alert("Failed to save handover: " + (err.message || "Unknown error"));
+      showError("Failed to save handover: " + (err.message || "Unknown error"));
     }
   };
 
   const handleFetchPurchaseHistory = async () => {
     if (!purchaseHistoryCustomerId.trim()) {
-      alert("Please enter a customer ID");
+      showAlert("Please enter a customer ID");
       return;
     }
 
@@ -662,7 +663,7 @@ Thank you for choosing Pawesome!
       const data = await apiRequest(`/customers/${purchaseHistoryCustomerId}/purchases`);
       setPurchaseHistoryData(data);
     } catch (err) {
-      alert("Failed to fetch purchase history: " + (err.message || "Unknown error"));
+      showError("Failed to fetch purchase history: " + (err.message || "Unknown error"));
       setPurchaseHistoryData(null);
     } finally {
       setPurchaseHistoryLoading(false);
@@ -679,11 +680,11 @@ Thank you for choosing Pawesome!
         setProductSearchQuery(data.product.name);
         setProductSearchResults([data.product]);
       } else {
-        alert("Product not found for this barcode");
+        showAlert("Product not found for this barcode");
       }
       setBarcodeInput("");
     } catch (err) {
-      alert("Failed to scan barcode: " + (err.message || "Unknown error"));
+      showError("Failed to scan barcode: " + (err.message || "Unknown error"));
     }
   };
 
@@ -700,17 +701,17 @@ Thank you for choosing Pawesome!
 
   const handleSaveNotes = () => {
     localStorage.setItem("cashier_notes", cashierNotes);
-    alert("Notes saved successfully!");
+    showSuccess("Notes saved successfully!");
     setShowNotesModal(false);
   };
 
   const handlePriceOverride = () => {
     if (!priceOverrideNew || toNumber(priceOverrideNew) <= 0) {
-      alert("Please enter a valid price.");
+      showAlert("Please enter a valid price.");
       return;
     }
 
-    alert(`Price overridden from ${formatCurrency(priceOverrideOriginal)} to ${formatCurrency(priceOverrideNew)}`);
+    showSuccess(`Price overridden from ${formatCurrency(priceOverrideOriginal)} to ${formatCurrency(priceOverrideNew)}`);
     setShowPriceOverrideModal(false);
     setPriceOverrideProductId("");
     setPriceOverrideOriginal("");
@@ -730,7 +731,7 @@ Thank you for choosing Pawesome!
     } else {
       setCartItems([...cartItems, { ...product, quantity: 1 }]);
     }
-    alert(`${product.name} added to cart`);
+    showSuccess(`${product.name} added to cart`);
   };
 
   const handleSelectCustomer = (customer) => {
@@ -739,7 +740,7 @@ Thank you for choosing Pawesome!
     setShowCustomerSearch(false);
     setCustomerSearchQuery("");
     setCustomerSearchResults([]);
-    alert(`Selected customer: ${customer?.name || "Customer"}`);
+    showSuccess(`Selected customer: ${customer?.name || "Customer"}`);
   };
 
   const handleOpenPriceOverride = (product) => {
@@ -751,12 +752,12 @@ Thank you for choosing Pawesome!
 
   const handleToggleCashDrawer = () => {
     setCashDrawerOpen(!cashDrawerOpen);
-    alert(cashDrawerOpen ? "Cash drawer closed" : "Cash drawer opened");
+    showAlert(cashDrawerOpen ? "Cash drawer closed" : "Cash drawer opened");
   };
 
   const handleVoidTransaction = async () => {
     if (!voidTransactionId || !voidReason.trim()) {
-      alert("Please fill in all required fields.");
+      showAlert("Please fill in all required fields.");
       return;
     }
 
@@ -772,19 +773,19 @@ Thank you for choosing Pawesome!
         body: JSON.stringify(voidData),
       });
 
-      alert("Transaction voided successfully.");
+      showSuccess("Transaction voided successfully.");
       setVoidTransactionId("");
       setVoidReason("");
       setShowVoidModal(false);
       fetchDashboardData({ silent: true });
     } catch (err) {
-      alert("Failed to void transaction: " + (err.message || "Unknown error"));
+      showError("Failed to void transaction: " + (err.message || "Unknown error"));
     }
   };
 
   const handleRegisterCustomer = async () => {
     if (!newCustomerName.trim() || !newCustomerPhone.trim()) {
-      alert("Please fill in name and phone number.");
+      showAlert("Please fill in name and phone number.");
       return;
     }
 
@@ -800,19 +801,19 @@ Thank you for choosing Pawesome!
         body: JSON.stringify(customerData),
       });
 
-      alert("Customer registered successfully.");
+      showSuccess("Customer registered successfully.");
       setNewCustomerName("");
       setNewCustomerPhone("");
       setNewCustomerEmail("");
       setShowCustomerRegModal(false);
     } catch (err) {
-      alert("Failed to register customer: " + (err.message || "Unknown error"));
+      showError("Failed to register customer: " + (err.message || "Unknown error"));
     }
   };
 
   const handleCheckGiftCardBalance = async () => {
     if (!giftCardNumber.trim()) {
-      alert("Please enter a gift card number.");
+      showAlert("Please enter a gift card number.");
       return;
     }
 
@@ -820,7 +821,7 @@ Thank you for choosing Pawesome!
       const data = await apiRequest(`/gift-cards/${giftCardNumber}/balance`);
       setGiftCardBalance(data.balance);
     } catch (err) {
-      alert("Failed to check gift card balance: " + (err.message || "Unknown error"));
+      showError("Failed to check gift card balance: " + (err.message || "Unknown error"));
       setGiftCardBalance(null);
     }
   };
@@ -828,20 +829,20 @@ Thank you for choosing Pawesome!
   const handleMarkBoardingAsPaid = async (id) => {
     try {
       await apiRequest(`/cashier/boarding-payments/${id}/verify`, "POST");
-      alert("Payment confirmed successfully.");
+      showSuccess("Payment confirmed successfully.");
       fetchDashboardData({ silent: true });
     } catch (err) {
-      alert("Failed to confirm payment: " + (err.message || "Unknown error"));
+      showError("Failed to confirm payment: " + (err.message || "Unknown error"));
     }
   };
 
   const handleMarkAppointmentAsPaid = async (id) => {
     try {
       await apiRequest(`/appointments/${id}/pay`, "POST");
-      alert("Payment confirmed successfully.");
+      showSuccess("Payment confirmed successfully.");
       fetchDashboardData({ silent: true });
     } catch (err) {
-      alert("Failed to confirm payment: " + (err.message || "Unknown error"));
+      showError("Failed to confirm payment: " + (err.message || "Unknown error"));
     }
   };
 

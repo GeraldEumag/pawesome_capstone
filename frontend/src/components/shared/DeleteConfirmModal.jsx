@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import "./DeleteConfirmModal.css";
+import { showAlert } from "../../utils/alert";
 
 const DeleteConfirmModal = ({
   isOpen,
@@ -15,7 +16,7 @@ const DeleteConfirmModal = ({
 
   const handleConfirm = () => {
     if (requireReason && !reason.trim()) {
-      alert("Please provide a reason for deletion.");
+      showAlert("Please provide a reason for deletion.");
       return;
     }
     onConfirm(reason);

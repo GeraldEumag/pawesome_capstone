@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react";
+import { showAlert, showSuccess, showError } from "../../utils/alert";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
   faUsers,
@@ -111,7 +112,7 @@ const ReceptionistCustomerManagement = () => {
     e.preventDefault();
 
     if (!selectedCustomer || !bookingForm.pet_id || !bookingForm.appointment_date) {
-      alert("Please select pet and appointment date.");
+      showAlert("Please select pet and appointment date.");
       return;
     }
 
@@ -128,11 +129,11 @@ const ReceptionistCustomerManagement = () => {
         status: "pending",
       });
 
-      alert("Booking created successfully.");
+      showSuccess("Booking created successfully.");
       setShowBookingModal(false);
       await loadCustomers();
     } catch (err) {
-      alert(err.message || "Failed to create booking.");
+      showError(err.message || "Failed to create booking.");
     }
   };
 

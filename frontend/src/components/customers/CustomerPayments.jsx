@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { apiRequest, clearAuthStorage } from "../../api/client";
 import "./CustomerPayments.css";
+import { showAlert, showError } from "../../utils/alert";
 
 const formatCurrency = (value) =>
   `₱${Number(value || 0).toLocaleString("en-PH", {
@@ -229,7 +230,7 @@ const CustomerPayments = () => {
           throw new Error("Service receipt is not available yet.");
         }
 
-        alert(
+        showAlert(
           `Receipt ${receipt.receipt_number || payment.receipt_number}\n` +
             `Service Request #${receipt.request_id || payment.id}\n` +
             `Service: ${receipt.service_type || receipt.request_type || receipt.service_name || "Service"}\n` +
@@ -248,7 +249,7 @@ const CustomerPayments = () => {
           throw new Error("Boarding receipt is not available yet.");
         }
 
-        alert(
+        showAlert(
           `Receipt ${payment.receipt_number}\n` +
             `Boarding #${payment.id}\n` +
             `Pet: ${payment.pet_name || "N/A"}\n` +
@@ -268,7 +269,7 @@ const CustomerPayments = () => {
         throw new Error("Receipt details not found.");
       }
 
-      alert(
+      showAlert(
         `Receipt ${receipt.receipt_number}\n` +
           `Order #${payment.id}\n` +
           `Amount: ${formatCurrency(receipt.total_amount)}\n` +
@@ -277,7 +278,7 @@ const CustomerPayments = () => {
           `Remarks: ${receipt.cashier_remarks || "None"}`
       );
     } catch (err) {
-      alert(err.message || "Receipt is not available yet.");
+      showError(err.message || "Receipt is not available yet.");
     }
   };
 

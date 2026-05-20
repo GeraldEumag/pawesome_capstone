@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react";
+import { showConfirm } from "../../utils/alert";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
   faUser,
@@ -283,8 +284,8 @@ const AppointmentList = () => {
     setMessageType("");
   };
 
-  const resetLocalProfile = () => {
-    const confirmed = window.confirm("Reset this local profile form to default values?");
+  const resetLocalProfile = async () => {
+    const confirmed = await showConfirm("Reset this local profile form to default values?");
 
     if (!confirmed) return;
 

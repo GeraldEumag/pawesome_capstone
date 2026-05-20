@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { Outlet, NavLink, useLocation } from "react-router-dom";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { showError } from "../../utils/alert";
 import {
   faMoon,
   faSun,
@@ -46,7 +47,7 @@ const InventoryDashboard = () => {
       localStorage.setItem("profile_photo", data.url || data.profile_photo);
       window.location.reload();
     } catch (err) {
-      alert("Failed to upload profile photo: " + err.message);
+      showError("Failed to upload profile photo: " + err.message);
     }
   };
 

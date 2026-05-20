@@ -13,6 +13,7 @@ import './styles/unifiedDashboard.css';
 import './styles/unifiedSidebar.css';
 import './styles/unifiedReports.css';
 import './styles/theme.css';
+import './styles/sweetalert-theme.css';
 import { initializeTheme } from './utils/theme';
 import App from './App'; // 
 import reportWebVitals from './reportWebVitals'; // 

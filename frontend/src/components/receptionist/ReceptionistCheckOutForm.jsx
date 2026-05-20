@@ -8,6 +8,7 @@ import {
   faUser,
 } from "@fortawesome/free-solid-svg-icons";
 import "./ReceptionistCheckOutForm.css";
+import { showConfirm } from "../../utils/alert";
 import { apiRequest } from "../../api/client";
 
 const ReceptionistCheckOutForm = () => {
@@ -65,7 +66,7 @@ const ReceptionistCheckOutForm = () => {
   }, [searchQuery, bookings]);
 
   const handleCheckOut = async (id) => {
-    const confirmCheckout = window.confirm("Confirm this guest check-out?");
+    const confirmCheckout = await showConfirm("Confirm this guest check-out?");
     if (!confirmCheckout) return;
 
     setError("");

@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { showAlert, showPrompt } from "../../utils/alert";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
   faSearch,
@@ -253,15 +254,15 @@ const CashierTransactions = () => {
                   <button 
                     className="action-btn edit-btn" 
                     title="Edit"
-                    onClick={() => alert('Edit feature coming soon!')}
+                    onClick={() => showAlert('Edit feature coming soon!')}
                   >
                     <FontAwesomeIcon icon={faEdit} />
                   </button>
                   <button 
                     className="action-btn delete-btn" 
                     title="Void"
-                    onClick={() => {
-                      const reason = prompt("Enter reason for voiding:");
+                    onClick={async () => {
+                      const reason = await showPrompt("Enter reason for voiding:");
                       if (reason) handleVoidTransaction(transaction.sale_id, reason);
                     }}
                     disabled={transaction.status === 'cancelled'}

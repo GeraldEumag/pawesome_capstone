@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react";
+import { showConfirm } from "../../utils/alert";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
   faBirthdayCake,
@@ -481,7 +482,7 @@ const CustomersProfile = () => {
 
   const handleDeleteCustomer = async (customer) => {
     const customerId = getCustomerId(customer);
-    const confirmed = window.confirm(`Delete ${getCustomerName(customer)}?`);
+    const confirmed = await showConfirm(`Delete ${getCustomerName(customer)}?`);
 
     if (!confirmed) return;
 
@@ -598,7 +599,7 @@ const CustomersProfile = () => {
   };
 
   const handleDeletePet = async (pet) => {
-    const confirmed = window.confirm(`Delete ${pet.name}?`);
+    const confirmed = await showConfirm(`Delete ${pet.name}?`);
     if (!confirmed) return;
 
     try {

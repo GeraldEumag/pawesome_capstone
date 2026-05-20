@@ -11,6 +11,7 @@ import {
 } from "@fortawesome/free-solid-svg-icons";
 import logo from "../../assets/pawesome.jpg";
 import "./Login.css";
+import { showSuccess } from "../../utils/alert";
 
 const roleRouteMap = {
   admin: "/admin",
@@ -99,7 +100,7 @@ const Login = () => {
         localStorage.setItem("rememberMe", "true");
       }
 
-      alert(`Welcome, ${response.user.name}!`);
+      await showSuccess(`Welcome, ${response.user.name}!`);
 
       navigate(roleRouteMap[response.user.role] || "/dashboard");
     } catch (error) {

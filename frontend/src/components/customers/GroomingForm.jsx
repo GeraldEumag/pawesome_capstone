@@ -5,6 +5,7 @@ import {
   validateServiceCompatibility,
   getUnavailableServiceMessage,
 } from "../../config/petServiceRules";
+import { showAlert, showSuccess, showError } from "../../utils/alert";
 
 const GroomingForm = () => {
   const [activeTab, setActiveTab] = useState("book");
@@ -114,13 +115,13 @@ const GroomingForm = () => {
       } else {
         setGroomingAvailability(null);
         setDateAvailable(false);
-        alert(data.message || "This grooming date is already reserved. Please choose another date.");
+        showAlert(data.message || "This grooming date is already reserved. Please choose another date.");
       }
     } catch (error) {
       console.error("Error fetching grooming availability:", error);
       setGroomingAvailability(null);
       setDateAvailable(false);
-      alert("Failed to check availability. Please try again.");
+      showError("Failed to check availability. Please try again.");
     } finally {
       setAvailabilityLoading(false);
     }
@@ -152,18 +153,18 @@ const GroomingForm = () => {
 
     // Check availability before submitting
     if (!formData.pet_id) {
-      alert("Please select an active pet for this grooming appointment.");
+      showAlert("Please select an active pet for this grooming appointment.");
       return;
     }
 
     if (compatibility && !compatibility.isValid) {
-      alert(typeMessage || "This service is not available for this pet type.");
+      showAlert(typeMessage || "This service is not available for this pet type.");
       return;
     }
 
     // Check availability before submitting
     if (!dateAvailable) {
-      alert("This grooming date is already reserved. Please choose another date.");
+      showAlert("This grooming date is already reserved. Please choose another date.");
       return;
     }
 
@@ -176,7 +177,7 @@ const GroomingForm = () => {
       });
 
       if (data.success) {
-        alert("Grooming appointment submitted! Waiting for receptionist approval.");
+        showSuccess("Grooming appointment submitted! Waiting for receptionist approval.");
 
         setFormData({
           customer_name: customerName,
@@ -196,11 +197,11 @@ const GroomingForm = () => {
         await fetchAppointments();
         setActiveTab("my");
       } else {
-        alert(data.message || "Failed to submit grooming appointment");
+        showAlert(data.message || "Failed to submit grooming appointment");
       }
     } catch (error) {
       console.error("Submit error:", error);
-      alert("Failed to submit grooming appointment");
+      showError("Failed to submit grooming appointment");
     } finally {
       setLoading(false);
     }

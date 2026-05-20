@@ -1,5 +1,6 @@
 import React from "react";
 import { NavLink } from "react-router-dom";
+import { showConfirm } from "../../utils/alert";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
   faHome,
@@ -17,7 +18,9 @@ import {
 import "./VeterinarySidebar.css";
 
 const VeterinarySidebar = ({ collapsed, onToggleCollapse }) => {
-  const handleLogout = () => {
+  const handleLogout = async () => {
+    const confirmed = await showConfirm("Are you sure you want to log out?", "", "Yes", "Cancel", "question", true);
+    if (!confirmed) return;
     // Only clear authentication-related keys, not all localStorage data
     localStorage.removeItem("token");
     localStorage.removeItem("role");

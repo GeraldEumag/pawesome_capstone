@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback } from "react";
+import { showAlert } from "../../utils/alert";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
   faHistory,
@@ -303,7 +304,7 @@ const LoginHistory = () => {
                       <button
                         className="action-btn view-btn"
                         title="View Details"
-                        onClick={() => alert(`User Agent: ${log.user_agent || "N/A"}`)}
+                        onClick={() => showAlert(`User Agent: ${log.user_agent || "N/A"}`)}
                       >
                         <FontAwesomeIcon icon={faEye} />
                       </button>

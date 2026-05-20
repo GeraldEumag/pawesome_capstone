@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react";
+import { showConfirm } from "../../utils/alert";
 import {
   FaCalendarAlt,
   FaCalendarCheck,
@@ -281,7 +282,7 @@ const ReceptionistDashboard = () => {
     }
 
     if (newStatus === "rejected") {
-      const confirmed = window.confirm(`Reject ${request.id}?`);
+      const confirmed = await showConfirm(`Reject ${request.id}?`);
       if (!confirmed) return;
     }
 

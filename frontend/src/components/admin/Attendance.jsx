@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useState } from "react";
 import "./Attendance.css";
 import { attendanceApi } from "../../api/attendance";
 import { apiRequest } from "../../api/client";
+import { showAlert, showError } from "../../utils/alert";
 
 const Attendance = () => {
   const [search, setSearch] = useState("");
@@ -80,7 +81,7 @@ const Attendance = () => {
         setRecords((response.data || []).map(transformRecord));
       }
     } catch (err) {
-      alert(err.message || "Failed to load attendance data.");
+      showError(err.message || "Failed to load attendance data.");
     } finally {
       setLoading(false);
     }
@@ -119,7 +120,7 @@ const Attendance = () => {
 
   const handleSave = async () => {
     if (!formData.user_id) {
-      alert("Please select an employee.");
+      showAlert("Please select an employee.");
       return;
     }
 
@@ -140,7 +141,7 @@ const Attendance = () => {
         await loadAttendance();
       }
     } catch (err) {
-      alert(err.message || "Failed to save attendance.");
+      showError(err.message || "Failed to save attendance.");
     }
   };
 

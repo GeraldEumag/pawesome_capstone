@@ -2,6 +2,7 @@ import React, { useState, useEffect, useMemo } from "react";
 import { inventoryApi } from "../../api/inventory";
 import { exportToCSV } from "../../utils/reportExport";
 import "./MonthlyInventoryAudit.css";
+import { showAlert } from "../../utils/alert";
 
 const getCurrentMonth = () => {
   const now = new Date();
@@ -47,7 +48,7 @@ const MonthlyAuditReport = () => {
 
   const handleExportCSV = () => {
     if (audits.length === 0) {
-      alert("No audit data to export.");
+      showAlert("No audit data to export.");
       return;
     }
 
@@ -79,7 +80,7 @@ const MonthlyAuditReport = () => {
 
   const handleExportPDF = () => {
     if (audits.length === 0) {
-      alert("No audit data to export.");
+      showAlert("No audit data to export.");
       return;
     }
 

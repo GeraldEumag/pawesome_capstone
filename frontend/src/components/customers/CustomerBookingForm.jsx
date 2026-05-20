@@ -15,6 +15,7 @@ import {
   validateServiceCompatibility,
   getSpecialCareWarning,
 } from "../../config/petServiceRules";
+import { showAlert, showSuccess, showError } from "../../utils/alert";
 
 const CustomerBookingForm = () => {
   const navigate = useNavigate();
@@ -185,7 +186,7 @@ const CustomerBookingForm = () => {
   useEffect(() => {
     // Check if user is authenticated
     if (!token) {
-      alert("Please log in first before booking a service.");
+      showAlert("Please log in first before booking a service.");
       navigate("/login");
       return;
     }
@@ -250,12 +251,12 @@ const CustomerBookingForm = () => {
 
     // Ensure a pet is selected
     if (!formData.pet_id) {
-      alert("Please select a pet for this service request.");
+      showAlert("Please select a pet for this service request.");
       return;
     }
 
     if (compatibility && !compatibility.isValid) {
-      alert(serviceEligibilityMessage || "This service is not available for this pet type.");
+      showAlert(serviceEligibilityMessage || "This service is not available for this pet type.");
       return;
     }
 
@@ -300,7 +301,7 @@ const CustomerBookingForm = () => {
       });
 
       if (data.success) {
-        alert("Booking request submitted successfully. Please wait for receptionist approval.");
+        showSuccess("Booking request submitted successfully. Please wait for receptionist approval.");
 
         setFormData({
           customer_name: customerName,
@@ -318,7 +319,7 @@ const CustomerBookingForm = () => {
         });
         setSelectedPetId("");
       } else {
-        alert(data.message || "Failed to submit request.");
+        showAlert(data.message || "Failed to submit request.");
       }
     } catch (error) {
       console.error("BOOKING SUBMIT ERROR:", error);
@@ -331,7 +332,7 @@ const CustomerBookingForm = () => {
         error.message ||
         "Server error while submitting booking request.";
 
-      alert(message);
+      showError(message);
     } finally {
       setLoading(false);
     }

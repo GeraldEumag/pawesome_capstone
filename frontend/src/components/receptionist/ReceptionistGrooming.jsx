@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useState } from "react";
+import { showConfirm } from "../../utils/alert";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
   faCalendarAlt,
@@ -242,7 +243,7 @@ const Grooming = () => {
     }
 
     if (newStatus === "rejected") {
-      const confirmed = window.confirm("Reject this grooming appointment?");
+      const confirmed = await showConfirm("Reject this grooming appointment?");
       if (!confirmed) return;
     }
 

@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback } from "react";
+import { showConfirm } from "../../utils/alert";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
   faHotel,
@@ -198,7 +199,7 @@ const HotelForm = () => {
   };
 
   const handleCancelBooking = async (bookingId) => {
-    if (!window.confirm("Cancel this pending boarding request?")) return;
+    if (!(await showConfirm("Cancel this pending boarding request?"))) return;
 
     try {
       setLoading(true);

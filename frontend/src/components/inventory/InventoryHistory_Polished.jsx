@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { inventoryApi } from "../../api/inventory";
 import StockLogsViewer from "./StockLogsViewer";
 import "./InventoryHistory_Polished.css";
+import { showAlert } from "../../utils/alert";
 
 const InventoryHistory = () => {
   const [history, setHistory] = useState([]);
@@ -52,7 +53,7 @@ const InventoryHistory = () => {
           {historyError && <span className="demo-badge">No live records</span>}
         </div>
         <div className="header-actions">
-          <button className="btn-export" onClick={() => alert("Export feature coming soon!")}>
+          <button className="btn-export" onClick={() => showAlert("Export feature coming soon!")}>
             📥 Export
           </button>
         </div>

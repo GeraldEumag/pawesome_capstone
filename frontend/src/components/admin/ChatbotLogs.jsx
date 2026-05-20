@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react";
+import { showConfirm } from "../../utils/alert";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
   faBook,
@@ -392,7 +393,7 @@ const ChatbotLogs = () => {
   };
 
   const removeFaq = async (id) => {
-    if (!window.confirm("Delete this FAQ?")) return;
+    if (!(await showConfirm("Delete this FAQ?"))) return;
 
     try {
       await apiRequest(`/admin/chatbot/faqs/${id}`, { method: "DELETE" });
@@ -405,7 +406,7 @@ const ChatbotLogs = () => {
   };
 
   const removeService = async (id) => {
-    if (!window.confirm("Delete this service?")) return;
+    if (!(await showConfirm("Delete this service?"))) return;
 
     try {
       await apiRequest(`/admin/services/${id}`, { method: "DELETE" });

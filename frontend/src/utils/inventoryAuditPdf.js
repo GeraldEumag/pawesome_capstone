@@ -1,3 +1,5 @@
+import { showAlert } from "./alert";
+
 /**
  * Generate PDF for inventory audit report
  * Uses browser print API for simplicity (production-ready)
@@ -5,7 +7,7 @@
 
 export const generateInventoryAuditPdf = (logs) => {
   if (!logs || logs.length === 0) {
-    alert("No logs to export");
+    showAlert("No logs to export");
     return;
   }
 
@@ -40,7 +42,7 @@ export const generateInventoryAuditPdf = (logs) => {
   // Create print window
   const printWindow = window.open("", "_blank");
   if (!printWindow) {
-    alert("Please allow popups to export PDF");
+    showAlert("Please allow popups to export PDF");
     return;
   }
 

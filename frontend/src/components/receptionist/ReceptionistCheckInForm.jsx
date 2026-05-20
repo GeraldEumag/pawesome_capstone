@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useState } from "react";
+import { showConfirm } from "../../utils/alert";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
   faSearch,
@@ -264,7 +265,7 @@ const ReceptionistCheckInForm = () => {
   };
 
   const handleCheckIn = async (booking) => {
-    const confirmed = window.confirm(
+    const confirmed = await showConfirm(
       `Confirm check-in for ${getPetName(booking)} owned by ${getCustomerName(booking)}?`
     );
 

@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { Outlet, NavLink, useLocation } from "react-router-dom";
 import { motion } from "framer-motion";
+import { showError } from "../../utils/alert";
 import {
   ResponsiveContainer,
   BarChart,
@@ -84,7 +85,7 @@ const AdminDashboard = () => {
       localStorage.setItem("profile_photo", data.url || data.profile_photo);
       window.location.reload();
     } catch (err) {
-      alert("Failed to upload profile photo: " + err.message);
+      showError("Failed to upload profile photo: " + err.message);
     }
   };
 

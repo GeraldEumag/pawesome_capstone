@@ -4,6 +4,7 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faUser, faBell, faLock } from "@fortawesome/free-solid-svg-icons";
 import { apiRequest } from "../../api/client";
 import "./CreateUser.css";
+import { showError } from "../../utils/alert";
 
 const CreateUser = () => {
   const navigate = useNavigate();
@@ -156,7 +157,7 @@ const CreateUser = () => {
 
       setTimeout(() => navigate("/admin/users"), 1200);
     } catch (error) {
-      alert(`Error creating user: ${error.message}`);
+      showError(`Error creating user: ${error.message}`);
     } finally {
       setIsSubmitting(false);
     }

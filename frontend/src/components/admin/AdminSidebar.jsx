@@ -1,5 +1,6 @@
 import React from "react";
 import { NavLink, useNavigate } from "react-router-dom";
+import { showConfirm } from "../../utils/alert";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
   faHome,
@@ -22,7 +23,9 @@ const AdminSidebar = ({ mobileOpen, onMobileMenuToggle }) => {
   const [payrollExpanded, setPayrollExpanded] = React.useState(false);
   const navigate = useNavigate();
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
+    const confirmed = await showConfirm("Are you sure you want to log out?", "", "Yes", "Cancel", "question", true);
+    if (!confirmed) return;
     localStorage.clear();
     navigate("/");
   };

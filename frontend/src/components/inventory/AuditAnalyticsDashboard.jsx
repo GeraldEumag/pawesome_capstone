@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useMemo } from "react";
 import { inventoryApi } from "../../api/inventory";
 import { exportToCSV } from "../../utils/reportExport";
+import { showAlert } from "../../utils/alert";
 import { Line, Bar, Pie } from "react-chartjs-2";
 import {
   Chart as ChartJS,
@@ -135,7 +136,7 @@ const AuditAnalyticsDashboard = () => {
 
   const handleExportCSV = () => {
     if (auditData.length === 0) {
-      alert("No analytics data to export.");
+      showAlert("No analytics data to export.");
       return;
     }
 
@@ -164,7 +165,7 @@ const AuditAnalyticsDashboard = () => {
 
   const handleExportPDF = () => {
     if (auditData.length === 0) {
-      alert("No analytics data to export.");
+      showAlert("No analytics data to export.");
       return;
     }
 

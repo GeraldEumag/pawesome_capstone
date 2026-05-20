@@ -3,6 +3,7 @@ import { apiRequest } from "../../api/client";
 import CashierSidebar from "./CashierSidebar";
 import { normalizeList } from "../../utils/normalizeList";
 import "./CashierPaymentVerification.css";
+import { showAlert, showSuccess, showError, showPrompt } from "../../utils/alert";
 
 const CashierPaymentVerification = () => {
   const [requests, setRequests] = useState([]);
@@ -34,14 +35,14 @@ const CashierPaymentVerification = () => {
 
       if (data && data.success) {
         printReceipt(data, payment);
-        alert(data.message || `Payment verified. Receipt: ${data.receipt_number || "Generated"}`);
+        showSuccess(data.message || `Payment verified. Receipt: ${data.receipt_number || "Generated"}`);
         fetchRequests();
       } else {
-        alert(data?.message || "Failed to verify payment.");
+        showAlert(data?.message || "Failed to verify payment.");
       }
     } catch (err) {
       console.error("Failed to verify payment:", err);
-      alert(err.message || "Failed to verify payment.");
+      showError(err.message || "Failed to verify payment.");
     }
   };
 
@@ -93,7 +94,7 @@ const CashierPaymentVerification = () => {
   };
 
   const rejectPayment = async (payment) => {
-    const cashier_remarks = window.prompt("Reason for rejecting this payment proof:");
+    const cashier_remarks = await showPrompt("Reason for rejecting this payment proof:");
     if (cashier_remarks === null) return;
 
     try {
@@ -104,14 +105,14 @@ const CashierPaymentVerification = () => {
       });
 
       if (data && data.success) {
-        alert(data.message || 'Payment rejected.');
+        showSuccess(data.message || 'Payment rejected.');
         fetchRequests();
       } else {
-        alert(data?.message || 'Failed to reject payment.');
+        showAlert(data?.message || 'Failed to reject payment.');
       }
     } catch (err) {
       console.error("Failed to reject payment:", err);
-      alert(err.message || "Failed to reject payment.");
+      showError(err.message || "Failed to reject payment.");
     }
   };
 
