@@ -22,6 +22,7 @@ class ReceptionistPetController extends Controller
                     'breed' => $pet->breed ?? 'Unknown',
                     'age' => $pet->age ?? 'N/A',
                     'image' => $pet->image ?? 'https://placehold.co/120x120?text=Pet',
+                    'image_url' => $pet->image_url,
                 ];
             });
 

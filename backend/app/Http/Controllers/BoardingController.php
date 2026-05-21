@@ -477,11 +477,11 @@ class BoardingController extends Controller
     /**
      * Get single boarding details
      */
-    public function show($id): JsonResponse
+    public function show(Request $request, $id): JsonResponse
     {
         $boarding = Boarding::with(['pet', 'customer', 'hotelRoom', 'careLogs.loggedBy', 'bookingAddOns.addOn'])->findOrFail($id);
 
-        if (!$this->customerCanAccess(request(), $boarding)) {
+        if (!$this->customerCanAccess($request, $boarding)) {
             return response()->json(['message' => 'Reservation not found'], 404);
         }
 
@@ -595,7 +595,7 @@ class BoardingController extends Controller
     /**
      * Confirm/Approve boarding reservation with inventory deduction
      */
-    public function confirm($id): JsonResponse
+    public function confirm(Request $request, $id): JsonResponse
     {
         $boarding = Boarding::findOrFail($id);
 
@@ -632,11 +632,11 @@ class BoardingController extends Controller
         }
 
         // Process approval and inventory deduction in transaction
-        $result = DB::transaction(function () use ($boarding, $oldStatus, $addOnInventoryService) {
+        $result = DB::transaction(function () use ($boarding, $oldStatus, $addOnInventoryService, $request) {
             // Update boarding status
             $boarding->update([
                 'status' => 'approved',
-                'approved_by' => request()->user()?->id,
+                'approved_by' => $request->user()?->id,
                 'approved_at' => now(),
                 'payment_status' => $boarding->payment_status === 'paid' ? 'paid' : 'unpaid',
             ]);
@@ -688,9 +688,9 @@ class BoardingController extends Controller
         ]);
     }
 
-    public function approve($id): JsonResponse
+    public function approve(Request $request, $id): JsonResponse
     {
-        return $this->confirm($id);
+        return $this->confirm($request, $id);
     }
 
     public function pending(): JsonResponse
@@ -852,7 +852,7 @@ class BoardingController extends Controller
     /**
      * Check out guest
      */
-    public function checkOut($id): JsonResponse
+    public function checkOut(Request $request, $id): JsonResponse
     {
         $boarding = Boarding::findOrFail($id);
 
@@ -878,7 +878,7 @@ class BoardingController extends Controller
             'status' => 'completed',
             'actual_check_out' => now(),
             'checked_out_at' => now(),
-            'checked_out_by' => request()->user()?->id,
+            'checked_out_by' => $request->user()?->id,
             'balance_due' => 0,
         ]);
         $boarding->hotelRoom?->update(['status' => 'available']);
@@ -901,12 +901,12 @@ class BoardingController extends Controller
         );
     }
 
-    public function complete($id): JsonResponse
+    public function complete(Request $request, $id): JsonResponse
     {
-        return $this->checkOut($id);
+        return $this->checkOut($request, $id);
     }
 
-    public function readyForPickup($id): JsonResponse
+    public function readyForPickup(Request $request, $id): JsonResponse
     {
         $boarding = Boarding::findOrFail($id);
 
@@ -917,7 +917,7 @@ class BoardingController extends Controller
         $oldStatus = $boarding->status;
         $boarding->update([
             'status' => 'ready_for_pickup',
-            'ready_for_pickup_by' => request()->user()?->id,
+            'ready_for_pickup_by' => $request->user()?->id,
             'ready_for_pickup_at' => now(),
         ]);
 
@@ -933,11 +933,11 @@ class BoardingController extends Controller
     /**
      * Cancel reservation
      */
-    public function cancel($id): JsonResponse
+    public function cancel(Request $request, $id): JsonResponse
     {
         $boarding = Boarding::findOrFail($id);
 
-        if (!$this->customerCanAccess(request(), $boarding)) {
+        if (!$this->customerCanAccess($request, $boarding)) {
             return response()->json(['message' => 'Reservation not found'], 404);
         }
 
@@ -945,7 +945,6 @@ class BoardingController extends Controller
             return response()->json(['error' => 'Cannot cancel completed reservation'], 422);
         }
 
-        $request = request();
         if ($request->user()?->role === 'customer' && $boarding->status !== 'pending') {
             return response()->json(['error' => 'Customers can only cancel pending boarding requests'], 422);
         }
@@ -1136,7 +1135,7 @@ class BoardingController extends Controller
     /**
      * Reject reservation
      */
-    public function reject($id): JsonResponse
+    public function reject(Request $request, $id): JsonResponse
     {
         $boarding = Boarding::findOrFail($id);
 
@@ -1151,9 +1150,9 @@ class BoardingController extends Controller
         $oldStatus = $boarding->status;
         $boarding->update([
             'status' => 'rejected',
-            'rejected_by' => request()->user()?->id,
+            'rejected_by' => $request->user()?->id,
             'rejected_at' => now(),
-            'rejection_reason' => request('rejection_reason'),
+            'rejection_reason' => $request->input('rejection_reason'),
         ]);
         if ($boarding->hotelRoom && in_array($boarding->hotelRoom->status, ['reserved'], true)) {
             $boarding->hotelRoom->update(['status' => 'available']);
@@ -1238,11 +1237,11 @@ class BoardingController extends Controller
         ]);
     }
 
-    public function careLogs($id): JsonResponse
+    public function careLogs(Request $request, $id): JsonResponse
     {
         $boarding = Boarding::with('careLogs.loggedBy')->findOrFail($id);
 
-        if (!$this->customerCanAccess(request(), $boarding)) {
+        if (!$this->customerCanAccess($request, $boarding)) {
             return response()->json(['message' => 'Reservation not found'], 404);
         }
 

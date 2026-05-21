@@ -207,4 +207,77 @@ class SecureFileController extends Controller
             ->header('Cache-Control', 'public, max-age=86400') // Cache for 1 day
             ->header('X-Content-Type-Options', 'nosniff');
     }
+
+    /**
+     * Securely view pet photos
+     */
+    public function viewPetImage(Request $request, $petId)
+    {
+        $user = Auth::user();
+
+        if (!$user) {
+            return response()->json(['message' => 'Unauthenticated'], 401);
+        }
+
+        $pet = DB::table('pets')->where('id', $petId)->first();
+
+        if (!$pet) {
+            return response()->json(['message' => 'Pet not found'], 404);
+        }
+
+        // Authorization: customer can view their own pet; staff can view any
+        $canAccess = false;
+        if ($user->role === 'customer') {
+            $customer = DB::table('customers')
+                ->where('user_id', $user->id)
+                ->orWhere('email', $user->email)
+                ->first();
+            $canAccess = $customer && (int) $pet->customer_id === (int) $customer->id;
+        } else {
+            $canAccess = in_array($user->role, ['admin', 'receptionist', 'cashier', 'manager', 'veterinary', 'inventory']);
+        }
+
+        if (!$canAccess) {
+            return response()->json(['message' => 'Forbidden'], 403);
+        }
+
+        if (!$pet->image) {
+            return response()->json(['message' => 'Pet photo not found'], 404);
+        }
+
+        $filePath = $pet->image;
+        $disk = 'public';
+
+        if (!Storage::disk($disk)->exists($filePath)) {
+            return response()->json(['message' => 'File not found'], 404);
+        }
+
+        $fileContents = Storage::disk($disk)->get($filePath);
+
+        $extension = strtolower(pathinfo($filePath, PATHINFO_EXTENSION));
+        $mimeTypes = [
+            'jpg' => 'image/jpeg',
+            'jpeg' => 'image/jpeg',
+            'png' => 'image/png',
+            'webp' => 'image/webp',
+        ];
+
+        $mimeType = $mimeTypes[$extension] ?? 'image/jpeg';
+
+        if (!$fileContents) {
+            return response()->json(['message' => 'File not readable'], 404);
+        }
+
+        $allowedMimeTypes = ['image/jpeg', 'image/png', 'image/webp'];
+
+        if (!in_array($mimeType, $allowedMimeTypes)) {
+            return response()->json(['message' => 'Invalid file type'], 422);
+        }
+
+        return response($fileContents)
+            ->header('Content-Type', $mimeType)
+            ->header('Content-Disposition', 'inline; filename="pet_' . $petId . '.' . $extension . '"')
+            ->header('Cache-Control', 'public, max-age=86400')
+            ->header('X-Content-Type-Options', 'nosniff');
+    }
 }

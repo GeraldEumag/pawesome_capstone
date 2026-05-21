@@ -21,6 +21,7 @@ import {
 import toast from "react-hot-toast";
 import { apiRequest } from "../../api/client";
 import { formatCurrency } from "../../utils/currency";
+import PetAvatar from "../shared/PetAvatar";
 import "./VetCurrentBoarders.css";
 
 const VetCurrentBoarders = () => {
@@ -343,9 +344,7 @@ const VetCurrentBoarders = () => {
             <article key={boarder.id} className="premium-card vet-boarder-card">
               <div className="vet-boarder-top">
                 <div className="vet-boarder-pet">
-                  <div className="vet-pet-icon">
-                    <FontAwesomeIcon icon={faPaw} />
-                  </div>
+                  <PetAvatar pet={boarder.pet} size={44} />
 
                   <div>
                     <h4>{getPetName(boarder)}</h4>

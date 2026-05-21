@@ -23,6 +23,7 @@ import {
   faCheck,
 } from "@fortawesome/free-solid-svg-icons";
 import { apiRequest } from "../../api/client";
+import PetAvatar from "../shared/PetAvatar";
 import "./ReceptionistVetAppointments.css";
 
 const VetAppointments = () => {
@@ -385,9 +386,7 @@ const VetAppointments = () => {
                 </td>
                 <td className="pet-info">
                   <div className="pet-details">
-                    <div className="pet-avatar">
-                      <FontAwesomeIcon icon={faPaw} />
-                    </div>
+                    <PetAvatar pet={appointment.pet} size={40} className="pet-avatar" />
                     <div>
                       <span className="pet-name">{appointment.petName}</span>
                       <span className="pet-breed">{appointment.breed}</span>

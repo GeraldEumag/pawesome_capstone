@@ -3,9 +3,11 @@ import { showConfirm } from "../../utils/alert";
 import {
   FaArchive,
   FaCalendarAlt,
+  FaCamera,
   FaCat,
   FaDog,
   FaDove,
+  FaEdit,
   FaExclamationTriangle,
   FaFileMedical,
   FaHeartbeat,
@@ -20,6 +22,7 @@ import {
 } from "react-icons/fa";
 import "./CustomerPets.css";
 import { apiRequest } from "../../api/client";
+import PetAvatar from "../shared/PetAvatar";
 import {
   getSpeciesOptions,
   getBreedOptions,
@@ -38,6 +41,7 @@ const initialForm = (customerEmail) => ({
   birthdate: "",
   notes: "",
   customer_email: customerEmail || "",
+  image: null,
 });
 
 const CustomerPets = () => {
@@ -62,6 +66,10 @@ const CustomerPets = () => {
   const [medicalHistory, setMedicalHistory] = useState([]);
   const [historyLoading, setHistoryLoading] = useState(false);
   const [historyError, setHistoryError] = useState("");
+
+  const [previewImage, setPreviewImage] = useState(null);
+  const [editingPet, setEditingPet] = useState(null);
+  const [editLoading, setEditLoading] = useState(false);
 
   const showMessage = (type, text) => {
     setMessage({ type, text });
@@ -320,7 +328,15 @@ const CustomerPets = () => {
   };
 
   const handleChange = (event) => {
-    const { name, value } = event.target;
+    const { name, value, type, files } = event.target;
+
+    if (type === "file" && files && files[0]) {
+      const file = files[0];
+      setFormData((prev) => ({ ...prev, image: file }));
+      setPreviewImage(URL.createObjectURL(file));
+      if (message.text) setMessage({ type: "", text: "" });
+      return;
+    }
 
     // If species changes, reset breed and manual values
     if (name === "species") {
@@ -343,7 +359,18 @@ const CustomerPets = () => {
 
   const resetForm = () => {
     setFormData(initialForm(customerEmail));
+    setPreviewImage(null);
   };
+
+  const buildPetPayload = (data) => ({
+    name: data.name?.trim(),
+    species: resolveFinalSpecies(data.species, data.manualSpecies),
+    breed: resolveFinalBreed(data.breed, data.manualBreed),
+    birthdate: data.birthdate || null,
+    birth_date: data.birthdate || null,
+    notes: data.notes?.trim() || null,
+    customer_email: customerEmail,
+  });
 
   const handleSubmit = async (event) => {
     event.preventDefault();
@@ -358,19 +385,25 @@ const CustomerPets = () => {
     try {
       setLoading(true);
 
-      const payload = {
-        name: formData.name?.trim(),
-        species: resolveFinalSpecies(formData.species, formData.manualSpecies),
-        breed: resolveFinalBreed(formData.breed, formData.manualBreed),
-        birthdate: formData.birthdate || null,
-        birth_date: formData.birthdate || null,
-        notes: formData.notes?.trim() || null,
-        customer_email: customerEmail,
-      };
+      let body;
+      const payload = buildPetPayload(formData);
+
+      if (formData.image) {
+        const formDataObj = new FormData();
+        Object.entries(payload).forEach(([key, value]) => {
+          if (value !== null && value !== undefined) {
+            formDataObj.append(key, value);
+          }
+        });
+        formDataObj.append("image", formData.image);
+        body = formDataObj;
+      } else {
+        body = JSON.stringify(payload);
+      }
 
       const data = await apiRequest("/customer/pets", {
         method: "POST",
-        body: JSON.stringify(payload),
+        body,
       });
 
       resetForm();
@@ -388,6 +421,80 @@ const CustomerPets = () => {
       showMessage("error", errorMessage);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleEditClick = (pet) => {
+    setEditingPet(pet);
+    setFormData({
+      name: pet?.name || "",
+      species: pet?.species || "",
+      breed: pet?.breed || "",
+      manualSpecies: "",
+      manualBreed: "",
+      birthdate: getPetBirthdate(pet) || "",
+      notes: pet?.notes || "",
+      customer_email: customerEmail,
+      image: null,
+    });
+    setPreviewImage(pet?.image_url || pet?.image || null);
+  };
+
+  const closeEditModal = () => {
+    setEditingPet(null);
+    resetForm();
+  };
+
+  const handleUpdatePet = async (event) => {
+    event.preventDefault();
+
+    const validationError = validateForm();
+
+    if (validationError) {
+      showMessage("error", validationError);
+      return;
+    }
+
+    try {
+      setEditLoading(true);
+
+      let body;
+      const payload = buildPetPayload(formData);
+
+      if (formData.image) {
+        const formDataObj = new FormData();
+        Object.entries(payload).forEach(([key, value]) => {
+          if (value !== null && value !== undefined) {
+            formDataObj.append(key, value);
+          }
+        });
+        formDataObj.append("image", formData.image);
+        formDataObj.append("_method", "PUT");
+        body = formDataObj;
+      } else {
+        body = JSON.stringify(payload);
+      }
+
+      const data = await apiRequest(`/customer/pets/${editingPet.id}`, {
+        method: formData.image ? "POST" : "PUT",
+        body,
+      });
+
+      closeEditModal();
+      await fetchPets({ silent: true });
+      showMessage("success", data?.message || "Pet updated successfully.");
+    } catch (error) {
+      console.error("UPDATE PET ERROR:", error);
+
+      const errorMessage =
+        error?.response?.data?.message ||
+        error?.response?.data?.error ||
+        error?.message ||
+        "Failed to update pet. Please try again.";
+
+      showMessage("error", errorMessage);
+    } finally {
+      setEditLoading(false);
     }
   };
 
@@ -593,6 +700,30 @@ const CustomerPets = () => {
           </div>
 
           <form className="pets-form" onSubmit={handleSubmit}>
+            <label className="pet-image-upload-label">
+              Pet Photo
+              <div className="pet-image-preview-wrapper">
+                {previewImage ? (
+                  <img
+                    src={previewImage}
+                    alt="Pet preview"
+                    className="pet-image-preview"
+                  />
+                ) : (
+                  <span className="pet-image-placeholder">
+                    <FaCamera />
+                  </span>
+                )}
+                <input
+                  type="file"
+                  name="image"
+                  accept="image/jpeg,image/png,image/webp"
+                  onChange={handleChange}
+                  className="pet-image-input"
+                />
+              </div>
+            </label>
+
             <label>
               Pet Name <small>*</small>
               <input
@@ -774,9 +905,7 @@ const CustomerPets = () => {
             <div className="pets-list">
               {filteredPets.map((pet) => (
                 <article className="pet-item" key={pet.id}>
-                  <div className="pet-avatar">
-                    {getSpeciesIcon(getPetSpecies(pet))}
-                  </div>
+                  <PetAvatar pet={pet} size={100} className="pet-avatar" />
 
                   <div className="pet-info">
                     <div className="pet-title-row">
@@ -834,15 +963,25 @@ const CustomerPets = () => {
                       </button>
 
                       {activeTab === "active" && (
-                        <button
-                          className="pet-archive-btn"
-                          type="button"
-                          onClick={() => handleArchive(pet.id)}
-                          disabled={deletingId === pet.id}
-                        >
-                          <FaArchive />
-                          {deletingId === pet.id ? "Archiving..." : "Archive"}
-                        </button>
+                        <>
+                          <button
+                            className="pet-edit-btn"
+                            type="button"
+                            onClick={() => handleEditClick(pet)}
+                          >
+                            <FaEdit />
+                            Edit
+                          </button>
+                          <button
+                            className="pet-archive-btn"
+                            type="button"
+                            onClick={() => handleArchive(pet.id)}
+                            disabled={deletingId === pet.id}
+                          >
+                            <FaArchive />
+                            {deletingId === pet.id ? "Archiving..." : "Archive"}
+                          </button>
+                        </>
                       )}
 
                       {activeTab === "archived" && (
@@ -864,6 +1003,182 @@ const CustomerPets = () => {
           )}
         </div>
       </div>
+
+      {editingPet && (
+        <div className="pet-history-overlay" onClick={closeEditModal}>
+          <div
+            className="pet-history-modal"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <div className="pet-history-header">
+              <div>
+                <span className="pets-eyebrow">
+                  <FaEdit />
+                  Edit Pet
+                </span>
+                <h2>{getPetName(editingPet)}</h2>
+                <p>
+                  {getPetSpecies(editingPet)} • {getPetBreed(editingPet)}
+                </p>
+              </div>
+
+              <button
+                className="pet-history-close"
+                type="button"
+                onClick={closeEditModal}
+              >
+                <FaTimes />
+              </button>
+            </div>
+
+            <div className="pet-history-body">
+              <form className="pets-form" onSubmit={handleUpdatePet}>
+                <label className="pet-image-upload-label">
+                  Pet Photo
+                  <div className="pet-image-preview-wrapper">
+                    {previewImage ? (
+                      <img
+                        src={previewImage}
+                        alt="Pet preview"
+                        className="pet-image-preview"
+                      />
+                    ) : (
+                      <span className="pet-image-placeholder">
+                        <FaCamera />
+                      </span>
+                    )}
+                    <input
+                      type="file"
+                      name="image"
+                      accept="image/jpeg,image/png,image/webp"
+                      onChange={handleChange}
+                      className="pet-image-input"
+                    />
+                  </div>
+                </label>
+
+                <label>
+                  Pet Name <small>*</small>
+                  <input
+                    name="name"
+                    placeholder="Example: Max"
+                    value={formData.name}
+                    onChange={handleChange}
+                    required
+                  />
+                </label>
+
+                <label>
+                  Type of Pet <small>*</small>
+                  <select
+                    name="species"
+                    value={formData.species}
+                    onChange={handleChange}
+                    required
+                  >
+                    <option value="">Select type of pet</option>
+                    {speciesOptions.map((species) => (
+                      <option key={species} value={species}>
+                        {species}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+
+                {isManualSpeciesRequired(formData.species) && (
+                  <label>
+                    Type of Pet Details <small>*</small>
+                    <input
+                      name="manualSpecies"
+                      placeholder="Enter type of pet (e.g., Ferret, Turtle, etc.)"
+                      value={formData.manualSpecies}
+                      onChange={handleChange}
+                      required
+                    />
+                  </label>
+                )}
+
+                {formData.species && !isManualSpeciesRequired(formData.species) && (
+                  <label>
+                    Breed <small>*</small>
+                    <select
+                      name="breed"
+                      value={formData.breed}
+                      onChange={handleChange}
+                      required
+                    >
+                      <option value="">Select breed</option>
+                      {breedOptions.map((breed) => (
+                        <option key={breed} value={breed}>
+                          {breed}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                )}
+
+                {(isManualBreedRequired(formData.breed) || isManualSpeciesRequired(formData.species)) && (
+                  <label>
+                    Breed Details <small>*</small>
+                    <input
+                      name="manualBreed"
+                      placeholder={
+                        isManualSpeciesRequired(formData.species)
+                          ? "Enter breed or type"
+                          : "Enter breed (e.g., African Grey, Flowerhorn, etc.)"
+                      }
+                      value={formData.manualBreed}
+                      onChange={handleChange}
+                      required
+                    />
+                  </label>
+                )}
+
+                <div className="pets-form-row">
+                  <label>
+                    Birthdate
+                    <input
+                      name="birthdate"
+                      type="date"
+                      max={new Date().toISOString().slice(0, 10)}
+                      value={formData.birthdate}
+                      onChange={handleChange}
+                    />
+                  </label>
+                </div>
+
+                <label>
+                  Medical Notes / Special Needs
+                  <textarea
+                    name="notes"
+                    placeholder="Example: Allergies, medications, behavior notes..."
+                    value={formData.notes}
+                    onChange={handleChange}
+                  />
+                </label>
+
+                <div className="pets-form-actions">
+                  <button
+                    type="button"
+                    className="pets-reset-btn"
+                    onClick={closeEditModal}
+                  >
+                    Cancel
+                  </button>
+
+                  <button
+                    type="submit"
+                    className="pets-submit-btn"
+                    disabled={editLoading}
+                  >
+                    {editLoading ? "Saving..." : "Update Pet"}
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+      )}
 
       {selectedPet && (
         <div className="pet-history-overlay" onClick={closeMedicalHistory}>

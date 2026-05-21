@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import "./CustomerBookings.css";
 import { apiRequest } from "../../api/client";
+import PetAvatar from "../shared/PetAvatar";
 import {
   FaCalendarCheck,
   FaCheckCircle,
@@ -1618,9 +1619,12 @@ const CustomerBookings = () => {
 
                   {selectedPet && (
                     <div className="selected-pet-card full-width">
-                      <div>
-                        <small>Selected Pet</small>
-                        <strong>{getPetName(selectedPet)}</strong>
+                      <div style={{ display: "flex", alignItems: "center", gap: "0.75rem" }}>
+                        <PetAvatar pet={selectedPet} size={44} />
+                        <div>
+                          <small>Selected Pet</small>
+                          <strong>{getPetName(selectedPet)}</strong>
+                        </div>
                       </div>
                       <div>
                         <small>Type of Pet</small>

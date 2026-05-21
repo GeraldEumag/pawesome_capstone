@@ -22,6 +22,7 @@ import {
 } from "@fortawesome/free-solid-svg-icons";
 import "./ReceptionistCheckInForm.css";
 import { apiRequest } from "../../api/client";
+import PetAvatar from "../shared/PetAvatar";
 import BoardingInventoryUsage from "../boarding/BoardingInventoryUsage";
 
 const STATUS_READY_FOR_CHECKIN = ["approved", "scheduled", "confirmed"];
@@ -463,9 +464,7 @@ const ReceptionistCheckInForm = () => {
                     </div>
 
                     <div className="boarding-pet-row">
-                      <div className="pet-avatar">
-                        <FontAwesomeIcon icon={faPaw} />
-                      </div>
+                      <PetAvatar pet={booking.pet} size={48} className="pet-avatar" />
 
                       <div>
                         <h3>{getPetName(booking)}</h3>

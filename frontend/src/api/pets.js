@@ -10,16 +10,20 @@ export const petsApi = {
   },
 
   createPet: async (data) => {
+    const isFormData = data instanceof FormData;
     return apiRequest("/pets", {
       method: "POST",
-      body: JSON.stringify(data),
+      body: isFormData ? data : JSON.stringify(data),
+      ...(isFormData ? {} : { headers: { "Content-Type": "application/json" } }),
     });
   },
 
   updatePet: async (id, data) => {
+    const isFormData = data instanceof FormData;
     return apiRequest(`/pets/${id}`, {
       method: "PUT",
-      body: JSON.stringify(data),
+      body: isFormData ? data : JSON.stringify(data),
+      ...(isFormData ? {} : { headers: { "Content-Type": "application/json" } }),
     });
   },
 

@@ -33,6 +33,8 @@ class Pet extends Model
         'birth_date' => 'date',
     ];
 
+    protected $appends = ['image_url'];
+
     /**
      * Scope to get only active pets
      */
@@ -52,6 +54,22 @@ class Pet extends Model
     public function customer()
     {
         return $this->belongsTo(Customer::class);
+    }
+
+    /**
+     * Get the full URL for the pet's image.
+     */
+    public function getImageUrlAttribute(): ?string
+    {
+        if (!$this->image) {
+            return null;
+        }
+
+        if (str_starts_with($this->image, 'http')) {
+            return $this->image;
+        }
+
+        return "/api/files/pet-photos/{$this->id}/view";
     }
 
     public function appointments()

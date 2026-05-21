@@ -16,6 +16,7 @@ import {
 } from "@fortawesome/free-solid-svg-icons";
 import toast from "react-hot-toast";
 import { apiRequest } from "../../api/client";
+import PetAvatar from "../shared/PetAvatar";
 import ServiceBillingPanel from "../shared/ServiceBillingPanel";
 import "./VetConsultation.css";
 
@@ -302,7 +303,7 @@ const VetConsultation = () => {
 
       <div className="consult-summary">
         <article>
-          <FontAwesomeIcon icon={faPaw} />
+          <PetAvatar pet={appointment.pet} size={40} />
           <span>Pet</span>
           <strong>{appointment.pet?.name || "Unknown"}</strong>
           <small>{appointment.pet?.species || "Pet"} {appointment.pet?.breed ? `- ${appointment.pet.breed}` : ""}</small>

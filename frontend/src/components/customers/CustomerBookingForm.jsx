@@ -16,6 +16,7 @@ import {
   getSpecialCareWarning,
 } from "../../config/petServiceRules";
 import { showAlert, showSuccess, showError } from "../../utils/alert";
+import PetAvatar from "../shared/PetAvatar";
 
 const CustomerBookingForm = () => {
   const navigate = useNavigate();
@@ -422,7 +423,15 @@ const CustomerBookingForm = () => {
 
             {selectedPet && (
               <div className="selected-pet-info">
-                <p><strong>Type of Pet:</strong> {getPetDisplayInfo(selectedPet)?.typeOfPet}</p>
+                <div style={{ display: "flex", alignItems: "center", gap: "0.75rem", marginBottom: "0.5rem" }}>
+                  <PetAvatar pet={selectedPet} size={48} />
+                  <div>
+                    <p style={{ margin: 0, fontWeight: 700 }}>{selectedPet.name}</p>
+                    <p style={{ margin: 0, fontSize: "0.85rem", color: "#64748b" }}>
+                      {getPetDisplayInfo(selectedPet)?.typeOfPet}
+                    </p>
+                  </div>
+                </div>
                 {getPetDisplayInfo(selectedPet)?.birthdate && (
                   <p><strong>Birthdate:</strong> {new Date(getPetDisplayInfo(selectedPet).birthdate).toLocaleDateString()}</p>
                 )}

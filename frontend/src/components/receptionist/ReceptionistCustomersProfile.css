@@ -751,9 +751,9 @@
 }
 
 .pet-card .pet-avatar {
-  width: 56px;
-  height: 56px;
-  min-width: 56px;
+  width: 80px;
+  height: 80px;
+  min-width: 80px;
   display: grid;
   place-items: center;
   border-radius: 18px;

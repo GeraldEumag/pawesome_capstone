@@ -17,6 +17,7 @@ import {
 } from "@fortawesome/free-solid-svg-icons";
 import { receptionistCustomerApi } from "../../api/receptionistCustomers";
 import { formatCurrency } from "../../utils/currency";
+import PetAvatar from "../shared/PetAvatar";
 import "./ReceptionistCustomerManagement.css";
 
 const ReceptionistCustomerManagement = () => {
@@ -379,9 +380,7 @@ const ReceptionistCustomerManagement = () => {
                 <div className="pets-detail">
                   {getPets(selectedCustomer).map((pet) => (
                     <div key={pet.id || pet.name} className="pet-item">
-                      <div className="pet-avatar">
-                        <FontAwesomeIcon icon={faPaw} />
-                      </div>
+                      <PetAvatar pet={pet} size={44} className="pet-avatar" />
                       <div className="pet-details">
                         <h4>{pet.name}</h4>
                         <p>{pet.type || pet.species} - {pet.breed || "N/A"}</p>

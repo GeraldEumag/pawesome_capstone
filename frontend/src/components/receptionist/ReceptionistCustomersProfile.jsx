@@ -24,6 +24,7 @@ import {
 } from "@fortawesome/free-solid-svg-icons";
 import "./ReceptionistCustomersProfile.css";
 import { receptionistProfileApi } from "../../api/receptionistProfileApi";
+import PetAvatar from "../shared/PetAvatar";
 
 const EMPTY_CUSTOMER_FORM = {
   firstName: "",
@@ -1040,9 +1041,7 @@ const CustomersProfile = () => {
               ) : (
                 getCustomerPets(selectedCustomer).map((pet) => (
                   <article key={pet.id} className="pet-card">
-                    <div className="pet-avatar">
-                      <FontAwesomeIcon icon={faPaw} />
-                    </div>
+                    <PetAvatar pet={pet} size={80} className="pet-avatar" />
 
                     <div className="pet-info">
                       <h5>{pet.name}</h5>

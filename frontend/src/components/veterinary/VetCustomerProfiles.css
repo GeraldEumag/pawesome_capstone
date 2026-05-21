@@ -705,7 +705,7 @@
 
 .vet-pet-profile-header {
   display: grid;
-  grid-template-columns: 52px minmax(0, 1fr) auto;
+  grid-template-columns: 64px minmax(0, 1fr) auto;
   align-items: center;
   gap: 0.85rem;
 }
@@ -909,7 +909,7 @@
   }
 
   .vet-pet-profile-header {
-    grid-template-columns: 52px minmax(0, 1fr);
+    grid-template-columns: 64px minmax(0, 1fr);
   }
 
   .vet-pet-status {

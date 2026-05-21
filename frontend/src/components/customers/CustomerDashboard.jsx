@@ -23,6 +23,7 @@ import {
 import CustomerSidebar from "./CustomerSidebar";
 import CustomerDashboardChatbot from "../CustomerDashboardChatbot";
 import NotificationDropdown from "../shared/NotificationDropdown";
+import PetAvatar from "../shared/PetAvatar";
 import DashboardProfile from "../shared/DashboardProfile";
 import { apiRequest, clearAuthStorage, uploadProfilePhoto } from "../../api/client";
 import { useTheme } from "../../utils/theme";
@@ -401,9 +402,7 @@ const CustomerDashboard = () => {
                       {filteredRecentPets.map((pet, idx) => (
                         <div key={idx} className="pet-card">
                           <div className="pet-card-header">
-                            <div className="pet-avatar">
-                              <FontAwesomeIcon icon={faPaw} />
-                            </div>
+                            <PetAvatar pet={pet} size={44} />
                             <div>
                               <strong>{pet.name || "Pet"}</strong>
                               <span className="pet-type">{pet.species || pet.type || "Pet"}</span>

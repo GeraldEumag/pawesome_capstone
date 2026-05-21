@@ -21,6 +21,7 @@ import {
 } from "@fortawesome/free-solid-svg-icons";
 import "./ReceptionistHotelBookings.css";
 import { apiRequest } from "../../api/client";
+import PetAvatar from "../shared/PetAvatar";
 
 const STATUS_OPTIONS = [
   { value: "all", label: "All Status" },
@@ -692,9 +693,7 @@ const ReceptionistHotelBookings = () => {
 
                       <td className="pet-info">
                         <div className="pet-details">
-                          <div className="pet-avatar">
-                            <FontAwesomeIcon icon={faPaw} />
-                          </div>
+                          <PetAvatar pet={booking.pet} size={40} className="pet-avatar" />
                           <div>
                             <span className="pet-name">{getPetName(booking)}</span>
                             <small>

@@ -25,6 +25,7 @@ import {
 } from "@fortawesome/free-solid-svg-icons";
 import toast from "react-hot-toast";
 import { apiRequest } from "../../api/client";
+import PetAvatar from "../shared/PetAvatar";
 import "./VetCustomerProfiles.css";
 
 const VetCustomerProfiles = () => {
@@ -148,6 +149,7 @@ const VetCustomerProfiles = () => {
     age: getPetAge(pet),
     status: getPetStatus(pet),
     notes: getPetNotes(pet),
+    image_url: pet?.image_url || pet?.image || null,
     createdAt: pet?.created_at || pet?.registered_at || "",
     lastVisit:
       pet?.last_visit ||
@@ -614,9 +616,7 @@ const VetCustomerProfiles = () => {
                   {selectedProfile.pets.map((pet) => (
                     <article key={pet.id} className="vet-pet-profile-card">
                       <div className="vet-pet-profile-header">
-                        <div className="vet-pet-icon">
-                          <FontAwesomeIcon icon={faPaw} />
-                        </div>
+                        <PetAvatar pet={pet} size={64} />
 
                         <div>
                           <h5>{pet.name}</h5>

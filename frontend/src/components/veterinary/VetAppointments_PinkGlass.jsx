@@ -27,6 +27,7 @@ import {
 import { NavLink, useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
 import { apiRequest } from "../../api/client";
+import PetAvatar from "../shared/PetAvatar";
 import styled, { createGlobalStyle } from "styled-components";
 import {
   // eslint-disable-next-line no-unused-vars

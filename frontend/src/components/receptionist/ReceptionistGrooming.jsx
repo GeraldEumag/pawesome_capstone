@@ -22,6 +22,7 @@ import {
 } from "@fortawesome/free-solid-svg-icons";
 import "./ReceptionistGrooming.css";
 import { apiRequest } from "../../api/client";
+import PetAvatar from "../shared/PetAvatar";
 import GroomingInventoryUsage from "../grooming/GroomingInventoryUsage";
 
 const STATUS_OPTIONS = [
@@ -619,9 +620,7 @@ const Grooming = () => {
 
                     <td className="pet-info">
                       <div className="pet-details">
-                        <div className="pet-avatar">
-                          <FontAwesomeIcon icon={faPaw} />
-                        </div>
+                        <PetAvatar pet={appointment.pet} size={40} className="pet-avatar" />
                         <div>
                           <span className="pet-name">{appointment.petName}</span>
                           <small>

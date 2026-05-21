@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Pet;
 use App\Models\Customer;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 
 class PetController extends Controller
 {
@@ -79,6 +80,7 @@ class PetController extends Controller
             'age' => 'nullable|integer|min:0',
             'gender' => 'nullable|string|max:50',
             'notes' => 'nullable|string',
+            'image' => 'nullable|image|mimes:jpg,jpeg,png,webp|max:5120',
         ]);
 
         $user = $request->user();
@@ -94,7 +96,7 @@ class PetController extends Controller
             ]
         );
 
-        $pet = Pet::create([
+        $petData = [
             'customer_id' => $customer->id,
             'name' => $validated['name'],
             'species' => $validated['species'],
@@ -104,11 +106,18 @@ class PetController extends Controller
             'age' => null,
             'gender' => $validated['gender'] ?? null,
             'notes' => $validated['notes'] ?? null,
-        ]);
+        ];
+
+        if ($request->hasFile('image')) {
+            $petData['image'] = $request->file('image')->store('pet_photos', 'public');
+        }
+
+        $pet = Pet::create($petData);
 
         return response()->json([
             'message' => 'Pet added successfully.',
             'pet' => $pet,
+            'image_url' => $pet->image_url,
         ], 201);
     }
 
@@ -134,6 +143,7 @@ class PetController extends Controller
             'age' => 'nullable|integer|min:0',
             'gender' => 'nullable|string|max:50',
             'notes' => 'nullable|string',
+            'image' => 'nullable|image|mimes:jpg,jpeg,png,webp|max:5120',
         ]);
 
         $pet = Pet::findOrFail($id);
@@ -146,11 +156,19 @@ class PetController extends Controller
         $validated['birth_date'] = $validated['birth_date'] ?? $validated['birthdate'] ?? null;
         $validated['age'] = null;
 
+        if ($request->hasFile('image')) {
+            if ($pet->image) {
+                Storage::disk('public')->delete($pet->image);
+            }
+            $validated['image'] = $request->file('image')->store('pet_photos', 'public');
+        }
+
         $pet->update($validated);
 
         return response()->json([
             'message' => 'Pet updated successfully',
-            'pet' => $pet
+            'pet' => $pet,
+            'image_url' => $pet->image_url,
         ]);
     }
 

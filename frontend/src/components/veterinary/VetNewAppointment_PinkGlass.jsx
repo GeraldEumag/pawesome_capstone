@@ -18,6 +18,7 @@ import {
 } from "@fortawesome/free-solid-svg-icons";
 import toast from "react-hot-toast";
 import { apiRequest } from "../../api/client";
+import PetAvatar from "../shared/PetAvatar";
 import "./VetNewAppointment_PinkGlass.css";
 
 const VetNewAppointment = () => {
@@ -559,9 +560,7 @@ const VetNewAppointment = () => {
                     className={`pet-option ${String(formData.pet_id) === String(pet.id) ? "selected" : ""}`}
                     onClick={() => handlePetSelect(pet)}
                   >
-                    <span className="pet-option-icon">
-                      <FontAwesomeIcon icon={faPaw} />
-                    </span>
+                    <PetAvatar pet={pet} size={36} />
 
                     <span>
                       <strong>{getPetName(pet)}</strong>

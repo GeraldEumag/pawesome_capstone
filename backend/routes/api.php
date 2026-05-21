@@ -957,4 +957,5 @@ Route::middleware(['throttle:api'])->group(function () {
 Route::middleware(['auth.api', 'throttle:api'])->prefix('files')->group(function () {
     Route::get('/payment-proofs/{type}/{id}/view', [SecureFileController::class, 'viewPaymentProof']);
     Route::get('/profile-photos/{userId}/view', [SecureFileController::class, 'viewProfilePhoto']);
+    Route::get('/pet-photos/{petId}/view', [SecureFileController::class, 'viewPetImage']);
 });

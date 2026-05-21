@@ -16,6 +16,7 @@ use Illuminate\Support\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Facades\Storage;
 
 class PortalController extends Controller
 {
@@ -275,10 +276,20 @@ class PortalController extends Controller
             'age' => 'nullable|integer|min:0',
             'gender' => 'nullable|string|max:50',
             'notes' => 'nullable|string',
+            'image' => 'nullable|image|mimes:jpg,jpeg,png,webp|max:5120',
         ]);
 
-        $pet = Pet::create(array_merge($data, ['customer_id' => $cust->id]));
-        return response()->json($pet, 201);
+        $petData = array_merge($data, ['customer_id' => $cust->id]);
+
+        if ($request->hasFile('image')) {
+            $petData['image'] = $request->file('image')->store('pet_photos', 'public');
+        }
+
+        $pet = Pet::create($petData);
+        return response()->json([
+            'pet' => $pet,
+            'image_url' => $pet->image_url,
+        ], 201);
     }
 
     public function deletePet($id)

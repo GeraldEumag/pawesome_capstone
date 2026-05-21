@@ -16,6 +16,7 @@ import {
 
 import { apiRequest } from "../../api/client";
 import { useTheme } from "../../utils/theme";
+import PetAvatar from "../shared/PetAvatar";
 import toast from "react-hot-toast";
 import "./VeterinaryCurrentBoarders.css";
 
@@ -182,9 +183,7 @@ const VeterinaryCurrentBoarders = () => {
               <div key={boarder.id} className="boarder-card">
                 <div className="boarder-header">
                   <div className="pet-info">
-                    <div className="pet-avatar">
-                      <FontAwesomeIcon icon={faPaw} />
-                    </div>
+                    <PetAvatar pet={boarder.pet} size={44} className="pet-avatar" />
                     <div>
                       <h3>{boarder.pet?.name || "Unknown"}</h3>
                       <p className="pet-details">
