@@ -21,6 +21,8 @@ import {
   faSpinner,
   faExclamationTriangle,
   faCheck,
+  faTasks,
+  faTimes,
 } from "@fortawesome/free-solid-svg-icons";
 import { apiRequest } from "../../api/client";
 import PetAvatar from "../shared/PetAvatar";
@@ -38,6 +40,7 @@ const VetAppointments = () => {
   const [actionLoading, setActionLoading] = useState(false);
   const [selectedVet, setSelectedVet] = useState("");
   const [vetAssignments, setVetAssignments] = useState({});
+  const [selectedIds, setSelectedIds] = useState(new Set());
 
   // Fetch appointments and veterinarians on mount
   useEffect(() => {
@@ -76,7 +79,6 @@ const VetAppointments = () => {
       setAppointments(transformedAppointments);
       setError("");
     } catch (err) {
-      console.error("Failed to fetch appointments:", err);
       setError("Failed to load appointments. Please try again.");
     } finally {
       setLoading(false);
@@ -95,7 +97,6 @@ const VetAppointments = () => {
         setError("No active veterinarian accounts found. Create or activate a veterinarian user first.");
       }
     } catch (err) {
-      console.error("Failed to fetch veterinarians:", err);
       setError("Could not load veterinarian list. Please refresh or check the receptionist permission.");
       setVeterinarians([]);
     }
@@ -122,7 +123,6 @@ const VetAppointments = () => {
       setSelectedVet("");
       setError("");
     } catch (err) {
-      console.error("Failed to approve appointment:", err);
       setError(err.message || "Failed to approve appointment");
     } finally {
       setActionLoading(false);
@@ -146,7 +146,6 @@ const VetAppointments = () => {
       setSelectedAppointment(null);
       setError("");
     } catch (err) {
-      console.error("Failed to cancel appointment:", err);
       setError(err.message || "Failed to cancel appointment");
     } finally {
       setActionLoading(false);
@@ -154,6 +153,77 @@ const VetAppointments = () => {
   };
 
   // Reschedule appointment
+  // ── Bulk actions ──────────────────────────────────────────
+
+  const toggleSelect = (rawId) => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(rawId)) next.delete(rawId); else next.add(rawId);
+      return next;
+    });
+  };
+
+  const selectAllVisible = () => {
+    const visiblePending = filteredAppointments.filter((a) => a.status === "pending");
+    if (visiblePending.length === 0) return;
+    const allSelected = visiblePending.every((a) => selectedIds.has(a.rawId));
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      visiblePending.forEach((a) => {
+        if (allSelected) next.delete(a.rawId); else next.add(a.rawId);
+      });
+      return next;
+    });
+  };
+
+  const handleBulkApprove = async () => {
+    const ids = Array.from(selectedIds);
+    const withoutVet = ids.filter((id) => !vetAssignments[id]);
+    if (withoutVet.length > 0) { setError("Please assign a veterinarian to every selected appointment."); return; }
+    if (!(await showConfirm(`Approve ${ids.length} selected appointments?`))) return;
+    setActionLoading(true);
+    setError("");
+    try {
+      await Promise.all(
+        ids.map((id) =>
+          apiRequest(`/receptionist/requests/${id}/approve`, {
+            method: "POST",
+            body: JSON.stringify({ veterinarian_id: Number(vetAssignments[id]) }),
+          })
+        )
+      );
+      setSelectedIds(new Set());
+      await fetchAppointments();
+    } catch (err) {
+      setError(err.message || "Bulk approve failed.");
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  const handleBulkCancel = async () => {
+    const ids = Array.from(selectedIds);
+    if (!(await showConfirm(`Cancel ${ids.length} selected appointments?`))) return;
+    setActionLoading(true);
+    setError("");
+    try {
+      await Promise.all(
+        ids.map((id) =>
+          apiRequest(`/receptionist/requests/${id}/status`, {
+            method: "PATCH",
+            body: JSON.stringify({ status: "rejected" }),
+          })
+        )
+      );
+      setSelectedIds(new Set());
+      await fetchAppointments();
+    } catch (err) {
+      setError(err.message || "Bulk cancel failed.");
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
   const handleReschedule = async (appointmentId, newDateTime) => {
     if (!appointmentId || !newDateTime) {
       setError("Choose an approved appointment and a new schedule before rescheduling.");
@@ -171,7 +241,6 @@ const VetAppointments = () => {
       setSelectedAppointment(null);
       setError("");
     } catch (err) {
-      console.error("Failed to reschedule appointment:", err);
       setError(err.message || "Failed to reschedule appointment");
     } finally {
       setActionLoading(false);
@@ -321,6 +390,24 @@ const VetAppointments = () => {
         </div>
       </div>
 
+      {/* Bulk Action Bar */}
+      {selectedIds.size > 0 && (
+        <div className="bulk-action-bar">
+          <span><FontAwesomeIcon icon={faTasks} /> <strong>{selectedIds.size}</strong> selected</span>
+          <div className="bulk-actions">
+            <button className="primary-btn" onClick={handleBulkApprove} disabled={actionLoading}>
+              <FontAwesomeIcon icon={faCheckCircle} /> Approve Selected
+            </button>
+            <button className="secondary-btn" onClick={handleBulkCancel} disabled={actionLoading}>
+              <FontAwesomeIcon icon={faTimesCircle} /> Cancel Selected
+            </button>
+            <button className="secondary-btn" onClick={() => setSelectedIds(new Set())} disabled={actionLoading}>
+              <FontAwesomeIcon icon={faTimes} /> Clear
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* Filters */}
       <div className="appointments-controls">
         <div className="search-filter-group">
@@ -366,6 +453,17 @@ const VetAppointments = () => {
         <table className="appointments-table">
           <thead>
             <tr>
+              <th>
+                <input
+                  type="checkbox"
+                  onChange={selectAllVisible}
+                  checked={
+                    filteredAppointments.filter((a) => a.status === "pending").length > 0 &&
+                    filteredAppointments.filter((a) => a.status === "pending").every((a) => selectedIds.has(a.rawId))
+                  }
+                  title="Select all pending"
+                />
+              </th>
               <th>Appointment ID</th>
               <th>Pet Info</th>
               <th>Owner</th>
@@ -380,7 +478,16 @@ const VetAppointments = () => {
           </thead>
           <tbody>
             {filteredAppointments.map((appointment) => (
-              <tr key={appointment.id} className="appointment-row">
+              <tr key={appointment.id} className={`appointment-row ${selectedIds.has(appointment.rawId) ? "selected" : ""}`}>
+                <td>
+                  {appointment.status === "pending" && (
+                    <input
+                      type="checkbox"
+                      checked={selectedIds.has(appointment.rawId)}
+                      onChange={() => toggleSelect(appointment.rawId)}
+                    />
+                  )}
+                </td>
                 <td className="appointment-id">
                   <span className="id-badge">{appointment.id}</span>
                 </td>

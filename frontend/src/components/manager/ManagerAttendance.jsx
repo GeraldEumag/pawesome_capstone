@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import DatePickerInput from "../../components/shared/DatePickerInput";
 import {
   faCalendarAlt,
   faCheckCircle,
@@ -743,12 +744,12 @@ const ManagerAttendance = () => {
         <div className="attendance-date-row">
           <div className="attendance-date-field">
             <label htmlFor="manager-attendance-date">Attendance Date</label>
-            <input
+            <DatePickerInput
               id="manager-attendance-date"
-              type="date"
-              value={selectedDate}
-              max={TODAY}
-              onChange={(event) => setSelectedDate(event.target.value)}
+              selected={selectedDate ? new Date(selectedDate) : null}
+              onChange={(date) => setSelectedDate(date ? date.toISOString().split("T")[0] : "")}
+              placeholderText="Pick a date..."
+              maxDate={new Date()}
             />
           </div>
 

@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import DatePickerInput from "../../components/shared/DatePickerInput";
 import {
   faCalendarAlt,
   faChartLine,
@@ -1009,18 +1010,18 @@ const ManagerReports = () => {
 
         <div className="reports-filter-grid">
           <FilterField label="Start Date">
-            <input
-              type="date"
-              value={startDate}
-              onChange={(event) => setStartDate(event.target.value)}
+            <DatePickerInput
+              selected={startDate ? new Date(startDate) : null}
+              onChange={(date) => setStartDate(date ? date.toISOString().split("T")[0] : "")}
+              placeholderText="From..."
             />
           </FilterField>
 
           <FilterField label="End Date">
-            <input
-              type="date"
-              value={endDate}
-              onChange={(event) => setEndDate(event.target.value)}
+            <DatePickerInput
+              selected={endDate ? new Date(endDate) : null}
+              onChange={(date) => setEndDate(date ? date.toISOString().split("T")[0] : "")}
+              placeholderText="To..."
             />
           </FilterField>
 

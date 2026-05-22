@@ -1,7 +1,13 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import styled, { createGlobalStyle, keyframes, css } from "styled-components";
-import { apiRequest, normalizeList } from "../../api/client";
+import { apiRequest } from "../../api/client";
+import {
+  normalizeList,
+  getAvailableStock,
+  normProduct,
+  formatCurrency,
+} from "../../utils/apiNormalize";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
   faPaw, faSearch, faRotateRight, faTrash, faBoxOpen,
@@ -28,46 +34,11 @@ const PAYMENT_METHODS = [
 const QUICK_AMOUNTS = [20, 50, 100, 200, 500, 1000];
 
 /* ─── Helpers ──────────────────────────────────────────────────── */
-const fmt = (amount) =>
-  (Number(amount) || 0).toLocaleString("en-PH", { style: "currency", currency: "PHP" });
-
-const normCat = (v) => String(v || "others").trim().toLowerCase();
+const fmt = (amount) => formatCurrency(amount, { minimumFractionDigits: 0 });
 
 const toNumber = (value) => {
   const num = Number(value);
   return Number.isFinite(num) ? num : 0;
-};
-
-const getAvailableStock = (item) =>
-  toNumber(
-    item?.available_stock ??
-    item?.available_quantity ??
-    item?.current_stock ??
-    item?.stock ??
-    item?.quantity ??
-    item?.total_stock ??
-    item?.stock_quantity ??
-    0
-  );
-
-const normProduct = (p, i) => {
-  const availableStock = getAvailableStock(p);
-
-  return {
-    ...p,
-    id: p?.id ?? p?.inventory_item_id ?? p?.product_id ?? p?.item_id ?? i + 1,
-    name: p?.name ?? p?.product_name ?? p?.item_name ?? "Unnamed Product",
-    price: toNumber(p?.price ?? p?.selling_price ?? p?.unit_price ?? 0),
-    stock: availableStock,
-    available_stock: availableStock,
-    stock_status: availableStock > 0 ? "in_stock" : "out_of_stock",
-    is_available: availableStock > 0,
-    category: normCat(p?.category || p?.product_category || p?.type),
-    image: p?.photo_url || p?.image || p?.image_url || p?.photo || "",
-    barcode: p?.barcode || p?.sku || p?.item_code || "",
-    discount: toNumber(p?.discount ?? p?.discount_percent ?? 0),
-    raw: p,
-  };
 };
 
 const discountedPrice = (p) => {
@@ -1435,8 +1406,7 @@ const CashierPOS = () => {
       document.documentElement.requestFullscreen().then(() => {
         setIsFullscreen(true);
         addToast("Entered fullscreen mode", "success");
-      }).catch(err => {
-        console.error("Error entering fullscreen:", err);
+      }).catch(() => {
         // Restore navbar and sidebar if fullscreen fails
         if (navbar) navbar.style.display = '';
         if (sidebar) sidebar.style.display = '';
@@ -1453,8 +1423,7 @@ const CashierPOS = () => {
           if (sidebar) sidebar.style.display = '';
         }, 100);
         addToast("Exited fullscreen mode", "info");
-      }).catch(err => {
-        console.error("Error exiting fullscreen:", err);
+      }).catch(() => {
         addToast("Could not exit fullscreen mode", "error");
       });
     }

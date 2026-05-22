@@ -1,0 +1,66 @@
+<?php
+
+use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
+
+return new class extends Migration
+{
+    public function up(): void
+    {
+        // 1. pets.customer_id: cascade -> set null (pets should survive customer deletion)
+        Schema::table('pets', function (Blueprint $table) {
+            $table->dropForeign(['customer_id']);
+            $table->foreignId('customer_id')->nullable()->constrained('users')->onDelete('set null');
+        });
+
+        // 2. appointments: cascade -> set null for customer/pet/service
+        Schema::table('appointments', function (Blueprint $table) {
+            $table->dropForeign(['customer_id']);
+            $table->dropForeign(['pet_id']);
+            $table->dropForeign(['service_id']);
+            $table->foreignId('customer_id')->nullable()->constrained('users')->onDelete('set null');
+            $table->foreignId('pet_id')->nullable()->constrained('pets')->onDelete('set null');
+            $table->foreignId('service_id')->nullable()->constrained('services')->onDelete('set null');
+        });
+
+        // 3. boardings.pet_id: cascade -> set null
+        Schema::table('boardings', function (Blueprint $table) {
+            $table->dropForeign(['pet_id']);
+            $table->foreignId('pet_id')->nullable()->constrained('pets')->onDelete('set null');
+        });
+
+        // 4. inventory_logs.inventory_item_id: cascade -> set null
+        Schema::table('inventory_logs', function (Blueprint $table) {
+            $table->dropForeign(['inventory_item_id']);
+            $table->foreignId('inventory_item_id')->nullable()->constrained('inventory_items')->onDelete('set null');
+        });
+    }
+
+    public function down(): void
+    {
+        Schema::table('pets', function (Blueprint $table) {
+            $table->dropForeign(['customer_id']);
+            $table->foreignId('customer_id')->constrained('users')->onDelete('cascade');
+        });
+
+        Schema::table('appointments', function (Blueprint $table) {
+            $table->dropForeign(['customer_id']);
+            $table->dropForeign(['pet_id']);
+            $table->dropForeign(['service_id']);
+            $table->foreignId('customer_id')->constrained('users')->onDelete('cascade');
+            $table->foreignId('pet_id')->constrained('pets')->onDelete('cascade');
+            $table->foreignId('service_id')->constrained('services')->onDelete('cascade');
+        });
+
+        Schema::table('boardings', function (Blueprint $table) {
+            $table->dropForeign(['pet_id']);
+            $table->foreignId('pet_id')->constrained('pets')->onDelete('cascade');
+        });
+
+        Schema::table('inventory_logs', function (Blueprint $table) {
+            $table->dropForeign(['inventory_item_id']);
+            $table->foreignId('inventory_item_id')->constrained('inventory_items')->onDelete('cascade');
+        });
+    }
+};

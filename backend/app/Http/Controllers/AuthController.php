@@ -126,14 +126,14 @@ class AuthController extends Controller
             'message' => 'Login successful',
             'user' => $user,
             'token' => $token,
-        ]);
+        ])->cookie('auth_token', $token, 4320, '/', null, false, true);
     }
 
     public function me(Request $request)
     {
         try {
-            // Get token from Authorization header
-            $token = $request->bearerToken();
+            // Get token from httpOnly cookie first, then fallback to Authorization header
+            $token = $request->cookie('auth_token') ?? $request->bearerToken();
             if (!$token) {
                 return response()->json(['error' => 'No token provided'], 401);
             }
@@ -323,7 +323,8 @@ class AuthController extends Controller
             $user->currentAccessToken()?->delete();
         }
 
-        return response()->json(['message' => 'Logout successful']);
+        return response()->json(['message' => 'Logout successful'])
+            ->cookie('auth_token', '', -1, '/', null, false, true);
     }
 
     /**

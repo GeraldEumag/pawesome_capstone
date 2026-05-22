@@ -14,8 +14,7 @@ const CustomerManagement = lazy(() => import("../components/receptionist/Recepti
 const CustomersProfile = lazy(() => import("../components/receptionist/ReceptionistCustomersProfile"));
 const ProfileSettings = lazy(() => import("../components/shared/ProfileSettings"));
 const AppointmentList = lazy(() => import("../components/receptionist/ReceptionistAppointmentList"));
-const CheckInForm = lazy(() => import("../components/receptionist/ReceptionistCheckInForm"));
-const CheckOutForm = lazy(() => import("../components/receptionist/ReceptionistCheckOutForm"));
+const BoardingManager = lazy(() => import("../components/receptionist/ReceptionistBoardingManager"));
 const Reports = lazy(() => import("../components/customers/CustomerReports"));
 const Approvals = lazy(() => import("../components/receptionist/ReceptionistApprovals"));
 const ReceptionistHistory = lazy(() => import("../components/receptionist/ReceptionistHistory"));
@@ -38,8 +37,9 @@ const ReceptionistRoutes = () => (
         <Route index element={<Navigate to="dashboard" replace />} />
         <Route path="dashboard" element={<ReceptionistDashboard />} />
         <Route path="appointments" element={<AppointmentList />} />
-        <Route path="checkin" element={<CheckInForm />} />
-        <Route path="checkout" element={<CheckOutForm />} />
+        <Route path="boarding-manager" element={<BoardingManager />} />
+        <Route path="checkin" element={<Navigate to="/receptionist/boarding-manager" replace />} />
+        <Route path="checkout" element={<Navigate to="/receptionist/boarding-manager" replace />} />
         <Route path="chatbot" element={<ReceptionistChatbot />} />
         {/* Booking sub-routes */}
         <Route path="bookings" element={<ReceptionistBookings />} />

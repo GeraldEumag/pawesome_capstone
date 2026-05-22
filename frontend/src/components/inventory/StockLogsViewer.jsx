@@ -3,6 +3,7 @@ import { inventoryApi } from "../../api/inventory";
 import { normalizeList } from "../../api/client";
 import { generateInventoryAuditPdf } from "../../utils/inventoryAuditPdf";
 import "./StockLogsViewer.css";
+import DatePickerInput from "../shared/DatePickerInput";
 
 const normalizeMovement = (log = {}) => ({
   id: log.id,
@@ -295,22 +296,20 @@ const getInitials = (name) =>
         </div>
 
         <div className="filter-group date-range">
-          <input
-            type="date"
-            value={dateRange.start}
-            onChange={(e) =>
-              setDateRange((prev) => ({ ...prev, start: e.target.value }))
+          <DatePickerInput
+            selected={dateRange.start ? new Date(dateRange.start) : null}
+            onChange={(date) =>
+              setDateRange((prev) => ({ ...prev, start: date ? date.toISOString().split("T")[0] : "" }))
             }
-            placeholder="From"
+            placeholderText="From..."
           />
           <span>to</span>
-          <input
-            type="date"
-            value={dateRange.end}
-            onChange={(e) =>
-              setDateRange((prev) => ({ ...prev, end: e.target.value }))
+          <DatePickerInput
+            selected={dateRange.end ? new Date(dateRange.end) : null}
+            onChange={(date) =>
+              setDateRange((prev) => ({ ...prev, end: date ? date.toISOString().split("T")[0] : "" }))
             }
-            placeholder="To"
+            placeholderText="To..."
           />
         </div>
 

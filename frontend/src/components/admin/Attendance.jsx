@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useState } from "react";
 import "./Attendance.css";
 import { attendanceApi } from "../../api/attendance";
 import { apiRequest } from "../../api/client";
+import DatePickerInput from "../../components/shared/DatePickerInput";
 import { showAlert, showError } from "../../utils/alert";
 
 const Attendance = () => {
@@ -156,11 +157,10 @@ const Attendance = () => {
         </div>
 
         <div className="actions">
-          <input
-            type="date"
-            value={selectedDate}
-            onChange={(e) => setSelectedDate(e.target.value)}
-            className="date-picker"
+          <DatePickerInput
+            selected={selectedDate ? new Date(selectedDate) : null}
+            onChange={(date) => setSelectedDate(date ? date.toISOString().split("T")[0] : "")}
+            placeholderText="Pick a date..."
           />
 
           <input
@@ -316,11 +316,10 @@ const Attendance = () => {
 
               <label>
                 Date
-                <input
-                  type="date"
-                  name="date"
-                  value={formData.date}
-                  onChange={handleChange}
+                <DatePickerInput
+                  selected={formData.date ? new Date(formData.date) : null}
+                  onChange={(date) => handleChange({ target: { name: "date", value: date ? date.toISOString().split("T")[0] : "" } })}
+                  placeholderText="Pick a date..."
                 />
               </label>
 

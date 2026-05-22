@@ -261,6 +261,9 @@ const ReceptionistApprovals = () => {
     remarks: "",
     rejectionReason: "",
   });
+  const [selectedIds, setSelectedIds] = useState(new Set());
+  const [bulkActionOpen, setBulkActionOpen] = useState(false);
+  const [bulkActionType, setBulkActionType] = useState("");
 
   const showMessage = (type, message) => {
     if (type === "success") {
@@ -305,7 +308,6 @@ const ReceptionistApprovals = () => {
       setRequests([...(Array.isArray(list) ? list : []), ...boardings]);
       setLastUpdated(new Date().toLocaleString("en-PH"));
     } catch (err) {
-      console.error("Failed to load approvals:", err);
       setRequests([]);
       showMessage("error", err.message || "Failed to load pending requests.");
     } finally {
@@ -329,7 +331,6 @@ const ReceptionistApprovals = () => {
           : ""
       );
     } catch (err) {
-      console.error("Failed to load veterinarians:", err);
       setVeterinarians([]);
       setVetError("Could not load veterinarians. Refresh before approving veterinary requests.");
     }
@@ -473,8 +474,6 @@ const ReceptionistApprovals = () => {
       closeActionModal();
       await fetchRequests({ silent: true });
     } catch (err) {
-      console.error("Approve request error:", err);
-      
       // Handle specific double booking conflict errors
       if (err.message?.includes('already has an appointment at selected date and time')) {
         showMessage("error", "This veterinarian already has an appointment at the selected date and time.");
@@ -522,7 +521,6 @@ const ReceptionistApprovals = () => {
       closeActionModal();
       await fetchRequests({ silent: true });
     } catch (err) {
-      console.error("Reject request error:", err);
       showMessage("error", err.message || "Failed to reject request.");
     } finally {
       setProcessingId(null);
@@ -538,6 +536,100 @@ const ReceptionistApprovals = () => {
     }
 
     rejectRequest();
+  };
+
+  const toggleSelectId = (id) => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
+
+  const toggleSelectAll = () => {
+    const allIds = new Set(filteredRequests.map(getRequestId));
+    setSelectedIds((prev) => {
+      if (prev.size === allIds.size) return new Set();
+      return allIds;
+    });
+  };
+
+  const openBulkAction = (type) => {
+    setBulkActionType(type);
+    setBulkActionOpen(true);
+    setActionForm({ veterinarianId: "", remarks: "", rejectionReason: "" });
+  };
+
+  const closeBulkAction = () => {
+    setBulkActionOpen(false);
+    setBulkActionType("");
+  };
+
+  const runBulkApprove = async () => {
+    const ids = Array.from(selectedIds);
+    if (ids.length === 0) return;
+    let successCount = 0;
+    let failCount = 0;
+    for (const id of ids) {
+      const item = requests.find((r) => getRequestId(r) === id);
+      if (!item) continue;
+      try {
+        const vetRequest = isVetRequest(item);
+        const hotelRequest = getRequestType(item) === "hotel";
+        const veterinarianId = actionForm.veterinarianId || vetAssignments[id];
+        if (vetRequest && !veterinarianId) {
+          failCount++;
+          continue;
+        }
+        const payload = { receptionist_remarks: actionForm.remarks.trim() || "Approved by receptionist" };
+        if (vetRequest) payload.veterinarian_id = Number(veterinarianId);
+        await apiRequest(
+          hotelRequest
+            ? `/receptionist/boarding-requests/${id}/approve`
+            : `/receptionist/requests/${id}/approve`,
+          { method: "POST", body: JSON.stringify(payload) }
+        );
+        successCount++;
+      } catch {
+        failCount++;
+      }
+    }
+    showMessage("success", `Approved ${successCount} request(s). ${failCount > 0 ? `${failCount} failed.` : ""}`);
+    setSelectedIds(new Set());
+    closeBulkAction();
+    await fetchRequests({ silent: true });
+  };
+
+  const runBulkReject = async () => {
+    const ids = Array.from(selectedIds);
+    const reason = actionForm.rejectionReason.trim();
+    if (!reason) {
+      showMessage("error", "Rejection reason is required.");
+      return;
+    }
+    let successCount = 0;
+    let failCount = 0;
+    for (const id of ids) {
+      const item = requests.find((r) => getRequestId(r) === id);
+      if (!item) continue;
+      try {
+        const hotelRequest = getRequestType(item) === "hotel";
+        await apiRequest(
+          hotelRequest
+            ? `/receptionist/boarding-requests/${id}/reject`
+            : `/receptionist/requests/${id}/reject`,
+          { method: "POST", body: JSON.stringify({ rejection_reason: reason, receptionist_remarks: actionForm.remarks.trim() || reason }) }
+        );
+        successCount++;
+      } catch {
+        failCount++;
+      }
+    }
+    showMessage("success", `Rejected ${successCount} request(s). ${failCount > 0 ? `${failCount} failed.` : ""}`);
+    setSelectedIds(new Set());
+    closeBulkAction();
+    await fetchRequests({ silent: true });
   };
 
   const exportCSV = () => {
@@ -778,6 +870,33 @@ const ReceptionistApprovals = () => {
           </div>
         </div>
 
+        {filteredRequests.length > 0 && (
+          <div className="approval-bulk-bar">
+            <label className="approval-bulk-select">
+              <input
+                type="checkbox"
+                checked={selectedIds.size > 0 && selectedIds.size === filteredRequests.length}
+                onChange={toggleSelectAll}
+              />
+              <span>
+                {selectedIds.size === 0
+                  ? "Select All"
+                  : `${selectedIds.size} selected`}
+              </span>
+            </label>
+            {selectedIds.size > 0 && (
+              <div className="approval-bulk-actions">
+                <button type="button" className="approve-btn" onClick={() => openBulkAction("approve")}>
+                  <FaCheckCircle /> Bulk Approve
+                </button>
+                <button type="button" className="reject-btn" onClick={() => openBulkAction("reject")}>
+                  <FaTimesCircle /> Bulk Reject
+                </button>
+              </div>
+            )}
+          </div>
+        )}
+
         {loading ? (
           <div className="approval-state">
             <FaSpinner className="spin" />
@@ -808,6 +927,13 @@ const ReceptionistApprovals = () => {
 
                       <span className="request-id">#{requestId}</span>
                     </div>
+                    <label className="approval-item-select">
+                      <input
+                        type="checkbox"
+                        checked={selectedIds.has(requestId)}
+                        onChange={() => toggleSelectId(requestId)}
+                      />
+                    </label>
 
                     <h3>{getServiceName(item)}</h3>
 
@@ -1077,6 +1203,94 @@ const ReceptionistApprovals = () => {
                     <FaTimesCircle />
                   )}
                   {actionType === "approve" ? "Approve Request" : "Reject Request"}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {bulkActionOpen && (
+        <div className="approval-modal-overlay" onClick={closeBulkAction}>
+          <div className="approval-modal" onClick={(event) => event.stopPropagation()}>
+            <div className="approval-modal-header">
+              <div>
+                <span className="approval-eyebrow">
+                  {bulkActionType === "approve" ? <FaCheckCircle /> : <FaTimesCircle />}
+                  {bulkActionType === "approve" ? "Bulk Approve" : "Bulk Reject"}
+                </span>
+                <h2>{selectedIds.size} Request(s) Selected</h2>
+              </div>
+              <button type="button" className="close-modal-btn" onClick={closeBulkAction}>
+                <FaTimes />
+              </button>
+            </div>
+
+            <form className="approval-modal-body" onSubmit={(e) => { e.preventDefault(); bulkActionType === "approve" ? runBulkApprove() : runBulkReject(); }}>
+              {bulkActionType === "approve" && (
+                <div className="form-group">
+                  <label>Default Veterinarian (for vet requests)</label>
+                  <select
+                    value={actionForm.veterinarianId}
+                    onChange={(event) =>
+                      setActionForm((current) => ({
+                        ...current,
+                        veterinarianId: event.target.value,
+                      }))
+                    }
+                  >
+                    <option value="">Use per-request assignment</option>
+                    {veterinarians.map((vet) => (
+                      <option key={vet.id} value={vet.id}>
+                        {vet.name || vet.full_name || `Veterinarian #${vet.id}`}
+                      </option>
+                    ))}
+                  </select>
+                  {vetError && <small className="form-error">{vetError}</small>}
+                </div>
+              )}
+
+              {bulkActionType === "reject" && (
+                <div className="form-group">
+                  <label>Rejection Reason *</label>
+                  <textarea
+                    value={actionForm.rejectionReason}
+                    onChange={(event) =>
+                      setActionForm((current) => ({
+                        ...current,
+                        rejectionReason: event.target.value,
+                      }))
+                    }
+                    placeholder="Enter a clear reason for rejection."
+                    required
+                  />
+                </div>
+              )}
+
+              <div className="form-group">
+                <label>Receptionist Remarks</label>
+                <textarea
+                  value={actionForm.remarks}
+                  onChange={(event) =>
+                    setActionForm((current) => ({
+                      ...current,
+                      remarks: event.target.value,
+                    }))
+                  }
+                  placeholder="Optional remarks for this action."
+                />
+              </div>
+
+              <div className="approval-modal-actions">
+                <button type="button" className="secondary-btn" onClick={closeBulkAction}>
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className={bulkActionType === "approve" ? "primary-btn" : "danger-btn"}
+                >
+                  {bulkActionType === "approve" ? <FaCheckCircle /> : <FaTimesCircle />}
+                  {bulkActionType === "approve" ? "Bulk Approve" : "Bulk Reject"}
                 </button>
               </div>
             </form>

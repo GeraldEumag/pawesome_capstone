@@ -1,11 +1,10 @@
 import React from "react";
-import { Routes, Route } from "react-router-dom";
+import { Routes, Route, Navigate } from "react-router-dom";
 import ProtectedRoute from "../components/ProtectedRoute";
 import CustomerDashboard from "../components/customers/CustomerDashboard";
 
 // Core customer modules
 import CustomerReports from "../components/customers/CustomerReports";
-import CustomerBookings from "../components/customers/CustomerBookings";
 import CustomerPets from "../components/customers/CustomerPets";
 import CustomerOrders from "../components/customers/CustomerOrders";
 import CustomerChatbot from "../components/customers/CustomerChatbot";
@@ -16,10 +15,9 @@ import CustomerNotifications from "../components/customers/CustomerNotifications
 import HotelForm from "../components/customers/HotelForm";
 import GroomingForm from "../components/customers/GroomingForm";
 import VetForm from "../components/customers/VetForm";
-import CustomerBookingForm from "../components/customers/CustomerBookingForm";
-import CustomerRequestStatus from "../components/customers/CustomerRequestStatus";
 import CustomerMedicalConfinements from "../components/customers/CustomerMedicalConfinements";
 import CustomerHistory from "../components/customers/CustomerHistory";
+import CustomerServices from "../components/customers/CustomerServices";
 
 const CustomerRoutes = () => (
   <Routes>
@@ -35,9 +33,10 @@ const CustomerRoutes = () => (
       <Route index element={<CustomerReports />} />
 
       {/* Core customer routes */}
-      <Route path="bookings" element={<CustomerBookings />} />
-      <Route path="booking" element={<CustomerBookingForm />} />
-      <Route path="requests" element={<CustomerRequestStatus />} />
+      <Route path="services" element={<CustomerServices />} />
+      <Route path="bookings" element={<Navigate to="/customer/services" replace />} />
+      <Route path="booking" element={<Navigate to="/customer/services" replace />} />
+      <Route path="requests" element={<Navigate to="/customer/services" replace />} />
       <Route path="orders" element={<CustomerOrders />} />
       <Route path="pets" element={<CustomerPets />} />
       <Route path="hotel" element={<HotelForm />} />

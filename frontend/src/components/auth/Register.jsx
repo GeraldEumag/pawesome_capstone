@@ -22,6 +22,7 @@ import {
   faUserPlus,
 } from "@fortawesome/free-solid-svg-icons";
 import { apiRequest, clearAuthStorage } from "../../api/client";
+import DatePickerInput from "../../components/shared/DatePickerInput";
 import "./Register.css";
 
 const INITIAL_FORM = {
@@ -564,12 +565,12 @@ const Register = () => {
 
                   <div className="register-form-group">
                     <label htmlFor="dateOfBirth">Date of Birth</label>
-                    <input
+                    <DatePickerInput
                       id="dateOfBirth"
-                      name="dateOfBirth"
-                      type="date"
-                      value={formData.dateOfBirth}
-                      onChange={handleChange}
+                      selected={formData.dateOfBirth ? new Date(formData.dateOfBirth) : null}
+                      onChange={(date) => handleChange({ target: { name: "dateOfBirth", value: date ? date.toISOString().split("T")[0] : "" } })}
+                      placeholderText="Select birthdate..."
+                      maxDate={new Date()}
                     />
                   </div>
 

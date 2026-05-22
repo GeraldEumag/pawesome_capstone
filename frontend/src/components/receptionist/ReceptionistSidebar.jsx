@@ -1,6 +1,7 @@
 import React from "react";
 import { NavLink, useNavigate } from "react-router-dom";
 import { showConfirm } from "../../utils/alert";
+import { apiRequest, clearAuthStorage } from "../../api/client";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
   faCalendarAlt,
@@ -23,9 +24,8 @@ const ReceptionistSidebar = () => {
   const handleLogout = async () => {
     const confirmed = await showConfirm("Are you sure you want to log out?", "", "Yes", "Cancel", "question", true);
     if (!confirmed) return;
-    localStorage.removeItem("token");
-    localStorage.removeItem("role");
-    localStorage.removeItem("name");
+    try { await apiRequest("/auth/logout", { method: "POST" }); } catch {}
+    clearAuthStorage();
     navigate("/");
   };
 
@@ -62,12 +62,12 @@ const ReceptionistSidebar = () => {
           </li>
           <li className="nav-item">
             <NavLink
-              to="/receptionist/bookings/hotel"
+              to="/receptionist/boarding-manager"
               end
               className={({ isActive }) => (isActive ? "active" : "")}
             >
               <FontAwesomeIcon icon={faHotel} />
-              <span>Pet Hotel</span>
+              <span>Boarding</span>
             </NavLink>
           </li>
           <li className="nav-item">

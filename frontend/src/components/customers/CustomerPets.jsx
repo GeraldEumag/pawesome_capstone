@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { showConfirm } from "../../utils/alert";
+import DatePickerInput from "../shared/DatePickerInput";
 import {
   FaArchive,
   FaCalendarAlt,
@@ -22,7 +23,7 @@ import {
 } from "react-icons/fa";
 import "./CustomerPets.css";
 import { apiRequest } from "../../api/client";
-import PetAvatar from "../shared/PetAvatar";
+import PetAvatar, { resolveImageUrl } from "../shared/PetAvatar";
 import {
   getSpeciesOptions,
   getBreedOptions,
@@ -197,14 +198,12 @@ const CustomerPets = () => {
 
       try {
         data = await apiRequest("/customer/pets");
-      } catch (customerPetsError) {
-        console.warn("Customer pets endpoint failed. Trying /pets:", customerPetsError);
+      } catch {
         data = await apiRequest("/pets");
       }
 
       setPets(safeArray(data));
-    } catch (error) {
-      console.error("Failed to load pets:", error);
+    } catch {
       setPets([]);
       showMessage("error", "Failed to load pets. Please refresh the page.");
     } finally {
@@ -217,8 +216,7 @@ const CustomerPets = () => {
     try {
       const data = await apiRequest("/customer/pets/archived");
       setArchivedPets(safeArray(data));
-    } catch (error) {
-      console.error("Failed to load archived pets:", error);
+    } catch {
       setArchivedPets([]);
       showMessage("error", "Failed to load archived pets. Please refresh the page.");
     }
@@ -410,8 +408,6 @@ const CustomerPets = () => {
       await fetchPets({ silent: true });
       showMessage("success", data?.message || "Pet added successfully.");
     } catch (error) {
-      console.error("ADD PET ERROR:", error);
-
       const errorMessage =
         error?.response?.data?.message ||
         error?.response?.data?.error ||
@@ -437,7 +433,7 @@ const CustomerPets = () => {
       customer_email: customerEmail,
       image: null,
     });
-    setPreviewImage(pet?.image_url || pet?.image || null);
+    setPreviewImage(resolveImageUrl(pet?.image_url || pet?.image || null));
   };
 
   const closeEditModal = () => {
@@ -484,8 +480,6 @@ const CustomerPets = () => {
       await fetchPets({ silent: true });
       showMessage("success", data?.message || "Pet updated successfully.");
     } catch (error) {
-      console.error("UPDATE PET ERROR:", error);
-
       const errorMessage =
         error?.response?.data?.message ||
         error?.response?.data?.error ||
@@ -521,8 +515,6 @@ const CustomerPets = () => {
       await fetchArchivedPets();
       showMessage("success", "Pet archived successfully.");
     } catch (error) {
-      console.error("Failed to archive pet:", error);
-
       const errorMessage =
         error?.response?.data?.message ||
         error?.response?.data?.error ||
@@ -551,8 +543,6 @@ const CustomerPets = () => {
       await fetchArchivedPets();
       showMessage("success", "Pet restored successfully.");
     } catch (error) {
-      console.error("Failed to restore pet:", error);
-
       const errorMessage =
         error?.response?.data?.message ||
         error?.response?.data?.error ||
@@ -577,8 +567,7 @@ const CustomerPets = () => {
       const result = await apiRequest(`/customer/pets/${petId}/medical-history`);
       const records = safeArray(result).map(normalizeMedicalRecord);
       setMedicalHistory(records);
-    } catch (error) {
-      console.error("Failed to load medical history:", error);
+    } catch {
       setHistoryError(
         "Medical history is not available yet, or no records were found for this pet."
       );
@@ -804,12 +793,13 @@ const CustomerPets = () => {
             <div className="pets-form-row">
               <label>
                 Birthdate
-                <input
-                  name="birthdate"
-                  type="date"
-                  max={new Date().toISOString().slice(0, 10)}
-                  value={formData.birthdate}
-                  onChange={handleChange}
+                <DatePickerInput
+                  selected={formData.birthdate ? new Date(formData.birthdate) : null}
+                  onChange={(date) =>
+                    handleChange({ target: { name: "birthdate", value: date ? date.toISOString().split("T")[0] : "" } })
+                  }
+                  placeholderText="Select birthdate..."
+                  maxDate={new Date()}
                 />
               </label>
             </div>
@@ -894,18 +884,22 @@ const CustomerPets = () => {
           {filteredPets.length === 0 ? (
             <div className="pets-empty-state">
               <FaPaw />
-              <h3>No pets found</h3>
+              <h3>{searchTerm || speciesFilter !== "all" ? "No pets match your search" : "No pets yet"}</h3>
               <p>
                 {searchTerm || speciesFilter !== "all"
-                  ? "Try adjusting your search or filter."
-                  : "Add your first pet using the form."}
+                  ? "Try adjusting your search or filter to find what you're looking for."
+                  : "Your furry friends will appear here. Register your first pet using the form on the left!"}
               </p>
             </div>
           ) : (
             <div className="pets-list">
-              {filteredPets.map((pet) => (
-                <article className="pet-item" key={pet.id}>
-                  <PetAvatar pet={pet} size={100} className="pet-avatar" />
+              {filteredPets.map((pet, index) => (
+                <article
+                  className="pet-item"
+                  key={pet.id}
+                  style={{ animationDelay: `${index * 0.06}s` }}
+                >
+                  <PetAvatar pet={pet} size={72} className="pet-avatar" />
 
                   <div className="pet-info">
                     <div className="pet-title-row">
@@ -1137,12 +1131,13 @@ const CustomerPets = () => {
                 <div className="pets-form-row">
                   <label>
                     Birthdate
-                    <input
-                      name="birthdate"
-                      type="date"
-                      max={new Date().toISOString().slice(0, 10)}
-                      value={formData.birthdate}
-                      onChange={handleChange}
+                    <DatePickerInput
+                      selected={formData.birthdate ? new Date(formData.birthdate) : null}
+                      onChange={(date) =>
+                        handleChange({ target: { name: "birthdate", value: date ? date.toISOString().split("T")[0] : "" } })
+                      }
+                      placeholderText="Select birthdate..."
+                      maxDate={new Date()}
                     />
                   </label>
                 </div>

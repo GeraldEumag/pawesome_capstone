@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import DatePickerInput from "../../components/shared/DatePickerInput";
 import {
   faCalendarAlt,
   faCheckCircle,
@@ -828,21 +829,21 @@ const ManagerHistory = () => {
 
             <div className="history-filter-field">
               <label htmlFor="history-date-from">Date From</label>
-              <input
+              <DatePickerInput
                 id="history-date-from"
-                type="date"
-                value={dateFrom}
-                onChange={(event) => setDateFrom(event.target.value)}
+                selected={dateFrom ? new Date(dateFrom) : null}
+                onChange={(date) => setDateFrom(date ? date.toISOString().split("T")[0] : "")}
+                placeholderText="From..."
               />
             </div>
 
             <div className="history-filter-field">
               <label htmlFor="history-date-to">Date To</label>
-              <input
+              <DatePickerInput
                 id="history-date-to"
-                type="date"
-                value={dateTo}
-                onChange={(event) => setDateTo(event.target.value)}
+                selected={dateTo ? new Date(dateTo) : null}
+                onChange={(date) => setDateTo(date ? date.toISOString().split("T")[0] : "")}
+                placeholderText="To..."
               />
             </div>
 

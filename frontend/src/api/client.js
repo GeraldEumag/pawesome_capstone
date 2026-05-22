@@ -77,6 +77,7 @@ export const apiRequest = async (endpoint, methodOrOptions = "GET", data = null,
     ...options,
     method,
     headers,
+    credentials: "include",
   };
 
   if (body !== null && body !== undefined) {
@@ -127,7 +128,6 @@ export const apiRequest = async (endpoint, methodOrOptions = "GET", data = null,
 
     return result;
   } catch (error) {
-    console.error("Network/API error:", error);
     throw error;
   }
 };

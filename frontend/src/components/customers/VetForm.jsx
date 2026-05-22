@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useCallback } from "react";
 import "./VetForm.css";
 import { apiRequest, normalizeList } from "../../api/client";
+import DatePickerInput from "../../components/shared/DatePickerInput";
 import {
   validateServiceCompatibility,
   getSpecialCareWarning,
@@ -11,6 +12,7 @@ const VetForm = () => {
   const [activeTab, setActiveTab] = useState("book");
   const [appointments, setAppointments] = useState([]);
   const [pets, setPets] = useState([]);
+  const [services, setServices] = useState([]);
   const [loading, setLoading] = useState(false);
 
   const customerEmail = localStorage.getItem("email");
@@ -22,7 +24,7 @@ const VetForm = () => {
     pet_id: "",
     pet_name: "",
     service_type: "vet",
-    service_name: "Checkup",
+    service_name: "",
     request_date: "",
     request_time: "",
     notes: "",
@@ -54,10 +56,22 @@ const VetForm = () => {
     }
   }, []);
 
+  const fetchServices = useCallback(async () => {
+    try {
+      const data = await apiRequest("/customer/services");
+      const list = normalizeList(data, ["services", "data"]);
+      setServices(list);
+    } catch (error) {
+      console.error("Failed to load services:", error);
+      setServices([]);
+    }
+  }, []);
+
   useEffect(() => {
     fetchAppointments();
     fetchPets();
-  }, [fetchAppointments, fetchPets]);
+    fetchServices();
+  }, [fetchAppointments, fetchPets, fetchServices]);
 
   const selectedPet = pets.find((pet) => String(pet.id) === String(formData.pet_id));
 
@@ -141,7 +155,7 @@ const VetForm = () => {
           pet_id: "",
           pet_name: "",
           service_type: "vet",
-          service_name: "Checkup",
+          service_name: "",
           request_date: "",
           request_time: "",
           notes: "",
@@ -231,18 +245,28 @@ const VetForm = () => {
               name="service_name"
               value={formData.service_name}
               onChange={handleChange}
+              required
             >
-              <option value="Checkup">Checkup</option>
-              <option value="Vaccination">Vaccination</option>
-              <option value="Surgery">Surgery</option>
-              <option value="Dental">Dental Cleaning</option>
+              <option value="">Select a service...</option>
+              {services.map((service) => (
+                <option key={service.id} value={service.name}>
+                  {service.name}
+                  {service.category ? ` (${service.category})` : ""}
+                  {service.price ? ` — ₱${Number(service.price).toFixed(2)}` : ""}
+                </option>
+              ))}
             </select>
 
-            <input
-              type="date"
-              name="request_date"
-              value={formData.request_date}
-              onChange={handleChange}
+            <DatePickerInput
+              selected={formData.request_date ? new Date(formData.request_date) : null}
+              onChange={(date) =>
+                setFormData((prev) => ({
+                  ...prev,
+                  request_date: date ? date.toISOString().split("T")[0] : "",
+                }))
+              }
+              placeholderText="Pick a date..."
+              minDate={new Date()}
               required
             />
 

@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import DatePickerInput from "../../components/shared/DatePickerInput";
 import {
   faArrowLeft,
   faCalendarAlt,
@@ -20,6 +21,17 @@ import toast from "react-hot-toast";
 import { apiRequest } from "../../api/client";
 import PetAvatar from "../shared/PetAvatar";
 import "./VetNewAppointment_PinkGlass.css";
+import {
+  safeArray,
+  getEntityName,
+  getEntityContact,
+  getPetName,
+  getPetType,
+  getPetBreed,
+  getServiceName,
+  getServicePrice,
+  formatCurrency,
+} from "../../utils/apiNormalize";
 
 const VetNewAppointment = () => {
   const navigate = useNavigate();
@@ -48,57 +60,13 @@ const VetNewAppointment = () => {
     notes: "",
   });
 
-  const safeArray = (value) => {
-    if (Array.isArray(value)) return value;
-    if (Array.isArray(value?.data)) return value.data;
-    if (Array.isArray(value?.services)) return value.services;
-    if (Array.isArray(value?.customers)) return value.customers;
-    if (Array.isArray(value?.pets)) return value.pets;
-    if (Array.isArray(value?.records)) return value.records;
-    if (Array.isArray(value?.result)) return value.result;
-    if (Array.isArray(value?.results)) return value.results;
-    if (Array.isArray(value?.data?.data)) return value.data.data;
-    return [];
-  };
-
-  const getCustomerName = (customer) =>
-    customer?.name ||
-    customer?.full_name ||
-    `${customer?.first_name || ""} ${customer?.last_name || ""}`.trim() ||
-    "Unnamed Customer";
-
-  const getCustomerEmail = (customer) =>
-    customer?.email || customer?.user?.email || "No email";
-
-  const getCustomerPhone = (customer) =>
-    customer?.phone || customer?.contact_number || customer?.mobile || "No contact";
-
-  const getPetName = (pet) => pet?.name || pet?.pet_name || "Unnamed Pet";
-
-  const getPetSpecies = (pet) => pet?.species || pet?.type || "Pet";
-
-  const getPetBreed = (pet) => pet?.breed || "Unknown breed";
-
-  const getServiceName = (service) =>
-    service?.name || service?.service_name || service?.title || "Service";
-
+  const getCustomerName = (customer) => getEntityName(customer, "customer");
+  const getCustomerEmail = (customer) => getEntityContact(customer, "email");
+  const getCustomerPhone = (customer) => getEntityContact(customer, "phone");
+  const getPetSpecies = (pet) => getPetType(pet);
   const getServiceCategory = (service) => service?.category || "Other";
-
-  const getServicePrice = (service) =>
-    service?.price || service?.service_price || service?.amount || 0;
-
   const getServiceDuration = (service) =>
     service?.duration_minutes || service?.duration || "";
-
-  const formatCurrency = (value) => {
-    const number = Number(value || 0);
-
-    return new Intl.NumberFormat("en-PH", {
-      style: "currency",
-      currency: "PHP",
-      minimumFractionDigits: 0,
-    }).format(number);
-  };
 
   const todayKey = new Date().toISOString().split("T")[0];
 
@@ -153,9 +121,7 @@ const VetNewAppointment = () => {
       try {
         const customersData = await apiRequest("/customers");
         customersList = safeArray(customersData);
-        console.log("CUSTOMERS RESPONSE:", customersData);
-      } catch (customerErr) {
-        console.error("Customers API failed:", customerErr);
+      } catch {
         toast.error("Failed to load customers.");
       }
 
@@ -200,8 +166,7 @@ const VetNewAppointment = () => {
 
       const data = await apiRequest(`/customers/${customerId}/pets`);
       setPets(safeArray(data));
-    } catch (err) {
-      console.error("Failed to fetch customer pets:", err);
+    } catch {
       setPets([]);
       toast.error("Failed to load customer pets.");
     } finally {
@@ -334,7 +299,6 @@ const VetNewAppointment = () => {
       toast.success("Appointment created successfully.");
       navigate("/veterinary/appointments");
     } catch (err) {
-      console.error("Failed to create appointment:", err);
       const message = err?.message || "Failed to create appointment. Please try again.";
       setError(message);
       toast.error(message);
@@ -658,11 +622,11 @@ const VetNewAppointment = () => {
                   Appointment Date <span>*</span>
                 </label>
 
-                <input
-                  type="date"
-                  min={todayKey}
-                  value={formData.appointment_date}
-                  onChange={(e) => updateField("appointment_date", e.target.value)}
+                <DatePickerInput
+                  selected={formData.appointment_date ? new Date(formData.appointment_date) : null}
+                  onChange={(date) => updateField("appointment_date", date ? date.toISOString().split("T")[0] : "")}
+                  placeholderText="Pick a date..."
+                  minDate={new Date()}
                 />
               </div>
 

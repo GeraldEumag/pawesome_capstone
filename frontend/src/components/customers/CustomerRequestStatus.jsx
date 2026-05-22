@@ -7,7 +7,9 @@ import {
   FaTimesCircle,
   FaCashRegister,
   FaPaw,
+  FaTimes,
 } from "react-icons/fa";
+import gcashQr from "../../assets/PAWESOME TEST GCASH.png";
 import "./CustomerRequestStatus.css";
 import { apiRequest } from "../../api/client";
 import { normalizeList } from "../../utils/normalizeList";
@@ -40,6 +42,7 @@ const CustomerRequestStatus = () => {
   const [requests, setRequests] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [uploadingId, setUploadingId] = useState(null);
+  const [payModalItem, setPayModalItem] = useState(null);
 
   useEffect(() => {
     fetchRequests();
@@ -50,7 +53,6 @@ const CustomerRequestStatus = () => {
       const email = localStorage.getItem("email");
 
       if (!email) {
-        console.error("No email found in localStorage");
         setRequests([]);
         return;
       }
@@ -80,39 +82,61 @@ const CustomerRequestStatus = () => {
       }));
 
       setRequests(normalizeList([...serviceRequests, ...orders, ...boardings]));
-    } catch (error) {
-      console.error("Failed to fetch customer requests:", error);
+    } catch {
       setRequests([]);
     }
   };
 
+  const getSortDate = (item) => {
+    const raw = item.check_in || item.check_in_date || item.preferred_date || item.scheduled_date || item.date || item.request_date || item.created_at;
+    if (!raw) return null;
+    const d = new Date(raw);
+    return isNaN(d.getTime()) ? null : d;
+  };
+
   const filteredRequests = Array.isArray(requests)
-    ? requests.filter((item) => {
-        const search = safeLower(searchTerm);
-        const status = safeLower(item?.status || item?.order_status);
+    ? requests
+        .filter((item) => {
+          const search = safeLower(searchTerm);
+          const status = safeLower(item?.status || item?.order_status);
 
-        const searchableText = [
-          item?.service_type,
-          item?.type,
-          item?.type_label,
-          getCustomerName(item),
-          item?.customer_email,
-          getPetName(item),
-          item?.pet_type,
-          item?.service,
-          item?.service_name,
-          item?.preferred_date,
-          item?.scheduled_date,
-          item?.date,
-          item?.request_date,
-          item?.id,
-          status,
-        ]
-          .map(safeLower)
-          .join(" ");
+          const searchableText = [
+            item?.service_type,
+            item?.type,
+            item?.type_label,
+            getCustomerName(item),
+            item?.customer_email,
+            getPetName(item),
+            item?.pet_type,
+            item?.service,
+            item?.service_name,
+            item?.preferred_date,
+            item?.scheduled_date,
+            item?.date,
+            item?.request_date,
+            item?.id,
+            status,
+          ]
+            .map(safeLower)
+            .join(" ");
 
-        return !search || searchableText.includes(search);
-      })
+          return !search || searchableText.includes(search);
+        })
+        .sort((a, b) => {
+          const dateA = getSortDate(a);
+          const dateB = getSortDate(b);
+          const today = new Date();
+          today.setHours(0, 0, 0, 0);
+
+          if (!dateA && !dateB) return 0;
+          if (!dateA) return 1;
+          if (!dateB) return -1;
+
+          const diffA = Math.abs(dateA.getTime() - today.getTime());
+          const diffB = Math.abs(dateB.getTime() - today.getTime());
+
+          return diffA - diffB;
+        })
     : [];
 
   const getStatusIcon = (status) => {
@@ -177,78 +201,110 @@ const CustomerRequestStatus = () => {
         </div>
       </section>
 
-      <section className="customer-status-grid">
-        {filteredRequests.map((item) => {
-          const status = safeText(item.status || item.order_status, "pending");
-          const paymentStatus = safeText(item.payment_status || item.payment, "unpaid");
-
-          return (
-          <div className="customer-status-card" key={`${item.source || "request"}-${item.id}`}>
-            <div className="status-card-top">
-              <div className="status-card-icon">
-                <FaPaw />
-              </div>
-
-              <div>
-                <h3>{safeText(item.service || item.service_name || item.type_label, "Service Request")}</h3>
-                <p>Request #{item.id}</p>
-              </div>
-            </div>
-
-            <div className="status-card-details">
-              <p>
-                <strong>Customer:</strong> {getCustomerName(item)}
-              </p>
-              <p>
-                <strong>Pet:</strong> {getPetName(item)}
-              </p>
-              <p>
-                <strong>Date:</strong>{" "}
-                {(item.date || item.request_date) ? new Date(item.date || item.request_date).toLocaleDateString() : "N/A"}
-              </p>
-              <p>
-                <strong>Time:</strong> {item.time || item.request_time || "N/A"}
-              </p>
-            </div>
-
-            <div className="status-card-footer">
-              <span className={`customer-status-pill ${safeLower(status)}`}>
-                {getStatusIcon(status)}
-                {status}
-              </span>
-
-              <span className={`customer-payment-pill ${safeLower(paymentStatus)}`}>
-                <FaCashRegister />
-                {paymentStatus}
-              </span>
-            </div>
-
-            {canPay(item) && (
-              <div className="status-card-footer">
-                <input
-                  id={`pay-${item.source}-${item.id}`}
-                  type="file"
-                  accept="image/*,.pdf"
-                  style={{ display: "none" }}
-                  onChange={(event) => uploadPaymentProof(item, event.target.files?.[0])}
-                />
-                <label className="customer-pay-btn" htmlFor={`pay-${item.source}-${item.id}`}>
-                  {uploadingId === `${item.source}-${item.id}` ? "Uploading..." : "Pay"}
-                </label>
-              </div>
-            )}
-          </div>
-        );
-        })}
-
-        {filteredRequests.length === 0 && (
+      <section className="customer-status-table-wrap">
+        {filteredRequests.length === 0 ? (
           <div className="customer-status-empty">
             <FaClipboardList />
             <h3>No requests found</h3>
             <p>Your booking requests will appear here after submission.</p>
           </div>
+        ) : (
+          <table className="customer-status-table">
+            <thead>
+              <tr>
+                <th>ID</th>
+                <th>Service</th>
+                <th>Pet</th>
+                <th>Date</th>
+                <th>Status</th>
+                <th>Payment</th>
+                <th>Action</th>
+              </tr>
+            </thead>
+            <tbody>
+              {filteredRequests.map((item) => {
+                const status = safeText(item.status || item.order_status, "pending");
+                const paymentStatus = safeText(item.payment_status || item.payment, "unpaid");
+
+                return (
+                  <tr key={`${item.source || "request"}-${item.id}`}>
+                    <td className="col-id">#{item.id}</td>
+                    <td className="col-service">{safeText(item.service || item.service_name || item.type_label, "Service Request")}</td>
+                    <td className="col-pet">{getPetName(item)}</td>
+                    <td className="col-date">
+                      {(item.date || item.request_date) ? new Date(item.date || item.request_date).toLocaleDateString() : "N/A"}
+                    </td>
+                    <td className="col-status">
+                      <span className={`customer-status-pill ${safeLower(status)}`}>
+                        {getStatusIcon(status)}
+                        {status}
+                      </span>
+                    </td>
+                    <td className="col-payment">
+                      <span className={`customer-payment-pill ${safeLower(paymentStatus)}`}>
+                        <FaCashRegister />
+                        {paymentStatus}
+                      </span>
+                    </td>
+                    <td className="col-action">
+                      {canPay(item) ? (
+                        <button
+                          className="customer-pay-btn"
+                          onClick={() => setPayModalItem(item)}
+                        >
+                          Pay
+                        </button>
+                      ) : (
+                        <span className="no-action">—</span>
+                      )}
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
         )}
       </section>
+
+      {payModalItem && (
+        <div className="pay-modal-overlay" onClick={() => setPayModalItem(null)}>
+          <div className="pay-modal" onClick={(e) => e.stopPropagation()}>
+            <div className="pay-modal-header">
+              <h3>GCash Payment</h3>
+              <button className="pay-modal-close" onClick={() => setPayModalItem(null)}>
+                <FaTimes />
+              </button>
+            </div>
+
+            <div className="pay-modal-body">
+              <p className="pay-modal-instruction">
+                Scan the QR code or send payment to the number below.
+              </p>
+              <div className="pay-modal-qr">
+                <img src={gcashQr} alt="GCash QR Code" />
+              </div>
+              <p className="pay-modal-number">GCash No: 0917 123 4567</p>
+            </div>
+
+            <div className="pay-modal-footer">
+              <input
+                id="modal-pay-upload"
+                type="file"
+                accept="image/*,.pdf"
+                style={{ display: "none" }}
+                onChange={(event) => {
+                  uploadPaymentProof(payModalItem, event.target.files?.[0]);
+                  setPayModalItem(null);
+                }}
+              />
+              <label className="customer-pay-btn pay-modal-upload" htmlFor="modal-pay-upload">
+                <FaCashRegister />
+                Upload Receipt
+              </label>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

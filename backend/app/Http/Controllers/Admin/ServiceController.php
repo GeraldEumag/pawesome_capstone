@@ -115,6 +115,16 @@ class ServiceController extends Controller
         try {
             // Find the service to delete
             $service = Service::findOrFail($id);
+
+            // Prevent deletion if service has active appointments
+            $hasAppointments = \App\Models\Appointment::where('service_id', $id)->exists();
+            if ($hasAppointments) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Cannot delete service with active appointments'
+                ], 422);
+            }
+
             $service->delete();
 
             return response()->json(['message' => 'Service deleted successfully']);

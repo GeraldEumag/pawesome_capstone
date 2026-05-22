@@ -10,6 +10,7 @@ import {
 import "./ReceptionistCheckOutForm.css";
 import { showConfirm } from "../../utils/alert";
 import { apiRequest } from "../../api/client";
+import { normalizeList } from "../../utils/apiNormalize";
 
 const ReceptionistCheckOutForm = () => {
   const [bookings, setBookings] = useState([]);
@@ -26,12 +27,13 @@ const ReceptionistCheckOutForm = () => {
 
     try {
       const data = await apiRequest("/receptionist/requests");
-      
+      const requests = normalizeList(data, ["requests", "data"]);
+
       // Filter only hotel requests that are checked_in (ready for check-out)
-      const hotelCheckedIn = data.requests.filter(
+      const hotelCheckedIn = requests.filter(
         item => item.type === "hotel" && item.status === "checked_in"
       );
-      
+
       setBookings(hotelCheckedIn);
     } catch (err) {
       setError("Failed to load boarding reservations");

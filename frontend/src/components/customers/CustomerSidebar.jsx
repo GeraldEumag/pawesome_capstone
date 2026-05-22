@@ -1,6 +1,7 @@
 import React from "react";
 import { NavLink, useNavigate } from "react-router-dom";
 import { showConfirm } from "../../utils/alert";
+import { apiRequest, clearAuthStorage } from "../../api/client";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
   faHome,
@@ -20,10 +21,8 @@ const CustomerSidebar = ({ collapsed, onToggleCollapse }) => {
   const handleLogout = async () => {
     const confirmed = await showConfirm("Are you sure you want to log out?", "", "Yes", "Cancel", "question", true);
     if (!confirmed) return;
-    localStorage.removeItem("token");
-    localStorage.removeItem("role");
-    localStorage.removeItem("name");
-    localStorage.removeItem("email");
+    try { await apiRequest("/auth/logout", { method: "POST" }); } catch {}
+    clearAuthStorage();
     navigate("/");
   };
 
@@ -39,14 +38,9 @@ const CustomerSidebar = ({ collapsed, onToggleCollapse }) => {
       icon: faPaw,
     },
     {
-      to: "/customer/bookings",
-      label: "Book Services",
+      to: "/customer/services",
+      label: "Services",
       icon: faCalendarPlus,
-    },
-    {
-      to: "/customer/requests",
-      label: "My Requests",
-      icon: faCalendarAlt,
     },
     {
       to: "/customer/payments",

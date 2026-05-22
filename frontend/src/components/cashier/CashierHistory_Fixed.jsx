@@ -96,7 +96,6 @@ const CashierHistory = () => {
       setTransactions(transactionsData);
       setError("");
     } catch (err) {
-      console.error("Failed to fetch transactions:", err);
       setError(err.message || "Failed to load transaction history");
       setTransactions([]);
     } finally {
@@ -117,7 +116,6 @@ const CashierHistory = () => {
       setPaymentVerifications(paymentsData);
       setError("");
     } catch (err) {
-      console.error("Failed to fetch payment verifications:", err);
       setError(err.message || "Failed to load payment verification history");
       setPaymentVerifications([]);
     } finally {
@@ -138,7 +136,6 @@ const CashierHistory = () => {
       setReceipts(receiptsData);
       setError("");
     } catch (err) {
-      console.error("Failed to fetch receipts:", err);
       setError(err.message || "Failed to load receipt history");
       setReceipts([]);
     } finally {
@@ -159,7 +156,6 @@ const CashierHistory = () => {
       setRejectedPayments(rejectedData);
       setError("");
     } catch (err) {
-      console.error("Failed to fetch rejected payments:", err);
       setError(err.message || "Failed to load rejected payments history");
       setRejectedPayments([]);
     } finally {
@@ -283,8 +279,20 @@ const CashierHistory = () => {
   };
 
   const handleExport = () => {
-    // TODO: Implement export functionality
-    showAlert("Export feature coming soon!");
+    const data = filteredData;
+    if (!data || data.length === 0) { showAlert("No records to export."); return; }
+    const headers = ["ID", "Receipt", "Customer", "Amount", "Method", "Status", "Date", "Verified By"];
+    const rows = data.map((r) => [
+      r.id, r.receipt_number || "", r.customer_name || r.customer || "",
+      r.amount || r.total_amount || 0, r.payment_method || r.method || "",
+      r.status || "", formatDate(r.created_at || r.date), r.verified_by || "",
+    ]);
+    const csv = [headers, ...rows].map((row) => row.map((v) => `"${String(v ?? "").replace(/"/g, '""')}"`).join(",")).join("\n");
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url; a.download = `cashier-${activeTab}-${new Date().toISOString().slice(0, 10)}.csv`;
+    a.click(); URL.revokeObjectURL(url);
   };
 
   if (loading) {

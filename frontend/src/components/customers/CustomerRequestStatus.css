@@ -1,78 +1,85 @@
+/* CustomerRequestStatus.css */
+/* Clean modern Request Status UI */
+
 .customer-status-page {
+  --cr-primary: #ec4899;
+  --cr-primary-hover: #db2777;
+  --cr-surface: #ffffff;
+  --cr-border: rgba(0, 0, 0, 0.06);
+  --cr-heading: #111827;
+  --cr-text: #1f2937;
+  --cr-muted: #6b7280;
+  --cr-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+  --cr-shadow-hover: 0 8px 24px rgba(0, 0, 0, 0.06);
+  --cr-radius: 14px;
+  --cr-radius-sm: 10px;
+  --cr-radius-pill: 999px;
+
   min-height: 100vh;
   padding: 1.5rem;
-  background: var(--color-bg-gradient);
-  color: var(--color-text);
+  color: var(--cr-text);
+  font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
 }
 
+.customer-status-page *,
+.customer-status-page *::before,
+.customer-status-page *::after {
+  box-sizing: border-box;
+}
+
+/* Shared card surface */
 .customer-status-hero,
 .customer-status-toolbar,
 .customer-status-card,
 .customer-status-empty {
-  background: var(--color-surface);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-card);
-  box-shadow: var(--shadow-card);
-  backdrop-filter: blur(18px);
+  background: var(--cr-surface);
+  border: 1px solid var(--cr-border);
+  border-radius: var(--cr-radius);
+  box-shadow: var(--cr-shadow);
 }
 
+/* Hero */
 .customer-status-hero {
-  padding: 2rem;
+  padding: 2rem 1.5rem;
   margin-bottom: 1.5rem;
-  position: relative;
-  overflow: hidden;
-}
-
-.customer-status-hero::before {
-  content: "";
-  position: absolute;
-  right: -90px;
-  top: -120px;
-  width: 330px;
-  height: 330px;
-  background: radial-gradient(
-    circle,
-    rgba(255, 95, 147, 0.28),
-    transparent 65%
-  );
+  text-align: center;
+  background: linear-gradient(135deg, #fdf2f8, #ffffff, #eff6ff);
 }
 
 .customer-status-badge {
   display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
   padding: 0.35rem 0.75rem;
-  border-radius: var(--radius-pill);
-  background: rgba(255, 95, 147, 0.12);
-  color: var(--color-primary);
+  border-radius: var(--cr-radius-pill);
+  background: rgba(236, 72, 153, 0.1);
+  color: var(--cr-primary);
   font-size: 0.78rem;
-  font-weight: 950;
+  font-weight: 600;
   text-transform: uppercase;
-  letter-spacing: 0.08em;
+  letter-spacing: 0.06em;
+  margin-bottom: 0.75rem;
 }
 
 .customer-status-hero h1 {
-  margin: 0.7rem 0 0.6rem;
-  font-size: clamp(2rem, 4vw, 3rem);
-  font-weight: 950;
-  letter-spacing: -0.05em;
-  background: linear-gradient(
-    135deg,
-    var(--color-primary),
-    var(--color-primary-light)
-  );
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
+  margin: 0 0 0.5rem;
+  font-size: clamp(1.6rem, 3.2vw, 2.2rem);
+  font-weight: 700;
+  color: var(--cr-heading);
+  letter-spacing: -0.02em;
 }
 
 .customer-status-hero p {
-  max-width: 760px;
-  margin: 0;
-  color: var(--color-muted);
-  font-weight: 700;
-  line-height: 1.6;
+  margin: 0 auto;
+  max-width: 600px;
+  color: var(--cr-muted);
+  font-size: 0.95rem;
+  line-height: 1.55;
 }
 
+/* Toolbar & search */
 .customer-status-toolbar {
-  padding: 1rem;
+  padding: 1rem 1.25rem;
   margin-bottom: 1.5rem;
 }
 
@@ -85,98 +92,109 @@
   left: 1rem;
   top: 50%;
   transform: translateY(-50%);
-  color: var(--color-primary);
+  color: var(--cr-muted);
+  font-size: 0.9rem;
 }
 
 .customer-status-search input {
   width: 100%;
-  min-height: 48px;
-  padding: 0 1rem 0 2.8rem;
-  border-radius: var(--radius-md);
-  border: 1px solid var(--color-border);
-  background: var(--color-surface-solid);
-  color: var(--color-text);
-  font: inherit;
-  font-weight: 750;
+  min-height: 44px;
+  padding: 0 1rem 0 2.6rem;
+  border-radius: var(--cr-radius-sm);
+  border: 1px solid var(--cr-border);
+  background: #f9fafb;
+  color: var(--cr-text);
+  font-size: 0.9rem;
+  outline: none;
+  transition: 0.18s ease;
 }
 
 .customer-status-search input:focus {
-  outline: none;
-  border-color: var(--color-primary);
-  box-shadow: 0 0 0 4px rgba(255, 95, 147, 0.15);
+  border-color: rgba(236, 72, 153, 0.35);
+  box-shadow: 0 0 0 3px rgba(236, 72, 153, 0.08);
 }
 
-.customer-status-grid {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 1rem;
+/* Table wrapper */
+.customer-status-table-wrap {
+  border: 1px solid var(--cr-border);
+  border-radius: var(--cr-radius);
+  background: var(--cr-surface);
+  box-shadow: var(--cr-shadow);
+  overflow: hidden;
+  overflow-x: auto;
 }
 
-.customer-status-card {
-  padding: 1.3rem;
-  transition: 0.25s ease;
+/* Table */
+.customer-status-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9rem;
+  min-width: 700px;
 }
 
-.customer-status-card:hover {
-  transform: translateY(-5px);
-  box-shadow: var(--shadow-primary);
+.customer-status-table thead {
+  background: #f9fafb;
 }
 
-.status-card-top {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
+.customer-status-table th {
+  padding: 0.85rem 1rem;
+  text-align: left;
+  font-weight: 600;
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--cr-muted);
+  border-bottom: 1px solid var(--cr-border);
+  white-space: nowrap;
 }
 
-.status-card-icon {
-  width: 50px;
-  height: 50px;
-  border-radius: 18px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: white;
-  background: linear-gradient(
-    135deg,
-    var(--color-primary),
-    var(--color-primary-light)
-  );
-  box-shadow: var(--shadow-primary);
+.customer-status-table td {
+  padding: 0.85rem 1rem;
+  border-bottom: 1px solid var(--cr-border);
+  color: var(--cr-text);
+  vertical-align: middle;
 }
 
-.status-card-top h3 {
-  margin: 0;
-  color: var(--color-heading);
-  font-weight: 950;
+.customer-status-table tbody tr:hover {
+  background: rgba(236, 72, 153, 0.03);
 }
 
-.status-card-top p {
-  margin: 0.25rem 0 0;
-  color: var(--color-muted);
-  font-weight: 750;
+.customer-status-table tbody tr:last-child td {
+  border-bottom: none;
 }
 
-.status-card-details {
-  margin: 1rem 0;
-  padding: 1rem;
-  border-radius: var(--radius-md);
-  background: rgba(255, 95, 147, 0.07);
-}
-
-.status-card-details p {
-  margin: 0.45rem 0;
-  color: var(--color-text);
+/* Column styles */
+.col-id {
   font-weight: 700;
+  color: var(--cr-muted);
+  font-size: 0.85rem;
+  white-space: nowrap;
 }
 
-.status-card-details strong {
-  color: var(--color-heading);
+.col-service {
+  font-weight: 600;
+  color: var(--cr-heading);
+  max-width: 220px;
 }
 
-.status-card-footer {
-  display: flex;
-  gap: 0.5rem;
-  flex-wrap: wrap;
+.col-pet {
+  white-space: nowrap;
+}
+
+.col-date {
+  white-space: nowrap;
+  color: var(--cr-muted);
+}
+
+.col-status,
+.col-payment,
+.col-action {
+  white-space: nowrap;
+}
+
+.no-action {
+  color: var(--cr-muted);
+  font-size: 0.9rem;
 }
 
 .customer-status-pill,
@@ -184,34 +202,40 @@
 .customer-pay-btn {
   display: inline-flex;
   align-items: center;
-  gap: 0.4rem;
-  padding: 0.45rem 0.75rem;
-  border-radius: var(--radius-pill);
+  gap: 0.35rem;
+  padding: 0.35rem 0.7rem;
+  border-radius: var(--cr-radius-pill);
   font-size: 0.78rem;
-  font-weight: 950;
+  font-weight: 600;
   text-transform: capitalize;
 }
 
 .customer-pay-btn {
   border: 0;
   cursor: pointer;
-  color: white;
-  background: linear-gradient(135deg, var(--color-primary), var(--color-primary-light));
-  box-shadow: var(--shadow-primary);
+  color: #fff;
+  background: var(--cr-primary);
+  box-shadow: 0 2px 8px rgba(236, 72, 153, 0.2);
+  transition: 0.18s ease;
+}
+
+.customer-pay-btn:hover {
+  background: var(--cr-primary-hover);
+  box-shadow: 0 4px 12px rgba(236, 72, 153, 0.28);
 }
 
 .customer-status-pill.pending {
-  background: var(--color-warning-bg);
+  background: #fef3c7;
   color: #92400e;
 }
 
 .customer-status-pill.approved {
-  background: var(--color-success-bg);
+  background: #d1fae5;
   color: #065f46;
 }
 
 .customer-status-pill.rejected {
-  background: var(--color-danger-bg);
+  background: #fee2e2;
   color: #991b1b;
 }
 
@@ -221,54 +245,205 @@
 }
 
 .customer-payment-pill.pending {
-  background: var(--color-info-bg);
-  color: #1e3a8a;
+  background: #dbeafe;
+  color: #1e40af;
 }
 
 .customer-payment-pill.paid {
-  background: var(--color-success-bg);
+  background: #d1fae5;
   color: #065f46;
 }
 
+/* Empty state */
 .customer-status-empty {
-  grid-column: 1 / -1;
-  padding: 4rem 2rem;
+  padding: 3.5rem 2rem;
   text-align: center;
-  color: var(--color-muted);
+  color: var(--cr-muted);
 }
 
 .customer-status-empty svg {
-  font-size: 2.5rem;
-  color: var(--color-primary);
+  font-size: 2rem;
+  color: var(--cr-primary);
+  margin-bottom: 0.75rem;
 }
 
 .customer-status-empty h3 {
-  margin: 1rem 0 0.4rem;
-  color: var(--color-heading);
-  font-weight: 950;
+  margin: 0 0 0.35rem;
+  color: var(--cr-heading);
+  font-size: 1.1rem;
+  font-weight: 700;
 }
 
 .customer-status-empty p {
   margin: 0;
-  font-weight: 700;
+  font-size: 0.9rem;
 }
 
-@media (max-width: 1100px) {
-  .customer-status-grid {
-    grid-template-columns: repeat(2, 1fr);
+/* Dark mode */
+[data-theme="dark"] .customer-status-page,
+body[data-theme="dark"] .customer-status-page {
+  --cr-surface: #0f172a;
+  --cr-border: rgba(255, 255, 255, 0.08);
+  --cr-heading: #f9fafc;
+  --cr-text: #e2e8f0;
+  --cr-muted: #94a3b8;
+  --cr-primary: #f9a8d4;
+  --cr-primary-hover: #f472b6;
+}
+
+[data-theme="dark"] .customer-status-hero,
+body[data-theme="dark"] .customer-status-hero {
+  background: linear-gradient(135deg, #1a1030, #0f172a, #0b1a2e);
+}
+
+[data-theme="dark"] .customer-status-search input,
+body[data-theme="dark"] .customer-status-search input {
+  background: #1e293b;
+}
+
+[data-theme="dark"] .customer-status-table thead,
+body[data-theme="dark"] .customer-status-table thead {
+  background: #1e293b;
+}
+
+[data-theme="dark"] .customer-status-table tbody tr:hover,
+body[data-theme="dark"] .customer-status-table tbody tr:hover {
+  background: rgba(249, 168, 212, 0.06);
+}
+
+/* Pay Modal */
+.pay-modal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 2000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.45);
+  backdrop-filter: blur(4px);
+  padding: 1rem;
+}
+
+.pay-modal {
+  width: 100%;
+  max-width: 380px;
+  background: var(--cr-surface);
+  border: 1px solid var(--cr-border);
+  border-radius: var(--cr-radius);
+  box-shadow: 0 24px 48px rgba(0, 0, 0, 0.12);
+  overflow: hidden;
+  animation: pay-modal-in 0.22s ease;
+}
+
+@keyframes pay-modal-in {
+  from {
+    opacity: 0;
+    transform: translateY(12px) scale(0.97);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
   }
 }
 
+.pay-modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1.1rem 1.25rem;
+  border-bottom: 1px solid var(--cr-border);
+}
+
+.pay-modal-header h3 {
+  margin: 0;
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--cr-heading);
+}
+
+.pay-modal-close {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border: 0;
+  border-radius: var(--cr-radius-sm);
+  background: transparent;
+  color: var(--cr-muted);
+  cursor: pointer;
+  transition: 0.18s ease;
+}
+
+.pay-modal-close:hover {
+  background: #f3f4f6;
+  color: var(--cr-heading);
+}
+
+.pay-modal-body {
+  padding: 1.25rem;
+  text-align: center;
+}
+
+.pay-modal-instruction {
+  margin: 0 0 1rem;
+  color: var(--cr-muted);
+  font-size: 0.9rem;
+  line-height: 1.5;
+}
+
+.pay-modal-qr {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 1rem;
+}
+
+.pay-modal-qr img {
+  width: 220px;
+  height: 220px;
+  object-fit: contain;
+  border-radius: var(--cr-radius-sm);
+  border: 1px solid var(--cr-border);
+}
+
+.pay-modal-number {
+  margin: 0;
+  font-weight: 700;
+  font-size: 1rem;
+  color: var(--cr-heading);
+  letter-spacing: 0.02em;
+}
+
+.pay-modal-footer {
+  padding: 0 1.25rem 1.25rem;
+  display: flex;
+  justify-content: center;
+}
+
+.pay-modal-upload {
+  width: 100%;
+  justify-content: center;
+  padding: 0.6rem 1rem;
+  font-size: 0.9rem;
+  border-radius: var(--cr-radius-sm);
+}
+
+/* Responsive */
 @media (max-width: 768px) {
   .customer-status-page {
     padding: 1rem;
   }
 
   .customer-status-hero {
-    padding: 1.35rem;
+    padding: 1.5rem 1rem;
   }
 
-  .customer-status-grid {
-    grid-template-columns: 1fr;
+  .customer-status-table-wrap {
+    border-radius: var(--cr-radius-sm);
+  }
+
+  .customer-status-table th,
+  .customer-status-table td {
+    padding: 0.65rem 0.75rem;
   }
 }

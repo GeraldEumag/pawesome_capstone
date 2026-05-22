@@ -21,7 +21,22 @@ import {
 } from "@fortawesome/free-solid-svg-icons";
 import "./ReceptionistHotelBookings.css";
 import { apiRequest } from "../../api/client";
+import DatePickerInput from "../../components/shared/DatePickerInput";
 import PetAvatar from "../shared/PetAvatar";
+import {
+  normalizeList,
+  normalizeStatus,
+  normalizePaymentStatus,
+  formatStatus,
+  formatDate,
+  formatDateTime,
+  formatCurrency,
+  getDateValue,
+  getPetName,
+  getCustomerName,
+  getCustomerPhone,
+  getRoomName,
+} from "../../utils/apiNormalize";
 
 const STATUS_OPTIONS = [
   { value: "all", label: "All Status" },
@@ -56,115 +71,6 @@ const CARE_LOG_TYPES = [
   { value: "health_observation", label: "Health Observation" },
   { value: "general_update", label: "General Update" },
 ];
-
-const normalizeList = (result, keys = []) => {
-  if (Array.isArray(result)) return result;
-
-  for (const key of keys) {
-    if (Array.isArray(result?.[key])) return result[key];
-    if (Array.isArray(result?.[key]?.data)) return result[key].data;
-    if (Array.isArray(result?.data?.[key])) return result.data[key];
-    if (Array.isArray(result?.data?.[key]?.data)) return result.data[key].data;
-  }
-
-  if (Array.isArray(result?.data)) return result.data;
-  if (Array.isArray(result?.data?.data)) return result.data.data;
-  if (Array.isArray(result?.boarding_requests)) return result.boarding_requests;
-  if (Array.isArray(result?.boardings)) return result.boardings;
-  if (Array.isArray(result?.boardings?.data)) return result.boardings.data;
-  if (Array.isArray(result?.available_rooms)) return result.available_rooms;
-  if (Array.isArray(result?.rooms)) return result.rooms;
-  if (Array.isArray(result?.hotel_rooms)) return result.hotel_rooms;
-  if (Array.isArray(result?.records)) return result.records;
-  if (Array.isArray(result?.items)) return result.items;
-
-  return [];
-};
-
-const normalizeStatus = (value) =>
-  String(value || "pending").toLowerCase().replace(/\s+/g, "_");
-
-const normalizePaymentStatus = (value) => {
-  const status = String(value || "unpaid").toLowerCase().replace(/\s+/g, "_");
-
-  if (status === "verified" || status === "completed") return "paid";
-  if (status === "for_payment") return "pending";
-
-  return status;
-};
-
-const formatStatus = (value) =>
-  String(value || "pending")
-    .replace(/_/g, " ")
-    .replace(/\b\w/g, (letter) => letter.toUpperCase());
-
-const formatDate = (value) => {
-  if (!value) return "N/A";
-
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return String(value).slice(0, 10);
-
-  return date.toLocaleDateString("en-PH", {
-    year: "numeric",
-    month: "short",
-    day: "2-digit",
-  });
-};
-
-const formatDateTime = (value) => {
-  if (!value) return "N/A";
-
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return value;
-
-  return date.toLocaleString("en-PH", {
-    year: "numeric",
-    month: "short",
-    day: "2-digit",
-    hour: "numeric",
-    minute: "2-digit",
-  });
-};
-
-const formatCurrency = (value) => {
-  const amount = Number(value || 0);
-
-  return new Intl.NumberFormat("en-PH", {
-    style: "currency",
-    currency: "PHP",
-    minimumFractionDigits: 2,
-  }).format(amount);
-};
-
-const getDateValue = (value) => {
-  if (!value) return "";
-  return String(value).includes("T") ? String(value).split("T")[0] : String(value).slice(0, 10);
-};
-
-const getPetName = (booking) =>
-  booking.pet?.name || booking.pet_name || booking.petName || "Unknown Pet";
-
-const getCustomerName = (booking) =>
-  booking.customer?.name ||
-  booking.customer_name ||
-  booking.owner_name ||
-  booking.customer_email ||
-  "Unknown Customer";
-
-const getCustomerPhone = (booking) =>
-  booking.customer?.phone ||
-  booking.customer_phone ||
-  booking.owner_phone ||
-  booking.phone ||
-  "N/A";
-
-const getRoomName = (booking) =>
-  booking.hotel_room?.name ||
-  booking.hotel_room?.room_number ||
-  booking.room?.name ||
-  booking.room_number ||
-  booking.room_type ||
-  "Unassigned";
 
 const getRoomOptionName = (room) =>
   room.name || room.room_number || room.room_name || `Room #${room.id}`;
@@ -228,7 +134,6 @@ const ReceptionistHotelBookings = () => {
 
       setLastUpdated(new Date().toLocaleString("en-PH"));
     } catch (err) {
-      console.error("Failed to load boarding requests:", err);
       showMessage("error", err.message || "Failed to load boarding requests.");
     } finally {
       setLoading(false);
@@ -241,7 +146,6 @@ const ReceptionistHotelBookings = () => {
       const data = await apiRequest("/receptionist/boarding-rooms");
       setRooms(normalizeList(data, ["rooms", "hotel_rooms", "available_rooms"]));
     } catch (err) {
-      console.warn("Failed to load boarding rooms:", err);
       setRooms([]);
     }
   }, []);
@@ -322,8 +226,6 @@ const ReceptionistHotelBookings = () => {
       await fetchBookings({ silent: true });
       await fetchRooms();
     } catch (err) {
-      console.error("Hotel action failed:", err);
-      
       // Handle specific double booking conflict errors
       if (err.message?.includes('already booked for selected date range')) {
         showMessage("error", "This room/kennel is already booked for the selected date range.");
@@ -953,33 +855,29 @@ const ReceptionistHotelBookings = () => {
                   <div className="form-row">
                     <div className="form-group">
                       <label>Check In Date</label>
-                      <input
-                        type="date"
-                        value={
-                          scheduleDraft[selectedBooking.id]?.check_in ||
-                          getDateValue(selectedBooking.check_in)
+                      <DatePickerInput
+                        selected={(() => {
+                          const val = scheduleDraft[selectedBooking.id]?.check_in || getDateValue(selectedBooking.check_in);
+                          return val ? new Date(val) : null;
+                        })()}
+                        onChange={(date) =>
+                          updateScheduleDraft(selectedBooking.id, "check_in", date ? date.toISOString().split("T")[0] : "")
                         }
-                        onChange={(event) =>
-                          updateScheduleDraft(selectedBooking.id, "check_in", event.target.value)
-                        }
+                        placeholderText="Pick check-in..."
                       />
                     </div>
 
                     <div className="form-group">
                       <label>Check Out Date</label>
-                      <input
-                        type="date"
-                        value={
-                          scheduleDraft[selectedBooking.id]?.check_out ||
-                          getDateValue(selectedBooking.check_out)
+                      <DatePickerInput
+                        selected={(() => {
+                          const val = scheduleDraft[selectedBooking.id]?.check_out || getDateValue(selectedBooking.check_out);
+                          return val ? new Date(val) : null;
+                        })()}
+                        onChange={(date) =>
+                          updateScheduleDraft(selectedBooking.id, "check_out", date ? date.toISOString().split("T")[0] : "")
                         }
-                        onChange={(event) =>
-                          updateScheduleDraft(
-                            selectedBooking.id,
-                            "check_out",
-                            event.target.value
-                          )
-                        }
+                        placeholderText="Pick check-out..."
                       />
                     </div>
                   </div>

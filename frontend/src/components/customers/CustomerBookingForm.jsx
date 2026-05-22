@@ -17,6 +17,7 @@ import {
 } from "../../config/petServiceRules";
 import { showAlert, showSuccess, showError } from "../../utils/alert";
 import PetAvatar from "../shared/PetAvatar";
+import DatePickerInput from "../shared/DatePickerInput";
 
 const CustomerBookingForm = () => {
   const navigate = useNavigate();
@@ -454,13 +455,13 @@ const CustomerBookingForm = () => {
                 <label>
                   Check-in Date
                   <div className="input-icon">
-                    <FaCalendarAlt />
-                    <input
-                      type="date"
-                      name="check_in_date"
-                      value={formData.check_in_date}
-                      min={new Date().toISOString().split("T")[0]}
-                      onChange={handleChange}
+                    <DatePickerInput
+                      selected={formData.check_in_date ? new Date(formData.check_in_date) : null}
+                      onChange={(date) =>
+                        handleChange({ target: { name: "check_in_date", value: date ? date.toISOString().split("T")[0] : "" } })
+                      }
+                      placeholderText="Pick check-in..."
+                      minDate={new Date()}
                       required
                     />
                   </div>
@@ -469,13 +470,13 @@ const CustomerBookingForm = () => {
                 <label>
                   Check-out Date
                   <div className="input-icon">
-                    <FaCalendarAlt />
-                    <input
-                      type="date"
-                      name="check_out_date"
-                      value={formData.check_out_date}
-                      min={formData.check_in_date || new Date().toISOString().split("T")[0]}
-                      onChange={handleChange}
+                    <DatePickerInput
+                      selected={formData.check_out_date ? new Date(formData.check_out_date) : null}
+                      onChange={(date) =>
+                        handleChange({ target: { name: "check_out_date", value: date ? date.toISOString().split("T")[0] : "" } })
+                      }
+                      placeholderText="Pick check-out..."
+                      minDate={formData.check_in_date ? new Date(formData.check_in_date) : new Date()}
                       required
                     />
                   </div>
@@ -516,13 +517,13 @@ const CustomerBookingForm = () => {
                 <label>
                   Preferred Date
                   <div className="input-icon">
-                    <FaCalendarAlt />
-                    <input
-                      type="date"
-                      name="preferred_date"
-                      value={formData.preferred_date}
-                      min={new Date().toISOString().split("T")[0]}
-                      onChange={handleChange}
+                    <DatePickerInput
+                      selected={formData.preferred_date ? new Date(formData.preferred_date) : null}
+                      onChange={(date) =>
+                        handleChange({ target: { name: "preferred_date", value: date ? date.toISOString().split("T")[0] : "" } })
+                      }
+                      placeholderText="Pick a date..."
+                      minDate={new Date()}
                       required
                     />
                   </div>

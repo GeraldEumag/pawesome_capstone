@@ -87,13 +87,15 @@ const CustomerPayments = () => {
               request.service_type ||
               "Service Request",
             total_amount:
-            request.total_amount ||
-            request.price ||
-            request.service_price ||
-            request.amount ||
-            500,
+              request.total_amount ||
+              request.price ||
+              request.service_price ||
+              request.amount ||
+              500,
             order_status: request.status || "approved",
             payment_status: request.payment_status || request.payment || "unpaid",
+            created_at: request.created_at || request.request_date || request.appointment_date || request.date || request.scheduled_date || null,
+            verified_at: request.verified_at || request.paid_at || request.date_verified || request.updated_at || null,
             items: [
               {
                 product_name:
@@ -127,6 +129,8 @@ const CustomerPayments = () => {
           total_amount: order.total_amount || order.total || 0,
           order_status: order.status || order.order_status || "approved",
           payment_status: order.payment_status || "unpaid",
+          created_at: order.created_at || order.order_date || order.date || order.submitted_at || null,
+          verified_at: order.verified_at || order.paid_at || order.date_verified || order.updated_at || null,
           items: order.items || [],
         }));
 
@@ -157,7 +161,8 @@ const CustomerPayments = () => {
           payment_status: boarding.payment_status || "unpaid",
           pet_name: boarding.pet?.name || boarding.pet_name,
           customer_name: boarding.customer?.name || boarding.customer_name,
-          created_at: boarding.created_at || boarding.check_in || boarding.request_date,
+          created_at: boarding.created_at || boarding.check_in || boarding.request_date || null,
+          verified_at: boarding.verified_at || boarding.paid_at || boarding.date_verified || boarding.updated_at || null,
           items: [
             {
               product_name: "Pet Hotel / Boarding",

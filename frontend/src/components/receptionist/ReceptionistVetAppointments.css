@@ -581,6 +581,52 @@
   border-top: 1px solid #e9ecef;
 }
 
+/* Bulk Actions */
+
+.bulk-action-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1.25rem;
+  padding: 0.85rem 1.25rem;
+  border-radius: 12px;
+  background: linear-gradient(135deg, #eef2ff, #e0e7ff);
+  border: 1px solid #c7d2fe;
+  box-shadow: 0 4px 12px rgba(67, 56, 202, 0.1);
+  animation: bulkBarIn 0.2s ease both;
+}
+
+@keyframes bulkBarIn {
+  from { opacity: 0; transform: translateY(-8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.bulk-action-bar span {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: #4338ca;
+  font-weight: 700;
+  font-size: 0.95rem;
+}
+
+.bulk-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.bulk-actions button {
+  min-height: 38px;
+  padding: 0 1rem;
+  font-size: 0.85rem;
+}
+
+.appointment-row.selected {
+  background: #eef2ff !important;
+}
+
 /* Responsive Design */
 @media (max-width: 1200px) {
   .appointments-header {

@@ -2,6 +2,7 @@ import React, { useCallback, useEffect, useMemo, useState } from "react";
 import "./CustomerBookings.css";
 import { apiRequest } from "../../api/client";
 import PetAvatar from "../shared/PetAvatar";
+import DatePickerInput from "../shared/DatePickerInput";
 import {
   FaCalendarCheck,
   FaCheckCircle,
@@ -482,14 +483,12 @@ const CustomerBookings = () => {
 
       try {
         petsData = await apiRequest("/customer/pets");
-      } catch (customerPetsError) {
-        console.warn("Customer pets endpoint failed. Trying /pets:", customerPetsError);
+      } catch {
         petsData = await apiRequest("/pets");
       }
 
       setPets(safeArray(petsData));
-    } catch (error) {
-      console.error("Failed to load customer pets:", error);
+    } catch {
       setPets([]);
     } finally {
       setPetsLoading(false);
@@ -549,125 +548,62 @@ const CustomerBookings = () => {
         }
 
         const [requestsResult, boardingsResult] = await Promise.allSettled([
-          apiRequest("/customer/my-requests"),
-          apiRequest("/customer/boardings"),
+          apiRequest("/customer/service-requests"),
+          apiRequest("/customer/boarding-requests"),
         ]);
 
-        if (requestsResult.status === "rejected") {
-          console.error("Failed to load customer requests:", {
-            message: requestsResult.reason?.message,
-            status: requestsResult.reason?.status,
-            response: requestsResult.reason?.response,
-            url: requestsResult.reason?.url,
-          });
-        }
+        let allBookings = [];
 
-        if (boardingsResult.status === "rejected") {
-          console.error("Failed to load customer boardings:", {
-            message: boardingsResult.reason?.message,
-            status: boardingsResult.reason?.status,
-            response: boardingsResult.reason?.response,
-            url: boardingsResult.reason?.url,
-          });
-        }
-
-        const requests =
-          requestsResult.status === "fulfilled"
-            ? safeArray(requestsResult.value?.requests || requestsResult.value?.data || requestsResult.value)
-            : [];
-
-        const boardings =
-          boardingsResult.status === "fulfilled"
-            ? safeArray(
-                boardingsResult.value?.boardings ||
-                  boardingsResult.value?.data ||
-                  boardingsResult.value?.records ||
-                  boardingsResult.value
-              )
-            : [];
-
-        const mappedRequests = requests.map((item) => {
-          const meta = getBookingTypeMeta(item.type || item.service_type || item.request_type);
-
-          return {
-            id: `request-${item.id}`,
-            sourceId: item.id,
-            sourceType: "service_request",
-            raw: item,
-            type: meta.shortTitle,
-            serviceType: meta.type,
-            title: meta.title,
-            accent: meta.accent,
-            icon: meta.icon,
-            pet: item.pet || item.pet_name || item.pet?.name || "Unknown Pet",
-            service: item.service || item.service_name || "Service Request",
-            details: `${item.pet || item.pet_name || item.pet?.name || "Unknown Pet"} • ${
-              item.service || item.service_name || "Service Request"
-            }`,
-            date: item.date || item.request_date || item.scheduled_date || item.created_at || "",
-            time: item.time || item.request_time || item.scheduled_time || "",
-            notes: item.notes || "",
-            status: normalizeStatus(item.status),
-            paymentStatus: normalizeStatus(item.payment_status || "unpaid"),
-          };
-        });
-
-        const mappedBoardings = boardings.map((item) => {
-          const meta = getBookingTypeMeta("hotel");
-          const checkIn = getBoardingCheckIn(item);
-          const checkOut = getBoardingCheckOut(item);
-          const roomName = getBoardingRoomName(item);
-          const roomType = getBoardingRoomType(item);
-          const petName = getBoardingPetName(item);
-
-          return {
-            id: `boarding-${item.id}`,
-            sourceId: item.id,
-            sourceType: "boarding",
-            raw: item,
-            type: meta.shortTitle,
-            serviceType: "hotel",
-            title: "Pet Hotel",
-            accent: meta.accent,
-            icon: meta.icon,
-            pet: petName,
-            service: roomName,
-            details: `${petName} • ${roomName}${roomType ? ` • ${String(roomType).replace(/_/g, " ")}` : ""}`,
-            date: checkIn || item.created_at || "",
-            checkIn,
-            checkOut,
-            time: "",
+        if (requestsResult.status === "fulfilled") {
+          const requestsData = safeArray(requestsResult.value);
+          const normalizedRequests = requestsData.map((item) => ({
+            id: item.id,
+            type: "service",
+            serviceType: normalizeServiceType(item.service_type || item.type),
+            title: item.service_name || item.service || item.title || "Service Request",
+            pet: item.pet_name || item.pet || "Unknown Pet",
+            service: item.service_name || item.service || "",
+            date: item.request_date || item.date || item.scheduled_date || "",
+            time: item.request_time || item.time || "",
+            status: item.status || "pending",
             notes: item.notes || item.special_requests || "",
-            status: normalizeStatus(item.status || "pending"),
-            paymentStatus: normalizeStatus(item.payment_status || "unpaid"),
-            totalAmount: Number(item.total_amount || item.amount || 0),
-          };
-        });
+            checkIn: item.check_in || item.checkin_date || "",
+            checkOut: item.check_out || item.checkout_date || "",
+            paymentStatus: item.payment_status || "unpaid",
+            totalAmount: item.total_amount || item.amount || 0,
+            createdAt: item.created_at || "",
+          }));
+          allBookings = [...allBookings, ...normalizedRequests];
+        }
 
-        const combinedBookings = [...mappedBoardings, ...mappedRequests];
+        if (boardingsResult.status === "fulfilled") {
+          const boardingsData = safeArray(boardingsResult.value);
+          const normalizedBoardings = boardingsData.map((item) => ({
+            id: item.id,
+            type: "boarding",
+            serviceType: "hotel",
+            title: item.service_name || "Pet Hotel",
+            pet: item.pet_name || item.pet?.name || "Unknown Pet",
+            service: "Pet Hotel",
+            date: item.check_in || item.checkin_date || "",
+            time: "",
+            status: item.status || "pending",
+            notes: item.notes || item.special_requests || "",
+            checkIn: item.check_in || item.checkin_date || "",
+            checkOut: item.check_out || item.checkout_date || "",
+            paymentStatus: item.payment_status || "unpaid",
+            totalAmount: item.total_amount || item.amount || 0,
+            createdAt: item.created_at || "",
+          }));
+          allBookings = [...allBookings, ...normalizedBoardings];
+        }
 
-        combinedBookings.sort((a, b) => {
-          const dateA = new Date(a.date || a.raw?.created_at || 0).getTime();
-          const dateB = new Date(b.date || b.raw?.created_at || 0).getTime();
-          return dateB - dateA;
-        });
+        allBookings.sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0));
 
-        setBookings(combinedBookings);
-        setErrorMessage(
-          requestsResult.status === "rejected" && boardingsResult.status === "rejected"
-            ? "Failed to load your bookings. Please refresh the page."
-            : boardingsResult.status === "rejected"
-              ? "Failed to load your Pet Hotel reservations. Other bookings are still shown."
-              : ""
-        );
-      } catch (error) {
-        console.error("Error fetching bookings:", {
-          message: error?.message,
-          status: error?.status,
-          response: error?.response,
-          url: error?.url,
-        });
-        setErrorMessage("Failed to load your bookings. Please refresh the page.");
+        setBookings(allBookings);
+        setError("");
+      } catch {
+        setBookings([]);
       } finally {
         setLoading(false);
         setRefreshing(false);
@@ -977,8 +913,7 @@ const CustomerBookings = () => {
         setVeterinaryAvailability(null);
         showToast(data.message || "Failed to check veterinary availability", "error");
       }
-    } catch (error) {
-      console.error("Error fetching veterinary availability:", error);
+    } catch {
       setVeterinaryAvailability(null);
       showToast("Failed to check availability. Please try again.", "error");
     } finally {
@@ -998,8 +933,7 @@ const CustomerBookings = () => {
         setGroomingAvailability(null);
         showToast(data.message || "Failed to check grooming availability", "error");
       }
-    } catch (error) {
-      console.error("Error fetching grooming availability:", error);
+    } catch {
       setGroomingAvailability(null);
       showToast("Failed to check availability. Please try again.", "error");
     } finally {
@@ -1052,8 +986,7 @@ const CustomerBookings = () => {
         setBoardingAvailability(null);
         showToast(data.message || "Failed to check boarding availability", "error");
       }
-    } catch (error) {
-      console.error("Error fetching boarding availability:", error);
+    } catch {
       setBoardingAvailability(null);
       showToast("Failed to check room availability. Please try again.", "error");
     } finally {
@@ -1285,7 +1218,6 @@ const CustomerBookings = () => {
         showToast(data.message || "Failed to submit booking request.", "error");
       }
     } catch (error) {
-      console.error("Error submitting booking:", error);
       showToast(error?.message || "Failed to submit booking. Please try again.", "error");
     } finally {
       setSubmitting(false);
@@ -1691,24 +1623,22 @@ const CustomerBookings = () => {
                     <>
                       <label className="form-group">
                         Check-in Date
-                        <input
-                          type="date"
-                          name="request_date"
-                          value={formData.request_date}
-                          onChange={handleInputChange}
-                          min={new Date().toISOString().split("T")[0]}
+                        <DatePickerInput
+                          selected={formData.request_date ? new Date(formData.request_date) : null}
+                          onChange={(date) => handleInputChange({ target: { name: "request_date", value: date ? date.toISOString().split("T")[0] : "" } })}
+                          placeholderText="Pick check-in..."
+                          minDate={new Date()}
                           required
                         />
                       </label>
 
                       <label className="form-group">
                         Check-out Date
-                        <input
-                          type="date"
-                          name="check_out_date"
-                          value={formData.check_out_date || ""}
-                          onChange={handleInputChange}
-                          min={formData.request_date || new Date().toISOString().split("T")[0]}
+                        <DatePickerInput
+                          selected={formData.check_out_date ? new Date(formData.check_out_date) : null}
+                          onChange={(date) => handleInputChange({ target: { name: "check_out_date", value: date ? date.toISOString().split("T")[0] : "" } })}
+                          placeholderText="Pick check-out..."
+                          minDate={formData.request_date ? new Date(formData.request_date) : new Date()}
                           required
                         />
                       </label>
@@ -1738,12 +1668,11 @@ const CustomerBookings = () => {
                     <>
                       <label className="form-group">
                         Preferred Date
-                        <input
-                          type="date"
-                          name="request_date"
-                          value={formData.request_date}
-                          onChange={handleInputChange}
-                          min={new Date().toISOString().split("T")[0]}
+                        <DatePickerInput
+                          selected={formData.request_date ? new Date(formData.request_date) : null}
+                          onChange={(date) => handleInputChange({ target: { name: "request_date", value: date ? date.toISOString().split("T")[0] : "" } })}
+                          placeholderText="Pick a date..."
+                          minDate={new Date()}
                           required
                         />
                       </label>

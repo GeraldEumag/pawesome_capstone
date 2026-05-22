@@ -5,16 +5,32 @@ const AUTH_TOKEN_KEYS = ["token", "access_token", "authToken", "customerToken", 
 
 const getToken = () => AUTH_TOKEN_KEYS.map((key) => localStorage.getItem(key)).find(Boolean);
 
-const getImageUrl = (pet) => {
-  const url = pet?.image_url || pet?.image || null;
+const API_BASE_URL =
+  process.env.VITE_API_BASE_URL ||
+  process.env.REACT_APP_API_URL ||
+  "";
+
+export const resolveImageUrl = (url) => {
   if (!url) return null;
+  if (url.startsWith("http")) return url;
+
   const token = getToken();
   if (token && url.startsWith("/api/")) {
     const separator = url.includes("?") ? "&" : "?";
     return `${url}${separator}token=${encodeURIComponent(token)}`;
   }
+
+  if (url.startsWith("/")) {
+    const origin = API_BASE_URL
+      ? API_BASE_URL.replace(/\/api\/?$/, "").replace(/\/$/, "")
+      : window.location.origin;
+    return `${origin}${url}`;
+  }
+
   return url;
 };
+
+const getImageUrl = (pet) => resolveImageUrl(pet?.image_url || pet?.image || null);
 
 const getSpeciesIcon = (species) => {
   const value = String(species || "").toLowerCase();

@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import DatePickerInput from "../../components/shared/DatePickerInput";
 import {
   faArrowLeft,
   faSave,
@@ -336,13 +337,12 @@ const VetEditAppointment = () => {
           <div className="form-row">
             <div className="form-group">
               <label htmlFor="appointment_date">Appointment Date</label>
-              <input
-                type="date"
+              <DatePickerInput
                 id="appointment_date"
-                name="appointment_date"
-                value={formData.appointment_date}
-                onChange={handleInputChange}
-                min={new Date().toISOString().split('T')[0]}
+                selected={formData.appointment_date ? new Date(formData.appointment_date) : null}
+                onChange={(date) => handleInputChange({ target: { name: "appointment_date", value: date ? date.toISOString().split("T")[0] : "" } })}
+                placeholderText="Pick a date..."
+                minDate={new Date()}
                 required
               />
             </div>

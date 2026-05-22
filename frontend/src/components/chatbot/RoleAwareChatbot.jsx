@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import DatePickerInput from "../shared/DatePickerInput";
 import {
   faRobot,
   faPaperPlane,
@@ -796,19 +797,19 @@ const RoleAwareChatbot = ({
                 </label>
                 <label>
                   Check-in Date
-                  <input
-                    type="date"
-                    value={workflowState.form.check_in}
-                    onChange={(event) => updateWorkflowForm("check_in", event.target.value)}
+                  <DatePickerInput
+                    selected={workflowState.form.check_in ? new Date(workflowState.form.check_in) : null}
+                    onChange={(date) => updateWorkflowForm("check_in", date ? date.toISOString().split("T")[0] : "")}
+                    placeholderText="Pick check-in..."
                     required
                   />
                 </label>
                 <label>
                   Check-out Date
-                  <input
-                    type="date"
-                    value={workflowState.form.check_out}
-                    onChange={(event) => updateWorkflowForm("check_out", event.target.value)}
+                  <DatePickerInput
+                    selected={workflowState.form.check_out ? new Date(workflowState.form.check_out) : null}
+                    onChange={(date) => updateWorkflowForm("check_out", date ? date.toISOString().split("T")[0] : "")}
+                    placeholderText="Pick check-out..."
                     required
                   />
                 </label>

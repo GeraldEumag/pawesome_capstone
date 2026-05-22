@@ -3,6 +3,7 @@ import { apiRequest } from "../../api/client";
 import { exportToCSV, exportToPDF } from "../../utils/reportExport";
 import { useRealTimeSync } from "../../hooks/useRealTimeSync";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import DatePickerInput from "../../components/shared/DatePickerInput";
 import {
   faUsers,
   faChartBar,
@@ -267,11 +268,10 @@ const CustomerReport = () => {
                 <FontAwesomeIcon icon={faCalendarAlt} />
                 Start Date
               </label>
-              <input
-                type="date"
-                value={filters.startDate}
-                onChange={(e) => handleFilterChange("startDate", e.target.value)}
-                max={filters.endDate}
+              <DatePickerInput
+                selected={filters.startDate ? new Date(filters.startDate) : null}
+                onChange={(date) => handleFilterChange("startDate", date ? date.toISOString().split("T")[0] : "")}
+                placeholderText="From..."
               />
             </div>
             
@@ -280,11 +280,10 @@ const CustomerReport = () => {
                 <FontAwesomeIcon icon={faCalendarAlt} />
                 End Date
               </label>
-              <input
-                type="date"
-                value={filters.endDate}
-                onChange={(e) => handleFilterChange("endDate", e.target.value)}
-                min={filters.startDate}
+              <DatePickerInput
+                selected={filters.endDate ? new Date(filters.endDate) : null}
+                onChange={(date) => handleFilterChange("endDate", date ? date.toISOString().split("T")[0] : "")}
+                placeholderText="To..."
               />
             </div>
             

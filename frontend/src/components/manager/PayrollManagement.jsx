@@ -3,6 +3,7 @@ import { payrollApi } from "../../api/payroll";
 import { apiRequest } from "../../api/client";
 import { formatCurrency } from "../../utils/currency";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import DatePickerInput from "../../components/shared/DatePickerInput";
 import {
   faCalendarAlt,
   faCheck,
@@ -761,19 +762,19 @@ const PayrollManagement = () => {
         <div className="payroll-generate-form">
           <label>
             <span>Start Date</span>
-            <input
-              type="date"
-              value={startDate}
-              onChange={(event) => setStartDate(event.target.value)}
+            <DatePickerInput
+              selected={startDate ? new Date(startDate) : null}
+              onChange={(date) => setStartDate(date ? date.toISOString().split("T")[0] : "")}
+              placeholderText="From..."
             />
           </label>
 
           <label>
             <span>End Date</span>
-            <input
-              type="date"
-              value={endDate}
-              onChange={(event) => setEndDate(event.target.value)}
+            <DatePickerInput
+              selected={endDate ? new Date(endDate) : null}
+              onChange={(date) => setEndDate(date ? date.toISOString().split("T")[0] : "")}
+              placeholderText="To..."
             />
           </label>
 

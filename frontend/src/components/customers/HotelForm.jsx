@@ -14,6 +14,7 @@ import {
 } from "@fortawesome/free-solid-svg-icons";
 import "./HotelForm.css";
 import { apiRequest } from "../../api/client";
+import DatePickerInput from "../../components/shared/DatePickerInput";
 
 const normalizeList = (result, keys = []) => {
   if (Array.isArray(result)) return result;
@@ -425,11 +426,37 @@ const HotelForm = () => {
               <div className="form-row">
                 <div className="form-group">
                   <label>Check-in Date *</label>
-                  <input type="date" name="check_in_date" value={bookingForm.check_in_date} onChange={handleChange} required min={new Date().toISOString().split("T")[0]} />
+                  <DatePickerInput
+                    selected={bookingForm.check_in_date ? new Date(bookingForm.check_in_date) : null}
+                    onChange={(date) =>
+                      handleChange({
+                        target: {
+                          name: "check_in_date",
+                          value: date ? date.toISOString().split("T")[0] : "",
+                        },
+                      })
+                    }
+                    placeholderText="Pick check-in date..."
+                    minDate={new Date()}
+                    required
+                  />
                 </div>
                 <div className="form-group">
                   <label>Check-out Date *</label>
-                  <input type="date" name="check_out_date" value={bookingForm.check_out_date} onChange={handleChange} required min={bookingForm.check_in_date || new Date().toISOString().split("T")[0]} />
+                  <DatePickerInput
+                    selected={bookingForm.check_out_date ? new Date(bookingForm.check_out_date) : null}
+                    onChange={(date) =>
+                      handleChange({
+                        target: {
+                          name: "check_out_date",
+                          value: date ? date.toISOString().split("T")[0] : "",
+                        },
+                      })
+                    }
+                    placeholderText="Pick check-out date..."
+                    minDate={bookingForm.check_in_date ? new Date(bookingForm.check_in_date) : new Date()}
+                    required
+                  />
                 </div>
               </div>
 

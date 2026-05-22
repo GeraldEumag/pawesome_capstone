@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { inventoryApi } from "../../api/inventory";
 import { formatCurrency } from "../../utils/currency";
+import DatePickerInput from "../shared/DatePickerInput";
 import "./AddProductModal.css";
 
 const AddProductModal = ({ isOpen, onClose, onSuccess, editItem = null }) => {
@@ -322,11 +323,10 @@ const AddProductModal = ({ isOpen, onClose, onSuccess, editItem = null }) => {
 
                   <div className="form-group">
                     <label>Received Date</label>
-                    <input
-                      type="date"
-                      name="received_date"
-                      value={formData.received_date}
-                      onChange={handleChange}
+                    <DatePickerInput
+                      selected={formData.received_date ? new Date(formData.received_date) : null}
+                      onChange={(date) => handleChange({ target: { name: "received_date", value: date ? date.toISOString().split("T")[0] : "" } })}
+                      placeholderText="Select received date..."
                     />
                   </div>
 

@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useCallback } from "react";
 import "./GroomingForm.css";
 import { apiRequest, normalizeList } from "../../api/client";
+import DatePickerInput from "../../components/shared/DatePickerInput";
 import {
   validateServiceCompatibility,
   getUnavailableServiceMessage,
@@ -296,11 +297,18 @@ const GroomingForm = () => {
               <option value="Teeth Cleaning">Teeth Cleaning - ₱350</option>
             </select>
 
-            <input
-              type="date"
-              name="request_date"
-              value={formData.request_date}
-              onChange={handleChange}
+            <DatePickerInput
+              selected={formData.request_date ? new Date(formData.request_date) : null}
+              onChange={(date) =>
+                handleChange({
+                  target: {
+                    name: "request_date",
+                    value: date ? date.toISOString().split("T")[0] : "",
+                  },
+                })
+              }
+              placeholderText="Pick a date..."
+              minDate={new Date()}
               required
             />
 

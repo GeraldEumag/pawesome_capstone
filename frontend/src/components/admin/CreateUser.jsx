@@ -5,6 +5,7 @@ import { faUser, faBell, faLock } from "@fortawesome/free-solid-svg-icons";
 import { apiRequest } from "../../api/client";
 import "./CreateUser.css";
 import { showError } from "../../utils/alert";
+import DatePickerInput from "../../components/shared/DatePickerInput";
 
 const CreateUser = () => {
   const navigate = useNavigate();
@@ -240,14 +241,13 @@ const CreateUser = () => {
               <div className="form-row">
                 <div className="form-group">
                   <label htmlFor="dateOfBirth">Date of Birth *</label>
-                  <input
-                    type="date"
+                  <DatePickerInput
                     id="dateOfBirth"
-                    name="dateOfBirth"
-                    value={formData.dateOfBirth}
-                    onChange={handleChange}
+                    selected={formData.dateOfBirth ? new Date(formData.dateOfBirth) : null}
+                    onChange={(date) => handleChange({ target: { name: "dateOfBirth", value: date ? date.toISOString().split("T")[0] : "" } })}
+                    placeholderText="Select birthdate..."
+                    maxDate={new Date()}
                     className={errors.dateOfBirth ? "error" : ""}
-                    max={new Date().toISOString().split("T")[0]}
                   />
                   {errors.dateOfBirth && (
                     <span className="error-message">{errors.dateOfBirth}</span>

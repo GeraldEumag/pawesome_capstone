@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import DatePickerInput from "../../components/shared/DatePickerInput";
 import {
   faBan,
   faCalendarAlt,
@@ -282,8 +283,7 @@ const ReceptionistBookings = () => {
 
       setCustomers(safeArray(customersData, "customers"));
       setPets(safeArray(petsData, "pets"));
-    } catch (err) {
-      console.warn("Failed to fetch customers/pets:", err);
+    } catch {
       setCustomers([]);
       setPets([]);
     }
@@ -293,8 +293,7 @@ const ReceptionistBookings = () => {
     try {
       const data = await apiRequest("/services");
       setServices(safeArray(data, "services"));
-    } catch (err) {
-      console.warn("Failed to fetch services:", err);
+    } catch {
       setServices([]);
     }
   };
@@ -408,7 +407,6 @@ const ReceptionistBookings = () => {
       setBookings(allBookings);
       setLastUpdated(new Date().toLocaleString("en-PH"));
     } catch (err) {
-      console.error("Failed to load bookings:", err);
       notify("error", err.message || "Failed to load bookings.");
     } finally {
       setLoading(false);
@@ -623,7 +621,6 @@ const ReceptionistBookings = () => {
       handleBookingCancel();
       await fetchBookings({ silent: true });
     } catch (err) {
-      console.error("Create booking error:", err);
       notify("error", err.message || "Failed to create booking. Please try again.");
     } finally {
       setProcessing(false);
@@ -663,7 +660,6 @@ const ReceptionistBookings = () => {
         details: data,
       });
     } catch (err) {
-      console.error("Availability check error:", err);
       setAvailability({
         available: false,
         message: err.message || "Unable to verify availability. Please refresh and try again.",
@@ -815,7 +811,6 @@ const ReceptionistBookings = () => {
       closeActionModal();
       await fetchBookings({ silent: true });
     } catch (err) {
-      console.error("Action submit error:", err);
       notify("error", err.message || "Failed to update booking.");
     } finally {
       setProcessing(false);
@@ -869,7 +864,6 @@ const ReceptionistBookings = () => {
       closeCancelModal();
       await fetchBookings({ silent: true });
     } catch (err) {
-      console.error("Cancel request error:", err);
       notify("error", err.message || "Failed to update cancel request.");
     } finally {
       setProcessing(false);
@@ -954,8 +948,6 @@ const ReceptionistBookings = () => {
       closeRescheduleModal();
       await fetchBookings({ silent: true });
     } catch (err) {
-      console.error("Reschedule request error:", err);
-      
       // Handle specific double booking conflict errors
       if (err.message?.includes('already has an appointment at the selected date and time')) {
         notify("error", "This veterinarian already has an appointment at the selected date and time.");
@@ -1555,12 +1547,12 @@ const ReceptionistBookings = () => {
                 {actionType === "reschedule" && (
                   <div className="form-group">
                     <label>New Date</label>
-                    <input
-                      type="date"
-                      value={newDate}
-                      onChange={(event) => {
-                        setNewDate(event.target.value);
-                        checkAvailability(selectedBooking, event.target.value);
+                    <DatePickerInput
+                      selected={newDate ? new Date(newDate) : null}
+                      onChange={(date) => {
+                        const dateStr = date ? date.toISOString().split("T")[0] : "";
+                        setNewDate(dateStr);
+                        checkAvailability(selectedBooking, dateStr);
                       }}
                       required
                     />
@@ -1720,10 +1712,10 @@ const ReceptionistBookings = () => {
                 {rescheduleAction === "approve" && (
                   <div className="form-group">
                     <label>Approved New Date</label>
-                    <input
-                      type="date"
-                      value={rescheduleNewDate}
-                      onChange={(event) => setRescheduleNewDate(event.target.value)}
+                    <DatePickerInput
+                      selected={rescheduleNewDate ? new Date(rescheduleNewDate) : null}
+                      onChange={(date) => setRescheduleNewDate(date ? date.toISOString().split("T")[0] : "")}
+                      placeholderText="Pick a date..."
                       required
                     />
                   </div>
@@ -1995,11 +1987,11 @@ const ReceptionistBookings = () => {
                 <div className="form-grid">
                   <div className="form-group">
                     <label>Appointment Date *</label>
-                    <input
-                      type="date"
-                      name="appointmentDate"
-                      value={bookingFormData.appointmentDate}
-                      onChange={handleBookingInputChange}
+                    <DatePickerInput
+                      selected={bookingFormData.appointmentDate ? new Date(bookingFormData.appointmentDate) : null}
+                      onChange={(date) => handleBookingInputChange({ target: { name: "appointmentDate", value: date ? date.toISOString().split("T")[0] : "" } })}
+                      placeholderText="Pick a date..."
+                      minDate={new Date()}
                       required
                     />
                   </div>

@@ -24,122 +24,23 @@ import "./ReceptionistCheckInForm.css";
 import { apiRequest } from "../../api/client";
 import PetAvatar from "../shared/PetAvatar";
 import BoardingInventoryUsage from "../boarding/BoardingInventoryUsage";
+import {
+  normalizeList,
+  normalizeStatus,
+  formatStatus,
+  formatDate,
+  getPetName,
+  getPetType,
+  getCustomerName,
+  getCustomerPhone,
+  getCheckInDate,
+  getCheckOutDate,
+  getRoomName,
+  getNotes,
+  isHotelRequest,
+} from "../../utils/apiNormalize";
 
 const STATUS_READY_FOR_CHECKIN = ["approved", "scheduled", "confirmed"];
-
-const normalizeList = (payload) => {
-  if (Array.isArray(payload)) return payload;
-  if (Array.isArray(payload?.requests)) return payload.requests;
-  if (Array.isArray(payload?.data)) return payload.data;
-  if (Array.isArray(payload?.data?.requests)) return payload.data.requests;
-  if (Array.isArray(payload?.boarding_requests)) return payload.boarding_requests;
-  if (Array.isArray(payload?.boardings)) return payload.boardings;
-  if (Array.isArray(payload?.records)) return payload.records;
-  if (Array.isArray(payload?.items)) return payload.items;
-  return [];
-};
-
-const normalizeStatus = (value) =>
-  String(value || "pending").toLowerCase().replace(/\s+/g, "_");
-
-const formatStatus = (value) =>
-  String(value || "pending")
-    .replace(/_/g, " ")
-    .replace(/\b\w/g, (letter) => letter.toUpperCase());
-
-const formatDate = (value) => {
-  if (!value) return "TBD";
-
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return String(value).slice(0, 10);
-
-  return date.toLocaleDateString("en-PH", {
-    year: "numeric",
-    month: "short",
-    day: "2-digit",
-  });
-};
-
-const getPetName = (item) =>
-  item.pet?.name ||
-  item.pet_name ||
-  item.petName ||
-  item.pet ||
-  "Unknown Pet";
-
-const getPetType = (item) =>
-  item.pet?.species ||
-  item.pet?.type ||
-  item.pet_species ||
-  item.pet_type ||
-  "Pet";
-
-const getCustomerName = (item) =>
-  item.customer?.name ||
-  item.customer_name ||
-  item.owner_name ||
-  item.customer ||
-  "Unknown Customer";
-
-const getCustomerPhone = (item) =>
-  item.customer?.phone ||
-  item.customer_phone ||
-  item.owner_phone ||
-  item.phone ||
-  "No phone";
-
-const getCheckInDate = (item) =>
-  item.check_in ||
-  item.checkin_date ||
-  item.booking_date ||
-  item.appointment_date ||
-  item.date ||
-  item.created_at ||
-  "";
-
-const getCheckOutDate = (item) =>
-  item.check_out ||
-  item.checkout_date ||
-  item.end_date ||
-  item.date_to ||
-  "";
-
-const getRoomName = (item) =>
-  item.hotel_room?.name ||
-  item.hotel_room?.room_number ||
-  item.room?.name ||
-  item.room_number ||
-  item.room_type ||
-  item.service ||
-  "Room not assigned";
-
-const getNotes = (item) =>
-  item.special_requests ||
-  item.feeding_instructions ||
-  item.notes ||
-  item.remarks ||
-  "No notes provided";
-
-const isHotelRequest = (item) => {
-  const values = [
-    item.type,
-    item.request_type,
-    item.service_type,
-    item.category,
-    item.source,
-    item.service,
-    item.service_name,
-  ]
-    .filter(Boolean)
-    .map((value) => String(value).toLowerCase());
-
-  return values.some(
-    (value) =>
-      value.includes("hotel") ||
-      value.includes("boarding") ||
-      value.includes("board")
-  );
-};
 
 const ReceptionistCheckInForm = () => {
   const [bookings, setBookings] = useState([]);
@@ -199,7 +100,6 @@ const ReceptionistCheckInForm = () => {
       setBookings(readyForCheckIn);
       setLastUpdated(new Date().toLocaleString("en-PH"));
     } catch (err) {
-      console.error("Failed to load check-in records:", err);
       showMessage("error", err.message || "Failed to load boarding reservations.");
       setBookings([]);
     } finally {
@@ -283,7 +183,6 @@ const ReceptionistCheckInForm = () => {
       setSelectedBooking(null);
       await loadBookings({ silent: true });
     } catch (err) {
-      console.error("Check-in failed:", err);
       showMessage("error", err.message || "Failed to process check-in.");
     } finally {
       setCheckingInId(null);

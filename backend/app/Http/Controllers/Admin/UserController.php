@@ -149,6 +149,19 @@ class UserController extends Controller
             return response()->json(['message' => 'You cannot delete your own account'], 403);
         }
 
+        // Prevent deletion if user has active pets, appointments, or boardings
+        $hasPets = \App\Models\Pet::where('customer_id', $user->id)->exists();
+        $hasAppointments = \App\Models\Appointment::where('customer_id', $user->id)->exists();
+        $hasBoardings = \App\Models\Boarding::whereHas('pet', function ($q) use ($user) {
+            $q->where('customer_id', $user->id);
+        })->exists();
+
+        if ($hasPets || $hasAppointments || $hasBoardings) {
+            return response()->json([
+                'message' => 'Cannot delete user with active pets, appointments, or boardings'
+            ], 422);
+        }
+
         $user->delete();
 
         return response()->json(['message' => 'User deleted successfully']);

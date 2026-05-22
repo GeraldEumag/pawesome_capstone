@@ -11,6 +11,7 @@ import {
   faTimes,
 } from "@fortawesome/free-solid-svg-icons";
 import { getDateRangePreset } from "../../utils/reportExport";
+import DatePickerInput from "./DatePickerInput";
 import "./ReportFilters.css";
 
 /**
@@ -143,21 +144,20 @@ const ReportFilters = ({
           <div className="date-inputs">
             <div className="date-input-group">
               <label>From</label>
-              <input
-                type="date"
-                value={startDate}
-                onChange={(e) => onDateChange && onDateChange("startDate", e.target.value)}
+              <DatePickerInput
+                selected={startDate ? new Date(startDate) : null}
+                onChange={(date) => onDateChange && onDateChange("startDate", date ? date.toISOString().split("T")[0] : "")}
+                placeholderText="From..."
                 disabled={loading}
               />
             </div>
             <div className="date-input-group">
               <label>To</label>
-              <input
-                type="date"
-                value={endDate}
-                onChange={(e) => onDateChange && onDateChange("endDate", e.target.value)}
+              <DatePickerInput
+                selected={endDate ? new Date(endDate) : null}
+                onChange={(date) => onDateChange && onDateChange("endDate", date ? date.toISOString().split("T")[0] : "")}
+                placeholderText="To..."
                 disabled={loading}
-                min={startDate}
               />
             </div>
           </div>

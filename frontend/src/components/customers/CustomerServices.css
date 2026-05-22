@@ -1,0 +1,215 @@
+/* CustomerServices.css */
+/* Clean modern Customer Services UI */
+
+.customer-services-page {
+  --cs-primary: #ec4899;
+  --cs-primary-hover: #db2777;
+  --cs-surface: #ffffff;
+  --cs-border: rgba(0, 0, 0, 0.06);
+  --cs-heading: #111827;
+  --cs-text: #1f2937;
+  --cs-muted: #6b7280;
+  --cs-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+  --cs-shadow-hover: 0 8px 24px rgba(0, 0, 0, 0.06);
+  --cs-radius: 14px;
+  --cs-radius-sm: 10px;
+  --cs-radius-pill: 999px;
+
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 1.5rem;
+  color: var(--cs-text);
+  font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+
+.customer-services-page *,
+.customer-services-page *::before,
+.customer-services-page *::after {
+  box-sizing: border-box;
+}
+
+/* Hero */
+.cs-hero {
+  padding: 2rem 1.5rem;
+  margin-bottom: 1.5rem;
+  text-align: center;
+  border: 1px solid var(--cs-border);
+  border-radius: var(--cs-radius);
+  background: linear-gradient(135deg, #fdf2f8, #ffffff, #eff6ff);
+  box-shadow: var(--cs-shadow);
+}
+
+.cs-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.35rem 0.75rem;
+  border-radius: var(--cs-radius-pill);
+  background: rgba(236, 72, 153, 0.1);
+  color: var(--cs-primary);
+  font-size: 0.78rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  margin-bottom: 0.75rem;
+}
+
+.cs-hero h1 {
+  margin: 0 0 0.5rem;
+  font-size: clamp(1.6rem, 3.2vw, 2.2rem);
+  font-weight: 700;
+  color: var(--cs-heading);
+  letter-spacing: -0.02em;
+}
+
+.cs-hero p {
+  margin: 0;
+  color: var(--cs-muted);
+  font-size: 0.95rem;
+  line-height: 1.55;
+}
+
+/* Tabs */
+.cs-tabs {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 1.5rem;
+  padding: 0.35rem;
+  border: 1px solid var(--cs-border);
+  border-radius: var(--cs-radius-sm);
+  background: #f9fafb;
+}
+
+.cs-tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.6rem 1.1rem;
+  border: none;
+  border-radius: var(--cs-radius-sm);
+  background: transparent;
+  color: var(--cs-muted);
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: 0.18s ease;
+}
+
+.cs-tab:hover:not(.active) {
+  background: rgba(0, 0, 0, 0.04);
+  color: var(--cs-text);
+}
+
+.cs-tab.active {
+  background: var(--cs-surface);
+  color: var(--cs-primary);
+  box-shadow: var(--cs-shadow);
+}
+
+/* Service cards */
+.cs-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 1rem;
+}
+
+.cs-card {
+  padding: 1.6rem;
+  text-align: center;
+  cursor: pointer;
+  border: 1px solid var(--cs-border);
+  border-radius: var(--cs-radius);
+  background: var(--cs-surface);
+  box-shadow: var(--cs-shadow);
+  transition: 0.18s ease;
+}
+
+.cs-card:hover {
+  box-shadow: var(--cs-shadow-hover);
+  transform: translateY(-2px);
+}
+
+.cs-card-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 56px;
+  height: 56px;
+  border-radius: var(--cs-radius-sm);
+  margin-bottom: 1rem;
+  font-size: 1.5rem;
+  background: rgba(0, 0, 0, 0.04);
+}
+
+.cs-card h3 {
+  margin: 0 0 0.4rem;
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--cs-heading);
+}
+
+.cs-card p {
+  margin: 0 0 1.1rem;
+  color: var(--cs-muted);
+  font-size: 0.88rem;
+  line-height: 1.5;
+}
+
+.cs-card-action {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.55rem 1.1rem;
+  border-radius: var(--cs-radius-pill);
+  color: #fff;
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+/* Dark mode */
+[data-theme="dark"] .customer-services-page,
+body[data-theme="dark"] .customer-services-page {
+  --cs-surface: #0f172a;
+  --cs-border: rgba(255, 255, 255, 0.08);
+  --cs-heading: #f9fafc;
+  --cs-text: #e2e8f0;
+  --cs-muted: #94a3b8;
+  --cs-primary: #f9a8d4;
+  --cs-primary-hover: #f472b6;
+}
+
+[data-theme="dark"] .cs-hero,
+body[data-theme="dark"] .cs-hero {
+  background: linear-gradient(135deg, #1a1030, #0f172a, #0b1a2e);
+}
+
+[data-theme="dark"] .cs-tabs,
+body[data-theme="dark"] .cs-tabs {
+  background: #1e293b;
+}
+
+[data-theme="dark"] .cs-card,
+body[data-theme="dark"] .cs-card {
+  background: #1e293b;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .customer-services-page {
+    padding: 1rem;
+  }
+
+  .cs-hero {
+    padding: 1.5rem 1rem;
+  }
+
+  .cs-tabs {
+    flex-wrap: wrap;
+  }
+
+  .cs-tab {
+    flex: 1;
+    justify-content: center;
+    min-width: 120px;
+  }
+}

@@ -18,6 +18,7 @@ import {
 import { receptionistCustomerApi } from "../../api/receptionistCustomers";
 import { formatCurrency } from "../../utils/currency";
 import PetAvatar from "../shared/PetAvatar";
+import DatePickerInput from "../shared/DatePickerInput";
 import "./ReceptionistCustomerManagement.css";
 
 const ReceptionistCustomerManagement = () => {
@@ -489,15 +490,15 @@ const ReceptionistCustomerManagement = () => {
 
                 <div className="info-item">
                   <label>Date</label>
-                  <input
-                    type="date"
-                    value={bookingForm.appointment_date}
-                    onChange={(e) =>
+                  <DatePickerInput
+                    selected={bookingForm.appointment_date ? new Date(bookingForm.appointment_date) : null}
+                    onChange={(date) =>
                       setBookingForm((prev) => ({
                         ...prev,
-                        appointment_date: e.target.value,
+                        appointment_date: date ? date.toISOString().split("T")[0] : "",
                       }))
                     }
+                    placeholderText="Pick a date..."
                     required
                   />
                 </div>
