@@ -4,15 +4,12 @@ import { showConfirm } from "../../utils/alert";
 import { apiRequest, clearAuthStorage } from "../../api/client";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
-  faHome,
   faBoxes,
   faWarehouse,
   faHistory,
   faChartBar,
   faSignOutAlt,
-  faListCheck,
   faUser,
-  faCog,
   faClipboardCheck,
   faTimes,
 } from "@fortawesome/free-solid-svg-icons";
@@ -45,29 +42,8 @@ const InventorySidebar = ({ mobileOpen, onMobileMenuToggle }) => {
         <ul className="nav-list">
           <li className="nav-item">
             <NavLink to="/inventory" className={({ isActive }) => isActive ? "active" : ""} end>
-              <FontAwesomeIcon icon={faHome} />
-              <span>Dashboard</span>
-            </NavLink>
-          </li>
-
-          <li className="nav-item">
-            <NavLink to="/inventory/products" className={({ isActive }) => isActive ? "active" : ""} end>
               <FontAwesomeIcon icon={faBoxes} />
-              <span>Inventory Items</span>
-            </NavLink>
-          </li>
-
-          <li className="nav-item">
-            <NavLink to="/inventory/stock" className={({ isActive }) => isActive ? "active" : ""} end>
-              <FontAwesomeIcon icon={faListCheck} />
-              <span>Stock Management</span>
-            </NavLink>
-          </li>
-
-          <li className="nav-item">
-            <NavLink to="/inventory/management" className={({ isActive }) => isActive ? "active" : ""} end>
-              <FontAwesomeIcon icon={faCog} />
-              <span>Management</span>
+              <span>Unified Inventory</span>
             </NavLink>
           </li>
 

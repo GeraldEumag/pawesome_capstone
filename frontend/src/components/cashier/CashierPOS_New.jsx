@@ -19,6 +19,7 @@ import {
   faBolt, faUser, faChevronDown, faChevronUp, faList,
   faStore, faHistory, faBan, faCalculator, faExpand, faCompress,
   faBars, faChartLine, faUserCircle, faClipboardList, faWallet,
+  faBone, faScissors, faBasketball, faPills, faBriefcaseMedical,
 } from "@fortawesome/free-solid-svg-icons";
 
 /* ─── Constants ────────────────────────────────────────────────── */
@@ -31,6 +32,16 @@ const PAYMENT_METHODS = [
   { value: "GCash",  label: "GCash",  icon: faMobileScreen,  color: "#4F46E5" },
   { value: "Online", label: "Online", icon: faGlobe,         color: "#8B5CF6" },
 ];
+
+const CATEGORY_CONFIG = {
+  all:          { label: "All Products",   icon: faStore,             color: "#4F46E5", bg: "#EEF2FF" },
+  food:         { label: "Pet Food",       icon: faPaw,               color: "#F97316", bg: "#FFF7ED" },
+  accessories:  { label: "Accessories",    icon: faBone,              color: "#8B5CF6", bg: "#F5F3FF" },
+  grooming:     { label: "Grooming",       icon: faScissors,          color: "#EC4899", bg: "#FDF2F8" },
+  toys:         { label: "Toys",           icon: faBasketball,        color: "#14B8A6", bg: "#ECFDF5" },
+  health:       { label: "Health & Meds",  icon: faPills,              color: "#EF4444", bg: "#FEF2F2" },
+  services:     { label: "Services",       icon: faBriefcaseMedical,  color: "#64748B", bg: "#F1F5F9" },
+};
 
 const QUICK_AMOUNTS = [20, 50, 100, 200, 500, 1000];
 
@@ -402,21 +413,22 @@ const CategoryBtn = styled.button`
   padding: 9px 12px;
   border-radius: 8px;
   border: none;
-  background: ${({ $active }) => $active ? "#FFF0F4" : "transparent"};
-  color: ${({ $active }) => $active ? "#E91E63" : "#374151"};
+  background: ${({ $active, $bg }) => $active ? $bg || "#FFF0F4" : "transparent"};
+  color: ${({ $active, $color }) => $active ? $color || "#E91E63" : "#374151"};
   font-size: 13px;
   font-weight: ${({ $active }) => $active ? 700 : 500};
   cursor: pointer;
   text-align: left;
   transition: all 0.12s;
-  &:hover { background: ${({ $active }) => $active ? "#FFF0F4" : "#F9FAFB"}; }
+  &:hover { background: ${({ $active, $bg }) => $active ? $bg || "#FFF0F4" : "#F9FAFB"}; }
   .cat-icon { width: 28px; height: 28px; border-radius: 6px;
-    background: ${({ $active }) => $active ? "#FECDD3" : "#F3F4F6"};
+    background: ${({ $active, $color }) => $active ? ($color || "#E91E63") + "22" : "#F3F4F6"};
     display: flex; align-items: center; justify-content: center;
     font-size: 12px; flex-shrink: 0; }
+  .cat-icon svg { color: ${({ $active, $color }) => $active ? ($color || "#E91E63") : "#9CA3AF"}; }
   .cat-label { flex: 1; }
   .cat-count { font-size: 11px; font-weight: 700;
-    background: ${({ $active }) => $active ? "#E91E63" : "#E5E7EB"};
+    background: ${({ $active, $color }) => $active ? ($color || "#E91E63") : "#E5E7EB"};
     color: ${({ $active }) => $active ? "#fff" : "#6B7280"};
     border-radius: 999px; padding: 1px 7px; }
 
@@ -1542,14 +1554,21 @@ const CashierPOS = () => {
       acc[p.category] = (acc[p.category] || 0) + 1;
       return acc;
     }, {});
-    return [
-      { id: "all", label: "All Products", count: products.length },
+    const catList = [
+      { id: "all", label: CATEGORY_CONFIG.all.label, count: products.length, config: CATEGORY_CONFIG.all },
       ...Object.entries(grouped).map(([id, count]) => ({
         id,
-        label: id.replace(/\b\w/g, c => c.toUpperCase()),
+        label: CATEGORY_CONFIG[id]?.label || id.replace(/\b\w/g, c => c.toUpperCase()),
         count,
+        config: CATEGORY_CONFIG[id] || { icon: faBox, color: "#64748B", bg: "#F1F5F9" },
       })),
     ];
+    // Sort: all first, then by count descending
+    return catList.sort((a, b) => {
+      if (a.id === "all") return -1;
+      if (b.id === "all") return 1;
+      return b.count - a.count;
+    });
   }, [products]);
 
   /* Filtered products */
@@ -1884,16 +1903,12 @@ const CashierPOS = () => {
                 <CategoryBtn
                   key={cat.id}
                   $active={activeCategory === cat.id}
+                  $color={cat.config?.color}
+                  $bg={cat.config?.bg}
                   onClick={() => setActiveCategory(cat.id)}
                 >
                   <span className="cat-icon">
-                    <FontAwesomeIcon icon={
-                      cat.id === "all" ? faStore :
-                      cat.id.includes("food") ? faPaw :
-                      cat.id.includes("health") ? faTag :
-                      cat.id.includes("groom") ? faBolt :
-                      faBox
-                    } />
+                    <FontAwesomeIcon icon={cat.config?.icon || faBox} />
                   </span>
                   <span className="cat-label">{cat.label}</span>
                   <span className="cat-count">{cat.count}</span>

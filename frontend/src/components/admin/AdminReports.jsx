@@ -12,9 +12,7 @@ import {
   faHeartbeat,
   faMagnifyingGlass,
   faMoneyBillWave,
-  faRotateRight,
   faShieldHalved,
-  faSpinner,
   faStethoscope,
   faTimes,
   faUsers,
@@ -260,7 +258,6 @@ const AdminReports = () => {
   const [reports, setReports] = useState({});
   const [overview, setOverview] = useState(null);
   const [loading, setLoading] = useState(false);
-  const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState("");
   const [lastUpdated, setLastUpdated] = useState("");
   const [searchTerm, setSearchTerm] = useState("");
@@ -293,9 +290,7 @@ const AdminReports = () => {
       const config = SECTION_CONFIG.find((section) => section.key === sectionKey) || SECTION_CONFIG[0];
 
       try {
-        if (silent) {
-          setRefreshing(true);
-        } else {
+        if (!silent) {
           setLoading(true);
         }
         setError("");
@@ -324,7 +319,6 @@ const AdminReports = () => {
         setError(err.message || `Failed to load ${config.label}.`);
       } finally {
         setLoading(false);
-        setRefreshing(false);
       }
     },
     [activeSection, buildEndpoint]

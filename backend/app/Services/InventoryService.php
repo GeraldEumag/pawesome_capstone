@@ -554,18 +554,24 @@ class InventoryService
      */
     public function getSummary(): array
     {
-        $totalItems = InventoryItem::count();
+        $totalItems = InventoryItem::whereNull('archived_at')->count();
         $totalValue = InventoryItem::where('status', self::STATUS_ACTIVE)
+            ->whereNull('archived_at')
             ->sum(DB::raw('stock * price'));
-        $lowStockCount = InventoryItem::whereRaw('stock <= reorder_level')
+        $lowStockCount = InventoryItem::whereNull('archived_at')
+            ->whereRaw('stock <= reorder_level')
             ->where('stock', '>', 0)
             ->count();
-        $outOfStockCount = InventoryItem::where('stock', 0)->count();
-        $expiringSoon = InventoryItem::where('expiry_date', '<=', now()->addDays(30))
+        $outOfStockCount = InventoryItem::whereNull('archived_at')
+            ->where('stock', 0)
+            ->count();
+        $expiringSoon = InventoryItem::whereNull('archived_at')
+            ->where('expiry_date', '<=', now()->addDays(30))
             ->where('expiry_date', '>=', now())
             ->count();
 
         $categoryBreakdown = InventoryItem::where('status', self::STATUS_ACTIVE)
+            ->whereNull('archived_at')
             ->selectRaw('category, COUNT(*) as count, SUM(stock) as total_stock, SUM(stock * price) as total_value')
             ->groupBy('category')
             ->get();

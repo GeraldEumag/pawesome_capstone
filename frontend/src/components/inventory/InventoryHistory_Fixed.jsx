@@ -373,8 +373,49 @@ const InventoryHistory = () => {
   };
 
   const handleExport = () => {
-    // TODO: Implement export functionality
-    showAlert("Export feature coming soon!");
+    const data = filteredData;
+    if (!data || data.length === 0) {
+      showAlert("No records to export.");
+      return;
+    }
+
+    const escape = (val) => {
+      const str = String(val ?? "").replace(/"/g, '""');
+      return str.includes(",") || str.includes("\n") ? `"${str}"` : str;
+    };
+
+    let rows = [];
+
+    if (activeTab === "audit") {
+      rows = [
+        ["Record ID", "Date", "Product", "SKU", "Movement", "Quantity", "Previous Stock", "New Stock", "Reason", "Performed By", "Role", "Period", "Status"],
+        ...data.map((r) => [
+          r.id, r.createdAt, r.itemName, r.sku,
+          r.movementType, r.quantity, r.previousStock ?? "",
+          r.newStock ?? "", r.reason, r.performedBy, r.role,
+          r.period || r.month || "", r.status || "",
+        ]),
+      ];
+    } else {
+      rows = [
+        ["Record ID", "Date", "Product", "SKU", "Movement", "Quantity", "Previous Stock", "New Stock", "Reason", "Performed By", "Role", "Supplier", "Batch"],
+        ...data.map((r) => [
+          r.id, r.createdAt, r.itemName, r.sku,
+          r.movementType, r.quantity, r.previousStock ?? "",
+          r.newStock ?? "", r.reason, r.performedBy, r.role,
+          r.supplier || "", r.batch_number || "",
+        ]),
+      ];
+    }
+
+    const csv = rows.map((r) => r.map(escape).join(",")).join("\n");
+    const blob = new Blob([csv], { type: "text/csv" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `inventory_${activeTab}_${new Date().toISOString().slice(0, 10)}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
   };
 
   const getTabIcon = (tab) => {

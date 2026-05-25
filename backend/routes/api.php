@@ -52,6 +52,7 @@ use App\Http\Controllers\Api\ReceptionistCustomerController;
 use App\Http\Controllers\Api\SecureFileController;
 use App\Http\Controllers\Api\ReceptionistPetController;
 use App\Http\Controllers\ReceptionistRequestController;
+use App\Http\Controllers\SystemSettingController;
 use Illuminate\Support\Facades\Route;
 
 // Global route patterns to ensure ID parameters are numeric
@@ -61,6 +62,14 @@ Route::pattern('pet', '[0-9]+');
 // Health check endpoint for deployment monitoring
 Route::get('/health', function () {
     return response()->json(['status' => 'ok']);
+});
+
+// Public system settings (no auth — needed before login for theme init)
+Route::get('/settings/public', [SystemSettingController::class, 'getPublicSettings']);
+
+// Admin-only theme setting
+Route::middleware(['auth.api', 'throttle:api', 'role:admin'])->group(function () {
+    Route::post('/admin/settings/theme', [SystemSettingController::class, 'updateThemeColor']);
 });
 
 // Service Request API endpoints

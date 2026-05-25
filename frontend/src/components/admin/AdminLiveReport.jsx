@@ -5,8 +5,6 @@ import {
   faBox,
   faChartPie,
   faClipboardList,
-  faClock,
-  faDownload,
   faEye,
   faFileCsv,
   faFileExcel,
@@ -75,10 +73,8 @@ const AdminLiveReport = ({
   const [error, setError] = useState("");
   const [lastUpdated, setLastUpdated] = useState("");
 
-  const [searchTerm, setSearchTerm] = useState("");
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
-  const [statusFilter, setStatusFilter] = useState("all");
   const [selectedRow, setSelectedRow] = useState(null);
 
   useEffect(() => {
@@ -100,20 +96,17 @@ const AdminLiveReport = ({
       params.append("end_date", endDate);
     }
 
-    if (statusFilter !== "all") params.append("status", statusFilter);
-    if (searchTerm.trim()) params.append("search", searchTerm.trim());
-
     return params.toString();
-  }, [startDate, endDate, statusFilter, searchTerm]);
+  }, [startDate, endDate]);
 
-  const normalizeResponse = (response) => {
+  const normalizeResponse = useCallback((response) => {
     const data = response?.data?.data || response?.data || response || {};
 
     return {
       rows: safeArray(data, dataKey),
       summary: data.summary || response?.summary || {},
     };
-  };
+  }, [dataKey]);
 
   const fetchData = useCallback(
     async ({ silent = false } = {}) => {
@@ -143,12 +136,12 @@ const AdminLiveReport = ({
         setRefreshing(false);
       }
     },
-    [endpoint, dataKey, title, buildQuery]
+    [endpoint, title, buildQuery, normalizeResponse]
   );
 
   useRealTimeSync(
     () => fetchData({ silent: true }),
-    [startDate, endDate, statusFilter, searchTerm],
+    [startDate, endDate],
     30000
   );
 
@@ -176,20 +169,6 @@ const AdminLiveReport = ({
   }, [filteredRows]);
 
   const exportColumns = columns.filter((column) => column.key !== "actions");
-
-  const handleDateChange = (key, value) => {
-    if (key === "startDate") setStartDate(value);
-    if (key === "endDate") setEndDate(value);
-  };
-
-  const clearFilters = () => {
-    const preset = getDateRangePreset("month");
-
-    setSearchTerm("");
-    setStatusFilter("all");
-    setStartDate(preset.startDate);
-    setEndDate(preset.endDate);
-  };
 
   const formatCellValue = (key, value) => {
     const column = columns.find((item) => item.key === key);

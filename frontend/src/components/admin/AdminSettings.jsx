@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
   faCog,
@@ -14,8 +14,11 @@ import {
   faUserShield,
   faLock,
   faEnvelope,
+  faPalette,
 } from "@fortawesome/free-solid-svg-icons";
 import { apiRequest } from "../../api/client";
+import { THEME_PRESETS } from "../../config/themePresets";
+import { applyThemeColor, getCurrentThemeColor } from "../../utils/theme";
 import "./AdminSettings.css";
 
 const AdminSettings = () => {
@@ -96,6 +99,26 @@ const AdminSettings = () => {
     },
   ]);
 
+  // Theme Color
+  const [selectedTheme, setSelectedTheme] = useState(getCurrentThemeColor());
+  const [themeLoading, setThemeLoading] = useState(false);
+
+  const handleSaveTheme = useCallback(async () => {
+    try {
+      setThemeLoading(true);
+      await apiRequest("/admin/settings/theme", {
+        method: "POST",
+        body: JSON.stringify({ theme_color: selectedTheme }),
+      });
+      applyThemeColor(selectedTheme);
+      showSuccess("Theme color updated! All users will see the new color on next load.");
+    } catch (err) {
+      showError("Failed to save theme color.");
+    } finally {
+      setThemeLoading(false);
+    }
+  }, [selectedTheme]);
+
   // System Info
   const [systemInfo, setSystemInfo] = useState({
     lastBackup: null,
@@ -148,6 +171,7 @@ const AdminSettings = () => {
 
   const tabs = [
     { id: "general", label: "General", icon: faCog },
+    { id: "appearance", label: "Appearance", icon: faPalette },
     { id: "security", label: "Security", icon: faShieldAlt },
     { id: "roles", label: "Roles & Permissions", icon: faUsers },
     { id: "notifications", label: "Notifications", icon: faBell },
@@ -273,6 +297,72 @@ const AdminSettings = () => {
                 )}
               </button>
             </div>
+          </div>
+        )}
+
+        {/* Appearance Settings */}
+        {activeTab === "appearance" && (
+          <div className="settings-section">
+            <h3>
+              <FontAwesomeIcon icon={faPalette} /> Theme Color
+            </h3>
+            <p className="settings-description">
+              Choose a system-wide color theme. Once saved, all users will see the selected color across the entire application.
+            </p>
+            <div className="theme-presets-grid">
+              {THEME_PRESETS.map((preset) => (
+                <button
+                  key={preset.key}
+                  type="button"
+                  className={`theme-preset-card ${preset.isMix ? "mix-card" : ""} ${selectedTheme === preset.key ? "active" : ""}`}
+                  onClick={() => {
+                    setSelectedTheme(preset.key);
+                    applyThemeColor(preset.key);
+                  }}
+                  title={preset.description}
+                >
+                  {preset.isMix && preset.mixColors ? (
+                    <span className="theme-swatch-mix">
+                      {preset.mixColors.map((color, i) => (
+                        <span
+                          key={i}
+                          className="mix-slice"
+                          style={{ background: color }}
+                        />
+                      ))}
+                    </span>
+                  ) : (
+                    <span
+                      className="theme-swatch"
+                      style={{
+                        background: `linear-gradient(135deg, ${preset.primary}, ${preset.primaryLight}, ${preset.primarySoft})`,
+                      }}
+                    />
+                  )}
+                  <span className="theme-emoji">{preset.emoji}</span>
+                  <span className="theme-name">{preset.label}</span>
+                  {preset.isMix && (
+                    <span className="theme-mix-badge">MIX</span>
+                  )}
+                  {selectedTheme === preset.key && (
+                    <span className="theme-check">
+                      <FontAwesomeIcon icon={faCheckCircle} />
+                    </span>
+                  )}
+                </button>
+              ))}
+            </div>
+            <button
+              className="save-btn"
+              onClick={handleSaveTheme}
+              disabled={themeLoading}
+            >
+              {themeLoading ? (
+                <><FontAwesomeIcon icon={faSpinner} spin /> Saving...</>
+              ) : (
+                <><FontAwesomeIcon icon={faSave} /> Apply Theme System-Wide</>
+              )}
+            </button>
           </div>
         )}
 

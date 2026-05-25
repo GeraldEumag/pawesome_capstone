@@ -19,12 +19,12 @@ const THEME = {
     elastic: "cubic-bezier(0.175, 0.885, 0.32, 1.275)",
   },
   
-  // Colors for animations
+  // Colors for animations — resolved from CSS variables at runtime
   colors: {
-    primary: "#ff5f93",
-    primaryLight: "#ff8db5",
-    glassBorder: "rgba(255,95,147,0.18)",
-    glassShadow: "0 18px 45px rgba(255,95,147,0.14)",
+    primary: "var(--color-primary, #ff5f93)",
+    primaryLight: "var(--color-primary-light, #ff8db5)",
+    glassBorder: "var(--color-border, rgba(255,95,147,0.18))",
+    glassShadow: "var(--shadow-card, 0 18px 45px rgba(255,95,147,0.14))",
   },
 };
 
@@ -206,19 +206,19 @@ export const bounce = keyframes`
 // Glow animations
 export const glow = keyframes`
   0%, 100% { 
-    box-shadow: 0 0 20px rgba(255, 95, 147, 0.3); 
+    box-shadow: 0 0 20px rgba(0, 0, 0, 0.12); 
   }
   50% { 
-    box-shadow: 0 0 30px rgba(255, 95, 147, 0.6); 
+    box-shadow: 0 0 30px rgba(0, 0, 0, 0.22); 
   }
 `;
 
 export const glowPulse = keyframes`
   0%, 100% { 
-    box-shadow: 0 0 15px rgba(255, 95, 147, 0.2); 
+    box-shadow: 0 0 15px rgba(0, 0, 0, 0.08); 
   }
   50% { 
-    box-shadow: 0 0 25px rgba(255, 95, 147, 0.4); 
+    box-shadow: 0 0 25px rgba(0, 0, 0, 0.18); 
   }
 `;
 
@@ -307,7 +307,7 @@ export const animationMixin = (animationName, duration = THEME.duration.normal, 
   animation: ${animationName} ${duration} ${easing} forwards;
 `;
 
-export const hoverMixin = (transform = 'translateY(-2px)', shadow = THEME.colors.glassShadow) => `
+export const hoverMixin = (transform = 'translateY(-2px)', shadow = "var(--shadow-card, 0 18px 45px rgba(255,95,147,0.14))") => `
   transition: all ${THEME.duration.fast} ${THEME.easing.smooth};
   
   &:hover {
@@ -325,16 +325,16 @@ export const glassHoverMixin = () => `
   
   &:hover {
     background: rgba(255, 255, 255, 0.95);
-    border-color: ${THEME.colors.primary};
+    border-color: var(--color-primary, #ff5f93);
     transform: translateY(-1px);
   }
 `;
 
-export const focusMixin = (color = THEME.colors.primary) => `
+export const focusMixin = (color = "var(--color-primary, #ff5f93)") => `
   &:focus {
     outline: none;
     border-color: ${color};
-    box-shadow: 0 0 0 4px ${color}40, 0 8px 20px ${color}20;
+    box-shadow: 0 0 0 4px rgba(0,0,0,0.06), 0 8px 20px rgba(0,0,0,0.08);
   }
 `;
 
@@ -342,9 +342,9 @@ export const loadingMixin = (size = '20px') => `
   display: inline-block;
   width: ${size};
   height: ${size};
-  border: 3px solid ${THEME.colors.glassBorder};
+  border: 3px solid var(--color-border, rgba(255,95,147,0.18));
   border-radius: 50%;
-  border-top-color: ${THEME.colors.primary};
+  border-top-color: var(--color-primary, #ff5f93);
   animation: ${spin} 1s linear infinite;
 `;
 

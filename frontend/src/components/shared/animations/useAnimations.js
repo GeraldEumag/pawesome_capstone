@@ -213,7 +213,7 @@ export const animationPresets = {
       options: { duration: '0.2s' }
     },
     glow: {
-      styles: { boxShadow: '0 0 20px rgba(255, 95, 147, 0.4)' },
+      styles: { boxShadow: 'var(--shadow-primary, 0 0 20px rgba(0,0,0,0.18))' },
       options: { duration: '0.3s' }
     },
     scale: {

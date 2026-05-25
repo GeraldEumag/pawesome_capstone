@@ -21,30 +21,30 @@ import {
 } from "./animations";
 
 /* ─────────────────────────────────────────────────────────────
-   Pink Glass Theme Design Tokens
+   Theme Design Tokens — reads from global CSS variables
 ───────────────────────────────────────────────────────────── */
 const THEME = {
-  // Colors
-  primary: "#ff5f93",
-  primaryLight: "#ff8db5",
-  primaryDark: "#ff3d73",
-  secondary: "#ff8db5",
-  accent: "#ffb3d1",
-  
+  // Colors — fallback to pink, overridden by :root CSS vars at runtime
+  primary: "var(--color-primary, #ff5f93)",
+  primaryLight: "var(--color-primary-light, #ff8db5)",
+  primaryDark: "var(--color-primary-hover, #ff3d73)",
+  secondary: "var(--color-primary-light, #ff8db5)",
+  accent: "var(--color-primary-soft, #ffb3d1)",
+
   // Glass effects
   glassBg: "rgba(255,255,255,0.85)",
-  glassBorder: "rgba(255,95,147,0.18)",
-  glassShadow: "0 18px 45px rgba(255,95,147,0.14)",
-  
+  glassBorder: "var(--color-border, rgba(255,95,147,0.18))",
+  glassShadow: "var(--shadow-card, 0 18px 45px rgba(255,95,147,0.14))",
+
   // Backgrounds
-  pageBg: "linear-gradient(135deg, #fff5f8 0%, #ffe0ec 50%, #fff5f8 100%)",
+  pageBg: "var(--color-bg-gradient, linear-gradient(135deg, #fff5f8 0%, #ffe0ec 50%, #fff5f8 100%))",
   cardBg: "rgba(255,255,255,0.9)",
-  
+
   // Text
   textPrimary: "#2d3748",
   textSecondary: "#718096",
   textMuted: "#a0aec0",
-  
+
   // Status
   success: "#48bb78",
   warning: "#ed8936",
@@ -139,7 +139,7 @@ const EditButton = styled.button`
     background: ${THEME.primaryDark};
     border-color: ${THEME.primaryDark};
     transform: translateY(-2px);
-    box-shadow: 0 22px 55px rgba(255,95,147,0.18);
+    box-shadow: var(--shadow-primary, 0 22px 55px rgba(255,95,147,0.18));
   }
   
   &:active {
@@ -219,7 +219,7 @@ const AvatarRing = styled.div`
   background: linear-gradient(135deg, ${THEME.primary}, ${THEME.primaryLight});
   flex-shrink: 0;
   position: relative;
-  box-shadow: 0 12px 30px rgba(255,95,147,0.25);
+  box-shadow: var(--shadow-primary, 0 12px 30px rgba(255,95,147,0.25));
 `;
 
 const AvatarInner = styled.div`
@@ -266,7 +266,7 @@ const AvatarRole = styled.span`
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: "0.8px";
-  box-shadow: 0 4px 12px rgba(255,95,147,0.2);
+  box-shadow: var(--shadow-card, 0 4px 12px rgba(255,95,147,0.2));
 `;
 
 const AvatarStatus = styled.span`
@@ -306,7 +306,7 @@ const UploadButton = styled.label`
   &:hover {
     border-color: ${THEME.primary};
     color: ${THEME.primary};
-    background: rgba(255,95,147,0.05);
+    background: rgba(0,0,0,0.04);
     transform: translateY(-1px);
   }
 `;
@@ -359,7 +359,7 @@ const Input = styled.input`
   font-weight: 500;
   outline: none;
   transition: all 0.3s ease;
-  box-shadow: 0 4px 12px rgba(255,95,147,0.08);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.05);
   
   &:disabled {
     background: rgba(255,255,255,0.5);
@@ -388,7 +388,7 @@ const Textarea = styled.textarea`
   outline: none;
   resize: vertical;
   transition: all 0.3s ease;
-  box-shadow: 0 4px 12px rgba(255,95,147,0.08);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.05);
   font-family: inherit;
   line-height: 1.5;
   
@@ -554,7 +554,7 @@ const MetaIcon = styled.div`
   color: white;
   font-size: 14px;
   flex-shrink: 0;
-  box-shadow: 0 4px 12px rgba(255,95,147,0.2);
+  box-shadow: var(--shadow-card, 0 4px 12px rgba(255,95,147,0.2));
 `;
 
 const MetaContent = styled.div`
@@ -579,7 +579,7 @@ const MetaValue = styled.div`
 const PasswordRequirements = styled.div`
   font-size: 13px;
   color: ${THEME.textSecondary};
-  background: rgba(255,95,147,0.08);
+  background: rgba(0,0,0,0.04);
   border: 1px solid ${THEME.glassBorder};
   border-radius: 12px;
   padding: 12px 16px;

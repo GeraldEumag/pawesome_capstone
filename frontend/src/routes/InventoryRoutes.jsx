@@ -2,13 +2,10 @@ import React from "react";
 import { Routes, Route } from "react-router-dom";
 import ProtectedRoute from "../components/ProtectedRoute";
 import InventoryDashboard from "../components/inventory/InventoryDashboard";
-import InventorySimplified from "../components/inventory/InventorySimplified";
-import InventoryProducts from "../components/inventory/InventoryProducts";
-import InventoryStock from "../components/inventory/InventoryStock_Polished";
+import UnifiedInventory from "../components/inventory/UnifiedInventory";
 import InventoryReports from "../components/inventory/InventoryReports";
 import InventoryHistory from "../components/inventory/InventoryHistory_Fixed";
 import ProfileSettings from "../components/shared/ProfileSettings";
-import InventoryManagement from "../components/inventory/InventoryManagement";
 import MonthlyInventoryAudit from "../components/inventory/MonthlyInventoryAudit";
 import MonthlyAuditReport from "../components/inventory/MonthlyAuditReport";
 import AuditAnalyticsDashboard from "../components/inventory/AuditAnalyticsDashboard";
@@ -23,12 +20,12 @@ const InventoryRoutes = () => (
         </ProtectedRoute>
       }
     >
-      <Route index element={<InventorySimplified />} />
-      <Route path="products" element={<InventorySimplified />} />
-      <Route path="simplified" element={<InventorySimplified />} />
-      <Route path="stock" element={<InventoryStock />} />
-      <Route path="management" element={<InventoryManagement />} />
-      <Route path="legacy-products" element={<InventoryProducts />} />
+      <Route index element={<UnifiedInventory />} />
+      <Route path="products" element={<UnifiedInventory />} />
+      <Route path="simplified" element={<UnifiedInventory />} />
+      <Route path="stock" element={<UnifiedInventory />} />
+      <Route path="management" element={<UnifiedInventory />} />
+      <Route path="legacy-products" element={<UnifiedInventory />} />
       <Route path="history" element={<InventoryHistory />} />
       <Route path="analytics" element={<InventoryReports />} />
       <Route path="reports" element={<InventoryReports />} />

@@ -52,13 +52,9 @@ const StockAdjustmentModal = ({ isOpen, onClose, item, onSuccess }) => {
   };
 
   const handleSubmit = async () => {
-    if (Number(quantity) <= 0) {
-      showAlert("Please enter quantity greater than 0.");
-      return;
-    }
-
-    if (!reason) {
-      showAlert("Please select a reason.");
+    const validationError = validateForm();
+    if (validationError) {
+      showAlert(validationError);
       return;
     }
 

@@ -4,7 +4,7 @@ import { formatCurrency } from "../../utils/currency";
 import DatePickerInput from "../shared/DatePickerInput";
 import SupplierModal from "./SupplierModal";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faBuilding, faPlus } from "@fortawesome/free-solid-svg-icons";
+import { faBuilding } from "@fortawesome/free-solid-svg-icons";
 import "./AddProductModal.css";
 
 const AddProductModal = ({ isOpen, onClose, onSuccess, editItem = null }) => {
@@ -33,7 +33,6 @@ const AddProductModal = ({ isOpen, onClose, onSuccess, editItem = null }) => {
   const [errors, setErrors] = useState({});
   const [photoPreview, setPhotoPreview] = useState(null);
   const [showSupplierModal, setShowSupplierModal] = useState(false);
-  const [suppliers, setSuppliers] = useState([]);
 
   useEffect(() => {
     if (editItem) {

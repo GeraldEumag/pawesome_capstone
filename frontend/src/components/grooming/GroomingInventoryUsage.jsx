@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { apiRequest } from '../../api/client';
 import './GroomingInventoryUsage.css';
 
@@ -10,13 +10,7 @@ const GroomingInventoryUsage = ({ groomingId, petId }) => {
   const [message, setMessage] = useState('');
   const [messageType, setMessageType] = useState('');
 
-  // Fetch available inventory items
-  useEffect(() => {
-    fetchAvailableItems();
-    fetchUsageHistory();
-  }, [groomingId]);
-
-  const fetchAvailableItems = async () => {
+  const fetchAvailableItems = useCallback(async () => {
     try {
       const response = await apiRequest('/grooming/inventory-items');
       if (response.success) {
@@ -27,9 +21,9 @@ const GroomingInventoryUsage = ({ groomingId, petId }) => {
       setMessage('Failed to load available items');
       setMessageType('error');
     }
-  };
+  }, []);
 
-  const fetchUsageHistory = async () => {
+  const fetchUsageHistory = useCallback(async () => {
     try {
       const response = await apiRequest(`/grooming/${groomingId}/inventory-usage-history`);
       if (response.success) {
@@ -38,7 +32,13 @@ const GroomingInventoryUsage = ({ groomingId, petId }) => {
     } catch (error) {
       console.error('Failed to fetch usage history:', error);
     }
-  };
+  }, [groomingId]);
+
+  // Fetch available inventory items
+  useEffect(() => {
+    fetchAvailableItems();
+    fetchUsageHistory();
+  }, [groomingId, fetchAvailableItems, fetchUsageHistory]);
 
   const addItem = () => {
     setItems([
@@ -198,8 +198,8 @@ const GroomingInventoryUsage = ({ groomingId, petId }) => {
                       disabled={!item.inventory_item_id}
                     />
                     <span className="unit-label">
-                      {getSelectedItemName(item.inventory_item_id) && 
-                        availableItems.find(i => i.id === parseInt(item.inventory_item_id))?.unit || 'pcs'
+                      {(getSelectedItemName(item.inventory_item_id) &&
+                        availableItems.find(i => i.id === parseInt(item.inventory_item_id))?.unit) || 'pcs'
                       }
                     </span>
                   </div>

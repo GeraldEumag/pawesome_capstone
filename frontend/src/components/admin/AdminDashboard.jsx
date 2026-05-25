@@ -21,7 +21,6 @@ import {
   faSun,
   faUsers,
   faClipboardList,
-  faArrowTrendUp,
   faCalendarCheck,
   faBoxOpen,
   faUserShield,
@@ -59,9 +58,8 @@ const cardVariants = {
 const chartColors = ["#ff5f93", "#ff8db5", "#ffc8dd", "#f472b6", "#fb7185", "#f59e0b"];
 
 const AdminDashboard = () => {
-  const { user, role: userRole } = useAuth();
+  const { user } = useAuth();
   const name = user?.name || "Admin";
-  const role = userRole || "admin";
   const profilePhoto = user?.profile_photo || "";
 
   const { theme, toggle } = useTheme();
@@ -79,7 +77,7 @@ const AdminDashboard = () => {
 
   const handleProfilePhotoUpload = async (file) => {
     try {
-      const data = await uploadProfilePhoto(file);
+      await uploadProfilePhoto(file);
       // Refresh user data via auth context if needed
       window.location.reload();
     } catch (err) {
@@ -165,7 +163,7 @@ const AdminDashboard = () => {
   const formatNumber = (value) =>
     new Intl.NumberFormat("en-PH").format(Number(value || 0));
 
-  const dashboard = dashboardData || {};
+  const dashboard = useMemo(() => dashboardData || {}, [dashboardData]);
 
   const appointmentStatusData = useMemo(() => {
     return normalizeList(dashboard?.appointments_by_status, [

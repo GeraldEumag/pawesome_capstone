@@ -250,8 +250,55 @@ const CustomerHistory = () => {
   };
 
   const handleExport = () => {
-    // TODO: Implement export functionality
-    showAlert("Export feature coming soon!");
+    const data = filteredData;
+    if (!data || data.length === 0) {
+      showAlert("No records to export.");
+      return;
+    }
+
+    const escape = (val) => {
+      const str = String(val ?? "").replace(/"/g, '""');
+      return str.includes(",") || str.includes("\n") ? `"${str}"` : str;
+    };
+
+    let rows = [];
+    if (activeTab === "orders") {
+      rows = [
+        ["Order ID", "Status", "Date", "Total Amount", "Payment Status", "Items"],
+        ...data.map((o) => [
+          o.id, o.status, o.created_at,
+          o.total_amount || 0, o.payment_status || "pending",
+          Array.isArray(o.items) ? o.items.map((i) => i.name || i.product_name).join("; ") : "",
+        ]),
+      ];
+    } else if (activeTab === "requests") {
+      rows = [
+        ["Request ID", "Status", "Date", "Service Type", "Pet Name", "Scheduled Date", "Payment Status"],
+        ...data.map((r) => [
+          r.id, r.status, r.created_at,
+          r.service_type || "", r.pet_name || "N/A",
+          r.scheduled_date || "", r.payment_status || "pending",
+        ]),
+      ];
+    } else if (activeTab === "payments") {
+      rows = [
+        ["Payment ID", "Status", "Date", "Amount", "Method", "Reference"],
+        ...data.map((p) => [
+          p.id, p.status, p.created_at,
+          p.amount || 0, p.payment_method || "N/A",
+          p.reference_id || p.receipt_number || "N/A",
+        ]),
+      ];
+    }
+
+    const csv = rows.map((r) => r.map(escape).join(",")).join("\n");
+    const blob = new Blob([csv], { type: "text/csv" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `customer_${activeTab}_${new Date().toISOString().slice(0, 10)}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
   };
 
   if (loading) {
