@@ -20,7 +20,7 @@ import {
   faTimesCircle,
 } from "@fortawesome/free-solid-svg-icons";
 import "./ReceptionistHotelBookings.css";
-import { apiRequest } from "../../api/client";
+import { apiRequest, getAuthenticatedFileUrl } from "../../api/client";
 import DatePickerInput from "../../components/shared/DatePickerInput";
 import PetAvatar from "../shared/PetAvatar";
 import {
@@ -794,14 +794,37 @@ const ReceptionistHotelBookings = () => {
                 />
                 <InfoItem
                   label="Instructions"
-                  value={
-                    selectedBooking.special_requests ||
-                    selectedBooking.feeding_instructions ||
-                    selectedBooking.notes ||
-                    "None"
-                  }
+                  value={selectedBooking.notes || "None"}
                   wide
                 />
+                {selectedBooking.vaccination_card && (
+                  <div className="info-item wide">
+                    <span className="info-label">Vaccination Card</span>
+                    <button
+                      type="button"
+                      className="vaccination-link"
+                      onClick={async () => {
+                        const win = window.open("", "_blank");
+                        if (!win) {
+                          alert("Popup blocked. Please allow popups for this site.");
+                          return;
+                        }
+                        try {
+                          const url = await getAuthenticatedFileUrl(
+                            selectedBooking.vaccination_card_url || `/files/vaccination-cards/${selectedBooking.id}/view`
+                          );
+                          win.location.href = url;
+                        } catch (err) {
+                          win.close();
+                          console.error("Vaccination card open error:", err);
+                          alert(err.message || "Failed to open vaccination card.");
+                        }
+                      }}
+                    >
+                      <FontAwesomeIcon icon={faEye} /> View Vaccination Card
+                    </button>
+                  </div>
+                )}
               </div>
 
               {["pending", "approved"].includes(normalizeStatus(selectedBooking.status)) && (

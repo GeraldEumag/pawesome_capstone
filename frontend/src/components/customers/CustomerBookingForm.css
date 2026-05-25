@@ -3,6 +3,9 @@
   padding: 1.5rem;
   background: var(--color-bg-gradient);
   color: var(--color-text);
+  display: grid;
+  gap: 1.25rem;
+  align-content: start;
 }
 
 .booking-hero,
@@ -15,8 +18,8 @@
 }
 
 .booking-hero {
-  padding: 2rem;
-  margin-bottom: 1.5rem;
+  padding: 1.25rem;
+  margin-bottom: 0;
   position: relative;
   overflow: hidden;
 }
@@ -30,34 +33,38 @@
   height: 330px;
   background: radial-gradient(
     circle,
-    rgba(255, 95, 147, 0.28),
+    var(--color-primary-soft),
     transparent 65%
   );
+  opacity: 0.45;
 }
 
 .booking-badge {
   display: inline-flex;
-  padding: 0.35rem 0.75rem;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.35rem 0.85rem;
   border-radius: var(--radius-pill);
-  background: rgba(255, 95, 147, 0.12);
+  background: var(--color-primary-soft);
   color: var(--color-primary);
-  font-size: 0.78rem;
+  font-size: 0.75rem;
   font-weight: 950;
   text-transform: uppercase;
   letter-spacing: 0.08em;
 }
 
 .booking-hero h1 {
-  margin: 0.7rem 0 0.6rem;
-  font-size: clamp(2rem, 4vw, 3rem);
+  margin: 0.5rem 0 0.4rem;
+  font-size: clamp(1.4rem, 3vw, 2rem);
   font-weight: 950;
-  letter-spacing: -0.05em;
+  letter-spacing: -0.04em;
   background: linear-gradient(
     135deg,
     var(--color-primary),
     var(--color-primary-light)
   );
   -webkit-background-clip: text;
+  background-clip: text;
   -webkit-text-fill-color: transparent;
 }
 
@@ -65,12 +72,13 @@
   max-width: 760px;
   margin: 0;
   color: var(--color-muted);
+  font-size: 0.9rem;
   font-weight: 700;
-  line-height: 1.6;
+  line-height: 1.5;
 }
 
 .booking-card {
-  padding: 1.5rem;
+  padding: 1rem;
 }
 
 .booking-card-header {
@@ -78,7 +86,7 @@
   justify-content: space-between;
   align-items: center;
   gap: 1rem;
-  margin-bottom: 1.5rem;
+  margin-bottom: 1rem;
 }
 
 .booking-card-header h2 {
@@ -94,10 +102,10 @@
 }
 
 .booking-card-header > svg {
-  width: 52px;
-  height: 52px;
-  padding: 0.85rem;
-  border-radius: 18px;
+  width: 42px;
+  height: 42px;
+  padding: 0.7rem;
+  border-radius: 14px;
   color: white;
   background: linear-gradient(
     135deg,
@@ -114,14 +122,15 @@
 .form-grid {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
-  gap: 1rem;
+  gap: 0.75rem;
 }
 
 .booking-form label {
   display: flex;
   flex-direction: column;
-  gap: 0.45rem;
+  gap: 0.35rem;
   color: var(--color-heading);
+  font-size: 0.9rem;
   font-weight: 900;
 }
 
@@ -139,8 +148,8 @@
 
 .booking-form input,
 .booking-form select {
-  min-height: 48px;
-  padding: 0 1rem;
+  min-height: 42px;
+  padding: 0 0.9rem;
 }
 
 .booking-form textarea {
@@ -153,7 +162,7 @@
 .booking-form textarea:focus {
   outline: none;
   border-color: var(--color-primary);
-  box-shadow: 0 0 0 4px rgba(255, 95, 147, 0.15);
+  box-shadow: 0 0 0 4px var(--color-primary-soft);
 }
 
 .readonly-input {
@@ -176,12 +185,57 @@
 }
 
 .no-pets-message {
-  padding: 1rem;
-  background-color: rgba(255, 95, 147, 0.08);
-  border: 1px solid rgba(255, 95, 147, 0.2);
+  padding: 1.1rem;
+  background-color: var(--color-primary-soft);
+  border: 1px solid var(--color-border);
   border-radius: var(--radius-md);
   color: var(--color-primary);
   text-align: center;
+}
+
+.selected-pet-info {
+  grid-column: 1 / -1;
+  padding: 1rem;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--color-border);
+  background: var(--color-primary-soft);
+}
+
+.selected-pet-info p {
+  margin: 0.2rem 0 0;
+  color: var(--color-text);
+  font-size: 0.88rem;
+}
+
+.service-eligibility-message {
+  grid-column: 1 / -1;
+  padding: 0.85rem 1rem;
+  border-radius: var(--radius-md);
+  font-size: 0.88rem;
+  font-weight: 700;
+  border: 1px solid;
+}
+
+.service-eligibility-message.info {
+  background: rgba(59, 130, 246, 0.08);
+  border-color: rgba(59, 130, 246, 0.22);
+  color: #1d4ed8;
+}
+
+.service-eligibility-message.error {
+  background: rgba(239, 68, 68, 0.08);
+  border-color: rgba(239, 68, 68, 0.22);
+  color: #dc2626;
+}
+
+.loading-rooms,
+.no-rooms-message {
+  padding: 0.9rem 1rem;
+  border-radius: var(--radius-md);
+  border: 1px dashed var(--color-border);
+  color: var(--color-muted);
+  font-size: 0.88rem;
+  font-weight: 700;
 }
 
 .no-pets-message p {
@@ -214,9 +268,9 @@
 }
 
 .submit-booking-btn {
-  margin-top: 1.5rem;
+  margin-top: 1rem;
   width: 100%;
-  min-height: 52px;
+  min-height: 46px;
   border: none;
   border-radius: var(--radius-pill);
   background: linear-gradient(

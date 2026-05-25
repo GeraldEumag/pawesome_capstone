@@ -1098,3 +1098,22 @@ body[data-theme="dark"] .checkin-summary-card.active {
     border-radius: var(--checkin-radius-md);
   }
 }
+
+/* Vaccination card link/button */
+.vaccination-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  color: var(--checkin-info, #3b82f6);
+  font-size: 0.9rem;
+  text-decoration: none;
+  padding: 0.5rem 0.9rem;
+  border-radius: 8px;
+  background: rgba(59, 130, 246, 0.08);
+  border: none;
+  cursor: pointer;
+}
+
+.vaccination-link:hover {
+  background: rgba(59, 130, 246, 0.14);
+}

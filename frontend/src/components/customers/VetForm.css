@@ -1,94 +1,293 @@
+/* VetForm.css — modern design, CSS variable theming */
+
 .vet-container {
-  padding: 24px;
+  width: 100%;
+  display: grid;
+  gap: 1.25rem;
+  padding-bottom: 2rem;
+  color: var(--color-text);
+  font-family: inherit;
 }
 
+.vet-container,
+.vet-container * {
+  box-sizing: border-box;
+}
+
+/* Header */
 .vet-header {
-  background: white;
-  border: 1px solid rgba(255, 95, 147, 0.2);
-  border-radius: 20px;
-  padding: 28px;
-  margin-bottom: 18px;
-  box-shadow: 0 12px 30px rgba(255, 95, 147, 0.12);
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 1rem;
+  padding: 1rem 1.25rem;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-card);
+  background:
+    radial-gradient(circle at top left, var(--color-primary-soft), transparent 40%),
+    var(--color-surface);
+  box-shadow: var(--shadow-card);
+  backdrop-filter: blur(18px);
 }
 
 .vet-header h1 {
-  margin: 0 0 8px;
-  color: #ff5f93;
-  font-size: 32px;
+  margin: 0 0 0.2rem;
+  font-size: clamp(1.1rem, 2.5vw, 1.5rem);
+  font-weight: 800;
+  color: var(--color-heading);
+  letter-spacing: -0.02em;
 }
 
 .vet-header p {
   margin: 0;
-  color: #64748b;
+  color: var(--color-muted);
+  font-size: 0.88rem;
 }
 
+/* Tabs */
 .vet-tabs {
   display: flex;
-  gap: 10px;
-  margin-bottom: 18px;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  padding: 0.35rem;
+  border: 1px solid var(--color-border);
+  border-radius: 14px;
+  background: var(--color-surface);
 }
 
 .vet-tabs button {
-  border: 1px solid rgba(255, 95, 147, 0.25);
-  background: white;
-  color: #64748b;
-  padding: 11px 18px;
-  border-radius: 999px;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0.55rem 1rem;
+  border: none;
+  border-radius: 10px;
+  background: transparent;
+  color: var(--color-muted);
+  font-size: 0.88rem;
   font-weight: 700;
   cursor: pointer;
+  transition: 0.18s ease;
+  font-family: inherit;
+}
+
+.vet-tabs button:hover:not(.active) {
+  background: var(--color-primary-soft);
+  color: var(--color-primary);
 }
 
 .vet-tabs button.active {
-  background: linear-gradient(135deg, #ff5f93, #ff8db5);
-  color: white;
+  background: linear-gradient(135deg, var(--color-primary), var(--color-primary-light));
+  color: #ffffff;
+  box-shadow: var(--shadow-primary);
 }
 
+/* Card */
 .vet-card {
-  background: white;
-  border: 1px solid rgba(255, 95, 147, 0.2);
-  border-radius: 20px;
-  padding: 24px;
+  padding: 1rem;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-card);
+  background: var(--color-surface);
+  box-shadow: var(--shadow-card);
+  backdrop-filter: blur(18px);
 }
 
+.vet-card h2 {
+  margin: 0 0 0.85rem;
+  font-size: 1rem;
+  font-weight: 800;
+  color: var(--color-heading);
+}
+
+/* Form */
 .vet-form {
   display: grid;
-  gap: 14px;
+  gap: 0.65rem;
+}
+
+.vet-form label {
+  display: block;
+  margin-bottom: 0.25rem;
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: var(--color-heading);
 }
 
 .vet-form input,
 .vet-form select,
 .vet-form textarea {
   width: 100%;
-  padding: 13px 15px;
-  border: 1px solid rgba(255, 95, 147, 0.25);
-  border-radius: 14px;
+  min-height: 38px;
+  padding: 0.5rem 0.8rem;
+  border: 1px solid var(--color-border);
+  border-radius: 10px;
+  background: var(--color-surface-solid);
+  color: var(--color-text);
+  font-size: 0.9rem;
+  font-family: inherit;
+  outline: none;
+  transition: 0.18s ease;
+}
+
+.vet-form input:focus,
+.vet-form select:focus,
+.vet-form textarea:focus {
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px var(--color-primary-soft);
 }
 
 .vet-form textarea {
-  min-height: 100px;
+  min-height: 60px;
+  resize: vertical;
 }
 
-.vet-form button {
+.vet-form button[type="submit"] {
+  width: 100%;
+  min-height: 42px;
+  margin-top: 0.25rem;
   border: none;
-  border-radius: 14px;
-  padding: 13px;
-  background: linear-gradient(135deg, #ff5f93, #ff8db5);
-  color: white;
+  border-radius: var(--radius-pill);
+  background: linear-gradient(135deg, var(--color-primary), var(--color-primary-light));
+  color: #ffffff;
+  font-size: 0.92rem;
   font-weight: 800;
   cursor: pointer;
+  box-shadow: var(--shadow-primary);
+  transition: 0.18s ease;
+  font-family: inherit;
+}
+
+.vet-form button[type="submit"]:hover {
+  transform: translateY(-1px);
+  opacity: 0.92;
+}
+
+.vet-form button[type="submit"]:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+}
+
+/* Selected pet info */
+.vet-selected-pet-info {
+  padding: 0.6rem 0.85rem;
+  border-radius: 10px;
+  background: var(--color-primary-soft);
+  border: 1px solid var(--color-border);
+}
+
+.vet-selected-pet-info p {
+  margin: 0.15rem 0;
+  font-size: 0.82rem;
+  color: var(--color-text);
+}
+
+.vet-selected-pet-info strong {
+  color: var(--color-heading);
+  font-weight: 700;
+}
+
+/* Service note / warnings */
+.vet-service-note {
+  padding: 0.6rem 0.85rem;
+  border-radius: 10px;
+  font-size: 0.85rem;
+  font-weight: 700;
+  background: rgba(59, 130, 246, 0.08);
+  border: 1px solid rgba(59, 130, 246, 0.22);
+  color: #1d4ed8;
+}
+
+.vet-service-note.error {
+  background: rgba(220, 38, 38, 0.07);
+  border-color: rgba(220, 38, 38, 0.2);
+  color: #991b1b;
+}
+
+/* Appointment list items */
+.vet-items-list {
+  display: grid;
+  gap: 0.5rem;
 }
 
 .vet-item {
-  border: 1px solid rgba(255, 95, 147, 0.16);
-  border-radius: 16px;
-  padding: 16px;
-  margin-bottom: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.85rem;
+  padding: 0.65rem 1rem;
+  border: 1px solid var(--color-border);
+  border-left: 3px solid var(--color-primary);
+  border-radius: 14px;
+  background: var(--color-surface);
+  transition: 0.18s ease;
+}
+
+.vet-item:hover {
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-card);
+}
+
+.vet-item-body {
+  min-width: 0;
+  flex: 1;
+}
+
+.vet-item h3 {
+  margin: 0;
+  font-size: 0.92rem;
+  font-weight: 800;
+  color: var(--color-heading);
+}
+
+.vet-item p {
+  margin: 0.15rem 0 0;
+  font-size: 0.78rem;
+  color: var(--color-muted);
+}
+
+/* Status badges */
+.vet-status {
+  display: inline-flex;
+  align-items: center;
+  min-height: 24px;
+  padding: 0 0.65rem;
+  border-radius: var(--radius-pill);
+  font-size: 0.72rem;
+  font-weight: 800;
+  text-transform: capitalize;
+  white-space: nowrap;
 }
 
 .vet-status.pending {
+  background: rgba(245, 158, 11, 0.12);
   color: #92400e;
-  background: #fef3c7;
-  padding: 6px 12px;
-  border-radius: 999px;
-  font-weight: 700;
+}
+
+.vet-status.approved {
+  background: rgba(16, 185, 129, 0.12);
+  color: #065f46;
+}
+
+.vet-status.rejected {
+  background: rgba(239, 68, 68, 0.1);
+  color: #991b1b;
+}
+
+.vet-status.completed {
+  background: rgba(59, 130, 246, 0.1);
+  color: #1e40af;
+}
+
+.vet-status.cancelled {
+  background: rgba(107, 114, 128, 0.1);
+  color: #374151;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .vet-container {
+    gap: 1rem;
+  }
 }

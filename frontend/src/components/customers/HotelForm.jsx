@@ -53,16 +53,14 @@ const HotelForm = () => {
     pet_type: "",
     pet_breed: "",
     check_in_date: "",
-    check_out_date: "",
-    check_in_time: "",
-    check_out_time: "",
+    number_of_days: 1,
+    check_in_time: "09:00",
+    check_out_time: "17:00",
     boarding_type: "standard",
-    special_instructions: "",
-    feeding_instructions: "",
-    medication_notes: "",
-    emergency_contact: "",
     notes: "",
   });
+  const [vaccinationCard, setVaccinationCard] = useState(null);
+  const [vaccinationPreview, setVaccinationPreview] = useState(null);
 
   const fetchPets = useCallback(async () => {
     try {
@@ -135,15 +133,18 @@ const HotelForm = () => {
   const handleCreateBooking = async (e) => {
     e.preventDefault();
 
-    // Check if a room is selected
     if (!selectedRoom) {
       setError("Please select an available room for your stay.");
       return;
     }
 
-    // Check if selected room is still available
     if (boardingAvailability && !boardingAvailability.rooms?.find(room => room.id === selectedRoom.id && room.available)) {
       setError("Selected room is no longer available. Please choose another room.");
+      return;
+    }
+
+    if (!vaccinationCard) {
+      setError("Please upload a vaccination card photo.");
       return;
     }
 
@@ -151,26 +152,22 @@ const HotelForm = () => {
       setLoading(true);
       setError("");
 
-      const payload = {
-        pet_id: bookingForm.pet_id || undefined,
-        pet_name: selectedPet?.name || bookingForm.pet_name,
-        pet_type: selectedPet?.type || selectedPet?.species || bookingForm.pet_type,
-        pet_breed: selectedPet?.breed || bookingForm.pet_breed,
-        check_in_date: bookingForm.check_in_date,
-        check_out_date: bookingForm.check_out_date,
-        check_in_time: bookingForm.check_in_time,
-        check_out_time: bookingForm.check_out_time,
-        room_id: selectedRoom?.id,
-        special_requests: bookingForm.special_instructions,
-        feeding_instructions: bookingForm.feeding_instructions,
-        medication_notes: bookingForm.medication_notes,
-        emergency_contact: bookingForm.emergency_contact,
-        notes: bookingForm.notes,
-      };
+      const formData = new FormData();
+      formData.append("pet_id", bookingForm.pet_id || "");
+      formData.append("pet_name", selectedPet?.name || bookingForm.pet_name || "");
+      formData.append("pet_type", selectedPet?.type || selectedPet?.species || bookingForm.pet_type || "");
+      formData.append("pet_breed", selectedPet?.breed || bookingForm.pet_breed || "");
+      formData.append("check_in_date", bookingForm.check_in_date);
+      formData.append("number_of_days", String(bookingForm.number_of_days));
+      formData.append("check_in_time", bookingForm.check_in_time);
+      formData.append("check_out_time", bookingForm.check_out_time);
+      formData.append("room_id", selectedRoom?.id);
+      formData.append("notes", bookingForm.notes || "");
+      formData.append("vaccination_card", vaccinationCard);
 
       await apiRequest("/customer/boardings", {
         method: "POST",
-        body: JSON.stringify(payload),
+        body: formData,
       });
 
       setSuccessMessage("Pet boarding request submitted successfully.");
@@ -180,16 +177,14 @@ const HotelForm = () => {
         pet_type: "",
         pet_breed: "",
         check_in_date: "",
-        check_out_date: "",
-        check_in_time: "",
-        check_out_time: "",
+        number_of_days: 1,
+        check_in_time: "09:00",
+        check_out_time: "17:00",
         boarding_type: "standard",
-        special_instructions: "",
-        feeding_instructions: "",
-        medication_notes: "",
-        emergency_contact: "",
         notes: "",
       });
+      setVaccinationCard(null);
+      setVaccinationPreview(null);
       await fetchMyBookings();
       setActiveTab("my-bookings");
     } catch (err) {
@@ -270,7 +265,7 @@ const HotelForm = () => {
     ["unpaid", "rejected"].includes(booking.payment_status || "unpaid");
 
   const fetchBoardingAvailability = async (roomType = null) => {
-    if (!bookingForm.pet_id || !bookingForm.check_in_date || !bookingForm.check_out_date) {
+    if (!bookingForm.pet_id || !bookingForm.check_in_date || !bookingForm.number_of_days) {
       setBoardingAvailability(null);
       return;
     }
@@ -278,19 +273,24 @@ const HotelForm = () => {
     try {
       setAvailabilityLoading(true);
       setError("");
-      
+
+      const checkIn = new Date(bookingForm.check_in_date);
+      const checkOut = new Date(checkIn);
+      checkOut.setDate(checkOut.getDate() + parseInt(bookingForm.number_of_days, 10));
+      const checkOutDate = checkOut.toISOString().split("T")[0];
+
       const params = new URLSearchParams({
         pet_id: bookingForm.pet_id,
         check_in_date: bookingForm.check_in_date,
-        check_out_date: bookingForm.check_out_date,
+        check_out_date: checkOutDate,
       });
-      
+
       if (roomType) {
         params.append('room_type', roomType);
       }
-      
+
       const data = await apiRequest(`/boarding/rooms/available?${params}`);
-      
+
       if (data.success) {
         setBoardingAvailability(data);
       } else {
@@ -309,10 +309,9 @@ const HotelForm = () => {
     const { name, value } = e.target;
     setBookingForm((prev) => ({ ...prev, [name]: value }));
 
-    // Check availability when pet or dates are selected
-    if ((name === "pet_id" || name === "check_in_date" || name === "check_out_date") && value) {
+    if ((name === "pet_id" || name === "check_in_date" || name === "number_of_days") && value) {
       const updatedForm = { ...bookingForm, [name]: value };
-      if (updatedForm.pet_id && updatedForm.check_in_date && updatedForm.check_out_date) {
+      if (updatedForm.pet_id && updatedForm.check_in_date && updatedForm.number_of_days) {
         fetchBoardingAvailability(updatedForm.room_type);
       }
     }
@@ -320,13 +319,11 @@ const HotelForm = () => {
 
   // Calculate total amount when room is selected
   const calculateTotal = () => {
-    if (!selectedRoom || !bookingForm.check_in_date || !bookingForm.check_out_date) {
+    if (!selectedRoom || !bookingForm.check_in_date || !bookingForm.number_of_days) {
       return { total: 0, days: 0, dailyRate: 0 };
     }
 
-    const checkIn = new Date(bookingForm.check_in_date);
-    const checkOut = new Date(bookingForm.check_out_date);
-    const days = Math.max(1, Math.ceil((checkOut - checkIn) / (1000 * 60 * 60 * 24)));
+    const days = Math.max(1, parseInt(bookingForm.number_of_days, 10));
     const roomSubtotal = selectedRoom.daily_rate * days;
     const total = roomSubtotal;
 
@@ -442,19 +439,14 @@ const HotelForm = () => {
                   />
                 </div>
                 <div className="form-group">
-                  <label>Check-out Date *</label>
-                  <DatePickerInput
-                    selected={bookingForm.check_out_date ? new Date(bookingForm.check_out_date) : null}
-                    onChange={(date) =>
-                      handleChange({
-                        target: {
-                          name: "check_out_date",
-                          value: date ? date.toISOString().split("T")[0] : "",
-                        },
-                      })
-                    }
-                    placeholderText="Pick check-out date..."
-                    minDate={bookingForm.check_in_date ? new Date(bookingForm.check_in_date) : new Date()}
+                  <label>Number of Days *</label>
+                  <input
+                    type="number"
+                    name="number_of_days"
+                    min={1}
+                    max={30}
+                    value={bookingForm.number_of_days}
+                    onChange={handleChange}
                     required
                   />
                 </div>
@@ -503,9 +495,9 @@ const HotelForm = () => {
                 </div>
               )}
 
-              {bookingForm.check_in_date && bookingForm.check_out_date && !boardingAvailability && !availabilityLoading && (
+              {bookingForm.check_in_date && bookingForm.number_of_days && !boardingAvailability && !availabilityLoading && (
                 <div className="availability-prompt">
-                  <p>Please select both dates to check available rooms.</p>
+                  <p>Click above to check available rooms.</p>
                 </div>
               )}
 
@@ -541,32 +533,55 @@ const HotelForm = () => {
               <div className="form-row">
                 <div className="form-group">
                   <label>Check-in Time</label>
-                  <input type="time" name="check_in_time" value={bookingForm.check_in_time} onChange={handleChange} />
+                  <select name="check_in_time" value={bookingForm.check_in_time} onChange={handleChange}>
+                    {Array.from({ length: 11 }, (_, i) => {
+                      const hour = 9 + i;
+                      const val = String(hour).padStart(2, "0") + ":00";
+                      const label = hour <= 12 ? `${val} AM` : `${val} PM`;
+                      return <option key={val} value={val}>{label}</option>;
+                    })}
+                  </select>
                 </div>
                 <div className="form-group">
                   <label>Check-out Time</label>
-                  <input type="time" name="check_out_time" value={bookingForm.check_out_time} onChange={handleChange} />
+                  <select name="check_out_time" value={bookingForm.check_out_time} onChange={handleChange}>
+                    {Array.from({ length: 11 }, (_, i) => {
+                      const hour = 9 + i;
+                      const val = String(hour).padStart(2, "0") + ":00";
+                      const label = hour <= 12 ? `${val} AM` : `${val} PM`;
+                      return <option key={val} value={val}>{label}</option>;
+                    })}
+                  </select>
                 </div>
               </div>
 
               <div className="form-group">
-                <label>Feeding Instructions</label>
-                <textarea name="feeding_instructions" value={bookingForm.feeding_instructions} onChange={handleChange} rows={2} />
+                <label>Notes</label>
+                <textarea name="notes" value={bookingForm.notes} onChange={handleChange} rows={3} placeholder="Any additional notes..." />
               </div>
 
               <div className="form-group">
-                <label>Medication Notes</label>
-                <textarea name="medication_notes" value={bookingForm.medication_notes} onChange={handleChange} rows={2} />
-              </div>
-
-              <div className="form-group">
-                <label>Emergency Contact</label>
-                <input type="text" name="emergency_contact" value={bookingForm.emergency_contact} onChange={handleChange} />
-              </div>
-
-              <div className="form-group">
-                <label>Special Instructions</label>
-                <textarea name="special_instructions" value={bookingForm.special_instructions} onChange={handleChange} rows={3} />
+                <label>Vaccination Card *</label>
+                <input
+                  type="file"
+                  accept="image/*,.pdf"
+                  onChange={(e) => {
+                    const file = e.target.files?.[0] || null;
+                    setVaccinationCard(file);
+                    if (file) {
+                      const reader = new FileReader();
+                      reader.onloadend = () => setVaccinationPreview(reader.result);
+                      reader.readAsDataURL(file);
+                    } else {
+                      setVaccinationPreview(null);
+                    }
+                  }}
+                />
+                {vaccinationPreview && (
+                  <div className="vaccination-preview">
+                    <img src={vaccinationPreview} alt="Vaccination card preview" />
+                  </div>
+                )}
               </div>
 
               <button type="submit" disabled={loading}>

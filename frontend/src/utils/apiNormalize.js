@@ -168,7 +168,7 @@ export const getCheckOutDate = (item) =>
   item?.check_out || item?.checkout_date || item?.end_date || item?.date_to || "";
 
 export const getNotes = (item) =>
-  item?.special_requests || item?.feeding_instructions || item?.notes || item?.remarks || "No notes provided";
+  item?.notes || item?.remarks || "No notes provided";
 
 export const isHotelRequest = (item) => {
   const values = [

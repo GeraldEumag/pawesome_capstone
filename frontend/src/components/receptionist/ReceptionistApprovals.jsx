@@ -18,7 +18,7 @@ import {
   FaUser,
   FaUserMd,
 } from "react-icons/fa";
-import { apiRequest } from "../../api/client";
+import { apiRequest, getAuthenticatedFileUrl } from "../../api/client";
 import "./ReceptionistApprovals.css";
 
 const TYPE_FILTERS = [
@@ -227,11 +227,10 @@ const normalizeBoardingApproval = (boarding) => ({
   pet_name: boarding.pet_name || boarding.pet?.name,
   customer_name: boarding.customer_name || boarding.customer?.name,
   customer_email: boarding.customer_email || boarding.customer?.email,
-  notes:
-    boarding.special_requests ||
-    boarding.feeding_instructions ||
-    boarding.medication_notes ||
-    boarding.notes,
+  notes: boarding.notes,
+  vaccination_card: boarding.vaccination_card,
+  vaccination_card_url: boarding.vaccination_card_url,
+  vaccination_card_verified_at: boarding.vaccination_card_verified_at,
 });
 
 const ReceptionistApprovals = () => {
@@ -264,6 +263,7 @@ const ReceptionistApprovals = () => {
   const [selectedIds, setSelectedIds] = useState(new Set());
   const [bulkActionOpen, setBulkActionOpen] = useState(false);
   const [bulkActionType, setBulkActionType] = useState("");
+  const [verifiedIds, setVerifiedIds] = useState(new Set());
 
   const showMessage = (type, message) => {
     if (type === "success") {
@@ -395,6 +395,23 @@ const ReceptionistApprovals = () => {
     });
   }, [requests, searchTerm, typeFilter, vetFilter, vetAssignments]);
 
+  const openVaccinationCard = async (cardUrl) => {
+    if (!cardUrl) return;
+    const win = window.open("", "_blank");
+    if (!win) {
+      showMessage("error", "Popup blocked. Please allow popups for this site.");
+      return;
+    }
+    try {
+      const blobUrl = await getAuthenticatedFileUrl(cardUrl);
+      win.location.href = blobUrl;
+    } catch (err) {
+      win.close();
+      console.error("Vaccination card open error:", err);
+      showMessage("error", err.message || "Failed to open vaccination card.");
+    }
+  };
+
   const openDetails = (item) => {
     setSelectedRequest(item);
     setDetailsOpen(true);
@@ -427,6 +444,30 @@ const ReceptionistApprovals = () => {
       remarks: "",
       rejectionReason: "",
     });
+  };
+
+  const verifyVaccination = async () => {
+    if (!selectedRequest) return;
+
+    const requestId = getRequestId(selectedRequest);
+    const hotelRequest = getRequestType(selectedRequest) === "hotel";
+    if (!hotelRequest) return;
+
+    try {
+      setProcessingId(requestId);
+      await apiRequest(`/receptionist/boarding-requests/${requestId}/verify-vaccination`, {
+        method: "POST",
+      });
+      setVerifiedIds((prev) => new Set(prev).add(requestId));
+      setSelectedRequest((prev) =>
+        prev ? { ...prev, vaccination_card_verified_at: new Date().toISOString() } : prev
+      );
+      showMessage("success", "Vaccination card verified.");
+    } catch (err) {
+      showMessage("error", err.message || "Failed to verify vaccination card.");
+    } finally {
+      setProcessingId(null);
+    }
   };
 
   const approveRequest = async () => {
@@ -1068,6 +1109,23 @@ const ReceptionistApprovals = () => {
                   }
                   wide
                 />
+                {selectedRequest.vaccination_card && (
+                  <div className="approval-detail-item wide">
+                    <small>Vaccination Card</small>
+                    <button
+                      type="button"
+                      className="vaccination-link"
+                      onClick={() => openVaccinationCard(selectedRequest.vaccination_card_url)}
+                    >
+                      <FaEye /> View Vaccination Card
+                    </button>
+                    {selectedRequest.vaccination_card_verified_at && (
+                      <span className="vaccination-verified-badge">
+                        <FaCheckCircle /> Verified
+                      </span>
+                    )}
+                  </div>
+                )}
               </div>
             </div>
 
@@ -1127,6 +1185,42 @@ const ReceptionistApprovals = () => {
                 <strong>{getServiceName(selectedRequest)}</strong>
                 <span>{getCustomerName(selectedRequest)} | {getPetName(selectedRequest)}</span>
               </div>
+
+              {actionType === "approve" && selectedRequest.vaccination_card && (
+                <div className="vaccination-card-section">
+                  <h4>
+                    <FaEye /> Vaccination Card
+                  </h4>
+                  <button
+                    type="button"
+                    className="vaccination-link"
+                    onClick={() => openVaccinationCard(selectedRequest.vaccination_card_url)}
+                  >
+                    <FaEye /> View Vaccination Card
+                  </button>
+                  {selectedRequest.vaccination_card_verified_at ? (
+                    <span className="vaccination-verified-badge">
+                      <FaCheckCircle /> Verified
+                    </span>
+                  ) : (
+                    <button
+                      type="button"
+                      className="vaccination-verify-btn"
+                      onClick={verifyVaccination}
+                      disabled={processingId === getRequestId(selectedRequest)}
+                    >
+                      {processingId === getRequestId(selectedRequest) ? (
+                        <FaSpinner className="spin" />
+                      ) : (
+                        <FaCheckCircle />
+                      )}
+                      {processingId === getRequestId(selectedRequest)
+                        ? "Verifying..."
+                        : "Verify Vaccination Card"}
+                    </button>
+                  )}
+                </div>
+              )}
 
               {actionType === "approve" && isVetRequest(selectedRequest) && (
                 <div className="form-group">
@@ -1193,7 +1287,12 @@ const ReceptionistApprovals = () => {
                 <button
                   type="submit"
                   className={actionType === "approve" ? "primary-btn" : "danger-btn"}
-                  disabled={processingId === getRequestId(selectedRequest)}
+                  disabled={
+                    processingId === getRequestId(selectedRequest) ||
+                    (actionType === "approve" &&
+                      selectedRequest.vaccination_card &&
+                      !selectedRequest.vaccination_card_verified_at)
+                  }
                 >
                   {processingId === getRequestId(selectedRequest) ? (
                     <FaSpinner className="spin" />

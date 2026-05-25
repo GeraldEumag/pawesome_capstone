@@ -161,3 +161,31 @@ export const uploadProfilePhoto = async (file) => {
   formData.append("profile_photo", file);
   return apiRequest("/auth/profile-photo", "POST", formData);
 };
+
+/**
+ * Fetch an authenticated file and return a temporary blob URL.
+ * Use this for opening secure files in new tabs or inline previews.
+ */
+export const getAuthenticatedFileUrl = async (endpoint) => {
+  const token = getToken();
+  const url = normalizeEndpoint(endpoint);
+
+  const response = await fetch(url, {
+    method: "GET",
+    headers: {
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    },
+    credentials: "include",
+  });
+
+  if (!response.ok) {
+    const text = await response.text();
+    const result = parseResponseText(text);
+    const message =
+      result?.message || result?.error || "Failed to load file.";
+    throw new Error(message);
+  }
+
+  const blob = await response.blob();
+  return URL.createObjectURL(blob);
+};

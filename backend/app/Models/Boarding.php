@@ -53,7 +53,8 @@ class Boarding extends Model
         'medication_notes',
         'reminder_sent_at',
         'emergency_contact',
-        'emergency_phone',
+        'vaccination_card',
+        'vaccination_card_verified_at',
         'approved_by',
         'approved_at',
         'rejected_by',
@@ -70,6 +71,10 @@ class Boarding extends Model
         'checked_out_at',
     ];
 
+    protected $appends = [
+        'vaccination_card_url',
+    ];
+
     protected $casts = [
         'check_in' => 'datetime',
         'check_out' => 'datetime',
@@ -83,6 +88,7 @@ class Boarding extends Model
         'rejected_at' => 'datetime',
         'paid_at' => 'datetime',
         'reminder_sent_at' => 'datetime',
+        'vaccination_card_verified_at' => 'datetime',
         'base_amount' => 'decimal:2',
         'additional_charges' => 'decimal:2',
         'total_amount' => 'decimal:2',
@@ -294,5 +300,14 @@ class Boarding extends Model
         if ($this->hotelRoom && in_array($this->hotelRoom->status, ['reserved', 'occupied'])) {
             $this->hotelRoom->update(['status' => 'available']);
         }
+    }
+
+    protected function getVaccinationCardUrlAttribute(): ?string
+    {
+        if (!$this->vaccination_card) {
+            return null;
+        }
+
+        return '/files/vaccination-cards/' . $this->id . '/view';
     }
 }

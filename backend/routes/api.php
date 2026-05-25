@@ -467,6 +467,7 @@ Route::middleware(['auth.api', 'throttle:api', 'role:receptionist'])->prefix('re
     // Boarding Request actions
     Route::post('boarding-requests/{id}/approve', [BoardingController::class, 'approve']);
     Route::post('boarding-requests/{id}/reject', [BoardingController::class, 'reject']);
+    Route::post('boarding-requests/{id}/verify-vaccination', [BoardingController::class, 'verifyVaccinationCard']);
     Route::post('boarding-requests/{id}/schedule', [BoardingController::class, 'schedule']);
     Route::post('boarding-requests/{id}/check-in', [BoardingController::class, 'checkIn']);
     Route::post('boarding-requests/{id}/care-logs', [BoardingController::class, 'addCareLog']);
@@ -976,6 +977,7 @@ Route::middleware(['throttle:api'])->group(function () {
 // Secure File Access Routes (auth required)
 Route::middleware(['auth.api', 'throttle:api'])->prefix('files')->group(function () {
     Route::get('/payment-proofs/{type}/{id}/view', [SecureFileController::class, 'viewPaymentProof']);
+    Route::get('/vaccination-cards/{id}/view', [SecureFileController::class, 'viewVaccinationCard']);
     Route::get('/pet-photos/{petId}/view', [SecureFileController::class, 'viewPetImage']);
 });
 

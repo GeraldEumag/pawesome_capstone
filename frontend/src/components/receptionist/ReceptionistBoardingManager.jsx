@@ -21,7 +21,7 @@ import {
   faInfoCircle,
 } from "@fortawesome/free-solid-svg-icons";
 import "./ReceptionistCheckInForm.css";
-import { apiRequest } from "../../api/client";
+import { apiRequest, getAuthenticatedFileUrl } from "../../api/client";
 import PetAvatar from "../shared/PetAvatar";
 import {
   normalizeList,
@@ -389,6 +389,34 @@ const ReceptionistBoardingManager = () => {
                       <strong>Notes:</strong> {getNotes(booking)}
                     </span>
                   </div>
+                  {booking.vaccination_card && (
+                    <div className="checkin-detail-row">
+                      <button
+                        type="button"
+                        className="vaccination-link"
+                        onClick={async () => {
+                          const win = window.open("", "_blank");
+                          if (!win) {
+                            alert("Popup blocked. Please allow popups for this site.");
+                            return;
+                          }
+                          try {
+                            const url = await getAuthenticatedFileUrl(
+                              booking.vaccination_card_url || `/files/vaccination-cards/${booking.id}/view`
+                            );
+                            win.location.href = url;
+                          } catch (err) {
+                            win.close();
+                            console.error("Vaccination card open error:", err);
+                            alert(err.message || "Failed to open vaccination card.");
+                          }
+                        }}
+                      >
+                        <FontAwesomeIcon icon={faEye} />
+                        View Vaccination Card
+                      </button>
+                    </div>
+                  )}
                 </div>
               )}
             </div>

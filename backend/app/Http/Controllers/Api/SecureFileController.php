@@ -51,6 +51,13 @@ class SecureFileController extends Controller
                 }
                 break;
 
+            case 'boarding-vaccination':
+                $record = DB::table('boardings')->where('id', $id)->first();
+                if ($record && $user->role === 'customer') {
+                    $isOwner = ($record->customer_id == $user->id);
+                }
+                break;
+
             case 'medical_confinement':
             case 'medical-confinement':
                 $record = DB::table('medical_confinements')->where('id', $id)->first();
@@ -146,6 +153,80 @@ class SecureFileController extends Controller
             ->header('Content-Disposition', 'inline; filename="payment_proof_' . $id . '.' . pathinfo($filePath, PATHINFO_EXTENSION))
             ->header('Cache-Control', 'private, max-age=3600') // Cache for 1 hour
             ->header('X-Content-Type-Options', 'nosniff'); // Prevent MIME type sniffing
+    }
+
+    /**
+     * Securely view vaccination card files
+     */
+    public function viewVaccinationCard(Request $request, $id)
+    {
+        $user = Auth::user();
+
+        if (!$user) {
+            return response()->json(['message' => 'Unauthenticated'], 401);
+        }
+
+        $record = DB::table('boardings')->where('id', $id)->first();
+
+        if (!$record) {
+            return response()->json(['message' => 'Record not found'], 404);
+        }
+
+        // Authorization
+        $isOwner = false;
+        if ($user->role === 'customer') {
+            $isOwner = ($record->customer_id == $user->id);
+        }
+
+        $canAccess = false;
+        if ($user->role === 'customer') {
+            $canAccess = $isOwner;
+        } elseif (in_array($user->role, ['admin', 'receptionist', 'manager', 'cashier', 'veterinary'])) {
+            $canAccess = true;
+        }
+
+        if (!$canAccess) {
+            return response()->json(['message' => 'Forbidden'], 403);
+        }
+
+        $filePath = $record->vaccination_card ?? null;
+
+        if (!$filePath) {
+            return response()->json(['message' => 'Vaccination card not found'], 404);
+        }
+
+        $disk = 'private';
+        if (!Storage::disk($disk)->exists($filePath)) {
+            return response()->json(['message' => 'File not found'], 404);
+        }
+
+        $fileContents = Storage::disk($disk)->get($filePath);
+
+        $extension = strtolower(pathinfo($filePath, PATHINFO_EXTENSION));
+        $mimeTypes = [
+            'jpg' => 'image/jpeg',
+            'jpeg' => 'image/jpeg',
+            'png' => 'image/png',
+            'pdf' => 'application/pdf',
+        ];
+
+        $mimeType = $mimeTypes[$extension] ?? 'application/octet-stream';
+
+        if (!$fileContents) {
+            return response()->json(['message' => 'File not readable'], 404);
+        }
+
+        $allowedMimeTypes = ['image/jpeg', 'image/png', 'application/pdf'];
+
+        if (!in_array($mimeType, $allowedMimeTypes)) {
+            return response()->json(['message' => 'Invalid file type'], 422);
+        }
+
+        return response($fileContents)
+            ->header('Content-Type', $mimeType)
+            ->header('Content-Disposition', 'inline; filename="vaccination_card_' . $id . '.' . pathinfo($filePath, PATHINFO_EXTENSION))
+            ->header('Cache-Control', 'private, max-age=3600')
+            ->header('X-Content-Type-Options', 'nosniff');
     }
 
     /**
