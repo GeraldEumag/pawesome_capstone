@@ -1,17 +1,11 @@
 /* ===== CUSTOMER DASHBOARD - PINK GLASS THEME ===== */
 
 .customer-dashboard {
-  --color-primary: #ff5f93;
-  --color-primary-light: #ff8db5;
-  --color-primary-soft: #ffc8dd;
-  --color-bg-gradient: linear-gradient(135deg, #ffc8dd, #ffd6e8, #fff1f7);
   --color-surface: rgba(255, 255, 255, 0.86);
   --color-surface-strong: rgba(255, 255, 255, 0.96);
-  --color-border: rgba(255, 95, 147, 0.18);
   --color-text: #1f2937;
   --color-heading: #191919;
   --color-muted: #64748b;
-  --shadow-card: 0 18px 45px rgba(255, 95, 147, 0.14);
   --shadow-soft: 0 10px 24px rgba(15, 23, 42, 0.08);
 
   display: flex;

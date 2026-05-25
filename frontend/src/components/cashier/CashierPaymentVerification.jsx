@@ -1,5 +1,6 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { apiRequest } from "../../api/client";
+import { getToken } from "../../utils/auth";
 import { useAuth } from "../../context/AuthContext";
 import CashierSidebar from "./CashierSidebar";
 import { normalizeList } from "../../utils/normalizeList";
@@ -10,6 +11,29 @@ const CashierPaymentVerification = () => {
   const { user } = useAuth();
   const [requests, setRequests] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [proofModal, setProofModal] = useState(null); // { blobUrl, isPdf, loading, error }
+
+  const openProof = useCallback(async (proofUrl) => {
+    setProofModal({ blobUrl: null, isPdf: false, loading: true, error: null });
+    try {
+      const token = getToken();
+      const res = await fetch(proofUrl, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (!res.ok) throw new Error(`Server returned ${res.status}`);
+      const blob = await res.blob();
+      const blobUrl = URL.createObjectURL(blob);
+      const isPdf = blob.type === "application/pdf";
+      setProofModal({ blobUrl, isPdf, loading: false, error: null });
+    } catch (err) {
+      setProofModal({ blobUrl: null, isPdf: false, loading: false, error: err.message });
+    }
+  }, []);
+
+  const closeProof = useCallback(() => {
+    if (proofModal?.blobUrl) URL.revokeObjectURL(proofModal.blobUrl);
+    setProofModal(null);
+  }, [proofModal]);
 
   const fetchRequests = async () => {
     try {
@@ -178,16 +202,15 @@ const CashierPaymentVerification = () => {
                           <td>₱{Number(item.amount || item.total_amount || 0).toLocaleString("en-PH")}</td>
                           <td>
                             {item.proof_url ? (
-                              <a
-                                href={item.proof_url}
-                                target="_blank"
-                                rel="noreferrer"
+                              <button
+                                type="button"
                                 className="proof-link"
+                                onClick={() => openProof(item.proof_url)}
                               >
                                 View Proof
-                              </a>
+                              </button>
                             ) : (
-                              "No proof uploaded"
+                              <span className="no-proof">No proof</span>
                             )}
                           </td>
                           <td>
@@ -221,6 +244,42 @@ const CashierPaymentVerification = () => {
           </div>
         </section>
       </main>
+      {proofModal && (
+        <div className="proof-modal-overlay" onClick={closeProof}>
+          <div className="proof-modal" onClick={(e) => e.stopPropagation()}>
+            <div className="proof-modal-header">
+              <span>Payment Proof</span>
+              <button type="button" className="proof-modal-close" onClick={closeProof}>
+                ✕
+              </button>
+            </div>
+            <div className="proof-modal-body">
+              {proofModal.loading && (
+                <div className="proof-modal-state">Loading proof…</div>
+              )}
+              {proofModal.error && (
+                <div className="proof-modal-state error">
+                  Failed to load: {proofModal.error}
+                </div>
+              )}
+              {proofModal.blobUrl && !proofModal.isPdf && (
+                <img
+                  src={proofModal.blobUrl}
+                  alt="Payment proof"
+                  className="proof-modal-img"
+                />
+              )}
+              {proofModal.blobUrl && proofModal.isPdf && (
+                <iframe
+                  src={proofModal.blobUrl}
+                  title="Payment proof PDF"
+                  className="proof-modal-pdf"
+                />
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

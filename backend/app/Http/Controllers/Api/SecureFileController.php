@@ -45,9 +45,16 @@ class SecureFileController extends Controller
                 break;
                 
             case 'boarding':
-                $record = DB::table('boarding')->where('id', $id)->first();
+                $record = DB::table('boardings')->where('id', $id)->first();
                 if ($record && $user->role === 'customer') {
-                    // Customer can only access their own boarding records
+                    $isOwner = ($record->customer_id == $user->id);
+                }
+                break;
+
+            case 'medical_confinement':
+            case 'medical-confinement':
+                $record = DB::table('medical_confinements')->where('id', $id)->first();
+                if ($record && $user->role === 'customer') {
                     $isOwner = ($record->customer_id == $user->id);
                 }
                 break;
