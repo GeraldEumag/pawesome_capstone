@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { useNavigate } from "react-router-dom";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
@@ -12,11 +12,13 @@ import {
 } from "@fortawesome/free-solid-svg-icons";
 import { notificationApi } from "../../api/notifications";
 import { normalizeList } from "../../utils/normalizeList";
+import { useAuth } from "../../context/AuthContext";
 import "./NotificationDropdown.css";
 
 const NotificationDropdown = ({ role }) => {
   const navigate = useNavigate();
-  const notificationRole = role || localStorage.getItem("role") || "manager";
+  const { role: authRole } = useAuth();
+  const notificationRole = role || authRole || "manager";
   const [isOpen, setIsOpen] = useState(false);
   const [notifications, setNotifications] = useState([]);
   const [unreadCount, setUnreadCount] = useState(0);
@@ -88,7 +90,7 @@ const NotificationDropdown = ({ role }) => {
   };
 
   const getNotificationDestination = (notification) => {
-    const role = notificationRole || localStorage.getItem("role") || "customer";
+    const role = notificationRole || "customer";
     const relatedType = String(notification.related_type || notification.type || "").toLowerCase();
     const text = `${notification.title || ""} ${notification.message || ""}`.toLowerCase();
     

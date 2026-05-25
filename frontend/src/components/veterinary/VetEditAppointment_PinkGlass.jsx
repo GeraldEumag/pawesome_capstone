@@ -119,7 +119,6 @@ const VetEditAppointment = () => {
       try {
         const customersData = await apiRequest("/customers");
         customersList = safeArray(customersData);
-        console.log("CUSTOMERS RESPONSE:", customersData);
       } catch (customerErr) {
         console.error("Customers API failed:", customerErr);
         toast.error("Failed to load customers.");
@@ -128,13 +127,11 @@ const VetEditAppointment = () => {
       try {
         const servicesData = await apiRequest("/services");
         servicesList = safeArray(servicesData);
-        console.log("SERVICES RESPONSE:", servicesData);
       } catch (serviceErr) {
         console.error("Services API failed:", serviceErr);
         try {
           const adminServicesData = await apiRequest("/admin/services");
           servicesList = safeArray(adminServicesData);
-          console.log("ADMIN SERVICES RESPONSE:", adminServicesData);
         } catch (adminServiceErr) {
           console.error("Admin services fallback failed:", adminServiceErr);
         }
@@ -147,7 +144,6 @@ const VetEditAppointment = () => {
       try {
         const appointmentResponse = await apiRequest(`/veterinary/appointments/${appointmentId}`);
         appointmentData = appointmentResponse?.appointment || appointmentResponse;
-        console.log("APPOINTMENT RESPONSE:", appointmentData);
       } catch (appointmentErr) {
         console.error("Failed to load appointment:", appointmentErr);
         setError("Failed to load appointment details.");

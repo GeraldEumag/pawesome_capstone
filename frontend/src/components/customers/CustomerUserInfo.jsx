@@ -1,43 +1,23 @@
-import React, { useState, useEffect } from "react";
+import { useMemo } from "react";
+import { useAuth } from "../../context/AuthContext";
 import "./CustomerUserInfo.css";
 
 const CustomerUserInfo = () => {
-  const [user, setUser] = useState({
-    name: "Customer",
-    email: "No email",
-    phone: "",
-    address: "",
-    memberSince: "",
-  });
+  const { user: authUser } = useAuth();
 
-  useEffect(() => {
-    const name = localStorage.getItem("name") || "Customer";
-    const email = localStorage.getItem("email") || "No email";
-    const storedUser = localStorage.getItem("user");
+  const user = useMemo(() => {
+    const name = authUser?.name || "Customer";
+    const email = authUser?.email || "No email";
+    const phone = authUser?.phone || "";
+    const address = authUser?.address
+      ? `${authUser.address}, ${authUser.city || ""}, ${authUser.state || ""} ${authUser.zip_code || ""}`
+      : "";
+    const memberSince = authUser?.created_at
+      ? new Date(authUser.created_at).toLocaleDateString("en-US", { month: "long", year: "numeric" })
+      : "";
 
-    let phone = "";
-    let address = "";
-    let memberSince = "";
-
-    if (storedUser) {
-      try {
-        const userData = JSON.parse(storedUser);
-        phone = userData.phone || "";
-        address = userData.address ? `${userData.address}, ${userData.city || ""}, ${userData.state || ""} ${userData.zip_code || ""}` : "";
-        memberSince = userData.created_at ? new Date(userData.created_at).toLocaleDateString('en-US', { month: 'long', year: 'numeric' }) : "";
-      } catch (error) {
-        console.error("Failed to parse user data:", error);
-      }
-    }
-
-    setUser({
-      name,
-      email,
-      phone,
-      address,
-      memberSince,
-    });
-  }, []);
+    return { name, email, phone, address, memberSince };
+  }, [authUser]);
 
   return (
     <section className="userinfo-section">

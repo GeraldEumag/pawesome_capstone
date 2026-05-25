@@ -1,5 +1,6 @@
-import React, { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { useAuth } from "../../context/AuthContext";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import DatePickerInput from "../shared/DatePickerInput";
 import {
@@ -70,7 +71,8 @@ const RoleAwareChatbot = ({
   subtitle = "Shared RBAC chatbot",
   role: propRole,
 }) => {
-  const role = propRole || localStorage.getItem("role") || "user";
+  const { role: authRole } = useAuth();
+  const role = propRole || authRole || "user";
   const [isOpen, setIsOpen] = useState(mode === "embedded");
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState("");

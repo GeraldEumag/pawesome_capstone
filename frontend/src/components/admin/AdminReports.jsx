@@ -32,6 +32,7 @@ import {
 import { apiRequest } from "../../api/client";
 import { formatCurrency } from "../../utils/currency";
 import StandardTable from "../shared/StandardTable";
+import StandardReportLayout from "../shared/StandardReportLayout";
 import { exportToCSV, exportToExcel, exportToPDF, getDateRangePreset } from "../../utils/reportExport";
 import "./AdminReports.css";
 
@@ -421,36 +422,16 @@ const AdminReports = () => {
   const refreshActive = () => fetchReport(activeSection, { silent: true });
 
   return (
+    <StandardReportLayout
+      title="Reports Center"
+      subtitle="A live reporting workspace for revenue, payments, bookings, inventory, customers, staff, and system health."
+      icon={faChartLine}
+      loading={loading && !activeReport.table?.length}
+      error={error}
+      onRefresh={refreshActive}
+      lastUpdated={lastUpdated || "Not refreshed yet"}
+    >
     <main className="admin-reports-page">
-      <section className="reports-hero">
-        <div>
-          <span className="reports-eyebrow">
-            <FontAwesomeIcon icon={activeConfig.icon} />
-            Admin Analytics
-          </span>
-          <h1>Reports Center</h1>
-          <p>
-            A live reporting workspace for revenue, payments, bookings, inventory, customers, staff, and system health.
-          </p>
-          <small>Last updated: {lastUpdated || "Not refreshed yet"}</small>
-        </div>
-
-        <div className="reports-hero-actions">
-          <span className="admin-role-badge">
-            <FontAwesomeIcon icon={faShieldHalved} />
-            System Role: Admin
-          </span>
-          <button
-            type="button"
-            className={`refresh-report-btn ${refreshing ? "refreshing" : ""}`}
-            onClick={refreshActive}
-            disabled={refreshing || loading}
-          >
-            <FontAwesomeIcon icon={refreshing ? faSpinner : faRotateRight} />
-            {refreshing ? "Refreshing..." : "Refresh"}
-          </button>
-        </div>
-      </section>
 
       <section className="reports-kpi-grid" aria-label="Live report KPIs">
         {headerKpis.map((kpi) => (
@@ -660,6 +641,7 @@ const AdminReports = () => {
         </section>
       )}
     </main>
+    </StandardReportLayout>
   );
 };
 

@@ -108,7 +108,7 @@ const CashierHistory = () => {
         Using the correct endpoint for cashier transaction history
       */
       const response = await apiRequest("/cashier/transactions");
-      console.log("Cashier history API response:", response);
+      // Cashier history loaded
 
       const rawItems = Array.isArray(response)
         ? response
@@ -119,8 +119,7 @@ const CashierHistory = () => {
           response?.recent_sales ||
           [];
       
-      console.log("Extracted raw items:", rawItems);
-      console.log("Raw items count:", rawItems.length);
+      // Items extracted
 
       const normalizedItems = rawItems.map((item, index) =>
         normalizeTransaction(item, index)

@@ -1,6 +1,7 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
-import { apiRequest, clearAuthStorage } from "../../api/client";
+import { apiRequest } from "../../api/client";
+import { useAuth } from "../../context/AuthContext";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
   faArrowLeft,
@@ -39,6 +40,7 @@ const Login = () => {
   const [showPassword, setShowPassword] = useState(false);
 
   const navigate = useNavigate();
+  const { login } = useAuth();
 
   const validateForm = () => {
     const newErrors = {};
@@ -74,12 +76,11 @@ const Login = () => {
         }),
       });
 
-      clearAuthStorage();
-      localStorage.setItem("token", response.token);
-      localStorage.setItem("role", response.user.role);
-      localStorage.setItem("name", response.user.name);
-      localStorage.setItem("username", response.user.username);
-      localStorage.setItem("email", response.user.email);
+      login(response.token, response.user.role, {
+        name: response.user.name,
+        username: response.user.username,
+        email: response.user.email,
+      });
 
       if (formData.rememberMe) {
         localStorage.setItem("rememberMe", "true");

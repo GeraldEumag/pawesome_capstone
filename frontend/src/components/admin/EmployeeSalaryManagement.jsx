@@ -1,4 +1,5 @@
-import React, { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { useAuth } from "../../context/AuthContext";
 import {
   Bar,
   BarChart,
@@ -56,6 +57,7 @@ const departments = [
 const colors = ["#ff5f93", "#ff8db5", "#ffc8dd", "#f472b6", "#fb7185"];
 
 const EmployeeSalaryManagement = () => {
+  const { role } = useAuth();
   const [employees, setEmployees] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [filterDepartment, setFilterDepartment] = useState("all");
@@ -65,7 +67,7 @@ const EmployeeSalaryManagement = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
-  const salaryBasePath = ["payroll", "payroll_manager"].includes(localStorage.getItem("role"))
+  const salaryBasePath = ["payroll", "payroll_manager"].includes(role)
     ? "/payroll"
     : "/admin/salaries";
 

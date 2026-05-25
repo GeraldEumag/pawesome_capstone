@@ -1,9 +1,6 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import { FaDog, FaCat, FaPaw, FaDove } from "react-icons/fa";
-
-const AUTH_TOKEN_KEYS = ["token", "access_token", "authToken", "customerToken", "adminToken", "clientToken"];
-
-const getToken = () => AUTH_TOKEN_KEYS.map((key) => localStorage.getItem(key)).find(Boolean);
+import { getToken } from "../../utils/auth";
 
 const API_BASE_URL =
   process.env.VITE_API_BASE_URL ||

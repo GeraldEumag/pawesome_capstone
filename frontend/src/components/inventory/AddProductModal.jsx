@@ -2,6 +2,9 @@ import React, { useState, useEffect } from "react";
 import { inventoryApi } from "../../api/inventory";
 import { formatCurrency } from "../../utils/currency";
 import DatePickerInput from "../shared/DatePickerInput";
+import SupplierModal from "./SupplierModal";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faBuilding, faPlus } from "@fortawesome/free-solid-svg-icons";
 import "./AddProductModal.css";
 
 const AddProductModal = ({ isOpen, onClose, onSuccess, editItem = null }) => {
@@ -12,9 +15,11 @@ const AddProductModal = ({ isOpen, onClose, onSuccess, editItem = null }) => {
     category: "",
     brand: "",
     supplier: "",
+    supplier_id: null,
     quantity: "",
     reorder_level: "10",
     price: "",
+    cost: "",
     status: "In stock",
     description: "",
     photo: null,
@@ -27,6 +32,8 @@ const AddProductModal = ({ isOpen, onClose, onSuccess, editItem = null }) => {
 
   const [errors, setErrors] = useState({});
   const [photoPreview, setPhotoPreview] = useState(null);
+  const [showSupplierModal, setShowSupplierModal] = useState(false);
+  const [suppliers, setSuppliers] = useState([]);
 
   useEffect(() => {
     if (editItem) {
@@ -36,9 +43,11 @@ const AddProductModal = ({ isOpen, onClose, onSuccess, editItem = null }) => {
         category: editItem.category || "",
         brand: editItem.brand || "",
         supplier: editItem.supplier || "",
+        supplier_id: editItem.supplier_id || null,
         quantity: editItem.quantity?.toString() || "",
         reorder_level: editItem.reorder_level?.toString() || "10",
         price: editItem.price?.toString() || "",
+        cost: editItem.cost?.toString() || "",
         status: editItem.status || "In stock",
         description: editItem.description || "",
         photo: editItem.photo_url || editItem.photo || null,
@@ -52,9 +61,11 @@ const AddProductModal = ({ isOpen, onClose, onSuccess, editItem = null }) => {
         category: "",
         brand: "",
         supplier: "",
+        supplier_id: null,
         quantity: "",
         reorder_level: "10",
         price: "",
+        cost: "",
         status: "In stock",
         description: "",
         photo: null,
@@ -121,6 +132,8 @@ const AddProductModal = ({ isOpen, onClose, onSuccess, editItem = null }) => {
       stock: stock,
       reorder_level: parseInt(formData.reorder_level) || 10,
       price: parseFloat(formData.price),
+      cost: formData.cost ? parseFloat(formData.cost) : null,
+      supplier_id: formData.supplier_id || null,
     };
     delete data.photoFile;
     if (formData.photoFile instanceof File) {
@@ -289,7 +302,31 @@ const AddProductModal = ({ isOpen, onClose, onSuccess, editItem = null }) => {
                   {errors.price && <span className="error-text">{errors.price}</span>}
                 </div>
 
+                <div className="form-group">
+                  <label>Product Cost (₱)</label>
+                  <input
+                    type="number"
+                    name="cost"
+                    value={formData.cost}
+                    onChange={handleChange}
+                    placeholder="0.00"
+                    min="0"
+                    step="0.01"
+                  />
+                  <small>Cost price for profit reporting</small>
+                </div>
+
               </div>
+              {formData.cost && formData.price && (
+                <div className="margin-preview">
+                  <span className={`margin-badge ${
+                    ((parseFloat(formData.price) - parseFloat(formData.cost)) / parseFloat(formData.price) * 100) >= 30 ? "good" :
+                    ((parseFloat(formData.price) - parseFloat(formData.cost)) / parseFloat(formData.price) * 100) >= 10 ? "warning" : "danger"
+                  }`}>
+                    Margin: {(((parseFloat(formData.price) - parseFloat(formData.cost)) / parseFloat(formData.price)) * 100).toFixed(1)}%
+                  </span>
+                </div>
+              )}
             </div>
 
             {!editItem && (
@@ -339,13 +376,30 @@ const AddProductModal = ({ isOpen, onClose, onSuccess, editItem = null }) => {
               <div className="form-grid">
                 <div className="form-group">
                   <label>Supplier</label>
-                  <input
-                    type="text"
-                    name="supplier"
-                    value={formData.supplier}
-                    onChange={handleChange}
-                    placeholder="e.g., Pet Supplies Inc."
-                  />
+                  <div className="supplier-select-row">
+                    <input
+                      type="text"
+                      name="supplier"
+                      value={formData.supplier}
+                      onChange={handleChange}
+                      placeholder="Select or type supplier..."
+                      readOnly
+                      style={{ flex: 1 }}
+                    />
+                    <button
+                      type="button"
+                      className="btn btn-secondary"
+                      onClick={() => setShowSupplierModal(true)}
+                      title="Select Supplier"
+                    >
+                      <FontAwesomeIcon icon={faBuilding} /> Select
+                    </button>
+                  </div>
+                  {formData.supplier && (
+                    <small className="supplier-hint">
+                      Selected: {formData.supplier}
+                    </small>
+                  )}
                 </div>
 
                 <div className="form-group">
@@ -428,6 +482,20 @@ const AddProductModal = ({ isOpen, onClose, onSuccess, editItem = null }) => {
               </div>
             )}
           </div>
+
+          <SupplierModal
+            isOpen={showSupplierModal}
+            onClose={() => setShowSupplierModal(false)}
+            mode="select"
+            initialSupplierId={formData.supplier_id}
+            onSelectSupplier={(supplier) => {
+              setFormData((prev) => ({
+                ...prev,
+                supplier: supplier.name,
+                supplier_id: supplier.id,
+              }));
+            }}
+          />
 
           <div className="modal-footer">
             <button type="button" className="btn-secondary" onClick={onClose} disabled={loading}>

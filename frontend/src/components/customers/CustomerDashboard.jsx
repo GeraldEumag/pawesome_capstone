@@ -1,7 +1,8 @@
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { Outlet, NavLink, useLocation } from "react-router-dom";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { showError } from "../../utils/alert";
+import { useAuth } from "../../context/AuthContext";
 import {
   faMoon,
   faSun,
@@ -21,18 +22,17 @@ import {
   faBell,
   } from "@fortawesome/free-solid-svg-icons";
 import CustomerSidebar from "./CustomerSidebar";
-import CustomerDashboardChatbot from "../CustomerDashboardChatbot";
-import NotificationDropdown from "../shared/NotificationDropdown";
+import DashboardLayout from "../shared/DashboardLayout";
 import PetAvatar from "../shared/PetAvatar";
-import DashboardProfile from "../shared/DashboardProfile";
 import { apiRequest, clearAuthStorage, uploadProfilePhoto } from "../../api/client";
 import { useTheme } from "../../utils/theme";
 import "../../styles/dashboardGlobal.css";
 import "./CustomerDashboard.css";
 
 const CustomerDashboard = () => {
-  const name = localStorage.getItem("name") || "Customer";
-  const profilePhoto = localStorage.getItem("profile_photo") || "";
+  const { user } = useAuth();
+  const name = user?.name || "Customer";
+  const profilePhoto = user?.profile_photo || "";
 
   const { theme, toggle } = useTheme();
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
@@ -48,7 +48,7 @@ const CustomerDashboard = () => {
       formData.append("profile_photo", file);
 
       const data = await uploadProfilePhoto("/auth/profile-photo", formData);
-      localStorage.setItem("profile_photo", data.url || data.profile_photo);
+      // Refresh user data via auth context if needed
       window.location.reload();
     } catch (err) {
       showError("Failed to upload profile photo: " + err.message);
@@ -237,50 +237,41 @@ const CustomerDashboard = () => {
     { label: "View Notifications", icon: faBell, link: "/customer/notifications", tone: "soft" },
   ];
 
+  const sidebar = (
+    <CustomerSidebar
+      collapsed={sidebarCollapsed}
+      onToggleCollapse={() => setSidebarCollapsed((prev) => !prev)}
+    />
+  );
+
+  const extraActions = (
+    <>
+      <button
+        className="theme-toggle-btn"
+        type="button"
+        title="Toggle theme"
+        onClick={toggle}
+      >
+        <FontAwesomeIcon icon={theme === "light" ? faMoon : faSun} />
+      </button>
+    </>
+  );
+
   return (
-    <div className={customerDashboardClasses}>
-      <CustomerSidebar
-        collapsed={sidebarCollapsed}
-        onToggleCollapse={() => setSidebarCollapsed((prev) => !prev)}
-      />
-
-      <main className="customer-main">
-        <header className="customer-navbar top-navbar">
-          <div className="navbar-left">
-            <span className="eyebrow">Pawesome Customer Portal</span>
-            <h1>Customer Dashboard</h1>
-            <p>Manage your pets, bookings, rewards, and service updates in one place.</p>
-          </div>
-
-          <div className="search-group">
-            <input
-              type="text"
-              placeholder="Search bookings, pets, services..."
-              value={searchTerm}
-              onChange={(event) => setSearchTerm(event.target.value)}
-            />
-          </div>
-
-          <div className="navbar-actions">
-            <DashboardProfile
-              name={name}
-              role="Customer"
-              image={profilePhoto}
-              onUpload={handleProfilePhotoUpload}
-            />
-
-            <NotificationDropdown role="customer" />
-
-            <button
-              className="theme-toggle-btn"
-              type="button"
-              title="Toggle theme"
-              onClick={toggle}
-            >
-              <FontAwesomeIcon icon={theme === "light" ? faMoon : faSun} />
-            </button>
-          </div>
-        </header>
+    <DashboardLayout
+      sidebar={sidebar}
+      title="Customer Dashboard"
+      subtitle="Manage your pets, bookings, rewards, and service updates in one place."
+      role="customer"
+      name={name}
+      profilePhoto={profilePhoto}
+      onProfileUpload={handleProfilePhotoUpload}
+      extraActions={extraActions}
+      showChatbot
+      chatbotTitle="Customer Assistant"
+      chatbotSubtitle="Pet care, bookings, and account help"
+      className={customerDashboardClasses}
+    >
 
         {showOverview ? (
           <section className="customer-overview-page">
@@ -612,10 +603,7 @@ const CustomerDashboard = () => {
             <Outlet />
           </section>
         )}
-      </main>
-
-      <CustomerDashboardChatbot />
-    </div>
+    </DashboardLayout>
   );
 };
 

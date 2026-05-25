@@ -1,17 +1,15 @@
-import React from "react";
 import { Navigate } from "react-router-dom";
+import { useAuth } from "../../context/AuthContext";
 
 const RoleProtectedRoute = ({ children, allowedRoles }) => {
-  const token = localStorage.getItem("token");
-  const normalizeRole = (role) => role === "payroll_manager" ? "payroll" : role;
-  const role = normalizeRole(localStorage.getItem("role")); // "admin", "receptionist", "customer"
+  const { token, role } = useAuth();
+  const normalizedRole = role === "payroll_manager" ? "payroll" : role;
 
   if (!token) {
     return <Navigate to="/login" />;
   }
 
-  if (!allowedRoles.includes(role)) {
-    // Redirect to a generic dashboard if role is not allowed
+  if (!allowedRoles.includes(normalizedRole)) {
     return <Navigate to="/dashboard" />;
   }
 

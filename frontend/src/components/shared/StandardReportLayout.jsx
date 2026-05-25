@@ -1,6 +1,5 @@
 import React from "react";
 import StandardReportHeader from "./StandardReportHeader";
-import ReportFilters from "./ReportFilters";
 import "./StandardReportLayout.css";
 
 /**
@@ -19,7 +18,6 @@ import "./StandardReportLayout.css";
  * @param {Function} props.onExport - Export handler (optional)
  * @param {string} props.lastUpdated - Last updated timestamp
  * @param {React.ReactNode} props.children - Report content
- * @param {Object} props.filterProps - Props for ReportFilters component
  */
 const StandardReportLayout = ({
   title,
@@ -33,7 +31,6 @@ const StandardReportLayout = ({
   onExport,
   lastUpdated,
   children,
-  filterProps = {},
 }) => {
   const renderLoadingState = () => (
     <div className="standard-loading-state">
@@ -78,10 +75,6 @@ const StandardReportLayout = ({
         onExport={onExport}
         lastUpdated={lastUpdated}
       />
-
-      {filterProps && Object.keys(filterProps).length > 0 && (
-        <ReportFilters {...filterProps} />
-      )}
 
       <div className="report-content">
         {loading ? (

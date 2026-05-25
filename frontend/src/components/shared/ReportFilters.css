@@ -1,16 +1,16 @@
 .report-filters-container {
-  background: rgba(255, 255, 255, 0.96);
-  border: 1px solid var(--report-border, rgba(255, 95, 147, 0.14));
-  border-radius: 8px;
-  padding: 1rem;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 1.25rem;
   margin-bottom: 1.25rem;
-  box-shadow: var(--report-shadow, 0 12px 32px rgba(255, 95, 147, 0.1));
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08), 0 4px 12px rgba(0, 0, 0, 0.04);
 }
 
 .filter-section {
   margin-bottom: 1rem;
   padding-bottom: 1rem;
-  border-bottom: 1px solid rgba(255, 95, 147, 0.1);
+  border-bottom: 1px solid #f1f5f9;
 }
 
 .filter-section:last-of-type {
@@ -50,9 +50,9 @@
 .filter-dropdown select {
   width: 100%;
   min-height: 40px;
-  border: 1px solid rgba(255, 95, 147, 0.18);
+  border: 1px solid #e2e8f0;
   border-radius: 8px;
-  background: #fff;
+  background: #ffffff;
   color: #111827;
   font-size: 0.88rem;
   line-height: 1.3;
@@ -72,8 +72,8 @@
 .date-input-group input[type="date"]:focus,
 .filter-dropdown select:focus {
   outline: none;
-  border-color: var(--report-primary, #ff5f93);
-  box-shadow: 0 0 0 3px rgba(255, 95, 147, 0.12);
+  border-color: #94a3b8;
+  box-shadow: 0 0 0 3px rgba(148, 163, 184, 0.15);
 }
 
 .clear-search-btn {
@@ -107,16 +107,17 @@
 
 .preset-btn {
   padding: 0.45rem 0.7rem;
-  background: rgba(255, 95, 147, 0.08);
-  border: 1px solid rgba(255, 95, 147, 0.12);
-  color: #111827;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  color: #475569;
   cursor: pointer;
 }
 
 .preset-btn:hover {
-  background: rgba(255, 95, 147, 0.14);
-  border-color: rgba(255, 95, 147, 0.25);
+  background: #f1f5f9;
+  border-color: #cbd5e1;
   transform: translateY(-1px);
+  color: #334155;
 }
 
 .date-inputs {
@@ -150,27 +151,45 @@
   justify-content: center;
   gap: 0.5rem;
   border: 1px solid transparent;
-  padding: 0.65rem 0.9rem;
+  padding: 0.6rem 1.1rem;
   cursor: pointer;
   font-size: 0.86rem;
+  white-space: nowrap;
+  flex-shrink: 0;
 }
 
 .clear-btn {
-  background: rgba(239, 68, 68, 0.09);
+  background: #fef2f2;
   color: #dc2626;
-  border-color: rgba(239, 68, 68, 0.12);
+  border-color: #fecaca;
+}
+
+.clear-btn:hover {
+  background: #fee2e2;
+  border-color: #fca5a5;
 }
 
 .refresh-btn {
-  background: rgba(255, 95, 147, 0.1);
-  color: #be185d;
-  border-color: rgba(255, 95, 147, 0.16);
+  background: #f0f9ff;
+  color: #0369a1;
+  border-color: #bae6fd;
+}
+
+.refresh-btn:hover {
+  background: #e0f2fe;
+  border-color: #7dd3fc;
 }
 
 .export-btn {
-  background: linear-gradient(135deg, var(--report-primary, #ff5f93), var(--report-primary-light, #ff8db5));
+  background: #0f172a;
   color: white;
-  box-shadow: 0 8px 18px rgba(255, 95, 147, 0.16);
+  border-color: #0f172a;
+  box-shadow: 0 4px 12px rgba(15, 23, 42, 0.15);
+}
+
+.export-btn:hover {
+  background: #1e293b;
+  border-color: #1e293b;
 }
 
 .action-btn:hover:not(:disabled) {
@@ -180,8 +199,8 @@
 .spinner {
   width: 14px;
   height: 14px;
-  border: 2px solid rgba(255, 95, 147, 0.25);
-  border-top-color: var(--report-primary, #ff5f93);
+  border: 2px solid #e2e8f0;
+  border-top-color: #475569;
   border-radius: 50%;
   animation: reportFilterSpin 0.8s linear infinite;
 }
@@ -190,40 +209,114 @@
   position: relative;
 }
 
+.export-chevron {
+  display: inline-flex;
+  align-items: center;
+  margin-left: 0.35rem;
+  opacity: 0.85;
+  transition: transform 0.25s ease;
+}
+
+.export-dropdown:hover .export-chevron,
+.export-dropdown:focus-within .export-chevron {
+  transform: rotate(180deg);
+}
+
 .export-options {
   position: absolute;
   top: calc(100% + 0.5rem);
   right: 0;
   z-index: 20;
-  min-width: 170px;
+  min-width: 210px;
   display: none;
   overflow: hidden;
   background: #fff;
-  border: 1px solid var(--report-border, rgba(255, 95, 147, 0.14));
-  border-radius: 8px;
-  box-shadow: 0 14px 32px rgba(31, 41, 55, 0.14);
+  border: 1px solid rgba(226, 232, 240, 0.9);
+  border-radius: 12px;
+  box-shadow: 0 20px 40px rgba(15, 23, 42, 0.12), 0 0 1px rgba(0, 0, 0, 0.05);
+  padding: 0.5rem;
 }
 
 .export-dropdown:hover .export-options,
 .export-dropdown:focus-within .export-options {
   display: block;
+  animation: exportFadeIn 0.18s ease;
 }
 
-.export-options button {
+@keyframes exportFadeIn {
+  from { opacity: 0; transform: translateY(-4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.export-options-header {
   display: flex;
   align-items: center;
-  gap: 0.55rem;
-  width: 100%;
-  padding: 0.7rem 0.85rem;
-  border: none;
-  background: #fff;
-  color: #111827;
-  cursor: pointer;
-  text-align: left;
+  gap: 0.5rem;
+  padding: 0.5rem 0.6rem 0.35rem;
+  margin-bottom: 0.25rem;
+  font-size: 0.72rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: #94a3b8;
+  border-bottom: 1px solid rgba(226, 232, 240, 0.7);
 }
 
-.export-options button:hover {
-  background: rgba(255, 95, 147, 0.08);
+.export-option {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+  width: 100%;
+  padding: 0.55rem 0.6rem;
+  border: none;
+  border-radius: 8px;
+  background: transparent;
+  color: #1e293b;
+  cursor: pointer;
+  text-align: left;
+  font-size: 0.86rem;
+  font-weight: 700;
+  transition: background 0.15s ease, transform 0.12s ease;
+}
+
+.export-option:hover {
+  background: rgba(241, 245, 249, 0.85);
+  transform: translateX(2px);
+}
+
+.export-icon-wrap {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 7px;
+  font-size: 0.82rem;
+  flex-shrink: 0;
+}
+
+.excel-icon {
+  background: rgba(16, 185, 129, 0.1);
+  color: #10b981;
+}
+
+.csv-icon {
+  background: rgba(59, 130, 246, 0.1);
+  color: #3b82f6;
+}
+
+.pdf-icon {
+  background: rgba(239, 68, 68, 0.1);
+  color: #ef4444;
+}
+
+.print-icon {
+  background: rgba(100, 116, 139, 0.1);
+  color: #64748b;
+}
+
+.export-label {
+  font-weight: 750;
 }
 
 @keyframes reportFilterSpin {

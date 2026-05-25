@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { Outlet, NavLink, useLocation } from "react-router-dom";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
@@ -31,13 +31,12 @@ import {
   faUser,
 } from "@fortawesome/free-solid-svg-icons";
 import CashierSidebar from "./CashierSidebar";
-import RoleAwareChatbot from "../chatbot/RoleAwareChatbot";
-import NotificationDropdown from "../shared/NotificationDropdown";
-import DashboardProfile from "../shared/DashboardProfile";
+import DashboardLayout from "../shared/DashboardLayout";
 import "./CashierDashboard.css";
 import { apiRequest, uploadProfilePhoto } from "../../api/client";
 import { formatCurrency } from "../../utils/currency";
 import { useTheme } from "../../utils/theme";
+import { useAuth } from "../../context/AuthContext";
 import { showAlert, showSuccess, showError } from "../../utils/alert";
 
 const toNumber = (value) => {
@@ -76,15 +75,16 @@ const getTypeIcon = (type) => {
 };
 
 const CashierDashboard = () => {
-  const name = localStorage.getItem("name") || "Cashier";
-  const profilePhoto = localStorage.getItem("profile_photo") || "";
+  const { user } = useAuth();
+  const name = user?.name || "Cashier";
+  const profilePhoto = user?.profile_photo || "";
 
   const { theme, toggle } = useTheme();
 
   const handleProfilePhotoUpload = async (file) => {
     try {
       const data = await uploadProfilePhoto(file);
-      localStorage.setItem("profile_photo", data.url || data.profile_photo);
+      // Refresh user data via auth context if needed
       window.location.reload();
     } catch (err) {
       showError("Failed to upload profile photo: " + err.message);
@@ -694,7 +694,6 @@ Thank you for choosing Pawesome!
     if (filterDateTo) filters.date_to = filterDateTo;
     if (filterPaymentType) filters.payment_type = filterPaymentType;
 
-    console.log("Applying filters:", filters);
     setShowFilterModal(false);
     fetchDashboardData({ silent: true });
   };
@@ -900,51 +899,45 @@ Thank you for choosing Pawesome!
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [theme, showOverview, fetchDashboardData]);
 
+  const extraActions = (
+    <>
+      <button
+        className="btn-secondary"
+        type="button"
+        onClick={() => fetchDashboardData({ silent: true })}
+        title="Refresh"
+      >
+        <FontAwesomeIcon
+          icon={faRotateRight}
+          className={refreshing ? "spin-icon" : ""}
+        />
+      </button>
+      <button
+        className="btn-secondary"
+        type="button"
+        onClick={toggle}
+        title="Toggle Theme"
+      >
+        <FontAwesomeIcon icon={theme === "light" ? faMoon : faSun} />
+      </button>
+    </>
+  );
+
   return (
-    <div className={cashierDashboardClasses}>
-      <CashierSidebar />
-
-      <main className="app-main">
-        <header className="app-topbar">
-          <div>
-            <h1 className="premium-title">Point of Sale</h1>
-            <p className="premium-muted">
-              {greeting}, {name}. Process transactions and manage cashier sales.
-            </p>
-          </div>
-
-          <div className="navbar-actions">
-            <DashboardProfile
-              name={name}
-              role="Cashier"
-              image={profilePhoto}
-              onUpload={handleProfilePhotoUpload}
-            />
-
-            <NotificationDropdown role="cashier" />
-
-            <button
-              className="btn-secondary"
-              type="button"
-              onClick={() => fetchDashboardData({ silent: true })}
-              title="Refresh"
-            >
-              <FontAwesomeIcon
-                icon={faRotateRight}
-                className={refreshing ? "spin-icon" : ""}
-              />
-            </button>
-
-            <button
-              className="btn-secondary"
-              type="button"
-              onClick={toggle}
-              title="Toggle Theme"
-            >
-              <FontAwesomeIcon icon={theme === "light" ? faMoon : faSun} />
-            </button>
-          </div>
-        </header>
+    <DashboardLayout
+      sidebar={<CashierSidebar />}
+      title="Point of Sale"
+      subtitle={`${greeting}, ${name}. Process transactions and manage cashier sales.`}
+      role="cashier"
+      name={name}
+      profilePhoto={profilePhoto}
+      onProfileUpload={handleProfilePhotoUpload}
+      extraActions={extraActions}
+      showChatbot
+      chatbotTitle="Cashier Assistant"
+      chatbotSubtitle="Transactions, payments, and cashier workflow help"
+      className={cashierDashboardClasses}
+    >
 
         <section className="app-content">
           {showOverview ? (
@@ -1300,13 +1293,7 @@ Thank you for choosing Pawesome!
             </div>
           </div>
         )}
-      </main>
-      <RoleAwareChatbot
-        mode="widget"
-        title="Cashier Assistant"
-        subtitle="Transactions, payments, and cashier workflow help"
-      />
-    </div>
+    </DashboardLayout>
   );
 };
 

@@ -80,12 +80,11 @@ class SecureFileAccess {
   }
 
   /**
-   * Get authentication token from localStorage
+   * Get authentication token
    * @returns {string|null} - Authentication token
    */
   getAuthToken() {
-    const tokenKeys = ['token', 'access_token', 'authToken', 'customerToken', 'adminToken', 'clientToken'];
-    return tokenKeys.map(key => localStorage.getItem(key)).find(Boolean);
+    return getToken();
   }
 
   /**

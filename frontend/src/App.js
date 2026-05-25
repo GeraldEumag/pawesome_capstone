@@ -1,10 +1,14 @@
-import React from "react";
-import "./App.css"; // Import global CSS fixes
-import "./styles/dashboardGlobal.css"; // Import global dashboard theme
-import AppRoutes from "./routes/AppRoutes"; // ✅ direct path to AppRoutes.jsx
+import "./App.css";
+import "./styles/dashboardGlobal.css";
+import AppRoutes from "./routes/AppRoutes";
+import ErrorBoundary from "./components/shared/ErrorBoundary";
 
 function App() {
-  return <AppRoutes />;
+  return (
+    <ErrorBoundary>
+      <AppRoutes />
+    </ErrorBoundary>
+  );
 }
 
 export default App;

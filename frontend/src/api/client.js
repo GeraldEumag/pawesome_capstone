@@ -1,3 +1,5 @@
+import { getToken, clearAuth } from "../utils/auth";
+
 export const API_URL =
   process.env.VITE_API_BASE_URL ||
   process.env.REACT_APP_API_URL ||
@@ -5,18 +7,8 @@ export const API_URL =
 
 export const USE_MOCK_DATA = false;
 
-const AUTH_TOKEN_KEYS = ["token", "access_token", "authToken", "customerToken", "adminToken", "clientToken"];
-
-const getToken = () => {
-  return AUTH_TOKEN_KEYS.map((key) => localStorage.getItem(key)).find(Boolean);
-};
-
-export const clearAuthStorage = () => {
-  AUTH_TOKEN_KEYS.forEach((key) => localStorage.removeItem(key));
-  ["role", "name", "username", "email", "user", "adminUser"].forEach((key) =>
-    localStorage.removeItem(key)
-  );
-};
+/** @deprecated Use clearAuth from utils/auth instead */
+export const clearAuthStorage = clearAuth;
 
 const normalizeEndpoint = (endpoint) => {
   if (!endpoint) return API_URL;
@@ -93,17 +85,15 @@ export const apiRequest = async (endpoint, methodOrOptions = "GET", data = null,
 
     
     if (response.status === 401) {
-      // Check if this is a login request to show appropriate error message
       const isLoginRequest = endpoint.includes('/auth/login');
-      
+
       if (!isLoginRequest) {
-        clearAuthStorage();
-        if (typeof window !== "undefined" && window.location.pathname !== "/login") {
-          window.location.assign("/login");
+        clearAuth();
+        if (typeof window !== "undefined") {
+          window.dispatchEvent(new Event("pawesome:auth-expired"));
         }
         throw new Error("Your session expired or you are not logged in. Please log in again.");
       } else {
-        // For login requests, show invalid credentials message
         throw new Error("Invalid email/username or password.");
       }
     }

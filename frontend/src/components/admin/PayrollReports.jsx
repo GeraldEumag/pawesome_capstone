@@ -1,4 +1,5 @@
-import React, { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { useAuth } from "../../context/AuthContext";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
   faArrowDown,
@@ -39,6 +40,7 @@ import {
 import { apiRequest } from "../../api/client";
 import { formatCurrency } from "../../utils/currency";
 import { normalizeList } from "../../utils/normalizeList";
+import StandardTable from "../../components/shared/StandardTable";
 import "./PayrollReports.css";
 
 const CHART_COLORS = [
@@ -85,6 +87,7 @@ const safeArray = (value) => {
 };
 
 const PayrollReports = () => {
+  const { role } = useAuth();
   const [selectedPeriod, setSelectedPeriod] = useState("monthly");
   const [selectedDepartment, setSelectedDepartment] = useState("all");
   const [reportType, setReportType] = useState("summary");
@@ -215,7 +218,6 @@ const PayrollReports = () => {
           params.append("search", searchTerm.trim());
         }
 
-        const role = localStorage.getItem("role");
         const isPayrollRole = ["payroll", "payroll_manager"].includes(role);
         let result;
 
@@ -802,40 +804,29 @@ const PayrollReports = () => {
                       </ResponsiveContainer>
                     </div>
 
-                    <div className="payroll-table-wrap">
-                      <table className="department-table">
-                        <thead>
-                          <tr>
-                            <th>Department</th>
-                            <th>Employees</th>
-                            <th>Total Salary</th>
-                            <th>Average Salary</th>
-                            <th>% of Total</th>
-                            <th>Trend</th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {filteredDepartmentData.map((dept) => (
-                            <tr key={dept.department}>
-                              <td className="department-name">
-                                <FontAwesomeIcon icon={faBuilding} />
-                                {dept.department}
-                              </td>
-                              <td>{dept.employees}</td>
-                              <td>{formatCurrency(dept.totalSalary)}</td>
-                              <td>{formatCurrency(dept.average)}</td>
-                              <td>{dept.percentage || 0}%</td>
-                              <td>
-                                <span className={`trend-indicator ${getGrowthColor(dept.trend)}`}>
-                                  <FontAwesomeIcon icon={getGrowthIcon(dept.trend)} />
-                                  {dept.trend || 0}%
-                                </span>
-                              </td>
-                            </tr>
-                          ))}
-                        </tbody>
-                      </table>
-                    </div>
+                    <StandardTable
+                      columns={[
+                        { key: "department", label: "Department", sortable: true, render: (value) => (
+                          <div className="department-name">
+                            <FontAwesomeIcon icon={faBuilding} />
+                            {value}
+                          </div>
+                        )},
+                        { key: "employees", label: "Employees", sortable: true },
+                        { key: "totalSalary", label: "Total Salary", sortable: true, format: "currency" },
+                        { key: "average", label: "Average Salary", sortable: true, format: "currency" },
+                        { key: "percentage", label: "% of Total", sortable: true, render: (value) => `${value || 0}%` },
+                        { key: "trend", label: "Trend", sortable: true, render: (value) => (
+                          <span className={`trend-indicator ${getGrowthColor(value)}`}>
+                            <FontAwesomeIcon icon={getGrowthIcon(value)} />
+                            {value || 0}%
+                          </span>
+                        )},
+                      ]}
+                      data={filteredDepartmentData}
+                      emptyMessage="No department data found."
+                      pageSize={10}
+                    />
                   </>
                 )}
               </article>
@@ -982,72 +973,48 @@ const PayrollReports = () => {
                   </div>
                 </div>
 
-                {filteredPayrollRecords.length === 0 ? (
-                  renderEmptyState("No payroll records", "Try clearing the filters.")
-                ) : (
-                  <div className="payroll-table-wrap">
-                    <table className="payroll-records-table">
-                      <thead>
-                        <tr>
-                          <th>Employee</th>
-                          <th>Department</th>
-                          <th>Base Salary</th>
-                          <th>Bonus</th>
-                          <th>Deductions</th>
-                          <th>Net Pay</th>
-                          <th>Period</th>
-                          <th>Status</th>
-                          <th>Date</th>
-                          <th>Action</th>
-                        </tr>
-                      </thead>
-
-                      <tbody>
-                        {filteredPayrollRecords.map((record) => (
-                          <tr key={record.id}>
-                            <td>
-                              <div className="employee-cell">
-                                <span>
-                                  <FontAwesomeIcon icon={faUserTie} />
-                                </span>
-                                <div>
-                                  <strong>{record.employeeName}</strong>
-                                  <small>{record.employeeId}</small>
-                                </div>
-                              </div>
-                            </td>
-                            <td>{record.department}</td>
-                            <td>{formatCurrency(record.baseSalary)}</td>
-                            <td className="amount-positive">
-                              +{formatCurrency(record.bonus)}
-                            </td>
-                            <td className="amount-negative">
-                              -{formatCurrency(record.deductions)}
-                            </td>
-                            <td className="net-pay">{formatCurrency(record.netPay)}</td>
-                            <td>{record.payPeriod}</td>
-                            <td>
-                              <span className={`status-pill ${record.status}`}>
-                                {record.status}
-                              </span>
-                            </td>
-                            <td>{formatDate(record.paymentDate || record.createdAt)}</td>
-                            <td>
-                              <button
-                                type="button"
-                                className="view-record-btn"
-                                onClick={() => setSelectedRecord(record)}
-                              >
-                                <FontAwesomeIcon icon={faEye} />
-                                View
-                              </button>
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                )}
+                <StandardTable
+                  columns={[
+                    { key: "employeeName", label: "Employee", sortable: true, render: (value, record) => (
+                      <div className="employee-cell">
+                        <span><FontAwesomeIcon icon={faUserTie} /></span>
+                        <div>
+                          <strong>{value}</strong>
+                          <small>{record.employeeId}</small>
+                        </div>
+                      </div>
+                    )},
+                    { key: "department", label: "Department", sortable: true },
+                    { key: "baseSalary", label: "Base Salary", sortable: true, format: "currency" },
+                    { key: "bonus", label: "Bonus", sortable: true, render: (value) => (
+                      <span className="amount-positive">+{formatCurrency(value)}</span>
+                    )},
+                    { key: "deductions", label: "Deductions", sortable: true, render: (value) => (
+                      <span className="amount-negative">-{formatCurrency(value)}</span>
+                    )},
+                    { key: "netPay", label: "Net Pay", sortable: true, render: (value) => (
+                      <span className="net-pay">{formatCurrency(value)}</span>
+                    )},
+                    { key: "payPeriod", label: "Period", sortable: true },
+                    { key: "status", label: "Status", sortable: true, render: (value) => (
+                      <span className={`status-pill ${value}`}>{value}</span>
+                    )},
+                    { key: "paymentDate", label: "Date", sortable: true, render: (value, record) => formatDate(value || record.createdAt) },
+                    { key: "actions", label: "Action", sortable: false, render: (_value, record) => (
+                      <button
+                        type="button"
+                        className="view-record-btn"
+                        onClick={() => setSelectedRecord(record)}
+                      >
+                        <FontAwesomeIcon icon={faEye} />
+                        View
+                      </button>
+                    )},
+                  ]}
+                  data={filteredPayrollRecords}
+                  emptyMessage="No payroll records found. Try clearing the filters."
+                  pageSize={10}
+                />
               </article>
             </section>
           )}

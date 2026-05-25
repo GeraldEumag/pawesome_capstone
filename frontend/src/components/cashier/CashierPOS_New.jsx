@@ -1,5 +1,6 @@
-import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { useAuth } from "../../context/AuthContext";
 import styled, { createGlobalStyle, keyframes, css } from "styled-components";
 import { apiRequest } from "../../api/client";
 import {
@@ -1349,6 +1350,7 @@ const NavMenuItem = styled.button`
 
 /* ─── Main Component ────────────────────────────────────────────── */
 const CashierPOS = () => {
+  const { user } = useAuth();
   const navigate = useNavigate();
 
   /* State */
@@ -1756,7 +1758,7 @@ const CashierPOS = () => {
       <hr>
       <table class="meta">
         <tr><td>Receipt</td><td style="text-align:right">${receiptToPrint.receipt_number || receiptToPrint.transaction_id}</td></tr>
-        <tr><td>Cashier</td><td style="text-align:right">${receiptToPrint.cashier_name || localStorage.getItem("name") || "Cashier"}</td></tr>
+        <tr><td>Cashier</td><td style="text-align:right">${receiptToPrint.cashier_name || user?.name || "Cashier"}</td></tr>
         <tr><td>Customer</td><td style="text-align:right">${receiptToPrint.customer_name}</td></tr>
         <tr><td>Payment</td><td style="text-align:right">${receiptToPrint.payment_method}</td></tr>
         <tr><td>Status</td><td style="text-align:right">${receiptToPrint.payment_status || "paid"}</td></tr>

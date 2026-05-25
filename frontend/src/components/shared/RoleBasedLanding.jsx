@@ -1,5 +1,6 @@
-import React, { useEffect } from "react";
+import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { useAuth } from "../../context/AuthContext";
 
 const roleRouteMap = {
   admin: "/admin",
@@ -15,7 +16,7 @@ const roleRouteMap = {
 
 const RoleBasedLanding = () => {
   const navigate = useNavigate();
-  const role = localStorage.getItem("role"); // "admin", "receptionist", "customer"
+  const { role } = useAuth();
 
   useEffect(() => {
     if (!role) {

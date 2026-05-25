@@ -484,51 +484,6 @@
   text-transform: capitalize;
 }
 
-/* TABLES */
-
-.payroll-table-wrap {
-  width: 100%;
-  overflow-x: auto;
-  border-radius: var(--payroll-radius-lg);
-  border: 1px solid var(--payroll-border);
-  background: var(--payroll-surface-solid);
-}
-
-.department-table,
-.payroll-records-table {
-  width: 100%;
-  min-width: 900px;
-  border-collapse: collapse;
-}
-
-.department-table th,
-.department-table td,
-.payroll-records-table th,
-.payroll-records-table td {
-  padding: 1rem;
-  text-align: left;
-  border-bottom: 1px solid var(--payroll-border);
-  color: var(--payroll-text);
-  font-size: 0.9rem;
-  font-weight: 750;
-  white-space: nowrap;
-}
-
-.department-table th,
-.payroll-records-table th {
-  color: var(--payroll-primary);
-  background: rgba(255, 95, 147, 0.08);
-  font-size: 0.76rem;
-  font-weight: 950;
-  text-transform: uppercase;
-  letter-spacing: 0.055em;
-}
-
-.department-table tbody tr:hover,
-.payroll-records-table tbody tr:hover {
-  background: rgba(255, 95, 147, 0.06);
-}
-
 .department-name {
   display: flex;
   align-items: center;

@@ -161,7 +161,6 @@
 .vet-reports-refresh-btn,
 .vet-data-source-badge,
 .vet-filter-btn,
-.vet-export-actions button,
 .vet-table-action,
 .vet-report-modal-actions button {
   min-height: 44px;
@@ -189,8 +188,7 @@
 }
 
 .vet-filter-btn.primary,
-.vet-table-action,
-.vet-export-actions button {
+.vet-table-action {
   cursor: pointer;
   color: #ffffff;
   background: linear-gradient(135deg, var(--color-primary), var(--color-primary-light));
@@ -199,10 +197,71 @@
 
 .vet-reports-refresh-btn:hover,
 .vet-filter-btn:hover,
-.vet-export-actions button:hover,
 .vet-table-action:hover,
 .vet-report-modal-actions button:hover {
   transform: translateY(-2px);
+}
+
+.export-btn-sm {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.45rem 0.7rem;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  font-size: 0.78rem;
+  font-weight: 800;
+  cursor: pointer;
+  transition: transform 0.12s ease, box-shadow 0.2s ease, background 0.2s ease;
+  white-space: nowrap;
+}
+
+.export-btn-sm:hover {
+  transform: translateY(-1px);
+}
+
+.export-btn-sm.excel {
+  background: rgba(16, 185, 129, 0.1);
+  color: #059669;
+  border-color: rgba(16, 185, 129, 0.2);
+}
+
+.export-btn-sm.excel:hover {
+  background: rgba(16, 185, 129, 0.18);
+  box-shadow: 0 4px 10px rgba(16, 185, 129, 0.14);
+}
+
+.export-btn-sm.csv {
+  background: rgba(59, 130, 246, 0.1);
+  color: #2563eb;
+  border-color: rgba(59, 130, 246, 0.2);
+}
+
+.export-btn-sm.csv:hover {
+  background: rgba(59, 130, 246, 0.18);
+  box-shadow: 0 4px 10px rgba(59, 130, 246, 0.14);
+}
+
+.export-btn-sm.pdf {
+  background: rgba(239, 68, 68, 0.1);
+  color: #dc2626;
+  border-color: rgba(239, 68, 68, 0.2);
+}
+
+.export-btn-sm.pdf:hover {
+  background: rgba(239, 68, 68, 0.18);
+  box-shadow: 0 4px 10px rgba(239, 68, 68, 0.14);
+}
+
+.export-btn-sm.print {
+  background: rgba(100, 116, 139, 0.1);
+  color: #475569;
+  border-color: rgba(100, 116, 139, 0.2);
+}
+
+.export-btn-sm.print:hover {
+  background: rgba(100, 116, 139, 0.18);
+  box-shadow: 0 4px 10px rgba(100, 116, 139, 0.14);
 }
 
 .vet-reports-refresh-btn.refreshing svg {
@@ -636,74 +695,6 @@
   background: linear-gradient(135deg, var(--color-primary), var(--color-primary-light));
 }
 
-/* TABLE */
-
-.vet-table-scroll {
-  width: 100%;
-  overflow-x: auto;
-}
-
-.vet-report-table {
-  width: 100%;
-  min-width: 760px;
-  border-collapse: separate;
-  border-spacing: 0 0.65rem;
-}
-
-.vet-report-table th {
-  color: var(--color-muted);
-  font-size: 0.78rem;
-  font-weight: 950;
-  text-align: left;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  padding: 0 0.9rem;
-}
-
-.vet-report-table th button {
-  border: none;
-  background: transparent;
-  color: inherit;
-  font: inherit;
-  cursor: pointer;
-  display: inline-flex;
-  align-items: center;
-  gap: 0.35rem;
-}
-
-.vet-report-table td {
-  background: rgba(255, 255, 255, 0.66);
-  border-top: 1px solid rgba(255, 95, 147, 0.08);
-  border-bottom: 1px solid rgba(255, 95, 147, 0.08);
-  padding: 0.95rem;
-  color: var(--color-text);
-  font-weight: 800;
-}
-
-.vet-report-table td:first-child {
-  border-left: 1px solid rgba(255, 95, 147, 0.08);
-  border-radius: 18px 0 0 18px;
-}
-
-.vet-report-table td:last-child {
-  border-right: 1px solid rgba(255, 95, 147, 0.08);
-  border-radius: 0 18px 18px 0;
-}
-
-.vet-table-empty {
-  min-height: 160px;
-  display: grid;
-  place-items: center;
-  align-content: center;
-  gap: 0.45rem;
-  color: var(--color-muted);
-  text-align: center;
-}
-
-.vet-table-empty svg {
-  color: var(--color-primary);
-  font-size: 2rem;
-}
 
 /* ACTIVITY */
 
@@ -982,7 +973,6 @@
 [data-theme="dark"] .vet-filter-grid select,
 [data-theme="dark"] .vet-financial-summary div,
 [data-theme="dark"] .vet-service-stats div,
-[data-theme="dark"] .vet-report-table td,
 [data-theme="dark"] .vet-activity-item,
 [data-theme="dark"] .vet-report-modal,
 [data-theme="dark"] .vet-report-modal-header button {
@@ -1035,10 +1025,10 @@
   .vet-export-actions,
   .vet-filter-actions {
     display: grid;
-    grid-template-columns: 1fr;
+    grid-template-columns: repeat(2, 1fr);
   }
 
-  .vet-export-actions button,
+  .vet-export-actions .export-btn-sm,
   .vet-filter-actions button {
     width: 100%;
   }

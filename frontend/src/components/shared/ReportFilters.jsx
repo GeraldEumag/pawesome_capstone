@@ -9,6 +9,7 @@ import {
   faFileCsv,
   faSearch,
   faTimes,
+  faPrint,
 } from "@fortawesome/free-solid-svg-icons";
 import { getDateRangePreset } from "../../utils/reportExport";
 import DatePickerInput from "./DatePickerInput";
@@ -36,6 +37,7 @@ import "./ReportFilters.css";
  * @param {Function} props.onExportCSV - CSV export handler
  * @param {Function} props.onExportPDF - PDF export handler
  * @param {Function} props.onExportExcel - Excel export handler
+ * @param {Function} props.onPrint - Print handler
  * @param {boolean} props.loading - Loading state
  * @param {Function} props.onRefresh - Refresh data handler
  * @param {Function} props.onClearFilters - Clear all filters handler
@@ -68,6 +70,7 @@ const ReportFilters = ({
   onExportCSV,
   onExportPDF,
   onExportExcel,
+  onPrint,
   loading = false,
   onRefresh,
   onClearFilters,
@@ -275,24 +278,47 @@ const ReportFilters = ({
             <button className="action-btn export-btn" disabled={loading}>
               <FontAwesomeIcon icon={faDownload} />
               Export
+              <span className="export-chevron">
+                <svg width="10" height="6" viewBox="0 0 10 6" fill="none">
+                  <path d="M1 1L5 5L9 1" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+              </span>
             </button>
             <div className="export-options">
+              <div className="export-options-header">
+                <FontAwesomeIcon icon={faDownload} />
+                <span>Export Options</span>
+              </div>
+              {onExportExcel && (
+                <button className="export-option excel" onClick={onExportExcel}>
+                  <span className="export-icon-wrap excel-icon">
+                    <FontAwesomeIcon icon={faFileExcel} />
+                  </span>
+                  <span className="export-label">Excel (.xlsx)</span>
+                </button>
+              )}
               {onExportCSV && (
-                <button onClick={onExportCSV}>
-                  <FontAwesomeIcon icon={faFileCsv} />
-                  Export CSV
+                <button className="export-option csv" onClick={onExportCSV}>
+                  <span className="export-icon-wrap csv-icon">
+                    <FontAwesomeIcon icon={faFileCsv} />
+                  </span>
+                  <span className="export-label">CSV (.csv)</span>
                 </button>
               )}
               {onExportPDF && (
-                <button onClick={onExportPDF}>
-                  <FontAwesomeIcon icon={faFilePdf} />
-                  Export PDF
+                <button className="export-option pdf" onClick={onExportPDF}>
+                  <span className="export-icon-wrap pdf-icon">
+                    <FontAwesomeIcon icon={faFilePdf} />
+                  </span>
+                  <span className="export-label">PDF (.pdf)</span>
                 </button>
               )}
-              {onExportExcel && (
-                <button onClick={onExportExcel}>
-                  <FontAwesomeIcon icon={faFileExcel} />
-                  Export Excel
+              {onPrint && (
+                <button className="export-option print" onClick={onPrint}>
+                  <span className="export-icon-wrap print-icon">
+                    <FontAwesomeIcon icon={faPrint} />
+                  </span>
+                  <span className="export-label">Print</span>
                 </button>
               )}
             </div>

@@ -12,10 +12,11 @@ import {
   faUser,
   faReceipt,
   faCheckCircle,
+  faTimes,
 } from "@fortawesome/free-solid-svg-icons";
 import "./CashierSidebar.css";
 
-const CashierSidebar = () => {
+const CashierSidebar = ({ mobileOpen, onMobileMenuToggle }) => {
   const navigate = useNavigate();
 
   const handleLogout = async () => {
@@ -27,12 +28,15 @@ const CashierSidebar = () => {
   };
 
   return (
-    <aside className="app-sidebar cashier-sidebar">
+    <aside className={`app-sidebar cashier-sidebar ${mobileOpen ? "mobile-open" : ""}`}>
       <div className="sidebar-header">
         <div className="sidebar-logo">
           <FontAwesomeIcon icon={faCashRegister} />
           <span>Cashier Portal</span>
         </div>
+        <button className="mobile-close-btn" onClick={onMobileMenuToggle} type="button" aria-label="Close menu">
+          <FontAwesomeIcon icon={faTimes} />
+        </button>
       </div>
 
       <nav className="sidebar-nav">

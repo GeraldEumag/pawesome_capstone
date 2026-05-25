@@ -142,7 +142,7 @@ class InventorySyncService {
 
     try {
       this.isRefreshing = true;
-      const role = String(localStorage.getItem("role") || "").toLowerCase();
+      const role = String((await import("../utils/auth")).getRole() || "").toLowerCase();
       const response =
         role === "cashier"
           ? await inventoryApi.getCashierSellableItems()
@@ -254,7 +254,7 @@ class InventorySyncService {
         timestamp: new Date().toISOString()
       }]);
       
-      console.log(`InventorySync: Stock updated for product ${productId}: ${oldStock} → ${newStock}`);
+      // Stock updated
     }
   }
 
@@ -268,7 +268,7 @@ class InventorySyncService {
       this.fetchProducts();
     }, this.refreshInterval);
     
-    console.log("InventorySync: Auto-refresh started");
+    // Auto-refresh started
   }
 
   // Stop automatic refresh
@@ -276,7 +276,7 @@ class InventorySyncService {
     if (this.refreshTimer) {
       clearInterval(this.refreshTimer);
       this.refreshTimer = null;
-      console.log("InventorySync: Auto-refresh stopped");
+      // Auto-refresh stopped
     }
   }
 
@@ -294,7 +294,7 @@ class InventorySyncService {
   // Clear cache
   clearCache() {
     this.cache.clear();
-    console.log("InventorySync: Cache cleared");
+    // Cache cleared
   }
 }
 

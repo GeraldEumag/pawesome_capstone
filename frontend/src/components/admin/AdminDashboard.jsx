@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { Outlet, NavLink, useLocation } from "react-router-dom";
 import { motion } from "framer-motion";
 import { showError } from "../../utils/alert";
@@ -25,7 +25,6 @@ import {
   faCalendarCheck,
   faBoxOpen,
   faUserShield,
-  faBars,
   faServer,
   faDatabase,
   faSync,
@@ -44,14 +43,13 @@ import {
 } from "@fortawesome/free-solid-svg-icons";
 
 import AdminSidebar from "./AdminSidebar";
-import RoleAwareChatbot from "../chatbot/RoleAwareChatbot";
-import NotificationDropdown from "../shared/NotificationDropdown";
-import DashboardProfile from "../shared/DashboardProfile";
+import DashboardLayout from "../shared/DashboardLayout";
 import "./AdminDashboard.css";
 import { apiRequest, uploadProfilePhoto } from "../../api/client";
 import { formatCurrency } from "../../utils/currency";
 import { normalizeList } from "../../utils/normalizeList";
 import { useTheme } from "../../utils/theme";
+import { useAuth } from "../../context/AuthContext";
 
 const cardVariants = {
   hidden: { opacity: 0, y: 18 },
@@ -61,12 +59,12 @@ const cardVariants = {
 const chartColors = ["#ff5f93", "#ff8db5", "#ffc8dd", "#f472b6", "#fb7185", "#f59e0b"];
 
 const AdminDashboard = () => {
-  const name = localStorage.getItem("name") || "Admin";
-  const role = localStorage.getItem("role") || "admin";
-  const profilePhoto = localStorage.getItem("profile_photo") || "";
+  const { user, role: userRole } = useAuth();
+  const name = user?.name || "Admin";
+  const role = userRole || "admin";
+  const profilePhoto = user?.profile_photo || "";
 
   const { theme, toggle } = useTheme();
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [dashboardData, setDashboardData] = useState(null);
   const [systemHealth, setSystemHealth] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -82,7 +80,7 @@ const AdminDashboard = () => {
   const handleProfilePhotoUpload = async (file) => {
     try {
       const data = await uploadProfilePhoto(file);
-      localStorage.setItem("profile_photo", data.url || data.profile_photo);
+      // Refresh user data via auth context if needed
       window.location.reload();
     } catch (err) {
       showError("Failed to upload profile photo: " + err.message);
@@ -389,72 +387,47 @@ const AdminDashboard = () => {
     );
   };
 
+  const extraActions = (
+    <>
+      {showOverview && (
+        <button
+          className={`admin-icon-btn admin-refresh-btn ${
+            refreshing ? "refreshing" : ""
+          }`}
+          type="button"
+          onClick={() => fetchDashboardData({ silent: true })}
+          disabled={refreshing}
+          title="Refresh dashboard"
+        >
+          <FontAwesomeIcon icon={refreshing ? faSpinner : faRotateRight} />
+        </button>
+      )}
+      <button
+        className="theme-toggle-btn"
+        type="button"
+        onClick={toggle}
+        title="Toggle theme"
+      >
+        <FontAwesomeIcon icon={theme === "light" ? faMoon : faSun} />
+      </button>
+    </>
+  );
+
   return (
-    <div className={`admin-dashboard ${mobileMenuOpen ? "mobile-open" : ""}`}>
-      <AdminSidebar
-        mobileOpen={mobileMenuOpen}
-        onMobileMenuToggle={() => setMobileMenuOpen((prev) => !prev)}
-      />
-
-      <main className="admin-main">
-        <header className="admin-navbar top-navbar">
-          <div className="navbar-left">
-            <button
-              className="mobile-menu-toggle"
-              onClick={() => setMobileMenuOpen((prev) => !prev)}
-              aria-label="Toggle mobile menu"
-              type="button"
-            >
-              <FontAwesomeIcon icon={faBars} />
-            </button>
-
-            <div>
-              <h1>{pageCopy.title}</h1>
-              <p>{pageCopy.subtitle}</p>
-            </div>
-
-          <div className="search-group admin-status-strip">
-            <span className="status-strip-pill role-pill">
-              {role.toUpperCase()}
-            </span>
-          </div>
-        </div>
-
-        <div className="navbar-actions">
-          {showOverview && (
-            <button
-              className={`admin-icon-btn admin-refresh-btn ${
-                refreshing ? "refreshing" : ""
-              }`}
-              type="button"
-              onClick={() => fetchDashboardData({ silent: true })}
-              disabled={refreshing}
-              title="Refresh dashboard"
-            >
-              <FontAwesomeIcon icon={refreshing ? faSpinner : faRotateRight} />
-            </button>
-          )}
-
-          <DashboardProfile
-            name={name}
-            role="Administrator"
-            image={profilePhoto}
-            onUpload={handleProfilePhotoUpload}
-          />
-
-          <NotificationDropdown role="admin" />
-
-          <button
-            className="theme-toggle-btn"
-            type="button"
-            onClick={toggle}
-            title="Toggle theme"
-          >
-            <FontAwesomeIcon icon={theme === "light" ? faMoon : faSun} />
-          </button>
-        </div>
-      </header>
-
+    <DashboardLayout
+      sidebar={<AdminSidebar />}
+      title={pageCopy.title}
+      subtitle={pageCopy.subtitle}
+      role="admin"
+      name={name}
+      profilePhoto={profilePhoto}
+      onProfileUpload={handleProfilePhotoUpload}
+      extraActions={extraActions}
+      showChatbot
+      chatbotTitle="Admin Assistant"
+      chatbotSubtitle="Logs, navigation, and RBAC guidance"
+      className="admin-dashboard"
+    >
       {showOverview ? (
         <>
             {loading ? (
@@ -805,14 +778,7 @@ const AdminDashboard = () => {
             <Outlet />
           </section>
         )}
-      </main>
-
-      <RoleAwareChatbot
-        mode="widget"
-        title="Admin Assistant"
-        subtitle="Logs, navigation, and RBAC guidance"
-      />
-    </div>
+    </DashboardLayout>
   );
 };
 

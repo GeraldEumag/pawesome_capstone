@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { Outlet, useLocation, useNavigate } from "react-router-dom";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
@@ -21,9 +21,9 @@ import {
 import { apiRequest } from "../../api/client";
 import { formatCurrency } from "../../utils/currency";
 import { useTheme } from "../../utils/theme";
+import { useAuth } from "../../context/AuthContext";
 import ManagerSidebar from "./ManagerSidebar";
-import NotificationDropdown from "../shared/NotificationDropdown";
-import DashboardProfile from "../shared/DashboardProfile";
+import DashboardLayout from "../shared/DashboardLayout";
 import "./ManagerDashboard.css";
 
 const DEFAULT_STATS = {
@@ -201,8 +201,9 @@ const buildStatsFromData = (dashboardData, attendanceList, payrollList) => {
 };
 
 const ManagerDashboard = () => {
-  const name = localStorage.getItem("name") || "Manager";
-  const profilePhoto = localStorage.getItem("profile_photo") || "";
+  const { user } = useAuth();
+  const name = user?.name || "Manager";
+  const profilePhoto = user?.profile_photo || "";
 
   const { theme, toggle } = useTheme();
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
@@ -235,7 +236,7 @@ const ManagerDashboard = () => {
       const { uploadProfilePhoto } = await import("../../api/client");
       const data = await uploadProfilePhoto(file);
 
-      localStorage.setItem("profile_photo", data.url || data.profile_photo);
+      // Refresh user data via auth context if needed
       showToast("Profile photo updated successfully.", "success");
 
       window.setTimeout(() => {
@@ -445,54 +446,50 @@ const ManagerDashboard = () => {
     };
   }, [payrollPeriod]);
 
+  const sidebar = (
+    <ManagerSidebar
+      collapsed={sidebarCollapsed}
+      onToggleCollapse={() => setSidebarCollapsed((prev) => !prev)}
+    />
+  );
+
+  const extraActions = (
+    <>
+      <button
+        className="manager-icon-btn"
+        onClick={() => fetchDashboardData({ silent: true })}
+        disabled={refreshing || loading}
+        title="Refresh dashboard"
+        type="button"
+      >
+        <FontAwesomeIcon
+          icon={refreshing || loading ? faSpinner : faRefresh}
+          spin={refreshing || loading}
+        />
+      </button>
+      <button
+        className="manager-icon-btn"
+        type="button"
+        onClick={toggle}
+        title="Toggle theme"
+      >
+        <FontAwesomeIcon icon={theme === "light" ? faMoon : faSun} />
+      </button>
+    </>
+  );
+
   return (
-    <div className={`manager-dashboard ${sidebarCollapsed ? "collapsed" : ""}`}>
-      <ManagerSidebar
-        collapsed={sidebarCollapsed}
-        onToggleCollapse={() => setSidebarCollapsed((prev) => !prev)}
-      />
-
-      <main className="manager-main">
-        <header className="manager-navbar">
-          <div className="manager-navbar-title">
-            <span className="manager-eyebrow">Manager Workspace</span>
-            <h1>Manager Dashboard</h1>
-            <p>Workforce, attendance, payroll, and reporting overview.</p>
-          </div>
-
-          <div className="manager-navbar-actions">
-            <DashboardProfile
-              name={name}
-              role="Manager"
-              image={profilePhoto}
-              onUpload={handleProfilePhotoUpload}
-            />
-
-            <NotificationDropdown role="manager" />
-
-            <button
-              className="manager-icon-btn"
-              onClick={() => fetchDashboardData({ silent: true })}
-              disabled={refreshing || loading}
-              title="Refresh dashboard"
-              type="button"
-            >
-              <FontAwesomeIcon
-                icon={refreshing || loading ? faSpinner : faRefresh}
-                spin={refreshing || loading}
-              />
-            </button>
-
-            <button
-              className="manager-icon-btn"
-              type="button"
-              onClick={toggle}
-              title="Toggle theme"
-            >
-              <FontAwesomeIcon icon={theme === "light" ? faMoon : faSun} />
-            </button>
-          </div>
-        </header>
+    <DashboardLayout
+      sidebar={sidebar}
+      title="Manager Dashboard"
+      subtitle="Workforce, attendance, payroll, and reporting overview."
+      role="manager"
+      name={name}
+      profilePhoto={profilePhoto}
+      onProfileUpload={handleProfilePhotoUpload}
+      extraActions={extraActions}
+      className={`manager-dashboard ${sidebarCollapsed ? "collapsed" : ""}`}
+    >
 
         {showOverview ? (
           <section className="manager-dashboard-content">
@@ -778,8 +775,7 @@ const ManagerDashboard = () => {
             <Outlet />
           </section>
         )}
-      </main>
-    </div>
+    </DashboardLayout>
   );
 };
 

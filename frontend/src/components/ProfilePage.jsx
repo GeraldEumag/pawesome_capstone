@@ -72,12 +72,6 @@ export default function ProfilePage({
     try {
       setLoading(true);
 
-      const token = localStorage.getItem("token");
-      if (!token) {
-        showMessage("No authentication token found. Please log in again.", "error");
-        return;
-      }
-
       const response = await apiRequest("/auth/me");
 
       if (!response) {

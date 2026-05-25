@@ -1,11 +1,13 @@
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { apiRequest } from "../../api/client";
+import { useAuth } from "../../context/AuthContext";
 import CashierSidebar from "./CashierSidebar";
 import { normalizeList } from "../../utils/normalizeList";
 import "./CashierPaymentVerification.css";
 import { showAlert, showSuccess, showError, showPrompt } from "../../utils/alert";
 
 const CashierPaymentVerification = () => {
+  const { user } = useAuth();
   const [requests, setRequests] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -50,7 +52,7 @@ const CashierPaymentVerification = () => {
     const receiptNumber = data.receipt_number || data.receipt?.receipt_number || `REC-${payment.id}`;
     const amount = Number(data.amount || data.receipt?.total_amount || payment.amount || payment.total_amount || 0);
     const date = new Date().toLocaleString("en-PH");
-    const cashier = localStorage.getItem("name") || localStorage.getItem("user_id") || "Cashier";
+    const cashier = user?.name || "Cashier";
     const customer = payment.customer_name || payment.customer?.name || "Customer";
     const service = payment.service_name || payment.service?.name || payment.order_name || payment.request_type || payment.type || "Payment";
     const method = payment.payment_method || data.payment_method || "Online Payment";

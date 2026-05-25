@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   FaPaw,
@@ -11,6 +11,7 @@ import {
 } from "react-icons/fa";
 import "./CustomerBookingForm.css";
 import { apiRequest } from "../../api/client";
+import { useAuth } from "../../context/AuthContext";
 import {
   validateServiceCompatibility,
   getSpecialCareWarning,
@@ -21,19 +22,13 @@ import DatePickerInput from "../shared/DatePickerInput";
 
 const CustomerBookingForm = () => {
   const navigate = useNavigate();
-  
-  // Get customer name from localStorage
-  const customerName =
-    localStorage.getItem("name") ||
-    localStorage.getItem("customer_name") ||
-    "Customer";
+  const { token, user } = useAuth();
 
-  // Get authentication token
-  const token = localStorage.getItem("token");
+  const customerName = user?.name || user?.customer_name || "Customer";
 
   const [formData, setFormData] = useState({
     customer_name: customerName,
-    customer_email: localStorage.getItem("email") || "",
+    customer_email: user?.email || "",
     pet_id: "",
     pet_name: "",
     service_type: "grooming",
@@ -46,13 +41,15 @@ const CustomerBookingForm = () => {
     boarding_room_id: "",
   });
 
-  const [pets, setPets] = useState([]);
   const [selectedPetId, setSelectedPetId] = useState("");
   const [loading, setLoading] = useState(false);
+  const [selectedPet, setSelectedPet] = useState(null);
+
+  const [pets, setPets] = useState([]);
   const [petsLoading, setPetsLoading] = useState(false);
+
   const [availableRooms, setAvailableRooms] = useState([]);
   const [roomsLoading, setRoomsLoading] = useState(false);
-  const [selectedPet, setSelectedPet] = useState(null);
 
   const calculateAge = (birthdate) => {
     if (!birthdate) return null;
@@ -131,77 +128,66 @@ const CustomerBookingForm = () => {
 
   const availableTimeSlots = generateTimeSlots();
 
-  // Load pets from API
-  const loadPets = async () => {
-    try {
+  // Fetch pets
+  useEffect(() => {
+    if (!token) return;
+    let cancelled = false;
+    const fetchPets = async () => {
       setPetsLoading(true);
-      const result = await apiRequest("/customer/pets", "GET");
+      try {
+        const result = await apiRequest("/customer/pets", "GET");
+        const petList = Array.isArray(result)
+          ? result
+          : result.pets || result.data || [];
+        if (!cancelled) {
+          setPets(petList.filter((pet) => pet.status !== "archived" && !pet.archived_at));
+        }
+      } finally {
+        if (!cancelled) setPetsLoading(false);
+      }
+    };
+    fetchPets();
+    return () => { cancelled = true; };
+  }, [token]);
 
-      const petList = Array.isArray(result)
-        ? result
-        : result.pets || result.data || [];
-
-      // Filter out archived pets - only show active pets for booking
-      const activePets = petList.filter(pet => 
-        pet.status !== 'archived' && !pet.archived_at
-      );
-
-      setPets(activePets);
-    } catch (error) {
-      console.error("Failed to load pets:", error);
-      setPets([]);
-    } finally {
-      setPetsLoading(false);
-    }
-  };
-
-  // Load available rooms for selected pet and dates
-  const loadAvailableRooms = useCallback(async () => {
-    if (!selectedPetId || !formData.check_in_date || !formData.check_out_date) {
+  // Fetch available rooms
+  useEffect(() => {
+    const shouldFetch =
+      formData.service_type === "hotel" &&
+      !!selectedPetId &&
+      !!formData.check_in_date &&
+      !!formData.check_out_date;
+    if (!shouldFetch) {
       setAvailableRooms([]);
       return;
     }
-
-    try {
+    let cancelled = false;
+    const fetchRooms = async () => {
       setRoomsLoading(true);
-      const params = new URLSearchParams({
-        pet_id: selectedPetId,
-        check_in_date: formData.check_in_date,
-        check_out_date: formData.check_out_date,
-      });
-
-      const result = await apiRequest(`/boarding/rooms/available?${params}`);
-      
-      if (result.success && result.rooms) {
-        setAvailableRooms(result.rooms);
-      } else {
-        setAvailableRooms([]);
+      try {
+        const params = new URLSearchParams({
+          pet_id: selectedPetId,
+          check_in_date: formData.check_in_date,
+          check_out_date: formData.check_out_date,
+        });
+        const result = await apiRequest(`/boarding/rooms/available?${params}`);
+        if (!cancelled) {
+          setAvailableRooms(result.success && result.rooms ? result.rooms : []);
+        }
+      } finally {
+        if (!cancelled) setRoomsLoading(false);
       }
-    } catch (error) {
-      console.error("Failed to load available rooms:", error);
-      setAvailableRooms([]);
-    } finally {
-      setRoomsLoading(false);
-    }
-  }, [selectedPetId, formData.check_in_date, formData.check_out_date]);
+    };
+    fetchRooms();
+    return () => { cancelled = true; };
+  }, [formData.service_type, selectedPetId, formData.check_in_date, formData.check_out_date]);
 
   useEffect(() => {
-    // Check if user is authenticated
     if (!token) {
       showAlert("Please log in first before booking a service.");
       navigate("/login");
-      return;
     }
-
-    loadPets();
   }, [token, navigate]);
-
-  // Load available rooms when pet or dates change for hotel bookings
-  useEffect(() => {
-    if (formData.service_type === "hotel" && selectedPetId && formData.check_in_date && formData.check_out_date) {
-      loadAvailableRooms();
-    }
-  }, [selectedPetId, formData.check_in_date, formData.check_out_date, formData.service_type, loadAvailableRooms]);
 
   const serviceOptions = {
     grooming: "Grooming",
@@ -269,7 +255,7 @@ const CustomerBookingForm = () => {
 
       const payload = {
         customer_name: customerName,
-        customer_email: localStorage.getItem("email") || formData.customer_email,
+        customer_email: user?.email || formData.customer_email,
 
         pet_id: selectedPet?.id,
         pet_name: selectedPet?.name,
@@ -295,8 +281,6 @@ const CustomerBookingForm = () => {
         payload.check_out_date = formData.check_out_date;
       }
 
-      console.log("BOOKING PAYLOAD:", payload);
-
       const data = await apiRequest("/customer/requests", {
         method: "POST",
         body: JSON.stringify(payload),
@@ -307,7 +291,7 @@ const CustomerBookingForm = () => {
 
         setFormData({
           customer_name: customerName,
-          customer_email: localStorage.getItem("email") || "",
+          customer_email: user?.email || "",
           pet_id: "",
           pet_name: "",
           service_type: "grooming",

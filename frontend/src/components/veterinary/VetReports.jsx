@@ -47,6 +47,8 @@ import {
   getDateRangePreset,
 } from "../../utils/reportExport";
 import { safeArray } from "../../utils/normalizeList";
+import StandardReportLayout from "../shared/StandardReportLayout";
+import StandardTable from "../shared/StandardTable";
 import "./VetReports.css";
 
 const CHART_COLORS = ["#ff5f93", "#ff8db5", "#ffc8dd", "#fb7185", "#f59e0b", "#10b981"];
@@ -626,7 +628,15 @@ const VetReports = () => {
   }
 
   return (
-    <section className="app-content vet-reports">
+    <StandardReportLayout
+      title="Veterinary Reports"
+      subtitle="Monitor veterinary service revenue, completed appointments, service demand, and patient activity."
+      icon={faStethoscope}
+      loading={loading && !reports?.services?.length}
+      error={error}
+      onRefresh={handleRefresh}
+      lastUpdated={new Date().toLocaleTimeString()}
+    >
       {toast.text && (
         <div className={`vet-reports-toast ${toast.type}`}>
           <FontAwesomeIcon
@@ -635,41 +645,6 @@ const VetReports = () => {
           <span>{toast.text}</span>
         </div>
       )}
-
-      <div className="premium-card vet-reports-hero">
-        <div className="vet-reports-hero-copy">
-          <span className="vet-reports-eyebrow">
-            <FontAwesomeIcon icon={faChartLine} />
-            Veterinary Analytics
-          </span>
-
-          <h2 className="premium-title">
-            <FontAwesomeIcon icon={faStethoscope} />
-            Veterinary Reports
-          </h2>
-
-          <p className="premium-muted">
-            Monitor veterinary service revenue, completed appointments, service demand,
-            and patient activity using live report data.
-          </p>
-        </div>
-
-        <div className="vet-reports-hero-actions">
-          <span className="vet-data-source-badge live">
-            Live Data
-          </span>
-
-          <button
-            className={`vet-reports-refresh-btn ${refreshing ? "refreshing" : ""}`}
-            type="button"
-            onClick={handleRefresh}
-            disabled={refreshing}
-          >
-            <FontAwesomeIcon icon={faRotateRight} />
-            {refreshing ? "Refreshing..." : "Refresh"}
-          </button>
-        </div>
-      </div>
 
       {error && (
         <div className="premium-card vet-error-banner">
@@ -681,86 +656,6 @@ const VetReports = () => {
           </button>
         </div>
       )}
-
-      <div className="premium-card vet-report-filters">
-        <div className="vet-report-search">
-          <FontAwesomeIcon icon={faSearch} />
-          <input
-            type="text"
-            placeholder="Search service, pet, customer, veterinarian, notes..."
-            value={searchTerm}
-            onChange={(event) => setSearchTerm(event.target.value)}
-          />
-
-          {searchTerm && (
-            <button type="button" onClick={() => setSearchTerm("")}>
-              <FontAwesomeIcon icon={faTimes} />
-            </button>
-          )}
-        </div>
-
-        <div className="vet-filter-grid">
-          <label>
-            Start Date
-            <DatePickerInput
-              selected={startDate ? new Date(startDate) : null}
-              onChange={(date) => setStartDate(date ? date.toISOString().split("T")[0] : "")}
-              placeholderText="From..."
-            />
-          </label>
-
-          <label>
-            End Date
-            <DatePickerInput
-              selected={endDate ? new Date(endDate) : null}
-              onChange={(date) => setEndDate(date ? date.toISOString().split("T")[0] : "")}
-              placeholderText="To..."
-            />
-          </label>
-
-          <label>
-            Status
-            <select
-              value={statusFilter}
-              onChange={(event) => setStatusFilter(event.target.value)}
-            >
-              <option value="all">All Status</option>
-              <option value="completed">Completed</option>
-              <option value="scheduled">Scheduled</option>
-              <option value="pending">Pending</option>
-              <option value="cancelled">Cancelled</option>
-              <option value="rejected">Rejected</option>
-            </select>
-          </label>
-
-          <label>
-            Service
-            <select
-              value={serviceTypeFilter}
-              onChange={(event) => setServiceTypeFilter(event.target.value)}
-            >
-              <option value="all">All Services</option>
-              {serviceOptions.map((service) => (
-                <option key={service} value={service}>
-                  {service}
-                </option>
-              ))}
-            </select>
-          </label>
-        </div>
-
-        <div className="vet-filter-actions">
-          <button className="vet-filter-btn primary" type="button" onClick={handleApplyFilters}>
-            <FontAwesomeIcon icon={faFilter} />
-            Apply Filters
-          </button>
-
-          <button className="vet-filter-btn ghost" type="button" onClick={handleClearFilters}>
-            <FontAwesomeIcon icon={faTimes} />
-            Clear
-          </button>
-        </div>
-      </div>
 
       <div className="vet-report-stats">
         <article className="premium-card vet-report-stat-card">
@@ -992,96 +887,51 @@ const VetReports = () => {
           </div>
 
           <div className="vet-export-actions">
-            <button type="button" onClick={() => handleExport("csv")}>
-              <FontAwesomeIcon icon={faFileCsv} />
-              CSV
-            </button>
-
-            <button type="button" onClick={() => handleExport("excel")}>
+            <button className="export-btn-sm excel" type="button" onClick={() => handleExport("excel")} title="Export Excel">
               <FontAwesomeIcon icon={faFileExcel} />
-              Excel
+              <span>Excel</span>
             </button>
-
-            <button type="button" onClick={() => handleExport("pdf")}>
+            <button className="export-btn-sm csv" type="button" onClick={() => handleExport("csv")} title="Export CSV">
+              <FontAwesomeIcon icon={faFileCsv} />
+              <span>CSV</span>
+            </button>
+            <button className="export-btn-sm pdf" type="button" onClick={() => handleExport("pdf")} title="Export PDF">
               <FontAwesomeIcon icon={faFilePdf} />
-              PDF
+              <span>PDF</span>
             </button>
-
-            <button type="button" onClick={handlePrint}>
+            <button className="export-btn-sm print" type="button" onClick={handlePrint} title="Print">
               <FontAwesomeIcon icon={faPrint} />
-              Print
+              <span>Print</span>
             </button>
           </div>
         </div>
 
-        <div className="vet-table-scroll">
-          <table className="vet-report-table">
-            <thead>
-              <tr>
-                <th>
-                  <button type="button" onClick={() => handleSort("serviceName")}>
-                    Service Name <SortIcon columnKey="serviceName" />
-                  </button>
-                </th>
-                <th>
-                  <button type="button" onClick={() => handleSort("count")}>
-                    Appointments <SortIcon columnKey="count" />
-                  </button>
-                </th>
-                <th>
-                  <button type="button" onClick={() => handleSort("revenue")}>
-                    Revenue <SortIcon columnKey="revenue" />
-                  </button>
-                </th>
-                <th>
-                  <button type="button" onClick={() => handleSort("average_revenue")}>
-                    Average <SortIcon columnKey="average_revenue" />
-                  </button>
-                </th>
-                <th>Action</th>
-              </tr>
-            </thead>
-
-            <tbody>
-              {sortedServices.length === 0 ? (
-                <tr>
-                  <td colSpan="5">
-                    <div className="vet-table-empty">
-                      <FontAwesomeIcon icon={faSearch} />
-                      <strong>No service records found</strong>
-                      <span>Try changing search or filters.</span>
-                    </div>
-                  </td>
-                </tr>
-              ) : (
-                sortedServices.map((item) => {
-                  const serviceName = item.serviceName || item.service?.name || "Unknown Service";
-
-                  return (
-                    <tr key={`table-${item.id || serviceName}`}>
-                      <td>
-                        <strong>{serviceName}</strong>
-                      </td>
-                      <td>{formatNumber(item.count)}</td>
-                      <td>{formatCurrency(item.revenue)}</td>
-                      <td>{formatCurrency(item.average_revenue)}</td>
-                      <td>
-                        <button
-                          className="vet-table-action"
-                          type="button"
-                          onClick={() => setSelectedService(item)}
-                        >
-                          <FontAwesomeIcon icon={faEye} />
-                          View
-                        </button>
-                      </td>
-                    </tr>
-                  );
-                })
-              )}
-            </tbody>
-          </table>
-        </div>
+        <StandardTable
+          columns={[
+            { key: "serviceName", label: "Service Name", sortable: true, render: (value, item) => (
+              <strong>{value || item.service?.name || "Unknown Service"}</strong>
+            )},
+            { key: "count", label: "Appointments", sortable: true, render: (value) => formatNumber(value) },
+            { key: "revenue", label: "Revenue", sortable: true, format: "currency" },
+            { key: "average_revenue", label: "Average", sortable: true, format: "currency" },
+            { key: "actions", label: "Action", sortable: false, render: (_value, item) => (
+              <button
+                className="vet-table-action"
+                type="button"
+                onClick={() => setSelectedService(item)}
+              >
+                <FontAwesomeIcon icon={faEye} />
+                View
+              </button>
+            )},
+          ]}
+          data={sortedServices.map((item) => ({
+            ...item,
+            serviceName: item.serviceName || item.service?.name || "Unknown Service",
+          }))}
+          emptyMessage="No service records found. Try changing search or filters."
+          pageSize={10}
+        />
       </div>
 
       <div className="premium-card vet-activity-panel">
@@ -1190,7 +1040,7 @@ const VetReports = () => {
           </div>
         </div>
       )}
-    </section>
+    </StandardReportLayout>
   );
 };
 

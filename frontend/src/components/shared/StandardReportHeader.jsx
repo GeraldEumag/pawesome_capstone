@@ -29,7 +29,11 @@ const StandardReportHeader = ({
     <div className="standard-report-header">
       <div className="header-content">
         <div className="header-title-section">
-          {icon && <FontAwesomeIcon icon={icon} className="header-icon" />}
+          {icon && (
+            <div className="header-icon-wrap">
+              <FontAwesomeIcon icon={icon} className="header-icon" />
+            </div>
+          )}
           <div className="header-text">
             <h1 className="page-title">{title}</h1>
             <p className="page-subtitle">{subtitle}</p>

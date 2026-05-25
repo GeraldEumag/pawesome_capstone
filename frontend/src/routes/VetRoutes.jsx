@@ -1,13 +1,13 @@
-import React, { Suspense, lazy } from "react";
+import { Suspense, lazy } from "react";
 import { Routes, Route } from "react-router-dom";
 import ProtectedRoute from "../components/ProtectedRoute";
 
-const VetDashboard = lazy(() => import("../components/veterinary/VetDashboard_PinkGlass"));
+const VetDashboard = lazy(() => import("../components/veterinary/VetDashboard"));
 const VetAppointments = lazy(() => import("../components/veterinary/VetAppointments_PinkGlass"));
 const VetServices = lazy(() => import("../components/veterinary/VetServices_PinkGlass"));
 const VetEditAppointment = lazy(() => import("../components/veterinary/VetEditAppointment_PinkGlass"));
 const VetConsultation = lazy(() => import("../components/veterinary/VetConsultation"));
-const VetHistory = lazy(() => import("../components/veterinary/VetHistory_Fixed"));
+const VetHistory = lazy(() => import("../components/veterinary/VetHistory"));
 const VetCustomerProfiles = lazy(() => import("../components/veterinary/VetCustomerProfiles.jsx"));
 const VetReports = lazy(() => import("../components/veterinary/VetReports"));
 const VetReceipt = lazy(() => import("../components/veterinary/VetReceipt"));

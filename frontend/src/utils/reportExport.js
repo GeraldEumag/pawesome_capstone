@@ -5,6 +5,7 @@
 
 import jsPDF from "jspdf";
 import "jspdf-autotable";
+import * as XLSX from "xlsx";
 
 export const getNestedValue = (row, key) => {
   if (!row || !key) return undefined;
@@ -126,8 +127,7 @@ export const exportToPDF = (data, columns, title = "Report", filename = "report"
 };
 
 /**
- * Export data to Excel format (using CSV with .xlsx extension for compatibility)
- * For true Excel support, additional libraries like SheetJS would be needed
+ * Export data to Excel format using SheetJS
  * @param {Array} data - Array of objects to export
  * @param {Array} columns - Array of {key, label} objects defining columns
  * @param {string} filename - Output filename without extension
@@ -138,7 +138,6 @@ export const exportToExcel = (data, columns, filename = "report") => {
     return;
   }
 
-  // Create TSV content (Tab-Separated Values for better Excel compatibility)
   const headers = columns.map((col) => col.label || col.key);
 
   const rows = data.map((row) =>
@@ -146,26 +145,18 @@ export const exportToExcel = (data, columns, filename = "report") => {
       const value = getNestedValue(row, col.key);
       if (value === null || value === undefined) return "";
       const stringValue = String(value);
-      // Escape tabs and newlines
       return stringValue.replace(/\t/g, " ").replace(/\n/g, " ");
     })
   );
 
-  const tsvContent = [headers.join("\t"), ...rows.map((row) => row.join("\t"))].join("\n");
+  const worksheetData = [headers, ...rows];
+  const worksheet = XLSX.utils.aoa_to_sheet(worksheetData);
+  const workbook = XLSX.utils.book_new();
 
-  // Create blob with Excel MIME type
-  const blob = new Blob([tsvContent], {
-    type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-  });
-  const link = document.createElement("a");
-  const url = URL.createObjectURL(blob);
+  XLSX.utils.book_append_sheet(workbook, worksheet, "Report");
 
-  link.setAttribute("href", url);
-  link.setAttribute("download", `${filename}_${formatDateForFilename(new Date())}.xlsx`);
-  link.style.visibility = "hidden";
-  document.body.appendChild(link);
-  link.click();
-  document.body.removeChild(link);
+  const outputFilename = `${filename}_${formatDateForFilename(new Date())}.xlsx`;
+  XLSX.writeFile(workbook, outputFilename);
 };
 
 /**
@@ -215,11 +206,14 @@ export const filterByDateRange = (data, dateKey, startDate, endDate) => {
   if (!startDate && !endDate) return data;
 
   return data.filter((item) => {
-    const itemDate = new Date(item[dateKey]);
-    if (isNaN(itemDate.getTime())) return true;
+    const rawDate = item[dateKey];
+    if (!rawDate) return true;
 
-    if (startDate && itemDate < new Date(startDate)) return false;
-    if (endDate && itemDate > new Date(endDate)) return false;
+    const itemDateStr = new Date(rawDate).toISOString().split("T")[0];
+    if (itemDateStr === "Invalid Date") return true;
+
+    if (startDate && itemDateStr < startDate) return false;
+    if (endDate && itemDateStr > endDate) return false;
 
     return true;
   });

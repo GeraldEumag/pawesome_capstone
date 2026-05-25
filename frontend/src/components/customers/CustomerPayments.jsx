@@ -1,5 +1,7 @@
-import React, { useEffect, useMemo, useState } from "react";
-import { apiRequest, clearAuthStorage } from "../../api/client";
+import { useEffect, useMemo, useState } from "react";
+import { apiRequest } from "../../api/client";
+import { clearAuth } from "../../utils/auth";
+import { useAuth } from "../../context/AuthContext";
 import "./CustomerPayments.css";
 import { showAlert, showError } from "../../utils/alert";
 
@@ -8,7 +10,6 @@ const formatCurrency = (value) =>
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
   })}`;
-
 
 const getPaymentStatus = (item) =>
   String(item.payment_status || "unpaid").toLowerCase();
@@ -22,17 +23,17 @@ const paymentLabels = {
 };
 
 const CustomerPayments = () => {
+  const { user } = useAuth();
   const [payments, setPayments] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
-  
   const fetchPayments = async () => {
     try {
       setLoading(true);
       setError("");
 
-      const email = localStorage.getItem("email") || "customer@example.com";
+      const email = user?.email || "customer@example.com";
 
       // Fetch service requests
       const requestsResult = await apiRequest(
@@ -197,7 +198,7 @@ const CustomerPayments = () => {
       // Check for authentication errors
       if (err.message && (err.message.includes("session expired") || err.message.includes("Unauthenticated") || err.message.includes("401"))) {
         // Clear session and redirect to login
-        clearAuthStorage();
+        clearAuth();
         window.location.href = "/login";
         return;
       }

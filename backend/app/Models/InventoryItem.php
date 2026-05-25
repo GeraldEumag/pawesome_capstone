@@ -15,11 +15,13 @@ class InventoryItem extends Model
         'category',
         'brand',
         'supplier',
+        'supplier_id',
         'description',
         'photo',
         'stock',
         'reorder_level',
         'price',
+        'cost',
         'expiry_date',
         'status',
         'is_sellable',
@@ -74,6 +76,7 @@ class InventoryItem extends Model
             // Ensure non-negative values
             $item->stock = max(0, $item->stock ?? 0);
             $item->price = max(0, $item->price ?? 0);
+            $item->cost = max(0, $item->cost ?? 0);
             $item->reorder_level = max(0, $item->reorder_level ?? 0);
         });
 
@@ -96,6 +99,9 @@ class InventoryItem extends Model
             if ($item->price < 0) {
                 $item->price = 0;
             }
+            if ($item->cost < 0) {
+                $item->cost = 0;
+            }
             if ($item->reorder_level < 0) {
                 $item->reorder_level = 0;
             }
@@ -105,6 +111,14 @@ class InventoryItem extends Model
     public function logs()
     {
         return $this->hasMany(InventoryLog::class);
+    }
+
+    /**
+     * Get the supplier for this item
+     */
+    public function supplierModel()
+    {
+        return $this->belongsTo(Supplier::class, 'supplier_id');
     }
 
     /**

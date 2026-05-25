@@ -9,6 +9,7 @@ import ForgotPassword from "../components/auth/ForgotPassword";
 import Logout from "../components/auth/Logout";
 import Dashboard from "../components/Dashboard";
 import ProtectedRoute from "../components/ProtectedRoute";
+import AuthRedirectListener from "../components/shared/AuthRedirectListener";
 
 // Module routes
 import AdminRoutes from "./AdminRoutes";
@@ -22,6 +23,7 @@ import ManagerRoutes from "./ManagerRoutes";
 
 const AppRoutes = () => (
   <Router>
+    <AuthRedirectListener />
     <Routes>
       {/* Public routes */}
       <Route path="/" element={<LandingPage />} />
@@ -46,7 +48,6 @@ const AppRoutes = () => (
       <Route path="/customer/*" element={<CustomerRoutes />} />
       <Route path="/receptionist/*" element={<ReceptionistRoutes />} />
       <Route path="/veterinary/*" element={<VetRoutes />} />
-      <Route path="/vet/*" element={<VetRoutes />} />
       <Route path="/inventory/*" element={<InventoryRoutes />} />
       <Route path="/cashier/*" element={<CashierRoutes />} />
       <Route path="/manager/*" element={<ManagerRoutes />} />

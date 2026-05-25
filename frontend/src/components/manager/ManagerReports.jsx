@@ -8,7 +8,10 @@ import {
   faClock,
   faDownload,
   faEye,
+  faFileCsv,
+  faFileExcel,
   faFileInvoiceDollar,
+  faFilePdf,
   faFilter,
   faMoneyBillWave,
   faPrint,
@@ -40,6 +43,13 @@ import {
 import { apiRequest } from "../../api/client";
 import { formatCurrency } from "../../utils/currency";
 import { useTheme } from "../../utils/theme";
+import {
+  exportToCSV,
+  exportToPDF,
+  exportToExcel,
+} from "../../utils/reportExport";
+import StandardReportLayout from "../shared/StandardReportLayout";
+import StandardTable from "../shared/StandardTable";
 import "./ManagerReports.css";
 
 const CHART_COLORS = ["#ff5f93", "#ff8db5", "#ffc8dd", "#f59e0b", "#10b981", "#3b82f6"];
@@ -226,15 +236,6 @@ const getMonthKey = (dateValue) => {
     month: "short",
     year: "numeric",
   });
-};
-
-const escapeCSV = (value) => {
-  const text = String(value ?? "");
-  if (text.includes(",") || text.includes('"') || text.includes("\n")) {
-    return `"${text.replace(/"/g, '""')}"`;
-  }
-
-  return text;
 };
 
 const ManagerReports = () => {
@@ -579,7 +580,61 @@ const ManagerReports = () => {
     ];
   };
 
-  const exportCSV = () => {
+  const getExportColumns = () => {
+    if (activeTab === "attendance") {
+      return [
+        { key: "employeeName", label: "Employee" },
+        { key: "employeeId", label: "Employee ID" },
+        { key: "department", label: "Department" },
+        { key: "role", label: "Role" },
+        { key: "date", label: "Date" },
+        { key: "status", label: "Status" },
+        { key: "reviewStatus", label: "Review Status" },
+        { key: "overtime", label: "Overtime" },
+        { key: "undertime", label: "Undertime" },
+        { key: "remarks", label: "Remarks" },
+      ];
+    }
+    if (activeTab === "payroll") {
+      return [
+        { key: "employeeName", label: "Employee" },
+        { key: "employeeId", label: "Employee ID" },
+        { key: "department", label: "Department" },
+        { key: "role", label: "Role" },
+        { key: "period", label: "Period" },
+        { key: "attendanceDays", label: "Attendance Days" },
+        { key: "grossPay", label: "Gross Pay" },
+        { key: "deductions", label: "Deductions" },
+        { key: "netPay", label: "Net Pay" },
+        { key: "status", label: "Status" },
+      ];
+    }
+    if (activeTab === "staff") {
+      return [
+        { key: "name", label: "Name" },
+        { key: "email", label: "Email" },
+        { key: "department", label: "Department" },
+        { key: "role", label: "Role" },
+        { key: "status", label: "Status" },
+        { key: "hireDate", label: "Hire Date" },
+        { key: "attendanceRecords", label: "Attendance Records" },
+        { key: "payrollRecords", label: "Payroll Records" },
+      ];
+    }
+    return [
+      { key: "reportType", label: "Report Type" },
+      { key: "employeeName", label: "Employee" },
+      { key: "name", label: "Name" },
+      { key: "department", label: "Department" },
+      { key: "role", label: "Role" },
+      { key: "status", label: "Status" },
+      { key: "date", label: "Date" },
+      { key: "period", label: "Period" },
+      { key: "netPay", label: "Net Pay" },
+    ];
+  };
+
+  const handleExport = (type) => {
     const dataset = getActiveDataset();
 
     if (dataset.length === 0) {
@@ -587,89 +642,23 @@ const ManagerReports = () => {
       return;
     }
 
-    const columns =
-      activeTab === "attendance"
-        ? [
-            "employeeName",
-            "employeeId",
-            "department",
-            "role",
-            "date",
-            "status",
-            "reviewStatus",
-            "overtime",
-            "undertime",
-            "remarks",
-          ]
-        : activeTab === "payroll"
-          ? [
-              "employeeName",
-              "employeeId",
-              "department",
-              "role",
-              "period",
-              "attendanceDays",
-              "grossPay",
-              "deductions",
-              "netPay",
-              "status",
-            ]
-          : activeTab === "staff"
-            ? [
-                "name",
-                "email",
-                "department",
-                "role",
-                "status",
-                "hireDate",
-                "attendanceRecords",
-                "payrollRecords",
-              ]
-            : [
-                "reportType",
-                "employeeName",
-                "name",
-                "department",
-                "role",
-                "status",
-                "date",
-                "period",
-                "netPay",
-              ];
+    const columns = getExportColumns();
+    const filename = `manager-${activeTab}-report`;
+    const title = getTabTitle(activeTab);
 
-    const rows = [
-      columns.map(formatLabel),
-      ...dataset.map((item) =>
-        columns.map((column) => {
-          const value = item[column];
-
-          if (["grossPay", "deductions", "netPay"].includes(column)) {
-            return formatCurrency(value || 0);
-          }
-
-          if (["date", "hireDate"].includes(column)) {
-            return formatDate(value);
-          }
-
-          return value ?? "";
-        })
-      ),
-    ];
-
-    const csvContent = rows.map((row) => row.map(escapeCSV).join(",")).join("\n");
-    const blob = new Blob([csvContent], {
-      type: "text/csv;charset=utf-8;",
-    });
-
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement("a");
-
-    link.href = url;
-    link.download = `manager-${activeTab}-report-${new Date().toISOString().split("T")[0]}.csv`;
-    link.click();
-
-    URL.revokeObjectURL(url);
-    showToast("Report exported successfully.", "success");
+    try {
+      if (type === "csv") {
+        exportToCSV(dataset, columns, filename);
+      } else if (type === "pdf") {
+        exportToPDF(dataset, columns, title, filename);
+      } else if (type === "excel") {
+        exportToExcel(dataset, columns, filename);
+      }
+      showToast(`${title} exported as ${type.toUpperCase()} successfully.`, "success");
+    } catch (err) {
+      console.error("Export failed:", err);
+      showToast(`Failed to export ${type.toUpperCase()} report.`, "error");
+    }
   };
 
   const printReport = () => {
@@ -771,177 +760,121 @@ const ManagerReports = () => {
     </>
   );
 
+  const attendanceColumns = [
+    { key: "employeeName", label: "Employee", sortable: true, render: (value, record) => (
+      <div>
+        <strong>{value}</strong>
+        <small style={{ display: "block", color: "#64748b" }}>{record.employeeId}</small>
+      </div>
+    )},
+    { key: "department", label: "Department", sortable: true },
+    { key: "role", label: "Role", sortable: true },
+    { key: "date", label: "Date", sortable: true, render: (value) => formatDate(value) },
+    { key: "status", label: "Status", sortable: true, render: (value) => <StatusBadge status={value} /> },
+    { key: "reviewStatus", label: "Review", sortable: true, render: (value) => <StatusBadge status={value} /> },
+    { key: "overtime", label: "Overtime", sortable: true, render: (value) => `${value}h` },
+    { key: "undertime", label: "Undertime", sortable: true, render: (value) => `${value}h` },
+    { key: "actions", label: "Actions", sortable: false, render: (_value, record) => (
+      <button
+        type="button"
+        className="report-view-btn"
+        onClick={() => setSelectedRecord({ type: "attendance", record })}
+      >
+        <FontAwesomeIcon icon={faEye} />
+        View
+      </button>
+    )},
+  ];
+
   const renderAttendanceTab = () => (
-    <ReportTable
-      columns={[
-        "Employee",
-        "Department",
-        "Role",
-        "Date",
-        "Status",
-        "Review",
-        "Overtime",
-        "Undertime",
-        "Actions",
-      ]}
+    <StandardTable
+      columns={attendanceColumns}
+      data={filteredAttendance}
       emptyMessage="No attendance records found."
-    >
-      {filteredAttendance.map((record) => (
-        <tr key={record.id}>
-          <td>
-            <strong>{record.employeeName}</strong>
-            <small>{record.employeeId}</small>
-          </td>
-          <td>{record.department}</td>
-          <td>{record.role}</td>
-          <td>{formatDate(record.date)}</td>
-          <td>
-            <StatusBadge status={record.status} />
-          </td>
-          <td>
-            <StatusBadge status={record.reviewStatus} />
-          </td>
-          <td>{record.overtime}h</td>
-          <td>{record.undertime}h</td>
-          <td>
-            <button
-              type="button"
-              className="report-view-btn"
-              onClick={() => setSelectedRecord({ type: "attendance", record })}
-            >
-              <FontAwesomeIcon icon={faEye} />
-              View
-            </button>
-          </td>
-        </tr>
-      ))}
-    </ReportTable>
+      pageSize={10}
+    />
   );
+
+  const payrollColumns = [
+    { key: "employeeName", label: "Employee", sortable: true, render: (value, record) => (
+      <div>
+        <strong>{value}</strong>
+        <small style={{ display: "block", color: "#64748b" }}>{record.employeeId}</small>
+      </div>
+    )},
+    { key: "department", label: "Department", sortable: true },
+    { key: "period", label: "Period", sortable: true },
+    { key: "attendanceDays", label: "Attendance Days", sortable: true },
+    { key: "grossPay", label: "Gross Pay", sortable: true, format: "currency" },
+    { key: "deductions", label: "Deductions", sortable: true, format: "currency" },
+    { key: "netPay", label: "Net Pay", sortable: true, render: (value) => <strong>{formatCurrency(value)}</strong> },
+    { key: "status", label: "Status", sortable: true, render: (value) => <StatusBadge status={value} /> },
+    { key: "actions", label: "Actions", sortable: false, render: (_value, record) => (
+      <button
+        type="button"
+        className="report-view-btn"
+        onClick={() => setSelectedRecord({ type: "payroll", record })}
+      >
+        <FontAwesomeIcon icon={faEye} />
+        View
+      </button>
+    )},
+  ];
 
   const renderPayrollTab = () => (
-    <ReportTable
-      columns={[
-        "Employee",
-        "Department",
-        "Period",
-        "Attendance Days",
-        "Gross Pay",
-        "Deductions",
-        "Net Pay",
-        "Status",
-        "Actions",
-      ]}
+    <StandardTable
+      columns={payrollColumns}
+      data={filteredPayroll}
       emptyMessage="No payroll records found."
-    >
-      {filteredPayroll.map((record) => (
-        <tr key={record.id}>
-          <td>
-            <strong>{record.employeeName}</strong>
-            <small>{record.employeeId}</small>
-          </td>
-          <td>{record.department}</td>
-          <td>{record.period}</td>
-          <td>{record.attendanceDays}</td>
-          <td>{formatCurrency(record.grossPay)}</td>
-          <td>{formatCurrency(record.deductions)}</td>
-          <td>
-            <strong>{formatCurrency(record.netPay)}</strong>
-          </td>
-          <td>
-            <StatusBadge status={record.status} />
-          </td>
-          <td>
-            <button
-              type="button"
-              className="report-view-btn"
-              onClick={() => setSelectedRecord({ type: "payroll", record })}
-            >
-              <FontAwesomeIcon icon={faEye} />
-              View
-            </button>
-          </td>
-        </tr>
-      ))}
-    </ReportTable>
+      pageSize={10}
+    />
   );
 
+  const staffColumns = [
+    { key: "name", label: "Staff", sortable: true, render: (value, record) => (
+      <div>
+        <strong>{value}</strong>
+        <small style={{ display: "block", color: "#64748b" }}>{record.id}</small>
+      </div>
+    )},
+    { key: "email", label: "Email", sortable: true },
+    { key: "department", label: "Department", sortable: true },
+    { key: "role", label: "Role", sortable: true },
+    { key: "status", label: "Status", sortable: true, render: (value) => <StatusBadge status={value} /> },
+    { key: "attendanceRecords", label: "Attendance Records", sortable: true },
+    { key: "payrollRecords", label: "Payroll Records", sortable: true },
+    { key: "actions", label: "Actions", sortable: false, render: (_value, record) => (
+      <button
+        type="button"
+        className="report-view-btn"
+        onClick={() => setSelectedRecord({ type: "staff", record })}
+      >
+        <FontAwesomeIcon icon={faEye} />
+        View
+      </button>
+    )},
+  ];
+
   const renderStaffTab = () => (
-    <ReportTable
-      columns={[
-        "Staff",
-        "Email",
-        "Department",
-        "Role",
-        "Status",
-        "Attendance Records",
-        "Payroll Records",
-        "Actions",
-      ]}
+    <StandardTable
+      columns={staffColumns}
+      data={filteredStaff}
       emptyMessage="No staff records found."
-    >
-      {filteredStaff.map((record) => (
-        <tr key={record.id}>
-          <td>
-            <strong>{record.name}</strong>
-            <small>{record.id}</small>
-          </td>
-          <td>{record.email}</td>
-          <td>{record.department}</td>
-          <td>{record.role}</td>
-          <td>
-            <StatusBadge status={record.status} />
-          </td>
-          <td>{record.attendanceRecords}</td>
-          <td>{record.payrollRecords}</td>
-          <td>
-            <button
-              type="button"
-              className="report-view-btn"
-              onClick={() => setSelectedRecord({ type: "staff", record })}
-            >
-              <FontAwesomeIcon icon={faEye} />
-              View
-            </button>
-          </td>
-        </tr>
-      ))}
-    </ReportTable>
+      pageSize={10}
+    />
   );
 
   return (
+    <StandardReportLayout
+      title="Attendance & Payroll Reports"
+      subtitle="Review attendance summaries, payroll totals, staff performance, and manager-level operational reporting in one workspace."
+      icon={faChartLine}
+      loading={loading && !filteredAttendance.length && !filteredPayroll.length && !filteredStaff.length}
+      error={error}
+      onRefresh={() => fetchReportData({ silent: true })}
+      lastUpdated={formatDateTime(new Date())}
+    >
     <div className={`manager-reports ${theme}`}>
-      <section className="manager-reports-hero">
-        <div>
-          <span className="reports-eyebrow">Manager Reports</span>
-          <h1>Attendance & Payroll Reports</h1>
-          <p>
-            Review attendance summaries, payroll totals, staff performance, and
-            manager-level operational reporting in one workspace.
-          </p>
-        </div>
-
-        <div className="reports-hero-actions">
-          <button
-            type="button"
-            className="reports-btn secondary"
-            onClick={() => fetchReportData({ silent: true })}
-            disabled={loading || refreshing}
-          >
-            <FontAwesomeIcon icon={refreshing ? faSpinner : faRefresh} spin={refreshing} />
-            {refreshing ? "Refreshing..." : "Refresh"}
-          </button>
-
-          <button type="button" className="reports-btn secondary" onClick={printReport}>
-            <FontAwesomeIcon icon={faPrint} />
-            Print
-          </button>
-
-          <button type="button" className="reports-btn primary" onClick={exportCSV}>
-            <FontAwesomeIcon icon={faDownload} />
-            Export CSV
-          </button>
-        </div>
-      </section>
 
       {error && (
         <div className="reports-alert error">
@@ -984,81 +917,6 @@ const ManagerReports = () => {
         <SummaryCard label="Active Staff" value={summary.activeStaff} icon={faUsers} tone="success" />
       </section>
 
-      <section className="reports-controls-card">
-        <div className="reports-search-row">
-          <div className="reports-search-box">
-            <FontAwesomeIcon icon={faSearch} />
-            <input
-              type="text"
-              placeholder="Search employee, department, role, status, or payroll period..."
-              value={searchTerm}
-              onChange={(event) => setSearchTerm(event.target.value)}
-            />
-
-            {searchTerm && (
-              <button type="button" onClick={() => setSearchTerm("")}>
-                <FontAwesomeIcon icon={faXmark} />
-              </button>
-            )}
-          </div>
-
-          <div className="reports-filter-label">
-            <FontAwesomeIcon icon={faFilter} />
-            Filters
-          </div>
-        </div>
-
-        <div className="reports-filter-grid">
-          <FilterField label="Start Date">
-            <DatePickerInput
-              selected={startDate ? new Date(startDate) : null}
-              onChange={(date) => setStartDate(date ? date.toISOString().split("T")[0] : "")}
-              placeholderText="From..."
-            />
-          </FilterField>
-
-          <FilterField label="End Date">
-            <DatePickerInput
-              selected={endDate ? new Date(endDate) : null}
-              onChange={(date) => setEndDate(date ? date.toISOString().split("T")[0] : "")}
-              placeholderText="To..."
-            />
-          </FilterField>
-
-          <FilterField label="Department">
-            <select
-              value={departmentFilter}
-              onChange={(event) => setDepartmentFilter(event.target.value)}
-            >
-              <option value="all">All Departments</option>
-              {departments.map((department) => (
-                <option value={department} key={department}>
-                  {department}
-                </option>
-              ))}
-            </select>
-          </FilterField>
-
-          <FilterField label="Status">
-            <select
-              value={statusFilter}
-              onChange={(event) => setStatusFilter(event.target.value)}
-            >
-              <option value="all">All Status</option>
-              {statuses.map((status) => (
-                <option value={status} key={status}>
-                  {formatLabel(status)}
-                </option>
-              ))}
-            </select>
-          </FilterField>
-
-          <button type="button" className="reports-clear-btn" onClick={clearFilters}>
-            Clear Filters
-          </button>
-        </div>
-      </section>
-
       <section className="reports-tabs">
         {[
           { id: "summary", label: "Summary", icon: faChartLine },
@@ -1092,9 +950,29 @@ const ManagerReports = () => {
               <h2>{getTabTitle(activeTab)}</h2>
             </div>
 
-            <p>
-              Last updated: <strong>{formatDateTime(new Date())}</strong>
-            </p>
+            <div className="reports-header-actions">
+              <p>
+                Last updated: <strong>{formatDateTime(new Date())}</strong>
+              </p>
+              <div className="manager-export-actions">
+                <button className="export-btn-sm excel" type="button" onClick={() => handleExport("excel")} title="Export Excel">
+                  <FontAwesomeIcon icon={faFileExcel} />
+                  <span>Excel</span>
+                </button>
+                <button className="export-btn-sm csv" type="button" onClick={() => handleExport("csv")} title="Export CSV">
+                  <FontAwesomeIcon icon={faFileCsv} />
+                  <span>CSV</span>
+                </button>
+                <button className="export-btn-sm pdf" type="button" onClick={() => handleExport("pdf")} title="Export PDF">
+                  <FontAwesomeIcon icon={faFilePdf} />
+                  <span>PDF</span>
+                </button>
+                <button className="export-btn-sm print" type="button" onClick={printReport} title="Print">
+                  <FontAwesomeIcon icon={faPrint} />
+                  <span>Print</span>
+                </button>
+              </div>
+            </div>
           </div>
 
           {activeTab === "summary" && renderSummaryTab()}
@@ -1128,6 +1006,7 @@ const ManagerReports = () => {
         </div>
       )}
     </div>
+    </StandardReportLayout>
   );
 };
 
@@ -1177,29 +1056,6 @@ const StatusBadge = ({ status }) => (
   </span>
 );
 
-const ReportTable = ({ columns, children, emptyMessage }) => (
-  <div className="reports-table-wrap">
-    <table className="reports-table">
-      <thead>
-        <tr>
-          {columns.map((column) => (
-            <th key={column}>{column}</th>
-          ))}
-        </tr>
-      </thead>
-
-      <tbody>{children}</tbody>
-    </table>
-
-    {React.Children.count(children) === 0 && (
-      <div className="reports-empty-state">
-        <FontAwesomeIcon icon={faTable} />
-        <h3>No records found</h3>
-        <p>{emptyMessage}</p>
-      </div>
-    )}
-  </div>
-);
 
 const ReportDetailsModal = ({ selectedRecord, onClose }) => {
   const { type, record } = selectedRecord;

@@ -32,6 +32,7 @@ import {
 import { apiRequest } from "../../api/client";
 import { formatCurrency } from "../../utils/currency";
 import StandardReportLayout from "../shared/StandardReportLayout";
+import StandardTable from "../shared/StandardTable";
 import {
   exportToCSV,
   exportToPDF,
@@ -518,41 +519,6 @@ const ReceptionistReports = () => {
     );
   };
 
-  const filterProps = {
-    searchTerm,
-    onSearchChange: setSearchTerm,
-    startDate,
-    endDate,
-    onDateChange: handleDateChange,
-    statusFilter,
-    onStatusChange: setStatusFilter,
-    statusOptions: [
-      { value: "completed", label: "Completed" },
-      { value: "approved", label: "Approved" },
-      { value: "confirmed", label: "Confirmed" },
-      { value: "paid", label: "Paid" },
-      { value: "pending", label: "Pending" },
-      { value: "scheduled", label: "Scheduled" },
-      { value: "cancelled", label: "Cancelled" },
-      { value: "rejected", label: "Rejected" },
-    ],
-    transactionTypeFilter,
-    onTransactionTypeChange: setTransactionTypeFilter,
-    transactionTypeOptions: [
-      { value: "all", label: "All Types" },
-      { value: "appointment", label: "Appointments" },
-      { value: "order", label: "Orders" },
-    ],
-    showTransactionType: true,
-    onExportCSV: handleExportCSV,
-    onExportPDF: handleExportPDF,
-    onExportExcel: handleExportExcel,
-    loading,
-    onRefresh: fetchReportData,
-    onClearFilters: handleClearFilters,
-    searchPlaceholder: "Search transactions, customers, pets, or services...",
-  };
-
   return (
     <StandardReportLayout
       title="Receptionist Reports"
@@ -562,7 +528,6 @@ const ReceptionistReports = () => {
       error={error}
       onRefresh={fetchReportData}
       lastUpdated={lastUpdated || "Not refreshed yet"}
-      filterProps={filterProps}
     >
       <div className="receptionist-reports-content">
         <section className="rr-insight-bar">
@@ -697,87 +662,48 @@ const ReceptionistReports = () => {
             </div>
           </div>
 
-          <div className="rr-table-scroll">
-            <table className="rr-table">
-              <thead>
-                <tr>
-                  <th>Transaction</th>
-                  <th>Customer</th>
-                  <th>Pet</th>
-                  <th>Type</th>
-                  <th>Service</th>
-                  <th>Date</th>
-                  <th>Amount</th>
-                  <th>Status</th>
-                  <th>Action</th>
-                </tr>
-              </thead>
-
-              <tbody>
-                {filteredTransactions.length === 0 ? (
-                  <tr>
-                    <td colSpan="9">
-                      <div className="rr-empty-table">
-                        <FontAwesomeIcon icon={faSearch} />
-                        <h3>No transactions found</h3>
-                        <p>Try changing the date range, status, type, or search filter.</p>
-                      </div>
-                    </td>
-                  </tr>
-                ) : (
-                  filteredTransactions.map((transaction) => (
-                    <tr key={`${transaction.type}-${transaction.id}`}>
-                      <td>
-                        <span className="rr-id-badge">{transaction.id}</span>
-                      </td>
-                      <td>
-                        <strong className="rr-customer-name">
-                          {transaction.customer}
-                        </strong>
-                      </td>
-                      <td>{transaction.pet || "N/A"}</td>
-                      <td>
-                        <span className={`rr-type-badge ${transaction.type}`}>
-                          {transaction.typeLabel}
-                        </span>
-                      </td>
-                      <td>{transaction.service}</td>
-                      <td>
-                        <div className="rr-date-cell">
-                          <span>{transaction.displayDate || formatDateDisplay(transaction.date)}</span>
-                          <small>{formatTimeDisplay(transaction.time)}</small>
-                        </div>
-                      </td>
-                      <td>
-                        <strong className="rr-amount">
-                          {formatCurrency(transaction.amount)}
-                        </strong>
-                      </td>
-                      <td>
-                        <span
-                          className={`rr-status-badge ${getStatusClass(
-                            transaction.status
-                          )}`}
-                        >
-                          {formatLabel(transaction.status)}
-                        </span>
-                      </td>
-                      <td>
-                        <button
-                          type="button"
-                          className="rr-view-btn"
-                          onClick={() => setSelectedTransaction(transaction)}
-                          title="View details"
-                        >
-                          <FontAwesomeIcon icon={faEye} />
-                        </button>
-                      </td>
-                    </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
-          </div>
+          <StandardTable
+            columns={[
+              { key: "id", label: "Transaction", sortable: true, render: (value) => (
+                <span className="rr-id-badge">{value}</span>
+              )},
+              { key: "customer", label: "Customer", sortable: true, render: (value) => (
+                <strong className="rr-customer-name">{value}</strong>
+              )},
+              { key: "pet", label: "Pet", sortable: true, render: (value) => value || "N/A" },
+              { key: "type", label: "Type", sortable: true, render: (value, transaction) => (
+                <span className={`rr-type-badge ${value}`}>
+                  {transaction.typeLabel}
+                </span>
+              )},
+              { key: "service", label: "Service", sortable: true },
+              { key: "date", label: "Date", sortable: true, render: (value, transaction) => (
+                <div className="rr-date-cell">
+                  <span>{transaction.displayDate || formatDateDisplay(value)}</span>
+                  <small>{formatTimeDisplay(transaction.time)}</small>
+                </div>
+              )},
+              { key: "amount", label: "Amount", sortable: true, format: "currency" },
+              { key: "status", label: "Status", sortable: true, render: (value) => (
+                <span className={`rr-status-badge ${getStatusClass(value)}`}>
+                  {formatLabel(value)}
+                </span>
+              )},
+              { key: "actions", label: "Action", sortable: false, render: (_value, transaction) => (
+                <button
+                  type="button"
+                  className="rr-view-btn"
+                  onClick={() => setSelectedTransaction(transaction)}
+                  title="View details"
+                >
+                  <FontAwesomeIcon icon={faEye} />
+                </button>
+              )},
+            ]}
+            data={filteredTransactions}
+            emptyMessage="No transactions found. Try changing the date range, status, type, or search filter."
+            pageSize={10}
+          />
         </section>
 
         {selectedTransaction && (

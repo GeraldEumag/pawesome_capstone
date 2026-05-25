@@ -12,6 +12,7 @@ use App\Http\Controllers\Admin\CustomerReportController;
 use App\Http\Controllers\Admin\ActivityLogController;
 use App\Http\Controllers\Admin\LoginLogController;
 use App\Http\Controllers\Admin\SalaryController;
+use App\Http\Controllers\Admin\SupplierController;
 use App\Http\Controllers\ChatbotController as SharedChatbotController;
 use App\Http\Controllers\ChatbotWorkflowController;
 use App\Http\Controllers\Customer\PortalController;
@@ -189,6 +190,16 @@ Route::middleware(['auth.api', 'throttle:api', 'role:admin'])->prefix('admin')->
     Route::get('reports/system-health', [ReportsController::class, 'systemHealth']);
     Route::get('reports/logistics', [ReportsController::class, 'logistics']);
     Route::get('reports/reception', [ReportsController::class, 'reception']);
+
+    // Supplier Management
+    Route::get('suppliers', [SupplierController::class, 'index']);
+    Route::post('suppliers', [SupplierController::class, 'store']);
+    Route::get('suppliers/{id}', [SupplierController::class, 'show']);
+    Route::put('suppliers/{id}', [SupplierController::class, 'update']);
+    Route::delete('suppliers/{id}', [SupplierController::class, 'destroy']);
+
+    // Inventory Cost Report
+    Route::get('inventory/cost-report', [InventoryController::class, 'costReport']);
 
     // Login Log Routes
     Route::get('login-logs', [LoginLogController::class, 'index']);

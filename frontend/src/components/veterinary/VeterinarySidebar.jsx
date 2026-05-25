@@ -12,13 +12,14 @@ import {
   faUserMd,
   faSignOutAlt,
   faBars,
+  faTimes,
   faUser,
   faHotel,
   faStethoscope,
 } from "@fortawesome/free-solid-svg-icons";
 import "./VeterinarySidebar.css";
 
-const VeterinarySidebar = ({ collapsed, onToggleCollapse }) => {
+const VeterinarySidebar = ({ collapsed, onToggleCollapse, mobileOpen, onMobileMenuToggle }) => {
   const handleLogout = async () => {
     const confirmed = await showConfirm("Are you sure you want to log out?", "", "Yes", "Cancel", "question", true);
     if (!confirmed) return;
@@ -28,7 +29,7 @@ const VeterinarySidebar = ({ collapsed, onToggleCollapse }) => {
   };
 
   return (
-    <aside className={`app-sidebar veterinary-sidebar ${collapsed ? "collapsed" : ""}`}>
+    <aside className={`app-sidebar veterinary-sidebar ${collapsed ? "collapsed" : ""} ${mobileOpen ? "mobile-open" : ""}`}>
       <div className="sidebar-header">
         <button className="collapse-btn" onClick={onToggleCollapse}>
           <FontAwesomeIcon icon={faBars} />
@@ -39,6 +40,9 @@ const VeterinarySidebar = ({ collapsed, onToggleCollapse }) => {
             <span>Vet Portal</span>
           </div>
         )}
+        <button className="mobile-close-btn" onClick={onMobileMenuToggle} type="button" aria-label="Close menu">
+          <FontAwesomeIcon icon={faTimes} />
+        </button>
       </div>
 
       <nav className="sidebar-nav">

@@ -1,6 +1,7 @@
-import React, { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import "./CustomerBookings.css";
 import { apiRequest } from "../../api/client";
+import { useAuth } from "../../context/AuthContext";
 import PetAvatar from "../shared/PetAvatar";
 import DatePickerInput from "../shared/DatePickerInput";
 import {
@@ -114,8 +115,9 @@ const symptomOptions = [
 ];
 
 const CustomerBookings = () => {
-  const customerEmail = localStorage.getItem("email") || "";
-  const customerName = localStorage.getItem("name") || "Customer";
+  const { user } = useAuth();
+  const customerEmail = user?.email || "";
+  const customerName = user?.name || "Customer";
 
   const [selectedBooking, setSelectedBooking] = useState(null);
   const [receipt, setReceipt] = useState(null);

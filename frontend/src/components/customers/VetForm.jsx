@@ -1,6 +1,7 @@
-import React, { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback } from "react";
 import "./VetForm.css";
 import { apiRequest, normalizeList } from "../../api/client";
+import { useAuth } from "../../context/AuthContext";
 import DatePickerInput from "../../components/shared/DatePickerInput";
 import {
   validateServiceCompatibility,
@@ -9,14 +10,15 @@ import {
 import { showAlert, showSuccess, showError } from "../../utils/alert";
 
 const VetForm = () => {
+  const { user } = useAuth();
+  const customerEmail = user?.email;
+  const customerName = user?.name || "Customer";
+
   const [activeTab, setActiveTab] = useState("book");
   const [appointments, setAppointments] = useState([]);
   const [pets, setPets] = useState([]);
   const [services, setServices] = useState([]);
   const [loading, setLoading] = useState(false);
-
-  const customerEmail = localStorage.getItem("email");
-  const customerName = localStorage.getItem("name") || "Customer";
 
   const [formData, setFormData] = useState({
     customer_name: customerName,

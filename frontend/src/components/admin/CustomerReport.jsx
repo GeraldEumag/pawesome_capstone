@@ -4,6 +4,7 @@ import { exportToCSV, exportToPDF } from "../../utils/reportExport";
 import { useRealTimeSync } from "../../hooks/useRealTimeSync";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import DatePickerInput from "../../components/shared/DatePickerInput";
+import StandardTable from "../../components/shared/StandardTable";
 import {
   faUsers,
   faChartBar,
@@ -379,105 +380,55 @@ const CustomerReport = () => {
             </button>
           </div>
         ) : (
-          <div className="table-wrapper">
-            <table className="customer-table">
-              <thead>
-                <tr>
-                  <th>ID</th>
-                  <th>Name</th>
-                  <th>Email</th>
-                  <th>Phone</th>
-                  <th>Status</th>
-                  <th>Total Orders</th>
-                  <th>Total Amount</th>
-                  <th>Paid Amount</th>
-                  <th>Balance</th>
-                  <th>Last Order</th>
-                  <th>Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {paginatedCustomers.map((customer) => (
-                  <tr key={customer.customer_id}>
-                    <td>{customer.customer_id}</td>
-                    <td>
-                      <div className="customer-name">
-                        <FontAwesomeIcon icon={faUser} />
-                        {customer.name}
-                      </div>
-                    </td>
-                    <td>
-                      <div className="customer-email">
-                        <FontAwesomeIcon icon={faEnvelope} />
-                        {customer.email}
-                      </div>
-                    </td>
-                    <td>
-                      <div className="customer-phone">
-                        <FontAwesomeIcon icon={faPhone} />
-                        {customer.phone}
-                      </div>
-                    </td>
-                    <td>
-                      <span
-                        className="status-badge"
-                        style={{ backgroundColor: getStatusColor(customer.status) }}
-                      >
-                        {customer.status}
-                      </span>
-                    </td>
-                    <td>{customer.total_orders}</td>
-                    <td>{formatCurrency(customer.total_order_amount)}</td>
-                    <td>{formatCurrency(customer.total_payments)}</td>
-                    <td>
-                      <span
-                        className={`balance-amount ${
-                          customer.balance_amount > 0 ? "negative" : "positive"
-                        }`}
-                      >
-                        {formatCurrency(customer.balance_amount)}
-                      </span>
-                    </td>
-                    <td>{formatDate(customer.last_order_date)}</td>
-                    <td>
-                      <button
-                        onClick={() => viewCustomerDetail(customer.customer_id)}
-                        className="btn-action"
-                        title="View Details"
-                      >
-                        <FontAwesomeIcon icon={faEye} />
-                      </button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-            {filteredCustomers.length > pageSize && (
-              <div className="standard-table-pagination">
-                <span>
-                  Showing {(currentPage - 1) * pageSize + 1}-
-                  {Math.min(currentPage * pageSize, filteredCustomers.length)} of {filteredCustomers.length}
-                </span>
-                <div className="pagination-actions">
-                  <button
-                    type="button"
-                    onClick={() => setCurrentPage((page) => Math.max(1, page - 1))}
-                    disabled={currentPage === 1}
-                  >
-                    Previous
-                  </button>
-                  <strong>{currentPage} / {totalPages}</strong>
-                  <button
-                    type="button"
-                    onClick={() => setCurrentPage((page) => Math.min(totalPages, page + 1))}
-                    disabled={currentPage === totalPages}
-                  >
-                    Next
-                  </button>
+          <StandardTable
+            columns={[
+              { key: "customer_id", label: "ID", sortable: true },
+              { key: "name", label: "Name", sortable: true, render: (value) => (
+                <div className="customer-name">
+                  <FontAwesomeIcon icon={faUser} />
+                  {value}
                 </div>
-              </div>
-            )}
-          </div>
+              )},
+              { key: "email", label: "Email", sortable: true, render: (value) => (
+                <div className="customer-email">
+                  <FontAwesomeIcon icon={faEnvelope} />
+                  {value}
+                </div>
+              )},
+              { key: "phone", label: "Phone", sortable: true, render: (value) => (
+                <div className="customer-phone">
+                  <FontAwesomeIcon icon={faPhone} />
+                  {value}
+                </div>
+              )},
+              { key: "status", label: "Status", sortable: true, render: (value) => (
+                <span className="status-badge" style={{ backgroundColor: getStatusColor(value) }}>
+                  {value}
+                </span>
+              )},
+              { key: "total_orders", label: "Total Orders", sortable: true },
+              { key: "total_order_amount", label: "Total Amount", sortable: true, format: "currency" },
+              { key: "total_payments", label: "Paid Amount", sortable: true, format: "currency" },
+              { key: "balance_amount", label: "Balance", sortable: true, render: (value) => (
+                <span className={`balance-amount ${value > 0 ? "negative" : "positive"}`}>
+                  {formatCurrency(value)}
+                </span>
+              )},
+              { key: "last_order_date", label: "Last Order", sortable: true, render: (value) => formatDate(value) },
+              { key: "actions", label: "Actions", sortable: false, render: (_value, customer) => (
+                <button
+                  onClick={() => viewCustomerDetail(customer.customer_id)}
+                  className="btn-action"
+                  title="View Details"
+                >
+                  <FontAwesomeIcon icon={faEye} />
+                </button>
+              )},
+            ]}
+            data={filteredCustomers}
+            emptyMessage="No customer records found. Try clearing the filters."
+            pageSize={10}
+          />
         )}
       </div>
 

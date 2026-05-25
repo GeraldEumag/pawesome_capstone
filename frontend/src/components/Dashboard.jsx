@@ -1,5 +1,5 @@
-import React from "react";
 import { Navigate } from "react-router-dom";
+import { useAuth } from "../context/AuthContext";
 
 const roleHomeMap = {
   admin: "/admin",
@@ -15,8 +15,8 @@ const roleHomeMap = {
 };
 
 const Dashboard = () => {
-  const name = localStorage.getItem("name");
-  const role = localStorage.getItem("role");
+  const { user, role } = useAuth();
+  const name = user?.name;
 
   if (roleHomeMap[role]) {
     return <Navigate to={roleHomeMap[role]} replace />;

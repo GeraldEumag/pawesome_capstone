@@ -61,15 +61,10 @@ const MonthlyInventoryAudit = () => {
   const fetchAuditItems = async () => {
     try {
       setLoading(true);
-      console.log("🔍 DEBUG: Fetching real audit items for month:", month);
-      console.log("🔍 DEBUG: API endpoint: /inventory/monthly-audit?month=" + month);
-      
+
       // Use real backend API to get inventory items
       const res = await inventoryApi.getOrCreateMonthlyAudit(month);
-      console.log("🔍 DEBUG: Full API Response:", res);
-      console.log("🔍 DEBUG: Response type:", typeof res);
-      console.log("🔍 DEBUG: Response keys:", Object.keys(res || {}));
-      
+
       let auditRows = [];
       if (res && res.audits) {
         auditRows = res.audits;
@@ -78,27 +73,13 @@ const MonthlyInventoryAudit = () => {
       } else if (res && Array.isArray(res)) {
         auditRows = res;
       } else {
-        console.warn("🔍 DEBUG: Unexpected response structure:", res);
+        console.warn("Unexpected response structure:", res);
       }
       auditRows = auditRows.map(normalizeAuditRow);
-      
-      console.log("🔍 DEBUG: Raw audit rows:", auditRows);
-      console.log("🔍 DEBUG: Number of audit rows:", auditRows.length);
-      
-      // Debug first item structure
-      if (auditRows.length > 0) {
-        console.log("🔍 DEBUG: First audit row structure:", auditRows[0]);
-        console.log("🔍 DEBUG: First audit row keys:", Object.keys(auditRows[0]));
-        console.log("🔍 DEBUG: First item structure:", auditRows[0].item);
-        if (auditRows[0].item) {
-          console.log("🔍 DEBUG: First item keys:", Object.keys(auditRows[0].item));
-        }
-      }
-      
+
       // Filter out service items - only include physical inventory items
       const physicalAuditRows = auditRows.filter((auditRow) => {
         if (!auditRow || !auditRow.item) {
-          console.warn("🔍 DEBUG: Skipping audit row without item:", auditRow);
           return false;
         }
         
@@ -112,32 +93,26 @@ const MonthlyInventoryAudit = () => {
         );
         
         if (!isPhysical) {
-          console.log("🔍 DEBUG: Filtering out service item:", auditRow.item.name);
+          // Skip service items in audit
         }
-        
+
         return isPhysical;
       });
-      
-      console.log("🔍 DEBUG: Physical audit rows after filtering:", physicalAuditRows);
-      console.log("🔍 DEBUG: Number of physical audit rows:", physicalAuditRows.length);
-      
+
       // If no items, try to get all inventory items directly
       if (physicalAuditRows.length === 0) {
-        console.log("🔍 DEBUG: No physical items found, trying to fetch all inventory items...");
         try {
           const inventoryRes = await inventoryApi.getItems();
-          console.log("🔍 DEBUG: All inventory items:", inventoryRes);
           const fallbackRows = inventoryRes.items || inventoryRes.data || [];
           setItems(fallbackRows.map(normalizeAuditRow));
         } catch (inventoryErr) {
-          console.error("🔍 DEBUG: Failed to fetch all inventory items:", inventoryErr);
+          console.error("Failed to fetch all inventory items:", inventoryErr);
         }
       } else {
         setItems(physicalAuditRows);
       }
     } catch (err) {
-      console.error("🔍 DEBUG: Failed to load monthly audit:", err);
-      console.error("🔍 DEBUG: Error details:", err.response?.data || err.message);
+      console.error("Failed to load monthly audit:", err);
       setItems([]);
     } finally {
       setLoading(false);
@@ -409,57 +384,6 @@ const MonthlyInventoryAudit = () => {
             onChange={(e) => setMonth(e.target.value)}
           />
         </div>
-      </div>
-
-      {/* ENHANCED DEBUG INFO */}
-      <div style={{background: '#f0f0f0', padding: '15px', margin: '10px 0', borderRadius: '5px', fontSize: '12px'}}>
-        <strong>🔍 ENHANCED DEBUG INFO:</strong><br/>
-        <div style={{display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', marginTop: '10px'}}>
-          <div>
-            <strong>Loading:</strong> {loading ? 'YES' : 'NO'}<br/>
-            <strong>Items Count:</strong> {items.length}<br/>
-            <strong>Month:</strong> {month}<br/>
-            <strong>API Endpoint:</strong> /inventory/monthly-audit?month={month}
-          </div>
-          <div>
-            <strong>First Item Name:</strong> {items.length > 0 ? (items[0]?.item?.name || items[0]?.name || 'No name') : 'No items'}<br/>
-            <strong>First Item ID:</strong> {items.length > 0 ? (items[0]?.id || 'No ID') : 'No items'}<br/>
-            <strong>Has Item Relation:</strong> {items.length > 0 ? (items[0]?.item ? 'YES' : 'NO') : 'N/A'}<br/>
-            <strong>System Stock:</strong> {items.length > 0 ? (items[0]?.system_stock || 'N/A') : 'N/A'}
-          </div>
-        </div>
-        
-        <div style={{marginTop: '10px', display: 'flex', gap: '5px', flexWrap: 'wrap'}}>
-          <button 
-            onClick={() => fetchAuditItems()}
-            style={{background: '#007bff', color: 'white', padding: '5px 10px', border: 'none', borderRadius: '3px', fontSize: '11px'}}
-          >
-            🔄 Test API Call
-          </button>
-          <button 
-            onClick={() => console.log('🔍 DEBUG: Current items state:', items)}
-            style={{background: '#28a745', color: 'white', padding: '5px 10px', border: 'none', borderRadius: '3px', fontSize: '11px'}}
-          >
-            📋 Log Items State
-          </button>
-          <button 
-            onClick={() => window.open('/api/inventory/monthly-audit?month=' + month, '_blank')}
-            style={{background: '#ffc107', color: 'black', padding: '5px 10px', border: 'none', borderRadius: '3px', fontSize: '11px'}}
-          >
-            🌐 Test API in Browser
-          </button>
-        </div>
-        
-        {items.length === 0 && (
-          <div style={{marginTop: '10px', padding: '10px', background: '#fff3cd', border: '1px solid #ffeaa7', borderRadius: '3px'}}>
-            <strong>⚠️ NO ITEMS FOUND - Possible Issues:</strong><br/>
-            1. Backend API not implemented<br/>
-            2. Database has no inventory items<br/>
-            3. API endpoint returns wrong structure<br/>
-            4. CORS or authentication issues<br/>
-            5. Server not running
-          </div>
-        )}
       </div>
 
       <div className="audit-stats-grid">

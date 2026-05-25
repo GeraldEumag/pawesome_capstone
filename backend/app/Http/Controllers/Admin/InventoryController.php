@@ -142,7 +142,7 @@ class InventoryController extends Controller
     public function destroy($id)
     {
         try {
-            $reason = request('reason', 'Archived via inventory management');
+            $reason = (string) request('reason', 'Archived via inventory management');
             $result = $this->inventoryService->archiveItem($id, $reason);
             return response()->json($result);
         } catch (\Exception $e) {
@@ -510,6 +510,7 @@ class InventoryController extends Controller
             ->get();
 
         foreach ($batches as $batch) {
+            /** @var \App\Models\InventoryBatch $batch */
             if ($needed <= 0) break;
 
             $deduct = min($batch->remaining_quantity, $needed);
@@ -610,6 +611,102 @@ class InventoryController extends Controller
             'success' => true,
             'products' => $items,
             'count' => $items->count(),
+        ]);
+    }
+
+    /**
+     * Get inventory cost report for admin
+     */
+    public function costReport()
+    {
+        $items = InventoryItem::where('status', 'active')
+            ->with('supplierModel')
+            ->get();
+
+        $itemsWithCost = $items->whereNotNull('cost');
+        $itemsWithoutCost = $items->whereNull('cost');
+
+        $totalCostValue = $itemsWithCost->sum(function ($item) {
+            return $item->stock * $item->cost;
+        });
+
+        $totalRetailValue = $items->sum(function ($item) {
+            return $item->stock * $item->price;
+        });
+
+        $overallMargin = $totalRetailValue > 0
+            ? (($totalRetailValue - $totalCostValue) / $totalRetailValue) * 100
+            : 0;
+
+        // Per-category breakdown
+        $categoryBreakdown = $items->groupBy('category')->map(function ($categoryItems) {
+            $catCost = $categoryItems->whereNotNull('cost')->sum(function ($item) {
+                return $item->stock * $item->cost;
+            });
+            $catRetail = $categoryItems->sum(function ($item) {
+                return $item->stock * $item->price;
+            });
+            $catMargin = $catRetail > 0 ? (($catRetail - $catCost) / $catRetail) * 100 : 0;
+
+            return [
+                'category' => $categoryItems->first()->category,
+                'item_count' => $categoryItems->count(),
+                'total_stock' => $categoryItems->sum('stock'),
+                'cost_value' => round($catCost, 2),
+                'retail_value' => round($catRetail, 2),
+                'profit' => round($catRetail - $catCost, 2),
+                'margin_percent' => round($catMargin, 2),
+            ];
+        })->values();
+
+        // Top 10 highest margin items
+        $topMargins = $itemsWithCost->map(function ($item) {
+            $profit = $item->price - $item->cost;
+            $margin = $item->price > 0 ? ($profit / $item->price) * 100 : 0;
+            return [
+                'id' => $item->id,
+                'name' => $item->name,
+                'sku' => $item->sku,
+                'category' => $item->category,
+                'cost' => (float) $item->cost,
+                'price' => (float) $item->price,
+                'stock' => $item->stock,
+                'profit_per_unit' => round($profit, 2),
+                'margin_percent' => round($margin, 2),
+            ];
+        })->sortByDesc('margin_percent')->take(10)->values();
+
+        // Bottom 10 lowest margin items
+        $bottomMargins = $itemsWithCost->map(function ($item) {
+            $profit = $item->price - $item->cost;
+            $margin = $item->price > 0 ? ($profit / $item->price) * 100 : 0;
+            return [
+                'id' => $item->id,
+                'name' => $item->name,
+                'sku' => $item->sku,
+                'category' => $item->category,
+                'cost' => (float) $item->cost,
+                'price' => (float) $item->price,
+                'stock' => $item->stock,
+                'profit_per_unit' => round($profit, 2),
+                'margin_percent' => round($margin, 2),
+            ];
+        })->sortBy('margin_percent')->take(10)->values();
+
+        return response()->json([
+            'success' => true,
+            'summary' => [
+                'total_items' => $items->count(),
+                'items_with_cost' => $itemsWithCost->count(),
+                'items_without_cost' => $itemsWithoutCost->count(),
+                'total_cost_value' => round($totalCostValue, 2),
+                'total_retail_value' => round($totalRetailValue, 2),
+                'total_profit' => round($totalRetailValue - $totalCostValue, 2),
+                'overall_margin_percent' => round($overallMargin, 2),
+            ],
+            'category_breakdown' => $categoryBreakdown,
+            'top_margins' => $topMargins,
+            'bottom_margins' => $bottomMargins,
         ]);
     }
 

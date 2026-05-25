@@ -1,32 +1,53 @@
-@media (max-width: 1200px) {
-  .app-grid-4 {
-    grid-template-columns: repeat(2, 1fr);
-  }
+/* ================================================================
+   RESPONSIVE.CSS — Unified breakpoints for all Pawesome views
+   Breakpoints:
+     - Desktop  : 1201px+
+     - Laptop   : 992px  – 1200px
+     - Tablet   : 768px  – 991px
+     - Mobile   : 640px  – 767px
+     - Small    : 0px    – 639px
+   ================================================================ */
 
-  .app-grid-3 {
-    grid-template-columns: repeat(2, 1fr);
-  }
+/* Base: hamburger hidden on desktop */
+.mobile-menu-toggle {
+  display: none;
+  width: 44px;
+  height: 44px;
+  border: none;
+  border-radius: 12px;
+  background: rgba(255, 95, 147, 0.12);
+  color: #ff5f93;
+  font-size: 1.15rem;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: background 0.2s ease, transform 0.15s ease;
 }
 
-@media (max-width: 768px) {
-  .app-sidebar {
-    display: none;
-  }
+.mobile-menu-toggle:hover {
+  background: rgba(255, 95, 147, 0.22);
+  transform: translateY(-1px);
+}
 
-  .app-main {
-    margin-left: 0;
-    width: 100%;
-  }
+.mobile-menu-toggle:active {
+  transform: scale(0.96);
+}
 
+/* ─── LAPTOP (max-width: 1200px) ─── */
+@media (max-width: 1200px) {
+  .app-grid-4 { grid-template-columns: repeat(2, 1fr); }
+  .app-grid-3 { grid-template-columns: repeat(2, 1fr); }
+}
+
+/* ─── TABLET (max-width: 991px) ─── */
+@media (max-width: 991px) {
   .app-topbar {
     min-height: auto;
-    padding: 18px;
-    flex-direction: column;
-    align-items: stretch;
+    padding: 14px 18px;
+    gap: 10px;
   }
 
   .app-content {
-    padding: 18px;
+    padding: 16px;
   }
 
   .app-grid-2,
@@ -35,7 +56,229 @@
     grid-template-columns: 1fr;
   }
 
+  /* Tables: enable horizontal scroll */
+  .app-table-wrapper,
+  .table-responsive,
+  .payment-table-wrapper,
+  .inventory-table-wrapper,
+  .report-table-wrapper {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .app-table-wrapper table,
+  .table-responsive table,
+  .payment-table-wrapper table,
+  .inventory-table-wrapper table {
+    min-width: 600px;
+  }
+
+  /* Modal actions stack */
   .app-modal-actions {
     flex-direction: column;
+    gap: 8px;
+  }
+
+  /* Cards */
+  .app-card,
+  .premium-card,
+  .dashboard-card,
+  .metric-card,
+  .overview-card {
+    padding: 16px;
+  }
+
+  /* Form grids */
+  .form-grid,
+  .booking-form .form-grid,
+  .customer-form-grid {
+    grid-template-columns: 1fr !important;
+  }
+}
+
+/* ─── MOBILE (max-width: 767px) ─── */
+@media (max-width: 767px) {
+  /* Hide fixed sidebars on small screens; hamburger opens overlay */
+  .app-sidebar,
+  .admin-sidebar,
+  .cashier-sidebar,
+  .customer-sidebar,
+  .inventory-sidebar,
+  .manager-sidebar,
+  .receptionist-sidebar,
+  .veterinary-sidebar {
+    position: fixed;
+    inset: 0 auto 0 0;
+    width: 260px !important;
+    transform: translateX(-100%);
+    transition: transform 0.28s ease;
+    z-index: 1400 !important;
+  }
+
+  .app-sidebar.mobile-open,
+  .admin-sidebar.mobile-open,
+  .cashier-sidebar.mobile-open,
+  .customer-sidebar.mobile-open,
+  .inventory-sidebar.mobile-open,
+  .manager-sidebar.mobile-open,
+  .receptionist-sidebar.mobile-open,
+  .veterinary-sidebar.mobile-open {
+    transform: translateX(0);
+  }
+
+  /* Show mobile hamburger */
+  .mobile-menu-toggle {
+    display: grid !important;
+    place-items: center;
+  }
+
+  /* Main content fills width */
+  .app-main,
+  .admin-main,
+  .cashier-main,
+  .customer-main,
+  .inventory-main,
+  .manager-main,
+  .receptionist-main,
+  .vet-main {
+    margin-left: 0 !important;
+    width: 100% !important;
+  }
+
+  /* Tables: shrink text and padding so more columns fit */
+  table {
+    font-size: 0.85rem;
+  }
+
+  table th,
+  table td {
+    padding: 8px 10px;
+    white-space: nowrap;
+  }
+
+  /* Overlay backdrop when sidebar is open */
+  .mobile-open ~ .mobile-backdrop,
+  .mobile-backdrop.active {
+    display: block;
+  }
+
+  .mobile-backdrop {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.45);
+    z-index: 1350;
+  }
+
+  /* Topbar */
+  .app-topbar,
+  .admin-navbar,
+  .cashier-navbar,
+  .customer-navbar,
+  .inventory-navbar,
+  .manager-navbar,
+  .receptionist-navbar,
+  .vet-navbar,
+  .top-navbar {
+    padding: 12px 14px;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  /* Typography scale down */
+  .app-topbar h1,
+  .admin-navbar h1,
+  .cashier-navbar h1,
+  .customer-navbar h1,
+  .top-navbar h1 {
+    font-size: 1.15rem;
+  }
+
+  /* Dashboard stats */
+  .metrics-row,
+  .stats-row,
+  .overview-row,
+  .dashboard-grid {
+    grid-template-columns: 1fr !important;
+  }
+
+  /* Buttons wrap */
+  .btn-row,
+  .action-row,
+  .app-modal-actions {
+    flex-wrap: wrap;
+  }
+
+  /* Inputs */
+  input, select, textarea {
+    font-size: 16px; /* prevent iOS zoom */
+  }
+}
+
+/* ─── SMALL PHONES (max-width: 639px) ─── */
+@media (max-width: 639px) {
+  .app-content {
+    padding: 10px;
+  }
+
+  .app-card,
+  .premium-card,
+  .dashboard-card,
+  .metric-card,
+  .overview-card {
+    padding: 12px;
+    border-radius: 14px;
+  }
+
+  /* POS special */
+  .pos-layout,
+  .pos-grid,
+  .cashier-pos-grid {
+    grid-template-columns: 1fr !important;
+  }
+
+  .pos-cart,
+  .pos-products {
+    min-width: 0 !important;
+  }
+
+  /* Receipts */
+  .receipt-preview {
+    font-size: 11px;
+    padding: 12px;
+  }
+
+  /* Booking form */
+  .booking-form .form-grid {
+    gap: 10px;
+  }
+
+  /* Tables: card view fallback on very small screens */
+  .table-card-view thead {
+    display: none;
+  }
+
+  .table-card-view tbody tr {
+    display: block;
+    margin-bottom: 12px;
+    padding: 12px;
+    border: 1px solid rgba(255, 95, 147, 0.15);
+    border-radius: 12px;
+    background: #fff;
+  }
+
+  .table-card-view tbody td {
+    display: flex;
+    justify-content: space-between;
+    padding: 6px 0;
+    border: none;
+    font-size: 0.9rem;
+  }
+
+  .table-card-view tbody td::before {
+    content: attr(data-label);
+    font-weight: 600;
+    color: #64748b;
+    margin-right: 8px;
   }
 }

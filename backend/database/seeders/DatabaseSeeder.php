@@ -26,6 +26,7 @@ class DatabaseSeeder extends Seeder
             PawesomeLiveDemoSeeder::class,
             AddOnsSeeder::class, // Seed add-ons with missing items
             AddOnInventoryMappingSeeder::class, // Map add-ons to inventory items
+            CsvDataSeeder::class, // Import CSV items with cost & supplier data
         ]);
     }
 }

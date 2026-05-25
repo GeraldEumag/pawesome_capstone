@@ -96,11 +96,17 @@ const CashierReports = () => {
       const totalSales = sales.reduce((sum, item) => sum + (Number(item.amount) || 0), 0);
       const today = new Date().toISOString().split('T')[0];
       const todaySales = sales
-        .filter(item => item.date === today)
+        .filter(item => {
+          const itemDate = item.date ? new Date(item.date).toISOString().split('T')[0] : '';
+          return itemDate === today;
+        })
         .reduce((sum, item) => sum + (Number(item.amount) || 0), 0);
-      
+
       const totalTransactions = sales.length;
-      const todayTransactions = sales.filter(item => item.date === today).length;
+      const todayTransactions = sales.filter(item => {
+        const itemDate = item.date ? new Date(item.date).toISOString().split('T')[0] : '';
+        return itemDate === today;
+      }).length;
       const refunds = sales.filter(item => item.status === 'refunded').length;
       const averageOrderValue = totalTransactions > 0 ? totalSales / totalTransactions : 0;
 
@@ -272,7 +278,9 @@ const CashierReports = () => {
 
   // Chart data preparation
   const dailySalesData = getFilteredData().reduce((acc, item) => {
-    const date = item.date || new Date().toISOString().split('T')[0];
+    const date = item.date
+      ? new Date(item.date).toISOString().split('T')[0]
+      : new Date().toISOString().split('T')[0];
     const existing = acc.find(d => d.date === date);
     if (existing) {
       existing.sales += Number(item.amount) || 0;
@@ -367,36 +375,6 @@ const CashierReports = () => {
     }
   };
 
-  const filterProps = {
-    searchTerm,
-    onSearchChange: setSearchTerm,
-    startDate,
-    endDate,
-    onDateChange: handleDateChange,
-    statusFilter,
-    onStatusChange: setStatusFilter,
-    statusOptions: [
-      { value: "completed", label: "Completed" },
-      { value: "pending", label: "Pending" },
-      { value: "refunded", label: "Refunded" },
-      { value: "failed", label: "Failed" },
-    ],
-    onExportCSV: handleExportCSV,
-    onExportPDF: handleExportPDF,
-    onExportExcel: handleExportExcel,
-    salespersonFilter,
-    onSalespersonChange: setSalespersonFilter,
-    salespersonOptions: salespeople.map((person) => ({
-      value: String(person.id),
-      label: person.name || `User #${person.id}`,
-    })),
-    showSalesperson: isAdminReport,
-    loading,
-    onRefresh: fetchReportData,
-    onClearFilters: handleClearFilters,
-    searchPlaceholder: "Search transactions, customers, or payment methods...",
-  };
-
   return (
     <StandardReportLayout
       title="Cashier Reports"
@@ -406,7 +384,6 @@ const CashierReports = () => {
       error={error}
       onRefresh={fetchReportData}
       lastUpdated={new Date().toLocaleTimeString()}
-      filterProps={filterProps}
     >
       <div className="cashier-reports-navigation">
         <nav className="nav-tabs">

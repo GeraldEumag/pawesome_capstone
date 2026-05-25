@@ -1,5 +1,6 @@
-import React, { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { showConfirm } from "../../utils/alert";
+import { useAuth } from "../../context/AuthContext";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
   faUser,
@@ -46,6 +47,7 @@ const emptyPasswordData = {
 };
 
 const AppointmentList = () => {
+  const { user } = useAuth();
   const [isEditing, setIsEditing] = useState(false);
   const [savingProfile, setSavingProfile] = useState(false);
   const [changingPassword, setChangingPassword] = useState(false);
@@ -66,9 +68,9 @@ const AppointmentList = () => {
 
   useEffect(() => {
     const storedProfile = localStorage.getItem(STORAGE_KEY);
-    const localName = localStorage.getItem("name");
-    const localEmail = localStorage.getItem("email");
-    const localPhoto = localStorage.getItem("profile_photo");
+    const authName = user?.name;
+    const authEmail = user?.email;
+    const authPhoto = user?.profile_photo;
 
     let parsedProfile = null;
 
@@ -81,12 +83,12 @@ const AppointmentList = () => {
     const initialProfile = {
       ...defaultProfileData,
       ...(parsedProfile || {}),
-      ...(localEmail ? { email: localEmail } : {}),
-      ...(localPhoto ? { profileImage: localPhoto } : {}),
+      ...(authEmail ? { email: authEmail } : {}),
+      ...(authPhoto ? { profileImage: authPhoto } : {}),
     };
 
-    if (!parsedProfile && localName) {
-      const nameParts = localName.trim().split(/\s+/);
+    if (!parsedProfile && authName) {
+      const nameParts = authName.trim().split(/\s+/);
       initialProfile.firstName = nameParts[0] || defaultProfileData.firstName;
       initialProfile.lastName =
         nameParts.length > 1
@@ -96,7 +98,7 @@ const AppointmentList = () => {
 
     setProfileData(initialProfile);
     setDraftProfile(initialProfile);
-  }, []);
+  }, [user]);
 
   const fullName = useMemo(
     () => `${profileData.firstName} ${profileData.lastName}`.trim(),

@@ -86,7 +86,6 @@ export const inventoryApi = {
       const queryString = buildQueryString(params);
       return await apiRequest(`${ACTIVE_ITEMS_ENDPOINT}${queryString}`);
     } catch (error) {
-      console.error("[InventoryAPI] Failed to fetch items:", error.message);
       throw error;
     }
   },
@@ -96,7 +95,6 @@ export const inventoryApi = {
       const queryString = buildQueryInput(params);
       return await apiRequest(`${ACTIVE_ITEMS_ENDPOINT}${queryString}`);
     } catch (error) {
-      console.error("[InventoryAPI] Failed to fetch active items:", error.message);
       throw error;
     }
   },
@@ -117,23 +115,6 @@ export const inventoryApi = {
       const queryString = buildQueryString(params);
       return await apiRequest(`${PUBLIC_ITEMS_ENDPOINT}${queryString}`);
     } catch (error) {
-      console.error("[InventoryAPI] Failed to fetch public items:", error.message);
-      throw error;
-    }
-  },
-
-  /**
-   * Retrieves sellable products for POS and Customer Store
-   * Only returns items that are sellable and have stock > 0
-   * @async
-   * @returns {Promise<{success: boolean, products: Array, count: number}>} Sellable products
-   * @throws {Error} When the request fails
-   */
-  getSellable: async () => {
-    try {
-      return await apiRequest("/inventory/sellable");
-    } catch (error) {
-      console.error("[InventoryAPI] Failed to fetch sellable items:", error.message);
       throw error;
     }
   },
@@ -142,7 +123,6 @@ export const inventoryApi = {
     try {
       return await apiRequest("/inventory/sellable");
     } catch (error) {
-      console.error("[InventoryAPI] Failed to fetch sellable items:", error.message);
       throw error;
     }
   },
@@ -151,7 +131,6 @@ export const inventoryApi = {
     try {
       return await apiRequest("/cashier/inventory/sellable");
     } catch (error) {
-      console.error("[InventoryAPI] Failed to fetch cashier sellable items:", error.message);
       throw error;
     }
   },
@@ -168,7 +147,6 @@ export const inventoryApi = {
     try {
       return await apiRequest(`/inventory/items/${id}`);
     } catch (error) {
-      console.error(`[InventoryAPI] Failed to fetch item ${id}:`, error.message);
       throw error;
     }
   },
@@ -196,7 +174,6 @@ export const inventoryApi = {
         body: JSON.stringify(data),
       });
     } catch (error) {
-      console.error("[InventoryAPI] Failed to create item:", error.message);
       throw error;
     }
   },
@@ -227,7 +204,6 @@ export const inventoryApi = {
         body: formData,
       });
     } catch (error) {
-      console.error("[InventoryAPI] Failed to create item with photo:", error.message);
       throw error;
     }
   },
@@ -253,7 +229,6 @@ export const inventoryApi = {
         body: JSON.stringify(data),
       });
     } catch (error) {
-      console.error(`[InventoryAPI] Failed to update item ${id}:`, error.message);
       throw error;
     }
   },
@@ -289,7 +264,6 @@ export const inventoryApi = {
         body: formData,
       });
     } catch (error) {
-      console.error(`[InventoryAPI] Failed to update item ${id} with photo:`, error.message);
       throw error;
     }
   },
@@ -319,7 +293,6 @@ export const inventoryApi = {
         }),
       });
     } catch (error) {
-      console.error(`[InventoryAPI] Failed to add stock for item ${id}:`, error.message);
       throw error;
     }
   },
@@ -340,7 +313,6 @@ export const inventoryApi = {
         body: JSON.stringify({ reason }),
       });
     } catch (error) {
-      console.error(`[InventoryAPI] Failed to archive item ${id}:`, error.message);
       throw error;
     }
   },
@@ -354,22 +326,11 @@ export const inventoryApi = {
    * @returns {Promise<Object>} Archived items with pagination
    * @throws {Error} When request fails
    */
-  getArchived: async (params = {}) => {
-    try {
-      const queryString = buildQueryInput(params);
-      return await apiRequest(`${ARCHIVED_ITEMS_ENDPOINT}${queryString}`);
-    } catch (error) {
-      console.error("[InventoryAPI] Failed to fetch archived items:", error.message);
-      throw error;
-    }
-  },
-
   getArchivedItems: async (params = {}) => {
     try {
       const queryString = buildQueryInput(params);
       return await apiRequest(`${ARCHIVED_ITEMS_ENDPOINT}${queryString}`);
     } catch (error) {
-      console.error("[InventoryAPI] Failed to fetch archived items:", error.message);
       throw error;
     }
   },
@@ -388,7 +349,6 @@ export const inventoryApi = {
         method: "PATCH",
       });
     } catch (error) {
-      console.error(`[InventoryAPI] Failed to unarchive item ${id}:`, error.message);
       throw error;
     }
   },
@@ -400,7 +360,6 @@ export const inventoryApi = {
         method: "PATCH",
       });
     } catch (error) {
-      console.error(`[InventoryAPI] Failed to restore item ${id}:`, error.message);
       throw error;
     }
   },
@@ -419,7 +378,6 @@ export const inventoryApi = {
         method: "DELETE",
       });
     } catch (error) {
-      console.error(`[InventoryAPI] Failed to delete item ${id}:`, error.message);
       throw error;
     }
   },
@@ -431,7 +389,6 @@ export const inventoryApi = {
         method: "DELETE",
       });
     } catch (error) {
-      console.error(`[InventoryAPI] Failed to force delete item ${id}:`, error.message);
       throw error;
     }
   },
@@ -446,7 +403,6 @@ export const inventoryApi = {
     try {
       return await apiRequest("/inventory/dashboard");
     } catch (error) {
-      console.error("[InventoryAPI] Failed to fetch dashboard:", error.message);
       throw error;
     }
   },
@@ -467,7 +423,6 @@ export const inventoryApi = {
       const queryString = buildQueryString(params);
       return await apiRequest(`/inventory/reports${queryString}`);
     } catch (error) {
-      console.error("[InventoryAPI] Failed to fetch reports:", error.message);
       throw error;
     }
   },
@@ -488,7 +443,6 @@ export const inventoryApi = {
       const queryString = buildQueryInput(params);
       return await apiRequest(`${STOCK_HISTORY_ENDPOINT}${queryString}`);
     } catch (error) {
-      console.error("[InventoryAPI] Failed to fetch stock history:", error.message);
       throw error;
     }
   },
@@ -498,7 +452,6 @@ export const inventoryApi = {
       const queryString = buildQueryInput(params);
       return await apiRequest(`${STOCK_LOGS_ENDPOINT}${queryString}`);
     } catch (error) {
-      console.error("[InventoryAPI] Failed to fetch stock logs:", error.message);
       throw error;
     }
   },
@@ -553,7 +506,6 @@ export const inventoryApi = {
         body: JSON.stringify(payload),
       });
     } catch (error) {
-      console.error(`[InventoryAPI] Failed to adjust stock for item ${id}:`, error.message);
       throw error;
     }
   },
@@ -568,19 +520,10 @@ export const inventoryApi = {
     try {
       return await apiRequest("/inventory/low-stock");
     } catch (error) {
-      console.error("[InventoryAPI] Failed to fetch low stock alerts:", error.message);
       throw error;
     }
   },
 
-  getLowStockItems: async () => {
-    try {
-      return await apiRequest("/inventory/low-stock");
-    } catch (error) {
-      console.error("[InventoryAPI] Failed to fetch low stock items:", error.message);
-      throw error;
-    }
-  },
 
   /**
    * Creates a reorder request for low stock items.
@@ -604,7 +547,6 @@ export const inventoryApi = {
         body: JSON.stringify(payload),
       });
     } catch (error) {
-      console.error("[InventoryAPI] Failed to create reorder request:", error.message);
       throw error;
     }
   },
@@ -634,20 +576,10 @@ export const inventoryApi = {
     try {
       return await apiRequest(`/inventory/items/${itemId}/batches`);
     } catch (error) {
-      console.error(`[InventoryAPI] Failed to get batches for item ${itemId}:`, error.message);
       throw error;
     }
   },
 
-  getBatches: async (itemId) => {
-    validateId(itemId, "Item ID");
-    try {
-      return await apiRequest(`/inventory/items/${itemId}/batches`);
-    } catch (error) {
-      console.error(`[InventoryAPI] Failed to get batches for item ${itemId}:`, error.message);
-      throw error;
-    }
-  },
 
   /**
    * Add a new batch to an inventory item.
@@ -670,7 +602,6 @@ export const inventoryApi = {
         body: JSON.stringify(batchData),
       });
     } catch (error) {
-      console.error(`[InventoryAPI] Failed to add batch for item ${itemId}:`, error.message);
       throw error;
     }
   },
@@ -684,7 +615,6 @@ export const inventoryApi = {
         body: JSON.stringify(batchData),
       });
     } catch (error) {
-      console.error(`[InventoryAPI] Failed to create batch for item ${itemId}:`, error.message);
       throw error;
     }
   },
@@ -698,7 +628,6 @@ export const inventoryApi = {
         body: JSON.stringify(payload),
       });
     } catch (error) {
-      console.error(`[InventoryAPI] Failed to update batch ${batchId}:`, error.message);
       throw error;
     }
   },
@@ -719,7 +648,6 @@ export const inventoryApi = {
         body: JSON.stringify({ reason }),
       });
     } catch (error) {
-      console.error(`[InventoryAPI] Failed to dispose batch ${batchId}:`, error.message);
       throw error;
     }
   },
@@ -741,7 +669,6 @@ export const inventoryApi = {
         body: JSON.stringify({ quantity: newQuantity, reason }),
       });
     } catch (error) {
-      console.error(`[InventoryAPI] Failed to adjust batch ${batchId}:`, error.message);
       throw error;
     }
   },
@@ -753,30 +680,11 @@ export const inventoryApi = {
    * @returns {Promise<Object>} Monthly audit data
    * @throws {Error} When request fails
    */
-  getMonthlyAudit: async (month) => {
-    try {
-      const queryString = buildQueryString({ month });
-      return await apiRequest(`/inventory/monthly-audit${queryString}`);
-    } catch (error) {
-      console.error("[InventoryAPI] Failed to get monthly audit:", error.message);
-      throw error;
-    }
-  },
-
-  /**
-   * Gets or creates monthly audit items for a specific month.
-   * Auto-populates audit rows for all physical inventory items if none exist.
-   * @async
-   * @param {string} month - Month in YYYY-MM format
-   * @returns {Promise<Object>} Monthly audit data with auto-populated items
-   * @throws {Error} When request fails
-   */
   getOrCreateMonthlyAudit: async (month) => {
     try {
       const queryString = buildQueryString({ month });
       return await apiRequest(`/inventory/monthly-audit${queryString}`);
     } catch (error) {
-      console.error("[InventoryAPI] Failed to get or create monthly audit:", error.message);
       throw error;
     }
   },
@@ -791,7 +699,6 @@ export const inventoryApi = {
     try {
       return await apiRequest("/inventory/monthly-audit/discrepancy-reasons");
     } catch (error) {
-      console.error("[InventoryAPI] Failed to get discrepancy reasons:", error.message);
       throw error;
     }
   },
@@ -813,7 +720,6 @@ export const inventoryApi = {
         body: JSON.stringify(payload),
       });
     } catch (error) {
-      console.error("[InventoryAPI] Failed to save monthly audit:", error.message);
       throw error;
     }
   },
@@ -830,7 +736,6 @@ export const inventoryApi = {
       const queryString = buildQueryString({ month });
       return await apiRequest(`/inventory/monthly-audit-report${queryString}`);
     } catch (error) {
-      console.error("[InventoryAPI] Failed to get monthly audit report:", error.message);
       throw error;
     }
   },
@@ -849,7 +754,106 @@ export const inventoryApi = {
       const queryString = buildQueryString({ months });
       return await apiRequest(`/inventory/audit-analytics${queryString}`);
     } catch (error) {
-      console.error("[InventoryAPI] Failed to get audit analytics:", error.message);
+      throw error;
+    }
+  },
+
+  /**
+   * Retrieves the inventory cost/profit report.
+   * @async
+   * @returns {Promise<Object>} Cost report with summary, category breakdown, top/bottom margins
+   * @throws {Error} When request fails
+   */
+  getCostReport: async () => {
+    try {
+      return await apiRequest("/admin/inventory/cost-report");
+    } catch (error) {
+      throw error;
+    }
+  },
+
+  // ========================
+  // Supplier Management
+  // ========================
+
+  /**
+   * Retrieves all suppliers.
+   * @async
+   * @param {Object} [params={}] - Query parameters
+   * @param {string} [params.search] - Search query
+   * @param {boolean} [params.active_only] - Only active suppliers
+   * @returns {Promise<Object>} Suppliers list
+   * @throws {Error} When request fails
+   */
+  getSuppliers: async (params = {}) => {
+    try {
+      const queryString = buildQueryString(params);
+      return await apiRequest(`/admin/suppliers${queryString}`);
+    } catch (error) {
+      throw error;
+    }
+  },
+
+  /**
+   * Creates a new supplier.
+   * @async
+   * @param {Object} data - Supplier data
+   * @param {string} data.name - Supplier name
+   * @param {string} [data.contact_person] - Contact person
+   * @param {string} [data.phone] - Phone number
+   * @param {string} [data.email] - Email address
+   * @param {string} [data.address] - Physical address
+   * @param {string} [data.notes] - Additional notes
+   * @returns {Promise<Object>} Created supplier
+   * @throws {Error} When validation fails or request fails
+   */
+  createSupplier: async (data) => {
+    validateData(data, "create supplier");
+    try {
+      return await apiRequest("/admin/suppliers", {
+        method: "POST",
+        body: JSON.stringify(data),
+      });
+    } catch (error) {
+      throw error;
+    }
+  },
+
+  /**
+   * Updates an existing supplier.
+   * @async
+   * @param {string|number} id - Supplier ID
+   * @param {Object} data - Updated supplier data
+   * @returns {Promise<Object>} Updated supplier
+   * @throws {Error} When request fails
+   */
+  updateSupplier: async (id, data) => {
+    validateId(id, "Supplier ID");
+    validateData(data, "update supplier");
+    try {
+      return await apiRequest(`/admin/suppliers/${id}`, {
+        method: "PUT",
+        body: JSON.stringify(data),
+      });
+    } catch (error) {
+      throw error;
+    }
+  },
+
+  /**
+   * Deletes a supplier.
+   * @async
+   * @param {string|number} id - Supplier ID
+   * @returns {Promise<Object>} Deletion confirmation
+   * @throws {Error} When request fails
+   */
+  deleteSupplier: async (id) => {
+    validateId(id, "Supplier ID");
+    try {
+      return await apiRequest(`/admin/suppliers/${id}`, {
+        method: "DELETE",
+      });
+    } catch (error) {
       throw error;
     }
   },

@@ -206,30 +206,29 @@
   box-shadow: 14px 0 38px rgba(0, 0, 0, 0.35) !important;
 }
 
-/* MOBILE */
-@media (max-width: 768px) {
-  .app-sidebar,
-  .admin-sidebar,
-  .cashier-sidebar,
-  .customer-sidebar,
-  .inventory-sidebar,
-  .manager-sidebar,
-  .receptionist-sidebar,
-  .veterinary-sidebar {
-    width: 82px !important;
-  }
+/* MOBILE CLOSE BUTTON (visible on all sidebars when overlay is active) */
+.mobile-close-btn {
+  display: none;
+  margin-left: auto;
+  width: 42px;
+  height: 42px;
+  border: none;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.2);
+  color: #fff;
+  font-size: 1.15rem;
+  cursor: pointer;
+  place-items: center;
+  transition: background 0.2s ease;
+}
 
-  .sidebar-logo span,
-  .nav-item a span,
-  .sidebar-link span,
-  .logout-btn span {
-    display: none !important;
-  }
+.mobile-close-btn:hover {
+  background: rgba(255, 255, 255, 0.35);
+}
 
-  .nav-item a,
-  .sidebar-link,
-  .logout-btn {
-    justify-content: center !important;
-    padding: 0.85rem !important;
+/* Show close button on tablet/mobile */
+@media (max-width: 1023px) {
+  .mobile-close-btn {
+    display: grid;
   }
 }

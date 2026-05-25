@@ -1,7 +1,8 @@
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { Outlet, NavLink, useLocation } from "react-router-dom";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { showError } from "../../utils/alert";
+import { useAuth } from "../../context/AuthContext";
 import {
   faMoon,
   faSun,
@@ -30,9 +31,7 @@ import {
 import { apiRequest, uploadProfilePhoto } from "../../api/client";
 import { useTheme } from "../../utils/theme";
 import VeterinarySidebar from "./VeterinarySidebar";
-import RoleAwareChatbot from "../chatbot/RoleAwareChatbot";
-import NotificationDropdown from "../shared/NotificationDropdown";
-import DashboardProfile from "../shared/DashboardProfile";
+import DashboardLayout from "../shared/DashboardLayout";
 import toast from "react-hot-toast";
 import styled, { createGlobalStyle } from "styled-components";
 import {
@@ -55,8 +54,9 @@ const GlobalStyle = createGlobalStyle`
 `;
 
 const VetDashboard = () => {
-  const name = localStorage.getItem("name") || "Veterinarian";
-  const profilePhoto = localStorage.getItem("profile_photo") || "";
+  const { user } = useAuth();
+  const name = user?.name || "Veterinarian";
+  const profilePhoto = user?.profile_photo || "";
   const { theme, toggle } = useTheme();
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [dashboardData, setDashboardData] = useState(null);
@@ -68,7 +68,7 @@ const VetDashboard = () => {
   const handleProfilePhotoUpload = async (file) => {
     try {
       const data = await uploadProfilePhoto(file);
-      localStorage.setItem("profile_photo", data.url || data.profile_photo);
+      // Refresh user data via auth context if needed
       window.location.reload();
     } catch (err) {
       showError("Failed to upload profile photo: " + err.message);
@@ -250,44 +250,34 @@ const VetDashboard = () => {
   };
 
   
+  const sidebar = (
+    <VeterinarySidebar
+      collapsed={sidebarCollapsed}
+      onToggleCollapse={() => setSidebarCollapsed((prev) => !prev)}
+    />
+  );
+
+  const extraActions = (
+    <button className="theme-toggle-btn" type="button" onClick={toggle}>
+      <FontAwesomeIcon icon={theme === "light" ? faMoon : faSun} />
+    </button>
+  );
+
   return (
-    <div className={`app-dashboard vet-dashboard ${sidebarCollapsed ? "collapsed" : ""}`}>
-      <VeterinarySidebar
-        collapsed={sidebarCollapsed}
-        onToggleCollapse={() => setSidebarCollapsed((prev) => !prev)}
-      />
-
-      <main className="app-main vet-main">
-        <header className="app-topbar vet-navbar">
-          <div className="navbar-left">
-            <h1 className="premium-title">Veterinary Dashboard</h1>
-            <p className="premium-muted">
-              Manage appointments, patient records, and pet care workflow.
-            </p>
-          </div>
-
-          <div className="search-group">
-            <input
-              type="text"
-              placeholder="Search appointments, patients, records..."
-            />
-          </div>
-
-          <div className="navbar-actions">
-            <DashboardProfile
-              name={name}
-              role="Veterinarian"
-              image={profilePhoto}
-              onUpload={handleProfilePhotoUpload}
-            />
-
-            <NotificationDropdown role="veterinary" />
-
-            <button className="theme-toggle-btn" type="button" onClick={toggle}>
-              <FontAwesomeIcon icon={faMoon} />
-            </button>
-          </div>
-        </header>
+    <DashboardLayout
+      sidebar={sidebar}
+      title="Veterinary Dashboard"
+      subtitle="Manage appointments, patient records, and pet care workflow."
+      role="veterinary"
+      name={name}
+      profilePhoto={profilePhoto}
+      onProfileUpload={handleProfilePhotoUpload}
+      extraActions={extraActions}
+      showChatbot
+      chatbotTitle="Veterinary Assistant"
+      chatbotSubtitle="Appointments, patient workflow, and dashboard help"
+      className={`app-dashboard vet-dashboard ${sidebarCollapsed ? "collapsed" : ""}`}
+    >
 
         {showOverview ? (
           <section className="app-content vet-content">
@@ -635,14 +625,7 @@ const VetDashboard = () => {
             <Outlet />
           </section>
         )}
-      </main>
-
-      <RoleAwareChatbot
-        mode="widget"
-        title="Veterinary Assistant"
-        subtitle="Appointments, patient workflow, and dashboard help"
-      />
-    </div>
+    </DashboardLayout>
   );
 };
 

@@ -213,23 +213,6 @@ const AdminLiveReport = ({
       error={error}
       onRefresh={() => fetchData({ silent: true })}
       lastUpdated={lastUpdated || new Date().toLocaleTimeString()}
-      filterProps={{
-        searchTerm,
-        onSearchChange: setSearchTerm,
-        startDate,
-        endDate,
-        onDateChange: handleDateChange,
-        statusFilter,
-        onStatusChange: setStatusFilter,
-        statusOptions,
-        onExportCSV: () => exportToCSV(filteredRows, exportColumns, exportName),
-        onExportPDF: () => exportToPDF(filteredRows, exportColumns, title, exportName),
-        onExportExcel: () => exportToExcel(filteredRows, exportColumns, exportName),
-        loading: loading || refreshing,
-        onRefresh: () => fetchData({ silent: true }),
-        onClearFilters: clearFilters,
-        searchPlaceholder,
-      }}
     >
       <div className="reports-content live-report-content">
         <div className="live-report-toolbar">

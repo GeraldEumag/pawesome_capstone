@@ -1,5 +1,6 @@
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { useAuth } from "../../context/AuthContext";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
   faUser, faCamera, faSave, faTimes, faLock,
@@ -667,6 +668,7 @@ const ToggleSwitch = styled.label`
 ───────────────────────────────────────────────────────────── */
 const ProfileSettings = () => {
   const navigate = useNavigate();
+  const { role, login, logout } = useAuth();
   const [isEditing, setIsEditing] = useState(false);
   const [message, setMessage] = useState("");
   const [messageType, setMessageType] = useState("");
@@ -760,18 +762,6 @@ const ProfileSettings = () => {
     try {
       setLoading(true);
       setError("");
-      let token = localStorage.getItem("token");
-      const storedRole = localStorage.getItem("role") || "customer";
-      
-      if (!token) {
-        // Auto-login removed for production security
-        // User must login through proper login form
-      }
-      
-      if (!token) {
-        setError("Authentication failed. Please login again.");
-        return;
-      }
 
       const userData = await apiRequest("/auth/me");
       if (!userData || !userData.id) {
@@ -779,7 +769,7 @@ const ProfileSettings = () => {
         return;
       }
 
-      setUserRole(userData.role || storedRole);
+      setUserRole(userData.role || role);
       setProfileData({
         id: userData.id,
         name: userData.name || "",
@@ -795,7 +785,7 @@ const ProfileSettings = () => {
         zip_code: userData.zip_code || "",
         country: userData.country || "",
         bio: userData.bio || "",
-        role: userData.role || storedRole,
+        role: userData.role || role,
         is_active: userData.is_active !== undefined ? userData.is_active : true,
         created_at: userData.created_at || "",
         updated_at: userData.updated_at || "",
@@ -831,18 +821,20 @@ const ProfileSettings = () => {
 
   const testLogin = async () => {
     try {
-      const role = userRole || "customer";
+      const loginRole = userRole || "customer";
       const response = await apiRequest("/auth/login", {
         method: "POST",
         body: JSON.stringify({
-          email: `${role}@example.com`,
-          password: `${role}123`
+          email: `${loginRole}@example.com`,
+          password: `${loginRole}123`
         }),
       });
-      
+
       if (response.user && response.token) {
-        localStorage.setItem("token", response.token);
-        localStorage.setItem("role", response.user.role);
+        login(response.token, response.user.role, {
+          name: response.user.name,
+          email: response.user.email,
+        });
         setProfileData(p => ({ ...p, id: null, name: "", email: "" }));
         setTimeout(() => fetchUserProfile(), 500);
       } else {
@@ -943,7 +935,7 @@ const ProfileSettings = () => {
         showSuccess("Password changed! Logging out…");
         setPasswordData({ currentPassword: "", newPassword: "", confirmPassword: "" });
         setTimeout(() => {
-          localStorage.clear();
+          logout();
           window.location.href = "/login";
         }, 2000);
       }

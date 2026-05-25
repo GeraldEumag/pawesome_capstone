@@ -1,5 +1,5 @@
-import React from "react";
 import { Navigate, useLocation } from "react-router-dom";
+import { useAuth } from "../context/AuthContext";
 
 const routeRoleMap = {
   admin: ["admin"],
@@ -10,7 +10,6 @@ const routeRoleMap = {
   manager: ["manager"],
   payroll: ["payroll", "payroll_manager"],
   veterinary: ["veterinary", "vet", "veterinarian"],
-  vet: ["veterinary", "vet", "veterinarian"],
 };
 
 const roleHomeMap = {
@@ -28,8 +27,7 @@ const roleHomeMap = {
 };
 
 const ProtectedRoute = ({ children }) => {
-  const token = localStorage.getItem("token");
-  const role = localStorage.getItem("role");
+  const { token, role } = useAuth();
   const location = useLocation();
 
   if (!token) {

@@ -14,10 +14,11 @@ import {
   faUser,
   faCog,
   faClipboardCheck,
+  faTimes,
 } from "@fortawesome/free-solid-svg-icons";
 import "./InventorySidebar.css";
 
-const InventorySidebar = () => {
+const InventorySidebar = ({ mobileOpen, onMobileMenuToggle }) => {
   const navigate = useNavigate();
 
   const handleLogout = async () => {
@@ -29,12 +30,15 @@ const InventorySidebar = () => {
   };
 
   return (
-    <aside className="app-sidebar inventory-sidebar">
+    <aside className={`app-sidebar inventory-sidebar ${mobileOpen ? "mobile-open" : ""}`}>
       <div className="sidebar-header">
         <div className="sidebar-logo">
           <FontAwesomeIcon icon={faWarehouse} />
           <span>Inventory Portal</span>
         </div>
+        <button className="mobile-close-btn" onClick={onMobileMenuToggle} type="button" aria-label="Close menu">
+          <FontAwesomeIcon icon={faTimes} />
+        </button>
       </div>
 
       <nav className="sidebar-nav">

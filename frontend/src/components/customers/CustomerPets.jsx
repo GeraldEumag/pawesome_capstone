@@ -1,5 +1,6 @@
-import React, { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { showConfirm } from "../../utils/alert";
+import { useAuth } from "../../context/AuthContext";
 import DatePickerInput from "../shared/DatePickerInput";
 import {
   FaArchive,
@@ -46,11 +47,12 @@ const initialForm = (customerEmail) => ({
 });
 
 const CustomerPets = () => {
-  const customerEmail = localStorage.getItem("email") || "";
+  const { user } = useAuth();
+  const customerEmail = user?.email || "";
 
   const [pets, setPets] = useState([]);
   const [archivedPets, setArchivedPets] = useState([]);
-  const [formData, setFormData] = useState(initialForm(customerEmail));
+  const [formData, setFormData] = useState(() => initialForm(customerEmail));
 
   const [loading, setLoading] = useState(false);
   const [pageLoading, setPageLoading] = useState(true);

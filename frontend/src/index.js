@@ -15,8 +15,9 @@ import './styles/unifiedReports.css';
 import './styles/theme.css';
 import './styles/sweetalert-theme.css';
 import { initializeTheme } from './utils/theme';
-import App from './App'; // 
-import reportWebVitals from './reportWebVitals'; // 
+import { AuthProvider } from './context/AuthContext';
+import App from './App';
+import reportWebVitals from './reportWebVitals';
 
 // Initialize theme before rendering
 initializeTheme();
@@ -24,17 +25,19 @@ initializeTheme();
 const root = ReactDOM.createRoot(document.getElementById('root'));
 root.render(
   <React.StrictMode>
-    <App />
-    <Toaster
-      position="top-center"
-      containerStyle={{
-        top: "50%",
-        left: "50%",
-        transform: "translate(-50%, -50%)",
-        zIndex: 99999,
-        width: "min(460px, calc(100vw - 24px))",
-      }}
-    />
+    <AuthProvider>
+      <App />
+      <Toaster
+        position="top-center"
+        containerStyle={{
+          top: "50%",
+          left: "50%",
+          transform: "translate(-50%, -50%)",
+          zIndex: 99999,
+          width: "min(460px, calc(100vw - 24px))",
+        }}
+      />
+    </AuthProvider>
   </React.StrictMode>
 );
 

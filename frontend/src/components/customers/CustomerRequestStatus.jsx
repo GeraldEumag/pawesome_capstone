@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import {
   FaClipboardList,
   FaSearch,
@@ -14,6 +14,7 @@ import "./CustomerRequestStatus.css";
 import { apiRequest } from "../../api/client";
 import { normalizeList } from "../../utils/normalizeList";
 import { showSuccess, showError } from "../../utils/alert";
+import { useAuth } from "../../context/AuthContext";
 
 const safeLower = (value) => {
   if (value === null || value === undefined) return "";
@@ -39,6 +40,7 @@ const getPetName = (item) =>
   safeText(item?.pet_name || item?.pet?.name || item?.pet, "N/A");
 
 const CustomerRequestStatus = () => {
+  const { user } = useAuth();
   const [requests, setRequests] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [uploadingId, setUploadingId] = useState(null);
@@ -50,7 +52,7 @@ const CustomerRequestStatus = () => {
 
   const fetchRequests = async () => {
     try {
-      const email = localStorage.getItem("email");
+      const email = user?.email;
 
       if (!email) {
         setRequests([]);

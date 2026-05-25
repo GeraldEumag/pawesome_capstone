@@ -355,35 +355,6 @@ const InventoryReports = () => {
     </div>
   );
 
-  const filterProps = {
-    searchTerm,
-    onSearchChange: setSearchTerm,
-    startDate,
-    endDate,
-    onDateChange: handleDateChange,
-    statusFilter,
-    onStatusChange: setStatusFilter,
-    statusOptions: [
-      { value: "in-stock", label: "In Stock" },
-      { value: "low-stock", label: "Low Stock" },
-      { value: "out-of-stock", label: "Out of Stock" },
-    ],
-    categoryFilter,
-    onCategoryChange: setCategoryFilter,
-    categoryOptions: [
-      { value: "all", label: "All Categories" },
-      ...categories.map(cat => ({ value: cat, label: cat }))
-    ],
-    showCategory: true,
-    onExportCSV: handleExportCSV,
-    onExportPDF: handleExportPDF,
-    onExportExcel: handleExportExcel,
-    loading,
-    onRefresh: fetchData,
-    onClearFilters: handleClearFilters,
-    searchPlaceholder: "Search inventory items...",
-  };
-
   return (
     <StandardReportLayout
       title="Inventory Reports"
@@ -393,7 +364,6 @@ const InventoryReports = () => {
       error=""
       onRefresh={fetchData}
       lastUpdated={new Date().toLocaleTimeString()}
-      filterProps={filterProps}
     >
       <div className="reports-content">
         {renderInventoryContent()}

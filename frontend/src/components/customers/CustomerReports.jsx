@@ -31,6 +31,7 @@ import {
 import { apiRequest } from "../../api/client";
 import { formatCurrency } from "../../utils/currency";
 import StandardReportLayout from "../shared/StandardReportLayout";
+import StandardTable from "../shared/StandardTable";
 import {
   exportToCSV,
   exportToPDF,
@@ -547,31 +548,6 @@ const CustomerReports = () => {
     exportToExcel(filteredBookings, bookingExportColumns, "customer-bookings-report");
   };
 
-  const filterProps = {
-    searchTerm,
-    onSearchChange: setSearchTerm,
-    startDate,
-    endDate,
-    onDateChange: handleDateChange,
-    statusFilter,
-    onStatusChange: setStatusFilter,
-    statusOptions: [
-      { value: "completed", label: "Completed" },
-      { value: "pending", label: "Pending" },
-      { value: "scheduled", label: "Scheduled" },
-      { value: "confirmed", label: "Confirmed" },
-      { value: "cancelled", label: "Cancelled" },
-      { value: "rejected", label: "Rejected" },
-    ],
-    onExportCSV: handleExportCSV,
-    onExportPDF: handleExportPDF,
-    onExportExcel: handleExportExcel,
-    loading,
-    onRefresh: fetchReportData,
-    onClearFilters: handleClearFilters,
-    searchPlaceholder: "Search bookings, customers, pets, services, or status...",
-  };
-
   return (
     <StandardReportLayout
       title="Customer Reports"
@@ -581,7 +557,6 @@ const CustomerReports = () => {
       error={error}
       onRefresh={fetchReportData}
       lastUpdated={lastUpdated || "Not refreshed yet"}
-      filterProps={filterProps}
     >
       <div className="customer-reports-content">
         <section className="cr-insight-bar">
@@ -760,84 +735,43 @@ const CustomerReports = () => {
             </div>
           </div>
 
-          <div className="cr-table-scroll">
-            <table className="cr-table">
-              <thead>
-                <tr>
-                  <th>Booking</th>
-                  <th>Customer</th>
-                  <th>Pet</th>
-                  <th>Service</th>
-                  <th>Schedule</th>
-                  <th>Amount</th>
-                  <th>Status</th>
-                  <th>Action</th>
-                </tr>
-              </thead>
-
-              <tbody>
-                {filteredBookings.length === 0 ? (
-                  <tr>
-                    <td colSpan="8">
-                      <div className="cr-empty-table">
-                        <FontAwesomeIcon icon={faSearch} />
-                        <h3>No bookings found</h3>
-                        <p>Try changing the date range, status, or search filter.</p>
-                      </div>
-                    </td>
-                  </tr>
-                ) : (
-                  filteredBookings.map((booking) => (
-                    <tr key={`${booking.displayId}-${booking.date}-${booking.customer_name}`}>
-                      <td>
-                        <span className="cr-id-badge">{booking.displayId}</span>
-                      </td>
-
-                      <td>
-                        <strong className="cr-customer-name">
-                          {booking.customer_name}
-                        </strong>
-                      </td>
-
-                      <td>{booking.pet_name}</td>
-
-                      <td>{booking.service}</td>
-
-                      <td>
-                        <div className="cr-date-cell">
-                          <span>{booking.displayDate}</span>
-                          <small>{formatTimeDisplay(booking.time)}</small>
-                        </div>
-                      </td>
-
-                      <td>
-                        <strong className="cr-amount">
-                          {formatCurrency(booking.amount)}
-                        </strong>
-                      </td>
-
-                      <td>
-                        <span className={`cr-status-badge ${getStatusClass(booking.status)}`}>
-                          {formatLabel(booking.status)}
-                        </span>
-                      </td>
-
-                      <td>
-                        <button
-                          type="button"
-                          className="cr-view-btn"
-                          onClick={() => setSelectedBooking(booking)}
-                          title="View booking details"
-                        >
-                          <FontAwesomeIcon icon={faEye} />
-                        </button>
-                      </td>
-                    </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
-          </div>
+          <StandardTable
+            columns={[
+              { key: "displayId", label: "Booking", sortable: true, render: (value) => (
+                <span className="cr-id-badge">{value}</span>
+              )},
+              { key: "customer_name", label: "Customer", sortable: true, render: (value) => (
+                <strong className="cr-customer-name">{value}</strong>
+              )},
+              { key: "pet_name", label: "Pet", sortable: true },
+              { key: "service", label: "Service", sortable: true },
+              { key: "displayDate", label: "Schedule", sortable: true, render: (value, booking) => (
+                <div className="cr-date-cell">
+                  <span>{value}</span>
+                  <small>{formatTimeDisplay(booking.time)}</small>
+                </div>
+              )},
+              { key: "amount", label: "Amount", sortable: true, format: "currency" },
+              { key: "status", label: "Status", sortable: true, render: (value) => (
+                <span className={`cr-status-badge ${getStatusClass(value)}`}>
+                  {formatLabel(value)}
+                </span>
+              )},
+              { key: "actions", label: "Action", sortable: false, render: (_value, booking) => (
+                <button
+                  type="button"
+                  className="cr-view-btn"
+                  onClick={() => setSelectedBooking(booking)}
+                  title="View booking details"
+                >
+                  <FontAwesomeIcon icon={faEye} />
+                </button>
+              )},
+            ]}
+            data={filteredBookings}
+            emptyMessage="No bookings found. Try changing the date range, status, or search filter."
+            pageSize={10}
+          />
         </section>
 
         {selectedBooking && (

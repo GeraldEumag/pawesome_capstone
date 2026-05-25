@@ -47,6 +47,41 @@
   font-weight: 500;
 }
 
+/* Cost & Margin */
+.cost-cell {
+  white-space: nowrap;
+}
+
+.no-cost {
+  color: #94a3b8;
+  font-style: italic;
+}
+
+.margin-pill {
+  display: inline-block;
+  margin-left: 6px;
+  padding: 2px 6px;
+  border-radius: 10px;
+  font-size: 0.7rem;
+  font-weight: 600;
+  line-height: 1;
+}
+
+.margin-pill.good {
+  background: #dcfce7;
+  color: #166534;
+}
+
+.margin-pill.warning {
+  background: #fef9c3;
+  color: #854d0e;
+}
+
+.margin-pill.danger {
+  background: #fee2e2;
+  color: #991b1b;
+}
+
 .archive-reason {
   color: #dc2626;
   font-size: 0.875rem;

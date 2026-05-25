@@ -18,11 +18,13 @@ import {
   faArchive,
   faImage,
   faEye,
+  faBuilding,
 } from '@fortawesome/free-solid-svg-icons';
 import { inventoryApi } from '../../api/inventory';
 import { normalizeList } from '../../api/client';
 import PremiumToast from '../shared/PremiumToast';
 import DeleteConfirmModal from '../shared/DeleteConfirmModal';
+import SupplierModal from './SupplierModal';
 import './InventoryManagement.css';
 
 /**
@@ -53,10 +55,12 @@ const INITIAL_FORM_DATA = {
   sku: '',
   category: 'Food',
   price: '',
+  cost: '',
   stock_quantity: '',
   reorder_level: 10,
   brand: '',
   supplier: '',
+  supplier_id: null,
   description: '',
   location: '',
   photo: null,
@@ -78,6 +82,7 @@ const InventoryManagement = () => {
   const [saving, setSaving] = useState(false);
   const [photoPreview, setPhotoPreview] = useState(null);
   const [viewPhotoUrl, setViewPhotoUrl] = useState(null);
+  const [showSupplierModal, setShowSupplierModal] = useState(false);
   
   // Filters
   const [searchTerm, setSearchTerm] = useState('');
@@ -233,10 +238,12 @@ const InventoryManagement = () => {
       sku: item.sku || '',
       category: item.category || 'Food',
       price: item.price || '',
+      cost: item.cost || '',
       stock_quantity: item.stock_quantity || item.stock || item.quantity || '',
       reorder_level: item.reorder_level || item.min_stock_level || item.minStock || 10,
       brand: item.brand || '',
       supplier: item.supplier || '',
+      supplier_id: item.supplier_id || null,
       description: item.description || '',
       location: item.location || '',
       photo: item.photo_url || item.photo || null,
@@ -290,6 +297,8 @@ const InventoryManagement = () => {
         stock: parseInt(formData.stock_quantity) || 0,
         quantity: parseInt(formData.stock_quantity) || 0,
         stock_quantity: parseInt(formData.stock_quantity) || 0,
+        cost: formData.cost ? parseFloat(formData.cost) : null,
+        supplier_id: formData.supplier_id || null,
       };
       delete payload.photoFile;
       
@@ -606,6 +615,7 @@ const InventoryManagement = () => {
                 <th>Product Name</th>
                 <th>Category</th>
                 <th>Price</th>
+                <th>Cost</th>
                 <th>{activeTab === 'archived' ? 'Stock' : 'Stock'}</th>
                 <th>{activeTab === 'archived' ? 'Archived Date' : 'Status'}</th>
                 <th>{activeTab === 'archived' ? 'Archive Reason' : 'Location'}</th>
@@ -628,6 +638,23 @@ const InventoryManagement = () => {
                     </span>
                   </td>
                   <td className="price-cell">₱{(item.price || 0).toLocaleString()}</td>
+                  <td className="cost-cell">
+                    {item.cost ? (
+                      <>
+                        ₱{item.cost.toLocaleString()}
+                        {item.price && item.cost && (
+                          <span className={`margin-pill ${
+                            ((item.price - item.cost) / item.price * 100) >= 30 ? 'good' :
+                            ((item.price - item.cost) / item.price * 100) >= 10 ? 'warning' : 'danger'
+                          }`}>
+                            {(((item.price - item.cost) / item.price) * 100).toFixed(0)}%
+                          </span>
+                        )}
+                      </>
+                    ) : (
+                      <span className="no-cost">—</span>
+                    )}
+                  </td>
                   <td className="stock-cell">
                     {activeTab === 'archived' ? (
                       <span className="archived-stock">{item.stock_quantity || item.stock || 0}</span>
@@ -721,7 +748,21 @@ const InventoryManagement = () => {
                 <FontAwesomeIcon icon={faTimes} />
               </button>
             </div>
-            
+
+            <SupplierModal
+              isOpen={showSupplierModal}
+              onClose={() => setShowSupplierModal(false)}
+              mode="select"
+              initialSupplierId={formData.supplier_id}
+              onSelectSupplier={(supplier) => {
+                setFormData((prev) => ({
+                  ...prev,
+                  supplier: supplier.name,
+                  supplier_id: supplier.id,
+                }));
+              }}
+            />
+
             <form onSubmit={handleSave} className="item-form">
               <div className="form-row">
                 <div className={`form-group ${formTouched.name && formErrors.name ? "has-error" : ""}`}>
@@ -799,6 +840,22 @@ const InventoryManagement = () => {
                     <small className="form-error">{formErrors.price}</small>
                   )}
                 </div>
+                <div className="form-group">
+                  <label>Cost (₱)</label>
+                  <input
+                    type="number"
+                    name="cost"
+                    value={formData.cost}
+                    onChange={handleInputChange}
+                    min="0"
+                    step="0.01"
+                    placeholder="0.00"
+                  />
+                  <small>Cost for profit reporting</small>
+                </div>
+              </div>
+
+              <div className="form-row">
                 <div className={`form-group ${formTouched.stock_quantity && formErrors.stock_quantity ? "has-error" : ""}`}>
                   <label>Stock Quantity *</label>
                   <input
@@ -815,9 +872,6 @@ const InventoryManagement = () => {
                     <small className="form-error">{formErrors.stock_quantity}</small>
                   )}
                 </div>
-              </div>
-
-              <div className="form-row">
                 <div className="form-group">
                   <label>Minimum Stock Level</label>
                   <input
@@ -844,13 +898,27 @@ const InventoryManagement = () => {
                 </div>
                 <div className="form-group">
                   <label>Supplier</label>
-                  <input
-                    type="text"
-                    name="supplier"
-                    value={formData.supplier}
-                    onChange={handleInputChange}
-                    placeholder="e.g., Pet Nutrition Co."
-                  />
+                  <div className="supplier-select-row" style={{ display: 'flex', gap: 8 }}>
+                    <input
+                      type="text"
+                      name="supplier"
+                      value={formData.supplier}
+                      readOnly
+                      placeholder="Select supplier..."
+                      style={{ flex: 1 }}
+                    />
+                    <button
+                      type="button"
+                      className="btn btn-secondary"
+                      onClick={() => setShowSupplierModal(true)}
+                      title="Select Supplier"
+                    >
+                      <FontAwesomeIcon icon={faBuilding} />
+                    </button>
+                  </div>
+                  {formData.supplier && (
+                    <small>{formData.supplier}</small>
+                  )}
                 </div>
               </div>
 

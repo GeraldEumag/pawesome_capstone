@@ -15,10 +15,11 @@ import {
   faCheckCircle,
   faCalendarCheck,
   faHistory,
+  faTimes,
 } from "@fortawesome/free-solid-svg-icons";
 import "./ReceptionistSidebar.css";
 
-const ReceptionistSidebar = () => {
+const ReceptionistSidebar = ({ mobileOpen, onMobileMenuToggle }) => {
   const navigate = useNavigate();
 
   const handleLogout = async () => {
@@ -30,12 +31,15 @@ const ReceptionistSidebar = () => {
   };
 
   return (
-    <aside className="app-sidebar receptionist-sidebar">
+    <aside className={`app-sidebar receptionist-sidebar ${mobileOpen ? "mobile-open" : ""}`}>
       <div className="sidebar-header">
         <div className="sidebar-logo">
           <FontAwesomeIcon icon={faPhone} />
           <span>Reception Portal</span>
         </div>
+        <button className="mobile-close-btn" onClick={onMobileMenuToggle} type="button" aria-label="Close menu">
+          <FontAwesomeIcon icon={faTimes} />
+        </button>
       </div>
 
       <nav className="sidebar-nav">

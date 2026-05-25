@@ -1,4 +1,4 @@
-import React, { Suspense, lazy } from "react";
+import { Suspense, lazy } from "react";
 import { Routes, Route } from "react-router-dom";
 import ProtectedRoute from "../components/ProtectedRoute";
 
@@ -7,7 +7,7 @@ const AdminDashboard = lazy(() => import("../components/admin/AdminDashboard"));
 const AdminReports = lazy(() => import("../components/admin/AdminReports"));
 const ManageUsers = lazy(() => import("../components/admin/ManageUsers"));
 const CreateUser = lazy(() => import("../components/admin/CreateUser"));
-const History = lazy(() => import("../components/admin/History_Fixed"));
+const History = lazy(() => import("../components/admin/History"));
 const Attendance = lazy(() => import("../components/admin/Attendance"));
 const ProfileSettings = lazy(() => import("../components/shared/ProfileSettings"));
 const ChatbotLogs = lazy(() => import("../components/admin/ChatbotLogs"));

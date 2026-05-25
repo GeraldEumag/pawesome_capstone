@@ -1,7 +1,8 @@
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { Outlet, NavLink, useLocation } from "react-router-dom";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { showError } from "../../utils/alert";
+import { useAuth } from "../../context/AuthContext";
 import {
   faMoon,
   faSun,
@@ -20,16 +21,15 @@ import {
   YAxis,
 } from "recharts";
 import InventorySidebar from "./InventorySidebar";
-import RoleAwareChatbot from "../chatbot/RoleAwareChatbot";
-import NotificationDropdown from "../shared/NotificationDropdown";
-import DashboardProfile from "../shared/DashboardProfile";
+import DashboardLayout from "../shared/DashboardLayout";
 import { apiRequest, uploadProfilePhoto } from "../../api/client";
 import { useTheme } from "../../utils/theme";
 import "./InventoryDashboard.css";
 
 const InventoryDashboard = () => {
-  const name = localStorage.getItem("name") || "Inventory Manager";
-  const profilePhoto = localStorage.getItem("profile_photo") || "";
+  const { user } = useAuth();
+  const name = user?.name || "Inventory Manager";
+  const profilePhoto = user?.profile_photo || "";
 
   const { theme, toggle } = useTheme();
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
@@ -44,7 +44,7 @@ const InventoryDashboard = () => {
   const handleProfilePhotoUpload = async (file) => {
     try {
       const data = await uploadProfilePhoto(file);
-      localStorage.setItem("profile_photo", data.url || data.profile_photo);
+      // Refresh user data via auth context if needed
       window.location.reload();
     } catch (err) {
       showError("Failed to upload profile photo: " + err.message);
@@ -157,46 +157,38 @@ const InventoryDashboard = () => {
     .filter(Boolean)
     .join(" ");
 
+  const sidebar = (
+    <InventorySidebar
+      collapsed={sidebarCollapsed}
+      onToggleCollapse={() => setSidebarCollapsed((prev) => !prev)}
+    />
+  );
+
+  const extraActions = (
+    <button
+      className="theme-toggle-btn"
+      type="button"
+      onClick={toggle}
+    >
+      <FontAwesomeIcon icon={theme === "light" ? faMoon : faSun} />
+    </button>
+  );
+
   return (
-    <div className={inventoryDashboardClasses}>
-      <InventorySidebar
-        collapsed={sidebarCollapsed}
-        onToggleCollapse={() => setSidebarCollapsed((prev) => !prev)}
-      />
-
-      <main className="inventory-main">
-        <header className="inventory-navbar top-navbar">
-          <div className="navbar-left">
-            <h1>Inventory Management</h1>
-            <p>Monitor stock levels and manage warehouse operations</p>
-          </div>
-
-          <div className="search-group">
-            <input
-              type="text"
-              placeholder="Search products, suppliers, orders..."
-            />
-          </div>
-
-          <div className="navbar-actions">
-            <DashboardProfile
-              name={name}
-              role="Inventory"
-              image={profilePhoto}
-              onUpload={handleProfilePhotoUpload}
-            />
-
-            <NotificationDropdown role="inventory" />
-
-            <button
-              className="theme-toggle-btn"
-              type="button"
-              onClick={toggle}
-            >
-              <FontAwesomeIcon icon={theme === "light" ? faMoon : faSun} />
-            </button>
-          </div>
-        </header>
+    <DashboardLayout
+      sidebar={sidebar}
+      title="Inventory Management"
+      subtitle="Monitor stock levels and manage warehouse operations"
+      role="inventory"
+      name={name}
+      profilePhoto={profilePhoto}
+      onProfileUpload={handleProfilePhotoUpload}
+      extraActions={extraActions}
+      showChatbot
+      chatbotTitle="Inventory Assistant"
+      chatbotSubtitle="Stock guidance, navigation, and inventory help"
+      className={inventoryDashboardClasses}
+    >
 
         {showOverview ? (
           <>
@@ -371,13 +363,7 @@ const InventoryDashboard = () => {
             <Outlet />
           </section>
         )}
-      </main>
-      <RoleAwareChatbot
-        mode="widget"
-        title="Inventory Assistant"
-        subtitle="Stock guidance, navigation, and inventory help"
-      />
-    </div>
+    </DashboardLayout>
   );
 };
 

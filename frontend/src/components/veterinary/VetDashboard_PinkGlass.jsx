@@ -800,8 +800,9 @@ const EmptyState = styled.div`
 
 const VetDashboard = () => {
   const navigate = useNavigate();
-  const name = localStorage.getItem("name") || "Veterinarian";
-  const profilePhoto = localStorage.getItem("profile_photo") || "";
+  const { user } = useAuth();
+  const name = user?.name || "Veterinarian";
+  const profilePhoto = user?.profile_photo || "";
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [dashboardData, setDashboardData] = useState(null);
   const [currentBoarders, setCurrentBoarders] = useState([]);

@@ -68,12 +68,7 @@ const StockAdjustmentModal = ({ isOpen, onClose, item, onSuccess }) => {
     try {
       const finalReason = reason === "Other" ? customReason : reason;
 
-      console.log("[StockAdjustment] Sending request:", {
-        itemId: item.id,
-        type: adjustmentType,
-        quantity: Number(quantity),
-        reason: finalReason,
-      });
+      // Send stock adjustment request
 
       await inventoryApi.adjustStock(item.id, adjustmentType, Number(quantity), finalReason);
 
