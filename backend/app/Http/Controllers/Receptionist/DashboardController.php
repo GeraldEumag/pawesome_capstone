@@ -52,7 +52,7 @@ class DashboardController extends Controller
     public function customers()
     {
         return response()->json(
-            Customer::with('pets')->get()
+            Customer::with(['pets', 'user'])->get()
         );
     }
 

@@ -39,7 +39,7 @@ class CustomersController extends Controller
      */
     public function index(Request $request)
     {
-        $query = Customer::with(['pets']);
+        $query = Customer::with(['pets', 'user']);
 
         if ($request->user()?->role === 'customer') {
             $customer = $this->currentCustomer($request);
@@ -82,7 +82,7 @@ class CustomersController extends Controller
             return response()->json(['message' => 'Customer not found'], 404);
         }
 
-        $customer = Customer::with(['pets', 'pets.appointments', 'pets.boardings'])->find($id);
+        $customer = Customer::with(['pets', 'pets.appointments', 'pets.boardings', 'user'])->find($id);
         
         if (!$customer) {
             return response()->json(['message' => 'Customer not found'], 404);

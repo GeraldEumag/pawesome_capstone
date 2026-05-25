@@ -201,7 +201,7 @@ const buildStatsFromData = (dashboardData, attendanceList, payrollList) => {
 };
 
 const ManagerDashboard = () => {
-  const { user } = useAuth();
+  const { user, updateUser } = useAuth();
   const name = user?.name || "Manager";
   const profilePhoto = user?.profile_photo || "";
 
@@ -235,13 +235,9 @@ const ManagerDashboard = () => {
     try {
       const { uploadProfilePhoto } = await import("../../api/client");
       const data = await uploadProfilePhoto(file);
-
-      // Refresh user data via auth context if needed
+      const photoUrl = data?.profile_photo || data?.url || "";
+      if (photoUrl) updateUser({ profile_photo: photoUrl });
       showToast("Profile photo updated successfully.", "success");
-
-      window.setTimeout(() => {
-        window.location.reload();
-      }, 700);
     } catch (err) {
       showToast(err.message || "Failed to upload profile photo.", "error");
     }

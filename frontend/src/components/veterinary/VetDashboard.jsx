@@ -54,7 +54,7 @@ const GlobalStyle = createGlobalStyle`
 `;
 
 const VetDashboard = () => {
-  const { user } = useAuth();
+  const { user, updateUser } = useAuth();
   const name = user?.name || "Veterinarian";
   const profilePhoto = user?.profile_photo || "";
   const { theme, toggle } = useTheme();
@@ -68,8 +68,8 @@ const VetDashboard = () => {
   const handleProfilePhotoUpload = async (file) => {
     try {
       const data = await uploadProfilePhoto(file);
-      // Refresh user data via auth context if needed
-      window.location.reload();
+      const photoUrl = data?.profile_photo || data?.url || "";
+      if (photoUrl) updateUser({ profile_photo: photoUrl });
     } catch (err) {
       showError("Failed to upload profile photo: " + err.message);
     }

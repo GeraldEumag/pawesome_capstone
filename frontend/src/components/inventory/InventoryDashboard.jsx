@@ -27,7 +27,7 @@ import { useTheme } from "../../utils/theme";
 import "./InventoryDashboard.css";
 
 const InventoryDashboard = () => {
-  const { user } = useAuth();
+  const { user, updateUser } = useAuth();
   const name = user?.name || "Inventory Manager";
   const profilePhoto = user?.profile_photo || "";
 
@@ -44,8 +44,8 @@ const InventoryDashboard = () => {
   const handleProfilePhotoUpload = async (file) => {
     try {
       const data = await uploadProfilePhoto(file);
-      // Refresh user data via auth context if needed
-      window.location.reload();
+      const photoUrl = data?.profile_photo || data?.url || "";
+      if (photoUrl) updateUser({ profile_photo: photoUrl });
     } catch (err) {
       showError("Failed to upload profile photo: " + err.message);
     }

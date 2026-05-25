@@ -25,16 +25,21 @@ import CustomerSidebar from "./CustomerSidebar";
 import DashboardLayout from "../shared/DashboardLayout";
 import PetAvatar from "../shared/PetAvatar";
 import { apiRequest, clearAuthStorage, uploadProfilePhoto } from "../../api/client";
-import { useTheme } from "../../utils/theme";
+import { useTheme, fetchAndApplySystemTheme } from "../../utils/theme";
 import "../../styles/dashboardGlobal.css";
 import "./CustomerDashboard.css";
 
 const CustomerDashboard = () => {
-  const { user } = useAuth();
+  const { user, updateUser } = useAuth();
   const name = user?.name || "Customer";
   const profilePhoto = user?.profile_photo || "";
 
   const { theme, toggle } = useTheme();
+
+  useEffect(() => {
+    fetchAndApplySystemTheme();
+  }, []);
+
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [dashboardData, setDashboardData] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -44,12 +49,9 @@ const CustomerDashboard = () => {
 
   const handleProfilePhotoUpload = async (file) => {
     try {
-      const formData = new FormData();
-      formData.append("profile_photo", file);
-
-      const data = await uploadProfilePhoto("/auth/profile-photo", formData);
-      // Refresh user data via auth context if needed
-      window.location.reload();
+      const data = await uploadProfilePhoto(file);
+      const photoUrl = data?.profile_photo || data?.url || "";
+      if (photoUrl) updateUser({ profile_photo: photoUrl });
     } catch (err) {
       showError("Failed to upload profile photo: " + err.message);
     }

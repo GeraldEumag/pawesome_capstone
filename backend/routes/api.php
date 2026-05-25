@@ -973,9 +973,13 @@ Route::middleware(['throttle:api'])->group(function () {
     Route::get('/boarding/rooms/{id}', [BoardingRoomController::class, 'show']);
 });
 
-// Secure File Access Routes
+// Secure File Access Routes (auth required)
 Route::middleware(['auth.api', 'throttle:api'])->prefix('files')->group(function () {
     Route::get('/payment-proofs/{type}/{id}/view', [SecureFileController::class, 'viewPaymentProof']);
-    Route::get('/profile-photos/{userId}/view', [SecureFileController::class, 'viewProfilePhoto']);
     Route::get('/pet-photos/{petId}/view', [SecureFileController::class, 'viewPetImage']);
+});
+
+// Profile photos are public (avatars are not sensitive)
+Route::prefix('files')->group(function () {
+    Route::get('/profile-photos/{userId}/view', [SecureFileController::class, 'viewProfilePhoto']);
 });

@@ -11,7 +11,7 @@ import {
   faCashRegister, faHistory, faCreditCard, faBell,
   faCog, faPalette, faLanguage, faMoon, faSun,
 } from "@fortawesome/free-solid-svg-icons";
-import { apiRequest } from "../../api/client";
+import { apiRequest, uploadProfilePhoto } from "../../api/client";
 import styled, { createGlobalStyle } from "styled-components";
 import {
   fadeIn, pulse,
@@ -668,7 +668,7 @@ const ToggleSwitch = styled.label`
 ───────────────────────────────────────────────────────────── */
 const ProfileSettings = () => {
   const navigate = useNavigate();
-  const { role, login, logout } = useAuth();
+  const { role, login, logout, updateUser, user: authUser } = useAuth();
   const [isEditing, setIsEditing] = useState(false);
   const [message, setMessage] = useState("");
   const [messageType, setMessageType] = useState("");
@@ -789,7 +789,8 @@ const ProfileSettings = () => {
         is_active: userData.is_active !== undefined ? userData.is_active : true,
         created_at: userData.created_at || "",
         updated_at: userData.updated_at || "",
-        profileImage: userData.profile_image || null,
+        // Prefer AuthContext photo (has ?v= cache-buster) over raw API value
+        profileImage: authUser?.profile_photo || userData.profile_photo || userData.profile_image || null,
       });
     } catch (err) {
       if (err.message?.includes("401")) {
@@ -834,6 +835,7 @@ const ProfileSettings = () => {
         login(response.token, response.user.role, {
           name: response.user.name,
           email: response.user.email,
+          profile_photo: response.user.profile_photo || "",
         });
         setProfileData(p => ({ ...p, id: null, name: "", email: "" }));
         setTimeout(() => fetchUserProfile(), 500);
@@ -859,12 +861,23 @@ const ProfileSettings = () => {
     setSettings(p => ({ ...p, [settingName]: value }));
   };
 
-  const handleImageUpload = (e) => {
-    const file = e.target.files[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => setProfileData(p => ({ ...p, profileImage: reader.result }));
-      reader.readAsDataURL(file);
+  const handleImageUpload = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onloadend = () => setProfileData(p => ({ ...p, profileImage: reader.result }));
+    reader.readAsDataURL(file);
+    try {
+      const data = await uploadProfilePhoto(file);
+      let photoUrl = data?.profile_photo || data?.url || "";
+      if (photoUrl) {
+        if (!photoUrl.includes("?v=")) photoUrl += "?v=" + Date.now();
+        updateUser({ profile_photo: photoUrl });
+        setProfileData(p => ({ ...p, profileImage: photoUrl }));
+      }
+      showSuccess("Profile photo updated!");
+    } catch (err) {
+      showError(err.message || "Failed to upload photo.");
     }
   };
 
@@ -1040,7 +1053,11 @@ const ProfileSettings = () => {
                     <AvatarRing>
                       <AvatarInner>
                         {profileData.profileImage ? (
-                          <AvatarImage src={profileData.profileImage} alt="Avatar" />
+                          <AvatarImage
+                            src={profileData.profileImage.startsWith("/") ? `${window.location.origin}${profileData.profileImage}` : profileData.profileImage}
+                            alt="Avatar"
+                            onError={(e) => { e.target.style.display = "none"; }}
+                          />
                         ) : (
                           <FontAwesomeIcon icon={faUser} />
                         )}

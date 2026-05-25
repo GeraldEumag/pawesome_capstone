@@ -156,6 +156,8 @@ export const normalizeList = (result, keys = []) => {
   return [];
 };
 
-export const uploadProfilePhoto = async (endpoint, formData) => {
-  return apiRequest(endpoint, "POST", formData);
+export const uploadProfilePhoto = async (file) => {
+  const formData = new FormData();
+  formData.append("profile_photo", file);
+  return apiRequest("/auth/profile-photo", "POST", formData);
 };

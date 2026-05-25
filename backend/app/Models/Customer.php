@@ -23,11 +23,22 @@ class Customer extends Model
         'user_id',
     ];
 
+    protected $appends = ['profile_photo'];
+
     protected $casts = [
         'notification_preferences' => 'array',
         'loyalty_points' => 'integer',
         'is_active' => 'boolean',
     ];
+
+    public function getProfilePhotoAttribute(): ?string
+    {
+        $userId = $this->user_id ?? $this->user?->id;
+        if (!$userId) return null;
+        // Delegate to the linked user's accessor
+        $user = $this->relationLoaded('user') ? $this->user : \App\Models\User::find($userId);
+        return $user?->profile_photo ?? null;
+    }
 
     public function scopeActive($query)
     {

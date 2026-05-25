@@ -142,24 +142,10 @@ class SecureFileController extends Controller
     }
 
     /**
-     * Securely view profile photos
+     * View profile photos — publicly accessible (avatars are not sensitive)
      */
     public function viewProfilePhoto(Request $request, $userId)
     {
-        $user = Auth::user();
-        
-        if (!$user) {
-            return response()->json(['message' => 'Unauthenticated'], 401);
-        }
-
-        // Users can view their own profile photo
-        // Admin can view any profile photo
-        $canAccess = ($user->id == $userId) || ($user->role === 'admin');
-
-        if (!$canAccess) {
-            return response()->json(['message' => 'Forbidden'], 403);
-        }
-
         $targetUser = DB::table('users')->where('id', $userId)->first();
         
         if (!$targetUser) {
@@ -170,7 +156,12 @@ class SecureFileController extends Controller
             return response()->json(['message' => 'Profile photo not found'], 404);
         }
 
+        // Use raw DB value (not the model accessor which returns the API URL)
         $filePath = $targetUser->profile_photo;
+        // Strip /api/ prefix if someone stored the URL instead of path
+        if (str_starts_with($filePath, '/api/')) {
+            return response()->json(['message' => 'Profile photo not found'], 404);
+        }
         $disk = 'public';
         
         if (!Storage::disk($disk)->exists($filePath)) {

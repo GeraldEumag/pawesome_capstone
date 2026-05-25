@@ -205,8 +205,10 @@ class AuthController extends Controller
             'profile_photo' => 'required|image|mimes:jpg,jpeg,png,webp|max:5120',
         ]);
 
-        if ($user->profile_photo) {
-            Storage::disk('public')->delete($user->profile_photo);
+        // Use getRawOriginal to bypass the accessor and get the actual storage path
+        $oldPath = $user->getRawOriginal('profile_photo');
+        if ($oldPath && !str_starts_with($oldPath, '/api/')) {
+            Storage::disk('public')->delete($oldPath);
         }
 
         $path = $validated['profile_photo']->store('profile_photos', 'public');
@@ -215,10 +217,15 @@ class AuthController extends Controller
             'profile_photo' => $path,
         ]);
 
+        // After update, the accessor will return the correct API URL
+        $user->refresh();
+
+        $photoUrl = $user->profile_photo . '?v=' . time();
+
         return response()->json([
             'message' => 'Profile photo uploaded successfully',
-            'profile_photo' => "/api/files/profile-photos/{$user->id}/view",
-            'url' => "/api/files/profile-photos/{$user->id}/view",
+            'profile_photo' => $photoUrl,
+            'url' => $photoUrl,
             'user' => $user,
         ]);
     }

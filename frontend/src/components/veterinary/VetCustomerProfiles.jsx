@@ -26,6 +26,7 @@ import {
 import toast from "react-hot-toast";
 import { apiRequest } from "../../api/client";
 import PetAvatar from "../shared/PetAvatar";
+import CustomerAvatar from "../shared/CustomerAvatar";
 import "./VetCustomerProfiles.css";
 
 const VetCustomerProfiles = () => {
@@ -174,6 +175,10 @@ const VetCustomerProfiles = () => {
         email: getOwnerEmail(pet),
         phone: getOwnerPhone(pet),
         address: getOwnerAddress(pet),
+        profile_photo:
+          pet?.customer?.profile_photo ||
+          pet?.owner?.profile_photo ||
+          null,
         pets: [],
         raw: pet?.customer || pet?.owner || {},
       };
@@ -467,9 +472,7 @@ const VetCustomerProfiles = () => {
         <div className="vet-customer-list">
           {filteredCustomers.map((customer) => (
             <article key={customer.key} className="premium-card vet-customer-card">
-              <div className="vet-customer-avatar">
-                {getCustomerInitials(customer.name)}
-              </div>
+              <CustomerAvatar customer={customer} size={52} className="vet-customer-avatar" />
 
               <div className="vet-customer-info">
                 <div className="vet-customer-mainline">
@@ -564,9 +567,7 @@ const VetCustomerProfiles = () => {
 
             <div className="vet-profile-modal-body">
               <div className="modal-profile-summary">
-                <div className="modal-profile-avatar">
-                  {getCustomerInitials(selectedProfile.name)}
-                </div>
+                <CustomerAvatar customer={selectedProfile} size={72} className="modal-profile-avatar" />
 
                 <div>
                   <h4>{selectedProfile.name}</h4>

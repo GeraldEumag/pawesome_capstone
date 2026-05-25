@@ -77,6 +77,21 @@ class User extends Authenticatable
         ];
     }
 
+    /**
+     * Always return the API-accessible URL for the profile photo.
+     * This ensures img tags can load it directly without auth headers.
+     */
+    public function getProfilePhotoAttribute($value): ?string
+    {
+        if (!$value) return null;
+        // Already a full URL or API path (possibly with ?v= cache buster)
+        $base = strtok($value, '?');
+        if (str_starts_with($base, '/api/') || str_starts_with($base, 'http')) {
+            return $value;
+        }
+        return "/api/files/profile-photos/{$this->id}/view";
+    }
+
     public function customer()
     {
         return $this->hasOne(Customer::class);

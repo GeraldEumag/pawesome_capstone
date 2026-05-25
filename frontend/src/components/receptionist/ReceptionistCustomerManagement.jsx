@@ -18,6 +18,7 @@ import {
 import { receptionistCustomerApi } from "../../api/receptionistCustomers";
 import { formatCurrency } from "../../utils/currency";
 import PetAvatar from "../shared/PetAvatar";
+import CustomerAvatar from "../shared/CustomerAvatar";
 import DatePickerInput from "../shared/DatePickerInput";
 import "./ReceptionistCustomerManagement.css";
 
@@ -277,11 +278,14 @@ const ReceptionistCustomerManagement = () => {
                 return (
                   <tr key={customer.id}>
                     <td className="customer-name">
-                      <div className="name-info">
-                        <span className="name">{getCustomerName(customer)}</span>
-                        <span className="join-date">
-                          Since {customer.created_at || customer.joinDate || "N/A"}
-                        </span>
+                      <div className="name-info" style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                        <CustomerAvatar customer={customer} size={36} />
+                        <div>
+                          <span className="name">{getCustomerName(customer)}</span>
+                          <span className="join-date" style={{ display: "block" }}>
+                            Since {customer.created_at || customer.joinDate || "N/A"}
+                          </span>
+                        </div>
                       </div>
                     </td>
 

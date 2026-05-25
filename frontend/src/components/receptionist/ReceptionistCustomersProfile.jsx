@@ -25,6 +25,7 @@ import {
 import "./ReceptionistCustomersProfile.css";
 import { receptionistProfileApi } from "../../api/receptionistProfileApi";
 import PetAvatar from "../shared/PetAvatar";
+import CustomerAvatar from "../shared/CustomerAvatar";
 
 const EMPTY_CUSTOMER_FORM = {
   firstName: "",
@@ -829,9 +830,7 @@ const CustomersProfile = () => {
                     <tr key={getCustomerId(customer)}>
                       <td>
                         <div className="customer-cell">
-                          <div className="customer-avatar">
-                            <FontAwesomeIcon icon={faUser} />
-                          </div>
+                          <CustomerAvatar customer={customer} size={40} className="customer-avatar" />
                           <div className="customer-basic-info">
                             <h4>{customerName}</h4>
                             <p>Customer ID: {getCustomerId(customer)}</p>

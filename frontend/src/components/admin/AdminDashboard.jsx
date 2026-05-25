@@ -58,7 +58,7 @@ const cardVariants = {
 const chartColors = ["#ff5f93", "#ff8db5", "#ffc8dd", "#f472b6", "#fb7185", "#f59e0b"];
 
 const AdminDashboard = () => {
-  const { user } = useAuth();
+  const { user, updateUser } = useAuth();
   const name = user?.name || "Admin";
   const profilePhoto = user?.profile_photo || "";
 
@@ -77,9 +77,9 @@ const AdminDashboard = () => {
 
   const handleProfilePhotoUpload = async (file) => {
     try {
-      await uploadProfilePhoto(file);
-      // Refresh user data via auth context if needed
-      window.location.reload();
+      const data = await uploadProfilePhoto(file);
+      const photoUrl = data?.profile_photo || data?.url || "";
+      if (photoUrl) updateUser({ profile_photo: photoUrl });
     } catch (err) {
       showError("Failed to upload profile photo: " + err.message);
     }

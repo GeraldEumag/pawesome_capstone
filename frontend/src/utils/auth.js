@@ -15,7 +15,7 @@ const LEGACY_TOKEN_KEYS = [
 
 const STANDARD_TOKEN_KEY = "pawesome_auth_token";
 const ROLE_KEY = "role";
-const USER_KEYS = ["name", "username", "email", "user", "adminUser"];
+const USER_KEYS = ["name", "username", "email", "user", "adminUser", "profile_photo"];
 
 /* ─── Token ─── */
 
@@ -70,8 +70,11 @@ export const getUserData = () => {
 export const setUserData = (data) => {
   if (!data || typeof data !== "object") return;
   for (const [key, value] of Object.entries(data)) {
-    if (value !== undefined && value !== null) {
+    if (value !== undefined && value !== null && value !== "") {
       localStorage.setItem(key, String(value));
+    } else if (value === "" && key !== "profile_photo") {
+      // Allow clearing non-photo fields with empty string, but don't wipe photo
+      localStorage.setItem(key, "");
     }
   }
 };
