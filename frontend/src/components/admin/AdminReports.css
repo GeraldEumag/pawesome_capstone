@@ -1,5 +1,136 @@
 /* AdminReports.css */
-/* Professional Pawesome Admin Reports UI */
+/* Professional Pawesome Admin Reports UI - Refactored for UnifiedReportEngine */
+
+.admin-reports-wrapper {
+  --ar-primary: var(--color-primary, #ff5f93);
+  --ar-primary-light: var(--color-primary-light, #ff8db5);
+  --ar-bg: var(--color-bg, #ffffff);
+  --ar-surface: rgba(255, 255, 255, 0.95);
+  --ar-border: rgba(255, 95, 147, 0.18);
+  --ar-text: #1f2937;
+  --ar-text-muted: #64748b;
+  
+  display: grid;
+  gap: 1.5rem;
+  padding: 1.5rem;
+}
+
+/* Section Navigation */
+.admin-reports-nav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  padding: 0.75rem;
+  background: var(--ar-surface);
+  border: 1px solid var(--ar-border);
+  border-radius: 24px;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+}
+
+.admin-nav-tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.625rem 1rem;
+  border: none;
+  border-radius: 9999px;
+  background: transparent;
+  color: var(--ar-text);
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.admin-nav-tab:hover {
+  background: rgba(255, 95, 147, 0.1);
+  color: var(--ar-primary);
+}
+
+.admin-nav-tab.active {
+  background: linear-gradient(135deg, var(--ar-primary), var(--ar-primary-light));
+  color: white;
+  box-shadow: 0 4px 12px rgba(255, 95, 147, 0.35);
+}
+
+/* Utility Tab Styling */
+.admin-nav-tab.utility {
+  background: rgba(16, 185, 129, 0.1);
+  color: #10b981;
+  border: 1px dashed rgba(16, 185, 129, 0.3);
+}
+
+.admin-nav-tab.utility:hover {
+  background: rgba(16, 185, 129, 0.2);
+  color: #059669;
+}
+
+.admin-nav-tab.utility.active {
+  background: linear-gradient(135deg, #10b981, #34d399);
+  color: white;
+  border-style: solid;
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.35);
+}
+
+/* Advanced Tab Styling */
+.admin-nav-tab.advanced {
+  background: rgba(59, 130, 246, 0.1);
+  color: #3b82f6;
+  border: 1px dashed rgba(59, 130, 246, 0.3);
+}
+
+.admin-nav-tab.advanced:hover {
+  background: rgba(59, 130, 246, 0.2);
+  color: #2563eb;
+}
+
+.admin-nav-tab.advanced.active {
+  background: linear-gradient(135deg, #3b82f6, #60a5fa);
+  color: white;
+  border-style: solid;
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.35);
+}
+
+/* Advanced Report Content Container */
+.advanced-report-content {
+  background: var(--ar-surface);
+  border: 1px solid var(--ar-border);
+  border-radius: 24px;
+  padding: 1.5rem;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+  min-height: 600px;
+}
+
+.admin-nav-tab.active {
+  background: linear-gradient(135deg, var(--ar-primary), var(--ar-primary-light));
+  color: white;
+  box-shadow: 0 4px 14px rgba(255, 95, 147, 0.25);
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .admin-reports-wrapper {
+    padding: 1rem;
+  }
+  
+  .admin-reports-nav {
+    padding: 0.5rem;
+  }
+  
+  .admin-nav-tab {
+    padding: 0.5rem 0.75rem;
+    font-size: 0.8125rem;
+  }
+}
+
+/* Dark Mode */
+[data-theme="dark"] .admin-reports-wrapper,
+body[data-theme="dark"] .admin-reports-wrapper {
+  --ar-surface: rgba(15, 23, 42, 0.95);
+  --ar-border: rgba(255, 141, 181, 0.2);
+  --ar-text: #f1f5f9;
+  --ar-text-muted: #94a3b8;
+}
 
 .admin-reports-page,
 .live-report-content {

@@ -12,12 +12,6 @@ import {
   faUserCheck,
   faUserTimes,
   faUsers,
-  faSpinner,
-  faFileExcel,
-  faFileCsv,
-  faFilePdf,
-  faPrint,
-  faXmark,
 } from "@fortawesome/free-solid-svg-icons";
 import {
   Bar,
@@ -36,13 +30,10 @@ import {
 } from "recharts";
 import { apiRequest } from "../../api/client";
 import { formatCurrency } from "../../utils/currency";
-import { exportToCSV, exportToPDF, exportToExcel } from "../../utils/reportExport";
-import StandardReportLayout from "../shared/StandardReportLayout";
-import StandardTable from "../shared/StandardTable";
+import UnifiedReportEngine, { ChartContainer, CHART_COLORS } from "../shared/UnifiedReportEngine";
 import "./ManagerReports.css";
 
-// CHART_COLORS for charts
-const CHART_COLORS = ["#ff5f93", "#ff8db5", "#ffc8dd", "#f59e0b", "#10b981", "#3b82f6"];
+// Use CHART_COLORS from UnifiedReportEngine
 
 const getDefaultDateRange = () => {
   const now = new Date();
@@ -244,20 +235,9 @@ const ManagerReports = () => {
   const [staff, setStaff] = useState([]);
   const [liveSummary, setLiveSummary] = useState({});
   const [departments, setDepartments] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [refreshing, setRefreshing] = useState(false);
-  const [error, setError] = useState("");
-  const [searchTerm, setSearchTerm] = useState("");
-  const [statusFilter, setStatusFilter] = useState("all");
-  const [departmentFilter, setDepartmentFilter] = useState("all");
-  const [startDate, setStartDate] = useState(defaultRange.startDate);
-  const [endDate, setEndDate] = useState(defaultRange.endDate);
-  const [selectedRecord, setSelectedRecord] = useState(null);
-  const [toast, setToast] = useState(null);
-  const [theme, setTheme] = useState("light");
 
-  // Data loading function
-  const fetchReportData = useCallback(
+  // Data loading is handled by UnifiedReportEngine
+
     async ({ silent = false } = {}) => {
       try {
         if (silent) {
@@ -348,11 +328,6 @@ const ManagerReports = () => {
     },
     []
   );
-
-  const showToast = (type, message) => {
-    setToast({ type, message });
-    setTimeout(() => setToast(null), 3000);
-  };
 
   useEffect(() => {
     fetchReportData();

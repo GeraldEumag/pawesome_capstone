@@ -1,19 +1,15 @@
-import React, { useCallback, useEffect, useMemo, useState } from "react";
+import React, { useCallback, useMemo, useState } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
   faCalendarCheck,
   faChartLine,
   faCheckCircle,
   faClock,
-  faDownload,
   faEye,
   faInfoCircle,
   faMoneyBillWave,
   faReceipt,
-  faRefresh,
-  faSearch,
   faShoppingBag,
-  faTimes,
   faUsers,
 } from "@fortawesome/free-solid-svg-icons";
 import {
@@ -31,19 +27,9 @@ import {
 } from "recharts";
 import { apiRequest } from "../../api/client";
 import { formatCurrency } from "../../utils/currency";
-import StandardReportLayout from "../shared/StandardReportLayout";
-import StandardTable from "../shared/StandardTable";
-import {
-  exportToCSV,
-  exportToPDF,
-  exportToExcel,
-  filterByDateRange,
-  filterByStatus,
-  getDateRangePreset,
-} from "../../utils/reportExport";
+import { getDateRangePreset } from "../../utils/reportExport";
+import UnifiedReportEngine, { ChartContainer, CHART_COLORS } from "../shared/UnifiedReportEngine";
 import "./ReceptionistReports.css";
-
-const CHART_COLORS = ["#ff5f93", "#ff8db5", "#ffc8dd", "#f59e0b", "#10b981", "#3b82f6"];
 
 const getDefaultDateRange = () => {
   try {
@@ -248,543 +234,143 @@ const buildOrderTransaction = (order, index) => {
 };
 
 const ReceptionistReports = () => {
-  const defaultRange = useMemo(() => getDefaultDateRange(), []);
-
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
-
-  const [searchTerm, setSearchTerm] = useState("");
-  const [startDate, setStartDate] = useState(defaultRange.startDate);
-  const [endDate, setEndDate] = useState(defaultRange.endDate);
-  const [statusFilter, setStatusFilter] = useState("all");
-  const [transactionTypeFilter, setTransactionTypeFilter] = useState("all");
-
   const [transactions, setTransactions] = useState([]);
-  const [selectedTransaction, setSelectedTransaction] = useState(null);
-  const [lastUpdated, setLastUpdated] = useState("");
 
-  const fetchReportData = useCallback(async () => {
-    try {
-      setLoading(true);
-      setError("");
+  const fetchReportData = useCallback(async (filters) => {
+    const result = await apiRequest("/receptionist/reports/live");
+    const data = result?.data || result || {};
 
-      const result = await apiRequest("/receptionist/reports/live");
-      const data = result?.data || result || {};
+    const requests = normalizeList(data.requests || data.service_requests || [], [
+      "requests", "service_requests",
+    ]);
+    const orders = normalizeList(data.orders || data.customer_orders || [], [
+      "orders", "customer_orders",
+    ]);
 
-      const requests = normalizeList(data.requests || data.service_requests || [], [
-        "requests",
-        "service_requests",
-      ]);
+    const transformedTransactions = [
+      ...requests.map(buildRequestTransaction),
+      ...orders.map(buildOrderTransaction),
+    ].sort((a, b) => new Date(b.date || 0) - new Date(a.date || 0));
 
-      const orders = normalizeList(data.orders || data.customer_orders || [], [
-        "orders",
-        "customer_orders",
-      ]);
-
-      const transformedTransactions = [
-        ...requests.map(buildRequestTransaction),
-        ...orders.map(buildOrderTransaction),
-      ].sort((a, b) => new Date(b.date || 0) - new Date(a.date || 0));
-
-      setTransactions(transformedTransactions);
-      setLastUpdated(new Date().toLocaleString("en-PH"));
-    } catch (err) {
-      console.error("Failed to fetch receptionist reports:", err);
-      setError(err.message || "Failed to load live receptionist report data.");
-      setTransactions([]);
-    } finally {
-      setLoading(false);
-    }
+    setTransactions(transformedTransactions);
+    return transformedTransactions;
   }, []);
 
-  useEffect(() => {
-    fetchReportData();
-  }, [fetchReportData]);
-
-  const filteredTransactions = useMemo(() => {
-    let filtered = [...transactions];
-
-    if (startDate || endDate) {
-      filtered = filterByDateRange(filtered, "date", startDate, endDate);
-    }
-
-    if (statusFilter !== "all") {
-      filtered = filterByStatus(filtered, "status", statusFilter);
-    }
-
-    if (transactionTypeFilter !== "all") {
-      filtered = filtered.filter(
-        (transaction) => transaction.type === transactionTypeFilter
-      );
-    }
-
-    if (searchTerm.trim()) {
-      const search = searchTerm.trim().toLowerCase();
-
-      filtered = filtered.filter((transaction) =>
-        [
-          transaction.id,
-          transaction.rawId,
-          transaction.customer,
-          transaction.pet,
-          transaction.type,
-          transaction.typeLabel,
-          transaction.service,
-          transaction.status,
-          transaction.notes,
-          transaction.source,
-        ]
-          .filter(Boolean)
-          .join(" ")
-          .toLowerCase()
-          .includes(search)
-      );
-    }
-
-    return filtered;
-  }, [
-    transactions,
-    startDate,
-    endDate,
-    statusFilter,
-    transactionTypeFilter,
-    searchTerm,
-  ]);
-
-  const summaryStats = useMemo(() => {
-    const totalTransactions = filteredTransactions.length;
-    const appointments = filteredTransactions.filter(
-      (transaction) => transaction.type === "appointment"
+  // Summary cards
+  const summaryCards = useMemo(() => {
+    const total = transactions.length;
+    const appointments = transactions.filter((t) => t.type === "appointment").length;
+    const orders = transactions.filter((t) => t.type === "order").length;
+    const completed = transactions.filter((t) =>
+      ["completed", "approved", "confirmed", "paid"].includes(normalizeStatus(t.status))
     ).length;
-    const orders = filteredTransactions.filter(
-      (transaction) => transaction.type === "order"
+    const pending = transactions.filter((t) =>
+      ["pending", "scheduled"].includes(normalizeStatus(t.status))
     ).length;
-    const completedTransactions = filteredTransactions.filter((transaction) =>
-      ["completed", "approved", "confirmed", "paid", "verified"].includes(
-        normalizeStatus(transaction.status)
-      )
-    ).length;
-    const pendingTransactions = filteredTransactions.filter((transaction) =>
-      ["pending", "scheduled", "for_approval"].includes(
-        normalizeStatus(transaction.status)
-      )
-    ).length;
-    const totalRevenue = filteredTransactions.reduce(
-      (sum, transaction) => sum + numberValue(transaction.amount),
-      0
-    );
+    const revenue = transactions.reduce((sum, t) => sum + numberValue(t.amount), 0);
 
-    return {
-      totalTransactions,
-      appointments,
-      orders,
-      completedTransactions,
-      pendingTransactions,
-      totalRevenue,
-    };
-  }, [filteredTransactions]);
+    return [
+      { id: "total", label: "Total Transactions", value: total, icon: faReceipt, tone: "primary", trend: "neutral" },
+      { id: "appointments", label: "Appointments", value: appointments, icon: faCalendarCheck, tone: "success", trend: "up" },
+      { id: "orders", label: "Orders", value: orders, icon: faShoppingBag, tone: "secondary", trend: "up" },
+      { id: "completed", label: "Completed", value: completed, icon: faCheckCircle, tone: "success", trend: "up" },
+      { id: "pending", label: "Pending", value: pending, icon: faClock, tone: "warning", trend: "neutral" },
+      { id: "revenue", label: "Total Revenue", value: formatCurrency(revenue), icon: faMoneyBillWave, tone: "money", trend: "up" },
+    ];
+  }, [transactions]);
 
-  const summaryCards = [
+  // Table columns
+  const tableColumns = [
+    { key: "id", label: "Transaction", sortable: true, render: (value) => <span className="rr-id-badge">{value}</span> },
+    { key: "customer", label: "Customer", sortable: true },
+    { key: "type", label: "Type", sortable: true, render: (value) => <span className={`rr-type-badge ${value}`}>{formatLabel(value)}</span> },
+    { key: "service", label: "Service", sortable: true },
+    { key: "date", label: "Date", format: "date", sortable: true },
+    { key: "amount", label: "Amount", format: "currency", sortable: true },
+    { key: "status", label: "Status", sortable: true, render: (value) => <span className={`rr-status-badge ${getStatusClass(value)}`}>{formatLabel(value)}</span> },
+  ];
+
+  // Custom type filter
+  const customFilters = [
     {
-      id: "total-transactions",
-      label: "Filtered Transactions",
-      value: summaryStats.totalTransactions,
-      icon: faChartLine,
-      tone: "primary",
-    },
-    {
-      id: "appointments",
-      label: "Appointments",
-      value: summaryStats.appointments,
-      icon: faCalendarCheck,
-      tone: "success",
-    },
-    {
-      id: "orders",
-      label: "Orders",
-      value: summaryStats.orders,
-      icon: faShoppingBag,
-      tone: "secondary",
-    },
-    {
-      id: "completed",
-      label: "Completed / Confirmed",
-      value: summaryStats.completedTransactions,
-      icon: faCheckCircle,
-      tone: "warning",
-    },
-    {
-      id: "pending",
-      label: "Pending / Scheduled",
-      value: summaryStats.pendingTransactions,
-      icon: faClock,
-      tone: "info",
-    },
-    {
-      id: "total-revenue",
-      label: "Filtered Revenue",
-      value: formatCurrency(summaryStats.totalRevenue),
-      icon: faMoneyBillWave,
-      tone: "money",
+      key: "transactionType",
+      label: "Transaction Type",
+      dataKey: "type",
+      options: [
+        { value: "appointment", label: "Appointments" },
+        { value: "order", label: "Orders" },
+      ],
     },
   ];
 
-  const transactionTypeData = useMemo(() => {
-    const typeCounts = {};
+  // Chart data
+  const chartData = useMemo(() => {
+    const typeData = [
+      { type: "appointment", count: transactions.filter((t) => t.type === "appointment").length },
+      { type: "order", count: transactions.filter((t) => t.type === "order").length },
+    ];
 
-    filteredTransactions.forEach((transaction) => {
-      const type = transaction.typeLabel || "Unknown";
-      typeCounts[type] = (typeCounts[type] || 0) + 1;
-    });
+    const dailyData = transactions.reduce((acc, item) => {
+      const date = item.date || new Date().toISOString().split("T")[0];
+      acc[date] = (acc[date] || 0) + 1;
+      return acc;
+    }, {});
+    const dailyArray = Object.entries(dailyData).map(([date, count]) => ({ date, count })).slice(-7);
 
-    return Object.entries(typeCounts).map(([type, count]) => ({
-      type,
-      count,
-    }));
-  }, [filteredTransactions]);
+    return { typeData, dailyArray };
+  }, [transactions]);
 
-  const dailyTransactionsData = useMemo(() => {
-    const dailyCounts = {};
+  // Render charts
+  const renderCharts = () => (
+    <>
+      <ChartContainer title="Transaction Types" subtitle="Appointments vs Orders">
+        <ResponsiveContainer width="100%" height="100%">
+          <PieChart>
+            <Pie data={chartData.typeData} cx="50%" cy="50%" innerRadius={60} outerRadius={100} dataKey="count">
+              {chartData.typeData.map((entry, index) => (
+                <Cell key={`cell-${index}`} fill={CHART_COLORS[index % CHART_COLORS.length]} />
+              ))}
+            </Pie>
+            <Tooltip formatter={(value, name, props) => [`${value} ${props.payload.type}s`, "Count"]} />
+            <Legend />
+          </PieChart>
+        </ResponsiveContainer>
+      </ChartContainer>
 
-    filteredTransactions.forEach((transaction) => {
-      if (!transaction.date) return;
-
-      if (!dailyCounts[transaction.date]) {
-        dailyCounts[transaction.date] = {
-          date: transaction.date,
-          count: 0,
-          revenue: 0,
-        };
-      }
-
-      dailyCounts[transaction.date].count += 1;
-      dailyCounts[transaction.date].revenue += numberValue(transaction.amount);
-    });
-
-    return Object.values(dailyCounts)
-      .sort((a, b) => new Date(a.date) - new Date(b.date))
-      .slice(-14);
-  }, [filteredTransactions]);
-
-  const handleDateChange = (key, value) => {
-    if (key === "startDate") setStartDate(value);
-    if (key === "endDate") setEndDate(value);
-  };
-
-  const handleClearFilters = () => {
-    const range = getDefaultDateRange();
-
-    setSearchTerm("");
-    setStatusFilter("all");
-    setTransactionTypeFilter("all");
-    setStartDate(range.startDate);
-    setEndDate(range.endDate);
-  };
-
-  const exportColumns = [
-    { key: "id", label: "Transaction ID" },
-    { key: "customer", label: "Customer" },
-    { key: "pet", label: "Pet" },
-    { key: "typeLabel", label: "Type" },
-    { key: "service", label: "Service" },
-    { key: "date", label: "Date", format: "date" },
-    { key: "time", label: "Time" },
-    { key: "amount", label: "Amount", format: "currency" },
-    { key: "status", label: "Status" },
-    { key: "notes", label: "Notes" },
-  ];
-
-  const handleExportCSV = () => {
-    exportToCSV(
-      filteredTransactions,
-      exportColumns,
-      "receptionist-transactions-report"
-    );
-  };
-
-  const handleExportPDF = () => {
-    exportToPDF(
-      filteredTransactions,
-      exportColumns,
-      "Receptionist Transactions Report",
-      "receptionist-transactions-report"
-    );
-  };
-
-  const handleExportExcel = () => {
-    exportToExcel(
-      filteredTransactions,
-      exportColumns,
-      "receptionist-transactions-report"
-    );
-  };
+      <ChartContainer title="Daily Activity" subtitle="Transactions per day">
+        <ResponsiveContainer width="100%" height="100%">
+          <LineChart data={chartData.dailyArray}>
+            <CartesianGrid strokeDasharray="3 3" />
+            <XAxis dataKey="date" tick={{ fontSize: 12 }} />
+            <YAxis tick={{ fontSize: 12 }} />
+            <Tooltip />
+            <Line type="monotone" dataKey="count" stroke={CHART_COLORS[0]} strokeWidth={2} dot={{ r: 4 }} />
+          </LineChart>
+        </ResponsiveContainer>
+      </ChartContainer>
+    </>
+  );
 
   return (
-    <StandardReportLayout
+    <UnifiedReportEngine
       title="Receptionist Reports"
-      subtitle="Appointment scheduling, order management, customer service records, and front desk transaction metrics"
-      icon={faCalendarCheck}
-      loading={loading}
-      error={error}
-      onRefresh={fetchReportData}
-      lastUpdated={lastUpdated || "Not refreshed yet"}
-    >
-      <div className="receptionist-reports-content">
-        <section className="rr-insight-bar">
-          <div>
-            <span className="rr-eyebrow">
-              <FontAwesomeIcon icon={faReceipt} />
-              Live Receptionist Report
-            </span>
-            <h2>Front Desk Transaction Overview</h2>
-            <p>
-              Showing filtered appointment and order records from the receptionist
-              live report endpoint.
-            </p>
-          </div>
-
-          <div className="rr-insight-meta">
-            <span>
-              <FontAwesomeIcon icon={faUsers} />
-              {new Set(filteredTransactions.map((item) => item.customer)).size} Customers
-            </span>
-            <span>
-              <FontAwesomeIcon icon={faSearch} />
-              {filteredTransactions.length} Visible Records
-            </span>
-          </div>
-        </section>
-
-        <section className="rr-summary-grid">
-          {summaryCards.map((card) => (
-            <article className={`rr-summary-card ${card.tone}`} key={card.id}>
-              <span>
-                <FontAwesomeIcon icon={card.icon} />
-              </span>
-              <div>
-                <strong>{card.value}</strong>
-                <p>{card.label}</p>
-              </div>
-            </article>
-          ))}
-        </section>
-
-        <section className="rr-charts-grid">
-          <article className="rr-chart-card">
-            <div className="rr-section-head">
-              <div>
-                <span className="rr-eyebrow">Breakdown</span>
-                <h3>Transaction Types</h3>
-              </div>
-            </div>
-
-            {transactionTypeData.length === 0 ? (
-              <div className="rr-empty-chart">
-                <FontAwesomeIcon icon={faInfoCircle} />
-                <p>No transaction type data available.</p>
-              </div>
-            ) : (
-              <ResponsiveContainer width="100%" height={320}>
-                <PieChart>
-                  <Pie
-                    data={transactionTypeData}
-                    cx="50%"
-                    cy="50%"
-                    labelLine={false}
-                    label={({ type, percent }) =>
-                      `${type}: ${(percent * 100).toFixed(0)}%`
-                    }
-                    outerRadius={95}
-                    dataKey="count"
-                  >
-                    {transactionTypeData.map((entry, index) => (
-                      <Cell
-                        key={`type-cell-${entry.type}`}
-                        fill={CHART_COLORS[index % CHART_COLORS.length]}
-                      />
-                    ))}
-                  </Pie>
-                  <Tooltip />
-                  <Legend />
-                </PieChart>
-              </ResponsiveContainer>
-            )}
-          </article>
-
-          <article className="rr-chart-card">
-            <div className="rr-section-head">
-              <div>
-                <span className="rr-eyebrow">Trend</span>
-                <h3>Daily Transactions</h3>
-              </div>
-            </div>
-
-            {dailyTransactionsData.length === 0 ? (
-              <div className="rr-empty-chart">
-                <FontAwesomeIcon icon={faInfoCircle} />
-                <p>No daily transaction data available.</p>
-              </div>
-            ) : (
-              <ResponsiveContainer width="100%" height={320}>
-                <LineChart data={dailyTransactionsData}>
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="date" />
-                  <YAxis allowDecimals={false} />
-                  <Tooltip />
-                  <Legend />
-                  <Line
-                    type="monotone"
-                    dataKey="count"
-                    name="Transactions"
-                    stroke="#ff5f93"
-                    strokeWidth={3}
-                    dot={{ r: 4 }}
-                    activeDot={{ r: 6 }}
-                  />
-                </LineChart>
-              </ResponsiveContainer>
-            )}
-          </article>
-        </section>
-
-        <section className="rr-table-card">
-          <div className="rr-section-head">
-            <div>
-              <span className="rr-eyebrow">
-                <FontAwesomeIcon icon={faReceipt} />
-                Transaction Records
-              </span>
-              <h3>Transaction History</h3>
-              <p>
-                Showing <strong>{filteredTransactions.length}</strong> of{" "}
-                <strong>{transactions.length}</strong> total record(s).
-              </p>
-            </div>
-          </div>
-
-          <StandardTable
-            columns={[
-              { key: "id", label: "Transaction", sortable: true, render: (value) => (
-                <span className="rr-id-badge">{value}</span>
-              )},
-              { key: "customer", label: "Customer", sortable: true, render: (value) => (
-                <strong className="rr-customer-name">{value}</strong>
-              )},
-              { key: "pet", label: "Pet", sortable: true, render: (value) => value || "N/A" },
-              { key: "type", label: "Type", sortable: true, render: (value, transaction) => (
-                <span className={`rr-type-badge ${value}`}>
-                  {transaction.typeLabel}
-                </span>
-              )},
-              { key: "service", label: "Service", sortable: true },
-              { key: "date", label: "Date", sortable: true, render: (value, transaction) => (
-                <div className="rr-date-cell">
-                  <span>{transaction.displayDate || formatDateDisplay(value)}</span>
-                  <small>{formatTimeDisplay(transaction.time)}</small>
-                </div>
-              )},
-              { key: "amount", label: "Amount", sortable: true, format: "currency" },
-              { key: "status", label: "Status", sortable: true, render: (value) => (
-                <span className={`rr-status-badge ${getStatusClass(value)}`}>
-                  {formatLabel(value)}
-                </span>
-              )},
-              { key: "actions", label: "Action", sortable: false, render: (_value, transaction) => (
-                <button
-                  type="button"
-                  className="rr-view-btn"
-                  onClick={() => setSelectedTransaction(transaction)}
-                  title="View details"
-                >
-                  <FontAwesomeIcon icon={faEye} />
-                </button>
-              )},
-            ]}
-            data={filteredTransactions}
-            emptyMessage="No transactions found. Try changing the date range, status, type, or search filter."
-            pageSize={10}
-          />
-        </section>
-
-        {selectedTransaction && (
-          <div
-            className="rr-modal-overlay"
-            onClick={() => setSelectedTransaction(null)}
-          >
-            <div className="rr-modal" onClick={(event) => event.stopPropagation()}>
-              <div className="rr-modal-header">
-                <div>
-                  <span className="rr-eyebrow">
-                    <FontAwesomeIcon icon={faEye} />
-                    Transaction Details
-                  </span>
-                  <h2>{selectedTransaction.id}</h2>
-                </div>
-
-                <button
-                  type="button"
-                  className="rr-close-btn"
-                  onClick={() => setSelectedTransaction(null)}
-                >
-                  <FontAwesomeIcon icon={faTimes} />
-                </button>
-              </div>
-
-              <div className="rr-modal-body">
-                <div className="rr-detail-grid">
-                  <DetailItem label="Customer" value={selectedTransaction.customer} />
-                  <DetailItem label="Pet" value={selectedTransaction.pet} />
-                  <DetailItem label="Source" value={selectedTransaction.source} />
-                  <DetailItem label="Type" value={selectedTransaction.typeLabel} />
-                  <DetailItem label="Service" value={selectedTransaction.service} />
-                  <DetailItem label="Date" value={selectedTransaction.displayDate} />
-                  <DetailItem
-                    label="Time"
-                    value={formatTimeDisplay(selectedTransaction.time)}
-                  />
-                  <DetailItem
-                    label="Amount"
-                    value={formatCurrency(selectedTransaction.amount)}
-                  />
-                  <DetailItem
-                    label="Status"
-                    value={formatLabel(selectedTransaction.status)}
-                  />
-                  <DetailItem
-                    label="Notes"
-                    value={selectedTransaction.notes || "No notes provided."}
-                    wide
-                  />
-                </div>
-
-                <details className="rr-raw-record">
-                  <summary>Show raw record data</summary>
-                  <pre>{JSON.stringify(selectedTransaction.raw, null, 2)}</pre>
-                </details>
-              </div>
-
-              <div className="rr-modal-actions">
-                <button
-                  type="button"
-                  className="rr-secondary-btn"
-                  onClick={() => setSelectedTransaction(null)}
-                >
-                  Close
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
-      </div>
-    </StandardReportLayout>
+      subtitle="Appointments, orders, and customer service activity"
+      icon={faUsers}
+      fetchData={fetchReportData}
+      data={transactions}
+      columns={tableColumns}
+      summaryCards={summaryCards}
+      charts={renderCharts()}
+      statusOptions={["pending", "scheduled", "completed", "approved", "confirmed", "paid", "cancelled"]}
+      customFilters={customFilters}
+      exportFilename="receptionist-reports"
+      exportTitle="Receptionist Reports"
+      tablePageSize={12}
+      tableEmptyMessage="No transactions found"
+      enableSavedFilters={true}
+      refreshInterval={30000}
+    />
   );
 };
-
-const DetailItem = ({ label, value, wide = false }) => (
-  <div className={`rr-detail-item ${wide ? "wide" : ""}`}>
-    <small>{label}</small>
-    <strong>{value || "N/A"}</strong>
-  </div>
-);
 
 export default ReceptionistReports;

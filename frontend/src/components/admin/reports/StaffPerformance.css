@@ -1,0 +1,383 @@
+/* StaffPerformance.css */
+/* Phase 4: Staff Performance Analytics */
+
+.staff-performance {
+  display: grid;
+  gap: 1.5rem;
+  padding: 1rem 0;
+}
+
+/* Header */
+.sp-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: linear-gradient(135deg, rgba(255, 95, 147, 0.1), rgba(255, 141, 181, 0.05));
+  border: 1px solid rgba(255, 95, 147, 0.2);
+  border-radius: 16px;
+  padding: 1.25rem 1.5rem;
+}
+
+.sp-title {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.sp-icon {
+  font-size: 2rem;
+  color: #ff5f93;
+}
+
+.sp-title h2 {
+  margin: 0;
+  font-size: 1.25rem;
+  color: #1f2937;
+}
+
+.sp-title p {
+  margin: 0.25rem 0 0;
+  font-size: 0.875rem;
+  color: #64748b;
+}
+
+.sp-controls select {
+  padding: 0.5rem 0.875rem;
+  border: 1px solid rgba(255, 95, 147, 0.2);
+  border-radius: 8px;
+  font-size: 0.875rem;
+  background: white;
+}
+
+/* Overview Metrics */
+.sp-overview {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 1rem;
+}
+
+.sp-metric-card {
+  display: flex;
+  align-items: center;
+  gap: 0.875rem;
+  padding: 1rem;
+  background: rgba(255, 255, 255, 0.95);
+  border: 1px solid rgba(255, 95, 147, 0.15);
+  border-radius: 12px;
+}
+
+.sp-metric-card svg {
+  font-size: 1.5rem;
+  color: #ff5f93;
+}
+
+.sp-metric-card.highlight {
+  background: linear-gradient(135deg, rgba(255, 95, 147, 0.1), rgba(255, 141, 181, 0.05));
+  border-color: rgba(255, 95, 147, 0.3);
+}
+
+.sp-metric-card.highlight svg {
+  color: #f59e0b;
+}
+
+.sp-metric-card strong {
+  display: block;
+  font-size: 1.375rem;
+  font-weight: 700;
+  color: #1f2937;
+}
+
+.sp-metric-card span {
+  font-size: 0.75rem;
+  color: #64748b;
+}
+
+/* Top Performer */
+.sp-top-performer {
+  background: linear-gradient(135deg, rgba(245, 158, 11, 0.1), rgba(251, 191, 36, 0.05));
+  border: 1px solid rgba(245, 158, 11, 0.2);
+  border-radius: 16px;
+  padding: 1.25rem;
+}
+
+.trophy-section {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.trophy-icon {
+  font-size: 3rem;
+  color: #f59e0b;
+}
+
+.trophy-section h3 {
+  margin: 0;
+  font-size: 1rem;
+  color: #1f2937;
+}
+
+.trophy-section p {
+  margin: 0.25rem 0;
+  font-size: 0.875rem;
+  color: #64748b;
+}
+
+.top-rating {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.25rem 0.75rem;
+  background: rgba(245, 158, 11, 0.15);
+  border-radius: 9999px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #f59e0b;
+}
+
+/* Main Grid */
+.sp-main-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.5rem;
+}
+
+/* Staff List */
+.sp-staff-list {
+  background: rgba(255, 255, 255, 0.95);
+  border: 1px solid rgba(255, 95, 147, 0.15);
+  border-radius: 16px;
+  padding: 1.25rem;
+}
+
+.sp-staff-list h3 {
+  margin: 0 0 1rem;
+  font-size: 1rem;
+  color: #1f2937;
+}
+
+.staff-grid {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.staff-card {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1rem;
+  background: rgba(255, 255, 255, 0.6);
+  border: 1px solid rgba(255, 95, 147, 0.1);
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.staff-card:hover {
+  border-color: rgba(255, 95, 147, 0.3);
+  box-shadow: 0 4px 12px rgba(255, 95, 147, 0.1);
+}
+
+.staff-avatar {
+  position: relative;
+}
+
+.avatar-placeholder {
+  width: 48px;
+  height: 48px;
+  display: grid;
+  place-items: center;
+  background: linear-gradient(135deg, #ff5f93, #ff8db5);
+  border-radius: 50%;
+  color: white;
+  font-weight: 600;
+  font-size: 1.25rem;
+}
+
+.performance-badge {
+  position: absolute;
+  bottom: -4px;
+  right: -4px;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.125rem 0.375rem;
+  border-radius: 9999px;
+  font-size: 0.625rem;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.staff-info {
+  flex: 1;
+}
+
+.staff-info h4 {
+  margin: 0 0 0.25rem;
+  font-size: 0.9375rem;
+  color: #1f2937;
+}
+
+.staff-info p {
+  margin: 0;
+  font-size: 0.75rem;
+  color: #64748b;
+}
+
+.staff-metrics {
+  display: flex;
+  gap: 1rem;
+  text-align: right;
+}
+
+.staff-metrics > div {
+  display: flex;
+  flex-direction: column;
+}
+
+.staff-metrics strong {
+  font-size: 0.9375rem;
+  font-weight: 700;
+  color: #1f2937;
+}
+
+.staff-metrics small {
+  font-size: 0.6875rem;
+  color: #94a3b8;
+}
+
+/* Staff Detail */
+.sp-staff-detail {
+  background: rgba(255, 255, 255, 0.95);
+  border: 1px solid rgba(255, 95, 147, 0.15);
+  border-radius: 16px;
+  padding: 1.25rem;
+}
+
+.detail-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+.detail-header h3 {
+  margin: 0;
+  font-size: 1.125rem;
+  color: #1f2937;
+}
+
+.detail-header button {
+  width: 32px;
+  height: 32px;
+  display: grid;
+  place-items: center;
+  background: rgba(255, 95, 147, 0.1);
+  border: none;
+  border-radius: 8px;
+  color: #64748b;
+  font-size: 1.25rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.detail-header button:hover {
+  background: rgba(255, 95, 147, 0.2);
+  color: #ff5f93;
+}
+
+.detail-metrics {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1rem;
+  margin-top: 1rem;
+  padding-top: 1rem;
+  border-top: 1px solid rgba(255, 95, 147, 0.1);
+}
+
+.detail-metrics > div {
+  text-align: center;
+}
+
+.detail-metrics strong {
+  display: block;
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #ff5f93;
+  margin-bottom: 0.25rem;
+}
+
+.detail-metrics span {
+  font-size: 0.75rem;
+  color: #64748b;
+}
+
+/* Departments */
+.sp-departments {
+  background: rgba(255, 255, 255, 0.95);
+  border: 1px solid rgba(255, 95, 147, 0.15);
+  border-radius: 16px;
+  padding: 1.25rem;
+}
+
+.sp-departments h3 {
+  margin: 0 0 1rem;
+  font-size: 1rem;
+  color: #1f2937;
+}
+
+.department-charts {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 1.5rem;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .sp-main-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .sp-header {
+    flex-direction: column;
+    gap: 1rem;
+    align-items: flex-start;
+  }
+  
+  .staff-metrics {
+    flex-direction: column;
+    gap: 0.5rem;
+    text-align: left;
+  }
+  
+  .detail-metrics {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Dark Mode */
+[data-theme="dark"] .staff-performance,
+body[data-theme="dark"] .staff-performance {
+  --sp-bg: rgba(15, 23, 42, 0.95);
+}
+
+[data-theme="dark"] .sp-header,
+[data-theme="dark"] .sp-metric-card,
+[data-theme="dark"] .sp-top-performer,
+[data-theme="dark"] .sp-staff-list,
+[data-theme="dark"] .sp-staff-detail,
+[data-theme="dark"] .sp-departments {
+  background: rgba(15, 23, 42, 0.9);
+  border-color: rgba(255, 141, 181, 0.2);
+}
+
+[data-theme="dark"] .sp-title h2,
+[data-theme="dark"] .sp-metric-card strong,
+[data-theme="dark"] .trophy-section h3,
+[data-theme="dark"] .sp-staff-list h3,
+[data-theme="dark"] .detail-header h3,
+[data-theme="dark"] .sp-departments h3,
+[data-theme="dark"] .staff-info h4,
+[data-theme="dark"] .staff-metrics strong {
+  color: #f1f5f9;
+}

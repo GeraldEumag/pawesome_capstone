@@ -1,0 +1,244 @@
+/* ComparativeReporting.css */
+/* Phase 3: Comparative Reporting Styles */
+
+.comparative-reporting {
+  display: grid;
+  gap: 1.5rem;
+  padding: 1rem 0;
+}
+
+/* Header */
+.cr-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.cr-title {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.cr-icon {
+  font-size: 2rem;
+  color: #ff5f93;
+}
+
+.cr-title h2 {
+  margin: 0;
+  font-size: 1.25rem;
+  color: #1f2937;
+}
+
+.cr-title p {
+  margin: 0.25rem 0 0;
+  font-size: 0.875rem;
+  color: #64748b;
+}
+
+/* Controls */
+.cr-controls {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: rgba(255, 255, 255, 0.95);
+  border: 1px solid rgba(255, 95, 147, 0.15);
+  border-radius: 16px;
+  padding: 1rem 1.25rem;
+}
+
+.period-selectors {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.period-selector {
+  display: flex;
+  flex-direction: column;
+  gap: 0.375rem;
+}
+
+.period-selector label {
+  font-size: 0.6875rem;
+  font-weight: 600;
+  color: #94a3b8;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.period-selector select {
+  padding: 0.5rem 0.875rem;
+  border: 1px solid rgba(255, 95, 147, 0.2);
+  border-radius: 8px;
+  font-size: 0.875rem;
+  color: #1f2937;
+  background: white;
+  cursor: pointer;
+  min-width: 150px;
+}
+
+.period-arrow {
+  color: #cbd5e1;
+  font-size: 1.25rem;
+  margin-top: 1rem;
+}
+
+.metric-filter {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.metric-filter svg {
+  color: #64748b;
+}
+
+.metric-filter select {
+  padding: 0.5rem 0.875rem;
+  border: 1px solid rgba(255, 95, 147, 0.2);
+  border-radius: 8px;
+  font-size: 0.875rem;
+  color: #1f2937;
+  background: white;
+  cursor: pointer;
+}
+
+/* Metrics Grid */
+.cr-metrics-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1rem;
+}
+
+/* Comparison Metric Card */
+.comparison-metric {
+  background: rgba(255, 255, 255, 0.95);
+  border: 1px solid rgba(255, 95, 147, 0.15);
+  border-radius: 16px;
+  padding: 1.25rem;
+  transition: all 0.2s ease;
+}
+
+.comparison-metric:hover {
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+}
+
+.comparison-metric h4 {
+  margin: 0 0 0.75rem;
+  font-size: 0.875rem;
+  color: #64748b;
+  font-weight: 600;
+}
+
+.metric-values {
+  display: flex;
+  gap: 1.5rem;
+  margin-bottom: 0.75rem;
+}
+
+.metric-current,
+.metric-previous {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.metric-current small,
+.metric-previous small {
+  font-size: 0.6875rem;
+  color: #94a3b8;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.metric-current strong {
+  font-size: 1.375rem;
+  font-weight: 700;
+  color: #1f2937;
+}
+
+.metric-previous span {
+  font-size: 1rem;
+  color: #94a3b8;
+}
+
+.metric-change {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  padding: 0.375rem 0.75rem;
+  border-radius: 9999px;
+  font-size: 0.875rem;
+  font-weight: 700;
+  width: fit-content;
+}
+
+.metric-change.positive {
+  color: #10b981;
+  background: rgba(16, 185, 129, 0.1);
+}
+
+.metric-change.negative {
+  color: #ef4444;
+  background: rgba(239, 68, 68, 0.1);
+}
+
+/* Charts Grid */
+.cr-charts-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+  gap: 1.5rem;
+}
+
+/* YoY Section */
+.cr-yoy-section {
+  background: rgba(255, 255, 255, 0.95);
+  border: 1px solid rgba(255, 95, 147, 0.15);
+  border-radius: 16px;
+  padding: 1.25rem;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .cr-controls {
+    flex-direction: column;
+    gap: 1rem;
+    align-items: flex-start;
+  }
+  
+  .period-selectors {
+    flex-direction: column;
+    align-items: flex-start;
+    width: 100%;
+  }
+  
+  .period-arrow {
+    transform: rotate(90deg);
+    margin: 0;
+  }
+  
+  .cr-charts-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Dark Mode */
+[data-theme="dark"] .comparative-reporting,
+body[data-theme="dark"] .comparative-reporting {
+  --cr-bg: rgba(15, 23, 42, 0.95);
+}
+
+[data-theme="dark"] .cr-controls,
+[data-theme="dark"] .comparison-metric,
+[data-theme="dark"] .cr-yoy-section {
+  background: rgba(15, 23, 42, 0.9);
+  border-color: rgba(255, 141, 181, 0.2);
+}
+
+[data-theme="dark"] .cr-title h2,
+[data-theme="dark"] .comparison-metric h4,
+[data-theme="dark"] .metric-current strong {
+  color: #f1f5f9;
+}

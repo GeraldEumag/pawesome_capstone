@@ -1,0 +1,468 @@
+/* ApiHealthCheck.css */
+/* Backend connection status monitoring UI */
+
+.api-health-check {
+  padding: 1.5rem;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+/* Header */
+.health-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.5rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid rgba(255, 95, 147, 0.15);
+}
+
+.health-title {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.server-icon {
+  font-size: 2.5rem;
+  color: #ff5f93;
+}
+
+.health-title h2 {
+  margin: 0;
+  font-size: 1.5rem;
+  color: #1f2937;
+}
+
+.health-title p {
+  margin: 0.25rem 0 0;
+  font-size: 0.875rem;
+  color: #64748b;
+}
+
+.health-controls {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.auto-refresh-toggle {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.875rem;
+  color: #64748b;
+  cursor: pointer;
+}
+
+.auto-refresh-toggle input {
+  width: 18px;
+  height: 18px;
+  accent-color: #ff5f93;
+}
+
+.refresh-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.625rem 1.25rem;
+  background: linear-gradient(135deg, #ff5f93, #ff8db5);
+  border: none;
+  border-radius: 10px;
+  color: white;
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.refresh-btn:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 14px rgba(255, 95, 147, 0.35);
+}
+
+.refresh-btn:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+/* Overall Status */
+.overall-status {
+  margin-bottom: 1.5rem;
+}
+
+.status-card {
+  display: flex;
+  align-items: center;
+  gap: 1.25rem;
+  padding: 1.5rem;
+  border: 2px solid;
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.8);
+}
+
+.status-icon {
+  font-size: 3rem;
+}
+
+.status-info h3 {
+  margin: 0 0 0.5rem;
+  font-size: 1.25rem;
+}
+
+.status-info p {
+  margin: 0 0 0.25rem;
+  font-size: 0.9375rem;
+  color: #64748b;
+}
+
+.status-info small {
+  font-size: 0.75rem;
+  color: #94a3b8;
+}
+
+/* Connection Details */
+.connection-details {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.detail-card {
+  padding: 1rem;
+  background: rgba(241, 245, 249, 0.8);
+  border: 1px solid rgba(226, 232, 240, 0.8);
+  border-radius: 12px;
+}
+
+.detail-card strong {
+  display: block;
+  font-size: 0.75rem;
+  color: #64748b;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: 0.375rem;
+}
+
+.detail-card code {
+  font-size: 0.8125rem;
+  color: #1f2937;
+  word-break: break-all;
+}
+
+.detail-card span {
+  font-size: 0.9375rem;
+  font-weight: 600;
+}
+
+.detail-card span.connected,
+.detail-card span.available {
+  color: #10b981;
+}
+
+.detail-card span.disconnected,
+.detail-card span.error {
+  color: #ef4444;
+}
+
+/* Endpoints Section */
+.endpoints-section {
+  background: rgba(255, 255, 255, 0.95);
+  border: 1px solid rgba(255, 95, 147, 0.15);
+  border-radius: 16px;
+  padding: 1.25rem;
+  margin-bottom: 1.5rem;
+}
+
+.endpoints-section h3 {
+  margin: 0 0 1rem;
+  font-size: 1.125rem;
+  color: #1f2937;
+}
+
+.endpoints-table-wrapper {
+  overflow-x: auto;
+}
+
+.endpoints-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.875rem;
+}
+
+.endpoints-table th {
+  text-align: left;
+  padding: 0.75rem;
+  font-weight: 600;
+  color: #64748b;
+  border-bottom: 2px solid rgba(255, 95, 147, 0.1);
+  white-space: nowrap;
+}
+
+.endpoints-table td {
+  padding: 0.75rem;
+  border-bottom: 1px solid rgba(255, 95, 147, 0.05);
+}
+
+.endpoint-row:hover {
+  background: rgba(255, 95, 147, 0.02);
+}
+
+/* Status Badge */
+.status-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  padding: 0.375rem 0.75rem;
+  border-radius: 9999px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: capitalize;
+  white-space: nowrap;
+}
+
+.status-badge small {
+  font-weight: 400;
+  opacity: 0.8;
+}
+
+.required-badge {
+  display: inline-block;
+  margin-left: 0.5rem;
+  padding: 0.125rem 0.5rem;
+  background: rgba(239, 68, 68, 0.1);
+  border-radius: 4px;
+  font-size: 0.625rem;
+  font-weight: 700;
+  color: #ef4444;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.endpoint-path {
+  font-family: monospace;
+  font-size: 0.8125rem;
+  color: #64748b;
+}
+
+.error-message {
+  color: #ef4444;
+  font-size: 0.75rem;
+}
+
+.success-message {
+  color: #10b981;
+  font-weight: 600;
+}
+
+/* Summary */
+.endpoints-summary {
+  display: flex;
+  gap: 1rem;
+  margin-top: 1rem;
+  padding-top: 1rem;
+  border-top: 1px solid rgba(255, 95, 147, 0.1);
+}
+
+.summary-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 0.75rem 1.25rem;
+  background: rgba(241, 245, 249, 0.8);
+  border-radius: 10px;
+  min-width: 100px;
+}
+
+.summary-item strong {
+  font-size: 1.5rem;
+  font-weight: 700;
+}
+
+.summary-item span {
+  font-size: 0.6875rem;
+  color: #64748b;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.summary-item.success strong {
+  color: #10b981;
+}
+
+.summary-item.warning strong {
+  color: #f59e0b;
+}
+
+.summary-item.error strong {
+  color: #ef4444;
+}
+
+.summary-item.total strong {
+  color: #64748b;
+}
+
+/* Quick Actions */
+.quick-actions {
+  background: rgba(255, 255, 255, 0.95);
+  border: 1px solid rgba(255, 95, 147, 0.15);
+  border-radius: 16px;
+  padding: 1.25rem;
+  margin-bottom: 1.5rem;
+}
+
+.quick-actions h3 {
+  margin: 0 0 1rem;
+  font-size: 1rem;
+  color: #1f2937;
+}
+
+.actions-grid {
+  display: flex;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.action-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.625rem 1rem;
+  background: rgba(241, 245, 249, 0.8);
+  border: 1px solid rgba(226, 232, 240, 0.8);
+  border-radius: 8px;
+  color: #64748b;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.action-btn:hover {
+  background: rgba(255, 95, 147, 0.1);
+  border-color: rgba(255, 95, 147, 0.3);
+  color: #ff5f93;
+}
+
+/* Implementation Guide */
+.implementation-guide {
+  background: linear-gradient(135deg, rgba(245, 158, 11, 0.1), rgba(251, 191, 36, 0.05));
+  border: 1px solid rgba(245, 158, 11, 0.3);
+  border-radius: 16px;
+  padding: 1.25rem;
+}
+
+.implementation-guide h3 {
+  margin: 0 0 0.75rem;
+  font-size: 1rem;
+  color: #1f2937;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.implementation-guide h3 svg {
+  color: #f59e0b;
+}
+
+.implementation-guide p {
+  margin: 0 0 1rem;
+  font-size: 0.875rem;
+  color: #64748b;
+  line-height: 1.5;
+}
+
+.implementation-guide code {
+  background: rgba(255, 95, 147, 0.1);
+  padding: 0.125rem 0.375rem;
+  border-radius: 4px;
+  font-size: 0.8125rem;
+  color: #ff5f93;
+}
+
+.guide-steps {
+  background: rgba(255, 255, 255, 0.6);
+  border-radius: 10px;
+  padding: 1rem 1rem 1rem 2rem;
+}
+
+.guide-steps ol {
+  margin: 0;
+  padding-left: 1rem;
+}
+
+.guide-steps li {
+  margin-bottom: 0.5rem;
+  font-size: 0.8125rem;
+  color: #1f2937;
+  line-height: 1.5;
+}
+
+.guide-steps li:last-child {
+  margin-bottom: 0;
+}
+
+.guide-steps code {
+  background: rgba(15, 23, 42, 0.1);
+  padding: 0.125rem 0.375rem;
+  border-radius: 4px;
+  font-size: 0.75rem;
+  color: #0f172a;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .health-header {
+    flex-direction: column;
+    gap: 1rem;
+    align-items: flex-start;
+  }
+  
+  .health-controls {
+    width: 100%;
+    justify-content: space-between;
+  }
+  
+  .connection-details {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  
+  .endpoints-summary {
+    flex-wrap: wrap;
+  }
+  
+  .summary-item {
+    flex: 1;
+    min-width: 80px;
+  }
+}
+
+/* Dark Mode */
+[data-theme="dark"] .api-health-check,
+body[data-theme="dark"] .api-health-check {
+  --health-bg: rgba(15, 23, 42, 0.95);
+}
+
+[data-theme="dark"] .status-card,
+[data-theme="dark"] .detail-card,
+[data-theme="dark"] .endpoints-section,
+[data-theme="dark"] .quick-actions,
+[data-theme="dark"] .implementation-guide,
+[data-theme="dark"] .guide-steps {
+  background: rgba(15, 23, 42, 0.9);
+  border-color: rgba(255, 141, 181, 0.2);
+}
+
+[data-theme="dark"] .health-title h2,
+[data-theme="dark"] .endpoints-section h3,
+[data-theme="dark"] .quick-actions h3,
+[data-theme="dark"] .implementation-guide h3,
+[data-theme="dark"] .guide-steps li {
+  color: #f1f5f9;
+}
+
+[data-theme="dark"] .detail-card,
+[data-theme="dark"] .summary-item {
+  background: rgba(30, 41, 59, 0.8);
+}

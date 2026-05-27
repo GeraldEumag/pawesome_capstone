@@ -200,6 +200,18 @@ Route::middleware(['auth.api', 'throttle:api', 'role:admin'])->prefix('admin')->
     Route::get('reports/logistics', [ReportsController::class, 'logistics']);
     Route::get('reports/reception', [ReportsController::class, 'reception']);
 
+    // Advanced Reporting APIs (Phase 2, 3, 4)
+    Route::get('reports/executive', [ReportsController::class, 'executiveOverview']);
+    Route::get('reports/predictive', [ReportsController::class, 'predictiveAnalytics']);
+    Route::get('reports/customers/segments', [ReportsController::class, 'customerSegmentation']);
+    Route::get('reports/comparison', [ReportsController::class, 'comparativeReporting']);
+    Route::get('reports/alerts', [ReportsController::class, 'automatedAlerts']);
+    Route::post('reports/alerts', [ReportsController::class, 'createAlert']);
+    Route::delete('reports/alerts/{id}', [ReportsController::class, 'deleteAlert']);
+    Route::get('reports/sales-analysis', [ReportsController::class, 'salesAnalysis']);
+    Route::get('reports/inventory-opt', [ReportsController::class, 'inventoryOptimization']);
+    Route::get('reports/staff-performance', [ReportsController::class, 'staffPerformance']);
+
     // Supplier Management
     Route::get('suppliers', [SupplierController::class, 'index']);
     Route::post('suppliers', [SupplierController::class, 'store']);
