@@ -133,7 +133,12 @@ const VetNewAppointment = () => {
           const adminServicesData = await apiRequest("/admin/services");
           servicesList = safeArray(adminServicesData);
         } catch {
-          servicesList = [];
+          try {
+            const receptionistServicesData = await apiRequest("/receptionist/services?active_only=1");
+            servicesList = safeArray(receptionistServicesData);
+          } catch {
+            servicesList = [];
+          }
         }
       }
 

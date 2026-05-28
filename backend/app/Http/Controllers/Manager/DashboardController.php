@@ -114,6 +114,154 @@ class DashboardController extends Controller
         ]);
     }
 
+    public function history(Request $request)
+    {
+        $perPage = (int) $request->get('per_page', 50);
+        $page    = (int) $request->get('page', 1);
+        $offset  = ($page - 1) * $perPage;
+
+        $dateFilter = $request->get('date_filter', 'all');
+        $search     = trim((string) $request->get('search', ''));
+        $category   = $request->get('category', 'all');
+
+        $entries = collect();
+
+        // --- Sales (POS) ---
+        $salesQuery = DB::table('sales')
+            ->leftJoin('users as cashiers', 'cashiers.id', '=', 'sales.cashier_id')
+            ->select([
+                DB::raw('"transaction" as category'),
+                DB::raw('"sale" as subcategory'),
+                DB::raw('CONCAT("SALE-", sales.id) as reference_id'),
+                DB::raw('COALESCE(cashiers.name, "Walk-in") as actor'),
+                DB::raw('"cashier" as actor_role'),
+                DB::raw('"Sale completed" as action'),
+                DB::raw('CONCAT("POS transaction #", sales.id, " — ", COALESCE(sales.payment_type, "cash")) as description'),
+                'sales.amount',
+                DB::raw('COALESCE(sales.status, "completed") as status'),
+                'sales.created_at',
+            ]);
+
+        if ($dateFilter === 'today')  $salesQuery->whereDate('sales.created_at', Carbon::today());
+        if ($dateFilter === 'week')   $salesQuery->where('sales.created_at', '>=', Carbon::now()->subDays(7));
+        if ($dateFilter === 'month')  $salesQuery->where('sales.created_at', '>=', Carbon::now()->subDays(30));
+        if ($search) $salesQuery->where(function ($q) use ($search) {
+            $q->where('cashiers.name', 'like', "%$search%")
+              ->orWhere('sales.payment_type', 'like', "%$search%");
+        });
+
+        // --- Appointments ---
+        $apptQuery = DB::table('appointments')
+            ->leftJoin('users as vets', 'vets.id', '=', 'appointments.veterinarian_id')
+            ->leftJoin('customers', 'customers.id', '=', 'appointments.customer_id')
+            ->leftJoin('pets', 'pets.id', '=', 'appointments.pet_id')
+            ->leftJoin('services', 'services.id', '=', 'appointments.service_id')
+            ->select([
+                DB::raw('"appointment" as category'),
+                DB::raw('"service" as subcategory'),
+                DB::raw('CONCAT("APT-", appointments.id) as reference_id'),
+                DB::raw('COALESCE(vets.name, "Unassigned") as actor'),
+                DB::raw('"veterinary" as actor_role'),
+                DB::raw('CONCAT("Appointment ", appointments.status) as action'),
+                DB::raw('CONCAT(COALESCE(services.name, "Service"), " for ", COALESCE(pets.name, "pet"), " (", COALESCE(customers.name, "customer"), ")") as description'),
+                DB::raw('COALESCE(services.price, 0) as amount'),
+                'appointments.status',
+                DB::raw('COALESCE(appointments.scheduled_at, appointments.created_at) as created_at'),
+            ]);
+
+        if ($dateFilter === 'today')  $apptQuery->whereDate('appointments.created_at', Carbon::today());
+        if ($dateFilter === 'week')   $apptQuery->where('appointments.created_at', '>=', Carbon::now()->subDays(7));
+        if ($dateFilter === 'month')  $apptQuery->where('appointments.created_at', '>=', Carbon::now()->subDays(30));
+        if ($search) $apptQuery->where(function ($q) use ($search) {
+            $q->where('customers.name', 'like', "%$search%")
+              ->orWhere('pets.name', 'like', "%$search%")
+              ->orWhere('services.name', 'like', "%$search%")
+              ->orWhere('vets.name', 'like', "%$search%");
+        });
+
+        // --- Service Requests ---
+        if (DB::getSchemaBuilder()->hasTable('service_requests')) {
+            $srQuery = DB::table('service_requests')
+                ->select([
+                    DB::raw('"service_request" as category'),
+                    DB::raw('COALESCE(service_requests.request_type, "service") as subcategory'),
+                    DB::raw('CONCAT("SR-", service_requests.id) as reference_id'),
+                    DB::raw('COALESCE(service_requests.customer_name, "Customer") as actor'),
+                    DB::raw('"customer" as actor_role'),
+                    DB::raw('CONCAT("Service request ", service_requests.status) as action'),
+                    DB::raw('CONCAT(COALESCE(service_requests.service_name, service_requests.request_type, "Service"), " for ", COALESCE(service_requests.pet_name, "pet")) as description'),
+                    DB::raw('COALESCE(service_requests.total_amount, service_requests.price, 0) as amount'),
+                    'service_requests.status',
+                    'service_requests.created_at',
+                ]);
+
+            if ($dateFilter === 'today')  $srQuery->whereDate('service_requests.created_at', Carbon::today());
+            if ($dateFilter === 'week')   $srQuery->where('service_requests.created_at', '>=', Carbon::now()->subDays(7));
+            if ($dateFilter === 'month')  $srQuery->where('service_requests.created_at', '>=', Carbon::now()->subDays(30));
+            if ($search) $srQuery->where(function ($q) use ($search) {
+                $q->where('customer_name', 'like', "%$search%")
+                  ->orWhere('pet_name', 'like', "%$search%")
+                  ->orWhere('service_name', 'like', "%$search%");
+            });
+
+            $entries = $entries->concat($srQuery->get());
+        }
+
+        // --- Customer Orders ---
+        if (DB::getSchemaBuilder()->hasTable('customer_orders')) {
+            $ordQuery = DB::table('customer_orders')
+                ->select([
+                    DB::raw('"order" as category'),
+                    DB::raw('"customer_order" as subcategory'),
+                    DB::raw('CONCAT("ORD-", customer_orders.id) as reference_id'),
+                    DB::raw('COALESCE(customer_orders.customer_name, "Customer") as actor'),
+                    DB::raw('"customer" as actor_role'),
+                    DB::raw('CONCAT("Order ", customer_orders.status) as action'),
+                    DB::raw('CONCAT("Order #", customer_orders.id, " — ", COALESCE(customer_orders.payment_method, "N/A")) as description'),
+                    DB::raw('COALESCE(customer_orders.total_amount, 0) as amount'),
+                    'customer_orders.status',
+                    'customer_orders.created_at',
+                ]);
+
+            if ($dateFilter === 'today')  $ordQuery->whereDate('customer_orders.created_at', Carbon::today());
+            if ($dateFilter === 'week')   $ordQuery->where('customer_orders.created_at', '>=', Carbon::now()->subDays(7));
+            if ($dateFilter === 'month')  $ordQuery->where('customer_orders.created_at', '>=', Carbon::now()->subDays(30));
+            if ($search) $ordQuery->where(function ($q) use ($search) {
+                $q->where('customer_name', 'like', "%$search%")
+                  ->orWhere('payment_method', 'like', "%$search%");
+            });
+
+            $entries = $entries->concat($ordQuery->get());
+        }
+
+        $entries = $entries
+            ->concat($salesQuery->get())
+            ->concat($apptQuery->get());
+
+        // Category filter
+        if ($category !== 'all') {
+            $entries = $entries->filter(fn ($e) => ($e->category ?? '') === $category);
+        }
+
+        // Sort newest first
+        $entries = $entries->sortByDesc('created_at')->values();
+
+        $total = $entries->count();
+        $paginated = $entries->slice($offset, $perPage)->values();
+
+        return response()->json([
+            'success'  => true,
+            'history'  => $paginated,
+            'data'     => $paginated,
+            'meta'     => [
+                'total'        => $total,
+                'per_page'     => $perPage,
+                'current_page' => $page,
+                'last_page'    => max(1, (int) ceil($total / $perPage)),
+            ],
+        ]);
+    }
+
     private function calculateRevenueGrowth($today)
     {
         $currentMonth = Sale::whereMonth('created_at', $today->month)->sum('amount');

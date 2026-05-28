@@ -17,6 +17,7 @@ const GroomingForm = () => {
   const [activeTab, setActiveTab] = useState("book");
   const [appointments, setAppointments] = useState([]);
   const [pets, setPets] = useState([]);
+  const [services, setServices] = useState([]);
   const [loading, setLoading] = useState(false);
   const [availabilityLoading, setAvailabilityLoading] = useState(false);
   const [groomingAvailability, setGroomingAvailability] = useState(null);
@@ -28,7 +29,7 @@ const GroomingForm = () => {
     pet_id: "",
     pet_name: "",
     service_type: "grooming",
-    service_name: "Basic Bath",
+    service_name: "",
     request_date: "",
     request_time: "",
     notes: "",
@@ -66,10 +67,22 @@ const GroomingForm = () => {
     }
   }, []);
 
+  const fetchServices = useCallback(async () => {
+    try {
+      const data = await apiRequest("/customer/services");
+      const list = normalizeList(data, ["services", "data"]);
+      setServices(list);
+    } catch (error) {
+      console.error("Failed to load services:", error);
+      setServices([]);
+    }
+  }, []);
+
   useEffect(() => {
     fetchAppointments();
     fetchPets();
-  }, [fetchAppointments, fetchPets]);
+    fetchServices();
+  }, [fetchAppointments, fetchPets, fetchServices]);
 
   const selectedPet = pets.find((pet) => String(pet.id) === String(formData.pet_id));
 
@@ -189,7 +202,7 @@ const GroomingForm = () => {
           pet_id: "",
           pet_name: "",
           service_type: "grooming",
-          service_name: "Basic Bath",
+          service_name: "",
           request_date: "",
           request_time: "",
           notes: "",
@@ -291,13 +304,21 @@ const GroomingForm = () => {
               name="service_name"
               value={formData.service_name}
               onChange={handleChange}
+              required
             >
-              <option value="Basic Bath">Basic Bath - ₱500</option>
-              <option value="Full Grooming Package">Full Grooming Package - ₱1500</option>
-              <option value="Haircut Only">Haircut Only - ₱800</option>
-              <option value="Nail Trim">Nail Trim - ₱200</option>
-              <option value="Teeth Cleaning">Teeth Cleaning - ₱350</option>
+              <option value="">Select a grooming service...</option>
+              {services
+                .filter((s) => ["grooming", "daycare"].includes((s.category || "").toLowerCase()))
+                .map((service) => (
+                  <option key={service.id || service.name} value={service.name}>
+                    {service.name}
+                    {service.price ? ` \u2014 \u20b1${Number(service.price).toFixed(2)}` : ""}
+                  </option>
+                ))}
             </select>
+            {services.length === 0 && (
+              <small className="service-loading">Loading services...</small>
+            )}
 
             <DatePickerInput
               selected={formData.request_date ? new Date(formData.request_date) : null}

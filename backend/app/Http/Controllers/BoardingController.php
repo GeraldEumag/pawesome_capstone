@@ -230,10 +230,13 @@ class BoardingController extends Controller
             $request->merge(['customer_id' => $customerId]);
         }
 
+        $useHotelRoom = $request->has('hotel_room_id') && $request->hotel_room_id;
+
         $validator = Validator::make($request->all(), [
             'pet_id' => 'required|exists:pets,id',
             'customer_id' => 'required|exists:customers,id',
-            'room_id' => 'required|exists:boarding_rooms,id',
+            'room_id' => 'nullable|exists:boarding_rooms,id',
+            'hotel_room_id' => 'nullable|exists:hotel_rooms,id',
             'check_in_date' => 'required|date|after_or_equal:today',
             'number_of_days' => 'required|integer|min:1',
             'check_in_time' => 'nullable|date_format:H:i',
@@ -247,6 +250,10 @@ class BoardingController extends Controller
 
         if ($validator->fails()) {
             return response()->json(['errors' => $validator->errors()], 422);
+        }
+
+        if (!$request->room_id && !$request->hotel_room_id) {
+            return response()->json(['errors' => ['room_id' => ['A room must be selected.']]], 422);
         }
 
         if ($request->pet_id && $request->user()?->role === 'customer') {
@@ -266,25 +273,33 @@ class BoardingController extends Controller
         $checkOutDate = $checkOut->toDateString();
 
         // Calculate total amount using room-based pricing
-        $pricingResult = $this->boardingRoomService->calculateTotalAmount(
-            $request->room_id,
-            $request->check_in_date,
-            $checkOutDate
-        );
+        if ($useHotelRoom) {
+            $hotelRoom = \App\Models\HotelRoom::find($request->hotel_room_id);
+            $dailyRate = (float) ($hotelRoom->daily_rate ?? 0);
+            $numberOfDays = max(1, (int) $request->number_of_days);
+            $totalAmount = $dailyRate * $numberOfDays;
+            $roomName = $hotelRoom->name ?? $hotelRoom->room_number;
+            $roomType = $hotelRoom->type;
+        } else {
+            $pricingResult = $this->boardingRoomService->calculateTotalAmount(
+                $request->room_id,
+                $request->check_in_date,
+                $checkOutDate
+            );
 
-        if (!$pricingResult['success']) {
-            return response()->json([
-                'success' => false,
-                'message' => $pricingResult['message']
-            ], 422);
+            if (!$pricingResult['success']) {
+                return response()->json([
+                    'success' => false,
+                    'message' => $pricingResult['message']
+                ], 422);
+            }
+
+            $totalAmount = $pricingResult['total_amount'];
+            $dailyRate = $pricingResult['daily_rate'];
+            $numberOfDays = $pricingResult['number_of_days'];
+            $roomName = $pricingResult['room_name'];
+            $roomType = $pricingResult['room_type'];
         }
-
-        // Use room-based pricing
-        $totalAmount = $pricingResult['total_amount'];
-        $dailyRate = $pricingResult['daily_rate'];
-        $numberOfDays = $pricingResult['number_of_days'];
-        $roomName = $pricingResult['room_name'];
-        $roomType = $pricingResult['room_type'];
 
         // Process add-ons
         $addOnSubtotal = 0;
@@ -368,16 +383,12 @@ class BoardingController extends Controller
             'notes' => $request->notes,
         ];
 
-        if (Schema::hasColumn('boardings', 'room_id')) {
+        if (Schema::hasColumn('boardings', 'room_id') && $request->room_id) {
             $boardingData['room_id'] = $request->room_id;
         }
 
-        if (
-            Schema::hasColumn('boardings', 'hotel_room_id') &&
-            Schema::hasTable('hotel_rooms') &&
-            DB::table('hotel_rooms')->where('id', $request->room_id)->exists()
-        ) {
-            $boardingData['hotel_room_id'] = $request->room_id;
+        if (Schema::hasColumn('boardings', 'hotel_room_id') && $request->hotel_room_id) {
+            $boardingData['hotel_room_id'] = $request->hotel_room_id;
         }
         
         // Note: Special care fields and compatibility metadata stored in notes field
@@ -419,22 +430,24 @@ class BoardingController extends Controller
         );
         
         // Create boarding and room reservation in a transaction
-        $result = DB::transaction(function () use ($boardingData, $request, $selectedAddOns, $checkOutDate) {
+        $result = DB::transaction(function () use ($boardingData, $request, $selectedAddOns, $checkOutDate, $useHotelRoom) {
             $boarding = Boarding::create($boardingData);
 
-            // Create room reservation
-            $roomReservationResult = $this->boardingRoomService->createRoomReservation(
-                $request->room_id,
-                'pet_hotel',
-                $boarding->id,
-                $request->pet_id,
-                $request->check_in_date,
-                $checkOutDate,
-                $request->customer_id
-            );
+            // Create room reservation (only for boarding rooms, not legacy hotel rooms)
+            if (!$useHotelRoom) {
+                $roomReservationResult = $this->boardingRoomService->createRoomReservation(
+                    $request->room_id,
+                    'pet_hotel',
+                    $boarding->id,
+                    $request->pet_id,
+                    $request->check_in_date,
+                    $checkOutDate,
+                    $request->customer_id
+                );
 
-            if (!$roomReservationResult['success']) {
-                throw new \Exception($roomReservationResult['message']);
+                if (!$roomReservationResult['success']) {
+                    throw new \Exception($roomReservationResult['message']);
+                }
             }
 
             // Create booking add-ons

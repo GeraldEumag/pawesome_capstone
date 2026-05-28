@@ -36,9 +36,11 @@ class InventoryController extends Controller
             $query->where('category', $request->category);
         }
 
-        // Filter by status
+        // Filter by status; exclude archived items by default when no status filter is provided
         if ($request->has('status')) {
             $query->where('status', $request->status);
+        } else {
+            $query->where('status', '!=', 'archived')->whereNull('archived_at');
         }
 
         // Filter by stock level

@@ -18,11 +18,13 @@ import {
   faSpinner,
   faTimes,
   faTimesCircle,
+  faWrench,
 } from "@fortawesome/free-solid-svg-icons";
 import "./ReceptionistHotelBookings.css";
 import { apiRequest, getAuthenticatedFileUrl } from "../../api/client";
 import DatePickerInput from "../../components/shared/DatePickerInput";
 import PetAvatar from "../shared/PetAvatar";
+import ServiceManagerModal from "./ServiceManagerModal";
 import {
   normalizeList,
   normalizeStatus,
@@ -76,6 +78,7 @@ const getRoomOptionName = (room) =>
   room.name || room.room_number || room.room_name || `Room #${room.id}`;
 
 const ReceptionistHotelBookings = () => {
+  const [showServiceManager, setShowServiceManager] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [filterStatus, setFilterStatus] = useState("all");
   const [filterPayment, setFilterPayment] = useState("all");
@@ -412,6 +415,15 @@ const ReceptionistHotelBookings = () => {
         <div className="hotel-hero-actions">
           <button
             type="button"
+            className="secondary-btn"
+            onClick={() => setShowServiceManager(true)}
+          >
+            <FontAwesomeIcon icon={faWrench} />
+            Manage Rooms
+          </button>
+
+          <button
+            type="button"
             className={`secondary-btn ${refreshing ? "loading" : ""}`}
             onClick={() => {
               fetchBookings({ silent: true });
@@ -429,6 +441,10 @@ const ReceptionistHotelBookings = () => {
           </button>
         </div>
       </section>
+
+      {showServiceManager && (
+        <ServiceManagerModal onClose={() => setShowServiceManager(false)} />
+      )}
 
       <section className="hotel-summary-grid">
         <button type="button" className="hotel-summary-card" onClick={() => setFilterStatus("all")}>

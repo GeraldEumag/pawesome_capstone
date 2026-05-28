@@ -1,6 +1,9 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { showConfirm } from "../../utils/alert";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import catHotelImg from "../../assets/CATHOTEL.jpg";
+import dogHotelImg from "../../assets/DOGHOTEL.jpg";
+import daycareImg from "../../assets/PETDAYCARE.jpg";
 import {
   faHotel,
   faPlus,
@@ -15,6 +18,21 @@ import {
 import "./HotelForm.css";
 import { apiRequest } from "../../api/client";
 import DatePickerInput from "../../components/shared/DatePickerInput";
+
+const CATEGORY_CONFIG = {
+  dog_hotel: { img: dogHotelImg, label: "Dog Hotel",  badge: "#f97316" },
+  cat_hotel: { img: catHotelImg, label: "Cat Hotel",  badge: "#8b5cf6" },
+  daycare:   { img: daycareImg,  label: "Daycare",    badge: "#10b981" },
+  other:     { img: null,        label: "Other",      badge: "#64748b" },
+};
+
+const getRoomConfig = (room) => {
+  const cat = room.hotel_category ||
+    (room.room_type?.startsWith("dog") || room.room_type === "kennel" ? "dog_hotel" :
+     room.room_type?.startsWith("cat") || room.room_type === "cattery" ? "cat_hotel" :
+     room.room_type?.startsWith("daycare") ? "daycare" : "other");
+  return CATEGORY_CONFIG[cat] || CATEGORY_CONFIG.other;
+};
 
 const normalizeList = (result, keys = []) => {
   if (Array.isArray(result)) return result;
@@ -127,7 +145,13 @@ const HotelForm = () => {
 
   const handleRoomSelect = (room) => {
     setSelectedRoom(room);
-    setBookingForm(prev => ({ ...prev, hotel_room_id: room.id }));
+    const isLegacy = String(room.id).startsWith("hotel_");
+    const realId = isLegacy ? String(room.id).replace("hotel_", "") : room.id;
+    setBookingForm(prev => ({
+      ...prev,
+      room_id: isLegacy ? undefined : realId,
+      hotel_room_id: isLegacy ? realId : undefined,
+    }));
   };
 
   const handleCreateBooking = async (e) => {
@@ -161,7 +185,12 @@ const HotelForm = () => {
       formData.append("number_of_days", String(bookingForm.number_of_days));
       formData.append("check_in_time", bookingForm.check_in_time);
       formData.append("check_out_time", bookingForm.check_out_time);
-      formData.append("room_id", selectedRoom?.id);
+      if (bookingForm.room_id) {
+        formData.append("room_id", bookingForm.room_id);
+      }
+      if (bookingForm.hotel_room_id) {
+        formData.append("hotel_room_id", bookingForm.hotel_room_id);
+      }
       formData.append("notes", bookingForm.notes || "");
       formData.append("vaccination_card", vaccinationCard);
 
@@ -458,28 +487,45 @@ const HotelForm = () => {
                   <h4>Available Rooms for Your Stay</h4>
                   {boardingAvailability.rooms && boardingAvailability.rooms.length > 0 ? (
                     <div className="rooms-grid">
-                      {boardingAvailability.rooms.map((room) => (
-                        <button
-                          key={room.id}
-                          type="button"
-                          className={`room-card ${!room.available ? 'unavailable' : ''} ${selectedRoom?.id === room.id ? 'selected' : ''}`}
-                          onClick={() => room.available && handleRoomSelect(room)}
-                          disabled={!room.available}
-                        >
-                          <div className="room-header">
-                            <span className="room-name">{room.room_name}</span>
-                            <span className="room-type">{room.room_type}</span>
-                          </div>
-                          <div className="room-details">
-                            <span className="room-capacity">Capacity: {room.capacity}</span>
-                            <span className="room-rate">₱{room.daily_rate}/day</span>
-                            <span className="room-size">{room.size_allowed}</span>
-                          </div>
-                          <span className="room-status">
-                            {room.available ? 'Available' : room.reason || 'Not Available'}
-                          </span>
-                        </button>
-                      ))}
+                      {boardingAvailability.rooms.map((room) => {
+                        const cfg = getRoomConfig(room);
+                        return (
+                          <button
+                            key={room.id}
+                            type="button"
+                            className={`room-card ${!room.available ? 'unavailable' : ''} ${selectedRoom?.id === room.id ? 'selected' : ''}`}
+                            onClick={() => room.available && handleRoomSelect(room)}
+                            disabled={!room.available}
+                          >
+                            <div className="room-card-img-wrap">
+                              {cfg.img
+                                ? <img src={cfg.img} alt={cfg.label} className="room-card-img" />
+                                : <div className="room-card-img-placeholder"><FontAwesomeIcon icon={faBed} /></div>
+                              }
+                              <span className="room-card-badge" style={{ background: cfg.badge }}>{cfg.label}</span>
+                              {!room.available && <div className="room-card-unavailable-overlay">Unavailable</div>}
+                            </div>
+                            <div className="room-card-body">
+                              <div className="room-header">
+                                <span className="room-name">{room.room_name}</span>
+                                <span className="room-type">{room.room_type?.replace(/_/g, ' ')}</span>
+                              </div>
+                              <div className="room-details">
+                                {room.capacity || room.max_capacity ? (
+                                  <span className="room-capacity">👥 Capacity: {room.capacity ?? room.max_capacity}</span>
+                                ) : null}
+                                <span className="room-rate">₱{Number(room.daily_rate).toLocaleString('en-PH')}/day</span>
+                                {room.available_rooms != null && (
+                                  <span className="room-slots">{room.available_rooms} slot{room.available_rooms !== 1 ? 's' : ''} left</span>
+                                )}
+                              </div>
+                              <span className={`room-status ${room.available ? 'avail' : 'unavail'}`}>
+                                {room.available ? '✓ Available' : room.reason || 'Not Available'}
+                              </span>
+                            </div>
+                          </button>
+                        );
+                      })}
                     </div>
                   ) : (
                     <div className="no-availability">
@@ -607,41 +653,63 @@ const HotelForm = () => {
                 const logs = careLogs[booking.id] || [];
 
                 return (
-                  <div key={booking.id} className="booking-card">
-                    <div className="booking-header">
-                      <div className="booking-id">Boarding #{booking.id}</div>
+                  <div key={booking.id} className="booking-card" style={{ borderLeftColor: statusStyle.color }}>
+                    <div className="booking-card-top">
+                      <div className="booking-card-avatar">
+                        <FontAwesomeIcon icon={faPaw} />
+                      </div>
+                      <div className="booking-card-meta">
+                        <h4>Boarding #{booking.id}</h4>
+                        <p>{booking.pet?.name || booking.pet_name}</p>
+                      </div>
                       <span className="status-badge" style={{ backgroundColor: statusStyle.bg, color: statusStyle.color }}>
                         {booking.status}
                       </span>
                     </div>
 
-                    <div className="booking-details">
-                      <div className="detail-row"><span className="label"><FontAwesomeIcon icon={faPaw} /> Pet:</span><span className="value">{booking.pet?.name || booking.pet_name}</span></div>
-                      <div className="detail-row"><span className="label"><FontAwesomeIcon icon={faBed} /> Room:</span><span className="value">{booking.hotel_room?.name || booking.hotel_room?.room_number || booking.boarding_type || "Pending assignment"}</span></div>
-                      <div className="detail-row"><span className="label"><FontAwesomeIcon icon={faCalendarAlt} /> Stay:</span><span className="value">{booking.check_in?.slice(0, 10)} to {booking.check_out?.slice(0, 10)}</span></div>
-                      <div className="detail-row"><span className="label"><FontAwesomeIcon icon={faReceipt} /> Payment:</span><span className="value">{booking.payment_status || "unpaid"}</span></div>
-                      {booking.rejection_reason && <div className="detail-row"><span className="label">Reason:</span><span className="value">{booking.rejection_reason}</span></div>}
+                    <div className="booking-card-body">
+                      <div className="booking-card-grid">
+                        <div>
+                          <span className="bcg-label"><FontAwesomeIcon icon={faBed} /> Room</span>
+                          <span className="bcg-value">{booking.hotel_room?.name || booking.hotel_room?.room_number || booking.boarding_type || "Pending"}</span>
+                        </div>
+                        <div>
+                          <span className="bcg-label"><FontAwesomeIcon icon={faCalendarAlt} /> Stay</span>
+                          <span className="bcg-value">{booking.check_in?.slice(0, 10)} — {booking.check_out?.slice(0, 10)}</span>
+                        </div>
+                        <div>
+                          <span className="bcg-label"><FontAwesomeIcon icon={faReceipt} /> Payment</span>
+                          <span className="bcg-value" style={{ textTransform: "capitalize" }}>{booking.payment_status || "unpaid"}</span>
+                        </div>
+                        <div>
+                          <span className="bcg-label">Total</span>
+                          <span className="bcg-value">₱{Number(booking.total_amount || 0).toLocaleString("en-PH", { minimumFractionDigits: 2 })}</span>
+                        </div>
+                      </div>
+                      {booking.rejection_reason && (
+                        <div className="booking-rejection">{booking.rejection_reason}</div>
+                      )}
                     </div>
 
-                    <div className="booking-actions">
+                    <div className="booking-card-actions">
                       {booking.status === "pending" && (
-                        <button className="cancel-btn" onClick={() => handleCancelBooking(booking.id)} disabled={loading}>
+                        <button className="bc-action cancel" onClick={() => handleCancelBooking(booking.id)} disabled={loading}>
                           <FontAwesomeIcon icon={faTimesCircle} /> Cancel
                         </button>
                       )}
 
                       {canUploadPayment(booking) && (
-                        <div className="payment-upload-inline">
+                        <div className="bc-payment-row">
                           <input type="file" accept="image/*,.pdf" onChange={(e) => setPaymentFiles((prev) => ({ ...prev, [booking.id]: e.target.files?.[0] }))} />
-                          <button type="button" onClick={() => handlePaymentUpload(booking)} disabled={loading || !paymentFiles[booking.id]}>
+                          <button className="bc-action primary" type="button" onClick={() => handlePaymentUpload(booking)} disabled={loading || !paymentFiles[booking.id]}>
                             <FontAwesomeIcon icon={faReceipt} /> Upload Proof
                           </button>
                         </div>
                       )}
 
                       {["checked_in", "in_care", "ready_for_pickup", "completed"].includes(booking.status) && (
-                        <button type="button" onClick={() => fetchCareLogs(booking.id)}>
-                          <FontAwesomeIcon icon={faClipboardList} /> View Care Logs
+                        <button className="bc-action primary" type="button" onClick={() => fetchCareLogs(booking.id)}>
+                          <FontAwesomeIcon icon={faClipboardList} /> Care Logs
                         </button>
                       )}
                     </div>

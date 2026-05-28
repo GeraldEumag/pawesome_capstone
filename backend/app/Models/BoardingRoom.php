@@ -15,6 +15,7 @@ class BoardingRoom extends Model
         'room_code',
         'room_name',
         'room_type',
+        'hotel_category',
         'allowed_species',
         'max_capacity',
         'total_rooms',
@@ -23,6 +24,23 @@ class BoardingRoom extends Model
         'customer_selectable',
         'notes',
     ];
+
+    const VALID_ROOM_TYPES = [
+        'dog_standard', 'dog_large', 'dog_family',
+        'cat_condo', 'cat_suite',
+        'small_pet',
+        'daycare_dog', 'daycare_cat', 'daycare_mixed',
+    ];
+
+    const HOTEL_CATEGORIES = ['dog_hotel', 'cat_hotel', 'daycare', 'other'];
+
+    public static function inferCategory(string $roomType): string
+    {
+        if (in_array($roomType, ['dog_standard', 'dog_large', 'dog_family'])) return 'dog_hotel';
+        if (in_array($roomType, ['cat_condo', 'cat_suite'])) return 'cat_hotel';
+        if (in_array($roomType, ['daycare_dog', 'daycare_cat', 'daycare_mixed'])) return 'daycare';
+        return 'other';
+    }
 
     protected $casts = [
         'allowed_species' => 'array',

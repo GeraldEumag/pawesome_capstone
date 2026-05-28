@@ -19,10 +19,12 @@ import {
   faBed,
   faPhone,
   faInfoCircle,
+  faWrench,
 } from "@fortawesome/free-solid-svg-icons";
 import "./ReceptionistCheckInForm.css";
 import { apiRequest, getAuthenticatedFileUrl } from "../../api/client";
 import PetAvatar from "../shared/PetAvatar";
+import ServiceManagerModal from "./ServiceManagerModal";
 import {
   normalizeList,
   normalizeStatus,
@@ -49,6 +51,7 @@ const TABS = [
 const STATUS_READY_FOR_CHECKIN = ["approved", "scheduled", "confirmed"];
 
 const ReceptionistBoardingManager = () => {
+  const [showServiceManager, setShowServiceManager] = useState(false);
   const [activeTab, setActiveTab] = useState("queue");
   const [bookings, setBookings] = useState([]);
   const [searchQuery, setSearchQuery] = useState("");
@@ -232,6 +235,15 @@ const ReceptionistBoardingManager = () => {
         <div className="checkin-hero-actions">
           <button
             type="button"
+            className="checkin-secondary-btn"
+            onClick={() => setShowServiceManager(true)}
+          >
+            <FontAwesomeIcon icon={faWrench} />
+            Manage Rooms
+          </button>
+
+          <button
+            type="button"
             className={`checkin-secondary-btn ${refreshing ? "loading" : ""}`}
             onClick={() => loadBookings({ silent: true })}
             disabled={refreshing || loading}
@@ -241,6 +253,10 @@ const ReceptionistBoardingManager = () => {
           </button>
         </div>
       </section>
+
+      {showServiceManager && (
+        <ServiceManagerModal onClose={() => setShowServiceManager(false)} />
+      )}
 
       <section className="checkin-summary-grid">
         {TABS.map((t) => (

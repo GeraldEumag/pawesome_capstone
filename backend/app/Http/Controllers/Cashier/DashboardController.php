@@ -131,10 +131,16 @@ class DashboardController extends Controller
         );
     }
 
-    public function transactions()
+    public function transactions(?Request $request = null)
     {
+        $perPage = $request ? (int) $request->get('per_page', 50) : 50;
+        $page    = $request ? (int) $request->get('page', 1) : 1;
+        $search  = $request ? trim((string) $request->get('search', '')) : '';
+        $method  = $request ? $request->get('method', 'all') : 'all';
+        $dateFilter = $request ? $request->get('date_filter', 'all') : 'all';
+
         // Get traditional sales (POS transactions)
-        $sales = Sale::latest()->limit(50)->get()->map(function ($sale) {
+        $sales = Sale::latest()->limit(200)->get()->map(function ($sale) {
             return [
                 'id' => 'SALE-' . $sale->id,
                 'transaction_id' => $sale->id,
@@ -209,15 +215,57 @@ class DashboardController extends Controller
             ->concat($customerOrders)
             ->concat($serviceRequests)
             ->sortByDesc('date')
-            ->values()
-            ->take(100); // Limit to 100 total records
+            ->values();
 
-        return response()->json($allTransactions);
+        // Apply search filter
+        if ($search) {
+            $keyword = strtolower($search);
+            $allTransactions = $allTransactions->filter(function ($t) use ($keyword) {
+                return str_contains(strtolower($t['customer'] ?? ''), $keyword)
+                    || str_contains(strtolower($t['id'] ?? ''), $keyword)
+                    || str_contains(strtolower($t['method'] ?? ''), $keyword);
+            })->values();
+        }
+
+        // Apply payment method filter
+        if ($method && $method !== 'all') {
+            $allTransactions = $allTransactions->filter(function ($t) use ($method) {
+                return strtolower($t['method'] ?? '') === strtolower($method);
+            })->values();
+        }
+
+        // Apply date filter
+        if ($dateFilter && $dateFilter !== 'all') {
+            $now = now();
+            $allTransactions = $allTransactions->filter(function ($t) use ($dateFilter, $now) {
+                $date = \Carbon\Carbon::parse($t['date'] ?? null);
+                if (!$date) return false;
+                if ($dateFilter === 'today')  return $date->isToday();
+                if ($dateFilter === 'week')   return $date->gte($now->copy()->subDays(7));
+                if ($dateFilter === 'month')  return $date->gte($now->copy()->subDays(30));
+                return true;
+            })->values();
+        }
+
+        $total = $allTransactions->count();
+        $offset = ($page - 1) * $perPage;
+        $paginated = $allTransactions->slice($offset, $perPage)->values();
+
+        return response()->json([
+            'transactions' => $paginated,
+            'data' => $paginated,
+            'meta' => [
+                'total'        => $total,
+                'per_page'     => $perPage,
+                'current_page' => $page,
+                'last_page'    => max(1, (int) ceil($total / $perPage)),
+            ],
+        ]);
     }
 
-    public function history()
+    public function history(?Request $request = null)
     {
-        return $this->transactions();
+        return $this->transactions($request);
     }
 
     public function searchTransactions(Request $request)

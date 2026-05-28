@@ -19,11 +19,13 @@ import {
   faTimes,
   faTimesCircle,
   faUser,
+  faWrench,
 } from "@fortawesome/free-solid-svg-icons";
 import "./ReceptionistGrooming.css";
 import { apiRequest } from "../../api/client";
 import PetAvatar from "../shared/PetAvatar";
 import GroomingInventoryUsage from "../grooming/GroomingInventoryUsage";
+import ServiceManagerModal from "./ServiceManagerModal";
 
 const STATUS_OPTIONS = [
   { value: "all", label: "All Status" },
@@ -140,6 +142,7 @@ const getAppointmentTime = (item) =>
   "";
 
 const Grooming = () => {
+  const [showServiceManager, setShowServiceManager] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [filterStatus, setFilterStatus] = useState("all");
   const [filterService, setFilterService] = useState("all");
@@ -441,6 +444,15 @@ const Grooming = () => {
         <div className="grooming-hero-actions">
           <button
             type="button"
+            className="secondary-btn"
+            onClick={() => setShowServiceManager(true)}
+          >
+            <FontAwesomeIcon icon={faWrench} />
+            Manage Services
+          </button>
+
+          <button
+            type="button"
             className={`secondary-btn ${refreshing ? "loading" : ""}`}
             onClick={() => fetchAppointments({ silent: true })}
             disabled={refreshing}
@@ -455,6 +467,10 @@ const Grooming = () => {
           </button>
         </div>
       </section>
+
+      {showServiceManager && (
+        <ServiceManagerModal onClose={() => setShowServiceManager(false)} />
+      )}
 
       <section className="grooming-summary-grid">
         <button type="button" className="grooming-summary-card" onClick={() => setFilterStatus("all")}>

@@ -179,12 +179,12 @@ const StockLogsViewer = ({ itemId = null, filterAction = null, search = null }) 
   const calculateStats = () => {
     const filtered = getFilteredLogs();
     const additions = filtered
-      .filter((l) => getQuantityChange(l) > 0)
-      .reduce((sum, l) => sum + getQuantityChange(l), 0);
+      .filter((l) => l.quantityChange > 0)
+      .reduce((sum, l) => sum + l.quantityChange, 0);
     const removals = filtered
-      .filter((l) => getQuantityChange(l) < 0)
-      .reduce((sum, l) => sum + Math.abs(getQuantityChange(l)), 0);
-    const adjustments = filtered.filter((l) => getMovement(l).includes("adjustment")).length;
+      .filter((l) => l.quantityChange < 0)
+      .reduce((sum, l) => sum + Math.abs(l.quantityChange), 0);
+    const adjustments = filtered.filter((l) => (l.movementType || "").includes("adjustment")).length;
 
     return { additions, removals, adjustments, total: filtered.length };
   };

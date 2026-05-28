@@ -300,7 +300,9 @@ class POSController extends Controller
      */
     public function getServices()
     {
-        $services = Service::select('id', 'name', 'price', 'description')
+        $services = Service::select('id', 'name', 'price', 'description', 'category', 'duration_minutes')
+            ->where('is_active', true)
+            ->orderBy('category')
             ->orderBy('name')
             ->get()
             ->map(function ($service) {
@@ -308,9 +310,13 @@ class POSController extends Controller
                     'id' => $service->id,
                     'name' => $service->name,
                     'price' => (float) $service->price,
-                    'category' => 'Services',
+                    'category' => 'services',
+                    'service_category' => $service->category,
                     'description' => $service->description,
-                    'type' => 'service',
+                    'duration_minutes' => $service->duration_minutes,
+                    'item_type' => 'service',
+                    'stock' => 9999,
+                    'available_stock' => 9999,
                     'inStock' => true,
                 ];
             });

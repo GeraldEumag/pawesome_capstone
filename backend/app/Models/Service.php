@@ -40,6 +40,7 @@ class Service extends Model
         'Medication',
         'Grooming',
         'Hotel',
+        'Daycare',
         'Other',
     ];
 

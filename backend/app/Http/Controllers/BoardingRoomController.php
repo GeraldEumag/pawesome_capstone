@@ -76,16 +76,26 @@ class BoardingRoomController extends Controller
 
             if ($size && in_array($species, ['dog', 'cat'], true)) {
                 if (in_array($size, ['small', 'medium'], true)) {
-                    $allowedRoomTypes = array_values(array_filter(
+                    $sizeFiltered = array_values(array_filter(
                         $allowedRoomTypes,
                         fn ($type) => in_array($type, ['dog_standard', 'cat_condo'])
                     ));
+                    if (!empty($sizeFiltered)) {
+                        $allowedRoomTypes = $sizeFiltered;
+                    }
                 } elseif (in_array($size, ['large', 'giant'], true)) {
-                    $allowedRoomTypes = array_values(array_filter(
+                    $sizeFiltered = array_values(array_filter(
                         $allowedRoomTypes,
                         fn ($type) => in_array($type, ['dog_large', 'dog_family', 'cat_suite'])
                     ));
+                    if (!empty($sizeFiltered)) {
+                        $allowedRoomTypes = $sizeFiltered;
+                    }
                 }
+            }
+
+            if (empty($allowedRoomTypes)) {
+                return response()->json(['success' => true, 'rooms' => []]);
             }
 
             $roomsQuery = DB::table('boarding_rooms')
@@ -99,12 +109,15 @@ class BoardingRoomController extends Controller
                 $roomsQuery->where('customer_selectable', true);
             }
 
-            $rooms = $roomsQuery->orderBy('daily_rate')->get();
+            $boardingRooms = $roomsQuery->orderBy('daily_rate')->get();
             $reservationRoomColumn = Schema::hasColumn('boarding_room_reservations', 'room_id')
                 ? 'room_id'
                 : (Schema::hasColumn('boarding_room_reservations', 'boarding_room_id') ? 'boarding_room_id' : null);
 
-            $availableRooms = $rooms->map(function ($room) use ($checkIn, $checkOut, $reservationRoomColumn) {
+            $allRooms = collect();
+
+            // ── Process boarding_rooms ────────────────────────────────
+            foreach ($boardingRooms as $room) {
                 $blockingReservationCount = 0;
 
                 if ($reservationRoomColumn && Schema::hasTable('boarding_room_reservations')) {
@@ -128,12 +141,92 @@ class BoardingRoomController extends Controller
                 $room->available = $blockingReservationCount < (int) ($room->total_rooms ?? 1);
                 $room->available_rooms = max(0, (int) ($room->total_rooms ?? 1) - $blockingReservationCount);
 
-                return $room;
-            })->values();
+                if (empty($room->hotel_category)) {
+                    $rt = $room->room_type ?? '';
+                    if (in_array($rt, ['dog_standard', 'dog_large', 'dog_family'])) {
+                        $room->hotel_category = 'dog_hotel';
+                    } elseif (in_array($rt, ['cat_condo', 'cat_suite'])) {
+                        $room->hotel_category = 'cat_hotel';
+                    } elseif (in_array($rt, ['daycare_dog', 'daycare_cat', 'daycare_mixed'])) {
+                        $room->hotel_category = 'daycare';
+                    } else {
+                        $room->hotel_category = 'other';
+                    }
+                }
+
+                $allRooms->push($room);
+            }
+
+            // ── Also query legacy hotel_rooms ─────────────────────────
+            if (Schema::hasTable('hotel_rooms')) {
+                $hotelRoomSpeciesMap = [
+                    'kennel'   => ['dog'],
+                    'cattery'  => ['cat'],
+                ];
+
+                $hotelRoomCategoryMap = [
+                    'kennel'   => 'dog_hotel',
+                    'cattery'  => 'cat_hotel',
+                    'standard' => 'other',
+                    'deluxe'   => 'other',
+                    'suite'    => 'other',
+                ];
+
+                $hotelQuery = DB::table('hotel_rooms')
+                    ->whereNotIn('status', ['inactive', 'maintenance']);
+
+                // Only include hotel rooms compatible with this species
+                $hotelQuery->where(function ($q) use ($species) {
+                    if ($species === 'dog') {
+                        $q->whereIn('type', ['kennel', 'standard', 'deluxe', 'suite']);
+                    } elseif ($species === 'cat') {
+                        $q->whereIn('type', ['cattery', 'standard', 'deluxe', 'suite']);
+                    } else {
+                        $q->whereIn('type', ['standard', 'deluxe', 'suite']);
+                    }
+                });
+
+                $hotelRooms = $hotelQuery->orderBy('daily_rate')->get();
+
+                foreach ($hotelRooms as $hr) {
+                    $blocking = 0;
+                    if (Schema::hasTable('boardings') && Schema::hasColumn('boardings', 'hotel_room_id')) {
+                        $blocking = DB::table('boardings')
+                            ->where('hotel_room_id', $hr->id)
+                            ->whereNotIn('status', ['rejected', 'cancelled', 'checked_out', 'completed'])
+                            ->where('check_in', '<', $checkOut)
+                            ->where('check_out', '>', $checkIn)
+                            ->count();
+                    }
+
+                    $capacity = (int) ($hr->capacity ?? 1);
+                    $available = $blocking < $capacity;
+
+                    $mapped = (object) [
+                        'id'                => 'hotel_' . $hr->id,
+                        'room_code'         => $hr->room_number,
+                        'room_name'         => $hr->name,
+                        'room_type'         => $hr->type,
+                        'hotel_category'    => $hotelRoomCategoryMap[$hr->type] ?? 'other',
+                        'allowed_species'   => $hotelRoomSpeciesMap[$hr->type] ?? ['dog', 'cat', 'bird', 'other'],
+                        'max_capacity'      => $capacity,
+                        'total_rooms'       => $capacity,
+                        'available_rooms'   => max(0, $capacity - $blocking),
+                        'daily_rate'        => (float) $hr->daily_rate,
+                        'is_active'         => true,
+                        'customer_selectable'=> true,
+                        'notes'             => $hr->notes,
+                        'available'         => $available,
+                        '_source'           => 'hotel_rooms',
+                    ];
+
+                    $allRooms->push($mapped);
+                }
+            }
 
             return response()->json([
                 'success' => true,
-                'rooms' => $availableRooms,
+                'rooms'   => $allRooms->values(),
             ]);
         } catch (\Throwable $e) {
             Log::error('Boarding room availability error', [

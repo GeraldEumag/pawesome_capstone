@@ -5,6 +5,7 @@ import { apiRequest, clearAuthStorage } from "../../api/client";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
   faBoxes,
+  faBox,
   faWarehouse,
   faHistory,
   faChartBar,
@@ -44,6 +45,13 @@ const InventorySidebar = ({ mobileOpen, onMobileMenuToggle }) => {
             <NavLink to="/inventory" className={({ isActive }) => isActive ? "active" : ""} end>
               <FontAwesomeIcon icon={faBoxes} />
               <span>Unified Inventory</span>
+            </NavLink>
+          </li>
+
+          <li className="nav-item">
+            <NavLink to="/inventory/stock" className={({ isActive }) => isActive ? "active" : ""} end>
+              <FontAwesomeIcon icon={faBox} />
+              <span>Stock Management</span>
             </NavLink>
           </li>
 

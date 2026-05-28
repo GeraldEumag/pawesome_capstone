@@ -24,8 +24,10 @@ import {
   FaTimesCircle,
   FaUndoAlt,
   FaUser,
+  FaWrench,
 } from "react-icons/fa";
 import { apiRequest } from "../../api/client";
+import ServiceManagerModal from "./ServiceManagerModal";
 import "./ReceptionistDashboard.css";
 
 const STATUS_OPTIONS = [
@@ -66,6 +68,7 @@ const ReceptionistDashboard = () => {
   const [paymentFilter, setPaymentFilter] = useState("all");
 
   const [selectedRequest, setSelectedRequest] = useState(null);
+  const [showServiceManager, setShowServiceManager] = useState(false);
   const [busyAction, setBusyAction] = useState("");
   const [sortConfig, setSortConfig] = useState({
     key: "created_at",
@@ -478,6 +481,11 @@ const ReceptionistDashboard = () => {
               <FaDownload />
               Export CSV
             </button>
+
+            <button type="button" className="hero-action-btn" onClick={() => setShowServiceManager(true)}>
+              <FaWrench />
+              Manage Services & Rooms
+            </button>
           </div>
         </div>
       </section>
@@ -780,6 +788,8 @@ const ReceptionistDashboard = () => {
           </div>
         )}
       </section>
+
+      {showServiceManager && <ServiceManagerModal onClose={() => setShowServiceManager(false)} />}
 
       {selectedRequest && (
         <div

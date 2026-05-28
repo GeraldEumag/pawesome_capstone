@@ -24,6 +24,7 @@ import {
 
 /* ─── Constants ────────────────────────────────────────────────── */
 const PRODUCT_ENDPOINT  = "/cashier/inventory/sellable";
+const SERVICE_ENDPOINT  = "/cashier/pos/services";
 const CHECKOUT_ENDPOINT = "/cashier/pos/transaction";
 const TAX_RATE = 0.12;
 
@@ -1367,6 +1368,7 @@ const CashierPOS = () => {
 
   /* State */
   const [products, setProducts]           = useState([]);
+  const [services, setServices]           = useState([]);
   const [cart, setCart]                   = useState([]);
   const [activeCategory, setActiveCategory] = useState("all");
   const [searchQuery, setSearchQuery]     = useState("");
@@ -1509,7 +1511,17 @@ const CashierPOS = () => {
     }
   }, [addToast, reconcileCartWithProducts]);
 
-  useEffect(() => { fetchProducts(); }, [fetchProducts]);
+  const fetchServices = useCallback(async () => {
+    try {
+      const res = await apiRequest(SERVICE_ENDPOINT);
+      const raw = normalizeList(res, ["services", "data"]);
+      setServices(raw);
+    } catch {
+      setServices([]);
+    }
+  }, []);
+
+  useEffect(() => { fetchProducts(); fetchServices(); }, [fetchProducts, fetchServices]);
   /* Fullscreen state tracking */
   useEffect(() => {
     const handleFullscreenChange = () => {
@@ -1548,14 +1560,20 @@ const CashierPOS = () => {
     };
   }, [showNavMenu]);
 
+  /* All items = inventory products + services */
+  const allItems = useMemo(() => [
+    ...products,
+    ...services.map(s => ({ ...s, id: `svc-${s.id}`, _serviceId: s.id })),
+  ], [products, services]);
+
   /* Categories */
   const categories = useMemo(() => {
-    const grouped = products.reduce((acc, p) => {
+    const grouped = allItems.reduce((acc, p) => {
       acc[p.category] = (acc[p.category] || 0) + 1;
       return acc;
     }, {});
     const catList = [
-      { id: "all", label: CATEGORY_CONFIG.all.label, count: products.length, config: CATEGORY_CONFIG.all },
+      { id: "all", label: CATEGORY_CONFIG.all.label, count: allItems.length, config: CATEGORY_CONFIG.all },
       ...Object.entries(grouped).map(([id, count]) => ({
         id,
         label: CATEGORY_CONFIG[id]?.label || id.replace(/\b\w/g, c => c.toUpperCase()),
@@ -1563,34 +1581,33 @@ const CashierPOS = () => {
         config: CATEGORY_CONFIG[id] || { icon: faBox, color: "#64748B", bg: "#F1F5F9" },
       })),
     ];
-    // Sort: all first, then by count descending
     return catList.sort((a, b) => {
       if (a.id === "all") return -1;
       if (b.id === "all") return 1;
       return b.count - a.count;
     });
-  }, [products]);
+  }, [allItems]);
 
-  /* Filtered products */
   const filteredProducts = useMemo(() => {
     const kw = searchQuery.trim().toLowerCase();
-    return products.filter(p => {
+    return allItems.filter(p => {
       const matchCat = activeCategory === "all" || p.category === activeCategory;
       const matchSearch = !kw
         || p.name.toLowerCase().includes(kw)
-        || p.category.toLowerCase().includes(kw)
+        || (p.service_category || p.category || "").toLowerCase().includes(kw)
         || String(p.barcode || "").toLowerCase().includes(kw);
       return matchCat && matchSearch;
     });
-  }, [products, activeCategory, searchQuery]);
+  }, [allItems, activeCategory, searchQuery]);
 
   const lowStockCount  = useMemo(() => products.filter(p => getAvailableStock(p) > 0 && getAvailableStock(p) <= 5).length, [products]);
   const outOfStockCount = useMemo(() => products.filter(p => isProductOutOfStock(p)).length, [products]);
 
   /* Cart operations */
   const addToCart = useCallback((product) => {
-    const availableStock = getAvailableStock(product);
-    if (availableStock <= 0) {
+    const isService = product.item_type === "service";
+    const availableStock = isService ? 9999 : getAvailableStock(product);
+    if (!isService && availableStock <= 0) {
       addToast(`${product.name} is out of stock`, "warn");
       return;
     }
@@ -1709,14 +1726,18 @@ const CashierPOS = () => {
         subtotal, tax, discount: discountAmt, total,
         voucher: validatedVoucher?.code || null,
         reference_number: (paymentMethod === "GCash" || paymentMethod === "Online") ? referenceNumber : null,
-        items: cart.map(i => ({
-          item_type: "product",
-          item_id: i.id,
-          item_name: i.name,
-          quantity: i.quantity,
-          unit_price: Number(i.price) || 0,
-          discount_amount: Number(i.discount) || 0,
-        })),
+        items: cart.map(i => {
+          const isService = i.item_type === "service";
+          return {
+            item_type: isService ? "service" : "product",
+            item_id: isService ? undefined : i.id,
+            service_id: isService ? i._serviceId : undefined,
+            item_name: i.name,
+            quantity: i.quantity,
+            unit_price: Number(i.price) || 0,
+            discount_amount: Number(i.discount) || 0,
+          };
+        }),
       };
       const res = await apiRequest(CHECKOUT_ENDPOINT, {
         method: "POST",
@@ -1738,6 +1759,7 @@ const CashierPOS = () => {
       addToast("Payment successful! Click View Receipt to print.", "success");
       clearOrder();
       fetchProducts({ silent: true });
+      fetchServices();
     } catch (err) {
       addToast(err.message || "Checkout failed. Please try again.", "error");
     } finally {

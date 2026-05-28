@@ -23,12 +23,15 @@ import {
   faCheck,
   faTasks,
   faTimes,
+  faWrench,
 } from "@fortawesome/free-solid-svg-icons";
 import { apiRequest } from "../../api/client";
+import ServiceManagerModal from "./ServiceManagerModal";
 import PetAvatar from "../shared/PetAvatar";
 import "./ReceptionistVetAppointments.css";
 
 const VetAppointments = () => {
+  const [showServiceManager, setShowServiceManager] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [filterStatus, setFilterStatus] = useState("all");
   const [filterDoctor, setFilterDoctor] = useState("all");
@@ -327,12 +330,23 @@ const VetAppointments = () => {
           <p>Manage veterinary appointments and patient scheduling</p>
         </div>
         <div className="header-actions">
+          <button
+            className="primary-btn"
+            onClick={() => setShowServiceManager(true)}
+          >
+            <FontAwesomeIcon icon={faWrench} />
+            Manage Services
+          </button>
           <button className="primary-btn">
             <FontAwesomeIcon icon={faPlus} />
             New Appointment
           </button>
         </div>
       </div>
+
+      {showServiceManager && (
+        <ServiceManagerModal onClose={() => setShowServiceManager(false)} />
+      )}
 
       {error && (
         <div className="error-banner">

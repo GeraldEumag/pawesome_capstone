@@ -25,65 +25,19 @@ import {
   FaPlus,
 } from "react-icons/fa";
 
-const groomingServices = [
-  {
-    name: "Basic Bath",
-    category: "Grooming",
-    price: 500,
-    description: "Bath, blow dry, and basic coat cleaning.",
-  },
-  {
-    name: "Full Grooming Package",
-    category: "Grooming",
-    price: 1500,
-    description: "Bath, haircut, nail trim, ear cleaning, and finishing.",
-  },
-  {
-    name: "Haircut Only",
-    category: "Grooming",
-    price: 800,
-    description: "Breed-appropriate haircut or trimming.",
-  },
-  {
-    name: "Nail Trim",
-    category: "Grooming",
-    price: 200,
-    description: "Safe nail trimming for pets.",
-  },
-  {
-    name: "Teeth Cleaning",
-    category: "Grooming",
-    price: 350,
-    description: "Basic pet teeth cleaning.",
-  },
+const fallbackVetServices = [
+  { name: "General Consultation", category: "Veterinary", price: 500, description: "General health checkup and consultation." },
+  { name: "Vaccination", category: "Veterinary", price: 750, description: "Pet vaccination service." },
+  { name: "Deworming", category: "Veterinary", price: 350, description: "Deworming and parasite prevention." },
+  { name: "Laboratory Test", category: "Veterinary", price: 1200, description: "Basic laboratory test request." },
 ];
 
-
-const defaultVetServices = [
-  {
-    name: "General Consultation",
-    category: "Veterinary",
-    price: 500,
-    description: "General health checkup and consultation.",
-  },
-  {
-    name: "Vaccination",
-    category: "Veterinary",
-    price: 750,
-    description: "Pet vaccination service.",
-  },
-  {
-    name: "Deworming",
-    category: "Veterinary",
-    price: 350,
-    description: "Deworming and parasite prevention.",
-  },
-  {
-    name: "Laboratory Test",
-    category: "Veterinary",
-    price: 1200,
-    description: "Basic laboratory test request.",
-  },
+const fallbackGroomingServices = [
+  { name: "Basic Bath", category: "Grooming", price: 500, description: "Bath, blow dry, and basic coat cleaning." },
+  { name: "Full Grooming Package", category: "Grooming", price: 1500, description: "Bath, haircut, nail trim, ear cleaning, and finishing." },
+  { name: "Haircut Only", category: "Grooming", price: 800, description: "Breed-appropriate haircut or trimming." },
+  { name: "Nail Trim", category: "Grooming", price: 200, description: "Safe nail trimming for pets." },
+  { name: "Teeth Cleaning", category: "Grooming", price: 350, description: "Basic pet teeth cleaning." },
 ];
 
 const initialVetInfo = {
@@ -125,6 +79,7 @@ const CustomerBookings = () => {
 
   const [bookings, setBookings] = useState([]);
   const [vetServices, setVetServices] = useState([]);
+  const [groomingServices, setGroomingServices] = useState([]);
   const [pets, setPets] = useState([]);
 
   const [loading, setLoading] = useState(true);
@@ -365,10 +320,10 @@ const CustomerBookings = () => {
 
   const serviceOptions = useMemo(() => {
     if (selectedBooking === "Hotel") return [];
-    if (selectedBooking === "Vet") return vetServices.length > 0 ? vetServices : defaultVetServices;
-    if (selectedBooking === "Groom") return groomingServices;
+    if (selectedBooking === "Vet") return vetServices.length > 0 ? vetServices : fallbackVetServices;
+    if (selectedBooking === "Groom") return groomingServices.length > 0 ? groomingServices : fallbackGroomingServices;
     return [];
-  }, [selectedBooking, vetServices]);
+  }, [selectedBooking, vetServices, groomingServices]);
 
   const selectedService = useMemo(() => {
     return serviceOptions.find(
@@ -532,9 +487,30 @@ const CustomerBookings = () => {
         return veterinaryKeywords.some((keyword) => text.includes(keyword));
       });
 
-      setVetServices(veterinaryServices.length > 0 ? veterinaryServices : defaultVetServices);
+      setVetServices(veterinaryServices.length > 0 ? veterinaryServices : fallbackVetServices);
     } catch (error) {
-      setVetServices(defaultVetServices);
+      setVetServices(fallbackVetServices);
+    } finally {
+      setServicesLoading(false);
+    }
+  }, []);
+
+  const fetchGroomingServices = useCallback(async () => {
+    try {
+      setServicesLoading(true);
+      const data = await apiRequest("/customer/services");
+      const services = safeArray(data);
+      const grooming = services
+        .map((s) => ({
+          name: s.name || s.service_name || "",
+          category: s.category || "Grooming",
+          price: Number(s.price || s.amount || 0),
+          description: s.description || "",
+        }))
+        .filter((s) => s.name && ["grooming", "daycare"].includes((s.category || "").toLowerCase()));
+      setGroomingServices(grooming.length > 0 ? grooming : fallbackGroomingServices);
+    } catch {
+      setGroomingServices(fallbackGroomingServices);
     } finally {
       setServicesLoading(false);
     }
@@ -617,8 +593,9 @@ const CustomerBookings = () => {
   useEffect(() => {
     fetchBookings();
     fetchVetServices();
+    fetchGroomingServices();
     fetchCustomerPets();
-  }, [fetchBookings, fetchVetServices, fetchCustomerPets]);
+  }, [fetchBookings, fetchVetServices, fetchGroomingServices, fetchCustomerPets]);
 
   useEffect(() => {
     if (

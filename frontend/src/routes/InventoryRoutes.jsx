@@ -4,7 +4,7 @@ import ProtectedRoute from "../components/ProtectedRoute";
 import InventoryDashboard from "../components/inventory/InventoryDashboard";
 import UnifiedInventory from "../components/inventory/UnifiedInventory";
 import InventoryReports from "../components/inventory/InventoryReports";
-import InventoryHistory from "../components/inventory/InventoryHistory_Fixed";
+import InventoryHistory from "../components/inventory/InventoryHistory_Polished";
 import ProfileSettings from "../components/shared/ProfileSettings";
 import MonthlyInventoryAudit from "../components/inventory/MonthlyInventoryAudit";
 import MonthlyAuditReport from "../components/inventory/MonthlyAuditReport";

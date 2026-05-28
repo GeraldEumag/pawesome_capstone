@@ -23,9 +23,11 @@ import {
   faStethoscope,
   faTimes,
   faUser,
+  faWrench,
 } from "@fortawesome/free-solid-svg-icons";
 import "./ReceptionistBookings.css";
 import { apiRequest } from "../../api/client";
+import ServiceManagerModal from "./ServiceManagerModal";
 
 const initialBookingForm = {
   customerId: "",
@@ -210,6 +212,7 @@ const normalizePaymentStatus = (status) => {
 
 const ReceptionistBookings = () => {
   const [showNewBookingModal, setShowNewBookingModal] = useState(false);
+  const [showServiceManager, setShowServiceManager] = useState(false);
 
   const [showActionModal, setShowActionModal] = useState(false);
   const [selectedBooking, setSelectedBooking] = useState(null);
@@ -1149,6 +1152,15 @@ const ReceptionistBookings = () => {
         <div className="booking-hero-actions">
           <button
             type="button"
+            className="secondary-btn"
+            onClick={() => setShowServiceManager(true)}
+          >
+            <FontAwesomeIcon icon={faWrench} />
+            Manage Services
+          </button>
+
+          <button
+            type="button"
             className={`secondary-btn ${refreshing ? "loading" : ""}`}
             onClick={() => fetchBookings({ silent: true })}
             disabled={refreshing}
@@ -1172,6 +1184,10 @@ const ReceptionistBookings = () => {
           </button>
         </div>
       </section>
+
+      {showServiceManager && (
+        <ServiceManagerModal onClose={() => setShowServiceManager(false)} />
+      )}
 
       <section className="dashboard-summary">
         <button type="button" className="summary-card" onClick={() => setFilter("pending")}>

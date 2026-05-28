@@ -1,62 +1,22 @@
-import React, { useEffect, useMemo, useState } from "react";
-import { motion, AnimatePresence } from "framer-motion";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import {
-  faHistory,
-  faSearch,
-  faUser,
-  faClock,
-  faEdit,
-  faMoneyBillWave,
-  faReceipt,
-  faCalendarAlt,
-  faSpinner,
-  faExclamationTriangle,
-  faCheckCircle,
-  faTimesCircle,
-  faEye,
-  faDownload,
-  faRefresh,
-  faShoppingCart,
-  faFileMedical,
-  faShieldAlt,
-  faChartLine,
-  faLock,
-  faClipboardList,
-} from "@fortawesome/free-solid-svg-icons";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { apiRequest } from "../../api/client";
-import { formatCurrency } from "../../utils/currency";
+import HistoryTimeline from "../shared/HistoryTimeline";
 import "./History.css";
 
-const fadeUp = {
-  hidden: { opacity: 0, y: 18 },
-  show: { opacity: 1, y: 0 },
-};
+const CATEGORY_OPTIONS = [
+  { value: "transaction", label: "Transactions" },
+  { value: "editing",     label: "Editing Activities" },
+  { value: "login",       label: "Staff Logins" },
+  { value: "general",     label: "General" },
+];
 
 const History = () => {
   const [historyLogs, setHistoryLogs] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-  const [success, setSuccess] = useState("");
-
   const [searchTerm, setSearchTerm] = useState("");
   const [filterCategory, setFilterCategory] = useState("all");
-  const [filterUser, setFilterUser] = useState("all");
   const [filterDate, setFilterDate] = useState("all");
-  const [filterAccount, setFilterAccount] = useState("all");
-
-  const [showDetailModal, setShowDetailModal] = useState(false);
-  const [selectedLog, setSelectedLog] = useState(null);
-
-  const showSuccess = (message) => {
-    setSuccess(message);
-    setTimeout(() => setSuccess(""), 3000);
-  };
-
-  const showError = (message) => {
-    setError(message);
-    setTimeout(() => setError(""), 5000);
-  };
 
   const fetchHistoryLogs = async () => {
     try {
@@ -256,698 +216,68 @@ const History = () => {
   }, []);
 
   const filteredHistoryLogs = useMemo(() => {
-    return Array.isArray(historyLogs)
-      ? historyLogs.filter((log) => {
-          const keyword = searchTerm.toLowerCase();
+    if (!Array.isArray(historyLogs)) return [];
+    const keyword = searchTerm.toLowerCase();
+    const now = Date.now();
+    return historyLogs.filter((log) => {
+      const matchesSearch = !keyword ||
+        log.user_name?.toLowerCase().includes(keyword) ||
+        log.action?.toLowerCase().includes(keyword) ||
+        log.description?.toLowerCase().includes(keyword) ||
+        log.reference_id?.toLowerCase().includes(keyword) ||
+        log.account_name?.toLowerCase().includes(keyword);
 
-          const matchesSearch =
-            log.user_name?.toLowerCase().includes(keyword) ||
-            log.user_email?.toLowerCase().includes(keyword) ||
-            log.action?.toLowerCase().includes(keyword) ||
-            log.description?.toLowerCase().includes(keyword) ||
-            log.reference_id?.toLowerCase().includes(keyword) ||
-            log.account_name?.toLowerCase().includes(keyword);
+      const matchesCategory = filterCategory === "all" || log.category === filterCategory;
 
-          const matchesCategory =
-            filterCategory === "all" || log.category === filterCategory;
+      const createdDate = new Date(log.created_at);
+      const matchesDate =
+        filterDate === "all" ||
+        (filterDate === "today" && createdDate.toDateString() === new Date().toDateString()) ||
+        (filterDate === "week"  && now - createdDate.getTime() < 7 * 24 * 60 * 60 * 1000) ||
+        (filterDate === "month" && now - createdDate.getTime() < 30 * 24 * 60 * 60 * 1000);
 
-          const matchesUser =
-            filterUser === "all" || log.user_name === filterUser;
+      return matchesSearch && matchesCategory && matchesDate;
+    });
+  }, [historyLogs, searchTerm, filterCategory, filterDate]);
 
-          const matchesAccount =
-            filterAccount === "all" || log.account_name === filterAccount;
-
-          const createdDate = new Date(log.created_at);
-          const now = Date.now();
-
-          const matchesDate =
-            filterDate === "all" ||
-            (filterDate === "today" &&
-              createdDate.toDateString() === new Date().toDateString()) ||
-            (filterDate === "week" &&
-              now - createdDate.getTime() < 7 * 24 * 60 * 60 * 1000) ||
-            (filterDate === "month" &&
-              now - createdDate.getTime() < 30 * 24 * 60 * 60 * 1000);
-
-          return (
-            matchesSearch &&
-            matchesCategory &&
-            matchesUser &&
-            matchesAccount &&
-            matchesDate
-          );
-        })
-      : [];
-  }, [historyLogs, searchTerm, filterCategory, filterUser, filterDate, filterAccount]);
-
-  const uniqueAccounts = useMemo(() => {
-    return [...new Set(historyLogs.map((log) => log.account_name).filter(Boolean))];
-  }, [historyLogs]);
-
-  const uniqueUsers = useMemo(() => {
-    return [...new Set(historyLogs.map((log) => log.user_name).filter(Boolean))];
-  }, [historyLogs]);
-
-  const stats = useMemo(() => {
-    return {
-      total: filteredHistoryLogs.length,
-      transactions: filteredHistoryLogs.filter((l) => l.category === "transaction")
-        .length,
-      editing: filteredHistoryLogs.filter((l) => l.category === "editing").length,
-      logins: filteredHistoryLogs.filter((l) => l.category === "login").length,
-      today: filteredHistoryLogs.filter(
-        (l) => new Date(l.created_at).toDateString() === new Date().toDateString()
-      ).length,
-    };
+  const exportHistory = useCallback(() => {
+    if (!filteredHistoryLogs.length) return;
+    const fmtD = (v) => v ? new Date(v).toLocaleDateString("en-PH") : "N/A";
+    const fmtT = (v) => v ? new Date(v).toLocaleTimeString("en-PH", { hour: "2-digit", minute: "2-digit" }) : "N/A";
+    const headers = ["ID","Category","User","Role","Account","Action","Description","Amount","Reference","Date","Time","Status"];
+    const rows = filteredHistoryLogs.map((log) => [
+      log.id, log.category, log.user_name, log.user_role, log.account_name || "N/A",
+      log.action, log.description, log.amount ?? "N/A", log.reference_id,
+      fmtD(log.created_at), fmtT(log.created_at), log.status,
+    ]);
+    const csv = [headers, ...rows].map((r) => r.map((v) => `"${String(v ?? "").replace(/"/g, '""')}"`).join(",")).join("\n");
+    const url = URL.createObjectURL(new Blob([csv], { type: "text/csv;charset=utf-8;" }));
+    const a = document.createElement("a");
+    a.href = url; a.download = `admin-history-${Date.now()}.csv`;
+    document.body.appendChild(a); a.click();
+    document.body.removeChild(a); URL.revokeObjectURL(url);
   }, [filteredHistoryLogs]);
 
-  const formatDate = (dateString) => {
-    if (!dateString) return "N/A";
-    return new Date(dateString).toLocaleDateString("en-PH", {
-      year: "numeric",
-      month: "short",
-      day: "2-digit",
-    });
-  };
-
-  const formatTime = (dateString) => {
-    if (!dateString) return "N/A";
-    return new Date(dateString).toLocaleTimeString("en-PH", {
-      hour: "2-digit",
-      minute: "2-digit",
-    });
-  };
-
-  const formatAmount = (amount) => {
-    if (amount === null || amount === undefined) return "N/A";
-    return formatCurrency(amount);
-  };
-
-  const getCategoryIcon = (category, subcategory) => {
-    switch (category) {
-      case "transaction":
-        if (subcategory === "sale") return faShoppingCart;
-        if (subcategory === "payment") return faMoneyBillWave;
-        if (subcategory === "refund") return faReceipt;
-        return faMoneyBillWave;
-
-      case "editing":
-        if (subcategory === "medical_record") return faFileMedical;
-        if (subcategory === "appointment") return faCalendarAlt;
-        return faEdit;
-
-      case "login":
-        return faLock;
-
-      default:
-        return faHistory;
-    }
-  };
-
-  const getCategoryColor = (category) => {
-    const colors = {
-      transaction: "success",
-      editing: "warning",
-      login: "info",
-      general: "secondary",
-    };
-
-    return colors[category] || "secondary";
-  };
-
-  const getRoleBadgeColor = (role) => {
-    const colors = {
-      admin: "danger",
-      manager: "warning",
-      receptionist: "info",
-      veterinary: "success",
-      cashier: "primary",
-      inventory: "secondary",
-      payroll: "dark",
-      customer: "light",
-    };
-
-    return colors[role] || "secondary";
-  };
-
-  const openDetailModal = (log) => {
-    setSelectedLog(log);
-    setShowDetailModal(true);
-  };
-
-  const closeDetailModal = () => {
-    setShowDetailModal(false);
-    setSelectedLog(null);
-  };
-
-  const refreshData = async () => {
-    await fetchHistoryLogs();
-    showSuccess("History data refreshed");
-  };
-
-  const exportHistory = () => {
-    try {
-      if (!filteredHistoryLogs.length) {
-        showError("No history data to export");
-        return;
-      }
-
-      const headers = [
-        "ID",
-        "Category",
-        "User",
-        "Role",
-        "Account",
-        "Action",
-        "Description",
-        "Amount",
-        "Reference",
-        "Date",
-        "Time",
-        "Status",
-      ];
-
-      const rows = filteredHistoryLogs.map((log) => [
-        log.id,
-        log.category,
-        log.user_name,
-        log.user_role,
-        log.account_name || "N/A",
-        log.action,
-        log.description,
-        log.amount ?? "N/A",
-        log.reference_id,
-        formatDate(log.created_at),
-        formatTime(log.created_at),
-        log.status,
-      ]);
-
-      const csvContent = [headers, ...rows]
-        .map((row) =>
-          row
-            .map((value) => `"${String(value ?? "").replace(/"/g, '""')}"`)
-            .join(",")
-        )
-        .join("\n");
-
-      const blob = new Blob([csvContent], {
-        type: "text/csv;charset=utf-8;",
-      });
-
-      const url = URL.createObjectURL(blob);
-      const link = document.createElement("a");
-
-      link.href = url;
-      link.setAttribute("download", `system-history-${Date.now()}.csv`);
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-
-      URL.revokeObjectURL(url);
-      showSuccess("History exported successfully");
-    } catch (err) {
-      console.error(err);
-      showError("Failed to export history");
-    }
-  };
-
   return (
-    <motion.div
-      className="admin-history"
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      transition={{ duration: 0.35 }}
-    >
-      <motion.div
-        className="section-header enhanced"
-        variants={fadeUp}
-        initial="hidden"
-        animate="show"
-      >
-        <div className="header-left">
-          <div className="history-kicker">
-            <FontAwesomeIcon icon={faShieldAlt} />
-            Audit Trail Center
-          </div>
-
-          <h2>
-            <FontAwesomeIcon icon={faHistory} className="header-icon" />
-            System History
-            <span className="history-badge">{stats.total} entries</span>
-          </h2>
-
-          <p>
-            Monitor transactions, editing activities, logins, and system actions
-            across all accounts.
-          </p>
-        </div>
-
-        <div className="header-actions">
-          <button className="action-btn refresh" onClick={refreshData}>
-            <FontAwesomeIcon icon={faRefresh} />
-            Refresh
-          </button>
-
-          <button className="action-btn export" onClick={exportHistory}>
-            <FontAwesomeIcon icon={faDownload} />
-            Export CSV
-          </button>
-        </div>
-      </motion.div>
-
-      <motion.div
-        className="history-stats-grid"
-        initial="hidden"
-        animate="show"
-        transition={{ staggerChildren: 0.08 }}
-      >
-        <motion.div className="stat-card total" variants={fadeUp}>
-          <div className="stat-icon">
-            <FontAwesomeIcon icon={faChartLine} />
-          </div>
-          <div className="stat-info">
-            <div className="stat-value">{stats.total}</div>
-            <div className="stat-label">Total Activities</div>
-          </div>
-        </motion.div>
-
-        <motion.div className="stat-card transactions" variants={fadeUp}>
-          <div className="stat-icon">
-            <FontAwesomeIcon icon={faMoneyBillWave} />
-          </div>
-          <div className="stat-info">
-            <div className="stat-value">{stats.transactions}</div>
-            <div className="stat-label">Transactions</div>
-          </div>
-        </motion.div>
-
-        <motion.div className="stat-card editing" variants={fadeUp}>
-          <div className="stat-icon">
-            <FontAwesomeIcon icon={faEdit} />
-          </div>
-          <div className="stat-info">
-            <div className="stat-value">{stats.editing}</div>
-            <div className="stat-label">Editing Activities</div>
-          </div>
-        </motion.div>
-
-        <motion.div className="stat-card logins" variants={fadeUp}>
-          <div className="stat-icon">
-            <FontAwesomeIcon icon={faLock} />
-          </div>
-          <div className="stat-info">
-            <div className="stat-value">{stats.logins}</div>
-            <div className="stat-label">Staff Logins</div>
-          </div>
-        </motion.div>
-
-        <motion.div className="stat-card today" variants={fadeUp}>
-          <div className="stat-icon">
-            <FontAwesomeIcon icon={faCalendarAlt} />
-          </div>
-          <div className="stat-info">
-            <div className="stat-value">{stats.today}</div>
-            <div className="stat-label">Today</div>
-          </div>
-        </motion.div>
-      </motion.div>
-
-      <AnimatePresence>
-        {success && (
-          <motion.div
-            className="success-message"
-            initial={{ opacity: 0, y: -8 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -8 }}
-          >
-            <FontAwesomeIcon icon={faCheckCircle} />
-            {success}
-          </motion.div>
-        )}
-
-        {error && (
-          <motion.div
-            className="error-message"
-            initial={{ opacity: 0, y: -8 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -8 }}
-          >
-            <FontAwesomeIcon icon={faExclamationTriangle} />
-            {error}
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-      <motion.div
-        className="history-controls"
-        variants={fadeUp}
-        initial="hidden"
-        animate="show"
-        transition={{ delay: 0.1 }}
-      >
-        <div className="search-filter-group">
-          <div className="search-box">
-            <FontAwesomeIcon icon={faSearch} />
-            <input
-              type="text"
-              placeholder="Search user, action, description, reference..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-            />
-          </div>
-
-          <div className="filter-dropdown">
-            <select
-              value={filterCategory}
-              onChange={(e) => setFilterCategory(e.target.value)}
-            >
-              <option value="all">All Categories</option>
-              <option value="transaction">Transactions</option>
-              <option value="editing">Editing Activities</option>
-              <option value="login">Staff Logins</option>
-              <option value="general">General</option>
-            </select>
-          </div>
-
-          <div className="filter-dropdown">
-            <select value={filterUser} onChange={(e) => setFilterUser(e.target.value)}>
-              <option value="all">All Users</option>
-              {uniqueUsers.map((user) => (
-                <option key={user} value={user}>
-                  {user}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          <div className="filter-dropdown">
-            <select
-              value={filterAccount}
-              onChange={(e) => setFilterAccount(e.target.value)}
-            >
-              <option value="all">All Accounts</option>
-              {uniqueAccounts.map((account) => (
-                <option key={account} value={account}>
-                  {account}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          <div className="filter-dropdown">
-            <select value={filterDate} onChange={(e) => setFilterDate(e.target.value)}>
-              <option value="all">All Time</option>
-              <option value="today">Today</option>
-              <option value="week">This Week</option>
-              <option value="month">This Month</option>
-            </select>
-          </div>
-        </div>
-      </motion.div>
-
-      <motion.div
-        className="history-table-container"
-        variants={fadeUp}
-        initial="hidden"
-        animate="show"
-        transition={{ delay: 0.18 }}
-      >
-        {loading ? (
-          <div className="loading-container">
-            <FontAwesomeIcon icon={faSpinner} spin />
-            <p>Loading history logs...</p>
-          </div>
-        ) : filteredHistoryLogs.length === 0 ? (
-          <div className="empty-state">
-            <FontAwesomeIcon icon={faClipboardList} className="empty-icon" />
-            <h3>No history logs found</h3>
-            <p>Try adjusting your filters or refresh the history records.</p>
-          </div>
-        ) : (
-          <div className="history-table-scroll">
-            <table className="history-table">
-              <thead>
-                <tr>
-                  <th>ID</th>
-                  <th>Category</th>
-                  <th>User</th>
-                  <th>Account</th>
-                  <th>Action</th>
-                  <th>Description</th>
-                  <th>Amount</th>
-                  <th>Reference</th>
-                  <th>Date</th>
-                  <th>Time</th>
-                  <th>Actions</th>
-                </tr>
-              </thead>
-
-              <tbody>
-                {filteredHistoryLogs.map((log, index) => (
-                  <motion.tr
-                    key={`${log.reference_id}-${log.id}`}
-                    className="history-row"
-                    initial={{ opacity: 0, y: 8 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.25, delay: index * 0.015 }}
-                  >
-                    <td className="log-id">#{log.id}</td>
-
-                    <td>
-                      <span className={`category-badge ${getCategoryColor(log.category)}`}>
-                        <FontAwesomeIcon
-                          icon={getCategoryIcon(log.category, log.subcategory)}
-                        />
-                        {log.category}
-                      </span>
-                    </td>
-
-                    <td className="user-info">
-                      <div className="user-details">
-                        <div className="user-name">
-                          <FontAwesomeIcon icon={faUser} className="user-icon" />
-                          <strong>{log.user_name || "N/A"}</strong>
-                        </div>
-
-                        <div className="user-role">
-                          <span className={`role-badge ${getRoleBadgeColor(log.user_role)}`}>
-                            {log.user_role || "N/A"}
-                          </span>
-                        </div>
-                      </div>
-                    </td>
-
-                    <td className="account">{log.account_name || "N/A"}</td>
-                    <td className="action">{log.action || "N/A"}</td>
-                    <td className="description">{log.description || "N/A"}</td>
-
-                    <td className="amount">
-                      {log.amount !== null && log.amount !== undefined ? (
-                        <span
-                          className={
-                            Number(log.amount) < 0 ? "negative-amount" : "positive-amount"
-                          }
-                        >
-                          {formatAmount(log.amount)}
-                        </span>
-                      ) : (
-                        "N/A"
-                      )}
-                    </td>
-
-                    <td className="reference">{log.reference_id || "N/A"}</td>
-                    <td className="date">{formatDate(log.created_at)}</td>
-                    <td className="time">{formatTime(log.created_at)}</td>
-
-                    <td className="actions">
-                      <button
-                        className="table-action-btn view-btn"
-                        onClick={() => openDetailModal(log)}
-                        title="View Details"
-                      >
-                        <FontAwesomeIcon icon={faEye} />
-                      </button>
-                    </td>
-                  </motion.tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
-      </motion.div>
-
-      <AnimatePresence>
-        {showDetailModal && selectedLog && (
-          <motion.div
-            className="modal-overlay"
-            onClick={closeDetailModal}
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-          >
-            <motion.div
-              className="detail-modal"
-              onClick={(e) => e.stopPropagation()}
-              initial={{ opacity: 0, scale: 0.96, y: 20 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.96, y: 20 }}
-              transition={{ duration: 0.25 }}
-            >
-              <div className="modal-header">
-                <h3>
-                  <FontAwesomeIcon
-                    icon={getCategoryIcon(selectedLog.category, selectedLog.subcategory)}
-                  />
-                  {selectedLog.action}
-                </h3>
-
-                <button className="close-btn" onClick={closeDetailModal}>
-                  <FontAwesomeIcon icon={faTimesCircle} />
-                </button>
-              </div>
-
-              <div className="modal-body">
-                <div className="detail-grid">
-                  <div className="detail-section">
-                    <h4>Basic Information</h4>
-
-                    <div className="detail-item">
-                      <label>ID:</label>
-                      <span>#{selectedLog.id}</span>
-                    </div>
-
-                    <div className="detail-item">
-                      <label>Category:</label>
-                      <span
-                        className={`category-badge ${getCategoryColor(
-                          selectedLog.category
-                        )}`}
-                      >
-                        {selectedLog.category}
-                      </span>
-                    </div>
-
-                    <div className="detail-item">
-                      <label>Subcategory:</label>
-                      <span>{selectedLog.subcategory || "N/A"}</span>
-                    </div>
-
-                    <div className="detail-item">
-                      <label>Status:</label>
-                      <span className={`status-badge ${selectedLog.status}`}>
-                        {selectedLog.status || "N/A"}
-                      </span>
-                    </div>
-                  </div>
-
-                  <div className="detail-section">
-                    <h4>User Information</h4>
-
-                    <div className="detail-item">
-                      <label>Name:</label>
-                      <span>{selectedLog.user_name || "N/A"}</span>
-                    </div>
-
-                    <div className="detail-item">
-                      <label>Email:</label>
-                      <span>{selectedLog.user_email || "N/A"}</span>
-                    </div>
-
-                    <div className="detail-item">
-                      <label>Role:</label>
-                      <span
-                        className={`role-badge ${getRoleBadgeColor(
-                          selectedLog.user_role
-                        )}`}
-                      >
-                        {selectedLog.user_role || "N/A"}
-                      </span>
-                    </div>
-                  </div>
-
-                  <div className="detail-section">
-                    <h4>Account Information</h4>
-
-                    <div className="detail-item">
-                      <label>Account:</label>
-                      <span>{selectedLog.account_name || "N/A"}</span>
-                    </div>
-
-                    <div className="detail-item">
-                      <label>Reference ID:</label>
-                      <span>{selectedLog.reference_id || "N/A"}</span>
-                    </div>
-
-                    <div className="detail-item">
-                      <label>Date:</label>
-                      <span>
-                        {formatDate(selectedLog.created_at)} at{" "}
-                        {formatTime(selectedLog.created_at)}
-                      </span>
-                    </div>
-
-                    {selectedLog.amount !== null && selectedLog.amount !== undefined && (
-                      <div className="detail-item">
-                        <label>Amount:</label>
-                        <span
-                          className={
-                            Number(selectedLog.amount) < 0
-                              ? "negative-amount"
-                              : "positive-amount"
-                          }
-                        >
-                          {formatAmount(selectedLog.amount)}
-                        </span>
-                      </div>
-                    )}
-                  </div>
-
-                  <div className="detail-section">
-                    <h4>Description</h4>
-
-                    <div className="detail-item">
-                      <label>Action:</label>
-                      <span>{selectedLog.action || "N/A"}</span>
-                    </div>
-
-                    <div className="detail-item">
-                      <label>Description:</label>
-                      <span>{selectedLog.description || "N/A"}</span>
-                    </div>
-                  </div>
-
-                  {selectedLog.metadata && (
-                    <div className="detail-section full">
-                      <h4>Additional Details</h4>
-
-                      <div className="metadata-content">
-                        {Object.entries(selectedLog.metadata).map(([key, value]) => (
-                          <div key={key} className="metadata-item">
-                            <label>{key.replace(/_/g, " ").toUpperCase()}:</label>
-                            <span>
-                              {typeof value === "object"
-                                ? JSON.stringify(value, null, 2)
-                                : String(value)}
-                            </span>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-                </div>
-              </div>
-
-              <div className="modal-actions">
-                <button className="close-modal-btn" onClick={closeDetailModal}>
-                  Close
-                </button>
-              </div>
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-    </motion.div>
+    <HistoryTimeline
+      entries={filteredHistoryLogs}
+      loading={loading}
+      error={error}
+      onRefresh={fetchHistoryLogs}
+      onExport={exportHistory}
+      roleAccent="#e11d48"
+      roleLabel="Audit Trail Center"
+      emptyMessage="No history data found. Adjust filters or refresh records."
+      searchTerm={searchTerm}
+      onSearchChange={setSearchTerm}
+      dateFilter={filterDate}
+      onDateFilterChange={setFilterDate}
+      categoryFilter={filterCategory}
+      onCategoryFilterChange={setFilterCategory}
+      categoryOptions={CATEGORY_OPTIONS}
+    />
   );
 };
 
 export default History;
+

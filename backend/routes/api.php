@@ -24,6 +24,9 @@ use App\Http\Controllers\Inventory\DashboardController as InventoryDashboardCont
 use App\Http\Controllers\Manager\DashboardController as ManagerDashboardController;
 use App\Http\Controllers\Receptionist\DashboardController as ReceptionistDashboardController;
 use App\Http\Controllers\Receptionist\CustomerOrderController as ReceptionistCustomerOrderController;
+use App\Http\Controllers\Receptionist\ServiceController as ReceptionistServiceController;
+use App\Http\Controllers\Receptionist\HotelRoomController as ReceptionistHotelRoomController;
+use App\Http\Controllers\Receptionist\BoardingRoomController as ReceptionistBoardingRoomController;
 use App\Http\Controllers\Veterinary\DashboardController as VeterinaryDashboardController;
 use App\Http\Controllers\Veterinary\MedicalRecordController;
 use App\Http\Controllers\Veterinary\ConsultationWorkflowController;
@@ -487,6 +490,22 @@ Route::middleware(['auth.api', 'throttle:api', 'role:receptionist'])->prefix('re
     Route::post('boarding-requests/{id}/ready-for-pickup', [BoardingController::class, 'readyForPickup']);
     Route::post('boarding-requests/{id}/check-out', [BoardingController::class, 'checkOut']);
     
+    // Service & Room Management
+    Route::get('services', [ReceptionistServiceController::class, 'index']);
+    Route::post('services', [ReceptionistServiceController::class, 'store']);
+    Route::put('services/{id}', [ReceptionistServiceController::class, 'update']);
+    Route::delete('services/{id}', [ReceptionistServiceController::class, 'destroy']);
+
+    Route::get('hotel-rooms', [ReceptionistHotelRoomController::class, 'index']);
+    Route::post('hotel-rooms', [ReceptionistHotelRoomController::class, 'store']);
+    Route::put('hotel-rooms/{id}', [ReceptionistHotelRoomController::class, 'update']);
+    Route::delete('hotel-rooms/{id}', [ReceptionistHotelRoomController::class, 'destroy']);
+
+    Route::get('boarding-rooms', [ReceptionistBoardingRoomController::class, 'index']);
+    Route::post('boarding-rooms', [ReceptionistBoardingRoomController::class, 'store']);
+    Route::put('boarding-rooms/{id}', [ReceptionistBoardingRoomController::class, 'update']);
+    Route::delete('boarding-rooms/{id}', [ReceptionistBoardingRoomController::class, 'destroy']);
+
     // Boarding Inventory Usage Routes
     Route::post('boarding-requests/{id}/inventory-usage', [BoardingController::class, 'recordInventoryUsage']);
     Route::get('boarding-requests/{id}/inventory-usage-history', [BoardingController::class, 'getInventoryUsageHistory']);
@@ -587,7 +606,7 @@ Route::middleware(['auth.api', 'throttle:api', 'role:manager'])->prefix('manager
     Route::post('payroll/{id}/release', [ApiPayrollController::class, 'markAsPaid']);
 
     // Manager History Route
-    Route::get('history', [ReportsController::class, 'orders']);
+    Route::get('history', [ManagerDashboardController::class, 'history']);
 
     // Manager Staff-Specific Routes
     Route::get('staff/{id}/attendance', [AttendanceController::class, 'index']);

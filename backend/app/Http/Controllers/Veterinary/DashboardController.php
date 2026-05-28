@@ -103,14 +103,42 @@ class DashboardController extends Controller
     {
         $statuses = $request->input('status', 'completed,cancelled');
         $statusArray = explode(',', $statuses);
-        
-        $appointments = $this->assignedAppointments()
+
+        $perPage = (int) $request->get('per_page', 25);
+        $page    = (int) $request->get('page', 1);
+        $search  = trim((string) $request->get('search', ''));
+        $dateFilter = $request->get('date_filter', 'all');
+
+        $query = $this->assignedAppointments()
             ->with(['customer', 'pet', 'service', 'veterinarian'])
             ->whereIn('status', $statusArray)
-            ->orderBy('scheduled_at', 'desc')
-            ->get();
-            
-        return response()->json($appointments);
+            ->orderBy('scheduled_at', 'desc');
+
+        if ($search) {
+            $query->where(function ($q) use ($search) {
+                $q->whereHas('customer', fn ($c) => $c->where('name', 'like', "%$search%"))
+                  ->orWhereHas('pet', fn ($p) => $p->where('name', 'like', "%$search%"))
+                  ->orWhereHas('service', fn ($s) => $s->where('name', 'like', "%$search%"));
+            });
+        }
+
+        if ($dateFilter === 'today')  $query->whereDate('scheduled_at', \Carbon\Carbon::today());
+        if ($dateFilter === 'week')   $query->where('scheduled_at', '>=', \Carbon\Carbon::now()->subDays(7));
+        if ($dateFilter === 'month')  $query->where('scheduled_at', '>=', \Carbon\Carbon::now()->subDays(30));
+
+        $paginated = $query->paginate($perPage, ['*'], 'page', $page);
+
+        return response()->json([
+            'appointments' => $paginated->items(),
+            'history'      => $paginated->items(),
+            'data'         => $paginated->items(),
+            'meta'         => [
+                'total'        => $paginated->total(),
+                'per_page'     => $paginated->perPage(),
+                'current_page' => $paginated->currentPage(),
+                'last_page'    => $paginated->lastPage(),
+            ],
+        ]);
     }
 
     public function reports(Request $request)
