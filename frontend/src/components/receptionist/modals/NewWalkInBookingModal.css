@@ -1,0 +1,139 @@
+/* New Walk-in Booking Modal */
+
+.hub-booking-modal {
+  max-width: 720px;
+}
+
+.hub-form-error {
+  background: #fef2f2;
+  color: #991b1b;
+  border: 1px solid #fecaca;
+  padding: 12px 16px;
+  border-radius: 10px;
+  font-size: 13px;
+  font-weight: 600;
+  margin-bottom: 16px;
+}
+
+.hub-form-section {
+  margin-bottom: 24px;
+}
+
+.hub-form-section h4 {
+  font-size: 14px;
+  font-weight: 700;
+  color: #374151;
+  margin: 0 0 12px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid #f3f4f6;
+}
+
+.hub-form-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 14px;
+}
+
+.hub-form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.hub-form-group.full {
+  grid-column: 1 / -1;
+}
+
+.hub-form-group label {
+  font-size: 12px;
+  font-weight: 600;
+  color: #374151;
+}
+
+.hub-form-group input,
+.hub-form-group select,
+.hub-form-group textarea {
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: 1px solid #d1d5db;
+  font-size: 13px;
+  outline: none;
+  background: #fff;
+  color: #111827;
+  transition: border-color 0.2s;
+}
+
+.hub-form-group input:focus,
+.hub-form-group select:focus,
+.hub-form-group textarea:focus {
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.hub-form-group input:disabled {
+  background: #f3f4f6;
+  color: #6b7280;
+}
+
+.hub-form-group textarea {
+  resize: vertical;
+  min-height: 80px;
+}
+
+.hub-payment-preview {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+  background: #f9fafb;
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+  padding: 16px;
+  margin-bottom: 16px;
+}
+
+.hub-payment-preview > div {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.hub-payment-preview span {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: #9ca3af;
+  font-weight: 600;
+}
+
+.hub-payment-preview strong {
+  font-size: 16px;
+  color: #111827;
+}
+
+@media (max-width: 768px) {
+  .hub-booking-modal {
+    max-width: 100%;
+    margin: 12px;
+  }
+
+  .hub-form-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .hub-form-group.full {
+    grid-column: auto;
+  }
+
+  .hub-payment-preview {
+    grid-template-columns: 1fr;
+  }
+
+  .hub-modal-actions {
+    flex-wrap: wrap;
+  }
+
+  .hub-modal-actions .hub-modal-btn {
+    flex: 1;
+    justify-content: center;
+  }
+}

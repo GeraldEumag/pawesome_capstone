@@ -1,0 +1,872 @@
+import React, { useCallback, useEffect, useMemo, useState } from "react";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import {
+  faBed,
+  faCalendarAlt,
+  faCalendarCheck,
+  faCheckCircle,
+  faClock,
+  faCut,
+  faDownload,
+  faEye,
+  faFilter,
+  faHotel,
+  faInfoCircle,
+  faMoneyBillWave,
+  faPaw,
+  faPlus,
+  faRefresh,
+  faSearch,
+  faSignOutAlt,
+  faSpinner,
+  faStethoscope,
+  faTimes,
+  faTimesCircle,
+  faUndoAlt,
+  faUser,
+} from "@fortawesome/free-solid-svg-icons";
+import { apiRequest } from "../../api/client";
+import { showConfirm } from "../../utils/alert";
+import { useUnifiedRequests } from "./hooks/useUnifiedRequests";
+import NewWalkInBookingModal from "./modals/NewWalkInBookingModal";
+import {
+  formatDate,
+  formatTime,
+  formatStatus,
+  formatCurrency,
+  normalizeStatus,
+} from "./utils/requestNormalization";
+import "./ReceptionistAppointmentsBoarding.css";
+
+const STATUS_OPTIONS = [
+  { value: "all", label: "All Status" },
+  { value: "pending", label: "Pending" },
+  { value: "approved", label: "Approved" },
+  { value: "in_progress", label: "In Progress" },
+  { value: "checked_in", label: "Checked In" },
+  { value: "completed", label: "Completed" },
+  { value: "rejected", label: "Rejected / Cancelled" },
+];
+
+const TYPE_OPTIONS = [
+  { value: "all", label: "All Types" },
+  { value: "vet", label: "Veterinary" },
+  { value: "hotel", label: "Hotel / Boarding" },
+  { value: "grooming", label: "Grooming" },
+];
+
+const PAYMENT_OPTIONS = [
+  { value: "all", label: "All Payments" },
+  { value: "paid", label: "Paid" },
+  { value: "partial", label: "Partial" },
+  { value: "pending", label: "Pending" },
+  { value: "unpaid", label: "Unpaid" },
+];
+
+const safeText = (value) => String(value || "").toLowerCase();
+
+const TypeIcon = ({ type }) => {
+  if (type === "grooming") return <FontAwesomeIcon icon={faCut} />;
+  if (type === "hotel") return <FontAwesomeIcon icon={faHotel} />;
+  if (type === "vet") return <FontAwesomeIcon icon={faStethoscope} />;
+  return <FontAwesomeIcon icon={faPaw} />;
+};
+
+const TypeLabel = ({ type }) => {
+  if (type === "grooming") return "Grooming";
+  if (type === "hotel") return "Hotel";
+  if (type === "vet") return "Veterinary";
+  return "Service";
+};
+
+const StatusBadge = ({ status }) => {
+  const classMap = {
+    pending: "status-pending",
+    approved: "status-approved",
+    in_progress: "status-in-progress",
+    checked_in: "status-checked-in",
+    completed: "status-completed",
+    checked_out: "status-completed",
+    rejected: "status-rejected",
+    cancelled: "status-rejected",
+  };
+  return <span className={`hub-status-badge ${classMap[status] || ""}`}>{formatStatus(status)}</span>;
+};
+
+const PaymentBadge = ({ status }) => {
+  const classMap = {
+    paid: "payment-paid",
+    partial: "payment-partial",
+    pending: "payment-pending",
+    unpaid: "payment-unpaid",
+  };
+  return <span className={`hub-payment-badge ${classMap[status] || ""}`}>{status}</span>;
+};
+
+const StatCard = ({ icon, label, value, tone, active, onClick }) => (
+  <button type="button" className={`hub-stat-card ${active ? "active" : ""} ${tone || ""}`} onClick={onClick}>
+    <span className="hub-stat-icon">{icon}</span>
+    <div>
+      <h3>{value}</h3>
+      <p>{label}</p>
+    </div>
+  </button>
+);
+
+const ReceptionistAppointmentsBoarding = () => {
+  const { requests, loading, refreshing, error, success, lastUpdated, stats, fetchAll, updateItemStatus, notify } =
+    useUnifiedRequests();
+
+  const [searchTerm, setSearchTerm] = useState("");
+  const [statusFilter, setStatusFilter] = useState("all");
+  const [typeFilter, setTypeFilter] = useState("all");
+  const [paymentFilter, setPaymentFilter] = useState("all");
+
+  const [selectedRequest, setSelectedRequest] = useState(null);
+  const [showDetailModal, setShowDetailModal] = useState(false);
+  const [showBookingModal, setShowBookingModal] = useState(false);
+  const [busyAction, setBusyAction] = useState("");
+
+  const [veterinarians, setVeterinarians] = useState([]);
+  const [vetAssignments, setVetAssignments] = useState({});
+
+  // Fetch veterinarians for vet assignment
+  useEffect(() => {
+    const fetchVets = async () => {
+      try {
+        const result = await apiRequest("/receptionist/veterinarians/available", { method: "GET" });
+        const list = Array.isArray(result) ? result : result?.data || result?.veterinarians || [];
+        setVeterinarians(Array.isArray(list) ? list : []);
+      } catch {
+        setVeterinarians([]);
+      }
+    };
+    fetchVets();
+  }, []);
+
+  const filteredRequests = useMemo(() => {
+    const keyword = safeText(searchTerm);
+    return requests.filter((item) => {
+      const matchesSearch =
+        !keyword ||
+        safeText(item.id).includes(keyword) ||
+        safeText(item.petName).includes(keyword) ||
+        safeText(item.customerName).includes(keyword) ||
+        safeText(item.service).includes(keyword) ||
+        safeText(item.type).includes(keyword) ||
+        safeText(item.status).includes(keyword) ||
+        safeText(item.paymentStatus).includes(keyword) ||
+        safeText(item.customerPhone).includes(keyword);
+
+      const matchesStatus = statusFilter === "all" || item.status === statusFilter;
+      const matchesType = typeFilter === "all" || item.type === typeFilter;
+      const matchesPayment = paymentFilter === "all" || item.paymentStatus === paymentFilter;
+
+      return matchesSearch && matchesStatus && matchesType && matchesPayment;
+    });
+  }, [requests, searchTerm, statusFilter, typeFilter, paymentFilter]);
+
+  const sortedRequests = useMemo(() => {
+    return [...filteredRequests].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+  }, [filteredRequests]);
+
+  const clearFilters = () => {
+    setSearchTerm("");
+    setStatusFilter("all");
+    setTypeFilter("all");
+    setPaymentFilter("all");
+  };
+
+  const exportCSV = () => {
+    if (sortedRequests.length === 0) {
+      notify("error", "No records to export.");
+      return;
+    }
+    const headers = ["ID", "Type", "Pet", "Customer", "Service", "Date", "Time", "Status", "Payment", "Amount", "Notes"];
+    const rows = sortedRequests.map((item) => [
+      item.id,
+      item.type,
+      item.petName,
+      item.customerName,
+      item.service,
+      formatDate(item.date),
+      formatTime(item.time),
+      item.status,
+      item.paymentStatus,
+      item.amount,
+      item.notes,
+    ]);
+    const csv = [headers, ...rows]
+      .map((row) => row.map((value) => `"${String(value ?? "").replace(/"/g, '""')}"`).join(","))
+      .join("\n");
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const anchor = document.createElement("a");
+    anchor.href = url;
+    anchor.download = `appointments-boarding-${new Date().toISOString().slice(0, 10)}.csv`;
+    anchor.click();
+    URL.revokeObjectURL(url);
+    notify("success", "Export downloaded.");
+  };
+
+  const isBusy = (id, action) => busyAction === `${id}-${action}`;
+
+  const handleAction = async (item, action, extra = {}) => {
+    const key = `${item.id}-${action}`;
+    setBusyAction(key);
+    try {
+      let endpoint = "";
+      let method = "POST";
+      let payload = {};
+      const isHotel = item.type === "hotel";
+
+      if (action === "approve") {
+        endpoint = isHotel
+          ? `/receptionist/boarding-requests/${item.id}/approve`
+          : `/receptionist/requests/${item.id}/approve`;
+        payload = {
+          receptionist_remarks: extra.remarks || "Approved by receptionist",
+          ...(item.type === "vet" && extra.veterinarianId
+            ? { veterinarian_id: Number(extra.veterinarianId) }
+            : {}),
+        };
+      } else if (action === "reject") {
+        const confirmed = await showConfirm("Reject this request?");
+        if (!confirmed) { setBusyAction(""); return; }
+        endpoint = isHotel
+          ? `/receptionist/boarding-requests/${item.id}/reject`
+          : `/receptionist/requests/${item.id}/reject`;
+        payload = { rejection_reason: extra.reason || "Rejected by receptionist" };
+      } else if (action === "check_in") {
+        const confirmed = await showConfirm(`Check in ${item.petName}?`);
+        if (!confirmed) { setBusyAction(""); return; }
+        try {
+          endpoint = `/receptionist/boarding-requests/${item.id}/check-in`;
+          await apiRequest(endpoint, { method: "POST" });
+        } catch {
+          endpoint = `/receptionist/requests/${item.id}/status`;
+          method = "PATCH";
+          payload = { status: "checked_in" };
+          await apiRequest(endpoint, { method, body: JSON.stringify(payload) });
+        }
+        updateItemStatus(item.id, "checked_in");
+        notify("success", "Checked in successfully.");
+        setBusyAction("");
+        await fetchAll({ silent: true });
+        return;
+      } else if (action === "check_out") {
+        const confirmed = await showConfirm(`Check out ${item.petName}?`);
+        if (!confirmed) { setBusyAction(""); return; }
+        endpoint = `/receptionist/requests/${item.id}/status`;
+        method = "PATCH";
+        payload = { status: "completed" };
+      } else if (["approved", "in_progress", "completed", "rejected", "cancelled", "pending"].includes(action)) {
+        endpoint = `/receptionist/requests/${item.id}/status`;
+        method = "PATCH";
+        payload = { status: action };
+      }
+
+      if (endpoint) {
+        await apiRequest(endpoint, { method, body: JSON.stringify(payload) });
+      }
+
+      updateItemStatus(item.id, action === "check_out" ? "completed" : action);
+      notify("success", `Request updated successfully.`);
+      await fetchAll({ silent: true });
+    } catch (err) {
+      notify("error", err.message || "Action failed.");
+    } finally {
+      setBusyAction("");
+    }
+  };
+
+  const openDetail = (item) => {
+    setSelectedRequest(item);
+    setShowDetailModal(true);
+  };
+
+  const closeDetail = () => {
+    setShowDetailModal(false);
+    setSelectedRequest(null);
+  };
+
+  const getQuickActions = (item) => {
+    const actions = [];
+    const busy = (action) => isBusy(item.id, action);
+
+    // View details always available
+    actions.push(
+      <button
+        key="view"
+        type="button"
+        className="hub-action-btn view"
+        onClick={() => openDetail(item)}
+        title="View Details"
+      >
+        <FontAwesomeIcon icon={faEye} />
+      </button>
+    );
+
+    if (item.status === "pending") {
+      actions.push(
+        <button
+          key="approve"
+          type="button"
+          className="hub-action-btn approve"
+          onClick={() => handleAction(item, "approve")}
+          disabled={busy("approve")}
+          title="Approve"
+        >
+          <FontAwesomeIcon icon={busy("approve") ? faSpinner : faCheckCircle} spin={busy("approve")} />
+        </button>,
+        <button
+          key="reject"
+          type="button"
+          className="hub-action-btn reject"
+          onClick={() => handleAction(item, "reject")}
+          disabled={busy("reject")}
+          title="Reject"
+        >
+          <FontAwesomeIcon icon={busy("reject") ? faSpinner : faTimesCircle} spin={busy("reject")} />
+        </button>
+      );
+    }
+
+    if (item.type === "hotel" && item.status === "approved") {
+      actions.push(
+        <button
+          key="checkin"
+          type="button"
+          className="hub-action-btn checkin"
+          onClick={() => handleAction(item, "check_in")}
+          disabled={busy("check_in")}
+          title="Check In"
+        >
+          <FontAwesomeIcon icon={busy("check_in") ? faSpinner : faSignOutAlt} spin={busy("check_in")} />
+          Check In
+        </button>
+      );
+    }
+
+    if (item.type === "hotel" && item.status === "checked_in") {
+      actions.push(
+        <button
+          key="checkout"
+          type="button"
+          className="hub-action-btn checkout"
+          onClick={() => handleAction(item, "check_out")}
+          disabled={busy("check_out")}
+          title="Check Out"
+        >
+          <FontAwesomeIcon icon={busy("check_out") ? faSpinner : faSignOutAlt} spin={busy("check_out")} />
+          Check Out
+        </button>
+      );
+    }
+
+    if (item.type === "grooming" && item.status === "approved") {
+      actions.push(
+        <button
+          key="start"
+          type="button"
+          className="hub-action-btn start"
+          onClick={() => handleAction(item, "in_progress")}
+          disabled={busy("in_progress")}
+          title="Start Grooming"
+        >
+          <FontAwesomeIcon icon={busy("in_progress") ? faSpinner : faClock} spin={busy("in_progress")} />
+          Start
+        </button>
+      );
+    }
+
+    if (item.type === "grooming" && item.status === "in_progress") {
+      actions.push(
+        <button
+          key="complete"
+          type="button"
+          className="hub-action-btn complete"
+          onClick={() => handleAction(item, "completed")}
+          disabled={busy("completed")}
+          title="Mark Complete"
+        >
+          <FontAwesomeIcon icon={busy("completed") ? faSpinner : faCheckCircle} spin={busy("completed")} />
+          Complete
+        </button>
+      );
+    }
+
+    // Reset to pending (for approved/rejected)
+    if (["approved", "rejected", "cancelled"].includes(item.status)) {
+      actions.push(
+        <button
+          key="reset"
+          type="button"
+          className="hub-action-btn reset"
+          onClick={() => handleAction(item, "pending")}
+          disabled={busy("pending")}
+          title="Reset to Pending"
+        >
+          <FontAwesomeIcon icon={busy("pending") ? faSpinner : faUndoAlt} spin={busy("pending")} />
+        </button>
+      );
+    }
+
+    return actions;
+  };
+
+  return (
+    <div className="receptionist-hub">
+      {/* Toast messages */}
+      {success && (
+        <div className="hub-toast success">
+          <FontAwesomeIcon icon={faCheckCircle} />
+          <span>{success}</span>
+        </div>
+      )}
+      {error && (
+        <div className="hub-toast error">
+          <FontAwesomeIcon icon={faTimesCircle} />
+          <span>{error}</span>
+        </div>
+      )}
+
+      {/* Hero */}
+      <section className="hub-hero fade-up">
+        <div>
+          <span className="hub-eyebrow">
+            <FontAwesomeIcon icon={faCalendarCheck} />
+            Receptionist Portal
+          </span>
+          <h1>Appointments &amp; Boarding</h1>
+          <p>
+            Manage all service requests, appointments, and boarding reservations in one place.
+            Filter by type, status, or payment to focus on what matters.
+          </p>
+          <small>Last updated: {lastUpdated || "Not refreshed yet"}</small>
+        </div>
+        <div className="hub-hero-actions">
+          <button
+            type="button"
+            className={`hub-hero-btn ${refreshing ? "loading" : ""}`}
+            onClick={() => fetchAll({ silent: true })}
+            disabled={refreshing}
+          >
+            <FontAwesomeIcon icon={refreshing ? faSpinner : faRefresh} spin={refreshing} />
+            {refreshing ? "Refreshing..." : "Refresh"}
+          </button>
+          <button type="button" className="hub-hero-btn ghost" onClick={exportCSV}>
+            <FontAwesomeIcon icon={faDownload} />
+            Export CSV
+          </button>
+        </div>
+      </section>
+
+      {/* Stat Cards */}
+      <section className="hub-stats">
+        <StatCard
+          icon={<FontAwesomeIcon icon={faPaw} />}
+          label="Total"
+          value={stats.total}
+          active={statusFilter === "all" && typeFilter === "all"}
+          onClick={() => { setStatusFilter("all"); setTypeFilter("all"); }}
+        />
+        <StatCard
+          icon={<FontAwesomeIcon icon={faClock} />}
+          label="Pending"
+          value={stats.pending}
+          tone="warning"
+          active={statusFilter === "pending"}
+          onClick={() => setStatusFilter("pending")}
+        />
+        <StatCard
+          icon={<FontAwesomeIcon icon={faCheckCircle} />}
+          label="Approved"
+          value={stats.approved}
+          tone="success"
+          active={statusFilter === "approved"}
+          onClick={() => setStatusFilter("approved")}
+        />
+        <StatCard
+          icon={<FontAwesomeIcon icon={faBed} />}
+          label="Checked In"
+          value={stats.checkedIn}
+          tone="info"
+          active={statusFilter === "checked_in"}
+          onClick={() => setStatusFilter("checked_in")}
+        />
+        <StatCard
+          icon={<FontAwesomeIcon icon={faCut} />}
+          label="In Progress"
+          value={stats.inProgress}
+          tone="primary"
+          active={statusFilter === "in_progress"}
+          onClick={() => setStatusFilter("in_progress")}
+        />
+        <StatCard
+          icon={<FontAwesomeIcon icon={faCalendarCheck} />}
+          label="Completed"
+          value={stats.completed}
+          tone="completed"
+          active={statusFilter === "completed"}
+          onClick={() => setStatusFilter("completed")}
+        />
+        <StatCard
+          icon={<FontAwesomeIcon icon={faMoneyBillWave} />}
+          label="For Payment"
+          value={stats.forPayment}
+          tone="payment"
+          active={paymentFilter === "pending" || paymentFilter === "unpaid"}
+          onClick={() => { setPaymentFilter("pending"); setStatusFilter("all"); }}
+        />
+      </section>
+
+      {/* Filters */}
+      <section className="hub-toolbar fade-up">
+        <div className="hub-search">
+          <FontAwesomeIcon icon={faSearch} />
+          <input
+            type="text"
+            placeholder="Search ID, pet, customer, phone, service, status..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+          />
+          {searchTerm && (
+            <button type="button" onClick={() => setSearchTerm("")}>
+              <FontAwesomeIcon icon={faTimes} />
+            </button>
+          )}
+        </div>
+
+        <label className="hub-filter">
+          <FontAwesomeIcon icon={faFilter} />
+          <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)}>
+            {STATUS_OPTIONS.map((o) => (
+              <option key={o.value} value={o.value}>{o.label}</option>
+            ))}
+          </select>
+        </label>
+
+        <label className="hub-filter">
+          <FontAwesomeIcon icon={faPaw} />
+          <select value={typeFilter} onChange={(e) => setTypeFilter(e.target.value)}>
+            {TYPE_OPTIONS.map((o) => (
+              <option key={o.value} value={o.value}>{o.label}</option>
+            ))}
+          </select>
+        </label>
+
+        <label className="hub-filter">
+          <FontAwesomeIcon icon={faMoneyBillWave} />
+          <select value={paymentFilter} onChange={(e) => setPaymentFilter(e.target.value)}>
+            {PAYMENT_OPTIONS.map((o) => (
+              <option key={o.value} value={o.value}>{o.label}</option>
+            ))}
+          </select>
+        </label>
+
+        <button type="button" className="hub-clear-btn" onClick={clearFilters}>
+          <FontAwesomeIcon icon={faTimes} />
+          Clear
+        </button>
+      </section>
+
+      {/* Table */}
+      <section className="hub-table-card fade-up">
+        <div className="hub-table-header">
+          <div>
+            <span className="hub-eyebrow">
+              <FontAwesomeIcon icon={faCalendarAlt} />
+              Live Queue
+            </span>
+            <h2>All Requests</h2>
+            <p>
+              Showing <strong>{sortedRequests.length}</strong> of <strong>{requests.length}</strong> record(s).
+            </p>
+          </div>
+          <div className="hub-table-actions">
+            <button type="button" className="hub-new-btn" onClick={() => setShowBookingModal(true)}>
+              <FontAwesomeIcon icon={faPlus} /> New Walk-in
+            </button>
+            <button type="button" onClick={() => fetchAll({ silent: true })}>
+              <FontAwesomeIcon icon={faRefresh} /> Refresh
+            </button>
+            <button type="button" onClick={exportCSV}>
+              <FontAwesomeIcon icon={faDownload} /> Export
+            </button>
+          </div>
+        </div>
+
+        {loading ? (
+          <div className="hub-loading-state">
+            <FontAwesomeIcon icon={faSpinner} spin />
+            <h3>Loading requests...</h3>
+            <p>Please wait while all appointments and boardings are loaded.</p>
+          </div>
+        ) : (
+          <div className="hub-table-scroll">
+            <table className="hub-table">
+              <thead>
+                <tr>
+                  <th>Type</th>
+                  <th>ID</th>
+                  <th>Pet</th>
+                  <th>Customer</th>
+                  <th>Service</th>
+                  <th>Schedule</th>
+                  <th>Status</th>
+                  <th>Payment</th>
+                  <th>Amount</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {sortedRequests.map((item) => (
+                  <tr key={`${item.type}-${item.id}`}>
+                    <td>
+                      <span className={`hub-type-badge ${item.type}`}>
+                        <TypeIcon type={item.type} />
+                        <TypeLabel type={item.type} />
+                      </span>
+                    </td>
+                    <td>
+                      <span className="hub-id">#{item.id}</span>
+                    </td>
+                    <td>
+                      <div className="hub-pet-cell">
+                        <strong>{item.petName}</strong>
+                        <small>{item.petType}{item.breed ? ` · ${item.breed}` : ""}</small>
+                      </div>
+                    </td>
+                    <td>
+                      <div className="hub-customer-cell">
+                        <FontAwesomeIcon icon={faUser} />
+                        <div>
+                          <strong>{item.customerName}</strong>
+                          {item.customerPhone && <small>{item.customerPhone}</small>}
+                        </div>
+                      </div>
+                    </td>
+                    <td>{item.service}</td>
+                    <td>
+                      <div className="hub-schedule-cell">
+                        <strong>{formatDate(item.date)}</strong>
+                        {item.time && <small>{formatTime(item.time)}</small>}
+                      </div>
+                    </td>
+                    <td>
+                      <StatusBadge status={item.status} />
+                    </td>
+                    <td>
+                      <PaymentBadge status={item.paymentStatus} />
+                    </td>
+                    <td>
+                      <span className="hub-amount">{formatCurrency(item.amount)}</span>
+                    </td>
+                    <td>
+                      <div className="hub-action-group">
+                        {getQuickActions(item)}
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+
+            {sortedRequests.length === 0 && (
+              <div className="hub-empty-state">
+                <FontAwesomeIcon icon={faSearch} />
+                <h3>No records found</h3>
+                <p>Try changing your search keyword or filters.</p>
+              </div>
+            )}
+          </div>
+        )}
+      </section>
+
+      {/* Detail Modal */}
+      {showBookingModal && (
+        <NewWalkInBookingModal
+          onClose={() => setShowBookingModal(false)}
+          onSuccess={() => {
+            setShowBookingModal(false);
+            fetchAll({ silent: true });
+            notify("success", "Booking created successfully.");
+          }}
+        />
+      )}
+
+      {showDetailModal && selectedRequest && (
+        <div className="hub-modal-overlay" onClick={closeDetail}>
+          <div className="hub-modal" onClick={(e) => e.stopPropagation()}>
+            <div className="hub-modal-header">
+              <div>
+                <span className="hub-eyebrow">
+                  <FontAwesomeIcon icon={faInfoCircle} />
+                  Request Details
+                </span>
+                <h2>
+                  <TypeIcon type={selectedRequest.type} /> #{selectedRequest.id}
+                </h2>
+              </div>
+              <button type="button" onClick={closeDetail}>
+                <FontAwesomeIcon icon={faTimes} />
+              </button>
+            </div>
+
+            <div className="hub-modal-body">
+              <div className="hub-detail-grid">
+                <div><small>Pet</small><strong>{selectedRequest.petName}</strong></div>
+                <div><small>Type</small><strong>{selectedRequest.petType}{selectedRequest.breed ? ` · ${selectedRequest.breed}` : ""}</strong></div>
+                <div><small>Customer</small><strong>{selectedRequest.customerName}</strong></div>
+                <div><small>Phone</small><strong>{selectedRequest.customerPhone || "N/A"}</strong></div>
+                <div><small>Service</small><strong>{selectedRequest.service}</strong></div>
+                <div><small>Type</small><strong><TypeLabel type={selectedRequest.type} /></strong></div>
+                <div><small>Date</small><strong>{formatDate(selectedRequest.date)}</strong></div>
+                <div><small>Time</small><strong>{formatTime(selectedRequest.time) || "N/A"}</strong></div>
+                <div><small>Status</small><StatusBadge status={selectedRequest.status} /></div>
+                <div><small>Payment</small><PaymentBadge status={selectedRequest.paymentStatus} /></div>
+                <div><small>Amount</small><strong>{formatCurrency(selectedRequest.amount)}</strong></div>
+                <div><small>Paid</small><strong>{formatCurrency(selectedRequest.paidAmount)}</strong></div>
+              </div>
+
+              {selectedRequest.type === "hotel" && (
+                <div className="hub-detail-section">
+                  <h4>Boarding Details</h4>
+                  <div className="hub-detail-grid">
+                    <div><small>Room</small><strong>{selectedRequest.roomType || "N/A"}</strong></div>
+                    <div><small>Check-in</small><strong>{formatDate(selectedRequest.checkIn)}</strong></div>
+                    <div><small>Check-out</small><strong>{formatDate(selectedRequest.checkOut)}</strong></div>
+                  </div>
+                </div>
+              )}
+
+              <div className="hub-detail-section">
+                <h4>Notes</h4>
+                <p>{selectedRequest.notes || "No notes provided."}</p>
+              </div>
+
+              {/* Vet Assignment for vet appointments */}
+              {selectedRequest.type === "vet" && (
+                <div className="hub-detail-section">
+                  <h4>Veterinarian Assignment</h4>
+                  {veterinarians.length === 0 ? (
+                    <p className="hub-detail-note">No veterinarians available.</p>
+                  ) : (
+                    <select
+                      className="hub-vet-select"
+                      value={vetAssignments[selectedRequest.id] || ""}
+                      onChange={(e) =>
+                        setVetAssignments((prev) => ({ ...prev, [selectedRequest.id]: e.target.value }))
+                      }
+                    >
+                      <option value="">{selectedRequest.raw?.veterinarian ? `Assigned: ${selectedRequest.raw.veterinarian.name || selectedRequest.raw.veterinarian_id}` : "Select veterinarian..."}</option>
+                      {veterinarians.map((vet) => (
+                        <option key={vet.id} value={vet.id}>
+                          {vet.name || vet.full_name || `Vet #${vet.id}`}
+                        </option>
+                      ))}
+                    </select>
+                  )}
+                </div>
+              )}
+            </div>
+
+            <div className="hub-modal-actions">
+              <button type="button" className="hub-modal-btn secondary" onClick={closeDetail}>
+                Close
+              </button>
+
+              {selectedRequest.status === "pending" && (
+                <>
+                  <button
+                    type="button"
+                    className="hub-modal-btn approve"
+                    onClick={() => {
+                      handleAction(selectedRequest, "approve", {
+                        veterinarianId: vetAssignments[selectedRequest.id],
+                      });
+                      closeDetail();
+                    }}
+                    disabled={isBusy(selectedRequest.id, "approve")}
+                  >
+                    <FontAwesomeIcon icon={faCheckCircle} /> Approve
+                  </button>
+                  <button
+                    type="button"
+                    className="hub-modal-btn reject"
+                    onClick={() => {
+                      handleAction(selectedRequest, "reject");
+                      closeDetail();
+                    }}
+                    disabled={isBusy(selectedRequest.id, "reject")}
+                  >
+                    <FontAwesomeIcon icon={faTimesCircle} /> Reject
+                  </button>
+                </>
+              )}
+
+              {selectedRequest.type === "hotel" && selectedRequest.status === "approved" && (
+                <button
+                  type="button"
+                  className="hub-modal-btn checkin"
+                  onClick={() => {
+                    handleAction(selectedRequest, "check_in");
+                    closeDetail();
+                  }}
+                  disabled={isBusy(selectedRequest.id, "check_in")}
+                >
+                  <FontAwesomeIcon icon={faSignOutAlt} /> Check In
+                </button>
+              )}
+
+              {selectedRequest.type === "hotel" && selectedRequest.status === "checked_in" && (
+                <button
+                  type="button"
+                  className="hub-modal-btn checkout"
+                  onClick={() => {
+                    handleAction(selectedRequest, "check_out");
+                    closeDetail();
+                  }}
+                  disabled={isBusy(selectedRequest.id, "check_out")}
+                >
+                  <FontAwesomeIcon icon={faSignOutAlt} /> Check Out
+                </button>
+              )}
+
+              {selectedRequest.type === "grooming" && selectedRequest.status === "approved" && (
+                <button
+                  type="button"
+                  className="hub-modal-btn start"
+                  onClick={() => {
+                    handleAction(selectedRequest, "in_progress");
+                    closeDetail();
+                  }}
+                  disabled={isBusy(selectedRequest.id, "in_progress")}
+                >
+                  <FontAwesomeIcon icon={faClock} /> Start Grooming
+                </button>
+              )}
+
+              {selectedRequest.type === "grooming" && selectedRequest.status === "in_progress" && (
+                <button
+                  type="button"
+                  className="hub-modal-btn complete"
+                  onClick={() => {
+                    handleAction(selectedRequest, "completed");
+                    closeDetail();
+                  }}
+                  disabled={isBusy(selectedRequest.id, "completed")}
+                >
+                  <FontAwesomeIcon icon={faCheckCircle} /> Mark Complete
+                </button>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
+export default ReceptionistAppointmentsBoarding;

@@ -3,20 +3,12 @@ import { Routes, Route, Navigate } from "react-router-dom";
 import ProtectedRoute from "../components/ProtectedRoute";
 import ReceptionistLayout from "../components/receptionist/ReceptionistLayout";
 
-const ReceptionistDashboard = lazy(() => import("../components/receptionist/ReceptionistDashboard"));
 const ReceptionistChatbot = lazy(() => import("../components/receptionist/ReceptionistChatbot"));
-const HotelBookings = lazy(() => import("../components/receptionist/ReceptionistHotelBookings"));
-const ReceptionistConfinements = lazy(() => import("../components/receptionist/ReceptionistConfinements"));
-const VetAppointments = lazy(() => import("../components/receptionist/ReceptionistVetAppointments"));
-const Grooming = lazy(() => import("../components/receptionist/ReceptionistGrooming"));
-const ReceptionistBookings = lazy(() => import("../components/receptionist/ReceptionistBookings"));
+const ReceptionistAppointmentsBoarding = lazy(() => import("../components/receptionist/ReceptionistAppointmentsBoarding"));
 const CustomerManagement = lazy(() => import("../components/receptionist/ReceptionistCustomerManagement"));
 const CustomersProfile = lazy(() => import("../components/receptionist/ReceptionistCustomersProfile"));
 const ProfileSettings = lazy(() => import("../components/shared/ProfileSettings"));
-const AppointmentList = lazy(() => import("../components/receptionist/ReceptionistAppointmentList"));
-const BoardingManager = lazy(() => import("../components/receptionist/ReceptionistBoardingManager"));
 const Reports = lazy(() => import("../components/customers/CustomerReports"));
-const Approvals = lazy(() => import("../components/receptionist/ReceptionistApprovals"));
 const ReceptionistHistory = lazy(() => import("../components/receptionist/ReceptionistHistory"));
 
 const RouteLoading = () => (
@@ -34,21 +26,22 @@ const ReceptionistRoutes = () => (
           </ProtectedRoute>
         }
       >
-        <Route index element={<Navigate to="dashboard" replace />} />
-        <Route path="dashboard" element={<ReceptionistDashboard />} />
-        <Route path="appointments" element={<AppointmentList />} />
-        <Route path="boarding-manager" element={<BoardingManager />} />
-        <Route path="checkin" element={<Navigate to="/receptionist/boarding-manager" replace />} />
-        <Route path="checkout" element={<Navigate to="/receptionist/boarding-manager" replace />} />
+        <Route index element={<Navigate to="appointments-boarding" replace />} />
+        <Route path="appointments-boarding" element={<ReceptionistAppointmentsBoarding />} />
+
+        {/* Legacy redirects to unified hub */}
+        <Route path="dashboard" element={<Navigate to="/receptionist/appointments-boarding" replace />} />
+        <Route path="appointments" element={<Navigate to="/receptionist/appointments-boarding" replace />} />
+        <Route path="boarding-manager" element={<Navigate to="/receptionist/appointments-boarding" replace />} />
+        <Route path="checkin" element={<Navigate to="/receptionist/appointments-boarding" replace />} />
+        <Route path="checkout" element={<Navigate to="/receptionist/appointments-boarding" replace />} />
+        <Route path="bookings" element={<Navigate to="/receptionist/appointments-boarding" replace />} />
+        <Route path="bookings/*" element={<Navigate to="/receptionist/appointments-boarding" replace />} />
+        <Route path="approvals" element={<Navigate to="/receptionist/appointments-boarding" replace />} />
+
         <Route path="chatbot" element={<ReceptionistChatbot />} />
-        {/* Booking sub-routes */}
-        <Route path="bookings" element={<ReceptionistBookings />} />
-        <Route path="bookings/hotel" element={<HotelBookings />} />
-        <Route path="medical-confinements" element={<ReceptionistConfinements />} />
-        <Route path="bookings/vet" element={<VetAppointments />} />
-        <Route path="bookings/grooming" element={<Grooming />} />
+        <Route path="medical-confinements" element={<Navigate to="/receptionist/appointments-boarding" replace />} />
         <Route path="customers" element={<CustomerManagement />} />
-        <Route path="approvals" element={<Approvals />} />
         <Route path="history" element={<ReceptionistHistory />} />
         <Route path="profile" element={<ProfileSettings />} />
         <Route path="reports" element={<Reports />} />

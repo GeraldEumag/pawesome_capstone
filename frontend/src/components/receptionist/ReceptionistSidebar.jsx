@@ -4,18 +4,14 @@ import { showConfirm } from "../../utils/alert";
 import { apiRequest, clearAuthStorage } from "../../api/client";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
-  faCalendarAlt,
   faPhone,
   faSignOutAlt,
   faUser,
   faChartBar,
-  faHotel,
-  faCut,
   faRobot,
-  faCheckCircle,
-  faCalendarCheck,
   faHistory,
   faTimes,
+  faStethoscope,
 } from "@fortawesome/free-solid-svg-icons";
 import "./ReceptionistSidebar.css";
 
@@ -46,42 +42,12 @@ const ReceptionistSidebar = ({ mobileOpen, onMobileMenuToggle }) => {
         <ul className="nav-list">
           <li className="nav-item">
             <NavLink
-              to="/receptionist/dashboard"
+              to="/receptionist/appointments-boarding"
               end
               className={({ isActive }) => (isActive ? "active" : "")}
             >
-              <FontAwesomeIcon icon={faCalendarCheck} />
-              <span>Dashboard</span>
-            </NavLink>
-          </li>
-          <li className="nav-item">
-            <NavLink
-              to="/receptionist/bookings"
-              end
-              className={({ isActive }) => (isActive ? "active" : "")}
-            >
-              <FontAwesomeIcon icon={faCalendarAlt} />
-              <span>Bookings</span>
-            </NavLink>
-          </li>
-          <li className="nav-item">
-            <NavLink
-              to="/receptionist/boarding-manager"
-              end
-              className={({ isActive }) => (isActive ? "active" : "")}
-            >
-              <FontAwesomeIcon icon={faHotel} />
-              <span>Boarding</span>
-            </NavLink>
-          </li>
-          <li className="nav-item">
-            <NavLink
-              to="/receptionist/bookings/grooming"
-              end
-              className={({ isActive }) => (isActive ? "active" : "")}
-            >
-              <FontAwesomeIcon icon={faCut} />
-              <span>Grooming</span>
+              <FontAwesomeIcon icon={faStethoscope} />
+              <span>Appointments &amp; Boarding</span>
             </NavLink>
           </li>
           <li className="nav-item">
@@ -92,16 +58,6 @@ const ReceptionistSidebar = ({ mobileOpen, onMobileMenuToggle }) => {
             >
               <FontAwesomeIcon icon={faUser} />
               <span>Customer Profile</span>
-            </NavLink>
-          </li>
-          <li className="nav-item">
-            <NavLink
-              to="/receptionist/approvals"
-              end
-              className={({ isActive }) => (isActive ? "active" : "")}
-            >
-              <FontAwesomeIcon icon={faCheckCircle} />
-              <span>Approvals</span>
             </NavLink>
           </li>
           <li className="nav-item">
