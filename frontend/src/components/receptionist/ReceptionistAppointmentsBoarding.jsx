@@ -24,11 +24,13 @@ import {
   faTimesCircle,
   faUndoAlt,
   faUser,
+  faWrench,
 } from "@fortawesome/free-solid-svg-icons";
-import { apiRequest } from "../../api/client";
+import { apiRequest, getAuthenticatedFileUrl } from "../../api/client";
 import { showConfirm } from "../../utils/alert";
 import { useUnifiedRequests } from "./hooks/useUnifiedRequests";
 import NewWalkInBookingModal from "./modals/NewWalkInBookingModal";
+import ServiceManagerModal from "./ServiceManagerModal";
 import {
   formatDate,
   formatTime,
@@ -125,6 +127,7 @@ const ReceptionistAppointmentsBoarding = () => {
   const [selectedRequest, setSelectedRequest] = useState(null);
   const [showDetailModal, setShowDetailModal] = useState(false);
   const [showBookingModal, setShowBookingModal] = useState(false);
+  const [showServiceManager, setShowServiceManager] = useState(false);
   const [busyAction, setBusyAction] = useState("");
 
   const [veterinarians, setVeterinarians] = useState([]);
@@ -210,6 +213,38 @@ const ReceptionistAppointmentsBoarding = () => {
   };
 
   const isBusy = (id, action) => busyAction === `${id}-${action}`;
+
+  const openVaccinationCard = async (cardUrl) => {
+    if (!cardUrl) return;
+    const win = window.open("", "_blank");
+    if (!win) {
+      notify("error", "Please allow popups for this site to view the vaccination card.");
+      return;
+    }
+    try {
+      const blobUrl = await getAuthenticatedFileUrl(cardUrl);
+      win.location.href = blobUrl;
+    } catch (err) {
+      win.close();
+      notify("error", err.message || "Failed to load vaccination card.");
+    }
+  };
+
+  const verifyVaccination = async (item) => {
+    if (!item || item.type !== "hotel") return;
+    try {
+      setBusyAction(`${item.id}-vaccination`);
+      await apiRequest(`/receptionist/boarding-requests/${item.id}/verify-vaccination`, {
+        method: "POST",
+      });
+      notify("success", "Vaccination card verified.");
+      await fetchAll({ silent: true });
+    } catch (err) {
+      notify("error", err.message || "Failed to verify vaccination card.");
+    } finally {
+      setBusyAction("");
+    }
+  };
 
   const handleAction = async (item, action, extra = {}) => {
     const key = `${item.id}-${action}`;
@@ -588,6 +623,9 @@ const ReceptionistAppointmentsBoarding = () => {
             <button type="button" className="hub-new-btn" onClick={() => setShowBookingModal(true)}>
               <FontAwesomeIcon icon={faPlus} /> New Walk-in
             </button>
+            <button type="button" className="hub-new-btn secondary" onClick={() => setShowServiceManager(true)}>
+              <FontAwesomeIcon icon={faWrench} /> Manage Services
+            </button>
             <button type="button" onClick={() => fetchAll({ silent: true })}>
               <FontAwesomeIcon icon={faRefresh} /> Refresh
             </button>
@@ -696,6 +734,8 @@ const ReceptionistAppointmentsBoarding = () => {
         />
       )}
 
+      {showServiceManager && <ServiceManagerModal onClose={() => setShowServiceManager(false)} />}
+
       {showDetailModal && selectedRequest && (
         <div className="hub-modal-overlay" onClick={closeDetail}>
           <div className="hub-modal" onClick={(e) => e.stopPropagation()}>
@@ -738,6 +778,37 @@ const ReceptionistAppointmentsBoarding = () => {
                     <div><small>Check-in</small><strong>{formatDate(selectedRequest.checkIn)}</strong></div>
                     <div><small>Check-out</small><strong>{formatDate(selectedRequest.checkOut)}</strong></div>
                   </div>
+
+                  {selectedRequest.raw?.vaccination_card && (
+                    <div className="hub-vaccination-section" style={{ marginTop: "16px" }}>
+                      <h4>
+                        <FontAwesomeIcon icon={faEye} /> Vaccination Card
+                      </h4>
+                      <button
+                        type="button"
+                        className="hub-modal-btn secondary"
+                        onClick={() => openVaccinationCard(selectedRequest.raw?.vaccination_card_url || selectedRequest.raw?.vaccination_card)}
+                      >
+                        <FontAwesomeIcon icon={faEye} /> View Vaccination Card
+                      </button>
+                      {selectedRequest.raw?.vaccination_card_verified_at ? (
+                        <span className="hub-status-badge status-completed" style={{ marginLeft: "10px", display: "inline-flex", alignItems: "center", gap: "6px" }}>
+                          <FontAwesomeIcon icon={faCheckCircle} /> Verified
+                        </span>
+                      ) : (
+                        <button
+                          type="button"
+                          className="hub-modal-btn approve"
+                          onClick={() => verifyVaccination(selectedRequest)}
+                          disabled={isBusy(selectedRequest.id, "vaccination")}
+                          style={{ marginLeft: "10px" }}
+                        >
+                          <FontAwesomeIcon icon={isBusy(selectedRequest.id, "vaccination") ? faSpinner : faCheckCircle} spin={isBusy(selectedRequest.id, "vaccination")} />
+                          {isBusy(selectedRequest.id, "vaccination") ? "Verifying..." : "Verify Vaccination Card"}
+                        </button>
+                      )}
+                    </div>
+                  )}
                 </div>
               )}
 
