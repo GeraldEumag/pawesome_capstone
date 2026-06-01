@@ -19,7 +19,9 @@ import {
 } from "@fortawesome/free-solid-svg-icons";
 import toast from "react-hot-toast";
 import { apiRequest } from "../../api/client";
+import { useTheme } from "../../utils/theme";
 import PetAvatar from "../shared/PetAvatar";
+import "./theme.css";
 import "./VetNewAppointment_PinkGlass.css";
 import {
   safeArray,
@@ -34,6 +36,7 @@ import {
 } from "../../utils/apiNormalize";
 
 const VetNewAppointment = () => {
+  useTheme();
   const navigate = useNavigate();
 
   const [pageLoading, setPageLoading] = useState(true);

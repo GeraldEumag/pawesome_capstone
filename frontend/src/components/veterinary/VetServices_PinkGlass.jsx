@@ -19,52 +19,39 @@ import {
 } from "@fortawesome/free-solid-svg-icons";
 import toast from "react-hot-toast";
 import { apiRequest } from "../../api/client";
+import { useTheme } from "../../utils/theme";
 import styled, { createGlobalStyle } from "styled-components";
-
-/* ─────────────────────────────────────────────────────────────
-   Pink Glass Theme Design Tokens
-───────────────────────────────────────────────────────────── */
-const THEME = {
-  primary: "#ff5f93",
-  primaryLight: "#ff8db5",
-  primaryDark: "#ff3d73",
-  secondary: "#ff8db5",
-  accent: "#ffb3d1",
-  glassBg: "rgba(255,255,255,0.85)",
-  glassBorder: "rgba(255,95,147,0.18)",
-  glassShadow: "0 18px 45px rgba(255,95,147,0.14)",
-  pageBg: "linear-gradient(135deg, #fff5f8 0%, #ffe0ec 50%, #fff5f8 100%)",
-  cardBg: "rgba(255,255,255,0.9)",
-  textPrimary: "#2d3748",
-  textSecondary: "#718096",
-  textMuted: "#a0aec0",
-  success: "#48bb78",
-  warning: "#ed8936",
-  error: "#f56565",
-  info: "#4299e1",
-};
+import "./theme.css";
 
 const GlobalStyle = createGlobalStyle`
   @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
   * { box-sizing: border-box; }
-  body { font-family: 'Inter', sans-serif; background: ${THEME.pageBg}; margin: 0; padding: 0; }
 `;
 
 const PageContainer = styled.div`
   min-height: 100vh;
-  background: ${THEME.pageBg};
+  background: var(--veterinary-page-bg);
   padding: 32px;
   font-family: 'Inter', sans-serif;
+  color: var(--veterinary-text-primary);
+
+  @media (max-width: 768px) {
+    padding: 16px;
+  }
 `;
 
 const HeroSection = styled.div`
-  background: linear-gradient(135deg, ${THEME.primaryLight} 0%, ${THEME.primary} 100%);
+  background: linear-gradient(135deg, var(--veterinary-primary-light) 0%, var(--veterinary-primary) 100%);
   border-radius: 24px;
   padding: 40px;
   margin-bottom: 32px;
-  color: white;
+  color: var(--veterinary-text-on-primary);
   position: relative;
   overflow: hidden;
+
+  @media (max-width: 768px) {
+    padding: 24px;
+  }
 
   &::before {
     content: '';
@@ -92,7 +79,7 @@ const HeroTitle = styled.h1`
   font-size: 2.5rem;
   font-weight: 700;
   margin: 0 0 12px 0;
-  background: linear-gradient(135deg, #ffffff 0%, #f0f0f0 100%);
+  background: linear-gradient(135deg, var(--veterinary-text-on-primary) 0%, rgba(255,255,255,0.9) 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
@@ -113,8 +100,8 @@ const HeroActions = styled.div`
 `;
 
 const PrimaryButton = styled.button`
-  background: linear-gradient(135deg, #ffffff 0%, #f8f8f8 100%);
-  color: ${THEME.primary};
+  background: linear-gradient(135deg, var(--veterinary-card-bg) 0%, var(--veterinary-glass-bg) 100%);
+  color: var(--veterinary-primary);
   border: none;
   padding: 12px 24px;
   border-radius: 16px;
@@ -140,9 +127,9 @@ const PrimaryButton = styled.button`
 `;
 
 const SecondaryButton = styled.button`
-  background: linear-gradient(135deg, rgba(255,255,255,0.9) 0%, rgba(255,255,255,0.7) 100%);
-  color: ${THEME.textPrimary};
-  border: 2px solid ${THEME.glassBorder};
+  background: var(--veterinary-glass-bg);
+  color: var(--veterinary-text-primary);
+  border: 2px solid var(--veterinary-glass-border);
   padding: 12px 24px;
   border-radius: 16px;
   font-weight: 600;
@@ -157,7 +144,7 @@ const SecondaryButton = styled.button`
   &:hover {
     transform: translateY(-2px);
     box-shadow: 0 8px 25px rgba(255,95,147,0.2);
-    border-color: ${THEME.primary};
+    border-color: var(--veterinary-primary);
   }
 
   &:disabled {
@@ -175,16 +162,16 @@ const SearchContainer = styled.div`
   display: flex;
   gap: 16px;
   align-items: center;
-  background: ${THEME.glassBg};
-  border: 2px solid ${THEME.glassBorder};
+  background: var(--veterinary-glass-bg);
+  border: 2px solid var(--veterinary-glass-border);
   border-radius: 20px;
   padding: 16px 24px;
   backdrop-filter: blur(10px);
-  box-shadow: ${THEME.glassShadow};
+  box-shadow: var(--veterinary-glass-shadow);
 `;
 
 const SearchIcon = styled.div`
-  color: ${THEME.textMuted};
+  color: var(--veterinary-text-muted);
   font-size: 1.1rem;
 `;
 
@@ -193,27 +180,27 @@ const SearchInput = styled.input`
   border: none;
   background: transparent;
   font-size: 1rem;
-  color: ${THEME.textPrimary};
+  color: var(--veterinary-text-primary);
   outline: none;
 
   &::placeholder {
-    color: ${THEME.textMuted};
+    color: var(--veterinary-text-muted);
   }
 `;
 
 const FilterSelect = styled.select`
-  border: 2px solid ${THEME.glassBorder};
+  border: 2px solid var(--veterinary-glass-border);
   border-radius: 12px;
   padding: 8px 16px;
-  background: rgba(255,255,255,0.8);
+  background: var(--veterinary-card-bg);
   font-size: 0.95rem;
-  color: ${THEME.textPrimary};
+  color: var(--veterinary-text-primary);
   cursor: pointer;
   transition: all 0.3s ease;
 
   &:focus {
     outline: none;
-    border-color: ${THEME.primary};
+    border-color: var(--veterinary-primary);
     box-shadow: 0 0 0 3px rgba(255,95,147,0.1);
   }
 `;
@@ -226,12 +213,12 @@ const ServicesGrid = styled.div`
 `;
 
 const ServiceCard = styled.div`
-  background: ${THEME.glassBg};
-  border: 2px solid ${THEME.glassBorder};
+  background: var(--veterinary-glass-bg);
+  border: 2px solid var(--veterinary-glass-border);
   border-radius: 20px;
   padding: 24px;
   backdrop-filter: blur(10px);
-  box-shadow: ${THEME.glassShadow};
+  box-shadow: var(--veterinary-glass-shadow);
   transition: all 0.3s ease;
 
   &:hover {
@@ -254,7 +241,7 @@ const ServiceInfo = styled.div`
 const ServiceName = styled.h3`
   font-size: 1.3rem;
   font-weight: 700;
-  color: ${THEME.textPrimary};
+  color: var(--veterinary-text-primary);
   margin: 0 0 8px 0;
 `;
 
@@ -263,8 +250,8 @@ const ServiceCategory = styled.span`
   align-items: center;
   gap: 6px;
   padding: 6px 12px;
-  background: linear-gradient(135deg, ${THEME.primaryLight} 0%, ${THEME.primary} 100%);
-  color: white;
+  background: linear-gradient(135deg, var(--veterinary-primary-light) 0%, var(--veterinary-primary) 100%);
+  color: var(--veterinary-text-on-primary);
   border-radius: 20px;
   font-size: 0.8rem;
   font-weight: 600;
@@ -287,8 +274,8 @@ const ActionButton = styled.button`
   justify-content: center;
 
   &.edit {
-    background: linear-gradient(135deg, ${THEME.info} 0%, #3182ce 100%);
-    color: white;
+    background: linear-gradient(135deg, var(--veterinary-info) 0%, var(--veterinary-info-dark, #3182ce) 100%);
+    color: var(--veterinary-text-on-primary);
 
     &:hover {
       transform: scale(1.1);
@@ -297,8 +284,8 @@ const ActionButton = styled.button`
   }
 
   &.delete {
-    background: linear-gradient(135deg, ${THEME.error} 0%, #e53e3e 100%);
-    color: white;
+    background: linear-gradient(135deg, var(--veterinary-error) 0%, var(--veterinary-error-dark, #e53e3e) 100%);
+    color: var(--veterinary-text-on-primary);
 
     &:hover {
       transform: scale(1.1);
@@ -307,8 +294,8 @@ const ActionButton = styled.button`
   }
 
   &.toggle {
-    background: ${props => props.active ? THEME.success : THEME.warning};
-    color: white;
+    background: ${props => props.active ? 'var(--veterinary-success)' : 'var(--veterinary-warning)'};
+    color: var(--veterinary-text-on-primary);
 
     &:hover {
       transform: scale(1.1);
@@ -331,12 +318,12 @@ const DetailItem = styled.div`
 const DetailIcon = styled.div`
   width: 40px;
   height: 40px;
-  background: linear-gradient(135deg, ${THEME.primaryLight} 0%, ${THEME.primary} 100%);
+  background: linear-gradient(135deg, var(--veterinary-primary-light) 0%, var(--veterinary-primary) 100%);
   border-radius: 12px;
   display: flex;
   align-items: center;
   justify-content: center;
-  color: white;
+  color: var(--veterinary-text-on-primary);
   font-size: 1rem;
 `;
 
@@ -346,7 +333,7 @@ const DetailContent = styled.div`
 
 const DetailLabel = styled.div`
   font-size: 0.85rem;
-  color: ${THEME.textMuted};
+  color: var(--veterinary-text-muted);
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.5px;
@@ -354,12 +341,12 @@ const DetailLabel = styled.div`
 
 const DetailValue = styled.div`
   font-size: 1rem;
-  color: ${THEME.textPrimary};
+  color: var(--veterinary-text-primary);
   font-weight: 600;
 `;
 
 const ServiceDescription = styled.p`
-  color: ${THEME.textSecondary};
+  color: var(--veterinary-text-secondary);
   line-height: 1.6;
   margin: 16px 0 0 0;
 `;
@@ -379,21 +366,21 @@ const ModalOverlay = styled.div`
 `;
 
 const Modal = styled.div`
-  background: ${THEME.glassBg};
-  border: 2px solid ${THEME.glassBorder};
+  background: var(--veterinary-glass-bg);
+  border: 2px solid var(--veterinary-glass-border);
   border-radius: 24px;
   max-width: 500px;
   width: 90%;
   max-height: 90vh;
   overflow-y: auto;
-  box-shadow: ${THEME.glassShadow};
+  box-shadow: var(--veterinary-glass-shadow);
   animation: slideInUp 0.3s ease;
 `;
 
 const ModalHeader = styled.div`
   padding: 24px;
-  background: linear-gradient(135deg, ${THEME.primaryLight} 0%, ${THEME.primary} 100%);
-  color: white;
+  background: linear-gradient(135deg, var(--veterinary-primary-light) 0%, var(--veterinary-primary) 100%);
+  color: var(--veterinary-text-on-primary);
   border-radius: 22px 22px 0 0;
   display: flex;
   align-items: center;
@@ -407,12 +394,12 @@ const ModalTitle = styled.h2`
 `;
 
 const CloseButton = styled.button`
-  background: rgba(255,255,255,0.2);
+  background: var(--veterinary-glass-bg);
   border: none;
   width: 32px;
   height: 32px;
   border-radius: 8px;
-  color: white;
+  color: var(--veterinary-text-on-primary);
   cursor: pointer;
   display: flex;
   align-items: center;
@@ -420,7 +407,7 @@ const CloseButton = styled.button`
   transition: all 0.3s ease;
 
   &:hover {
-    background: rgba(255,255,255,0.3);
+    background: var(--veterinary-card-bg);
   }
 `;
 
@@ -436,21 +423,21 @@ const Label = styled.label`
   display: block;
   margin-bottom: 8px;
   font-weight: 600;
-  color: ${THEME.textPrimary};
+  color: var(--veterinary-text-primary);
 `;
 
 const Input = styled.input`
   width: 100%;
   padding: 12px 16px;
-  border: 2px solid ${THEME.glassBorder};
+  border: 2px solid var(--veterinary-glass-border);
   border-radius: 12px;
-  background: rgba(255,255,255,0.8);
+  background: var(--veterinary-card-bg);
   font-size: 0.95rem;
   transition: all 0.3s ease;
 
   &:focus {
     outline: none;
-    border-color: ${THEME.primary};
+    border-color: var(--veterinary-primary);
     box-shadow: 0 0 0 3px rgba(255,95,147,0.1);
   }
 `;
@@ -458,9 +445,9 @@ const Input = styled.input`
 const Textarea = styled.textarea`
   width: 100%;
   padding: 12px 16px;
-  border: 2px solid ${THEME.glassBorder};
+  border: 2px solid var(--veterinary-glass-border);
   border-radius: 12px;
-  background: rgba(255,255,255,0.8);
+  background: var(--veterinary-card-bg);
   font-size: 0.95rem;
   transition: all 0.3s ease;
   resize: vertical;
@@ -468,7 +455,7 @@ const Textarea = styled.textarea`
 
   &:focus {
     outline: none;
-    border-color: ${THEME.primary};
+    border-color: var(--veterinary-primary);
     box-shadow: 0 0 0 3px rgba(255,95,147,0.1);
   }
 `;
@@ -476,23 +463,23 @@ const Textarea = styled.textarea`
 const Select = styled.select`
   width: 100%;
   padding: 12px 16px;
-  border: 2px solid ${THEME.glassBorder};
+  border: 2px solid var(--veterinary-glass-border);
   border-radius: 12px;
-  background: rgba(255,255,255,0.8);
+  background: var(--veterinary-card-bg);
   font-size: 0.95rem;
   cursor: pointer;
   transition: all 0.3s ease;
 
   &:focus {
     outline: none;
-    border-color: ${THEME.primary};
+    border-color: var(--veterinary-primary);
     box-shadow: 0 0 0 3px rgba(255,95,147,0.1);
   }
 `;
 
 const ModalActions = styled.div`
   padding: 24px;
-  border-top: 2px solid ${THEME.glassBorder};
+  border-top: 2px solid var(--veterinary-glass-border);
   display: flex;
   gap: 12px;
   justify-content: flex-end;
@@ -501,7 +488,7 @@ const ModalActions = styled.div`
 const EmptyState = styled.div`
   text-align: center;
   padding: 60px 20px;
-  color: ${THEME.textMuted};
+  color: var(--veterinary-text-muted);
 `;
 
 const EmptyStateIcon = styled.div`
@@ -513,7 +500,7 @@ const EmptyStateIcon = styled.div`
 const LoadingState = styled.div`
   text-align: center;
   padding: 60px 20px;
-  color: ${THEME.textMuted};
+  color: var(--veterinary-text-muted);
 `;
 
 const ErrorAlert = styled.div`
@@ -525,11 +512,12 @@ const ErrorAlert = styled.div`
   display: flex;
   align-items: center;
   gap: 12px;
-  color: ${THEME.error};
+  color: var(--veterinary-error);
   font-weight: 600;
 `;
 
 const VetServices = () => {
+  const { theme } = useTheme();
   const [services, setServices] = useState([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -720,8 +708,8 @@ const VetServices = () => {
   return (
     <>
       <GlobalStyle />
-      <PageContainer>
-        <HeroSection>
+      <PageContainer style={{ background: `var(--veterinary-page-bg)` }} className={`theme-${theme}`}>
+        <HeroSection style={{ background: `linear-gradient(135deg, var(--veterinary-primary-light) 0%, var(--veterinary-primary) 100%)` }}>
           <HeroContent>
             <HeroTitle>Services Management</HeroTitle>
             <HeroSubtitle>

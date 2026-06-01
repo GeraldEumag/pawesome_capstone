@@ -1,5 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { apiRequest } from "../../api/client";
+import { useTheme } from "../../utils/theme";
+import "./theme.css";
 
 const normalizeList = (result) => {
   if (Array.isArray(result)) return result;
@@ -9,6 +11,7 @@ const normalizeList = (result) => {
 };
 
 const VetMedicalConfinements = () => {
+  useTheme();
   const [records, setRecords] = useState([]);
   const [note, setNote] = useState({ note_type: "progress_update", treatment_given: "", medication_given: "", recommendations: "" });
   const [message, setMessage] = useState("");

@@ -1,65 +1,8 @@
 /* VetNewAppointment_PinkGlass.css */
 /* Premium Pink Pawesome New Veterinary Appointment with Pink Glass Theme */
 
-:root {
-  /* Pink Glass Theme Variables */
-  --color-primary: #ff5f93;
-  --color-primary-light: #ff8db5;
-  --color-primary-dark: #ff3d73;
-  --color-secondary: #ff8db5;
-  --color-accent: #ffb3d1;
-  
-  /* Glass Effects */
-  --color-glass-bg: rgba(255, 255, 255, 0.85);
-  --color-glass-border: rgba(255, 95, 147, 0.18);
-  --color-glass-shadow: 0 18px 45px rgba(255, 95, 147, 0.14);
-  
-  /* Backgrounds */
-  --color-page-bg: linear-gradient(135deg, #fff5f8 0%, #ffe0ec 50%, #fff5f8 100%);
-  --color-surface: var(--color-glass-bg);
-  --color-surface-solid: rgba(255, 255, 255, 0.9);
-  
-  /* Text Colors */
-  --color-text: #2d3748;
-  --color-heading: #2d3748;
-  --color-muted: #718096;
-  --color-text-secondary: #718096;
-  
-  /* Status Colors */
-  --color-success: #48bb78;
-  --color-warning: #ed8936;
-  --color-danger: #f56565;
-  --color-info: #4299e1;
-  
-  /* Background Colors for Status */
-  --color-danger-bg: rgba(245, 101, 101, 0.1);
-  --color-warning-bg: rgba(237, 137, 54, 0.1);
-  
-  /* Shadows */
-  --shadow-soft: 0 4px 12px rgba(255, 95, 147, 0.08);
-  --shadow-card: var(--color-glass-shadow);
-  --shadow-primary: 0 8px 20px rgba(255, 95, 147, 0.15);
-  
-  /* Border */
-  --color-border: var(--color-glass-border);
-  
-  /* Radius */
-  --radius-card: 24px;
-  --radius-lg: 16px;
-  --radius-md: 12px;
-  --radius-pill: 16px;
-}
-
-/* Dark Mode Variables */
-[data-theme="dark"] {
-  --color-surface: rgba(15, 23, 42, 0.9);
-  --color-surface-solid: rgba(15, 23, 42, 0.94);
-  --color-text: #f7fafc;
-  --color-heading: #f7fafc;
-  --color-muted: #a0aec0;
-  --color-text-secondary: #a0aec0;
-  --color-border: rgba(255, 95, 147, 0.28);
-}
+/* Using variables from theme.css */
+/* --veterinary-* variables are defined in theme.css */
 
 /* Base Styles */
 .vet-new-appointment {
@@ -68,8 +11,8 @@
   display: grid;
   gap: 24px;
   overflow-x: hidden;
-  color: var(--color-text);
-  background: var(--color-page-bg);
+  color: var(--veterinary-text-primary);
+  background: var(--veterinary-page-bg);
   min-height: 100vh;
   padding: 32px;
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
@@ -88,10 +31,10 @@
   align-items: center;
   gap: 20px;
   padding: 24px;
-  border-radius: var(--radius-card);
-  background: var(--color-surface);
-  border: 2px solid var(--color-border);
-  box-shadow: var(--shadow-card);
+  border-radius: var(--veterinary-radius-xl);
+  background: var(--veterinary-glass-bg);
+  border: 2px solid var(--veterinary-glass-border);
+  box-shadow: var(--veterinary-shadow-md);
   backdrop-filter: blur(20px);
   overflow: hidden;
   animation: fadeInUp 0.8s ease;
@@ -126,16 +69,16 @@
   height: 44px;
   min-width: 44px;
   padding: 0 16px;
-  border-radius: var(--radius-pill);
-  border: 2px solid var(--color-border);
-  background: var(--color-surface-solid);
-  color: var(--color-primary);
+  border-radius: 16px;
+  border: 2px solid var(--veterinary-glass-border);
+  background: var(--veterinary-card-bg);
+  color: var(--veterinary-primary);
   font-weight: 700;
   cursor: pointer;
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  box-shadow: var(--shadow-soft);
+  box-shadow: var(--veterinary-shadow-sm);
   transition: all 0.3s ease;
   white-space: nowrap;
   text-decoration: none;
@@ -143,7 +86,7 @@
 
 .back-appointment-btn:hover {
   transform: translateY(-2px);
-  box-shadow: var(--shadow-primary);
+  box-shadow: 0 8px 20px rgba(255, 95, 147, 0.15);
 }
 
 .new-appointment-eyebrow {
@@ -151,7 +94,7 @@
   align-items: center;
   gap: 8px;
   margin-bottom: 8px;
-  color: var(--color-primary);
+  color: var(--veterinary-primary);
   font-size: 12px;
   font-weight: 600;
   text-transform: uppercase;
@@ -160,7 +103,7 @@
 
 .new-appointment-hero h1 {
   margin: 0;
-  color: var(--color-heading);
+  color: var(--veterinary-text-primary);
   font-size: clamp(1.45rem, 2.5vw, 2rem);
   font-weight: 700;
   letter-spacing: -0.04em;
@@ -169,7 +112,7 @@
 .new-appointment-hero p {
   max-width: 720px;
   margin: 4px 0 0;
-  color: var(--color-muted);
+  color: var(--veterinary-text-muted);
   font-size: 14px;
   font-weight: 500;
   line-height: 1.5;
@@ -190,13 +133,13 @@
   gap: 8px;
   min-height: 38px;
   padding: 6px 12px;
-  border-radius: var(--radius-pill);
-  background: var(--color-surface-solid);
-  border: 2px solid var(--color-border);
-  color: var(--color-muted);
+  border-radius: 16px;
+  background: var(--veterinary-card-bg);
+  border: 2px solid var(--veterinary-glass-border);
+  color: var(--veterinary-text-muted);
   font-size: 12px;
   font-weight: 700;
-  box-shadow: var(--shadow-soft);
+  box-shadow: var(--veterinary-shadow-sm);
   transition: all 0.3s ease;
 }
 
@@ -207,19 +150,19 @@
   place-items: center;
   border-radius: 999px;
   background: rgba(255, 95, 147, 0.1);
-  color: var(--color-primary);
+  color: var(--veterinary-primary);
   font-size: 11px;
   font-weight: 600;
 }
 
 .progress-step.active,
 .progress-step.done {
-  color: var(--color-primary);
+  color: var(--veterinary-primary);
   border-color: rgba(255, 95, 147, 0.28);
 }
 
 .progress-step.done span {
-  background: linear-gradient(135deg, var(--color-primary), var(--color-primary-dark));
+  background: linear-gradient(135deg, var(--veterinary-primary), var(--veterinary-primary-dark));
   color: white;
 }
 
@@ -229,9 +172,9 @@
   align-items: center;
   gap: 12px;
   padding: 16px 20px;
-  border-radius: var(--radius-lg);
-  background: var(--color-danger-bg);
-  color: var(--color-danger);
+  border-radius: var(--veterinary-radius-lg);
+  background: rgba(245, 101, 101, 0.1);
+  color: var(--veterinary-error);
   border: 2px solid rgba(245, 101, 101, 0.2);
   font-weight: 600;
   animation: slideInUp 0.6s ease;
@@ -248,10 +191,10 @@
 .new-appointment-form-card,
 .appointment-summary-card {
   min-width: 0;
-  border-radius: var(--radius-card);
-  background: var(--color-surface);
-  border: 2px solid var(--color-border);
-  box-shadow: var(--shadow-card);
+  border-radius: var(--veterinary-radius-xl);
+  background: var(--veterinary-glass-bg);
+  border: 2px solid var(--veterinary-glass-border);
+  box-shadow: var(--veterinary-shadow-md);
   backdrop-filter: blur(20px);
   overflow: hidden;
 }
@@ -273,7 +216,7 @@
   justify-content: space-between;
   gap: 16px;
   padding: 20px 24px;
-  background: linear-gradient(135deg, var(--color-primary-light) 0%, var(--color-primary) 100%);
+  background: linear-gradient(135deg, var(--veterinary-primary-light) 0%, var(--veterinary-primary) 100%);
   color: white;
 }
 
@@ -293,7 +236,7 @@
 
 .required-hint {
   padding: 4px 10px;
-  border-radius: var(--radius-pill);
+  border-radius: 16px;
   background: rgba(255, 255, 255, 0.2);
   font-size: 11px;
   font-weight: 700;
@@ -303,7 +246,7 @@
 /* Form Sections */
 .form-section {
   padding: 24px;
-  border-bottom: 2px solid var(--color-border);
+  border-bottom: 2px solid var(--veterinary-glass-border);
 }
 
 .form-section:last-of-type {
@@ -324,20 +267,20 @@
   padding: 12px;
   border-radius: 16px;
   color: white;
-  background: linear-gradient(135deg, var(--color-primary), var(--color-primary-dark));
-  box-shadow: var(--shadow-primary);
+  background: linear-gradient(135deg, var(--veterinary-primary), var(--veterinary-primary-dark));
+  box-shadow: 0 8px 20px rgba(255, 95, 147, 0.15);
 }
 
 .section-title h3 {
   margin: 0;
-  color: var(--color-heading);
+  color: var(--veterinary-text-primary);
   font-size: 16px;
   font-weight: 700;
 }
 
 .section-title p {
   margin: 2px 0 0;
-  color: var(--color-muted);
+  color: var(--veterinary-text-muted);
   font-size: 13px;
   font-weight: 500;
 }
@@ -356,13 +299,13 @@
 }
 
 .form-group label {
-  color: var(--color-heading);
+  color: var(--veterinary-text-primary);
   font-size: 13px;
   font-weight: 700;
 }
 
 .form-group label span {
-  color: var(--color-danger);
+  color: var(--veterinary-error);
 }
 
 /* Form Controls */
@@ -373,15 +316,15 @@
   width: 100%;
   min-height: 48px;
   border-radius: 16px;
-  border: 2px solid var(--color-border);
-  background: var(--color-surface-solid);
-  color: var(--color-text);
+  border: 2px solid var(--veterinary-glass-border);
+  background: var(--veterinary-card-bg);
+  color: var(--veterinary-text-primary);
   padding: 12px 16px;
   font-family: inherit;
   font-size: 14px;
   font-weight: 600;
   outline: none;
-  box-shadow: var(--shadow-soft);
+  box-shadow: var(--veterinary-shadow-sm);
   transition: all 0.3s ease;
 }
 
@@ -389,7 +332,7 @@
 .form-group select:focus,
 .form-group textarea:focus,
 .customer-search-wrapper input:focus {
-  border-color: var(--color-primary);
+  border-color: var(--veterinary-primary);
   box-shadow: 0 0 0 4px rgba(255, 95, 147, 0.15), 0 4px 16px rgba(255, 95, 147, 0.12);
 }
 
@@ -414,7 +357,7 @@
   left: 16px;
   top: 50%;
   transform: translateY(-50%);
-  color: var(--color-primary);
+  color: var(--veterinary-primary);
   pointer-events: none;
   z-index: 2;
 }
@@ -429,14 +372,14 @@
   border: none;
   border-radius: 999px;
   background: rgba(255, 95, 147, 0.1);
-  color: var(--color-primary);
+  color: var(--veterinary-primary);
   cursor: pointer;
   z-index: 2;
   transition: all 0.3s ease;
 }
 
 .clear-customer-btn:hover {
-  background: var(--color-danger);
+  background: var(--veterinary-error);
   color: white;
 }
 
@@ -450,9 +393,9 @@
   z-index: 30;
   padding: 8px;
   border-radius: 18px;
-  background: var(--color-surface);
-  border: 2px solid var(--color-border);
-  box-shadow: var(--shadow-card);
+  background: var(--veterinary-glass-bg);
+  border: 2px solid var(--veterinary-glass-border);
+  box-shadow: var(--veterinary-shadow-md);
   backdrop-filter: blur(20px);
 }
 
@@ -482,16 +425,16 @@
   display: grid;
   place-items: center;
   border-radius: 15px;
-  background: linear-gradient(135deg, var(--color-primary), var(--color-primary-dark));
+  background: linear-gradient(135deg, var(--veterinary-primary), var(--veterinary-primary-dark));
   color: white;
   font-weight: 700;
-  box-shadow: var(--shadow-primary);
+  box-shadow: 0 8px 20px rgba(255, 95, 147, 0.15);
 }
 
 .customer-result strong,
 .customer-no-result strong {
   display: block;
-  color: var(--color-heading);
+  color: var(--veterinary-text-primary);
   font-weight: 700;
 }
 
@@ -499,7 +442,7 @@
 .customer-no-result small {
   display: block;
   margin-top: 2px;
-  color: var(--color-muted);
+  color: var(--veterinary-text-muted);
   font-weight: 500;
 }
 
@@ -514,7 +457,7 @@
   align-items: center;
   gap: 12px;
   padding: 16px;
-  border-radius: var(--radius-lg);
+  border-radius: var(--veterinary-radius-lg);
   background: rgba(255, 95, 147, 0.08);
   border: 2px solid rgba(255, 95, 147, 0.18);
   margin-top: 16px;
@@ -527,25 +470,25 @@
 
 .selected-customer-card strong {
   display: block;
-  color: var(--color-heading);
+  color: var(--veterinary-text-primary);
   font-weight: 700;
 }
 
 .selected-customer-card p {
   margin: 2px 0 0;
-  color: var(--color-muted);
+  color: var(--veterinary-text-muted);
   font-weight: 500;
 }
 
 .selected-customer-card small {
   display: block;
   margin-top: 2px;
-  color: var(--color-primary);
+  color: var(--veterinary-primary);
   font-weight: 600;
 }
 
 .selected-check {
-  color: var(--color-primary);
+  color: var(--veterinary-primary);
   font-size: 18px;
 }
 
@@ -563,24 +506,24 @@
   align-items: center;
   gap: 12px;
   padding: 16px;
-  border-radius: var(--radius-lg);
-  border: 2px solid var(--color-border);
-  background: var(--color-surface-solid);
+  border-radius: var(--veterinary-radius-lg);
+  border: 2px solid var(--veterinary-glass-border);
+  background: var(--veterinary-card-bg);
   text-align: left;
   cursor: pointer;
   transition: all 0.3s ease;
-  box-shadow: var(--shadow-soft);
+  box-shadow: var(--veterinary-shadow-sm);
 }
 
 .pet-option:hover {
   transform: translateY(-2px);
-  border-color: var(--color-primary);
+  border-color: var(--veterinary-primary);
 }
 
 .pet-option.selected {
-  border-color: var(--color-primary);
+  border-color: var(--veterinary-primary);
   background: rgba(255, 95, 147, 0.1);
-  box-shadow: var(--shadow-primary);
+  box-shadow: 0 8px 20px rgba(255, 95, 147, 0.15);
 }
 
 .pet-option-icon {
@@ -590,20 +533,20 @@
   display: grid;
   place-items: center;
   border-radius: 15px;
-  color: var(--color-primary);
+  color: var(--veterinary-primary);
   background: rgba(255, 95, 147, 0.1);
 }
 
 .pet-option strong {
   display: block;
-  color: var(--color-heading);
+  color: var(--veterinary-text-primary);
   font-weight: 700;
 }
 
 .pet-option small {
   display: block;
   margin-top: 4px;
-  color: var(--color-muted);
+  color: var(--veterinary-text-muted);
   font-weight: 500;
 }
 
@@ -614,7 +557,7 @@
   align-items: center;
   gap: 12px;
   padding: 16px;
-  border-radius: var(--radius-lg);
+  border-radius: var(--veterinary-radius-lg);
   background: rgba(255, 95, 147, 0.08);
   border: 2px solid rgba(255, 95, 147, 0.18);
 }
@@ -627,25 +570,25 @@
   place-items: center;
   border-radius: 16px;
   color: white;
-  background: linear-gradient(135deg, var(--color-primary), var(--color-primary-dark));
-  box-shadow: var(--shadow-primary);
+  background: linear-gradient(135deg, var(--veterinary-primary), var(--veterinary-primary-dark));
+  box-shadow: 0 8px 20px rgba(255, 95, 147, 0.15);
 }
 
 .service-preview-icon.muted {
   background: rgba(255, 95, 147, 0.1);
-  color: var(--color-primary);
+  color: var(--veterinary-primary);
   box-shadow: none;
 }
 
 .selected-service-preview strong {
   display: block;
-  color: var(--color-heading);
+  color: var(--veterinary-text-primary);
   font-weight: 700;
 }
 
 .selected-service-preview p {
   margin: 2px 0 0;
-  color: var(--color-muted);
+  color: var(--veterinary-text-muted);
   font-weight: 600;
 }
 
@@ -653,30 +596,30 @@
 .helper-empty-box {
   text-align: center;
   padding: 32px 16px;
-  border-radius: var(--radius-card);
-  border: 2px dashed var(--color-border);
+  border-radius: var(--veterinary-radius-xl);
+  border: 2px dashed var(--veterinary-glass-border);
   background: rgba(255, 255, 255, 0.45);
 }
 
 .helper-empty-box svg {
-  color: var(--color-primary);
+  color: var(--veterinary-primary);
   font-size: 32px;
   margin-bottom: 12px;
 }
 
 .helper-empty-box.warning svg {
-  color: var(--color-warning);
+  color: var(--veterinary-warning);
 }
 
 .helper-empty-box h4 {
   margin: 0 0 4px;
-  color: var(--color-heading);
+  color: var(--veterinary-text-primary);
   font-weight: 700;
 }
 
 .helper-empty-box p {
   margin: 0;
-  color: var(--color-muted);
+  color: var(--veterinary-text-muted);
   font-weight: 500;
 }
 
@@ -686,14 +629,14 @@
   justify-content: flex-end;
   gap: 12px;
   padding: 24px;
-  border-top: 2px solid var(--color-border);
+  border-top: 2px solid var(--veterinary-glass-border);
 }
 
 .cancel-appointment-btn,
 .save-appointment-btn {
   min-height: 46px;
   padding: 12px 20px;
-  border-radius: var(--radius-pill);
+  border-radius: 16px;
   border: none;
   font-weight: 700;
   cursor: pointer;
@@ -705,16 +648,16 @@
 }
 
 .cancel-appointment-btn {
-  background: var(--color-surface-solid);
-  color: var(--color-primary);
-  border: 2px solid var(--color-border);
-  box-shadow: var(--shadow-soft);
+  background: var(--veterinary-card-bg);
+  color: var(--veterinary-primary);
+  border: 2px solid var(--veterinary-glass-border);
+  box-shadow: var(--veterinary-shadow-sm);
 }
 
 .save-appointment-btn {
-  background: linear-gradient(135deg, var(--color-primary), var(--color-primary-dark));
+  background: linear-gradient(135deg, var(--veterinary-primary), var(--veterinary-primary-dark));
   color: white;
-  box-shadow: var(--shadow-primary);
+  box-shadow: 0 8px 20px rgba(255, 95, 147, 0.15);
 }
 
 .cancel-appointment-btn:hover,
@@ -736,7 +679,7 @@
   gap: 12px;
   padding-bottom: 16px;
   margin-bottom: 16px;
-  border-bottom: 2px solid var(--color-border);
+  border-bottom: 2px solid var(--veterinary-glass-border);
 }
 
 .summary-card-header > span {
@@ -747,19 +690,19 @@
   place-items: center;
   border-radius: 17px;
   color: white;
-  background: linear-gradient(135deg, var(--color-primary), var(--color-primary-dark));
-  box-shadow: var(--shadow-primary);
+  background: linear-gradient(135deg, var(--veterinary-primary), var(--veterinary-primary-dark));
+  box-shadow: 0 8px 20px rgba(255, 95, 147, 0.15);
 }
 
 .summary-card-header h3 {
   margin: 0;
-  color: var(--color-heading);
+  color: var(--veterinary-text-primary);
   font-weight: 700;
 }
 
 .summary-card-header p {
   margin: 2px 0 0;
-  color: var(--color-muted);
+  color: var(--veterinary-text-muted);
   font-weight: 500;
 }
 
@@ -771,7 +714,7 @@
 .summary-row,
 .summary-price {
   padding: 12px;
-  border-radius: var(--radius-md);
+  border-radius: var(--veterinary-radius-md);
   background: rgba(255, 241, 247, 0.3);
   border: 2px solid rgba(255, 95, 147, 0.08);
 }
@@ -779,7 +722,7 @@
 .summary-row small,
 .summary-price small {
   display: block;
-  color: var(--color-muted);
+  color: var(--veterinary-text-muted);
   font-size: 11px;
   font-weight: 700;
   text-transform: uppercase;
@@ -789,13 +732,13 @@
 .summary-row strong {
   display: block;
   margin-top: 4px;
-  color: var(--color-heading);
+  color: var(--veterinary-text-primary);
   font-weight: 700;
   word-break: break-word;
 }
 
 .summary-price {
-  background: linear-gradient(135deg, var(--color-primary), var(--color-primary-dark));
+  background: linear-gradient(135deg, var(--veterinary-primary), var(--veterinary-primary-dark));
 }
 
 .summary-price small {
@@ -816,8 +759,8 @@
   gap: 12px;
   margin-top: 16px;
   padding: 12px;
-  border-radius: var(--radius-md);
-  background: var(--color-warning-bg);
+  border-radius: var(--veterinary-radius-md);
+  background: rgba(237, 137, 54, 0.1);
   color: #92400e;
 }
 
@@ -840,10 +783,10 @@
   align-content: center;
   gap: 8px;
   padding: 48px 20px;
-  border-radius: var(--radius-card);
-  background: var(--color-surface);
-  border: 2px solid var(--color-border);
-  box-shadow: var(--shadow-card);
+  border-radius: var(--veterinary-radius-xl);
+  background: var(--veterinary-glass-bg);
+  border: 2px solid var(--veterinary-glass-border);
+  box-shadow: var(--veterinary-shadow-md);
   text-align: center;
 }
 
@@ -854,7 +797,7 @@
   place-items: center;
   border-radius: 22px;
   background: rgba(255, 95, 147, 0.1);
-  color: var(--color-primary);
+  color: var(--veterinary-primary);
   font-size: 20px;
 }
 
@@ -863,13 +806,13 @@
 }
 
 .new-appointment-loading strong {
-  color: var(--color-heading);
+  color: var(--veterinary-text-primary);
   font-weight: 700;
 }
 
 .new-appointment-loading p {
   margin: 4px 0 0;
-  color: var(--color-muted);
+  color: var(--veterinary-text-muted);
   font-weight: 500;
 }
 
@@ -903,6 +846,43 @@
     opacity: 1;
     transform: translateY(0);
   }
+}
+
+/* Dark Mode Support */
+[data-theme="dark"] .vet-new-appointment {
+  background: var(--veterinary-page-bg);
+  color: var(--veterinary-text-primary);
+}
+
+[data-theme="dark"] .new-appointment-hero,
+[data-theme="dark"] .new-appointment-form-card,
+[data-theme="dark"] .appointment-summary-card,
+[data-theme="dark"] .new-appointment-loading {
+  background: var(--veterinary-glass-bg);
+  border-color: var(--veterinary-glass-border);
+}
+
+[data-theme="dark"] .form-group input,
+[data-theme="dark"] .form-group select,
+[data-theme="dark"] .form-group textarea,
+[data-theme="dark"] .customer-search-wrapper input {
+  background: var(--veterinary-card-bg);
+  border-color: var(--veterinary-glass-border);
+  color: var(--veterinary-text-primary);
+}
+
+[data-theme="dark"] .progress-step {
+  background: var(--veterinary-card-bg);
+  border-color: var(--veterinary-glass-border);
+}
+
+[data-theme="dark"] .pet-option {
+  background: var(--veterinary-card-bg);
+  border-color: var(--veterinary-glass-border);
+}
+
+[data-theme="dark"] .helper-empty-box {
+  background: rgba(255, 255, 255, 0.05);
 }
 
 @keyframes scaleIn {

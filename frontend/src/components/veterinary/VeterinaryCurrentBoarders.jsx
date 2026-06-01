@@ -18,6 +18,7 @@ import { apiRequest } from "../../api/client";
 import { useTheme } from "../../utils/theme";
 import PetAvatar from "../shared/PetAvatar";
 import toast from "react-hot-toast";
+import "./theme.css";
 import "./VeterinaryCurrentBoarders.css";
 
 const VeterinaryCurrentBoarders = () => {

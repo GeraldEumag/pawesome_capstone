@@ -14,9 +14,12 @@ import { apiRequest } from "../../api/client";
 import { formatCurrency } from "../../utils/currency";
 import jsPDF from "jspdf";
 import html2canvas from "html2canvas";
+import { useTheme } from "../../utils/theme";
+import "./theme.css";
 import "./VetReceipt.css";
 
 const VetReceipt = () => {
+  useTheme();
   const [receiptData, setReceiptData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");

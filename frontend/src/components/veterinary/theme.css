@@ -1,0 +1,436 @@
+/* Veterinary Theme - Now uses Global Admin Theme Variables */
+/* This file maps --veterinary-* variables to the global --color-* variables */
+
+/* ─────────────────────────────────────────────────────────────
+   Map Veterinary Variables to Global Admin Theme
+───────────────────────────────────────────────────────────── */
+:root {
+  /* Primary Brand Colors - Using Global Admin Theme */
+  --veterinary-primary: var(--color-primary, #ff5f93);
+  --veterinary-primary-light: var(--color-primary-light, #ff8db5);
+  --veterinary-primary-dark: #ff3d73;
+  --veterinary-secondary: var(--color-primary-light, #ff8db5);
+  --veterinary-accent: var(--color-primary-soft, #ffc8dd);
+
+  /* Glass Morphism - Using Global Theme */
+  --veterinary-glass-bg: var(--color-surface, rgba(255, 255, 255, 0.85));
+  --veterinary-glass-border: var(--color-border, rgba(255, 95, 147, 0.18));
+  --veterinary-glass-shadow: var(--shadow-card, 0 18px 45px rgba(255, 95, 147, 0.14));
+
+  /* Backgrounds - Using Global Theme */
+  --veterinary-page-bg: var(--color-bg-gradient, linear-gradient(135deg, #ffc8dd, #ffd6e8, #fff1f7));
+  --veterinary-card-bg: var(--color-surface-solid, #ffffff);
+  --veterinary-surface: var(--color-surface-solid, #ffffff);
+  --veterinary-surface-elevated: var(--color-surface-solid, #ffffff);
+
+  /* Text Colors - Using Global Theme */
+  --veterinary-text-primary: var(--color-text, #1f2937);
+  --veterinary-text-secondary: var(--color-muted, #64748b);
+  --veterinary-text-muted: var(--color-subtle, #94a3b8);
+  --veterinary-text-on-primary: #ffffff;
+
+  /* Status Colors - Using Global Theme */
+  --veterinary-success: var(--color-success, #10b981);
+  --veterinary-warning: var(--color-warning, #f59e0b);
+  --veterinary-error: var(--color-danger, #ef4444);
+  --veterinary-info: var(--color-info, #3b82f6);
+
+  /* Borders & Shadows - Using Global Theme */
+  --veterinary-border-color: var(--color-border, rgba(255, 95, 147, 0.18));
+  --veterinary-shadow-sm: var(--shadow-soft, 0 12px 28px rgba(15, 23, 42, 0.08));
+  --veterinary-shadow-md: var(--shadow-card, 0 20px 50px rgba(255, 95, 147, 0.15));
+  --veterinary-shadow-lg: 0 8px 32px rgba(0, 0, 0, 0.15);
+  --veterinary-shadow-xl: 0 16px 48px rgba(0, 0, 0, 0.2);
+
+  /* Sidebar - Using Global Theme */
+  --veterinary-sidebar-bg: linear-gradient(180deg, var(--color-primary, #ff5f93) 0%, var(--color-primary-light, #ff8db5) 100%);
+  --veterinary-sidebar-text: #ffffff;
+  --veterinary-sidebar-active-bg: #ffffff;
+  --veterinary-sidebar-active-text: var(--color-primary, #ff5f93);
+
+  /* Radius - Standard sizes */
+  --veterinary-radius-sm: var(--radius-sm, 10px);
+  --veterinary-radius-md: var(--radius-md, 16px);
+  --veterinary-radius-lg: var(--radius-lg, 22px);
+  --veterinary-radius-xl: var(--radius-card, 26px);
+  --veterinary-radius-2xl: 24px;
+  --veterinary-radius-3xl: 32px;
+
+  /* Transitions */
+  --veterinary-transition-fast: 0.15s ease;
+  --veterinary-transition-normal: 0.3s ease;
+  --veterinary-transition-slow: 0.5s ease;
+}
+
+/* Body styles applied globally */
+body {
+  background: var(--veterinary-page-bg);
+  color: var(--veterinary-text-primary);
+  transition: background var(--veterinary-transition-normal), color var(--veterinary-transition-normal);
+}
+
+/* ─────────────────────────────────────────────────────────────
+   Dark Mode Overrides - Using Global Theme
+───────────────────────────────────────────────────────────── */
+[data-theme="dark"] {
+  /* Primary Brand Colors - Using Global Admin Theme */
+  --veterinary-primary: var(--color-primary, #ff5f93);
+  --veterinary-primary-light: var(--color-primary-light, #ff8db5);
+  --veterinary-primary-dark: #ff3d73;
+  --veterinary-secondary: var(--color-primary-light, #ff8db5);
+  --veterinary-accent: var(--color-primary-soft, #ffc8dd);
+
+  /* Dark Glass Morphism - Using Global Theme */
+  --veterinary-glass-bg: var(--color-surface, rgba(15, 23, 42, 0.92));
+  --veterinary-glass-border: rgba(255, 141, 181, 0.28);
+  --veterinary-glass-shadow: 0 18px 45px rgba(0, 0, 0, 0.3);
+
+  /* Dark Backgrounds - Using Global Theme */
+  --veterinary-page-bg: var(--color-bg-gradient, linear-gradient(135deg, #0f172a, #1e293b, #3b1224));
+  --veterinary-card-bg: var(--color-surface-solid, #111827);
+  --veterinary-surface: var(--color-surface-muted, #1e293b);
+  --veterinary-surface-elevated: #334155;
+
+  /* Light Text for Dark Backgrounds - Using Global Theme */
+  --veterinary-text-primary: var(--color-text, #f8fafc);
+  --veterinary-text-secondary: var(--color-muted, #cbd5e1);
+  --veterinary-text-muted: var(--color-subtle, #94a3b8);
+  --veterinary-text-on-primary: #ffffff;
+
+  /* Status Colors - Using Global Theme */
+  --veterinary-success: #86efac;
+  --veterinary-warning: #fde68a;
+  --veterinary-error: #fca5a5;
+  --veterinary-info: #bfdbfe;
+
+  /* Dark Borders & Shadows */
+  --veterinary-border-color: rgba(255, 141, 181, 0.28);
+  --veterinary-shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.3);
+  --veterinary-shadow-md: 0 4px 16px rgba(0, 0, 0, 0.4);
+  --veterinary-shadow-lg: 0 8px 32px rgba(0, 0, 0, 0.5);
+  --veterinary-shadow-xl: 0 16px 48px rgba(0, 0, 0, 0.6);
+
+  /* Dark Sidebar */
+  --veterinary-sidebar-bg: linear-gradient(180deg, #831843 0%, #9d174d 52%, #be185d 100%);
+  --veterinary-sidebar-text: #ffffff;
+  --veterinary-sidebar-active-bg: #ffffff;
+  --veterinary-sidebar-active-text: #be185d;
+}
+
+/* ─────────────────────────────────────────────────────────────
+   Utility Classes for Components
+───────────────────────────────────────────────────────────── */
+
+/* Page Container */
+.veterinary-page {
+  min-height: 100vh;
+  background: var(--veterinary-page-bg);
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
+/* Glass Card */
+.veterinary-glass-card {
+  background: var(--veterinary-glass-bg);
+  border: 2px solid var(--veterinary-glass-border);
+  border-radius: var(--veterinary-radius-2xl);
+  backdrop-filter: blur(20px);
+  box-shadow: var(--veterinary-glass-shadow);
+}
+
+/* Hero Section */
+.veterinary-hero {
+  background: linear-gradient(135deg, var(--veterinary-primary-light) 0%, var(--veterinary-primary) 100%);
+  border-radius: var(--veterinary-radius-2xl);
+  padding: 40px;
+  color: white;
+  position: relative;
+  overflow: hidden;
+}
+
+.veterinary-hero::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="grain" width="100" height="100" patternUnits="userSpaceOnUse"><circle cx="25" cy="25" r="1" fill="white" opacity="0.3"/><circle cx="75" cy="75" r="1" fill="white" opacity="0.3"/><circle cx="50" cy="10" r="0.5" fill="white" opacity="0.2"/><circle cx="20" cy="60" r="0.5" fill="white" opacity="0.2"/><circle cx="80" cy="40" r="0.5" fill="white" opacity="0.2"/></pattern></defs><rect width="100" height="100" fill="url(%23grain)"/></svg>');
+  opacity: 0.1;
+  pointer-events: none;
+}
+
+/* Stat Cards */
+.veterinary-stat-card {
+  background: var(--veterinary-glass-bg);
+  border: 2px solid var(--veterinary-glass-border);
+  border-radius: var(--veterinary-radius-xl);
+  padding: 24px;
+  backdrop-filter: blur(20px);
+  box-shadow: var(--veterinary-glass-shadow);
+  transition: all var(--veterinary-transition-normal);
+}
+
+.veterinary-stat-card:hover {
+  transform: translateY(-4px);
+  box-shadow: var(--veterinary-shadow-xl);
+}
+
+/* Buttons */
+.veterinary-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 20px;
+  border-radius: var(--veterinary-radius-lg);
+  font-weight: 600;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all var(--veterinary-transition-normal);
+  border: none;
+  outline: none;
+}
+
+.veterinary-btn-primary {
+  background: var(--veterinary-primary);
+  color: var(--veterinary-text-on-primary);
+  box-shadow: var(--veterinary-shadow-sm);
+}
+
+.veterinary-btn-primary:hover {
+  background: var(--veterinary-primary-dark);
+  transform: translateY(-2px);
+  box-shadow: var(--veterinary-shadow-md);
+}
+
+.veterinary-btn-secondary {
+  background: var(--veterinary-glass-bg);
+  color: var(--veterinary-text-secondary);
+  border: 2px solid var(--veterinary-glass-border);
+}
+
+.veterinary-btn-secondary:hover {
+  border-color: var(--veterinary-primary);
+  color: var(--veterinary-primary);
+  transform: translateY(-2px);
+}
+
+/* Form Inputs */
+.veterinary-input {
+  width: 100%;
+  height: 44px;
+  padding: 0 16px;
+  border-radius: var(--veterinary-radius-lg);
+  border: 2px solid var(--veterinary-glass-border);
+  background: var(--veterinary-glass-bg);
+  color: var(--veterinary-text-primary);
+  font-size: 14px;
+  font-weight: 500;
+  outline: none;
+  transition: all var(--veterinary-transition-normal);
+}
+
+.veterinary-input:focus {
+  border-color: var(--veterinary-primary);
+  box-shadow: 0 0 0 4px rgba(255, 95, 147, 0.15);
+}
+
+/* Status Badges */
+.veterinary-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border-radius: var(--veterinary-radius-md);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.veterinary-badge-success {
+  background: rgba(72, 187, 120, 0.1);
+  color: var(--veterinary-success);
+  border: 2px solid rgba(72, 187, 120, 0.2);
+}
+
+.veterinary-badge-warning {
+  background: rgba(237, 137, 54, 0.1);
+  color: var(--veterinary-warning);
+  border: 2px solid rgba(237, 137, 54, 0.2);
+}
+
+.veterinary-badge-error {
+  background: rgba(245, 101, 101, 0.1);
+  color: var(--veterinary-error);
+  border: 2px solid rgba(245, 101, 101, 0.2);
+}
+
+.veterinary-badge-info {
+  background: rgba(66, 153, 225, 0.1);
+  color: var(--veterinary-info);
+  border: 2px solid rgba(66, 153, 225, 0.2);
+}
+
+/* Alert Items */
+.veterinary-alert {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 16px;
+  border-radius: var(--veterinary-radius-lg);
+  margin-bottom: 12px;
+  backdrop-filter: blur(10px);
+}
+
+.veterinary-alert-success {
+  background: rgba(72, 187, 120, 0.1);
+  color: var(--veterinary-success);
+  border: 2px solid rgba(72, 187, 120, 0.2);
+}
+
+.veterinary-alert-warning {
+  background: rgba(237, 137, 54, 0.1);
+  color: var(--veterinary-warning);
+  border: 2px solid rgba(237, 137, 54, 0.2);
+}
+
+.veterinary-alert-error {
+  background: rgba(245, 101, 101, 0.1);
+  color: var(--veterinary-error);
+  border: 2px solid rgba(245, 101, 101, 0.2);
+}
+
+.veterinary-alert-info {
+  background: rgba(66, 153, 225, 0.1);
+  color: var(--veterinary-info);
+  border: 2px solid rgba(66, 153, 225, 0.2);
+}
+
+/* Empty State */
+.veterinary-empty-state {
+  text-align: center;
+  padding: 60px 20px;
+  color: var(--veterinary-text-muted);
+}
+
+.veterinary-empty-state svg {
+  font-size: 48px;
+  margin-bottom: 16px;
+  opacity: 0.5;
+}
+
+/* Loading Skeleton */
+.veterinary-skeleton {
+  background: linear-gradient(90deg, var(--veterinary-glass-bg) 25%, var(--veterinary-card-bg) 50%, var(--veterinary-glass-bg) 75%);
+  background-size: 200% 100%;
+  animation: veterinary-skeleton-loading 1.5s infinite;
+  border-radius: var(--veterinary-radius-lg);
+}
+
+@keyframes veterinary-skeleton-loading {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
+}
+
+[data-theme="dark"] .veterinary-skeleton {
+  background: linear-gradient(90deg, rgba(30, 41, 59, 0.8) 25%, rgba(51, 65, 85, 0.8) 50%, rgba(30, 41, 59, 0.8) 75%);
+  background-size: 200% 100%;
+}
+
+/* Animations */
+@keyframes veterinary-fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes veterinary-scale-in {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.veterinary-fade-in {
+  animation: veterinary-fade-in 0.6s ease forwards;
+}
+
+.veterinary-scale-in {
+  animation: veterinary-scale-in 0.5s ease forwards;
+}
+
+/* Grid Layouts */
+.veterinary-grid-2 {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 24px;
+}
+
+.veterinary-grid-3 {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 24px;
+}
+
+.veterinary-grid-4 {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 24px;
+}
+
+/* Responsive */
+@media (max-width: 1200px) {
+  .veterinary-grid-4 {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 768px) {
+  .veterinary-grid-2,
+  .veterinary-grid-3,
+  .veterinary-grid-4 {
+    grid-template-columns: 1fr;
+  }
+
+  .veterinary-hero {
+    padding: 24px;
+  }
+
+  .veterinary-stat-card {
+    padding: 16px;
+  }
+}
+
+/* Scrollbar Styling */
+.veterinary-page ::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+.veterinary-page ::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.veterinary-page ::-webkit-scrollbar-thumb {
+  background: var(--veterinary-primary-light);
+  border-radius: 4px;
+}
+
+.veterinary-page ::-webkit-scrollbar-thumb:hover {
+  background: var(--veterinary-primary);
+}
+
+[data-theme="dark"] .veterinary-page ::-webkit-scrollbar-thumb {
+  background: var(--veterinary-primary-dark);
+}

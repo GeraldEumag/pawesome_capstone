@@ -7,7 +7,7 @@
   display: grid;
   gap: 24px;
   overflow-x: hidden;
-  color: var(--color-text);
+  color: var(--veterinary-text-primary);
 }
 
 .vet-history,
@@ -49,7 +49,7 @@
   align-items: center;
   gap: 0.45rem;
   margin-bottom: 0.55rem;
-  color: var(--color-primary);
+  color: var(--veterinary-primary);
   font-size: 0.78rem;
   font-weight: 950;
   text-transform: uppercase;
@@ -84,7 +84,7 @@
   min-height: 44px;
   border: none;
   padding: 0.7rem 1rem;
-  border-radius: var(--radius-pill);
+  border-radius: 999px;
   font-size: 0.9rem;
   font-weight: 950;
   cursor: pointer;
@@ -98,17 +98,17 @@
 }
 
 .vet-history-refresh-btn {
-  background: var(--color-surface-solid);
-  color: var(--color-primary);
-  border: 1px solid var(--color-border);
-  box-shadow: var(--shadow-soft);
+  background: var(--veterinary-card-bg);
+  color: var(--veterinary-primary);
+  border: 1px solid var(--veterinary-glass-border);
+  box-shadow: var(--veterinary-shadow-sm);
 }
 
 .vet-history-export-btn,
 .vet-history-view-btn {
-  background: linear-gradient(135deg, var(--color-primary), var(--color-primary-light));
+  background: linear-gradient(135deg, var(--veterinary-primary), var(--veterinary-primary-light));
   color: #ffffff;
-  box-shadow: var(--shadow-primary);
+  box-shadow: 0 12px 24px rgba(255, 95, 147, 0.18);
 }
 
 .vet-history-refresh-btn:hover,
@@ -140,7 +140,7 @@
   align-items: center;
   gap: 0.75rem;
   border-style: solid;
-  background: var(--color-danger-bg) !important;
+  background: rgba(245, 101, 101, 0.1) !important;
   color: #991b1b;
   font-weight: 850;
 }
@@ -172,13 +172,13 @@
   place-items: center;
   border-radius: 18px;
   color: #ffffff;
-  background: linear-gradient(135deg, var(--color-primary), var(--color-primary-light));
-  box-shadow: var(--shadow-primary);
+  background: linear-gradient(135deg, var(--veterinary-primary), var(--veterinary-primary-light));
+  box-shadow: 0 12px 24px rgba(255, 95, 147, 0.18);
 }
 
 .vet-history-stat-card h3 {
   margin: 0;
-  color: var(--color-primary);
+  color: var(--veterinary-primary);
   font-size: 1.4rem;
   font-weight: 950;
   line-height: 1.05;
@@ -186,7 +186,7 @@
 
 .vet-history-stat-card p {
   margin: 0.3rem 0 0;
-  color: var(--color-muted);
+  color: var(--veterinary-text-muted);
   font-weight: 800;
   font-size: 0.86rem;
 }
@@ -210,7 +210,7 @@
   left: 16px;
   top: 50%;
   transform: translateY(-50%);
-  color: var(--color-primary);
+  color: var(--veterinary-primary);
   pointer-events: none;
 }
 
@@ -218,18 +218,18 @@
   width: 100%;
   min-height: 48px;
   padding: 0.8rem 2.9rem 0.8rem 3rem;
-  border-radius: var(--radius-pill);
-  border: 1px solid var(--color-border);
-  background: var(--color-surface-solid);
-  color: var(--color-text);
+  border-radius: 999px;
+  border: 1px solid var(--veterinary-glass-border);
+  background: var(--veterinary-card-bg);
+  color: var(--veterinary-text-primary);
   font-weight: 750;
   outline: none;
-  box-shadow: var(--shadow-soft);
+  box-shadow: var(--veterinary-shadow-sm);
   transition: 0.2s ease;
 }
 
 .vet-history-search-box input:focus {
-  border-color: var(--color-primary);
+  border-color: var(--veterinary-primary);
   box-shadow: 0 0 0 4px rgba(255, 95, 147, 0.16);
 }
 
@@ -245,7 +245,7 @@
   border: none;
   border-radius: 999px;
   background: rgba(255, 95, 147, 0.1);
-  color: var(--color-primary);
+  color: var(--veterinary-primary);
   cursor: pointer;
 }
 
@@ -265,7 +265,7 @@
 .vet-history-toolbar-controls label > svg {
   position: absolute;
   left: 14px;
-  color: var(--color-primary);
+  color: var(--veterinary-primary);
   pointer-events: none;
   z-index: 1;
 }
@@ -275,24 +275,24 @@
   min-height: 44px;
   min-width: 155px;
   padding: 0.65rem 0.85rem 0.65rem 2.45rem;
-  border-radius: var(--radius-pill);
-  border: 1px solid var(--color-border);
-  background: var(--color-surface-solid);
-  color: var(--color-heading);
+  border-radius: 999px;
+  border: 1px solid var(--veterinary-glass-border);
+  background: var(--veterinary-card-bg);
+  color: var(--veterinary-text-primary);
   font-weight: 850;
   outline: none;
-  box-shadow: var(--shadow-soft);
+  box-shadow: var(--veterinary-shadow-sm);
 }
 
 .vet-history-result-count {
-  color: var(--color-muted);
+  color: var(--veterinary-text-muted);
   font-size: 0.9rem;
   font-weight: 800;
   white-space: nowrap;
 }
 
 .vet-history-result-count strong {
-  color: var(--color-primary);
+  color: var(--veterinary-primary);
 }
 
 /* HISTORY LIST */
@@ -315,7 +315,7 @@
   position: absolute;
   inset: 0 auto 0 0;
   width: 5px;
-  background: linear-gradient(180deg, var(--color-primary), var(--color-primary-light));
+  background: linear-gradient(180deg, var(--veterinary-primary), var(--veterinary-primary-light));
   opacity: 0;
   transition: 0.25s ease;
 }
@@ -337,7 +337,7 @@
   justify-content: space-between;
   gap: 1rem;
   padding-bottom: 1rem;
-  border-bottom: 1px solid var(--color-border);
+  border-bottom: 1px solid var(--veterinary-glass-border);
   flex-wrap: wrap;
 }
 
@@ -345,12 +345,12 @@
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  color: var(--color-muted);
+  color: var(--veterinary-text-muted);
   font-weight: 800;
 }
 
 .vet-history-date svg {
-  color: var(--color-primary);
+  color: var(--veterinary-primary);
 }
 
 .vet-history-badges {
@@ -369,7 +369,7 @@
   justify-content: center;
   gap: 0.4rem;
   padding: 0.42rem 0.75rem;
-  border-radius: var(--radius-pill);
+  border-radius: 999px;
   font-size: 0.73rem;
   font-weight: 950;
   text-transform: uppercase;
@@ -379,34 +379,34 @@
 
 .vet-type-badge {
   background: rgba(255, 95, 147, 0.1);
-  color: var(--color-primary);
+  color: var(--veterinary-primary);
   border-color: rgba(255, 95, 147, 0.16);
 }
 
 .vet-type-badge.type-vaccination {
-  background: var(--color-info-bg);
+  background: rgba(66, 153, 225, 0.14);
   color: #1e3a8a;
 }
 
 .vet-type-badge.type-surgery,
 .vet-type-badge.type-emergency {
-  background: var(--color-danger-bg);
+  background: rgba(245, 101, 101, 0.1);
   color: #991b1b;
 }
 
 .vet-type-badge.type-checkup,
 .vet-type-badge.type-consultation {
   background: rgba(255, 95, 147, 0.1);
-  color: var(--color-primary);
+  color: var(--veterinary-primary);
 }
 
 .vet-payment-badge.paid {
-  background: var(--color-success-bg);
+  background: rgba(72, 187, 120, 0.14);
   color: #065f46;
 }
 
 .vet-payment-badge.pending {
-  background: var(--color-warning-bg);
+  background: rgba(237, 137, 54, 0.14);
   color: #92400e;
 }
 
@@ -429,24 +429,24 @@
   height: 58px;
   min-width: 58px;
   border-radius: 20px;
-  background: linear-gradient(135deg, var(--color-primary), var(--color-primary-light));
+  background: linear-gradient(135deg, var(--veterinary-primary), var(--veterinary-primary-light));
   display: grid;
   place-items: center;
   color: white;
   font-size: 1.45rem;
-  box-shadow: var(--shadow-primary);
+  box-shadow: 0 12px 24px rgba(255, 95, 147, 0.18);
 }
 
 .vet-history-patient h4 {
   margin: 0 0 0.25rem;
-  color: var(--color-heading);
+  color: var(--veterinary-text-primary);
   font-weight: 950;
   font-size: 1.12rem;
 }
 
 .vet-history-patient p {
   margin: 0;
-  color: var(--color-muted);
+  color: var(--veterinary-text-muted);
   font-size: 0.9rem;
   font-weight: 750;
   display: flex;
@@ -465,14 +465,14 @@
 .vet-medical-section {
   min-width: 0;
   padding: 1rem;
-  border-radius: var(--radius-lg);
+  border-radius: var(--veterinary-radius-lg);
   background: rgba(255, 241, 247, 0.58);
   border: 1px solid rgba(255, 95, 147, 0.1);
 }
 
 .vet-medical-section h5 {
   margin: 0 0 0.5rem;
-  color: var(--color-heading);
+  color: var(--veterinary-text-primary);
   font-size: 0.82rem;
   font-weight: 950;
   text-transform: uppercase;
@@ -483,12 +483,12 @@
 }
 
 .vet-medical-section h5 svg {
-  color: var(--color-primary);
+  color: var(--veterinary-primary);
 }
 
 .vet-medical-section p {
   margin: 0;
-  color: var(--color-muted);
+  color: var(--veterinary-text-muted);
   font-weight: 750;
   line-height: 1.5;
   word-break: break-word;
@@ -501,21 +501,21 @@
 .vet-cost-amount {
   font-size: 1.25rem;
   font-weight: 950;
-  color: var(--color-primary) !important;
+  color: var(--veterinary-primary) !important;
 }
 
 /* NOTES */
 
 .vet-history-notes {
   padding: 1rem;
-  border-radius: var(--radius-lg);
+  border-radius: var(--veterinary-radius-lg);
   background: rgba(255, 255, 255, 0.5);
-  border: 1px dashed var(--color-border);
+  border: 1px dashed var(--veterinary-glass-border);
 }
 
 .vet-history-notes h5 {
   margin: 0 0 0.5rem;
-  color: var(--color-heading);
+  color: var(--veterinary-text-primary);
   font-size: 0.85rem;
   font-weight: 950;
   display: flex;
@@ -524,12 +524,12 @@
 }
 
 .vet-history-notes h5 svg {
-  color: var(--color-primary);
+  color: var(--veterinary-primary);
 }
 
 .vet-history-notes p {
   margin: 0;
-  color: var(--color-muted);
+  color: var(--veterinary-text-muted);
   font-style: italic;
   font-weight: 700;
   line-height: 1.5;
@@ -543,14 +543,14 @@
   justify-content: space-between;
   gap: 1rem;
   padding-top: 1rem;
-  border-top: 1px solid var(--color-border);
+  border-top: 1px solid var(--veterinary-glass-border);
 }
 
 .vet-vet-info {
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  color: var(--color-muted);
+  color: var(--veterinary-text-muted);
   font-weight: 800;
 }
 
@@ -572,12 +572,12 @@
 .vet-loading-state svg,
 .vet-error-state svg {
   font-size: 3rem;
-  color: var(--color-primary);
+  color: var(--veterinary-primary);
 }
 
 .vet-empty-state h3 {
   margin: 0;
-  color: var(--color-heading);
+  color: var(--veterinary-text-primary);
   font-weight: 950;
 }
 
@@ -585,13 +585,13 @@
 .vet-loading-state span,
 .vet-error-state span {
   margin: 0;
-  color: var(--color-muted);
+  color: var(--veterinary-text-muted);
   font-weight: 750;
 }
 
 .vet-error-state svg,
 .vet-error-state span {
-  color: var(--color-danger);
+  color: var(--veterinary-error);
 }
 
 .spin-animation {
@@ -617,10 +617,10 @@
   max-height: 90vh;
   overflow-y: auto;
   padding: 1.4rem;
-  border-radius: var(--radius-card);
-  background: var(--color-surface);
-  border: 1px solid var(--color-border);
-  box-shadow: var(--shadow-card);
+  border-radius: var(--veterinary-radius-xl);
+  background: var(--veterinary-glass-bg);
+  border: 1px solid var(--veterinary-glass-border);
+  box-shadow: var(--veterinary-shadow-md);
 }
 
 .vet-history-modal-header {
@@ -629,7 +629,7 @@
   gap: 1rem;
   padding-bottom: 1rem;
   margin-bottom: 1rem;
-  border-bottom: 1px solid var(--color-border);
+  border-bottom: 1px solid var(--veterinary-glass-border);
 }
 
 .vet-history-modal-header h3 {
@@ -637,14 +637,14 @@
   display: flex;
   align-items: center;
   gap: 0.55rem;
-  color: var(--color-heading);
+  color: var(--veterinary-text-primary);
   font-size: 1.45rem;
   font-weight: 950;
 }
 
 .vet-history-modal-header p {
   margin: 0.25rem 0 0;
-  color: var(--color-muted);
+  color: var(--veterinary-text-muted);
   font-weight: 750;
 }
 
@@ -652,10 +652,10 @@
   width: 42px;
   height: 42px;
   min-width: 42px;
-  border: 1px solid var(--color-border);
+  border: 1px solid var(--veterinary-glass-border);
   border-radius: 14px;
-  background: var(--color-surface-solid);
-  color: var(--color-heading);
+  background: var(--veterinary-card-bg);
+  color: var(--veterinary-text-primary);
   cursor: pointer;
 }
 
@@ -682,7 +682,7 @@
 .vet-history-modal-grid small {
   display: block;
   margin-bottom: 0.35rem;
-  color: var(--color-muted);
+  color: var(--veterinary-text-muted);
   font-size: 0.78rem;
   font-weight: 950;
   text-transform: uppercase;
@@ -690,7 +690,7 @@
 }
 
 .vet-history-modal-grid strong {
-  color: var(--color-heading);
+  color: var(--veterinary-text-primary);
   font-weight: 900;
   word-break: break-word;
 }
@@ -700,17 +700,17 @@
   align-items: center;
   gap: 0.5rem;
   margin: 0 0 0.55rem;
-  color: var(--color-heading);
+  color: var(--veterinary-text-primary);
   font-weight: 950;
 }
 
 .vet-history-modal-section h4 svg {
-  color: var(--color-primary);
+  color: var(--veterinary-primary);
 }
 
 .vet-history-modal-section p {
   margin: 0;
-  color: var(--color-muted);
+  color: var(--veterinary-text-muted);
   font-weight: 750;
   line-height: 1.5;
 }
@@ -722,7 +722,7 @@
   flex-wrap: wrap;
   padding-top: 1rem;
   margin-top: 1rem;
-  border-top: 1px solid var(--color-border);
+  border-top: 1px solid var(--veterinary-glass-border);
 }
 
 /* DARK MODE */

@@ -16,8 +16,10 @@ import {
 } from "@fortawesome/free-solid-svg-icons";
 import toast from "react-hot-toast";
 import { apiRequest } from "../../api/client";
+import { useTheme } from "../../utils/theme";
 import PetAvatar from "../shared/PetAvatar";
 import ServiceBillingPanel from "../shared/ServiceBillingPanel";
+import "./theme.css";
 import "./VetConsultation.css";
 
 const emptyForm = {
@@ -38,6 +40,7 @@ const emptyForm = {
 };
 
 const VetConsultation = () => {
+  useTheme();
   const { id } = useParams();
   const navigate = useNavigate();
   const [appointment, setAppointment] = useState(null);

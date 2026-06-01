@@ -2,6 +2,7 @@ import React from "react";
 import { NavLink } from "react-router-dom";
 import { showConfirm } from "../../utils/alert";
 import { apiRequest, clearAuthStorage } from "../../api/client";
+import { useTheme } from "../../utils/theme";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
   faHome,
@@ -17,9 +18,11 @@ import {
   faHotel,
   faStethoscope,
 } from "@fortawesome/free-solid-svg-icons";
+import "./theme.css";
 import "./VeterinarySidebar.css";
 
 const VeterinarySidebar = ({ collapsed, onToggleCollapse, mobileOpen, onMobileMenuToggle }) => {
+  useTheme();
   const handleLogout = async () => {
     const confirmed = await showConfirm("Are you sure you want to log out?", "", "Yes", "Cancel", "question", true);
     if (!confirmed) return;

@@ -2,10 +2,10 @@
 /* Premium Pink Veterinary Sidebar - Always Expanded */
 
 .veterinary-sidebar {
-  width: 260px !important;
-  min-width: 260px !important;
-  background: linear-gradient(180deg, #ff5f93 0%, #ff8db5 52%, #ffafcc 100%) !important;
-  color: #ffffff !important;
+  width: 260px;
+  min-width: 260px;
+  background: var(--veterinary-sidebar-bg);
+  color: var(--veterinary-sidebar-text);
   box-shadow: 14px 0 38px rgba(255, 95, 147, 0.24);
   border-right: 1px solid rgba(255, 255, 255, 0.34);
 }
@@ -225,7 +225,9 @@
 /* DARK MODE */
 
 [data-theme="dark"] .veterinary-sidebar {
-  background: linear-gradient(180deg, #3b1224 0%, #831843 52%, #be185d 100%) !important;
+  background: var(--veterinary-sidebar-bg);
+  box-shadow: 14px 0 38px rgba(0, 0, 0, 0.3);
+  border-right-color: rgba(255, 141, 181, 0.2);
 }
 
 /* MOBILE */

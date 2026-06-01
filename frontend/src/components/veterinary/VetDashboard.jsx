@@ -33,25 +33,14 @@ import { useTheme } from "../../utils/theme";
 import VeterinarySidebar from "./VeterinarySidebar";
 import DashboardLayout from "../shared/DashboardLayout";
 import toast from "react-hot-toast";
-import styled, { createGlobalStyle } from "styled-components";
+import "./theme.css";
+import styled from "styled-components";
 import {
   fadeIn, fadeInUp, slideInUp, scaleIn, pulse,
   FadeIn, ScaleIn, SlideInUp, Spinning, Glowing,
   useScrollAnimation, useLoadingAnimation,
   hoverMixin, glassHoverMixin, focusMixin
 } from "../shared/animations";
-
-const GlobalStyle = createGlobalStyle`
-  body {
-    --primary-color: #FF69B4;
-    --secondary-color: #FFC5C5;
-    --background-color: #FFFFFF;
-    --text-color: #333333;
-    --glass-color: rgba(255, 255, 255, 0.2);
-    --glass-background-color: rgba(255, 255, 255, 0.1);
-    --box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-  }
-`;
 
 const VetDashboard = () => {
   const { user, updateUser } = useAuth();

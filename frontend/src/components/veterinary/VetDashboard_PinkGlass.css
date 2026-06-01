@@ -1,36 +1,8 @@
 /* VetDashboard.css - Pink Glass Theme Adaptation */
 /* Premium pink veterinary dashboard with glass morphism effects */
 
-/* ─────────────────────────────────────────────────────────────
-   Pink Glass Theme Variables
-───────────────────────────────────────────────────────────── */
-:root {
-  --primary-color: #ff5f93;
-  --primary-light: #ff8db5;
-  --primary-dark: #ff3d73;
-  --secondary: #ffb3d1;
-  --glass-bg: rgba(255, 255, 255, 0.85);
-  --glass-border: rgba(255, 95, 147, 0.18);
-  --glass-shadow: 0 18px 45px rgba(255, 95, 147, 0.14);
-  --page-bg: linear-gradient(135deg, #fff5f8 0%, #ffe0ec 50%, #fff5f8 100%);
-  --text-primary: #2d3748;
-  --text-secondary: #718096;
-  --text-muted: #a0aec0;
-  --success: #48bb78;
-  --warning: #ed8936;
-  --error: #f56565;
-  --info: #4299e1;
-  --radius-sm: 8px;
-  --radius-md: 12px;
-  --radius-lg: 16px;
-  --radius-xl: 20px;
-  --radius-2xl: 24px;
-  --radius-3xl: 32px;
-  --shadow-sm: 0 2px 8px rgba(255, 95, 147, 0.08);
-  --shadow-md: 0 4px 16px rgba(255, 95, 147, 0.12);
-  --shadow-lg: 0 8px 32px rgba(255, 95, 147, 0.16);
-  --shadow-xl: 0 16px 48px rgba(255, 95, 147, 0.20);
-}
+/* Using variables from theme.css */
+/* --veterinary-* variables are defined in theme.css */
 
 /* ─────────────────────────────────────────────────────────────
    Global Styles & Reset
@@ -39,21 +11,13 @@
   box-sizing: border-box;
 }
 
-body {
-  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-  background: var(--page-bg);
-  margin: 0;
-  padding: 0;
-  color: var(--text-primary);
-}
-
 /* ─────────────────────────────────────────────────────────────
    Dashboard Layout
 ───────────────────────────────────────────────────────────── */
 .vet-dashboard {
   min-height: 100vh;
   overflow-x: hidden;
-  background: var(--page-bg);
+  background: var(--veterinary-page-bg);
 }
 
 .vet-dashboard,
@@ -84,13 +48,13 @@ body {
   position: sticky;
   top: 0;
   z-index: 100;
-  background: var(--glass-bg);
-  border: 2px solid var(--glass-border);
-  border-radius: 0 0 var(--radius-2xl) var(--radius-2xl);
+  background: var(--veterinary-glass-bg);
+  border: 2px solid var(--veterinary-glass-border);
+  border-radius: 0 0 var(--veterinary-radius-2xl) var(--veterinary-radius-2xl);
   padding: 24px 32px;
   margin: 0 24px;
   backdrop-filter: blur(20px);
-  box-shadow: var(--glass-shadow);
+  box-shadow: var(--veterinary-glass-shadow);
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -111,12 +75,12 @@ body {
   line-height: 1.1;
   font-size: 28px;
   font-weight: 700;
-  color: var(--text-primary);
+  color: var(--veterinary-text-primary);
 }
 
 .navbar-left p {
   margin: 0;
-  color: var(--text-secondary);
+  color: var(--veterinary-text-secondary);
   font-size: 14px;
 }
 
@@ -125,10 +89,10 @@ body {
   align-items: center;
   gap: 8px;
   margin-bottom: 4px;
-  background: var(--primary-light);
+  background: var(--veterinary-primary-light);
   color: white;
   padding: 6px 12px;
-  border-radius: var(--radius-md);
+  border-radius: var(--veterinary-radius-md);
   font-size: 12px;
   font-weight: 600;
   text-transform: uppercase;
@@ -152,7 +116,7 @@ body {
   left: 16px;
   top: 50%;
   transform: translateY(-50%);
-  color: var(--text-muted);
+  color: var(--veterinary-text-muted);
   pointer-events: none;
   z-index: 2;
 }
@@ -161,11 +125,11 @@ body {
   width: 100%;
   height: 44px;
   padding: 0 16px 0 44px;
-  border-radius: var(--radius-lg);
-  background: var(--glass-bg);
-  border: 2px solid var(--glass-border);
-  box-shadow: var(--shadow-sm);
-  color: var(--text-primary);
+  border-radius: var(--veterinary-radius-lg);
+  background: var(--veterinary-glass-bg);
+  border: 2px solid var(--veterinary-glass-border);
+  box-shadow: var(--veterinary-shadow-sm);
+  color: var(--veterinary-text-primary);
   font-size: 14px;
   font-weight: 500;
   outline: none;
@@ -174,13 +138,13 @@ body {
 }
 
 .search-group input:focus {
-  border-color: var(--primary-color);
-  box-shadow: 0 0 0 4px rgba(255, 95, 147, 0.15), var(--shadow-md);
+  border-color: var(--veterinary-primary);
+  box-shadow: 0 0 0 4px rgba(255, 95, 147, 0.15), var(--veterinary-shadow-md);
   transform: translateY(-1px);
 }
 
 .search-group input::placeholder {
-  color: var(--text-muted);
+  color: var(--veterinary-text-muted);
 }
 
 /* ─────────────────────────────────────────────────────────────
@@ -199,12 +163,12 @@ body {
   width: 44px;
   height: 44px;
   min-width: 44px;
-  border-radius: var(--radius-lg);
-  border: 2px solid var(--glass-border);
-  background: var(--glass-bg);
-  color: var(--text-secondary);
+  border-radius: var(--veterinary-radius-lg);
+  border: 2px solid var(--veterinary-glass-border);
+  background: var(--veterinary-glass-bg);
+  color: var(--veterinary-text-secondary);
   cursor: pointer;
-  box-shadow: var(--shadow-sm);
+  box-shadow: var(--veterinary-shadow-sm);
   transition: all 0.3s ease;
   backdrop-filter: blur(10px);
   display: flex;
@@ -215,13 +179,13 @@ body {
 
 .theme-toggle-btn:hover {
   transform: translateY(-2px);
-  box-shadow: var(--shadow-lg);
-  border-color: var(--primary-color);
-  color: var(--primary-color);
+  box-shadow: var(--veterinary-shadow-lg);
+  border-color: var(--veterinary-primary);
+  color: var(--veterinary-primary);
 }
 
 .theme-toggle-btn:focus {
-  border-color: var(--primary-color);
+  border-color: var(--veterinary-primary);
   box-shadow: 0 0 0 4px rgba(255, 95, 147, 0.15);
 }
 
@@ -246,11 +210,11 @@ body {
   align-items: center;
   margin: 32px;
   padding: 40px;
-  background: linear-gradient(135deg, var(--primary-light) 0%, var(--primary-color) 100%);
-  border-radius: var(--radius-2xl);
+  background: linear-gradient(135deg, var(--veterinary-primary-light) 0%, var(--veterinary-primary) 100%);
+  border-radius: var(--veterinary-radius-2xl);
   overflow: hidden;
   animation: fadeInUp 0.8s ease;
-  box-shadow: var(--shadow-xl);
+  box-shadow: var(--veterinary-shadow-xl);
 }
 
 .vet-hero::before {
@@ -314,7 +278,7 @@ body {
   white-space: nowrap;
   height: 44px;
   padding: 0 24px;
-  border-radius: var(--radius-lg);
+  border-radius: var(--veterinary-radius-lg);
   font-weight: 600;
   font-size: 14px;
   transition: all 0.3s ease;
@@ -323,7 +287,7 @@ body {
 
 .vet-hero-actions .btn-primary {
   background: white;
-  color: var(--primary-color);
+  color: var(--veterinary-primary);
   box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
 }
 
@@ -350,7 +314,7 @@ body {
   align-items: center;
   gap: 8px;
   padding: 8px 16px;
-  border-radius: var(--radius-lg);
+  border-radius: var(--veterinary-radius-lg);
   background: rgba(255, 255, 255, 0.2);
   color: white;
   font-weight: 600;
@@ -377,18 +341,18 @@ body {
   align-items: flex-start;
   gap: 12px;
   padding: 16px;
-  border-radius: var(--radius-lg);
+  border-radius: var(--veterinary-radius-lg);
   border: 2px solid;
-  background: var(--glass-bg);
+  background: var(--veterinary-glass-bg);
   backdrop-filter: blur(20px);
-  box-shadow: var(--shadow-md);
+  box-shadow: var(--veterinary-shadow-md);
   transition: all 0.3s ease;
   animation: slideInUp 0.6s ease;
 }
 
 .alert-item:hover {
   transform: translateY(-2px);
-  box-shadow: var(--shadow-lg);
+  box-shadow: var(--veterinary-shadow-lg);
 }
 
 .alert-item > svg {
@@ -396,20 +360,20 @@ body {
   height: 42px;
   min-width: 42px;
   padding: 10px;
-  border-radius: var(--radius-md);
+  border-radius: var(--veterinary-radius-md);
   color: white;
 }
 
 .alert-item strong {
   display: block;
-  color: var(--text-primary);
+  color: var(--veterinary-text-primary);
   font-weight: 600;
   font-size: 14px;
 }
 
 .alert-item p {
   margin: 4px 0 0;
-  color: var(--text-secondary);
+  color: var(--veterinary-text-secondary);
   font-size: 12px;
   font-weight: 500;
 }
@@ -420,7 +384,7 @@ body {
 }
 
 .alert-item.success > svg {
-  background: var(--success);
+  background: var(--veterinary-success);
 }
 
 .alert-item.info {
@@ -429,7 +393,7 @@ body {
 }
 
 .alert-item.info > svg {
-  background: var(--info);
+  background: var(--veterinary-info);
 }
 
 .alert-item.warning {
@@ -438,7 +402,7 @@ body {
 }
 
 .alert-item.warning > svg {
-  background: var(--warning);
+  background: var(--veterinary-warning);
 }
 
 .alert-item.danger {
@@ -447,7 +411,7 @@ body {
 }
 
 .alert-item.danger > svg {
-  background: var(--error);
+  background: var(--veterinary-error);
 }
 
 /* ─────────────────────────────────────────────────────────────
@@ -469,11 +433,11 @@ body {
   gap: 16px;
   min-width: 0;
   padding: 24px;
-  background: var(--glass-bg);
-  border: 2px solid var(--glass-border);
-  border-radius: var(--radius-xl);
+  background: var(--veterinary-glass-bg);
+  border: 2px solid var(--veterinary-glass-border);
+  border-radius: var(--veterinary-radius-xl);
   backdrop-filter: blur(20px);
-  box-shadow: var(--glass-shadow);
+  box-shadow: var(--veterinary-glass-shadow);
   transition: all 0.3s ease;
   animation: scaleIn 0.6s ease;
 }
@@ -493,35 +457,35 @@ body {
 
 .vet-stat-card:hover {
   transform: translateY(-4px);
-  box-shadow: var(--shadow-xl);
+  box-shadow: var(--veterinary-shadow-xl);
 }
 
 .vet-stat-icon {
   width: 56px;
   height: 56px;
   min-width: 56px;
-  border-radius: var(--radius-lg);
+  border-radius: var(--veterinary-radius-lg);
   display: grid;
   place-items: center;
   color: white;
   font-size: 20px;
-  box-shadow: var(--shadow-md);
+  box-shadow: var(--veterinary-shadow-md);
 }
 
 .vet-stat-icon.appointments {
-  background: linear-gradient(135deg, var(--primary-color), var(--primary-dark));
+  background: linear-gradient(135deg, var(--veterinary-primary), var(--veterinary-primary-dark));
 }
 
 .vet-stat-icon.patients {
-  background: linear-gradient(135deg, var(--info), #2c5282);
+  background: linear-gradient(135deg, var(--veterinary-info), #2c5282);
 }
 
 .vet-stat-icon.completed {
-  background: linear-gradient(135deg, var(--success), #38a169);
+  background: linear-gradient(135deg, var(--veterinary-success), #38a169);
 }
 
 .vet-stat-icon.pending {
-  background: linear-gradient(135deg, var(--warning), #dd6b20);
+  background: linear-gradient(135deg, var(--veterinary-warning), #dd6b20);
 }
 
 .vet-stat-body {
@@ -533,19 +497,19 @@ body {
   line-height: 1;
   font-size: 32px;
   font-weight: 700;
-  color: var(--text-primary);
+  color: var(--veterinary-text-primary);
 }
 
 .vet-stat-card p {
   margin: 4px 0 0;
   font-weight: 600;
-  color: var(--text-secondary);
+  color: var(--veterinary-text-secondary);
 }
 
 .vet-stat-card small {
   display: block;
   margin-top: 4px;
-  color: var(--text-muted);
+  color: var(--veterinary-text-muted);
   font-weight: 500;
   font-size: 12px;
 }
@@ -557,11 +521,11 @@ body {
   margin-top: 8px;
   font-size: 12px;
   font-weight: 600;
-  color: var(--success);
+  color: var(--veterinary-success);
 }
 
 .vet-trend.negative {
-  color: var(--error);
+  color: var(--veterinary-error);
 }
 
 /* ─────────────────────────────────────────────────────────────
@@ -584,19 +548,19 @@ body {
 .vet-panel {
   overflow: hidden;
   min-width: 0;
-  background: var(--glass-bg);
-  border: 2px solid var(--glass-border);
-  border-radius: var(--radius-2xl);
+  background: var(--veterinary-glass-bg);
+  border: 2px solid var(--veterinary-glass-border);
+  border-radius: var(--veterinary-radius-2xl);
   backdrop-filter: blur(20px);
-  box-shadow: var(--glass-shadow);
+  box-shadow: var(--veterinary-glass-shadow);
   animation: fadeInUp 0.8s ease;
 }
 
 .panel-header {
   padding: 24px 32px;
   margin-bottom: 0;
-  border-bottom: 2px solid var(--glass-border);
-  background: linear-gradient(135deg, var(--primary-light) 0%, var(--primary-color) 100%);
+  border-bottom: 2px solid var(--veterinary-glass-border);
+  background: linear-gradient(135deg, var(--veterinary-primary-light) 0%, var(--veterinary-primary) 100%);
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -626,9 +590,9 @@ body {
 
 .premium-badge.live {
   padding: 6px 12px;
-  border-radius: var(--radius-md);
+  border-radius: var(--veterinary-radius-md);
   background: rgba(72, 187, 120, 0.2);
-  color: var(--success);
+  color: var(--veterinary-success);
   font-weight: 600;
   font-size: 12px;
   border: 2px solid rgba(72, 187, 120, 0.3);
@@ -649,16 +613,16 @@ body {
   align-items: center;
   gap: 16px;
   padding: 20px;
-  border-radius: var(--radius-lg);
+  border-radius: var(--veterinary-radius-lg);
   background: rgba(255, 255, 255, 0.5);
-  border: 2px solid var(--glass-border);
+  border: 2px solid var(--veterinary-glass-border);
   transition: all 0.3s ease;
   backdrop-filter: blur(10px);
 }
 
 .preview-appointment-item:hover {
   transform: translateY(-2px);
-  box-shadow: var(--shadow-lg);
+  box-shadow: var(--veterinary-shadow-lg);
   background: rgba(255, 255, 255, 0.7);
 }
 
@@ -668,13 +632,13 @@ body {
 }
 
 .apt-time {
-  color: var(--primary-color);
+  color: var(--veterinary-primary);
   font-weight: 600;
   font-size: 16px;
 }
 
 .apt-time-box small {
-  color: var(--text-muted);
+  color: var(--veterinary-text-muted);
   font-size: 11px;
   font-weight: 600;
   text-transform: uppercase;
@@ -688,7 +652,7 @@ body {
 }
 
 .apt-pet {
-  color: var(--text-primary);
+  color: var(--veterinary-text-primary);
   font-weight: 600;
   font-size: 16px;
   white-space: nowrap;
@@ -697,7 +661,7 @@ body {
 }
 
 .apt-service {
-  color: var(--text-secondary);
+  color: var(--veterinary-text-secondary);
   font-weight: 500;
   font-size: 14px;
   white-space: nowrap;
@@ -722,7 +686,7 @@ body {
   justify-content: center;
   gap: 6px;
   white-space: nowrap;
-  border-radius: var(--radius-md);
+  border-radius: var(--veterinary-radius-md);
   border: none;
   cursor: pointer;
   transition: all 0.3s ease;
@@ -731,28 +695,28 @@ body {
 }
 
 .btn-sm.btn-primary {
-  background: var(--primary-color);
+  background: var(--veterinary-primary);
   color: white;
-  box-shadow: var(--shadow-sm);
+  box-shadow: var(--veterinary-shadow-sm);
 }
 
 .btn-sm.btn-primary:hover {
   transform: translateY(-1px);
-  box-shadow: var(--shadow-md);
+  box-shadow: var(--veterinary-shadow-md);
 }
 
 .btn-sm.btn-secondary {
-  background: var(--glass-bg);
-  color: var(--text-secondary);
-  border: 2px solid var(--glass-border);
+  background: var(--veterinary-glass-bg);
+  color: var(--veterinary-text-secondary);
+  border: 2px solid var(--veterinary-glass-border);
   backdrop-filter: blur(10px);
 }
 
 .btn-sm.btn-secondary:hover {
   transform: translateY(-1px);
-  box-shadow: var(--shadow-sm);
-  border-color: var(--primary-color);
-  color: var(--primary-color);
+  box-shadow: var(--veterinary-shadow-sm);
+  border-color: var(--veterinary-primary);
+  color: var(--veterinary-primary);
 }
 
 button:disabled {
@@ -776,16 +740,16 @@ button:disabled {
   justify-content: space-between;
   gap: 12px;
   padding: 16px;
-  border-radius: var(--radius-lg);
+  border-radius: var(--veterinary-radius-lg);
   background: rgba(255, 255, 255, 0.5);
-  border: 2px solid var(--glass-border);
+  border: 2px solid var(--veterinary-glass-border);
   transition: all 0.3s ease;
   backdrop-filter: blur(10px);
 }
 
 .patient-row:hover {
   transform: translateY(-2px);
-  box-shadow: var(--shadow-lg);
+  box-shadow: var(--veterinary-shadow-lg);
   background: rgba(255, 255, 255, 0.7);
 }
 
@@ -801,14 +765,14 @@ button:disabled {
   height: 40px;
   min-width: 40px;
   padding: 10px;
-  border-radius: var(--radius-md);
+  border-radius: var(--veterinary-radius-md);
   background: rgba(255, 95, 147, 0.12);
-  color: var(--primary-color);
+  color: var(--veterinary-primary);
 }
 
 .patient-info strong {
   display: block;
-  color: var(--text-primary);
+  color: var(--veterinary-text-primary);
   font-weight: 600;
   font-size: 14px;
   white-space: nowrap;
@@ -818,7 +782,7 @@ button:disabled {
 
 .patient-info p {
   margin: 2px 0 0;
-  color: var(--text-secondary);
+  color: var(--veterinary-text-secondary);
   font-weight: 500;
   font-size: 12px;
 }
@@ -831,32 +795,32 @@ button:disabled {
   align-items: center;
   gap: 6px;
   padding: 6px 12px;
-  border-radius: var(--radius-md);
+  border-radius: var(--veterinary-radius-md);
   font-size: 12px;
   font-weight: 600;
 }
 
 .badge-success {
   background: rgba(72, 187, 120, 0.1);
-  color: var(--success);
+  color: var(--veterinary-success);
   border: 2px solid rgba(72, 187, 120, 0.2);
 }
 
 .badge-warning {
   background: rgba(237, 137, 54, 0.1);
-  color: var(--warning);
+  color: var(--veterinary-warning);
   border: 2px solid rgba(237, 137, 54, 0.2);
 }
 
 .badge-danger {
   background: rgba(245, 101, 101, 0.1);
-  color: var(--error);
+  color: var(--veterinary-error);
   border: 2px solid rgba(245, 101, 101, 0.2);
 }
 
 .badge-info {
   background: rgba(66, 153, 225, 0.1);
-  color: var(--info);
+  color: var(--veterinary-info);
   border: 2px solid rgba(66, 153, 225, 0.2);
 }
 
@@ -866,7 +830,7 @@ button:disabled {
 .empty-state {
   text-align: center;
   padding: 60px 20px;
-  color: var(--text-muted);
+  color: var(--veterinary-text-muted);
   animation: fadeIn 0.8s ease;
 }
 
@@ -878,13 +842,13 @@ button:disabled {
   width: 48px;
   height: 48px;
   margin-bottom: 16px;
-  color: var(--text-muted);
+  color: var(--veterinary-text-muted);
   opacity: 0.5;
 }
 
 .empty-state h3 {
   margin: 0 0 8px 0;
-  color: var(--text-secondary);
+  color: var(--veterinary-text-secondary);
   font-size: 18px;
 }
 
@@ -911,17 +875,17 @@ button:disabled {
 .boarder-card {
   min-width: 0;
   padding: 24px;
-  border-radius: var(--radius-xl);
+  border-radius: var(--veterinary-radius-xl);
   background: rgba(255, 255, 255, 0.5);
-  border: 2px solid var(--glass-border);
-  box-shadow: var(--shadow-md);
+  border: 2px solid var(--veterinary-glass-border);
+  box-shadow: var(--veterinary-shadow-md);
   backdrop-filter: blur(10px);
   transition: all 0.3s ease;
 }
 
 .boarder-card:hover {
   transform: translateY(-2px);
-  box-shadow: var(--shadow-lg);
+  box-shadow: var(--veterinary-shadow-lg);
   background: rgba(255, 255, 255, 0.7);
 }
 
@@ -942,7 +906,7 @@ button:disabled {
 
 .boarder-pet-info h4 {
   margin: 0;
-  color: var(--text-primary);
+  color: var(--veterinary-text-primary);
   font-weight: 600;
   font-size: 16px;
   white-space: nowrap;
@@ -952,7 +916,7 @@ button:disabled {
 
 .boarder-pet-info p {
   margin: 2px 0 0;
-  color: var(--text-secondary);
+  color: var(--veterinary-text-secondary);
   font-weight: 500;
   font-size: 12px;
 }
@@ -962,10 +926,10 @@ button:disabled {
   height: 44px;
   min-width: 44px;
   padding: 10px;
-  border-radius: var(--radius-lg);
-  background: linear-gradient(135deg, var(--primary-color), var(--primary-dark));
+  border-radius: var(--veterinary-radius-lg);
+  background: linear-gradient(135deg, var(--veterinary-primary), var(--veterinary-primary-dark));
   color: white;
-  box-shadow: var(--shadow-md);
+  box-shadow: var(--veterinary-shadow-md);
 }
 
 .room-badge {
@@ -973,8 +937,8 @@ button:disabled {
   align-items: center;
   gap: 6px;
   padding: 8px 12px;
-  border-radius: var(--radius-md);
-  background: var(--primary-light);
+  border-radius: var(--veterinary-radius-md);
+  background: var(--veterinary-primary-light);
   color: white;
   font-weight: 600;
   font-size: 12px;
@@ -986,7 +950,7 @@ button:disabled {
   grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
   gap: 16px;
   padding: 16px;
-  border-radius: var(--radius-lg);
+  border-radius: var(--veterinary-radius-lg);
   background: rgba(255, 241, 247, 0.3);
   border: 2px solid rgba(255, 95, 147, 0.1);
   margin-bottom: 16px;
@@ -1001,14 +965,14 @@ button:disabled {
   font-size: 11px;
   text-transform: uppercase;
   letter-spacing: 0.5px;
-  color: var(--text-muted);
+  color: var(--veterinary-text-muted);
   font-weight: 600;
   margin-bottom: 4px;
 }
 
 .detail-item p {
   margin: 0;
-  color: var(--text-primary);
+  color: var(--veterinary-text-primary);
   font-weight: 600;
   font-size: 14px;
   word-break: break-word;
@@ -1019,10 +983,10 @@ button:disabled {
   align-items: center;
   gap: 8px;
   padding: 12px;
-  border-radius: var(--radius-lg);
+  border-radius: var(--veterinary-radius-lg);
   background: rgba(237, 137, 54, 0.1);
   border: 2px solid rgba(237, 137, 54, 0.2);
-  color: var(--warning);
+  color: var(--veterinary-warning);
   font-weight: 600;
   margin-bottom: 16px;
   font-size: 14px;
@@ -1030,11 +994,11 @@ button:disabled {
 
 .view-pet-btn {
   width: fit-content;
-  background: var(--primary-color);
+  background: var(--veterinary-primary);
   color: white;
   border: none;
   padding: 10px 20px;
-  border-radius: var(--radius-lg);
+  border-radius: var(--veterinary-radius-lg);
   font-weight: 600;
   font-size: 14px;
   cursor: pointer;
@@ -1047,7 +1011,7 @@ button:disabled {
 
 .view-pet-btn:hover {
   transform: translateY(-2px);
-  box-shadow: var(--shadow-lg);
+  box-shadow: var(--veterinary-shadow-lg);
 }
 
 /* ─────────────────────────────────────────────────────────────
@@ -1061,17 +1025,17 @@ button:disabled {
 
 .appointment-card {
   padding: 20px;
-  border-radius: var(--radius-lg);
+  border-radius: var(--veterinary-radius-lg);
   background: rgba(255, 255, 255, 0.5);
-  border: 2px solid var(--glass-border);
-  box-shadow: var(--shadow-md);
+  border: 2px solid var(--veterinary-glass-border);
+  box-shadow: var(--veterinary-shadow-md);
   backdrop-filter: blur(10px);
   transition: all 0.3s ease;
 }
 
 .appointment-card:hover {
   transform: translateY(-2px);
-  box-shadow: var(--shadow-lg);
+  box-shadow: var(--veterinary-shadow-lg);
   background: rgba(255, 255, 255, 0.7);
 }
 
@@ -1085,21 +1049,21 @@ button:disabled {
 
 .appointment-card h3 {
   margin: 0;
-  color: var(--text-primary);
+  color: var(--veterinary-text-primary);
   font-weight: 600;
   font-size: 16px;
 }
 
 .appointment-card p {
   margin: 4px 0;
-  color: var(--text-secondary);
+  color: var(--veterinary-text-secondary);
   font-weight: 500;
   font-size: 14px;
 }
 
 .status-badge {
   padding: 6px 12px;
-  border-radius: var(--radius-md);
+  border-radius: var(--veterinary-radius-md);
   font-size: 11px;
   font-weight: 600;
   text-transform: uppercase;
@@ -1110,20 +1074,20 @@ button:disabled {
 .status-badge.completed,
 .status-badge.done {
   background: rgba(72, 187, 120, 0.1);
-  color: var(--success);
+  color: var(--veterinary-success);
   border: 2px solid rgba(72, 187, 120, 0.2);
 }
 
 .status-badge.in_progress,
 .status-badge.ongoing {
   background: rgba(66, 153, 225, 0.1);
-  color: var(--info);
+  color: var(--veterinary-info);
   border: 2px solid rgba(66, 153, 225, 0.2);
 }
 
 .status-badge.pending {
   background: rgba(237, 137, 54, 0.1);
-  color: var(--warning);
+  color: var(--veterinary-warning);
   border: 2px solid rgba(237, 137, 54, 0.2);
 }
 
@@ -1134,7 +1098,7 @@ button:disabled {
 .status-badge.no-show,
 .status-badge.no_show {
   background: rgba(245, 101, 101, 0.1);
-  color: var(--error);
+  color: var(--veterinary-error);
   border: 2px solid rgba(245, 101, 101, 0.2);
 }
 
@@ -1145,7 +1109,7 @@ button:disabled {
   gap: 16px;
   margin-top: 16px;
   padding-top: 16px;
-  border-top: 2px solid var(--glass-border);
+  border-top: 2px solid var(--veterinary-glass-border);
   flex-wrap: wrap;
 }
 
@@ -1153,23 +1117,23 @@ button:disabled {
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  color: var(--text-secondary);
+  color: var(--veterinary-text-secondary);
   font-weight: 600;
   font-size: 12px;
 }
 
 .appointment-footer .btn-secondary {
-  background: var(--glass-bg);
-  color: var(--text-secondary);
-  border: 2px solid var(--glass-border);
+  background: var(--veterinary-glass-bg);
+  color: var(--veterinary-text-secondary);
+  border: 2px solid var(--veterinary-glass-border);
   backdrop-filter: blur(10px);
 }
 
 .appointment-footer .btn-secondary:hover {
   transform: translateY(-1px);
-  box-shadow: var(--shadow-sm);
-  border-color: var(--primary-color);
-  color: var(--primary-color);
+  box-shadow: var(--veterinary-shadow-sm);
+  border-color: var(--veterinary-primary);
+  color: var(--veterinary-primary);
 }
 
 /* ─────────────────────────────────────────────────────────────
@@ -1185,29 +1149,29 @@ button:disabled {
 
 .status-card {
   padding: 16px;
-  border-radius: var(--radius-lg);
+  border-radius: var(--veterinary-radius-lg);
   text-align: center;
   border: 2px solid;
-  background: var(--glass-bg);
+  background: var(--veterinary-glass-bg);
   backdrop-filter: blur(10px);
   transition: all 0.3s ease;
 }
 
 .status-card:hover {
   transform: translateY(-2px);
-  box-shadow: var(--shadow-md);
+  box-shadow: var(--veterinary-shadow-md);
 }
 
 .status-card.success {
   border-color: rgba(72, 187, 120, 0.2);
   background: rgba(72, 187, 120, 0.1);
-  color: var(--success);
+  color: var(--veterinary-success);
 }
 
 .status-card.info {
   border-color: rgba(66, 153, 225, 0.2);
   background: rgba(66, 153, 225, 0.1);
-  color: var(--info);
+  color: var(--veterinary-info);
 }
 
 .status-card strong {
@@ -1228,7 +1192,7 @@ button:disabled {
   align-items: end;
   gap: 8px;
   padding: 16px;
-  border-radius: var(--radius-lg);
+  border-radius: var(--veterinary-radius-lg);
   background: rgba(255, 241, 247, 0.3);
   border: 2px solid rgba(255, 95, 147, 0.1);
   margin: 0 32px 24px;
@@ -1238,7 +1202,7 @@ button:disabled {
   flex: 1;
   min-height: 20px;
   border-radius: 4px 4px 0 0;
-  background: linear-gradient(180deg, var(--primary-color), var(--primary-light));
+  background: linear-gradient(180deg, var(--veterinary-primary), var(--veterinary-primary-light));
   transition: all 0.3s ease;
 }
 
@@ -1256,7 +1220,7 @@ button:disabled {
 
 .activity-summary p {
   margin: 0;
-  color: var(--text-secondary);
+  color: var(--veterinary-text-secondary);
   font-weight: 600;
   font-size: 14px;
 }
@@ -1265,7 +1229,7 @@ button:disabled {
    See All Links
 ───────────────────────────────────────────────────────────── */
 .see-all-link {
-  color: var(--primary-color);
+  color: var(--veterinary-primary);
   font-weight: 600;
   text-decoration: none;
   white-space: nowrap;
@@ -1273,7 +1237,7 @@ button:disabled {
 }
 
 .see-all-link:hover {
-  color: var(--primary-dark);
+  color: var(--veterinary-primary-dark);
   transform: translateY(-1px);
 }
 
@@ -1282,17 +1246,17 @@ button:disabled {
 ───────────────────────────────────────────────────────────── */
 .loading-skeleton {
   min-height: 130px;
-  border-radius: var(--radius-2xl);
+  border-radius: var(--veterinary-radius-2xl);
   background: linear-gradient(90deg, #fff 25%, #ffe4ef 50%, #fff 75%);
   background-size: 200% 100%;
   animation: shimmer 1.4s infinite;
-  border: 2px solid var(--glass-border);
+  border: 2px solid var(--veterinary-glass-border);
 }
 
 .loading-boarders {
   text-align: center;
   padding: 60px 20px;
-  color: var(--primary-color);
+  color: var(--veterinary-primary);
   font-weight: 600;
   animation: fadeIn 0.8s ease;
 }
@@ -1463,7 +1427,7 @@ button:disabled {
   .vet-alerts,
   .vet-panel {
     margin: 16px;
-    border-radius: var(--radius-xl);
+    border-radius: var(--veterinary-radius-xl);
   }
 
   .vet-hero {

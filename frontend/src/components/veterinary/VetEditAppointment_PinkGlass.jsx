@@ -15,10 +15,13 @@ import {
 } from "@fortawesome/free-solid-svg-icons";
 import toast from "react-hot-toast";
 import { apiRequest } from "../../api/client";
+import { useTheme } from "../../utils/theme";
 import PetAvatar from "../shared/PetAvatar";
+import "./theme.css";
 import "./VetNewAppointment_PinkGlass.css";
 
 const VetEditAppointment = () => {
+  useTheme();
   const navigate = useNavigate();
   const { id } = useParams();
   const [appointmentId] = useState(id);

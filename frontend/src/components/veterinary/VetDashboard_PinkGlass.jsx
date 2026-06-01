@@ -3,6 +3,7 @@ import { Outlet, NavLink, useLocation, useNavigate } from "react-router-dom";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
   faMoon,
+  faSun,
   faCalendarAlt,
   faUsers,
   faHotel,
@@ -25,6 +26,7 @@ import {
 } from "@fortawesome/free-solid-svg-icons";
 
 import { apiRequest, uploadProfilePhoto } from "../../api/client";
+import { useTheme } from "../../utils/theme";
 import VeterinarySidebar from "./VeterinarySidebar";
 import RoleAwareChatbot from "../chatbot/RoleAwareChatbot";
 import NotificationDropdown from "../shared/NotificationDropdown";
@@ -35,51 +37,13 @@ import {
   FadeIn, ScaleIn, Spinning,
   hoverMixin, glassHoverMixin, focusMixin
 } from "../shared/animations";
-
-/* ─────────────────────────────────────────────────────────────
-   Pink Glass Theme Design Tokens
-───────────────────────────────────────────────────────────── */
-const THEME = {
-  // Colors
-  primary: "#ff5f93",
-  primaryLight: "#ff8db5",
-  primaryDark: "#ff3d73",
-  secondary: "#ff8db5",
-  accent: "#ffb3d1",
-  
-  // Glass effects
-  glassBg: "rgba(255,255,255,0.85)",
-  glassBorder: "rgba(255,95,147,0.18)",
-  glassShadow: "0 18px 45px rgba(255,95,147,0.14)",
-  
-  // Backgrounds
-  pageBg: "linear-gradient(135deg, #fff5f8 0%, #ffe0ec 50%, #fff5f8 100%)",
-  cardBg: "rgba(255,255,255,0.9)",
-  
-  // Text
-  textPrimary: "#2d3748",
-  textSecondary: "#718096",
-  textMuted: "#a0aec0",
-  
-  // Status
-  success: "#48bb78",
-  warning: "#ed8936",
-  error: "#f56565",
-  info: "#4299e1",
-};
+import "./theme.css";
 
 const GlobalStyle = createGlobalStyle`
   @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
-  
+
   * {
     box-sizing: border-box;
-  }
-  
-  body {
-    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-    background: ${THEME.pageBg};
-    margin: 0;
-    padding: 0;
   }
 `;
 
@@ -89,28 +53,29 @@ const GlobalStyle = createGlobalStyle`
 
 const PageContainer = styled.div`
   min-height: 100vh;
-  background: ${THEME.pageBg};
+  background: var(--veterinary-page-bg);
   font-family: 'Inter', sans-serif;
+  color: var(--veterinary-text-primary);
 `;
 
 const MainContent = styled.main`
   margin-left: 280px;
   min-height: 100vh;
-  transition: margin-left 0.3s ease;
-  
+  transition: margin-left var(--veterinary-transition-normal);
+
   &.collapsed {
     margin-left: 90px;
   }
 `;
 
 const TopBar = styled.header`
-  background: ${THEME.glassBg};
-  border: 2px solid ${THEME.glassBorder};
+  background: var(--veterinary-glass-bg);
+  border: 2px solid var(--veterinary-glass-border);
   border-radius: 0 0 24px 24px;
   padding: 24px 32px;
   margin: 0 24px;
   backdrop-filter: blur(20px);
-  box-shadow: ${THEME.glassShadow};
+  box-shadow: var(--veterinary-glass-shadow);
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -129,8 +94,8 @@ const RoleBadge = styled.span`
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  background: ${THEME.primaryLight};
-  color: white;
+  background: var(--veterinary-primary-light);
+  color: var(--veterinary-text-on-primary);
   padding: 6px 12px;
   border-radius: 12px;
   font-size: 12px;
@@ -142,12 +107,12 @@ const RoleBadge = styled.span`
 const PageTitle = styled.h1`
   font-size: 28px;
   font-weight: 700;
-  color: ${THEME.textPrimary};
+  color: var(--veterinary-text-primary);
   margin: 0;
 `;
 
 const PageSubtitle = styled.p`
-  color: ${THEME.textSecondary};
+  color: var(--veterinary-text-secondary);
   margin: 0;
   font-size: 14px;
 `;
@@ -157,26 +122,38 @@ const SearchGroup = styled.div`
   max-width: 400px;
   flex: 1;
   margin: 0 32px;
+
+  svg {
+    position: absolute;
+    left: 16px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--veterinary-text-muted);
+    pointer-events: none;
+  }
 `;
 
 const SearchInput = styled.input`
   width: 100%;
   height: 44px;
   border-radius: 16px;
-  border: 2px solid ${THEME.glassBorder};
-  background: ${THEME.glassBg};
-  color: ${THEME.textPrimary};
+  border: 2px solid var(--veterinary-glass-border);
+  background: var(--veterinary-glass-bg);
+  color: var(--veterinary-text-primary);
   padding: 0 16px 0 44px;
   font-size: 14px;
   font-weight: 500;
   outline: none;
-  transition: all 0.3s ease;
-  box-shadow: 0 4px 12px rgba(255,95,147,0.08);
-  
-  ${focusMixin()}
-  
+  transition: all var(--veterinary-transition-normal);
+  box-shadow: var(--veterinary-shadow-sm);
+
+  &:focus {
+    border-color: var(--veterinary-primary);
+    box-shadow: 0 0 0 4px rgba(255, 95, 147, 0.15);
+  }
+
   &::placeholder {
-    color: ${THEME.textMuted};
+    color: var(--veterinary-text-muted);
   }
 `;
 
@@ -185,7 +162,7 @@ const SearchIcon = styled.div`
   left: 16px;
   top: 50%;
   transform: translateY(-50%);
-  color: ${THEME.textMuted};
+  color: var(--veterinary-text-muted);
   pointer-events: none;
 `;
 
@@ -193,40 +170,56 @@ const TopBarActions = styled.div`
   display: flex;
   align-items: center;
   gap: 16px;
+  flex-wrap: nowrap;
+  min-width: fit-content;
 `;
 
 const IconButton = styled.button`
   width: 44px;
   height: 44px;
+  min-width: 44px;
   border-radius: 16px;
-  border: 2px solid ${THEME.glassBorder};
-  background: ${THEME.glassBg};
-  color: ${THEME.textSecondary};
+  border: 2px solid var(--veterinary-glass-border);
+  background: var(--veterinary-glass-bg);
+  color: var(--veterinary-text-secondary);
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  transition: all 0.3s ease;
-  box-shadow: 0 4px 12px rgba(255,95,147,0.08);
+  transition: all var(--veterinary-transition-normal);
+  box-shadow: var(--veterinary-shadow-sm);
   outline: none;
-  
-  ${glassHoverMixin()}
-  ${focusMixin()}
+
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--veterinary-shadow-lg);
+    border-color: var(--veterinary-primary);
+    color: var(--veterinary-primary);
+  }
+
+  &:focus {
+    border-color: var(--veterinary-primary);
+    box-shadow: 0 0 0 4px rgba(255, 95, 147, 0.15);
+  }
 `;
 
 const ContentArea = styled.section`
   padding: 32px;
+
+  @media (max-width: 768px) {
+    padding: 16px;
+  }
 `;
 
 const HeroSection = styled(FadeIn)`
-  background: linear-gradient(135deg, ${THEME.primaryLight} 0%, ${THEME.primary} 100%);
+  background: linear-gradient(135deg, var(--veterinary-primary-light) 0%, var(--veterinary-primary) 100%);
   border-radius: 24px;
   padding: 40px;
   margin-bottom: 32px;
-  color: white;
+  color: var(--veterinary-text-on-primary);
   position: relative;
   overflow: hidden;
-  
+
   &::before {
     content: '';
     position: absolute;
@@ -238,6 +231,10 @@ const HeroSection = styled(FadeIn)`
     opacity: 0.1;
     pointer-events: none;
   }
+
+  @media (max-width: 768px) {
+    padding: 24px;
+  }
 `;
 
 const HeroContent = styled.div`
@@ -246,12 +243,14 @@ const HeroContent = styled.div`
   display: flex;
   flex-direction: column;
   gap: 24px;
+  max-width: 100%;
 `;
 
 const HeroHeader = styled.div`
   display: flex;
   flex-direction: column;
   gap: 12px;
+  max-width: 100%;
 `;
 
 const HeroBadge = styled.span`
@@ -259,19 +258,21 @@ const HeroBadge = styled.span`
   align-items: center;
   gap: 8px;
   background: rgba(255,255,255,0.2);
-  color: white;
+  color: var(--veterinary-text-on-primary);
   padding: 8px 16px;
   border-radius: 16px;
   font-size: 14px;
   font-weight: 600;
   width: fit-content;
+  flex-shrink: 0;
 `;
 
 const HeroTitle = styled.h2`
-  font-size: 32px;
+  font-size: clamp(1.5rem, 3vw, 2rem);
   font-weight: 700;
   margin: 0;
   line-height: 1.2;
+  word-wrap: break-word;
 `;
 
 const HeroText = styled.p`
@@ -279,12 +280,24 @@ const HeroText = styled.p`
   margin: 0;
   opacity: 0.9;
   line-height: 1.5;
+  max-width: 100%;
+  word-wrap: break-word;
 `;
 
 const HeroActions = styled.div`
   display: flex;
   gap: 16px;
   flex-wrap: wrap;
+
+  @media (max-width: 480px) {
+    flex-direction: column;
+    width: 100%;
+
+    > * {
+      width: 100%;
+      justify-content: center;
+    }
+  }
 `;
 
 const PrimaryButton = styled(NavLink)`
@@ -295,14 +308,18 @@ const PrimaryButton = styled(NavLink)`
   padding: 0 24px;
   border-radius: 16px;
   background: white;
-  color: ${THEME.primary};
+  color: var(--veterinary-primary);
   text-decoration: none;
   font-weight: 600;
   font-size: 14px;
-  transition: all 0.3s ease;
+  transition: all var(--veterinary-transition-normal);
   box-shadow: 0 8px 20px rgba(0,0,0,0.1);
-  
-  ${hoverMixin('translateY(-2px)', '0 12px 30px rgba(0,0,0,0.15)')}
+  flex-shrink: 0;
+
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 12px 30px rgba(0,0,0,0.15);
+  }
 `;
 
 const SecondaryButton = styled(NavLink)`
@@ -313,13 +330,14 @@ const SecondaryButton = styled(NavLink)`
   padding: 0 24px;
   border-radius: 16px;
   background: rgba(255,255,255,0.2);
-  color: white;
+  color: var(--veterinary-text-on-primary);
   text-decoration: none;
   font-weight: 600;
   font-size: 14px;
   border: 2px solid rgba(255,255,255,0.3);
-  transition: all 0.3s ease;
-  
+  transition: all var(--veterinary-transition-normal);
+  flex-shrink: 0;
+
   &:hover {
     background: rgba(255,255,255,0.3);
     transform: translateY(-2px);
@@ -331,42 +349,52 @@ const UpdatePill = styled.div`
   align-items: center;
   gap: 8px;
   background: rgba(255,255,255,0.2);
-  color: white;
+  color: var(--veterinary-text-on-primary);
   padding: 8px 16px;
   border-radius: 16px;
   font-size: 12px;
   font-weight: 600;
   width: fit-content;
+  flex-shrink: 0;
 `;
 
 const Card = styled(FadeIn)`
-  background: ${THEME.glassBg};
-  border: 2px solid ${THEME.glassBorder};
+  background: var(--veterinary-glass-bg);
+  border: 2px solid var(--veterinary-glass-border);
   border-radius: 24px;
   overflow: hidden;
   backdrop-filter: blur(20px);
-  box-shadow: ${THEME.glassShadow};
+  box-shadow: var(--veterinary-glass-shadow);
+  margin-bottom: 24px;
 `;
 
 const CardHeader = styled.div`
   padding: 24px 32px;
-  background: linear-gradient(135deg, ${THEME.primaryLight} 0%, ${THEME.primary} 100%);
+  background: linear-gradient(135deg, var(--veterinary-primary-light) 0%, var(--veterinary-primary) 100%);
   display: flex;
   align-items: center;
   justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+
+  > div {
+    min-width: 0;
+  }
 `;
 
 const CardTitle = styled.h2`
-  color: white;
+  color: var(--veterinary-text-on-primary);
   font-size: 20px;
   font-weight: 600;
   margin: 0;
+  word-wrap: break-word;
 `;
 
 const CardSubtitle = styled.p`
   color: rgba(255,255,255,0.9);
   font-size: 14px;
   margin: 4px 0 0 0;
+  word-wrap: break-word;
 `;
 
 const Badge = styled.span`
@@ -377,32 +405,33 @@ const Badge = styled.span`
   border-radius: 12px;
   font-size: 12px;
   font-weight: 600;
-  
+  flex-shrink: 0;
+
   ${props => {
     if (props.variant === 'success') {
       return `
-        background: ${THEME.success};
-        color: white;
+        background: var(--veterinary-success);
+        color: var(--veterinary-text-on-primary);
       `;
     } else if (props.variant === 'warning') {
       return `
-        background: ${THEME.warning};
-        color: white;
+        background: var(--veterinary-warning);
+        color: var(--veterinary-text-on-primary);
       `;
     } else if (props.variant === 'error') {
       return `
-        background: ${THEME.error};
-        color: white;
+        background: var(--veterinary-error);
+        color: var(--veterinary-text-on-primary);
       `;
     } else if (props.variant === 'info') {
       return `
-        background: ${THEME.info};
-        color: white;
+        background: var(--veterinary-info);
+        color: var(--veterinary-text-on-primary);
       `;
     } else {
       return `
-        background: ${THEME.primaryLight};
-        color: white;
+        background: var(--veterinary-primary-light);
+        color: var(--veterinary-text-on-primary);
       `;
     }
   }}
@@ -410,57 +439,79 @@ const Badge = styled.span`
 
 const CardContent = styled.div`
   padding: 32px;
+
+  @media (max-width: 768px) {
+    padding: 16px;
+  }
 `;
 
 const Grid = styled.div`
   display: grid;
   gap: 24px;
-  
+  margin-bottom: 24px;
+
   ${props => {
     if (props.cols === 2) {
-      return 'grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));';
+      return 'grid-template-columns: repeat(2, 1fr);';
     } else if (props.cols === 4) {
-      return 'grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));';
+      return 'grid-template-columns: repeat(4, 1fr);';
     }
   }}
+
+  @media (max-width: 1200px) {
+    ${props => props.cols === 4 && 'grid-template-columns: repeat(2, 1fr);'}
+  }
+
+  @media (max-width: 768px) {
+    grid-template-columns: 1fr !important;
+  }
 `;
 
 const StatCard = styled(ScaleIn)`
-  background: ${THEME.glassBg};
-  border: 2px solid ${THEME.glassBorder};
+  background: var(--veterinary-glass-bg);
+  border: 2px solid var(--veterinary-glass-border);
   border-radius: 20px;
   padding: 24px;
   backdrop-filter: blur(20px);
-  box-shadow: ${THEME.glassShadow};
+  box-shadow: var(--veterinary-glass-shadow);
   display: flex;
   align-items: center;
   gap: 16px;
-  transition: all 0.3s ease;
-  
-  ${glassHoverMixin()}
+  transition: all var(--veterinary-transition-normal);
+
+  &:hover {
+    transform: translateY(-4px);
+    box-shadow: var(--veterinary-shadow-xl);
+  }
+
+  @media (max-width: 768px) {
+    padding: 16px;
+  }
 `;
 
 const StatIcon = styled.div`
   width: 56px;
   height: 56px;
+  min-width: 56px;
   border-radius: 16px;
   display: flex;
   align-items: center;
   justify-content: center;
   font-size: 24px;
-  color: white;
-  
+  color: var(--veterinary-text-on-primary);
+  flex-shrink: 0;
+
   ${props => {
     if (props.variant === 'success') {
-      return `background: linear-gradient(135deg, ${THEME.success}, #38a169);`;
+      return `background: linear-gradient(135deg, var(--veterinary-success), #38a169);`;
     } else if (props.variant === 'warning') {
-      return `background: linear-gradient(135deg, ${THEME.warning}, #dd6b20);`;
+      return `background: linear-gradient(135deg, var(--veterinary-warning), #dd6b20);`;
     } else if (props.variant === 'error') {
-      return `background: linear-gradient(135deg, ${THEME.error}, #e53e3e);`;
+      return `background: linear-gradient(135deg, var(--veterinary-error), #e53e3e);`;
     } else if (props.variant === 'info') {
-      return `background: linear-gradient(135deg, ${THEME.info}, #3182ce);`;
+      return `background: linear-gradient(135deg, var(--veterinary-info), #3182ce);`;
     } else {
-      return `background: linear-gradient(135deg, ${THEME.primary}, ${THEME.primaryDark});`;
+      return `background: linear-gradient(135deg, var(--veterinary-primary), var(--veterinary-primary-dark));`;
     }
   }}
 `;
@@ -470,25 +521,30 @@ const StatContent = styled.div`
   display: flex;
   flex-direction: column;
   gap: 4px;
+  min-width: 0;
 `;
 
 const StatValue = styled.h3`
   font-size: 32px;
   font-weight: 700;
-  color: ${THEME.textPrimary};
+  color: var(--veterinary-text-primary);
   margin: 0;
+
+  @media (max-width: 768px) {
+    font-size: 24px;
+  }
 `;
 
 const StatTitle = styled.p`
   font-size: 14px;
   font-weight: 600;
-  color: ${THEME.textSecondary};
+  color: var(--veterinary-text-secondary);
   margin: 0;
 `;
 
 const StatSubtitle = styled.small`
   font-size: 12px;
-  color: ${THEME.textMuted};
+  color: var(--veterinary-text-muted);
 `;
 
 const StatTrend = styled.span`
@@ -497,11 +553,11 @@ const StatTrend = styled.span`
   gap: 4px;
   font-size: 12px;
   font-weight: 600;
-  
+
   ${props => props.positive ? `
-    color: ${THEME.success};
+    color: var(--veterinary-success);
   ` : `
-    color: ${THEME.error};
+    color: var(--veterinary-error);
   `}
 `;
 
@@ -512,30 +568,30 @@ const AlertItem = styled.div`
   padding: 16px;
   border-radius: 16px;
   margin-bottom: 12px;
-  
+
   ${props => {
     if (props.variant === 'success') {
       return `
         background: rgba(72, 187, 120, 0.1);
-        color: ${THEME.success};
+        color: var(--veterinary-success);
         border: 2px solid rgba(72, 187, 120, 0.2);
       `;
     } else if (props.variant === 'warning') {
       return `
         background: rgba(237, 137, 54, 0.1);
-        color: ${THEME.warning};
+        color: var(--veterinary-warning);
         border: 2px solid rgba(237, 137, 54, 0.2);
       `;
     } else if (props.variant === 'error') {
       return `
         background: rgba(245, 101, 101, 0.1);
-        color: ${THEME.error};
+        color: var(--veterinary-error);
         border: 2px solid rgba(245, 101, 101, 0.2);
       `;
     } else {
       return `
         background: rgba(66, 153, 225, 0.1);
-        color: ${THEME.info};
+        color: var(--veterinary-info);
         border: 2px solid rgba(66, 153, 225, 0.2);
       `;
     }
@@ -544,6 +600,7 @@ const AlertItem = styled.div`
 
 const AlertContent = styled.div`
   flex: 1;
+  min-width: 0;
 `;
 
 const AlertTitle = styled.strong`
@@ -551,12 +608,14 @@ const AlertTitle = styled.strong`
   font-size: 14px;
   font-weight: 600;
   margin-bottom: 4px;
+  word-wrap: break-word;
 `;
 
 const AlertText = styled.p`
   font-size: 12px;
   margin: 0;
   opacity: 0.8;
+  word-wrap: break-word;
 `;
 
 const AppointmentItem = styled.div`
@@ -566,33 +625,52 @@ const AppointmentItem = styled.div`
   padding: 20px;
   border-radius: 16px;
   background: rgba(255,255,255,0.5);
-  border: 2px solid ${THEME.glassBorder};
+  border: 2px solid var(--veterinary-glass-border);
   margin-bottom: 12px;
-  transition: all 0.3s ease;
-  
-  ${glassHoverMixin()}
+  transition: all var(--veterinary-transition-normal);
+  backdrop-filter: blur(10px);
+  gap: 16px;
+
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--veterinary-shadow-lg);
+    background: rgba(255,255,255,0.7);
+  }
+
+  @media (max-width: 768px) {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
+  }
 `;
 
 const AppointmentInfo = styled.div`
   display: flex;
   align-items: center;
   gap: 16px;
+  flex: 1;
+  min-width: 0;
+
+  @media (max-width: 768px) {
+    width: 100%;
+  }
 `;
 
 const AppointmentTime = styled.div`
   text-align: center;
   min-width: 80px;
+  flex-shrink: 0;
 `;
 
 const TimeValue = styled.div`
   font-size: 16px;
   font-weight: 600;
-  color: ${THEME.textPrimary};
+  color: var(--veterinary-text-primary);
 `;
 
 const TimeStatus = styled.small`
   font-size: 11px;
-  color: ${THEME.textMuted};
+  color: var(--veterinary-text-muted);
   text-transform: uppercase;
   letter-spacing: 0.5px;
 `;
@@ -601,26 +679,41 @@ const AppointmentDetails = styled.div`
   display: flex;
   flex-direction: column;
   gap: 4px;
+  min-width: 0;
 `;
 
 const PetName = styled.strong`
   font-size: 16px;
-  color: ${THEME.textPrimary};
+  color: var(--veterinary-text-primary);
+  word-wrap: break-word;
 `;
 
 const ServiceInfo = styled.span`
   font-size: 14px;
-  color: ${THEME.textSecondary};
+  color: var(--veterinary-text-secondary);
+  word-wrap: break-word;
 `;
 
 const AppointmentActions = styled.div`
   display: flex;
   gap: 8px;
+  flex-wrap: wrap;
+  flex-shrink: 0;
+
+  @media (max-width: 768px) {
+    width: 100%;
+    justify-content: stretch;
+
+    > * {
+      flex: 1;
+    }
+  }
 `;
 
 const ActionButton = styled.button`
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   gap: 6px;
   height: 36px;
   padding: 0 16px;
@@ -629,24 +722,42 @@ const ActionButton = styled.button`
   font-size: 12px;
   font-weight: 600;
   cursor: pointer;
-  transition: all 0.3s ease;
-  
+  transition: all var(--veterinary-transition-normal);
+  white-space: nowrap;
+  flex-shrink: 0;
+
   ${props => {
     if (props.variant === 'primary') {
       return `
-        background: ${THEME.primary};
-        color: white;
-        ${hoverMixin('translateY(-1px)', '0 8px 20px rgba(255,95,147,0.3)')}
+        background: var(--veterinary-primary);
+        color: var(--veterinary-text-on-primary);
+
+        &:hover {
+          transform: translateY(-1px);
+          box-shadow: 0 8px 20px rgba(255,95,147,0.3);
+        }
       `;
     } else {
       return `
-        background: ${THEME.glassBg};
-        color: ${THEME.textSecondary};
-        border: 2px solid ${THEME.glassBorder};
-        ${glassHoverMixin()}
+        background: var(--veterinary-glass-bg);
+        color: var(--veterinary-text-secondary);
+        border: 2px solid var(--veterinary-glass-border);
+
+        &:hover {
+          transform: translateY(-1px);
+          border-color: var(--veterinary-primary);
+          color: var(--veterinary-primary);
+          box-shadow: var(--veterinary-shadow-sm);
+        }
       `;
     }
   }}
+
+  &:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none !important;
+  }
 `;
 
 const PatientRow = styled.div`
@@ -656,46 +767,65 @@ const PatientRow = styled.div`
   padding: 16px;
   border-radius: 16px;
   background: rgba(255,255,255,0.5);
-  border: 2px solid ${THEME.glassBorder};
+  border: 2px solid var(--veterinary-glass-border);
   margin-bottom: 12px;
-  transition: all 0.3s ease;
-  
-  ${glassHoverMixin()}
+  transition: all var(--veterinary-transition-normal);
+  gap: 12px;
+
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--veterinary-shadow-lg);
+    background: rgba(255,255,255,0.7);
+  }
+
+  @media (max-width: 768px) {
+    flex-direction: column;
+    align-items: flex-start;
+  }
 `;
 
 const PatientInfo = styled.div`
   display: flex;
   align-items: center;
   gap: 12px;
+  min-width: 0;
+  flex: 1;
 `;
 
 const PatientDetails = styled.div`
   display: flex;
   flex-direction: column;
   gap: 2px;
+  min-width: 0;
 `;
 
 const PatientName = styled.strong`
   font-size: 14px;
-  color: ${THEME.textPrimary};
+  color: var(--veterinary-text-primary);
+  word-wrap: break-word;
 `;
 
 const PatientBreed = styled.p`
   font-size: 12px;
-  color: ${THEME.textMuted};
+  color: var(--veterinary-text-muted);
   margin: 0;
+  word-wrap: break-word;
 `;
 
 const BoarderCard = styled.div`
   background: rgba(255,255,255,0.5);
-  border: 2px solid ${THEME.glassBorder};
+  border: 2px solid var(--veterinary-glass-border);
   border-radius: 20px;
   padding: 24px;
   margin-bottom: 16px;
   backdrop-filter: blur(20px);
-  transition: all 0.3s ease;
-  
-  ${glassHoverMixin()}
+  transition: all var(--veterinary-transition-normal);
+
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--veterinary-shadow-lg);
+    background: rgba(255,255,255,0.7);
+  }
 `;
 
 const BoarderHeader = styled.div`
@@ -703,63 +833,76 @@ const BoarderHeader = styled.div`
   align-items: center;
   justify-content: space-between;
   margin-bottom: 16px;
+  gap: 16px;
+  flex-wrap: wrap;
 `;
 
 const BoarderPetInfo = styled.div`
   display: flex;
   align-items: center;
   gap: 12px;
+  min-width: 0;
 `;
 
 const BoarderName = styled.h4`
   font-size: 16px;
   font-weight: 600;
-  color: ${THEME.textPrimary};
+  color: var(--veterinary-text-primary);
   margin: 0;
+  word-wrap: break-word;
 `;
 
 const BoarderBreed = styled.p`
   font-size: 12px;
-  color: ${THEME.textMuted};
+  color: var(--veterinary-text-muted);
   margin: 2px 0 0 0;
+  word-wrap: break-word;
 `;
 
 const RoomBadge = styled.span`
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  background: ${THEME.primaryLight};
-  color: white;
+  background: var(--veterinary-primary-light);
+  color: var(--veterinary-text-on-primary);
   padding: 8px 12px;
   border-radius: 12px;
   font-size: 12px;
   font-weight: 600;
+  flex-shrink: 0;
+  white-space: nowrap;
 `;
 
 const BoarderDetails = styled.div`
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  grid-template-columns: repeat(3, 1fr);
   gap: 16px;
   margin-bottom: 16px;
+
+  @media (max-width: 600px) {
+    grid-template-columns: 1fr;
+  }
 `;
 
 const DetailItem = styled.div`
   display: flex;
   flex-direction: column;
   gap: 4px;
+  min-width: 0;
 `;
 
 const DetailLabel = styled.strong`
   font-size: 12px;
-  color: ${THEME.textMuted};
+  color: var(--veterinary-text-muted);
   text-transform: uppercase;
   letter-spacing: 0.5px;
 `;
 
 const DetailValue = styled.p`
   font-size: 14px;
-  color: ${THEME.textPrimary};
+  color: var(--veterinary-text-primary);
   margin: 0;
+  word-wrap: break-word;
 `;
 
 const SpecialRequests = styled.div`
@@ -771,36 +914,42 @@ const SpecialRequests = styled.div`
   border: 2px solid rgba(237, 137, 54, 0.2);
   border-radius: 12px;
   margin-bottom: 16px;
-  color: ${THEME.warning};
+  color: var(--veterinary-warning);
   font-size: 14px;
+  word-wrap: break-word;
 `;
 
 const EmptyState = styled.div`
   text-align: center;
   padding: 60px 20px;
-  color: ${THEME.textMuted};
-  
+  color: var(--veterinary-text-muted);
+
   svg {
     font-size: 48px;
     margin-bottom: 16px;
     opacity: 0.5;
   }
-  
+
   h3 {
     font-size: 18px;
-    color: ${THEME.textSecondary};
+    color: var(--veterinary-text-secondary);
     margin: 0 0 8px 0;
   }
-  
+
   p {
     font-size: 14px;
     margin: 0;
+  }
+
+  @media (max-width: 768px) {
+    padding: 40px 16px;
   }
 `;
 
 const VetDashboard = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
+  const { theme, toggle } = useTheme();
   const name = user?.name || "Veterinarian";
   const profilePhoto = user?.profile_photo || "";
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
@@ -861,11 +1010,9 @@ const VetDashboard = () => {
     return () => clearInterval(interval);
   }, [showOverview]);
 
-  const toggleTheme = () => {
-    const current = document.documentElement.getAttribute("data-theme") || "light";
-    const next = current === "dark" ? "light" : "dark";
-    document.documentElement.setAttribute("data-theme", next);
-    localStorage.setItem("theme", next);
+  // Theme toggle now uses global useTheme hook
+  const handleThemeToggle = () => {
+    toggle();
   };
 
   const handleStartAppointment = async (aptId) => {
@@ -1018,8 +1165,8 @@ const VetDashboard = () => {
 
               <NotificationDropdown role="veterinary" />
 
-              <IconButton onClick={toggleTheme} title="Toggle theme">
-                <FontAwesomeIcon icon={faMoon} />
+              <IconButton onClick={handleThemeToggle} title="Toggle theme">
+                <FontAwesomeIcon icon={theme === "dark" ? faSun : faMoon} />
               </IconButton>
             </TopBarActions>
           </TopBar>
@@ -1414,10 +1561,10 @@ const VetDashboard = () => {
                         borderRadius: '12px',
                         border: '2px solid rgba(72, 187, 120, 0.2)'
                       }}>
-                        <strong style={{ fontSize: '24px', color: THEME.success }}>
+                        <strong style={{ fontSize: '24px', color: 'var(--veterinary-success)' }}>
                           {dashboardData?.today_appointments || 0}
                         </strong>
-                        <p style={{ margin: '4px 0 0 0', fontSize: '12px', color: THEME.textMuted }}>
+                        <p style={{ margin: '4px 0 0 0', fontSize: '12px', color: 'var(--veterinary-text-muted)' }}>
                           Appointments today
                         </p>
                       </div>
@@ -1429,10 +1576,10 @@ const VetDashboard = () => {
                         borderRadius: '12px',
                         border: '2px solid rgba(66, 153, 225, 0.2)'
                       }}>
-                        <strong style={{ fontSize: '24px', color: THEME.info }}>
+                        <strong style={{ fontSize: '24px', color: 'var(--veterinary-info)' }}>
                           {dashboardData?.pending_appointments || 0}
                         </strong>
-                        <p style={{ margin: '4px 0 0 0', fontSize: '12px', color: THEME.textMuted }}>
+                        <p style={{ margin: '4px 0 0 0', fontSize: '12px', color: 'var(--veterinary-text-muted)' }}>
                           Pending appointments
                         </p>
                       </div>
@@ -1451,7 +1598,7 @@ const VetDashboard = () => {
                           style={{
                             flex: 1,
                             height: `${height}%`,
-                            background: `linear-gradient(to top, ${THEME.primary}, ${THEME.primaryLight})`,
+                            background: 'linear-gradient(to top, var(--veterinary-primary), var(--veterinary-primary-light))',
                             borderRadius: '4px 4px 0 0',
                             minHeight: '20px'
                           }}
@@ -1459,7 +1606,7 @@ const VetDashboard = () => {
                       ))}
                     </div>
 
-                    <div style={{ fontSize: '14px', color: THEME.textSecondary }}>
+                    <div style={{ fontSize: '14px', color: 'var(--veterinary-text-secondary)' }}>
                       <p style={{ margin: '0 0 8px 0' }}>
                         Total patients: {dashboardData?.total_patients || 0}
                       </p>

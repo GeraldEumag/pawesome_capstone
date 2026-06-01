@@ -27,6 +27,7 @@ import {
 import { NavLink, useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
 import { apiRequest } from "../../api/client";
+import { useTheme } from "../../utils/theme";
 import PetAvatar from "../shared/PetAvatar";
 import styled, { createGlobalStyle } from "styled-components";
 import {
@@ -35,51 +36,13 @@ import {
   FadeIn, ScaleIn, SlideInUp, Spinning,
   hoverMixin, glassHoverMixin, focusMixin
 } from "../shared/animations";
-
-/* ─────────────────────────────────────────────────────────────
-   Pink Glass Theme Design Tokens
-───────────────────────────────────────────────────────────── */
-const THEME = {
-  // Colors
-  primary: "#ff5f93",
-  primaryLight: "#ff8db5",
-  primaryDark: "#ff3d73",
-  secondary: "#ff8db5",
-  accent: "#ffb3d1",
-  
-  // Glass effects
-  glassBg: "rgba(255,255,255,0.85)",
-  glassBorder: "rgba(255,95,147,0.18)",
-  glassShadow: "0 18px 45px rgba(255,95,147,0.14)",
-  
-  // Backgrounds
-  pageBg: "linear-gradient(135deg, #fff5f8 0%, #ffe0ec 50%, #fff5f8 100%)",
-  cardBg: "rgba(255,255,255,0.9)",
-  
-  // Text
-  textPrimary: "#2d3748",
-  textSecondary: "#718096",
-  textMuted: "#a0aec0",
-  
-  // Status
-  success: "#48bb78",
-  warning: "#ed8936",
-  error: "#f56565",
-  info: "#4299e1",
-};
+import "./theme.css";
 
 const GlobalStyle = createGlobalStyle`
   @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
-  
+
   * {
     box-sizing: border-box;
-  }
-  
-  body {
-    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-    background: ${THEME.pageBg};
-    margin: 0;
-    padding: 0;
   }
 `;
 
@@ -89,17 +52,22 @@ const GlobalStyle = createGlobalStyle`
 
 const PageContainer = styled.div`
   min-height: 100vh;
-  background: ${THEME.pageBg};
+  background: var(--veterinary-page-bg);
   padding: 32px;
   font-family: 'Inter', sans-serif;
+  color: var(--veterinary-text-primary);
+
+  @media (max-width: 768px) {
+    padding: 16px;
+  }
 `;
 
 const HeroSection = styled(FadeIn)`
-  background: linear-gradient(135deg, ${THEME.primaryLight} 0%, ${THEME.primary} 100%);
+  background: linear-gradient(135deg, var(--veterinary-primary-light) 0%, var(--veterinary-primary) 100%);
   border-radius: 24px;
   padding: 40px;
   margin-bottom: 32px;
-  color: white;
+  color: var(--veterinary-text-on-primary);
   position: relative;
   overflow: hidden;
   display: flex;
@@ -130,8 +98,8 @@ const HeroBadge = styled.span`
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  background: rgba(255,255,255,0.2);
-  color: white;
+  background: var(--veterinary-glass-bg);
+  color: var(--veterinary-text-on-primary);
   padding: 8px 16px;
   border-radius: 16px;
   font-size: 14px;
@@ -171,16 +139,16 @@ const RefreshButton = styled.button`
   height: 44px;
   padding: 0 20px;
   border-radius: 16px;
-  background: rgba(255,255,255,0.2);
-  color: white;
-  border: 2px solid rgba(255,255,255,0.3);
+  background: var(--veterinary-glass-bg);
+  color: var(--veterinary-text-on-primary);
+  border: 2px solid var(--veterinary-glass-border);
   font-weight: 600;
   font-size: 14px;
   cursor: pointer;
   transition: all 0.3s ease;
   
   &:hover {
-    background: rgba(255,255,255,0.3);
+    background: var(--veterinary-card-bg);
     transform: translateY(-2px);
   }
   
@@ -199,7 +167,7 @@ const ErrorAlert = styled.div`
   border-radius: 16px;
   background: rgba(245, 101, 101, 0.1);
   border: 2px solid rgba(245, 101, 101, 0.2);
-  color: ${THEME.error};
+  color: var(--veterinary-error);
   margin-bottom: 32px;
   font-weight: 500;
 `;
@@ -212,12 +180,12 @@ const SummarySection = styled(ScaleIn)`
 `;
 
 const SummaryCard = styled.div`
-  background: ${THEME.glassBg};
-  border: 2px solid ${THEME.glassBorder};
+  background: var(--veterinary-glass-bg);
+  border: 2px solid var(--veterinary-glass-border);
   border-radius: 20px;
   padding: 24px;
   backdrop-filter: blur(20px);
-  box-shadow: ${THEME.glassShadow};
+  box-shadow: var(--veterinary-glass-shadow);
   display: flex;
   align-items: center;
   gap: 16px;
@@ -234,17 +202,17 @@ const SummaryIcon = styled.div`
   align-items: center;
   justify-content: center;
   font-size: 20px;
-  color: white;
+  color: var(--veterinary-text-on-primary);
   
   ${props => {
     if (props.variant === 'today') {
-      return `background: linear-gradient(135deg, ${THEME.primary}, ${THEME.primaryDark});`;
+      return `background: linear-gradient(135deg, var(--veterinary-primary), var(--veterinary-primary-dark));`;
     } else if (props.variant === 'pending') {
-      return `background: linear-gradient(135deg, ${THEME.warning}, #dd6b20);`;
+      return `background: linear-gradient(135deg, var(--veterinary-warning), #dd6b20);`;
     } else if (props.variant === 'approved') {
-      return `background: linear-gradient(135deg, ${THEME.info}, #3182ce);`;
+      return `background: linear-gradient(135deg, var(--veterinary-info), #3182ce);`;
     } else if (props.variant === 'completed') {
-      return `background: linear-gradient(135deg, ${THEME.success}, #38a169);`;
+      return `background: linear-gradient(135deg, var(--veterinary-success), #38a169);`;
     }
   }}
 `;
@@ -256,24 +224,24 @@ const SummaryContent = styled.div`
 const SummaryTitle = styled.h3`
   font-size: 14px;
   font-weight: 600;
-  color: ${THEME.textSecondary};
+  color: var(--veterinary-text-secondary);
   margin: 0 0 4px 0;
 `;
 
 const SummaryValue = styled.div`
   font-size: 24px;
   font-weight: 700;
-  color: ${THEME.textPrimary};
+  color: var(--veterinary-text-primary);
 `;
 
 const ControlsSection = styled(SlideInUp)`
-  background: ${THEME.glassBg};
-  border: 2px solid ${THEME.glassBorder};
+  background: var(--veterinary-glass-bg);
+  border: 2px solid var(--veterinary-glass-border);
   border-radius: 24px;
   padding: 32px;
   margin-bottom: 32px;
   backdrop-filter: blur(20px);
-  box-shadow: ${THEME.glassShadow};
+  box-shadow: var(--veterinary-glass-shadow);
 `;
 
 const SearchFilterContainer = styled.div`
@@ -291,7 +259,7 @@ const SearchBox = styled.div`
 const SearchIcon = styled.div`
   position: absolute;
   left: 16px;
-  color: ${THEME.textMuted};
+  color: var(--veterinary-text-muted);
   pointer-events: none;
 `;
 
@@ -299,9 +267,9 @@ const SearchInput = styled.input`
   width: 100%;
   height: 48px;
   border-radius: 16px;
-  border: 2px solid ${THEME.glassBorder};
-  background: ${THEME.glassBg};
-  color: ${THEME.textPrimary};
+  border: 2px solid var(--veterinary-glass-border);
+  background: var(--veterinary-glass-bg);
+  color: var(--veterinary-text-primary);
   padding: 0 16px 0 44px;
   font-size: 14px;
   font-weight: 500;
@@ -312,7 +280,7 @@ const SearchInput = styled.input`
   ${focusMixin()}
   
   &::placeholder {
-    color: ${THEME.textMuted};
+    color: var(--veterinary-text-muted);
   }
 `;
 
@@ -323,8 +291,8 @@ const ClearButton = styled.button`
   height: 32px;
   border-radius: 8px;
   border: none;
-  background: ${THEME.textMuted};
-  color: white;
+  background: var(--veterinary-text-muted);
+  color: var(--veterinary-text-on-primary);
   cursor: pointer;
   display: flex;
   align-items: center;
@@ -332,7 +300,7 @@ const ClearButton = styled.button`
   transition: all 0.3s ease;
   
   &:hover {
-    background: ${THEME.error};
+    background: var(--veterinary-error);
   }
 `;
 
@@ -340,7 +308,7 @@ const FilterLabel = styled.div`
   display: flex;
   align-items: center;
   gap: 8px;
-  color: ${THEME.textSecondary};
+  color: var(--veterinary-text-secondary);
   font-weight: 600;
   font-size: 14px;
   margin-bottom: 12px;
@@ -355,18 +323,18 @@ const FilterButtons = styled.div`
 const FilterButton = styled.button`
   padding: 8px 16px;
   border-radius: 12px;
-  border: 2px solid ${THEME.glassBorder};
-  background: ${THEME.glassBg};
-  color: ${THEME.textSecondary};
+  border: 2px solid var(--veterinary-glass-border);
+  background: var(--veterinary-glass-bg);
+  color: var(--veterinary-text-secondary);
   font-weight: 600;
   font-size: 12px;
   cursor: pointer;
   transition: all 0.3s ease;
   
   ${props => props.$active ? `
-    background: ${THEME.primary};
-    color: white;
-    border-color: ${THEME.primary};
+    background: var(--veterinary-primary);
+    color: var(--veterinary-text-on-primary);
+    border-color: var(--veterinary-primary);
     ${hoverMixin('translateY(-1px)', '0 8px 20px rgba(255,95,147,0.3)')}
   ` : `
     ${glassHoverMixin()}
@@ -377,7 +345,7 @@ const LastUpdated = styled.div`
   display: flex;
   align-items: center;
   gap: 8px;
-  color: ${THEME.textMuted};
+  color: var(--veterinary-text-muted);
   font-size: 12px;
   font-weight: 500;
 `;
@@ -390,12 +358,12 @@ const AppointmentsGrid = styled.div`
 `;
 
 const AppointmentCard = styled(FadeIn)`
-  background: ${THEME.glassBg};
-  border: 2px solid ${THEME.glassBorder};
+  background: var(--veterinary-glass-bg);
+  border: 2px solid var(--veterinary-glass-border);
   border-radius: 24px;
   overflow: hidden;
   backdrop-filter: blur(20px);
-  box-shadow: ${THEME.glassShadow};
+  box-shadow: var(--veterinary-glass-shadow);
   transition: all 0.3s ease;
   
   ${glassHoverMixin()}
@@ -403,8 +371,8 @@ const AppointmentCard = styled(FadeIn)`
 
 const CardHeader = styled.div`
   padding: 24px;
-  background: linear-gradient(135deg, ${THEME.primaryLight} 0%, ${THEME.primary} 100%);
-  color: white;
+  background: linear-gradient(135deg, var(--veterinary-primary-light) 0%, var(--veterinary-primary) 100%);
+  color: var(--veterinary-text-on-primary);
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -442,8 +410,9 @@ const StatusBadge = styled.div`
   border-radius: 12px;
   font-size: 12px;
   font-weight: 600;
-  background: rgba(255,255,255,0.2);
-  color: white;
+  background: var(--veterinary-card-bg);
+  color: var(--veterinary-primary);
+  border: 1px solid var(--veterinary-glass-border);
   white-space: nowrap;
 `;
 
@@ -469,7 +438,7 @@ const DetailIcon = styled.div`
   height: 40px;
   border-radius: 12px;
   background: rgba(255,95,147,0.1);
-  color: ${THEME.primary};
+  color: var(--veterinary-primary);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -484,7 +453,7 @@ const DetailContent = styled.div`
 const DetailLabel = styled.strong`
   display: block;
   font-size: 12px;
-  color: ${THEME.textMuted};
+  color: var(--veterinary-text-muted);
   text-transform: uppercase;
   letter-spacing: 0.5px;
   margin-bottom: 4px;
@@ -492,7 +461,7 @@ const DetailLabel = styled.strong`
 
 const DetailValue = styled.p`
   font-size: 14px;
-  color: ${THEME.textPrimary};
+  color: var(--veterinary-text-primary);
   margin: 0;
   font-weight: 500;
 `;
@@ -520,33 +489,33 @@ const ActionButton = styled.button`
   ${props => {
     if (props.variant === 'primary') {
       return `
-        background: ${THEME.primary};
-        color: white;
+        background: var(--veterinary-primary);
+        color: var(--veterinary-text-on-primary);
         ${hoverMixin('translateY(-1px)', '0 8px 20px rgba(255,95,147,0.3)')}
       `;
     } else if (props.variant === 'success') {
       return `
-        background: ${THEME.success};
-        color: white;
+        background: var(--veterinary-success);
+        color: var(--veterinary-text-on-primary);
         ${hoverMixin('translateY(-1px)', '0 8px 20px rgba(72,187,120,0.3)')}
       `;
     } else if (props.variant === 'warning') {
       return `
-        background: ${THEME.warning};
-        color: white;
+        background: var(--veterinary-warning);
+        color: var(--veterinary-text-on-primary);
         ${hoverMixin('translateY(-1px)', '0 8px 20px rgba(237,137,54,0.3)')}
       `;
     } else if (props.variant === 'danger') {
       return `
-        background: ${THEME.error};
-        color: white;
+        background: var(--veterinary-error);
+        color: var(--veterinary-text-on-primary);
         ${hoverMixin('translateY(-1px)', '0 8px 20px rgba(245,101,101,0.3)')}
       `;
     } else {
       return `
-        background: ${THEME.glassBg};
-        color: ${THEME.textSecondary};
-        border: 2px solid ${THEME.glassBorder};
+        background: var(--veterinary-glass-bg);
+        color: var(--veterinary-text-secondary);
+        border: 2px solid var(--veterinary-glass-border);
         ${glassHoverMixin()}
       `;
     }
@@ -562,7 +531,7 @@ const ActionButton = styled.button`
 const EmptyState = styled.div`
   text-align: center;
   padding: 80px 20px;
-  color: ${THEME.textMuted};
+  color: var(--veterinary-text-muted);
   
   svg {
     font-size: 64px;
@@ -572,7 +541,7 @@ const EmptyState = styled.div`
   
   h3 {
     font-size: 20px;
-    color: ${THEME.textSecondary};
+    color: var(--veterinary-text-secondary);
     margin: 0 0 12px 0;
   }
   
@@ -598,22 +567,22 @@ const ModalOverlay = styled.div`
 `;
 
 const Modal = styled.div`
-  background: ${THEME.glassBg};
-  border: 2px solid ${THEME.glassBorder};
+  background: var(--veterinary-glass-bg);
+  border: 2px solid var(--veterinary-glass-border);
   border-radius: 24px;
   max-width: 600px;
   width: 100%;
   max-height: 90vh;
   overflow-y: auto;
   backdrop-filter: blur(20px);
-  box-shadow: ${THEME.glassShadow};
+  box-shadow: var(--veterinary-glass-shadow);
   animation: slideInUp 0.3s ease;
 `;
 
 const ModalHeader = styled.div`
   padding: 24px;
-  background: linear-gradient(135deg, ${THEME.primaryLight} 0%, ${THEME.primary} 100%);
-  color: white;
+  background: linear-gradient(135deg, var(--veterinary-primary-light) 0%, var(--veterinary-primary) 100%);
+  color: var(--veterinary-text-on-primary);
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -627,8 +596,8 @@ const ModalBadge = styled.span`
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  background: rgba(255,255,255,0.2);
-  color: white;
+  background: var(--veterinary-glass-bg);
+  color: var(--veterinary-text-on-primary);
   padding: 6px 12px;
   border-radius: 12px;
   font-size: 12px;
@@ -653,8 +622,8 @@ const CloseButton = styled.button`
   height: 36px;
   border-radius: 12px;
   border: none;
-  background: rgba(255,255,255,0.2);
-  color: white;
+  background: var(--veterinary-glass-bg);
+  color: var(--veterinary-text-on-primary);
   cursor: pointer;
   display: flex;
   align-items: center;
@@ -662,7 +631,7 @@ const CloseButton = styled.button`
   transition: all 0.3s ease;
   
   &:hover {
-    background: rgba(255,255,255,0.3);
+    background: var(--veterinary-card-bg);
   }
 `;
 
@@ -689,7 +658,7 @@ const ModalDetail = styled.div`
 
 const ModalActions = styled.div`
   padding: 24px;
-  border-top: 2px solid ${THEME.glassBorder};
+  border-top: 2px solid var(--veterinary-glass-border);
   display: flex;
   gap: 12px;
   flex-wrap: wrap;
@@ -701,7 +670,7 @@ const LoadingSpinner = styled.div`
   align-items: center;
   justify-content: center;
   min-height: 400px;
-  color: ${THEME.primary};
+  color: var(--veterinary-primary);
   
   svg {
     font-size: 48px;
@@ -715,6 +684,7 @@ const LoadingSpinner = styled.div`
 `;
 
 const VetAppointments = () => {
+  const { theme } = useTheme();
   const navigate = useNavigate();
   const [appointments, setAppointments] = useState([]);
   const [selectedAppointment, setSelectedAppointment] = useState(null);
@@ -1048,7 +1018,7 @@ const VetAppointments = () => {
     return (
       <>
         <GlobalStyle />
-        <PageContainer>
+        <PageContainer style={{ background: `var(--veterinary-page-bg)` }} className={`theme-${theme}`}>
           <LoadingSpinner>
             <Spinning>
               <FontAwesomeIcon icon={faSpinner} />
@@ -1063,8 +1033,8 @@ const VetAppointments = () => {
   return (
     <>
       <GlobalStyle />
-      <PageContainer>
-        <HeroSection>
+      <PageContainer style={{ background: `var(--veterinary-page-bg)` }} className={`theme-${theme}`}>
+        <HeroSection style={{ background: `linear-gradient(135deg, var(--veterinary-primary-light) 0%, var(--veterinary-primary) 100%)` }}>
           <HeroContent>
             <HeroBadge>
               <FontAwesomeIcon icon={faStethoscope} />

@@ -1,51 +1,14 @@
 /* VetAppointments.css - Pink Glass Theme Adaptation */
 /* Premium Pink Pawesome Veterinary Appointments with Glass Morphism */
 
-/* ─────────────────────────────────────────────────────────────
-   Pink Glass Theme Variables
-───────────────────────────────────────────────────────────── */
-:root {
-  --primary-color: #ff5f93;
-  --primary-light: #ff8db5;
-  --primary-dark: #ff3d73;
-  --secondary: #ffb3d1;
-  --accent: #ffb3d1;
-  --glass-bg: rgba(255, 255, 255, 0.85);
-  --glass-border: rgba(255, 95, 147, 0.18);
-  --glass-shadow: 0 18px 45px rgba(255, 95, 147, 0.14);
-  --page-bg: linear-gradient(135deg, #fff5f8 0%, #ffe0ec 50%, #fff5f8 100%);
-  --text-primary: #2d3748;
-  --text-secondary: #718096;
-  --text-muted: #a0aec0;
-  --success: #48bb78;
-  --warning: #ed8936;
-  --error: #f56565;
-  --info: #4299e1;
-  --radius-sm: 8px;
-  --radius-md: 12px;
-  --radius-lg: 16px;
-  --radius-xl: 20px;
-  --radius-2xl: 24px;
-  --radius-3xl: 32px;
-  --shadow-sm: 0 2px 8px rgba(255, 95, 147, 0.08);
-  --shadow-md: 0 4px 16px rgba(255, 95, 147, 0.12);
-  --shadow-lg: 0 8px 32px rgba(255, 95, 147, 0.16);
-  --shadow-xl: 0 16px 48px rgba(255, 95, 147, 0.20);
-}
+/* Using variables from theme.css */
+/* --veterinary-* variables are defined in theme.css */
 
 /* ─────────────────────────────────────────────────────────────
    Global Styles & Reset
 ───────────────────────────────────────────────────────────── */
 * {
   box-sizing: border-box;
-}
-
-body {
-  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-  background: var(--page-bg);
-  margin: 0;
-  padding: 0;
-  color: var(--text-primary);
 }
 
 /* ─────────────────────────────────────────────────────────────
@@ -57,9 +20,9 @@ body {
   display: grid;
   gap: 24px;
   overflow-x: hidden;
-  color: var(--text-primary);
+  color: var(--veterinary-text-primary);
   padding: 32px;
-  background: var(--page-bg);
+  background: var(--veterinary-page-bg);
   font-family: 'Inter', sans-serif;
 }
 
@@ -73,10 +36,10 @@ body {
   justify-content: space-between;
   gap: 20px;
   padding: 40px;
-  border-radius: var(--radius-2xl);
-  background: linear-gradient(135deg, var(--primary-light) 0%, var(--primary-color) 100%);
-  border: 2px solid var(--glass-border);
-  box-shadow: var(--glass-shadow);
+  border-radius: var(--veterinary-radius-2xl);
+  background: linear-gradient(135deg, var(--veterinary-primary-light) 0%, var(--veterinary-primary) 100%);
+  border: 2px solid var(--veterinary-glass-border);
+  box-shadow: var(--veterinary-glass-shadow);
   backdrop-filter: blur(20px);
   overflow: hidden;
   animation: fadeInUp 0.8s ease;
@@ -120,7 +83,7 @@ body {
   background: rgba(255, 255, 255, 0.2);
   color: white;
   padding: 6px 12px;
-  border-radius: var(--radius-md);
+  border-radius: var(--veterinary-radius-md);
   font-size: 12px;
   font-weight: 600;
   text-transform: uppercase;
@@ -161,7 +124,7 @@ body {
   min-height: 44px;
   border: none;
   padding: 12px 20px;
-  border-radius: var(--radius-lg);
+  border-radius: var(--veterinary-radius-lg);
   font-size: 14px;
   font-weight: 600;
   cursor: pointer;
@@ -177,7 +140,7 @@ body {
 
 .add-appointment-btn {
   background: white;
-  color: var(--primary-color);
+  color: var(--veterinary-primary);
   box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
 }
 
@@ -215,9 +178,9 @@ body {
   align-items: center;
   gap: 12px;
   padding: 16px 20px;
-  border-radius: var(--radius-lg);
+  border-radius: var(--veterinary-radius-lg);
   background: rgba(245, 101, 101, 0.1);
-  color: var(--error);
+  color: var(--veterinary-error);
   border: 2px solid rgba(245, 101, 101, 0.2);
   font-weight: 600;
   backdrop-filter: blur(20px);
@@ -240,10 +203,10 @@ body {
   gap: 16px;
   min-width: 0;
   padding: 24px;
-  border-radius: var(--radius-xl);
-  background: var(--glass-bg);
-  border: 2px solid var(--glass-border);
-  box-shadow: var(--glass-shadow);
+  border-radius: var(--veterinary-radius-xl);
+  background: var(--veterinary-glass-bg);
+  border: 2px solid var(--veterinary-glass-border);
+  box-shadow: var(--veterinary-glass-shadow);
   backdrop-filter: blur(20px);
   transition: all 0.3s ease;
   animation: scaleIn 0.6s ease;
@@ -251,7 +214,7 @@ body {
 
 .summary-card:hover {
   transform: translateY(-4px);
-  box-shadow: var(--shadow-xl);
+  box-shadow: var(--veterinary-shadow-xl);
 }
 
 .summary-icon {
@@ -260,31 +223,31 @@ body {
   min-width: 56px;
   display: grid;
   place-items: center;
-  border-radius: var(--radius-lg);
+  border-radius: var(--veterinary-radius-lg);
   color: white;
   font-size: 20px;
-  box-shadow: var(--shadow-md);
+  box-shadow: var(--veterinary-shadow-md);
 }
 
 .summary-icon.today {
-  background: linear-gradient(135deg, var(--primary-color), var(--primary-dark));
+  background: linear-gradient(135deg, var(--veterinary-primary), var(--veterinary-primary-dark));
 }
 
 .summary-icon.pending {
-  background: linear-gradient(135deg, var(--warning), #dd6b20);
+  background: linear-gradient(135deg, var(--veterinary-warning), #dd6b20);
 }
 
 .summary-icon.approved {
-  background: linear-gradient(135deg, var(--info), #3182ce);
+  background: linear-gradient(135deg, var(--veterinary-info), #3182ce);
 }
 
 .summary-icon.completed {
-  background: linear-gradient(135deg, var(--success), #38a169);
+  background: linear-gradient(135deg, var(--veterinary-success), #38a169);
 }
 
 .summary-card h3 {
   margin: 0 0 4px;
-  color: var(--text-secondary);
+  color: var(--veterinary-text-secondary);
   font-size: 14px;
   font-weight: 600;
 }
@@ -292,7 +255,7 @@ body {
 .today-count,
 .week-count,
 .completion-rate {
-  color: var(--text-primary);
+  color: var(--veterinary-text-primary);
   font-size: 24px;
   font-weight: 700;
   line-height: 1.15;
@@ -305,10 +268,10 @@ body {
   display: grid;
   gap: 20px;
   padding: 32px;
-  border-radius: var(--radius-2xl);
-  background: var(--glass-bg);
-  border: 2px solid var(--glass-border);
-  box-shadow: var(--glass-shadow);
+  border-radius: var(--veterinary-radius-2xl);
+  background: var(--veterinary-glass-bg);
+  border: 2px solid var(--veterinary-glass-border);
+  box-shadow: var(--veterinary-glass-shadow);
   backdrop-filter: blur(20px);
   animation: fadeInUp 1.2s ease 0.4s both;
 }
@@ -330,7 +293,7 @@ body {
   left: 16px;
   top: 50%;
   transform: translateY(-50%);
-  color: var(--text-muted);
+  color: var(--veterinary-text-muted);
   pointer-events: none;
   z-index: 2;
 }
@@ -339,25 +302,25 @@ body {
   width: 100%;
   min-height: 48px;
   padding: 14px 16px 14px 44px;
-  border-radius: var(--radius-lg);
-  border: 2px solid var(--glass-border);
-  background: var(--glass-bg);
-  color: var(--text-primary);
+  border-radius: var(--veterinary-radius-lg);
+  border: 2px solid var(--veterinary-glass-border);
+  background: var(--veterinary-glass-bg);
+  color: var(--veterinary-text-primary);
   font-weight: 500;
   font-size: 14px;
-  box-shadow: var(--shadow-sm);
+  box-shadow: var(--veterinary-shadow-sm);
   transition: all 0.3s ease;
   outline: none;
 }
 
 .search-box input:focus {
-  border-color: var(--primary-color);
-  box-shadow: 0 0 0 4px rgba(255, 95, 147, 0.15), var(--shadow-md);
+  border-color: var(--veterinary-primary);
+  box-shadow: 0 0 0 4px rgba(255, 95, 147, 0.15), var(--veterinary-shadow-md);
   transform: translateY(-1px);
 }
 
 .search-box input::placeholder {
-  color: var(--text-muted);
+  color: var(--veterinary-text-muted);
 }
 
 .clear-search-btn {
@@ -370,15 +333,15 @@ body {
   display: grid;
   place-items: center;
   border: none;
-  border-radius: var(--radius-md);
-  background: var(--text-muted);
+  border-radius: var(--veterinary-radius-md);
+  background: var(--veterinary-text-muted);
   color: white;
   cursor: pointer;
   transition: all 0.3s ease;
 }
 
 .clear-search-btn:hover {
-  background: var(--error);
+  background: var(--veterinary-error);
   transform: translateY(-1px);
 }
 
@@ -386,7 +349,7 @@ body {
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  color: var(--text-secondary);
+  color: var(--veterinary-text-secondary);
   font-size: 14px;
   font-weight: 600;
   text-transform: uppercase;
@@ -403,49 +366,49 @@ body {
 }
 
 .filter-btn {
-  border: 2px solid var(--glass-border);
-  background: var(--glass-bg);
-  color: var(--text-secondary);
-  border-radius: var(--radius-lg);
+  border: 2px solid var(--veterinary-glass-border);
+  background: var(--veterinary-glass-bg);
+  color: var(--veterinary-text-secondary);
+  border-radius: var(--veterinary-radius-lg);
   padding: 8px 16px;
   font-size: 12px;
   font-weight: 600;
   cursor: pointer;
   transition: all 0.3s ease;
-  box-shadow: var(--shadow-sm);
+  box-shadow: var(--veterinary-shadow-sm);
   backdrop-filter: blur(10px);
   outline: none;
 }
 
 .filter-btn:hover {
   transform: translateY(-1px);
-  box-shadow: var(--shadow-md);
-  border-color: var(--primary-color);
-  color: var(--primary-color);
+  box-shadow: var(--veterinary-shadow-md);
+  border-color: var(--veterinary-primary);
+  color: var(--veterinary-primary);
 }
 
 .filter-btn.active {
-  background: linear-gradient(135deg, var(--primary-color), var(--primary-dark));
+  background: linear-gradient(135deg, var(--veterinary-primary), var(--veterinary-primary-dark));
   color: white;
-  border-color: var(--primary-color);
-  box-shadow: var(--shadow-md);
+  border-color: var(--veterinary-primary);
+  box-shadow: var(--veterinary-shadow-md);
 }
 
 .filter-btn.active:hover {
   transform: translateY(-2px);
-  box-shadow: var(--shadow-lg);
+  box-shadow: var(--veterinary-shadow-lg);
 }
 
 .appointments-last-updated {
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  color: var(--text-muted);
+  color: var(--veterinary-text-muted);
   font-size: 12px;
   font-weight: 500;
   padding: 8px 12px;
   background: rgba(255, 95, 147, 0.1);
-  border-radius: var(--radius-md);
+  border-radius: var(--veterinary-radius-md);
   border: 2px solid rgba(255, 95, 147, 0.2);
   width: fit-content;
 }
@@ -468,10 +431,10 @@ body {
   min-width: 0;
   position: relative;
   padding: 24px;
-  border-radius: var(--radius-2xl);
-  background: var(--glass-bg);
-  border: 2px solid var(--glass-border);
-  box-shadow: var(--glass-shadow);
+  border-radius: var(--veterinary-radius-2xl);
+  background: var(--veterinary-glass-bg);
+  border: 2px solid var(--veterinary-glass-border);
+  box-shadow: var(--veterinary-glass-shadow);
   backdrop-filter: blur(20px);
   overflow: hidden;
   transition: all 0.3s ease;
@@ -483,14 +446,14 @@ body {
   position: absolute;
   inset: 0 auto 0 0;
   width: 5px;
-  background: linear-gradient(180deg, var(--primary-color), var(--primary-light));
+  background: linear-gradient(180deg, var(--veterinary-primary), var(--veterinary-primary-light));
   opacity: 0;
   transition: 0.3s ease;
 }
 
 .appointment-card:hover {
   transform: translateY(-4px);
-  box-shadow: var(--shadow-xl);
+  box-shadow: var(--veterinary-shadow-xl);
 }
 
 .appointment-card:hover::before {
@@ -504,7 +467,7 @@ body {
   gap: 16px;
   margin-bottom: 20px;
   padding-bottom: 20px;
-  border-bottom: 2px solid var(--glass-border);
+  border-bottom: 2px solid var(--veterinary-glass-border);
 }
 
 .appointment-info {
@@ -516,7 +479,7 @@ body {
   display: flex;
   align-items: center;
   gap: 8px;
-  color: var(--text-primary);
+  color: var(--veterinary-text-primary);
   font-size: 18px;
   font-weight: 700;
   white-space: nowrap;
@@ -525,7 +488,7 @@ body {
 }
 
 .appointment-info h3 svg {
-  color: var(--primary-color);
+  color: var(--veterinary-primary);
 }
 
 .appointment-info p {
@@ -533,7 +496,7 @@ body {
   display: flex;
   align-items: center;
   gap: 8px;
-  color: var(--text-secondary);
+  color: var(--veterinary-text-secondary);
   font-size: 14px;
   font-weight: 500;
 }
@@ -547,7 +510,7 @@ body {
   justify-content: center;
   gap: 6px;
   padding: 8px 12px;
-  border-radius: var(--radius-lg);
+  border-radius: var(--veterinary-radius-lg);
   font-size: 11px;
   font-weight: 600;
   text-transform: uppercase;
@@ -558,26 +521,26 @@ body {
 
 .appointment-status.pending {
   background: rgba(237, 137, 54, 0.1);
-  color: var(--warning);
+  color: var(--veterinary-warning);
   border-color: rgba(237, 137, 54, 0.2);
 }
 
 .appointment-status.approved {
   background: rgba(66, 153, 225, 0.1);
-  color: var(--info);
+  color: var(--veterinary-info);
   border-color: rgba(66, 153, 225, 0.2);
 }
 
 .appointment-status.in_progress,
 .appointment-status.ongoing {
   background: rgba(255, 95, 147, 0.12);
-  color: var(--primary-color);
+  color: var(--veterinary-primary);
   border-color: rgba(255, 95, 147, 0.18);
 }
 
 .appointment-status.completed {
   background: rgba(72, 187, 120, 0.1);
-  color: var(--success);
+  color: var(--veterinary-success);
   border-color: rgba(72, 187, 120, 0.2);
 }
 
@@ -587,7 +550,7 @@ body {
 .appointment-status.no_show,
 .appointment-status.no-show {
   background: rgba(245, 101, 101, 0.1);
-  color: var(--error);
+  color: var(--veterinary-error);
   border-color: rgba(245, 101, 101, 0.2);
 }
 
@@ -606,7 +569,7 @@ body {
   align-items: flex-start;
   gap: 12px;
   padding: 16px;
-  border-radius: var(--radius-lg);
+  border-radius: var(--veterinary-radius-lg);
   background: rgba(255, 241, 247, 0.3);
   border: 2px solid rgba(255, 95, 147, 0.1);
   transition: all 0.3s ease;
@@ -622,8 +585,8 @@ body {
   height: 40px;
   min-width: 40px;
   padding: 10px;
-  border-radius: var(--radius-md);
-  color: var(--primary-color);
+  border-radius: var(--veterinary-radius-md);
+  color: var(--veterinary-primary);
   background: rgba(255, 95, 147, 0.11);
 }
 
@@ -634,7 +597,7 @@ body {
 .detail-item strong {
   display: block;
   margin-bottom: 4px;
-  color: var(--text-muted);
+  color: var(--veterinary-text-muted);
   font-size: 11px;
   font-weight: 600;
   text-transform: uppercase;
@@ -643,7 +606,7 @@ body {
 
 .detail-item p {
   margin: 0;
-  color: var(--text-primary);
+  color: var(--veterinary-text-primary);
   font-size: 14px;
   font-weight: 500;
   line-height: 1.45;
@@ -662,7 +625,7 @@ body {
   grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
   gap: 8px;
   padding-top: 20px;
-  border-top: 2px solid var(--glass-border);
+  border-top: 2px solid var(--veterinary-glass-border);
 }
 
 .action-btn {
@@ -670,7 +633,7 @@ body {
   min-width: 0;
   padding: 8px 12px;
   border: none;
-  border-radius: var(--radius-md);
+  border-radius: var(--veterinary-radius-md);
   font-size: 12px;
   font-weight: 600;
   cursor: pointer;
@@ -695,66 +658,66 @@ body {
 }
 
 .view-btn {
-  background: var(--glass-bg);
-  color: var(--text-secondary);
-  border: 2px solid var(--glass-border);
+  background: var(--veterinary-glass-bg);
+  color: var(--veterinary-text-secondary);
+  border: 2px solid var(--veterinary-glass-border);
   backdrop-filter: blur(10px);
 }
 
 .view-btn:hover {
-  border-color: var(--primary-color);
-  color: var(--primary-color);
-  box-shadow: var(--shadow-sm);
+  border-color: var(--veterinary-primary);
+  color: var(--veterinary-primary);
+  box-shadow: var(--veterinary-shadow-sm);
 }
 
 .start-btn {
   background: rgba(66, 153, 225, 0.1);
-  color: var(--info);
+  color: var(--veterinary-info);
   border: 2px solid rgba(66, 153, 225, 0.2);
 }
 
 .start-btn:hover {
-  background: var(--info);
+  background: var(--veterinary-info);
   color: white;
   transform: translateY(-2px);
-  box-shadow: var(--shadow-md);
+  box-shadow: var(--veterinary-shadow-md);
 }
 
 .complete-btn {
   background: rgba(72, 187, 120, 0.1);
-  color: var(--success);
+  color: var(--veterinary-success);
   border: 2px solid rgba(72, 187, 120, 0.2);
 }
 
 .complete-btn:hover {
-  background: var(--success);
+  background: var(--veterinary-success);
   color: white;
   transform: translateY(-2px);
-  box-shadow: var(--shadow-md);
+  box-shadow: var(--veterinary-shadow-md);
 }
 
 .edit-btn {
-  background: linear-gradient(135deg, var(--primary-color), var(--primary-dark));
+  background: linear-gradient(135deg, var(--veterinary-primary), var(--veterinary-primary-dark));
   color: white;
-  box-shadow: var(--shadow-sm);
+  box-shadow: var(--veterinary-shadow-sm);
 }
 
 .edit-btn:hover {
   transform: translateY(-2px);
-  box-shadow: var(--shadow-md);
+  box-shadow: var(--veterinary-shadow-md);
 }
 
 .delete-btn {
   background: rgba(245, 101, 101, 0.1);
-  color: var(--error);
+  color: var(--veterinary-error);
   border: 2px solid rgba(245, 101, 101, 0.2);
 }
 
 .delete-btn:hover {
-  background: var(--error);
+  background: var(--veterinary-error);
   color: white;
   transform: translateY(-2px);
-  box-shadow: var(--shadow-md);
+  box-shadow: var(--veterinary-shadow-md);
 }
 
 /* ─────────────────────────────────────────────────────────────
@@ -763,31 +726,31 @@ body {
 .no-appointments {
   text-align: center;
   padding: 80px 20px;
-  background: var(--glass-bg);
+  background: var(--veterinary-glass-bg);
   backdrop-filter: blur(20px);
-  border-radius: var(--radius-2xl);
-  border: 2px dashed var(--glass-border);
-  box-shadow: var(--glass-shadow);
+  border-radius: var(--veterinary-radius-2xl);
+  border: 2px dashed var(--veterinary-glass-border);
+  box-shadow: var(--veterinary-glass-shadow);
   animation: fadeIn 0.8s ease;
 }
 
 .no-appointments svg {
   font-size: 64px;
-  color: var(--text-muted);
+  color: var(--veterinary-text-muted);
   margin-bottom: 24px;
   opacity: 0.5;
 }
 
 .no-appointments h3 {
   margin: 0 0 12px;
-  color: var(--text-secondary);
+  color: var(--veterinary-text-secondary);
   font-size: 20px;
   font-weight: 700;
 }
 
 .no-appointments p {
   margin: 0;
-  color: var(--text-muted);
+  color: var(--veterinary-text-muted);
   font-weight: 500;
   font-size: 16px;
 }
@@ -801,11 +764,11 @@ body {
   place-items: center;
   gap: 16px;
   padding: 60px 20px;
-  border-radius: var(--radius-2xl);
-  background: var(--glass-bg);
-  border: 2px solid var(--glass-border);
-  box-shadow: var(--glass-shadow);
-  color: var(--primary-color);
+  border-radius: var(--veterinary-radius-2xl);
+  background: var(--veterinary-glass-bg);
+  border: 2px solid var(--veterinary-glass-border);
+  box-shadow: var(--veterinary-glass-shadow);
+  color: var(--veterinary-primary);
   font-weight: 600;
   backdrop-filter: blur(20px);
   animation: fadeIn 0.8s ease;
@@ -816,7 +779,7 @@ body {
   height: 64px;
   display: grid;
   place-items: center;
-  border-radius: var(--radius-xl);
+  border-radius: var(--veterinary-radius-xl);
   background: rgba(255, 95, 147, 0.1);
 }
 
@@ -845,10 +808,10 @@ body {
   max-height: 90vh;
   overflow-y: auto;
   padding: 32px;
-  border-radius: var(--radius-2xl);
-  background: var(--glass-bg);
-  border: 2px solid var(--glass-border);
-  box-shadow: var(--glass-shadow);
+  border-radius: var(--veterinary-radius-2xl);
+  background: var(--veterinary-glass-bg);
+  border: 2px solid var(--veterinary-glass-border);
+  box-shadow: var(--veterinary-glass-shadow);
   backdrop-filter: blur(20px);
   animation: slideInUp 0.3s ease;
 }
@@ -859,19 +822,19 @@ body {
   gap: 16px;
   padding-bottom: 20px;
   margin-bottom: 20px;
-  border-bottom: 2px solid var(--glass-border);
+  border-bottom: 2px solid var(--veterinary-glass-border);
 }
 
 .appointment-modal-header h3 {
   margin: 0;
-  color: var(--text-primary);
+  color: var(--veterinary-text-primary);
   font-size: 24px;
   font-weight: 700;
 }
 
 .appointment-modal-header p {
   margin: 4px 0 0;
-  color: var(--text-secondary);
+  color: var(--veterinary-text-secondary);
   font-weight: 500;
   font-size: 16px;
 }
@@ -880,10 +843,10 @@ body {
   width: 44px;
   height: 44px;
   min-width: 44px;
-  border: 2px solid var(--glass-border);
-  border-radius: var(--radius-lg);
-  background: var(--glass-bg);
-  color: var(--text-secondary);
+  border: 2px solid var(--veterinary-glass-border);
+  border-radius: var(--veterinary-radius-lg);
+  background: var(--veterinary-glass-bg);
+  color: var(--veterinary-text-secondary);
   cursor: pointer;
   transition: all 0.3s ease;
   display: flex;
@@ -892,9 +855,9 @@ body {
 }
 
 .modal-close-btn:hover {
-  background: var(--error);
+  background: var(--veterinary-error);
   color: white;
-  border-color: var(--error);
+  border-color: var(--veterinary-error);
   transform: translateY(-1px);
 }
 
@@ -907,7 +870,7 @@ body {
 .modal-detail {
   min-width: 0;
   padding: 16px;
-  border-radius: var(--radius-lg);
+  border-radius: var(--veterinary-radius-lg);
   background: rgba(255, 241, 247, 0.3);
   border: 2px solid rgba(255, 95, 147, 0.1);
   transition: all 0.3s ease;
@@ -924,7 +887,7 @@ body {
 .modal-detail strong {
   display: block;
   margin-bottom: 8px;
-  color: var(--text-muted);
+  color: var(--veterinary-text-muted);
   font-size: 11px;
   font-weight: 600;
   text-transform: uppercase;
@@ -933,7 +896,7 @@ body {
 
 .modal-detail p {
   margin: 0;
-  color: var(--text-primary);
+  color: var(--veterinary-text-primary);
   font-weight: 600;
   font-size: 14px;
   word-break: break-word;
@@ -946,7 +909,7 @@ body {
   flex-wrap: wrap;
   padding-top: 20px;
   margin-top: 20px;
-  border-top: 2px solid var(--glass-border);
+  border-top: 2px solid var(--veterinary-glass-border);
 }
 
 /* ─────────────────────────────────────────────────────────────
@@ -1083,7 +1046,7 @@ body {
   .appointment-card,
   .summary-card,
   .appointment-modal {
-    border-radius: var(--radius-xl);
+    border-radius: var(--veterinary-radius-xl);
   }
 
   .appointments-summary {

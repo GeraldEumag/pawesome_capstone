@@ -184,3 +184,57 @@
     flex-direction: column;
   }
 }
+
+/* Dark Mode Support */
+[data-theme="dark"] .vet-consultation {
+  color: #f8fafc;
+}
+
+[data-theme="dark"] .consult-header,
+[data-theme="dark"] .consult-summary article,
+[data-theme="dark"] .consult-form,
+[data-theme="dark"] .consult-start-panel,
+[data-theme="dark"] .consult-loading,
+[data-theme="dark"] .consult-empty {
+  background: rgba(15, 23, 42, 0.92);
+  border-color: rgba(255, 95, 147, 0.25);
+  box-shadow: 0 18px 45px rgba(0, 0, 0, 0.3);
+}
+
+[data-theme="dark"] .consult-back {
+  background: rgba(255, 95, 147, 0.2);
+  color: #ff8db5;
+}
+
+[data-theme="dark"] .consult-eyebrow {
+  color: #ff8db5;
+}
+
+[data-theme="dark"] .consult-meta {
+  color: #94a3b8;
+}
+
+[data-theme="dark"] .consult-summary h3 {
+  color: #f8fafc;
+}
+
+[data-theme="dark"] .consult-form input,
+[data-theme="dark"] .consult-form textarea,
+[data-theme="dark"] .consult-form select {
+  background: rgba(30, 41, 59, 0.8);
+  border-color: rgba(255, 95, 147, 0.25);
+  color: #f8fafc;
+}
+
+[data-theme="dark"] .consult-form input:focus,
+[data-theme="dark"] .consult-form textarea:focus,
+[data-theme="dark"] .consult-form select:focus {
+  border-color: #ff5f93;
+  box-shadow: 0 0 0 3px rgba(255, 95, 147, 0.2);
+}
+
+[data-theme="dark"] .consult-actions .secondary {
+  background: rgba(30, 41, 59, 0.8);
+  color: #ff8db5;
+  border-color: rgba(255, 95, 147, 0.3);
+}
