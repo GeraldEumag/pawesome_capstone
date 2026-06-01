@@ -7,6 +7,7 @@ use App\Models\Appointment;
 use App\Models\Customer;
 use App\Models\InventoryItem;
 use App\Models\Pet;
+use App\Models\Attendance;
 use App\Models\Payroll;
 use App\Models\Sale;
 use App\Models\User;
@@ -318,6 +319,134 @@ class ReportsController extends Controller
         ]);
     }
 
+    public function managerAttendance(Request $request)
+    {
+        $query = Attendance::with('user')->latest('date');
+
+        if ($request->has('start_date') && $request->has('end_date')) {
+            $query->whereBetween('date', [$request->query('start_date'), $request->query('end_date')]);
+        }
+
+        $records = $query->get();
+
+        $byStatus = $records->groupBy('status')->map->count();
+        $byDepartment = $records->groupBy(fn ($r) => $r->user?->department ?? 'Unassigned')->map->count();
+
+        return response()->json([
+            'success' => true,
+            'data' => [
+                'attendance' => $records->map(fn ($r) => [
+                    'id' => $r->id,
+                    'user_id' => $r->user_id,
+                    'employee_name' => $r->user?->name ?? 'Unknown',
+                    'employee_id' => $r->user_id,
+                    'department' => $r->user?->department ?? 'Unassigned',
+                    'role' => $r->user?->role ?? 'Staff',
+                    'date' => $r->date?->toDateString(),
+                    'time_in' => $r->check_in,
+                    'time_out' => $r->check_out,
+                    'status' => $r->status,
+                    'is_late' => $r->is_late,
+                    'is_early_leave' => $r->is_early_leave,
+                    'overtime_hours' => (float) $r->overtime_hours,
+                    'total_hours' => (float) $r->total_hours,
+                    'location' => $r->location,
+                    'source' => $r->source ?? 'manual',
+                    'biometric_id' => $r->biometric_id,
+                    'notes' => $r->notes,
+                ]),
+                'summary' => [
+                    'total_records' => $records->count(),
+                    'present' => $byStatus->get('present', 0),
+                    'late' => $byStatus->get('late', 0),
+                    'absent' => $byStatus->get('absent', 0),
+                    'early_leave' => $byStatus->get('early_leave', 0),
+                    'total_overtime_hours' => (float) $records->sum('overtime_hours'),
+                    'total_late_count' => $records->where('is_late', true)->count(),
+                    'biometric_punches' => $records->where('source', 'biometric')->count(),
+                ],
+                'by_department' => $byDepartment,
+                'by_status' => $byStatus,
+            ],
+        ]);
+    }
+
+    public function managerPayroll(Request $request)
+    {
+        $query = Payroll::with('user')->latest('pay_period_start');
+
+        if ($request->has('start_date') && $request->has('end_date')) {
+            $query->whereBetween('pay_period_start', [$request->query('start_date'), $request->query('end_date')]);
+        }
+
+        $records = $query->get();
+
+        $byStatus = $records->groupBy('status')->map->count();
+        $byDepartment = $records->groupBy(fn ($r) => $r->user?->department ?? 'Unassigned')->map->count();
+
+        return response()->json([
+            'success' => true,
+            'data' => [
+                'payroll' => $records->map(fn ($r) => [
+                    'id' => $r->id,
+                    'payroll_id' => $r->payroll_id,
+                    'user_id' => $r->user_id,
+                    'employee_name' => $r->user?->name ?? 'Unknown',
+                    'employee_id' => $r->user_id,
+                    'department' => $r->user?->department ?? 'Unassigned',
+                    'role' => $r->user?->role ?? 'Staff',
+                    'period' => $r->pay_period_label,
+                    'pay_period_start' => $r->pay_period_start?->toDateString(),
+                    'pay_period_end' => $r->pay_period_end?->toDateString(),
+                    'base_salary' => (float) $r->base_salary,
+                    'hourly_rate' => (float) $r->hourly_rate,
+                    'present_days' => (int) $r->present_days,
+                    'absent_days' => (int) $r->absent_days,
+                    'regular_hours' => (float) $r->regular_hours,
+                    'overtime_hours' => (float) $r->overtime_hours,
+                    'overtime_pay' => (float) $r->overtime_pay,
+                    'regular_holiday_pay' => (float) ($r->regular_holiday_pay ?? 0),
+                    'special_holiday_pay' => (float) ($r->special_holiday_pay ?? 0),
+                    'night_differential' => (float) ($r->night_differential ?? 0),
+                    'regular_holiday_ot_pay' => (float) ($r->regular_holiday_ot_pay ?? 0),
+                    'special_holiday_ot_pay' => (float) ($r->special_holiday_ot_pay ?? 0),
+                    'bonus' => (float) ($r->bonus ?? 0),
+                    'allowances' => (float) ($r->allowances ?? 0),
+                    'gross_pay' => (float) $r->gross_pay,
+                    'deductions' => (float) ($r->deductions ?? 0),
+                    'sss_contribution' => (float) ($r->sss_contribution ?? 0),
+                    'philhealth_contribution' => (float) ($r->philhealth_contribution ?? 0),
+                    'pagibig_contribution' => (float) ($r->pagibig_contribution ?? 0),
+                    'tax_deduction' => (float) ($r->tax_deduction ?? 0),
+                    'late_deductions' => (float) ($r->late_deductions ?? 0),
+                    'absent_deductions' => (float) ($r->absent_deductions ?? 0),
+                    'net_pay' => (float) $r->net_pay,
+                    'status' => $r->status,
+                    'payment_date' => $r->payment_date?->toDateString(),
+                    'payment_method' => $r->payment_method,
+                    'remarks' => $r->remarks,
+                    'processed_by' => $r->processed_by,
+                    'processed_at' => $r->processed_at,
+                ]),
+                'summary' => [
+                    'total_records' => $records->count(),
+                    'total_gross' => (float) $records->sum('gross_pay'),
+                    'total_net' => (float) $records->sum('net_pay'),
+                    'total_deductions' => (float) $records->sum(fn ($r) => ($r->deductions ?? 0) + ($r->sss_contribution ?? 0) + ($r->philhealth_contribution ?? 0) + ($r->pagibig_contribution ?? 0) + ($r->tax_deduction ?? 0) + ($r->late_deductions ?? 0) + ($r->absent_deductions ?? 0)),
+                    'total_overtime_pay' => (float) $records->sum('overtime_pay'),
+                    'total_holiday_pay' => (float) $records->sum(fn ($r) => ($r->regular_holiday_pay ?? 0) + ($r->special_holiday_pay ?? 0)),
+                    'total_night_diff' => (float) $records->sum('night_differential'),
+                    'draft' => $byStatus->get('draft', 0),
+                    'pending' => $byStatus->get('pending', 0),
+                    'paid' => $byStatus->get('paid', 0),
+                    'approved' => $byStatus->get('approved', 0),
+                ],
+                'by_status' => $byStatus,
+                'by_department' => $byDepartment,
+            ],
+        ]);
+    }
+
     public function veterinary(Request $request)
     {
         $appointments = $this->appointmentsBase($request);
@@ -399,94 +528,6 @@ class ReportsController extends Controller
                 'requests_per_day' => $this->requestsPerDay($request),
                 'receptionist_activity' => $this->recentActions($request, ['order', 'service_request', 'appointment']),
             ],
-        ]);
-    }
-
-    public function payrollReports(Request $request)
-    {
-        $query = Payroll::with('user');
-
-        $period = $request->query('period', 'monthly');
-        $from = match ($period) {
-            'weekly' => now()->subWeek(),
-            'quarterly' => now()->subQuarter(),
-            'yearly' => now()->subYear(),
-            default => now()->subMonth(),
-        };
-
-        $query->where('created_at', '>=', $from);
-        $this->applyDateRange($query->getQuery(), $request, 'payrolls.created_at');
-
-        $department = $request->query('department');
-        if ($department && $department !== 'all') {
-            $query->where('department', $department);
-        }
-
-        $payrolls = $query->latest('pay_period_start')->get();
-        $totalPayroll = (float) $payrolls->sum(fn (Payroll $payroll) => (float) ($payroll->net_pay ?: $payroll->gross_pay ?: $payroll->base_salary));
-        $totalEmployees = $payrolls->pluck('user_id')->unique()->count();
-        $totalBonuses = (float) $payrolls->sum('bonus');
-        $totalDeductions = (float) $payrolls->sum('deductions');
-
-        $departmentBreakdown = $payrolls
-            ->groupBy(fn (Payroll $payroll) => $payroll->department ?: 'Unassigned')
-            ->map(function ($group, $departmentName) use ($totalPayroll) {
-                $departmentPayroll = (float) $group->sum(fn (Payroll $payroll) => (float) ($payroll->net_pay ?: $payroll->gross_pay ?: $payroll->base_salary));
-                $employees = $group->pluck('user_id')->unique()->count();
-
-                return [
-                    'department' => $departmentName,
-                    'employees' => $employees,
-                    'totalSalary' => round($departmentPayroll, 2),
-                    'average' => $employees > 0 ? round($departmentPayroll / $employees, 2) : 0,
-                    'percentage' => $totalPayroll > 0 ? round(($departmentPayroll / $totalPayroll) * 100, 1) : 0,
-                ];
-            })
-            ->values();
-
-        $monthlyTrend = Payroll::query()
-            ->where('created_at', '>=', now()->subMonths(11)->startOfMonth())
-            ->get()
-            ->groupBy(fn (Payroll $payroll) => Carbon::parse($payroll->created_at)->format('M Y'))
-            ->map(fn ($group, $month) => [
-                'month' => $month,
-                'payroll' => round((float) $group->sum(fn (Payroll $payroll) => (float) ($payroll->net_pay ?: $payroll->gross_pay ?: $payroll->base_salary)), 2),
-                'employees' => $group->pluck('user_id')->unique()->count(),
-            ])
-            ->values();
-
-        $topEarners = $payrolls
-            ->sortByDesc(fn (Payroll $payroll) => (float) ($payroll->net_pay ?: $payroll->gross_pay ?: $payroll->base_salary))
-            ->take(10)
-            ->map(fn (Payroll $payroll) => [
-                'id' => $payroll->id,
-                'name' => $payroll->user?->name ?? 'Unknown Employee',
-                'position' => $payroll->position ?: 'Staff',
-                'department' => $payroll->department ?: 'Unassigned',
-                'salary' => (float) ($payroll->net_pay ?: $payroll->gross_pay ?: $payroll->base_salary),
-                'payPeriod' => $payroll->pay_period_label,
-            ])
-            ->values();
-
-        return response()->json([
-            'success' => true,
-            'section' => 'payroll',
-            'last_updated' => now()->format('Y-m-d H:i:s'),
-            'data' => [
-                'summary' => [
-                    'total_payroll' => round($totalPayroll, 2),
-                    'total_employees' => $totalEmployees,
-                    'average_salary' => $totalEmployees > 0 ? round($totalPayroll / $totalEmployees, 2) : 0,
-                    'total_bonuses' => round($totalBonuses, 2),
-                    'total_deductions' => round($totalDeductions, 2),
-                    'payroll_growth' => 0,
-                ],
-                'departmentBreakdown' => $departmentBreakdown,
-                'monthlyTrend' => $monthlyTrend,
-                'topEarners' => $topEarners,
-                'payrolls' => $payrolls,
-            ],
-            'generated_at' => now()->toIso8601String(),
         ]);
     }
 

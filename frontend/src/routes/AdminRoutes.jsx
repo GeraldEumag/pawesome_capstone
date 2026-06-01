@@ -25,11 +25,6 @@ const ServiceRequestReports = lazy(() => import("../components/admin/ServiceRequ
 const LogisticsReports = lazy(() => import("../components/admin/LogisticsReports"));
 const ReceptionistReports = lazy(() => import("../components/receptionist/ReceptionistReports"));
 
-// Payroll modules - lazy loaded
-const AdminPayroll = lazy(() => import("../components/admin/AdminPayroll"));
-const EmployeeSalaryManagement = lazy(() => import("../components/admin/EmployeeSalaryManagement"));
-const PayrollReports = lazy(() => import("../components/admin/PayrollReports"));
-
 // Loading fallback component
 const RouteLoading = () => (
   <div style={{ padding: "20px", textAlign: "center" }}>Loading...</div>
@@ -70,10 +65,6 @@ const AdminRoutes = () => (
         <Route path="chatbot" element={<ChatbotLogs />} />
         <Route path="settings" element={<AdminSettings />} />
 
-        {/* Payroll routes */}
-        <Route path="payroll" element={<AdminPayroll />} />
-        <Route path="payroll/salaries" element={<EmployeeSalaryManagement />} />
-        <Route path="payroll/reports" element={<PayrollReports />} />
       </Route>
     </Routes>
   </Suspense>

@@ -1,0 +1,534 @@
+/* ManagerSchedule.css */
+
+.manager-schedule {
+  --sched-primary: var(--color-primary, #ff5f93);
+  --sched-primary-light: var(--color-primary-light, #ff8db5);
+  --sched-primary-soft: var(--color-primary-soft, #ffc8dd);
+  --sched-surface: var(--color-surface, rgba(255, 255, 255, 0.9));
+  --sched-surface-solid: var(--color-surface-solid, #ffffff);
+  --sched-border: var(--color-border, rgba(255, 95, 147, 0.18));
+  --sched-heading: var(--color-heading, #191919);
+  --sched-text: var(--color-text, #1f2937);
+  --sched-muted: var(--color-muted, #64748b);
+  --sched-success: #10b981;
+  --sched-warning: #f59e0b;
+  --sched-danger: #ef4444;
+  --sched-shadow-card: var(--shadow-card, 0 20px 50px rgba(255, 95, 147, 0.15));
+  --sched-shadow-soft: var(--shadow-soft, 0 12px 28px rgba(15, 23, 42, 0.08));
+  --sched-radius-card: var(--radius-card, 28px);
+  --sched-radius-lg: var(--radius-lg, 22px);
+  --sched-radius-md: var(--radius-md, 16px);
+  --sched-radius-pill: var(--radius-pill, 999px);
+
+  width: 100%;
+  min-height: 100vh;
+  padding: 1.6rem;
+  color: var(--sched-text);
+  background: transparent;
+  font-family: Inter, Jost, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+
+.manager-schedule,
+.manager-schedule * {
+  box-sizing: border-box;
+}
+
+.schedule-eyebrow {
+  display: inline-flex;
+  align-items: center;
+  width: max-content;
+  max-width: 100%;
+  min-height: 30px;
+  padding: 0 0.75rem;
+  border-radius: var(--sched-radius-pill);
+  background: rgba(255, 95, 147, 0.1);
+  color: var(--sched-primary);
+  border: 1px solid rgba(255, 95, 147, 0.14);
+  font-size: 0.72rem;
+  font-weight: 950;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+/* Hero */
+
+.manager-schedule-hero {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1.25rem;
+  margin-bottom: 1.25rem;
+  padding: clamp(1.25rem, 3vw, 2rem);
+  border: 1px solid var(--sched-border);
+  border-radius: var(--sched-radius-card);
+  background: radial-gradient(circle at top right, rgba(255, 95, 147, 0.17), transparent 38%), var(--sched-surface);
+  box-shadow: var(--sched-shadow-card);
+  backdrop-filter: blur(18px);
+}
+
+.manager-schedule-hero h1 {
+  margin: 0.75rem 0 0;
+  color: var(--sched-heading);
+  font-size: clamp(1.8rem, 4vw, 3rem);
+  font-weight: 950;
+  line-height: 1.05;
+  letter-spacing: -0.06em;
+}
+
+.manager-schedule-hero p {
+  max-width: 850px;
+  margin: 0.85rem 0 0;
+  color: var(--sched-muted);
+  font-size: 1rem;
+  font-weight: 750;
+  line-height: 1.65;
+}
+
+.schedule-hero-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  justify-content: flex-end;
+}
+
+/* Buttons */
+
+.schedule-btn {
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.55rem;
+  border: none;
+  border-radius: var(--sched-radius-pill);
+  padding: 0 1rem;
+  font: inherit;
+  font-size: 0.9rem;
+  font-weight: 750;
+  cursor: pointer;
+  transition: 0.2s ease;
+}
+
+.schedule-btn.primary {
+  background: var(--sched-primary);
+  color: #ffffff;
+  box-shadow: var(--sched-shadow-primary);
+}
+
+.schedule-btn.primary:hover {
+  transform: translateY(-2px);
+}
+
+.schedule-btn.secondary {
+  background: var(--sched-surface-solid);
+  color: var(--sched-primary);
+  border: 1px solid var(--sched-border);
+}
+
+.schedule-btn.danger {
+  background: var(--sched-danger);
+  color: #ffffff;
+}
+
+/* Alert */
+
+.schedule-alert {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  padding: 0.9rem 1.1rem;
+  margin-bottom: 1.25rem;
+  border-radius: var(--sched-radius-md);
+  font-size: 0.92rem;
+  font-weight: 750;
+}
+
+.schedule-alert.error {
+  background: #fee2e2;
+  color: #991b1b;
+}
+
+.schedule-alert button {
+  margin-left: auto;
+  padding: 0.4rem 0.8rem;
+  border-radius: var(--sched-radius-pill);
+  border: none;
+  background: rgba(255, 255, 255, 0.6);
+  color: inherit;
+  font-weight: 750;
+  cursor: pointer;
+}
+
+/* Week Bar */
+
+.schedule-week-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.85rem 1.15rem;
+  margin-bottom: 1.25rem;
+  border: 1px solid var(--sched-border);
+  border-radius: var(--sched-radius-lg);
+  background: var(--sched-surface);
+  box-shadow: var(--sched-shadow-soft);
+  flex-wrap: wrap;
+}
+
+.schedule-week-nav {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+.schedule-week-nav button {
+  width: 38px;
+  height: 38px;
+  display: grid;
+  place-items: center;
+  border: 1px solid var(--sched-border);
+  border-radius: 12px;
+  background: var(--sched-surface-solid);
+  color: var(--sched-primary);
+  cursor: pointer;
+}
+
+.schedule-week-nav strong {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  color: var(--sched-heading);
+  font-size: 1rem;
+  font-weight: 950;
+}
+
+.schedule-search-box {
+  flex: 1;
+  max-width: 320px;
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  padding: 0 0.85rem;
+  border: 1px solid var(--sched-border);
+  border-radius: var(--sched-radius-pill);
+  background: var(--sched-surface-solid);
+}
+
+.schedule-search-box svg {
+  color: var(--sched-muted);
+}
+
+.schedule-search-box input {
+  flex: 1;
+  min-height: 40px;
+  border: none;
+  background: transparent;
+  color: var(--sched-text);
+  font-size: 0.9rem;
+  font-weight: 650;
+  outline: none;
+}
+
+.schedule-search-box button {
+  width: 28px;
+  height: 28px;
+  display: grid;
+  place-items: center;
+  border: none;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--sched-muted);
+  cursor: pointer;
+}
+
+/* Grid Card */
+
+.schedule-grid-card {
+  border: 1px solid var(--sched-border);
+  border-radius: var(--sched-radius-card);
+  background: var(--sched-surface);
+  box-shadow: var(--sched-shadow-card);
+  overflow: hidden;
+}
+
+.schedule-table-scroll {
+  overflow-x: auto;
+}
+
+.schedule-table {
+  width: 100%;
+  min-width: 700px;
+  border-collapse: collapse;
+}
+
+.schedule-table th {
+  padding: 0.75rem 0.6rem;
+  background: rgba(255, 95, 147, 0.08);
+  color: var(--sched-heading);
+  font-size: 0.75rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  text-align: center;
+}
+
+.schedule-table th.schedule-employee-header {
+  text-align: left;
+  min-width: 200px;
+}
+
+.schedule-table td {
+  padding: 0.5rem 0.6rem;
+  border-top: 1px solid rgba(255, 95, 147, 0.1);
+  text-align: center;
+  vertical-align: middle;
+}
+
+.schedule-employee-cell {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+  text-align: left;
+}
+
+.schedule-avatar {
+  width: 36px;
+  height: 36px;
+  display: grid;
+  place-items: center;
+  border-radius: 10px;
+  color: #ffffff;
+  font-size: 0.85rem;
+  font-weight: 900;
+}
+
+.schedule-employee-cell strong {
+  display: block;
+  color: var(--sched-heading);
+  font-weight: 800;
+  font-size: 0.9rem;
+}
+
+.schedule-employee-cell small {
+  display: block;
+  color: var(--sched-muted);
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+
+.schedule-shift-cell {
+  cursor: pointer;
+  transition: 0.15s ease;
+}
+
+.schedule-shift-cell:hover {
+  background: rgba(255, 95, 147, 0.05);
+}
+
+.schedule-shift-tag {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.15rem;
+  padding: 0.4rem 0.5rem;
+  border-radius: 10px;
+  background: rgba(255, 95, 147, 0.1);
+  color: var(--sched-primary);
+  font-size: 0.72rem;
+  font-weight: 700;
+  min-width: 56px;
+}
+
+.schedule-shift-tag.off {
+  background: rgba(100, 116, 139, 0.12);
+  color: var(--sched-muted);
+}
+
+.schedule-shift-empty {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.15rem;
+  padding: 0.4rem 0.5rem;
+  border-radius: 10px;
+  color: var(--sched-muted);
+  font-size: 0.72rem;
+  font-weight: 700;
+  opacity: 0.6;
+}
+
+.schedule-empty-row {
+  text-align: center;
+  padding: 2rem;
+  color: var(--sched-muted);
+}
+
+.schedule-empty-row svg {
+  font-size: 1.5rem;
+  margin-right: 0.5rem;
+}
+
+/* Loading */
+
+.schedule-loading-state {
+  min-height: 260px;
+  display: grid;
+  place-items: center;
+  padding: 2rem;
+}
+
+.schedule-loading-state svg {
+  color: var(--sched-primary);
+  font-size: 2.4rem;
+}
+
+/* Modal */
+
+.schedule-modal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 9000;
+  display: grid;
+  place-items: center;
+  padding: 1.25rem;
+  background: rgba(15, 23, 42, 0.55);
+  backdrop-filter: blur(6px);
+}
+
+.schedule-modal {
+  width: min(420px, 100%);
+  max-height: 92vh;
+  overflow: hidden;
+  border-radius: var(--sched-radius-lg);
+  background: var(--sched-surface-solid);
+  border: 1px solid var(--sched-border);
+  box-shadow: var(--sched-shadow-card);
+}
+
+.schedule-modal-header,
+.schedule-modal-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 1rem 1.25rem;
+}
+
+.schedule-modal-header {
+  border-bottom: 1px solid var(--sched-border);
+}
+
+.schedule-modal-header h2 {
+  margin: 0.4rem 0 0;
+  color: var(--sched-heading);
+  font-weight: 950;
+  font-size: 1.05rem;
+}
+
+.schedule-modal-header > button {
+  width: 42px;
+  height: 42px;
+  border: none;
+  border-radius: 12px;
+  background: rgba(255, 95, 147, 0.1);
+  color: var(--sched-primary);
+  cursor: pointer;
+}
+
+.schedule-modal-body {
+  overflow-y: auto;
+  padding: 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.schedule-toggle {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  font-size: 0.95rem;
+  font-weight: 750;
+  cursor: pointer;
+}
+
+.schedule-toggle input {
+  width: 20px;
+  height: 20px;
+  accent-color: var(--sched-primary);
+}
+
+.schedule-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  font-size: 0.9rem;
+  font-weight: 750;
+}
+
+.schedule-field > span {
+  color: var(--sched-muted);
+  font-size: 0.82rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.schedule-field input {
+  padding: 0.6rem 0.75rem;
+  border: 1px solid var(--sched-border);
+  border-radius: var(--sched-radius-md);
+  background: var(--sched-surface-solid);
+  color: var(--sched-text);
+  font-size: 0.95rem;
+  outline: none;
+}
+
+.schedule-modal-footer {
+  border-top: 1px solid var(--sched-border);
+}
+
+/* Toast */
+
+.schedule-toast {
+  position: fixed;
+  right: 1.25rem;
+  bottom: 1.25rem;
+  z-index: 9500;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.55rem;
+  padding: 0.75rem 1.1rem;
+  border-radius: var(--sched-radius-lg);
+  background: var(--sched-surface-solid);
+  border: 1px solid var(--sched-border);
+  box-shadow: var(--sched-shadow-card);
+  font-weight: 750;
+  font-size: 0.92rem;
+}
+
+.schedule-toast.error { color: #991b1b; }
+.schedule-toast.success { color: #047857; }
+.schedule-toast.warning { color: #92400e; }
+
+/* Responsive */
+
+@media (max-width: 640px) {
+  .manager-schedule-hero {
+    flex-direction: column;
+  }
+
+  .schedule-hero-actions {
+    justify-content: flex-start;
+    width: 100%;
+  }
+
+  .schedule-week-bar {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .schedule-search-box {
+    max-width: 100%;
+    width: 100%;
+  }
+}

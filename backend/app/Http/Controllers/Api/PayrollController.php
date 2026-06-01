@@ -10,6 +10,7 @@ use App\Models\User;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Support\Facades\Auth;
 
 class PayrollController extends Controller
 {
@@ -86,8 +87,97 @@ class PayrollController extends Controller
     }
 
     /**
-     * Generate payroll from attendance records for a date range
+     * Preview payroll computation without saving
      */
+    public function compute(Request $request): JsonResponse
+    {
+        $validated = $request->validate([
+            'period_start' => 'required|date',
+            'period_end' => 'required|date|after_or_equal:period_start',
+        ]);
+
+        $startDate = $validated['period_start'];
+        $endDate = $validated['period_end'];
+
+        $employees = User::whereIn('role', [
+            'manager', 'cashier', 'receptionist', 'veterinary',
+            'inventory', 'payroll', 'staff', 'groomer',
+        ])->where('is_active', true)->get();
+
+        $results = [];
+
+        foreach ($employees as $employee) {
+            $attendanceRecords = Attendance::where('user_id', $employee->id)
+                ->whereBetween('date', [$startDate, $endDate])
+                ->get();
+
+            $presentDays = $attendanceRecords->whereIn('status', ['present'])->count();
+            $lateDays = $attendanceRecords->where('status', 'late')->count();
+            $absentDays = $attendanceRecords->where('status', 'absent')->count();
+            $regularHours = $attendanceRecords->sum('total_hours');
+            $overtimeHours = $attendanceRecords->sum('overtime_hours');
+
+            $baseSalary = $employee->base_salary ?? 15000;
+            $hourlyRate = $employee->hourly_rate ?? ($baseSalary / 160);
+            $dailyRate = $baseSalary / 22;
+            $lateDeductions = $lateDays * ($dailyRate * 0.1);
+            $absentDeductions = $absentDays * $dailyRate;
+            $overtimePay = $overtimeHours * ($hourlyRate * 1.5);
+
+            // PhilHealth
+            $philhealth = min($baseSalary * 0.03, 1800) / 2;
+            // SSS (simplified table)
+            $sss = 1125;
+            foreach ([
+                [3250, 135], [3750, 157.50], [4250, 180], [4750, 202.50], [5250, 225],
+                [5750, 247.50], [6250, 270], [6750, 292.50], [7250, 315], [7750, 337.50],
+                [8250, 360], [8750, 382.50], [9250, 405], [9750, 427.50], [10250, 450],
+                [10750, 472.50], [11250, 495], [11750, 517.50], [12250, 540], [12750, 562.50],
+                [13250, 585], [13750, 607.50], [14250, 630], [14750, 652.50], [15250, 675],
+                [15750, 697.50], [16250, 720], [16750, 742.50], [17250, 765], [17750, 787.50],
+                [18250, 810], [18750, 832.50], [19250, 855], [19750, 877.50], [20250, 900],
+                [20750, 922.50], [21250, 945], [21750, 967.50], [22250, 990], [22750, 1012.50],
+                [23250, 1035], [23750, 1057.50], [24250, 1080], [24750, 1102.50],
+            ] as [$cap, $val]) {
+                if ($baseSalary <= $cap) { $sss = $val; break; }
+            }
+
+            $grossPay = $baseSalary + $overtimePay;
+            $totalDeductions = $sss + $philhealth + 100 + $lateDeductions + $absentDeductions;
+            $netPay = max(0, $grossPay - $totalDeductions);
+
+            $results[] = [
+                'user_id' => $employee->id,
+                'employee_name' => $employee->name,
+                'role' => $employee->role,
+                'department' => $employee->department ?? 'Unassigned',
+                'base_salary' => round($baseSalary, 2),
+                'hourly_rate' => round($hourlyRate, 2),
+                'present_days' => $presentDays,
+                'late_days' => $lateDays,
+                'absent_days' => $absentDays,
+                'regular_hours' => round($regularHours, 2),
+                'overtime_hours' => round($overtimeHours, 2),
+                'overtime_pay' => round($overtimePay, 2),
+                'late_deductions' => round($lateDeductions, 2),
+                'absent_deductions' => round($absentDeductions, 2),
+                'sss_contribution' => round($sss, 2),
+                'philhealth_contribution' => round($philhealth, 2),
+                'pagibig_contribution' => 100,
+                'gross_pay' => round($grossPay, 2),
+                'total_deductions' => round($totalDeductions, 2),
+                'net_pay' => round($netPay, 2),
+            ];
+        }
+
+        return response()->json([
+            'success' => true,
+            'data' => $results,
+            'period_start' => $startDate,
+            'period_end' => $endDate,
+        ]);
+    }
+
     public function generate(Request $request): JsonResponse
     {
         if ($request->has('start_date') && !$request->has('period_start')) {
@@ -175,7 +265,7 @@ class PayrollController extends Controller
                         'late_deductions' => round($lateDeductions, 2),
                         'absent_deductions' => round($absentDeductions, 2),
                         'status' => 'draft',
-                        'processed_by' => auth()->id(),
+                        'processed_by' => Auth::id(),
                         'processed_at' => now(),
                     ]
                 );
@@ -241,7 +331,7 @@ class PayrollController extends Controller
 
         $payroll->update([
             'status' => 'pending',
-            'processed_by' => auth()->id(),
+            'processed_by' => Auth::id(),
             'processed_at' => now(),
         ]);
 
@@ -289,7 +379,7 @@ class PayrollController extends Controller
             'status' => 'paid',
             'payment_date' => now(),
             'payment_method' => 'Bank Transfer', // Default, can be customized
-            'processed_by' => auth()->id(),
+            'processed_by' => Auth::id(),
             'processed_at' => now(),
         ]);
 
@@ -349,6 +439,72 @@ class PayrollController extends Controller
         return response()->json([
             'success' => true,
             'message' => 'Payroll deleted successfully.',
+        ]);
+    }
+
+    /**
+     * Create payroll record manually
+     */
+    public function store(Request $request): JsonResponse
+    {
+        $validated = $request->validate([
+            'user_id' => 'required|exists:users,id',
+            'pay_period_start' => 'required|date',
+            'pay_period_end' => 'required|date|after_or_equal:pay_period_start',
+            'base_salary' => 'required|numeric|min:0',
+            'hourly_rate' => 'nullable|numeric|min:0',
+            'working_days' => 'nullable|integer|min:0',
+            'present_days' => 'nullable|integer|min:0',
+            'absent_days' => 'nullable|integer|min:0',
+            'regular_hours' => 'nullable|numeric|min:0',
+            'overtime_hours' => 'nullable|numeric|min:0',
+            'overtime_pay' => 'nullable|numeric|min:0',
+            'regular_holiday_pay' => 'nullable|numeric|min:0',
+            'special_holiday_pay' => 'nullable|numeric|min:0',
+            'night_differential' => 'nullable|numeric|min:0',
+            'regular_holiday_ot_pay' => 'nullable|numeric|min:0',
+            'special_holiday_ot_pay' => 'nullable|numeric|min:0',
+            'bonus' => 'nullable|numeric|min:0',
+            'allowances' => 'nullable|numeric|min:0',
+            'deductions' => 'nullable|numeric|min:0',
+            'tax_deduction' => 'nullable|numeric|min:0',
+            'sss_contribution' => 'nullable|numeric|min:0',
+            'philhealth_contribution' => 'nullable|numeric|min:0',
+            'pagibig_contribution' => 'nullable|numeric|min:0',
+            'late_deductions' => 'nullable|numeric|min:0',
+            'absent_deductions' => 'nullable|numeric|min:0',
+            'gross_pay' => 'required|numeric|min:0',
+            'net_pay' => 'required|numeric|min:0',
+            'remarks' => 'nullable|string',
+        ]);
+
+        $user = User::findOrFail($validated['user_id']);
+        $periodLabel = Carbon::parse($validated['pay_period_start'])->format('M d') . ' - ' . Carbon::parse($validated['pay_period_end'])->format('M d, Y');
+
+        $payroll = Payroll::create(array_merge($validated, [
+            'pay_period_label' => $periodLabel,
+            'department' => $user->department ?? 'Unassigned',
+            'position' => $user->position ?? $user->role,
+            'status' => 'draft',
+            'processed_by' => Auth::id(),
+            'processed_at' => now(),
+        ]));
+
+        $payroll->load('user');
+
+        Notification::create([
+            'role' => 'manager',
+            'title' => 'Payroll Created',
+            'message' => 'Manual payroll created for ' . ($payroll->user->name ?? 'employee') . ' for ' . $periodLabel . '.',
+            'type' => 'success',
+            'related_type' => 'payroll',
+            'related_id' => $payroll->id,
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Payroll record created successfully.',
+            'data' => $payroll->load(['user', 'processor']),
         ]);
     }
 }

@@ -205,7 +205,7 @@
 
 .reports-summary-grid {
   display: grid;
-  grid-template-columns: repeat(4, minmax(180px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
   gap: 0.9rem;
   margin-bottom: 1.25rem;
 }
@@ -1045,4 +1045,51 @@ body[data-theme="dark"] .reports-detail-grid div {
     padding: 0 !important;
     background: #ffffff !important;
   }
+}
+
+/* Biometric panel */
+.reports-biometric-panel {
+  padding: 1rem 0;
+}
+
+.reports-biometric-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.reports-biometric-recent {
+  grid-column: 1 / -1;
+  padding: 1.25rem;
+  border: 1px solid var(--reports-border);
+  border-radius: var(--reports-radius-lg);
+  background: var(--reports-surface);
+}
+
+.reports-biometric-recent h3 {
+  margin: 0 0 0.75rem;
+  font-size: 1rem;
+  color: var(--reports-heading);
+}
+
+.reports-biometric-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.reports-biometric-table th,
+.reports-biometric-table td {
+  padding: 0.6rem 0.75rem;
+  text-align: left;
+  border-bottom: 1px solid var(--reports-border);
+  font-size: 0.85rem;
+}
+
+.reports-biometric-table th {
+  color: var(--reports-muted);
+  font-weight: 700;
+  text-transform: uppercase;
+  font-size: 0.72rem;
+  letter-spacing: 0.05em;
 }

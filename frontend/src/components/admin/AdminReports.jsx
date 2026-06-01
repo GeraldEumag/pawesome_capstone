@@ -2,7 +2,6 @@ import React, { useCallback, useEffect, useMemo, useState, Suspense, lazy } from
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
   faBox,
-  faCalendarCheck,
   faChartLine,
   faClipboardList,
   faCreditCard,
@@ -118,14 +117,6 @@ const SECTION_CONFIG = [
     icon: faMoneyBillWave,
     tableKeys: ["transactions", "payment_verifications", "orders"],
     tableTitle: "Cashier Records",
-  },
-  {
-    key: "payroll",
-    label: "Staff / Payroll",
-    endpoint: "/admin/reports/payroll",
-    icon: faCalendarCheck,
-    tableKeys: ["payrolls", "topEarners", "departmentBreakdown"],
-    tableTitle: "Payroll Records",
   },
   {
     key: "system",
@@ -689,9 +680,6 @@ const AdminReports = () => {
     const baseOptions = ["pending", "approved", "scheduled", "completed", "paid", "rejected", "cancelled"];
     if (activeSection === 'inventory') {
       return ['in_stock', 'low_stock', 'out_of_stock'];
-    }
-    if (activeSection === 'payroll') {
-      return ['draft', 'pending', 'approved', 'paid'];
     }
     return baseOptions;
   };

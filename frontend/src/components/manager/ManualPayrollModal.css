@@ -1,0 +1,412 @@
+/* ManualPayrollModal.css */
+
+.mpm-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 9000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  background: rgba(0, 0, 0, 0.45);
+  backdrop-filter: blur(6px);
+  overflow-y: auto;
+}
+
+.mpm-dialog {
+  width: 100%;
+  max-width: 960px;
+  max-height: 92vh;
+  display: flex;
+  flex-direction: column;
+  border: 1px solid rgba(255, 95, 147, 0.22);
+  border-radius: 28px;
+  background: rgba(255, 255, 255, 0.95);
+  box-shadow: 0 24px 60px rgba(15, 23, 42, 0.18);
+  overflow: hidden;
+  animation: mpmFadeIn 0.22s ease;
+}
+
+@keyframes mpmFadeIn {
+  from { opacity: 0; transform: translateY(14px) scale(0.985); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+/* Header */
+
+.mpm-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 1.15rem 1.5rem 0.6rem;
+  border-bottom: 1px solid rgba(255, 95, 147, 0.14);
+}
+
+.mpm-eyebrow {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.25rem 0.65rem;
+  border-radius: 999px;
+  background: rgba(255, 95, 147, 0.1);
+  color: #ff5f93;
+  font-size: 0.68rem;
+  font-weight: 950;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.mpm-header h2 {
+  margin: 0.35rem 0 0;
+  color: #191919;
+  font-size: 1.35rem;
+  font-weight: 950;
+}
+
+.mpm-close {
+  width: 36px;
+  height: 36px;
+  display: grid;
+  place-items: center;
+  border: none;
+  border-radius: 10px;
+  background: #f1f5f9;
+  color: #64748b;
+  cursor: pointer;
+  transition: 0.15s ease;
+  flex-shrink: 0;
+}
+
+.mpm-close:hover {
+  background: #fee2e2;
+  color: #ef4444;
+}
+
+/* Alert */
+
+.mpm-alert {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  margin: 0.75rem 1.5rem 0;
+  padding: 0.65rem 0.9rem;
+  border-radius: 12px;
+  background: #fee2e2;
+  color: #991b1b;
+  font-size: 0.88rem;
+  font-weight: 750;
+}
+
+.mpm-alert svg { font-size: 0.95rem; }
+
+/* Body */
+
+.mpm-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 1.1rem 1.5rem;
+}
+
+/* Top row */
+
+.mpm-row.top {
+  display: grid;
+  grid-template-columns: 2fr 1fr 1fr;
+  gap: 0.75rem;
+  margin-bottom: 0.75rem;
+}
+
+.mpm-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+
+.mpm-field > span {
+  font-size: 0.72rem;
+  font-weight: 800;
+  color: #64748b;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.mpm-field input,
+.mpm-field select,
+.mpm-field textarea {
+  min-height: 40px;
+  padding: 0 0.65rem;
+  border: 1px solid rgba(255, 95, 147, 0.22);
+  border-radius: 12px;
+  background: #ffffff;
+  color: #1f2937;
+  font-size: 0.92rem;
+  font-weight: 700;
+  font-family: inherit;
+  outline: none;
+  transition: 0.15s ease;
+}
+
+.mpm-field textarea {
+  min-height: unset;
+  padding: 0.5rem 0.65rem;
+  resize: vertical;
+}
+
+.mpm-field input:focus,
+.mpm-field select:focus,
+.mpm-field textarea:focus {
+  border-color: #ff5f93;
+  box-shadow: 0 0 0 3px rgba(255, 95, 147, 0.14);
+}
+
+.mpm-select-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.mpm-select-wrap svg {
+  position: absolute;
+  left: 0.65rem;
+  color: #ff5f93;
+  font-size: 0.85rem;
+  pointer-events: none;
+}
+
+.mpm-select-wrap select {
+  width: 100%;
+  padding-left: 2rem;
+  appearance: none;
+  cursor: pointer;
+}
+
+.mpm-number-wrap {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0 0.55rem;
+  border: 1px solid rgba(255, 95, 147, 0.22);
+  border-radius: 12px;
+  background: #ffffff;
+  transition: 0.15s ease;
+}
+
+.mpm-number-wrap:focus-within {
+  border-color: #ff5f93;
+  box-shadow: 0 0 0 3px rgba(255, 95, 147, 0.14);
+}
+
+.mpm-number-wrap small {
+  color: #64748b;
+  font-weight: 800;
+  font-size: 0.85rem;
+}
+
+.mpm-number-wrap input {
+  flex: 1;
+  min-height: 38px;
+  border: none;
+  background: transparent;
+  outline: none;
+  font-size: 0.92rem;
+  font-weight: 700;
+  text-align: right;
+  color: #1f2937;
+  padding: 0 0.3rem;
+}
+
+/* Employee card */
+
+.mpm-employee-card {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  padding: 0.55rem 0.85rem;
+  margin-bottom: 1rem;
+  border-radius: 12px;
+  background: rgba(255, 95, 147, 0.07);
+  border: 1px solid rgba(255, 95, 147, 0.14);
+}
+
+.mpm-employee-card strong {
+  color: #191919;
+  font-size: 0.92rem;
+  font-weight: 800;
+}
+
+.mpm-employee-card small {
+  color: #64748b;
+  font-size: 0.78rem;
+  font-weight: 700;
+}
+
+/* Grid */
+
+.mpm-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.25rem;
+  margin-bottom: 1rem;
+}
+
+.mpm-col {
+  border: 1px solid rgba(255, 95, 147, 0.14);
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.8);
+  overflow: hidden;
+}
+
+.mpm-col-header {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  padding: 0.75rem 1rem;
+  background: rgba(255, 95, 147, 0.07);
+  border-bottom: 1px solid rgba(255, 95, 147, 0.12);
+}
+
+.mpm-col-header svg {
+  width: 24px;
+  height: 24px;
+  display: grid;
+  place-items: center;
+  border-radius: 8px;
+  background: rgba(255, 95, 147, 0.15);
+  color: #ff5f93;
+  font-size: 0.75rem;
+  padding: 0.35rem;
+}
+
+.mpm-col-header h3 {
+  margin: 0;
+  font-size: 0.92rem;
+  font-weight: 800;
+  color: #191919;
+}
+
+.mpm-fields {
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+  padding: 0.85rem 1rem;
+}
+
+.mpm-row-inner {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.55rem;
+}
+
+/* Totals */
+
+.mpm-totals {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+}
+
+.mpm-total-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.25rem;
+  padding: 0.85rem;
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.9);
+  border: 1px solid rgba(255, 95, 147, 0.14);
+  text-align: center;
+}
+
+.mpm-total-card small {
+  font-size: 0.7rem;
+  font-weight: 800;
+  color: #64748b;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.mpm-total-card strong {
+  font-size: 1.15rem;
+  font-weight: 950;
+  color: #191919;
+}
+
+.mpm-total-card strong.ded { color: #ef4444; }
+
+.mpm-total-card.net {
+  background: rgba(16, 185, 129, 0.08);
+  border-color: rgba(16, 185, 129, 0.25);
+}
+
+.mpm-total-card.net strong { color: #047857; }
+
+/* Footer */
+
+.mpm-footer {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.65rem;
+  padding: 0.85rem 1.5rem;
+  border-top: 1px solid rgba(255, 95, 147, 0.14);
+  background: rgba(255, 255, 255, 0.7);
+}
+
+.mpm-btn {
+  min-height: 42px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0 1.1rem;
+  border: none;
+  border-radius: 999px;
+  font: inherit;
+  font-size: 0.9rem;
+  font-weight: 750;
+  cursor: pointer;
+  transition: 0.18s ease;
+}
+
+.mpm-btn.secondary {
+  background: #f1f5f9;
+  color: #64748b;
+}
+
+.mpm-btn.secondary:hover { background: #e2e8f0; }
+
+.mpm-btn.primary {
+  background: #ff5f93;
+  color: #ffffff;
+  box-shadow: 0 12px 30px rgba(255, 95, 147, 0.24);
+}
+
+.mpm-btn.primary:hover { transform: translateY(-2px); }
+
+.mpm-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none !important;
+}
+
+/* Responsive */
+
+@media (max-width: 800px) {
+  .mpm-grid {
+    grid-template-columns: 1fr;
+  }
+  .mpm-row.top {
+    grid-template-columns: 1fr;
+  }
+  .mpm-totals {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 480px) {
+  .mpm-row-inner {
+    grid-template-columns: 1fr;
+  }
+}

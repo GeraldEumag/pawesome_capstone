@@ -109,8 +109,6 @@ const NotificationDropdown = ({ role }) => {
     }
 
     if (role === "admin") {
-      if (relatedType.includes("payroll")) return "/admin/payroll";
-      if (relatedType.includes("salary")) return "/admin/payroll/salaries";
       if (relatedType.includes("payment")) return "/admin/reports/payments";
       if (relatedType.includes("order")) return "/admin/reports/orders";
       if (relatedType.includes("service") || relatedType.includes("booking")) return "/admin/reports/service-requests";

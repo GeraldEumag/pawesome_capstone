@@ -3,7 +3,9 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import DatePickerInput from "../../components/shared/DatePickerInput";
 import {
   faCalendarAlt,
+  faCalendarDays,
   faCheckCircle,
+  faCheckSquare,
   faChevronDown,
   faChevronLeft,
   faChevronRight,
@@ -13,11 +15,16 @@ import {
   faEye,
   faFilter,
   faHourglassHalf,
+  faList,
   faPenToSquare,
   faPrint,
   faRefresh,
   faSearch,
   faSpinner,
+  faSquare,
+  faThumbsDown,
+  faThumbsUp,
+  faThList,
   faTriangleExclamation,
   faUserCheck,
   faUserClock,
@@ -262,6 +269,12 @@ const ManagerAttendance = () => {
   const [showDetailsModal, setShowDetailsModal] = useState(false);
   const [showRemarksModal, setShowRemarksModal] = useState(false);
   const [remarksForm, setRemarksForm] = useState(DEFAULT_REMARKS_FORM);
+  const [selectedIds, setSelectedIds] = useState(new Set());
+  const [viewMode, setViewMode] = useState("list");
+  const [calendarMonth, setCalendarMonth] = useState(() => {
+    const d = new Date();
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+  });
 
   const showToast = useCallback((message, type = "info") => {
     setToast({ message, type });
@@ -545,40 +558,105 @@ const ManagerAttendance = () => {
     }
   };
 
-  const handleMarkReviewed = async (record) => {
+  const handleReviewAction = async (record, action) => {
     setActionLoadingId(record.id);
 
     try {
       await apiRequest(`/manager/attendance/${record.id}/review`, {
         method: "POST",
         body: JSON.stringify({
-          review_status: "reviewed",
+          review_status: action === "approve" ? "reviewed" : "rejected",
         }),
       });
 
       setAttendance((prev) =>
         prev.map((item) =>
-          item.id === record.id ? { ...item, reviewStatus: "reviewed" } : item
-        )
-      );
-
-      showToast("Attendance record marked as reviewed.", "success");
-    } catch (err) {
-      console.error("Mark reviewed error:", err);
-
-      setAttendance((prev) =>
-        prev.map((item) =>
-          item.id === record.id ? { ...item, reviewStatus: "reviewed" } : item
+          item.id === record.id
+            ? { ...item, reviewStatus: action === "approve" ? "reviewed" : "rejected" }
+            : item
         )
       );
 
       showToast(
-        "Marked as reviewed on-screen. Backend review endpoint still needs verification.",
+        `Attendance record ${action === "approve" ? "approved" : "rejected"}.`,
+        "success"
+      );
+    } catch (err) {
+      console.error(`Review ${action} error:`, err);
+
+      setAttendance((prev) =>
+        prev.map((item) =>
+          item.id === record.id
+            ? { ...item, reviewStatus: action === "approve" ? "reviewed" : "rejected" }
+            : item
+        )
+      );
+
+      showToast(
+        `${action === "approve" ? "Approved" : "Rejected"} on-screen. Backend endpoint may need verification.`,
         "warning"
       );
     } finally {
       setActionLoadingId(null);
     }
+  };
+
+  const toggleSelect = (id) => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
+
+  const toggleSelectAll = () => {
+    const pageIds = new Set(paginatedAttendance.map((r) => r.id));
+    const allSelected = pageIds.size > 0 && [...pageIds].every((id) => selectedIds.has(id));
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (allSelected) {
+        pageIds.forEach((id) => next.delete(id));
+      } else {
+        pageIds.forEach((id) => next.add(id));
+      }
+      return next;
+    });
+  };
+
+  const clearSelection = () => setSelectedIds(new Set());
+
+  const handleBulkAction = async (action) => {
+    if (selectedIds.size === 0) return;
+    const ids = [...selectedIds];
+    let succeeded = 0;
+    let failed = 0;
+
+    for (const id of ids) {
+      try {
+        await apiRequest(`/manager/attendance/${id}/review`, {
+          method: "POST",
+          body: JSON.stringify({ review_status: action === "approve" ? "reviewed" : "rejected" }),
+        });
+        succeeded++;
+      } catch {
+        failed++;
+      }
+    }
+
+    setAttendance((prev) =>
+      prev.map((item) =>
+        selectedIds.has(item.id)
+          ? { ...item, reviewStatus: action === "approve" ? "reviewed" : "rejected" }
+          : item
+      )
+    );
+
+    setSelectedIds(new Set());
+    showToast(
+      `${action === "approve" ? "Approved" : "Rejected"} ${succeeded} records${failed > 0 ? `, ${failed} failed` : ""}.`,
+      failed > 0 ? "warning" : "success"
+    );
   };
 
   const exportToCSV = () => {
@@ -678,6 +756,29 @@ const ManagerAttendance = () => {
           </button>
         </div>
       </section>
+
+      {selectedIds.size > 0 && (
+        <section className="attendance-bulk-bar">
+          <span>
+            <FontAwesomeIcon icon={faCheckSquare} />
+            <strong>{selectedIds.size}</strong> selected
+          </span>
+          <div>
+            <button type="button" className="attendance-btn success" onClick={() => handleBulkAction("approve")}>
+              <FontAwesomeIcon icon={faThumbsUp} />
+              Approve Selected
+            </button>
+            <button type="button" className="attendance-btn danger" onClick={() => handleBulkAction("reject")}>
+              <FontAwesomeIcon icon={faThumbsDown} />
+              Reject Selected
+            </button>
+            <button type="button" className="attendance-btn secondary" onClick={clearSelection}>
+              <FontAwesomeIcon icon={faXmark} />
+              Clear
+            </button>
+          </div>
+        </section>
+      )}
 
       {error && (
         <div className="attendance-alert error">
@@ -853,7 +954,28 @@ const ManagerAttendance = () => {
         <div className="attendance-table-header">
           <div>
             <span className="attendance-eyebrow">Attendance Records</span>
-            <h2>Daily Attendance List</h2>
+            <h2>{viewMode === "list" ? "Daily Attendance List" : "Calendar View"}</h2>
+          </div>
+
+          <div className="attendance-view-toggle">
+            <button
+              type="button"
+              className={viewMode === "list" ? "active" : ""}
+              onClick={() => setViewMode("list")}
+              title="List view"
+            >
+              <FontAwesomeIcon icon={faList} />
+              List
+            </button>
+            <button
+              type="button"
+              className={viewMode === "calendar" ? "active" : ""}
+              onClick={() => setViewMode("calendar")}
+              title="Calendar view"
+            >
+              <FontAwesomeIcon icon={faCalendarDays} />
+              Calendar
+            </button>
           </div>
 
           <div className="attendance-page-size">
@@ -880,12 +1002,37 @@ const ManagerAttendance = () => {
             <h3>Loading attendance records</h3>
             <p>Please wait while attendance data is being loaded.</p>
           </div>
+        ) : viewMode === "calendar" ? (
+          <CalendarView
+            records={filteredAttendance}
+            month={calendarMonth}
+            onMonthChange={setCalendarMonth}
+            selectedIds={selectedIds}
+            onToggleSelect={toggleSelect}
+          />
         ) : (
           <>
             <div className="attendance-table-scroll">
               <table className="attendance-table">
                 <thead>
                   <tr>
+                    <th>
+                      <button
+                        type="button"
+                        className="attendance-select-all"
+                        onClick={toggleSelectAll}
+                        title="Select all on page"
+                      >
+                        <FontAwesomeIcon
+                          icon={
+                            paginatedAttendance.length > 0 &&
+                            paginatedAttendance.every((r) => selectedIds.has(r.id))
+                              ? faCheckSquare
+                              : faSquare
+                          }
+                        />
+                      </button>
+                    </th>
                     <SortableHeader label="Employee" field="name" sortBy={sortBy} sortOrder={sortOrder} onSort={handleSort} />
                     <SortableHeader label="Role" field="role" sortBy={sortBy} sortOrder={sortOrder} onSort={handleSort} />
                     <SortableHeader label="Department" field="department" sortBy={sortBy} sortOrder={sortOrder} onSort={handleSort} />
@@ -903,7 +1050,19 @@ const ManagerAttendance = () => {
 
                 <tbody>
                   {paginatedAttendance.map((record) => (
-                    <tr key={record.id}>
+                    <tr key={record.id} className={selectedIds.has(record.id) ? "selected" : ""}>
+                      <td>
+                        <button
+                          type="button"
+                          className="attendance-select-row"
+                          onClick={() => toggleSelect(record.id)}
+                        >
+                          <FontAwesomeIcon
+                            icon={selectedIds.has(record.id) ? faCheckSquare : faSquare}
+                          />
+                        </button>
+                      </td>
+
                       <td>
                         <div className="attendance-employee-cell">
                           <span>{record.name.charAt(0).toUpperCase()}</span>
@@ -978,18 +1137,38 @@ const ManagerAttendance = () => {
                           <button
                             type="button"
                             className="review"
-                            title="Mark as reviewed"
+                            title="Approve"
                             disabled={
                               actionLoadingId === record.id ||
                               record.reviewStatus === "reviewed"
                             }
-                            onClick={() => handleMarkReviewed(record)}
+                            onClick={() => handleReviewAction(record, "approve")}
                           >
                             <FontAwesomeIcon
                               icon={
                                 actionLoadingId === record.id
                                   ? faSpinner
-                                  : faCheckCircle
+                                  : faThumbsUp
+                              }
+                              spin={actionLoadingId === record.id}
+                            />
+                          </button>
+
+                          <button
+                            type="button"
+                            className="reject"
+                            title="Reject"
+                            disabled={
+                              actionLoadingId === record.id ||
+                              record.reviewStatus === "rejected"
+                            }
+                            onClick={() => handleReviewAction(record, "reject")}
+                          >
+                            <FontAwesomeIcon
+                              icon={
+                                actionLoadingId === record.id
+                                  ? faSpinner
+                                  : faThumbsDown
                               }
                               spin={actionLoadingId === record.id}
                             />
@@ -999,6 +1178,31 @@ const ManagerAttendance = () => {
                     </tr>
                   ))}
                 </tbody>
+
+                {paginatedAttendance.length > 0 && (
+                  <tfoot>
+                    <tr className="attendance-summary-row">
+                      <td colSpan={7}>
+                        <strong>Page Totals</strong>
+                      </td>
+                      <td>
+                        <strong>
+                          {formatHours(
+                            paginatedAttendance.reduce((sum, r) => sum + toHours(r.overtime), 0)
+                          )}
+                        </strong>
+                      </td>
+                      <td>
+                        <strong>
+                          {formatHours(
+                            paginatedAttendance.reduce((sum, r) => sum + toHours(r.undertime), 0)
+                          )}
+                        </strong>
+                      </td>
+                      <td colSpan={4} />
+                    </tr>
+                  </tfoot>
+                )}
               </table>
             </div>
 
@@ -1087,6 +1291,107 @@ const ManagerAttendance = () => {
             icon={toast.type === "error" ? faTriangleExclamation : faCheckCircle}
           />
           <span>{toast.message}</span>
+        </div>
+      )}
+    </div>
+  );
+};
+
+const STATUS_DOT_COLORS = {
+  present: "#10b981",
+  late: "#f59e0b",
+  absent: "#ef4444",
+  half_day: "#3b82f6",
+  on_leave: "#8b5cf6",
+  default: "#64748b",
+};
+
+const CalendarView = ({ records, month, onMonthChange, selectedIds, onToggleSelect }) => {
+  const [year, mon] = month.split("-").map(Number);
+  const firstDay = new Date(year, mon - 1, 1);
+  const lastDay = new Date(year, mon, 0);
+  const daysInMonth = lastDay.getDate();
+  const startWeekday = firstDay.getDay();
+
+  const byDate = useMemo(() => {
+    const map = {};
+    records.forEach((r) => {
+      const d = String(r.date).split("T")[0];
+      if (!map[d]) map[d] = [];
+      map[d].push(r);
+    });
+    return map;
+  }, [records]);
+
+  const prevMonth = () => {
+    const d = new Date(year, mon - 2, 1);
+    onMonthChange(`${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`);
+  };
+  const nextMonth = () => {
+    const d = new Date(year, mon, 1);
+    onMonthChange(`${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`);
+  };
+
+  const dayNames = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+  const cells = [];
+  for (let i = 0; i < startWeekday; i++) cells.push(null);
+  for (let day = 1; day <= daysInMonth; day++) cells.push(day);
+
+  return (
+    <div className="attendance-calendar">
+      <div className="attendance-calendar-header">
+        <button type="button" onClick={prevMonth}>
+          <FontAwesomeIcon icon={faChevronLeft} />
+        </button>
+        <strong>
+          {firstDay.toLocaleDateString("en-PH", { month: "long", year: "numeric" })}
+        </strong>
+        <button type="button" onClick={nextMonth}>
+          <FontAwesomeIcon icon={faChevronRight} />
+        </button>
+      </div>
+
+      <div className="attendance-calendar-grid">
+        {dayNames.map((d) => (
+          <div key={d} className="attendance-calendar-dayname">
+            {d}
+          </div>
+        ))}
+
+        {cells.map((day, idx) => {
+          if (!day) return <div key={idx} className="attendance-calendar-cell empty" />;
+          const dateKey = `${year}-${String(mon).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
+          const dayRecords = byDate[dateKey] || [];
+          return (
+            <div key={idx} className="attendance-calendar-cell">
+              <span className="attendance-calendar-date">{day}</span>
+              <div className="attendance-calendar-dots">
+                {dayRecords.slice(0, 5).map((r) => (
+                  <button
+                    key={r.id}
+                    type="button"
+                    className={selectedIds.has(r.id) ? "selected" : ""}
+                    style={{
+                      backgroundColor: STATUS_DOT_COLORS[r.status] || STATUS_DOT_COLORS.default,
+                    }}
+                    title={`${r.name} — ${formatStatus(r.status)}`}
+                    onClick={() => onToggleSelect(r.id)}
+                  />
+                ))}
+                {dayRecords.length > 5 && (
+                  <small>+{dayRecords.length - 5}</small>
+                )}
+              </div>
+            </div>
+          );
+        })}
+      </div>
+
+      {records.length === 0 && (
+        <div className="attendance-empty-state">
+          <FontAwesomeIcon icon={faCalendarAlt} />
+          <h3>No records for this month</h3>
+          <p>Try a different month or adjust filters.</p>
         </div>
       )}
     </div>

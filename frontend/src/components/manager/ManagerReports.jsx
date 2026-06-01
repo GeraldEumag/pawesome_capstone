@@ -2,11 +2,14 @@ import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
   faCalendarAlt,
+  faCalendarCheck,
+  faCalendarDay,
   faChartLine,
   faCheckCircle,
   faClock,
   faEye,
   faFileInvoiceDollar,
+  faFingerprint,
   faMoneyBillWave,
   faTriangleExclamation,
   faUserCheck,
@@ -228,10 +231,44 @@ const getMonthKey = (dateValue) => {
   });
 };
 
+const normalizeLeave = (record, index) => ({
+  id: record.id || `leave-${index}`,
+  employeeName: record.employee_name || record.user?.name || "Unknown",
+  employeeId: record.user_id || record.employee_id || "N/A",
+  department: record.employee_role || record.user?.department || "Unassigned",
+  role: record.employee_role || record.user?.role || "Staff",
+  type: record.type || "leave",
+  startDate: record.start_date,
+  endDate: record.end_date,
+  days: safeNumber(record.days || 0),
+  reason: record.reason || "",
+  status: normalizeStatus(record.status),
+  managerRemarks: record.manager_remarks || "",
+  reviewedBy: record.reviewed_by_name || "",
+  reviewedAt: record.reviewed_at,
+  createdAt: record.created_at,
+});
+
+const normalizeSchedule = (record, index) => ({
+  id: record.id || `schedule-${index}`,
+  employeeName: record.employee_name || record.user?.name || "Unknown",
+  employeeId: record.user_id || record.employee_id || "N/A",
+  department: record.employee_department || record.user?.department || "Unassigned",
+  role: record.employee_role || record.user?.role || "Staff",
+  dayOfWeek: record.day_of_week || record.day || "",
+  shiftStart: record.shift_start || "",
+  shiftEnd: record.shift_end || "",
+  isOffDay: !!record.is_off_day,
+  createdAt: record.created_at,
+});
+
 const TAB_CONFIG = [
   { key: 'summary', label: 'Summary', icon: faChartLine },
   { key: 'attendance', label: 'Attendance', icon: faCalendarAlt },
   { key: 'payroll', label: 'Payroll', icon: faMoneyBillWave },
+  { key: 'leave', label: 'Leave', icon: faCalendarCheck },
+  { key: 'schedule', label: 'Schedule', icon: faCalendarDay },
+  { key: 'biometric', label: 'Biometric', icon: faFingerprint },
   { key: 'staff', label: 'Staff', icon: faUsers },
 ];
 
@@ -242,6 +279,9 @@ const ManagerReports = () => {
   const [attendance, setAttendance] = useState([]);
   const [payroll, setPayroll] = useState([]);
   const [staff, setStaff] = useState([]);
+  const [leaves, setLeaves] = useState([]);
+  const [schedules, setSchedules] = useState([]);
+  const [biometricSummary, setBiometricSummary] = useState(null);
   const [liveSummary, setLiveSummary] = useState({});
   const [departments, setDepartments] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -273,15 +313,17 @@ const ManagerReports = () => {
           attendanceReportResponse,
           payrollReportResponse,
           staffResponse,
-          attendanceFallbackResponse,
-          payrollFallbackResponse,
+          leavesResponse,
+          schedulesResponse,
+          biometricResponse,
         ] = await Promise.all([
           apiRequest("/manager/reports/live").catch(() => null),
           apiRequest("/manager/reports/attendance").catch(() => null),
           apiRequest("/manager/reports/payroll").catch(() => null),
           apiRequest("/manager/staff").catch(() => null),
-          apiRequest("/manager/attendance").catch(() => null),
-          apiRequest("/manager/payroll").catch(() => null),
+          apiRequest("/manager/leaves").catch(() => null),
+          apiRequest("/manager/schedules").catch(() => null),
+          apiRequest("/manager/biometric/today-summary").catch(() => null),
         ]);
 
         const liveData = liveResponse?.data || liveResponse || {};
@@ -302,37 +344,28 @@ const ManagerReports = () => {
         ]);
 
         const staffList = normalizeList(staffResponse, ["staff", "users", "employees", "data"]);
-
-        const attendanceFallback = normalizeList(attendanceFallbackResponse, [
-          "attendance",
-          "records",
-          "items",
-        ]);
-
-        const payrollFallback = normalizeList(payrollFallbackResponse, [
-          "payroll",
-          "records",
-          "items",
-        ]);
-
-        const attendanceSource =
-          attendanceReport.length > 0 ? attendanceReport : attendanceFallback;
-
-        const payrollSource = payrollReport.length > 0 ? payrollReport : payrollFallback;
+        const leavesList = normalizeList(leavesResponse, ["leaves", "requests", "data"]);
+        const schedulesList = normalizeList(schedulesResponse, ["schedules", "data"]);
+        const biometricData = biometricResponse?.data || biometricResponse || null;
 
         setLiveSummary(summary);
-        setAttendance(attendanceSource.map(normalizeAttendance));
-        setPayroll(payrollSource.map(normalizePayroll));
+        setAttendance(attendanceReport.map(normalizeAttendance));
+        setPayroll(payrollReport.map(normalizePayroll));
         setStaff(staffList.map(normalizeStaff));
+        setLeaves(leavesList.map(normalizeLeave));
+        setSchedules(schedulesList.map(normalizeSchedule));
+        setBiometricSummary(biometricData);
 
         if (
           !liveResponse &&
-          attendanceSource.length === 0 &&
-          payrollSource.length === 0 &&
-          staffList.length === 0
+          attendanceReport.length === 0 &&
+          payrollReport.length === 0 &&
+          staffList.length === 0 &&
+          leavesList.length === 0 &&
+          schedulesList.length === 0
         ) {
           setError(
-            "No manager report data is available yet. Please verify the manager report, attendance, payroll, and staff endpoints."
+            "No manager report data is available yet. Please verify the manager report endpoints."
           );
         }
       } catch (err) {
@@ -341,6 +374,9 @@ const ManagerReports = () => {
         setAttendance([]);
         setPayroll([]);
         setStaff([]);
+        setLeaves([]);
+        setSchedules([]);
+        setBiometricSummary(null);
       } finally {
         setLoading(false);
         setRefreshing(false);
@@ -364,16 +400,19 @@ const ManagerReports = () => {
         ? attendance.map((item) => item.status)
         : activeTab === "payroll"
           ? payroll.map((item) => item.status)
-          : activeTab === "staff"
-            ? staff.map((item) => item.status)
-            : [
-                ...attendance.map((item) => item.status),
-                ...payroll.map((item) => item.status),
-                ...staff.map((item) => item.status),
-              ];
+          : activeTab === "leave"
+            ? leaves.map((item) => item.status)
+            : activeTab === "staff"
+              ? staff.map((item) => item.status)
+              : [
+                  ...attendance.map((item) => item.status),
+                  ...payroll.map((item) => item.status),
+                  ...leaves.map((item) => item.status),
+                  ...staff.map((item) => item.status),
+                ];
 
     return [...new Set(source)].filter(Boolean).sort();
-  }, [activeTab, attendance, payroll, staff]);
+  }, [activeTab, attendance, payroll, leaves, staff]);
 
   const filteredAttendance = useMemo(() => {
     const search = searchTerm.trim().toLowerCase();
@@ -449,6 +488,36 @@ const ManagerReports = () => {
     });
   }, [departmentFilter, searchTerm, staff, statusFilter]);
 
+  const filteredLeaves = useMemo(() => {
+    const search = searchTerm.trim().toLowerCase();
+    return leaves.filter((record) => {
+      const matchesSearch =
+        !search ||
+        [record.employeeName, record.employeeId, record.department, record.role, record.type, record.reason, record.status]
+          .join(" ")
+          .toLowerCase()
+          .includes(search);
+      const matchesStatus = statusFilter === "all" || record.status === statusFilter;
+      const matchesDepartment = departmentFilter === "all" || record.department === departmentFilter;
+      const matchesDate = isWithinDateRange(record.startDate, startDate, endDate);
+      return matchesSearch && matchesStatus && matchesDepartment && matchesDate;
+    });
+  }, [departmentFilter, endDate, leaves, searchTerm, startDate, statusFilter]);
+
+  const filteredSchedules = useMemo(() => {
+    const search = searchTerm.trim().toLowerCase();
+    return schedules.filter((record) => {
+      const matchesSearch =
+        !search ||
+        [record.employeeName, record.employeeId, record.department, record.role, record.dayOfWeek]
+          .join(" ")
+          .toLowerCase()
+          .includes(search);
+      const matchesDepartment = departmentFilter === "all" || record.department === departmentFilter;
+      return matchesSearch && matchesDepartment;
+    });
+  }, [departmentFilter, schedules, searchTerm]);
+
   // Filter functions
   const filterData = (data, filters) => {
     const search = filters.searchTerm?.trim().toLowerCase() || '';
@@ -486,13 +555,15 @@ const ManagerReports = () => {
     switch (activeTab) {
       case 'attendance': return filterData(attendance, filters);
       case 'payroll': return filterData(payroll, filters);
+      case 'leave': return filterData(leaves, filters);
+      case 'schedule': return filterData(schedules, filters);
       case 'staff': return filterData(staff, filters);
       default: {
         const all = [...attendance, ...payroll, ...staff];
         return filterData(all, filters);
       }
     }
-  }, [activeTab, attendance, payroll, staff]);
+  }, [activeTab, attendance, payroll, leaves, schedules, staff]);
 
   // Calculate summary stats
   const summary = useMemo(() => {
@@ -508,6 +579,8 @@ const ManagerReports = () => {
     ).length;
 
     const activeStaffCount = staff.filter((item) => item.status === "active").length;
+    const pendingLeaves = leaves.filter((item) => item.status === "pending").length;
+    const biometricPunches = biometricSummary?.total_punches ?? biometricSummary?.check_ins ?? 0;
 
     return {
       totalAttendance: attendance.length,
@@ -521,10 +594,14 @@ const ManagerReports = () => {
       pendingPayroll,
       totalStaff: staff.length,
       activeStaff: activeStaffCount,
+      totalLeaves: leaves.length,
+      pendingLeaves,
+      totalSchedules: schedules.length,
+      biometricPunches,
       liveTotalStaff: liveSummary.total_staff || liveSummary.total_employees || staff.length,
       liveMonthlyRevenue: liveSummary.monthly_revenue || liveSummary.total_revenue || 0,
     };
-  }, [attendance, payroll, staff, liveSummary]);
+  }, [attendance, payroll, staff, leaves, schedules, biometricSummary, liveSummary]);
 
   const attendanceStatusChart = useMemo(() => {
     const counts = {};
@@ -632,6 +709,28 @@ const ManagerReports = () => {
         { key: "status", label: "Status" },
       ];
     }
+    if (activeTab === "leave") {
+      return [
+        { key: "employeeName", label: "Employee" },
+        { key: "department", label: "Department" },
+        { key: "type", label: "Type" },
+        { key: "startDate", label: "From" },
+        { key: "endDate", label: "To" },
+        { key: "days", label: "Days" },
+        { key: "status", label: "Status" },
+        { key: "reason", label: "Reason" },
+      ];
+    }
+    if (activeTab === "schedule") {
+      return [
+        { key: "employeeName", label: "Employee" },
+        { key: "department", label: "Department" },
+        { key: "dayOfWeek", label: "Day" },
+        { key: "shiftStart", label: "Start" },
+        { key: "shiftEnd", label: "End" },
+        { key: "isOffDay", label: "Off Day" },
+      ];
+    }
     if (activeTab === "staff") {
       return [
         { key: "name", label: "Name" },
@@ -658,10 +757,14 @@ const ManagerReports = () => {
   };
 
   const handleExport = (type) => {
+    if (activeTab === "biometric") {
+      showToast("warning", "Biometric report does not support tabular export.");
+      return;
+    }
     const dataset = getActiveDataset();
 
     if (dataset.length === 0) {
-      showToast("There is no report data to export.", "warning");
+      showToast("warning", "There is no report data to export.");
       return;
     }
 
@@ -677,10 +780,10 @@ const ManagerReports = () => {
       } else if (type === "excel") {
         exportToExcel(dataset, columns, filename);
       }
-      showToast(`${title} exported as ${type.toUpperCase()} successfully.`, "success");
+      showToast("success", `${title} exported as ${type.toUpperCase()} successfully.`);
     } catch (err) {
       console.error("Export failed:", err);
-      showToast(`Failed to export ${type.toUpperCase()} report.`, "error");
+      showToast("error", `Failed to export ${type.toUpperCase()} report.`);
     }
   };
 
@@ -779,6 +882,44 @@ const ManagerReports = () => {
             </ResponsiveContainer>
           )}
         </ChartCard>
+
+        <ChartCard title="Department Attendance Breakdown" wide>
+          {filteredAttendance.length === 0 ? (
+            <ChartEmpty message="No department attendance data available." />
+          ) : (
+            <ResponsiveContainer width="100%" height={320}>
+              <BarChart data={Object.entries(filteredAttendance.reduce((acc, item) => {
+                acc[item.department] = (acc[item.department] || 0) + 1;
+                return acc;
+              }, {})).map(([dept, count]) => ({ department: dept, count }))}>
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis dataKey="department" />
+                <YAxis />
+                <Tooltip />
+                <Bar dataKey="count" name="Records" fill="#3b82f6" radius={[12, 12, 0, 0]} />
+              </BarChart>
+            </ResponsiveContainer>
+          )}
+        </ChartCard>
+
+        <ChartCard title="Department Payroll Distribution" wide>
+          {filteredPayroll.length === 0 ? (
+            <ChartEmpty message="No department payroll data available." />
+          ) : (
+            <ResponsiveContainer width="100%" height={320}>
+              <BarChart data={Object.entries(filteredPayroll.reduce((acc, item) => {
+                acc[item.department] = (acc[item.department] || 0) + item.netPay;
+                return acc;
+              }, {})).map(([dept, total]) => ({ department: dept, total }))}>
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis dataKey="department" />
+                <YAxis />
+                <Tooltip formatter={(value) => formatCurrency(value)} />
+                <Bar dataKey="total" name="Net Pay" fill="#14b8a6" radius={[12, 12, 0, 0]} />
+              </BarChart>
+            </ResponsiveContainer>
+          )}
+        </ChartCard>
       </section>
     </>
   );
@@ -828,6 +969,10 @@ const ManagerReports = () => {
     { key: "department", label: "Department", sortable: true },
     { key: "period", label: "Period", sortable: true },
     { key: "attendanceDays", label: "Attendance Days", sortable: true },
+    { key: "overtimePay", label: "OT Pay", sortable: true, format: "currency" },
+    { key: "regularHolidayPay", label: "Reg. Holiday", sortable: true, format: "currency" },
+    { key: "specialHolidayPay", label: "Spl. Holiday", sortable: true, format: "currency" },
+    { key: "nightDifferential", label: "Night Diff.", sortable: true, format: "currency" },
     { key: "grossPay", label: "Gross Pay", sortable: true, format: "currency" },
     { key: "deductions", label: "Deductions", sortable: true, format: "currency" },
     { key: "netPay", label: "Net Pay", sortable: true, render: (value) => <strong>{formatCurrency(value)}</strong> },
@@ -887,12 +1032,84 @@ const ManagerReports = () => {
     />
   );
 
+  const leaveColumns = [
+    { key: "employeeName", label: "Employee", sortable: true, render: (value, record) => (
+      <div><strong>{value}</strong><small style={{ display: "block", color: "#64748b" }}>{record.employeeId}</small></div>
+    )},
+    { key: "department", label: "Department", sortable: true },
+    { key: "type", label: "Type", sortable: true },
+    { key: "startDate", label: "From", sortable: true, render: (value) => formatDate(value) },
+    { key: "endDate", label: "To", sortable: true, render: (value) => formatDate(value) },
+    { key: "days", label: "Days", sortable: true },
+    { key: "status", label: "Status", sortable: true, render: (value) => <StatusBadge status={value} /> },
+    { key: "managerRemarks", label: "Remarks", sortable: true },
+    { key: "actions", label: "Actions", sortable: false, render: (_value, record) => (
+      <button type="button" className="report-view-btn" onClick={() => setSelectedRecord({ type: "leave", record })}>
+        <FontAwesomeIcon icon={faEye} /> View
+      </button>
+    )},
+  ];
+
+  const renderLeaveTab = () => (
+    <StandardTable columns={leaveColumns} data={filteredLeaves} emptyMessage="No leave records found." pageSize={10} />
+  );
+
+  const scheduleColumns = [
+    { key: "employeeName", label: "Employee", sortable: true, render: (value, record) => (
+      <div><strong>{value}</strong><small style={{ display: "block", color: "#64748b" }}>{record.employeeId}</small></div>
+    )},
+    { key: "department", label: "Department", sortable: true },
+    { key: "dayOfWeek", label: "Day", sortable: true },
+    { key: "shiftStart", label: "Start", sortable: true },
+    { key: "shiftEnd", label: "End", sortable: true },
+    { key: "isOffDay", label: "Off Day", sortable: true, render: (value) => value ? <span className="reports-status absent">Yes</span> : <span className="reports-status present">No</span> },
+    { key: "actions", label: "Actions", sortable: false, render: (_value, record) => (
+      <button type="button" className="report-view-btn" onClick={() => setSelectedRecord({ type: "schedule", record })}>
+        <FontAwesomeIcon icon={faEye} /> View
+      </button>
+    )},
+  ];
+
+  const renderScheduleTab = () => (
+    <StandardTable columns={scheduleColumns} data={filteredSchedules} emptyMessage="No schedule records found." pageSize={10} />
+  );
+
+  const renderBiometricTab = () => (
+    <div className="reports-biometric-panel">
+      {!biometricSummary ? (
+        <ChartEmpty message="No biometric attendance data available." />
+      ) : (
+        <div className="reports-biometric-grid">
+          <SummaryCard label="Check-ins Today" value={biometricSummary.check_ins ?? biometricSummary.total_punches ?? 0} icon={faFingerprint} tone="primary" />
+          <SummaryCard label="Check-outs Today" value={biometricSummary.check_outs ?? 0} icon={faCheckCircle} tone="success" />
+          <SummaryCard label="Late Arrivals" value={biometricSummary.late_count ?? 0} icon={faClock} tone="warning" />
+          <SummaryCard label="Active Credentials" value={biometricSummary.active_credentials ?? biometricSummary.registered_credentials ?? 0} icon={faUsers} tone="info" />
+          <div className="reports-biometric-recent wide">
+            <h3>Recent Biometric Activity</h3>
+            {(!biometricSummary.recent_activity || biometricSummary.recent_activity.length === 0) ? (
+              <p>No recent biometric punches.</p>
+            ) : (
+              <table className="reports-biometric-table">
+                <thead><tr><th>Employee</th><th>Time</th><th>Type</th><th>Status</th></tr></thead>
+                <tbody>
+                  {(biometricSummary.recent_activity || []).map((item, i) => (
+                    <tr key={i}><td>{item.employee_name || item.name || "Unknown"}</td><td>{item.time || item.punched_at || "N/A"}</td><td>{item.type || "punch"}</td><td><StatusBadge status={item.status || "present"} /></td></tr>
+                  ))}
+                </tbody>
+              </table>
+            )}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+
   return (
     <StandardReportLayout
       title="Attendance & Payroll Reports"
       subtitle="Review attendance summaries, payroll totals, staff performance, and manager-level operational reporting in one workspace."
       icon={faChartLine}
-      loading={loading && !filteredAttendance.length && !filteredPayroll.length && !filteredStaff.length}
+      loading={loading && !filteredAttendance.length && !filteredPayroll.length && !filteredStaff.length && !filteredLeaves.length && !filteredSchedules.length}
       error={error}
       onRefresh={() => fetchReportData({ silent: true })}
       lastUpdated={formatDateTime(new Date())}
@@ -938,14 +1155,20 @@ const ManagerReports = () => {
           tone="money"
         />
         <SummaryCard label="Active Staff" value={summary.activeStaff} icon={faUsers} tone="success" />
+        <SummaryCard label="Leave Requests" value={summary.totalLeaves} icon={faCalendarCheck} tone="primary" />
+        <SummaryCard label="Pending Leave" value={summary.pendingLeaves} icon={faTriangleExclamation} tone="warning" />
+        <SummaryCard label="Biometric Punches" value={summary.biometricPunches} icon={faFingerprint} tone="info" />
       </section>
 
       <section className="reports-tabs">
         {[
           { id: "summary", label: "Summary", icon: faChartLine },
-          { id: "attendance", label: "Attendance Report", icon: faCalendarAlt },
-          { id: "payroll", label: "Payroll Report", icon: faMoneyBillWave },
-          { id: "staff", label: "Staff Performance", icon: faUsers },
+          { id: "attendance", label: "Attendance", icon: faCalendarAlt },
+          { id: "payroll", label: "Payroll", icon: faMoneyBillWave },
+          { id: "leave", label: "Leave", icon: faCalendarCheck },
+          { id: "schedule", label: "Schedule", icon: faCalendarDay },
+          { id: "biometric", label: "Biometric", icon: faFingerprint },
+          { id: "staff", label: "Staff", icon: faUsers },
         ].map((tab) => (
           <button
             type="button"
@@ -1001,6 +1224,9 @@ const ManagerReports = () => {
           {activeTab === "summary" && renderSummaryTab()}
           {activeTab === "attendance" && renderAttendanceTab()}
           {activeTab === "payroll" && renderPayrollTab()}
+          {activeTab === "leave" && renderLeaveTab()}
+          {activeTab === "schedule" && renderScheduleTab()}
+          {activeTab === "biometric" && renderBiometricTab()}
           {activeTab === "staff" && renderStaffTab()}
         </section>
       )}
@@ -1036,6 +1262,9 @@ const ManagerReports = () => {
 const getTabTitle = (activeTab) => {
   if (activeTab === "attendance") return "Attendance Report";
   if (activeTab === "payroll") return "Payroll Report";
+  if (activeTab === "leave") return "Leave Report";
+  if (activeTab === "schedule") return "Schedule Report";
+  if (activeTab === "biometric") return "Biometric Attendance Report";
   if (activeTab === "staff") return "Staff Performance Report";
   return "Manager Report Summary";
 };

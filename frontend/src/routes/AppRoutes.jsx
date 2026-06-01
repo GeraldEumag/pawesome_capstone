@@ -13,7 +13,6 @@ import AuthRedirectListener from "../components/shared/AuthRedirectListener";
 
 // Module routes
 import AdminRoutes from "./AdminRoutes";
-import PayrollRoutes from "./PayrollRoutes";
 import CustomerRoutes from "./CustomerRoutes";
 import ReceptionistRoutes from "./ReceptionistRoutes";
 import VetRoutes from "./VetRoutes";
@@ -44,7 +43,6 @@ const AppRoutes = () => (
 
       {/* Module routes — render components directly */}
       <Route path="/admin/*" element={<AdminRoutes />} />
-      <Route path="/payroll/*" element={<PayrollRoutes />} />
       <Route path="/customer/*" element={<CustomerRoutes />} />
       <Route path="/receptionist/*" element={<ReceptionistRoutes />} />
       <Route path="/veterinary/*" element={<VetRoutes />} />

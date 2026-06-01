@@ -1168,3 +1168,277 @@ body[data-theme="dark"] .attendance-remarks-box {
     background: #ffffff !important;
   }
 }
+
+/* Bulk Action Bar */
+
+.attendance-bulk-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.9rem 1.25rem;
+  margin-bottom: 1.25rem;
+  border: 1px solid var(--attendance-border);
+  border-radius: var(--attendance-radius-card);
+  background: var(--attendance-surface);
+  box-shadow: var(--attendance-shadow-soft);
+}
+
+.attendance-bulk-bar > span {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  color: var(--attendance-text);
+  font-size: 0.95rem;
+  font-weight: 750;
+}
+
+.attendance-bulk-bar > span svg {
+  color: var(--attendance-primary);
+}
+
+.attendance-bulk-bar > div {
+  display: flex;
+  gap: 0.55rem;
+  flex-wrap: wrap;
+}
+
+/* View Toggle */
+
+.attendance-view-toggle {
+  display: inline-flex;
+  gap: 0.15rem;
+  padding: 0.25rem;
+  border: 1px solid var(--attendance-border);
+  border-radius: var(--attendance-radius-pill);
+  background: var(--attendance-surface-solid);
+}
+
+.attendance-view-toggle button {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.45rem 0.85rem;
+  border: none;
+  border-radius: var(--attendance-radius-pill);
+  background: transparent;
+  color: var(--attendance-muted);
+  font-size: 0.85rem;
+  font-weight: 750;
+  cursor: pointer;
+  transition: 0.18s ease;
+}
+
+.attendance-view-toggle button.active {
+  background: var(--attendance-primary);
+  color: #ffffff;
+}
+
+/* Table selection */
+
+.attendance-select-all,
+.attendance-select-row {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border: none;
+  border-radius: 10px;
+  background: transparent;
+  color: var(--attendance-primary);
+  cursor: pointer;
+  font-size: 1.05rem;
+  transition: 0.15s ease;
+}
+
+.attendance-select-all:hover,
+.attendance-select-row:hover {
+  background: rgba(255, 95, 147, 0.1);
+}
+
+.attendance-table tbody tr.selected {
+  background: rgba(255, 95, 147, 0.06);
+}
+
+.attendance-actions .reject {
+  background: rgba(239, 68, 68, 0.12);
+  color: #ef4444;
+}
+
+.attendance-actions .reject:hover {
+  background: rgba(239, 68, 68, 0.22);
+}
+
+.attendance-actions .review {
+  background: rgba(16, 185, 129, 0.12);
+  color: #10b981;
+}
+
+.attendance-actions .review:hover {
+  background: rgba(16, 185, 129, 0.22);
+}
+
+/* Summary row */
+
+.attendance-summary-row {
+  background: rgba(255, 95, 147, 0.06);
+}
+
+.attendance-summary-row td {
+  font-weight: 800;
+  color: var(--attendance-heading);
+}
+
+/* Calendar View */
+
+.attendance-calendar {
+  padding: 1rem;
+}
+
+.attendance-calendar-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.attendance-calendar-header strong {
+  font-size: 1.15rem;
+  font-weight: 950;
+  color: var(--attendance-heading);
+  letter-spacing: -0.02em;
+}
+
+.attendance-calendar-header button {
+  width: 38px;
+  height: 38px;
+  display: grid;
+  place-items: center;
+  border: 1px solid var(--attendance-border);
+  border-radius: 12px;
+  background: var(--attendance-surface-solid);
+  color: var(--attendance-primary);
+  cursor: pointer;
+  transition: 0.18s ease;
+}
+
+.attendance-calendar-header button:hover {
+  box-shadow: var(--attendance-shadow-primary);
+}
+
+.attendance-calendar-grid {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 0.5rem;
+}
+
+.attendance-calendar-dayname {
+  text-align: center;
+  font-size: 0.78rem;
+  font-weight: 800;
+  color: var(--attendance-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  padding: 0.5rem 0;
+}
+
+.attendance-calendar-cell {
+  min-height: 90px;
+  padding: 0.55rem;
+  border: 1px solid var(--attendance-border);
+  border-radius: var(--attendance-radius-md);
+  background: var(--attendance-surface-solid);
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  transition: 0.15s ease;
+}
+
+.attendance-calendar-cell:hover {
+  box-shadow: var(--attendance-shadow-soft);
+}
+
+.attendance-calendar-cell.empty {
+  background: transparent;
+  border-color: transparent;
+}
+
+.attendance-calendar-date {
+  font-size: 0.9rem;
+  font-weight: 800;
+  color: var(--attendance-heading);
+}
+
+.attendance-calendar-dots {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem;
+  align-items: center;
+}
+
+.attendance-calendar-dots button {
+  width: 10px;
+  height: 10px;
+  border: none;
+  border-radius: 999px;
+  cursor: pointer;
+  transition: transform 0.15s ease;
+}
+
+.attendance-calendar-dots button:hover {
+  transform: scale(1.4);
+}
+
+.attendance-calendar-dots button.selected {
+  box-shadow: 0 0 0 2px #ffffff, 0 0 0 4px var(--attendance-primary);
+}
+
+.attendance-calendar-dots small {
+  color: var(--attendance-muted);
+  font-size: 0.7rem;
+  font-weight: 700;
+}
+
+/* Success / Danger button helpers */
+
+.attendance-btn.success {
+  background: #10b981;
+  color: #ffffff;
+}
+
+.attendance-btn.success:hover {
+  background: #059669;
+}
+
+.attendance-btn.danger {
+  background: #ef4444;
+  color: #ffffff;
+}
+
+.attendance-btn.danger:hover {
+  background: #dc2626;
+}
+
+/* Responsive */
+
+@media (max-width: 640px) {
+  .attendance-bulk-bar {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .attendance-calendar-grid {
+    gap: 0.25rem;
+  }
+
+  .attendance-calendar-cell {
+    min-height: 60px;
+    padding: 0.3rem;
+  }
+
+  .attendance-view-toggle {
+    display: none;
+  }
+}

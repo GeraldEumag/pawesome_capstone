@@ -12,16 +12,12 @@ import {
   faTimes,
   faUser,
   faBuilding,
-  faMoneyBillWave,
-  faDollarSign,
-  faFileInvoiceDollar,
   faRobot,
   faCog,
 } from "@fortawesome/free-solid-svg-icons";
 import "./AdminSidebar.css";
 
 const AdminSidebar = ({ mobileOpen, onMobileMenuToggle }) => {
-  const [payrollExpanded, setPayrollExpanded] = React.useState(false);
   const navigate = useNavigate();
 
   const handleLogout = async () => {
@@ -76,39 +72,6 @@ const AdminSidebar = ({ mobileOpen, onMobileMenuToggle }) => {
               <FontAwesomeIcon icon={faRobot} />
               <span>Chatbot</span>
             </NavLink>
-          </li>
-
-          <li className="nav-item">
-            <div
-              className="nav-dropdown-header"
-              onClick={() => setPayrollExpanded(!payrollExpanded)}
-            >
-              <FontAwesomeIcon icon={faMoneyBillWave} />
-              <span>Payroll</span>
-            </div>
-
-            <ul className={`nav-sublist ${payrollExpanded ? "expanded" : ""}`}>
-              <li className="nav-subitem">
-                <NavLink to="/admin/payroll" end>
-                  <FontAwesomeIcon icon={faMoneyBillWave} />
-                  <span>Overview</span>
-                </NavLink>
-              </li>
-
-              <li className="nav-subitem">
-                <NavLink to="/admin/payroll/salaries">
-                  <FontAwesomeIcon icon={faDollarSign} />
-                  <span>Salaries</span>
-                </NavLink>
-              </li>
-
-              <li className="nav-subitem">
-                <NavLink to="/admin/payroll/reports">
-                  <FontAwesomeIcon icon={faFileInvoiceDollar} />
-                  <span>Reports</span>
-                </NavLink>
-              </li>
-            </ul>
           </li>
 
           <li className="nav-item">

@@ -190,7 +190,7 @@ class DashboardController extends Controller
                     DB::raw('"customer" as actor_role'),
                     DB::raw('CONCAT("Service request ", service_requests.status) as action'),
                     DB::raw('CONCAT(COALESCE(service_requests.service_name, service_requests.request_type, "Service"), " for ", COALESCE(service_requests.pet_name, "pet")) as description'),
-                    DB::raw('COALESCE(service_requests.total_amount, service_requests.price, 0) as amount'),
+                    DB::raw('0 as amount'),
                     'service_requests.status',
                     'service_requests.created_at',
                 ]);

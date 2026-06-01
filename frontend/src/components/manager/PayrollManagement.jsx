@@ -1,11 +1,14 @@
 import React, { useCallback, useEffect, useMemo, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { payrollApi } from "../../api/payroll";
 import { apiRequest } from "../../api/client";
 import { formatCurrency } from "../../utils/currency";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import DatePickerInput from "../../components/shared/DatePickerInput";
+import ManualPayrollModal from "./ManualPayrollModal";
 import {
   faCalendarAlt,
+  faCalculator,
   faCheck,
   faCheckCircle,
   faChevronDown,
@@ -19,6 +22,7 @@ import {
   faFilter,
   faMoneyBill,
   faMoneyBillWave,
+  faPen,
   faPrint,
   faRefresh,
   faSearch,
@@ -201,6 +205,7 @@ const createPayrollNotification = async (message, priority = "high") => {
 };
 
 const PayrollManagement = () => {
+  const navigate = useNavigate();
   const [payrolls, setPayrolls] = useState([]);
   const [backendSummary, setBackendSummary] = useState(null);
 
@@ -223,6 +228,7 @@ const PayrollManagement = () => {
 
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
+  const [showManualModal, setShowManualModal] = useState(false);
 
   const [selectedPayroll, setSelectedPayroll] = useState(null);
   const [showDetailsModal, setShowDetailsModal] = useState(false);
@@ -739,6 +745,16 @@ const PayrollManagement = () => {
             <FontAwesomeIcon icon={faDownload} />
             Export CSV
           </button>
+
+          <button type="button" className="payroll-btn primary" onClick={() => navigate("/manager/payroll/compute")}>
+            <FontAwesomeIcon icon={faCalculator} />
+            Compute Payroll
+          </button>
+
+          <button type="button" className="payroll-btn primary" onClick={() => setShowManualModal(true)}>
+            <FontAwesomeIcon icon={faPen} />
+            Manual Entry
+          </button>
         </div>
       </section>
 
@@ -947,6 +963,28 @@ const PayrollManagement = () => {
         )}
       </section>
 
+      {payPeriods.length > 0 && (
+        <section className="payroll-period-tabs">
+          <button
+            type="button"
+            className={selectedPeriod === "all" ? "active" : ""}
+            onClick={() => setSelectedPeriod("all")}
+          >
+            All Periods
+          </button>
+          {payPeriods.slice(0, 8).map((period) => (
+            <button
+              type="button"
+              key={period}
+              className={selectedPeriod === period ? "active" : ""}
+              onClick={() => setSelectedPeriod(period)}
+            >
+              {period}
+            </button>
+          ))}
+        </section>
+      )}
+
       <section className="payroll-table-card">
         <div className="payroll-table-header">
           <div>
@@ -1142,6 +1180,16 @@ const PayrollManagement = () => {
 
       <PayslipPrint payroll={printPayroll} />
 
+      {showManualModal && (
+        <ManualPayrollModal
+          onClose={() => setShowManualModal(false)}
+          onSaved={() => {
+            showToast("Manual payroll saved.", "success");
+            fetchPayrolls({ silent: true });
+          }}
+        />
+      )}
+
       {toast && (
         <div className={`payroll-toast ${toast.type}`}>
           <FontAwesomeIcon
@@ -1211,6 +1259,35 @@ const DetailItem = ({ label, value }) => (
   </div>
 );
 
+const StatusPipeline = ({ status }) => {
+  const steps = [
+    { key: "draft", label: "Draft" },
+    { key: "pending", label: "Pending" },
+    { key: "approved", label: "Approved" },
+    { key: "paid", label: "Paid" },
+  ];
+  const current = normalizeStatus(status);
+  const currentIndex = steps.findIndex((s) => s.key === current);
+
+  return (
+    <div className="payroll-status-pipeline">
+      {steps.map((step, idx) => {
+        const isActive = idx <= currentIndex;
+        const isCurrent = idx === currentIndex;
+        return (
+          <React.Fragment key={step.key}>
+            {idx > 0 && <div className={`pipeline-connector ${isActive ? "active" : ""}`} />}
+            <div className={`pipeline-step ${isActive ? "active" : ""} ${isCurrent ? "current" : ""}`}>
+              <span>{idx + 1}</span>
+              <small>{step.label}</small>
+            </div>
+          </React.Fragment>
+        );
+      })}
+    </div>
+  );
+};
+
 const PayrollDetailsModal = ({ payroll, onClose, onPrint, onDownload }) => (
   <div className="payroll-modal-overlay">
     <div className="payroll-modal large">
@@ -1226,6 +1303,8 @@ const PayrollDetailsModal = ({ payroll, onClose, onPrint, onDownload }) => (
       </div>
 
       <div className="payroll-modal-body">
+        <StatusPipeline status={payroll.status} />
+
         <div className="payroll-detail-grid">
           <DetailItem label="Payroll ID" value={payroll.payrollId} />
           <DetailItem label="Employee" value={payroll.employeeName} />

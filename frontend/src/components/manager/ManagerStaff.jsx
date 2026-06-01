@@ -3,6 +3,7 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
   faBriefcase,
   faCalendarAlt,
+  faChartPie,
   faCheckCircle,
   faChevronDown,
   faChevronLeft,
@@ -13,12 +14,15 @@ import {
   faEnvelope,
   faEye,
   faFileInvoiceDollar,
+  faFingerprint,
   faFilter,
   faIdCard,
   faMapMarkerAlt,
   faMoneyBillWave,
+  faPenToSquare,
   faPhone,
   faRefresh,
+  faSave,
   faSearch,
   faSpinner,
   faTable,
@@ -29,7 +33,22 @@ import {
 } from "@fortawesome/free-solid-svg-icons";
 import { apiRequest } from "../../api/client";
 import { formatCurrency } from "../../utils/currency";
+import FingerprintEnrollment from "./FingerprintEnrollment";
 import "./ManagerStaff.css";
+
+const ROLE_COLORS = {
+  manager: "#7c3aed",
+  cashier: "#0891b2",
+  receptionist: "#d97706",
+  veterinary: "#059669",
+  inventory: "#ea580c",
+  payroll: "#7c3aed",
+  staff: "#3b82f6",
+  groomer: "#ec4899",
+  default: "#64748b",
+};
+
+const getRoleColor = (role) => ROLE_COLORS[(role || "").toLowerCase().replace(/\s+/g, "_")] || ROLE_COLORS.default;
 
 const normalizeList = (payload, keys = []) => {
   if (Array.isArray(payload)) return payload;
@@ -277,6 +296,10 @@ const ManagerStaff = () => {
   const [modalRecords, setModalRecords] = useState([]);
   const [modalLoading, setModalLoading] = useState(false);
   const [modalError, setModalError] = useState("");
+  const [profileTab, setProfileTab] = useState("profile");
+  const [editForm, setEditForm] = useState({});
+  const [showEnrollModal, setShowEnrollModal] = useState(false);
+  const [enrollUser, setEnrollUser] = useState(null);
 
   const showToast = useCallback((message, type = "info") => {
     setToast({ message, type });
@@ -601,6 +624,53 @@ const ManagerStaff = () => {
     setModalRecords([]);
     setModalError("");
     setModalLoading(false);
+    setProfileTab("profile");
+    setEditForm({});
+  };
+
+  const openEdit = (person) => {
+    setSelectedStaff(person);
+    setEditForm({
+      phone: person.phone || "",
+      department: person.department || "",
+      schedule: person.schedule || "",
+      address: person.address || "",
+    });
+    setActiveModal("edit");
+  };
+
+  const handleEditChange = (field, value) => {
+    setEditForm((prev) => ({ ...prev, [field]: value }));
+  };
+
+  const saveEdit = async () => {
+    if (!selectedStaff) return;
+    try {
+      await apiRequest(`/manager/staff/${selectedStaff.rawId}`, {
+        method: "PUT",
+        body: JSON.stringify(editForm),
+      });
+      setStaff((prev) =>
+        prev.map((p) =>
+          p.id === selectedStaff.id
+            ? { ...p, phone: editForm.phone, department: editForm.department, schedule: editForm.schedule, address: editForm.address }
+            : p
+        )
+      );
+      showToast("Staff details updated successfully.", "success");
+      closeModal();
+    } catch (err) {
+      console.error("Staff edit error:", err);
+      setStaff((prev) =>
+        prev.map((p) =>
+          p.id === selectedStaff.id
+            ? { ...p, phone: editForm.phone, department: editForm.department, schedule: editForm.schedule, address: editForm.address }
+            : p
+        )
+      );
+      showToast("Updated locally. Backend endpoint may not be ready yet.", "warning");
+      closeModal();
+    }
   };
 
   const pageStart = filteredStaff.length ? (currentPage - 1) * itemsPerPage + 1 : 0;
@@ -858,7 +928,14 @@ const ManagerStaff = () => {
                     <tr key={person.id}>
                       <td>
                         <div className="staff-member-cell">
-                          <span className="staff-avatar">
+                          <span
+                            className="staff-avatar"
+                            style={
+                              person.avatar
+                                ? undefined
+                                : { backgroundColor: getRoleColor(person.role) }
+                            }
+                          >
                             {person.avatar ? (
                               <img src={person.avatar} alt={person.name} />
                             ) : (
@@ -926,6 +1003,20 @@ const ManagerStaff = () => {
                             <FontAwesomeIcon icon={faMoneyBillWave} />
                             Payroll
                           </button>
+
+                          <button type="button" onClick={() => openEdit(person)}>
+                            <FontAwesomeIcon icon={faPenToSquare} />
+                            Edit
+                          </button>
+
+                          <button
+                            type="button"
+                            className="staff-fingerprint-btn"
+                            onClick={() => { setEnrollUser({ id: person.id, name: person.name }); setShowEnrollModal(true); }}
+                          >
+                            <FontAwesomeIcon icon={faFingerprint} />
+                            Fingerprint
+                          </button>
                         </div>
                       </td>
                     </tr>
@@ -976,7 +1067,88 @@ const ManagerStaff = () => {
       </section>
 
       {activeModal === "profile" && selectedStaff && (
-        <ProfileModal staff={selectedStaff} onClose={closeModal} />
+        <ProfileModal
+          staff={selectedStaff}
+          activeTab={profileTab}
+          onTabChange={setProfileTab}
+          onClose={closeModal}
+        />
+      )}
+
+      {activeModal === "edit" && selectedStaff && (
+        <div className="staff-modal-overlay">
+          <div className="staff-modal">
+            <div className="staff-modal-header">
+              <div>
+                <span className="staff-eyebrow">Edit Staff</span>
+                <h2>{selectedStaff.name}</h2>
+              </div>
+              <button type="button" onClick={closeModal}>
+                <FontAwesomeIcon icon={faXmark} />
+              </button>
+            </div>
+
+            <div className="staff-modal-body">
+              <div className="staff-edit-form">
+                <label>
+                  <span>Phone</span>
+                  <input
+                    type="text"
+                    value={editForm.phone || ""}
+                    onChange={(e) => handleEditChange("phone", e.target.value)}
+                    placeholder="Phone number"
+                  />
+                </label>
+                <label>
+                  <span>Department</span>
+                  <input
+                    type="text"
+                    value={editForm.department || ""}
+                    onChange={(e) => handleEditChange("department", e.target.value)}
+                    placeholder="Department"
+                  />
+                </label>
+                <label>
+                  <span>Schedule</span>
+                  <input
+                    type="text"
+                    value={editForm.schedule || ""}
+                    onChange={(e) => handleEditChange("schedule", e.target.value)}
+                    placeholder="e.g. Mon-Fri 9AM-5PM"
+                  />
+                </label>
+                <label>
+                  <span>Address</span>
+                  <textarea
+                    value={editForm.address || ""}
+                    onChange={(e) => handleEditChange("address", e.target.value)}
+                    placeholder="Address"
+                    rows={3}
+                  />
+                </label>
+              </div>
+            </div>
+
+            <div className="staff-modal-footer">
+              <button type="button" className="staff-btn secondary" onClick={closeModal}>
+                Cancel
+              </button>
+              <button type="button" className="staff-btn primary" onClick={saveEdit}>
+                <FontAwesomeIcon icon={faSave} />
+                Save Changes
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showEnrollModal && enrollUser && (
+        <FingerprintEnrollment
+          userId={enrollUser.id}
+          userName={enrollUser.name}
+          onClose={() => setShowEnrollModal(false)}
+          onEnrolled={() => showToast("Fingerprint enrolled successfully.", "success")}
+        />
       )}
 
       {(activeModal === "attendance" || activeModal === "payroll") && selectedStaff && (
@@ -1036,80 +1208,211 @@ const StatusBadge = ({ status }) => (
   <span className={`staff-status ${normalizeStatus(status)}`}>{formatLabel(status)}</span>
 );
 
-const ProfileModal = ({ staff, onClose }) => (
-  <div className="staff-modal-overlay">
-    <div className="staff-modal large">
-      <div className="staff-modal-header">
-        <div>
-          <span className="staff-eyebrow">Employee Profile</span>
-          <h2>{staff.name}</h2>
+const ProfileModal = ({ staff, activeTab, onTabChange, onClose }) => {
+  const attendanceRate =
+    staff.attendanceRecords > 0
+      ? Math.round((staff.presentDays / staff.attendanceRecords) * 100)
+      : 0;
+  const onTimeRate =
+    staff.attendanceRecords > 0
+      ? Math.round(
+          ((staff.attendanceRecords - staff.lateDays - staff.absentDays) / staff.attendanceRecords) *
+            100
+        )
+      : 0;
+  const lateRate =
+    staff.attendanceRecords > 0
+      ? Math.round((staff.lateDays / staff.attendanceRecords) * 100)
+      : 0;
+  const absentRate =
+    staff.attendanceRecords > 0
+      ? Math.round((staff.absentDays / staff.attendanceRecords) * 100)
+      : 0;
+
+  return (
+    <div className="staff-modal-overlay">
+      <div className="staff-modal large">
+        <div className="staff-modal-header">
+          <div>
+            <span className="staff-eyebrow">Employee Profile</span>
+            <h2>{staff.name}</h2>
+          </div>
+
+          <button type="button" onClick={onClose}>
+            <FontAwesomeIcon icon={faXmark} />
+          </button>
         </div>
 
-        <button type="button" onClick={onClose}>
-          <FontAwesomeIcon icon={faXmark} />
-        </button>
-      </div>
-
-      <div className="staff-modal-body">
-        <div className="staff-profile-card">
-          <span className="staff-profile-avatar">
-            {staff.avatar ? <img src={staff.avatar} alt={staff.name} /> : staff.name.charAt(0)}
-          </span>
-
-          <div>
-            <h3>{staff.name}</h3>
-            <p>{staff.role}</p>
-            <StatusBadge status={staff.status} />
-          </div>
+        <div className="staff-modal-tabs">
+          <button
+            type="button"
+            className={activeTab === "profile" ? "active" : ""}
+            onClick={() => onTabChange("profile")}
+          >
+            <FontAwesomeIcon icon={faIdCard} />
+            Profile
+          </button>
+          <button
+            type="button"
+            className={activeTab === "performance" ? "active" : ""}
+            onClick={() => onTabChange("performance")}
+          >
+            <FontAwesomeIcon icon={faChartPie} />
+            Performance
+          </button>
         </div>
 
-        <div className="staff-detail-grid">
-          <DetailItem icon={faIdCard} label="Employee Code" value={staff.employeeCode} />
-          <DetailItem icon={faBriefcase} label="Department" value={staff.department} />
-          <DetailItem icon={faEnvelope} label="Email" value={staff.email} />
-          <DetailItem icon={faPhone} label="Phone" value={staff.phone} />
-          <DetailItem icon={faMapMarkerAlt} label="Address" value={staff.address} />
-          <DetailItem icon={faCalendarAlt} label="Hire Date" value={formatDate(staff.hireDate)} />
-          <DetailItem icon={faClock} label="Schedule" value={staff.schedule} />
-          <DetailItem
-            icon={faMoneyBillWave}
-            label="Latest Payroll"
-            value={formatCurrency(staff.latestPayroll)}
-          />
+        <div className="staff-modal-body">
+          {activeTab === "profile" ? (
+            <>
+              <div className="staff-profile-card">
+                <span
+                  className="staff-profile-avatar"
+                  style={
+                    staff.avatar
+                      ? undefined
+                      : { backgroundColor: getRoleColor(staff.role) }
+                  }
+                >
+                  {staff.avatar ? (
+                    <img src={staff.avatar} alt={staff.name} />
+                  ) : (
+                    staff.name.charAt(0)
+                  )}
+                </span>
+
+                <div>
+                  <h3>{staff.name}</h3>
+                  <p>{staff.role}</p>
+                  <StatusBadge status={staff.status} />
+                </div>
+              </div>
+
+              <div className="staff-detail-grid">
+                <DetailItem icon={faIdCard} label="Employee Code" value={staff.employeeCode} />
+                <DetailItem icon={faBriefcase} label="Department" value={staff.department} />
+                <DetailItem icon={faEnvelope} label="Email" value={staff.email} />
+                <DetailItem icon={faPhone} label="Phone" value={staff.phone} />
+                <DetailItem icon={faMapMarkerAlt} label="Address" value={staff.address} />
+                <DetailItem
+                  icon={faCalendarAlt}
+                  label="Hire Date"
+                  value={formatDate(staff.hireDate)}
+                />
+                <DetailItem icon={faClock} label="Schedule" value={staff.schedule} />
+                <DetailItem
+                  icon={faMoneyBillWave}
+                  label="Latest Payroll"
+                  value={formatCurrency(staff.latestPayroll)}
+                />
+              </div>
+
+              <div className="staff-profile-summary">
+                <div>
+                  <small>Attendance Records</small>
+                  <strong>{staff.attendanceRecords}</strong>
+                </div>
+                <div>
+                  <small>Present Days</small>
+                  <strong>{staff.presentDays}</strong>
+                </div>
+                <div>
+                  <small>Late Days</small>
+                  <strong>{staff.lateDays}</strong>
+                </div>
+                <div>
+                  <small>Absent Days</small>
+                  <strong>{staff.absentDays}</strong>
+                </div>
+                <div>
+                  <small>Payroll Records</small>
+                  <strong>{staff.payrollRecords}</strong>
+                </div>
+              </div>
+            </>
+          ) : (
+            <div className="staff-performance">
+              <div className="staff-perf-summary">
+                <div>
+                  <span className="staff-perf-value">{attendanceRate}%</span>
+                  <small>Attendance Rate</small>
+                </div>
+                <div>
+                  <span className="staff-perf-value">{onTimeRate}%</span>
+                  <small>On-Time Rate</small>
+                </div>
+                <div>
+                  <span className="staff-perf-value">{lateRate}%</span>
+                  <small>Late Rate</small>
+                </div>
+                <div>
+                  <span className="staff-perf-value">{absentRate}%</span>
+                  <small>Absent Rate</small>
+                </div>
+                <div>
+                  <span className="staff-perf-value">
+                    {formatCurrency(staff.totalPayroll)}
+                  </span>
+                  <small>Total Payroll Paid</small>
+                </div>
+                <div>
+                  <span className="staff-perf-value">
+                    {formatCurrency(
+                      staff.payrollRecords > 0
+                        ? Math.round(staff.totalPayroll / staff.payrollRecords)
+                        : 0
+                    )}
+                  </span>
+                  <small>Average Net Pay</small>
+                </div>
+              </div>
+
+              <div className="staff-perf-breakdown">
+                <h4>Attendance Breakdown</h4>
+                <div className="staff-perf-bar-row">
+                  <span>Present</span>
+                  <div className="staff-perf-bar">
+                    <div
+                      className="staff-perf-bar-fill success"
+                      style={{ width: `${attendanceRate}%` }}
+                    />
+                  </div>
+                  <strong>{staff.presentDays} days</strong>
+                </div>
+                <div className="staff-perf-bar-row">
+                  <span>Late</span>
+                  <div className="staff-perf-bar">
+                    <div
+                      className="staff-perf-bar-fill warning"
+                      style={{ width: `${lateRate}%` }}
+                    />
+                  </div>
+                  <strong>{staff.lateDays} days</strong>
+                </div>
+                <div className="staff-perf-bar-row">
+                  <span>Absent</span>
+                  <div className="staff-perf-bar">
+                    <div
+                      className="staff-perf-bar-fill danger"
+                      style={{ width: `${absentRate}%` }}
+                    />
+                  </div>
+                  <strong>{staff.absentDays} days</strong>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
 
-        <div className="staff-profile-summary">
-          <div>
-            <small>Attendance Records</small>
-            <strong>{staff.attendanceRecords}</strong>
-          </div>
-          <div>
-            <small>Present Days</small>
-            <strong>{staff.presentDays}</strong>
-          </div>
-          <div>
-            <small>Late Days</small>
-            <strong>{staff.lateDays}</strong>
-          </div>
-          <div>
-            <small>Absent Days</small>
-            <strong>{staff.absentDays}</strong>
-          </div>
-          <div>
-            <small>Payroll Records</small>
-            <strong>{staff.payrollRecords}</strong>
-          </div>
+        <div className="staff-modal-footer">
+          <button type="button" className="staff-btn secondary" onClick={onClose}>
+            Close
+          </button>
         </div>
-      </div>
-
-      <div className="staff-modal-footer">
-        <button type="button" className="staff-btn secondary" onClick={onClose}>
-          Close
-        </button>
       </div>
     </div>
-  </div>
-);
+  );
+};
 
 const RecordsModal = ({ type, staff, records, loading, error, onClose }) => {
   const isAttendance = type === "attendance";

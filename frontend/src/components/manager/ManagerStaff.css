@@ -560,7 +560,8 @@
   gap: 0.45rem;
 }
 
-.staff-actions button {
+.staff-actions button,
+.staff-fingerprint-btn {
   min-height: 38px;
   padding: 0 0.75rem;
   color: var(--staff-primary);
@@ -1033,5 +1034,201 @@ body[data-theme="dark"] .staff-modal-table th {
     right: 1rem;
     bottom: 1rem;
     width: auto;
+  }
+}
+
+/* Modal Tabs */
+
+.staff-modal-tabs {
+  display: flex;
+  gap: 0.5rem;
+  padding: 0 1.25rem;
+  border-bottom: 1px solid var(--staff-border);
+  background: rgba(255, 95, 147, 0.04);
+}
+
+.staff-modal-tabs button {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0.7rem 1.1rem;
+  border: none;
+  border-bottom: 2px solid transparent;
+  background: transparent;
+  color: var(--staff-muted);
+  font-size: 0.9rem;
+  font-weight: 750;
+  cursor: pointer;
+  transition: 0.18s ease;
+}
+
+.staff-modal-tabs button.active {
+  color: var(--staff-primary);
+  border-bottom-color: var(--staff-primary);
+}
+
+.staff-modal-tabs button:hover {
+  color: var(--staff-primary);
+}
+
+/* Performance Section */
+
+.staff-performance {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.staff-perf-summary {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.75rem;
+}
+
+.staff-perf-summary > div {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 1rem;
+  border-radius: var(--staff-radius-md);
+  border: 1px solid var(--staff-border);
+  background: var(--staff-surface-solid);
+  text-align: center;
+}
+
+.staff-perf-value {
+  font-size: 1.35rem;
+  font-weight: 950;
+  color: var(--staff-heading);
+}
+
+.staff-perf-summary > div small {
+  color: var(--staff-muted);
+  font-size: 0.78rem;
+  font-weight: 750;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.staff-perf-breakdown {
+  display: flex;
+  flex-direction: column;
+  gap: 0.9rem;
+  padding: 1rem 1.25rem;
+  border-radius: var(--staff-radius-md);
+  border: 1px solid var(--staff-border);
+  background: var(--staff-surface-solid);
+}
+
+.staff-perf-breakdown h4 {
+  margin: 0 0 0.35rem;
+  color: var(--staff-heading);
+  font-size: 1rem;
+  font-weight: 950;
+}
+
+.staff-perf-bar-row {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  font-size: 0.88rem;
+}
+
+.staff-perf-bar-row > span {
+  min-width: 70px;
+  color: var(--staff-muted);
+  font-weight: 700;
+}
+
+.staff-perf-bar-row > strong {
+  min-width: 80px;
+  text-align: right;
+  color: var(--staff-heading);
+  font-weight: 800;
+  font-size: 0.85rem;
+}
+
+.staff-perf-bar {
+  flex: 1;
+  height: 10px;
+  border-radius: 999px;
+  background: rgba(255, 95, 147, 0.1);
+  overflow: hidden;
+}
+
+.staff-perf-bar-fill {
+  height: 100%;
+  border-radius: 999px;
+  transition: width 0.5s ease;
+}
+
+.staff-perf-bar-fill.success {
+  background: var(--staff-success);
+}
+
+.staff-perf-bar-fill.warning {
+  background: var(--staff-warning);
+}
+
+.staff-perf-bar-fill.danger {
+  background: var(--staff-danger);
+}
+
+/* Edit Form */
+
+.staff-edit-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.staff-edit-form label {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  font-size: 0.9rem;
+  font-weight: 750;
+  color: var(--staff-heading);
+}
+
+.staff-edit-form label span {
+  color: var(--staff-muted);
+  font-size: 0.82rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.staff-edit-form input,
+.staff-edit-form textarea {
+  padding: 0.7rem 0.85rem;
+  border: 1px solid var(--staff-border);
+  border-radius: var(--staff-radius-md);
+  background: var(--staff-surface-solid);
+  color: var(--staff-text);
+  font-size: 0.95rem;
+  font-weight: 650;
+  outline: none;
+  transition: border-color 0.2s ease;
+}
+
+.staff-edit-form input:focus,
+.staff-edit-form textarea:focus {
+  border-color: var(--staff-primary);
+}
+
+/* Role-colored avatar support */
+
+.staff-avatar,
+.staff-profile-avatar {
+  transition: background-color 0.2s ease;
+}
+
+/* Responsive performance */
+
+@media (max-width: 640px) {
+  .staff-perf-summary {
+    grid-template-columns: repeat(2, 1fr);
   }
 }

@@ -1096,3 +1096,114 @@ body[data-theme="dark"] .payroll-table th {
     background: #ffffff !important;
   }
 }
+
+/* Period Tabs */
+
+.payroll-period-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+  padding: 0.7rem 1.1rem;
+  margin-bottom: 1.25rem;
+  border: 1px solid var(--payroll-border);
+  border-radius: var(--payroll-radius-card);
+  background: var(--payroll-surface);
+  box-shadow: var(--payroll-shadow-soft);
+  overflow-x: auto;
+}
+
+.payroll-period-tabs button {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.5rem 0.9rem;
+  border: 1px solid var(--payroll-border);
+  border-radius: var(--payroll-radius-pill);
+  background: var(--payroll-surface-solid);
+  color: var(--payroll-muted);
+  font-size: 0.82rem;
+  font-weight: 750;
+  cursor: pointer;
+  transition: 0.18s ease;
+  white-space: nowrap;
+}
+
+.payroll-period-tabs button:hover {
+  border-color: var(--payroll-primary);
+  color: var(--payroll-primary);
+}
+
+.payroll-period-tabs button.active {
+  background: var(--payroll-primary);
+  border-color: var(--payroll-primary);
+  color: #ffffff;
+  box-shadow: var(--payroll-shadow-primary);
+}
+
+/* Status Pipeline */
+
+.payroll-status-pipeline {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  margin-bottom: 1.25rem;
+  padding: 0.75rem 1rem;
+  border: 1px solid var(--payroll-border);
+  border-radius: var(--payroll-radius-md);
+  background: var(--payroll-surface-solid);
+}
+
+.pipeline-step {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.pipeline-step > span {
+  width: 32px;
+  height: 32px;
+  display: grid;
+  place-items: center;
+  border-radius: 999px;
+  background: rgba(255, 95, 147, 0.12);
+  color: var(--payroll-muted);
+  font-size: 0.8rem;
+  font-weight: 900;
+  transition: 0.2s ease;
+}
+
+.pipeline-step > small {
+  font-size: 0.72rem;
+  font-weight: 750;
+  color: var(--payroll-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.pipeline-step.active > span {
+  background: var(--payroll-primary);
+  color: #ffffff;
+  box-shadow: 0 8px 20px rgba(255, 95, 147, 0.35);
+}
+
+.pipeline-step.active > small {
+  color: var(--payroll-primary);
+}
+
+.pipeline-step.current > span {
+  box-shadow: 0 0 0 3px rgba(255, 95, 147, 0.3);
+}
+
+.pipeline-connector {
+  flex: 1;
+  height: 3px;
+  max-width: 60px;
+  border-radius: 999px;
+  background: rgba(255, 95, 147, 0.15);
+  transition: 0.3s ease;
+}
+
+.pipeline-connector.active {
+  background: var(--payroll-primary);
+}

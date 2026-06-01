@@ -420,6 +420,10 @@
   background: linear-gradient(135deg, #14b8a6, #2dd4bf);
 }
 
+.manager-stat-card.neutral .manager-stat-icon {
+  background: linear-gradient(135deg, #64748b, #94a3b8);
+}
+
 .manager-stat-card strong {
   display: block;
   color: var(--manager-heading);

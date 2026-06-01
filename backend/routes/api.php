@@ -198,7 +198,6 @@ Route::middleware(['auth.api', 'throttle:api', 'role:admin'])->prefix('admin')->
     Route::get('reports/orders', [ReportsController::class, 'orders']);
     Route::get('reports/services', [ReportsController::class, 'serviceRequests']);
     Route::get('reports/service-requests', [ReportsController::class, 'serviceRequests']);
-    Route::get('reports/payroll', [ReportsController::class, 'payrollReports']);
     Route::get('reports/system-health', [ReportsController::class, 'systemHealth']);
     Route::get('reports/logistics', [ReportsController::class, 'logistics']);
     Route::get('reports/reception', [ReportsController::class, 'reception']);
@@ -591,8 +590,8 @@ Route::middleware(['auth.api', 'throttle:api', 'role:manager'])->prefix('manager
     Route::get('reports/medical-confinement', [WorkflowReportController::class, 'medicalConfinement']);
     Route::get('reports/room-occupancy', [WorkflowReportController::class, 'roomOccupancy']);
     Route::get('reports/veterinary-services', [WorkflowReportController::class, 'veterinaryServices']);
-    Route::get('reports/attendance', [ReportsController::class, 'payrollReports']);
-    Route::get('reports/payroll', [ReportsController::class, 'payrollReports']);
+    Route::get('reports/attendance', [ReportsController::class, 'managerAttendance']);
+    Route::get('reports/payroll', [ReportsController::class, 'managerPayroll']);
 
     // Manager Attendance Routes
     Route::get('attendance', [AttendanceController::class, 'index']);
@@ -601,12 +600,38 @@ Route::middleware(['auth.api', 'throttle:api', 'role:manager'])->prefix('manager
 
     // Manager Payroll Routes
     Route::get('payroll', [ApiPayrollController::class, 'index']);
+    Route::post('payroll', [ApiPayrollController::class, 'store']);
+    Route::post('payroll/compute', [ApiPayrollController::class, 'compute']);
     Route::post('payroll/generate', [ApiPayrollController::class, 'generate']);
     Route::post('payroll/{id}/approve', [ApiPayrollController::class, 'approve']);
     Route::post('payroll/{id}/release', [ApiPayrollController::class, 'markAsPaid']);
 
     // Manager History Route
     Route::get('history', [ManagerDashboardController::class, 'history']);
+
+    // Manager Leave Routes
+    Route::get('leaves', [\App\Http\Controllers\Manager\LeaveController::class, 'index']);
+    Route::post('leaves', [\App\Http\Controllers\Manager\LeaveController::class, 'store']);
+    Route::post('leaves/{id}/approve', [\App\Http\Controllers\Manager\LeaveController::class, 'approve']);
+    Route::post('leaves/{id}/reject', [\App\Http\Controllers\Manager\LeaveController::class, 'reject']);
+    Route::get('leaves/calendar', [\App\Http\Controllers\Manager\LeaveController::class, 'calendar']);
+
+    // Manager Schedule Routes
+    Route::get('schedules', [\App\Http\Controllers\Manager\ScheduleController::class, 'index']);
+    Route::post('schedules', [\App\Http\Controllers\Manager\ScheduleController::class, 'store']);
+    Route::delete('schedules/{id}', [\App\Http\Controllers\Manager\ScheduleController::class, 'destroy']);
+
+    // Manager Fingerprint / Biometric Attendance Routes
+    Route::prefix('biometric')->group(function () {
+        Route::post('challenge', [\App\Http\Controllers\Manager\FingerprintController::class, 'registerChallenge']);
+        Route::post('register', [\App\Http\Controllers\Manager\FingerprintController::class, 'registerCredential']);
+        Route::post('auth-challenge', [\App\Http\Controllers\Manager\FingerprintController::class, 'verifyChallenge']);
+        Route::post('verify-punch', [\App\Http\Controllers\Manager\FingerprintController::class, 'verifyAndPunch']);
+        Route::post('terminal-punch', [\App\Http\Controllers\Manager\FingerprintController::class, 'terminalPunch']);
+        Route::get('credentials', [\App\Http\Controllers\Manager\FingerprintController::class, 'listCredentials']);
+        Route::delete('credentials/{credential}', [\App\Http\Controllers\Manager\FingerprintController::class, 'deleteCredential']);
+        Route::get('today-summary', [\App\Http\Controllers\Manager\FingerprintController::class, 'todaySummary']);
+    });
 
     // Manager Staff-Specific Routes
     Route::get('staff/{id}/attendance', [AttendanceController::class, 'index']);

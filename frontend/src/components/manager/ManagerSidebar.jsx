@@ -14,6 +14,9 @@ import {
   faSignOutAlt,
   faHistory,
   faTimes,
+  faCalendarCheck,
+  faTableCells,
+  faFingerprint,
 } from "@fortawesome/free-solid-svg-icons";
 import "./ManagerSidebar.css";
 
@@ -60,6 +63,27 @@ const ManagerSidebar = ({ mobileOpen, onMobileMenuToggle }) => {
             <NavLink to="/manager/attendance">
               <FontAwesomeIcon icon={faClipboardList} />
               <span>Attendance</span>
+            </NavLink>
+          </li>
+
+          <li className="nav-item">
+            <NavLink to="/manager/kiosk">
+              <FontAwesomeIcon icon={faFingerprint} />
+              <span>Fingerprint Kiosk</span>
+            </NavLink>
+          </li>
+
+          <li className="nav-item">
+            <NavLink to="/manager/leaves">
+              <FontAwesomeIcon icon={faCalendarCheck} />
+              <span>Leave</span>
+            </NavLink>
+          </li>
+
+          <li className="nav-item">
+            <NavLink to="/manager/schedule">
+              <FontAwesomeIcon icon={faTableCells} />
+              <span>Schedule</span>
             </NavLink>
           </li>
 
