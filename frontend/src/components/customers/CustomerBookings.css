@@ -70,7 +70,7 @@
   padding: 1rem 0.75rem;
   border: 2px solid var(--color-border);
   border-radius: var(--radius-md);
-  background: white;
+  background: var(--color-surface-solid, white);
   cursor: pointer;
   transition: all 0.2s ease;
   text-align: center;
@@ -124,7 +124,7 @@
   padding: 1rem;
   border: 2px solid var(--color-border);
   border-radius: var(--radius-md);
-  background: white;
+  background: var(--color-surface-solid, white);
   cursor: pointer;
   transition: all 0.2s ease;
   text-align: left;
@@ -1114,7 +1114,7 @@
   padding: 1rem;
   border-radius: 20px;
   border: 1px dashed var(--color-border);
-  background: color-mix(in srgb, var(--color-primary-soft) 40%, white);
+  background: color-mix(in srgb, var(--color-primary-soft) 40%, var(--color-surface-solid, white));
 }
 
 .additional-health-card > div {

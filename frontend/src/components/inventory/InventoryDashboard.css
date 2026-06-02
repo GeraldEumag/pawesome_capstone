@@ -166,7 +166,7 @@
 
 .icon-btn,
 .theme-toggle-btn {
-  background: #fff;
+  background: var(--color-surface-solid, #fff);
   color: #102a43;
   width: 46px;
   height: 46px;
@@ -288,7 +288,7 @@
 }
 
 .panel {
-  background: #fff;
+  background: var(--color-surface-solid, #fff);
   border-radius: 24px;
   box-shadow: 0 10px 30px rgba(16, 42, 67, 0.08);
   overflow: hidden;
@@ -611,7 +611,7 @@
 .status-card,
 .chart-placeholder,
 .mini-chart-placeholder {
-  background: #fff;
+  background: var(--color-surface-solid, #fff);
   border-radius: 24px;
   box-shadow: 0 10px 30px rgba(16, 42, 67, 0.08);
   padding: 1.5rem;
@@ -835,7 +835,7 @@
 .inventory-main {
   padding: 1.4rem 2rem 2rem;
   padding-top: 112px;
-  background: linear-gradient(135deg, #fff1f7, #ffffff, #f8fbff);
+  background: var(--color-bg-gradient, linear-gradient(135deg, #fff1f7, #ffffff, #f8fbff));
 }
 
 .inventory-navbar {
@@ -876,7 +876,7 @@
   width: 48px;
   height: 48px;
   border-radius: 16px;
-  background: #ffffff;
+  background: var(--color-surface-solid, #ffffff);
   box-shadow: 0 10px 24px rgba(255, 95, 147, 0.12);
 }
 
@@ -1172,7 +1172,7 @@
   display: block;
   padding: 1rem;
   border-radius: 16px;
-  background: #fff1f7;
+  background: var(--color-surface-muted, #fff1f7);
   border: 1px dashed rgba(255, 95, 147, 0.28);
   color: #64748b;
   font-weight: 800;
@@ -1187,13 +1187,13 @@
 .metric-card {
   min-height: 110px !important;
   border-radius: 18px !important;
-  background: #ffffff !important;
+  background: var(--color-surface-solid, #ffffff) !important;
   border: 1px solid rgba(255, 95, 147, 0.14) !important;
   box-shadow: 0 10px 24px rgba(255, 95, 147, 0.08) !important;
 }
 
 .metric-card.accent {
-  background: linear-gradient(135deg, #eef2ff, #fff1f7) !important;
+  background: linear-gradient(135deg, #eef2ff, var(--color-surface-muted, #fff1f7)) !important;
 }
 
 .metric-card h3 {
@@ -1262,7 +1262,7 @@
 }
 
 .analytics-chart-card {
-  background: linear-gradient(135deg, #ffffff, #fff1f7);
+  background: linear-gradient(135deg, var(--color-surface-solid, #ffffff), var(--color-surface-muted, #fff1f7));
   border: 1px solid rgba(255, 95, 147, 0.14);
   border-radius: 20px;
   padding: 1rem;

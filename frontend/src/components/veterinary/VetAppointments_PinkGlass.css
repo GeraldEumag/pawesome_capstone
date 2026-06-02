@@ -139,7 +139,7 @@
 }
 
 .add-appointment-btn {
-  background: white;
+  background: var(--color-surface-solid, white);
   color: var(--veterinary-primary);
   box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
 }

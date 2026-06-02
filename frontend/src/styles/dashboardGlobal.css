@@ -53,14 +53,15 @@ textarea {
   border: 1px solid rgba(255, 95, 147, 0.3) !important;
   border-radius: 12px !important;
   padding: 12px 14px !important;
-  background: white;
+  background: var(--color-surface-solid, #ffffff);
+  color: var(--color-text, #1f2937);
   transition: all 0.2s ease;
 }
 
 input:focus,
 select:focus,
 textarea:focus {
-  border-color: #ff5f93 !important;
+  border-color: var(--color-primary, #ff5f93) !important;
   box-shadow: 0 0 0 3px rgba(255, 95, 147, 0.15);
   outline: none;
 }

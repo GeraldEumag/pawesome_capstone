@@ -6,7 +6,7 @@
   padding-bottom: 40px !important;
   padding-left: 32px !important;
   padding-right: 32px !important;
-  background: linear-gradient(135deg, #ffc8dd, #ffd6e8, #fff1f7) !important;
+  background: var(--color-bg-gradient, linear-gradient(135deg, #ffc8dd, #ffd6e8, #fff1f7)) !important;
   color: #1f2937;
 }
 
@@ -78,7 +78,7 @@
   color: #64748b;
   font-weight: 800;
   border-radius: 18px;
-  background: #fff7fb;
+  background: var(--color-surface-muted, #fff7fb);
 }
 
 .status-overview-section {
@@ -103,7 +103,7 @@
 
 .inventory-reports-page {
   padding: 24px 32px 48px !important;
-  background: linear-gradient(135deg, #ffc8dd, #ffd6e8, #fff1f7) !important;
+  background: var(--color-bg-gradient, linear-gradient(135deg, #ffc8dd, #ffd6e8, #fff1f7)) !important;
   overflow-x: hidden !important;
 }
 
@@ -183,7 +183,7 @@
 }
 
 .status-card.low-stock {
-  background: #fffbeb !important;
+  background: var(--color-warning-bg, #fffbeb) !important;
   border-color: #fcd34d !important;
 }
 
@@ -520,7 +520,7 @@ body,
   overflow-x: hidden !important;
   display: flex !important;
   justify-content: center !important;
-  background: linear-gradient(135deg, #ffc8dd, #ffd6e8, #fff1f7) !important;
+  background: var(--color-bg-gradient, linear-gradient(135deg, #ffc8dd, #ffd6e8, #fff1f7)) !important;
 }
 
 .inventory-reports-inner {
@@ -743,7 +743,7 @@ body,
   border-radius: 999px !important;
   border: none !important;
   padding: 0 18px;
-  background: #ffffff !important;
+  background: var(--color-surface-solid, #ffffff) !important;
   color: #1f2937;
   font-weight: 800;
 }
@@ -774,7 +774,7 @@ body,
   border-radius: 999px !important;
   border: none !important;
   padding: 0 14px;
-  background: #ffffff !important;
+  background: var(--color-surface-solid, #ffffff) !important;
   color: #1f2937;
   font-weight: 800;
 }
@@ -925,7 +925,7 @@ body,
 }
 
 .report-card {
- background: #ffffff;
+ background: var(--color-surface-solid, #ffffff);
  padding: 1.5rem;
  border-radius: 18px;
  border: 1px solid #e2e8f0;
@@ -949,7 +949,7 @@ body,
 }
 
 .reports-panel {
- background: #ffffff;
+ background: var(--color-surface-solid, #ffffff);
  padding: 1.25rem;
  border-radius: 18px;
  border: 1px solid #e2e8f0;
@@ -988,7 +988,7 @@ body,
 }
 
 .reports-panel-bottom {
- background: #ffffff;
+ background: var(--color-surface-solid, #ffffff);
  padding: 1.25rem;
  border-radius: 18px;
  border: 1px solid #e2e8f0;
@@ -1007,7 +1007,7 @@ body,
 }
 
 .table-container {
- background: white;
+ background: var(--color-surface-solid, white);
  border-radius: 8px;
  border: 2px solid #d1d5db;
  overflow-x: auto;
@@ -1115,7 +1115,7 @@ body,
 /* ID and SKU codes - Pink Theme */
 .id-code, .sku-code {
   padding: 4px 10px;
-  background: #fff1f7;
+  background: var(--color-surface-muted, #fff1f7);
   border: 1px solid rgba(255, 95, 147, 0.16);
   border-radius: 999px;
   font-family: 'SF Mono', Monaco, 'Courier New', monospace;
@@ -1174,7 +1174,7 @@ body,
  align-items: center;
  gap: 1rem;
  padding: 1.25rem;
- background: white;
+ background: var(--color-surface-solid, white);
  border-radius: 10px;
  border: 1px solid #e5e7eb;
  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
@@ -1250,7 +1250,7 @@ body,
  align-items: center;
  gap: 1rem;
  padding: 1rem 1.25rem;
- background: white;
+ background: var(--color-surface-solid, white);
  border-radius: 10px;
  border: 2px solid #e5e7eb;
  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
@@ -1363,7 +1363,7 @@ body,
 .alerts-section {
  margin: 1.5rem 0;
  padding: 1.25rem;
- background: white;
+ background: var(--color-surface-solid, white);
  border-radius: 10px;
  border: 1px solid #fecaca;
  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
@@ -1651,7 +1651,7 @@ body,
 /* ===== PREMIUM PINK GLASS UPGRADE ===== */
 
 .inventory-reports-page {
-  background: linear-gradient(135deg, #fff1f7, #ffffff, #f8fbff) !important;
+  background: var(--color-bg-gradient, linear-gradient(135deg, #fff1f7, #ffffff, #f8fbff)) !important;
 }
 
 .reports-header {
@@ -1702,7 +1702,7 @@ body,
 .summary-table th,
 .alerts-table th,
 .inventory-table th {
-  background: linear-gradient(135deg, #fff1f7, #ffffff);
+  background: linear-gradient(135deg, var(--color-surface-muted, #fff1f7), var(--color-surface-solid, #ffffff));
   color: #1f2937;
   font-weight: 900;
   text-transform: uppercase;
@@ -1880,7 +1880,7 @@ input:focus, select:focus {
   position: sticky;
   top: 0;
   z-index: 10;
-  background: linear-gradient(135deg, #fff1f7, #ffffff);
+  background: linear-gradient(135deg, var(--color-surface-muted, #fff1f7), var(--color-surface-solid, #ffffff));
 }
 
 /* Table Row Hover Intelligence */

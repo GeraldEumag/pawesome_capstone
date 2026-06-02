@@ -598,7 +598,7 @@
   gap: 0.75rem;
   border: 2px dashed var(--admin-border);
   border-radius: var(--admin-radius-lg);
-  background: rgba(255, 255, 255, 0.5);
+  background: var(--admin-surface-solid);
   color: var(--admin-muted);
   text-align: center;
   font-weight: 750;
@@ -933,7 +933,7 @@
 }
 
 .admin-main .recharts-tooltip-wrapper .recharts-default-tooltip {
-  background: #ffffff !important;
+  background: var(--admin-surface-solid) !important;
   border: 1px solid var(--admin-border) !important;
   color: var(--admin-heading) !important;
 }
@@ -1035,7 +1035,7 @@
 .admin-main .search-input,
 .admin-main .search-box input,
 .admin-main .filter-select {
-  background: #ffffff !important;
+  background: var(--admin-surface-solid) !important;
   color: var(--admin-heading) !important;
 }
 
@@ -1043,7 +1043,7 @@
 .admin-main textarea::placeholder,
 .admin-main .search-input::placeholder,
 .admin-main .search-box input::placeholder {
-  color: #64748b !important;
+  color: var(--admin-muted) !important;
   opacity: 1;
 }
 

@@ -116,7 +116,7 @@ const StatCard = ({ icon, label, value, tone, active, onClick }) => (
 );
 
 const ReceptionistAppointmentsBoarding = () => {
-  const { requests, loading, refreshing, error, success, lastUpdated, stats, fetchAll, updateItemStatus, notify } =
+  const { requests, setRequests, loading, refreshing, error, success, lastUpdated, stats, fetchAll, updateItemStatus, notify } =
     useUnifiedRequests();
 
   const [searchTerm, setSearchTerm] = useState("");
@@ -237,6 +237,34 @@ const ReceptionistAppointmentsBoarding = () => {
       await apiRequest(`/receptionist/boarding-requests/${item.id}/verify-vaccination`, {
         method: "POST",
       });
+
+      // Immediately update UI to show verified state
+      const now = new Date().toISOString();
+      if (selectedRequest && selectedRequest.id === item.id) {
+        setSelectedRequest((prev) => ({
+          ...prev,
+          raw: {
+            ...prev.raw,
+            vaccination_card_verified_at: now,
+          },
+        }));
+      }
+
+      // Also update the item in the requests list
+      setRequests((prev) =>
+        prev.map((req) =>
+          req.id === item.id
+            ? {
+                ...req,
+                raw: {
+                  ...req.raw,
+                  vaccination_card_verified_at: now,
+                },
+              }
+            : req
+        )
+      );
+
       notify("success", "Vaccination card verified.");
       await fetchAll({ silent: true });
     } catch (err) {
@@ -781,9 +809,6 @@ const ReceptionistAppointmentsBoarding = () => {
 
                   {selectedRequest.raw?.vaccination_card && (
                     <div className="hub-vaccination-section" style={{ marginTop: "16px" }}>
-                      <h4>
-                        <FontAwesomeIcon icon={faEye} /> Vaccination Card
-                      </h4>
                       <button
                         type="button"
                         className="hub-modal-btn secondary"

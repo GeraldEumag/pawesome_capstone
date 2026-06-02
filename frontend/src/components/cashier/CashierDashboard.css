@@ -388,7 +388,7 @@
 .icon-btn:hover,
 .theme-toggle-btn:hover {
   transform: translateY(-2px);
-  background: #fff;
+  background: var(--color-surface-solid, #fff);
   box-shadow: var(--shadow-card);
 }
 

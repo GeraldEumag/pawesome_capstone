@@ -56,7 +56,7 @@
   border: 2px solid #e5e7eb;
   border-radius: 8px;
   font-size: 1rem;
-  background: white;
+  background: var(--color-surface-solid, white);
 }
 
 .orders-search-box input:focus {
@@ -145,7 +145,7 @@
 }
 
 .order-card {
-  background: white;
+  background: var(--color-surface-solid, white);
   border: 1px solid #e5e7eb;
   border-radius: 12px;
   padding: 1.5rem;
@@ -222,7 +222,7 @@
 }
 
 .order-status.pending {
-  background: #fff3cd;
+  background: var(--color-warning-bg, #fff3cd);
   color: #856404;
 }
 
@@ -247,7 +247,7 @@
 }
 
 .payment-status.pending {
-  background: #fff3cd;
+  background: var(--color-warning-bg, #fff3cd);
   color: #856404;
 }
 

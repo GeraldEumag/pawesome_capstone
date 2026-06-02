@@ -111,6 +111,7 @@ export const useUnifiedRequests = ({ autoRefresh = true, refreshInterval = 30000
 
   return {
     requests,
+    setRequests,
     loading,
     refreshing,
     error,

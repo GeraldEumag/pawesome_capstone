@@ -39,7 +39,7 @@
 }
 
 .inventory-sidebar .sidebar-logo svg {
-  background: white;
+  background: var(--color-surface-solid, white);
   padding: 10px;
   border-radius: 14px;
   color: #ff5f93;
@@ -95,7 +95,7 @@
 
 /* ACTIVE (IMPORTANT FIX) */
 .inventory-sidebar .nav-item a.active {
-  background: white !important;
+  background: var(--color-surface-solid, white) !important;
   color: #ff5f93 !important;
 
   box-shadow: 0 12px 30px rgba(255,95,147,0.25);
@@ -130,7 +130,7 @@
 }
 
 .inventory-sidebar .logout-btn:hover {
-  background: white;
+  background: var(--color-surface-solid, white);
   transform: translateY(-2px);
 }
 
@@ -194,7 +194,7 @@
 }
 
 .inventory-sidebar .nav-item a:hover svg {
-  background: #ffffff;
+  background: var(--color-surface-solid, #ffffff);
   color: #ff5f93 !important;
   transform: rotate(-5deg) scale(1.08);
   box-shadow: 0 10px 22px rgba(255,95,147,0.25);
@@ -203,7 +203,7 @@
 /* Glowing active */
 .inventory-sidebar .nav-item a.active {
   position: relative;
-  background: #ffffff !important;
+  background: var(--color-surface-solid, #ffffff) !important;
   color: #ff5f93 !important;
   transform: translateX(4px);
   box-shadow:

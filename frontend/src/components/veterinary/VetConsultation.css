@@ -37,7 +37,7 @@
 
 .consult-back {
   padding: 10px 14px;
-  background: #fff0f6;
+  background: var(--color-surface-muted, #fff0f6);
   color: #ff3d73;
 }
 
@@ -122,7 +122,7 @@
   border-radius: 12px;
   padding: 11px 12px;
   font: inherit;
-  background: #fff;
+  background: var(--color-surface-solid, #fff);
 }
 
 .consult-form textarea {
@@ -144,7 +144,7 @@
   justify-content: flex-end;
   gap: 12px;
   padding: 16px 0 0;
-  background: linear-gradient(180deg, rgba(255, 245, 248, 0), #fff5f8 35%);
+  background: linear-gradient(180deg, rgba(255, 245, 248, 0), var(--color-surface-muted, #fff5f8) 35%);
 }
 
 .consult-actions button {
@@ -152,7 +152,7 @@
 }
 
 .consult-actions .secondary {
-  background: #fff;
+  background: var(--color-surface-solid, #fff);
   color: #ff3d73;
   border: 1px solid rgba(255, 95, 147, 0.22);
 }

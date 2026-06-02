@@ -16,7 +16,7 @@
 .modal-content.stock-modal {
   width: min(520px, calc(100vw - 32px));
   max-height: 88vh;
-  background: #ffffff;
+  background: var(--color-surface-solid, #ffffff);
   border-radius: 28px;
   box-shadow: 0 28px 80px rgba(15, 23, 42, 0.28);
   border: 1px solid rgba(255, 95, 147, 0.14);
@@ -231,7 +231,7 @@
   min-height: 84px;
   border-radius: 18px;
   border: 1px solid rgba(255, 95, 147, 0.18);
-  background: #ffffff;
+  background: var(--color-surface-solid, #ffffff);
   color: #64748b;
   cursor: pointer;
   transition: 0.2s ease;
@@ -279,7 +279,7 @@
   height: 42px;
   border-radius: 999px;
   border: 1px solid rgba(255, 95, 147, 0.22);
-  background: #ffffff;
+  background: var(--color-surface-solid, #ffffff);
   color: #ff5f93;
   font-size: 20px;
   font-weight: 950;
@@ -297,7 +297,7 @@
   height: 44px;
   border-radius: 999px;
   border: 1px solid rgba(255, 95, 147, 0.2);
-  background: #ffffff;
+  background: var(--color-surface-solid, #ffffff);
   color: #111827;
   padding: 0 16px;
   font-weight: 800;
@@ -549,7 +549,7 @@
 }
 
 .cancel-adjustment-btn {
-  background: #ffffff;
+  background: var(--color-surface-solid, #ffffff);
   color: #334155;
   border: 1px solid rgba(255, 95, 147, 0.22);
 }

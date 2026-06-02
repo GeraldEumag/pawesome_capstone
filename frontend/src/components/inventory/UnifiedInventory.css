@@ -103,7 +103,7 @@
 }
 
 .btn-filter {
-  background: #fff;
+  background: var(--color-surface-solid, #fff);
   color: #475569;
   border: 1px solid #e2e8f0;
 }
@@ -150,7 +150,7 @@
 }
 
 .ui-stat-card {
-  background: white;
+  background: var(--color-surface-solid, white);
   border: 1px solid #e2e8f0;
   border-radius: 10px;
   padding: 1rem;
@@ -247,7 +247,7 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  background: white;
+  background: var(--color-surface-solid, white);
   padding: 0.6rem 0.8rem;
   border-radius: 6px;
   border-left: 3px solid #f59e0b;
@@ -300,7 +300,7 @@
   padding: 0.6rem 1rem;
   border: 2px solid #e5e7eb;
   border-radius: 8px;
-  background: white;
+  background: var(--color-surface-solid, white);
   color: #64748b;
   font-size: 0.85rem;
   font-weight: 500;
@@ -337,7 +337,7 @@
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  background: white;
+  background: var(--color-surface-solid, white);
   border: 1px solid #e2e8f0;
   border-radius: 8px;
   padding: 0.5rem 0.75rem;
@@ -388,7 +388,7 @@
   border: 1px solid #e2e8f0;
   border-radius: 6px;
   font-size: 0.85rem;
-  background: white;
+  background: var(--color-surface-solid, white);
   min-width: 140px;
 }
 
@@ -432,7 +432,7 @@
 
 /* Table */
 .ui-table-wrapper {
-  background: white;
+  background: var(--color-surface-solid, white);
   border: 1px solid #e2e8f0;
   border-radius: 10px;
   overflow: hidden;
@@ -728,7 +728,7 @@
 .ui-pagination button {
   padding: 0.4rem 0.75rem;
   border: 1px solid #e2e8f0;
-  background: white;
+  background: var(--color-surface-solid, white);
   border-radius: 6px;
   font-size: 0.8rem;
   cursor: pointer;
@@ -758,7 +758,7 @@
 
 /* Activity timeline */
 .ui-activity {
-  background: white;
+  background: var(--color-surface-solid, white);
   border: 1px solid #e2e8f0;
   border-radius: 10px;
   padding: 1rem;
@@ -928,7 +928,7 @@
 }
 
 .modal-content {
-  background: white;
+  background: var(--color-surface-solid, white);
   border-radius: 12px;
   max-width: 700px;
   width: 100%;

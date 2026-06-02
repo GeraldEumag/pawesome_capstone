@@ -47,7 +47,7 @@
   height: 42px;
   padding: 0.72rem;
   border-radius: 16px;
-  background: #ffffff;
+  background: var(--color-surface-solid, #ffffff);
   color: #ff5f93;
   box-shadow: 0 10px 24px rgba(255, 95, 147, 0.18);
 }
@@ -100,7 +100,7 @@
 }
 
 .manager-sidebar .nav-item a.active {
-  background: #ffffff !important;
+  background: var(--color-surface-solid, #ffffff) !important;
   color: #ff5f93 !important;
   box-shadow: 0 14px 30px rgba(255, 95, 147, 0.2);
 }
@@ -150,7 +150,7 @@
 }
 
 .manager-sidebar .logout-btn:hover {
-  background: #ffffff;
+  background: var(--color-surface-solid, #ffffff);
   color: #ff5f93 !important;
   transform: translateY(-2px);
   box-shadow: 0 14px 30px rgba(255, 95, 147, 0.2);

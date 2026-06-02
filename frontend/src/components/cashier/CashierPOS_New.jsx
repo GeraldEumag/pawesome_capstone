@@ -1522,6 +1522,14 @@ const CashierPOS = () => {
   }, []);
 
   useEffect(() => { fetchProducts(); fetchServices(); }, [fetchProducts, fetchServices]);
+
+  /* Auto-refresh services periodically to sync with receptionist changes */
+  useEffect(() => {
+    const interval = setInterval(() => {
+      fetchServices();
+    }, 30000); // Refresh services every 30 seconds
+    return () => clearInterval(interval);
+  }, [fetchServices]);
   /* Fullscreen state tracking */
   useEffect(() => {
     const handleFullscreenChange = () => {
@@ -1897,7 +1905,7 @@ const CashierPOS = () => {
               <Badge $type="out"><FontAwesomeIcon icon={faBan} /> {outOfStockCount} Out</Badge>
             )}
 
-            <IconBtn onClick={fetchProducts}>
+            <IconBtn onClick={() => { fetchProducts(); fetchServices(); }}>
               <FontAwesomeIcon icon={faRotateRight} /> Refresh
             </IconBtn>
 

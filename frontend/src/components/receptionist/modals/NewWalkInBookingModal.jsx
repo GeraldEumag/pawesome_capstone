@@ -26,6 +26,7 @@ const initialForm = {
   bookingType: "hotel",
   paymentMethod: "cash",
   paidAmount: "0",
+  vaccinationCard: null,
 };
 
 const roomRates = {
@@ -80,24 +81,28 @@ const NewWalkInBookingModal = ({ onClose, onSuccess }) => {
   const [customers, setCustomers] = useState([]);
   const [pets, setPets] = useState([]);
   const [services, setServices] = useState([]);
+  const [hotelRooms, setHotelRooms] = useState([]);
   const [processing, setProcessing] = useState(false);
   const [error, setError] = useState("");
 
   useEffect(() => {
     const load = async () => {
       try {
-        const [cData, pData, sData] = await Promise.all([
+        const [cData, pData, sData, hData] = await Promise.all([
           apiRequest("/customers").catch(() => null),
           apiRequest("/pets").catch(() => null),
           apiRequest("/services").catch(() => null),
+          apiRequest("/receptionist/hotel-rooms").catch(() => null),
         ]);
         setCustomers(safeArray(cData, "customers"));
         setPets(safeArray(pData, "pets"));
         setServices(safeArray(sData, "services"));
+        setHotelRooms(safeArray(hData, "rooms"));
       } catch {
         setCustomers([]);
         setPets([]);
         setServices([]);
+        setHotelRooms([]);
       }
     };
     load();
@@ -183,6 +188,25 @@ const NewWalkInBookingModal = ({ onClose, onSuccess }) => {
     );
   };
 
+  // Helper to resolve room type to actual hotel_room_id
+  const resolveHotelRoomId = (roomTypeName) => {
+    // Try to find a room that matches the type
+    const room = hotelRooms.find((r) =>
+      String(r.type || r.room_type || "").toLowerCase() === String(roomTypeName).toLowerCase() ||
+      String(r.name || "").toLowerCase().includes(String(roomTypeName).toLowerCase())
+    );
+    return room?.id || roomTypeName; // Fallback to name if no match
+  };
+
+  // Helper to build notes from various fields
+  const buildNotes = () => {
+    const parts = [];
+    if (form.specialRequests) parts.push(`Special Requests: ${form.specialRequests}`);
+    if (form.symptoms) parts.push(`Symptoms: ${form.symptoms}`);
+    if (form.medicalNotes) parts.push(`Medical Notes: ${form.medicalNotes}`);
+    return parts.join("\n") || "";
+  };
+
   const handleSubmit = async (event) => {
     event.preventDefault();
     if (!form.customerId || !form.petId || !form.appointmentDate) {
@@ -193,70 +217,83 @@ const NewWalkInBookingModal = ({ onClose, onSuccess }) => {
       setError("Please select a service.");
       return;
     }
+    if (form.bookingType === "hotel" && !form.vaccinationCard) {
+      setError("Vaccination card is required for hotel bookings.");
+      return;
+    }
 
     try {
       setProcessing(true);
       setError("");
       const amount = calculatedAmount;
       const paidAmount = Number(form.paidAmount || 0);
-      const paymentStatus = getPaymentStatusFromAmount(amount, paidAmount);
 
       let endpoint = "";
       let payload = {};
+      let useFormData = false;
 
       if (form.bookingType === "hotel") {
         endpoint = "/boardings";
-        payload = {
-          pet_id: form.petId,
-          customer_id: form.customerId,
-          hotel_room_id: form.roomType,
-          room_type: form.roomType,
-          check_in: form.appointmentDate,
-          check_out: form.appointmentDate,
-          total_amount: amount,
-          payment_status: paymentStatus,
-          paid_amount: paidAmount,
-          payment_method: form.paymentMethod,
-          notes: form.specialRequests,
-        };
+        const numberOfDays = parseDurationDays(form.duration);
+        const hotelRoomId = resolveHotelRoomId(form.roomType);
+
+        // Use FormData for file upload
+        useFormData = true;
+        payload = new FormData();
+        payload.append("pet_id", form.petId);
+        payload.append("customer_id", form.customerId);
+        payload.append("hotel_room_id", hotelRoomId);
+        payload.append("check_in_date", form.appointmentDate);
+        payload.append("number_of_days", numberOfDays);
+        payload.append("notes", buildNotes());
+        payload.append("vaccination_card", form.vaccinationCard);
+        // Optional fields
+        if (paidAmount > 0) {
+          payload.append("paid_amount", paidAmount);
+          payload.append("payment_method", form.paymentMethod);
+        }
       }
 
       if (form.bookingType === "vet") {
         endpoint = "/receptionist/appointments";
         payload = {
-          pet_id: form.petId,
           customer_id: form.customerId,
+          pet_id: form.petId,
           service_id: form.service,
           scheduled_at: combineDateTime(form.appointmentDate, form.appointmentTime),
-          price: amount,
-          payment_status: paymentStatus,
-          paid_amount: paidAmount,
-          payment_method: form.paymentMethod,
-          symptoms: form.symptoms,
-          medical_notes: form.medicalNotes,
-          notes: form.specialRequests,
+          notes: buildNotes(),
+          // Backend auto-fetches price from service
         };
       }
 
       if (form.bookingType === "grooming") {
         endpoint = "/grooming";
+        // Get service name from selected service_id
+        const selectedService = services.find((s) => String(s.id) === String(form.service));
+        const serviceName = selectedService?.name || form.service;
+
         payload = {
-          pet_id: form.petId,
           customer_id: form.customerId,
-          service_id: form.service,
-          scheduled_at: combineDateTime(form.appointmentDate, form.appointmentTime),
-          price: amount,
-          payment_status: paymentStatus,
-          paid_amount: paidAmount,
-          payment_method: form.paymentMethod,
-          special_requests: form.specialRequests,
+          pet_id: form.petId,
+          service: serviceName, // Backend expects service NAME, not ID
+          appointment_date: form.appointmentDate,
+          appointment_time: form.appointmentTime,
+          amount: amount, // Backend expects amount, not price
+          notes: form.specialRequests, // Backend expects notes, not special_requests
         };
       }
 
-      await apiRequest(endpoint, {
+      const requestOptions = {
         method: "POST",
-        body: JSON.stringify(payload),
-      });
+        body: useFormData ? payload : JSON.stringify(payload),
+      };
+
+      // Don't set Content-Type for FormData - browser will set it with boundary
+      if (!useFormData) {
+        requestOptions.headers = { "Content-Type": "application/json" };
+      }
+
+      await apiRequest(endpoint, requestOptions);
 
       setForm(initialForm);
       onSuccess();
@@ -388,10 +425,27 @@ const NewWalkInBookingModal = ({ onClose, onSuccess }) => {
                     <div className="hub-form-group">
                       <label>Room Type *</label>
                       <select name="roomType" value={form.roomType} onChange={handleInputChange} required>
-                        <option value="Standard Room">Standard Room</option>
-                        <option value="Deluxe Suite">Deluxe Suite</option>
-                        <option value="Presidential Suite">Presidential Suite</option>
+                        <option value="">Select an available room...</option>
+                        {hotelRooms.length > 0 ? (
+                          hotelRooms.map((room) => (
+                            <option key={room.id} value={room.type || room.room_type || room.name || `Room ${room.id}`}>
+                              {room.type || room.room_type || room.name || `Room ${room.id}`} - ₱{room.daily_rate || 0}/day
+                              {room.status && room.status !== "available" ? ` (${room.status})` : ""}
+                            </option>
+                          ))
+                        ) : (
+                          <>
+                            <option value="Standard Room">Standard Room - ₱50/day</option>
+                            <option value="Deluxe Suite">Deluxe Suite - ₱80/day</option>
+                            <option value="Presidential Suite">Presidential Suite - ₱120/day</option>
+                          </>
+                        )}
                       </select>
+                      {hotelRooms.length === 0 && (
+                        <small style={{ color: "var(--color-warning, #d97706)", fontSize: "12px" }}>
+                          Using default room options (hotel rooms data unavailable)
+                        </small>
+                      )}
                     </div>
                     <div className="hub-form-group">
                       <label>Duration *</label>
@@ -409,6 +463,19 @@ const NewWalkInBookingModal = ({ onClose, onSuccess }) => {
                         <option value="Day Care">Day Care</option>
                         <option value="Pet Training">Pet Training</option>
                       </select>
+                    </div>
+                    <div className="hub-form-group full">
+                      <label>Vaccination Card *</label>
+                      <input
+                        type="file"
+                        name="vaccinationCard"
+                        accept="image/*,.pdf"
+                        onChange={(e) => setForm((prev) => ({ ...prev, vaccinationCard: e.target.files[0] }))}
+                        required
+                      />
+                      <small style={{ color: "var(--color-muted, #6b7280)", fontSize: "12px" }}>
+                        Upload a photo or PDF of the pet&apos;s vaccination records (required for boarding)
+                      </small>
                     </div>
                   </>
                 )}
