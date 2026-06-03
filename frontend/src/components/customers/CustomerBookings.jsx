@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import "./CustomerBookings.css";
 import { apiRequest } from "../../api/client";
 import { useAuth } from "../../context/AuthContext";
+import { showWarning, showSuccess, showError } from "../../utils/alert";
 import PetAvatar from "../shared/PetAvatar";
 import DatePickerInput from "../shared/DatePickerInput";
 import {
@@ -688,11 +689,13 @@ const CustomerBookings = () => {
     if (type === "error") {
       setErrorMessage(message);
       setTimeout(() => setErrorMessage(""), 3500);
+      showError(message);
       return;
     }
 
     setSuccessMessage(message);
     setTimeout(() => setSuccessMessage(""), 3500);
+    showSuccess(message);
   };
 
   const handleSelect = (type) => {

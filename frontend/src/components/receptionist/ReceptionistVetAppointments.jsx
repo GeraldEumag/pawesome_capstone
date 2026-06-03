@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { showConfirm } from "../../utils/alert";
+import { showConfirm, showError, showWarning } from "../../utils/alert";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
   faStethoscope,
@@ -83,6 +83,7 @@ const VetAppointments = () => {
       setError("");
     } catch (err) {
       setError("Failed to load appointments. Please try again.");
+      showError("Failed to load appointments. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -98,9 +99,11 @@ const VetAppointments = () => {
 
       if (vetList.length === 0) {
         setError("No active veterinarian accounts found. Create or activate a veterinarian user first.");
+        showWarning("No active veterinarian accounts found. Create or activate a veterinarian user first.");
       }
     } catch (err) {
       setError("Could not load veterinarian list. Please refresh or check the receptionist permission.");
+      showError("Could not load veterinarian list. Please refresh or check the receptionist permission.");
       setVeterinarians([]);
     }
   };
@@ -111,6 +114,7 @@ const VetAppointments = () => {
 
     if (!veterinarianId) {
       setError("Please choose a veterinarian before approving this appointment.");
+      showWarning("Please choose a veterinarian before approving this appointment.");
       return;
     }
 
@@ -127,6 +131,7 @@ const VetAppointments = () => {
       setError("");
     } catch (err) {
       setError(err.message || "Failed to approve appointment");
+      showError(err.message || "Failed to approve appointment");
     } finally {
       setActionLoading(false);
     }
@@ -150,6 +155,7 @@ const VetAppointments = () => {
       setError("");
     } catch (err) {
       setError(err.message || "Failed to cancel appointment");
+      showError(err.message || "Failed to cancel appointment");
     } finally {
       setActionLoading(false);
     }
@@ -182,7 +188,7 @@ const VetAppointments = () => {
   const handleBulkApprove = async () => {
     const ids = Array.from(selectedIds);
     const withoutVet = ids.filter((id) => !vetAssignments[id]);
-    if (withoutVet.length > 0) { setError("Please assign a veterinarian to every selected appointment."); return; }
+    if (withoutVet.length > 0) { setError("Please assign a veterinarian to every selected appointment."); showWarning("Please assign a veterinarian to every selected appointment."); return; }
     if (!(await showConfirm(`Approve ${ids.length} selected appointments?`))) return;
     setActionLoading(true);
     setError("");
@@ -199,6 +205,7 @@ const VetAppointments = () => {
       await fetchAppointments();
     } catch (err) {
       setError(err.message || "Bulk approve failed.");
+      showError(err.message || "Bulk approve failed.");
     } finally {
       setActionLoading(false);
     }
@@ -222,6 +229,7 @@ const VetAppointments = () => {
       await fetchAppointments();
     } catch (err) {
       setError(err.message || "Bulk cancel failed.");
+      showError(err.message || "Bulk cancel failed.");
     } finally {
       setActionLoading(false);
     }
@@ -230,6 +238,7 @@ const VetAppointments = () => {
   const handleReschedule = async (appointmentId, newDateTime) => {
     if (!appointmentId || !newDateTime) {
       setError("Choose an approved appointment and a new schedule before rescheduling.");
+      showWarning("Choose an approved appointment and a new schedule before rescheduling.");
       return;
     }
 
@@ -245,6 +254,7 @@ const VetAppointments = () => {
       setError("");
     } catch (err) {
       setError(err.message || "Failed to reschedule appointment");
+      showError(err.message || "Failed to reschedule appointment");
     } finally {
       setActionLoading(false);
     }

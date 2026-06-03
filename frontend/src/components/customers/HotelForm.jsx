@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from "react";
-import { showConfirm } from "../../utils/alert";
+import { showConfirm, showWarning, showSuccess, showError } from "../../utils/alert";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import catHotelImg from "../../assets/CATHOTEL.jpg";
 import dogHotelImg from "../../assets/DOGHOTEL.jpg";
@@ -159,16 +159,19 @@ const HotelForm = () => {
 
     if (!selectedRoom) {
       setError("Please select an available room for your stay.");
+      showWarning("Please select an available room for your stay.");
       return;
     }
 
     if (boardingAvailability && !boardingAvailability.rooms?.find(room => room.id === selectedRoom.id && room.available)) {
       setError("Selected room is no longer available. Please choose another room.");
+      showWarning("Selected room is no longer available. Please choose another room.");
       return;
     }
 
     if (!vaccinationCard) {
       setError("Please upload a vaccination card photo.");
+      showWarning("Please upload a vaccination card photo.");
       return;
     }
 
@@ -200,6 +203,7 @@ const HotelForm = () => {
       });
 
       setSuccessMessage("Pet boarding request submitted successfully.");
+      showSuccess("Pet boarding request submitted successfully.");
       setBookingForm({
         pet_id: "",
         pet_name: "",
@@ -218,6 +222,7 @@ const HotelForm = () => {
       setActiveTab("my-bookings");
     } catch (err) {
       setError(err.message || "Failed to create boarding request.");
+      showError(err.message || "Failed to create boarding request.");
     } finally {
       setLoading(false);
     }
@@ -230,9 +235,11 @@ const HotelForm = () => {
       setLoading(true);
       await apiRequest(`/customer/boarding-requests/${bookingId}/cancel`, { method: "POST" });
       setSuccessMessage("Boarding request cancelled.");
+      showSuccess("Boarding request cancelled.");
       await fetchMyBookings();
     } catch (err) {
       setError(err.message || "Failed to cancel reservation.");
+      showError(err.message || "Failed to cancel reservation.");
     } finally {
       setLoading(false);
     }
@@ -242,6 +249,7 @@ const HotelForm = () => {
     const file = paymentFiles[booking.id];
     if (!file) {
       setError("Choose a payment proof file first.");
+      showWarning("Choose a payment proof file first.");
       return;
     }
 
@@ -256,10 +264,12 @@ const HotelForm = () => {
         body: formData,
       });
       setSuccessMessage("Payment proof submitted for cashier verification.");
+      showSuccess("Payment proof submitted for cashier verification.");
       setPaymentFiles((prev) => ({ ...prev, [booking.id]: null }));
       await fetchMyBookings();
     } catch (err) {
       setError(err.message || "Failed to upload payment proof.");
+      showError(err.message || "Failed to upload payment proof.");
     } finally {
       setLoading(false);
     }

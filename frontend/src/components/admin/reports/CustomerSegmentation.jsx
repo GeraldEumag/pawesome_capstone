@@ -28,6 +28,7 @@ import {
 import { formatCurrency } from '../../../utils/currency';
 import { ChartContainer, CHART_COLORS } from '../../shared/UnifiedReportEngine';
 import { apiRequest } from '../../../api/client';
+import { showError } from '../../../utils/alert';
 import './CustomerSegmentation.css';
 
 /**
@@ -77,10 +78,12 @@ const CustomerSegmentation = ({ data: initialData = {} }) => {
         setData(response.data || {});
       } else {
         setError(response?.message || 'Failed to fetch customer data');
+        showError(response?.message || 'Failed to fetch customer data');
       }
     } catch (err) {
       console.error('Customer Segmentation API Error:', err);
       setError(err.message || 'Network error');
+      showError(err.message || 'Network error');
     } finally {
       setLoading(false);
     }

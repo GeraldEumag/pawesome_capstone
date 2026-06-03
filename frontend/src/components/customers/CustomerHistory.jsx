@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useState } from "react";
 import { apiRequest } from "../../api/client";
+import { showError } from "../../utils/alert";
 import HistoryTimeline from "../shared/HistoryTimeline";
 
 const TYPE_OPTIONS = [
@@ -82,6 +83,7 @@ const CustomerHistory = () => {
       setEntries(filtered);
     } catch (err) {
       setError(err.message || "Failed to load activity history.");
+      showError(err.message || "Failed to load activity history.");
     } finally {
       setLoading(false);
     }

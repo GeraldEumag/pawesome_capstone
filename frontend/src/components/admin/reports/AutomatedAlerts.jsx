@@ -17,6 +17,7 @@ import {
   faSync,
 } from '@fortawesome/free-solid-svg-icons';
 import { apiRequest } from '../../../api/client';
+import { showError } from '../../../utils/alert';
 import './AutomatedAlerts.css';
 
 /**
@@ -125,10 +126,12 @@ const AutomatedAlerts = () => {
         setHistory(response.data?.history || []);
       } else {
         setError(response?.message || 'Failed to fetch alerts');
+        showError(response?.message || 'Failed to fetch alerts');
       }
     } catch (err) {
       console.error('Automated Alerts API Error:', err);
       setError(err.message || 'Network error');
+      showError(err.message || 'Network error');
     } finally {
       setLoading(false);
     }

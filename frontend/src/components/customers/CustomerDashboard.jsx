@@ -75,6 +75,7 @@ const CustomerDashboard = () => {
           return;
         }
         setError(err.message || "Failed to load dashboard data");
+        showError(err.message || "Failed to load dashboard data");
         console.error("Customer dashboard fetch error:", err);
       } finally {
         setLoading(false);

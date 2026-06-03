@@ -33,6 +33,7 @@ import {
 import { formatCurrency } from '../../../utils/currency';
 import { ChartContainer, CHART_COLORS } from '../../shared/UnifiedReportEngine';
 import { apiRequest } from '../../../api/client';
+import { showError } from '../../../utils/alert';
 import './SalesAnalysis.css';
 
 /**
@@ -76,10 +77,12 @@ const SalesAnalysis = ({ data: initialData = {} }) => {
         setData(response.data || {});
       } else {
         setError(response?.message || 'Failed to fetch sales data');
+        showError(response?.message || 'Failed to fetch sales data');
       }
     } catch (err) {
       console.error('Sales Analysis API Error:', err);
       setError(err.message || 'Network error');
+      showError(err.message || 'Network error');
     } finally {
       setLoading(false);
     }

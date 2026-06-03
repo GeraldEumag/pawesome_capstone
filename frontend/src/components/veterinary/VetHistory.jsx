@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useState } from "react";
 import { apiRequest } from "../../api/client";
 import { useTheme } from "../../utils/theme";
+import { showError } from "../../utils/alert";
 import HistoryTimeline from "../shared/HistoryTimeline";
 import "./theme.css";
 
@@ -53,6 +54,7 @@ const VetHistory = () => {
       setMeta(res?.meta || null);
     } catch (err) {
       setError(err.message || "Failed to load veterinary history.");
+      showError(err.message || "Failed to load veterinary history.");
     } finally {
       setLoading(false);
     }

@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useState } from "react";
-import { showAlert } from "../../utils/alert";
+import { showAlert, showError } from "../../utils/alert";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
   faSearch,
@@ -195,6 +195,7 @@ const InventoryHistory = () => {
     } catch (err) {
       console.error("Failed to fetch stock history:", err);
       setError(err.message || "Failed to load stock history");
+      showError(err.message || "Failed to load stock history");
       setStockHistory([]);
     } finally {
       setLoading(false);
@@ -216,6 +217,7 @@ const InventoryHistory = () => {
     } catch (err) {
       console.error("Failed to fetch audit history:", err);
       setError(err.message || "Failed to load audit history");
+      showError(err.message || "Failed to load audit history");
       setAuditHistory([]);
     } finally {
       setLoading(false);
@@ -237,6 +239,7 @@ const InventoryHistory = () => {
     } catch (err) {
       console.error("Failed to fetch adjustment history:", err);
       setError(err.message || "Failed to load adjustment history");
+      showError(err.message || "Failed to load adjustment history");
       setAdjustmentHistory([]);
     } finally {
       setLoading(false);
@@ -258,6 +261,7 @@ const InventoryHistory = () => {
     } catch (err) {
       console.error("Failed to fetch restock history:", err);
       setError(err.message || "Failed to load restock history");
+      showError(err.message || "Failed to load restock history");
       setRestockHistory([]);
     } finally {
       setLoading(false);

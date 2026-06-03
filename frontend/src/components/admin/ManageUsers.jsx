@@ -27,6 +27,7 @@ import {
 } from "@fortawesome/free-solid-svg-icons";
 import { apiRequest } from "../../api/client";
 import { normalizeList } from "../../utils/normalizeList";
+import { showSuccess as showSwalSuccess, showError as showSwalError, showWarning } from "../../utils/alert";
 import "./ManageUsers.css";
 
 const ROLE_OPTIONS = [
@@ -75,12 +76,14 @@ const ManageUsers = () => {
     setSuccess(message);
     window.clearTimeout(window.manageUsersSuccessTimer);
     window.manageUsersSuccessTimer = window.setTimeout(() => setSuccess(""), 3000);
+    showSwalSuccess(message);
   };
 
   const showError = (message) => {
     setError(message);
     window.clearTimeout(window.manageUsersErrorTimer);
     window.manageUsersErrorTimer = window.setTimeout(() => setError(""), 5000);
+    showSwalError(message);
   };
 
   const safeNormalizeUsers = (value) =>

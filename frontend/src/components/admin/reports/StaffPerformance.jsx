@@ -33,6 +33,7 @@ import {
 import { formatCurrency } from '../../../utils/currency';
 import { ChartContainer, CHART_COLORS } from '../../shared/UnifiedReportEngine';
 import { apiRequest } from '../../../api/client';
+import { showError } from '../../../utils/alert';
 import './StaffPerformance.css';
 
 /**
@@ -102,10 +103,12 @@ const StaffPerformance = ({ data: initialData = {} }) => {
         setData(response.data || {});
       } else {
         setError(response?.message || 'Failed to fetch staff data');
+        showError(response?.message || 'Failed to fetch staff data');
       }
     } catch (err) {
       console.error('Staff Performance API Error:', err);
       setError(err.message || 'Network error');
+      showError(err.message || 'Network error');
     } finally {
       setLoading(false);
     }

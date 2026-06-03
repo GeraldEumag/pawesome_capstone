@@ -29,6 +29,7 @@ import {
 import { formatCurrency } from '../../../utils/currency';
 import { ChartContainer, CHART_COLORS } from '../../shared/UnifiedReportEngine';
 import { apiRequest } from '../../../api/client';
+import { showError } from '../../../utils/alert';
 import './PredictiveAnalytics.css';
 
 /**
@@ -126,10 +127,12 @@ const PredictiveAnalytics = ({ data: initialData = {} }) => {
         setData(response.data || {});
       } else {
         setError(response?.message || 'Failed to fetch forecast data');
+        showError(response?.message || 'Failed to fetch forecast data');
       }
     } catch (err) {
       console.error('Predictive Analytics API Error:', err);
       setError(err.message || 'Network error');
+      showError(err.message || 'Network error');
     } finally {
       setLoading(false);
     }

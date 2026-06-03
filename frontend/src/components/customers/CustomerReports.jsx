@@ -30,6 +30,7 @@ import {
 } from "recharts";
 import { apiRequest } from "../../api/client";
 import { formatCurrency } from "../../utils/currency";
+import { showError } from "../../utils/alert";
 import StandardReportLayout from "../shared/StandardReportLayout";
 import StandardTable from "../shared/StandardTable";
 import {
@@ -297,6 +298,7 @@ const CustomerReports = () => {
     } catch (err) {
       console.error("Failed to fetch customer reports:", err);
       setError(err.message || "Failed to load live customer report data.");
+      showError(err.message || "Failed to load live customer report data.");
       setBookings([]);
       setPets([]);
       setTransactions([]);

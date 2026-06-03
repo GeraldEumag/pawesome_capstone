@@ -16,6 +16,7 @@ import {
 import Swal from "sweetalert2";
 import "./CustomerOrders.css";
 import { apiRequest } from "../../api/client";
+import { showError } from "../../utils/alert";
 
 const CustomerOrders = () => {
   const [orders, setOrders] = useState([]);
@@ -74,6 +75,7 @@ const CustomerOrders = () => {
       setError("");
     } catch (err) {
       setError(err.message || "Failed to load orders");
+      showError(err.message || "Failed to load orders");
       console.error("Customer orders fetch error:", err);
     } finally {
       setLoading(false);

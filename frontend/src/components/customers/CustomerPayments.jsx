@@ -204,6 +204,7 @@ const CustomerPayments = () => {
       }
       
       setError(err.message || "Failed to load payments.");
+      showError(err.message || "Failed to load payments.");
       setPayments([]);
     } finally {
       setLoading(false);

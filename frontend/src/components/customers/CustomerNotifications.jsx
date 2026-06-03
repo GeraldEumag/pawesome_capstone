@@ -14,6 +14,7 @@ import {
 } from "@fortawesome/free-solid-svg-icons";
 import "./CustomerNotifications.css";
 import { apiRequest } from "../../api/client";
+import { showError } from "../../utils/alert";
 
 const CustomerNotifications = () => {
   const [notifications, setNotifications] = useState([]);
@@ -33,6 +34,7 @@ const CustomerNotifications = () => {
       setError("");
     } catch (err) {
       setError(err.message || "Failed to load notifications");
+      showError(err.message || "Failed to load notifications");
       console.error("Customer notifications fetch error:", err);
     } finally {
       setLoading(false);

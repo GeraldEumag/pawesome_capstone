@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { showAlert, showPrompt } from "../../utils/alert";
+import { showAlert, showPrompt, showError } from "../../utils/alert";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
   faSearch,
@@ -77,6 +77,7 @@ const CashierTransactions = () => {
       });
     } catch (err) {
       setError("Failed to load transactions");
+      showError("Failed to load transactions");
       console.error("Load transactions error:", err);
     } finally {
       setLoading(false);
@@ -103,6 +104,7 @@ const CashierTransactions = () => {
       }
     } catch (err) {
       setError("Failed to void transaction");
+      showError("Failed to void transaction");
     } finally {
       setLoading(false);
     }

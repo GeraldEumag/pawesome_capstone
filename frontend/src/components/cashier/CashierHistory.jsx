@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { apiRequest } from "../../api/client";
+import { showError } from "../../utils/alert";
 import HistoryTimeline from "../shared/HistoryTimeline";
 import "./CashierHistory.css";
 
@@ -52,6 +53,7 @@ const CashierHistory = () => {
       setMeta(res?.meta || null);
     } catch (err) {
       setError(err.message || "Failed to load cashier history.");
+      showError(err.message || "Failed to load cashier history.");
     } finally {
       setLoading(false);
     }

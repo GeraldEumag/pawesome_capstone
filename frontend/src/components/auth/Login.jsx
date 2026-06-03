@@ -12,7 +12,7 @@ import {
 } from "@fortawesome/free-solid-svg-icons";
 import logo from "../../assets/pawesome.jpg";
 import "./Login.css";
-import { showSuccess } from "../../utils/alert";
+import { showSuccess, showError } from "../../utils/alert";
 
 const roleRouteMap = {
   admin: "/admin",
@@ -101,6 +101,7 @@ const Login = () => {
         username: errorMsg,
         password: errorMsg,
       });
+      showError(errorMsg);
     } finally {
       setIsSubmitting(false);
     }

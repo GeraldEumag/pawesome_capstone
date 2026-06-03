@@ -15,6 +15,7 @@ import { formatCurrency } from "../../utils/currency";
 import jsPDF from "jspdf";
 import html2canvas from "html2canvas";
 import { useTheme } from "../../utils/theme";
+import { showError } from "../../utils/alert";
 import "./theme.css";
 import "./VetReceipt.css";
 
@@ -64,6 +65,7 @@ const VetReceipt = () => {
       setError("");
     } catch (err) {
       setError(err.message || "Failed to fetch receipt");
+      showError(err.message || "Failed to fetch receipt");
       console.error("Receipt fetch error:", err);
     } finally {
       setLoading(false);
@@ -89,6 +91,7 @@ const VetReceipt = () => {
       pdf.save(`receipt-${receiptData.id}.pdf`);
     } catch (err) {
       setError("Failed to download PDF");
+      showError("Failed to download PDF");
       console.error(err);
     }
   };

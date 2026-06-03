@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from "react";
-import { showAlert } from "../../utils/alert";
+import { showAlert, showError } from "../../utils/alert";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
   faHistory,
@@ -49,6 +49,7 @@ const LoginHistory = () => {
       setTotalPages(data.last_page || 1);
     } catch (err) {
       setError(err.message || "Failed to fetch login logs");
+      showError(err.message || "Failed to fetch login logs");
       setLogs([]);
     } finally {
       setLoading(false);

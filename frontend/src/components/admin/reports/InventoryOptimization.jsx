@@ -32,6 +32,7 @@ import {
 import { formatCurrency } from '../../../utils/currency';
 import { ChartContainer, CHART_COLORS } from '../../shared/UnifiedReportEngine';
 import { apiRequest } from '../../../api/client';
+import { showError } from '../../../utils/alert';
 import './InventoryOptimization.css';
 
 /**
@@ -85,10 +86,12 @@ const InventoryOptimization = ({ data: initialData = {} }) => {
         setData(response.data || {});
       } else {
         setError(response?.message || 'Failed to fetch inventory data');
+        showError(response?.message || 'Failed to fetch inventory data');
       }
     } catch (err) {
       console.error('Inventory Optimization API Error:', err);
       setError(err.message || 'Network error');
+      showError(err.message || 'Network error');
     } finally {
       setLoading(false);
     }

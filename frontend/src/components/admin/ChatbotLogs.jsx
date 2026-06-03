@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react";
-import { showConfirm } from "../../utils/alert";
+import { showConfirm, showSuccess, showError } from "../../utils/alert";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
   faBook,
@@ -131,12 +131,14 @@ const ChatbotLogs = () => {
       setSuccess(message);
       window.clearTimeout(window.chatbotSuccessTimer);
       window.chatbotSuccessTimer = window.setTimeout(() => setSuccess(""), 3000);
+      showSuccess(message);
       return;
     }
 
     setError(message);
     window.clearTimeout(window.chatbotErrorTimer);
     window.chatbotErrorTimer = window.setTimeout(() => setError(""), 5000);
+    showError(message);
   };
 
   const formatDateTime = (value) => {

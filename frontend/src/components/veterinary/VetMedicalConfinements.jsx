@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { apiRequest } from "../../api/client";
 import { useTheme } from "../../utils/theme";
+import { showSuccess, showError } from "../../utils/alert";
 import "./theme.css";
 
 const normalizeList = (result) => {
@@ -23,7 +24,10 @@ const VetMedicalConfinements = () => {
   };
 
   useEffect(() => {
-    load().catch((err) => setError(err.message || "Failed to load confinements."));
+    load().catch((err) => {
+      setError(err.message || "Failed to load confinements.");
+      showError(err.message || "Failed to load confinements.");
+    });
   }, []);
 
   const post = async (url, body, ok) => {
@@ -31,9 +35,11 @@ const VetMedicalConfinements = () => {
       setError("");
       await apiRequest(url, { method: "POST", body: body ? JSON.stringify(body) : undefined });
       setMessage(ok);
+      showSuccess(ok);
       await load();
     } catch (err) {
       setError(err.message || "Action failed.");
+      showError(err.message || "Action failed.");
     }
   };
 

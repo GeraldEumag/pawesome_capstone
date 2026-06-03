@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { apiRequest } from "../../api/client";
+import { showWarning, showSuccess, showError } from "../../utils/alert";
 import "./Login.css";
 
 const ForgotPassword = () => {
@@ -22,6 +23,7 @@ const ForgotPassword = () => {
 
     if (!email.trim()) {
       setError("Email address is required.");
+      showWarning("Email address is required.");
       return;
     }
 
@@ -36,8 +38,10 @@ const ForgotPassword = () => {
       setResetTokenSent(true);
       setToken(response.reset_token || "");
       setMessage("Password reset token created. Use the token below to create a new password.");
+      showSuccess("Password reset token created. Use the token below to create a new password.");
     } catch (err) {
       setError(err.message || "Failed to request password reset.");
+      showError(err.message || "Failed to request password reset.");
     } finally {
       setIsSubmitting(false);
     }
@@ -50,21 +54,25 @@ const ForgotPassword = () => {
 
     if (!token.trim()) {
       setError("Reset token is required.");
+      showWarning("Reset token is required.");
       return;
     }
 
     if (!newPassword) {
       setError("New password is required.");
+      showWarning("New password is required.");
       return;
     }
 
     if (newPassword.length < 8) {
       setError("New password must be at least 8 characters.");
+      showWarning("New password must be at least 8 characters.");
       return;
     }
 
     if (newPassword !== confirmPassword) {
       setError("Passwords do not match.");
+      showWarning("Passwords do not match.");
       return;
     }
 
@@ -82,9 +90,11 @@ const ForgotPassword = () => {
       });
 
       setMessage("Password reset successfully. Redirecting to login...");
+      showSuccess("Password reset successfully. Redirecting to login...");
       setTimeout(() => navigate("/login"), 2000);
     } catch (err) {
       setError(err.message || "Failed to reset password.");
+      showError(err.message || "Failed to reset password.");
     } finally {
       setIsSubmitting(false);
     }

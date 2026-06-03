@@ -28,6 +28,7 @@ import {
 import { apiRequest } from "../../api/client";
 import { formatCurrency } from "../../utils/currency";
 import { normalizeList } from "../../utils/normalizeList";
+import { showError } from "../../utils/alert";
 import "./EmployeeSalaryManagement.css";
 
 
@@ -102,6 +103,7 @@ const EmployeeSalaryManagement = () => {
       );
     } catch (err) {
       setError(err.message || "Failed to load employee salary data");
+      showError(err.message || "Failed to load employee salary data");
       setEmployees([]);
     } finally {
       setLoading(false);
@@ -207,6 +209,7 @@ const EmployeeSalaryManagement = () => {
       setError("");
     } catch (err) {
       setError(err.message || "Failed to save employee salary data");
+      showError(err.message || "Failed to save employee salary data");
       return;
     }
 
@@ -237,6 +240,7 @@ const EmployeeSalaryManagement = () => {
       setError("");
     } catch (err) {
       setError(err.message || "Failed to update employee salary data");
+      showError(err.message || "Failed to update employee salary data");
       return;
     }
 
@@ -250,6 +254,7 @@ const EmployeeSalaryManagement = () => {
       setError("");
     } catch (err) {
       setError(err.message || "Failed to delete employee salary data");
+      showError(err.message || "Failed to delete employee salary data");
     }
   };
 

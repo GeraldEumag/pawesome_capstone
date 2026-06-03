@@ -9,6 +9,7 @@ import {
   normProduct,
   formatCurrency,
 } from "../../utils/apiNormalize";
+import { showError } from "../../utils/alert";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
   faPaw, faSearch, faRotateRight, faTrash, faBoxOpen,
@@ -1499,6 +1500,7 @@ const CashierPOS = () => {
         const message = err.message || "Unable to refresh stock";
         if (productsRef.current.length === 0) {
           setError(message);
+          showError(message);
         } else {
           addToast("Unable to refresh stock. Keeping previous product list.", "warn");
         }

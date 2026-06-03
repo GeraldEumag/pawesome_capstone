@@ -2,6 +2,7 @@ import React, { useState, useMemo, useCallback, useEffect } from "react";
 import { apiRequest } from "../../api/client";
 import { exportToCSV, exportToPDF } from "../../utils/reportExport";
 import { useRealTimeSync } from "../../hooks/useRealTimeSync";
+import { showError } from "../../utils/alert";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import DatePickerInput from "../../components/shared/DatePickerInput";
 import StandardTable from "../../components/shared/StandardTable";
@@ -72,11 +73,13 @@ const CustomerReport = () => {
         setError("");
       } else {
         setError("Failed to load customer reports");
+        showError("Failed to load customer reports");
         setCustomers([]);
       }
     } catch (err) {
       console.error("Error fetching customer reports:", err);
       setError("Failed to load customer reports. Please try again.");
+      showError("Failed to load customer reports. Please try again.");
       setCustomers([]);
     } finally {
       setLoading(false);
@@ -121,6 +124,7 @@ const CustomerReport = () => {
     } catch (err) {
       console.error("Export error:", err);
       setError("Failed to export report");
+      showError("Failed to export report");
     }
   };
 
@@ -133,10 +137,12 @@ const CustomerReport = () => {
         setShowDetailModal(true);
       } else {
         setError(response?.message || "Failed to fetch customer details");
+        showError(response?.message || "Failed to fetch customer details");
       }
     } catch (err) {
       console.error("Error fetching customer details:", err);
       setError("Failed to load customer details");
+      showError("Failed to load customer details");
     }
   };
 

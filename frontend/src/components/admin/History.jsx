@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { apiRequest } from "../../api/client";
+import { showError } from "../../utils/alert";
 import HistoryTimeline from "../shared/HistoryTimeline";
 import "./History.css";
 
@@ -205,6 +206,7 @@ const History = () => {
     } catch (err) {
       console.error("Fetch history logs error:", err);
       setError(err.message || "Failed to fetch history logs");
+      showError(err.message || "Failed to fetch history logs");
       setHistoryLogs([]);
     } finally {
       setLoading(false);

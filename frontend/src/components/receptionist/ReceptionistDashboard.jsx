@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react";
-import { showConfirm } from "../../utils/alert";
+import { showConfirm, showWarning, showError, showSuccess } from "../../utils/alert";
 import {
   FaCalendarAlt,
   FaCalendarCheck,
@@ -80,12 +80,14 @@ const ReceptionistDashboard = () => {
       setSuccess(message);
       window.clearTimeout(window.receptionistSuccessTimer);
       window.receptionistSuccessTimer = window.setTimeout(() => setSuccess(""), 3000);
+      showSuccess(message);
       return;
     }
 
     setError(message);
     window.clearTimeout(window.receptionistErrorTimer);
     window.receptionistErrorTimer = window.setTimeout(() => setError(""), 5000);
+    showError(message);
   };
 
   const normalizeType = (value = "") => {
@@ -181,6 +183,9 @@ const ReceptionistDashboard = () => {
           item.description ||
           "",
         created_at: item.created_at || item.date || "",
+        vaccination_card: item.vaccination_card || null,
+        vaccination_card_url: item.vaccination_card_url || null,
+        vaccination_card_verified_at: item.vaccination_card_verified_at || null,
         raw: item,
       };
     });
@@ -399,6 +404,14 @@ const ReceptionistDashboard = () => {
   const getSortIcon = (key) => {
     if (sortConfig.key !== key) return <FaSort />;
     return sortConfig.direction === "asc" ? <FaSortUp /> : <FaSortDown />;
+  };
+
+  const openVaccinationCard = (url) => {
+    if (!url) {
+      showWarning("No vaccination card available");
+      return;
+    }
+    window.open(url, "_blank");
   };
 
   const handleSort = (key) => {
@@ -866,6 +879,30 @@ const ReceptionistDashboard = () => {
                 <p>{selectedRequest.notes || "No notes provided."}</p>
               </div>
             </div>
+
+            {selectedRequest.vaccination_card && (
+              <div className="request-notes-card vaccination-card-section">
+                <h4><FaEye /> Vaccination Card</h4>
+                <div className="vaccination-actions">
+                  <button
+                    type="button"
+                    className="vaccination-view-btn"
+                    onClick={() => openVaccinationCard(selectedRequest.vaccination_card_url)}
+                  >
+                    <FaEye /> View Vaccination Card
+                  </button>
+                  {selectedRequest.vaccination_card_verified_at ? (
+                    <span className="vaccination-status verified">
+                      <FaCheckCircle /> Verified
+                    </span>
+                  ) : (
+                    <span className="vaccination-status unverified">
+                      <FaTimesCircle /> Not Verified
+                    </span>
+                  )}
+                </div>
+              </div>
+            )}
 
             <div className="request-modal-actions">
               <button

@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { apiRequest } from "../../api/client";
+import { showWarning, showSuccess, showError } from "../../utils/alert";
 
 const list = (result, key) => (Array.isArray(result?.[key]) ? result[key] : Array.isArray(result) ? result : []);
 
@@ -17,13 +18,17 @@ const CustomerMedicalConfinements = () => {
   };
 
   useEffect(() => {
-    load().catch((err) => setError(err.message || "Failed to load medical confinements."));
+    load().catch((err) => {
+      setError(err.message || "Failed to load medical confinements.");
+      showError(err.message || "Failed to load medical confinements.");
+    });
   }, []);
 
   const uploadPayment = async (record) => {
     const file = files[record.id];
     if (!file) {
       setError("Choose a proof file first.");
+      showWarning("Choose a proof file first.");
       return;
     }
     const form = new FormData();
@@ -31,6 +36,7 @@ const CustomerMedicalConfinements = () => {
     form.append("payment_proof", file);
     await apiRequest(`/customer/medical-confinements/${record.id}/payment-proof`, { method: "POST", body: form });
     setMessage("Payment proof submitted.");
+    showSuccess("Payment proof submitted.");
     await load();
   };
 

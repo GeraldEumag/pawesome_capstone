@@ -23,6 +23,7 @@ import {
 } from "@fortawesome/free-solid-svg-icons";
 import { apiRequest, clearAuthStorage } from "../../api/client";
 import DatePickerInput from "../../components/shared/DatePickerInput";
+import { showSuccess, showError } from "../../utils/alert";
 import "./Register.css";
 
 const INITIAL_FORM = {
@@ -362,12 +363,14 @@ const Register = () => {
       setSuccessMessage(
         "Registration successful. Redirecting to your customer dashboard..."
       );
+      showSuccess("Registration successful. Redirecting to your customer dashboard...");
 
       window.setTimeout(() => {
         navigate("/customer");
       }, 900);
     } catch (err) {
       setFormError(err.message || "Registration failed. Please try again.");
+      showError(err.message || "Registration failed. Please try again.");
     } finally {
       setLoading(false);
     }

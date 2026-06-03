@@ -28,6 +28,7 @@ import {
 import { formatCurrency } from '../../../utils/currency';
 import { ChartContainer, CHART_COLORS } from '../../shared/UnifiedReportEngine';
 import { apiRequest } from '../../../api/client';
+import { showError } from '../../../utils/alert';
 import './ComparativeReporting.css';
 
 /**
@@ -98,10 +99,12 @@ const ComparativeReporting = ({ data: initialData = {} }) => {
         setData(response.data || {});
       } else {
         setError(response?.message || 'Failed to fetch comparison data');
+        showError(response?.message || 'Failed to fetch comparison data');
       }
     } catch (err) {
       console.error('Comparative Reporting API Error:', err);
       setError(err.message || 'Network error');
+      showError(err.message || 'Network error');
     } finally {
       setLoading(false);
     }

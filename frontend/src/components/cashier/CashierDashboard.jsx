@@ -197,6 +197,7 @@ const CashierDashboard = () => {
         setError("");
       } catch (err) {
         setError(err.message || "Failed to load dashboard data");
+        showError(err.message || "Failed to load dashboard data");
         console.error("Cashier dashboard fetch error:", err);
       } finally {
         setLoading(false);

@@ -31,6 +31,7 @@ import {
 import { formatCurrency } from '../../../utils/currency';
 import { ChartContainer, CHART_COLORS } from '../../shared/UnifiedReportEngine';
 import { apiRequest } from '../../../api/client';
+import { showError } from '../../../utils/alert';
 import ExportButton from '../../shared/ExportButton';
 import { exportExecutiveData } from '../../../utils/advancedReportExport';
 import './ExecutiveDashboard.css';
@@ -110,10 +111,12 @@ const ExecutiveDashboard = ({ data: initialData = {} }) => {
         setLastUpdated(new Date());
       } else {
         setError(response?.message || 'Failed to fetch data');
+        showError(response?.message || 'Failed to fetch data');
       }
     } catch (err) {
       console.error('Executive Dashboard API Error:', err);
       setError(err.message || 'Network error. Please check your connection.');
+      showError(err.message || 'Network error. Please check your connection.');
     } finally {
       if (!silent) setLoading(false);
     }

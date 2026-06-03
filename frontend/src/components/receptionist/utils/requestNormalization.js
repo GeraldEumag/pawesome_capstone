@@ -170,6 +170,9 @@ export const normalizeBoarding = (item) => {
     paidAmount: Number(item.paid_amount || 0),
     paymentStatus: normalizePaymentStatus(item.payment_status || "pending"),
     notes: item.notes || item.special_requests || "",
+    vaccination_card: item.vaccination_card || null,
+    vaccination_card_url: item.vaccination_card_url || null,
+    vaccination_card_verified_at: item.vaccination_card_verified_at || null,
     createdAt: item.created_at || item.check_in || new Date().toISOString(),
     raw: item,
   };
