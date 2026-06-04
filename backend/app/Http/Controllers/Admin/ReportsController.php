@@ -144,6 +144,19 @@ class ReportsController extends Controller
 
     public function overview(Request $request)
     {
+        // Real 7-day revenue trend for the chart
+        $revenueTrend = [];
+        for ($i = 6; $i >= 0; $i--) {
+            $date = Carbon::now()->subDays($i);
+            $dayRevenue = (float) Sale::whereDate('created_at', $date)->sum('amount') ?? 0;
+            $dayOrders = Sale::whereDate('created_at', $date)->count();
+            $revenueTrend[] = [
+                'date' => $date->format('M d'),
+                'revenue' => $dayRevenue,
+                'orders' => $dayOrders,
+            ];
+        }
+
         $payload = [
             'summary' => $this->overviewMetrics($request),
             'recent_actions' => $this->recentActions($request),
@@ -152,6 +165,7 @@ class ReportsController extends Controller
             'users' => $this->overviewUsers($request),
             'low_stock_alerts' => $this->lowStockAlerts($request),
             'pending_operations' => $this->pendingOperations($request),
+            'trend' => $revenueTrend,
         ];
 
         return response()->json([
@@ -160,7 +174,9 @@ class ReportsController extends Controller
             'last_updated' => now()->format('Y-m-d H:i:s'),
             'summary' => $payload['summary'],
             'data' => $payload,
-            'charts' => [],
+            'charts' => [
+                'trend' => $revenueTrend,
+            ],
             'filters' => $this->activeFilters($request),
             'message' => null,
         ]);
@@ -744,10 +760,18 @@ class ReportsController extends Controller
             ->select([
                 'customer_orders.*',
                 DB::raw('COALESCE(customer_orders.customer_name, customer_orders.customer_email, CONCAT("Customer #", customer_orders.customer_id)) as customer_display'),
+                DB::raw('DATE(customer_orders.created_at) as date'),
             ])
             ->latest('customer_orders.created_at')
             ->limit(500)
             ->get();
+
+        // Real revenue trend grouped by order date
+        $trend = $orders->groupBy('date')->map(fn ($group, $date) => [
+            'date' => $date,
+            'revenue' => (float) $group->sum(fn ($order) => (float) ($order->total_amount ?? 0)),
+            'orders' => $group->count(),
+        ])->sortKeys()->values();
 
         return response()->json([
             'success' => true,
@@ -760,6 +784,7 @@ class ReportsController extends Controller
                     'total_revenue' => (float) $orders->whereIn('payment_status', ['paid', 'completed', 'verified'])->sum('total_amount'),
                 ],
                 'orders' => $orders,
+                'trend' => $trend,
                 'generated_at' => now()->toIso8601String(),
             ],
         ]);
@@ -1642,7 +1667,6 @@ class ReportsController extends Controller
                 'full_date' => $date->format('Y-m-d'),
                 'revenue' => $dayRevenue,
                 'orders' => $dayOrders,
-                'target' => 10000, // Daily target
             ];
         }
 
@@ -1802,11 +1826,45 @@ class ReportsController extends Controller
      */
     public function comparativeReporting(Request $request)
     {
-        $primaryRange = [Carbon::now()->startOfMonth(), Carbon::now()->endOfMonth()];
-        $comparisonRange = [Carbon::now()->subMonth()->startOfMonth(), Carbon::now()->subMonth()->endOfMonth()];
+        $primaryFrom = Carbon::now()->startOfMonth();
+        $primaryTo = Carbon::now()->endOfMonth();
+        $comparisonFrom = Carbon::now()->subMonth()->startOfMonth();
+        $comparisonTo = Carbon::now()->subMonth()->endOfMonth();
 
-        $primaryMetrics = $this->getPeriodMetrics($primaryRange[0], $primaryRange[1]);
-        $comparisonMetrics = $this->getPeriodMetrics($comparisonRange[0], $comparisonRange[1]);
+        $primaryMetrics = $this->getPeriodMetrics($primaryFrom, $primaryTo);
+        $comparisonMetrics = $this->getPeriodMetrics($comparisonFrom, $comparisonTo);
+
+        // Real daily trend data for primary period
+        $dailyTrend = [];
+        $daysInMonth = $primaryFrom->daysInMonth;
+        for ($i = 1; $i <= $daysInMonth; $i++) {
+            $date = $primaryFrom->copy()->addDays($i - 1);
+            $currentRevenue = (float) Sale::whereDate('created_at', $date)->sum('amount') ?? 0;
+            $prevDate = $date->copy()->subMonth();
+            $previousRevenue = (float) Sale::whereDate('created_at', $prevDate)->sum('amount') ?? 0;
+            $dailyTrend[] = [
+                'day' => $date->format('M d'),
+                'current' => $currentRevenue,
+                'previous' => $previousRevenue,
+            ];
+        }
+
+        // Real category breakdown by sales type for both periods
+        $categoryBreakdown = Sale::whereBetween('created_at', [$primaryFrom, $primaryTo])
+            ->select('type', DB::raw('SUM(amount) as current'))
+            ->whereNotNull('type')
+            ->groupBy('type')
+            ->get()
+            ->map(function ($item) use ($comparisonFrom, $comparisonTo) {
+                $previous = (float) Sale::where('type', $item->type)
+                    ->whereBetween('created_at', [$comparisonFrom, $comparisonTo])
+                    ->sum('amount') ?? 0;
+                return [
+                    'category' => ucfirst($item->type),
+                    'current' => (float) $item->current,
+                    'previous' => $previous,
+                ];
+            })->values()->all();
 
         return response()->json([
             'success' => true,
@@ -1817,8 +1875,8 @@ class ReportsController extends Controller
                     'customers' => ['current' => $primaryMetrics['customers'], 'previous' => $comparisonMetrics['customers']],
                     'avgOrderValue' => ['current' => $primaryMetrics['avg_order_value'], 'previous' => $comparisonMetrics['avg_order_value']],
                 ],
-                'dailyTrend' => [],
-                'categoryBreakdown' => [],
+                'dailyTrend' => $dailyTrend,
+                'categoryBreakdown' => $categoryBreakdown,
             ],
         ]);
     }
@@ -1887,7 +1945,6 @@ class ReportsController extends Controller
                 'revenue' => $revenue,
                 'orders' => $orders,
                 'avg_order_value' => $orders > 0 ? round($revenue / $orders, 2) : 0,
-                'target' => 12000,
             ];
         }
 
@@ -1961,7 +2018,6 @@ class ReportsController extends Controller
                 'categoryData' => $categoryData->values(),
                 'hourlyData' => $hourlyData,
                 'topProducts' => $topProducts,
-                'conversionRate' => 3.2, // Would need website analytics for real data
                 'summary' => [
                     'total_revenue' => $totalRevenue,
                     'total_orders' => $totalOrders,
@@ -2003,37 +2059,59 @@ class ReportsController extends Controller
      */
     public function staffPerformance(Request $request)
     {
-        $staffUsers = User::whereIn('role', ['groomer', 'veterinary', 'receptionist', 'cashier'])->get();
+        $staffUsers = User::whereIn('role', ['groomer', 'veterinary', 'receptionist', 'cashier', 'manager'])->get();
 
-        // Check if staff_id column exists in sales table
         $hasStaffIdColumn = Schema::hasColumn('sales', 'staff_id');
+        $thirtyDaysAgo = Carbon::now()->subDays(30);
 
-        $staffData = $staffUsers->map(function($user) use ($hasStaffIdColumn) {
-            // Only query by staff_id if column exists
+        $staffData = $staffUsers->map(function ($user) use ($hasStaffIdColumn, $thirtyDaysAgo) {
+            // 1. Sales revenue by staff (last 30 days)
             if ($hasStaffIdColumn) {
                 $revenue = (float) Sale::where('staff_id', $user->id)
-                    ->where('created_at', '>=', Carbon::now()->subDays(30))
+                    ->where('created_at', '>=', $thirtyDaysAgo)
+                    ->sum('amount') ?? 0;
+            } elseif (Schema::hasColumn('sales', 'cashier_id')) {
+                $revenue = (float) Sale::where('cashier_id', $user->id)
+                    ->where('created_at', '>=', $thirtyDaysAgo)
                     ->sum('amount') ?? 0;
             } else {
-                // Fallback: estimate based on role or use placeholder
                 $revenue = 0;
             }
-            
+
+            // 2. Appointments / services completed by staff
+            $appointmentsCount = 0;
+            if (Schema::hasColumn('appointments', 'veterinarian_id') && in_array($user->role, ['veterinary', 'groomer'])) {
+                $appointmentsCount = Appointment::where('veterinarian_id', $user->id)
+                    ->where('status', 'completed')
+                    ->where('created_at', '>=', $thirtyDaysAgo)
+                    ->count();
+            }
+
+            // 3. Attendance & biometric data (real)
+            $attendanceRecords = Attendance::where('user_id', $user->id)
+                ->where('date', '>=', $thirtyDaysAgo->toDateString())
+                ->get();
+
+            $presentDays = $attendanceRecords->where('status', 'present')->count();
+            $lateDays = $attendanceRecords->where('is_late', true)->count();
+            $totalDays = $attendanceRecords->count();
+            $attendanceRate = $totalDays > 0 ? round(($presentDays / $totalDays) * 100, 1) : 0;
+            $punctualityRate = $totalDays > 0 ? round((($totalDays - $lateDays) / $totalDays) * 100, 1) : 0;
+            $biometricPunches = $attendanceRecords->where('source', 'biometric')->count();
+            $overtimeHours = (float) $attendanceRecords->sum('overtime_hours');
+
             return [
                 'id' => $user->id,
                 'name' => $user->name,
                 'role' => $user->role,
                 'department' => $user->department ?? 'General',
                 'avatar' => $user->avatar,
-                'rating' => 4.5,
-                'performanceLevel' => 'good',
                 'revenue' => $revenue,
-                'customers' => 0,
-                'appointments' => 0,
-                'attendance' => 95,
-                'punctuality' => 95,
-                'customerSatisfaction' => 4.5,
-                'efficiency' => 88,
+                'appointments' => $appointmentsCount,
+                'attendanceRate' => $attendanceRate,
+                'punctualityRate' => $punctualityRate,
+                'biometricPunches' => $biometricPunches,
+                'overtimeHours' => $overtimeHours,
             ];
         });
 
@@ -2041,8 +2119,6 @@ class ReportsController extends Controller
             'success' => true,
             'data' => [
                 'staffData' => $staffData,
-                'departmentData' => [],
-                'trendData' => [],
             ],
         ]);
     }

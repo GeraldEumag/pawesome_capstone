@@ -95,17 +95,17 @@ const VetReports = () => {
     return normalizedRecords;
   }, []);
 
-  // Summary cards
+  // Summary cards - real values only, no fake trends
   const summaryCards = useMemo(() => {
     const totalRevenue = services.reduce((sum, s) => sum + s.revenue, 0);
     const totalAppointments = services.reduce((sum, s) => sum + s.count, 0);
     const completedRecords = records.filter((r) => r.status === "completed").length;
 
     return [
-      { id: "revenue", label: "Monthly Revenue", value: formatCurrency(totalRevenue), icon: faMoneyBillWave, tone: "money", trend: "up", change: "+12%" },
-      { id: "appointments", label: "Appointments", value: totalAppointments, icon: faCalendarCheck, tone: "primary", trend: "up", change: "+8%" },
-      { id: "services", label: "Active Services", value: services.length, icon: faStethoscope, tone: "info", trend: "neutral" },
-      { id: "completed", label: "Completed", value: completedRecords, icon: faPaw, tone: "success", trend: "up", change: "+15%" },
+      { id: "revenue", label: "Monthly Revenue", value: formatCurrency(totalRevenue), icon: faMoneyBillWave, tone: "money" },
+      { id: "appointments", label: "Appointments", value: totalAppointments, icon: faCalendarCheck, tone: "primary" },
+      { id: "services", label: "Active Services", value: services.length, icon: faStethoscope, tone: "info" },
+      { id: "completed", label: "Completed", value: completedRecords, icon: faPaw, tone: "success" },
     ];
   }, [services, records]);
 

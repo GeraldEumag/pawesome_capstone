@@ -191,7 +191,7 @@ const InventoryReports = () => {
     exportToExcel(exportData, exportColumns, "inventory-report");
   };
 
-  // Prepare summary cards data
+  // Prepare summary cards data - real values only, no fake trends
   const summaryCards = [
     {
       id: "total-items",
@@ -199,8 +199,6 @@ const InventoryReports = () => {
       value: summaryStats.totalItems,
       icon: "faBox",
       color: "primary",
-      trend: "neutral",
-      change: "0%"
     },
     {
       id: "in-stock",
@@ -208,8 +206,6 @@ const InventoryReports = () => {
       value: summaryStats.inStockItems,
       icon: "faCheckCircle",
       color: "success",
-      trend: "up",
-      change: "+2.1%"
     },
     {
       id: "low-stock",
@@ -217,8 +213,6 @@ const InventoryReports = () => {
       value: summaryStats.lowStockItems,
       icon: "faExclamationTriangle",
       color: "warning",
-      trend: "down",
-      change: "-5.3%"
     },
     {
       id: "out-of-stock",
@@ -226,8 +220,6 @@ const InventoryReports = () => {
       value: summaryStats.outOfStockItems,
       icon: "faTimesCircle",
       color: "danger",
-      trend: "down",
-      change: "-1.2%"
     }
   ];
 

@@ -143,23 +143,24 @@ const ExecutiveDashboard = ({ data: initialData = {} }) => {
     comparisons = {},
   } = data;
 
-  // Calculate derived metrics
+  // Calculate derived metrics from real API data only
   const metrics = useMemo(() => {
     const currentRevenue = summary.total_revenue || summary.today_revenue || 0;
-    const previousRevenue = comparisons.previous_revenue || currentRevenue * 0.88;
-    const revenueChange = previousRevenue > 0 
+    const previousRevenue = comparisons.previous_revenue || 0;
+    const revenueChange = previousRevenue > 0
       ? ((currentRevenue - previousRevenue) / previousRevenue * 100).toFixed(1)
       : 0;
 
     const currentOrders = summary.total_orders || summary.today_orders || 0;
-    const previousOrders = comparisons.previous_orders || currentOrders * 0.92;
+    const previousOrders = comparisons.previous_orders || 0;
     const ordersChange = previousOrders > 0
       ? ((currentOrders - previousOrders) / previousOrders * 100).toFixed(1)
       : 0;
 
-    // Predictions
-    const forecastRevenue = predictions.next_month_revenue || currentRevenue * 1.12;
-    const forecastGrowth = ((forecastRevenue - currentRevenue) / currentRevenue * 100).toFixed(1);
+    const forecastRevenue = predictions.next_month_revenue || 0;
+    const forecastGrowth = currentRevenue > 0
+      ? ((forecastRevenue - currentRevenue) / currentRevenue * 100).toFixed(1)
+      : 0;
 
     return {
       revenue: { current: currentRevenue, change: revenueChange, trend: revenueChange >= 0 ? 'up' : 'down' },
@@ -265,8 +266,6 @@ const ExecutiveDashboard = ({ data: initialData = {} }) => {
           value={metrics.customers}
           subtitle="Total registered"
           icon={faUsers}
-          trend="up"
-          change="+5.2%"
           tone="success"
         />
         <KPICard
@@ -288,10 +287,8 @@ const ExecutiveDashboard = ({ data: initialData = {} }) => {
         <KPICard
           title="Forecast (Next Mo)"
           value={formatCurrency(metrics.forecast.value)}
-          subtitle={`Projected growth: +${metrics.forecast.growth}%`}
+          subtitle={`Projected growth: ${metrics.forecast.growth > 0 ? '+' : ''}${metrics.forecast.growth}%`}
           icon={faChartLine}
-          trend="up"
-          change={`+${metrics.forecast.growth}%`}
           tone="info"
         />
       </section>
@@ -334,7 +331,6 @@ const ExecutiveDashboard = ({ data: initialData = {} }) => {
                 formatter={(value) => formatCurrency(value)}
                 labelStyle={{ color: '#666' }}
               />
-              <ReferenceLine y={10000} stroke="#10b981" strokeDasharray="5 5" label="Target" />
               <Area 
                 type="monotone" 
                 dataKey="revenue" 
@@ -373,14 +369,14 @@ const ExecutiveDashboard = ({ data: initialData = {} }) => {
           </div>
           <div className="exec-comparison-card">
             <span className="exec-period-label">Last Month</span>
-            <strong className="exec-period-value">{formatCurrency(comparisons.previous_revenue || metrics.revenue.current * 0.88)}</strong>
-            <small>{comparisons.previous_orders || Math.floor(metrics.orders.current * 0.92)} orders</small>
+            <strong className="exec-period-value">{formatCurrency(comparisons.previous_revenue || 0)}</strong>
+            <small>{comparisons.previous_orders || 0} orders</small>
           </div>
           <div className="exec-comparison-card highlight">
             <span className="exec-period-label">YoY Growth</span>
             <strong className="exec-period-value positive">
               <FontAwesomeIcon icon={faPercentage} />
-              +{(comparisons.yoy_growth || 12.5).toFixed(1)}%
+              {comparisons.yoy_growth > 0 ? '+' : ''}{(comparisons.yoy_growth || 0).toFixed(1)}%
             </strong>
             <small>vs same period last year</small>
           </div>

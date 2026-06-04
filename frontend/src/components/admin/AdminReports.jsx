@@ -5,7 +5,6 @@ import {
   faChartLine,
   faClipboardList,
   faCreditCard,
-  faHeartbeat,
   faMoneyBillWave,
   faShieldHalved,
   faServer,
@@ -42,12 +41,6 @@ import "./AdminReports.css";
 
 // Lazy load advanced report components for code splitting
 const ExecutiveDashboard = lazy(() => import("./reports/ExecutiveDashboard"));
-const PredictiveAnalytics = lazy(() => import("./reports/PredictiveAnalytics"));
-const CustomerSegmentation = lazy(() => import("./reports/CustomerSegmentation"));
-const AutomatedAlerts = lazy(() => import("./reports/AutomatedAlerts"));
-const ComparativeReporting = lazy(() => import("./reports/ComparativeReporting"));
-const SalesAnalysis = lazy(() => import("./reports/SalesAnalysis"));
-const InventoryOptimization = lazy(() => import("./reports/InventoryOptimization"));
 const StaffPerformance = lazy(() => import("./reports/StaffPerformance"));
 
 // Loading fallback component - uses skeleton for better UX
@@ -136,60 +129,6 @@ const SECTION_CONFIG = [
     isAdvanced: true,
   },
   {
-    key: "predictive",
-    label: "Predictive Analytics",
-    endpoint: "/admin/reports/predictive",
-    icon: faHeartbeat,
-    tableKeys: [],
-    tableTitle: "AI Forecasting",
-    isAdvanced: true,
-  },
-  {
-    key: "segmentation",
-    label: "Customer Segments",
-    endpoint: "/admin/reports/customers",
-    icon: faUsers,
-    tableKeys: ["customers", "segments"],
-    tableTitle: "RFM Analysis",
-    isAdvanced: true,
-  },
-  {
-    key: "comparison",
-    label: "Comparative Analysis",
-    endpoint: "/admin/reports/comparison",
-    icon: faChartLine,
-    tableKeys: [],
-    tableTitle: "Period Comparison",
-    isAdvanced: true,
-  },
-  {
-    key: "alerts",
-    label: "Automated Alerts",
-    endpoint: "/admin/reports/alerts",
-    icon: faExclamationTriangle,
-    tableKeys: [],
-    tableTitle: "Alert Configuration",
-    isAdvanced: true,
-  },
-  {
-    key: "sales_analysis",
-    label: "Sales Deep Dive",
-    endpoint: "/admin/reports/sales-analysis",
-    icon: faChartLine,
-    tableKeys: [],
-    tableTitle: "Sales Analytics",
-    isAdvanced: true,
-  },
-  {
-    key: "inventory_opt",
-    label: "Inventory Optimization",
-    endpoint: "/admin/reports/inventory-opt",
-    icon: faBox,
-    tableKeys: [],
-    tableTitle: "ABC Analysis",
-    isAdvanced: true,
-  },
-  {
     key: "staff_perf",
     label: "Staff Performance",
     endpoint: "/admin/reports/staff-performance",
@@ -273,11 +212,24 @@ export const normalizeReportResponse = (res, tableKeys = []) => {
           : [];
   }
 
+  // Extract trend data from various backend response shapes
+  const trend =
+    payload.charts?.trend ||
+    nestedData.charts?.trend ||
+    payload.trend ||
+    nestedData.trend ||
+    payload.revenue_trend ||
+    nestedData.revenue_trend ||
+    [];
+
   return {
     success: payload.success !== false,
     section: payload.section || nestedData.section || null,
     summary: payload.summary || nestedData.summary || {},
-    charts: payload.charts || nestedData.charts || {},
+    charts: {
+      ...(payload.charts || nestedData.charts || {}),
+      trend,
+    },
     table,
     lastUpdated:
       payload.last_updated ||
@@ -471,7 +423,7 @@ const AdminReports = () => {
     });
   }, [activeReport.summary, filteredRows.length, statusChart.length]);
 
-  // Enhanced KPI data with trends
+  // KPI data - real values only, no fake trends
   const headerKpis = useMemo(() => {
     const summary = executiveSummary;
     return [
@@ -481,8 +433,6 @@ const AdminReports = () => {
         value: formatCurrency(getNumericValue(summary, ["total_revenue", "today_revenue", "monthly_revenue"])),
         icon: faMoneyBillWave,
         tone: "money",
-        trend: "up",
-        change: "+12.5%",
       },
       {
         id: "pending_payments",
@@ -490,8 +440,6 @@ const AdminReports = () => {
         value: getNumericValue(summary, ["pending_payments", "pending_payment_proofs"]),
         icon: faCreditCard,
         tone: "warning",
-        trend: "neutral",
-        change: "0%",
       },
       {
         id: "pending_bookings",
@@ -499,8 +447,6 @@ const AdminReports = () => {
         value: getNumericValue(summary, ["pending_approvals", "pending_requests", "pending_bookings"]),
         icon: faClipboardList,
         tone: "info",
-        trend: "up",
-        change: "+5%",
       },
       {
         id: "low_stock",
@@ -508,8 +454,6 @@ const AdminReports = () => {
         value: getNumericValue(summary, ["low_stock_items", "low_stock_count"]),
         icon: faBox,
         tone: getNumericValue(summary, ["low_stock_items"]) > 10 ? "danger" : "warning",
-        trend: "down",
-        change: "-3",
       },
       {
         id: "completed",
@@ -517,8 +461,6 @@ const AdminReports = () => {
         value: getNumericValue(summary, ["completed_services", "completed_appointments", "total_completed"]),
         icon: faCheckCircle,
         tone: "success",
-        trend: "up",
-        change: "+8.2%",
       },
       {
         id: "customers",
@@ -526,8 +468,6 @@ const AdminReports = () => {
         value: getNumericValue(summary, ["total_customers", "customer_count"]),
         icon: faUsers,
         tone: "primary",
-        trend: "up",
-        change: "+15",
       },
     ];
   }, [executiveSummary]);
@@ -548,13 +488,8 @@ const AdminReports = () => {
       fill: CHART_COLORS[statusMap.size % CHART_COLORS.length]
     }));
 
-    // Revenue trend (mock data if not available from API)
-    const trendData = activeReport.charts?.trend || 
-      Array.from({ length: 7 }, (_, i) => ({
-        date: new Date(Date.now() - (6 - i) * 24 * 60 * 60 * 1000).toLocaleDateString('en-PH', { weekday: 'short' }),
-        revenue: Math.floor(Math.random() * 5000) + 3000,
-        orders: Math.floor(Math.random() * 50) + 20,
-      }));
+    // Revenue trend from API only - no mock data
+    const trendData = activeReport.charts?.trend || [];
 
     return { statusData, trendData };
   }, [activeReport]);
@@ -689,18 +624,6 @@ const AdminReports = () => {
     switch (activeSection) {
       case 'dashboard':
         return <ExecutiveDashboard data={overview || activeReport} />;
-      case 'predictive':
-        return <PredictiveAnalytics data={activeReport} />;
-      case 'segmentation':
-        return <CustomerSegmentation data={activeReport} />;
-      case 'comparison':
-        return <ComparativeReporting data={activeReport} />;
-      case 'alerts':
-        return <AutomatedAlerts />;
-      case 'sales_analysis':
-        return <SalesAnalysis data={activeReport} />;
-      case 'inventory_opt':
-        return <InventoryOptimization data={activeReport} />;
       case 'staff_perf':
         return <StaffPerformance data={activeReport} />;
       case 'api_health':

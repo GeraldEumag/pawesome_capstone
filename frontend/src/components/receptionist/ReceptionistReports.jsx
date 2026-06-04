@@ -223,12 +223,12 @@ const ReceptionistReports = () => {
     const revenue = transactions.reduce((sum, t) => sum + numberValue(t.amount), 0);
 
     return [
-      { id: "total", label: "Total Transactions", value: total, icon: faReceipt, tone: "primary", trend: "neutral" },
-      { id: "appointments", label: "Appointments", value: appointments, icon: faCalendarCheck, tone: "success", trend: "up" },
-      { id: "orders", label: "Orders", value: orders, icon: faShoppingBag, tone: "secondary", trend: "up" },
-      { id: "completed", label: "Completed", value: completed, icon: faCheckCircle, tone: "success", trend: "up" },
-      { id: "pending", label: "Pending", value: pending, icon: faClock, tone: "warning", trend: "neutral" },
-      { id: "revenue", label: "Total Revenue", value: formatCurrency(revenue), icon: faMoneyBillWave, tone: "money", trend: "up" },
+      { id: "total", label: "Total Transactions", value: total, icon: faReceipt, tone: "primary" },
+      { id: "appointments", label: "Appointments", value: appointments, icon: faCalendarCheck, tone: "success" },
+      { id: "orders", label: "Orders", value: orders, icon: faShoppingBag, tone: "secondary" },
+      { id: "completed", label: "Completed", value: completed, icon: faCheckCircle, tone: "success" },
+      { id: "pending", label: "Pending", value: pending, icon: faClock, tone: "warning" },
+      { id: "revenue", label: "Total Revenue", value: formatCurrency(revenue), icon: faMoneyBillWave, tone: "money" },
     ];
   }, [transactions]);
 
