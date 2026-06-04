@@ -1,17 +1,47 @@
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useMemo } from "react";
 import { apiRequest } from "../../api/client";
 import { getToken } from "../../utils/auth";
 import { useAuth } from "../../context/AuthContext";
 import CashierSidebar from "./CashierSidebar";
 import { normalizeList } from "../../utils/normalizeList";
 import "./CashierPaymentVerification.css";
-import { showAlert, showSuccess, showError, showPrompt } from "../../utils/alert";
+import { showAlert, showSuccess, showError, showPrompt, showConfirm } from "../../utils/alert";
+
+const formatDate = (dateStr) => {
+  if (!dateStr) return "N/A";
+  const d = new Date(dateStr);
+  if (isNaN(d.getTime())) return dateStr;
+  return d.toLocaleString("en-US", {
+    month: "short", day: "numeric", year: "numeric",
+    hour: "numeric", minute: "2-digit", hour12: true,
+  });
+};
+
+const RefreshIcon = ({ spinning }) => (
+  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <polyline points="23 4 23 10 17 10" /><polyline points="1 20 1 14 7 14" />
+    <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15" />
+  </svg>
+);
+
+const InboxIcon = () => (
+  <svg width="56" height="56" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+    <polyline points="22 12 16 12 14 15 10 15 8 12 2 12" />
+    <path d="M5.45 5.11 2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z" />
+  </svg>
+);
 
 const CashierPaymentVerification = () => {
   const { user } = useAuth();
   const [requests, setRequests] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [proofModal, setProofModal] = useState(null); // { blobUrl, isPdf, loading, error }
+  const [refreshing, setRefreshing] = useState(false);
+  const [lastUpdated, setLastUpdated] = useState(null);
+  const [actionLoading, setActionLoading] = useState({}); // { [id]: 'verify' | 'reject' }
+  const [proofModal, setProofModal] = useState(null);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [typeFilter, setTypeFilter] = useState("");
+  const [statusFilter, setStatusFilter] = useState("");
 
   const openProof = useCallback(async (proofUrl) => {
     setProofModal({ blobUrl: null, isPdf: false, loading: true, error: null });
@@ -35,24 +65,32 @@ const CashierPaymentVerification = () => {
     setProofModal(null);
   }, [proofModal]);
 
-  const fetchRequests = async () => {
+  const fetchRequests = async (silent = false) => {
     try {
-      setLoading(true);
+      if (!silent) setLoading(true);
+      else setRefreshing(true);
 
       const data = await apiRequest("/cashier/payment-requests");
-
       const list = normalizeList(data, ["payments", "requests", "data"]);
-
       setRequests(list);
+      setLastUpdated(new Date());
     } catch (err) {
       console.error("Failed to load payment requests:", err);
       setRequests([]);
     } finally {
       setLoading(false);
+      setRefreshing(false);
     }
   };
 
   const verifyPayment = async (payment) => {
+    const confirmed = await showConfirm(
+      `Verify payment of ₱${Number(payment.amount || payment.total_amount || 0).toLocaleString("en-PH")} from ${payment.customer_name || payment.customer?.name || "Customer"}?`,
+      "Confirm Verification"
+    );
+    if (!confirmed) return;
+
+    setActionLoading((prev) => ({ ...prev, [payment.id]: "verify" }));
     try {
       const data = await apiRequest(`/cashier/payment-requests/${payment.id}/verify`, "POST", {
         type: payment.payable_type || payment.type || payment.payment_source || "service_request",
@@ -62,13 +100,15 @@ const CashierPaymentVerification = () => {
       if (data && data.success) {
         printReceipt(data, payment);
         showSuccess(data.message || `Payment verified. Receipt: ${data.receipt_number || "Generated"}`);
-        fetchRequests();
+        fetchRequests(true);
       } else {
         showAlert(data?.message || "Failed to verify payment.");
       }
     } catch (err) {
       console.error("Failed to verify payment:", err);
       showError(err.message || "Failed to verify payment.");
+    } finally {
+      setActionLoading((prev) => { const n = { ...prev }; delete n[payment.id]; return n; });
     }
   };
 
@@ -123,6 +163,7 @@ const CashierPaymentVerification = () => {
     const cashier_remarks = await showPrompt("Reason for rejecting this payment proof:");
     if (cashier_remarks === null) return;
 
+    setActionLoading((prev) => ({ ...prev, [payment.id]: "reject" }));
     try {
       const data = await apiRequest(`/cashier/payment-requests/${payment.id}/reject`, "POST", {
         type: payment.payable_type || payment.type || payment.payment_source || "service_request",
@@ -131,20 +172,64 @@ const CashierPaymentVerification = () => {
       });
 
       if (data && data.success) {
-        showSuccess(data.message || 'Payment rejected.');
-        fetchRequests();
+        showSuccess(data.message || "Payment rejected.");
+        fetchRequests(true);
       } else {
-        showAlert(data?.message || 'Failed to reject payment.');
+        showAlert(data?.message || "Failed to reject payment.");
       }
     } catch (err) {
       console.error("Failed to reject payment:", err);
       showError(err.message || "Failed to reject payment.");
+    } finally {
+      setActionLoading((prev) => { const n = { ...prev }; delete n[payment.id]; return n; });
     }
   };
 
   useEffect(() => {
     fetchRequests();
+    const interval = setInterval(() => fetchRequests(true), 30000);
+    return () => clearInterval(interval);
   }, []);
+
+  const filteredRequests = useMemo(() => {
+    let list = [...requests];
+    if (searchQuery.trim()) {
+      const q = searchQuery.trim().toLowerCase();
+      list = list.filter(
+        (r) =>
+          (r.customer_name || r.customer?.name || "").toLowerCase().includes(q) ||
+          (r.service_name || r.service?.name || r.order_name || "").toLowerCase().includes(q)
+      );
+    }
+    if (typeFilter) {
+      list = list.filter((r) => (r.request_type || r.type || "").toLowerCase() === typeFilter.toLowerCase());
+    }
+    if (statusFilter) {
+      list = list.filter((r) => (r.payment_status || "pending").toLowerCase() === statusFilter.toLowerCase());
+    }
+    return list;
+  }, [requests, searchQuery, typeFilter, statusFilter]);
+
+  const uniqueTypes = useMemo(() => {
+    const types = new Set();
+    requests.forEach((r) => { const t = r.request_type || r.type; if (t) types.add(t); });
+    return Array.from(types);
+  }, [requests]);
+
+  const stats = useMemo(() => {
+    const pending = requests.filter((r) => (r.payment_status || "pending").toLowerCase() === "pending");
+    const totalAmount = pending.reduce((sum, r) => sum + Number(r.amount || r.total_amount || 0), 0);
+    return {
+      totalPending: pending.length,
+      totalAmount,
+      verifiedToday: requests.filter((r) => {
+        if ((r.payment_status || "").toLowerCase() !== "verified") return false;
+        const d = new Date(r.updated_at || r.created_at);
+        const today = new Date();
+        return d.toDateString() === today.toDateString();
+      }).length,
+    };
+  }, [requests]);
 
   return (
     <div className="app-dashboard cashier-payment-page">
@@ -166,17 +251,72 @@ const CashierPaymentVerification = () => {
               <div className="badge badge-info">Payment Control Panel</div>
             </div>
 
+            {/* Stats Summary */}
+            <div className="stats-summary fade-up">
+              <div className="stat-card">
+                <div className="stat-value">{stats.totalPending}</div>
+                <div className="stat-label">Pending</div>
+              </div>
+              <div className="stat-card">
+                <div className="stat-value">₱{stats.totalAmount.toLocaleString("en-PH")}</div>
+                <div className="stat-label">Total Amount</div>
+              </div>
+              <div className="stat-card">
+                <div className="stat-value">{stats.verifiedToday}</div>
+                <div className="stat-label">Verified Today</div>
+              </div>
+            </div>
+
             {loading ? (
               <div className="loading-container">
                 <p>Loading payment requests...</p>
               </div>
-            ) : requests.length === 0 ? (
-              <div className="payment-card">
-                <p>No approved requests pending payment.</p>
+            ) : filteredRequests.length === 0 ? (
+              <div className="payment-card fade-up">
+                <div className="empty-state">
+                  <div className="empty-state-icon"><InboxIcon /></div>
+                  <h3>No pending payments</h3>
+                  <p>{requests.length === 0 ? "No approved requests pending payment." : "No results match your filters."}</p>
+                  <button type="button" className="refresh-btn" onClick={() => fetchRequests(true)} disabled={refreshing}>
+                    <RefreshIcon spinning={refreshing} />
+                    {refreshing ? "Refreshing…" : "Refresh"}
+                  </button>
+                </div>
               </div>
             ) : (
-              <div className="payment-card">
-                <h2>Pending Payments</h2>
+              <div className="payment-card fade-up">
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: "10px", marginBottom: "16px" }}>
+                  <h2 style={{ margin: 0 }}>Pending Payments</h2>
+                  <button type="button" className={`refresh-btn ${refreshing ? "spinning" : ""}`} onClick={() => fetchRequests(true)} disabled={refreshing}>
+                    <RefreshIcon spinning={refreshing} />
+                    {refreshing ? "Refreshing…" : "Refresh"}
+                  </button>
+                </div>
+
+                {lastUpdated && (
+                  <div className="last-updated">
+                    Last updated: {lastUpdated.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit", second: "2-digit", hour12: true })}
+                  </div>
+                )}
+
+                {/* Filters */}
+                <div className="payment-filters">
+                  <input type="text" placeholder="Search customer or service..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} />
+                  <select value={typeFilter} onChange={(e) => setTypeFilter(e.target.value)}>
+                    <option value="">All Types</option>
+                    {uniqueTypes.map((t) => (
+                      <option key={t} value={t}>{t}</option>
+                    ))}
+                  </select>
+                  <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)}>
+                    <option value="">All Statuses</option>
+                    <option value="pending">Pending</option>
+                    <option value="verified">Verified</option>
+                    <option value="rejected">Rejected</option>
+                  </select>
+                </div>
+
+                {/* Desktop Table */}
                 <div className="payment-table-wrapper">
                   <table className="payment-table">
                     <thead>
@@ -185,59 +325,93 @@ const CashierPaymentVerification = () => {
                         <th>Type</th>
                         <th>Service / Order</th>
                         <th>Date</th>
-                        <th>Amount</th>
+                        <th style={{ textAlign: "right" }}>Amount</th>
                         <th>Proof</th>
                         <th>Payment</th>
                         <th>Action</th>
                       </tr>
                     </thead>
-
                     <tbody>
-                      {requests.map((item) => (
-                        <tr key={item.id}>
-                          <td>{item.customer_name || item.customer?.name || "Customer"}</td>
-                          <td>{item.request_type || item.type || "Request"}</td>
-                          <td>{item.service_name || item.service?.name || item.order_name || "N/A"}</td>
-                          <td>{item.request_date || item.date || "N/A"}</td>
-                          <td>₱{Number(item.amount || item.total_amount || 0).toLocaleString("en-PH")}</td>
-                          <td>
-                            {item.proof_url ? (
-                              <button
-                                type="button"
-                                className="proof-link"
-                                onClick={() => openProof(item.proof_url)}
-                              >
-                                View Proof
+                      {filteredRequests.map((item) => {
+                        const action = actionLoading[item.id];
+                        return (
+                          <tr key={item.id}>
+                            <td>{item.customer_name || item.customer?.name || "Customer"}</td>
+                            <td>{item.request_type || item.type || "Request"}</td>
+                            <td>{item.service_name || item.service?.name || item.order_name || "N/A"}</td>
+                            <td>{formatDate(item.request_date || item.date || item.created_at)}</td>
+                            <td className="amount-cell">₱{Number(item.amount || item.total_amount || 0).toLocaleString("en-PH")}</td>
+                            <td>
+                              {item.proof_url ? (
+                                <button type="button" className="proof-link" onClick={() => openProof(item.proof_url)}>View Proof</button>
+                              ) : (
+                                <span className="no-proof">No proof</span>
+                              )}
+                            </td>
+                            <td>
+                              <span className={`status-badge ${String(item.payment_status || "pending").toLowerCase()}`}>
+                                {item.payment_status || "pending"}
+                              </span>
+                            </td>
+                            <td className="payment-actions">
+                              <button className="verify-btn" type="button" disabled={!!action} onClick={() => verifyPayment(item)}>
+                                {action === "verify" ? <span className="btn-spinner" /> : null}
+                                {action === "verify" ? "Verifying…" : "Verify Payment"}
                               </button>
+                              <button className="reject-btn" type="button" disabled={!!action} onClick={() => rejectPayment(item)}>
+                                {action === "reject" ? <span className="btn-spinner" /> : null}
+                                {action === "reject" ? "Rejecting…" : "Reject"}
+                              </button>
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+
+                {/* Mobile Cards */}
+                <div className="payment-cards-mobile">
+                  {filteredRequests.map((item) => {
+                    const action = actionLoading[item.id];
+                    return (
+                      <div className="payment-card-item" key={item.id}>
+                        <div className="card-row"><span className="card-label">Customer</span><span className="card-value">{item.customer_name || item.customer?.name || "Customer"}</span></div>
+                        <div className="card-row"><span className="card-label">Type</span><span className="card-value">{item.request_type || item.type || "Request"}</span></div>
+                        <div className="card-row"><span className="card-label">Service</span><span className="card-value">{item.service_name || item.service?.name || item.order_name || "N/A"}</span></div>
+                        <div className="card-row"><span className="card-label">Date</span><span className="card-value">{formatDate(item.request_date || item.date || item.created_at)}</span></div>
+                        <div className="card-row"><span className="card-label">Amount</span><span className="card-value">₱{Number(item.amount || item.total_amount || 0).toLocaleString("en-PH")}</span></div>
+                        <div className="card-row">
+                          <span className="card-label">Proof</span>
+                          <span className="card-value">
+                            {item.proof_url ? (
+                              <button type="button" className="proof-link" onClick={() => openProof(item.proof_url)}>View Proof</button>
                             ) : (
                               <span className="no-proof">No proof</span>
                             )}
-                          </td>
-                          <td>
+                          </span>
+                        </div>
+                        <div className="card-row">
+                          <span className="card-label">Status</span>
+                          <span className="card-value">
                             <span className={`status-badge ${String(item.payment_status || "pending").toLowerCase()}`}>
                               {item.payment_status || "pending"}
                             </span>
-                          </td>
-                          <td className="payment-actions">
-                            <button
-                              className="verify-btn"
-                              type="button"
-                              onClick={() => verifyPayment(item)}
-                            >
-                              Verify Payment
-                            </button>
-                            <button
-                              className="reject-btn"
-                              type="button"
-                              onClick={() => rejectPayment(item)}
-                            >
-                              Reject
-                            </button>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
+                          </span>
+                        </div>
+                        <div className="card-actions">
+                          <button className="verify-btn" type="button" disabled={!!action} onClick={() => verifyPayment(item)}>
+                            {action === "verify" ? <span className="btn-spinner" /> : null}
+                            {action === "verify" ? "Verifying…" : "Verify"}
+                          </button>
+                          <button className="reject-btn" type="button" disabled={!!action} onClick={() => rejectPayment(item)}>
+                            {action === "reject" ? <span className="btn-spinner" /> : null}
+                            {action === "reject" ? "Rejecting…" : "Reject"}
+                          </button>
+                        </div>
+                      </div>
+                    );
+                  })}
                 </div>
               </div>
             )}

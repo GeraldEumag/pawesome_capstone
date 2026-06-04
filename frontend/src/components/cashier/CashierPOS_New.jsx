@@ -1307,6 +1307,71 @@ const ToastItem = styled.div`
   box-shadow: 0 8px 24px rgba(0,0,0,0.2);
   animation: ${slideIn} 0.2s ease both;
   max-width: 320px;
+  position: relative;
+  overflow: hidden;
+`;
+
+const ToastProgress = styled.div`
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  height: 3px;
+  background: rgba(255,255,255,0.5);
+  border-radius: 0 0 0 10px;
+  animation: shrink 3.2s linear forwards;
+  @keyframes shrink { from { width: 100%; } to { width: 0%; } }
+`;
+
+const HelpOverlay = styled.div`
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.5);
+  z-index: 1001;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: ${fadeIn} 0.2s ease;
+`;
+
+const HelpModal = styled.div`
+  background: #fff;
+  border-radius: 16px;
+  padding: 28px 32px;
+  max-width: 420px;
+  width: 90%;
+  box-shadow: 0 24px 64px rgba(0,0,0,0.3);
+`;
+
+const HelpTitle = styled.h2`
+  margin: 0 0 18px;
+  font-size: 1.25rem;
+  color: #111827;
+`;
+
+const HelpGrid = styled.div`
+  display: grid;
+  gap: 10px;
+  margin-bottom: 20px;
+`;
+
+const HelpRow = styled.div`
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 0;
+  border-bottom: 1px solid #f3f4f6;
+  font-size: 0.9rem;
+  color: #374151;
+  kbd {
+    background: #f3f4f6;
+    border: 1px solid #d1d5db;
+    border-radius: 6px;
+    padding: 3px 8px;
+    font-family: ui-monospace, monospace;
+    font-size: 0.8rem;
+    font-weight: 700;
+    color: #111827;
+  }
 `;
 
 /* Navigation Menu */
@@ -1393,6 +1458,7 @@ const CashierPOS = () => {
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [showNavMenu, setShowNavMenu] = useState(false);
   const [viewPhotoUrl, setViewPhotoUrl] = useState(null);
+  const [showHelp, setShowHelp] = useState(false);
 
   const searchRef = useRef(null);
   const navMenuRef = useRef(null);
@@ -1402,7 +1468,10 @@ const CashierPOS = () => {
   /* Toast */
   const addToast = useCallback((message, type = "info") => {
     const id = Date.now();
-    setToasts(prev => [...prev, { id, message, type }]);
+    setToasts(prev => {
+      const next = [...prev, { id, message, type, createdAt: Date.now() }];
+      return next.slice(-3); // keep max 3 toasts
+    });
     setTimeout(() => setToasts(prev => prev.filter(t => t.id !== id)), 3200);
   }, []);
 
@@ -1699,7 +1768,9 @@ const CashierPOS = () => {
   /* Keyboard shortcuts */
   useEffect(() => {
     const handler = (e) => {
+      if (e.key === "F1") { e.preventDefault(); setShowHelp(true); }
       if (e.key === "F2") { e.preventDefault(); searchRef.current?.focus(); }
+      if (e.key === "F3") { e.preventDefault(); if (cart.length > 0) clearOrder(); }
       if (e.key === "F4") { e.preventDefault(); if (cart.length > 0) setShowPaymentSection(true); }
       if (e.key === "Escape") {
         if (searchQuery) { setSearchQuery(""); return; }
@@ -1865,7 +1936,9 @@ const CashierPOS = () => {
           </TopBarCenter>
 
           <ShortcutPills>
+            <Pill><kbd>F1</kbd> Help</Pill>
             <Pill><kbd>F2</kbd> Search</Pill>
+            <Pill><kbd>F3</kbd> Clear</Pill>
             <Pill><kbd>F4</kbd> Pay</Pill>
             <Pill><kbd>Esc</kbd> Cancel</Pill>
           </ShortcutPills>
@@ -1913,6 +1986,10 @@ const CashierPOS = () => {
 
             <IconBtn $danger onClick={clearOrder} disabled={cart.length === 0}>
               <FontAwesomeIcon icon={faTrash} /> Clear
+            </IconBtn>
+
+            <IconBtn onClick={() => setShowHelp(true)} title="Keyboard shortcuts">
+              <FontAwesomeIcon icon={faKeyboard} /> Help
             </IconBtn>
 
             <IconBtn $primary onClick={toggleFullscreen}>
@@ -2370,6 +2447,26 @@ const CashierPOS = () => {
         </PhotoModalOverlay>
       )}
 
+      {/* ── Help Modal ─────────────────────────────────────────── */}
+      {showHelp && (
+        <HelpOverlay onClick={() => setShowHelp(false)}>
+          <HelpModal onClick={(e) => e.stopPropagation()}>
+            <HelpTitle><FontAwesomeIcon icon={faKeyboard} style={{ marginRight: 10 }} />Keyboard Shortcuts</HelpTitle>
+            <HelpGrid>
+              <HelpRow><span>Open this help</span><kbd>F1</kbd></HelpRow>
+              <HelpRow><span>Focus search bar</span><kbd>F2</kbd></HelpRow>
+              <HelpRow><span>Clear cart / order</span><kbd>F3</kbd></HelpRow>
+              <HelpRow><span>Open payment section</span><kbd>F4</kbd></HelpRow>
+              <HelpRow><span>Cancel / close modal</span><kbd>Esc</kbd></HelpRow>
+              <HelpRow><span>Add scanned product</span><kbd>Enter</kbd></HelpRow>
+            </HelpGrid>
+            <IconBtn onClick={() => setShowHelp(false)} style={{ width: "100%", justifyContent: "center" }}>
+              <FontAwesomeIcon icon={faXmark} /> Close
+            </IconBtn>
+          </HelpModal>
+        </HelpOverlay>
+      )}
+
       {/* ── Toasts ──────────────────────────────────────────────── */}
       <ToastWrap>
         {toasts.map(t => (
@@ -2381,6 +2478,7 @@ const CashierPOS = () => {
               faBolt
             } />
             {t.message}
+            <ToastProgress />
           </ToastItem>
         ))}
       </ToastWrap>
