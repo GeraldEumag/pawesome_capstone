@@ -128,6 +128,8 @@ const CashierDashboard = () => {
   const [breakDuration, setBreakDuration] = useState(0);
   const [showHandoverModal, setShowHandoverModal] = useState(false);
   const [handoverNote, setHandoverNote] = useState("");
+  const [lastHandover, setLastHandover] = useState(null);
+  const [lastShiftReport, setLastShiftReport] = useState(null);
   const [topSellingProducts, setTopSellingProducts] = useState([]);
   const [showPurchaseHistoryModal, setShowPurchaseHistoryModal] = useState(false);
   const [purchaseHistoryCustomerId, setPurchaseHistoryCustomerId] = useState("");
@@ -207,9 +209,23 @@ const CashierDashboard = () => {
     [showOverview]
   );
 
+  const fetchLastCashierInfo = useCallback(async () => {
+    try {
+      const [handoverRes, shiftRes] = await Promise.all([
+        apiRequest("/cashier/handover/last"),
+        apiRequest("/cashier/shift-report/last"),
+      ]);
+      setLastHandover(handoverRes?.handover || null);
+      setLastShiftReport(shiftRes?.shift_report || null);
+    } catch (err) {
+      console.error("Failed to load last cashier info:", err);
+    }
+  }, []);
+
   useEffect(() => {
     fetchDashboardData();
-  }, [fetchDashboardData]);
+    fetchLastCashierInfo();
+  }, [fetchDashboardData, fetchLastCashierInfo]);
 
   useEffect(() => {
     localStorage.setItem("cashierTheme", theme);
@@ -385,6 +401,7 @@ const CashierDashboard = () => {
       setShiftMessage("Shift report submitted successfully.");
       setActualCashCount("");
       setShiftNote("");
+      fetchLastCashierInfo();
 
       setTimeout(() => {
         setShowEndShiftModal(false);
@@ -648,6 +665,7 @@ Thank you for choosing Pawesome!
       showSuccess("Handover note saved successfully.");
       setHandoverNote("");
       setShowHandoverModal(false);
+      fetchLastCashierInfo();
     } catch (err) {
       showError("Failed to save handover: " + (err.message || "Unknown error"));
     }
@@ -1045,6 +1063,26 @@ Thank you for choosing Pawesome!
                         <span>Transactions</span>
                         <strong>{todayTransactions}</strong>
                       </div>
+                      {lastShiftReport && (
+                        <div className="cashier-mini-stat" style={{ marginTop: 8 }}>
+                          <span>Last Shift</span>
+                          <strong style={{ fontSize: 12 }}>
+                            {lastShiftReport.created_at
+                              ? new Date(lastShiftReport.created_at).toLocaleDateString("en-PH")
+                              : "N/A"}
+                          </strong>
+                        </div>
+                      )}
+                      {lastHandover && (
+                        <div className="cashier-mini-stat" style={{ marginTop: 4 }}>
+                          <span>Last Handover</span>
+                          <strong style={{ fontSize: 12 }}>
+                            {lastHandover.created_at
+                              ? new Date(lastHandover.created_at).toLocaleDateString("en-PH")
+                              : "N/A"}
+                          </strong>
+                        </div>
+                      )}
                       <button className="btn-primary" onClick={() => setShowEndShiftModal(true)}>
                         End Shift
                       </button>

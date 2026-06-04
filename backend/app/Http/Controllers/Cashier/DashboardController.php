@@ -409,10 +409,38 @@ class DashboardController extends Controller
             'cashier_name' => 'required|string',
         ]);
 
-        // Store handover note - in production, save to handovers table
-        // For now, just return success
+        ActivityLog::logForAuthUser('cashier_handover', $validated['note'], [
+            'category' => 'cashier',
+            'subcategory' => 'handover',
+            'reference_type' => 'cashier_handover',
+            'reference_id' => auth()->id(),
+            'metadata' => [
+                'cashier_name' => $validated['cashier_name'],
+                'shift_date' => now()->toIso8601String(),
+            ],
+        ]);
+
         return response()->json([
             'success' => true,
+            'message' => 'Handover note saved successfully',
+        ]);
+    }
+
+    public function getLastHandover()
+    {
+        $lastHandover = ActivityLog::where('action', 'cashier_handover')
+            ->where('user_id', auth()->id())
+            ->latest()
+            ->first();
+
+        return response()->json([
+            'success' => true,
+            'handover' => $lastHandover ? [
+                'note' => $lastHandover->description,
+                'cashier_name' => $lastHandover->metadata['cashier_name'] ?? null,
+                'shift_date' => $lastHandover->metadata['shift_date'] ?? null,
+                'created_at' => $lastHandover->created_at->toIso8601String(),
+            ] : null,
         ]);
     }
 
@@ -430,6 +458,16 @@ class DashboardController extends Controller
             'note' => 'nullable|string',
         ]);
 
+        ActivityLog::logForAuthUser('cashier_end_shift', $data['note'] ?? 'Shift ended', [
+            'category' => 'cashier',
+            'subcategory' => 'end_shift',
+            'reference_type' => 'cashier_shift',
+            'reference_id' => auth()->id(),
+            'metadata' => array_merge($data, [
+                'submitted_at' => now()->toIso8601String(),
+            ]),
+        ]);
+
         return response()->json([
             'success' => true,
             'message' => 'Shift report submitted successfully',
@@ -437,6 +475,22 @@ class DashboardController extends Controller
                 'id' => 'SHIFT-' . now()->format('YmdHis'),
                 'submitted_at' => now()->toIso8601String(),
             ]),
+        ]);
+    }
+
+    public function getLastShiftReport()
+    {
+        $lastShift = ActivityLog::where('action', 'cashier_end_shift')
+            ->where('user_id', auth()->id())
+            ->latest()
+            ->first();
+
+        return response()->json([
+            'success' => true,
+            'shift_report' => $lastShift ? array_merge(
+                $lastShift->metadata ?? [],
+                ['created_at' => $lastShift->created_at->toIso8601String()]
+            ) : null,
         ]);
     }
 
@@ -448,18 +502,28 @@ class DashboardController extends Controller
             'cashier_name' => 'required|string',
         ]);
 
+        // Strip common prefixes to get numeric ID
+        $rawId = $validated['transaction_id'];
+        $numericId = preg_replace('/^(SALE-|TRX-|ORDER-|SERVICE-)/i', '', $rawId);
+
         // Find and void the transaction
-        $transaction = Sale::find($validated['transaction_id']);
-        if ($transaction) {
-            $transaction->status = 'voided';
-            $transaction->void_reason = $validated['reason'];
-            $transaction->voided_by = $validated['cashier_name'];
-            $transaction->voided_at = now();
-            $transaction->save();
+        $transaction = Sale::find($numericId);
+        if (!$transaction) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Transaction not found.',
+            ], 404);
         }
+
+        $transaction->status = 'voided';
+        $transaction->void_reason = $validated['reason'];
+        $transaction->voided_by = $validated['cashier_name'];
+        $transaction->voided_at = now();
+        $transaction->save();
 
         return response()->json([
             'success' => true,
+            'message' => 'Transaction voided successfully.',
         ]);
     }
 

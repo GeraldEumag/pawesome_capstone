@@ -376,7 +376,9 @@ Route::middleware(['auth.api', 'throttle:api', 'role:cashier'])->prefix('cashier
     Route::post('multi-payment', [CashierDashboardController::class, 'multiPayment']);
     Route::post('apply-discount', [CashierDashboardController::class, 'applyDiscount']);
     Route::post('handover', [CashierDashboardController::class, 'handover']);
+    Route::get('handover/last', [CashierDashboardController::class, 'getLastHandover']);
     Route::post('end-shift', [CashierDashboardController::class, 'endShift']);
+    Route::get('shift-report/last', [CashierDashboardController::class, 'getLastShiftReport']);
     Route::post('void', [CashierDashboardController::class, 'voidTransaction']);
     
     // POS Operations

@@ -42,15 +42,15 @@ const CashierReports = () => {
     if (filters.salesperson_id && filters.salesperson_id !== "all") params.append("salesperson_id", filters.salesperson_id);
     if (filters.searchTerm) params.append("search", filters.searchTerm);
 
-    const endpoint = isAdminReport 
-      ? `/admin/reports/sales?${params}` 
-      : "/cashier/transactions";
-    
+    const endpoint = isAdminReport
+      ? `/admin/reports/sales?${params}`
+      : `/cashier/transactions?${params}`;
+
     const response = await apiRequest(endpoint);
-    const reportData = response?.data || response || {};
-    const transactions = Array.isArray(response)
-      ? response
-      : reportData.transactions || reportData.sales || [];
+    const reportData = response || {};
+    const transactions = Array.isArray(reportData)
+      ? reportData
+      : reportData.transactions || reportData.data || [];
     
     setSalespeople(reportData.salespeople || []);
     setRawTransactions(transactions);
@@ -74,7 +74,7 @@ const CashierReports = () => {
     return transactions;
   }, [isAdminReport]);
 
-  // Summary cards with trends
+  // Summary cards – real data only, no fake trends
   const summaryCards = useMemo(() => [
     {
       id: "total-sales",
@@ -82,8 +82,6 @@ const CashierReports = () => {
       value: formatCurrency(summaryData.totalSales),
       icon: faDollarSign,
       tone: "money",
-      trend: "up",
-      change: "+12.5%"
     },
     {
       id: "total-transactions",
@@ -91,8 +89,6 @@ const CashierReports = () => {
       value: summaryData.totalTransactions,
       icon: faReceipt,
       tone: "primary",
-      trend: "up",
-      change: "+8.2%"
     },
     {
       id: "today-sales",
@@ -100,8 +96,6 @@ const CashierReports = () => {
       value: formatCurrency(summaryData.todaySales),
       icon: faMoneyBillWave,
       tone: "success",
-      trend: "up",
-      change: "+5.1%"
     },
     {
       id: "average-order",
@@ -109,19 +103,17 @@ const CashierReports = () => {
       value: formatCurrency(summaryData.averageOrderValue),
       icon: faChartLine,
       tone: "info",
-      trend: "neutral",
-      change: "+2.3%"
     },
   ], [summaryData]);
 
-  // Table columns
+  // Table columns – mapped to actual backend fields from /cashier/transactions
   const tableColumns = [
     { key: "id", label: "Transaction ID", sortable: true },
-    { key: "salesperson_name", label: "Salesperson", sortable: true },
-    { key: "date", label: "Date", format: "date", sortable: true },
-    { key: "time", label: "Time", sortable: true },
+    { key: "customer_name", label: "Customer", sortable: true },
+    { key: "date", label: "Date", format: "datetime", sortable: true },
     { key: "amount", label: "Amount", format: "currency", sortable: true },
     { key: "payment_method", label: "Payment Method", sortable: true },
+    { key: "type", label: "Type", sortable: true },
     { key: "status", label: "Status", sortable: true },
   ];
 
@@ -215,7 +207,7 @@ const CashierReports = () => {
       icon={faMoneyBillWave}
       fetchData={fetchReportData}
       data={rawTransactions}
-      columns={tableColumns}
+      columns={[]}
       summaryCards={summaryCards}
       charts={renderCharts()}
       statusOptions={["completed", "pending", "refunded", "cancelled"]}

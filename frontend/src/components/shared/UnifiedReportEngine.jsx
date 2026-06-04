@@ -80,7 +80,7 @@ const AdvancedFilterPanel = ({
     setActivePreset(presetKey);
     const range = getDateRangePreset(presetKey);
     onDateRangeChange(range);
-    onApplyFilters();
+    onApplyFilters(range);
   };
 
   const handleSaveFilter = () => {
@@ -383,17 +383,17 @@ const UnifiedReportEngineBase = ({
   const [appliedDateRange, setAppliedDateRange] = useState({ ...dateRange });
   
   // Data loading
-  const loadData = useCallback(async ({ silent = false } = {}) => {
+  const loadData = useCallback(async ({ silent = false, overrideParams = null } = {}) => {
     if (!silent) setLoading(true);
     setError(null);
-    
+
     try {
-      const params = {
+      const params = overrideParams || {
         ...appliedFilters,
         startDate: appliedDateRange.startDate,
         endDate: appliedDateRange.endDate,
       };
-      
+
       await fetchData(params);
       setLastUpdated(new Date());
     } catch (err) {
@@ -428,23 +428,37 @@ const UnifiedReportEngineBase = ({
     setDateRange(newRange);
   }, []);
   
-  const handleApplyFilters = useCallback(() => {
-    setAppliedFilters({ ...filters });
-    setAppliedDateRange({ ...dateRange });
-    loadData();
+  const handleApplyFilters = useCallback((forcedDateRange = null) => {
+    const nextFilters = { ...filters };
+    const nextDateRange = forcedDateRange ? { ...forcedDateRange } : { ...dateRange };
+    setAppliedFilters(nextFilters);
+    setAppliedDateRange(nextDateRange);
+    loadData({
+      overrideParams: {
+        ...nextFilters,
+        startDate: nextDateRange.startDate,
+        endDate: nextDateRange.endDate,
+      },
+    });
   }, [filters, dateRange, loadData]);
-  
+
   const handleClearFilters = useCallback(() => {
     const resetFilters = { searchTerm: '', status: 'all' };
     customFilters.forEach((cf) => {
       resetFilters[cf.key] = 'all';
     });
-    
+
     setFilters(resetFilters);
     setDateRange(defaultDateRange);
     setAppliedFilters(resetFilters);
     setAppliedDateRange(defaultDateRange);
-    loadData();
+    loadData({
+      overrideParams: {
+        ...resetFilters,
+        startDate: defaultDateRange.startDate,
+        endDate: defaultDateRange.endDate,
+      },
+    });
   }, [customFilters, defaultDateRange, loadData]);
   
   const handleSaveFilter = useCallback((filterConfig) => {

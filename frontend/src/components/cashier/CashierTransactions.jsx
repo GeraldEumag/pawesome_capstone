@@ -95,6 +95,55 @@ const CashierTransactions = () => {
     return map[method] || 'cash';
   };
 
+  const handlePrintReceipt = (transaction) => {
+    const receiptWindow = window.open("", "_blank", "width=400,height=600");
+    if (!receiptWindow) return;
+
+    const itemsHtml = (transaction.products || [])
+      .map((p) => `<tr><td>${p.name}</td><td>${p.quantity}</td><td>${formatCurrency(p.price)}</td></tr>`)
+      .join("");
+
+    receiptWindow.document.write(`
+      <html>
+        <head>
+          <title>Receipt ${transaction.id}</title>
+          <style>
+            body { font-family: monospace; padding: 20px; max-width: 360px; margin: 0 auto; }
+            h2 { text-align: center; margin-bottom: 4px; }
+            .store { text-align: center; font-size: 12px; margin-bottom: 16px; }
+            table { width: 100%; border-collapse: collapse; font-size: 12px; }
+            th, td { text-align: left; padding: 4px 0; }
+            th { border-bottom: 1px dashed #000; }
+            .total { border-top: 1px dashed #000; font-weight: bold; margin-top: 8px; padding-top: 8px; text-align: right; }
+            .meta { margin-top: 16px; font-size: 12px; }
+            .meta div { margin-bottom: 4px; }
+            @media print { button { display: none; } }
+          </style>
+        </head>
+        <body>
+          <h2>PAWESOME PET STORE</h2>
+          <div class="store">123 Pet Street, Manila, Philippines</div>
+          <div class="meta">
+            <div><strong>Transaction:</strong> ${transaction.id}</div>
+            <div><strong>Customer:</strong> ${transaction.customer || "Walk-in"}</div>
+            <div><strong>Date:</strong> ${transaction.date} ${transaction.time || ""}</div>
+            <div><strong>Payment:</strong> ${transaction.payment || "Cash"}</div>
+          </div>
+          <table>
+            <thead><tr><th>Item</th><th>Qty</th><th>Price</th></tr></thead>
+            <tbody>${itemsHtml}</tbody>
+          </table>
+          <div class="total">TOTAL: ${formatCurrency(transaction.amount)}</div>
+          <div class="meta" style="margin-top:24px; text-align:center;">
+            <div>Thank you for shopping!</div>
+          </div>
+          <button onclick="window.print()" style="margin-top:20px; width:100%; padding:10px; font-size:14px;">Print Receipt</button>
+        </body>
+      </html>
+    `);
+    receiptWindow.document.close();
+  };
+
   const handleVoidTransaction = async (id, reason) => {
     try {
       setLoading(true);
@@ -312,12 +361,22 @@ const CashierTransactions = () => {
           <div className="transaction-modal" onClick={(e) => e.stopPropagation()}>
             <div className="modal-header">
               <h2>Transaction Details</h2>
-              <button
-                className="close-btn"
-                onClick={() => setSelectedTransaction(null)}
-              >
-                ×
-              </button>
+              <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+                <button
+                  className="btn-secondary"
+                  type="button"
+                  onClick={() => handlePrintReceipt(selectedTransaction)}
+                  style={{ fontSize: 13, padding: "6px 12px" }}
+                >
+                  <FontAwesomeIcon icon={faReceipt} /> Print Receipt
+                </button>
+                <button
+                  className="close-btn"
+                  onClick={() => setSelectedTransaction(null)}
+                >
+                  ×
+                </button>
+              </div>
             </div>
             <div className="modal-content">
               <div className="transaction-overview">
