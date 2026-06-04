@@ -113,17 +113,6 @@ const CustomerPets = () => {
     pet?.special_needs ||
     "No medical notes or special needs recorded.";
 
-  const getSpeciesIcon = (species) => {
-    const value = String(species || "").toLowerCase();
-
-    if (value.includes("dog")) return <FaDog />;
-    if (value.includes("cat")) return <FaCat />;
-    if (value.includes("rabbit")) return <FaPaw />;
-    if (value.includes("bird")) return <FaDove />;
-
-    return <FaPaw />;
-  };
-
   const formatDate = (value) => {
     if (!value) return "No date";
 
@@ -286,7 +275,7 @@ const CustomerPets = () => {
 
       return matchesSpecies && matchesSearch;
     });
-  }, [pets, archivedPets, searchTerm, speciesFilter, activeTab]);
+  }, [pets, archivedPets, searchTerm, speciesFilter, activeTab, getPetName, getPetSpecies, getPetBreed, getPetAge, getPetNotes, formatDate]);
 
   const validateForm = () => {
     if (!formData.name.trim()) return "Pet name is required.";

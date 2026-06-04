@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
   faBed,
@@ -36,7 +36,6 @@ import {
   formatTime,
   formatStatus,
   formatCurrency,
-  normalizeStatus,
 } from "./utils/requestNormalization";
 import "./ReceptionistAppointmentsBoarding.css";
 
@@ -281,12 +280,14 @@ const ReceptionistAppointmentsBoarding = () => {
       let endpoint = "";
       let method = "POST";
       let payload = {};
-      const isHotel = item.type === "hotel";
+
+      const isAppointment = item.source === "appointment";
+      const isBoarding = item.source === "boarding";
+      const isGrooming = item.source === "grooming";
 
       if (action === "approve") {
-        endpoint = isHotel
-          ? `/receptionist/boarding-requests/${item.id}/approve`
-          : `/receptionist/requests/${item.id}/approve`;
+        // Pending items always come from service_request source
+        endpoint = `/receptionist/requests/${item.id}/approve`;
         payload = {
           receptionist_remarks: extra.remarks || "Approved by receptionist",
           ...(item.type === "vet" && extra.veterinarianId
@@ -296,22 +297,19 @@ const ReceptionistAppointmentsBoarding = () => {
       } else if (action === "reject") {
         const confirmed = await showConfirm("Reject this request?");
         if (!confirmed) { setBusyAction(""); return; }
-        endpoint = isHotel
-          ? `/receptionist/boarding-requests/${item.id}/reject`
-          : `/receptionist/requests/${item.id}/reject`;
+        endpoint = `/receptionist/requests/${item.id}/reject`;
         payload = { rejection_reason: extra.reason || "Rejected by receptionist" };
       } else if (action === "check_in") {
         const confirmed = await showConfirm(`Check in ${item.petName}?`);
         if (!confirmed) { setBusyAction(""); return; }
-        try {
+        if (isBoarding) {
           endpoint = `/receptionist/boarding-requests/${item.id}/check-in`;
-          await apiRequest(endpoint, { method: "POST" });
-        } catch {
+        } else {
           endpoint = `/receptionist/requests/${item.id}/status`;
           method = "PATCH";
           payload = { status: "checked_in" };
-          await apiRequest(endpoint, { method, body: JSON.stringify(payload) });
         }
+        await apiRequest(endpoint, { method, body: JSON.stringify(payload) });
         updateItemStatus(item.id, "checked_in");
         notify("success", "Checked in successfully.");
         setBusyAction("");
@@ -320,13 +318,31 @@ const ReceptionistAppointmentsBoarding = () => {
       } else if (action === "check_out") {
         const confirmed = await showConfirm(`Check out ${item.petName}?`);
         if (!confirmed) { setBusyAction(""); return; }
-        endpoint = `/receptionist/requests/${item.id}/status`;
-        method = "PATCH";
-        payload = { status: "completed" };
+        if (isBoarding) {
+          endpoint = `/receptionist/boarding-requests/${item.id}/check-out`;
+        } else {
+          endpoint = `/receptionist/requests/${item.id}/status`;
+          method = "PATCH";
+          payload = { status: "completed" };
+        }
       } else if (["approved", "in_progress", "completed", "rejected", "cancelled", "pending"].includes(action)) {
-        endpoint = `/receptionist/requests/${item.id}/status`;
-        method = "PATCH";
-        payload = { status: action };
+        if (isGrooming) {
+          endpoint = `/grooming/${item.id}/status`;
+          method = "PUT";
+          payload = { status: action };
+        } else if (isAppointment) {
+          endpoint = `/receptionist/appointments/${item.id}`;
+          method = "PUT";
+          payload = { status: action };
+        } else if (isBoarding) {
+          endpoint = `/receptionist/boarding-requests/${item.id}`;
+          method = "PUT";
+          payload = { status: action };
+        } else {
+          endpoint = `/receptionist/requests/${item.id}/status`;
+          method = "PATCH";
+          payload = { status: action };
+        }
       }
 
       if (endpoint) {

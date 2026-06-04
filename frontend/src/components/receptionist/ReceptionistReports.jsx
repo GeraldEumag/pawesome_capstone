@@ -1,12 +1,8 @@
 import React, { useCallback, useMemo, useState } from "react";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
   faCalendarCheck,
-  faChartLine,
   faCheckCircle,
   faClock,
-  faEye,
-  faInfoCircle,
   faMoneyBillWave,
   faReceipt,
   faShoppingBag,
@@ -27,24 +23,8 @@ import {
 } from "recharts";
 import { apiRequest } from "../../api/client";
 import { formatCurrency } from "../../utils/currency";
-import { getDateRangePreset } from "../../utils/reportExport";
 import UnifiedReportEngine, { ChartContainer, CHART_COLORS } from "../shared/UnifiedReportEngine";
 import "./ReceptionistReports.css";
-
-const getDefaultDateRange = () => {
-  try {
-    const preset = getDateRangePreset("month");
-    return {
-      startDate: preset?.startDate || "",
-      endDate: preset?.endDate || "",
-    };
-  } catch {
-    return {
-      startDate: "",
-      endDate: "",
-    };
-  }
-};
 
 const normalizeList = (payload, keys = []) => {
   if (Array.isArray(payload)) return payload;
@@ -96,33 +76,6 @@ const formatDateDisplay = (value) => {
     year: "numeric",
     month: "short",
     day: "2-digit",
-  });
-};
-
-const formatTimeDisplay = (value) => {
-  if (!value) return "N/A";
-
-  if (String(value).includes("AM") || String(value).includes("PM")) {
-    return value;
-  }
-
-  if (String(value).includes(":") && !String(value).includes("T")) {
-    const [hour, minute] = String(value).split(":");
-    const date = new Date();
-    date.setHours(Number(hour || 0), Number(minute || 0), 0, 0);
-
-    return date.toLocaleTimeString("en-PH", {
-      hour: "numeric",
-      minute: "2-digit",
-    });
-  }
-
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return value;
-
-  return date.toLocaleTimeString("en-PH", {
-    hour: "numeric",
-    minute: "2-digit",
   });
 };
 

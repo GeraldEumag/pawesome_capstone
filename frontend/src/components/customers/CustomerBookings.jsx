@@ -207,6 +207,14 @@ const CustomerBookings = () => {
       .replace(/\s+/g, "_");
   };
 
+  const normalizeServiceType = (value) => {
+    const t = String(value || "").toLowerCase();
+    if (t.includes("groom")) return "grooming";
+    if (t.includes("hotel") || t.includes("boarding")) return "hotel";
+    if (t.includes("vet") || t.includes("medical") || t.includes("consult")) return "vet";
+    return t || "service";
+  };
+
   const getSpeciesRoomTypeOptions = useCallback((pet) => {
     const species = normalizeText(getPetType(pet));
 
@@ -526,58 +534,98 @@ const CustomerBookings = () => {
           setRefreshing(true);
         }
 
-        const [requestsResult, boardingsResult] = await Promise.allSettled([
-          apiRequest("/customer/service-requests"),
-          apiRequest("/customer/boarding-requests"),
+        const [requestsResult, boardingsResult, groomingResult] = await Promise.allSettled([
+          apiRequest("/customer/my-requests"),
+          apiRequest("/customer/boardings"),
+          apiRequest("/customer/grooming"),
         ]);
 
-        let allBookings = [];
+        const map = new Map();
+
+        // Helper to add or overwrite by deduplication key
+        const addItem = (item) => {
+          const key = item.serviceRequestId ? `sr-${item.serviceRequestId}` : `${item.type}-${item.id}`;
+          // Prefer dedicated records over generic service requests
+          const existing = map.get(key);
+          if (!existing || existing.type === "service") {
+            map.set(key, item);
+          }
+        };
 
         if (requestsResult.status === "fulfilled") {
           const requestsData = safeArray(requestsResult.value);
-          const normalizedRequests = requestsData.map((item) => ({
-            id: item.id,
-            type: "service",
-            serviceType: normalizeServiceType(item.service_type || item.type),
-            title: item.service_name || item.service || item.title || "Service Request",
-            pet: item.pet_name || item.pet || "Unknown Pet",
-            service: item.service_name || item.service || "",
-            date: item.request_date || item.date || item.scheduled_date || "",
-            time: item.request_time || item.time || "",
-            status: item.status || "pending",
-            notes: item.notes || item.special_requests || "",
-            checkIn: item.check_in || item.checkin_date || "",
-            checkOut: item.check_out || item.checkout_date || "",
-            paymentStatus: item.payment_status || "unpaid",
-            totalAmount: item.total_amount || item.amount || 0,
-            createdAt: item.created_at || "",
-          }));
-          allBookings = [...allBookings, ...normalizedRequests];
+          requestsData.forEach((item) => {
+            addItem({
+              id: item.id,
+              type: "service",
+              serviceType: normalizeServiceType(item.service_type || item.type),
+              title: item.service_name || item.service || item.title || "Service Request",
+              pet: item.pet_name || item.pet || "Unknown Pet",
+              service: item.service_name || item.service || "",
+              date: item.request_date || item.date || item.scheduled_date || "",
+              time: item.request_time || item.time || "",
+              status: item.status || "pending",
+              notes: item.notes || item.special_requests || "",
+              checkIn: item.check_in || item.checkin_date || "",
+              checkOut: item.check_out || item.checkout_date || "",
+              paymentStatus: item.payment_status || "unpaid",
+              totalAmount: item.total_amount || item.amount || 0,
+              createdAt: item.created_at || "",
+              serviceRequestId: item.id,
+            });
+          });
         }
 
         if (boardingsResult.status === "fulfilled") {
           const boardingsData = safeArray(boardingsResult.value);
-          const normalizedBoardings = boardingsData.map((item) => ({
-            id: item.id,
-            type: "boarding",
-            serviceType: "hotel",
-            title: item.service_name || "Pet Hotel",
-            pet: item.pet_name || item.pet?.name || "Unknown Pet",
-            service: "Pet Hotel",
-            date: item.check_in || item.checkin_date || "",
-            time: "",
-            status: item.status || "pending",
-            notes: item.notes || item.special_requests || "",
-            checkIn: item.check_in || item.checkin_date || "",
-            checkOut: item.check_out || item.checkout_date || "",
-            paymentStatus: item.payment_status || "unpaid",
-            totalAmount: item.total_amount || item.amount || 0,
-            createdAt: item.created_at || "",
-          }));
-          allBookings = [...allBookings, ...normalizedBoardings];
+          boardingsData.forEach((item) => {
+            addItem({
+              id: item.id,
+              type: "boarding",
+              serviceType: "hotel",
+              title: item.service_name || "Pet Hotel",
+              pet: item.pet_name || item.pet?.name || "Unknown Pet",
+              service: "Pet Hotel",
+              date: item.check_in || item.checkin_date || "",
+              time: "",
+              status: item.status || "pending",
+              notes: item.notes || item.special_requests || "",
+              checkIn: item.check_in || item.checkin_date || "",
+              checkOut: item.check_out || item.checkout_date || "",
+              paymentStatus: item.payment_status || "unpaid",
+              totalAmount: item.total_amount || item.amount || 0,
+              createdAt: item.created_at || "",
+              serviceRequestId: item.service_request_id || null,
+            });
+          });
         }
 
-        allBookings.sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0));
+        if (groomingResult.status === "fulfilled") {
+          const groomingData = safeArray(groomingResult.value);
+          const appointments = Array.isArray(groomingData) ? groomingData : (groomingData.appointments || groomingData.data || []);
+          appointments.forEach((item) => {
+            addItem({
+              id: item.id,
+              type: "grooming",
+              serviceType: "grooming",
+              title: item.service || "Grooming",
+              pet: item.pet?.name || item.pet_name || "Unknown Pet",
+              service: item.service || "Grooming",
+              date: item.appointment_date || item.date || "",
+              time: item.appointment_time || item.time || "",
+              status: item.status || "pending",
+              notes: item.notes || item.special_requests || "",
+              checkIn: "",
+              checkOut: "",
+              paymentStatus: item.payment_status || "unpaid",
+              totalAmount: item.total_amount || item.amount || 0,
+              createdAt: item.created_at || "",
+              serviceRequestId: item.service_request_id || null,
+            });
+          });
+        }
+
+        const allBookings = Array.from(map.values()).sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0));
 
         setBookings(allBookings);
         setError("");

@@ -15,7 +15,7 @@ class Appointment extends Model
         'consultation_fee', 'base_amount', 'additional_charges', 'total_amount',
         'amount_paid', 'balance_due', 'receipt_number', 'paid_at', 'verified_by',
         'notes', 'diagnosis', 'treatment_notes', 'prescription',
-        'vet_remarks', 'cashier_remarks', 'cancellation_reason'
+        'vet_remarks', 'cashier_remarks', 'cancellation_reason', 'service_request_id'
     ];
 
     protected $casts = [

@@ -284,6 +284,7 @@ const CustomersProfile = () => {
 
   useEffect(() => {
     loadData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const getCustomerPets = (customer) => {
@@ -310,6 +311,7 @@ const CustomersProfile = () => {
       customersWithPets: customers.filter((customer) => getCustomerPets(customer).length > 0)
         .length,
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [customers, pets]);
 
   const filteredCustomers = useMemo(() => {
@@ -368,6 +370,7 @@ const CustomersProfile = () => {
 
         return getLastName(a).localeCompare(getLastName(b));
       });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [customers, pets, searchTerm, filterType]);
 
   const handleCustomerInputChange = (event) => {

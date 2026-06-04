@@ -253,6 +253,7 @@ const CustomerBookingForm = () => {
 
       const selectedPet = pets.find((pet) => String(pet.id) === String(selectedPetId));
 
+      const isHotel = formData.service_type === "hotel";
       const payload = {
         customer_name: customerName,
         customer_email: user?.email || formData.customer_email,
@@ -262,23 +263,33 @@ const CustomerBookingForm = () => {
 
         request_type: formData.service_type || formData.request_type,
 
-        requested_date: formData.preferred_date || formData.requested_date,
-        requested_time: formData.preferred_time || formData.requested_time,
+        requested_date: isHotel ? formData.check_in_date : (formData.preferred_date || formData.requested_date),
+        requested_time: isHotel ? "14:00" : (formData.preferred_time || formData.requested_time),
 
         notes: formData.notes || "",
         special_request: formData.notes || "",
       };
 
       // Add room selection data for hotel bookings
-      if (formData.service_type === "hotel" && formData.boarding_room_id) {
+      if (isHotel && formData.boarding_room_id) {
         const selectedRoom = availableRooms.find(room => String(room.id) === String(formData.boarding_room_id));
         if (selectedRoom) {
           payload.boarding_room_id = selectedRoom.id;
           payload.room_name = selectedRoom.room_name;
+          payload.room_type = selectedRoom.room_type || selectedRoom.room_name;
           payload.daily_rate = selectedRoom.daily_rate;
         }
         payload.check_in_date = formData.check_in_date;
         payload.check_out_date = formData.check_out_date;
+
+        // Calculate total days and amount
+        if (formData.check_in_date && formData.check_out_date) {
+          const checkIn = new Date(formData.check_in_date);
+          const checkOut = new Date(formData.check_out_date);
+          const totalDays = Math.max(1, Math.round((checkOut - checkIn) / (1000 * 60 * 60 * 24)));
+          payload.total_days = totalDays;
+          payload.total_amount = (selectedRoom?.daily_rate || 0) * totalDays;
+        }
       }
 
       const data = await apiRequest("/customer/requests", {

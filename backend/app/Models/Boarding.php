@@ -69,6 +69,7 @@ class Boarding extends Model
         'actual_check_out',
         'checked_out_by',
         'checked_out_at',
+        'service_request_id',
     ];
 
     protected $appends = [

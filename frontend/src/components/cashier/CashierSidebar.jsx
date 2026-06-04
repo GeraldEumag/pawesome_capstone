@@ -11,7 +11,6 @@ import {
   faSignOutAlt,
   faUser,
   faReceipt,
-  faCheckCircle,
   faTimes,
 } from "@fortawesome/free-solid-svg-icons";
 import "./CashierSidebar.css";

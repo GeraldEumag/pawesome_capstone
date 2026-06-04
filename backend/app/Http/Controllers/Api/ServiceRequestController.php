@@ -29,7 +29,7 @@ class ServiceRequestController extends Controller
         };
     }
 
-    private function formatRequest(ServiceRequest $item): array
+    private function formatRequest(object $item): array
     {
         return [
             'id' => $item->id,
@@ -71,6 +71,8 @@ class ServiceRequestController extends Controller
             'requested_time' => $request->requested_time ?? $request->request_time ?? $request->preferred_time,
         ]);
 
+        $isHotel = in_array(strtolower($request->request_type ?? ''), ['hotel', 'boarding']);
+
         $validated = $request->validate([
             'customer_name' => 'required|string|max:150',
             'customer_email' => 'nullable|email|max:150',
@@ -79,8 +81,15 @@ class ServiceRequestController extends Controller
             'request_type' => 'required|string|max:150',
             'service_name' => 'nullable|string|max:150',
             'requested_date' => 'required|date|after_or_equal:today',
-            'requested_time' => 'required|date_format:H:i',
+            'requested_time' => $isHotel ? 'nullable|date_format:H:i' : 'required|date_format:H:i',
             'notes' => 'nullable|string',
+            'check_out_date' => 'nullable|date|after_or_equal:requested_date',
+            'boarding_room_id' => 'nullable|integer|exists:boarding_rooms,id',
+            'room_name' => 'nullable|string|max:255',
+            'room_type' => 'nullable|string|max:255',
+            'daily_rate' => 'nullable|numeric|min:0',
+            'total_days' => 'nullable|integer|min:1',
+            'total_amount' => 'nullable|numeric|min:0',
         ]);
 
         $pet = null;
@@ -121,9 +130,9 @@ class ServiceRequestController extends Controller
             }
         }
 
-        // Validate business hours
-        $time = $validated['requested_time'];
-        if ($time < '09:00' || $time > '18:00') {
+        // Validate business hours (skip for hotel bookings which don't use time slots)
+        $time = $validated['requested_time'] ?? '00:00';
+        if (!$isHotel && ($time < '09:00' || $time > '18:00')) {
             return response()->json([
                 'message' => 'Selected time is outside shop opening hours. Please choose between 9:00 AM and 6:00 PM.',
             ], 422);
@@ -185,7 +194,7 @@ class ServiceRequestController extends Controller
         }
 
         // Add room data for hotel/boarding bookings
-        if ($validated['request_type'] === 'hotel' || $validated['request_type'] === 'boarding') {
+        if ($isHotel) {
             if (!empty($validated['boarding_room_id'])) {
                 // Get room details from boarding_rooms table
                 $room = \App\Models\BoardingRoom::find($validated['boarding_room_id']);
@@ -194,14 +203,18 @@ class ServiceRequestController extends Controller
                     $createData['room_name'] = $room->room_name;
                     $createData['room_type'] = $room->room_type;
                     $createData['daily_rate'] = $room->daily_rate;
-                    
-                    // Calculate total days and amount
-                    $checkIn = Carbon::parse($validated['check_in_date']);
-                    $checkOut = Carbon::parse($validated['check_out_date']);
-                    $totalDays = $checkIn->diffInDays($checkOut);
-                    $createData['total_days'] = $totalDays;
-                    $createData['total_amount'] = $room->daily_rate * $totalDays;
                 }
+            }
+
+            // Use provided check_out_date or calculate from request
+            if (!empty($validated['check_out_date'])) {
+                $createData['check_out_date'] = $validated['check_out_date'];
+            }
+            if (!empty($validated['total_days'])) {
+                $createData['total_days'] = $validated['total_days'];
+            }
+            if (!empty($validated['total_amount'])) {
+                $createData['total_amount'] = $validated['total_amount'];
             }
         }
 
@@ -353,6 +366,7 @@ class ServiceRequestController extends Controller
             'status' => 'required|in:pending,approved,rejected,rescheduled',
         ]);
 
+        /** @var ServiceRequest|null $serviceRequest */
         $serviceRequest = ServiceRequest::find($id);
 
         if (!$serviceRequest) {
@@ -432,7 +446,7 @@ class ServiceRequestController extends Controller
             $serviceRequest->id
         );
 
-        ActivityLog::log(auth()->id(), 'service_request_' . $validated['status'], "Service request #{$serviceRequest->id} set to {$validated['status']}", [
+        ActivityLog::log(Auth::id() ?? 0, 'service_request_' . $validated['status'], "Service request #{$serviceRequest->id} set to {$validated['status']}", [
             'category' => 'service_requests',
             'reference_type' => 'service_request',
             'reference_id' => $serviceRequest->id,
@@ -587,7 +601,7 @@ class ServiceRequestController extends Controller
                 ]);
             }
         } catch (\Throwable $e) {
-            \Log::warning('notifyRole failed: ' . $e->getMessage());
+            Log::warning('notifyRole failed: ' . $e->getMessage());
         }
     }
 

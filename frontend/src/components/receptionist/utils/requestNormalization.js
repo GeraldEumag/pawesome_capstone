@@ -127,6 +127,8 @@ export const normalizeAppointment = (item) => {
     id: item.id,
     rawId: item.id,
     type: "vet",
+    source: "appointment",
+    serviceRequestId: item.service_request_id || item.serviceRequestId || null,
     petName: getPetName(item),
     petType: item.pet?.species || item.pet?.type || item.pet_type || "Pet",
     breed: item.pet?.breed || item.breed || "",
@@ -154,6 +156,8 @@ export const normalizeBoarding = (item) => {
     id: item.id,
     rawId: item.id,
     type: "hotel",
+    source: "boarding",
+    serviceRequestId: item.service_request_id || item.serviceRequestId || null,
     petName: getPetName(item),
     petType: item.pet?.species || item.pet?.type || item.pet_type || "Pet",
     breed: item.pet?.breed || item.breed || "",
@@ -188,6 +192,8 @@ export const normalizeGrooming = (item) => {
     id: item.id,
     rawId: item.id,
     type: "grooming",
+    source: "grooming",
+    serviceRequestId: item.service_request_id || item.serviceRequestId || null,
     petName: getPetName(item),
     petType: item.pet?.species || item.pet?.type || item.pet_type || "Pet",
     breed: item.pet?.breed || item.breed || "",
@@ -223,6 +229,8 @@ export const normalizeGenericRequest = (item, index) => {
     id: rawId,
     rawId,
     type,
+    source: "service_request",
+    serviceRequestId: item.id || item.service_request_id || null,
     petName: getPetName(item),
     petType: item.pet?.species || item.pet?.type || item.pet_type || "Pet",
     breed: item.pet?.breed || item.breed || "",
@@ -250,28 +258,32 @@ export const normalizeGenericRequest = (item, index) => {
 export const mergeRequests = (genericRequests = [], appointments = [], boardings = [], groomings = []) => {
   const map = new Map();
 
+  // Helper to build a deduplication key
+  const makeKey = (item) => {
+    if (item.serviceRequestId) {
+      return `sr-${item.serviceRequestId}`;
+    }
+    return `${item.type}-${item.rawId}`;
+  };
+
   // Add generic requests first (lowest priority)
   genericRequests.forEach((item) => {
-    const key = `${item.type}-${item.rawId}`;
-    map.set(key, item);
+    map.set(makeKey(item), item);
   });
 
-  // Overwrite with detailed appointments
+  // Overwrite with detailed appointments (higher priority)
   appointments.forEach((item) => {
-    const key = `${item.type}-${item.rawId}`;
-    map.set(key, item);
+    map.set(makeKey(item), item);
   });
 
-  // Overwrite with detailed boardings
+  // Overwrite with detailed boardings (higher priority)
   boardings.forEach((item) => {
-    const key = `${item.type}-${item.rawId}`;
-    map.set(key, item);
+    map.set(makeKey(item), item);
   });
 
-  // Overwrite with detailed groomings
+  // Overwrite with detailed groomings (higher priority)
   groomings.forEach((item) => {
-    const key = `${item.type}-${item.rawId}`;
-    map.set(key, item);
+    map.set(makeKey(item), item);
   });
 
   return Array.from(map.values()).sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));

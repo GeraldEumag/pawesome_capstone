@@ -29,6 +29,7 @@ class Grooming extends Model
         'receipt_number',
         'completed_at',
         'status',
+        'service_request_id',
     ];
 
     protected $casts = [

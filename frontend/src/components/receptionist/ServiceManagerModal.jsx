@@ -165,6 +165,7 @@ const ServiceManagerModal = ({ onClose }) => {
     fetchItems();
     setEditingId(null);
     setFormData({});
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeTab]);
 
   const startCreate = () => {

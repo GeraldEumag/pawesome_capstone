@@ -276,14 +276,14 @@ const IconBtn = styled.button`
   padding: 0 12px;
   border-radius: 8px;
   border: 1px solid #E5E7EB;
-  background: #fff;
+  background: var(--color-surface-solid, #fff);
   color: #374151;
   font-size: 12px;
   font-weight: 600;
   cursor: pointer;
   transition: all 0.15s;
   white-space: nowrap;
-  &:hover { background: #F9FAFB; border-color: #D1D5DB; }
+  &:hover { background: var(--color-surface-muted, #F9FAFB); border-color: #D1D5DB; }
   &:disabled { opacity: 0.45; cursor: not-allowed; }
   ${({ $danger }) => $danger && css`
     border-color: #FCA5A5;
@@ -518,7 +518,7 @@ const PhotoModalOverlay = styled.div`
 
 const PhotoModalBox = styled.div`
   position: relative;
-  background: #fff;
+  background: var(--color-modal-bg, #fff);
   border-radius: 16px;
   padding: 16px;
   max-width: 640px;
@@ -772,7 +772,7 @@ const MetaBtn = styled.button`
   height: 32px;
   border-radius: 8px;
   border: 1.5px solid ${({ $active }) => $active ? "#E91E63" : "#E5E7EB"};
-  background: ${({ $active }) => $active ? "#FFF0F4" : "#fff"};
+  background: ${({ $active }) => $active ? "#FFF0F4" : "var(--color-surface-solid, #fff)"};
   color: ${({ $active }) => $active ? "#E91E63" : "#6B7280"};
   font-size: 12px;
   font-weight: 600;
@@ -893,7 +893,7 @@ const QtyBtn = styled.button`
   height: 24px;
   border-radius: 6px;
   border: 1px solid #E5E7EB;
-  background: #fff;
+  background: var(--color-surface-solid, #fff);
   color: #374151;
   font-size: 11px;
   display: flex;
@@ -915,7 +915,7 @@ const QtyInput = styled.input`
   font-weight: 700;
   color: #111827;
   outline: none;
-  background: #fff;
+  background: var(--color-input-bg, #fff);
   &:focus { border-color: #E91E63; }
   -moz-appearance: textfield;
   &::-webkit-inner-spin-button, &::-webkit-outer-spin-button { -webkit-appearance: none; }
@@ -951,7 +951,7 @@ const VoucherRow = styled.div`
 
 const VoucherInput = styled(FieldInput)`
   font-size: 12px;
-  background: #fff;
+  background: var(--color-input-bg, #fff);
 `;
 
 const VoucherBtn = styled.button`
@@ -959,7 +959,7 @@ const VoucherBtn = styled.button`
   padding: 0 12px;
   border-radius: 8px;
   border: 1.5px solid #E91E63;
-  background: #fff;
+  background: var(--color-surface-solid, #fff);
   color: #E91E63;
   font-size: 12px;
   font-weight: 700;
@@ -1047,7 +1047,7 @@ const PayMethodBtn = styled.button`
   padding: 8px 4px;
   border-radius: 8px;
   border: 1.5px solid ${({ $active, $color }) => $active ? $color : "#E5E7EB"};
-  background: ${({ $active, $color }) => $active ? `${$color}14` : "#fff"};
+  background: ${({ $active, $color }) => $active ? `${$color}14` : "var(--color-surface-solid, #fff)"};
   color: ${({ $active, $color }) => $active ? $color : "#6B7280"};
   font-size: 10px;
   font-weight: 600;
@@ -1156,7 +1156,7 @@ const SecBtn = styled.button`
   height: 36px;
   border-radius: 8px;
   border: 1.5px solid ${({ $color }) => $color || "#E5E7EB"};
-  background: #fff;
+  background: var(--color-surface-solid, #fff);
   color: ${({ $color }) => $color || "#374151"};
   font-size: 12px;
   font-weight: 600;
@@ -1166,7 +1166,7 @@ const SecBtn = styled.button`
   justify-content: center;
   gap: 6px;
   transition: all 0.12s;
-  &:hover { background: ${({ $bg }) => $bg || "#F9FAFB"}; }
+  &:hover { background: ${({ $bg }) => $bg || "var(--color-surface-muted, #F9FAFB)"}; }
   &:disabled { opacity: 0.35; cursor: not-allowed; }
 `;
 
@@ -1184,7 +1184,7 @@ const Overlay = styled.div`
 `;
 
 const Modal = styled.div`
-  background: #fff;
+  background: var(--color-modal-bg, #fff);
   border-radius: 16px;
   width: 100%;
   max-width: ${({ $width }) => $width || "480px"};
@@ -1335,7 +1335,7 @@ const HelpOverlay = styled.div`
 `;
 
 const HelpModal = styled.div`
-  background: #fff;
+  background: var(--color-modal-bg, #fff);
   border-radius: 16px;
   padding: 28px 32px;
   max-width: 420px;
@@ -1386,7 +1386,7 @@ const NavMenuDropdown = styled.div`
   right: 0;
   margin-top: 8px;
   width: 220px;
-  background: #fff;
+  background: var(--color-dropdown-bg, #fff);
   border: 1px solid #E5E7EB;
   border-radius: 12px;
   box-shadow: 0 10px 40px rgba(0,0,0,0.15);

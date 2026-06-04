@@ -4,6 +4,8 @@ namespace App\Http\Controllers;
 
 use App\Models\ServiceRequest;
 use App\Models\Appointment;
+use App\Models\Boarding;
+use App\Models\Grooming;
 use App\Models\Customer;
 use App\Models\Pet;
 use App\Models\Service;
@@ -12,6 +14,7 @@ use App\Models\ActivityLog;
 use App\Services\WorkflowNotifier;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Schema;
 
 class ReceptionistRequestController extends Controller
@@ -21,6 +24,20 @@ class ReceptionistRequestController extends Controller
         return strtolower((string) $serviceRequest->request_type) === 'vet'
             || str_contains(strtolower((string) $serviceRequest->service_name), 'vet')
             || str_contains(strtolower((string) $serviceRequest->service_name), 'consult');
+    }
+
+    private function requestIsGrooming(ServiceRequest $serviceRequest): bool
+    {
+        return strtolower((string) $serviceRequest->request_type) === 'grooming'
+            || str_contains(strtolower((string) $serviceRequest->service_name), 'groom');
+    }
+
+    private function requestIsHotel(ServiceRequest $serviceRequest): bool
+    {
+        return strtolower((string) $serviceRequest->request_type) === 'hotel'
+            || strtolower((string) $serviceRequest->request_type) === 'boarding'
+            || str_contains(strtolower((string) $serviceRequest->service_name), 'hotel')
+            || str_contains(strtolower((string) $serviceRequest->service_name), 'boarding');
     }
 
     private function resolveCustomer(ServiceRequest $serviceRequest): ?Customer
@@ -145,7 +162,7 @@ class ReceptionistRequestController extends Controller
         );
     }
 
-    private function formatRequest(ServiceRequest $item): array
+    private function formatRequest(object $item): array
     {
         return [
             'id' => $item->id,
@@ -300,32 +317,43 @@ class ReceptionistRequestController extends Controller
     public function updateStatus(Request $request, $id)
     {
         $validated = $request->validate([
-            'status' => 'required|in:pending,approved,rejected',
+            'status' => 'required|in:pending,approved,rejected,cancelled,completed,in_progress,checked_in',
         ]);
 
+        /** @var ServiceRequest $serviceRequest */
         $serviceRequest = ServiceRequest::findOrFail($id);
         $serviceRequest->status = $validated['status'];
 
-        if ($validated['status'] === 'approved') {
-            $serviceRequest->payment_status = 'unpaid';
-        }
-
-        if ($validated['status'] === 'rejected') {
+        if (in_array($validated['status'], ['approved', 'rejected', 'cancelled'])) {
             $serviceRequest->payment_status = 'unpaid';
         }
 
         $serviceRequest->save();
 
+        // Propagate status change to linked dedicated records
+        $newStatus = $validated['status'];
+        if (in_array($newStatus, ['rejected', 'cancelled'])) {
+            if (Schema::hasColumn('appointments', 'service_request_id')) {
+                Appointment::where('service_request_id', $serviceRequest->id)->update(['status' => $newStatus]);
+            }
+            if (Schema::hasColumn('groomings', 'service_request_id')) {
+                Grooming::where('service_request_id', $serviceRequest->id)->update(['status' => $newStatus, 'payment_status' => 'unpaid']);
+            }
+            if (Schema::hasColumn('boardings', 'service_request_id')) {
+                Boarding::where('service_request_id', $serviceRequest->id)->update(['status' => $newStatus, 'payment_status' => 'unpaid']);
+            }
+        }
+
         WorkflowNotifier::notifyEmail(
             $serviceRequest->customer_email,
             'Service Request Updated',
             "Your {$serviceRequest->service_name} request is now {$validated['status']}.",
-            $validated['status'] === 'rejected' ? 'error' : 'success',
+            in_array($validated['status'], ['rejected', 'cancelled']) ? 'error' : 'success',
             'service_request',
             $serviceRequest->id
         );
 
-        ActivityLog::log(auth()->id(), 'service_request_' . $validated['status'], "Service request #{$serviceRequest->id} set to {$validated['status']}", [
+        ActivityLog::log(Auth::id() ?? 0, 'service_request_' . $validated['status'], "Service request #{$serviceRequest->id} set to {$validated['status']}", [
             'category' => 'service_requests',
             'reference_type' => 'service_request',
             'reference_id' => $serviceRequest->id,
@@ -347,19 +375,34 @@ class ReceptionistRequestController extends Controller
 
         $serviceRequest = ServiceRequest::findOrFail($id);
         $appointment = null;
+        $grooming = null;
+        $boarding = null;
 
+        $customer = $this->resolveCustomer($serviceRequest);
+        $pet = $this->resolvePet($serviceRequest, $customer);
+
+        if (!$customer && $pet) {
+            $customer = $pet->customer;
+        }
+
+        if ($customer) {
+            if (!$serviceRequest->customer_email) {
+                $serviceRequest->customer_email = $customer->email;
+            }
+            if (!$serviceRequest->customer_name) {
+                $serviceRequest->customer_name = $customer->name;
+            }
+        }
+        if ($pet && !$serviceRequest->pet_id) {
+            $serviceRequest->pet_id = $pet->id;
+        }
+
+        // --- Vet requests: create/update Appointment ---
         if ($this->requestIsVet($serviceRequest)) {
             $vet = User::find($validated['veterinarian_id'] ?? null);
 
             if (!$vet || !in_array($vet->role, ['veterinary', 'vet', 'veterinarian'], true)) {
                 return response()->json(['message' => 'Choose a valid veterinarian before approving this vet request.'], 422);
-            }
-
-            $customer = $this->resolveCustomer($serviceRequest);
-            $pet = $this->resolvePet($serviceRequest, $customer);
-
-            if (!$customer && $pet) {
-                $customer = $pet->customer;
             }
 
             $service = $this->resolveService($serviceRequest);
@@ -372,18 +415,6 @@ class ReceptionistRequestController extends Controller
 
             if ((int) $pet->customer_id !== (int) $customer->id) {
                 return response()->json(['message' => 'The selected pet does not belong to this customer.'], 422);
-            }
-
-            if (!$serviceRequest->pet_id) {
-                $serviceRequest->pet_id = $pet->id;
-            }
-
-            if (!$serviceRequest->customer_email) {
-                $serviceRequest->customer_email = $customer->email;
-            }
-
-            if (!$serviceRequest->customer_name) {
-                $serviceRequest->customer_name = $customer->name;
             }
 
             $scheduledAt = $serviceRequest->request_date
@@ -402,6 +433,7 @@ class ReceptionistRequestController extends Controller
                     'status' => 'approved',
                     'notes' => $serviceRequest->notes,
                     'price' => $service->price ?? 0,
+                    'service_request_id' => $serviceRequest->id,
                 ]
             );
 
@@ -411,7 +443,82 @@ class ReceptionistRequestController extends Controller
                     'status' => 'approved',
                     'notes' => $serviceRequest->notes,
                     'price' => $service->price ?? $appointment->price,
+                    'service_request_id' => $serviceRequest->id,
                 ]);
+            }
+        }
+
+        // --- Grooming requests: create/update Grooming record ---
+        if ($this->requestIsGrooming($serviceRequest)) {
+            if ($customer && $pet) {
+                $service = $this->resolveService($serviceRequest);
+                $price = $service ? ($service->price ?? 0) : 0;
+
+                $grooming = Grooming::firstOrCreate(
+                    ['service_request_id' => $serviceRequest->id],
+                    [
+                        'customer_id' => $customer->id,
+                        'pet_id' => $pet->id,
+                        'service' => $serviceRequest->service_name ?? 'Grooming',
+                        'appointment_date' => $serviceRequest->request_date,
+                        'appointment_time' => $serviceRequest->request_time,
+                        'notes' => $serviceRequest->notes,
+                        'amount' => $price,
+                        'base_amount' => $price,
+                        'total_amount' => $price,
+                        'balance_due' => $price,
+                        'status' => 'approved',
+                        'payment_status' => 'unpaid',
+                    ]
+                );
+
+                if (!$grooming->wasRecentlyCreated) {
+                    $grooming->update([
+                        'status' => 'approved',
+                        'payment_status' => 'unpaid',
+                    ]);
+                }
+            }
+        }
+
+        // --- Hotel requests: create/update Boarding record ---
+        if ($this->requestIsHotel($serviceRequest)) {
+            if ($customer && $pet) {
+                $checkIn = $serviceRequest->request_date;
+                $checkOut = $serviceRequest->check_out_date;
+                if (!$checkOut && $checkIn) {
+                    $checkOut = Carbon::parse($checkIn)->addDay()->toDateString();
+                }
+
+                $boarding = Boarding::firstOrCreate(
+                    ['service_request_id' => $serviceRequest->id],
+                    [
+                        'pet_id' => $pet->id,
+                        'pet_name' => $pet->name ?? $serviceRequest->pet_name,
+                        'pet_type' => $pet->species ?? $pet->type ?? $serviceRequest->pet_type,
+                        'customer_id' => $customer->id,
+                        'customer_name' => $customer->name ?? $serviceRequest->customer_name,
+                        'customer_email' => $customer->email ?? $serviceRequest->customer_email,
+                        'check_in' => $checkIn,
+                        'check_out' => $checkOut,
+                        'room_name' => $serviceRequest->room_name,
+                        'room_type' => $serviceRequest->room_type,
+                        'rate_per_day' => $serviceRequest->daily_rate,
+                        'number_of_days' => $serviceRequest->total_days ?? 1,
+                        'total_amount' => $serviceRequest->total_amount ?? 0,
+                        'status' => 'approved',
+                        'payment_status' => 'unpaid',
+                        'notes' => $serviceRequest->notes,
+                        'stay_type' => 'hotel_boarding',
+                    ]
+                );
+
+                if (!$boarding->wasRecentlyCreated) {
+                    $boarding->update([
+                        'status' => 'approved',
+                        'payment_status' => 'unpaid',
+                    ]);
+                }
             }
         }
 
@@ -437,6 +544,8 @@ class ReceptionistRequestController extends Controller
             'message' => 'Request approved successfully.',
             'request' => $this->formatRequest($serviceRequest),
             'appointment' => $appointment?->load(['customer', 'pet', 'service', 'veterinarian']),
+            'grooming' => $grooming?->load(['customer', 'pet']),
+            'boarding' => $boarding?->load(['pet', 'customer']),
         ]);
     }
 
@@ -456,6 +565,18 @@ class ReceptionistRequestController extends Controller
             'rejection_reason' => $validated['rejection_reason'],
             'receptionist_remarks' => $validated['receptionist_remarks'] ?? $validated['rejection_reason'],
         ]);
+
+        // Propagate rejection to linked dedicated records
+        $linkedStatus = 'rejected';
+        if (Schema::hasColumn('appointments', 'service_request_id')) {
+            Appointment::where('service_request_id', $serviceRequest->id)->update(['status' => $linkedStatus]);
+        }
+        if (Schema::hasColumn('groomings', 'service_request_id')) {
+            Grooming::where('service_request_id', $serviceRequest->id)->update(['status' => $linkedStatus, 'payment_status' => 'unpaid']);
+        }
+        if (Schema::hasColumn('boardings', 'service_request_id')) {
+            Boarding::where('service_request_id', $serviceRequest->id)->update(['status' => $linkedStatus, 'payment_status' => 'unpaid']);
+        }
 
         WorkflowNotifier::notifyEmail(
             $serviceRequest->customer_email,
