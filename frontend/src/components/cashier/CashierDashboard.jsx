@@ -924,11 +924,25 @@ Thank you for choosing Pawesome!
     </>
   );
 
+  const ROUTE_META = [
+    { path: "/cashier", title: "Cashier Dashboard", subtitle: `${greeting}, ${name}. Process transactions and manage cashier sales.` },
+    { path: "/cashier/dashboard", title: "Cashier Dashboard", subtitle: `${greeting}, ${name}. Process transactions and manage cashier sales.` },
+    { path: "/cashier/dashboard/pos", title: "Point of Sale", subtitle: "Scan products, apply discounts, and process customer payments." },
+    { path: "/cashier/dashboard/sales", title: "Sales & Transactions", subtitle: "Review completed sales, refunds, and payment methods." },
+    { path: "/cashier/dashboard/transactions", title: "Sales & Transactions", subtitle: "Review completed sales, refunds, and payment methods." },
+    { path: "/cashier/dashboard/history", title: "Sales History", subtitle: "Browse past transactions and generate receipts." },
+    { path: "/cashier/dashboard/analytics", title: "Sales Analytics", subtitle: "Visualize revenue trends, peak hours, and product performance." },
+    { path: "/cashier/dashboard/reports", title: "Sales Analytics", subtitle: "Visualize revenue trends, peak hours, and product performance." },
+    { path: "/cashier/dashboard/profile", title: "Profile Settings", subtitle: "Manage your account details and preferences." },
+  ];
+
+  const pageMeta = ROUTE_META.find((r) => r.path === normalizedPath) || ROUTE_META[0];
+
   return (
     <DashboardLayout
       sidebar={<CashierSidebar />}
-      title="Point of Sale"
-      subtitle={`${greeting}, ${name}. Process transactions and manage cashier sales.`}
+      title={pageMeta.title}
+      subtitle={pageMeta.subtitle}
       role="cashier"
       name={name}
       profilePhoto={profilePhoto}

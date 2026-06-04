@@ -2,17 +2,6 @@ import React from "react";
 import { NavLink, useNavigate } from "react-router-dom";
 import { showConfirm } from "../../utils/alert";
 import { apiRequest, clearAuthStorage } from "../../api/client";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import {
-  faPhone,
-  faSignOutAlt,
-  faUser,
-  faChartBar,
-  faRobot,
-  faHistory,
-  faTimes,
-  faStethoscope,
-} from "@fortawesome/free-solid-svg-icons";
 import "./ReceptionistSidebar.css";
 
 const ReceptionistSidebar = ({ mobileOpen, onMobileMenuToggle }) => {
@@ -26,87 +15,61 @@ const ReceptionistSidebar = ({ mobileOpen, onMobileMenuToggle }) => {
     navigate("/");
   };
 
+  const handleNavClick = () => {
+    if (window.innerWidth <= 768 && onMobileMenuToggle) {
+      onMobileMenuToggle();
+    }
+  };
+
   return (
     <aside className={`app-sidebar receptionist-sidebar ${mobileOpen ? "mobile-open" : ""}`}>
       <div className="sidebar-header">
         <div className="sidebar-logo">
-          <FontAwesomeIcon icon={faPhone} />
           <span>Reception Portal</span>
         </div>
         <button className="mobile-close-btn" onClick={onMobileMenuToggle} type="button" aria-label="Close menu">
-          <FontAwesomeIcon icon={faTimes} />
+          &times;
         </button>
       </div>
 
       <nav className="sidebar-nav">
         <ul className="nav-list">
           <li className="nav-item">
-            <NavLink
-              to="/receptionist/appointments-boarding"
-              end
-              className={({ isActive }) => (isActive ? "active" : "")}
-            >
-              <FontAwesomeIcon icon={faStethoscope} />
-              <span>Appointments &amp; Boarding</span>
+            <NavLink to="/receptionist/appointments-boarding" end onClick={handleNavClick}>
+              Appointments & Boarding
             </NavLink>
           </li>
           <li className="nav-item">
-            <NavLink
-              to="/receptionist/customer-profile"
-              end
-              className={({ isActive }) => (isActive ? "active" : "")}
-            >
-              <FontAwesomeIcon icon={faUser} />
-              <span>Customer Profile</span>
+            <NavLink to="/receptionist/customer-profile" onClick={handleNavClick}>
+              Customer Profile
             </NavLink>
           </li>
           <li className="nav-item">
-            <NavLink
-              to="/receptionist/chatbot"
-              end
-              className={({ isActive }) => (isActive ? "active" : "")}
-            >
-              <FontAwesomeIcon icon={faRobot} />
-              <span>Chatbot</span>
+            <NavLink to="/receptionist/chatbot" onClick={handleNavClick}>
+              Chatbot
             </NavLink>
           </li>
           <li className="nav-item">
-            <NavLink
-              to="/receptionist/profile"
-              end
-              className={({ isActive }) => (isActive ? "active" : "")}
-            >
-              <FontAwesomeIcon icon={faUser} />
-              <span>Profile</span>
+            <NavLink to="/receptionist/profile" onClick={handleNavClick}>
+              Profile
             </NavLink>
           </li>
           <li className="nav-item">
-            <NavLink
-              to="/receptionist/history"
-              end
-              className={({ isActive }) => (isActive ? "active" : "")}
-            >
-              <FontAwesomeIcon icon={faHistory} />
-              <span>History</span>
+            <NavLink to="/receptionist/history" onClick={handleNavClick}>
+              History
             </NavLink>
           </li>
           <li className="nav-item">
-            <NavLink
-              to="/receptionist/reports"
-              end
-              className={({ isActive }) => (isActive ? "active" : "")}
-            >
-              <FontAwesomeIcon icon={faChartBar} />
-              <span>Reports</span>
+            <NavLink to="/receptionist/reports" onClick={handleNavClick}>
+              Reports
             </NavLink>
           </li>
         </ul>
       </nav>
 
       <div className="sidebar-footer">
-        <button className="logout-btn" onClick={handleLogout} title="Logout">
-          <FontAwesomeIcon icon={faSignOutAlt} />
-          <span>Logout</span>
+        <button className="logout-btn" onClick={handleLogout}>
+          Logout
         </button>
       </div>
     </aside>

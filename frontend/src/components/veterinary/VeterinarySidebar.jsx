@@ -2,27 +2,9 @@ import React from "react";
 import { NavLink } from "react-router-dom";
 import { showConfirm } from "../../utils/alert";
 import { apiRequest, clearAuthStorage } from "../../api/client";
-import { useTheme } from "../../utils/theme";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import {
-  faHome,
-  faCalendarAlt,
-  faUsers,
-  faHistory,
-  faChartBar,
-  faUserMd,
-  faSignOutAlt,
-  faBars,
-  faTimes,
-  faUser,
-  faHotel,
-  faStethoscope,
-} from "@fortawesome/free-solid-svg-icons";
-import "./theme.css";
 import "./VeterinarySidebar.css";
 
-const VeterinarySidebar = ({ collapsed, onToggleCollapse, mobileOpen, onMobileMenuToggle }) => {
-  useTheme();
+const VeterinarySidebar = ({ mobileOpen, onMobileMenuToggle }) => {
   const handleLogout = async () => {
     const confirmed = await showConfirm("Are you sure you want to log out?", "", "Yes", "Cancel", "question", true);
     if (!confirmed) return;
@@ -31,120 +13,71 @@ const VeterinarySidebar = ({ collapsed, onToggleCollapse, mobileOpen, onMobileMe
     window.location.href = "/login";
   };
 
+  const handleNavClick = () => {
+    if (window.innerWidth <= 768 && onMobileMenuToggle) {
+      onMobileMenuToggle();
+    }
+  };
+
   return (
-    <aside className={`app-sidebar veterinary-sidebar ${collapsed ? "collapsed" : ""} ${mobileOpen ? "mobile-open" : ""}`}>
+    <aside className={`app-sidebar veterinary-sidebar ${mobileOpen ? "mobile-open" : ""}`}>
       <div className="sidebar-header">
-        <button className="collapse-btn" onClick={onToggleCollapse}>
-          <FontAwesomeIcon icon={faBars} />
-        </button>
-        {!collapsed && (
-          <div className="sidebar-logo">
-            <FontAwesomeIcon icon={faUserMd} />
-            <span>Vet Portal</span>
-          </div>
-        )}
+        <div className="sidebar-logo">
+          <span>Vet Portal</span>
+        </div>
         <button className="mobile-close-btn" onClick={onMobileMenuToggle} type="button" aria-label="Close menu">
-          <FontAwesomeIcon icon={faTimes} />
+          &times;
         </button>
       </div>
 
       <nav className="sidebar-nav">
         <ul className="nav-list">
           <li className="nav-item">
-            <NavLink
-              to="/veterinary"
-              className={({ isActive }) => (isActive ? "active" : "")}
-              end
-              title="Dashboard"
-            >
-              <FontAwesomeIcon icon={faHome} />
-              {!collapsed && <span>Dashboard</span>}
+            <NavLink to="/veterinary" end onClick={handleNavClick}>
+              Dashboard
             </NavLink>
           </li>
-          
           <li className="nav-item">
-            <NavLink
-              to="/veterinary/appointments"
-              className={({ isActive }) => (isActive ? "active" : "")}
-              title="Appointments"
-            >
-              <FontAwesomeIcon icon={faCalendarAlt} />
-              {!collapsed && <span>Appointments</span>}
+            <NavLink to="/veterinary/appointments" onClick={handleNavClick}>
+              Appointments
             </NavLink>
           </li>
-          
           <li className="nav-item">
-            <NavLink
-              to="/veterinary/customer-profiles"
-              className={({ isActive }) => (isActive ? "active" : "")}
-              title="Customer Profiles"
-            >
-              <FontAwesomeIcon icon={faUsers} />
-              {!collapsed && <span>Customer Profiles</span>}
+            <NavLink to="/veterinary/customer-profiles" onClick={handleNavClick}>
+              Customer Profiles
             </NavLink>
           </li>
-          
           <li className="nav-item">
-            <NavLink
-              to="/veterinary/current-boarders"
-              className={({ isActive }) => (isActive ? "active" : "")}
-              title="Current Boarders"
-            >
-              <FontAwesomeIcon icon={faHotel} />
-              {!collapsed && <span>Current Boarders</span>}
+            <NavLink to="/veterinary/current-boarders" onClick={handleNavClick}>
+              Current Boarders
             </NavLink>
           </li>
-          
           <li className="nav-item">
-            <NavLink
-              to="/veterinary/services"
-              className={({ isActive }) => (isActive ? "active" : "")}
-              title="Services"
-            >
-              <FontAwesomeIcon icon={faStethoscope} />
-              {!collapsed && <span>Services</span>}
+            <NavLink to="/veterinary/services" onClick={handleNavClick}>
+              Services
             </NavLink>
           </li>
-          
           <li className="nav-item">
-            <NavLink
-              to="/veterinary/history"
-              className={({ isActive }) => (isActive ? "active" : "")}
-              title="History"
-            >
-              <FontAwesomeIcon icon={faHistory} />
-              {!collapsed && <span>History</span>}
+            <NavLink to="/veterinary/history" onClick={handleNavClick}>
+              History
             </NavLink>
           </li>
-          
           <li className="nav-item">
-            <NavLink
-              to="/veterinary/reports"
-              className={({ isActive }) => (isActive ? "active" : "")}
-              title="Reports"
-            >
-              <FontAwesomeIcon icon={faChartBar} />
-              {!collapsed && <span>Reports</span>}
+            <NavLink to="/veterinary/reports" onClick={handleNavClick}>
+              Reports
             </NavLink>
           </li>
-
           <li className="nav-item">
-            <NavLink
-              to="/veterinary/profile"
-              className={({ isActive }) => (isActive ? "active" : "")}
-              title="Profile"
-            >
-              <FontAwesomeIcon icon={faUser} />
-              {!collapsed && <span>Profile</span>}
+            <NavLink to="/veterinary/profile" onClick={handleNavClick}>
+              Profile
             </NavLink>
           </li>
         </ul>
       </nav>
 
       <div className="sidebar-footer">
-        <button className="logout-btn" onClick={handleLogout} title="Logout">
-          <FontAwesomeIcon icon={faSignOutAlt} />
-          {!collapsed && <span>Logout</span>}
+        <button className="logout-btn" onClick={handleLogout}>
+          Logout
         </button>
       </div>
     </aside>

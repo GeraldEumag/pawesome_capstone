@@ -2,22 +2,6 @@ import React from "react";
 import { NavLink, useNavigate } from "react-router-dom";
 import { showConfirm } from "../../utils/alert";
 import { apiRequest, clearAuthStorage } from "../../api/client";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import {
-  faHome,
-  faChartLine,
-  faUsers,
-  faClipboardList,
-  faMoneyBillWave,
-  faFileAlt,
-  faUserCircle,
-  faSignOutAlt,
-  faHistory,
-  faTimes,
-  faCalendarCheck,
-  faTableCells,
-  faFingerprint,
-} from "@fortawesome/free-solid-svg-icons";
 import "./ManagerSidebar.css";
 
 const ManagerSidebar = ({ mobileOpen, onMobileMenuToggle }) => {
@@ -31,86 +15,73 @@ const ManagerSidebar = ({ mobileOpen, onMobileMenuToggle }) => {
     navigate("/");
   };
 
+  const handleNavClick = () => {
+    if (window.innerWidth <= 768 && onMobileMenuToggle) {
+      onMobileMenuToggle();
+    }
+  };
+
   return (
     <aside className={`app-sidebar manager-sidebar ${mobileOpen ? "mobile-open" : ""}`}>
       <div className="sidebar-header">
         <div className="sidebar-logo">
-          <FontAwesomeIcon icon={faChartLine} />
           <span>Manager Portal</span>
         </div>
         <button className="mobile-close-btn" onClick={onMobileMenuToggle} type="button" aria-label="Close menu">
-          <FontAwesomeIcon icon={faTimes} />
+          &times;
         </button>
       </div>
 
       <nav className="sidebar-nav">
         <ul className="nav-list">
           <li className="nav-item">
-            <NavLink to="/manager" end>
-              <FontAwesomeIcon icon={faHome} />
-              <span>Dashboard</span>
-            </NavLink>
-          </li>
-
-          <li className="nav-item">
-            <NavLink to="/manager/staff">
-              <FontAwesomeIcon icon={faUsers} />
-              <span>Staff</span>
-            </NavLink>
-          </li>
-
-          <li className="nav-item">
-            <NavLink to="/manager/attendance">
-              <FontAwesomeIcon icon={faClipboardList} />
-              <span>Attendance</span>
-            </NavLink>
-          </li>
-
-          <li className="nav-item">
-            <NavLink to="/manager/kiosk">
-              <FontAwesomeIcon icon={faFingerprint} />
-              <span>Fingerprint Kiosk</span>
-            </NavLink>
-          </li>
-
-          <li className="nav-item">
-            <NavLink to="/manager/leaves">
-              <FontAwesomeIcon icon={faCalendarCheck} />
-              <span>Leave</span>
-            </NavLink>
-          </li>
-
-          <li className="nav-item">
-            <NavLink to="/manager/schedule">
-              <FontAwesomeIcon icon={faTableCells} />
-              <span>Schedule</span>
-            </NavLink>
-          </li>
-
-          <li className="nav-item">
-            <NavLink to="/manager/payroll">
-              <FontAwesomeIcon icon={faMoneyBillWave} />
-              <span>Payroll</span>
-            </NavLink>
-          </li>
-
-          <li className="nav-item">
-            <NavLink to="/manager/history">
-              <FontAwesomeIcon icon={faHistory} />
-              <span>History</span>
+            <NavLink to="/manager" end onClick={handleNavClick}>
+              Dashboard
             </NavLink>
           </li>
           <li className="nav-item">
-            <NavLink to="/manager/reports">
-              <FontAwesomeIcon icon={faFileAlt} />
-              <span>Reports</span>
+            <NavLink to="/manager/staff" onClick={handleNavClick}>
+              Staff
             </NavLink>
           </li>
-
           <li className="nav-item">
-            <NavLink to="/manager/profile">
-              <FontAwesomeIcon icon={faUserCircle} />
-              <span>Profile</span>
+            <NavLink to="/manager/attendance" onClick={handleNavClick}>
+              Attendance
+            </NavLink>
+          </li>
+          <li className="nav-item">
+            <NavLink to="/manager/kiosk" onClick={handleNavClick}>
+              Fingerprint Kiosk
+            </NavLink>
+          </li>
+          <li className="nav-item">
+            <NavLink to="/manager/leaves" onClick={handleNavClick}>
+              Leave
+            </NavLink>
+          </li>
+          <li className="nav-item">
+            <NavLink to="/manager/schedule" onClick={handleNavClick}>
+              Schedule
+            </NavLink>
+          </li>
+          <li className="nav-item">
+            <NavLink to="/manager/payroll" onClick={handleNavClick}>
+              Payroll
+            </NavLink>
+          </li>
+          <li className="nav-item">
+            <NavLink to="/manager/history" onClick={handleNavClick}>
+              History
+            </NavLink>
+          </li>
+          <li className="nav-item">
+            <NavLink to="/manager/reports" onClick={handleNavClick}>
+              Reports
+            </NavLink>
+          </li>
+          <li className="nav-item">
+            <NavLink to="/manager/profile" onClick={handleNavClick}>
+              Profile
             </NavLink>
           </li>
         </ul>
@@ -118,8 +89,7 @@ const ManagerSidebar = ({ mobileOpen, onMobileMenuToggle }) => {
 
       <div className="sidebar-footer">
         <button className="logout-btn" onClick={handleLogout}>
-          <FontAwesomeIcon icon={faSignOutAlt} />
-          <span>Logout</span>
+          Logout
         </button>
       </div>
     </aside>

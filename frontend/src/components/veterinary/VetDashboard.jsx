@@ -47,7 +47,6 @@ const VetDashboard = () => {
   const name = user?.name || "Veterinarian";
   const profilePhoto = user?.profile_photo || "";
   const { theme, toggle } = useTheme();
-  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [dashboardData, setDashboardData] = useState(null);
   const [currentBoarders, setCurrentBoarders] = useState([]);
   const [loadingBoarders, setLoadingBoarders] = useState(false);
@@ -239,12 +238,23 @@ const VetDashboard = () => {
   };
 
   
-  const sidebar = (
-    <VeterinarySidebar
-      collapsed={sidebarCollapsed}
-      onToggleCollapse={() => setSidebarCollapsed((prev) => !prev)}
-    />
-  );
+  const sidebar = <VeterinarySidebar />;
+
+  const ROUTE_META = [
+    { path: "/veterinary", title: "Veterinary Dashboard", subtitle: "Manage appointments, patient records, and pet care workflow." },
+    { path: "/vet", title: "Veterinary Dashboard", subtitle: "Manage appointments, patient records, and pet care workflow." },
+    { path: "/veterinary/appointments", title: "Appointments", subtitle: "Schedule, reschedule, and manage vet consultations." },
+    { path: "/veterinary/services", title: "Vet Services", subtitle: "Browse and manage available veterinary services and pricing." },
+    { path: "/veterinary/history", title: "Activity History", subtitle: "Review past consultations, treatments, and medical notes." },
+    { path: "/veterinary/customer-profiles", title: "Customer Profiles", subtitle: "View pet owner details and their registered pets." },
+    { path: "/veterinary/reports", title: "Reports", subtitle: "Access veterinary analytics, appointment summaries, and trends." },
+    { path: "/veterinary/receipt", title: "Receipts", subtitle: "Generate and review payment receipts for services rendered." },
+    { path: "/veterinary/current-boarders", title: "Current Boarders", subtitle: "Monitor active boarding pets and their daily status." },
+    { path: "/veterinary/medical-confinements", title: "Medical Confinements", subtitle: "Track confined patients, treatments, and recovery plans." },
+    { path: "/veterinary/profile", title: "Profile Settings", subtitle: "Manage your account details and preferences." },
+  ];
+
+  const pageMeta = ROUTE_META.find((r) => r.path === normalizedPath) || ROUTE_META[0];
 
   const extraActions = (
     <button className="theme-toggle-btn" type="button" onClick={toggle}>
@@ -255,8 +265,8 @@ const VetDashboard = () => {
   return (
     <DashboardLayout
       sidebar={sidebar}
-      title="Veterinary Dashboard"
-      subtitle="Manage appointments, patient records, and pet care workflow."
+      title={pageMeta.title}
+      subtitle={pageMeta.subtitle}
       role="veterinary"
       name={name}
       profilePhoto={profilePhoto}
@@ -265,7 +275,7 @@ const VetDashboard = () => {
       showChatbot
       chatbotTitle="Veterinary Assistant"
       chatbotSubtitle="Appointments, patient workflow, and dashboard help"
-      className={`app-dashboard vet-dashboard ${sidebarCollapsed ? "collapsed" : ""}`}
+      className="app-dashboard vet-dashboard"
     >
 
         {showOverview ? (

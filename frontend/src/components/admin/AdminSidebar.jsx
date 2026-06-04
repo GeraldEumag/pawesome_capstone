@@ -2,19 +2,6 @@ import React from "react";
 import { NavLink, useNavigate } from "react-router-dom";
 import { showConfirm } from "../../utils/alert";
 import { apiRequest, clearAuthStorage } from "../../api/client";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import {
-  faHome,
-  faUsers,
-  faHistory,
-  faChartBar,
-  faSignOutAlt,
-  faTimes,
-  faUser,
-  faBuilding,
-  faRobot,
-  faCog,
-} from "@fortawesome/free-solid-svg-icons";
 import "./AdminSidebar.css";
 
 const AdminSidebar = ({ mobileOpen, onMobileMenuToggle }) => {
@@ -28,77 +15,64 @@ const AdminSidebar = ({ mobileOpen, onMobileMenuToggle }) => {
     navigate("/");
   };
 
-  return (
-    <aside className={`app-sidebar ${mobileOpen ? "mobile-open" : ""}`}>
-      <div className="sidebar-header">
-        <div className="sidebar-brand-icon">
-          <FontAwesomeIcon icon={faBuilding} />
-        </div>
+  const handleNavClick = () => {
+    if (window.innerWidth <= 768 && onMobileMenuToggle) {
+      onMobileMenuToggle();
+    }
+  };
 
+  return (
+    <aside className={`app-sidebar admin-sidebar ${mobileOpen ? "mobile-open" : ""}`}>
+      <div className="sidebar-header">
         <div className="sidebar-logo">
           <span>Admin Portal</span>
         </div>
-
-        <button className="mobile-close-btn" onClick={onMobileMenuToggle}>
-          <FontAwesomeIcon icon={faTimes} />
+        <button className="mobile-close-btn" onClick={onMobileMenuToggle} type="button" aria-label="Close menu">
+          &times;
         </button>
       </div>
 
       <nav className="sidebar-nav">
         <ul className="nav-list">
           <li className="nav-item">
-            <NavLink to="/admin" end>
-              <FontAwesomeIcon icon={faHome} />
-              <span>Dashboard</span>
+            <NavLink to="/admin" end onClick={handleNavClick}>
+              Dashboard
             </NavLink>
           </li>
-
           <li className="nav-item">
-            <NavLink to="/admin/users">
-              <FontAwesomeIcon icon={faUsers} />
-              <span>Users</span>
+            <NavLink to="/admin/users" onClick={handleNavClick}>
+              Users
             </NavLink>
           </li>
-
           <li className="nav-item">
-            <NavLink to="/admin/profile">
-              <FontAwesomeIcon icon={faUser} />
-              <span>Profile</span>
+            <NavLink to="/admin/profile" onClick={handleNavClick}>
+              Profile
             </NavLink>
           </li>
-
           <li className="nav-item">
-            <NavLink to="/admin/chatbot">
-              <FontAwesomeIcon icon={faRobot} />
-              <span>Chatbot</span>
+            <NavLink to="/admin/chatbot" onClick={handleNavClick}>
+              Chatbot
             </NavLink>
           </li>
-
           <li className="nav-item">
-            <NavLink to="/admin/history">
-              <FontAwesomeIcon icon={faHistory} />
-              <span>History</span>
+            <NavLink to="/admin/history" onClick={handleNavClick}>
+              History
             </NavLink>
           </li>
-
           <li className="nav-item">
-            <NavLink to="/admin/reports">
-              <FontAwesomeIcon icon={faChartBar} />
-              <span>Reports</span>
+            <NavLink to="/admin/reports" onClick={handleNavClick}>
+              Reports
             </NavLink>
           </li>
         </ul>
       </nav>
 
       <div className="sidebar-footer">
-        <NavLink to="/admin/settings" className="settings-link">
-          <FontAwesomeIcon icon={faCog} />
-          <span>Settings</span>
+        <NavLink to="/admin/settings" className="settings-link" onClick={handleNavClick}>
+          Settings
         </NavLink>
-
         <button className="logout-btn" onClick={handleLogout}>
-          <FontAwesomeIcon icon={faSignOutAlt} />
-          <span>Logout</span>
+          Logout
         </button>
       </div>
     </aside>

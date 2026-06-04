@@ -40,7 +40,6 @@ const CustomerDashboard = () => {
     fetchAndApplySystemTheme();
   }, []);
 
-  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [dashboardData, setDashboardData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -194,7 +193,6 @@ const CustomerDashboard = () => {
 
   const customerDashboardClasses = [
     "customer-dashboard",
-    sidebarCollapsed ? "collapsed" : "",
     theme === "dark" ? "dark" : "",
   ]
     .filter(Boolean)
@@ -240,12 +238,27 @@ const CustomerDashboard = () => {
     { label: "View Notifications", icon: faBell, link: "/customer/notifications", tone: "soft" },
   ];
 
-  const sidebar = (
-    <CustomerSidebar
-      collapsed={sidebarCollapsed}
-      onToggleCollapse={() => setSidebarCollapsed((prev) => !prev)}
-    />
-  );
+  const sidebar = <CustomerSidebar />;
+
+  const ROUTE_META = [
+    { path: "/customer", title: "Customer Dashboard", subtitle: "Manage your pets, bookings, rewards, and service updates in one place." },
+    { path: "/customer/services", title: "Services", subtitle: "Browse and book grooming, hotel, and veterinary services." },
+    { path: "/customer/orders", title: "My Orders", subtitle: "Track your product orders and delivery status." },
+    { path: "/customer/pets", title: "My Pets", subtitle: "View and manage your registered pets and their profiles." },
+    { path: "/customer/hotel", title: "Hotel Booking", subtitle: "Book a comfortable stay for your pet at our hotel." },
+    { path: "/customer/grooming", title: "Grooming Booking", subtitle: "Schedule grooming sessions for your pet." },
+    { path: "/customer/vet", title: "Vet Consultation", subtitle: "Book veterinary consultations and checkups." },
+    { path: "/customer/medical-confinements", title: "Medical Confinements", subtitle: "View medical confinement records and recovery plans." },
+    { path: "/customer/chatbot", title: "Chatbot", subtitle: "Get instant help from our AI assistant." },
+    { path: "/customer/userinfo", title: "User Information", subtitle: "View and update your personal information." },
+    { path: "/customer/profile", title: "Profile Settings", subtitle: "Manage your account details and preferences." },
+    { path: "/customer/history", title: "Order History", subtitle: "Review past orders, services, and payment records." },
+    { path: "/customer/notifications", title: "Notifications", subtitle: "Stay updated with the latest alerts and messages." },
+    { path: "/customer/payments", title: "Payments", subtitle: "View and manage your payment methods and invoices." },
+    { path: "/customer/reports", title: "Reports", subtitle: "Access your activity reports and analytics." },
+  ];
+
+  const pageMeta = ROUTE_META.find((r) => r.path === normalizedPath) || ROUTE_META[0];
 
   const extraActions = (
     <>
@@ -263,8 +276,8 @@ const CustomerDashboard = () => {
   return (
     <DashboardLayout
       sidebar={sidebar}
-      title="Customer Dashboard"
-      subtitle="Manage your pets, bookings, rewards, and service updates in one place."
+      title={pageMeta.title}
+      subtitle={pageMeta.subtitle}
       role="customer"
       name={name}
       profilePhoto={profilePhoto}

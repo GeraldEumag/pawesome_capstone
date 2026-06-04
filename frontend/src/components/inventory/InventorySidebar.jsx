@@ -2,18 +2,6 @@ import React from "react";
 import { NavLink, useNavigate } from "react-router-dom";
 import { showConfirm } from "../../utils/alert";
 import { apiRequest, clearAuthStorage } from "../../api/client";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import {
-  faBoxes,
-  faBox,
-  faWarehouse,
-  faHistory,
-  faChartBar,
-  faSignOutAlt,
-  faUser,
-  faClipboardCheck,
-  faTimes,
-} from "@fortawesome/free-solid-svg-icons";
 import "./InventorySidebar.css";
 
 const InventorySidebar = ({ mobileOpen, onMobileMenuToggle }) => {
@@ -27,73 +15,63 @@ const InventorySidebar = ({ mobileOpen, onMobileMenuToggle }) => {
     navigate("/");
   };
 
+  const handleNavClick = () => {
+    if (window.innerWidth <= 768 && onMobileMenuToggle) {
+      onMobileMenuToggle();
+    }
+  };
+
   return (
     <aside className={`app-sidebar inventory-sidebar ${mobileOpen ? "mobile-open" : ""}`}>
       <div className="sidebar-header">
         <div className="sidebar-logo">
-          <FontAwesomeIcon icon={faWarehouse} />
           <span>Inventory Portal</span>
         </div>
         <button className="mobile-close-btn" onClick={onMobileMenuToggle} type="button" aria-label="Close menu">
-          <FontAwesomeIcon icon={faTimes} />
+          &times;
         </button>
       </div>
 
       <nav className="sidebar-nav">
         <ul className="nav-list">
           <li className="nav-item">
-            <NavLink to="/inventory" className={({ isActive }) => isActive ? "active" : ""} end>
-              <FontAwesomeIcon icon={faBoxes} />
-              <span>Unified Inventory</span>
+            <NavLink to="/inventory" end onClick={handleNavClick}>
+              Unified Inventory
             </NavLink>
           </li>
-
           <li className="nav-item">
-            <NavLink to="/inventory/stock" className={({ isActive }) => isActive ? "active" : ""} end>
-              <FontAwesomeIcon icon={faBox} />
-              <span>Stock Management</span>
+            <NavLink to="/inventory/stock" onClick={handleNavClick}>
+              Stock Management
             </NavLink>
           </li>
-
           <li className="nav-item">
-            <NavLink to="/inventory/history" className={({ isActive }) => isActive ? "active" : ""} end>
-              <FontAwesomeIcon icon={faHistory} />
-              <span>History</span>
+            <NavLink to="/inventory/history" onClick={handleNavClick}>
+              History
             </NavLink>
           </li>
-
           <li className="nav-item">
-            <NavLink to="/inventory/reports" className={({ isActive }) => isActive ? "active" : ""} end>
-              <FontAwesomeIcon icon={faChartBar} />
-              <span>Reports</span>
+            <NavLink to="/inventory/reports" onClick={handleNavClick}>
+              Reports
             </NavLink>
           </li>
-
           <li className="nav-item">
-            <NavLink to="/inventory/monthly-audit" className={({ isActive }) => isActive ? "active" : ""} end>
-              <FontAwesomeIcon icon={faClipboardCheck} />
-              <span>Monthly Audit</span>
+            <NavLink to="/inventory/monthly-audit" onClick={handleNavClick}>
+              Monthly Audit
             </NavLink>
           </li>
-
           <li className="nav-item">
-            <NavLink to="/inventory/monthly-audit-report" className={({ isActive }) => isActive ? "active" : ""} end>
-              <FontAwesomeIcon icon={faClipboardCheck} />
-              <span>Audit Reports</span>
+            <NavLink to="/inventory/monthly-audit-report" onClick={handleNavClick}>
+              Audit Reports
             </NavLink>
           </li>
-
           <li className="nav-item">
-            <NavLink to="/inventory/audit-analytics" className={({ isActive }) => isActive ? "active" : ""} end>
-              <FontAwesomeIcon icon={faChartBar} />
-              <span>Audit Analytics</span>
+            <NavLink to="/inventory/audit-analytics" onClick={handleNavClick}>
+              Audit Analytics
             </NavLink>
           </li>
-
           <li className="nav-item">
-            <NavLink to="/inventory/profile" className={({ isActive }) => isActive ? "active" : ""} end>
-              <FontAwesomeIcon icon={faUser} />
-              <span>Profile</span>
+            <NavLink to="/inventory/profile" onClick={handleNavClick}>
+              Profile
             </NavLink>
           </li>
         </ul>
@@ -101,8 +79,7 @@ const InventorySidebar = ({ mobileOpen, onMobileMenuToggle }) => {
 
       <div className="sidebar-footer">
         <button className="logout-btn" onClick={handleLogout}>
-          <FontAwesomeIcon icon={faSignOutAlt} />
-          <span>Logout</span>
+          Logout
         </button>
       </div>
     </aside>

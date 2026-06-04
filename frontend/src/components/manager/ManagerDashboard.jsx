@@ -211,7 +211,6 @@ const ManagerDashboard = () => {
   const profilePhoto = user?.profile_photo || "";
 
   const { theme, toggle } = useTheme();
-  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -479,12 +478,7 @@ const ManagerDashboard = () => {
     };
   }, [payrollPeriod]);
 
-  const sidebar = (
-    <ManagerSidebar
-      collapsed={sidebarCollapsed}
-      onToggleCollapse={() => setSidebarCollapsed((prev) => !prev)}
-    />
-  );
+  const sidebar = <ManagerSidebar />;
 
   const extraActions = (
     <>
@@ -511,17 +505,33 @@ const ManagerDashboard = () => {
     </>
   );
 
+  const ROUTE_META = [
+    { path: "/manager", title: "Manager Dashboard", subtitle: "Workforce, attendance, payroll, and reporting overview." },
+    { path: "/manager/staff", title: "Staff Management", subtitle: "Manage employee records, roles, and department assignments." },
+    { path: "/manager/attendance", title: "Attendance Tracking", subtitle: "Monitor daily clock-ins, absences, and tardiness." },
+    { path: "/manager/leaves", title: "Leave Requests", subtitle: "Review and approve employee leave applications." },
+    { path: "/manager/schedule", title: "Work Schedule", subtitle: "Plan shifts, assign tasks, and manage staff rosters." },
+    { path: "/manager/payroll", title: "Payroll Management", subtitle: "Process salaries, deductions, and payment releases." },
+    { path: "/manager/payroll/compute", title: "Payroll Computation", subtitle: "Calculate wages, overtime, bonuses, and net pay." },
+    { path: "/manager/history", title: "Activity History", subtitle: "Review past workforce actions, changes, and approvals." },
+    { path: "/manager/reports", title: "Reports", subtitle: "Access workforce analytics, attendance summaries, and payroll reports." },
+    { path: "/manager/kiosk", title: "Fingerprint Kiosk", subtitle: "Biometric attendance check-in and check-out station." },
+    { path: "/manager/profile", title: "Profile Settings", subtitle: "Manage your account details and preferences." },
+  ];
+
+  const pageMeta = ROUTE_META.find((r) => r.path === normalizedPath) || ROUTE_META[0];
+
   return (
     <DashboardLayout
       sidebar={sidebar}
-      title="Manager Dashboard"
-      subtitle="Workforce, attendance, payroll, and reporting overview."
+      title={pageMeta.title}
+      subtitle={pageMeta.subtitle}
       role="manager"
       name={name}
       profilePhoto={profilePhoto}
       onProfileUpload={handleProfilePhotoUpload}
       extraActions={extraActions}
-      className={`manager-dashboard ${sidebarCollapsed ? "collapsed" : ""}`}
+      className="manager-dashboard"
     >
 
         {showOverview ? (

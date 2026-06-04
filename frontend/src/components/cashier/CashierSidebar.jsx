@@ -2,17 +2,6 @@ import React from "react";
 import { NavLink, useNavigate } from "react-router-dom";
 import { showConfirm } from "../../utils/alert";
 import { apiRequest, clearAuthStorage } from "../../api/client";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import {
-  faHome,
-  faCashRegister,
-  faHistory,
-  faChartBar,
-  faSignOutAlt,
-  faUser,
-  faReceipt,
-  faTimes,
-} from "@fortawesome/free-solid-svg-icons";
 import "./CashierSidebar.css";
 
 const CashierSidebar = ({ mobileOpen, onMobileMenuToggle }) => {
@@ -26,93 +15,61 @@ const CashierSidebar = ({ mobileOpen, onMobileMenuToggle }) => {
     navigate("/");
   };
 
+  const handleNavClick = () => {
+    if (window.innerWidth <= 768 && onMobileMenuToggle) {
+      onMobileMenuToggle();
+    }
+  };
+
   return (
     <aside className={`app-sidebar cashier-sidebar ${mobileOpen ? "mobile-open" : ""}`}>
       <div className="sidebar-header">
         <div className="sidebar-logo">
-          <FontAwesomeIcon icon={faCashRegister} />
           <span>Cashier Portal</span>
         </div>
         <button className="mobile-close-btn" onClick={onMobileMenuToggle} type="button" aria-label="Close menu">
-          <FontAwesomeIcon icon={faTimes} />
+          &times;
         </button>
       </div>
 
       <nav className="sidebar-nav">
         <ul className="nav-list">
           <li className="nav-item">
-            <NavLink
-              to="/cashier"
-              className={({ isActive }) => (isActive ? "active" : "")}
-              end
-              title="Dashboard"
-            >
-              <FontAwesomeIcon icon={faHome} />
-              <span>Dashboard</span>
+            <NavLink to="/cashier" end onClick={handleNavClick}>
+              Dashboard
             </NavLink>
           </li>
-
           <li className="nav-item">
-            <NavLink
-              to="/cashier/pos"
-              className={({ isActive }) => (isActive ? "active" : "")}
-              title="POS"
-            >
-              <FontAwesomeIcon icon={faCashRegister} />
-              <span>POS</span>
+            <NavLink to="/cashier/pos" onClick={handleNavClick}>
+              POS
             </NavLink>
           </li>
-
           <li className="nav-item">
-            <NavLink
-              to="/cashier/transactions"
-              className={({ isActive }) => (isActive ? "active" : "")}
-              title="Transactions"
-            >
-              <FontAwesomeIcon icon={faReceipt} />
-              <span>Transactions</span>
+            <NavLink to="/cashier/transactions" onClick={handleNavClick}>
+              Transactions
             </NavLink>
           </li>
-
           <li className="nav-item">
-            <NavLink
-              to="/cashier/history"
-              className={({ isActive }) => (isActive ? "active" : "")}
-              title="History"
-            >
-              <FontAwesomeIcon icon={faHistory} />
-              <span>History</span>
+            <NavLink to="/cashier/history" onClick={handleNavClick}>
+              History
             </NavLink>
           </li>
-
           <li className="nav-item">
-            <NavLink
-              to="/cashier/reports"
-              className={({ isActive }) => (isActive ? "active" : "")}
-              title="Reports"
-            >
-              <FontAwesomeIcon icon={faChartBar} />
-              <span>Reports</span>
+            <NavLink to="/cashier/reports" onClick={handleNavClick}>
+              Reports
             </NavLink>
           </li>
-
           <li className="nav-item">
-            <NavLink
-              to="/cashier/profile"
-              className={({ isActive }) => (isActive ? "active" : "")}
-              title="Profile"
-            >
-              <FontAwesomeIcon icon={faUser} />
-              <span>Profile</span>
+            <NavLink to="/cashier/profile" onClick={handleNavClick}>
+              Profile
             </NavLink>
           </li>
         </ul>
       </nav>
 
       <div className="sidebar-footer">
-        <button className="logout-btn" onClick={handleLogout} title="Logout">
-          <FontAwesomeIcon icon={faSignOutAlt} />
-          <span>Logout</span>
+        <button className="logout-btn" onClick={handleLogout}>
+          Logout
         </button>
       </div>
     </aside>

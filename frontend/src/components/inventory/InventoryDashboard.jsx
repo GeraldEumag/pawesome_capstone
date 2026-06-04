@@ -33,7 +33,6 @@ const InventoryDashboard = () => {
   const profilePhoto = user?.profile_photo || "";
 
   const { theme, toggle } = useTheme();
-  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [dashboardData, setDashboardData] = useState(null);
   const [dashboardError, setDashboardError] = useState("");
   const location = useLocation();
@@ -152,18 +151,30 @@ const InventoryDashboard = () => {
 
   const inventoryDashboardClasses = [
     "inventory-dashboard",
-    sidebarCollapsed ? "collapsed" : "",
     theme === "dark" ? "dark" : "",
   ]
     .filter(Boolean)
     .join(" ");
 
-  const sidebar = (
-    <InventorySidebar
-      collapsed={sidebarCollapsed}
-      onToggleCollapse={() => setSidebarCollapsed((prev) => !prev)}
-    />
-  );
+  const sidebar = <InventorySidebar />;
+
+  const ROUTE_META = [
+    { path: "/inventory", title: "Inventory Dashboard", subtitle: "Monitor stock levels, product movement, and warehouse operations." },
+    { path: "/inventory/products", title: "Product Management", subtitle: "Manage products, categories, pricing, and stock quantities." },
+    { path: "/inventory/stock", title: "Product Management", subtitle: "Manage products, categories, pricing, and stock quantities." },
+    { path: "/inventory/management", title: "Product Management", subtitle: "Manage products, categories, pricing, and stock quantities." },
+    { path: "/inventory/simplified", title: "Product Management", subtitle: "Manage products, categories, pricing, and stock quantities." },
+    { path: "/inventory/legacy-products", title: "Product Management", subtitle: "Manage products, categories, pricing, and stock quantities." },
+    { path: "/inventory/history", title: "Inventory History", subtitle: "Review past stock movements, adjustments, and transfers." },
+    { path: "/inventory/analytics", title: "Inventory Reports", subtitle: "Analyze stock trends, turnover rates, and demand forecasts." },
+    { path: "/inventory/reports", title: "Inventory Reports", subtitle: "Analyze stock trends, turnover rates, and demand forecasts." },
+    { path: "/inventory/monthly-audit", title: "Monthly Audit", subtitle: "Perform and review monthly stock audits and reconciliations." },
+    { path: "/inventory/monthly-audit-report", title: "Audit Report", subtitle: "View detailed monthly audit findings and discrepancies." },
+    { path: "/inventory/audit-analytics", title: "Audit Analytics", subtitle: "Visualize audit trends, accuracy rates, and problem areas." },
+    { path: "/inventory/profile", title: "Profile Settings", subtitle: "Manage your account details and preferences." },
+  ];
+
+  const pageMeta = ROUTE_META.find((r) => r.path === normalizedPath) || ROUTE_META[0];
 
   const extraActions = (
     <button
@@ -178,8 +189,8 @@ const InventoryDashboard = () => {
   return (
     <DashboardLayout
       sidebar={sidebar}
-      title="Inventory Management"
-      subtitle="Monitor stock levels and manage warehouse operations"
+      title={pageMeta.title}
+      subtitle={pageMeta.subtitle}
       role="inventory"
       name={name}
       profilePhoto={profilePhoto}

@@ -952,7 +952,6 @@ const VetDashboard = () => {
   const { theme, toggle } = useTheme();
   const name = user?.name || "Veterinarian";
   const profilePhoto = user?.profile_photo || "";
-  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [dashboardData, setDashboardData] = useState(null);
   const [currentBoarders, setCurrentBoarders] = useState([]);
   const [loadingBoarders, setLoadingBoarders] = useState(false);
@@ -1126,13 +1125,10 @@ const VetDashboard = () => {
   return (
     <>
       <GlobalStyle />
-      <PageContainer className={`app-dashboard vet-dashboard ${sidebarCollapsed ? "collapsed" : ""}`}>
-        <VeterinarySidebar
-          collapsed={sidebarCollapsed}
-          onToggleCollapse={() => setSidebarCollapsed((prev) => !prev)}
-        />
+      <PageContainer className="app-dashboard vet-dashboard">
+        <VeterinarySidebar />
 
-        <MainContent className={`app-main vet-main ${sidebarCollapsed ? "collapsed" : ""}`}>
+        <MainContent className="app-main vet-main">
           <TopBar>
             <TopBarLeft>
               <RoleBadge>

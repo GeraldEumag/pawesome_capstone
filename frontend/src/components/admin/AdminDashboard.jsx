@@ -359,17 +359,34 @@ const AdminDashboard = () => {
     },
   ];
 
-  const pageCopy = showOverview
-    ? {
-        title: "Admin Command Center",
-        subtitle:
-          "Monitor users, appointments, revenue, inventory alerts, and system health in one professional workspace.",
-      }
-    : {
-        title: "Admin Workspace",
-        subtitle:
-          "Manage platform operations with role-based access and live system context.",
-      };
+  const ROUTE_META = [
+    { path: "/admin", title: "Admin Command Center", subtitle: "Monitor users, appointments, revenue, inventory alerts, and system health in one professional workspace." },
+    { path: "/admin/profile", title: "Profile Settings", subtitle: "Manage your account details and preferences." },
+    { path: "/admin/users/create", title: "Create User", subtitle: "Add a new user to the system with role-based access." },
+    { path: "/admin/users", title: "Manage Users", subtitle: "Create, edit, and monitor role access across the platform." },
+    { path: "/admin/reports/cashier", title: "Cashier Reports", subtitle: "Review cashier sales, transactions, and revenue data." },
+    { path: "/admin/reports/inventory", title: "Inventory Reports", subtitle: "Track stock levels, product movement, and warehouse metrics." },
+    { path: "/admin/reports/manager", title: "Manager Reports", subtitle: "View workforce, attendance, and payroll summaries." },
+    { path: "/admin/reports/veterinary", title: "Veterinary Reports", subtitle: "Access patient records, appointments, and vet service data." },
+    { path: "/admin/reports/customers", title: "Customer Reports", subtitle: "Analyze customer activity, bookings, and engagement." },
+    { path: "/admin/reports/payments", title: "Payment Reports", subtitle: "Review payment transactions and revenue breakdowns." },
+    { path: "/admin/reports/orders", title: "Order Reports", subtitle: "Analyze order volume, status, and fulfillment metrics." },
+    { path: "/admin/reports/services", title: "Service Reports", subtitle: "Review service requests, approvals, and completion rates." },
+    { path: "/admin/reports/logistics", title: "Logistics Reports", subtitle: "Track supply chain, deliveries, and logistics performance." },
+    { path: "/admin/reports/reception", title: "Reception Reports", subtitle: "Review front desk bookings, check-ins, and customer flow." },
+    { path: "/admin/reports/attendance", title: "Attendance Reports", subtitle: "Monitor staff attendance, punctuality, and absences." },
+    { path: "/admin/reports", title: "Reports", subtitle: "Central hub for all role-based reports and analytics." },
+    { path: "/admin/history", title: "Activity History", subtitle: "View system-wide logs and recent changes." },
+    { path: "/admin/chatbot", title: "Chatbot Logs", subtitle: "Review AI assistant conversations and feedback." },
+    { path: "/admin/settings", title: "System Settings", subtitle: "Configure platform preferences and global options." },
+  ];
+
+  const pageMeta = useMemo(() => {
+    const exact = ROUTE_META.find((r) => r.path === normalizedPath);
+    if (exact) return exact;
+    const prefix = ROUTE_META.filter((r) => normalizedPath.startsWith(r.path + "/")).sort((a, b) => b.path.length - a.path.length)[0];
+    return prefix || { title: "Admin Workspace", subtitle: "Manage platform operations with role-based access and live system context." };
+  }, [normalizedPath]);
 
   const AdminTooltip = ({ active, payload, label }) => {
     if (!active || !payload || payload.length === 0) return null;
@@ -415,8 +432,8 @@ const AdminDashboard = () => {
   return (
     <DashboardLayout
       sidebar={<AdminSidebar />}
-      title={pageCopy.title}
-      subtitle={pageCopy.subtitle}
+      title={pageMeta.title}
+      subtitle={pageMeta.subtitle}
       role="admin"
       name={name}
       profilePhoto={profilePhoto}
