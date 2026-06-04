@@ -34,16 +34,14 @@ const VetForm = () => {
 
   const fetchAppointments = useCallback(async () => {
     try {
-      const data = await apiRequest(`/customer/my-requests?email=${customerEmail}`);
-      
-      // Filter only vet requests
-      const requests = Array.isArray(data?.requests) ? data.requests : Array.isArray(data) ? data : [];
-      const vetOnly = requests.filter(item => item.type === "vet");
-      setAppointments(vetOnly);
+      const data = await apiRequest("/customer/vet-consultations");
+      const list = normalizeList(data, ["appointments", "data", "consultations"]);
+      setAppointments(list);
     } catch (error) {
       console.error("Failed to load vet appointments:", error);
+      setAppointments([]);
     }
-  }, [customerEmail]);
+  }, []);
 
   const fetchPets = useCallback(async () => {
     try {

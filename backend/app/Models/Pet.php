@@ -69,7 +69,8 @@ class Pet extends Model
             return $this->image;
         }
 
-        return "/api/files/pet-photos/{$this->id}/view";
+        $cacheBuster = $this->updated_at ? $this->updated_at->timestamp : time();
+        return "/api/files/pet-photos/{$this->id}/view?t={$cacheBuster}";
     }
 
     public function appointments()

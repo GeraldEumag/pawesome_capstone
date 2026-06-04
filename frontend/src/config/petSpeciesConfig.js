@@ -4,16 +4,10 @@
  * Used across customer pet registration and service compatibility checks
  */
 
-// Predetermined species options
+// Predetermined species options — restricted to dog and cat for this platform
 export const SPECIES_OPTIONS = [
   "Dog",
-  "Cat", 
-  "Rabbit",
-  "Bird",
-  "Hamster",
-  "Fish",
-  "Reptile",
-  "Other"
+  "Cat"
 ];
 
 // Predetermined breeds per species
@@ -21,7 +15,7 @@ export const SPECIES_BREED_DATA = {
   "Dog": [
     "Aspin",
     "Shih Tzu",
-    "Chihuahua", 
+    "Chihuahua",
     "Pomeranian",
     "Golden Retriever",
     "Labrador Retriever",
@@ -41,49 +35,7 @@ export const SPECIES_BREED_DATA = {
     "Ragdoll",
     "Mixed Breed",
     "Other / Not listed"
-  ],
-  "Rabbit": [
-    "Holland Lop",
-    "Lionhead",
-    "Netherland Dwarf",
-    "Mini Rex",
-    "Mixed Breed",
-    "Other / Not listed"
-  ],
-  "Bird": [
-    "Parakeet",
-    "Cockatiel",
-    "Lovebird",
-    "Canary",
-    "African Grey",
-    "Mixed Breed",
-    "Other / Not listed"
-  ],
-  "Hamster": [
-    "Syrian Hamster",
-    "Dwarf Hamster",
-    "Roborovski Hamster",
-    "Chinese Hamster",
-    "Mixed Breed",
-    "Other / Not listed"
-  ],
-  "Fish": [
-    "Betta",
-    "Goldfish",
-    "Guppy",
-    "Molly",
-    "Koi",
-    "Other / Not listed"
-  ],
-  "Reptile": [
-    "Turtle",
-    "Gecko",
-    "Bearded Dragon",
-    "Iguana",
-    "Snake",
-    "Other / Not listed"
-  ],
-  "Other": []
+  ]
 };
 
 /**

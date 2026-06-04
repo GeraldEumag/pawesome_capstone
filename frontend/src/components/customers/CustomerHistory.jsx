@@ -22,7 +22,7 @@ const CustomerHistory = () => {
     setError("");
     try {
       const [orders, appts, boardings] = await Promise.allSettled([
-        apiRequest("/customer/orders").catch(() => []),
+        apiRequest("/customer/store/orders").catch(() => []),
         apiRequest("/customer/appointments").catch(() => []),
         apiRequest("/customer/boardings").catch(() => []),
       ]);

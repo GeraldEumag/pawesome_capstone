@@ -25,7 +25,8 @@ const CustomerSidebar = ({ mobileOpen, onMobileMenuToggle }) => {
     { to: "/customer", label: "Dashboard", end: true },
     { to: "/customer/pets", label: "My Pets" },
     { to: "/customer/services", label: "Services" },
-    { to: "/customer/payments", label: "Payment History" },
+    { to: "/customer/payments", label: "Payments" },
+    { to: "/customer/history", label: "History" },
     { to: "/customer/profile", label: "Profile" },
   ];
 

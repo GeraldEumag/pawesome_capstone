@@ -37,22 +37,14 @@ const GroomingForm = () => {
 
   const fetchAppointments = useCallback(async () => {
     try {
-      if (!customerEmail) {
-        setAppointments([]);
-        return;
-      }
-
-      const data = await apiRequest(`/customer/my-requests?email=${customerEmail}`);
-
-      // Filter only grooming requests
-      const requests = Array.isArray(data?.requests) ? data.requests : Array.isArray(data) ? data : [];
-      const groomingOnly = requests.filter(item => item.type === "grooming");
-      
-      setAppointments(groomingOnly);
+      const data = await apiRequest("/customer/grooming");
+      const list = normalizeList(data, ["appointments", "data", "grooming"]);
+      setAppointments(list);
     } catch (error) {
       console.error("Failed to load grooming appointments:", error);
+      setAppointments([]);
     }
-  }, [customerEmail]);
+  }, []);
 
   const fetchPets = useCallback(async () => {
     try {

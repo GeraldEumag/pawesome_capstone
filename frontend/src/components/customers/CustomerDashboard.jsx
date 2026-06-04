@@ -234,7 +234,7 @@ const CustomerDashboard = () => {
     { label: "Add Pet", icon: faPlus, link: "/customer/pets", tone: "pink" },
     { label: "Book Services", icon: faCalendarCheck, link: "/customer/bookings", tone: "soft" },
         { label: "Upload Payment", icon: faCreditCard, link: "/customer/payments", tone: "gold" },
-    { label: "View Orders", icon: faList, link: "/customer/requests", tone: "info" },
+    { label: "View Orders", icon: faList, link: "/customer/orders", tone: "info" },
     { label: "View Notifications", icon: faBell, link: "/customer/notifications", tone: "soft" },
   ];
 

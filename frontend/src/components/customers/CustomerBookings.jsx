@@ -752,7 +752,7 @@ const CustomerBookings = () => {
       meta.type === "vet"
         ? vetServices.length > 0
           ? vetServices
-          : defaultVetServices
+          : fallbackVetServices
         : groomingServices;
 
     setSelectedBooking(type);

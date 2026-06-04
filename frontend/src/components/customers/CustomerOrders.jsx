@@ -399,9 +399,30 @@ const CustomerOrders = () => {
     window.location.href = `/customer/payments?order_id=${order.id}`;
   };
 
-  const viewReceipt = (order) => {
-    // Navigate to receipt view
-    window.location.href = `/customer/store/orders/${order.id}/receipt`;
+  const viewReceipt = async (order) => {
+    try {
+      const data = await apiRequest(`/customer/store/orders/${order.id}/receipt`, "GET");
+      const receipt = data?.receipt || data;
+      if (!receipt) {
+        throw new Error("Receipt details not found.");
+      }
+      await Swal.fire({
+        icon: "info",
+        title: `Receipt ${receipt.receipt_number || "N/A"}`,
+        html: `
+          <div style="text-align:left;">
+            <p><strong>Order #</strong> ${order.id}</p>
+            <p><strong>Amount:</strong> ₱${Number(receipt.total_amount || order.total_amount || 0).toLocaleString("en-PH", { minimumFractionDigits: 2 })}</p>
+            <p><strong>Paid At:</strong> ${receipt.paid_at || "N/A"}</p>
+            <p><strong>Verified By:</strong> ${receipt.verified_by || "Cashier"}</p>
+            <p><strong>Remarks:</strong> ${receipt.cashier_remarks || "None"}</p>
+          </div>
+        `,
+        confirmButtonColor: "#ff5f93",
+      });
+    } catch (err) {
+      Swal.fire({ icon: "error", title: "Receipt Unavailable", text: err.message || "Receipt is not available yet.", confirmButtonColor: "#ef4444" });
+    }
   };
 
   const cancelBoardingRequest = async (boardingId) => {
@@ -465,9 +486,31 @@ const CustomerOrders = () => {
     window.location.href = `/customer/payments?boarding_id=${boardingRequest.id}`;
   };
 
-  const viewBoardingReceipt = (boardingRequest) => {
-    // Navigate to receipt view for boarding
-    window.location.href = `/customer/boarding-requests/${boardingRequest.id}/receipt`;
+  const viewBoardingReceipt = async (boardingRequest) => {
+    try {
+      const data = await apiRequest(`/customer/boarding-requests/${boardingRequest.id}/receipt`, "GET");
+      const receipt = data?.receipt || data;
+      if (!receipt) {
+        throw new Error("Boarding receipt is not available yet.");
+      }
+      await Swal.fire({
+        icon: "info",
+        title: `Receipt ${receipt.receipt_number || "N/A"}`,
+        html: `
+          <div style="text-align:left;">
+            <p><strong>Boarding #</strong> ${boardingRequest.id}</p>
+            <p><strong>Pet:</strong> ${boardingRequest.pet_name || "N/A"}</p>
+            <p><strong>Amount:</strong> ₱${Number(receipt.total_amount || boardingRequest.total_amount || 0).toLocaleString("en-PH", { minimumFractionDigits: 2 })}</p>
+            <p><strong>Paid At:</strong> ${receipt.paid_at || "N/A"}</p>
+            <p><strong>Verified By:</strong> ${receipt.verified_by || "Cashier"}</p>
+            <p><strong>Remarks:</strong> ${receipt.cashier_remarks || "None"}</p>
+          </div>
+        `,
+        confirmButtonColor: "#ff5f93",
+      });
+    } catch (err) {
+      Swal.fire({ icon: "error", title: "Receipt Unavailable", text: err.message || "Receipt is not available yet.", confirmButtonColor: "#ef4444" });
+    }
   };
 
   const filteredOrders = orders.filter((order) => {

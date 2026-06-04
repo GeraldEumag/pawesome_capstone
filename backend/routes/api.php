@@ -271,9 +271,6 @@ Route::middleware(['auth.api', 'throttle:api'])->prefix('chatbot')->group(functi
 Route::middleware(['auth.api', 'throttle:api', 'role:customer'])->prefix('customer')->group(function () {
     Route::get('overview', [PortalController::class, 'overview']);
     Route::get('dashboard', [PortalController::class, 'overview']);
-    Route::get('pets', [PortalController::class, 'pets']);
-    Route::post('pets', [PortalController::class, 'addPet']);
-    Route::delete('pets/{id}', [PortalController::class, 'deletePet']);
     Route::get('appointments', [PortalController::class, 'appointments']);
     Route::get('bookings', [PortalController::class, 'bookings']);
     Route::get('transactions', [PortalController::class, 'transactions']);

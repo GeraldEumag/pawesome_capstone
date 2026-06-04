@@ -6,6 +6,7 @@ use App\Models\Pet;
 use App\Models\Customer;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Carbon;
 
 class PetController extends Controller
 {
@@ -96,14 +97,15 @@ class PetController extends Controller
             ]
         );
 
+        $birth = $validated['birthdate'] ?? $validated['birth_date'] ?? null;
         $petData = [
             'customer_id' => $customer->id,
             'name' => $validated['name'],
             'species' => $validated['species'],
             'breed' => $validated['breed'] ?? null,
-            'birthdate' => $validated['birthdate'] ?? $validated['birth_date'] ?? null,
+            'birthdate' => $birth,
             'birth_date' => $validated['birth_date'] ?? $validated['birthdate'] ?? null,
-            'age' => null,
+            'age' => $birth ? Carbon::parse($birth)->age : null,
             'gender' => $validated['gender'] ?? null,
             'notes' => $validated['notes'] ?? null,
         ];
@@ -152,9 +154,10 @@ class PetController extends Controller
             return response()->json(['message' => 'Pet not found'], 404);
         }
 
-        $validated['birthdate'] = $validated['birthdate'] ?? $validated['birth_date'] ?? null;
+        $birth = $validated['birthdate'] ?? $validated['birth_date'] ?? null;
+        $validated['birthdate'] = $birth;
         $validated['birth_date'] = $validated['birth_date'] ?? $validated['birthdate'] ?? null;
-        $validated['age'] = null;
+        $validated['age'] = $birth ? Carbon::parse($birth)->age : null;
 
         if ($request->hasFile('image')) {
             if ($pet->image) {

@@ -28,17 +28,13 @@ import PetAvatar, { resolveImageUrl } from "../shared/PetAvatar";
 import {
   getSpeciesOptions,
   getBreedOptions,
-  isManualSpeciesRequired,
-  isManualBreedRequired,
-  resolveFinalSpecies,
-  resolveFinalBreed
+  isManualBreedRequired
 } from "../../config/petSpeciesConfig";
 
 const initialForm = (customerEmail) => ({
   name: "",
   species: "",
   breed: "",
-  manualSpecies: "",
   manualBreed: "",
   birthdate: "",
   notes: "",
@@ -281,22 +277,12 @@ const CustomerPets = () => {
     if (!formData.name.trim()) return "Pet name is required.";
     if (!formData.species) return "Please select type of pet.";
 
-    // Validate manual species if required
-    if (isManualSpeciesRequired(formData.species) && !formData.manualSpecies?.trim()) {
-      return "Please specify the type of pet when 'Other' is selected.";
-    }
-
     // Validate breed selection
     if (!formData.breed) return "Please select pet breed.";
 
     // Validate manual breed if required
     if (isManualBreedRequired(formData.breed) && !formData.manualBreed?.trim()) {
       return "Please specify the breed when 'Mixed Breed' or 'Other / Not listed' is selected.";
-    }
-
-    // For custom species, manual breed is always required
-    if (isManualSpeciesRequired(formData.species) && !formData.manualBreed?.trim()) {
-      return "Please specify the breed for custom species.";
     }
 
     if (formData.birthdate) {
@@ -334,7 +320,6 @@ const CustomerPets = () => {
         [name]: value,
         breed: "",
         manualBreed: "",
-        manualSpecies: value === "Other" ? prev.manualSpecies : "",
       }));
     } else {
       setFormData((prev) => ({
@@ -353,10 +338,12 @@ const CustomerPets = () => {
 
   const buildPetPayload = (data) => ({
     name: data.name?.trim(),
-    species: resolveFinalSpecies(data.species, data.manualSpecies),
-    breed: resolveFinalBreed(data.breed, data.manualBreed),
-    birthdate: data.birthdate || null,
-    birth_date: data.birthdate || null,
+    species: data.species,
+    breed: isManualBreedRequired(data.breed) && data.manualBreed?.trim()
+      ? data.manualBreed.trim()
+      : data.breed,
+    birthdate: normalizeDateString(data.birthdate) || null,
+    birth_date: normalizeDateString(data.birthdate) || null,
     notes: data.notes?.trim() || null,
     customer_email: customerEmail,
   });
@@ -411,15 +398,21 @@ const CustomerPets = () => {
     }
   };
 
+  const normalizeDateString = (value) => {
+    if (!value) return "";
+    const d = new Date(value);
+    if (Number.isNaN(d.getTime())) return "";
+    return d.toISOString().split("T")[0];
+  };
+
   const handleEditClick = (pet) => {
     setEditingPet(pet);
     setFormData({
       name: pet?.name || "",
       species: pet?.species || "",
       breed: pet?.breed || "",
-      manualSpecies: "",
       manualBreed: "",
-      birthdate: getPetBirthdate(pet) || "",
+      birthdate: normalizeDateString(getPetBirthdate(pet)),
       notes: pet?.notes || "",
       customer_email: customerEmail,
       image: null,
@@ -448,22 +441,20 @@ const CustomerPets = () => {
       let body;
       const payload = buildPetPayload(formData);
 
+      const formDataObj = new FormData();
+      Object.entries(payload).forEach(([key, value]) => {
+        if (value !== null && value !== undefined) {
+          formDataObj.append(key, value);
+        }
+      });
       if (formData.image) {
-        const formDataObj = new FormData();
-        Object.entries(payload).forEach(([key, value]) => {
-          if (value !== null && value !== undefined) {
-            formDataObj.append(key, value);
-          }
-        });
         formDataObj.append("image", formData.image);
-        formDataObj.append("_method", "PUT");
-        body = formDataObj;
-      } else {
-        body = JSON.stringify(payload);
       }
+      formDataObj.append("_method", "PUT");
+      body = formDataObj;
 
       const data = await apiRequest(`/customer/pets/${editingPet.id}`, {
-        method: formData.image ? "POST" : "PUT",
+        method: "POST",
         body,
       });
 
@@ -732,20 +723,7 @@ const CustomerPets = () => {
               </select>
             </label>
 
-            {isManualSpeciesRequired(formData.species) && (
-              <label>
-                Type of Pet Details <small>*</small>
-                <input
-                  name="manualSpecies"
-                  placeholder="Enter type of pet (e.g., Ferret, Turtle, etc.)"
-                  value={formData.manualSpecies}
-                  onChange={handleChange}
-                  required
-                />
-              </label>
-            )}
-
-            {formData.species && !isManualSpeciesRequired(formData.species) && (
+            {formData.species && (
               <label>
                 Breed <small>*</small>
                 <select
@@ -764,16 +742,12 @@ const CustomerPets = () => {
               </label>
             )}
 
-            {(isManualBreedRequired(formData.breed) || isManualSpeciesRequired(formData.species)) && (
+            {isManualBreedRequired(formData.breed) && (
               <label>
                 Breed Details <small>*</small>
                 <input
                   name="manualBreed"
-                  placeholder={
-                    isManualSpeciesRequired(formData.species)
-                      ? "Enter breed or type"
-                      : "Enter breed (e.g., African Grey, Flowerhorn, etc.)"
-                  }
+                  placeholder="Enter breed (e.g., mixed local, etc.)"
                   value={formData.manualBreed}
                   onChange={handleChange}
                   required
@@ -1011,6 +985,7 @@ const CustomerPets = () => {
                 className="pet-history-close"
                 type="button"
                 onClick={closeEditModal}
+                aria-label="Close edit modal"
               >
                 <FaTimes />
               </button>
@@ -1070,20 +1045,7 @@ const CustomerPets = () => {
                   </select>
                 </label>
 
-                {isManualSpeciesRequired(formData.species) && (
-                  <label>
-                    Type of Pet Details <small>*</small>
-                    <input
-                      name="manualSpecies"
-                      placeholder="Enter type of pet (e.g., Ferret, Turtle, etc.)"
-                      value={formData.manualSpecies}
-                      onChange={handleChange}
-                      required
-                    />
-                  </label>
-                )}
-
-                {formData.species && !isManualSpeciesRequired(formData.species) && (
+                {formData.species && (
                   <label>
                     Breed <small>*</small>
                     <select
@@ -1102,16 +1064,12 @@ const CustomerPets = () => {
                   </label>
                 )}
 
-                {(isManualBreedRequired(formData.breed) || isManualSpeciesRequired(formData.species)) && (
+                {isManualBreedRequired(formData.breed) && (
                   <label>
                     Breed Details <small>*</small>
                     <input
                       name="manualBreed"
-                      placeholder={
-                        isManualSpeciesRequired(formData.species)
-                          ? "Enter breed or type"
-                          : "Enter breed (e.g., African Grey, Flowerhorn, etc.)"
-                      }
+                      placeholder="Enter breed (e.g., mixed local, etc.)"
                       value={formData.manualBreed}
                       onChange={handleChange}
                       required
