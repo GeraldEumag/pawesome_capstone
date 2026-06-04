@@ -12,7 +12,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('boardings', function (Blueprint $table) {
-            $table->timestamp('vaccination_card_verified_at')->nullable()->after('vaccination_card');
+            $table->timestamp('vaccination_card_verified_at')->nullable();
         });
     }
 

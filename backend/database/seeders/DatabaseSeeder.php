@@ -18,6 +18,7 @@ class DatabaseSeeder extends Seeder
         $this->call([
             ChatbotFaqSeeder::class, // Chatbot FAQ data
             PawesomeLiveDemoSeeder::class, // Comprehensive live demo data
+            BitposItemsSeeder::class, // BitPOS inventory items
         ]);
     }
 }
