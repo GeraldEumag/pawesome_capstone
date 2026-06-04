@@ -5,51 +5,80 @@ namespace App\Http\Controllers\Veterinary;
 use App\Http\Controllers\Controller;
 use App\Models\Appointment;
 use App\Models\Pet;
+use App\Models\User;
 use App\Services\ServiceBillingService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\Auth;
 
 class DashboardController extends Controller
 {
     private function assignedAppointments()
     {
-        return Appointment::query()->where('veterinarian_id', auth()->id());
+        return Appointment::query()->where('veterinarian_id', Auth::id());
+    }
+
+    private function unassignedPendingAppointments()
+    {
+        return Appointment::query()->whereNull('veterinarian_id')->where('status', 'pending');
     }
 
     public function overview()
     {
         $today = Carbon::today();
-        
+
+        $authId = Auth::id();
+
+        $todayAssigned = $this->assignedAppointments()
+            ->whereDate('scheduled_at', $today)
+            ->whereIn('status', ['approved', 'scheduled', 'in_progress', 'treated'])
+            ->count();
+
+        $todayUnassigned = $this->unassignedPendingAppointments()
+            ->whereDate('scheduled_at', $today)
+            ->count();
+
+        $pendingAssigned = $this->assignedAppointments()
+            ->where('status', 'pending')
+            ->count();
+
+        $pendingUnassigned = $this->unassignedPendingAppointments()
+            ->count();
+
+        $upcomingAssigned = $this->assignedAppointments()
+            ->with(['customer', 'pet', 'service', 'veterinarian'])
+            ->where('scheduled_at', '>=', $today)
+            ->whereIn('status', ['approved', 'scheduled', 'in_progress', 'treated'])
+            ->orderBy('scheduled_at')
+            ->limit(5)
+            ->get();
+
+        $upcomingUnassigned = $this->unassignedPendingAppointments()
+            ->with(['customer', 'pet', 'service'])
+            ->whereDate('scheduled_at', '>=', $today)
+            ->orderBy('scheduled_at')
+            ->limit(5)
+            ->get();
+
         return response()->json([
-            'today_appointments' => $this->assignedAppointments()
-                ->whereDate('scheduled_at', $today)
-                ->whereIn('status', ['approved', 'scheduled', 'in_progress', 'treated'])
-                ->count(),
+            'today_appointments' => $todayAssigned + $todayUnassigned,
             'approved_appointments' => $this->assignedAppointments()
                 ->whereIn('status', ['approved', 'scheduled'])
                 ->count(),
-            'pending_appointments' => $this->assignedAppointments()
-                ->where('status', 'pending')
-                ->count(),
+            'pending_appointments' => $pendingAssigned + $pendingUnassigned,
             'completed_appointments' => $this->assignedAppointments()
                 ->where('status', 'completed')
                 ->count(),
-            'total_patients' => Pet::whereHas('appointments', function ($query) {
-                $query->where('veterinarian_id', auth()->id());
+            'total_patients' => Pet::whereHas('appointments', function ($query) use ($authId) {
+                $query->where('veterinarian_id', $authId);
             })->count(),
-            'new_patients_this_month' => Pet::whereHas('appointments', function ($query) {
-                $query->where('veterinarian_id', auth()->id());
+            'new_patients_this_month' => Pet::whereHas('appointments', function ($query) use ($authId) {
+                $query->where('veterinarian_id', $authId);
             })->whereMonth('created_at', $today->month)->count(),
-            'upcoming_appointments' => $this->assignedAppointments()
-                ->with(['customer', 'pet', 'service', 'veterinarian'])
-                ->where('scheduled_at', '>=', $today)
-                ->whereIn('status', ['approved', 'scheduled', 'in_progress', 'treated'])
-                ->orderBy('scheduled_at')
-                ->limit(5)
-                ->get(),
+            'upcoming_appointments' => $upcomingAssigned->concat($upcomingUnassigned)->sortBy('scheduled_at')->values()->take(5),
             'recent_patients' => Pet::with('customer')
-                ->whereHas('appointments', function ($query) {
-                    $query->where('veterinarian_id', auth()->id());
+                ->whereHas('appointments', function ($query) use ($authId) {
+                    $query->where('veterinarian_id', $authId);
                 })
                 ->latest()
                 ->take(5)
@@ -66,12 +95,21 @@ class DashboardController extends Controller
 
     public function appointments()
     {
+        $authId = Auth::id();
+
         return response()->json(
             Appointment::with(['customer', 'pet', 'service', 'veterinarian'])
-                ->whereIn('status', ['approved', 'scheduled', 'in_progress', 'treated', 'completed', 'cancelled', 'no_show'])
-                ->where(function($query) {
-                    // Only show appointments assigned to current veterinarian
-                    $query->where('veterinarian_id', auth()->id());
+                ->where(function ($query) use ($authId) {
+                    // Show appointments assigned to current veterinarian
+                    $query->where(function ($sub) use ($authId) {
+                        $sub->where('veterinarian_id', $authId)
+                            ->whereIn('status', ['approved', 'scheduled', 'in_progress', 'treated', 'completed', 'cancelled', 'no_show']);
+                    })
+                    // Also show unassigned pending appointments (incoming requests)
+                    ->orWhere(function ($sub) {
+                        $sub->whereNull('veterinarian_id')
+                            ->where('status', 'pending');
+                    });
                 })
                 ->orderBy('scheduled_at')
                 ->get()
@@ -143,7 +181,8 @@ class DashboardController extends Controller
 
     public function reports(Request $request)
     {
-        $user = auth()->user();
+        /** @var User|null $user */
+        $user = Auth::user();
         $today = Carbon::today();
         
         // Build base query based on user role

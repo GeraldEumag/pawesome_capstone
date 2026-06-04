@@ -18,6 +18,7 @@ class ServiceRequest extends Model
         'pet_breed',
         'request_type',
         'service_name',
+        'price',
         'request_date',
         'request_time',
         'preferred_time',

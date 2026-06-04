@@ -17,6 +17,7 @@ import {
   FaTimesCircle,
   FaUser,
   FaUserMd,
+  FaMoneyBillWave,
 } from "react-icons/fa";
 import { apiRequest, getAuthenticatedFileUrl } from "../../api/client";
 import "./ReceptionistApprovals.css";
@@ -688,6 +689,7 @@ const ReceptionistApprovals = () => {
       "Schedule Date",
       "Schedule Time",
       "Status",
+      "Price",
       "Notes",
     ];
 
@@ -700,6 +702,7 @@ const ReceptionistApprovals = () => {
       getRequestDate(item),
       getRequestTime(item),
       item.status || "pending",
+      item.price || item.amount || item.total_amount || "",
       item.notes || item.remarks || item.description || "",
     ]);
 
@@ -993,6 +996,13 @@ const ReceptionistApprovals = () => {
                         label="Status"
                         value={formatLabel(normalizeStatus(item.status || "pending"))}
                       />
+                      {(item.price || item.amount || item.total_amount) && (
+                        <InfoLine
+                          icon={<FaMoneyBillWave />}
+                          label="Price"
+                          value={`₱${Number(item.price || item.amount || item.total_amount || 0).toFixed(2)}`}
+                        />
+                      )}
                     </div>
 
                     {(item.notes || item.remarks || item.description) && (
@@ -1099,6 +1109,12 @@ const ReceptionistApprovals = () => {
                 <DetailItem label="Time" value={formatTime(getRequestTime(selectedRequest)) || "No time"} />
                 <DetailItem label="Raw Type" value={getRawType(selectedRequest) || "N/A"} />
                 <DetailItem label="Status" value={formatLabel(selectedRequest.status || "pending")} />
+                {(selectedRequest.price || selectedRequest.amount || selectedRequest.total_amount) && (
+                  <DetailItem
+                    label="Price"
+                    value={`₱${Number(selectedRequest.price || selectedRequest.amount || selectedRequest.total_amount || 0).toFixed(2)}`}
+                  />
+                )}
                 <DetailItem
                   label="Notes"
                   value={

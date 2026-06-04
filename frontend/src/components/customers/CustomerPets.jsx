@@ -49,6 +49,7 @@ const CustomerPets = () => {
   const [pets, setPets] = useState([]);
   const [archivedPets, setArchivedPets] = useState([]);
   const [formData, setFormData] = useState(() => initialForm(customerEmail));
+  const [formErrors, setFormErrors] = useState({});
 
   const [loading, setLoading] = useState(false);
   const [pageLoading, setPageLoading] = useState(true);
@@ -274,32 +275,25 @@ const CustomerPets = () => {
   }, [pets, archivedPets, searchTerm, speciesFilter, activeTab, getPetName, getPetSpecies, getPetBreed, getPetAge, getPetNotes, formatDate]);
 
   const validateForm = () => {
-    if (!formData.name.trim()) return "Pet name is required.";
-    if (!formData.species) return "Please select type of pet.";
-
-    // Validate breed selection
-    if (!formData.breed) return "Please select pet breed.";
-
-    // Validate manual breed if required
+    const errors = {};
+    if (!formData.name.trim()) errors.name = "Pet name is required.";
+    if (!formData.species) errors.species = "Please select type of pet.";
+    if (!formData.breed) errors.breed = "Please select pet breed.";
     if (isManualBreedRequired(formData.breed) && !formData.manualBreed?.trim()) {
-      return "Please specify the breed when 'Mixed Breed' or 'Other / Not listed' is selected.";
+      errors.manualBreed = "Please specify the breed.";
     }
-
     if (formData.birthdate) {
       const selectedBirthdate = new Date(`${formData.birthdate}T00:00:00`);
       const today = new Date();
       today.setHours(23, 59, 59, 999);
-
       if (Number.isNaN(selectedBirthdate.getTime())) {
-        return "Please enter a valid birthdate.";
-      }
-
-      if (selectedBirthdate > today) {
-        return "Birthdate cannot be in the future.";
+        errors.birthdate = "Please enter a valid birthdate.";
+      } else if (selectedBirthdate > today) {
+        errors.birthdate = "Birthdate cannot be in the future.";
       }
     }
-
-    return "";
+    setFormErrors(errors);
+    return Object.keys(errors).length > 0 ? Object.values(errors)[0] : "";
   };
 
   const handleChange = (event) => {
@@ -329,6 +323,9 @@ const CustomerPets = () => {
     }
 
     if (message.text) setMessage({ type: "", text: "" });
+    if (formErrors[name]) {
+      setFormErrors((prev) => ({ ...prev, [name]: undefined }));
+    }
   };
 
   const resetForm = () => {
@@ -1025,7 +1022,9 @@ const CustomerPets = () => {
                     value={formData.name}
                     onChange={handleChange}
                     required
+                    className={formErrors.name ? "input-error" : ""}
                   />
+                  {formErrors.name && <span className="field-error">{formErrors.name}</span>}
                 </label>
 
                 <label>
@@ -1035,6 +1034,7 @@ const CustomerPets = () => {
                     value={formData.species}
                     onChange={handleChange}
                     required
+                    className={formErrors.species ? "input-error" : ""}
                   >
                     <option value="">Select type of pet</option>
                     {speciesOptions.map((species) => (
@@ -1043,6 +1043,7 @@ const CustomerPets = () => {
                       </option>
                     ))}
                   </select>
+                  {formErrors.species && <span className="field-error">{formErrors.species}</span>}
                 </label>
 
                 {formData.species && (
@@ -1053,6 +1054,7 @@ const CustomerPets = () => {
                       value={formData.breed}
                       onChange={handleChange}
                       required
+                      className={formErrors.breed ? "input-error" : ""}
                     >
                       <option value="">Select breed</option>
                       {breedOptions.map((breed) => (
@@ -1061,6 +1063,7 @@ const CustomerPets = () => {
                         </option>
                       ))}
                     </select>
+                    {formErrors.breed && <span className="field-error">{formErrors.breed}</span>}
                   </label>
                 )}
 
@@ -1073,21 +1076,26 @@ const CustomerPets = () => {
                       value={formData.manualBreed}
                       onChange={handleChange}
                       required
+                      className={formErrors.manualBreed ? "input-error" : ""}
                     />
+                    {formErrors.manualBreed && <span className="field-error">{formErrors.manualBreed}</span>}
                   </label>
                 )}
 
                 <div className="pets-form-row">
                   <label>
                     Birthdate
-                    <DatePickerInput
-                      selected={formData.birthdate ? new Date(formData.birthdate) : null}
-                      onChange={(date) =>
-                        handleChange({ target: { name: "birthdate", value: date ? date.toISOString().split("T")[0] : "" } })
-                      }
-                      placeholderText="Select birthdate..."
-                      maxDate={new Date()}
-                    />
+                    <div className={formErrors.birthdate ? "datepicker-error-wrap" : ""}>
+                      <DatePickerInput
+                        selected={formData.birthdate ? new Date(formData.birthdate) : null}
+                        onChange={(date) =>
+                          handleChange({ target: { name: "birthdate", value: date ? date.toISOString().split("T")[0] : "" } })
+                        }
+                        placeholderText="Select birthdate..."
+                        maxDate={new Date()}
+                      />
+                    </div>
+                    {formErrors.birthdate && <span className="field-error">{formErrors.birthdate}</span>}
                   </label>
                 </div>
 

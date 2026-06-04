@@ -27,6 +27,7 @@ const VetForm = () => {
     pet_name: "",
     service_type: "vet",
     service_name: "",
+    price: "",
     request_date: "",
     request_time: "",
     notes: "",
@@ -34,9 +35,15 @@ const VetForm = () => {
 
   const fetchAppointments = useCallback(async () => {
     try {
-      const data = await apiRequest("/customer/vet-consultations");
-      const list = normalizeList(data, ["appointments", "data", "consultations"]);
-      setAppointments(list);
+      const data = await apiRequest("/customer/my-requests");
+      const requests = normalizeList(data, ["requests", "data"]);
+      const vetOnly = requests.filter(
+        (item) =>
+          item.type === "vet" ||
+          item.request_type === "vet" ||
+          (item.service_name && String(item.service_name).toLowerCase().includes("vet"))
+      );
+      setAppointments(vetOnly);
     } catch (error) {
       console.error("Failed to load vet appointments:", error);
       setAppointments([]);
@@ -122,6 +129,16 @@ const VetForm = () => {
       return;
     }
 
+    if (name === "service_name") {
+      const service = services.find((s) => s.name === value);
+      setFormData((prev) => ({
+        ...prev,
+        service_name: value,
+        price: service?.price ?? "",
+      }));
+      return;
+    }
+
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
@@ -156,6 +173,7 @@ const VetForm = () => {
           pet_name: "",
           service_type: "vet",
           service_name: "",
+          price: "",
           request_date: "",
           request_time: "",
           notes: "",
@@ -248,13 +266,26 @@ const VetForm = () => {
               required
             >
               <option value="">Select a service...</option>
-              {services.map((service) => (
-                <option key={service.id} value={service.name}>
-                  {service.name}
-                  {service.category ? ` (${service.category})` : ""}
-                  {service.price ? ` — ₱${Number(service.price).toFixed(2)}` : ""}
-                </option>
-              ))}
+              {services
+                .filter((s) =>
+                  [
+                    "consultation",
+                    "vaccination",
+                    "treatment",
+                    "emergency",
+                    "surgery",
+                    "dental",
+                    "diagnostics",
+                    "medication",
+                  ].includes((s.category || "").toLowerCase())
+                )
+                .map((service) => (
+                  <option key={service.id} value={service.name}>
+                    {service.name}
+                    {service.category ? ` (${service.category})` : ""}
+                    {service.price ? ` — ₱${Number(service.price).toFixed(2)}` : ""}
+                  </option>
+                ))}
             </select>
 
             <DatePickerInput
@@ -286,6 +317,12 @@ const VetForm = () => {
               required
             />
 
+            {formData.price !== "" && (
+              <div className="vet-price-summary">
+                <strong>Estimated Price:</strong> ₱{Number(formData.price).toFixed(2)}
+              </div>
+            )}
+
             <button
               type="submit"
               disabled={loading || (compatibility && !compatibility.isValid)}
@@ -308,6 +345,11 @@ const VetForm = () => {
                 <p>Date: {item.request_date}</p>
                 <p>Time: {item.request_time}</p>
                 <p>Concern: {item.notes || "None"}</p>
+                {(item.price || item.amount) && (
+                  <p className="vet-price">
+                    Price: ₱{Number(item.price || item.amount).toFixed(2)}
+                  </p>
+                )}
 
                 <span className={`vet-status ${item.status}`}>
                   {item.status}

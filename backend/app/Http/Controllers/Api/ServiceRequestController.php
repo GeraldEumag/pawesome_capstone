@@ -3,6 +3,10 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Models\Appointment;
+use App\Models\Customer;
+use App\Models\Grooming;
+use App\Models\Service;
 use App\Models\ServiceRequest;
 use App\Models\ActivityLog;
 use App\Models\Pet;
@@ -53,6 +57,8 @@ class ServiceRequestController extends Controller
             'request_time' => $item->request_time,
             'notes' => $item->notes,
             'status' => $item->status,
+            'price' => $item->price,
+            'amount' => $item->price,
             'payment' => $item->payment_status,
             'payment_status' => $item->payment_status,
             'payment_method' => $item->payment_method,
@@ -90,6 +96,7 @@ class ServiceRequestController extends Controller
             'daily_rate' => 'nullable|numeric|min:0',
             'total_days' => 'nullable|integer|min:1',
             'total_amount' => 'nullable|numeric|min:0',
+            'price' => 'nullable|numeric|min:0',
         ]);
 
         $pet = null;
@@ -166,11 +173,21 @@ class ServiceRequestController extends Controller
             }
         }
 
+        // Resolve price from submitted data or service lookup
+        $price = $validated['price'] ?? null;
+        if (!$price && !empty($validated['service_name'])) {
+            $svc = Service::whereRaw('LOWER(name) = ?', [strtolower($validated['service_name'])])->first();
+            if ($svc) {
+                $price = $svc->price;
+            }
+        }
+
         $createData = [
             'request_type' => $validated['request_type'],
             'customer_name' => $validated['customer_name'],
             'pet_name' => $validated['pet_name'],
             'service_name' => $validated['service_name'] ?? $validated['request_type'], // Use request_type as service_name fallback
+            'price' => $price,
             // Use requested_date/time as primary, fallback to preferred_date/time
             'request_date' => $validated['requested_date'],
             'request_time' => $validated['requested_time'],
@@ -224,6 +241,82 @@ class ServiceRequestController extends Controller
         }
 
         $serviceRequest = ServiceRequest::create($createData);
+
+        // Auto-create a pending Appointment for vet bookings so the veterinary dashboard can see them
+        if ($this->normalizeServiceType($validated['request_type']) === 'veterinary') {
+            $appointmentPet = null;
+            if (!empty($validated['pet_id'])) {
+                $appointmentPet = Pet::find($validated['pet_id']);
+            }
+            $appointmentCustomer = $appointmentPet?->customer;
+            if (!$appointmentCustomer && !empty($validated['customer_email'])) {
+                $appointmentCustomer = Customer::where('email', $validated['customer_email'])->first();
+            }
+
+            if ($appointmentCustomer && $appointmentPet) {
+                $serviceName = trim((string) ($validated['service_name'] ?? $validated['request_type']));
+                $service = null;
+                if ($serviceName !== '') {
+                    $service = Service::whereRaw('LOWER(name) = ?', [strtolower($serviceName)])->first();
+                    if (!$service) {
+                        $category = collect(['Consultation', 'Vaccination', 'Surgery', 'Dental'])
+                            ->first(fn ($item) => str_contains(strtolower($serviceName), strtolower($item)));
+                        if ($category) {
+                            $service = Service::where('category', $category)->first();
+                        }
+                    }
+                }
+                if (!$service) {
+                    $service = Service::whereIn('category', ['Consultation', 'Vaccination', 'Surgery', 'Dental'])->first();
+                }
+
+                $scheduledAt = Carbon::parse($validated['requested_date'] . ' ' . ($validated['requested_time'] ?? '09:00'));
+
+                Appointment::create([
+                    'customer_id' => $appointmentCustomer->id,
+                    'pet_id' => $appointmentPet->id,
+                    'service_id' => $service?->id,
+                    'veterinarian_id' => null,
+                    'status' => 'pending',
+                    'scheduled_at' => $scheduledAt,
+                    'notes' => $validated['notes'] ?? null,
+                    'price' => $serviceRequest->price ?? $service?->price ?? 0,
+                    'service_request_id' => $serviceRequest->id,
+                ]);
+            }
+        }
+
+        // Auto-create a pending Grooming record so groomer dashboard can see customer bookings
+        if ($this->normalizeServiceType($validated['request_type']) === 'grooming') {
+            $groomingPet = null;
+            if (!empty($validated['pet_id'])) {
+                $groomingPet = Pet::find($validated['pet_id']);
+            }
+            $groomingCustomer = $groomingPet?->customer;
+            if (!$groomingCustomer && !empty($validated['customer_email'])) {
+                $groomingCustomer = Customer::where('email', $validated['customer_email'])->first();
+            }
+
+            if ($groomingCustomer && $groomingPet) {
+                $price = $serviceRequest->price ?? 0;
+
+                Grooming::create([
+                    'customer_id' => $groomingCustomer->id,
+                    'pet_id' => $groomingPet->id,
+                    'service' => $validated['service_name'] ?? 'Grooming',
+                    'appointment_date' => $validated['requested_date'],
+                    'appointment_time' => $validated['requested_time'] ?? '09:00',
+                    'notes' => $validated['notes'] ?? null,
+                    'amount' => $price,
+                    'base_amount' => $price,
+                    'total_amount' => $price,
+                    'balance_due' => $price,
+                    'status' => 'pending',
+                    'payment_status' => 'unpaid',
+                    'service_request_id' => $serviceRequest->id,
+                ]);
+            }
+        }
 
         WorkflowNotifier::notifyRole(
             'receptionist',

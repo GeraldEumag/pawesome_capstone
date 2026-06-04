@@ -30,6 +30,7 @@ const GroomingForm = () => {
     pet_name: "",
     service_type: "grooming",
     service_name: "",
+    price: "",
     request_date: "",
     request_time: "",
     notes: "",
@@ -37,9 +38,15 @@ const GroomingForm = () => {
 
   const fetchAppointments = useCallback(async () => {
     try {
-      const data = await apiRequest("/customer/grooming");
-      const list = normalizeList(data, ["appointments", "data", "grooming"]);
-      setAppointments(list);
+      const data = await apiRequest("/customer/my-requests");
+      const requests = normalizeList(data, ["requests", "data"]);
+      const groomingOnly = requests.filter(
+        (item) =>
+          item.type === "grooming" ||
+          item.request_type === "grooming" ||
+          (item.service_name && String(item.service_name).toLowerCase().includes("groom"))
+      );
+      setAppointments(groomingOnly);
     } catch (error) {
       console.error("Failed to load grooming appointments:", error);
       setAppointments([]);
@@ -149,6 +156,16 @@ const GroomingForm = () => {
       return;
     }
 
+    if (name === "service_name") {
+      const service = services.find((s) => s.name === value);
+      setFormData((prev) => ({
+        ...prev,
+        service_name: value,
+        price: service?.price ?? "",
+      }));
+      return;
+    }
+
     setFormData((prev) => ({ ...prev, [name]: value }));
 
     // Check availability when date changes
@@ -195,6 +212,7 @@ const GroomingForm = () => {
           pet_name: "",
           service_type: "grooming",
           service_name: "",
+          price: "",
           request_date: "",
           request_time: "",
           notes: "",
@@ -370,6 +388,12 @@ const GroomingForm = () => {
               onChange={handleChange}
             />
 
+            {formData.price !== "" && (
+              <div className="grooming-price-summary">
+                <strong>Estimated Price:</strong> ₱{Number(formData.price).toFixed(2)}
+              </div>
+            )}
+
             <button
               type="submit"
               disabled={loading || (compatibility && !compatibility.isValid)}
@@ -392,6 +416,11 @@ const GroomingForm = () => {
                 <p>Date: {item.date}</p>
                 <p>Time: {item.time}</p>
                 <p>Notes: {item.notes || "None"}</p>
+                {(item.price || item.amount) && (
+                  <p className="grooming-price">
+                    Price: ₱{Number(item.price || item.amount).toFixed(2)}
+                  </p>
+                )}
 
                 <span className={`status ${item.status}`}>
                   {item.status}

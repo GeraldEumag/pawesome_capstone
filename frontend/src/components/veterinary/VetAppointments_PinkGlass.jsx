@@ -23,6 +23,7 @@ import {
   faCalendarDay,
   faChartLine,
   faXmark,
+  faMoneyBillWave,
 } from "@fortawesome/free-solid-svg-icons";
 import { NavLink, useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
@@ -792,6 +793,7 @@ const VetAppointments = () => {
       dateKey: formatDateKey(scheduledAt),
       time: formatTime(scheduledAt),
       service: serviceName,
+      price: apt?.price || apt?.amount || apt?.total_amount || null,
       status: normalizeStatus(apt?.status),
       notes: apt?.notes || apt?.reason || apt?.description || "",
       scheduledAt,
@@ -841,7 +843,7 @@ const VetAppointments = () => {
   const statusOptions = useMemo(
     () => [
       { key: "all", label: "All" },
-      { key: "pending", label: "Pending" },
+      { key: "pending", label: "Incoming" },
       { key: "approved", label: "Approved" },
       { key: "in_progress", label: "Ongoing" },
       { key: "completed", label: "Completed" },
@@ -1170,6 +1172,10 @@ const VetAppointments = () => {
               appointment.status === "canceled" ||
               appointment.status === "rejected";
 
+            const isUnassignedPending =
+              appointment.status === "pending" &&
+              (!appointment.raw?.veterinarian_id && appointment.raw?.veterinarian_id !== 0);
+
             const canStart = ["approved", "scheduled"].includes(appointment.status);
 
             const canConsult = ["in_progress", "treated"].includes(appointment.status);
@@ -1191,8 +1197,13 @@ const VetAppointments = () => {
 
                   <StatusBadge>
                     <FontAwesomeIcon icon={getStatusIcon(appointment.status)} />
-                    <span>{getStatusLabel(appointment.status)}</span>
+                    <span>{isUnassignedPending ? "Incoming" : getStatusLabel(appointment.status)}</span>
                   </StatusBadge>
+                  {isUnassignedPending && (
+                    <span style={{ fontSize: "11px", fontWeight: 600, color: "var(--veterinary-warning)", marginLeft: "8px" }}>
+                      Unassigned
+                    </span>
+                  )}
                 </CardHeader>
 
                 <CardContent>
@@ -1231,6 +1242,18 @@ const VetAppointments = () => {
                       </DetailContent>
                     </DetailItem>
 
+                    {appointment.price && (
+                      <DetailItem>
+                        <DetailIcon>
+                          <FontAwesomeIcon icon={faMoneyBillWave} />
+                        </DetailIcon>
+                        <DetailContent>
+                          <DetailLabel>Price</DetailLabel>
+                          <DetailValue>₱{Number(appointment.price).toFixed(2)}</DetailValue>
+                        </DetailContent>
+                      </DetailItem>
+                    )}
+
                     {appointment.notes && (
                       <DetailItem>
                         <DetailIcon>
@@ -1254,44 +1277,48 @@ const VetAppointments = () => {
                       View
                     </ActionButton>
 
-                    <ActionButton
-                      variant="success"
-                      type="button"
-                      disabled={!canStart || actionLoadingId === `${appointment.id}-in_progress`}
-                      onClick={() => updateAppointmentStatus(appointment.id, "in_progress")}
-                    >
-                      <FontAwesomeIcon icon={faPlay} />
-                      Start
-                    </ActionButton>
+                    {!isUnassignedPending && (
+                      <>
+                        <ActionButton
+                          variant="success"
+                          type="button"
+                          disabled={!canStart || actionLoadingId === `${appointment.id}-in_progress`}
+                          onClick={() => updateAppointmentStatus(appointment.id, "in_progress")}
+                        >
+                          <FontAwesomeIcon icon={faPlay} />
+                          Start
+                        </ActionButton>
 
-                    <ActionButton
-                      variant="primary"
-                      type="button"
-                      disabled={!canComplete || actionLoadingId === `${appointment.id}-completed`}
-                      onClick={() => navigate(`/veterinary/appointments/${appointment.id}/consult`)}
-                    >
-                      <FontAwesomeIcon icon={faCircleCheck} />
-                      Consult
-                    </ActionButton>
+                        <ActionButton
+                          variant="primary"
+                          type="button"
+                          disabled={!canComplete || actionLoadingId === `${appointment.id}-completed`}
+                          onClick={() => navigate(`/veterinary/appointments/${appointment.id}/consult`)}
+                        >
+                          <FontAwesomeIcon icon={faCircleCheck} />
+                          Consult
+                        </ActionButton>
 
-                    <ActionButton
-                      as={NavLink}
-                      variant="secondary"
-                      to={`/veterinary/appointments/${appointment.id}/edit`}
-                    >
-                      <FontAwesomeIcon icon={faEdit} />
-                      Edit
-                    </ActionButton>
+                        <ActionButton
+                          as={NavLink}
+                          variant="secondary"
+                          to={`/veterinary/appointments/${appointment.id}/edit`}
+                        >
+                          <FontAwesomeIcon icon={faEdit} />
+                          Edit
+                        </ActionButton>
 
-                    <ActionButton
-                      variant="danger"
-                      type="button"
-                      disabled={isCompleted || isCancelled}
-                      onClick={() => cancelAppointment(appointment.id)}
-                    >
-                      <FontAwesomeIcon icon={faTrash} />
-                      Cancel
-                    </ActionButton>
+                        <ActionButton
+                          variant="danger"
+                          type="button"
+                          disabled={isCompleted || isCancelled}
+                          onClick={() => cancelAppointment(appointment.id)}
+                        >
+                          <FontAwesomeIcon icon={faTrash} />
+                          Cancel
+                        </ActionButton>
+                      </>
+                    )}
                   </ActionsList>
                 </CardContent>
               </AppointmentCard>
