@@ -1,8 +1,9 @@
 import React, { useState, useEffect, useCallback, useMemo } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import StatusDot from "../shared/StatusDot";
 import {
-  faPlus, faEdit, faSearch, faBox, faExclamationTriangle,
-  faCheckCircle, faTimes, faSync, faArchive, faImage,
+  faPlus, faEdit, faSearch, faBox,
+  faSync, faArchive, faImage,
   faWarehouse, faBoxes, faBell, faSort, faSortUp, faSortDown,
   faChevronDown, faChevronUp, faDownload, faHistory, faInfoCircle,
   faSlidersH, faAdjust,
@@ -16,12 +17,12 @@ import DeleteConfirmModal from "../shared/DeleteConfirmModal";
 import "./UnifiedInventory.css";
 
 const CATEGORIES = [
-  { value: "Food", label: "Food", icon: "🍖" },
-  { value: "Accessories", label: "Accessories", icon: "🦴" },
-  { value: "Grooming", label: "Grooming", icon: "✂️" },
-  { value: "Toys", label: "Toys", icon: "🎾" },
-  { value: "Health", label: "Health", icon: "💊" },
-  { value: "Services", label: "Services", icon: "🩺" },
+  { value: "Food", label: "Food" },
+  { value: "Accessories", label: "Accessories" },
+  { value: "Grooming", label: "Grooming" },
+  { value: "Toys", label: "Toys" },
+  { value: "Health", label: "Health" },
+  { value: "Services", label: "Services" },
 ];
 
 const UnifiedInventory = () => {
@@ -454,8 +455,7 @@ const UnifiedInventory = () => {
       {/* Critical banner */}
       {stats.outOfStock > 0 && (
         <div className="ui-critical-banner">
-          <FontAwesomeIcon icon={faExclamationTriangle} />
-          <strong>{stats.outOfStock}</strong> items are OUT OF STOCK — Immediate attention required!
+          <strong>!</strong> <strong>{stats.outOfStock}</strong> items are OUT OF STOCK — Immediate attention required!
         </div>
       )}
 
@@ -619,7 +619,7 @@ const UnifiedInventory = () => {
                     </td>
                     <td>
                       <span className="category-badge">
-                        {CATEGORIES.find((c) => c.value === item.category)?.icon || "📦"} {item.category}
+                        {item.category || "—"}
                       </span>
                     </td>
                     <td>{item.brand || "—"}</td>
@@ -647,12 +647,9 @@ const UnifiedInventory = () => {
                     </td>
                     <td>
                       {activeTab === "archived" ? (
-                        <span className="status-badge archived">Archived</span>
+                        <StatusDot status="archived" />
                       ) : (
-                        <span className={`status-badge ${getStatusBadgeClass(item)}`}>
-                          <FontAwesomeIcon icon={getStock(item) === 0 ? faTimes : getStock(item) <= getMinStock(item) ? faExclamationTriangle : faCheckCircle} />
-                          {getStatus(item)}
-                        </span>
+                        <StatusDot status={getStatus(item).replace(/\s+/g, "_").toLowerCase()} />
                       )}
                     </td>
                     <td className="actions-col">
@@ -743,9 +740,29 @@ const UnifiedInventory = () => {
         <div className="ui-pagination">
           <button onClick={() => setCurrentPage((p) => Math.max(1, p - 1))} disabled={currentPage === 1}>← Prev</button>
           <div className="page-numbers">
-            {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
-              <button key={page} className={currentPage === page ? "active" : ""} onClick={() => setCurrentPage(page)}>{page}</button>
-            ))}
+            {(() => {
+              const pages = [];
+              const add = (n) => pages.push(n);
+              const showFirst = currentPage > 3;
+              const showLast = currentPage < totalPages - 2;
+              const start = Math.max(2, currentPage - 1);
+              const end = Math.min(totalPages - 1, currentPage + 1);
+
+              add(1);
+              if (showFirst && currentPage > 4) add("start-ellipsis");
+              if (showFirst) { add(start); if (start + 1 <= end) add(start + 1); if (start + 2 <= end) add(start + 2); }
+              else if (totalPages > 1) { add(2); if (totalPages > 2) add(3); }
+              if (showLast && currentPage < totalPages - 3) add("end-ellipsis");
+              if (showLast && totalPages > 1) add(totalPages);
+
+              return pages.map((p, idx) =>
+                p === "start-ellipsis" || p === "end-ellipsis" ? (
+                  <span key={p + idx} className="page-ellipsis">...</span>
+                ) : (
+                  <button key={p} className={currentPage === p ? "active" : ""} onClick={() => setCurrentPage(p)}>{p}</button>
+                )
+              );
+            })()}
           </div>
           <button onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))} disabled={currentPage === totalPages}>Next →</button>
           <span className="page-info">Page {currentPage} of {totalPages} ({filteredItems.length} total)</span>
@@ -800,7 +817,7 @@ const UnifiedInventory = () => {
             <div className="modal-header">
               <h2><FontAwesomeIcon icon={faInfoCircle} /> Item Details</h2>
               <button className="btn-close" onClick={() => setShowInfoModal(false)}>
-                <FontAwesomeIcon icon={faTimes} />
+                &times;
               </button>
             </div>
             <div className="modal-body">
@@ -830,7 +847,7 @@ const UnifiedInventory = () => {
         <div className="modal-overlay" onClick={() => setViewPhotoUrl(null)}>
           <div className="modal-content photo-modal" onClick={(e) => e.stopPropagation()}>
             <button className="btn-close" onClick={() => setViewPhotoUrl(null)}>
-              <FontAwesomeIcon icon={faTimes} />
+              &times;
             </button>
             <img src={viewPhotoUrl} alt="Product" />
           </div>

@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState, useCallback } from "react";
 import { inventoryApi } from "../../api/inventory";
 import Papa from "papaparse";
 import jsPDF from "jspdf";
@@ -6,6 +6,7 @@ import "jspdf-autotable";
 import * as XLSX from "xlsx";
 import "./MonthlyInventoryAudit.css";
 import { showAlert, showSuccess, showError } from "../../utils/alert";
+import StatusDot from "../shared/StatusDot";
 
 const getCurrentMonth = () => {
   const now = new Date();
@@ -57,6 +58,13 @@ const MonthlyInventoryAudit = () => {
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+
+  // Pagination & filtering state
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(25);
+  const [categoryFilter, setCategoryFilter] = useState("all");
+  const [statusFilter, setStatusFilter] = useState("all");
+  const [searchTerm, setSearchTerm] = useState("");
 
   const fetchAuditItems = async () => {
     try {
@@ -120,8 +128,16 @@ const MonthlyInventoryAudit = () => {
   };
 
   useEffect(() => {
+    setCurrentPage(1);
+    setCategoryFilter("all");
+    setStatusFilter("all");
+    setSearchTerm("");
     fetchAuditItems();
   }, [month]);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [categoryFilter, statusFilter, searchTerm, itemsPerPage]);
 
   const updateItem = (id, field, value) => {
     // Validate negative stock
@@ -179,20 +195,100 @@ const MonthlyInventoryAudit = () => {
     }
   };
 
+  const categories = useMemo(() => {
+    const cats = [...new Set(items.map((i) => i.item?.category).filter(Boolean))];
+    return cats.sort();
+  }, [items]);
+
+  const filteredItems = useMemo(() => {
+    let result = [...items];
+
+    if (categoryFilter !== "all") {
+      result = result.filter((r) => r.item?.category === categoryFilter);
+    }
+
+    if (statusFilter !== "all") {
+      result = result.filter((r) => getStatus(r) === statusFilter);
+    }
+
+    if (searchTerm.trim()) {
+      const term = searchTerm.toLowerCase();
+      result = result.filter(
+        (r) =>
+          (r.item?.name || "").toLowerCase().includes(term) ||
+          (r.item?.sku || "").toLowerCase().includes(term)
+      );
+    }
+
+    return result;
+  }, [items, categoryFilter, statusFilter, searchTerm]);
+
+  const totalPages = Math.max(1, Math.ceil(filteredItems.length / itemsPerPage));
+  const paginatedItems = useMemo(() => {
+    const start = (currentPage - 1) * itemsPerPage;
+    return filteredItems.slice(start, start + itemsPerPage);
+  }, [filteredItems, currentPage, itemsPerPage]);
+
   const stats = useMemo(() => {
-    const checked = items.filter((auditRow) => auditRow.actual_stock !== null && auditRow.actual_stock !== "").length;
-    const matched = items.filter((auditRow) => getStatus(auditRow) === "matched").length;
-    const discrepancy = items.filter((auditRow) => getStatus(auditRow) === "discrepancy").length;
-    const totalVariance = items.reduce((sum, auditRow) => sum + calculateVariance(auditRow), 0);
+    const checked = filteredItems.filter((auditRow) => auditRow.actual_stock !== null && auditRow.actual_stock !== "").length;
+    const matched = filteredItems.filter((auditRow) => getStatus(auditRow) === "matched").length;
+    const discrepancy = filteredItems.filter((auditRow) => getStatus(auditRow) === "discrepancy").length;
+    const totalVariance = filteredItems.reduce((sum, auditRow) => sum + calculateVariance(auditRow), 0);
+    const completion = filteredItems.length > 0 ? (checked / filteredItems.length) * 100 : 0;
 
     return {
-      total: items.length,
+      total: filteredItems.length,
       checked,
       matched,
       discrepancy,
       totalVariance,
+      completion: Math.round(completion),
     };
-  }, [items]);
+  }, [filteredItems]);
+
+  const handleMarkVisibleMatched = useCallback(() => {
+    const visibleIds = new Set(paginatedItems.map((r) => r.id));
+    setItems((prev) =>
+      prev.map((auditRow) => {
+        if (!visibleIds.has(auditRow.id)) return auditRow;
+        const system = Number(auditRow.system_stock || 0);
+        return {
+          ...auditRow,
+          actual_stock: system,
+          variance: 0,
+          status: "matched",
+        };
+      })
+    );
+  }, [paginatedItems]);
+
+  const handleClearVisible = useCallback(() => {
+    const visibleIds = new Set(paginatedItems.map((r) => r.id));
+    setItems((prev) =>
+      prev.map((auditRow) => {
+        if (!visibleIds.has(auditRow.id)) return auditRow;
+        return {
+          ...auditRow,
+          actual_stock: "",
+          variance: 0,
+          status: "pending",
+          reason: "",
+        };
+      })
+    );
+  }, [paginatedItems]);
+
+  const jumpToUnchecked = useCallback(() => {
+    const idx = filteredItems.findIndex((r) => r.actual_stock === "" || r.actual_stock === null);
+    if (idx >= 0) {
+      const page = Math.floor(idx / itemsPerPage) + 1;
+      setCurrentPage(page);
+    }
+  }, [filteredItems, itemsPerPage]);
+
+  const jumpToDiscrepancies = useCallback(() => {
+    setStatusFilter("discrepancy");
+  }, []);
 
   const handleSave = async () => {
     const checkedItems = items.filter((auditRow) => auditRow.actual_stock !== null && auditRow.actual_stock !== "");
@@ -386,30 +482,22 @@ const MonthlyInventoryAudit = () => {
         </div>
       </div>
 
-      <div className="audit-stats-grid">
-        <div className="audit-stat-card">
-          <span>Total Items</span>
-          <strong>{stats.total}</strong>
+      {/* Progress Overview */}
+      <div className="audit-progress-section">
+        <div className="progress-header">
+          <span className="progress-label">Audit Completion</span>
+          <span className="progress-value">{stats.completion}% ({stats.checked} / {stats.total})</span>
         </div>
-
-        <div className="audit-stat-card">
-          <span>Checked</span>
-          <strong>{stats.checked}</strong>
+        <div className="progress-bar-bg">
+          <div
+            className="progress-bar-fill"
+            style={{ width: `${stats.completion}%` }}
+          />
         </div>
-
-        <div className="audit-stat-card good">
-          <span>Matched</span>
-          <strong>{stats.matched}</strong>
-        </div>
-
-        <div className="audit-stat-card warning">
-          <span>Discrepancies</span>
-          <strong>{stats.discrepancy}</strong>
-        </div>
-
-        <div className="audit-stat-card">
-          <span>Total Variance</span>
-          <strong>{stats.totalVariance}</strong>
+        <div className="progress-legend">
+          <span><span className="dot green"/> Matched: {stats.matched}</span>
+          <span><span className="dot red"/> Discrepancies: {stats.discrepancy}</span>
+          <span><span className="dot gray"/> Pending: {stats.total - stats.checked}</span>
         </div>
       </div>
 
@@ -428,13 +516,13 @@ const MonthlyInventoryAudit = () => {
 
             <div className="audit-header-actions">
               <button onClick={handleExportCSV} className="btn-export-csv">
-                📥 Export CSV
+                Export CSV
               </button>
               <button onClick={handleExportPDF} className="btn-export-pdf">
-                📄 Export PDF
+                Export PDF
               </button>
               <button onClick={handleExportExcel} className="btn-export-excel">
-                📊 Export Excel
+                Export Excel
               </button>
               <button onClick={handleSave} disabled={saving} className="btn-save-audit">
                 {saving ? "Saving..." : "Save Monthly Audit"}
@@ -442,64 +530,93 @@ const MonthlyInventoryAudit = () => {
             </div>
           </div>
 
-          {/* Audit Summary Stats */}
-          <div className="audit-summary-stats">
-            <div className="summary-stat">
-              <span className="stat-label">Total Items</span>
-              <span className="stat-value">{stats.total}</span>
+          {/* Filters & Bulk Actions */}
+          <div className="audit-toolbar">
+            <div className="audit-filters">
+              <div className="filter-group">
+                <select value={categoryFilter} onChange={(e) => setCategoryFilter(e.target.value)}>
+                  <option value="all">All Categories</option>
+                  {categories.map((cat) => (
+                    <option key={cat} value={cat}>{cat}</option>
+                  ))}
+                </select>
+              </div>
+              <div className="filter-group status-pills">
+                {["all", "pending", "matched", "discrepancy"].map((s) => (
+                  <button
+                    key={s}
+                    className={`status-pill ${statusFilter === s ? "active" : ""}`}
+                    onClick={() => setStatusFilter(s)}
+                  >
+                    {s === "all" ? "All" : s.charAt(0).toUpperCase() + s.slice(1)}
+                  </button>
+                ))}
+              </div>
+              <div className="filter-right">
+                <button className="btn-clear" onClick={() => { setCategoryFilter("all"); setStatusFilter("all"); setSearchTerm(""); }}>
+                  Clear
+                </button>
+                <div className="filter-group search-group">
+                  <input
+                    type="text"
+                    placeholder="Search by name or SKU..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="search-input"
+                  />
+                </div>
+              </div>
             </div>
-            <div className="summary-stat">
-              <span className="stat-label">Checked</span>
-              <span className="stat-value">{stats.checked}</span>
-            </div>
-            <div className="summary-stat good">
-              <span className="stat-label">Matched</span>
-              <span className="stat-value">{stats.matched}</span>
-            </div>
-            <div className="summary-stat warning">
-              <span className="stat-label">Discrepancies</span>
-              <span className="stat-value">{stats.discrepancy}</span>
-            </div>
-            <div className="summary-stat">
-              <span className="stat-label">Total Variance</span>
-              <span className="stat-value">{stats.totalVariance}</span>
+
+            <div className="audit-bulk-actions">
+              <button className="btn-bulk" onClick={handleMarkVisibleMatched}>
+                Mark Visible as Matched
+              </button>
+              <button className="btn-bulk btn-bulk-clear" onClick={handleClearVisible}>
+                Clear Visible
+              </button>
+              <button className="btn-bulk" onClick={jumpToUnchecked}>
+                Jump to Unchecked
+              </button>
+              <button className="btn-bulk btn-bulk-warn" onClick={jumpToDiscrepancies}>
+                Jump to Discrepancies
+              </button>
             </div>
           </div>
 
           <div className="audit-table-scroll">
-            <table className="audit-table">
+            <table className="audit-table compact">
               <thead>
                 <tr>
-                  <th>Product</th>
+                  <th className="sticky-col">Product</th>
                   <th>SKU</th>
                   <th>Category</th>
-                  <th>System Stock</th>
-                  <th>Actual Stock</th>
-                  <th>Variance</th>
+                  <th className="numeric">System</th>
+                  <th className="numeric">Actual</th>
+                  <th className="numeric">Variance</th>
                   <th>Status</th>
                   <th>Reason</th>
                 </tr>
               </thead>
 
               <tbody>
-                {items.map((auditRow) => {
+                {paginatedItems.map((auditRow) => {
                   const variance = calculateVariance(auditRow);
                   const status = getStatus(auditRow);
                   const varianceColorClass = getVarianceColor(variance);
-                  const statusColorClass = getStatusColor(status);
-                  
+
                   return (
-                    <tr key={auditRow.id}>
-                      <td>
+                    <tr key={auditRow.id} className={status === "discrepancy" ? "row-discrepancy" : ""}>
+                      <td className="sticky-col">
                         <strong>{auditRow.item?.name || "Unknown"}</strong>
                         <small>{auditRow.item?.brand || "No brand"}</small>
                       </td>
 
                       <td>{auditRow.item?.sku || "N/A"}</td>
                       <td>{auditRow.item?.category || "N/A"}</td>
-                      <td>{auditRow.system_stock}</td>
+                      <td className="numeric">{auditRow.system_stock}</td>
 
-                      <td>
+                      <td className="numeric">
                         <input
                           type="number"
                           min="0"
@@ -508,18 +625,24 @@ const MonthlyInventoryAudit = () => {
                             updateItem(auditRow.id, "actual_stock", e.target.value)
                           }
                           placeholder="Count"
-                          className="audit-input"
+                          className="audit-input audit-input-sm"
                         />
                       </td>
 
-                      <td className={`variance-cell ${varianceColorClass}`}>
-                        {auditRow.actual_stock === null || auditRow.actual_stock === "" ? "-" : variance}
+                      <td className={`numeric variance-cell ${varianceColorClass}`}>
+                        {auditRow.actual_stock === null || auditRow.actual_stock === "" ? (
+                          "-"
+                        ) : variance === 0 ? (
+                          <span className="variance-zero">0</span>
+                        ) : (
+                          <span className={`variance-badge ${variance > 0 ? "up" : "down"}`}>
+                            {variance > 0 ? `+${variance}` : variance}
+                          </span>
+                        )}
                       </td>
 
                       <td>
-                        <span className={`audit-status ${statusColorClass}`}>
-                          {status}
-                        </span>
+                        <StatusDot status={status} />
                       </td>
 
                       <td>
@@ -534,14 +657,14 @@ const MonthlyInventoryAudit = () => {
                               ? "Required reason"
                               : "Optional"
                           }
-                          className="audit-input"
+                          className={`audit-input audit-input-sm ${status === "discrepancy" && !auditRow.reason?.trim() ? "input-required" : ""}`}
                         />
                       </td>
                     </tr>
                   );
                 })}
 
-                {items.length === 0 && (
+                {paginatedItems.length === 0 && (
                   <tr>
                     <td colSpan="8" className="audit-empty">
                       No inventory items found.
@@ -550,6 +673,67 @@ const MonthlyInventoryAudit = () => {
                 )}
               </tbody>
             </table>
+          </div>
+
+          {/* Pagination */}
+          <div className="audit-pagination">
+            <div className="pagination-info">
+              Showing {filteredItems.length > 0 ? (currentPage - 1) * itemsPerPage + 1 : 0} -
+              {Math.min(currentPage * itemsPerPage, filteredItems.length)} of {filteredItems.length}
+            </div>
+            <div className="pagination-controls">
+              <button
+                className="btn-page"
+                disabled={currentPage === 1}
+                onClick={() => setCurrentPage((p) => p - 1)}
+              >
+                Prev
+              </button>
+              {(() => {
+                const pages = [];
+                const add = (n) => pages.push(n);
+                const showFirst = currentPage > 3;
+                const showLast = currentPage < totalPages - 2;
+                const start = Math.max(2, currentPage - 1);
+                const end = Math.min(totalPages - 1, currentPage + 1);
+
+                add(1);
+                if (showFirst && currentPage > 4) add("start-ellipsis");
+                if (showFirst) { add(start); if (start + 1 <= end) add(start + 1); if (start + 2 <= end) add(start + 2); }
+                else if (totalPages > 1) { add(2); if (totalPages > 2) add(3); }
+                if (showLast && currentPage < totalPages - 3) add("end-ellipsis");
+                if (showLast && totalPages > 1) add(totalPages);
+
+                return pages.map((p, idx) =>
+                  p === "start-ellipsis" || p === "end-ellipsis" ? (
+                    <span key={p + idx} className="page-ellipsis">...</span>
+                  ) : (
+                    <button
+                      key={p}
+                      className={`btn-page ${p === currentPage ? "active" : ""}`}
+                      onClick={() => setCurrentPage(p)}
+                    >
+                      {p}
+                    </button>
+                  )
+                );
+              })()}
+              <button
+                className="btn-page"
+                disabled={currentPage === totalPages}
+                onClick={() => setCurrentPage((p) => p + 1)}
+              >
+                Next
+              </button>
+            </div>
+            <div className="per-page-select">
+              <select value={itemsPerPage} onChange={(e) => setItemsPerPage(Number(e.target.value))}>
+                <option value={10}>10 / page</option>
+                <option value={25}>25 / page</option>
+                <option value={50}>50 / page</option>
+                <option value={100}>100 / page</option>
+              </select>
+            </div>
           </div>
         </div>
       )}

@@ -17,7 +17,7 @@ const AddProductModal = ({ isOpen, onClose, onSuccess, editItem = null }) => {
     supplier: "",
     supplier_id: null,
     quantity: "",
-    reorder_level: "10",
+    reorder_level: "0",
     price: "",
     cost: "",
     status: "In stock",
@@ -44,7 +44,7 @@ const AddProductModal = ({ isOpen, onClose, onSuccess, editItem = null }) => {
         supplier: editItem.supplier || "",
         supplier_id: editItem.supplier_id || null,
         quantity: editItem.quantity?.toString() || "",
-        reorder_level: editItem.reorder_level?.toString() || "10",
+        reorder_level: editItem.reorder_level?.toString() || "0",
         price: editItem.price?.toString() || "",
         cost: editItem.cost?.toString() || "",
         status: editItem.status || "In stock",
@@ -62,7 +62,7 @@ const AddProductModal = ({ isOpen, onClose, onSuccess, editItem = null }) => {
         supplier: "",
         supplier_id: null,
         quantity: "",
-        reorder_level: "10",
+        reorder_level: "0",
         price: "",
         cost: "",
         status: "In stock",
@@ -129,7 +129,7 @@ const AddProductModal = ({ isOpen, onClose, onSuccess, editItem = null }) => {
       ...formData,
       quantity: stock,
       stock: stock,
-      reorder_level: parseInt(formData.reorder_level) || 10,
+      reorder_level: parseInt(formData.reorder_level) || 0,
       price: parseFloat(formData.price),
       cost: formData.cost ? parseFloat(formData.cost) : null,
       supplier_id: formData.supplier_id || null,
@@ -170,7 +170,7 @@ const AddProductModal = ({ isOpen, onClose, onSuccess, editItem = null }) => {
       <div className="modal-content product-modal" onClick={(e) => e.stopPropagation()}>
         <div className="modal-header">
           <div className="modal-title">
-            <span className="modal-icon">{editItem ? "✏️" : "➕"}</span>
+            <span className="modal-icon">{editItem ? "Edit" : "Add"}</span>
             <div>
               <h3>{editItem ? "Edit Product" : "Add New Product"}</h3>
               <p>{editItem ? "Update product details" : "Create a new inventory item"}</p>
@@ -186,7 +186,7 @@ const AddProductModal = ({ isOpen, onClose, onSuccess, editItem = null }) => {
             {errors.submit && <div className="error-banner">{errors.submit}</div>}
 
             <div className="form-section">
-              <h4>📋 Basic Information</h4>
+              <h4>Basic Information</h4>
               <div className="form-grid">
                 <div className="form-group">
                   <label>
@@ -229,12 +229,12 @@ const AddProductModal = ({ isOpen, onClose, onSuccess, editItem = null }) => {
                     className={errors.category ? "error" : ""}
                   >
                     <option value="">Select Category</option>
-                    <option value="Pet Food">🍖 Pet Food</option>
-                    <option value="Grooming">✂️ Grooming</option>
-                    <option value="Health">💊 Health</option>
-                    <option value="Toys">🎾 Toys</option>
-                    <option value="Accessories">🦴 Accessories</option>
-                    <option value="Services">🩺 Services</option>
+                    <option value="Pet Food">Pet Food</option>
+                    <option value="Grooming">Grooming</option>
+                    <option value="Health">Health</option>
+                    <option value="Toys">Toys</option>
+                    <option value="Accessories">Accessories</option>
+                    <option value="Services">Services</option>
                   </select>
                   {errors.category && <span className="error-text">{errors.category}</span>}
                 </div>
@@ -253,7 +253,7 @@ const AddProductModal = ({ isOpen, onClose, onSuccess, editItem = null }) => {
             </div>
 
             <div className="form-section">
-              <h4>📦 Stock Information</h4>
+              <h4>Stock Information</h4>
               <div className="form-grid">
                 <div className="form-group">
                   <label>
@@ -278,10 +278,10 @@ const AddProductModal = ({ isOpen, onClose, onSuccess, editItem = null }) => {
                     name="reorder_level"
                     value={formData.reorder_level}
                     onChange={handleChange}
-                    placeholder="10"
+                    placeholder="0"
                     min="0"
                   />
-                  <small>Alert when stock falls below this</small>
+                  <small className="helper-text">Items at or below this level are flagged as low stock.</small>
                 </div>
 
                 <div className="form-group">
@@ -330,7 +330,7 @@ const AddProductModal = ({ isOpen, onClose, onSuccess, editItem = null }) => {
 
             {!editItem && (
               <div className="form-section batch-section">
-                <h4>📦 Batch Information</h4>
+                <h4>Batch Information</h4>
                 <div className="form-grid">
                   <div className="form-group">
                     <label>Batch Number</label>
@@ -371,7 +371,7 @@ const AddProductModal = ({ isOpen, onClose, onSuccess, editItem = null }) => {
             )}
 
             <div className="form-section">
-              <h4>🏢 Supplier Information</h4>
+              <h4>Supplier Information</h4>
               <div className="form-grid">
                 <div className="form-group">
                   <label>Supplier</label>
@@ -413,7 +413,7 @@ const AddProductModal = ({ isOpen, onClose, onSuccess, editItem = null }) => {
             </div>
 
             <div className="form-section">
-              <h4>📝 Additional Information</h4>
+              <h4>Additional Information</h4>
               <div className="form-group">
                 <label>Description</label>
                 <textarea
@@ -427,7 +427,7 @@ const AddProductModal = ({ isOpen, onClose, onSuccess, editItem = null }) => {
             </div>
 
             <div className="form-section">
-              <h4>📸 Product Photo</h4>
+              <h4>Product Photo</h4>
               <div className="photo-upload-area">
                 {photoPreview ? (
                   <div className="photo-preview-container">
@@ -464,7 +464,7 @@ const AddProductModal = ({ isOpen, onClose, onSuccess, editItem = null }) => {
             {/* Preview */}
             {formData.name && formData.price && (
               <div className="product-preview">
-                <h4>👁️ Preview</h4>
+                <h4>Preview</h4>
                 <div className="preview-card">
                   <div className="preview-name">{formData.name}</div>
                   <div className="preview-details">

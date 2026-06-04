@@ -142,20 +142,14 @@ const StockLogsViewer = ({ itemId = null, filterAction = null, search = null }) 
     });
   };
 
-  const getActionIcon = (action) => {
+  const getActionLabel = (action) => {
     switch (action) {
-      case "restock":
-        return "📦";
-      case "sale":
-        return "💰";
-      case "adjustment":
-        return "📝";
-      case "remove":
-        return "🗑️";
-      case "expired":
-        return "⚠️";
-      default:
-        return "📝";
+      case "restock": return "Restock";
+      case "sale": return "Sale";
+      case "adjustment": return "Adjustment";
+      case "remove": return "Removal";
+      case "expired": return "Expired";
+      default: return "Adjustment";
     }
   };
 
@@ -205,39 +199,39 @@ const getInitials = (name) =>
       {/* Header with Stats */}
       <div className="logs-header">
         <div className="logs-title">
-          <h3>📊 Stock Activity Log</h3>
+          <h3>Stock Activity Log</h3>
           <p>Track all inventory changes and adjustments</p>
         </div>
         <button className="btn-refresh" onClick={refreshLogs} disabled={loading}>
-          {loading ? "⟳" : "🔄"} Refresh
+          {loading ? "Refreshing..." : "Refresh"}
         </button>
       </div>
 
       {/* Stats Cards */}
       <div className="logs-stats">
         <div className="stat-card additions">
-          <span className="stat-icon">📥</span>
+          <span className="stat-icon">+</span>
           <div className="stat-info">
             <span className="stat-value">+{stats.additions}</span>
             <span className="stat-label">Stock Added</span>
           </div>
         </div>
         <div className="stat-card removals">
-          <span className="stat-icon">📤</span>
+          <span className="stat-icon">-</span>
           <div className="stat-info">
             <span className="stat-value">-{stats.removals}</span>
             <span className="stat-label">Stock Removed</span>
           </div>
         </div>
         <div className="stat-card adjustments">
-          <span className="stat-icon">📝</span>
+          <span className="stat-icon">~</span>
           <div className="stat-info">
             <span className="stat-value">{stats.adjustments}</span>
             <span className="stat-label">Adjustments</span>
           </div>
         </div>
         <div className="stat-card total">
-          <span className="stat-icon">📋</span>
+          <span className="stat-icon">#</span>
           <div className="stat-info">
             <span className="stat-value">{stats.total}</span>
             <span className="stat-label">Total Entries</span>
@@ -247,7 +241,7 @@ const getInitials = (name) =>
 
       {/* Analytics Panel */}
       <div className="logs-analytics">
-        <h4>📈 Activity Overview</h4>
+        <h4>Activity Overview</h4>
         <div className="analytics-row">
           <div>
             <strong>Most Active Item:</strong>{" "}
@@ -277,7 +271,7 @@ const getInitials = (name) =>
         <div className="filter-group">
           <input
             type="text"
-            placeholder="🔍 Search logs..."
+            placeholder="Search logs..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             className="search-input"
@@ -287,11 +281,11 @@ const getInitials = (name) =>
         <div className="filter-group">
           <select value={filter} onChange={(e) => setFilter(e.target.value)}>
             <option value="all">All Actions</option>
-            <option value="restock">📦 Restock</option>
-            <option value="sale">💰 Sale</option>
-            <option value="adjustment">📝 Adjustment</option>
-            <option value="remove">🗑️ Removal</option>
-            <option value="expired">⚠️ Expired</option>
+            <option value="restock">Restock</option>
+            <option value="sale">Sale</option>
+            <option value="adjustment">Adjustment</option>
+            <option value="remove">Removal</option>
+            <option value="expired">Expired</option>
           </select>
         </div>
 
@@ -330,7 +324,7 @@ const getInitials = (name) =>
           disabled={filteredLogs.length === 0}
           title="Export audit report as PDF"
         >
-          🖨 Export PDF
+          Export PDF
         </button>
       </div>
 
@@ -343,7 +337,7 @@ const getInitials = (name) =>
           </div>
         ) : filteredLogs.length === 0 ? (
           <div className="logs-empty">
-            <span className="empty-icon">📭</span>
+            <span className="empty-icon">-</span>
             <h4>No logs found</h4>
             <p>Try adjusting your filters or search criteria</p>
           </div>
@@ -355,7 +349,7 @@ const getInitials = (name) =>
                 {log.image ? (
                   <img src={log.image} alt={log.itemName} />
                 ) : (
-                  <span>{getActionIcon(log.movementType)}</span>
+                  <span>{getActionLabel(log.movementType)}</span>
                 )}
               </div>
 

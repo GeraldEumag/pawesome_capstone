@@ -3,6 +3,7 @@ import { Outlet, NavLink, useLocation } from "react-router-dom";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { showError } from "../../utils/alert";
 import { useAuth } from "../../context/AuthContext";
+import StatusDot from "../shared/StatusDot";
 import {
   faMoon,
   faSun,
@@ -147,7 +148,7 @@ const InventoryDashboard = () => {
     },
   ].filter((item) => item.value > 0);
 
-  const pieColors = ["#ff5f93", "#f59e0b", "#ef4444"];
+  const pieColors = ["#22c55e", "#f59e0b", "#ef4444"];
 
   const inventoryDashboardClasses = [
     "inventory-dashboard",
@@ -290,8 +291,9 @@ const InventoryDashboard = () => {
                         <p>{item.stock} units remaining</p>
                       </div>
                       <div className="category-status">
-                        <div className={`status-indicator ${item.stock === 0 ? 'danger' : item.stock <= item.reorder_level ? 'warning' : 'good'}`}></div>
-                        <span>{item.stock === 0 ? 'Out of Stock' : item.stock <= item.reorder_level ? 'Low Stock' : 'In Stock'}</span>
+                        <StatusDot
+                          status={item.stock === 0 ? "out_of_stock" : item.stock <= item.reorder_level ? "low_stock" : "in_stock"}
+                        />
                       </div>
                     </div>
                   ))}

@@ -756,6 +756,16 @@
   margin-left: 0.5rem;
 }
 
+.page-ellipsis {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.4rem 0.5rem;
+  font-size: 0.85rem;
+  color: #94a3b8;
+  user-select: none;
+}
+
 /* Activity timeline */
 .ui-activity {
   background: var(--color-surface-solid, white);

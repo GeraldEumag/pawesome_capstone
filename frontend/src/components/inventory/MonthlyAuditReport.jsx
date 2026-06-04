@@ -283,10 +283,10 @@ const MonthlyAuditReport = () => {
 
             <div className="audit-header-actions">
               <button onClick={handleExportCSV} className="btn-export-csv">
-                📥 Export CSV
+                Export CSV
               </button>
               <button onClick={handleExportPDF} className="btn-export-pdf">
-                📄 Export PDF
+                Export PDF
               </button>
             </div>
           </div>

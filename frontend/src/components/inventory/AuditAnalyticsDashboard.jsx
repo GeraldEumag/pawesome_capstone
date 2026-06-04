@@ -367,10 +367,10 @@ const AuditAnalyticsDashboard = () => {
 
           <div className="audit-header-actions">
             <button onClick={handleExportCSV} className="btn-export-csv">
-              📥 Export CSV
+              Export CSV
             </button>
             <button onClick={handleExportPDF} className="btn-export-pdf">
-              📄 Export PDF
+              Export PDF
             </button>
           </div>
         </div>
@@ -392,19 +392,19 @@ const AuditAnalyticsDashboard = () => {
                 className={chartType === 'line' ? 'active' : ''}
                 onClick={() => setChartType('line')}
               >
-                📈 Line
+                Line
               </button>
-              <button 
+              <button
                 className={chartType === 'bar' ? 'active' : ''}
                 onClick={() => setChartType('bar')}
               >
-                📊 Bar
+                Bar
               </button>
               <button 
                 className={chartType === 'pie' ? 'active' : ''}
                 onClick={() => setChartType('pie')}
               >
-                🥧 Pie
+                Pie
               </button>
             </div>
           </div>

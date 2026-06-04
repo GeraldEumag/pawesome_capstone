@@ -54,11 +54,11 @@ const InventoryAdjustmentHistory = () => {
     return "default";
   };
 
-  const getTypeIcon = (type) => {
-    if (type === "add") return "➕";
-    if (type === "remove") return "➖";
-    if (type === "set") return "📝";
-    return "⚙️";
+  const getTypeLabel = (type) => {
+    if (type === "add") return "Add";
+    if (type === "remove") return "Remove";
+    if (type === "set") return "Set";
+    return "Adjustment";
   };
 
   return (
@@ -111,7 +111,7 @@ const InventoryAdjustmentHistory = () => {
           </div>
         ) : filteredLogs.length === 0 ? (
           <div className="history-empty">
-            <div className="empty-icon">📋</div>
+            <div className="empty-icon">-</div>
             <h3>No adjustment records found</h3>
             <p>Try adjusting your search or filters</p>
           </div>
@@ -155,8 +155,7 @@ const InventoryAdjustmentHistory = () => {
 
                     <td className="type-cell">
                       <span className={`history-badge ${getTypeClass(type)}`}>
-                        <span className="badge-icon">{getTypeIcon(type)}</span>
-                        {type}
+                        <span className="badge-icon">{getTypeLabel(type)}</span>
                       </span>
                     </td>
 

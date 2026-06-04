@@ -3,9 +3,9 @@ import { inventoryApi } from "../../api/inventory";
 import "./StockAdjustmentModal.css";
 import { showAlert, showError } from "../../utils/alert";
 
-const StockAdjustmentModal = ({ isOpen, onClose, item, onSuccess }) => {
-  const [adjustmentType, setAdjustmentType] = useState("add"); // 'add', 'remove'
-  const [quantity, setQuantity] = useState("");
+const StockAdjustmentModal = ({ isOpen, onClose, item, onSuccess, initialType, initialQuantity }) => {
+  const [adjustmentType, setAdjustmentType] = useState(initialType || "add"); // 'add', 'remove'
+  const [quantity, setQuantity] = useState(initialQuantity ? String(initialQuantity) : "");
   const [reason, setReason] = useState("");
   const [customReason, setCustomReason] = useState("");
   const [loading, setLoading] = useState(false);
@@ -16,21 +16,33 @@ const StockAdjustmentModal = ({ isOpen, onClose, item, onSuccess }) => {
   const currentStock = getStock(item);
 
   const resetForm = () => {
-    setAdjustmentType("add");
-    setQuantity("");
+    setAdjustmentType(initialType || "add");
+    setQuantity(initialQuantity ? String(initialQuantity) : "");
     setReason("");
     setCustomReason("");
     setError(null);
   };
 
-  // Auto-suggest quantity based on adjustment type
+  // Reset form when modal opens so new initialType/initialQuantity are respected
   useEffect(() => {
-    if (adjustmentType === "remove" && currentStock > 0) {
+    if (isOpen) {
+      setAdjustmentType(initialType || "add");
+      setQuantity(initialQuantity ? String(initialQuantity) : "");
+      setReason("");
+      setCustomReason("");
+      setError(null);
+    }
+  }, [isOpen, initialType, initialQuantity]);
+
+  // Auto-suggest quantity based on adjustment type (only when user switches type manually)
+  useEffect(() => {
+    if (!isOpen) return;
+    if (adjustmentType === "remove" && currentStock > 0 && !initialQuantity) {
       setQuantity(Math.min(currentStock, 5).toString());
-    } else if (adjustmentType === "add") {
+    } else if (adjustmentType === "add" && !initialQuantity) {
       setQuantity("");
     }
-  }, [adjustmentType, item, currentStock]);
+  }, [adjustmentType, item, currentStock, isOpen, initialQuantity]);
 
 
   const handleClose = () => {
@@ -114,6 +126,9 @@ const StockAdjustmentModal = ({ isOpen, onClose, item, onSuccess }) => {
         return [
           "Damaged/expired",
           "Returned to supplier",
+          "Lost/stolen",
+          "Used for internal",
+          "Other",
         ];
       default:
         return ["Other"];
@@ -127,7 +142,7 @@ const StockAdjustmentModal = ({ isOpen, onClose, item, onSuccess }) => {
       <div className="modal-content stock-modal" onClick={(e) => e.stopPropagation()}>
         <div className="modal-header">
           <div className="modal-title">
-            <span className="modal-icon">📦</span>
+            <span className="modal-icon">Stock</span>
             <div>
               <h3>Adjust Stock</h3>
               <p>Update inventory quantity with reason tracking</p>
@@ -167,7 +182,7 @@ const StockAdjustmentModal = ({ isOpen, onClose, item, onSuccess }) => {
                   className={`type-btn ${adjustmentType === "add" ? "active" : ""}`}
                   onClick={() => setAdjustmentType("add")}
                 >
-                  <span className="icon">➕</span>
+                  <span className="icon">+</span>
                   <span>Add Stock</span>
                 </button>
                 <button
@@ -175,7 +190,7 @@ const StockAdjustmentModal = ({ isOpen, onClose, item, onSuccess }) => {
                   className={`type-btn ${adjustmentType === "remove" ? "active" : ""}`}
                   onClick={() => setAdjustmentType("remove")}
                 >
-                  <span className="icon">➖</span>
+                  <span className="icon">-</span>
                   <span>Remove Stock</span>
                 </button>
               </div>
@@ -263,14 +278,14 @@ const StockAdjustmentModal = ({ isOpen, onClose, item, onSuccess }) => {
             {/* Smart Alert Warnings */}
             {quantity && getNewStockPreview() <= 0 && (
               <div className="alert-danger">
-                <span className="alert-icon">⚠️</span>
+                <span className="alert-icon">!</span>
                 <span>This will result in <strong>OUT OF STOCK</strong></span>
               </div>
             )}
 
             {quantity && getNewStockPreview() > 0 && getNewStockPreview() <= 10 && (
               <div className="alert-warning">
-                <span className="alert-icon">⚠️</span>
+                <span className="alert-icon">!</span>
                 <span>This will trigger <strong>LOW STOCK</strong> alert</span>
               </div>
             )}
@@ -284,8 +299,8 @@ const StockAdjustmentModal = ({ isOpen, onClose, item, onSuccess }) => {
                 </div>
                 <div className="preview-row adjustment">
                   <span>
-                    {adjustmentType === "add" && "➕ Adding:"}
-                    {adjustmentType === "remove" && "➖ Removing:"}
+                    {adjustmentType === "add" && "Adding:"}
+                    {adjustmentType === "remove" && "Removing:"}
                   </span>
                   <strong>{quantity} units</strong>
                 </div>
@@ -301,7 +316,7 @@ const StockAdjustmentModal = ({ isOpen, onClose, item, onSuccess }) => {
             {/* Stock History Panel */}
             <div className="stock-history-panel">
               <h4 className="history-title">
-                <span>📋</span> Recent Adjustments
+                Recent Adjustments
               </h4>
               {item.history?.length ? (
                 <ul className="history-list">
@@ -323,7 +338,7 @@ const StockAdjustmentModal = ({ isOpen, onClose, item, onSuccess }) => {
                       </div>
                       {log.performed_by && (
                         <div className="history-user">
-                          <span>👤 {log.performed_by}</span>
+                          <span>{log.performed_by}</span>
                           {log.role && <span className="user-role">({log.role})</span>}
                         </div>
                       )}
