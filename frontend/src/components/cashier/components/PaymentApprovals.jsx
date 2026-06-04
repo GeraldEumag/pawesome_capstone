@@ -340,14 +340,16 @@ const PaymentApprovals = () => {
                 <div className="pa-card-actions">
                   <button
                     className="pa-btn-verify"
-                    onClick={() => verifyPayment(payment)}
+                    onClick={() => {
+                      if (payment.proof_url) {
+                        openProof(payment.proof_url, payment);
+                      } else {
+                        showWarning("No proof available for this payment");
+                      }
+                    }}
                     disabled={isVerifyLoading || isRejectLoading}
                   >
-                    {isVerifyLoading ? (
-                      <><FontAwesomeIcon icon={faSpinner} spin /> Verifying...</>
-                    ) : (
-                      <><FontAwesomeIcon icon={faCheck} /> Verify</>
-                    )}
+                    <FontAwesomeIcon icon={faCheck} /> Verify
                   </button>
                   <button
                     className="pa-btn-reject"

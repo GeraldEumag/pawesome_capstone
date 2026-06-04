@@ -886,14 +886,15 @@
 }
 
 .pa-receipt {
-  background: white;
+  background: var(--color-surface-solid, #ffffff);
   padding: 32px;
   font-family: 'Courier New', monospace;
+  color: var(--color-text, #1f2937);
 }
 
 .pa-receipt-header {
   text-align: center;
-  border-bottom: 2px dashed #ccc;
+  border-bottom: 2px dashed var(--color-border, #ccc);
   padding-bottom: 20px;
   margin-bottom: 20px;
 }
@@ -901,14 +902,14 @@
 .pa-receipt-header h2 {
   margin: 0 0 8px 0;
   font-size: 1.5rem;
-  color: #1f2937;
+  color: var(--color-heading, #1f2937);
   letter-spacing: 2px;
 }
 
 .pa-receipt-number {
   margin: 0;
   font-size: 0.9rem;
-  color: #6b7280;
+  color: var(--color-muted, #6b7280);
   font-family: 'Courier New', monospace;
 }
 
@@ -917,7 +918,7 @@
   flex-direction: column;
   gap: 12px;
   padding: 20px 0;
-  border-bottom: 2px dashed #ccc;
+  border-bottom: 2px dashed var(--color-border, #ccc);
 }
 
 .pa-receipt-row {
@@ -928,11 +929,11 @@
 }
 
 .pa-receipt-row span:first-child {
-  color: #6b7280;
+  color: var(--color-muted, #6b7280);
 }
 
 .pa-receipt-row span:last-child {
-  color: #1f2937;
+  color: var(--color-text, #1f2937);
   font-weight: 600;
 }
 
@@ -944,30 +945,49 @@
 .pa-receipt-footer p {
   margin: 0;
   font-size: 0.85rem;
-  color: #6b7280;
+  color: var(--color-muted, #6b7280);
   font-style: italic;
 }
 
 /* Print styles for receipt */
 @media print {
   .pa-modal-overlay {
-    background: white;
-    position: static;
-    padding: 0;
+    background: white !important;
+    position: static !important;
+    padding: 0 !important;
+    display: block !important;
   }
-  
+
   .pa-modal {
-    box-shadow: none;
-    max-height: none;
+    box-shadow: none !important;
+    max-height: none !important;
+    border: none !important;
+    border-radius: 0 !important;
+    width: 100% !important;
+    max-width: 100% !important;
   }
-  
+
   .pa-modal-footer,
-  .pa-modal-header button {
+  .pa-modal-header,
+  .pa-modal-close {
     display: none !important;
   }
-  
+
   .pa-receipt {
-    padding: 20px;
+    padding: 20px !important;
+    background: white !important;
+    color: #1f2937 !important;
+  }
+
+  .pa-receipt-header h2,
+  .pa-receipt-row span:last-child {
+    color: #1f2937 !important;
+  }
+
+  .pa-receipt-number,
+  .pa-receipt-row span:first-child,
+  .pa-receipt-footer p {
+    color: #6b7280 !important;
   }
 }
 

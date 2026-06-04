@@ -14,6 +14,14 @@ class PaymentVerificationService
      */
     public function verify(string $type, int $id, $request)
     {
+        $referenceNumber = $request->input('reference_number');
+        if (!$referenceNumber || trim($referenceNumber) === '') {
+            return ['success' => false, 'message' => 'Reference number is required to verify payment', 'status' => 422];
+        }
+        if (strlen(trim($referenceNumber)) < 6) {
+            return ['success' => false, 'message' => 'Reference number must be at least 6 characters', 'status' => 422];
+        }
+
         try {
             if ($type === 'boarding') {
                 return $this->verifyTablePayment('boardings', 'BD-REC-', $id, $request, 'Boarding payment verified successfully.');
@@ -44,8 +52,10 @@ class PaymentVerificationService
                     'payment_status' => 'paid',
                     'paid_at' => now(),
                     'verified_by' => auth()->id(),
+                    'verified_at' => now(),
                     'cashier_remarks' => $request->input('cashier_remarks', 'Payment verified by cashier'),
                     'receipt_number' => $receiptNumber,
+                    'reference_number' => $referenceNumber,
                 ]);
 
                 return ['success' => true, 'message' => 'Service request payment verified successfully.', 'payment_status' => 'paid', 'receipt_number' => $receiptNumber];
@@ -64,8 +74,10 @@ class PaymentVerificationService
                 'payment_status' => 'paid',
                 'paid_at' => now(),
                 'verified_by' => auth()->id(),
+                'verified_at' => now(),
                 'cashier_remarks' => $request->input('cashier_remarks'),
                 'receipt_number' => $receiptNumber,
+                'reference_number' => $referenceNumber,
                 'updated_at' => now(),
             ]);
 
@@ -151,8 +163,10 @@ class PaymentVerificationService
             'payment_status' => 'paid',
             'paid_at' => now(),
             'verified_by' => auth()->id(),
+            'verified_at' => now(),
             'cashier_remarks' => $request->input('cashier_remarks', 'Payment verified by cashier'),
             'receipt_number' => $receiptNumber,
+            'reference_number' => $referenceNumber,
             'updated_at' => now(),
         ]);
 
