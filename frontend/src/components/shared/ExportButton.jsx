@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faDownload, faFileCsv, faFileExcel, faFilePdf } from '@fortawesome/free-solid-svg-icons';
+import { showError } from '../../utils/alert';
 import './ExportButton.css';
 
 /**
@@ -30,7 +31,7 @@ const ExportButton = ({
       }
     } catch (err) {
       console.error('Export error:', err);
-      alert('Export failed. Please try again.');
+      showError('Export failed. Please try again.');
     } finally {
       setIsExporting(false);
     }

@@ -4,13 +4,14 @@
  */
 
 import { format } from 'date-fns';
+import { showWarning, showError } from './alert';
 
 /**
  * Export data to CSV
  */
 export const exportToCSV = (data, filename, headers) => {
   if (!data || data.length === 0) {
-    alert('No data to export');
+    showWarning('No data to export');
     return;
   }
 
@@ -40,7 +41,7 @@ export const exportToCSV = (data, filename, headers) => {
  */
 export const exportToExcel = async (data, filename, sheetName = 'Data') => {
   if (!data || data.length === 0) {
-    alert('No data to export');
+    showWarning('No data to export');
     return;
   }
 
@@ -76,7 +77,7 @@ export const exportToExcel = async (data, filename, sheetName = 'Data') => {
  */
 export const exportToPDF = async (data, filename, title, headers) => {
   if (!data || data.length === 0) {
-    alert('No data to export');
+    showWarning('No data to export');
     return;
   }
 
@@ -108,7 +109,7 @@ export const exportToPDF = async (data, filename, title, headers) => {
     doc.save(`${filename}_${format(new Date(), 'yyyy-MM-dd')}.pdf`);
   } catch (err) {
     console.error('PDF export error:', err);
-    alert('PDF export failed. Falling back to CSV.');
+    showError('PDF export failed. Falling back to CSV.');
     exportToCSV(data, filename, headers);
   }
 };

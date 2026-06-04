@@ -152,7 +152,7 @@ const AutomatedAlerts = () => {
         setAlerts(alerts.filter(a => a.id !== id));
       } catch (err) {
         console.error('Delete alert error:', err);
-        alert('Failed to delete alert. Please try again.');
+        showError('Failed to delete alert. Please try again.');
       }
     }
   };

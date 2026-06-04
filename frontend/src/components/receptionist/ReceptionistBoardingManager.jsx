@@ -23,6 +23,7 @@ import {
 } from "@fortawesome/free-solid-svg-icons";
 import "./ReceptionistCheckInForm.css";
 import { apiRequest, getAuthenticatedFileUrl } from "../../api/client";
+import { showError } from "../../utils/alert";
 import PetAvatar from "../shared/PetAvatar";
 import ServiceManagerModal from "./ServiceManagerModal";
 import {
@@ -413,7 +414,7 @@ const ReceptionistBoardingManager = () => {
                         onClick={async () => {
                           const win = window.open("", "_blank");
                           if (!win) {
-                            alert("Popup blocked. Please allow popups for this site.");
+                            showError("Popup blocked. Please allow popups for this site.");
                             return;
                           }
                           try {
@@ -424,7 +425,7 @@ const ReceptionistBoardingManager = () => {
                           } catch (err) {
                             win.close();
                             console.error("Vaccination card open error:", err);
-                            alert(err.message || "Failed to open vaccination card.");
+                            showError(err.message || "Failed to open vaccination card.");
                           }
                         }}
                       >

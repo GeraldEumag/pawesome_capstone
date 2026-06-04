@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { inventoryApi } from "../../api/inventory";
+import { showError } from "../../utils/alert";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
   faPlus,
@@ -135,7 +136,7 @@ const SupplierModal = ({
       await inventoryApi.deleteSupplier(id);
       await fetchSuppliers();
     } catch (err) {
-      alert(err.message || "Failed to delete supplier");
+      showError(err.message || "Failed to delete supplier");
     } finally {
       setLoading(false);
     }
