@@ -255,10 +255,27 @@ const Grooming = () => {
       setProcessingId(appointment.id);
       setError("");
 
-      await apiRequest(`/receptionist/requests/${appointment.id}/status`, {
-        method: "PATCH",
-        body: JSON.stringify({ status: newStatus }),
-      });
+      // Use dedicated approve endpoint for approval so backend creates Grooming record
+      if (newStatus === "approved") {
+        await apiRequest(`/receptionist/requests/${appointment.id}/approve`, {
+          method: "POST",
+          body: JSON.stringify({
+            receptionist_remarks: "Approved via grooming dashboard",
+          }),
+        });
+      } else if (newStatus === "rejected") {
+        await apiRequest(`/receptionist/requests/${appointment.id}/reject`, {
+          method: "POST",
+          body: JSON.stringify({
+            rejection_reason: "Rejected via grooming dashboard",
+          }),
+        });
+      } else {
+        await apiRequest(`/receptionist/requests/${appointment.id}/status`, {
+          method: "PATCH",
+          body: JSON.stringify({ status: newStatus }),
+        });
+      }
 
       setGroomingAppointments((prev) =>
         prev.map((item) =>

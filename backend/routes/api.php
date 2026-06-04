@@ -75,12 +75,7 @@ Route::middleware(['auth.api', 'throttle:api', 'role:admin'])->group(function ()
     Route::post('/admin/settings/theme', [SystemSettingController::class, 'updateThemeColor']);
 });
 
-// Service Request API endpoints
-Route::middleware(['auth.api', 'throttle:api', 'role:receptionist,admin'])->group(function () {
-    Route::get('/receptionist/requests', [ServiceRequestController::class, 'receptionistRequests']);
-    Route::patch('/receptionist/requests/{id}/status', [ServiceRequestController::class, 'updateStatus']);
-});
-
+// Service Request API endpoints — ALL handled by ReceptionistRequestController
 Route::middleware(['auth.api', 'throttle:api', 'role:cashier,veterinary,receptionist,admin,inventory'])->prefix('billing')->group(function () {
     Route::get('/inventory-items', [ServiceBillingController::class, 'getInventoryItems']);
     Route::get('/{serviceType}/{serviceId}/summary', [ServiceBillingController::class, 'getServiceSummary']);

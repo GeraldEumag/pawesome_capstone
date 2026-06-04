@@ -51,14 +51,39 @@ const VetAppointments = () => {
     fetchVeterinarians();
   }, []);
 
+  const isVetRequest = (item) => {
+    const values = [
+      item.type,
+      item.request_type,
+      item.service_type,
+      item.category,
+      item.source,
+      item.service_name,
+      item.service,
+      item.name,
+    ]
+      .filter(Boolean)
+      .map((value) => String(value).toLowerCase());
+
+    return values.some(
+      (value) =>
+        value === "vet" ||
+        value === "veterinary" ||
+        value.includes("veterinary") ||
+        value.includes("consult") ||
+        value.includes("vaccination") ||
+        value.includes("medical")
+    );
+  };
+
   const fetchAppointments = async () => {
     try {
       setLoading(true);
       const data = await apiRequest("/receptionist/requests");
       
-      // Filter only vet requests
+      // Filter only vet requests using robust type detection
       const requestData = Array.isArray(data) ? data : (data.requests || []);
-      const vetOnly = requestData.filter(item => item.type === "vet");
+      const vetOnly = requestData.filter(isVetRequest);
       
       const transformedAppointments = vetOnly.map(item => ({
         id: `APT-${String(item.id).padStart(3, '0')}`,
@@ -145,9 +170,9 @@ const VetAppointments = () => {
     
     try {
       setActionLoading(true);
-      await apiRequest(`/receptionist/requests/${appointmentId}/status`, {
-        method: "PATCH",
-        body: JSON.stringify({ status: "rejected" }),
+      await apiRequest(`/receptionist/requests/${appointmentId}/reject`, {
+        method: "POST",
+        body: JSON.stringify({ rejection_reason: reason }),
       });
       
       await fetchAppointments();

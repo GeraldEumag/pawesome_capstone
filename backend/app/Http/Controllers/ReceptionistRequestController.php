@@ -21,23 +21,21 @@ class ReceptionistRequestController extends Controller
 {
     private function requestIsVet(ServiceRequest $serviceRequest): bool
     {
-        return strtolower((string) $serviceRequest->request_type) === 'vet'
-            || str_contains(strtolower((string) $serviceRequest->service_name), 'vet')
-            || str_contains(strtolower((string) $serviceRequest->service_name), 'consult');
+        $requestType = strtolower((string) $serviceRequest->request_type);
+
+        return $requestType === 'vet' || $requestType === 'veterinary';
     }
 
     private function requestIsGrooming(ServiceRequest $serviceRequest): bool
     {
-        return strtolower((string) $serviceRequest->request_type) === 'grooming'
-            || str_contains(strtolower((string) $serviceRequest->service_name), 'groom');
+        return strtolower((string) $serviceRequest->request_type) === 'grooming';
     }
 
     private function requestIsHotel(ServiceRequest $serviceRequest): bool
     {
-        return strtolower((string) $serviceRequest->request_type) === 'hotel'
-            || strtolower((string) $serviceRequest->request_type) === 'boarding'
-            || str_contains(strtolower((string) $serviceRequest->service_name), 'hotel')
-            || str_contains(strtolower((string) $serviceRequest->service_name), 'boarding');
+        $requestType = strtolower((string) $serviceRequest->request_type);
+
+        return $requestType === 'hotel' || $requestType === 'boarding';
     }
 
     private function resolveCustomer(ServiceRequest $serviceRequest): ?Customer
@@ -120,46 +118,131 @@ class ReceptionistRequestController extends Controller
             if ($service) {
                 return $service;
             }
+        }
 
+        // Vet requests: match by veterinary category
+        if ($this->requestIsVet($serviceRequest)) {
             $category = collect(['Consultation', 'Vaccination', 'Surgery', 'Dental'])
                 ->first(fn ($item) => str_contains(strtolower($serviceName), strtolower($item)));
 
             if ($category) {
                 $service = Service::where('category', $category)->first();
-
                 if ($service) {
                     return $service;
                 }
             }
+
+            $service = Service::whereIn('category', ['Consultation', 'Vaccination', 'Surgery', 'Dental'])
+                    ->orderByRaw("CASE category WHEN 'Consultation' THEN 1 WHEN 'Vaccination' THEN 2 WHEN 'Surgery' THEN 3 WHEN 'Dental' THEN 4 ELSE 5 END")
+                    ->first();
+
+            if ($service) {
+                return $service;
+            }
+
+            $createData = [
+                'category' => 'Consultation',
+                'price' => 500,
+                'description' => 'Default veterinary consultation service for approved vet requests.',
+                'is_active' => true,
+            ];
+
+            if (!Schema::hasColumn('services', 'category')) {
+                unset($createData['category']);
+            }
+
+            if (!Schema::hasColumn('services', 'is_active')) {
+                unset($createData['is_active']);
+            }
+
+            return Service::firstOrCreate(
+                ['name' => 'Veterinary Consultation'],
+                $createData
+            );
         }
 
-        $service = Service::whereIn('category', ['Consultation', 'Vaccination', 'Surgery', 'Dental'])
-                ->orderByRaw("CASE category WHEN 'Consultation' THEN 1 WHEN 'Vaccination' THEN 2 WHEN 'Surgery' THEN 3 WHEN 'Dental' THEN 4 ELSE 5 END")
-                ->first();
+        // Grooming requests
+        if ($this->requestIsGrooming($serviceRequest)) {
+            $service = Service::whereRaw('LOWER(name) = ?', [strtolower($serviceName)])->first();
 
+            if ($service) {
+                return $service;
+            }
+
+            $service = Service::where('category', 'Grooming')->first();
+            if ($service) {
+                return $service;
+            }
+
+            $createData = [
+                'category' => 'Grooming',
+                'price' => 800,
+                'description' => 'Default grooming service for approved grooming requests.',
+                'is_active' => true,
+            ];
+
+            if (!Schema::hasColumn('services', 'category')) {
+                unset($createData['category']);
+            }
+
+            if (!Schema::hasColumn('services', 'is_active')) {
+                unset($createData['is_active']);
+            }
+
+            return Service::firstOrCreate(
+                ['name' => 'Standard Grooming'],
+                $createData
+            );
+        }
+
+        // Hotel / Boarding requests
+        if ($this->requestIsHotel($serviceRequest)) {
+            $service = Service::whereRaw('LOWER(name) = ?', [strtolower($serviceName)])->first();
+
+            if ($service) {
+                return $service;
+            }
+
+            $service = Service::where('category', 'Hotel')->first();
+            if ($service) {
+                return $service;
+            }
+
+            $createData = [
+                'category' => 'Hotel',
+                'price' => 1500,
+                'description' => 'Default pet hotel/boarding service for approved hotel requests.',
+                'is_active' => true,
+            ];
+
+            if (!Schema::hasColumn('services', 'category')) {
+                unset($createData['category']);
+            }
+
+            if (!Schema::hasColumn('services', 'is_active')) {
+                unset($createData['is_active']);
+            }
+
+            return Service::firstOrCreate(
+                ['name' => 'Pet Hotel / Boarding'],
+                $createData
+            );
+        }
+
+        // Generic fallback: try to find any matching service by name, then any active service
+        if ($serviceName !== '') {
+            $service = Service::whereRaw('LOWER(name) LIKE ?', ['%' . strtolower($serviceName) . '%'])->first();
+            if ($service) {
+                return $service;
+            }
+        }
+
+        $service = Service::where('is_active', true)->first();
         if ($service) {
             return $service;
         }
 
-        $createData = [
-            'category' => 'Consultation',
-            'price' => 500,
-            'description' => 'Default veterinary consultation service for approved vet requests.',
-            'is_active' => true,
-        ];
-
-        if (!Schema::hasColumn('services', 'category')) {
-            unset($createData['category']);
-        }
-
-        if (!Schema::hasColumn('services', 'is_active')) {
-            unset($createData['is_active']);
-        }
-
-        return Service::firstOrCreate(
-            ['name' => 'Veterinary Consultation'],
-            $createData
-        );
+        return null;
     }
 
     private function formatRequest(object $item): array
@@ -344,6 +427,109 @@ class ReceptionistRequestController extends Controller
             }
         }
 
+        // Safety net: create/update linked records when approving via PATCH
+        if ($newStatus === 'approved') {
+            $customer = $this->resolveCustomer($serviceRequest);
+            $pet = $this->resolvePet($serviceRequest, $customer);
+
+            if (!$customer && $pet) {
+                $customer = $pet->customer;
+            }
+
+            if ($customer) {
+                if (!$serviceRequest->customer_email) {
+                    $serviceRequest->customer_email = $customer->email;
+                }
+                if (!$serviceRequest->customer_name) {
+                    $serviceRequest->customer_name = $customer->name;
+                }
+            }
+            if ($pet && !$serviceRequest->pet_id) {
+                $serviceRequest->pet_id = $pet->id;
+            }
+
+            // Grooming: create record if customer and pet resolved
+            if ($this->requestIsGrooming($serviceRequest) && $customer && $pet) {
+                if (Schema::hasColumn('groomings', 'service_request_id')) {
+                    $service = $this->resolveService($serviceRequest);
+                    $price = $service ? ($service->price ?? 0) : 0;
+
+                    $grooming = Grooming::firstOrCreate(
+                        ['service_request_id' => $serviceRequest->id],
+                        [
+                            'customer_id' => $customer->id,
+                            'pet_id' => $pet->id,
+                            'service' => $serviceRequest->service_name ?? 'Grooming',
+                            'appointment_date' => $serviceRequest->request_date,
+                            'appointment_time' => $serviceRequest->request_time,
+                            'notes' => $serviceRequest->notes,
+                            'amount' => $price,
+                            'base_amount' => $price,
+                            'total_amount' => $price,
+                            'balance_due' => $price,
+                            'status' => 'approved',
+                            'payment_status' => 'unpaid',
+                        ]
+                    );
+
+                    if (!$grooming->wasRecentlyCreated) {
+                        $grooming->update([
+                            'status' => 'approved',
+                            'payment_status' => 'unpaid',
+                        ]);
+                    }
+                }
+            }
+
+            // Hotel: create record if customer and pet resolved
+            if ($this->requestIsHotel($serviceRequest) && $customer && $pet) {
+                if (Schema::hasColumn('boardings', 'service_request_id')) {
+                    $checkIn = $serviceRequest->request_date;
+                    $checkOut = $serviceRequest->check_out_date;
+                    if (!$checkOut && $checkIn) {
+                        $checkOut = Carbon::parse($checkIn)->addDay()->toDateString();
+                    }
+
+                    $boarding = Boarding::firstOrCreate(
+                        ['service_request_id' => $serviceRequest->id],
+                        [
+                            'pet_id' => $pet->id,
+                            'pet_name' => $pet->name ?? $serviceRequest->pet_name,
+                            'pet_type' => $pet->species ?? $pet->type ?? $serviceRequest->pet_type,
+                            'customer_id' => $customer->id,
+                            'customer_name' => $customer->name ?? $serviceRequest->customer_name,
+                            'customer_email' => $customer->email ?? $serviceRequest->customer_email,
+                            'check_in' => $checkIn,
+                            'check_out' => $checkOut,
+                            'room_name' => $serviceRequest->room_name,
+                            'room_type' => $serviceRequest->room_type,
+                            'rate_per_day' => $serviceRequest->daily_rate,
+                            'number_of_days' => $serviceRequest->total_days ?? 1,
+                            'total_amount' => $serviceRequest->total_amount ?? 0,
+                            'status' => 'approved',
+                            'payment_status' => 'unpaid',
+                            'notes' => $serviceRequest->notes,
+                            'stay_type' => 'hotel_boarding',
+                        ]
+                    );
+
+                    if (!$boarding->wasRecentlyCreated) {
+                        $boarding->update([
+                            'status' => 'approved',
+                            'payment_status' => 'unpaid',
+                        ]);
+                    }
+                }
+            }
+
+            // Vet: only update existing appointment if one exists (can't create without vet assignment)
+            if ($this->requestIsVet($serviceRequest)) {
+                if (Schema::hasColumn('appointments', 'service_request_id')) {
+                    Appointment::where('service_request_id', $serviceRequest->id)->update(['status' => 'approved']);
+                }
+            }
+        }
+
         WorkflowNotifier::notifyEmail(
             $serviceRequest->customer_email,
             'Service Request Updated',
@@ -398,7 +584,11 @@ class ReceptionistRequestController extends Controller
         }
 
         // --- Vet requests: create/update Appointment ---
-        if ($this->requestIsVet($serviceRequest)) {
+        // Extra safety: never treat hotel/boarding as vet regardless of request_type value
+        $isHotelRequest = $this->requestIsHotel($serviceRequest);
+        $isGroomingRequest = $this->requestIsGrooming($serviceRequest);
+
+        if ($this->requestIsVet($serviceRequest) && !$isHotelRequest && !$isGroomingRequest) {
             $vet = User::find($validated['veterinarian_id'] ?? null);
 
             if (!$vet || !in_array($vet->role, ['veterinary', 'vet', 'veterinarian'], true)) {

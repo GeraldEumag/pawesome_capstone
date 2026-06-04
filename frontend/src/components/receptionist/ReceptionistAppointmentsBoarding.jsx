@@ -285,27 +285,56 @@ const ReceptionistAppointmentsBoarding = () => {
       const isBoarding = item.source === "boarding";
       const isGrooming = item.source === "grooming";
 
+      // Use service_request ID when available so we never send a boarding/appointment/grooming
+      // table ID into the /receptionist/requests/{id} endpoint (which expects a ServiceRequest ID).
+      const requestId = item.serviceRequestId || item.id;
+
       if (action === "approve") {
-        // Pending items always come from service_request source
-        endpoint = `/receptionist/requests/${item.id}/approve`;
-        payload = {
-          receptionist_remarks: extra.remarks || "Approved by receptionist",
-          ...(item.type === "vet" && extra.veterinarianId
-            ? { veterinarian_id: Number(extra.veterinarianId) }
-            : {}),
-        };
+        if (item.source === "service_request" || item.serviceRequestId) {
+          endpoint = `/receptionist/requests/${requestId}/approve`;
+        } else if (isBoarding) {
+          endpoint = `/receptionist/boarding-requests/${item.id}/approve`;
+        } else if (isGrooming) {
+          endpoint = `/grooming/${item.id}/status`;
+          method = "PUT";
+          payload = { status: "approved" };
+        } else {
+          endpoint = `/receptionist/requests/${requestId}/approve`;
+        }
+
+        if (method === "POST") {
+          payload = {
+            receptionist_remarks: extra.remarks || "Approved by receptionist",
+            ...(item.type === "vet" && extra.veterinarianId
+              ? { veterinarian_id: Number(extra.veterinarianId) }
+              : {}),
+          };
+        }
       } else if (action === "reject") {
         const confirmed = await showConfirm("Reject this request?");
         if (!confirmed) { setBusyAction(""); return; }
-        endpoint = `/receptionist/requests/${item.id}/reject`;
-        payload = { rejection_reason: extra.reason || "Rejected by receptionist" };
+
+        if (item.source === "service_request" || item.serviceRequestId) {
+          endpoint = `/receptionist/requests/${requestId}/reject`;
+          payload = { rejection_reason: extra.reason || "Rejected by receptionist" };
+        } else if (isBoarding) {
+          endpoint = `/receptionist/boarding-requests/${item.id}/reject`;
+          payload = { rejection_reason: extra.reason || "Rejected by receptionist" };
+        } else if (isGrooming) {
+          endpoint = `/grooming/${item.id}/status`;
+          method = "PUT";
+          payload = { status: "rejected" };
+        } else {
+          endpoint = `/receptionist/requests/${requestId}/reject`;
+          payload = { rejection_reason: extra.reason || "Rejected by receptionist" };
+        }
       } else if (action === "check_in") {
         const confirmed = await showConfirm(`Check in ${item.petName}?`);
         if (!confirmed) { setBusyAction(""); return; }
         if (isBoarding) {
           endpoint = `/receptionist/boarding-requests/${item.id}/check-in`;
         } else {
-          endpoint = `/receptionist/requests/${item.id}/status`;
+          endpoint = `/receptionist/requests/${requestId}/status`;
           method = "PATCH";
           payload = { status: "checked_in" };
         }
@@ -321,7 +350,7 @@ const ReceptionistAppointmentsBoarding = () => {
         if (isBoarding) {
           endpoint = `/receptionist/boarding-requests/${item.id}/check-out`;
         } else {
-          endpoint = `/receptionist/requests/${item.id}/status`;
+          endpoint = `/receptionist/requests/${requestId}/status`;
           method = "PATCH";
           payload = { status: "completed" };
         }

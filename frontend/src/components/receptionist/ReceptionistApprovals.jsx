@@ -452,7 +452,10 @@ const ReceptionistApprovals = () => {
 
     const requestId = getRequestId(selectedRequest);
     const hotelRequest = getRequestType(selectedRequest) === "hotel";
-    if (!hotelRequest) return;
+    const isBoardingRecord = selectedRequest.approval_source === "boarding";
+
+    // Only verify vaccination for actual Boarding records, not ServiceRequest hotel items
+    if (!hotelRequest || !isBoardingRecord) return;
 
     try {
       setProcessingId(requestId);
@@ -477,6 +480,7 @@ const ReceptionistApprovals = () => {
     const requestId = getRequestId(selectedRequest);
     const vetRequest = isVetRequest(selectedRequest);
     const hotelRequest = getRequestType(selectedRequest) === "hotel";
+    const isBoardingRecord = selectedRequest.approval_source === "boarding";
     const veterinarianId = actionForm.veterinarianId || vetAssignments[requestId];
 
     if (vetRequest && !veterinarianId) {
@@ -497,7 +501,7 @@ const ReceptionistApprovals = () => {
       }
 
       await apiRequest(
-        hotelRequest
+        (hotelRequest && isBoardingRecord)
           ? `/receptionist/boarding-requests/${requestId}/approve`
           : `/receptionist/requests/${requestId}/approve`,
         {
@@ -537,6 +541,7 @@ const ReceptionistApprovals = () => {
     const requestId = getRequestId(selectedRequest);
     const reason = actionForm.rejectionReason.trim();
     const hotelRequest = getRequestType(selectedRequest) === "hotel";
+    const isBoardingRecord = selectedRequest.approval_source === "boarding";
 
     if (!reason) {
       showMessage("error", "Rejection reason is required.");
@@ -547,7 +552,7 @@ const ReceptionistApprovals = () => {
       setProcessingId(requestId);
 
       await apiRequest(
-        hotelRequest
+        (hotelRequest && isBoardingRecord)
           ? `/receptionist/boarding-requests/${requestId}/reject`
           : `/receptionist/requests/${requestId}/reject`,
         {
@@ -657,8 +662,9 @@ const ReceptionistApprovals = () => {
       if (!item) continue;
       try {
         const hotelRequest = getRequestType(item) === "hotel";
+        const isBoardingRecord = item.approval_source === "boarding";
         await apiRequest(
-          hotelRequest
+          (hotelRequest && isBoardingRecord)
             ? `/receptionist/boarding-requests/${id}/reject`
             : `/receptionist/requests/${id}/reject`,
           { method: "POST", body: JSON.stringify({ rejection_reason: reason, receptionist_remarks: actionForm.remarks.trim() || reason }) }

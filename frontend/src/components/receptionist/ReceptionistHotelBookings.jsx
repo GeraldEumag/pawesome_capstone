@@ -692,7 +692,8 @@ const ReceptionistHotelBookings = () => {
                                 runAction(
                                   booking,
                                   `/receptionist/boarding-requests/${booking.id}/reject`,
-                                  "Boarding rejected."
+                                  "Boarding rejected.",
+                                  { rejection_reason: "Rejected via hotel dashboard" }
                                 )
                               }
                               disabled={isProcessing(booking)}
