@@ -77,17 +77,6 @@ const CashierSidebar = ({ mobileOpen, onMobileMenuToggle }) => {
 
           <li className="nav-item">
             <NavLink
-              to="/cashier/payment-verification"
-              className={({ isActive }) => (isActive ? "active" : "")}
-              title="Payment Verification"
-            >
-              <FontAwesomeIcon icon={faCheckCircle} />
-              <span>Payment Verification</span>
-            </NavLink>
-          </li>
-
-          <li className="nav-item">
-            <NavLink
               to="/cashier/history"
               className={({ isActive }) => (isActive ? "active" : "")}
               title="History"

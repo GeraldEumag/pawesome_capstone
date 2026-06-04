@@ -10,6 +10,7 @@ import {
   formatCurrency,
 } from "../../utils/apiNormalize";
 import { showError } from "../../utils/alert";
+import PaymentApprovals from "./components/PaymentApprovals";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
   faPaw, faSearch, faRotateRight, faTrash, faBoxOpen,
@@ -1437,6 +1438,8 @@ const CashierPOS = () => {
   const [services, setServices]           = useState([]);
   const [cart, setCart]                   = useState([]);
   const [activeCategory, setActiveCategory] = useState("all");
+  const [activeTab, setActiveTab] = useState("products"); // 'products' | 'payment-approvals'
+  const [pendingCount, setPendingCount] = useState(0);
   const [searchQuery, setSearchQuery]     = useState("");
   const [orderType, setOrderType]         = useState("walk-in");
   const [customerName, setCustomerName]   = useState("");
@@ -1593,6 +1596,24 @@ const CashierPOS = () => {
   }, []);
 
   useEffect(() => { fetchProducts(); fetchServices(); }, [fetchProducts, fetchServices]);
+
+  /* Fetch pending payment count for sidebar badge */
+  const fetchPendingCount = useCallback(async () => {
+    try {
+      const data = await apiRequest("/cashier/payment-requests");
+      const list = data?.data || data?.requests || data?.payments || data || [];
+      const pending = list.filter(r => (r.payment_status || "pending").toLowerCase() === "pending");
+      setPendingCount(pending.length);
+    } catch {
+      setPendingCount(0);
+    }
+  }, []);
+
+  useEffect(() => { fetchPendingCount(); }, [fetchPendingCount]);
+  useEffect(() => {
+    const interval = setInterval(() => fetchPendingCount(), 30000);
+    return () => clearInterval(interval);
+  }, [fetchPendingCount]);
 
   /* Auto-refresh services periodically to sync with receptionist changes */
   useEffect(() => {
@@ -1963,9 +1984,6 @@ const CashierPOS = () => {
                   <NavMenuItem onClick={() => { navigate('/cashier/history'); setShowNavMenu(false); }}>
                     <FontAwesomeIcon icon={faHistory} /> History
                   </NavMenuItem>
-                  <NavMenuItem onClick={() => { navigate('/cashier/payment-verification'); setShowNavMenu(false); }}>
-                    <FontAwesomeIcon icon={faWallet} /> Payment Verification
-                  </NavMenuItem>
                   <NavMenuItem onClick={() => { navigate('/cashier/profile'); setShowNavMenu(false); }}>
                     <FontAwesomeIcon icon={faUserCircle} /> Profile
                   </NavMenuItem>
@@ -2011,10 +2029,10 @@ const CashierPOS = () => {
               {categories.map(cat => (
                 <CategoryBtn
                   key={cat.id}
-                  $active={activeCategory === cat.id}
+                  $active={activeTab === "products" && activeCategory === cat.id}
                   $color={cat.config?.color}
                   $bg={cat.config?.bg}
-                  onClick={() => setActiveCategory(cat.id)}
+                  onClick={() => { setActiveTab("products"); setActiveCategory(cat.id); }}
                 >
                   <span className="cat-icon">
                     <FontAwesomeIcon icon={cat.config?.icon || faBox} />
@@ -2023,49 +2041,68 @@ const CashierPOS = () => {
                   <span className="cat-count">{cat.count}</span>
                 </CategoryBtn>
               ))}
+              <div style={{ height: 1, background: "var(--color-border)", margin: "8px 4px" }} />
+              <CategoryBtn
+                key="payment-approvals"
+                $active={activeTab === "payment-approvals"}
+                $color="#10b981"
+                $bg="#ECFDF5"
+                style={{ background: activeTab === "payment-approvals" ? "#ECFDF5" : "rgba(236,253,245,0.5)" }}
+                onClick={() => setActiveTab("payment-approvals")}
+              >
+                <span className="cat-icon">
+                  <FontAwesomeIcon icon={faCheckCircle} />
+                </span>
+                <span className="cat-label">Payment Approvals</span>
+                <span className="cat-count" style={{ background: "#10b981", color: "#fff" }}>{pendingCount}</span>
+              </CategoryBtn>
             </CategoryList>
           </CategoriesPane>
 
-          {/* Center: Products */}
+          {/* Center: Products or Payment Approvals */}
           <ProductsPane>
-            <ProductsPaneHeader>
-              <div>
-                <PaneLabel>Catalog</PaneLabel>
-                <SectionTitle>
-                  {activeCategory === "all" ? "All Products"
-                    : categories.find(c => c.id === activeCategory)?.label || "Products"}
-                </SectionTitle>
-              </div>
-              <CountPill title={lastStockSyncAt ? `Last synced ${lastStockSyncAt.toLocaleTimeString()}` : "Stock not synced yet"}>
-                <FontAwesomeIcon icon={faList} />
-                {isRefreshingProducts
-                  ? "Refreshing stock..."
-                  : `${filteredProducts.length} item${filteredProducts.length !== 1 ? "s" : ""}`}
-              </CountPill>
-            </ProductsPaneHeader>
-
-            {loading ? (
-              <StateCard>
-                <Spinner />
-                <StateTitle>Loading products…</StateTitle>
-                <StateText>Fetching inventory from the server.</StateText>
-              </StateCard>
-            ) : error ? (
-              <StateCard>
-                <StateIcon><FontAwesomeIcon icon={faTriangleExclamation} /></StateIcon>
-                <StateTitle>Could not load products</StateTitle>
-                <StateText>{error}</StateText>
-                <IconBtn onClick={fetchProducts}><FontAwesomeIcon icon={faRotateRight} /> Retry</IconBtn>
-              </StateCard>
-            ) : filteredProducts.length === 0 ? (
-              <StateCard>
-                <StateIcon><FontAwesomeIcon icon={faBoxOpen} /></StateIcon>
-                <StateTitle>No products found</StateTitle>
-                <StateText>Try another category or search term.</StateText>
-              </StateCard>
+            {activeTab === "payment-approvals" ? (
+              <PaymentApprovals />
             ) : (
-              <ProductGrid>
-                {filteredProducts.map(product => {
+              <>
+                <ProductsPaneHeader>
+                  <div>
+                    <PaneLabel>Catalog</PaneLabel>
+                    <SectionTitle>
+                      {activeCategory === "all" ? "All Products"
+                        : categories.find(c => c.id === activeCategory)?.label || "Products"}
+                    </SectionTitle>
+                  </div>
+                  <CountPill title={lastStockSyncAt ? `Last synced ${lastStockSyncAt.toLocaleTimeString()}` : "Stock not synced yet"}>
+                    <FontAwesomeIcon icon={faList} />
+                    {isRefreshingProducts
+                      ? "Refreshing stock..."
+                      : `${filteredProducts.length} item${filteredProducts.length !== 1 ? "s" : ""}`}
+                  </CountPill>
+                </ProductsPaneHeader>
+
+                {loading ? (
+                  <StateCard>
+                    <Spinner />
+                    <StateTitle>Loading products…</StateTitle>
+                    <StateText>Fetching inventory from the server.</StateText>
+                  </StateCard>
+                ) : error ? (
+                  <StateCard>
+                    <StateIcon><FontAwesomeIcon icon={faTriangleExclamation} /></StateIcon>
+                    <StateTitle>Could not load products</StateTitle>
+                    <StateText>{error}</StateText>
+                    <IconBtn onClick={fetchProducts}><FontAwesomeIcon icon={faRotateRight} /> Retry</IconBtn>
+                  </StateCard>
+                ) : filteredProducts.length === 0 ? (
+                  <StateCard>
+                    <StateIcon><FontAwesomeIcon icon={faBoxOpen} /></StateIcon>
+                    <StateTitle>No products found</StateTitle>
+                    <StateText>Try another category or search term.</StateText>
+                  </StateCard>
+                ) : (
+                  <ProductGrid>
+                    {filteredProducts.map(product => {
                   const cartItem = cart.find(i => i.id === product.id);
                   const dPrice   = discountedPrice(product);
                   const hasDisc  = Number(product.discount) > 0;
@@ -2106,9 +2143,11 @@ const CashierPOS = () => {
                 })}
               </ProductGrid>
             )}
-          </ProductsPane>
+          </>
+        )}
+      </ProductsPane>
 
-          {/* Right: Order Panel */}
+      {/* Right: Order Panel */}
           <OrderPane>
             <OrderHeader>
               <PaneLabel>Current</PaneLabel>

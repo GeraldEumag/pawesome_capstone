@@ -6,7 +6,6 @@ import CashierTransactions from "../components/cashier/CashierTransactions";
 import CashierHistory from "../components/cashier/CashierHistory";
 import CashierReports from "../components/cashier/CashierReports";
 import ProfileSettings from "../components/shared/ProfileSettings";
-import CashierPaymentVerification from "../components/cashier/CashierPaymentVerification";
 
 const CashierRoutes = () => (
   <Routes>
@@ -45,7 +44,6 @@ const CashierRoutes = () => (
       <Route path="analytics" element={<CashierReports />} />
       <Route path="history" element={<CashierHistory />} />
       <Route path="reports" element={<CashierReports />} />
-      <Route path="payment-verification" element={<CashierPaymentVerification />} />
       <Route path="profile" element={<ProfileSettings />} />
     </Route>
 
@@ -99,16 +97,6 @@ const CashierRoutes = () => (
       }
     >
       <Route index element={<CashierReports />} />
-    </Route>
-    <Route
-      path="payment-verification"
-      element={
-        <ProtectedRoute>
-          <CashierDashboard />
-        </ProtectedRoute>
-      }
-    >
-      <Route index element={<CashierPaymentVerification />} />
     </Route>
     <Route
       path="profile"
