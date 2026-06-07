@@ -70,11 +70,16 @@ class InventoryService
         // Create initial batch if batch data provided
         if ($batchData && $validated['stock'] > 0) {
             $item->addBatchStock(
-                $batchData['quantity'],
+                (int) $batchData['quantity'],
                 $batchData['batch_no'] ?? null,
                 $batchData['expiration_date'] ?? null,
                 $batchData['notes'] ?? 'Initial stock batch',
-                false // Don't update main stock here
+                false, // Don't update main stock here
+                $batchData['manufacturing_date'] ?? null,
+                $batchData['supplier'] ?? null,
+                isset($batchData['unit_cost']) ? (float) $batchData['unit_cost'] : null,
+                $batchData['proof_photo'] ?? null,
+                $batchData['received_date'] ?? null
             );
         } elseif ($validated['stock'] > 0) {
             // Create default batch for non-FEFO items with stock

@@ -846,6 +846,7 @@ const VetAppointments = () => {
       { key: "pending", label: "Incoming" },
       { key: "approved", label: "Approved" },
       { key: "in_progress", label: "Ongoing" },
+      { key: "awaiting_payment", label: "Awaiting Payment" },
       { key: "completed", label: "Completed" },
       { key: "cancelled", label: "Cancelled" },
     ],
@@ -864,6 +865,7 @@ const VetAppointments = () => {
         pending: 0,
         approved: 0,
         in_progress: 0,
+        awaiting_payment: 0,
         completed: 0,
         cancelled: 0,
       }
@@ -906,6 +908,7 @@ const VetAppointments = () => {
     const pendingCount = appointments.filter((item) => item.status === "pending").length;
     const approvedCount = appointments.filter((item) => item.status === "approved").length;
     const ongoingCount = appointments.filter((item) => item.status === "in_progress").length;
+    const awaitingPaymentCount = appointments.filter((item) => item.status === "awaiting_payment").length;
     const completionRate =
       appointments.length > 0
         ? Math.round((completedCount / appointments.length) * 100)
@@ -917,6 +920,7 @@ const VetAppointments = () => {
       pendingCount,
       approvedCount,
       ongoingCount,
+      awaitingPaymentCount,
       completionRate,
     };
   }, [appointments, todayKey]);
@@ -927,6 +931,8 @@ const VetAppointments = () => {
         return faCheckCircle;
       case "in_progress":
         return faPlay;
+      case "awaiting_payment":
+        return faMoneyBillWave;
       case "completed":
         return faCircleCheck;
       case "cancelled":
@@ -1292,17 +1298,18 @@ const VetAppointments = () => {
                         <ActionButton
                           variant="primary"
                           type="button"
-                          disabled={!canComplete || actionLoadingId === `${appointment.id}-completed`}
+                          disabled={!canComplete || actionLoadingId === `${appointment.id}-completed` || appointment.status === "awaiting_payment"}
                           onClick={() => navigate(`/veterinary/appointments/${appointment.id}/consult`)}
                         >
                           <FontAwesomeIcon icon={faCircleCheck} />
-                          Consult
+                          {appointment.status === "awaiting_payment" ? "Awaiting Payment" : "Consult"}
                         </ActionButton>
 
                         <ActionButton
                           as={NavLink}
                           variant="secondary"
                           to={`/veterinary/appointments/${appointment.id}/edit`}
+                          style={{ pointerEvents: appointment.status === "awaiting_payment" ? "none" : "auto", opacity: appointment.status === "awaiting_payment" ? 0.5 : 1 }}
                         >
                           <FontAwesomeIcon icon={faEdit} />
                           Edit
@@ -1311,7 +1318,7 @@ const VetAppointments = () => {
                         <ActionButton
                           variant="danger"
                           type="button"
-                          disabled={isCompleted || isCancelled}
+                          disabled={isCompleted || isCancelled || appointment.status === "awaiting_payment"}
                           onClick={() => cancelAppointment(appointment.id)}
                         >
                           <FontAwesomeIcon icon={faTrash} />
@@ -1420,12 +1427,12 @@ const VetAppointments = () => {
                   variant="primary"
                   type="button"
                   disabled={
-                    !["in_progress", "treated"].includes(selectedAppointment.status)
+                    !["in_progress", "treated", "awaiting_payment"].includes(selectedAppointment.status)
                   }
                   onClick={() => navigate(`/veterinary/appointments/${selectedAppointment.id}/consult`)}
                 >
                   <FontAwesomeIcon icon={faCircleCheck} />
-                  Consult
+                  {selectedAppointment.status === "awaiting_payment" ? "View (Awaiting Pay)" : "Consult"}
                 </ActionButton>
 
                 <ActionButton
@@ -1433,7 +1440,8 @@ const VetAppointments = () => {
                   type="button"
                   disabled={
                     selectedAppointment.status === "completed" ||
-                    selectedAppointment.status === "cancelled"
+                    selectedAppointment.status === "cancelled" ||
+                    selectedAppointment.status === "awaiting_payment"
                   }
                   onClick={() => cancelAppointment(selectedAppointment.id)}
                 >

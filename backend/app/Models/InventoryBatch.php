@@ -14,15 +14,20 @@ class InventoryBatch extends Model
         'inventory_item_id',
         'batch_no',
         'received_date',
+        'manufacturing_date',
         'expiration_date',
         'quantity',
         'remaining_quantity',
+        'supplier',
+        'unit_cost',
+        'proof_photo',
         'status',
         'notes',
     ];
 
     protected $casts = [
         'received_date' => 'date',
+        'manufacturing_date' => 'date',
         'expiration_date' => 'date',
     ];
 

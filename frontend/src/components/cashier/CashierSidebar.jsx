@@ -45,6 +45,11 @@ const CashierSidebar = ({ mobileOpen, onMobileMenuToggle }) => {
             </NavLink>
           </li>
           <li className="nav-item">
+            <NavLink to="/cashier/payment-verification" onClick={handleNavClick}>
+              Payment Approvals
+            </NavLink>
+          </li>
+          <li className="nav-item">
             <NavLink to="/cashier/transactions" onClick={handleNavClick}>
               Transactions
             </NavLink>
@@ -52,11 +57,6 @@ const CashierSidebar = ({ mobileOpen, onMobileMenuToggle }) => {
           <li className="nav-item">
             <NavLink to="/cashier/history" onClick={handleNavClick}>
               History
-            </NavLink>
-          </li>
-          <li className="nav-item">
-            <NavLink to="/cashier/payment-verification" onClick={handleNavClick}>
-              Payment Verification
             </NavLink>
           </li>
           <li className="nav-item">

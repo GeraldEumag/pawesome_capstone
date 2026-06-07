@@ -86,21 +86,11 @@ class ConsultationWorkflowController extends Controller
             return response()->json(['errors' => $validator->errors()], 422);
         }
 
-        $billingStatus = ServiceBillingService::canCompleteService(ServiceItemUsage::SERVICE_VETERINARY, (int) $appointment->id);
-        $paymentStatus = strtolower((string) ($appointment->payment_status ?? 'unpaid'));
-
-        if ($paymentStatus !== 'paid' || !$billingStatus['can_complete']) {
-            return response()->json([
-                'error' => $paymentStatus !== 'paid'
-                    ? 'Consultation cannot be completed until payment is fully verified.'
-                    : $billingStatus['message'],
-                'payment_status' => $appointment->payment_status,
-                'billing' => $billingStatus,
-            ], 422);
-        }
+        // Sync billing totals so cashier sees an accurate bill
+        $billSummary = ServiceBillingService::finalizeServiceBill(ServiceItemUsage::SERVICE_VETERINARY, (int) $appointment->id);
 
         $appointment->update([
-            'status' => 'completed',
+            'status' => 'awaiting_payment',
             'diagnosis' => $request->diagnosis,
             'treatment_notes' => $request->treatment_notes,
             'prescription' => $request->prescription,
@@ -108,9 +98,14 @@ class ConsultationWorkflowController extends Controller
             'completed_at' => now(),
         ]);
 
-        WorkflowNotifier::notifyUser($appointment->customer?->user_id, 'Consultation completed', 'Your pet consultation has been completed.', 'success', 'appointment', $appointment->id);
+        WorkflowNotifier::notifyUser($appointment->customer?->user_id, 'Consultation finalized', 'Your pet consultation has been finalized and is awaiting payment.', 'info', 'appointment', $appointment->id);
+        WorkflowNotifier::notifyRole('cashier', 'Vet consultation awaiting payment', "Pet {$appointment->pet?->name} consultation is ready for billing.", 'info', 'appointment', $appointment->id);
 
-        return response()->json(['message' => 'Consultation completed', 'consultation' => $appointment->fresh(['customer', 'pet', 'service', 'veterinarian'])]);
+        return response()->json([
+            'message' => 'Consultation finalized. Awaiting payment at cashier.',
+            'consultation' => $appointment->fresh(['customer', 'pet', 'service', 'veterinarian']),
+            'billing' => $billSummary,
+        ]);
     }
 
     public function recommendConfinement(Request $request, $id): JsonResponse

@@ -187,7 +187,6 @@ class ServiceRequestController extends Controller
             'customer_name' => $validated['customer_name'],
             'pet_name' => $validated['pet_name'],
             'service_name' => $validated['service_name'] ?? $validated['request_type'], // Use request_type as service_name fallback
-            'price' => $price,
             // Use requested_date/time as primary, fallback to preferred_date/time
             'request_date' => $validated['requested_date'],
             'request_time' => $validated['requested_time'],
@@ -197,6 +196,10 @@ class ServiceRequestController extends Controller
             'status' => 'pending',
             'payment_status' => 'unpaid',
         ];
+
+        if (Schema::hasColumn('service_requests', 'price')) {
+            $createData['price'] = $price;
+        }
 
         if (Schema::hasColumn('service_requests', 'customer_email')) {
             $createData['customer_email'] = $validated['customer_email'] ?? null;
@@ -242,79 +245,44 @@ class ServiceRequestController extends Controller
 
         $serviceRequest = ServiceRequest::create($createData);
 
-        // Auto-create a pending Appointment for vet bookings so the veterinary dashboard can see them
-        if ($this->normalizeServiceType($validated['request_type']) === 'veterinary') {
-            $appointmentPet = null;
-            if (!empty($validated['pet_id'])) {
-                $appointmentPet = Pet::find($validated['pet_id']);
-            }
-            $appointmentCustomer = $appointmentPet?->customer;
-            if (!$appointmentCustomer && !empty($validated['customer_email'])) {
-                $appointmentCustomer = Customer::where('email', $validated['customer_email'])->first();
-            }
-
-            if ($appointmentCustomer && $appointmentPet) {
-                $serviceName = trim((string) ($validated['service_name'] ?? $validated['request_type']));
-                $service = null;
-                if ($serviceName !== '') {
-                    $service = Service::whereRaw('LOWER(name) = ?', [strtolower($serviceName)])->first();
-                    if (!$service) {
-                        $category = collect(['Consultation', 'Vaccination', 'Surgery', 'Dental'])
-                            ->first(fn ($item) => str_contains(strtolower($serviceName), strtolower($item)));
-                        if ($category) {
-                            $service = Service::where('category', $category)->first();
-                        }
-                    }
-                }
-                if (!$service) {
-                    $service = Service::whereIn('category', ['Consultation', 'Vaccination', 'Surgery', 'Dental'])->first();
-                }
-
-                $scheduledAt = Carbon::parse($validated['requested_date'] . ' ' . ($validated['requested_time'] ?? '09:00'));
-
-                Appointment::create([
-                    'customer_id' => $appointmentCustomer->id,
-                    'pet_id' => $appointmentPet->id,
-                    'service_id' => $service?->id,
-                    'veterinarian_id' => null,
-                    'status' => 'pending',
-                    'scheduled_at' => $scheduledAt,
-                    'notes' => $validated['notes'] ?? null,
-                    'price' => $serviceRequest->price ?? $service?->price ?? 0,
-                    'service_request_id' => $serviceRequest->id,
-                ]);
-            }
-        }
-
         // Auto-create a pending Grooming record so groomer dashboard can see customer bookings
         if ($this->normalizeServiceType($validated['request_type']) === 'grooming') {
-            $groomingPet = null;
-            if (!empty($validated['pet_id'])) {
-                $groomingPet = Pet::find($validated['pet_id']);
-            }
-            $groomingCustomer = $groomingPet?->customer;
-            if (!$groomingCustomer && !empty($validated['customer_email'])) {
-                $groomingCustomer = Customer::where('email', $validated['customer_email'])->first();
-            }
+            try {
+                $groomingPet = null;
+                if (!empty($validated['pet_id'])) {
+                    $groomingPet = Pet::find($validated['pet_id']);
+                }
+                $groomingCustomer = $groomingPet?->customer;
+                if (!$groomingCustomer && !empty($validated['customer_email'])) {
+                    $groomingCustomer = Customer::where('email', $validated['customer_email'])->first();
+                }
 
-            if ($groomingCustomer && $groomingPet) {
-                $price = $serviceRequest->price ?? 0;
+                if ($groomingCustomer && $groomingPet) {
+                    $price = $serviceRequest->price ?? 0;
 
-                Grooming::create([
-                    'customer_id' => $groomingCustomer->id,
-                    'pet_id' => $groomingPet->id,
-                    'service' => $validated['service_name'] ?? 'Grooming',
-                    'appointment_date' => $validated['requested_date'],
-                    'appointment_time' => $validated['requested_time'] ?? '09:00',
-                    'notes' => $validated['notes'] ?? null,
-                    'amount' => $price,
-                    'base_amount' => $price,
-                    'total_amount' => $price,
-                    'balance_due' => $price,
-                    'status' => 'pending',
-                    'payment_status' => 'unpaid',
-                    'service_request_id' => $serviceRequest->id,
-                ]);
+                    $groomingData = [
+                        'customer_id' => $groomingCustomer->id,
+                        'pet_id' => $groomingPet->id,
+                        'service' => $validated['service_name'] ?? 'Grooming',
+                        'appointment_date' => $validated['requested_date'],
+                        'appointment_time' => $validated['requested_time'] ?? '09:00',
+                        'notes' => $validated['notes'] ?? null,
+                        'amount' => $price,
+                        'base_amount' => $price,
+                        'total_amount' => $price,
+                        'balance_due' => $price,
+                        'status' => 'pending',
+                        'payment_status' => 'unpaid',
+                    ];
+
+                    if (Schema::hasColumn('groomings', 'service_request_id')) {
+                        $groomingData['service_request_id'] = $serviceRequest->id;
+                    }
+
+                    Grooming::create($groomingData);
+                }
+            } catch (\Throwable $e) {
+                Log::warning('Auto-create grooming failed for service request #' . $serviceRequest->id . ': ' . $e->getMessage());
             }
         }
 

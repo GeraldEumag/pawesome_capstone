@@ -11,6 +11,7 @@ use App\Models\Pet;
 use App\Models\Service;
 use App\Models\User;
 use App\Models\ActivityLog;
+use App\Models\ServiceItemUsage;
 use App\Services\WorkflowNotifier;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
@@ -270,6 +271,9 @@ class ReceptionistRequestController extends Controller
             'payment_status' => $item->payment_status,
             'payment' => $item->payment_status,
             'notes' => $item->notes,
+            'price' => $item->price ?? null,
+            'amount' => $item->price ?? null,
+            'total_amount' => $item->price ?? null,
             'created_at' => $item->created_at,
         ];
     }
@@ -478,6 +482,31 @@ class ReceptionistRequestController extends Controller
                             'payment_status' => 'unpaid',
                         ]);
                     }
+
+                    // Auto-create base service billing item so groomer sees the service fee
+                    $baseItemExists = ServiceItemUsage::where('service_type', ServiceItemUsage::SERVICE_GROOMING)
+                        ->where('service_id', $grooming->id)
+                        ->where('item_type', ServiceItemUsage::ITEM_BASE_SERVICE)
+                        ->exists();
+
+                    if (!$baseItemExists && $price > 0) {
+                        ServiceItemUsage::create([
+                            'service_type' => ServiceItemUsage::SERVICE_GROOMING,
+                            'service_id' => $grooming->id,
+                            'pet_id' => $pet->id,
+                            'customer_id' => $customer->id,
+                            'customer_email' => $customer->email,
+                            'item_type' => ServiceItemUsage::ITEM_BASE_SERVICE,
+                            'description' => $service->name ?? $serviceRequest->service_name ?? 'Grooming Service',
+                            'quantity_used' => 1,
+                            'unit' => 'session',
+                            'unit_price' => $price,
+                            'total_price' => $price,
+                            'is_billable' => true,
+                            'is_paid' => false,
+                            'used_by' => Auth::id(),
+                        ]);
+                    }
                 }
             }
 
@@ -636,6 +665,34 @@ class ReceptionistRequestController extends Controller
                     'service_request_id' => $serviceRequest->id,
                 ]);
             }
+
+            // Auto-create base service billing item so vet sees the consultation fee
+            $baseItemExists = ServiceItemUsage::where('service_type', ServiceItemUsage::SERVICE_VETERINARY)
+                ->where('service_id', $appointment->id)
+                ->where('item_type', ServiceItemUsage::ITEM_BASE_SERVICE)
+                ->exists();
+
+            if (!$baseItemExists) {
+                $servicePrice = (float) ($service->price ?? $appointment->price ?? 0);
+                if ($servicePrice > 0) {
+                    ServiceItemUsage::create([
+                        'service_type' => ServiceItemUsage::SERVICE_VETERINARY,
+                        'service_id' => $appointment->id,
+                        'pet_id' => $pet->id,
+                        'customer_id' => $customer->id,
+                        'customer_email' => $customer->email,
+                        'item_type' => ServiceItemUsage::ITEM_BASE_SERVICE,
+                        'description' => $service->name ?? 'Veterinary Consultation',
+                        'quantity_used' => 1,
+                        'unit' => 'session',
+                        'unit_price' => $servicePrice,
+                        'total_price' => $servicePrice,
+                        'is_billable' => true,
+                        'is_paid' => false,
+                        'used_by' => Auth::id(),
+                    ]);
+                }
+            }
         }
 
         // --- Grooming requests: create/update Grooming record ---
@@ -666,6 +723,31 @@ class ReceptionistRequestController extends Controller
                     $grooming->update([
                         'status' => 'approved',
                         'payment_status' => 'unpaid',
+                    ]);
+                }
+
+                // Auto-create base service billing item so groomer sees the service fee
+                $baseItemExists = ServiceItemUsage::where('service_type', ServiceItemUsage::SERVICE_GROOMING)
+                    ->where('service_id', $grooming->id)
+                    ->where('item_type', ServiceItemUsage::ITEM_BASE_SERVICE)
+                    ->exists();
+
+                if (!$baseItemExists && $price > 0) {
+                    ServiceItemUsage::create([
+                        'service_type' => ServiceItemUsage::SERVICE_GROOMING,
+                        'service_id' => $grooming->id,
+                        'pet_id' => $pet->id,
+                        'customer_id' => $customer->id,
+                        'customer_email' => $customer->email,
+                        'item_type' => ServiceItemUsage::ITEM_BASE_SERVICE,
+                        'description' => $service->name ?? $serviceRequest->service_name ?? 'Grooming Service',
+                        'quantity_used' => 1,
+                        'unit' => 'session',
+                        'unit_price' => $price,
+                        'total_price' => $price,
+                        'is_billable' => true,
+                        'is_paid' => false,
+                        'used_by' => Auth::id(),
                     ]);
                 }
             }

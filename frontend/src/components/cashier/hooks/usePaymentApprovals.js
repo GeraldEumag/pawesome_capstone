@@ -58,6 +58,10 @@ export const usePaymentApprovals = (user) => {
   // Proof modal handlers
   const openProof = useCallback(async (proofUrl, payment) => {
     setProofModal({ blobUrl: null, isPdf: false, loading: true, error: null, payment: null });
+    if (!proofUrl) {
+      setProofModal({ blobUrl: null, isPdf: false, loading: false, error: null, payment });
+      return;
+    }
     try {
       const token = getToken();
       const res = await fetch(proofUrl, {
@@ -131,11 +135,6 @@ export const usePaymentApprovals = (user) => {
 
   // Verify single payment
   const verifyPayment = useCallback(async (payment, referenceNumber = "") => {
-    if (!referenceNumber || referenceNumber.trim() === "") {
-      showError("Reference number is required to verify payment");
-      return;
-    }
-
     const confirmed = await showConfirm(
       `Verify payment of ₱${Number(payment.amount || payment.total_amount || 0).toLocaleString("en-PH")} from ${payment.customer_name || payment.customer?.name || "Customer"}?`
     );
@@ -147,6 +146,7 @@ export const usePaymentApprovals = (user) => {
         type: payment.payable_type || payment.type || payment.payment_source || "service_request",
         cashier_remarks: "Payment verified by cashier",
         reference_number: referenceNumber.trim(),
+        payment_method: payment.payment_method || "counter",
       });
 
       if (data && data.success) {
@@ -348,11 +348,12 @@ export const usePaymentApprovals = (user) => {
       0
     );
     const verifiedToday = requests.filter(r => {
-      const verifiedAt = r.verified_at || r.updated_at;
+      const verifiedAt = r.verified_at || r.paid_at || r.updated_at;
       if (!verifiedAt) return false;
       const date = new Date(verifiedAt);
       const today = new Date();
-      return date.toDateString() === today.toDateString() && r.payment_status === "verified";
+      const ps = r.payment_status || "";
+      return date.toDateString() === today.toDateString() && (ps === "verified" || ps === "paid");
     }).length;
     
     return { total, totalAmount, verifiedToday };

@@ -632,18 +632,7 @@ const UnifiedInventory = () => {
                     </td>
                     <td className="numeric price-cell">₱{(item.price || 0).toLocaleString()}</td>
                     <td className="cost-cell">
-                      {item.cost ? (
-                        <>
-                          ₱{item.cost.toLocaleString()}
-                          {item.price && item.cost && (
-                            <span className={`margin-pill ${((item.price - item.cost) / item.price * 100) >= 30 ? "good" : ((item.price - item.cost) / item.price * 100) >= 10 ? "warning" : "danger"}`}>
-                              {(((item.price - item.cost) / item.price) * 100).toFixed(0)}%
-                            </span>
-                          )}
-                        </>
-                      ) : (
-                        <span className="no-cost">—</span>
-                      )}
+                      {item.cost ? `₱${item.cost.toLocaleString()}` : <span className="no-cost">—</span>}
                     </td>
                     <td>
                       {activeTab === "archived" ? (
@@ -689,16 +678,22 @@ const UnifiedInventory = () => {
                           ) : itemBatches[item.id]?.length > 0 ? (
                             <table className="batch-table">
                               <thead>
-                                <tr><th>Batch #</th><th>Received</th><th>Expiry</th><th>Qty</th><th>Remaining</th><th>Status</th></tr>
+                                <tr><th>Batch #</th><th>Mfg Date</th><th>Expiry</th><th>Qty</th><th>Remaining</th><th>Unit Cost</th><th>Proof</th><th>Status</th></tr>
                               </thead>
                               <tbody>
                                 {itemBatches[item.id].map((batch) => (
                                   <tr key={batch.id}>
                                     <td>{batch.batch_no}</td>
-                                    <td>{batch.received_date ? new Date(batch.received_date).toLocaleDateString() : "—"}</td>
+                                    <td>{batch.manufacturing_date ? new Date(batch.manufacturing_date).toLocaleDateString() : "—"}</td>
                                     <td>{batch.expiration_date ? new Date(batch.expiration_date).toLocaleDateString() : "—"}</td>
                                     <td>{batch.quantity}</td>
                                     <td>{batch.remaining_quantity}</td>
+                                    <td>{batch.unit_cost ? `₱${parseFloat(batch.unit_cost).toFixed(2)}` : "—"}</td>
+                                    <td>
+                                      {batch.proof_photo ? (
+                                        <a href={batch.proof_photo} target="_blank" rel="noopener noreferrer">View</a>
+                                      ) : "—"}
+                                    </td>
                                     <td><span className={`batch-status ${batch.status}`}>{batch.status}</span></td>
                                   </tr>
                                 ))}
@@ -830,11 +825,6 @@ const UnifiedInventory = () => {
                 <div><label>Stock</label><p>{getStock(infoItem)} / {getMinStock(infoItem)} min</p></div>
                 <div><label>Price</label><p>₱{(infoItem.price || 0).toLocaleString()}</p></div>
                 <div><label>Cost</label><p>{infoItem.cost ? `₱${infoItem.cost.toLocaleString()}` : "—"}</p></div>
-                {infoItem.cost && infoItem.price && (
-                  <div><label>Margin</label>
-                    <p>{(((infoItem.price - infoItem.cost) / infoItem.price) * 100).toFixed(1)}%</p>
-                  </div>
-                )}
                 <div className="full-width"><label>Description</label><p>{infoItem.description || "No description"}</p></div>
               </div>
             </div>

@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use App\Services\WorkflowNotifier;
@@ -15,28 +16,33 @@ class PaymentVerificationService
     public function verify(string $type, int $id, $request)
     {
         $referenceNumber = $request->input('reference_number');
-        if (!$referenceNumber || trim($referenceNumber) === '') {
-            return ['success' => false, 'message' => 'Reference number is required to verify payment', 'status' => 422];
-        }
-        if (strlen(trim($referenceNumber)) < 6) {
-            return ['success' => false, 'message' => 'Reference number must be at least 6 characters', 'status' => 422];
+        $paymentMethod = $request->input('payment_method');
+        $isCounterPayment = !$referenceNumber && in_array(strtolower((string) $paymentMethod), ['cash', 'counter', 'walk_in', 'walk-in', '']);
+
+        if (!$isCounterPayment) {
+            if (!$referenceNumber || trim($referenceNumber) === '') {
+                return ['success' => false, 'message' => 'Reference number is required to verify payment', 'status' => 422];
+            }
+            if (strlen(trim($referenceNumber)) < 6) {
+                return ['success' => false, 'message' => 'Reference number must be at least 6 characters', 'status' => 422];
+            }
         }
 
         try {
             if ($type === 'boarding') {
-                return $this->verifyTablePayment('boardings', 'BD-REC-', $id, $request, 'Boarding payment verified successfully.');
+                return $this->verifyTablePayment('boardings', 'BD-REC-', $id, $request, 'Boarding payment verified successfully.', $referenceNumber);
             }
 
             if ($type === 'appointment' || $type === 'veterinary') {
-                return $this->verifyTablePayment('appointments', 'VT-REC-', $id, $request, 'Veterinary payment verified successfully.');
+                return $this->verifyTablePayment('appointments', 'VT-REC-', $id, $request, 'Veterinary payment verified successfully.', $referenceNumber);
             }
 
             if ($type === 'grooming') {
-                return $this->verifyTablePayment('groomings', 'GR-REC-', $id, $request, 'Grooming payment verified successfully.');
+                return $this->verifyTablePayment('groomings', 'GR-REC-', $id, $request, 'Grooming payment verified successfully.', $referenceNumber);
             }
 
             if ($type === 'medical_confinement' || $type === 'confinement') {
-                return $this->verifyTablePayment('medical_confinements', 'MC-REC-', $id, $request, 'Medical confinement payment verified successfully.');
+                return $this->verifyTablePayment('medical_confinements', 'MC-REC-', $id, $request, 'Medical confinement payment verified successfully.', $referenceNumber);
             }
 
             if ($type === 'service_request' || $type === 'service') {
@@ -51,7 +57,7 @@ class PaymentVerificationService
                 DB::table('service_requests')->where('id', $id)->update([
                     'payment_status' => 'paid',
                     'paid_at' => now(),
-                    'verified_by' => auth()->id(),
+                    'verified_by' => Auth::id(),
                     'verified_at' => now(),
                     'cashier_remarks' => $request->input('cashier_remarks', 'Payment verified by cashier'),
                     'receipt_number' => $receiptNumber,
@@ -73,7 +79,7 @@ class PaymentVerificationService
             DB::table('customer_orders')->where('id', $id)->update([
                 'payment_status' => 'paid',
                 'paid_at' => now(),
-                'verified_by' => auth()->id(),
+                'verified_by' => Auth::id(),
                 'verified_at' => now(),
                 'cashier_remarks' => $request->input('cashier_remarks'),
                 'receipt_number' => $receiptNumber,
@@ -117,7 +123,7 @@ class PaymentVerificationService
 
                 DB::table('service_requests')->where('id', $id)->update([
                     'payment_status' => 'rejected',
-                    'rejected_by' => auth()->id(),
+                    'rejected_by' => Auth::id(),
                     'rejected_at' => now(),
                     'rejection_reason' => $request->input('rejection_reason'),
                 ]);
@@ -133,7 +139,7 @@ class PaymentVerificationService
 
             DB::table('customer_orders')->where('id', $id)->update([
                 'payment_status' => 'rejected',
-                'rejected_by' => auth()->id(),
+                'rejected_by' => Auth::id(),
                 'rejected_at' => now(),
                 'rejection_reason' => $request->input('rejection_reason'),
             ]);
@@ -146,31 +152,41 @@ class PaymentVerificationService
         }
     }
 
-    private function verifyTablePayment(string $table, string $prefix, int $id, $request, string $message): array
+    private function verifyTablePayment(string $table, string $prefix, int $id, $request, string $message, ?string $referenceNumber = null): array
     {
         $record = DB::table($table)->where('id', $id)->first();
         if (!$record) {
             return ['success' => false, 'message' => 'Payment record not found', 'status' => 404];
         }
 
-        if (($record->payment_status ?? 'unpaid') !== 'pending') {
+        $allowedStatuses = $table === 'appointments' ? ['pending', 'unpaid'] : ['pending'];
+        if (!in_array($record->payment_status ?? 'unpaid', $allowedStatuses)) {
             return ['success' => false, 'message' => 'Only pending payment proofs can be verified', 'status' => 422, 'payment_status' => $record->payment_status ?? 'unpaid'];
         }
 
         $receiptNumber = $record->receipt_number ?? ($prefix . now()->format('YmdHis') . '-' . $id);
 
-        DB::table($table)->where('id', $id)->update([
+        $updateData = [
             'payment_status' => 'paid',
             'paid_at' => now(),
-            'verified_by' => auth()->id(),
+            'verified_by' => Auth::id(),
             'verified_at' => now(),
             'cashier_remarks' => $request->input('cashier_remarks', 'Payment verified by cashier'),
             'receipt_number' => $receiptNumber,
-            'reference_number' => $referenceNumber,
             'updated_at' => now(),
-        ]);
+        ];
 
-        $this->syncServiceBillingForVerifiedPayment($table, $id, auth()->id(), $receiptNumber);
+        if ($table === 'appointments') {
+            $updateData['status'] = 'completed';
+        }
+
+        if ($referenceNumber) {
+            $updateData['reference_number'] = $referenceNumber;
+        }
+
+        DB::table($table)->where('id', $id)->update($updateData);
+
+        $this->syncServiceBillingForVerifiedPayment($table, $id, Auth::id(), $receiptNumber);
 
         WorkflowNotifier::notifyEmail($record->customer_email ?? null, 'Payment verified', 'Your payment proof was verified by cashier.', 'success', $table, $id);
 
@@ -184,13 +200,14 @@ class PaymentVerificationService
             return ['success' => false, 'message' => 'Payment record not found', 'status' => 404];
         }
 
-        if (($record->payment_status ?? 'unpaid') !== 'pending') {
+        $allowedStatuses = $table === 'appointments' ? ['pending', 'unpaid'] : ['pending'];
+        if (!in_array(($record->payment_status ?? 'unpaid'), $allowedStatuses)) {
             return ['success' => false, 'message' => 'Only pending payment proofs can be rejected', 'status' => 422, 'payment_status' => $record->payment_status ?? 'unpaid'];
         }
 
         DB::table($table)->where('id', $id)->update([
             'payment_status' => 'rejected',
-            'rejected_by' => auth()->id(),
+            'rejected_by' => Auth::id(),
             'rejected_at' => now(),
             'rejection_reason' => $request->input('rejection_reason'),
             'cashier_remarks' => $request->input('cashier_remarks'),

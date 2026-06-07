@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\Auth;
 
 class InventoryItem extends Model
 {
@@ -242,9 +243,9 @@ class InventoryItem extends Model
             'stock_after' => $this->stock,
             'previous_stock' => $this->stock + $amount,
             'new_stock' => $this->stock,
-            'performed_by' => auth()->user()?->name,
-            'role' => auth()->user()?->role,
-            'user_id' => auth()->id(),
+            'performed_by' => Auth::user()?->name,
+            'role' => Auth::user()?->role,
+            'user_id' => Auth::id(),
             'details' => json_encode(['batch_deductions' => $deductions]),
         ]);
 
@@ -254,14 +255,28 @@ class InventoryItem extends Model
     /**
      * Add stock with batch tracking
      */
-    public function addBatchStock(int $amount, ?string $batchNo = null, ?string $expirationDate = null, string $notes = '', bool $updateMainStock = true): InventoryBatch
-    {
+    public function addBatchStock(
+        int $amount,
+        ?string $batchNo = null,
+        ?string $expirationDate = null,
+        string $notes = '',
+        bool $updateMainStock = true,
+        ?string $manufacturingDate = null,
+        ?string $supplier = null,
+        ?float $unitCost = null,
+        ?string $proofPhoto = null,
+        ?string $receivedDate = null
+    ): InventoryBatch {
         $batch = $this->batches()->create([
             'batch_no' => $batchNo ?: 'BATCH-' . strtoupper(uniqid()),
-            'received_date' => now(),
+            'received_date' => $receivedDate ?: now(),
+            'manufacturing_date' => $manufacturingDate,
             'expiration_date' => $expirationDate,
             'quantity' => $amount,
             'remaining_quantity' => $amount,
+            'supplier' => $supplier,
+            'unit_cost' => $unitCost,
+            'proof_photo' => $proofPhoto,
             'status' => 'active',
             'notes' => $notes,
         ]);
@@ -285,10 +300,16 @@ class InventoryItem extends Model
             'stock_after' => $this->stock,
             'previous_stock' => $this->stock - ($updateMainStock ? $amount : 0),
             'new_stock' => $this->stock,
-            'performed_by' => auth()->user()?->name,
-            'role' => auth()->user()?->role,
-            'user_id' => auth()->id(),
-            'details' => json_encode(['batch_id' => $batch->id, 'expiration_date' => $expirationDate]),
+            'performed_by' => Auth::user()?->name,
+            'role' => Auth::user()?->role,
+            'user_id' => Auth::id(),
+            'details' => json_encode([
+                'batch_id' => $batch->id,
+                'expiration_date' => $expirationDate,
+                'manufacturing_date' => $manufacturingDate,
+                'supplier' => $supplier,
+                'unit_cost' => $unitCost,
+            ]),
         ]);
 
         return $batch;
@@ -431,7 +452,7 @@ class InventoryItem extends Model
     {
         $this->status = 'archived';
         $this->archived_at = now();
-        $this->archived_by = $userId ?? auth()->id();
+        $this->archived_by = $userId ?? Auth::id();
         $this->archive_reason = $reason;
         $this->save();
 
@@ -463,7 +484,7 @@ class InventoryItem extends Model
 
         // Log the unarchiving action
         ActivityLog::create([
-            'user_id' => $userId ?? auth()->id(),
+            'user_id' => $userId ?? Auth::id(),
             'action' => 'unarchived',
             'subject_type' => 'InventoryItem',
             'subject_id' => $this->id,

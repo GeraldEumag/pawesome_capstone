@@ -27,7 +27,13 @@ const AddProductModal = ({ isOpen, onClose, onSuccess, editItem = null }) => {
     // Batch fields
     batch_no: "",
     batch_quantity: "",
+    manufacturing_date: "",
+    expiration_date: "",
+    batch_supplier: "",
+    batch_unit_cost: "",
     received_date: new Date().toISOString().split('T')[0],
+    batch_proof: null,
+    batch_proof_preview: null,
   });
 
   const [errors, setErrors] = useState({});
@@ -71,7 +77,13 @@ const AddProductModal = ({ isOpen, onClose, onSuccess, editItem = null }) => {
         photoFile: null,
         batch_no: "",
         batch_quantity: "",
+        manufacturing_date: "",
+        expiration_date: "",
+        batch_supplier: "",
+        batch_unit_cost: "",
         received_date: new Date().toISOString().split('T')[0],
+        batch_proof: null,
+        batch_proof_preview: null,
       });
       setPhotoPreview(null);
     }
@@ -104,6 +116,22 @@ const AddProductModal = ({ isOpen, onClose, onSuccess, editItem = null }) => {
     setPhotoPreview(null);
   };
 
+  const handleBatchProofChange = (e) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setFormData((prev) => ({ ...prev, batch_proof: file }));
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setFormData((prev) => ({ ...prev, batch_proof_preview: reader.result }));
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handleRemoveBatchProof = () => {
+    setFormData((prev) => ({ ...prev, batch_proof: null, batch_proof_preview: null }));
+  };
+
   const validateForm = () => {
     const newErrors = {};
     if (!formData.name.trim()) newErrors.name = "Product name is required";
@@ -114,6 +142,15 @@ const AddProductModal = ({ isOpen, onClose, onSuccess, editItem = null }) => {
     }
     if (!formData.price || parseFloat(formData.price) <= 0) {
       newErrors.price = "Valid price is required";
+    }
+    if (!editItem) {
+      if (!formData.batch_no.trim()) newErrors.batch_no = "Batch number is required";
+      if (!formData.batch_quantity || parseInt(formData.batch_quantity) <= 0) {
+        newErrors.batch_quantity = "Valid batch quantity is required";
+      }
+      if (formData.category === "Health" && !formData.expiration_date) {
+        newErrors.expiration_date = "Expiration date is required for medicine items";
+      }
     }
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -135,8 +172,27 @@ const AddProductModal = ({ isOpen, onClose, onSuccess, editItem = null }) => {
       supplier_id: formData.supplier_id || null,
     };
     delete data.photoFile;
+    delete data.batch_proof;
+    delete data.batch_proof_preview;
     if (formData.photoFile instanceof File) {
       data.photo = formData.photoFile;
+    }
+
+    // Build batchData for new items
+    if (!editItem) {
+      data.batchData = {
+        batch_no: formData.batch_no,
+        quantity: parseInt(formData.batch_quantity) || stock,
+        manufacturing_date: formData.manufacturing_date || null,
+        expiration_date: formData.expiration_date || null,
+        supplier: formData.batch_supplier || null,
+        unit_cost: formData.batch_unit_cost ? parseFloat(formData.batch_unit_cost) : null,
+        received_date: formData.received_date || new Date().toISOString().split('T')[0],
+        notes: 'Initial stock batch',
+      };
+      if (formData.batch_proof instanceof File) {
+        data.batchData.proof_photo = formData.batch_proof;
+      }
     }
 
     try {
@@ -147,7 +203,7 @@ const AddProductModal = ({ isOpen, onClose, onSuccess, editItem = null }) => {
           await inventoryApi.updateItem(editItem.id, data);
         }
       } else {
-        if (data.photo instanceof File) {
+        if (data.photo instanceof File || data.batchData?.proof_photo instanceof File) {
           await inventoryApi.createItemWithPhoto(data);
         } else {
           await inventoryApi.createItem(data);
@@ -316,16 +372,6 @@ const AddProductModal = ({ isOpen, onClose, onSuccess, editItem = null }) => {
                 </div>
 
               </div>
-              {formData.cost && formData.price && (
-                <div className="margin-preview">
-                  <span className={`margin-badge ${
-                    ((parseFloat(formData.price) - parseFloat(formData.cost)) / parseFloat(formData.price) * 100) >= 30 ? "good" :
-                    ((parseFloat(formData.price) - parseFloat(formData.cost)) / parseFloat(formData.price) * 100) >= 10 ? "warning" : "danger"
-                  }`}>
-                    Margin: {(((parseFloat(formData.price) - parseFloat(formData.cost)) / parseFloat(formData.price)) * 100).toFixed(1)}%
-                  </span>
-                </div>
-              )}
             </div>
 
             {!editItem && (
@@ -333,14 +379,18 @@ const AddProductModal = ({ isOpen, onClose, onSuccess, editItem = null }) => {
                 <h4>Batch Information</h4>
                 <div className="form-grid">
                   <div className="form-group">
-                    <label>Batch Number</label>
+                    <label>
+                      Batch Number <span className="required">*</span>
+                    </label>
                     <input
                       type="text"
                       name="batch_no"
                       value={formData.batch_no}
                       onChange={handleChange}
                       placeholder="e.g., BATCH-001"
+                      className={errors.batch_no ? "error" : ""}
                     />
+                    {errors.batch_no && <span className="error-text">{errors.batch_no}</span>}
                   </div>
 
                   <div className="form-group">
@@ -354,6 +404,41 @@ const AddProductModal = ({ isOpen, onClose, onSuccess, editItem = null }) => {
                       onChange={handleChange}
                       placeholder="0"
                       min="0"
+                      className={errors.batch_quantity ? "error" : ""}
+                    />
+                    {errors.batch_quantity && <span className="error-text">{errors.batch_quantity}</span>}
+                  </div>
+
+                  <div className="form-group">
+                    <label>Manufacturing Date</label>
+                    <DatePickerInput
+                      selected={formData.manufacturing_date ? new Date(formData.manufacturing_date) : null}
+                      onChange={(date) => handleChange({ target: { name: "manufacturing_date", value: date ? date.toISOString().split("T")[0] : "" } })}
+                      placeholderText="Select manufacturing date..."
+                    />
+                  </div>
+
+                  <div className="form-group">
+                    <label>
+                      Expiration Date {formData.category === "Health" && <span className="required">*</span>}
+                    </label>
+                    <DatePickerInput
+                      selected={formData.expiration_date ? new Date(formData.expiration_date) : null}
+                      onChange={(date) => handleChange({ target: { name: "expiration_date", value: date ? date.toISOString().split("T")[0] : "" } })}
+                      placeholderText="Select expiration date..."
+                      className={errors.expiration_date ? "error" : ""}
+                    />
+                    {errors.expiration_date && <span className="error-text">{errors.expiration_date}</span>}
+                  </div>
+
+                  <div className="form-group">
+                    <label>Supplier</label>
+                    <input
+                      type="text"
+                      name="batch_supplier"
+                      value={formData.batch_supplier}
+                      onChange={handleChange}
+                      placeholder="e.g., ABC Pharmaceuticals"
                     />
                   </div>
 
@@ -366,6 +451,52 @@ const AddProductModal = ({ isOpen, onClose, onSuccess, editItem = null }) => {
                     />
                   </div>
 
+                  <div className="form-group">
+                    <label>Unit Cost (₱)</label>
+                    <input
+                      type="number"
+                      name="batch_unit_cost"
+                      value={formData.batch_unit_cost}
+                      onChange={handleChange}
+                      placeholder="0.00"
+                      min="0"
+                      step="0.01"
+                    />
+                  </div>
+
+                  <div className="form-group">
+                    <label>Proof / Receipt Image</label>
+                    {formData.batch_proof_preview ? (
+                      <div className="photo-preview-container">
+                        <img
+                          src={formData.batch_proof_preview}
+                          alt="Batch proof"
+                          className="photo-preview-img"
+                          style={{ maxHeight: 100 }}
+                        />
+                        <button
+                          type="button"
+                          className="btn-remove-photo"
+                          onClick={handleRemoveBatchProof}
+                        >
+                          Remove Proof
+                        </button>
+                      </div>
+                    ) : (
+                      <label className="photo-upload-label" style={{ padding: 12 }}>
+                        <input
+                          type="file"
+                          accept="image/*"
+                          onChange={handleBatchProofChange}
+                          className="photo-input"
+                        />
+                        <div className="photo-upload-placeholder">
+                          <span>Click to upload receipt/proof</span>
+                          <small>JPEG, PNG, GIF up to 5MB</small>
+                        </div>
+                      </label>
+                    )}
+                  </div>
                 </div>
               </div>
             )}

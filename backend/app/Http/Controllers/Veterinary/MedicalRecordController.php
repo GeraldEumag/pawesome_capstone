@@ -475,7 +475,9 @@ class MedicalRecordController extends Controller
             $pet = Pet::with(['customer'])->findOrFail($petId);
             
             // Verify the pet belongs to the authenticated customer
-            if ($pet->customer_id !== $user->id) {
+            // pet.customer_id references the customers table; user.id references users table.
+            // The Customer model links to User via user_id.
+            if (!$pet->customer || $pet->customer->user_id !== $user->id) {
                 return response()->json([
                     'success' => false,
                     'message' => 'Pet not found or does not belong to you'

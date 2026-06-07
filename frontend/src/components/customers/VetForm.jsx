@@ -185,7 +185,7 @@ const VetForm = () => {
         showAlert(data.message || "Failed to submit vet appointment");
       }
     } catch (error) {
-      showError("Failed to submit vet appointment");
+      showError(error.message || "Failed to submit vet appointment");
     } finally {
       setLoading(false);
     }

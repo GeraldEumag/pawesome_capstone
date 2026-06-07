@@ -18,11 +18,6 @@ class DashboardController extends Controller
         return Appointment::query()->where('veterinarian_id', Auth::id());
     }
 
-    private function unassignedPendingAppointments()
-    {
-        return Appointment::query()->whereNull('veterinarian_id')->where('status', 'pending');
-    }
-
     public function overview()
     {
         $today = Carbon::today();
@@ -31,41 +26,27 @@ class DashboardController extends Controller
 
         $todayAssigned = $this->assignedAppointments()
             ->whereDate('scheduled_at', $today)
-            ->whereIn('status', ['approved', 'scheduled', 'in_progress', 'treated'])
-            ->count();
-
-        $todayUnassigned = $this->unassignedPendingAppointments()
-            ->whereDate('scheduled_at', $today)
+            ->whereIn('status', ['approved', 'scheduled', 'in_progress', 'treated', 'awaiting_payment'])
             ->count();
 
         $pendingAssigned = $this->assignedAppointments()
             ->where('status', 'pending')
             ->count();
 
-        $pendingUnassigned = $this->unassignedPendingAppointments()
-            ->count();
-
         $upcomingAssigned = $this->assignedAppointments()
             ->with(['customer', 'pet', 'service', 'veterinarian'])
             ->where('scheduled_at', '>=', $today)
-            ->whereIn('status', ['approved', 'scheduled', 'in_progress', 'treated'])
-            ->orderBy('scheduled_at')
-            ->limit(5)
-            ->get();
-
-        $upcomingUnassigned = $this->unassignedPendingAppointments()
-            ->with(['customer', 'pet', 'service'])
-            ->whereDate('scheduled_at', '>=', $today)
+            ->whereIn('status', ['approved', 'scheduled', 'in_progress', 'treated', 'awaiting_payment'])
             ->orderBy('scheduled_at')
             ->limit(5)
             ->get();
 
         return response()->json([
-            'today_appointments' => $todayAssigned + $todayUnassigned,
+            'today_appointments' => $todayAssigned,
             'approved_appointments' => $this->assignedAppointments()
                 ->whereIn('status', ['approved', 'scheduled'])
                 ->count(),
-            'pending_appointments' => $pendingAssigned + $pendingUnassigned,
+            'pending_appointments' => $pendingAssigned,
             'completed_appointments' => $this->assignedAppointments()
                 ->where('status', 'completed')
                 ->count(),
@@ -75,7 +56,7 @@ class DashboardController extends Controller
             'new_patients_this_month' => Pet::whereHas('appointments', function ($query) use ($authId) {
                 $query->where('veterinarian_id', $authId);
             })->whereMonth('created_at', $today->month)->count(),
-            'upcoming_appointments' => $upcomingAssigned->concat($upcomingUnassigned)->sortBy('scheduled_at')->values()->take(5),
+            'upcoming_appointments' => $upcomingAssigned->sortBy('scheduled_at')->values()->take(5),
             'recent_patients' => Pet::with('customer')
                 ->whereHas('appointments', function ($query) use ($authId) {
                     $query->where('veterinarian_id', $authId);
@@ -87,7 +68,7 @@ class DashboardController extends Controller
                 ->with('service')
                 ->selectRaw('service_id, count(*) as count')
                 ->whereMonth('scheduled_at', $today->month)
-                ->whereIn('status', ['approved', 'scheduled', 'in_progress', 'treated', 'completed'])
+                ->whereIn('status', ['approved', 'scheduled', 'in_progress', 'treated', 'awaiting_payment', 'completed'])
                 ->groupBy('service_id')
                 ->get(),
         ]);
@@ -97,20 +78,12 @@ class DashboardController extends Controller
     {
         $authId = Auth::id();
 
+        // Only show appointments assigned to current veterinarian
+        // (i.e., ones that receptionist has approved and assigned)
         return response()->json(
             Appointment::with(['customer', 'pet', 'service', 'veterinarian'])
-                ->where(function ($query) use ($authId) {
-                    // Show appointments assigned to current veterinarian
-                    $query->where(function ($sub) use ($authId) {
-                        $sub->where('veterinarian_id', $authId)
-                            ->whereIn('status', ['approved', 'scheduled', 'in_progress', 'treated', 'completed', 'cancelled', 'no_show']);
-                    })
-                    // Also show unassigned pending appointments (incoming requests)
-                    ->orWhere(function ($sub) {
-                        $sub->whereNull('veterinarian_id')
-                            ->where('status', 'pending');
-                    });
-                })
+                ->where('veterinarian_id', $authId)
+                ->whereIn('status', ['approved', 'scheduled', 'in_progress', 'treated', 'awaiting_payment', 'completed', 'cancelled', 'no_show'])
                 ->orderBy('scheduled_at')
                 ->get()
         );

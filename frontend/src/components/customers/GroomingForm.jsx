@@ -228,7 +228,7 @@ const GroomingForm = () => {
       }
     } catch (error) {
       console.error("Submit error:", error);
-      showError("Failed to submit grooming appointment");
+      showError(error.message || "Failed to submit grooming appointment");
     } finally {
       setLoading(false);
     }

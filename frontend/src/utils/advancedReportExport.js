@@ -84,21 +84,21 @@ export const exportToPDF = async (data, filename, title, headers) => {
   try {
     // Dynamic import
     const { jsPDF } = await import('jspdf');
-    await import('jspdf-autotable');
-    
+    const { default: autoTable } = await import('jspdf-autotable');
+
     const doc = new jsPDF();
-    
+
     // Title
     doc.setFontSize(16);
     doc.text(title, 14, 20);
-    
+
     // Date
     doc.setFontSize(10);
     doc.text(`Generated: ${format(new Date(), 'PPP')}`, 14, 30);
-    
+
     // Table
     const tableHeaders = headers || Object.keys(data[0]);
-    doc.autoTable({
+    autoTable(doc, {
       head: [tableHeaders.map(h => h.toUpperCase())],
       body: data.map(row => tableHeaders.map(h => row[h] ?? '')),
       startY: 40,

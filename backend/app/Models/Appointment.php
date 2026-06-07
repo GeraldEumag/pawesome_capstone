@@ -34,6 +34,7 @@ class Appointment extends Model
     const STATUS_IN_CONSULTATION = 'in_consultation';
     const STATUS_NEEDS_CONFINEMENT = 'needs_confinement';
     const STATUS_TREATED = 'treated';
+    const STATUS_AWAITING_PAYMENT = 'awaiting_payment';
     const STATUS_COMPLETED = 'completed';
     const STATUS_CANCELLED = 'cancelled';
     const STATUS_REJECTED = 'rejected';
@@ -50,6 +51,7 @@ class Appointment extends Model
         self::STATUS_IN_CONSULTATION,
         self::STATUS_NEEDS_CONFINEMENT,
         self::STATUS_TREATED,
+        self::STATUS_AWAITING_PAYMENT,
         self::STATUS_COMPLETED,
         self::STATUS_CANCELLED,
         self::STATUS_REJECTED,
@@ -129,6 +131,7 @@ class Appointment extends Model
             self::STATUS_IN_PROGRESS,
             self::STATUS_IN_CONSULTATION,
             self::STATUS_TREATED,
+            self::STATUS_AWAITING_PAYMENT,
         ], true);
     }
 

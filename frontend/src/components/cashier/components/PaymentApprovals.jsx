@@ -69,17 +69,13 @@ const PaymentApprovals = () => {
   // Handle verify with reference number from modal
   const handleVerifyFromModal = async () => {
     const refNum = referenceNumberRef.current;
-    if (!refNum || !refNum.trim()) {
-      showWarning("Reference number is required to verify payment");
-      return;
-    }
     
     if (!proofModal?.payment) {
       showError("Payment data not available");
       return;
     }
     
-    const result = await verifyPayment(proofModal.payment, refNum.trim());
+    const result = await verifyPayment(proofModal.payment, refNum?.trim() || "");
     if (result?.success) {
       // Show receipt after successful verification
       const payment = proofModal.payment;
@@ -89,7 +85,7 @@ const PaymentApprovals = () => {
         service_name: payment.service_name || payment.request_type || "Service",
         amount: payment.amount || 0,
         receipt_number: result.receipt_number,
-        reference_number: refNum.trim(),
+        reference_number: refNum?.trim() || "Counter Payment",
         paid_at: new Date().toISOString(),
         verified_by: user?.name || "Cashier",
       });
@@ -344,7 +340,7 @@ const PaymentApprovals = () => {
                       if (payment.proof_url) {
                         openProof(payment.proof_url, payment);
                       } else {
-                        showWarning("No proof available for this payment");
+                        openProof(null, payment);
                       }
                     }}
                     disabled={isVerifyLoading || isRejectLoading}
@@ -387,6 +383,11 @@ const PaymentApprovals = () => {
                     alt="Payment Proof" 
                     className="pa-proof-image"
                   />
+                ) : proofModal.payment && !proofModal.payment.proof_url ? (
+                  <div className="pa-proof-loading" style={{ background: "#f0fdf4", color: "#166534" }}>
+                    <FontAwesomeIcon icon={faCheck} size="2x" />
+                    <p>Counter payment — no proof uploaded.</p>
+                  </div>
                 ) : (
                   <div className="pa-proof-loading">
                     <FontAwesomeIcon icon={faSpinner} spin size="2x" />
@@ -396,8 +397,8 @@ const PaymentApprovals = () => {
               </div>
               <div className="pa-reference-section">
                 <label htmlFor="referenceNumber" className="pa-reference-label">
-                  <strong>GCash Reference Number *</strong>
-                  <span className="pa-reference-hint">Required for verification</span>
+                  <strong>GCash / Counter Reference Number</strong>
+                  <span className="pa-reference-hint">Optional for counter payments</span>
                 </label>
                 <div className="pa-reference-input-group">
                   <input
@@ -445,7 +446,7 @@ const PaymentApprovals = () => {
               <button 
                 className="pa-btn-verify" 
                 onClick={handleVerifyFromModal}
-                disabled={actionLoading || !referenceNumber.trim()}
+                disabled={actionLoading}
               >
                 {actionLoading === `${proofModal?.payment?.id}-verify` ? (
                   <><FontAwesomeIcon icon={faSpinner} spin /> Verifying...</>

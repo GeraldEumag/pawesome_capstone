@@ -205,7 +205,12 @@ const CashierPaymentVerification = () => {
       list = list.filter((r) => (r.request_type || r.type || "").toLowerCase() === typeFilter.toLowerCase());
     }
     if (statusFilter) {
-      list = list.filter((r) => (r.payment_status || "pending").toLowerCase() === statusFilter.toLowerCase());
+      const sf = statusFilter.toLowerCase();
+      list = list.filter((r) => {
+        const ps = (r.payment_status || "pending").toLowerCase();
+        if (sf === "pending") return ps === "pending" || ps === "unpaid";
+        return ps === sf;
+      });
     }
     return list;
   }, [requests, searchQuery, typeFilter, statusFilter]);
@@ -217,14 +222,19 @@ const CashierPaymentVerification = () => {
   }, [requests]);
 
   const stats = useMemo(() => {
-    const pending = requests.filter((r) => (r.payment_status || "pending").toLowerCase() === "pending");
+    const pending = requests.filter((r) => {
+      const ps = (r.payment_status || "pending").toLowerCase();
+      return ps === "pending" || ps === "unpaid";
+    });
     const totalAmount = pending.reduce((sum, r) => sum + Number(r.amount || r.total_amount || 0), 0);
     return {
       totalPending: pending.length,
       totalAmount,
       verifiedToday: requests.filter((r) => {
-        if ((r.payment_status || "").toLowerCase() !== "verified") return false;
-        const d = new Date(r.updated_at || r.created_at);
+        const ps = (r.payment_status || "").toLowerCase();
+        return ps === "verified" || ps === "paid";
+      }).filter((r) => {
+        const d = new Date(r.updated_at || r.created_at || r.paid_at);
         const today = new Date();
         return d.toDateString() === today.toDateString();
       }).length,
@@ -310,7 +320,8 @@ const CashierPaymentVerification = () => {
                   </select>
                   <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)}>
                     <option value="">All Statuses</option>
-                    <option value="pending">Pending</option>
+                    <option value="pending">Pending / Unpaid</option>
+                    <option value="paid">Paid</option>
                     <option value="verified">Verified</option>
                     <option value="rejected">Rejected</option>
                   </select>

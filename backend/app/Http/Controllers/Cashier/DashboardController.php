@@ -11,6 +11,7 @@ use App\Services\WorkflowNotifier;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Auth;
 use App\Services\PaymentVerificationService;
 
 class DashboardController extends Controller
@@ -18,7 +19,7 @@ class DashboardController extends Controller
     private function overviewData(): array
     {
         $today = Carbon::today();
-        $user = auth()->user();
+        $user = Auth::user();
 
         $lowStockItems = InventoryItem::whereColumn('stock', '<=', 'threshold')
             ->where('stock', '>', 0)
@@ -50,7 +51,7 @@ class DashboardController extends Controller
                 ];
             });
 
-        $pendingOrders = Appointment::where('status', 'confirmed')
+        $pendingOrders = Appointment::where('status', 'approved')
             ->with(['pet', 'customer'])
             ->limit(5)
             ->get()
@@ -67,21 +68,22 @@ class DashboardController extends Controller
             });
 
         // Count service requests by logged-in customer
-        $pendingServiceRequests = \App\Models\ServiceRequest::where('customer_email', $user->email)
-            ->where('status', 'pending')
-            ->count();
+        $userEmail = $user?->email;
+        $pendingServiceRequests = $userEmail
+            ? \App\Models\ServiceRequest::where('customer_email', $userEmail)->where('status', 'pending')->count()
+            : 0;
 
-        $approvedServiceRequests = \App\Models\ServiceRequest::where('customer_email', $user->email)
-            ->where('status', 'approved')
-            ->count();
+        $approvedServiceRequests = $userEmail
+            ? \App\Models\ServiceRequest::where('customer_email', $userEmail)->where('status', 'approved')->count()
+            : 0;
 
-        $paymentPendingServiceRequests = \App\Models\ServiceRequest::where('customer_email', $user->email)
-            ->where('payment_status', 'pending')
-            ->count();
+        $paymentPendingServiceRequests = $userEmail
+            ? \App\Models\ServiceRequest::where('customer_email', $userEmail)->where('payment_status', 'pending')->count()
+            : 0;
 
-        $paidServiceRequests = \App\Models\ServiceRequest::where('customer_email', $user->email)
-            ->where('payment_status', 'paid')
-            ->count();
+        $paidServiceRequests = $userEmail
+            ? \App\Models\ServiceRequest::where('customer_email', $userEmail)->where('payment_status', 'paid')->count()
+            : 0;
 
         $salesByType = Sale::selectRaw('payment_type, COUNT(*) as count, SUM(amount) as total')
             ->whereDate('created_at', $today)
@@ -100,7 +102,7 @@ class DashboardController extends Controller
             'today_transactions' => Sale::whereDate('created_at', $today)->count(),
             'monthly_sales' => Sale::whereMonth('created_at', $today->month)->sum('amount'),
             'monthly_transactions' => Sale::whereMonth('created_at', $today->month)->count(),
-            'pending_payments' => Appointment::where('status', 'confirmed')->count(),
+            'pending_payments' => Appointment::where('status', 'approved')->count(),
             'completed_payments' => Sale::where('type', 'appointment')->count(),
             'recent_sales' => Sale::latest()->limit(10)->get(),
             'sales_by_type' => $salesByType,
@@ -413,7 +415,7 @@ class DashboardController extends Controller
             'category' => 'cashier',
             'subcategory' => 'handover',
             'reference_type' => 'cashier_handover',
-            'reference_id' => auth()->id(),
+            'reference_id' => Auth::id(),
             'metadata' => [
                 'cashier_name' => $validated['cashier_name'],
                 'shift_date' => now()->toIso8601String(),
@@ -429,7 +431,7 @@ class DashboardController extends Controller
     public function getLastHandover()
     {
         $lastHandover = ActivityLog::where('action', 'cashier_handover')
-            ->where('user_id', auth()->id())
+            ->where('user_id', Auth::id())
             ->latest()
             ->first();
 
@@ -462,7 +464,7 @@ class DashboardController extends Controller
             'category' => 'cashier',
             'subcategory' => 'end_shift',
             'reference_type' => 'cashier_shift',
-            'reference_id' => auth()->id(),
+            'reference_id' => Auth::id(),
             'metadata' => array_merge($data, [
                 'submitted_at' => now()->toIso8601String(),
             ]),
@@ -481,7 +483,7 @@ class DashboardController extends Controller
     public function getLastShiftReport()
     {
         $lastShift = ActivityLog::where('action', 'cashier_end_shift')
-            ->where('user_id', auth()->id())
+            ->where('user_id', Auth::id())
             ->latest()
             ->first();
 
@@ -647,7 +649,36 @@ class DashboardController extends Controller
                 ];
             });
 
-        $allPayments = $orders->concat($serviceRequests)->concat($boardings)->concat($confinements);
+        // Get veterinary consultations awaiting payment (walk-in or online)
+        $appointments = Appointment::with(['customer', 'pet', 'service'])
+            ->whereIn('status', ['awaiting_payment', 'treated'])
+            ->whereIn('payment_status', ['unpaid', 'pending'])
+            ->orderBy('updated_at', 'desc')
+            ->get()
+            ->map(function ($appointment) {
+                return [
+                    'id' => $appointment->id,
+                    'payable_type' => 'appointment',
+                    'type' => 'appointment',
+                    'source' => 'appointment',
+                    'payment_source' => 'appointment',
+                    'customer_name' => $appointment->customer?->name ?? 'Customer',
+                    'customer_email' => $appointment->customer?->email,
+                    'pet_name' => $appointment->pet?->name,
+                    'request_type' => 'appointment',
+                    'service_name' => $appointment->service?->name ?? 'Veterinary Consultation',
+                    'amount' => $appointment->total_amount ?? $appointment->balance_due ?? $appointment->price ?? 0,
+                    'payment_method' => $appointment->payment_method,
+                    'payment_reference' => $appointment->payment_reference,
+                    'payment_proof' => $appointment->payment_proof,
+                    'proof_url' => $appointment->payment_proof ? url('/api/files/payment-proofs/appointment/' . $appointment->id . '/view') : null,
+                    'request_date' => $appointment->updated_at,
+                    'status' => $appointment->status,
+                    'payment_status' => $appointment->payment_status,
+                ];
+            });
+
+        $allPayments = $orders->concat($serviceRequests)->concat($boardings)->concat($confinements)->concat($appointments);
 
         return response()->json(['payments' => $allPayments]);
     }
@@ -684,12 +715,12 @@ class DashboardController extends Controller
                 ->update([
                     'payment_status' => 'paid',
                     'paid_at' => now(),
-                    'verified_by' => auth()->id(),
+                    'verified_by' => Auth::id(),
                     'cashier_remarks' => $request->input('cashier_remarks', 'Payment verified by cashier'),
                     'receipt_number' => $receiptNumber,
                 ]);
 
-            ActivityLog::log(auth()->id(), 'payment_verified', "Cashier verified payment for service request #{$id}", [
+            ActivityLog::log(Auth::id(), 'payment_verified', "Cashier verified payment for service request #{$id}", [
                 'category' => 'payment',
                 'reference_type' => 'service_request',
                 'reference_id' => $id,
@@ -733,7 +764,7 @@ class DashboardController extends Controller
             ->update([
                 'payment_status' => 'paid',
                 'paid_at' => now(),
-                'verified_by' => auth()->id(),
+                'verified_by' => Auth::id(),
                 'cashier_remarks' => $request->input('cashier_remarks'),
                 'receipt_number' => $receiptNumber,
                 'updated_at' => now(),
@@ -749,7 +780,7 @@ class DashboardController extends Controller
             ['receipt_number' => $receiptNumber]
         );
 
-        ActivityLog::log(auth()->id(), 'payment_verified', "Cashier verified payment for order #{$id}", [
+        ActivityLog::log(Auth::id(), 'payment_verified', "Cashier verified payment for order #{$id}", [
             'category' => 'payment',
             'reference_type' => 'customer_order',
             'reference_id' => $id,
@@ -794,12 +825,12 @@ class DashboardController extends Controller
                 ->where('id', $id)
                 ->update([
                     'payment_status' => 'rejected',
-                    'rejected_by' => auth()->id(),
+                    'rejected_by' => Auth::id(),
                     'rejected_at' => now(),
                     'rejection_reason' => $rejectionReason,
                 ]);
 
-            ActivityLog::log(auth()->id(), 'payment_rejected', "Cashier rejected payment for service request #{$id}", [
+            ActivityLog::log(Auth::id(), 'payment_rejected', "Cashier rejected payment for service request #{$id}", [
                 'category' => 'payment',
                 'reference_type' => 'service_request',
                 'reference_id' => $id,
@@ -838,12 +869,12 @@ class DashboardController extends Controller
             ->where('id', $id)
             ->update([
                 'payment_status' => 'rejected',
-                'rejected_by' => auth()->id(),
+                'rejected_by' => Auth::id(),
                 'rejected_at' => now(),
                 'rejection_reason' => $rejectionReason,
             ]);
 
-        ActivityLog::log(auth()->id(), 'payment_rejected', "Cashier rejected payment for order #{$id}", [
+        ActivityLog::log(Auth::id(), 'payment_rejected', "Cashier rejected payment for order #{$id}", [
             'category' => 'payment',
             'reference_type' => 'customer_order',
             'reference_id' => $id,

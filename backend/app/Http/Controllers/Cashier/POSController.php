@@ -12,6 +12,7 @@ use App\Models\Customer;
 use App\Models\Service;
 use App\Services\InventoryService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Validator;
@@ -63,10 +64,11 @@ class POSController extends Controller
         try {
             DB::beginTransaction();
 
-            // Calculate totals
-            $subtotal = 0;
-            $taxRate = 0.12; // 12% VAT
-            $discountAmount = 0;
+            // Use frontend-computed VAT-inclusive totals
+            $subtotal = (float) ($payload['subtotal'] ?? 0);
+            $taxAmount = (float) ($payload['tax'] ?? 0);
+            $discountAmount = (float) ($payload['discount'] ?? 0);
+            $totalAmount = (float) ($payload['total'] ?? 0);
             $saleCustomerId = null;
 
             if (!empty($payload['customer_id'])) {
@@ -79,10 +81,17 @@ class POSController extends Controller
                 }
             }
 
+            // Validate item-level math roughly matches frontend totals
+            $computedSubtotal = 0;
             foreach ($payload['items'] as $item) {
                 $itemTotal = $item['unit_price'] * $item['quantity'];
                 $itemDiscount = $item['discount_amount'] ?? 0;
-                $subtotal += ($itemTotal - $itemDiscount);
+                $computedSubtotal += ($itemTotal - $itemDiscount);
+            }
+            if (abs($computedSubtotal - $subtotal) > 0.10) {
+                $subtotal = $computedSubtotal;
+                $taxAmount = round($subtotal * 0.12 / 1.12, 2);
+                $totalAmount = max($subtotal - $discountAmount, 0);
             }
 
             foreach ($payload['items'] as $item) {
@@ -106,14 +115,11 @@ class POSController extends Controller
                 }
             }
 
-            $taxAmount = $subtotal * $taxRate;
-            $totalAmount = $subtotal + $taxAmount - $discountAmount;
-
             // Create the sale. Some upgraded databases keep payment details only
             // in the payments table, while newer schemas also mirror it on sales.
             $saleData = [
                 'customer_id' => $saleCustomerId,
-                'cashier_id' => $request->user()?->id ?? auth()->id(),
+                'cashier_id' => $request->user()?->id ?? Auth::id(),
                 'type' => 'product',
                 'status' => 'pending',
                 'payment_type' => $payload['payment_method'],
@@ -511,7 +517,7 @@ class POSController extends Controller
                     'email' => $sale->customer?->email,
                     'phone' => $sale->customer?->phone,
                 ],
-                'items' => $sale->items->map(function ($item) {
+                'items' => collect($sale->items)->map(function ($item) {
                     return [
                         'description' => $item->item_name,
                         'quantity' => $item->quantity,

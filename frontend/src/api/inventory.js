@@ -190,15 +190,38 @@ export const inventoryApi = {
     validateData(data, "create item");
     try {
       const formData = new FormData();
+      let batchProofFile = null;
+
       Object.entries(data).forEach(([key, value]) => {
-        if (value !== undefined && value !== null) {
-          if (key === "photo" && value instanceof File) {
-            formData.append("photo", value);
-          } else {
-            formData.append(key, typeof value === "object" ? JSON.stringify(value) : String(value));
+        if (value === undefined || value === null) return;
+
+        if (key === "photo" && value instanceof File) {
+          formData.append("photo", value);
+          return;
+        }
+
+        if (key === "batchData" && typeof value === "object") {
+          // Extract proof_photo file from batchData before stringifying
+          if (value.proof_photo instanceof File) {
+            batchProofFile = value.proof_photo;
           }
+          const batchClone = { ...value };
+          delete batchClone.proof_photo;
+          formData.append("batchData", JSON.stringify(batchClone));
+          return;
+        }
+
+        if (typeof value === "object") {
+          formData.append(key, JSON.stringify(value));
+        } else {
+          formData.append(key, String(value));
         }
       });
+
+      if (batchProofFile) {
+        formData.append("batch_proof", batchProofFile);
+      }
+
       return await apiRequest("/inventory/items", {
         method: "POST",
         body: formData,

@@ -4,7 +4,7 @@
  */
 
 import jsPDF from "jspdf";
-import "jspdf-autotable";
+import autoTable from "jspdf-autotable";
 import * as XLSX from "xlsx";
 
 export const getNestedValue = (row, key) => {
@@ -97,7 +97,7 @@ export const exportToPDF = (data, columns, title = "Report", filename = "report"
   );
 
   // Add table
-  doc.autoTable({
+  autoTable(doc, {
     head: [headers],
     body: rows,
     startY: 40,

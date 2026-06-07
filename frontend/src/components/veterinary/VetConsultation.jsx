@@ -27,10 +27,7 @@ const emptyForm = {
   symptoms: "",
   physical_examination: "",
   diagnosis: "",
-  secondary_diagnosis: "",
   treatment_plan: "",
-  procedure_notes: "",
-  follow_up_instructions: "",
   weight_kg: "",
   temperature_celsius: "",
   heart_rate: "",
@@ -89,10 +86,7 @@ const VetConsultation = () => {
       symptoms: medicalRecord.symptoms || "",
       physical_examination: medicalRecord.physical_examination || "",
       diagnosis: medicalRecord.diagnosis || "",
-      secondary_diagnosis: medicalRecord.secondary_diagnosis || "",
       treatment_plan: medicalRecord.treatment_plan || "",
-      procedure_notes: medicalRecord.procedure_notes || "",
-      follow_up_instructions: medicalRecord.follow_up_instructions || "",
       weight_kg: medicalRecord.weight_kg || "",
       temperature_celsius: medicalRecord.temperature_celsius || "",
       heart_rate: medicalRecord.heart_rate || "",
@@ -218,15 +212,15 @@ const VetConsultation = () => {
         method: "POST",
         body: JSON.stringify({
           diagnosis: form.diagnosis,
-          treatment_notes: form.treatment_plan || form.procedure_notes,
-          prescription: form.follow_up_instructions,
+          treatment_notes: form.treatment_plan,
+          prescription: "",
           vet_remarks: form.notes,
         }),
       });
-      toast.success("Appointment completed. Receipt is ready.");
-      navigate(`/veterinary/receipt?id=${id}`);
+      toast.success("Consultation finalized. Awaiting payment at cashier.");
+      await loadConsultation();
     } catch (err) {
-      toast.error(err.message || "Failed to complete appointment.");
+      toast.error(err.message || "Failed to finalize consultation.");
     } finally {
       setSaving(false);
     }
@@ -337,13 +331,20 @@ const VetConsultation = () => {
         </article>
       </div>
 
-      {!isStarted && (
+      {!isStarted && appointmentStatus !== "awaiting_payment" && (
         <div className="consult-start-panel">
           <p>Start the appointment to open a medical record for this pet.</p>
           <button type="button" onClick={startAppointment} disabled={saving}>
             <FontAwesomeIcon icon={faPlay} />
             Start Consultation
           </button>
+        </div>
+      )}
+      {appointmentStatus === "awaiting_payment" && (
+        <div className="consult-start-panel" style={{ background: "#fff7ed", borderColor: "#f97316" }}>
+          <p style={{ color: "#c2410c", fontWeight: 600 }}>
+            This consultation has been finalized and is awaiting payment at the cashier.
+          </p>
         </div>
       )}
 
@@ -367,14 +368,6 @@ const VetConsultation = () => {
         <label>
           Treatment Plan
           <textarea value={form.treatment_plan} onChange={(e) => updateField("treatment_plan", e.target.value)} />
-        </label>
-        <label>
-          Procedure Notes
-          <textarea value={form.procedure_notes} onChange={(e) => updateField("procedure_notes", e.target.value)} />
-        </label>
-        <label>
-          Follow-up Instructions
-          <textarea value={form.follow_up_instructions} onChange={(e) => updateField("follow_up_instructions", e.target.value)} />
         </label>
         <label>
           General Notes
@@ -489,7 +482,7 @@ const VetConsultation = () => {
         </button>
         <button type="button" className="primary" onClick={finalizeAndComplete} disabled={!isStarted || saving}>
           <FontAwesomeIcon icon={faCircleCheck} />
-          Finalize & Complete
+          Finalize & Send to Billing
         </button>
         <button type="button" className="secondary" onClick={recommendConfinement} disabled={!isStarted || saving || appointmentStatus === "needs_confinement"}>
           <FontAwesomeIcon icon={faHospital} />

@@ -101,6 +101,26 @@ class InventoryController extends Controller
     {
         try {
             $data = $this->handlePhotoUpload($request, $request->all());
+
+            // Parse batchData from JSON string (multipart/form-data sends it as string)
+            if (!empty($data['batchData']) && is_string($data['batchData'])) {
+                $data['batchData'] = json_decode($data['batchData'], true) ?? [];
+            }
+
+            // Handle batch proof photo upload
+            if ($request->hasFile('batch_proof')) {
+                $file = $request->file('batch_proof');
+                if ($file->isValid()) {
+                    $uploadDir = public_path('uploads/inventory/batches');
+                    if (!is_dir($uploadDir)) {
+                        mkdir($uploadDir, 0755, true);
+                    }
+                    $filename = 'batch_' . time() . '_' . uniqid() . '.' . $file->getClientOriginalExtension();
+                    $file->move($uploadDir, $filename);
+                    $data['batchData']['proof_photo'] = 'uploads/inventory/batches/' . $filename;
+                }
+            }
+
             $result = $this->inventoryService->createItem($data);
             return response()->json($result, 201);
         } catch (ValidationException $e) {

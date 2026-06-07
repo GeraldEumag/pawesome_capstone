@@ -2,7 +2,7 @@ import React, { useEffect, useMemo, useState, useCallback } from "react";
 import { inventoryApi } from "../../api/inventory";
 import Papa from "papaparse";
 import jsPDF from "jspdf";
-import "jspdf-autotable";
+import autoTable from "jspdf-autotable";
 import * as XLSX from "xlsx";
 import "./MonthlyInventoryAudit.css";
 import { showAlert, showSuccess, showError } from "../../utils/alert";
@@ -407,7 +407,7 @@ const MonthlyInventoryAudit = () => {
     ]);
 
     // Add table
-    doc.autoTable({
+    autoTable(doc, {
       head: [["Product", "SKU", "Category", "System Stock", "Actual Stock", "Variance", "Status", "Reason"]],
       body: tableData,
       startY: 85,

@@ -31,9 +31,9 @@ const CHECKOUT_ENDPOINT = "/cashier/pos/transaction";
 const TAX_RATE = 0.12;
 
 const PAYMENT_METHODS = [
-  { value: "Cash",   label: "Cash",   icon: faMoneyBillWave, color: "#10B981" },
-  { value: "GCash",  label: "GCash",  icon: faMobileScreen,  color: "#4F46E5" },
-  { value: "Online", label: "Online", icon: faGlobe,         color: "#8B5CF6" },
+  { value: "Cash",  label: "Cash",  icon: faMoneyBillWave, color: "#10B981" },
+  { value: "GCash", label: "GCash", icon: faMobileScreen,  color: "#4F46E5" },
+  { value: "Maya",  label: "Maya",  icon: faWallet,        color: "#00A4E0" },
 ];
 
 const CATEGORY_CONFIG = {
@@ -61,9 +61,6 @@ const discountedPrice = (p) => {
   const disc  = Number(p.discount) || 0;
   return disc > 0 ? price * (1 - disc / 100) : price;
 };
-
-const priceWithVAT = (p) => discountedPrice(p) * (1 + TAX_RATE);
-const vatPerUnit   = (p) => discountedPrice(p) * TAX_RATE;
 
 const stockStatus = (stock) => {
   const q = getAvailableStock({ available_stock: stock });
@@ -1442,6 +1439,8 @@ const CashierPOS = () => {
   const [pendingCount, setPendingCount] = useState(0);
   const [searchQuery, setSearchQuery]     = useState("");
   const [orderType, setOrderType]         = useState("walk-in");
+  const [customers, setCustomers]         = useState([]);
+  const [customerId, setCustomerId]       = useState(null);
   const [customerName, setCustomerName]   = useState("");
   const [voucher, setVoucher]             = useState("");
   const [validatedVoucher, setValidatedVoucher] = useState(null);
@@ -1595,14 +1594,27 @@ const CashierPOS = () => {
     }
   }, []);
 
-  useEffect(() => { fetchProducts(); fetchServices(); }, [fetchProducts, fetchServices]);
+  const fetchCustomers = useCallback(async () => {
+    try {
+      const res = await apiRequest("/customers");
+      const raw = normalizeList(res, ["customers", "data"]);
+      setCustomers(raw);
+    } catch {
+      setCustomers([]);
+    }
+  }, []);
+
+  useEffect(() => { fetchProducts(); fetchServices(); fetchCustomers(); }, [fetchProducts, fetchServices, fetchCustomers]);
 
   /* Fetch pending payment count for sidebar badge */
   const fetchPendingCount = useCallback(async () => {
     try {
       const data = await apiRequest("/cashier/payment-requests");
       const list = data?.data || data?.requests || data?.payments || data || [];
-      const pending = list.filter(r => (r.payment_status || "pending").toLowerCase() === "pending");
+      const pending = list.filter(r => {
+        const ps = (r.payment_status || "pending").toLowerCase();
+        return ps === "pending" || ps === "unpaid";
+      });
       setPendingCount(pending.length);
     } catch {
       setPendingCount(0);
@@ -1740,6 +1752,7 @@ const CashierPOS = () => {
 
   const clearOrder = useCallback(() => {
     setCart([]);
+    setCustomerId(null);
     setCustomerName("");
     setVoucher("");
     setValidatedVoucher(null);
@@ -1753,7 +1766,7 @@ const CashierPOS = () => {
 
   /* Totals (VAT-inclusive pricing) */
   const subtotal = useMemo(() =>
-    cart.reduce((sum, i) => sum + priceWithVAT(i) * i.quantity, 0), [cart]);
+    cart.reduce((sum, i) => sum + discountedPrice(i) * i.quantity, 0), [cart]);
   const tax = useMemo(() => subtotal * TAX_RATE / (1 + TAX_RATE), [subtotal]);
   const discountAmt = useMemo(() => {
     if (!validatedVoucher) return 0;
@@ -1762,7 +1775,7 @@ const CashierPOS = () => {
     if (type === "fixed") return Math.min(value, subtotal);
     return 0;
   }, [validatedVoucher, subtotal]);
-  const total = useMemo(() => Math.max(subtotal + tax - discountAmt, 0), [subtotal, tax, discountAmt]);
+  const total = useMemo(() => Math.max(subtotal - discountAmt, 0), [subtotal, discountAmt]);
   const change = useMemo(() => Math.max((Number(amountReceived) || 0) - total, 0), [amountReceived, total]);
 
   const canCheckout = cart.length > 0 && cart.every((item) => item.quantity <= getAvailableStock(item)) && !checkoutLoading
@@ -1822,12 +1835,13 @@ const CashierPOS = () => {
       setCheckoutLoading(true);
       const payload = {
         order_type: orderType,
+        customer_id: customerId || null,
         customer_name: customerName || "Walk-in Customer",
         payment_method: paymentMethod.toLowerCase(),
         cash_received: Number(amountReceived) || total,
         subtotal, tax, discount: discountAmt, total,
         voucher: validatedVoucher?.code || null,
-        reference_number: (paymentMethod === "GCash" || paymentMethod === "Online") ? referenceNumber : null,
+        reference_number: (paymentMethod === "GCash" || paymentMethod === "Maya") ? referenceNumber : null,
         items: cart.map(i => {
           const isService = i.item_type === "service";
           return {
@@ -1854,7 +1868,7 @@ const CashierPOS = () => {
         subtotal, tax, discount: discountAmt, total,
         change: Math.max((Number(amountReceived) || total) - total, 0),
         items: payload.items,
-        reference_number: (paymentMethod === "GCash" || paymentMethod === "Online") ? referenceNumber : null,
+        reference_number: (paymentMethod === "GCash" || paymentMethod === "Maya") ? referenceNumber : null,
         date: new Date().toLocaleString("en-PH", { month: "short", day: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit" }),
       };
       setRecentSale(receipt);
@@ -1876,12 +1890,11 @@ const CashierPOS = () => {
     const w = window.open("", "_blank", "width=420,height=700");
     if (!w) { addToast("Allow pop-ups to print receipt", "warn"); return; }
     const itemsHtml = receiptToPrint.items.map(i => {
-      const itemVatPrice = (i.unit_price || 0) * (1 + TAX_RATE);
-      const itemVatTotal = itemVatPrice * i.quantity;
+      const itemTotal = (i.unit_price || 0) * i.quantity;
       return `
       <tr>
-        <td>${i.item_name} × ${i.quantity}<br><small>${fmt(itemVatPrice)} each (VAT incl.)</small></td>
-        <td style="text-align:right">${fmt(itemVatTotal)}</td>
+        <td>${i.item_name} × ${i.quantity}<br><small>${fmt(i.unit_price)} each</small></td>
+        <td style="text-align:right">${fmt(itemTotal)}</td>
       </tr>`;
     }).join("");
     w.document.write(`<!DOCTYPE html><html><head><title>Receipt</title>
@@ -2127,8 +2140,8 @@ const CashierPOS = () => {
                       <ProductBody>
                         <ProductName title={product.name}>{product.name}</ProductName>
                         <PriceRow>
-                          <PriceMain>{fmt(priceWithVAT(product))}</PriceMain>
-                          {hasDisc && <PriceOld>{fmt(product.price * (1 + TAX_RATE))}</PriceOld>}
+                          <PriceMain>{fmt(discountedPrice(product))}</PriceMain>
+                          {hasDisc && <PriceOld>{fmt(product.price)}</PriceOld>}
                         </PriceRow>
                         <StockBadge $type={ss.type}>{ss.label}</StockBadge>
                         <AddToCartBtn
@@ -2157,14 +2170,44 @@ const CashierPOS = () => {
             <CustomerField>
               <FieldLabel>
                 <FontAwesomeIcon icon={faUser} />
-                Customer Name
+                Customer
               </FieldLabel>
-              <FieldInput
-                type="text"
-                placeholder="Customer Name"
-                value={customerName}
-                onChange={e => setCustomerName(e.target.value)}
-              />
+              <select
+                style={{
+                  width: "100%",
+                  border: "1.5px solid var(--color-border)",
+                  borderRadius: 8,
+                  padding: "9px 10px",
+                  fontSize: 13,
+                  lineHeight: "16px",
+                  color: "var(--pos-text)",
+                  background: "var(--pos-input-bg)",
+                  outline: "none",
+                  marginBottom: 6,
+                }}
+                value={customerId || ""}
+                onChange={(e) => {
+                  const id = e.target.value ? Number(e.target.value) : null;
+                  setCustomerId(id);
+                  const c = customers.find((x) => x.id === id);
+                  setCustomerName(c ? c.name : "");
+                }}
+              >
+                <option value="">Walk-in Customer</option>
+                {customers.map((c) => (
+                  <option key={c.id} value={c.id}>
+                    {c.name} {c.phone ? `(${c.phone})` : ""}
+                  </option>
+                ))}
+              </select>
+              {!customerId && (
+                <FieldInput
+                  type="text"
+                  placeholder="Type walk-in customer name..."
+                  value={customerName}
+                  onChange={(e) => setCustomerName(e.target.value)}
+                />
+              )}
             </CustomerField>
 
             {/* Cart */}
@@ -2182,7 +2225,7 @@ const CashierPOS = () => {
                   <CartItem key={item.id}>
                     <CartItemInfo>
                       <CartItemName title={item.name}>{item.name}</CartItemName>
-                      <CartItemPrice>{fmt(priceWithVAT(item))} each · VAT {fmt(vatPerUnit(item))}</CartItemPrice>
+                      <CartItemPrice>{fmt(discountedPrice(item))} each</CartItemPrice>
                     </CartItemInfo>
 
                     <QtyControl>
@@ -2204,7 +2247,7 @@ const CashierPOS = () => {
                       </QtyBtn>
                     </QtyControl>
 
-                    <CartItemTotal>{fmt(priceWithVAT(item) * item.quantity)}</CartItemTotal>
+                    <CartItemTotal>{fmt(discountedPrice(item) * item.quantity)}</CartItemTotal>
 
                     <RemoveBtn onClick={() => removeFromCart(item.id)}>
                       <FontAwesomeIcon icon={faXmark} />
@@ -2319,7 +2362,7 @@ const CashierPOS = () => {
                   </>
                 )}
 
-                {(paymentMethod === "GCash" || paymentMethod === "Online") && (
+                {(paymentMethod === "GCash" || paymentMethod === "Maya") && (
                   <>
                     <FieldLabel style={{ marginBottom: 6 }}>
                       <FontAwesomeIcon icon={faMobileScreen} />
