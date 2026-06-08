@@ -306,27 +306,6 @@
 }
 
 /* Dark Mode */
-[data-theme="dark"] .sales-analysis,
-body[data-theme="dark"] .sales-analysis {
-  --sa-bg: rgba(15, 23, 42, 0.95);
-}
 
-[data-theme="dark"] .sales-metric-card,
-[data-theme="dark"] .sa-hourly-section,
-[data-theme="dark"] .sa-products-section,
-[data-theme="dark"] .sa-insights {
-  background: rgba(15, 23, 42, 0.9);
-  border-color: rgba(255, 141, 181, 0.2);
-}
 
-[data-theme="dark"] .sa-header {
-  background: linear-gradient(135deg, rgba(255, 95, 147, 0.15), rgba(255, 141, 181, 0.1));
-}
 
-[data-theme="dark"] .sa-title h2,
-[data-theme="dark"] .sales-metric-card strong,
-[data-theme="dark"] .sa-products-section h3,
-[data-theme="dark"] .sa-insights h3,
-[data-theme="dark"] .insight-card strong {
-  color: #f1f5f9;
-}

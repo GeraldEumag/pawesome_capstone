@@ -726,63 +726,12 @@
 }
 
 /* Dark mode */
-[data-theme="dark"] .customer-hotel-reservation,
-body[data-theme="dark"] .customer-hotel-reservation {
-  --hf-surface: #0f172a;
-  --hf-border: rgba(255, 255, 255, 0.08);
-  --hf-heading: #f9fafc;
-  --hf-text: #e2e8f0;
-  --hf-muted: #94a3b8;
-  --hf-primary: #f9a8d4;
-  --hf-primary-hover: #f472b6;
-}
 
-[data-theme="dark"] .hotel-header,
-body[data-theme="dark"] .hotel-header {
-  background: linear-gradient(135deg, #1a1030, #0f172a, #0b1a2e);
-}
 
-[data-theme="dark"] .hotel-tabs,
-body[data-theme="dark"] .hotel-tabs {
-  background: #1e293b;
-}
 
-[data-theme="dark"] .booking-form-section,
-body[data-theme="dark"] .booking-form-section,
-[data-theme="dark"] .booking-card,
-body[data-theme="dark"] .booking-card,
-[data-theme="dark"] .hotel-availability,
-body[data-theme="dark"] .hotel-availability,
-[data-theme="dark"] .pricing-summary,
-body[data-theme="dark"] .pricing-summary,
-[data-theme="dark"] .no-bookings,
-body[data-theme="dark"] .no-bookings {
-  background: #1e293b;
-}
 
-[data-theme="dark"] .hotel-selected-pet-info,
-body[data-theme="dark"] .hotel-selected-pet-info,
-[data-theme="dark"] .status-card-details,
-body[data-theme="dark"] .status-card-details,
-[data-theme="dark"] .care-log-item,
-body[data-theme="dark"] .care-log-item {
-  background: #1e293b;
-}
 
-[data-theme="dark"] .room-card.selected,
-body[data-theme="dark"] .room-card.selected {
-  background: #2a1a30;
-}
 
-[data-theme="dark"] .form-group input,
-body[data-theme="dark"] .form-group input,
-[data-theme="dark"] .form-group select,
-body[data-theme="dark"] .form-group select,
-[data-theme="dark"] .form-group textarea,
-body[data-theme="dark"] .form-group textarea {
-  background: #1e293b;
-  color: var(--hf-text);
-}
 
 /* Responsive */
 @media (max-width: 768px) {

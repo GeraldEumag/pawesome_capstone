@@ -372,62 +372,6 @@ tr:hover td {
 }
 
 /* ===== DARK MODE ===== */
-[data-theme="dark"] {
-  /* Primary Pink Theme (unchanged) */
-  --color-primary: #ff5f93;
-  --color-primary-light: #ff8db5;
-  --color-primary-soft: #ffc8dd;
-  --color-primary-hover: #ff4f85;
-
-  /* Background */
-  --color-bg: #0f172a;
-  --color-bg-gradient: linear-gradient(135deg, #0f172a, #1e293b, #3b1224);
-
-  /* Surfaces */
-  --color-surface: rgba(15, 23, 42, 0.92);
-  --color-surface-solid: #111827;
-  --color-surface-muted: #1e293b;
-
-  /* Borders */
-  --color-border: rgba(255, 141, 181, 0.28);
-
-  /* Text Colors */
-  --color-text: #f8fafc;
-  --color-heading: #ffffff;
-  --color-muted: #cbd5e1;
-  --color-subtle: #94a3b8;
-
-  /* Table Colors */
-  --color-table-header: rgba(30, 41, 59, 0.96);
-  --color-table-row: rgba(15, 23, 42, 0.9);
-  --color-table-row-hover: rgba(51, 65, 85, 0.85);
-
-  /* Input Colors */
-  --color-input-bg: rgba(15, 23, 42, 0.96);
-  --color-input-text: #f8fafc;
-  --color-input-placeholder: #94a3b8;
-
-  /* Modal & Dropdown Colors */
-  --color-modal-bg: rgba(15, 23, 42, 0.98);
-  --color-dropdown-bg: #1e293b;
-
-  /* Status Colors */
-  --color-success-bg: rgba(16, 185, 129, 0.18);
-  --color-success-text: #86efac;
-
-  --color-warning-bg: rgba(245, 158, 11, 0.18);
-  --color-warning-text: #fde68a;
-
-  --color-danger-bg: rgba(239, 68, 68, 0.18);
-  --color-danger-text: #fca5a5;
-
-  --color-info-bg: rgba(59, 130, 246, 0.18);
-  --color-info-text: #bfdbfe;
-
-  /* Shadows */
-  --shadow-card: 0 22px 55px rgba(0, 0, 0, 0.42);
-  --shadow-soft: 0 14px 34px rgba(0, 0, 0, 0.32);
-}
 
 /* ===== CENTRAL THEME SURFACE OVERRIDES ===== */
 .admin-dashboard,
@@ -672,12 +616,5 @@ tr:hover td,
   color: var(--color-text);
 }
 
-[data-theme="dark"] .receipt-paper {
-  background: #ffffff !important;
-  color: #111827 !important;
-}
 
-[data-theme="dark"] .receipt-paper * {
-  color: #111827 !important;
-}
 

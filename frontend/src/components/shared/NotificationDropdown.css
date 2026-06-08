@@ -201,27 +201,10 @@
   font-size: 1.3rem;
 }
 
-[data-theme="dark"] .pawesome-notifications-panel {
-  background: rgba(31, 15, 25, 0.98);
-  border-color: rgba(255, 141, 181, 0.22);
-}
 
-[data-theme="dark"] .pawesome-notifications-header h3,
-[data-theme="dark"] .pawesome-notification-content strong {
-  color: #ffffff;
-}
 
-[data-theme="dark"] .pawesome-notification-content p {
-  color: #cbd5e1;
-}
 
-[data-theme="dark"] .pawesome-notification-item:hover {
-  background: rgba(255, 255, 255, 0.06);
-}
 
-[data-theme="dark"] .pawesome-notification-item.unread {
-  background: rgba(255, 95, 147, 0.16);
-}
 
 @media (max-width: 768px) {
   .pawesome-notifications-panel {

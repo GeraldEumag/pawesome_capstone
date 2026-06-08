@@ -2,8 +2,6 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { Outlet, NavLink, useLocation } from "react-router-dom";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
-  faMoon,
-  faSun,
   faShoppingCart,
   faReceipt,
   faCalendarAlt,
@@ -35,7 +33,6 @@ import DashboardLayout from "../shared/DashboardLayout";
 import "./CashierDashboard.css";
 import { apiRequest, uploadProfilePhoto } from "../../api/client";
 import { formatCurrency } from "../../utils/currency";
-import { useTheme } from "../../utils/theme";
 import { useAuth } from "../../context/AuthContext";
 import { showAlert, showSuccess, showError } from "../../utils/alert";
 
@@ -78,8 +75,6 @@ const CashierDashboard = () => {
   const { user, updateUser } = useAuth();
   const name = user?.name || "Cashier";
   const profilePhoto = user?.profile_photo || "";
-
-  const { theme, toggle } = useTheme();
 
   const handleProfilePhotoUpload = async (file) => {
     try {
@@ -227,10 +222,6 @@ const CashierDashboard = () => {
     fetchLastCashierInfo();
   }, [fetchDashboardData, fetchLastCashierInfo]);
 
-  useEffect(() => {
-    localStorage.setItem("cashierTheme", theme);
-  }, [theme]);
-
   const todaySales = toNumber(dashboardData?.today_sales);
   const todayTransactions = toNumber(dashboardData?.today_transactions);
   const monthlySales = toNumber(dashboardData?.monthly_sales);
@@ -358,9 +349,7 @@ const CashierDashboard = () => {
   const cashierDashboardClasses = [
     "app-dashboard",
     "cashier-dashboard",
-    theme === "dark" ? "dark" : "",
   ]
-    .filter(Boolean)
     .join(" ");
 
   const handleEndShift = async () => {
@@ -902,10 +891,6 @@ Thank you for choosing Pawesome!
               fetchDashboardData({ silent: true });
             }
             break;
-          case 'd':
-            event.preventDefault();
-            toggle();
-            break;
           default:
             break;
         }
@@ -916,7 +901,7 @@ Thank you for choosing Pawesome!
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [theme, showOverview, fetchDashboardData]);
+  }, [showOverview, fetchDashboardData]);
 
   const extraActions = (
     <>
@@ -930,14 +915,6 @@ Thank you for choosing Pawesome!
           icon={faRotateRight}
           className={refreshing ? "spin-icon" : ""}
         />
-      </button>
-      <button
-        className="btn-secondary"
-        type="button"
-        onClick={toggle}
-        title="Toggle Theme"
-      >
-        <FontAwesomeIcon icon={theme === "light" ? faMoon : faSun} />
       </button>
     </>
   );

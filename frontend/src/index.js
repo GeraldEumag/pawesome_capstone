@@ -14,13 +14,9 @@ import './styles/unifiedSidebar.css';
 import './styles/unifiedReports.css';
 import './styles/theme.css';
 import './styles/sweetalert-theme.css';
-import { initializeTheme } from './utils/theme';
 import { AuthProvider } from './context/AuthContext';
 import App from './App';
 import reportWebVitals from './reportWebVitals';
-
-// Initialize theme before rendering
-initializeTheme();
 
 const root = ReactDOM.createRoot(document.getElementById('root'));
 root.render(

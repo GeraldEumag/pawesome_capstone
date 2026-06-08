@@ -285,51 +285,13 @@
 }
 
 /* Dark mode adjustments */
-[data-theme="dark"] .boarding-inventory-usage {
-  background: var(--color-surface);
-  border-color: var(--color-border);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
-}
 
-[data-theme="dark"] .message.success {
-  background: #1e3f26;
-  color: #5eead4;
-  border-color: #2f4f3f;
-}
 
-[data-theme="dark"] .message.error {
-  background: #3f1f1f;
-  color: #f87171;
-  border-color: #5f2f2f;
-}
 
-[data-theme="dark"] .no-items {
-  background: var(--color-surface);
-  border-color: var(--color-border);
-}
 
-[data-theme="dark"] .item-row {
-  background: var(--color-surface);
-  border-color: var(--color-border);
-}
 
-[data-theme="dark"] .item-select,
-[data-theme="dark"] .quantity-input,
-[data-theme="dark"] .notes-input {
-  background: var(--color-background);
-  border-color: var(--color-border);
-  color: var(--color-text);
-}
 
-[data-theme="dark"] .history-item {
-  background: var(--color-surface);
-  border-color: var(--color-border);
-}
 
-[data-theme="dark"] .batch-info {
-  background: var(--color-surface);
-  border-color: var(--color-border);
-}
 
 /* Responsive design */
 @media (max-width: 768px) {

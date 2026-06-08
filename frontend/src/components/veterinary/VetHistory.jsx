@@ -1,6 +1,5 @@
 import React, { useCallback, useEffect, useState } from "react";
 import { apiRequest } from "../../api/client";
-import { useTheme } from "../../utils/theme";
 import { showError } from "../../utils/alert";
 import HistoryTimeline from "../shared/HistoryTimeline";
 import "./theme.css";
@@ -12,7 +11,6 @@ const STATUS_OPTIONS = [
 ];
 
 const VetHistory = () => {
-  useTheme();
   const [entries, setEntries]         = useState([]);
   const [loading, setLoading]         = useState(true);
   const [error, setError]             = useState("");

@@ -727,30 +727,9 @@
 
 /* DARK MODE */
 
-[data-theme="dark"] .vet-history-card,
-[data-theme="dark"] .vet-history-modal,
-[data-theme="dark"] .vet-history-search-box input,
-[data-theme="dark"] .vet-history-refresh-btn,
-[data-theme="dark"] .vet-history-modal-close,
-[data-theme="dark"] .vet-history-toolbar-controls select,
-[data-theme="dark"] .vet-history-toolbar-controls .app-select {
-  background: rgba(15, 23, 42, 0.94);
-}
 
-[data-theme="dark"] .vet-medical-section,
-[data-theme="dark"] .vet-history-modal-grid div,
-[data-theme="dark"] .vet-history-modal-section {
-  background: rgba(255, 255, 255, 0.06);
-}
 
-[data-theme="dark"] .vet-history-notes {
-  background: rgba(255, 255, 255, 0.04);
-}
 
-[data-theme="dark"] .vet-pet-avatar,
-[data-theme="dark"] .vet-history-stat-card > span {
-  box-shadow: 0 8px 16px rgba(255, 95, 147, 0.2);
-}
 
 /* RESPONSIVE */
 

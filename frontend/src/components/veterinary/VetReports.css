@@ -944,34 +944,8 @@
 
 /* DARK MODE */
 
-[data-theme="dark"] .vet-reports {
-  --color-surface: rgba(15, 23, 42, 0.9);
-  --color-surface-solid: rgba(15, 23, 42, 0.96);
-  --color-text: #f8fafc;
-  --color-heading: #ffffff;
-  --color-muted: #cbd5e1;
-  --color-border: rgba(255, 141, 181, 0.26);
-}
 
-[data-theme="dark"] .vet-reports-refresh-btn,
-[data-theme="dark"] .vet-filter-btn.ghost,
-[data-theme="dark"] .vet-report-search input,
-[data-theme="dark"] .vet-filter-grid input,
-[data-theme="dark"] .vet-filter-grid select,
-[data-theme="dark"] .vet-financial-summary div,
-[data-theme="dark"] .vet-service-stats div,
-[data-theme="dark"] .vet-activity-item,
-[data-theme="dark"] .vet-report-modal,
-[data-theme="dark"] .vet-report-modal-header button {
-  background: rgba(15, 23, 42, 0.94);
-}
 
-[data-theme="dark"] .vet-chart-empty,
-[data-theme="dark"] .vet-empty-state,
-[data-theme="dark"] .vet-detail-grid div,
-[data-theme="dark"] .vet-modal-note {
-  background: rgba(255, 255, 255, 0.06);
-}
 
 /* RESPONSIVE */
 

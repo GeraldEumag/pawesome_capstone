@@ -17,7 +17,6 @@ import {
   faEdit,
 } from "@fortawesome/free-solid-svg-icons";
 import { apiRequest } from "../../api/client";
-import { useTheme } from "../../utils/theme";
 import "./InventoryHistory.css";
 
 const normalizeMovement = (record = {}) => ({
@@ -86,7 +85,6 @@ const normalizeMovement = (record = {}) => ({
 });
 
 const InventoryHistory = () => {
-  const { theme } = useTheme();
   const [activeTab, setActiveTab] = useState("stock");
   const [stockHistory, setStockHistory] = useState([]);
   const [auditHistory, setAuditHistory] = useState([]);
@@ -454,7 +452,7 @@ const InventoryHistory = () => {
   }
 
   return (
-    <div className={`inventory-history ${theme}`}>
+    <div className="inventory-history">
       <div className="history-header">
         <div className="header-content">
           <h1>Inventory History</h1>

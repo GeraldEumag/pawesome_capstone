@@ -633,26 +633,9 @@
 
 /* DARK MODE */
 
-[data-theme="dark"] .vet-boarder-card,
-[data-theme="dark"] .vet-boarder-modal,
-[data-theme="dark"] .vet-boarders-search input,
-[data-theme="dark"] .vet-boarders-refresh-btn,
-[data-theme="dark"] .vet-boarder-modal-close {
-  background: rgba(15, 23, 42, 0.94);
-}
 
-[data-theme="dark"] .vet-pet-icon {
-  box-shadow: 0 8px 16px rgba(255, 95, 147, 0.2);
-}
 
-[data-theme="dark"] .vet-boarder-row,
-[data-theme="dark"] .vet-info-section {
-  background: rgba(255, 255, 255, 0.06);
-}
 
-[data-theme="dark"] .vet-info-grid p {
-  background: rgba(15, 23, 42, 0.82);
-}
 
 /* RESPONSIVE */
 

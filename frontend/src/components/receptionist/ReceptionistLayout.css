@@ -207,44 +207,12 @@
 
 /* ===== RECEPTIONIST DARK MODE FIX ===== */
 
-[data-theme="dark"] .receptionist-layout,
-body[data-theme="dark"] .receptionist-layout {
-  background: linear-gradient(135deg, #0f172a, #111827, #3b1224) !important;
-}
 
-[data-theme="dark"] .receptionist-main,
-body[data-theme="dark"] .receptionist-main {
-  background: transparent !important;
-}
 
-[data-theme="dark"] .receptionist-topbar,
-body[data-theme="dark"] .receptionist-topbar {
-  background: rgba(15, 23, 42, 0.92) !important;
-  border-bottom: 1px solid rgba(255, 141, 181, 0.22) !important;
-}
 
-[data-theme="dark"] .receptionist-topbar h1,
-body[data-theme="dark"] .receptionist-topbar h1 {
-  color: #ff8db5 !important;
-}
 
-[data-theme="dark"] .receptionist-topbar p,
-body[data-theme="dark"] .receptionist-topbar p {
-  color: #cbd5e1 !important;
-}
 
-[data-theme="dark"] .topbar-user,
-[data-theme="dark"] .topbar-icon {
-  background: rgba(255, 255, 255, 0.1) !important;
-  border-color: rgba(255, 141, 181, 0.25) !important;
-  color: #ffffff !important;
-}
 
-[data-theme="dark"] .topbar-user strong,
-[data-theme="dark"] .topbar-user small,
-[data-theme="dark"] .topbar-icon svg {
-  color: #ffffff !important;
-}
 
 /* ===== FIX NOTIFICATION DROPDOWN POSITION ===== */
 
@@ -300,118 +268,23 @@ body[data-theme="dark"] .receptionist-topbar p {
 }
 
 /* dark mode dropdown */
-[data-theme="dark"] .notification-dropdown {
-  background: rgba(15, 23, 42, 0.98) !important;
-  border-color: rgba(255, 141, 181, 0.28) !important;
-}
 
-[data-theme="dark"] .notification-dropdown strong {
-  color: #ffffff !important;
-}
 
-[data-theme="dark"] .notification-dropdown small {
-  color: #cbd5e1 !important;
-}
 
-[data-theme="dark"] .notification-dropdown button:hover {
-  background: rgba(255, 95, 147, 0.16) !important;
-}
 
 /* ===== FINAL RECEPTIONIST DARK MODE FIX ===== */
 
-body[data-theme="dark"] {
-  background: linear-gradient(135deg, #0f172a, #111827, #3b1224) !important;
-  color: #f8fafc !important;
-}
 
-body[data-theme="dark"] .receptionist-layout,
-body[data-theme="dark"] .receptionist-main,
-body[data-theme="dark"] .receptionist-content,
-body[data-theme="dark"] .receptionist-dashboard,
-body[data-theme="dark"] .customer-management,
-body[data-theme="dark"] .grooming-page,
-body[data-theme="dark"] .hotel-bookings-page,
-body[data-theme="dark"] .bookings-page {
-  background: linear-gradient(135deg, #0f172a, #111827, #3b1224) !important;
-  color: #f8fafc !important;
-}
 
-body[data-theme="dark"] .receptionist-topbar {
-  background: rgba(15, 23, 42, 0.96) !important;
-  border-bottom: 1px solid rgba(255, 141, 181, 0.22) !important;
-}
 
-body[data-theme="dark"] .receptionist-sidebar {
-  background: linear-gradient(180deg, #111827, #1f2937, #3b1224) !important;
-}
 
-body[data-theme="dark"] .receptionist-sidebar .nav-item a {
-  color: #ffffff !important;
-}
 
-body[data-theme="dark"] .receptionist-sidebar .nav-item a.active {
-  background: rgba(255, 255, 255, 0.16) !important;
-  color: #ff8db5 !important;
-}
 
-body[data-theme="dark"] .receptionist-sidebar .nav-item a.active svg {
-  color: #ff8db5 !important;
-}
 
-body[data-theme="dark"] .receptionist-sidebar .logout-btn {
-  background: rgba(255, 255, 255, 0.12) !important;
-  color: white !important;
-}
 
-body[data-theme="dark"] .receptionist-hero,
-body[data-theme="dark"] .receptionist-stat-card,
-body[data-theme="dark"] .receptionist-toolbar,
-body[data-theme="dark"] .request-table-card,
-body[data-theme="dark"] .customer-card,
-body[data-theme="dark"] .stats-card,
-body[data-theme="dark"] .grooming-card,
-body[data-theme="dark"] .hotel-card,
-body[data-theme="dark"] .booking-card,
-body[data-theme="dark"] .page-card,
-body[data-theme="dark"] .table-card {
-  background: rgba(15, 23, 42, 0.92) !important;
-  border-color: rgba(255, 141, 181, 0.24) !important;
-  color: #f8fafc !important;
-}
 
-body[data-theme="dark"] h1,
-body[data-theme="dark"] h2,
-body[data-theme="dark"] h3,
-body[data-theme="dark"] th,
-body[data-theme="dark"] td,
-body[data-theme="dark"] label {
-  color: #ffffff !important;
-}
 
-body[data-theme="dark"] p,
-body[data-theme="dark"] small,
-body[data-theme="dark"] span {
-  color: inherit;
-}
 
-body[data-theme="dark"] input,
-body[data-theme="dark"] select,
-body[data-theme="dark"] textarea {
-  background: #111827 !important;
-  color: #ffffff !important;
-  border-color: rgba(255, 141, 181, 0.26) !important;
-}
 
-body[data-theme="dark"] input::placeholder {
-  color: #94a3b8 !important;
-}
 
-body[data-theme="dark"] table thead,
-body[data-theme="dark"] .request-table th {
-  background: rgba(255, 141, 181, 0.12) !important;
-}
 
-body[data-theme="dark"] table tbody tr,
-body[data-theme="dark"] table tbody td {
-  background: transparent !important;
-}

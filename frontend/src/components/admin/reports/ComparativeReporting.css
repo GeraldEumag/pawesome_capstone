@@ -225,20 +225,5 @@
 }
 
 /* Dark Mode */
-[data-theme="dark"] .comparative-reporting,
-body[data-theme="dark"] .comparative-reporting {
-  --cr-bg: rgba(15, 23, 42, 0.95);
-}
 
-[data-theme="dark"] .cr-controls,
-[data-theme="dark"] .comparison-metric,
-[data-theme="dark"] .cr-yoy-section {
-  background: rgba(15, 23, 42, 0.9);
-  border-color: rgba(255, 141, 181, 0.2);
-}
 
-[data-theme="dark"] .cr-title h2,
-[data-theme="dark"] .comparison-metric h4,
-[data-theme="dark"] .metric-current strong {
-  color: #f1f5f9;
-}

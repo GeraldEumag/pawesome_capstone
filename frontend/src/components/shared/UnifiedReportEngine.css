@@ -590,17 +590,6 @@
 }
 
 /* Dark Mode */
-[data-theme="dark"] .unified-report-engine,
-body[data-theme="dark"] .unified-report-engine {
-  --ure-bg: rgba(15, 23, 42, 0.95);
-  --ure-surface: rgba(15, 23, 42, 0.9);
-  --ure-surface-hover: rgba(15, 23, 42, 1);
-  --ure-border: rgba(255, 141, 181, 0.2);
-  --ure-border-strong: rgba(255, 141, 181, 0.35);
-  --ure-text: #f1f5f9;
-  --ure-text-muted: #94a3b8;
-  --ure-heading: #ffffff;
-}
 
 /* Responsive */
 @media (max-width: 768px) {

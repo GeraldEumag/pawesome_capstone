@@ -5,8 +5,6 @@ import { showError } from "../../utils/alert";
 import { useAuth } from "../../context/AuthContext";
 import StatusDot from "../shared/StatusDot";
 import {
-  faMoon,
-  faSun,
   faCalendarAlt,
   faBox,
 } from "@fortawesome/free-solid-svg-icons";
@@ -24,7 +22,6 @@ import {
 import InventorySidebar from "./InventorySidebar";
 import DashboardLayout from "../shared/DashboardLayout";
 import { apiRequest, uploadProfilePhoto } from "../../api/client";
-import { useTheme } from "../../utils/theme";
 import "./InventoryDashboard.css";
 
 const InventoryDashboard = () => {
@@ -32,14 +29,9 @@ const InventoryDashboard = () => {
   const name = user?.name || "Inventory Manager";
   const profilePhoto = user?.profile_photo || "";
 
-  const { theme, toggle } = useTheme();
   const [dashboardData, setDashboardData] = useState(null);
   const [dashboardError, setDashboardError] = useState("");
   const location = useLocation();
-
-  useEffect(() => {
-    document.documentElement.setAttribute("data-theme", theme);
-  }, [theme]);
 
   const handleProfilePhotoUpload = async (file) => {
     try {
@@ -151,9 +143,7 @@ const InventoryDashboard = () => {
 
   const inventoryDashboardClasses = [
     "inventory-dashboard",
-    theme === "dark" ? "dark" : "",
   ]
-    .filter(Boolean)
     .join(" ");
 
   const sidebar = <InventorySidebar />;
@@ -176,15 +166,6 @@ const InventoryDashboard = () => {
 
   const pageMeta = ROUTE_META.find((r) => r.path === normalizedPath) || ROUTE_META[0];
 
-  const extraActions = (
-    <button
-      className="theme-toggle-btn"
-      type="button"
-      onClick={toggle}
-    >
-      <FontAwesomeIcon icon={theme === "light" ? faMoon : faSun} />
-    </button>
-  );
 
   return (
     <DashboardLayout

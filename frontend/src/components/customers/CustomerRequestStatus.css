@@ -280,36 +280,10 @@
 }
 
 /* Dark mode */
-[data-theme="dark"] .customer-status-page,
-body[data-theme="dark"] .customer-status-page {
-  --cr-surface: #0f172a;
-  --cr-border: rgba(255, 255, 255, 0.08);
-  --cr-heading: #f9fafc;
-  --cr-text: #e2e8f0;
-  --cr-muted: #94a3b8;
-  --cr-primary: #f9a8d4;
-  --cr-primary-hover: #f472b6;
-}
 
-[data-theme="dark"] .customer-status-hero,
-body[data-theme="dark"] .customer-status-hero {
-  background: linear-gradient(135deg, #1a1030, #0f172a, #0b1a2e);
-}
 
-[data-theme="dark"] .customer-status-search input,
-body[data-theme="dark"] .customer-status-search input {
-  background: #1e293b;
-}
 
-[data-theme="dark"] .customer-status-table thead,
-body[data-theme="dark"] .customer-status-table thead {
-  background: #1e293b;
-}
 
-[data-theme="dark"] .customer-status-table tbody tr:hover,
-body[data-theme="dark"] .customer-status-table tbody tr:hover {
-  background: rgba(249, 168, 212, 0.06);
-}
 
 /* Pay Modal */
 .pay-modal-overlay {

@@ -813,40 +813,7 @@
 
 /* Dark mode */
 
-[data-theme="dark"] .approvals-page,
-body[data-theme="dark"] .approvals-page {
-  --ap-surface: rgba(15, 23, 42, 0.9);
-  --ap-surface-solid: rgba(15, 23, 42, 0.96);
-  --ap-border: rgba(255, 141, 181, 0.26);
-  --ap-heading: #ffffff;
-  --ap-text: #f8fafc;
-  --ap-muted: #cbd5e1;
-  --ap-primary: #f9a8d4;
-  --ap-primary-light: #fbcfe8;
-}
 
-[data-theme="dark"] .approvals-search-box,
-[data-theme="dark"] .approvals-filter-box,
-[data-theme="dark"] .approval-item,
-[data-theme="dark"] .info-line,
-[data-theme="dark"] .approval-note,
-[data-theme="dark"] .approval-detail-item,
-[data-theme="dark"] .approval-action-summary,
-[data-theme="dark"] .form-group select,
-[data-theme="dark"] .form-group textarea,
-[data-theme="dark"] .vet-assignment-field select,
-body[data-theme="dark"] .approvals-search-box,
-body[data-theme="dark"] .approvals-filter-box,
-body[data-theme="dark"] .approval-item,
-body[data-theme="dark"] .info-line,
-body[data-theme="dark"] .approval-note,
-body[data-theme="dark"] .approval-detail-item,
-body[data-theme="dark"] .approval-action-summary,
-body[data-theme="dark"] .form-group select,
-body[data-theme="dark"] .form-group textarea,
-body[data-theme="dark"] .vet-assignment-field select {
-  background: rgba(15, 23, 42, 0.94);
-}
 
 /* Responsive */
 

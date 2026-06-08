@@ -450,28 +450,6 @@
 }
 
 /* Dark Mode */
-[data-theme="dark"] .automated-alerts,
-body[data-theme="dark"] .automated-alerts {
-  --aa-bg: rgba(15, 23, 42, 0.95);
-}
 
-[data-theme="dark"] .alert-config-card,
-[data-theme="dark"] .aa-stat-card,
-[data-theme="dark"] .alert-history-item,
-[data-theme="dark"] .aa-setting-group {
-  background: rgba(15, 23, 42, 0.9);
-  border-color: rgba(255, 141, 181, 0.2);
-}
 
-[data-theme="dark"] .aa-header {
-  background: linear-gradient(135deg, rgba(255, 95, 147, 0.15), rgba(255, 141, 181, 0.1));
-}
 
-[data-theme="dark"] .aa-title h2,
-[data-theme="dark"] .alert-config-info h4,
-[data-theme="dark"] .alert-detail strong,
-[data-theme="dark"] .aa-stat-card strong,
-[data-theme="dark"] .alert-history-content h5,
-[data-theme="dark"] .aa-setting-group h4 {
-  color: #f1f5f9;
-}

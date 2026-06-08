@@ -19,7 +19,6 @@ import {
 } from "@fortawesome/free-solid-svg-icons";
 import toast from "react-hot-toast";
 import { apiRequest } from "../../api/client";
-import { useTheme } from "../../utils/theme";
 import styled, { createGlobalStyle } from "styled-components";
 import "./theme.css";
 
@@ -517,7 +516,6 @@ const ErrorAlert = styled.div`
 `;
 
 const VetServices = () => {
-  const { theme } = useTheme();
   const [services, setServices] = useState([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -708,7 +706,7 @@ const VetServices = () => {
   return (
     <>
       <GlobalStyle />
-      <PageContainer style={{ background: `var(--veterinary-page-bg)` }} className={`theme-${theme}`}>
+      <PageContainer style={{ background: `var(--veterinary-page-bg)` }} className="theme-light">
         <HeroSection style={{ background: `linear-gradient(135deg, var(--veterinary-primary-light) 0%, var(--veterinary-primary) 100%)` }}>
           <HeroContent>
             <HeroTitle>Services Management</HeroTitle>

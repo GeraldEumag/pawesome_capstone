@@ -439,30 +439,6 @@
 }
 
 /* Dark Mode */
-[data-theme="dark"] .api-health-check,
-body[data-theme="dark"] .api-health-check {
-  --health-bg: rgba(15, 23, 42, 0.95);
-}
 
-[data-theme="dark"] .status-card,
-[data-theme="dark"] .detail-card,
-[data-theme="dark"] .endpoints-section,
-[data-theme="dark"] .quick-actions,
-[data-theme="dark"] .implementation-guide,
-[data-theme="dark"] .guide-steps {
-  background: rgba(15, 23, 42, 0.9);
-  border-color: rgba(255, 141, 181, 0.2);
-}
 
-[data-theme="dark"] .health-title h2,
-[data-theme="dark"] .endpoints-section h3,
-[data-theme="dark"] .quick-actions h3,
-[data-theme="dark"] .implementation-guide h3,
-[data-theme="dark"] .guide-steps li {
-  color: #f1f5f9;
-}
 
-[data-theme="dark"] .detail-card,
-[data-theme="dark"] .summary-item {
-  background: rgba(30, 41, 59, 0.8);
-}

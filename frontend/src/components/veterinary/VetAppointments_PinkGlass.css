@@ -960,42 +960,10 @@
 /* ─────────────────────────────────────────────────────────────
    Dark Mode Support
 ───────────────────────────────────────────────────────────── */
-[data-theme="dark"] {
-  --glass-bg: rgba(15, 23, 42, 0.85);
-  --glass-border: rgba(255, 95, 147, 0.25);
-  --text-primary: #f7fafc;
-  --text-secondary: #cbd5e0;
-  --text-muted: #a0aec0;
-  --page-bg: linear-gradient(135deg, #1a202c 0%, #2d3748 50%, #1a202c 100%);
-}
 
-[data-theme="dark"] .appointments-hero,
-[data-theme="dark"] .appointments-controls,
-[data-theme="dark"] .summary-card,
-[data-theme="dark"] .appointment-card,
-[data-theme="dark"] .appointment-modal,
-[data-theme="dark"] .no-appointments,
-[data-theme="dark"] .loading-spinner {
-  background: rgba(15, 23, 42, 0.9);
-}
 
-[data-theme="dark"] .refresh-appointments-btn,
-[data-theme="dark"] .search-box input,
-[data-theme="dark"] .filter-btn,
-[data-theme="dark"] .view-btn,
-[data-theme="dark"] .modal-close-btn {
-  background: rgba(15, 23, 42, 0.94);
-}
 
-[data-theme="dark"] .detail-item,
-[data-theme="dark"] .modal-detail {
-  background: rgba(255, 255, 255, 0.06);
-}
 
-[data-theme="dark"] .error-message {
-  background: rgba(245, 101, 101, 0.1);
-  border-color: rgba(245, 101, 101, 0.2);
-}
 
 /* ─────────────────────────────────────────────────────────────
    Responsive Design

@@ -692,37 +692,8 @@
 }
 
 /* Dark Mode */
-[data-theme="dark"] .hotel-bookings,
-body[data-theme="dark"] .hotel-bookings {
-  --hotel-surface: #1f2937;
-  --hotel-surface-alt: #111827;
-  --hotel-border: #374151;
-  --hotel-heading: #f9fafb;
-  --hotel-text: #d1d5db;
-  --hotel-muted: #9ca3af;
-  --hotel-primary: #f472b6;
-  --hotel-primary-soft: rgba(244, 114, 182, 0.15);
-  --hotel-success-bg: rgba(16, 185, 129, 0.15);
-  --hotel-danger-bg: rgba(239, 68, 68, 0.15);
-  --hotel-warning-bg: rgba(245, 158, 11, 0.15);
-  --hotel-info-bg: rgba(59, 130, 246, 0.15);
-}
 
-[data-theme="dark"] .hotel-hero {
-  background: linear-gradient(135deg, #2d1b2a 0%, #1f2937 60%, #1e3a4a 100%);
-}
 
-[data-theme="dark"] .bookings-table tbody tr:hover { background: rgba(244, 114, 182, 0.08); }
-[data-theme="dark"] .hotel-search-box,
-[data-theme="dark"] .hotel-filter-box,
-[data-theme="dark"] .action-btn,
-[data-theme="dark"] .info-item,
-[data-theme="dark"] .booking-form,
-[data-theme="dark"] .form-group input,
-[data-theme="dark"] .form-group textarea,
-[data-theme="dark"] .form-group select {
-  background: var(--hotel-surface-alt);
-}
 
 /* Responsive */
 @media (max-width: 1180px) {

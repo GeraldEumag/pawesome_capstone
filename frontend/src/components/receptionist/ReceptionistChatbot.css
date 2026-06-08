@@ -345,29 +345,8 @@
 
 /* Dark mode */
 
-[data-theme="dark"] .receptionist-chatbot-page,
-body[data-theme="dark"] .receptionist-chatbot-page {
-  --chat-surface: rgba(15, 23, 42, 0.9);
-  --chat-surface-solid: rgba(15, 23, 42, 0.96);
-  --chat-border: rgba(255, 141, 181, 0.26);
-  --chat-heading: #ffffff;
-  --chat-text: #f8fafc;
-  --chat-muted: #cbd5e1;
-  --chat-primary: #f9a8d4;
-  --chat-primary-light: #fbcfe8;
-}
 
-[data-theme="dark"] .prompt-card,
-[data-theme="dark"] .scope-card,
-body[data-theme="dark"] .prompt-card,
-body[data-theme="dark"] .scope-card {
-  background: rgba(15, 23, 42, 0.94);
-}
 
-[data-theme="dark"] .chatbot-secondary-btn,
-body[data-theme="dark"] .chatbot-secondary-btn {
-  background: rgba(15, 23, 42, 0.94);
-}
 
 /* Responsive */
 

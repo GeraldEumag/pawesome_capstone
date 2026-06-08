@@ -346,30 +346,10 @@
 }
 
 /* Dark mode adjustments for payment methods */
-[data-theme="dark"] .payment-method.cash {
-  background: #0c4a6e;
-  color: #e0f2fe;
-}
 
-[data-theme="dark"] .payment-method.card {
-  background: #5b21b6;
-  color: #f3e8ff;
-}
 
-[data-theme="dark"] .payment-method.gcash {
-  background: #78350f;
-  color: #fef3c7;
-}
 
-[data-theme="dark"] .payment-method.maya {
-  background: #14532d;
-  color: #dcfce7;
-}
 
-[data-theme="dark"] .payment-method.online {
-  background: #7f1d1d;
-  color: #fee2e2;
-}
 
 /* Status Badges */
 .status-badge {
@@ -412,35 +392,11 @@
 }
 
 /* Dark mode adjustments for status badges */
-[data-theme="dark"] .status-badge.pending {
-  background: #78350f;
-  color: #fef3c7;
-}
 
-[data-theme="dark"] .status-badge.verified {
-  background: #064e3b;
-  color: #d1fae5;
-}
 
-[data-theme="dark"] .status-badge.rejected {
-  background: #7f1d1d;
-  color: #fee2e2;
-}
 
-[data-theme="dark"] .status-badge.completed {
-  background: #1e3a8a;
-  color: #dbeafe;
-}
 
-[data-theme="dark"] .status-badge.paid {
-  background: #064e3b;
-  color: #d1fae5;
-}
 
-[data-theme="dark"] .status-badge.unpaid {
-  background: #78350f;
-  color: #fef3c7;
-}
 
 /* Special text styles */
 .rejection-reason {

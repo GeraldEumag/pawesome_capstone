@@ -1579,41 +1579,6 @@
 }
 
 /* Final theme verification fixes: keep this file aligned with the centralized theme variables. */
-[data-theme="dark"] .customer-layout,
-[data-theme="dark"] .customer-main,
-[data-theme="dark"] .customer-content,
-[data-theme="dark"] .customer-dashboard {
-  background: var(--color-bg-gradient) !important;
-  color: var(--color-text) !important;
-}
 
-[data-theme="dark"] .customer-navbar,
-[data-theme="dark"] .customer-topbar,
-[data-theme="dark"] .customer-dashboard-header,
-[data-theme="dark"] .dashboard-hero,
-[data-theme="dark"] .stat-card,
-[data-theme="dark"] .quick-action-card,
-[data-theme="dark"] .customer-card,
-[data-theme="dark"] .panel,
-[data-theme="dark"] .pets-header,
-[data-theme="dark"] .pets-hero,
-[data-theme="dark"] .empty-state {
-  background: var(--color-surface) !important;
-  border-color: var(--color-border) !important;
-  box-shadow: var(--shadow-card) !important;
-  color: var(--color-text) !important;
-}
 
-[data-theme="dark"] .customer-navbar h1,
-[data-theme="dark"] .customer-topbar h1 {
-  background: none !important;
-  -webkit-text-fill-color: var(--color-heading) !important;
-  color: var(--color-heading) !important;
-}
 
-[data-theme="dark"] .customer-navbar p,
-[data-theme="dark"] .customer-topbar p,
-[data-theme="dark"] .customer-navbar .eyebrow,
-[data-theme="dark"] .customer-topbar .eyebrow {
-  color: var(--color-muted) !important;
-}

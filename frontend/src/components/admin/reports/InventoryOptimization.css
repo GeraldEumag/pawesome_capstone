@@ -461,31 +461,5 @@
 }
 
 /* Dark Mode */
-[data-theme="dark"] .inventory-optimization,
-body[data-theme="dark"] .inventory-optimization {
-  --io-bg: rgba(15, 23, 42, 0.95);
-}
 
-[data-theme="dark"] .io-header,
-[data-theme="dark"] .io-summary-card,
-[data-theme="dark"] .opt-card,
-[data-theme="dark"] .io-abc-section,
-[data-theme="dark"] .io-stock-section,
-[data-theme="dark"] .io-forecast-section,
-[data-theme="dark"] .io-reorder-section,
-[data-theme="dark"] .reorder-details {
-  background: rgba(15, 23, 42, 0.9);
-  border-color: rgba(255, 141, 181, 0.2);
-}
 
-[data-theme="dark"] .io-title h2,
-[data-theme="dark"] .io-summary-card strong,
-[data-theme="dark"] .opt-card-stats strong,
-[data-theme="dark"] .io-abc-section h3,
-[data-theme="dark"] .io-stock-section h3,
-[data-theme="dark"] .io-forecast-section h3,
-[data-theme="dark"] .io-reorder-section h3,
-[data-theme="dark"] .reorder-header h4,
-[data-theme="dark"] .reorder-details strong {
-  color: #f1f5f9;
-}

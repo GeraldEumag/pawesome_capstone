@@ -584,38 +584,8 @@
 
 /* Dark mode */
 
-[data-theme="dark"] .appointment-list,
-body[data-theme="dark"] .appointment-list {
-  --profile-surface: rgba(15, 23, 42, 0.9);
-  --profile-surface-solid: rgba(15, 23, 42, 0.96);
-  --profile-border: rgba(255, 141, 181, 0.26);
-  --profile-heading: #ffffff;
-  --profile-text: #f8fafc;
-  --profile-muted: #cbd5e1;
-  --profile-primary: #f9a8d4;
-  --profile-primary-light: #fbcfe8;
-}
 
-[data-theme="dark"] .profile-hero-card,
-[data-theme="dark"] .profile-avatar-section,
-[data-theme="dark"] .form-group input,
-[data-theme="dark"] .form-group textarea,
-[data-theme="dark"] .account-info-list div,
-body[data-theme="dark"] .profile-hero-card,
-body[data-theme="dark"] .profile-avatar-section,
-body[data-theme="dark"] .form-group input,
-body[data-theme="dark"] .form-group textarea,
-body[data-theme="dark"] .account-info-list div {
-  background: rgba(15, 23, 42, 0.94);
-}
 
-[data-theme="dark"] .form-group input:disabled,
-[data-theme="dark"] .form-group textarea:disabled,
-body[data-theme="dark"] .form-group input:disabled,
-body[data-theme="dark"] .form-group textarea:disabled {
-  background: rgba(30, 41, 59, 0.82);
-  color: #cbd5e1;
-}
 
 /* Responsive */
 

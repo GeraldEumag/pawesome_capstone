@@ -28,7 +28,6 @@ import {
 import { NavLink, useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
 import { apiRequest } from "../../api/client";
-import { useTheme } from "../../utils/theme";
 import PetAvatar from "../shared/PetAvatar";
 import styled, { createGlobalStyle } from "styled-components";
 import {
@@ -685,7 +684,6 @@ const LoadingSpinner = styled.div`
 `;
 
 const VetAppointments = () => {
-  const { theme } = useTheme();
   const navigate = useNavigate();
   const [appointments, setAppointments] = useState([]);
   const [selectedAppointment, setSelectedAppointment] = useState(null);
@@ -1026,7 +1024,7 @@ const VetAppointments = () => {
     return (
       <>
         <GlobalStyle />
-        <PageContainer style={{ background: `var(--veterinary-page-bg)` }} className={`theme-${theme}`}>
+        <PageContainer style={{ background: `var(--veterinary-page-bg)` }} className="theme-light">
           <LoadingSpinner>
             <Spinning>
               <FontAwesomeIcon icon={faSpinner} />
@@ -1041,7 +1039,7 @@ const VetAppointments = () => {
   return (
     <>
       <GlobalStyle />
-      <PageContainer style={{ background: `var(--veterinary-page-bg)` }} className={`theme-${theme}`}>
+      <PageContainer style={{ background: `var(--veterinary-page-bg)` }} className="theme-light">
         <HeroSection style={{ background: `linear-gradient(135deg, var(--veterinary-primary-light) 0%, var(--veterinary-primary) 100%)` }}>
           <HeroContent>
             <HeroBadge>

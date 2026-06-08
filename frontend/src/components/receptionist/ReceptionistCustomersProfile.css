@@ -993,43 +993,8 @@
 
 /* Dark mode */
 
-[data-theme="dark"] .customers-profile,
-body[data-theme="dark"] .customers-profile {
-  --cp-surface: rgba(15, 23, 42, 0.9);
-  --cp-surface-solid: rgba(15, 23, 42, 0.96);
-  --cp-border: rgba(255, 141, 181, 0.26);
-  --cp-heading: #ffffff;
-  --cp-text: #f8fafc;
-  --cp-muted: #cbd5e1;
-  --cp-primary: #f9a8d4;
-  --cp-primary-light: #fbcfe8;
-}
 
-[data-theme="dark"] .customer-search-box,
-[data-theme="dark"] .customer-filter-box,
-[data-theme="dark"] .action-btn,
-[data-theme="dark"] .profile-info-card,
-[data-theme="dark"] .pet-card,
-[data-theme="dark"] .no-pets-card,
-[data-theme="dark"] .form-group input,
-[data-theme="dark"] .form-group textarea,
-[data-theme="dark"] .form-group select,
-body[data-theme="dark"] .customer-search-box,
-body[data-theme="dark"] .customer-filter-box,
-body[data-theme="dark"] .action-btn,
-body[data-theme="dark"] .profile-info-card,
-body[data-theme="dark"] .pet-card,
-body[data-theme="dark"] .no-pets-card,
-body[data-theme="dark"] .form-group input,
-body[data-theme="dark"] .form-group textarea,
-body[data-theme="dark"] .form-group select {
-  background: rgba(15, 23, 42, 0.94);
-}
 
-[data-theme="dark"] .customers-table tbody tr:hover,
-body[data-theme="dark"] .customers-table tbody tr:hover {
-  background: rgba(255, 255, 255, 0.06);
-}
 
 /* Responsive */
 

@@ -219,48 +219,12 @@
   color: #475569;
 }
 
-[data-theme="dark"] .standard-table-container,
-body[data-theme="dark"] .standard-table-container {
-  background: rgba(17, 24, 39, 0.96);
-  border-color: rgba(148, 163, 184, 0.2);
-}
 
-[data-theme="dark"] .standard-table th,
-body[data-theme="dark"] .standard-table th {
-  background: rgba(31, 41, 55, 0.9);
-  border-bottom-color: rgba(148, 163, 184, 0.2);
-  color: #f8fafc;
-}
 
-[data-theme="dark"] .standard-table td,
-body[data-theme="dark"] .standard-table td {
-  border-bottom-color: rgba(148, 163, 184, 0.15);
-  color: #e2e8f0;
-}
 
-[data-theme="dark"] .standard-table.striped tbody tr:nth-child(even),
-body[data-theme="dark"] .standard-table.striped tbody tr:nth-child(even) {
-  background: rgba(31, 41, 55, 0.5);
-}
 
-[data-theme="dark"] .standard-table.hoverable tbody tr:hover,
-body[data-theme="dark"] .standard-table.hoverable tbody tr:hover {
-  background: rgba(51, 65, 85, 0.5);
-}
 
-[data-theme="dark"] .standard-table-pagination,
-body[data-theme="dark"] .standard-table-pagination {
-  background: rgba(31, 41, 55, 0.9);
-  border-top-color: rgba(148, 163, 184, 0.15);
-  color: #94a3b8;
-}
 
-[data-theme="dark"] .pagination-actions button,
-body[data-theme="dark"] .pagination-actions button {
-  background: rgba(17, 24, 39, 0.8);
-  border-color: rgba(148, 163, 184, 0.2);
-  color: #f1f5f9;
-}
 
 @keyframes spin {
   from { transform: rotate(0deg); }

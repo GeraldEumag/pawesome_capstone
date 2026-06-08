@@ -2,8 +2,6 @@ import React, { useState, useEffect, useMemo } from "react";
 import { Outlet, NavLink, useLocation, useNavigate } from "react-router-dom";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
-  faMoon,
-  faSun,
   faCalendarAlt,
   faUsers,
   faHotel,
@@ -26,7 +24,6 @@ import {
 } from "@fortawesome/free-solid-svg-icons";
 
 import { apiRequest, uploadProfilePhoto } from "../../api/client";
-import { useTheme } from "../../utils/theme";
 import VeterinarySidebar from "./VeterinarySidebar";
 import RoleAwareChatbot from "../chatbot/RoleAwareChatbot";
 import NotificationDropdown from "../shared/NotificationDropdown";
@@ -949,7 +946,6 @@ const EmptyState = styled.div`
 const VetDashboard = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
-  const { theme, toggle } = useTheme();
   const name = user?.name || "Veterinarian";
   const profilePhoto = user?.profile_photo || "";
   const [dashboardData, setDashboardData] = useState(null);
@@ -1008,11 +1004,6 @@ const VetDashboard = () => {
 
     return () => clearInterval(interval);
   }, [showOverview]);
-
-  // Theme toggle now uses global useTheme hook
-  const handleThemeToggle = () => {
-    toggle();
-  };
 
   const handleStartAppointment = async (aptId) => {
     try {
@@ -1160,10 +1151,6 @@ const VetDashboard = () => {
               />
 
               <NotificationDropdown role="veterinary" />
-
-              <IconButton onClick={handleThemeToggle} title="Toggle theme">
-                <FontAwesomeIcon icon={theme === "dark" ? faSun : faMoon} />
-              </IconButton>
             </TopBarActions>
           </TopBar>
 

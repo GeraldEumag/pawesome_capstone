@@ -9,10 +9,9 @@ import {
   faShieldAlt, faCalendarAlt, faPencilAlt, faKey,
   faIdBadge, faGlobe, faHeart, faStore, faShoppingCart,
   faCashRegister, faHistory, faCreditCard, faBell,
-  faCog, faPalette, faLanguage, faMoon, faSun,
+  faCog, faPalette, faLanguage,
 } from "@fortawesome/free-solid-svg-icons";
 import { apiRequest, uploadProfilePhoto } from "../../api/client";
-import { applyTheme, getCurrentTheme } from "../../utils/theme";
 import styled, { createGlobalStyle } from "styled-components";
 import {
   fadeIn, pulse,
@@ -718,7 +717,6 @@ const ProfileSettings = () => {
   const [settings, setSettings] = useState({
     emailNotifications: true,
     pushNotifications: false,
-    darkMode: false,
     language: "en",
     autoSave: true,
     twoFactorAuth: false,
@@ -807,9 +805,6 @@ const ProfileSettings = () => {
 
   useEffect(() => {
     fetchUserProfile();
-    // Sync dark mode toggle with current theme
-    const currentTheme = getCurrentTheme();
-    setSettings(p => ({ ...p, darkMode: currentTheme === "dark" }));
   }, []);
 
   const showSuccess = (msg) => {
@@ -863,9 +858,6 @@ const ProfileSettings = () => {
 
   const handleSettingChange = (settingName, value) => {
     setSettings(p => ({ ...p, [settingName]: value }));
-    if (settingName === "darkMode") {
-      applyTheme(value ? "dark" : "light");
-    }
   };
 
   const handleImageUpload = async (e) => {
@@ -1400,20 +1392,6 @@ const ProfileSettings = () => {
                           type="checkbox"
                           checked={settings.pushNotifications}
                           onChange={(e) => handleSettingChange("pushNotifications", e.target.checked)}
-                        />
-                        <span className="slider"></span>
-                      </ToggleSwitch>
-                    </SettingItem>
-                    <SettingItem>
-                      <SettingLabel>
-                        <FontAwesomeIcon icon={faMoon} />
-                        Dark Mode
-                      </SettingLabel>
-                      <ToggleSwitch>
-                        <input
-                          type="checkbox"
-                          checked={settings.darkMode}
-                          onChange={(e) => handleSettingChange("darkMode", e.target.checked)}
                         />
                         <span className="slider"></span>
                       </ToggleSwitch>

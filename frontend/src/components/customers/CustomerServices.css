@@ -167,31 +167,9 @@
 }
 
 /* Dark mode */
-[data-theme="dark"] .customer-services-page,
-body[data-theme="dark"] .customer-services-page {
-  --cs-surface: #0f172a;
-  --cs-border: rgba(255, 255, 255, 0.08);
-  --cs-heading: #f9fafc;
-  --cs-text: #e2e8f0;
-  --cs-muted: #94a3b8;
-  --cs-primary: #f9a8d4;
-  --cs-primary-hover: #f472b6;
-}
 
-[data-theme="dark"] .cs-hero,
-body[data-theme="dark"] .cs-hero {
-  background: linear-gradient(135deg, #1a1030, #0f172a, #0b1a2e);
-}
 
-[data-theme="dark"] .cs-tabs,
-body[data-theme="dark"] .cs-tabs {
-  background: #1e293b;
-}
 
-[data-theme="dark"] .cs-card,
-body[data-theme="dark"] .cs-card {
-  background: #1e293b;
-}
 
 /* Responsive */
 @media (max-width: 768px) {

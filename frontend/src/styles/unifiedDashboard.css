@@ -215,60 +215,10 @@ body {
 
 /* ===== UNIFIED DARK MODE ===== */
 
-[data-theme="dark"] .admin-navbar,
-[data-theme="dark"] .cashier-navbar,
-[data-theme="dark"] .customer-navbar,
-[data-theme="dark"] .inventory-navbar,
-[data-theme="dark"] .manager-navbar,
-[data-theme="dark"] .receptionist-navbar,
-[data-theme="dark"] .app-topbar,
-[data-theme="dark"] .vet-navbar {
-  background: rgba(17, 24, 39, 0.92) !important;
-  border-bottom: 1px solid var(--color-border) !important;
-}
 
-[data-theme="dark"] .overview-card,
-[data-theme="dark"] .panel,
-[data-theme="dark"] .premium-card,
-[data-theme="dark"] .app-stat-card,
-[data-theme="dark"] .receptionist-hero,
-[data-theme="dark"] .receptionist-stat-card,
-[data-theme="dark"] .receptionist-toolbar,
-[data-theme="dark"] .request-table-card,
-[data-theme="dark"] .metric-card,
-[data-theme="dark"] .status-card,
-[data-theme="dark"] .quick-action-card,
-[data-theme="dark"] .transaction-item,
-[data-theme="dark"] .payment-method-item,
-[data-theme="dark"] .boarder-card {
-  background: var(--color-surface) !important;
-  color: var(--color-text) !important;
-  border-color: var(--color-border) !important;
-}
 
-[data-theme="dark"] input,
-[data-theme="dark"] select,
-[data-theme="dark"] textarea {
-  background: var(--color-surface-solid) !important;
-  color: var(--color-text) !important;
-  border-color: var(--color-border) !important;
-}
 
-[data-theme="dark"] .profile-action-name,
-[data-theme="dark"] .navbar-left h1,
-[data-theme="dark"] .panel-header h2,
-[data-theme="dark"] .overview-card h3,
-[data-theme="dark"] .metric-card h3 {
-  color: var(--color-heading) !important;
-}
 
-[data-theme="dark"] .profile-action-role,
-[data-theme="dark"] .navbar-left p,
-[data-theme="dark"] .panel-header p,
-[data-theme="dark"] .overview-card p,
-[data-theme="dark"] .metric-card p {
-  color: var(--color-muted) !important;
-}
 
 /* Loading State */
 .loading-state {

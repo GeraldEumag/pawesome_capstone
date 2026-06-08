@@ -23,7 +23,6 @@ import {
 import { apiRequest } from "../../api/client";
 import { formatCurrency } from "../../utils/currency";
 import { getDateRangePreset } from "../../utils/reportExport";
-import { useTheme } from "../../utils/theme";
 import UnifiedReportEngine, { ChartContainer, CHART_COLORS } from "../shared/UnifiedReportEngine";
 import "./theme.css";
 import "./VetReports.css";
@@ -52,7 +51,6 @@ const emptyReports = {
 };
 
 const VetReports = () => {
-  useTheme();
   const [records, setRecords] = useState([]);
   const [services, setServices] = useState([]);
   const [serviceOptions, setServiceOptions] = useState([]);

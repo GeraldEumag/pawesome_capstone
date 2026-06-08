@@ -21,13 +21,11 @@ import {
 import toast from "react-hot-toast";
 import { apiRequest } from "../../api/client";
 import { formatCurrency } from "../../utils/currency";
-import { useTheme } from "../../utils/theme";
 import PetAvatar from "../shared/PetAvatar";
 import "./theme.css";
 import "./VetCurrentBoarders.css";
 
 const VetCurrentBoarders = () => {
-  useTheme();
   const [boarders, setBoarders] = useState([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);

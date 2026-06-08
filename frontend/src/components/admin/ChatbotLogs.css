@@ -778,31 +778,8 @@
 
 /* DARK MODE */
 
-[data-theme="dark"] .chatbot-logs {
-  --cb-surface: rgba(15, 23, 42, 0.9);
-  --cb-surface-solid: rgba(15, 23, 42, 0.96);
-  --cb-border: rgba(255, 141, 181, 0.26);
-  --cb-heading: #ffffff;
-  --cb-text: #f8fafc;
-  --cb-muted: #cbd5e1;
-  --cb-primary: #f9a8d4;
-  --cb-primary-light: #fbcfe8;
-}
 
-[data-theme="dark"] .chatbot-search-box,
-[data-theme="dark"] .chatbot-filter-box,
-[data-theme="dark"] .management-card,
-[data-theme="dark"] .management-form input,
-[data-theme="dark"] .management-form textarea,
-[data-theme="dark"] .management-form select,
-[data-theme="dark"] .bot-bubble {
-  background: rgba(15, 23, 42, 0.94);
-}
 
-[data-theme="dark"] .empty-state,
-[data-theme="dark"] .loading-container {
-  background: rgba(255, 255, 255, 0.06);
-}
 
 /* RESPONSIVE */
 

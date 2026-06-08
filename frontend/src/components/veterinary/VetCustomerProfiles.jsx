@@ -25,14 +25,12 @@ import {
 } from "@fortawesome/free-solid-svg-icons";
 import toast from "react-hot-toast";
 import { apiRequest } from "../../api/client";
-import { useTheme } from "../../utils/theme";
 import PetAvatar from "../shared/PetAvatar";
 import CustomerAvatar from "../shared/CustomerAvatar";
 import "./theme.css";
 import "./VetCustomerProfiles.css";
 
 const VetCustomerProfiles = () => {
-  useTheme();
   const [customers, setCustomers] = useState([]);
   const [selectedProfile, setSelectedProfile] = useState(null);
   const [selectedPetHistory, setSelectedPetHistory] = useState(null);

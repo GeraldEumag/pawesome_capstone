@@ -963,33 +963,8 @@
 
 /* Dark mode */
 
-[data-theme="dark"] .manager-attendance,
-body[data-theme="dark"] .manager-attendance {
-  --attendance-surface: rgba(15, 23, 42, 0.9);
-  --attendance-surface-solid: rgba(15, 23, 42, 0.96);
-  --attendance-border: rgba(255, 141, 181, 0.26);
-  --attendance-heading: #ffffff;
-  --attendance-text: #f8fafc;
-  --attendance-muted: #cbd5e1;
-  --attendance-primary: #f9a8d4;
-  --attendance-primary-light: #fbcfe8;
-  --attendance-shadow-card: 0 22px 55px rgba(0, 0, 0, 0.38);
-  --attendance-shadow-soft: 0 14px 34px rgba(0, 0, 0, 0.28);
-}
 
-[data-theme="dark"] .attendance-table th,
-body[data-theme="dark"] .attendance-table th {
-  background: rgba(255, 141, 181, 0.1);
-}
 
-[data-theme="dark"] .attendance-table-scroll,
-[data-theme="dark"] .attendance-detail-grid div,
-[data-theme="dark"] .attendance-remarks-box,
-body[data-theme="dark"] .attendance-table-scroll,
-body[data-theme="dark"] .attendance-detail-grid div,
-body[data-theme="dark"] .attendance-remarks-box {
-  background: rgba(15, 23, 42, 0.86);
-}
 
 /* Responsive */
 

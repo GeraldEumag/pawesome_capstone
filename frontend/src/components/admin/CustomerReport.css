@@ -675,32 +675,9 @@
   border-top: 1px solid rgba(255, 95, 147, 0.12);
 }
 
-[data-theme="dark"] .customer-report-container,
-body[data-theme="dark"] .customer-report-container {
-  --report-surface: rgba(17, 24, 39, 0.94);
-  --report-border: rgba(255, 141, 181, 0.24);
-  --report-heading: #f8fafc;
-  --report-text: #e5e7eb;
-  --report-muted: #cbd5e1;
-  --report-shadow: 0 18px 48px rgba(0, 0, 0, 0.34);
-}
-
-[data-theme="dark"] .customer-report-container .filter-group input,
-[data-theme="dark"] .customer-report-container .filter-group select,
-body[data-theme="dark"] .customer-report-container .filter-group input,
-body[data-theme="dark"] .customer-report-container .filter-group select {
-  background: rgba(17, 24, 39, 0.94);
-  border-color: rgba(255, 141, 181, 0.24);
-  color: #f8fafc;
-}
 
 
-[data-theme="dark"] .customer-report-container .btn-secondary,
-body[data-theme="dark"] .customer-report-container .btn-secondary {
-  background: rgba(31, 41, 55, 0.92);
-  color: #f8fafc;
-  border-color: rgba(255, 141, 181, 0.24);
-}
+
 
 @media (max-width: 768px) {
   .customer-report-container .report-header h1 {

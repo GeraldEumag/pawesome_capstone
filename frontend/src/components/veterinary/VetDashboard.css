@@ -901,30 +901,9 @@ button:disabled {
 
 /* DARK MODE */
 
-[data-theme="dark"] .search-group input,
-[data-theme="dark"] .theme-toggle-btn,
-[data-theme="dark"] .preview-appointment-item,
-[data-theme="dark"] .patient-row,
-[data-theme="dark"] .boarder-card,
-[data-theme="dark"] .appointment-card,
-[data-theme="dark"] .status-card {
-  background: rgba(15, 23, 42, 0.94);
-}
 
-[data-theme="dark"] .boarder-details,
-[data-theme="dark"] .mini-chart,
-[data-theme="dark"] .empty-state {
-  background: rgba(255, 255, 255, 0.06);
-}
 
-[data-theme="dark"] .alert-item {
-  background: rgba(15, 23, 42, 0.94);
-}
 
-[data-theme="dark"] .loading-skeleton {
-  background: linear-gradient(90deg, #1f2937 25%, #3b1224 50%, #1f2937 75%);
-  background-size: 200% 100%;
-}
 
 /* RESPONSIVE */
 

@@ -271,36 +271,9 @@
   overflow-wrap: anywhere;
 }
 
-[data-theme="dark"] .standard-report-layout,
-body[data-theme="dark"] .standard-report-layout {
-  --report-surface: rgba(17, 24, 39, 0.96);
-  --report-border: rgba(148, 163, 184, 0.2);
-  --report-heading: #f8fafc;
-  --report-text: #e5e7eb;
-  --report-muted: #94a3b8;
-  --report-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
-  background: #0f172a;
-}
 
-[data-theme="dark"] .info-item,
-body[data-theme="dark"] .info-item {
-  background: rgba(31, 41, 55, 0.7);
-  border-color: rgba(148, 163, 184, 0.15);
-}
 
-[data-theme="dark"] .error-message,
-[data-theme="dark"] .empty-message,
-body[data-theme="dark"] .error-message,
-body[data-theme="dark"] .empty-message {
-  color: #e2e8f0;
-}
 
-[data-theme="dark"] .modal-header,
-[data-theme="dark"] .modal-footer,
-body[data-theme="dark"] .modal-header,
-body[data-theme="dark"] .modal-footer {
-  border-color: rgba(148, 163, 184, 0.15);
-}
 
 /* Animations */
 @keyframes spin {

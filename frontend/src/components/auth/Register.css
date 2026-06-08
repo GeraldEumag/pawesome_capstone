@@ -739,66 +739,13 @@
 
 /* Dark mode */
 
-[data-theme="dark"] .register-page,
-body[data-theme="dark"] .register-page {
-  --reg-bg-gradient: linear-gradient(135deg, #111827, #1f2937, #3b1224);
-  --reg-surface: rgba(15, 23, 42, 0.9);
-  --reg-surface-solid: rgba(15, 23, 42, 0.96);
-  --reg-border: rgba(255, 141, 181, 0.26);
-  --reg-heading: #ffffff;
-  --reg-text: #f8fafc;
-  --reg-muted: #cbd5e1;
-  --reg-primary: #f9a8d4;
-  --reg-primary-light: #fbcfe8;
-}
 
-[data-theme="dark"] .register-card,
-[data-theme="dark"] .register-form-section,
-[data-theme="dark"] .review-grid div,
-body[data-theme="dark"] .register-card,
-body[data-theme="dark"] .register-form-section,
-body[data-theme="dark"] .review-grid div {
-  background: rgba(15, 23, 42, 0.9);
-}
 
-[data-theme="dark"] .register-form-group input,
-[data-theme="dark"] .register-form-group select,
-body[data-theme="dark"] .register-form-group input,
-body[data-theme="dark"] .register-form-group select {
-  background-color: rgba(15, 23, 42, 0.94);
-  color: #f8fafc;
-}
 
-[data-theme="dark"] .register-form-group input::placeholder,
-body[data-theme="dark"] .register-form-group input::placeholder {
-  color: #94a3b8;
-}
 
-[data-theme="dark"] .register-form-group input.has-error,
-[data-theme="dark"] .register-form-group select.has-error,
-body[data-theme="dark"] .register-form-group input.has-error,
-body[data-theme="dark"] .register-form-group select.has-error {
-  background-color: rgba(127, 29, 29, 0.25);
-}
 
-[data-theme="dark"] .step-circle,
-body[data-theme="dark"] .step-circle {
-  background: rgba(15, 23, 42, 0.96);
-}
 
-[data-theme="dark"] .register-alert.error,
-body[data-theme="dark"] .register-alert.error {
-  color: #fecaca;
-  background: rgba(127, 29, 29, 0.32);
-  border-color: rgba(248, 113, 113, 0.28);
-}
 
-[data-theme="dark"] .register-alert.success,
-body[data-theme="dark"] .register-alert.success {
-  color: #bbf7d0;
-  background: rgba(20, 83, 45, 0.32);
-  border-color: rgba(74, 222, 128, 0.28);
-}
 
 /* Responsive */
 

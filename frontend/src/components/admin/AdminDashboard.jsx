@@ -17,8 +17,6 @@ import {
 } from "recharts";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
-  faMoon,
-  faSun,
   faUsers,
   faClipboardList,
   faCalendarCheck,
@@ -47,7 +45,6 @@ import "./AdminDashboard.css";
 import { apiRequest, uploadProfilePhoto } from "../../api/client";
 import { formatCurrency } from "../../utils/currency";
 import { normalizeList } from "../../utils/normalizeList";
-import { useTheme } from "../../utils/theme";
 import { useAuth } from "../../context/AuthContext";
 
 const cardVariants = {
@@ -62,7 +59,6 @@ const AdminDashboard = () => {
   const name = user?.name || "Admin";
   const profilePhoto = user?.profile_photo || "";
 
-  const { theme, toggle } = useTheme();
   const [dashboardData, setDashboardData] = useState(null);
   const [systemHealth, setSystemHealth] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -418,14 +414,6 @@ const AdminDashboard = () => {
           <FontAwesomeIcon icon={refreshing ? faSpinner : faRotateRight} />
         </button>
       )}
-      <button
-        className="theme-toggle-btn"
-        type="button"
-        onClick={toggle}
-        title="Toggle theme"
-      >
-        <FontAwesomeIcon icon={theme === "light" ? faMoon : faSun} />
-      </button>
     </>
   );
 

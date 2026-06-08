@@ -334,24 +334,8 @@
   color: var(--color-muted, #64748b);
 }
 
-[data-theme="dark"] .profile-hero-card,
-[data-theme="dark"] .profile-card,
-[data-theme="dark"] .profile-stat-card {
-  background: rgba(15, 23, 42, 0.9);
-  border-color: rgba(255, 141, 181, 0.26);
-}
 
-[data-theme="dark"] .profile-form-group input,
-[data-theme="dark"] .profile-form-group textarea {
-  background: rgba(15, 23, 42, 0.94);
-  color: #f8fafc;
-}
 
-[data-theme="dark"] .profile-form-group input:disabled,
-[data-theme="dark"] .profile-form-group textarea:disabled {
-  background: rgba(30, 41, 59, 0.9);
-  color: #cbd5e1;
-}
 
 @media (max-width: 1100px) {
   .profile-grid {

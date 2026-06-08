@@ -1330,35 +1330,9 @@
 
 /* DARK MODE */
 
-[data-theme="dark"] .customer-pets {
-  --color-surface: rgba(15, 23, 42, 0.9);
-  --color-surface-solid: rgba(15, 23, 42, 0.96);
-  --color-text: #f8fafc;
-  --color-heading: #ffffff;
-  --color-muted: #cbd5e1;
-  --color-border: rgba(255, 141, 181, 0.26);
-}
 
-[data-theme="dark"] .pets-form input,
-[data-theme="dark"] .pets-form select,
-[data-theme="dark"] .pets-form textarea,
-[data-theme="dark"] .pets-search-box input,
-[data-theme="dark"] .pets-filter-select,
-[data-theme="dark"] .pet-history-close,
-[data-theme="dark"] .pet-history-modal {
-  background: rgba(15, 23, 42, 0.96);
-  color: var(--color-text);
-}
 
-[data-theme="dark"] .pet-item,
-[data-theme="dark"] .pet-history-item {
-  background: rgba(15, 23, 42, 0.74);
-}
 
-[data-theme="dark"] .pet-history-grid div,
-[data-theme="dark"] .pet-history-notes {
-  background: rgba(255, 255, 255, 0.06);
-}
 
 /* RESPONSIVE */
 

@@ -16,14 +16,12 @@ import {
   faMoon,
   faRefresh,
   faSpinner,
-  faSun,
   faTableCells,
   faTimes,
   faUsers,
 } from "@fortawesome/free-solid-svg-icons";
 import { apiRequest } from "../../api/client";
 import { formatCurrency } from "../../utils/currency";
-import { useTheme } from "../../utils/theme";
 import { useAuth } from "../../context/AuthContext";
 import ManagerSidebar from "./ManagerSidebar";
 import DashboardLayout from "../shared/DashboardLayout";
@@ -210,7 +208,6 @@ const ManagerDashboard = () => {
   const name = user?.name || "Manager";
   const profilePhoto = user?.profile_photo || "";
 
-  const { theme, toggle } = useTheme();
   const [refreshing, setRefreshing] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -493,14 +490,6 @@ const ManagerDashboard = () => {
           icon={refreshing || loading ? faSpinner : faRefresh}
           spin={refreshing || loading}
         />
-      </button>
-      <button
-        className="manager-icon-btn"
-        type="button"
-        onClick={toggle}
-        title="Toggle theme"
-      >
-        <FontAwesomeIcon icon={theme === "light" ? faMoon : faSun} />
       </button>
     </>
   );

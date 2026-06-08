@@ -124,13 +124,6 @@
 }
 
 /* Dark Mode */
-[data-theme="dark"] .admin-reports-wrapper,
-body[data-theme="dark"] .admin-reports-wrapper {
-  --ar-surface: rgba(15, 23, 42, 0.95);
-  --ar-border: rgba(255, 141, 181, 0.2);
-  --ar-text: #f1f5f9;
-  --ar-text-muted: #94a3b8;
-}
 
 .admin-reports-page,
 .live-report-content {
@@ -800,39 +793,8 @@ body[data-theme="dark"] .admin-reports-wrapper {
 
 /* Dark mode */
 
-[data-theme="dark"] .admin-reports-page,
-[data-theme="dark"] .live-report-content,
-body[data-theme="dark"] .admin-reports-page,
-body[data-theme="dark"] .live-report-content {
-  --report-surface: rgba(15, 23, 42, 0.9);
-  --report-surface-solid: rgba(15, 23, 42, 0.96);
-  --report-border: rgba(255, 141, 181, 0.26);
-  --report-heading: #ffffff;
-  --report-text: #f8fafc;
-  --report-muted: #cbd5e1;
-}
 
-[data-theme="dark"] .admin-report-search input,
-[data-theme="dark"] .admin-report-filter-grid input,
-[data-theme="dark"] .admin-report-filter-grid select,
-[data-theme="dark"] .info-item,
-[data-theme="dark"] .report-health-list div,
-[data-theme="dark"] .status-breakdown-list div,
-body[data-theme="dark"] .admin-report-search input,
-body[data-theme="dark"] .admin-report-filter-grid input,
-body[data-theme="dark"] .admin-report-filter-grid select,
-body[data-theme="dark"] .info-item,
-body[data-theme="dark"] .report-health-list div,
-body[data-theme="dark"] .status-breakdown-list div {
-  background: rgba(15, 23, 42, 0.94);
-}
 
-[data-theme="dark"] .reports-empty-mini,
-[data-theme="dark"] .reports-state-card,
-body[data-theme="dark"] .reports-empty-mini,
-body[data-theme="dark"] .reports-state-card {
-  background: rgba(255, 255, 255, 0.06);
-}
 
 /* Responsive */
 

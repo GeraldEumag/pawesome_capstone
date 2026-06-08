@@ -113,13 +113,3 @@ button,
 }
 
 /* DARK MODE */
-[data-theme="dark"] .admin-reports-page,
-[data-theme="dark"] .cashier-reports-page,
-[data-theme="dark"] .customer-reports,
-[data-theme="dark"] .inventory-reports-page,
-[data-theme="dark"] .manager-reports,
-[data-theme="dark"] .reports-container,
-[data-theme="dark"] .vet-reports {
-  background: var(--color-bg-gradient) !important;
-  color: var(--color-text) !important;
-}

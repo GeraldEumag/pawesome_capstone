@@ -858,31 +858,8 @@
 
 /* DARK MODE */
 
-[data-theme="dark"] .manage-users {
-  --mu-surface: rgba(15, 23, 42, 0.9);
-  --mu-surface-solid: rgba(15, 23, 42, 0.96);
-  --mu-border: rgba(255, 141, 181, 0.26);
-  --mu-heading: #ffffff;
-  --mu-text: #f8fafc;
-  --mu-muted: #cbd5e1;
-  --mu-primary: #f9a8d4;
-  --mu-primary-light: #fbcfe8;
-}
 
-[data-theme="dark"] .users-table td,
-[data-theme="dark"] .mu-detail-grid div,
-[data-theme="dark"] .search-box,
-[data-theme="dark"] .filter-box,
-[data-theme="dark"] .action-btn,
-[data-theme="dark"] .form-group input,
-[data-theme="dark"] .form-group select,
-[data-theme="dark"] .close-btn {
-  background: rgba(15, 23, 42, 0.94);
-}
 
-[data-theme="dark"] .mu-user-detail-top {
-  background: rgba(255, 255, 255, 0.06);
-}
 
 /* RESPONSIVE */
 

@@ -334,28 +334,7 @@
 }
 
 /* Dark Mode */
-[data-theme="dark"] .predictive-analytics,
-body[data-theme="dark"] .predictive-analytics {
-  --pa-bg: rgba(15, 23, 42, 0.95);
-}
 
-[data-theme="dark"] .forecast-card,
-[data-theme="dark"] .pa-chart-section,
-[data-theme="dark"] .pa-recommendations {
-  background: rgba(15, 23, 42, 0.9);
-  border-color: rgba(255, 141, 181, 0.2);
-}
 
-[data-theme="dark"] .pa-header {
-  background: linear-gradient(135deg, rgba(255, 95, 147, 0.15), rgba(255, 141, 181, 0.1));
-}
 
-[data-theme="dark"] .forecast-values strong,
-[data-theme="dark"] .recommendation-content h5 {
-  color: #f1f5f9;
-}
 
-[data-theme="dark"] .pa-title h2,
-[data-theme="dark"] .pa-recommendations h3 {
-  color: #f1f5f9;
-}

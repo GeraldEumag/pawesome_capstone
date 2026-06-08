@@ -391,47 +391,13 @@
 }
 
 /* Dark mode adjustments */
-[data-theme="dark"] .status-badge.pending {
-  background: #78350f;
-  color: #fef3c7;
-}
 
-[data-theme="dark"] .status-badge.approved,
-[data-theme="dark"] .status-badge.verified {
-  background: #064e3b;
-  color: #d1fae5;
-}
 
-[data-theme="dark"] .status-badge.rejected,
-[data-theme="dark"] .status-badge.cancelled {
-  background: #7f1d1d;
-  color: #fee2e2;
-}
 
-[data-theme="dark"] .status-badge.completed {
-  background: #1e3a8a;
-  color: #dbeafe;
-}
 
-[data-theme="dark"] .status-badge.scheduled {
-  background: #581c87;
-  color: #e9d5ff;
-}
 
-[data-theme="dark"] .status-badge.paid {
-  background: #064e3b;
-  color: #d1fae5;
-}
 
-[data-theme="dark"] .status-badge.unpaid {
-  background: #78350f;
-  color: #fef3c7;
-}
 
-[data-theme="dark"] .status-badge.in-progress {
-  background: #9a3412;
-  color: #fed7aa;
-}
 
 /* Payment Status */
 .payment-status {

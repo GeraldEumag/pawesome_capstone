@@ -268,15 +268,3 @@
 }
 
 /* ===== DARK MODE ===== */
-[data-theme="dark"] .app-sidebar,
-[data-theme="dark"] .admin-sidebar,
-[data-theme="dark"] .cashier-sidebar,
-[data-theme="dark"] .customer-sidebar,
-[data-theme="dark"] .inventory-sidebar,
-[data-theme="dark"] .manager-sidebar,
-[data-theme="dark"] .receptionist-sidebar,
-[data-theme="dark"] .veterinary-sidebar {
-  background: linear-gradient(180deg, #111827, #1f2937, #3b1224);
-  border-right: 1px solid rgba(255, 141, 181, 0.22);
-  box-shadow: 14px 0 38px rgba(0, 0, 0, 0.35);
-}

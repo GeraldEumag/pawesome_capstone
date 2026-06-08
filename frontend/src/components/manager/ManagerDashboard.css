@@ -878,44 +878,9 @@
 
 /* Dark mode */
 
-[data-theme="dark"] .manager-dashboard,
-body[data-theme="dark"] .manager-dashboard {
-  --manager-surface: rgba(15, 23, 42, 0.9);
-  --manager-surface-solid: rgba(15, 23, 42, 0.96);
-  --manager-border: rgba(255, 141, 181, 0.26);
-  --manager-heading: #ffffff;
-  --manager-text: #f8fafc;
-  --manager-muted: #cbd5e1;
-  --manager-primary: #f9a8d4;
-  --manager-primary-light: #fbcfe8;
-  --manager-bg-gradient: linear-gradient(135deg, #111827, #1f2937, #3b1224);
-  --manager-shadow-card: 0 22px 55px rgba(0, 0, 0, 0.38);
-  --manager-shadow-soft: 0 14px 34px rgba(0, 0, 0, 0.28);
-}
 
-[data-theme="dark"] .manager-navbar,
-body[data-theme="dark"] .manager-navbar {
-  background: rgba(15, 23, 42, 0.9);
-}
 
-[data-theme="dark"] .manager-record-item,
-[data-theme="dark"] .manager-compact-item,
-[data-theme="dark"] .manager-activity-item,
-[data-theme="dark"] .manager-payroll-summary div,
-body[data-theme="dark"] .manager-record-item,
-body[data-theme="dark"] .manager-compact-item,
-body[data-theme="dark"] .manager-activity-item,
-body[data-theme="dark"] .manager-payroll-summary div {
-  background: rgba(15, 23, 42, 0.72);
-  border-color: rgba(255, 141, 181, 0.18);
-}
 
-[data-theme="dark"] .manager-alert.warning,
-body[data-theme="dark"] .manager-alert.warning {
-  background: rgba(146, 64, 14, 0.26);
-  border-color: rgba(245, 158, 11, 0.28);
-  color: #fde68a;
-}
 
 /* Responsive */
 

@@ -359,29 +359,7 @@
 }
 
 /* Dark Mode */
-[data-theme="dark"] .customer-segmentation,
-body[data-theme="dark"] .customer-segmentation {
-  --cs-bg: rgba(15, 23, 42, 0.95);
-}
 
-[data-theme="dark"] .segment-card,
-[data-theme="dark"] .cs-recommendations,
-[data-theme="dark"] .cs-action-item {
-  background: rgba(15, 23, 42, 0.9);
-  border-color: rgba(255, 141, 181, 0.2);
-}
 
-[data-theme="dark"] .cs-header {
-  background: linear-gradient(135deg, rgba(255, 95, 147, 0.15), rgba(255, 141, 181, 0.1));
-}
 
-[data-theme="dark"] .segment-title,
-[data-theme="dark"] .cs-title h2,
-[data-theme="dark"] .cs-recommendations h3,
-[data-theme="dark"] .cs-action-content h4 {
-  color: #f1f5f9;
-}
 
-[data-theme="dark"] .segment-stats strong {
-  color: #f1f5f9;
-}

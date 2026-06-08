@@ -18,6 +18,3 @@
 }
 
 /* Dark mode adjustments */
-[data-theme="dark"] .status-dot-label {
-  color: var(--color-text-primary, #e2e8f0);
-}

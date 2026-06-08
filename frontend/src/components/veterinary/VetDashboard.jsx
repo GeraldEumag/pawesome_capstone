@@ -4,8 +4,6 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { showError } from "../../utils/alert";
 import { useAuth } from "../../context/AuthContext";
 import {
-  faMoon,
-  faSun,
   faCalendarAlt,
   faUsers,
   faHotel,
@@ -29,7 +27,6 @@ import {
 } from "@fortawesome/free-solid-svg-icons";
 
 import { apiRequest, uploadProfilePhoto } from "../../api/client";
-import { useTheme } from "../../utils/theme";
 import VeterinarySidebar from "./VeterinarySidebar";
 import DashboardLayout from "../shared/DashboardLayout";
 import toast from "react-hot-toast";
@@ -46,7 +43,6 @@ const VetDashboard = () => {
   const { user, updateUser } = useAuth();
   const name = user?.name || "Veterinarian";
   const profilePhoto = user?.profile_photo || "";
-  const { theme, toggle } = useTheme();
   const [dashboardData, setDashboardData] = useState(null);
   const [currentBoarders, setCurrentBoarders] = useState([]);
   const [loadingBoarders, setLoadingBoarders] = useState(false);
@@ -256,12 +252,6 @@ const VetDashboard = () => {
 
   const pageMeta = ROUTE_META.find((r) => r.path === normalizedPath) || ROUTE_META[0];
 
-  const extraActions = (
-    <button className="theme-toggle-btn" type="button" onClick={toggle}>
-      <FontAwesomeIcon icon={theme === "light" ? faMoon : faSun} />
-    </button>
-  );
-
   return (
     <DashboardLayout
       sidebar={sidebar}
@@ -271,7 +261,6 @@ const VetDashboard = () => {
       name={name}
       profilePhoto={profilePhoto}
       onProfileUpload={handleProfilePhotoUpload}
-      extraActions={extraActions}
       showChatbot
       chatbotTitle="Veterinary Assistant"
       chatbotSubtitle="Appointments, patient workflow, and dashboard help"

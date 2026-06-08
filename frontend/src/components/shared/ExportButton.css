@@ -102,16 +102,7 @@
 }
 
 /* Dark Mode */
-[data-theme="dark"] .export-dropdown,
-body[data-theme="dark"] .export-dropdown {
-  background: rgba(15, 23, 42, 0.95);
-  border-color: rgba(255, 141, 181, 0.2);
-}
 
-[data-theme="dark"] .export-option,
-body[data-theme="dark"] .export-option {
-  color: #e2e8f0;
-}
 
 /* Responsive */
 @media (max-width: 768px) {

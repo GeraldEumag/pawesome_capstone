@@ -263,31 +263,6 @@
 }
 
 /* Dark Mode */
-[data-theme="dark"] .report-skeleton,
-body[data-theme="dark"] .report-skeleton {
-  --skeleton-base: rgba(15, 23, 42, 0.8);
-  --skeleton-highlight: rgba(30, 41, 59, 0.8);
-}
 
-[data-theme="dark"] .skeleton-card,
-[data-theme="dark"] .skeleton-chart,
-[data-theme="dark"] .skeleton-table {
-  background: rgba(15, 23, 42, 0.8);
-  border-color: rgba(30, 41, 59, 0.8);
-}
 
-[data-theme="dark"] .skeleton-title-main,
-[data-theme="dark"] .skeleton-subtitle,
-[data-theme="dark"] .skeleton-icon,
-[data-theme="dark"] .skeleton-title,
-[data-theme="dark"] .skeleton-value,
-[data-theme="dark"] .skeleton-text,
-[data-theme="dark"] .skeleton-bar,
-[data-theme="dark"] .skeleton-cell {
-  background: linear-gradient(90deg, rgba(30, 41, 59, 0.8) 25%, rgba(51, 65, 85, 0.8) 50%, rgba(30, 41, 59, 0.8) 75%);
-  background-size: 200% 100%;
-}
 
-[data-theme="dark"] .skeleton-table-header {
-  background: rgba(30, 41, 59, 0.5);
-}

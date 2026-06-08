@@ -947,53 +947,9 @@
 }
 
 /* Dark mode */
-[data-theme="dark"] .checkin-form,
-body[data-theme="dark"] .checkin-form {
-  --checkin-surface: #0f172a;
-  --checkin-surface-solid: #0f172a;
-  --checkin-border: rgba(255, 255, 255, 0.08);
-  --checkin-heading: #f9fafc;
-  --checkin-text: #e2e8f0;
-  --checkin-muted: #94a3b8;
-  --checkin-primary: #f9a8d4;
-  --checkin-primary-light: #fbcfe8;
-  --checkin-bg: #0b1120;
-}
 
-[data-theme="dark"] .checkin-hero,
-body[data-theme="dark"] .checkin-hero {
-  background: linear-gradient(135deg, #1a1030, #0f172a, #0b1a2e);
-}
 
-[data-theme="dark"] .checkin-search,
-body[data-theme="dark"] .checkin-search,
-[data-theme="dark"] .checkin-select-wrap,
-body[data-theme="dark"] .checkin-select-wrap,
-[data-theme="dark"] .checkin-search-box,
-body[data-theme="dark"] .checkin-search-box,
-[data-theme="dark"] .checkin-filter-box,
-body[data-theme="dark"] .checkin-filter-box,
-[data-theme="dark"] .boarding-card,
-body[data-theme="dark"] .boarding-card,
-[data-theme="dark"] .checkin-card,
-body[data-theme="dark"] .checkin-card,
-[data-theme="dark"] .boarding-info-grid div,
-body[data-theme="dark"] .boarding-info-grid div,
-[data-theme="dark"] .checkin-detail-item,
-body[data-theme="dark"] .checkin-detail-item,
-[data-theme="dark"] .checkin-close-btn,
-body[data-theme="dark"] .checkin-close-btn,
-[data-theme="dark"] .boarding-inventory-section,
-body[data-theme="dark"] .boarding-inventory-section {
-  background: #1e293b;
-}
 
-[data-theme="dark"] .checkin-summary-card:hover,
-body[data-theme="dark"] .checkin-summary-card:hover,
-[data-theme="dark"] .checkin-summary-card.active,
-body[data-theme="dark"] .checkin-summary-card.active {
-  border-color: rgba(249, 168, 212, 0.25);
-}
 
 /* Responsive */
 @media (max-width: 1180px) {

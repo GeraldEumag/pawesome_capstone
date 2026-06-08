@@ -1,13 +1,11 @@
 import { Outlet, useNavigate, useLocation } from "react-router-dom";
 import ReceptionistSidebar from "./ReceptionistSidebar";
-import { FaRedoAlt, FaMoon, FaUserTie } from "react-icons/fa";
+import { FaRedoAlt, FaUserTie } from "react-icons/fa";
 import DashboardLayout from "../shared/DashboardLayout";
-import { useTheme } from "../../utils/theme";
 import "./ReceptionistLayout.css";
 
 const ReceptionistLayout = () => {
   const navigate = useNavigate();
-  const { toggle } = useTheme();
   const location = useLocation();
   const normalizedPath = location.pathname.replace(/\/+$/, "");
 
@@ -46,14 +44,6 @@ const ReceptionistLayout = () => {
         onClick={() => window.location.reload()}
       >
         <FaRedoAlt />
-      </button>
-      <button
-        className="topbar-icon"
-        type="button"
-        title="Dark Mode"
-        onClick={toggle}
-      >
-        <FaMoon />
       </button>
     </>
   );

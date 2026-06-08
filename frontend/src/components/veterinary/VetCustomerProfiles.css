@@ -768,28 +768,8 @@
 
 /* DARK MODE */
 
-[data-theme="dark"] .vet-customer-card,
-[data-theme="dark"] .vet-profile-modal,
-[data-theme="dark"] .vet-history-modal,
-[data-theme="dark"] .vet-search-box input,
-[data-theme="dark"] .vet-modal-close,
-[data-theme="dark"] .vet-refresh-btn,
-[data-theme="dark"] .vet-history-back-btn,
-[data-theme="dark"] .vet-pet-profile-card,
-[data-theme="dark"] .vet-history-item {
-  background: rgba(15, 23, 42, 0.94);
-}
 
-[data-theme="dark"] .modal-profile-grid div,
-[data-theme="dark"] .vet-pet-info-grid div,
-[data-theme="dark"] .vet-history-grid div {
-  background: rgba(255, 255, 255, 0.06);
-}
 
-[data-theme="dark"] .modal-profile-summary,
-[data-theme="dark"] .vet-pet-notes {
-  background: rgba(255, 255, 255, 0.06);
-}
 
 /* RESPONSIVE */
 

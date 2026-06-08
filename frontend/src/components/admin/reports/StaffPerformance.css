@@ -356,28 +356,5 @@
 }
 
 /* Dark Mode */
-[data-theme="dark"] .staff-performance,
-body[data-theme="dark"] .staff-performance {
-  --sp-bg: rgba(15, 23, 42, 0.95);
-}
 
-[data-theme="dark"] .sp-header,
-[data-theme="dark"] .sp-metric-card,
-[data-theme="dark"] .sp-top-performer,
-[data-theme="dark"] .sp-staff-list,
-[data-theme="dark"] .sp-staff-detail,
-[data-theme="dark"] .sp-departments {
-  background: rgba(15, 23, 42, 0.9);
-  border-color: rgba(255, 141, 181, 0.2);
-}
 
-[data-theme="dark"] .sp-title h2,
-[data-theme="dark"] .sp-metric-card strong,
-[data-theme="dark"] .trophy-section h3,
-[data-theme="dark"] .sp-staff-list h3,
-[data-theme="dark"] .detail-header h3,
-[data-theme="dark"] .sp-departments h3,
-[data-theme="dark"] .staff-info h4,
-[data-theme="dark"] .staff-metrics strong {
-  color: #f1f5f9;
-}

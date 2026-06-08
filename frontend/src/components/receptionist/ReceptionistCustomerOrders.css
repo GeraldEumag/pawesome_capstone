@@ -839,39 +839,8 @@
 
 /* Dark mode */
 
-[data-theme="dark"] .customer-orders,
-body[data-theme="dark"] .customer-orders {
-  --orders-surface: rgba(15, 23, 42, 0.9);
-  --orders-surface-solid: rgba(15, 23, 42, 0.96);
-  --orders-border: rgba(255, 141, 181, 0.26);
-  --orders-heading: #ffffff;
-  --orders-text: #f8fafc;
-  --orders-muted: #cbd5e1;
-  --orders-primary: #f9a8d4;
-  --orders-primary-light: #fbcfe8;
-}
 
-[data-theme="dark"] .orders-search-box,
-[data-theme="dark"] .orders-filter-box,
-[data-theme="dark"] .action-btn,
-[data-theme="dark"] .order-detail-item,
-[data-theme="dark"] .order-items-panel,
-[data-theme="dark"] .order-reason-card,
-[data-theme="dark"] .modal-item-row,
-body[data-theme="dark"] .orders-search-box,
-body[data-theme="dark"] .orders-filter-box,
-body[data-theme="dark"] .action-btn,
-body[data-theme="dark"] .order-detail-item,
-body[data-theme="dark"] .order-items-panel,
-body[data-theme="dark"] .order-reason-card,
-body[data-theme="dark"] .modal-item-row {
-  background: rgba(15, 23, 42, 0.94);
-}
 
-[data-theme="dark"] .orders-table tbody tr:hover,
-body[data-theme="dark"] .orders-table tbody tr:hover {
-  background: rgba(255, 255, 255, 0.06);
-}
 
 /* Responsive */
 

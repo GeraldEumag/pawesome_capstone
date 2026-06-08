@@ -1066,38 +1066,9 @@
 
 /* DARK MODE */
 
-[data-theme="dark"] .admin-dashboard {
-  --admin-bg-gradient: linear-gradient(135deg, #0f172a, #1f2937, #3b1224);
-  --admin-surface: rgba(15, 23, 42, 0.9);
-  --admin-surface-solid: rgba(15, 23, 42, 0.96);
-  --admin-border: rgba(255, 141, 181, 0.26);
-  --admin-heading: #ffffff;
-  --admin-text: #f8fafc;
-  --admin-muted: #d7dee8;
-  --admin-primary: #f9a8d4;
-  --admin-primary-light: #fbcfe8;
-  color: var(--admin-text);
-}
 
-[data-theme="dark"] .admin-main input,
-[data-theme="dark"] .admin-main select,
-[data-theme="dark"] .admin-main textarea,
-[data-theme="dark"] .admin-main .search-input,
-[data-theme="dark"] .admin-main .search-box input,
-[data-theme="dark"] .admin-main .filter-select {
-  background: rgba(15, 23, 42, 0.98) !important;
-  color: #ffffff !important;
-}
 
-[data-theme="dark"] .admin-empty-chart,
-[data-theme="dark"] .empty-panel-state {
-  background: rgba(255, 255, 255, 0.06);
-}
 
-[data-theme="dark"] .admin-main .recharts-tooltip-wrapper .recharts-default-tooltip {
-  background: #111827 !important;
-  color: #ffffff !important;
-}
 
 /* RESPONSIVE */
 

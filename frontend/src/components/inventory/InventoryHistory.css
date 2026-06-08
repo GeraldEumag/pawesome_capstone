@@ -374,45 +374,13 @@
 }
 
 /* Dark mode adjustments for action badges */
-[data-theme="dark"] .action-badge.stock-in {
-  background: #14532d;
-  color: #dcfce7;
-}
 
-[data-theme="dark"] .action-badge.stock-out {
-  background: #7f1d1d;
-  color: #fee2e2;
-}
 
-[data-theme="dark"] .action-badge.adjustment {
-  background: #78350f;
-  color: #fef3c7;
-}
 
-[data-theme="dark"] .action-badge.restock {
-  background: #1e3a8a;
-  color: #dbeafe;
-}
 
-[data-theme="dark"] .action-badge.sale {
-  background: #5b21b6;
-  color: #f3e8ff;
-}
 
-[data-theme="dark"] .action-badge.return {
-  background: #0c4a6e;
-  color: #e0f2fe;
-}
 
-[data-theme="dark"] .action-badge.damage {
-  background: #7f1d1d;
-  color: #fee2e2;
-}
 
-[data-theme="dark"] .action-badge.expired {
-  background: #78350f;
-  color: #fef3c7;
-}
 
 /* Quantity styling */
 .quantity {
@@ -442,25 +410,9 @@
 }
 
 /* Dark mode adjustments for quantity */
-[data-theme="dark"] .quantity.stock-in {
-  background: #14532d;
-  color: #dcfce7;
-}
 
-[data-theme="dark"] .quantity.stock-out {
-  background: #7f1d1d;
-  color: #fee2e2;
-}
 
-[data-theme="dark"] .quantity.adjustment {
-  background: #78350f;
-  color: #fef3c7;
-}
 
-[data-theme="dark"] .quantity.restock {
-  background: #1e3a8a;
-  color: #dbeafe;
-}
 
 /* View Button */
 .view-btn {

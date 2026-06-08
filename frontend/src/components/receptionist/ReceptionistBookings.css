@@ -991,46 +991,8 @@
 
 /* Dark mode */
 
-[data-theme="dark"] .receptionist-bookings,
-body[data-theme="dark"] .receptionist-bookings {
-  --rb-surface: rgba(15, 23, 42, 0.9);
-  --rb-surface-solid: rgba(15, 23, 42, 0.96);
-  --rb-border: rgba(255, 141, 181, 0.26);
-  --rb-heading: #ffffff;
-  --rb-text: #f8fafc;
-  --rb-muted: #cbd5e1;
-  --rb-primary: #f9a8d4;
-  --rb-primary-light: #fbcfe8;
-}
 
-[data-theme="dark"] .booking-search-wrap,
-[data-theme="dark"] .booking-filter,
-[data-theme="dark"] .action-btn,
-[data-theme="dark"] .booking-details-summary div,
-[data-theme="dark"] .detail-item,
-[data-theme="dark"] .form-group input,
-[data-theme="dark"] .form-group textarea,
-[data-theme="dark"] .form-group select,
-[data-theme="dark"] .payment-preview-card div,
-body[data-theme="dark"] .booking-search-wrap,
-body[data-theme="dark"] .booking-filter,
-body[data-theme="dark"] .action-btn,
-body[data-theme="dark"] .booking-details-summary div,
-body[data-theme="dark"] .detail-item,
-body[data-theme="dark"] .form-group input,
-body[data-theme="dark"] .form-group textarea,
-body[data-theme="dark"] .form-group select,
-body[data-theme="dark"] .payment-preview-card div {
-  background: rgba(15, 23, 42, 0.94);
-}
 
-[data-theme="dark"] .modal-content .modal-actions,
-[data-theme="dark"] .appointment-modal > .modal-actions,
-body[data-theme="dark"] .modal-content .modal-actions,
-body[data-theme="dark"] .appointment-modal > .modal-actions {
-  background: rgba(15, 23, 42, 0.96);
-  border-top-color: rgba(255, 141, 181, 0.26);
-}
 
 /* Responsive */
 

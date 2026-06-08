@@ -573,24 +573,6 @@
 }
 
 /* Dark Mode */
-[data-theme="dark"] .executive-dashboard,
-body[data-theme="dark"] .executive-dashboard {
-  --exec-bg: rgba(15, 23, 42, 0.95);
-}
 
-[data-theme="dark"] .exec-kpi-card,
-[data-theme="dark"] .exec-anomalies-section,
-[data-theme="dark"] .exec-comparison-section {
-  background: rgba(15, 23, 42, 0.9);
-  border-color: rgba(255, 141, 181, 0.2);
-}
 
-[data-theme="dark"] .exec-kpi-value,
-[data-theme="dark"] .exec-period-value {
-  color: #f1f5f9;
-}
 
-[data-theme="dark"] .exec-kpi-title,
-[data-theme="dark"] .exec-period-label {
-  color: #94a3b8;
-}

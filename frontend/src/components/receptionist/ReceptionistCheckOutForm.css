@@ -258,28 +258,8 @@
 }
 
 /* Dark mode */
-[data-theme="dark"] .checkout-form,
-body[data-theme="dark"] .checkout-form {
-  --co-surface: #0f172a;
-  --co-border: rgba(255, 255, 255, 0.08);
-  --co-heading: #f9fafc;
-  --co-text: #e2e8f0;
-  --co-muted: #94a3b8;
-  --co-primary: #f9a8d4;
-  --co-primary-hover: #f472b6;
-}
 
-[data-theme="dark"] .form-header,
-body[data-theme="dark"] .form-header {
-  background: linear-gradient(135deg, #1a1030, #0f172a, #0b1a2e);
-}
 
-[data-theme="dark"] .search-row,
-body[data-theme="dark"] .search-row,
-[data-theme="dark"] .boarding-card,
-body[data-theme="dark"] .boarding-card {
-  background: #1e293b;
-}
 
 /* Responsive */
 @media (max-width: 768px) {

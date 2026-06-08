@@ -21,15 +21,6 @@ const SkeletonBase = styled.div`
   animation: ${shimmer} 1.5s infinite;
   border-radius: var(--veterinary-radius-md, 12px);
 
-  [data-theme="dark"] & {
-    background: linear-gradient(
-      90deg,
-      rgba(30, 41, 59, 0.8) 25%,
-      rgba(51, 65, 85, 0.8) 50%,
-      rgba(30, 41, 59, 0.8) 75%
-    );
-    background-size: 200% 100%;
-  }
 `;
 
 const StatCardSkeleton = styled.div`

@@ -849,41 +849,11 @@
 }
 
 /* Dark Mode Support */
-[data-theme="dark"] .vet-new-appointment {
-  background: var(--veterinary-page-bg);
-  color: var(--veterinary-text-primary);
-}
 
-[data-theme="dark"] .new-appointment-hero,
-[data-theme="dark"] .new-appointment-form-card,
-[data-theme="dark"] .appointment-summary-card,
-[data-theme="dark"] .new-appointment-loading {
-  background: var(--veterinary-glass-bg);
-  border-color: var(--veterinary-glass-border);
-}
 
-[data-theme="dark"] .form-group input,
-[data-theme="dark"] .form-group select,
-[data-theme="dark"] .form-group textarea,
-[data-theme="dark"] .customer-search-wrapper input {
-  background: var(--veterinary-card-bg);
-  border-color: var(--veterinary-glass-border);
-  color: var(--veterinary-text-primary);
-}
 
-[data-theme="dark"] .progress-step {
-  background: var(--veterinary-card-bg);
-  border-color: var(--veterinary-glass-border);
-}
 
-[data-theme="dark"] .pet-option {
-  background: var(--veterinary-card-bg);
-  border-color: var(--veterinary-glass-border);
-}
 
-[data-theme="dark"] .helper-empty-box {
-  background: rgba(255, 255, 255, 0.05);
-}
 
 @keyframes scaleIn {
   from {
@@ -903,33 +873,9 @@
 }
 
 /* Dark Mode Overrides */
-[data-theme="dark"] .new-appointment-hero,
-[data-theme="dark"] .new-appointment-form-card,
-[data-theme="dark"] .appointment-summary-card,
-[data-theme="dark"] .customer-results,
-[data-theme="dark"] .new-appointment-loading {
-  background: rgba(15, 23, 42, 0.9);
-}
 
-[data-theme="dark"] .back-appointment-btn,
-[data-theme="dark"] .form-group input,
-[data-theme="dark"] .form-group select,
-[data-theme="dark"] .form-group textarea,
-[data-theme="dark"] .customer-search-wrapper input,
-[data-theme="dark"] .pet-option,
-[data-theme="dark"] .cancel-appointment-btn {
-  background: rgba(15, 23, 42, 0.94);
-}
 
-[data-theme="dark"] .helper-empty-box,
-[data-theme="dark"] .summary-row {
-  background: rgba(255, 255, 255, 0.06);
-}
 
-[data-theme="dark"] .selected-customer-card,
-[data-theme="dark"] .selected-service-preview {
-  background: rgba(255, 95, 147, 0.12);
-}
 
 /* Responsive Design */
 @media (max-width: 1200px) {

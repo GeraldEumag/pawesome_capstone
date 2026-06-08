@@ -337,33 +337,8 @@
 }
 
 /* Dark mode adjustments */
-[data-theme="dark"] .special-requests,
-[data-theme="dark"] .medication-notes {
-  background: #3d3d00;
-  border-color: #666600;
-}
 
-[data-theme="dark"] .special-requests span,
-[data-theme="dark"] .medication-notes p {
-  color: #ffeb3b;
-}
 
-[data-theme="dark"] .badge-success {
-  background: #1e4620;
-  color: #4caf50;
-}
 
-[data-theme="dark"] .badge-info {
-  background: #0c5460;
-  color: #5bc0de;
-}
 
-[data-theme="dark"] .badge-warning {
-  background: #856404;
-  color: #ffc107;
-}
 
-[data-theme="dark"] .badge-secondary {
-  background: #383d41;
-  color: #6c757d;
-}

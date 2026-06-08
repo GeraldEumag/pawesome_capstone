@@ -800,32 +800,7 @@
 
 /* Dark mode */
 
-[data-theme="dark"] .manager-history,
-body[data-theme="dark"] .manager-history {
-  --history-surface: rgba(15, 23, 42, 0.9);
-  --history-surface-solid: rgba(15, 23, 42, 0.96);
-  --history-border: rgba(255, 141, 181, 0.26);
-  --history-heading: #ffffff;
-  --history-text: #f8fafc;
-  --history-muted: #cbd5e1;
-  --history-primary: #f9a8d4;
-  --history-primary-light: #fbcfe8;
-  --history-shadow-card: 0 22px 55px rgba(0, 0, 0, 0.38);
-  --history-shadow-soft: 0 14px 34px rgba(0, 0, 0, 0.28);
-}
 
-[data-theme="dark"] .history-record-card,
-[data-theme="dark"] .history-search-box input,
-[data-theme="dark"] .history-filter-field input,
-[data-theme="dark"] .history-filter-field select,
-[data-theme="dark"] .history-detail-grid div,
-body[data-theme="dark"] .history-record-card,
-body[data-theme="dark"] .history-search-box input,
-body[data-theme="dark"] .history-filter-field input,
-body[data-theme="dark"] .history-filter-field select,
-body[data-theme="dark"] .history-detail-grid div {
-  background: rgba(15, 23, 42, 0.86);
-}
 
 /* Responsive */
 

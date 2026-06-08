@@ -545,56 +545,13 @@
 
 /* Dark Mode */
 
-[data-theme="dark"] .rbac-chatbot-panel,
-[data-theme="dark"] .rbac-workflow-modal {
-  background: rgba(33, 24, 38, 0.98);
-  border-color: rgba(255, 141, 181, 0.24);
-}
 
-[data-theme="dark"] .rbac-chatbot-body {
-  background:
-    radial-gradient(circle at top right, rgba(255, 141, 181, 0.12), transparent 32%),
-    linear-gradient(180deg, #1f1724 0%, #15111d 100%);
-}
 
-[data-theme="dark"] .rbac-chat-message.bot .rbac-chat-bubble,
-[data-theme="dark"] .rbac-message-text,
-[data-theme="dark"] .rbac-chatbot-form {
-  background: rgba(255, 255, 255, 0.06);
-  border-color: rgba(255, 141, 181, 0.16);
-  color: #f8fafc;
-}
 
-[data-theme="dark"] .rbac-chatbot-form input,
-[data-theme="dark"] .rbac-workflow-form input,
-[data-theme="dark"] .rbac-workflow-form select,
-[data-theme="dark"] .rbac-workflow-form textarea {
-  background: rgba(15, 23, 42, 0.38);
-  color: #f8fafc;
-  border-color: rgba(255, 141, 181, 0.18);
-}
 
-[data-theme="dark"] .rbac-chatbot-form input::placeholder,
-[data-theme="dark"] .rbac-workflow-form input::placeholder,
-[data-theme="dark"] .rbac-workflow-form textarea::placeholder {
-  color: #94a3b8;
-}
 
-[data-theme="dark"] .rbac-workflow-header h4,
-[data-theme="dark"] .rbac-result-card strong {
-  color: #f8fafc;
-}
 
-[data-theme="dark"] .rbac-workflow-form label,
-[data-theme="dark"] .rbac-result-card span,
-[data-theme="dark"] .rbac-chatbot-state {
-  color: #cbd5e1;
-}
 
-[data-theme="dark"] .rbac-result-card {
-  background: rgba(255, 255, 255, 0.06);
-  border-color: rgba(255, 141, 181, 0.16);
-}
 
 /* Mobile */
 
@@ -748,20 +705,8 @@
 }
 
 /* Dark mode */
-[data-theme="dark"] .rbac-quick-actions-bar {
-  background: rgba(255, 255, 255, 0.06);
-  border-color: rgba(255, 141, 181, 0.16);
-}
 
-[data-theme="dark"] .rbac-quick-action {
-  background: rgba(255, 141, 181, 0.1);
-  border-color: rgba(255, 141, 181, 0.18);
-  color: #ff8db5;
-}
 
-[data-theme="dark"] .rbac-quick-action:hover {
-  background: rgba(255, 141, 181, 0.16);
-}
 
 /* Mobile */
 @media (max-width: 480px) {

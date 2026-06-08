@@ -4,8 +4,6 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { showError } from "../../utils/alert";
 import { useAuth } from "../../context/AuthContext";
 import {
-  faMoon,
-  faSun,
   faPaw,
   faCalendarAlt,
   faHeart,
@@ -25,7 +23,7 @@ import CustomerSidebar from "./CustomerSidebar";
 import DashboardLayout from "../shared/DashboardLayout";
 import PetAvatar from "../shared/PetAvatar";
 import { apiRequest, clearAuthStorage, uploadProfilePhoto } from "../../api/client";
-import { useTheme, fetchAndApplySystemTheme } from "../../utils/theme";
+import { fetchAndApplySystemTheme } from "../../utils/theme";
 import "../../styles/dashboardGlobal.css";
 import "./CustomerDashboard.css";
 
@@ -33,8 +31,6 @@ const CustomerDashboard = () => {
   const { user, updateUser } = useAuth();
   const name = user?.name || "Customer";
   const profilePhoto = user?.profile_photo || "";
-
-  const { theme, toggle } = useTheme();
 
   useEffect(() => {
     fetchAndApplySystemTheme();
@@ -193,9 +189,7 @@ const CustomerDashboard = () => {
 
   const customerDashboardClasses = [
     "customer-dashboard",
-    theme === "dark" ? "dark" : "",
   ]
-    .filter(Boolean)
     .join(" ");
 
   const getBookingProgress = (status) => {
@@ -262,14 +256,6 @@ const CustomerDashboard = () => {
 
   const extraActions = (
     <>
-      <button
-        className="theme-toggle-btn"
-        type="button"
-        title="Toggle theme"
-        onClick={toggle}
-      >
-        <FontAwesomeIcon icon={theme === "light" ? faMoon : faSun} />
-      </button>
     </>
   );
 
