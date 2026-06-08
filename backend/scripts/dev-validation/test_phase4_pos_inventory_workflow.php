@@ -5,7 +5,7 @@
  * Tests: POS transaction, stock deduction, inventory logs, low-stock alerts
  */
 
-require __DIR__ . '/vendor/autoload.php';
+require __DIR__ . '/../../vendor/autoload.php';
 
 use Illuminate\Support\Facades\DB;
 use App\Models\InventoryItem;
@@ -13,7 +13,7 @@ use App\Models\Sale;
 use App\Models\InventoryLog;
 use App\Models\User;
 
-$app = require_once __DIR__ . '/bootstrap/app.php';
+$app = require_once __DIR__ . '/../../bootstrap/app.php';
 $app->make(Illuminate\Contracts\Console\Kernel::class)->bootstrap();
 
 echo "=== Phase 4 Inventory and POS Stock Workflow API Test ===\n\n";

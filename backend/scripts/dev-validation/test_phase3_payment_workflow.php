@@ -5,13 +5,13 @@
  * Tests: Customer upload proof, Cashier view/verify/reject, Customer view status
  */
 
-require __DIR__ . '/vendor/autoload.php';
+require __DIR__ . '/../../vendor/autoload.php';
 
 use Illuminate\Support\Facades\DB;
 use App\Models\ServiceRequest;
 use App\Models\User;
 
-$app = require_once __DIR__ . '/bootstrap/app.php';
+$app = require_once __DIR__ . '/../../bootstrap/app.php';
 $app->make(Illuminate\Contracts\Console\Kernel::class)->bootstrap();
 
 echo "=== Phase 3 Payment Workflow API Test ===\n\n";

@@ -5,14 +5,14 @@
  * Performs actual authenticated API calls to test POS workflow
  */
 
-require __DIR__ . '/vendor/autoload.php';
+require __DIR__ . '/../../vendor/autoload.php';
 
 use Illuminate\Support\Facades\DB;
 use App\Models\InventoryItem;
 use App\Models\Sale;
 use App\Models\InventoryLog;
 
-$app = require_once __DIR__ . '/bootstrap/app.php';
+$app = require_once __DIR__ . '/../../bootstrap/app.php';
 $app->make(Illuminate\Contracts\Console\Kernel::class)->bootstrap();
 
 echo "=== Real POS Transaction Workflow Test ===\n\n";
