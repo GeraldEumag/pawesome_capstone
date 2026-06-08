@@ -247,8 +247,8 @@ Phase 7 validates the in-app notification system and status update alerts. This 
 
 ## Files Changed
 
-- **Created**: `backend/test_phase7_notifications.php` - Phase 7A API validation test script
-- **Created**: `backend/test_phase7b_workflow_triggers.php` - Phase 7B workflow trigger validation script
+- **Created**: `backend/scripts/dev-validation/test_phase7_notifications.php` - Phase 7A API validation test script (temporary local validation script, not production runtime file)
+- **Created**: `backend/scripts/dev-validation/test_phase7b_workflow_triggers.php` - Phase 7B workflow trigger validation script (temporary local validation script, not production runtime file)
 - **Modified**: `backend/app/Http/Controllers/Api/ServiceRequestController.php` - Added customer notification for payment proof upload
 - **Modified**: `backend/app/Services/PaymentVerificationService.php` - Added customer notifications for payment verify/reject
 - **Modified**: `backend/app/Http/Controllers/ReceptionistRequestController.php` - Added veterinary notification for scheduled appointment
@@ -265,7 +265,7 @@ Phase 7 validates the in-app notification system and status update alerts. This 
 - **Branch**: main
 - **Status**: Ahead of origin/main by 9 commits
 - **Modified**: `SYSTEM_AUDIT_TRACKER.md`, `backend/app/Http/Controllers/Api/ServiceRequestController.php`, `backend/app/Services/PaymentVerificationService.php`, `backend/app/Http/Controllers/ReceptionistRequestController.php`
-- **Untracked**: `PHASE_7_NOTIFICATIONS_STATUS_ALERTS_REPORT.md`, `backend/test_phase7_notifications.php`, `backend/test_phase7b_workflow_triggers.php`
+- **Untracked**: `PHASE_7_NOTIFICATIONS_STATUS_ALERTS_REPORT.md`, `backend/scripts/dev-validation/test_phase7_notifications.php`, `backend/scripts/dev-validation/test_phase7b_workflow_triggers.php`
 
 ## Test Results Summary
 

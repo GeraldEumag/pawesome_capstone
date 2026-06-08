@@ -106,7 +106,7 @@ http://localhost:3002 (Note: Ports 3000 and 3001 were in use, Vite auto-switched
 - ✅ npm run build passed (45.37s)
 
 ### Files Changed
-- `backend/test_phase3_payment_workflow.php` (NEW)
+- `backend/scripts/dev-validation/test_phase3_payment_workflow.php` (NEW - temporary local validation script, not production runtime file)
 - `PHASE_3_PAYMENT_VERIFICATION_WORKFLOW_REPORT.md` (NEW)
 - `SYSTEM_AUDIT_TRACKER.md` (UPDATED)
 
@@ -561,8 +561,8 @@ http://localhost:3002 (Note: Ports 3000 and 3001 were in use, Vite auto-switched
 - Modified: `backend/app/Http/Controllers/Api/ServiceRequestController.php` - Added customer notification for payment proof upload
 - Modified: `backend/app/Services/PaymentVerificationService.php` - Added customer notifications for payment verify/reject
 - Modified: `backend/app/Http/Controllers/ReceptionistRequestController.php` - Added veterinary notification for scheduled appointment
-- Created: `backend/test_phase7_notifications.php` - Phase 7A API validation test script
-- Created: `backend/test_phase7b_workflow_triggers.php` - Phase 7B workflow trigger validation script
+- Created: `backend/scripts/dev-validation/test_phase7_notifications.php` - Phase 7A API validation test script (temporary local validation script, not production runtime file)
+- Created: `backend/scripts/dev-validation/test_phase7b_workflow_triggers.php` - Phase 7B workflow trigger validation script (temporary local validation script, not production runtime file)
 - Created: `PHASE_7_NOTIFICATIONS_STATUS_ALERTS_REPORT.md` - Detailed Phase 7 report
 
 ### Pending Tasks
