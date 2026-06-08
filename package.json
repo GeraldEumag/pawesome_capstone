@@ -12,5 +12,10 @@
     "react-hot-toast": "^2.6.0",
     "recharts": "^3.8.1",
     "xlsx": "^0.18.5"
+  },
+  "devDependencies": {
+    "@tailwindcss/vite": "^4.3.0",
+    "@vitejs/plugin-react": "^4.7.0",
+    "vite": "^6.4.3"
   }
 }
