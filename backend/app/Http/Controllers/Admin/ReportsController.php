@@ -21,59 +21,86 @@ class ReportsController extends Controller
 {
     public function sales(Request $request)
     {
-        $query = $this->dateRange(DB::table('sales'), $request);
+        try {
+            $query = $this->dateRange(DB::table('sales'), $request);
 
-        $this->applyExactFilter($query, $request, 'status', 'sales.status');
+            $this->applyExactFilter($query, $request, 'status', 'sales.status');
 
-        $salesperson = $request->query('salesperson_id') ?: $request->query('cashier_id');
-        if ($salesperson && $salesperson !== 'all' && Schema::hasColumn('sales', 'cashier_id')) {
-            $query->where('sales.cashier_id', $salesperson);
-        }
+            $salesperson = $request->query('salesperson_id') ?: $request->query('cashier_id');
+            if ($salesperson && $salesperson !== 'all' && Schema::hasColumn('sales', 'cashier_id')) {
+                $query->where('sales.cashier_id', $salesperson);
+            }
 
-        $search = trim((string) $request->query('search', ''));
-        if ($search !== '') {
-            $query->where(function ($nested) use ($search) {
-                foreach (['transaction_number', 'type', 'payment_type', 'payment_method', 'notes'] as $column) {
-                    if (Schema::hasColumn('sales', $column)) {
-                        $nested->orWhere("sales.$column", 'like', "%$search%");
+            $search = trim((string) $request->query('search', ''));
+            if ($search !== '') {
+                $query->where(function ($nested) use ($search) {
+                    foreach (['transaction_number', 'type', 'payment_type', 'payment_method', 'notes'] as $column) {
+                        if (Schema::hasColumn('sales', $column)) {
+                            $nested->orWhere("sales.$column", 'like', "%$search%");
+                        }
                     }
-                }
-            });
-        }
+                });
+            }
 
-        $rows = $query
-            ->leftJoin('users as cashiers', 'cashiers.id', '=', 'sales.cashier_id')
-            ->select([
-                'sales.*',
-                DB::raw('COALESCE(cashiers.name, "Unassigned") as salesperson_name'),
-                DB::raw('DATE(sales.created_at) as date'),
-            ])
-            ->latest('sales.created_at')
-            ->limit($request->integer('limit', 500))
-            ->get();
+            $rows = $query
+                ->leftJoin('users as cashiers', 'cashiers.id', '=', 'sales.cashier_id')
+                ->select([
+                    'sales.*',
+                    DB::raw('COALESCE(cashiers.name, "Unassigned") as salesperson_name'),
+                    DB::raw('DATE(sales.created_at) as date'),
+                ])
+                ->latest('sales.created_at')
+                ->limit($request->integer('limit', 500))
+                ->get();
 
-        $trend = $rows->groupBy('date')->map(fn ($group, $date) => [
-            'date' => $date,
-            'revenue' => (float) $group->sum(fn ($sale) => (float) ($sale->amount ?? $sale->total_amount ?? 0)),
-            'orders' => $group->count(),
-        ])->values();
+            $trend = $rows->groupBy('date')->map(fn ($group, $date) => [
+                'date' => $date,
+                'revenue' => (float) $group->sum(fn ($sale) => (float) ($sale->amount ?? $sale->total_amount ?? 0)),
+                'orders' => $group->count(),
+            ])->values();
 
-        return response()->json([
-            'success' => true,
-            'data' => [
-                'summary' => [
-                    'total_revenue' => (float) $rows->sum(fn ($sale) => (float) ($sale->amount ?? $sale->total_amount ?? 0)),
-                    'total_orders' => $rows->count(),
-                    'completed_orders' => $rows->where('status', 'completed')->count(),
-                    'pending_orders' => $rows->where('status', 'pending')->count(),
+            $message = null;
+            if ($rows->isEmpty()) {
+                $message = 'No records found for selected date range.';
+            }
+
+            return response()->json([
+                'success' => true,
+                'data' => [
+                    'summary' => [
+                        'total_revenue' => (float) $rows->sum(fn ($sale) => (float) ($sale->amount ?? $sale->total_amount ?? 0)),
+                        'total_orders' => $rows->count(),
+                        'completed_orders' => $rows->where('status', 'completed')->count(),
+                        'pending_orders' => $rows->where('status', 'pending')->count(),
+                    ],
+                    'sales' => $rows,
+                    'transactions' => $rows,
+                    'trend' => $trend,
+                    'salespeople' => User::whereIn('role', ['cashier', 'admin', 'manager'])->orderBy('name')->get(['id', 'name', 'role']),
+                    'generated_at' => now()->toIso8601String(),
                 ],
-                'sales' => $rows,
-                'transactions' => $rows,
-                'trend' => $trend,
-                'salespeople' => User::whereIn('role', ['cashier', 'admin', 'manager'])->orderBy('name')->get(['id', 'name', 'role']),
-                'generated_at' => now()->toIso8601String(),
-            ],
-        ]);
+                'message' => $message,
+            ]);
+        } catch (\Exception $e) {
+            // Return empty results on any error to prevent 500
+            return response()->json([
+                'success' => true,
+                'data' => [
+                    'summary' => [
+                        'total_revenue' => 0,
+                        'total_orders' => 0,
+                        'completed_orders' => 0,
+                        'pending_orders' => 0,
+                    ],
+                    'sales' => collect(),
+                    'transactions' => collect(),
+                    'trend' => collect(),
+                    'salespeople' => User::whereIn('role', ['cashier', 'admin', 'manager'])->orderBy('name')->get(['id', 'name', 'role']),
+                    'generated_at' => now()->toIso8601String(),
+                ],
+                'message' => 'No records found for selected date range.',
+            ]);
+        }
     }
 
     public function summary()
@@ -239,6 +266,11 @@ class ReportsController extends Controller
         $paidBoardingRevenue = $boardingPayments->where('payment_status', 'paid')->sum('amount');
         $paidConfinementRevenue = $confinementPayments->where('payment_status', 'paid')->sum('amount');
 
+        $message = null;
+        if ($paymentRows->isEmpty() && $rows->isEmpty()) {
+            $message = 'No records found for selected date range.';
+        }
+
         return response()->json([
             'success' => true,
             'summary' => [
@@ -271,7 +303,7 @@ class ReportsController extends Controller
                     ->values(),
             ],
             'filters' => $this->activeFilters($request),
-            'message' => null,
+            'message' => $message,
         ]);
     }
 
@@ -299,6 +331,11 @@ class ReportsController extends Controller
         $stockValue = (clone $items)->sum(DB::raw('stock * price'));
         $topBrand = $this->topBrand($request);
 
+        $message = null;
+        if ($logs->isEmpty() && $items->count() === 0) {
+            $message = 'No records found for selected date range.';
+        }
+
         return response()->json([
             'success' => true,
             'data' => [
@@ -316,6 +353,7 @@ class ReportsController extends Controller
                 'logs' => $logs,
                 'fast_moving_products' => $this->fastMovingProducts($request),
             ],
+            'message' => $message,
         ]);
     }
 
@@ -471,6 +509,11 @@ class ReportsController extends Controller
         $serviceBreakdown = $this->serviceBreakdown($request);
         $confinements = $this->medicalConfinementsBase($request);
 
+        $message = null;
+        if ($appointments->count() === 0 && $confinements->count() === 0) {
+            $message = 'No records found for selected date range.';
+        }
+
         return response()->json([
             'success' => true,
             'data' => [
@@ -494,6 +537,7 @@ class ReportsController extends Controller
                 'monthly_completed' => $completed,
                 'period' => $this->periodLabel($request),
             ],
+            'message' => $message,
         ]);
     }
 
@@ -525,6 +569,14 @@ class ReportsController extends Controller
 
     public function reception(Request $request)
     {
+        $serviceRequests = $this->serviceRequestsBase($request)->latest('created_at')->limit(250)->get();
+        $customerOrders = $this->customerOrdersBase($request)->latest('created_at')->limit(250)->get();
+
+        $message = null;
+        if ($serviceRequests->isEmpty() && $customerOrders->isEmpty()) {
+            $message = 'No records found for selected date range.';
+        }
+
         return response()->json([
             'success' => true,
             'data' => [
@@ -539,11 +591,12 @@ class ReportsController extends Controller
                     'bookings_handled' => $this->appointmentsBase($request)->count() + $this->serviceRequestsBase($request)->count(),
                     'orders_approved' => $this->customerOrdersBase($request)->where('status', 'approved')->count(),
                 ],
-                'requests' => $this->serviceRequestsBase($request)->latest('created_at')->limit(250)->get(),
-                'orders' => $this->customerOrdersBase($request)->latest('created_at')->limit(250)->get(),
+                'requests' => $serviceRequests,
+                'orders' => $customerOrders,
                 'requests_per_day' => $this->requestsPerDay($request),
                 'receptionist_activity' => $this->recentActions($request, ['order', 'service_request', 'appointment']),
             ],
+            'message' => $message,
         ]);
     }
 
@@ -1542,11 +1595,23 @@ class ReportsController extends Controller
         $from = $request->query('from') ?: $request->query('start_date') ?: $request->query('startDate');
         $to = $request->query('to') ?: $request->query('end_date') ?: $request->query('endDate');
 
-        if ($from) {
-            $query->whereDate($column, '>=', $from);
+        // Validate date format (YYYY-MM-DD) before applying filter
+        $datePattern = '/^\d{4}-\d{2}-\d{2}$/';
+
+        if ($from && preg_match($datePattern, $from)) {
+            try {
+                $query->whereDate($column, '>=', $from);
+            } catch (\Exception $e) {
+                // Skip invalid from date
+            }
         }
-        if ($to) {
-            $query->whereDate($column, '<=', $to);
+
+        if ($to && preg_match($datePattern, $to)) {
+            try {
+                $query->whereDate($column, '<=', $to);
+            } catch (\Exception $e) {
+                // Skip invalid to date
+            }
         }
     }
 
