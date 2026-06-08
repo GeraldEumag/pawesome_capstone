@@ -247,7 +247,7 @@ Mark sale as cancelled
    - Stock after void: 100
    - Expected: 100
    - ✅ Stock restored correctly
-   - ⚠️ Void inventory log not found (minor issue - stock restoration works)
+   - ✅ Void inventory log created (movement_type: sale_void)
 
 **Errors:** None (all API calls successful)
 
