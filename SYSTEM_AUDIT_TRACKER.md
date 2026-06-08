@@ -2,6 +2,8 @@
 
 ## Phase
 
+Phase 5 — Veterinary Service Execution Workflow (API-validated, browser testing pending)
+
 Phase 4 — Inventory and POS Stock Workflow (API-validated, browser testing pending)
 
 Phase 3 — Cashier Payment Verification and Payment Workflow (API-validated, browser testing pending)
@@ -242,5 +244,95 @@ http://localhost:3002 (Note: Ports 3000 and 3001 were in use, Vite auto-switched
 - Low-stock alerts: WORKING
 - Payment verification does NOT deduct stock: VERIFIED
 - Service payment does NOT deduct stock: VERIFIED
+
+**Manual Browser/UI Testing: PENDING ⚠️**
+
+## Phase 5 Development Summary
+
+### Completed Tasks
+- ✅ Verified veterinary consultation workflow endpoints (16 routes)
+- ✅ Verified ConsultationWorkflowController methods (index, scheduled, start, complete, recommendConfinement)
+- ✅ Verified MedicalRecordController methods (index, show, store, update, recordInventoryUsage, getAvailableItems)
+- ✅ Verified VeterinaryDashboardController methods (overview, appointments, reports)
+- ✅ Verified role-based access control (vet cannot access payment verification, request approval, manual inventory deduction)
+- ✅ Verified appointment status flow (approved → in_consultation → awaiting_payment)
+- ✅ Verified medical data persistence (diagnosis, treatment_notes, prescription, vet_remarks)
+- ✅ Verified customer visibility of updated service status
+- ✅ Verified inventory usage through approved service flow
+- ✅ Created test script: backend/test_phase5_veterinary_workflow.php
+- ✅ npm run build passed (34.22s)
+
+### Files Changed
+- `backend/test_phase5_veterinary_workflow.php` (NEW)
+- `PHASE_5_VETERINARY_SERVICE_WORKFLOW_REPORT.md` (NEW)
+- `SYSTEM_AUDIT_TRACKER.md` (UPDATED)
+
+### API Routes Verified
+- GET /api/veterinary/consultations/scheduled - Get approved/scheduled appointments
+- GET /api/veterinary/consultations - Get all consultations
+- GET /api/veterinary/appointments/{id} - Get appointment details
+- POST /api/veterinary/consultations/{id}/start - Start consultation
+- POST /api/veterinary/consultations/{id}/complete - Complete consultation with medical data
+- PUT /api/veterinary/appointments/{id}/status - Update appointment status
+- GET /api/veterinary/reports - Get veterinary reports
+- GET /api/veterinary/inventory-items - Get available service consumables
+- POST /api/veterinary/appointments/{id}/inventory-usage - Record inventory usage through service flow
+- GET /api/customer/appointments - Customer view appointments with status
+
+### Database Fields Used
+- appointments: id, status, diagnosis, treatment_notes, prescription, vet_remarks, veterinarian_id, customer_id, pet_id, service_id
+- medical_records: id, pet_id, veterinarian_id, visit_date, diagnosis, treatment_plan, notes, status
+- service_item_usages: service_type, service_id, inventory_item_id, quantity_used, unit_price, total_price
+
+### Appointment Status Flow
+- approved → in_consultation (vet starts consultation)
+- in_consultation → awaiting_payment (vet completes with medical data)
+- awaiting_payment → paid (cashier verifies payment - separate workflow)
+
+### Medical Data Saved
+- Diagnosis: "Test diagnosis: Mild respiratory infection"
+- Treatment Notes: "Test treatment: Antibiotics for 7 days, rest, and monitoring"
+- Prescription: "Test prescription: Amoxicillin 250mg twice daily for 7 days"
+- Vet Remarks: "Test remarks: Follow up in 1 week if symptoms persist"
+
+### Access Control Verified
+- ✅ Vet cannot access pending service requests (403 Forbidden)
+- ✅ Vet cannot verify payments (403 Forbidden)
+- ✅ Vet cannot approve pending customer requests (403 Forbidden)
+- ✅ Vet cannot manually deduct inventory (403 Forbidden)
+- ✅ Vet CAN record inventory usage through approved service flow (200 OK)
+
+### Constraints Verified
+- ✅ Veterinary service execution completed successfully and moved to awaiting_payment
+- ✅ Customer can see updated service status and medical notes
+- ✅ Role-based access control properly enforced
+- ✅ Reports data available for manager/admin consumption
+- ✅ Status validation prevents changes after awaiting_payment state
+
+### Pending Tasks
+- ⏳ Manual browser testing at http://localhost:3002
+- ⏳ Vet open appointment from UI validation
+- ⏳ Vet start consultation from UI validation
+- ⏳ Vet save medical data from UI validation
+- ⏳ Customer view updated status from UI validation
+- ⏳ Console error check
+- ⏳ Network/API request failure check
+- ⏳ Final Phase 5 verdict
+
+### Phase 5 Status
+**NOT FINAL YET** - Manual browser testing required before commit/push.
+
+**API Workflow Validation: PASSED ✅**
+- Vet login: WORKING
+- Vet view approved/scheduled appointments: WORKING
+- Vet cannot see pending requests: VERIFIED
+- Vet start consultation: WORKING
+- Vet complete with medical data: WORKING
+- Appointment status flow: WORKING (approved → in_consultation → awaiting_payment)
+- Customer view updated status: WORKING
+- Vet cannot verify payments: VERIFIED (403)
+- Vet cannot approve requests: VERIFIED (403)
+- Vet cannot manually deduct inventory: VERIFIED (403)
+- Vet inventory usage through service flow: WORKING
 
 **Manual Browser/UI Testing: PENDING ⚠️**
