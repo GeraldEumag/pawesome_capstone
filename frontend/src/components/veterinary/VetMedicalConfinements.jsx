@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { apiRequest } from "../../api/client";
-import { showSuccess, showError } from "../../utils/alert";
+import { showSuccess, showError } from "../../utils/alert.jsx";
 import "./theme.css";
 
 const normalizeList = (result) => {

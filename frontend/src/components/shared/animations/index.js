@@ -67,7 +67,7 @@ export {
   withAnimation,
   withScrollAnimation,
   animationPresets
-} from './useAnimations';
+} from './useAnimations.jsx';
 
 /* ─────────────────────────────────────────────────────────────
    Quick Import Examples

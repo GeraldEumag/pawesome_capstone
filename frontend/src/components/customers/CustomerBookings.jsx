@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import "./CustomerBookings.css";
 import { apiRequest } from "../../api/client";
 import { useAuth } from "../../context/AuthContext";
-import { showWarning, showSuccess, showError } from "../../utils/alert";
+import { showWarning, showSuccess, showError } from "../../utils/alert.jsx";
 import PetAvatar from "../shared/PetAvatar";
 import DatePickerInput from "../shared/DatePickerInput";
 import {

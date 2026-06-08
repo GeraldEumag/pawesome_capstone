@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { apiRequest } from "../../api/client";
-import { showWarning, showSuccess, showError } from "../../utils/alert";
+import { showWarning, showSuccess, showError } from "../../utils/alert.jsx";
 
 const list = (result, key) => (Array.isArray(result?.[key]) ? result[key] : Array.isArray(result) ? result : []);
 

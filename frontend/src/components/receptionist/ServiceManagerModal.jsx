@@ -17,7 +17,7 @@ import {
   FaToggleOff,
 } from "react-icons/fa";
 import { apiRequest, normalizeList } from "../../api/client";
-import { showConfirm } from "../../utils/alert";
+import { showConfirm } from "../../utils/alert.jsx";
 import "./ServiceManagerModal.css";
 
 const TABS = [

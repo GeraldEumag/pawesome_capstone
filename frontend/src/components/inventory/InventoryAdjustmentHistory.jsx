@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { inventoryApi } from "../../api/inventory";
+import { inventoryApi } from "../../api/inventory.jsx";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faSync, faHistory, faSearch } from "@fortawesome/free-solid-svg-icons";
 import "./InventoryAdjustmentHistory.css";

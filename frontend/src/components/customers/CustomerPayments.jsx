@@ -3,7 +3,7 @@ import { apiRequest } from "../../api/client";
 import { clearAuth } from "../../utils/auth";
 import { useAuth } from "../../context/AuthContext";
 import "./CustomerPayments.css";
-import { showAlert, showError } from "../../utils/alert";
+import { showAlert, showError } from "../../utils/alert.jsx";
 
 const formatCurrency = (value) =>
   `₱${Number(value || 0).toLocaleString("en-PH", {

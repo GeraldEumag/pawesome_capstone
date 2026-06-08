@@ -4,7 +4,7 @@
  */
 
 import { format } from 'date-fns';
-import { showWarning, showError } from './alert';
+import { showWarning, showError } from './alert.jsx';
 
 /**
  * Export data to CSV

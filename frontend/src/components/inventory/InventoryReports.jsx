@@ -13,7 +13,7 @@ import {
   Cell,
   CartesianGrid,
 } from "recharts";
-import { inventoryApi } from "../../api/inventory";
+import { inventoryApi } from "../../api/inventory.jsx";
 import { apiRequest } from "../../api/client";
 import { exportToCSV, exportToPDF, exportToExcel } from "../../utils/reportExport";
 import StandardReportLayout from "../shared/StandardReportLayout";

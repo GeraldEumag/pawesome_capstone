@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
-import { inventoryApi } from "../../api/inventory";
-import { showError } from "../../utils/alert";
+import { inventoryApi } from "../../api/inventory.jsx";
+import { showError } from "../../utils/alert.jsx";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
   faPlus,

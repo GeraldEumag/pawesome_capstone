@@ -13,7 +13,7 @@
  * ╚══════════════════════════════════════════════════════════════════╝
  */
 
-import { inventoryApi } from '../api/inventory';
+import { inventoryApi } from '../api/inventory.jsx';
 import { normalizeList } from '../api/client';
 import { categorizeProducts } from '../components/shared/inventorySync';
 

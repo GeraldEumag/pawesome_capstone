@@ -34,7 +34,7 @@ import "./CashierDashboard.css";
 import { apiRequest, uploadProfilePhoto } from "../../api/client";
 import { formatCurrency } from "../../utils/currency";
 import { useAuth } from "../../context/AuthContext";
-import { showAlert, showSuccess, showError } from "../../utils/alert";
+import { showAlert, showSuccess, showError } from "../../utils/alert.jsx";
 
 const toNumber = (value) => {
   const num = Number(value);

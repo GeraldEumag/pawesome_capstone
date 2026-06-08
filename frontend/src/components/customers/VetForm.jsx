@@ -7,7 +7,7 @@ import {
   validateServiceCompatibility,
   getSpecialCareWarning,
 } from "../../config/petServiceRules";
-import { showAlert, showSuccess, showError } from "../../utils/alert";
+import { showAlert, showSuccess, showError } from "../../utils/alert.jsx";
 
 const VetForm = () => {
   const { user } = useAuth();

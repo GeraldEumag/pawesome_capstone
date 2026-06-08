@@ -16,7 +16,7 @@ import {
   validateServiceCompatibility,
   getSpecialCareWarning,
 } from "../../config/petServiceRules";
-import { showAlert, showSuccess, showError } from "../../utils/alert";
+import { showAlert, showSuccess, showError } from "../../utils/alert.jsx";
 import PetAvatar from "../shared/PetAvatar";
 import DatePickerInput from "../shared/DatePickerInput";
 

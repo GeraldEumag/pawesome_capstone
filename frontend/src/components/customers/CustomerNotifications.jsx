@@ -14,7 +14,7 @@ import {
 } from "@fortawesome/free-solid-svg-icons";
 import "./CustomerNotifications.css";
 import { apiRequest } from "../../api/client";
-import { showError } from "../../utils/alert";
+import { showError } from "../../utils/alert.jsx";
 
 const CustomerNotifications = () => {
   const [notifications, setNotifications] = useState([]);

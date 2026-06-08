@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { Outlet, NavLink, useLocation } from "react-router-dom";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { showError } from "../../utils/alert";
+import { showError } from "../../utils/alert.jsx";
 import { useAuth } from "../../context/AuthContext";
 import StatusDot from "../shared/StatusDot";
 import {

@@ -1,8 +1,8 @@
 import React, { useState, useEffect, useMemo } from "react";
-import { inventoryApi } from "../../api/inventory";
+import { inventoryApi } from "../../api/inventory.jsx";
 import { exportToCSV } from "../../utils/reportExport";
 import "./MonthlyInventoryAudit.css";
-import { showAlert } from "../../utils/alert";
+import { showAlert } from "../../utils/alert.jsx";
 
 const getCurrentMonth = () => {
   const now = new Date();

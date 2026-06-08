@@ -23,7 +23,7 @@ import {
 } from "@fortawesome/free-solid-svg-icons";
 import { apiRequest, clearAuthStorage } from "../../api/client";
 import DatePickerInput from "../../components/shared/DatePickerInput";
-import { showSuccess, showError } from "../../utils/alert";
+import { showSuccess, showError } from "../../utils/alert.jsx";
 import "./Register.css";
 
 const INITIAL_FORM = {

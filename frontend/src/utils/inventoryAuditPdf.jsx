@@ -1,4 +1,4 @@
-import { showAlert } from "./alert";
+import { showAlert } from "./alert.jsx";
 
 /**
  * Generate PDF for inventory audit report

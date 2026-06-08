@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback, useMemo } from "react";
 import { apiRequest } from "../../../api/client";
 import { getToken } from "../../../utils/auth";
-import { showSuccess, showError, showPrompt, showConfirm, showAlert } from "../../../utils/alert";
+import { showSuccess, showError, showPrompt, showConfirm, showAlert } from "../../../utils/alert.jsx";
 
 export const usePaymentApprovals = (user) => {
   const [requests, setRequests] = useState([]);

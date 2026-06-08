@@ -13,8 +13,8 @@ import {
   faTimesCircle,
   faPrint
 } from "@fortawesome/free-solid-svg-icons";
-import { showSuccess, showError, showWarning, showAlert } from "../../../utils/alert";
-import { usePaymentApprovals } from "../hooks/usePaymentApprovals";
+import { showSuccess, showError, showWarning, showAlert } from "../../../utils/alert.jsx";
+import { usePaymentApprovals } from "../hooks/usePaymentApprovals.jsx";
 import { useAuth } from "../../../context/AuthContext";
 import "./PaymentApprovals.css";
 

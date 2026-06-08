@@ -8,7 +8,7 @@ import {
   faChevronDown, faChevronUp, faDownload, faHistory, faInfoCircle,
   faSlidersH, faAdjust,
 } from "@fortawesome/free-solid-svg-icons";
-import { inventoryApi } from "../../api/inventory";
+import { inventoryApi } from "../../api/inventory.jsx";
 import { normalizeList } from "../../api/client";
 import AddProductModal from "./AddProductModal";
 import StockAdjustmentModal from "./StockAdjustmentModal";

@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from "react";
-import { showConfirm, showWarning, showSuccess, showError } from "../../utils/alert";
+import { showConfirm, showWarning, showSuccess, showError } from "../../utils/alert.jsx";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import catHotelImg from "../../assets/CATHOTEL.jpg";
 import dogHotelImg from "../../assets/DOGHOTEL.jpg";

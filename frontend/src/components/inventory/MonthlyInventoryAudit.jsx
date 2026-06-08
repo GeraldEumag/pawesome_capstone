@@ -1,11 +1,11 @@
 import React, { useEffect, useMemo, useState, useCallback } from "react";
-import { inventoryApi } from "../../api/inventory";
+import { inventoryApi } from "../../api/inventory.jsx";
 import Papa from "papaparse";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import * as XLSX from "xlsx";
 import "./MonthlyInventoryAudit.css";
-import { showAlert, showSuccess, showError } from "../../utils/alert";
+import { showAlert, showSuccess, showError } from "../../utils/alert.jsx";
 import StatusDot from "../shared/StatusDot";
 
 const getCurrentMonth = () => {

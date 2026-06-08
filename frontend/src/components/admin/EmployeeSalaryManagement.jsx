@@ -28,7 +28,7 @@ import {
 import { apiRequest } from "../../api/client";
 import { formatCurrency } from "../../utils/currency";
 import { normalizeList } from "../../utils/normalizeList";
-import { showError } from "../../utils/alert";
+import { showError } from "../../utils/alert.jsx";
 import "./EmployeeSalaryManagement.css";
 
 

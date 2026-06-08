@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { apiRequest } from "../../api/client";
-import { showWarning, showSuccess, showError } from "../../utils/alert";
+import { showWarning, showSuccess, showError } from "../../utils/alert.jsx";
 import "./Login.css";
 
 const ForgotPassword = () => {

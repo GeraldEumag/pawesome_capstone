@@ -30,7 +30,7 @@ import {
 } from "recharts";
 import { apiRequest } from "../../api/client";
 import { formatCurrency } from "../../utils/currency";
-import { showError } from "../../utils/alert";
+import { showError } from "../../utils/alert.jsx";
 import StandardReportLayout from "../shared/StandardReportLayout";
 import StandardTable from "../shared/StandardTable";
 import {

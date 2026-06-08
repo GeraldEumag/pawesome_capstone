@@ -3,7 +3,7 @@ import "./Attendance.css";
 import { attendanceApi } from "../../api/attendance";
 import { apiRequest } from "../../api/client";
 import DatePickerInput from "../../components/shared/DatePickerInput";
-import { showAlert, showError } from "../../utils/alert";
+import { showAlert, showError } from "../../utils/alert.jsx";
 
 const Attendance = () => {
   const [search, setSearch] = useState("");

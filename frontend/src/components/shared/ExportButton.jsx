@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faDownload, faFileCsv, faFileExcel, faFilePdf } from '@fortawesome/free-solid-svg-icons';
-import { showError } from '../../utils/alert';
+import { showError } from '../../utils/alert.jsx';
 import './ExportButton.css';
 
 /**

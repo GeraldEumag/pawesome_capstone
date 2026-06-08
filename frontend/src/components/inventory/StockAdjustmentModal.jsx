@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
-import { inventoryApi } from "../../api/inventory";
+import { inventoryApi } from "../../api/inventory.jsx";
 import "./StockAdjustmentModal.css";
-import { showAlert, showError } from "../../utils/alert";
+import { showAlert, showError } from "../../utils/alert.jsx";
 
 const StockAdjustmentModal = ({ isOpen, onClose, item, onSuccess, initialType, initialQuantity }) => {
   const [adjustmentType, setAdjustmentType] = useState(initialType || "add"); // 'add', 'remove'

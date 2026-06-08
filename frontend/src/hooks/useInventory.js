@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { inventoryApi } from '../api/inventory';
+import { inventoryApi } from '../api/inventory.jsx';
 
 /**
  * UNIFIED INVENTORY HOOK

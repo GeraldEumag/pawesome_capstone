@@ -22,7 +22,7 @@ import {
 import { formatCurrency } from '../../../utils/currency';
 import { ChartContainer, CHART_COLORS } from '../../shared/UnifiedReportEngine';
 import { apiRequest } from '../../../api/client';
-import { showError } from '../../../utils/alert';
+import { showError } from '../../../utils/alert.jsx';
 import './StaffPerformance.css';
 
 const StaffPerformance = ({ data: initialData = {} }) => {

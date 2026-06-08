@@ -12,7 +12,7 @@ import {
 } from "@fortawesome/free-solid-svg-icons";
 import logo from "../../assets/pawesome.jpg";
 import "./Login.css";
-import { showSuccess, showError } from "../../utils/alert";
+import { showSuccess, showError } from "../../utils/alert.jsx";
 
 const roleRouteMap = {
   admin: "/admin",

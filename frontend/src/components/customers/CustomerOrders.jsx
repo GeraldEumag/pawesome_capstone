@@ -16,7 +16,7 @@ import {
 import Swal from "sweetalert2";
 import "./CustomerOrders.css";
 import { apiRequest } from "../../api/client";
-import { showError } from "../../utils/alert";
+import { showError } from "../../utils/alert.jsx";
 
 const CustomerOrders = () => {
   const [orders, setOrders] = useState([]);

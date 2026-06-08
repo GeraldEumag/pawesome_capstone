@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react";
-import { showConfirm, showWarning, showError, showSuccess } from "../../utils/alert";
+import { showConfirm, showWarning, showError, showSuccess } from "../../utils/alert.jsx";
 import {
   FaCalendarAlt,
   FaCalendarCheck,

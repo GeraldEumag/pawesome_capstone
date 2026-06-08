@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Outlet, NavLink, useLocation } from "react-router-dom";
 import { motion } from "framer-motion";
-import { showError } from "../../utils/alert";
+import { showError } from "../../utils/alert.jsx";
 import {
   ResponsiveContainer,
   BarChart,

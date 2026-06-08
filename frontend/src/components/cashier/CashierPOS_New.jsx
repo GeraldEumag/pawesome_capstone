@@ -9,7 +9,7 @@ import {
   normProduct,
   formatCurrency,
 } from "../../utils/apiNormalize";
-import { showError } from "../../utils/alert";
+import { showError } from "../../utils/alert.jsx";
 import PaymentApprovals from "./components/PaymentApprovals";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {

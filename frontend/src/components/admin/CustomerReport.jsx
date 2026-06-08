@@ -2,7 +2,7 @@ import React, { useState, useMemo, useCallback, useEffect } from "react";
 import { apiRequest } from "../../api/client";
 import { exportToCSV, exportToPDF } from "../../utils/reportExport";
 import { useRealTimeSync } from "../../hooks/useRealTimeSync";
-import { showError } from "../../utils/alert";
+import { showError } from "../../utils/alert.jsx";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import DatePickerInput from "../../components/shared/DatePickerInput";
 import StandardTable from "../../components/shared/StandardTable";

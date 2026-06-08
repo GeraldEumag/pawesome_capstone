@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react";
-import { showAlert, showSuccess, showError } from "../../utils/alert";
+import { showAlert, showSuccess, showError } from "../../utils/alert.jsx";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
   faUsers,

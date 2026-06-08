@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { apiRequest } from "../../api/client";
-import { showError } from "../../utils/alert";
+import { showError } from "../../utils/alert.jsx";
 import HistoryTimeline from "../shared/HistoryTimeline";
 import "./History.css";
 

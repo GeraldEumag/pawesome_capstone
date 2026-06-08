@@ -27,7 +27,7 @@ import {
 } from "@fortawesome/free-solid-svg-icons";
 import { apiRequest } from "../../api/client";
 import { normalizeList } from "../../utils/normalizeList";
-import { showSuccess as showSwalSuccess, showError as showSwalError, showWarning } from "../../utils/alert";
+import { showSuccess as showSwalSuccess, showError as showSwalError, showWarning } from "../../utils/alert.jsx";
 import "./ManageUsers.css";
 
 const ROLE_OPTIONS = [

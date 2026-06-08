@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
-import { inventoryApi } from "../../api/inventory";
+import { inventoryApi } from "../../api/inventory.jsx";
 import { normalizeList } from "../../api/client";
-import { generateInventoryAuditPdf } from "../../utils/inventoryAuditPdf";
+import { generateInventoryAuditPdf } from "../../utils/inventoryAuditPdf.jsx";
 import "./StockLogsViewer.css";
 import DatePickerInput from "../shared/DatePickerInput";
 

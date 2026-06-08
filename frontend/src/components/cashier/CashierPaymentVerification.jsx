@@ -5,7 +5,7 @@ import { useAuth } from "../../context/AuthContext";
 import CashierSidebar from "./CashierSidebar";
 import { normalizeList } from "../../utils/normalizeList";
 import "./CashierPaymentVerification.css";
-import { showAlert, showSuccess, showError, showPrompt, showConfirm } from "../../utils/alert";
+import { showAlert, showSuccess, showError, showPrompt, showConfirm } from "../../utils/alert.jsx";
 
 const formatDate = (dateStr) => {
   if (!dateStr) return "N/A";

@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { secureFileAccess } from '../utils/secureFileAccess';
+import { secureFileAccess } from '../utils/secureFileAccess.jsx';
 
 /**
  * React hook for secure file access

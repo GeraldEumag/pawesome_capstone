@@ -4,7 +4,7 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faUser, faBell, faLock } from "@fortawesome/free-solid-svg-icons";
 import { apiRequest } from "../../api/client";
 import "./CreateUser.css";
-import { showError } from "../../utils/alert";
+import { showError } from "../../utils/alert.jsx";
 import DatePickerInput from "../../components/shared/DatePickerInput";
 
 const CreateUser = () => {

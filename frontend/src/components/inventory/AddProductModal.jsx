@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { inventoryApi } from "../../api/inventory";
+import { inventoryApi } from "../../api/inventory.jsx";
 import { formatCurrency } from "../../utils/currency";
 import DatePickerInput from "../shared/DatePickerInput";
 import SupplierModal from "./SupplierModal";

@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import "./DeleteConfirmModal.css";
-import { showAlert } from "../../utils/alert";
+import { showAlert } from "../../utils/alert.jsx";
 
 const DeleteConfirmModal = ({
   isOpen,

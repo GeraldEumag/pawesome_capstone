@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo } from "react";
-import { inventoryApi } from "../../api/inventory";
+import { inventoryApi } from "../../api/inventory.jsx";
 import { exportToCSV } from "../../utils/reportExport";
-import { showAlert } from "../../utils/alert";
+import { showAlert } from "../../utils/alert.jsx";
 import { Line, Bar, Pie } from "react-chartjs-2";
 import {
   Chart as ChartJS,

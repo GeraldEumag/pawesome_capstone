@@ -14,7 +14,7 @@ import { apiRequest } from "../../api/client";
 import { formatCurrency } from "../../utils/currency";
 import jsPDF from "jspdf";
 import html2canvas from "html2canvas";
-import { showError } from "../../utils/alert";
+import { showError } from "../../utils/alert.jsx";
 import "./theme.css";
 import "./VetReceipt.css";
 

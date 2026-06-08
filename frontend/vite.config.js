@@ -3,7 +3,10 @@ import react from "@vitejs/plugin-react";
 import tailwindcss from "@tailwindcss/vite";
 
 export default defineConfig({
-  plugins: [react(), tailwindcss()],
+  plugins: [
+    react(),
+    tailwindcss(),
+  ],
   server: {
     port: 3000,
     proxy: {
@@ -17,9 +20,13 @@ export default defineConfig({
     outDir: "build",
   },
   esbuild: {
-    loader: {
-      ".js": "jsx",
-    },
     drop: ["debugger"],
+  },
+  optimizeDeps: {
+    esbuildOptions: {
+      loader: {
+        ".js": "jsx",
+      },
+    },
   },
 });

@@ -23,7 +23,7 @@ import {
 } from "@fortawesome/free-solid-svg-icons";
 import "./ReceptionistCheckInForm.css";
 import { apiRequest, getAuthenticatedFileUrl } from "../../api/client";
-import { showError } from "../../utils/alert";
+import { showError } from "../../utils/alert.jsx";
 import PetAvatar from "../shared/PetAvatar";
 import ServiceManagerModal from "./ServiceManagerModal";
 import {
@@ -41,7 +41,7 @@ import {
   getNotes,
   isHotelRequest,
 } from "../../utils/apiNormalize";
-import { showConfirm } from "../../utils/alert";
+import { showConfirm } from "../../utils/alert.jsx";
 
 const TABS = [
   { key: "queue", label: "Queue", icon: faClipboardList },

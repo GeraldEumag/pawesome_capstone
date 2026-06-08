@@ -27,7 +27,7 @@ import {
   faWrench,
 } from "@fortawesome/free-solid-svg-icons";
 import { apiRequest, getAuthenticatedFileUrl } from "../../api/client";
-import { showConfirm } from "../../utils/alert";
+import { showConfirm } from "../../utils/alert.jsx";
 import { useUnifiedRequests } from "./hooks/useUnifiedRequests";
 import NewWalkInBookingModal from "./modals/NewWalkInBookingModal";
 import ServiceManagerModal from "./ServiceManagerModal";

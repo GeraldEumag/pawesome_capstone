@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { showConfirm, showError, showWarning } from "../../utils/alert";
+import { showConfirm, showError, showWarning } from "../../utils/alert.jsx";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
   faStethoscope,

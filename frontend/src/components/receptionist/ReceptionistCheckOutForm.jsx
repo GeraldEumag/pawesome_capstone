@@ -8,7 +8,7 @@ import {
   faUser,
 } from "@fortawesome/free-solid-svg-icons";
 import "./ReceptionistCheckOutForm.css";
-import { showConfirm } from "../../utils/alert";
+import { showConfirm } from "../../utils/alert.jsx";
 import { apiRequest } from "../../api/client";
 import { normalizeList } from "../../utils/apiNormalize";
 

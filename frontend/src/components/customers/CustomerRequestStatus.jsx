@@ -13,7 +13,7 @@ import gcashQr from "../../assets/PAWESOME TEST GCASH.png";
 import "./CustomerRequestStatus.css";
 import { apiRequest } from "../../api/client";
 import { normalizeList } from "../../utils/normalizeList";
-import { showSuccess, showError } from "../../utils/alert";
+import { showSuccess, showError } from "../../utils/alert.jsx";
 import { useAuth } from "../../context/AuthContext";
 
 const safeLower = (value) => {
