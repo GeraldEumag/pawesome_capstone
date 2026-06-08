@@ -25,8 +25,8 @@ export const applyThemeColor = (presetKey) => {
 export const fetchAndApplySystemTheme = async () => {
   try {
     const baseUrl =
-      import.meta.env?.VITE_API_BASE_URL ||
-      process?.env?.REACT_APP_API_URL ||
+      (typeof import.meta !== "undefined" && import.meta.env?.VITE_API_BASE_URL) ||
+      (typeof process !== "undefined" && process.env?.REACT_APP_API_URL) ||
       "http://localhost:8000/api";
     const res = await fetch(`${baseUrl}/settings/public`);
     if (!res.ok) throw new Error("fetch failed");

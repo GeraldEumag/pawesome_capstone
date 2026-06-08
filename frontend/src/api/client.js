@@ -1,9 +1,18 @@
 import { getToken, clearAuth } from "../utils/auth";
 
+const getEnv = (key) => {
+  if (typeof import.meta !== "undefined" && import.meta.env?.[key]) {
+    return import.meta.env[key];
+  }
+  if (typeof process !== "undefined" && process.env?.[key]) {
+    return process.env[key];
+  }
+  return undefined;
+};
+
 export const API_URL =
-  import.meta.env?.VITE_API_BASE_URL ||
-  process?.env?.VITE_API_BASE_URL ||
-  process?.env?.REACT_APP_API_URL ||
+  getEnv("VITE_API_BASE_URL") ||
+  getEnv("REACT_APP_API_URL") ||
   "/api";
 
 export const USE_MOCK_DATA = false;
