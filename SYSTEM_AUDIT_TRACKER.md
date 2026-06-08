@@ -2,9 +2,13 @@
 
 ## Phase
 
+Phase 4 — Inventory and POS Stock Workflow (API-validated, browser testing pending)
+
 Phase 3 — Cashier Payment Verification and Payment Workflow (API-validated, browser testing pending)
 
 Phase 2 — Booking and Service Workflow (API-validated, browser testing pending)
+
+Phase 1 — System Stabilization (Local committed)
 
 ## Date
 
@@ -143,5 +147,76 @@ http://localhost:3002 (Note: Ports 3000 and 3001 were in use, Vite auto-switched
 - Cashier reject payment: WORKING
 - Customer view payment status: WORKING
 - Customer view receipt: WORKING
+
+**Manual Browser/UI Testing: PENDING ⚠️**
+
+## Phase 4 Development Summary
+
+### Completed Tasks
+- ✅ Verified database schema for inventory, sales, and inventory_logs tables
+- ✅ Verified API routes for POS operations (5 routes)
+- ✅ Verified POSController methods (getProducts, processTransaction, getTransactions, getTransaction, voidTransaction)
+- ✅ Verified InventoryService methods (deductStock, addStock, getLowStockItems, getOutOfStockItems)
+- ✅ Verified InventoryItem stock tracking methods (isLowStock, isOutOfStock, needsFefo, deductStockFefo)
+- ✅ Verified stock deduction uses centralized InventoryService with row locking
+- ✅ Verified inventory log creation with stock_before and stock_after values
+- ✅ Verified low-stock notification logic (checkAndCreateStockNotifications)
+- ✅ Verified payment verification does NOT deduct stock
+- ✅ Verified customer service payment does NOT deduct stock
+- ✅ Created test script: backend/test_phase4_pos_inventory_workflow.php
+- ✅ npm run build passed (44.70s)
+
+### Files Changed
+- `backend/test_phase4_pos_inventory_workflow.php` (NEW)
+- `PHASE_4_INVENTORY_POS_STOCK_WORKFLOW_REPORT.md` (NEW)
+- `SYSTEM_AUDIT_TRACKER.md` (UPDATED)
+
+### API Routes Verified
+- GET /api/cashier/pos/products - Cashier load sellable inventory
+- POST /api/cashier/pos/transaction - Cashier create POS transaction
+- GET /api/cashier/pos/transactions - Cashier view transaction history
+- GET /api/cashier/pos/transaction/{id} - Cashier view transaction details
+- POST /api/cashier/pos/transaction/{id}/void - Cashier void transaction
+
+### Database Fields Used
+- inventory_items: id, sku, name, category, stock, reorder_level, price, status, is_sellable
+- sales: id, transaction_number, customer_id, cashier_id, status, total_amount, created_at
+- inventory_logs: inventory_item_id, delta, stock_before, stock_after, previous_stock, new_stock, movement_type, reference_type, reference_id
+
+### Stock Deduction Workflow
+- POS transaction → InventoryService::deductStock() → Inventory log created → Low-stock check
+- Row locking (lockForUpdate) prevents race conditions
+- FEFO (First Expired, First Out) for items with expiration tracking
+- Stock deduction happens only once per product item
+
+### Constraints Verified
+- ✅ Stock deduction happens only once (centralized via InventoryService)
+- ✅ Inventory log created with before/after stock values
+- ✅ Payment verification does NOT deduct stock
+- ✅ Customer service payment does NOT deduct stock
+- ✅ Low-stock alert works when stock <= reorder_level
+- ✅ Transaction appears in cashier history (via getTransactions API)
+- ✅ Inventory dashboard reflects updated stock (via InventoryService)
+
+### Pending Tasks
+- ⏳ Manual browser testing at http://localhost:3002
+- ⏳ Cashier POS transaction creation UI validation
+- ⏳ Stock deduction verification in UI
+- ⏳ Inventory log viewer UI validation
+- ⏳ Low-stock alert UI validation
+- ⏳ Final Phase 4 verdict
+
+### Phase 4 Status
+**NOT FINAL YET** - Manual browser testing required before commit/push.
+
+**API Workflow Validation: PASSED ✅**
+- Cashier POS loads sellable inventory: WORKING
+- Cashier creates POS transaction: WORKING
+- Stock deduction (once): WORKING
+- Inventory log creation (before/after): WORKING
+- Transaction history: WORKING
+- Low-stock alerts: WORKING
+- Payment verification does NOT deduct stock: VERIFIED
+- Service payment does NOT deduct stock: VERIFIED
 
 **Manual Browser/UI Testing: PENDING ⚠️**
