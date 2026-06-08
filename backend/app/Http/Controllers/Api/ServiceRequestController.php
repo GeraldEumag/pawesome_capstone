@@ -577,6 +577,16 @@ class ServiceRequestController extends Controller
             $serviceRequest->id
         );
 
+        // Notify customer about payment pending verification
+        WorkflowNotifier::notifyEmail(
+            $serviceRequest->customer_email,
+            'Payment Proof Submitted',
+            "Your payment proof for {$serviceRequest->service_name} is pending verification.",
+            'info',
+            'service_request',
+            $serviceRequest->id
+        );
+
         ActivityLog::log($user->id, 'payment_proof_uploaded', "Customer uploaded proof for service request #{$serviceRequest->id}", [
             'category' => 'service_requests',
             'reference_type' => 'service_request',

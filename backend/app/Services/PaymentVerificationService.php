@@ -64,6 +64,8 @@ class PaymentVerificationService
                     'reference_number' => $referenceNumber,
                 ]);
 
+                WorkflowNotifier::notifyEmail($sr->customer_email ?? null, 'Payment Verified', "Your payment for {$sr->service_name} has been verified. Receipt: {$receiptNumber}", 'success', 'service_request', $id);
+
                 return ['success' => true, 'message' => 'Service request payment verified successfully.', 'payment_status' => 'paid', 'receipt_number' => $receiptNumber];
             }
 
@@ -121,12 +123,16 @@ class PaymentVerificationService
                     return ['success' => false, 'message' => 'Only pending payment proofs can be rejected', 'status' => 422, 'payment_status' => $sr->payment_status];
                 }
 
+                $rejectionReason = $request->input('rejection_reason', 'Payment rejected by cashier');
+
                 DB::table('service_requests')->where('id', $id)->update([
                     'payment_status' => 'rejected',
                     'rejected_by' => Auth::id(),
                     'rejected_at' => now(),
-                    'rejection_reason' => $request->input('rejection_reason'),
+                    'rejection_reason' => $rejectionReason,
                 ]);
+
+                WorkflowNotifier::notifyEmail($sr->customer_email ?? null, 'Payment Rejected', "Your payment for {$sr->service_name} was rejected. Reason: {$rejectionReason}", 'error', 'service_request', $id);
 
                 return ['success' => true, 'message' => 'Service request payment rejected', 'payment_status' => 'rejected'];
             }
