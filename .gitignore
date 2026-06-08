@@ -15,7 +15,25 @@ frontend/test-results/
 # production
 /build
 frontend/build/
-backend/storage/
+# backend/storage - keep folder structure, ignore data
+backend/storage/app/*
+backend/storage/app/public/*
+backend/storage/framework/cache/*
+backend/storage/framework/cache/data/*
+backend/storage/framework/sessions/*
+backend/storage/framework/testing/*
+backend/storage/framework/views/*
+backend/storage/logs/*
+!backend/storage/.gitignore
+!backend/storage/app/.gitignore
+!backend/storage/app/public/.gitignore
+!backend/storage/framework/.gitignore
+!backend/storage/framework/cache/.gitignore
+!backend/storage/framework/cache/data/.gitignore
+!backend/storage/framework/sessions/.gitignore
+!backend/storage/framework/testing/.gitignore
+!backend/storage/framework/views/.gitignore
+!backend/storage/logs/.gitignore
 
 # cache
 .cache/
