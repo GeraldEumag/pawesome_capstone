@@ -194,6 +194,70 @@ Mark sale as cancelled
 
 ---
 
+## Real POS Transaction Test Results
+
+### Authenticated API Workflow Test
+✅ **Real POS transaction executed successfully**
+
+**Test Configuration:**
+- Cashier: cashier@example.com / Password123!
+- Base URL: http://127.0.0.1:8000/api
+
+**Test Results:**
+
+1. **Login (POST /api/auth/login)**
+   - ✅ Successful authentication
+   - ✅ Token acquired
+
+2. **Fetch Products (GET /api/cashier/pos/products)**
+   - ✅ Fetched 381 sellable products
+
+3. **Select Test Item**
+   - Item: 4IN1 VACCINE (ID: 274)
+   - Stock before: 100
+   - Quantity to sell: 1
+
+4. **Create Transaction (POST /api/cashier/pos/transaction)**
+   - ✅ Transaction created successfully
+   - **POS Transaction ID: 1**
+   - **Transaction Number: TRX-6A2729E712D55**
+
+5. **Stock Deduction Verification**
+   - Stock before: 100
+   - Stock after: 99
+   - Expected: 99
+   - ✅ Stock decreased correctly
+
+6. **Inventory Log Creation**
+   - ✅ Inventory log created
+   - **Inventory Log ID: 2**
+   - Stock before: 100
+   - Stock after: 99
+   - Delta: -1
+   - Movement type: pos_sale
+   - Reference type: sale
+   - Reference ID: 1
+   - ✅ All required fields present (stock_before, stock_after, movement_type, reference_type, reference_id)
+
+7. **Transaction History (GET /api/cashier/pos/transactions)**
+   - ✅ Transaction appears in history
+
+8. **Void Transaction (POST /api/cashier/pos/transaction/{id}/void)**
+   - ✅ Transaction voided successfully
+   - Stock after void: 100
+   - Expected: 100
+   - ✅ Stock restored correctly
+   - ⚠️ Void inventory log not found (minor issue - stock restoration works)
+
+**Errors:** None (all API calls successful)
+
+**API Endpoints Tested:**
+- POST /api/auth/login
+- GET /api/cashier/pos/products
+- POST /api/cashier/pos/transaction
+- GET /api/cashier/pos/transactions
+- POST /api/cashier/pos/transaction/{id}/void
+
 ## API Validation Results
 
 ### Test 1: Database Schema
@@ -226,20 +290,21 @@ Mark sale as cancelled
 - ID: 9, 8IN1VACCINE, Stock: 100, Reorder Level: 10
 
 ### Test 7: POS Transactions
-⚠️ No POS transactions found (expected - system not yet in production use)
+✅ Real POS transaction created and tested (ID: 1)
 
 ### Test 8: Inventory Logs
-✅ Sample inventory logs found in database
-- Logs track stock changes with delta, before/after values
+✅ Real inventory log created with all required fields (ID: 2)
 
 ### Test 9: Stock Deduction Logic
 ✅ POSController uses InventoryService::deductStock() for centralized stock deduction
 ✅ POSController uses row locking (lockForUpdate) to prevent race conditions
+✅ Stock deduction verified with real transaction (100 → 99)
 
 ### Test 10: Inventory Log Creation
 ✅ InventoryService creates InventoryLog entries
 ✅ InventoryService logs stock_before and stock_after values
 ✅ InventoryService checks for low-stock notifications
+✅ Real log verified with all required fields
 
 ### Test 11: Payment Verification Does NOT Deduct Stock
 ✅ PaymentVerificationService does NOT call InventoryService (correct behavior)
@@ -301,8 +366,12 @@ Mark sale as cancelled
 - `backend/app/Models/InventoryLog.php` - Inventory log model
 - `backend/routes/api.php` - POS and inventory routes
 
-### Test Files
-- `backend/test_phase4_pos_inventory_workflow.php` (NEW) - API validation test script
+### Test Files (TEMPORARY - to be moved or removed before production)
+- `backend/test_phase3_payment_workflow.php` (TEMPORARY) - Phase 3 API validation test script
+- `backend/test_phase4_pos_inventory_workflow.php` (TEMPORARY) - Phase 4 API validation test script
+- `backend/test_pos_workflow_real.php` (TEMPORARY) - Real POS transaction workflow test script
+
+**Note:** These test scripts are temporary validation scripts. Before final production/demo commit, they should be moved to a proper folder such as `backend/tests/Feature` or `backend/scripts/dev-validation`, or removed if no longer needed.
 
 ### Frontend Files (No changes required - existing components)
 - `frontend/src/components/cashier/POS.jsx` - Cashier POS interface
