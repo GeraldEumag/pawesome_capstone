@@ -229,7 +229,7 @@ if (!$voidResponse['success']) {
     
     // Verify void log created
     $voidLog = InventoryLog::where('inventory_item_id', $itemId)
-        ->where('reference_type', 'cancellation')
+        ->where('reference_type', 'sale_void')
         ->where('reference_id', $transactionId)
         ->latest()
         ->first();

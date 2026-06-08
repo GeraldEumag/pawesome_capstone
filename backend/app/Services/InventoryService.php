@@ -442,33 +442,34 @@ class InventoryService
             );
 
             $item = $item->fresh();
-            if (in_array($referenceType, ['vet_usage', 'grooming_usage', 'boarding_food_usage'], true)) {
-                $logData = [
-                    'inventory_item_id' => $itemId,
-                    'delta' => $quantity,
-                    'quantity' => $quantity,
-                    'type' => 'restock',
-                    'movement_type' => $referenceType,
-                    'reason' => $reason,
-                    'reference_type' => $referenceType,
-                    'reference_id' => $referenceId,
-                    'stock_before' => $stockBefore,
-                    'stock_after' => $item->stock,
-                    'previous_stock' => $stockBefore,
-                    'new_stock' => $item->stock,
-                    'performed_by' => auth()->user()?->name,
-                    'role' => auth()->user()?->role,
-                    'user_id' => auth()->id(),
-                ];
+            
+            // Always create inventory log for stock addition (including cancellations)
+            $logData = [
+                'inventory_item_id' => $itemId,
+                'delta' => $quantity,
+                'quantity' => $quantity,
+                'type' => 'restock',
+                'movement_type' => $referenceType === 'cancellation' ? 'sale_void' : $referenceType,
+                'reason' => $reason,
+                'reference_type' => $referenceType === 'cancellation' ? 'sale_void' : $referenceType,
+                'reference_id' => $referenceId,
+                'stock_before' => $stockBefore,
+                'stock_after' => $item->stock,
+                'previous_stock' => $stockBefore,
+                'new_stock' => $item->stock,
+                'performed_by' => auth()->user()?->name,
+                'role' => auth()->user()?->role,
+                'user_id' => auth()->id(),
+            ];
 
-                if (Schema::hasColumn('inventory_logs', 'batch_id')) {
-                    $logData['batch_id'] = $batch->id;
-                } else {
-                    $logData['details'] = json_encode(['batch_id' => $batch->id]);
-                }
-
-                InventoryLog::create($logData);
+            if (Schema::hasColumn('inventory_logs', 'batch_id')) {
+                $logData['batch_id'] = $batch->id;
+            } else {
+                $logData['details'] = json_encode(['batch_id' => $batch->id]);
             }
+
+            InventoryLog::create($logData);
+            
             $this->notifyInventoryMovement($item, $quantity, $reason, $referenceType, $referenceId, $stockBefore, $item->stock);
 
             return [
@@ -488,7 +489,7 @@ class InventoryService
 
         $movementType = in_array($referenceType, ['vet_usage', 'grooming_usage', 'boarding_food_usage'], true)
             ? $referenceType
-            : ($referenceType === 'customer_order' ? 'customer_order_restore' : 'stock_in');
+            : ($referenceType === 'cancellation' ? 'sale_void' : ($referenceType === 'customer_order' ? 'customer_order_restore' : 'stock_in'));
 
         // Log the stock addition
         InventoryLog::create([
@@ -498,7 +499,7 @@ class InventoryService
             'type' => 'restock',
             'movement_type' => $movementType,
             'reason' => $reason,
-            'reference_type' => $referenceType,
+            'reference_type' => $referenceType === 'cancellation' ? 'sale_void' : $referenceType,
             'reference_id' => $referenceId,
             'stock_before' => $stockBefore,
             'stock_after' => $item->stock,

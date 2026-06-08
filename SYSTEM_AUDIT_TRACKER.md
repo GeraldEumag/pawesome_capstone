@@ -233,11 +233,12 @@ http://localhost:3002 (Note: Ports 3000 and 3001 were in use, Vite auto-switched
 
 **API Workflow Validation: PASSED ✅**
 - Cashier POS loads sellable inventory: WORKING
-- Cashier creates POS transaction: WORKING (Real transaction tested: ID 1)
+- Cashier creates POS transaction: WORKING (Real transaction tested: ID 3)
 - Stock deduction (once): WORKING (Verified: 100 → 99)
-- Inventory log creation (before/after): WORKING (Verified: Log ID 2)
-- Transaction history: WORKING (Verified: Transaction ID 1 in history)
+- Inventory log creation (before/after): WORKING (Verified: Log ID 7)
+- Transaction history: WORKING (Verified: Transaction ID 3 in history)
 - Void transaction: WORKING (Stock restored: 99 → 100)
+- Void inventory log: WORKING (Fixed - now creates sale_void log)
 - Low-stock alerts: WORKING
 - Payment verification does NOT deduct stock: VERIFIED
 - Service payment does NOT deduct stock: VERIFIED
