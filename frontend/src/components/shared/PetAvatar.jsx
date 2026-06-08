@@ -3,8 +3,9 @@ import { FaDog, FaCat, FaPaw, FaDove } from "react-icons/fa";
 import { getToken } from "../../utils/auth";
 
 const API_BASE_URL =
-  process.env.VITE_API_BASE_URL ||
-  process.env.REACT_APP_API_URL ||
+  import.meta.env?.VITE_API_BASE_URL ||
+  process?.env?.VITE_API_BASE_URL ||
+  process?.env?.REACT_APP_API_URL ||
   "";
 
 export const resolveImageUrl = (url) => {

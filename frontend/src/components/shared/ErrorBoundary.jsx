@@ -14,7 +14,7 @@ class ErrorBoundary extends Component {
   componentDidCatch(error, errorInfo) {
     this.setState({ errorInfo });
     // In production, you could send this to an error tracking service
-    if (process.env.NODE_ENV === "development") {
+    if (import.meta.env?.DEV) {
       // eslint-disable-next-line no-console
       console.error("ErrorBoundary caught:", error, errorInfo);
     }
@@ -81,7 +81,7 @@ class ErrorBoundary extends Component {
               dashboard.
             </p>
 
-            {process.env.NODE_ENV === "development" && error && (
+            {import.meta.env?.DEV && error && (
               <details
                 style={{
                   marginBottom: "24px",

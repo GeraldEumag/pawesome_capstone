@@ -51,7 +51,7 @@ class ReportErrorBoundary extends React.Component {
             <h3>Something went wrong</h3>
             <p>We encountered an error while loading this report.</p>
             
-            {process.env.NODE_ENV === 'development' && this.state.error && (
+            {import.meta.env?.DEV && this.state.error && (
               <details className="error-details">
                 <summary>Error Details (Development Only)</summary>
                 <pre>{this.state.error.toString()}</pre>

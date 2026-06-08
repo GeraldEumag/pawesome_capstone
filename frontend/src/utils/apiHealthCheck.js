@@ -233,7 +233,7 @@ export const formatHealthCheckResults = (results) => {
 };
 
 // Auto-run health check on module load in development
-if (process.env.NODE_ENV === "development") {
+if (import.meta.env?.DEV) {
   console.log("🔍 API Health Check Module Loaded");
   console.log(`   API URL: ${API_URL}`);
 }

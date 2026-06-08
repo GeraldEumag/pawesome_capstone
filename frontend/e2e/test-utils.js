@@ -35,7 +35,7 @@ async function loginAs(page, role = 'admin') {
   
   const email = process.env[`E2E_${roleUpper}_EMAIL`] || defaults.email;
   const password = process.env[`E2E_${roleUpper}_PASSWORD`] || defaults.password;
-  const apiBase = process.env.REACT_APP_API_URL || 'http://127.0.0.1:8000/api';
+  const apiBase = process.env.VITE_API_BASE_URL || process.env.REACT_APP_API_URL || 'http://127.0.0.1:8000/api';
   const expectedPath = ROLE_DASHBOARDS[role] || '/dashboard';
 
   const response = await page.request.post(`${apiBase}/auth/login`, {

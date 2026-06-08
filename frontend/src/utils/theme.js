@@ -24,7 +24,10 @@ export const applyThemeColor = (presetKey) => {
 // Fetch system theme from backend and apply it globally
 export const fetchAndApplySystemTheme = async () => {
   try {
-    const baseUrl = process.env.REACT_APP_API_URL || "http://localhost:8000/api";
+    const baseUrl =
+      import.meta.env?.VITE_API_BASE_URL ||
+      process?.env?.REACT_APP_API_URL ||
+      "http://localhost:8000/api";
     const res = await fetch(`${baseUrl}/settings/public`);
     if (!res.ok) throw new Error("fetch failed");
     const data = await res.json();
