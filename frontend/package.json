@@ -31,11 +31,11 @@
     "xlsx": "^0.18.5"
   },
   "scripts": {
-    "start": "craco start",
-    "dev": "craco start",
-    "build": "craco build",
-    "test": "craco test",
-    "eject": "react-scripts eject",
+    "start": "vite",
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "test:e2e": "playwright test",
     "lint": "eslint src --fix"
   },
   "eslintConfig": {
