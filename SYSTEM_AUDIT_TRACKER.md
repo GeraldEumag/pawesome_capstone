@@ -2,11 +2,12 @@
 
 ## Phase
 
+Phase 8 — Capstone B Browser/UI Validation and System Readiness Audit (IN PROGRESS - Manual testing required)
 Phase 7 — In-App Notifications and Status Update Alerts (API-validated, browser testing pending)
 Phase 6 — Manager/Admin Reports and Records Monitoring (API-validated, browser testing pending)
 Phase 5 — Veterinary Service Execution Workflow (API-validated, browser testing pending)
 
-Phase 4 — Inventory and POS Stock Workflow (API-validated, browser testing pending)
+Phase 4 — Inventory and POS Stock Workflow (API-validated with real DB changes, browser testing pending)
 
 Phase 3 — Cashier Payment Verification and Payment Workflow (API-validated, browser testing pending)
 
@@ -32,12 +33,12 @@ http://127.0.0.1:8000
 
 ## Frontend URL
 
-http://localhost:3002 (Note: Ports 3000 and 3001 were in use, Vite auto-switched to 3002)
+http://localhost:3003 (Note: Ports 3000, 3001, and 3002 were in use, Vite auto-switched to 3003)
 
 ## Setup Status
 
 * Backend: ✅ PASS - Composer install successful, migrations up to date, DemoDataSeeder ran successfully
-* Frontend: ✅ PASS - npm install successful, build successful, dev server running on port 3002
+* Frontend: ✅ PASS - npm install successful, build successful, dev server running on port 3003
 * Database: ✅ PASS - All migrations ran, demo data seeded
 * Migrations: ✅ PASS - 61 migrations ran successfully
 * Seeders: ✅ PASS - DemoDataSeeder executed, BoardingRoomSeeder created and seeded (7 room types)
