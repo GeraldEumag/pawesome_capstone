@@ -46,7 +46,8 @@ const getInitialForm = (serviceType) => {
 
 const ServiceBookingModal = ({ serviceType, onClose }) => {
   const navigate = useNavigate();
-  const { isAuthenticated, user } = useAuth();
+  const { isAuthenticated, user, role } = useAuth();
+  const isCustomer = role === "customer";
   const config = SERVICE_CONFIG[serviceType];
   const [formData, setFormData] = useState(() => getInitialForm(serviceType));
   const [loading, setLoading] = useState(false);
@@ -54,10 +55,10 @@ const ServiceBookingModal = ({ serviceType, onClose }) => {
   const [errors, setErrors] = useState({});
 
   useEffect(() => {
-    if (isAuthenticated && user?.name) {
+    if (isCustomer && user?.name) {
       setFormData((prev) => ({ ...prev, customer_name: user.name || "", customer_email: user.email || "" }));
     }
-  }, [isAuthenticated, user]);
+  }, [isCustomer, user]);
 
   useEffect(() => {
     const handleEsc = (e) => { if (e.key === "Escape") onClose(); };
@@ -111,14 +112,16 @@ const ServiceBookingModal = ({ serviceType, onClose }) => {
     saveDraft(serviceType, formData);
 
     if (serviceType === "hotel") {
-      if (!isAuthenticated) {
-        showAlert("Please create an account first so we can process your booking request.");
+      if (!isCustomer) {
+        showAlert("Please create a customer account first so we can process your booking request.");
+        navigate("/register");
+        return;
       }
       navigate("/customer/hotel");
       return;
     }
 
-    if (!isAuthenticated) { showAlert("Please create an account first so we can process your booking request."); navigate("/register"); return; }
+    if (!isCustomer) { showAlert("Please create a customer account first so we can process your booking request."); navigate("/register"); return; }
 
     const payload = buildPayload();
     try {
@@ -138,12 +141,12 @@ const ServiceBookingModal = ({ serviceType, onClose }) => {
       <div className="modal-form-row">
         <label className="modal-form-group">
           <span><FontAwesomeIcon icon={faUser} /> Customer Name *</span>
-          <input type="text" name="customer_name" value={formData.customer_name} onChange={handleChange} placeholder="Your full name" readOnly={isAuthenticated} className={errors.customer_name ? "has-error" : ""} />
+          <input type="text" name="customer_name" value={formData.customer_name} onChange={handleChange} placeholder="Your full name" readOnly={isCustomer} className={errors.customer_name ? "has-error" : ""} />
           {fe("customer_name")}
         </label>
         <label className="modal-form-group">
           <span><FontAwesomeIcon icon={faEnvelope} /> Email *</span>
-          <input type="email" name="customer_email" value={formData.customer_email} onChange={handleChange} placeholder="you@example.com" readOnly={isAuthenticated} className={errors.customer_email ? "has-error" : ""} />
+          <input type="email" name="customer_email" value={formData.customer_email} onChange={handleChange} placeholder="you@example.com" readOnly={isCustomer} className={errors.customer_email ? "has-error" : ""} />
           {fe("customer_email")}
         </label>
       </div>

@@ -10,6 +10,7 @@ import DynamicFeaturedServices from "./DynamicFeaturedServices";
 import DynamicHowItWorks from "./DynamicHowItWorks";
 import DynamicAbout from "./DynamicAbout";
 import DynamicFinalCTA from "./DynamicFinalCTA";
+import DynamicTrustStats from "./DynamicTrustStats";
 
 const LandingPage = () => {
   const currentYear = new Date().getFullYear();
@@ -57,6 +58,8 @@ const LandingPage = () => {
 
       <main>
         <DynamicHero content={getSection("hero")} onBookService={scrollToServices} />
+
+        <DynamicTrustStats content={getSection("trust_stats")} />
 
         <div id="featured-services-anchor">
           <DynamicFeaturedServices
