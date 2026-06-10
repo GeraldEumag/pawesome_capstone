@@ -12,6 +12,7 @@ const Attendance = lazy(() => import("../components/admin/Attendance"));
 const ProfileSettings = lazy(() => import("../components/shared/ProfileSettings"));
 const ChatbotLogs = lazy(() => import("../components/admin/ChatbotLogs"));
 const AdminSettings = lazy(() => import("../components/admin/AdminSettings"));
+const AdminLandingPageEditor = lazy(() => import("../components/admin/AdminLandingPageEditor"));
 
 // Admin monitoring reports - read-only system-wide views
 const CashierReports = lazy(() => import("../components/admin/CashierAdminReports"));
@@ -63,6 +64,7 @@ const AdminRoutes = () => (
         <Route path="reports/attendance" element={<Attendance />} />
         <Route path="history" element={<History />} />
         <Route path="chatbot" element={<ChatbotLogs />} />
+        <Route path="landing-page" element={<AdminLandingPageEditor />} />
         <Route path="settings" element={<AdminSettings />} />
 
       </Route>

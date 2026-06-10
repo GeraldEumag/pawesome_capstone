@@ -2,6 +2,7 @@ import { useEffect, useState, useCallback } from "react";
 import "./GroomingForm.css";
 import { apiRequest, normalizeList } from "../../api/client";
 import { useAuth } from "../../context/AuthContext";
+import { getDraft, clearDraft } from "../../utils/preBookingDraft";
 import DatePickerInput from "../../components/shared/DatePickerInput";
 import {
   validateServiceCompatibility,
@@ -82,6 +83,29 @@ const GroomingForm = () => {
     fetchPets();
     fetchServices();
   }, [fetchAppointments, fetchPets, fetchServices]);
+
+  useEffect(() => {
+    const draft = getDraft();
+    if (!draft || draft.service_type !== "grooming") return;
+
+    const updates = {};
+    if (draft.form_data?.pet_name) updates.pet_name = draft.form_data.pet_name;
+    if (draft.form_data?.pet_type) {
+      const pet = pets.find((p) => (p.species || p.type || "").toLowerCase() === (draft.form_data.pet_type || "").toLowerCase());
+      if (pet) { updates.pet_id = pet.id; updates.pet_name = pet.name; }
+    }
+    if (draft.form_data?.grooming_service_type) updates.service_name = draft.form_data.grooming_service_type;
+    if (draft.form_data?.preferred_date) updates.request_date = draft.form_data.preferred_date;
+    if (draft.form_data?.preferred_time) updates.request_time = draft.form_data.preferred_time;
+    if (draft.form_data?.special_grooming_instructions) updates.notes = draft.form_data.special_grooming_instructions;
+
+    setFormData((prev) => ({ ...prev, ...updates }));
+    clearDraft();
+
+    if (Object.keys(updates).length > 0) {
+      showSuccess("We have restored your booking details. Please review and submit.");
+    }
+  }, [pets]);
 
   const selectedPet = pets.find((pet) => String(pet.id) === String(formData.pet_id));
 

@@ -56,6 +56,7 @@ use App\Http\Controllers\Api\SecureFileController;
 use App\Http\Controllers\Api\ReceptionistPetController;
 use App\Http\Controllers\ReceptionistRequestController;
 use App\Http\Controllers\SystemSettingController;
+use App\Http\Controllers\Api\LandingPageContentController;
 use Illuminate\Support\Facades\Route;
 
 // Global route patterns to ensure ID parameters are numeric
@@ -70,9 +71,20 @@ Route::get('/health', function () {
 // Public system settings (no auth — needed before login for theme init)
 Route::get('/settings/public', [SystemSettingController::class, 'getPublicSettings']);
 
+// Public landing page content (no auth)
+Route::get('/landing-page', [LandingPageContentController::class, 'showPublic']);
+
 // Admin-only theme setting
 Route::middleware(['auth.api', 'throttle:api', 'role:admin'])->group(function () {
     Route::post('/admin/settings/theme', [SystemSettingController::class, 'updateThemeColor']);
+});
+
+// Admin landing page content management
+Route::middleware(['auth.api', 'throttle:api', 'role:admin'])->prefix('admin/landing-page')->group(function () {
+    Route::get('/', [LandingPageContentController::class, 'index']);
+    Route::get('/{section}', [LandingPageContentController::class, 'show']);
+    Route::put('/{section}', [LandingPageContentController::class, 'update']);
+    Route::post('/upload-image', [LandingPageContentController::class, 'uploadImage']);
 });
 
 // Service Request API endpoints — ALL handled by ReceptionistRequestController

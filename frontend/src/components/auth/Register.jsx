@@ -24,6 +24,7 @@ import {
 import { apiRequest, clearAuthStorage } from "../../api/client";
 import DatePickerInput from "../../components/shared/DatePickerInput";
 import { showSuccess, showError } from "../../utils/alert.jsx";
+import { getDraft } from "../../utils/preBookingDraft";
 import "./Register.css";
 
 const INITIAL_FORM = {
@@ -360,13 +361,33 @@ const Register = () => {
       );
       localStorage.setItem("suffix", user.suffix || formData.suffix.trim() || "");
 
-      setSuccessMessage(
-        "Registration successful. Redirecting to your customer dashboard..."
-      );
-      showSuccess("Registration successful. Redirecting to your customer dashboard...");
+      const draft = getDraft();
+      let redirectPath = "/customer";
+      if (draft?.service_type) {
+        const draftPaths = {
+          hotel: "/customer/hotel",
+          grooming: "/customer/grooming",
+          vet: "/customer/vet",
+        };
+        redirectPath = draftPaths[draft.service_type] || "/customer";
+      }
+
+      if (draft) {
+        setSuccessMessage(
+          "Registration successful. You have a pending booking request. Redirecting you to complete it..."
+        );
+        showSuccess(
+          "Registration successful. You have a pending booking request. Redirecting you to complete it..."
+        );
+      } else {
+        setSuccessMessage(
+          "Registration successful. Redirecting to your customer dashboard..."
+        );
+        showSuccess("Registration successful. Redirecting to your customer dashboard...");
+      }
 
       window.setTimeout(() => {
-        navigate("/customer");
+        navigate(redirectPath);
       }, 900);
     } catch (err) {
       setFormError(err.message || "Registration failed. Please try again.");

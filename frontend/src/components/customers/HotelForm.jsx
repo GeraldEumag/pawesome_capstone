@@ -17,6 +17,7 @@ import {
 } from "@fortawesome/free-solid-svg-icons";
 import "./HotelForm.css";
 import { apiRequest } from "../../api/client";
+import { getDraft, clearDraft } from "../../utils/preBookingDraft";
 import DatePickerInput from "../../components/shared/DatePickerInput";
 
 const CATEGORY_CONFIG = {
@@ -113,6 +114,33 @@ const HotelForm = () => {
     fetchPets();
     fetchMyBookings();
   }, [fetchPets, fetchMyBookings]);
+
+  useEffect(() => {
+    const draft = getDraft();
+    if (!draft || draft.service_type !== "hotel") return;
+
+    const updates = {};
+    if (draft.form_data?.pet_name) updates.pet_name = draft.form_data.pet_name;
+    if (draft.form_data?.pet_type) updates.pet_type = draft.form_data.pet_type;
+    if (draft.form_data?.check_in_date) updates.check_in_date = draft.form_data.check_in_date;
+    if (draft.form_data?.preferred_time) updates.check_in_time = draft.form_data.preferred_time;
+    if (draft.form_data?.room_type) updates.boarding_type = draft.form_data.room_type;
+    if (draft.form_data?.special_care_instructions) updates.notes = draft.form_data.special_care_instructions;
+
+    if (draft.form_data?.check_in_date && draft.form_data?.check_out_date) {
+      const checkIn = new Date(draft.form_data.check_in_date);
+      const checkOut = new Date(draft.form_data.check_out_date);
+      const days = Math.max(1, Math.round((checkOut - checkIn) / (1000 * 60 * 60 * 24)));
+      updates.number_of_days = days;
+    }
+
+    setBookingForm((prev) => ({ ...prev, ...updates }));
+    clearDraft();
+
+    if (Object.keys(updates).length > 0) {
+      showSuccess("We have restored your booking details. Please select your registered pet or enter details manually to continue.");
+    }
+  }, []);
 
   const selectedPet = pets.find((pet) => String(pet.id) === String(bookingForm.pet_id));
 

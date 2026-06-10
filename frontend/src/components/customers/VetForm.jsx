@@ -2,6 +2,7 @@ import { useEffect, useState, useCallback } from "react";
 import "./VetForm.css";
 import { apiRequest, normalizeList } from "../../api/client";
 import { useAuth } from "../../context/AuthContext";
+import { getDraft, clearDraft } from "../../utils/preBookingDraft";
 import DatePickerInput from "../../components/shared/DatePickerInput";
 import {
   validateServiceCompatibility,
@@ -79,6 +80,29 @@ const VetForm = () => {
     fetchPets();
     fetchServices();
   }, [fetchAppointments, fetchPets, fetchServices]);
+
+  useEffect(() => {
+    const draft = getDraft();
+    if (!draft || draft.service_type !== "vet") return;
+
+    const updates = {};
+    if (draft.form_data?.pet_name) updates.pet_name = draft.form_data.pet_name;
+    if (draft.form_data?.pet_type) {
+      const pet = pets.find((p) => (p.species || p.type || "").toLowerCase() === (draft.form_data.pet_type || "").toLowerCase());
+      if (pet) { updates.pet_id = pet.id; updates.pet_name = pet.name; }
+    }
+    if (draft.form_data?.veterinary_service_type) updates.service_name = draft.form_data.veterinary_service_type;
+    if (draft.form_data?.preferred_date) updates.request_date = draft.form_data.preferred_date;
+    if (draft.form_data?.preferred_time) updates.request_time = draft.form_data.preferred_time;
+    if (draft.form_data?.main_reason_for_visit) updates.notes = draft.form_data.main_reason_for_visit;
+
+    setFormData((prev) => ({ ...prev, ...updates }));
+    clearDraft();
+
+    if (Object.keys(updates).length > 0) {
+      showSuccess("We have restored your booking details. Please review and submit.");
+    }
+  }, [pets]);
 
   const selectedPet = pets.find((pet) => String(pet.id) === String(formData.pet_id));
 

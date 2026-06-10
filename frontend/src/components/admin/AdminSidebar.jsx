@@ -50,6 +50,11 @@ const AdminSidebar = ({ mobileOpen, onMobileMenuToggle }) => {
             </NavLink>
           </li>
           <li className="nav-item">
+            <NavLink to="/admin/landing-page" onClick={handleNavClick}>
+              Landing Page Editor
+            </NavLink>
+          </li>
+          <li className="nav-item">
             <NavLink to="/admin/chatbot" onClick={handleNavClick}>
               Chatbot
             </NavLink>

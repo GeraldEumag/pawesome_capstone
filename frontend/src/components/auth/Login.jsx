@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { apiRequest } from "../../api/client";
 import { useAuth } from "../../context/AuthContext";
+import { getDraft } from "../../utils/preBookingDraft";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
   faArrowLeft,
@@ -91,9 +92,22 @@ const Login = () => {
         localStorage.setItem("rememberMe", "true");
       }
 
+      let redirectPath = roleRouteMap[response.user.role] || "/dashboard";
+      if (response.user.role === "customer") {
+        const draft = getDraft();
+        if (draft?.service_type) {
+          const draftPaths = {
+            hotel: "/customer/hotel",
+            grooming: "/customer/grooming",
+            vet: "/customer/vet",
+          };
+          redirectPath = draftPaths[draft.service_type] || redirectPath;
+        }
+      }
+
       await showSuccess(`Welcome, ${response.user.name}!`);
 
-      navigate(roleRouteMap[response.user.role] || "/dashboard");
+      navigate(redirectPath);
     } catch (error) {
       const errorMsg = error.message || "Invalid username or password";
 
