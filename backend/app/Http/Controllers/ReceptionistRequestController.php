@@ -278,6 +278,13 @@ class ReceptionistRequestController extends Controller
         ];
     }
 
+    private function onlyExistingColumns(string $table, array $data): array
+    {
+        return collect($data)
+            ->filter(fn ($_value, $column) => Schema::hasColumn($table, $column))
+            ->all();
+    }
+
     public function index()
     {
         $requests = ServiceRequest::latest()->get()->map(fn ($item) => $this->formatRequest($item));
@@ -521,7 +528,7 @@ class ReceptionistRequestController extends Controller
 
                     $boarding = Boarding::firstOrCreate(
                         ['service_request_id' => $serviceRequest->id],
-                        [
+                        $this->onlyExistingColumns('boardings', [
                             'pet_id' => $pet->id,
                             'pet_name' => $pet->name ?? $serviceRequest->pet_name,
                             'pet_type' => $pet->species ?? $pet->type ?? $serviceRequest->pet_type,
@@ -539,7 +546,7 @@ class ReceptionistRequestController extends Controller
                             'payment_status' => 'unpaid',
                             'notes' => $serviceRequest->notes,
                             'stay_type' => 'hotel_boarding',
-                        ]
+                        ])
                     );
 
                     if (!$boarding->wasRecentlyCreated) {
@@ -767,7 +774,7 @@ class ReceptionistRequestController extends Controller
 
                 $boarding = Boarding::firstOrCreate(
                     ['service_request_id' => $serviceRequest->id],
-                    [
+                    $this->onlyExistingColumns('boardings', [
                         'pet_id' => $pet->id,
                         'pet_name' => $pet->name ?? $serviceRequest->pet_name,
                         'pet_type' => $pet->species ?? $pet->type ?? $serviceRequest->pet_type,
@@ -785,7 +792,7 @@ class ReceptionistRequestController extends Controller
                         'payment_status' => 'unpaid',
                         'notes' => $serviceRequest->notes,
                         'stay_type' => 'hotel_boarding',
-                    ]
+                    ])
                 );
 
                 if (!$boarding->wasRecentlyCreated) {

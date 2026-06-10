@@ -99,21 +99,31 @@ class PaymentVerificationService
 
     public function reject(string $type, int $id, $request)
     {
+        $rejectionReason = trim((string) $request->input('rejection_reason', ''));
+
+        if ($rejectionReason === '') {
+            return [
+                'success' => false,
+                'message' => 'Rejection reason is required.',
+                'status' => 422,
+            ];
+        }
+
         try {
             if ($type === 'boarding') {
-                return $this->rejectTablePayment('boardings', $id, $request, 'Boarding payment rejected');
+                return $this->rejectTablePayment('boardings', $id, $request, 'Boarding payment rejected', $rejectionReason);
             }
 
             if ($type === 'appointment' || $type === 'veterinary') {
-                return $this->rejectTablePayment('appointments', $id, $request, 'Veterinary payment rejected');
+                return $this->rejectTablePayment('appointments', $id, $request, 'Veterinary payment rejected', $rejectionReason);
             }
 
             if ($type === 'grooming') {
-                return $this->rejectTablePayment('groomings', $id, $request, 'Grooming payment rejected');
+                return $this->rejectTablePayment('groomings', $id, $request, 'Grooming payment rejected', $rejectionReason);
             }
 
             if ($type === 'medical_confinement' || $type === 'confinement') {
-                return $this->rejectTablePayment('medical_confinements', $id, $request, 'Medical confinement payment rejected');
+                return $this->rejectTablePayment('medical_confinements', $id, $request, 'Medical confinement payment rejected', $rejectionReason);
             }
 
             if ($type === 'service_request' || $type === 'service') {
@@ -122,8 +132,6 @@ class PaymentVerificationService
                 if (($sr->payment_status ?? 'unpaid') !== 'pending') {
                     return ['success' => false, 'message' => 'Only pending payment proofs can be rejected', 'status' => 422, 'payment_status' => $sr->payment_status];
                 }
-
-                $rejectionReason = $request->input('rejection_reason', 'Payment rejected by cashier');
 
                 DB::table('service_requests')->where('id', $id)->update([
                     'payment_status' => 'rejected',
@@ -147,7 +155,7 @@ class PaymentVerificationService
                 'payment_status' => 'rejected',
                 'rejected_by' => Auth::id(),
                 'rejected_at' => now(),
-                'rejection_reason' => $request->input('rejection_reason'),
+                'rejection_reason' => $rejectionReason,
             ]);
 
             return ['success' => true, 'message' => 'Payment rejected', 'payment_status' => 'rejected'];
@@ -199,7 +207,7 @@ class PaymentVerificationService
         return ['success' => true, 'message' => $message, 'payment_status' => 'paid', 'receipt_number' => $receiptNumber];
     }
 
-    private function rejectTablePayment(string $table, int $id, $request, string $message): array
+    private function rejectTablePayment(string $table, int $id, $request, string $message, string $rejectionReason): array
     {
         $record = DB::table($table)->where('id', $id)->first();
         if (!$record) {
@@ -215,7 +223,7 @@ class PaymentVerificationService
             'payment_status' => 'rejected',
             'rejected_by' => Auth::id(),
             'rejected_at' => now(),
-            'rejection_reason' => $request->input('rejection_reason'),
+            'rejection_reason' => $rejectionReason,
             'cashier_remarks' => $request->input('cashier_remarks'),
             'updated_at' => now(),
         ]);

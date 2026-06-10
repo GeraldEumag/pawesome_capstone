@@ -642,6 +642,7 @@ class InventoryService
             'category' => $isCreate ? 'required|string|max:50' : 'sometimes|string|max:50',
             'description' => 'nullable|string',
             'brand' => 'nullable|string|max:255',
+            'generic_name' => 'nullable|string|max:255',
             'supplier' => 'nullable|string|max:255',
             'supplier_id' => 'nullable|integer|exists:suppliers,id',
             'photo' => 'nullable|string|max:255',

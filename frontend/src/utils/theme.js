@@ -27,7 +27,7 @@ export const fetchAndApplySystemTheme = async () => {
     const baseUrl =
       (typeof import.meta !== "undefined" && import.meta.env?.VITE_API_BASE_URL) ||
       (typeof process !== "undefined" && process.env?.REACT_APP_API_URL) ||
-      "http://localhost:8000/api";
+      "/api";
     const res = await fetch(`${baseUrl}/settings/public`);
     if (!res.ok) throw new Error("fetch failed");
     const data = await res.json();

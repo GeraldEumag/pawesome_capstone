@@ -595,6 +595,7 @@ const UnifiedInventory = () => {
                 <th className="sortable" onClick={() => handleSort("name")}>Product {renderSortIcon("name")}</th>
                 <th className="sortable" onClick={() => handleSort("category")}>Category {renderSortIcon("category")}</th>
                 <th className="sortable" onClick={() => handleSort("brand")}>Brand {renderSortIcon("brand")}</th>
+                <th className="sortable" onClick={() => handleSort("generic_name")}>Generic Name {renderSortIcon("generic_name")}</th>
                 <th className="sortable" onClick={() => handleSort("supplier")}>Supplier {renderSortIcon("supplier")}</th>
                 <th className="sortable numeric" onClick={() => handleSort("stock")}>Stock {renderSortIcon("stock")}</th>
                 <th className="sortable numeric" onClick={() => handleSort("price")}>Price {renderSortIcon("price")}</th>
@@ -623,6 +624,7 @@ const UnifiedInventory = () => {
                       </span>
                     </td>
                     <td>{item.brand || "—"}</td>
+                    <td>{item.generic_name || "—"}</td>
                     <td>{item.supplier || "—"}</td>
                     <td className="numeric">
                       <span className={`stock-value ${getStock(item) <= getMinStock(item) && getStock(item) > 0 ? "low" : ""} ${getStock(item) === 0 ? "out" : ""}`}>

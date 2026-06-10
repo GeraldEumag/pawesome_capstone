@@ -15,6 +15,7 @@ class InventoryItem extends Model
         'name',
         'category',
         'brand',
+        'generic_name',
         'supplier',
         'supplier_id',
         'description',

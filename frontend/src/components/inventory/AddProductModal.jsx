@@ -14,6 +14,7 @@ const AddProductModal = ({ isOpen, onClose, onSuccess, editItem = null }) => {
     sku: "",
     category: "",
     brand: "",
+    generic_name: "",
     supplier: "",
     supplier_id: null,
     quantity: "",
@@ -47,6 +48,7 @@ const AddProductModal = ({ isOpen, onClose, onSuccess, editItem = null }) => {
         sku: editItem.sku || "",
         category: editItem.category || "",
         brand: editItem.brand || "",
+        generic_name: editItem.generic_name || "",
         supplier: editItem.supplier || "",
         supplier_id: editItem.supplier_id || null,
         quantity: editItem.quantity?.toString() || "",
@@ -65,6 +67,7 @@ const AddProductModal = ({ isOpen, onClose, onSuccess, editItem = null }) => {
         sku: "",
         category: "",
         brand: "",
+        generic_name: "",
         supplier: "",
         supplier_id: null,
         quantity: "",
@@ -304,6 +307,18 @@ const AddProductModal = ({ isOpen, onClose, onSuccess, editItem = null }) => {
                     onChange={handleChange}
                     placeholder="e.g., Royal Canin"
                   />
+                </div>
+
+                <div className="form-group">
+                  <label>Generic Name</label>
+                  <input
+                    type="text"
+                    name="generic_name"
+                    value={formData.generic_name}
+                    onChange={handleChange}
+                    placeholder="e.g., Amoxicillin (for medicines)"
+                  />
+                  <small className="helper-text">Optional: Generic name for medicines/health products</small>
                 </div>
               </div>
             </div>

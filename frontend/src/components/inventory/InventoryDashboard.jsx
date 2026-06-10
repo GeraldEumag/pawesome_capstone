@@ -147,6 +147,7 @@ const InventoryDashboard = () => {
     .join(" ");
 
   const sidebar = <InventorySidebar />;
+  const extraActions = null;
 
   const ROUTE_META = [
     { path: "/inventory", title: "Inventory Dashboard", subtitle: "Monitor stock levels, product movement, and warehouse operations." },

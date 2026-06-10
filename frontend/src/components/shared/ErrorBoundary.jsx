@@ -1,6 +1,4 @@
 import { Component } from "react";
-import { Link } from "react-router-dom";
-
 class ErrorBoundary extends Component {
   constructor(props) {
     super(props);
@@ -133,8 +131,8 @@ class ErrorBoundary extends Component {
               >
                 Refresh Page
               </button>
-              <Link
-                to="/"
+              <a
+                href="/"
                 onClick={this.handleReset}
                 style={{
                   padding: "10px 20px",
@@ -149,7 +147,7 @@ class ErrorBoundary extends Component {
                 }}
               >
                 Go to Home
-              </Link>
+              </a>
             </div>
           </div>
         </div>
