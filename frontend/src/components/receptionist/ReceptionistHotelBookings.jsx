@@ -18,14 +18,13 @@ import {
   faSpinner,
   faTimes,
   faTimesCircle,
-  faWrench,
+  faUser,
 } from "@fortawesome/free-solid-svg-icons";
 import "./ReceptionistHotelBookings.css";
 import { apiRequest, getAuthenticatedFileUrl } from "../../api/client";
 import { showError } from "../../utils/alert.jsx";
 import DatePickerInput from "../../components/shared/DatePickerInput";
 import PetAvatar from "../shared/PetAvatar";
-import ServiceManagerModal from "./ServiceManagerModal";
 import {
   normalizeList,
   normalizeStatus,
@@ -79,7 +78,6 @@ const getRoomOptionName = (room) =>
   room.name || room.room_number || room.room_name || `Room #${room.id}`;
 
 const ReceptionistHotelBookings = () => {
-  const [showServiceManager, setShowServiceManager] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [filterStatus, setFilterStatus] = useState("all");
   const [filterPayment, setFilterPayment] = useState("all");
@@ -414,14 +412,6 @@ const ReceptionistHotelBookings = () => {
         </div>
 
         <div className="hotel-hero-actions">
-          <button
-            type="button"
-            className="secondary-btn"
-            onClick={() => setShowServiceManager(true)}
-          >
-            <FontAwesomeIcon icon={faWrench} />
-            Manage Rooms
-          </button>
 
           <button
             type="button"
@@ -442,10 +432,6 @@ const ReceptionistHotelBookings = () => {
           </button>
         </div>
       </section>
-
-      {showServiceManager && (
-        <ServiceManagerModal onClose={() => setShowServiceManager(false)} />
-      )}
 
       <section className="hotel-summary-grid">
         <button type="button" className="hotel-summary-card" onClick={() => setFilterStatus("all")}>
@@ -576,7 +562,6 @@ const ReceptionistHotelBookings = () => {
             <table className="bookings-table">
               <thead>
                 <tr>
-                  <th>ID</th>
                   <th>Pet</th>
                   <th>Customer</th>
                   <th>Stay</th>
@@ -590,7 +575,7 @@ const ReceptionistHotelBookings = () => {
               <tbody>
                 {filteredBookings.length === 0 && (
                   <tr>
-                    <td colSpan="8">
+                    <td colSpan="7">
                       <div className="hotel-empty-state">
                         <FontAwesomeIcon icon={faSearch} />
                         <h3>No hotel boarding records found</h3>
@@ -606,63 +591,59 @@ const ReceptionistHotelBookings = () => {
 
                   return (
                     <tr key={booking.id} className="booking-row">
-                      <td className="booking-id">
-                        <span className="id-badge">#{booking.id}</span>
-                      </td>
-
-                      <td className="pet-info">
-                        <div className="pet-details">
-                          <PetAvatar pet={booking.pet} size={40} className="pet-avatar" />
-                          <div>
-                            <span className="pet-name">{getPetName(booking)}</span>
-                            <small>
-                              {booking.pet?.species ||
-                                booking.pet_species ||
-                                booking.pet_type ||
-                                "Pet"}
-                            </small>
-                          </div>
+                      <td>
+                        <div className="pet-cell">
+                          <PetAvatar pet={booking.pet} size={36} />
+                          <span>{getPetName(booking)}</span>
                         </div>
                       </td>
 
-                      <td className="customer">
-                        <strong>{getCustomerName(booking)}</strong>
-                        <small>{getCustomerPhone(booking)}</small>
+                      <td>
+                        <div className="customer-cell">
+                          <FontAwesomeIcon icon={faUser} />
+                          <span>{getCustomerName(booking)}</span>
+                        </div>
                       </td>
 
-                      <td className="date">
-                        <FontAwesomeIcon icon={faCalendarAlt} />
-                        <span>
-                          {formatDate(booking.check_in)} to {formatDate(booking.check_out)}
-                        </span>
+                      <td>
+                        <div className="stay-cell">
+                          <FontAwesomeIcon icon={faCalendarAlt} />
+                          <span>{formatDate(booking.check_in)} - {formatDate(booking.check_out)}</span>
+                        </div>
                       </td>
 
-                      <td className="room">
-                        <span>{getRoomName(booking)}</span>
+                      <td>
+                        <div className="room-cell">
+                          <span>{getRoomName(booking)}</span>
+                        </div>
                       </td>
 
-                      <td className="payment">
-                        <span className={`payment-badge ${getPaymentClass(paymentStatus)}`}>
-                          {formatStatus(paymentStatus)}
-                        </span>
+                      <td>
+                        <div className="payment-cell">
+                          <span className={`payment-badge ${getPaymentClass(paymentStatus)}`}>
+                            {formatStatus(paymentStatus)}
+                          </span>
+                        </div>
                       </td>
 
-                      <td className="status">
-                        <span className={`status-badge ${getStatusClass(status)}`}>
-                          <FontAwesomeIcon icon={getStatusIcon(status)} />
-                          {formatStatus(status)}
-                        </span>
+                      <td>
+                        <div className="status-cell">
+                          <span className={`status-badge ${getStatusClass(status)}`}>
+                            {formatStatus(status)}
+                          </span>
+                        </div>
                       </td>
 
-                      <td className="actions">
-                        <button
-                          type="button"
-                          className="action-btn view-btn"
-                          onClick={() => setSelectedBooking(booking)}
-                          title="View / Manage"
-                        >
-                          <FontAwesomeIcon icon={faEye} />
-                        </button>
+                      <td>
+                        <div className="actions-cell">
+                          <button
+                            type="button"
+                            className="action-btn view-btn"
+                            onClick={() => setSelectedBooking(booking)}
+                            title="View / Manage"
+                          >
+                            <FontAwesomeIcon icon={faEye} />
+                          </button>
 
                         {status === "pending" && (
                           <>
@@ -757,6 +738,7 @@ const ReceptionistHotelBookings = () => {
                             <FontAwesomeIcon icon={faDoorOpen} />
                           </button>
                         )}
+                        </div>
                       </td>
                     </tr>
                   );

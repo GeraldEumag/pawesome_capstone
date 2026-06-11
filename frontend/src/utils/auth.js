@@ -46,14 +46,31 @@ export const setToken = (token) => {
 
 /* ─── Role ─── */
 
-export const getRole = () => localStorage.getItem(ROLE_KEY);
+// Role normalization map to match backend EnsureRole middleware
+const ROLE_NORMALIZATION_MAP = {
+  vet: "veterinary",
+  veterinarian: "veterinary",
+  payroll_manager: "payroll",
+};
+
+export const normalizeRole = (role) => {
+  if (!role) return null;
+  return ROLE_NORMALIZATION_MAP[role] || role;
+};
+
+export const getRole = () => {
+  const rawRole = localStorage.getItem(ROLE_KEY);
+  return normalizeRole(rawRole);
+};
 
 export const setRole = (role) => {
   if (!role) {
     localStorage.removeItem(ROLE_KEY);
     return;
   }
-  localStorage.setItem(ROLE_KEY, role);
+  // Store normalized role for consistency
+  const normalizedRole = normalizeRole(role);
+  localStorage.setItem(ROLE_KEY, normalizedRole);
 };
 
 /* ─── User Data ─── */
