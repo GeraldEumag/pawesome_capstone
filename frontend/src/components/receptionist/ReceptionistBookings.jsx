@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState, useRef } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import DatePickerInput from "../../components/shared/DatePickerInput";
 import {
@@ -261,11 +261,21 @@ const ReceptionistBookings = () => {
 
   const [bookingFormData, setBookingFormData] = useState(initialBookingForm);
 
+  const successTimerRef = useRef(null);
+  const errorTimerRef = useRef(null);
+
+  useEffect(() => {
+    return () => {
+      if (successTimerRef.current) clearTimeout(successTimerRef.current);
+      if (errorTimerRef.current) clearTimeout(errorTimerRef.current);
+    };
+  }, []);
+
   const notify = (type, message) => {
     if (type === "success") {
       setSuccess(message);
-      window.clearTimeout(window.receptionistBookingsSuccessTimer);
-      window.receptionistBookingsSuccessTimer = window.setTimeout(
+      if (successTimerRef.current) clearTimeout(successTimerRef.current);
+      successTimerRef.current = setTimeout(
         () => setSuccess(""),
         3000
       );
@@ -273,8 +283,8 @@ const ReceptionistBookings = () => {
     }
 
     setError(message);
-    window.clearTimeout(window.receptionistBookingsErrorTimer);
-    window.receptionistBookingsErrorTimer = window.setTimeout(() => setError(""), 5000);
+    if (errorTimerRef.current) clearTimeout(errorTimerRef.current);
+    errorTimerRef.current = setTimeout(() => setError(""), 5000);
   };
 
   const fetchCustomersAndPets = async () => {
@@ -313,7 +323,7 @@ const ReceptionistBookings = () => {
 
       const [appointmentsData, boardingsData, groomingData] = await Promise.all([
         apiRequest("/receptionist/appointment/list").catch(() => null),
-        apiRequest("/boardings").catch(() => null),
+        apiRequest("/receptionist/boarding-requests").catch(() => null),
         apiRequest("/grooming").catch(() => null),
       ]);
 
@@ -842,7 +852,7 @@ const ReceptionistBookings = () => {
 
       const endpoint =
         selectedCancelBooking.type === "hotel"
-          ? `/boardings/${selectedCancelBooking.id}/cancel`
+          ? `/receptionist/boarding-requests/${selectedCancelBooking.id}/reject`
           : `/receptionist/appointments/${selectedCancelBooking.id}/cancel`;
 
       await apiRequest(endpoint, {

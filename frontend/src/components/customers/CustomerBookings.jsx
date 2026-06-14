@@ -90,10 +90,7 @@ const CustomerBookings = () => {
   const [refreshing, setRefreshing] = useState(false);
 
   const [availabilityLoading, setAvailabilityLoading] = useState(false);
-  const [veterinaryAvailability, setVeterinaryAvailability] = useState(null);
-  const [groomingAvailability, setGroomingAvailability] = useState(null);
   const [boardingAvailability, setBoardingAvailability] = useState(null);
-  const [selectedTimeSlot, setSelectedTimeSlot] = useState("");
   const [selectedRoom, setSelectedRoom] = useState(null);
   const [selectedRoomType, setSelectedRoomType] = useState("");
 
@@ -636,7 +633,7 @@ const CustomerBookings = () => {
         setRefreshing(false);
       }
     },
-    [customerEmail]
+    []
   );
 
   useEffect(() => {
@@ -819,19 +816,6 @@ const CustomerBookings = () => {
 
     if (errorMessage) setErrorMessage("");
 
-    if (selectedBooking === "Vet" && (name === "request_date" || name === "service_name")) {
-      const updatedFormData = { ...formData, [name]: value };
-      if (updatedFormData.request_date) {
-        fetchVeterinaryAvailability(updatedFormData.request_date, updatedFormData.service_name);
-      }
-    }
-
-    if (selectedBooking === "Groom" && name === "request_date") {
-      if (value) {
-        fetchGroomingAvailability(value);
-      }
-    }
-
     if (selectedBooking === "Hotel" && (name === "request_date" || name === "check_out_date")) {
       const updatedFormData = { ...formData, [name]: value };
       if (updatedFormData.request_date && updatedFormData.check_out_date) {
@@ -927,50 +911,6 @@ const CustomerBookings = () => {
     setPreviewUrl(null);
   };
 
-  const fetchVeterinaryAvailability = async (date, serviceName) => {
-    try {
-      setAvailabilityLoading(true);
-
-      const service = vetServices.find((s) => s.name === serviceName);
-      const serviceId = service?.id;
-
-      const url = `/customer/availability/veterinary?date=${date}${serviceId ? `&service_id=${serviceId}` : ""}`;
-      const data = await apiRequest(url);
-
-      if (data.success) {
-        setVeterinaryAvailability(data);
-      } else {
-        setVeterinaryAvailability(null);
-        showToast(data.message || "Failed to check veterinary availability", "error");
-      }
-    } catch {
-      setVeterinaryAvailability(null);
-      showToast("Failed to check availability. Please try again.", "error");
-    } finally {
-      setAvailabilityLoading(false);
-    }
-  };
-
-  const fetchGroomingAvailability = async (date) => {
-    try {
-      setAvailabilityLoading(true);
-
-      const data = await apiRequest(`/customer/availability/grooming?date=${date}`);
-
-      if (data.success) {
-        setGroomingAvailability(data);
-      } else {
-        setGroomingAvailability(null);
-        showToast(data.message || "Failed to check grooming availability", "error");
-      }
-    } catch {
-      setGroomingAvailability(null);
-      showToast("Failed to check availability. Please try again.", "error");
-    } finally {
-      setAvailabilityLoading(false);
-    }
-  };
-
   const fetchBoardingAvailability = async (
     checkIn,
     checkOut,
@@ -1024,11 +964,6 @@ const CustomerBookings = () => {
     }
   };
 
-  const handleTimeSlotSelect = (slot) => {
-    setSelectedTimeSlot(slot.time);
-    setFormData((prev) => ({ ...prev, request_time: slot.time }));
-  };
-
   const handleRoomSelect = (room) => {
     setSelectedRoom(room);
     setFormData((prev) => ({ ...prev, room_id: room.id }));
@@ -1074,19 +1009,6 @@ const CustomerBookings = () => {
     }
     if (!formData.request_date) return "Please select a preferred date.";
 
-    if (selectedBooking === "Vet") {
-      if (!selectedTimeSlot) return "Please select an available time slot.";
-      if (veterinaryAvailability && !veterinaryAvailability.slots?.find((slot) => slot.time === selectedTimeSlot && slot.available)) {
-        return "Selected time slot is not available. Please choose another slot.";
-      }
-    }
-
-    if (selectedBooking === "Groom") {
-      if (groomingAvailability && !groomingAvailability.available) {
-        return "This grooming date is already reserved. Please choose another date.";
-      }
-    }
-
     if (selectedBooking === "Hotel") {
       if (!selectedPet) return "Please select a pet first.";
 
@@ -1123,15 +1045,15 @@ const CustomerBookings = () => {
       }
     }
 
-    const selectedDateTime = new Date(
-      `${formData.request_date}T${formData.request_time || "12:00"}:00`
-    );
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const selectedDate = new Date(`${formData.request_date}T00:00:00`);
 
-    if (Number.isNaN(selectedDateTime.getTime())) {
+    if (Number.isNaN(selectedDate.getTime())) {
       return "Please select a valid schedule.";
     }
 
-    if (selectedDateTime < new Date()) {
+    if (selectedDate < today) {
       return "Schedule cannot be in the past.";
     }
 
@@ -1220,7 +1142,7 @@ const CustomerBookings = () => {
         service_type: formData.service_type,
         service_name: formData.service_name,
         request_date: formData.request_date,
-        request_time: formData.request_time,
+        request_time: null,
         notes: buildFinalNotes(),
         request_type: formData.service_type,
         veterinary_health_info:
@@ -1696,7 +1618,7 @@ const CustomerBookings = () => {
                     </>
                   ) : (
                     <>
-                      <label className="form-group">
+                      <label className="form-group full-width">
                         Preferred Date
                         <DatePickerInput
                           selected={formData.request_date ? new Date(formData.request_date) : null}
@@ -1706,83 +1628,42 @@ const CustomerBookings = () => {
                           required
                         />
                       </label>
-
-                      <label className="form-group">
-                        Preferred Time
-                        <input
-                          type="time"
-                          name="request_time"
-                          value={formData.request_time}
-                          onChange={handleInputChange}
-                          required={selectedBooking !== "Hotel"}
-                        />
-                      </label>
                     </>
                   )}
 
+                  <div className="time-policy-note form-group full-width" style={{
+                    gridColumn: "span 2",
+                    backgroundColor: "#eef2ff",
+                    border: "1px solid #c7d2fe",
+                    borderRadius: "0.375rem",
+                    padding: "0.75rem 1rem",
+                    marginTop: "0.5rem",
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "0.5rem",
+                    fontSize: "0.875rem",
+                    color: "#3730a3"
+                  }}>
+                    <span style={{ fontSize: "1.25rem" }}>🕘</span>
+                    <div>
+                      <strong>Open 9:00 AM – 7:00 PM</strong> · Walk-in anytime on your selected date.
+                      <br />
+                      <span style={{ fontSize: "0.75rem", color: "#4f46e5" }}>Pricing is calculated per day or per package, not by the hour.</span>
+                    </div>
+                  </div>
+
                   {/* Availability Display Section */}
-                  {(selectedBooking === "Vet" || selectedBooking === "Groom" || selectedBooking === "Hotel") && (
+                  {selectedBooking === "Hotel" && (
                     <div className="form-group full-width availability-section">
                       <div className="availability-header">
                         <span className="availability-title">
-                          {selectedBooking === "Vet" && "Available Time Slots"}
-                          {selectedBooking === "Groom" && "Date Availability"}
-                          {selectedBooking === "Hotel" && "Available Rooms"}
+                          Available Rooms
                         </span>
                         {availabilityLoading && <span className="availability-loading">Checking...</span>}
                       </div>
 
-                      {/* Veterinary Availability */}
-                      {selectedBooking === "Vet" && veterinaryAvailability && (
-                        <div className="availability-content">
-                          {veterinaryAvailability.slots && veterinaryAvailability.slots.length > 0 ? (
-                            <div className="time-slots-grid">
-                              {veterinaryAvailability.slots.map((slot) => (
-                                <button
-                                  key={slot.time}
-                                  type="button"
-                                  className={`time-slot ${!slot.available ? 'unavailable' : ''} ${selectedTimeSlot === slot.time ? 'selected' : ''}`}
-                                  onClick={() => slot.available && handleTimeSlotSelect(slot)}
-                                  disabled={!slot.available}
-                                >
-                                  <span className="slot-time">{slot.label}</span>
-                                  <span className="slot-status">
-                                    {slot.available ? 'Available' : slot.reason || 'Booked'}
-                                  </span>
-                                </button>
-                              ))}
-                            </div>
-                          ) : (
-                            <div className="no-availability">
-                              <p>No available veterinary slots for this date. Please choose another date.</p>
-                            </div>
-                          )}
-                        </div>
-                      )}
-
-                      {/* Grooming Availability */}
-                      {selectedBooking === "Groom" && groomingAvailability && (
-                        <div className="availability-content">
-                          {groomingAvailability.available ? (
-                            <div className="availability-success">
-                              <span className="availability-icon">✓</span>
-                              <span>This grooming date is available for booking.</span>
-                            </div>
-                          ) : (
-                            <div className="no-availability">
-                              <p>This grooming date is already reserved. Please choose another date.</p>
-                              {groomingAvailability.existing_appointment && (
-                                <div className="existing-booking">
-                                  <small>Existing booking: {groomingAvailability.existing_appointment.pet_name} - {groomingAvailability.existing_appointment.service}</small>
-                                </div>
-                              )}
-                            </div>
-                          )}
-                        </div>
-                      )}
-
                       {/* Boarding Availability */}
-                      {selectedBooking === "Hotel" && boardingAvailability && (
+                      {boardingAvailability && (
                         <div className="availability-content">
                           {isUnsupportedBoardingPet(selectedPet) ? (
                             <div className="no-availability">
@@ -1848,12 +1729,10 @@ const CustomerBookings = () => {
                       )}
 
                       {/* Show message when no availability data yet */}
-                      {!veterinaryAvailability && !groomingAvailability && !boardingAvailability && !availabilityLoading && (
+                      {selectedBooking === "Hotel" && !boardingAvailability && !availabilityLoading && (
                         <div className="availability-prompt">
                           <p>
-                            {selectedBooking === "Hotel"
-                              ? "Select a pet, check-in date, and check-out date to view compatible rooms."
-                              : "Select a date to check availability."}
+                            Select a pet, check-in date, and check-out date to view compatible rooms.
                           </p>
                         </div>
                       )}

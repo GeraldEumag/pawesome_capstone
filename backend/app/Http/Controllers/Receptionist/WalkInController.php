@@ -10,6 +10,7 @@ use App\Models\ServiceRequest;
 use App\Models\Boarding;
 use App\Models\Appointment;
 use App\Models\Grooming;
+use App\Models\Service;
 use App\Services\WorkflowNotifier;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -60,15 +61,18 @@ class WalkInController extends Controller
                 $serviceType = $bookingData['service_type'];
 
                 // Step 1: Get or create customer
+                $tempPassword = null;
                 if ($customerMode === 'new') {
                     $customerData = $request->input('customer');
                     $petData = $request->input('pet');
+
+                    $tempPassword = \Illuminate\Support\Str::random(10) . rand(10, 99) . '!';
 
                     // Create user account
                     $user = User::create([
                         'name' => $customerData['first_name'] . ' ' . $customerData['last_name'],
                         'email' => $customerData['email'],
-                        'password' => Hash::make('Password123!'),
+                        'password' => Hash::make($tempPassword),
                         'role' => 'customer',
                         'is_active' => true,
                     ]);
@@ -76,10 +80,7 @@ class WalkInController extends Controller
                     // Create customer record
                     $customer = Customer::create([
                         'user_id' => $user->id,
-                        'first_name' => $customerData['first_name'],
-                        'middle_name' => $customerData['middle_name'] ?? null,
-                        'last_name' => $customerData['last_name'],
-                        'suffix' => $customerData['suffix'] ?? null,
+                        'name' => $customerData['first_name'] . ' ' . $customerData['last_name'],
                         'email' => $customerData['email'],
                         'phone' => $customerData['phone'],
                         'address' => $customerData['address'] ?? null,
@@ -129,10 +130,8 @@ class WalkInController extends Controller
                 // Step 2: Create service request
                 $serviceRequest = ServiceRequest::create([
                     'request_type' => $serviceType,
-                    'customer_id' => $isNewCustomer ? $customer->user_id : null,
-                    'customer_name' => $isNewCustomer 
-                        ? ($customer->first_name . ' ' . $customer->last_name)
-                        : ($customer->first_name . ' ' . $customer->last_name),
+                    'customer_id' => $customer->user_id,
+                    'customer_name' => $customer->name,
                     'customer_email' => $customer->email,
                     'pet_id' => $petId,
                     'pet_name' => $pet->name,
@@ -142,7 +141,7 @@ class WalkInController extends Controller
                     'notes' => $bookingData['notes'] ?? null,
                     'status' => 'pending',
                     'payment_status' => 'pending',
-                    'price' => 0, // Will be updated when approved
+                    'price' => 0, // Will be updated below for hotel, or on approval
                 ]);
 
                 // Step 3: Create specific booking record based on service type
@@ -150,20 +149,43 @@ class WalkInController extends Controller
                 $bookingType = null;
 
                 if ($serviceType === 'hotel') {
+                    $ratePerDay = (float)($bookingData['rate_per_day'] ?? 0);
+                    $hotelRoomId = $bookingData['hotel_room_id'] ?? $bookingData['room_id'] ?? null;
+                    
+                    if ($hotelRoomId && $ratePerDay == 0) {
+                        $room = \App\Models\HotelRoom::find($hotelRoomId);
+                        if ($room) {
+                            $ratePerDay = (float)$room->daily_rate;
+                        }
+                    }
+                    
+                    $numberOfDays = 1;
+                    if (!empty($bookingData['request_date']) && !empty($bookingData['check_out_date'])) {
+                        $checkIn = new \DateTime($bookingData['request_date']);
+                        $checkOut = new \DateTime($bookingData['check_out_date']);
+                        $diff = $checkIn->diff($checkOut);
+                        $numberOfDays = max(1, $diff->days);
+                    }
+                    
+                    $totalAmount = $ratePerDay * $numberOfDays;
+
+                    // Update ServiceRequest price with the totalAmount
+                    $serviceRequest->price = $totalAmount;
+                    $serviceRequest->save();
+
                     $bookingRecord = Boarding::create([
                         'service_request_id' => $serviceRequest->id,
                         'pet_id' => $petId,
                         'pet_name' => $pet->name,
                         'pet_type' => $pet->species,
                         'customer_id' => $customerId,
-                        'customer_name' => $customer->first_name . ' ' . $customer->last_name,
+                        'customer_name' => $customer->name,
                         'customer_email' => $customer->email,
                         'check_in' => $bookingData['request_date'],
                         'check_out' => $bookingData['check_out_date'] ?? null,
-                        'room_type' => $bookingData['room_type'] ?? null,
-                        'rate_per_day' => 0,
-                        'number_of_days' => 1,
-                        'total_amount' => 0,
+                        'hotel_room_id' => $hotelRoomId,
+                        'boarding_type' => $bookingData['room_type'] ?? null,
+                        'total_amount' => $totalAmount,
                         'status' => 'pending',
                         'payment_status' => 'pending',
                         'notes' => $bookingData['special_requests'] ?? null,
@@ -171,16 +193,35 @@ class WalkInController extends Controller
                     ]);
                     $bookingType = 'boarding';
                 } elseif ($serviceType === 'veterinary') {
+                    // Resolve the Service ID based on service_name select option
+                    $service = Service::where('name', $bookingData['service_name'])->first();
+                    if (!$service) {
+                        $service = Service::whereIn('category', ['Consultation', 'Vaccination', 'Treatment', 'Emergency', 'Surgery', 'Dental', 'Diagnostics'])->first();
+                    }
+                    
+                    $serviceId = $service ? $service->id : null;
+                    $servicePrice = $service ? (float)$service->price : 0.0;
+
+                    if (!$serviceId) {
+                        $firstService = Service::first();
+                        $serviceId = $firstService ? $firstService->id : 1;
+                        $servicePrice = $firstService ? (float)$firstService->price : 0.0;
+                    }
+
+                    // Update service request price
+                    $serviceRequest->price = $servicePrice;
+                    $serviceRequest->save();
+
                     $bookingRecord = Appointment::create([
                         'service_request_id' => $serviceRequest->id,
                         'customer_id' => $customerId,
                         'pet_id' => $petId,
-                        'service_id' => null, // Will be set when approved
+                        'service_id' => $serviceId,
                         'scheduled_at' => $bookingData['request_date'] . ' ' . ($bookingData['request_time'] ?? '09:00'),
                         'veterinarian_id' => $bookingData['veterinarian_id'] ?? null,
                         'status' => 'pending',
                         'notes' => $bookingData['reason'] ?? null,
-                        'price' => 0,
+                        'price' => $servicePrice,
                     ]);
                     $bookingType = 'appointment';
                 } elseif ($serviceType === 'grooming') {
@@ -206,7 +247,7 @@ class WalkInController extends Controller
                 WorkflowNotifier::notifyRole(
                     'receptionist',
                     'New Walk-in Booking',
-                    "Walk-in {$serviceType} booking created for {$customer->first_name} {$customer->last_name} - Pet: {$pet->name}",
+                    "Walk-in {$serviceType} booking created for {$customer->name} - Pet: {$pet->name}",
                     'info',
                     $serviceType,
                     $serviceRequest->id,
@@ -218,7 +259,7 @@ class WalkInController extends Controller
                     WorkflowNotifier::notifyEmail(
                         $customer->email,
                         'Welcome to Pawesome - Your Account Details',
-                        "Welcome! Your walk-in booking has been created. Your login email is: {$customer->email} and your temporary password is: Password123! Please change your password after your first login.",
+                        "Welcome! Your walk-in booking has been created. Your login email is: {$customer->email} and your temporary password is: {$tempPassword} Please change your password after your first login.",
                         'success',
                         'account_created',
                         $serviceRequest->id
@@ -244,7 +285,6 @@ class WalkInController extends Controller
                         'customer_id' => $customerId,
                         'pet_id' => $petId,
                         'is_new_customer' => $isNewCustomer,
-                        'default_password' => $isNewCustomer ? 'Password123!' : null,
                     ],
                 ], 201);
             });
@@ -265,7 +305,22 @@ class WalkInController extends Controller
     {
         $query = $request->input('q');
         
-        if (!$query || strlen($query) < 2) {
+        if ($query === null) {
+            return response()->json([
+                'success' => true,
+                'data' => [],
+            ]);
+        }
+
+        if (strlen($query) === 0) {
+            $customers = Customer::with(['pets'])->limit(50)->get();
+            return response()->json([
+                'success' => true,
+                'data' => $customers,
+            ]);
+        }
+
+        if (strlen($query) < 2) {
             return response()->json([
                 'success' => true,
                 'data' => [],
@@ -274,8 +329,7 @@ class WalkInController extends Controller
 
         try {
             $customers = Customer::where(function ($q) use ($query) {
-                $q->where('first_name', 'LIKE', "%{$query}%")
-                    ->orWhere('last_name', 'LIKE', "%{$query}%")
+                $q->where('name', 'LIKE', "%{$query}%")
                     ->orWhere('email', 'LIKE', "%{$query}%")
                     ->orWhere('phone', 'LIKE', "%{$query}%");
             })

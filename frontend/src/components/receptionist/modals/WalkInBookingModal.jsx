@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
   faTimes,
@@ -66,6 +66,8 @@ const WalkInBookingModal = ({ serviceType, onClose, onSuccess }) => {
     // Hotel specific
     check_out_date: "",
     room_type: "",
+    room_id: "",
+    rate_per_day: 0,
     special_requests: "",
     // Veterinary specific
     veterinarian_id: "",
@@ -98,6 +100,7 @@ const WalkInBookingModal = ({ serviceType, onClose, onSuccess }) => {
 
   // AbortController for cleanup
   const abortControllerRef = useRef(null);
+  const searchTimeoutRef = useRef(null);
 
   // Fetch veterinarians, rooms, and customers on mount
   useEffect(() => {
@@ -121,6 +124,9 @@ const WalkInBookingModal = ({ serviceType, onClose, onSuccess }) => {
     return () => {
       if (abortControllerRef.current) {
         abortControllerRef.current.abort();
+      }
+      if (searchTimeoutRef.current) {
+        clearTimeout(searchTimeoutRef.current);
       }
     };
   }, [serviceType]);
@@ -185,7 +191,7 @@ const WalkInBookingModal = ({ serviceType, onClose, onSuccess }) => {
       return;
     }
     const filtered = allCustomers.filter((c) => {
-      const fullName = `${c.first_name} ${c.last_name}`.toLowerCase();
+      const fullName = (c.name || "").toLowerCase();
       return (
         fullName.includes(searchTerm.toLowerCase()) ||
         (c.email && c.email.toLowerCase().includes(searchTerm.toLowerCase())) ||
@@ -199,16 +205,40 @@ const WalkInBookingModal = ({ serviceType, onClose, onSuccess }) => {
   const handleSearchChange = (e) => {
     const value = e.target.value;
     setCustomerSearch(value);
+
+    // Instant local filtering feedback
     filterCustomersLocally(value);
+
+    if (searchTimeoutRef.current) {
+      clearTimeout(searchTimeoutRef.current);
+    }
+
+    if (!value.trim()) {
+      setFilteredCustomers(allCustomers);
+      return;
+    }
+
+    // Automatically trigger backend search after 350ms of inactivity
+    searchTimeoutRef.current = setTimeout(() => {
+      handleBackendSearch(value);
+    }, 350);
   };
 
   // Backend search for more results
-  const handleBackendSearch = async () => {
-    if (!customerSearch.trim()) return;
+  const handleBackendSearch = async (term = customerSearch) => {
+    const queryTerm = typeof term === "string" ? term : customerSearch;
+    if (!queryTerm.trim()) {
+      setFilteredCustomers(allCustomers);
+      return;
+    }
+
+    // Only query backend if query is 2+ characters to respect backend safety
+    if (queryTerm.trim().length < 2) return;
+
     try {
       setLoading(true);
       const response = await apiRequest(
-        `/receptionist/customers/search?q=${encodeURIComponent(customerSearch)}`
+        `/receptionist/customers/search?q=${encodeURIComponent(queryTerm.trim())}`
       );
       const results = response.data || response || [];
       setFilteredCustomers(results);
@@ -244,12 +274,16 @@ const WalkInBookingModal = ({ serviceType, onClose, onSuccess }) => {
   };
 
   const validateBookingForm = () => {
-    if (!bookingForm.service_name) return "Please select a service";
+    if (serviceType !== "hotel" && !bookingForm.service_name) return "Please select a service";
     if (!bookingForm.request_date) return "Please select a date";
-    if (!bookingForm.request_time) return "Please select a time";
     
-    if (serviceType === "hotel" && !bookingForm.check_out_date) {
-      return "Check-out date is required";
+    if (serviceType === "hotel") {
+      if (!bookingForm.check_out_date) {
+        return "Check-out date is required";
+      }
+      if (!bookingForm.room_id) {
+        return "Please select a Room";
+      }
     }
     if (serviceType === "veterinary" && !bookingForm.reason.trim()) {
       return "Reason for visit is required";
@@ -295,13 +329,16 @@ const WalkInBookingModal = ({ serviceType, onClose, onSuccess }) => {
         pet_id: customerMode === "existing" ? selectedPet.id : undefined,
         booking: {
           service_type: serviceType,
-          service_name: bookingForm.service_name,
+          service_name: serviceType === "hotel" ? (bookingForm.room_type ? `Hotel Boarding (${bookingForm.room_type})` : "Hotel Boarding") : bookingForm.service_name,
           request_date: bookingForm.request_date,
-          request_time: bookingForm.request_time,
+          request_time: null,
           notes: bookingForm.notes || "",
           ...(serviceType === "hotel" && {
             check_out_date: bookingForm.check_out_date,
             room_type: bookingForm.room_type,
+            room_id: bookingForm.room_id,
+            hotel_room_id: bookingForm.room_id,
+            rate_per_day: bookingForm.rate_per_day,
             special_requests: bookingForm.special_requests,
           }),
           ...(serviceType === "veterinary" && {
@@ -427,7 +464,12 @@ const WalkInBookingModal = ({ serviceType, onClose, onSuccess }) => {
           placeholder="Search customers by name, email or phone..."
           value={customerSearch}
           onChange={handleSearchChange}
-          onKeyPress={(e) => e.key === "Enter" && handleBackendSearch()}
+          onKeyDown={(e) => {
+            if (e.key === "Enter") {
+              if (searchTimeoutRef.current) clearTimeout(searchTimeoutRef.current);
+              handleBackendSearch();
+            }
+          }}
         />
         <button
           type="button"
@@ -439,34 +481,52 @@ const WalkInBookingModal = ({ serviceType, onClose, onSuccess }) => {
         </button>
       </div>
 
-      {/* Customer Dropdown */}
-      <div className="form-group">
-        <label>Customer *</label>
-        <select
-          value={selectedCustomer?.id || ""}
-          onChange={(e) => {
-            const customerId = parseInt(e.target.value);
-            const customer = filteredCustomers.find((c) => c.id === customerId);
-            if (customer) {
-              setSelectedCustomer(customer);
-              setSelectedPet(null);
-            }
-          }}
-          className="customer-select"
-        >
-          <option value="">-- Select Customer --</option>
-          {filteredCustomers.map((customer) => (
-            <option key={customer.id} value={customer.id}>
-              {customer.first_name} {customer.last_name} - {customer.email} - {customer.phone}
-            </option>
-          ))}
-        </select>
-        {filteredCustomers.length === 0 && !loading && (
-          <small className="helper-text">
-            No customers found. Try searching or typing to filter.
-          </small>
-        )}
-      </div>
+      {/* Customer Results (Closed at first, opens automatically when there is a search term) */}
+      {customerSearch.trim() && (
+        <div className="customer-results-container" style={{ marginTop: '24px' }}>
+          <label className="form-label" style={{ fontWeight: '600', display: 'block', marginBottom: '8px', color: '#475569' }}>
+            Search Matches *
+          </label>
+          
+          <div className="customer-results-list" style={{ maxHeight: '200px', overflowY: 'auto', paddingRight: '4px' }}>
+            {filteredCustomers.length > 0 ? (
+              filteredCustomers.map((customer) => (
+                <button
+                  key={customer.id}
+                  type="button"
+                  className={`customer-result-item ${selectedCustomer?.id === customer.id ? 'selected' : ''}`}
+                  onClick={() => selectCustomer(customer)}
+                  style={{ outline: 'none' }}
+                >
+                  <div className="customer-info">
+                    <strong>{customer.name}</strong>
+                    <span>{customer.email || 'No Email'} · {customer.phone || 'No Phone'}</span>
+                  </div>
+                  {selectedCustomer?.id === customer.id && (
+                    <FontAwesomeIcon icon={faCheckCircle} className="selected-icon" />
+                  )}
+                </button>
+              ))
+            ) : (
+              !loading && (
+                <div style={{ textAlign: 'center', padding: '24px', border: '1px dashed #cbd5e1', borderRadius: '8px' }}>
+                  <p style={{ margin: 0, color: '#64748b', fontSize: '0.875rem' }}>No customers found matching "{customerSearch}".</p>
+                </div>
+              )
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Active Customer Selection Summary */}
+      {selectedCustomer && (
+        <div className="selected-summary" style={{ marginTop: '20px', padding: '12px 16px', borderRadius: '8px', background: '#f8fafc', border: '1px solid #e2e8f0' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#334155', fontSize: '0.9rem' }}>
+            <FontAwesomeIcon icon={faUser} style={{ color: '#ff5f93' }} />
+            <span>Selected Customer: <strong>{selectedCustomer.name}</strong></span>
+          </div>
+        </div>
+      )}
 
       {/* Pet Dropdown - Shows after customer selected */}
       {selectedCustomer && (
@@ -501,7 +561,7 @@ const WalkInBookingModal = ({ serviceType, onClose, onSuccess }) => {
         <div className="selected-summary">
           <div className="summary-item">
             <FontAwesomeIcon icon={faUser} />
-            <span>{selectedCustomer.first_name} {selectedCustomer.last_name}</span>
+            <span>{selectedCustomer.name}</span>
           </div>
           <div className="summary-item">
             <FontAwesomeIcon icon={faPaw} />
@@ -723,24 +783,26 @@ const WalkInBookingModal = ({ serviceType, onClose, onSuccess }) => {
       <p className="step-description">Enter the {serviceType} booking information</p>
 
       <div className="form-grid">
-        <div className="form-group full-width">
-          <label>Service *</label>
-          <select
-            value={bookingForm.service_name}
-            onChange={(e) =>
-              setBookingForm({ ...bookingForm, service_name: e.target.value })
-            }
-          >
-            <option value="">Select a service</option>
-            {services.map((service) => (
-              <option key={service.id} value={service.name}>
-                {service.name} - ₱{service.price}
-              </option>
-            ))}
-          </select>
-        </div>
+        {serviceType !== "hotel" && (
+          <div className="form-group full-width">
+            <label>Service *</label>
+            <select
+              value={bookingForm.service_name}
+              onChange={(e) =>
+                setBookingForm({ ...bookingForm, service_name: e.target.value })
+              }
+            >
+              <option value="">Select a service</option>
+              {services.map((service) => (
+                <option key={service.id} value={service.name}>
+                  {service.name} - ₱{service.price}
+                </option>
+              ))}
+            </select>
+          </div>
+        )}
 
-        <div className="form-group">
+        <div className="form-group full-width">
           <label>Date *</label>
           <input
             type="date"
@@ -751,15 +813,24 @@ const WalkInBookingModal = ({ serviceType, onClose, onSuccess }) => {
           />
         </div>
 
-        <div className="form-group">
-          <label>Time *</label>
-          <input
-            type="time"
-            value={bookingForm.request_time}
-            onChange={(e) =>
-              setBookingForm({ ...bookingForm, request_time: e.target.value })
-            }
-          />
+        <div className="time-policy-note form-group full-width" style={{
+          backgroundColor: "#eef2ff",
+          border: "1px solid #c7d2fe",
+          borderRadius: "0.375rem",
+          padding: "0.75rem 1rem",
+          marginBottom: "1rem",
+          display: "flex",
+          alignItems: "center",
+          gap: "0.5rem",
+          fontSize: "0.875rem",
+          color: "#3730a3"
+        }}>
+          <span style={{ fontSize: "1.25rem" }}>🕘</span>
+          <div>
+            <strong>Open 9:00 AM – 7:00 PM</strong> · Walk-in anytime on selected date.
+            <br />
+            <span style={{ fontSize: "0.75rem", color: "#4f46e5" }}>Charged per day or per package, not by the hour.</span>
+          </div>
         </div>
 
         {/* Hotel-specific fields */}
@@ -777,16 +848,22 @@ const WalkInBookingModal = ({ serviceType, onClose, onSuccess }) => {
             </div>
 
             <div className="form-group">
-              <label>Room Type</label>
+              <label>Room *</label>
               <select
-                value={bookingForm.room_type}
-                onChange={(e) =>
-                  setBookingForm({ ...bookingForm, room_type: e.target.value })
-                }
+                value={bookingForm.room_id}
+                onChange={(e) => {
+                  const r = hotelRooms.find((room) => String(room.id) === String(e.target.value));
+                  setBookingForm({
+                    ...bookingForm,
+                    room_id: e.target.value,
+                    room_type: r ? r.type : "",
+                    rate_per_day: r ? r.daily_rate : 0
+                  });
+                }}
               >
-                <option value="">Select room type</option>
+                <option value="">Select Room</option>
                 {hotelRooms.map((room) => (
-                  <option key={room.id} value={room.type}>
+                  <option key={room.id} value={room.id}>
                     {room.name} ({room.type}) - ₱{room.daily_rate}/day
                   </option>
                 ))}

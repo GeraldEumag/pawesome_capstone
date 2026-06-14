@@ -310,7 +310,7 @@ class ReceptionistRequestController extends Controller
 
     public function approvalHistory()
     {
-        $requests = ServiceRequest::whereIn('status', ['approved', 'completed', 'paid'])
+        $requests = ServiceRequest::whereIn('status', ['approved', 'scheduled', 'completed', 'paid'])
             ->latest()
             ->get()
             ->map(fn ($item) => $this->formatRequest($item));
@@ -418,7 +418,9 @@ class ReceptionistRequestController extends Controller
         $serviceRequest = ServiceRequest::findOrFail($id);
         $serviceRequest->status = $validated['status'];
 
-        if (in_array($validated['status'], ['approved', 'rejected', 'cancelled'])) {
+        if (in_array($validated['status'], ['rejected', 'cancelled'])) {
+            $serviceRequest->payment_status = 'unpaid';
+        } elseif ($validated['status'] === 'approved' && !in_array($serviceRequest->payment_status, ['paid', 'verified', 'completed'])) {
             $serviceRequest->payment_status = 'unpaid';
         }
 
