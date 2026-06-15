@@ -571,7 +571,8 @@ Route::middleware(['auth.api', 'throttle:api', 'role:admin,inventory'])->prefix(
     Route::patch('{id}/stock', [InventoryDashboardController::class, 'adjustStock']);
 });
 
-Route::middleware(['auth.api', 'throttle:api', 'role:manager'])->prefix('manager')->group(function () {
+Route::middleware(['auth.api', 'throttle:api'])->prefix('manager')->group(function () {
+    Route::middleware('role:manager')->group(function () {
     Route::get('dashboard', [ManagerDashboardController::class, 'overview']);
     Route::get('staff', [ManagerDashboardController::class, 'staff']);
     Route::get('executive-summary', [ManagerDashboardController::class, 'executiveSummary']);
@@ -593,37 +594,54 @@ Route::middleware(['auth.api', 'throttle:api', 'role:manager'])->prefix('manager
     Route::get('reports/veterinary-services', [WorkflowReportController::class, 'veterinaryServices']);
     Route::get('reports/attendance', [ReportsController::class, 'managerAttendance']);
     Route::get('reports/payroll', [ReportsController::class, 'managerPayroll']);
-
-    // Manager Attendance Routes
-    Route::get('attendance', [AttendanceController::class, 'index']);
-    Route::post('attendance/{id}/remarks', [AttendanceController::class, 'update']);
-    Route::post('attendance/{id}/review', [AttendanceController::class, 'update']);
-
-    // Manager Payroll Routes
-    Route::get('payroll', [ApiPayrollController::class, 'index']);
-    Route::post('payroll', [ApiPayrollController::class, 'store']);
-    Route::post('payroll/compute', [ApiPayrollController::class, 'compute']);
-    Route::post('payroll/generate', [ApiPayrollController::class, 'generate']);
-    Route::post('payroll/{id}/approve', [ApiPayrollController::class, 'approve']);
-    Route::post('payroll/{id}/release', [ApiPayrollController::class, 'markAsPaid']);
-
-    // Manager History Route
     Route::get('history', [ManagerDashboardController::class, 'history']);
+    Route::get('staff/{id}/attendance', [AttendanceController::class, 'index']);
+    Route::get('staff/{id}/payroll', [ApiPayrollController::class, 'index']);
+    });
 
-    // Manager Leave Routes
-    Route::get('leaves', [\App\Http\Controllers\Manager\LeaveController::class, 'index']);
-    Route::post('leaves', [\App\Http\Controllers\Manager\LeaveController::class, 'store']);
-    Route::post('leaves/{id}/approve', [\App\Http\Controllers\Manager\LeaveController::class, 'approve']);
-    Route::post('leaves/{id}/reject', [\App\Http\Controllers\Manager\LeaveController::class, 'reject']);
-    Route::get('leaves/calendar', [\App\Http\Controllers\Manager\LeaveController::class, 'calendar']);
+    // Attendance report access. Manager is view-only; Payroll/HR owns edits.
+    Route::middleware('role:manager,admin,payroll,payroll_manager')->group(function () {
+        Route::get('attendance', [AttendanceController::class, 'index']);
+    });
+    Route::middleware('role:admin,payroll,payroll_manager')->group(function () {
+        Route::post('attendance/{id}/remarks', [AttendanceController::class, 'update']);
+        Route::post('attendance/{id}/review', [AttendanceController::class, 'update']);
+    });
 
-    // Manager Schedule Routes
-    Route::get('schedules', [\App\Http\Controllers\Manager\ScheduleController::class, 'index']);
-    Route::post('schedules', [\App\Http\Controllers\Manager\ScheduleController::class, 'store']);
-    Route::delete('schedules/{id}', [\App\Http\Controllers\Manager\ScheduleController::class, 'destroy']);
+    // Payroll summary access. Manager is view-only; Payroll/HR owns computation/release.
+    Route::middleware('role:manager,admin,payroll,payroll_manager')->group(function () {
+        Route::get('payroll', [ApiPayrollController::class, 'index']);
+    });
+    Route::middleware('role:admin,payroll,payroll_manager')->group(function () {
+        Route::post('payroll', [ApiPayrollController::class, 'store']);
+        Route::post('payroll/compute', [ApiPayrollController::class, 'compute']);
+        Route::post('payroll/generate', [ApiPayrollController::class, 'generate']);
+        Route::post('payroll/{id}/approve', [ApiPayrollController::class, 'approve']);
+        Route::post('payroll/{id}/release', [ApiPayrollController::class, 'markAsPaid']);
+    });
 
-    // Manager Fingerprint / Biometric Attendance Routes
-    Route::prefix('biometric')->group(function () {
+    // Leave report access. Manager is view-only; Payroll/HR owns approval/rejection.
+    Route::middleware('role:manager,admin,payroll,payroll_manager')->group(function () {
+        Route::get('leaves', [\App\Http\Controllers\Manager\LeaveController::class, 'index']);
+        Route::get('leaves/calendar', [\App\Http\Controllers\Manager\LeaveController::class, 'calendar']);
+    });
+    Route::middleware('role:admin,payroll,payroll_manager')->group(function () {
+        Route::post('leaves', [\App\Http\Controllers\Manager\LeaveController::class, 'store']);
+        Route::post('leaves/{id}/approve', [\App\Http\Controllers\Manager\LeaveController::class, 'approve']);
+        Route::post('leaves/{id}/reject', [\App\Http\Controllers\Manager\LeaveController::class, 'reject']);
+    });
+
+    // Schedule report access. Manager is view-only; Payroll/HR owns schedule edits.
+    Route::middleware('role:manager,admin,payroll,payroll_manager')->group(function () {
+        Route::get('schedules', [\App\Http\Controllers\Manager\ScheduleController::class, 'index']);
+    });
+    Route::middleware('role:admin,payroll,payroll_manager')->group(function () {
+        Route::post('schedules', [\App\Http\Controllers\Manager\ScheduleController::class, 'store']);
+        Route::delete('schedules/{id}', [\App\Http\Controllers\Manager\ScheduleController::class, 'destroy']);
+    });
+
+    // Payroll/HR Fingerprint / Biometric Attendance Routes
+    Route::middleware('role:admin,payroll,payroll_manager')->prefix('biometric')->group(function () {
         Route::post('challenge', [\App\Http\Controllers\Manager\FingerprintController::class, 'registerChallenge']);
         Route::post('register', [\App\Http\Controllers\Manager\FingerprintController::class, 'registerCredential']);
         Route::post('auth-challenge', [\App\Http\Controllers\Manager\FingerprintController::class, 'verifyChallenge']);
@@ -633,14 +651,10 @@ Route::middleware(['auth.api', 'throttle:api', 'role:manager'])->prefix('manager
         Route::delete('credentials/{credential}', [\App\Http\Controllers\Manager\FingerprintController::class, 'deleteCredential']);
         Route::get('today-summary', [\App\Http\Controllers\Manager\FingerprintController::class, 'todaySummary']);
     });
-
-    // Manager Staff-Specific Routes
-    Route::get('staff/{id}/attendance', [AttendanceController::class, 'index']);
-    Route::get('staff/{id}/payroll', [ApiPayrollController::class, 'index']);
 });
 
-// Payroll Routes (Admin access)
-Route::middleware(['auth.api', 'throttle:api', 'role:admin,manager'])->prefix('payroll')->group(function () {
+// Payroll Routes (Admin and Payroll/HR access)
+Route::middleware(['auth.api', 'throttle:api', 'role:admin,payroll,payroll_manager'])->prefix('payroll')->group(function () {
     Route::get('/', [ApiPayrollController::class, 'index']);
     Route::post('/generate', [ApiPayrollController::class, 'generate']);
     Route::get('/reports/overview', [ReportsController::class, 'payrollReports']);
@@ -649,8 +663,8 @@ Route::middleware(['auth.api', 'throttle:api', 'role:admin,manager'])->prefix('p
     Route::get('/{id}', [ApiPayrollController::class, 'show']);
 });
 
-// Attendance Routes (Admin and Manager)
-Route::middleware(['auth.api', 'throttle:api', 'role:admin,manager'])->prefix('attendance')->group(function () {
+// Attendance Routes (Admin and Payroll/HR)
+Route::middleware(['auth.api', 'throttle:api', 'role:admin,payroll,payroll_manager'])->prefix('attendance')->group(function () {
     Route::get('/', [AttendanceController::class, 'index']);
     Route::post('/', [AttendanceController::class, 'store']);
     Route::get('/today', [AttendanceController::class, 'today']);
@@ -661,8 +675,8 @@ Route::middleware(['auth.api', 'throttle:api', 'role:admin,manager'])->prefix('a
     Route::delete('/{id}', [AttendanceController::class, 'destroy']);
 });
 
-// Manager Attendance Records Routes (Simple attendance tracking)
-Route::middleware(['auth.api', 'throttle:api', 'role:admin,manager'])->prefix('attendance-records')->group(function () {
+// Attendance Records Routes (Simple attendance tracking)
+Route::middleware(['auth.api', 'throttle:api', 'role:admin,payroll,payroll_manager'])->prefix('attendance-records')->group(function () {
     Route::get('/', [AttendanceRecordController::class, 'index']);
     Route::post('/', [AttendanceRecordController::class, 'store']);
     Route::get('/summary', [AttendanceRecordController::class, 'summary']);

@@ -33,6 +33,25 @@ const LEAVE_TYPES = [
   { value: "bereavement_leave", label: "Bereavement Leave", color: "#64748b" },
 ];
 
+const normalizeList = (payload, keys = []) => {
+  if (Array.isArray(payload)) return payload;
+
+  for (const key of keys) {
+    if (Array.isArray(payload?.[key])) return payload[key];
+    if (Array.isArray(payload?.data?.[key])) return payload.data[key];
+    if (Array.isArray(payload?.[key]?.data)) return payload[key].data;
+    if (Array.isArray(payload?.data?.[key]?.data)) return payload.data[key].data;
+  }
+
+  if (Array.isArray(payload?.data)) return payload.data;
+  if (Array.isArray(payload?.data?.data)) return payload.data.data;
+  if (Array.isArray(payload?.records)) return payload.records;
+  if (Array.isArray(payload?.items)) return payload.items;
+  if (Array.isArray(payload?.results)) return payload.results;
+
+  return [];
+};
+
 const formatLabel = (value) =>
   String(value || "N/A")
     .replace(/_/g, " ")
@@ -92,10 +111,9 @@ const ManagerLeave = () => {
         if (searchTerm.trim()) params.append("search", searchTerm.trim());
 
         const res = await apiRequest(`/manager/leaves?${params}`);
-        setRecords(res?.data || []);
+        setRecords(normalizeList(res, ["data", "leaves", "records"]));
         setStats(res?.stats || { pending: 0, approved: 0, rejected: 0, on_leave_today: 0 });
       } catch (err) {
-        console.error("Leave load error:", err);
         setError(err.message || "Failed to load leave requests.");
         setRecords([]);
       } finally {
@@ -326,16 +344,7 @@ const ManagerLeave = () => {
                           <td className="leave-reason">{r.reason || "—"}</td>
                           <td>
                             <div className="leave-actions">
-                              {r.status === "pending" && (
-                                <>
-                                  <button type="button" className="approve" onClick={() => { setSelectedRecord(r); setActionModal("approve"); }}>
-                                    <FontAwesomeIcon icon={faThumbsUp} /> Approve
-                                  </button>
-                                  <button type="button" className="reject" onClick={() => { setSelectedRecord(r); setActionModal("reject"); }}>
-                                    <FontAwesomeIcon icon={faThumbsDown} /> Reject
-                                  </button>
-                                </>
-                              )}
+                              <span className="leave-readonly-badge">View Only</span>
                             </div>
                           </td>
                         </tr>

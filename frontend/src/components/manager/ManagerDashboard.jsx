@@ -28,16 +28,25 @@ import DashboardLayout from "../shared/DashboardLayout";
 import "./ManagerDashboard.css";
 
 const DEFAULT_STATS = {
-  totalEmployees: 0,
-  presentToday: 0,
-  lateToday: 0,
-  absentToday: 0,
-  pendingReviews: 0,
-  pendingLeaveRequests: 0,
-  onLeaveToday: 0,
-  currentPayrollTotal: 0,
-  payrollPendingApproval: 0,
-  payrollReleased: 0,
+  totalSales: 0,
+  totalReservations: 0,
+  pendingReservations: 0,
+  paidPayments: 0,
+  pendingPayments: 0,
+  rejectedPayments: 0,
+  totalCustomers: 0,
+  activeCustomers: 0,
+  totalAppointments: 0,
+  groomingRequests: 0,
+  veterinaryAppointments: 0,
+  boardingBookings: 0,
+  lowStockItems: 0,
+  completedServices: 0,
+  todayAppointments: 0,
+  todayRevenue: 0,
+  monthlyRevenue: 0,
+  approvedOrders: 0,
+  rejectedOrders: 0,
 };
 
 const normalizeList = (payload, keys = []) => {
@@ -131,77 +140,32 @@ const getEmployeeRole = (record) =>
   record?.department ||
   "Staff";
 
-const buildStatsFromData = (dashboardData, attendanceList, payrollList) => {
-  const pendingAttendance = attendanceList.filter((item) => {
-    const reviewStatus = normalizeStatus(
-      item.review_status || item.manager_review_status || item.reviewed_status
-    );
-
-    return (
-      reviewStatus === "pending" ||
-      reviewStatus === "unreviewed" ||
-      item.reviewed === false ||
-      item.is_reviewed === false
-    );
-  }).length;
-
-  const presentToday = attendanceList.filter(
-    (item) => normalizeStatus(item.status) === "present"
-  ).length;
-
-  const lateToday = attendanceList.filter(
-    (item) => normalizeStatus(item.status) === "late"
-  ).length;
-
-  const absentToday = attendanceList.filter(
-    (item) => normalizeStatus(item.status) === "absent"
-  ).length;
-
-  const payrollPendingApproval = payrollList.filter((item) =>
-    ["pending", "pending_review", "for_approval", "draft"].includes(
-      normalizeStatus(item.status || item.payroll_status)
-    )
-  ).length;
-
-  const payrollReleased = payrollList.filter((item) =>
-    ["released", "paid"].includes(normalizeStatus(item.status || item.payroll_status))
-  ).length;
-
-  const currentPayrollTotal = payrollList.reduce(
-    (sum, item) =>
-      sum +
-      toNumber(
-        item.net_pay ||
-          item.total_net_pay ||
-          item.amount ||
-          item.total_amount ||
-          item.gross_pay
-      ),
-    0
-  );
-
+const buildStatsFromData = (dashboardData) => {
   return {
-    totalEmployees:
-      toNumber(dashboardData.total_employees) ||
-      toNumber(dashboardData.total_staff) ||
-      new Set(attendanceList.map((item) => getEmployeeName(item))).size ||
-      payrollList.length,
-    presentToday: toNumber(dashboardData.present_today) || presentToday,
-    lateToday: toNumber(dashboardData.late_today) || lateToday,
-    absentToday: toNumber(dashboardData.absent_today) || absentToday,
-    pendingReviews:
-      toNumber(dashboardData.pending_reviews) ||
-      toNumber(dashboardData.pending_attendance_reviews) ||
-      pendingAttendance,
-    currentPayrollTotal:
-      toNumber(dashboardData.current_payroll_total) ||
-      toNumber(dashboardData.total_payroll) ||
-      currentPayrollTotal,
-    payrollPendingApproval:
-      toNumber(dashboardData.payroll_pending_approval) || payrollPendingApproval,
-    payrollReleased: toNumber(dashboardData.payroll_released) || payrollReleased,
+    totalSales: toNumber(dashboardData.sales_total) || 0,
+    totalReservations: toNumber(dashboardData.total_orders) || 0,
+    pendingReservations: toNumber(dashboardData.pending_reservations || dashboardData.pending_orders) || 0,
+    paidPayments: toNumber(dashboardData.paid_orders) || 0,
+    pendingPayments: toNumber(dashboardData.pending_payments) || 0,
+    rejectedPayments: toNumber(dashboardData.rejected_payments) || 0,
+    totalCustomers: toNumber(dashboardData.total_customers) || 0,
+    activeCustomers: toNumber(dashboardData.active_customers || dashboardData.total_customers) || 0,
+    totalAppointments: toNumber(dashboardData.total_appointments) || 0,
+    groomingRequests: toNumber(dashboardData.grooming_requests) || 0,
+    veterinaryAppointments: toNumber(dashboardData.veterinary_appointments) || 0,
+    boardingBookings: toNumber(dashboardData.boarding_bookings) || 0,
+    lowStockItems: toNumber(dashboardData.low_stock_count) || 0,
+    completedServices: toNumber(dashboardData.completed_services) || 0,
+    todayAppointments: toNumber(dashboardData.today_appointments) || 0,
+    todayRevenue: toNumber(dashboardData.today_revenue) || 0,
+    monthlyRevenue: toNumber(dashboardData.monthly_revenue) || 0,
+    approvedOrders: toNumber(dashboardData.approved_orders) || 0,
+    rejectedOrders: toNumber(dashboardData.rejected_orders) || 0,
   };
 };
+
+const recordKey = (source, record, index) =>
+  `${source}-${record?.source || record?.type || record?.category || "record"}-${record?.id || record?.payment_id || record?.request_id || record?.item_id || record?.log_id || "no-id"}-${index}`;
 
 const ManagerDashboard = () => {
   const { user, updateUser } = useAuth();
@@ -215,8 +179,10 @@ const ManagerDashboard = () => {
   const [lastUpdated, setLastUpdated] = useState("");
 
   const [dashboardStats, setDashboardStats] = useState(DEFAULT_STATS);
-  const [todayAttendance, setTodayAttendance] = useState([]);
-  const [payrollPeriod, setPayrollPeriod] = useState([]);
+  const [recentPayments, setRecentPayments] = useState([]);
+  const [recentBookings, setRecentBookings] = useState([]);
+  const [upcomingAppointments, setUpcomingAppointments] = useState([]);
+  const [lowStockItems, setLowStockItems] = useState([]);
   const [recentActivity, setRecentActivity] = useState([]);
 
   const location = useLocation();
@@ -257,30 +223,50 @@ const ManagerDashboard = () => {
 
         setError("");
 
+        const requestResults = await Promise.allSettled([
+          apiRequest("/manager/dashboard"),
+          apiRequest("/manager/reports/payments"),
+          apiRequest("/manager/reports/services"),
+          apiRequest("/manager/reports/veterinary-services"),
+          apiRequest("/manager/reports/inventory"),
+          apiRequest("/manager/history"),
+        ]);
+
         const [
           dashboardResponse,
-          attendanceResponse,
-          payrollResponse,
+          paymentsResponse,
+          bookingsResponse,
+          appointmentsResponse,
+          lowStockResponse,
           historyResponse,
-        ] = await Promise.all([
-          apiRequest("/manager/dashboard").catch(() => null),
-          apiRequest("/manager/attendance").catch(() => null),
-          apiRequest("/manager/payroll").catch(() => null),
-          apiRequest("/manager/history").catch(() => null),
-        ]);
+        ] = requestResults.map((result) => (result.status === "fulfilled" ? result.value : null));
 
         const dashboardData = dashboardResponse?.data || dashboardResponse || {};
 
-        const attendanceList = normalizeList(attendanceResponse, [
-          "attendance",
+        const paymentsList = normalizeList(paymentsResponse, [
+          "payments",
           "records",
-          "items",
+          "data",
         ]);
 
-        const payrollList = normalizeList(payrollResponse, [
-          "payroll",
-          "records",
+        const bookingsList = normalizeList(bookingsResponse, [
+          "services",
+          "service_requests",
+          "requests",
+          "data",
+        ]);
+
+        const appointmentsList = normalizeList(appointmentsResponse, [
+          "appointments",
+          "veterinary_services",
+          "data",
+        ]);
+
+        const lowStockList = normalizeList(lowStockResponse, [
+          "inventory",
           "items",
+          "low_stock",
+          "data",
         ]);
 
         const historyList = normalizeList(historyResponse, [
@@ -290,22 +276,21 @@ const ManagerDashboard = () => {
           "records",
         ]);
 
-        setDashboardStats(
-          buildStatsFromData(dashboardData, attendanceList, payrollList)
-        );
-
-        setTodayAttendance(attendanceList.slice(0, 6));
-        setPayrollPeriod(payrollList.slice(0, 6));
+        setDashboardStats({ ...DEFAULT_STATS, ...buildStatsFromData(dashboardData) });
+        setRecentPayments(paymentsList.slice(0, 6));
+        setRecentBookings(bookingsList.slice(0, 6));
+        setUpcomingAppointments(appointmentsList.slice(0, 6));
+        setLowStockItems(lowStockList.slice(0, 6));
         setRecentActivity(historyList.slice(0, 6));
         setLastUpdated(new Date().toLocaleString("en-PH"));
 
-        if (!dashboardResponse && !attendanceResponse && !payrollResponse) {
+        if (!dashboardResponse && !paymentsResponse && !bookingsResponse) {
           setError(
-            "No manager dashboard endpoint returned data yet. The dashboard is ready, but backend data still needs to be connected."
+            "No manager dashboard data available yet. The dashboard is ready, but backend data still needs to be connected."
           );
         }
       } catch (err) {
-        console.error("Manager dashboard fetch error:", err);
+        setDashboardStats(DEFAULT_STATS);
         setError(err.message || "Failed to load manager dashboard data.");
       } finally {
         setLoading(false);
@@ -324,74 +309,123 @@ const ManagerDashboard = () => {
   const summaryCards = useMemo(
     () => [
       {
-        title: "Total Employees",
-        value: dashboardStats.totalEmployees,
-        subtitle: "Active workforce",
-        icon: faUsers,
-        tone: "primary",
-      },
-      {
-        title: "Present Today",
-        value: dashboardStats.presentToday,
-        subtitle: "On duty today",
-        icon: faCheck,
-        tone: "success",
-      },
-      {
-        title: "Late Today",
-        value: dashboardStats.lateToday,
-        subtitle: "Late arrivals",
-        icon: faClock,
-        tone: "warning",
-      },
-      {
-        title: "Absent Today",
-        value: dashboardStats.absentToday,
-        subtitle: "Not present",
-        icon: faTimes,
-        tone: "danger",
-      },
-      {
-        title: "Pending Reviews",
-        value: dashboardStats.pendingReviews,
-        subtitle: "Attendance needing review",
-        icon: faExclamationTriangle,
-        tone: "info",
-      },
-      {
-        title: "Pending Leave",
-        value: dashboardStats.pendingLeaveRequests || 0,
-        subtitle: "Leave requests awaiting approval",
-        icon: faCalendarCheck,
-        tone: "warning",
-      },
-      {
-        title: "On Leave Today",
-        value: dashboardStats.onLeaveToday || 0,
-        subtitle: "Employees on approved leave",
-        icon: faMoon,
-        tone: "neutral",
-      },
-      {
-        title: "Current Payroll",
-        value: formatCurrency(dashboardStats.currentPayrollTotal),
-        subtitle: "Current period estimate",
+        title: "Total Revenue",
+        value: formatCurrency(dashboardStats.totalSales),
+        subtitle: "Overall revenue",
         icon: faMoneyBill,
         tone: "money",
       },
       {
-        title: "Pending Approval",
-        value: dashboardStats.payrollPendingApproval,
-        subtitle: "Payroll records waiting",
+        title: "Total Reservations",
+        value: dashboardStats.totalReservations,
+        subtitle: "Orders, service requests, and bookings",
+        icon: faClipboardList,
+        tone: "primary",
+      },
+      {
+        title: "Pending Reservations",
+        value: dashboardStats.pendingReservations,
+        subtitle: "Awaiting receptionist action",
         icon: faClock,
         tone: "warning",
       },
       {
-        title: "Released Payroll",
-        value: dashboardStats.payrollReleased,
-        subtitle: "Released payments",
+        title: "Paid Payments",
+        value: dashboardStats.paidPayments,
+        subtitle: "Completed transactions",
         icon: faCheck,
         tone: "success",
+      },
+      {
+        title: "Pending Payments",
+        value: dashboardStats.pendingPayments,
+        subtitle: "Awaiting verification",
+        icon: faClock,
+        tone: "warning",
+      },
+      {
+        title: "Rejected Payments",
+        value: dashboardStats.rejectedPayments,
+        subtitle: "Rejected proof or payment records",
+        icon: faTimes,
+        tone: "danger",
+      },
+      {
+        title: "Total Customers",
+        value: dashboardStats.totalCustomers,
+        subtitle: "Registered clients",
+        icon: faUsers,
+        tone: "primary",
+      },
+      {
+        title: "Active Customers",
+        value: dashboardStats.activeCustomers,
+        subtitle: "Currently active customer records",
+        icon: faUsers,
+        tone: "success",
+      },
+      {
+        title: "Total Appointments",
+        value: dashboardStats.totalAppointments,
+        subtitle: "Scheduled services",
+        icon: faCalendarCheck,
+        tone: "info",
+      },
+      {
+        title: "Grooming Requests",
+        value: dashboardStats.groomingRequests,
+        subtitle: "Pet grooming bookings",
+        icon: faCalendarAlt,
+        tone: "neutral",
+      },
+      {
+        title: "Veterinary Appointments",
+        value: dashboardStats.veterinaryAppointments,
+        subtitle: "Vet consultations",
+        icon: faCalendarCheck,
+        tone: "success",
+      },
+      {
+        title: "Boarding Bookings",
+        value: dashboardStats.boardingBookings,
+        subtitle: "Hotel stays",
+        icon: faMoon,
+        tone: "info",
+      },
+      {
+        title: "Low Stock Items",
+        value: dashboardStats.lowStockItems,
+        subtitle: "Needs restocking",
+        icon: faExclamationTriangle,
+        tone: "danger",
+      },
+      {
+        title: "Completed Services",
+        value: dashboardStats.completedServices,
+        subtitle: "Finished services",
+        icon: faCheck,
+        tone: "success",
+      },
+      {
+        title: "Today's Appointments",
+        value: dashboardStats.todayAppointments,
+        subtitle: "Scheduled for today",
+        icon: faCalendarAlt,
+        tone: "info",
+      },
+      {
+        title: "Today's Revenue",
+        value: formatCurrency(dashboardStats.todayRevenue),
+        subtitle: "Daily earnings",
+        icon: faChartLine,
+        tone: "money",
+      },
+      {
+        title: "Monthly Revenue",
+        value: formatCurrency(dashboardStats.monthlyRevenue),
+        subtitle: "This month",
+        icon: faChartLine,
+        tone: "primary",
       },
     ],
     [dashboardStats]
@@ -399,81 +433,58 @@ const ManagerDashboard = () => {
 
   const quickActions = [
     {
-      title: "View Attendance",
-      description: "Review daily employee attendance records.",
-      icon: faCalendarAlt,
-      path: "/manager/attendance",
-    },
-    {
-      title: "Fingerprint Kiosk",
-      description: "Open biometric check-in for employees.",
-      icon: faFingerprint,
-      path: "/manager/kiosk",
-    },
-    {
-      title: "Manage Leave",
-      description: "Review and approve employee leave requests.",
-      icon: faCalendarCheck,
-      path: "/manager/leaves",
-    },
-    {
-      title: "Work Schedule",
-      description: "Assign and manage employee shifts.",
-      icon: faTableCells,
-      path: "/manager/schedule",
-    },
-    {
-      title: "Manage Payroll",
-      description: "Monitor payroll periods and payroll status.",
-      icon: faMoneyBill,
-      path: "/manager/payroll",
-    },
-    {
-      title: "View Reports",
-      description: "Open attendance and payroll reports.",
+      title: "Sales Report",
+      description: "View detailed sales analytics and trends.",
       icon: faChartLine,
       path: "/manager/reports",
     },
     {
+      title: "Payment Report",
+      description: "Monitor payment status and transactions.",
+      icon: faMoneyBill,
+      path: "/manager/reports",
+    },
+    {
+      title: "Inventory Report",
+      description: "Check stock levels and low stock alerts.",
+      icon: faExclamationTriangle,
+      path: "/manager/reports",
+    },
+    {
+      title: "Service Report",
+      description: "View service requests and completions.",
+      icon: faCalendarCheck,
+      path: "/manager/reports",
+    },
+    {
+      title: "Customer Report",
+      description: "Analyze customer data and activity.",
+      icon: faUsers,
+      path: "/manager/reports",
+    },
+    {
+      title: "Staff Performance",
+      description: "Review staff productivity metrics.",
+      icon: faUsers,
+      path: "/manager/reports",
+    },
+    {
       title: "View History",
-      description: "Review manager activity and audit trail.",
+      description: "Review business activity and audit trail.",
       icon: faHistory,
       path: "/manager/history",
     },
   ];
 
-  const payrollTotals = useMemo(() => {
-    const totalNetPay = payrollPeriod.reduce(
-      (sum, item) =>
-        sum +
-        toNumber(
-          item.net_pay ||
-            item.total_net_pay ||
-            item.amount ||
-            item.total_amount ||
-            item.gross_pay
-        ),
-      0
-    );
-
-    const approved = payrollPeriod.filter((item) =>
-      ["approved", "released", "paid"].includes(
-        normalizeStatus(item.status || item.payroll_status)
-      )
-    ).length;
-
-    const pending = payrollPeriod.filter((item) =>
-      ["pending", "pending_review", "for_approval", "draft"].includes(
-        normalizeStatus(item.status || item.payroll_status)
-      )
-    ).length;
-
+  const revenueTotals = useMemo(() => {
     return {
-      totalNetPay,
-      approved,
-      pending,
+      totalRevenue: dashboardStats.totalSales,
+      todayRevenue: dashboardStats.todayRevenue,
+      monthlyRevenue: dashboardStats.monthlyRevenue,
+      approvedOrders: dashboardStats.approvedOrders,
+      rejectedOrders: dashboardStats.rejectedOrders,
     };
-  }, [payrollPeriod]);
+  }, [dashboardStats]);
 
   const sidebar = <ManagerSidebar />;
 
@@ -495,16 +506,16 @@ const ManagerDashboard = () => {
   );
 
   const ROUTE_META = [
-    { path: "/manager", title: "Manager Dashboard", subtitle: "Workforce, attendance, payroll, and reporting overview." },
-    { path: "/manager/staff", title: "Staff Management", subtitle: "Manage employee records, roles, and department assignments." },
-    { path: "/manager/attendance", title: "Attendance Tracking", subtitle: "Monitor daily clock-ins, absences, and tardiness." },
-    { path: "/manager/leaves", title: "Leave Requests", subtitle: "Review and approve employee leave applications." },
-    { path: "/manager/schedule", title: "Work Schedule", subtitle: "Plan shifts, assign tasks, and manage staff rosters." },
-    { path: "/manager/payroll", title: "Payroll Management", subtitle: "Process salaries, deductions, and payment releases." },
-    { path: "/manager/payroll/compute", title: "Payroll Computation", subtitle: "Calculate wages, overtime, bonuses, and net pay." },
-    { path: "/manager/history", title: "Activity History", subtitle: "Review past workforce actions, changes, and approvals." },
-    { path: "/manager/reports", title: "Reports", subtitle: "Access workforce analytics, attendance summaries, and payroll reports." },
-    { path: "/manager/kiosk", title: "Fingerprint Kiosk", subtitle: "Biometric attendance check-in and check-out station." },
+    { path: "/manager", title: "Manager Dashboard", subtitle: "Executive monitoring dashboard for reservations, services, payments, inventory, customers, and business performance." },
+    { path: "/manager/staff", title: "Staff Performance", subtitle: "Monitor employee records and workforce performance (read-only)." },
+    { path: "/manager/payroll", title: "Payroll Summary", subtitle: "View payroll status and cost summaries (read-only)." },
+    { path: "/manager/history", title: "History / Audit Trail", subtitle: "Review business activity and system audit logs." },
+    { path: "/manager/reports", title: "Reports", subtitle: "Access sales, payment, inventory, service, customer, and staff performance reports." },
+    { path: "/manager/reservations", title: "Reservations Monitoring", subtitle: "Monitor appointment, grooming, boarding, and customer reservation activity." },
+    { path: "/manager/services", title: "Service Monitoring", subtitle: "Monitor veterinary, grooming, and boarding service performance." },
+    { path: "/manager/payments", title: "Payment Monitoring", subtitle: "Monitor paid, pending, and rejected payment records." },
+    { path: "/manager/inventory", title: "Inventory Monitoring", subtitle: "Monitor stock levels, low-stock alerts, and inventory report data." },
+    { path: "/manager/customers", title: "Customer Records", subtitle: "Review customer records and activity summaries." },
     { path: "/manager/profile", title: "Profile Settings", subtitle: "Manage your account details and preferences." },
   ];
 
@@ -525,273 +536,332 @@ const ManagerDashboard = () => {
 
         {showOverview ? (
           <section className="manager-dashboard-content">
-            {loading ? (
+            {loading && (
               <div className="manager-state-card">
                 <FontAwesomeIcon icon={faSpinner} spin />
-                <h2>Loading manager dashboard</h2>
-                <p>Please wait while the workforce and payroll overview loads.</p>
+                <h2>Loading Manager Dashboard</h2>
+                <p>Please wait while the executive monitoring dashboard loads.</p>
               </div>
-            ) : (
-              <>
-                {error && (
-                  <div className="manager-alert warning">
-                    <div>
-                      <FontAwesomeIcon icon={faExclamationTriangle} />
-                      <span>{error}</span>
-                    </div>
+            )}
 
-                    <button type="button" onClick={() => fetchDashboardData()}>
-                      Retry
-                    </button>
+            {error && (
+              <div className="manager-alert warning">
+                <div>
+                  <FontAwesomeIcon icon={faExclamationTriangle} />
+                  <span>{error}</span>
+                </div>
+
+                <button type="button" onClick={() => fetchDashboardData()}>
+                  Retry
+                </button>
+              </div>
+            )}
+
+            <section className="manager-hero">
+              <div className="manager-hero-copy">
+                <span className="manager-eyebrow">Executive Summary</span>
+                <h2>Business monitoring, reservations, services, payments, inventory, and reports overview.</h2>
+                <p>
+                  This executive monitoring dashboard provides a comprehensive view of Pawesome operations,
+                  including reservations, veterinary services, grooming, hotel/boarding, payments, inventory,
+                  customers, staff performance, and business reports.
+                </p>
+                <small>
+                  Last updated: {lastUpdated || "Not refreshed yet"}
+                </small>
+              </div>
+
+              <div className="manager-hero-panel">
+                <div>
+                  <span>Total Revenue</span>
+                  <strong>{formatCurrency(dashboardStats.totalSales)}</strong>
+                  <small>Overall business revenue</small>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() => navigate("/manager/reports")}
+                >
+                  View Reports
+                  <FontAwesomeIcon icon={faArrowRight} />
+                </button>
+              </div>
+            </section>
+
+            <section className="manager-summary-grid">
+              {summaryCards.map((card) => (
+                <article
+                  className={`manager-stat-card ${card.tone}`}
+                  key={card.title}
+                >
+                  <span className="manager-stat-icon">
+                    <FontAwesomeIcon icon={card.icon} />
+                  </span>
+
+                  <div>
+                    <strong>{card.value}</strong>
+                    <p>{card.title}</p>
+                    <small>{card.subtitle}</small>
                   </div>
-                )}
+                </article>
+              ))}
+            </section>
 
-                <section className="manager-hero">
-                  <div className="manager-hero-copy">
-                    <span className="manager-eyebrow">Workforce & Payroll Overview</span>
-                    <h2>Monitor attendance, payroll readiness, and staff activity.</h2>
-                    <p>
-                      This dashboard gives the manager a clear overview of daily
-                      attendance, pending reviews, payroll status, and recent
-                      workforce-related activity.
-                    </p>
-                    <small>
-                      Last updated: {lastUpdated || "Not refreshed yet"}
-                    </small>
+            <section className="manager-quick-actions">
+              {quickActions.map((action) => (
+                <button
+                  type="button"
+                  className="manager-action-card"
+                  key={action.title}
+                  onClick={() => navigate(action.path)}
+                >
+                  <span>
+                    <FontAwesomeIcon icon={action.icon} />
+                  </span>
+
+                  <div>
+                    <strong>{action.title}</strong>
+                    <small>{action.description}</small>
                   </div>
 
-                  <div className="manager-hero-panel">
-                    <div>
-                      <span>Payroll Estimate</span>
-                      <strong>{formatCurrency(dashboardStats.currentPayrollTotal)}</strong>
-                      <small>Current payroll period</small>
-                    </div>
+                  <FontAwesomeIcon icon={faArrowRight} />
+                </button>
+              ))}
+            </section>
 
-                    <button
-                      type="button"
-                      onClick={() => navigate("/manager/payroll")}
-                    >
-                      Open Payroll
-                      <FontAwesomeIcon icon={faArrowRight} />
-                    </button>
-                  </div>
-                </section>
+            <section className="manager-overview-grid">
+              <article className="manager-panel manager-panel-large">
+                <PanelHeader
+                  eyebrow="Recent Payments"
+                  title="Latest Payment Transactions"
+                  actionLabel="View All"
+                  onAction={() => navigate("/manager/reports")}
+                />
 
-                <section className="manager-summary-grid">
-                  {summaryCards.map((card) => (
-                    <article
-                      className={`manager-stat-card ${card.tone}`}
-                      key={card.title}
-                    >
-                      <span className="manager-stat-icon">
-                        <FontAwesomeIcon icon={card.icon} />
-                      </span>
-
-                      <div>
-                        <strong>{card.value}</strong>
-                        <p>{card.title}</p>
-                        <small>{card.subtitle}</small>
-                      </div>
-                    </article>
-                  ))}
-                </section>
-
-                <section className="manager-quick-actions">
-                  {quickActions.map((action) => (
-                    <button
-                      type="button"
-                      className="manager-action-card"
-                      key={action.title}
-                      onClick={() => navigate(action.path)}
-                    >
-                      <span>
-                        <FontAwesomeIcon icon={action.icon} />
-                      </span>
-
-                      <div>
-                        <strong>{action.title}</strong>
-                        <small>{action.description}</small>
-                      </div>
-
-                      <FontAwesomeIcon icon={faArrowRight} />
-                    </button>
-                  ))}
-                </section>
-
-                <section className="manager-overview-grid">
-                  <article className="manager-panel manager-panel-large">
-                    <PanelHeader
-                      eyebrow="Daily Attendance"
-                      title="Today's Attendance Snapshot"
-                      actionLabel="View All"
-                      onAction={() => navigate("/manager/attendance")}
-                    />
-
-                    {todayAttendance.length === 0 ? (
-                      <EmptyPanel
-                        icon={faClipboardList}
-                        title="No attendance records"
-                        message="No employee attendance records are available for today."
-                      />
-                    ) : (
-                      <div className="manager-record-list">
-                        {todayAttendance.map((record, index) => {
-                          const status = normalizeStatus(record.status);
-
-                          return (
-                            <div
-                              className="manager-record-item"
-                              key={record.id || record.attendance_id || index}
-                            >
-                              <div className="manager-record-main">
-                                <span className="manager-avatar">
-                                  {getEmployeeName(record).charAt(0).toUpperCase()}
-                                </span>
-
-                                <div>
-                                  <strong>{getEmployeeName(record)}</strong>
-                                  <small>{getEmployeeRole(record)}</small>
-                                </div>
-                              </div>
-
-                              <div className="manager-time-group">
-                                <span>In: {formatTime(record.time_in)}</span>
-                                <span>Out: {formatTime(record.time_out)}</span>
-                              </div>
-
-                              <span className={`manager-status-badge ${status}`}>
-                                {formatStatusLabel(status)}
-                              </span>
-                            </div>
-                          );
-                        })}
-                      </div>
-                    )}
-                  </article>
-
-                  <article className="manager-panel">
-                    <PanelHeader
-                      eyebrow="Payroll"
-                      title="Payroll Period Snapshot"
-                      actionLabel="View All"
-                      onAction={() => navigate("/manager/payroll")}
-                    />
-
-                    <div className="manager-payroll-summary">
-                      <div>
-                        <small>Visible Net Pay</small>
-                        <strong>{formatCurrency(payrollTotals.totalNetPay)}</strong>
-                      </div>
-
-                      <div>
-                        <small>Approved / Released</small>
-                        <strong>{payrollTotals.approved}</strong>
-                      </div>
-
-                      <div>
-                        <small>Pending Review</small>
-                        <strong>{payrollTotals.pending}</strong>
-                      </div>
-                    </div>
-
-                    {payrollPeriod.length === 0 ? (
-                      <EmptyPanel
-                        icon={faMoneyBill}
-                        title="No payroll records"
-                        message="No payroll period records are available yet."
-                      />
-                    ) : (
-                      <div className="manager-compact-list">
-                        {payrollPeriod.map((payroll, index) => {
-                          const status = normalizeStatus(
-                            payroll.status || payroll.payroll_status
-                          );
-
-                          return (
-                            <div
-                              className="manager-compact-item"
-                              key={payroll.id || payroll.payroll_id || index}
-                            >
-                              <div>
-                                <strong>{getEmployeeName(payroll)}</strong>
-                                <small>{getEmployeeRole(payroll)}</small>
-                              </div>
-
-                              <div>
-                                <span>
-                                  {formatCurrency(
-                                    payroll.net_pay ||
-                                      payroll.total_net_pay ||
-                                      payroll.amount ||
-                                      payroll.total_amount ||
-                                      0
-                                  )}
-                                </span>
-                                <small className={`manager-text-status ${status}`}>
-                                  {formatStatusLabel(status)}
-                                </small>
-                              </div>
-                            </div>
-                          );
-                        })}
-                      </div>
-                    )}
-                  </article>
-                </section>
-
-                <section className="manager-panel">
-                  <PanelHeader
-                    eyebrow="Audit Trail"
-                    title="Recent Manager Activity"
-                    actionLabel="View History"
-                    onAction={() => navigate("/manager/history")}
+                {recentPayments.length === 0 ? (
+                  <EmptyPanel
+                    icon={faMoneyBill}
+                    title="No recent payments"
+                    message="No payment transactions are available yet."
                   />
+                ) : (
+                  <div className="manager-record-list">
+                    {recentPayments.map((payment, index) => {
+                      const status = normalizeStatus(payment.status || payment.payment_status);
+                      const amount = toNumber(payment.amount || payment.total_amount || 0);
 
-                  {recentActivity.length === 0 ? (
-                    <EmptyPanel
-                      icon={faHistory}
-                      title="No recent activity"
-                      message="Manager action history will appear here once available."
-                    />
-                  ) : (
-                    <div className="manager-activity-list">
-                      {recentActivity.map((activity, index) => (
+                      return (
                         <div
-                          className="manager-activity-item"
-                          key={activity.id || activity.log_id || index}
+                          className="manager-record-item"
+                          key={recordKey("payment", payment, index)}
                         >
-                          <span>
-                            <FontAwesomeIcon icon={faClipboardList} />
-                          </span>
+                          <div className="manager-record-main">
+                            <span className="manager-avatar">
+                              {payment.customer_name?.charAt(0).toUpperCase() || "C"}
+                            </span>
+
+                            <div>
+                              <strong>{payment.customer_name || "Customer"}</strong>
+                              <small>{payment.payment_type || payment.payment_method || "N/A"}</small>
+                            </div>
+                          </div>
 
                           <div>
-                            <strong>
-                              {activity.action ||
-                                activity.type ||
-                                activity.event ||
-                                "Manager Action"}
-                            </strong>
-                            <p>
-                              {activity.description ||
-                                activity.remarks ||
-                                activity.message ||
-                                "No description provided."}
-                            </p>
-                            <small>
-                              {formatDateTime(
-                                activity.created_at ||
-                                  activity.date ||
-                                  activity.timestamp
-                              )}
+                            <span>{formatCurrency(amount)}</span>
+                            <small className={`manager-text-status ${status}`}>
+                              {formatStatusLabel(status)}
                             </small>
                           </div>
                         </div>
-                      ))}
+                      );
+                    })}
+                  </div>
+                )}
+              </article>
+
+              <article className="manager-panel">
+                <PanelHeader
+                  eyebrow="Revenue Summary"
+                  title="Business Revenue Overview"
+                  actionLabel="View Reports"
+                  onAction={() => navigate("/manager/reports")}
+                />
+
+                <div className="manager-payroll-summary">
+                  <div>
+                    <small>Total Revenue</small>
+                    <strong>{formatCurrency(revenueTotals.totalRevenue)}</strong>
+                  </div>
+
+                  <div>
+                    <small>Today's Revenue</small>
+                    <strong>{formatCurrency(revenueTotals.todayRevenue)}</strong>
+                  </div>
+
+                  <div>
+                    <small>Monthly Revenue</small>
+                    <strong>{formatCurrency(revenueTotals.monthlyRevenue)}</strong>
+                  </div>
+                </div>
+
+                <div className="manager-compact-list">
+                  <div className="manager-compact-item">
+                    <div>
+                      <strong>Approved Orders</strong>
+                      <small>Orders approved by receptionist</small>
                     </div>
-                  )}
-                </section>
-              </>
-            )}
+                    <span>{revenueTotals.approvedOrders}</span>
+                  </div>
+                  <div className="manager-compact-item">
+                    <div>
+                      <strong>Rejected Orders</strong>
+                      <small>Orders rejected or cancelled</small>
+                    </div>
+                    <span>{revenueTotals.rejectedOrders}</span>
+                  </div>
+                </div>
+              </article>
+            </section>
+
+            <section className="manager-overview-grid">
+              <article className="manager-panel manager-panel-large">
+                <PanelHeader
+                  eyebrow="Recent Bookings"
+                  title="Latest Service Requests"
+                  actionLabel="View All"
+                  onAction={() => navigate("/manager/reports")}
+                />
+
+                {recentBookings.length === 0 ? (
+                  <EmptyPanel
+                    icon={faCalendarCheck}
+                    title="No recent bookings"
+                    message="No service requests are available yet."
+                  />
+                ) : (
+                  <div className="manager-record-list">
+                    {recentBookings.map((booking, index) => {
+                      const status = normalizeStatus(booking.status || booking.request_status);
+                      const serviceType = booking.request_type || booking.service_name || "Service";
+
+                      return (
+                        <div
+                          className="manager-record-item"
+                          key={recordKey("booking", booking, index)}
+                        >
+                          <div className="manager-record-main">
+                            <span className="manager-avatar">
+                              {serviceType.charAt(0).toUpperCase()}
+                            </span>
+
+                            <div>
+                              <strong>{serviceType}</strong>
+                              <small>{booking.customer_name || booking.pet_name || "N/A"}</small>
+                            </div>
+                          </div>
+
+                          <span className={`manager-status-badge ${status}`}>
+                            {formatStatusLabel(status)}
+                          </span>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </article>
+
+              <article className="manager-panel">
+                <PanelHeader
+                  eyebrow="Low Stock Alert"
+                  title="Items Needing Restock"
+                  actionLabel="View Inventory"
+                  onAction={() => navigate("/manager/reports")}
+                />
+
+                {lowStockItems.length === 0 ? (
+                  <EmptyPanel
+                    icon={faCheck}
+                    title="Stock levels healthy"
+                    message="No items are currently below reorder level."
+                  />
+                ) : (
+                  <div className="manager-compact-list">
+                    {lowStockItems.map((item, index) => {
+                      const stock = toNumber(item.stock || item.quantity || 0);
+                      const reorderLevel = toNumber(item.reorder_level || item.min_stock || 0);
+
+                      return (
+                        <div
+                          className="manager-compact-item"
+                          key={recordKey("inventory", item, index)}
+                        >
+                          <div>
+                            <strong>{item.name || item.item_name || "Item"}</strong>
+                            <small>Stock: {stock} / Reorder at: {reorderLevel}</small>
+                          </div>
+
+                          <span className={`manager-text-status ${stock <= reorderLevel ? "danger" : "success"}`}>
+                            {stock <= reorderLevel ? "Low" : "OK"}
+                          </span>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </article>
+            </section>
+
+            <section className="manager-panel">
+              <PanelHeader
+                eyebrow="Audit Trail"
+                title="Recent Manager Activity"
+                actionLabel="View History"
+                onAction={() => navigate("/manager/history")}
+              />
+
+              {recentActivity.length === 0 ? (
+                <EmptyPanel
+                  icon={faHistory}
+                  title="No recent activity"
+                  message="Manager action history will appear here once available."
+                />
+              ) : (
+                <div className="manager-activity-list">
+                  {recentActivity.map((activity, index) => (
+                    <div
+                      className="manager-activity-item"
+                      key={recordKey("activity", activity, index)}
+                    >
+                      <span>
+                        <FontAwesomeIcon icon={faClipboardList} />
+                      </span>
+
+                      <div>
+                        <strong>
+                          {activity.action ||
+                            activity.type ||
+                            activity.event ||
+                            "Manager Action"}
+                        </strong>
+                        <p>
+                          {activity.description ||
+                            activity.remarks ||
+                            activity.message ||
+                            "No description provided."}
+                        </p>
+                        <small>
+                          {formatDateTime(
+                            activity.created_at ||
+                              activity.date ||
+                              activity.timestamp
+                          )}
+                        </small>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </section>
 
             {toast && (
               <div className={`manager-toast ${toast.type}`}>

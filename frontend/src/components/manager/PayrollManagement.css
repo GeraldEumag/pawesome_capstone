@@ -1,6 +1,21 @@
 /* PayrollManagement.css */
 /* Professional Manager Payroll Management UI */
 
+.readonly-badge {
+  display: inline-flex;
+  align-items: center;
+  margin-left: 0.5rem;
+  padding: 0.25rem 0.75rem;
+  border-radius: var(--payroll-radius-pill);
+  background: rgba(100, 116, 139, 0.15);
+  color: var(--payroll-muted);
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  border: 1px solid rgba(100, 116, 139, 0.25);
+}
+
 .manager-payroll {
   --payroll-primary: var(--color-primary, #ff5f93);
   --payroll-primary-light: var(--color-primary-light, #ff8db5);

@@ -264,26 +264,29 @@ const normalizeSchedule = (record, index) => ({
 
 const TAB_CONFIG = [
   { key: 'summary', label: 'Summary', icon: faChartLine },
-  { key: 'attendance', label: 'Attendance', icon: faCalendarAlt },
-  { key: 'payroll', label: 'Payroll', icon: faMoneyBillWave },
-  { key: 'leave', label: 'Leave', icon: faCalendarCheck },
-  { key: 'schedule', label: 'Schedule', icon: faCalendarDay },
-  { key: 'biometric', label: 'Biometric', icon: faFingerprint },
-  { key: 'staff', label: 'Staff', icon: faUsers },
+  { key: 'sales', label: 'Sales Report', icon: faFileInvoiceDollar },
+  { key: 'payments', label: 'Payment Report', icon: faMoneyBillWave },
+  { key: 'inventory', label: 'Inventory Report', icon: faTriangleExclamation },
+  { key: 'services', label: 'Service Report', icon: faCalendarCheck },
+  { key: 'customers', label: 'Customer Report', icon: faUsers },
+  { key: 'staff', label: 'Staff Performance', icon: faUserCheck },
+  { key: 'payroll', label: 'Payroll Summary', icon: faFileInvoiceDollar },
 ];
 
-const ManagerReports = () => {
+const ManagerReports = ({ initialTab }) => {
   const defaultRange = useMemo(() => getDefaultDateRange(), []);
 
-  const [activeTab, setActiveTab] = useState("summary");
-  const [attendance, setAttendance] = useState([]);
-  const [payroll, setPayroll] = useState([]);
+  const [activeTab, setActiveTab] = useState(initialTab || "summary");
+  const [salesData, setSalesData] = useState([]);
+  const [paymentsData, setPaymentsData] = useState([]);
+  const [inventoryData, setInventoryData] = useState([]);
+  const [servicesData, setServicesData] = useState([]);
+  const [customersData, setCustomersData] = useState([]);
   const [staff, setStaff] = useState([]);
-  const [leaves, setLeaves] = useState([]);
-  const [schedules, setSchedules] = useState([]);
-  const [biometricSummary, setBiometricSummary] = useState(null);
+  const [payroll, setPayroll] = useState([]);
   const [liveSummary, setLiveSummary] = useState({});
   const [departments, setDepartments] = useState([]);
+  const [reportErrors, setReportErrors] = useState({});
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState("");
@@ -308,75 +311,83 @@ const ManagerReports = () => {
 
         setError("");
 
-        const [
-          liveResponse,
-          attendanceReportResponse,
-          payrollReportResponse,
-          staffResponse,
-          leavesResponse,
-          schedulesResponse,
-          biometricResponse,
-        ] = await Promise.all([
-          apiRequest("/manager/reports/live").catch(() => null),
-          apiRequest("/manager/reports/attendance").catch(() => null),
-          apiRequest("/manager/reports/payroll").catch(() => null),
-          apiRequest("/manager/staff").catch(() => null),
-          apiRequest("/manager/leaves").catch(() => null),
-          apiRequest("/manager/schedules").catch(() => null),
-          apiRequest("/manager/biometric/today-summary").catch(() => null),
-        ]);
+        const requestMap = [
+          ["summary", apiRequest("/manager/reports/live")],
+          ["sales", apiRequest("/manager/reports/sales")],
+          ["payments", apiRequest("/manager/reports/payments")],
+          ["inventory", apiRequest("/manager/reports/inventory")],
+          ["services", apiRequest("/manager/reports/services")],
+          ["customers", apiRequest("/manager/reports/customers")],
+          ["staff", apiRequest("/manager/staff")],
+          ["payroll", apiRequest("/manager/reports/payroll")],
+        ];
+
+        const settled = await Promise.allSettled(requestMap.map(([, request]) => request));
+        const responses = {};
+        const nextErrors = {};
+
+        settled.forEach((result, index) => {
+          const key = requestMap[index][0];
+          if (result.status === "fulfilled") {
+            responses[key] = result.value;
+          } else {
+            responses[key] = null;
+            nextErrors[key] = result.reason?.message || "Report data is unavailable.";
+          }
+        });
+
+        const liveResponse = responses.summary;
+        const salesResponse = responses.sales;
+        const paymentsResponse = responses.payments;
+        const inventoryResponse = responses.inventory;
+        const servicesResponse = responses.services;
+        const customersResponse = responses.customers;
+        const staffResponse = responses.staff;
+        const payrollResponse = responses.payroll;
 
         const liveData = liveResponse?.data || liveResponse || {};
         const summary = liveData.summary || liveData || {};
 
-        const attendanceReport = normalizeList(attendanceReportResponse, [
-          "attendance",
-          "records",
-          "reports",
-          "data",
-        ]);
-
-        const payrollReport = normalizeList(payrollReportResponse, [
-          "payroll",
-          "records",
-          "reports",
-          "data",
-        ]);
-
+        const salesList = normalizeList(salesResponse, ["sales", "records", "data"]);
+        const paymentsList = normalizeList(paymentsResponse, ["payments", "records", "data"]);
+        const inventoryList = normalizeList(inventoryResponse, ["inventory", "items", "data"]);
+        const servicesList = normalizeList(servicesResponse, ["services", "requests", "data"]);
+        const customersList = normalizeList(customersResponse, ["customers", "data"]);
         const staffList = normalizeList(staffResponse, ["staff", "users", "employees", "data"]);
-        const leavesList = normalizeList(leavesResponse, ["leaves", "requests", "data"]);
-        const schedulesList = normalizeList(schedulesResponse, ["schedules", "data"]);
-        const biometricData = biometricResponse?.data || biometricResponse || null;
+        const payrollList = normalizeList(payrollResponse, ["payroll", "records", "data"]);
 
         setLiveSummary(summary);
-        setAttendance(attendanceReport.map(normalizeAttendance));
-        setPayroll(payrollReport.map(normalizePayroll));
+        setSalesData(salesList);
+        setPaymentsData(paymentsList);
+        setInventoryData(inventoryList);
+        setServicesData(servicesList);
+        setCustomersData(customersList);
         setStaff(staffList.map(normalizeStaff));
-        setLeaves(leavesList.map(normalizeLeave));
-        setSchedules(schedulesList.map(normalizeSchedule));
-        setBiometricSummary(biometricData);
+        setPayroll(payrollList.map(normalizePayroll));
+        setReportErrors(nextErrors);
 
         if (
           !liveResponse &&
-          attendanceReport.length === 0 &&
-          payrollReport.length === 0 &&
+          salesList.length === 0 &&
+          paymentsList.length === 0 &&
+          inventoryList.length === 0 &&
+          servicesList.length === 0 &&
+          customersList.length === 0 &&
           staffList.length === 0 &&
-          leavesList.length === 0 &&
-          schedulesList.length === 0
+          payrollList.length === 0
         ) {
-          setError(
-            "No manager report data is available yet. Please verify the manager report endpoints."
-          );
+          setError("No manager report data is available yet. Empty executive report tabs are still available.");
         }
       } catch (err) {
-        console.error("Manager reports load error:", err);
         setError(err.message || "Failed to load manager reports.");
-        setAttendance([]);
-        setPayroll([]);
+        setSalesData([]);
+        setPaymentsData([]);
+        setInventoryData([]);
+        setServicesData([]);
+        setCustomersData([]);
         setStaff([]);
-        setLeaves([]);
-        setSchedules([]);
-        setBiometricSummary(null);
+        setPayroll([]);
+        setReportErrors({ summary: err.message || "Report data is unavailable." });
       } finally {
         setLoading(false);
         setRefreshing(false);
@@ -396,51 +407,104 @@ const ManagerReports = () => {
 
   const statuses = useMemo(() => {
     const source =
-      activeTab === "attendance"
-        ? attendance.map((item) => item.status)
-        : activeTab === "payroll"
-          ? payroll.map((item) => item.status)
-          : activeTab === "leave"
-            ? leaves.map((item) => item.status)
-            : activeTab === "staff"
-              ? staff.map((item) => item.status)
-              : [
-                  ...attendance.map((item) => item.status),
-                  ...payroll.map((item) => item.status),
-                  ...leaves.map((item) => item.status),
-                  ...staff.map((item) => item.status),
-                ];
+      activeTab === "sales"
+        ? salesData.map((item) => item.status)
+        : activeTab === "payments"
+          ? paymentsData.map((item) => item.status)
+          : activeTab === "inventory"
+            ? inventoryData.map((item) => item.status)
+            : activeTab === "services"
+              ? servicesData.map((item) => item.status)
+              : activeTab === "customers"
+                ? customersData.map((item) => item.status)
+                : activeTab === "staff"
+                  ? staff.map((item) => item.status)
+                  : activeTab === "payroll"
+                    ? payroll.map((item) => item.status)
+                    : [
+                        ...salesData.map((item) => item.status),
+                        ...paymentsData.map((item) => item.status),
+                        ...inventoryData.map((item) => item.status),
+                        ...servicesData.map((item) => item.status),
+                        ...customersData.map((item) => item.status),
+                        ...staff.map((item) => item.status),
+                        ...payroll.map((item) => item.status),
+                      ];
 
     return [...new Set(source)].filter(Boolean).sort();
-  }, [activeTab, attendance, payroll, leaves, staff]);
+  }, [activeTab, salesData, paymentsData, inventoryData, servicesData, customersData, staff, payroll]);
 
-  const filteredAttendance = useMemo(() => {
+  const filteredSales = useMemo(() => {
     const search = searchTerm.trim().toLowerCase();
-
-    return attendance.filter((record) => {
+    return salesData.filter((record) => {
       const matchesSearch =
         !search ||
-        [
-          record.employeeName,
-          record.employeeId,
-          record.department,
-          record.role,
-          record.status,
-          record.reviewStatus,
-          record.remarks,
-        ]
+        Object.values(record)
           .join(" ")
           .toLowerCase()
           .includes(search);
-
       const matchesStatus = statusFilter === "all" || record.status === statusFilter;
-      const matchesDepartment =
-        departmentFilter === "all" || record.department === departmentFilter;
       const matchesDate = isWithinDateRange(record.date, startDate, endDate);
-
-      return matchesSearch && matchesStatus && matchesDepartment && matchesDate;
+      return matchesSearch && matchesStatus && matchesDate;
     });
-  }, [attendance, departmentFilter, endDate, searchTerm, startDate, statusFilter]);
+  }, [salesData, endDate, searchTerm, startDate, statusFilter]);
+
+  const filteredPayments = useMemo(() => {
+    const search = searchTerm.trim().toLowerCase();
+    return paymentsData.filter((record) => {
+      const matchesSearch =
+        !search ||
+        Object.values(record)
+          .join(" ")
+          .toLowerCase()
+          .includes(search);
+      const matchesStatus = statusFilter === "all" || record.status === statusFilter;
+      const matchesDate = isWithinDateRange(record.date, startDate, endDate);
+      return matchesSearch && matchesStatus && matchesDate;
+    });
+  }, [paymentsData, endDate, searchTerm, startDate, statusFilter]);
+
+  const filteredInventory = useMemo(() => {
+    const search = searchTerm.trim().toLowerCase();
+    return inventoryData.filter((record) => {
+      const matchesSearch =
+        !search ||
+        Object.values(record)
+          .join(" ")
+          .toLowerCase()
+          .includes(search);
+      const matchesStatus = statusFilter === "all" || record.status === statusFilter;
+      return matchesSearch && matchesStatus;
+    });
+  }, [inventoryData, searchTerm, statusFilter]);
+
+  const filteredServices = useMemo(() => {
+    const search = searchTerm.trim().toLowerCase();
+    return servicesData.filter((record) => {
+      const matchesSearch =
+        !search ||
+        Object.values(record)
+          .join(" ")
+          .toLowerCase()
+          .includes(search);
+      const matchesStatus = statusFilter === "all" || record.status === statusFilter;
+      const matchesDate = isWithinDateRange(record.date, startDate, endDate);
+      return matchesSearch && matchesStatus && matchesDate;
+    });
+  }, [servicesData, endDate, searchTerm, startDate, statusFilter]);
+
+  const filteredCustomers = useMemo(() => {
+    const search = searchTerm.trim().toLowerCase();
+    return customersData.filter((record) => {
+      const matchesSearch =
+        !search ||
+        Object.values(record)
+          .join(" ")
+          .toLowerCase()
+          .includes(search);
+      return matchesSearch;
+    });
+  }, [customersData, searchTerm]);
 
   const filteredPayroll = useMemo(() => {
     const search = searchTerm.trim().toLowerCase();
@@ -488,36 +552,6 @@ const ManagerReports = () => {
     });
   }, [departmentFilter, searchTerm, staff, statusFilter]);
 
-  const filteredLeaves = useMemo(() => {
-    const search = searchTerm.trim().toLowerCase();
-    return leaves.filter((record) => {
-      const matchesSearch =
-        !search ||
-        [record.employeeName, record.employeeId, record.department, record.role, record.type, record.reason, record.status]
-          .join(" ")
-          .toLowerCase()
-          .includes(search);
-      const matchesStatus = statusFilter === "all" || record.status === statusFilter;
-      const matchesDepartment = departmentFilter === "all" || record.department === departmentFilter;
-      const matchesDate = isWithinDateRange(record.startDate, startDate, endDate);
-      return matchesSearch && matchesStatus && matchesDepartment && matchesDate;
-    });
-  }, [departmentFilter, endDate, leaves, searchTerm, startDate, statusFilter]);
-
-  const filteredSchedules = useMemo(() => {
-    const search = searchTerm.trim().toLowerCase();
-    return schedules.filter((record) => {
-      const matchesSearch =
-        !search ||
-        [record.employeeName, record.employeeId, record.department, record.role, record.dayOfWeek]
-          .join(" ")
-          .toLowerCase()
-          .includes(search);
-      const matchesDepartment = departmentFilter === "all" || record.department === departmentFilter;
-      return matchesSearch && matchesDepartment;
-    });
-  }, [departmentFilter, schedules, searchTerm]);
-
   // Filter functions
   const filterData = (data, filters) => {
     const search = filters.searchTerm?.trim().toLowerCase() || '';
@@ -553,73 +587,71 @@ const ManagerReports = () => {
   // Get filtered data for current tab
   const getFilteredData = useCallback((filters) => {
     switch (activeTab) {
-      case 'attendance': return filterData(attendance, filters);
-      case 'payroll': return filterData(payroll, filters);
-      case 'leave': return filterData(leaves, filters);
-      case 'schedule': return filterData(schedules, filters);
+      case 'sales': return filterData(salesData, filters);
+      case 'payments': return filterData(paymentsData, filters);
+      case 'inventory': return filterData(inventoryData, filters);
+      case 'services': return filterData(servicesData, filters);
+      case 'customers': return filterData(customersData, filters);
       case 'staff': return filterData(staff, filters);
+      case 'payroll': return filterData(payroll, filters);
       default: {
-        const all = [...attendance, ...payroll, ...staff];
+        const all = [...salesData, ...paymentsData, ...inventoryData, ...servicesData, ...customersData, ...staff, ...payroll];
         return filterData(all, filters);
       }
     }
-  }, [activeTab, attendance, payroll, leaves, schedules, staff]);
+  }, [activeTab, salesData, paymentsData, inventoryData, servicesData, customersData, staff, payroll]);
 
   // Calculate summary stats
   const summary = useMemo(() => {
-    const present = attendance.filter((item) => item.status === "present").length;
-    const late = attendance.filter((item) => item.status === "late").length;
-    const absent = attendance.filter((item) => item.status === "absent").length;
-    const pendingReview = attendance.filter((item) => item.reviewStatus !== "reviewed").length;
-
-    const grossPay = payroll.reduce((sum, item) => sum + item.grossPay, 0);
-    const netPay = payroll.reduce((sum, item) => sum + item.netPay, 0);
-    const pendingPayroll = payroll.filter((item) =>
-      ["pending", "pending_review", "draft", "for_approval"].includes(item.status)
-    ).length;
-
-    const activeStaffCount = staff.filter((item) => item.status === "active").length;
-    const pendingLeaves = leaves.filter((item) => item.status === "pending").length;
-    const biometricPunches = biometricSummary?.total_punches ?? biometricSummary?.check_ins ?? 0;
-
-    return {
-      totalAttendance: attendance.length,
-      present,
-      late,
-      absent,
-      pendingReview,
-      payrollRecords: payroll.length,
-      grossPay,
-      netPay,
-      pendingPayroll,
-      totalStaff: staff.length,
-      activeStaff: activeStaffCount,
-      totalLeaves: leaves.length,
-      pendingLeaves,
-      totalSchedules: schedules.length,
-      biometricPunches,
-      liveTotalStaff: liveSummary.total_staff || liveSummary.total_employees || staff.length,
-      liveMonthlyRevenue: liveSummary.monthly_revenue || liveSummary.total_revenue || 0,
+    return liveSummary || {
+      totalSales: 0,
+      totalReservations: 0,
+      totalPayments: 0,
+      totalInventory: 0,
+      totalServices: 0,
+      totalCustomers: 0,
+      totalStaff: 0,
+      totalPayroll: 0,
     };
-  }, [attendance, payroll, staff, leaves, schedules, biometricSummary, liveSummary]);
+  }, [liveSummary]);
 
-  const attendanceStatusChart = useMemo(() => {
+  const salesStatusChart = useMemo(() => {
     const counts = {};
-
-    filteredAttendance.forEach((item) => {
+    filteredSales.forEach((item) => {
       counts[formatLabel(item.status)] = (counts[formatLabel(item.status)] || 0) + 1;
     });
-
     return Object.entries(counts).map(([name, value]) => ({ name, value }));
-  }, [filteredAttendance]);
+  }, [filteredSales]);
+
+  const paymentsStatusChart = useMemo(() => {
+    const counts = {};
+    filteredPayments.forEach((item) => {
+      counts[formatLabel(item.status)] = (counts[formatLabel(item.status)] || 0) + 1;
+    });
+    return Object.entries(counts).map(([name, value]) => ({ name, value }));
+  }, [filteredPayments]);
+
+  const inventoryStatusChart = useMemo(() => {
+    const counts = {};
+    filteredInventory.forEach((item) => {
+      counts[formatLabel(item.status)] = (counts[formatLabel(item.status)] || 0) + 1;
+    });
+    return Object.entries(counts).map(([name, value]) => ({ name, value }));
+  }, [filteredInventory]);
+
+  const servicesStatusChart = useMemo(() => {
+    const counts = {};
+    filteredServices.forEach((item) => {
+      counts[formatLabel(item.status)] = (counts[formatLabel(item.status)] || 0) + 1;
+    });
+    return Object.entries(counts).map(([name, value]) => ({ name, value }));
+  }, [filteredServices]);
 
   const payrollStatusChart = useMemo(() => {
     const counts = {};
-
     filteredPayroll.forEach((item) => {
       counts[formatLabel(item.status)] = (counts[formatLabel(item.status)] || 0) + 1;
     });
-
     return Object.entries(counts).map(([name, value]) => ({ name, value }));
   }, [filteredPayroll]);
 
@@ -637,28 +669,24 @@ const ManagerReports = () => {
     }));
   }, [filteredPayroll]);
 
-  const attendanceTrendChart = useMemo(() => {
+  const salesTrendChart = useMemo(() => {
     const totals = {};
 
-    filteredAttendance.forEach((item) => {
+    filteredSales.forEach((item) => {
       const month = getMonthKey(item.date);
 
       if (!totals[month]) {
         totals[month] = {
           month,
-          present: 0,
-          late: 0,
-          absent: 0,
+          total: 0,
         };
       }
 
-      if (item.status === "present") totals[month].present += 1;
-      if (item.status === "late") totals[month].late += 1;
-      if (item.status === "absent") totals[month].absent += 1;
+      totals[month].total += item.amount || 0;
     });
 
     return Object.values(totals);
-  }, [filteredAttendance]);
+  }, [filteredSales]);
 
   const clearFilters = () => {
     setSearchTerm("");
@@ -669,30 +697,73 @@ const ManagerReports = () => {
   };
 
   const getActiveDataset = () => {
-    if (activeTab === "attendance") return filteredAttendance;
-    if (activeTab === "payroll") return filteredPayroll;
+    if (activeTab === "sales") return filteredSales;
+    if (activeTab === "payments") return filteredPayments;
+    if (activeTab === "inventory") return filteredInventory;
+    if (activeTab === "services") return filteredServices;
+    if (activeTab === "customers") return filteredCustomers;
     if (activeTab === "staff") return filteredStaff;
+    if (activeTab === "payroll") return filteredPayroll;
 
     return [
-      ...filteredAttendance.map((item) => ({ ...item, reportType: "Attendance" })),
-      ...filteredPayroll.map((item) => ({ ...item, reportType: "Payroll" })),
+      ...filteredSales.map((item) => ({ ...item, reportType: "Sales" })),
+      ...filteredPayments.map((item) => ({ ...item, reportType: "Payments" })),
+      ...filteredInventory.map((item) => ({ ...item, reportType: "Inventory" })),
+      ...filteredServices.map((item) => ({ ...item, reportType: "Services" })),
+      ...filteredCustomers.map((item) => ({ ...item, reportType: "Customers" })),
       ...filteredStaff.map((item) => ({ ...item, reportType: "Staff" })),
+      ...filteredPayroll.map((item) => ({ ...item, reportType: "Payroll" })),
     ];
   };
 
   const getExportColumns = () => {
-    if (activeTab === "attendance") {
+    if (activeTab === "sales") {
       return [
-        { key: "employeeName", label: "Employee" },
-        { key: "employeeId", label: "Employee ID" },
-        { key: "department", label: "Department" },
-        { key: "role", label: "Role" },
+        { key: "id", label: "ID" },
         { key: "date", label: "Date" },
+        { key: "amount", label: "Amount" },
         { key: "status", label: "Status" },
-        { key: "reviewStatus", label: "Review Status" },
-        { key: "overtime", label: "Overtime" },
-        { key: "undertime", label: "Undertime" },
-        { key: "remarks", label: "Remarks" },
+      ];
+    }
+    if (activeTab === "payments") {
+      return [
+        { key: "id", label: "ID" },
+        { key: "date", label: "Date" },
+        { key: "amount", label: "Amount" },
+        { key: "method", label: "Method" },
+        { key: "status", label: "Status" },
+      ];
+    }
+    if (activeTab === "inventory") {
+      return [
+        { key: "id", label: "ID" },
+        { key: "name", label: "Name" },
+        { key: "quantity", label: "Quantity" },
+        { key: "status", label: "Status" },
+      ];
+    }
+    if (activeTab === "services") {
+      return [
+        { key: "id", label: "ID" },
+        { key: "date", label: "Date" },
+        { key: "service", label: "Service" },
+        { key: "status", label: "Status" },
+      ];
+    }
+    if (activeTab === "customers") {
+      return [
+        { key: "id", label: "ID" },
+        { key: "name", label: "Name" },
+        { key: "email", label: "Email" },
+        { key: "phone", label: "Phone" },
+      ];
+    }
+    if (activeTab === "staff") {
+      return [
+        { key: "id", label: "ID" },
+        { key: "name", label: "Name" },
+        { key: "role", label: "Role" },
+        { key: "status", label: "Status" },
       ];
     }
     if (activeTab === "payroll") {
@@ -794,20 +865,20 @@ const ManagerReports = () => {
   const renderSummaryTab = () => (
     <>
       <section className="manager-report-chart-grid">
-        <ChartCard title="Attendance Status Distribution">
-          {attendanceStatusChart.length === 0 ? (
-            <ChartEmpty message="No attendance status data available." />
+        <ChartCard title="Sales Status Distribution">
+          {salesStatusChart.length === 0 ? (
+            <ChartEmpty message="No sales status data available." />
           ) : (
             <ResponsiveContainer width="100%" height={300}>
               <PieChart>
                 <Pie
-                  data={attendanceStatusChart}
+                  data={salesStatusChart}
                   dataKey="value"
                   nameKey="name"
                   outerRadius={95}
                   label
                 >
-                  {attendanceStatusChart.map((entry, index) => (
+                  {salesStatusChart.map((entry, index) => (
                     <Cell
                       key={entry.name}
                       fill={CHART_COLORS[index % CHART_COLORS.length]}
@@ -864,39 +935,37 @@ const ManagerReports = () => {
           )}
         </ChartCard>
 
-        <ChartCard title="Attendance Trend" wide>
-          {attendanceTrendChart.length === 0 ? (
-            <ChartEmpty message="No attendance trend data available." />
+        <ChartCard title="Sales Trend" wide>
+          {salesTrendChart.length === 0 ? (
+            <ChartEmpty message="No sales trend data available." />
           ) : (
             <ResponsiveContainer width="100%" height={320}>
-              <LineChart data={attendanceTrendChart}>
+              <LineChart data={salesTrendChart}>
                 <CartesianGrid strokeDasharray="3 3" />
                 <XAxis dataKey="month" />
                 <YAxis />
-                <Tooltip />
+                <Tooltip formatter={(value) => formatCurrency(value)} />
                 <Legend />
-                <Line type="monotone" dataKey="present" stroke="#10b981" strokeWidth={3} />
-                <Line type="monotone" dataKey="late" stroke="#f59e0b" strokeWidth={3} />
-                <Line type="monotone" dataKey="absent" stroke="#ef4444" strokeWidth={3} />
+                <Line type="monotone" dataKey="total" stroke="#10b981" strokeWidth={3} />
               </LineChart>
             </ResponsiveContainer>
           )}
         </ChartCard>
 
-        <ChartCard title="Department Attendance Breakdown" wide>
-          {filteredAttendance.length === 0 ? (
-            <ChartEmpty message="No department attendance data available." />
+        <ChartCard title="Sales by Category" wide>
+          {filteredSales.length === 0 ? (
+            <ChartEmpty message="No sales category data available." />
           ) : (
             <ResponsiveContainer width="100%" height={320}>
-              <BarChart data={Object.entries(filteredAttendance.reduce((acc, item) => {
-                acc[item.department] = (acc[item.department] || 0) + 1;
+              <BarChart data={Object.entries(filteredSales.reduce((acc, item) => {
+                acc[item.category || "Other"] = (acc[item.category || "Other"] || 0) + (item.amount || 0);
                 return acc;
-              }, {})).map(([dept, count]) => ({ department: dept, count }))}>
+              }, {})).map(([category, total]) => ({ category, total }))}>
                 <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="department" />
+                <XAxis dataKey="category" />
                 <YAxis />
-                <Tooltip />
-                <Bar dataKey="count" name="Records" fill="#3b82f6" radius={[12, 12, 0, 0]} />
+                <Tooltip formatter={(value) => formatCurrency(value)} />
+                <Bar dataKey="total" name="Total Sales" fill="#3b82f6" radius={[12, 12, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
           )}
@@ -955,6 +1024,51 @@ const ManagerReports = () => {
       columns={attendanceColumns}
       data={filteredAttendance}
       emptyMessage="No attendance records found."
+      pageSize={10}
+    />
+  );
+
+  const renderSalesTab = () => (
+    <StandardTable
+      columns={[{ key: "id", label: "ID" }, { key: "date", label: "Date" }, { key: "amount", label: "Amount" }, { key: "status", label: "Status" }]}
+      data={filteredSales}
+      emptyMessage="No sales records found."
+      pageSize={10}
+    />
+  );
+
+  const renderPaymentsTab = () => (
+    <StandardTable
+      columns={[{ key: "id", label: "ID" }, { key: "date", label: "Date" }, { key: "amount", label: "Amount" }, { key: "method", label: "Method" }, { key: "status", label: "Status" }]}
+      data={filteredPayments}
+      emptyMessage="No payment records found."
+      pageSize={10}
+    />
+  );
+
+  const renderInventoryTab = () => (
+    <StandardTable
+      columns={[{ key: "id", label: "ID" }, { key: "name", label: "Name" }, { key: "quantity", label: "Quantity" }, { key: "status", label: "Status" }]}
+      data={filteredInventory}
+      emptyMessage="No inventory records found."
+      pageSize={10}
+    />
+  );
+
+  const renderServicesTab = () => (
+    <StandardTable
+      columns={[{ key: "id", label: "ID" }, { key: "date", label: "Date" }, { key: "service", label: "Service" }, { key: "status", label: "Status" }]}
+      data={filteredServices}
+      emptyMessage="No service records found."
+      pageSize={10}
+    />
+  );
+
+  const renderCustomersTab = () => (
+    <StandardTable
+      columns={[{ key: "id", label: "ID" }, { key: "name", label: "Name" }, { key: "email", label: "Email" }, { key: "phone", label: "Phone" }]}
+      data={filteredCustomers}
+      emptyMessage="No customer records found."
       pageSize={10}
     />
   );
@@ -1032,85 +1146,13 @@ const ManagerReports = () => {
     />
   );
 
-  const leaveColumns = [
-    { key: "employeeName", label: "Employee", sortable: true, render: (value, record) => (
-      <div><strong>{value}</strong><small style={{ display: "block", color: "#64748b" }}>{record.employeeId}</small></div>
-    )},
-    { key: "department", label: "Department", sortable: true },
-    { key: "type", label: "Type", sortable: true },
-    { key: "startDate", label: "From", sortable: true, render: (value) => formatDate(value) },
-    { key: "endDate", label: "To", sortable: true, render: (value) => formatDate(value) },
-    { key: "days", label: "Days", sortable: true },
-    { key: "status", label: "Status", sortable: true, render: (value) => <StatusBadge status={value} /> },
-    { key: "managerRemarks", label: "Remarks", sortable: true },
-    { key: "actions", label: "Actions", sortable: false, render: (_value, record) => (
-      <button type="button" className="report-view-btn" onClick={() => setSelectedRecord({ type: "leave", record })}>
-        <FontAwesomeIcon icon={faEye} /> View
-      </button>
-    )},
-  ];
-
-  const renderLeaveTab = () => (
-    <StandardTable columns={leaveColumns} data={filteredLeaves} emptyMessage="No leave records found." pageSize={10} />
-  );
-
-  const scheduleColumns = [
-    { key: "employeeName", label: "Employee", sortable: true, render: (value, record) => (
-      <div><strong>{value}</strong><small style={{ display: "block", color: "#64748b" }}>{record.employeeId}</small></div>
-    )},
-    { key: "department", label: "Department", sortable: true },
-    { key: "dayOfWeek", label: "Day", sortable: true },
-    { key: "shiftStart", label: "Start", sortable: true },
-    { key: "shiftEnd", label: "End", sortable: true },
-    { key: "isOffDay", label: "Off Day", sortable: true, render: (value) => value ? <span className="reports-status absent">Yes</span> : <span className="reports-status present">No</span> },
-    { key: "actions", label: "Actions", sortable: false, render: (_value, record) => (
-      <button type="button" className="report-view-btn" onClick={() => setSelectedRecord({ type: "schedule", record })}>
-        <FontAwesomeIcon icon={faEye} /> View
-      </button>
-    )},
-  ];
-
-  const renderScheduleTab = () => (
-    <StandardTable columns={scheduleColumns} data={filteredSchedules} emptyMessage="No schedule records found." pageSize={10} />
-  );
-
-  const renderBiometricTab = () => (
-    <div className="reports-biometric-panel">
-      {!biometricSummary ? (
-        <ChartEmpty message="No biometric attendance data available." />
-      ) : (
-        <div className="reports-biometric-grid">
-          <SummaryCard label="Check-ins Today" value={biometricSummary.check_ins ?? biometricSummary.total_punches ?? 0} icon={faFingerprint} tone="primary" />
-          <SummaryCard label="Check-outs Today" value={biometricSummary.check_outs ?? 0} icon={faCheckCircle} tone="success" />
-          <SummaryCard label="Late Arrivals" value={biometricSummary.late_count ?? 0} icon={faClock} tone="warning" />
-          <SummaryCard label="Active Credentials" value={biometricSummary.active_credentials ?? biometricSummary.registered_credentials ?? 0} icon={faUsers} tone="info" />
-          <div className="reports-biometric-recent wide">
-            <h3>Recent Biometric Activity</h3>
-            {(!biometricSummary.recent_activity || biometricSummary.recent_activity.length === 0) ? (
-              <p>No recent biometric punches.</p>
-            ) : (
-              <table className="reports-biometric-table">
-                <thead><tr><th>Employee</th><th>Time</th><th>Type</th><th>Status</th></tr></thead>
-                <tbody>
-                  {(biometricSummary.recent_activity || []).map((item, i) => (
-                    <tr key={i}><td>{item.employee_name || item.name || "Unknown"}</td><td>{item.time || item.punched_at || "N/A"}</td><td>{item.type || "punch"}</td><td><StatusBadge status={item.status || "present"} /></td></tr>
-                  ))}
-                </tbody>
-              </table>
-            )}
-          </div>
-        </div>
-      )}
-    </div>
-  );
-
   return (
     <StandardReportLayout
-      title="Attendance & Payroll Reports"
-      subtitle="Review attendance summaries, payroll totals, staff performance, and manager-level operational reporting in one workspace."
+      title="Executive Monitoring Reports"
+      subtitle="Review sales, payments, inventory, services, customers, staff performance, and payroll summaries in one workspace."
       icon={faChartLine}
-      loading={loading && !filteredAttendance.length && !filteredPayroll.length && !filteredStaff.length && !filteredLeaves.length && !filteredSchedules.length}
-      error={error}
+      loading={false}
+      error=""
       onRefresh={() => fetchReportData({ silent: true })}
       lastUpdated={formatDateTime(new Date())}
     >
@@ -1128,68 +1170,88 @@ const ManagerReports = () => {
 
       <section className="reports-summary-grid">
         <SummaryCard
-          label="Attendance Records"
-          value={summary.totalAttendance}
-          icon={faCalendarAlt}
-          tone="primary"
-        />
-        <SummaryCard label="Present" value={summary.present} icon={faUserCheck} tone="success" />
-        <SummaryCard label="Late" value={summary.late} icon={faClock} tone="warning" />
-        <SummaryCard label="Absent" value={summary.absent} icon={faUserTimes} tone="danger" />
-        <SummaryCard
-          label="Pending Review"
-          value={summary.pendingReview}
-          icon={faTriangleExclamation}
-          tone="info"
-        />
-        <SummaryCard
-          label="Payroll Records"
-          value={summary.payrollRecords}
+          label="Total Sales"
+          value={summary.totalSales || 0}
           icon={faFileInvoiceDollar}
           tone="money"
         />
         <SummaryCard
-          label="Net Payroll"
-          value={formatCurrency(summary.netPay)}
+          label="Total Reservations"
+          value={summary.totalReservations || 0}
+          icon={faCalendarCheck}
+          tone="primary"
+        />
+        <SummaryCard
+          label="Total Payments"
+          value={summary.totalPayments || 0}
           icon={faMoneyBillWave}
+          tone="success"
+        />
+        <SummaryCard
+          label="Inventory Items"
+          value={summary.totalInventory || 0}
+          icon={faTriangleExclamation}
+          tone="warning"
+        />
+        <SummaryCard
+          label="Total Services"
+          value={summary.totalServices || 0}
+          icon={faCalendarAlt}
+          tone="info"
+        />
+        <SummaryCard
+          label="Total Customers"
+          value={summary.totalCustomers || 0}
+          icon={faUsers}
+          tone="primary"
+        />
+        <SummaryCard
+          label="Total Staff"
+          value={summary.totalStaff || 0}
+          icon={faUserCheck}
+          tone="success"
+        />
+        <SummaryCard
+          label="Total Payroll"
+          value={summary.totalPayroll || 0}
+          icon={faFileInvoiceDollar}
           tone="money"
         />
-        <SummaryCard label="Active Staff" value={summary.activeStaff} icon={faUsers} tone="success" />
-        <SummaryCard label="Leave Requests" value={summary.totalLeaves} icon={faCalendarCheck} tone="primary" />
-        <SummaryCard label="Pending Leave" value={summary.pendingLeaves} icon={faTriangleExclamation} tone="warning" />
-        <SummaryCard label="Biometric Punches" value={summary.biometricPunches} icon={faFingerprint} tone="info" />
       </section>
 
       <section className="reports-tabs">
-        {[
-          { id: "summary", label: "Summary", icon: faChartLine },
-          { id: "attendance", label: "Attendance", icon: faCalendarAlt },
-          { id: "payroll", label: "Payroll", icon: faMoneyBillWave },
-          { id: "leave", label: "Leave", icon: faCalendarCheck },
-          { id: "schedule", label: "Schedule", icon: faCalendarDay },
-          { id: "biometric", label: "Biometric", icon: faFingerprint },
-          { id: "staff", label: "Staff", icon: faUsers },
-        ].map((tab) => (
-          <button
-            type="button"
-            key={tab.id}
-            className={activeTab === tab.id ? "active" : ""}
-            onClick={() => setActiveTab(tab.id)}
-          >
-            <FontAwesomeIcon icon={tab.icon} />
-            {tab.label}
-          </button>
-        ))}
+        {TAB_CONFIG.map((tab) => {
+          const Icon = tab.icon;
+          return (
+            <button
+              type="button"
+              key={tab.key}
+              className={activeTab === tab.key ? "active" : ""}
+              onClick={() => setActiveTab(tab.key)}
+            >
+              <FontAwesomeIcon icon={Icon} />
+              {tab.label}
+            </button>
+          );
+        })}
       </section>
 
-      {loading ? (
+      {loading && (
         <div className="reports-loading-state">
           <FontAwesomeIcon icon={faSpinner} spin />
           <h2>Loading manager reports</h2>
           <p>Please wait while attendance, payroll, and staff reports are being loaded.</p>
         </div>
-      ) : (
-        <section className="reports-content-card">
+      )}
+
+      {reportErrors[activeTab] && (
+        <div className="reports-alert warning">
+          <FontAwesomeIcon icon={faTriangleExclamation} />
+          <span>{reportErrors[activeTab]}</span>
+        </div>
+      )}
+
+      <section className="reports-content-card">
           <div className="reports-content-header">
             <div>
               <span className="reports-eyebrow">{formatLabel(activeTab)}</span>
@@ -1222,18 +1284,22 @@ const ManagerReports = () => {
           </div>
 
           {activeTab === "summary" && renderSummaryTab()}
-          {activeTab === "attendance" && renderAttendanceTab()}
-          {activeTab === "payroll" && renderPayrollTab()}
-          {activeTab === "leave" && renderLeaveTab()}
-          {activeTab === "schedule" && renderScheduleTab()}
-          {activeTab === "biometric" && renderBiometricTab()}
+          {activeTab === "sales" && renderSalesTab()}
+          {activeTab === "payments" && renderPaymentsTab()}
+          {activeTab === "inventory" && renderInventoryTab()}
+          {activeTab === "services" && renderServicesTab()}
+          {activeTab === "customers" && renderCustomersTab()}
           {activeTab === "staff" && renderStaffTab()}
+          {activeTab === "payroll" && renderPayrollTab()}
         </section>
-      )}
 
       <PrintArea
         summary={summary}
-        attendance={filteredAttendance}
+        sales={filteredSales}
+        payments={filteredPayments}
+        inventory={filteredInventory}
+        services={filteredServices}
+        customers={filteredCustomers}
         payroll={filteredPayroll}
         staff={filteredStaff}
         activeTab={activeTab}
@@ -1260,13 +1326,14 @@ const ManagerReports = () => {
 };
 
 const getTabTitle = (activeTab) => {
-  if (activeTab === "attendance") return "Attendance Report";
-  if (activeTab === "payroll") return "Payroll Report";
-  if (activeTab === "leave") return "Leave Report";
-  if (activeTab === "schedule") return "Schedule Report";
-  if (activeTab === "biometric") return "Biometric Attendance Report";
+  if (activeTab === "sales") return "Sales Report";
+  if (activeTab === "payments") return "Payment Report";
+  if (activeTab === "inventory") return "Inventory Report";
+  if (activeTab === "services") return "Service Report";
+  if (activeTab === "customers") return "Customer Report";
   if (activeTab === "staff") return "Staff Performance Report";
-  return "Manager Report Summary";
+  if (activeTab === "payroll") return "Payroll Summary";
+  return "Executive Report Summary";
 };
 
 const SummaryCard = ({ label, value, icon, tone }) => (
@@ -1353,92 +1420,102 @@ const ReportDetailsModal = ({ selectedRecord, onClose }) => {
   );
 };
 
-const PrintArea = ({ summary, attendance, payroll, staff, activeTab }) => (
+const PrintArea = ({ summary, sales, payments, inventory, services, customers, payroll, staff, activeTab }) => (
   <section className="manager-reports-print">
     <h1>Pawesome Retreat Inc.</h1>
     <h2>{getTabTitle(activeTab)}</h2>
     <p>Generated: {formatDateTime(new Date())}</p>
 
     <div className="print-summary">
-      <span>Attendance Records: {summary.totalAttendance}</span>
-      <span>Payroll Records: {summary.payrollRecords}</span>
-      <span>Net Payroll: {formatCurrency(summary.netPay)}</span>
-      <span>Active Staff: {summary.activeStaff}</span>
+      <span>Total Sales: {summary.totalSales || 0}</span>
+      <span>Total Reservations: {summary.totalReservations || 0}</span>
+      <span>Total Payments: {summary.totalPayments || 0}</span>
+      <span>Total Customers: {summary.totalCustomers || 0}</span>
     </div>
 
-    <h3>Attendance Summary</h3>
-    <table>
-      <thead>
-        <tr>
-          <th>Employee</th>
-          <th>Department</th>
-          <th>Date</th>
-          <th>Status</th>
-          <th>Review</th>
-        </tr>
-      </thead>
-      <tbody>
-        {attendance.map((item) => (
-          <tr key={item.id}>
-            <td>{item.employeeName}</td>
-            <td>{item.department}</td>
-            <td>{formatDate(item.date)}</td>
-            <td>{formatLabel(item.status)}</td>
-            <td>{formatLabel(item.reviewStatus)}</td>
-          </tr>
-        ))}
-      </tbody>
-    </table>
+    {sales && sales.length > 0 && (
+      <>
+        <h3>Sales Summary</h3>
+        <table>
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Date</th>
+              <th>Amount</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            {sales.map((item) => (
+              <tr key={item.id}>
+                <td>{item.id}</td>
+                <td>{formatDate(item.date)}</td>
+                <td>{formatCurrency(item.amount)}</td>
+                <td>{formatLabel(item.status)}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </>
+    )}
 
-    <h3>Payroll Summary</h3>
-    <table>
-      <thead>
-        <tr>
-          <th>Employee</th>
-          <th>Period</th>
-          <th>Gross Pay</th>
-          <th>Deductions</th>
-          <th>Net Pay</th>
-          <th>Status</th>
-        </tr>
-      </thead>
-      <tbody>
-        {payroll.map((item) => (
-          <tr key={item.id}>
-            <td>{item.employeeName}</td>
-            <td>{item.period}</td>
-            <td>{formatCurrency(item.grossPay)}</td>
-            <td>{formatCurrency(item.deductions)}</td>
-            <td>{formatCurrency(item.netPay)}</td>
-            <td>{formatLabel(item.status)}</td>
-          </tr>
-        ))}
-      </tbody>
-    </table>
+    {payroll && payroll.length > 0 && (
+      <>
+        <h3>Payroll Summary</h3>
+        <table>
+          <thead>
+            <tr>
+              <th>Employee</th>
+              <th>Period</th>
+              <th>Gross Pay</th>
+              <th>Deductions</th>
+              <th>Net Pay</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            {payroll.map((item) => (
+              <tr key={item.id}>
+                <td>{item.employeeName}</td>
+                <td>{item.period}</td>
+                <td>{formatCurrency(item.grossPay)}</td>
+                <td>{formatCurrency(item.deductions)}</td>
+                <td>{formatCurrency(item.netPay)}</td>
+                <td>{formatLabel(item.status)}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </>
+    )}
 
-    <h3>Staff Summary</h3>
-    <table>
-      <thead>
-        <tr>
-          <th>Staff</th>
-          <th>Email</th>
-          <th>Department</th>
-          <th>Role</th>
-          <th>Status</th>
-        </tr>
-      </thead>
-      <tbody>
-        {staff.map((item) => (
-          <tr key={item.id}>
-            <td>{item.name}</td>
-            <td>{item.email}</td>
-            <td>{item.department}</td>
-            <td>{item.role}</td>
-            <td>{formatLabel(item.status)}</td>
-          </tr>
-        ))}
-      </tbody>
-    </table>
+    {staff && staff.length > 0 && (
+      <>
+        <h3>Staff Summary</h3>
+        <table>
+          <thead>
+            <tr>
+              <th>Staff</th>
+              <th>Email</th>
+              <th>Department</th>
+              <th>Role</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            {staff.map((item) => (
+              <tr key={item.id}>
+                <td>{item.name}</td>
+                <td>{item.email}</td>
+                <td>{item.department}</td>
+                <td>{item.role}</td>
+                <td>{formatLabel(item.status)}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </>
+    )}
   </section>
 );
 

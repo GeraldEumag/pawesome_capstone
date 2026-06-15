@@ -17,7 +17,7 @@ import "./NotificationDropdown.css";
 
 const NotificationDropdown = ({ role }) => {
   const navigate = useNavigate();
-  const { role: authRole } = useAuth();
+  const { token, role: authRole } = useAuth();
   const notificationRole = role || authRole || "manager";
   const [isOpen, setIsOpen] = useState(false);
   const [notifications, setNotifications] = useState([]);
@@ -27,26 +27,36 @@ const NotificationDropdown = ({ role }) => {
   const panelRef = useRef(null);
 
   const fetchNotifications = useCallback(async () => {
+    if (!token || !notificationRole) {
+      setNotifications([]);
+      setUnreadCount(0);
+      setLoading(false);
+      return;
+    }
+
     setLoading(true);
 
     try {
       const res = await notificationApi.getAll(notificationRole);
       setNotifications(normalizeList(res, ["notifications", "data", "records"]));
       setUnreadCount(res.unread_count || 0);
-    } catch (error) {
-      console.error("Failed to load notifications:", error);
+    } catch {
+      setNotifications([]);
+      setUnreadCount(0);
     } finally {
       setLoading(false);
     }
-  }, [notificationRole]);
+  }, [notificationRole, token]);
 
   useEffect(() => {
+    if (!token || !notificationRole) return undefined;
+
     fetchNotifications();
 
     const interval = setInterval(fetchNotifications, 10000);
 
     return () => clearInterval(interval);
-  }, [fetchNotifications]);
+  }, [fetchNotifications, notificationRole, token]);
 
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -68,8 +78,8 @@ const NotificationDropdown = ({ role }) => {
     try {
       await notificationApi.markAsRead(id);
       fetchNotifications();
-    } catch (error) {
-      console.error("Failed to mark notification as read:", error);
+    } catch {
+      // Notification actions are optional and should not interrupt dashboard demos.
     }
   };
 
@@ -77,8 +87,8 @@ const NotificationDropdown = ({ role }) => {
     try {
       await notificationApi.markAllAsRead(notificationRole);
       fetchNotifications();
-    } catch (error) {
-      console.error("Failed to mark all notifications as read:", error);
+    } catch {
+      // Notification actions are optional and should not interrupt dashboard demos.
     }
   };
 
@@ -264,9 +274,9 @@ const NotificationDropdown = ({ role }) => {
                   <span>No notifications yet</span>
                 </div>
               ) : (
-                notifications.map((item) => (
+                notifications.map((item, index) => (
                   <button
-                    key={item.id}
+                    key={`notification-${notificationRole}-${item.id || "no-id"}-${index}`}
                     className={`pawesome-notification-item ${item.type} ${!item.read ? "unread" : ""}`}
                     type="button"
                     onClick={(event) => {

@@ -19,6 +19,7 @@ import VetRoutes from "./VetRoutes";
 import InventoryRoutes from "./InventoryRoutes";
 import CashierRoutes from "./CashierRoutes";
 import ManagerRoutes from "./ManagerRoutes";
+import PayrollRoutes from "./PayrollRoutes";
 
 const AppRoutes = () => (
   <Router>
@@ -49,6 +50,7 @@ const AppRoutes = () => (
       <Route path="/inventory/*" element={<InventoryRoutes />} />
       <Route path="/cashier/*" element={<CashierRoutes />} />
       <Route path="/manager/*" element={<ManagerRoutes />} />
+      <Route path="/payroll/*" element={<PayrollRoutes />} />
     </Routes>
   </Router>
 );

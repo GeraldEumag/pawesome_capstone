@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { payrollApi } from "../../api/payroll";
 import { apiRequest } from "../../api/client";
 import { formatCurrency } from "../../utils/currency";
+import { useAuth } from "../../context/AuthContext";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import DatePickerInput from "../../components/shared/DatePickerInput";
 import ManualPayrollModal from "./ManualPayrollModal";
@@ -206,6 +207,9 @@ const createPayrollNotification = async (message, priority = "high") => {
 
 const PayrollManagement = () => {
   const navigate = useNavigate();
+  const { role } = useAuth();
+  const isManagerView = role === "manager";
+  const canOperatePayroll = ["admin", "payroll", "payroll_manager"].includes(role);
   const [payrolls, setPayrolls] = useState([]);
   const [backendSummary, setBackendSummary] = useState(null);
 
@@ -722,11 +726,16 @@ const PayrollManagement = () => {
     <div className="manager-payroll">
       <section className="manager-payroll-hero">
         <div>
-          <span className="payroll-eyebrow">Manager Payroll</span>
-          <h1>Payroll Management</h1>
+          <span className="payroll-eyebrow">
+            {isManagerView ? "Manager Payroll Summary" : "Payroll Manager / HR"}
+          </span>
+          <h1>
+            Payroll Management {isManagerView && <span className="readonly-badge">View Only</span>}
+          </h1>
           <p>
-            Generate payroll by period, review attendance-based payroll values,
-            approve records, release payroll, and print employee payslips.
+            {isManagerView
+              ? "Monitor payroll summaries, review attendance-based payroll values, and view employee payslips. Manager access is limited to monitoring and review only. Payroll operations are handled by Payroll Manager / HR."
+              : "Manage payroll records, compute payroll for pay periods, release payroll, and generate employee payslips."}
           </p>
         </div>
 
@@ -746,15 +755,27 @@ const PayrollManagement = () => {
             Export CSV
           </button>
 
-          <button type="button" className="payroll-btn primary" onClick={() => navigate("/manager/payroll/compute")}>
-            <FontAwesomeIcon icon={faCalculator} />
-            Compute Payroll
-          </button>
+          {canOperatePayroll && (
+            <>
+              <button
+                type="button"
+                className="payroll-btn secondary"
+                onClick={() => navigate("/payroll/compute")}
+              >
+                <FontAwesomeIcon icon={faCalculator} />
+                Compute Payroll
+              </button>
 
-          <button type="button" className="payroll-btn primary" onClick={() => setShowManualModal(true)}>
-            <FontAwesomeIcon icon={faPen} />
-            Manual Entry
-          </button>
+              <button
+                type="button"
+                className="payroll-btn primary"
+                onClick={() => setShowManualModal(true)}
+              >
+                <FontAwesomeIcon icon={faPen} />
+                Manual Entry
+              </button>
+            </>
+          )}
         </div>
       </section>
 
@@ -767,44 +788,6 @@ const PayrollManagement = () => {
           </button>
         </div>
       )}
-
-      <section className="payroll-generate-card">
-        <div>
-          <span className="payroll-eyebrow">Payroll Period</span>
-          <h2>Generate Payroll</h2>
-          <p>Select a start and end date to generate payroll for the selected period.</p>
-        </div>
-
-        <div className="payroll-generate-form">
-          <label>
-            <span>Start Date</span>
-            <DatePickerInput
-              selected={startDate ? new Date(startDate) : null}
-              onChange={(date) => setStartDate(date ? date.toISOString().split("T")[0] : "")}
-              placeholderText="From..."
-            />
-          </label>
-
-          <label>
-            <span>End Date</span>
-            <DatePickerInput
-              selected={endDate ? new Date(endDate) : null}
-              onChange={(date) => setEndDate(date ? date.toISOString().split("T")[0] : "")}
-              placeholderText="To..."
-            />
-          </label>
-
-          <button
-            type="button"
-            className="payroll-btn primary"
-            onClick={handleGenerate}
-            disabled={generating || !startDate || !endDate}
-          >
-            <FontAwesomeIcon icon={generating ? faSpinner : faMoneyBill} spin={generating} />
-            {generating ? "Generating..." : "Generate Payroll"}
-          </button>
-        </div>
-      </section>
 
       <section className="payroll-summary-grid">
         <SummaryCard label="Employees in Payroll" value={summary.employees} icon={faUsers} tone="primary" />
@@ -1083,34 +1066,6 @@ const PayrollManagement = () => {
                             View
                           </button>
 
-                          {["pending", "pending_review", "for_approval", "draft", "processing"].includes(payroll.status) && (
-                            <button
-                              type="button"
-                              onClick={() => handleApprove(payroll)}
-                              disabled={actionLoadingId === payroll.id}
-                            >
-                              <FontAwesomeIcon
-                                icon={actionLoadingId === payroll.id ? faSpinner : faCheck}
-                                spin={actionLoadingId === payroll.id}
-                              />
-                              Approve
-                            </button>
-                          )}
-
-                          {payroll.status === "approved" && (
-                            <button
-                              type="button"
-                              onClick={() => handleRelease(payroll)}
-                              disabled={actionLoadingId === payroll.id}
-                            >
-                              <FontAwesomeIcon
-                                icon={actionLoadingId === payroll.id ? faSpinner : faMoneyBillWave}
-                                spin={actionLoadingId === payroll.id}
-                              />
-                              Release
-                            </button>
-                          )}
-
                           <button type="button" onClick={() => printPayslip(payroll)}>
                             <FontAwesomeIcon icon={faPrint} />
                             Print
@@ -1120,6 +1075,34 @@ const PayrollManagement = () => {
                             <FontAwesomeIcon icon={faDownload} />
                             PDF
                           </button>
+
+                          {canOperatePayroll && (
+                            <>
+                              <button
+                                type="button"
+                                onClick={() => handleApprove(payroll)}
+                                disabled={actionLoadingId === payroll.id || payroll.status === "approved"}
+                              >
+                                <FontAwesomeIcon
+                                  icon={actionLoadingId === payroll.id ? faSpinner : faCheck}
+                                  spin={actionLoadingId === payroll.id}
+                                />
+                                Approve
+                              </button>
+
+                              <button
+                                type="button"
+                                onClick={() => handleRelease(payroll)}
+                                disabled={actionLoadingId === payroll.id || ["released", "paid"].includes(payroll.status)}
+                              >
+                                <FontAwesomeIcon
+                                  icon={actionLoadingId === payroll.id ? faSpinner : faMoneyBillWave}
+                                  spin={actionLoadingId === payroll.id}
+                                />
+                                Release
+                              </button>
+                            </>
+                          )}
                         </div>
                       </td>
                     </tr>
@@ -1178,17 +1161,14 @@ const PayrollManagement = () => {
         />
       )}
 
-      <PayslipPrint payroll={printPayroll} />
-
-      {showManualModal && (
+      {showManualModal && canOperatePayroll && (
         <ManualPayrollModal
           onClose={() => setShowManualModal(false)}
-          onSaved={() => {
-            showToast("Manual payroll saved.", "success");
-            fetchPayrolls({ silent: true });
-          }}
+          onSaved={() => fetchPayrolls({ silent: true })}
         />
       )}
+
+      <PayslipPrint payroll={printPayroll} />
 
       {toast && (
         <div className={`payroll-toast ${toast.type}`}>

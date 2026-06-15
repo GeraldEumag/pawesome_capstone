@@ -78,8 +78,9 @@ const VetDashboard = () => {
         setDashboardData(data);
         setCurrentBoarders(Array.isArray(boarders) ? boarders : []);
         setLastUpdated(new Date());
-      } catch (err) {
-        console.error("Vet dashboard fetch error:", err);
+      } catch {
+        setDashboardData(null);
+        setCurrentBoarders([]);
       } finally {
         setLoading(false);
         setLoadingBoarders(false);
@@ -91,7 +92,7 @@ const VetDashboard = () => {
     // Real-time updates: poll every 5 seconds
     const interval = setInterval(() => {
       if (showOverview) fetchDashboardData();
-    }, 5000);
+    }, 30000);
 
     return () => clearInterval(interval);
   }, [showOverview]);
@@ -139,6 +140,7 @@ const VetDashboard = () => {
 
   const todayAppointments = dashboardData
     ? (dashboardData.upcoming_appointments || []).map((apt) => ({
+        id: apt.id,
         petName: apt.pet?.name || "Pet",
         ownerName: apt.customer?.name || "Customer",
         time: apt.scheduled_at
@@ -370,7 +372,7 @@ const VetDashboard = () => {
 
                 <div className="appointments-preview actionable">
                   {(dashboardData?.upcoming_appointments || []).slice(0, 5).map((apt, idx) => (
-                    <div key={idx} className="preview-appointment-item">
+                    <div key={`today-appointment-${apt.id || "no-id"}-${idx}`} className="preview-appointment-item">
                       <div className="apt-info">
                         <span className="apt-time">
                           {apt.scheduled_at
@@ -423,7 +425,7 @@ const VetDashboard = () => {
 
                 <div className="patients-preview">
                   {(dashboardData?.recent_patients || []).slice(0, 4).map((pet, idx) => (
-                    <div key={idx} className="patient-row">
+                    <div key={`patient-${pet.id || pet.name || "no-id"}-${idx}`} className="patient-row">
                       <div className="patient-info">
                         <FontAwesomeIcon icon={faPaw} />
                         <div>
@@ -537,7 +539,7 @@ const VetDashboard = () => {
                 <div className="appointment-list">
                   {todayAppointments.length > 0 ? (
                     todayAppointments.map((appointment, index) => (
-                      <div key={index} className="appointment-card">
+                      <div key={`appointment-${appointment.id || appointment.petName || "no-id"}-${index}`} className="appointment-card">
                         <div className="appointment-card-top">
                           <div>
                             <h3>{appointment.petName}</h3>

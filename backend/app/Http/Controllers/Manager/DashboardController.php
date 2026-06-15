@@ -20,21 +20,42 @@ class DashboardController extends Controller
         $staffRoles = ['receptionist', 'veterinary', 'inventory', 'cashier'];
         
         // Count service requests with different payment statuses
-        $paidServiceRevenue = ServiceRequest::where('payment_status', 'paid')->count() * 500;
+        $paidServiceRevenue = (float) ServiceRequest::where('payment_status', 'paid')->sum('price');
         $paidServiceCount = ServiceRequest::where('payment_status', 'paid')->count();
         $pendingServicePayments = ServiceRequest::where('payment_status', 'pending')->count();
+        $rejectedServicePayments = ServiceRequest::where('payment_status', 'rejected')->count();
         $totalServiceRequests = ServiceRequest::count();
+        $pendingServiceRequests = ServiceRequest::whereIn('status', ['pending', 'awaiting_approval'])->count();
         
         // Count customer orders
         $paidOrderRevenue = DB::table('customer_orders')->where('payment_status', 'paid')->sum('total_amount');
         $paidOrderCount = DB::table('customer_orders')->where('payment_status', 'paid')->count();
         $totalOrders = DB::table('customer_orders')->count();
         
+        // Count grooming requests
+        $groomingRequests = ServiceRequest::where('request_type', 'grooming')->count();
+        
+        // Count veterinary appointments
+        $veterinaryAppointments = Appointment::count();
+        
+        // Count boarding bookings
+        $boardingBookings = DB::table('boardings')->count();
+        
+        // Count total customers
+        $totalCustomers = DB::table('customers')->count();
+        $activeCustomers = DB::table('customers')->where('is_active', true)->count();
+        
+        // Count total appointments
+        $totalAppointments = Appointment::count();
+        
         return response()->json([
             'total_orders' => $totalOrders + $totalServiceRequests,
+            'pending_reservations' => DB::table('customer_orders')->where('status', 'pending')->count() + $pendingServiceRequests,
+            'pending_orders' => DB::table('customer_orders')->where('status', 'pending')->count() + $pendingServiceRequests,
             'approved_orders' => DB::table('customer_orders')->where('status', 'approved')->count(),
             'paid_orders' => $paidOrderCount + $paidServiceCount,
             'pending_payments' => DB::table('customer_orders')->where('payment_status', 'pending')->count() + $pendingServicePayments,
+            'rejected_payments' => DB::table('customer_orders')->where('payment_status', 'rejected')->count() + $rejectedServicePayments,
             'rejected_orders' => DB::table('customer_orders')->whereIn('status', ['rejected', 'cancelled'])->count(),
             'sales_total' => Sale::where('status', 'completed')->sum('amount') + $paidOrderRevenue + $paidServiceRevenue,
             'paid_service_revenue' => $paidServiceRevenue,
@@ -52,6 +73,12 @@ class DashboardController extends Controller
             'completed_appointments' => Appointment::where('status', 'completed')->count(),
             'today_revenue' => Sale::whereDate('created_at', $today)->sum('amount'),
             'monthly_revenue' => Sale::whereMonth('created_at', $today->month)->sum('amount'),
+            'grooming_requests' => $groomingRequests,
+            'veterinary_appointments' => $veterinaryAppointments,
+            'boarding_bookings' => $boardingBookings,
+            'total_customers' => $totalCustomers,
+            'active_customers' => $activeCustomers,
+            'total_appointments' => $totalAppointments,
             'staff_performance' => User::whereIn('role', $staffRoles)
                 ->select('id', 'name', 'role', 'is_active', 'created_at')
                 ->orderBy('name')

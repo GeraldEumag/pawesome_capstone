@@ -20,6 +20,7 @@ import {
   faXmark,
 } from "@fortawesome/free-solid-svg-icons";
 import { apiRequest } from "../../api/client";
+import { useAuth } from "../../context/AuthContext";
 import "./ManagerSchedule.css";
 
 const DAYS = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
@@ -39,6 +40,25 @@ const ROLE_COLORS = {
 
 const getRoleColor = (role) => ROLE_COLORS[(role || "").toLowerCase().replace(/\s+/g, "_")] || ROLE_COLORS.default;
 
+const normalizeList = (payload, keys = []) => {
+  if (Array.isArray(payload)) return payload;
+
+  for (const key of keys) {
+    if (Array.isArray(payload?.[key])) return payload[key];
+    if (Array.isArray(payload?.data?.[key])) return payload.data[key];
+    if (Array.isArray(payload?.[key]?.data)) return payload[key].data;
+    if (Array.isArray(payload?.data?.[key]?.data)) return payload.data[key].data;
+  }
+
+  if (Array.isArray(payload?.data)) return payload.data;
+  if (Array.isArray(payload?.data?.data)) return payload.data.data;
+  if (Array.isArray(payload?.records)) return payload.records;
+  if (Array.isArray(payload?.items)) return payload.items;
+  if (Array.isArray(payload?.results)) return payload.results;
+
+  return [];
+};
+
 const formatTime = (value) => {
   if (!value) return "—";
   const text = String(value);
@@ -47,6 +67,7 @@ const formatTime = (value) => {
 };
 
 const ManagerSchedule = () => {
+  const { role } = useAuth();
   const [records, setRecords] = useState([]);
   const [employees, setEmployees] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -73,8 +94,8 @@ const ManagerSchedule = () => {
         else setLoading(true);
         setError("");
         const res = await apiRequest("/manager/schedules");
-        setRecords(res?.data || []);
-        setEmployees(res?.employees || []);
+        setRecords(normalizeList(res, ["data", "schedules", "records"]));
+        setEmployees(normalizeList(res, ["employees", "staff", "data"]));
       } catch (err) {
         console.error("Schedule load error:", err);
         setError(err.message || "Failed to load schedules.");
@@ -185,22 +206,26 @@ const ManagerSchedule = () => {
     return `${start.toLocaleDateString("en-PH", { month: "short", day: "numeric" })} - ${end.toLocaleDateString("en-PH", { month: "short", day: "numeric", year: "numeric" })}`;
   }, [currentWeek]);
 
+  const isManagerView = role === "manager";
+
   return (
     <div className="manager-schedule">
       <section className="manager-schedule-hero">
         <div>
-          <span className="schedule-eyebrow">Manager Schedule</span>
-          <h1>Work Scheduling</h1>
-          <p>Assign and manage employee shifts across the week. Click any cell to edit a shift or mark as day-off.</p>
+          <span className="schedule-eyebrow">
+            {isManagerView ? "Manager Schedule" : "Payroll / HR Schedule"}
+          </span>
+          <h1>{isManagerView ? "Work Scheduling (Read-Only)" : "Work Scheduling"}</h1>
+          <p>
+            {isManagerView
+              ? "View employee shift schedules. Manager access is limited to monitoring only."
+              : "Manage employee shift schedules and weekly assignments."}
+          </p>
         </div>
         <div className="schedule-hero-actions">
           <button type="button" className="schedule-btn secondary" onClick={() => loadSchedules({ silent: true })} disabled={loading || refreshing}>
             <FontAwesomeIcon icon={refreshing ? faSpinner : faRefresh} spin={refreshing} />
             Refresh
-          </button>
-          <button type="button" className="schedule-btn primary" onClick={copyFromPreviousWeek}>
-            <FontAwesomeIcon icon={faCopy} />
-            Copy Week
           </button>
         </div>
       </section>
@@ -260,7 +285,7 @@ const ManagerSchedule = () => {
                       const s = scheduleMap[key];
                       const isOff = s?.is_off_day;
                       return (
-                        <td key={dayIdx} className="schedule-shift-cell" onClick={() => openEdit(emp.id, dayIdx)}>
+                        <td key={dayIdx} className="schedule-shift-cell">
                           {s ? (
                             <div className={`schedule-shift-tag ${isOff ? "off" : ""}`}>
                               {isOff ? (

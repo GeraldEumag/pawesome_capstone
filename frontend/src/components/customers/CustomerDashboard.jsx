@@ -70,8 +70,6 @@ const CustomerDashboard = () => {
           return;
         }
         setError(err.message || "Failed to load dashboard data");
-        showError(err.message || "Failed to load dashboard data");
-        console.error("Customer dashboard fetch error:", err);
       } finally {
         setLoading(false);
       }
@@ -393,7 +391,7 @@ const CustomerDashboard = () => {
 
                     <div className="pets-list">
                       {filteredRecentPets.map((pet, idx) => (
-                        <div key={idx} className="pet-card">
+                        <div key={`pet-${pet.id || pet.name || "no-id"}-${idx}`} className="pet-card">
                           <div className="pet-card-header">
                             <PetAvatar pet={pet} size={44} />
                             <div>
@@ -473,7 +471,7 @@ const CustomerDashboard = () => {
                     <div className="booking-list">
                       {filteredRecentBookings.length > 0 ? (
                         filteredRecentBookings.map((booking, index) => (
-                          <div key={index} className="booking-card">
+                          <div key={`booking-${booking.id || booking.petName || "no-id"}-${index}`} className="booking-card">
                             <div className="booking-card-top">
                               <div>
                                 <h3>{booking.petName}</h3>

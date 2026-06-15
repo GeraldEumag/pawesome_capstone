@@ -4,6 +4,12 @@ import ProtectedRoute from "../components/ProtectedRoute";
 import AdminPayroll from "../components/admin/AdminPayroll";
 import PayrollReports from "../components/admin/PayrollReports";
 import EmployeeSalaryManagement from "../components/admin/EmployeeSalaryManagement";
+import PayrollManagement from "../components/manager/PayrollManagement";
+import PayrollComputation from "../components/manager/PayrollComputation";
+import ManagerAttendance from "../components/manager/ManagerAttendance";
+import ManagerLeave from "../components/manager/ManagerLeave";
+import ManagerSchedule from "../components/manager/ManagerSchedule";
+import FingerprintKiosk from "../components/manager/FingerprintKiosk";
 
 const PayrollRoutes = () => (
   <Routes>
@@ -11,7 +17,47 @@ const PayrollRoutes = () => (
       index
       element={
         <ProtectedRoute>
-          <AdminPayroll />
+          <PayrollManagement />
+        </ProtectedRoute>
+      }
+    />
+    <Route
+      path="compute"
+      element={
+        <ProtectedRoute>
+          <PayrollComputation />
+        </ProtectedRoute>
+      }
+    />
+    <Route
+      path="attendance"
+      element={
+        <ProtectedRoute>
+          <ManagerAttendance />
+        </ProtectedRoute>
+      }
+    />
+    <Route
+      path="leaves"
+      element={
+        <ProtectedRoute>
+          <ManagerLeave />
+        </ProtectedRoute>
+      }
+    />
+    <Route
+      path="schedule"
+      element={
+        <ProtectedRoute>
+          <ManagerSchedule />
+        </ProtectedRoute>
+      }
+    />
+    <Route
+      path="kiosk"
+      element={
+        <ProtectedRoute>
+          <FingerprintKiosk />
         </ProtectedRoute>
       }
     />

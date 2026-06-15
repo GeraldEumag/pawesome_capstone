@@ -3,14 +3,9 @@ import { Routes, Route } from "react-router-dom";
 import ProtectedRoute from "../components/ProtectedRoute";
 import ManagerDashboard from "../components/manager/ManagerDashboard";
 import ManagerStaff from "../components/manager/ManagerStaff";
-import ManagerAttendance from "../components/manager/ManagerAttendance";
 import PayrollManagement from "../components/manager/PayrollManagement";
-import PayrollComputation from "../components/manager/PayrollComputation";
 import ManagerReports from "../components/manager/ManagerReports";
 import ManagerHistory from "../components/manager/ManagerHistory";
-import ManagerLeave from "../components/manager/ManagerLeave";
-import ManagerSchedule from "../components/manager/ManagerSchedule";
-import FingerprintKiosk from "../components/manager/FingerprintKiosk";
 import ProfileSettings from "../components/shared/ProfileSettings";
 
 const ManagerRoutes = () => (
@@ -26,16 +21,16 @@ const ManagerRoutes = () => (
       {/* Default landing page */}
       <Route index element={<ManagerDashboard />} />
 
-      {/* Nested routes */}
+      {/* Nested routes - Executive monitoring only */}
       <Route path="staff" element={<ManagerStaff />} />
-      <Route path="attendance" element={<ManagerAttendance />} />
-      <Route path="leaves" element={<ManagerLeave />} />
-      <Route path="schedule" element={<ManagerSchedule />} />
       <Route path="payroll" element={<PayrollManagement />} />
-      <Route path="payroll/compute" element={<PayrollComputation />} />
       <Route path="history" element={<ManagerHistory />} />
       <Route path="reports" element={<ManagerReports />} />
-      <Route path="kiosk" element={<FingerprintKiosk />} />
+      <Route path="reservations" element={<ManagerReports initialTab="services" />} />
+      <Route path="services" element={<ManagerReports initialTab="services" />} />
+      <Route path="payments" element={<ManagerReports initialTab="payments" />} />
+      <Route path="inventory" element={<ManagerReports initialTab="inventory" />} />
+      <Route path="customers" element={<ManagerReports initialTab="customers" />} />
       <Route path="profile" element={<ProfileSettings />} />
     </Route>
   </Routes>

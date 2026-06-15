@@ -217,7 +217,7 @@ const InventoryDashboard = () => {
                 </div>
                 <div className="activity-list">
                   {recentActivity.map((activity, index) => (
-                    <div key={index} className="activity-item">
+                    <div key={`inventory-activity-${activity.id || activity.product || "no-id"}-${index}`} className="activity-item">
                       <div className="activity-header">
                         <div className="activity-info">
                           <h3>{activity.action}</h3>
@@ -275,7 +275,7 @@ const InventoryDashboard = () => {
 
                 <div className="stock-categories">
                   {(dashboardData?.critical_items || []).slice(0, 3).map((item, idx) => (
-                    <div key={idx} className="stock-category-item">
+                    <div key={`critical-item-${item.id || item.name || "no-id"}-${idx}`} className="stock-category-item">
                       <div className="category-icon">
                         <FontAwesomeIcon icon={faBox} />
                       </div>

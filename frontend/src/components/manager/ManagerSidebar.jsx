@@ -40,43 +40,48 @@ const ManagerSidebar = ({ mobileOpen, onMobileMenuToggle }) => {
             </NavLink>
           </li>
           <li className="nav-item">
+            <NavLink to="/manager/reports" onClick={handleNavClick}>
+              Reports
+            </NavLink>
+          </li>
+          <li className="nav-item">
+            <NavLink to="/manager/reservations" onClick={handleNavClick}>
+              Reservations Monitoring
+            </NavLink>
+          </li>
+          <li className="nav-item">
+            <NavLink to="/manager/services" onClick={handleNavClick}>
+              Service Monitoring
+            </NavLink>
+          </li>
+          <li className="nav-item">
+            <NavLink to="/manager/payments" onClick={handleNavClick}>
+              Payment Monitoring
+            </NavLink>
+          </li>
+          <li className="nav-item">
+            <NavLink to="/manager/inventory" onClick={handleNavClick}>
+              Inventory Monitoring
+            </NavLink>
+          </li>
+          <li className="nav-item">
+            <NavLink to="/manager/customers" onClick={handleNavClick}>
+              Customer Records
+            </NavLink>
+          </li>
+          <li className="nav-item">
             <NavLink to="/manager/staff" onClick={handleNavClick}>
-              Staff
-            </NavLink>
-          </li>
-          <li className="nav-item">
-            <NavLink to="/manager/attendance" onClick={handleNavClick}>
-              Attendance
-            </NavLink>
-          </li>
-          <li className="nav-item">
-            <NavLink to="/manager/kiosk" onClick={handleNavClick}>
-              Fingerprint Kiosk
-            </NavLink>
-          </li>
-          <li className="nav-item">
-            <NavLink to="/manager/leaves" onClick={handleNavClick}>
-              Leave
-            </NavLink>
-          </li>
-          <li className="nav-item">
-            <NavLink to="/manager/schedule" onClick={handleNavClick}>
-              Schedule
+              Staff Performance
             </NavLink>
           </li>
           <li className="nav-item">
             <NavLink to="/manager/payroll" onClick={handleNavClick}>
-              Payroll
+              Payroll Summary
             </NavLink>
           </li>
           <li className="nav-item">
             <NavLink to="/manager/history" onClick={handleNavClick}>
-              History
-            </NavLink>
-          </li>
-          <li className="nav-item">
-            <NavLink to="/manager/reports" onClick={handleNavClick}>
-              Reports
+              History / Audit Trail
             </NavLink>
           </li>
           <li className="nav-item">
