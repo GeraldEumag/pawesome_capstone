@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useState, useRef } from "react";
 import {
   FaCalendarAlt,
   FaCheckCircle,
@@ -266,17 +266,27 @@ const ReceptionistApprovals = () => {
   const [bulkActionType, setBulkActionType] = useState("");
   const [verifiedIds, setVerifiedIds] = useState(new Set());
 
+  const successTimerRef = useRef(null);
+  const errorTimerRef = useRef(null);
+
+  useEffect(() => {
+    return () => {
+      if (successTimerRef.current) clearTimeout(successTimerRef.current);
+      if (errorTimerRef.current) clearTimeout(errorTimerRef.current);
+    };
+  }, []);
+
   const showMessage = (type, message) => {
     if (type === "success") {
       setSuccess(message);
-      window.clearTimeout(window.approvalsSuccessTimer);
-      window.approvalsSuccessTimer = window.setTimeout(() => setSuccess(""), 3000);
+      if (successTimerRef.current) clearTimeout(successTimerRef.current);
+      successTimerRef.current = setTimeout(() => setSuccess(""), 3000);
       return;
     }
 
     setError(message);
-    window.clearTimeout(window.approvalsErrorTimer);
-    window.approvalsErrorTimer = window.setTimeout(() => setError(""), 5000);
+    if (errorTimerRef.current) clearTimeout(errorTimerRef.current);
+    errorTimerRef.current = setTimeout(() => setError(""), 5000);
   };
 
   const isVetRequest = (item) => getRequestType(item) === "vet";
@@ -616,36 +626,54 @@ const ReceptionistApprovals = () => {
   const runBulkApprove = async () => {
     const ids = Array.from(selectedIds);
     if (ids.length === 0) return;
-    let successCount = 0;
-    let failCount = 0;
-    for (const id of ids) {
-      const item = requests.find((r) => getRequestId(r) === id);
-      if (!item) continue;
-      try {
+
+    try {
+      setLoading(true);
+
+      const promises = ids.map(async (id) => {
+        const item = requests.find((r) => getRequestId(r) === id);
+        if (!item) throw new Error("Item not found");
+
         const vetRequest = isVetRequest(item);
         const hotelRequest = getRequestType(item) === "hotel";
         const veterinarianId = actionForm.veterinarianId || vetAssignments[id];
+
         if (vetRequest && !veterinarianId) {
-          failCount++;
-          continue;
+          throw new Error("Missing veterinarian selection");
         }
+
         const payload = { receptionist_remarks: actionForm.remarks.trim() || "Approved by receptionist" };
         if (vetRequest) payload.veterinarian_id = Number(veterinarianId);
-        await apiRequest(
+
+        return apiRequest(
           hotelRequest
             ? `/receptionist/boarding-requests/${id}/approve`
             : `/receptionist/requests/${id}/approve`,
           { method: "POST", body: JSON.stringify(payload) }
         );
-        successCount++;
-      } catch {
-        failCount++;
-      }
+      });
+
+      const results = await Promise.allSettled(promises);
+
+      let successCount = 0;
+      let failCount = 0;
+
+      results.forEach((res) => {
+        if (res.status === "fulfilled") {
+          successCount++;
+        } else {
+          failCount++;
+        }
+      });
+
+      showMessage("success", `Approved ${successCount} request(s). ${failCount > 0 ? `${failCount} failed.` : ""}`);
+    } catch (err) {
+      showMessage("error", err.message || "An error occurred during bulk approval.");
+    } finally {
+      setSelectedIds(new Set());
+      closeBulkAction();
+      await fetchRequests({ silent: true });
     }
-    showMessage("success", `Approved ${successCount} request(s). ${failCount > 0 ? `${failCount} failed.` : ""}`);
-    setSelectedIds(new Set());
-    closeBulkAction();
-    await fetchRequests({ silent: true });
   };
 
   const runBulkReject = async () => {
@@ -655,29 +683,52 @@ const ReceptionistApprovals = () => {
       showMessage("error", "Rejection reason is required.");
       return;
     }
-    let successCount = 0;
-    let failCount = 0;
-    for (const id of ids) {
-      const item = requests.find((r) => getRequestId(r) === id);
-      if (!item) continue;
-      try {
+
+    try {
+      setLoading(true);
+
+      const promises = ids.map(async (id) => {
+        const item = requests.find((r) => getRequestId(r) === id);
+        if (!item) throw new Error("Item not found");
+
         const hotelRequest = getRequestType(item) === "hotel";
         const isBoardingRecord = item.approval_source === "boarding";
-        await apiRequest(
+
+        return apiRequest(
           (hotelRequest && isBoardingRecord)
             ? `/receptionist/boarding-requests/${id}/reject`
             : `/receptionist/requests/${id}/reject`,
-          { method: "POST", body: JSON.stringify({ rejection_reason: reason, receptionist_remarks: actionForm.remarks.trim() || reason }) }
+          {
+            method: "POST",
+            body: JSON.stringify({
+              rejection_reason: reason,
+              receptionist_remarks: actionForm.remarks.trim() || reason
+            })
+          }
         );
-        successCount++;
-      } catch {
-        failCount++;
-      }
+      });
+
+      const results = await Promise.allSettled(promises);
+
+      let successCount = 0;
+      let failCount = 0;
+
+      results.forEach((res) => {
+        if (res.status === "fulfilled") {
+          successCount++;
+        } else {
+          failCount++;
+        }
+      });
+
+      showMessage("success", `Rejected ${successCount} request(s). ${failCount > 0 ? `${failCount} failed.` : ""}`);
+    } catch (err) {
+      showMessage("error", err.message || "An error occurred during bulk rejection.");
+    } finally {
+      setSelectedIds(new Set());
+      closeBulkAction();
+      await fetchRequests({ silent: true });
     }
-    showMessage("success", `Rejected ${successCount} request(s). ${failCount > 0 ? `${failCount} failed.` : ""}`);
-    setSelectedIds(new Set());
-    closeBulkAction();
-    await fetchRequests({ silent: true });
   };
 
   const exportCSV = () => {

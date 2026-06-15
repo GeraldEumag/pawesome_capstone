@@ -43,7 +43,7 @@ const parseResponseText = (text) => {
 /**
  * Supports both:
  * apiRequest("/auth/login", "POST", payload)
- * apiRequest("/auth/login", { method: "POST", body: JSON.stringify(payload) })
+ * apiRequest("/auth/login", { method: "POST", body: JSON.stringify(payload), signal: abortSignal })
  */
 export const apiRequest = async (endpoint, methodOrOptions = "GET", data = null, extraOptions = {}) => {
   const token = getToken();
@@ -53,17 +53,20 @@ export const apiRequest = async (endpoint, methodOrOptions = "GET", data = null,
   let body = null;
   let customHeaders = {};
   let options = {};
+  let signal = null;
 
   if (typeof methodOrOptions === "string") {
     method = methodOrOptions.toUpperCase();
     body = data;
     options = extraOptions || {};
     customHeaders = options.headers || {};
+    signal = options.signal;
   } else if (typeof methodOrOptions === "object" && methodOrOptions !== null) {
     method = (methodOrOptions.method || "GET").toUpperCase();
     body = methodOrOptions.body || data;
     options = methodOrOptions;
     customHeaders = methodOrOptions.headers || {};
+    signal = methodOrOptions.signal;
   }
 
   const isFormData = body instanceof FormData;
@@ -82,14 +85,16 @@ export const apiRequest = async (endpoint, methodOrOptions = "GET", data = null,
     credentials: "include",
   };
 
+  // Remove signal from config if present (we'll pass it directly to fetch)
+  delete config.signal;
+  delete config.params;
+
   if (body !== null && body !== undefined) {
     config.body = isFormData || typeof body === "string" ? body : JSON.stringify(body);
   }
 
-  delete config.params;
-
   try {
-    const response = await fetch(url, config);
+    const response = await fetch(url, { ...config, signal });
     const text = await response.text();
     const result = parseResponseText(text);
 
@@ -128,6 +133,10 @@ export const apiRequest = async (endpoint, methodOrOptions = "GET", data = null,
 
     return result;
   } catch (error) {
+    // Handle aborted requests gracefully
+    if (error.name === 'AbortError') {
+      throw new Error('Request was cancelled');
+    }
     throw error;
   }
 };

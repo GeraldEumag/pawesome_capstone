@@ -1,4 +1,172 @@
-/* Receptionist Sidebar Accent */
+/* Receptionist Sidebar - Matches Admin Global Pink Theme */
+
 .receptionist-sidebar {
-  --sidebar-accent: var(--color-primary);
+  --sidebar-accent: var(--color-primary, #ff5f93);
+  /* Inherits pink gradient from sidebar.css global styles */
+}
+
+/* Header styling */
+.receptionist-sidebar .sidebar-header {
+  border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.receptionist-sidebar .sidebar-logo {
+  color: #ffffff;
+  font-weight: 700;
+}
+
+/* Dropdown Toggle Button */
+.receptionist-sidebar .dropdown-toggle {
+  width: 100%;
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.625rem 1rem;
+  border-radius: 8px;
+  color: rgba(255, 255, 255, 0.9);
+  background: transparent;
+  border: none;
+  font-size: 0.9rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.receptionist-sidebar .dropdown-toggle:hover {
+  background: rgba(255, 255, 255, 0.12);
+  color: #ffffff;
+}
+
+.receptionist-sidebar .dropdown-icon {
+  margin-left: auto;
+  font-size: 0.75rem;
+  opacity: 0.7;
+  transition: transform 0.2s ease;
+}
+
+.receptionist-sidebar .dropdown-toggle[aria-expanded="true"] .dropdown-icon {
+  transform: rotate(180deg);
+}
+
+/* Dropdown Menu */
+.receptionist-sidebar .dropdown-menu {
+  list-style: none;
+  padding: 0.5rem 0 0.5rem 1.5rem;
+  margin: 0;
+  border-left: 2px solid rgba(255, 255, 255, 0.3);
+  margin-left: 1rem;
+}
+
+.receptionist-sidebar .dropdown-menu .nav-item {
+  margin: 0.125rem 0;
+}
+
+.receptionist-sidebar .dropdown-menu .nav-item a {
+  min-height: 36px;
+  padding: 0.5rem 0.75rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  border-radius: 6px;
+  color: #1f2937;
+  text-decoration: none;
+  display: flex;
+  align-items: center;
+  gap: 0.625rem;
+  transition: all 0.15s ease;
+}
+
+.receptionist-sidebar .dropdown-menu .nav-item a:hover {
+  background: rgba(255, 255, 255, 0.5);
+  color: #0f172a;
+}
+
+.receptionist-sidebar .dropdown-menu .nav-item a.active {
+  background: var(--sidebar-accent);
+  color: #ffffff;
+  font-weight: 600;
+}
+
+.receptionist-sidebar .dropdown-menu .nav-item a.active .nav-icon {
+  color: #ffffff;
+}
+
+.receptionist-sidebar .dropdown-menu .nav-icon {
+  color: var(--sidebar-accent);
+}
+
+/* Navigation Icons */
+.receptionist-sidebar .nav-icon {
+  font-size: 0.95rem;
+  width: 18px;
+  text-align: center;
+  flex-shrink: 0;
+  color: rgba(255, 255, 255, 0.8);
+}
+
+.receptionist-sidebar .dropdown-menu .nav-item a.active .nav-icon,
+.receptionist-sidebar .nav-item > a.active .nav-icon {
+  color: var(--sidebar-accent);
+}
+
+/* Main Nav Items */
+.receptionist-sidebar .nav-item > a {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  min-height: 44px;
+  padding: 0.625rem 1rem;
+  border-radius: 8px;
+  color: rgba(255, 255, 255, 0.9);
+  text-decoration: none;
+  font-size: 0.9rem;
+  font-weight: 500;
+  transition: all 0.2s ease;
+}
+
+.receptionist-sidebar .nav-item > a:hover {
+  background: rgba(255, 255, 255, 0.12);
+  color: #ffffff;
+}
+
+.receptionist-sidebar .nav-item > a:hover .nav-icon {
+  color: #ffffff;
+}
+
+.receptionist-sidebar .nav-item > a.active {
+  background: rgba(255, 255, 255, 0.95);
+  color: var(--sidebar-accent);
+}
+
+/* When dropdown has active child, show subtle indicator on toggle */
+.receptionist-sidebar .dropdown-toggle.has-active-child {
+  border-left: 3px solid rgba(255, 255, 255, 0.6);
+}
+
+/* Dropdown toggle shows active only when explicitly selected (rare) */
+.receptionist-sidebar .nav-item.dropdown > .dropdown-toggle.active {
+  background: rgba(255, 255, 255, 0.95);
+  color: var(--sidebar-accent);
+}
+
+/* Logout button styling */
+.receptionist-sidebar .logout-btn {
+  width: calc(100% - 1.4rem);
+  margin: 0 0.7rem;
+  min-height: 40px;
+  padding: 0.5rem 1rem;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.1);
+  color: rgba(255, 255, 255, 0.9);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  font-size: 0.9rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.receptionist-sidebar .logout-btn:hover {
+  background: rgba(255, 255, 255, 0.2);
+  color: #ffffff;
+  border-color: rgba(255, 255, 255, 0.3);
 }

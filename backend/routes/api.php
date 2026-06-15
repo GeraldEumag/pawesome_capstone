@@ -27,6 +27,7 @@ use App\Http\Controllers\Receptionist\CustomerOrderController as ReceptionistCus
 use App\Http\Controllers\Receptionist\ServiceController as ReceptionistServiceController;
 use App\Http\Controllers\Receptionist\HotelRoomController as ReceptionistHotelRoomController;
 use App\Http\Controllers\Receptionist\BoardingRoomController as ReceptionistBoardingRoomController;
+use App\Http\Controllers\Receptionist\WalkInController as ReceptionistWalkInController;
 use App\Http\Controllers\Veterinary\DashboardController as VeterinaryDashboardController;
 use App\Http\Controllers\Veterinary\MedicalRecordController;
 use App\Http\Controllers\Veterinary\ConsultationWorkflowController;
@@ -516,6 +517,10 @@ Route::middleware(['auth.api', 'throttle:api', 'role:receptionist'])->prefix('re
     Route::post('medical-confinements/{id}/care-logs', [MedicalConfinementController::class, 'addCareLog']);
     Route::get('medical-confinements/{id}/care-logs', [MedicalConfinementController::class, 'careLogs']);
     Route::post('medical-confinements/{id}/release', [MedicalConfinementController::class, 'release']);
+    
+    // Walk-in Booking Routes
+    Route::post('walk-ins', [ReceptionistWalkInController::class, 'store']);
+    Route::get('customers/search', [ReceptionistWalkInController::class, 'searchCustomers']);
 });
 
 Route::middleware(['auth.api', 'throttle:api'])->get('inventory/public/items', [InventoryDashboardController::class, 'publicItems']);
