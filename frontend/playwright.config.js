@@ -1,14 +1,19 @@
 import { defineConfig, devices } from "@playwright/test";
 
+const baseURL = process.env.E2E_BASE_URL || "http://localhost:3002";
+const startFrontend = process.env.PW_START_FRONTEND === "true";
+
 export default defineConfig({
   testDir: "./e2e",
-  fullyParallel: true,
+  outputDir: "./test-results",
+  fullyParallel: false,
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 2 : 0,
   workers: process.env.CI ? 1 : undefined,
-  reporter: "list",
+  reporter: [["list"], ["html", { outputFolder: "playwright-report", open: "never" }]],
   use: {
-    baseURL: "http://localhost:3000",
+    baseURL,
+    screenshot: "only-on-failure",
     trace: "on-first-retry",
   },
   projects: [
@@ -17,9 +22,11 @@ export default defineConfig({
       use: { ...devices["Desktop Chrome"] },
     },
   ],
-  webServer: {
-    command: "npm run dev",
-    url: "http://localhost:3000",
-    reuseExistingServer: !process.env.CI,
-  },
+  webServer: startFrontend
+    ? {
+        command: "npm run dev -- --host 127.0.0.1 --port 3002",
+        url: baseURL,
+        reuseExistingServer: !process.env.CI,
+      }
+    : undefined,
 });
