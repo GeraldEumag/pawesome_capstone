@@ -25,7 +25,7 @@
   color: #374151;
   margin: 0 0 12px;
   padding-bottom: 8px;
-  border-bottom: 1px solid #f3f4f6;
+  border-bottom: 2px solid rgba(255, 95, 147, 0.15);
 }
 
 .hub-form-grid {
@@ -66,8 +66,8 @@
 .hub-form-group input:focus,
 .hub-form-group select:focus,
 .hub-form-group textarea:focus {
-  border-color: #3b82f6;
-  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+  border-color: var(--color-primary, #ff5f93);
+  box-shadow: 0 0 0 3px rgba(255, 95, 147, 0.12);
 }
 
 .hub-form-group input:disabled {
@@ -84,8 +84,8 @@
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   gap: 12px;
-  background: #f9fafb;
-  border: 1px solid #e5e7eb;
+  background: rgba(255, 241, 247, 0.6);
+  border: 1px solid rgba(255, 95, 147, 0.16);
   border-radius: 10px;
   padding: 16px;
   margin-bottom: 16px;
