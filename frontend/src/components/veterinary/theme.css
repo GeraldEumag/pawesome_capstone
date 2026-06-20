@@ -60,6 +60,74 @@
   --veterinary-transition-fast: 0.15s ease;
   --veterinary-transition-normal: 0.3s ease;
   --veterinary-transition-slow: 0.5s ease;
+
+  /* Spacing / Layout Tokens */
+  --vet-page-padding: 32px;
+  --vet-section-gap: 28px;
+  --vet-card-gap: 20px;
+  --vet-form-gap: 16px;
+
+  /* Form Card Tokens */
+  --vet-form-card-bg: rgba(255, 241, 247, 0.55);
+  --vet-form-border: rgba(255, 95, 147, 0.14);
+  --vet-input-height: 48px;
+  --vet-input-bg: var(--color-surface-solid, #ffffff);
+  --vet-input-border: rgba(255, 95, 147, 0.22);
+  --vet-input-focus-ring: rgba(255, 95, 147, 0.18);
+  --vet-input-radius: var(--radius-lg, 14px);
+
+  /* Icon Container Tokens */
+  --vet-icon-sm: 36px;
+  --vet-icon-md: 48px;
+  --vet-icon-lg: 60px;
+  --vet-icon-radius-sm: 12px;
+  --vet-icon-radius-md: 16px;
+  --vet-icon-radius-lg: 20px;
+  --vet-icon-gradient: linear-gradient(135deg, var(--color-primary-light, #ff8db5), var(--color-primary, #ff5f93));
+
+  /* Per-Status Badge Tokens */
+  --vet-badge-pending-bg: rgba(245, 158, 11, 0.1);
+  --vet-badge-pending-color: #b45309;
+  --vet-badge-pending-border: rgba(245, 158, 11, 0.25);
+
+  --vet-badge-approved-bg: rgba(59, 130, 246, 0.1);
+  --vet-badge-approved-color: #1d4ed8;
+  --vet-badge-approved-border: rgba(59, 130, 246, 0.25);
+
+  --vet-badge-in-progress-bg: rgba(255, 95, 147, 0.1);
+  --vet-badge-in-progress-color: var(--color-primary, #ff5f93);
+  --vet-badge-in-progress-border: rgba(255, 95, 147, 0.22);
+
+  --vet-badge-completed-bg: rgba(16, 185, 129, 0.1);
+  --vet-badge-completed-color: #065f46;
+  --vet-badge-completed-border: rgba(16, 185, 129, 0.25);
+
+  --vet-badge-cancelled-bg: rgba(239, 68, 68, 0.1);
+  --vet-badge-cancelled-color: #991b1b;
+  --vet-badge-cancelled-border: rgba(239, 68, 68, 0.2);
+
+  --vet-badge-admitted-bg: rgba(139, 92, 246, 0.1);
+  --vet-badge-admitted-color: #5b21b6;
+  --vet-badge-admitted-border: rgba(139, 92, 246, 0.22);
+
+  --vet-badge-observation-bg: rgba(6, 182, 212, 0.1);
+  --vet-badge-observation-color: #0e7490;
+  --vet-badge-observation-border: rgba(6, 182, 212, 0.22);
+
+  --vet-badge-discharged-bg: rgba(16, 185, 129, 0.1);
+  --vet-badge-discharged-color: #065f46;
+  --vet-badge-discharged-border: rgba(16, 185, 129, 0.22);
+
+  /* Section Card Tokens */
+  --vet-section-card-bg: var(--color-surface, rgba(255,255,255,0.85));
+  --vet-section-card-border: var(--color-border, rgba(255,95,147,0.18));
+  --vet-section-header-color: var(--color-primary, #ff5f93);
+  --vet-divider: rgba(255, 95, 147, 0.12);
+
+  /* Sidebar Tokens */
+  --vet-sidebar-nav-gap: 4px;
+  --vet-sidebar-item-radius: 14px;
+  --vet-sidebar-icon-size: 18px;
 }
 
 /* Body styles applied globally */
@@ -72,6 +140,24 @@ body {
 /* ─────────────────────────────────────────────────────────────
    Dark Mode Overrides - Using Global Theme
 ───────────────────────────────────────────────────────────── */
+[data-theme="dark"] {
+  --veterinary-glass-bg: rgba(30, 20, 40, 0.82);
+  --veterinary-glass-border: rgba(255, 95, 147, 0.22);
+  --veterinary-card-bg: #1e1428;
+  --veterinary-surface: #1e1428;
+  --veterinary-page-bg: linear-gradient(135deg, #1a0d22, #1e1428, #22102e);
+
+  --veterinary-text-primary: #f1e8f5;
+  --veterinary-text-secondary: #c4a8d4;
+  --veterinary-text-muted: #8b6fa0;
+
+  --vet-form-card-bg: rgba(255, 95, 147, 0.06);
+  --vet-form-border: rgba(255, 95, 147, 0.18);
+  --vet-input-bg: rgba(30, 20, 40, 0.9);
+  --vet-section-card-bg: rgba(30, 20, 40, 0.82);
+  --vet-section-card-border: rgba(255, 95, 147, 0.2);
+  --vet-divider: rgba(255, 95, 147, 0.15);
+}
 
 /* ─────────────────────────────────────────────────────────────
    Utility Classes for Components

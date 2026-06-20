@@ -850,10 +850,40 @@
 
 /* Dark Mode Support */
 
+[data-theme="dark"] .vet-new-appointment {
+  background: var(--veterinary-page-bg);
+}
 
+[data-theme="dark"] .new-appointment-hero {
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.4);
+}
 
+[data-theme="dark"] .new-appointment-form-card {
+  background: rgba(30, 18, 38, 0.82);
+  border-color: rgba(255, 95, 147, 0.14);
+}
 
+[data-theme="dark"] .appointment-summary-card {
+  background: rgba(30, 18, 38, 0.82);
+  border-color: rgba(255, 95, 147, 0.14);
+}
 
+[data-theme="dark"] .form-input,
+[data-theme="dark"] .form-select,
+[data-theme="dark"] .form-textarea {
+  background: rgba(15, 10, 25, 0.55);
+  border-color: rgba(255, 95, 147, 0.18);
+  color: var(--veterinary-text-primary);
+}
+
+[data-theme="dark"] .customer-search-results {
+  background: rgba(25, 14, 35, 0.97);
+  border-color: rgba(255, 95, 147, 0.16);
+}
+
+[data-theme="dark"] .search-result-item:hover {
+  background: rgba(255, 95, 147, 0.1);
+}
 
 @keyframes scaleIn {
   from {
@@ -874,8 +904,24 @@
 
 /* Dark Mode Overrides */
 
+[data-theme="dark"] .pet-option {
+  background: rgba(30, 18, 38, 0.7);
+  border-color: rgba(255, 95, 147, 0.14);
+}
 
+[data-theme="dark"] .pet-option.selected {
+  background: rgba(255, 95, 147, 0.12);
+  border-color: var(--veterinary-primary);
+}
 
+[data-theme="dark"] .service-preview-item {
+  background: rgba(30, 18, 38, 0.65);
+  border-color: rgba(255, 95, 147, 0.12);
+}
+
+[data-theme="dark"] .summary-row {
+  border-color: rgba(255, 95, 147, 0.08);
+}
 
 /* Responsive Design */
 @media (max-width: 1200px) {

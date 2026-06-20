@@ -415,6 +415,7 @@
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
   gap: 1.5rem;
+  min-height: 320px;
 }
 
 .ure-chart-container {
@@ -423,6 +424,8 @@
   border-radius: var(--ure-radius-lg);
   padding: 1.25rem;
   box-shadow: var(--ure-shadow);
+  min-width: 0;
+  min-height: 300px;
 }
 
 .ure-chart-header {
@@ -469,6 +472,8 @@
 
 .ure-chart-body {
   width: 100%;
+  min-width: 0;
+  min-height: 200px;
 }
 
 /* Table Section */

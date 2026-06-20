@@ -1,4 +1,186 @@
-/* Veterinary Sidebar Accent */
+/* ─────────────────────────────────────────────────────────────
+   VeterinarySidebar.css — Premium Vet Sidebar
+───────────────────────────────────────────────────────────── */
+
 .veterinary-sidebar {
-  --sidebar-accent: var(--color-primary);
+  --sidebar-accent: var(--color-primary, #ff5f93);
+  --sidebar-item-radius: var(--vet-sidebar-item-radius, 14px);
+  --sidebar-icon-size: var(--vet-sidebar-icon-size, 18px);
+}
+
+/* ── Logo Block ────────────────────────────────────────────── */
+
+.veterinary-sidebar .sidebar-logo {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.veterinary-sidebar .sidebar-logo-icon {
+  width: 40px;
+  height: 40px;
+  min-width: 40px;
+  border-radius: 13px;
+  background: rgba(255, 255, 255, 0.22);
+  display: grid;
+  place-items: center;
+  font-size: 18px;
+  color: #ffffff;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+  flex-shrink: 0;
+}
+
+.veterinary-sidebar .sidebar-logo-text {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.veterinary-sidebar .sidebar-logo-title {
+  font-size: 1rem;
+  font-weight: 800;
+  color: #ffffff;
+  line-height: 1.1;
+  letter-spacing: -0.02em;
+}
+
+.veterinary-sidebar .sidebar-logo-sub {
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.72);
+  letter-spacing: 0.01em;
+  margin-top: 2px;
+}
+
+/* ── Nav Label ─────────────────────────────────────────────── */
+
+.veterinary-sidebar .sidebar-nav-label {
+  margin: 0 0 8px;
+  padding: 0 12px;
+  font-size: 0.68rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: rgba(255, 255, 255, 0.52);
+}
+
+/* ── Nav List ──────────────────────────────────────────────── */
+
+.veterinary-sidebar .nav-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--vet-sidebar-nav-gap, 3px);
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+/* ── Nav Item & NavLink ─────────────────────────────────────── */
+
+.veterinary-sidebar .nav-item a {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  padding: 10px 13px;
+  border-radius: var(--sidebar-item-radius);
+  color: rgba(255, 255, 255, 0.82);
+  font-size: 0.875rem;
+  font-weight: 600;
+  text-decoration: none;
+  transition: background 0.18s ease, color 0.18s ease, transform 0.18s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.veterinary-sidebar .nav-item a:hover {
+  background: rgba(255, 255, 255, 0.14);
+  color: #ffffff;
+  transform: translateX(2px);
+}
+
+.veterinary-sidebar .nav-item a.active {
+  background: rgba(255, 255, 255, 0.96);
+  color: var(--sidebar-accent);
+  font-weight: 750;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+}
+
+.veterinary-sidebar .nav-item a.active .nav-icon {
+  background: linear-gradient(135deg, var(--sidebar-accent), #ff8db5);
+  color: #ffffff;
+}
+
+/* ── Nav Icon Container ─────────────────────────────────────── */
+
+.veterinary-sidebar .nav-icon {
+  width: 34px;
+  height: 34px;
+  min-width: 34px;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.15);
+  display: grid;
+  place-items: center;
+  font-size: var(--sidebar-icon-size);
+  transition: background 0.18s ease, color 0.18s ease;
+  flex-shrink: 0;
+}
+
+.veterinary-sidebar .nav-item a:hover .nav-icon {
+  background: rgba(255, 255, 255, 0.22);
+}
+
+/* ── Nav Label ─────────────────────────────────────────────── */
+
+.veterinary-sidebar .nav-label {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  flex: 1;
+}
+
+/* ── Logout Button ─────────────────────────────────────────── */
+
+.veterinary-sidebar .logout-btn {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+  padding: 11px 16px;
+  border-radius: var(--sidebar-item-radius);
+  background: rgba(255, 255, 255, 0.12);
+  color: rgba(255, 255, 255, 0.88);
+  font-size: 0.875rem;
+  font-weight: 650;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  cursor: pointer;
+  transition: background 0.18s ease, color 0.18s ease, transform 0.18s ease;
+}
+
+.veterinary-sidebar .logout-btn:hover {
+  background: rgba(239, 68, 68, 0.22);
+  color: #ffffff;
+  border-color: rgba(239, 68, 68, 0.35);
+  transform: translateY(-1px);
+}
+
+/* ── Dark Mode ─────────────────────────────────────────────── */
+
+[data-theme="dark"] .veterinary-sidebar .nav-item a.active {
+  background: rgba(255, 95, 147, 0.18);
+  color: #ffb3cc;
+}
+
+[data-theme="dark"] .veterinary-sidebar .nav-item a.active .nav-icon {
+  background: rgba(255, 95, 147, 0.3);
+  color: #ffb3cc;
+}
+
+/* ── Responsive ────────────────────────────────────────────── */
+
+@media (max-width: 768px) {
+  .veterinary-sidebar .sidebar-logo-sub {
+    display: none;
+  }
 }

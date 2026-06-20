@@ -13,6 +13,14 @@ import {
   faStethoscope,
   faUser,
   faHospital,
+  faWeightScale,
+  faThermometer,
+  faHeartPulse,
+  faLungs,
+  faStar,
+  faMoneyBillWave,
+  faBriefcaseMedical,
+  faTriangleExclamation,
 } from "@fortawesome/free-solid-svg-icons";
 import toast from "react-hot-toast";
 import { apiRequest } from "../../api/client";
@@ -279,14 +287,32 @@ const VetConsultation = () => {
     );
   }
 
+  const vitalFields = [
+    { icon: faWeightScale, label: "Weight", field: "weight_kg", unit: "kg" },
+    { icon: faThermometer, label: "Temperature", field: "temperature_celsius", unit: "°C" },
+    { icon: faHeartPulse, label: "Heart Rate", field: "heart_rate", unit: "bpm" },
+    { icon: faLungs, label: "Resp. Rate", field: "respiratory_rate", unit: "/min" },
+    { icon: faStar, label: "Body Score", field: "body_condition_score", unit: "/9" },
+  ];
+
+  const paymentItems = [
+    { label: "Base Amount", value: `PHP ${Number((billingSummary.total_bill || 0) - (billingSummary.additional_charges || 0)).toFixed(2)}` },
+    { label: "Additional Charges", value: `PHP ${Number(billingSummary.additional_charges || 0).toFixed(2)}` },
+    { label: "Amount Paid", value: `PHP ${Number(billingSummary.total_paid || 0).toFixed(2)}` },
+    { label: "Balance Due", value: `PHP ${Number(billingSummary.balance_due || 0).toFixed(2)}`, highlight: true },
+    { label: "Payment Status", value: String(appointment?.payment_status || billingSummary.payment_status || "unpaid").replace(/_/g, " ") },
+  ];
+
   return (
     <section className="vet-consultation">
+
+      {/* ── Header ─────────────────────────────────── */}
       <div className="consult-header">
         <button type="button" className="consult-back" onClick={() => navigate("/veterinary/appointments")}>
           <FontAwesomeIcon icon={faArrowLeft} />
-          Back
+          Back to Appointments
         </button>
-        <div>
+        <div className="consult-header-copy">
           <span className="consult-eyebrow">
             <FontAwesomeIcon icon={faFileMedical} />
             Consultation
@@ -296,195 +322,268 @@ const VetConsultation = () => {
         </div>
       </div>
 
-      <div className="consult-summary">
-        <article>
-          <PetAvatar pet={appointment.pet} size={40} />
-          <span>Pet</span>
-          <strong>{appointment.pet?.name || "Unknown"}</strong>
-          <small>{appointment.pet?.species || "Pet"} {appointment.pet?.breed ? `- ${appointment.pet.breed}` : ""}</small>
-        </article>
-        <article>
-          <FontAwesomeIcon icon={faUser} />
-          <span>Owner</span>
-          <strong>{appointment.customer?.name || "Unknown owner"}</strong>
-          <small>{appointment.customer?.phone || appointment.customer?.email || "No contact"}</small>
-        </article>
-        <article>
-          <FontAwesomeIcon icon={faStethoscope} />
-          <span>Service Acquired</span>
-          <strong>{serviceLabel}</strong>
-          <small>{appointment.service?.category || "Veterinary service"}</small>
-        </article>
-        <article>
-          <FontAwesomeIcon icon={faNotesMedical} />
-          <span>Status</span>
-          <strong>{appointmentStatus.replace(/_/g, " ")}</strong>
-          <small>{record ? `Record: ${record.status}` : "No record yet"}</small>
-        </article>
-        <article>
-          <FontAwesomeIcon icon={faCircleCheck} />
-          <span>Payment</span>
-          <strong>{String(appointment?.payment_status || billingSummary.payment_status || "unpaid").replace(/_/g, " ")}</strong>
-          <small>Balance: PHP {Number(billingSummary.balance_due || 0).toFixed(2)}</small>
-        </article>
+      {/* ── Patient Summary ─────────────────────────── */}
+      <div className="consult-section-card">
+        <div className="consult-section-header">
+          <div className="consult-section-icon"><FontAwesomeIcon icon={faPaw} /></div>
+          <div className="consult-section-title-group">
+            <h3>Patient Summary</h3>
+            <p>Appointment details and current status</p>
+          </div>
+          <span className={`consult-apt-badge consult-apt-badge--${appointmentStatus.replace(/_/g, "-")}`}>
+            {appointmentStatus.replace(/_/g, " ")}
+          </span>
+        </div>
+        <div className="consult-summary">
+          <article>
+            <PetAvatar pet={appointment.pet} size={40} />
+            <span>Pet</span>
+            <strong>{appointment.pet?.name || "Unknown"}</strong>
+            <small>{appointment.pet?.species || "Pet"}{appointment.pet?.breed ? ` · ${appointment.pet.breed}` : ""}</small>
+          </article>
+          <article>
+            <FontAwesomeIcon icon={faUser} />
+            <span>Owner</span>
+            <strong>{appointment.customer?.name || "Unknown owner"}</strong>
+            <small>{appointment.customer?.phone || appointment.customer?.email || "No contact"}</small>
+          </article>
+          <article>
+            <FontAwesomeIcon icon={faStethoscope} />
+            <span>Service</span>
+            <strong>{serviceLabel}</strong>
+            <small>{appointment.service?.category || "Veterinary service"}</small>
+          </article>
+          <article>
+            <FontAwesomeIcon icon={faNotesMedical} />
+            <span>Record</span>
+            <strong>{record ? record.status.replace(/_/g, " ") : "No record yet"}</strong>
+            <small>{record ? `ID #${record.id}` : "Start consultation to create"}</small>
+          </article>
+          <article>
+            <FontAwesomeIcon icon={faCircleCheck} />
+            <span>Payment</span>
+            <strong>{String(appointment?.payment_status || billingSummary.payment_status || "unpaid").replace(/_/g, " ")}</strong>
+            <small>Balance: PHP {Number(billingSummary.balance_due || 0).toFixed(2)}</small>
+          </article>
+        </div>
       </div>
 
+      {/* ── Status Alert Panels ─────────────────────── */}
       {!isStarted && appointmentStatus !== "awaiting_payment" && (
         <div className="consult-start-panel">
-          <p>Start the appointment to open a medical record for this pet.</p>
-          <button type="button" onClick={startAppointment} disabled={saving}>
-            <FontAwesomeIcon icon={faPlay} />
+          <div className="consult-start-panel-copy">
+            <div className="consult-start-icon-wrap"><FontAwesomeIcon icon={faPlay} /></div>
+            <div>
+              <strong>Ready to Begin</strong>
+              <p>Start the consultation to open a medical record for this patient.</p>
+            </div>
+          </div>
+          <button type="button" className="consult-start-btn" onClick={startAppointment} disabled={saving}>
+            {saving ? <FontAwesomeIcon icon={faSpinner} spin /> : <FontAwesomeIcon icon={faPlay} />}
             Start Consultation
           </button>
         </div>
       )}
       {appointmentStatus === "awaiting_payment" && (
-        <div className="consult-start-panel" style={{ background: "#fff7ed", borderColor: "#f97316" }}>
-          <p style={{ color: "#c2410c", fontWeight: 600 }}>
-            This consultation has been finalized and is awaiting payment at the cashier.
-          </p>
+        <div className="consult-start-panel consult-start-panel--payment">
+          <div className="consult-start-panel-copy">
+            <div className="consult-start-icon-wrap consult-start-icon-wrap--payment"><FontAwesomeIcon icon={faCircleCheck} /></div>
+            <div>
+              <strong>Consultation Finalized</strong>
+              <p>This consultation has been finalized and is awaiting payment at the cashier.</p>
+            </div>
+          </div>
         </div>
       )}
 
-      <div className="consult-form">
-        <label>
-          Chief Complaint
-          <textarea value={form.chief_complaint} onChange={(e) => updateField("chief_complaint", e.target.value)} />
-        </label>
-        <label>
-          Symptoms
-          <textarea value={form.symptoms} onChange={(e) => updateField("symptoms", e.target.value)} />
-        </label>
-        <label>
-          Physical Examination
-          <textarea value={form.physical_examination} onChange={(e) => updateField("physical_examination", e.target.value)} />
-        </label>
-        <label>
-          Diagnosis
-          <textarea value={form.diagnosis} onChange={(e) => updateField("diagnosis", e.target.value)} />
-        </label>
-        <label>
-          Treatment Plan
-          <textarea value={form.treatment_plan} onChange={(e) => updateField("treatment_plan", e.target.value)} />
-        </label>
-        <label>
-          General Notes
-          <textarea value={form.notes} onChange={(e) => updateField("notes", e.target.value)} />
-        </label>
-
-        <div className="consult-vitals">
-          <label>
-            Weight kg
-            <input value={form.weight_kg} onChange={(e) => updateField("weight_kg", e.target.value)} />
+      {/* ── Clinical Notes ──────────────────────────── */}
+      <div className="consult-section-card">
+        <div className="consult-section-header">
+          <div className="consult-section-icon"><FontAwesomeIcon icon={faNotesMedical} /></div>
+          <div className="consult-section-title-group">
+            <h3>Clinical Notes</h3>
+            <p>Medical observations, diagnosis, and treatment plan</p>
+          </div>
+        </div>
+        <div className="consult-form">
+          <label className="consult-label">
+            Chief Complaint
+            <textarea value={form.chief_complaint} onChange={(e) => updateField("chief_complaint", e.target.value)} disabled={isFinalized} />
           </label>
-          <label>
-            Temp C
-            <input value={form.temperature_celsius} onChange={(e) => updateField("temperature_celsius", e.target.value)} />
+          <label className="consult-label">
+            Symptoms
+            <textarea value={form.symptoms} onChange={(e) => updateField("symptoms", e.target.value)} disabled={isFinalized} />
           </label>
-          <label>
-            Heart Rate
-            <input value={form.heart_rate} onChange={(e) => updateField("heart_rate", e.target.value)} />
+          <label className="consult-label">
+            Physical Examination
+            <textarea value={form.physical_examination} onChange={(e) => updateField("physical_examination", e.target.value)} disabled={isFinalized} />
           </label>
-          <label>
-            Resp. Rate
-            <input value={form.respiratory_rate} onChange={(e) => updateField("respiratory_rate", e.target.value)} />
+          <label className="consult-label">
+            Diagnosis
+            <textarea value={form.diagnosis} onChange={(e) => updateField("diagnosis", e.target.value)} disabled={isFinalized} />
           </label>
-          <label>
-            Body Score
-            <input value={form.body_condition_score} onChange={(e) => updateField("body_condition_score", e.target.value)} />
+          <label className="consult-label">
+            Treatment Plan
+            <textarea value={form.treatment_plan} onChange={(e) => updateField("treatment_plan", e.target.value)} disabled={isFinalized} />
+          </label>
+          <label className="consult-label">
+            General Notes
+            <textarea value={form.notes} onChange={(e) => updateField("notes", e.target.value)} disabled={isFinalized} />
           </label>
         </div>
       </div>
 
-      <div className="consult-form">
-        <h3>Payment Summary</h3>
-        <div className="consult-vitals">
-          <label>
-            Base Amount
-            <input value={Number((billingSummary.total_bill || 0) - (billingSummary.additional_charges || 0)).toFixed(2)} readOnly />
-          </label>
-          <label>
-            Additional Charges
-            <input value={Number(billingSummary.additional_charges || 0).toFixed(2)} readOnly />
-          </label>
-          <label>
-            Amount Paid
-            <input value={Number(billingSummary.total_paid || 0).toFixed(2)} readOnly />
-          </label>
-          <label>
-            Balance Due
-            <input value={Number(billingSummary.balance_due || 0).toFixed(2)} readOnly />
-          </label>
-          <label>
-            Payment Status
-            <input value={String(appointment?.payment_status || billingSummary.payment_status || "unpaid").replace(/_/g, " ")} readOnly />
-          </label>
+      {/* ── Vital Signs ─────────────────────────────── */}
+      <div className="consult-section-card">
+        <div className="consult-section-header">
+          <div className="consult-section-icon"><FontAwesomeIcon icon={faHeartPulse} /></div>
+          <div className="consult-section-title-group">
+            <h3>Vital Signs</h3>
+            <p>Physical measurements and body condition assessment</p>
+          </div>
         </div>
-        {!completionStatus.can_complete && completionStatus.message ? (
-          <p>{completionStatus.message}</p>
-        ) : null}
-      </div>
-
-      <div className="consult-form">
-        <ServiceBillingPanel
-          serviceType="veterinary"
-          serviceId={appointment.id}
-          petId={appointment.pet_id}
-          onBillingUpdate={handleBillingUpdate}
-        />
-      </div>
-
-      <div className="consult-form">
-        <h3><FontAwesomeIcon icon={faHospital} /> Medical Confinement Recommendation</h3>
-        <label>
-          Reason for Confinement
-          <textarea value={confinementForm.reason_for_confinement} onChange={(e) => setConfinementForm((current) => ({ ...current, reason_for_confinement: e.target.value }))} />
-        </label>
-        <label>
-          Medication Plan
-          <textarea value={confinementForm.medication_plan} onChange={(e) => setConfinementForm((current) => ({ ...current, medication_plan: e.target.value }))} />
-        </label>
-        <label>
-          Observation Instructions
-          <textarea value={confinementForm.observation_instructions} onChange={(e) => setConfinementForm((current) => ({ ...current, observation_instructions: e.target.value }))} />
-        </label>
-        <label>
-          Special Care Instructions
-          <textarea value={confinementForm.special_care_instructions} onChange={(e) => setConfinementForm((current) => ({ ...current, special_care_instructions: e.target.value }))} />
-        </label>
-        <div className="consult-vitals">
-          <label>
-            Urgency
-            <select value={confinementForm.urgency_level} onChange={(e) => setConfinementForm((current) => ({ ...current, urgency_level: e.target.value }))}>
-              <option value="low">Low</option>
-              <option value="normal">Normal</option>
-              <option value="urgent">Urgent</option>
-              <option value="critical">Critical</option>
-            </select>
-          </label>
-          <label>
-            Expected Days
-            <input type="number" min="1" value={confinementForm.expected_stay_days} onChange={(e) => setConfinementForm((current) => ({ ...current, expected_stay_days: e.target.value }))} />
-          </label>
-          <label>
-            Estimated Cost
-            <input type="number" min="0" step="0.01" value={confinementForm.estimated_cost} onChange={(e) => setConfinementForm((current) => ({ ...current, estimated_cost: e.target.value }))} />
-          </label>
+        <div className="consult-vitals-grid">
+          {vitalFields.map(({ icon, label, field, unit }) => (
+            <div key={field} className="consult-vital-field">
+              <div className="consult-vital-icon-wrap">
+                <FontAwesomeIcon icon={icon} />
+              </div>
+              <span className="consult-vital-label">{label}</span>
+              <div className="consult-vital-input-wrap">
+                <input
+                  type="number"
+                  step="0.01"
+                  value={form[field]}
+                  onChange={(e) => updateField(field, e.target.value)}
+                  disabled={isFinalized}
+                  placeholder="—"
+                />
+                <span className="consult-vital-unit">{unit}</span>
+              </div>
+            </div>
+          ))}
         </div>
       </div>
 
+      {/* ── Payment Summary ─────────────────────────── */}
+      <div className="consult-section-card">
+        <div className="consult-section-header">
+          <div className="consult-section-icon"><FontAwesomeIcon icon={faMoneyBillWave} /></div>
+          <div className="consult-section-title-group">
+            <h3>Payment Summary</h3>
+            <p>Billing overview for this consultation</p>
+          </div>
+        </div>
+        <div className="consult-payment-grid">
+          {paymentItems.map(({ label, value, highlight }) => (
+            <div key={label} className={`consult-payment-item${highlight ? " consult-payment-item--highlight" : ""}`}>
+              <span className="consult-payment-label">{label}</span>
+              <span className="consult-payment-value">{value}</span>
+            </div>
+          ))}
+        </div>
+        {!completionStatus.can_complete && completionStatus.message && (
+          <div className="consult-payment-warning">
+            <FontAwesomeIcon icon={faTriangleExclamation} />
+            <span>{completionStatus.message}</span>
+          </div>
+        )}
+      </div>
+
+      {/* ── Service Billing ─────────────────────────── */}
+      <div className="consult-section-card">
+        <div className="consult-section-header">
+          <div className="consult-section-icon"><FontAwesomeIcon icon={faBriefcaseMedical} /></div>
+          <div className="consult-section-title-group">
+            <h3>Service Billing</h3>
+            <p>Manage service charges and additional billing items</p>
+          </div>
+        </div>
+        <div className="consult-billing-body">
+          <ServiceBillingPanel
+            serviceType="veterinary"
+            serviceId={appointment.id}
+            petId={appointment.pet_id}
+            onBillingUpdate={handleBillingUpdate}
+          />
+        </div>
+      </div>
+
+      {/* ── Confinement Recommendation ──────────────── */}
+      <div className="consult-section-card">
+        <div className="consult-section-header">
+          <div className="consult-section-icon consult-section-icon--warning"><FontAwesomeIcon icon={faHospital} /></div>
+          <div className="consult-section-title-group">
+            <h3>Medical Confinement Recommendation</h3>
+            <p>Recommend this patient for admission and in-patient care</p>
+          </div>
+          {appointmentStatus === "needs_confinement" && (
+            <span className="consult-apt-badge consult-apt-badge--submitted">Submitted</span>
+          )}
+        </div>
+        <div className="consult-form">
+          <label className="consult-label">
+            Reason for Confinement
+            <textarea value={confinementForm.reason_for_confinement} onChange={(e) => setConfinementForm((current) => ({ ...current, reason_for_confinement: e.target.value }))} disabled={appointmentStatus === "needs_confinement"} />
+          </label>
+          <label className="consult-label">
+            Medication Plan
+            <textarea value={confinementForm.medication_plan} onChange={(e) => setConfinementForm((current) => ({ ...current, medication_plan: e.target.value }))} disabled={appointmentStatus === "needs_confinement"} />
+          </label>
+          <label className="consult-label">
+            Observation Instructions
+            <textarea value={confinementForm.observation_instructions} onChange={(e) => setConfinementForm((current) => ({ ...current, observation_instructions: e.target.value }))} disabled={appointmentStatus === "needs_confinement"} />
+          </label>
+          <label className="consult-label">
+            Special Care Instructions
+            <textarea value={confinementForm.special_care_instructions} onChange={(e) => setConfinementForm((current) => ({ ...current, special_care_instructions: e.target.value }))} disabled={appointmentStatus === "needs_confinement"} />
+          </label>
+        </div>
+        <div className="consult-vitals-grid consult-vitals-grid--3">
+          <div className="consult-vital-field">
+            <div className="consult-vital-icon-wrap consult-vital-icon-wrap--warning"><FontAwesomeIcon icon={faTriangleExclamation} /></div>
+            <span className="consult-vital-label">Urgency Level</span>
+            <div className="consult-vital-input-wrap">
+              <select value={confinementForm.urgency_level} onChange={(e) => setConfinementForm((current) => ({ ...current, urgency_level: e.target.value }))} disabled={appointmentStatus === "needs_confinement"}>
+                <option value="low">Low</option>
+                <option value="normal">Normal</option>
+                <option value="urgent">Urgent</option>
+                <option value="critical">Critical</option>
+              </select>
+            </div>
+          </div>
+          <div className="consult-vital-field">
+            <div className="consult-vital-icon-wrap"><FontAwesomeIcon icon={faNotesMedical} /></div>
+            <span className="consult-vital-label">Expected Days</span>
+            <div className="consult-vital-input-wrap">
+              <input type="number" min="1" value={confinementForm.expected_stay_days} onChange={(e) => setConfinementForm((current) => ({ ...current, expected_stay_days: e.target.value }))} disabled={appointmentStatus === "needs_confinement"} placeholder="—" />
+              <span className="consult-vital-unit">days</span>
+            </div>
+          </div>
+          <div className="consult-vital-field">
+            <div className="consult-vital-icon-wrap"><FontAwesomeIcon icon={faMoneyBillWave} /></div>
+            <span className="consult-vital-label">Estimated Cost</span>
+            <div className="consult-vital-input-wrap">
+              <span className="consult-vital-prefix">PHP</span>
+              <input type="number" min="0" step="0.01" value={confinementForm.estimated_cost} onChange={(e) => setConfinementForm((current) => ({ ...current, estimated_cost: e.target.value }))} disabled={appointmentStatus === "needs_confinement"} placeholder="0.00" />
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* ── Sticky Actions ──────────────────────────── */}
       <div className="consult-actions">
-        <button type="button" className="secondary" onClick={() => saveRecord("draft")} disabled={!isStarted || saving || isFinalized}>
-          <FontAwesomeIcon icon={faSave} />
+        <button type="button" className="consult-btn consult-btn--secondary" onClick={() => saveRecord("draft")} disabled={!isStarted || saving || isFinalized}>
+          {saving ? <FontAwesomeIcon icon={faSpinner} spin /> : <FontAwesomeIcon icon={faSave} />}
           Save Draft
         </button>
-        <button type="button" className="primary" onClick={finalizeAndComplete} disabled={!isStarted || saving}>
-          <FontAwesomeIcon icon={faCircleCheck} />
-          Finalize & Send to Billing
-        </button>
-        <button type="button" className="secondary" onClick={recommendConfinement} disabled={!isStarted || saving || appointmentStatus === "needs_confinement"}>
+        <button type="button" className="consult-btn consult-btn--secondary" onClick={recommendConfinement} disabled={!isStarted || saving || appointmentStatus === "needs_confinement"}>
           <FontAwesomeIcon icon={faHospital} />
           Needs Confinement
+        </button>
+        <button type="button" className="consult-btn consult-btn--primary" onClick={finalizeAndComplete} disabled={!isStarted || saving}>
+          {saving ? <FontAwesomeIcon icon={faSpinner} spin /> : <FontAwesomeIcon icon={faCircleCheck} />}
+          Finalize &amp; Send to Billing
         </button>
       </div>
     </section>

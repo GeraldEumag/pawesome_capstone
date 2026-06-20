@@ -17,7 +17,7 @@ import toast from "react-hot-toast";
 import { apiRequest } from "../../api/client";
 import PetAvatar from "../shared/PetAvatar";
 import "./theme.css";
-import "./VetNewAppointment_PinkGlass.css";
+import "./VetEditAppointment_PinkGlass.css";
 
 const VetEditAppointment = () => {
   const navigate = useNavigate();

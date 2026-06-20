@@ -31,13 +31,7 @@ import VeterinarySidebar from "./VeterinarySidebar";
 import DashboardLayout from "../shared/DashboardLayout";
 import toast from "react-hot-toast";
 import "./theme.css";
-import styled from "styled-components";
-import {
-  fadeIn, fadeInUp, slideInUp, scaleIn, pulse,
-  FadeIn, ScaleIn, SlideInUp, Spinning, Glowing,
-  useScrollAnimation, useLoadingAnimation,
-  hoverMixin, glassHoverMixin, focusMixin
-} from "../shared/animations";
+import "./VetDashboard.css";
 
 const VetDashboard = () => {
   const { user, updateUser } = useAuth();
@@ -272,18 +266,22 @@ const VetDashboard = () => {
         {showOverview ? (
           <section className="app-content vet-content">
             {/* Quick Actions */}
-            <section className="premium-card vet-quick-actions">
-              <h3 className="section-title">Quick Actions</h3>
-              <div className="actions-row">
-                <NavLink to="/veterinary/appointments" className="btn-primary">
-                  <FontAwesomeIcon icon={faCalendarAlt} /> View Appointments
-                </NavLink>
-                <NavLink to="/veterinary/customer-profiles" className="btn-secondary">
-                  <FontAwesomeIcon icon={faPaw} /> Patient Records
-                </NavLink>
-                <NavLink to="/veterinary/current-boarders" className="btn-secondary">
-                  <FontAwesomeIcon icon={faHotel} /> Current Boarders
-                </NavLink>
+            <section className="vet-quick-actions-section">
+              <div className="vet-qa-grid">
+                {[
+                  { to: "/veterinary/appointments",       icon: faCalendarAlt,   label: "Appointments",      sub: "View & manage" },
+                  { to: "/veterinary/customer-profiles",  icon: faPaw,           label: "Patient Records",   sub: "Pets & owners" },
+                  { to: "/veterinary/current-boarders",   icon: faHotel,         label: "Boarders",          sub: "Active stays" },
+                  { to: "/veterinary/medical-confinements", icon: faBed,         label: "Confinements",      sub: "Under care" },
+                  { to: "/veterinary/services",           icon: faStethoscope,   label: "Services",          sub: "Manage catalog" },
+                  { to: "/veterinary/history",            icon: faNotesMedical,  label: "History",           sub: "Past records" },
+                ].map(({ to, icon, label, sub }) => (
+                  <NavLink key={to} to={to} className="vet-qa-card">
+                    <span className="vet-qa-icon"><FontAwesomeIcon icon={icon} /></span>
+                    <strong className="vet-qa-label">{label}</strong>
+                    <small className="vet-qa-sub">{sub}</small>
+                  </NavLink>
+                ))}
               </div>
             </section>
 

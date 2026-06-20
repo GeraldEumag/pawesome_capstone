@@ -1,0 +1,674 @@
+/* ─────────────────────────────────────────────────────────────
+   VetServices_PinkGlass.css — Plain CSS replacement for styled-components
+───────────────────────────────────────────────────────────── */
+
+.vs-page {
+  min-height: 100vh;
+  background: var(--veterinary-page-bg);
+  padding: 32px;
+  font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  color: var(--veterinary-text-primary);
+  display: grid;
+  gap: var(--vet-section-gap, 28px);
+  align-content: start;
+}
+
+.vs-page,
+.vs-page * {
+  box-sizing: border-box;
+}
+
+/* ── Hero ──────────────────────────────────────────────────── */
+
+.vs-hero {
+  position: relative;
+  padding: 40px;
+  border-radius: var(--veterinary-radius-2xl);
+  background: linear-gradient(135deg, var(--veterinary-primary-light) 0%, var(--veterinary-primary) 100%);
+  color: #ffffff;
+  overflow: hidden;
+}
+
+.vs-hero::before {
+  content: "";
+  position: absolute;
+  top: -50%;
+  right: -50%;
+  width: 200%;
+  height: 200%;
+  background: radial-gradient(circle, rgba(255, 255, 255, 0.12) 0%, transparent 70%);
+  animation: vs-float 20s ease-in-out infinite;
+  pointer-events: none;
+}
+
+@keyframes vs-float {
+  0%, 100% { transform: translate(0, 0) rotate(0deg); }
+  50%       { transform: translate(-30px, -30px) rotate(180deg); }
+}
+
+.vs-hero-content {
+  position: relative;
+  z-index: 1;
+}
+
+.vs-hero-title {
+  font-size: clamp(1.8rem, 3vw, 2.5rem);
+  font-weight: 800;
+  margin: 0 0 10px;
+  color: #ffffff;
+  letter-spacing: -0.03em;
+}
+
+.vs-hero-subtitle {
+  font-size: 1rem;
+  margin: 0 0 24px;
+  opacity: 0.92;
+  line-height: 1.6;
+  max-width: 680px;
+}
+
+.vs-hero-actions {
+  display: flex;
+  gap: 14px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+/* ── Buttons ───────────────────────────────────────────────── */
+
+.vs-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 11px 22px;
+  min-height: 44px;
+  border-radius: 999px;
+  font-size: 0.9rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
+  white-space: nowrap;
+  border: none;
+}
+
+.vs-btn--primary {
+  background: rgba(255, 255, 255, 0.95);
+  color: var(--veterinary-primary);
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.12);
+}
+
+.vs-btn--primary:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.18);
+}
+
+.vs-btn--secondary {
+  background: var(--veterinary-glass-bg);
+  color: var(--veterinary-text-primary);
+  border: 1.5px solid var(--veterinary-glass-border);
+  backdrop-filter: blur(10px);
+}
+
+.vs-btn--secondary:hover:not(:disabled) {
+  transform: translateY(-2px);
+  border-color: var(--veterinary-primary);
+  box-shadow: 0 8px 22px rgba(255, 95, 147, 0.2);
+}
+
+.vs-btn--danger {
+  background: linear-gradient(135deg, #f56565, #e53e3e);
+  color: #ffffff;
+  box-shadow: 0 4px 14px rgba(229, 62, 62, 0.3);
+}
+
+.vs-btn--danger:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(229, 62, 62, 0.4);
+}
+
+.vs-btn:disabled {
+  opacity: 0.58;
+  cursor: not-allowed;
+  transform: none !important;
+}
+
+/* ── Error Alert ───────────────────────────────────────────── */
+
+.vs-error-alert {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 20px;
+  border-radius: var(--veterinary-radius-lg);
+  background: var(--vet-badge-cancelled-bg);
+  border: 1.5px solid var(--vet-badge-cancelled-border);
+  color: var(--vet-badge-cancelled-color);
+  font-weight: 650;
+}
+
+/* ── Search / Filter Bar ───────────────────────────────────── */
+
+.vs-search-section {
+  margin: 0;
+}
+
+.vs-search-container {
+  display: flex;
+  gap: 14px;
+  align-items: center;
+  background: var(--veterinary-glass-bg);
+  border: 1.5px solid var(--veterinary-glass-border);
+  border-radius: var(--veterinary-radius-2xl);
+  padding: 14px 22px;
+  backdrop-filter: blur(12px);
+  box-shadow: var(--veterinary-shadow-sm);
+}
+
+.vs-search-icon {
+  color: var(--veterinary-primary);
+  font-size: 1rem;
+  flex-shrink: 0;
+}
+
+.vs-search-input {
+  flex: 1;
+  border: none;
+  background: transparent;
+  font-size: 0.95rem;
+  color: var(--veterinary-text-primary);
+  font-family: inherit;
+  outline: none;
+  min-width: 0;
+}
+
+.vs-search-input::placeholder {
+  color: var(--veterinary-text-muted);
+}
+
+.vs-filter-select {
+  border: 1.5px solid var(--veterinary-glass-border);
+  border-radius: 14px;
+  padding: 8px 14px;
+  background: var(--veterinary-card-bg);
+  font-size: 0.875rem;
+  font-family: inherit;
+  color: var(--veterinary-text-primary);
+  cursor: pointer;
+  outline: none;
+  transition: border-color 0.2s ease;
+  flex-shrink: 0;
+}
+
+.vs-filter-select:focus {
+  border-color: var(--veterinary-primary);
+  box-shadow: 0 0 0 3px rgba(255, 95, 147, 0.1);
+}
+
+/* ── Services Grid ─────────────────────────────────────────── */
+
+.vs-services-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 22px;
+}
+
+/* ── Service Card ──────────────────────────────────────────── */
+
+.vs-service-card {
+  background: var(--veterinary-glass-bg);
+  border: 1.5px solid var(--veterinary-glass-border);
+  border-radius: var(--veterinary-radius-2xl);
+  padding: 22px;
+  backdrop-filter: blur(12px);
+  box-shadow: var(--veterinary-shadow-sm);
+  transition: transform 0.25s ease, box-shadow 0.25s ease;
+  display: grid;
+  gap: 14px;
+  align-content: start;
+}
+
+.vs-service-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 24px 48px rgba(255, 95, 147, 0.18);
+}
+
+.vs-service-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.vs-service-info {
+  flex: 1;
+  min-width: 0;
+  display: grid;
+  gap: 6px;
+}
+
+.vs-service-name {
+  margin: 0;
+  font-size: 1.2rem;
+  font-weight: 800;
+  color: var(--veterinary-text-primary);
+  letter-spacing: -0.01em;
+  line-height: 1.25;
+}
+
+.vs-service-category {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 12px;
+  border-radius: 999px;
+  background: linear-gradient(135deg, var(--veterinary-primary-light), var(--veterinary-primary));
+  color: #ffffff;
+  font-size: 0.76rem;
+  font-weight: 700;
+  width: fit-content;
+}
+
+.vs-service-actions {
+  display: flex;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+/* ── Action Icon Buttons ───────────────────────────────────── */
+
+.vs-action-btn {
+  width: 34px;
+  height: 34px;
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+  display: grid;
+  place-items: center;
+  font-size: 0.85rem;
+  color: #ffffff;
+  transition: transform 0.18s ease, box-shadow 0.18s ease;
+}
+
+.vs-action-btn--edit {
+  background: linear-gradient(135deg, #63b3ed, #3182ce);
+}
+
+.vs-action-btn--edit:hover {
+  transform: scale(1.12);
+  box-shadow: 0 4px 14px rgba(49, 130, 206, 0.4);
+}
+
+.vs-action-btn--delete {
+  background: linear-gradient(135deg, #fc8181, #e53e3e);
+}
+
+.vs-action-btn--delete:hover {
+  transform: scale(1.12);
+  box-shadow: 0 4px 14px rgba(229, 62, 62, 0.4);
+}
+
+.vs-action-btn--toggle-on {
+  background: linear-gradient(135deg, #68d391, #38a169);
+}
+
+.vs-action-btn--toggle-on:hover {
+  transform: scale(1.12);
+  box-shadow: 0 4px 14px rgba(56, 161, 105, 0.4);
+}
+
+.vs-action-btn--toggle-off {
+  background: linear-gradient(135deg, #f6ad55, #dd6b20);
+}
+
+.vs-action-btn--toggle-off:hover {
+  transform: scale(1.12);
+  box-shadow: 0 4px 14px rgba(221, 107, 32, 0.4);
+}
+
+/* ── Service Details ───────────────────────────────────────── */
+
+.vs-service-details {
+  display: grid;
+  gap: 10px;
+}
+
+.vs-detail-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.vs-detail-icon {
+  width: 38px;
+  height: 38px;
+  min-width: 38px;
+  border-radius: 12px;
+  background: var(--vet-icon-gradient);
+  display: grid;
+  place-items: center;
+  color: #ffffff;
+  font-size: 0.9rem;
+}
+
+.vs-detail-content {
+  flex: 1;
+  min-width: 0;
+}
+
+.vs-detail-label {
+  font-size: 0.72rem;
+  font-weight: 750;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--veterinary-text-muted);
+  margin-bottom: 2px;
+}
+
+.vs-detail-value {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--veterinary-text-primary);
+}
+
+.vs-service-description {
+  margin: 0;
+  color: var(--veterinary-text-muted);
+  font-size: 0.875rem;
+  font-weight: 500;
+  line-height: 1.6;
+}
+
+/* ── Service Status Badge ──────────────────────────────────── */
+
+.vs-service-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 12px;
+  border-radius: 999px;
+  font-size: 0.76rem;
+  font-weight: 700;
+  width: fit-content;
+}
+
+.vs-service-status--active {
+  background: var(--vet-badge-completed-bg);
+  color: var(--vet-badge-completed-color);
+  border: 1px solid var(--vet-badge-completed-border);
+}
+
+.vs-service-status--inactive {
+  background: var(--vet-badge-cancelled-bg);
+  color: var(--vet-badge-cancelled-color);
+  border: 1px solid var(--vet-badge-cancelled-border);
+  opacity: 0.75;
+}
+
+/* ── Loading / Empty States ────────────────────────────────── */
+
+.vs-loading-state,
+.vs-empty-state {
+  display: grid;
+  place-items: center;
+  align-content: center;
+  text-align: center;
+  gap: 12px;
+  min-height: 280px;
+  color: var(--veterinary-text-muted);
+  padding: 60px 20px;
+}
+
+.vs-loading-state p,
+.vs-empty-state p {
+  margin: 0;
+  font-weight: 500;
+  max-width: 320px;
+}
+
+.vs-empty-icon {
+  font-size: 3.5rem;
+  opacity: 0.4;
+  color: var(--veterinary-primary);
+}
+
+.vs-empty-state h3 {
+  margin: 0;
+  font-size: 1.15rem;
+  font-weight: 750;
+  color: var(--veterinary-text-primary);
+}
+
+@keyframes vs-spin {
+  to { transform: rotate(360deg); }
+}
+
+.vs-spin {
+  animation: vs-spin 0.9s linear infinite;
+  font-size: 2rem;
+  color: var(--veterinary-primary);
+}
+
+/* ── Modal ─────────────────────────────────────────────────── */
+
+.vs-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.55);
+  display: grid;
+  place-items: center;
+  z-index: 1000;
+  backdrop-filter: blur(6px);
+  padding: 16px;
+}
+
+.vs-modal {
+  background: var(--veterinary-glass-bg);
+  border: 1.5px solid var(--veterinary-glass-border);
+  border-radius: var(--veterinary-radius-2xl);
+  max-width: 500px;
+  width: 100%;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: var(--veterinary-shadow-md);
+  animation: vs-slideUp 0.28s ease;
+}
+
+@keyframes vs-slideUp {
+  from { opacity: 0; transform: translateY(20px) scale(0.97); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+.vs-modal-header {
+  padding: 20px 24px;
+  background: linear-gradient(135deg, var(--veterinary-primary-light), var(--veterinary-primary));
+  border-radius: calc(var(--veterinary-radius-2xl) - 2px) calc(var(--veterinary-radius-2xl) - 2px) 0 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.vs-modal-title {
+  margin: 0;
+  color: #ffffff;
+  font-size: 1.25rem;
+  font-weight: 800;
+  letter-spacing: -0.01em;
+}
+
+.vs-modal-close {
+  width: 32px;
+  height: 32px;
+  min-width: 32px;
+  border: none;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.2);
+  color: #ffffff;
+  cursor: pointer;
+  display: grid;
+  place-items: center;
+  font-size: 0.9rem;
+  transition: background 0.18s ease;
+}
+
+.vs-modal-close:hover {
+  background: rgba(255, 255, 255, 0.35);
+}
+
+.vs-modal-body {
+  padding: 22px 24px;
+  display: grid;
+  gap: 18px;
+}
+
+.vs-modal-body > p {
+  margin: 0;
+  color: var(--veterinary-text-muted);
+  font-size: 0.925rem;
+  line-height: 1.6;
+}
+
+.vs-modal-actions {
+  padding: 18px 24px;
+  border-top: 1px solid var(--vet-divider);
+  display: flex;
+  gap: 10px;
+  justify-content: flex-end;
+}
+
+/* ── Form Controls Inside Modal ────────────────────────────── */
+
+.vs-form-group {
+  display: grid;
+  gap: 7px;
+}
+
+.vs-label {
+  font-size: 0.8rem;
+  font-weight: 750;
+  color: var(--veterinary-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.vs-input,
+.vs-select,
+.vs-textarea {
+  width: 100%;
+  padding: 11px 14px;
+  border: 1.5px solid var(--vet-input-border);
+  border-radius: var(--vet-input-radius, 14px);
+  background: var(--vet-input-bg);
+  color: var(--veterinary-text-primary);
+  font-family: inherit;
+  font-size: 0.9rem;
+  font-weight: 550;
+  outline: none;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.vs-input:focus,
+.vs-select:focus,
+.vs-textarea:focus {
+  border-color: var(--veterinary-primary);
+  box-shadow: 0 0 0 4px var(--vet-input-focus-ring);
+}
+
+.vs-textarea {
+  resize: vertical;
+  min-height: 100px;
+  line-height: 1.55;
+}
+
+/* ── Responsive ────────────────────────────────────────────── */
+
+@media (max-width: 768px) {
+  .vs-page {
+    padding: 16px;
+  }
+
+  .vs-hero {
+    padding: 24px;
+  }
+
+  .vs-services-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .vs-search-container {
+    flex-wrap: wrap;
+    gap: 10px;
+    padding: 12px 16px;
+  }
+
+  .vs-filter-select {
+    width: 100%;
+  }
+
+  .vs-modal-actions {
+    flex-direction: column;
+  }
+
+  .vs-btn {
+    width: 100%;
+  }
+}
+
+/* ── Dark Mode ─────────────────────────────────────────────── */
+
+[data-theme="dark"] .vs-page {
+  background: var(--veterinary-page-bg);
+}
+
+[data-theme="dark"] .vs-service-card {
+  background: rgba(30, 18, 38, 0.82);
+  border-color: rgba(255, 95, 147, 0.14);
+}
+
+[data-theme="dark"] .vs-service-card:hover {
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.35);
+}
+
+[data-theme="dark"] .vs-search-section {
+  background: rgba(30, 18, 38, 0.7);
+  border-color: rgba(255, 95, 147, 0.14);
+}
+
+[data-theme="dark"] .vs-search-container {
+  background: rgba(30, 18, 38, 0.7);
+  border-color: rgba(255, 95, 147, 0.14);
+}
+
+[data-theme="dark"] .vs-search-input {
+  background: rgba(15, 10, 25, 0.55);
+  color: var(--veterinary-text-primary);
+}
+
+[data-theme="dark"] .vs-filter-select {
+  background: rgba(30, 18, 38, 0.8);
+  color: var(--veterinary-text-primary);
+  border-color: rgba(255, 95, 147, 0.18);
+}
+
+[data-theme="dark"] .vs-modal-overlay {
+  background: rgba(0, 0, 0, 0.72);
+}
+
+[data-theme="dark"] .vs-modal {
+  background: rgba(25, 14, 35, 0.97);
+  border-color: rgba(255, 95, 147, 0.18);
+}
+
+[data-theme="dark"] .vs-input,
+[data-theme="dark"] .vs-select,
+[data-theme="dark"] .vs-textarea {
+  background: rgba(15, 10, 25, 0.55);
+  border-color: rgba(255, 95, 147, 0.18);
+  color: var(--veterinary-text-primary);
+}
+
+[data-theme="dark"] .vs-detail-item {
+  background: rgba(255, 95, 147, 0.04);
+  border-color: rgba(255, 95, 147, 0.08);
+}

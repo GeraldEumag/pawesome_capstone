@@ -944,8 +944,84 @@
 
 /* DARK MODE */
 
+[data-theme="dark"] .vet-reports {
+  background: var(--veterinary-page-bg);
+}
 
+/* ─────────────────────────────────────────────────────────────
+   Reports Loading Override
+───────────────────────────────────────────────────────────── */
 
+.vet-reports .standard-loading-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  padding: 60px 24px;
+  text-align: center;
+  background: transparent;
+}
+
+.vet-reports .standard-loading-state .loading-spinner {
+  width: 36px;
+  height: 36px;
+  border: 3px solid var(--veterinary-glass-border);
+  border-top: 3px solid var(--veterinary-primary);
+  border-radius: 50%;
+  animation: vetReportsSpin 0.8s linear infinite;
+  margin: 0;
+}
+
+.vet-reports .standard-loading-state .loading-text {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--veterinary-text-muted);
+  margin: 0;
+}
+
+.vet-reports .standard-loading-state .loading-subtext {
+  display: none;
+}
+
+@keyframes vetReportsSpin {
+  to { transform: rotate(360deg); }
+}
+
+[data-theme="dark"] .vet-report-card,
+[data-theme="dark"] .vet-panel {
+  background: rgba(30, 18, 38, 0.82);
+  border-color: rgba(255, 95, 147, 0.14);
+}
+
+[data-theme="dark"] .vet-report-stats .vet-stat-card {
+  background: rgba(30, 18, 38, 0.7);
+  border-color: rgba(255, 95, 147, 0.14);
+}
+
+[data-theme="dark"] .vet-filter-grid select,
+[data-theme="dark"] .vet-filter-grid input {
+  background: rgba(15, 10, 25, 0.55);
+  border-color: rgba(255, 95, 147, 0.18);
+  color: var(--veterinary-text-primary);
+}
+
+[data-theme="dark"] .vet-chart-bar-fill {
+  opacity: 0.85;
+}
+
+[data-theme="dark"] .vet-financial-summary {
+  background: rgba(30, 18, 38, 0.7);
+  border-color: rgba(255, 95, 147, 0.14);
+}
+
+[data-theme="dark"] .vet-report-row {
+  border-color: rgba(255, 95, 147, 0.08);
+}
+
+[data-theme="dark"] .vet-report-row:hover {
+  background: rgba(255, 95, 147, 0.06);
+}
 
 /* RESPONSIVE */
 

@@ -1,195 +1,602 @@
-/* VetReceipt.css */
-/* Global theme version: uses app-content, premium-card, CSS variables */
+/* ─────────────────────────────────────────────────────────────
+   VetReceipt.css — Premium clinic-branded receipt with print styles
+───────────────────────────────────────────────────────────── */
 
 .vet-receipt {
   padding: 32px;
   background: var(--veterinary-page-bg);
   min-height: calc(100vh - 80px);
+  font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
 }
 
 .receipt-container {
-  max-width: 800px;
+  max-width: 760px;
   margin: 0 auto;
 }
 
 .receipt-card {
-  padding: 32px;
+  padding: 0;
+  border-radius: var(--veterinary-radius-2xl, 28px);
+  background: var(--veterinary-glass-bg);
+  border: 1.5px solid var(--veterinary-glass-border);
+  box-shadow: var(--veterinary-shadow-md);
+  backdrop-filter: blur(20px);
+  overflow: hidden;
 }
 
+/* ── Clinic Branded Header ─────────────────────────────────── */
+
 .receipt-header {
-  background: linear-gradient(
-    135deg,
-    var(--veterinary-primary),
-    var(--veterinary-primary-light)
-  );
-  color: white;
-  padding: 30px;
+  position: relative;
+  background: linear-gradient(135deg, var(--veterinary-primary) 0%, var(--veterinary-primary-light) 100%);
+  color: #ffffff;
+  padding: 36px 40px 32px;
   text-align: center;
-  border-radius: 16px 16px 0 0;
-  margin: -32px -32px 0 -32px;
+  overflow: hidden;
+}
+
+.receipt-header::before {
+  content: "";
+  position: absolute;
+  top: -80px;
+  right: -80px;
+  width: 220px;
+  height: 220px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.12);
+  pointer-events: none;
+}
+
+.receipt-header::after {
+  content: "";
+  position: absolute;
+  bottom: -60px;
+  left: -60px;
+  width: 180px;
+  height: 180px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.08);
+  pointer-events: none;
+}
+
+.receipt-clinic-logo {
+  position: relative;
+  z-index: 1;
+  width: 64px;
+  height: 64px;
+  border-radius: 22px;
+  background: rgba(255, 255, 255, 0.22);
+  display: grid;
+  place-items: center;
+  margin: 0 auto 16px;
+  font-size: 1.8rem;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
 }
 
 .receipt-header h1 {
-  margin: 0;
-  font-size: 24px;
-  font-weight: bold;
+  position: relative;
+  z-index: 1;
+  margin: 0 0 6px;
+  font-size: 1.75rem;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  color: #ffffff;
 }
 
-.receipt-header p {
-  margin: 5px 0 0 0;
-  opacity: 0.9;
-  font-size: 14px;
+.receipt-clinic-name {
+  position: relative;
+  z-index: 1;
+  margin: 0 0 4px;
+  font-size: 1rem;
+  font-weight: 700;
+  color: rgba(255, 255, 255, 0.95);
 }
+
+.receipt-clinic-tagline {
+  position: relative;
+  z-index: 1;
+  margin: 0 0 18px;
+  font-size: 0.82rem;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.78);
+}
+
+.receipt-id-badge {
+  position: relative;
+  z-index: 1;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+
+/* ── Body ──────────────────────────────────────────────────── */
 
 .receipt-body {
-  padding: 30px 0;
+  padding: 28px 36px 0;
+  display: grid;
+  gap: 0;
 }
 
+/* ── Sections ──────────────────────────────────────────────── */
+
 .receipt-section {
-  margin-bottom: 30px;
+  padding: 22px 0;
+  border-bottom: 1px solid var(--vet-divider, rgba(255, 95, 147, 0.08));
+}
+
+.receipt-section:last-child {
+  border-bottom: none;
 }
 
 .receipt-section h3 {
-  margin: 0 0 15px 0;
-  color: var(--veterinary-text-primary);
-  font-size: 18px;
-  border-bottom: 2px solid var(--veterinary-primary);
-  padding-bottom: 10px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 0 0 16px;
+  font-size: 0.85rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--veterinary-primary);
 }
+
+.receipt-section h3 svg {
+  font-size: 0.9rem;
+  opacity: 0.85;
+}
+
+/* ── Info Rows ─────────────────────────────────────────────── */
 
 .receipt-info {
   display: grid;
-  grid-template-columns: 200px 1fr;
-  gap: 15px;
-  margin-bottom: 20px;
+  grid-template-columns: 160px 1fr;
+  gap: 8px 16px;
+  align-items: start;
+  padding: 8px 0;
+  border-bottom: 1px dashed rgba(0, 0, 0, 0.04);
+}
+
+.receipt-info:last-child {
+  border-bottom: none;
 }
 
 .info-label {
-  font-weight: 600;
-  color: var(--veterinary-text-primary);
-  font-size: 16px;
+  font-size: 0.83rem;
+  font-weight: 750;
+  color: var(--veterinary-text-muted);
+  padding-top: 2px;
 }
 
 .info-value {
+  font-size: 0.9rem;
+  font-weight: 600;
   color: var(--veterinary-text-primary);
-  font-size: 16px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
 }
 
+.info-value svg {
+  color: var(--veterinary-primary);
+  opacity: 0.7;
+}
+
+/* ── Service Items ─────────────────────────────────────────── */
+
 .service-item {
-  background: var(--veterinary-card-bg);
-  border: 1px solid var(--veterinary-glass-border);
-  border-radius: 8px;
-  padding: 15px;
+  background: var(--vet-form-card-bg, rgba(255, 245, 250, 0.5));
+  border: 1.5px solid var(--veterinary-glass-border);
+  border-radius: var(--veterinary-radius-lg, 16px);
+  padding: 16px 18px;
   margin-bottom: 10px;
 }
 
 .service-header {
   display: flex;
   justify-content: space-between;
-  align-items: center;
-  margin-bottom: 10px;
+  align-items: flex-start;
+  gap: 12px;
+  margin-bottom: 8px;
 }
 
 .service-name {
-  font-weight: 600;
+  font-size: 0.95rem;
+  font-weight: 750;
   color: var(--veterinary-text-primary);
-  font-size: 16px;
 }
 
 .service-price {
-  font-weight: bold;
+  font-size: 1.05rem;
+  font-weight: 800;
   color: var(--veterinary-primary);
-  font-size: 18px;
+  white-space: nowrap;
 }
 
 .service-details {
+  font-size: 0.85rem;
   color: var(--veterinary-text-muted);
-  font-size: 14px;
-  line-height: 1.5;
+  font-weight: 500;
+  line-height: 1.55;
 }
 
+.additional-service {
+  padding: 4px 0;
+  font-size: 0.85rem;
+  color: var(--veterinary-text-muted);
+  border-bottom: 1px dashed rgba(0, 0, 0, 0.06);
+}
+
+.additional-service:last-child {
+  border-bottom: none;
+}
+
+/* ── Receipt Footer (Totals) ───────────────────────────────── */
+
 .receipt-footer {
-  background: var(--veterinary-card-bg);
-  padding: 20px 30px;
-  border-top: 2px solid var(--veterinary-glass-border);
-  border-radius: 0 0 16px 16px;
-  margin: 0 -32px -32px -32px;
+  background: var(--vet-form-card-bg, rgba(255, 245, 250, 0.5));
+  padding: 22px 36px;
+  border-top: 1.5px solid var(--veterinary-glass-border);
+  display: grid;
+  gap: 10px;
 }
 
 .total-section {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 15px;
+  gap: 16px;
+  padding: 8px 0;
 }
 
 .total-label {
-  font-size: 18px;
-  font-weight: 600;
-  color: var(--veterinary-text-primary);
+  font-size: 0.88rem;
+  font-weight: 700;
+  color: var(--veterinary-text-muted);
 }
 
 .total-amount {
-  font-size: 24px;
-  font-weight: bold;
+  font-size: 0.95rem;
+  font-weight: 750;
+  color: var(--veterinary-text-primary);
+}
+
+.total-section:last-of-type .total-label {
+  font-size: 1rem;
+  font-weight: 800;
+  color: var(--veterinary-text-primary);
+}
+
+.total-section:last-of-type .total-amount {
+  font-size: 1.45rem;
+  font-weight: 800;
   color: var(--veterinary-primary);
 }
 
 .payment-info {
-  color: var(--veterinary-text-muted);
-  font-size: 14px;
-  line-height: 1.5;
+  margin-top: 6px;
+  padding-top: 14px;
+  border-top: 1px dashed var(--veterinary-glass-border);
+  display: grid;
+  gap: 6px;
 }
+
+.payment-info p {
+  margin: 0;
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: var(--veterinary-text-muted);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.payment-info strong {
+  color: var(--veterinary-text-primary);
+  font-weight: 750;
+}
+
+/* ── Status Badges ─────────────────────────────────────────── */
+
+.badge-success {
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 10px;
+  border-radius: 999px;
+  font-size: 0.72rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  background: var(--vet-badge-completed-bg, rgba(16, 185, 129, 0.1));
+  color: var(--vet-badge-completed-color, #065f46);
+  border: 1px solid var(--vet-badge-completed-border, rgba(16, 185, 129, 0.25));
+}
+
+.badge-warning {
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 10px;
+  border-radius: 999px;
+  font-size: 0.72rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  background: var(--vet-badge-pending-bg, rgba(245, 158, 11, 0.1));
+  color: var(--vet-badge-pending-color, #b45309);
+  border: 1px solid var(--vet-badge-pending-border, rgba(245, 158, 11, 0.25));
+}
+
+.badge-danger {
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 10px;
+  border-radius: 999px;
+  font-size: 0.72rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  background: var(--vet-badge-cancelled-bg, rgba(239, 68, 68, 0.1));
+  color: var(--vet-badge-cancelled-color, #991b1b);
+  border: 1px solid var(--vet-badge-cancelled-border, rgba(239, 68, 68, 0.2));
+}
+
+/* ── Thank You Note ────────────────────────────────────────── */
+
+.receipt-thankyou {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 18px 36px;
+  background: rgba(255, 95, 147, 0.05);
+  border-top: 1px dashed rgba(255, 95, 147, 0.18);
+  color: var(--veterinary-primary);
+}
+
+.receipt-thankyou svg {
+  font-size: 1.1rem;
+  flex-shrink: 0;
+}
+
+.receipt-thankyou p {
+  margin: 0;
+  font-size: 0.88rem;
+  font-weight: 650;
+  color: var(--veterinary-primary);
+  text-align: center;
+  line-height: 1.45;
+}
+
+/* ── Action Buttons ────────────────────────────────────────── */
 
 .receipt-actions {
   display: flex;
-  gap: 15px;
-  margin-top: 20px;
+  gap: 12px;
+  padding: 20px 36px 28px;
+  flex-wrap: wrap;
 }
 
-/* Status badges */
-.status-badge {
-  display: inline-block;
-  padding: 6px 12px;
+.receipt-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 11px 22px;
+  min-height: 44px;
   border-radius: 999px;
-  font-weight: 600;
-  font-size: 0.75rem;
-  text-transform: uppercase;
+  font-size: 0.88rem;
+  font-weight: 750;
+  cursor: pointer;
+  border: none;
+  font-family: inherit;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  white-space: nowrap;
 }
 
-.status-badge.status-paid {
-  background: rgba(16, 185, 129, 0.15);
-  color: #059669;
+.receipt-btn--primary {
+  background: linear-gradient(135deg, var(--veterinary-primary-light), var(--veterinary-primary));
+  color: #ffffff;
+  box-shadow: 0 5px 16px rgba(255, 95, 147, 0.28);
 }
 
-.status-badge.status-pending {
-  background: rgba(245, 158, 11, 0.15);
-  color: #d97706;
+.receipt-btn--primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 24px rgba(255, 95, 147, 0.4);
 }
 
-.status-badge.status-cancelled {
-  background: rgba(239, 68, 68, 0.15);
-  color: #dc2626;
+.receipt-btn--secondary {
+  background: var(--veterinary-glass-bg);
+  color: var(--veterinary-primary);
+  border: 1.5px solid rgba(255, 95, 147, 0.25);
 }
 
-/* Print styles */
-@media print {
-  .receipt-actions {
-    display: none !important;
-  }
+.receipt-btn--secondary:hover {
+  transform: translateY(-2px);
+  background: rgba(255, 95, 147, 0.06);
+}
 
+.receipt-btn--ghost {
+  background: transparent;
+  color: var(--veterinary-text-muted);
+  border: 1.5px solid var(--veterinary-glass-border);
+}
+
+.receipt-btn--ghost:hover {
+  background: rgba(0, 0, 0, 0.04);
+}
+
+/* ── Loading / Error / Empty States ───────────────────────── */
+
+.vet-loading-state,
+.vet-error-banner,
+.vet-empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  min-height: 260px;
+  text-align: center;
+  border-radius: var(--veterinary-radius-2xl, 28px);
+  background: var(--veterinary-glass-bg);
+  border: 1.5px solid var(--veterinary-glass-border);
+  padding: 48px 32px;
+}
+
+.vet-loading-state {
+  color: var(--veterinary-primary);
+  font-weight: 700;
+}
+
+.vet-error-banner {
+  color: var(--vet-badge-cancelled-color, #991b1b);
+  background: var(--vet-badge-cancelled-bg);
+  border-color: var(--vet-badge-cancelled-border);
+}
+
+.vet-empty-state svg {
+  font-size: 2.5rem;
+  color: var(--veterinary-primary);
+  opacity: 0.45;
+}
+
+.vet-empty-state h3 {
+  margin: 0;
+  font-size: 1.05rem;
+  font-weight: 750;
+  color: var(--veterinary-text-primary);
+}
+
+.vet-empty-state p {
+  margin: 0;
+  color: var(--veterinary-text-muted);
+  font-size: 0.875rem;
+  max-width: 300px;
+}
+
+@keyframes receipt-spin {
+  to { transform: rotate(360deg); }
+}
+
+.spin-animation {
+  animation: receipt-spin 0.9s linear infinite;
+  font-size: 1.75rem;
+}
+
+/* ── Responsive ────────────────────────────────────────────── */
+
+@media (max-width: 640px) {
   .vet-receipt {
-    padding: 0;
-    background: var(--color-surface-solid, white);
-  }
-
-  .premium-card {
-    box-shadow: none !important;
-    border: 1px solid #ddd !important;
+    padding: 16px;
   }
 
   .receipt-header {
-    background: #ec4899 !important;
+    padding: 28px 24px 22px;
+  }
+
+  .receipt-body {
+    padding: 20px 24px 0;
+  }
+
+  .receipt-footer,
+  .receipt-thankyou,
+  .receipt-actions {
+    padding-left: 24px;
+    padding-right: 24px;
+  }
+
+  .receipt-info {
+    grid-template-columns: 120px 1fr;
+  }
+
+  .receipt-actions {
+    flex-direction: column;
+  }
+
+  .receipt-btn {
+    width: 100%;
+  }
+}
+
+/* ── PRINT STYLES ──────────────────────────────────────────── */
+
+@media print {
+  @page {
+    size: A4;
+    margin: 16mm 20mm;
+  }
+
+  body,
+  .vet-receipt {
+    background: #ffffff !important;
+    padding: 0 !important;
+    margin: 0 !important;
+  }
+
+  .receipt-actions,
+  .receipt-thankyou {
+    display: none !important;
+  }
+
+  .receipt-container {
+    max-width: 100%;
+  }
+
+  .receipt-card {
+    border: 1px solid #e5e7eb !important;
+    box-shadow: none !important;
+    backdrop-filter: none !important;
+    border-radius: 12px !important;
+    overflow: hidden !important;
+  }
+
+  .receipt-header {
+    background: #ff5f93 !important;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  .receipt-header * {
+    color: #ffffff !important;
+  }
+
+  .receipt-clinic-logo {
+    background: rgba(255, 255, 255, 0.25) !important;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  .receipt-section h3 {
+    color: #ff5f93 !important;
+  }
+
+  .receipt-footer {
+    background: #fdf2f8 !important;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  .service-item {
+    background: #fdf2f8 !important;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+    border: 1px solid #e5e7eb !important;
+  }
+
+  .total-section:last-of-type .total-amount,
+  .service-price {
+    color: #ff5f93 !important;
+  }
+
+  .receipt-id-badge {
+    background: rgba(255, 255, 255, 0.25) !important;
+    border-color: rgba(255, 255, 255, 0.4) !important;
     -webkit-print-color-adjust: exact;
     print-color-adjust: exact;
   }

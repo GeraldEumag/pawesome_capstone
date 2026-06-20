@@ -727,9 +727,41 @@
 
 /* DARK MODE */
 
+[data-theme="dark"] .vet-history {
+  background: var(--veterinary-page-bg);
+}
 
+[data-theme="dark"] .vet-history-record {
+  background: rgba(30, 18, 38, 0.82);
+  border-color: rgba(255, 95, 147, 0.14);
+}
 
+[data-theme="dark"] .vet-history-record:hover {
+  box-shadow: 0 16px 36px rgba(0, 0, 0, 0.35);
+}
 
+[data-theme="dark"] .vet-history-stats .vet-stat-card {
+  background: rgba(30, 18, 38, 0.7);
+  border-color: rgba(255, 95, 147, 0.14);
+}
+
+[data-theme="dark"] .vet-history-toolbar {
+  background: rgba(30, 18, 38, 0.7);
+  border-color: rgba(255, 95, 147, 0.14);
+}
+
+[data-theme="dark"] .vet-history-toolbar-controls select,
+[data-theme="dark"] .vet-history-toolbar-controls .app-select {
+  background: rgba(15, 10, 25, 0.55);
+  border-color: rgba(255, 95, 147, 0.18);
+  color: var(--veterinary-text-primary);
+}
+
+[data-theme="dark"] .vet-history-search-input {
+  background: rgba(15, 10, 25, 0.55);
+  border-color: rgba(255, 95, 147, 0.14);
+  color: var(--veterinary-text-primary);
+}
 
 /* RESPONSIVE */
 

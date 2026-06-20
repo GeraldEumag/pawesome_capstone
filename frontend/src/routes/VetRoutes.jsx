@@ -1,6 +1,7 @@
 import { Suspense, lazy } from "react";
 import { Routes, Route } from "react-router-dom";
 import ProtectedRoute from "../components/ProtectedRoute";
+import { VetDashboardSkeleton } from "../components/veterinary/VetSkeleton";
 
 const VetDashboard = lazy(() => import("../components/veterinary/VetDashboard"));
 const VetAppointments = lazy(() => import("../components/veterinary/VetAppointments_PinkGlass"));
@@ -15,12 +16,8 @@ const ProfileSettings = lazy(() => import("../components/shared/ProfileSettings"
 const VetCurrentBoarders = lazy(() => import("../components/veterinary/VeterinaryCurrentBoarders"));
 const VetMedicalConfinements = lazy(() => import("../components/veterinary/VetMedicalConfinements"));
 
-const RouteLoading = () => (
-  <div style={{ padding: "20px", textAlign: "center" }}>Loading...</div>
-);
-
 const VetRoutes = () => (
-  <Suspense fallback={<RouteLoading />}>
+  <Suspense fallback={<VetDashboardSkeleton />}>
     <Routes>
       <Route
         path="/*"

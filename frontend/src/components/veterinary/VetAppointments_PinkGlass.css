@@ -544,6 +544,12 @@
   border-color: rgba(72, 187, 120, 0.2);
 }
 
+.appointment-status.awaiting_payment {
+  background: rgba(139, 92, 246, 0.1);
+  color: #7c3aed;
+  border-color: rgba(139, 92, 246, 0.2);
+}
+
 .appointment-status.cancelled,
 .appointment-status.canceled,
 .appointment-status.rejected,
@@ -756,35 +762,37 @@
 }
 
 /* ─────────────────────────────────────────────────────────────
-   Loading State - Glass Style
+   Loading State - Minimal
 ───────────────────────────────────────────────────────────── */
-.loading-spinner {
-  min-height: 400px;
-  display: grid;
-  place-items: center;
-  gap: 16px;
-  padding: 60px 20px;
-  border-radius: var(--veterinary-radius-2xl);
+.vet-loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  padding: 60px 24px;
+  min-height: 320px;
   background: var(--veterinary-glass-bg);
-  border: 2px solid var(--veterinary-glass-border);
-  box-shadow: var(--veterinary-glass-shadow);
-  color: var(--veterinary-primary);
+  border: 1.5px solid var(--veterinary-glass-border);
+  border-radius: var(--veterinary-radius-2xl);
+  color: var(--veterinary-text-muted);
+  font-size: 14px;
   font-weight: 600;
-  backdrop-filter: blur(20px);
-  animation: fadeIn 0.8s ease;
+  animation: fadeIn 0.6s ease;
 }
 
-.spinner-icon {
-  width: 64px;
-  height: 64px;
-  display: grid;
-  place-items: center;
-  border-radius: var(--veterinary-radius-xl);
-  background: rgba(255, 95, 147, 0.1);
+.vet-loader {
+  width: 36px;
+  height: 36px;
+  border: 3px solid var(--veterinary-glass-border);
+  border-top-color: var(--veterinary-primary);
+  border-radius: 50%;
+  animation: vetAppointmentSpin 0.8s linear infinite;
 }
 
+.spinner-icon,
 .spin-animation {
-  animation: vetAppointmentSpin 0.9s linear infinite;
+  display: none;
 }
 
 /* ─────────────────────────────────────────────────────────────
@@ -961,9 +969,63 @@
    Dark Mode Support
 ───────────────────────────────────────────────────────────── */
 
+[data-theme="dark"] .vet-appointments {
+  background: var(--veterinary-page-bg);
+}
 
+[data-theme="dark"] .appointment-card {
+  background: rgba(30, 18, 38, 0.82);
+  border-color: rgba(255, 95, 147, 0.14);
+}
 
+[data-theme="dark"] .appointment-card:hover {
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.35);
+}
 
+[data-theme="dark"] .summary-card {
+  background: rgba(30, 18, 38, 0.7);
+  border-color: rgba(255, 95, 147, 0.14);
+}
+
+[data-theme="dark"] .appointments-controls {
+  background: rgba(30, 18, 38, 0.7);
+  border-color: rgba(255, 95, 147, 0.14);
+}
+
+[data-theme="dark"] .search-input-wrapper {
+  background: rgba(15, 10, 25, 0.6);
+  border-color: rgba(255, 95, 147, 0.14);
+}
+
+[data-theme="dark"] .search-input {
+  color: var(--veterinary-text-primary);
+}
+
+[data-theme="dark"] .filter-select {
+  background: rgba(30, 18, 38, 0.8);
+  color: var(--veterinary-text-primary);
+  border-color: rgba(255, 95, 147, 0.18);
+}
+
+[data-theme="dark"] .modal-overlay,
+[data-theme="dark"] .modal-backdrop {
+  background: rgba(0, 0, 0, 0.72);
+}
+
+[data-theme="dark"] .modal-card,
+[data-theme="dark"] .appointment-modal {
+  background: rgba(25, 14, 35, 0.96);
+  border-color: rgba(255, 95, 147, 0.18);
+}
+
+[data-theme="dark"] .modal-detail-value {
+  color: var(--veterinary-text-primary);
+}
+
+[data-theme="dark"] .empty-appointments {
+  border-color: rgba(255, 95, 147, 0.12);
+  background: rgba(255, 95, 147, 0.03);
+}
 
 /* ─────────────────────────────────────────────────────────────
    Responsive Design

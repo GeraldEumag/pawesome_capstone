@@ -299,6 +299,13 @@
   border-radius: var(--chat-radius-lg);
   background: var(--chat-surface-solid);
   box-shadow: var(--chat-shadow-soft);
+  transition: 0.22s ease;
+}
+
+.scope-card:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--chat-shadow-card);
+  border-color: rgba(255, 95, 147, 0.24);
 }
 
 .scope-card > span {
@@ -342,11 +349,6 @@
 .receptionist-chatbot-shell > *:last-child {
   min-height: 620px;
 }
-
-/* Dark mode */
-
-
-
 
 /* Responsive */
 

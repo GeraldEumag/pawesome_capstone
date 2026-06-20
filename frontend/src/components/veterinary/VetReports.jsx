@@ -144,7 +144,7 @@ const VetReports = () => {
   const renderCharts = () => (
     <>
       <ChartContainer title="Service Revenue" subtitle="Top services by revenue">
-        <ResponsiveContainer width="100%" height="100%">
+        <ResponsiveContainer width="100%" height="100%" minWidth={300} minHeight={200}>
           <BarChart data={chartData.topServices}>
             <CartesianGrid strokeDasharray="3 3" />
             <XAxis dataKey="serviceName" tick={{ fontSize: 11 }} angle={-15} textAnchor="end" height={60} />
@@ -160,7 +160,7 @@ const VetReports = () => {
       </ChartContainer>
 
       <ChartContainer title="Appointment Distribution" subtitle="By service type">
-        <ResponsiveContainer width="100%" height="100%">
+        <ResponsiveContainer width="100%" height="100%" minWidth={300} minHeight={200}>
           <PieChart>
             <Pie data={chartData.servicePie} cx="50%" cy="50%" innerRadius={60} outerRadius={100} paddingAngle={4} dataKey="value">
               {chartData.servicePie.map((entry, index) => (

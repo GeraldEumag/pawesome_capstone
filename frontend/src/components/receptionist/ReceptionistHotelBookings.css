@@ -67,8 +67,8 @@
   padding: 24px;
   background: var(--hotel-surface);
   border: 1px solid var(--hotel-border);
-  border-radius: 12px;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+  border-radius: 14px;
+  box-shadow: 0 2px 8px rgba(255, 95, 147, 0.06);
 }
 
 .hotel-eyebrow {
@@ -189,7 +189,8 @@
 
 .hotel-summary-card:hover {
   border-color: var(--hotel-primary);
-  box-shadow: 0 2px 8px rgba(255, 95, 147, 0.12);
+  box-shadow: 0 4px 16px rgba(255, 95, 147, 0.14);
+  transform: translateY(-2px);
 }
 
 .hotel-summary-card span {
@@ -204,10 +205,10 @@
   font-size: 1rem;
 }
 
-.hotel-summary-card.warning span { background: var(--hotel-warning); }
-.hotel-summary-card.info    span { background: var(--hotel-info); }
-.hotel-summary-card.active  span { background: #8b5cf6; }
-.hotel-summary-card.success span { background: var(--hotel-success); }
+.hotel-summary-card.warning span { background: var(--hotel-warning-bg); color: #92400e; }
+.hotel-summary-card.info    span { background: var(--hotel-info-bg);    color: #1e40af; }
+.hotel-summary-card.active  span { background: #ede9fe;                 color: #6d28d9; }
+.hotel-summary-card.success span { background: var(--hotel-success-bg); color: #065f46; }
 
 .hotel-summary-card strong {
   display: block;
@@ -495,6 +496,10 @@
   background: #fff;
   color: var(--hotel-muted);
   font-size: 0.8rem;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  display: grid;
+  place-items: center;
 }
 
 .action-btn:hover {

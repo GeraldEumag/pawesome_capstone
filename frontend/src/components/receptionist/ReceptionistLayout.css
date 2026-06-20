@@ -13,6 +13,10 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
+  background: rgba(255, 255, 255, 0.78);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border-bottom: 1px solid rgba(255, 95, 147, 0.1);
 }
 
 .receptionist-topbar .topbar-title h1 {
@@ -77,6 +81,7 @@
   font-size: 1.1rem;
   cursor: pointer;
   box-shadow: var(--shadow-soft);
+  transition: all 0.2s ease;
 }
 
 .receptionist-content {
@@ -86,6 +91,17 @@
 .topbar-icon,
 .topbar-user {
   outline: none !important;
+}
+
+.topbar-icon:hover {
+  background: rgba(255, 95, 147, 0.1);
+  border-color: rgba(255, 95, 147, 0.3);
+  box-shadow: 0 4px 14px rgba(255, 95, 147, 0.14);
+}
+
+.topbar-user:hover {
+  box-shadow: 0 8px 24px rgba(255, 95, 147, 0.16);
+  transform: translateY(-1px);
 }
 
 .topbar-icon:focus,
@@ -205,15 +221,6 @@
   font-weight: 700;
 }
 
-/* ===== RECEPTIONIST DARK MODE FIX ===== */
-
-
-
-
-
-
-
-
 /* ===== FIX NOTIFICATION DROPDOWN POSITION ===== */
 
 .receptionist-topbar {
@@ -266,25 +273,4 @@
 .receptionist-topbar .notification-dropdown {
   transform: translateY(0) !important;
 }
-
-/* dark mode dropdown */
-
-
-
-
-/* ===== FINAL RECEPTIONIST DARK MODE FIX ===== */
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 

@@ -40,8 +40,8 @@
   padding: 24px;
   background: var(--grooming-surface);
   border: 1px solid var(--grooming-border);
-  border-radius: 12px;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+  border-radius: 14px;
+  box-shadow: 0 2px 8px rgba(255, 95, 147, 0.06);
 }
 
 .header-title h1 {
@@ -99,8 +99,9 @@
 }
 
 .primary-btn:hover {
-  background: #4f46e5;
+  background: #ff4f85;
   transform: translateY(-1px);
+  box-shadow: 0 6px 18px rgba(255, 95, 147, 0.3);
 }
 
 .secondary-btn {
@@ -163,7 +164,8 @@
 
 .stat-card:hover {
   border-color: var(--grooming-primary);
-  box-shadow: 0 2px 8px rgba(99, 102, 241, 0.08);
+  box-shadow: 0 4px 16px rgba(255, 95, 147, 0.14);
+  transform: translateY(-2px);
 }
 
 .stat-card svg {
@@ -380,6 +382,7 @@
   cursor: pointer;
   display: grid;
   place-items: center;
+  transition: all 0.15s ease;
 }
 
 .action-btn:hover {

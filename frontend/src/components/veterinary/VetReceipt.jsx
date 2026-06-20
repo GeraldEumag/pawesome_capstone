@@ -6,9 +6,13 @@ import {
   faTimes,
   faPaw,
   faUser,
-  faDollarSign,
+  faMoneyBillWave,
   faFileInvoice,
   faSpinner,
+  faCalendarAlt,
+  faStethoscope,
+  faReceipt,
+  faCircleCheck,
 } from "@fortawesome/free-solid-svg-icons";
 import { apiRequest } from "../../api/client";
 import { formatCurrency } from "../../utils/currency";
@@ -137,14 +141,20 @@ const VetReceipt = () => {
       <div className="receipt-container">
         <div className="premium-card receipt-card">
           <div className="receipt-header">
+            <div className="receipt-clinic-logo">
+              <FontAwesomeIcon icon={faPaw} />
+            </div>
             <h1>Payment Receipt</h1>
-            <p>Pawesome Pet Care Center</p>
-            <p>Receipt #{receiptData.id}</p>
+            <p className="receipt-clinic-name">Pawesome Pet Care Center</p>
+            <p className="receipt-clinic-tagline">Professional Veterinary & Pet Hotel Services</p>
+            <span className="receipt-id-badge">
+              <FontAwesomeIcon icon={faReceipt} /> Receipt #{receiptData.id}
+            </span>
           </div>
 
           <div className="receipt-body">
           <div className="receipt-section">
-            <h3>Service Information</h3>
+            <h3><FontAwesomeIcon icon={faCalendarAlt} /> Service Information</h3>
             <div className="receipt-info">
               <div className="info-label">Date:</div>
               <div className="info-value">{new Date(receiptData.date).toLocaleDateString()}</div>
@@ -164,7 +174,7 @@ const VetReceipt = () => {
           </div>
 
           <div className="receipt-section">
-            <h3>Patient Information</h3>
+            <h3><FontAwesomeIcon icon={faPaw} /> Patient Information</h3>
             <div className="receipt-info">
               <div className="info-label">Pet Name:</div>
               <div className="info-value">
@@ -188,12 +198,11 @@ const VetReceipt = () => {
           </div>
 
           <div className="receipt-section">
-            <h3>Service Details</h3>
+            <h3><FontAwesomeIcon icon={faStethoscope} /> Service Details</h3>
             <div className="service-item">
               <div className="service-header">
                 <div className="service-name">{receiptData.service_name}</div>
                 <div className="service-price">
-                  <FontAwesomeIcon icon={faDollarSign} />
                   {formatCurrency(receiptData.service_cost)}
                 </div>
               </div>
@@ -207,7 +216,6 @@ const VetReceipt = () => {
                 <div className="service-header">
                   <div className="service-name">Additional Services</div>
                   <div className="service-price">
-                    <FontAwesomeIcon icon={faDollarSign} />
                     {formatCurrency(receiptData.additional_services.reduce((sum, service) => sum + (service.cost || 0), 0))}
                   </div>
                 </div>
@@ -259,14 +267,19 @@ const VetReceipt = () => {
             </div>
           </div>
 
+          <div className="receipt-thankyou">
+            <FontAwesomeIcon icon={faCircleCheck} />
+            <p>Thank you for trusting Pawesome Pet Care Center with your pet's health!</p>
+          </div>
+
           <div className="receipt-actions">
-            <button className="btn-primary" onClick={handlePrint}>
+            <button className="receipt-btn receipt-btn--primary" onClick={handlePrint}>
               <FontAwesomeIcon icon={faPrint} /> Print
             </button>
-            <button className="btn-secondary" onClick={handleDownloadPDF}>
+            <button className="receipt-btn receipt-btn--secondary" onClick={handleDownloadPDF}>
               <FontAwesomeIcon icon={faDownload} /> Download PDF
             </button>
-            <button className="btn-secondary" onClick={handleClose}>
+            <button className="receipt-btn receipt-btn--ghost" onClick={handleClose}>
               <FontAwesomeIcon icon={faTimes} /> Close
             </button>
           </div>

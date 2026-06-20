@@ -1,0 +1,723 @@
+/* ─────────────────────────────────────────────────────────────
+   VetEditAppointment_PinkGlass.css — Dedicated Edit Form CSS
+   Targets the actual class names used in VetEditAppointment_PinkGlass.jsx
+───────────────────────────────────────────────────────────── */
+
+.new-appointment-container {
+  width: 100%;
+  max-width: 100%;
+  display: grid;
+  gap: var(--vet-section-gap, 28px);
+  padding: var(--vet-page-padding, 32px);
+  background: var(--veterinary-page-bg);
+  color: var(--veterinary-text-primary);
+  font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  overflow-x: hidden;
+}
+
+.new-appointment-container,
+.new-appointment-container * {
+  box-sizing: border-box;
+}
+
+/* ── Hero Header ───────────────────────────────────────────── */
+
+.new-appointment-header {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  padding: 2rem 2.25rem;
+  border-radius: var(--veterinary-radius-2xl);
+  background: linear-gradient(135deg, var(--veterinary-primary-light) 0%, var(--veterinary-primary) 100%);
+  overflow: hidden;
+  box-shadow: var(--veterinary-glass-shadow);
+}
+
+.new-appointment-header::after {
+  content: "";
+  position: absolute;
+  top: -100px;
+  right: -80px;
+  width: 260px;
+  height: 260px;
+  border-radius: 999px;
+  background: radial-gradient(circle, rgba(255, 255, 255, 0.2), transparent 68%);
+  pointer-events: none;
+}
+
+.back-button {
+  position: relative;
+  z-index: 1;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 18px;
+  min-height: 44px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.2);
+  color: #ffffff;
+  border: 1.5px solid rgba(255, 255, 255, 0.3);
+  font-size: 0.875rem;
+  font-weight: 700;
+  cursor: pointer;
+  white-space: nowrap;
+  flex-shrink: 0;
+  transition: background 0.2s ease, transform 0.2s ease;
+}
+
+.back-button:hover {
+  background: rgba(255, 255, 255, 0.32);
+  transform: translateX(-2px);
+}
+
+.new-appointment-header h1 {
+  position: relative;
+  z-index: 1;
+  margin: 0 0 4px;
+  color: #ffffff;
+  font-size: clamp(1.35rem, 2.5vw, 1.9rem);
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  line-height: 1.15;
+}
+
+.new-appointment-header p {
+  position: relative;
+  z-index: 1;
+  margin: 0;
+  color: rgba(255, 255, 255, 0.88);
+  font-size: 0.9rem;
+  font-weight: 500;
+}
+
+.new-appointment-header > div {
+  position: relative;
+  z-index: 1;
+  flex: 1;
+  min-width: 0;
+}
+
+/* ── Alert Banners ─────────────────────────────────────────── */
+
+.new-appointment-alert {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 18px;
+  border-radius: var(--veterinary-radius-lg);
+  background: var(--vet-badge-cancelled-bg);
+  border: 1.5px solid var(--vet-badge-cancelled-border);
+  color: var(--vet-badge-cancelled-color);
+  font-weight: 650;
+  font-size: 0.9rem;
+}
+
+/* ── Form Layout (3-column grid stacked vertically) ────────── */
+
+.new-appointment-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 340px;
+  gap: 22px;
+  align-items: start;
+}
+
+/* ── Form Section Cards ────────────────────────────────────── */
+
+.new-appointment-form-card {
+  border-radius: var(--veterinary-radius-2xl);
+  background: var(--veterinary-glass-bg);
+  border: 1.5px solid var(--veterinary-glass-border);
+  box-shadow: var(--veterinary-shadow-sm);
+  backdrop-filter: blur(20px);
+  overflow: hidden;
+  margin-bottom: 20px;
+}
+
+.new-appointment-form-card:last-child {
+  margin-bottom: 0;
+}
+
+/* ── Card Header ───────────────────────────────────────────── */
+
+.form-card-header {
+  padding: 18px 22px;
+  background: linear-gradient(135deg, var(--veterinary-primary-light) 0%, var(--veterinary-primary) 100%);
+  border-bottom: none;
+}
+
+.form-card-header h2 {
+  margin: 0 0 3px;
+  color: #ffffff;
+  font-size: 1.05rem;
+  font-weight: 800;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  letter-spacing: -0.01em;
+}
+
+.form-card-header p {
+  margin: 0;
+  color: rgba(255, 255, 255, 0.85);
+  font-size: 0.83rem;
+  font-weight: 500;
+}
+
+/* ── Form Rows & Groups ────────────────────────────────────── */
+
+.form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  padding: 20px 22px;
+  border-bottom: 1px solid var(--vet-divider);
+}
+
+.form-group {
+  padding: 16px 22px;
+  display: grid;
+  gap: 8px;
+  border-bottom: 1px solid var(--vet-divider);
+}
+
+.form-group:last-child {
+  border-bottom: none;
+}
+
+.form-group label {
+  font-size: 0.8rem;
+  font-weight: 750;
+  color: var(--veterinary-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.form-group input,
+.form-group select,
+.form-group textarea {
+  width: 100%;
+  min-height: var(--vet-input-height, 48px);
+  border-radius: var(--vet-input-radius, 14px);
+  border: 1.5px solid var(--vet-input-border);
+  background: var(--vet-input-bg);
+  color: var(--veterinary-text-primary);
+  padding: 11px 16px;
+  font-family: inherit;
+  font-size: 0.9rem;
+  font-weight: 550;
+  outline: none;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.form-group input:focus,
+.form-group select:focus,
+.form-group textarea:focus {
+  border-color: var(--veterinary-primary);
+  box-shadow: 0 0 0 4px var(--vet-input-focus-ring);
+}
+
+.form-group textarea {
+  min-height: 110px;
+  resize: vertical;
+  line-height: 1.55;
+}
+
+/* Service count helper text */
+.service-count-helper {
+  color: var(--veterinary-text-muted);
+  font-size: 0.78rem;
+  font-weight: 600;
+  display: block;
+  margin-top: 2px;
+}
+
+/* ── Customer Search ───────────────────────────────────────── */
+
+.search-container {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.search-container input {
+  width: 100%;
+  min-height: var(--vet-input-height, 48px);
+  padding: 11px 40px 11px 16px;
+  border-radius: var(--vet-input-radius, 14px);
+  border: 1.5px solid var(--vet-input-border);
+  background: var(--vet-input-bg);
+  color: var(--veterinary-text-primary);
+  font-family: inherit;
+  font-size: 0.9rem;
+  font-weight: 550;
+  outline: none;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.search-container input:focus {
+  border-color: var(--veterinary-primary);
+  box-shadow: 0 0 0 4px var(--vet-input-focus-ring);
+}
+
+.search-icon {
+  position: absolute;
+  right: 14px;
+  color: var(--veterinary-primary);
+  pointer-events: none;
+  font-size: 0.9rem;
+}
+
+/* ── Customer Search Results Dropdown ──────────────────────── */
+
+.customer-search-results {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  right: 0;
+  z-index: 40;
+  max-height: 260px;
+  overflow-y: auto;
+  padding: 8px;
+  border-radius: var(--veterinary-radius-xl);
+  background: var(--veterinary-glass-bg);
+  border: 1.5px solid var(--veterinary-glass-border);
+  box-shadow: var(--veterinary-shadow-md);
+  backdrop-filter: blur(24px);
+}
+
+.customer-result-item {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 11px 14px;
+  border-radius: var(--veterinary-radius-md);
+  cursor: pointer;
+  transition: background 0.15s ease;
+  border: none;
+  background: transparent;
+  text-align: left;
+}
+
+.customer-result-item:hover {
+  background: rgba(255, 95, 147, 0.08);
+}
+
+.customer-result-item span {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+
+.customer-result-item strong {
+  display: block;
+  color: var(--veterinary-text-primary);
+  font-size: 0.9rem;
+  font-weight: 700;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.customer-result-item small {
+  display: block;
+  color: var(--veterinary-text-muted);
+  font-size: 0.78rem;
+  font-weight: 500;
+}
+
+/* ── Selected Customer Display ─────────────────────────────── */
+
+.selected-customer-display {
+  margin-top: 12px;
+  padding: 14px;
+  border-radius: var(--veterinary-radius-lg);
+  background: rgba(255, 95, 147, 0.06);
+  border: 1.5px solid rgba(255, 95, 147, 0.2);
+}
+
+.selected-customer-info {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.selected-customer-info svg {
+  width: 36px;
+  height: 36px;
+  min-width: 36px;
+  padding: 9px;
+  border-radius: 12px;
+  background: var(--vet-icon-gradient);
+  color: #ffffff;
+  flex-shrink: 0;
+}
+
+.selected-customer-info span {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+
+.selected-customer-info strong {
+  display: block;
+  color: var(--veterinary-text-primary);
+  font-weight: 750;
+  font-size: 0.9rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.selected-customer-info small {
+  display: block;
+  color: var(--veterinary-text-muted);
+  font-size: 0.8rem;
+  font-weight: 500;
+}
+
+/* ── Helper Empty Boxes ────────────────────────────────────── */
+
+.helper-empty-box {
+  display: grid;
+  place-items: center;
+  align-content: center;
+  text-align: center;
+  gap: 8px;
+  padding: 32px 16px;
+  border-radius: var(--veterinary-radius-xl);
+  border: 2px dashed var(--veterinary-glass-border);
+  background: var(--vet-form-card-bg);
+}
+
+.helper-empty-box svg {
+  color: var(--veterinary-primary);
+  font-size: 2rem;
+  opacity: 0.55;
+}
+
+.helper-empty-box.warning svg {
+  color: var(--vet-badge-pending-color);
+}
+
+.helper-empty-box h4 {
+  margin: 0;
+  color: var(--veterinary-text-primary);
+  font-size: 0.95rem;
+  font-weight: 750;
+}
+
+.helper-empty-box p {
+  margin: 0;
+  color: var(--veterinary-text-muted);
+  font-size: 0.85rem;
+  font-weight: 500;
+  max-width: 260px;
+}
+
+/* ── Pet Selection Grid ────────────────────────────────────── */
+
+.pet-selection-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 200px), 1fr));
+  gap: 10px;
+}
+
+.pet-option {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px;
+  border-radius: var(--veterinary-radius-lg);
+  border: 1.5px solid var(--veterinary-glass-border);
+  background: var(--veterinary-glass-bg);
+  text-align: left;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: var(--veterinary-shadow-sm);
+}
+
+.pet-option:hover {
+  transform: translateY(-2px);
+  border-color: var(--veterinary-primary);
+  box-shadow: var(--veterinary-shadow-md);
+}
+
+.pet-option.selected {
+  border-color: var(--veterinary-primary);
+  background: rgba(255, 95, 147, 0.08);
+  box-shadow: 0 0 0 3px rgba(255, 95, 147, 0.15);
+}
+
+.pet-option span {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+
+.pet-option strong {
+  display: block;
+  color: var(--veterinary-text-primary);
+  font-size: 0.875rem;
+  font-weight: 750;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.pet-option small {
+  display: block;
+  color: var(--veterinary-text-muted);
+  font-size: 0.78rem;
+  font-weight: 500;
+}
+
+/* ── Service Preview ───────────────────────────────────────── */
+
+.selected-service-preview {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 14px 16px;
+  border-radius: var(--veterinary-radius-lg);
+  background: rgba(255, 95, 147, 0.06);
+  border: 1.5px solid rgba(255, 95, 147, 0.2);
+  margin-top: 4px;
+}
+
+.selected-service-preview strong {
+  display: block;
+  color: var(--veterinary-text-primary);
+  font-size: 0.925rem;
+  font-weight: 750;
+  margin-bottom: 3px;
+}
+
+.selected-service-preview p {
+  margin: 0;
+  color: var(--veterinary-text-muted);
+  font-size: 0.85rem;
+  font-weight: 550;
+}
+
+/* ── Appointment Summary ───────────────────────────────────── */
+
+.appointment-summary {
+  display: grid;
+  gap: 10px;
+  padding: 0;
+}
+
+.summary-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  padding: 13px 16px;
+  border-radius: var(--veterinary-radius-md);
+  background: var(--vet-form-card-bg);
+  border: 1px solid var(--vet-form-border);
+}
+
+.summary-row small {
+  font-size: 0.75rem;
+  font-weight: 750;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--veterinary-text-muted);
+  white-space: nowrap;
+}
+
+.summary-row strong {
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: var(--veterinary-text-primary);
+  text-align: right;
+  word-break: break-word;
+}
+
+.summary-row.price {
+  background: linear-gradient(135deg, var(--veterinary-primary-light), var(--veterinary-primary));
+  border-color: transparent;
+}
+
+.summary-row.price small {
+  color: rgba(255, 255, 255, 0.85);
+}
+
+.summary-row.price strong {
+  color: #ffffff;
+  font-size: 1.1rem;
+}
+
+/* ── Form Actions ──────────────────────────────────────────── */
+
+.form-actions {
+  grid-column: 1 / -1;
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  flex-wrap: wrap;
+  padding: 18px 22px;
+  background: var(--veterinary-glass-bg);
+  border: 1.5px solid var(--veterinary-glass-border);
+  border-radius: var(--veterinary-radius-2xl);
+  backdrop-filter: blur(20px);
+  box-shadow: var(--veterinary-shadow-sm);
+}
+
+.cancel-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 22px;
+  min-height: 46px;
+  border-radius: 999px;
+  background: var(--veterinary-glass-bg);
+  color: var(--veterinary-primary);
+  border: 1.5px solid rgba(255, 95, 147, 0.25);
+  font-size: 0.9rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.2s ease, transform 0.2s ease;
+}
+
+.cancel-btn:hover {
+  background: rgba(255, 95, 147, 0.08);
+  transform: translateY(-1px);
+}
+
+.save-appointment-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 12px 26px;
+  min-height: 46px;
+  border-radius: 999px;
+  background: linear-gradient(135deg, var(--veterinary-primary-light), var(--veterinary-primary));
+  color: #ffffff;
+  border: none;
+  font-size: 0.9rem;
+  font-weight: 750;
+  cursor: pointer;
+  box-shadow: 0 6px 18px rgba(255, 95, 147, 0.3);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.save-appointment-btn:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 26px rgba(255, 95, 147, 0.42);
+}
+
+.save-appointment-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* ── Loading State ─────────────────────────────────────────── */
+
+.loading-container {
+  display: grid;
+  place-items: center;
+  align-content: center;
+  text-align: center;
+  gap: 12px;
+  min-height: 380px;
+  border-radius: var(--veterinary-radius-2xl);
+  background: var(--veterinary-glass-bg);
+  border: 1.5px solid var(--veterinary-glass-border);
+  backdrop-filter: blur(20px);
+  color: var(--veterinary-text-muted);
+}
+
+.loading-container strong {
+  display: block;
+  color: var(--veterinary-text-primary);
+  font-weight: 750;
+  font-size: 1rem;
+}
+
+.loading-container p {
+  margin: 0;
+  font-weight: 500;
+  font-size: 0.875rem;
+}
+
+/* ── Spin Animation ────────────────────────────────────────── */
+
+@keyframes edit-spin {
+  to { transform: rotate(360deg); }
+}
+
+.spin {
+  animation: edit-spin 0.9s linear infinite;
+  font-size: 2rem;
+  color: var(--veterinary-primary);
+}
+
+/* ── Dark Mode ─────────────────────────────────────────────── */
+
+[data-theme="dark"] .new-appointment-header {
+  background: linear-gradient(135deg, #8b2252 0%, #ff5f93 100%);
+}
+
+/* ── Responsive ────────────────────────────────────────────── */
+
+@media (max-width: 1100px) {
+  .new-appointment-layout {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 900px) {
+  .new-appointment-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 16px;
+    padding: 1.5rem;
+  }
+
+  .back-button {
+    align-self: flex-start;
+  }
+
+  .form-row {
+    grid-template-columns: 1fr;
+  }
+
+  .form-actions {
+    justify-content: stretch;
+  }
+
+  .cancel-btn,
+  .save-appointment-btn {
+    flex: 1;
+    justify-content: center;
+  }
+}
+
+@media (max-width: 600px) {
+  .new-appointment-container {
+    padding: 16px;
+  }
+
+  .new-appointment-header {
+    padding: 1.25rem;
+  }
+
+  .pet-selection-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .form-actions {
+    flex-direction: column;
+  }
+
+  .cancel-btn,
+  .save-appointment-btn {
+    width: 100%;
+  }
+}

@@ -56,8 +56,6 @@ const THEME = {
    Styled Components
 ───────────────────────────────────────────────────────────── */
 const GlobalStyle = createGlobalStyle`
-  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
-  
   * {
     box-sizing: border-box;
   }
@@ -458,21 +456,21 @@ const Button = styled.button`
   letter-spacing: "0.3px";
   
   ${props => {
-    if (props.variant === 'primary') {
+    if (props.$variant === 'primary') {
       return `
         background: linear-gradient(135deg, ${THEME.primary}, ${THEME.primaryLight});
         color: white;
         box-shadow: ${THEME.glassShadow};
         ${hoverMixin()}
       `;
-    } else if (props.variant === 'secondary') {
+    } else if (props.$variant === 'secondary') {
       return `
         background: ${THEME.glassBg};
         color: ${THEME.textSecondary};
         border: 2px solid ${THEME.glassBorder};
         ${glassHoverMixin()}
       `;
-    } else if (props.variant === 'danger') {
+    } else if (props.$variant === 'danger') {
       return `
         background: linear-gradient(135deg, ${THEME.error}, #fc8181);
         color: white;
@@ -1023,10 +1021,10 @@ const ProfileSettings = () => {
                 <span>{error}</span>
               </div>
               <ButtonGroup>
-                <Button variant="secondary" onClick={fetchUserProfile}>
+                <Button $variant="secondary" onClick={fetchUserProfile}>
                   Retry
                 </Button>
-                <Button variant="primary" onClick={testLogin}>
+                <Button $variant="primary" onClick={testLogin}>
                   Test Login ({roleLabel})
                 </Button>
               </ButtonGroup>
@@ -1188,11 +1186,11 @@ const ProfileSettings = () => {
 
                   {isEditing && (
                     <ButtonGroup>
-                      <Button variant="secondary" onClick={handleCancel}>
+                      <Button $variant="secondary" onClick={handleCancel}>
                         <FontAwesomeIcon icon={faTimes} />
                         Cancel
                       </Button>
-                      <Button variant="primary" onClick={handleSaveProfile}>
+                      <Button $variant="primary" onClick={handleSaveProfile}>
                         <FontAwesomeIcon icon={faSave} />
                         Save Changes
                       </Button>
@@ -1276,11 +1274,11 @@ const ProfileSettings = () => {
 
                   {isEditing && (
                     <ButtonGroup>
-                      <Button variant="secondary" onClick={handleCancel}>
+                      <Button $variant="secondary" onClick={handleCancel}>
                         <FontAwesomeIcon icon={faTimes} />
                         Cancel
                       </Button>
-                      <Button variant="primary" onClick={handleSaveProfile}>
+                      <Button $variant="primary" onClick={handleSaveProfile}>
                         <FontAwesomeIcon icon={faSave} />
                         Save Changes
                       </Button>
@@ -1500,7 +1498,7 @@ const ProfileSettings = () => {
 
                     <ButtonGroup>
                       <Button
-                        variant="danger"
+                        $variant="danger"
                         onClick={handleChangePassword}
                         disabled={pwLoading}
                       >

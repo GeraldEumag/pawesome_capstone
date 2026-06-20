@@ -80,16 +80,18 @@
   background: var(--color-surface-solid, white);
   padding: 1.5rem;
   border-radius: 16px;
+  border: 1px solid #f1f5f9;
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
   display: flex;
   align-items: center;
   gap: 1rem;
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
 }
 
 .summary-card:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+  transform: translateY(-3px);
+  box-shadow: 0 10px 30px rgba(255, 95, 147, 0.16);
+  border-color: rgba(255, 95, 147, 0.2);
 }
 
 .card-icon {
@@ -169,6 +171,12 @@
   border: 2px solid #e9ecef;
   border-radius: 8px;
   padding: 0 1rem;
+  transition: border-color 0.2s ease;
+}
+
+.filter-dropdown:focus-within {
+  border-color: #ff5f93;
+  box-shadow: 0 0 0 3px rgba(255, 95, 147, 0.1);
 }
 
 .filter-dropdown svg {
@@ -422,18 +430,20 @@
   left: 0;
   right: 0;
   bottom: 0;
-  background: rgba(0, 0, 0, 0.5);
+  background: rgba(15, 23, 42, 0.52);
   display: flex;
   align-items: center;
   justify-content: center;
   z-index: 1000;
-  backdrop-filter: blur(4px);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
 }
 
 .customer-modal {
   background: var(--color-surface-solid, white);
   border-radius: 16px;
-  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+  border: 1px solid rgba(255, 95, 147, 0.12);
+  box-shadow: 0 24px 60px rgba(15, 23, 42, 0.16), 0 8px 24px rgba(255, 95, 147, 0.1);
   max-width: 800px;
   width: 90%;
   max-height: 80vh;

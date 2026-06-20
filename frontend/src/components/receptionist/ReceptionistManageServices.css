@@ -109,8 +109,9 @@
 .tab-btn.active {
   color: var(--services-primary);
   border-bottom-color: var(--services-primary);
-  background: transparent;
+  background: rgba(255, 95, 147, 0.06);
   border-radius: 8px 8px 0 0;
+  font-weight: 600;
 }
 
 /* Stats */
@@ -207,8 +208,9 @@
 }
 
 .primary-btn:hover {
-  background: #4f46e5;
+  background: #ff4f85;
   transform: translateY(-1px);
+  box-shadow: 0 6px 18px rgba(255, 95, 147, 0.3);
 }
 
 .primary-btn:disabled {
@@ -362,6 +364,13 @@
   border-radius: 10px;
   padding: 16px;
   box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+  transition: all 0.18s ease;
+}
+
+.room-card:hover {
+  border-color: var(--services-primary);
+  box-shadow: 0 4px 16px rgba(255, 95, 147, 0.12);
+  transform: translateY(-2px);
 }
 
 .room-header {

@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useMemo, useEffect, memo } from 'react';
+import React, { useState, useCallback, useMemo, useEffect, useRef, memo } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
   faChartLine,
@@ -370,6 +370,28 @@ const UnifiedReportEngineBase = ({
   const [error, setError] = useState(null);
   const [lastUpdated, setLastUpdated] = useState(null);
   const [selectedRecord, setSelectedRecord] = useState(null);
+  const [chartsReady, setChartsReady] = useState(false);
+  const chartsSectionRef = useRef(null);
+
+  useEffect(() => {
+    const section = chartsSectionRef.current;
+    if (!section) return;
+    let fallbackId;
+    const update = () => {
+      const rect = section.getBoundingClientRect();
+      const ready = rect.width > 0 && rect.height > 0;
+      setChartsReady(ready);
+      if (ready) clearTimeout(fallbackId);
+    };
+    update();
+    const observer = new ResizeObserver(update);
+    observer.observe(section);
+    fallbackId = setTimeout(() => setChartsReady(true), 500);
+    return () => {
+      observer.disconnect();
+      clearTimeout(fallbackId);
+    };
+  }, [loading]);
   
   // Filter state
   const defaultDateRange = useMemo(() => getDateRangePreset('month'), []);
@@ -580,8 +602,8 @@ const UnifiedReportEngineBase = ({
         
         {/* Charts Section */}
         {charts && (
-          <div className="ure-charts-section">
-            {charts}
+          <div className="ure-charts-section" ref={chartsSectionRef}>
+            {chartsReady && charts}
           </div>
         )}
         
