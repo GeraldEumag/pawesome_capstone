@@ -2,23 +2,25 @@
 /* Clean modern Request Status UI */
 
 .customer-status-page {
-  --cr-primary: #ec4899;
-  --cr-primary-hover: #db2777;
-  --cr-surface: #ffffff;
-  --cr-border: rgba(0, 0, 0, 0.06);
-  --cr-heading: #111827;
-  --cr-text: #1f2937;
-  --cr-muted: #6b7280;
-  --cr-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
-  --cr-shadow-hover: 0 8px 24px rgba(0, 0, 0, 0.06);
-  --cr-radius: 14px;
-  --cr-radius-sm: 10px;
-  --cr-radius-pill: 999px;
+  --cr-primary: var(--color-primary, #ff5f93);
+  --cr-primary-hover: var(--color-primary-hover, #ff4f85);
+  --cr-surface: var(--color-surface, rgba(255,255,255,0.86));
+  --cr-border: var(--color-border, rgba(255,95,147,0.18));
+  --cr-heading: var(--color-heading, #191919);
+  --cr-text: var(--color-text, #1f2937);
+  --cr-muted: var(--color-muted, #64748b);
+  --cr-shadow: var(--shadow-soft, 0 12px 28px rgba(15,23,42,0.08));
+  --cr-shadow-hover: var(--shadow-card, 0 18px 45px rgba(255,95,147,0.14));
+  --cr-radius: var(--radius-lg, 22px);
+  --cr-radius-sm: var(--radius-md, 16px);
+  --cr-radius-pill: var(--radius-pill, 999px);
 
-  min-height: 100vh;
+  width: 100%;
+  max-width: 100%;
   padding: 1.5rem;
   color: var(--cr-text);
   font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  box-sizing: border-box;
 }
 
 .customer-status-page *,
@@ -35,7 +37,8 @@
   background: var(--cr-surface);
   border: 1px solid var(--cr-border);
   border-radius: var(--cr-radius);
-  box-shadow: var(--cr-shadow);
+  box-shadow: var(--cr-shadow-hover);
+  backdrop-filter: blur(14px);
 }
 
 /* Hero */
@@ -43,7 +46,7 @@
   padding: 2rem 1.5rem;
   margin-bottom: 1.5rem;
   text-align: center;
-  background: linear-gradient(135deg, #fdf2f8, #ffffff, #eff6ff);
+  background: var(--cr-surface);
 }
 
 .customer-status-badge {
@@ -64,9 +67,9 @@
 .customer-status-hero h1 {
   margin: 0 0 0.5rem;
   font-size: clamp(1.6rem, 3.2vw, 2.2rem);
-  font-weight: 700;
+  font-weight: 900;
   color: var(--cr-heading);
-  letter-spacing: -0.02em;
+  letter-spacing: -0.04em;
 }
 
 .customer-status-hero p {
@@ -100,9 +103,9 @@
   width: 100%;
   min-height: 44px;
   padding: 0 1rem 0 2.6rem;
-  border-radius: var(--cr-radius-sm);
-  border: 1px solid var(--cr-border);
-  background: #f9fafb;
+  border-radius: var(--cr-radius-pill) !important;
+  border: 1px solid var(--cr-border) !important;
+  background: var(--cr-surface);
   color: var(--cr-text);
   font-size: 0.9rem;
   outline: none;
@@ -110,8 +113,8 @@
 }
 
 .customer-status-search input:focus {
-  border-color: rgba(236, 72, 153, 0.35);
-  box-shadow: 0 0 0 3px rgba(236, 72, 153, 0.08);
+  border-color: var(--cr-primary) !important;
+  box-shadow: 0 0 0 3px rgba(255, 95, 147, 0.12) !important;
 }
 
 /* Table wrapper */
@@ -119,7 +122,8 @@
   border: 1px solid var(--cr-border);
   border-radius: var(--cr-radius);
   background: var(--cr-surface);
-  box-shadow: var(--cr-shadow);
+  box-shadow: var(--cr-shadow-hover);
+  backdrop-filter: blur(14px);
   overflow: hidden;
   overflow-x: auto;
 }
@@ -133,7 +137,7 @@
 }
 
 .customer-status-table thead {
-  background: #f9fafb;
+  background: rgba(255, 95, 147, 0.04);
 }
 
 .customer-status-table th {
@@ -214,44 +218,46 @@
   border: 0;
   cursor: pointer;
   color: #fff;
-  background: var(--cr-primary);
-  box-shadow: 0 2px 8px rgba(236, 72, 153, 0.2);
-  transition: 0.18s ease;
+  background: linear-gradient(135deg, var(--cr-primary), var(--color-primary-light, #ff8db5));
+  box-shadow: 0 6px 16px rgba(255, 95, 147, 0.22);
+  font-weight: 900;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
 
 .customer-pay-btn:hover {
-  background: var(--cr-primary-hover);
-  box-shadow: 0 4px 12px rgba(236, 72, 153, 0.28);
+  background: linear-gradient(135deg, var(--cr-primary-hover), var(--cr-primary));
+  box-shadow: 0 10px 24px rgba(255, 95, 147, 0.3);
+  transform: translateY(-2px);
 }
 
 .customer-status-pill.pending {
-  background: #fef3c7;
-  color: #92400e;
+  background: rgba(245, 158, 11, 0.12);
+  color: #b45309;
 }
 
 .customer-status-pill.approved {
-  background: #d1fae5;
-  color: #065f46;
+  background: rgba(34, 197, 94, 0.12);
+  color: #15803d;
 }
 
 .customer-status-pill.rejected {
-  background: #fee2e2;
-  color: #991b1b;
+  background: rgba(239, 68, 68, 0.12);
+  color: #b91c1c;
 }
 
 .customer-payment-pill.unpaid {
-  background: #f1f5f9;
+  background: rgba(100, 116, 139, 0.1);
   color: #475569;
 }
 
 .customer-payment-pill.pending {
-  background: #dbeafe;
-  color: #1e40af;
+  background: rgba(59, 130, 246, 0.12);
+  color: #1d4ed8;
 }
 
 .customer-payment-pill.paid {
-  background: #d1fae5;
-  color: #065f46;
+  background: rgba(34, 197, 94, 0.12);
+  color: #15803d;
 }
 
 /* Empty state */
@@ -279,12 +285,6 @@
   font-size: 0.9rem;
 }
 
-/* Dark mode */
-
-
-
-
-
 /* Pay Modal */
 .pay-modal-overlay {
   position: fixed;
@@ -303,8 +303,9 @@
   max-width: 380px;
   background: var(--cr-surface);
   border: 1px solid var(--cr-border);
-  border-radius: var(--cr-radius);
-  box-shadow: 0 24px 48px rgba(0, 0, 0, 0.12);
+  border-radius: var(--radius-card, 26px);
+  box-shadow: var(--cr-shadow-hover);
+  backdrop-filter: blur(16px);
   overflow: hidden;
   animation: pay-modal-in 0.22s ease;
 }
@@ -350,7 +351,7 @@
 }
 
 .pay-modal-close:hover {
-  background: #f3f4f6;
+  background: rgba(255, 95, 147, 0.08);
   color: var(--cr-heading);
 }
 

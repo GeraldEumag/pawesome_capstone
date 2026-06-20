@@ -14,9 +14,9 @@
   --hf-info: #3b82f6;
   --hf-shadow: var(--shadow-card);
   --hf-shadow-hover: var(--shadow-primary);
-  --hf-radius: 14px;
-  --hf-radius-sm: 10px;
-  --hf-radius-pill: 999px;
+  --hf-radius: var(--radius-lg, 22px);
+  --hf-radius-sm: var(--radius-md, 16px);
+  --hf-radius-pill: var(--radius-pill, 999px);
 
   width: 100%;
   min-height: 100vh;
@@ -45,6 +45,7 @@
     radial-gradient(circle at top left, var(--color-primary-soft), transparent 40%),
     var(--color-surface);
   box-shadow: var(--hf-shadow);
+  backdrop-filter: blur(18px);
 }
 
 .hotel-header h1 {
@@ -81,9 +82,9 @@
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  background: #fee2e2;
-  color: #991b1b;
-  border: 1px solid #fecaca;
+  background: rgba(239, 68, 68, 0.08);
+  color: var(--color-danger-text, #991b1b);
+  border: 1px solid rgba(239, 68, 68, 0.2);
 }
 
 .hotel-error span {
@@ -94,9 +95,9 @@
 }
 
 .alert-success {
-  background: #d1fae5;
-  color: #065f46;
-  border: 1px solid #a7f3d0;
+  background: rgba(34, 197, 94, 0.1);
+  color: var(--color-success-text, #065f46);
+  border: 1px solid rgba(34, 197, 94, 0.22);
 }
 
 /* Tabs */

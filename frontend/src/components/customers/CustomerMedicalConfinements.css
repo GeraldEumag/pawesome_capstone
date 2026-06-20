@@ -1,0 +1,421 @@
+/* ===== CUSTOMER MEDICAL CONFINEMENTS — PINK GLASSMORPHISM ===== */
+
+.customer-medical-confinements {
+  padding: 1.5rem;
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+/* ===== PAGE HEADER ===== */
+
+.medical-page-header {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1.35rem;
+  flex-wrap: wrap;
+}
+
+.medical-eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  margin-bottom: 0.35rem;
+  padding: 0.3rem 0.75rem;
+  border-radius: var(--radius-pill, 999px);
+  background: rgba(255, 95, 147, 0.1);
+  color: var(--color-primary, #ff5f93);
+  font-size: 0.72rem;
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.medical-page-header h2 {
+  margin: 0;
+  color: var(--color-heading, #191919);
+  font-size: clamp(1.5rem, 2.5vw, 2rem);
+  font-weight: 900;
+  letter-spacing: -0.04em;
+}
+
+.medical-page-header p {
+  margin: 0.35rem 0 0;
+  color: var(--color-muted, #64748b);
+  font-size: 0.92rem;
+  line-height: 1.5;
+}
+
+/* ===== INLINE FEEDBACK ===== */
+
+.medical-feedback {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  padding: 0.85rem 1.1rem;
+  border-radius: var(--radius-md, 16px);
+  font-size: 0.88rem;
+  font-weight: 700;
+  margin-bottom: 1rem;
+  animation: fadeUp 0.3s ease both;
+}
+
+.medical-feedback.success {
+  background: rgba(34, 197, 94, 0.1);
+  border: 1px solid rgba(34, 197, 94, 0.22);
+  color: var(--color-success-text, #065f46);
+}
+
+.medical-feedback.error {
+  background: rgba(239, 68, 68, 0.08);
+  border: 1px solid rgba(239, 68, 68, 0.2);
+  color: var(--color-danger-text, #991b1b);
+}
+
+/* ===== PANEL ===== */
+
+.medical-panel {
+  border: 1px solid var(--color-border, rgba(255,95,147,0.18));
+  border-radius: var(--radius-card, 26px);
+  background: var(--color-surface, rgba(255,255,255,0.86));
+  box-shadow: var(--shadow-card, 0 18px 45px rgba(255,95,147,0.14));
+  backdrop-filter: blur(16px);
+  overflow: hidden;
+  margin-bottom: 1.35rem;
+}
+
+.medical-panel-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 1.35rem 1.5rem;
+  border-bottom: 1px solid var(--color-border, rgba(255,95,147,0.18));
+  background: rgba(255, 95, 147, 0.04);
+}
+
+.medical-panel-header h3 {
+  margin: 0;
+  color: var(--color-heading, #191919);
+  font-size: 1.1rem;
+  font-weight: 900;
+  letter-spacing: -0.03em;
+}
+
+.medical-count-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 28px;
+  padding: 0 0.75rem;
+  border-radius: var(--radius-pill, 999px);
+  background: rgba(255, 95, 147, 0.1);
+  color: var(--color-primary, #ff5f93);
+  font-size: 0.78rem;
+  font-weight: 900;
+}
+
+/* ===== CONFINEMENT LIST ===== */
+
+.confinement-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+/* ===== CONFINEMENT CARD ===== */
+
+.confinement-card {
+  border-bottom: 1px solid var(--color-border, rgba(255,95,147,0.12));
+  padding: 1.25rem 1.5rem;
+  transition: background 0.2s ease;
+  animation: fadeUp 0.35s ease both;
+}
+
+.confinement-card:last-child {
+  border-bottom: none;
+}
+
+.confinement-card:hover {
+  background: rgba(255, 95, 147, 0.025);
+}
+
+.confinement-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.85rem;
+  margin-bottom: 1rem;
+}
+
+.confinement-id {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: var(--color-primary, #ff5f93);
+  font-size: 0.92rem;
+  font-weight: 900;
+  letter-spacing: -0.01em;
+}
+
+/* ===== STATUS BADGE ===== */
+
+.status-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.35rem 0.8rem;
+  border-radius: var(--radius-pill, 999px);
+  font-size: 0.74rem;
+  font-weight: 900;
+  text-transform: capitalize;
+  white-space: nowrap;
+}
+
+.status-badge.active,
+.status-badge.ongoing,
+.status-badge.admitted {
+  background: rgba(59, 130, 246, 0.12);
+  color: #1d4ed8;
+}
+
+.status-badge.discharged,
+.status-badge.completed {
+  background: rgba(34, 197, 94, 0.12);
+  color: #15803d;
+}
+
+.status-badge.pending {
+  background: rgba(245, 158, 11, 0.12);
+  color: #b45309;
+}
+
+.status-badge.cancelled {
+  background: rgba(239, 68, 68, 0.12);
+  color: #b91c1c;
+}
+
+/* ===== DETAILS GRID ===== */
+
+.confinement-details {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+}
+
+.detail-row {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+
+.detail-row .label {
+  color: var(--color-muted, #64748b);
+  font-size: 0.72rem;
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.detail-row .value {
+  color: var(--color-heading, #191919);
+  font-size: 0.9rem;
+  font-weight: 800;
+}
+
+/* ===== ACTIONS ===== */
+
+.confinement-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  flex-wrap: wrap;
+  margin-top: 0.75rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid var(--color-border, rgba(255,95,147,0.1));
+}
+
+.confinement-file-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  min-height: 38px;
+  padding: 0 1rem;
+  border: 1px solid var(--color-border, rgba(255,95,147,0.22));
+  border-radius: var(--radius-pill, 999px);
+  background: var(--color-surface, rgba(255,255,255,0.86));
+  color: var(--color-muted, #64748b);
+  font-size: 0.82rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: border-color 0.2s ease, color 0.2s ease;
+}
+
+.confinement-file-label:hover {
+  border-color: var(--color-primary, #ff5f93);
+  color: var(--color-primary, #ff5f93);
+}
+
+.confinement-file-input {
+  position: absolute;
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.confinement-action-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  min-height: 38px;
+  padding: 0 1.1rem;
+  border: none;
+  border-radius: var(--radius-pill, 999px);
+  font-size: 0.82rem;
+  font-weight: 900;
+  cursor: pointer;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  white-space: nowrap;
+}
+
+.confinement-action-btn.primary {
+  background: linear-gradient(135deg, var(--color-primary, #ff5f93), var(--color-primary-light, #ff8db5));
+  color: #ffffff;
+  box-shadow: 0 8px 20px rgba(255, 95, 147, 0.22);
+}
+
+.confinement-action-btn.primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 28px rgba(255, 95, 147, 0.3);
+}
+
+.confinement-action-btn.secondary {
+  background: rgba(255, 95, 147, 0.08);
+  border: 1px solid var(--color-border, rgba(255,95,147,0.22));
+  color: var(--color-primary, #ff5f93);
+}
+
+.confinement-action-btn.secondary:hover {
+  background: rgba(255, 95, 147, 0.14);
+  transform: translateY(-2px);
+}
+
+/* ===== LOGS ACCORDION ===== */
+
+.care-logs-section {
+  margin-top: 1rem;
+  border-radius: var(--radius-md, 16px);
+  border: 1px solid var(--color-border, rgba(255,95,147,0.15));
+  overflow: hidden;
+}
+
+.care-logs-title {
+  padding: 0.75rem 1rem;
+  background: rgba(255, 95, 147, 0.05);
+  color: var(--color-muted, #64748b);
+  font-size: 0.76rem;
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  border-bottom: 1px solid var(--color-border, rgba(255,95,147,0.12));
+}
+
+.care-log-item {
+  padding: 0.85rem 1rem;
+  border-bottom: 1px solid var(--color-border, rgba(255,95,147,0.08));
+  animation: fadeUp 0.3s ease both;
+}
+
+.care-log-item:last-child {
+  border-bottom: none;
+}
+
+.care-log-item strong {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.2rem 0.6rem;
+  border-radius: 8px;
+  background: rgba(255, 95, 147, 0.08);
+  color: var(--color-primary, #ff5f93);
+  font-size: 0.74rem;
+  font-weight: 900;
+  text-transform: capitalize;
+  margin-bottom: 0.4rem;
+}
+
+.care-log-item p {
+  margin: 0;
+  color: var(--color-text, #1f2937);
+  font-size: 0.86rem;
+  font-weight: 600;
+  line-height: 1.5;
+}
+
+/* ===== EMPTY STATE ===== */
+
+.medical-empty {
+  display: grid;
+  place-items: center;
+  text-align: center;
+  padding: 3.5rem 2rem;
+  color: var(--color-muted, #64748b);
+}
+
+.medical-empty h3 {
+  margin: 0.75rem 0 0.5rem;
+  color: var(--color-heading, #191919);
+  font-size: 1.1rem;
+  font-weight: 900;
+}
+
+.medical-empty p {
+  margin: 0;
+  font-size: 0.9rem;
+  max-width: 360px;
+  line-height: 1.55;
+}
+
+/* ===== ANIMATION ===== */
+
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ===== RESPONSIVE ===== */
+
+@media (max-width: 768px) {
+  .customer-medical-confinements {
+    padding: 1rem;
+  }
+
+  .medical-page-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .confinement-details {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .confinement-actions {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .confinement-action-btn,
+  .confinement-file-label {
+    width: 100%;
+    justify-content: center;
+  }
+}
+
+@media (max-width: 480px) {
+  .confinement-details {
+    grid-template-columns: 1fr;
+  }
+}

@@ -52,7 +52,7 @@
   flex-wrap: wrap;
   padding: 0.35rem;
   border: 1px solid var(--color-border);
-  border-radius: 14px;
+  border-radius: var(--radius-lg, 22px);
   background: var(--color-surface);
 }
 

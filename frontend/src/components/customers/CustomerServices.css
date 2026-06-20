@@ -2,24 +2,25 @@
 /* Clean modern Customer Services UI */
 
 .customer-services-page {
-  --cs-primary: #ec4899;
-  --cs-primary-hover: #db2777;
-  --cs-surface: #ffffff;
-  --cs-border: rgba(0, 0, 0, 0.06);
-  --cs-heading: #111827;
-  --cs-text: #1f2937;
-  --cs-muted: #6b7280;
-  --cs-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
-  --cs-shadow-hover: 0 8px 24px rgba(0, 0, 0, 0.06);
-  --cs-radius: 14px;
-  --cs-radius-sm: 10px;
-  --cs-radius-pill: 999px;
+  --cs-primary: var(--color-primary, #ff5f93);
+  --cs-primary-hover: var(--color-primary-hover, #ff4f85);
+  --cs-surface: var(--color-surface, rgba(255,255,255,0.86));
+  --cs-border: var(--color-border, rgba(255,95,147,0.18));
+  --cs-heading: var(--color-heading, #191919);
+  --cs-text: var(--color-text, #1f2937);
+  --cs-muted: var(--color-muted, #64748b);
+  --cs-shadow: var(--shadow-soft, 0 12px 28px rgba(15,23,42,0.08));
+  --cs-shadow-hover: var(--shadow-card, 0 18px 45px rgba(255,95,147,0.14));
+  --cs-radius: var(--radius-lg, 22px);
+  --cs-radius-sm: var(--radius-md, 16px);
+  --cs-radius-pill: var(--radius-pill, 999px);
 
-  max-width: 1200px;
-  margin: 0 auto;
+  width: 100%;
+  max-width: 100%;
   padding: 1.5rem;
   color: var(--cs-text);
   font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  box-sizing: border-box;
 }
 
 .customer-services-page *,
@@ -34,9 +35,10 @@
   margin-bottom: 1.5rem;
   text-align: center;
   border: 1px solid var(--cs-border);
-  border-radius: var(--cs-radius);
-  background: linear-gradient(135deg, #fdf2f8, #ffffff, #eff6ff);
-  box-shadow: var(--cs-shadow);
+  border-radius: var(--radius-card, 26px);
+  background: var(--cs-surface);
+  box-shadow: var(--cs-shadow-hover);
+  backdrop-filter: blur(16px);
 }
 
 .cs-badge {
@@ -77,8 +79,8 @@
   margin-bottom: 1.5rem;
   padding: 0.35rem;
   border: 1px solid var(--cs-border);
-  border-radius: var(--cs-radius-sm);
-  background: #f9fafb;
+  border-radius: var(--radius-card, 26px);
+  background: rgba(255, 95, 147, 0.04);
 }
 
 .cs-tab {
@@ -104,7 +106,8 @@
 .cs-tab.active {
   background: var(--cs-surface);
   color: var(--cs-primary);
-  box-shadow: var(--cs-shadow);
+  box-shadow: var(--cs-shadow-hover);
+  backdrop-filter: blur(8px);
 }
 
 /* Service cards */
@@ -122,24 +125,28 @@
   border-radius: var(--cs-radius);
   background: var(--cs-surface);
   box-shadow: var(--cs-shadow);
-  transition: 0.18s ease;
+  backdrop-filter: blur(12px);
+  transition: transform 0.22s ease, box-shadow 0.22s ease, border-color 0.22s ease;
 }
 
 .cs-card:hover {
   box-shadow: var(--cs-shadow-hover);
-  transform: translateY(-2px);
+  border-color: var(--color-primary, #ff5f93);
+  transform: translateY(-4px);
 }
 
 .cs-card-icon {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 56px;
-  height: 56px;
+  width: 60px;
+  height: 60px;
   border-radius: var(--cs-radius-sm);
   margin-bottom: 1rem;
   font-size: 1.5rem;
-  background: rgba(0, 0, 0, 0.04);
+  background: rgba(255, 95, 147, 0.1);
+  color: var(--cs-primary);
+  box-shadow: 0 8px 20px rgba(255, 95, 147, 0.14);
 }
 
 .cs-card h3 {
@@ -165,11 +172,6 @@
   font-size: 0.85rem;
   font-weight: 600;
 }
-
-/* Dark mode */
-
-
-
 
 /* Responsive */
 @media (max-width: 768px) {

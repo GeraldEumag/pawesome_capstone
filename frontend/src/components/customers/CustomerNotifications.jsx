@@ -181,95 +181,106 @@ const CustomerNotifications = () => {
     );
   }
 
+  const unreadCount = notifications.filter(n => !n.read).length;
+
   return (
     <div className="customer-notifications">
-      <section className="notifications-hero">
-        <span className="notifications-badge">Customer Portal</span>
-        <h1>Notifications</h1>
-        <p>Stay updated with your orders, service requests, and payment status.</p>
-      </section>
+      <header className="notifications-page-header">
+        <div className="notifications-page-header-left">
+          <span className="notifications-eyebrow">Customer Portal</span>
+          <h2>Notifications</h2>
+          <p>Stay updated with your orders, service requests, and payment status.</p>
+        </div>
+      </header>
 
-      <section className="notifications-toolbar">
-        <div className="notifications-filter">
-          <select value={filter} onChange={(e) => setFilter(e.target.value)}>
-            <option value="all">All Notifications</option>
-            <option value="order">Orders</option>
-            <option value="payment">Payments</option>
-            <option value="service">Services</option>
-          </select>
+      <div className="notifications-panel">
+        <div className="notifications-panel-header">
+          <h3>All Notifications</h3>
+          {unreadCount > 0 && (
+            <span className="notifications-unread-badge">{unreadCount} unread</span>
+          )}
         </div>
 
-        <div className="notifications-actions">
-          <button 
-            onClick={markAllAsRead} 
-            disabled={notifications.filter(n => !n.read).length === 0}
+        <div className="notifications-toolbar">
+          <div className="notifications-filter">
+            <select value={filter} onChange={(e) => setFilter(e.target.value)}>
+              <option value="all">All Notifications</option>
+              <option value="order">Orders</option>
+              <option value="payment">Payments</option>
+              <option value="service">Services</option>
+            </select>
+          </div>
+          <button
+            onClick={markAllAsRead}
+            disabled={unreadCount === 0}
             className="mark-all-read-btn"
           >
             <FontAwesomeIcon icon={faCheckCircle} />
             Mark All Read
           </button>
         </div>
-      </section>
 
-      <section className="notifications-grid">
         {filteredNotifications.length === 0 ? (
           <div className="notifications-empty">
-            <FontAwesomeIcon icon={faBell} />
+            <FontAwesomeIcon icon={faBell} style={{fontSize:"2.5rem", color:"var(--color-primary)", opacity:0.4, marginBottom:"0.75rem"}} />
             <h3>No notifications</h3>
             <p>
-              {filter === "all" 
-                ? "You don't have any notifications yet." 
+              {filter === "all"
+                ? "You don't have any notifications yet."
                 : `No ${filter} notifications found.`}
             </p>
           </div>
         ) : (
-          filteredNotifications.map((notification) => (
-            <article 
-              key={notification.id} 
-              className={`notification-item ${getNotificationColor(notification.type)} ${!notification.read ? "unread" : ""}`}
-            >
-              <div className="notification-header">
-                <div className="notification-icon">
+          <div className="notifications-list">
+            {filteredNotifications.map((notification) => (
+              <article
+                key={notification.id}
+                className={`notification-item ${!notification.read ? "unread" : ""}`}
+              >
+                <div className={`notification-icon-wrap ${getNotificationColor(notification.type)}`}>
                   {getNotificationIcon(notification.type)}
                 </div>
-                <div className="notification-meta">
-                  <h3>{notification.title}</h3>
-                  <span className="notification-time">
-                    {formatDate(notification.created_at)}
-                  </span>
-                  {!notification.read && <span className="unread-indicator">New</span>}
+
+                <div className="notification-body">
+                  <div className="notification-header">
+                    <div className="notification-meta">
+                      <h3>{notification.title}</h3>
+                    </div>
+                    <span className="notification-time">{formatDate(notification.created_at)}</span>
+                    {!notification.read && <span className="unread-indicator">New</span>}
+                  </div>
+
+                  <div className="notification-content">
+                    <p>{notification.message}</p>
+                    {(notification.order_id || notification.related_type === "order") && (
+                      <div className="notification-reference">
+                        Order #{notification.order_id || notification.related_id}
+                      </div>
+                    )}
+                    {(notification.service_request_id || notification.related_type === "service_request") && (
+                      <div className="notification-reference">
+                        Request #{notification.service_request_id || notification.related_id}
+                      </div>
+                    )}
+                  </div>
+
+                  {!notification.read && (
+                    <div className="notification-actions">
+                      <button
+                        onClick={() => markAsRead(notification.id)}
+                        className="mark-read-btn"
+                      >
+                        <FontAwesomeIcon icon={faEye} />
+                        Mark as Read
+                      </button>
+                    </div>
+                  )}
                 </div>
-              </div>
-
-              <div className="notification-content">
-                <p>{notification.message}</p>
-                {(notification.order_id || notification.related_type === "order") && (
-                  <small className="notification-reference">
-                    Order #{notification.order_id || notification.related_id}
-                  </small>
-                )}
-                {(notification.service_request_id || notification.related_type === "service_request") && (
-                  <small className="notification-reference">
-                    Request #{notification.service_request_id || notification.related_id}
-                  </small>
-                )}
-              </div>
-
-              <div className="notification-actions">
-                {!notification.read && (
-                  <button 
-                    onClick={() => markAsRead(notification.id)}
-                    className="mark-read-btn"
-                  >
-                    <FontAwesomeIcon icon={faEye} />
-                    Mark as Read
-                  </button>
-                )}
-              </div>
-            </article>
-          ))
+              </article>
+            ))}
+          </div>
         )}
-      </section>
+      </div>
     </div>
   );
 };

@@ -22,8 +22,8 @@ const ReceptionistHistory = () => {
     try {
       const [appts, boardings, orders] = await Promise.allSettled([
         apiRequest("/receptionist/appointments").catch(() => []),
-        apiRequest("/receptionist/boardings").catch(() => []),
-        apiRequest("/receptionist/orders").catch(() => []),
+        apiRequest("/receptionist/boarding-requests").catch(() => []),
+        apiRequest("/receptionist/customer-orders").catch(() => []),
       ]);
 
       const mapped = [];

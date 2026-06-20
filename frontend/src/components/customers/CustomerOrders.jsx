@@ -488,28 +488,28 @@ const CustomerOrders = () => {
 
   const viewBoardingReceipt = async (boardingRequest) => {
     try {
-      const data = await apiRequest(`/customer/boarding-requests/${boardingRequest.id}/receipt`, "GET");
-      const receipt = data?.receipt || data;
-      if (!receipt) {
-        throw new Error("Boarding receipt is not available yet.");
+      const data = await apiRequest(`/customer/boarding-requests/${boardingRequest.id}`, "GET");
+      const b = data?.boarding || data?.boarding_request || data || boardingRequest;
+      if (!b) {
+        throw new Error("Boarding details are not available yet.");
       }
       await Swal.fire({
         icon: "info",
-        title: `Receipt ${receipt.receipt_number || "N/A"}`,
+        title: `Boarding #${b.id || boardingRequest.id}`,
         html: `
           <div style="text-align:left;">
-            <p><strong>Boarding #</strong> ${boardingRequest.id}</p>
-            <p><strong>Pet:</strong> ${boardingRequest.pet_name || "N/A"}</p>
-            <p><strong>Amount:</strong> ₱${Number(receipt.total_amount || boardingRequest.total_amount || 0).toLocaleString("en-PH", { minimumFractionDigits: 2 })}</p>
-            <p><strong>Paid At:</strong> ${receipt.paid_at || "N/A"}</p>
-            <p><strong>Verified By:</strong> ${receipt.verified_by || "Cashier"}</p>
-            <p><strong>Remarks:</strong> ${receipt.cashier_remarks || "None"}</p>
+            <p><strong>Pet:</strong> ${b.pet_name || boardingRequest.pet_name || "N/A"}</p>
+            <p><strong>Status:</strong> ${b.status || boardingRequest.status || "N/A"}</p>
+            <p><strong>Payment Status:</strong> ${b.payment_status || boardingRequest.payment_status || "N/A"}</p>
+            <p><strong>Amount:</strong> ₱${Number(b.total_amount || boardingRequest.total_amount || 0).toLocaleString("en-PH", { minimumFractionDigits: 2 })}</p>
+            <p><strong>Check-In:</strong> ${b.check_in_date || "N/A"}</p>
+            <p><strong>Check-Out:</strong> ${b.check_out_date || "N/A"}</p>
           </div>
         `,
         confirmButtonColor: "#ff5f93",
       });
     } catch (err) {
-      Swal.fire({ icon: "error", title: "Receipt Unavailable", text: err.message || "Receipt is not available yet.", confirmButtonColor: "#ef4444" });
+      Swal.fire({ icon: "error", title: "Details Unavailable", text: err.message || "Boarding details are not available yet.", confirmButtonColor: "#ef4444" });
     }
   };
 
@@ -535,6 +535,10 @@ const CustomerOrders = () => {
       day: "numeric",
     });
   };
+
+  const totalOrders = orders.length;
+  const pendingOrders = orders.filter(o => o.status === "pending").length;
+  const paidOrders = orders.filter(o => o.payment_status === "paid").length;
 
   if (loading) {
     return (
@@ -564,20 +568,41 @@ const CustomerOrders = () => {
 
   return (
     <div className="customer-orders">
-      <section className="orders-hero">
-        <span className="orders-badge">Customer Portal</span>
-        <h1>My Orders</h1>
-        <p>
-          Track your store orders, upload payment proof after approval, and view receipts.
-        </p>
-      </section>
+      <header className="orders-page-header">
+        <div className="orders-page-header-left">
+          <span className="orders-eyebrow">Customer Portal</span>
+          <h2>My Orders</h2>
+          <p>Track store orders, upload payment proof, and view receipts.</p>
+        </div>
+      </header>
 
-      <section className="orders-toolbar">
+      <div className="orders-stats-row">
+        <div className="orders-stat-card">
+          <div className="orders-stat-icon"><FontAwesomeIcon icon={faBox} /></div>
+          <div><h4>{totalOrders}</h4><p>Total Orders</p></div>
+        </div>
+        <div className="orders-stat-card">
+          <div className="orders-stat-icon warning"><FontAwesomeIcon icon={faClock} /></div>
+          <div><h4>{pendingOrders}</h4><p>Pending</p></div>
+        </div>
+        <div className="orders-stat-card">
+          <div className="orders-stat-icon success"><FontAwesomeIcon icon={faCheckCircle} /></div>
+          <div><h4>{paidOrders}</h4><p>Paid</p></div>
+        </div>
+      </div>
+
+      <div className="orders-panel">
+        <div className="orders-panel-header">
+          <h3>Order History</h3>
+          <span className="orders-count-badge">{filteredOrders.length} orders</span>
+        </div>
+
+      <section className="orders-toolbar" style={{padding: "1rem 1.35rem 0"}}>
         <div className="orders-search-box">
-          <FontAwesomeIcon icon={faSearch} />
+          <FontAwesomeIcon icon={faSearch} className="orders-search-icon" />
           <input
             type="text"
-            placeholder="Search order number, reference, or customer name..."
+            placeholder="Search orders..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
           />
@@ -604,7 +629,7 @@ const CustomerOrders = () => {
                   <p>{formatDate(order.created_at)}</p>
                 </div>
                 <div className="order-amount">
-                  <strong>₱{order.total_amount || 0}</strong>
+                  <strong>₱{Number(order.total_amount || 0).toLocaleString("en-PH", { minimumFractionDigits: 2 })}</strong>
                   <small>Total Amount</small>
                 </div>
               </div>
@@ -666,6 +691,7 @@ const CustomerOrders = () => {
           ))
         )}
       </section>
+      </div>
     </div>
   );
 };

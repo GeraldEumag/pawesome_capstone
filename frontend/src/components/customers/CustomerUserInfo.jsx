@@ -1,5 +1,6 @@
 import { useMemo } from "react";
 import { useAuth } from "../../context/AuthContext";
+import { FaUser, FaEnvelope, FaPhone, FaMapMarkerAlt, FaCalendarAlt, FaPaw } from "react-icons/fa";
 import "./CustomerUserInfo.css";
 
 const CustomerUserInfo = () => {
@@ -21,25 +22,62 @@ const CustomerUserInfo = () => {
 
   return (
     <section className="userinfo-section">
-      <div className="userinfo-header">
-        <div>
-          <span className="userinfo-eyebrow">Customer Account</span>
-          <h2>My Profile</h2>
-          <p>View your personal information and membership details.</p>
-        </div>
-      </div>
+      <header className="userinfo-header">
+        <span className="userinfo-eyebrow"><FaPaw /> Customer Account</span>
+        <h2>My Profile</h2>
+        <p>Your personal information and membership details.</p>
+      </header>
 
-      <div className="userinfo-card">
-        <div className="userinfo-avatar">
-          {user.name.charAt(0)}
+      <div className="userinfo-panel">
+        <div className="userinfo-profile-row">
+          <div className="userinfo-avatar">
+            {user.name.charAt(0).toUpperCase()}
+          </div>
+          <div className="userinfo-profile-meta">
+            <h3 className="userinfo-name">{user.name}</h3>
+            <p className="userinfo-email-sub">{user.email}</p>
+            {user.memberSince && (
+              <span className="userinfo-member-chip">
+                <FaCalendarAlt /> Member since {user.memberSince}
+              </span>
+            )}
+          </div>
         </div>
 
-        <div className="userinfo-details">
-          <p><strong>Full Name:</strong> {user.name}</p>
-          <p><strong>Email:</strong> {user.email}</p>
-          <p><strong>Phone:</strong> {user.phone}</p>
-          <p><strong>Address:</strong> {user.address}</p>
-          <p><strong>Member Since:</strong> {user.memberSince}</p>
+        <div className="userinfo-divider" />
+
+        <div className="userinfo-fields">
+          <div className="userinfo-field">
+            <div className="userinfo-field-icon"><FaUser /></div>
+            <div className="userinfo-field-body">
+              <span className="userinfo-field-label">Full Name</span>
+              <span className="userinfo-field-value">{user.name}</span>
+            </div>
+          </div>
+
+          <div className="userinfo-field">
+            <div className="userinfo-field-icon"><FaEnvelope /></div>
+            <div className="userinfo-field-body">
+              <span className="userinfo-field-label">Email Address</span>
+              <span className="userinfo-field-value">{user.email}</span>
+            </div>
+          </div>
+
+          <div className="userinfo-field">
+            <div className="userinfo-field-icon"><FaPhone /></div>
+            <div className="userinfo-field-body">
+              <span className="userinfo-field-label">Phone Number</span>
+              <span className="userinfo-field-value">{user.phone || <em style={{opacity:0.5, fontStyle:"italic", fontWeight:400}}>Not provided</em>}</span>
+            </div>
+          </div>
+
+          <div className="userinfo-field">
+            <div className="userinfo-field-icon"><FaMapMarkerAlt /></div>
+            <div className="userinfo-field-body">
+              <span className="userinfo-field-label">Address</span>
+              <span className="userinfo-field-value">{user.address || <em style={{opacity:0.5, fontStyle:"italic", fontWeight:400}}>Not provided</em>}</span>
+            </div>
+          </div>
         </div>
       </div>
     </section>
