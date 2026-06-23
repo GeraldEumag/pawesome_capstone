@@ -113,7 +113,7 @@
 .reports-header .header-content h1 {
   font-size: 2.5rem;
   font-weight: 800;
-  background: linear-gradient(135deg, var(--success-green) 0%, #059669 50%, var(--primary-teal-light) 100%);
+  background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary-light, #ff8db5) 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
@@ -542,11 +542,11 @@
 }
 
 .reports-header .header-content h1 {
-  background: linear-gradient(135deg, #191919, #ff5f93);
+  background: linear-gradient(135deg, var(--color-heading, #191919), var(--color-primary));
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
-  color: #191919;
+  color: var(--color-heading, #191919);
 }
 
 .reports-header .header-content p {
@@ -579,7 +579,7 @@
 
 .nav-tab.active,
 .quick-filter-btn.active {
-  background: linear-gradient(135deg, #ff5f93, #ff8db5);
+  background: linear-gradient(135deg, var(--color-primary), var(--color-primary-light, #ff8db5));
   border-color: transparent;
   color: #ffffff;
   box-shadow: 0 12px 24px rgba(255, 95, 147, 0.2);
@@ -589,7 +589,7 @@
 .quick-filter-btn:hover {
   background: rgba(255, 95, 147, 0.08);
   border-color: rgba(255, 95, 147, 0.22);
-  color: #ff5f93;
+  color: var(--color-primary);
 }
 
 .nav-tab.active:hover,
@@ -604,14 +604,14 @@
   place-items: center;
   border-radius: 14px;
   background: rgba(255, 95, 147, 0.1);
-  color: #ff5f93;
+  color: var(--color-primary);
 }
 
 .refresh-mini,
 .retry-btn {
   border: none;
   border-radius: 999px;
-  background: linear-gradient(135deg, #ff5f93, #ff8db5);
+  background: linear-gradient(135deg, var(--color-primary), var(--color-primary-light, #ff8db5));
   color: #ffffff;
   font-weight: 900;
   cursor: pointer;
@@ -641,7 +641,7 @@
   margin: 0 auto 1rem;
   border-radius: 24px;
   background: rgba(239, 68, 68, 0.1);
-  color: #dc2626;
+  color: var(--color-danger, #dc2626);
   font-size: 1.8rem;
 }
 
@@ -658,8 +658,9 @@
 }
 
 .cashier-dashboard.dark .reports-header .header-content h1 {
-  background: linear-gradient(135deg, #ffffff, #ff8db5);
+  background: linear-gradient(135deg, #ffffff, var(--color-primary-light, #ff8db5));
   -webkit-background-clip: text;
+  background-clip: text;
   -webkit-text-fill-color: transparent;
 }
 
@@ -705,4 +706,15 @@
   .nav-tab {
     flex: 0 0 auto;
   }
+}
+
+/* ── Dark Mode ── */
+[data-theme="dark"] .nav-tab:hover,
+[data-theme="dark"] .quick-filter-btn:hover { color: var(--color-primary-light, #ff8db5); }
+[data-theme="dark"] .error-icon             { color: var(--color-danger, #fca5a5); }
+
+@media (prefers-color-scheme: dark) {
+  .nav-tab:hover,
+  .quick-filter-btn:hover { color: var(--color-primary-light, #ff8db5); }
+  .error-icon             { color: var(--color-danger, #fca5a5); }
 }

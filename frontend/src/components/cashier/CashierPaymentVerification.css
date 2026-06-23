@@ -11,8 +11,8 @@
   justify-content: center;
   padding: 8px 14px;
   border-radius: 999px;
-  background: rgba(255, 95, 147, 0.12);
-  color: #ff5f93;
+  background: rgba(var(--color-primary-rgb, 255, 95, 147), 0.12);
+  color: var(--color-primary);
   font-weight: 900;
   text-decoration: none;
   transition: background 0.2s ease;
@@ -97,26 +97,26 @@
 
 .status-badge.pending {
   background: var(--color-warning-bg);
-  color: #92400e;
+  color: var(--color-warning-text, #92400e);
 }
 
 .status-badge.approved {
   background: var(--color-success-bg);
-  color: #065f46;
+  color: var(--color-success-text, #065f46);
 }
 
 .status-badge.rejected {
   background: var(--color-danger-bg);
-  color: #991b1b;
+  color: var(--color-danger-text, #991b1b);
 }
 
 .status-badge.rescheduled {
   background: var(--color-info-bg);
-  color: #1e3a8a;
+  color: var(--color-info-text, #1e3a8a);
 }
 
 .status-badge.paid {
-  background: #10b981;
+  background: var(--color-success, #10b981);
   color: white;
 }
 
@@ -135,13 +135,13 @@
 }
 
 .verify-btn {
-  background: #10b981;
+  background: var(--color-success, #10b981);
   color: white;
   transition: background 0.2s ease, opacity 0.2s ease;
 }
 
 .verify-btn:hover {
-  background: #059669;
+  background: var(--color-success-dark, #059669);
 }
 
 .verify-btn:disabled {
@@ -150,13 +150,13 @@
 }
 
 .reject-btn {
-  background: #ef4444;
+  background: var(--color-danger, #ef4444);
   color: white;
   transition: background 0.2s ease, opacity 0.2s ease;
 }
 
 .reject-btn:hover {
-  background: #dc2626;
+  background: var(--color-danger-dark, #dc2626);
 }
 
 .reject-btn:disabled {
@@ -427,15 +427,11 @@
 }
 
 .badge-info {
-  background: rgba(59, 130, 246, 0.1);
-  color: #1e3a8a;
-  border: 1px solid rgba(59, 130, 246, 0.3);
+  background: var(--color-info-bg, rgba(59, 130, 246, 0.1));
+  color: var(--color-info-text, #1e3a8a);
+  border: 1px solid var(--color-info-border, rgba(59, 130, 246, 0.3));
 }
 
-.cashier-payment-page .app-main {
-  margin-left: 260px;
-  width: calc(100% - 260px);
-}
 
 .no-proof {
   color: var(--color-muted);
@@ -527,15 +523,10 @@
 }
 
 .proof-modal-state.error {
-  color: #dc2626;
+  color: var(--color-danger, #dc2626);
 }
 
 @media (max-width: 768px) {
-  .cashier-payment-page .app-main {
-    margin-left: 82px;
-    width: calc(100% - 82px);
-  }
-
   .payment-hero {
     padding: 20px;
   }
@@ -569,4 +560,23 @@
     width: 100%;
     min-width: unset;
   }
+}
+
+/* ── Dark Mode ── */
+[data-theme="dark"] .proof-link:hover { background: rgba(255, 95, 147, 0.25); }
+[data-theme="dark"] .status-badge.pending    { color: var(--color-warning-text, #fcd34d); }
+[data-theme="dark"] .status-badge.approved   { color: var(--color-success-text, #6ee7b7); }
+[data-theme="dark"] .status-badge.rejected   { color: var(--color-danger-text,  #fca5a5); }
+[data-theme="dark"] .status-badge.rescheduled{ color: var(--color-info-text,    #93c5fd); }
+[data-theme="dark"] .badge-info              { color: var(--color-info-text,    #93c5fd); }
+[data-theme="dark"] .proof-modal-state.error { color: var(--color-danger,       #fca5a5); }
+
+@media (prefers-color-scheme: dark) {
+  .proof-link:hover { background: rgba(255, 95, 147, 0.25); }
+  .status-badge.pending    { color: var(--color-warning-text, #fcd34d); }
+  .status-badge.approved   { color: var(--color-success-text, #6ee7b7); }
+  .status-badge.rejected   { color: var(--color-danger-text,  #fca5a5); }
+  .status-badge.rescheduled{ color: var(--color-info-text,    #93c5fd); }
+  .badge-info              { color: var(--color-info-text,    #93c5fd); }
+  .proof-modal-state.error { color: var(--color-danger,       #fca5a5); }
 }

@@ -1,11 +1,12 @@
-import { useEffect, useState, useCallback, useMemo } from "react";
+import { useEffect, useState, useCallback, useMemo, useRef } from "react";
 import { apiRequest } from "../../api/client";
 import { getToken } from "../../utils/auth";
 import { useAuth } from "../../context/AuthContext";
-import CashierSidebar from "./CashierSidebar";
 import { normalizeList } from "../../utils/normalizeList";
 import "./CashierPaymentVerification.css";
 import { showAlert, showSuccess, showError, showPrompt, showConfirm } from "../../utils/alert.jsx";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faRotateRight, faInbox, faXmark } from "@fortawesome/free-solid-svg-icons";
 
 const formatDate = (dateStr) => {
   if (!dateStr) return "N/A";
@@ -17,19 +18,6 @@ const formatDate = (dateStr) => {
   });
 };
 
-const RefreshIcon = ({ spinning }) => (
-  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-    <polyline points="23 4 23 10 17 10" /><polyline points="1 20 1 14 7 14" />
-    <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15" />
-  </svg>
-);
-
-const InboxIcon = () => (
-  <svg width="56" height="56" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-    <polyline points="22 12 16 12 14 15 10 15 8 12 2 12" />
-    <path d="M5.45 5.11 2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z" />
-  </svg>
-);
 
 const CashierPaymentVerification = () => {
   const { user } = useAuth();
@@ -40,6 +28,7 @@ const CashierPaymentVerification = () => {
   const [actionLoading, setActionLoading] = useState({}); // { [id]: 'verify' | 'reject' }
   const [proofModal, setProofModal] = useState(null);
   const [searchQuery, setSearchQuery] = useState("");
+  const rateLimitedRef = useRef(false);
   const [typeFilter, setTypeFilter] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
 
@@ -66,6 +55,7 @@ const CashierPaymentVerification = () => {
   }, [proofModal]);
 
   const fetchRequests = async (silent = false) => {
+    if (rateLimitedRef.current) return;
     try {
       if (!silent) setLoading(true);
       else setRefreshing(true);
@@ -75,8 +65,14 @@ const CashierPaymentVerification = () => {
       setRequests(list);
       setLastUpdated(new Date());
     } catch (err) {
-      console.error("Failed to load payment requests:", err);
-      setRequests([]);
+      if (err?.message?.toLowerCase().includes("too many") || err?.status === 429) {
+        console.warn("Payment requests rate limited — pausing for 5 minutes.");
+        rateLimitedRef.current = true;
+        setTimeout(() => { rateLimitedRef.current = false; }, 5 * 60 * 1000);
+      } else {
+        console.error("Failed to load payment requests:", err);
+      }
+      if (!silent) setRequests([]);
     } finally {
       setLoading(false);
       setRefreshing(false);
@@ -187,7 +183,7 @@ const CashierPaymentVerification = () => {
 
   useEffect(() => {
     fetchRequests();
-    const interval = setInterval(() => fetchRequests(true), 30000);
+    const interval = setInterval(() => fetchRequests(true), 60000);
     return () => clearInterval(interval);
   }, []);
 
@@ -242,19 +238,7 @@ const CashierPaymentVerification = () => {
   }, [requests]);
 
   return (
-    <div className="app-dashboard cashier-payment-page">
-      <CashierSidebar />
-
-      <main className="app-main">
-        <header className="app-topbar">
-          <div>
-            <h1>Payment Verification</h1>
-            <p>Verify and process approved bookings and orders</p>
-          </div>
-        </header>
-
-        <section className="app-content">
-          <div className="cashier-payment-verification">
+    <div className="cashier-payment-verification">
             <div className="payment-hero premium-card fade-up">
               <h1>Approved Requests</h1>
               <p>Process payments for customer-approved bookings and orders</p>
@@ -284,11 +268,11 @@ const CashierPaymentVerification = () => {
             ) : filteredRequests.length === 0 ? (
               <div className="payment-card fade-up">
                 <div className="empty-state">
-                  <div className="empty-state-icon"><InboxIcon /></div>
+                  <div className="empty-state-icon"><FontAwesomeIcon icon={faInbox} /></div>
                   <h3>No pending payments</h3>
                   <p>{requests.length === 0 ? "No approved requests pending payment." : "No results match your filters."}</p>
                   <button type="button" className="refresh-btn" onClick={() => fetchRequests(true)} disabled={refreshing}>
-                    <RefreshIcon spinning={refreshing} />
+                    <FontAwesomeIcon icon={faRotateRight} spin={refreshing} />
                     {refreshing ? "Refreshing…" : "Refresh"}
                   </button>
                 </div>
@@ -297,8 +281,8 @@ const CashierPaymentVerification = () => {
               <div className="payment-card fade-up">
                 <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: "10px", marginBottom: "16px" }}>
                   <h2 style={{ margin: 0 }}>Pending Payments</h2>
-                  <button type="button" className={`refresh-btn ${refreshing ? "spinning" : ""}`} onClick={() => fetchRequests(true)} disabled={refreshing}>
-                    <RefreshIcon spinning={refreshing} />
+                  <button type="button" className="refresh-btn" onClick={() => fetchRequests(true)} disabled={refreshing}>
+                    <FontAwesomeIcon icon={faRotateRight} spin={refreshing} />
                     {refreshing ? "Refreshing…" : "Refresh"}
                   </button>
                 </div>
@@ -426,16 +410,13 @@ const CashierPaymentVerification = () => {
                 </div>
               </div>
             )}
-          </div>
-        </section>
-      </main>
       {proofModal && (
         <div className="proof-modal-overlay" onClick={closeProof}>
           <div className="proof-modal" onClick={(e) => e.stopPropagation()}>
             <div className="proof-modal-header">
               <span>Payment Proof</span>
               <button type="button" className="proof-modal-close" onClick={closeProof}>
-                ✕
+                <FontAwesomeIcon icon={faXmark} />
               </button>
             </div>
             <div className="proof-modal-body">

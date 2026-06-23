@@ -52,7 +52,7 @@
   padding: 0.4rem 0.75rem;
   border-radius: 999px;
   background: rgba(255, 95, 147, 0.1);
-  color: #ff5f93;
+  color: var(--color-primary);
   font-size: 0.75rem;
   font-weight: 900;
   text-transform: uppercase;
@@ -108,7 +108,7 @@
   display: grid;
   place-items: center;
   border: none;
-  background: linear-gradient(135deg, #ff5f93, #ff8db5);
+  background: linear-gradient(135deg, var(--color-primary), var(--color-primary-light, #ff8db5));
   color: #fff;
   border-radius: 50%;
   cursor: pointer;
@@ -214,7 +214,7 @@
   left: 1rem;
   top: 50%;
   transform: translateY(-50%);
-  color: #ff5f93;
+  color: var(--color-primary);
   font-size: 1rem;
 }
 
@@ -260,7 +260,7 @@
 }
 
 .history-table-wrapper::-webkit-scrollbar-thumb {
-  background: linear-gradient(135deg, #ff5f93, #ff8db5);
+  background: linear-gradient(135deg, var(--color-primary), var(--color-primary-light, #ff8db5));
   border-radius: 999px;
 }
 
@@ -320,7 +320,7 @@
 
 .amount-cell {
   font-weight: 950;
-  color: #16a34a !important;
+  color: var(--color-success-text, #16a34a) !important;
 }
 
 /* Details Cell Styles */
@@ -372,27 +372,27 @@
 
 .method-badge.cash {
   background: rgba(34, 197, 94, 0.13);
-  color: #15803d;
+  color: var(--color-success-text, #15803d);
 }
 
 .method-badge.card {
   background: rgba(59, 130, 246, 0.13);
-  color: #1d4ed8;
+  color: var(--color-info-text, #1d4ed8);
 }
 
 .method-badge.gcash {
   background: rgba(99, 102, 241, 0.13);
-  color: #4338ca;
+  color: var(--color-info-text, #4338ca);
 }
 
 .method-badge.maya {
   background: rgba(14, 165, 233, 0.13);
-  color: #0369a1;
+  color: var(--color-info-text, #0369a1);
 }
 
 .method-badge.online {
   background: rgba(168, 85, 247, 0.13);
-  color: #7e22ce;
+  color: var(--color-info-text, #7e22ce);
 }
 
 /* Empty State */
@@ -444,7 +444,7 @@
   border: none;
   border-radius: 999px;
   padding: 0.8rem 1.2rem;
-  background: linear-gradient(135deg, #ff5f93, #ff8db5);
+  background: linear-gradient(135deg, var(--color-primary), var(--color-primary-light, #ff8db5));
   color: #fff;
   font-weight: 900;
   cursor: pointer;
@@ -473,7 +473,7 @@
   width: 44px;
   height: 44px;
   border: 4px solid rgba(255, 95, 147, 0.16);
-  border-top: 4px solid #ff5f93;
+  border-top: 4px solid var(--color-primary);
   border-radius: 50%;
   animation: spin 0.9s linear infinite;
 }
@@ -629,4 +629,23 @@
   .history-table {
     min-width: 720px;
   }
+}
+
+/* ── Dark Mode ── */
+[data-theme="dark"] .amount-cell          { color: var(--color-success-text, #86efac) !important; }
+[data-theme="dark"] .method-badge.cash    { color: var(--color-success-text, #86efac); }
+[data-theme="dark"] .method-badge.card,
+[data-theme="dark"] .method-badge.gcash,
+[data-theme="dark"] .method-badge.maya,
+[data-theme="dark"] .method-badge.online  { color: var(--color-info-text, #93c5fd); }
+[data-theme="dark"] .history-search input { background: rgba(15, 23, 42, 0.5); color: var(--color-text); }
+
+@media (prefers-color-scheme: dark) {
+  .amount-cell          { color: var(--color-success-text, #86efac) !important; }
+  .method-badge.cash    { color: var(--color-success-text, #86efac); }
+  .method-badge.card,
+  .method-badge.gcash,
+  .method-badge.maya,
+  .method-badge.online  { color: var(--color-info-text, #93c5fd); }
+  .history-search input { background: rgba(15, 23, 42, 0.5); color: var(--color-text); }
 }

@@ -3,7 +3,7 @@ import { apiRequest } from "../../api/client";
 import { showError } from "../../utils/alert.jsx";
 import HistoryTimeline from "../shared/HistoryTimeline";
 import { formatCurrency } from "../../utils/currency";
-import "./CashierHistory.css";
+import "./CashierHistory_Polished.css";
 
 const METHOD_OPTIONS = [
   { value: "cash",          label: "Cash" },

@@ -296,21 +296,21 @@ const CashierTransactions = () => {
                 </td>
                 <td className="actions">
                   <button
-                    className="action-btn view-btn"
+                    className="action-btn view"
                     onClick={() => setSelectedTransaction(transaction)}
                     title="View Details"
                   >
                     <FontAwesomeIcon icon={faEye} />
                   </button>
                   <button 
-                    className="action-btn edit-btn" 
+                    className="action-btn edit" 
                     title="Edit"
                     onClick={() => showAlert('Edit feature coming soon!')}
                   >
                     <FontAwesomeIcon icon={faEdit} />
                   </button>
                   <button 
-                    className="action-btn delete-btn" 
+                    className="action-btn delete" 
                     title="Void"
                     onClick={async () => {
                       const reason = await showPrompt("Enter reason for voiding:");

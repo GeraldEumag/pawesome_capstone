@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useMemo } from "react";
+import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { apiRequest } from "../../../api/client";
 import { getToken } from "../../../utils/auth";
 import { showSuccess, showError, showPrompt, showConfirm, showAlert } from "../../../utils/alert.jsx";
@@ -9,6 +9,7 @@ export const usePaymentApprovals = (user) => {
   const [refreshing, setRefreshing] = useState(false);
   const [actionLoading, setActionLoading] = useState(null);
   const [lastUpdated, setLastUpdated] = useState(null);
+  const rateLimitedRef = useRef(false);
   
   // Filter states
   const [searchTerm, setSearchTerm] = useState("");
@@ -23,6 +24,7 @@ export const usePaymentApprovals = (user) => {
 
   // Fetch requests
   const fetchRequests = useCallback(async ({ silent = false } = {}) => {
+    if (rateLimitedRef.current) return;
     try {
       if (silent) {
         setRefreshing(true);
@@ -35,7 +37,13 @@ export const usePaymentApprovals = (user) => {
       setRequests(list);
       setLastUpdated(new Date());
     } catch (err) {
-      console.error("Failed to load payment requests:", err);
+      if (err?.message?.toLowerCase().includes("too many") || err?.status === 429) {
+        console.warn("Payment requests rate limited — pausing polling for 5 minutes.");
+        rateLimitedRef.current = true;
+        setTimeout(() => { rateLimitedRef.current = false; }, 5 * 60 * 1000);
+      } else {
+        console.error("Failed to load payment requests:", err);
+      }
       if (!silent) setRequests([]);
     } finally {
       setLoading(false);
@@ -51,7 +59,7 @@ export const usePaymentApprovals = (user) => {
   useEffect(() => {
     const interval = setInterval(() => {
       fetchRequests({ silent: true });
-    }, 30000);
+    }, 60000);
     return () => clearInterval(interval);
   }, [fetchRequests]);
 

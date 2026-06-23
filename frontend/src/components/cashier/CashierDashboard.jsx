@@ -929,6 +929,10 @@ Thank you for choosing Pawesome!
     { path: "/cashier/dashboard/analytics", title: "Sales Analytics", subtitle: "Visualize revenue trends, peak hours, and product performance." },
     { path: "/cashier/dashboard/reports", title: "Sales Analytics", subtitle: "Visualize revenue trends, peak hours, and product performance." },
     { path: "/cashier/dashboard/profile", title: "Profile Settings", subtitle: "Manage your account details and preferences." },
+    { path: "/cashier/transactions", title: "Sales & Transactions", subtitle: "Review completed sales, refunds, and payment methods." },
+    { path: "/cashier/history", title: "Sales History", subtitle: "Browse past transactions and generate receipts." },
+    { path: "/cashier/reports", title: "Sales Analytics", subtitle: "Visualize revenue trends, peak hours, and product performance." },
+    { path: "/cashier/profile", title: "Profile Settings", subtitle: "Manage your account details and preferences." },
   ];
 
   const pageMeta = ROUTE_META.find((r) => r.path === normalizedPath) || ROUTE_META[0];
@@ -986,13 +990,18 @@ Thank you for choosing Pawesome!
                   ))}
                 </section>
 
-                <section className="cashier-quick-actions">
-                  {quickActions.map((action) => (
-                    <NavLink key={action.label} to={action.link} className="cashier-action-card">
-                      <FontAwesomeIcon icon={action.icon} />
-                      <span>{action.label}</span>
-                    </NavLink>
-                  ))}
+                <section className="quick-actions-section">
+                  <div className="quick-actions-grid">
+                    {quickActions.map((action) => (
+                      <NavLink key={action.label} to={action.link} className={`quick-action-card ${action.tone}`}>
+                        <div className="quick-action-icon">
+                          <FontAwesomeIcon icon={action.icon} />
+                        </div>
+                        <span>{action.label}</span>
+                        <span className="action-arrow"><FontAwesomeIcon icon={faArrowRight} /></span>
+                      </NavLink>
+                    ))}
+                  </div>
                 </section>
 
                 <section className="cashier-main-grid">

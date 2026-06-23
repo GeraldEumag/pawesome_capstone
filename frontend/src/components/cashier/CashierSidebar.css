@@ -2,3 +2,11 @@
 .cashier-sidebar {
   --sidebar-accent: var(--color-primary);
 }
+
+/* Icon sizing */
+.cashier-sidebar .nav-icon {
+  width: 18px;
+  text-align: center;
+  flex-shrink: 0;
+  font-size: 0.95rem;
+}
