@@ -351,7 +351,7 @@ const AuditAnalyticsDashboard = () => {
             </div>
           </div>
           <div className="analytics-chart-container">
-            <ResponsiveContainer width="100%" height="100%">
+            <ResponsiveContainer width="100%" height={280}>
               {chartType === "line" ? (
                 <LineChart data={chartData}>
                   <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,95,147,0.1)" />
@@ -381,7 +381,7 @@ const AuditAnalyticsDashboard = () => {
         <div className="analytics-chart-card">
           <h3>Status Distribution</h3>
           <div className="analytics-chart-container">
-            <ResponsiveContainer width="100%" height="100%">
+            <ResponsiveContainer width="100%" height={280}>
               <PieChart>
                 <Pie data={pieData} dataKey="value" nameKey="name" innerRadius={60} outerRadius={90} paddingAngle={4}>
                   {pieData.map((entry, index) => (

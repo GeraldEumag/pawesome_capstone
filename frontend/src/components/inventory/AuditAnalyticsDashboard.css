@@ -112,7 +112,7 @@
 
 .analytics-chart-container {
   width: 100%;
-  height: 280px;
+  min-width: 0;
 }
 
 /* ---- Months Filter ---- */
