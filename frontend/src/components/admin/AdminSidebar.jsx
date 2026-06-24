@@ -1,8 +1,63 @@
 import React from "react";
 import { NavLink, useNavigate } from "react-router-dom";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import {
+  faChartPie,
+  faUsers,
+  faUserPlus,
+  faHistory,
+  faKey,
+  faComments,
+  faChartBar,
+  faMoneyBillWave,
+  faCog,
+  faEdit,
+  faUserCircle,
+  faSignOutAlt,
+  faTimes,
+} from "@fortawesome/free-solid-svg-icons";
 import { showConfirm } from "../../utils/alert.jsx";
 import { apiRequest, clearAuthStorage } from "../../api/client";
 import "./AdminSidebar.css";
+
+const NAV_SECTIONS = [
+  {
+    label: "System",
+    items: [
+      { to: "/admin", label: "Dashboard", icon: faChartPie, end: true },
+    ],
+  },
+  {
+    label: "User Management",
+    items: [
+      { to: "/admin/users", label: "Manage Users", icon: faUsers },
+      { to: "/admin/users/create", label: "Create User", icon: faUserPlus },
+    ],
+  },
+  {
+    label: "Monitoring",
+    items: [
+      { to: "/admin/history", label: "Audit History", icon: faHistory },
+      { to: "/admin/history/logins", label: "Login History", icon: faKey },
+      { to: "/admin/chatbot", label: "Chatbot Logs", icon: faComments },
+    ],
+  },
+  {
+    label: "Reports",
+    items: [
+      { to: "/admin/reports", label: "All Reports", icon: faChartBar },
+      { to: "/admin/reports/payroll", label: "Payroll Reports", icon: faMoneyBillWave },
+    ],
+  },
+  {
+    label: "System Tools",
+    items: [
+      { to: "/admin/settings", label: "Settings", icon: faCog },
+      { to: "/admin/landing-page", label: "Landing Page Editor", icon: faEdit },
+      { to: "/admin/profile", label: "Profile", icon: faUserCircle },
+    ],
+  },
+];
 
 const AdminSidebar = ({ mobileOpen, onMobileMenuToggle }) => {
   const navigate = useNavigate();
@@ -28,56 +83,32 @@ const AdminSidebar = ({ mobileOpen, onMobileMenuToggle }) => {
           <span>Admin Portal</span>
         </div>
         <button className="mobile-close-btn" onClick={onMobileMenuToggle} type="button" aria-label="Close menu">
-          &times;
+          <FontAwesomeIcon icon={faTimes} />
         </button>
       </div>
 
       <nav className="sidebar-nav">
-        <ul className="nav-list">
-          <li className="nav-item">
-            <NavLink to="/admin" end onClick={handleNavClick}>
-              Dashboard
-            </NavLink>
-          </li>
-          <li className="nav-item">
-            <NavLink to="/admin/users" onClick={handleNavClick}>
-              Users
-            </NavLink>
-          </li>
-          <li className="nav-item">
-            <NavLink to="/admin/profile" onClick={handleNavClick}>
-              Profile
-            </NavLink>
-          </li>
-          <li className="nav-item">
-            <NavLink to="/admin/landing-page" onClick={handleNavClick}>
-              Landing Page Editor
-            </NavLink>
-          </li>
-          <li className="nav-item">
-            <NavLink to="/admin/chatbot" onClick={handleNavClick}>
-              Chatbot
-            </NavLink>
-          </li>
-          <li className="nav-item">
-            <NavLink to="/admin/history" onClick={handleNavClick}>
-              History
-            </NavLink>
-          </li>
-          <li className="nav-item">
-            <NavLink to="/admin/reports" onClick={handleNavClick}>
-              Reports
-            </NavLink>
-          </li>
-        </ul>
+        {NAV_SECTIONS.map((section) => (
+          <div key={section.label} className="nav-section">
+            <span className="nav-section-label">{section.label}</span>
+            <ul className="nav-list">
+              {section.items.map(({ to, label, icon, end }) => (
+                <li key={to} className="nav-item">
+                  <NavLink to={to} end={end} onClick={handleNavClick}>
+                    <FontAwesomeIcon icon={icon} className="nav-icon" />
+                    <span>{label}</span>
+                  </NavLink>
+                </li>
+              ))}
+            </ul>
+          </div>
+        ))}
       </nav>
 
       <div className="sidebar-footer">
-        <NavLink to="/admin/settings" className="settings-link" onClick={handleNavClick}>
-          Settings
-        </NavLink>
         <button className="logout-btn" onClick={handleLogout}>
-          Logout
+          <FontAwesomeIcon icon={faSignOutAlt} />
+          <span>Logout</span>
         </button>
       </div>
     </aside>

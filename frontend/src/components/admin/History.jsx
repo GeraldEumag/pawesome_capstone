@@ -36,7 +36,7 @@ const History = () => {
         apiRequest("/admin/login-logs").catch(() => []),
         apiRequest("/admin/chatbot/logs").catch(() => []),
         apiRequest("/inventory/logs").catch(() => []),
-        apiRequest("/cashier/transactions").catch(() => []),
+        apiRequest("/admin/reports/cashier").catch(() => []),
         apiRequest("/admin/appointments").catch(() => []),
       ]);
 
@@ -138,9 +138,10 @@ const History = () => {
       }
 
       if (salesData.status === "fulfilled") {
-        const sales = Array.isArray(salesData.value)
-          ? salesData.value
-          : salesData.value?.transactions || [];
+        const raw = salesData.value;
+        const sales = Array.isArray(raw)
+          ? raw
+          : raw?.data?.payment_verifications || raw?.data?.transactions || raw?.data?.orders || raw?.payment_verifications || raw?.transactions || [];
 
         sales.forEach((sale) => {
           historyEntries.push({
@@ -267,7 +268,7 @@ const History = () => {
       error={error}
       onRefresh={fetchHistoryLogs}
       onExport={exportHistory}
-      roleAccent="#e11d48"
+      roleAccent="#ff5f93"
       roleLabel="Audit Trail Center"
       emptyMessage="No history data found. Adjust filters or refresh records."
       searchTerm={searchTerm}

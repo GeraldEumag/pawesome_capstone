@@ -101,12 +101,6 @@
   min-height: 600px;
 }
 
-.admin-nav-tab.active {
-  background: linear-gradient(135deg, var(--ar-primary), var(--ar-primary-light));
-  color: white;
-  box-shadow: 0 4px 14px rgba(255, 95, 147, 0.25);
-}
-
 /* Responsive */
 @media (max-width: 768px) {
   .admin-reports-wrapper {

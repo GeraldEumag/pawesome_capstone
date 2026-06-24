@@ -128,15 +128,27 @@ const AdminSettings = () => {
   });
 
   useEffect(() => {
+    fetchSettings();
     fetchSystemInfo();
   }, []);
+
+  const fetchSettings = async () => {
+    try {
+      const data = await apiRequest("/admin/settings");
+      if (data?.general) setGeneralSettings(data.general);
+      if (data?.security) setSecuritySettings(data.security);
+      if (data?.notifications) setNotificationSettings(data.notifications);
+    } catch (err) {
+      console.error("Error fetching settings:", err);
+    }
+  };
 
   const fetchSystemInfo = async () => {
     try {
       const users = await apiRequest("/admin/users");
       setSystemInfo((prev) => ({
         ...prev,
-        totalUsers: users?.length || 0,
+        totalUsers: users?.data?.length || users?.length || 0,
       }));
     } catch (err) {
       console.error("Error fetching system info:", err);
@@ -158,8 +170,17 @@ const AdminSettings = () => {
       setLoading(true);
       setError("");
 
-      // Simulate API call - in production, this would save to backend
-      await new Promise((resolve) => setTimeout(resolve, 500));
+      const endpointMap = {
+        General: { path: "/admin/settings/general", payload: generalSettings },
+        Security: { path: "/admin/settings/security", payload: securitySettings },
+        Notification: { path: "/admin/settings/notifications", payload: notificationSettings },
+      };
+
+      const { path, payload } = endpointMap[settingType];
+      await apiRequest(path, {
+        method: "POST",
+        body: JSON.stringify(payload),
+      });
 
       showSuccess(`${settingType} settings saved successfully`);
     } catch (err) {

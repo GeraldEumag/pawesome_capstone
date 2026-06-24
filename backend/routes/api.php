@@ -75,9 +75,13 @@ Route::get('/settings/public', [SystemSettingController::class, 'getPublicSettin
 // Public landing page content (no auth)
 Route::get('/landing-page', [LandingPageContentController::class, 'showPublic']);
 
-// Admin-only theme setting
+// Admin-only settings routes
 Route::middleware(['auth.api', 'throttle:api', 'role:admin'])->group(function () {
+    Route::get('/admin/settings', [SystemSettingController::class, 'getSettings']);
     Route::post('/admin/settings/theme', [SystemSettingController::class, 'updateThemeColor']);
+    Route::post('/admin/settings/general', [SystemSettingController::class, 'updateGeneral']);
+    Route::post('/admin/settings/security', [SystemSettingController::class, 'updateSecurity']);
+    Route::post('/admin/settings/notifications', [SystemSettingController::class, 'updateNotifications']);
 });
 
 // Admin landing page content management
@@ -131,11 +135,6 @@ Route::middleware(['auth.api', 'throttle:api', 'role:admin'])->prefix('admin')->
     Route::put('users/{id}', [UserController::class, 'update']);
     Route::patch('users/{id}/toggle', [UserController::class, 'toggle']);
     Route::delete('users/{id}', [UserController::class, 'destroy']);
-
-    Route::get('services', [ServiceController::class, 'index']);
-    Route::post('services', [ServiceController::class, 'store']);
-    Route::put('services/{id}', [ServiceController::class, 'update']);
-    Route::delete('services/{id}', [ServiceController::class, 'destroy']);
 
     // Inventory Management (Admin Routes)
     Route::get('inventory', [InventoryController::class, 'index']);
@@ -243,15 +242,11 @@ Route::middleware(['auth.api', 'throttle:api', 'role:admin'])->prefix('admin')->
     // Appointments overview (for History.jsx admin history view)
     Route::get('appointments', [AppointmentController::class, 'index']);
 
-    // Dynamic routes with ID parameters
-    Route::get('customers/{id}', [CustomersController::class, 'show']);
-    Route::get('customers/{id}/pets', [CustomersController::class, 'pets']);
-    Route::get('customers/{id}/purchases', [CustomersController::class, 'purchases']);
     Route::get('reports/customers/{id}', [CustomerReportController::class, 'getCustomerDetail']);
 });
 
-// Veterinary Services Management
-Route::middleware(['auth.api', 'throttle:api', 'role:veterinary'])->prefix('admin')->group(function () {
+// Services Management (admin + veterinary)
+Route::middleware(['auth.api', 'throttle:api', 'role:admin,veterinary'])->prefix('admin')->group(function () {
     Route::get('services', [ServiceController::class, 'index']);
     Route::post('services', [ServiceController::class, 'store']);
     Route::put('services/{id}', [ServiceController::class, 'update']);

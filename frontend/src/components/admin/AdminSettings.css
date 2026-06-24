@@ -1,6 +1,6 @@
 .admin-settings {
   padding: 2rem;
-  min-height: 100vh;
+  min-height: auto;
   font-family: "Inter", system-ui, sans-serif;
   color: var(--color-text);
   background: var(--color-bg-gradient);

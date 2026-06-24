@@ -2,34 +2,12 @@
 /* Professional Admin Chatbot Control Center - Pink Theme */
 
 .chatbot-logs {
-  --cb-primary: #ff5f93;
-  --cb-primary-light: #ff8db5;
-  --cb-primary-soft: #ffc8dd;
-  --cb-bg-gradient: linear-gradient(135deg, #ffc8dd, #ffd6e8, #fff1f7);
-  --cb-surface: rgba(255, 255, 255, 0.88);
-  --cb-surface-solid: rgba(255, 255, 255, 0.96);
-  --cb-border: rgba(255, 95, 147, 0.18);
-  --cb-heading: #191919;
-  --cb-text: #1f2937;
-  --cb-muted: #64748b;
-  --cb-success: #059669;
-  --cb-danger: #dc2626;
-  --cb-warning: #d97706;
-  --cb-info: #2563eb;
-  --cb-shadow-soft: 0 10px 24px rgba(15, 23, 42, 0.08);
-  --cb-shadow-card: 0 18px 45px rgba(255, 95, 147, 0.14);
-  --cb-shadow-primary: 0 14px 28px rgba(255, 95, 147, 0.24);
-  --cb-radius-md: 16px;
-  --cb-radius-lg: 22px;
-  --cb-radius-card: 28px;
-  --cb-radius-pill: 999px;
-
   width: 100%;
-  min-height: 100vh;
+  min-height: auto;
   display: grid;
   gap: 1.35rem;
   padding: 1rem;
-  color: var(--cb-text);
+  color: var(--color-text);
   font-family: "Inter", system-ui, sans-serif;
 }
 
@@ -87,12 +65,12 @@
   gap: 1.25rem;
   overflow: hidden;
   padding: 2rem;
-  border: 1px solid var(--cb-border);
-  border-radius: var(--cb-radius-card);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-card);
   background:
     radial-gradient(circle at top left, rgba(255, 95, 147, 0.18), transparent 34%),
-    var(--cb-bg-gradient);
-  box-shadow: var(--cb-shadow-card);
+    var(--color-bg-gradient);
+  box-shadow: var(--shadow-card);
 }
 
 .chatbot-hero::after {
@@ -118,7 +96,7 @@
   align-items: center;
   gap: 0.45rem;
   margin-bottom: 0.55rem;
-  color: var(--cb-primary);
+  color: var(--color-primary);
   font-size: 0.78rem;
   font-weight: 950;
   text-transform: uppercase;
@@ -130,7 +108,7 @@
   display: flex;
   align-items: center;
   gap: 0.7rem;
-  color: var(--cb-heading);
+  color: var(--color-heading);
   font-size: clamp(1.7rem, 3vw, 2.35rem);
   font-weight: 950;
   letter-spacing: -0.055em;
@@ -139,7 +117,7 @@
 .chatbot-hero p {
   max-width: 820px;
   margin: 0.45rem 0 0;
-  color: var(--cb-muted);
+  color: var(--color-muted);
   font-size: 0.96rem;
   font-weight: 750;
   line-height: 1.55;
@@ -148,7 +126,7 @@
 .last-updated {
   display: inline-block;
   margin-top: 0.7rem;
-  color: var(--cb-muted);
+  color: var(--color-muted);
   font-size: 0.82rem;
   font-weight: 850;
 }
@@ -167,7 +145,7 @@
 .card-actions button {
   min-height: 44px;
   border: none;
-  border-radius: var(--cb-radius-pill);
+  border-radius: var(--radius-pill);
   padding: 0 1rem;
   font-size: 0.88rem;
   font-weight: 950;
@@ -183,17 +161,17 @@
 .refresh-btn,
 .management-actions button,
 .card-actions button {
-  background: linear-gradient(135deg, var(--cb-primary), var(--cb-primary-light));
+  background: linear-gradient(135deg, var(--color-primary), var(--color-primary-light));
   color: #ffffff;
-  box-shadow: var(--cb-shadow-primary);
+  box-shadow: var(--shadow-primary);
 }
 
 .secondary-btn,
 .management-actions .secondary-btn {
-  background: var(--cb-surface-solid);
-  color: var(--cb-primary);
-  border: 1px solid var(--cb-border);
-  box-shadow: var(--cb-shadow-soft);
+  background: var(--color-surface-solid);
+  color: var(--color-primary);
+  border: 1px solid var(--color-border);
+  box-shadow: var(--shadow-soft);
 }
 
 .refresh-btn:hover,
@@ -240,10 +218,10 @@
   gap: 0.9rem;
   min-width: 0;
   padding: 1.15rem;
-  border: 1px solid var(--cb-border);
+  border: 1px solid var(--color-border);
   border-radius: 24px;
-  background: var(--cb-surface);
-  box-shadow: var(--cb-shadow-card);
+  background: var(--color-surface);
+  box-shadow: var(--shadow-card);
   backdrop-filter: blur(16px);
 }
 
@@ -254,9 +232,9 @@
   border-radius: 18px;
   display: grid;
   place-items: center;
-  background: linear-gradient(135deg, var(--cb-primary), var(--cb-primary-light));
+  background: linear-gradient(135deg, var(--color-primary), var(--color-primary-light));
   color: #ffffff;
-  box-shadow: var(--cb-shadow-primary);
+  box-shadow: var(--shadow-primary);
 }
 
 .chatbot-stat-card.info .stat-icon {
@@ -273,7 +251,7 @@
 
 .chatbot-stat-card strong {
   display: block;
-  color: var(--cb-primary);
+  color: var(--color-primary);
   font-size: 1.6rem;
   font-weight: 950;
   line-height: 1;
@@ -281,7 +259,7 @@
 
 .chatbot-stat-card p {
   margin: 0.25rem 0 0;
-  color: var(--cb-muted);
+  color: var(--color-muted);
   font-size: 0.86rem;
   font-weight: 800;
 }
@@ -301,10 +279,10 @@
   min-width: 0;
   display: flex;
   align-items: center;
-  background: var(--cb-surface);
-  border: 1px solid var(--cb-border);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
   border-radius: 22px;
-  box-shadow: var(--cb-shadow-card);
+  box-shadow: var(--shadow-card);
   overflow: hidden;
 }
 
@@ -312,7 +290,7 @@
 .chatbot-filter-box > svg {
   position: absolute;
   left: 16px;
-  color: var(--cb-primary);
+  color: var(--color-primary);
   pointer-events: none;
 }
 
@@ -327,7 +305,7 @@
   padding: 0 1rem 0 3rem;
   font-size: 0.93rem;
   font-weight: 750;
-  color: var(--cb-text);
+  color: var(--color-text);
 }
 
 .chatbot-filter-box select {
@@ -344,7 +322,7 @@
   border: none;
   border-radius: 999px;
   background: rgba(255, 95, 147, 0.1);
-  color: var(--cb-primary);
+  color: var(--color-primary);
   cursor: pointer;
   transform: translateY(-50%);
 }
@@ -370,14 +348,14 @@
   display: inline-flex;
   align-items: center;
   gap: 0.55rem;
-  border: 1px solid var(--cb-border);
-  border-radius: var(--cb-radius-pill);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-pill);
   padding: 0 1rem;
-  background: var(--cb-surface);
-  color: var(--cb-text);
+  background: var(--color-surface);
+  color: var(--color-text);
   font-weight: 950;
   cursor: pointer;
-  box-shadow: var(--cb-shadow-soft);
+  box-shadow: var(--shadow-soft);
   transition: 0.22s ease;
 }
 
@@ -387,8 +365,8 @@
 
 .chatbot-tabs button.active {
   color: white;
-  background: linear-gradient(135deg, var(--cb-primary), var(--cb-primary-light));
-  box-shadow: var(--cb-shadow-primary);
+  background: linear-gradient(135deg, var(--color-primary), var(--color-primary-light));
+  box-shadow: var(--shadow-primary);
 }
 
 .chatbot-tabs button span {
@@ -419,10 +397,10 @@
 .management-panel {
   min-width: 0;
   padding: 1.35rem;
-  border: 1px solid var(--cb-border);
-  border-radius: var(--cb-radius-card);
-  background: var(--cb-surface);
-  box-shadow: var(--cb-shadow-card);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-card);
+  background: var(--color-surface);
+  box-shadow: var(--shadow-card);
   backdrop-filter: blur(16px);
 }
 
@@ -446,7 +424,7 @@
 .panel-title-row h3,
 .management-panel h3 {
   margin: 0;
-  color: var(--cb-heading);
+  color: var(--color-heading);
   font-size: 1.18rem;
   font-weight: 950;
   letter-spacing: -0.04em;
@@ -454,7 +432,7 @@
 
 .panel-title-row p {
   margin: 0.3rem 0 0;
-  color: var(--cb-muted);
+  color: var(--color-muted);
   font-size: 0.88rem;
   font-weight: 750;
 }
@@ -464,9 +442,9 @@
   align-items: center;
   min-height: 32px;
   padding: 0 0.75rem;
-  border-radius: var(--cb-radius-pill);
+  border-radius: var(--radius-pill);
   background: rgba(255, 95, 147, 0.1);
-  color: var(--cb-primary);
+  color: var(--color-primary);
   font-size: 0.78rem;
   font-weight: 950;
   white-space: nowrap;
@@ -482,7 +460,7 @@
 .management-form label {
   display: grid;
   gap: 0.45rem;
-  color: var(--cb-heading);
+  color: var(--color-heading);
   font-size: 0.88rem;
   font-weight: 900;
 }
@@ -493,10 +471,10 @@
   width: 100%;
   min-height: 48px;
   padding: 0.8rem 0.95rem;
-  border-radius: var(--cb-radius-md);
-  border: 1px solid var(--cb-border);
-  background: var(--cb-surface-solid);
-  color: var(--cb-text);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--color-border);
+  background: var(--color-surface-solid);
+  color: var(--color-text);
   outline: none;
   font-family: inherit;
   font-weight: 750;
@@ -512,7 +490,7 @@
 .management-form input:focus,
 .management-form textarea:focus,
 .management-form select:focus {
-  border-color: var(--cb-primary);
+  border-color: var(--color-primary);
   box-shadow: 0 0 0 4px rgba(255, 95, 147, 0.16);
 }
 
@@ -527,7 +505,7 @@
   grid-template-columns: auto 1fr;
   align-items: center;
   gap: 0.75rem;
-  color: var(--cb-heading);
+  color: var(--color-heading);
   font-weight: 900;
   cursor: pointer;
 }
@@ -535,7 +513,7 @@
 .checkbox-row input[type="checkbox"] {
   width: 20px;
   height: 20px;
-  accent-color: var(--cb-primary);
+  accent-color: var(--color-primary);
 }
 
 .management-actions,
@@ -569,11 +547,11 @@
 
 .management-card {
   min-width: 0;
-  border: 1px solid var(--cb-border);
-  border-radius: var(--cb-radius-lg);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
   padding: 1rem;
-  background: var(--cb-surface-solid);
-  box-shadow: var(--cb-shadow-soft);
+  background: var(--color-surface-solid);
+  box-shadow: var(--shadow-soft);
   transition: 0.22s ease;
 }
 
@@ -588,24 +566,24 @@
 .management-card:hover {
   transform: translateY(-2px);
   border-color: rgba(255, 95, 147, 0.35);
-  box-shadow: var(--cb-shadow-card);
+  box-shadow: var(--shadow-card);
 }
 
 .management-card strong {
-  color: var(--cb-heading);
+  color: var(--color-heading);
   font-weight: 950;
 }
 
 .management-card p {
   margin: 0.45rem 0;
-  color: var(--cb-muted);
+  color: var(--color-muted);
   font-size: 0.9rem;
   font-weight: 750;
   line-height: 1.5;
 }
 
 .management-card span {
-  color: var(--cb-muted);
+  color: var(--color-muted);
   font-weight: 750;
 }
 
@@ -623,9 +601,9 @@
   place-items: center;
   border-radius: 17px;
   color: #ffffff !important;
-  background: linear-gradient(135deg, var(--cb-primary), var(--cb-primary-light));
+  background: linear-gradient(135deg, var(--color-primary), var(--color-primary-light));
   font-weight: 950 !important;
-  box-shadow: var(--cb-shadow-primary);
+  box-shadow: var(--shadow-primary);
 }
 
 .card-meta {
@@ -643,9 +621,9 @@
   justify-content: center;
   min-height: 30px;
   padding: 0 0.7rem;
-  border-radius: var(--cb-radius-pill);
+  border-radius: var(--radius-pill);
   background: rgba(255, 95, 147, 0.1);
-  color: var(--cb-primary) !important;
+  color: var(--color-primary) !important;
   font-size: 0.78rem;
   font-weight: 950 !important;
   text-transform: capitalize;
@@ -673,9 +651,9 @@
   display: inline-flex;
   width: fit-content;
   padding: 0.35rem 0.7rem;
-  border-radius: var(--cb-radius-pill);
+  border-radius: var(--radius-pill);
   background: rgba(255, 95, 147, 0.08);
-  color: var(--cb-muted);
+  color: var(--color-muted);
   font-size: 0.78rem;
   font-weight: 850;
 }
@@ -683,7 +661,7 @@
 .card-actions {
   padding-top: 0.85rem;
   margin-top: 0.85rem;
-  border-top: 1px solid var(--cb-border);
+  border-top: 1px solid var(--color-border);
 }
 
 /* CHAT BUBBLES */
@@ -696,7 +674,7 @@
 
 .chat-intent {
   display: block;
-  color: var(--cb-muted);
+  color: var(--color-muted);
   font-size: 0.78rem;
   font-weight: 850;
 }
@@ -704,8 +682,8 @@
 .bubble {
   max-width: 88%;
   padding: 0.9rem 1rem;
-  border-radius: var(--cb-radius-lg);
-  box-shadow: var(--cb-shadow-soft);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-soft);
 }
 
 .bubble strong {
@@ -723,15 +701,15 @@
 
 .user-bubble {
   justify-self: end;
-  background: linear-gradient(135deg, var(--cb-primary), var(--cb-primary-light));
+  background: linear-gradient(135deg, var(--color-primary), var(--color-primary-light));
   color: white;
   border-bottom-right-radius: 6px;
 }
 
 .bot-bubble {
   justify-self: start;
-  background: var(--cb-surface-solid);
-  color: var(--cb-text);
+  background: var(--color-surface-solid);
+  color: var(--color-text);
   border-bottom-left-radius: 6px;
 }
 
@@ -746,9 +724,9 @@
   gap: 0.75rem;
   padding: 2rem;
   text-align: center;
-  color: var(--cb-muted);
-  border: 2px dashed var(--cb-border);
-  border-radius: var(--cb-radius-lg);
+  color: var(--color-muted);
+  border: 2px dashed var(--color-border);
+  border-radius: var(--radius-lg);
   background: rgba(255, 255, 255, 0.45);
 }
 
@@ -758,28 +736,23 @@
 
 .empty-state svg,
 .loading-container svg {
-  color: var(--cb-primary);
+  color: var(--color-primary);
   font-size: 2.7rem;
 }
 
 .empty-state h3,
 .loading-container h3 {
   margin: 0;
-  color: var(--cb-heading);
+  color: var(--color-heading);
   font-weight: 950;
 }
 
 .empty-state p,
 .loading-container p {
   margin: 0;
-  color: var(--cb-muted);
+  color: var(--color-muted);
   font-weight: 750;
 }
-
-/* DARK MODE */
-
-
-
 
 /* RESPONSIVE */
 

@@ -1,4 +1,61 @@
-﻿/* Admin Sidebar Accent */
+﻿/* ============================================================
+   Admin Sidebar — Additive styles only.
+   Base background, nav colors, hover, and active states are
+   all inherited from the global sidebar.css (pink gradient,
+   white text, white-card active). We only add admin-specific
+   extras here: section labels, icon sizing, and logo badge.
+   ============================================================ */
+
+/* ---- Accent pin ---- */
 .admin-sidebar {
   --sidebar-accent: var(--color-primary);
+}
+
+/* ---- Section Labels ---- */
+.admin-sidebar .nav-section {
+  padding: 0 0.75rem;
+  margin-bottom: 0.2rem;
+}
+
+.admin-sidebar .nav-section-label {
+  display: block;
+  font-size: 0.65rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: rgba(255, 255, 255, 0.55);
+  padding: 0.75rem 0.6rem 0.3rem;
+}
+
+/* ---- Icons inside nav links ---- */
+.admin-sidebar .nav-icon {
+  width: 16px;
+  text-align: center;
+  font-size: 0.88rem;
+  flex-shrink: 0;
+  opacity: 0.85;
+  transition: opacity 0.18s;
+}
+
+.admin-sidebar .nav-item a:hover .nav-icon,
+.admin-sidebar .nav-item a.active .nav-icon {
+  opacity: 1;
+}
+
+/* Active icon gets the primary color since the card turns white */
+.admin-sidebar .nav-item a.active .nav-icon {
+  color: var(--color-primary, #ff5f93);
+}
+
+/* ---- Logo icon badge ---- */
+.admin-sidebar .sidebar-logo-icon {
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.25);
+  color: #fff;
+  display: grid;
+  place-items: center;
+  font-size: 1rem;
+  flex-shrink: 0;
 }

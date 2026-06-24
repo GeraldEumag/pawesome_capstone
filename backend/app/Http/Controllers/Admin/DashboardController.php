@@ -101,23 +101,16 @@ class DashboardController extends Controller
     public function systemHealth()
     {
         $health = [
-            'backend' => [
-                'status' => 'operational',
-            ],
-            'database' => [
-                'status' => 'connected',
-            ],
-            'active_modules' => [
-                'appointments' => true,
-                'customers' => true,
-                'inventory' => true,
-                'reports' => true,
-            ],
+            'backend'        => $this->checkBackendHealth(),
+            'database'       => $this->checkDatabaseHealth(),
+            'filesystem'     => $this->checkFilesystemHealth(),
+            'memory'         => $this->checkMemoryUsage(),
+            'active_modules' => $this->getActiveModules(),
         ];
 
         return response()->json([
             'timestamp' => Carbon::now()->toISOString(),
-            'health' => $health,
+            'health'    => $health,
         ]);
     }
 
