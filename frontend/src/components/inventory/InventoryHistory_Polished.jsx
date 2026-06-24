@@ -81,7 +81,7 @@ const InventoryHistory_Polished = () => {
     <HistoryTimeline
       entries={entries} loading={loading} error={error}
       onRefresh={fetchHistory} onExport={exportCSV}
-      roleAccent="#ea580c" roleLabel="Inventory"
+      roleAccent="#ff5f93" roleLabel="Inventory"
       emptyMessage="No stock log records found."
       searchTerm={searchTerm} onSearchChange={setSearchTerm}
       dateFilter={dateFilter} onDateFilterChange={setDateFilter}

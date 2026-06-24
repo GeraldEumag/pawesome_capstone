@@ -26,21 +26,33 @@ class DashboardController extends Controller
     {
         $summary = $this->inventoryService->getSummary();
         $today = Carbon::today();
-        
+
+        $recentLogs = InventoryLog::with('inventoryItem')
+            ->latest()
+            ->limit(10)
+            ->get()
+            ->map(fn ($log) => $this->formatLog($log));
+
+        $criticalItems = InventoryItem::where('status', '!=', 'archived')
+            ->whereColumn('stock', '<=', 'reorder_level')
+            ->orderBy('stock', 'asc')
+            ->limit(5)
+            ->get();
+
+        $totalInventoryValue = InventoryItem::where('status', '!=', 'archived')
+            ->selectRaw('SUM(stock * price) as total_value')
+            ->value('total_value') ?? 0;
+
         return response()->json([
             'total_items' => $summary['total_items'],
             'low_stock_items' => $summary['low_stock_count'],
             'out_of_stock_items' => $summary['out_of_stock_count'],
             'expiring_soon' => $summary['expiring_soon_count'],
             'total_stock_value' => $summary['total_stock_value'],
-            'recent_transactions' => InventoryLog::with('inventoryItem')
-                ->latest()
-                ->limit(10)
-                ->get(),
-            'critical_items' => InventoryItem::where('stock', '<=', 'reorder_level')
-                ->orderBy('stock', 'asc')
-                ->limit(5)
-                ->get(),
+            'total_inventory_value' => round((float) $totalInventoryValue, 2),
+            'category_breakdown' => $summary['category_breakdown'] ?? [],
+            'recent_transactions' => $recentLogs,
+            'critical_items' => $criticalItems,
             'inventory_changes_today' => InventoryLog::whereDate('created_at', $today)->count(),
         ]);
     }

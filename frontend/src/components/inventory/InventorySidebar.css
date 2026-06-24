@@ -1,4 +1,56 @@
-/* Inventory Sidebar Accent */
-.inventory-sidebar {
-  --sidebar-accent: var(--color-primary);
+﻿/* ============================================================
+   Inventory Sidebar — Additive styles only.
+   Base background, nav colors, hover, and active states are
+   all inherited from the global sidebar.css (pink gradient,
+   white text, white-card active). We only add inventory-
+   specific extras here: section labels and icon sizing.
+   ============================================================ */
+
+/* ---- Section Labels ---- */
+.inventory-sidebar .nav-section {
+  padding: 0 0.75rem;
+  margin-bottom: 0.2rem;
+}
+
+.inventory-sidebar .nav-section-label {
+  display: block;
+  font-size: 0.65rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: rgba(255, 255, 255, 0.55);
+  padding: 0.75rem 0.6rem 0.3rem;
+}
+
+/* ---- Icons inside nav links ---- */
+.inventory-sidebar .nav-icon {
+  width: 16px;
+  text-align: center;
+  font-size: 0.88rem;
+  flex-shrink: 0;
+  opacity: 0.85;
+  transition: opacity 0.18s;
+}
+
+.inventory-sidebar .nav-item a:hover .nav-icon,
+.inventory-sidebar .nav-item a.active .nav-icon {
+  opacity: 1;
+}
+
+/* Active icon gets the primary color since the card turns white */
+.inventory-sidebar .nav-item a.active .nav-icon {
+  color: var(--color-primary, #ff5f93);
+}
+
+/* ---- Logo icon badge ---- */
+.inventory-sidebar .sidebar-logo-icon {
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.25);
+  color: #fff;
+  display: grid;
+  place-items: center;
+  font-size: 1rem;
+  flex-shrink: 0;
 }

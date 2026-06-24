@@ -1,4 +1,4 @@
-/* Add Product Modal Styles */
+﻿/* Add Product Modal Styles */
 
 .modal-overlay {
   position: fixed;
@@ -29,8 +29,8 @@
   justify-content: space-between;
   align-items: center;
   padding: 1.5rem 2rem;
-  border-bottom: 1px solid #f1f5f9;
-  background: linear-gradient(135deg, #ffafcc 0%, #ffc8dd 100%);
+  border-bottom: 1px solid var(--color-border, rgba(255,95,147,0.14));
+  background: linear-gradient(135deg, var(--color-primary-soft, #ffc8dd) 0%, rgba(255,200,221,0.5) 100%);
 }
 
 .modal-title {
@@ -238,7 +238,7 @@
   justify-content: flex-end;
   gap: 0.75rem;
   padding: 1rem 2rem;
-  border-top: 1px solid #f1f5f9;
+  border-top: 1px solid var(--color-border, rgba(255,95,147,0.14));
   background: #f8fafc;
 }
 
@@ -510,3 +510,4 @@
   font-size: 0.75rem;
   color: #64748b;
 }
+

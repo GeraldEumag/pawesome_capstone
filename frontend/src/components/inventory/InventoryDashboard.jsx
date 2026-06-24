@@ -7,6 +7,15 @@ import StatusDot from "../shared/StatusDot";
 import {
   faCalendarAlt,
   faBox,
+  faBoxes,
+  faExclamationTriangle,
+  faTimesCircle,
+  faDollarSign,
+  faPlus,
+  faMinus,
+  faSyncAlt,
+  faFire,
+  faClockRotateLeft,
 } from "@fortawesome/free-solid-svg-icons";
 import {
   BarChart,
@@ -15,6 +24,7 @@ import {
   Pie,
   Cell,
   Tooltip,
+  Legend,
   ResponsiveContainer,
   XAxis,
   YAxis,
@@ -80,29 +90,58 @@ const InventoryDashboard = () => {
     {
       title: "Total Products",
       value: dashboardData.total_items || 0,
-      subtitle: "In inventory",
-      change: "",
+      subtitle: "Active inventory items",
+      icon: faBoxes,
+      accent: "primary",
     },
     {
-      title: "Low Stock Items",
+      title: "Low Stock",
       value: dashboardData.low_stock_items || 0,
-      subtitle: "Need reorder",
-      change: "",
+      subtitle: "Need reorder soon",
+      icon: faExclamationTriangle,
+      accent: "warning",
     },
     {
       title: "Out of Stock",
       value: dashboardData.out_of_stock_items || 0,
-      subtitle: "Items",
-      change: "",
+      subtitle: "Require immediate action",
+      icon: faTimesCircle,
+      accent: "danger",
+    },
+    {
+      title: "Inventory Value",
+      value: `₱${Number(dashboardData.total_inventory_value || 0).toLocaleString("en-PH", { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`,
+      subtitle: "Total stock value",
+      icon: faDollarSign,
+      accent: "success",
     },
   ] : [];
+
+  const getActivityIcon = (action = "") => {
+    const a = action.toLowerCase();
+    if (a.includes("add") || a.includes("initial") || a.includes("purchase")) return faPlus;
+    if (a.includes("remove") || a.includes("usage") || a.includes("deduct")) return faMinus;
+    if (a.includes("expir")) return faFire;
+    if (a.includes("adjust") || a.includes("set")) return faSyncAlt;
+    return faClockRotateLeft;
+  };
+
+  const getActivityAccent = (action = "") => {
+    const a = action.toLowerCase();
+    if (a.includes("add") || a.includes("initial") || a.includes("purchase")) return "add";
+    if (a.includes("remove") || a.includes("usage") || a.includes("deduct")) return "remove";
+    if (a.includes("expir")) return "expiring";
+    return "adjust";
+  };
 
   const recentActivity = dashboardData ? (dashboardData.recent_transactions || []).map((transaction) => ({
     action: transaction.action || "Transaction",
     product: transaction.item_name || "Item",
     quantity: transaction.quantity || 0,
-    time: transaction.created_at ? new Date(transaction.created_at).toLocaleDateString() : 'N/A',
+    time: transaction.created_at ? new Date(transaction.created_at).toLocaleDateString("en-PH", { month: "short", day: "numeric", year: "numeric" }) : "N/A",
     status: transaction.status || "completed",
+    icon: getActivityIcon(transaction.action),
+    accent: getActivityAccent(transaction.action),
   })) : [];
 
   // Chart data
@@ -139,7 +178,7 @@ const InventoryDashboard = () => {
     },
   ].filter((item) => item.value > 0);
 
-  const pieColors = ["#22c55e", "#f59e0b", "#ef4444"];
+  const PIE_COLORS = ["#22c55e", "#f59e0b", "#ef4444"];
 
   const inventoryDashboardClasses = [
     "inventory-dashboard",
@@ -196,12 +235,17 @@ const InventoryDashboard = () => {
                 </div>
               )}
               {summaryCards.map((card) => (
-                <div key={card.title} className="overview-card">
-                  <div>
-                    <h3>{card.value}</h3>
-                    <p>{card.title}</p>
+                <div key={card.title} className={`overview-card overview-card--${card.accent}`}>
+                  <div className="overview-card-body">
+                    <div className={`overview-card-icon overview-card-icon--${card.accent}`}>
+                      <FontAwesomeIcon icon={card.icon} />
+                    </div>
+                    <div className="overview-card-text">
+                      <h3>{card.value}</h3>
+                      <p>{card.title}</p>
+                      <small>{card.subtitle}</small>
+                    </div>
                   </div>
-                  <span>{card.change}</span>
                 </div>
               ))}
             </section>
@@ -216,27 +260,21 @@ const InventoryDashboard = () => {
                   <span className="badge">Live</span>
                 </div>
                 <div className="activity-list">
+                  {recentActivity.length === 0 && !dashboardError && (
+                    <p className="no-data">No recent activity found.</p>
+                  )}
                   {recentActivity.map((activity, index) => (
-                    <div key={`inventory-activity-${activity.id || activity.product || "no-id"}-${index}`} className="activity-item">
-                      <div className="activity-header">
-                        <div className="activity-info">
-                          <h3>{activity.action}</h3>
-                          <p>{activity.product}</p>
-                        </div>
-                        <div className="activity-quantity">
-                          <strong>{activity.quantity} units</strong>
-                          <span className={`status-badge ${activity.status}`}>
-                            {activity.status}
-                          </span>
-                        </div>
+                    <div key={`inventory-activity-${activity.product || "no-id"}-${index}`} className={`activity-item activity-item--${activity.accent}`}>
+                      <div className={`activity-type-icon activity-type-icon--${activity.accent}`}>
+                        <FontAwesomeIcon icon={activity.icon} />
                       </div>
-                      <div className="activity-details">
-                        <span>
-                          <FontAwesomeIcon icon={faBox} /> {activity.quantity} units
-                        </span>
-                        <span>
-                          <FontAwesomeIcon icon={faCalendarAlt} /> {activity.time}
-                        </span>
+                      <div className="activity-info">
+                        <h3>{activity.product}</h3>
+                        <p>{activity.action.replace(/_/g, " ")}</p>
+                      </div>
+                      <div className="activity-meta">
+                        <strong>{activity.quantity > 0 ? `+${activity.quantity}` : activity.quantity} units</strong>
+                        <span><FontAwesomeIcon icon={faCalendarAlt} /> {activity.time}</span>
                       </div>
                     </div>
                   ))}
@@ -244,18 +282,21 @@ const InventoryDashboard = () => {
               </article>
 
               <article className="panel quick-stat-panel">
-                <div className="metric-card accent">
+                <div className="metric-card metric-card--warning">
+                  <div className="metric-card-icon"><FontAwesomeIcon icon={faFire} /></div>
                   <h3>{dashboardData?.expiring_soon || 0}</h3>
                   <p>Expiring Soon</p>
                   <small>Within 30 days</small>
                 </div>
 
-                <div className="metric-card">
+                <div className="metric-card metric-card--alert">
+                  <div className="metric-card-icon"><FontAwesomeIcon icon={faExclamationTriangle} /></div>
                   <h3>{dashboardData?.low_stock_items || 0}</h3>
                   <p>Low Stock Alerts</p>
                 </div>
 
-                <div className="metric-card">
+                <div className="metric-card metric-card--info">
+                  <div className="metric-card-icon"><FontAwesomeIcon icon={faSyncAlt} /></div>
                   <h3>{dashboardData?.inventory_changes_today || 0}</h3>
                   <p>Changes Today</p>
                 </div>
@@ -337,10 +378,11 @@ const InventoryDashboard = () => {
                               paddingAngle={4}
                             >
                               {stockPieData.map((entry, index) => (
-                                <Cell key={entry.name} fill={pieColors[index % pieColors.length]} />
+                                <Cell key={entry.name} fill={PIE_COLORS[index % PIE_COLORS.length]} />
                               ))}
                             </Pie>
                             <Tooltip />
+                            <Legend iconType="circle" iconSize={10} wrapperStyle={{ fontSize: "0.78rem" }} />
                           </PieChart>
                         </ResponsiveContainer>
                       </div>

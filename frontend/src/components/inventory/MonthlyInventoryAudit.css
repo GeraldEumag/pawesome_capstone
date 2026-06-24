@@ -1,8 +1,8 @@
-.monthly-audit-page {
+﻿.monthly-audit-page {
   width: 100%;
   min-height: calc(100vh - 90px);
   padding: 24px 32px;
-  background: linear-gradient(135deg, #ffc8dd, #ffd6e8, #fff1f7);
+  background: var(--color-bg-gradient, linear-gradient(135deg, #ffc8dd, #ffd6e8, #fff1f7));
   color: #1f2937;
   overflow-x: hidden;
 }
@@ -26,7 +26,7 @@
 
 .monthly-audit-hero h2 {
   margin: 0;
-  color: #ff5f93;
+  color: var(--color-primary, #ff5f93);
   font-size: 1.7rem;
   font-weight: 950;
 }
@@ -61,7 +61,7 @@
 
 .audit-stats-grid {
   display: grid;
-  grid-template-columns: repeat(5, minmax(140px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
   gap: 1rem;
   margin: 1.25rem 0;
 }
@@ -120,7 +120,7 @@
   height: 46px;
   margin: 0 auto 1rem;
   border: 4px solid rgba(255, 95, 147, 0.18);
-  border-top-color: #ff5f93;
+  border-top-color: var(--color-primary, #ff5f93);
   border-radius: 50%;
   animation: spin 0.8s linear infinite;
 }
@@ -189,7 +189,7 @@
 }
 
 .btn-save-audit {
-  background: #ff5f93;
+  background: var(--color-primary, #ff5f93);
   color: white;
 }
 
@@ -257,7 +257,7 @@
 
 .audit-table input:focus {
   outline: none;
-  border-color: #ff5f93;
+  border-color: var(--color-primary, #ff5f93);
   box-shadow: 0 0 0 4px rgba(255, 95, 147, 0.12);
 }
 
@@ -369,7 +369,7 @@
 
 .month-selector select:focus {
   outline: none;
-  border-color: #ff5f93;
+  border-color: var(--color-primary, #ff5f93);
 }
 
 .chart-container {
@@ -606,7 +606,7 @@
 .audit-table input[type="number"]:focus,
 .audit-table input[type="text"]:focus {
   outline: none;
-  border-color: #ff5f93;
+  border-color: var(--color-primary, #ff5f93);
   box-shadow: 0 0 0 3px rgba(255, 95, 147, 0.1);
 }
 
@@ -675,7 +675,7 @@
 
 .audit-input:focus {
   outline: none;
-  border-color: #ff5f93;
+  border-color: var(--color-primary, #ff5f93);
   box-shadow: 0 0 0 3px rgba(255, 95, 147, 0.1);
   transform: translateY(-1px);
 }
@@ -732,7 +732,7 @@
 }
 
 .audit-table tbody tr:hover .audit-input {
-  border-color: #ff5f93;
+  border-color: var(--color-primary, #ff5f93);
   background: #fafafa;
 }
 
@@ -838,7 +838,7 @@
 
 .period-selector:focus {
   outline: none;
-  border-color: #ff5f93;
+  border-color: var(--color-primary, #ff5f93);
   box-shadow: 0 0 0 3px rgba(255, 95, 147, 0.1);
 }
 
@@ -858,14 +858,14 @@
 }
 
 .chart-type-selector button:hover {
-  border-color: #ff5f93;
+  border-color: var(--color-primary, #ff5f93);
   transform: translateY(-1px);
 }
 
 .chart-type-selector button.active {
   background: linear-gradient(135deg, #ff5f93, #e53e3e);
   color: white;
-  border-color: #ff5f93;
+  border-color: var(--color-primary, #ff5f93);
 }
 
 /* Enhanced chart container */
@@ -932,7 +932,7 @@
 .progress-value {
   font-size: 0.9rem;
   font-weight: 800;
-  color: #ff5f93;
+  color: var(--color-primary, #ff5f93);
 }
 
 .progress-bar-bg {
@@ -1023,9 +1023,9 @@
 }
 
 .status-pill.active {
-  background: #ff5f93;
+  background: var(--color-primary, #ff5f93);
   color: white;
-  border-color: #ff5f93;
+  border-color: var(--color-primary, #ff5f93);
 }
 
 .btn-clear {
@@ -1184,9 +1184,9 @@
 }
 
 .btn-page.active {
-  background: #ff5f93;
+  background: var(--color-primary, #ff5f93);
   color: white;
-  border-color: #ff5f93;
+  border-color: var(--color-primary, #ff5f93);
 }
 
 .btn-page:disabled {
@@ -1240,3 +1240,4 @@
     position: static;
   }
 }
+

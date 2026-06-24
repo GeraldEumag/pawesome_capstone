@@ -1,8 +1,47 @@
 import React from "react";
 import { NavLink, useNavigate } from "react-router-dom";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import {
+  faWarehouse,
+  faBoxes,
+  faHistory,
+  faChartBar,
+  faClipboardList,
+  faFileAlt,
+  faChartPie,
+  faUserCircle,
+  faSignOutAlt,
+  faTimes,
+} from "@fortawesome/free-solid-svg-icons";
 import { showConfirm } from "../../utils/alert.jsx";
 import { apiRequest, clearAuthStorage } from "../../api/client";
 import "./InventorySidebar.css";
+
+const NAV_SECTIONS = [
+  {
+    label: "Manage",
+    items: [
+      { to: "/inventory", label: "Dashboard", icon: faWarehouse, end: true },
+      { to: "/inventory/stock", label: "Stock Management", icon: faBoxes },
+      { to: "/inventory/history", label: "History", icon: faHistory },
+    ],
+  },
+  {
+    label: "Reports & Audit",
+    items: [
+      { to: "/inventory/reports", label: "Reports", icon: faChartBar },
+      { to: "/inventory/monthly-audit", label: "Monthly Audit", icon: faClipboardList },
+      { to: "/inventory/monthly-audit-report", label: "Audit Reports", icon: faFileAlt },
+      { to: "/inventory/audit-analytics", label: "Audit Analytics", icon: faChartPie },
+    ],
+  },
+  {
+    label: "Account",
+    items: [
+      { to: "/inventory/profile", label: "Profile", icon: faUserCircle },
+    ],
+  },
+];
 
 const InventorySidebar = ({ mobileOpen, onMobileMenuToggle }) => {
   const navigate = useNavigate();
@@ -28,58 +67,32 @@ const InventorySidebar = ({ mobileOpen, onMobileMenuToggle }) => {
           <span>Inventory Portal</span>
         </div>
         <button className="mobile-close-btn" onClick={onMobileMenuToggle} type="button" aria-label="Close menu">
-          &times;
+          <FontAwesomeIcon icon={faTimes} />
         </button>
       </div>
 
       <nav className="sidebar-nav">
-        <ul className="nav-list">
-          <li className="nav-item">
-            <NavLink to="/inventory" end onClick={handleNavClick}>
-              Unified Inventory
-            </NavLink>
-          </li>
-          <li className="nav-item">
-            <NavLink to="/inventory/stock" onClick={handleNavClick}>
-              Stock Management
-            </NavLink>
-          </li>
-          <li className="nav-item">
-            <NavLink to="/inventory/history" onClick={handleNavClick}>
-              History
-            </NavLink>
-          </li>
-          <li className="nav-item">
-            <NavLink to="/inventory/reports" onClick={handleNavClick}>
-              Reports
-            </NavLink>
-          </li>
-          <li className="nav-item">
-            <NavLink to="/inventory/monthly-audit" onClick={handleNavClick}>
-              Monthly Audit
-            </NavLink>
-          </li>
-          <li className="nav-item">
-            <NavLink to="/inventory/monthly-audit-report" onClick={handleNavClick}>
-              Audit Reports
-            </NavLink>
-          </li>
-          <li className="nav-item">
-            <NavLink to="/inventory/audit-analytics" onClick={handleNavClick}>
-              Audit Analytics
-            </NavLink>
-          </li>
-          <li className="nav-item">
-            <NavLink to="/inventory/profile" onClick={handleNavClick}>
-              Profile
-            </NavLink>
-          </li>
-        </ul>
+        {NAV_SECTIONS.map((section) => (
+          <div key={section.label} className="nav-section">
+            <span className="nav-section-label">{section.label}</span>
+            <ul className="nav-list">
+              {section.items.map(({ to, label, icon, end }) => (
+                <li key={to} className="nav-item">
+                  <NavLink to={to} end={end} onClick={handleNavClick}>
+                    <FontAwesomeIcon icon={icon} className="nav-icon" />
+                    <span>{label}</span>
+                  </NavLink>
+                </li>
+              ))}
+            </ul>
+          </div>
+        ))}
       </nav>
 
       <div className="sidebar-footer">
         <button className="logout-btn" onClick={handleLogout}>
-          Logout
+          <FontAwesomeIcon icon={faSignOutAlt} />
+          <span>Logout</span>
         </button>
       </div>
     </aside>
