@@ -20,6 +20,9 @@ import { formatCurrency } from "../../utils/currency";
 import { posApi } from "../../api/pos";
 import { useNavigate } from "react-router-dom";
 
+const isGenericFetchFailure = (error) =>
+  error?.name === "TypeError" && error?.message === "Failed to fetch";
+
 const CashierTransactions = () => {
   const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState("");
@@ -78,7 +81,9 @@ const CashierTransactions = () => {
     } catch (err) {
       setError("Failed to load transactions");
       showError("Failed to load transactions");
-      console.error("Load transactions error:", err);
+      if (!isGenericFetchFailure(err)) {
+        console.error("Load transactions error:", err);
+      }
     } finally {
       setLoading(false);
     }

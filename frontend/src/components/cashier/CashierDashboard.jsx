@@ -41,6 +41,9 @@ const toNumber = (value) => {
   return Number.isFinite(num) ? num : 0;
 };
 
+const isGenericFetchFailure = (error) =>
+  error?.name === "TypeError" && error?.message === "Failed to fetch";
+
 const formatTime = (value) => {
   if (!value) return "Just now";
 
@@ -195,7 +198,9 @@ const CashierDashboard = () => {
       } catch (err) {
         setError(err.message || "Failed to load dashboard data");
         showError(err.message || "Failed to load dashboard data");
-        console.error("Cashier dashboard fetch error:", err);
+        if (!isGenericFetchFailure(err)) {
+          console.error("Cashier dashboard fetch error:", err);
+        }
       } finally {
         setLoading(false);
         setRefreshing(false);
@@ -213,7 +218,9 @@ const CashierDashboard = () => {
       setLastHandover(handoverRes?.handover || null);
       setLastShiftReport(shiftRes?.shift_report || null);
     } catch (err) {
-      console.error("Failed to load last cashier info:", err);
+      if (!isGenericFetchFailure(err)) {
+        console.error("Failed to load last cashier info:", err);
+      }
     }
   }, []);
 

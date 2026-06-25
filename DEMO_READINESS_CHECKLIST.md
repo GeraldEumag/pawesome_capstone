@@ -212,11 +212,12 @@ All accounts use the same password: `Password123!`
 - **Workaround**: Focus on grooming and vet appointment workflows unless hotel room seed data is added
 
 ### Browser UI Testing
-- **Status**: Manager payroll and main cross-role workflow browser verification completed
+- **Status**: Core operational browser verification completed
 - **Evidence**:
   - `browser-evidence/manager-payroll-scope/manager-payroll-scope-results.json`
   - `browser-evidence/cross-role-main-workflow/cross-role-main-workflow-results.json`
-- **Observation**: Manager pages and the Customer -> Receptionist -> Veterinary -> Manager Reports workflow rendered and stayed on route; latest evidence has no browser console errors and no HTTP 401/403/404/500 API failures. Playwright still records `net::ERR_ABORTED` background/navigation aborts during fast route changes; these are documented separately as non-critical navigation/background request aborts.
+  - `browser-evidence/cashier-inventory-workflow/cashier-inventory-workflow-results.json`
+- **Observation**: Manager payroll pages, the Customer -> Receptionist -> Veterinary -> Manager Reports workflow, and the Cashier POS -> Inventory Stock Logs -> Manager Reports workflow rendered and stayed on route. Latest evidence has no browser console errors and no HTTP 401/403/404/500 API failures. Playwright still records `net::ERR_ABORTED` background/navigation aborts during fast route changes; these are documented separately as non-critical navigation/background request aborts.
 
 ---
 
@@ -278,8 +279,10 @@ All accounts use the same password: `Password123!`
 - [x] Receptionist sees and approves assigned vet request
 - [x] Veterinary sees appointment and updates status to `in_progress`
 - [x] Manager dashboard/reports load after workflow records are created
-- [ ] Cashier verifies payment (next workflow)
-- [ ] Inventory stock logs reflect POS/payment workflow (next workflow)
+- [x] Cashier POS sale completes and creates transaction evidence
+- [x] Inventory stock logs reflect POS stock deduction
+- [x] Manager reports load after POS/inventory activity
+- [ ] Customer payment proof verification remains optional/pending if no seeded proof data is available
 
 ---
 
@@ -320,7 +323,9 @@ npm run build
 | Manager staff page | ✅ Browser-render verified | Page rendered; console fetch errors fixed |
 | Admin user count | ✅ Updated | Checklist now expects 7 users |
 | Cross-role main workflow | ✅ Browser-verified | Customer -> Receptionist -> Veterinary -> Manager Reports passed in Chromium |
-| Cashier/POS workflow | ⚠️ Pending | Next browser workflow target |
+| Cashier/POS workflow | ✅ Browser-verified | POS cash sale completed, stock decreased, transaction detail loaded |
+| Inventory stock logs | ✅ Browser/API verified | POS sale produced `pos_sale` stock movement log |
+| Manager reports after POS | ✅ Browser/API verified | Sales and inventory report APIs loaded after POS activity |
 | Boarding data | ⚠️ Limited | Confirmed 0 hotel rooms in latest DB |
 
 ---
@@ -337,12 +342,12 @@ npm run build
 | Demo Data | ✅ Ready | Pet, grooming, vet appointment created |
 | Manager Payroll Browser UI | ✅ Verified | Manager pages render and latest evidence has no console errors |
 | Cross-Role Main Workflow | ✅ Verified | Customer -> Receptionist -> Veterinary -> Manager Reports passed with screenshots and JSON evidence |
-| Cashier POS / Inventory Workflow | ⚠️ Pending | Next browser workflow target |
+| Cashier POS / Inventory Workflow | ✅ Verified | Cashier POS sale deducted stock, Inventory logs showed POS movement, Manager reports loaded |
 | Boarding Feature | ⚠️ Limited | No `hotel_rooms` currently seeded |
 
-### Overall Status: **Main Workflow Browser-Verified**
+### Overall Status: **Core Operational Workflow Browser-Verified**
 
-The system is ready for the main demo workflow: Payroll scope is documented and implemented under Manager, Manager-owned payroll browser rendering is verified, and the Customer -> Receptionist -> Veterinary -> Manager Reports browser workflow passed with evidence. Cashier POS/payment verification and Inventory stock logs remain the next browser-validation target. Boarding/hotel remains limited until hotel room seed data is added.
+The system is ready for the core operational demo workflow: Payroll scope is documented and implemented under Manager, Manager-owned payroll browser rendering is verified, the Customer -> Receptionist -> Veterinary -> Manager Reports browser workflow passed, and the Cashier POS -> Inventory Stock Logs -> Manager Reports workflow passed with stock deduction evidence. Boarding/hotel remains limited until hotel room seed data is added. Customer payment proof verification remains separate from the POS cash-sale path and should be tested only if seeded proof data is available.
 
 ---
 
@@ -354,17 +359,17 @@ The system is ready for the main demo workflow: Payroll scope is documented and 
 
 ## Next Steps
 
-1. Browser-test the Cashier POS/payment verification workflow
-2. Browser-test Inventory stock logs after POS/payment activity
-3. Confirm Manager reports reflect Cashier POS/payment and inventory records
-4. Optional: Add hotel room seed data if boarding/hotel will be included in the demo
+1. Optional: Browser-test customer payment proof verification if seeded proof data is available
+2. Optional: Add hotel room seed data if boarding/hotel will be included in the demo
+3. Push committed readiness work to GitHub after final review
 
 ---
 
-## Latest Commit
+## Latest Completed Commits
 
 - Commit: `a0f7da3` Verify manager payroll scope and fix manager data loading
-- Scope: Payroll role removal, Manager-owned payroll validation, Manager data-load fixes, readiness checklist update, Playwright evidence, and Vite log ignore rules.
+- Commit: `39552ab` Verify main cross-role browser workflow
+- Pending commit scope: Cashier POS stock deduction workflow, Inventory stock log verification, Manager report verification after POS activity, Cashier route-change console cleanup, readiness checklist update, and Playwright evidence.
 
 ## Current Working Tree Note
 
