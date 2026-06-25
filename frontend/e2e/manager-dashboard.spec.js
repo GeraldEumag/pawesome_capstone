@@ -84,7 +84,7 @@ test.describe('Manager Dashboard end-to-end', () => {
   });
 
   test('forbidden pages redirect or block', async ({ page }) => {
-    const forbiddenPaths = ['/admin', '/payroll'];
+    const forbiddenPaths = ['/admin'];
     for (const path of forbiddenPaths) {
       await page.goto('http://localhost:3000' + path);
       const currentUrl = page.url();

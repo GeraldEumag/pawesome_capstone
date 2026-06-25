@@ -27,7 +27,6 @@ class PawesomeLiveDemoSeeder extends Seeder
             'inventory' => ['name' => 'Inventory Manager', 'role' => 'inventory', 'department' => 'Inventory', 'position' => 'Inventory Manager'],
             'vet' => ['name' => 'Veterinarian', 'role' => 'veterinary', 'department' => 'Veterinary', 'position' => 'Veterinarian'],
             'customer' => ['name' => 'Customer', 'role' => 'customer', 'department' => null, 'position' => null],
-            'payroll' => ['name' => 'Payroll Manager', 'role' => 'payroll', 'department' => 'Finance', 'position' => 'Payroll Manager'],
         ];
 
         $users = [];

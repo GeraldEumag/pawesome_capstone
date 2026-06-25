@@ -20,7 +20,6 @@ import {
   faXmark,
 } from "@fortawesome/free-solid-svg-icons";
 import { apiRequest } from "../../api/client";
-import { useAuth } from "../../context/AuthContext";
 import "./ManagerSchedule.css";
 
 const DAYS = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
@@ -32,13 +31,17 @@ const ROLE_COLORS = {
   receptionist: "#d97706",
   veterinary: "#059669",
   inventory: "#ea580c",
-  payroll: "#7c3aed",
   staff: "#3b82f6",
   groomer: "#ec4899",
   default: "#64748b",
 };
 
 const getRoleColor = (role) => ROLE_COLORS[(role || "").toLowerCase().replace(/\s+/g, "_")] || ROLE_COLORS.default;
+
+const isRequestCancelled = (error, signal) =>
+  signal?.aborted ||
+  error?.name === "AbortError" ||
+  error?.message === "Request was cancelled";
 
 const normalizeList = (payload, keys = []) => {
   if (Array.isArray(payload)) return payload;
@@ -67,7 +70,6 @@ const formatTime = (value) => {
 };
 
 const ManagerSchedule = () => {
-  const { role } = useAuth();
   const [records, setRecords] = useState([]);
   const [employees, setEmployees] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -88,29 +90,38 @@ const ManagerSchedule = () => {
   }, []);
 
   const loadSchedules = useCallback(
-    async ({ silent = false } = {}) => {
+    async ({ silent = false, signal } = {}) => {
       try {
         if (silent) setRefreshing(true);
         else setLoading(true);
         setError("");
-        const res = await apiRequest("/manager/schedules");
+        const res = await apiRequest("/manager/schedules", { signal });
         setRecords(normalizeList(res, ["data", "schedules", "records"]));
         setEmployees(normalizeList(res, ["employees", "staff", "data"]));
       } catch (err) {
+        if (isRequestCancelled(err, signal)) {
+          return;
+        }
+
         console.error("Schedule load error:", err);
         setError(err.message || "Failed to load schedules.");
         setRecords([]);
         setEmployees([]);
       } finally {
-        setLoading(false);
-        setRefreshing(false);
+        if (!signal?.aborted) {
+          setLoading(false);
+          setRefreshing(false);
+        }
       }
     },
     []
   );
 
   useEffect(() => {
-    loadSchedules();
+    const controller = new AbortController();
+    loadSchedules({ signal: controller.signal });
+
+    return () => controller.abort();
   }, [loadSchedules]);
 
   const filteredEmployees = useMemo(() => {
@@ -206,21 +217,13 @@ const ManagerSchedule = () => {
     return `${start.toLocaleDateString("en-PH", { month: "short", day: "numeric" })} - ${end.toLocaleDateString("en-PH", { month: "short", day: "numeric", year: "numeric" })}`;
   }, [currentWeek]);
 
-  const isManagerView = role === "manager";
-
   return (
     <div className="manager-schedule">
       <section className="manager-schedule-hero">
         <div>
-          <span className="schedule-eyebrow">
-            {isManagerView ? "Manager Schedule" : "Payroll / HR Schedule"}
-          </span>
-          <h1>{isManagerView ? "Work Scheduling (Read-Only)" : "Work Scheduling"}</h1>
-          <p>
-            {isManagerView
-              ? "View employee shift schedules. Manager access is limited to monitoring only."
-              : "Manage employee shift schedules and weekly assignments."}
-          </p>
+          <span className="schedule-eyebrow">Manager Schedule</span>
+          <h1>Work Scheduling</h1>
+          <p>Manage employee shift schedules and weekly assignments.</p>
         </div>
         <div className="schedule-hero-actions">
           <button type="button" className="schedule-btn secondary" onClick={() => loadSchedules({ silent: true })} disabled={loading || refreshing}>

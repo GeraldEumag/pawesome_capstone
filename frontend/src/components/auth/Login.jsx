@@ -17,8 +17,6 @@ import { showSuccess, showError } from "../../utils/alert.jsx";
 
 const roleRouteMap = {
   admin: "/admin",
-  payroll: "/payroll",
-  payroll_manager: "/payroll",
   customer: "/customer",
   receptionist: "/receptionist",
   veterinary: "/veterinary",

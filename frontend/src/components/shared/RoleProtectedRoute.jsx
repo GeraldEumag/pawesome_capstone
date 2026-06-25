@@ -3,13 +3,12 @@ import { useAuth } from "../../context/AuthContext";
 
 const RoleProtectedRoute = ({ children, allowedRoles }) => {
   const { token, role } = useAuth();
-  const normalizedRole = role === "payroll_manager" ? "payroll" : role;
 
   if (!token) {
     return <Navigate to="/login" />;
   }
 
-  if (!allowedRoles.includes(normalizedRole)) {
+  if (!allowedRoles.includes(role)) {
     return <Navigate to="/dashboard" />;
   }
 

@@ -1,0 +1,260 @@
+{
+  "startedAt": "2026-06-25T20:18:37.853Z",
+  "frontendUrl": "http://127.0.0.1:3000",
+  "backendUrl": "http://127.0.0.1:8000",
+  "login": true,
+  "pages": [
+    {
+      "path": "/manager",
+      "url": "http://127.0.0.1:3000/manager",
+      "rendered": true,
+      "stayedOnRoute": true,
+      "textLength": 2745,
+      "screenshot": "browser-evidence/manager-payroll-scope/manager-dashboard.png"
+    },
+    {
+      "path": "/manager/staff",
+      "url": "http://127.0.0.1:3000/manager/staff",
+      "rendered": true,
+      "stayedOnRoute": true,
+      "textLength": 1370,
+      "screenshot": "browser-evidence/manager-payroll-scope/manager-staff.png"
+    },
+    {
+      "path": "/manager/attendance",
+      "url": "http://127.0.0.1:3000/manager/attendance",
+      "rendered": true,
+      "stayedOnRoute": true,
+      "textLength": 1206,
+      "screenshot": "browser-evidence/manager-payroll-scope/manager-attendance.png"
+    },
+    {
+      "path": "/manager/leave",
+      "url": "http://127.0.0.1:3000/manager/leave",
+      "rendered": true,
+      "stayedOnRoute": true,
+      "textLength": 701,
+      "screenshot": "browser-evidence/manager-payroll-scope/manager-leave.png"
+    },
+    {
+      "path": "/manager/schedule",
+      "url": "http://127.0.0.1:3000/manager/schedule",
+      "rendered": true,
+      "stayedOnRoute": true,
+      "textLength": 1151,
+      "screenshot": "browser-evidence/manager-payroll-scope/manager-schedule.png"
+    },
+    {
+      "path": "/manager/payroll",
+      "url": "http://127.0.0.1:3000/manager/payroll",
+      "rendered": true,
+      "stayedOnRoute": true,
+      "textLength": 1179,
+      "screenshot": "browser-evidence/manager-payroll-scope/manager-payroll.png"
+    },
+    {
+      "path": "/manager/payroll/computation",
+      "url": "http://127.0.0.1:3000/manager/payroll/computation",
+      "rendered": true,
+      "stayedOnRoute": true,
+      "textLength": 554,
+      "screenshot": "browser-evidence/manager-payroll-scope/manager-payroll-computation.png"
+    },
+    {
+      "path": "/manager/reports",
+      "url": "http://127.0.0.1:3000/manager/reports",
+      "rendered": true,
+      "stayedOnRoute": true,
+      "textLength": 1367,
+      "screenshot": "browser-evidence/manager-payroll-scope/manager-reports.png"
+    }
+  ],
+  "console": [],
+  "network": [
+    {
+      "status": "REQUEST_FAILED",
+      "method": "GET",
+      "url": "http://127.0.0.1:8000/api/manager/reports/payments",
+      "page": "http://127.0.0.1:3000/manager",
+      "failure": "net::ERR_ABORTED"
+    },
+    {
+      "status": "REQUEST_FAILED",
+      "method": "GET",
+      "url": "http://127.0.0.1:8000/api/notifications?role=manager",
+      "page": "http://127.0.0.1:3000/manager",
+      "failure": "net::ERR_ABORTED"
+    },
+    {
+      "status": "REQUEST_FAILED",
+      "method": "GET",
+      "url": "http://127.0.0.1:8000/api/manager/reports/veterinary-services",
+      "page": "http://127.0.0.1:3000/manager",
+      "failure": "net::ERR_ABORTED"
+    },
+    {
+      "status": "REQUEST_FAILED",
+      "method": "GET",
+      "url": "http://127.0.0.1:8000/api/manager/reports/inventory",
+      "page": "http://127.0.0.1:3000/manager",
+      "failure": "net::ERR_ABORTED"
+    },
+    {
+      "status": "REQUEST_FAILED",
+      "method": "GET",
+      "url": "http://127.0.0.1:8000/api/manager/reports/payments",
+      "page": "http://127.0.0.1:3000/manager",
+      "failure": "net::ERR_ABORTED"
+    },
+    {
+      "status": "REQUEST_FAILED",
+      "method": "GET",
+      "url": "http://127.0.0.1:8000/api/manager/reports/inventory",
+      "page": "http://127.0.0.1:3000/manager",
+      "failure": "net::ERR_ABORTED"
+    },
+    {
+      "status": "REQUEST_FAILED",
+      "method": "GET",
+      "url": "http://127.0.0.1:8000/api/settings/public",
+      "page": "http://127.0.0.1:3000/manager",
+      "failure": "net::ERR_ABORTED"
+    },
+    {
+      "status": "REQUEST_FAILED",
+      "method": "GET",
+      "url": "http://127.0.0.1:8000/api/manager/dashboard",
+      "page": "http://127.0.0.1:3000/manager",
+      "failure": "net::ERR_ABORTED"
+    },
+    {
+      "status": "REQUEST_FAILED",
+      "method": "GET",
+      "url": "http://127.0.0.1:8000/api/manager/reports/services",
+      "page": "http://127.0.0.1:3000/manager",
+      "failure": "net::ERR_ABORTED"
+    },
+    {
+      "status": "REQUEST_FAILED",
+      "method": "GET",
+      "url": "http://127.0.0.1:8000/api/settings/public",
+      "page": "http://127.0.0.1:3000/manager",
+      "failure": "net::ERR_ABORTED"
+    },
+    {
+      "status": "REQUEST_FAILED",
+      "method": "GET",
+      "url": "http://127.0.0.1:8000/api/manager/reports/services",
+      "page": "http://127.0.0.1:3000/manager",
+      "failure": "net::ERR_ABORTED"
+    },
+    {
+      "status": "REQUEST_FAILED",
+      "method": "GET",
+      "url": "http://127.0.0.1:8000/api/manager/history",
+      "page": "http://127.0.0.1:3000/manager",
+      "failure": "net::ERR_ABORTED"
+    },
+    {
+      "status": "REQUEST_FAILED",
+      "method": "GET",
+      "url": "http://127.0.0.1:8000/api/notifications?role=manager",
+      "page": "http://127.0.0.1:3000/manager",
+      "failure": "net::ERR_ABORTED"
+    },
+    {
+      "status": "REQUEST_FAILED",
+      "method": "GET",
+      "url": "http://127.0.0.1:8000/api/manager/reports/veterinary-services",
+      "page": "http://127.0.0.1:3000/manager",
+      "failure": "net::ERR_ABORTED"
+    },
+    {
+      "status": "REQUEST_FAILED",
+      "method": "GET",
+      "url": "http://127.0.0.1:8000/api/manager/history",
+      "page": "http://127.0.0.1:3000/manager",
+      "failure": "net::ERR_ABORTED"
+    },
+    {
+      "status": "REQUEST_FAILED",
+      "method": "GET",
+      "url": "http://127.0.0.1:8000/api/manager/staff",
+      "page": "http://127.0.0.1:3000/manager/staff",
+      "failure": "net::ERR_ABORTED"
+    },
+    {
+      "status": "REQUEST_FAILED",
+      "method": "GET",
+      "url": "http://127.0.0.1:8000/api/notifications?role=manager",
+      "page": "http://127.0.0.1:3000/manager/staff",
+      "failure": "net::ERR_ABORTED"
+    },
+    {
+      "status": "REQUEST_FAILED",
+      "method": "GET",
+      "url": "http://127.0.0.1:8000/api/manager/leaves?",
+      "page": "http://127.0.0.1:3000/manager/leave",
+      "failure": "net::ERR_ABORTED"
+    },
+    {
+      "status": "REQUEST_FAILED",
+      "method": "GET",
+      "url": "http://127.0.0.1:8000/api/notifications?role=manager",
+      "page": "http://127.0.0.1:3000/manager/leave",
+      "failure": "net::ERR_ABORTED"
+    },
+    {
+      "status": "REQUEST_FAILED",
+      "method": "GET",
+      "url": "http://127.0.0.1:8000/api/manager/schedules",
+      "page": "http://127.0.0.1:3000/manager/schedule",
+      "failure": "net::ERR_ABORTED"
+    },
+    {
+      "status": "REQUEST_FAILED",
+      "method": "GET",
+      "url": "http://127.0.0.1:8000/api/notifications?role=manager",
+      "page": "http://127.0.0.1:3000/manager/schedule",
+      "failure": "net::ERR_ABORTED"
+    },
+    {
+      "status": "REQUEST_FAILED",
+      "method": "GET",
+      "url": "http://127.0.0.1:8000/api/notifications?role=manager",
+      "page": "http://127.0.0.1:3000/manager/schedule",
+      "failure": "net::ERR_ABORTED"
+    },
+    {
+      "status": "REQUEST_FAILED",
+      "method": "GET",
+      "url": "http://127.0.0.1:8000/api/notifications?role=manager",
+      "page": "http://127.0.0.1:3000/manager/payroll",
+      "failure": "net::ERR_ABORTED"
+    },
+    {
+      "status": "REQUEST_FAILED",
+      "method": "GET",
+      "url": "http://127.0.0.1:8000/api/manager/payroll?",
+      "page": "http://127.0.0.1:3000/manager/payroll",
+      "failure": "net::ERR_ABORTED"
+    },
+    {
+      "status": "REQUEST_FAILED",
+      "method": "GET",
+      "url": "http://127.0.0.1:8000/api/notifications?role=manager",
+      "page": "http://127.0.0.1:3000/manager/payroll/computation",
+      "failure": "net::ERR_ABORTED"
+    }
+  ],
+  "screenshots": [
+    "browser-evidence/manager-payroll-scope/manager-dashboard.png",
+    "browser-evidence/manager-payroll-scope/manager-staff.png",
+    "browser-evidence/manager-payroll-scope/manager-attendance.png",
+    "browser-evidence/manager-payroll-scope/manager-leave.png",
+    "browser-evidence/manager-payroll-scope/manager-schedule.png",
+    "browser-evidence/manager-payroll-scope/manager-payroll.png",
+    "browser-evidence/manager-payroll-scope/manager-payroll-computation.png",
+    "browser-evidence/manager-payroll-scope/manager-reports.png"
+  ]
+}

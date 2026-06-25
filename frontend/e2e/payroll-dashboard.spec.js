@@ -1,15 +1,15 @@
 const { test, expect } = require('@playwright/test');
 
-test.describe('Payroll Dashboard end-to-end', () => {
+test.describe('Manager Payroll end-to-end', () => {
   const { loginAs, mockLoginAs, getDashboardPath } = require('./test-utils');
-  const role = 'payroll';
-  const dashboardPath = getDashboardPath(role);
+  const role = 'manager';
+  const dashboardPath = '/manager/payroll';
 
   test.beforeEach(async ({ page }) => {
     if (process.env.E2E_LIVE) {
       await loginAs(page, role);
     } else {
-      await mockLoginAs(page, role, 'E2E Payroll');
+      await mockLoginAs(page, role, 'E2E Manager');
     }
   });
 
@@ -26,7 +26,7 @@ test.describe('Payroll Dashboard end-to-end', () => {
   test('loads payroll module and shows payroll metrics', async ({ page }) => {
     const mock = { payrolls: [], monthly_total: 50000 };
     if (!process.env.E2E_LIVE) {
-      await page.route('**/api/payroll*', route => route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(mock) }));
+      await page.route('**/api/manager/payroll*', route => route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(mock) }));
     }
     await page.goto('http://localhost:3000' + dashboardPath);
     await expect(page.locator('.summary-card, [class*="card"], [class*="stat"]').first()).toBeVisible();
@@ -58,12 +58,11 @@ test.describe('Payroll Dashboard end-to-end', () => {
     let generateCalled = false;
 
     if (!process.env.E2E_LIVE) {
-      await page.route('**/api/payroll/employees*', route => route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(mockEmployees) }));
-      await page.route('**/api/payroll/generate*', route => {
+      await page.route('**/api/manager/payroll/compute*', route => route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(mockEmployees) }));
+      await page.route('**/api/manager/payroll/generate*', route => {
         generateCalled = true;
         return route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ success: true, message: 'Payroll generated' }) });
       });
-      await page.route('**/api/payroll/*/payslip*', route => route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ id: 1, employee_name: 'John Staff', gross_pay: 30000 }) }));
     }
 
     await page.goto('http://localhost:3000' + dashboardPath);

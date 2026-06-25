@@ -3,8 +3,6 @@ import { useAuth } from "../context/AuthContext";
 
 const roleHomeMap = {
   admin: "/admin",
-  payroll: "/payroll",
-  payroll_manager: "/payroll",
   customer: "/customer",
   receptionist: "/receptionist",
   veterinary: "/veterinary",

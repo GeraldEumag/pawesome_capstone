@@ -193,6 +193,12 @@ const ManagerLeave = () => {
     }
   };
 
+  const openAction = (record, action) => {
+    setSelectedRecord(record);
+    setActionModal(action);
+    setRemarks("");
+  };
+
   const exportCSV = () => {
     if (!records.length) return;
     const headers = ["Employee", "Type", "Start Date", "End Date", "Status", "Reason"];
@@ -344,7 +350,18 @@ const ManagerLeave = () => {
                           <td className="leave-reason">{r.reason || "—"}</td>
                           <td>
                             <div className="leave-actions">
-                              <span className="leave-readonly-badge">View Only</span>
+                              {r.status === "pending" ? (
+                                <>
+                                  <button type="button" className="approve" onClick={() => openAction(r, "approve")}>
+                                    <FontAwesomeIcon icon={faThumbsUp} /> Approve
+                                  </button>
+                                  <button type="button" className="reject" onClick={() => openAction(r, "reject")}>
+                                    <FontAwesomeIcon icon={faThumbsDown} /> Reject
+                                  </button>
+                                </>
+                              ) : (
+                                <StatusBadge status={r.status} />
+                              )}
                             </div>
                           </td>
                         </tr>

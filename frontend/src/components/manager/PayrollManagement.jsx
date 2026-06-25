@@ -208,8 +208,7 @@ const createPayrollNotification = async (message, priority = "high") => {
 const PayrollManagement = () => {
   const navigate = useNavigate();
   const { role } = useAuth();
-  const isManagerView = role === "manager";
-  const canOperatePayroll = ["admin", "payroll", "payroll_manager"].includes(role);
+  const canOperatePayroll = ["manager", "admin"].includes(role);
   const [payrolls, setPayrolls] = useState([]);
   const [backendSummary, setBackendSummary] = useState(null);
 
@@ -727,15 +726,11 @@ const PayrollManagement = () => {
       <section className="manager-payroll-hero">
         <div>
           <span className="payroll-eyebrow">
-            {isManagerView ? "Manager Payroll Summary" : "Payroll Manager / HR"}
+            Manager Payroll Management
           </span>
-          <h1>
-            Payroll Management {isManagerView && <span className="readonly-badge">View Only</span>}
-          </h1>
+          <h1>Payroll Management</h1>
           <p>
-            {isManagerView
-              ? "Monitor payroll summaries, review attendance-based payroll values, and view employee payslips. Manager access is limited to monitoring and review only. Payroll operations are handled by Payroll Manager / HR."
-              : "Manage payroll records, compute payroll for pay periods, release payroll, and generate employee payslips."}
+            Manage payroll records, compute pay periods, release payroll, and generate employee payslips from Manager HR operations.
           </p>
         </div>
 
@@ -760,7 +755,7 @@ const PayrollManagement = () => {
               <button
                 type="button"
                 className="payroll-btn secondary"
-                onClick={() => navigate("/payroll/compute")}
+                onClick={() => navigate("/manager/payroll/computation")}
               >
                 <FontAwesomeIcon icon={faCalculator} />
                 Compute Payroll

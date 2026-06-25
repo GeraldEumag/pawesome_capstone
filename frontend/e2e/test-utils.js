@@ -8,7 +8,6 @@ const DEFAULT_CREDENTIALS = {
   cashier: { email: 'cashier@test.com', password: 'password123' },
   inventory: { email: 'inventory@test.com', password: 'password123' },
   receptionist: { email: 'receptionist@test.com', password: 'password123' },
-  payroll: { email: 'payroll@test.com', password: 'password123' },
   customer: { email: 'customer@test.com', password: 'password123' },
 };
 
@@ -20,7 +19,6 @@ const ROLE_DASHBOARDS = {
   cashier: '/cashier',
   inventory: '/inventory',
   receptionist: '/receptionist',
-  payroll: '/payroll',
   customer: '/customer',
 };
 

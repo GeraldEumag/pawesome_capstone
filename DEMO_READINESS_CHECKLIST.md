@@ -4,7 +4,8 @@
 
 - **Project Path**: `C:\Users\ACER\Pawesome_Capstone`
 - **Backend URL**: http://127.0.0.1:8000
-- **Frontend URL**: http://localhost:3000
+- **Frontend URL**: http://localhost:3000 or http://127.0.0.1:3000
+- **Tested URL**: http://127.0.0.1:3000
 - **Database**: pawesome_capstone (MySQL)
 
 ---
@@ -25,7 +26,11 @@ npm run dev
 
 ---
 
-## Login Credentials
+## Payroll Scope Change Update
+
+The separate Payroll role/account/portal has been removed. Payroll is now handled inside the Manager module as part of management responsibilities.
+
+### Final Role Structure
 
 All accounts use the same password: `Password123!`
 
@@ -38,7 +43,15 @@ All accounts use the same password: `Password123!`
 | Inventory | inventory@example.com | inventory | /inventory |
 | Veterinary | vet@example.com | vet | /veterinary |
 | Customer | customer@example.com | customer | /customer |
-| Payroll | payroll@example.com | payroll | /payroll |
+
+### Payroll Scope Implementation
+
+- Separate Payroll login account removed from demo seed data.
+- Separate Payroll frontend route group removed.
+- Payroll pages are available under Manager routes.
+- Payroll, attendance, leave, schedule, staff, and biometric routes are protected for `manager` and `admin`.
+- Manager is the primary demo role for payroll workflows.
+- Admin can still access protected management APIs where authorized.
 
 ---
 
@@ -48,11 +61,11 @@ All accounts use the same password: `Password123!`
 - **Pet**: Buddy (Golden Retriever, Dog, 2 years old)
 - **Grooming Appointment**: 1 pending appointment (Full Grooming Medium Breed)
 - **Vet Appointment**: 1 pending appointment (General Check-up)
-- **Boarding Reservation**: 0 (skipped due to schema mismatch - no hotel_rooms data)
+- **Boarding Reservation**: 0 (confirmed latest DB has 0 `hotel_rooms` and 0 available `hotel_rooms`)
 - **Inventory Movement**: 1 stock adjustment log created
 
 ### Database Counts
-- Users: 8
+- Users: 7
 - Pets: 1 (Buddy)
 - Inventory Items: 837+
 - Services: 29
@@ -133,14 +146,37 @@ All accounts use the same password: `Password123!`
 2. Verify redirect to `/manager`
 3. **View Dashboard**
    - Check overview statistics
-   - Verify reports are accessible
+   - Confirm management navigation is visible
 4. **View Staff**
    - Navigate to `/manager/staff`
-   - Check staff list
-5. **View Reports**
+   - Check staff list loads
+5. **View Attendance**
+   - Navigate to `/manager/attendance`
+   - Check attendance page loads
+6. **View Leave**
+   - Navigate to `/manager/leave`
+   - Check leave requests page loads
+7. **View Schedule**
+   - Navigate to `/manager/schedule`
+   - Check schedule page loads
+8. **View Payroll Dashboard**
+   - Navigate to `/manager/payroll`
+   - Check payroll overview loads
+9. **View Payroll Computation**
+   - Navigate to `/manager/payroll/computation`
+   - Check payroll computation page loads
+10. **View Reports**
    - Navigate to `/manager/reports`
    - Check available reports
-6. Logout
+11. Confirm no `/payroll` standalone dashboard is required
+12. Confirm payroll navigation stays under Manager
+13. Confirm payroll page does not require a Payroll account
+14. Confirm Manager can access payroll-related data
+15. Confirm attendance pages are accessible to Manager
+16. Confirm leave pages are accessible to Manager
+17. Confirm schedule pages are accessible to Manager
+18. Check browser console for runtime errors
+19. Logout
 
 ### Step 6: Admin Workflow
 1. Login as **admin@example.com** / `Password123!`
@@ -149,52 +185,67 @@ All accounts use the same password: `Password123!`
    - Check admin overview
 4. **View Users**
    - Navigate to `/admin/users`
-   - Verify all 8 users are listed
+   - Verify all 7 users are listed
+   - Confirm no separate Payroll user is required
 5. **View Reports**
    - Navigate to `/admin/reports`
    - Check various report types
-6. **View Settings**
+6. **Verify Role Structure**
+   - Confirm Admin, Manager, Receptionist, Cashier, Inventory, Veterinary, and Customer roles are present
+7. **Verify Payroll Scope**
+   - Confirm payroll ownership is documented under Manager
+8. **View Settings**
    - Navigate to `/admin/settings`
    - Check system settings
-7. Logout
+9. Check browser console for runtime errors
+10. Confirm authentication redirects remain role-based
+11. Logout
 
 ---
 
 ## Known Limitations
 
 ### Boarding/Hotel Feature
-- **Issue**: Boarding reservation was not created due to schema mismatch
-- **Reason**: `boardings` table references `hotel_rooms` table, but no hotel_rooms data exists
-- **Impact**: Boarding/hotel workflow cannot be tested in demo
-- **Workaround**: Focus on grooming and vet appointment workflows
+- **Issue**: Boarding reservation is not created in the current demo data
+- **Reason**: Latest DB check confirms `hotel_rooms=0` and `available_hotel_rooms=0`
+- **Impact**: Boarding/hotel workflow cannot be fully tested in demo
+- **Workaround**: Focus on grooming and vet appointment workflows unless hotel room seed data is added
 
 ### Browser UI Testing
-- **Status**: Not yet confirmed via actual browser testing
-- **Reason**: Localhost domain restrictions prevented automated browser testing
-- **Action Required**: Manual browser testing using the script above
+- **Status**: Manager-first browser verification completed after console fix
+- **Evidence**: `browser-evidence/manager-payroll-scope/manager-payroll-scope-results.json`
+- **Observation**: Manager pages rendered and stayed on route; latest evidence has no browser console errors. Playwright still records `net::ERR_ABORTED` background/navigation aborts during fast route changes, but no HTTP 401/403/404/500 API failures were found.
 
 ---
 
 ## What Is Verified
 
 ### Backend ✅
-- 585 API routes registered
-- 100+ migrations ran successfully
-- Authentication working for all roles
+- API routes registered successfully
+- Migrations are available and checked with `php artisan migrate:status`
+- Authentication working for the seeded role accounts
 - Database seeded with users, inventory, services
-- Demo data created (pet, grooming, vet appointment)
+- Demo data created for pet, grooming, and vet appointment flows
+- Payroll-related APIs are scoped under Manager/Admin access
 
 ### Frontend ✅
 - Build passed successfully
-- All role routes properly configured
-- All component files exist
-- Role-based routing structure correct
-- Login component with role redirects configured
+- Seven role routes are configured
+- Separate Payroll route group removed
+- Manager payroll, attendance, leave, schedule, staff, and reports routes configured
+- Login component redirects users by current role structure
 
 ### Database ✅
 - All migrations ran
 - Demo data seeded successfully
 - Pet, grooming, and vet appointment records created
+- Latest hotel room check confirms no seeded hotel rooms yet
+
+### Payroll Scope Change ✅
+- Payroll is no longer a standalone role
+- Payroll account removed from demo credentials
+- Payroll workflow is owned by Manager
+- Manager validation includes `/manager/payroll`, `/manager/payroll/computation`, `/manager/attendance`, `/manager/leave`, and `/manager/schedule`
 
 ### Laravel Storage Fix ✅
 - `.gitignore` updated to preserve folder structure
@@ -215,7 +266,7 @@ All accounts use the same password: `Password123!`
 - [ ] Receptionist can view and approve requests
 - [ ] Cashier can access POS and payment verification
 - [ ] Veterinary can view and update appointments
-- [ ] Manager can view reports and staff
+- [x] Manager can view staff, attendance, leave, schedule, payroll, payroll computation, and reports
 - [ ] Admin can manage users and settings
 
 ### Cross-Role Workflow ⚠️
@@ -224,7 +275,7 @@ All accounts use the same password: `Password123!`
 - [ ] Customer sees updated status
 - [ ] Cashier verifies payment (if applicable)
 - [ ] Veterinary updates appointment status
-- [ ] Manager/Admin reflects records in dashboard
+- [ ] Manager/Admin dashboards reflect records
 
 ---
 
@@ -235,6 +286,7 @@ All accounts use the same password: `Password123!`
 cd C:\Users\ACER\Pawesome_Capstone\backend
 php artisan route:list
 php artisan migrate:status
+php artisan route:list --path=payroll
 ```
 
 ### Demo Data Seeding (Manual Only)
@@ -253,31 +305,54 @@ npm run build
 
 ---
 
+## Updated Validation Status
+
+| Validation | Status | Notes |
+|------------|--------|-------|
+| Payroll role removal | ✅ Verified | No standalone Payroll role in credentials |
+| Payroll routes | ✅ Verified | Payroll workflow is under Manager |
+| Manager payroll pages | ✅ Browser-render verified | `/manager/payroll` and `/manager/payroll/computation` rendered and stayed on route |
+| Manager attendance/leave/schedule | ✅ Browser-render verified | Pages rendered; console fetch errors fixed |
+| Manager staff page | ✅ Browser-render verified | Page rendered; console fetch errors fixed |
+| Admin user count | ✅ Updated | Checklist now expects 7 users |
+| Boarding data | ⚠️ Limited | Confirmed 0 hotel rooms in latest DB |
+
+---
+
 ## Demo Readiness Status
 
 | Component | Status | Notes |
 |-----------|--------|-------|
-| Backend API | ✅ Ready | All routes working, auth functional |
+| Backend API | ✅ Ready | Routes working, auth functional |
 | Frontend Build | ✅ Ready | Build passes, routes configured |
 | Database | ✅ Ready | Migrations complete, demo data seeded |
-| Authentication | ✅ Ready | All roles can login via API |
+| Authentication | ✅ Ready | Seven demo roles can login via API |
+| Payroll Scope Change | ✅ Ready | Payroll moved under Manager scope |
 | Demo Data | ✅ Ready | Pet, grooming, vet appointment created |
-| Browser UI | ⚠️ Pending | Requires manual browser testing |
-| Cross-Role Workflow | ⚠️ Pending | Requires manual browser testing |
-| Boarding Feature | ⚠️ Limited | Schema mismatch, hotel_rooms missing |
+| Manager Payroll Browser UI | ✅ Verified | Manager pages render and latest evidence has no console errors |
+| Cross-Role Workflow | ⚠️ Pending | Requires browser testing |
+| Boarding Feature | ⚠️ Limited | No `hotel_rooms` currently seeded |
 
 ### Overall Status: **Conditionally Demo-Ready**
 
-The system is technically ready for demo presentation, but **manual browser testing is required** to confirm UI rendering and user interactions work correctly.
+The system is technically ready for demo presentation, with the Payroll scope change documented and implemented. Manager-owned payroll browser rendering is verified and the previous Staff, Attendance, and Schedule console fetch errors are fixed. Full cross-role browser workflow testing remains pending.
+
+---
+
+## Defense Explanation
+
+"Payroll is not a separate operational account in this version of the system. Payroll belongs to the Manager scope because it is part of staff administration, attendance review, leave handling, scheduling, and compensation computation. The system uses seven demo roles, and Manager owns the payroll workflow."
 
 ---
 
 ## Next Steps
 
-1. **Immediate**: Perform manual browser testing using the script above
-2. **If UI issues found**: Fix specific components/pages
-3. **If UI works**: System is fully demo-ready
-4. **Optional**: Create hotel_rooms data to enable boarding workflow testing
+1. Browser-test the Customer workflow
+2. Browser-test the Receptionist approval/scheduling workflow
+3. Browser-test the Veterinary appointment update workflow
+4. Browser-test the Cashier POS/payment verification workflow
+5. Confirm Manager/Admin reports reflect workflow records
+6. Optional: Add hotel room seed data if boarding/hotel will be included in the demo
 
 ---
 
@@ -285,6 +360,7 @@ The system is technically ready for demo presentation, but **manual browser test
 
 ### Modified Files
 - `.gitignore` - Updated to preserve Laravel storage folder structure
+- `DEMO_READINESS_CHECKLIST.md` - Updated for Payroll scope change and Manager browser validation
 
 ### New Files
 - `backend/storage/framework/cache/.gitignore`
@@ -297,10 +373,11 @@ The system is technically ready for demo presentation, but **manual browser test
 ### Files to Commit
 ```powershell
 git add .gitignore
+git add DEMO_READINESS_CHECKLIST.md
 git add backend/storage/framework/
 git add backend/database/seeders/DemoDataSeeder.php
 git add backend/database/seeders/DatabaseSeeder.php
-git commit -m "Fix Laravel storage folder structure and add demo data seeder"
+git commit -m "Document demo readiness and payroll scope change"
 ```
 
 ---
@@ -315,5 +392,5 @@ If issues arise during demo:
 
 ---
 
-**Last Updated**: June 9, 2026
-**Version**: 1.0
+**Last Updated**: June 26, 2026
+**Version**: 1.1

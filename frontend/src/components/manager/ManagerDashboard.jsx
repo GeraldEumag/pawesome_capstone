@@ -507,8 +507,12 @@ const ManagerDashboard = () => {
 
   const ROUTE_META = [
     { path: "/manager", title: "Manager Dashboard", subtitle: "Executive monitoring dashboard for reservations, services, payments, inventory, customers, and business performance." },
-    { path: "/manager/staff", title: "Staff Performance", subtitle: "Monitor employee records and workforce performance (read-only)." },
-    { path: "/manager/payroll", title: "Payroll Summary", subtitle: "View payroll status and cost summaries (read-only)." },
+    { path: "/manager/staff", title: "Staff Management", subtitle: "Manage employee records and workforce performance." },
+    { path: "/manager/attendance", title: "Attendance", subtitle: "Manage staff attendance records and reviews." },
+    { path: "/manager/leave", title: "Leave", subtitle: "Manage staff leave requests and calendar." },
+    { path: "/manager/schedule", title: "Schedule", subtitle: "Manage staff schedules." },
+    { path: "/manager/payroll", title: "Payroll Management", subtitle: "Manage payroll status, records, and cost summaries." },
+    { path: "/manager/payroll/computation", title: "Payroll Computation", subtitle: "Preview and generate payroll from attendance records." },
     { path: "/manager/history", title: "History / Audit Trail", subtitle: "Review business activity and system audit logs." },
     { path: "/manager/reports", title: "Reports", subtitle: "Access sales, payment, inventory, service, customer, and staff performance reports." },
     { path: "/manager/reservations", title: "Reservations Monitoring", subtitle: "Monitor appointment, grooming, boarding, and customer reservation activity." },

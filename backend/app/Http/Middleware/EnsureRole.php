@@ -33,6 +33,6 @@ class EnsureRole
             return 'veterinary';
         }
 
-        return $role === 'payroll_manager' ? 'payroll' : $role;
+        return $role;
     }
 }

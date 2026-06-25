@@ -125,7 +125,7 @@ test.describe('Receptionist Dashboard end-to-end', () => {
   });
 
   test('forbidden pages redirect or block', async ({ page }) => {
-    const forbiddenPaths = ['/admin', '/payroll', '/manager'];
+    const forbiddenPaths = ['/admin', '/manager'];
     for (const path of forbiddenPaths) {
       await page.goto('http://localhost:3000' + path);
       const currentUrl = page.url();

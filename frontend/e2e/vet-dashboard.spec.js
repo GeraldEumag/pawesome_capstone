@@ -90,7 +90,7 @@ test.describe('Vet Dashboard end-to-end', () => {
   });
 
   test('forbidden pages redirect or block', async ({ page }) => {
-    const forbiddenPaths = ['/admin', '/cashier', '/payroll'];
+    const forbiddenPaths = ['/admin', '/cashier', '/manager'];
     for (const path of forbiddenPaths) {
       await page.goto('http://localhost:3000' + path);
       const currentUrl = page.url();

@@ -1,5 +1,4 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { useAuth } from "../../context/AuthContext";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
   faArrowDown,
@@ -87,7 +86,6 @@ const safeArray = (value) => {
 };
 
 const PayrollReports = () => {
-  const { role } = useAuth();
   const [selectedPeriod, setSelectedPeriod] = useState("monthly");
   const [selectedDepartment, setSelectedDepartment] = useState("all");
   const [reportType, setReportType] = useState("summary");
@@ -218,32 +216,15 @@ const PayrollReports = () => {
           params.append("search", searchTerm.trim());
         }
 
-        const isPayrollRole = ["payroll", "payroll_manager"].includes(role);
         let result;
 
-        if (isPayrollRole) {
-          try {
-            result = await apiRequest(`/payroll/reports/overview?${params.toString()}`);
-          } catch (reportError) {
-            const [summary, records] = await Promise.all([
-              apiRequest(`/payroll/summary?${params.toString()}`),
-              apiRequest(`/payroll?${params.toString()}`),
-            ]);
-
-            result = {
-              summary: summary?.data || summary?.summary || summary,
-              payrolls: normalizeList(records, ["data", "records", "items", "payrolls"]),
-            };
-          }
-        } else {
-          try {
-            result = await apiRequest(`/payroll/reports/overview?${params.toString()}`);
-          } catch (reportError) {
-            const records = await apiRequest(`/payroll?${params.toString()}`);
-            result = {
-              payrolls: normalizeList(records, ["data", "records", "items", "payrolls"]),
-            };
-          }
+        try {
+          result = await apiRequest(`/manager/reports/payroll?${params.toString()}`);
+        } catch (reportError) {
+          const records = await apiRequest(`/manager/payroll?${params.toString()}`);
+          result = {
+            payrolls: normalizeList(records, ["data", "records", "items", "payrolls"]),
+          };
         }
         const normalized = normalizePayload(result);
 

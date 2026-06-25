@@ -147,11 +147,11 @@ const PayrollComputation = () => {
         body: JSON.stringify({ period_start: periodStart, period_end: periodEnd }),
       });
       showToast("Payroll generated successfully.", "success");
-      setTimeout(() => navigate("/payroll"), 1200);
+      setTimeout(() => navigate("/manager/payroll"), 1200);
     } catch (err) {
       console.error("Generate error:", err);
       showToast("Payroll generated locally. Verify backend.", "warning");
-      setTimeout(() => navigate("/payroll"), 1200);
+      setTimeout(() => navigate("/manager/payroll"), 1200);
     } finally {
       setGenerating(false);
     }
@@ -164,7 +164,7 @@ const PayrollComputation = () => {
     <div className="payroll-computation">
       <section className="payroll-comp-hero">
         <div>
-          <button type="button" className="payroll-comp-back" onClick={() => navigate("/payroll")}>
+          <button type="button" className="payroll-comp-back" onClick={() => navigate("/manager/payroll")}>
             <FontAwesomeIcon icon={faArrowLeft} /> Back to Payroll
           </button>
           <span className="payroll-comp-eyebrow">Payroll Computation</span>

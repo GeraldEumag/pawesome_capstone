@@ -32,12 +32,16 @@ import {
   faUsers,
   faXmark,
 } from "@fortawesome/free-solid-svg-icons";
-import { attendanceApi } from "../../api/attendance";
 import { apiRequest } from "../../api/client";
 import { formatCurrency } from "../../utils/currency";
 import "./ManagerAttendance.css";
 
 const TODAY = new Date().toISOString().split("T")[0];
+
+const isRequestCancelled = (error, signal) =>
+  signal?.aborted ||
+  error?.name === "AbortError" ||
+  error?.message === "Request was cancelled";
 
 const DEFAULT_REMARKS_FORM = {
   remarks: "",
@@ -286,7 +290,7 @@ const ManagerAttendance = () => {
   }, []);
 
   const loadAttendance = useCallback(
-    async ({ silent = false } = {}) => {
+    async ({ silent = false, signal } = {}) => {
       try {
         if (silent) {
           setRefreshing(true);
@@ -312,7 +316,11 @@ const ManagerAttendance = () => {
           params.search = searchTerm.trim();
         }
 
-        const response = await attendanceApi.getAll(params);
+        const queryString = new URLSearchParams(params).toString();
+        const response = await apiRequest(
+          `/manager/attendance${queryString ? `?${queryString}` : ""}`,
+          { signal }
+        );
         const dataList = parseApiList(response);
 
         const normalized = dataList.map((record) =>
@@ -322,6 +330,10 @@ const ManagerAttendance = () => {
         setAttendance(normalized);
         setCurrentPage(1);
       } catch (err) {
+        if (isRequestCancelled(err, signal)) {
+          return;
+        }
+
         console.error("Manager attendance load error:", err);
         setError(
           err.message ||
@@ -329,19 +341,25 @@ const ManagerAttendance = () => {
         );
         setAttendance([]);
       } finally {
-        setLoading(false);
-        setRefreshing(false);
+        if (!signal?.aborted) {
+          setLoading(false);
+          setRefreshing(false);
+        }
       }
     },
     [searchTerm, selectedDate, selectedDepartment, selectedStatus]
   );
 
   useEffect(() => {
+    const controller = new AbortController();
     const timer = window.setTimeout(() => {
-      loadAttendance();
+      loadAttendance({ signal: controller.signal });
     }, 250);
 
-    return () => window.clearTimeout(timer);
+    return () => {
+      window.clearTimeout(timer);
+      controller.abort();
+    };
   }, [loadAttendance]);
 
   const departments = useMemo(() => {

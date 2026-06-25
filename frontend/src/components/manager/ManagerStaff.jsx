@@ -50,6 +50,11 @@ const ROLE_COLORS = {
 
 const getRoleColor = (role) => ROLE_COLORS[(role || "").toLowerCase().replace(/\s+/g, "_")] || ROLE_COLORS.default;
 
+const isRequestCancelled = (error, signal) =>
+  signal?.aborted ||
+  error?.name === "AbortError" ||
+  error?.message === "Request was cancelled";
+
 const normalizeList = (payload, keys = []) => {
   if (Array.isArray(payload)) return payload;
 
@@ -308,7 +313,7 @@ const ManagerStaff = () => {
   }, []);
 
   const loadStaff = useCallback(
-    async ({ silent = false } = {}) => {
+    async ({ silent = false, signal } = {}) => {
       try {
         if (silent) {
           setRefreshing(true);
@@ -318,10 +323,14 @@ const ManagerStaff = () => {
 
         setError("");
 
-        const response = await apiRequest("/manager/staff");
+        const response = await apiRequest("/manager/staff", { signal });
         const list = normalizeList(response, ["staff", "users", "employees", "data"]);
         setStaff(list.map(normalizeStaff));
       } catch (err) {
+        if (isRequestCancelled(err, signal)) {
+          return;
+        }
+
         console.error("Manager staff load error:", err);
         setError(
           err.message ||
@@ -329,15 +338,20 @@ const ManagerStaff = () => {
         );
         setStaff([]);
       } finally {
-        setLoading(false);
-        setRefreshing(false);
+        if (!signal?.aborted) {
+          setLoading(false);
+          setRefreshing(false);
+        }
       }
     },
     []
   );
 
   useEffect(() => {
-    loadStaff();
+    const controller = new AbortController();
+    loadStaff({ signal: controller.signal });
+
+    return () => controller.abort();
   }, [loadStaff]);
 
   useEffect(() => {

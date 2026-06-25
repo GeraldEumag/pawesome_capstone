@@ -57,6 +57,9 @@ yarn-debug.log*
 yarn-error.log*
 frontend/react-dev.err.log
 frontend/react-dev.out.log
+frontend/vite-dev.err.log
+frontend/vite-dev.out.log
+frontend/*.log
 
 # temp folders
 temp-laravel/

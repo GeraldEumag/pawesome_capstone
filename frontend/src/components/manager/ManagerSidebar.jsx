@@ -71,12 +71,32 @@ const ManagerSidebar = ({ mobileOpen, onMobileMenuToggle }) => {
           </li>
           <li className="nav-item">
             <NavLink to="/manager/staff" onClick={handleNavClick}>
-              Staff Performance
+              Staff Management
+            </NavLink>
+          </li>
+          <li className="nav-item">
+            <NavLink to="/manager/attendance" onClick={handleNavClick}>
+              Attendance
+            </NavLink>
+          </li>
+          <li className="nav-item">
+            <NavLink to="/manager/leave" onClick={handleNavClick}>
+              Leave
+            </NavLink>
+          </li>
+          <li className="nav-item">
+            <NavLink to="/manager/schedule" onClick={handleNavClick}>
+              Schedule
             </NavLink>
           </li>
           <li className="nav-item">
             <NavLink to="/manager/payroll" onClick={handleNavClick}>
-              Payroll Summary
+              Payroll Management
+            </NavLink>
+          </li>
+          <li className="nav-item">
+            <NavLink to="/manager/payroll/computation" onClick={handleNavClick}>
+              Payroll Computation
             </NavLink>
           </li>
           <li className="nav-item">
