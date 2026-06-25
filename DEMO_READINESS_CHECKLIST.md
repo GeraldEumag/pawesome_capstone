@@ -212,9 +212,11 @@ All accounts use the same password: `Password123!`
 - **Workaround**: Focus on grooming and vet appointment workflows unless hotel room seed data is added
 
 ### Browser UI Testing
-- **Status**: Manager-first browser verification completed after console fix
-- **Evidence**: `browser-evidence/manager-payroll-scope/manager-payroll-scope-results.json`
-- **Observation**: Manager pages rendered and stayed on route; latest evidence has no browser console errors. Playwright still records `net::ERR_ABORTED` background/navigation aborts during fast route changes, but no HTTP 401/403/404/500 API failures were found.
+- **Status**: Manager payroll and main cross-role workflow browser verification completed
+- **Evidence**:
+  - `browser-evidence/manager-payroll-scope/manager-payroll-scope-results.json`
+  - `browser-evidence/cross-role-main-workflow/cross-role-main-workflow-results.json`
+- **Observation**: Manager pages and the Customer -> Receptionist -> Veterinary -> Manager Reports workflow rendered and stayed on route; latest evidence has no browser console errors and no HTTP 401/403/404/500 API failures. Playwright still records `net::ERR_ABORTED` background/navigation aborts during fast route changes; these are documented separately as non-critical navigation/background request aborts.
 
 ---
 
@@ -269,13 +271,15 @@ All accounts use the same password: `Password123!`
 - [x] Manager can view staff, attendance, leave, schedule, payroll, payroll computation, and reports
 - [ ] Admin can manage users and settings
 
-### Cross-Role Workflow ⚠️
-- [ ] Customer creates request (if UI allows)
-- [ ] Receptionist approves/schedules request
-- [ ] Customer sees updated status
-- [ ] Cashier verifies payment (if applicable)
-- [ ] Veterinary updates appointment status
-- [ ] Manager/Admin dashboards reflect records
+### Cross-Role Workflow ✅
+- [x] Customer dashboard loads
+- [x] Buddy pet profile appears
+- [x] Customer pending vet request appears
+- [x] Receptionist sees and approves assigned vet request
+- [x] Veterinary sees appointment and updates status to `in_progress`
+- [x] Manager dashboard/reports load after workflow records are created
+- [ ] Cashier verifies payment (next workflow)
+- [ ] Inventory stock logs reflect POS/payment workflow (next workflow)
 
 ---
 
@@ -315,6 +319,8 @@ npm run build
 | Manager attendance/leave/schedule | ✅ Browser-render verified | Pages rendered; console fetch errors fixed |
 | Manager staff page | ✅ Browser-render verified | Page rendered; console fetch errors fixed |
 | Admin user count | ✅ Updated | Checklist now expects 7 users |
+| Cross-role main workflow | ✅ Browser-verified | Customer -> Receptionist -> Veterinary -> Manager Reports passed in Chromium |
+| Cashier/POS workflow | ⚠️ Pending | Next browser workflow target |
 | Boarding data | ⚠️ Limited | Confirmed 0 hotel rooms in latest DB |
 
 ---
@@ -330,12 +336,13 @@ npm run build
 | Payroll Scope Change | ✅ Ready | Payroll moved under Manager scope |
 | Demo Data | ✅ Ready | Pet, grooming, vet appointment created |
 | Manager Payroll Browser UI | ✅ Verified | Manager pages render and latest evidence has no console errors |
-| Cross-Role Workflow | ⚠️ Pending | Requires browser testing |
+| Cross-Role Main Workflow | ✅ Verified | Customer -> Receptionist -> Veterinary -> Manager Reports passed with screenshots and JSON evidence |
+| Cashier POS / Inventory Workflow | ⚠️ Pending | Next browser workflow target |
 | Boarding Feature | ⚠️ Limited | No `hotel_rooms` currently seeded |
 
-### Overall Status: **Conditionally Demo-Ready**
+### Overall Status: **Main Workflow Browser-Verified**
 
-The system is technically ready for demo presentation, with the Payroll scope change documented and implemented. Manager-owned payroll browser rendering is verified and the previous Staff, Attendance, and Schedule console fetch errors are fixed. Full cross-role browser workflow testing remains pending.
+The system is ready for the main demo workflow: Payroll scope is documented and implemented under Manager, Manager-owned payroll browser rendering is verified, and the Customer -> Receptionist -> Veterinary -> Manager Reports browser workflow passed with evidence. Cashier POS/payment verification and Inventory stock logs remain the next browser-validation target. Boarding/hotel remains limited until hotel room seed data is added.
 
 ---
 
@@ -347,38 +354,21 @@ The system is technically ready for demo presentation, with the Payroll scope ch
 
 ## Next Steps
 
-1. Browser-test the Customer workflow
-2. Browser-test the Receptionist approval/scheduling workflow
-3. Browser-test the Veterinary appointment update workflow
-4. Browser-test the Cashier POS/payment verification workflow
-5. Confirm Manager/Admin reports reflect workflow records
-6. Optional: Add hotel room seed data if boarding/hotel will be included in the demo
+1. Browser-test the Cashier POS/payment verification workflow
+2. Browser-test Inventory stock logs after POS/payment activity
+3. Confirm Manager reports reflect Cashier POS/payment and inventory records
+4. Optional: Add hotel room seed data if boarding/hotel will be included in the demo
 
 ---
 
-## Git Changes
+## Latest Commit
 
-### Modified Files
-- `.gitignore` - Updated to preserve Laravel storage folder structure
-- `DEMO_READINESS_CHECKLIST.md` - Updated for Payroll scope change and Manager browser validation
+- Commit: `a0f7da3` Verify manager payroll scope and fix manager data loading
+- Scope: Payroll role removal, Manager-owned payroll validation, Manager data-load fixes, readiness checklist update, Playwright evidence, and Vite log ignore rules.
 
-### New Files
-- `backend/storage/framework/cache/.gitignore`
-- `backend/storage/framework/cache/data/.gitignore`
-- `backend/storage/framework/sessions/.gitignore`
-- `backend/storage/framework/testing/.gitignore`
-- `backend/storage/framework/views/.gitignore`
-- `backend/database/seeders/DemoDataSeeder.php`
+## Current Working Tree Note
 
-### Files to Commit
-```powershell
-git add .gitignore
-git add DEMO_READINESS_CHECKLIST.md
-git add backend/storage/framework/
-git add backend/database/seeders/DemoDataSeeder.php
-git add backend/database/seeders/DatabaseSeeder.php
-git commit -m "Document demo readiness and payroll scope change"
-```
+- `frontend/test-results/.last-run.json` is a generated Playwright state file and was intentionally left uncommitted.
 
 ---
 

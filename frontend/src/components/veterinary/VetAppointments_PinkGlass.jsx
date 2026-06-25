@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { showConfirm } from "../../utils/alert.jsx";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
@@ -31,9 +31,18 @@ import { apiRequest } from "../../api/client";
 import "./theme.css";
 import "./VetAppointments_PinkGlass.css";
 
+const isRequestCancelled = (error, signal) =>
+  signal?.aborted ||
+  error?.name === "AbortError" ||
+  error?.message === "Request was cancelled";
+
+const isGenericFetchFailure = (error) =>
+  error?.name === "TypeError" && error?.message === "Failed to fetch";
 
 const VetAppointments = () => {
   const navigate = useNavigate();
+  const mountedRef = useRef(true);
+  const fetchAbortRef = useRef(null);
   const [appointments, setAppointments] = useState([]);
   const [selectedAppointment, setSelectedAppointment] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -149,6 +158,11 @@ const VetAppointments = () => {
   }, []);
 
   const fetchAppointments = useCallback(async ({ silent = false } = {}) => {
+    fetchAbortRef.current?.abort();
+    const controller = new AbortController();
+    fetchAbortRef.current = controller;
+    const signal = controller.signal;
+
     try {
       if (!silent) {
         setLoading(true);
@@ -156,15 +170,21 @@ const VetAppointments = () => {
         setRefreshing(true);
       }
 
-      const data = await apiRequest("/veterinary/appointments");
+      const data = await apiRequest("/veterinary/appointments", { signal });
       const appointmentsData = safeArray(data);
       const transformedAppointments = appointmentsData.map(transformAppointment);
+
+      if (!mountedRef.current || signal?.aborted) return;
 
       setAppointments(transformedAppointments);
       setLastUpdated(new Date());
       setError("");
     } catch (err) {
-      console.error("Failed to fetch appointments:", err);
+      if (isRequestCancelled(err, signal) || !mountedRef.current) return;
+
+      if (!isGenericFetchFailure(err)) {
+        console.error("Failed to fetch appointments:", err);
+      }
       setError("Failed to load appointments. Please try again.");
       setAppointments([]);
 
@@ -172,19 +192,27 @@ const VetAppointments = () => {
         toast.error("Failed to load veterinary appointments.");
       }
     } finally {
-      setLoading(false);
-      setRefreshing(false);
+      if (mountedRef.current && !signal?.aborted) {
+        setLoading(false);
+        setRefreshing(false);
+      }
     }
   }, [transformAppointment]);
 
   useEffect(() => {
+    mountedRef.current = true;
+
     fetchAppointments({ silent: false });
 
     const interval = setInterval(() => {
       fetchAppointments({ silent: true });
     }, 15000);
 
-    return () => clearInterval(interval);
+    return () => {
+      mountedRef.current = false;
+      fetchAbortRef.current?.abort();
+      clearInterval(interval);
+    };
   }, [fetchAppointments]);
 
   const statusOptions = useMemo(
@@ -752,3 +780,4 @@ const VetAppointments = () => {
 };
 
 export default VetAppointments;
+
