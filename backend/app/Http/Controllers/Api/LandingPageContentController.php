@@ -20,6 +20,8 @@ class LandingPageContentController extends Controller
         'about',
         'final_cta',
         'trust_stats',
+        'facilities_gallery',
+        'footer',
     ];
 
     public function showPublic(): JsonResponse

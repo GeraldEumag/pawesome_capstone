@@ -260,6 +260,51 @@
   color: #ef4444;
 }
 
+/* Facility gallery editor */
+.editor-facility-item {
+  display: grid;
+  grid-template-columns: 1fr auto auto auto auto;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.editor-facility-upload {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.4rem 0.7rem;
+  border: 1px dashed rgba(255, 95, 147, 0.4);
+  border-radius: 10px;
+  background: rgba(255, 95, 147, 0.04);
+  color: #c93662;
+  font-size: 0.8rem;
+  font-weight: 800;
+  cursor: pointer;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.editor-facility-upload input[type="file"] {
+  display: none;
+}
+
+.editor-facility-preview {
+  width: 64px;
+  height: 48px;
+  object-fit: cover;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 95, 147, 0.2);
+  flex-shrink: 0;
+}
+
+.editor-facility-default {
+  color: #94a3b8;
+  font-size: 0.76rem;
+  font-weight: 700;
+  white-space: nowrap;
+  font-style: italic;
+}
+
 /* Responsive */
 @media (max-width: 768px) {
   .admin-landing-editor-body {

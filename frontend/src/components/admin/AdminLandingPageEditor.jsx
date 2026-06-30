@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faSave, faSpinner, faImage, faPlus, faTrash, faGlobe, faEye, faHome, faPaw, faListOl, faInfoCircle, faBullhorn, faChartBar } from "@fortawesome/free-solid-svg-icons";
+import { faSave, faSpinner, faImage, faPlus, faTrash, faGlobe, faEye, faHome, faPaw, faListOl, faInfoCircle, faBullhorn, faChartBar, faImages, faRectangleAd } from "@fortawesome/free-solid-svg-icons";
 import { fetchAdminLandingPageSections, updateLandingPageSection, uploadLandingPageImage } from "../../api/landingPage";
 import { showSuccess, showError } from "../../utils/alert.jsx";
 import "./AdminLandingPageEditor.css";
@@ -12,6 +12,8 @@ const SECTIONS = [
   { key: "about", label: "About Us", icon: faInfoCircle },
   { key: "final_cta", label: "Bottom Banner", icon: faBullhorn },
   { key: "trust_stats", label: "Quick Stats", icon: faChartBar },
+  { key: "facilities_gallery", label: "Facilities Gallery", icon: faImages },
+  { key: "footer", label: "Footer", icon: faRectangleAd },
 ];
 
 const deepClone = (obj) => JSON.parse(JSON.stringify(obj));
@@ -89,6 +91,30 @@ const AdminLandingPageEditor = () => {
       if (res.success && res.data?.url) {
         handleChange(fieldPath, res.data.url);
         showSuccess("Image uploaded.");
+      } else {
+        showError(res.message || "Upload failed.");
+      }
+    } catch (err) {
+      showError(err.message || "Upload error.");
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  const handleFacilityImageUpload = async (e, itemIdx) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setUploading(true);
+    try {
+      const res = await uploadLandingPageImage(file, "facilities_gallery");
+      if (res.success && res.data?.url) {
+        setSections((prev) => {
+          const next = deepClone(prev);
+          const items = next.facilities_gallery?.items || [];
+          if (items[itemIdx]) items[itemIdx].image = res.data.url;
+          return next;
+        });
+        showSuccess("Photo uploaded.");
       } else {
         showError(res.message || "Upload failed.");
       }
@@ -201,7 +227,42 @@ const AdminLandingPageEditor = () => {
             {renderInput("Main button text", "hero.primary_cta")}
             {renderInput("Second button text", "hero.secondary_cta")}
             {renderImageField("Hero background image", "hero.image")}
-            {renderArrayField("Topic labels (small badges under buttons)", "hero.tags", [{ key: "value", label: "Label text", default: "" }])}
+            <div className="editor-array">
+              <div className="editor-array-header">
+                <strong>Topic labels (small badges under buttons)</strong>
+                <button
+                  type="button"
+                  className="editor-btn-small"
+                  onClick={() => handleChange("hero.tags", [...(sections.hero?.tags || []), ""])}
+                >
+                  <FontAwesomeIcon icon={faPlus} /> Add
+                </button>
+              </div>
+              {(sections.hero?.tags || []).map((tag, idx) => (
+                <div key={idx} className="editor-array-item">
+                  <input
+                    type="text"
+                    placeholder="Badge label (e.g., Pet Hotel)"
+                    value={typeof tag === "string" ? tag : tag?.value || ""}
+                    onChange={(e) => {
+                      const next = [...(sections.hero?.tags || [])];
+                      next[idx] = e.target.value;
+                      handleChange("hero.tags", next);
+                    }}
+                  />
+                  <button
+                    type="button"
+                    className="editor-btn-remove"
+                    onClick={() => {
+                      const next = (sections.hero?.tags || []).filter((_, i) => i !== idx);
+                      handleChange("hero.tags", next);
+                    }}
+                  >
+                    <FontAwesomeIcon icon={faTrash} />
+                  </button>
+                </div>
+              ))}
+            </div>
           </div>
         );
       case "featured_services":
@@ -372,6 +433,81 @@ const AdminLandingPageEditor = () => {
               { key: "value", label: "Stat number (e.g., 9+)", default: "" },
               { key: "label", label: "What it means (e.g., Core Services)", default: "" },
             ])}
+          </div>
+        );
+      case "facilities_gallery":
+        return (
+          <div className="editor-form">
+            {renderInput("Small top text (above the section title)", "facilities_gallery.eyebrow")}
+            {renderInput("Section title", "facilities_gallery.headline")}
+            {renderInput("Description paragraph", "facilities_gallery.description", "textarea")}
+            <div className="editor-array">
+              <strong>Facility photos (each can have a caption and an uploaded image)</strong>
+              {(data.items || []).map((item, idx) => (
+                <div key={idx} className="editor-array-item editor-facility-item">
+                  <input
+                    placeholder="Caption (e.g., Reception Area)"
+                    value={item.caption || ""}
+                    onChange={(e) => {
+                      const next = [...data.items];
+                      next[idx] = { ...next[idx], caption: e.target.value };
+                      handleChange("facilities_gallery.items", next);
+                    }}
+                  />
+                  <label className="editor-facility-upload">
+                    <span>Upload photo</span>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={(e) => handleFacilityImageUpload(e, idx)}
+                    />
+                    {uploading && <FontAwesomeIcon icon={faSpinner} spin />}
+                  </label>
+                  {item.image && (
+                    <img
+                      src={item.image}
+                      alt={item.caption}
+                      className="editor-facility-preview"
+                    />
+                  )}
+                  {!item.image && (
+                    <span className="editor-facility-default">Using default facility photo</span>
+                  )}
+                  <button
+                    type="button"
+                    className="editor-btn-remove"
+                    onClick={() => {
+                      const next = data.items.filter((_, i) => i !== idx);
+                      handleChange("facilities_gallery.items", next);
+                    }}
+                  >
+                    <FontAwesomeIcon icon={faTrash} />
+                  </button>
+                </div>
+              ))}
+              <button
+                type="button"
+                className="editor-btn-small"
+                onClick={() =>
+                  handleChange("facilities_gallery.items", [
+                    ...(data.items || []),
+                    { caption: "", image: null },
+                  ])
+                }
+              >
+                <FontAwesomeIcon icon={faPlus} /> Add Photo Slot
+              </button>
+            </div>
+          </div>
+        );
+      case "footer":
+        return (
+          <div className="editor-form">
+            {renderInput("Business name (shown in footer + copyright)", "footer.brand_name")}
+            {renderInput("Tagline (below business name)", "footer.tagline")}
+            {renderInput("Short description paragraph", "footer.description", "textarea")}
+            {renderInput("Contact email", "footer.email")}
+            {renderInput("Contact address", "footer.address", "textarea")}
           </div>
         );
       default:

@@ -1,4 +1,5 @@
 import pawesomeLogo from "../../assets/pawesome.jpg";
+import facilityImg from "../../assets/facility 1.jpg";
 
 const DEFAULT_ABOUT = {
   eyebrow: "About Pawesome Retreat",
@@ -19,6 +20,11 @@ const DynamicAbout = ({ content }) => {
   return (
     <section id="about" className="landing-about">
       <div className="landing-about-card">
+        {(data.image || facilityImg) && (
+          <div className="landing-about-image">
+            <img src={data.image || facilityImg} alt="Pawesome Retreat facilities" />
+          </div>
+        )}
         <div className="landing-about-copy">
           <span className="landing-eyebrow">{data.eyebrow}</span>
           <h2>{data.headline}</h2>

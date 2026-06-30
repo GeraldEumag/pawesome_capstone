@@ -10,6 +10,7 @@ import DynamicFeaturedServices from "./DynamicFeaturedServices";
 import DynamicHowItWorks from "./DynamicHowItWorks";
 import DynamicAbout from "./DynamicAbout";
 import DynamicFinalCTA from "./DynamicFinalCTA";
+import DynamicFacilitiesGallery from "./DynamicFacilitiesGallery";
 import DynamicTrustStats from "./DynamicTrustStats";
 
 const LandingPage = () => {
@@ -59,6 +60,8 @@ const LandingPage = () => {
       <main>
         <DynamicHero content={getSection("hero")} onBookService={scrollToServices} />
 
+        <DynamicFacilitiesGallery content={getSection("facilities_gallery")} />
+
         <DynamicTrustStats content={getSection("trust_stats")} />
 
         <div id="featured-services-anchor">
@@ -76,40 +79,43 @@ const LandingPage = () => {
       </main>
 
       <footer id="contact" className="landing-footer">
-        <div className="landing-footer-content">
-          <div className="landing-footer-brand">
-            <div className="landing-footer-logo">
-              <img src={pawesomeLogo} alt="Pawesome Retreat" />
-              <div>
-                <strong>Pawesome Retreat Inc.</strong>
-                <span>Pet Hotel, Grooming, Supplies and Vet Clinic</span>
+        {(() => {
+          const f = getSection("footer") || {};
+          return (
+            <>
+              <div className="landing-footer-content">
+                <div className="landing-footer-brand">
+                  <div className="landing-footer-logo">
+                    <img src={pawesomeLogo} alt="Pawesome Retreat" />
+                    <div>
+                      <strong>{f.brand_name || "Pawesome Retreat Inc."}</strong>
+                      <span>{f.tagline || "Pet Hotel, Grooming, Supplies and Vet Clinic"}</span>
+                    </div>
+                  </div>
+                  <p>{f.description || "A modern pet care center providing trusted services for pets and convenient support for owners."}</p>
+                </div>
+
+                <div className="landing-footer-section">
+                  <h3>Quick Links</h3>
+                  <a href="#featured-services-anchor">Services</a>
+                  <a href="#about">About</a>
+                  <a href="#process">Process</a>
+                  <a href="#contact">Contact</a>
+                </div>
+
+                <div className="landing-footer-section">
+                  <h3>Contact</h3>
+                  <p>{f.email || "pawesomeretreat24@gmail.com"}</p>
+                  <p>{f.address || "Aldana Street San Isidro Village, Las Piñas, Philippines, 1740"}</p>
+                </div>
               </div>
-            </div>
 
-            <p>
-              A modern pet care center providing trusted services for pets and
-              convenient support for owners.
-            </p>
-          </div>
-
-          <div className="landing-footer-section">
-            <h3>Quick Links</h3>
-            <a href="#featured-services-anchor">Services</a>
-            <a href="#about">About</a>
-            <a href="#process">Process</a>
-            <a href="#contact">Contact</a>
-          </div>
-
-          <div className="landing-footer-section">
-            <h3>Contact</h3>
-            <p>pawesomeretreat24@gmail.com</p>
-            <p>Aldana Street San Isidro Village, Las Piñas, Philippines, 1740</p>
-          </div>
-        </div>
-
-        <div className="landing-footer-bottom">
-          <p>© {currentYear} Pawesome Retreat Inc. All rights reserved.</p>
-        </div>
+              <div className="landing-footer-bottom">
+                <p>© {currentYear} {f.brand_name || "Pawesome Retreat Inc."} All rights reserved.</p>
+              </div>
+            </>
+          );
+        })()}
       </footer>
 
       {activeModal && (

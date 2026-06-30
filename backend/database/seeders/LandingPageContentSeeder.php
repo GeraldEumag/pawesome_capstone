@@ -138,6 +138,36 @@ class LandingPageContentSeeder extends Seeder
                     ],
                 ],
             ],
+            [
+                'section_key' => 'facilities_gallery',
+                'content_type' => 'json',
+                'content_data' => [
+                    'eyebrow' => 'Our Facilities',
+                    'headline' => 'See Inside Pawesome Retreat',
+                    'description' => 'Take a look at our clean, comfortable, and well-equipped facilities designed for every pet.',
+                    'items' => [
+                        ['caption' => 'Location',            'image' => null],
+                        ['caption' => 'Facility 1',          'image' => null],
+                        ['caption' => 'Facility 2',          'image' => null],
+                        ['caption' => 'Facility 3',          'image' => null],
+                        ['caption' => 'Play Ground',         'image' => null],
+                        ['caption' => 'Reception Area',      'image' => null],
+                        ['caption' => 'Veterinary Clinic',   'image' => null],
+                        ['caption' => 'Veterinary Clinic 2', 'image' => null],
+                    ],
+                ],
+            ],
+            [
+                'section_key' => 'footer',
+                'content_type' => 'json',
+                'content_data' => [
+                    'brand_name'  => 'Pawesome Retreat Inc.',
+                    'tagline'     => 'Pet Hotel, Grooming, Supplies and Vet Clinic',
+                    'description' => 'A modern pet care center providing trusted services for pets and convenient support for owners.',
+                    'email'       => 'pawesomeretreat24@gmail.com',
+                    'address'     => 'Aldana Street San Isidro Village, Las Piñas, Philippines, 1740',
+                ],
+            ],
         ];
 
         foreach ($contents as $content) {

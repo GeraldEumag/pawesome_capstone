@@ -33,9 +33,10 @@ const DynamicHero = ({ content, onBookService }) => {
             </Link>
           </div>
           <div className="landing-hero-note">
-            {(data.tags || DEFAULT_HERO.tags).map((tag) => (
-              <span key={tag}>{tag}</span>
-            ))}
+            {(data.tags || DEFAULT_HERO.tags).map((tag, i) => {
+              const label = typeof tag === "string" ? tag : tag?.value || "";
+              return label ? <span key={i}>{label}</span> : null;
+            })}
           </div>
         </div>
 
