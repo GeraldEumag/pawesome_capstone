@@ -961,19 +961,7 @@ const CashierPOS = () => {
 
             {/* Actions */}
             <div className="pos-actions-bar">
-              {!showPaymentSection ? (
-                <button className="pos-checkout-btn" onClick={() => setShowPaymentSection(true)} disabled={cart.length === 0}>
-                  <FontAwesomeIcon icon={faCalculator} />
-                  Proceed to Payment — {fmt(total)}
-                </button>
-              ) : (
-                <button className="pos-checkout-btn" onClick={handleCheckout} disabled={!canCheckout}>
-                  <FontAwesomeIcon icon={checkoutLoading ? faClock : faCheckCircle} />
-                  {checkoutLoading ? "Processing…" : `Complete Payment — ${fmt(total)}`}
-                </button>
-              )}
-
-              <div className="pos-secondary-btns-row">
+              <div className="pos-actions-row">
                 <button
                   className="pos-sec-btn pos-sec-btn--danger"
                   onClick={clearOrder}
@@ -981,6 +969,17 @@ const CashierPOS = () => {
                 >
                   <FontAwesomeIcon icon={faTrash} /> Clear Cart
                 </button>
+                {!showPaymentSection ? (
+                  <button className="pos-checkout-btn" onClick={() => setShowPaymentSection(true)} disabled={cart.length === 0}>
+                    <FontAwesomeIcon icon={faCalculator} />
+                    Proceed to Payment — {fmt(total)}
+                  </button>
+                ) : (
+                  <button className="pos-checkout-btn" onClick={handleCheckout} disabled={!canCheckout}>
+                    <FontAwesomeIcon icon={checkoutLoading ? faClock : faCheckCircle} />
+                    {checkoutLoading ? "Processing…" : `Complete Payment — ${fmt(total)}`}
+                  </button>
+                )}
               </div>
 
               {recentSale && (

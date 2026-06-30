@@ -1077,6 +1077,22 @@
   flex-shrink: 0;
 }
 
+.pos-actions-row {
+  display: flex;
+  gap: 8px;
+  align-items: stretch;
+}
+
+.pos-actions-row .pos-checkout-btn,
+.pos-actions-row .pos-sec-btn {
+  flex: 1;
+}
+
+.pos-actions-row .pos-sec-btn {
+  height: 46px;
+  font-size: 13px;
+}
+
 .pos-checkout-btn {
   width: 100%;
   height: 46px;
