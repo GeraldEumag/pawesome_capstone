@@ -459,9 +459,9 @@ class POSController extends Controller
         });
 
         return [
-            'store_name' => 'Pawesome Pet Store',
-            'store_address' => '123 Pet Street, Manila, Philippines',
-            'store_phone' => '(02) 8123-4567',
+            'store_name' => 'Pawesome Retreat Inc.',
+            'store_address' => 'Aldana Street San Isidro Village, Las Piñas, Philippines, 1740',
+            'store_phone' => 'pawesomeretreat24@gmail.com',
             'transaction_number' => $sale->transaction_number,
             'invoice_number' => $invoice?->invoice_number,
             'date' => $sale->created_at->format('Y-m-d H:i:s'),
@@ -506,10 +506,10 @@ class POSController extends Controller
                 'due_date' => $sale->invoice->due_date,
                 'status' => $sale->invoice->status,
                 'store_info' => [
-                    'name' => 'Pawesome Pet Store',
-                    'address' => '123 Pet Street, Manila, Philippines',
-                    'phone' => '(02) 8123-4567',
-                    'email' => 'billing@pawesome.com',
+                    'name' => 'Pawesome Retreat Inc.',
+                    'address' => 'Aldana Street San Isidro Village, Las Piñas, Philippines, 1740',
+                    'phone' => 'pawesomeretreat24@gmail.com',
+                    'email' => 'pawesomeretreat24@gmail.com',
                 ],
                 'customer' => [
                     'name' => $sale->customer?->name ?? 'Walk-in Customer',

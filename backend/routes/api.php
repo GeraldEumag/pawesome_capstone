@@ -363,6 +363,10 @@ Route::middleware(['auth.api', 'throttle:api', 'role:cashier'])->prefix('cashier
     Route::get('boarding-payments/pending', [CashierDashboardController::class, 'getPaymentRequests']);
     Route::get('confinement-payments/pending', [CashierDashboardController::class, 'getPaymentRequests']);
     
+    // Customers (read-only for POS customer lookup)
+    Route::get('customers', [CustomersController::class, 'index']);
+    Route::get('customers/search', [CustomersController::class, 'search']);
+
     // POS static routes
     Route::get('inventory/sellable', [POSController::class, 'getProducts']);
     Route::get('pos/products', [POSController::class, 'getProducts']);

@@ -219,7 +219,7 @@ const CashierPOS = () => {
 
   const fetchCustomers = useCallback(async () => {
     try {
-      const res = await apiRequest("/customers");
+      const res = await apiRequest("/cashier/customers");
       const raw = normalizeList(res, ["customers", "data"]);
       setCustomers(raw);
     } catch {
@@ -382,7 +382,8 @@ const CashierPOS = () => {
   const canCheckout = cart.length > 0
     && cart.every((item) => item.quantity <= getAvailableStock(item))
     && !checkoutLoading
-    && (paymentMethod !== "Cash" || (Number(amountReceived) || 0) >= total);
+    && (paymentMethod !== "Cash" || (Number(amountReceived) || 0) >= total)
+    && (paymentMethod === "Cash" || referenceNumber.trim() !== "");
 
   const handleSearchEnter = useCallback(() => {
     const kw = searchQuery.trim().toLowerCase();
@@ -458,7 +459,11 @@ const CashierPOS = () => {
         method: "POST",
         body: JSON.stringify(payload),
       });
-      const txId = res?.transaction_id || res?.id || `TRX-${Date.now()}`;
+      const txId = res?.transaction?.transaction_number
+        || res?.transaction?.id
+        || res?.transaction_id
+        || res?.id
+        || `TRX-${Date.now()}`;
       const receipt = {
         transaction_id: String(txId).startsWith("TRX-") ? String(txId) : `TRX-${String(txId).padStart(4, "0")}`,
         customer_name: payload.customer_name,
@@ -1032,15 +1037,15 @@ const CashierPOS = () => {
                 )}
                 <div className="pos-receipt-divider" />
                 {completedReceipt.items.map((item, idx) => {
-                  const itemVatPrice = (item.unit_price || 0) * (1 + TAX_RATE);
-                  const itemVatTotal = itemVatPrice * item.quantity;
-                  const itemVatAmt   = (item.unit_price || 0) * TAX_RATE * item.quantity;
+                  const unitPrice  = item.unit_price || 0;
+                  const itemTotal  = unitPrice * item.quantity;
+                  const itemVatAmt = unitPrice * (TAX_RATE / (1 + TAX_RATE)) * item.quantity;
                   return (
                     <div className="pos-receipt-item-row" key={idx}>
                       <div className="item-name">{item.item_name}</div>
                       <div className="item-meta">
-                        <span>{item.quantity} × {fmt(itemVatPrice)} (VAT {fmt(itemVatAmt)})</span>
-                        <span>{fmt(itemVatTotal)}</span>
+                        <span>{item.quantity} × {fmt(unitPrice)} (VAT {fmt(itemVatAmt)})</span>
+                        <span>{fmt(itemTotal)}</span>
                       </div>
                     </div>
                   );

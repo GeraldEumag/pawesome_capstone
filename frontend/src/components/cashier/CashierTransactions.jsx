@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { showAlert, showPrompt, showError } from "../../utils/alert.jsx";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
@@ -10,6 +10,8 @@ import {
   faReceipt,
   faCreditCard,
   faMoneyBillWave,
+  faMobileScreen,
+  faWallet,
   faCalendarAlt,
   faShoppingCart,
   faEye,
@@ -37,10 +39,21 @@ const CashierTransactions = () => {
     total: 0,
   });
 
+  const searchDebounceRef = useRef(null);
+
   useEffect(() => {
-    loadTransactions(pagination.current_page);
+    loadTransactions(1);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [filterStatus]);
+
+  useEffect(() => {
+    clearTimeout(searchDebounceRef.current);
+    searchDebounceRef.current = setTimeout(() => {
+      loadTransactions(1);
+    }, 400);
+    return () => clearTimeout(searchDebounceRef.current);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchTerm]);
 
   const loadTransactions = async (page = 1) => {
     try {
@@ -49,6 +62,9 @@ const CashierTransactions = () => {
       const params = { per_page: 20, page };
       if (filterStatus !== "all") {
         params.status = filterStatus;
+      }
+      if (searchTerm.trim()) {
+        params.search = searchTerm.trim();
       }
       const response = await posApi.getTransactions(params);
       
@@ -94,8 +110,8 @@ const CashierTransactions = () => {
       'cash': 'cash',
       'credit_card': 'visa',
       'debit_card': 'mastercard',
-      'gcash': 'amex',
-      'maya': 'amex',
+      'gcash': 'gcash',
+      'maya': 'maya',
     };
     return map[method] || 'cash';
   };
@@ -126,8 +142,8 @@ const CashierTransactions = () => {
           </style>
         </head>
         <body>
-          <h2>PAWESOME PET STORE</h2>
-          <div class="store">123 Pet Street, Manila, Philippines</div>
+          <h2>Pawesome Retreat Inc.</h2>
+          <div class="store">Aldana Street San Isidro Village, Las Piñas, Philippines, 1740</div>
           <div class="meta">
             <div><strong>Transaction:</strong> ${transaction.id}</div>
             <div><strong>Customer:</strong> ${transaction.customer || "Walk-in"}</div>
@@ -165,14 +181,7 @@ const CashierTransactions = () => {
   };
 
   const filteredTransactions = transactions.filter((transaction) => {
-    const matchesSearch = 
-      transaction.customer.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      transaction.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      transaction.email.toLowerCase().includes(searchTerm.toLowerCase());
-    
-    const matchesFilter = filterStatus === "all" || transaction.status === filterStatus;
-    
-    return matchesSearch && matchesFilter;
+    return filterStatus === "all" || transaction.status === filterStatus;
   });
 
   const getStatusColor = (status) => {
@@ -192,8 +201,11 @@ const CashierTransactions = () => {
     switch (method) {
       case "visa":
       case "mastercard":
-      case "amex":
         return faCreditCard;
+      case "gcash":
+        return faMobileScreen;
+      case "maya":
+        return faWallet;
       case "cash":
         return faMoneyBillWave;
       default:
