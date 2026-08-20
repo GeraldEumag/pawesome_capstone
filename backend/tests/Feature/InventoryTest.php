@@ -42,6 +42,7 @@ class InventoryTest extends TestCase
     {
         $response = $this->postJson('/api/admin/inventory/items', [
                 'sku' => 'FOOD-TEST-001',
+                'barcode' => 'FOODTEST001',
                 'name' => 'Test Dog Food 5kg',
                 'category' => 'Food',
                 'brand' => 'TestBrand',
@@ -127,14 +128,17 @@ class InventoryTest extends TestCase
         ]);
     }
 
-    public function test_can_delete_inventory_item(): void
+    public function test_can_delete_inventory_item_with_zero_stock(): void
     {
+        // Production behavior: DELETE is a soft-delete (archive), not a hard-delete.
+        // Items with zero stock can be archived successfully.
         $item = InventoryItem::create([
             'sku' => 'FOOD-TEST-004',
+            'barcode' => 'FOODTEST004',
             'name' => 'To Be Deleted',
             'category' => 'Food',
             'price' => 200,
-            'stock' => 5,
+            'stock' => 0,
             'reorder_level' => 3,
             'status' => 'active',
         ]);
@@ -144,9 +148,49 @@ class InventoryTest extends TestCase
 
         $response->assertStatus(200);
 
-        $this->assertDatabaseMissing('inventory_items', [
+        // Item is archived (soft-deleted), not removed from the database
+        $this->assertDatabaseHas('inventory_items', [
             'id' => $item->id,
         ]);
+        $this->assertNotNull($item->fresh()->archived_at);
+    }
+
+    public function test_cannot_delete_item_with_stock_must_archive_instead(): void
+    {
+        // Production rule: items with stock > 0 cannot be archived/deleted
+        // until stock is adjusted to 0. This prevents accidental data loss.
+        $item = InventoryItem::create([
+            'sku' => 'FOOD-TEST-005',
+            'barcode' => 'FOODTEST005',
+            'name' => 'Has Stock',
+            'category' => 'Food',
+            'price' => 200,
+            'stock' => 5,
+            'reorder_level' => 3,
+            'status' => 'active',
+        ]);
+
+        // Delete/archive should be rejected because stock > 0
+        $response = $this->actingAs($this->admin)
+            ->deleteJson("/api/admin/inventory/items/{$item->id}");
+
+        $response->assertStatus(422);
+
+        // Item should still exist and not be archived
+        $this->assertDatabaseHas('inventory_items', [
+            'id' => $item->id,
+        ]);
+        $this->assertNull($item->fresh()->archived_at);
+
+        // After setting stock to 0, archive should work
+        $item->update(['stock' => 0]);
+        $archiveResponse = $this->actingAs($this->admin)
+            ->patchJson("/api/inventory/items/{$item->id}/archive", [
+                'reason' => 'Discontinued product',
+            ]);
+
+        $archiveResponse->assertStatus(200);
+        $this->assertNotNull($item->fresh()->archived_at);
     }
 
     public function test_can_list_all_inventory_items(): void
@@ -171,6 +215,7 @@ class InventoryTest extends TestCase
         $response = $this->actingAs($this->admin)
             ->postJson('/api/admin/inventory/items', [
                 'sku' => 'FOOD-INVALID-CAT',
+                'barcode' => 'FOODINVCAT01',
                 'name' => 'Test Item Invalid Category',
                 'category' => 'InvalidCategory', // Invalid category
                 'price' => 500,
@@ -194,10 +239,12 @@ class InventoryTest extends TestCase
         
         foreach ($validCategories as $category) {
             $sku = 'TEST-CAT-' . strtoupper(substr($category, 0, 3)) . rand(100, 999);
-            
+            $barcode = 'TESTCAT' . strtoupper(substr($category, 0, 3)) . rand(100, 999);
+
             $response = $this->actingAs($this->admin)
                 ->postJson('/api/admin/inventory/items', [
                     'sku' => $sku,
+                    'barcode' => $barcode,
                     'name' => "Test {$category} Item",
                     'category' => $category,
                     'price' => 100,
@@ -224,6 +271,7 @@ class InventoryTest extends TestCase
         $response = $this->actingAs($this->admin)
             ->postJson('/api/admin/inventory/items', [
                 'sku' => 'QUANTITY-TEST',
+                'barcode' => 'QTYTEST001',
                 'name' => 'Test Quantity Field',
                 'category' => 'Food',
                 'price' => 500,
@@ -559,6 +607,7 @@ class InventoryTest extends TestCase
         $response = $this->actingAs($this->admin)
             ->postJson('/api/admin/inventory/items', [
                 'sku' => 'INITIAL-LOG-TEST',
+                'barcode' => 'INITLOG001',
                 'name' => 'Initial Log Test',
                 'category' => 'Food',
                 'price' => 500,

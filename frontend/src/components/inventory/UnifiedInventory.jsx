@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback, useMemo } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import StatusDot from "../shared/StatusDot";
+import { exportToCSV as exportCSVUtil, exportToPDF, exportToExcel } from "../../utils/reportExport";
 import {
   faPlus, faEdit, faSearch, faBox,
   faSync, faArchive, faImage,
@@ -74,6 +75,10 @@ const UnifiedInventory = () => {
   const [adjustItem, setAdjustItem] = useState(null);
   const [showAdjustModal, setShowAdjustModal] = useState(false);
   const [deleteModal, setDeleteModal] = useState({ open: false, item: null, loading: false });
+  const [historyItem, setHistoryItem] = useState(null);
+  const [showHistoryModal, setShowHistoryModal] = useState(false);
+  const [historyLogs, setHistoryLogs] = useState([]);
+  const [loadingHistory, setLoadingHistory] = useState(false);
 
   // Toast
   const [toast, setToast] = useState({ show: false, type: "success", title: "", message: "" });
@@ -185,7 +190,7 @@ const UnifiedInventory = () => {
     const q = searchTerm.trim().toLowerCase();
     if (q) {
       result = result.filter((it) =>
-        [it.name, it.sku, it.brand, it.supplier, it.category].some((v) =>
+        [it.name, it.sku, it.barcode, it.brand, it.supplier, it.category].some((v) =>
           (v || "").toLowerCase().includes(q)
         )
       );
@@ -359,20 +364,47 @@ const UnifiedInventory = () => {
   // ---- View info ----
   const handleViewInfo = (item) => { setInfoItem(item); setShowInfoModal(true); };
 
-  // ---- Export CSV ----
-  const exportToCSV = () => {
-    const headers = ["Name", "SKU", "Category", "Brand", "Supplier", "Stock", "Price", "Cost", "Status"];
-    const rows = filteredItems.map((it) => [
-      it.name, it.sku, it.category, it.brand, it.supplier,
-      getStock(it), it.price, it.cost ?? "", getStatus(it),
-    ]);
-    const csv = [headers, ...rows].map((r) => r.join(",")).join("\n");
-    const blob = new Blob([csv], { type: "text/csv" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = "inventory.csv";
-    a.click();
+  const handleViewHistory = async (item) => {
+    setHistoryItem(item);
+    setShowHistoryModal(true);
+    setLoadingHistory(true);
+    setHistoryLogs([]);
+    try {
+      const res = await inventoryApi.getStockLogs({ itemId: item.id, per_page: 50 });
+      setHistoryLogs(normalizeList(res, ["logs", "data", "items"]));
+    } catch (err) {
+      showToast("error", "Error", err.message || "Failed to load history");
+    } finally {
+      setLoadingHistory(false);
+    }
+  };
+
+  // ---- Export (CSV / Excel / PDF) ----
+  const [showExportDropdown, setShowExportDropdown] = useState(false);
+  const exportColumns = [
+    { key: "name", label: "Name" },
+    { key: "sku", label: "SKU" },
+    { key: "category", label: "Category" },
+    { key: "brand", label: "Brand" },
+    { key: "supplier", label: "Supplier" },
+    { key: "stock", label: "Stock" },
+    { key: "price", label: "Price", format: "currency" },
+    { key: "cost", label: "Cost", format: "currency" },
+    { key: "status", label: "Status" },
+  ];
+
+  const handleExport = (format) => {
+    setShowExportDropdown(false);
+    if (!filteredItems || filteredItems.length === 0) return;
+    // Map items to include computed stock/status for export
+    const exportData = filteredItems.map((it) => ({
+      ...it,
+      stock: getStock(it),
+      status: getStatus(it),
+    }));
+    if (format === "csv") exportCSVUtil(exportData, exportColumns, "inventory");
+    else if (format === "excel") exportToExcel(exportData, exportColumns, "inventory");
+    else if (format === "pdf") exportToPDF(exportData, exportColumns, "Inventory Report", "inventory");
   };
 
   // ---- Reorder ----
@@ -418,9 +450,21 @@ const UnifiedInventory = () => {
           {error && <span className="demo-badge">No live records</span>}
         </div>
         <div className="ui-header-actions">
-          <button className="btn btn-secondary" onClick={exportToCSV}>
-            <FontAwesomeIcon icon={faDownload} /> Export CSV
-          </button>
+          <div style={{ position: "relative" }}>
+            <button className="btn btn-secondary" onClick={() => setShowExportDropdown(!showExportDropdown)}>
+              <FontAwesomeIcon icon={faDownload} /> Export ▼
+            </button>
+            {showExportDropdown && (
+              <>
+                <div style={{ position: "fixed", top: 0, left: 0, right: 0, bottom: 0, zIndex: 998 }} onClick={() => setShowExportDropdown(false)} />
+                <div style={{ position: "absolute", top: "100%", right: 0, background: "#fff", border: "1px solid #e2e8f0", borderRadius: 8, boxShadow: "0 8px 24px rgba(0,0,0,0.12)", zIndex: 999, minWidth: 160, overflow: "hidden" }}>
+                  <button style={{ display: "block", width: "100%", padding: "10px 16px", border: "none", background: "#fff", color: "#374151", fontSize: 13, textAlign: "left", cursor: "pointer" }} onClick={() => handleExport("csv")}>Export as CSV</button>
+                  <button style={{ display: "block", width: "100%", padding: "10px 16px", border: "none", background: "#fff", color: "#374151", fontSize: 13, textAlign: "left", cursor: "pointer" }} onClick={() => handleExport("excel")}>Export as Excel</button>
+                  <button style={{ display: "block", width: "100%", padding: "10px 16px", border: "none", background: "#fff", color: "#374151", fontSize: 13, textAlign: "left", cursor: "pointer" }} onClick={() => handleExport("pdf")}>Export as PDF</button>
+                </div>
+              </>
+            )}
+          </div>
           <button className="btn btn-primary" onClick={handleAddNew}>
             <FontAwesomeIcon icon={faPlus} /> Add New Item
           </button>
@@ -502,7 +546,7 @@ const UnifiedInventory = () => {
       <div className="ui-filters-bar">
         <div className="ui-search-box">
           <FontAwesomeIcon icon={faSearch} />
-          <input type="text" placeholder="Search by name, SKU, brand..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />
+          <input type="text" placeholder="Search by name, SKU, barcode, brand..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />
         </div>
         <div className="ui-filter-actions">
           <button className={`btn btn-filter ${showFilters ? "active" : ""}`} onClick={() => setShowFilters(!showFilters)}>
@@ -592,6 +636,7 @@ const UnifiedInventory = () => {
                   </th>
                 )}
                 <th className="sortable" onClick={() => handleSort("sku")}>SKU {renderSortIcon("sku")}</th>
+                <th className="sortable" onClick={() => handleSort("barcode")}>Barcode {renderSortIcon("barcode")}</th>
                 <th className="sortable" onClick={() => handleSort("name")}>Product {renderSortIcon("name")}</th>
                 <th className="sortable" onClick={() => handleSort("category")}>Category {renderSortIcon("category")}</th>
                 <th className="sortable" onClick={() => handleSort("brand")}>Brand {renderSortIcon("brand")}</th>
@@ -614,6 +659,7 @@ const UnifiedInventory = () => {
                       </td>
                     )}
                     <td className="sku-cell">{item.sku || "—"}</td>
+                    <td className="barcode-cell">{item.barcode || "—"}</td>
                     <td className="name-cell">
                       <div className="product-name">{item.name}</div>
                       <div className="product-brand">{item.brand}</div>
@@ -653,6 +699,9 @@ const UnifiedInventory = () => {
                           <button className="btn-icon info" onClick={() => handleViewInfo(item)} title="View Info">
                             <FontAwesomeIcon icon={faInfoCircle} />
                           </button>
+                          <button className="btn-icon history" onClick={() => handleViewHistory(item)} title="History">
+                            <FontAwesomeIcon icon={faHistory} />
+                          </button>
                           <button className={`btn-icon photo ${!item.photo_url ? "disabled" : ""}`} onClick={() => item.photo_url ? setViewPhotoUrl(item.photo_url) : showToast("info", "No Photo", `${item.name} has no photo.`)} title={item.photo_url ? "View Photo" : "No Photo"}>
                             <FontAwesomeIcon icon={faImage} />
                           </button>
@@ -672,7 +721,7 @@ const UnifiedInventory = () => {
                   {/* Expandable batch row */}
                   {activeTab === "active" && expandedItems.has(item.id) && (
                     <tr className="batch-row">
-                      <td colSpan={12}>
+                      <td colSpan={13}>
                         <div className="batch-details">
                           <h4><FontAwesomeIcon icon={faBoxes} /> Batches for {item.name}</h4>
                           {loadingBatches[item.id] ? (
@@ -710,7 +759,7 @@ const UnifiedInventory = () => {
                   )}
                   {activeTab === "active" && (
                     <tr className="expand-toggle-row">
-                      <td colSpan={12}>
+                      <td colSpan={13}>
                         <button className="btn-expand" onClick={() => toggleExpand(item.id)}>
                           <FontAwesomeIcon icon={expandedItems.has(item.id) ? faChevronUp : faChevronDown} />
                           {expandedItems.has(item.id) ? " Hide Batches" : " View Batches"}
@@ -821,6 +870,7 @@ const UnifiedInventory = () => {
               <div className="info-grid">
                 <div><label>Name</label><p>{infoItem.name}</p></div>
                 <div><label>SKU</label><p>{infoItem.sku || "—"}</p></div>
+                <div><label>Barcode</label><p>{infoItem.barcode || "—"}</p></div>
                 <div><label>Category</label><p>{infoItem.category}</p></div>
                 <div><label>Brand</label><p>{infoItem.brand || "—"}</p></div>
                 <div><label>Supplier</label><p>{infoItem.supplier || "—"}</p></div>
@@ -829,6 +879,72 @@ const UnifiedInventory = () => {
                 <div><label>Cost</label><p>{infoItem.cost ? `₱${infoItem.cost.toLocaleString()}` : "—"}</p></div>
                 <div className="full-width"><label>Description</label><p>{infoItem.description || "No description"}</p></div>
               </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* History Modal */}
+      {showHistoryModal && historyItem && (
+        <div className="modal-overlay" onClick={() => setShowHistoryModal(false)}>
+          <div className="modal-content history-modal" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <h2><FontAwesomeIcon icon={faHistory} /> Stock History</h2>
+              <button className="btn-close" onClick={() => setShowHistoryModal(false)}>
+                &times;
+              </button>
+            </div>
+            <div className="modal-body">
+              <div className="history-item-header">
+                <div className="history-item-name">{historyItem.name}</div>
+                <div className="history-item-meta">
+                  <span>SKU: {historyItem.sku || "—"}</span>
+                  {historyItem.barcode && <span>Barcode: {historyItem.barcode}</span>}
+                  <span>Current Stock: {getStock(historyItem)}</span>
+                </div>
+              </div>
+              {loadingHistory ? (
+                <p className="history-loading">Loading history...</p>
+              ) : historyLogs.length === 0 ? (
+                <p className="history-empty">No stock movements recorded for this item.</p>
+              ) : (
+                <table className="history-table">
+                  <thead>
+                    <tr>
+                      <th>Date</th>
+                      <th>Movement</th>
+                      <th>Qty</th>
+                      <th>Stock Before</th>
+                      <th>Stock After</th>
+                      <th>Reference</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {historyLogs.map((log) => {
+                      const qty = parseInt(log.quantity ?? log.delta ?? 0);
+                      const isPositive = qty >= 0;
+                      return (
+                        <tr key={log.id}>
+                          <td className="history-date">
+                            {log.created_at ? new Date(log.created_at).toLocaleDateString("en-PH", { year: "numeric", month: "short", day: "2-digit" }) : "—"}
+                          </td>
+                          <td>
+                            <span className={`movement-badge ${log.movement_type || "adjustment"}`}>
+                              {(log.movement_type || log.reason || "adjustment").replace(/_/g, " ")}
+                            </span>
+                          </td>
+                          <td className={`history-qty ${isPositive ? "positive" : "negative"}`}>
+                            {isPositive ? "+" : ""}{qty}
+                          </td>
+                          <td className="numeric">{log.stock_before ?? "—"}</td>
+                          <td className="numeric">{log.stock_after ?? "—"}</td>
+                          <td className="history-ref">{log.reference_type || log.reason || "—"}</td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              )}
             </div>
           </div>
         </div>

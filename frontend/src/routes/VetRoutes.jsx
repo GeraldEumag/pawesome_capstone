@@ -15,6 +15,7 @@ const VetReceipt = lazy(() => import("../components/veterinary/VetReceipt"));
 const ProfileSettings = lazy(() => import("../components/shared/ProfileSettings"));
 const VetCurrentBoarders = lazy(() => import("../components/veterinary/VeterinaryCurrentBoarders"));
 const VetMedicalConfinements = lazy(() => import("../components/veterinary/VetMedicalConfinements"));
+const MyPayroll = lazy(() => import("../components/shared/MyPayroll"));
 
 const VetRoutes = () => (
   <Suspense fallback={<VetDashboardSkeleton />}>
@@ -41,6 +42,7 @@ const VetRoutes = () => (
         <Route path="receipt" element={<VetReceipt />} />
         <Route path="current-boarders" element={<VetCurrentBoarders />} />
         <Route path="medical-confinements" element={<VetMedicalConfinements />} />
+        <Route path="payroll" element={<MyPayroll roleAccent="#059669" roleLabel="Veterinary" />} />
         <Route path="profile" element={<ProfileSettings />} />
       </Route>
     </Routes>

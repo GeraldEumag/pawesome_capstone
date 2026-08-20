@@ -664,26 +664,64 @@ class DashboardController extends Controller
     }
 
     /**
-     * Lookup product by barcode for Cashier POS
+     * Lookup product by barcode for Cashier POS.
+     *
+     * Server-side barcode lookup. The POS scanner calls this endpoint; it does
+     * NOT deduct stock. Stock deduction happens only inside the existing
+     * POS checkout transaction (POSController::processTransaction).
+     *
+     * Safety rules enforced here:
+     *  - barcode is normalized (trimmed) before comparison
+     *  - only active, non-archived items are returned
+     *  - sellability is reported so the POS can block non-sellable items
+     *  - stock is reported so the POS can block out-of-stock items
+     *  - unknown barcodes fail safely with 404 (no item creation, no stock change)
      */
     public function lookupBarcode($barcode)
     {
-        $product = InventoryItem::where('barcode', $barcode)
+        // Normalize: remove leading/trailing whitespace and any trailing newline
+        // characters that HID scanners may append.
+        $normalized = trim((string) $barcode);
+
+        if ($normalized === '') {
+            return response()->json([
+                'success' => false,
+                'message' => 'Barcode not found.',
+            ], 404);
+        }
+
+        $product = InventoryItem::where('barcode', $normalized)
             ->where('status', 'active')
+            ->whereNull('archived_at')
             ->first();
 
         if (!$product) {
-            return response()->json(['error' => 'Product not found'], 404);
+            return response()->json([
+                'success' => false,
+                'message' => 'Barcode not found.',
+            ], 404);
         }
 
+        $sellable = (bool) $product->is_sellable;
+        $inStock = (int) $product->stock > 0;
+
         return response()->json([
-            'product' => [
+            'success' => true,
+            'item' => [
                 'id' => $product->id,
                 'name' => $product->name,
                 'sku' => $product->sku,
-                'price' => $product->price,
-                'stock' => $product->stock,
                 'barcode' => $product->barcode,
+                'category' => $product->category,
+                'price' => (float) $product->price,
+                'selling_price' => (float) $product->price,
+                'stock' => (int) $product->stock,
+                'available_stock' => (int) $product->stock,
+                'is_sellable' => $sellable,
+                'sellable' => $sellable,
+                'in_stock' => $inStock,
+                'item_type' => 'product',
+                'type' => 'product',
             ],
         ]);
     }

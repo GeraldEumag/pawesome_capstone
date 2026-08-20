@@ -1,0 +1,430 @@
+{
+    "title": "Pawesome Cross-Role E2E Production Readiness Audit (HTTP)",
+    "started_at": "2026-08-20T18:31:19+02:00",
+    "api_base": "http://127.0.0.1:8000/api",
+    "seed": "658948",
+    "overall": "FAIL",
+    "summary": {
+        "pass": 24,
+        "fail": 3,
+        "warn": 2,
+        "blockers": 0
+    },
+    "findings": [
+        {
+            "type": "pass",
+            "gate": "auth",
+            "message": "Login as customer",
+            "at": "2026-08-20T18:31:20+02:00",
+            "detail": {
+                "email": "customer@example.com",
+                "token_len": 52
+            }
+        },
+        {
+            "type": "pass",
+            "gate": "auth",
+            "message": "Login as receptionist",
+            "at": "2026-08-20T18:31:21+02:00",
+            "detail": {
+                "email": "receptionist@example.com",
+                "token_len": 52
+            }
+        },
+        {
+            "type": "pass",
+            "gate": "auth",
+            "message": "Login as cashier",
+            "at": "2026-08-20T18:31:22+02:00",
+            "detail": {
+                "email": "cashier@example.com",
+                "token_len": 52
+            }
+        },
+        {
+            "type": "pass",
+            "gate": "auth",
+            "message": "Login as inventory",
+            "at": "2026-08-20T18:31:23+02:00",
+            "detail": {
+                "email": "inventory@example.com",
+                "token_len": 52
+            }
+        },
+        {
+            "type": "pass",
+            "gate": "auth",
+            "message": "Login as veterinary",
+            "at": "2026-08-20T18:31:24+02:00",
+            "detail": {
+                "email": "vet@example.com",
+                "token_len": 52
+            }
+        },
+        {
+            "type": "pass",
+            "gate": "auth",
+            "message": "Login as manager",
+            "at": "2026-08-20T18:31:25+02:00",
+            "detail": {
+                "email": "manager@example.com",
+                "token_len": 52
+            }
+        },
+        {
+            "type": "pass",
+            "gate": "auth",
+            "message": "Login as admin",
+            "at": "2026-08-20T18:31:26+02:00",
+            "detail": {
+                "email": "admin@example.com",
+                "token_len": 52
+            }
+        },
+        {
+            "type": "pass",
+            "gate": "customer",
+            "message": "Buddy pet resolved",
+            "at": "2026-08-20T18:31:27+02:00",
+            "detail": {
+                "pet_id": 1
+            }
+        },
+        {
+            "type": "pass",
+            "gate": "customer",
+            "message": "Customer submitted vet request",
+            "at": "2026-08-20T18:31:27+02:00",
+            "detail": {
+                "service_request_id": 56,
+                "status": "pending"
+            }
+        },
+        {
+            "type": "pass",
+            "gate": "receptionist",
+            "message": "Receptionist sees the pending customer request",
+            "at": "2026-08-20T18:31:28+02:00",
+            "detail": {
+                "count": 9
+            }
+        },
+        {
+            "type": "pass",
+            "gate": "receptionist",
+            "message": "Available veterinarian found",
+            "at": "2026-08-20T18:31:29+02:00",
+            "detail": {
+                "vet_id": 6,
+                "name": "Veterinarian"
+            }
+        },
+        {
+            "type": "pass",
+            "gate": "receptionist",
+            "message": "Receptionist approved request",
+            "at": "2026-08-20T18:31:29+02:00",
+            "detail": {
+                "response_status": 200,
+                "data": {
+                    "id": 56,
+                    "request_type": "vet",
+                    "service_type": "vet",
+                    "type": "vet",
+                    "customer_name": "Customer",
+                    "customer": "Customer",
+                    "customer_id": 7,
+                    "customer_email": "customer@example.com",
+                    "email": "customer@example.com",
+                    "pet_id": 1,
+                    "pet_name": "Buddy",
+                    "pet": "Buddy",
+                    "service_name": "General Check-up",
+                    "service": "General Check-up",
+                    "request_date": "2026-09-25",
+                    "date": "2026-09-25",
+                    "request_time": "12:58",
+                    "time": "12:58",
+                    "status": "approved",
+                    "payment_status": "unpaid",
+                    "payment": "unpaid",
+                    "notes": "CROSS_ROLE_E2E_AUDIT 658948",
+                    "price": "500.00",
+                    "amount": "500.00",
+                    "total_amount": "500.00",
+                    "created_at": "2026-08-20T16:31:27.000000Z"
+                }
+            }
+        },
+        {
+            "type": "pass",
+            "gate": "customer",
+            "message": "Customer uploaded payment proof",
+            "at": "2026-08-20T18:31:30+02:00",
+            "detail": {
+                "success": true,
+                "message": "Payment proof uploaded successfully. Waiting for cashier verification.",
+                "request": {
+                    "id": 56,
+                    "customer_id": 7,
+                    "customer": "Customer",
+                    "customer_name": "Customer",
+                    "email": "customer@example.com",
+                    "customer_email": "customer@example.com",
+                    "pet_id": 1,
+                    "pet": "Buddy",
+                    "pet_name": "Buddy",
+                    "type": "vet",
+                    "request_type": "vet",
+                    "service_type": "General Check-up",
+                    "service": "General Check-up",
+                    "service_name": "General Check-up",
+                    "date": "2026-09-25",
+                    "request_date": "2026-09-25",
+                    "requested_date": "2026-09-25",
+                    "time": "12:58",
+                    "request_time": "12:58",
+                    "notes": "CROSS_ROLE_E2E_AUDIT 658948",
+                    "status": "approved",
+                    "price": "500.00",
+                    "amount": "500.00",
+                    "payment": "pending",
+                    "payment_status": "pending",
+                    "payment_method": "gcash",
+                    "payment_reference": "GCASH-REF-658948",
+                    "payment_proof": "payment-proofs/proof_1787243490_laEVYX9F4u.png",
+                    "created_at": "2026-08-20T16:31:27.000000Z"
+                },
+                "payment_status": "pending",
+                "proof_url": "/api/files/payment-proofs/service-request/56/view"
+            }
+        },
+        {
+            "type": "pass",
+            "gate": "cashier",
+            "message": "Cashier sees the service_request payment request",
+            "at": "2026-08-20T18:31:31+02:00",
+            "detail": {
+                "count": 13
+            }
+        },
+        {
+            "type": "pass",
+            "gate": "cashier",
+            "message": "Cashier verified payment",
+            "at": "2026-08-20T18:31:32+02:00",
+            "detail": {
+                "success": true,
+                "message": "Service request payment verified successfully.",
+                "payment_status": "paid",
+                "receipt_number": "SR-REC-20260820163131-56"
+            }
+        },
+        {
+            "type": "pass",
+            "gate": "veterinary",
+            "message": "Veterinarian sees the approved appointment",
+            "at": "2026-08-20T18:31:32+02:00",
+            "detail": {
+                "appointment_id": 20
+            }
+        },
+        {
+            "type": "fail",
+            "gate": "veterinary",
+            "message": "Veterinarian start appointment failed",
+            "at": "2026-08-20T18:31:34+02:00",
+            "detail": {
+                "status": 0,
+                "body": false
+            }
+        },
+        {
+            "type": "fail",
+            "gate": "veterinary",
+            "message": "Veterinarian update medical failed",
+            "at": "2026-08-20T18:31:43+02:00",
+            "detail": {
+                "status": 422,
+                "body": "{\"message\":\"Can only update medical information for appointments in progress\",\"current_status\":\"approved\"}"
+            }
+        },
+        {
+            "type": "warn",
+            "gate": "veterinary",
+            "message": "Skipped medical record finalization due to missing medicalRecordId",
+            "at": "2026-08-20T18:31:43+02:00"
+        },
+        {
+            "type": "pass",
+            "gate": "inventory",
+            "message": "Inventory item available",
+            "at": "2026-08-20T18:31:44+02:00",
+            "detail": {
+                "item_id": 274,
+                "quantity": 94
+            }
+        },
+        {
+            "type": "warn",
+            "gate": "inventory",
+            "message": "Skipped appointment inventory usage due to missing appointmentId or no consumable item",
+            "at": "2026-08-20T18:32:01+02:00"
+        },
+        {
+            "type": "pass",
+            "gate": "inventory",
+            "message": "Inventory manager sees item after stock movement",
+            "at": "2026-08-20T18:32:02+02:00",
+            "detail": {
+                "item_id": 274,
+                "quantity_before": 94,
+                "quantity_after": 94
+            }
+        },
+        {
+            "type": "pass",
+            "gate": "veterinary",
+            "message": "Veterinarian finalized bill",
+            "at": "2026-08-20T18:32:02+02:00",
+            "detail": {
+                "success": true,
+                "billing": {
+                    "items": [
+                        {
+                            "id": 42,
+                            "service_type": "veterinary",
+                            "item_name_snapshot": null,
+                            "item_sku_snapshot": null,
+                            "pet_name_snapshot": null,
+                            "service_name_snapshot": null,
+                            "service_id": 20,
+                            "appointment_id": null,
+                            "pet_id": 1,
+                            "customer_id": 1,
+                            "customer_email": "customer@example.com",
+                            "inventory_item_id": null,
+                            "batch_id": null,
+                            "quantity_used": 1,
+                            "unit": "session",
+                            "usage_type": null,
+                            "used_by": 3,
+                            "role": null,
+                            "notes": null,
+                            "item_type": "base_service",
+                            "description": "General Check-up",
+                            "unit_price": "500.00",
+                            "total_price": "500.00",
+                            "charge_amount": "0.00",
+                            "is_billable": true,
+                            "is_paid": true,
+                            "created_at": "2026-08-20T16:31:29.000000Z",
+                            "updated_at": "2026-08-20T16:31:31.000000Z",
+                            "quantity": 1,
+                            "inventory_item": null,
+                            "user": {
+                                "id": 3,
+                                "name": "Receptionist",
+                                "first_name": "Receptionist",
+                                "middle_name": null,
+                                "last_name": "",
+                                "phone": null,
+                                "address": null,
+                                "city": null,
+                                "state": null,
+                                "zip_code": null,
+                                "country": null,
+                                "bio": null,
+                                "profile_image": null,
+                                "date_of_birth": null,
+                                "gender": null,
+                                "emergency_contact_person": null,
+                                "emergency_contact_number": null,
+                                "suffix": null,
+                                "username": "receptionist",
+                                "email": "receptionist@example.com",
+                                "email_verified_at": null,
+                                "role": "receptionist",
+                                "base_salary": "32000.00",
+                                "hourly_rate": "180.00",
+                                "work_start_time": "08:00:00",
+                                "work_end_time": "17:00:00",
+                                "working_days_per_week": 5,
+                                "department": "Front Desk",
+                                "position": "Receptionist",
+                                "employment_date": null,
+                                "employment_status": "active",
+                                "is_active": true,
+                                "telegram_chat_id": null,
+                                "profile_photo": null,
+                                "telegram_username": null,
+                                "telegram_linked_at": null,
+                                "created_at": "2026-06-08T17:08:56.000000Z",
+                                "updated_at": "2026-06-08T17:08:56.000000Z"
+                            }
+                        }
+                    ],
+                    "total_bill": 500,
+                    "total_paid": 500,
+                    "balance_due": 0,
+                    "has_unpaid_balance": false,
+                    "base_amount": 500,
+                    "additional_charges": 0,
+                    "payment_status": "paid"
+                },
+                "completion_status": {
+                    "can_complete": true,
+                    "balance_due": 0,
+                    "message": "Service can be completed. All payments settled."
+                }
+            }
+        },
+        {
+            "type": "fail",
+            "gate": "veterinary",
+            "message": "Veterinarian complete appointment failed",
+            "at": "2026-08-20T18:32:03+02:00",
+            "detail": {
+                "status": 422,
+                "body": "{\"message\":\"Finalize the consultation medical record before completing this appointment\"}"
+            }
+        },
+        {
+            "type": "pass",
+            "gate": "customer-back",
+            "message": "Customer sees own request after workflow",
+            "at": "2026-08-20T18:32:04+02:00",
+            "detail": {
+                "status": "approved",
+                "payment_status": "paid"
+            }
+        },
+        {
+            "type": "pass",
+            "gate": "manager",
+            "message": "Manager dashboard loads",
+            "at": "2026-08-20T18:32:04+02:00"
+        },
+        {
+            "type": "pass",
+            "gate": "manager",
+            "message": "Manager reports overview loads",
+            "at": "2026-08-20T18:32:05+02:00"
+        },
+        {
+            "type": "pass",
+            "gate": "manager",
+            "message": "Manager services report loads",
+            "at": "2026-08-20T18:32:06+02:00"
+        },
+        {
+            "type": "pass",
+            "gate": "rbac",
+            "message": "Customer cannot access receptionist endpoints (403)",
+            "at": "2026-08-20T18:32:07+02:00"
+        }
+    ],
+    "workflow": [],
+    "blockers": [],
+    "completed_at": "2026-08-20T18:32:07+02:00"
+}

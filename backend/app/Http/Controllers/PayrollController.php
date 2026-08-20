@@ -172,8 +172,8 @@ class PayrollController extends Controller
 
         $payroll->update($request->all());
 
-        // Recalculate if salary or attendance-related fields changed
-        if ($request->has('base_salary')) {
+        // Recalculate if any financial fields changed
+        if ($request->hasAny(['base_salary', 'bonus', 'allowances', 'deductions', 'overtime_hours', 'overtime_pay'])) {
             $payroll->calculatePayroll();
             $payroll->save();
         }
@@ -349,8 +349,8 @@ class PayrollController extends Controller
             ], 404);
         }
 
-        // Check authorization
-        if (auth()->id() !== $payroll->user_id && !in_array(auth()->user()?->role, ['admin', 'payroll'], true)) {
+        // Check authorization: own payslip, or manager/admin role
+        if (auth()->id() !== $payroll->user_id && !in_array(auth()->user()?->role, ['admin', 'manager', 'payroll'], true)) {
             return response()->json([
                 'success' => false,
                 'message' => 'Unauthorized access.',
@@ -358,7 +358,7 @@ class PayrollController extends Controller
         }
 
         $payslipData = [
-            'company_name' => 'Pawesome Veterinary Services',
+            'company_name' => 'Pawesome Retreat Inc.',
             'payslip_date' => now()->toDateString(),
             'payroll_id' => $payroll->payroll_id,
             'pay_period' => $payroll->pay_period_label,

@@ -12,6 +12,7 @@ import {
   faUserCircle,
   faSignOutAlt,
   faTimes,
+  faWallet,
 } from "@fortawesome/free-solid-svg-icons";
 import { showConfirm } from "../../utils/alert.jsx";
 import { apiRequest, clearAuthStorage } from "../../api/client";
@@ -38,6 +39,7 @@ const NAV_SECTIONS = [
   {
     label: "Account",
     items: [
+      { to: "/inventory/payroll", label: "My Payroll", icon: faWallet },
       { to: "/inventory/profile", label: "Profile", icon: faUserCircle },
     ],
   },

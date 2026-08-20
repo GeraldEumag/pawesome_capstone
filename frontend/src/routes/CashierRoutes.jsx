@@ -5,6 +5,7 @@ import CashierPOS from "../components/cashier/CashierPOS_New";
 import CashierTransactions from "../components/cashier/CashierTransactions";
 import CashierHistory from "../components/cashier/CashierHistory";
 import CashierReports from "../components/cashier/CashierReports";
+import MyPayroll from "../components/shared/MyPayroll";
 import ProfileSettings from "../components/shared/ProfileSettings";
 
 const CashierRoutes = () => (
@@ -44,6 +45,7 @@ const CashierRoutes = () => (
       <Route path="analytics" element={<CashierReports />} />
       <Route path="history" element={<CashierHistory />} />
       <Route path="reports" element={<CashierReports />} />
+      <Route path="payroll" element={<MyPayroll roleAccent="#0891b2" roleLabel="Cashier" />} />
       <Route path="profile" element={<ProfileSettings />} />
     </Route>
 
@@ -107,6 +109,16 @@ const CashierRoutes = () => (
       }
     >
       <Route index element={<ProfileSettings />} />
+    </Route>
+    <Route
+      path="payroll"
+      element={
+        <ProtectedRoute>
+          <CashierDashboard />
+        </ProtectedRoute>
+      }
+    >
+      <Route index element={<MyPayroll roleAccent="#0891b2" roleLabel="Cashier" />} />
     </Route>
 
     {/* Catch-all redirect to full-screen POS */}

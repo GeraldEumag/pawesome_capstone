@@ -28,6 +28,7 @@ import {
 } from "@fortawesome/free-solid-svg-icons";
 import { apiRequest, getAuthenticatedFileUrl } from "../../api/client";
 import { showConfirm } from "../../utils/alert.jsx";
+import { exportToCSV, exportToPDF, exportToExcel } from "../../utils/reportExport";
 import { useUnifiedRequests } from "./hooks/useUnifiedRequests";
 import NewWalkInBookingModal from "./modals/NewWalkInBookingModal";
 import ServiceManagerModal from "./ServiceManagerModal";
@@ -132,6 +133,8 @@ const ReceptionistAppointmentsBoarding = () => {
   const [veterinarians, setVeterinarians] = useState([]);
   const [vetAssignments, setVetAssignments] = useState({});
 
+  const [showExportDropdown, setShowExportDropdown] = useState(false);
+
   // Fetch veterinarians for vet assignment
   useEffect(() => {
     const fetchVets = async () => {
@@ -179,35 +182,38 @@ const ReceptionistAppointmentsBoarding = () => {
     setPaymentFilter("all");
   };
 
-  const exportCSV = () => {
+  const exportColumns = [
+    { key: "id", label: "ID" },
+    { key: "type", label: "Type" },
+    { key: "petName", label: "Pet" },
+    { key: "customerName", label: "Customer" },
+    { key: "service", label: "Service" },
+    { key: "date", label: "Date" },
+    { key: "time", label: "Time" },
+    { key: "status", label: "Status" },
+    { key: "paymentStatus", label: "Payment" },
+    { key: "amount", label: "Amount" },
+    { key: "notes", label: "Notes" },
+  ];
+
+  const handleExport = (format) => {
+    setShowExportDropdown(false);
     if (sortedRequests.length === 0) {
       notify("error", "No records to export.");
       return;
     }
-    const headers = ["ID", "Type", "Pet", "Customer", "Service", "Date", "Time", "Status", "Payment", "Amount", "Notes"];
-    const rows = sortedRequests.map((item) => [
-      item.id,
-      item.type,
-      item.petName,
-      item.customerName,
-      item.service,
-      formatDate(item.date),
-      formatTime(item.time),
-      item.status,
-      item.paymentStatus,
-      item.amount,
-      item.notes,
-    ]);
-    const csv = [headers, ...rows]
-      .map((row) => row.map((value) => `"${String(value ?? "").replace(/"/g, '""')}"`).join(","))
-      .join("\n");
-    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
-    const url = URL.createObjectURL(blob);
-    const anchor = document.createElement("a");
-    anchor.href = url;
-    anchor.download = `appointments-boarding-${new Date().toISOString().slice(0, 10)}.csv`;
-    anchor.click();
-    URL.revokeObjectURL(url);
+
+    const exportData = sortedRequests.map((item) => ({
+      ...item,
+      date: formatDate(item.date),
+      time: formatTime(item.time),
+    }));
+
+    const filename = "appointments-boarding";
+    if (format === "csv") exportToCSV(exportData, exportColumns, filename);
+    else if (format === "excel") exportToExcel(exportData, exportColumns, filename);
+    else if (format === "pdf") exportToPDF(exportData, exportColumns, "Appointments & Boarding", filename);
+
     notify("success", "Export downloaded.");
   };
 
@@ -563,10 +569,22 @@ const ReceptionistAppointmentsBoarding = () => {
             <FontAwesomeIcon icon={refreshing ? faSpinner : faRefresh} spin={refreshing} />
             {refreshing ? "Refreshing..." : "Refresh"}
           </button>
-          <button type="button" className="hub-hero-btn ghost" onClick={exportCSV}>
-            <FontAwesomeIcon icon={faDownload} />
-            Export CSV
-          </button>
+          <div className="export-dropdown-wrapper" style={{ position: "relative" }}>
+            <button type="button" className="hub-hero-btn ghost" onClick={() => setShowExportDropdown(!showExportDropdown)}>
+              <FontAwesomeIcon icon={faDownload} />
+              Export ▼
+            </button>
+            {showExportDropdown && (
+              <>
+                <div style={{ position: "fixed", top: 0, left: 0, right: 0, bottom: 0, zIndex: 998 }} onClick={() => setShowExportDropdown(false)} />
+                <div style={{ position: "absolute", top: "100%", right: 0, background: "#fff", border: "1px solid #e2e8f0", borderRadius: 8, boxShadow: "0 8px 24px rgba(0,0,0,0.12)", zIndex: 999, minWidth: 160, overflow: "hidden" }}>
+                  <button type="button" className="hub-hero-btn ghost" style={{ width: "100%", justifyContent: "flex-start" }} onClick={() => handleExport("csv")}>Export as CSV</button>
+                  <button type="button" className="hub-hero-btn ghost" style={{ width: "100%", justifyContent: "flex-start" }} onClick={() => handleExport("excel")}>Export as Excel</button>
+                  <button type="button" className="hub-hero-btn ghost" style={{ width: "100%", justifyContent: "flex-start" }} onClick={() => handleExport("pdf")}>Export as PDF</button>
+                </div>
+              </>
+            )}
+          </div>
         </div>
       </section>
 
@@ -702,9 +720,21 @@ const ReceptionistAppointmentsBoarding = () => {
             <button type="button" onClick={() => fetchAll({ silent: true })}>
               <FontAwesomeIcon icon={faRefresh} /> Refresh
             </button>
-            <button type="button" onClick={exportCSV}>
-              <FontAwesomeIcon icon={faDownload} /> Export
-            </button>
+            <div className="export-dropdown-wrapper" style={{ position: "relative" }}>
+              <button type="button" onClick={() => setShowExportDropdown(!showExportDropdown)}>
+                <FontAwesomeIcon icon={faDownload} /> Export ▼
+              </button>
+              {showExportDropdown && (
+                <>
+                  <div style={{ position: "fixed", top: 0, left: 0, right: 0, bottom: 0, zIndex: 998 }} onClick={() => setShowExportDropdown(false)} />
+                  <div style={{ position: "absolute", top: "100%", right: 0, background: "#fff", border: "1px solid #e2e8f0", borderRadius: 8, boxShadow: "0 8px 24px rgba(0,0,0,0.12)", zIndex: 999, minWidth: 160, overflow: "hidden" }}>
+                    <button type="button" style={{ width: "100%", textAlign: "left" }} onClick={() => handleExport("csv")}>Export as CSV</button>
+                    <button type="button" style={{ width: "100%", textAlign: "left" }} onClick={() => handleExport("excel")}>Export as Excel</button>
+                    <button type="button" style={{ width: "100%", textAlign: "left" }} onClick={() => handleExport("pdf")}>Export as PDF</button>
+                  </div>
+                </>
+              )}
+            </div>
           </div>
         </div>
 

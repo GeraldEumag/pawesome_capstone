@@ -44,4 +44,10 @@ export const payrollApi = {
     const queryString = new URLSearchParams(params).toString();
     return apiRequest(`/my-payroll?${queryString}`);
   },
+
+  // Get my payslip (for employees)
+  getMyPayslip: (id) => apiRequest(`/my-payroll/${id}/payslip`),
+
+  // Get payslip (for manager/admin)
+  getPayslip: (id) => apiRequest(`/manager/payroll/${id}/payslip`),
 };

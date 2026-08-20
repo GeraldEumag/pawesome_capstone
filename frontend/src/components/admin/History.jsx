@@ -243,23 +243,19 @@ const History = () => {
     });
   }, [historyLogs, searchTerm, filterCategory, filterDate]);
 
-  const exportHistory = useCallback(() => {
-    if (!filteredHistoryLogs.length) return;
-    const fmtD = (v) => v ? new Date(v).toLocaleDateString("en-PH") : "N/A";
-    const fmtT = (v) => v ? new Date(v).toLocaleTimeString("en-PH", { hour: "2-digit", minute: "2-digit" }) : "N/A";
-    const headers = ["ID","Category","User","Role","Account","Action","Description","Amount","Reference","Date","Time","Status"];
-    const rows = filteredHistoryLogs.map((log) => [
-      log.id, log.category, log.user_name, log.user_role, log.account_name || "N/A",
-      log.action, log.description, log.amount ?? "N/A", log.reference_id,
-      fmtD(log.created_at), fmtT(log.created_at), log.status,
-    ]);
-    const csv = [headers, ...rows].map((r) => r.map((v) => `"${String(v ?? "").replace(/"/g, '""')}"`).join(",")).join("\n");
-    const url = URL.createObjectURL(new Blob([csv], { type: "text/csv;charset=utf-8;" }));
-    const a = document.createElement("a");
-    a.href = url; a.download = `admin-history-${Date.now()}.csv`;
-    document.body.appendChild(a); a.click();
-    document.body.removeChild(a); URL.revokeObjectURL(url);
-  }, [filteredHistoryLogs]);
+  const exportColumns = [
+    { key: "id", label: "ID" },
+    { key: "category", label: "Category" },
+    { key: "user_name", label: "User" },
+    { key: "user_role", label: "Role" },
+    { key: "account_name", label: "Account" },
+    { key: "action", label: "Action" },
+    { key: "description", label: "Description" },
+    { key: "amount", label: "Amount", format: "currency" },
+    { key: "reference_id", label: "Reference" },
+    { key: "created_at", label: "Date", format: "date" },
+    { key: "status", label: "Status" },
+  ];
 
   return (
     <HistoryTimeline
@@ -267,7 +263,9 @@ const History = () => {
       loading={loading}
       error={error}
       onRefresh={fetchHistoryLogs}
-      onExport={exportHistory}
+      exportColumns={exportColumns}
+      exportFilename="admin-audit-history"
+      exportTitle="Admin Audit Trail History"
       roleAccent="#ff5f93"
       roleLabel="Audit Trail Center"
       emptyMessage="No history data found. Adjust filters or refresh records."

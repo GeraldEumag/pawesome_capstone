@@ -29,7 +29,7 @@ class DashboardController extends Controller
                 'completed_appointments' => Appointment::where('status', 'completed')->count(),
                 'total_revenue' => (float) Sale::sum('amount'),
                 'today_revenue' => (float) Sale::whereDate('created_at', $today)->sum('amount'),
-                'low_stock_items' => InventoryItem::whereColumn('stock', '<=', 'reorder_level')->count(),
+                'low_stock_items' => InventoryItem::whereNull('archived_at')->whereRaw('stock <= reorder_level')->where('stock', '>', 0)->count(),
                 'appointments_by_status' => Appointment::selectRaw('status, COUNT(*) as count')
                     ->groupBy('status')
                     ->get()

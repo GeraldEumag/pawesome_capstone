@@ -62,21 +62,15 @@ const VetHistory = () => {
 
   const handlePageChange = (p) => { setPage(p); fetchHistory(p); };
 
-  const exportCSV = useCallback(() => {
-    if (!entries.length) return;
-    const headers = ["Reference","Service","Pet","Customer","Vet","Status","Date"];
-    const rows = entries.map((e) => [
-      e.reference_id, e.service_name || "N/A", e.pet_name || "N/A",
-      e.customer || "N/A", e.actor, e.status,
-      e.created_at ? new Date(e.created_at).toLocaleString("en-PH") : "N/A",
-    ]);
-    const csv = [headers, ...rows].map((r) => r.map((v) => `"${String(v ?? "").replace(/"/g, '""')}"`).join(",")).join("\n");
-    const a = Object.assign(document.createElement("a"), {
-      href: URL.createObjectURL(new Blob([csv], { type: "text/csv;charset=utf-8;" })),
-      download: `vet-history-${Date.now()}.csv`,
-    });
-    document.body.appendChild(a); a.click(); document.body.removeChild(a);
-  }, [entries]);
+  const exportColumns = [
+    { key: "reference_id", label: "Reference" },
+    { key: "service_name", label: "Service" },
+    { key: "pet_name", label: "Pet" },
+    { key: "customer", label: "Customer" },
+    { key: "actor", label: "Vet" },
+    { key: "status", label: "Status" },
+    { key: "created_at", label: "Date", format: "date" },
+  ];
 
   return (
     <HistoryTimeline
@@ -84,7 +78,9 @@ const VetHistory = () => {
       loading={loading}
       error={error}
       onRefresh={() => fetchHistory(page)}
-      onExport={exportCSV}
+      exportColumns={exportColumns}
+      exportFilename="vet-history"
+      exportTitle="Veterinary History"
       roleAccent="#059669"
       roleLabel="Veterinary"
       emptyMessage="No appointment history found."

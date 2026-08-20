@@ -159,9 +159,9 @@ class ReportsController extends Controller
                 'total_appointments' => Appointment::count(),
                 'completed_appointments' => Appointment::where('status', 'completed')->count(),
                 'total_pets' => Pet::count(),
-                'total_inventory_items' => InventoryItem::count(),
+                'total_inventory_items' => InventoryItem::whereNull('archived_at')->count(),
                 'low_stock_items' => $this->lowStockCount(),
-                'out_of_stock_items' => InventoryItem::where('stock', 0)->count(),
+                'out_of_stock_items' => InventoryItem::whereNull('archived_at')->where('stock', 0)->count(),
                 'monthly_revenue' => $monthlyRevenue,
                 'top_services' => $topServices,
                 'top_customers' => $topCustomers,
@@ -1199,10 +1199,10 @@ class ReportsController extends Controller
             return collect();
         }
 
-        $query = $this->inventoryItemsBase($request);
+        $query = $this->inventoryItemsBase($request)->whereNull('archived_at')->where('stock', '>', 0);
 
         if (Schema::hasColumn('inventory_items', 'reorder_level')) {
-            $query->whereColumn('stock', '<=', 'reorder_level');
+            $query->whereRaw('stock <= reorder_level');
         } elseif (Schema::hasColumn('inventory_items', 'minimum_stock_level')) {
             $query->whereColumn('stock', '<=', 'minimum_stock_level');
         } else {
@@ -1578,12 +1578,12 @@ class ReportsController extends Controller
 
     private function lowStockCount(?Request $request = null): int
     {
-        $query = DB::table('inventory_items');
+        $query = DB::table('inventory_items')->whereNull('archived_at');
         if ($request) {
             $this->applyDateRange($query, $request, 'created_at');
         }
 
-        return (int) $query->whereColumn('stock', '<=', 'reorder_level')->count();
+        return (int) $query->whereRaw('stock <= reorder_level')->where('stock', '>', 0)->count();
     }
 
     private function activeCustomerCount(Request $request): int
@@ -2157,17 +2157,41 @@ class ReportsController extends Controller
      */
     public function inventoryOptimization(Request $request)
     {
-        $items = InventoryItem::get()->map(fn($item) => ['name' => $item->name, 'stock' => $item->stock, 'reorder_level' => $item->reorder_level, 'total_value' => $item->stock * ($item->unit_cost ?? 0)])->sortByDesc('total_value');
-        $lowStockCount = InventoryItem::whereColumn('stock', '<=', 'reorder_level')->count();
+        $items = InventoryItem::whereNull('archived_at')->get()->map(fn($item) => ['name' => $item->name, 'stock' => $item->stock, 'reorder_level' => $item->reorder_level, 'total_value' => $item->stock * ($item->unit_cost ?? 0)])->sortByDesc('total_value');
+        $lowStockCount = InventoryItem::whereNull('archived_at')->whereRaw('stock <= reorder_level')->where('stock', '>', 0)->count();
+
+        // Calculate ABC data from real inventory items
+        $totalValue = $items->sum('total_value');
+        $sortedItems = $items->values();
+        $aThreshold = $totalValue * 0.70;
+        $bThreshold = $totalValue * 0.95;
+        $cumulative = 0;
+        $aItems = ['count' => 0, 'value' => 0];
+        $bItems = ['count' => 0, 'value' => 0];
+        $cItems = ['count' => 0, 'value' => 0];
+        foreach ($sortedItems as $item) {
+            $cumulative += $item['total_value'];
+            if ($cumulative <= $aThreshold) {
+                $aItems['count']++;
+                $aItems['value'] += $item['total_value'];
+            } elseif ($cumulative <= $bThreshold) {
+                $bItems['count']++;
+                $bItems['value'] += $item['total_value'];
+            } else {
+                $cItems['count']++;
+                $cItems['value'] += $item['total_value'];
+            }
+        }
+        $abcData = [
+            ['category' => 'A - High Value', 'items' => $aItems['count'], 'value' => round($aItems['value'], 2), 'percentage' => $totalValue > 0 ? round($aItems['value'] / $totalValue * 100, 1) : 0, 'color' => '#10b981'],
+            ['category' => 'B - Medium Value', 'items' => $bItems['count'], 'value' => round($bItems['value'], 2), 'percentage' => $totalValue > 0 ? round($bItems['value'] / $totalValue * 100, 1) : 0, 'color' => '#3b82f6'],
+            ['category' => 'C - Low Value', 'items' => $cItems['count'], 'value' => round($cItems['value'], 2), 'percentage' => $totalValue > 0 ? round($cItems['value'] / $totalValue * 100, 1) : 0, 'color' => '#94a3b8'],
+        ];
 
         return response()->json([
             'success' => true,
             'data' => [
-                'abcData' => [
-                    ['category' => 'A - High Value', 'items' => 45, 'value' => 125000, 'percentage' => 70, 'color' => '#10b981'],
-                    ['category' => 'B - Medium Value', 'items' => 85, 'value' => 45000, 'percentage' => 25, 'color' => '#3b82f6'],
-                    ['category' => 'C - Low Value', 'items' => 180, 'value' => 8500, 'percentage' => 5, 'color' => '#94a3b8'],
-                ],
+                'abcData' => $abcData,
                 'stockData' => [],
                 'reorderRecommendations' => [],
                 'lowStockCount' => $lowStockCount,

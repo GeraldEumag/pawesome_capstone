@@ -1,14 +1,14 @@
 // Helper utilities for E2E tests
 
-// Default credentials for test accounts (matching E2ESeeder.php)
+// Default credentials for test accounts (matching the live dev/prototype database)
 const DEFAULT_CREDENTIALS = {
-  admin: { email: 'admin@test.com', password: 'password123' },
-  manager: { email: 'manager@test.com', password: 'password123' },
-  veterinary: { email: 'veterinary@test.com', password: 'password123' },
-  cashier: { email: 'cashier@test.com', password: 'password123' },
-  inventory: { email: 'inventory@test.com', password: 'password123' },
-  receptionist: { email: 'receptionist@test.com', password: 'password123' },
-  customer: { email: 'customer@test.com', password: 'password123' },
+  admin:        { email: 'admin@example.com',      password: 'Password123!' },
+  manager:      { email: 'manager@example.com',    password: 'password123' },
+  veterinary:   { email: 'vet@example.com',        password: 'Password123!' },
+  cashier:      { email: 'cashier@example.com',    password: 'password123' },
+  inventory:    { email: 'inventory@example.com',  password: 'Password123!' },
+  receptionist: { email: 'receptionist@example.com', password: 'Password123!' },
+  customer:     { email: 'customer@example.com',   password: 'Password123!' },
 };
 
 // Dashboard URLs per role

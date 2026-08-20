@@ -1,0 +1,107 @@
+{
+    "title": "Pawesome Cross-Role E2E Production Readiness Audit (HTTP)",
+    "started_at": "2026-08-20T18:15:57+02:00",
+    "api_base": "http://127.0.0.1:8000/api",
+    "seed": "809078",
+    "overall": "FAIL",
+    "summary": {
+        "pass": 8,
+        "fail": 1,
+        "warn": 0,
+        "blockers": 0
+    },
+    "findings": [
+        {
+            "type": "pass",
+            "gate": "auth",
+            "message": "Login as customer",
+            "at": "2026-08-20T18:15:58+02:00",
+            "detail": {
+                "email": "customer@example.com",
+                "token_len": 52
+            }
+        },
+        {
+            "type": "pass",
+            "gate": "auth",
+            "message": "Login as receptionist",
+            "at": "2026-08-20T18:15:59+02:00",
+            "detail": {
+                "email": "receptionist@example.com",
+                "token_len": 52
+            }
+        },
+        {
+            "type": "pass",
+            "gate": "auth",
+            "message": "Login as cashier",
+            "at": "2026-08-20T18:16:00+02:00",
+            "detail": {
+                "email": "cashier@example.com",
+                "token_len": 52
+            }
+        },
+        {
+            "type": "pass",
+            "gate": "auth",
+            "message": "Login as inventory",
+            "at": "2026-08-20T18:16:01+02:00",
+            "detail": {
+                "email": "inventory@example.com",
+                "token_len": 52
+            }
+        },
+        {
+            "type": "pass",
+            "gate": "auth",
+            "message": "Login as veterinary",
+            "at": "2026-08-20T18:16:02+02:00",
+            "detail": {
+                "email": "vet@example.com",
+                "token_len": 52
+            }
+        },
+        {
+            "type": "pass",
+            "gate": "auth",
+            "message": "Login as manager",
+            "at": "2026-08-20T18:16:03+02:00",
+            "detail": {
+                "email": "manager@example.com",
+                "token_len": 52
+            }
+        },
+        {
+            "type": "pass",
+            "gate": "auth",
+            "message": "Login as admin",
+            "at": "2026-08-20T18:16:04+02:00",
+            "detail": {
+                "email": "admin@example.com",
+                "token_len": 52
+            }
+        },
+        {
+            "type": "pass",
+            "gate": "customer",
+            "message": "Buddy pet resolved",
+            "at": "2026-08-20T18:16:05+02:00",
+            "detail": {
+                "pet_id": 1
+            }
+        },
+        {
+            "type": "fail",
+            "gate": "customer",
+            "message": "Customer vet request creation failed",
+            "at": "2026-08-20T18:16:06+02:00",
+            "detail": {
+                "status": 422,
+                "body": "{\"success\":false,\"message\":\"This pet already has a booking for the selected service, date, and time.\",\"errors\":{\"requested_time\":[\"Duplicate booking for this pet and time.\"]}}"
+            }
+        }
+    ],
+    "workflow": [],
+    "blockers": [],
+    "completed_at": "2026-08-20T18:16:06+02:00"
+}

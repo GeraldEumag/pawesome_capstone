@@ -5,6 +5,7 @@ import { useAuth } from "../../context/AuthContext";
 import { normalizeList } from "../../utils/normalizeList";
 import "./CashierPaymentVerification.css";
 import { showAlert, showSuccess, showError, showPrompt, showConfirm } from "../../utils/alert.jsx";
+import { printReceipt as printReceiptUtil } from "../../utils/receiptPrinter";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faRotateRight, faInbox, faXmark } from "@fortawesome/free-solid-svg-icons";
 
@@ -116,43 +117,36 @@ const CashierPaymentVerification = () => {
     const customer = payment.customer_name || payment.customer?.name || "Customer";
     const service = payment.service_name || payment.service?.name || payment.order_name || payment.request_type || payment.type || "Payment";
     const method = payment.payment_method || data.payment_method || "Online Payment";
+    const referenceNumber = data.reference_number || payment.payment_reference || "";
 
-    const w = window.open("", "_blank", "width=420,height=700");
-    if (!w) return;
+    // Build items list — use actual items if available, otherwise single service line
+    let items;
+    const rawItems = data.receipt?.items || payment.items || [];
+    if (rawItems.length > 0) {
+      items = rawItems.map((item) => ({
+        name: item.item_name || item.name || item.description || "Item",
+        quantity: Number(item.quantity || 1),
+        unitPrice: Number(item.unit_price || item.price || item.amount || 0),
+        total: Number(item.total_price || item.total || item.amount || 0),
+      }));
+    } else {
+      items = [{ name: service, quantity: 1, unitPrice: amount, total: amount }];
+    }
 
-    w.document.write(`<!doctype html><html><head><title>${receiptNumber}</title>
-      <style>
-        body{font-family:'Courier New',monospace;max-width:360px;margin:auto;padding:20px;color:#111}
-        h2{text-align:center;font-size:18px;margin:0 0 4px}
-        .center{text-align:center;font-size:12px;color:#555;margin-bottom:12px}
-        table{width:100%;border-collapse:collapse;font-size:12px}
-        td{padding:4px 0;vertical-align:top}
-        hr{border:0;border-top:1px dashed #bbb;margin:10px 0}
-        .total td{font-size:14px;font-weight:bold;border-top:1px dashed #bbb;padding-top:8px}
-        @media print{button{display:none}}
-      </style></head><body>
-      <h2>Pawesome Retreat Inc.</h2>
-      <div class="center">Official Cashier Receipt<br>${date}</div>
-      <hr>
-      <table>
-        <tr><td>Receipt</td><td style="text-align:right">${receiptNumber}</td></tr>
-        <tr><td>Cashier</td><td style="text-align:right">${cashier}</td></tr>
-        <tr><td>Customer</td><td style="text-align:right">${customer}</td></tr>
-        <tr><td>Payment</td><td style="text-align:right">${method}</td></tr>
-        <tr><td>Status</td><td style="text-align:right">paid</td></tr>
-      </table>
-      <hr>
-      <table>
-        <tr><td>${service}<br><small>Qty 1 x ₱${amount.toFixed(2)}</small></td><td style="text-align:right">₱${amount.toFixed(2)}</td></tr>
-        <tr class="total"><td>Total</td><td style="text-align:right">₱${amount.toFixed(2)}</td></tr>
-      </table>
-      <hr>
-      <div class="center">Please keep this receipt.</div>
-      <button onclick="window.print()">Print</button>
-      </body></html>`);
-    w.document.close();
-    w.focus();
-    w.print();
+    printReceiptUtil({
+      title: "Official Payment Receipt",
+      receiptNumber,
+      date,
+      cashier,
+      customer,
+      paymentMethod: method,
+      paymentStatus: "paid",
+      referenceNumber,
+      verifiedBy: cashier,
+      items,
+      subtotal: amount,
+      total: amount,
+    });
   };
 
   const rejectPayment = async (payment) => {

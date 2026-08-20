@@ -320,6 +320,38 @@ class MedicalRecordController extends Controller
     }
 
     /**
+     * Finalize a medical record (allowing the appointment to be completed)
+     */
+    public function finalize($id)
+    {
+        $record = MedicalRecord::findOrFail($id);
+        $user = request()->user();
+
+        // Only admin or the creating veterinarian can finalize
+        if ($user->role !== 'admin' && $record->veterinarian_id !== $user->id) {
+            return response()->json(['message' => 'You do not have permission to finalize this record'], 403);
+        }
+
+        if ($record->status === MedicalRecord::STATUS_LOCKED) {
+            return response()->json(['message' => 'Locked records cannot be finalized'], 422);
+        }
+
+        if ($record->status === MedicalRecord::STATUS_FINALIZED) {
+            return response()->json([
+                'message' => 'Medical record is already finalized',
+                'record' => $record->fresh()
+            ], 200);
+        }
+
+        $record->finalize();
+
+        return response()->json([
+            'message' => 'Medical record finalized successfully',
+            'record' => $record->fresh()
+        ]);
+    }
+
+    /**
      * Get medical records for a specific pet
      */
     public function forPet($petId)

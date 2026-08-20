@@ -1,4 +1,5 @@
 import React, { useMemo, useState } from "react";
+import { exportToCSV, exportToPDF, exportToExcel } from "../../utils/reportExport";
 import "./HistoryTimeline.css";
 
 const fmt = (v) =>
@@ -39,6 +40,9 @@ const HistoryTimeline = ({
   error = "",
   onRefresh,
   onExport,
+  exportColumns,
+  exportFilename = "history",
+  exportTitle = "Activity History",
   roleAccent = "#6366f1",
   roleLabel = "History",
   emptyMessage = "No history records found.",
@@ -55,6 +59,23 @@ const HistoryTimeline = ({
 }) => {
   const [selectedEntry, setSelectedEntry] = useState(null);
   const [localPage, setLocalPage] = useState(1);
+  const [showExportDropdown, setShowExportDropdown] = useState(false);
+
+  // Unified export handler — uses shared utilities if exportColumns provided,
+  // otherwise falls back to the legacy onExport callback (CSV only)
+  const handleExport = (format) => {
+    setShowExportDropdown(false);
+    if (!entries || entries.length === 0) return;
+
+    if (exportColumns && exportColumns.length > 0) {
+      if (format === "csv") exportToCSV(entries, exportColumns, exportFilename);
+      else if (format === "excel") exportToExcel(entries, exportColumns, exportFilename);
+      else if (format === "pdf") exportToPDF(entries, exportColumns, exportTitle, exportFilename);
+    } else if (onExport) {
+      // Legacy: call the old CSV-only callback
+      onExport();
+    }
+  };
 
   const totalPages = meta
     ? meta.last_page || 1
@@ -102,11 +123,28 @@ const HistoryTimeline = ({
               Refresh
             </button>
           )}
-          {onExport && (
-            <button className="ht-btn ht-btn-primary" onClick={onExport} type="button">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-              Export CSV
-            </button>
+          {(onExport || exportColumns) && (
+            <div className="ht-export-wrapper">
+              <button
+                className="ht-btn ht-btn-primary"
+                onClick={() => setShowExportDropdown(!showExportDropdown)}
+                type="button"
+              >
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                Export
+                <span className="ht-export-arrow">▼</span>
+              </button>
+              {showExportDropdown && (
+                <>
+                  <div className="ht-export-overlay" onClick={() => setShowExportDropdown(false)} />
+                  <div className="ht-export-dropdown">
+                    <button type="button" onClick={() => handleExport("csv")}>Export as CSV</button>
+                    <button type="button" onClick={() => handleExport("excel")}>Export as Excel</button>
+                    <button type="button" onClick={() => handleExport("pdf")}>Export as PDF</button>
+                  </div>
+                </>
+              )}
+            </div>
           )}
         </div>
       </div>

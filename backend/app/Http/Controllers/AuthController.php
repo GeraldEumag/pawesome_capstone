@@ -7,6 +7,8 @@ use App\Models\Customer;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Carbon;
@@ -261,27 +263,53 @@ class AuthController extends Controller
     public function forgotPassword(Request $request)
     {
         $validator = Validator::make($request->all(), [
-            'email' => 'required|string|email|exists:users,email',
+            'email' => 'required|string|email',
         ]);
 
         if ($validator->fails()) {
             return response()->json(['errors' => $validator->errors()], 422);
         }
 
-        $token = Str::random(64);
-        $hashedToken = Hash::make($token);
+        $email = $request->email;
+        $user = User::where('email', $email)->first();
 
-        $table = config('auth.passwords.users.table');
-        DB::table($table)->where('email', $request->email)->delete();
-        DB::table($table)->insert([
-            'email' => $request->email,
-            'token' => $hashedToken,
-            'created_at' => now(),
-        ]);
+        // Always return the same generic message to avoid email enumeration.
+        // Only generate and send a token if the user actually exists.
+        if ($user) {
+            $token = Str::random(64);
+            $hashedToken = Hash::make($token);
+
+            $table = config('auth.passwords.users.table');
+            DB::table($table)->where('email', $email)->delete();
+            DB::table($table)->insert([
+                'email' => $email,
+                'token' => $hashedToken,
+                'created_at' => now(),
+            ]);
+
+            // Send the reset token via email — never expose it in the API response.
+            try {
+                Mail::raw(
+                    "Hello,\n\n"
+                    . "You requested a password reset for your Pawesome account.\n\n"
+                    . "Your password reset token is:\n\n"
+                    . $token . "\n\n"
+                    . "Use this token on the password reset page to set a new password.\n"
+                    . "This token will expire in " . config('auth.passwords.users.expire', 60) . " minutes.\n\n"
+                    . "If you did not request a password reset, you can safely ignore this email.\n\n"
+                    . "— Pawesome Retreat Inc.",
+                    function ($message) use ($email) {
+                        $message->to($email)
+                            ->subject('Pawesome — Password Reset Token');
+                    }
+                );
+            } catch (\Throwable $e) {
+                Log::error('Failed to send password reset email: ' . $e->getMessage());
+            }
+        }
 
         return response()->json([
-            'message' => 'Password reset token generated successfully',
-            'reset_token' => $token,
+            'message' => 'If the email address is associated with an account, a password reset token has been sent to that email.',
         ]);
     }
 

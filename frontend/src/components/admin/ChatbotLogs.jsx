@@ -26,6 +26,7 @@ import {
 } from "@fortawesome/free-solid-svg-icons";
 import { apiRequest } from "../../api/client";
 import { formatCurrency } from "../../utils/currency";
+import { exportToCSV, exportToPDF, exportToExcel } from "../../utils/reportExport";
 import "./ChatbotLogs.css";
 
 const FAQ_SCOPES = [
@@ -96,6 +97,7 @@ const ChatbotLogs = () => {
   const [detailsLoading, setDetailsLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
+  const [showExportDropdown, setShowExportDropdown] = useState(false);
 
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
@@ -526,37 +528,31 @@ const ChatbotLogs = () => {
     ];
   }, [chatLogs, faqs, services]);
 
-  const exportLogsCSV = () => {
+  const exportColumns = [
+    { key: "user_id", label: "User ID" },
+    { key: "user_name", label: "User Name" },
+    { key: "user_role", label: "Role" },
+    { key: "total_chats", label: "Total Chats" },
+    { key: "last_chat_date", label: "Last Chat Date" },
+  ];
+
+  const handleExport = (format) => {
+    setShowExportDropdown(false);
     if (filteredLogs.length === 0) {
       showMessage("error", "No chatbot logs available to export.");
       return;
     }
 
-    const headers = ["User ID", "User Name", "Role", "Total Chats", "Last Chat Date"];
+    const filename = `chatbot-logs-${new Date().toISOString().slice(0, 10)}`;
 
-    const rows = filteredLogs.map((log) => [
-      log.user_id,
-      log.user_name,
-      log.user_role,
-      log.total_chats,
-      log.last_chat_date,
-    ]);
+    if (format === "csv") {
+      exportToCSV(filteredLogs, exportColumns, filename);
+    } else if (format === "excel") {
+      exportToExcel(filteredLogs, exportColumns, filename);
+    } else if (format === "pdf") {
+      exportToPDF(filteredLogs, exportColumns, "Chatbot Logs", filename);
+    }
 
-    const csv = [headers, ...rows]
-      .map((row) =>
-        row.map((value) => `"${String(value || "").replace(/"/g, '""')}"`).join(",")
-      )
-      .join("\n");
-
-    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
-    const url = URL.createObjectURL(blob);
-    const anchor = document.createElement("a");
-
-    anchor.href = url;
-    anchor.download = `chatbot-logs-${new Date().toISOString().slice(0, 10)}.csv`;
-    anchor.click();
-
-    URL.revokeObjectURL(url);
     showMessage("success", "Chatbot logs exported successfully.");
   };
 
@@ -615,10 +611,22 @@ const ChatbotLogs = () => {
             {refreshing ? "Refreshing..." : "Refresh Data"}
           </button>
 
-          <button className="secondary-btn" type="button" onClick={exportLogsCSV}>
-            <FontAwesomeIcon icon={faDownload} />
-            Export Logs
-          </button>
+          <div style={{ position: "relative" }}>
+            <button className="secondary-btn" type="button" onClick={() => setShowExportDropdown(!showExportDropdown)}>
+              <FontAwesomeIcon icon={faDownload} />
+              Export Logs ▼
+            </button>
+            {showExportDropdown && (
+              <>
+                <div style={{ position: "fixed", top: 0, left: 0, right: 0, bottom: 0, zIndex: 998 }} onClick={() => setShowExportDropdown(false)} />
+                <div style={{ position: "absolute", top: "100%", right: 0, background: "#fff", border: "1px solid #e2e8f0", borderRadius: 8, boxShadow: "0 8px 24px rgba(0,0,0,0.12)", zIndex: 999, minWidth: 160, overflow: "hidden" }}>
+                  <button className="secondary-btn" type="button" style={{ width: "100%", border: "none", background: "#fff", textAlign: "left", padding: "10px 14px" }} onClick={() => handleExport("csv")}>Export as CSV</button>
+                  <button className="secondary-btn" type="button" style={{ width: "100%", border: "none", background: "#fff", textAlign: "left", padding: "10px 14px" }} onClick={() => handleExport("excel")}>Export as Excel</button>
+                  <button className="secondary-btn" type="button" style={{ width: "100%", border: "none", background: "#fff", textAlign: "left", padding: "10px 14px" }} onClick={() => handleExport("pdf")}>Export as PDF</button>
+                </div>
+              </>
+            )}
+          </div>
         </div>
       </section>
 

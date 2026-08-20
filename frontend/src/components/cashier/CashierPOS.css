@@ -1339,6 +1339,28 @@
   margin-top: 8px;
 }
 
+/* ── Print: receipt modal only, hide everything else ── */
+@media print {
+  body * { visibility: hidden !important; }
+  .pos-overlay, .pos-overlay * { visibility: visible !important; }
+  .pos-overlay {
+    position: absolute !important;
+    top: 0; left: 0;
+    background: #fff !important;
+    width: 100% !important;
+  }
+  .pos-modal {
+    box-shadow: none !important;
+    border: none !important;
+    width: 100% !important;
+    max-width: 380px !important;
+    margin: 0 auto !important;
+  }
+  .pos-modal-footer { display: none !important; }
+  .pos-modal-header .pos-remove-btn { display: none !important; }
+  .pos-receipt-paper { border: none !important; }
+}
+
 /* ── Toasts ── */
 .pos-toast-wrap {
   position: fixed;

@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useState } from "react";
 import { apiRequest } from "../../api/client";
 import { showError } from "../../utils/alert.jsx";
+import { printReceipt } from "../../utils/receiptPrinter";
 import HistoryTimeline from "../shared/HistoryTimeline";
 import { formatCurrency } from "../../utils/currency";
 import "./CashierHistory_Polished.css";
@@ -73,73 +74,43 @@ const CashierHistory = () => {
     const items = (raw.items || raw.products || []).map((item) => ({
       name: item.item_name || item.name || "Item",
       quantity: item.quantity || 1,
-      price: Number(item.unit_price || item.price || item.total_price || 0),
+      unitPrice: Number(item.unit_price || item.price || item.total_price || 0),
+      total: Number(item.total_price || (item.unit_price || item.price || 0) * (item.quantity || 1)),
     }));
 
-    const receiptWindow = window.open("", "_blank", "width=400,height=600");
-    if (!receiptWindow) return;
+    const total = Number(entry.amount || raw.total || raw.total_amount || 0);
+    const subtotal = Number(raw.subtotal || total);
+    const discount = Number(raw.discount || raw.discount_amount || 0);
+    const amountReceived = Number(raw.amount_received || raw.cash_received || 0);
+    const change = Number(raw.change || raw.change_amount || 0);
 
-    const itemsHtml = items
-      .map((p) => `<tr><td>${p.name}</td><td>${p.quantity}</td><td>${formatCurrency(p.price)}</td></tr>`)
-      .join("");
-
-    receiptWindow.document.write(`
-      <html>
-        <head>
-          <title>Receipt ${entry.reference_id}</title>
-          <style>
-            body { font-family: monospace; padding: 20px; max-width: 360px; margin: 0 auto; }
-            h2 { text-align: center; margin-bottom: 4px; }
-            .store { text-align: center; font-size: 12px; margin-bottom: 16px; }
-            table { width: 100%; border-collapse: collapse; font-size: 12px; }
-            th, td { text-align: left; padding: 4px 0; }
-            th { border-bottom: 1px dashed #000; }
-            .total { border-top: 1px dashed #000; font-weight: bold; margin-top: 8px; padding-top: 8px; text-align: right; }
-            .meta { margin-top: 16px; font-size: 12px; }
-            .meta div { margin-bottom: 4px; }
-            @media print { button { display: none; } }
-          </style>
-        </head>
-        <body>
-          <h2>PAWESOME PET STORE</h2>
-          <div class="store">123 Pet Street, Manila, Philippines</div>
-          <div class="meta">
-            <div><strong>Transaction:</strong> ${entry.reference_id}</div>
-            <div><strong>Customer:</strong> ${entry.actor || "Walk-in"}</div>
-            <div><strong>Date:</strong> ${entry.created_at ? new Date(entry.created_at).toLocaleString("en-PH") : "N/A"}</div>
-            <div><strong>Payment:</strong> ${entry.method || "Cash"}</div>
-          </div>
-          <table>
-            <thead><tr><th>Item</th><th>Qty</th><th>Price</th></tr></thead>
-            <tbody>${itemsHtml}</tbody>
-          </table>
-          <div class="total">TOTAL: ${formatCurrency(entry.amount || 0)}</div>
-          <div class="meta" style="margin-top:24px; text-align:center;">
-            <div>Thank you for shopping!</div>
-          </div>
-          <button onclick="window.print()" style="margin-top:20px; width:100%; padding:10px; font-size:14px;">Print Receipt</button>
-        </body>
-      </html>
-    `);
-    receiptWindow.document.close();
+    printReceipt({
+      title: "Official Cashier Receipt",
+      receiptNumber: entry.reference_id || String(saleId),
+      date: entry.created_at ? new Date(entry.created_at).toLocaleString("en-PH") : new Date().toLocaleString("en-PH"),
+      cashier: raw.cashier_name || entry.actor || "Cashier",
+      customer: raw.customer_name || entry.actor || "Walk-in",
+      paymentMethod: entry.method || raw.payment_method || "cash",
+      paymentStatus: entry.status || raw.payment_status || "paid",
+      referenceNumber: raw.reference_number || "",
+      items,
+      subtotal,
+      vat: raw.tax || raw.vat_amount,
+      discount,
+      total,
+      amountReceived: amountReceived || undefined,
+      change: change || undefined,
+    });
   };
 
-  const exportCSV = useCallback(() => {
-    if (!entries.length) return;
-    const headers = ["Reference","Customer","Amount","Method","Status","Date"];
-    const rows = entries.map((e) => [
-      e.reference_id, e.actor,
-      Number(e.amount).toLocaleString("en-PH", { style: "currency", currency: "PHP" }),
-      e.method, e.status,
-      e.created_at ? new Date(e.created_at).toLocaleString("en-PH") : "N/A",
-    ]);
-    const csv = [headers, ...rows].map((r) => r.map((v) => `"${String(v ?? "").replace(/"/g, '""')}"`).join(",")).join("\n");
-    const a = Object.assign(document.createElement("a"), {
-      href: URL.createObjectURL(new Blob([csv], { type: "text/csv;charset=utf-8;" })),
-      download: `cashier-history-${Date.now()}.csv`,
-    });
-    document.body.appendChild(a); a.click(); document.body.removeChild(a);
-  }, [entries]);
+  const exportColumns = [
+    { key: "reference_id", label: "Reference" },
+    { key: "actor", label: "Customer" },
+    { key: "amount", label: "Amount", format: "currency" },
+    { key: "method", label: "Method" },
+    { key: "status", label: "Status" },
+    { key: "created_at", label: "Date", format: "date" },
+  ];
 
   return (
     <HistoryTimeline
@@ -147,7 +118,9 @@ const CashierHistory = () => {
       loading={loading}
       error={error}
       onRefresh={() => fetchHistory(page)}
-      onExport={exportCSV}
+      exportColumns={exportColumns}
+      exportFilename="cashier-history"
+      exportTitle="Cashier Transaction History"
       roleAccent="#0891b2"
       roleLabel="Cashier"
       emptyMessage="No transactions found. Adjust filters or refresh."

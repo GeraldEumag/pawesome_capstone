@@ -2,6 +2,7 @@
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 import { apiRequest } from "../../api/client";
+import { lookupBarcode } from "../../api/pos";
 import "./CashierPOS.css";
 import {
   normalizeList,
@@ -10,6 +11,7 @@ import {
   formatCurrency,
 } from "../../utils/apiNormalize";
 import { showError } from "../../utils/alert.jsx";
+import { printReceipt } from "../../utils/receiptPrinter";
 import PaymentApprovals from "./components/PaymentApprovals";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
@@ -107,6 +109,9 @@ const CashierPOS = () => {
   const navMenuRef = useRef(null);
   const latestInventoryRequestRef = useRef(0);
   const productsRef = useRef([]);
+  // Guards against double-firing a barcode lookup when a HID scanner
+  // emits Enter in quick succession (or the user presses Enter twice).
+  const barcodeLookupInFlightRef = useRef(false);
 
   /* Toast */
   const addToast = useCallback((message, type = "info") => {
@@ -385,22 +390,75 @@ const CashierPOS = () => {
     && (paymentMethod !== "Cash" || (Number(amountReceived) || 0) >= total)
     && (paymentMethod === "Cash" || referenceNumber.trim() !== "");
 
-  const handleSearchEnter = useCallback(() => {
-    const kw = searchQuery.trim().toLowerCase();
+  const handleSearchEnter = useCallback(async () => {
+    const kw = searchQuery.trim();
     if (!kw) return;
-    const barMatch = products.find(p => String(p.barcode || "").toLowerCase() === kw);
-    if (barMatch) {
-      addToCart(barMatch);
-      setSearchQuery("");
-      addToast(`${barMatch.name} added to cart`, "success");
-      return;
+
+    // Prevent double-fire: the search input's onKeyDown and the window
+    // keydown listener both fire for the same Enter keypress, and a HID
+    // scanner can emit Enter in rapid succession. The guard wraps the
+    // entire handler so neither the barcode path nor the manual fallback
+    // can run twice concurrently.
+    if (barcodeLookupInFlightRef.current) return;
+    barcodeLookupInFlightRef.current = true;
+    try {
+      // A HID barcode scan is a single token with no spaces. Manual product
+      // name searches almost always contain spaces. When the input looks
+      // like a barcode, prefer the server-side lookup (works even if the
+      // item is not currently in the loaded product list, e.g. out-of-stock
+      // items that are excluded from /cashier/inventory/sellable).
+      const looksLikeBarcode = !/\s/.test(kw) && kw.length >= 4 && /^[A-Za-z0-9\-]+$/.test(kw);
+
+      if (looksLikeBarcode) {
+        try {
+          const item = await lookupBarcode(kw);
+          if (item) {
+            const sellable = item.is_sellable ?? item.sellable ?? true;
+            const stock = getAvailableStock(item);
+            if (!sellable) {
+              addToast("This item is not available for POS sale.", "warn");
+            } else if (stock <= 0) {
+              addToast(`${item.name} is out of stock.`, "warn");
+            } else {
+              // Normalize so the cart row matches the shape produced by the
+              // product list (consistent id/price/stock/category handling).
+              addToCart(normProduct(item));
+              addToast(`${item.name} added to cart`, "success");
+            }
+            setSearchQuery("");
+            searchRef.current?.focus();
+            return;
+          }
+        } catch (err) {
+          // 404 = unknown barcode; fall through to manual single-match below
+          // so a typed SKU that isn't a barcode still resolves. Other errors
+          // (auth, network) are surfaced and we abort.
+          const status = err?.status;
+          if (status !== 404) {
+            addToast(err?.message || "Barcode lookup failed.", "error");
+            setSearchQuery("");
+            searchRef.current?.focus();
+            return;
+          }
+        }
+      }
+
+      // Fallback: manual search using the loaded product list.
+      // If exactly one product matches, add it (covers typed name/SKU).
+      if (filteredProducts.length === 1) {
+        addToCart(filteredProducts[0]);
+        setSearchQuery("");
+        addToast(`${filteredProducts[0].name} added to cart`, "success");
+      } else if (looksLikeBarcode) {
+        // Barcode lookup returned nothing AND no single manual match:
+        // unknown barcode. Fail safely — do not create items or deduct stock.
+        addToast("Barcode not found.", "error");
+        setSearchQuery("");
+      }
+    } finally {
+      barcodeLookupInFlightRef.current = false;
     }
-    if (filteredProducts.length === 1) {
-      addToCart(filteredProducts[0]);
-      setSearchQuery("");
-      addToast(`${filteredProducts[0].name} added to cart`, "success");
-    }
-  }, [searchQuery, products, filteredProducts, addToCart, addToast]);
+  }, [searchQuery, filteredProducts, addToCart, addToast]);
 
   useEffect(() => {
     const handler = (e) => {
@@ -488,53 +546,30 @@ const CashierPOS = () => {
   };
 
   const handlePrint = (receiptOverride = null) => {
-    const receiptToPrint = (receiptOverride && Array.isArray(receiptOverride.items)) ? receiptOverride : completedReceipt;
-    if (!receiptToPrint || !Array.isArray(receiptToPrint.items)) return;
-    const w = window.open("", "_blank", "width=420,height=700");
-    if (!w) { addToast("Allow pop-ups to print receipt", "warn"); return; }
-    const itemsHtml = receiptToPrint.items.map(i => {
-      const itemTotal = (i.unit_price || 0) * i.quantity;
-      return `<tr><td>${i.item_name} x ${i.quantity}<br><small>${fmt(i.unit_price)} each</small></td><td style="text-align:right">${fmt(itemTotal)}</td></tr>`;
-    }).join("");
-    w.document.write(`<!DOCTYPE html><html><head><title>Receipt</title>
-      <style>
-        body{font-family:'Courier New',monospace;padding:20px;max-width:360px;margin:auto}
-        h2{text-align:center;font-size:18px;margin-bottom:4px}
-        .center{text-align:center;font-size:12px;color:#666;margin-bottom:12px}
-        hr{border:none;border-top:1px dashed #ccc;margin:10px 0}
-        table{width:100%;font-size:12px;border-collapse:collapse}
-        td{padding:3px 0;vertical-align:top}
-        .meta td{color:#444}.total-row td{font-size:14px;font-weight:bold;padding-top:8px;border-top:1px dashed #ccc}
-        .footer{text-align:center;font-size:11px;color:#888;margin-top:12px}
-        @media print{button{display:none}}
-      </style></head><body>
-      <h2>Pawesome Retreat Inc.</h2>
-      <div class="center">Official Cashier Receipt<br>${receiptToPrint.date}</div>
-      <hr>
-      <table class="meta">
-        <tr><td>Receipt</td><td style="text-align:right">${receiptToPrint.receipt_number || receiptToPrint.transaction_id}</td></tr>
-        <tr><td>Cashier</td><td style="text-align:right">${receiptToPrint.cashier_name || user?.name || "Cashier"}</td></tr>
-        <tr><td>Customer</td><td style="text-align:right">${receiptToPrint.customer_name}</td></tr>
-        <tr><td>Payment</td><td style="text-align:right">${receiptToPrint.payment_method}</td></tr>
-        <tr><td>Status</td><td style="text-align:right">${receiptToPrint.payment_status || "paid"}</td></tr>
-      </table>
-      <hr>
-      <table>${itemsHtml}</table>
-      <hr>
-      <table>
-        <tr><td>Subtotal (incl. VAT)</td><td style="text-align:right">${fmt(receiptToPrint.subtotal)}</td></tr>
-        <tr><td>VAT 12%</td><td style="text-align:right">${fmt(receiptToPrint.tax)}</td></tr>
-        <tr><td>Discount</td><td style="text-align:right">-${fmt(receiptToPrint.discount)}</td></tr>
-        <tr class="total-row"><td>TOTAL</td><td style="text-align:right">${fmt(receiptToPrint.total)}</td></tr>
-        <tr><td>Received</td><td style="text-align:right">${fmt(receiptToPrint.amount_received)}</td></tr>
-        <tr><td>Change</td><td style="text-align:right">${fmt(receiptToPrint.change)}</td></tr>
-      </table>
-      <div class="footer">Thank you for shopping with us!<br>Please keep this receipt.</div>
-      <br><button onclick="window.print()">Print</button>
-    </body></html>`);
-    w.document.close();
-    w.focus();
-    w.print();
+    const r = (receiptOverride && Array.isArray(receiptOverride.items)) ? receiptOverride : completedReceipt;
+    if (!r || !Array.isArray(r.items)) return;
+    printReceipt({
+      title: "Official Cashier Receipt",
+      receiptNumber: r.receipt_number || r.transaction_id,
+      date: r.date,
+      cashier: r.cashier_name || user?.name || "Cashier",
+      customer: r.customer_name || "Walk-in",
+      paymentMethod: r.payment_method,
+      paymentStatus: r.payment_status || "paid",
+      referenceNumber: r.reference_number,
+      items: r.items.map(i => ({
+        name: i.item_name,
+        quantity: i.quantity,
+        unitPrice: i.unit_price,
+        total: (i.unit_price || 0) * i.quantity,
+      })),
+      subtotal: r.subtotal,
+      vat: r.tax,
+      discount: r.discount,
+      total: r.total,
+      amountReceived: r.amount_received,
+      change: r.change,
+    });
   };
 
   /* ---- Render ---------------------------------------------------- */

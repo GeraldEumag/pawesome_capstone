@@ -100,7 +100,7 @@ class Payroll extends Model
     public function calculatePayroll(): void
     {
         $user = $this->user;
-        
+
         if (!$user) {
             return;
         }
@@ -108,7 +108,7 @@ class Payroll extends Model
         // Set employee details
         $this->department = $user->department ?? 'Unassigned';
         $this->position = $user->position ?? 'Staff';
-        
+
         // Calculate working days in period
         $startDate = \Carbon\Carbon::parse($this->pay_period_start);
         $endDate = \Carbon\Carbon::parse($this->pay_period_end);
@@ -145,72 +145,86 @@ class Payroll extends Model
         // Calculate gross pay
         $this->gross_pay = (float) ($this->base_salary + $this->overtime_pay + $this->bonus + $this->allowances);
 
+        // Calculate withholding tax (BIR 2023-onwards, RR 11-2018 Annex E)
+        // Taxable income = gross_pay - statutory contributions (SSS, PhilHealth, Pag-IBIG)
+        $this->tax_deduction = (float) $this->calculateWithholdingTax();
+
         // Calculate total deductions
-        $totalDeductions = $this->sss_contribution + $this->philhealth_contribution + 
-                          $this->pagibig_contribution + $this->tax_deduction + 
+        $totalDeductions = $this->sss_contribution + $this->philhealth_contribution +
+                          $this->pagibig_contribution + $this->tax_deduction +
                           $this->late_deductions + $this->absent_deductions + $this->deductions;
 
         // Calculate net pay
         $this->net_pay = (float) max(0, $this->gross_pay - $totalDeductions);
     }
 
+    /**
+     * Calculate BIR monthly withholding tax on compensation (2023 onwards, RR 11-2018 Annex E).
+     * Taxable income = gross_pay - SSS - PhilHealth - Pag-IBIG (non-taxable statutory contributions).
+     */
+    private function calculateWithholdingTax(): float
+    {
+        $taxableIncome = (float) $this->gross_pay
+            - (float) $this->sss_contribution
+            - (float) $this->philhealth_contribution
+            - (float) $this->pagibig_contribution;
+
+        if ($taxableIncome <= 0) {
+            return 0.0;
+        }
+
+        // BIR Monthly Withholding Tax Table (effective January 1, 2023)
+        if ($taxableIncome <= 20833) {
+            return 0.0;
+        }
+        if ($taxableIncome <= 33332) {
+            return ($taxableIncome - 20833) * 0.15;
+        }
+        if ($taxableIncome <= 66666) {
+            return 1875 + ($taxableIncome - 33333) * 0.20;
+        }
+        if ($taxableIncome <= 166666) {
+            return 8541.80 + ($taxableIncome - 66667) * 0.25;
+        }
+        if ($taxableIncome <= 666666) {
+            return 33541.80 + ($taxableIncome - 166667) * 0.30;
+        }
+        return 183541.80 + ($taxableIncome - 666667) * 0.35;
+    }
+
     private function calculateSSS(): float
     {
-        // SSS contribution table (simplified)
-        $monthlySalary = $this->base_salary;
-        
-        if ($monthlySalary <= 3250) return 135;
-        if ($monthlySalary <= 3750) return 157.50;
-        if ($monthlySalary <= 4250) return 180;
-        if ($monthlySalary <= 4750) return 202.50;
-        if ($monthlySalary <= 5250) return 225;
-        if ($monthlySalary <= 5750) return 247.50;
-        if ($monthlySalary <= 6250) return 270;
-        if ($monthlySalary <= 6750) return 292.50;
-        if ($monthlySalary <= 7250) return 315;
-        if ($monthlySalary <= 7750) return 337.50;
-        if ($monthlySalary <= 8250) return 360;
-        if ($monthlySalary <= 8750) return 382.50;
-        if ($monthlySalary <= 9250) return 405;
-        if ($monthlySalary <= 9750) return 427.50;
-        if ($monthlySalary <= 10250) return 450;
-        if ($monthlySalary <= 10750) return 472.50;
-        if ($monthlySalary <= 11250) return 495;
-        if ($monthlySalary <= 11750) return 517.50;
-        if ($monthlySalary <= 12250) return 540;
-        if ($monthlySalary <= 12750) return 562.50;
-        if ($monthlySalary <= 13250) return 585;
-        if ($monthlySalary <= 13750) return 607.50;
-        if ($monthlySalary <= 14250) return 630;
-        if ($monthlySalary <= 14750) return 652.50;
-        if ($monthlySalary <= 15250) return 675;
-        if ($monthlySalary <= 15750) return 697.50;
-        if ($monthlySalary <= 16250) return 720;
-        if ($monthlySalary <= 16750) return 742.50;
-        if ($monthlySalary <= 17250) return 765;
-        if ($monthlySalary <= 17750) return 787.50;
-        if ($monthlySalary <= 18250) return 810;
-        if ($monthlySalary <= 18750) return 832.50;
-        if ($monthlySalary <= 19250) return 855;
-        if ($monthlySalary <= 19750) return 877.50;
-        if ($monthlySalary <= 20250) return 900;
-        if ($monthlySalary <= 20750) return 922.50;
-        if ($monthlySalary <= 21250) return 945;
-        if ($monthlySalary <= 21750) return 967.50;
-        if ($monthlySalary <= 22250) return 990;
-        if ($monthlySalary <= 22750) return 1012.50;
-        if ($monthlySalary <= 23250) return 1035;
-        if ($monthlySalary <= 23750) return 1057.50;
-        if ($monthlySalary <= 24250) return 1080;
-        if ($monthlySalary <= 24750) return 1102.50;
-        return 1125; // Maximum
+        // SSS 2025 (effective January 1, 2025, SSS Circular No. 2024-006)
+        // Employee share = 5.0% of Monthly Salary Credit (MSC)
+        // MSC ranges from 5,000 to 35,000 in 500-peso increments
+        $salary = (float) $this->base_salary;
+
+        if ($salary <= 0) {
+            return 0.0;
+        }
+
+        // Determine MSC from salary
+        if ($salary <= 5250) {
+            $msc = 5000;
+        } elseif ($salary >= 34750) {
+            $msc = 35000;
+        } else {
+            // Round up to nearest 500
+            $msc = (int) ceil($salary / 500) * 500;
+        }
+
+        return round($msc * 0.05, 2);
     }
 
     private function calculatePhilHealth(): float
     {
-        // PhilHealth premium: 3% of monthly salary (capped)
-        $premium = $this->base_salary * 0.03;
-        return min($premium, 1800) / 2; // Employee share is half
+        // PhilHealth 2024: 5% premium rate, max P5,000
+        // Employee share = 50% of premium
+        // Min premium: P500 (for salary <= 10,000)
+        // Max premium: P5,000 (for salary >= 100,000)
+        $salary = (float) $this->base_salary;
+        $premium = max(500, min($salary * 0.05, 5000));
+        return $premium / 2; // Employee share is half
     }
 
     public function scopeForPeriod($query, $startDate, $endDate)

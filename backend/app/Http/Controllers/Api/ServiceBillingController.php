@@ -148,11 +148,17 @@ class ServiceBillingController extends Controller
             $items = \App\Models\InventoryItem::where('stock', '>', 0)
                 ->where('status', '!=', 'archived')
                 ->orderBy('name')
-                ->get(['id', 'name', 'stock', 'unit_price', 'unit']);
+                ->get(['id', 'name', 'stock', 'price']);
 
             return response()->json([
                 'success' => true,
-                'items' => $items
+                'items' => $items->map(fn ($i) => [
+                    'id' => $i->id,
+                    'name' => $i->name,
+                    'stock' => $i->stock,
+                    'unit_price' => (float) ($i->price ?? 0),
+                    'unit' => 'pcs',
+                ]),
             ]);
         } catch (\Exception $e) {
             return response()->json([
@@ -192,9 +198,12 @@ class ServiceBillingController extends Controller
         }
     }
 
-    public function finalizeBill(Request $request, string $serviceType, int $serviceId): JsonResponse
+    public function finalizeBill(Request $request): JsonResponse
     {
         try {
+            $serviceType = $request->route('serviceType') ?? $request->input('serviceType') ?? 'veterinary';
+            $serviceId = (int) ($request->route('serviceId') ?? $request->route('id') ?? 0);
+
             if (!in_array($serviceType, ['veterinary', 'grooming', 'boarding'])) {
                 return response()->json([
                     'success' => false,

@@ -29,6 +29,25 @@ export const getPOSServices = async () => {
 };
 
 /**
+ * Lookup a single product by barcode via the server-side endpoint.
+ * Used by the POS scanner. Does NOT deduct stock — stock deduction
+ * happens only during checkout (POST /cashier/pos/transaction).
+ *
+ * @param {string} barcode - Raw barcode value (will be trimmed by backend)
+ * @returns {Promise<Object>} Resolved item: { id, name, sku, barcode, price, stock, is_sellable, ... }
+ * @throws {Error} When barcode is not found, item is non-sellable/archived, or request fails.
+ */
+export const lookupBarcode = async (barcode) => {
+  const trimmed = String(barcode ?? "").trim();
+  if (!trimmed) {
+    throw new Error("Barcode is empty.");
+  }
+  const response = await apiRequest(`/products/barcode/${encodeURIComponent(trimmed)}`);
+  // Backend returns { success, item }. Fall back to legacy { product } shape.
+  return response?.item ?? response?.product ?? null;
+};
+
+/**
  * Get transactions with optional filters
  * @param {Object} params - { status, date_from, date_to, customer_id, per_page }
  */
@@ -110,6 +129,7 @@ export const posApi = {
   processTransaction,
   getPOSProducts,
   getPOSServices,
+  lookupBarcode,
   getTransactions,
   getTransaction,
   voidTransaction,

@@ -12,6 +12,7 @@ const AddProductModal = ({ isOpen, onClose, onSuccess, editItem = null }) => {
   const [formData, setFormData] = useState({
     name: "",
     sku: "",
+    barcode: "",
     category: "",
     brand: "",
     generic_name: "",
@@ -46,6 +47,7 @@ const AddProductModal = ({ isOpen, onClose, onSuccess, editItem = null }) => {
       setFormData({
         name: editItem.name || "",
         sku: editItem.sku || "",
+        barcode: editItem.barcode || "",
         category: editItem.category || "",
         brand: editItem.brand || "",
         generic_name: editItem.generic_name || "",
@@ -65,6 +67,7 @@ const AddProductModal = ({ isOpen, onClose, onSuccess, editItem = null }) => {
       setFormData({
         name: "",
         sku: "",
+        barcode: "",
         category: "",
         brand: "",
         generic_name: "",
@@ -275,6 +278,21 @@ const AddProductModal = ({ isOpen, onClose, onSuccess, editItem = null }) => {
                     className={errors.sku ? "error" : ""}
                   />
                   {errors.sku && <span className="error-text">{errors.sku}</span>}
+                </div>
+
+                <div className="form-group">
+                  <label>Barcode</label>
+                  <input
+                    type="text"
+                    name="barcode"
+                    value={formData.barcode}
+                    onChange={handleChange}
+                    placeholder="e.g., 8938501234567 (scan or type)"
+                    className={errors.barcode ? "error" : ""}
+                    autoComplete="off"
+                  />
+                  <small className="helper-text">Unique product barcode for POS scanning. Leave blank if none.</small>
+                  {errors.barcode && <span className="error-text">{errors.barcode}</span>}
                 </div>
 
                 <div className="form-group">
@@ -615,6 +633,9 @@ const AddProductModal = ({ isOpen, onClose, onSuccess, editItem = null }) => {
                   <div className="preview-name">{formData.name}</div>
                   <div className="preview-details">
                     <span className="preview-sku">{formData.sku || "No SKU"}</span>
+                    {formData.barcode && (
+                      <span className="preview-barcode">Barcode: {formData.barcode}</span>
+                    )}
                     <span className="preview-price">{formatCurrency(parseFloat(formData.price) || 0)}</span>
                   </div>
                   <div className="preview-stock">

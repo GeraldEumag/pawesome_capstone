@@ -16,6 +16,7 @@ import {
   faEye,
 } from "@fortawesome/free-solid-svg-icons";
 import { apiRequest } from "../../api/client";
+import { exportToCSV, exportToPDF, exportToExcel } from "../../utils/reportExport";
 import "./LoginHistory.css";
 
 const LoginHistory = () => {
@@ -29,6 +30,7 @@ const LoginHistory = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [statistics, setStatistics] = useState(null);
+  const [showExportDropdown, setShowExportDropdown] = useState(false);
 
   // Fetch login logs from API
   const fetchLogs = useCallback(async (page = 1) => {
@@ -97,27 +99,39 @@ const LoginHistory = () => {
   };
 
   // Export logs
-  const exportLogs = () => {
-    const csvContent = [
-      ["ID", "User", "Email", "Action", "Status", "IP Address", "Time"].join(","),
-      ...logs.map((log) => [
-        log.id,
-        log.user?.name || "N/A",
-        log.email,
-        log.action,
-        log.status,
-        log.ip_address || "N/A",
-        new Date(log.created_at).toLocaleString(),
-      ].join(",")),
-    ].join("\n");
+  const exportColumns = [
+    { key: "id", label: "ID" },
+    { key: "user_name", label: "User" },
+    { key: "email", label: "Email" },
+    { key: "action", label: "Action" },
+    { key: "status", label: "Status" },
+    { key: "ip_address", label: "IP Address" },
+    { key: "created_at", label: "Time" },
+  ];
 
-    const blob = new Blob([csvContent], { type: "text/csv" });
-    const url = window.URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `login-logs-${new Date().toISOString().split("T")[0]}.csv`;
-    a.click();
-    window.URL.revokeObjectURL(url);
+  const handleExport = (format) => {
+    setShowExportDropdown(false);
+    if (logs.length === 0) {
+      showError("No login logs available to export.");
+      return;
+    }
+
+    const rows = logs.map((log) => ({
+      ...log,
+      user_name: log.user?.name || "N/A",
+      created_at: new Date(log.created_at).toLocaleString(),
+    }));
+
+    const filename = `login-logs-${new Date().toISOString().split("T")[0]}`;
+
+    if (format === "csv") {
+      exportToCSV(rows, exportColumns, filename);
+    } else if (format === "excel") {
+      exportToExcel(rows, exportColumns, filename);
+    } else if (format === "pdf") {
+      exportToPDF(rows, exportColumns, "Login History", filename);
+    }
+
     showSuccess("Logs exported successfully");
   };
 
@@ -162,9 +176,21 @@ const LoginHistory = () => {
           <button className="action-btn" onClick={refreshData} title="Refresh">
             <FontAwesomeIcon icon={faRefresh} /> Refresh
           </button>
-          <button className="action-btn" onClick={exportLogs} title="Export">
-            <FontAwesomeIcon icon={faDownload} /> Export
-          </button>
+          <div style={{ position: "relative" }}>
+            <button className="action-btn" onClick={() => setShowExportDropdown(!showExportDropdown)} title="Export">
+              <FontAwesomeIcon icon={faDownload} /> Export ▼
+            </button>
+            {showExportDropdown && (
+              <>
+                <div style={{ position: "fixed", top: 0, left: 0, right: 0, bottom: 0, zIndex: 998 }} onClick={() => setShowExportDropdown(false)} />
+                <div style={{ position: "absolute", top: "100%", right: 0, background: "#fff", border: "1px solid #e2e8f0", borderRadius: 8, boxShadow: "0 8px 24px rgba(0,0,0,0.12)", zIndex: 999, minWidth: 160, overflow: "hidden" }}>
+                  <button className="action-btn" style={{ width: "100%", border: "none", background: "#fff", textAlign: "left", padding: "10px 14px" }} onClick={() => handleExport("csv")}>Export as CSV</button>
+                  <button className="action-btn" style={{ width: "100%", border: "none", background: "#fff", textAlign: "left", padding: "10px 14px" }} onClick={() => handleExport("excel")}>Export as Excel</button>
+                  <button className="action-btn" style={{ width: "100%", border: "none", background: "#fff", textAlign: "left", padding: "10px 14px" }} onClick={() => handleExport("pdf")}>Export as PDF</button>
+                </div>
+              </>
+            )}
+          </div>
         </div>
       </div>
 

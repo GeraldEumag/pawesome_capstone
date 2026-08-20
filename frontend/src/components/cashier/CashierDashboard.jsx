@@ -35,6 +35,7 @@ import { apiRequest, uploadProfilePhoto } from "../../api/client";
 import { formatCurrency } from "../../utils/currency";
 import { useAuth } from "../../context/AuthContext";
 import { showAlert, showSuccess, showError } from "../../utils/alert.jsx";
+import { exportToCSV, exportToPDF, exportToExcel } from "../../utils/reportExport";
 
 const toNumber = (value) => {
   const num = Number(value);
@@ -127,6 +128,7 @@ const CashierDashboard = () => {
   const [showHandoverModal, setShowHandoverModal] = useState(false);
   const [handoverNote, setHandoverNote] = useState("");
   const [lastHandover, setLastHandover] = useState(null);
+  const [showExportDropdown, setShowExportDropdown] = useState(false);
   const [lastShiftReport, setLastShiftReport] = useState(null);
   const [topSellingProducts, setTopSellingProducts] = useState([]);
   const [showPurchaseHistoryModal, setShowPurchaseHistoryModal] = useState(false);
@@ -444,44 +446,39 @@ const CashierDashboard = () => {
     }
   };
 
-  const handleExportTransactions = (format = 'csv') => {
+  const exportColumns = [
+    { key: "id", label: "ID" },
+    { key: "type", label: "Type" },
+    { key: "amount", label: "Amount" },
+    { key: "items", label: "Items" },
+    { key: "created_at", label: "Date" },
+  ];
+
+  const handleExportTransactions = (format) => {
+    setShowExportDropdown(false);
     const transactions = dashboardData?.recent_sales || [];
     if (transactions.length === 0) {
       showAlert("No transactions to export");
       return;
     }
 
-    let content = '';
-    let filename = '';
-    let mimeType = '';
+    const rows = transactions.map((t) => ({
+      id: `TRX-${String(t.id || "0").padStart(3, "0")}`,
+      type: t.type || 'Sale',
+      amount: toNumber(t.amount),
+      items: t.items || 1,
+      created_at: t.created_at || new Date().toISOString(),
+    }));
 
-    if (format === 'csv') {
-      const headers = ['ID', 'Type', 'Amount', 'Items', 'Date'];
-      const rows = transactions.map(t => [
-        `TRX-${String(t.id || "0").padStart(3, "0")}`,
-        t.type || 'Sale',
-        toNumber(t.amount),
-        t.items || 1,
-        t.created_at || new Date().toISOString()
-      ]);
-      content = [headers, ...rows].map(row => row.join(',')).join('\n');
-      filename = `transactions_${new Date().toISOString().split('T')[0]}.csv`;
-      mimeType = 'text/csv';
-    } else {
-      content = JSON.stringify(transactions, null, 2);
-      filename = `transactions_${new Date().toISOString().split('T')[0]}.json`;
-      mimeType = 'application/json';
+    const filename = `transactions_${new Date().toISOString().split('T')[0]}`;
+
+    if (format === "csv") {
+      exportToCSV(rows, exportColumns, filename);
+    } else if (format === "excel") {
+      exportToExcel(rows, exportColumns, filename);
+    } else if (format === "pdf") {
+      exportToPDF(rows, exportColumns, "Transactions", filename);
     }
-
-    const blob = new Blob([content], { type: mimeType });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = filename;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    URL.revokeObjectURL(url);
   };
 
   const handleRefund = async () => {
@@ -690,10 +687,11 @@ Thank you for choosing Pawesome!
 
     try {
       const data = await apiRequest(`/products/barcode/${barcodeInput}`);
-      if (data.product) {
+      const item = data?.item ?? data?.product ?? null;
+      if (item) {
         setShowProductSearch(true);
-        setProductSearchQuery(data.product.name);
-        setProductSearchResults([data.product]);
+        setProductSearchQuery(item.name);
+        setProductSearchResults([item]);
       } else {
         showAlert("Product not found for this barcode");
       }
@@ -1018,7 +1016,24 @@ Thank you for choosing Pawesome!
                         <h2>Recent Transactions</h2>
                         <p>Latest sales and payment records</p>
                       </div>
-                      <span className="badge badge-success">Today</span>
+                      <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                        <div style={{ position: "relative" }}>
+                          <button className="btn-secondary" type="button" onClick={() => setShowExportDropdown(!showExportDropdown)}>
+                            Export ▼
+                          </button>
+                          {showExportDropdown && (
+                            <>
+                              <div style={{ position: "fixed", top: 0, left: 0, right: 0, bottom: 0, zIndex: 998 }} onClick={() => setShowExportDropdown(false)} />
+                              <div style={{ position: "absolute", top: "100%", right: 0, background: "#fff", border: "1px solid #e2e8f0", borderRadius: 8, boxShadow: "0 8px 24px rgba(0,0,0,0.12)", zIndex: 999, minWidth: 160, overflow: "hidden" }}>
+                                <button className="btn-secondary" type="button" style={{ width: "100%", border: "none", background: "#fff", textAlign: "left", padding: "10px 14px" }} onClick={() => handleExportTransactions("csv")}>Export as CSV</button>
+                                <button className="btn-secondary" type="button" style={{ width: "100%", border: "none", background: "#fff", textAlign: "left", padding: "10px 14px" }} onClick={() => handleExportTransactions("excel")}>Export as Excel</button>
+                                <button className="btn-secondary" type="button" style={{ width: "100%", border: "none", background: "#fff", textAlign: "left", padding: "10px 14px" }} onClick={() => handleExportTransactions("pdf")}>Export as PDF</button>
+                              </div>
+                            </>
+                          )}
+                        </div>
+                        <span className="badge badge-success">Today</span>
+                      </div>
                     </div>
 
                     {recentTransactions.length > 0 ? (

@@ -64,6 +64,8 @@ class PaymentVerificationService
                     'reference_number' => $referenceNumber,
                 ]);
 
+                $this->markLinkedServiceAsPaidFromRequest($sr, $id, $receiptNumber);
+
                 WorkflowNotifier::notifyEmail($sr->customer_email ?? null, 'Payment Verified', "Your payment for {$sr->service_name} has been verified. Receipt: {$receiptNumber}", 'success', 'service_request', $id);
 
                 return ['success' => true, 'message' => 'Service request payment verified successfully.', 'payment_status' => 'paid', 'receipt_number' => $receiptNumber];
@@ -190,9 +192,8 @@ class PaymentVerificationService
             'updated_at' => now(),
         ];
 
-        if ($table === 'appointments') {
-            $updateData['status'] = 'completed';
-        }
+        // Note: status is not set to 'completed' here; the service provider
+        // completes the appointment after medical record finalization.
 
         if ($referenceNumber) {
             $updateData['reference_number'] = $referenceNumber;
@@ -247,5 +248,38 @@ class PaymentVerificationService
         }
 
         ServiceBillingService::markBaseServiceAsPaid($serviceType, $id, $verifiedBy, $receiptNumber);
+    }
+
+    private function markLinkedServiceAsPaidFromRequest($serviceRequest, int $serviceRequestId, string $receiptNumber): void
+    {
+        $requestType = $serviceRequest->request_type ?? $serviceRequest->type ?? null;
+
+        $linked = match ($requestType) {
+            'vet', 'veterinary' => ['appointments', 'veterinary'],
+            'grooming' => ['groomings', 'grooming'],
+            'boarding' => ['boardings', 'boarding'],
+            default => null,
+        };
+
+        if (!$linked) {
+            return;
+        }
+
+        [$table, $serviceType] = $linked;
+        $record = DB::table($table)->where('service_request_id', $serviceRequestId)->first();
+        if (!$record) {
+            return;
+        }
+
+        DB::table($table)->where('id', $record->id)->update([
+            'payment_status' => 'paid',
+            'paid_at' => now(),
+            'verified_by' => Auth::id(),
+            'verified_at' => now(),
+            'receipt_number' => $receiptNumber,
+            'updated_at' => now(),
+        ]);
+
+        ServiceBillingService::markBaseServiceAsPaid($serviceType, $record->id, Auth::id(), $receiptNumber);
     }
 }

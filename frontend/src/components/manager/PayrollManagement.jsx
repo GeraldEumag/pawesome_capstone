@@ -49,6 +49,8 @@ import {
   YAxis,
 } from "recharts";
 import "./PayrollManagement.css";
+import { exportToCSV as exportCSVUtil, exportToPDF as exportPDFUtil, exportToExcel } from "../../utils/reportExport";
+import { STORE_INFO } from "../../utils/storeInfo";
 
 const CHART_COLORS = ["#ff5f93", "#ff8db5", "#ffc8dd", "#f59e0b", "#10b981", "#3b82f6"];
 
@@ -160,6 +162,7 @@ const normalizePayroll = (record, index) => {
     role: getRole(record),
     period: getPayrollPeriod(record),
     date: record.created_at || record.updated_at || record.payroll_date || record.generated_at,
+    baseSalary: safeNumber(record.base_salary || record.baseSalary || 0),
     regularHours: safeNumber(record.regular_hours || record.hours_worked || record.total_hours || 0),
     overtimeHours: safeNumber(record.overtime_hours || record.overtime || 0),
     attendanceDays: safeNumber(record.attendance_days || record.days_worked || record.present_days || 0),
@@ -168,13 +171,20 @@ const normalizePayroll = (record, index) => {
     lateDeductions: safeNumber(record.late_deductions || record.late_deduction || 0),
     absenceDeductions: safeNumber(record.absence_deductions || record.absent_deductions || 0),
     overtimePay: safeNumber(record.overtime_pay || record.overtime_amount || 0),
+    bonus: safeNumber(record.bonus || 0),
     allowance: safeNumber(record.allowance || record.bonus || record.allowances || 0),
+    sss: safeNumber(record.sss_contribution || record.sss || 0),
+    philhealth: safeNumber(record.philhealth_contribution || record.philhealth || 0),
+    pagibig: safeNumber(record.pagibig_contribution || record.pagibig || 0),
+    tax: safeNumber(record.tax_deduction || record.tax || 0),
     grossPay,
     deductions,
     netPay,
     status: normalizeStatus(record.status || record.payroll_status),
     approvedBy: record.approved_by || record.approver?.name || "N/A",
     releasedBy: record.released_by || record.paid_by || "N/A",
+    paymentDate: record.payment_date || null,
+    paymentMethod: record.payment_method || null,
     remarks: record.remarks || record.notes || "",
     raw: record,
   };
@@ -589,122 +599,146 @@ const PayrollManagement = () => {
     setShowDetailsModal(false);
   };
 
-  const exportCSV = () => {
+  const [showExportDropdown, setShowExportDropdown] = useState(false);
+
+  const exportColumns = [
+    { key: "payrollId", label: "Payroll ID" },
+    { key: "employeeName", label: "Employee" },
+    { key: "employeeId", label: "Employee ID" },
+    { key: "department", label: "Department" },
+    { key: "role", label: "Role" },
+    { key: "period", label: "Pay Period" },
+    { key: "attendanceDays", label: "Attendance Days" },
+    { key: "regularHours", label: "Regular Hours" },
+    { key: "overtimeHours", label: "Overtime Hours" },
+    { key: "grossPay", label: "Gross Pay", format: "currency" },
+    { key: "deductions", label: "Deductions", format: "currency" },
+    { key: "netPay", label: "Net Pay", format: "currency" },
+    { key: "status", label: "Status" },
+  ];
+
+  const handleExport = (format) => {
+    setShowExportDropdown(false);
     if (filteredPayrolls.length === 0) {
       showToast("There is no payroll data to export.", "warning");
       return;
     }
-
-    const headers = [
-      "Payroll ID",
-      "Employee",
-      "Employee ID",
-      "Department",
-      "Role",
-      "Pay Period",
-      "Attendance Days",
-      "Regular Hours",
-      "Overtime Hours",
-      "Gross Pay",
-      "Deductions",
-      "Net Pay",
-      "Status",
-    ];
-
-    const rows = filteredPayrolls.map((payroll) => [
-      payroll.payrollId,
-      payroll.employeeName,
-      payroll.employeeId,
-      payroll.department,
-      payroll.role,
-      payroll.period,
-      payroll.attendanceDays,
-      payroll.regularHours,
-      payroll.overtimeHours,
-      formatCurrency(payroll.grossPay),
-      formatCurrency(payroll.deductions),
-      formatCurrency(payroll.netPay),
-      formatLabel(payroll.status),
-    ]);
-
-    const csvContent = [headers, ...rows]
-      .map((row) => row.map(escapeCSV).join(","))
-      .join("\n");
-
-    const blob = new Blob([csvContent], {
-      type: "text/csv;charset=utf-8;",
-    });
-
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement("a");
-
-    link.href = url;
-    link.download = `manager-payroll-${new Date().toISOString().split("T")[0]}.csv`;
-    link.click();
-
-    URL.revokeObjectURL(url);
-    showToast("Payroll CSV exported successfully.", "success");
+    // Pre-map data with formatted values
+    const data = filteredPayrolls.map((p) => ({
+      ...p,
+      grossPay: formatCurrency(p.grossPay),
+      deductions: formatCurrency(p.deductions),
+      netPay: formatCurrency(p.netPay),
+      status: formatLabel(p.status),
+    }));
+    const filename = `manager-payroll`;
+    if (format === "csv") exportCSVUtil(data, exportColumns, filename);
+    else if (format === "excel") exportToExcel(data, exportColumns, filename);
+    else if (format === "pdf") exportPDFUtil(data, exportColumns, "Manager Payroll Report", filename);
+    showToast(`Payroll ${format.toUpperCase()} exported successfully.`, "success");
   };
 
   const downloadPayslipPDF = (payroll) => {
     const doc = new jsPDF();
 
+    // Header — store info
     doc.setFontSize(18);
     doc.setTextColor(255, 95, 147);
-    doc.text("Pawesome Retreat Inc.", 14, 20);
+    doc.text(STORE_INFO.name, 14, 20);
 
-    doc.setFontSize(12);
-    doc.setTextColor(31, 41, 55);
-    doc.text("Employee Payslip", 14, 28);
-
-    doc.setFontSize(10);
-    doc.setTextColor(100, 116, 139);
-    doc.text(`Generated: ${formatDateTime(new Date())}`, 14, 35);
-
-    doc.setFontSize(10);
-    doc.setTextColor(31, 41, 55);
-    doc.text(`Employee: ${payroll.employeeName}`, 14, 48);
-    doc.text(`Payroll ID: ${payroll.payrollId}`, 14, 55);
-    doc.text(`Pay Period: ${payroll.period}`, 14, 62);
-    doc.text(`Department: ${payroll.department}`, 14, 69);
-    doc.text(`Status: ${formatLabel(payroll.status)}`, 14, 76);
-
-    autoTable(doc, {
-      startY: 88,
-      head: [["Description", "Details", "Amount"]],
-      body: [
-        ["Regular Hours", `${payroll.regularHours} hrs`, ""],
-        ["Attendance Days", `${payroll.attendanceDays} day(s)`, ""],
-        ["Overtime Hours", `${payroll.overtimeHours} hrs`, formatCurrency(payroll.overtimePay)],
-        ["Allowance / Bonus", "", formatCurrency(payroll.allowance)],
-        ["Gross Pay", "", formatCurrency(payroll.grossPay)],
-        ["Late Deductions", `${payroll.lateCount} late record(s)`, formatCurrency(payroll.lateDeductions)],
-        ["Absence Deductions", `${payroll.absentCount} absent record(s)`, formatCurrency(payroll.absenceDeductions)],
-        ["Total Deductions", "", formatCurrency(payroll.deductions)],
-        ["Net Pay", "", formatCurrency(payroll.netPay)],
-      ],
-      headStyles: {
-        fillColor: [255, 95, 147],
-        textColor: 255,
-        fontStyle: "bold",
-      },
-      bodyStyles: {
-        fontSize: 10,
-      },
-      alternateRowStyles: {
-        fillColor: [250, 250, 250],
-      },
-      columnStyles: {
-        0: { fontStyle: "bold", cellWidth: 60 },
-        1: { cellWidth: 70 },
-        2: { halign: "right", fontStyle: "bold" },
-      },
-    });
-
-    const finalY = doc.lastAutoTable.finalY + 12;
     doc.setFontSize(9);
     doc.setTextColor(100, 116, 139);
-    doc.text("This payslip was generated by the Pawesome Payroll Management System.", 14, finalY);
+    doc.text(STORE_INFO.address, 14, 26);
+    doc.text(STORE_INFO.phone, 14, 31);
+
+    doc.setFontSize(14);
+    doc.setTextColor(31, 41, 55);
+    doc.text("Employee Payslip", 14, 42);
+
+    doc.setFontSize(9);
+    doc.setTextColor(100, 116, 139);
+    doc.text(`Generated: ${formatDateTime(new Date())}`, 14, 48);
+
+    // Employee info
+    doc.setFontSize(10);
+    doc.setTextColor(31, 41, 55);
+    doc.text(`Employee: ${payroll.employeeName}`, 14, 58);
+    doc.text(`Payroll ID: ${payroll.payrollId}`, 14, 64);
+    doc.text(`Pay Period: ${payroll.period}`, 14, 70);
+    doc.text(`Department: ${payroll.department}`, 14, 76);
+    doc.text(`Status: ${formatLabel(payroll.status)}`, 14, 82);
+
+    // Earnings table
+    const baseSalary = Number(payroll.baseSalary || 0);
+    const otPay = Number(payroll.overtimePay || 0);
+    const bonus = Number(payroll.bonus || 0);
+    const allowance = Number(payroll.allowance || 0);
+    const grossPay = Number(payroll.grossPay || 0);
+
+    autoTable(doc, {
+      startY: 92,
+      head: [["Earnings", "Amount"]],
+      body: [
+        ["Base Salary", formatCurrency(baseSalary)],
+        ["Overtime Pay", formatCurrency(otPay)],
+        ["Bonus", formatCurrency(bonus)],
+        ["Allowances", formatCurrency(allowance)],
+        ["Gross Pay", formatCurrency(grossPay)],
+      ],
+      headStyles: { fillColor: [255, 95, 147], textColor: 255, fontStyle: "bold" },
+      bodyStyles: { fontSize: 10 },
+      columnStyles: { 1: { halign: "right", fontStyle: "bold" } },
+    });
+
+    // Deductions table — full statutory breakdown
+    const sss = Number(payroll.sss || payroll.sssContribution || 0);
+    const philhealth = Number(payroll.philhealth || payroll.philhealthContribution || 0);
+    const pagibig = Number(payroll.pagibig || payroll.pagibigContribution || 0);
+    const tax = Number(payroll.tax || payroll.taxDeduction || 0);
+    const lateDed = Number(payroll.lateDeductions || 0);
+    const absentDed = Number(payroll.absenceDeductions || 0);
+    const otherDed = Number(payroll.deductions || 0);
+    const totalDed = sss + philhealth + pagibig + tax + lateDed + absentDed + otherDed;
+
+    const afterEarningsY = doc.lastAutoTable.finalY + 8;
+
+    autoTable(doc, {
+      startY: afterEarningsY,
+      head: [["Deductions", "Amount"]],
+      body: [
+        ["SSS Contribution", formatCurrency(sss)],
+        ["PhilHealth Contribution", formatCurrency(philhealth)],
+        ["Pag-IBIG Contribution", formatCurrency(pagibig)],
+        ["Withholding Tax", formatCurrency(tax)],
+        ["Late Deductions", formatCurrency(lateDed)],
+        ["Absence Deductions", formatCurrency(absentDed)],
+        ["Other Deductions", formatCurrency(otherDed)],
+        ["Total Deductions", formatCurrency(totalDed)],
+      ],
+      headStyles: { fillColor: [239, 68, 68], textColor: 255, fontStyle: "bold" },
+      bodyStyles: { fontSize: 10 },
+      columnStyles: { 1: { halign: "right", fontStyle: "bold" } },
+    });
+
+    // Net pay
+    const netPay = Number(payroll.netPay || 0);
+    const afterDedY = doc.lastAutoTable.finalY + 10;
+
+    doc.setFontSize(14);
+    doc.setTextColor(255, 95, 147);
+    doc.text(`Net Pay: ${formatCurrency(netPay)}`, 14, afterDedY);
+
+    // Attendance summary
+    doc.setFontSize(9);
+    doc.setTextColor(100, 116, 139);
+    doc.text(`Attendance: ${payroll.attendanceDays} present day(s) | ${payroll.regularHours} regular hrs | ${payroll.overtimeHours} OT hrs`, 14, afterDedY + 8);
+    doc.text(`Payment Date: ${payroll.paymentDate ? formatDateTime(payroll.paymentDate) : "N/A"} | Method: ${payroll.paymentMethod || "N/A"}`, 14, afterDedY + 14);
+
+    // Footer
+    doc.setFontSize(8);
+    doc.setTextColor(100, 116, 139);
+    doc.text("This payslip was generated by the Pawesome Payroll Management System.", 14, afterDedY + 24);
+    doc.text("Signatures: __________________ (Prepared By)   __________________ (Employee)", 14, afterDedY + 30);
 
     const filename = `Payslip-${payroll.employeeName.replace(/\s+/g, "_")}-${payroll.period.replace(/\s+/g, "_")}.pdf`;
     doc.save(filename);
@@ -745,10 +779,22 @@ const PayrollManagement = () => {
             {refreshing ? "Refreshing..." : "Refresh"}
           </button>
 
-          <button type="button" className="payroll-btn primary" onClick={exportCSV}>
-            <FontAwesomeIcon icon={faDownload} />
-            Export CSV
-          </button>
+          <div style={{ position: "relative" }}>
+            <button type="button" className="payroll-btn primary" onClick={() => setShowExportDropdown(!showExportDropdown)}>
+              <FontAwesomeIcon icon={faDownload} />
+              Export ▼
+            </button>
+            {showExportDropdown && (
+              <>
+                <div style={{ position: "fixed", top: 0, left: 0, right: 0, bottom: 0, zIndex: 998 }} onClick={() => setShowExportDropdown(false)} />
+                <div style={{ position: "absolute", top: "100%", right: 0, background: "#fff", border: "1px solid #e2e8f0", borderRadius: 8, boxShadow: "0 8px 24px rgba(0,0,0,0.12)", zIndex: 999, minWidth: 160, overflow: "hidden" }}>
+                  <button type="button" style={{ display: "block", width: "100%", padding: "10px 16px", border: "none", background: "#fff", color: "#374151", fontSize: 13, textAlign: "left", cursor: "pointer" }} onClick={() => handleExport("csv")}>Export as CSV</button>
+                  <button type="button" style={{ display: "block", width: "100%", padding: "10px 16px", border: "none", background: "#fff", color: "#374151", fontSize: 13, textAlign: "left", cursor: "pointer" }} onClick={() => handleExport("excel")}>Export as Excel</button>
+                  <button type="button" style={{ display: "block", width: "100%", padding: "10px 16px", border: "none", background: "#fff", color: "#374151", fontSize: 13, textAlign: "left", cursor: "pointer" }} onClick={() => handleExport("pdf")}>Export as PDF</button>
+                </div>
+              </>
+            )}
+          </div>
 
           {canOperatePayroll && (
             <>
@@ -1328,9 +1374,19 @@ const PayrollDetailsModal = ({ payroll, onClose, onPrint, onDownload }) => (
 const PayslipPrint = ({ payroll }) => {
   if (!payroll) return null;
 
+  const sss = Number(payroll.sss || payroll.sssContribution || 0);
+  const philhealth = Number(payroll.philhealth || payroll.philhealthContribution || 0);
+  const pagibig = Number(payroll.pagibig || payroll.pagibigContribution || 0);
+  const tax = Number(payroll.tax || payroll.taxDeduction || 0);
+  const lateDed = Number(payroll.lateDeductions || 0);
+  const absentDed = Number(payroll.absenceDeductions || 0);
+  const otherDed = Number(payroll.deductions || 0);
+  const totalDed = sss + philhealth + pagibig + tax + lateDed + absentDed + otherDed;
+
   return (
     <section className="payroll-print-area">
-      <h1>Pawesome Retreat Inc.</h1>
+      <h1>{STORE_INFO.name}</h1>
+      <p>{STORE_INFO.address}</p>
       <h2>Employee Payslip</h2>
       <p>Generated: {formatDateTime(new Date())}</p>
 
@@ -1364,60 +1420,41 @@ const PayslipPrint = ({ payroll }) => {
       <table>
         <thead>
           <tr>
-            <th>Description</th>
-            <th>Details</th>
+            <th>Earnings</th>
             <th>Amount</th>
           </tr>
         </thead>
-
         <tbody>
-          <tr>
-            <td>Regular Hours</td>
-            <td>{payroll.regularHours} hrs</td>
-            <td></td>
-          </tr>
-          <tr>
-            <td>Attendance Days</td>
-            <td>{payroll.attendanceDays} day(s)</td>
-            <td></td>
-          </tr>
-          <tr>
-            <td>Overtime Hours</td>
-            <td>{payroll.overtimeHours} hrs</td>
-            <td>{formatCurrency(payroll.overtimePay)}</td>
-          </tr>
-          <tr>
-            <td>Allowance / Bonus</td>
-            <td></td>
-            <td>{formatCurrency(payroll.allowance)}</td>
-          </tr>
-          <tr>
-            <td>Gross Pay</td>
-            <td></td>
-            <td>{formatCurrency(payroll.grossPay)}</td>
-          </tr>
-          <tr>
-            <td>Late Deductions</td>
-            <td>{payroll.lateCount} late record(s)</td>
-            <td>{formatCurrency(payroll.lateDeductions)}</td>
-          </tr>
-          <tr>
-            <td>Absence Deductions</td>
-            <td>{payroll.absentCount} absent record(s)</td>
-            <td>{formatCurrency(payroll.absenceDeductions)}</td>
-          </tr>
-          <tr>
-            <td>Total Deductions</td>
-            <td></td>
-            <td>{formatCurrency(payroll.deductions)}</td>
-          </tr>
-          <tr className="net-row">
-            <td>Net Pay</td>
-            <td></td>
-            <td>{formatCurrency(payroll.netPay)}</td>
-          </tr>
+          <tr><td>Base Salary</td><td>{formatCurrency(payroll.baseSalary)}</td></tr>
+          <tr><td>Overtime Pay ({payroll.overtimeHours} hrs)</td><td>{formatCurrency(payroll.overtimePay)}</td></tr>
+          <tr><td>Bonus</td><td>{formatCurrency(payroll.bonus)}</td></tr>
+          <tr><td>Allowances</td><td>{formatCurrency(payroll.allowance)}</td></tr>
+          <tr className="net-row"><td>Gross Pay</td><td>{formatCurrency(payroll.grossPay)}</td></tr>
         </tbody>
       </table>
+
+      <table>
+        <thead>
+          <tr>
+            <th>Deductions</th>
+            <th>Amount</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td>SSS Contribution</td><td>{formatCurrency(sss)}</td></tr>
+          <tr><td>PhilHealth Contribution</td><td>{formatCurrency(philhealth)}</td></tr>
+          <tr><td>Pag-IBIG Contribution</td><td>{formatCurrency(pagibig)}</td></tr>
+          <tr><td>Withholding Tax</td><td>{formatCurrency(tax)}</td></tr>
+          <tr><td>Late Deductions ({payroll.lateCount} late)</td><td>{formatCurrency(lateDed)}</td></tr>
+          <tr><td>Absence Deductions ({payroll.absentCount} absent)</td><td>{formatCurrency(absentDed)}</td></tr>
+          <tr><td>Other Deductions</td><td>{formatCurrency(otherDed)}</td></tr>
+          <tr className="net-row"><td>Total Deductions</td><td>{formatCurrency(totalDed)}</td></tr>
+        </tbody>
+      </table>
+
+      <div className="print-net-row">
+        <strong>Net Pay: {formatCurrency(payroll.netPay)}</strong>
+      </div>
 
       <div className="print-signatures">
         <div>

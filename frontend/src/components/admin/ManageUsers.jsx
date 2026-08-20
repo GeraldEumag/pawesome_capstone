@@ -28,6 +28,7 @@ import {
 import { apiRequest } from "../../api/client";
 import { normalizeList } from "../../utils/normalizeList";
 import { showSuccess as showSwalSuccess, showError as showSwalError, showWarning } from "../../utils/alert.jsx";
+import { exportToCSV, exportToPDF, exportToExcel } from "../../utils/reportExport";
 import "./ManageUsers.css";
 
 const ROLE_OPTIONS = [
@@ -53,6 +54,7 @@ const ManageUsers = () => {
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const [showExportDropdown, setShowExportDropdown] = useState(false);
 
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
@@ -409,39 +411,39 @@ const ManageUsers = () => {
     showSuccess("Filters cleared.");
   };
 
-  const exportCSV = () => {
+  const exportColumns = [
+    { key: "id", label: "ID" },
+    { key: "name", label: "Name" },
+    { key: "username", label: "Username" },
+    { key: "email", label: "Email" },
+    { key: "role", label: "Role" },
+    { key: "active", label: "Status" },
+    { key: "created_at", label: "Join Date" },
+  ];
+
+  const handleExport = (format) => {
+    setShowExportDropdown(false);
     if (sortedUsers.length === 0) {
       showError("No users available to export.");
       return;
     }
 
-    const headers = ["ID", "Name", "Username", "Email", "Role", "Status", "Join Date"];
+    const rows = sortedUsers.map((user) => ({
+      ...user,
+      active: isActiveUser(user) ? "Active" : "Inactive",
+      created_at: formatDate(user.created_at),
+    }));
 
-    const rows = sortedUsers.map((user) => [
-      user.id || "",
-      user.name || "",
-      user.username || "",
-      user.email || "",
-      user.role || "",
-      isActiveUser(user) ? "Active" : "Inactive",
-      formatDate(user.created_at),
-    ]);
+    const filename = `manage-users-${new Date().toISOString().slice(0, 10)}`;
 
-    const csv = [headers, ...rows]
-      .map((row) =>
-        row.map((value) => `"${String(value).replace(/"/g, '""')}"`).join(",")
-      )
-      .join("\n");
+    if (format === "csv") {
+      exportToCSV(rows, exportColumns, filename);
+    } else if (format === "excel") {
+      exportToExcel(rows, exportColumns, filename);
+    } else if (format === "pdf") {
+      exportToPDF(rows, exportColumns, "Manage Users", filename);
+    }
 
-    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
-    const url = URL.createObjectURL(blob);
-    const anchor = document.createElement("a");
-
-    anchor.href = url;
-    anchor.download = `manage-users-${new Date().toISOString().slice(0, 10)}.csv`;
-    anchor.click();
-
-    URL.revokeObjectURL(url);
     showSuccess("User list exported successfully.");
   };
 
@@ -486,10 +488,22 @@ const ManageUsers = () => {
             {refreshing ? "Refreshing..." : "Refresh"}
           </button>
 
-          <button type="button" className="mu-secondary-btn" onClick={exportCSV}>
-            <FontAwesomeIcon icon={faDownload} />
-            Export CSV
-          </button>
+          <div style={{ position: "relative" }}>
+            <button type="button" className="mu-secondary-btn" onClick={() => setShowExportDropdown(!showExportDropdown)}>
+              <FontAwesomeIcon icon={faDownload} />
+              Export ▼
+            </button>
+            {showExportDropdown && (
+              <>
+                <div style={{ position: "fixed", top: 0, left: 0, right: 0, bottom: 0, zIndex: 998 }} onClick={() => setShowExportDropdown(false)} />
+                <div style={{ position: "absolute", top: "100%", right: 0, background: "#fff", border: "1px solid #e2e8f0", borderRadius: 8, boxShadow: "0 8px 24px rgba(0,0,0,0.12)", zIndex: 999, minWidth: 160, overflow: "hidden" }}>
+                  <button type="button" className="mu-secondary-btn" style={{ width: "100%", border: "none", background: "#fff", textAlign: "left", padding: "10px 14px" }} onClick={() => handleExport("csv")}>Export as CSV</button>
+                  <button type="button" className="mu-secondary-btn" style={{ width: "100%", border: "none", background: "#fff", textAlign: "left", padding: "10px 14px" }} onClick={() => handleExport("excel")}>Export as Excel</button>
+                  <button type="button" className="mu-secondary-btn" style={{ width: "100%", border: "none", background: "#fff", textAlign: "left", padding: "10px 14px" }} onClick={() => handleExport("pdf")}>Export as PDF</button>
+                </div>
+              </>
+            )}
+          </div>
 
           <NavLink to="/admin/users/create" className="add-user-btn">
             <FontAwesomeIcon icon={faUserPlus} />

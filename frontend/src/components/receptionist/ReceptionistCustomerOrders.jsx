@@ -24,6 +24,7 @@ import {
 } from "@fortawesome/free-solid-svg-icons";
 import "./ReceptionistCustomerOrders.css";
 import { apiRequest } from "../../api/client";
+import { exportToCSV, exportToPDF, exportToExcel } from "../../utils/reportExport";
 
 const STATUS_OPTIONS = [
   { value: "all", label: "All Status" },
@@ -153,6 +154,8 @@ export default function ReceptionistCustomerOrders() {
   const [statusFilter, setStatusFilter] = useState("all");
   const [paymentStatusFilter, setPaymentStatusFilter] = useState("all");
   const [lastUpdated, setLastUpdated] = useState("");
+
+  const [showExportDropdown, setShowExportDropdown] = useState(false);
 
   const fetchOrders = useCallback(
     async ({ silent = false } = {}) => {
@@ -472,7 +475,21 @@ export default function ReceptionistCustomerOrders() {
     }
   };
 
-  const exportCSV = () => {
+  const exportColumns = [
+    { key: "id", label: "Order ID" },
+    { key: "orderNumber", label: "Order Number" },
+    { key: "customer", label: "Customer" },
+    { key: "email", label: "Email" },
+    { key: "orderType", label: "Order Type" },
+    { key: "totalAmount", label: "Total Amount" },
+    { key: "paymentMethod", label: "Payment Method" },
+    { key: "paymentStatus", label: "Payment Status" },
+    { key: "status", label: "Status" },
+    { key: "date", label: "Date" },
+  ];
+
+  const handleExport = (format) => {
+    setShowExportDropdown(false);
     if (filteredOrders.length === 0) {
       Swal.fire({
         icon: "info",
@@ -483,49 +500,23 @@ export default function ReceptionistCustomerOrders() {
       return;
     }
 
-    const headers = [
-      "Order ID",
-      "Order Number",
-      "Customer",
-      "Email",
-      "Order Type",
-      "Total Amount",
-      "Payment Method",
-      "Payment Status",
-      "Status",
-      "Date",
-    ];
+    const exportData = filteredOrders.map((order) => ({
+      id: order.id,
+      orderNumber: order.order_number || order.reference_number || "",
+      customer: getCustomerName(order),
+      email: getCustomerEmail(order),
+      orderType: order.order_type || "",
+      totalAmount: order.total_amount || 0,
+      paymentMethod: order.payment_method || "",
+      paymentStatus: order.payment_status || "",
+      status: order.status || "",
+      date: order.created_at || "",
+    }));
 
-    const rows = filteredOrders.map((order) => [
-      order.id,
-      order.order_number || order.reference_number || "",
-      getCustomerName(order),
-      getCustomerEmail(order),
-      order.order_type || "",
-      order.total_amount || 0,
-      order.payment_method || "",
-      order.payment_status || "",
-      order.status || "",
-      order.created_at || "",
-    ]);
-
-    const csv = [headers, ...rows]
-      .map((row) =>
-        row.map((value) => `"${String(value ?? "").replace(/"/g, '""')}"`).join(",")
-      )
-      .join("\n");
-
-    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
-    const url = URL.createObjectURL(blob);
-    const anchor = document.createElement("a");
-
-    anchor.href = url;
-    anchor.download = `receptionist-customer-orders-${new Date()
-      .toISOString()
-      .slice(0, 10)}.csv`;
-    anchor.click();
-
-    URL.revokeObjectURL(url);
+    const filename = "receptionist-customer-orders";
+    if (format === "csv") exportToCSV(exportData, exportColumns, filename);
+    else if (format === "excel") exportToExcel(exportData, exportColumns, filename);
+    else if (format === "pdf") exportToPDF(exportData, exportColumns, "Customer Orders", filename);
   };
 
   const clearFilters = () => {
@@ -590,10 +581,22 @@ export default function ReceptionistCustomerOrders() {
             {refreshing ? "Refreshing..." : "Refresh"}
           </button>
 
-          <button type="button" className="secondary-btn" onClick={exportCSV}>
-            <FontAwesomeIcon icon={faDownload} />
-            Export CSV
-          </button>
+          <div className="export-dropdown-wrapper" style={{ position: "relative" }}>
+            <button type="button" className="secondary-btn" onClick={() => setShowExportDropdown(!showExportDropdown)}>
+              <FontAwesomeIcon icon={faDownload} />
+              Export ▼
+            </button>
+            {showExportDropdown && (
+              <>
+                <div style={{ position: "fixed", top: 0, left: 0, right: 0, bottom: 0, zIndex: 998 }} onClick={() => setShowExportDropdown(false)} />
+                <div style={{ position: "absolute", top: "100%", right: 0, background: "#fff", border: "1px solid #e2e8f0", borderRadius: 8, boxShadow: "0 8px 24px rgba(0,0,0,0.12)", zIndex: 999, minWidth: 160, overflow: "hidden" }}>
+                  <button type="button" className="secondary-btn" style={{ width: "100%", justifyContent: "flex-start" }} onClick={() => handleExport("csv")}>Export as CSV</button>
+                  <button type="button" className="secondary-btn" style={{ width: "100%", justifyContent: "flex-start" }} onClick={() => handleExport("excel")}>Export as Excel</button>
+                  <button type="button" className="secondary-btn" style={{ width: "100%", justifyContent: "flex-start" }} onClick={() => handleExport("pdf")}>Export as PDF</button>
+                </div>
+              </>
+            )}
+          </div>
         </div>
       </section>
 

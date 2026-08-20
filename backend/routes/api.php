@@ -619,6 +619,8 @@ Route::middleware(['auth.api', 'throttle:api'])->prefix('manager')->group(functi
         Route::post('payroll/{payroll}/approve', [ApiPayrollController::class, 'approve']);
         Route::post('payroll/{payroll}/release', [ApiPayrollController::class, 'markAsPaid']);
         Route::get('payroll/{payroll}', [ApiPayrollController::class, 'show']);
+        Route::put('payroll/{id}', [PayrollController::class, 'update']);
+        Route::get('payroll/{payroll}/payslip', [PayrollController::class, 'payslip']);
     });
 
     // Leave operations are owned by Manager, with Admin as system override.
@@ -683,6 +685,7 @@ Route::middleware(['auth.api', 'throttle:api'])->group(function () {
     Route::post('/attendance/check-in', [AttendanceController::class, 'checkIn']);
     Route::post('/attendance/check-out', [AttendanceController::class, 'checkOut']);
     Route::get('/my-payroll', [PayrollController::class, 'myPayroll']);
+    Route::get('/my-payroll/{id}/payslip', [PayrollController::class, 'payslip']);
 });
 
 Route::middleware(['auth.api', 'throttle:api', 'role:veterinary,vet'])->prefix('veterinary')->group(function () {
@@ -740,6 +743,7 @@ Route::middleware(['auth.api', 'throttle:api', 'role:veterinary,vet'])->prefix('
     Route::put('medical-records/{id}', [MedicalRecordController::class, 'update']);
     Route::delete('medical-records/{id}', [MedicalRecordController::class, 'destroy']);
     Route::post('medical-records/{id}/lock', [MedicalRecordController::class, 'lock']);
+    Route::post('medical-records/{id}/finalize', [MedicalRecordController::class, 'finalize']);
     
     // Veterinary Inventory Usage Routes
     Route::post('appointments/{id}/inventory-usage', [MedicalRecordController::class, 'recordInventoryUsage']);
@@ -771,7 +775,9 @@ Route::middleware('throttle:api')->prefix('inventory')->group(function () {
 });
 
 // Product Search Routes (for Cashier POS)
-Route::middleware(['auth.api', 'throttle:api'])->prefix('products')->group(function () {
+// Restricted to operational roles that legitimately need product lookup.
+// Customers must NOT be able to call barcode/SKU lookup for internal POS use.
+Route::middleware(['auth.api', 'throttle:api', 'role:cashier,inventory,admin'])->prefix('products')->group(function () {
     Route::get('/search', [InventoryDashboardController::class, 'searchProducts']);
     Route::get('/barcode/{barcode}', [InventoryDashboardController::class, 'lookupBarcode']);
 });
@@ -847,8 +853,13 @@ Route::middleware(['auth.api', 'throttle:api', 'role:receptionist'])->prefix('bo
     Route::post('/{id}/complete', [BoardingController::class, 'complete']);
     Route::post('/{id}/finalize-bill', [BoardingController::class, 'finalizeBill']);
     Route::post('/{id}/cancel', [BoardingController::class, 'cancel']);
-    Route::post('/{id}/pay', [BoardingController::class, 'markAsPaid']);
     Route::post('/{boarding}/payment', [PaymentController::class, 'storeBoardingPayment']);
+});
+
+// Boarding payment confirmation — Cashier/Admin only (NOT receptionist).
+// Receptionist must not bypass Cashier payment verification.
+Route::middleware(['auth.api', 'throttle:api', 'role:cashier,admin'])->prefix('boardings')->group(function () {
+    Route::post('/{id}/pay', [BoardingController::class, 'markAsPaid']);
 });
 
 Route::middleware(['auth.api', 'throttle:api', 'role:receptionist,admin'])->prefix('boarding')->group(function () {

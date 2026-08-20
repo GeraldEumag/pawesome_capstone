@@ -142,10 +142,41 @@ const PayrollComputation = () => {
   const handleGenerate = async () => {
     setGenerating(true);
     try {
-      await apiRequest("/manager/payroll/generate", {
+      // Step 1: Generate payroll from attendance
+      const genResponse = await apiRequest("/manager/payroll/generate", {
         method: "POST",
         body: JSON.stringify({ period_start: periodStart, period_end: periodEnd }),
       });
+
+      // Step 2: Apply edited bonus/allowances/deductions to generated records
+      const generatedRecords = genResponse?.data || [];
+      const editedMap = new Map(computedRows.map((r) => [r.user_id, r]));
+
+      for (const gen of generatedRecords) {
+        const edited = editedMap.get(gen.user_id);
+        if (!edited) continue;
+
+        const hasEdits =
+          Number(edited._bonus) !== 0 ||
+          Number(edited._allowances) !== 0 ||
+          Number(edited._otherDeductions) !== 0;
+
+        if (!hasEdits) continue;
+
+        try {
+          await apiRequest(`/manager/payroll/${gen.id}`, {
+            method: "PUT",
+            body: JSON.stringify({
+              bonus: Number(edited._bonus) || 0,
+              allowances: Number(edited._allowances) || 0,
+              deductions: Number(edited._otherDeductions) || 0,
+            }),
+          });
+        } catch (updateErr) {
+          console.warn(`Failed to apply edits for user ${gen.user_id}:`, updateErr);
+        }
+      }
+
       showToast("Payroll generated successfully.", "success");
       setTimeout(() => navigate("/manager/payroll"), 1200);
     } catch (err) {

@@ -9,6 +9,7 @@ import ProfileSettings from "../components/shared/ProfileSettings";
 import MonthlyInventoryAudit from "../components/inventory/MonthlyInventoryAudit";
 import MonthlyAuditReport from "../components/inventory/MonthlyAuditReport";
 import AuditAnalyticsDashboard from "../components/inventory/AuditAnalyticsDashboard";
+import MyPayroll from "../components/shared/MyPayroll";
 
 const InventoryRoutes = () => (
   <Routes>
@@ -53,6 +54,7 @@ const InventoryRoutes = () => (
           </ProtectedRoute>
         }
       />
+      <Route path="payroll" element={<MyPayroll roleAccent="#ff5f93" roleLabel="Inventory" />} />
       <Route path="profile" element={<ProfileSettings />} />
     </Route>
   </Routes>

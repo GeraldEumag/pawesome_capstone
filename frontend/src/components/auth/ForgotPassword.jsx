@@ -36,9 +36,9 @@ const ForgotPassword = () => {
       });
 
       setResetTokenSent(true);
-      setToken(response.reset_token || "");
-      setMessage("Password reset token created. Use the token below to create a new password.");
-      showSuccess("Password reset token created. Use the token below to create a new password.");
+      setToken("");
+      setMessage("If the email address is associated with an account, a password reset token has been sent to that email. Enter the token below to set a new password.");
+      showSuccess("If the email address is associated with an account, a reset token has been sent to your email.");
     } catch (err) {
       setError(err.message || "Failed to request password reset.");
       showError(err.message || "Failed to request password reset.");
@@ -157,7 +157,8 @@ const ForgotPassword = () => {
                     disabled={isSubmitting}
                   />
                   <small>
-                    Use the token returned by the system. If you did not receive one,
+                    Check your email for the reset token. Enter it above to set a new
+                    password. If you did not receive an email, verify your address and
                     request again.
                   </small>
                 </div>

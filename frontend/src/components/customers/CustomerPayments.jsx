@@ -4,6 +4,7 @@ import { clearAuth } from "../../utils/auth";
 import { useAuth } from "../../context/AuthContext";
 import "./CustomerPayments.css";
 import { showAlert, showError } from "../../utils/alert.jsx";
+import { printReceipt } from "../../utils/receiptPrinter";
 
 const formatCurrency = (value) =>
   `₱${Number(value || 0).toLocaleString("en-PH", {
@@ -231,60 +232,74 @@ const CustomerPayments = () => {
     try {
       if (payment.payment_source === "service_request" || payment.type === "service_request" || payment.payable_type === "service_request") {
         const data = await apiRequest(`/customer/requests/${payment.id}/receipt`, "GET");
-
         const receipt = data?.receipt || data?.data || data;
+        if (!receipt) throw new Error("Service receipt is not available yet.");
 
-        if (!receipt) {
-          throw new Error("Service receipt is not available yet.");
-        }
+        const amount = Number(receipt.total_amount || payment.total_amount || 0);
+        const serviceName = receipt.service_type || receipt.request_type || receipt.service_name || "Service";
 
-        showAlert(
-          `Receipt ${receipt.receipt_number || payment.receipt_number}\n` +
-            `Service Request #${receipt.request_id || payment.id}\n` +
-            `Service: ${receipt.service_type || receipt.request_type || receipt.service_name || "Service"}\n` +
-            `Pet: ${receipt.pet_name || payment.pet_name || "N/A"}\n` +
-            `Amount: ${formatCurrency(receipt.total_amount || payment.total_amount)}\n` +
-            `Paid At: ${receipt.paid_at || payment.paid_at || "N/A"}\n` +
-            `Verified By: ${receipt.verified_by || "Cashier"}\n` +
-            `Remarks: ${receipt.cashier_remarks || payment.cashier_remarks || "None"}`
-        );
-
+        printReceipt({
+          title: "Service Receipt",
+          receiptNumber: receipt.receipt_number || payment.receipt_number || `SR-${payment.id}`,
+          date: receipt.paid_at || payment.paid_at || new Date().toLocaleString("en-PH"),
+          customer: receipt.customer_name || user?.name || "Customer",
+          paymentMethod: receipt.payment_method || payment.payment_method || "Online Payment",
+          paymentStatus: "paid",
+          verifiedBy: receipt.verified_by || "Cashier",
+          items: [{ name: `${serviceName} — Pet: ${receipt.pet_name || payment.pet_name || "N/A"}`, quantity: 1, unitPrice: amount, total: amount }],
+          subtotal: amount,
+          total: amount,
+          footerText: "Thank you for choosing Pawesome Retreat Inc.!",
+        });
         return;
       }
 
       if (payment.payment_source === "boarding") {
-        if (!payment.receipt_number) {
-          throw new Error("Boarding receipt is not available yet.");
-        }
+        if (!payment.receipt_number) throw new Error("Boarding receipt is not available yet.");
 
-        showAlert(
-          `Receipt ${payment.receipt_number}\n` +
-            `Boarding #${payment.id}\n` +
-            `Pet: ${payment.pet_name || "N/A"}\n` +
-            `Amount: ${formatCurrency(payment.total_amount)}\n` +
-            `Paid At: ${payment.paid_at || "N/A"}\n` +
-            `Verified By: ${payment.verified_by || "Cashier"}\n` +
-            `Remarks: ${payment.cashier_remarks || "None"}`
-        );
-
+        const amount = Number(payment.total_amount || 0);
+        printReceipt({
+          title: "Boarding Receipt",
+          receiptNumber: payment.receipt_number || `BRD-${payment.id}`,
+          date: payment.paid_at || new Date().toLocaleString("en-PH"),
+          customer: user?.name || "Customer",
+          paymentMethod: payment.payment_method || "Online Payment",
+          paymentStatus: "paid",
+          verifiedBy: payment.verified_by || "Cashier",
+          items: [{ name: `Pet Boarding — Pet: ${payment.pet_name || "N/A"}`, quantity: 1, unitPrice: amount, total: amount }],
+          subtotal: amount,
+          total: amount,
+          footerText: "Thank you for choosing Pawesome Retreat Inc.!",
+        });
         return;
       }
 
+      // Store order receipt
       const data = await apiRequest(`/customer/store/orders/${payment.id}/receipt`, "GET");
       const receipt = data?.receipt;
+      if (!receipt) throw new Error("Receipt details not found.");
 
-      if (!receipt) {
-        throw new Error("Receipt details not found.");
-      }
+      const amount = Number(receipt.total_amount || 0);
+      const items = (receipt.items || []).map((item) => ({
+        name: item.item_name || item.name || item.product_name || "Item",
+        quantity: Number(item.quantity || 1),
+        unitPrice: Number(item.unit_price || item.price || 0),
+        total: Number(item.total_price || item.total || 0),
+      }));
 
-      showAlert(
-        `Receipt ${receipt.receipt_number}\n` +
-          `Order #${payment.id}\n` +
-          `Amount: ${formatCurrency(receipt.total_amount)}\n` +
-          `Paid At: ${receipt.paid_at || "N/A"}\n` +
-          `Verified By: ${receipt.verified_by || "Cashier"}\n` +
-          `Remarks: ${receipt.cashier_remarks || "None"}`
-      );
+      printReceipt({
+        title: "Store Order Receipt",
+        receiptNumber: receipt.receipt_number || `ORD-${payment.id}`,
+        date: receipt.paid_at || new Date().toLocaleString("en-PH"),
+        customer: receipt.customer_name || user?.name || "Customer",
+        paymentMethod: receipt.payment_method || payment.payment_method || "Online Payment",
+        paymentStatus: "paid",
+        verifiedBy: receipt.verified_by || "Cashier",
+        items: items.length > 0 ? items : [{ name: "Store Order", quantity: 1, unitPrice: amount, total: amount }],
+        subtotal: amount,
+        total: amount,
+        footerText: "Thank you for shopping at Pawesome Retreat Inc.!",
+      });
     } catch (err) {
       showError(err.message || "Receipt is not available yet.");
     }
@@ -424,7 +439,7 @@ const CustomerPayments = () => {
                             className="receipt-btn"
                             onClick={() => viewReceipt(payment)}
                           >
-                            {payment.receipt_number || "View Receipt"}
+                            {payment.receipt_number ? `Print ${payment.receipt_number}` : "Print Receipt"}
                           </button>
                         ) : proofUrl ? (
                           <a className="receipt-btn" href={proofUrl} target="_blank" rel="noreferrer">

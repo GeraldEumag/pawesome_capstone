@@ -16,6 +16,7 @@ import {
 } from "@fortawesome/free-solid-svg-icons";
 import { apiRequest } from "../../api/client";
 import { formatCurrency } from "../../utils/currency";
+import { STORE_INFO, computeVatBreakdown } from "../../utils/storeInfo";
 import jsPDF from "jspdf";
 import html2canvas from "html2canvas";
 import { showError } from "../../utils/alert.jsx";
@@ -58,11 +59,14 @@ const VetReceipt = () => {
         service_name: receipt.service_name || 'Service',
         service_cost: receipt.amount || 0,
         description: receipt.notes || 'No description',
-        subtotal: receipt.amount || 0,
-        tax: 0,
-        total: receipt.amount || 0,
-        payment_method: 'Cash',
+        subtotal: receipt.subtotal || receipt.amount || 0,
+        tax: receipt.tax || receipt.vat_amount || 0,
+        total: receipt.total || receipt.amount || 0,
+        payment_method: receipt.payment_method || 'cash',
         payment_status: receipt.status || 'pending',
+        receipt_number: receipt.receipt_number || null,
+        paid_date: receipt.paid_date || null,
+        additional_services: receipt.additional_services || [],
       });
       setError("");
     } catch (err) {
@@ -145,8 +149,8 @@ const VetReceipt = () => {
               <FontAwesomeIcon icon={faPaw} />
             </div>
             <h1>Payment Receipt</h1>
-            <p className="receipt-clinic-name">Pawesome Pet Care Center</p>
-            <p className="receipt-clinic-tagline">Professional Veterinary & Pet Hotel Services</p>
+            <p className="receipt-clinic-name">{STORE_INFO.name}</p>
+            <p className="receipt-clinic-tagline">{STORE_INFO.tagline}</p>
             <span className="receipt-id-badge">
               <FontAwesomeIcon icon={faReceipt} /> Receipt #{receiptData.id}
             </span>
@@ -235,14 +239,12 @@ const VetReceipt = () => {
               <div className="total-label">Subtotal:</div>
               <div className="total-amount">{formatCurrency(receiptData.subtotal)}</div>
             </div>
-            
-            {receiptData.tax && (
-              <div className="total-section">
-                <div className="total-label">Tax:</div>
-                <div className="total-amount">{formatCurrency(receiptData.tax)}</div>
-              </div>
-            )}
-            
+
+            <div className="total-section">
+              <div className="total-label">VAT 12%:</div>
+              <div className="total-amount">{formatCurrency(receiptData.tax || computeVatBreakdown(receiptData.total).vatAmount)}</div>
+            </div>
+
             <div className="total-section">
               <div className="total-label">Total:</div>
               <div className="total-amount">{formatCurrency(receiptData.total)}</div>
@@ -269,7 +271,7 @@ const VetReceipt = () => {
 
           <div className="receipt-thankyou">
             <FontAwesomeIcon icon={faCircleCheck} />
-            <p>Thank you for trusting Pawesome Pet Care Center with your pet's health!</p>
+            <p>Thank you for trusting {STORE_INFO.name} with your pet's health!</p>
           </div>
 
           <div className="receipt-actions">

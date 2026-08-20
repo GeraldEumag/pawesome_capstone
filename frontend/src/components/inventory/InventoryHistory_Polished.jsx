@@ -61,26 +61,22 @@ const InventoryHistory_Polished = () => {
 
   useEffect(() => { fetchHistory(); }, [fetchHistory]);
 
-  const exportCSV = useCallback(() => {
-    if (!entries.length) return;
-    const headers = ["Reference","Item","Action","Quantity","Staff","Date"];
-    const rows = entries.map((e) => [
-      e.reference_id, e.item_name || "N/A", e.action,
-      e.quantity ?? "N/A", e.actor,
-      e.created_at ? new Date(e.created_at).toLocaleString("en-PH") : "N/A",
-    ]);
-    const csv = [headers, ...rows].map((r) => r.map((v) => `"${String(v ?? "").replace(/"/g, '""')}"`).join(",")).join("\n");
-    const a = Object.assign(document.createElement("a"), {
-      href: URL.createObjectURL(new Blob([csv], { type: "text/csv;charset=utf-8;" })),
-      download: `inventory-history-${Date.now()}.csv`,
-    });
-    document.body.appendChild(a); a.click(); document.body.removeChild(a);
-  }, [entries]);
+  const exportColumns = [
+    { key: "reference_id", label: "Reference" },
+    { key: "item_name", label: "Item" },
+    { key: "action", label: "Action" },
+    { key: "quantity", label: "Quantity" },
+    { key: "actor", label: "Staff" },
+    { key: "created_at", label: "Date", format: "date" },
+  ];
 
   return (
     <HistoryTimeline
       entries={entries} loading={loading} error={error}
-      onRefresh={fetchHistory} onExport={exportCSV}
+      onRefresh={fetchHistory}
+      exportColumns={exportColumns}
+      exportFilename="inventory-history"
+      exportTitle="Inventory Stock Movement History"
       roleAccent="#ff5f93" roleLabel="Inventory"
       emptyMessage="No stock log records found."
       searchTerm={searchTerm} onSearchChange={setSearchTerm}

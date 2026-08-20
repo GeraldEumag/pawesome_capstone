@@ -1,0 +1,136 @@
+{
+    "title": "Pawesome Cross-Role E2E Production Readiness Audit (HTTP)",
+    "started_at": "2026-08-20T18:30:38+02:00",
+    "api_base": "http://127.0.0.1:8000/api",
+    "seed": "011671",
+    "overall": "FAIL",
+    "summary": {
+        "pass": 11,
+        "fail": 1,
+        "warn": 0,
+        "blockers": 0
+    },
+    "findings": [
+        {
+            "type": "pass",
+            "gate": "auth",
+            "message": "Login as customer",
+            "at": "2026-08-20T18:30:39+02:00",
+            "detail": {
+                "email": "customer@example.com",
+                "token_len": 52
+            }
+        },
+        {
+            "type": "pass",
+            "gate": "auth",
+            "message": "Login as receptionist",
+            "at": "2026-08-20T18:30:40+02:00",
+            "detail": {
+                "email": "receptionist@example.com",
+                "token_len": 52
+            }
+        },
+        {
+            "type": "pass",
+            "gate": "auth",
+            "message": "Login as cashier",
+            "at": "2026-08-20T18:30:41+02:00",
+            "detail": {
+                "email": "cashier@example.com",
+                "token_len": 52
+            }
+        },
+        {
+            "type": "pass",
+            "gate": "auth",
+            "message": "Login as inventory",
+            "at": "2026-08-20T18:30:42+02:00",
+            "detail": {
+                "email": "inventory@example.com",
+                "token_len": 52
+            }
+        },
+        {
+            "type": "pass",
+            "gate": "auth",
+            "message": "Login as veterinary",
+            "at": "2026-08-20T18:30:43+02:00",
+            "detail": {
+                "email": "vet@example.com",
+                "token_len": 52
+            }
+        },
+        {
+            "type": "pass",
+            "gate": "auth",
+            "message": "Login as manager",
+            "at": "2026-08-20T18:30:44+02:00",
+            "detail": {
+                "email": "manager@example.com",
+                "token_len": 52
+            }
+        },
+        {
+            "type": "pass",
+            "gate": "auth",
+            "message": "Login as admin",
+            "at": "2026-08-20T18:30:45+02:00",
+            "detail": {
+                "email": "admin@example.com",
+                "token_len": 52
+            }
+        },
+        {
+            "type": "pass",
+            "gate": "customer",
+            "message": "Buddy pet resolved",
+            "at": "2026-08-20T18:30:47+02:00",
+            "detail": {
+                "pet_id": 1
+            }
+        },
+        {
+            "type": "pass",
+            "gate": "customer",
+            "message": "Customer submitted vet request",
+            "at": "2026-08-20T18:30:48+02:00",
+            "detail": {
+                "service_request_id": 55,
+                "status": "pending"
+            }
+        },
+        {
+            "type": "pass",
+            "gate": "receptionist",
+            "message": "Receptionist sees the pending customer request",
+            "at": "2026-08-20T18:30:49+02:00",
+            "detail": {
+                "count": 8
+            }
+        },
+        {
+            "type": "pass",
+            "gate": "receptionist",
+            "message": "Available veterinarian found",
+            "at": "2026-08-20T18:30:50+02:00",
+            "detail": {
+                "vet_id": 6,
+                "name": "Veterinarian"
+            }
+        },
+        {
+            "type": "fail",
+            "gate": "receptionist",
+            "message": "Receptionist approval failed",
+            "at": "2026-08-20T18:30:59+02:00",
+            "detail": {
+                "status": 0,
+                "body": false
+            }
+        }
+    ],
+    "workflow": [],
+    "blockers": [],
+    "completed_at": "2026-08-20T18:30:59+02:00"
+}

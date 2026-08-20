@@ -17,6 +17,7 @@ import Swal from "sweetalert2";
 import "./CustomerOrders.css";
 import { apiRequest } from "../../api/client";
 import { showError } from "../../utils/alert.jsx";
+import { printReceipt } from "../../utils/receiptPrinter";
 
 const CustomerOrders = () => {
   const [orders, setOrders] = useState([]);
@@ -213,7 +214,7 @@ const CustomerOrders = () => {
         buttons.push(
           <button key="receipt" className="action-btn success" onClick={() => viewBoardingReceipt(order)}>
             <FontAwesomeIcon icon={faReceipt} />
-            View Receipt
+            Print Receipt
           </button>
         );
       }
@@ -249,7 +250,7 @@ const CustomerOrders = () => {
         buttons.push(
           <button key="receipt" className="action-btn success" onClick={() => viewReceipt(order)}>
             <FontAwesomeIcon icon={faReceipt} />
-            View Receipt
+            Print Receipt
           </button>
         );
       }
@@ -403,22 +404,28 @@ const CustomerOrders = () => {
     try {
       const data = await apiRequest(`/customer/store/orders/${order.id}/receipt`, "GET");
       const receipt = data?.receipt || data;
-      if (!receipt) {
-        throw new Error("Receipt details not found.");
-      }
-      await Swal.fire({
-        icon: "info",
-        title: `Receipt ${receipt.receipt_number || "N/A"}`,
-        html: `
-          <div style="text-align:left;">
-            <p><strong>Order #</strong> ${order.id}</p>
-            <p><strong>Amount:</strong> ₱${Number(receipt.total_amount || order.total_amount || 0).toLocaleString("en-PH", { minimumFractionDigits: 2 })}</p>
-            <p><strong>Paid At:</strong> ${receipt.paid_at || "N/A"}</p>
-            <p><strong>Verified By:</strong> ${receipt.verified_by || "Cashier"}</p>
-            <p><strong>Remarks:</strong> ${receipt.cashier_remarks || "None"}</p>
-          </div>
-        `,
-        confirmButtonColor: "#ff5f93",
+      if (!receipt) throw new Error("Receipt details not found.");
+
+      const amount = Number(receipt.total_amount || order.total_amount || 0);
+      const items = (receipt.items || []).map((item) => ({
+        name: item.item_name || item.name || item.product_name || "Item",
+        quantity: Number(item.quantity || 1),
+        unitPrice: Number(item.unit_price || item.price || 0),
+        total: Number(item.total_price || item.total || 0),
+      }));
+
+      printReceipt({
+        title: "Store Order Receipt",
+        receiptNumber: receipt.receipt_number || `ORD-${order.id}`,
+        date: receipt.paid_at || new Date().toLocaleString("en-PH"),
+        customer: receipt.customer_name || "Customer",
+        paymentMethod: receipt.payment_method || "Online Payment",
+        paymentStatus: "paid",
+        verifiedBy: receipt.verified_by || "Cashier",
+        items: items.length > 0 ? items : [{ name: "Store Order", quantity: 1, unitPrice: amount, total: amount }],
+        subtotal: amount,
+        total: amount,
+        footerText: "Thank you for shopping at Pawesome Retreat Inc.!",
       });
     } catch (err) {
       Swal.fire({ icon: "error", title: "Receipt Unavailable", text: err.message || "Receipt is not available yet.", confirmButtonColor: "#ef4444" });
@@ -490,23 +497,25 @@ const CustomerOrders = () => {
     try {
       const data = await apiRequest(`/customer/boarding-requests/${boardingRequest.id}`, "GET");
       const b = data?.boarding || data?.boarding_request || data || boardingRequest;
-      if (!b) {
-        throw new Error("Boarding details are not available yet.");
-      }
-      await Swal.fire({
-        icon: "info",
-        title: `Boarding #${b.id || boardingRequest.id}`,
-        html: `
-          <div style="text-align:left;">
-            <p><strong>Pet:</strong> ${b.pet_name || boardingRequest.pet_name || "N/A"}</p>
-            <p><strong>Status:</strong> ${b.status || boardingRequest.status || "N/A"}</p>
-            <p><strong>Payment Status:</strong> ${b.payment_status || boardingRequest.payment_status || "N/A"}</p>
-            <p><strong>Amount:</strong> ₱${Number(b.total_amount || boardingRequest.total_amount || 0).toLocaleString("en-PH", { minimumFractionDigits: 2 })}</p>
-            <p><strong>Check-In:</strong> ${b.check_in_date || "N/A"}</p>
-            <p><strong>Check-Out:</strong> ${b.check_out_date || "N/A"}</p>
-          </div>
-        `,
-        confirmButtonColor: "#ff5f93",
+      if (!b) throw new Error("Boarding details are not available yet.");
+
+      const amount = Number(b.total_amount || boardingRequest.total_amount || 0);
+      const petName = b.pet_name || boardingRequest.pet_name || "N/A";
+      const checkIn = b.check_in_date || "N/A";
+      const checkOut = b.check_out_date || "N/A";
+
+      printReceipt({
+        title: "Boarding Receipt",
+        receiptNumber: b.receipt_number || `BRD-${b.id || boardingRequest.id}`,
+        date: b.paid_at || new Date().toLocaleString("en-PH"),
+        customer: b.customer_name || "Customer",
+        paymentMethod: b.payment_method || "Online Payment",
+        paymentStatus: "paid",
+        verifiedBy: b.verified_by || "Cashier",
+        items: [{ name: `Pet Boarding — ${petName} (Check-in: ${checkIn}, Check-out: ${checkOut})`, quantity: 1, unitPrice: amount, total: amount }],
+        subtotal: amount,
+        total: amount,
+        footerText: "Thank you for choosing Pawesome Retreat Inc.!",
       });
     } catch (err) {
       Swal.fire({ icon: "error", title: "Details Unavailable", text: err.message || "Boarding details are not available yet.", confirmButtonColor: "#ef4444" });

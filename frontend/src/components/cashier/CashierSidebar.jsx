@@ -7,6 +7,7 @@ import {
   faListAlt,
   faClockRotateLeft,
   faChartBar,
+  faWallet,
   faUser,
   faArrowRightFromBracket,
 } from "@fortawesome/free-solid-svg-icons";
@@ -72,6 +73,12 @@ const CashierSidebar = ({ mobileOpen, onMobileMenuToggle }) => {
             <NavLink to="/cashier/reports" onClick={handleNavClick} className={({ isActive }) => isActive ? "active" : ""}>
               <FontAwesomeIcon icon={faChartBar} className="nav-icon" />
               <span>Reports</span>
+            </NavLink>
+          </li>
+          <li className="nav-item">
+            <NavLink to="/cashier/payroll" onClick={handleNavClick} className={({ isActive }) => isActive ? "active" : ""}>
+              <FontAwesomeIcon icon={faWallet} className="nav-icon" />
+              <span>My Payroll</span>
             </NavLink>
           </li>
           <li className="nav-item">

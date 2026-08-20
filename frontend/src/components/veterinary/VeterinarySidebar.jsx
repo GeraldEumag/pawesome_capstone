@@ -12,6 +12,7 @@ import {
   faUser,
   faRightFromBracket,
   faPaw,
+  faWallet,
 } from "@fortawesome/free-solid-svg-icons";
 import { showConfirm } from "../../utils/alert.jsx";
 import { apiRequest, clearAuthStorage } from "../../api/client";
@@ -40,6 +41,7 @@ const VeterinarySidebar = ({ mobileOpen, onMobileMenuToggle }) => {
     { to: "/veterinary/services", label: "Services", icon: faStethoscope },
     { to: "/veterinary/history", label: "History", icon: faClockRotateLeft },
     { to: "/veterinary/reports", label: "Reports", icon: faChartBar },
+    { to: "/veterinary/payroll", label: "My Payroll", icon: faWallet },
     { to: "/veterinary/profile", label: "Profile", icon: faUser },
   ];
 

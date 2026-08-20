@@ -33,6 +33,7 @@ import {
 } from "@fortawesome/free-solid-svg-icons";
 import { apiRequest } from "../../api/client";
 import { formatCurrency } from "../../utils/currency";
+import { exportToCSV, exportToPDF, exportToExcel } from "../../utils/reportExport";
 import FingerprintEnrollment from "./FingerprintEnrollment";
 import "./ManagerStaff.css";
 
@@ -292,6 +293,7 @@ const ManagerStaff = () => {
   const [sortBy, setSortBy] = useState("name");
   const [sortOrder, setSortOrder] = useState("asc");
   const [showFilters, setShowFilters] = useState(false);
+  const [showExportDropdown, setShowExportDropdown] = useState(false);
 
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(10);
@@ -482,59 +484,56 @@ const ManagerStaff = () => {
     setSortOrder("asc");
   };
 
-  const exportCSV = () => {
+  const exportColumns = [
+    { key: "employeeCode", label: "Employee Code" },
+    { key: "name", label: "Name" },
+    { key: "email", label: "Email" },
+    { key: "phone", label: "Phone" },
+    { key: "department", label: "Department" },
+    { key: "role", label: "Role" },
+    { key: "status", label: "Status" },
+    { key: "hireDate", label: "Hire Date" },
+    { key: "attendanceRecords", label: "Attendance Records" },
+    { key: "attendanceIssues", label: "Attendance Issues" },
+    { key: "payrollRecords", label: "Payroll Records" },
+    { key: "latestPayroll", label: "Latest Payroll" },
+  ];
+
+  const handleExport = (format) => {
     if (filteredStaff.length === 0) {
       showToast("There is no staff data to export.", "warning");
       return;
     }
 
-    const headers = [
-      "Employee Code",
-      "Name",
-      "Email",
-      "Phone",
-      "Department",
-      "Role",
-      "Status",
-      "Hire Date",
-      "Attendance Records",
-      "Attendance Issues",
-      "Payroll Records",
-      "Latest Payroll",
-    ];
+    const exportData = filteredStaff.map((person) => ({
+      employeeCode: person.employeeCode,
+      name: person.name,
+      email: person.email,
+      phone: person.phone,
+      department: person.department,
+      role: person.role,
+      status: formatLabel(person.status),
+      hireDate: formatDate(person.hireDate),
+      attendanceRecords: person.attendanceRecords,
+      attendanceIssues: person.attendanceIssues,
+      payrollRecords: person.payrollRecords,
+      latestPayroll: formatCurrency(person.latestPayroll),
+    }));
 
-    const rows = filteredStaff.map((person) => [
-      person.employeeCode,
-      person.name,
-      person.email,
-      person.phone,
-      person.department,
-      person.role,
-      formatLabel(person.status),
-      formatDate(person.hireDate),
-      person.attendanceRecords,
-      person.attendanceIssues,
-      person.payrollRecords,
-      formatCurrency(person.latestPayroll),
-    ]);
+    const filename = "manager-staff";
 
-    const csvContent = [headers, ...rows]
-      .map((row) => row.map(escapeCSV).join(","))
-      .join("\n");
+    setShowExportDropdown(false);
 
-    const blob = new Blob([csvContent], {
-      type: "text/csv;charset=utf-8;",
-    });
-
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement("a");
-
-    link.href = url;
-    link.download = `manager-staff-${new Date().toISOString().split("T")[0]}.csv`;
-    link.click();
-
-    URL.revokeObjectURL(url);
-    showToast("Staff CSV exported successfully.", "success");
+    if (format === "csv") {
+      exportToCSV(exportData, exportColumns, filename);
+      showToast("Staff CSV exported successfully.", "success");
+    } else if (format === "excel") {
+      exportToExcel(exportData, exportColumns, filename);
+      showToast("Staff Excel exported successfully.", "success");
+    } else if (format === "pdf") {
+      exportToPDF(exportData, exportColumns, "Staff Directory Report", filename);
+      showToast("Staff PDF exported successfully.", "success");
+    }
   };
 
   const openProfile = (person) => {
@@ -713,10 +712,22 @@ const ManagerStaff = () => {
             {refreshing ? "Refreshing..." : "Refresh"}
           </button>
 
-          <button type="button" className="staff-btn primary" onClick={exportCSV}>
-            <FontAwesomeIcon icon={faDownload} />
-            Export CSV
-          </button>
+          <div style={{ position: "relative" }}>
+            <button type="button" className="staff-btn primary" onClick={() => setShowExportDropdown(!showExportDropdown)}>
+              <FontAwesomeIcon icon={faDownload} />
+              Export ▼
+            </button>
+            {showExportDropdown && (
+              <>
+                <div style={{ position: "fixed", top: 0, left: 0, right: 0, bottom: 0, zIndex: 998 }} onClick={() => setShowExportDropdown(false)} />
+                <div style={{ position: "absolute", top: "100%", right: 0, background: "#fff", border: "1px solid #e2e8f0", borderRadius: 8, boxShadow: "0 8px 24px rgba(0,0,0,0.12)", zIndex: 999, minWidth: 160, overflow: "hidden" }}>
+                  <button type="button" className="staff-btn primary" style={{ width: "100%", borderRadius: 0, border: "none" }} onClick={() => handleExport("csv")}>Export as CSV</button>
+                  <button type="button" className="staff-btn primary" style={{ width: "100%", borderRadius: 0, border: "none" }} onClick={() => handleExport("excel")}>Export as Excel</button>
+                  <button type="button" className="staff-btn primary" style={{ width: "100%", borderRadius: 0, border: "none" }} onClick={() => handleExport("pdf")}>Export as PDF</button>
+                </div>
+              </>
+            )}
+          </div>
         </div>
       </section>
 

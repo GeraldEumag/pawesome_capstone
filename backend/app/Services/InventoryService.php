@@ -639,6 +639,16 @@ class InventoryService
         $rules = [
             'name' => $isCreate ? 'required|string|max:255' : 'sometimes|string|max:255',
             'sku' => $isCreate ? 'present|nullable|string|max:50|unique:inventory_items,sku' : 'sometimes|string|max:50|unique:inventory_items,sku,' . ($itemId ?? $data['id'] ?? null),
+            // Barcode: alphanumeric + hyphens only (no spaces — HID scanners
+            // don't emit spaces, and spaces in barcodes cause lookup issues).
+            // Trailing whitespace/newlines from HID scanners are normalized
+            // below before validation/storage.
+            // Note: 'sometimes' (not 'present') so callers that predate
+            // barcode support can omit the key entirely without failing.
+            // The required-for-sellable rule is enforced post-validation.
+            'barcode' => $isCreate
+                ? 'sometimes|nullable|string|max:100|regex:/^[A-Za-z0-9\-]+$/|unique:inventory_items,barcode'
+                : 'sometimes|string|max:100|regex:/^[A-Za-z0-9\-]+$/|unique:inventory_items,barcode,' . ($itemId ?? $data['id'] ?? null),
             'category' => $isCreate ? 'required|string|max:50' : 'sometimes|string|max:50',
             'description' => 'nullable|string',
             'brand' => 'nullable|string|max:255',
@@ -655,7 +665,14 @@ class InventoryService
             'reorder_level' => $isCreate ? 'required|integer|min:0' : 'sometimes|integer|min:0',
             'expiry_date' => 'nullable|date',
             'status' => 'nullable|in:' . implode(',', self::VALID_STATUSES),
+            'is_sellable' => 'sometimes|boolean',
         ];
+
+        // Normalize barcode before validation so scanner input such as
+        // " 8938501234567\n" resolves identically to "8938501234567".
+        if (array_key_exists('barcode', $data)) {
+            $data['barcode'] = $this->normalizeBarcode($data['barcode']);
+        }
 
         $validator = \Illuminate\Support\Facades\Validator::make($data, $rules);
 
@@ -670,7 +687,56 @@ class InventoryService
             $validated['category'] = 'Accessories';
         }
 
+        // Ensure normalized barcode is stored (empty string -> null so the
+        // unique index treats it as "no barcode" rather than colliding on "").
+        if (array_key_exists('barcode', $validated)) {
+            $validated['barcode'] = $this->normalizeBarcode($validated['barcode']);
+        }
+
+        // Business rule: barcode is required for sellable items.
+        // is_sellable defaults to true (DB default = 1), so if it's not
+        // explicitly set to false/0, the item is sellable and must have a barcode.
+        // On create: barcode must be present and non-empty.
+        // On update: only enforce if barcode is explicitly being set to empty,
+        //   or if is_sellable is being changed to true while barcode is empty.
+        $isSellable = isset($validated['is_sellable'])
+            ? (bool) $validated['is_sellable']
+            : (isset($data['is_sellable']) ? (bool) $data['is_sellable'] : true);
+
+        if ($isSellable) {
+            if ($isCreate) {
+                if (empty($validated['barcode'])) {
+                    throw ValidationException::withMessages([
+                        'barcode' => ['The barcode field is required for sellable items.'],
+                    ]);
+                }
+            } else {
+                // On update, only reject if barcode is explicitly being cleared.
+                // If barcode is not in the update payload, preserve the existing value.
+                if (array_key_exists('barcode', $validated) && empty($validated['barcode'])) {
+                    throw ValidationException::withMessages([
+                        'barcode' => ['The barcode field is required for sellable items.'],
+                    ]);
+                }
+            }
+        }
+
         return $validated;
+    }
+
+    /**
+     * Normalize a barcode value: trim leading/trailing whitespace and any
+     * trailing newline characters that HID/keyboard-emulation scanners may
+     * append. An empty value after normalization becomes null so multiple
+     * unbarcoded items do not collide on the unique index.
+     */
+    private function normalizeBarcode(mixed $value): ?string
+    {
+        if ($value === null) {
+            return null;
+        }
+        $normalized = trim((string) $value);
+        return $normalized === '' ? null : $normalized;
     }
 
     /**

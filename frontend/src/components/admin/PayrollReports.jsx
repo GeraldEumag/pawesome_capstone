@@ -10,8 +10,10 @@ import {
   faDownload,
   faEye,
   faFileCsv,
+  faFileExcel,
   faFilePdf,
   faFilter,
+  faPrint,
   faMagnifyingGlass,
   faMinus,
   faMoneyBillWave,
@@ -39,6 +41,7 @@ import {
 import { apiRequest } from "../../api/client";
 import { formatCurrency } from "../../utils/currency";
 import { normalizeList } from "../../utils/normalizeList";
+import { exportToCSV, exportToPDF, exportToExcel } from "../../utils/reportExport";
 import StandardTable from "../../components/shared/StandardTable";
 import "./PayrollReports.css";
 
@@ -445,52 +448,29 @@ const PayrollReports = () => {
     });
   };
 
-  const exportCSV = () => {
-    const headers = [
-      "Employee ID",
-      "Employee Name",
-      "Department",
-      "Position",
-      "Base Salary",
-      "Bonus",
-      "Deductions",
-      "Net Pay",
-      "Pay Period",
-      "Status",
-      "Payment Date",
-    ];
+  const exportColumns = [
+    { key: "employeeId", label: "Employee ID" },
+    { key: "employeeName", label: "Employee Name" },
+    { key: "department", label: "Department" },
+    { key: "position", label: "Position" },
+    { key: "baseSalary", label: "Base Salary", format: "currency" },
+    { key: "bonus", label: "Bonus", format: "currency" },
+    { key: "deductions", label: "Deductions", format: "currency" },
+    { key: "netPay", label: "Net Pay", format: "currency" },
+    { key: "payPeriod", label: "Pay Period" },
+    { key: "status", label: "Status" },
+    { key: "paymentDate", label: "Payment Date", format: "date" },
+  ];
 
-    const rows = filteredPayrollRecords.map((record) => [
-      record.employeeId,
-      record.employeeName,
-      record.department,
-      record.position,
-      record.baseSalary,
-      record.bonus,
-      record.deductions,
-      record.netPay,
-      record.payPeriod,
-      record.status,
-      record.paymentDate,
-    ]);
+  const [showExportDropdown, setShowExportDropdown] = useState(false);
 
-    const csv = [headers, ...rows]
-      .map((row) =>
-        row.map((value) => `"${String(value ?? "").replace(/"/g, '""')}"`).join(",")
-      )
-      .join("\n");
-
-    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
-    const url = URL.createObjectURL(blob);
-
-    const link = document.createElement("a");
-    link.href = url;
-    link.download = `payroll-report-${selectedPeriod}-${new Date()
-      .toISOString()
-      .slice(0, 10)}.csv`;
-    link.click();
-
-    URL.revokeObjectURL(url);
+  const handleExport = (format) => {
+    setShowExportDropdown(false);
+    if (!filteredPayrollRecords || filteredPayrollRecords.length === 0) return;
+    const filename = `payroll-report-${selectedPeriod}`;
+    if (format === "csv") exportToCSV(filteredPayrollRecords, exportColumns, filename);
+    else if (format === "excel") exportToExcel(filteredPayrollRecords, exportColumns, filename);
+    else if (format === "pdf") exportToPDF(filteredPayrollRecords, exportColumns, "Payroll Report", filename);
   };
 
   const clearFilters = () => {
@@ -536,10 +516,22 @@ const PayrollReports = () => {
             {refreshing ? "Refreshing..." : "Refresh"}
           </button>
 
-          <button type="button" className="payroll-secondary-btn" onClick={exportCSV}>
-            <FontAwesomeIcon icon={faFileCsv} />
-            Export CSV
-          </button>
+          <div style={{ position: "relative" }}>
+            <button type="button" className="payroll-secondary-btn" onClick={() => setShowExportDropdown(!showExportDropdown)}>
+              <FontAwesomeIcon icon={faFileCsv} />
+              Export ▼
+            </button>
+            {showExportDropdown && (
+              <>
+                <div style={{ position: "fixed", top: 0, left: 0, right: 0, bottom: 0, zIndex: 998 }} onClick={() => setShowExportDropdown(false)} />
+                <div style={{ position: "absolute", top: "100%", right: 0, background: "#fff", border: "1px solid #e2e8f0", borderRadius: 8, boxShadow: "0 8px 24px rgba(0,0,0,0.12)", zIndex: 999, minWidth: 160, overflow: "hidden" }}>
+                  <button type="button" style={{ display: "block", width: "100%", padding: "10px 16px", border: "none", background: "#fff", color: "#374151", fontSize: 13, textAlign: "left", cursor: "pointer" }} onClick={() => handleExport("csv")}>Export as CSV</button>
+                  <button type="button" style={{ display: "block", width: "100%", padding: "10px 16px", border: "none", background: "#fff", color: "#374151", fontSize: 13, textAlign: "left", cursor: "pointer" }} onClick={() => handleExport("excel")}>Export as Excel</button>
+                  <button type="button" style={{ display: "block", width: "100%", padding: "10px 16px", border: "none", background: "#fff", color: "#374151", fontSize: 13, textAlign: "left", cursor: "pointer" }} onClick={() => handleExport("pdf")}>Export as PDF</button>
+                </div>
+              </>
+            )}
+          </div>
 
           <button type="button" className="payroll-primary-btn" onClick={() => window.print()}>
             <FontAwesomeIcon icon={faFilePdf} />
@@ -1007,14 +999,24 @@ const PayrollReports = () => {
             </div>
 
             <div className="payroll-export-actions">
-              <button type="button" onClick={exportCSV}>
+              <button type="button" onClick={() => handleExport("csv")}>
                 <FontAwesomeIcon icon={faFileCsv} />
                 Download CSV
               </button>
 
-              <button type="button" onClick={() => window.print()}>
+              <button type="button" onClick={() => handleExport("excel")}>
+                <FontAwesomeIcon icon={faFileExcel} />
+                Download Excel
+              </button>
+
+              <button type="button" onClick={() => handleExport("pdf")}>
                 <FontAwesomeIcon icon={faFilePdf} />
-                Print / PDF
+                Download PDF
+              </button>
+
+              <button type="button" onClick={() => window.print()}>
+                <FontAwesomeIcon icon={faPrint} />
+                Print
               </button>
 
               <button

@@ -57,22 +57,16 @@ const ManagerHistory = () => {
 
   const handlePageChange = (p) => { setPage(p); fetchHistory(p); };
 
-  const exportCSV = useCallback(() => {
-    if (!entries.length) return;
-    const headers = ["Reference","Category","Actor","Action","Description","Amount","Status","Date"];
-    const rows = entries.map((e) => [
-      e.reference_id, e.category, e.actor, e.action, e.description,
-      Number(e.amount).toLocaleString("en-PH", { style: "currency", currency: "PHP" }),
-      e.status,
-      e.created_at ? new Date(e.created_at).toLocaleString("en-PH") : "N/A",
-    ]);
-    const csv = [headers, ...rows].map((r) => r.map((v) => `"${String(v ?? "").replace(/"/g, '""')}"`).join(",")).join("\n");
-    const a = Object.assign(document.createElement("a"), {
-      href: URL.createObjectURL(new Blob([csv], { type: "text/csv;charset=utf-8;" })),
-      download: `manager-history-${Date.now()}.csv`,
-    });
-    document.body.appendChild(a); a.click(); document.body.removeChild(a);
-  }, [entries]);
+  const exportColumns = [
+    { key: "reference_id", label: "Reference" },
+    { key: "category", label: "Category" },
+    { key: "actor", label: "Actor" },
+    { key: "action", label: "Action" },
+    { key: "description", label: "Description" },
+    { key: "amount", label: "Amount", format: "currency" },
+    { key: "status", label: "Status" },
+    { key: "created_at", label: "Date", format: "date" },
+  ];
 
   return (
     <HistoryTimeline
@@ -80,7 +74,9 @@ const ManagerHistory = () => {
       loading={loading}
       error={error}
       onRefresh={() => fetchHistory(page)}
-      onExport={exportCSV}
+      exportColumns={exportColumns}
+      exportFilename="manager-history"
+      exportTitle="Manager Business Activity History"
       roleAccent="#7c3aed"
       roleLabel="Manager — Business Activity"
       emptyMessage="No business activity records found."

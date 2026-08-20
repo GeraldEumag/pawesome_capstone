@@ -1,0 +1,328 @@
+{
+    "summary": {
+        "pass": 50,
+        "fail": 0,
+        "warn": 0,
+        "critical": 0,
+        "high": 0,
+        "medium": 0
+    },
+    "overall": "PASS",
+    "findings": [
+        {
+            "severity": "pass",
+            "gate": "D2-sales",
+            "name": "Admin total_revenue vs sales table (API=13800, DB=13800)",
+            "detail": null
+        },
+        {
+            "severity": "pass",
+            "gate": "D2-sales",
+            "name": "Admin today_revenue vs DB (API=4800, DB=4800)",
+            "detail": null
+        },
+        {
+            "severity": "pass",
+            "gate": "D2-sales",
+            "name": "Manager sales_total (API=18200, DB=18200)",
+            "detail": null
+        },
+        {
+            "severity": "pass",
+            "gate": "D2-sales",
+            "name": "Manager total_orders (API=57, DB=57)",
+            "detail": null
+        },
+        {
+            "severity": "pass",
+            "gate": "D2-sales",
+            "name": "Manager total_service_requests (API=57, DB=57)",
+            "detail": null
+        },
+        {
+            "severity": "pass",
+            "gate": "D2-sales",
+            "name": "Cashier today_sales (API=4800, DB=4800)",
+            "detail": null
+        },
+        {
+            "severity": "pass",
+            "gate": "D2-sales",
+            "name": "DB: sales=18, sale_items=18, payments=18, invoices=18",
+            "detail": null
+        },
+        {
+            "severity": "pass",
+            "gate": "D2-sales",
+            "name": "All sales have sale_items",
+            "detail": null
+        },
+        {
+            "severity": "pass",
+            "gate": "D2-sales",
+            "name": "All completed sales have payments",
+            "detail": null
+        },
+        {
+            "severity": "pass",
+            "gate": "D3-inventory",
+            "name": "Inventory total_items (API=891, DB=891)",
+            "detail": null
+        },
+        {
+            "severity": "pass",
+            "gate": "D3-inventory",
+            "name": "Inventory low_stock_items (API=268, DB=268)",
+            "detail": null
+        },
+        {
+            "severity": "pass",
+            "gate": "D3-inventory",
+            "name": "Inventory out_of_stock_items (API=461, DB=461)",
+            "detail": null
+        },
+        {
+            "severity": "pass",
+            "gate": "D3-inventory",
+            "name": "Inventory total_stock_value (API=1913167, DB=1913167)",
+            "detail": null
+        },
+        {
+            "severity": "pass",
+            "gate": "D3-inventory",
+            "name": "Inventory logs present: 141 records",
+            "detail": null
+        },
+        {
+            "severity": "pass",
+            "gate": "D3-inventory",
+            "name": "Inventory logs: sale=24, restock=61, adjustment=1 | service_item_usages: 44",
+            "detail": null
+        },
+        {
+            "severity": "pass",
+            "gate": "D4-service",
+            "name": "Manager total_appointments (API=21, DB=21)",
+            "detail": null
+        },
+        {
+            "severity": "pass",
+            "gate": "D4-service",
+            "name": "Manager boarding_bookings (API=6, DB=6)",
+            "detail": null
+        },
+        {
+            "severity": "pass",
+            "gate": "D4-service",
+            "name": "Receptionist today_appointments (API=0, DB=0)",
+            "detail": null
+        },
+        {
+            "severity": "pass",
+            "gate": "D4-service",
+            "name": "Receptionist total_customers (API=1, DB=1)",
+            "detail": null
+        },
+        {
+            "severity": "pass",
+            "gate": "D4-service",
+            "name": "Veterinary completed_appointments (API=5, DB=5)",
+            "detail": null
+        },
+        {
+            "severity": "pass",
+            "gate": "D4-service",
+            "name": "Service request status breakdown: {\"pending\":8,\"approved\":49}",
+            "detail": null
+        },
+        {
+            "severity": "pass",
+            "gate": "D4-service",
+            "name": "Appointment status breakdown: {\"approved\":3,\"awaiting_payment\":7,\"completed\":5,\"in_progress\":6}",
+            "detail": null
+        },
+        {
+            "severity": "pass",
+            "gate": "D5-payments",
+            "name": "Manager pending_payments (API=9, DB=9)",
+            "detail": null
+        },
+        {
+            "severity": "pass",
+            "gate": "D5-payments",
+            "name": "Manager rejected_payments (API=3, DB=3)",
+            "detail": null
+        },
+        {
+            "severity": "pass",
+            "gate": "D5-payments",
+            "name": "Cashier payment-requests returned (pending proofs with uploaded proof: 9)",
+            "detail": null
+        },
+        {
+            "severity": "pass",
+            "gate": "D5-payments",
+            "name": "Payment totals: POS=10200, Service=8000",
+            "detail": null
+        },
+        {
+            "severity": "pass",
+            "gate": "D6-customer",
+            "name": "Admin total_users (API=8, DB=8)",
+            "detail": null
+        },
+        {
+            "severity": "pass",
+            "gate": "D6-customer",
+            "name": "Admin total_customers (API=1, DB=1)",
+            "detail": null
+        },
+        {
+            "severity": "pass",
+            "gate": "D6-customer",
+            "name": "Customer total_pets (API=9, DB=9)",
+            "detail": null
+        },
+        {
+            "severity": "pass",
+            "gate": "D6-customer",
+            "name": "Customer overview returned (customer has 57 service requests)",
+            "detail": null
+        },
+        {
+            "severity": "pass",
+            "gate": "D7-kpi",
+            "name": "Admin report total_revenue (API=13800, DB=13800)",
+            "detail": null
+        },
+        {
+            "severity": "pass",
+            "gate": "D7-kpi",
+            "name": "Admin report total_customers (API=1, DB=1)",
+            "detail": null
+        },
+        {
+            "severity": "pass",
+            "gate": "D7-kpi",
+            "name": "Admin report total_inventory_items (API=891, DB=891)",
+            "detail": null
+        },
+        {
+            "severity": "pass",
+            "gate": "D7-kpi",
+            "name": "Admin reports\/summary returned 200",
+            "detail": null
+        },
+        {
+            "severity": "pass",
+            "gate": "D7-kpi",
+            "name": "Manager executive-summary returned 200",
+            "detail": null
+        },
+        {
+            "severity": "pass",
+            "gate": "D7-kpi",
+            "name": "Admin dashboard consistent across calls (total_users) (API=8, DB=8)",
+            "detail": null
+        },
+        {
+            "severity": "pass",
+            "gate": "D7-kpi",
+            "name": "No demo\/sample\/test_data indicators found in dashboard responses",
+            "detail": null
+        },
+        {
+            "severity": "pass",
+            "gate": "D8-cross-role",
+            "name": "Recent service request: id=57, status=approved, payment_status=paid",
+            "detail": null
+        },
+        {
+            "severity": "pass",
+            "gate": "D8-cross-role",
+            "name": "Customer can see service request 57",
+            "detail": null
+        },
+        {
+            "severity": "pass",
+            "gate": "D8-cross-role",
+            "name": "Receptionist can access pending requests",
+            "detail": null
+        },
+        {
+            "severity": "pass",
+            "gate": "D8-cross-role",
+            "name": "Manager total_service_requests matches DB (API=57, DB=57)",
+            "detail": null
+        },
+        {
+            "severity": "pass",
+            "gate": "D8-cross-role",
+            "name": "Manager payroll returned 200 (DB has 6 payroll records)",
+            "detail": null
+        },
+        {
+            "severity": "pass",
+            "gate": "D7-hardcoded",
+            "name": "Cashier\/POSController: 0.12 (12% VAT) \u2014 Philippine VAT rate",
+            "detail": {
+                "acceptable": true
+            }
+        },
+        {
+            "severity": "pass",
+            "gate": "D7-hardcoded",
+            "name": "Cashier\/POSController: Store name\/address\/phone \u2014 Receipt header",
+            "detail": {
+                "acceptable": true
+            }
+        },
+        {
+            "severity": "pass",
+            "gate": "D7-hardcoded",
+            "name": "Cashier\/DashboardController: DISCOUNT10\/SAVE20\/WELCOME \u2014 Discount codes",
+            "detail": {
+                "acceptable": true
+            }
+        },
+        {
+            "severity": "pass",
+            "gate": "D7-hardcoded",
+            "name": "Api\/PayrollController: SSS\/PhilHealth\/Pag-IBIG\/Tax brackets \u2014 Philippine government-mandated contributions",
+            "detail": {
+                "acceptable": true
+            }
+        },
+        {
+            "severity": "pass",
+            "gate": "D7-hardcoded",
+            "name": "Api\/PayrollController: 15000 default salary \u2014 Fallback when user has no salary set",
+            "detail": {
+                "acceptable": true
+            }
+        },
+        {
+            "severity": "pass",
+            "gate": "D7-hardcoded",
+            "name": "Customer\/PortalController: Loyalty: *100 + *50, 1000=Premium \u2014 Loyalty program rules",
+            "detail": {
+                "acceptable": true
+            }
+        },
+        {
+            "severity": "pass",
+            "gate": "D7-hardcoded",
+            "name": "Admin\/DashboardController: All modules=true \u2014 Active modules list (system health)",
+            "detail": {
+                "acceptable": true
+            }
+        },
+        {
+            "severity": "pass",
+            "gate": "D7-hardcoded",
+            "name": "All hardcoded values are business constants or government-mandated rates \u2014 no demo\/fake KPI data found",
+            "detail": null
+        }
+    ],
+    "timestamp": "2026-08-20T18:13:04+00:00"
+}

@@ -62,7 +62,7 @@ class DashboardController extends Controller
             'paid_service_count' => $paidServiceCount,
             'pending_service_payments' => $pendingServicePayments,
             'total_service_requests' => $totalServiceRequests,
-            'low_stock_count' => InventoryItem::whereColumn('stock', '<=', 'reorder_level')->count(),
+            'low_stock_count' => InventoryItem::whereNull('archived_at')->whereRaw('stock <= reorder_level')->where('stock', '>', 0)->count(),
             'completed_services' => Appointment::where('status', 'completed')->count()
                 + DB::table('service_requests')->where('status', 'completed')->count(),
             'total_staff' => User::whereIn('role', $staffRoles)->count(),
@@ -114,14 +114,14 @@ class DashboardController extends Controller
                 'pending_payments' => DB::table('customer_orders')->where('payment_status', 'pending')->count(),
                 'overdue_invoices' => DB::table('customer_orders')
                     ->where('payment_status', 'pending')
-                    ->where('due_date', '<', $today)
+                    ->where('created_at', '<', $today->subDays(7))
                     ->count(),
             ],
             'operational_metrics' => [
                 'today_appointments' => Appointment::whereDate('scheduled_at', $today)->count(),
                 'completed_appointments' => Appointment::whereMonth('scheduled_at', $today->month)->count(),
                 'pending_orders' => DB::table('customer_orders')->where('status', 'pending')->count(),
-                'low_stock_items' => InventoryItem::whereColumn('stock', '<=', 'reorder_level')->count(),
+                'low_stock_items' => InventoryItem::whereNull('archived_at')->whereRaw('stock <= reorder_level')->where('stock', '>', 0)->count(),
                 'occupancy_rate' => DB::table('hotel_rooms')->count() > 0 
                     ? round(DB::table('boardings')->where('status', 'checked_in')->count() / DB::table('hotel_rooms')->count() * 100, 2)
                     : 0,

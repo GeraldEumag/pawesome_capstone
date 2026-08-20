@@ -15,6 +15,7 @@ import {
   FaHistory,
   FaChartBar,
   FaCog,
+  FaWallet,
 } from "react-icons/fa";
 import "./ReceptionistSidebar.css";
 
@@ -130,6 +131,13 @@ const ReceptionistSidebar = ({ mobileOpen, onMobileMenuToggle }) => {
           <li className="nav-item">
             <NavLink to="/receptionist/reports" onClick={handleNavClick}>
               <FaChartBar className="nav-icon" /> Reports
+            </NavLink>
+          </li>
+
+          {/* My Payroll */}
+          <li className="nav-item">
+            <NavLink to="/receptionist/payroll" onClick={handleNavClick}>
+              <FaWallet className="nav-icon" /> My Payroll
             </NavLink>
           </li>
 

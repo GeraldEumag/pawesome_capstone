@@ -1216,9 +1216,9 @@ class BoardingController extends Controller
     }
 
     /**
-     * Mark as paid (cashier)
+     * Mark as paid (cashier/admin only — route gated by role:cashier,admin)
      */
-    public function markAsPaid($id): JsonResponse
+    public function markAsPaid(Request $request, $id): JsonResponse
     {
         $boarding = Boarding::findOrFail($id);
 
@@ -1230,12 +1230,26 @@ class BoardingController extends Controller
             return response()->json(['error' => 'Can only confirm payment for confirmed or checked-in reservations'], 422);
         }
 
+        $receiptNumber = $boarding->receipt_number ?: ('BD-REC-' . now()->format('YmdHis') . '-' . $boarding->id);
+
         $boarding->payment_status = 'paid';
+        $boarding->paid_at = now();
+        $boarding->verified_by = $request->user()?->id;
+        $boarding->receipt_number = $receiptNumber;
+
+        if ($request->has('reference_number')) {
+            $boarding->reference_number = $request->input('reference_number');
+        }
+        if ($request->has('cashier_remarks')) {
+            $boarding->cashier_remarks = $request->input('cashier_remarks');
+        }
+
         $boarding->save();
 
         return response()->json([
             'message' => 'Payment confirmed successfully',
             'boarding' => $boarding->fresh(['pet', 'customer', 'hotelRoom']),
+            'receipt_number' => $receiptNumber,
         ]);
     }
 

@@ -20,6 +20,7 @@ import {
   FaMoneyBillWave,
 } from "react-icons/fa";
 import { apiRequest, getAuthenticatedFileUrl } from "../../api/client";
+import { exportToCSV, exportToPDF, exportToExcel } from "../../utils/reportExport";
 import "./ReceptionistApprovals.css";
 
 const TYPE_FILTERS = [
@@ -265,6 +266,8 @@ const ReceptionistApprovals = () => {
   const [bulkActionOpen, setBulkActionOpen] = useState(false);
   const [bulkActionType, setBulkActionType] = useState("");
   const [verifiedIds, setVerifiedIds] = useState(new Set());
+
+  const [showExportDropdown, setShowExportDropdown] = useState(false);
 
   const successTimerRef = useRef(null);
   const errorTimerRef = useRef(null);
@@ -731,53 +734,43 @@ const ReceptionistApprovals = () => {
     }
   };
 
-  const exportCSV = () => {
+  const exportColumns = [
+    { key: "requestId", label: "Request ID" },
+    { key: "type", label: "Type" },
+    { key: "service", label: "Service" },
+    { key: "customer", label: "Customer" },
+    { key: "pet", label: "Pet" },
+    { key: "scheduleDate", label: "Schedule Date" },
+    { key: "scheduleTime", label: "Schedule Time" },
+    { key: "status", label: "Status" },
+    { key: "price", label: "Price" },
+    { key: "notes", label: "Notes" },
+  ];
+
+  const handleExport = (format) => {
+    setShowExportDropdown(false);
     if (filteredRequests.length === 0) {
       showMessage("error", "No pending requests to export.");
       return;
     }
 
-    const headers = [
-      "Request ID",
-      "Type",
-      "Service",
-      "Customer",
-      "Pet",
-      "Schedule Date",
-      "Schedule Time",
-      "Status",
-      "Price",
-      "Notes",
-    ];
+    const exportData = filteredRequests.map((item) => ({
+      requestId: getRequestId(item),
+      type: getTypeLabel(getRequestType(item)),
+      service: getServiceName(item),
+      customer: getCustomerName(item),
+      pet: getPetName(item),
+      scheduleDate: getRequestDate(item),
+      scheduleTime: getRequestTime(item),
+      status: item.status || "pending",
+      price: item.price || item.amount || item.total_amount || "",
+      notes: item.notes || item.remarks || item.description || "",
+    }));
 
-    const rows = filteredRequests.map((item) => [
-      getRequestId(item),
-      getTypeLabel(getRequestType(item)),
-      getServiceName(item),
-      getCustomerName(item),
-      getPetName(item),
-      getRequestDate(item),
-      getRequestTime(item),
-      item.status || "pending",
-      item.price || item.amount || item.total_amount || "",
-      item.notes || item.remarks || item.description || "",
-    ]);
-
-    const csv = [headers, ...rows]
-      .map((row) =>
-        row.map((value) => `"${String(value ?? "").replace(/"/g, '""')}"`).join(",")
-      )
-      .join("\n");
-
-    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
-    const url = URL.createObjectURL(blob);
-    const anchor = document.createElement("a");
-
-    anchor.href = url;
-    anchor.download = `receptionist-approvals-${new Date().toISOString().slice(0, 10)}.csv`;
-    anchor.click();
-
-    URL.revokeObjectURL(url);
+    const filename = "receptionist-approvals";
+    if (format === "csv") exportToCSV(exportData, exportColumns, filename);
+    else if (format === "excel") exportToExcel(exportData, exportColumns, filename);
+    else if (format === "pdf") exportToPDF(exportData, exportColumns, "Receptionist Approvals", filename);
   };
 
   const clearFilters = () => {
@@ -835,10 +828,22 @@ const ReceptionistApprovals = () => {
             {refreshing ? "Refreshing..." : "Refresh"}
           </button>
 
-          <button type="button" className="secondary-btn" onClick={exportCSV}>
-            <FaDownload />
-            Export CSV
-          </button>
+          <div className="export-dropdown-wrapper" style={{ position: "relative" }}>
+            <button type="button" className="secondary-btn" onClick={() => setShowExportDropdown(!showExportDropdown)}>
+              <FaDownload />
+              Export ▼
+            </button>
+            {showExportDropdown && (
+              <>
+                <div style={{ position: "fixed", top: 0, left: 0, right: 0, bottom: 0, zIndex: 998 }} onClick={() => setShowExportDropdown(false)} />
+                <div style={{ position: "absolute", top: "100%", right: 0, background: "#fff", border: "1px solid #e2e8f0", borderRadius: 8, boxShadow: "0 8px 24px rgba(0,0,0,0.12)", zIndex: 999, minWidth: 160, overflow: "hidden" }}>
+                  <button type="button" className="secondary-btn" style={{ width: "100%", justifyContent: "flex-start" }} onClick={() => handleExport("csv")}>Export as CSV</button>
+                  <button type="button" className="secondary-btn" style={{ width: "100%", justifyContent: "flex-start" }} onClick={() => handleExport("excel")}>Export as Excel</button>
+                  <button type="button" className="secondary-btn" style={{ width: "100%", justifyContent: "flex-start" }} onClick={() => handleExport("pdf")}>Export as PDF</button>
+                </div>
+              </>
+            )}
+          </div>
         </div>
       </section>
 

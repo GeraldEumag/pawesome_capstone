@@ -34,6 +34,7 @@ import {
 } from "@fortawesome/free-solid-svg-icons";
 import { apiRequest } from "../../api/client";
 import { formatCurrency } from "../../utils/currency";
+import { exportToCSV, exportToPDF, exportToExcel } from "../../utils/reportExport";
 import "./ManagerAttendance.css";
 
 const TODAY = new Date().toISOString().split("T")[0];
@@ -265,6 +266,7 @@ const ManagerAttendance = () => {
   const [sortBy, setSortBy] = useState("name");
   const [sortOrder, setSortOrder] = useState("asc");
   const [showFilters, setShowFilters] = useState(false);
+  const [showExportDropdown, setShowExportDropdown] = useState(false);
 
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(10);
@@ -677,58 +679,60 @@ const ManagerAttendance = () => {
     );
   };
 
-  const exportToCSV = () => {
-    const headers = [
-      "Employee ID",
-      "Name",
-      "Email",
-      "Department",
-      "Role",
-      "Date",
-      "Time In",
-      "Time Out",
-      "Status",
-      "Total Hours",
-      "Overtime",
-      "Undertime",
-      "Remarks",
-      "Review Status",
-    ];
+  const exportColumns = [
+    { key: "employeeId", label: "Employee ID" },
+    { key: "name", label: "Name" },
+    { key: "email", label: "Email" },
+    { key: "department", label: "Department" },
+    { key: "role", label: "Role" },
+    { key: "date", label: "Date" },
+    { key: "timeIn", label: "Time In" },
+    { key: "timeOut", label: "Time Out" },
+    { key: "status", label: "Status" },
+    { key: "totalHours", label: "Total Hours" },
+    { key: "overtime", label: "Overtime" },
+    { key: "undertime", label: "Undertime" },
+    { key: "remarks", label: "Remarks" },
+    { key: "reviewStatus", label: "Review Status" },
+  ];
 
-    const rows = filteredAttendance.map((record) => [
-      record.employeeId,
-      record.name,
-      record.email,
-      record.department,
-      record.role,
-      record.date,
-      formatTime(record.timeIn),
-      formatTime(record.timeOut),
-      formatStatus(record.status),
-      record.totalHours,
-      record.overtime,
-      record.undertime,
-      record.remarks,
-      formatStatus(record.reviewStatus),
-    ]);
+  const handleExport = (format) => {
+    if (filteredAttendance.length === 0) {
+      showToast("There is no attendance data to export.", "warning");
+      return;
+    }
 
-    const csvContent = [headers, ...rows]
-      .map((row) => row.map(escapeCSV).join(","))
-      .join("\n");
+    const exportData = filteredAttendance.map((record) => ({
+      employeeId: record.employeeId,
+      name: record.name,
+      email: record.email,
+      department: record.department,
+      role: record.role,
+      date: record.date,
+      timeIn: formatTime(record.timeIn),
+      timeOut: formatTime(record.timeOut),
+      status: formatStatus(record.status),
+      totalHours: record.totalHours,
+      overtime: record.overtime,
+      undertime: record.undertime,
+      remarks: record.remarks,
+      reviewStatus: formatStatus(record.reviewStatus),
+    }));
 
-    const blob = new Blob([csvContent], {
-      type: "text/csv;charset=utf-8;",
-    });
+    const filename = "manager-attendance";
 
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement("a");
+    setShowExportDropdown(false);
 
-    link.href = url;
-    link.download = `manager-attendance-${selectedDate}.csv`;
-    link.click();
-
-    URL.revokeObjectURL(url);
-    showToast("Attendance CSV exported successfully.", "success");
+    if (format === "csv") {
+      exportToCSV(exportData, exportColumns, filename);
+      showToast("Attendance CSV exported successfully.", "success");
+    } else if (format === "excel") {
+      exportToExcel(exportData, exportColumns, filename);
+      showToast("Attendance Excel exported successfully.", "success");
+    } else if (format === "pdf") {
+      exportToPDF(exportData, exportColumns, "Attendance Report", filename);
+      showToast("Attendance PDF exported successfully.", "success");
+    }
   };
 
   const handlePrint = () => {
@@ -763,10 +767,22 @@ const ManagerAttendance = () => {
             Refresh
           </button>
 
-          <button type="button" className="attendance-btn secondary" onClick={exportToCSV}>
-            <FontAwesomeIcon icon={faDownload} />
-            Export CSV
-          </button>
+          <div style={{ position: "relative" }}>
+            <button type="button" className="attendance-btn secondary" onClick={() => setShowExportDropdown(!showExportDropdown)}>
+              <FontAwesomeIcon icon={faDownload} />
+              Export ▼
+            </button>
+            {showExportDropdown && (
+              <>
+                <div style={{ position: "fixed", top: 0, left: 0, right: 0, bottom: 0, zIndex: 998 }} onClick={() => setShowExportDropdown(false)} />
+                <div style={{ position: "absolute", top: "100%", right: 0, background: "#fff", border: "1px solid #e2e8f0", borderRadius: 8, boxShadow: "0 8px 24px rgba(0,0,0,0.12)", zIndex: 999, minWidth: 160, overflow: "hidden" }}>
+                  <button type="button" className="attendance-btn secondary" style={{ width: "100%", borderRadius: 0, border: "none" }} onClick={() => handleExport("csv")}>Export as CSV</button>
+                  <button type="button" className="attendance-btn secondary" style={{ width: "100%", borderRadius: 0, border: "none" }} onClick={() => handleExport("excel")}>Export as Excel</button>
+                  <button type="button" className="attendance-btn secondary" style={{ width: "100%", borderRadius: 0, border: "none" }} onClick={() => handleExport("pdf")}>Export as PDF</button>
+                </div>
+              </>
+            )}
+          </div>
 
           <button type="button" className="attendance-btn primary" onClick={handlePrint}>
             <FontAwesomeIcon icon={faPrint} />

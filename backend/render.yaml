@@ -4,8 +4,8 @@ services:
     name: pawesome-backend
     env: php
     plan: free
-    buildCommand: composer install --no-dev --optimize-autoloader && php artisan config:cache && php artisan route:cache && php artisan view:cache && php artisan optimize
-    startCommand: php artisan serve --host=0.0.0.0 --port=$PORT
+    buildCommand: composer install --no-dev --optimize-autoloader && php artisan route:cache && php artisan view:cache && php artisan storage:link
+    startCommand: php artisan migrate --force && php artisan serve --host=0.0.0.0 --port=$PORT
     healthCheckPath: /api/health
     envVars:
       - key: APP_ENV
@@ -16,6 +16,8 @@ services:
         generateValue: true
       - key: APP_URL
         value: https://pawesome-backend.onrender.com
+      - key: FRONTEND_URL
+        value: https://pawesome-frontend.vercel.app
       - key: DB_CONNECTION
         value: mysql
       - key: DB_HOST
@@ -28,7 +30,11 @@ services:
         value: pawesome
       - key: DB_PASSWORD
         generateValue: true
+      - key: SESSION_DRIVER
+        value: file
       - key: CACHE_DRIVER
+        value: redis
+      - key: CACHE_STORE
         value: redis
       - key: QUEUE_CONNECTION
         value: redis
@@ -36,6 +42,16 @@ services:
         value: redis
       - key: REDIS_PORT
         value: 6379
+      - key: CORS_ALLOWED_ORIGINS
+        value: https://pawesome-frontend.vercel.app
+      - key: CORS_SUPPORTS_CREDENTIALS
+        value: true
+      - key: SANCTUM_STATEFUL_DOMAINS
+        value: pawesome-frontend.vercel.app
+      - key: FILESYSTEM_DISK
+        value: public
+      - key: LOG_LEVEL
+        value: error
 
   # MySQL Database
   - type: pserv

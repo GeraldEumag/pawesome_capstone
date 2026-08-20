@@ -20,6 +20,7 @@ import {
 import "./CashierTransactions_Polished.css";
 import { formatCurrency } from "../../utils/currency";
 import { posApi } from "../../api/pos";
+import { printReceipt } from "../../utils/receiptPrinter";
 import { useNavigate } from "react-router-dom";
 
 const isGenericFetchFailure = (error) =>
@@ -117,52 +118,39 @@ const CashierTransactions = () => {
   };
 
   const handlePrintReceipt = (transaction) => {
-    const receiptWindow = window.open("", "_blank", "width=400,height=600");
-    if (!receiptWindow) return;
+    // Fix: API returns "items" not "products" — check both for safety
+    const rawItems = transaction.items || transaction.products || [];
+    const items = rawItems.map((item) => ({
+      name: item.item_name || item.name || "Item",
+      quantity: item.quantity || 1,
+      unitPrice: Number(item.unit_price || item.price || 0),
+      total: Number(item.total_price || (item.unit_price || item.price || 0) * (item.quantity || 1)),
+    }));
 
-    const itemsHtml = (transaction.products || [])
-      .map((p) => `<tr><td>${p.name}</td><td>${p.quantity}</td><td>${formatCurrency(p.price)}</td></tr>`)
-      .join("");
+    const total = Number(transaction.amount || transaction.total_amount || 0);
+    const subtotal = Number(transaction.subtotal || total);
+    const discount = Number(transaction.discount || transaction.discount_amount || 0);
+    const vat = Number(transaction.tax || transaction.tax_amount || 0);
+    const amountReceived = Number(transaction.amount_received || transaction.cash_received || 0);
+    const change = Number(transaction.change || transaction.change_amount || 0);
 
-    receiptWindow.document.write(`
-      <html>
-        <head>
-          <title>Receipt ${transaction.id}</title>
-          <style>
-            body { font-family: monospace; padding: 20px; max-width: 360px; margin: 0 auto; }
-            h2 { text-align: center; margin-bottom: 4px; }
-            .store { text-align: center; font-size: 12px; margin-bottom: 16px; }
-            table { width: 100%; border-collapse: collapse; font-size: 12px; }
-            th, td { text-align: left; padding: 4px 0; }
-            th { border-bottom: 1px dashed #000; }
-            .total { border-top: 1px dashed #000; font-weight: bold; margin-top: 8px; padding-top: 8px; text-align: right; }
-            .meta { margin-top: 16px; font-size: 12px; }
-            .meta div { margin-bottom: 4px; }
-            @media print { button { display: none; } }
-          </style>
-        </head>
-        <body>
-          <h2>Pawesome Retreat Inc.</h2>
-          <div class="store">Aldana Street San Isidro Village, Las Piñas, Philippines, 1740</div>
-          <div class="meta">
-            <div><strong>Transaction:</strong> ${transaction.id}</div>
-            <div><strong>Customer:</strong> ${transaction.customer || "Walk-in"}</div>
-            <div><strong>Date:</strong> ${transaction.date} ${transaction.time || ""}</div>
-            <div><strong>Payment:</strong> ${transaction.payment || "Cash"}</div>
-          </div>
-          <table>
-            <thead><tr><th>Item</th><th>Qty</th><th>Price</th></tr></thead>
-            <tbody>${itemsHtml}</tbody>
-          </table>
-          <div class="total">TOTAL: ${formatCurrency(transaction.amount)}</div>
-          <div class="meta" style="margin-top:24px; text-align:center;">
-            <div>Thank you for shopping!</div>
-          </div>
-          <button onclick="window.print()" style="margin-top:20px; width:100%; padding:10px; font-size:14px;">Print Receipt</button>
-        </body>
-      </html>
-    `);
-    receiptWindow.document.close();
+    printReceipt({
+      title: "Official Cashier Receipt",
+      receiptNumber: transaction.transaction_number || String(transaction.id),
+      date: `${transaction.date || ""} ${transaction.time || ""}`.trim() || new Date().toLocaleString("en-PH"),
+      cashier: transaction.cashier_name || transaction.cashier || "Cashier",
+      customer: transaction.customer || transaction.customer_name || "Walk-in",
+      paymentMethod: transaction.payment || transaction.payment_method || "cash",
+      paymentStatus: transaction.status || "paid",
+      referenceNumber: transaction.reference_number || "",
+      items,
+      subtotal,
+      vat: vat || undefined,
+      discount,
+      total,
+      amountReceived: amountReceived || undefined,
+      change: change || undefined,
+    });
   };
 
   const handleVoidTransaction = async (id, reason) => {

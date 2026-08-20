@@ -14,6 +14,7 @@ import {
   faPrint
 } from "@fortawesome/free-solid-svg-icons";
 import { showSuccess, showError, showWarning, showAlert } from "../../../utils/alert.jsx";
+import { printReceipt } from "../../../utils/receiptPrinter";
 import { usePaymentApprovals } from "../hooks/usePaymentApprovals.jsx";
 import { useAuth } from "../../../context/AuthContext";
 import "./PaymentApprovals.css";
@@ -505,9 +506,25 @@ const PaymentApprovals = () => {
               >
                 Close
               </button>
-              <button 
-                className="pa-btn-primary" 
-                onClick={() => window.print()}
+              <button
+                className="pa-btn-primary"
+                onClick={() => {
+                  const r = receiptData;
+                  printReceipt({
+                    title: "Official Payment Receipt",
+                    receiptNumber: r.receipt_number || "N/A",
+                    date: r.paid_at ? new Date(r.paid_at).toLocaleString("en-PH") : new Date().toLocaleString("en-PH"),
+                    cashier: user?.name || "Cashier",
+                    customer: r.customer_name || "Customer",
+                    paymentMethod: r.payment_method || "Online Payment",
+                    paymentStatus: "paid",
+                    referenceNumber: r.reference_number || "",
+                    verifiedBy: r.verified_by || user?.name || "Cashier",
+                    items: [{ name: r.service_name || "Service", quantity: 1, unitPrice: Number(r.amount || 0), total: Number(r.amount || 0) }],
+                    subtotal: Number(r.amount || 0),
+                    total: Number(r.amount || 0),
+                  });
+                }}
               >
                 <FontAwesomeIcon icon={faPrint} /> Print
               </button>

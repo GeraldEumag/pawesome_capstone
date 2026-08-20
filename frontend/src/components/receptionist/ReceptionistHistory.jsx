@@ -93,26 +93,23 @@ const ReceptionistHistory = () => {
 
   useEffect(() => { fetchHistory(); }, [fetchHistory]);
 
-  const exportCSV = useCallback(() => {
-    if (!entries.length) return;
-    const headers = ["Reference","Type","Actor","Description","Status","Amount","Date"];
-    const rows = entries.map((e) => [
-      e.reference_id, e.category, e.actor, e.description, e.status,
-      e.amount ? Number(e.amount).toLocaleString("en-PH", { style: "currency", currency: "PHP" }) : "N/A",
-      e.created_at ? new Date(e.created_at).toLocaleString("en-PH") : "N/A",
-    ]);
-    const csv = [headers, ...rows].map((r) => r.map((v) => `"${String(v ?? "").replace(/"/g, '""')}"`).join(",")).join("\n");
-    const a = Object.assign(document.createElement("a"), {
-      href: URL.createObjectURL(new Blob([csv], { type: "text/csv;charset=utf-8;" })),
-      download: `receptionist-history-${Date.now()}.csv`,
-    });
-    document.body.appendChild(a); a.click(); document.body.removeChild(a);
-  }, [entries]);
+  const exportColumns = [
+    { key: "reference_id", label: "Reference" },
+    { key: "category", label: "Type" },
+    { key: "actor", label: "Actor" },
+    { key: "description", label: "Description" },
+    { key: "status", label: "Status" },
+    { key: "amount", label: "Amount", format: "currency" },
+    { key: "created_at", label: "Date", format: "date" },
+  ];
 
   return (
     <HistoryTimeline
       entries={entries} loading={loading} error={error}
-      onRefresh={fetchHistory} onExport={exportCSV}
+      onRefresh={fetchHistory}
+      exportColumns={exportColumns}
+      exportFilename="receptionist-history"
+      exportTitle="Receptionist Activity History"
       roleAccent="#d97706" roleLabel="Receptionist"
       emptyMessage="No activity records found."
       searchTerm={searchTerm} onSearchChange={setSearchTerm}

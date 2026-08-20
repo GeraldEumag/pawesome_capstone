@@ -14,6 +14,7 @@ const CustomersProfile = lazy(() => import("../components/receptionist/Reception
 const ProfileSettings = lazy(() => import("../components/shared/ProfileSettings"));
 const Reports = lazy(() => import("../components/customers/CustomerReports"));
 const ReceptionistHistory = lazy(() => import("../components/receptionist/ReceptionistHistory"));
+const MyPayroll = lazy(() => import("../components/shared/MyPayroll"));
 
 const RouteLoading = () => (
   <div style={{ padding: "20px", textAlign: "center" }}>Loading...</div>
@@ -58,6 +59,7 @@ const ReceptionistRoutes = () => (
         <Route path="medical-confinements" element={<Navigate to="/receptionist/bookings/hotel" replace />} />
         <Route path="customers" element={<CustomerManagement />} />
         <Route path="history" element={<ReceptionistHistory />} />
+        <Route path="payroll" element={<MyPayroll roleAccent="#d97706" roleLabel="Receptionist" />} />
         <Route path="profile" element={<ProfileSettings />} />
         <Route path="reports" element={<Reports />} />
       </Route>
@@ -70,6 +72,16 @@ const ReceptionistRoutes = () => (
         }
       >
         <Route index element={<CustomersProfile />} />
+      </Route>
+      <Route
+        path="payroll"
+        element={
+          <ProtectedRoute>
+            <ReceptionistLayout />
+          </ProtectedRoute>
+        }
+      >
+        <Route index element={<MyPayroll roleAccent="#d97706" roleLabel="Receptionist" />} />
       </Route>
     </Routes>
   </Suspense>

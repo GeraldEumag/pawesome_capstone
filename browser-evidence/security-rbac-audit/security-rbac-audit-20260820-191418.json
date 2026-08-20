@@ -1,0 +1,1139 @@
+{
+    "summary": {
+        "pass": 139,
+        "fail": 0,
+        "warn": 0,
+        "critical": 0,
+        "high": 1,
+        "medium": 4
+    },
+    "overall": "FAIL",
+    "findings": [
+        {
+            "severity": "pass",
+            "gate": "B2-auth",
+            "name": "Valid login as customer",
+            "detail": {
+                "token_len": 52
+            }
+        },
+        {
+            "severity": "pass",
+            "gate": "B2-auth",
+            "name": "Valid login as receptionist",
+            "detail": {
+                "token_len": 52
+            }
+        },
+        {
+            "severity": "pass",
+            "gate": "B2-auth",
+            "name": "Valid login as cashier",
+            "detail": {
+                "token_len": 52
+            }
+        },
+        {
+            "severity": "pass",
+            "gate": "B2-auth",
+            "name": "Valid login as inventory",
+            "detail": {
+                "token_len": 52
+            }
+        },
+        {
+            "severity": "pass",
+            "gate": "B2-auth",
+            "name": "Valid login as veterinary",
+            "detail": {
+                "token_len": 52
+            }
+        },
+        {
+            "severity": "pass",
+            "gate": "B2-auth",
+            "name": "Valid login as manager",
+            "detail": {
+                "token_len": 52
+            }
+        },
+        {
+            "severity": "pass",
+            "gate": "B2-auth",
+            "name": "Valid login as admin",
+            "detail": {
+                "token_len": 52
+            }
+        },
+        {
+            "severity": "pass",
+            "gate": "B2-auth",
+            "name": "Invalid password rejected with 401",
+            "detail": null
+        },
+        {
+            "severity": "pass",
+            "gate": "B2-auth",
+            "name": "Nonexistent account rejected with 401",
+            "detail": null
+        },
+        {
+            "severity": "pass",
+            "gate": "B2-auth",
+            "name": "Missing token rejected on \/auth\/me with 401",
+            "detail": null
+        },
+        {
+            "severity": "pass",
+            "gate": "B2-auth",
+            "name": "Invalid token rejected with 401",
+            "detail": null
+        },
+        {
+            "severity": "pass",
+            "gate": "B2-auth",
+            "name": "Logout succeeded",
+            "detail": null
+        },
+        {
+            "severity": "pass",
+            "gate": "B2-auth",
+            "name": "Revoked token rejected after logout",
+            "detail": null
+        },
+        {
+            "severity": "pass",
+            "gate": "B3-rbac",
+            "name": "customer blocked from GET \/admin\/dashboard",
+            "detail": {
+                "status": 403
+            }
+        },
+        {
+            "severity": "pass",
+            "gate": "B3-rbac",
+            "name": "receptionist blocked from GET \/admin\/dashboard",
+            "detail": {
+                "status": 403
+            }
+        },
+        {
+            "severity": "pass",
+            "gate": "B3-rbac",
+            "name": "cashier blocked from GET \/admin\/dashboard",
+            "detail": {
+                "status": 403
+            }
+        },
+        {
+            "severity": "pass",
+            "gate": "B3-rbac",
+            "name": "inventory blocked from GET \/admin\/dashboard",
+            "detail": {
+                "status": 403
+            }
+        },
+        {
+            "severity": "pass",
+            "gate": "B3-rbac",
+            "name": "veterinary blocked from GET \/admin\/dashboard",
+            "detail": {
+                "status": 403
+            }
+        },
+        {
+            "severity": "pass",
+            "gate": "B3-rbac",
+            "name": "manager blocked from GET \/admin\/dashboard",
+            "detail": {
+                "status": 403
+            }
+        },
+        {
+            "severity": "pass",
+            "gate": "B3-rbac",
+            "name": "admin allowed GET \/admin\/dashboard",
+            "detail": {
+                "status": 200
+            }
+        },
+        {
+            "severity": "pass",
+            "gate": "B3-rbac",
+            "name": "customer blocked from GET \/admin\/users",
+            "detail": {
+                "status": 403
+            }
+        },
+        {
+            "severity": "pass",
+            "gate": "B3-rbac",
+            "name": "receptionist blocked from GET \/admin\/users",
+            "detail": {
+                "status": 403
+            }
+        },
+        {
+            "severity": "pass",
+            "gate": "B3-rbac",
+            "name": "cashier blocked from GET \/admin\/users",
+            "detail": {
+                "status": 403
+            }
+        },
+        {
+            "severity": "pass",
+            "gate": "B3-rbac",
+            "name": "inventory blocked from GET \/admin\/users",
+            "detail": {
+                "status": 403
+            }
+        },
+        {
+            "severity": "pass",
+            "gate": "B3-rbac",
+            "name": "veterinary blocked from GET \/admin\/users",
+            "detail": {
+                "status": 403
+            }
+        },
+        {
+            "severity": "pass",
+            "gate": "B3-rbac",
+            "name": "manager blocked from GET \/admin\/users",
+            "detail": {
+                "status": 403
+            }
+        },
+        {
+            "severity": "pass",
+            "gate": "B3-rbac",
+            "name": "admin allowed GET \/admin\/users",
+            "detail": {
+                "status": 200
+            }
+        },
+        {
+            "severity": "pass",
+            "gate": "B3-rbac",
+            "name": "customer blocked from GET \/manager\/dashboard",
+            "detail": {
+                "status": 403
+            }
+        },
+        {
+            "severity": "pass",
+            "gate": "B3-rbac",
+            "name": "receptionist blocked from GET \/manager\/dashboard",
+            "detail": {
+                "status": 403
+            }
+        },
+        {
+            "severity": "pass",
+            "gate": "B3-rbac",
+            "name": "cashier blocked from GET \/manager\/dashboard",
+            "detail": {
+                "status": 403
+            }
+        },
+        {
+            "severity": "pass",
+            "gate": "B3-rbac",
+            "name": "inventory blocked from GET \/manager\/dashboard",
+            "detail": {
+                "status": 403
+            }
+        },
+        {
+            "severity": "pass",
+            "gate": "B3-rbac",
+            "name": "veterinary blocked from GET \/manager\/dashboard",
+            "detail": {
+                "status": 403
+            }
+        },
+        {
+            "severity": "pass",
+            "gate": "B3-rbac",
+            "name": "manager allowed GET \/manager\/dashboard",
+            "detail": {
+                "status": 200
+            }
+        },
+        {
+            "severity": "pass",
+            "gate": "B3-rbac",
+            "name": "admin allowed GET \/manager\/dashboard",
+            "detail": {
+                "status": 200
+            }
+        },
+        {
+            "severity": "pass",
+            "gate": "B3-rbac",
+            "name": "customer blocked from GET \/manager\/reports\/overview",
+            "detail": {
+                "status": 403
+            }
+        },
+        {
+            "severity": "pass",
+            "gate": "B3-rbac",
+            "name": "receptionist blocked from GET \/manager\/reports\/overview",
+            "detail": {
+                "status": 403
+            }
+        },
+        {
+            "severity": "pass",
+            "gate": "B3-rbac",
+            "name": "cashier blocked from GET \/manager\/reports\/overview",
+            "detail": {
+                "status": 403
+            }
+        },
+        {
+            "severity": "pass",
+            "gate": "B3-rbac",
+            "name": "inventory blocked from GET \/manager\/reports\/overview",
+            "detail": {
+                "status": 403
+            }
+        },
+        {
+            "severity": "pass",
+            "gate": "B3-rbac",
+            "name": "veterinary blocked from GET \/manager\/reports\/overview",
+            "detail": {
+                "status": 403
+            }
+        },
+        {
+            "severity": "pass",
+            "gate": "B3-rbac",
+            "name": "manager allowed GET \/manager\/reports\/overview",
+            "detail": {
+                "status": 200
+            }
+        },
+        {
+            "severity": "pass",
+            "gate": "B3-rbac",
+            "name": "admin allowed GET \/manager\/reports\/overview",
+            "detail": {
+                "status": 200
+            }
+        },
+        {
+            "severity": "pass",
+            "gate": "B3-rbac",
+            "name": "customer blocked from GET \/cashier\/dashboard",
+            "detail": {
+                "status": 403
+            }
+        },
+        {
+            "severity": "pass",
+            "gate": "B3-rbac",
+            "name": "receptionist blocked from GET \/cashier\/dashboard",
+            "detail": {
+                "status": 403
+            }
+        },
+        {
+            "severity": "pass",
+            "gate": "B3-rbac",
+            "name": "cashier allowed GET \/cashier\/dashboard",
+            "detail": {
+                "status": 200
+            }
+        },
+        {
+            "severity": "pass",
+            "gate": "B3-rbac",
+            "name": "inventory blocked from GET \/cashier\/dashboard",
+            "detail": {
+                "status": 403
+            }
+        },
+        {
+            "severity": "pass",
+            "gate": "B3-rbac",
+            "name": "veterinary blocked from GET \/cashier\/dashboard",
+            "detail": {
+                "status": 403
+            }
+        },
+        {
+            "severity": "pass",
+            "gate": "B3-rbac",
+            "name": "manager blocked from GET \/cashier\/dashboard",
+            "detail": {
+                "status": 403
+            }
+        },
+        {
+            "severity": "pass",
+            "gate": "B3-rbac",
+            "name": "admin blocked from GET \/cashier\/dashboard",
+            "detail": {
+                "status": 403
+            }
+        },
+        {
+            "severity": "pass",
+            "gate": "B3-rbac",
+            "name": "customer blocked from GET \/cashier\/payment-requests",
+            "detail": {
+                "status": 403
+            }
+        },
+        {
+            "severity": "pass",
+            "gate": "B3-rbac",
+            "name": "receptionist blocked from GET \/cashier\/payment-requests",
+            "detail": {
+                "status": 403
+            }
+        },
+        {
+            "severity": "pass",
+            "gate": "B3-rbac",
+            "name": "cashier allowed GET \/cashier\/payment-requests",
+            "detail": {
+                "status": 200
+            }
+        },
+        {
+            "severity": "pass",
+            "gate": "B3-rbac",
+            "name": "inventory blocked from GET \/cashier\/payment-requests",
+            "detail": {
+                "status": 403
+            }
+        },
+        {
+            "severity": "pass",
+            "gate": "B3-rbac",
+            "name": "veterinary blocked from GET \/cashier\/payment-requests",
+            "detail": {
+                "status": 403
+            }
+        },
+        {
+            "severity": "pass",
+            "gate": "B3-rbac",
+            "name": "manager blocked from GET \/cashier\/payment-requests",
+            "detail": {
+                "status": 403
+            }
+        },
+        {
+            "severity": "pass",
+            "gate": "B3-rbac",
+            "name": "admin blocked from GET \/cashier\/payment-requests",
+            "detail": {
+                "status": 403
+            }
+        },
+        {
+            "severity": "pass",
+            "gate": "B3-rbac",
+            "name": "customer blocked from GET \/inventory\/dashboard",
+            "detail": {
+                "status": 403
+            }
+        },
+        {
+            "severity": "pass",
+            "gate": "B3-rbac",
+            "name": "receptionist blocked from GET \/inventory\/dashboard",
+            "detail": {
+                "status": 403
+            }
+        },
+        {
+            "severity": "pass",
+            "gate": "B3-rbac",
+            "name": "cashier blocked from GET \/inventory\/dashboard",
+            "detail": {
+                "status": 403
+            }
+        },
+        {
+            "severity": "pass",
+            "gate": "B3-rbac",
+            "name": "inventory allowed GET \/inventory\/dashboard",
+            "detail": {
+                "status": 200
+            }
+        },
+        {
+            "severity": "pass",
+            "gate": "B3-rbac",
+            "name": "veterinary blocked from GET \/inventory\/dashboard",
+            "detail": {
+                "status": 403
+            }
+        },
+        {
+            "severity": "pass",
+            "gate": "B3-rbac",
+            "name": "manager blocked from GET \/inventory\/dashboard",
+            "detail": {
+                "status": 403
+            }
+        },
+        {
+            "severity": "pass",
+            "gate": "B3-rbac",
+            "name": "admin allowed GET \/inventory\/dashboard",
+            "detail": {
+                "status": 200
+            }
+        },
+        {
+            "severity": "pass",
+            "gate": "B3-rbac",
+            "name": "customer blocked from GET \/inventory\/items",
+            "detail": {
+                "status": 403
+            }
+        },
+        {
+            "severity": "pass",
+            "gate": "B3-rbac",
+            "name": "receptionist blocked from GET \/inventory\/items",
+            "detail": {
+                "status": 403
+            }
+        },
+        {
+            "severity": "pass",
+            "gate": "B3-rbac",
+            "name": "cashier blocked from GET \/inventory\/items",
+            "detail": {
+                "status": 403
+            }
+        },
+        {
+            "severity": "pass",
+            "gate": "B3-rbac",
+            "name": "inventory allowed GET \/inventory\/items",
+            "detail": {
+                "status": 200
+            }
+        },
+        {
+            "severity": "pass",
+            "gate": "B3-rbac",
+            "name": "veterinary blocked from GET \/inventory\/items",
+            "detail": {
+                "status": 403
+            }
+        },
+        {
+            "severity": "pass",
+            "gate": "B3-rbac",
+            "name": "manager blocked from GET \/inventory\/items",
+            "detail": {
+                "status": 403
+            }
+        },
+        {
+            "severity": "pass",
+            "gate": "B3-rbac",
+            "name": "admin allowed GET \/inventory\/items",
+            "detail": {
+                "status": 200
+            }
+        },
+        {
+            "severity": "pass",
+            "gate": "B3-rbac",
+            "name": "customer blocked from GET \/receptionist\/requests\/pending",
+            "detail": {
+                "status": 403
+            }
+        },
+        {
+            "severity": "pass",
+            "gate": "B3-rbac",
+            "name": "receptionist allowed GET \/receptionist\/requests\/pending",
+            "detail": {
+                "status": 200
+            }
+        },
+        {
+            "severity": "pass",
+            "gate": "B3-rbac",
+            "name": "cashier blocked from GET \/receptionist\/requests\/pending",
+            "detail": {
+                "status": 403
+            }
+        },
+        {
+            "severity": "pass",
+            "gate": "B3-rbac",
+            "name": "inventory blocked from GET \/receptionist\/requests\/pending",
+            "detail": {
+                "status": 403
+            }
+        },
+        {
+            "severity": "pass",
+            "gate": "B3-rbac",
+            "name": "veterinary blocked from GET \/receptionist\/requests\/pending",
+            "detail": {
+                "status": 403
+            }
+        },
+        {
+            "severity": "pass",
+            "gate": "B3-rbac",
+            "name": "manager blocked from GET \/receptionist\/requests\/pending",
+            "detail": {
+                "status": 403
+            }
+        },
+        {
+            "severity": "pass",
+            "gate": "B3-rbac",
+            "name": "admin blocked from GET \/receptionist\/requests\/pending",
+            "detail": {
+                "status": 403
+            }
+        },
+        {
+            "severity": "pass",
+            "gate": "B3-rbac",
+            "name": "customer blocked from GET \/receptionist\/veterinarians\/available",
+            "detail": {
+                "status": 403
+            }
+        },
+        {
+            "severity": "pass",
+            "gate": "B3-rbac",
+            "name": "receptionist allowed GET \/receptionist\/veterinarians\/available",
+            "detail": {
+                "status": 200
+            }
+        },
+        {
+            "severity": "pass",
+            "gate": "B3-rbac",
+            "name": "cashier blocked from GET \/receptionist\/veterinarians\/available",
+            "detail": {
+                "status": 403
+            }
+        },
+        {
+            "severity": "pass",
+            "gate": "B3-rbac",
+            "name": "inventory blocked from GET \/receptionist\/veterinarians\/available",
+            "detail": {
+                "status": 403
+            }
+        },
+        {
+            "severity": "pass",
+            "gate": "B3-rbac",
+            "name": "veterinary blocked from GET \/receptionist\/veterinarians\/available",
+            "detail": {
+                "status": 403
+            }
+        },
+        {
+            "severity": "pass",
+            "gate": "B3-rbac",
+            "name": "manager blocked from GET \/receptionist\/veterinarians\/available",
+            "detail": {
+                "status": 403
+            }
+        },
+        {
+            "severity": "pass",
+            "gate": "B3-rbac",
+            "name": "admin blocked from GET \/receptionist\/veterinarians\/available",
+            "detail": {
+                "status": 403
+            }
+        },
+        {
+            "severity": "pass",
+            "gate": "B3-rbac",
+            "name": "customer blocked from GET \/veterinary\/dashboard",
+            "detail": {
+                "status": 403
+            }
+        },
+        {
+            "severity": "pass",
+            "gate": "B3-rbac",
+            "name": "receptionist blocked from GET \/veterinary\/dashboard",
+            "detail": {
+                "status": 403
+            }
+        },
+        {
+            "severity": "pass",
+            "gate": "B3-rbac",
+            "name": "cashier blocked from GET \/veterinary\/dashboard",
+            "detail": {
+                "status": 403
+            }
+        },
+        {
+            "severity": "pass",
+            "gate": "B3-rbac",
+            "name": "inventory blocked from GET \/veterinary\/dashboard",
+            "detail": {
+                "status": 403
+            }
+        },
+        {
+            "severity": "pass",
+            "gate": "B3-rbac",
+            "name": "veterinary allowed GET \/veterinary\/dashboard",
+            "detail": {
+                "status": 200
+            }
+        },
+        {
+            "severity": "pass",
+            "gate": "B3-rbac",
+            "name": "manager blocked from GET \/veterinary\/dashboard",
+            "detail": {
+                "status": 403
+            }
+        },
+        {
+            "severity": "pass",
+            "gate": "B3-rbac",
+            "name": "admin blocked from GET \/veterinary\/dashboard",
+            "detail": {
+                "status": 403
+            }
+        },
+        {
+            "severity": "pass",
+            "gate": "B3-rbac",
+            "name": "customer blocked from GET \/veterinary\/appointments",
+            "detail": {
+                "status": 403
+            }
+        },
+        {
+            "severity": "pass",
+            "gate": "B3-rbac",
+            "name": "receptionist blocked from GET \/veterinary\/appointments",
+            "detail": {
+                "status": 403
+            }
+        },
+        {
+            "severity": "pass",
+            "gate": "B3-rbac",
+            "name": "cashier blocked from GET \/veterinary\/appointments",
+            "detail": {
+                "status": 403
+            }
+        },
+        {
+            "severity": "pass",
+            "gate": "B3-rbac",
+            "name": "inventory blocked from GET \/veterinary\/appointments",
+            "detail": {
+                "status": 403
+            }
+        },
+        {
+            "severity": "pass",
+            "gate": "B3-rbac",
+            "name": "veterinary allowed GET \/veterinary\/appointments",
+            "detail": {
+                "status": 200
+            }
+        },
+        {
+            "severity": "pass",
+            "gate": "B3-rbac",
+            "name": "manager blocked from GET \/veterinary\/appointments",
+            "detail": {
+                "status": 403
+            }
+        },
+        {
+            "severity": "pass",
+            "gate": "B3-rbac",
+            "name": "admin blocked from GET \/veterinary\/appointments",
+            "detail": {
+                "status": 403
+            }
+        },
+        {
+            "severity": "pass",
+            "gate": "B3-rbac",
+            "name": "customer allowed GET \/customer\/overview",
+            "detail": {
+                "status": 200
+            }
+        },
+        {
+            "severity": "pass",
+            "gate": "B3-rbac",
+            "name": "receptionist blocked from GET \/customer\/overview",
+            "detail": {
+                "status": 403
+            }
+        },
+        {
+            "severity": "pass",
+            "gate": "B3-rbac",
+            "name": "cashier blocked from GET \/customer\/overview",
+            "detail": {
+                "status": 403
+            }
+        },
+        {
+            "severity": "pass",
+            "gate": "B3-rbac",
+            "name": "inventory blocked from GET \/customer\/overview",
+            "detail": {
+                "status": 403
+            }
+        },
+        {
+            "severity": "pass",
+            "gate": "B3-rbac",
+            "name": "veterinary blocked from GET \/customer\/overview",
+            "detail": {
+                "status": 403
+            }
+        },
+        {
+            "severity": "pass",
+            "gate": "B3-rbac",
+            "name": "manager blocked from GET \/customer\/overview",
+            "detail": {
+                "status": 403
+            }
+        },
+        {
+            "severity": "pass",
+            "gate": "B3-rbac",
+            "name": "admin blocked from GET \/customer\/overview",
+            "detail": {
+                "status": 403
+            }
+        },
+        {
+            "severity": "pass",
+            "gate": "B3-rbac",
+            "name": "customer allowed GET \/customer\/my-requests",
+            "detail": {
+                "status": 200
+            }
+        },
+        {
+            "severity": "pass",
+            "gate": "B3-rbac",
+            "name": "receptionist blocked from GET \/customer\/my-requests",
+            "detail": {
+                "status": 403
+            }
+        },
+        {
+            "severity": "pass",
+            "gate": "B3-rbac",
+            "name": "cashier blocked from GET \/customer\/my-requests",
+            "detail": {
+                "status": 403
+            }
+        },
+        {
+            "severity": "pass",
+            "gate": "B3-rbac",
+            "name": "inventory blocked from GET \/customer\/my-requests",
+            "detail": {
+                "status": 403
+            }
+        },
+        {
+            "severity": "pass",
+            "gate": "B3-rbac",
+            "name": "veterinary blocked from GET \/customer\/my-requests",
+            "detail": {
+                "status": 403
+            }
+        },
+        {
+            "severity": "pass",
+            "gate": "B3-rbac",
+            "name": "manager blocked from GET \/customer\/my-requests",
+            "detail": {
+                "status": 403
+            }
+        },
+        {
+            "severity": "pass",
+            "gate": "B3-rbac",
+            "name": "admin blocked from GET \/customer\/my-requests",
+            "detail": {
+                "status": 403
+            }
+        },
+        {
+            "severity": "pass",
+            "gate": "B3-rbac",
+            "name": "customer blocked from GET \/billing\/inventory-items",
+            "detail": {
+                "status": 403
+            }
+        },
+        {
+            "severity": "pass",
+            "gate": "B3-rbac",
+            "name": "receptionist allowed GET \/billing\/inventory-items",
+            "detail": {
+                "status": 200
+            }
+        },
+        {
+            "severity": "pass",
+            "gate": "B3-rbac",
+            "name": "cashier allowed GET \/billing\/inventory-items",
+            "detail": {
+                "status": 200
+            }
+        },
+        {
+            "severity": "pass",
+            "gate": "B3-rbac",
+            "name": "inventory allowed GET \/billing\/inventory-items",
+            "detail": {
+                "status": 200
+            }
+        },
+        {
+            "severity": "pass",
+            "gate": "B3-rbac",
+            "name": "veterinary allowed GET \/billing\/inventory-items",
+            "detail": {
+                "status": 200
+            }
+        },
+        {
+            "severity": "pass",
+            "gate": "B3-rbac",
+            "name": "manager blocked from GET \/billing\/inventory-items",
+            "detail": {
+                "status": 403
+            }
+        },
+        {
+            "severity": "pass",
+            "gate": "B3-rbac",
+            "name": "admin allowed GET \/billing\/inventory-items",
+            "detail": {
+                "status": 200
+            }
+        },
+        {
+            "severity": "pass",
+            "gate": "B4-idor",
+            "name": "Customer blocked from pet 10 (not owned)",
+            "detail": {
+                "status": 404
+            }
+        },
+        {
+            "severity": "pass",
+            "gate": "B4-idor",
+            "name": "Customer blocked from cancelling request 58 (not owned)",
+            "detail": {
+                "status": 404
+            }
+        },
+        {
+            "severity": "pass",
+            "gate": "B4-idor",
+            "name": "Customer blocked from payslip 1 (not own)",
+            "detail": {
+                "status": 403
+            }
+        },
+        {
+            "severity": "pass",
+            "gate": "B4-idor",
+            "name": "Cashier blocked from admin user list",
+            "detail": {
+                "status": 403
+            }
+        },
+        {
+            "severity": "pass",
+            "gate": "B4-idor",
+            "name": "Veterinary blocked from manager dashboard",
+            "detail": {
+                "status": 403
+            }
+        },
+        {
+            "severity": "pass",
+            "gate": "B4-idor",
+            "name": "Inventory blocked from receptionist approve",
+            "detail": {
+                "status": 403
+            }
+        },
+        {
+            "severity": "pass",
+            "gate": "B5-routes",
+            "name": "No sensitive routes missing auth middleware",
+            "detail": {
+                "total_routes": 597
+            }
+        },
+        {
+            "severity": "pass",
+            "gate": "B5-routes",
+            "name": "No sensitive routes missing role middleware (auth-only routes are intentionally open to any authenticated user)",
+            "detail": null
+        },
+        {
+            "severity": "medium",
+            "gate": "B5-routes",
+            "name": "Boarding room\/add-on catalog endpoints are public (no auth) \u2014 acceptable for marketing but exposes inventory",
+            "detail": {
+                "routes": [
+                    "api\/boarding\/add-ons",
+                    "api\/boarding\/rooms",
+                    "api\/boarding\/rooms\/available",
+                    "api\/boarding\/rooms\/calculate-total",
+                    "api\/boarding\/rooms\/types",
+                    "api\/boarding\/rooms\/{id}"
+                ]
+            }
+        },
+        {
+            "severity": "high",
+            "gate": "B6-config",
+            "name": "APP_DEBUG=true in .env (must be false in production)",
+            "detail": {
+                "value": "true"
+            }
+        },
+        {
+            "severity": "pass",
+            "gate": "B6-config",
+            "name": ".env.example APP_DEBUG=false (production-safe default)",
+            "detail": null
+        },
+        {
+            "severity": "medium",
+            "gate": "B6-config",
+            "name": "APP_ENV=local in .env (expected production for deployment)",
+            "detail": {
+                "value": "local"
+            }
+        },
+        {
+            "severity": "pass",
+            "gate": "B6-config",
+            "name": "APP_KEY is set",
+            "detail": null
+        },
+        {
+            "severity": "medium",
+            "gate": "B6-config",
+            "name": "DB_PASSWORD is empty\/placeholder in .env \u2014 local dev only, must be set in production",
+            "detail": null
+        },
+        {
+            "severity": "pass",
+            "gate": "B6-config",
+            "name": "CORS supports_credentials is configured (not hardcoded true)",
+            "detail": null
+        },
+        {
+            "severity": "medium",
+            "gate": "B6-config",
+            "name": "CORS default includes placeholder vercel URL \u2014 must be replaced with real production origin",
+            "detail": null
+        },
+        {
+            "severity": "pass",
+            "gate": "B6-config",
+            "name": "CORS allowed_origins is env-driven (not hardcoded wildcard)",
+            "detail": null
+        },
+        {
+            "severity": "pass",
+            "gate": "B6-config",
+            "name": ".env is gitignored",
+            "detail": null
+        },
+        {
+            "severity": "pass",
+            "gate": "B6-config",
+            "name": ".env is not tracked by git",
+            "detail": null
+        },
+        {
+            "severity": "pass",
+            "gate": "B7-upload",
+            "name": "Valid PNG payment proof accepted",
+            "detail": null
+        },
+        {
+            "severity": "pass",
+            "gate": "B7-upload",
+            "name": "PHP executable upload rejected",
+            "detail": {
+                "status": 422
+            }
+        },
+        {
+            "severity": "pass",
+            "gate": "B7-upload",
+            "name": "Mismatched MIME\/extension (PHP content with .png) rejected",
+            "detail": {
+                "status": 422
+            }
+        },
+        {
+            "severity": "pass",
+            "gate": "B7-upload",
+            "name": "Oversize file (>5MB) rejected",
+            "detail": {
+                "status": 422
+            }
+        },
+        {
+            "severity": "pass",
+            "gate": "B7-upload",
+            "name": "Path traversal filename rejected",
+            "detail": {
+                "status": 422
+            }
+        },
+        {
+            "severity": "pass",
+            "gate": "B7-upload",
+            "name": "Private filesystem disk is configured for sensitive uploads",
+            "detail": null
+        },
+        {
+            "severity": "pass",
+            "gate": "B7-upload",
+            "name": "Unauthenticated payment proof view blocked",
+            "detail": {
+                "status": 401
+            }
+        }
+    ],
+    "timestamp": "2026-08-20T19:14:18+02:00"
+}

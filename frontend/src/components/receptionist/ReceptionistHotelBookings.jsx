@@ -22,6 +22,7 @@ import {
 } from "@fortawesome/free-solid-svg-icons";
 import "./ReceptionistHotelBookings.css";
 import { apiRequest, getAuthenticatedFileUrl } from "../../api/client";
+import { exportToCSV, exportToPDF, exportToExcel } from "../../utils/reportExport";
 import { showError } from "../../utils/alert.jsx";
 import DatePickerInput from "../../components/shared/DatePickerInput";
 import PetAvatar from "../shared/PetAvatar";
@@ -93,6 +94,8 @@ const ReceptionistHotelBookings = () => {
   const [error, setError] = useState("");
   const [successMessage, setSuccessMessage] = useState("");
   const [lastUpdated, setLastUpdated] = useState("");
+
+  const [showExportDropdown, setShowExportDropdown] = useState(false);
 
   const [scheduleDraft, setScheduleDraft] = useState({});
   const [careDraft, setCareDraft] = useState({
@@ -294,53 +297,44 @@ const ReceptionistHotelBookings = () => {
     setFilterPayment("all");
   };
 
-  const exportCSV = () => {
+  const exportColumns = [
+    { key: "id", label: "ID" },
+    { key: "pet", label: "Pet" },
+    { key: "customer", label: "Customer" },
+    { key: "phone", label: "Phone" },
+    { key: "checkIn", label: "Check In" },
+    { key: "checkOut", label: "Check Out" },
+    { key: "room", label: "Room" },
+    { key: "payment", label: "Payment" },
+    { key: "status", label: "Status" },
+    { key: "amount", label: "Amount" },
+  ];
+
+  const handleExport = (format) => {
+    setShowExportDropdown(false);
     if (filteredBookings.length === 0) {
       showMessage("error", "No hotel boarding records to export.");
       return;
     }
 
-    const headers = [
-      "ID",
-      "Pet",
-      "Customer",
-      "Phone",
-      "Check In",
-      "Check Out",
-      "Room",
-      "Payment",
-      "Status",
-      "Amount",
-    ];
+    const exportData = filteredBookings.map((booking) => ({
+      id: booking.id,
+      pet: getPetName(booking),
+      customer: getCustomerName(booking),
+      phone: getCustomerPhone(booking),
+      checkIn: getDateValue(booking.check_in),
+      checkOut: getDateValue(booking.check_out),
+      room: getRoomName(booking),
+      payment: normalizePaymentStatus(booking.payment_status),
+      status: normalizeStatus(booking.status),
+      amount: booking.total_amount || booking.amount || 0,
+    }));
 
-    const rows = filteredBookings.map((booking) => [
-      booking.id,
-      getPetName(booking),
-      getCustomerName(booking),
-      getCustomerPhone(booking),
-      getDateValue(booking.check_in),
-      getDateValue(booking.check_out),
-      getRoomName(booking),
-      normalizePaymentStatus(booking.payment_status),
-      normalizeStatus(booking.status),
-      booking.total_amount || booking.amount || 0,
-    ]);
+    const filename = "hotel-boarding";
+    if (format === "csv") exportToCSV(exportData, exportColumns, filename);
+    else if (format === "excel") exportToExcel(exportData, exportColumns, filename);
+    else if (format === "pdf") exportToPDF(exportData, exportColumns, "Hotel Boarding Records", filename);
 
-    const csv = [headers, ...rows]
-      .map((row) =>
-        row.map((value) => `"${String(value ?? "").replace(/"/g, '""')}"`).join(",")
-      )
-      .join("\n");
-
-    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
-    const url = URL.createObjectURL(blob);
-    const anchor = document.createElement("a");
-
-    anchor.href = url;
-    anchor.download = `hotel-boarding-${new Date().toISOString().slice(0, 10)}.csv`;
-    anchor.click();
-
-    URL.revokeObjectURL(url);
     showMessage("success", "Hotel boarding records exported.");
   };
 
@@ -426,10 +420,22 @@ const ReceptionistHotelBookings = () => {
             {refreshing ? "Refreshing..." : "Refresh"}
           </button>
 
-          <button type="button" className="secondary-btn" onClick={exportCSV}>
-            <FontAwesomeIcon icon={faDownload} />
-            Export CSV
-          </button>
+          <div className="export-dropdown-wrapper" style={{ position: "relative" }}>
+            <button type="button" className="secondary-btn" onClick={() => setShowExportDropdown(!showExportDropdown)}>
+              <FontAwesomeIcon icon={faDownload} />
+              Export ▼
+            </button>
+            {showExportDropdown && (
+              <>
+                <div style={{ position: "fixed", top: 0, left: 0, right: 0, bottom: 0, zIndex: 998 }} onClick={() => setShowExportDropdown(false)} />
+                <div style={{ position: "absolute", top: "100%", right: 0, background: "#fff", border: "1px solid #e2e8f0", borderRadius: 8, boxShadow: "0 8px 24px rgba(0,0,0,0.12)", zIndex: 999, minWidth: 160, overflow: "hidden" }}>
+                  <button type="button" className="secondary-btn" style={{ width: "100%", justifyContent: "flex-start" }} onClick={() => handleExport("csv")}>Export as CSV</button>
+                  <button type="button" className="secondary-btn" style={{ width: "100%", justifyContent: "flex-start" }} onClick={() => handleExport("excel")}>Export as Excel</button>
+                  <button type="button" className="secondary-btn" style={{ width: "100%", justifyContent: "flex-start" }} onClick={() => handleExport("pdf")}>Export as PDF</button>
+                </div>
+              </>
+            )}
+          </div>
         </div>
       </section>
 

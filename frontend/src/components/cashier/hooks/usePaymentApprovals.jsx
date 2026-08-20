@@ -2,6 +2,8 @@ import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { apiRequest } from "../../../api/client";
 import { getToken } from "../../../utils/auth";
 import { showSuccess, showError, showPrompt, showConfirm, showAlert } from "../../../utils/alert.jsx";
+import { printReceipt as printReceiptUtil } from "../../../utils/receiptPrinter";
+import { exportToCSV as exportCSVUtil, exportToPDF, exportToExcel } from "../../../utils/reportExport";
 
 export const usePaymentApprovals = (user) => {
   const [requests, setRequests] = useState([]);
@@ -90,55 +92,44 @@ export const usePaymentApprovals = (user) => {
     setProofModal(null);
   }, [proofModal]);
 
-  // Print receipt helper
+  // Print receipt helper — uses shared receiptPrinter utility
   const printReceipt = useCallback((data, payment, referenceNumber = "") => {
     const receiptNumber = data.receipt_number || data.receipt?.receipt_number || `REC-${payment.id}`;
     const amount = Number(data.amount || data.receipt?.total_amount || payment.amount || payment.total_amount || 0);
-    const date = new Date().toLocaleString("en-PH");
     const cashier = user?.name || "Cashier";
     const customer = payment.customer_name || payment.customer?.name || "Customer";
     const service = payment.service_name || payment.service?.name || payment.order_name || payment.request_type || payment.type || "Payment";
     const method = payment.payment_method || data.payment_method || "Online Payment";
-    const refNum = referenceNumber || data.payment_reference || "N/A";
+    const refNum = referenceNumber || data.payment_reference || "";
 
-    const w = window.open("", "_blank", "width=420,height=700");
-    if (!w) return;
+    // Build items list — use actual items if available, otherwise single service line
+    let items;
+    const rawItems = data.receipt?.items || payment.items || [];
+    if (rawItems.length > 0) {
+      items = rawItems.map((item) => ({
+        name: item.item_name || item.name || item.description || "Item",
+        quantity: Number(item.quantity || 1),
+        unitPrice: Number(item.unit_price || item.price || item.amount || 0),
+        total: Number(item.total_price || item.total || item.amount || 0),
+      }));
+    } else {
+      items = [{ name: service, quantity: 1, unitPrice: amount, total: amount }];
+    }
 
-    w.document.write(`<!doctype html><html><head><title>${receiptNumber}</title>
-      <style>
-        body{font-family:'Courier New',monospace;max-width:360px;margin:auto;padding:20px;color:#111}
-        h2{text-align:center;font-size:18px;margin:0 0 4px}
-        .center{text-align:center;font-size:12px;color:#555;margin-bottom:12px}
-        table{width:100%;border-collapse:collapse;font-size:12px}
-        td{padding:4px 0;vertical-align:top}
-        hr{border:0;border-top:1px dashed #bbb;margin:10px 0}
-        .total td{font-size:14px;font-weight:bold;border-top:1px dashed #bbb;padding-top:8px}
-        .ref-row td{font-size:11px;color:#666}
-        @media print{button{display:none}}
-      </style></head><body>
-      <h2>Pawesome Retreat Inc.</h2>
-      <div class="center">Official Cashier Receipt<br>${date}</div>
-      <hr>
-      <table>
-        <tr><td>Receipt #</td><td style="text-align:right">${receiptNumber}</td></tr>
-        <tr><td>Cashier</td><td style="text-align:right">${cashier}</td></tr>
-        <tr><td>Customer</td><td style="text-align:right">${customer}</td></tr>
-        <tr><td>Payment Method</td><td style="text-align:right">${method}</td></tr>
-        <tr class="ref-row"><td>Reference #</td><td style="text-align:right">${refNum}</td></tr>
-        <tr><td>Status</td><td style="text-align:right">PAID</td></tr>
-      </table>
-      <hr>
-      <table>
-        <tr><td>${service}<br><small>Qty 1 x ₱${amount.toFixed(2)}</small></td><td style="text-align:right">₱${amount.toFixed(2)}</td></tr>
-        <tr class="total"><td>Total</td><td style="text-align:right">₱${amount.toFixed(2)}</td></tr>
-      </table>
-      <hr>
-      <div class="center">Verified by: ${cashier}<br>Thank you for your business!</div>
-      <button onclick="window.print()">Print</button>
-      </body></html>`);
-    w.document.close();
-    w.focus();
-    w.print();
+    printReceiptUtil({
+      title: "Official Payment Receipt",
+      receiptNumber,
+      date: new Date().toLocaleString("en-PH"),
+      cashier,
+      customer,
+      paymentMethod: method,
+      paymentStatus: "paid",
+      referenceNumber: refNum,
+      verifiedBy: cashier,
+      items,
+      subtotal: amount,
+      total: amount,
+    });
   }, [user]);
 
   // Verify single payment
@@ -317,35 +308,23 @@ export const usePaymentApprovals = (user) => {
     setSelectedIds([]);
   }, []);
 
-  // Export to CSV
-  const exportToCSV = useCallback(() => {
+  // Export — supports CSV, Excel, and PDF via shared utilities
+  const exportColumns = [
+    { key: "request_date", label: "Date", format: "date" },
+    { key: "customer_name", label: "Customer" },
+    { key: "request_type", label: "Type" },
+    { key: "service_name", label: "Service" },
+    { key: "amount", label: "Amount", format: "currency" },
+    { key: "payment_status", label: "Status" },
+  ];
+
+  const exportToCSV = useCallback((format = "csv") => {
     const data = filteredRequests;
-    const headers = ["Date", "Customer", "Type", "Service", "Amount", "Status"];
-    const rows = data.map(item => [
-      new Date(item.request_date || item.date || item.created_at).toLocaleString("en-PH"),
-      item.customer_name || item.customer?.name || "N/A",
-      item.request_type || item.type || "-",
-      item.service_name || item.service?.name || item.order_name || "-",
-      item.amount || item.total_amount || 0,
-      item.payment_status || "Pending"
-    ]);
-    
-    const csvContent = [
-      headers.join(","),
-      ...rows.map(row => row.map(cell => `"${cell}"`).join(","))
-    ].join("\n");
-    
-    const blob = new Blob([csvContent], { type: "text/csv" });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement("a");
-    link.href = url;
-    link.download = `pending-payments-${new Date().toISOString().split('T')[0]}.csv`;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    URL.revokeObjectURL(url);
-    
-    showSuccess(`Exported ${data.length} records to CSV`);
+    if (!data || data.length === 0) { showSuccess("No data to export"); return; }
+    if (format === "csv") exportCSVUtil(data, exportColumns, "pending-payments");
+    else if (format === "excel") exportToExcel(data, exportColumns, "pending-payments");
+    else if (format === "pdf") exportToPDF(data, exportColumns, "Pending Payments Report", "pending-payments");
+    showSuccess(`Exported ${data.length} records`);
   }, [filteredRequests]);
 
   // Stats

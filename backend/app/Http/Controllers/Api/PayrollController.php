@@ -124,26 +124,45 @@ class PayrollController extends Controller
             $absentDeductions = $absentDays * $dailyRate;
             $overtimePay = $overtimeHours * ($hourlyRate * 1.5);
 
-            // PhilHealth
-            $philhealth = min($baseSalary * 0.03, 1800) / 2;
-            // SSS (simplified table)
-            $sss = 1125;
-            foreach ([
-                [3250, 135], [3750, 157.50], [4250, 180], [4750, 202.50], [5250, 225],
-                [5750, 247.50], [6250, 270], [6750, 292.50], [7250, 315], [7750, 337.50],
-                [8250, 360], [8750, 382.50], [9250, 405], [9750, 427.50], [10250, 450],
-                [10750, 472.50], [11250, 495], [11750, 517.50], [12250, 540], [12750, 562.50],
-                [13250, 585], [13750, 607.50], [14250, 630], [14750, 652.50], [15250, 675],
-                [15750, 697.50], [16250, 720], [16750, 742.50], [17250, 765], [17750, 787.50],
-                [18250, 810], [18750, 832.50], [19250, 855], [19750, 877.50], [20250, 900],
-                [20750, 922.50], [21250, 945], [21750, 967.50], [22250, 990], [22750, 1012.50],
-                [23250, 1035], [23750, 1057.50], [24250, 1080], [24750, 1102.50],
-            ] as [$cap, $val]) {
-                if ($baseSalary <= $cap) { $sss = $val; break; }
+            // PhilHealth 2025: 5% premium, max P5,000, employee share 50%
+            $philhealthPremium = max(500, min($baseSalary * 0.05, 5000));
+            $philhealth = $philhealthPremium / 2;
+
+            // SSS 2025: employee share 5.0% of MSC, MSC 5,000-35,000
+            if ($baseSalary <= 0) {
+                $sss = 0;
+            } elseif ($baseSalary <= 5250) {
+                $sss = 250; // 5,000 * 5%
+            } elseif ($baseSalary >= 34750) {
+                $sss = 1750; // 35,000 * 5%
+            } else {
+                $msc = (int) ceil($baseSalary / 500) * 500;
+                $sss = round($msc * 0.05, 2);
             }
 
+            $pagibig = 100; // Fixed P100 for Pag-IBIG
+
             $grossPay = $baseSalary + $overtimePay;
-            $totalDeductions = $sss + $philhealth + 100 + $lateDeductions + $absentDeductions;
+
+            // BIR withholding tax (2023 onwards, RR 11-2018 Annex E)
+            // Taxable income = gross_pay - SSS - PhilHealth - Pag-IBIG
+            $taxableIncome = $grossPay - $sss - $philhealth - $pagibig;
+            $tax = 0;
+            if ($taxableIncome > 20833) {
+                if ($taxableIncome <= 33332) {
+                    $tax = ($taxableIncome - 20833) * 0.15;
+                } elseif ($taxableIncome <= 66666) {
+                    $tax = 1875 + ($taxableIncome - 33333) * 0.20;
+                } elseif ($taxableIncome <= 166666) {
+                    $tax = 8541.80 + ($taxableIncome - 66667) * 0.25;
+                } elseif ($taxableIncome <= 666666) {
+                    $tax = 33541.80 + ($taxableIncome - 166667) * 0.30;
+                } else {
+                    $tax = 183541.80 + ($taxableIncome - 666667) * 0.35;
+                }
+            }
+
+            $totalDeductions = $sss + $philhealth + $pagibig + $tax + $lateDeductions + $absentDeductions;
             $netPay = max(0, $grossPay - $totalDeductions);
 
             $results[] = [
@@ -163,7 +182,8 @@ class PayrollController extends Controller
                 'absent_deductions' => round($absentDeductions, 2),
                 'sss_contribution' => round($sss, 2),
                 'philhealth_contribution' => round($philhealth, 2),
-                'pagibig_contribution' => 100,
+                'pagibig_contribution' => $pagibig,
+                'tax_deduction' => round($tax, 2),
                 'gross_pay' => round($grossPay, 2),
                 'total_deductions' => round($totalDeductions, 2),
                 'net_pay' => round($netPay, 2),
@@ -348,9 +368,9 @@ class PayrollController extends Controller
         ]);
 
         Notification::create([
-            'role' => 'cashier',
+            'role' => 'manager',
             'title' => 'Payroll Payment Required',
-            'message' => 'Approved payroll for ' . ($payroll->user->name ?? 'employee') . ' is ready for payment.',
+            'message' => 'Approved payroll for ' . ($payroll->user->name ?? 'employee') . ' is ready for payment release.',
             'type' => 'warning',
             'related_type' => 'payroll',
             'related_id' => $payroll->id,
@@ -366,7 +386,7 @@ class PayrollController extends Controller
     /**
      * Mark payroll as paid
      */
-    public function markAsPaid(Payroll $payroll): JsonResponse
+    public function markAsPaid(Request $request, Payroll $payroll): JsonResponse
     {
         if ($payroll->status === 'paid') {
             return response()->json([
@@ -375,10 +395,12 @@ class PayrollController extends Controller
             ], 422);
         }
 
+        $paymentMethod = $request->input('payment_method', 'Bank Transfer');
+
         $payroll->update([
             'status' => 'paid',
-            'payment_date' => now(),
-            'payment_method' => 'Bank Transfer', // Default, can be customized
+            'payment_date' => $request->input('payment_date', now()),
+            'payment_method' => $paymentMethod,
             'processed_by' => Auth::id(),
             'processed_at' => now(),
         ]);

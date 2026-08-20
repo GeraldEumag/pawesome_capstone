@@ -27,6 +27,7 @@ import {
 } from "@fortawesome/free-solid-svg-icons";
 import "./ReceptionistBookings.css";
 import { apiRequest } from "../../api/client";
+import { exportToCSV, exportToPDF, exportToExcel } from "../../utils/reportExport";
 import ServiceManagerModal from "./ServiceManagerModal";
 
 const initialBookingForm = {
@@ -260,6 +261,8 @@ const ReceptionistBookings = () => {
   const [searchTerm, setSearchTerm] = useState("");
 
   const [bookingFormData, setBookingFormData] = useState(initialBookingForm);
+
+  const [showExportDropdown, setShowExportDropdown] = useState(false);
 
   const successTimerRef = useRef(null);
   const errorTimerRef = useRef(null);
@@ -1055,53 +1058,37 @@ const ReceptionistBookings = () => {
     };
   }, [bookings]);
 
-  const exportCSV = () => {
+  const exportColumns = [
+    { key: "id", label: "Booking ID" },
+    { key: "type", label: "Type" },
+    { key: "petName", label: "Pet" },
+    { key: "owner", label: "Owner" },
+    { key: "service", label: "Service" },
+    { key: "date", label: "Date" },
+    { key: "time", label: "Time" },
+    { key: "paymentStatus", label: "Payment" },
+    { key: "status", label: "Status" },
+    { key: "amount", label: "Amount" },
+  ];
+
+  const handleExport = (format) => {
+    setShowExportDropdown(false);
     if (filteredBookings.length === 0) {
       notify("error", "No bookings to export.");
       return;
     }
 
-    const headers = [
-      "Booking ID",
-      "Type",
-      "Pet",
-      "Owner",
-      "Service",
-      "Date",
-      "Time",
-      "Payment",
-      "Status",
-      "Amount",
-    ];
+    const exportData = filteredBookings.map((booking) => ({
+      ...booking,
+      date: formatDate(booking.appointmentDate || booking.checkIn),
+      time: formatTime(booking.appointmentTime),
+    }));
 
-    const rows = filteredBookings.map((booking) => [
-      booking.id,
-      booking.type,
-      booking.petName,
-      booking.owner,
-      booking.service,
-      formatDate(booking.appointmentDate || booking.checkIn),
-      formatTime(booking.appointmentTime),
-      booking.paymentStatus,
-      booking.status,
-      booking.amount,
-    ]);
+    const filename = "receptionist-bookings";
+    if (format === "csv") exportToCSV(exportData, exportColumns, filename);
+    else if (format === "excel") exportToExcel(exportData, exportColumns, filename);
+    else if (format === "pdf") exportToPDF(exportData, exportColumns, "Receptionist Bookings", filename);
 
-    const csv = [headers, ...rows]
-      .map((row) =>
-        row.map((value) => `"${String(value ?? "").replace(/"/g, '""')}"`).join(",")
-      )
-      .join("\n");
-
-    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
-    const url = URL.createObjectURL(blob);
-    const anchor = document.createElement("a");
-
-    anchor.href = url;
-    anchor.download = `receptionist-bookings-${new Date().toISOString().slice(0, 10)}.csv`;
-    anchor.click();
-
-    URL.revokeObjectURL(url);
     notify("success", "Bookings exported successfully.");
   };
 
@@ -1179,10 +1166,22 @@ const ReceptionistBookings = () => {
             {refreshing ? "Refreshing..." : "Refresh"}
           </button>
 
-          <button type="button" className="secondary-btn" onClick={exportCSV}>
-            <FontAwesomeIcon icon={faDownload} />
-            Export CSV
-          </button>
+          <div className="export-dropdown-wrapper" style={{ position: "relative" }}>
+            <button type="button" className="secondary-btn" onClick={() => setShowExportDropdown(!showExportDropdown)}>
+              <FontAwesomeIcon icon={faDownload} />
+              Export ▼
+            </button>
+            {showExportDropdown && (
+              <>
+                <div style={{ position: "fixed", top: 0, left: 0, right: 0, bottom: 0, zIndex: 998 }} onClick={() => setShowExportDropdown(false)} />
+                <div style={{ position: "absolute", top: "100%", right: 0, background: "#fff", border: "1px solid #e2e8f0", borderRadius: 8, boxShadow: "0 8px 24px rgba(0,0,0,0.12)", zIndex: 999, minWidth: 160, overflow: "hidden" }}>
+                  <button type="button" className="secondary-btn" style={{ width: "100%", justifyContent: "flex-start" }} onClick={() => handleExport("csv")}>Export as CSV</button>
+                  <button type="button" className="secondary-btn" style={{ width: "100%", justifyContent: "flex-start" }} onClick={() => handleExport("excel")}>Export as Excel</button>
+                  <button type="button" className="secondary-btn" style={{ width: "100%", justifyContent: "flex-start" }} onClick={() => handleExport("pdf")}>Export as PDF</button>
+                </div>
+              </>
+            )}
+          </div>
 
           <button
             type="button"

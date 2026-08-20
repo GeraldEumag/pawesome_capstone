@@ -1,0 +1,895 @@
+{
+    "summary": {
+        "pass": 96,
+        "fail": 0,
+        "warn": 9,
+        "critical": 0,
+        "high": 11,
+        "medium": 8
+    },
+    "overall": "FAIL",
+    "findings": [
+        {
+            "severity": "pass",
+            "gate": "C1-migration",
+            "name": "All migrations ran (0 migrations, 0 pending, 0 failed)",
+            "detail": null
+        },
+        {
+            "severity": "pass",
+            "gate": "C1-migration",
+            "name": "migrations table has 118 records",
+            "detail": null
+        },
+        {
+            "severity": "pass",
+            "gate": "C2-tables",
+            "name": "Table exists: users",
+            "detail": null
+        },
+        {
+            "severity": "pass",
+            "gate": "C2-tables",
+            "name": "Table exists: customers",
+            "detail": null
+        },
+        {
+            "severity": "pass",
+            "gate": "C2-tables",
+            "name": "Table exists: pets",
+            "detail": null
+        },
+        {
+            "severity": "pass",
+            "gate": "C2-tables",
+            "name": "Table exists: service_requests",
+            "detail": null
+        },
+        {
+            "severity": "pass",
+            "gate": "C2-tables",
+            "name": "Table exists: appointments",
+            "detail": null
+        },
+        {
+            "severity": "pass",
+            "gate": "C2-tables",
+            "name": "Table exists: grooming_appointments",
+            "detail": null
+        },
+        {
+            "severity": "pass",
+            "gate": "C2-tables",
+            "name": "Table exists: vet_appointments",
+            "detail": null
+        },
+        {
+            "severity": "pass",
+            "gate": "C2-tables",
+            "name": "Table exists: boardings",
+            "detail": null
+        },
+        {
+            "severity": "pass",
+            "gate": "C2-tables",
+            "name": "Table exists: boarding_rooms",
+            "detail": null
+        },
+        {
+            "severity": "pass",
+            "gate": "C2-tables",
+            "name": "Table exists: hotel_rooms",
+            "detail": null
+        },
+        {
+            "severity": "pass",
+            "gate": "C2-tables",
+            "name": "Table exists: inventory_items",
+            "detail": null
+        },
+        {
+            "severity": "pass",
+            "gate": "C2-tables",
+            "name": "Table exists: inventory_batches",
+            "detail": null
+        },
+        {
+            "severity": "pass",
+            "gate": "C2-tables",
+            "name": "Table exists: inventory_logs",
+            "detail": null
+        },
+        {
+            "severity": "pass",
+            "gate": "C2-tables",
+            "name": "Table exists: service_item_usages",
+            "detail": null
+        },
+        {
+            "severity": "warn",
+            "gate": "C2-tables",
+            "name": "Table not found: service_billings (may be optional or renamed)",
+            "detail": null
+        },
+        {
+            "severity": "pass",
+            "gate": "C2-tables",
+            "name": "Table exists: payments",
+            "detail": null
+        },
+        {
+            "severity": "pass",
+            "gate": "C2-tables",
+            "name": "Table exists: customer_orders",
+            "detail": null
+        },
+        {
+            "severity": "warn",
+            "gate": "C2-tables",
+            "name": "Table not found: transactions (may be optional or renamed)",
+            "detail": null
+        },
+        {
+            "severity": "pass",
+            "gate": "C2-tables",
+            "name": "Table exists: medical_records",
+            "detail": null
+        },
+        {
+            "severity": "pass",
+            "gate": "C2-tables",
+            "name": "Table exists: vaccinations",
+            "detail": null
+        },
+        {
+            "severity": "pass",
+            "gate": "C2-tables",
+            "name": "Table exists: medical_confinements",
+            "detail": null
+        },
+        {
+            "severity": "pass",
+            "gate": "C2-tables",
+            "name": "Table exists: payrolls",
+            "detail": null
+        },
+        {
+            "severity": "warn",
+            "gate": "C2-tables",
+            "name": "Table not found: attendances (may be optional or renamed)",
+            "detail": null
+        },
+        {
+            "severity": "pass",
+            "gate": "C2-tables",
+            "name": "Table exists: attendance_records",
+            "detail": null
+        },
+        {
+            "severity": "pass",
+            "gate": "C2-tables",
+            "name": "Table exists: notifications",
+            "detail": null
+        },
+        {
+            "severity": "pass",
+            "gate": "C2-tables",
+            "name": "Table exists: activity_logs",
+            "detail": null
+        },
+        {
+            "severity": "pass",
+            "gate": "C2-tables",
+            "name": "Table exists: login_logs",
+            "detail": null
+        },
+        {
+            "severity": "pass",
+            "gate": "C2-tables",
+            "name": "Table exists: personal_access_tokens",
+            "detail": null
+        },
+        {
+            "severity": "pass",
+            "gate": "C2-tables",
+            "name": "Table exists: chatbot_logs",
+            "detail": null
+        },
+        {
+            "severity": "pass",
+            "gate": "C2-tables",
+            "name": "Table exists: chatbot_faqs",
+            "detail": null
+        },
+        {
+            "severity": "pass",
+            "gate": "C2-tables",
+            "name": "Table exists: services",
+            "detail": null
+        },
+        {
+            "severity": "pass",
+            "gate": "C2-tables",
+            "name": "Table exists: suppliers",
+            "detail": null
+        },
+        {
+            "severity": "pass",
+            "gate": "C2-tables",
+            "name": "Table exists: gift_cards",
+            "detail": null
+        },
+        {
+            "severity": "pass",
+            "gate": "C2-tables",
+            "name": "Table exists: system_settings",
+            "detail": null
+        },
+        {
+            "severity": "warn",
+            "gate": "C2-tables",
+            "name": "Table not found: boarding_add_ons (may be optional or renamed)",
+            "detail": null
+        },
+        {
+            "severity": "warn",
+            "gate": "C2-tables",
+            "name": "Table not found: boarding_reservation_add_ons (may be optional or renamed)",
+            "detail": null
+        },
+        {
+            "severity": "warn",
+            "gate": "C2-tables",
+            "name": "Table not found: hotel_room_reservations (may be optional or renamed)",
+            "detail": null
+        },
+        {
+            "severity": "warn",
+            "gate": "C2-tables",
+            "name": "Table not found: care_logs (may be optional or renamed)",
+            "detail": null
+        },
+        {
+            "severity": "pass",
+            "gate": "C2-tables",
+            "name": "Total tables in database: 134",
+            "detail": null
+        },
+        {
+            "severity": "high",
+            "gate": "C3-keys",
+            "name": "No primary key on users",
+            "detail": null
+        },
+        {
+            "severity": "high",
+            "gate": "C3-keys",
+            "name": "No primary key on customers",
+            "detail": null
+        },
+        {
+            "severity": "high",
+            "gate": "C3-keys",
+            "name": "No primary key on pets",
+            "detail": null
+        },
+        {
+            "severity": "high",
+            "gate": "C3-keys",
+            "name": "No primary key on service_requests",
+            "detail": null
+        },
+        {
+            "severity": "high",
+            "gate": "C3-keys",
+            "name": "No primary key on appointments",
+            "detail": null
+        },
+        {
+            "severity": "high",
+            "gate": "C3-keys",
+            "name": "No primary key on boardings",
+            "detail": null
+        },
+        {
+            "severity": "high",
+            "gate": "C3-keys",
+            "name": "No primary key on inventory_items",
+            "detail": null
+        },
+        {
+            "severity": "high",
+            "gate": "C3-keys",
+            "name": "No primary key on payrolls",
+            "detail": null
+        },
+        {
+            "severity": "high",
+            "gate": "C3-keys",
+            "name": "No primary key on payments",
+            "detail": null
+        },
+        {
+            "severity": "high",
+            "gate": "C3-keys",
+            "name": "No primary key on medical_records",
+            "detail": null
+        },
+        {
+            "severity": "pass",
+            "gate": "C3-keys",
+            "name": "Foreign key constraints found: 77",
+            "detail": null
+        },
+        {
+            "severity": "medium",
+            "gate": "C3-keys",
+            "name": "No enforced FK: appointments.service_request_id \u2192 service_requests (column exists, relationship is logical only)",
+            "detail": null
+        },
+        {
+            "severity": "pass",
+            "gate": "C3-keys",
+            "name": "FK exists: appointments.pet_id \u2192 pets",
+            "detail": null
+        },
+        {
+            "severity": "pass",
+            "gate": "C3-keys",
+            "name": "FK exists: appointments.veterinarian_id \u2192 users",
+            "detail": null
+        },
+        {
+            "severity": "medium",
+            "gate": "C3-keys",
+            "name": "No enforced FK: service_requests.customer_id \u2192 customers (column exists, relationship is logical only)",
+            "detail": null
+        },
+        {
+            "severity": "pass",
+            "gate": "C3-keys",
+            "name": "FK exists: service_item_usages.inventory_item_id \u2192 inventory_items",
+            "detail": null
+        },
+        {
+            "severity": "pass",
+            "gate": "C3-keys",
+            "name": "FK exists: medical_records.appointment_id \u2192 appointments",
+            "detail": null
+        },
+        {
+            "severity": "pass",
+            "gate": "C3-keys",
+            "name": "FK exists: medical_records.pet_id \u2192 pets",
+            "detail": null
+        },
+        {
+            "severity": "pass",
+            "gate": "C3-keys",
+            "name": "FK exists: payrolls.user_id \u2192 users",
+            "detail": null
+        },
+        {
+            "severity": "pass",
+            "gate": "C3-keys",
+            "name": "Unique index on users.email",
+            "detail": null
+        },
+        {
+            "severity": "pass",
+            "gate": "C3-keys",
+            "name": "Unique index on users.username",
+            "detail": null
+        },
+        {
+            "severity": "pass",
+            "gate": "C3-keys",
+            "name": "Unique index on personal_access_tokens.token",
+            "detail": null
+        },
+        {
+            "severity": "pass",
+            "gate": "C3-keys",
+            "name": "Unique index on inventory_items.sku",
+            "detail": null
+        },
+        {
+            "severity": "pass",
+            "gate": "C4-ambiguity",
+            "name": "boarding_rooms table exists with 12 records",
+            "detail": null
+        },
+        {
+            "severity": "pass",
+            "gate": "C4-ambiguity",
+            "name": "hotel_rooms table exists with 0 records",
+            "detail": null
+        },
+        {
+            "severity": "pass",
+            "gate": "C4-ambiguity",
+            "name": "boardings references hotel_room_id (hotel_rooms is authoritative for room assignment)",
+            "detail": null
+        },
+        {
+            "severity": "medium",
+            "gate": "C4-ambiguity",
+            "name": "BoardingController references BOTH HotelRoom and BoardingRoom models",
+            "detail": null
+        },
+        {
+            "severity": "pass",
+            "gate": "C4-ambiguity",
+            "name": "Routes reference HotelRoomController",
+            "detail": null
+        },
+        {
+            "severity": "pass",
+            "gate": "C4-ambiguity",
+            "name": "Routes reference BoardingRoomController",
+            "detail": null
+        },
+        {
+            "severity": "pass",
+            "gate": "C4-ambiguity",
+            "name": "boardings using hotel_room_id: 0, using boarding_room_id: 0",
+            "detail": null
+        },
+        {
+            "severity": "pass",
+            "gate": "C5-ambiguity",
+            "name": "payments exists with 18 records",
+            "detail": null
+        },
+        {
+            "severity": "pass",
+            "gate": "C5-ambiguity",
+            "name": "customer_orders exists with 0 records",
+            "detail": null
+        },
+        {
+            "severity": "warn",
+            "gate": "C5-ambiguity",
+            "name": "transactions does not exist",
+            "detail": null
+        },
+        {
+            "severity": "warn",
+            "gate": "C5-ambiguity",
+            "name": "service_billings does not exist",
+            "detail": null
+        },
+        {
+            "severity": "pass",
+            "gate": "C5-ambiguity",
+            "name": "service_item_usages exists with 44 records",
+            "detail": null
+        },
+        {
+            "severity": "pass",
+            "gate": "C5-ambiguity",
+            "name": "CashierPaymentController references: payments",
+            "detail": null
+        },
+        {
+            "severity": "pass",
+            "gate": "C5-ambiguity",
+            "name": "CashierDashboardController references: payments, customer_orders, transactions",
+            "detail": null
+        },
+        {
+            "severity": "pass",
+            "gate": "C5-ambiguity",
+            "name": "POSController references: payments, transactions",
+            "detail": null
+        },
+        {
+            "severity": "pass",
+            "gate": "C5-ambiguity",
+            "name": "ServiceBillingController references: service_item_usages",
+            "detail": null
+        },
+        {
+            "severity": "pass",
+            "gate": "C5-ambiguity",
+            "name": "ServiceBillingService references: payments",
+            "detail": null
+        },
+        {
+            "severity": "pass",
+            "gate": "C6-seed",
+            "name": "Admin user exists (1 records)",
+            "detail": null
+        },
+        {
+            "severity": "pass",
+            "gate": "C6-seed",
+            "name": "Manager user exists (1 records)",
+            "detail": null
+        },
+        {
+            "severity": "pass",
+            "gate": "C6-seed",
+            "name": "Cashier user exists (1 records)",
+            "detail": null
+        },
+        {
+            "severity": "pass",
+            "gate": "C6-seed",
+            "name": "Receptionist user exists (1 records)",
+            "detail": null
+        },
+        {
+            "severity": "pass",
+            "gate": "C6-seed",
+            "name": "Veterinary user exists (1 records)",
+            "detail": null
+        },
+        {
+            "severity": "pass",
+            "gate": "C6-seed",
+            "name": "Inventory user exists (1 records)",
+            "detail": null
+        },
+        {
+            "severity": "pass",
+            "gate": "C6-seed",
+            "name": "Customer user exists (1 records)",
+            "detail": null
+        },
+        {
+            "severity": "pass",
+            "gate": "C6-seed",
+            "name": "Services seeded: 29",
+            "detail": null
+        },
+        {
+            "severity": "pass",
+            "gate": "C6-seed",
+            "name": "Inventory items seeded: 892",
+            "detail": null
+        },
+        {
+            "severity": "pass",
+            "gate": "C6-seed",
+            "name": "Customers seeded: 1",
+            "detail": null
+        },
+        {
+            "severity": "pass",
+            "gate": "C6-seed",
+            "name": "Pets seeded: 9",
+            "detail": null
+        },
+        {
+            "severity": "pass",
+            "gate": "C7-relations",
+            "name": "No orphan appointments (all service_request_id references valid)",
+            "detail": null
+        },
+        {
+            "severity": "high",
+            "gate": "C7-relations",
+            "name": "57 orphan service_requests with invalid customer_id",
+            "detail": null
+        },
+        {
+            "severity": "pass",
+            "gate": "C7-relations",
+            "name": "No orphan medical_records (all appointment_id references valid)",
+            "detail": null
+        },
+        {
+            "severity": "pass",
+            "gate": "C7-relations",
+            "name": "No orphan service_item_usages (all inventory_item_id references valid)",
+            "detail": null
+        },
+        {
+            "severity": "pass",
+            "gate": "C7-relations",
+            "name": "No orphan payrolls (all user_id references valid)",
+            "detail": null
+        },
+        {
+            "severity": "pass",
+            "gate": "C8-orphans",
+            "name": "No orphan pets (all customer_id references valid)",
+            "detail": null
+        },
+        {
+            "severity": "pass",
+            "gate": "C8-orphans",
+            "name": "No orphan customers (all user_id references valid)",
+            "detail": null
+        },
+        {
+            "severity": "pass",
+            "gate": "C8-orphans",
+            "name": "vet_appointments: 7 records, appointments: 21 records",
+            "detail": null
+        },
+        {
+            "severity": "medium",
+            "gate": "C8-orphans",
+            "name": "vet_appointments is a standalone table with pet_id \u2014 potential duplicate authority with appointments",
+            "detail": null
+        },
+        {
+            "severity": "pass",
+            "gate": "C8-orphans",
+            "name": "grooming_appointments: 0 records",
+            "detail": null
+        },
+        {
+            "severity": "medium",
+            "gate": "C9-backup",
+            "name": "mysqldump not found in PATH \u2014 use MySQL installation bin directory or cloud-managed backup",
+            "detail": null
+        },
+        {
+            "severity": "pass",
+            "gate": "C9-backup",
+            "name": "Schema export successful (0 KB)",
+            "detail": null
+        },
+        {
+            "severity": "pass",
+            "gate": "C9-backup",
+            "name": "Migration files present: 118",
+            "detail": null
+        },
+        {
+            "severity": "pass",
+            "gate": "C9-backup",
+            "name": "Seeder files present: 7",
+            "detail": null
+        },
+        {
+            "severity": "pass",
+            "gate": "C2b-columns",
+            "name": "users.id type OK (bigint(20) unsigned)",
+            "detail": null
+        },
+        {
+            "severity": "pass",
+            "gate": "C2b-columns",
+            "name": "users.email type OK (varchar(255))",
+            "detail": null
+        },
+        {
+            "severity": "pass",
+            "gate": "C2b-columns",
+            "name": "users.password type OK (varchar(255))",
+            "detail": null
+        },
+        {
+            "severity": "pass",
+            "gate": "C2b-columns",
+            "name": "users.role type OK (varchar(255))",
+            "detail": null
+        },
+        {
+            "severity": "pass",
+            "gate": "C2b-columns",
+            "name": "users.is_active type OK (tinyint(1))",
+            "detail": null
+        },
+        {
+            "severity": "pass",
+            "gate": "C2b-columns",
+            "name": "inventory_items.id type OK (bigint(20) unsigned)",
+            "detail": null
+        },
+        {
+            "severity": "pass",
+            "gate": "C2b-columns",
+            "name": "inventory_items.name type OK (varchar(255))",
+            "detail": null
+        },
+        {
+            "severity": "pass",
+            "gate": "C2b-columns",
+            "name": "inventory_items.stock type OK (int(11))",
+            "detail": null
+        },
+        {
+            "severity": "pass",
+            "gate": "C2b-columns",
+            "name": "inventory_items.price type OK (decimal(10,2))",
+            "detail": null
+        },
+        {
+            "severity": "pass",
+            "gate": "C2b-columns",
+            "name": "service_requests.id type OK (bigint(20) unsigned)",
+            "detail": null
+        },
+        {
+            "severity": "medium",
+            "gate": "C2b-columns",
+            "name": "service_requests.status type mismatch: expected string, got enum('pending','approved','rejected')",
+            "detail": null
+        },
+        {
+            "severity": "medium",
+            "gate": "C2b-columns",
+            "name": "service_requests.payment_status type mismatch: expected string, got enum('unpaid','pending','partial','paid','rejected','refunded')",
+            "detail": null
+        },
+        {
+            "severity": "pass",
+            "gate": "C2b-columns",
+            "name": "appointments.id type OK (bigint(20) unsigned)",
+            "detail": null
+        },
+        {
+            "severity": "pass",
+            "gate": "C2b-columns",
+            "name": "appointments.status type OK (varchar(50))",
+            "detail": null
+        },
+        {
+            "severity": "pass",
+            "gate": "C2b-columns",
+            "name": "appointments.payment_status type OK (varchar(255))",
+            "detail": null
+        },
+        {
+            "severity": "pass",
+            "gate": "C2b-columns",
+            "name": "payrolls.id type OK (bigint(20) unsigned)",
+            "detail": null
+        },
+        {
+            "severity": "pass",
+            "gate": "C2b-columns",
+            "name": "payrolls.user_id type OK (bigint(20) unsigned)",
+            "detail": null
+        },
+        {
+            "severity": "medium",
+            "gate": "C2b-columns",
+            "name": "payrolls.status type mismatch: expected string, got enum('draft','processing','pending','paid','cancelled')",
+            "detail": null
+        }
+    ],
+    "timestamp": "2026-08-20T17:29:00+00:00",
+    "total_tables": 134,
+    "existing_tables": [
+        "activity_logs",
+        "add_ons",
+        "appointments",
+        "attendance",
+        "attendance_records",
+        "biometric_credentials",
+        "boardings",
+        "boarding_care_logs",
+        "boarding_rooms",
+        "boarding_room_reservations",
+        "booking_addons",
+        "booking_requests",
+        "cache",
+        "cache_locks",
+        "chatbot_faqs",
+        "chatbot_logs",
+        "customers",
+        "customer_orders",
+        "customer_order_items",
+        "failed_jobs",
+        "gift_cards",
+        "groomings",
+        "grooming_appointments",
+        "hotel_rooms",
+        "inventory_batches",
+        "inventory_items",
+        "inventory_logs",
+        "inventory_monthly_audits",
+        "invoices",
+        "jobs",
+        "job_batches",
+        "landing_page_contents",
+        "leave_requests",
+        "login_logs",
+        "medical_attachments",
+        "medical_confinements",
+        "medical_progress_notes",
+        "medical_records",
+        "migrations",
+        "notifications",
+        "password_reset_tokens",
+        "payments",
+        "payrolls",
+        "personal_access_tokens",
+        "pets",
+        "prescriptions",
+        "sales",
+        "sale_items",
+        "services",
+        "service_item_usages",
+        "service_requests",
+        "sessions",
+        "suppliers",
+        "system_settings",
+        "users",
+        "vaccinations",
+        "vet_appointments",
+        "work_schedules",
+        "activity_logs",
+        "add_ons",
+        "appointments",
+        "attendance",
+        "attendance_records",
+        "biometric_credentials",
+        "boardings",
+        "boarding_care_logs",
+        "boarding_rooms",
+        "boarding_room_reservations",
+        "booking_addons",
+        "booking_requests",
+        "cache",
+        "cache_locks",
+        "chatbot_faqs",
+        "chatbot_logs",
+        "customers",
+        "customer_orders",
+        "customer_order_items",
+        "failed_jobs",
+        "gift_cards",
+        "groomings",
+        "grooming_appointments",
+        "hotel_rooms",
+        "inventory_batches",
+        "inventory_items",
+        "inventory_logs",
+        "inventory_monthly_audits",
+        "invoices",
+        "jobs",
+        "job_batches",
+        "leave_requests",
+        "login_logs",
+        "medical_attachments",
+        "medical_confinements",
+        "medical_progress_notes",
+        "medical_records",
+        "migrations",
+        "notifications",
+        "password_reset_tokens",
+        "payments",
+        "payrolls",
+        "personal_access_tokens",
+        "pets",
+        "prescriptions",
+        "sales",
+        "sale_items",
+        "services",
+        "service_item_usages",
+        "service_requests",
+        "sessions",
+        "suppliers",
+        "system_settings",
+        "users",
+        "vaccinations",
+        "vet_appointments",
+        "work_schedules",
+        "pma__bookmark",
+        "pma__central_columns",
+        "pma__column_info",
+        "pma__designer_settings",
+        "pma__export_templates",
+        "pma__favorite",
+        "pma__history",
+        "pma__navigationhiding",
+        "pma__pdf_pages",
+        "pma__recent",
+        "pma__relation",
+        "pma__savedsearches",
+        "pma__table_coords",
+        "pma__table_info",
+        "pma__table_uiprefs",
+        "pma__tracking",
+        "pma__userconfig",
+        "pma__usergroups",
+        "pma__users"
+    ]
+}

@@ -1,0 +1,498 @@
+/* MyPayroll.css — Employee self-service payroll view */
+.my-payroll-page {
+  padding: 24px 32px;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.my-payroll-hero {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 24px;
+  gap: 16px;
+}
+
+.my-payroll-hero .mp-eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--mp-accent, #0891b2);
+  margin-bottom: 6px;
+}
+
+.my-payroll-hero h1 {
+  font-size: 26px;
+  font-weight: 800;
+  color: #1f2937;
+  margin: 0 0 4px;
+}
+
+.my-payroll-hero p {
+  color: #6b7280;
+  font-size: 14px;
+  margin: 0;
+}
+
+.mp-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 18px;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  background: #fff;
+  color: #374151;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.mp-btn:hover { background: #f9fafb; }
+
+.mp-btn.primary {
+  background: var(--mp-accent, #0891b2);
+  color: #fff;
+  border-color: var(--mp-accent, #0891b2);
+}
+
+.mp-btn.primary:hover { opacity: 0.9; }
+
+.mp-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+/* Summary cards */
+.mp-summary-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.mp-summary-card {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 18px;
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+}
+
+.mp-summary-card .mp-summary-icon {
+  font-size: 24px;
+  color: #6b7280;
+}
+
+.mp-summary-card.paid .mp-summary-icon { color: #10b981; }
+.mp-summary-card.pending .mp-summary-icon { color: #f59e0b; }
+.mp-summary-card.net .mp-summary-icon { color: var(--mp-accent, #0891b2); }
+
+.mp-summary-card div {
+  display: flex;
+  flex-direction: column;
+}
+
+.mp-summary-label {
+  font-size: 11px;
+  color: #6b7280;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  font-weight: 600;
+}
+
+.mp-summary-value {
+  font-size: 22px;
+  font-weight: 800;
+  color: #1f2937;
+}
+
+/* Table */
+.mp-table-wrapper {
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 20px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+}
+
+.mp-table-wrapper h2 {
+  font-size: 18px;
+  font-weight: 700;
+  color: #1f2937;
+  margin: 0 0 16px;
+}
+
+.mp-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+.mp-table th {
+  text-align: left;
+  padding: 10px 12px;
+  background: #f9fafb;
+  color: #6b7280;
+  font-weight: 600;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.mp-table td {
+  padding: 12px;
+  border-bottom: 1px solid #f3f4f6;
+  color: #374151;
+}
+
+.mp-net-cell {
+  font-weight: 700;
+  color: var(--mp-accent, #0891b2);
+}
+
+.mp-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-weight: 600;
+  font-size: 12px;
+}
+
+.mp-actions {
+  display: flex;
+  gap: 6px;
+}
+
+.mp-action-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border: 1px solid #e2e8f0;
+  border-radius: 6px;
+  background: #fff;
+  color: #6b7280;
+  cursor: pointer;
+  transition: all 0.15s;
+  font-size: 13px;
+}
+
+.mp-action-btn:hover {
+  background: #f9fafb;
+  color: var(--mp-accent, #0891b2);
+  border-color: var(--mp-accent, #0891b2);
+}
+
+.mp-loading, .mp-empty {
+  text-align: center;
+  padding: 40px;
+  color: #6b7280;
+  font-size: 14px;
+}
+
+.mp-error {
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  color: #dc2626;
+  padding: 12px 16px;
+  border-radius: 8px;
+  margin-bottom: 16px;
+  font-size: 13px;
+}
+
+/* Modal */
+.mp-modal-overlay {
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0,0,0,0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 20px;
+}
+
+.mp-modal {
+  background: #fff;
+  border-radius: 12px;
+  max-width: 700px;
+  width: 100%;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.2);
+}
+
+.mp-modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px 24px;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.mp-modal-header h2 {
+  font-size: 18px;
+  font-weight: 700;
+  color: #1f2937;
+  margin: 0;
+}
+
+.mp-modal-close {
+  background: none;
+  border: none;
+  font-size: 24px;
+  color: #6b7280;
+  cursor: pointer;
+  padding: 0;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 6px;
+}
+
+.mp-modal-close:hover { background: #f3f4f6; }
+
+.mp-modal-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  padding: 16px 24px;
+  border-top: 1px solid #e2e8f0;
+}
+
+/* Payslip detail */
+.mp-payslip-detail { padding: 24px; }
+
+.mp-payslip-header {
+  text-align: center;
+  margin-bottom: 20px;
+}
+
+.mp-payslip-header h3 {
+  font-size: 20px;
+  font-weight: 800;
+  color: #1f2937;
+  margin: 0 0 4px;
+}
+
+.mp-payslip-header p {
+  font-size: 12px;
+  color: #6b7280;
+  margin: 2px 0;
+}
+
+.mp-payslip-header h4 {
+  font-size: 16px;
+  font-weight: 700;
+  color: #374151;
+  margin: 12px 0 0;
+}
+
+.mp-payslip-info-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin-bottom: 20px;
+  padding: 16px;
+  background: #f9fafb;
+  border-radius: 8px;
+}
+
+.mp-payslip-info-grid > div {
+  display: flex;
+  flex-direction: column;
+}
+
+.mp-payslip-info-grid strong {
+  font-size: 11px;
+  color: #6b7280;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.mp-payslip-info-grid span {
+  font-size: 14px;
+  font-weight: 600;
+  color: #1f2937;
+  margin-top: 2px;
+}
+
+.mp-payslip-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-bottom: 16px;
+  font-size: 13px;
+}
+
+.mp-payslip-table th {
+  text-align: left;
+  padding: 8px 12px;
+  background: #f3f4f6;
+  color: #374151;
+  font-weight: 600;
+  border: 1px solid #e5e7eb;
+}
+
+.mp-payslip-table td {
+  padding: 8px 12px;
+  border: 1px solid #e5e7eb;
+  color: #374151;
+}
+
+.mp-payslip-table td:last-child {
+  text-align: right;
+  font-weight: 600;
+}
+
+.mp-subtotal-row td {
+  font-weight: 700;
+  background: #f9fafb;
+}
+
+.mp-net-pay {
+  text-align: right;
+  font-size: 18px;
+  font-weight: 800;
+  padding: 16px;
+  border: 2px solid #e5e7eb;
+  border-radius: 8px;
+  margin-bottom: 12px;
+}
+
+.mp-payment-info {
+  display: flex;
+  gap: 24px;
+  font-size: 13px;
+  color: #6b7280;
+}
+
+/* Print area */
+.my-payslip-print-area {
+  display: none;
+}
+
+@media print {
+  body * {
+    visibility: hidden !important;
+  }
+
+  .my-payslip-print-area,
+  .my-payslip-print-area * {
+    visibility: visible !important;
+  }
+
+  .my-payslip-print-area {
+    display: block !important;
+    position: absolute;
+    inset: 0;
+    padding: 28px;
+    background: #fff;
+    color: #111827;
+    font-family: Arial, sans-serif;
+  }
+
+  .my-payslip-print-area h1 {
+    font-size: 24px;
+    color: #c93662;
+    margin: 0 0 4px;
+  }
+
+  .my-payslip-print-area h2 {
+    font-size: 18px;
+    margin: 8px 0;
+  }
+
+  .my-payslip-print-area p {
+    margin: 2px 0;
+    font-size: 12px;
+  }
+
+  .my-payslip-print-area .print-info-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+    margin: 16px 0;
+    padding: 12px;
+    border: 1px solid #d1d5db;
+    border-radius: 4px;
+  }
+
+  .my-payslip-print-area .print-info-grid strong {
+    display: block;
+    font-size: 10px;
+    color: #6b7280;
+  }
+
+  .my-payslip-print-area .print-info-grid span {
+    display: block;
+    font-size: 12px;
+    font-weight: 700;
+  }
+
+  .my-payslip-print-area table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 12px;
+    font-size: 12px;
+  }
+
+  .my-payslip-print-area th,
+  .my-payslip-print-area td {
+    border: 1px solid #d1d5db;
+    padding: 6px 8px;
+    text-align: left;
+  }
+
+  .my-payslip-print-area th {
+    background: #c93662;
+    color: #fff;
+  }
+
+  .my-payslip-print-area td:last-child {
+    text-align: right;
+    font-weight: 700;
+  }
+
+  .my-payslip-print-area .net-row td {
+    background: #fff1f7;
+    font-weight: 900;
+  }
+
+  .my-payslip-print-area .print-net {
+    text-align: right;
+    font-size: 16px;
+    margin: 16px 0;
+    padding: 12px;
+    border: 2px solid #c93662;
+    border-radius: 4px;
+  }
+
+  .my-payslip-print-area .print-signatures {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 40px;
+  }
+
+  .my-payslip-print-area .print-signatures span {
+    display: block;
+    border-bottom: 1px solid #333;
+    width: 200px;
+    height: 20px;
+  }
+
+  .my-payslip-print-area .print-signatures strong {
+    display: block;
+    margin-top: 4px;
+    font-size: 11px;
+  }
+}

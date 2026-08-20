@@ -22,6 +22,7 @@ import {
   faXmark,
 } from "@fortawesome/free-solid-svg-icons";
 import { apiRequest } from "../../api/client";
+import { exportToCSV, exportToPDF, exportToExcel } from "../../utils/reportExport";
 import "./ManagerLeave.css";
 
 const LEAVE_TYPES = [
@@ -76,6 +77,7 @@ const ManagerLeave = () => {
   const [selectedStatus, setSelectedStatus] = useState("all");
   const [selectedType, setSelectedType] = useState("all");
   const [showFilters, setShowFilters] = useState(false);
+  const [showExportDropdown, setShowExportDropdown] = useState(false);
 
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage] = useState(10);
@@ -199,23 +201,41 @@ const ManagerLeave = () => {
     setRemarks("");
   };
 
-  const exportCSV = () => {
+  const exportColumns = [
+    { key: "employee_name", label: "Employee" },
+    { key: "type", label: "Type" },
+    { key: "start_date", label: "Start Date" },
+    { key: "end_date", label: "End Date" },
+    { key: "status", label: "Status" },
+    { key: "reason", label: "Reason" },
+  ];
+
+  const handleExport = (format) => {
     if (!records.length) return;
-    const headers = ["Employee", "Type", "Start Date", "End Date", "Status", "Reason"];
-    const rows = records.map((r) => [
-      r.employee_name,
-      formatLabel(r.type),
-      formatDate(r.start_date),
-      formatDate(r.end_date),
-      formatLabel(r.status),
-      r.reason || "",
-    ]);
-    const csv = [headers, ...rows].map((r) => r.map((v) => `"${String(v).replace(/"/g, '""')}"`).join(",")).join("\n");
-    const a = Object.assign(document.createElement("a"), {
-      href: URL.createObjectURL(new Blob([csv], { type: "text/csv;charset=utf-8;" })),
-      download: `manager-leaves-${calendarMonth}.csv`,
-    });
-    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+
+    const exportData = records.map((r) => ({
+      employee_name: r.employee_name,
+      type: formatLabel(r.type),
+      start_date: formatDate(r.start_date),
+      end_date: formatDate(r.end_date),
+      status: formatLabel(r.status),
+      reason: r.reason || "",
+    }));
+
+    const filename = "manager-leaves";
+
+    setShowExportDropdown(false);
+
+    if (format === "csv") {
+      exportToCSV(exportData, exportColumns, filename);
+      showToast("Leave CSV exported successfully.", "success");
+    } else if (format === "excel") {
+      exportToExcel(exportData, exportColumns, filename);
+      showToast("Leave Excel exported successfully.", "success");
+    } else if (format === "pdf") {
+      exportToPDF(exportData, exportColumns, "Leave Requests Report", filename);
+      showToast("Leave PDF exported successfully.", "success");
+    }
   };
 
   const pageStart = filteredRecords.length ? (currentPage - 1) * itemsPerPage + 1 : 0;
@@ -234,10 +254,22 @@ const ManagerLeave = () => {
             <FontAwesomeIcon icon={refreshing ? faSpinner : faRefresh} spin={refreshing} />
             Refresh
           </button>
-          <button type="button" className="leave-btn primary" onClick={exportCSV}>
-            <FontAwesomeIcon icon={faDownload} />
-            Export CSV
-          </button>
+          <div style={{ position: "relative" }}>
+            <button type="button" className="leave-btn primary" onClick={() => setShowExportDropdown(!showExportDropdown)}>
+              <FontAwesomeIcon icon={faDownload} />
+              Export ▼
+            </button>
+            {showExportDropdown && (
+              <>
+                <div style={{ position: "fixed", top: 0, left: 0, right: 0, bottom: 0, zIndex: 998 }} onClick={() => setShowExportDropdown(false)} />
+                <div style={{ position: "absolute", top: "100%", right: 0, background: "#fff", border: "1px solid #e2e8f0", borderRadius: 8, boxShadow: "0 8px 24px rgba(0,0,0,0.12)", zIndex: 999, minWidth: 160, overflow: "hidden" }}>
+                  <button type="button" className="leave-btn primary" style={{ width: "100%", borderRadius: 0, border: "none" }} onClick={() => handleExport("csv")}>Export as CSV</button>
+                  <button type="button" className="leave-btn primary" style={{ width: "100%", borderRadius: 0, border: "none" }} onClick={() => handleExport("excel")}>Export as Excel</button>
+                  <button type="button" className="leave-btn primary" style={{ width: "100%", borderRadius: 0, border: "none" }} onClick={() => handleExport("pdf")}>Export as PDF</button>
+                </div>
+              </>
+            )}
+          </div>
         </div>
       </section>
 

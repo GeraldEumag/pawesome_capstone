@@ -27,6 +27,7 @@ import {
   FaWrench,
 } from "react-icons/fa";
 import { apiRequest } from "../../api/client";
+import { exportToCSV, exportToPDF, exportToExcel } from "../../utils/reportExport";
 import ServiceManagerModal from "./ServiceManagerModal";
 import "./ReceptionistDashboard.css";
 
@@ -70,6 +71,7 @@ const ReceptionistDashboard = () => {
   const [selectedRequest, setSelectedRequest] = useState(null);
   const [showServiceManager, setShowServiceManager] = useState(false);
   const [busyAction, setBusyAction] = useState("");
+  const [showExportDropdown, setShowExportDropdown] = useState(false);
   const [sortConfig, setSortConfig] = useState({
     key: "created_at",
     direction: "desc",
@@ -331,53 +333,31 @@ const ReceptionistDashboard = () => {
     setPaymentFilter("all");
   };
 
-  const exportCSV = () => {
+  const exportColumns = [
+    { key: "id", label: "Request ID" },
+    { key: "customer", label: "Customer" },
+    { key: "pet", label: "Pet" },
+    { key: "service", label: "Service" },
+    { key: "type", label: "Type" },
+    { key: "date", label: "Date" },
+    { key: "time", label: "Time" },
+    { key: "status", label: "Status" },
+    { key: "payment", label: "Payment" },
+    { key: "notes", label: "Notes" },
+  ];
+
+  const handleExport = (format) => {
+    setShowExportDropdown(false);
     if (sortedRequests.length === 0) {
       notify("error", "No receptionist requests to export.");
       return;
     }
 
-    const headers = [
-      "Request ID",
-      "Customer",
-      "Pet",
-      "Service",
-      "Type",
-      "Date",
-      "Time",
-      "Status",
-      "Payment",
-      "Notes",
-    ];
+    const filename = "receptionist-requests";
+    if (format === "csv") exportToCSV(sortedRequests, exportColumns, filename);
+    else if (format === "excel") exportToExcel(sortedRequests, exportColumns, filename);
+    else if (format === "pdf") exportToPDF(sortedRequests, exportColumns, "Receptionist Requests", filename);
 
-    const rows = sortedRequests.map((item) => [
-      item.id,
-      item.customer,
-      item.pet,
-      item.service,
-      item.type,
-      formatDate(item.date),
-      item.time || "N/A",
-      item.status,
-      item.payment,
-      item.notes,
-    ]);
-
-    const csv = [headers, ...rows]
-      .map((row) =>
-        row.map((value) => `"${String(value ?? "").replace(/"/g, '""')}"`).join(",")
-      )
-      .join("\n");
-
-    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
-    const url = URL.createObjectURL(blob);
-    const anchor = document.createElement("a");
-
-    anchor.href = url;
-    anchor.download = `receptionist-requests-${new Date().toISOString().slice(0, 10)}.csv`;
-    anchor.click();
-
-    URL.revokeObjectURL(url);
     notify("success", "Receptionist requests exported.");
   };
 
@@ -490,10 +470,22 @@ const ReceptionistDashboard = () => {
               {refreshing ? "Refreshing..." : "Refresh"}
             </button>
 
-            <button type="button" className="hero-action-btn ghost" onClick={exportCSV}>
-              <FaDownload />
-              Export CSV
-            </button>
+            <div className="export-dropdown-wrapper" style={{ position: "relative" }}>
+              <button type="button" className="hero-action-btn ghost" onClick={() => setShowExportDropdown(!showExportDropdown)}>
+                <FaDownload />
+                Export ▼
+              </button>
+              {showExportDropdown && (
+                <>
+                  <div style={{ position: "fixed", top: 0, left: 0, right: 0, bottom: 0, zIndex: 998 }} onClick={() => setShowExportDropdown(false)} />
+                  <div style={{ position: "absolute", top: "100%", right: 0, background: "#fff", border: "1px solid #e2e8f0", borderRadius: 8, boxShadow: "0 8px 24px rgba(0,0,0,0.12)", zIndex: 999, minWidth: 160, overflow: "hidden" }}>
+                    <button type="button" className="hero-action-btn ghost" style={{ width: "100%", justifyContent: "flex-start" }} onClick={() => handleExport("csv")}>Export as CSV</button>
+                    <button type="button" className="hero-action-btn ghost" style={{ width: "100%", justifyContent: "flex-start" }} onClick={() => handleExport("excel")}>Export as Excel</button>
+                    <button type="button" className="hero-action-btn ghost" style={{ width: "100%", justifyContent: "flex-start" }} onClick={() => handleExport("pdf")}>Export as PDF</button>
+                  </div>
+                </>
+              )}
+            </div>
 
             <button type="button" className="hero-action-btn" onClick={() => setShowServiceManager(true)}>
               <FaWrench />
@@ -642,10 +634,22 @@ const ReceptionistDashboard = () => {
               Refresh
             </button>
 
-            <button type="button" onClick={exportCSV}>
-              <FaDownload />
-              Export
-            </button>
+            <div className="export-dropdown-wrapper" style={{ position: "relative" }}>
+              <button type="button" onClick={() => setShowExportDropdown(!showExportDropdown)}>
+                <FaDownload />
+                Export ▼
+              </button>
+              {showExportDropdown && (
+                <>
+                  <div style={{ position: "fixed", top: 0, left: 0, right: 0, bottom: 0, zIndex: 998 }} onClick={() => setShowExportDropdown(false)} />
+                  <div style={{ position: "absolute", top: "100%", right: 0, background: "#fff", border: "1px solid #e2e8f0", borderRadius: 8, boxShadow: "0 8px 24px rgba(0,0,0,0.12)", zIndex: 999, minWidth: 160, overflow: "hidden" }}>
+                    <button type="button" style={{ width: "100%", textAlign: "left" }} onClick={() => handleExport("csv")}>Export as CSV</button>
+                    <button type="button" style={{ width: "100%", textAlign: "left" }} onClick={() => handleExport("excel")}>Export as Excel</button>
+                    <button type="button" style={{ width: "100%", textAlign: "left" }} onClick={() => handleExport("pdf")}>Export as PDF</button>
+                  </div>
+                </>
+              )}
+            </div>
           </div>
         </div>
 
