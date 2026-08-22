@@ -369,7 +369,7 @@ class ReceptionistRequestController extends Controller
         $user = $request->user();
         $status = 'pending'; // Default for customers
         
-        if ($user && in_array($user->role, ['receptionist', 'admin'])) {
+        if ($user && $user->hasRoleAccess('receptionist', 'admin')) {
             $status = $validated['status'] ?? 'scheduled'; // Default to scheduled for receptionist/admin
         }
 

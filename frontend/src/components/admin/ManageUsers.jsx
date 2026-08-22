@@ -33,8 +33,10 @@ import "./ManageUsers.css";
 
 const ROLE_OPTIONS = [
   { value: "admin", label: "Admin" },
+  { value: "super_admin", label: "Super Admin" },
   { value: "manager", label: "Manager" },
   { value: "receptionist", label: "Receptionist" },
+  { value: "super_receptionist", label: "Super Receptionist" },
   { value: "veterinary", label: "Veterinary" },
   { value: "cashier", label: "Cashier" },
   { value: "inventory", label: "Inventory" },

@@ -1,5 +1,5 @@
 import React from "react";
-import { NavLink } from "react-router-dom";
+import { NavLink, useNavigate } from "react-router-dom";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
   faGauge,
@@ -13,12 +13,16 @@ import {
   faRightFromBracket,
   faPaw,
   faWallet,
+  faArrowLeft,
 } from "@fortawesome/free-solid-svg-icons";
 import { showConfirm } from "../../utils/alert.jsx";
 import { apiRequest, clearAuthStorage } from "../../api/client";
+import { useAuth } from "../../context/AuthContext";
 import "./VeterinarySidebar.css";
 
 const VeterinarySidebar = ({ mobileOpen, onMobileMenuToggle }) => {
+  const navigate = useNavigate();
+  const { role } = useAuth();
   const handleLogout = async () => {
     const confirmed = await showConfirm("Are you sure you want to log out?", "", "Yes", "Cancel", "question", true);
     if (!confirmed) return;
@@ -61,6 +65,18 @@ const VeterinarySidebar = ({ mobileOpen, onMobileMenuToggle }) => {
           &times;
         </button>
       </div>
+
+      {role === "super_admin" && (
+        <button
+          className="super-back-btn"
+          type="button"
+          onClick={() => { navigate("/admin"); handleNavClick(); }}
+          title="Back to Admin Home"
+        >
+          <FontAwesomeIcon icon={faArrowLeft} />
+          <span>Back to Admin Home</span>
+        </button>
+      )}
 
       <nav className="sidebar-nav">
         <p className="sidebar-nav-label">Main Navigation</p>

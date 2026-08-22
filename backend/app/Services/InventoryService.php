@@ -950,7 +950,7 @@ class InventoryService
         }
 
         // Get all admins and inventory managers
-        $users = User::whereIn('role', ['admin', 'inventory'])->get();
+        $users = User::whereIn('role', ['admin', 'super_admin', 'inventory'])->get();
 
         foreach ($users as $user) {
             // OUT OF STOCK

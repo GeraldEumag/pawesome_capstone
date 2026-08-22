@@ -19,7 +19,7 @@ class CustomerOrderController extends Controller
     {
         $user = Auth::user();
         
-        if (!$user || !in_array(strtolower($user->role), ['receptionist', 'admin'])) {
+        if (!$user || !$user->hasRoleAccess('receptionist', 'admin')) {
             return response()->json(['message' => 'Unauthorized'], 401);
         }
 
@@ -95,7 +95,7 @@ class CustomerOrderController extends Controller
     {
         $user = Auth::user();
         
-        if (!$user || !in_array(strtolower($user->role), ['receptionist', 'admin'])) {
+        if (!$user || !$user->hasRoleAccess('receptionist', 'admin')) {
             return response()->json(['message' => 'Unauthorized'], 401);
         }
 
@@ -166,7 +166,7 @@ class CustomerOrderController extends Controller
     {
         $user = Auth::user();
         
-        if (!$user || !in_array(strtolower($user->role), ['receptionist', 'admin'])) {
+        if (!$user || !$user->hasRoleAccess('receptionist', 'admin')) {
             return response()->json(['message' => 'Unauthorized'], 401);
         }
 
@@ -333,7 +333,7 @@ class CustomerOrderController extends Controller
     {
         $user = Auth::user();
         
-        if (!$user || !in_array(strtolower($user->role), ['receptionist', 'admin'])) {
+        if (!$user || !$user->hasRoleAccess('receptionist', 'admin')) {
             return response()->json(['message' => 'Unauthorized'], 401);
         }
 
@@ -475,7 +475,7 @@ class CustomerOrderController extends Controller
     {
         $user = Auth::user();
         
-        if (!$user || !in_array(strtolower($user->role), ['receptionist', 'admin'])) {
+        if (!$user || !$user->hasRoleAccess('receptionist', 'admin')) {
             return response()->json(['message' => 'Unauthorized'], 401);
         }
 

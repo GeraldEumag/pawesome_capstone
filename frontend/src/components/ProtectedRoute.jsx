@@ -2,19 +2,22 @@ import { Navigate, useLocation } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 
 const routeRoleMap = {
-  admin: ["admin"],
+  admin: ["admin", "super_admin"],
   customer: ["customer"],
-  receptionist: ["receptionist"],
-  cashier: ["cashier"],
-  inventory: ["inventory"],
-  manager: ["manager"],
-  veterinary: ["veterinary", "vet", "veterinarian"],
+  receptionist: ["receptionist", "super_admin", "super_receptionist"],
+  cashier: ["cashier", "super_admin", "super_receptionist"],
+  inventory: ["inventory", "super_admin", "super_receptionist"],
+  manager: ["manager", "super_admin"],
+  veterinary: ["veterinary", "vet", "veterinarian", "super_admin"],
+  "super-receptionist": ["super_receptionist"],
 };
 
 const roleHomeMap = {
   admin: "/admin",
+  super_admin: "/admin",
   customer: "/customer",
   receptionist: "/receptionist",
+  super_receptionist: "/super-receptionist",
   veterinary: "/veterinary",
   vet: "/veterinary",
   veterinarian: "/veterinary",

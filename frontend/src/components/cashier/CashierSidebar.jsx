@@ -10,13 +10,16 @@ import {
   faWallet,
   faUser,
   faArrowRightFromBracket,
+  faArrowLeft,
 } from "@fortawesome/free-solid-svg-icons";
 import { showConfirm } from "../../utils/alert.jsx";
 import { apiRequest, clearAuthStorage } from "../../api/client";
+import { useAuth } from "../../context/AuthContext";
 import "./CashierSidebar.css";
 
 const CashierSidebar = ({ mobileOpen, onMobileMenuToggle }) => {
   const navigate = useNavigate();
+  const { role } = useAuth();
 
   const handleLogout = async () => {
     const confirmed = await showConfirm("Are you sure you want to log out?", "", "Yes", "Cancel", "question", true);
@@ -42,6 +45,21 @@ const CashierSidebar = ({ mobileOpen, onMobileMenuToggle }) => {
           &times;
         </button>
       </div>
+
+      {(role === "super_admin" || role === "super_receptionist") && (
+        <button
+          className="super-back-btn"
+          type="button"
+          onClick={() => {
+            navigate(role === "super_admin" ? "/admin" : "/super-receptionist/bookings/hotel");
+            handleNavClick();
+          }}
+          title={role === "super_admin" ? "Back to Admin Home" : "Back to Home"}
+        >
+          <FontAwesomeIcon icon={faArrowLeft} />
+          <span>{role === "super_admin" ? "Back to Admin Home" : "Back to Home"}</span>
+        </button>
+      )}
 
       <nav className="sidebar-nav">
         <ul className="nav-list">

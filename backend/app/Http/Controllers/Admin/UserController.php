@@ -41,7 +41,7 @@ class UserController extends Controller
             'gender' => 'sometimes|string|in:male,female,other',
             'emergency_contact_person' => 'sometimes|string|max:255',
             'emergency_contact_number' => 'sometimes|string|max:20',
-            'role' => 'required|string|in:admin,manager,receptionist,veterinary,cashier,inventory,customer',
+            'role' => 'required|string|in:admin,super_admin,manager,receptionist,super_receptionist,veterinary,cashier,inventory,customer',
             'is_active' => 'boolean',
         ]);
 
@@ -105,7 +105,7 @@ class UserController extends Controller
             'name' => 'sometimes|string|max:255',
             'email' => 'sometimes|string|email|max:255|unique:users,email,' . $id,
             'username' => 'sometimes|string|max:255|unique:users,username,' . $id,
-            'role' => 'sometimes|string|in:admin,manager,receptionist,veterinary,cashier,inventory,customer',
+            'role' => 'sometimes|string|in:admin,super_admin,manager,receptionist,super_receptionist,veterinary,cashier,inventory,customer',
             'is_active' => 'boolean',
         ]);
 

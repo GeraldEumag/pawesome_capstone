@@ -2,10 +2,13 @@ import React from "react";
 import { NavLink, useNavigate } from "react-router-dom";
 import { showConfirm } from "../../utils/alert.jsx";
 import { apiRequest, clearAuthStorage } from "../../api/client";
+import { useAuth } from "../../context/AuthContext";
+import { FaArrowLeft } from "react-icons/fa";
 import "./ManagerSidebar.css";
 
 const ManagerSidebar = ({ mobileOpen, onMobileMenuToggle }) => {
   const navigate = useNavigate();
+  const { role } = useAuth();
 
   const handleLogout = async () => {
     const confirmed = await showConfirm("Are you sure you want to log out?", "", "Yes", "Cancel", "question", true);
@@ -31,6 +34,18 @@ const ManagerSidebar = ({ mobileOpen, onMobileMenuToggle }) => {
           &times;
         </button>
       </div>
+
+      {role === "super_admin" && (
+        <button
+          className="super-back-btn"
+          type="button"
+          onClick={() => { navigate("/admin"); handleNavClick(); }}
+          title="Back to Admin Home"
+        >
+          <FaArrowLeft />
+          <span>Back to Admin Home</span>
+        </button>
+      )}
 
       <nav className="sidebar-nav">
         <ul className="nav-list">

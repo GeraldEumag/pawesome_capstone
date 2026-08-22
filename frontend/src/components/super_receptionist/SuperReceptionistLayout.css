@@ -1,0 +1,68 @@
+/* Super Receptionist Layout - Purple accent */
+
+.super-receptionist-layout {
+  --layout-accent: #7c3aed;
+}
+
+.super-receptionist-layout .topbar-user {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.4rem 0.75rem;
+  background: transparent;
+  border: 1px solid rgba(124, 58, 237, 0.2);
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.super-receptionist-layout .topbar-user:hover {
+  background: rgba(124, 58, 237, 0.08);
+  border-color: rgba(124, 58, 237, 0.4);
+}
+
+.super-receptionist-layout .topbar-avatar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #7c3aed, #a78bfa);
+  color: #ffffff;
+  font-size: 0.9rem;
+}
+
+.super-receptionist-layout .topbar-user strong {
+  display: block;
+  font-size: 0.82rem;
+  color: #1f2937;
+  line-height: 1.2;
+}
+
+.super-receptionist-layout .topbar-user small {
+  display: block;
+  font-size: 0.68rem;
+  color: #6b7280;
+  line-height: 1.2;
+}
+
+.super-receptionist-layout .topbar-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  background: transparent;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  color: #6b7280;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.super-receptionist-layout .topbar-icon:hover {
+  background: #f3f4f6;
+  color: #7c3aed;
+  border-color: #7c3aed;
+}

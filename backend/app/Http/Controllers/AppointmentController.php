@@ -184,7 +184,11 @@ class AppointmentController extends Controller
             'pet_id' => $request->pet_id,
             'service_id' => $request->service_id,
             'veterinarian_id' => $request->veterinarian_id,
-            'status' => in_array($request->user()?->role, ['veterinary', 'vet', 'veterinarian'], true) ? 'approved' : 'pending',
+            'status' => $request->user()?->hasRoleAccess('veterinary', 'vet', 'veterinarian')
+                ? 'approved'
+                : ($request->user()?->hasRoleAccess('receptionist', 'admin')
+                    ? 'approved'
+                    : 'pending'),
             'scheduled_at' => $request->scheduled_at,
             'notes' => $request->notes,
             'price' => $service->price ?? 0,
@@ -821,7 +825,7 @@ class AppointmentController extends Controller
             $updateData['pet_id'] = $request->pet_id;
         }
 
-        if ($request->has('customer_id') && in_array($request->user()?->role, ['admin', 'receptionist'], true)) {
+        if ($request->has('customer_id') && $request->user()?->hasRoleAccess('admin', 'receptionist')) {
             $updateData['customer_id'] = $request->customer_id;
         }
 

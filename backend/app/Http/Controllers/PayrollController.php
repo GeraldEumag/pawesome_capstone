@@ -350,7 +350,7 @@ class PayrollController extends Controller
         }
 
         // Check authorization: own payslip, or manager/admin role
-        if (auth()->id() !== $payroll->user_id && !in_array(auth()->user()?->role, ['admin', 'manager', 'payroll'], true)) {
+        if (auth()->id() !== $payroll->user_id && !auth()->user()?->hasRoleAccess('admin', 'manager', 'payroll')) {
             return response()->json([
                 'success' => false,
                 'message' => 'Unauthorized access.',

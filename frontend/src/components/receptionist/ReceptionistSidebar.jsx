@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { NavLink, useNavigate, useLocation } from "react-router-dom";
 import { showConfirm } from "../../utils/alert.jsx";
 import { apiRequest, clearAuthStorage } from "../../api/client";
+import { useAuth } from "../../context/AuthContext";
 import {
   FaHotel,
   FaStethoscope,
@@ -16,12 +17,14 @@ import {
   FaChartBar,
   FaCog,
   FaWallet,
+  FaArrowLeft,
 } from "react-icons/fa";
 import "./ReceptionistSidebar.css";
 
 const ReceptionistSidebar = ({ mobileOpen, onMobileMenuToggle }) => {
   const navigate = useNavigate();
   const location = useLocation();
+  const { role } = useAuth();
   const [bookingDropdownOpen, setBookingDropdownOpen] = useState(
     location.pathname.startsWith("/receptionist/bookings")
   );
@@ -56,6 +59,18 @@ const ReceptionistSidebar = ({ mobileOpen, onMobileMenuToggle }) => {
           &times;
         </button>
       </div>
+
+      {role === "super_admin" && (
+        <button
+          className="super-back-btn"
+          type="button"
+          onClick={() => { navigate("/admin"); handleNavClick(); }}
+          title="Back to Admin Home"
+        >
+          <FaArrowLeft />
+          <span>Back to Admin Home</span>
+        </button>
+      )}
 
       <nav className="sidebar-nav">
         <ul className="nav-list">

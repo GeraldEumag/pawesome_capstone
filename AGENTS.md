@@ -5,6 +5,10 @@
 Pawesome is a pet care management system with role-based access for 7 roles:
 customer, receptionist, cashier, inventory, veterinary, manager, admin.
 
+Two composite "super" roles extend the base roles:
+- `super_admin` — all staff modules (admin + manager + receptionist + cashier + inventory + vet). Customer portal blocked.
+- `super_receptionist` — receptionist + cashier + inventory combined.
+
 ## Architecture
 
 - **Backend:** Laravel 11 (PHP 8.2+) at `backend/`
@@ -56,9 +60,11 @@ php pawesome_report_reconciliation_audit.php   # Gate D: Report reconciliation
 | Role | Email | Password |
 | --- | --- | --- |
 | admin | admin@example.com | Password123! |
+| super admin | super_admin@example.com | Password123! |
 | manager | manager@example.com | password123 |
 | cashier | cashier@example.com | password123 |
 | receptionist | receptionist@example.com | Password123! |
+| super receptionist | super_receptionist@example.com | Password123! |
 | inventory | inventory@example.com | Password123! |
 | veterinary | vet@example.com | Password123! |
 | customer | customer@example.com | Password123! |

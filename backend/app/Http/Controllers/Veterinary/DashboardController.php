@@ -162,7 +162,7 @@ class DashboardController extends Controller
         $query = Appointment::with(['customer', 'pet', 'service', 'veterinarian']);
         
         // If not admin, filter by assigned veterinarian
-        if ($user->role !== 'admin') {
+        if (!$user->hasRoleAccess('admin')) {
             $query->where('veterinarian_id', $user->id);
         }
         

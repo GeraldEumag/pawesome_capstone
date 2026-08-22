@@ -1420,7 +1420,7 @@ class BoardingController extends Controller
         $boarding = Boarding::findOrFail($id);
         
         // Check access - only staff/admin can record usage
-        if (!in_array($request->user()?->role, ['admin', 'receptionist', 'veterinary', 'inventory'])) {
+        if (!$request->user()?->hasRoleAccess('admin', 'receptionist', 'veterinary', 'inventory')) {
             return response()->json([
                 'success' => false,
                 'message' => 'You do not have permission to record inventory usage'

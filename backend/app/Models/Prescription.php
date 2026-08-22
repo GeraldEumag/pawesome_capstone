@@ -86,9 +86,7 @@ class Prescription extends Model
             return false;
         }
 
-        return $user->role === 'admin' || 
-               $user->role === 'veterinary' || 
-               $user->role === 'vet';
+        return $user->hasRoleAccess('admin', 'veterinary', 'vet');
     }
 
     /**

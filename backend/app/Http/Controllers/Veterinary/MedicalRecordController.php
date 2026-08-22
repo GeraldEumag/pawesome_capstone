@@ -284,7 +284,7 @@ class MedicalRecordController extends Controller
         $user = request()->user();
 
         // Only admin or the creating veterinarian can delete
-        if ($user->role !== 'admin' && $record->veterinarian_id !== $user->id) {
+        if (!$user->hasRoleAccess('admin') && $record->veterinarian_id !== $user->id) {
             return response()->json(['message' => 'You do not have permission to delete this record'], 403);
         }
 
@@ -307,7 +307,7 @@ class MedicalRecordController extends Controller
         $user = request()->user();
 
         // Only admin or the creating veterinarian can lock
-        if ($user->role !== 'admin' && $record->veterinarian_id !== $user->id) {
+        if (!$user->hasRoleAccess('admin') && $record->veterinarian_id !== $user->id) {
             return response()->json(['message' => 'You do not have permission to lock this record'], 403);
         }
 
@@ -328,7 +328,7 @@ class MedicalRecordController extends Controller
         $user = request()->user();
 
         // Only admin or the creating veterinarian can finalize
-        if ($user->role !== 'admin' && $record->veterinarian_id !== $user->id) {
+        if (!$user->hasRoleAccess('admin') && $record->veterinarian_id !== $user->id) {
             return response()->json(['message' => 'You do not have permission to finalize this record'], 403);
         }
 

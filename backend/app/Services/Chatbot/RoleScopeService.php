@@ -90,6 +90,26 @@ class RoleScopeService
                     'What are your hours?',
                 ],
             ],
+            'super_admin' => [
+                'label' => 'Super Admin',
+                'welcome' => 'I can help you navigate any module across the entire system.',
+                'scope' => 'administration',
+                'suggestions' => [
+                    'Show system overview',
+                    'Navigate to front desk',
+                    'View all reports',
+                ],
+            ],
+            'super_receptionist' => [
+                'label' => 'Super Receptionist',
+                'welcome' => 'I can help with bookings, payments, and inventory management.',
+                'scope' => 'frontdesk',
+                'suggestions' => [
+                    'Help me with bookings',
+                    'Show POS shortcuts',
+                    'Check inventory status',
+                ],
+            ],
             'guest' => [
                 'label' => 'Guest',
                 'welcome' => 'I can help with general questions and guide you to the right part of the system.',

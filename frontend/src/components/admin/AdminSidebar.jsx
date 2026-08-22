@@ -1,5 +1,5 @@
 import React from "react";
-import { NavLink, useNavigate } from "react-router-dom";
+import { NavLink, useNavigate, useLocation } from "react-router-dom";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
   faChartPie,
@@ -15,9 +15,16 @@ import {
   faUserCircle,
   faSignOutAlt,
   faTimes,
+  faUserTie,
+  faCashRegister,
+  faBoxes,
+  faPaw,
+  faLayerGroup,
+  faArrowLeft,
 } from "@fortawesome/free-solid-svg-icons";
 import { showConfirm } from "../../utils/alert.jsx";
 import { apiRequest, clearAuthStorage } from "../../api/client";
+import { useAuth } from "../../context/AuthContext";
 import "./AdminSidebar.css";
 
 const NAV_SECTIONS = [
@@ -59,8 +66,25 @@ const NAV_SECTIONS = [
   },
 ];
 
+const OPERATIONS_HUB_SECTION = {
+  label: "Operations Hub",
+  items: [
+    { to: "/receptionist", label: "Front Desk", icon: faUserTie, external: true },
+    { to: "/cashier/pos", label: "POS / Cashier", icon: faCashRegister, external: true },
+    { to: "/inventory", label: "Inventory", icon: faBoxes, external: true },
+    { to: "/manager", label: "HR / Manager", icon: faUsers, external: true },
+    { to: "/veterinary", label: "Veterinary", icon: faPaw, external: true },
+  ],
+};
+
 const AdminSidebar = ({ mobileOpen, onMobileMenuToggle }) => {
   const navigate = useNavigate();
+  const location = useLocation();
+  const { role } = useAuth();
+  const onAdminHome = location.pathname === "/admin" || location.pathname === "/admin/";
+  const sections = role === "super_admin"
+    ? [...NAV_SECTIONS, OPERATIONS_HUB_SECTION]
+    : NAV_SECTIONS;
 
   const handleLogout = async () => {
     const confirmed = await showConfirm("Are you sure you want to log out?", "", "Yes", "Cancel", "question", true);
@@ -87,16 +111,29 @@ const AdminSidebar = ({ mobileOpen, onMobileMenuToggle }) => {
         </button>
       </div>
 
+      {role === "super_admin" && !onAdminHome && (
+        <button
+          className="super-back-btn"
+          type="button"
+          onClick={() => { navigate("/admin"); handleNavClick(); }}
+          title="Back to Admin Home"
+        >
+          <FontAwesomeIcon icon={faArrowLeft} />
+          <span>Back to Admin Home</span>
+        </button>
+      )}
+
       <nav className="sidebar-nav">
-        {NAV_SECTIONS.map((section) => (
+        {sections.map((section) => (
           <div key={section.label} className="nav-section">
             <span className="nav-section-label">{section.label}</span>
             <ul className="nav-list">
-              {section.items.map(({ to, label, icon, end }) => (
+              {section.items.map(({ to, label, icon, end, external }) => (
                 <li key={to} className="nav-item">
                   <NavLink to={to} end={end} onClick={handleNavClick}>
                     <FontAwesomeIcon icon={icon} className="nav-icon" />
                     <span>{label}</span>
+                    {external && <FontAwesomeIcon icon={faLayerGroup} className="external-icon" />}
                   </NavLink>
                 </li>
               ))}

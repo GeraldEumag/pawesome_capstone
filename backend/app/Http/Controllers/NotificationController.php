@@ -11,12 +11,26 @@ use Illuminate\Support\Facades\Validator;
 class NotificationController extends Controller
 {
     /**
+     * Map super roles to their effective base role so they receive
+     * broadcast notifications targeted at the underlying role.
+     */
+    private function effectiveRole(string $role): string
+    {
+        return match ($role) {
+            'super_admin'        => 'admin',
+            'super_receptionist' => 'receptionist',
+            default              => $role,
+        };
+    }
+
+    /**
      * Get all notifications for the authenticated user
      */
     public function index(Request $request): JsonResponse
     {
         $user = $request->user();
-        $query = Notification::forUserOrRole($user->id, $user->role);
+        $effectiveRole = $this->effectiveRole($user->role);
+        $query = Notification::forUserOrRole($user->id, $effectiveRole);
 
         // Filter by read status
         if ($request->has('unread')) {
@@ -28,7 +42,7 @@ class NotificationController extends Controller
         $notifications = $query->recent($limit)->get();
 
         // Get unread count
-        $unreadCount = Notification::forUserOrRole($user->id, $user->role)->unread()->count();
+        $unreadCount = Notification::forUserOrRole($user->id, $effectiveRole)->unread()->count();
 
         return response()->json([
             'notifications' => $notifications->map(fn (Notification $notification) => $this->formatNotification($notification)),
@@ -43,7 +57,8 @@ class NotificationController extends Controller
     public function getUnread(Request $request): JsonResponse
     {
         $user = $request->user();
-        $notifications = Notification::forUserOrRole($user->id, $user->role)
+        $effectiveRole = $this->effectiveRole($user->role);
+        $notifications = Notification::forUserOrRole($user->id, $effectiveRole)
             ->unread()
             ->latest()
             ->limit(20)
@@ -65,7 +80,7 @@ class NotificationController extends Controller
         /** @var User $actor */
         $actor = $request->user();
 
-        if ($actor->role !== 'admin') {
+        if (!$actor->hasRoleAccess('admin')) {
             return response()->json(['message' => 'Only administrators can create notifications.'], 403);
         }
 
@@ -144,10 +159,11 @@ class NotificationController extends Controller
     public function markAsRead(Request $request, $id): JsonResponse
     {
         $user = $request->user();
-        $notification = Notification::forUserOrRole($user->id, $user->role)->findOrFail($id);
+        $effectiveRole = $this->effectiveRole($user->role);
+        $notification = Notification::forUserOrRole($user->id, $effectiveRole)->findOrFail($id);
         $notification->markAsRead();
 
-        $unreadCount = Notification::forUserOrRole($user->id, $user->role)->unread()->count();
+        $unreadCount = Notification::forUserOrRole($user->id, $effectiveRole)->unread()->count();
 
         return response()->json([
             'message' => 'Notification marked as read',
@@ -161,8 +177,9 @@ class NotificationController extends Controller
     public function markAllAsRead(Request $request): JsonResponse
     {
         $user = $request->user();
-        
-        Notification::forUserOrRole($user->id, $user->role)
+        $effectiveRole = $this->effectiveRole($user->role);
+
+        Notification::forUserOrRole($user->id, $effectiveRole)
             ->unread()
             ->update([
                 'read' => true,
@@ -181,8 +198,9 @@ class NotificationController extends Controller
     public function clearAll(Request $request): JsonResponse
     {
         $user = $request->user();
-        
-        Notification::forUserOrRole($user->id, $user->role)->delete();
+        $effectiveRole = $this->effectiveRole($user->role);
+
+        Notification::forUserOrRole($user->id, $effectiveRole)->delete();
 
         return response()->json([
             'message' => 'All notifications cleared',
@@ -196,10 +214,11 @@ class NotificationController extends Controller
     public function destroy(Request $request, $id): JsonResponse
     {
         $user = $request->user();
-        $notification = Notification::forUserOrRole($user->id, $user->role)->findOrFail($id);
+        $effectiveRole = $this->effectiveRole($user->role);
+        $notification = Notification::forUserOrRole($user->id, $effectiveRole)->findOrFail($id);
         $notification->delete();
 
-        $unreadCount = Notification::forUserOrRole($user->id, $user->role)->unread()->count();
+        $unreadCount = Notification::forUserOrRole($user->id, $effectiveRole)->unread()->count();
 
         return response()->json([
             'message' => 'Notification deleted',
@@ -213,7 +232,8 @@ class NotificationController extends Controller
     public function unreadCount(Request $request): JsonResponse
     {
         $user = $request->user();
-        $count = Notification::forUserOrRole($user->id, $user->role)->unread()->count();
+        $effectiveRole = $this->effectiveRole($user->role);
+        $count = Notification::forUserOrRole($user->id, $effectiveRole)->unread()->count();
 
         return response()->json(['unread_count' => $count]);
     }

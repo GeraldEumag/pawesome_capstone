@@ -1,0 +1,168 @@
+/* Super Receptionist Sidebar - Purple accent for composite role */
+
+.super-receptionist-sidebar {
+  --sidebar-accent: #7c3aed;
+}
+
+/* Header */
+.super-receptionist-sidebar .sidebar-header {
+  border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.super-receptionist-sidebar .sidebar-logo {
+  color: #ffffff;
+  font-weight: 700;
+  font-size: 1rem;
+}
+
+/* Back to Home button */
+.super-receptionist-sidebar .super-back-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  width: calc(100% - 1.5rem);
+  margin: 0.75rem 0.75rem 0.25rem;
+  padding: 0.55rem 0.85rem;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 8px;
+  color: rgba(255, 255, 255, 0.9);
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.super-receptionist-sidebar .super-back-btn:hover {
+  background: rgba(255, 255, 255, 0.2);
+  color: #ffffff;
+  border-color: rgba(255, 255, 255, 0.4);
+}
+
+.super-receptionist-sidebar .super-back-btn svg {
+  font-size: 0.8rem;
+}
+
+/* Collapsible section toggle */
+.super-receptionist-sidebar .nav-section-toggle {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.625rem 1rem;
+  background: transparent;
+  border: none;
+  border-left: 3px solid transparent;
+  color: rgba(255, 255, 255, 0.85);
+  font-size: 0.78rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.super-receptionist-sidebar .nav-section-toggle:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: #ffffff;
+  border-left-color: var(--sidebar-accent);
+}
+
+.super-receptionist-sidebar .nav-section-icon {
+  font-size: 0.85rem;
+  opacity: 0.8;
+}
+
+.super-receptionist-sidebar .nav-section-label {
+  flex: 1;
+  text-align: left;
+}
+
+.super-receptionist-sidebar .nav-section-chevron {
+  font-size: 0.7rem;
+  opacity: 0.6;
+  transition: transform 0.2s ease;
+}
+
+.super-receptionist-sidebar .nav-section-chevron.open {
+  transform: rotate(180deg);
+}
+
+/* Nav list items */
+.super-receptionist-sidebar .nav-list {
+  list-style: none;
+  padding: 0.25rem 0;
+  margin: 0;
+}
+
+.super-receptionist-sidebar .nav-item {
+  margin: 0;
+}
+
+.super-receptionist-sidebar .nav-item a {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.55rem 1rem 0.55rem 2.2rem;
+  color: rgba(255, 255, 255, 0.75);
+  text-decoration: none;
+  font-size: 0.85rem;
+  font-weight: 500;
+  border-left: 3px solid transparent;
+  transition: all 0.18s ease;
+}
+
+.super-receptionist-sidebar .nav-item a:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: #ffffff;
+  border-left-color: var(--sidebar-accent);
+}
+
+.super-receptionist-sidebar .nav-item a.active {
+  background: rgba(124, 58, 237, 0.25);
+  color: #ffffff;
+  border-left-color: var(--sidebar-accent);
+  font-weight: 600;
+}
+
+.super-receptionist-sidebar .nav-icon {
+  font-size: 0.85rem;
+  width: 18px;
+  text-align: center;
+  opacity: 0.85;
+}
+
+.super-receptionist-sidebar .external-icon {
+  margin-left: auto;
+  font-size: 0.65rem;
+  opacity: 0.5;
+}
+
+/* Footer */
+.super-receptionist-sidebar .sidebar-footer {
+  border-top: 1px solid rgba(255, 255, 255, 0.15);
+  padding: 1rem;
+}
+
+.super-receptionist-sidebar .logout-btn {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.6rem 1rem;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 8px;
+  color: rgba(255, 255, 255, 0.9);
+  font-size: 0.85rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.super-receptionist-sidebar .logout-btn:hover {
+  background: rgba(220, 38, 38, 0.3);
+  border-color: rgba(220, 38, 38, 0.5);
+  color: #ffffff;
+}

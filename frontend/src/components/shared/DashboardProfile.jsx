@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { FaUserCircle, FaCamera, FaSpinner, FaCheck, FaTimes } from "react-icons/fa";
 import { useAuth } from "../../context/AuthContext";
 import { uploadProfilePhoto } from "../../api/client";
+import { formatRoleLabel } from "../../utils/roleLabels";
 import "./DashboardProfile.css";
 
 const resolveProfilePhoto = (url) => {
@@ -15,11 +16,13 @@ const resolveProfilePhoto = (url) => {
 
 const ROLE_PROFILE_PATHS = {
   admin: "/admin/profile",
+  super_admin: "/admin/profile",
   manager: "/manager/profile",
   cashier: "/cashier/profile",
   customer: "/customer/profile",
   veterinary: "/vet/profile",
   receptionist: "/receptionist/profile",
+  super_receptionist: "/super-receptionist/profile",
   inventory: "/inventory/profile",
   grooming: "/grooming/profile",
 };
@@ -98,7 +101,7 @@ export default function DashboardProfile({
 
         <span className="dashboard-profile-info">
           <strong>{name}</strong>
-          <small>{role}</small>
+          <small>{formatRoleLabel(role)}</small>
         </span>
       </button>
 

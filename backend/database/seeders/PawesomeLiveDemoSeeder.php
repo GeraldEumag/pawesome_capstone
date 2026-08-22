@@ -21,8 +21,10 @@ class PawesomeLiveDemoSeeder extends Seeder
     {
         $accounts = [
             'admin' => ['name' => 'Administrator', 'role' => 'admin', 'department' => 'Administration', 'position' => 'System Administrator'],
+            'super_admin' => ['name' => 'Super Administrator', 'role' => 'super_admin', 'department' => 'Administration', 'position' => 'Super System Administrator'],
             'manager' => ['name' => 'Manager', 'role' => 'manager', 'department' => 'Operations', 'position' => 'Operations Manager'],
             'receptionist' => ['name' => 'Receptionist', 'role' => 'receptionist', 'department' => 'Front Desk', 'position' => 'Receptionist'],
+            'super_receptionist' => ['name' => 'Super Receptionist', 'role' => 'super_receptionist', 'department' => 'Front Desk', 'position' => 'Super Receptionist'],
             'cashier' => ['name' => 'Cashier', 'role' => 'cashier', 'department' => 'Finance', 'position' => 'Cashier'],
             'inventory' => ['name' => 'Inventory Manager', 'role' => 'inventory', 'department' => 'Inventory', 'position' => 'Inventory Manager'],
             'vet' => ['name' => 'Veterinarian', 'role' => 'veterinary', 'department' => 'Veterinary', 'position' => 'Veterinarian'],
