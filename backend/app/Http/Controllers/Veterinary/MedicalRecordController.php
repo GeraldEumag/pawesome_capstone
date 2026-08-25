@@ -241,14 +241,11 @@ class MedicalRecordController extends Controller
                 'respiratory_rate', 'body_condition_score', 'notes', 'status'
             ]));
 
-            // Update prescriptions if provided
+            // Sync prescriptions: replace the full set on every save
             if ($request->has('prescriptions')) {
+                $record->prescriptions()->delete();
                 foreach ($request->prescriptions as $prescriptionData) {
-                    if (isset($prescriptionData['id'])) {
-                        $this->updatePrescription($prescriptionData['id'], $prescriptionData);
-                    } else {
-                        $this->createPrescription($record, $prescriptionData, $user);
-                    }
+                    $this->createPrescription($record, $prescriptionData, $user);
                 }
             }
 
@@ -638,17 +635,17 @@ class MedicalRecordController extends Controller
             'medication_name' => $data['medication_name'],
             'generic_name' => $data['generic_name'] ?? null,
             'medication_type' => $data['medication_type'] ?? null,
-            'dosage' => $data['dosage'],
-            'dosage_unit' => $data['dosage_unit'],
-            'frequency' => $data['frequency'],
-            'duration' => $data['duration'],
-            'route' => $data['route'] ?? null,
+            'dosage' => $data['dosage'] ?? '',
+            'dosage_unit' => $data['dosage_unit'] ?? 'unit',
+            'frequency' => $data['frequency'] ?? '',
+            'duration' => $data['duration'] ?? '',
+            'route' => $data['route'] ?? 'Oral',
             'instructions' => $data['instructions'] ?? null,
-            'quantity_prescribed' => $data['quantity_prescribed'],
-            'quantity_unit' => $data['quantity_unit'],
+            'quantity_prescribed' => $data['quantity_prescribed'] ?? 0,
+            'quantity_unit' => $data['quantity_unit'] ?? 'unit',
             'refills_allowed' => $data['refills_allowed'] ?? 0,
             'refills_remaining' => $data['refills_allowed'] ?? 0,
-            'start_date' => $data['start_date'],
+            'start_date' => $data['start_date'] ?? now()->toDateString(),
             'end_date' => $data['end_date'] ?? null,
             'side_effects_notes' => $data['side_effects_notes'] ?? null,
         ]);

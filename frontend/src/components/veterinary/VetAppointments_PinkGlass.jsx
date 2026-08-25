@@ -221,7 +221,7 @@ const VetAppointments = () => {
       { key: "pending", label: "Incoming" },
       { key: "approved", label: "Approved" },
       { key: "in_progress", label: "Ongoing" },
-      { key: "awaiting_payment", label: "Awaiting Payment" },
+      { key: "awaiting_payment", label: "Consultation Done" },
       { key: "completed", label: "Completed" },
       { key: "cancelled", label: "Cancelled" },
     ],
@@ -323,7 +323,10 @@ const VetAppointments = () => {
   const getStatusLabel = (status) => {
     switch (status) {
       case "in_progress":
+      case "in_consultation":
         return "Ongoing";
+      case "awaiting_payment":
+        return "Consultation Done";
       case "no_show":
         return "No Show";
       default:
@@ -346,11 +349,6 @@ const VetAppointments = () => {
         await apiRequest(`/veterinary/appointments/${appointmentId}/start`, {
           method: "POST",
           body: JSON.stringify({ notes: "Appointment started by veterinarian" }),
-        });
-      } else if (nextStatus === "completed") {
-        await apiRequest(`/veterinary/appointments/${appointmentId}/complete`, {
-          method: "POST",
-          body: JSON.stringify({ notes: "Appointment completed by veterinarian" }),
         });
       } else {
         await apiRequest(`/veterinary/appointments/${appointmentId}/status`, {
@@ -639,17 +637,20 @@ const VetAppointments = () => {
                     <button
                       className="action-btn complete-btn"
                       type="button"
-                      disabled={!canConsult || appointment.status === "awaiting_payment"}
+                      disabled={!canConsult && appointment.status !== "awaiting_payment"}
                       onClick={() => navigate(`/veterinary/appointments/${appointment.id}/consult`)}
                     >
                       <FontAwesomeIcon icon={faCircleCheck} />
-                      {appointment.status === "awaiting_payment" ? "Awaiting Payment" : "Consult"}
+                      {appointment.status === "awaiting_payment" ? "View Consultation" : "Consult"}
                     </button>
 
                     <NavLink
                       className="action-btn edit-btn"
                       to={`/veterinary/appointments/${appointment.id}/edit`}
-                      style={{ pointerEvents: appointment.status === "awaiting_payment" ? "none" : "auto", opacity: appointment.status === "awaiting_payment" ? 0.5 : 1 }}
+                      style={{
+                        pointerEvents: ["awaiting_payment", "completed"].includes(appointment.status) ? "none" : "auto",
+                        opacity: ["awaiting_payment", "completed"].includes(appointment.status) ? 0.5 : 1,
+                      }}
                     >
                       <FontAwesomeIcon icon={faEdit} /> Edit
                     </NavLink>
@@ -752,11 +753,11 @@ const VetAppointments = () => {
               <button
                 className="action-btn complete-btn"
                 type="button"
-                disabled={!["in_progress", "treated", "awaiting_payment"].includes(selectedAppointment.status)}
+                disabled={!["in_progress", "in_consultation", "treated", "awaiting_payment"].includes(selectedAppointment.status)}
                 onClick={() => navigate(`/veterinary/appointments/${selectedAppointment.id}/consult`)}
               >
                 <FontAwesomeIcon icon={faCircleCheck} />
-                {selectedAppointment.status === "awaiting_payment" ? "View (Awaiting Pay)" : "Consult"}
+                {selectedAppointment.status === "awaiting_payment" ? "View Consultation" : "Consult"}
               </button>
 
               <button

@@ -8,6 +8,7 @@ const VetAppointments = lazy(() => import("../components/veterinary/VetAppointme
 const VetServices = lazy(() => import("../components/veterinary/VetServices_PinkGlass"));
 const VetEditAppointment = lazy(() => import("../components/veterinary/VetEditAppointment_PinkGlass"));
 const VetConsultation = lazy(() => import("../components/veterinary/VetConsultation"));
+const VetAppointmentBilling = lazy(() => import("../components/veterinary/VetAppointmentBilling"));
 const VetHistory = lazy(() => import("../components/veterinary/VetHistory"));
 const VetCustomerProfiles = lazy(() => import("../components/veterinary/VetCustomerProfiles.jsx"));
 const VetReports = lazy(() => import("../components/veterinary/VetReports"));
@@ -36,6 +37,7 @@ const VetRoutes = () => (
         <Route path="appointments/:id/edit" element={<VetEditAppointment />} />
         <Route path="services" element={<VetServices />} />
         <Route path="appointments/:id/consult" element={<VetConsultation />} />
+        <Route path="appointments/:id/billing" element={<VetAppointmentBilling />} />
         <Route path="history" element={<VetHistory />} />
         <Route path="customer-profiles" element={<VetCustomerProfiles />} />
         <Route path="reports" element={<VetReports />} />

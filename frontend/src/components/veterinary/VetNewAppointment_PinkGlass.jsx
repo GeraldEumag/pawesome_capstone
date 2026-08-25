@@ -127,20 +127,10 @@ const VetNewAppointment = () => {
       }
 
       try {
-        const servicesData = await apiRequest("/services");
+        const servicesData = await apiRequest("/admin/services");
         servicesList = safeArray(servicesData);
-      } catch (serviceErr) {
-        try {
-          const adminServicesData = await apiRequest("/admin/services");
-          servicesList = safeArray(adminServicesData);
-        } catch {
-          try {
-            const receptionistServicesData = await apiRequest("/receptionist/services?active_only=1");
-            servicesList = safeArray(receptionistServicesData);
-          } catch {
-            servicesList = [];
-          }
-        }
+      } catch {
+        servicesList = [];
       }
 
       // Transform services to ensure required fields

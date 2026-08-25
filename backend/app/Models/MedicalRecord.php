@@ -13,6 +13,7 @@ class MedicalRecord extends Model
 
     protected $fillable = [
         'pet_id',
+        'customer_id',
         'appointment_id',
         'veterinarian_id',
         'visit_date',

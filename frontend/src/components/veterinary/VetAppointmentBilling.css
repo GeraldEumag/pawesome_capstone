@@ -1,0 +1,345 @@
+/* ─────────────────────────────────────────────────────────────
+   VetAppointmentBilling.css — Billing page for veterinary role
+───────────────────────────────────────────────────────────── */
+
+.vet-billing-page {
+  display: grid;
+  gap: var(--vet-section-gap, 28px);
+  padding: var(--vet-page-padding, 32px);
+  color: var(--veterinary-text-primary);
+  font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  padding-bottom: 60px;
+}
+
+.vet-billing-page,
+.vet-billing-page * {
+  box-sizing: border-box;
+}
+
+/* ── Shared Card Base ──────────────────────────────────────── */
+
+.billing-header,
+.billing-section-card,
+.billing-loading,
+.billing-empty {
+  background: var(--veterinary-glass-bg);
+  border: 1.5px solid var(--veterinary-glass-border);
+  border-radius: var(--veterinary-radius-2xl);
+  box-shadow: var(--veterinary-shadow-sm);
+  backdrop-filter: blur(20px);
+  overflow: hidden;
+}
+
+/* ── Header Card ───────────────────────────────────────────── */
+
+.billing-header {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  padding: 20px 24px;
+}
+
+.billing-header-copy {
+  min-width: 0;
+}
+
+.billing-eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  color: var(--veterinary-primary);
+  font-size: 0.76rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  margin-bottom: 4px;
+}
+
+.billing-header h2 {
+  margin: 0 0 3px;
+  font-size: 1.4rem;
+  font-weight: 800;
+  color: var(--veterinary-text-primary);
+  letter-spacing: -0.02em;
+}
+
+.billing-header p {
+  margin: 0;
+  color: var(--veterinary-text-muted);
+  font-size: 0.9rem;
+  font-weight: 500;
+}
+
+.billing-back {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 16px;
+  min-height: 42px;
+  border-radius: 999px;
+  background: rgba(255, 95, 147, 0.08);
+  color: var(--veterinary-primary);
+  border: 1.5px solid rgba(255, 95, 147, 0.2);
+  font-size: 0.875rem;
+  font-weight: 700;
+  cursor: pointer;
+  white-space: nowrap;
+  flex-shrink: 0;
+  transition: background 0.18s ease, transform 0.18s ease;
+}
+
+.billing-back:hover {
+  background: rgba(255, 95, 147, 0.15);
+  transform: translateX(-2px);
+}
+
+/* ── Section Card ──────────────────────────────────────────── */
+
+.billing-section-header {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 20px 24px;
+  border-bottom: 1px solid var(--vet-divider);
+}
+
+.billing-section-icon {
+  width: var(--vet-icon-md, 48px);
+  height: var(--vet-icon-md, 48px);
+  min-width: var(--vet-icon-md, 48px);
+  border-radius: var(--vet-icon-radius-md, 16px);
+  background: var(--vet-icon-gradient);
+  display: grid;
+  place-items: center;
+  color: #ffffff;
+  font-size: 1.15rem;
+  box-shadow: 0 6px 16px rgba(255, 95, 147, 0.25);
+  flex-shrink: 0;
+}
+
+.billing-section-title-group {
+  flex: 1;
+  min-width: 0;
+}
+
+.billing-section-title-group h3 {
+  margin: 0 0 3px;
+  font-size: 1.05rem;
+  font-weight: 800;
+  color: var(--veterinary-text-primary);
+  letter-spacing: -0.01em;
+}
+
+.billing-section-title-group p {
+  margin: 0;
+  font-size: 0.83rem;
+  font-weight: 500;
+  color: var(--veterinary-text-muted);
+}
+
+/* ── Patient Summary Grid ──────────────────────────────────── */
+
+.billing-summary-grid {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 0;
+}
+
+.billing-summary-grid article {
+  display: grid;
+  gap: 4px;
+  padding: 18px 20px;
+  border-right: 1px solid var(--vet-divider);
+}
+
+.billing-summary-grid article:last-child {
+  border-right: none;
+}
+
+.billing-summary-grid svg {
+  color: var(--veterinary-primary);
+  font-size: 1.1rem;
+  margin-bottom: 4px;
+}
+
+.billing-summary-grid span {
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--veterinary-text-muted);
+}
+
+.billing-summary-grid strong {
+  font-size: 0.95rem;
+  font-weight: 750;
+  color: var(--veterinary-text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.billing-summary-grid small {
+  font-size: 0.8rem;
+  font-weight: 500;
+  color: var(--veterinary-text-muted);
+}
+
+/* ── Billing Totals Grid ───────────────────────────────────── */
+
+.billing-totals-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 0;
+}
+
+.billing-total-item {
+  padding: 20px 24px;
+  display: grid;
+  gap: 6px;
+  border-right: 1px solid var(--vet-divider);
+}
+
+.billing-total-item:last-child {
+  border-right: none;
+}
+
+.billing-total-item--highlight {
+  background: rgba(255, 95, 147, 0.04);
+}
+
+.billing-total-label {
+  font-size: 0.73rem;
+  font-weight: 750;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--veterinary-text-muted);
+}
+
+.billing-total-value {
+  font-size: 1.2rem;
+  font-weight: 800;
+  color: var(--veterinary-text-primary);
+}
+
+.billing-total-value--accent {
+  color: var(--veterinary-primary);
+}
+
+/* ── Payment Status Badge ──────────────────────────────────── */
+
+.billing-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 12px;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: capitalize;
+  white-space: nowrap;
+}
+
+.billing-badge--paid {
+  background: rgba(16, 185, 129, 0.12);
+  color: #059669;
+  border: 1px solid rgba(16, 185, 129, 0.3);
+}
+
+.billing-badge--partial {
+  background: rgba(245, 158, 11, 0.12);
+  color: #d97706;
+  border: 1px solid rgba(245, 158, 11, 0.3);
+}
+
+.billing-badge--unpaid {
+  background: rgba(239, 68, 68, 0.1);
+  color: #dc2626;
+  border: 1px solid rgba(239, 68, 68, 0.25);
+}
+
+.billing-badge--pending {
+  background: rgba(99, 102, 241, 0.1);
+  color: #4f46e5;
+  border: 1px solid rgba(99, 102, 241, 0.25);
+}
+
+/* ── Billing Panel Body ────────────────────────────────────── */
+
+.billing-panel-body {
+  padding: 20px 24px;
+}
+
+/* ── Loading / Empty ───────────────────────────────────────── */
+
+.billing-loading,
+.billing-empty {
+  padding: 48px 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  min-height: 200px;
+  color: var(--veterinary-text-muted);
+  font-size: 1rem;
+  font-weight: 550;
+}
+
+/* ── Responsive ────────────────────────────────────────────── */
+
+@media (max-width: 1100px) {
+  .billing-summary-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+
+  .billing-summary-grid article {
+    border-bottom: 1px solid var(--vet-divider);
+    border-right: 1px solid var(--vet-divider);
+  }
+
+  .billing-summary-grid article:nth-child(3n) {
+    border-right: none;
+  }
+
+  .billing-totals-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .billing-total-item:nth-child(2n) {
+    border-right: none;
+  }
+
+  .billing-total-item {
+    border-bottom: 1px solid var(--vet-divider);
+  }
+}
+
+@media (max-width: 900px) {
+  .vet-billing-page {
+    padding: 20px;
+    padding-bottom: 40px;
+  }
+
+  .billing-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+}
+
+@media (max-width: 600px) {
+  .vet-billing-page {
+    padding: 14px;
+    padding-bottom: 30px;
+  }
+
+  .billing-summary-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .billing-totals-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .billing-total-item {
+    border-right: none;
+  }
+}

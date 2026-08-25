@@ -75,6 +75,10 @@ class ConsultationWorkflowController extends Controller
             return response()->json(['error' => 'Only active consultations can be completed'], 422);
         }
 
+        if ($appointment->veterinarian_id && (int) $appointment->veterinarian_id !== (int) $request->user()->id) {
+            return response()->json(['error' => 'This consultation is assigned to another veterinarian'], 403);
+        }
+
         $validator = Validator::make($request->all(), [
             'diagnosis' => 'nullable|string',
             'treatment_notes' => 'nullable|string',

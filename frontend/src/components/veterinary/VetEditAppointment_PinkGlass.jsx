@@ -126,16 +126,10 @@ const VetEditAppointment = () => {
       }
 
       try {
-        const servicesData = await apiRequest("/services");
-        servicesList = safeArray(servicesData);
-      } catch (serviceErr) {
-        console.error("Services API failed:", serviceErr);
-        try {
-          const adminServicesData = await apiRequest("/admin/services");
-          servicesList = safeArray(adminServicesData);
-        } catch (adminServiceErr) {
-          console.error("Admin services fallback failed:", adminServiceErr);
-        }
+        const adminServicesData = await apiRequest("/admin/services");
+        servicesList = safeArray(adminServicesData);
+      } catch {
+        servicesList = [];
       }
 
       if (servicesList.length === 0) {

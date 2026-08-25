@@ -91,10 +91,15 @@ class DashboardController extends Controller
 
     public function patients()
     {
+        $authId = Auth::id();
+
         return response()->json(
             Pet::with(['customer', 'appointments' => function($query) {
                 $query->latest()->take(3);
             }])
+                ->whereHas('appointments', function($query) use ($authId) {
+                    $query->where('veterinarian_id', $authId);
+                })
                 ->get()
         );
     }

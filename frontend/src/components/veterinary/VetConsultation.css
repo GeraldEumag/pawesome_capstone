@@ -166,6 +166,13 @@
 .consult-apt-badge--completed      { background: var(--vet-badge-completed-bg); color: var(--vet-badge-completed-color); border-color: var(--vet-badge-completed-border); }
 .consult-apt-badge--submitted      { background: var(--vet-badge-admitted-bg); color: var(--vet-badge-admitted-color); border-color: var(--vet-badge-admitted-border); }
 
+/* ── Appointment Status Badge in header ────────────────────── */
+
+.consult-header .consult-apt-badge {
+  margin-left: auto;
+  flex-shrink: 0;
+}
+
 /* ── Patient Summary Grid ──────────────────────────────────── */
 
 .consult-summary {
@@ -228,7 +235,8 @@
   border-left: 4px solid var(--veterinary-primary);
 }
 
-.consult-start-panel--payment {
+.consult-start-panel--payment,
+.consult-start-panel--complete {
   border-left-color: #10b981;
   background: rgba(16, 185, 129, 0.04);
 }
@@ -254,7 +262,8 @@
   flex-shrink: 0;
 }
 
-.consult-start-icon-wrap--payment {
+.consult-start-icon-wrap--payment,
+.consult-start-icon-wrap--complete {
   background: rgba(16, 185, 129, 0.12);
   color: #10b981;
 }
@@ -358,6 +367,30 @@
   background: rgba(100, 116, 139, 0.06);
 }
 
+/* ── Clinical Assessment full-width label ──────────────────── */
+
+.consult-label--full {
+  grid-column: 1 / -1;
+}
+
+.consult-label--secondary {
+  opacity: 0.8;
+}
+
+.consult-optional {
+  font-size: 0.72rem;
+  font-weight: 500;
+  color: var(--veterinary-text-muted);
+  text-transform: none;
+  letter-spacing: 0;
+  margin-left: 4px;
+}
+
+.consult-textarea--secondary {
+  min-height: 72px !important;
+  font-size: 0.85rem !important;
+}
+
 /* ── Vitals Grid ───────────────────────────────────────────── */
 
 .consult-vitals-grid {
@@ -369,6 +402,10 @@
 
 .consult-vitals-grid--3 {
   grid-template-columns: repeat(3, 1fr);
+}
+
+.consult-vitals-grid--4 {
+  grid-template-columns: repeat(4, 1fr);
 }
 
 .consult-vital-field {
@@ -511,10 +548,126 @@
   font-weight: 650;
 }
 
-/* ── Billing Body ──────────────────────────────────────────── */
+/* ── Prescription Table ────────────────────────────────────── */
 
-.consult-billing-body {
+.consult-rx-table-wrap {
   padding: 20px 24px;
+  overflow-x: auto;
+}
+
+.consult-rx-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.875rem;
+}
+
+.consult-rx-table th {
+  text-align: left;
+  padding: 8px 12px;
+  font-size: 0.72rem;
+  font-weight: 750;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--veterinary-text-muted);
+  border-bottom: 1.5px solid var(--vet-divider);
+  white-space: nowrap;
+}
+
+.consult-rx-table td {
+  padding: 6px 8px;
+  border-bottom: 1px solid var(--vet-divider);
+  vertical-align: middle;
+}
+
+.consult-rx-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.consult-rx-table input {
+  width: 100%;
+  border: 1.5px solid var(--vet-input-border);
+  border-radius: 10px;
+  padding: 8px 10px;
+  font: inherit;
+  font-size: 0.875rem;
+  font-weight: 500;
+  background: var(--vet-input-bg);
+  color: var(--veterinary-text-primary);
+  outline: none;
+  transition: border-color 0.18s ease;
+  min-width: 80px;
+}
+
+.consult-rx-table input:focus {
+  border-color: var(--veterinary-primary);
+  box-shadow: 0 0 0 3px var(--vet-input-focus-ring);
+}
+
+.consult-rx-table input:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  background: rgba(100, 116, 139, 0.06);
+}
+
+.consult-rx-remove {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  background: rgba(239, 68, 68, 0.08);
+  color: #dc2626;
+  border: 1.5px solid rgba(239, 68, 68, 0.2);
+  cursor: pointer;
+  font-size: 0.8rem;
+  transition: background 0.18s ease;
+}
+
+.consult-rx-remove:hover {
+  background: rgba(239, 68, 68, 0.15);
+}
+
+.consult-rx-add {
+  margin-top: 14px;
+}
+
+.consult-rx-empty {
+  padding: 28px 24px;
+  text-align: center;
+  color: var(--veterinary-text-muted);
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+
+/* ── Button size variants ──────────────────────────────────── */
+
+.consult-btn--sm {
+  padding: 9px 16px !important;
+  min-height: 38px !important;
+  font-size: 0.82rem !important;
+}
+
+/* ── Billing button (teal) ─────────────────────────────────── */
+
+.consult-btn--billing {
+  background: linear-gradient(135deg, #34d399, #10b981);
+  color: #ffffff;
+  border: none;
+  box-shadow: 0 6px 18px rgba(16, 185, 129, 0.3);
+}
+
+.consult-btn--billing:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 26px rgba(16, 185, 129, 0.42);
+}
+
+/* ── Awaiting-payment badge override (show as success/green)── */
+
+.consult-apt-badge--awaiting-payment {
+  background: rgba(16, 185, 129, 0.12) !important;
+  color: #059669 !important;
+  border-color: rgba(16, 185, 129, 0.3) !important;
 }
 
 /* ── Loading / Empty ───────────────────────────────────────── */
@@ -621,16 +774,9 @@
     border-right: none;
   }
 
-  .consult-vitals-grid {
-    grid-template-columns: repeat(3, 1fr);
-  }
-
-  .consult-payment-grid {
-    grid-template-columns: repeat(3, 1fr);
-  }
-
-  .consult-payment-item:nth-child(3n) {
-    border-right: none;
+  .consult-vitals-grid,
+  .consult-vitals-grid--4 {
+    grid-template-columns: repeat(2, 1fr);
   }
 }
 
@@ -660,16 +806,9 @@
   }
 
   .consult-vitals-grid,
-  .consult-vitals-grid--3 {
+  .consult-vitals-grid--3,
+  .consult-vitals-grid--4 {
     grid-template-columns: repeat(2, 1fr);
-  }
-
-  .consult-payment-grid {
-    grid-template-columns: 1fr 1fr;
-  }
-
-  .consult-payment-item {
-    border-bottom: 1px solid var(--vet-divider);
   }
 
   .consult-section-header {
@@ -688,11 +827,8 @@
   }
 
   .consult-vitals-grid,
-  .consult-vitals-grid--3 {
-    grid-template-columns: 1fr;
-  }
-
-  .consult-payment-grid {
+  .consult-vitals-grid--3,
+  .consult-vitals-grid--4 {
     grid-template-columns: 1fr;
   }
 
