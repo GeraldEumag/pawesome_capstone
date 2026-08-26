@@ -1,6 +1,7 @@
 import { useMemo } from "react";
+import { Link } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
-import { FaUser, FaEnvelope, FaPhone, FaMapMarkerAlt, FaCalendarAlt, FaPaw } from "react-icons/fa";
+import { FaUser, FaEnvelope, FaPhone, FaMapMarkerAlt, FaCalendarAlt, FaPaw, FaEdit } from "react-icons/fa";
 import "./CustomerUserInfo.css";
 
 const CustomerUserInfo = () => {
@@ -26,6 +27,9 @@ const CustomerUserInfo = () => {
         <span className="userinfo-eyebrow"><FaPaw /> Customer Account</span>
         <h2>My Profile</h2>
         <p>Your personal information and membership details.</p>
+        <Link to="/customer/profile" className="userinfo-edit-link">
+          <FaEdit /> Edit Profile
+        </Link>
       </header>
 
       <div className="userinfo-panel">

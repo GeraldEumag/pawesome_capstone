@@ -1,4 +1,5 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import { apiRequest } from "../../api/client";
 import { clearAuth } from "../../utils/auth";
 import { useAuth } from "../../context/AuthContext";
@@ -25,9 +26,12 @@ const paymentLabels = {
 
 const CustomerPayments = () => {
   const { user } = useAuth();
+  const [searchParams] = useSearchParams();
   const [payments, setPayments] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const highlightId = searchParams.get("order_id") || searchParams.get("boarding_id");
+  const highlightRef = useRef(null);
 
   const fetchPayments = async () => {
     try {
@@ -73,7 +77,7 @@ const CustomerPayments = () => {
 
           return (
             status === "approved" &&
-            ["unpaid", "pending", "rejected", "paid"].includes(paymentStatus)
+            ["unpaid", "pending", "rejected"].includes(paymentStatus)
           );
         })
         .map((request) => {
@@ -119,7 +123,7 @@ const CustomerPayments = () => {
 
           return (
             status === "approved" &&
-            ["unpaid", "pending", "rejected", "paid"].includes(paymentStatus)
+            ["unpaid", "pending", "rejected"].includes(paymentStatus)
           );
         })
         .map((order) => ({
@@ -143,7 +147,7 @@ const CustomerPayments = () => {
 
           return (
             ["approved", "scheduled"].includes(status) &&
-            ["unpaid", "pending", "rejected", "paid"].includes(paymentStatus)
+            ["unpaid", "pending", "rejected"].includes(paymentStatus)
           );
         })
         .map((boarding) => ({
@@ -216,6 +220,13 @@ const CustomerPayments = () => {
     fetchPayments();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // Scroll to highlighted row after payments load
+  useEffect(() => {
+    if (highlightId && !loading && highlightRef.current) {
+      highlightRef.current.scrollIntoView({ behavior: "smooth", block: "center" });
+    }
+  }, [highlightId, loading]);
 
   const summary = useMemo(() => {
     const paid = payments.filter((item) => getPaymentStatus(item) === "paid");
@@ -394,9 +405,14 @@ const CustomerPayments = () => {
                   const rowKey = `${payment.payment_source}-${payment.id}`;
                   const paymentStatus = getPaymentStatus(payment);
                   const proofUrl = payment.proof_url || payment.payment_proof_url || payment.receipt_url;
+                  const isHighlighted = highlightId && String(payment.id) === String(highlightId);
 
                   return (
-                    <tr key={rowKey}>
+                    <tr
+                      key={rowKey}
+                      ref={isHighlighted ? highlightRef : null}
+                      className={isHighlighted ? "payment-row-highlight" : undefined}
+                    >
                       <td>
                           <strong>{payment.display_id || payment.receipt_number || payment.reference_number || "N/A"}</strong>
                       </td>

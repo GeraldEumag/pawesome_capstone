@@ -111,7 +111,8 @@ class PortalController extends Controller
             + $orders->where('payment_status', 'pending')->count();
         $paymentPaid = $serviceRequests->where('payment_status', 'paid')->count()
             + $orders->where('payment_status', 'paid')->count();
-        $loyaltyPoints = ($paymentPaid * 100) + $completed * 50;
+        $computedLoyaltyPoints = ($paymentPaid * 100) + $completed * 50;
+        $loyaltyPoints = ($cust->loyalty_points > 0) ? (int) $cust->loyalty_points : $computedLoyaltyPoints;
         $memberStatus = $loyaltyPoints >= 1000 ? 'Premium' : 'Standard';
 
         $recentServiceRequests = $serviceRequests

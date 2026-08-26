@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { apiRequest } from "../../api/client";
 import { showWarning, showSuccess, showError } from "../../utils/alert.jsx";
 import "./CustomerMedicalConfinements.css";
+import PaymentUploadModal from "../shared/PaymentUploadModal";
 
 const list = (result, key) => (Array.isArray(result?.[key]) ? result[key] : Array.isArray(result) ? result : []);
 
@@ -18,8 +19,7 @@ const CustomerMedicalConfinements = () => {
   const [records, setRecords] = useState([]);
   const [notes, setNotes] = useState({});
   const [logs, setLogs] = useState({});
-  const [files, setFiles] = useState({});
-  const [fileNames, setFileNames] = useState({});
+  const [uploadModal, setUploadModal] = useState({ open: false, endpoint: "", title: "" });
   const [error, setError] = useState("");
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(true);
@@ -39,30 +39,12 @@ const CustomerMedicalConfinements = () => {
 
   useEffect(() => { load(); }, []);
 
-  const uploadPayment = async (record) => {
-    const file = files[record.id];
-    if (!file) {
-      showWarning("Please choose a payment proof file first.");
-      return;
-    }
-    const form = new FormData();
-    form.append("payment_method", "online_transfer");
-    form.append("payment_proof", file);
-    try {
-      await apiRequest(`/customer/medical-confinements/${record.id}/payment-proof`, { method: "POST", body: form });
-      setMessage("Payment proof submitted successfully.");
-      setError("");
-      showSuccess("Payment proof submitted.");
-      await load();
-    } catch (err) {
-      setError(err.message || "Failed to upload payment proof.");
-      showError(err.message || "Failed to upload payment proof.");
-    }
-  };
-
-  const handleFileChange = (recordId, file) => {
-    setFiles((prev) => ({ ...prev, [recordId]: file }));
-    setFileNames((prev) => ({ ...prev, [recordId]: file?.name || "" }));
+  const openPaymentModal = (record) => {
+    setUploadModal({
+      open: true,
+      endpoint: `/customer/medical-confinements/${record.id}/payment-proof`,
+      title: `Confinement #${record.id}`,
+    });
   };
 
   const loadNotes = async (record) => {
@@ -152,19 +134,9 @@ const CustomerMedicalConfinements = () => {
 
                 {["unpaid", "rejected", "partial"].includes(record.payment_status) && (
                   <div className="confinement-actions">
-                    <label className="confinement-file-label" htmlFor={`proof-${record.id}`}>
-                      {fileNames[record.id] ? `📎 ${fileNames[record.id]}` : "Choose Payment Proof"}
-                    </label>
-                    <input
-                      id={`proof-${record.id}`}
-                      className="confinement-file-input"
-                      type="file"
-                      accept="image/*,.pdf"
-                      onChange={(e) => handleFileChange(record.id, e.target.files?.[0])}
-                    />
                     <button
                       className="confinement-action-btn primary"
-                      onClick={() => uploadPayment(record)}
+                      onClick={() => openPaymentModal(record)}
                     >
                       Upload Payment Proof
                     </button>
@@ -216,6 +188,14 @@ const CustomerMedicalConfinements = () => {
           </div>
         )}
       </div>
+
+      <PaymentUploadModal
+        open={uploadModal.open}
+        onClose={() => setUploadModal({ open: false, endpoint: "", title: "" })}
+        onSuccess={load}
+        endpoint={uploadModal.endpoint}
+        title={uploadModal.title}
+      />
     </section>
   );
 };

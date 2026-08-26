@@ -297,8 +297,8 @@ class CustomerStoreController extends Controller
                 $items = $itemsQuery->get();
 
                 return [
-                    'id' => $order->order_number ?? $order->order_id ?? $order->id,
-                    'database_id' => $order->id,
+                    'id' => $order->id,
+                    'order_number' => $order->order_number ?? null,
                     'reference_number' => $order->reference_number ?? null,
                     'customer_name' => $order->customer_name ?? null,
                     'customer_email' => $order->customer_email ?? null,
@@ -321,6 +321,64 @@ class CustomerStoreController extends Controller
         ]);
     }
 
+    public function show(Request $request, $id)
+    {
+        $user = Auth::user();
+
+        if (!$user) {
+            return response()->json(['message' => 'Unauthorized'], 401);
+        }
+
+        $order = DB::table('customer_orders')
+            ->where('id', $id)
+            ->where(function ($q) use ($user) {
+                if (Schema::hasColumn('customer_orders', 'customer_id')) {
+                    $q->where('customer_id', $user->id);
+                }
+                if (Schema::hasColumn('customer_orders', 'user_id')) {
+                    $q->orWhere('user_id', $user->id);
+                }
+                if (Schema::hasColumn('customer_orders', 'customer_email') && $user->email) {
+                    $q->orWhere('customer_email', $user->email);
+                }
+            })
+            ->first();
+
+        if (!$order) {
+            return response()->json(['message' => 'Order not found'], 404);
+        }
+
+        $orderId = $order->id;
+        $itemsQuery = DB::table('customer_order_items');
+        if (Schema::hasColumn('customer_order_items', 'customer_order_id')) {
+            $itemsQuery->where('customer_order_id', $orderId);
+        } elseif (Schema::hasColumn('customer_order_items', 'order_id')) {
+            $itemsQuery->where('order_id', $orderId);
+        }
+        $items = $itemsQuery->get();
+
+        return response()->json([
+            'success' => true,
+            'data' => [
+                'id' => $order->id,
+                'order_number' => $order->order_number ?? null,
+                'reference_number' => $order->reference_number ?? null,
+                'customer_name' => $order->customer_name ?? null,
+                'customer_email' => $order->customer_email ?? null,
+                'subtotal' => (float) ($order->subtotal ?? 0),
+                'discount_amount' => (float) ($order->discount_amount ?? 0),
+                'total_amount' => (float) ($order->total_amount ?? $order->total ?? 0),
+                'payment_method' => $order->payment_method ?? null,
+                'payment_proof' => $order->payment_proof ?? null,
+                'payment_status' => $order->payment_status ?? 'pending',
+                'status' => $order->status ?? 'pending',
+                'created_at' => $order->created_at,
+                'updated_at' => $order->updated_at,
+                'items' => $items,
+            ],
+        ]);
+    }
+
     public function uploadPaymentProof(Request $request, $id)
     {
         $user = Auth::user();
@@ -331,13 +389,24 @@ class CustomerStoreController extends Controller
 
         $validated = $request->validate([
             'payment_method' => 'nullable|string|max:50',
-            'payment_reference' => 'nullable|string|max:255',
+            'payment_reference' => 'required|string|max:255',
             'payment_proof' => 'required|file|mimes:jpg,jpeg,png,pdf|max:5120',
         ]);
 
+        // Ownership check with fallback for customer_id / user_id / customer_email
         $order = DB::table('customer_orders')
             ->where('id', $id)
-            ->where('customer_id', $user->id)
+            ->where(function ($q) use ($user) {
+                if (Schema::hasColumn('customer_orders', 'customer_id')) {
+                    $q->where('customer_id', $user->id);
+                }
+                if (Schema::hasColumn('customer_orders', 'user_id')) {
+                    $q->orWhere('user_id', $user->id);
+                }
+                if (Schema::hasColumn('customer_orders', 'customer_email') && $user->email) {
+                    $q->orWhere('customer_email', $user->email);
+                }
+            })
             ->first();
 
         if (!$order) {

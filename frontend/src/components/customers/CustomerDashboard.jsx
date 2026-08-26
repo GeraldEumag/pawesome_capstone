@@ -14,7 +14,6 @@ import {
   faTriangleExclamation,
   faPlus,
   faCalendarCheck,
-  faList,
   faArrowRight,
   faCreditCard,
   faBell,
@@ -102,13 +101,7 @@ const CustomerDashboard = () => {
           icon: faPaw,
           tone: "pink",
         },
-        {
-          title: "Pending Orders",
-          value: dashboardData.pending_orders || 0,
-          subtitle: "Waiting for approval",
-          icon: faClock,
-          tone: "warning",
-        },
+
         {
           title: "Pending Service Requests",
           value: dashboardData.pending_service_requests || dashboardData.pending_requests || 0,
@@ -224,9 +217,9 @@ const CustomerDashboard = () => {
 
   const quickActions = [
     { label: "Add Pet", icon: faPlus, link: "/customer/pets", tone: "pink" },
-    { label: "Book Services", icon: faCalendarCheck, link: "/customer/bookings", tone: "soft" },
+    { label: "Book Services", icon: faCalendarCheck, link: "/customer/services", tone: "soft" },
         { label: "Upload Payment", icon: faCreditCard, link: "/customer/payments", tone: "gold" },
-    { label: "View Orders", icon: faList, link: "/customer/orders", tone: "info" },
+
     { label: "View Notifications", icon: faBell, link: "/customer/notifications", tone: "soft" },
   ];
 
@@ -235,7 +228,7 @@ const CustomerDashboard = () => {
   const ROUTE_META = [
     { path: "/customer", title: "Customer Dashboard", subtitle: "Manage your pets, bookings, rewards, and service updates in one place." },
     { path: "/customer/services", title: "Services", subtitle: "Browse and book grooming, hotel, and veterinary services." },
-    { path: "/customer/orders", title: "My Orders", subtitle: "Track your product orders and delivery status." },
+
     { path: "/customer/pets", title: "My Pets", subtitle: "View and manage your registered pets and their profiles." },
     { path: "/customer/hotel", title: "Hotel Booking", subtitle: "Book a comfortable stay for your pet at our hotel." },
     { path: "/customer/grooming", title: "Grooming Booking", subtitle: "Schedule grooming sessions for your pet." },

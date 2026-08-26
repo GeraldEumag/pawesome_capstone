@@ -6,7 +6,6 @@ import CustomerDashboard from "../components/customers/CustomerDashboard";
 // Core customer modules
 import CustomerReports from "../components/customers/CustomerReports";
 import CustomerPets from "../components/customers/CustomerPets";
-import CustomerOrders from "../components/customers/CustomerOrders";
 import CustomerChatbot from "../components/customers/CustomerChatbot";
 import CustomerUserInfo from "../components/customers/CustomerUserInfo";
 import ProfileSettings from "../components/shared/ProfileSettings";
@@ -37,7 +36,6 @@ const CustomerRoutes = () => (
       <Route path="bookings" element={<Navigate to="/customer/services" replace />} />
       <Route path="booking" element={<Navigate to="/customer/services" replace />} />
       <Route path="requests" element={<Navigate to="/customer/services" replace />} />
-      <Route path="orders" element={<CustomerOrders />} />
       <Route path="pets" element={<CustomerPets />} />
       <Route path="hotel" element={<HotelForm />} />
       <Route path="grooming" element={<GroomingForm />} />

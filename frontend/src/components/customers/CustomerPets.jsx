@@ -42,6 +42,40 @@ const initialForm = (customerEmail) => ({
   image: null,
 });
 
+// Pure helpers — defined outside the component so they are stable module-level functions
+// and do NOT need to be listed in useMemo dependency arrays.
+const getPetName = (pet) => pet?.name || pet?.pet_name || "Unnamed Pet";
+const getPetSpecies = (pet) => pet?.species || pet?.type || pet?.pet_species || "Pet";
+const getPetBreed = (pet) => pet?.breed || pet?.pet_breed || "No breed";
+const getPetBirthdate = (pet) => pet?.birthdate || pet?.birth_date || pet?.date_of_birth || "";
+const getPetAge = (pet) => {
+  const birthdate = getPetBirthdate(pet);
+  if (!birthdate) return "N/A";
+  const birth = new Date(`${String(birthdate).slice(0, 10)}T00:00:00`);
+  const today = new Date();
+  if (Number.isNaN(birth.getTime()) || birth > today) return "N/A";
+  let age = today.getFullYear() - birth.getFullYear();
+  const monthDiff = today.getMonth() - birth.getMonth();
+  if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birth.getDate())) age -= 1;
+  return age <= 0 ? "Less than 1 year" : `${age} ${age === 1 ? "year" : "years"}`;
+};
+const getPetNotes = (pet) =>
+  pet?.notes || pet?.medical_notes || pet?.special_needs || "No medical notes or special needs recorded.";
+const formatDate = (value) => {
+  if (!value) return "No date";
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return value;
+  return date.toLocaleDateString("en-PH", { year: "numeric", month: "short", day: "numeric" });
+};
+const normalizeMedicalRecord = (record, index) => ({
+  id: record?.id || index + 1,
+  date: record?.date || record?.visit_date || record?.appointment_date || record?.created_at || "",
+  title: record?.title || record?.service_name || record?.service_type || record?.type || "Medical Record",
+  diagnosis: record?.diagnosis || record?.condition || "No diagnosis stated.",
+  symptoms: record?.symptoms || "No symptoms recorded.",
+  treatment: record?.treatment || record?.procedure || record?.medical_notes || "No treatment stated.",
+});
+
 const CustomerPets = () => {
   const { user } = useAuth();
   const customerEmail = user?.email || "";
@@ -80,70 +114,8 @@ const CustomerPets = () => {
     }, 3500);
   };
 
-  const getPetName = (pet) => pet?.name || pet?.pet_name || "Unnamed Pet";
-  const getPetSpecies = (pet) => pet?.species || pet?.type || pet?.pet_species || "Pet";
-  const getPetBreed = (pet) => pet?.breed || pet?.pet_breed || "No breed";
-  const getPetBirthdate = (pet) => pet?.birthdate || pet?.birth_date || pet?.date_of_birth || "";
-  const getPetAge = (pet) => {
-    const birthdate = getPetBirthdate(pet);
-
-    if (!birthdate) return "N/A";
-
-    const birth = new Date(`${String(birthdate).slice(0, 10)}T00:00:00`);
-    const today = new Date();
-
-    if (Number.isNaN(birth.getTime()) || birth > today) return "N/A";
-
-    let age = today.getFullYear() - birth.getFullYear();
-    const monthDiff = today.getMonth() - birth.getMonth();
-
-    if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birth.getDate())) {
-      age -= 1;
-    }
-
-    return age <= 0 ? "Less than 1 year" : `${age} ${age === 1 ? "year" : "years"}`;
-  };
-
-  const getPetNotes = (pet) =>
-    pet?.notes ||
-    pet?.medical_notes ||
-    pet?.special_needs ||
-    "No medical notes or special needs recorded.";
-
-  const formatDate = (value) => {
-    if (!value) return "No date";
-
-    const date = new Date(value);
-    if (Number.isNaN(date.getTime())) return value;
-
-    return date.toLocaleDateString("en-PH", {
-      year: "numeric",
-      month: "short",
-      day: "numeric",
-    });
-  };
-
-  const normalizeMedicalRecord = (record, index) => ({
-    id: record?.id || index + 1,
-    date:
-      record?.date ||
-      record?.visit_date ||
-      record?.appointment_date ||
-      record?.created_at ||
-      "",
-    title:
-      record?.title ||
-      record?.service_name ||
-      record?.service_type ||
-      record?.type ||
-      "Medical Record",
-    diagnosis: record?.diagnosis || record?.condition || "No diagnosis stated.",
-    symptoms: record?.symptoms || "No symptoms recorded.",
-    treatment:
-      record?.treatment ||
-      record?.procedure ||
-      record?.medical_notes ||
-      "No treatment stated.",
+  const normalizeFullMedicalRecord = (record, index) => ({
+    ...normalizeMedicalRecord(record, index),
     prescription: record?.prescription || "No prescription recorded.",
     notes: record?.notes || record?.remarks || record?.description || "",
     weight: record?.weight || "",
@@ -272,7 +244,7 @@ const CustomerPets = () => {
 
       return matchesSpecies && matchesSearch;
     });
-  }, [pets, archivedPets, searchTerm, speciesFilter, activeTab, getPetName, getPetSpecies, getPetBreed, getPetAge, getPetNotes, formatDate]);
+  }, [pets, archivedPets, searchTerm, speciesFilter, activeTab]);
 
   const validateForm = () => {
     const errors = {};
@@ -544,7 +516,7 @@ const CustomerPets = () => {
 
     try {
       const result = await apiRequest(`/customer/pets/${petId}/medical-history`);
-      const records = safeArray(result).map(normalizeMedicalRecord);
+      const records = safeArray(result).map(normalizeFullMedicalRecord);
       setMedicalHistory(records);
     } catch {
       setHistoryError(

@@ -530,7 +530,7 @@ class ServiceRequestController extends Controller
 
         $validated = $request->validate([
             'payment_method' => 'nullable|string|max:255',
-            'payment_reference' => 'nullable|string|max:255',
+            'payment_reference' => 'required|string|max:255',
             'payment_proof' => 'required|file|mimes:jpg,jpeg,png,pdf|max:5120',
         ]);
 

@@ -216,3 +216,19 @@
     padding: 0.85rem 1rem;
   }
 }
+.userinfo-edit-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  margin-top: 0.6rem;
+  padding: 0.4rem 0.9rem;
+  border-radius: 8px;
+  background: #ff5f93;
+  color: #fff;
+  font-size: 0.85rem;
+  font-weight: 600;
+  text-decoration: none;
+  transition: background 0.15s;
+}
+
+.userinfo-edit-link:hover { background: #e84f7f; }

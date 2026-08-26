@@ -196,6 +196,33 @@
   white-space: nowrap;
 }
 
+.col-action-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  align-items: center;
+}
+
+.customer-cancel-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.35rem 0.7rem;
+  border-radius: var(--cr-radius-pill);
+  font-size: 0.78rem;
+  font-weight: 700;
+  border: 0;
+  cursor: pointer;
+  color: #fff;
+  background: #ef4444;
+  transition: background 0.18s ease, transform 0.18s ease;
+}
+
+.customer-cancel-btn:hover {
+  background: #dc2626;
+  transform: translateY(-1px);
+}
+
 .no-action {
   color: var(--cr-muted);
   font-size: 0.9rem;

@@ -7,14 +7,15 @@ import {
   FaTimesCircle,
   FaCashRegister,
   FaPaw,
-  FaTimes,
+  FaBan,
 } from "react-icons/fa";
-import gcashQr from "../../assets/PAWESOME TEST GCASH.png";
+import Swal from "sweetalert2";
 import "./CustomerRequestStatus.css";
 import { apiRequest } from "../../api/client";
 import { normalizeList } from "../../utils/normalizeList";
 import { showSuccess, showError } from "../../utils/alert.jsx";
 import { useAuth } from "../../context/AuthContext";
+import PaymentUploadModal from "../shared/PaymentUploadModal";
 
 const safeLower = (value) => {
   if (value === null || value === undefined) return "";
@@ -43,8 +44,7 @@ const CustomerRequestStatus = () => {
   const { user } = useAuth();
   const [requests, setRequests] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
-  const [uploadingId, setUploadingId] = useState(null);
-  const [payModalItem, setPayModalItem] = useState(null);
+  const [uploadModal, setUploadModal] = useState({ open: false, endpoint: "", title: "" });
 
   useEffect(() => {
     fetchRequests();
@@ -155,29 +155,43 @@ const CustomerRequestStatus = () => {
     return ["approved", "scheduled"].includes(status) && ["unpaid", "rejected"].includes(paymentStatus);
   };
 
-  const uploadPaymentProof = async (item, file) => {
-    if (!file) return;
+  const canCancelBoarding = (item) =>
+    item.source === "boarding" && safeLower(item?.status) === "pending";
 
-    const formData = new FormData();
-    formData.append("payment_method", "Online Payment");
-    formData.append("payment_reference", `REF-${Date.now()}`);
-    formData.append("payment_proof", file);
+  const openUploadModal = (item) => {
+    let endpoint = "";
+    if (item.source === "store_order")
+      endpoint = `/customer/store/orders/${item.id}/payment-proof`;
+    else if (item.source === "boarding")
+      endpoint = `/customer/boarding-requests/${item.id}/payment-proof`;
+    else
+      endpoint = `/customer/requests/${item.id}/payment-proof`;
+    setUploadModal({ open: true, endpoint, title: item.type_label || "Service" });
+  };
 
+  const cancelBoarding = async (item) => {
+    const { value: reason } = await Swal.fire({
+      title: "Cancel Boarding Request",
+      input: "textarea",
+      inputLabel: "Cancellation Reason",
+      inputPlaceholder: "Please provide a reason for cancellation...",
+      inputValidator: (v) => !v ? "Cancellation reason is required" : undefined,
+      showCancelButton: true,
+      confirmButtonText: "Cancel Request",
+      cancelButtonText: "Keep Request",
+      confirmButtonColor: "#ef4444",
+    });
+    if (!reason) return;
     try {
-      setUploadingId(`${item.source}-${item.id}`);
-      if (item.source === "store_order") {
-        await apiRequest(`/customer/store/orders/${item.id}/payment-proof`, "POST", formData);
-      } else if (item.source === "boarding") {
-        await apiRequest(`/customer/boarding-requests/${item.id}/payment-proof`, "POST", formData);
-      } else {
-        await apiRequest(`/customer/requests/${item.id}/payment-proof`, "POST", formData);
-      }
-      await fetchRequests();
-      showSuccess("Payment proof uploaded. Your payment is pending cashier verification.");
-    } catch (error) {
-      showError(error.message || "Failed to upload payment proof.");
-    } finally {
-      setUploadingId(null);
+      await apiRequest(
+        `/customer/boarding-requests/${item.id}/cancel`,
+        "POST",
+        { cancellation_reason: reason }
+      );
+      showSuccess("Boarding request cancelled successfully.");
+      fetchRequests();
+    } catch (err) {
+      showError(err.message || "Failed to cancel boarding request.");
     }
   };
 
@@ -250,16 +264,28 @@ const CustomerRequestStatus = () => {
                       </span>
                     </td>
                     <td className="col-action">
-                      {canPay(item) ? (
-                        <button
-                          className="customer-pay-btn"
-                          onClick={() => setPayModalItem(item)}
-                        >
-                          Pay
-                        </button>
-                      ) : (
-                        <span className="no-action">—</span>
-                      )}
+                      <div className="col-action-buttons">
+                        {canPay(item) && (
+                          <button
+                            className="customer-pay-btn"
+                            onClick={() => openUploadModal(item)}
+                          >
+                            Pay
+                          </button>
+                        )}
+                        {canCancelBoarding(item) && (
+                          <button
+                            className="customer-cancel-btn"
+                            onClick={() => cancelBoarding(item)}
+                            title="Cancel boarding request"
+                          >
+                            <FaBan /> Cancel
+                          </button>
+                        )}
+                        {!canPay(item) && !canCancelBoarding(item) && (
+                          <span className="no-action">—</span>
+                        )}
+                      </div>
                     </td>
                   </tr>
                 );
@@ -269,45 +295,13 @@ const CustomerRequestStatus = () => {
         )}
       </section>
 
-      {payModalItem && (
-        <div className="pay-modal-overlay" onClick={() => setPayModalItem(null)}>
-          <div className="pay-modal" onClick={(e) => e.stopPropagation()}>
-            <div className="pay-modal-header">
-              <h3>GCash Payment</h3>
-              <button className="pay-modal-close" onClick={() => setPayModalItem(null)}>
-                <FaTimes />
-              </button>
-            </div>
-
-            <div className="pay-modal-body">
-              <p className="pay-modal-instruction">
-                Scan the QR code or send payment to the number below.
-              </p>
-              <div className="pay-modal-qr">
-                <img src={gcashQr} alt="GCash QR Code" />
-              </div>
-              <p className="pay-modal-number">GCash No: 0917 123 4567</p>
-            </div>
-
-            <div className="pay-modal-footer">
-              <input
-                id="modal-pay-upload"
-                type="file"
-                accept="image/*,.pdf"
-                style={{ display: "none" }}
-                onChange={(event) => {
-                  uploadPaymentProof(payModalItem, event.target.files?.[0]);
-                  setPayModalItem(null);
-                }}
-              />
-              <label className="customer-pay-btn pay-modal-upload" htmlFor="modal-pay-upload">
-                <FaCashRegister />
-                Upload Receipt
-              </label>
-            </div>
-          </div>
-        </div>
-      )}
+      <PaymentUploadModal
+        open={uploadModal.open}
+        onClose={() => setUploadModal({ open: false, endpoint: "", title: "" })}
+        onSuccess={fetchRequests}
+        endpoint={uploadModal.endpoint}
+        title={uploadModal.title}
+      />
     </div>
   );
 };

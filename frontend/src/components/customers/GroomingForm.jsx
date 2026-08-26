@@ -8,7 +8,7 @@ import {
   validateServiceCompatibility,
   getUnavailableServiceMessage,
 } from "../../config/petServiceRules";
-import { showAlert, showSuccess, showError } from "../../utils/alert.jsx";
+import { showAlert, showSuccess, showError, showConfirm } from "../../utils/alert.jsx";
 
 const GroomingForm = () => {
   const { user } = useAuth();
@@ -258,6 +258,24 @@ const GroomingForm = () => {
     }
   };
 
+  const cancelRequest = async (item) => {
+    const confirmed = await showConfirm(
+      "Cancel this appointment?",
+      "This action cannot be undone.",
+      "Yes, Cancel",
+      "Keep",
+      "warning"
+    );
+    if (!confirmed) return;
+    try {
+      await apiRequest(`/customer/requests/${item.id}/cancel`, "PATCH");
+      showSuccess("Appointment cancelled.");
+      fetchAppointments();
+    } catch (err) {
+      showError(err.message || "Failed to cancel appointment.");
+    }
+  };
+
   return (
     <section className="grooming-container">
       <div className="grooming-header">
@@ -449,6 +467,16 @@ const GroomingForm = () => {
                 <span className={`status ${item.status}`}>
                   {item.status}
                 </span>
+
+                {(item.status === "pending" || item.status === "submitted") && (
+                  <button
+                    className="grooming-cancel-btn"
+                    onClick={() => cancelRequest(item)}
+                    style={{ marginTop: "0.5rem", background: "#ef4444", color: "#fff", border: "none", borderRadius: "6px", padding: "0.4rem 0.8rem", cursor: "pointer", fontSize: "0.85rem", fontWeight: 600 }}
+                  >
+                    Cancel
+                  </button>
+                )}
               </div>
             ))
           )}

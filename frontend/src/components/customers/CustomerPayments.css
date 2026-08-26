@@ -357,3 +357,25 @@
     padding: 0.9rem 1rem;
   }
 }
+
+.payment-row-highlight {
+  background: rgba(59, 130, 246, 0.10) !important;
+  outline: 2px solid #3b82f6;
+  outline-offset: -2px;
+}
+
+.receipt-btn {
+  display: inline-block;
+  padding: 0.35rem 0.75rem;
+  background: #f1f5f9;
+  border: 1px solid #cbd5e1;
+  border-radius: 6px;
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+  color: #0f172a;
+  text-decoration: none;
+  transition: background 0.15s;
+}
+
+.receipt-btn:hover { background: #e2e8f0; }

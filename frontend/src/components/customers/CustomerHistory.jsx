@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { apiRequest } from "../../api/client";
 import { showError } from "../../utils/alert.jsx";
 import HistoryTimeline from "../shared/HistoryTimeline";
@@ -10,13 +10,14 @@ const TYPE_OPTIONS = [
 ];
 
 const CustomerHistory = () => {
-  const [entries, setEntries]       = useState([]);
-  const [loading, setLoading]       = useState(true);
-  const [error, setError]           = useState("");
-  const [searchTerm, setSearchTerm] = useState("");
-  const [dateFilter, setDateFilter] = useState("all");
-  const [typeFilter, setTypeFilter] = useState("all");
+  const [rawEntries, setRawEntries]   = useState([]);
+  const [loading, setLoading]         = useState(true);
+  const [error, setError]             = useState("");
+  const [searchTerm, setSearchTerm]   = useState("");
+  const [dateFilter, setDateFilter]   = useState("all");
+  const [typeFilter, setTypeFilter]   = useState("all");
 
+  // Fetch raw data once on mount — no filter deps to avoid repeated API calls
   const fetchHistory = useCallback(async () => {
     setLoading(true);
     setError("");
@@ -32,7 +33,7 @@ const CustomerHistory = () => {
         items.forEach((o) => mapped.push({
           id: `ORD-${o.id}`, reference_id: `ORD-${o.id}`,
           action: `Order ${o.status || "pending"}`,
-          description: `Order #${o.id} — ${o.payment_method || "N/A"}`,
+          description: `Order #${o.order_number || o.id} — ${o.payment_method || "N/A"}`,
           status: o.status || "pending", category: "order",
           actor: "You", actor_role: "customer",
           amount: Number(o.total_amount || 0), method: o.payment_method,
@@ -63,33 +64,37 @@ const CustomerHistory = () => {
           created_at: b.check_in_date || b.created_at,
         }));
       }
-      const now = Date.now();
-      const keyword = searchTerm.toLowerCase();
-      const filtered = mapped
-        .filter((e) => typeFilter === "all" || e.category === typeFilter)
-        .filter((e) => !keyword || (e.description || "").toLowerCase().includes(keyword)
-          || (e.reference_id || "").toLowerCase().includes(keyword)
-          || (e.service_name || "").toLowerCase().includes(keyword)
-          || (e.pet_name || "").toLowerCase().includes(keyword))
-        .filter((e) => {
-          if (dateFilter === "all") return true;
-          const d = new Date(e.created_at).getTime();
-          if (dateFilter === "today") return new Date(e.created_at).toDateString() === new Date().toDateString();
-          if (dateFilter === "week")  return now - d < 7 * 86400000;
-          if (dateFilter === "month") return now - d < 30 * 86400000;
-          return true;
-        })
-        .sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
-      setEntries(filtered);
+      setRawEntries(mapped);
     } catch (err) {
       setError(err.message || "Failed to load activity history.");
       showError(err.message || "Failed to load activity history.");
     } finally {
       setLoading(false);
     }
-  }, [searchTerm, dateFilter, typeFilter]);
+  }, []);
 
   useEffect(() => { fetchHistory(); }, [fetchHistory]);
+
+  // Apply filters client-side — no extra API calls
+  const entries = useMemo(() => {
+    const now = Date.now();
+    const keyword = searchTerm.toLowerCase();
+    return rawEntries
+      .filter((e) => typeFilter === "all" || e.category === typeFilter)
+      .filter((e) => !keyword || (e.description || "").toLowerCase().includes(keyword)
+        || (e.reference_id || "").toLowerCase().includes(keyword)
+        || (e.service_name || "").toLowerCase().includes(keyword)
+        || (e.pet_name || "").toLowerCase().includes(keyword))
+      .filter((e) => {
+        if (dateFilter === "all") return true;
+        const d = new Date(e.created_at).getTime();
+        if (dateFilter === "today") return new Date(e.created_at).toDateString() === new Date().toDateString();
+        if (dateFilter === "week")  return now - d < 7 * 86400000;
+        if (dateFilter === "month") return now - d < 30 * 86400000;
+        return true;
+      })
+      .sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+  }, [rawEntries, searchTerm, dateFilter, typeFilter]);
 
   const exportColumns = [
     { key: "reference_id", label: "Reference" },

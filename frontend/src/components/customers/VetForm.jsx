@@ -8,7 +8,7 @@ import {
   validateServiceCompatibility,
   getSpecialCareWarning,
 } from "../../config/petServiceRules";
-import { showAlert, showSuccess, showError } from "../../utils/alert.jsx";
+import { showAlert, showSuccess, showError, showConfirm } from "../../utils/alert.jsx";
 
 const VetForm = () => {
   const { user } = useAuth();
@@ -215,6 +215,24 @@ const VetForm = () => {
     }
   };
 
+  const cancelRequest = async (item) => {
+    const confirmed = await showConfirm(
+      "Cancel this appointment?",
+      "This action cannot be undone.",
+      "Yes, Cancel",
+      "Keep",
+      "warning"
+    );
+    if (!confirmed) return;
+    try {
+      await apiRequest(`/customer/requests/${item.id}/cancel`, "PATCH");
+      showSuccess("Appointment cancelled.");
+      fetchAppointments();
+    } catch (err) {
+      showError(err.message || "Failed to cancel appointment.");
+    }
+  };
+
   return (
     <section className="vet-container">
       <div className="vet-header">
@@ -291,8 +309,12 @@ const VetForm = () => {
             >
               <option value="">Select a service...</option>
               {services
-                .filter((s) =>
-                  [
+                .filter((s) => {
+                  const cat = (s.category || s.service_type || s.type || "").toLowerCase();
+                  return [
+                    "vet",
+                    "veterinary",
+                    "veterinary_service",
                     "consultation",
                     "vaccination",
                     "treatment",
@@ -301,8 +323,8 @@ const VetForm = () => {
                     "dental",
                     "diagnostics",
                     "medication",
-                  ].includes((s.category || "").toLowerCase())
-                )
+                  ].includes(cat) || cat.includes("vet");
+                })
                 .map((service) => (
                   <option key={service.id} value={service.name}>
                     {service.name}
@@ -378,6 +400,16 @@ const VetForm = () => {
                 <span className={`vet-status ${item.status}`}>
                   {item.status}
                 </span>
+
+                {(item.status === "pending" || item.status === "submitted") && (
+                  <button
+                    className="vet-cancel-btn"
+                    onClick={() => cancelRequest(item)}
+                    style={{ marginTop: "0.5rem", background: "#ef4444", color: "#fff", border: "none", borderRadius: "6px", padding: "0.4rem 0.8rem", cursor: "pointer", fontSize: "0.85rem", fontWeight: 600 }}
+                  >
+                    Cancel
+                  </button>
+                )}
               </div>
             ))
           )}

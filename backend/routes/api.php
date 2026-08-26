@@ -294,7 +294,7 @@ Route::middleware(['auth.api', 'throttle:api', 'role:customer'])->prefix('custom
     // Customer Store Checkout
     Route::post('store/checkout', [CustomerStoreController::class, 'checkout']);
     Route::get('store/orders', [CustomerStoreController::class, 'orders']);
-    Route::get('store/orders/{id}', [CustomerStoreController::class, 'orders']);
+    Route::get('store/orders/{id}', [CustomerStoreController::class, 'show']);
     Route::post('store/orders/{id}/payment-proof', [CustomerStoreController::class, 'uploadPaymentProof']);
     Route::get('store/orders/{id}/receipt', [CustomerStoreController::class, 'receipt']);
     Route::post('store/orders/{id}/cancel', [CustomerStoreController::class, 'cancel']);

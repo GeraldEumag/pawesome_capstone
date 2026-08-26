@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { showConfirm, showWarning, showSuccess, showError } from "../../utils/alert.jsx";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import PaymentUploadModal from "../../components/shared/PaymentUploadModal";
 import catHotelImg from "../../assets/CATHOTEL.jpg";
 import dogHotelImg from "../../assets/DOGHOTEL.jpg";
 import daycareImg from "../../assets/PETDAYCARE.jpg";
@@ -58,7 +59,7 @@ const HotelForm = () => {
   const [myBookings, setMyBookings] = useState([]);
   const [pets, setPets] = useState([]);
   const [careLogs, setCareLogs] = useState({});
-  const [paymentFiles, setPaymentFiles] = useState({});
+  const [uploadModal, setUploadModal] = useState({ open: false, endpoint: "", title: "" });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [successMessage, setSuccessMessage] = useState("");
@@ -273,34 +274,12 @@ const HotelForm = () => {
     }
   };
 
-  const handlePaymentUpload = async (booking) => {
-    const file = paymentFiles[booking.id];
-    if (!file) {
-      setError("Choose a payment proof file first.");
-      showWarning("Choose a payment proof file first.");
-      return;
-    }
-
-    const formData = new FormData();
-    formData.append("payment_method", "online_transfer");
-    formData.append("payment_proof", file);
-
-    try {
-      setLoading(true);
-      await apiRequest(`/customer/boarding-requests/${booking.id}/payment-proof`, {
-        method: "POST",
-        body: formData,
-      });
-      setSuccessMessage("Payment proof submitted for cashier verification.");
-      showSuccess("Payment proof submitted for cashier verification.");
-      setPaymentFiles((prev) => ({ ...prev, [booking.id]: null }));
-      await fetchMyBookings();
-    } catch (err) {
-      setError(err.message || "Failed to upload payment proof.");
-      showError(err.message || "Failed to upload payment proof.");
-    } finally {
-      setLoading(false);
-    }
+  const openPaymentModal = (booking) => {
+    setUploadModal({
+      open: true,
+      endpoint: `/customer/boarding-requests/${booking.id}/payment-proof`,
+      title: `Boarding — ${booking.pet_name || "Pet"}`,
+    });
   };
 
   const fetchCareLogs = async (bookingId) => {
@@ -737,12 +716,9 @@ const HotelForm = () => {
                       )}
 
                       {canUploadPayment(booking) && (
-                        <div className="bc-payment-row">
-                          <input type="file" accept="image/*,.pdf" onChange={(e) => setPaymentFiles((prev) => ({ ...prev, [booking.id]: e.target.files?.[0] }))} />
-                          <button className="bc-action primary" type="button" onClick={() => handlePaymentUpload(booking)} disabled={loading || !paymentFiles[booking.id]}>
-                            <FontAwesomeIcon icon={faReceipt} /> Upload Proof
-                          </button>
-                        </div>
+                        <button className="bc-action primary" type="button" onClick={() => openPaymentModal(booking)}>
+                          <FontAwesomeIcon icon={faReceipt} /> Upload Payment
+                        </button>
                       )}
 
                       {["checked_in", "in_care", "ready_for_pickup", "completed"].includes(booking.status) && (
@@ -769,6 +745,14 @@ const HotelForm = () => {
           )}
         </div>
       )}
+
+      <PaymentUploadModal
+        open={uploadModal.open}
+        onClose={() => setUploadModal({ open: false, endpoint: "", title: "" })}
+        onSuccess={fetchMyBookings}
+        endpoint={uploadModal.endpoint}
+        title={uploadModal.title}
+      />
     </div>
   );
 };
