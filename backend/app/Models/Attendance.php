@@ -25,9 +25,14 @@ class Attendance extends Model
         'is_early_leave',
         'location',
         'notes',
+        'remarks',
+        'review_status',
         'approved_by',
         'salary_rate',
         'daily_earnings',
+        'source',
+        'biometric_id',
+        'terminal_id',
     ];
 
     protected $casts = [

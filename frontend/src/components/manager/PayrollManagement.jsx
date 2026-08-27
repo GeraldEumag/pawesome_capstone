@@ -7,6 +7,7 @@ import { useAuth } from "../../context/AuthContext";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import DatePickerInput from "../../components/shared/DatePickerInput";
 import ManualPayrollModal from "./ManualPayrollModal";
+import PayrollComputation from "./PayrollComputation";
 import {
   faCalendarAlt,
   faCalculator,
@@ -219,6 +220,9 @@ const PayrollManagement = () => {
   const navigate = useNavigate();
   const { role } = useAuth();
   const canOperatePayroll = ["manager", "admin"].includes(role);
+
+  // Tab switching: "records" (payroll list) or "computation" (PayrollComputation view)
+  const [payrollTab, setPayrollTab] = useState("records");
   const [payrolls, setPayrolls] = useState([]);
   const [backendSummary, setBackendSummary] = useState(null);
 
@@ -755,8 +759,50 @@ const PayrollManagement = () => {
   const pageStart = filteredPayrolls.length ? (currentPage - 1) * itemsPerPage + 1 : 0;
   const pageEnd = Math.min(currentPage * itemsPerPage, filteredPayrolls.length);
 
+  // If Computation tab is active, render PayrollComputation directly
+  if (payrollTab === "computation") {
+    return (
+      <div className="manager-payroll">
+        <div className="payroll-tab-bar">
+          <button
+            type="button"
+            className={`payroll-tab-btn${payrollTab === "records" ? " active" : ""}`}
+            onClick={() => setPayrollTab("records")}
+          >
+            <FontAwesomeIcon icon={faTable} /> Payroll Records
+          </button>
+          <button
+            type="button"
+            className={`payroll-tab-btn${payrollTab === "computation" ? " active" : ""}`}
+            onClick={() => setPayrollTab("computation")}
+          >
+            <FontAwesomeIcon icon={faCalculator} /> Payroll Computation
+          </button>
+        </div>
+        <PayrollComputation />
+      </div>
+    );
+  }
+
   return (
     <div className="manager-payroll">
+      <div className="payroll-tab-bar">
+        <button
+          type="button"
+          className={`payroll-tab-btn${payrollTab === "records" ? " active" : ""}`}
+          onClick={() => setPayrollTab("records")}
+        >
+          <FontAwesomeIcon icon={faTable} /> Payroll Records
+        </button>
+        <button
+          type="button"
+          className={`payroll-tab-btn${payrollTab === "computation" ? " active" : ""}`}
+          onClick={() => setPayrollTab("computation")}
+        >
+          <FontAwesomeIcon icon={faCalculator} /> Payroll Computation
+        </button>
+      </div>
+
       <section className="manager-payroll-hero">
         <div>
           <span className="payroll-eyebrow">

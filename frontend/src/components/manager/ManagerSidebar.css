@@ -2,3 +2,11 @@
 .manager-sidebar {
   --sidebar-accent: var(--color-primary);
 }
+
+/* Sub-item indentation for nested sidebar links (e.g. Attendance Kiosk under Attendance) */
+.manager-sidebar .nav-item-sub a,
+.manager-sidebar .nav-item-sub .nav-link {
+  padding-left: 2.25rem;
+  font-size: 0.875rem;
+  opacity: 0.88;
+}

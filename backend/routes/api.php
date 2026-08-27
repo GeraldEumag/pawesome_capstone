@@ -33,6 +33,7 @@ use App\Http\Controllers\Veterinary\MedicalRecordController;
 use App\Http\Controllers\Veterinary\ConsultationWorkflowController;
 use App\Http\Controllers\MedicalConfinementController;
 use App\Http\Controllers\Manager\WorkflowReportController;
+use App\Http\Controllers\Manager\BarcodeAttendanceController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\BoardingController;
 use App\Http\Controllers\BoardingRoomController;
@@ -607,6 +608,10 @@ Route::middleware(['auth.api', 'throttle:api'])->prefix('manager')->group(functi
 
     // Attendance and HR operations are owned by Manager, with Admin as system override.
     Route::middleware('role:manager,admin')->group(function () {
+        // Barcode kiosk routes must be defined before parameterised routes to avoid conflicts
+        Route::post('attendance/barcode-punch', [BarcodeAttendanceController::class, 'punch']);
+        Route::get('attendance/barcode-log', [BarcodeAttendanceController::class, 'todayLog']);
+
         Route::get('attendance', [AttendanceController::class, 'index']);
         Route::post('attendance/{id}/remarks', [AttendanceController::class, 'update']);
         Route::post('attendance/{id}/review', [AttendanceController::class, 'update']);

@@ -143,7 +143,10 @@ class AttendanceController extends Controller
             'status' => 'nullable|in:present,absent,late,early_leave,on_leave',
             'location' => 'nullable|string',
             'notes' => 'nullable|string',
+            'remarks' => 'nullable|string',
+            'review_status' => 'nullable|in:pending,reviewed,rejected',
             'salary_rate' => 'nullable|numeric',
+            'source' => 'nullable|string',
         ]);
 
         if ($validator->fails()) {

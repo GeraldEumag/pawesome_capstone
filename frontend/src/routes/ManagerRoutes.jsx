@@ -1,11 +1,11 @@
 import React from "react";
-import { Routes, Route } from "react-router-dom";
+import { Routes, Route, Navigate } from "react-router-dom";
 import ProtectedRoute from "../components/ProtectedRoute";
 import ManagerDashboard from "../components/manager/ManagerDashboard";
 import ManagerStaff from "../components/manager/ManagerStaff";
 import PayrollManagement from "../components/manager/PayrollManagement";
-import PayrollComputation from "../components/manager/PayrollComputation";
 import ManagerAttendance from "../components/manager/ManagerAttendance";
+import BarcodeAttendanceKiosk from "../components/manager/BarcodeAttendanceKiosk";
 import ManagerLeave from "../components/manager/ManagerLeave";
 import ManagerSchedule from "../components/manager/ManagerSchedule";
 import ManagerReports from "../components/manager/ManagerReports";
@@ -25,22 +25,26 @@ const ManagerRoutes = () => (
       {/* Default landing page */}
       <Route index element={<ManagerDashboard />} />
 
-      {/* Nested routes */}
+      {/* Core routes */}
       <Route path="staff" element={<ManagerStaff />} />
       <Route path="payroll" element={<PayrollManagement />} />
-      <Route path="payroll/computation" element={<PayrollComputation />} />
-      <Route path="payroll/compute" element={<PayrollComputation />} />
+      {/* Redirect old standalone computation URL to payroll (now a tab inside Payroll) */}
+      <Route path="payroll/computation" element={<Navigate to="/manager/payroll" replace />} />
+      <Route path="payroll/compute" element={<Navigate to="/manager/payroll" replace />} />
       <Route path="attendance" element={<ManagerAttendance />} />
+      <Route path="attendance/kiosk" element={<BarcodeAttendanceKiosk />} />
       <Route path="leave" element={<ManagerLeave />} />
-      <Route path="leaves" element={<ManagerLeave />} />
+      {/* Redirect old /leaves alias */}
+      <Route path="leaves" element={<Navigate to="/manager/leave" replace />} />
       <Route path="schedule" element={<ManagerSchedule />} />
       <Route path="history" element={<ManagerHistory />} />
       <Route path="reports" element={<ManagerReports />} />
-      <Route path="reservations" element={<ManagerReports initialTab="services" />} />
-      <Route path="services" element={<ManagerReports initialTab="services" />} />
-      <Route path="payments" element={<ManagerReports initialTab="payments" />} />
-      <Route path="inventory" element={<ManagerReports initialTab="inventory" />} />
-      <Route path="customers" element={<ManagerReports initialTab="customers" />} />
+      {/* Redirect old monitoring aliases to unified Reports page */}
+      <Route path="reservations" element={<Navigate to="/manager/reports" replace />} />
+      <Route path="services" element={<Navigate to="/manager/reports" replace />} />
+      <Route path="payments" element={<Navigate to="/manager/reports" replace />} />
+      <Route path="inventory" element={<Navigate to="/manager/reports" replace />} />
+      <Route path="customers" element={<Navigate to="/manager/reports" replace />} />
       <Route path="profile" element={<ProfileSettings />} />
     </Route>
   </Routes>

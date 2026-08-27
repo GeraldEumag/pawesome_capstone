@@ -1,6 +1,47 @@
 /* PayrollManagement.css */
 /* Professional Manager Payroll Management UI */
 
+/* Payroll tab bar (Records / Computation) */
+.payroll-tab-bar {
+  display: flex;
+  gap: 0.5rem;
+  padding: 0.75rem 1rem;
+  background: rgba(255, 255, 255, 0.8);
+  border-bottom: 1px solid rgba(255, 95, 147, 0.15);
+  backdrop-filter: blur(6px);
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+
+.payroll-tab-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1.25rem;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 95, 147, 0.25);
+  background: transparent;
+  color: #64748b;
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.18s ease;
+}
+
+.payroll-tab-btn:hover {
+  background: rgba(255, 95, 147, 0.06);
+  color: #ff5f93;
+  border-color: rgba(255, 95, 147, 0.4);
+}
+
+.payroll-tab-btn.active {
+  background: #ff5f93;
+  color: #fff;
+  border-color: #ff5f93;
+  font-weight: 600;
+}
+
 .readonly-badge {
   display: inline-flex;
   align-items: center;
