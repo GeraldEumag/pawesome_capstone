@@ -1,4 +1,5 @@
 const { test, expect } = require('@playwright/test');
+const frontendUrl = process.env.E2E_BASE_URL || "http://127.0.0.1:3000";
 
 test.describe('Receptionist Dashboard end-to-end', () => {
   const { loginAs, mockLoginAs, getDashboardPath } = require('./test-utils');
@@ -14,12 +15,12 @@ test.describe('Receptionist Dashboard end-to-end', () => {
   });
 
   test('login redirects to correct dashboard', async ({ page }) => {
-    await page.goto('http://localhost:3000' + dashboardPath);
+    await page.goto(frontendUrl + dashboardPath);
     await expect(page).toHaveURL(new RegExp(dashboardPath));
   });
 
   test('dashboard title is visible', async ({ page }) => {
-    await page.goto('http://localhost:3000' + dashboardPath);
+    await page.goto(frontendUrl + dashboardPath);
     await expect(page.locator('h1, h2').filter({ hasText: /receptionist|dashboard|requests/i }).first()).toBeVisible();
   });
 
@@ -40,7 +41,7 @@ test.describe('Receptionist Dashboard end-to-end', () => {
     if (!process.env.E2E_LIVE) {
       await page.route('**/receptionist/requests', route => route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(mockRequests) }));
     }
-    await page.goto('http://localhost:3000' + dashboardPath);
+    await page.goto(frontendUrl + dashboardPath);
     await expect(page.locator('.receptionist-stat-card, [class*="stat"], [class*="card"]').first()).toBeVisible();
     await expect(page.locator('text=/customer|request|appointment/i').first()).toBeVisible();
   });
@@ -71,7 +72,7 @@ test.describe('Receptionist Dashboard end-to-end', () => {
         return route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ success: true, message: 'Status updated' }) });
       });
     }
-    await page.goto('http://localhost:3000' + dashboardPath);
+    await page.goto(frontendUrl + dashboardPath);
     await page.waitForLoadState('networkidle');
     
     // Look for and click approve button
@@ -109,13 +110,13 @@ test.describe('Receptionist Dashboard end-to-end', () => {
   });
 
   test('refresh button reloads data', async ({ page }) => {
-    await page.goto('http://localhost:3000' + dashboardPath);
+    await page.goto(frontendUrl + dashboardPath);
     await page.locator('button:has-text("refresh"), button:has([data-icon="rotate"]), [title*="refresh" i]').first().click().catch(() => {});
     await expect(page.locator('.receptionist-stat-card, [class*="card"]').first()).toBeVisible();
   });
 
   test('main navigation works', async ({ page }) => {
-    await page.goto('http://localhost:3000' + dashboardPath);
+    await page.goto(frontendUrl + dashboardPath);
     const nav = page.locator('nav, aside, [role="navigation"], .sidebar, .sidenav').first();
     await expect(nav).toBeVisible();
     const links = nav.locator('a, button').filter({ hasText: /request|booking|order|customer/i });
@@ -127,7 +128,7 @@ test.describe('Receptionist Dashboard end-to-end', () => {
   test('forbidden pages redirect or block', async ({ page }) => {
     const forbiddenPaths = ['/admin', '/manager'];
     for (const path of forbiddenPaths) {
-      await page.goto('http://localhost:3000' + path);
+      await page.goto(frontendUrl + path);
       const currentUrl = page.url();
       const blocked = currentUrl.includes('/unauthorized') || 
                       currentUrl.includes('/forbidden') || 

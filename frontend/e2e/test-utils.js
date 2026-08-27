@@ -1,4 +1,5 @@
 // Helper utilities for E2E tests
+const frontendUrl = process.env.E2E_BASE_URL || 'http://127.0.0.1:3000';
 
 // Default credentials for test accounts (matching the live dev/prototype database)
 const DEFAULT_CREDENTIALS = {
@@ -54,7 +55,7 @@ async function loginAs(page, role = 'admin') {
     window.localStorage.setItem('email', user.email);
   }, { token: data.token, user: data.user });
   
-  await page.goto('http://localhost:3000' + expectedPath);
+  await page.goto(frontendUrl + expectedPath);
 }
 
 /**

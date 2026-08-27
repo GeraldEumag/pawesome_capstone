@@ -1,4 +1,5 @@
 const { test, expect } = require("@playwright/test");
+const frontendUrl = process.env.E2E_BASE_URL || "http://127.0.0.1:3000";
 const fs = require("node:fs");
 const path = require("node:path");
 
@@ -62,7 +63,7 @@ const startedAt = new Date().toISOString();
 const run = {
   setup: {
     backendUrl: "http://127.0.0.1:8000",
-    frontendUrl: "http://localhost:3000",
+    frontendUrl,
     browserPreview: "http://127.0.0.1:64422",
     testDate: startedAt,
     tester: "Codex automated Playwright",

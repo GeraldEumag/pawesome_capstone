@@ -1,4 +1,5 @@
 const { test, expect } = require('@playwright/test');
+const frontendUrl = process.env.E2E_BASE_URL || "http://127.0.0.1:3000";
 
 test.describe('Inventory Dashboard end-to-end', () => {
   const { loginAs, mockLoginAs, getDashboardPath } = require('./test-utils');
@@ -14,12 +15,12 @@ test.describe('Inventory Dashboard end-to-end', () => {
   });
 
   test('login redirects to correct dashboard', async ({ page }) => {
-    await page.goto('http://localhost:3000' + dashboardPath);
+    await page.goto(frontendUrl + dashboardPath);
     await expect(page).toHaveURL(new RegExp(dashboardPath));
   });
 
   test('dashboard title is visible', async ({ page }) => {
-    await page.goto('http://localhost:3000' + dashboardPath);
+    await page.goto(frontendUrl + dashboardPath);
     await expect(page.locator('h1, h2').filter({ hasText: /inventory|stock|product/i }).first()).toBeVisible();
   });
 
@@ -28,19 +29,19 @@ test.describe('Inventory Dashboard end-to-end', () => {
     if (!process.env.E2E_LIVE) {
       await page.route('**/api/inventory/dashboard', route => route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(mock) }));
     }
-    await page.goto('http://localhost:3000' + dashboardPath);
+    await page.goto(frontendUrl + dashboardPath);
     await expect(page.locator('.overview-card, [class*="card"], [class*="stat"]').first()).toBeVisible();
     await expect(page.locator('text=/product|stock|inventory/i').first()).toBeVisible();
   });
 
   test('refresh button reloads data', async ({ page }) => {
-    await page.goto('http://localhost:3000' + dashboardPath);
+    await page.goto(frontendUrl + dashboardPath);
     await page.locator('button:has-text("refresh"), button:has([data-icon="rotate"]), [title*="refresh" i]').first().click().catch(() => {});
     await expect(page.locator('.overview-card, [class*="card"]').first()).toBeVisible();
   });
 
   test('main navigation works', async ({ page }) => {
-    await page.goto('http://localhost:3000' + dashboardPath);
+    await page.goto(frontendUrl + dashboardPath);
     const nav = page.locator('nav, aside, [role="navigation"], .sidebar, .sidenav').first();
     await expect(nav).toBeVisible();
     const links = nav.locator('a, button').filter({ hasText: /product|stock|item|supplier/i });
@@ -61,7 +62,7 @@ test.describe('Inventory Dashboard end-to-end', () => {
       });
     }
 
-    await page.goto('http://localhost:3000' + dashboardPath);
+    await page.goto(frontendUrl + dashboardPath);
     await page.waitForLoadState('networkidle');
 
     // Look for add/create item button
@@ -105,7 +106,7 @@ test.describe('Inventory Dashboard end-to-end', () => {
       });
     }
 
-    await page.goto('http://localhost:3000' + dashboardPath);
+    await page.goto(frontendUrl + dashboardPath);
     await page.waitForLoadState('networkidle');
 
     // Look for stock adjust button
@@ -127,7 +128,7 @@ test.describe('Inventory Dashboard end-to-end', () => {
   test('forbidden pages redirect or block', async ({ page }) => {
     const forbiddenPaths = ['/admin', '/cashier', '/veterinary'];
     for (const path of forbiddenPaths) {
-      await page.goto('http://localhost:3000' + path);
+      await page.goto(frontendUrl + path);
       const currentUrl = page.url();
       const blocked = currentUrl.includes('/unauthorized') || currentUrl.includes('/forbidden') || currentUrl.includes(dashboardPath) || await page.locator('text=/access denied|forbidden|unauthorized/i').first().isVisible().catch(() => false);
       expect(blocked).toBeTruthy();

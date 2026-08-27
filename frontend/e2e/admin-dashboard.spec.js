@@ -1,4 +1,5 @@
 const { test, expect } = require('@playwright/test');
+const frontendUrl = process.env.E2E_BASE_URL || "http://127.0.0.1:3000";
 
 test.describe('Admin Dashboard end-to-end', () => {
   const { loginAs, mockLoginAs, getDashboardPath } = require('./test-utils');
@@ -14,12 +15,12 @@ test.describe('Admin Dashboard end-to-end', () => {
   });
 
   test('login redirects to correct dashboard', async ({ page }) => {
-    await page.goto('http://localhost:3000' + dashboardPath);
+    await page.goto(frontendUrl + dashboardPath);
     await expect(page).toHaveURL(new RegExp(dashboardPath));
   });
 
   test('dashboard title is visible', async ({ page }) => {
-    await page.goto('http://localhost:3000' + dashboardPath);
+    await page.goto(frontendUrl + dashboardPath);
     await expect(page.locator('h1, h2').filter({ hasText: /admin|dashboard/i }).first()).toBeVisible();
   });
 
@@ -41,7 +42,7 @@ test.describe('Admin Dashboard end-to-end', () => {
       });
     }
 
-    await page.goto('http://localhost:3000' + dashboardPath);
+    await page.goto(frontendUrl + dashboardPath);
     await expect(page.locator('.overview-card, .summary-card, [class*="card"]').first()).toBeVisible();
     await expect(page.locator('text=/total users|users/i').first()).toBeVisible();
   });
@@ -59,13 +60,13 @@ test.describe('Admin Dashboard end-to-end', () => {
       });
     }
 
-    await page.goto('http://localhost:3000' + dashboardPath);
+    await page.goto(frontendUrl + dashboardPath);
     await page.locator('button:has-text("refresh"), button:has([data-icon="rotate"]), [title*="refresh" i]').first().click().catch(() => {});
     await expect(page.locator('.overview-card, .summary-card').first()).toBeVisible();
   });
 
   test('main navigation works', async ({ page }) => {
-    await page.goto('http://localhost:3000' + dashboardPath);
+    await page.goto(frontendUrl + dashboardPath);
     const nav = page.locator('nav, aside, [role="navigation"], .sidebar, .sidenav').first();
     await expect(nav).toBeVisible();
     const links = nav.locator('a, button').filter({ hasText: /users|settings|reports|staff/i });
@@ -91,7 +92,7 @@ test.describe('Admin Dashboard end-to-end', () => {
       });
     }
 
-    await page.goto('http://localhost:3000' + dashboardPath);
+    await page.goto(frontendUrl + dashboardPath);
     await page.waitForLoadState('networkidle');
 
     // Navigate to users section if not on dashboard
@@ -133,7 +134,7 @@ test.describe('Admin Dashboard end-to-end', () => {
     // Admin should not be doing cashier/vet/receptionist operations
     const operationalPaths = ['/cashier/pos', '/veterinary/treatment', '/receptionist/bookings'];
     for (const path of operationalPaths) {
-      await page.goto('http://localhost:3000' + path);
+      await page.goto(frontendUrl + path);
       const currentUrl = page.url();
       // Should either redirect to admin or show forbidden
       const blockedOrRedirected = currentUrl.includes('/unauthorized') ||
@@ -147,7 +148,7 @@ test.describe('Admin Dashboard end-to-end', () => {
   test('forbidden pages redirect or block', async ({ page }) => {
     const forbiddenPaths = ['/cashier', '/veterinary', '/receptionist'];
     for (const path of forbiddenPaths) {
-      await page.goto('http://localhost:3000' + path);
+      await page.goto(frontendUrl + path);
       const currentUrl = page.url();
       const blocked = currentUrl.includes('/unauthorized') ||
                       currentUrl.includes('/forbidden') ||

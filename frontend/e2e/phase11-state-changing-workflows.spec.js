@@ -8,7 +8,7 @@ const reportDir = path.join(rootDir, "documentation", "reports", "phase11");
 const resultPath = path.join(reportDir, "phase11-state-changing-results.json");
 const proofPath = path.join(reportDir, "phase11-proof.png");
 
-const frontendUrl = "http://localhost:3000";
+const frontendUrl = process.env.E2E_BASE_URL || "http://127.0.0.1:3000";
 const backendUrl = "http://127.0.0.1:8000";
 const apiUrl = `${backendUrl}/api`;
 
