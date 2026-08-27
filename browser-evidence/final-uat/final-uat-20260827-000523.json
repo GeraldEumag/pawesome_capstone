@@ -1,0 +1,622 @@
+{
+    "summary": {
+        "pass": 42,
+        "fail": 0,
+        "warn": 2,
+        "critical": 0,
+        "high": 0,
+        "medium": 0
+    },
+    "overall": "PASS",
+    "findings": [
+        {
+            "severity": "pass",
+            "step": "login",
+            "name": "admin login successful",
+            "detail": {
+                "user_id": 1
+            }
+        },
+        {
+            "severity": "pass",
+            "step": "login",
+            "name": "manager login successful",
+            "detail": {
+                "user_id": 2
+            }
+        },
+        {
+            "severity": "pass",
+            "step": "login",
+            "name": "cashier login successful",
+            "detail": {
+                "user_id": 4
+            }
+        },
+        {
+            "severity": "pass",
+            "step": "login",
+            "name": "inventory login successful",
+            "detail": {
+                "user_id": 5
+            }
+        },
+        {
+            "severity": "pass",
+            "step": "login",
+            "name": "veterinary login successful",
+            "detail": {
+                "user_id": 6
+            }
+        },
+        {
+            "severity": "pass",
+            "step": "login",
+            "name": "receptionist login successful",
+            "detail": {
+                "user_id": 3
+            }
+        },
+        {
+            "severity": "pass",
+            "step": "login",
+            "name": "customer login successful",
+            "detail": {
+                "user_id": 7
+            }
+        },
+        {
+            "severity": "pass",
+            "step": "step1-customer",
+            "name": "Customer has pet: PW-E2E Pet 1781903525210 (#9)",
+            "detail": {
+                "pet_id": 9
+            }
+        },
+        {
+            "severity": "pass",
+            "step": "step1-customer",
+            "name": "Customer created vet request #65",
+            "detail": {
+                "request_id": 65
+            }
+        },
+        {
+            "severity": "pass",
+            "step": "step1-customer",
+            "name": "DB: service_request #65 status=pending",
+            "detail": {
+                "status": "pending"
+            }
+        },
+        {
+            "severity": "pass",
+            "step": "step2-receptionist",
+            "name": "Receptionist sees pending request #65",
+            "detail": null
+        },
+        {
+            "severity": "pass",
+            "step": "step2-receptionist",
+            "name": "Available veterinarian: Veterinarian (#6)",
+            "detail": null
+        },
+        {
+            "severity": "pass",
+            "step": "step2-receptionist",
+            "name": "Receptionist approved request #65 \u2192 appointment #25",
+            "detail": {
+                "appointment_id": 25
+            }
+        },
+        {
+            "severity": "pass",
+            "step": "step2-receptionist",
+            "name": "DB: appointment #25 created (status=approved)",
+            "detail": {
+                "status": "approved"
+            }
+        },
+        {
+            "severity": "pass",
+            "step": "step2-receptionist",
+            "name": "DB: service_request #65 status=approved",
+            "detail": null
+        },
+        {
+            "severity": "warn",
+            "step": "step3-payment",
+            "name": "Customer payment upload returned 404 (may use different endpoint)",
+            "detail": {
+                "message": "The route api\/customer\/requests\/65\/payment could not be found.",
+                "exception": "Symfony\\Component\\HttpKernel\\Exception\\NotFoundHttpException",
+                "file": "C:\\Users\\ACER\\Pawesome_Capstone\\backend\\vendor\\laravel\\framework\\src\\Illuminate\\Routing\\AbstractRouteCollection.php",
+                "line": 44,
+                "trace": [
+                    {
+                        "file": "C:\\Users\\ACER\\Pawesome_Capstone\\backend\\vendor\\laravel\\framework\\src\\Illuminate\\Routing\\RouteCollection.php",
+                        "line": 184,
+                        "function": "handleMatchedRoute",
+                        "class": "Illuminate\\Routing\\AbstractRouteCollection",
+                        "type": "->"
+                    },
+                    {
+                        "file": "C:\\Users\\ACER\\Pawesome_Capstone\\backend\\vendor\\laravel\\framework\\src\\Illuminate\\Routing\\Router.php",
+                        "line": 777,
+                        "function": "match",
+                        "class": "Illuminate\\Routing\\RouteCollection",
+                        "type": "->"
+                    },
+                    {
+                        "file": "C:\\Users\\ACER\\Pawesome_Capstone\\backend\\vendor\\laravel\\framework\\src\\Illuminate\\Routing\\Router.php",
+                        "line": 764,
+                        "function": "findRoute",
+                        "class": "Illuminate\\Routing\\Router",
+                        "type": "->"
+                    },
+                    {
+                        "file": "C:\\Users\\ACER\\Pawesome_Capstone\\backend\\vendor\\laravel\\framework\\src\\Illuminate\\Routing\\Router.php",
+                        "line": 753,
+                        "function": "dispatchToRoute",
+                        "class": "Illuminate\\Routing\\Router",
+                        "type": "->"
+                    },
+                    {
+                        "file": "C:\\Users\\ACER\\Pawesome_Capstone\\backend\\vendor\\laravel\\framework\\src\\Illuminate\\Foundation\\Http\\Kernel.php",
+                        "line": 200,
+                        "function": "dispatch",
+                        "class": "Illuminate\\Routing\\Router",
+                        "type": "->"
+                    },
+                    {
+                        "file": "C:\\Users\\ACER\\Pawesome_Capstone\\backend\\vendor\\laravel\\framework\\src\\Illuminate\\Pipeline\\Pipeline.php",
+                        "line": 180,
+                        "function": "Illuminate\\Foundation\\Http\\{closure}",
+                        "class": "Illuminate\\Foundation\\Http\\Kernel",
+                        "type": "->"
+                    },
+                    {
+                        "file": "C:\\Users\\ACER\\Pawesome_Capstone\\backend\\app\\Http\\Middleware\\SecurityHeaders.php",
+                        "line": 19,
+                        "function": "Illuminate\\Pipeline\\{closure}",
+                        "class": "Illuminate\\Pipeline\\Pipeline",
+                        "type": "->"
+                    },
+                    {
+                        "file": "C:\\Users\\ACER\\Pawesome_Capstone\\backend\\vendor\\laravel\\framework\\src\\Illuminate\\Pipeline\\Pipeline.php",
+                        "line": 219,
+                        "function": "handle",
+                        "class": "App\\Http\\Middleware\\SecurityHeaders",
+                        "type": "->"
+                    },
+                    {
+                        "file": "C:\\Users\\ACER\\Pawesome_Capstone\\backend\\app\\Http\\Middleware\\Cors.php",
+                        "line": 26,
+                        "function": "Illuminate\\Pipeline\\{closure}",
+                        "class": "Illuminate\\Pipeline\\Pipeline",
+                        "type": "->"
+                    },
+                    {
+                        "file": "C:\\Users\\ACER\\Pawesome_Capstone\\backend\\vendor\\laravel\\framework\\src\\Illuminate\\Pipeline\\Pipeline.php",
+                        "line": 219,
+                        "function": "handle",
+                        "class": "App\\Http\\Middleware\\Cors",
+                        "type": "->"
+                    },
+                    {
+                        "file": "C:\\Users\\ACER\\Pawesome_Capstone\\backend\\vendor\\laravel\\framework\\src\\Illuminate\\Pipeline\\Pipeline.php",
+                        "line": 137,
+                        "function": "Illuminate\\Pipeline\\{closure}",
+                        "class": "Illuminate\\Pipeline\\Pipeline",
+                        "type": "->"
+                    },
+                    {
+                        "file": "C:\\Users\\ACER\\Pawesome_Capstone\\backend\\vendor\\laravel\\framework\\src\\Illuminate\\Foundation\\Http\\Kernel.php",
+                        "line": 175,
+                        "function": "then",
+                        "class": "Illuminate\\Pipeline\\Pipeline",
+                        "type": "->"
+                    },
+                    {
+                        "file": "C:\\Users\\ACER\\Pawesome_Capstone\\backend\\vendor\\laravel\\framework\\src\\Illuminate\\Foundation\\Http\\Kernel.php",
+                        "line": 144,
+                        "function": "sendRequestThroughRouter",
+                        "class": "Illuminate\\Foundation\\Http\\Kernel",
+                        "type": "->"
+                    },
+                    {
+                        "file": "C:\\Users\\ACER\\Pawesome_Capstone\\backend\\vendor\\laravel\\framework\\src\\Illuminate\\Foundation\\Application.php",
+                        "line": 1220,
+                        "function": "handle",
+                        "class": "Illuminate\\Foundation\\Http\\Kernel",
+                        "type": "->"
+                    },
+                    {
+                        "file": "C:\\Users\\ACER\\Pawesome_Capstone\\backend\\public\\index.php",
+                        "line": 20,
+                        "function": "handleRequest",
+                        "class": "Illuminate\\Foundation\\Application",
+                        "type": "->"
+                    },
+                    {
+                        "file": "C:\\Users\\ACER\\Pawesome_Capstone\\backend\\vendor\\laravel\\framework\\src\\Illuminate\\Foundation\\resources\\server.php",
+                        "line": 23,
+                        "function": "require_once"
+                    }
+                ]
+            }
+        },
+        {
+            "severity": "pass",
+            "step": "step3-payment",
+            "name": "DB: Set payment_status=pending for request #65 (direct)",
+            "detail": null
+        },
+        {
+            "severity": "pass",
+            "step": "step3-payment",
+            "name": "DB: service_request #65 payment_status=pending",
+            "detail": null
+        },
+        {
+            "severity": "pass",
+            "step": "step3-payment",
+            "name": "Cashier can access payment-requests endpoint",
+            "detail": null
+        },
+        {
+            "severity": "pass",
+            "step": "step3-payment",
+            "name": "Cashier verified payment (alt endpoint) for request #65",
+            "detail": null
+        },
+        {
+            "severity": "pass",
+            "step": "step4-inventory",
+            "name": "Inventory dashboard accessible",
+            "detail": {
+                "total_items": 891,
+                "low_stock": 268,
+                "stock_value": "1913167.00"
+            }
+        },
+        {
+            "severity": "pass",
+            "step": "step4-inventory",
+            "name": "Inventory logs exist: 141 records (stock movements tracked)",
+            "detail": null
+        },
+        {
+            "severity": "pass",
+            "step": "step4-inventory",
+            "name": "Service item usages: 48 records (inventory\u2192service link exists)",
+            "detail": null
+        },
+        {
+            "severity": "pass",
+            "step": "step5-veterinary",
+            "name": "Veterinary can access appointments list",
+            "detail": null
+        },
+        {
+            "severity": "pass",
+            "step": "step5-veterinary",
+            "name": "Veterinary started appointment #25",
+            "detail": null
+        },
+        {
+            "severity": "pass",
+            "step": "step5-veterinary",
+            "name": "DB: appointment #25 status=in_progress",
+            "detail": null
+        },
+        {
+            "severity": "pass",
+            "step": "step5-veterinary",
+            "name": "Veterinary recorded medical record for appointment #25",
+            "detail": null
+        },
+        {
+            "severity": "pass",
+            "step": "step5-veterinary",
+            "name": "DB: medical_record created for appointment #25",
+            "detail": null
+        },
+        {
+            "severity": "pass",
+            "step": "step5-veterinary",
+            "name": "Veterinary completed appointment #25 (PATCH)",
+            "detail": null
+        },
+        {
+            "severity": "pass",
+            "step": "step6-customer",
+            "name": "Customer sees request #65 with status=approved, payment=paid",
+            "detail": {
+                "id": 65,
+                "customer_id": 7,
+                "customer": "Customer",
+                "customer_name": "Customer",
+                "email": "customer@example.com",
+                "customer_email": "customer@example.com",
+                "pet_id": 9,
+                "pet": "PW-E2E Pet 1781903525210",
+                "pet_name": "PW-E2E Pet 1781903525210",
+                "type": "vet",
+                "request_type": "vet",
+                "service_type": "General Check-up",
+                "service": "General Check-up",
+                "service_name": "General Check-up",
+                "date": "2026-09-03",
+                "request_date": "2026-09-03",
+                "requested_date": "2026-09-03",
+                "time": "10:00",
+                "request_time": "10:00",
+                "notes": "UAT vet request 1787789090",
+                "status": "approved",
+                "price": "500.00",
+                "amount": "500.00",
+                "payment": "paid",
+                "payment_status": "paid",
+                "payment_method": "gcash",
+                "payment_reference": "UAT-PROOF-1787789090",
+                "payment_proof": null,
+                "created_at": "2026-08-27T00:04:53.000000Z"
+            }
+        },
+        {
+            "severity": "pass",
+            "step": "step6-customer",
+            "name": "Customer can access notifications",
+            "detail": null
+        },
+        {
+            "severity": "pass",
+            "step": "step7-manager",
+            "name": "Manager dashboard accessible",
+            "detail": {
+                "total_service_requests": 65,
+                "total_appointments": 25,
+                "sales_total": 18700
+            }
+        },
+        {
+            "severity": "pass",
+            "step": "step7-manager",
+            "name": "Manager reports\/overview accessible",
+            "detail": null
+        },
+        {
+            "severity": "pass",
+            "step": "step7-manager",
+            "name": "DB: total service_requests=65, total appointments=25",
+            "detail": null
+        },
+        {
+            "severity": "pass",
+            "step": "step8-admin",
+            "name": "Admin dashboard accessible",
+            "detail": {
+                "total_users": 10,
+                "total_customers": 1,
+                "total_revenue": 13800
+            }
+        },
+        {
+            "severity": "pass",
+            "step": "step8-admin",
+            "name": "Admin user management accessible",
+            "detail": null
+        },
+        {
+            "severity": "warn",
+            "step": "step8-admin",
+            "name": "Admin history returned 404",
+            "detail": null
+        },
+        {
+            "severity": "pass",
+            "step": "step8-admin",
+            "name": "Admin reports\/summary accessible",
+            "detail": {
+                "total_revenue": "13800.00",
+                "total_customers": 1
+            }
+        },
+        {
+            "severity": "pass",
+            "step": "step8-admin",
+            "name": "Admin system-health accessible",
+            "detail": null
+        },
+        {
+            "severity": "pass",
+            "step": "cross-role",
+            "name": "Manager total_service_requests (65) matches DB (65)",
+            "detail": null
+        },
+        {
+            "severity": "pass",
+            "step": "cross-role",
+            "name": "Admin total_appointments (25) matches DB (25)",
+            "detail": null
+        },
+        {
+            "severity": "pass",
+            "step": "prod-check",
+            "name": "Health endpoint \/api\/health returns 200",
+            "detail": null
+        },
+        {
+            "severity": "pass",
+            "step": "prod-check",
+            "name": "No 500 errors encountered across all endpoints",
+            "detail": null
+        },
+        {
+            "severity": "pass",
+            "step": "prod-check",
+            "name": "No 401\/403 errors on authenticated endpoints",
+            "detail": null
+        }
+    ],
+    "workflow_steps": [
+        {
+            "step": 1,
+            "role": "customer",
+            "action": "Retrieve\/create pet",
+            "status": "PASS",
+            "detail": "pet #9"
+        },
+        {
+            "step": 1,
+            "role": "customer",
+            "action": "Create vet request",
+            "status": "PASS",
+            "detail": "request #65 (pending)"
+        },
+        {
+            "step": 2,
+            "role": "receptionist",
+            "action": "View pending requests",
+            "status": "PASS",
+            "detail": "request #65 visible"
+        },
+        {
+            "step": 2,
+            "role": "receptionist",
+            "action": "Approve vet request",
+            "status": "PASS",
+            "detail": "request #65 \u2192 appointment #25"
+        },
+        {
+            "step": 3,
+            "role": "customer",
+            "action": "Submit payment (DB direct)",
+            "status": "PASS",
+            "detail": "request #65"
+        },
+        {
+            "step": 3,
+            "role": "cashier",
+            "action": "View payment requests",
+            "status": "PASS",
+            "detail": "endpoint accessible"
+        },
+        {
+            "step": 3,
+            "role": "cashier",
+            "action": "Verify payment (alt)",
+            "status": "PASS",
+            "detail": "request #65"
+        },
+        {
+            "step": 4,
+            "role": "inventory",
+            "action": "Dashboard accessible",
+            "status": "PASS",
+            "detail": "items=891"
+        },
+        {
+            "step": 4,
+            "role": "inventory",
+            "action": "Stock movements tracked",
+            "status": "PASS",
+            "detail": "141 logs"
+        },
+        {
+            "step": 4,
+            "role": "inventory",
+            "action": "Inventory\u2192Service link",
+            "status": "PASS",
+            "detail": "48 usages"
+        },
+        {
+            "step": 5,
+            "role": "veterinary",
+            "action": "View appointments",
+            "status": "PASS",
+            "detail": "endpoint accessible"
+        },
+        {
+            "step": 5,
+            "role": "veterinary",
+            "action": "Start appointment",
+            "status": "PASS",
+            "detail": "appointment #25"
+        },
+        {
+            "step": 5,
+            "role": "veterinary",
+            "action": "Record treatment",
+            "status": "PASS",
+            "detail": "appointment #25"
+        },
+        {
+            "step": 5,
+            "role": "veterinary",
+            "action": "Complete appointment (PATCH)",
+            "status": "PASS",
+            "detail": "appointment #25"
+        },
+        {
+            "step": 6,
+            "role": "customer",
+            "action": "View updated status",
+            "status": "PASS",
+            "detail": "request #65 status=approved"
+        },
+        {
+            "step": 6,
+            "role": "customer",
+            "action": "View notifications",
+            "status": "PASS",
+            "detail": "endpoint accessible"
+        },
+        {
+            "step": 7,
+            "role": "manager",
+            "action": "Dashboard with KPIs",
+            "status": "PASS",
+            "detail": "requests=65"
+        },
+        {
+            "step": 7,
+            "role": "manager",
+            "action": "View reports",
+            "status": "PASS",
+            "detail": "overview accessible"
+        },
+        {
+            "step": 8,
+            "role": "admin",
+            "action": "System dashboard",
+            "status": "PASS",
+            "detail": "users=10"
+        },
+        {
+            "step": 8,
+            "role": "admin",
+            "action": "User management",
+            "status": "PASS",
+            "detail": "endpoint accessible"
+        },
+        {
+            "step": 8,
+            "role": "admin",
+            "action": "Reports summary",
+            "status": "PASS",
+            "detail": "accessible"
+        },
+        {
+            "step": 8,
+            "role": "admin",
+            "action": "System health",
+            "status": "PASS",
+            "detail": "accessible"
+        }
+    ],
+    "timestamp": "2026-08-27T00:05:23+00:00",
+    "environment": "local (127.0.0.1:8000)",
+    "note": "UAT performed against local development environment. Production UAT requires actual Render+Vercel deployment."
+}

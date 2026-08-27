@@ -132,7 +132,10 @@ async function visit(page, route, label, expectedText = null, apiPattern = null)
       ).catch(() => null)
     : Promise.resolve(null);
 
-  await page.goto(route);
+  const fullRoute = route.startsWith("http")
+    ? route
+    : (frontendUrl.replace(/\/$/, "") + (route.startsWith("/") ? route : "/" + route));
+  await page.goto(fullRoute);
   await page.waitForLoadState("domcontentloaded");
   await apiWait;
   const expectedRegex = expectedText ? new RegExp(expectedText, "i") : null;
@@ -176,7 +179,7 @@ async function loginThroughUi(page, role, request) {
 }
 
 async function logout(page) {
-  await page.goto("/logout");
+  await page.goto(frontendUrl + "/logout");
   await page.waitForURL("**/login", { timeout: 15000 }).catch(() => {});
 }
 
