@@ -570,6 +570,7 @@ Route::middleware(['auth.api', 'throttle:api', 'role:admin,inventory'])->prefix(
     Route::post('items/{id}/adjust-stock', [InventoryController::class, 'adjustStock']);
     Route::get('items/{id}/batches', [InventoryController::class, 'getItemBatches']);
     Route::post('items/{id}/batches', [InventoryController::class, 'addBatch']);
+    Route::post('batches/{batchId}/dispose', [InventoryController::class, 'disposeBatch']);
     Route::put('batches/{batchId}', [InventoryController::class, 'adjustBatch']);
     Route::post('{id}/stock', [InventoryDashboardController::class, 'adjustStock']);
     Route::patch('{id}/stock', [InventoryDashboardController::class, 'adjustStock']);
@@ -579,6 +580,7 @@ Route::middleware(['auth.api', 'throttle:api'])->prefix('manager')->group(functi
     Route::middleware('role:manager,admin')->group(function () {
     Route::get('dashboard', [ManagerDashboardController::class, 'overview']);
     Route::get('staff', [ManagerDashboardController::class, 'staff']);
+    Route::put('staff/{id}', [ManagerDashboardController::class, 'updateStaff']);
     Route::get('executive-summary', [ManagerDashboardController::class, 'executiveSummary']);
     
     // IMPORTANT: Static routes must come before dynamic routes

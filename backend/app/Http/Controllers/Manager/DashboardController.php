@@ -95,6 +95,28 @@ class DashboardController extends Controller
         ]);
     }
 
+    public function updateStaff(Request $request, $id)
+    {
+        $user = User::findOrFail($id);
+
+        if (!in_array($user->role, ['receptionist', 'veterinary', 'inventory', 'cashier'])) {
+            return response()->json(['message' => 'Can only update staff members.'], 403);
+        }
+
+        $validated = $request->validate([
+            'phone' => 'nullable|string|max:50',
+            'department' => 'nullable|string|max:100',
+            'address' => 'nullable|string|max:255',
+        ]);
+
+        $user->update($validated);
+
+        return response()->json([
+            'message' => 'Staff updated successfully.',
+            'staff' => $user->fresh(),
+        ]);
+    }
+
     public function executiveSummary()
     {
         $today = Carbon::today();
