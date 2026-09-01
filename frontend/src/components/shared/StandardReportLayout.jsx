@@ -1,4 +1,6 @@
 import React from "react";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faExclamationTriangle, faChartBar, faRotateRight } from "@fortawesome/free-solid-svg-icons";
 import StandardReportHeader from "./StandardReportHeader";
 import "./StandardReportLayout.css";
 
@@ -42,11 +44,14 @@ const StandardReportLayout = ({
 
   const renderErrorState = () => (
     <div className="standard-error-state">
-      <div className="error-icon">⚠️</div>
+      <div className="error-icon">
+        <FontAwesomeIcon icon={faExclamationTriangle} />
+      </div>
       <div className="error-message">{error}</div>
       {onRefresh && (
         <button className="retry-btn" onClick={onRefresh}>
-          🔄 Retry Loading
+          <FontAwesomeIcon icon={faRotateRight} />
+          Retry Loading
         </button>
       )}
     </div>
@@ -54,11 +59,14 @@ const StandardReportLayout = ({
 
   const renderEmptyState = () => (
     <div className="standard-empty-state">
-      <div className="empty-icon">📊</div>
+      <div className="empty-icon">
+        <FontAwesomeIcon icon={faChartBar} />
+      </div>
       <div className="empty-message">{emptyMessage}</div>
       {onRefresh && (
         <button className="refresh-btn" onClick={onRefresh}>
-          🔄 Refresh Data
+          <FontAwesomeIcon icon={faRotateRight} />
+          Refresh Data
         </button>
       )}
     </div>

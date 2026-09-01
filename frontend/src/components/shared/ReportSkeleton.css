@@ -5,6 +5,7 @@
   padding: 1.5rem;
   position: relative;
   overflow: hidden;
+  background: transparent;
 }
 
 .skeleton-section {
@@ -192,7 +193,7 @@
 .skeleton-cell:nth-child(4) { animation-delay: 0.3s; }
 .skeleton-cell:nth-child(5) { animation-delay: 0.4s; }
 
-/* Shimmer Overlay */
+/* Shimmer Overlay — pink-tinted brand shimmer */
 .skeleton-shimmer {
   position: absolute;
   top: 0;
@@ -202,7 +203,7 @@
   background: linear-gradient(
     90deg,
     transparent 0%,
-    rgba(255, 255, 255, 0.4) 50%,
+    rgba(255, 200, 221, 0.3) 50%,
     transparent 100%
   );
   animation: shimmer 2s infinite;

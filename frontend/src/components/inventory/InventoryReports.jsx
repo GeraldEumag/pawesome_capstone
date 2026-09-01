@@ -50,15 +50,23 @@ const InventoryReports = () => {
   const fetchReportData = useCallback(async (filters) => {
       setLoading(true);
       try {
+        // Use filters param when provided by UnifiedReportEngine/caller; fall back to local state
+        const from = filters?.startDate ?? startDate;
+        const to = filters?.endDate ?? endDate;
+        const status = filters?.status ?? statusFilter;
+        const category = filters?.category ?? categoryFilter;
+        const search = filters?.searchTerm ?? searchTerm;
+
         const params = new URLSearchParams();
-        if (startDate) params.append("from", startDate);
-        if (endDate) params.append("to", endDate);
-        if (statusFilter !== "all") params.append("status", statusFilter);
-        if (categoryFilter !== "all") params.append("category", categoryFilter);
-        if (searchTerm) params.append("search", searchTerm);
+        if (from) params.append("from", from);
+        if (to) params.append("to", to);
+        if (status && status !== "all") params.append("status", status);
+        if (category && category !== "all") params.append("category", category);
+        if (search) params.append("search", search);
+
         const response = isAdminReport
           ? await apiRequest(`/admin/reports/inventory?${params}`)
-          : await inventoryApi.getReports({ startDate, endDate, category: categoryFilter !== "all" ? categoryFilter : undefined });
+          : await inventoryApi.getReports({ startDate: from, endDate: to, category: category !== "all" ? category : undefined });
         const data = response?.data || response || {};
         const items = data.items || response.items || response.data || [];
 

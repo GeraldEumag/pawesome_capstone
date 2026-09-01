@@ -43,7 +43,7 @@ const CashierReports = () => {
     if (filters.searchTerm) params.append("search", filters.searchTerm);
 
     const endpoint = isAdminReport
-      ? `/admin/reports/sales?${params}`
+      ? `/admin/reports/cashier?${params}`
       : `/cashier/transactions?${params}`;
 
     const response = await apiRequest(endpoint);

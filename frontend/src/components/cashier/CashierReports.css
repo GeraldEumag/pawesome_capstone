@@ -718,3 +718,25 @@
   .quick-filter-btn:hover { color: var(--color-primary-light, #ff8db5); }
   .error-icon             { color: var(--color-danger, #fca5a5); }
 }
+
+@media print {
+  .cashier-reports-page {
+    background: white;
+    padding: 0;
+  }
+
+  .reports-menu-panel,
+  .nav-tabs,
+  .reports-header .action-btn,
+  .cashier-export-btn,
+  .quick-filter-group {
+    display: none !important;
+  }
+
+  .reports-kpi-card,
+  .premium-report-panel {
+    box-shadow: none;
+    break-inside: avoid;
+    border: 1px solid #ddd;
+  }
+}

@@ -30,7 +30,30 @@ const ReceptionistReports = lazy(() => import("../components/receptionist/Recept
 
 // Loading fallback component
 const RouteLoading = () => (
-  <div style={{ padding: "20px", textAlign: "center" }}>Loading...</div>
+  <div style={{
+    display: "flex",
+    flexDirection: "column",
+    alignItems: "center",
+    justifyContent: "center",
+    minHeight: "40vh",
+    gap: "1rem",
+    color: "#ff5f93",
+    fontSize: "0.95rem",
+    fontWeight: 600,
+  }}>
+    <svg
+      width="40"
+      height="40"
+      viewBox="0 0 40 40"
+      style={{ animation: "spin 0.8s linear infinite" }}
+      xmlns="http://www.w3.org/2000/svg"
+    >
+      <circle cx="20" cy="20" r="16" stroke="#ffc8dd" strokeWidth="4" fill="none" />
+      <path d="M20 4 A16 16 0 0 1 36 20" stroke="#ff5f93" strokeWidth="4" fill="none" strokeLinecap="round" />
+      <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+    </svg>
+    Loading...
+  </div>
 );
 
 const AdminRoutes = () => (

@@ -658,3 +658,22 @@
     flex-direction: column;
   }
 }
+@media print {
+  .cr-reports {
+    background: white;
+    padding: 0;
+  }
+
+  .cr-filter-card,
+  .cr-export-btn,
+  .cr-section-actions {
+    display: none !important;
+  }
+
+  .cr-table-card,
+  .cr-summary-card {
+    box-shadow: none;
+    break-inside: avoid;
+    border: 1px solid #ddd;
+  }
+}

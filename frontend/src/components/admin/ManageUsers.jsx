@@ -40,7 +40,6 @@ const ROLE_OPTIONS = [
   { value: "veterinary", label: "Veterinary" },
   { value: "cashier", label: "Cashier" },
   { value: "inventory", label: "Inventory" },
-  { value: "payroll", label: "Payroll" },
   { value: "customer", label: "Customer" },
 ];
 

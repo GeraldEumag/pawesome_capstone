@@ -369,9 +369,13 @@ const AdminReports = () => {
     [activeSection, buildEndpoint]
   );
 
+  // Only manually fetch for advanced sections (dashboard, staff_perf, api_health).
+  // Non-advanced sections are fetched exclusively by UnifiedReportEngine to avoid double-fetch race conditions.
   useEffect(() => {
-    fetchReport(activeSection);
-  }, [activeSection, fetchReport]);
+    if (activeConfig.isAdvanced) {
+      fetchReport(activeSection);
+    }
+  }, [activeSection, fetchReport, activeConfig.isAdvanced]);
 
   useEffect(() => {
     if (activeSection !== "executive" && !overview) {

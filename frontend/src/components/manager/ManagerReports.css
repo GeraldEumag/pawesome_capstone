@@ -1068,3 +1068,24 @@
   font-size: 0.72rem;
   letter-spacing: 0.05em;
 }
+@media print {
+  .manager-reports {
+    background: white;
+    padding: 0;
+  }
+
+  .reports-filter-card,
+  .reports-export-btn,
+  .reports-tab-nav,
+  .manager-report-tabs {
+    display: none !important;
+  }
+
+  .reports-summary-card,
+  .reports-panel,
+  .reports-table-card {
+    box-shadow: none;
+    break-inside: avoid;
+    border: 1px solid #ddd;
+  }
+}

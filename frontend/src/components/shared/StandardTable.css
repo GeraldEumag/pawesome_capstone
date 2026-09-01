@@ -1,9 +1,9 @@
 .standard-table-container {
   overflow-x: auto;
   background: #ffffff;
-  border: 1px solid #e2e8f0;
-  border-radius: 12px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08), 0 4px 12px rgba(0, 0, 0, 0.04);
+  border: 1px solid rgba(255, 95, 147, 0.15);
+  border-radius: 16px;
+  box-shadow: 0 4px 20px rgba(255, 95, 147, 0.08), 0 1px 3px rgba(0, 0, 0, 0.04);
 }
 
 .standard-table {
@@ -21,25 +21,26 @@
 }
 
 .standard-table th {
-  background: #f8fafc;
+  background: linear-gradient(180deg, #fdf2f7 0%, #f9f3f6 100%);
   padding: 1rem 1.25rem;
   text-align: left;
-  font-weight: 700;
-  color: #111827;
-  border-bottom: 2px solid #e2e8f0;
+  font-weight: 800;
+  color: #374151;
+  border-bottom: 2px solid rgba(255, 95, 147, 0.18);
   white-space: nowrap;
-  font-size: 0.8rem;
+  font-size: 0.75rem;
   text-transform: uppercase;
-  letter-spacing: 0.03em;
+  letter-spacing: 0.05em;
 }
 
 .standard-table th.sortable {
   cursor: pointer;
   user-select: none;
+  transition: background 0.15s ease;
 }
 
 .standard-table th.sortable:hover {
-  background: #f1f5f9;
+  background: linear-gradient(180deg, #fce7f0 0%, #fad6e7 100%);
 }
 
 .header-content {
@@ -51,13 +52,14 @@
 
 .sort-icon {
   font-size: 0.75rem;
-  color: #64748b;
-  opacity: 0.45;
-  transition: opacity 0.2s ease;
+  color: #94a3b8;
+  opacity: 0.55;
+  transition: all 0.2s ease;
 }
 
 .standard-table th.sortable:hover .sort-icon {
-  opacity: 0.8;
+  opacity: 0.9;
+  color: #ff5f93;
 }
 
 .sort-icon.active {
@@ -66,8 +68,8 @@
 }
 
 .standard-table td {
-  padding: 0.9rem 1.25rem;
-  border-bottom: 1px solid rgba(226, 232, 240, 0.65);
+  padding: 0.875rem 1.25rem;
+  border-bottom: 1px solid rgba(226, 232, 240, 0.55);
   color: #334155;
   vertical-align: middle;
   line-height: 1.45;
@@ -79,11 +81,15 @@
 }
 
 .standard-table.striped tbody tr:nth-child(even) {
-  background: rgba(248, 250, 252, 0.75);
+  background: rgba(255, 241, 247, 0.4);
+}
+
+.standard-table.hoverable tbody tr {
+  transition: background 0.15s ease, box-shadow 0.15s ease;
 }
 
 .standard-table.hoverable tbody tr:hover {
-  background: #f1f5f9;
+  background: rgba(255, 200, 221, 0.12);
 }
 
 .standard-table.hoverable tbody tr:hover td {
@@ -229,6 +235,24 @@
 @keyframes spin {
   from { transform: rotate(0deg); }
   to { transform: rotate(360deg); }
+}
+
+@media print {
+  .standard-table-container {
+    box-shadow: none;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+  }
+
+  .standard-table th {
+    background: #f9fafb !important;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  .standard-table-pagination {
+    display: none !important;
+  }
 }
 
 @media (max-width: 768px) {

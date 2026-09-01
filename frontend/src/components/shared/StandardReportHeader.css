@@ -1,13 +1,24 @@
 .standard-report-header {
-  background: #ffffff;
+  background: rgba(255, 255, 255, 0.97);
   color: #111827;
-  padding: 1.5rem 1.5rem;
-  margin-bottom: 1.25rem;
-  border-radius: 12px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08), 0 4px 12px rgba(0, 0, 0, 0.04);
-  border: 1px solid #e2e8f0;
-  border-left: 4px solid var(--color-primary, #ff5f93);
+  padding: 1.6rem 1.75rem;
+  margin-bottom: 1.5rem;
+  border-radius: 18px;
+  box-shadow: 0 4px 20px rgba(255, 95, 147, 0.1), 0 1px 3px rgba(0, 0, 0, 0.05);
+  border: 1px solid rgba(255, 95, 147, 0.18);
   position: relative;
+  overflow: hidden;
+}
+
+.standard-report-header::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 5px;
+  background: linear-gradient(180deg, #ff5f93 0%, #ff8db5 100%);
+  border-radius: 0 4px 4px 0;
 }
 
 .header-content {
@@ -30,16 +41,17 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 48px;
-  height: 48px;
-  border-radius: 10px;
-  background: rgba(255, 95, 147, 0.1);
+  width: 52px;
+  height: 52px;
+  border-radius: 14px;
+  background: linear-gradient(135deg, rgba(255, 95, 147, 0.15), rgba(255, 141, 181, 0.08));
   color: var(--color-primary, #ff5f93);
   flex-shrink: 0;
+  border: 1px solid rgba(255, 95, 147, 0.2);
 }
 
 .header-icon {
-  font-size: 1.4rem;
+  font-size: 1.5rem;
 }
 
 .header-text {
@@ -47,19 +59,23 @@
 }
 
 .page-title {
-  font-size: 1.4rem;
+  font-size: 1.5rem;
   font-weight: 800;
   margin: 0;
-  line-height: 1.25;
-  letter-spacing: -0.01em;
+  line-height: 1.2;
+  letter-spacing: -0.025em;
   color: #111827;
+  background: linear-gradient(135deg, #111827 30%, #374151);
+  -webkit-background-clip: text;
+  background-clip: text;
 }
 
 .page-subtitle {
   font-size: 0.85rem;
-  margin: 0.25rem 0 0 0;
+  margin: 0.3rem 0 0 0;
   color: #64748b;
-  line-height: 1.45;
+  line-height: 1.5;
+  font-weight: 500;
 }
 
 .header-actions {

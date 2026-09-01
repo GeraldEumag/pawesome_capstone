@@ -30,6 +30,7 @@ class DashboardController extends Controller
                 'total_revenue' => (float) Sale::sum('amount'),
                 'today_revenue' => (float) Sale::whereDate('created_at', $today)->sum('amount'),
                 'low_stock_items' => InventoryItem::whereNull('archived_at')->whereRaw('stock <= reorder_level')->where('stock', '>', 0)->count(),
+                'active_modules' => count(array_filter($this->getActiveModules())),
                 'appointments_by_status' => Appointment::selectRaw('status, COUNT(*) as count')
                     ->groupBy('status')
                     ->get()

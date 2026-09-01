@@ -66,9 +66,16 @@
 }
 
 .error-icon {
-  font-size: 2.5rem;
-  margin-bottom: 1.25rem;
+  width: 72px;
+  height: 72px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: rgba(239, 68, 68, 0.1);
   color: #ef4444;
+  font-size: 1.75rem;
+  margin-bottom: 1.5rem;
 }
 
 .error-message {
@@ -85,20 +92,20 @@
   align-items: center;
   gap: 0.5rem;
   padding: 0.7rem 1.4rem;
-  background: #0f172a;
+  background: linear-gradient(135deg, #ff5f93, #ff8db5);
   color: white;
   border: none;
-  border-radius: 10px;
+  border-radius: 12px;
   font-size: 0.875rem;
-  font-weight: 600;
+  font-weight: 700;
   cursor: pointer;
   transition: all 0.25s ease;
-  box-shadow: 0 4px 14px rgba(15, 23, 42, 0.2);
+  box-shadow: 0 4px 14px rgba(255, 95, 147, 0.3);
 }
 
 .retry-btn:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 6px 20px rgba(15, 23, 42, 0.3);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(255, 95, 147, 0.4);
 }
 
 /* Standard Empty State */
@@ -112,9 +119,17 @@
 }
 
 .empty-icon {
-  font-size: 3rem;
-  margin-bottom: 1.25rem;
-  opacity: 0.4;
+  width: 80px;
+  height: 80px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: rgba(255, 95, 147, 0.08);
+  color: #ff5f93;
+  font-size: 1.85rem;
+  margin-bottom: 1.5rem;
+  opacity: 0.75;
 }
 
 .empty-message {
@@ -130,20 +145,20 @@
   align-items: center;
   gap: 0.5rem;
   padding: 0.7rem 1.4rem;
-  background: #0f172a;
+  background: linear-gradient(135deg, #ff5f93, #ff8db5);
   color: white;
   border: none;
-  border-radius: 10px;
+  border-radius: 12px;
   font-size: 0.875rem;
-  font-weight: 600;
+  font-weight: 700;
   cursor: pointer;
   transition: all 0.25s ease;
-  box-shadow: 0 4px 14px rgba(15, 23, 42, 0.2);
+  box-shadow: 0 4px 14px rgba(255, 95, 147, 0.3);
 }
 
 .refresh-btn:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 6px 20px rgba(15, 23, 42, 0.3);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(255, 95, 147, 0.4);
 }
 
 .data-table-section,

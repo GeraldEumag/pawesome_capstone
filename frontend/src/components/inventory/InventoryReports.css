@@ -338,3 +338,22 @@
 @media (max-width: 480px) {
   .reports-summary-grid { grid-template-columns: 1fr; }
 }
+
+@media print {
+  .inventory-reports-page {
+    background: white;
+    padding: 0;
+  }
+
+  .reports-hero-actions,
+  .reports-filters {
+    display: none !important;
+  }
+
+  .reports-hero,
+  .reports-kpi-cards,
+  .standard-report-layout {
+    box-shadow: none;
+    break-inside: avoid;
+  }
+}

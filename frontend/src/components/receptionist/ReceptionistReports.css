@@ -636,3 +636,22 @@
     border-radius: 20px;
   }
 }
+@media print {
+  .rr-reports {
+    background: white;
+    padding: 0;
+  }
+
+  .rr-filter-card,
+  .rr-export-btn,
+  .rr-section-actions {
+    display: none !important;
+  }
+
+  .rr-table-card,
+  .rr-summary-card {
+    box-shadow: none;
+    break-inside: avoid;
+    border: 1px solid #ddd;
+  }
+}

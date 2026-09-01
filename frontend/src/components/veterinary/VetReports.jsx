@@ -57,8 +57,15 @@ const VetReports = () => {
 
   const fetchReportData = useCallback(async (filters) => {
     const params = new URLSearchParams();
-    if (filters.startDate) params.append("start_date", filters.startDate);
-    if (filters.endDate) params.append("end_date", filters.endDate);
+    // Send both param styles: start_date/end_date for vet endpoint, from/to for admin endpoint
+    if (filters.startDate) {
+      params.append("start_date", filters.startDate);
+      params.append("from", filters.startDate);
+    }
+    if (filters.endDate) {
+      params.append("end_date", filters.endDate);
+      params.append("to", filters.endDate);
+    }
     if (filters.status && filters.status !== "all") params.append("status", filters.status);
 
     const endpoint = params.toString() ? `/veterinary/reports?${params}` : "/veterinary/reports";

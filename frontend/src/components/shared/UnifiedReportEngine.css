@@ -303,58 +303,72 @@
 }
 
 .ure-summary-cards.grid {
-  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
 }
 
 .ure-summary-cards.row {
-  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
 }
 
 .ure-summary-card {
   display: flex;
   align-items: center;
   gap: 1rem;
-  padding: 1.25rem;
-  background: var(--ure-surface);
+  padding: 1.4rem;
+  background: rgba(255, 255, 255, 0.97);
   border: 1px solid var(--ure-border);
   border-radius: var(--ure-radius-lg);
   box-shadow: var(--ure-shadow);
-  transition: all 0.2s ease;
+  transition: all 0.25s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.ure-summary-card::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, rgba(255, 95, 147, 0.04) 0%, transparent 60%);
+  pointer-events: none;
 }
 
 .ure-summary-card:hover {
-  transform: translateY(-2px);
+  transform: translateY(-3px);
   box-shadow: var(--ure-shadow-lg);
+  border-color: var(--ure-border-strong);
 }
 
 .ure-card-icon {
-  width: 48px;
-  height: 48px;
+  width: 52px;
+  height: 52px;
   display: grid;
   place-items: center;
   border-radius: var(--ure-radius);
-  font-size: 1.25rem;
+  font-size: 1.3rem;
   flex-shrink: 0;
 }
 
 .ure-card-content {
   display: flex;
   flex-direction: column;
-  gap: 0.25rem;
+  gap: 0.2rem;
   min-width: 0;
 }
 
 .ure-card-content strong {
-  font-size: 1.5rem;
-  font-weight: 700;
+  font-size: 1.85rem;
+  font-weight: 800;
   color: var(--ure-heading);
-  line-height: 1.2;
+  line-height: 1.1;
+  letter-spacing: -0.03em;
 }
 
 .ure-card-content span {
-  font-size: 0.8125rem;
+  font-size: 0.8rem;
   color: var(--ure-text-muted);
-  font-weight: 500;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
 }
 
 .ure-change {
@@ -415,37 +429,49 @@
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
   gap: 1.5rem;
-  min-height: 320px;
+  min-height: 380px;
 }
 
 .ure-chart-container {
-  background: var(--ure-surface);
+  background: rgba(255, 255, 255, 0.97);
   border: 1px solid var(--ure-border);
-  border-radius: var(--ure-radius-lg);
-  padding: 1.25rem;
+  border-radius: var(--ure-radius-xl);
+  padding: 1.5rem;
   box-shadow: var(--ure-shadow);
   min-width: 0;
-  min-height: 300px;
+  min-height: 380px;
+  display: flex;
+  flex-direction: column;
 }
 
 .ure-chart-header {
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
-  margin-bottom: 1rem;
+  margin-bottom: 1.25rem;
+  padding-bottom: 0.875rem;
+  border-bottom: 1px solid var(--ure-border);
 }
 
 .ure-chart-header h3 {
   margin: 0;
   font-size: 1rem;
-  font-weight: 700;
+  font-weight: 800;
   color: var(--ure-heading);
+  letter-spacing: -0.01em;
 }
 
 .ure-chart-header p {
-  margin: 0.25rem 0 0;
-  font-size: 0.8125rem;
+  margin: 0.2rem 0 0;
+  font-size: 0.8rem;
   color: var(--ure-text-muted);
+}
+
+.ure-chart-body {
+  flex: 1;
+  width: 100%;
+  min-width: 0;
+  min-height: 280px;
 }
 
 .ure-chart-actions {
@@ -658,18 +684,39 @@
 @media print {
   .ure-filter-panel,
   .ure-table-actions,
-  .ure-chart-actions {
+  .ure-chart-actions,
+  .ure-btn-clear,
+  .ure-btn-save,
+  .ure-btn-apply,
+  .ure-date-presets,
+  .ure-saved-filters {
     display: none !important;
   }
-  
+
+  .unified-report-engine {
+    gap: 1rem;
+  }
+
   .ure-summary-cards {
     grid-template-columns: repeat(4, 1fr) !important;
+    break-inside: avoid;
   }
-  
+
+  .ure-summary-card {
+    border: 1px solid #ddd;
+    box-shadow: none;
+    padding: 0.75rem;
+  }
+
   .ure-chart-container,
   .ure-table-section {
     break-inside: avoid;
     box-shadow: none;
     border: 1px solid #ddd;
+    border-radius: 8px;
+  }
+
+  .ure-charts-section {
+    grid-template-columns: repeat(2, 1fr) !important;
   }
 }

@@ -474,16 +474,6 @@ const AdminDashboard = () => {
                   </div>
 
                   <div className="admin-hero-actions">
-                    <button
-                      type="button"
-                      className="admin-secondary-action"
-                      onClick={() => fetchDashboardData({ silent: true })}
-                      disabled={refreshing}
-                    >
-                      <FontAwesomeIcon icon={faRotateRight} />
-                      {refreshing ? "Refreshing..." : "Refresh Data"}
-                    </button>
-
                     <NavLink to="/admin/reports" className="admin-primary-action">
                       View Reports
                       <FontAwesomeIcon icon={faArrowRight} />

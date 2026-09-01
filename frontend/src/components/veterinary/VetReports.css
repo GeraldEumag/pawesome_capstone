@@ -437,9 +437,10 @@
 .vet-report-stat-card h3 {
   margin: 0;
   color: var(--veterinary-primary);
-  font-size: 1.2rem;
-  font-weight: 950;
+  font-size: 1.75rem;
+  font-weight: 800;
   line-height: 1.08;
+  letter-spacing: -0.03em;
 }
 
 .vet-report-stat-card p {
@@ -1114,5 +1115,27 @@
   .vet-report-stat-card h3,
   .vet-financial-summary strong {
     font-size: 1.05rem;
+  }
+}
+@media print {
+  .vet-reports {
+    background: white;
+    padding: 0;
+  }
+
+  .vet-filter-card,
+  .vet-export-btn,
+  .vet-report-actions {
+    display: none !important;
+  }
+
+  .vet-reports .premium-card {
+    box-shadow: none;
+    break-inside: avoid;
+    border: 1px solid #ddd;
+  }
+
+  .vet-chart-box {
+    height: 260px;
   }
 }
