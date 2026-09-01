@@ -55,14 +55,13 @@ const InventoryReports = () => {
         const to = filters?.endDate ?? endDate;
         const status = filters?.status ?? statusFilter;
         const category = filters?.category ?? categoryFilter;
-        const search = filters?.searchTerm ?? searchTerm;
+        // searchTerm is intentionally excluded from API params — applied client-side in filteredItems
 
         const params = new URLSearchParams();
         if (from) params.append("from", from);
         if (to) params.append("to", to);
         if (status && status !== "all") params.append("status", status);
         if (category && category !== "all") params.append("category", category);
-        if (search) params.append("search", search);
 
         const response = isAdminReport
           ? await apiRequest(`/admin/reports/inventory?${params}`)
@@ -81,7 +80,7 @@ const InventoryReports = () => {
       } finally {
         setLoading(false);
       }
-    }, [startDate, endDate, statusFilter, categoryFilter, searchTerm, isAdminReport]);
+    }, [startDate, endDate, statusFilter, categoryFilter, isAdminReport]);
 
   useEffect(() => {
     fetchReportData();

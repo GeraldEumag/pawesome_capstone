@@ -1,285 +1,502 @@
 ﻿/* ============================================================
-   Supplier Modal — Pink Theme
+   Supplier Modal — UI/UX Overhaul (Wide Two-Panel)
+   Brand color: #ff5f93 (pink)
    ============================================================ */
 
+/* ---- Overlay ---- */
+.supplier-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 1rem;
+}
+
+/* ---- Modal Shell ---- */
 .supplier-modal {
-  max-width: 700px;
-  max-height: 80vh;
-  overflow-y: auto;
-}
-
-/* ---- Toolbar ---- */
-.supplier-toolbar {
-  display: flex;
-  gap: 12px;
-  margin-bottom: 16px;
-  align-items: center;
-}
-
-.supplier-toolbar .search-box {
-  flex: 1;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  background: var(--color-surface-muted, #fff7fb);
-  border: 1px solid var(--color-border, rgba(255,95,147,0.18));
-  border-radius: 10px;
-  padding: 8px 12px;
-  transition: border-color 0.2s, box-shadow 0.2s;
-}
-
-.supplier-toolbar .search-box:focus-within {
-  border-color: var(--color-primary, #ff5f93);
-  box-shadow: 0 0 0 3px rgba(255,95,147,0.1);
-}
-
-.supplier-toolbar .search-box input {
-  border: none;
-  background: transparent;
-  outline: none;
-  flex: 1;
-  font-size: 14px;
-}
-
-/* ---- Supplier List ---- */
-.supplier-list {
+  background: #fff;
+  border-radius: 20px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.2);
+  width: 100%;
+  max-width: 820px;
+  max-height: 90vh;
   display: flex;
   flex-direction: column;
-  gap: 8px;
-  max-height: 400px;
-  overflow-y: auto;
-  scrollbar-width: thin;
-  scrollbar-color: rgba(255,95,147,0.2) transparent;
+  overflow: hidden;
 }
 
-.supplier-card {
+/* ---- Modal Header ---- */
+.supplier-modal-header {
+  padding: 1.25rem 1.5rem;
+  background: linear-gradient(135deg, #ff5f93, #ff8db5);
+  color: #fff;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+.supplier-modal-header h2,
+.supplier-modal-header h3,
+.supplier-modal-header .modal-title {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #fff;
+  margin: 0;
+}
+
+/* ---- Close Button ---- */
+.btn-close {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  border: none;
+  background: rgba(255, 255, 255, 0.25);
+  color: #fff;
+  font-size: 1rem;
+  cursor: pointer;
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  padding: 12px 16px;
-  border: 1px solid var(--color-border, rgba(255,95,147,0.14));
-  border-left: 3px solid transparent;
-  border-radius: 12px;
+  justify-content: center;
+  transition: background 0.2s;
+  flex-shrink: 0;
+}
+
+.btn-close:hover {
+  background: rgba(255, 255, 255, 0.45);
+}
+
+/* ---- Two-Panel Body ---- */
+.supplier-modal-body {
+  display: flex;
+  flex: 1;
+  overflow: hidden;
+}
+
+/* ---- List Panel ---- */
+.supplier-list-panel {
+  width: 42%;
+  border-right: 1px solid #f1f5f9;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+/* ---- Form Panel ---- */
+.supplier-form-panel {
+  flex: 1;
+  overflow-y: auto;
+  padding: 1.5rem;
+}
+
+/* ---- Supplier Search ---- */
+.supplier-search {
+  padding: 1rem;
+  border-bottom: 1px solid #f1f5f9;
+}
+
+.supplier-search input {
+  width: 100%;
+  padding: 0.5rem 0.875rem;
+  border: 1.5px solid #e2e8f0;
+  border-radius: 8px;
+  font-size: 0.875rem;
+  outline: none;
+  transition: border-color 0.2s, box-shadow 0.2s;
+  box-sizing: border-box;
+}
+
+.supplier-search input:focus {
+  border-color: #ff5f93;
+  box-shadow: 0 0 0 3px rgba(255, 95, 147, 0.12);
+}
+
+/* ---- Supplier List Scroll Area ---- */
+.supplier-list-scroll {
+  overflow-y: auto;
+  flex: 1;
+  padding: 0.75rem;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 95, 147, 0.2) transparent;
+}
+
+/* ---- Supplier Cards ---- */
+.supplier-card {
+  padding: 0.875rem 1rem;
+  border-radius: 10px;
+  border: 1.5px solid #e2e8f0;
+  margin-bottom: 0.5rem;
   cursor: pointer;
-  transition: all 0.2s ease;
-  background: var(--color-surface-solid, #fff);
-  box-shadow: 0 2px 8px rgba(255,95,147,0.05);
+  transition: border-color 0.2s, background 0.2s;
+  position: relative;
+  background: #fff;
 }
 
 .supplier-card:hover {
-  border-left-color: var(--color-primary, #ff5f93);
-  box-shadow: 0 4px 16px rgba(255,95,147,0.12);
-  background: rgba(255,95,147,0.03);
+  border-color: #ff8db5;
+  background: rgba(255, 95, 147, 0.03);
 }
 
 .supplier-card.selected {
-  border-left-color: var(--color-primary, #ff5f93);
-  background: rgba(255,95,147,0.07);
+  border-color: #ff5f93;
+  background: rgba(255, 95, 147, 0.06);
 }
 
-.supplier-info {
-  flex: 1;
-  min-width: 0;
+.supplier-card.active {
+  border-color: #ff5f93;
 }
 
-.supplier-name {
+.supplier-card-name {
+  font-size: 0.9rem;
   font-weight: 600;
-  font-size: 15px;
   color: #1e293b;
-  display: flex;
-  align-items: center;
-  gap: 8px;
+  margin-bottom: 0.25rem;
 }
 
-.selected-badge {
-  color: var(--color-primary, #ff5f93);
-  font-size: 12px;
-}
-
-.supplier-meta {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  margin-top: 4px;
-  font-size: 13px;
+.supplier-card-contact {
+  font-size: 0.8rem;
   color: #64748b;
 }
 
-.supplier-meta span:not(:last-child)::after {
-  content: "|";
-  margin-left: 8px;
-  color: #cbd5e1;
+/* ---- Active Badge ---- */
+.supplier-active-badge {
+  position: absolute;
+  top: 0.5rem;
+  right: 0.5rem;
+  background: #dcfce7;
+  color: #166534;
+  font-size: 0.65rem;
+  font-weight: 700;
+  padding: 0.15rem 0.5rem;
+  border-radius: 20px;
+  text-transform: uppercase;
 }
 
-.supplier-actions {
+/* ---- Card Actions (edit/delete icons) ---- */
+.supplier-card-actions {
   display: flex;
-  gap: 6px;
+  gap: 0.35rem;
+  position: absolute;
+  bottom: 0.5rem;
+  right: 0.5rem;
   opacity: 0;
-  transition: opacity 0.2s ease;
+  transition: opacity 0.2s;
 }
 
-.supplier-card:hover .supplier-actions {
+.supplier-card:hover .supplier-card-actions {
   opacity: 1;
 }
 
-/* ---- Supplier Form ---- */
-.supplier-form {
-  padding: 8px 0;
-}
-
-.supplier-form h4 {
-  margin-bottom: 16px;
-  color: #1e293b;
-  font-size: 1rem;
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-}
-
-.supplier-form h4::before {
-  content: "";
-  display: block;
-  width: 4px;
-  height: 18px;
-  border-radius: 2px;
-  background: var(--color-primary, #ff5f93);
-}
-
-.form-grid {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 12px;
-}
-
-.form-grid .full-width { grid-column: span 2; }
-
-.form-group {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-
-.form-group label {
-  font-size: 13px;
-  font-weight: 600;
-  color: #475569;
-}
-
-.form-group input,
-.form-group textarea {
-  padding: 9px 12px;
-  border: 1px solid #e2e8f0;
-  border-radius: 8px;
-  font-size: 14px;
-  outline: none;
-  transition: border-color 0.2s, box-shadow 0.2s;
-  background: var(--color-surface-solid, #fff);
-}
-
-.form-group input:focus,
-.form-group textarea:focus {
-  border-color: var(--color-primary, #ff5f93);
-  box-shadow: 0 0 0 3px rgba(255,95,147,0.1);
-}
-
-.form-group.has-error input,
-.form-group.has-error textarea {
-  border-color: #ef4444;
-}
-
-.form-error {
-  color: #ef4444;
-  font-size: 12px;
-}
-
-.form-actions {
-  display: flex;
-  justify-content: flex-end;
-  gap: 8px;
-  margin-top: 20px;
-  padding-top: 16px;
-  border-top: 1px solid var(--color-border, rgba(255,95,147,0.12));
-}
-
-/* ---- Buttons ---- */
-.btn {
-  padding: 9px 18px;
-  border-radius: 8px;
-  font-size: 14px;
-  font-weight: 500;
-  cursor: pointer;
+.supplier-card-actions button {
+  width: 26px;
+  height: 26px;
+  border-radius: 6px;
   border: none;
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  transition: all 0.2s;
-}
-
-.btn-primary {
-  background: var(--color-primary, #ff5f93);
-  color: white;
-}
-
-.btn-primary:hover {
-  background: var(--color-primary-hover, #ff4f85);
-  box-shadow: 0 4px 12px rgba(255,95,147,0.3);
-}
-
-.btn-secondary {
-  background: #f1f5f9;
-  color: #475569;
-}
-
-.btn-secondary:hover { background: #e2e8f0; }
-
-.btn-icon {
-  width: 32px;
-  height: 32px;
-  border-radius: 8px;
-  border: none;
-  background: transparent;
+  background: rgba(255, 255, 255, 0.9);
   color: #64748b;
+  font-size: 0.75rem;
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
   transition: all 0.2s;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
 }
 
-.btn-icon:hover {
-  background: rgba(255,95,147,0.08);
-  color: var(--color-primary, #ff5f93);
+.supplier-card-actions button:hover {
+  background: rgba(255, 95, 147, 0.1);
+  color: #ff5f93;
 }
 
-.btn-icon.danger:hover {
+.supplier-card-actions button.danger:hover {
   background: #fef2f2;
   color: #ef4444;
 }
 
-/* ---- States ---- */
-.required { color: var(--color-primary, #ff5f93); }
+/* ---- Form Panel — Section Title ---- */
+.supplier-form-panel h3,
+.supplier-form-panel h4,
+.supplier-form-panel .form-section-title {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #1e293b;
+  margin-bottom: 1rem;
+  margin-top: 0;
+}
 
-.error-banner {
-  background: #fef2f2;
-  color: #b91c1c;
-  padding: 10px 14px;
+/* ---- Supplier Form ---- */
+.supplier-form {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+/* ---- Form Groups ---- */
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  margin-bottom: 0.875rem;
+}
+
+.form-group label {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #475569;
+}
+
+.form-group input,
+.form-group textarea,
+.form-group select {
+  padding: 0.5rem 0.875rem;
+  border: 1.5px solid #e2e8f0;
   border-radius: 8px;
-  margin-bottom: 12px;
-  font-size: 14px;
-  border: 1px solid #fecaca;
+  font-size: 0.875rem;
+  outline: none;
+  transition: border-color 0.2s, box-shadow 0.2s;
+  background: #fff;
+  font-family: inherit;
 }
 
-.loading-state,
-.empty-state {
-  text-align: center;
-  padding: 40px;
+.form-group input:focus,
+.form-group textarea:focus,
+.form-group select:focus {
+  border-color: #ff5f93;
+  box-shadow: 0 0 0 3px rgba(255, 95, 147, 0.12);
+}
+
+.form-group textarea {
+  resize: vertical;
+  min-height: 80px;
+}
+
+.form-group .form-error,
+.form-group .error-text {
+  font-size: 0.75rem;
+  color: #ef4444;
+  margin-top: 0.15rem;
+}
+
+.form-group.has-error input,
+.form-group.has-error textarea,
+.form-group.has-error select {
+  border-color: #ef4444;
+}
+
+/* ---- Form Divider ---- */
+.form-divider {
+  height: 1px;
+  background: #f1f5f9;
+  margin: 1rem 0;
+  border: none;
+}
+
+/* ---- Active Toggle ---- */
+.active-toggle {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  cursor: pointer;
+}
+
+.active-toggle input[type="checkbox"] {
+  width: 16px;
+  height: 16px;
+  accent-color: #ff5f93;
+  cursor: pointer;
+}
+
+/* ---- Form Actions ---- */
+.form-actions {
+  display: flex;
+  gap: 0.75rem;
+  justify-content: flex-end;
+  margin-top: 1.5rem;
+  padding-top: 1rem;
+  border-top: 1px solid #f1f5f9;
+}
+
+/* ---- Buttons ---- */
+
+/* Save — pink gradient */
+.btn-save {
+  padding: 0.5rem 1.25rem;
+  border-radius: 8px;
+  border: none;
+  background: linear-gradient(135deg, #ff5f93, #ff8db5);
+  color: #fff;
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.btn-save:hover {
+  background: linear-gradient(135deg, #ff4f85, #ff7aab);
+  box-shadow: 0 4px 14px rgba(255, 95, 147, 0.35);
+  transform: translateY(-1px);
+}
+
+/* Cancel — outline gray */
+.btn-cancel {
+  padding: 0.5rem 1.25rem;
+  border-radius: 8px;
+  border: 1.5px solid #cbd5e1;
+  background: transparent;
+  color: #475569;
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.btn-cancel:hover {
+  background: #f1f5f9;
+  border-color: #94a3b8;
+}
+
+/* Select — solid pink with checkmark */
+.btn-select {
+  padding: 0.5rem 1.25rem;
+  border-radius: 8px;
+  border: none;
+  background: #ff5f93;
+  color: #fff;
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.btn-select:hover {
+  background: #ff4f85;
+  box-shadow: 0 4px 12px rgba(255, 95, 147, 0.3);
+}
+
+/* Add New — outline pink */
+.btn-add-new {
+  padding: 0.5rem 1.25rem;
+  border-radius: 8px;
+  border: 1.5px solid #ff5f93;
+  background: transparent;
+  color: #ff5f93;
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.btn-add-new:hover {
+  background: rgba(255, 95, 147, 0.08);
+}
+
+/* Edit — small icon button */
+.btn-edit {
+  padding: 0.35rem 0.75rem;
+  border-radius: 7px;
+  border: 1.5px solid #e2e8f0;
+  background: transparent;
   color: #64748b;
+  font-size: 0.8rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
 }
 
-.empty-state p { margin-top: 8px; }
+.btn-edit:hover {
+  border-color: #ff5f93;
+  color: #ff5f93;
+  background: rgba(255, 95, 147, 0.06);
+}
+
+/* Delete — outline red, hover fill red */
+.btn-delete {
+  padding: 0.35rem 0.75rem;
+  border-radius: 7px;
+  border: 1.5px solid #fca5a5;
+  background: transparent;
+  color: #ef4444;
+  font-size: 0.8rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.btn-delete:hover {
+  background: #ef4444;
+  border-color: #ef4444;
+  color: #fff;
+}
+
+/* ---- Empty / Loading States ---- */
+.empty-suppliers,
+.loading-suppliers {
+  text-align: center;
+  padding: 2rem;
+  color: #94a3b8;
+  font-style: italic;
+  font-size: 0.875rem;
+}
+
+/* ---- Modal Footer ---- */
+.modal-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.75rem;
+  padding: 1rem 1.5rem;
+  border-top: 1px solid #f1f5f9;
+  flex-shrink: 0;
+}
 
 /* ---- Responsive ---- */
 @media (max-width: 640px) {
-  .form-grid { grid-template-columns: 1fr; }
-  .form-grid .full-width { grid-column: span 1; }
+  .supplier-modal-body {
+    flex-direction: column;
+  }
+
+  .supplier-list-panel {
+    width: 100%;
+    height: 50%;
+    border-right: none;
+    border-bottom: 1px solid #f1f5f9;
+  }
+}
+
+/* ---- Print ---- */
+@media print {
+  .supplier-modal-overlay {
+    position: static;
+    background: none;
+    backdrop-filter: none;
+    display: block;
+    padding: 0;
+  }
+
+  .supplier-modal {
+    box-shadow: none;
+    max-height: none;
+    border-radius: 0;
+  }
 }

@@ -811,7 +811,7 @@ export const inventoryApi = {
   getSuppliers: async (params = {}) => {
     try {
       const queryString = buildQueryString(params);
-      return await apiRequest(`/admin/suppliers${queryString}`);
+      return await apiRequest(`/inventory/suppliers${queryString}`);
     } catch (error) {
       throw error;
     }
@@ -833,7 +833,7 @@ export const inventoryApi = {
   createSupplier: async (data) => {
     validateData(data, "create supplier");
     try {
-      return await apiRequest("/admin/suppliers", {
+      return await apiRequest("/inventory/suppliers", {
         method: "POST",
         body: JSON.stringify(data),
       });
@@ -854,7 +854,7 @@ export const inventoryApi = {
     validateId(id, "Supplier ID");
     validateData(data, "update supplier");
     try {
-      return await apiRequest(`/admin/suppliers/${id}`, {
+      return await apiRequest(`/inventory/suppliers/${id}`, {
         method: "PUT",
         body: JSON.stringify(data),
       });
@@ -873,7 +873,7 @@ export const inventoryApi = {
   deleteSupplier: async (id) => {
     validateId(id, "Supplier ID");
     try {
-      return await apiRequest(`/admin/suppliers/${id}`, {
+      return await apiRequest(`/inventory/suppliers/${id}`, {
         method: "DELETE",
       });
     } catch (error) {

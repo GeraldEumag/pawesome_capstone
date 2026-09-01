@@ -18,7 +18,7 @@ const MonthlyAuditReport = () => {
     try {
       setLoading(true);
       const res = await inventoryApi.getMonthlyAuditReport(month);
-      setAudits(res.audits || []);
+      setAudits(res.items || res.data || []);
     } catch (err) {
       console.error("Failed to load audit report:", err);
       setAudits([]);

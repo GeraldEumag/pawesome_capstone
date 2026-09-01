@@ -1,59 +1,119 @@
-/* MyPayroll.css — Employee self-service payroll view */
+/* ============================================================
+   MyPayroll.css — Employee self-service payroll view
+   Accent colour injected per-role via --mp-accent CSS variable.
+   Roles: Cashier (#0891b2) · Receptionist (#d97706) ·
+          Super Receptionist (#7c3aed) · Inventory (#ff5f93) ·
+          Veterinary (#059669)
+   ============================================================ */
+
+/* ---- Page wrapper ---- */
 .my-payroll-page {
-  padding: 24px 32px;
+  padding: 1.5rem 2rem;
   max-width: 1200px;
   margin: 0 auto;
+  --mp-accent: #0891b2; /* fallback; overridden per-role via style prop */
 }
 
+/* ============================================================
+   HERO SECTION
+   ============================================================ */
+
 .my-payroll-hero {
+  background: #fff;
+  border-radius: 18px;
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.07);
+  padding: 1.75rem 2rem;
+  margin-bottom: 1.5rem;
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
-  margin-bottom: 24px;
-  gap: 16px;
+  gap: 1rem;
+  flex-wrap: wrap;
+  /* Subtle accent stripe on the left */
+  border-left: 5px solid var(--mp-accent, #0891b2);
+  position: relative;
+  overflow: hidden;
 }
 
-.my-payroll-hero .mp-eyebrow {
+/* Soft accent glow in top-right corner */
+.my-payroll-hero::before {
+  content: "";
+  position: absolute;
+  top: -40px;
+  right: -40px;
+  width: 180px;
+  height: 180px;
+  background: radial-gradient(circle, rgba(var(--mp-accent-rgb, 8, 145, 178), 0.12), transparent 70%);
+  pointer-events: none;
+  border-radius: 50%;
+}
+
+.mp-eyebrow {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  font-size: 12px;
-  font-weight: 600;
+  font-size: 0.72rem;
+  font-weight: 700;
   text-transform: uppercase;
-  letter-spacing: 0.05em;
+  letter-spacing: 0.07em;
   color: var(--mp-accent, #0891b2);
-  margin-bottom: 6px;
+  background: color-mix(in srgb, var(--mp-accent, #0891b2) 12%, transparent);
+  border: 1px solid color-mix(in srgb, var(--mp-accent, #0891b2) 25%, transparent);
+  padding: 0.25rem 0.75rem;
+  border-radius: 999px;
+  margin-bottom: 0.5rem;
+}
+
+/* Fallback for browsers without color-mix */
+@supports not (background: color-mix(in srgb, red 10%, transparent)) {
+  .mp-eyebrow {
+    background: rgba(8, 145, 178, 0.1);
+    border-color: rgba(8, 145, 178, 0.2);
+  }
 }
 
 .my-payroll-hero h1 {
-  font-size: 26px;
+  font-size: clamp(1.5rem, 3vw, 2rem);
   font-weight: 800;
-  color: #1f2937;
-  margin: 0 0 4px;
+  color: #1e293b;
+  margin: 0 0 0.3rem;
+  letter-spacing: -0.02em;
+  line-height: 1.1;
 }
 
 .my-payroll-hero p {
-  color: #6b7280;
-  font-size: 14px;
+  color: #64748b;
+  font-size: 0.875rem;
   margin: 0;
+  line-height: 1.5;
 }
+
+/* ============================================================
+   BUTTONS
+   ============================================================ */
 
 .mp-btn {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  padding: 10px 18px;
-  border: 1px solid #e2e8f0;
-  border-radius: 8px;
+  padding: 0.55rem 1.1rem;
+  border: 1.5px solid #e2e8f0;
+  border-radius: 10px;
   background: #fff;
   color: #374151;
-  font-size: 13px;
+  font-size: 0.875rem;
   font-weight: 600;
   cursor: pointer;
-  transition: all 0.15s;
+  transition: 0.18s;
+  white-space: nowrap;
+  flex-shrink: 0;
 }
 
-.mp-btn:hover { background: #f9fafb; }
+.mp-btn:hover {
+  border-color: var(--mp-accent, #0891b2);
+  color: var(--mp-accent, #0891b2);
+  background: color-mix(in srgb, var(--mp-accent, #0891b2) 6%, white);
+}
 
 .mp-btn.primary {
   background: var(--mp-accent, #0891b2);
@@ -61,112 +121,239 @@
   border-color: var(--mp-accent, #0891b2);
 }
 
-.mp-btn.primary:hover { opacity: 0.9; }
+.mp-btn.primary:hover {
+  filter: brightness(1.08);
+}
 
-.mp-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+.mp-btn.refresh {
+  /* specific style for the hero refresh button */
+  align-self: flex-start;
+}
 
-/* Summary cards */
+.mp-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* ============================================================
+   SUMMARY CARDS
+   ============================================================ */
+
 .mp-summary-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: 16px;
-  margin-bottom: 24px;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1rem;
+  margin-bottom: 1.5rem;
 }
 
 .mp-summary-card {
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding: 18px;
+  gap: 1rem;
+  padding: 1.25rem 1.5rem;
   background: #fff;
-  border: 1px solid #e2e8f0;
-  border-radius: 12px;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+  border-radius: 14px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.06);
+  border-left: 4px solid var(--mp-accent, #0891b2);
+  transition: transform 0.2s, box-shadow 0.2s;
 }
+
+.mp-summary-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.1);
+}
+
+/* Card-specific accent borders */
+.mp-summary-card.paid    { border-left-color: #10b981; }
+.mp-summary-card.pending { border-left-color: #f59e0b; }
+/* .mp-summary-card (first, net) inherit --mp-accent */
 
 .mp-summary-card .mp-summary-icon {
-  font-size: 24px;
-  color: #6b7280;
+  font-size: 1.25rem;
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  /* Default: accent tint */
+  background: color-mix(in srgb, var(--mp-accent, #0891b2) 12%, white);
+  color: var(--mp-accent, #0891b2);
 }
 
-.mp-summary-card.paid .mp-summary-icon { color: #10b981; }
-.mp-summary-card.pending .mp-summary-icon { color: #f59e0b; }
-.mp-summary-card.net .mp-summary-icon { color: var(--mp-accent, #0891b2); }
+.mp-summary-card.paid .mp-summary-icon {
+  background: #dcfce7;
+  color: #16a34a;
+}
+
+.mp-summary-card.pending .mp-summary-icon {
+  background: #fef3c7;
+  color: #d97706;
+}
+
+.mp-summary-card.net .mp-summary-icon {
+  background: color-mix(in srgb, var(--mp-accent, #0891b2) 12%, white);
+  color: var(--mp-accent, #0891b2);
+}
 
 .mp-summary-card div {
   display: flex;
   flex-direction: column;
+  gap: 0.2rem;
 }
 
 .mp-summary-label {
-  font-size: 11px;
-  color: #6b7280;
+  font-size: 0.72rem;
+  color: #64748b;
   text-transform: uppercase;
-  letter-spacing: 0.04em;
+  letter-spacing: 0.05em;
   font-weight: 600;
 }
 
 .mp-summary-value {
-  font-size: 22px;
+  font-size: 1.75rem;
   font-weight: 800;
-  color: #1f2937;
+  color: #1e293b;
+  letter-spacing: -0.02em;
+  line-height: 1;
 }
 
-/* Table */
+/* ============================================================
+   ERROR / LOADING / EMPTY
+   ============================================================ */
+
+.mp-error {
+  background: #fef2f2;
+  border: 1.5px solid #fecaca;
+  color: #dc2626;
+  padding: 0.875rem 1.25rem;
+  border-radius: 10px;
+  margin-bottom: 1.25rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+
+.mp-loading,
+.mp-empty {
+  text-align: center;
+  padding: 3rem 2rem;
+  color: #94a3b8;
+  font-size: 0.9rem;
+  font-style: italic;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+/* ============================================================
+   PAYROLL HISTORY TABLE
+   ============================================================ */
+
 .mp-table-wrapper {
   background: #fff;
-  border: 1px solid #e2e8f0;
-  border-radius: 12px;
-  padding: 20px;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+  border-radius: 16px;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
+  padding: 1.5rem;
+  overflow: hidden;
 }
 
 .mp-table-wrapper h2 {
-  font-size: 18px;
+  font-size: 1rem;
   font-weight: 700;
-  color: #1f2937;
-  margin: 0 0 16px;
+  color: #1e293b;
+  margin: 0 0 1.25rem;
+  padding-bottom: 0.75rem;
+  border-bottom: 2px solid #f1f5f9;
 }
 
 .mp-table {
   width: 100%;
   border-collapse: collapse;
-  font-size: 13px;
+  font-size: 0.875rem;
+}
+
+/* Gradient header using role accent */
+.mp-table thead tr {
+  background: linear-gradient(
+    135deg,
+    var(--mp-accent, #0891b2) 0%,
+    color-mix(in srgb, var(--mp-accent, #0891b2) 75%, white) 100%
+  );
 }
 
 .mp-table th {
   text-align: left;
-  padding: 10px 12px;
-  background: #f9fafb;
-  color: #6b7280;
-  font-weight: 600;
-  font-size: 11px;
+  padding: 0.875rem 1.25rem;
+  color: #fff;
+  font-weight: 700;
+  font-size: 0.75rem;
   text-transform: uppercase;
-  letter-spacing: 0.04em;
-  border-bottom: 1px solid #e2e8f0;
+  letter-spacing: 0.05em;
+  white-space: nowrap;
+  /* Sticky so long tables keep the header visible */
+  position: sticky;
+  top: 0;
+  z-index: 1;
 }
 
 .mp-table td {
-  padding: 12px;
-  border-bottom: 1px solid #f3f4f6;
+  padding: 1rem 1.25rem;
+  border-bottom: 1px solid #f1f5f9;
   color: #374151;
+  vertical-align: middle;
 }
 
+.mp-table tbody tr:hover td {
+  background: color-mix(in srgb, var(--mp-accent, #0891b2) 4%, white);
+}
+
+.mp-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+/* Net pay column */
 .mp-net-cell {
-  font-weight: 700;
+  font-weight: 800;
+  font-size: 0.95rem;
   color: var(--mp-accent, #0891b2);
 }
+
+/* ============================================================
+   STATUS BADGES
+   ============================================================ */
 
 .mp-status {
   display: inline-flex;
   align-items: center;
-  gap: 4px;
-  font-weight: 600;
-  font-size: 12px;
+  gap: 5px;
+  padding: 0.25rem 0.65rem;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  white-space: nowrap;
+  /* Default — gets overridden by status-specific rules below.
+     The JSX sets inline `color` on the icon; we override with bg. */
+  background: #f1f5f9;
+  color: #475569;
 }
+
+/* Status-specific pill colours — applied via data attribute if JSX adds one,
+   otherwise controlled by the inline style already present in JSX. */
+.mp-status[data-status="paid"]      { background: #dcfce7; color: #166534; }
+.mp-status[data-status="pending"]   { background: #fef3c7; color: #92400e; }
+.mp-status[data-status="draft"]     { background: #f1f5f9; color: #475569; }
+.mp-status[data-status="processing"]{ background: #dbeafe; color: #1e40af; }
+.mp-status[data-status="cancelled"] { background: #fee2e2; color: #991b1b; }
+
+/* ============================================================
+   ACTION BUTTONS (table row)
+   ============================================================ */
 
 .mp-actions {
   display: flex;
+  align-items: center;
   gap: 6px;
 }
 
@@ -176,177 +363,218 @@
   justify-content: center;
   width: 32px;
   height: 32px;
-  border: 1px solid #e2e8f0;
-  border-radius: 6px;
+  border: 1.5px solid #e2e8f0;
+  border-radius: 8px;
   background: #fff;
-  color: #6b7280;
+  color: #64748b;
   cursor: pointer;
-  transition: all 0.15s;
-  font-size: 13px;
+  transition: 0.18s;
+  font-size: 0.8rem;
+  padding: 0;
 }
 
 .mp-action-btn:hover {
-  background: #f9fafb;
+  background: color-mix(in srgb, var(--mp-accent, #0891b2) 8%, white);
   color: var(--mp-accent, #0891b2);
   border-color: var(--mp-accent, #0891b2);
 }
 
-.mp-loading, .mp-empty {
-  text-align: center;
-  padding: 40px;
-  color: #6b7280;
-  font-size: 14px;
-}
+/* ============================================================
+   PAYSLIP MODAL
+   ============================================================ */
 
-.mp-error {
-  background: #fef2f2;
-  border: 1px solid #fecaca;
-  color: #dc2626;
-  padding: 12px 16px;
-  border-radius: 8px;
-  margin-bottom: 16px;
-  font-size: 13px;
-}
-
-/* Modal */
 .mp-modal-overlay {
   position: fixed;
-  top: 0; left: 0; right: 0; bottom: 0;
-  background: rgba(0,0,0,0.5);
+  inset: 0;
+  background: rgba(0, 0, 0, 0.55);
+  backdrop-filter: blur(4px);
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: center;
   z-index: 1000;
-  padding: 20px;
+  padding: 2rem 1rem;
+  overflow-y: auto;
 }
 
 .mp-modal {
   background: #fff;
-  border-radius: 12px;
+  border-radius: 20px;
   max-width: 700px;
   width: 100%;
-  max-height: 90vh;
-  overflow-y: auto;
-  box-shadow: 0 20px 60px rgba(0,0,0,0.2);
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.2);
+  display: flex;
+  flex-direction: column;
+  margin: auto;
 }
 
+/* Gradient header — same treatment as AddProductModal */
 .mp-modal-header {
+  background: linear-gradient(
+    135deg,
+    var(--mp-accent, #0891b2) 0%,
+    color-mix(in srgb, var(--mp-accent, #0891b2) 70%, white) 100%
+  );
+  padding: 1.25rem 1.5rem;
+  border-radius: 20px 20px 0 0;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 20px 24px;
-  border-bottom: 1px solid #e2e8f0;
+  flex-shrink: 0;
 }
 
 .mp-modal-header h2 {
-  font-size: 18px;
+  font-size: 1.1rem;
   font-weight: 700;
-  color: #1f2937;
+  color: #fff;
   margin: 0;
 }
 
 .mp-modal-close {
-  background: none;
+  background: rgba(255, 255, 255, 0.25);
   border: none;
-  font-size: 24px;
-  color: #6b7280;
-  cursor: pointer;
-  padding: 0;
+  color: #fff;
+  font-size: 1.25rem;
   width: 32px;
   height: 32px;
+  border-radius: 8px;
   display: flex;
   align-items: center;
   justify-content: center;
-  border-radius: 6px;
+  cursor: pointer;
+  transition: 0.18s;
+  line-height: 1;
+  padding: 0;
 }
 
-.mp-modal-close:hover { background: #f3f4f6; }
+.mp-modal-close:hover {
+  background: rgba(255, 255, 255, 0.4);
+}
 
 .mp-modal-footer {
   display: flex;
   justify-content: flex-end;
-  gap: 10px;
-  padding: 16px 24px;
-  border-top: 1px solid #e2e8f0;
+  gap: 0.6rem;
+  padding: 1rem 1.5rem;
+  border-top: 1px solid #f1f5f9;
+  background: #fafafa;
+  border-radius: 0 0 20px 20px;
+  flex-shrink: 0;
 }
 
-/* Payslip detail */
-.mp-payslip-detail { padding: 24px; }
+/* ============================================================
+   PAYSLIP DETAIL (inside modal)
+   ============================================================ */
 
+.mp-payslip-detail {
+  padding: 1.5rem;
+  overflow-y: auto;
+}
+
+/* Store branding header */
 .mp-payslip-header {
   text-align: center;
-  margin-bottom: 20px;
+  margin-bottom: 1.25rem;
+  padding: 1.25rem;
+  background: color-mix(in srgb, var(--mp-accent, #0891b2) 6%, white);
+  border-radius: 12px;
 }
 
 .mp-payslip-header h3 {
-  font-size: 20px;
+  font-size: 1.15rem;
   font-weight: 800;
-  color: #1f2937;
-  margin: 0 0 4px;
+  color: var(--mp-accent, #0891b2);
+  margin: 0 0 0.25rem;
 }
 
 .mp-payslip-header p {
-  font-size: 12px;
-  color: #6b7280;
+  font-size: 0.8rem;
+  color: #64748b;
   margin: 2px 0;
 }
 
 .mp-payslip-header h4 {
-  font-size: 16px;
+  font-size: 0.95rem;
   font-weight: 700;
-  color: #374151;
-  margin: 12px 0 0;
+  color: #1e293b;
+  margin: 0.75rem 0 0;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
 }
 
+/* Employee info grid */
 .mp-payslip-info-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 12px;
-  margin-bottom: 20px;
-  padding: 16px;
-  background: #f9fafb;
-  border-radius: 8px;
+  gap: 0.75rem 1.25rem;
+  margin-bottom: 1.25rem;
+  padding: 1.25rem;
+  background: #f8fafc;
+  border-radius: 12px;
+  border: 1px solid #f1f5f9;
 }
 
 .mp-payslip-info-grid > div {
   display: flex;
   flex-direction: column;
+  gap: 0.15rem;
 }
 
 .mp-payslip-info-grid strong {
-  font-size: 11px;
-  color: #6b7280;
+  font-size: 0.7rem;
+  color: #94a3b8;
   text-transform: uppercase;
-  letter-spacing: 0.04em;
+  letter-spacing: 0.05em;
+  font-weight: 600;
 }
 
 .mp-payslip-info-grid span {
-  font-size: 14px;
+  font-size: 0.9rem;
   font-weight: 600;
-  color: #1f2937;
-  margin-top: 2px;
+  color: #1e293b;
 }
 
+/* Earnings & deductions tables */
 .mp-payslip-table {
   width: 100%;
   border-collapse: collapse;
-  margin-bottom: 16px;
-  font-size: 13px;
+  margin-bottom: 1rem;
+  font-size: 0.875rem;
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+/* Earnings header — accent gradient */
+.mp-payslip-table:first-of-type thead tr {
+  background: linear-gradient(
+    135deg,
+    var(--mp-accent, #0891b2) 0%,
+    color-mix(in srgb, var(--mp-accent, #0891b2) 70%, white) 100%
+  );
+}
+
+/* Deductions header — red gradient */
+.mp-payslip-table:last-of-type thead tr {
+  background: linear-gradient(135deg, #ef4444 0%, #f87171 100%);
 }
 
 .mp-payslip-table th {
   text-align: left;
-  padding: 8px 12px;
-  background: #f3f4f6;
-  color: #374151;
-  font-weight: 600;
-  border: 1px solid #e5e7eb;
+  padding: 0.75rem 1rem;
+  color: #fff;
+  font-weight: 700;
+  font-size: 0.78rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
 }
 
 .mp-payslip-table td {
-  padding: 8px 12px;
-  border: 1px solid #e5e7eb;
+  padding: 0.7rem 1rem;
+  border-bottom: 1px solid #f1f5f9;
   color: #374151;
+}
+
+.mp-payslip-table tbody tr:nth-child(even) td {
+  background: #fafafa;
 }
 
 .mp-payslip-table td:last-child {
@@ -354,29 +582,47 @@
   font-weight: 600;
 }
 
+/* Subtotal / gross rows */
 .mp-subtotal-row td {
   font-weight: 700;
-  background: #f9fafb;
+  background: color-mix(in srgb, var(--mp-accent, #0891b2) 6%, white) !important;
+  color: var(--mp-accent, #0891b2);
 }
 
+/* Net pay hero block */
 .mp-net-pay {
+  background: color-mix(in srgb, var(--mp-accent, #0891b2) 8%, white);
+  border: 2px solid color-mix(in srgb, var(--mp-accent, #0891b2) 30%, white);
+  border-radius: 12px;
+  padding: 1.25rem 1.5rem;
+  margin-bottom: 1rem;
   text-align: right;
-  font-size: 18px;
-  font-weight: 800;
-  padding: 16px;
-  border: 2px solid #e5e7eb;
-  border-radius: 8px;
-  margin-bottom: 12px;
+  font-size: 1.4rem;
+  font-weight: 900;
+  color: var(--mp-accent, #0891b2);
+  letter-spacing: -0.02em;
 }
 
+/* Payment info footer inside payslip */
 .mp-payment-info {
   display: flex;
-  gap: 24px;
-  font-size: 13px;
-  color: #6b7280;
+  gap: 1.5rem;
+  flex-wrap: wrap;
+  font-size: 0.82rem;
+  color: #64748b;
+  padding-top: 0.5rem;
+  border-top: 1px solid #f1f5f9;
 }
 
-/* Print area */
+.mp-payment-info strong {
+  color: #374151;
+}
+
+/* ============================================================
+   PRINT AREA
+   (Keep existing styles — they work correctly)
+   ============================================================ */
+
 .my-payslip-print-area {
   display: none;
 }
@@ -494,5 +740,66 @@
     display: block;
     margin-top: 4px;
     font-size: 11px;
+  }
+}
+
+/* ============================================================
+   RESPONSIVE
+   ============================================================ */
+
+@media (max-width: 1024px) {
+  .mp-summary-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 768px) {
+  .my-payroll-page {
+    padding: 1rem;
+  }
+
+  .my-payroll-hero {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .mp-summary-grid {
+    grid-template-columns: 1fr 1fr;
+    gap: 0.75rem;
+  }
+
+  .mp-table-wrapper {
+    overflow-x: auto;
+  }
+
+  .mp-table {
+    min-width: 640px;
+  }
+
+  .mp-modal-overlay {
+    padding: 1rem;
+  }
+
+  .mp-payslip-info-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 480px) {
+  .mp-summary-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .mp-summary-value {
+    font-size: 1.4rem;
+  }
+
+  .mp-modal-footer {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .mp-modal-footer .mp-btn {
+    justify-content: center;
   }
 }

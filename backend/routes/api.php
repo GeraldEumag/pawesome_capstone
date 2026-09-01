@@ -575,6 +575,13 @@ Route::middleware(['auth.api', 'throttle:api', 'role:admin,inventory'])->prefix(
     Route::put('batches/{batchId}', [InventoryController::class, 'adjustBatch']);
     Route::post('{id}/stock', [InventoryDashboardController::class, 'adjustStock']);
     Route::patch('{id}/stock', [InventoryDashboardController::class, 'adjustStock']);
+
+    // Supplier routes — accessible by both admin and inventory staff
+    Route::get('suppliers', [SupplierController::class, 'index']);
+    Route::post('suppliers', [SupplierController::class, 'store']);
+    Route::get('suppliers/{id}', [SupplierController::class, 'show']);
+    Route::put('suppliers/{id}', [SupplierController::class, 'update']);
+    Route::delete('suppliers/{id}', [SupplierController::class, 'destroy']);
 });
 
 Route::middleware(['auth.api', 'throttle:api'])->prefix('manager')->group(function () {
