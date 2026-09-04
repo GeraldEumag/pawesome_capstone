@@ -17,8 +17,10 @@ import { showSuccess, showError } from "../../utils/alert.jsx";
 
 const roleRouteMap = {
   admin: "/admin",
+  super_admin: "/admin",
   customer: "/customer",
   receptionist: "/receptionist",
+  super_receptionist: "/super-receptionist",
   veterinary: "/veterinary",
   vet: "/veterinary",
   veterinarian: "/veterinary",
@@ -31,7 +33,6 @@ const Login = () => {
   const [formData, setFormData] = useState({
     username: "",
     password: "",
-    rememberMe: false,
   });
 
   const [errors, setErrors] = useState({});
@@ -85,10 +86,6 @@ const Login = () => {
               : `${response.user.profile_photo}?v=${Date.now()}`)
           : "",
       });
-
-      if (formData.rememberMe) {
-        localStorage.setItem("rememberMe", "true");
-      }
 
       let redirectPath = roleRouteMap[response.user.role] || "/dashboard";
       if (response.user.role === "customer") {
@@ -185,16 +182,6 @@ const Login = () => {
               )}
 
               <div className="login-options">
-                <label className="remember-box">
-                  <input
-                    type="checkbox"
-                    checked={formData.rememberMe}
-                    onChange={(e) => setFormData({ ...formData, rememberMe: e.target.checked })}
-                    disabled={isSubmitting}
-                  />
-                  <span>Remember me</span>
-                </label>
-
                 <Link to="/forgot-password">Forgot password?</Link>
               </div>
 

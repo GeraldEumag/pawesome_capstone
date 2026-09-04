@@ -24,6 +24,15 @@ const setCached = (data) => {
   }
 };
 
+export const clearLandingPageCache = () => {
+  try {
+    localStorage.removeItem(CACHE_KEY);
+    window.dispatchEvent(new Event("pawesome:landing-updated"));
+  } catch {
+    // ignore
+  }
+};
+
 export const useLandingPageContent = () => {
   const [content, setContent] = useState(() => getCached() || {});
   const [loading, setLoading] = useState(!getCached());
@@ -51,6 +60,17 @@ export const useLandingPageContent = () => {
     if (!getCached()) {
       refetch();
     }
+  }, [refetch]);
+
+  // Listen for admin-triggered cache invalidation
+  useEffect(() => {
+    const handleLandingUpdate = () => {
+      refetch();
+    };
+    window.addEventListener("pawesome:landing-updated", handleLandingUpdate);
+    return () => {
+      window.removeEventListener("pawesome:landing-updated", handleLandingUpdate);
+    };
   }, [refetch]);
 
   const getSection = useCallback(

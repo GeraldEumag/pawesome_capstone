@@ -6,6 +6,11 @@
 
 .admin-landing-editor-header {
   margin-bottom: 1.5rem;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
 }
 
 .admin-landing-editor-header h1 {
@@ -95,6 +100,10 @@
   color: #1f2937;
   font-size: 1.15rem;
   font-weight: 900;
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  flex-wrap: wrap;
 }
 
 .editor-save-btn {
@@ -303,6 +312,66 @@
   font-weight: 700;
   white-space: nowrap;
   font-style: italic;
+}
+
+/* Preview button */
+.editor-preview-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0.55rem 1.1rem;
+  border: 1.5px solid rgba(255, 95, 147, 0.32);
+  border-radius: 12px;
+  background: rgba(255, 95, 147, 0.06);
+  color: #c93662;
+  font-family: inherit;
+  font-size: 0.85rem;
+  font-weight: 800;
+  cursor: pointer;
+  transition: 0.2s ease;
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+
+.editor-preview-btn:hover {
+  background: rgba(255, 95, 147, 0.12);
+  border-color: #ff5f93;
+  transform: translateY(-1px);
+}
+
+/* Dirty state — unsaved badge */
+.editor-unsaved-badge {
+  display: inline-block;
+  padding: 0.2rem 0.6rem;
+  border-radius: 999px;
+  background: rgba(245, 158, 11, 0.14);
+  color: #b45309;
+  border: 1px solid rgba(245, 158, 11, 0.3);
+  font-size: 0.73rem;
+  font-weight: 900;
+  letter-spacing: 0.01em;
+  vertical-align: middle;
+}
+
+/* Dirty dot in sidebar */
+.editor-dirty-dot {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #f59e0b;
+  margin-left: auto;
+  flex-shrink: 0;
+  box-shadow: 0 0 0 2px rgba(245, 158, 11, 0.25);
+}
+
+/* Sidebar dirty button */
+.admin-landing-editor-sidebar button.dirty {
+  background: rgba(245, 158, 11, 0.06);
+}
+
+.admin-landing-editor-sidebar button.dirty.active {
+  background: linear-gradient(135deg, #ff5f93, #ff8db5);
 }
 
 /* Responsive */

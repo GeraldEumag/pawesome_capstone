@@ -97,6 +97,16 @@ const AdminSettings = () => {
       label: "Customer",
       permissions: ["Own profile", "Own pets", "Book appointments", "View history"],
     },
+    {
+      name: "super_admin",
+      label: "Super Administrator",
+      permissions: ["All staff modules", "User management", "All reports", "System settings", "Blocks customer portal access"],
+    },
+    {
+      name: "super_receptionist",
+      label: "Super Receptionist",
+      permissions: ["Receptionist duties", "Cashier (POS & transactions)", "Inventory management", "All three combined"],
+    },
   ]);
 
   // Theme Color

@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from "react";
+import React, { useMemo, useState, useCallback } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
@@ -10,6 +10,7 @@ import {
   faEnvelope,
   faEye,
   faEyeSlash,
+  faFileContract,
   faHeartPulse,
   faIdCard,
   faLock,
@@ -40,6 +41,7 @@ const INITIAL_FORM = {
   confirmPassword: "",
   emergencyContactPerson: "",
   emergencyContactNumber: "",
+  termsAccepted: false,
 };
 
 const SUFFIX_OPTIONS = [
@@ -231,6 +233,10 @@ const Register = () => {
         errors.emergencyContactNumber =
           "Use a valid 11-digit PH number starting with 09.";
       }
+
+      if (!formData.termsAccepted) {
+        errors.termsAccepted = "You must agree to the Terms of Service and Privacy Policy.";
+      }
     }
 
     return errors;
@@ -407,9 +413,15 @@ const Register = () => {
     <main className="register-page">
       <section className="register-shell">
         <aside className="register-brand-panel">
-          <div className="brand-pill">
-            <FontAwesomeIcon icon={faPaw} />
-            Pawesome Retreat Inc.
+          <div className="register-brand-top">
+            <div className="brand-pill">
+              <FontAwesomeIcon icon={faPaw} />
+              Pawesome Retreat Inc.
+            </div>
+            <Link to="/" className="register-back-link">
+              <FontAwesomeIcon icon={faArrowLeft} />
+              <span>Back to Home</span>
+            </Link>
           </div>
 
           <div className="brand-copy">
@@ -794,6 +806,29 @@ const Register = () => {
                     </div>
                     {renderFieldError("emergencyContactNumber")}
                   </div>
+                </div>
+
+                {/* Terms & Conditions */}
+                <div className="register-terms-row">
+                  <label className={`register-terms-label${fieldErrors.termsAccepted ? " has-error" : ""}`}>
+                    <input
+                      type="checkbox"
+                      checked={formData.termsAccepted}
+                      onChange={(e) =>
+                        updateField("termsAccepted", e.target.checked)
+                      }
+                      disabled={loading}
+                    />
+                    <span>
+                      <FontAwesomeIcon icon={faFileContract} />
+                      I agree to Pawesome Retreat's{" "}
+                      <a href="#" onClick={(e) => e.preventDefault()}>Terms of Service</a>
+                      {" "}and{" "}
+                      <a href="#" onClick={(e) => e.preventDefault()}>Privacy Policy</a>.
+                      <span className="terms-required"> *</span>
+                    </span>
+                  </label>
+                  {renderFieldError("termsAccepted")}
                 </div>
 
                 <div className="review-card">

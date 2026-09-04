@@ -124,7 +124,7 @@ class LandingPageContentController extends Controller
             $content->is_active = $request->boolean('is_active');
         }
 
-        $content->updated_by = auth('api')->id();
+        $content->updated_by = $request->user()?->id;
         $content->save();
 
         Cache::forget('landing_page_contents');

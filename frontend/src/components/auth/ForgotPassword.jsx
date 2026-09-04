@@ -1,7 +1,17 @@
 import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import {
+  faArrowLeft,
+  faEnvelope,
+  faKey,
+  faLock,
+  faEye,
+  faEyeSlash,
+} from "@fortawesome/free-solid-svg-icons";
 import { apiRequest } from "../../api/client";
 import { showWarning, showSuccess, showError } from "../../utils/alert.jsx";
+import logo from "../../assets/pawesome.jpg";
 import "./Login.css";
 
 const ForgotPassword = () => {
@@ -9,6 +19,8 @@ const ForgotPassword = () => {
   const [token, setToken] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+  const [showNewPassword, setShowNewPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -30,15 +42,19 @@ const ForgotPassword = () => {
     setIsSubmitting(true);
 
     try {
-      const response = await apiRequest("/auth/password/forgot", {
+      await apiRequest("/auth/password/forgot", {
         method: "POST",
         body: JSON.stringify({ email: email.trim() }),
       });
 
       setResetTokenSent(true);
       setToken("");
-      setMessage("If the email address is associated with an account, a password reset token has been sent to that email. Enter the token below to set a new password.");
-      showSuccess("If the email address is associated with an account, a reset token has been sent to your email.");
+      setMessage(
+        "If the email address is associated with an account, a password reset token has been sent to that email. Enter the token below to set a new password."
+      );
+      showSuccess(
+        "If the email address is associated with an account, a reset token has been sent to your email."
+      );
     } catch (err) {
       setError(err.message || "Failed to request password reset.");
       showError(err.message || "Failed to request password reset.");
@@ -101,110 +117,180 @@ const ForgotPassword = () => {
   };
 
   return (
-    <div className="login-container">
-      <div className="login-background">
-        <div className="login-content">
-          <div className="login-header">
-            <div className="logo">
-              <h1>PAWESOME</h1>
-              <span>RETREAT INC.</span>
-            </div>
+    <div className="login-page">
+      <div className="login-shell">
+        <aside className="login-left-panel">
+          <Link to="/" className="back-home-link">
+            <FontAwesomeIcon icon={faArrowLeft} />
+            <span>Back to Landing Page</span>
+          </Link>
 
-            <h2>Reset Your Password</h2>
+          <div className="login-left-content">
+            <img src={logo} alt="Pawesome Retreat Inc." className="login-logo-img" />
+
+            <h1>Reset Your Password</h1>
             <p>
-              Enter your email address and we’ll help you create a new password.
+              Enter your registered email and we will send you a secure reset
+              token to set a new password for your Pawesome account.
             </p>
           </div>
+        </aside>
 
-          {message && <div className="success-message">{message}</div>}
-          {error && <div className="error-message">{error}</div>}
+        <main className="login-right-panel">
+          <div className="login-card">
+            <div className="login-heading">
+              <h2>{resetTokenSent ? "Set New Password" : "Forgot Password"}</h2>
+              <p>
+                {resetTokenSent
+                  ? "Enter the reset token sent to your email and choose a new password."
+                  : "Enter your email address to receive a password reset token."}
+              </p>
+            </div>
 
-          {!resetTokenSent ? (
-            <form className="login-form" onSubmit={handleEmailSubmit}>
-              <div className="form-section">
-                <div className="form-group">
-                  <label htmlFor="email">Email Address *</label>
+            {message && (
+              <div
+                style={{
+                  margin: "0 0 1.25rem",
+                  padding: "0.85rem 1rem",
+                  borderRadius: "18px",
+                  background: "rgba(16, 185, 129, 0.1)",
+                  border: "1px solid rgba(16, 185, 129, 0.22)",
+                  color: "#047857",
+                  fontSize: "0.88rem",
+                  fontWeight: 800,
+                  lineHeight: 1.5,
+                }}
+              >
+                {message}
+              </div>
+            )}
+
+            {error && (
+              <div className="login-error" style={{ marginBottom: "1.25rem" }}>
+                {error}
+              </div>
+            )}
+
+            {!resetTokenSent ? (
+              <form className="login-form" onSubmit={handleEmailSubmit}>
+                <label>EMAIL ADDRESS *</label>
+                <div className="input-wrap">
+                  <FontAwesomeIcon icon={faEnvelope} />
                   <input
                     type="email"
-                    id="email"
-                    name="email"
+                    placeholder="Enter your registered email"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
-                    placeholder="Enter your email address"
                     disabled={isSubmitting}
                   />
                 </div>
-              </div>
 
-              <div className="form-actions">
-                <button type="submit" className="login-btn" disabled={isSubmitting}>
+                <button
+                  className="login-btn"
+                  type="submit"
+                  disabled={isSubmitting}
+                  style={{ marginTop: "0.5rem" }}
+                >
                   {isSubmitting ? "Sending..." : "Send Reset Token"}
                 </button>
-              </div>
-            </form>
-          ) : (
-            <form className="login-form" onSubmit={handleResetSubmit}>
-              <div className="form-section">
-                <div className="form-group">
-                  <label htmlFor="resetToken">Reset Token *</label>
+              </form>
+            ) : (
+              <form className="login-form" onSubmit={handleResetSubmit}>
+                <label>RESET TOKEN *</label>
+                <div className="input-wrap">
+                  <FontAwesomeIcon icon={faKey} />
                   <input
                     type="text"
-                    id="resetToken"
-                    name="resetToken"
+                    placeholder="Paste the token from your email"
                     value={token}
                     onChange={(e) => setToken(e.target.value)}
-                    placeholder="Enter the reset token"
                     disabled={isSubmitting}
                   />
-                  <small>
-                    Check your email for the reset token. Enter it above to set a new
-                    password. If you did not receive an email, verify your address and
-                    request again.
-                  </small>
                 </div>
 
-                <div className="form-group">
-                  <label htmlFor="newPassword">New Password *</label>
+                <label>NEW PASSWORD *</label>
+                <div className="input-wrap">
+                  <FontAwesomeIcon icon={faLock} />
                   <input
-                    type="password"
-                    id="newPassword"
-                    name="newPassword"
+                    type={showNewPassword ? "text" : "password"}
+                    placeholder="At least 8 characters"
                     value={newPassword}
                     onChange={(e) => setNewPassword(e.target.value)}
-                    placeholder="Create a new password"
                     disabled={isSubmitting}
                   />
+                  <button
+                    type="button"
+                    className="show-password-btn"
+                    onClick={() => setShowNewPassword((p) => !p)}
+                    disabled={isSubmitting}
+                  >
+                    <FontAwesomeIcon icon={showNewPassword ? faEyeSlash : faEye} />
+                  </button>
                 </div>
 
-                <div className="form-group">
-                  <label htmlFor="confirmPassword">Confirm Password *</label>
+                <label>CONFIRM NEW PASSWORD *</label>
+                <div className="input-wrap">
+                  <FontAwesomeIcon icon={faLock} />
                   <input
-                    type="password"
-                    id="confirmPassword"
-                    name="confirmPassword"
+                    type={showConfirmPassword ? "text" : "password"}
+                    placeholder="Re-enter your new password"
                     value={confirmPassword}
                     onChange={(e) => setConfirmPassword(e.target.value)}
-                    placeholder="Confirm your new password"
                     disabled={isSubmitting}
                   />
+                  <button
+                    type="button"
+                    className="show-password-btn"
+                    onClick={() => setShowConfirmPassword((p) => !p)}
+                    disabled={isSubmitting}
+                  >
+                    <FontAwesomeIcon icon={showConfirmPassword ? faEyeSlash : faEye} />
+                  </button>
                 </div>
-              </div>
 
-              <div className="form-actions">
-                <button type="submit" className="login-btn" disabled={isSubmitting}>
+                <button
+                  className="login-btn"
+                  type="submit"
+                  disabled={isSubmitting}
+                  style={{ marginTop: "0.5rem" }}
+                >
                   {isSubmitting ? "Resetting..." : "Reset Password"}
                 </button>
-              </div>
-            </form>
-          )}
 
-          <div className="register-link">
-            <span>Remembered your password?</span>
-            <Link to="/login" className="link">
-              Sign In
-            </Link>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setResetTokenSent(false);
+                    setError("");
+                    setMessage("");
+                    setToken("");
+                    setNewPassword("");
+                    setConfirmPassword("");
+                  }}
+                  style={{
+                    marginTop: "0.65rem",
+                    background: "none",
+                    border: "none",
+                    color: "var(--color-primary, #ff5f93)",
+                    fontWeight: 900,
+                    cursor: "pointer",
+                    fontSize: "0.9rem",
+                    width: "100%",
+                    textAlign: "center",
+                    padding: "0.5rem",
+                  }}
+                >
+                  Use a different email
+                </button>
+              </form>
+            )}
+
+            <p className="login-register">
+              Remembered your password?{" "}
+              <Link to="/login">Sign in to your account</Link>
+            </p>
           </div>
-        </div>
+        </main>
       </div>
     </div>
   );

@@ -1,7 +1,8 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faSave, faSpinner, faImage, faPlus, faTrash, faGlobe, faEye, faHome, faPaw, faListOl, faInfoCircle, faBullhorn, faChartBar, faImages, faRectangleAd } from "@fortawesome/free-solid-svg-icons";
+import { faSave, faSpinner, faImage, faPlus, faTrash, faGlobe, faEye, faHome, faPaw, faListOl, faInfoCircle, faBullhorn, faChartBar, faImages, faRectangleAd, faExternalLinkAlt } from "@fortawesome/free-solid-svg-icons";
 import { fetchAdminLandingPageSections, updateLandingPageSection, uploadLandingPageImage } from "../../api/landingPage";
+import { clearLandingPageCache } from "../../hooks/useLandingPageContent";
 import { showSuccess, showError } from "../../utils/alert.jsx";
 import "./AdminLandingPageEditor.css";
 
@@ -25,6 +26,10 @@ const AdminLandingPageEditor = () => {
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState("");
+  // Track which sections have unsaved changes
+  const [dirtySections, setDirtySections] = useState(new Set());
+  // Snapshot of last-saved state per section for dirty comparison
+  const savedSnapshotRef = useRef({});
 
   const loadSections = useCallback(async () => {
     setLoading(true);
@@ -37,6 +42,9 @@ const AdminLandingPageEditor = () => {
           map[item.section_key] = item.content_data;
         });
         setSections(map);
+        // Snapshot loaded state — no dirty sections after fresh load
+        savedSnapshotRef.current = JSON.parse(JSON.stringify(map));
+        setDirtySections(new Set());
       } else {
         setError(res.message || "Failed to load sections.");
       }
@@ -52,6 +60,7 @@ const AdminLandingPageEditor = () => {
   }, [loadSections]);
 
   const handleChange = (path, value) => {
+    const section = path.split(".")[0];
     setSections((prev) => {
       const next = deepClone(prev);
       const keys = path.split(".");
@@ -60,6 +69,20 @@ const AdminLandingPageEditor = () => {
         target = target[keys[i]];
       }
       target[keys[keys.length - 1]] = value;
+
+      // Mark section dirty if different from saved snapshot
+      const savedStr = JSON.stringify(savedSnapshotRef.current[section] ?? {});
+      const nextStr = JSON.stringify(next[section] ?? {});
+      setDirtySections((prev) => {
+        const updated = new Set(prev);
+        if (savedStr !== nextStr) {
+          updated.add(section);
+        } else {
+          updated.delete(section);
+        }
+        return updated;
+      });
+
       return next;
     });
   };
@@ -71,6 +94,14 @@ const AdminLandingPageEditor = () => {
     try {
       const res = await updateLandingPageSection(activeSection, data);
       if (res.success) {
+        clearLandingPageCache();
+        // Update snapshot for this section and clear dirty flag
+        savedSnapshotRef.current[activeSection] = JSON.parse(JSON.stringify(data));
+        setDirtySections((prev) => {
+          const updated = new Set(prev);
+          updated.delete(activeSection);
+          return updated;
+        });
         showSuccess("Section saved successfully.");
       } else {
         showError(res.message || "Failed to save.");
@@ -506,6 +537,7 @@ const AdminLandingPageEditor = () => {
             {renderInput("Business name (shown in footer + copyright)", "footer.brand_name")}
             {renderInput("Tagline (below business name)", "footer.tagline")}
             {renderInput("Short description paragraph", "footer.description", "textarea")}
+            {renderInput("Contact phone number", "footer.phone")}
             {renderInput("Contact email", "footer.email")}
             {renderInput("Contact address", "footer.address", "textarea")}
           </div>
@@ -518,10 +550,20 @@ const AdminLandingPageEditor = () => {
   return (
     <div className="admin-landing-editor">
       <div className="admin-landing-editor-header">
-        <h1>
-          <FontAwesomeIcon icon={faGlobe} /> Landing Page Editor
-        </h1>
-        <p>Edit text, images, and buttons for the public landing page.</p>
+        <div>
+          <h1>
+            <FontAwesomeIcon icon={faGlobe} /> Landing Page Editor
+          </h1>
+          <p>Edit text, images, and buttons for the public landing page.</p>
+        </div>
+        <button
+          className="editor-preview-btn"
+          title="Open public landing page in a new tab"
+          onClick={() => window.open("/", "_blank")}
+        >
+          <FontAwesomeIcon icon={faExternalLinkAlt} />
+          Preview Landing Page
+        </button>
       </div>
 
       <div className="admin-landing-editor-body">
@@ -529,11 +571,14 @@ const AdminLandingPageEditor = () => {
           {SECTIONS.map((section) => (
             <button
               key={section.key}
-              className={activeSection === section.key ? "active" : ""}
+              className={`${activeSection === section.key ? "active" : ""}${dirtySections.has(section.key) ? " dirty" : ""}`}
               onClick={() => setActiveSection(section.key)}
             >
               <FontAwesomeIcon icon={section.icon} />
               {section.label}
+              {dirtySections.has(section.key) && (
+                <span className="editor-dirty-dot" title="Unsaved changes" />
+              )}
             </button>
           ))}
         </aside>
@@ -548,7 +593,12 @@ const AdminLandingPageEditor = () => {
           ) : (
             <>
               <div className="editor-section-title">
-                <h2>{SECTIONS.find((s) => s.key === activeSection)?.label}</h2>
+                <h2>
+                  {SECTIONS.find((s) => s.key === activeSection)?.label}
+                  {dirtySections.has(activeSection) && (
+                    <span className="editor-unsaved-badge">Unsaved changes</span>
+                  )}
+                </h2>
                 <button
                   className="editor-save-btn"
                   onClick={handleSave}
