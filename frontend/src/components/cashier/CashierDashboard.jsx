@@ -23,7 +23,7 @@ import {
   faPlus,
   faStar,
   faArrowRight,
-  faHeadset,
+  faChartBar,
   faList,
   faUserPlus,
   faUser,
@@ -352,7 +352,7 @@ const CashierDashboard = () => {
     { label: "New Sale", icon: faShoppingCart, link: "/cashier/pos", tone: "pink" },
     { label: "Sales History", icon: faUserPlus, link: "/cashier/history", tone: "soft" },
     { label: "View Transactions", icon: faList, link: "/cashier/transactions", tone: "success" },
-    { label: "View Reports", icon: faHeadset, link: "/cashier/reports", tone: "gold" },
+    { label: "View Reports", icon: faChartBar, link: "/cashier/reports", tone: "gold" },
   ];
 
   const cashierDashboardClasses = [
@@ -986,8 +986,8 @@ Thank you for choosing Pawesome!
                 <>
                 <section className="cashier-kpi-grid">
                   {summaryCards.map((card) => (
-                    <div key={card.title} className="cashier-kpi-card">
-                      <FontAwesomeIcon icon={card.icon} />
+                    <div key={card.title} className={`cashier-kpi-card cashier-kpi-card--${card.tone || "pink"}`}>
+                      <div className="cashier-kpi-card-icon"><FontAwesomeIcon icon={card.icon} /></div>
                       <h3>{card.value}</h3>
                       <p>{card.title}</p>
                       <small>{card.change}</small>

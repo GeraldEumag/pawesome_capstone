@@ -34,20 +34,23 @@ class DashboardController extends Controller
                 ];
             });
 
-        $topSellingProducts = Sale::selectRaw('product_id, COUNT(*) as units_sold, SUM(amount) as revenue')
-            ->whereNotNull('product_id')
-            ->whereMonth('created_at', $today->month)
-            ->groupBy('product_id')
+        // Fix: query sale_items (not sales.product_id) for accurate top-selling data
+        $topSellingProducts = DB::table('sale_items')
+            ->join('sales', 'sale_items.sale_id', '=', 'sales.id')
+            ->whereNotNull('sale_items.product_id')
+            ->whereMonth('sales.created_at', $today->month)
+            ->selectRaw('sale_items.product_id, SUM(sale_items.quantity) as units_sold, SUM(sale_items.total_price) as revenue')
+            ->groupBy('sale_items.product_id')
             ->orderByDesc('units_sold')
             ->limit(5)
             ->get()
-            ->map(function ($sale) {
-                $product = InventoryItem::find($sale->product_id);
+            ->map(function ($row) {
+                $product = InventoryItem::find($row->product_id);
                 return [
-                    'id' => $sale->product_id,
+                    'id' => $row->product_id,
                     'name' => $product ? $product->name : 'Unknown',
-                    'units_sold' => $sale->units_sold,
-                    'revenue' => $sale->revenue,
+                    'units_sold' => (int) $row->units_sold,
+                    'revenue' => (float) $row->revenue,
                 ];
             });
 
@@ -67,23 +70,11 @@ class DashboardController extends Controller
                 ];
             });
 
-        // Count service requests by logged-in customer
-        $userEmail = $user?->email;
-        $pendingServiceRequests = $userEmail
-            ? \App\Models\ServiceRequest::where('customer_email', $userEmail)->where('status', 'pending')->count()
-            : 0;
-
-        $approvedServiceRequests = $userEmail
-            ? \App\Models\ServiceRequest::where('customer_email', $userEmail)->where('status', 'approved')->count()
-            : 0;
-
-        $paymentPendingServiceRequests = $userEmail
-            ? \App\Models\ServiceRequest::where('customer_email', $userEmail)->where('payment_status', 'pending')->count()
-            : 0;
-
-        $paidServiceRequests = $userEmail
-            ? \App\Models\ServiceRequest::where('customer_email', $userEmail)->where('payment_status', 'paid')->count()
-            : 0;
+        // Cashier-relevant: count ALL service requests across all customers (not by cashier email)
+        $pendingServiceRequests = \App\Models\ServiceRequest::where('status', 'pending')->count();
+        $approvedServiceRequests = \App\Models\ServiceRequest::where('status', 'approved')->count();
+        $paymentPendingServiceRequests = \App\Models\ServiceRequest::where('payment_status', 'pending')->count();
+        $paidServiceRequests = \App\Models\ServiceRequest::where('payment_status', 'paid')->count();
 
         $salesByType = Sale::selectRaw('payment_type, COUNT(*) as count, SUM(amount) as total')
             ->whereDate('created_at', $today)
@@ -126,11 +117,26 @@ class DashboardController extends Controller
         return response()->json(['data' => $this->overviewData()]);
     }
 
-    public function sales()
+    public function sales(Request $request)
     {
-        return response()->json(
-            Sale::latest()->get()
-        );
+        $perPage = (int) $request->get('per_page', 50);
+        $page    = (int) $request->get('page', 1);
+
+        $query = Sale::latest();
+
+        if ($request->filled('status')) {
+            $query->where('status', $request->status);
+        }
+        if ($request->filled('date_from')) {
+            $query->whereDate('created_at', '>=', $request->date_from);
+        }
+        if ($request->filled('date_to')) {
+            $query->whereDate('created_at', '<=', $request->date_to);
+        }
+
+        $sales = $query->paginate($perPage, ['*'], 'page', $page);
+
+        return response()->json($sales);
     }
 
     public function transactions(?Request $request = null)

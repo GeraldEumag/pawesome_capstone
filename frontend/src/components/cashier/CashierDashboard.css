@@ -3883,3 +3883,56 @@
     min-width: 0 !important;
   }
 }
+
+/* -- Tonal KPI Card Variants (added in Phase 4 overhaul) ----- */
+.cashier-kpi-card-icon {
+  width: 46px;
+  height: 46px;
+  border-radius: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.1rem;
+  background: linear-gradient(135deg, var(--color-primary), var(--color-primary-light));
+  color: #fff;
+  box-shadow: 0 8px 20px rgba(255, 95, 147, 0.22);
+  margin-bottom: 14px;
+}
+
+.cashier-kpi-card--pink .cashier-kpi-card-icon {
+  background: linear-gradient(135deg, #ff5f93, #ff8db5);
+  box-shadow: 0 8px 20px rgba(255, 95, 147, 0.22);
+}
+
+.cashier-kpi-card--purple .cashier-kpi-card-icon {
+  background: linear-gradient(135deg, #8b5cf6, #a78bfa);
+  box-shadow: 0 8px 20px rgba(139, 92, 246, 0.22);
+}
+
+.cashier-kpi-card--purple h3 {
+  color: #8b5cf6;
+}
+
+.cashier-kpi-card--blue .cashier-kpi-card-icon {
+  background: linear-gradient(135deg, #3b82f6, #60a5fa);
+  box-shadow: 0 8px 20px rgba(59, 130, 246, 0.22);
+}
+
+.cashier-kpi-card--blue h3 {
+  color: #3b82f6;
+}
+
+.cashier-kpi-card--orange .cashier-kpi-card-icon {
+  background: linear-gradient(135deg, #f97316, #fb923c);
+  box-shadow: 0 8px 20px rgba(249, 115, 22, 0.22);
+}
+
+.cashier-kpi-card--orange h3 {
+  color: #f97316;
+}
+
+/* Remove old svg direct color on kpi card — replaced by icon wrapper */
+.cashier-kpi-card svg {
+  color: inherit;
+  font-size: 1.1rem;
+}

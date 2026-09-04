@@ -1,9 +1,7 @@
 import React, { useState } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
-  faUserPlus,
   faInfoCircle,
-  faExclamationTriangle,
   faCheckCircle,
   faPlus,
   faHistory,
@@ -11,6 +9,11 @@ import {
   faHotel,
   faStethoscope,
   faCut,
+  faShieldAlt,
+  faKey,
+  faClipboardCheck,
+  faArrowRight,
+  faPaw,
 } from "@fortawesome/free-solid-svg-icons";
 import WalkInBookingModal from "./modals/WalkInBookingModal";
 import "./ReceptionistWalkIns.css";
@@ -29,7 +32,7 @@ const ReceptionistWalkIns = () => {
     setSuccessMessage(message);
     setShowModal(false);
     setSelectedServiceType(null);
-    
+
     // Clear success message after 5 seconds
     setTimeout(() => {
       setSuccessMessage("");
@@ -43,6 +46,8 @@ const ReceptionistWalkIns = () => {
       icon: faHotel,
       description: "Create a hotel or boarding reservation for a walk-in customer",
       color: "#8b5cf6",
+      gradient: "linear-gradient(135deg, #8b5cf6, #a78bfa)",
+      badge: "Boarding",
     },
     {
       key: "veterinary",
@@ -50,6 +55,8 @@ const ReceptionistWalkIns = () => {
       icon: faStethoscope,
       description: "Schedule a veterinary appointment for a walk-in customer",
       color: "#ef4444",
+      gradient: "linear-gradient(135deg, #ef4444, #f87171)",
+      badge: "Appointment",
     },
     {
       key: "grooming",
@@ -57,80 +64,153 @@ const ReceptionistWalkIns = () => {
       icon: faCut,
       description: "Book a grooming service for a walk-in customer",
       color: "#10b981",
+      gradient: "linear-gradient(135deg, #10b981, #34d399)",
+      badge: "Service",
+    },
+  ];
+
+  const importantNotes = [
+    {
+      icon: faKey,
+      title: "Default Password",
+      desc: "New accounts are created with Password123! — remind customers to change it.",
+    },
+    {
+      icon: faShieldAlt,
+      title: "Inform Customers",
+      desc: "Always notify customers to update their password after first login.",
+    },
+    {
+      icon: faClipboardCheck,
+      title: "Fill Fields Correctly",
+      desc: "Ensure all required fields are completed to avoid booking errors.",
     },
   ];
 
   return (
     <div className="walkins-page">
-      {/* Header */}
-      <div className="walkins-header">
-        <div className="header-title">
-          <h1>
-            <FontAwesomeIcon icon={faWalking} /> Walk-in Customers
-          </h1>
-          <p>Create bookings for walk-in customers with or without accounts</p>
-        </div>
-      </div>
 
-      {/* Success Message */}
+      {/* Success Toast */}
       {successMessage && (
-        <div className="alert alert-success">
+        <div className="walkins-toast">
           <FontAwesomeIcon icon={faCheckCircle} />
           <span>{successMessage}</span>
         </div>
       )}
 
-      {/* Info Banner */}
-      <div className="info-banner">
-        <FontAwesomeIcon icon={faInfoCircle} />
-        <div>
-          <strong>Important Notes:</strong>
-          <ul>
-            <li>For customers without accounts, the system will automatically create one with a default password: <strong>Password123!</strong></li>
-            <li>Please inform customers to change their password after their first login.</li>
-            <li>Ensure all required fields are filled correctly to avoid booking errors.</li>
-          </ul>
+      {/* Hero Banner */}
+      <div className="walkins-hero">
+        <div className="walkins-hero-left">
+          <div className="walkins-hero-badge">
+            <FontAwesomeIcon icon={faWalking} />
+            Walk-in Desk
+          </div>
+          <h1 className="walkins-hero-title">Walk-in Customers</h1>
+          <p className="walkins-hero-sub">
+            Create bookings instantly for walk-in customers — with or without an existing account.
+          </p>
+          <div className="walkins-hero-stats">
+            <span className="hero-stat-chip">
+              <FontAwesomeIcon icon={faHotel} /> Hotel
+            </span>
+            <span className="hero-stat-chip">
+              <FontAwesomeIcon icon={faStethoscope} /> Veterinary
+            </span>
+            <span className="hero-stat-chip">
+              <FontAwesomeIcon icon={faCut} /> Grooming
+            </span>
+          </div>
+        </div>
+        <div className="walkins-hero-right">
+          <div className="walkins-notes-card">
+            <div className="notes-card-header">
+              <FontAwesomeIcon icon={faInfoCircle} />
+              <span>Staff Notes</span>
+            </div>
+            <ul className="notes-list">
+              {importantNotes.map((note, i) => (
+                <li key={i} className="note-item">
+                  <div className="note-icon-wrap">
+                    <FontAwesomeIcon icon={note.icon} />
+                  </div>
+                  <div className="note-text">
+                    <strong>{note.title}</strong>
+                    <span>{note.desc}</span>
+                  </div>
+                </li>
+              ))}
+            </ul>
+          </div>
         </div>
       </div>
 
-      {/* Service Type Selection */}
-      <div className="service-selection">
-        <h2>Select Service Type</h2>
-        <div className="service-cards">
+      {/* Service Selection */}
+      <div className="walkins-services">
+        <div className="services-section-header">
+          <span className="services-eyebrow">Quick Action</span>
+          <h2 className="services-title">Select a Service to Book</h2>
+          <p className="services-sub">Choose the service type for this walk-in customer</p>
+        </div>
+
+        <div className="service-cards-grid">
           {serviceTypes.map((service) => (
-            <button
+            <div
               key={service.key}
-              type="button"
               className="service-card"
+              style={{ "--svc-color": service.color, "--svc-gradient": service.gradient }}
               onClick={() => handleNewWalkIn(service.key)}
-              style={{ "--service-color": service.color }}
+              role="button"
+              tabIndex={0}
+              onKeyDown={(e) => e.key === "Enter" && handleNewWalkIn(service.key)}
             >
-              <div className="card-icon" style={{ background: service.color }}>
-                <FontAwesomeIcon icon={service.icon} />
+              {/* Card accent top */}
+              <div className="svc-card-top">
+                <div className="svc-icon-ring">
+                  <FontAwesomeIcon icon={service.icon} />
+                </div>
+                <span className="svc-badge">{service.badge}</span>
               </div>
-              <div className="card-content">
-                <h3>{service.label}</h3>
-                <p>{service.description}</p>
+
+              {/* Card body */}
+              <div className="svc-card-body">
+                <h3 className="svc-label">{service.label}</h3>
+                <p className="svc-desc">{service.description}</p>
               </div>
-              <div className="card-action">
+
+              {/* CTA */}
+              <button
+                type="button"
+                className="svc-cta-btn"
+                onClick={(e) => { e.stopPropagation(); handleNewWalkIn(service.key); }}
+                tabIndex={-1}
+              >
                 <FontAwesomeIcon icon={faPlus} />
-                <span>New Booking</span>
-              </div>
-            </button>
+                New Booking
+                <FontAwesomeIcon icon={faArrowRight} className="cta-arrow" />
+              </button>
+            </div>
           ))}
         </div>
       </div>
 
-      {/* Recent Walk-ins Section (Placeholder for future enhancement) */}
-      <div className="recent-walkins">
-        <div className="section-header">
-          <FontAwesomeIcon icon={faHistory} />
-          <h2>Recent Walk-in Bookings</h2>
+      {/* Recent Walk-ins */}
+      <div className="walkins-recent">
+        <div className="recent-header">
+          <div className="recent-header-left">
+            <FontAwesomeIcon icon={faHistory} className="recent-icon" />
+            <div>
+              <h2 className="recent-title">Recent Walk-in Bookings</h2>
+              <p className="recent-sub">Bookings created today will appear here</p>
+            </div>
+          </div>
         </div>
-        <div className="empty-state">
-          <FontAwesomeIcon icon={faWalking} size="3x" />
-          <p>No recent walk-in bookings to display</p>
-          <small>Walk-in bookings created today will appear here</small>
+
+        <div className="recent-empty">
+          <div className="empty-icon-wrap">
+            <FontAwesomeIcon icon={faPaw} />
+          </div>
+          <p className="empty-heading">No walk-ins yet today</p>
+          <span className="empty-hint">Use the service cards above to create a new walk-in booking.</span>
         </div>
       </div>
 
