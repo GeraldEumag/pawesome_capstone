@@ -11,6 +11,7 @@ const History = lazy(() => import("../components/admin/History"));
 const Attendance = lazy(() => import("../components/admin/Attendance"));
 const ProfileSettings = lazy(() => import("../components/shared/ProfileSettings"));
 const ChatbotLogs = lazy(() => import("../components/admin/ChatbotLogs"));
+const LiveChatInbox = lazy(() => import("../components/live-chat/LiveChatInbox"));
 const AdminSettings = lazy(() => import("../components/admin/AdminSettings"));
 const AdminLandingPageEditor = lazy(() => import("../components/admin/AdminLandingPageEditor"));
 const LoginHistory = lazy(() => import("../components/admin/LoginHistory"));
@@ -88,6 +89,7 @@ const AdminRoutes = () => (
         <Route path="reports/attendance" element={<Attendance />} />
         <Route path="history" element={<History />} />
         <Route path="chatbot" element={<ChatbotLogs />} />
+        <Route path="live-chat" element={<LiveChatInbox />} />
         <Route path="landing-page" element={<AdminLandingPageEditor />} />
         <Route path="settings" element={<AdminSettings />} />
         <Route path="history/logins" element={<LoginHistory />} />

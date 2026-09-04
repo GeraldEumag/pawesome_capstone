@@ -1,138 +1,252 @@
-import { useState } from "react";
-import { FaTimes, FaPaperPlane } from "react-icons/fa";
+import { useEffect, useRef, useState } from "react";
+import { FaTimes, FaPaperPlane, FaRedo } from "react-icons/fa";
 import chatbotLogo from "../assets/pawesome-icon.png";
+import { fetchPublicChatbotWelcome, sendPublicChatbotMessage } from "../services/chatbotService";
 import "./LandingChatbot.css";
 
-const quickReplies = [
-  "How to register",
-  "How to login",
-  "Available services",
-  "How to book",
-  "How to buy products",
-  "Basic payment guide",
-];
+const SS_MSGS_KEY = "pawesome_landing_msgs";
+const SS_SUGG_KEY = "pawesome_landing_sugg";
+const MAX_SS_MSGS = 30;
 
-function getBotReply(message) {
-  const text = message.toLowerCase();
-
-  const privateKeywords = [
-    "my booking",
-    "my appointment",
-    "my payment",
-    "my pet",
-    "my order",
-    "my history",
-    "my records",
-    "status of my",
-    "track my",
-  ];
-
-  if (privateKeywords.some((word) => text.includes(word))) {
-    return "For personal booking status, payment status, pet records, order tracking, and appointment history, please login first and use the Customer Dashboard assistant.";
-  }
-
-  if (text.includes("register") || text.includes("account") || text.includes("sign up")) {
-    return "To create a customer account, click Register on the landing page, fill out your details, then login using your email and password.";
-  }
-
-  if (text.includes("login") || text.includes("log in")) {
-    return "Click the Login button, then enter your customer email and password to access your Customer Dashboard.";
-  }
-
-  if (text.includes("book") || text.includes("appointment")) {
-    return "To book a service, create or login to your customer account, then go to the Customer Dashboard and choose your preferred service schedule.";
-  }
-
-  if (
-    text.includes("service") ||
-    text.includes("vet") ||
-    text.includes("groom") ||
-    text.includes("hotel")
-  ) {
-    return "Pawesome offers veterinary services, grooming, pet hotel booking, and pet care services. Login as a customer to request a service.";
-  }
-
-  if (text.includes("product") || text.includes("store") || text.includes("buy")) {
-    return "Customers can browse and buy available pet products in the Customer Dashboard after logging in.";
-  }
-
-  if (text.includes("payment") || text.includes("pay")) {
-    return "Payment instructions will be shown after submitting a booking or order. For personal payment status, please login first.";
-  }
-
-  return "Hi! I can help with registration, login, services, booking, products, and basic payment instructions.";
+function loadSession() {
+  try {
+    const msgs = sessionStorage.getItem(SS_MSGS_KEY);
+    const sugg = sessionStorage.getItem(SS_SUGG_KEY);
+    return {
+      messages: msgs ? JSON.parse(msgs) : null,
+      suggestions: sugg ? JSON.parse(sugg) : null,
+    };
+  } catch { return { messages: null, suggestions: null }; }
 }
+
+function saveSession(messages, suggestions) {
+  try {
+    sessionStorage.setItem(SS_MSGS_KEY, JSON.stringify(messages.slice(-MAX_SS_MSGS)));
+    sessionStorage.setItem(SS_SUGG_KEY, JSON.stringify(suggestions));
+  } catch { }
+}
+
+function clearSession() {
+  try {
+    sessionStorage.removeItem(SS_MSGS_KEY);
+    sessionStorage.removeItem(SS_SUGG_KEY);
+  } catch { }
+}
+
+const formatTime = (iso) => {
+  if (!iso) return "";
+  return new Date(iso).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+};
+
+// Fallback if backend is unreachable
+const FALLBACK_WELCOME = {
+  reply: "Hi! Welcome to Pawesome Pet Services. I can help with our services, pricing, and how to get started.",
+  suggestions: ["What services do you offer?", "How do I register?", "What are your hours?"],
+};
 
 export default function LandingChatbot() {
   const [open, setOpen] = useState(false);
   const [input, setInput] = useState("");
-  const [messages, setMessages] = useState([
-    {
-      sender: "bot",
-      text: "Hi! Welcome to Pawesome. How can I help you today?",
-    },
-  ]);
+  const [messages, setMessages] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [suggestions, setSuggestions] = useState([]);
+  const [bootstrapped, setBootstrapped] = useState(false);
+  const messagesEndRef = useRef(null);
 
-  const sendMessage = (customMessage) => {
-    const message = customMessage || input.trim();
-    if (!message) return;
+  // Load welcome on first open — restore from sessionStorage if available
+  useEffect(() => {
+    if (!open || bootstrapped) return;
+    const cached = loadSession();
+    if (cached.messages?.length > 0) {
+      setMessages(cached.messages);
+      setSuggestions(cached.suggestions || []);
+      setBootstrapped(true);
+      return;
+    }
+    loadWelcome();
+  }, [open]); // eslint-disable-line react-hooks/exhaustive-deps
 
-    setMessages((prev) => [
-      ...prev,
-      { sender: "user", text: message },
-      { sender: "bot", text: getBotReply(message) },
-    ]);
+  // Persist to sessionStorage whenever messages/suggestions change
+  useEffect(() => {
+    if (bootstrapped && messages.length > 0) {
+      saveSession(messages, suggestions);
+    }
+  }, [messages, suggestions]); // eslint-disable-line react-hooks/exhaustive-deps
 
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [messages, loading]);
+
+  const loadWelcome = async () => {
+    setLoading(true);
+    try {
+      const data = await fetchPublicChatbotWelcome();
+      const welcomeMsg = {
+        sender: "bot",
+        text: data.reply,
+        timestamp: new Date().toISOString(),
+      };
+      setMessages([welcomeMsg]);
+      setSuggestions(data.suggestions || FALLBACK_WELCOME.suggestions);
+      setBootstrapped(true);
+    } catch {
+      setMessages([{
+        sender: "bot",
+        text: FALLBACK_WELCOME.reply,
+        timestamp: new Date().toISOString(),
+      }]);
+      setSuggestions(FALLBACK_WELCOME.suggestions);
+      setBootstrapped(true);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const sendMessage = async (customMessage) => {
+    const message = (customMessage || input).trim();
+    if (!message || loading) return;
+
+    const userMsg = {
+      sender: "user",
+      text: message,
+      timestamp: new Date().toISOString(),
+    };
+    setMessages((prev) => [...prev, userMsg]);
     setInput("");
+    setSuggestions([]);
+    setLoading(true);
+
+    try {
+      const data = await sendPublicChatbotMessage(message);
+      const botMsg = {
+        sender: "bot",
+        text: data.reply,
+        cta: data.cta || null,
+        timestamp: new Date().toISOString(),
+      };
+      setMessages((prev) => [...prev, botMsg]);
+      setSuggestions(data.suggestions || []);
+    } catch {
+      setMessages((prev) => [
+        ...prev,
+        {
+          sender: "bot",
+          text: "Sorry, I couldn't reach the server right now. Please try again or visit our registration page.",
+          cta: { label: "Register", href: "/register" },
+          timestamp: new Date().toISOString(),
+        },
+      ]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const resetChat = () => {
+    clearSession();
+    setMessages([]);
+    setSuggestions([]);
+    setBootstrapped(false);
+    setInput("");
+    loadWelcome();
   };
 
   return (
     <>
+      {/* Toggle button */}
       <button
-        className="landing-chatbot-toggle"
+        className="lc-toggle"
         type="button"
-        onClick={() => setOpen(true)}
+        onClick={() => setOpen((v) => !v)}
+        aria-label="Open Pawesome Assistant"
       >
-        <img src={chatbotLogo} alt="Pawesome Chatbot" className="chatbot-logo-img" />
+        <img src={chatbotLogo} alt="Pawesome Chatbot" className="lc-toggle-img" />
+        {!open && <span className="lc-toggle-text">Chat with us</span>}
       </button>
 
       {open && (
-        <div className="landing-chatbot">
-          <div className="landing-chatbot-header">
-            <div>
-              <strong>Pawesome Assistant</strong>
-              <span>For new users</span>
+        <div className="lc-panel">
+          {/* Header */}
+          <div className="lc-header">
+            <div className="lc-header-left">
+              <div className="lc-header-avatar">
+                <img src={chatbotLogo} alt="Pawesome" className="lc-header-img" />
+                <span className="lc-online-dot" />
+              </div>
+              <div>
+                <strong>Pawesome Assistant</strong>
+                <span>Online · Public info only</span>
+              </div>
             </div>
-            <button onClick={() => setOpen(false)}>
-              <FaTimes size={18} />
-            </button>
+            <div className="lc-header-actions">
+              <button className="lc-icon-btn" onClick={resetChat} title="New chat">
+                <FaRedo size={13} />
+              </button>
+              <button className="lc-icon-btn" onClick={() => setOpen(false)} title="Close">
+                <FaTimes size={15} />
+              </button>
+            </div>
           </div>
 
-          <div className="landing-chatbot-body">
-            {messages.map((msg, index) => (
-              <div key={index} className={`chat-message ${msg.sender}`}>
-                {msg.text}
+          {/* Body */}
+          <div className="lc-body">
+            {messages.map((msg, i) => (
+              <div key={i} className={`lc-msg lc-msg-${msg.sender}`}>
+                {msg.sender === "bot" && (
+                  <img src={chatbotLogo} alt="bot" className="lc-msg-avatar" />
+                )}
+                <div className="lc-msg-content">
+                  <div className="lc-bubble">
+                    {msg.text.split("\n").map((line, j) => (
+                      <p key={j}>{line}</p>
+                    ))}
+                    {msg.cta && (
+                      <a href={msg.cta.href} className="lc-cta-btn">
+                        {msg.cta.label} →
+                      </a>
+                    )}
+                  </div>
+                  <span className="lc-msg-time">{formatTime(msg.timestamp)}</span>
+                </div>
               </div>
             ))}
 
-            <div className="quick-replies">
-              {quickReplies.map((reply) => (
-                <button key={reply} onClick={() => sendMessage(reply)}>
-                  {reply}
-                </button>
-              ))}
-            </div>
+            {loading && (
+              <div className="lc-msg lc-msg-bot">
+                <img src={chatbotLogo} alt="bot" className="lc-msg-avatar" />
+                <div className="lc-typing-indicator">
+                  <span /><span /><span />
+                </div>
+              </div>
+            )}
+
+            {!loading && suggestions.length > 0 && (
+              <div className="lc-suggestions">
+                {suggestions.map((s) => (
+                  <button key={s} className="lc-suggestion-chip" onClick={() => sendMessage(s)}>
+                    {s}
+                  </button>
+                ))}
+              </div>
+            )}
+
+            <div ref={messagesEndRef} />
           </div>
 
-          <div className="landing-chatbot-input">
+          {/* Input */}
+          <div className="lc-input-bar">
             <input
               value={input}
               onChange={(e) => setInput(e.target.value)}
               onKeyDown={(e) => e.key === "Enter" && sendMessage()}
-              placeholder="Ask something..."
+              placeholder="Ask about our services..."
+              disabled={loading}
             />
-            <button onClick={() => sendMessage()}>
-              <FaPaperPlane size={18} />
+            <button
+              onClick={() => sendMessage()}
+              disabled={!input.trim() || loading}
+              className="lc-send-btn"
+            >
+              <FaPaperPlane size={15} />
             </button>
           </div>
         </div>

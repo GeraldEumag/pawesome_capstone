@@ -3,6 +3,7 @@
 namespace App\Services\Chatbot;
 
 use App\Models\ChatbotFaq;
+use Illuminate\Support\Facades\Cache;
 
 class KnowledgeBaseService
 {
@@ -43,15 +44,17 @@ class KnowledgeBaseService
      */
     public function findAnswer(string $message, string $role): ?array
     {
-        // Get active FAQs from database
-        $faqs = ChatbotFaq::where('is_active', true)
-            ->where(function ($query) use ($role) {
-                $query->whereNull('role_scope')
-                    ->orWhere('role_scope', $role)
-                    ->orWhere('role_scope', 'all');
-            })
-            ->orderBy('priority', 'desc')
-            ->get();
+        // Get active FAQs — cached per role for 10 minutes to avoid per-message DB hits
+        $faqs = Cache::remember("chatbot_faqs_{$role}", 600, function () use ($role) {
+            return ChatbotFaq::where('is_active', true)
+                ->where(function ($query) use ($role) {
+                    $query->whereNull('role_scope')
+                        ->orWhere('role_scope', $role)
+                        ->orWhere('role_scope', 'all');
+                })
+                ->orderBy('priority', 'desc')
+                ->get();
+        });
 
         $messageLower = strtolower($message);
 

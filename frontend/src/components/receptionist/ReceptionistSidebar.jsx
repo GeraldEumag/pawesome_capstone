@@ -13,6 +13,7 @@ import {
   FaChevronUp,
   FaUser,
   FaRobot,
+  FaComments,
   FaHistory,
   FaChartBar,
   FaCog,
@@ -132,6 +133,13 @@ const ReceptionistSidebar = ({ mobileOpen, onMobileMenuToggle }) => {
           <li className="nav-item">
             <NavLink to="/receptionist/chatbot" onClick={handleNavClick}>
               <FaRobot className="nav-icon" /> Chatbot
+            </NavLink>
+          </li>
+
+          {/* Live Chat */}
+          <li className="nav-item">
+            <NavLink to="/receptionist/live-chat" onClick={handleNavClick}>
+              <FaComments className="nav-icon" /> Live Chat
             </NavLink>
           </li>
 

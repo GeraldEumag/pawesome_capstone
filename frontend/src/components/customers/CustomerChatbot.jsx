@@ -6,8 +6,8 @@ export default function CustomerChatbot() {
   const botFeatures = [
     {
       icon: "📅",
-      title: "Booking Guidance",
-      description: "Ask how to book hotel stay, vet visit, or grooming service.",
+      title: "Book Appointments",
+      description: "Chat your way through booking vet, grooming, or hotel stays — step by step.",
     },
     {
       icon: "🐾",
@@ -15,14 +15,14 @@ export default function CustomerChatbot() {
       description: "Get help about pet profiles, services, and appointment details.",
     },
     {
-      icon: "💳",
-      title: "Payment Help",
-      description: "Ask how to upload receipts and check payment verification.",
+      icon: "�",
+      title: "Live Staff Chat",
+      description: "Request a live chat and a receptionist will respond directly in the chatbot.",
     },
     {
       icon: "👩‍💼",
-      title: "Receptionist Flow",
-      description: "Bookings are reviewed and approved by the receptionist.",
+      title: "Receptionist Approval",
+      description: "Booking requests are reviewed and approved by the receptionist.",
     },
   ];
 

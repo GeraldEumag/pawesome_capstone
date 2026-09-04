@@ -15,6 +15,7 @@ use App\Http\Controllers\Admin\SalaryController;
 use App\Http\Controllers\Admin\SupplierController;
 use App\Http\Controllers\ChatbotController as SharedChatbotController;
 use App\Http\Controllers\ChatbotWorkflowController;
+use App\Http\Controllers\LiveChatController;
 use App\Http\Controllers\Customer\PortalController;
 use App\Http\Controllers\Customer\CustomerStoreController;
 use App\Http\Controllers\AuthController;
@@ -1046,4 +1047,32 @@ Route::middleware(['auth.api', 'throttle:api'])->prefix('files')->group(function
 // Profile photos are public (avatars are not sensitive)
 Route::prefix('files')->group(function () {
     Route::get('/profile-photos/{userId}/view', [SecureFileController::class, 'viewProfilePhoto']);
+});
+
+// ─── Public Chatbot (no auth — for landing page) ──────────────────────────
+Route::middleware(['throttle:60,1'])->prefix('chatbot/public')->group(function () {
+    Route::get('welcome', [SharedChatbotController::class, 'publicWelcome']);
+    Route::post('message', [SharedChatbotController::class, 'publicMessage']);
+});
+
+// ─── Live Chat — Customer ─────────────────────────────────────────────────
+Route::middleware(['auth.api', 'throttle:api', 'role:customer'])->prefix('chatbot/live-chat')->group(function () {
+    Route::get('session', [LiveChatController::class, 'mySession']);
+    Route::post('start', [LiveChatController::class, 'startSession']);
+    Route::post('{session}/message', [LiveChatController::class, 'customerMessage']);
+    Route::delete('{session}', [LiveChatController::class, 'customerClose']);
+});
+
+// ─── Live Chat — Staff (receptionist + admin; super roles handled by middleware) ─
+Route::middleware(['auth.api', 'throttle:api', 'role:receptionist,admin'])->prefix('chatbot/live-chat')->group(function () {
+    Route::get('inbox', [LiveChatController::class, 'inbox']);
+    Route::post('{session}/claim', [LiveChatController::class, 'claimSession']);
+    Route::post('{session}/reply', [LiveChatController::class, 'staffReply']);
+    Route::patch('{session}/close', [LiveChatController::class, 'closeSession']);
+});
+
+// ─── Live Chat — Shared: both customer and staff may poll messages ─────────
+// Controller enforces ownership internally (customer can only read their own session).
+Route::middleware(['auth.api', 'throttle:api'])->prefix('chatbot/live-chat')->group(function () {
+    Route::get('{session}/messages', [LiveChatController::class, 'getMessages']);
 });

@@ -16,6 +16,7 @@ use App\Models\Service;
 use App\Models\ServiceRequest;
 use App\Models\User;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Schema;
@@ -821,13 +822,19 @@ class PremiumChatbotService
     {
         $normalizedMessage = strtolower($message);
         
-        // Search for matching FAQ
-        $faq = ChatbotFaq::where('is_active', true)
-            ->where(function ($query) use ($normalizedMessage) {
-                $query->whereRaw('LOWER(question) LIKE ?', ['%' . $normalizedMessage . '%'])
-                    ->orWhereRaw('LOWER(keywords) LIKE ?', ['%' . $normalizedMessage . '%']);
-            })
-            ->first();
+        // Load all active FAQs from cache (10-min TTL), then match in-memory
+        $allFaqs = Cache::remember('chatbot_faqs_all', 600, function () {
+            return ChatbotFaq::where('is_active', true)->get();
+        });
+
+        $faq = $allFaqs->first(function ($f) use ($normalizedMessage) {
+            // keywords is cast as array on the model — join into a searchable string
+            $keywordsStr = is_array($f->keywords)
+                ? strtolower(implode(' ', $f->keywords))
+                : strtolower((string) ($f->keywords ?? ''));
+            return str_contains(strtolower($f->question), $normalizedMessage)
+                || str_contains($keywordsStr, $normalizedMessage);
+        });
         
         if ($faq) {
             return [

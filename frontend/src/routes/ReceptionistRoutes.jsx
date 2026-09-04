@@ -4,6 +4,7 @@ import ProtectedRoute from "../components/ProtectedRoute";
 import ReceptionistLayout from "../components/receptionist/ReceptionistLayout";
 
 const ReceptionistChatbot = lazy(() => import("../components/receptionist/ReceptionistChatbot"));
+const LiveChatInbox = lazy(() => import("../components/live-chat/LiveChatInbox"));
 const ReceptionistHotelBookings = lazy(() => import("../components/receptionist/ReceptionistHotelBookings"));
 const ReceptionistVeterinaryBookings = lazy(() => import("../components/receptionist/ReceptionistVeterinaryBookings"));
 const ReceptionistGroomingBookings = lazy(() => import("../components/receptionist/ReceptionistGroomingBookings"));
@@ -56,6 +57,7 @@ const ReceptionistRoutes = () => (
         <Route path="walk-ins" element={<ReceptionistWalkIns />} />
 
         <Route path="chatbot" element={<ReceptionistChatbot />} />
+        <Route path="live-chat" element={<LiveChatInbox />} />
         <Route path="medical-confinements" element={<Navigate to="/receptionist/bookings/hotel" replace />} />
         <Route path="customers" element={<CustomerManagement />} />
         <Route path="history" element={<ReceptionistHistory />} />

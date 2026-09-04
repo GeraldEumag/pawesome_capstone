@@ -772,7 +772,7 @@
   }
 }
 
-/* ===== CHATBOT AVATAR IMAGE ===== */
+/* ===== CHATBOT AVATAR IMAGE (legacy compat) ===== */
 
 .chatbot-avatar-img {
   width: 42px;
@@ -783,3 +783,431 @@
   padding: 4px;
   box-shadow: 0 8px 22px rgba(255, 95, 147, 0.32);
 }
+
+/* ===== PANEL SIZE UPGRADE ===== */
+
+.rbac-chatbot.widget .rbac-chatbot-panel {
+  height: min(720px, calc(100vh - 80px));
+  width: min(480px, calc(100vw - 32px));
+}
+
+/* ===== TOGGLE BUTTON UPGRADE ===== */
+
+.rbac-toggle-icon-wrap {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.rbac-toggle-bot-img {
+  width: 46px;
+  height: 46px;
+  object-fit: cover;
+  border-radius: 50%;
+  background: #fff;
+  padding: 3px;
+  box-shadow: 0 4px 14px rgba(255, 95, 147, 0.35);
+}
+
+.rbac-toggle-pulse {
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 12px;
+  height: 12px;
+  background: #f59e0b;
+  border-radius: 50%;
+  border: 2px solid #fff;
+  animation: toggle-pulse 1.6s ease-in-out infinite;
+}
+
+@keyframes toggle-pulse {
+  0%, 100% { transform: scale(1); opacity: 1; }
+  50% { transform: scale(1.4); opacity: 0.7; }
+}
+
+.rbac-toggle-badge {
+  color: #f59e0b;
+  font-size: 1.2rem;
+  line-height: 1;
+  margin-left: -4px;
+}
+
+/* ===== HEADER AVATAR ===== */
+
+.rbac-avatar-wrap {
+  position: relative;
+  display: inline-flex;
+  flex-shrink: 0;
+}
+
+.rbac-avatar-img {
+  width: 46px;
+  height: 46px;
+  object-fit: cover;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.9);
+  padding: 3px;
+  box-shadow: 0 4px 14px rgba(255, 95, 147, 0.35);
+}
+
+.rbac-avatar-status {
+  position: absolute;
+  bottom: 2px;
+  right: 2px;
+  width: 11px;
+  height: 11px;
+  background: #10b981;
+  border-radius: 50%;
+  border: 2px solid #ff5f93;
+}
+
+.rbac-avatar-status.waiting {
+  background: #f59e0b;
+  animation: toggle-pulse 1.6s ease-in-out infinite;
+}
+
+/* ===== MSG AVATAR (per bubble) ===== */
+
+.rbac-msg-avatar-wrap {
+  flex-shrink: 0;
+  margin-right: 6px;
+  margin-top: 4px;
+}
+
+.rbac-msg-bot-img {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  object-fit: cover;
+  background: #fff;
+}
+
+.rbac-staff-avatar {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #10b981, #059669);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.8rem;
+  font-weight: 700;
+}
+
+/* Bot message row alignment */
+.rbac-chat-message.bot {
+  display: flex;
+  align-items: flex-start;
+}
+
+/* ===== TIMESTAMPS ===== */
+
+.rbac-msg-timestamp {
+  display: block;
+  font-size: 0.67rem;
+  color: #c0a0b0;
+  margin-top: 4px;
+  text-align: right;
+}
+
+.rbac-chat-message.user .rbac-msg-timestamp {
+  color: rgba(255,255,255,0.65);
+}
+
+/* ===== LIVE CHAT STYLES ===== */
+
+.rbac-livechat-sender-label {
+  display: block;
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: #059669;
+  margin-bottom: 2px;
+}
+
+.rbac-livechat-system-indicator {
+  display: block;
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: #997388;
+  font-style: italic;
+  margin-bottom: 2px;
+}
+
+/* Live chat customer messages */
+.rbac-chat-message.livechat.user .rbac-chat-bubble {
+  background: linear-gradient(135deg, #7c3aed, #9f67e8);
+}
+
+/* Live chat bot (staff) messages */
+.rbac-chat-message.livechat.bot .rbac-chat-bubble {
+  background: rgba(16, 185, 129, 0.08);
+  border-color: rgba(16, 185, 129, 0.2);
+}
+
+/* Live chat system messages */
+.rbac-chat-message.livechat.bot .rbac-chat-bubble p {
+  color: #6b7280;
+  font-style: italic;
+}
+
+.rbac-livechat-end-btn {
+  width: auto !important;
+  padding: 0.3rem 0.7rem !important;
+  font-size: 0.78rem !important;
+  gap: 0.3rem !important;
+  border-color: rgba(255,100,100,0.4) !important;
+  background: rgba(255,60,60,0.15) !important;
+}
+
+.rbac-livechat-waiting-anim {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: #997388;
+  font-size: 0.82rem;
+  font-style: italic;
+  padding: 4px 10px;
+}
+
+.rbac-livechat-waiting-anim span {
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #f59e0b;
+  animation: typing-bounce 1.4s infinite ease-in-out both;
+}
+
+.rbac-livechat-waiting-anim span:nth-child(1) { animation-delay: -0.32s; }
+.rbac-livechat-waiting-anim span:nth-child(2) { animation-delay: -0.16s; }
+.rbac-livechat-waiting-anim span:nth-child(3) { animation-delay: 0s; }
+
+/* ===== CONVERSATIONAL BOOKING FLOW ===== */
+
+.rbac-booking-step {
+  padding: 0.5rem 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.rbac-booking-error {
+  background: rgba(239,68,68,0.08);
+  border: 1px solid rgba(239,68,68,0.18);
+  border-radius: 12px;
+  color: #dc2626;
+  font-size: 0.82rem;
+  padding: 8px 12px;
+}
+
+.rbac-booking-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.rbac-booking-chip {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  padding: 10px 14px;
+  background: #fff;
+  border: 1px solid rgba(255, 95, 147, 0.22);
+  border-radius: 14px;
+  cursor: pointer;
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: #3d1a2a;
+  transition: all 0.15s;
+  text-align: left;
+  min-width: 110px;
+}
+
+.rbac-booking-chip:hover {
+  background: rgba(255, 95, 147, 0.08);
+  border-color: #ff5f93;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 14px rgba(255, 95, 147, 0.15);
+}
+
+.rbac-chip-sub {
+  font-size: 0.72rem;
+  color: #ff5f93;
+  font-weight: 500;
+}
+
+.rbac-chip-auto {
+  border-color: rgba(16, 185, 129, 0.3);
+}
+
+.rbac-chip-auto:hover {
+  background: rgba(16, 185, 129, 0.08);
+  border-color: #10b981;
+}
+
+.rbac-booking-datepicker {
+  padding: 4px 0;
+}
+
+.rbac-booking-datepicker input,
+.rbac-booking-datepicker .react-datepicker-wrapper input {
+  border: 1px solid rgba(255, 95, 147, 0.22);
+  border-radius: 12px;
+  padding: 10px 14px;
+  font-size: 0.9rem;
+  outline: none;
+  width: 100%;
+  color: #3d1a2a;
+  background: #fff;
+}
+
+.rbac-booking-datepicker input:focus,
+.rbac-booking-datepicker .react-datepicker-wrapper input:focus {
+  border-color: #ff5f93;
+  box-shadow: 0 0 0 3px rgba(255, 95, 147, 0.12);
+}
+
+.rbac-booking-notes-area {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.rbac-booking-notes-area textarea {
+  border: 1px solid rgba(255, 95, 147, 0.22);
+  border-radius: 12px;
+  padding: 10px 12px;
+  font-size: 0.88rem;
+  outline: none;
+  resize: vertical;
+  min-height: 70px;
+  color: #3d1a2a;
+  background: #fff;
+  font-family: inherit;
+}
+
+.rbac-booking-notes-area textarea:focus {
+  border-color: #ff5f93;
+}
+
+.rbac-booking-notes-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.rbac-booking-skip {
+  background: none;
+  border: none;
+  color: #997388;
+  font-size: 0.8rem;
+  cursor: pointer;
+  text-decoration: underline;
+  padding: 4px;
+}
+
+.rbac-booking-confirm-card {
+  background: #fff;
+  border: 1px solid rgba(255, 95, 147, 0.2);
+  border-radius: 16px;
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  box-shadow: 0 4px 18px rgba(255, 95, 147, 0.1);
+}
+
+.rbac-booking-confirm-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 10px;
+  font-size: 0.86rem;
+  padding-bottom: 8px;
+  border-bottom: 1px solid rgba(255,95,147,0.08);
+}
+
+.rbac-booking-confirm-row:last-of-type {
+  border-bottom: none;
+  padding-bottom: 0;
+}
+
+.rbac-booking-confirm-row span {
+  color: #997388;
+  font-size: 0.8rem;
+  flex-shrink: 0;
+}
+
+.rbac-booking-confirm-row strong {
+  color: #3d1a2a;
+  text-align: right;
+}
+
+.rbac-booking-confirm-actions {
+  display: flex;
+  gap: 8px;
+  padding-top: 6px;
+}
+
+.rbac-booking-confirm-btn {
+  flex: 1;
+  background: linear-gradient(135deg, #ff5f93, #ff8db5);
+  border: none;
+  border-radius: 10px;
+  color: #fff;
+  cursor: pointer;
+  padding: 10px;
+  font-size: 0.86rem;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  transition: opacity 0.15s;
+}
+
+.rbac-booking-confirm-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.rbac-booking-cancel-btn {
+  background: #fff0f4;
+  border: 1px solid #fbc8d4;
+  border-radius: 10px;
+  color: #e05a6a;
+  cursor: pointer;
+  padding: 10px 14px;
+  font-size: 0.86rem;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.rbac-booking-cancel-link {
+  background: none;
+  border: none;
+  color: #c0a0b0;
+  font-size: 0.78rem;
+  cursor: pointer;
+  text-decoration: underline;
+  align-self: flex-start;
+  padding: 2px 0;
+}
+
+/* Success message styling */
+.rbac-chat-message.booking-success .rbac-chat-bubble {
+  background: rgba(16, 185, 129, 0.08);
+  border-color: rgba(16, 185, 129, 0.25);
+}
+
+.rbac-chat-message.booking-success .rbac-chat-bubble p:first-child {
+  color: #065f46;
+  font-weight: 700;
+}
+

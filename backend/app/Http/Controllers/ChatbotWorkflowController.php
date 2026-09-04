@@ -43,6 +43,7 @@ class ChatbotWorkflowController extends Controller
             'pet_id' => 'required|integer',
             'service_id' => 'required|integer|exists:services,id',
             'scheduled_at' => 'required|date',
+            'notes' => 'nullable|string|max:1000',
         ]);
 
         $pet = Pet::where('customer_id', $customer->id)->find($data['pet_id']);
@@ -59,6 +60,7 @@ class ChatbotWorkflowController extends Controller
             'status' => 'pending',
             'scheduled_at' => $data['scheduled_at'],
             'price' => $service->price ?? 0,
+            'notes' => $data['notes'] ?? null,
         ]);
 
         return response()->json([
