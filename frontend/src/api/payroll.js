@@ -20,6 +20,19 @@ export const payrollApi = {
       body: JSON.stringify(data),
     }),
 
+  // Update an existing payroll record (draft or pending only)
+  update: (id, data) =>
+    apiRequest(`/manager/payroll/${id}`, {
+      method: "PUT",
+      body: JSON.stringify(data),
+    }),
+
+  // Get payroll records for a specific period
+  getByPeriod: (startDate, endDate) => {
+    const params = new URLSearchParams({ period_start: startDate, period_end: endDate });
+    return apiRequest(`/manager/payroll?${params}`);
+  },
+
   // Generate payroll for period
   generateForPeriod: (data) =>
     apiRequest("/manager/payroll/generate", {

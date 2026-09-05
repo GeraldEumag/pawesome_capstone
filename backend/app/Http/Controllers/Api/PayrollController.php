@@ -470,9 +470,12 @@ class PayrollController extends Controller
     public function store(Request $request): JsonResponse
     {
         $validated = $request->validate([
-            'user_id' => 'required|exists:users,id',
+            'user_id' => 'nullable|exists:users,id',
+            'employee_name' => 'nullable|string|max:255',
             'pay_period_start' => 'required|date',
             'pay_period_end' => 'required|date|after_or_equal:pay_period_start',
+            'employment_type' => 'nullable|in:regular,part_time,contractual',
+            'rate_type' => 'nullable|in:daily,hourly,monthly',
             'base_salary' => 'required|numeric|min:0',
             'hourly_rate' => 'nullable|numeric|min:0',
             'working_days' => 'nullable|integer|min:0',
@@ -488,6 +491,8 @@ class PayrollController extends Controller
             'special_holiday_ot_pay' => 'nullable|numeric|min:0',
             'bonus' => 'nullable|numeric|min:0',
             'allowances' => 'nullable|numeric|min:0',
+            'commission' => 'nullable|numeric|min:0',
+            'other_earnings' => 'nullable|numeric|min:0',
             'deductions' => 'nullable|numeric|min:0',
             'tax_deduction' => 'nullable|numeric|min:0',
             'sss_contribution' => 'nullable|numeric|min:0',
@@ -495,18 +500,32 @@ class PayrollController extends Controller
             'pagibig_contribution' => 'nullable|numeric|min:0',
             'late_deductions' => 'nullable|numeric|min:0',
             'absent_deductions' => 'nullable|numeric|min:0',
+            'salary_loan' => 'nullable|numeric|min:0',
+            'cash_advance' => 'nullable|numeric|min:0',
             'gross_pay' => 'required|numeric|min:0',
             'net_pay' => 'required|numeric|min:0',
+            'payment_date' => 'nullable|date',
+            'payment_method' => 'nullable|string|max:50',
+            'payment_reference' => 'nullable|string|max:100',
             'remarks' => 'nullable|string',
+            'manual_attendance' => 'nullable|array',
         ]);
 
-        $user = User::findOrFail($validated['user_id']);
+        $user = !empty($validated['user_id']) ? User::find($validated['user_id']) : null;
         $periodLabel = Carbon::parse($validated['pay_period_start'])->format('M d') . ' - ' . Carbon::parse($validated['pay_period_end'])->format('M d, Y');
+
+        // Require either user_id or employee_name
+        if (!$user && empty($validated['employee_name'])) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Please select an employee or enter an employee name.',
+            ], 422);
+        }
 
         $payroll = Payroll::create(array_merge($validated, [
             'pay_period_label' => $periodLabel,
-            'department' => $user->department ?? 'Unassigned',
-            'position' => $user->position ?? $user->role,
+            'department' => $user->department ?? ($validated['department'] ?? 'Unassigned'),
+            'position' => $user ? ($user->position ?? $user->role) : 'Staff',
             'status' => 'draft',
             'processed_by' => Auth::id(),
             'processed_at' => now(),
@@ -517,7 +536,7 @@ class PayrollController extends Controller
         Notification::create([
             'role' => 'manager',
             'title' => 'Payroll Created',
-            'message' => 'Manual payroll created for ' . ($payroll->user->name ?? 'employee') . ' for ' . $periodLabel . '.',
+            'message' => 'Manual payroll created for ' . ($payroll->employee_name ?? $payroll->user->name ?? 'employee') . ' for ' . $periodLabel . '.',
             'type' => 'success',
             'related_type' => 'payroll',
             'related_id' => $payroll->id,
@@ -527,6 +546,86 @@ class PayrollController extends Controller
             'success' => true,
             'message' => 'Payroll record created successfully.',
             'data' => $payroll->load(['user', 'processor']),
+        ]);
+    }
+
+    /**
+     * Update an existing manual payroll record (draft or pending only)
+     */
+    public function update(Request $request, $id): JsonResponse
+    {
+        $payroll = Payroll::findOrFail($id);
+
+        if (in_array($payroll->status, ['paid', 'cancelled'], true)) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Cannot edit a paid or cancelled payroll record.',
+            ], 422);
+        }
+
+        $validated = $request->validate([
+            'user_id' => 'nullable|exists:users,id',
+            'employee_name' => 'nullable|string|max:255',
+            'pay_period_start' => 'sometimes|required|date',
+            'pay_period_end' => 'sometimes|required|date|after_or_equal:pay_period_start',
+            'employment_type' => 'nullable|in:regular,part_time,contractual',
+            'rate_type' => 'nullable|in:daily,hourly,monthly',
+            'base_salary' => 'nullable|numeric|min:0',
+            'hourly_rate' => 'nullable|numeric|min:0',
+            'working_days' => 'nullable|integer|min:0',
+            'present_days' => 'nullable|integer|min:0',
+            'absent_days' => 'nullable|integer|min:0',
+            'regular_hours' => 'nullable|numeric|min:0',
+            'overtime_hours' => 'nullable|numeric|min:0',
+            'overtime_pay' => 'nullable|numeric|min:0',
+            'regular_holiday_pay' => 'nullable|numeric|min:0',
+            'special_holiday_pay' => 'nullable|numeric|min:0',
+            'night_differential' => 'nullable|numeric|min:0',
+            'regular_holiday_ot_pay' => 'nullable|numeric|min:0',
+            'special_holiday_ot_pay' => 'nullable|numeric|min:0',
+            'bonus' => 'nullable|numeric|min:0',
+            'allowances' => 'nullable|numeric|min:0',
+            'commission' => 'nullable|numeric|min:0',
+            'other_earnings' => 'nullable|numeric|min:0',
+            'deductions' => 'nullable|numeric|min:0',
+            'tax_deduction' => 'nullable|numeric|min:0',
+            'sss_contribution' => 'nullable|numeric|min:0',
+            'philhealth_contribution' => 'nullable|numeric|min:0',
+            'pagibig_contribution' => 'nullable|numeric|min:0',
+            'late_deductions' => 'nullable|numeric|min:0',
+            'absent_deductions' => 'nullable|numeric|min:0',
+            'salary_loan' => 'nullable|numeric|min:0',
+            'cash_advance' => 'nullable|numeric|min:0',
+            'gross_pay' => 'nullable|numeric|min:0',
+            'net_pay' => 'nullable|numeric|min:0',
+            'status' => 'nullable|in:draft,processing,pending,approved,paid,cancelled',
+            'payment_date' => 'nullable|date',
+            'payment_method' => 'nullable|string|max:50',
+            'payment_reference' => 'nullable|string|max:100',
+            'remarks' => 'nullable|string',
+            'manual_attendance' => 'nullable|array',
+        ]);
+
+        // Recompute period label if dates changed
+        if (isset($validated['pay_period_start']) || isset($validated['pay_period_end'])) {
+            $start = $validated['pay_period_start'] ?? $payroll->pay_period_start;
+            $end = $validated['pay_period_end'] ?? $payroll->pay_period_end;
+            $validated['pay_period_label'] = Carbon::parse($start)->format('M d') . ' - ' . Carbon::parse($end)->format('M d, Y');
+        }
+
+        // Track approval transition
+        if (isset($validated['status']) && $validated['status'] === 'approved' && $payroll->status !== 'approved') {
+            $validated['approved_by'] = Auth::id();
+            $validated['approved_at'] = now();
+        }
+
+        $payroll->update($validated);
+        $payroll->load(['user', 'processor', 'approver']);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Payroll record updated successfully.',
+            'data' => $payroll,
         ]);
     }
 }

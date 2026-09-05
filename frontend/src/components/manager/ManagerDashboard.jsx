@@ -256,6 +256,7 @@ const ManagerDashboard = () => {
         ]);
 
         const appointmentsList = normalizeList(appointmentsResponse, [
+          "consultations",
           "appointments",
           "veterinary_services",
           "data",

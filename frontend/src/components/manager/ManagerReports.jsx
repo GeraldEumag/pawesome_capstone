@@ -215,7 +215,11 @@ const normalizeStaff = (record, index) => ({
   email: record.email || record.user?.email || record.employee?.email || "N/A",
   department: getDepartment(record),
   role: getRole(record),
-  status: normalizeStatus(record.status || record.employment_status || "active"),
+  status: normalizeStatus(
+    record.status ||
+    record.employment_status ||
+    (record.is_active === false ? "inactive" : "active")
+  ),
   hireDate: record.hire_date || record.created_at || record.date_hired || "",
   attendanceRecords: safeNumber(record.attendance_records || record.attendance_count || 0),
   payrollRecords: safeNumber(record.payroll_records || record.payroll_count || 0),

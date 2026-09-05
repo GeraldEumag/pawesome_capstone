@@ -13,8 +13,11 @@ class Payroll extends Model
     protected $fillable = [
         'payroll_id',
         'user_id',
+        'employee_name',
         'department',
         'position',
+        'employment_type',
+        'rate_type',
         'base_salary',
         'hourly_rate',
         'working_days',
@@ -30,6 +33,8 @@ class Payroll extends Model
         'special_holiday_ot_pay',
         'bonus',
         'allowances',
+        'commission',
+        'other_earnings',
         'deductions',
         'tax_deduction',
         'sss_contribution',
@@ -37,6 +42,8 @@ class Payroll extends Model
         'pagibig_contribution',
         'late_deductions',
         'absent_deductions',
+        'salary_loan',
+        'cash_advance',
         'gross_pay',
         'net_pay',
         'pay_period_start',
@@ -45,9 +52,13 @@ class Payroll extends Model
         'status',
         'payment_date',
         'payment_method',
+        'payment_reference',
         'remarks',
         'processed_by',
         'processed_at',
+        'approved_by',
+        'approved_at',
+        'manual_attendance',
     ];
 
     protected $casts = [
@@ -74,6 +85,8 @@ class Payroll extends Model
         'net_pay' => 'decimal:2',
         'payment_date' => 'date',
         'processed_at' => 'datetime',
+        'approved_at' => 'datetime',
+        'manual_attendance' => 'array',
     ];
 
     public function user(): BelongsTo
@@ -84,6 +97,11 @@ class Payroll extends Model
     public function processor(): BelongsTo
     {
         return $this->belongsTo(User::class, 'processed_by');
+    }
+
+    public function approver(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'approved_by');
     }
 
     protected static function boot()

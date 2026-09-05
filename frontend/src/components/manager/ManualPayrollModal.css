@@ -410,3 +410,364 @@
     grid-template-columns: 1fr;
   }
 }
+
+/* ===== New sections (v2) ===== */
+
+/* Header right (status badge + close) */
+.mpm-header-right {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+}
+
+.mpm-payroll-id {
+  display: block;
+  margin-top: 0.2rem;
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: #94a3b8;
+}
+
+/* Status badge */
+.mpm-status-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.25rem 0.7rem;
+  border-radius: 999px;
+  font-size: 0.72rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  white-space: nowrap;
+}
+
+.mpm-status-draft      { background: #f1f5f9; color: #64748b; }
+.mpm-status-processing { background: #fef3c7; color: #92400e; }
+.mpm-status-pending    { background: #fef3c7; color: #b45309; }
+.mpm-status-approved   { background: #dbeafe; color: #1d4ed8; }
+.mpm-status-paid       { background: #d1fae5; color: #047857; }
+.mpm-status-cancelled  { background: #fee2e2; color: #991b1b; }
+
+/* Success alert */
+.mpm-alert.success {
+  background: #d1fae5;
+  color: #065f46;
+}
+
+/* Section wrapper */
+.mpm-section {
+  margin-bottom: 1.1rem;
+  padding: 0.85rem 1rem;
+  border: 1px solid rgba(255, 95, 147, 0.12);
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.6);
+}
+
+.mpm-section-header {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  margin-bottom: 0.75rem;
+}
+
+.mpm-section-header svg {
+  width: 26px;
+  height: 26px;
+  display: grid;
+  place-items: center;
+  border-radius: 8px;
+  background: rgba(255, 95, 147, 0.12);
+  color: #ff5f93;
+  font-size: 0.78rem;
+  padding: 0.35rem;
+}
+
+.mpm-section-header h3 {
+  margin: 0;
+  font-size: 0.92rem;
+  font-weight: 800;
+  color: #191919;
+  flex: 1;
+}
+
+/* Info row (Prepared By / Approved By) */
+.mpm-info-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1.25rem;
+  margin-top: 0.6rem;
+  padding-top: 0.6rem;
+  border-top: 1px dashed rgba(255, 95, 147, 0.1);
+}
+
+.mpm-info-row small {
+  font-size: 0.78rem;
+  color: #64748b;
+}
+
+/* 3-column grid */
+.mpm-grid-3 {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.75rem;
+}
+
+/* Attendance table */
+.mpm-table-scroll {
+  overflow-x: auto;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 95, 147, 0.12);
+}
+
+.mpm-attendance-table,
+.mpm-summary-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.82rem;
+}
+
+.mpm-attendance-table th,
+.mpm-attendance-table td,
+.mpm-summary-table th,
+.mpm-summary-table td {
+  padding: 0.4rem 0.5rem;
+  text-align: left;
+  border-bottom: 1px solid rgba(255, 95, 147, 0.08);
+  white-space: nowrap;
+}
+
+.mpm-attendance-table th,
+.mpm-summary-table th {
+  background: rgba(255, 95, 147, 0.06);
+  font-size: 0.7rem;
+  font-weight: 800;
+  color: #64748b;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.mpm-attendance-table input {
+  width: 100%;
+  min-height: 32px;
+  padding: 0 0.35rem;
+  border: 1px solid rgba(255, 95, 147, 0.15);
+  border-radius: 8px;
+  background: #fff;
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: #1f2937;
+  outline: none;
+}
+
+.mpm-attendance-table input:focus {
+  border-color: #ff5f93;
+  box-shadow: 0 0 0 2px rgba(255, 95, 147, 0.12);
+}
+
+.mpm-attendance-table input:disabled {
+  background: #f8fafc;
+  color: #94a3b8;
+}
+
+.mpm-attendance-totals td {
+  background: rgba(255, 95, 147, 0.04);
+  font-size: 0.8rem;
+}
+
+.mpm-attendance-totals strong {
+  color: #ff5f93;
+}
+
+.mpm-remove-row {
+  width: 28px;
+  height: 28px;
+  display: grid;
+  place-items: center;
+  border: none;
+  border-radius: 8px;
+  background: #fee2e2;
+  color: #ef4444;
+  cursor: pointer;
+  transition: 0.15s ease;
+}
+
+.mpm-remove-row:hover {
+  background: #ef4444;
+  color: #fff;
+}
+
+.mpm-add-row-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.3rem 0.7rem;
+  border: 1px solid rgba(255, 95, 147, 0.25);
+  border-radius: 999px;
+  background: rgba(255, 95, 147, 0.08);
+  color: #ff5f93;
+  font-size: 0.76rem;
+  font-weight: 800;
+  cursor: pointer;
+  transition: 0.15s ease;
+}
+
+.mpm-add-row-btn:hover {
+  background: rgba(255, 95, 147, 0.15);
+}
+
+.mpm-add-row-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Summary table */
+.mpm-summary-table td {
+  font-weight: 700;
+  color: #1f2937;
+}
+
+.mpm-summary-table .mpm-empty {
+  text-align: center;
+  color: #94a3b8;
+  font-weight: 700;
+  padding: 1.25rem;
+}
+
+/* Approval section */
+.mpm-approval-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.75rem;
+}
+
+.mpm-approval-item {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  padding: 0.65rem 0.85rem;
+  border-radius: 12px;
+  background: rgba(241, 245, 249, 0.6);
+  border: 1px solid rgba(255, 95, 147, 0.1);
+}
+
+.mpm-approval-item > span {
+  font-size: 0.72rem;
+  font-weight: 800;
+  color: #64748b;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.mpm-approval-item > strong {
+  font-size: 0.88rem;
+  color: #191919;
+}
+
+.mpm-approval-check {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.mpm-approval-check input[type="checkbox"] {
+  width: 20px;
+  height: 20px;
+  accent-color: #ff5f93;
+  cursor: pointer;
+}
+
+.mpm-approval-check small {
+  font-size: 0.76rem;
+  color: #64748b;
+  font-weight: 700;
+}
+
+/* Footer button variants */
+.mpm-btn.submit {
+  background: #f59e0b;
+  color: #fff;
+  box-shadow: 0 8px 20px rgba(245, 158, 11, 0.22);
+}
+
+.mpm-btn.submit:hover { transform: translateY(-2px); }
+
+.mpm-btn.approve {
+  background: #3b82f6;
+  color: #fff;
+  box-shadow: 0 8px 20px rgba(59, 130, 246, 0.22);
+}
+
+.mpm-btn.approve:hover { transform: translateY(-2px); }
+
+.mpm-btn.paid {
+  background: #10b981;
+  color: #fff;
+  box-shadow: 0 8px 20px rgba(16, 185, 129, 0.22);
+}
+
+.mpm-btn.paid:hover { transform: translateY(-2px); }
+
+/* Disabled inputs */
+.mpm-field input:disabled,
+.mpm-field select:disabled,
+.mpm-field textarea:disabled,
+.mpm-number-wrap:has(input:disabled) {
+  background: #f8fafc;
+  color: #94a3b8;
+  cursor: not-allowed;
+}
+
+/* Employee toggle (select vs manual name) */
+.mpm-employee-toggle {
+  display: flex;
+  gap: 0.35rem;
+  margin-bottom: 0.4rem;
+}
+
+.mpm-toggle-btn {
+  flex: 1;
+  padding: 0.35rem 0.6rem;
+  border: 1px solid rgba(255, 95, 147, 0.2);
+  border-radius: 10px;
+  background: #f8fafc;
+  color: #64748b;
+  font-size: 0.74rem;
+  font-weight: 800;
+  cursor: pointer;
+  transition: 0.15s ease;
+  font-family: inherit;
+}
+
+.mpm-toggle-btn.active {
+  background: rgba(255, 95, 147, 0.1);
+  color: #ff5f93;
+  border-color: rgba(255, 95, 147, 0.35);
+}
+
+.mpm-toggle-btn:hover:not(.active):not(:disabled) {
+  background: #f1f5f9;
+}
+
+.mpm-toggle-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Responsive new sections */
+@media (max-width: 800px) {
+  .mpm-grid-3 {
+    grid-template-columns: 1fr;
+  }
+  .mpm-approval-grid {
+    grid-template-columns: 1fr;
+  }
+  .mpm-attendance-table {
+    font-size: 0.75rem;
+  }
+  .mpm-section {
+    padding: 0.65rem 0.75rem;
+  }
+  .mpm-footer {
+    flex-wrap: wrap;
+  }
+}

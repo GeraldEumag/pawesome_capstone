@@ -634,7 +634,7 @@ Route::middleware(['auth.api', 'throttle:api'])->prefix('manager')->group(functi
         Route::post('payroll/{payroll}/approve', [ApiPayrollController::class, 'approve']);
         Route::post('payroll/{payroll}/release', [ApiPayrollController::class, 'markAsPaid']);
         Route::get('payroll/{payroll}', [ApiPayrollController::class, 'show']);
-        Route::put('payroll/{id}', [PayrollController::class, 'update']);
+        Route::put('payroll/{id}', [ApiPayrollController::class, 'update']);
         Route::get('payroll/{payroll}/payslip', [PayrollController::class, 'payslip']);
     });
 

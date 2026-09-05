@@ -174,18 +174,26 @@ const normalizePayroll = (record, index) => {
     overtimePay: safeNumber(record.overtime_pay || record.overtime_amount || 0),
     bonus: safeNumber(record.bonus || 0),
     allowance: safeNumber(record.allowance || record.bonus || record.allowances || 0),
+    commission: safeNumber(record.commission || 0),
+    otherEarnings: safeNumber(record.other_earnings || 0),
     sss: safeNumber(record.sss_contribution || record.sss || 0),
     philhealth: safeNumber(record.philhealth_contribution || record.philhealth || 0),
     pagibig: safeNumber(record.pagibig_contribution || record.pagibig || 0),
     tax: safeNumber(record.tax_deduction || record.tax || 0),
+    salaryLoan: safeNumber(record.salary_loan || 0),
+    cashAdvance: safeNumber(record.cash_advance || 0),
     grossPay,
     deductions,
     netPay,
     status: normalizeStatus(record.status || record.payroll_status),
-    approvedBy: record.approved_by || record.approver?.name || "N/A",
+    approvedBy: record.approver?.name || record.approved_by || "N/A",
+    approvedAt: record.approved_at || null,
     releasedBy: record.released_by || record.paid_by || "N/A",
     paymentDate: record.payment_date || null,
     paymentMethod: record.payment_method || null,
+    paymentReference: record.payment_reference || null,
+    employmentType: record.employment_type || "regular",
+    rateType: record.rate_type || "monthly",
     remarks: record.remarks || record.notes || "",
     raw: record,
   };
@@ -219,7 +227,7 @@ const createPayrollNotification = async (message, priority = "high") => {
 const PayrollManagement = () => {
   const navigate = useNavigate();
   const { role } = useAuth();
-  const canOperatePayroll = ["manager", "admin"].includes(role);
+  const canOperatePayroll = ["manager", "admin", "super_admin"].includes(role);
 
   // Tab switching: "records" (payroll list) or "computation" (PayrollComputation view)
   const [payrollTab, setPayrollTab] = useState("records");
@@ -246,6 +254,7 @@ const PayrollManagement = () => {
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
   const [showManualModal, setShowManualModal] = useState(false);
+  const [editPayrollRecord, setEditPayrollRecord] = useState(null);
 
   const [selectedPayroll, setSelectedPayroll] = useState(null);
   const [showDetailsModal, setShowDetailsModal] = useState(false);
@@ -1163,6 +1172,19 @@ const PayrollManagement = () => {
                             PDF
                           </button>
 
+                          {canOperatePayroll && ["draft", "pending"].includes(payroll.status) && (
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setEditPayrollRecord(payroll.raw || payroll);
+                                setShowManualModal(true);
+                              }}
+                            >
+                              <FontAwesomeIcon icon={faPen} />
+                              Edit
+                            </button>
+                          )}
+
                           {canOperatePayroll && (
                             <>
                               <button
@@ -1250,7 +1272,11 @@ const PayrollManagement = () => {
 
       {showManualModal && canOperatePayroll && (
         <ManualPayrollModal
-          onClose={() => setShowManualModal(false)}
+          initialPayroll={editPayrollRecord || undefined}
+          onClose={() => {
+            setShowManualModal(false);
+            setEditPayrollRecord(null);
+          }}
           onSaved={() => fetchPayrolls({ silent: true })}
         />
       )}

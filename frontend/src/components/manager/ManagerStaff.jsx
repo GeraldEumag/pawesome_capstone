@@ -155,7 +155,11 @@ const getPhone = (record) =>
 
 const normalizeStaff = (record, index) => {
   const id = record.id || record.user_id || record.employee_id || record.staff_id || index + 1;
-  const status = normalizeStatus(record.status || record.employment_status || "active");
+  const status = normalizeStatus(
+    record.status ||
+    record.employment_status ||
+    (record.is_active === false ? "inactive" : "active")
+  );
 
   return {
     id,
@@ -551,7 +555,7 @@ const ManagerStaff = () => {
     setModalLoading(true);
 
     try {
-      const response = await apiRequest(`/manager/staff/${person.rawId}/attendance`);
+      const response = await apiRequest(`/manager/staff/${person.rawId}/attendance?user_id=${person.rawId}`);
       const records = normalizeList(response, ["attendance", "records", "items"]);
       setModalRecords(records.map(normalizeAttendance));
     } catch (primaryError) {
@@ -595,7 +599,7 @@ const ManagerStaff = () => {
     setModalLoading(true);
 
     try {
-      const response = await apiRequest(`/manager/staff/${person.rawId}/payroll`);
+      const response = await apiRequest(`/manager/staff/${person.rawId}/payroll?user_id=${person.rawId}`);
       const records = normalizeList(response, ["payroll", "records", "items"]);
       setModalRecords(records.map(normalizePayroll));
     } catch (primaryError) {
@@ -646,7 +650,6 @@ const ManagerStaff = () => {
     setEditForm({
       phone: person.phone || "",
       department: person.department || "",
-      schedule: person.schedule || "",
       address: person.address || "",
     });
     setActiveModal("edit");
@@ -666,7 +669,7 @@ const ManagerStaff = () => {
       setStaff((prev) =>
         prev.map((p) =>
           p.id === selectedStaff.id
-            ? { ...p, phone: editForm.phone, department: editForm.department, schedule: editForm.schedule, address: editForm.address }
+            ? { ...p, phone: editForm.phone, department: editForm.department, address: editForm.address }
             : p
         )
       );
@@ -677,7 +680,7 @@ const ManagerStaff = () => {
       setStaff((prev) =>
         prev.map((p) =>
           p.id === selectedStaff.id
-            ? { ...p, phone: editForm.phone, department: editForm.department, schedule: editForm.schedule, address: editForm.address }
+            ? { ...p, phone: editForm.phone, department: editForm.department, address: editForm.address }
             : p
         )
       );
@@ -1131,15 +1134,6 @@ const ManagerStaff = () => {
                     value={editForm.department || ""}
                     onChange={(e) => handleEditChange("department", e.target.value)}
                     placeholder="Department"
-                  />
-                </label>
-                <label>
-                  <span>Schedule</span>
-                  <input
-                    type="text"
-                    value={editForm.schedule || ""}
-                    onChange={(e) => handleEditChange("schedule", e.target.value)}
-                    placeholder="e.g. Mon-Fri 9AM-5PM"
                   />
                 </label>
                 <label>
