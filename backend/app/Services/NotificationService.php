@@ -7,6 +7,10 @@ use App\Models\User;
 use App\Models\Boarding;
 use App\Models\Appointment;
 use App\Models\Customer;
+use App\Models\SystemSetting;
+use App\Mail\CustomerNotificationMail;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Mail;
 
 class NotificationService
 {
@@ -73,7 +77,7 @@ class NotificationService
             );
         }
 
-        self::sendFutureChannelNotification($customer, $message);
+        self::sendEmailNotification($customer, 'Hotel Reservation Created', $message, 'info');
     }
 
     /**
@@ -114,7 +118,7 @@ class NotificationService
             ['boarding_id' => $boarding->id, 'status' => $boarding->status]
         );
 
-        self::sendFutureChannelNotification($customer, $messages[$boarding->status]);
+        self::sendEmailNotification($customer, 'Reservation Update', $messages[$boarding->status], $type);
     }
 
     /**
@@ -153,7 +157,7 @@ class NotificationService
             );
         }
 
-        self::sendFutureChannelNotification($customer, $message);
+        self::sendEmailNotification($customer, 'Appointment Scheduled', $message, 'info');
     }
 
     /**
@@ -194,7 +198,7 @@ class NotificationService
             ['appointment_id' => $appointment->id, 'status' => $appointment->status]
         );
 
-        self::sendFutureChannelNotification($customer, $messages[$appointment->status]);
+        self::sendEmailNotification($customer, 'Appointment Update', $messages[$appointment->status], $type);
     }
 
     /**
@@ -231,7 +235,7 @@ class NotificationService
             ['reminder' => true, 'hours_before' => $hoursBefore]
         );
 
-        self::sendFutureChannelNotification($customer, $message);
+        self::sendEmailNotification($customer, $title, $message, 'warning');
     }
 
     /**
@@ -240,7 +244,7 @@ class NotificationService
     public static function sendLowStockAlert($inventoryItem): void
     {
         $admins = User::whereIn('role', ['admin', 'super_admin', 'manager'])->get();
-        
+
         $message = "Low Stock Alert: {$inventoryItem->name}\n" .
                    "Current Stock: {$inventoryItem->stock}\n" .
                    "Reorder Level: {$inventoryItem->reorder_level}";
@@ -258,11 +262,29 @@ class NotificationService
     }
 
     /**
-     * Reserved for future external notification channels.
+     * Dispatch the in-app + email notification to a customer.
      */
-    private static function sendFutureChannelNotification(Customer $customer, string $message): void
+    private static function sendEmailNotification(Customer $customer, string $title, string $message, string $type = 'info'): void
     {
-        return;
+        if (!(bool) SystemSetting::get('notif_email_notifications', true)) {
+            return;
+        }
+
+        $preferences = $customer->notification_preferences ?? [];
+        if (($preferences['email'] ?? true) === false) {
+            return;
+        }
+
+        $email = $customer->email ?? $customer->user?->email;
+        if (empty($email)) {
+            return;
+        }
+
+        try {
+            Mail::to($email)->queue(new CustomerNotificationMail($title, $message, $type));
+        } catch (\Throwable $e) {
+            Log::error('Failed to queue customer notification email: ' . $e->getMessage());
+        }
     }
 
     /**

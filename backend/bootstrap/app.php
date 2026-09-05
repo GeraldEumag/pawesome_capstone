@@ -22,6 +22,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'role' => \App\Http\Middleware\EnsureRole::class,
             'auth.api' => \App\Http\Middleware\ApiTokenAuth::class,
             'throttle' => \Illuminate\Routing\Middleware\ThrottleRequests::class,
+            'verified' => \App\Http\Middleware\EnsureEmailIsVerified::class,
         ]);
         $middleware->redirectGuestsTo(function (Request $request) {
             return $request->is('api/*') ? null : '/login';

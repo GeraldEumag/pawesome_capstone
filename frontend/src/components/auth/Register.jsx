@@ -393,7 +393,11 @@ const Register = () => {
       }
 
       window.setTimeout(() => {
-        navigate(redirectPath);
+        if (!user.email_verified_at) {
+          navigate(`/verify-email?email=${encodeURIComponent(user.email || formData.emailAddress.trim())}`);
+        } else {
+          navigate(redirectPath);
+        }
       }, 900);
     } catch (err) {
       setFormError(err.message || "Registration failed. Please try again.");

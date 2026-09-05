@@ -117,6 +117,8 @@ Route::prefix('auth')->group(function () {
         Route::post('login', [AuthController::class, 'login']);
         Route::post('password/forgot', [AuthController::class, 'forgotPassword']);
         Route::post('password/reset', [AuthController::class, 'resetPassword']);
+        Route::post('email/verify', [AuthController::class, 'verifyEmail']);
+        Route::post('email/resend', [AuthController::class, 'resendVerificationEmail']);
     });
 
     Route::middleware(['auth.api', 'throttle:api'])->group(function () {
@@ -259,13 +261,13 @@ Route::middleware(['auth.api', 'throttle:api'])->prefix('chatbot')->group(functi
     Route::get('welcome', [SharedChatbotController::class, 'welcome']);
     Route::post('message', [SharedChatbotController::class, 'message']);
     Route::get('workflow/booking-options', [ChatbotWorkflowController::class, 'bookingOptions']);
-    Route::post('workflow/bookings', [ChatbotWorkflowController::class, 'createBooking']);
+    Route::post('workflow/bookings', [ChatbotWorkflowController::class, 'createBooking'])->middleware('verified');
     Route::post('workflow/appointments/lookup', [ChatbotWorkflowController::class, 'lookupAppointments']);
     Route::post('workflow/inventory/search', [ChatbotWorkflowController::class, 'searchInventory']);
     // Hotel booking workflow routes
     Route::get('workflow/hotel-options', [ChatbotWorkflowController::class, 'hotelOptions']);
     Route::get('workflow/hotel/availability', [ChatbotWorkflowController::class, 'checkHotelAvailability']);
-    Route::post('workflow/hotel-bookings', [ChatbotWorkflowController::class, 'createHotelBooking']);
+    Route::post('workflow/hotel-bookings', [ChatbotWorkflowController::class, 'createHotelBooking'])->middleware('verified');
 });
 
 Route::middleware(['auth.api', 'throttle:api', 'role:customer'])->prefix('customer')->group(function () {
@@ -275,9 +277,9 @@ Route::middleware(['auth.api', 'throttle:api', 'role:customer'])->prefix('custom
     Route::get('bookings', [PortalController::class, 'bookings']);
     Route::get('transactions', [PortalController::class, 'transactions']);
     Route::get('purchases', [PortalController::class, 'purchases']);
-    Route::post('appointments', [PortalController::class, 'bookAppointment']);
+    Route::post('appointments', [PortalController::class, 'bookAppointment'])->middleware('verified');
     Route::get('boardings', [BoardingController::class, 'index']);
-    Route::post('boardings', [BoardingController::class, 'store']);
+    Route::post('boardings', [BoardingController::class, 'store'])->middleware('verified');
     Route::get('services', [PortalController::class, 'services']);
     Route::post('chatbot', [PortalController::class, 'chatbot']);
 
@@ -287,14 +289,14 @@ Route::middleware(['auth.api', 'throttle:api', 'role:customer'])->prefix('custom
     Route::get('payments/history', [PortalController::class, 'transactions']);
     
     // Customer Service Requests
-    Route::post('requests', [ServiceRequestController::class, 'store']);
+    Route::post('requests', [ServiceRequestController::class, 'store'])->middleware('verified');
     Route::get('my-requests', [ServiceRequestController::class, 'customerRequests']);
     Route::patch('requests/{id}/cancel', [ServiceRequestController::class, 'cancel']);
     Route::post('requests/{id}/payment-proof', [ServiceRequestController::class, 'uploadPaymentProof']);
     Route::get('requests/{id}/receipt', [ServiceRequestController::class, 'receipt']);
     
     // Customer Store Checkout
-    Route::post('store/checkout', [CustomerStoreController::class, 'checkout']);
+    Route::post('store/checkout', [CustomerStoreController::class, 'checkout'])->middleware('verified');
     Route::get('store/orders', [CustomerStoreController::class, 'orders']);
     Route::get('store/orders/{id}', [CustomerStoreController::class, 'show']);
     Route::post('store/orders/{id}/payment-proof', [CustomerStoreController::class, 'uploadPaymentProof']);
@@ -313,7 +315,7 @@ Route::middleware(['auth.api', 'throttle:api', 'role:customer'])->prefix('custom
     Route::get('pets/{pet}/medical-history', [MedicalRecordController::class, 'indexByCustomer']);
 
     Route::get('boarding-requests', [BoardingController::class, 'index']);
-    Route::post('boarding-requests', [BoardingController::class, 'store']);
+    Route::post('boarding-requests', [BoardingController::class, 'store'])->middleware('verified');
     Route::get('boardings/available-rooms', [BoardingController::class, 'availableRooms']);
     Route::get('boardings/{id}', [BoardingController::class, 'show']);
     Route::post('boardings/{id}/cancel', [BoardingController::class, 'cancel']);
@@ -323,7 +325,7 @@ Route::middleware(['auth.api', 'throttle:api', 'role:customer'])->prefix('custom
     Route::get('boarding-requests/{id}/care-logs', [BoardingController::class, 'careLogs']);
 
     Route::get('vet-consultations', [VetController::class, 'index']);
-    Route::post('vet-consultations', [VetController::class, 'store']);
+    Route::post('vet-consultations', [VetController::class, 'store'])->middleware('verified');
     Route::get('vet-consultations/{id}', [VetController::class, 'show']);
     Route::get('medical-confinements', [MedicalConfinementController::class, 'index']);
     Route::get('medical-confinements/{id}', [MedicalConfinementController::class, 'show']);
@@ -935,7 +937,7 @@ Route::middleware(['auth.api', 'throttle:api', 'role:admin'])->prefix('admin/gro
 // Customer Grooming Routes (View own appointments, create new)
 Route::middleware(['auth.api', 'throttle:api', 'role:customer'])->prefix('customer/grooming')->group(function () {
     Route::get('/', [GroomingController::class, 'index']);
-    Route::post('/', [GroomingController::class, 'store']);
+    Route::post('/', [GroomingController::class, 'store'])->middleware('verified');
     Route::get('/{id}', [GroomingController::class, 'show']);
 });
 
@@ -979,7 +981,7 @@ Route::middleware(['auth.api', 'throttle:api', 'role:customer'])->prefix('custom
 // Customer Vet Routes (View own appointments, create new)
 Route::middleware(['auth.api', 'throttle:api', 'role:customer'])->prefix('customer/vet')->group(function () {
     Route::get('/', [VetController::class, 'index']);
-    Route::post('/', [VetController::class, 'store']);
+    Route::post('/', [VetController::class, 'store'])->middleware('verified');
     Route::get('/{id}', [VetController::class, 'show']);
 });
 

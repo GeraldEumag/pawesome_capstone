@@ -11,7 +11,6 @@ use App\Models\Grooming;
 use App\Models\Service;
 use App\Models\MedicalRecord;
 use App\Models\ServiceItemUsage;
-use App\Services\NotificationService;
 use App\Services\WorkflowNotifier;
 use App\Services\BookingAvailabilityService;
 use App\Services\ServiceBillingService;
@@ -361,8 +360,6 @@ class AppointmentController extends Controller
         $appointment->cancellation_reason = $request->reason;
         $appointment->save();
 
-        // Send notification
-        NotificationService::notifyAppointmentStatusChange($appointment, $oldStatus);
 
         return response()->json([
             'message' => 'Appointment cancelled successfully',
@@ -401,8 +398,6 @@ class AppointmentController extends Controller
         $appointment->cancellation_reason = $request->reason;
         $appointment->save();
 
-        // Send notification
-        NotificationService::notifyAppointmentStatusChange($appointment, $oldStatus);
 
         return response()->json([
             'message' => 'Appointment rejected successfully',
@@ -466,8 +461,6 @@ class AppointmentController extends Controller
             ]
         );
 
-        // Send notification
-        NotificationService::notifyAppointmentStatusChange($appointment, $oldStatus);
         ActivityLog::log(auth()->id(), 'appointment_started', "Veterinary started appointment #{$appointment->id}", [
             'category' => 'veterinary',
             'reference_type' => 'appointment',
@@ -606,8 +599,6 @@ class AppointmentController extends Controller
 
         $appointment->update($updateData);
 
-        // Send notification
-        NotificationService::notifyAppointmentStatusChange($appointment, $oldStatus);
         ActivityLog::log(auth()->id(), 'appointment_completed', "Veterinary completed appointment #{$appointment->id}", [
             'category' => 'veterinary',
             'reference_type' => 'appointment',
@@ -717,8 +708,6 @@ class AppointmentController extends Controller
 
         $appointment->save();
 
-        // Send notification for status change
-        NotificationService::notifyAppointmentStatusChange($appointment, $oldStatus);
 
         if (in_array($newStatus, ['approved', 'scheduled'], true) && $appointment->veterinarian_id) {
             WorkflowNotifier::notifyUser(

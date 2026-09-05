@@ -47,6 +47,7 @@ class PawesomeLiveDemoSeeder extends Seeder
                     'base_salary' => $data['role'] === 'customer' ? null : 32000,
                     'hourly_rate' => $data['role'] === 'customer' ? null : 180,
                     'employment_status' => 'active',
+                    'email_verified_at' => now(),
                     'is_active' => true,
                 ]
             );

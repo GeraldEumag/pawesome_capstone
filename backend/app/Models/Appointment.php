@@ -2,12 +2,19 @@
 
 namespace App\Models;
 
+use App\Services\NotificationService;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 class Appointment extends Model
 {
     use HasFactory;
+
+    /**
+     * Holds the original status before an update so status-change
+     * notifications can be dispatched from the updated event.
+     */
+    public ?string $statusBeforeUpdate = null;
 
     protected $fillable = [
         'customer_id', 'pet_id', 'service_id', 'veterinarian_id', 'status',
@@ -59,7 +66,7 @@ class Appointment extends Model
     ];
 
     /**
-     * Boot method for model-level validation
+     * Boot method for model-level validation and notification hooks.
      */
     protected static function boot()
     {
@@ -81,6 +88,23 @@ class Appointment extends Model
                 if (!$appointment->exists) {
                     $appointment->scheduled_at = now()->addHour();
                 }
+            }
+        });
+
+        static::created(function ($appointment) {
+            NotificationService::notifyAppointmentCreated($appointment);
+        });
+
+        static::updating(function ($appointment) {
+            if ($appointment->isDirty('status')) {
+                $appointment->statusBeforeUpdate = $appointment->getOriginal('status');
+            }
+        });
+
+        static::updated(function ($appointment) {
+            if ($appointment->statusBeforeUpdate !== null && $appointment->status !== $appointment->statusBeforeUpdate) {
+                NotificationService::notifyAppointmentStatusChange($appointment, $appointment->statusBeforeUpdate);
+                $appointment->statusBeforeUpdate = null;
             }
         });
     }

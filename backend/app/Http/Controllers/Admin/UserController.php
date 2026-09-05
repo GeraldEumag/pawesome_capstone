@@ -69,6 +69,7 @@ class UserController extends Controller
                 'emergency_contact_person' => $request->emergency_contact_person,
                 'emergency_contact_number' => $request->emergency_contact_number,
                 'role' => $request->role,
+                'email_verified_at' => now(),
                 'is_active' => $request->is_active ?? true,
             ]);
 

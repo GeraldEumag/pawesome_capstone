@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\User;
 use App\Models\Customer;
+use App\Mail\EmailVerificationMail;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
@@ -79,10 +80,12 @@ class AuthController extends Controller
             return $user;
         });
 
+        $this->sendVerificationEmail($user);
+
         $token = $user->createToken('pawesome-token')->plainTextToken;
 
         return response()->json([
-            'message' => 'User registered successfully',
+            'message' => 'User registered successfully. Please check your email to verify your account.',
             'user' => $user,
             'token' => $token,
         ], 201);
@@ -384,5 +387,88 @@ class AuthController extends Controller
         return response()->json([
             'message' => 'Telegram account unlinked successfully'
         ]);
+    }
+
+    public function verifyEmail(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'email' => 'required|string|email',
+            'token' => 'required|string',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json(['errors' => $validator->errors()], 422);
+        }
+
+        $record = DB::table('email_verification_tokens')->where('email', $request->email)->first();
+
+        if (!$record || !Hash::check($request->token, $record->token)) {
+            return response()->json(['message' => 'Invalid or expired verification token.'], 422);
+        }
+
+        if (Carbon::parse($record->created_at)->addMinutes(60)->isPast()) {
+            DB::table('email_verification_tokens')->where('email', $request->email)->delete();
+            return response()->json(['message' => 'Verification token has expired.'], 422);
+        }
+
+        $user = User::where('email', $request->email)->first();
+
+        if (!$user) {
+            return response()->json(['message' => 'User not found.'], 404);
+        }
+
+        if ($user->email_verified_at) {
+            DB::table('email_verification_tokens')->where('email', $request->email)->delete();
+            return response()->json(['message' => 'Email already verified.']);
+        }
+
+        $user->email_verified_at = now();
+        $user->save();
+
+        DB::table('email_verification_tokens')->where('email', $request->email)->delete();
+
+        return response()->json(['message' => 'Email verified successfully.']);
+    }
+
+    public function resendVerificationEmail(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'email' => 'required|string|email|exists:users,email',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json(['errors' => $validator->errors()], 422);
+        }
+
+        $user = User::where('email', $request->email)->first();
+
+        if ($user->email_verified_at) {
+            return response()->json(['message' => 'Email already verified.']);
+        }
+
+        $this->sendVerificationEmail($user);
+
+        return response()->json(['message' => 'A new verification link has been sent to your email.']);
+    }
+
+    private function sendVerificationEmail(User $user): void
+    {
+        $email = $user->email;
+
+        DB::table('email_verification_tokens')->where('email', $email)->delete();
+
+        $token = Str::random(64);
+
+        DB::table('email_verification_tokens')->insert([
+            'email' => $email,
+            'token' => Hash::make($token),
+            'created_at' => now(),
+        ]);
+
+        try {
+            Mail::to($email)->queue(new EmailVerificationMail($token, $email, $user->name));
+        } catch (\Throwable $e) {
+            Log::error('Failed to queue verification email: ' . $e->getMessage());
+        }
     }
 }

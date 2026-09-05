@@ -89,6 +89,11 @@ const Login = () => {
 
       let redirectPath = roleRouteMap[response.user.role] || "/dashboard";
       if (response.user.role === "customer") {
+        if (!response.user.email_verified_at) {
+          navigate(`/verify-email?email=${encodeURIComponent(response.user.email)}`);
+          return;
+        }
+
         const draft = getDraft();
         if (draft?.service_type) {
           const draftPaths = {
