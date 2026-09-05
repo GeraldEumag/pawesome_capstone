@@ -58,7 +58,8 @@ class GroomingInventoryService
                     $item['quantity_used'],
                     'Grooming supply usage: ' . ($notes ?: 'Grooming supplies'),
                     'grooming_usage',
-                    $groomingId
+                    $groomingId,
+                    $item['batch_id'] ?? null
                 );
                 
                 // Record service usage with snapshots
@@ -71,6 +72,7 @@ class GroomingInventoryService
                     'customer_email' => $grooming?->customer?->email,
                     'inventory_item_id' => $item['inventory_item_id'],
                     'batch_id' => $this->getUsedBatchId($deductionResult),
+                    'batch_deductions' => $this->getAllBatchDeductions($deductionResult),
                     'quantity_used' => $item['quantity_used'],
                     'unit' => $item['unit'] ?? $inventoryItem->unit ?? 'pcs',
                     'usage_type' => $item['usage_type'] ?? 'supply',
@@ -143,15 +145,24 @@ class GroomingInventoryService
     }
     
     /**
-     * Get the batch ID that was used from deduction result
+     * Get the primary batch ID that was used from deduction result.
+     * Full batch deductions are available in $deductionResult['batch_deductions'].
      */
     private function getUsedBatchId(array $deductionResult): ?int
     {
         if (!empty($deductionResult['batch_deductions']) && count($deductionResult['batch_deductions']) > 0) {
             return $deductionResult['batch_deductions'][0]['batch_id'];
         }
-        
+
         return null;
+    }
+
+    /**
+     * Get all batch deductions from deduction result (for audit trail)
+     */
+    private function getAllBatchDeductions(array $deductionResult): array
+    {
+        return $deductionResult['batch_deductions'] ?? [];
     }
     
     /**
@@ -164,7 +175,17 @@ class GroomingInventoryService
             ->where('status', 'active')
             ->where('stock', '>', 0)
             ->whereIn('category', ['Grooming', 'Health', 'Accessories']) // Grooming relevant categories
-            ->select('id', 'name', 'sku', 'stock', 'category', 'brand', 'status')
+            ->with(['batches' => function ($q) {
+                $q->where('status', 'active')
+                  ->where('remaining_quantity', '>', 0)
+                  ->where(function ($bq) {
+                      $bq->whereNull('expiration_date')
+                         ->orWhere('expiration_date', '>', now());
+                  })
+                  ->orderByRaw('COALESCE(expiration_date, "9999-12-31") ASC')
+                  ->orderBy('received_date', 'asc');
+            }])
+            ->select('id', 'name', 'sku', 'stock', 'category', 'brand', 'status', 'is_service_consumable', 'requires_expiry_tracking', 'issue_method')
             ->orderBy('name')
             ->get()
             ->map(function ($item) {
@@ -179,6 +200,18 @@ class GroomingInventoryService
                     'type' => $item->category,
                     'brand' => $item->brand,
                     'status' => $item->status,
+                    'needs_fefo' => $item->needsFefo(),
+                    'issue_method' => $item->issue_method ?? 'FEFO',
+                    'batches' => $item->batches->map(fn ($batch) => [
+                        'batch_id' => $batch->id,
+                        'batch_no' => $batch->batch_no,
+                        'expiration_date' => $batch->expiration_date,
+                        'remaining_quantity' => $batch->remaining_quantity,
+                        'is_expiring_soon' => $batch->isExpiringSoon(),
+                        'days_until_expiry' => $batch->expiration_date
+                            ? now()->diffInDays($batch->expiration_date, false)
+                            : null,
+                    ])->toArray(),
                 ];
             })
             ->toArray();

@@ -69,7 +69,8 @@ class VeterinaryInventoryService
                         $delta,
                         'Veterinary service add-on usage: ' . ($notes ?: 'Medical supplies'),
                         'vet_usage',
-                        $appointmentId
+                        $appointmentId,
+                        $item['batch_id'] ?? null
                     );
                     $stockAfter = $deductionResult['stock_after'];
                     $batchId = $this->getUsedBatchId($deductionResult) ?? $batchId;
@@ -103,6 +104,7 @@ class VeterinaryInventoryService
                     'customer_email' => $appointment?->customer?->email,
                     'inventory_item_id' => $inventoryItemId,
                     'batch_id' => $batchId,
+                    'batch_deductions' => $delta > 0 ? $this->getAllBatchDeductions($deductionResult) : null,
                     'quantity_used' => $newQuantity,
                     'unit' => $item['unit'] ?? $inventoryItem->unit ?? 'pcs',
                     'usage_type' => $item['usage_type'] ?? 'service_addon',
@@ -246,15 +248,24 @@ class VeterinaryInventoryService
     }
     
     /**
-     * Get the batch ID that was used from deduction result
+     * Get the primary batch ID that was used from deduction result.
+     * Full batch deductions are available in $deductionResult['batch_deductions'].
      */
     private function getUsedBatchId(array $deductionResult): ?int
     {
         if (!empty($deductionResult['batch_deductions']) && count($deductionResult['batch_deductions']) > 0) {
             return $deductionResult['batch_deductions'][0]['batch_id'];
         }
-        
+
         return null;
+    }
+
+    /**
+     * Get all batch deductions from deduction result (for audit trail)
+     */
+    private function getAllBatchDeductions(array $deductionResult): array
+    {
+        return $deductionResult['batch_deductions'] ?? [];
     }
     
     /**
@@ -264,7 +275,17 @@ class VeterinaryInventoryService
     {
         return InventoryItem::where('is_service_consumable', true)
             ->where('status', 'active')
-            ->select('id', 'name', 'sku', 'description', 'stock', 'category', 'status', 'price', 'reorder_level')
+            ->with(['batches' => function ($q) {
+                $q->where('status', 'active')
+                  ->where('remaining_quantity', '>', 0)
+                  ->where(function ($bq) {
+                      $bq->whereNull('expiration_date')
+                         ->orWhere('expiration_date', '>', now());
+                  })
+                  ->orderByRaw('COALESCE(expiration_date, "9999-12-31") ASC')
+                  ->orderBy('received_date', 'asc');
+            }])
+            ->select('id', 'name', 'sku', 'description', 'stock', 'category', 'status', 'price', 'reorder_level', 'is_service_consumable', 'requires_expiry_tracking', 'issue_method')
             ->orderBy('name')
             ->get()
             ->map(function ($item) {
@@ -285,6 +306,18 @@ class VeterinaryInventoryService
                     'is_inventory_linked' => true,
                     'inventory_item_id' => $item->id,
                     'status' => $item->status,
+                    'needs_fefo' => $item->needsFefo(),
+                    'issue_method' => $item->issue_method ?? 'FEFO',
+                    'batches' => $item->batches->map(fn ($batch) => [
+                        'batch_id' => $batch->id,
+                        'batch_no' => $batch->batch_no,
+                        'expiration_date' => $batch->expiration_date,
+                        'remaining_quantity' => $batch->remaining_quantity,
+                        'is_expiring_soon' => $batch->isExpiringSoon(),
+                        'days_until_expiry' => $batch->expiration_date
+                            ? now()->diffInDays($batch->expiration_date, false)
+                            : null,
+                    ])->toArray(),
                 ];
             })
             ->toArray();

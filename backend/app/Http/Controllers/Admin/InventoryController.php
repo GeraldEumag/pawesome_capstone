@@ -368,11 +368,15 @@ class InventoryController extends Controller
 
             if ($validated['type'] === 'add') {
                 $newStock = $current + $qty;
-                
+
                 // Create new batch if expiration date is provided or required
                 if (($expirationDate || $requiresExpiry) && $qty > 0) {
-                    $this->deductFromBatches($id, $qty); // Use existing method for batch logic
-                    $item->addBatchStock($qty, null, $requiresExpiry ? $expirationDate : $expirationDate, 'Stock adjustment');
+                    // addBatchStock updates main stock by default; sync quantity column too
+                    $item->addBatchStock($qty, null, $expirationDate, 'Stock adjustment');
+                    if (Schema::hasColumn($item->getTable(), 'quantity')) {
+                        $item->quantity = $item->stock;
+                        $item->save();
+                    }
                 } else {
                     // Simple stock addition without batch
                     if (Schema::hasColumn($item->getTable(), 'stock')) {
@@ -383,10 +387,34 @@ class InventoryController extends Controller
                 }
             } elseif ($validated['type'] === 'remove') {
                 $newStock = max(0, $current - $qty);
-                
-                // Deduct from batches using FEFO
+
+                // Deduct from batches using FEFO (via model method, includes logging)
                 if ($qty > 0) {
-                    $this->deductFromBatches($id, $qty);
+                    if ($item->needsFefo() || $item->batches()->exists()) {
+                        $item->deductStockFefo(
+                            $qty,
+                            $validated['reason'] ?? 'Manual stock removal',
+                            'manual_removal',
+                            'adjustment',
+                            null
+                        );
+                        // deductStockFefo already updates stock + creates log; skip duplicate log below
+                        $item = $item->fresh();
+                        $newStock = (int) $item->stock;
+                        return response()->json([
+                            'success' => true,
+                            'message' => 'Stock adjusted successfully',
+                            'item' => $item->fresh(),
+                            'stock_before' => $current,
+                            'stock_after' => $newStock,
+                        ]);
+                    }
+                    // Non-batch item: simple decrement
+                    if (Schema::hasColumn($item->getTable(), 'stock')) {
+                        $item->stock = $newStock;
+                    }
+                    $item->quantity = $newStock;
+                    $item->save();
                 }
             } else {
                 $newStock = $qty;
@@ -466,10 +494,7 @@ class InventoryController extends Controller
     public function getHistory(Request $request)
     {
         $query = DB::table('inventory_logs')
-            ->leftJoin('inventory_items', function ($join) {
-                $join->on('inventory_logs.inventory_item_id', '=', 'inventory_items.id')
-                     ->orOn('inventory_logs.item_id', '=', 'inventory_items.id');
-            })
+            ->leftJoin('inventory_items', 'inventory_items.id', '=', DB::raw('COALESCE(inventory_logs.inventory_item_id, inventory_logs.item_id)'))
             ->select(
                 'inventory_logs.*',
                 'inventory_items.name as item_name',
@@ -514,49 +539,6 @@ class InventoryController extends Controller
     public function summary()
     {
         return response()->json($this->inventoryService->getSummary());
-    }
-
-    /**
-     * Deduct stock from batches using FEFO (First Expired, First Out) logic
-     */
-    public function deductFromBatches($itemId, $qty)
-    {
-        $needed = (int) $qty;
-
-        $batches = \App\Models\InventoryBatch::where('inventory_item_id', $itemId)
-            ->where('status', 'active')
-            ->where('remaining_quantity', '>', 0)
-            ->orderByRaw('expiration_date IS NULL, expiration_date ASC')
-            ->orderBy('received_date', 'asc')
-            ->lockForUpdate()
-            ->get();
-
-        foreach ($batches as $batch) {
-            /** @var \App\Models\InventoryBatch $batch */
-            if ($needed <= 0) break;
-
-            $deduct = min($batch->remaining_quantity, $needed);
-            $batch->remaining_quantity -= $deduct;
-
-            if ($batch->remaining_quantity <= 0) {
-                $batch->status = 'depleted';
-            }
-
-            $batch->save();
-            $needed -= $deduct;
-        }
-
-        if ($needed > 0) {
-            throw new \Exception('Not enough stock available.');
-        }
-
-        $total = \App\Models\InventoryBatch::where('inventory_item_id', $itemId)
-            ->where('status', 'active')
-            ->sum('remaining_quantity');
-
-        \App\Models\InventoryItem::where('id', $itemId)->update([
-            'stock' => $total,
-        ]);
     }
 
     /**
@@ -836,15 +818,27 @@ class InventoryController extends Controller
 
             // Update item stock
             $item = $batch->inventoryItem;
+            $stockBefore = (int) $item->stock;
             $item->stock += $delta;
             $item->save();
+            $stockAfter = (int) $item->stock;
 
             // Log the adjustment
             InventoryLog::create([
                 'inventory_item_id' => $item->id,
                 'delta' => $delta,
+                'quantity' => abs($delta),
+                'type' => 'batch_adjustment',
+                'movement_type' => 'batch_adjustment',
                 'reason' => $validated['reason'] ?? 'Batch adjustment',
                 'reference_type' => 'adjustment',
+                'stock_before' => $stockBefore,
+                'stock_after' => $stockAfter,
+                'previous_stock' => $stockBefore,
+                'new_stock' => $stockAfter,
+                'performed_by' => auth()->user()?->name,
+                'role' => auth()->user()?->role,
+                'user_id' => auth()->id(),
                 'details' => json_encode([
                     'batch_id' => $batch->id,
                     'batch_no' => $batch->batch_no,
@@ -912,12 +906,14 @@ class InventoryController extends Controller
 
         return DB::transaction(function () use ($validated) {
             $checkedBy = auth()->user()->name ?? 'Inventory Manager';
+            $userId = auth()->id();
+            $userRole = auth()->user()?->role;
             $saved = [];
 
             foreach ($validated['items'] as $row) {
                 $item = InventoryItem::lockForUpdate()->findOrFail($row['inventory_item_id']);
 
-                $systemStock = (int) ($item->quantity ?? $item->stock ?? 0);
+                $systemStock = (int) ($item->stock ?? 0);
                 $actualStock = (int) $row['actual_stock'];
                 $variance = $actualStock - $systemStock;
 
@@ -964,12 +960,25 @@ class InventoryController extends Controller
 
                     InventoryLog::create([
                         'inventory_item_id' => $item->id,
-                        'action' => 'monthly_audit',
-                        'quantity_before' => $before,
-                        'quantity_after' => $after,
-                        'quantity_change' => $variance,
+                        'delta' => $variance,
+                        'quantity' => abs($variance),
+                        'type' => 'monthly_audit',
+                        'movement_type' => 'monthly_audit',
                         'reason' => $row['reason'] ?? 'Monthly inventory count correction',
-                        'user_name' => $checkedBy,
+                        'reference_type' => 'monthly_audit',
+                        'stock_before' => $before,
+                        'stock_after' => $after,
+                        'previous_stock' => $before,
+                        'new_stock' => $after,
+                        'performed_by' => $checkedBy,
+                        'user_id' => $userId,
+                        'role' => $userRole,
+                        'details' => json_encode([
+                            'audit_month' => $validated['audit_month'],
+                            'system_stock' => $systemStock,
+                            'actual_stock' => $actualStock,
+                            'variance' => $variance,
+                        ]),
                     ]);
                 }
 

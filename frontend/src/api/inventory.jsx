@@ -405,17 +405,6 @@ export const inventoryApi = {
     }
   },
 
-  forceDeleteItem: async (id) => {
-    validateId(id, "Item ID");
-    try {
-      return await apiRequest(`/inventory/items/${id}`, {
-        method: "DELETE",
-      });
-    } catch (error) {
-      throw error;
-    }
-  },
-
   /**
    * Retrieves dashboard statistics for inventory overview.
    * @async
@@ -776,20 +765,6 @@ export const inventoryApi = {
       const months = typeof options === "number" ? options : options.months || 6;
       const queryString = buildQueryString({ months });
       return await apiRequest(`/inventory/audit-analytics${queryString}`);
-    } catch (error) {
-      throw error;
-    }
-  },
-
-  /**
-   * Retrieves the inventory cost/profit report.
-   * @async
-   * @returns {Promise<Object>} Cost report with summary, category breakdown, top/bottom margins
-   * @throws {Error} When request fails
-   */
-  getCostReport: async () => {
-    try {
-      return await apiRequest("/admin/inventory/cost-report");
     } catch (error) {
       throw error;
     }

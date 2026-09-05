@@ -4,11 +4,22 @@ import { formatCurrency } from "../../utils/currency";
 import DatePickerInput from "../shared/DatePickerInput";
 import SupplierModal from "./SupplierModal";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faBuilding } from "@fortawesome/free-solid-svg-icons";
+import {
+  faBoxOpen,
+  faLayerGroup,
+  faClipboardCheck,
+  faCheck,
+  faChevronLeft,
+  faChevronRight,
+  faBuilding,
+} from "@fortawesome/free-solid-svg-icons";
 import "./AddProductModal.css";
+
+const TOTAL_STEPS = 3;
 
 const AddProductModal = ({ isOpen, onClose, onSuccess, editItem = null }) => {
   const [loading, setLoading] = useState(false);
+  const [currentStep, setCurrentStep] = useState(1);
   const [formData, setFormData] = useState({
     name: "",
     sku: "",
@@ -22,10 +33,12 @@ const AddProductModal = ({ isOpen, onClose, onSuccess, editItem = null }) => {
     reorder_level: "0",
     price: "",
     cost: "",
-    status: "In stock",
+    status: "active",
     description: "",
     photo: null,
     photoFile: null,
+    requires_expiry_tracking: false,
+    issue_method: "FEFO",
     // Batch fields
     batch_no: "",
     batch_quantity: "",
@@ -44,6 +57,8 @@ const AddProductModal = ({ isOpen, onClose, onSuccess, editItem = null }) => {
 
   useEffect(() => {
     if (editItem) {
+      const requiresExpiry = editItem.requires_expiry_tracking ?? ["Food", "Health", "Grooming"].includes(editItem.category);
+      const issueMethod = editItem.issue_method ?? (requiresExpiry ? "FEFO" : "FIFO");
       setFormData({
         name: editItem.name || "",
         sku: editItem.sku || "",
@@ -57,10 +72,12 @@ const AddProductModal = ({ isOpen, onClose, onSuccess, editItem = null }) => {
         reorder_level: editItem.reorder_level?.toString() || "0",
         price: editItem.price?.toString() || "",
         cost: editItem.cost?.toString() || "",
-        status: editItem.status || "In stock",
+        status: editItem.status || "active",
         description: editItem.description || "",
         photo: editItem.photo_url || editItem.photo || null,
         photoFile: null,
+        requires_expiry_tracking: requiresExpiry,
+        issue_method: issueMethod,
       });
       setPhotoPreview(editItem.photo_url || editItem.photo || null);
     } else {
@@ -77,10 +94,12 @@ const AddProductModal = ({ isOpen, onClose, onSuccess, editItem = null }) => {
         reorder_level: "0",
         price: "",
         cost: "",
-        status: "In stock",
+        status: "active",
         description: "",
         photo: null,
         photoFile: null,
+        requires_expiry_tracking: false,
+        issue_method: "FEFO",
         batch_no: "",
         batch_quantity: "",
         manufacturing_date: "",
@@ -94,12 +113,12 @@ const AddProductModal = ({ isOpen, onClose, onSuccess, editItem = null }) => {
       setPhotoPreview(null);
     }
     setErrors({});
+    setCurrentStep(1);
   }, [editItem, isOpen]);
 
   const handleChange = (e) => {
-    const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
-    // Clear error when user types
+    const { name, value, type, checked } = e.target;
+    setFormData((prev) => ({ ...prev, [name]: type === "checkbox" ? checked : value }));
     if (errors[name]) {
       setErrors((prev) => ({ ...prev, [name]: null }));
     }
@@ -110,9 +129,7 @@ const AddProductModal = ({ isOpen, onClose, onSuccess, editItem = null }) => {
     if (file) {
       setFormData((prev) => ({ ...prev, photoFile: file }));
       const reader = new FileReader();
-      reader.onloadend = () => {
-        setPhotoPreview(reader.result);
-      };
+      reader.onloadend = () => setPhotoPreview(reader.result);
       reader.readAsDataURL(file);
     }
   };
@@ -138,33 +155,62 @@ const AddProductModal = ({ isOpen, onClose, onSuccess, editItem = null }) => {
     setFormData((prev) => ({ ...prev, batch_proof: null, batch_proof_preview: null }));
   };
 
-  const validateForm = () => {
+  // Auto-set issue_method and requires_expiry_tracking when category changes
+  const handleCategoryChange = (e) => {
+    const category = e.target.value;
+    const fefoCategories = ["Food", "Health", "Grooming"];
+    const isFefo = fefoCategories.includes(category);
+    setFormData((prev) => ({
+      ...prev,
+      category,
+      requires_expiry_tracking: isFefo ? true : prev.requires_expiry_tracking,
+      issue_method: isFefo ? "FEFO" : prev.issue_method,
+    }));
+    if (errors.category) {
+      setErrors((prev) => ({ ...prev, category: null }));
+    }
+  };
+
+  const validateStep = (step) => {
     const newErrors = {};
-    if (!formData.name.trim()) newErrors.name = "Product name is required";
-    if (!formData.sku.trim()) newErrors.sku = "SKU is required";
-    if (!formData.category) newErrors.category = "Category is required";
-    if (!formData.quantity || parseInt(formData.quantity) < 0) {
-      newErrors.quantity = "Valid quantity is required";
-    }
-    if (!formData.price || parseFloat(formData.price) <= 0) {
-      newErrors.price = "Valid price is required";
-    }
-    if (!editItem) {
-      if (!formData.batch_no.trim()) newErrors.batch_no = "Batch number is required";
-      if (!formData.batch_quantity || parseInt(formData.batch_quantity) <= 0) {
-        newErrors.batch_quantity = "Valid batch quantity is required";
+    if (step === 1) {
+      if (!formData.name.trim()) newErrors.name = "Product name is required";
+      if (!formData.sku.trim()) newErrors.sku = "SKU is required";
+      if (!formData.category) newErrors.category = "Category is required";
+    } else if (step === 2) {
+      if (!formData.quantity || parseInt(formData.quantity) < 0) {
+        newErrors.quantity = "Valid quantity is required";
       }
-      if (formData.category === "Health" && !formData.expiration_date) {
-        newErrors.expiration_date = "Expiration date is required for medicine items";
+      if (!formData.price || parseFloat(formData.price) <= 0) {
+        newErrors.price = "Valid price is required";
+      }
+      if (!editItem) {
+        if (!formData.batch_no.trim()) newErrors.batch_no = "Batch number is required";
+        if (!formData.batch_quantity || parseInt(formData.batch_quantity) <= 0) {
+          newErrors.batch_quantity = "Valid batch quantity is required";
+        }
+        if (formData.category === "Health" && !formData.expiration_date) {
+          newErrors.expiration_date = "Expiration date is required for medicine items";
+        }
       }
     }
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
 
+  const nextStep = () => {
+    if (validateStep(currentStep)) {
+      setCurrentStep((prev) => Math.min(prev + 1, TOTAL_STEPS));
+    }
+  };
+
+  const prevStep = () => {
+    setCurrentStep((prev) => Math.max(prev - 1, 1));
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!validateForm()) return;
+    if (!validateStep(currentStep)) return;
 
     setLoading(true);
     const stock = parseInt(formData.quantity) || 0;
@@ -176,6 +222,7 @@ const AddProductModal = ({ isOpen, onClose, onSuccess, editItem = null }) => {
       price: parseFloat(formData.price),
       cost: formData.cost ? parseFloat(formData.cost) : null,
       supplier_id: formData.supplier_id || null,
+      requires_expiry_tracking: formData.requires_expiry_tracking ? 1 : 0,
     };
     delete data.photoFile;
     delete data.batch_proof;
@@ -227,6 +274,12 @@ const AddProductModal = ({ isOpen, onClose, onSuccess, editItem = null }) => {
 
   if (!isOpen) return null;
 
+  const steps = [
+    { num: 1, label: "Basic Info", icon: faBoxOpen },
+    { num: 2, label: "Stock & Batch", icon: faLayerGroup },
+    { num: 3, label: "Supplier & Review", icon: faClipboardCheck },
+  ];
+
   return (
     <div className="modal-overlay" onClick={onClose}>
       <div className="modal-content product-modal" onClick={(e) => e.stopPropagation()}>
@@ -243,406 +296,533 @@ const AddProductModal = ({ isOpen, onClose, onSuccess, editItem = null }) => {
           </button>
         </div>
 
-        <form onSubmit={handleSubmit}>
+        {/* Step Indicator */}
+        <div className="step-indicator">
+          {steps.map((step, idx) => (
+            <React.Fragment key={step.num}>
+              <div
+                className={`step-circle ${
+                  currentStep > step.num ? "completed" : currentStep === step.num ? "active" : ""
+                }`}
+              >
+                {currentStep > step.num ? (
+                  <FontAwesomeIcon icon={faCheck} />
+                ) : (
+                  <FontAwesomeIcon icon={step.icon} />
+                )}
+                <span className="step-label">{step.label}</span>
+              </div>
+              {idx < steps.length - 1 && (
+                <div className={`step-connector ${currentStep > step.num ? "completed" : ""}`} />
+              )}
+            </React.Fragment>
+          ))}
+        </div>
+
+        <form onSubmit={handleSubmit} onKeyDown={(e) => {
+          if (e.key === 'Enter' && currentStep < TOTAL_STEPS) {
+            e.preventDefault();
+            nextStep();
+          }
+        }}>
           <div className="modal-body">
             {errors.submit && <div className="error-banner">{errors.submit}</div>}
 
-            <div className="form-section">
-              <h4>Basic Information</h4>
-              <div className="form-grid">
-                <div className="form-group">
-                  <label>
-                    Product Name <span className="required">*</span>
-                  </label>
-                  <input
-                    type="text"
-                    name="name"
-                    value={formData.name}
-                    onChange={handleChange}
-                    placeholder="e.g., Premium Dog Food"
-                    className={errors.name ? "error" : ""}
-                  />
-                  {errors.name && <span className="error-text">{errors.name}</span>}
-                </div>
+            {/* STEP 1: Basic Information */}
+            {currentStep === 1 && (
+              <div className="step-content">
+                <div className="form-section">
+                  <h4>Basic Information</h4>
+                  <div className="form-grid">
+                    <div className="form-group">
+                      <label>
+                        Product Name <span className="required">*</span>
+                      </label>
+                      <input
+                        type="text"
+                        name="name"
+                        value={formData.name}
+                        onChange={handleChange}
+                        placeholder="e.g., Premium Dog Food"
+                        className={errors.name ? "error" : ""}
+                      />
+                      {errors.name && <span className="error-text">{errors.name}</span>}
+                    </div>
 
-                <div className="form-group">
-                  <label>
-                    SKU <span className="required">*</span>
-                  </label>
-                  <input
-                    type="text"
-                    name="sku"
-                    value={formData.sku}
-                    onChange={handleChange}
-                    placeholder="e.g., PET-001"
-                    className={errors.sku ? "error" : ""}
-                  />
-                  {errors.sku && <span className="error-text">{errors.sku}</span>}
-                </div>
+                    <div className="form-group">
+                      <label>
+                        SKU <span className="required">*</span>
+                      </label>
+                      <input
+                        type="text"
+                        name="sku"
+                        value={formData.sku}
+                        onChange={handleChange}
+                        placeholder="e.g., PET-001"
+                        className={errors.sku ? "error" : ""}
+                      />
+                      {errors.sku && <span className="error-text">{errors.sku}</span>}
+                    </div>
 
-                <div className="form-group">
-                  <label>Barcode</label>
-                  <input
-                    type="text"
-                    name="barcode"
-                    value={formData.barcode}
-                    onChange={handleChange}
-                    placeholder="e.g., 8938501234567 (scan or type)"
-                    className={errors.barcode ? "error" : ""}
-                    autoComplete="off"
-                  />
-                  <small className="helper-text">Unique product barcode for POS scanning. Leave blank if none.</small>
-                  {errors.barcode && <span className="error-text">{errors.barcode}</span>}
-                </div>
+                    <div className="form-group">
+                      <label>Barcode</label>
+                      <input
+                        type="text"
+                        name="barcode"
+                        value={formData.barcode}
+                        onChange={handleChange}
+                        placeholder="e.g., 8938501234567 (scan or type)"
+                        className={errors.barcode ? "error" : ""}
+                        autoComplete="off"
+                      />
+                      <small className="helper-text">Unique product barcode for POS scanning. Leave blank if none.</small>
+                    </div>
 
-                <div className="form-group">
-                  <label>
-                    Category <span className="required">*</span>
-                  </label>
-                  <select
-                    name="category"
-                    value={formData.category}
-                    onChange={handleChange}
-                    className={errors.category ? "error" : ""}
-                  >
-                    <option value="">Select Category</option>
-                    <option value="Pet Food">Pet Food</option>
-                    <option value="Grooming">Grooming</option>
-                    <option value="Health">Health</option>
-                    <option value="Toys">Toys</option>
-                    <option value="Accessories">Accessories</option>
-                    <option value="Services">Services</option>
-                  </select>
-                  {errors.category && <span className="error-text">{errors.category}</span>}
-                </div>
+                    <div className="form-group">
+                      <label>
+                        Category <span className="required">*</span>
+                      </label>
+                      <select
+                        name="category"
+                        value={formData.category}
+                        onChange={handleCategoryChange}
+                        className={errors.category ? "error" : ""}
+                      >
+                        <option value="">Select Category</option>
+                        <option value="Food">Pet Food</option>
+                        <option value="Grooming">Grooming</option>
+                        <option value="Health">Health</option>
+                        <option value="Toys">Toys</option>
+                        <option value="Accessories">Accessories</option>
+                        <option value="Services">Services</option>
+                      </select>
+                      {errors.category && <span className="error-text">{errors.category}</span>}
+                    </div>
 
-                <div className="form-group">
-                  <label>Brand</label>
-                  <input
-                    type="text"
-                    name="brand"
-                    value={formData.brand}
-                    onChange={handleChange}
-                    placeholder="e.g., Royal Canin"
-                  />
-                </div>
+                    <div className="form-group">
+                      <label>Brand</label>
+                      <input
+                        type="text"
+                        name="brand"
+                        value={formData.brand}
+                        onChange={handleChange}
+                        placeholder="e.g., Royal Canin"
+                      />
+                    </div>
 
-                <div className="form-group">
-                  <label>Generic Name</label>
-                  <input
-                    type="text"
-                    name="generic_name"
-                    value={formData.generic_name}
-                    onChange={handleChange}
-                    placeholder="e.g., Amoxicillin (for medicines)"
-                  />
-                  <small className="helper-text">Optional: Generic name for medicines/health products</small>
-                </div>
-              </div>
-            </div>
-
-            <div className="form-section">
-              <h4>Stock Information</h4>
-              <div className="form-grid">
-                <div className="form-group">
-                  <label>
-                    Initial Stock <span className="required">*</span>
-                  </label>
-                  <input
-                    type="number"
-                    name="quantity"
-                    value={formData.quantity}
-                    onChange={handleChange}
-                    placeholder="0"
-                    min="0"
-                    className={errors.quantity ? "error" : ""}
-                  />
-                  {errors.quantity && <span className="error-text">{errors.quantity}</span>}
-                </div>
-
-                <div className="form-group">
-                  <label>Reorder Level</label>
-                  <input
-                    type="number"
-                    name="reorder_level"
-                    value={formData.reorder_level}
-                    onChange={handleChange}
-                    placeholder="0"
-                    min="0"
-                  />
-                  <small className="helper-text">Items at or below this level are flagged as low stock.</small>
-                </div>
-
-                <div className="form-group">
-                  <label>
-                    Unit Price (₱) <span className="required">*</span>
-                  </label>
-                  <input
-                    type="number"
-                    name="price"
-                    value={formData.price}
-                    onChange={handleChange}
-                    placeholder="0.00"
-                    min="0"
-                    step="0.01"
-                    className={errors.price ? "error" : ""}
-                  />
-                  {errors.price && <span className="error-text">{errors.price}</span>}
-                </div>
-
-                <div className="form-group">
-                  <label>Product Cost (₱)</label>
-                  <input
-                    type="number"
-                    name="cost"
-                    value={formData.cost}
-                    onChange={handleChange}
-                    placeholder="0.00"
-                    min="0"
-                    step="0.01"
-                  />
-                  <small>Cost price for profit reporting</small>
-                </div>
-
-              </div>
-            </div>
-
-            {!editItem && (
-              <div className="form-section batch-section">
-                <h4>Batch Information</h4>
-                <div className="form-grid">
-                  <div className="form-group">
-                    <label>
-                      Batch Number <span className="required">*</span>
-                    </label>
-                    <input
-                      type="text"
-                      name="batch_no"
-                      value={formData.batch_no}
-                      onChange={handleChange}
-                      placeholder="e.g., BATCH-001"
-                      className={errors.batch_no ? "error" : ""}
-                    />
-                    {errors.batch_no && <span className="error-text">{errors.batch_no}</span>}
+                    <div className="form-group">
+                      <label>Generic Name</label>
+                      <input
+                        type="text"
+                        name="generic_name"
+                        value={formData.generic_name}
+                        onChange={handleChange}
+                        placeholder="e.g., Amoxicillin (for medicines)"
+                      />
+                      <small className="helper-text">Optional: Generic name for medicines/health products</small>
+                    </div>
                   </div>
+                </div>
 
-                  <div className="form-group">
-                    <label>
-                      Batch Quantity <span className="required">*</span>
-                    </label>
-                    <input
-                      type="number"
-                      name="batch_quantity"
-                      value={formData.batch_quantity}
-                      onChange={handleChange}
-                      placeholder="0"
-                      min="0"
-                      className={errors.batch_quantity ? "error" : ""}
-                    />
-                    {errors.batch_quantity && <span className="error-text">{errors.batch_quantity}</span>}
-                  </div>
-
-                  <div className="form-group">
-                    <label>Manufacturing Date</label>
-                    <DatePickerInput
-                      selected={formData.manufacturing_date ? new Date(formData.manufacturing_date) : null}
-                      onChange={(date) => handleChange({ target: { name: "manufacturing_date", value: date ? date.toISOString().split("T")[0] : "" } })}
-                      placeholderText="Select manufacturing date..."
-                    />
-                  </div>
-
-                  <div className="form-group">
-                    <label>
-                      Expiration Date {formData.category === "Health" && <span className="required">*</span>}
-                    </label>
-                    <DatePickerInput
-                      selected={formData.expiration_date ? new Date(formData.expiration_date) : null}
-                      onChange={(date) => handleChange({ target: { name: "expiration_date", value: date ? date.toISOString().split("T")[0] : "" } })}
-                      placeholderText="Select expiration date..."
-                      className={errors.expiration_date ? "error" : ""}
-                    />
-                    {errors.expiration_date && <span className="error-text">{errors.expiration_date}</span>}
-                  </div>
-
-                  <div className="form-group">
-                    <label>Supplier</label>
-                    <input
-                      type="text"
-                      name="batch_supplier"
-                      value={formData.batch_supplier}
-                      onChange={handleChange}
-                      placeholder="e.g., ABC Pharmaceuticals"
-                    />
-                  </div>
-
-                  <div className="form-group">
-                    <label>Received Date</label>
-                    <DatePickerInput
-                      selected={formData.received_date ? new Date(formData.received_date) : null}
-                      onChange={(date) => handleChange({ target: { name: "received_date", value: date ? date.toISOString().split("T")[0] : "" } })}
-                      placeholderText="Select received date..."
-                    />
-                  </div>
-
-                  <div className="form-group">
-                    <label>Unit Cost (₱)</label>
-                    <input
-                      type="number"
-                      name="batch_unit_cost"
-                      value={formData.batch_unit_cost}
-                      onChange={handleChange}
-                      placeholder="0.00"
-                      min="0"
-                      step="0.01"
-                    />
-                  </div>
-
-                  <div className="form-group">
-                    <label>Proof / Receipt Image</label>
-                    {formData.batch_proof_preview ? (
+                <div className="form-section">
+                  <h4>Product Photo</h4>
+                  <div className="photo-upload-area">
+                    {photoPreview ? (
                       <div className="photo-preview-container">
-                        <img
-                          src={formData.batch_proof_preview}
-                          alt="Batch proof"
-                          className="photo-preview-img"
-                          style={{ maxHeight: 100 }}
-                        />
-                        <button
-                          type="button"
-                          className="btn-remove-photo"
-                          onClick={handleRemoveBatchProof}
-                        >
-                          Remove Proof
+                        <img src={photoPreview} alt="Product preview" className="photo-preview-img" />
+                        <button type="button" className="btn-remove-photo" onClick={handleRemovePhoto}>
+                          Remove Photo
                         </button>
                       </div>
                     ) : (
-                      <label className="photo-upload-label" style={{ padding: 12 }}>
-                        <input
-                          type="file"
-                          accept="image/*"
-                          onChange={handleBatchProofChange}
-                          className="photo-input"
-                        />
+                      <label className="photo-upload-label">
+                        <input type="file" accept="image/*" onChange={handlePhotoChange} className="photo-input" />
                         <div className="photo-upload-placeholder">
-                          <span>Click to upload receipt/proof</span>
+                          <span>Click to upload product photo</span>
                           <small>JPEG, PNG, GIF up to 5MB</small>
                         </div>
                       </label>
                     )}
                   </div>
                 </div>
+
+                {/* Live Preview */}
+                {formData.name && formData.price && (
+                  <div className="product-preview">
+                    <h4>Preview</h4>
+                    <div className="preview-card">
+                      <div className="preview-name">{formData.name}</div>
+                      <div className="preview-details">
+                        <span className="preview-sku">{formData.sku || "No SKU"}</span>
+                        {formData.barcode && (
+                          <span className="preview-barcode">Barcode: {formData.barcode}</span>
+                        )}
+                        <span className="preview-price">{formatCurrency(parseFloat(formData.price) || 0)}</span>
+                      </div>
+                      <div className="preview-stock">
+                        Category: {formData.category || "—"}
+                        {formData.brand && ` · Brand: ${formData.brand}`}
+                      </div>
+                    </div>
+                  </div>
+                )}
               </div>
             )}
 
-            <div className="form-section">
-              <h4>Supplier Information</h4>
-              <div className="form-grid">
-                <div className="form-group">
-                  <label>Supplier</label>
-                  <div className="supplier-select-row">
-                    <input
-                      type="text"
-                      name="supplier"
-                      value={formData.supplier}
-                      onChange={handleChange}
-                      placeholder="Select or type supplier..."
-                      readOnly
-                      style={{ flex: 1 }}
-                    />
-                    <button
-                      type="button"
-                      className="btn btn-secondary"
-                      onClick={() => setShowSupplierModal(true)}
-                      title="Select Supplier"
-                    >
-                      <FontAwesomeIcon icon={faBuilding} /> Select
-                    </button>
-                  </div>
-                  {formData.supplier && (
-                    <small className="supplier-hint">
-                      Selected: {formData.supplier}
-                    </small>
-                  )}
-                </div>
-
-                <div className="form-group">
-                  <label>Status</label>
-                  <select name="status" value={formData.status} onChange={handleChange}>
-                    <option value="In stock">In Stock</option>
-                    <option value="Low stock">Low Stock</option>
-                    <option value="Out of stock">Out of Stock</option>
-                  </select>
-                </div>
-              </div>
-            </div>
-
-            <div className="form-section">
-              <h4>Additional Information</h4>
-              <div className="form-group">
-                <label>Description</label>
-                <textarea
-                  name="description"
-                  value={formData.description}
-                  onChange={handleChange}
-                  placeholder="Product description, notes, or special instructions..."
-                  rows="3"
-                />
-              </div>
-            </div>
-
-            <div className="form-section">
-              <h4>Product Photo</h4>
-              <div className="photo-upload-area">
-                {photoPreview ? (
-                  <div className="photo-preview-container">
-                    <img
-                      src={photoPreview}
-                      alt="Product preview"
-                      className="photo-preview-img"
-                    />
-                    <button
-                      type="button"
-                      className="btn-remove-photo"
-                      onClick={handleRemovePhoto}
-                    >
-                      Remove Photo
-                    </button>
-                  </div>
-                ) : (
-                  <label className="photo-upload-label">
-                    <input
-                      type="file"
-                      accept="image/*"
-                      onChange={handlePhotoChange}
-                      className="photo-input"
-                    />
-                    <div className="photo-upload-placeholder">
-                      <span>Click to upload product photo</span>
-                      <small>JPEG, PNG, GIF up to 5MB</small>
+            {/* STEP 2: Stock & Batch */}
+            {currentStep === 2 && (
+              <div className="step-content">
+                <div className="form-section">
+                  <h4>Stock Information</h4>
+                  <div className="form-grid">
+                    <div className="form-group">
+                      <label>
+                        Initial Stock <span className="required">*</span>
+                      </label>
+                      <input
+                        type="number"
+                        name="quantity"
+                        value={formData.quantity}
+                        onChange={handleChange}
+                        placeholder="0"
+                        min="0"
+                        className={errors.quantity ? "error" : ""}
+                      />
+                      {errors.quantity && <span className="error-text">{errors.quantity}</span>}
                     </div>
-                  </label>
+
+                    <div className="form-group">
+                      <label>Reorder Level</label>
+                      <input
+                        type="number"
+                        name="reorder_level"
+                        value={formData.reorder_level}
+                        onChange={handleChange}
+                        placeholder="0"
+                        min="0"
+                      />
+                      <small className="helper-text">Items at or below this level are flagged as low stock.</small>
+                    </div>
+
+                    <div className="form-group">
+                      <label>
+                        Unit Price (₱) <span className="required">*</span>
+                      </label>
+                      <input
+                        type="number"
+                        name="price"
+                        value={formData.price}
+                        onChange={handleChange}
+                        placeholder="0.00"
+                        min="0"
+                        step="0.01"
+                        className={errors.price ? "error" : ""}
+                      />
+                      {errors.price && <span className="error-text">{errors.price}</span>}
+                    </div>
+
+                    <div className="form-group">
+                      <label>Product Cost (₱)</label>
+                      <input
+                        type="number"
+                        name="cost"
+                        value={formData.cost}
+                        onChange={handleChange}
+                        placeholder="0.00"
+                        min="0"
+                        step="0.01"
+                      />
+                      <small>Cost price for profit reporting</small>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Expiry Tracking Settings */}
+                <div className="form-section">
+                  <h4>Expiry & Issue Method</h4>
+                  <div className="form-grid">
+                    <div className="form-group">
+                      <label>
+                        <input
+                          type="checkbox"
+                          name="requires_expiry_tracking"
+                          checked={formData.requires_expiry_tracking}
+                          onChange={handleChange}
+                          style={{ width: "auto", marginRight: "8px" }}
+                        />
+                        Requires Expiry Tracking
+                      </label>
+                      <small className="helper-text">Enable for items with expiration dates (medicines, food).</small>
+                    </div>
+
+                    <div className="form-group">
+                      <label>Issue Method</label>
+                      <select
+                        name="issue_method"
+                        value={formData.issue_method}
+                        onChange={handleChange}
+                      >
+                        <option value="FEFO">FEFO (First Expired, First Out)</option>
+                        <option value="FIFO">FIFO (First In, First Out)</option>
+                        <option value="Manual">Manual</option>
+                      </select>
+                      <small className="helper-text">FEFO recommended for medicines and perishables.</small>
+                    </div>
+                  </div>
+                </div>
+
+                {!editItem && (
+                  <div className="form-section batch-section">
+                    <h4>Batch Information</h4>
+                    <div className="form-grid">
+                      <div className="form-group">
+                        <label>
+                          Batch Number <span className="required">*</span>
+                        </label>
+                        <input
+                          type="text"
+                          name="batch_no"
+                          value={formData.batch_no}
+                          onChange={handleChange}
+                          placeholder="e.g., BATCH-001"
+                          className={errors.batch_no ? "error" : ""}
+                        />
+                        {errors.batch_no && <span className="error-text">{errors.batch_no}</span>}
+                      </div>
+
+                      <div className="form-group">
+                        <label>
+                          Batch Quantity <span className="required">*</span>
+                        </label>
+                        <input
+                          type="number"
+                          name="batch_quantity"
+                          value={formData.batch_quantity}
+                          onChange={handleChange}
+                          placeholder="0"
+                          min="0"
+                          className={errors.batch_quantity ? "error" : ""}
+                        />
+                        {errors.batch_quantity && <span className="error-text">{errors.batch_quantity}</span>}
+                      </div>
+
+                      <div className="form-group">
+                        <label>Manufacturing Date</label>
+                        <DatePickerInput
+                          selected={formData.manufacturing_date ? new Date(formData.manufacturing_date) : null}
+                          onChange={(date) => handleChange({ target: { name: "manufacturing_date", value: date ? date.toISOString().split("T")[0] : "" } })}
+                          placeholderText="Select manufacturing date..."
+                        />
+                      </div>
+
+                      <div className="form-group">
+                        <label>
+                          Expiration Date {formData.category === "Health" && <span className="required">*</span>}
+                        </label>
+                        <DatePickerInput
+                          selected={formData.expiration_date ? new Date(formData.expiration_date) : null}
+                          onChange={(date) => handleChange({ target: { name: "expiration_date", value: date ? date.toISOString().split("T")[0] : "" } })}
+                          placeholderText="Select expiration date..."
+                          className={errors.expiration_date ? "error" : ""}
+                        />
+                        {errors.expiration_date && <span className="error-text">{errors.expiration_date}</span>}
+                      </div>
+
+                      <div className="form-group">
+                        <label>Supplier</label>
+                        <input
+                          type="text"
+                          name="batch_supplier"
+                          value={formData.batch_supplier}
+                          onChange={handleChange}
+                          placeholder="e.g., ABC Pharmaceuticals"
+                        />
+                      </div>
+
+                      <div className="form-group">
+                        <label>Received Date</label>
+                        <DatePickerInput
+                          selected={formData.received_date ? new Date(formData.received_date) : null}
+                          onChange={(date) => handleChange({ target: { name: "received_date", value: date ? date.toISOString().split("T")[0] : "" } })}
+                          placeholderText="Select received date..."
+                        />
+                      </div>
+
+                      <div className="form-group">
+                        <label>Unit Cost (₱)</label>
+                        <input
+                          type="number"
+                          name="batch_unit_cost"
+                          value={formData.batch_unit_cost}
+                          onChange={handleChange}
+                          placeholder="0.00"
+                          min="0"
+                          step="0.01"
+                        />
+                      </div>
+
+                      <div className="form-group">
+                        <label>Proof / Receipt Image</label>
+                        {formData.batch_proof_preview ? (
+                          <div className="photo-preview-container">
+                            <img
+                              src={formData.batch_proof_preview}
+                              alt="Batch proof"
+                              className="photo-preview-img"
+                              style={{ maxHeight: 100 }}
+                            />
+                            <button
+                              type="button"
+                              className="btn-remove-photo"
+                              onClick={handleRemoveBatchProof}
+                            >
+                              Remove Proof
+                            </button>
+                          </div>
+                        ) : (
+                          <label className="photo-upload-label" style={{ padding: 12 }}>
+                            <input
+                              type="file"
+                              accept="image/*"
+                              onChange={handleBatchProofChange}
+                              className="photo-input"
+                            />
+                            <div className="photo-upload-placeholder">
+                              <span>Click to upload receipt/proof</span>
+                              <small>JPEG, PNG, GIF up to 5MB</small>
+                            </div>
+                          </label>
+                        )}
+                      </div>
+                    </div>
+                  </div>
                 )}
               </div>
-            </div>
+            )}
 
-            {/* Preview */}
-            {formData.name && formData.price && (
-              <div className="product-preview">
-                <h4>Preview</h4>
-                <div className="preview-card">
-                  <div className="preview-name">{formData.name}</div>
-                  <div className="preview-details">
-                    <span className="preview-sku">{formData.sku || "No SKU"}</span>
-                    {formData.barcode && (
-                      <span className="preview-barcode">Barcode: {formData.barcode}</span>
-                    )}
-                    <span className="preview-price">{formatCurrency(parseFloat(formData.price) || 0)}</span>
+            {/* STEP 3: Supplier & Review */}
+            {currentStep === 3 && (
+              <div className="step-content">
+                <div className="form-section">
+                  <h4>Supplier Information</h4>
+                  <div className="form-grid">
+                    <div className="form-group">
+                      <label>Supplier</label>
+                      <div className="supplier-select-row">
+                        <input
+                          type="text"
+                          name="supplier"
+                          value={formData.supplier}
+                          onChange={handleChange}
+                          placeholder="Select or type supplier..."
+                          readOnly
+                          style={{ flex: 1 }}
+                        />
+                        <button
+                          type="button"
+                          className="btn-cancel"
+                          onClick={() => setShowSupplierModal(true)}
+                          title="Select Supplier"
+                        >
+                          <FontAwesomeIcon icon={faBuilding} /> Select
+                        </button>
+                      </div>
+                      {formData.supplier && (
+                        <small className="supplier-hint">
+                          Selected: {formData.supplier}
+                        </small>
+                      )}
+                    </div>
+
+                    <div className="form-group">
+                      <label>Status</label>
+                      <select name="status" value={formData.status} onChange={handleChange}>
+                        <option value="active">Active</option>
+                        <option value="inactive">Inactive</option>
+                        <option value="discontinued">Discontinued</option>
+                      </select>
+                    </div>
                   </div>
-                  <div className="preview-stock">
-                    Stock: {formData.quantity || 0} units
-                    {formData.reorder_level && (
-                      <small> (Reorder at: {formData.reorder_level})</small>
+                </div>
+
+                <div className="form-section">
+                  <h4>Additional Information</h4>
+                  <div className="form-group">
+                    <label>Description</label>
+                    <textarea
+                      name="description"
+                      value={formData.description}
+                      onChange={handleChange}
+                      placeholder="Product description, notes, or special instructions..."
+                      rows="3"
+                    />
+                  </div>
+                </div>
+
+                {/* Review Summary */}
+                <div className="form-section">
+                  <h4>Review Summary</h4>
+                  <div className="review-card">
+                    <div className="review-row">
+                      <span className="review-label">Name:</span>
+                      <span className="review-value">{formData.name || "—"}</span>
+                    </div>
+                    <div className="review-row">
+                      <span className="review-label">SKU:</span>
+                      <span className="review-value">{formData.sku || "—"}</span>
+                    </div>
+                    <div className="review-row">
+                      <span className="review-label">Category:</span>
+                      <span className="review-value">{formData.category || "—"}</span>
+                    </div>
+                    <div className="review-row">
+                      <span className="review-label">Brand:</span>
+                      <span className="review-value">{formData.brand || "—"}</span>
+                    </div>
+                    <div className="review-row">
+                      <span className="review-label">Stock:</span>
+                      <span className="review-value">{formData.quantity || 0} units</span>
+                    </div>
+                    <div className="review-row">
+                      <span className="review-label">Price:</span>
+                      <span className="review-value">{formatCurrency(parseFloat(formData.price) || 0)}</span>
+                    </div>
+                    <div className="review-row">
+                      <span className="review-label">Cost:</span>
+                      <span className="review-value">{formData.cost ? formatCurrency(parseFloat(formData.cost)) : "—"}</span>
+                    </div>
+                    <div className="review-row">
+                      <span className="review-label">Issue Method:</span>
+                      <span className="review-value">{formData.issue_method}</span>
+                    </div>
+                    <div className="review-row">
+                      <span className="review-label">Expiry Tracking:</span>
+                      <span className="review-value">{formData.requires_expiry_tracking ? "Yes" : "No"}</span>
+                    </div>
+                    {!editItem && (
+                      <>
+                        <div className="review-row">
+                          <span className="review-label">Batch No:</span>
+                          <span className="review-value">{formData.batch_no || "—"}</span>
+                        </div>
+                        <div className="review-row">
+                          <span className="review-label">Batch Qty:</span>
+                          <span className="review-value">{formData.batch_quantity || 0}</span>
+                        </div>
+                        <div className="review-row">
+                          <span className="review-label">Expiration:</span>
+                          <span className="review-value">{formData.expiration_date || "—"}</span>
+                        </div>
+                      </>
                     )}
+                    <div className="review-row">
+                      <span className="review-label">Supplier:</span>
+                      <span className="review-value">{formData.supplier || "—"}</span>
+                    </div>
+                    <div className="review-row">
+                      <span className="review-label">Status:</span>
+                      <span className="review-value" style={{ textTransform: "capitalize" }}>{formData.status}</span>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -663,22 +843,33 @@ const AddProductModal = ({ isOpen, onClose, onSuccess, editItem = null }) => {
             }}
           />
 
-          <div className="modal-footer">
-            <button type="button" className="btn-secondary" onClick={onClose} disabled={loading}>
+          <div className="modal-footer step-footer">
+            <button type="button" className="btn-cancel" onClick={onClose} disabled={loading}>
               Cancel
             </button>
-            <button type="submit" className="btn-primary" disabled={loading}>
-              {loading ? (
-                <>
-                  <span className="spinner"></span>
-                  {editItem ? "Saving..." : "Creating..."}
-                </>
-              ) : editItem ? (
-                "Save Changes"
-              ) : (
-                "Create Product"
-              )}
-            </button>
+            {currentStep > 1 && (
+              <button type="button" className="btn-cancel" onClick={prevStep} disabled={loading}>
+                <FontAwesomeIcon icon={faChevronLeft} /> Back
+              </button>
+            )}
+            {currentStep < TOTAL_STEPS ? (
+              <button type="button" className="btn-submit" onClick={nextStep}>
+                Next <FontAwesomeIcon icon={faChevronRight} />
+              </button>
+            ) : (
+              <button type="submit" className="btn-submit" disabled={loading}>
+                {loading ? (
+                  <>
+                    <span className="spinner"></span>
+                    {editItem ? "Saving..." : "Creating..."}
+                  </>
+                ) : editItem ? (
+                  "Save Changes"
+                ) : (
+                  "Create Product"
+                )}
+              </button>
+            )}
           </div>
         </form>
       </div>

@@ -38,6 +38,9 @@ class InventoryItem extends Model
         'pet_snapshot',
         'service_item_usage_snapshot',
         'payment_snapshot',
+        'is_service_consumable',
+        'requires_expiry_tracking',
+        'issue_method',
     ];
 
     protected $appends = ['photo_url'];
@@ -175,11 +178,13 @@ class InventoryItem extends Model
     public function hasExpiredBatches(): bool
     {
         return $this->batches()
-            ->where('status', 'expired')
-            ->orWhere(function ($q) {
-                $q->where('status', 'active')
-                  ->whereNotNull('expiration_date')
-                  ->where('expiration_date', '<', now());
+            ->where(function ($q) {
+                $q->where('status', 'expired')
+                  ->orWhere(function ($q2) {
+                      $q2->where('status', 'active')
+                        ->whereNotNull('expiration_date')
+                        ->where('expiration_date', '<', now());
+                  });
             })
             ->exists();
     }
@@ -195,14 +200,55 @@ class InventoryItem extends Model
     /**
      * Deduct stock using FEFO logic from batches
      * Returns array of batch deductions
+     *
+     * @param int $amount Quantity to deduct
+     * @param string $reason Reason for deduction
+     * @param string $movementType Movement type for logging
+     * @param string $referenceType Reference type (sale, vet_usage, etc.)
+     * @param int|null $referenceId Reference ID
+     * @param int|null $batchId Optional specific batch to deduct from first
+     * @return array Batch deductions
+     * @throws \Exception When insufficient batch stock
      */
-    public function deductStockFefo(int $amount, string $reason = '', string $movementType = 'stock_deduction', string $referenceType = 'sale', ?int $referenceId = null): array
+    public function deductStockFefo(int $amount, string $reason = '', string $movementType = 'stock_deduction', string $referenceType = 'sale', ?int $referenceId = null, ?int $batchId = null): array
     {
         $deductions = [];
         $remainingToDeduct = $amount;
 
-        // Get batches in FEFO order
-        $batches = $this->activeBatches()->get();
+        // If a specific batch is requested, deduct from it first
+        if ($batchId !== null) {
+            $preferredBatch = $this->batches()
+                ->where('id', $batchId)
+                ->where('status', 'active')
+                ->where('remaining_quantity', '>', 0)
+                ->where(function ($q) {
+                    $q->whereNull('expiration_date')
+                      ->orWhere('expiration_date', '>', now());
+                })
+                ->first();
+
+            if ($preferredBatch) {
+                $deductFromBatch = min($preferredBatch->remaining_quantity, $remainingToDeduct);
+                $preferredBatch->remaining_quantity -= $deductFromBatch;
+                if ($preferredBatch->remaining_quantity <= 0) {
+                    $preferredBatch->status = 'depleted';
+                }
+                $preferredBatch->save();
+
+                $deductions[] = [
+                    'batch_id' => $preferredBatch->id,
+                    'batch_no' => $preferredBatch->batch_no,
+                    'amount' => $deductFromBatch,
+                    'expiration_date' => $preferredBatch->expiration_date,
+                ];
+                $remainingToDeduct -= $deductFromBatch;
+            }
+        }
+
+        // Get remaining batches in FEFO order (excluding the preferred batch if already used)
+        $batches = $this->activeBatches()
+            ->when($batchId !== null, fn ($q) => $q->where('id', '!=', $batchId))
+            ->get();
 
         foreach ($batches as $batch) {
             if ($remainingToDeduct <= 0) break;
@@ -224,6 +270,14 @@ class InventoryItem extends Model
             ];
 
             $remainingToDeduct -= $deductFromBatch;
+        }
+
+        // Validate sufficient batch stock
+        if ($remainingToDeduct > 0) {
+            $availableInBatches = $amount - $remainingToDeduct;
+            throw new \Exception(
+                "Insufficient batch stock for {$this->name}. Needed: {$amount}, Available in batches: {$availableInBatches}"
+            );
         }
 
         // Update main stock count
@@ -317,10 +371,27 @@ class InventoryItem extends Model
     }
 
     /**
-     * Check if this item category needs FEFO (expiration tracking)
+     * Check if this item needs FEFO (First Expired, First Out) deduction
+     * Respects per-item issue_method and requires_expiry_tracking columns,
+     * falls back to category-based logic for backward compatibility.
      */
     public function needsFefo(): bool
     {
+        // Per-item override via issue_method column
+        $issueMethod = $this->issue_method ?? null;
+        if ($issueMethod === 'FEFO') {
+            return true;
+        }
+        if ($issueMethod === 'FIFO' || $issueMethod === 'Manual') {
+            return false;
+        }
+
+        // Per-item flag (only apply if explicitly set to true; default false is ambiguous)
+        if ($this->requires_expiry_tracking === true) {
+            return true;
+        }
+
+        // Fallback: category-based (backward compat)
         $fefoCategories = ['Food', 'Health', 'Grooming'];
         return in_array($this->category, $fefoCategories);
     }

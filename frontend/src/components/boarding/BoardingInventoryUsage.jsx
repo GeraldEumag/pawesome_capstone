@@ -48,7 +48,8 @@ const BoardingInventoryUsage = ({ boardingId, petId }) => {
         quantity_used: 1,
         usage_type: 'food',
         notes: '',
-        unit: 'pcs'
+        unit: 'pcs',
+        batch_id: '',
       }
     ]);
   };
@@ -60,24 +61,60 @@ const BoardingInventoryUsage = ({ boardingId, petId }) => {
   const updateItem = (index, field, value) => {
     const updatedItems = [...items];
     updatedItems[index][field] = value;
-    
-    // Auto-fill unit when item is selected
+
+    // Auto-fill unit and default batch when item is selected
     if (field === 'inventory_item_id') {
       const selectedItem = availableItems.find(item => item.id === parseInt(value));
       if (selectedItem) {
         updatedItems[index].unit = selectedItem.unit;
+        // Default to first batch (FEFO = earliest expiration) for FEFO items
+        if (selectedItem.needs_fefo && selectedItem.batches && selectedItem.batches.length > 0) {
+          updatedItems[index].batch_id = selectedItem.batches[0].batch_id;
+        } else {
+          updatedItems[index].batch_id = '';
+        }
       }
     }
-    
+
     setItems(updatedItems);
+  };
+
+  // Get batches for a selected item
+  const getItemBatches = (itemId) => {
+    const item = availableItems.find(i => i.id === parseInt(itemId));
+    return item && item.needs_fefo && item.batches ? item.batches : [];
+  };
+
+  // Get expiration badge class based on days until expiry
+  const getExpiryBadgeClass = (daysUntilExpiry) => {
+    if (daysUntilExpiry === null) return 'batch-badge no-expiry';
+    if (daysUntilExpiry < 0) return 'batch-badge expired';
+    if (daysUntilExpiry <= 30) return 'batch-badge expiring-soon';
+    return 'batch-badge good';
+  };
+
+  const formatExpiryLabel = (daysUntilExpiry) => {
+    if (daysUntilExpiry === null) return 'No expiry';
+    if (daysUntilExpiry < 0) return 'EXPIRED';
+    if (daysUntilExpiry === 0) return 'Expires today';
+    if (daysUntilExpiry <= 30) return `${daysUntilExpiry}d left`;
+    return `${Math.round(daysUntilExpiry / 30)}mo left`;
   };
 
   const saveUsage = async () => {
     // Validate items
-    const validItems = items.filter(item => 
-      item.inventory_item_id && 
+    const validItems = items.filter(item =>
+      item.inventory_item_id &&
       item.quantity_used > 0
-    );
+    ).map(item => {
+      const payload = { ...item };
+      if (item.batch_id) {
+        payload.batch_id = parseInt(item.batch_id);
+      } else {
+        delete payload.batch_id;
+      }
+      return payload;
+    });
 
     if (validItems.length === 0) {
       setMessage('Please add at least one item with quantity');
@@ -175,8 +212,8 @@ const BoardingInventoryUsage = ({ boardingId, petId }) => {
                     >
                       <option value="">Select item...</option>
                       {availableItems.map(availableItem => (
-                        <option 
-                          key={availableItem.id} 
+                        <option
+                          key={availableItem.id}
                           value={availableItem.id}
                           disabled={availableItem.stock <= 0}
                         >
@@ -186,6 +223,34 @@ const BoardingInventoryUsage = ({ boardingId, petId }) => {
                       ))}
                     </select>
                   </div>
+
+                  {item.inventory_item_id && getItemBatches(item.inventory_item_id).length > 0 && (
+                    <div className="field-group batch-selector-group">
+                      <label>Batch (FEFO — earliest expiry first)</label>
+                      <select
+                        value={item.batch_id || ''}
+                        onChange={(e) => updateItem(index, 'batch_id', e.target.value ? parseInt(e.target.value) : '')}
+                        className="batch-select"
+                      >
+                        {getItemBatches(item.inventory_item_id).map(batch => (
+                          <option key={batch.batch_id} value={batch.batch_id}>
+                            {batch.batch_no} — {batch.remaining_quantity} units
+                            {batch.expiration_date ? ` (exp: ${batch.expiration_date})` : ' (no expiry)'}
+                            {batch.is_expiring_soon ? ' ⚠ EXPIRING SOON' : ''}
+                          </option>
+                        ))}
+                      </select>
+                      {(() => {
+                        const selectedBatch = getItemBatches(item.inventory_item_id).find(b => b.batch_id === parseInt(item.batch_id));
+                        if (!selectedBatch) return null;
+                        return (
+                          <span className={getExpiryBadgeClass(selectedBatch.days_until_expiry)}>
+                            {formatExpiryLabel(selectedBatch.days_until_expiry)}
+                          </span>
+                        );
+                      })()}
+                    </div>
+                  )}
 
                   <div className="field-group">
                     <label>Quantity</label>

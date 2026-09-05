@@ -23,6 +23,7 @@ class ServiceItemUsage extends Model
         'customer_email',
         'inventory_item_id',
         'batch_id',
+        'batch_deductions',
         'quantity_used',
         'unit',
         'usage_type',
@@ -46,6 +47,7 @@ class ServiceItemUsage extends Model
         'charge_amount' => 'decimal:2',
         'is_billable' => 'boolean',
         'is_paid' => 'boolean',
+        'batch_deductions' => 'array',
         'created_at' => 'datetime',
         'updated_at' => 'datetime',
     ];

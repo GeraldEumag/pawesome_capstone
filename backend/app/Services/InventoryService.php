@@ -339,7 +339,7 @@ class InventoryService
      * Centralized method used by POS and Customer Order systems
      * Blocks sale of expired items
      */
-    public function deductStock(int $itemId, int $quantity, string $reason = 'Sale', string $referenceType = 'sale', ?int $referenceId = null): array
+    public function deductStock(int $itemId, int $quantity, string $reason = 'Sale', string $referenceType = 'sale', ?int $referenceId = null, ?int $batchId = null): array
     {
         $item = InventoryItem::findOrFail($itemId);
 
@@ -356,12 +356,14 @@ class InventoryService
         $stockBefore = $item->stock;
 
         // Use FEFO batch deduction for items that need expiration tracking
-        // OR if item has active batches
-        if ($item->needsFefo() || $item->batches()->exists()) {
+        // OR if item has active batches. Fall back to simple deduction when
+        // an item needs FEFO but has no batches yet (legacy items pre-batch-tracking).
+        $hasBatches = $item->batches()->exists();
+        if (($item->needsFefo() || $hasBatches) && $hasBatches) {
             $movementType = in_array($referenceType, ['vet_usage', 'grooming_usage', 'boarding_food_usage'], true)
                 ? $referenceType
                 : ($referenceType === 'sale' ? 'pos_sale' : 'stock_deduction');
-            $batchDeductions = $item->deductStockFefo($quantity, $reason, $movementType, $referenceType, $referenceId);
+            $batchDeductions = $item->deductStockFefo($quantity, $reason, $movementType, $referenceType, $referenceId, $batchId);
 
             // Refresh item to get updated stock
             $item = $item->fresh();
@@ -666,6 +668,9 @@ class InventoryService
             'expiry_date' => 'nullable|date',
             'status' => 'nullable|in:' . implode(',', self::VALID_STATUSES),
             'is_sellable' => 'sometimes|boolean',
+            'is_service_consumable' => 'sometimes|boolean',
+            'requires_expiry_tracking' => 'sometimes|boolean',
+            'issue_method' => 'sometimes|in:FIFO,FEFO,Manual',
         ];
 
         // Normalize barcode before validation so scanner input such as

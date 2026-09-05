@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Inventory;
 
 use App\Http\Controllers\Controller;
 use App\Models\InventoryItem;
+use App\Models\InventoryBatch;
 use App\Models\InventoryLog;
 use App\Models\InventoryMonthlyAudit;
 use App\Services\InventoryService;
@@ -107,19 +108,60 @@ class DashboardController extends Controller
 
     public function items(Request $request)
     {
-        $status = $request->query('status');
-        $query = InventoryItem::query()->orderBy('name');
+        $query = InventoryItem::query();
 
+        // Filter by category
+        if ($request->has('category')) {
+            $query->where('category', $request->category);
+        }
+
+        // Filter by status; exclude archived items by default when no status filter is provided
+        $status = $request->query('status');
         if ($status === 'archived') {
             $query->where('status', 'archived');
+        } elseif ($request->has('status')) {
+            $query->where('status', $request->status);
         } else {
-            $query->where('status', '!=', 'archived')
-                ->whereNull('archived_at');
+            $query->where('status', '!=', 'archived')->whereNull('archived_at');
+        }
+
+        // Filter by stock level
+        if ($request->has('stock_level')) {
+            switch ($request->stock_level) {
+                case 'low':
+                    $query->whereRaw('stock <= reorder_level')->where('stock', '>', 0);
+                    break;
+                case 'out':
+                    $query->where('stock', 0);
+                    break;
+                case 'in_stock':
+                    $query->where('stock', '>', 0);
+                    break;
+            }
+        }
+
+        // Search by name or SKU
+        if ($request->has('search')) {
+            $search = $request->search;
+            $query->where(function ($q) use ($search) {
+                $q->where('name', 'like', "%{$search}%")
+                  ->orWhere('sku', 'like', "%{$search}%");
+            });
+        }
+
+        // Return all items when no pagination is requested (frontend compatibility),
+        // paginate only when per_page/page params are explicitly provided
+        if ($request->has('per_page') || $request->has('page')) {
+            $items = $query->orderBy('name')->paginate($request->per_page ?? 20);
+            return response()->json(array_merge($items->toArray(), [
+                'success' => true,
+                'items' => $items->items(),
+            ]));
         }
 
         return response()->json([
             'success' => true,
-            'items' => $query->get(),
+            'items' => $query->orderBy('name')->get(),
         ]);
     }
 
@@ -304,34 +346,92 @@ class DashboardController extends Controller
             'items.*.reason' => 'nullable|string',
         ]);
 
-        $checkedBy = $request->user()?->name ?? 'System';
-        $saved = collect($validated['items'])->map(function ($row) use ($validated, $checkedBy) {
-            $item = InventoryItem::findOrFail($row['inventory_item_id']);
-            $systemStock = (int) ($item->stock ?? 0);
-            $actualStock = (int) $row['actual_stock'];
-            $variance = $actualStock - $systemStock;
+        return DB::transaction(function () use ($validated, $request) {
+            $checkedBy = $request->user()?->name ?? 'System';
+            $userId = $request->user()?->id;
+            $userRole = $request->user()?->role;
+            $saved = [];
 
-            return InventoryMonthlyAudit::updateOrCreate(
-                [
-                    'inventory_item_id' => $item->id,
-                    'audit_month' => $validated['audit_month'],
-                ],
-                [
-                    'system_stock' => $systemStock,
-                    'actual_stock' => $actualStock,
-                    'variance' => $variance,
-                    'status' => $variance === 0 ? 'matched' : 'discrepancy',
-                    'reason' => $row['reason'] ?? null,
-                    'checked_by' => $checkedBy,
-                ]
-            );
+            foreach ($validated['items'] as $row) {
+                $item = InventoryItem::lockForUpdate()->findOrFail($row['inventory_item_id']);
+
+                $systemStock = (int) ($item->stock ?? 0);
+                $actualStock = (int) $row['actual_stock'];
+                $variance = $actualStock - $systemStock;
+                $status = $variance === 0 ? 'matched' : 'discrepancy';
+
+                $audit = InventoryMonthlyAudit::updateOrCreate(
+                    [
+                        'inventory_item_id' => $item->id,
+                        'audit_month' => $validated['audit_month'],
+                    ],
+                    [
+                        'system_stock' => $systemStock,
+                        'actual_stock' => $actualStock,
+                        'variance' => $variance,
+                        'status' => $status,
+                        'reason' => $row['reason'] ?? null,
+                        'checked_by' => $checkedBy,
+                    ]
+                );
+
+                if ($variance !== 0) {
+                    $before = $systemStock;
+                    $after = $actualStock;
+
+                    InventoryBatch::create([
+                        'inventory_item_id' => $item->id,
+                        'batch_no' => 'AUDIT-' . strtoupper(uniqid()),
+                        'received_date' => now(),
+                        'expiration_date' => null,
+                        'quantity' => $variance > 0 ? $variance : 0,
+                        'remaining_quantity' => $variance > 0 ? $variance : 0,
+                        'status' => $variance > 0 ? 'active' : 'audit_adjusted',
+                        'notes' => 'Monthly inventory audit adjustment',
+                    ]);
+
+                    $stockUpdate = ['stock' => $actualStock];
+                    if (Schema::hasColumn('inventory_items', 'quantity')) {
+                        $stockUpdate['quantity'] = $actualStock;
+                    }
+
+                    DB::table('inventory_items')
+                        ->where('id', $item->id)
+                        ->update($stockUpdate);
+
+                    InventoryLog::create([
+                        'inventory_item_id' => $item->id,
+                        'delta' => $variance,
+                        'quantity' => abs($variance),
+                        'type' => 'monthly_audit',
+                        'movement_type' => 'monthly_audit',
+                        'reason' => $row['reason'] ?? 'Monthly inventory count correction',
+                        'reference_type' => 'monthly_audit',
+                        'stock_before' => $before,
+                        'stock_after' => $after,
+                        'previous_stock' => $before,
+                        'new_stock' => $after,
+                        'performed_by' => $checkedBy,
+                        'user_id' => $userId,
+                        'role' => $userRole,
+                        'details' => json_encode([
+                            'audit_month' => $validated['audit_month'],
+                            'system_stock' => $systemStock,
+                            'actual_stock' => $actualStock,
+                            'variance' => $variance,
+                        ]),
+                    ]);
+                }
+
+                $saved[] = $audit;
+            }
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Monthly inventory audit saved successfully.',
+                'audits' => $saved,
+            ]);
         });
-
-        return response()->json([
-            'success' => true,
-            'message' => 'Monthly inventory audit saved successfully.',
-            'audits' => $saved,
-        ]);
     }
 
     public function monthlyAuditReport(Request $request)
@@ -555,6 +655,26 @@ class DashboardController extends Controller
     {
         try {
             $data = $this->handlePhotoUpload($request, $request->all());
+
+            // Parse batchData from JSON string (multipart/form-data sends it as string)
+            if (!empty($data['batchData']) && is_string($data['batchData'])) {
+                $data['batchData'] = json_decode($data['batchData'], true) ?? [];
+            }
+
+            // Handle batch proof photo upload
+            if ($request->hasFile('batch_proof')) {
+                $file = $request->file('batch_proof');
+                if ($file->isValid()) {
+                    $uploadDir = public_path('uploads/inventory/batches');
+                    if (!is_dir($uploadDir)) {
+                        mkdir($uploadDir, 0755, true);
+                    }
+                    $filename = 'batch_' . time() . '_' . uniqid() . '.' . $file->getClientOriginalExtension();
+                    $file->move($uploadDir, $filename);
+                    $data['batchData']['proof_photo'] = 'uploads/inventory/batches/' . $filename;
+                }
+            }
+
             $result = $this->inventoryService->createItem($data);
             return response()->json($result, 201);
         } catch (\Exception $e) {
