@@ -31,14 +31,18 @@ const DynamicHowItWorks = ({ content }) => {
         <h2>{data.headline}</h2>
       </div>
 
-      <div className="landing-process-grid">
-        {steps.map((step, index) => (
-          <article className="landing-process-card" key={step.title}>
-            <span>{step.number || String(index + 1).padStart(2, "0")}</span>
-            <h3>{step.title}</h3>
-            <p>{step.description}</p>
-          </article>
-        ))}
+      <div className="landing-process-wrapper">
+        <div className="landing-process-grid">
+          {steps.map((step, index) => (
+            <article className="landing-process-card" key={step.title}>
+              <div className="landing-step-circle">
+                {step.number || String(index + 1).padStart(2, "0")}
+              </div>
+              <h3>{step.title}</h3>
+              <p>{step.description}</p>
+            </article>
+          ))}
+        </div>
       </div>
     </section>
   );

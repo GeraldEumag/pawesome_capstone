@@ -1,3 +1,5 @@
+const STAT_ICONS = ["🐾", "⏰", "❤️"];
+
 const DEFAULT_STATS = {
   stats: [
     { value: "9+", label: "Core Services" },
@@ -12,8 +14,9 @@ const DynamicTrustStats = ({ content }) => {
 
   return (
     <section className="landing-trust-strip" aria-label="Business highlights">
-      {stats.map((stat) => (
-        <div key={stat.label}>
+      {stats.map((stat, i) => (
+        <div className="landing-stat-item" key={stat.label}>
+          <span className="landing-stat-icon">{STAT_ICONS[i] ?? "🐾"}</span>
           <strong>{stat.value}</strong>
           <span>{stat.label}</span>
         </div>

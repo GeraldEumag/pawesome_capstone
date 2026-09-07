@@ -6,10 +6,9 @@ import { getDraft } from "../../utils/preBookingDraft";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
   faArrowLeft,
-  faUser,
-  faLock,
   faEye,
   faEyeSlash,
+  faPaw,
 } from "@fortawesome/free-solid-svg-icons";
 import logo from "../../assets/pawesome.jpg";
 import "./Login.css";
@@ -30,11 +29,7 @@ const roleRouteMap = {
 };
 
 const Login = () => {
-  const [formData, setFormData] = useState({
-    username: "",
-    password: "",
-  });
-
+  const [formData, setFormData] = useState({ username: "", password: "" });
   const [errors, setErrors] = useState({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
@@ -44,29 +39,17 @@ const Login = () => {
 
   const validateForm = () => {
     const newErrors = {};
-
-    if (!formData.username.trim()) {
-      newErrors.username = "Username is required";
-    }
-
-    if (!formData.password) {
-      newErrors.password = "Password is required";
-    }
-
+    if (!formData.username.trim()) newErrors.username = "Username is required";
+    if (!formData.password)       newErrors.password = "Password is required";
     return newErrors;
   };
 
   const handleLogin = async (e) => {
     e.preventDefault();
-
     const newErrors = validateForm();
-    if (Object.keys(newErrors).length > 0) {
-      setErrors(newErrors);
-      return;
-    }
+    if (Object.keys(newErrors).length > 0) { setErrors(newErrors); return; }
 
     setIsSubmitting(true);
-
     try {
       const response = await apiRequest("/auth/login", {
         method: "POST",
@@ -93,28 +76,18 @@ const Login = () => {
           navigate(`/verify-email?email=${encodeURIComponent(response.user.email)}`);
           return;
         }
-
         const draft = getDraft();
         if (draft?.service_type) {
-          const draftPaths = {
-            hotel: "/customer/hotel",
-            grooming: "/customer/grooming",
-            vet: "/customer/vet",
-          };
+          const draftPaths = { hotel: "/customer/hotel", grooming: "/customer/grooming", vet: "/customer/vet" };
           redirectPath = draftPaths[draft.service_type] || redirectPath;
         }
       }
 
       await showSuccess(`Welcome, ${response.user.name}!`);
-
       navigate(redirectPath);
     } catch (error) {
       const errorMsg = error.message || "Invalid username or password";
-
-      setErrors({
-        username: errorMsg,
-        password: errorMsg,
-      });
+      setErrors({ username: errorMsg, password: errorMsg });
       showError(errorMsg);
     } finally {
       setIsSubmitting(false);
@@ -123,83 +96,120 @@ const Login = () => {
 
   return (
     <div className="login-page">
-      <div className="login-shell">
-        <aside className="login-left-panel">
-          <Link to="/" className="back-home-link">
-            <FontAwesomeIcon icon={faArrowLeft} />
-            <span>Back to Landing Page</span>
-          </Link>
+      {/* Animated background blobs */}
+      <div className="login-blob login-blob-1" aria-hidden="true" />
+      <div className="login-blob login-blob-2" aria-hidden="true" />
+      <div className="login-blob login-blob-3" aria-hidden="true" />
 
-          <div className="login-left-content">
-            <img src={logo} alt="Pawesome Retreat Inc." className="login-logo-img" />
+      {/* Decorative large paw watermarks */}
+      <div className="login-page-paw login-page-paw-tl" aria-hidden="true">
+        <FontAwesomeIcon icon={faPaw} />
+      </div>
+      <div className="login-page-paw login-page-paw-br" aria-hidden="true">
+        <FontAwesomeIcon icon={faPaw} />
+      </div>
 
-            <h1>Welcome back to Pawesome Retreat</h1>
-            <p>
-              Manage appointments, pet care services, customer requests, and daily
-              operations in one secure portal.
-            </p>
+      {/* Back to home */}
+      <Link to="/" className="login-back-link">
+        <FontAwesomeIcon icon={faArrowLeft} />
+        <span>Back to Home</span>
+      </Link>
+
+      {/* Card */}
+      <div className="login-card">
+
+        {/* Pink gradient header */}
+        <div className="login-card-header">
+          <div className="login-header-paw login-header-paw-1" aria-hidden="true">🐾</div>
+          <div className="login-header-paw login-header-paw-2" aria-hidden="true">🐾</div>
+
+          <img src={logo} alt="Pawesome Retreat Inc." className="login-logo-img" />
+          <p className="login-brand-name">PAWESOME RETREAT</p>
+          <p className="login-brand-tagline">Premium Pet Care & Vet Services</p>
+        </div>
+
+        {/* Form body */}
+        <div className="login-card-body">
+          <div className="login-heading">
+            <h2>Welcome back 👋</h2>
+            <p>Sign in to your account to continue</p>
           </div>
-        </aside>
 
-        <main className="login-right-panel">
-          <div className="login-card">
-            <div className="login-heading">
-              <h2>Sign In</h2>
-              <p>Enter your account credentials to continue.</p>
+          <form className="login-form" onSubmit={handleLogin} noValidate>
+            <div className="login-field">
+              <label htmlFor="login-username">Username</label>
+              <input
+                id="login-username"
+                className={`login-input${errors.username ? " login-input-error" : ""}`}
+                type="text"
+                placeholder="Enter your username"
+                value={formData.username}
+                onChange={(e) => {
+                  setFormData({ ...formData, username: e.target.value });
+                  if (errors.username) setErrors({ ...errors, username: "" });
+                }}
+                disabled={isSubmitting}
+                autoComplete="username"
+              />
             </div>
 
-            <form className="login-form" onSubmit={handleLogin}>
-              <label>USERNAME *</label>
-              <div className="input-wrap">
-                <FontAwesomeIcon icon={faUser} />
+            <div className="login-field">
+              <label htmlFor="login-password">Password</label>
+              <div className="login-password-wrap">
                 <input
-                  type="text"
-                  placeholder="Enter your username"
-                  value={formData.username}
-                  onChange={(e) => setFormData({ ...formData, username: e.target.value })}
-                  disabled={isSubmitting}
-                />
-              </div>
-
-              <label>PASSWORD *</label>
-              <div className="input-wrap">
-                <FontAwesomeIcon icon={faLock} />
-                <input
+                  id="login-password"
+                  className={`login-input${errors.password ? " login-input-error" : ""}`}
                   type={showPassword ? "text" : "password"}
                   placeholder="Enter your password"
                   value={formData.password}
-                  onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                  onChange={(e) => {
+                    setFormData({ ...formData, password: e.target.value });
+                    if (errors.password) setErrors({ ...errors, password: "" });
+                  }}
                   disabled={isSubmitting}
+                  autoComplete="current-password"
                 />
-
                 <button
                   type="button"
                   className="show-password-btn"
                   onClick={() => setShowPassword(!showPassword)}
                   disabled={isSubmitting}
+                  aria-label={showPassword ? "Hide password" : "Show password"}
                 >
                   <FontAwesomeIcon icon={showPassword ? faEyeSlash : faEye} />
                 </button>
               </div>
+            </div>
 
-              {(errors.username || errors.password) && (
-                <div className="login-error">{errors.username || errors.password}</div>
-              )}
-
-              <div className="login-options">
-                <Link to="/forgot-password">Forgot password?</Link>
+            {(errors.username || errors.password) && (
+              <div className="login-error" role="alert">
+                {errors.username || errors.password}
               </div>
+            )}
 
-              <button className="login-btn" type="submit" disabled={isSubmitting}>
-                {isSubmitting ? "Signing In..." : "Sign In"}
-              </button>
-            </form>
+            <div className="login-options">
+              <Link to="/forgot-password">Forgot password?</Link>
+            </div>
 
-            <p className="login-register">
-              New to Pawesome? <Link to="/register">Create an account</Link>
-            </p>
-          </div>
-        </main>
+            <button className="login-btn" type="submit" disabled={isSubmitting}>
+              <span>{isSubmitting ? "Signing In…" : "Sign In"}</span>
+              {!isSubmitting && (
+                <span className="login-btn-arrow" aria-hidden="true">→</span>
+              )}
+            </button>
+          </form>
+
+          <p className="login-register">
+            New to Pawesome?{" "}
+            <Link to="/register">Create a free account</Link>
+          </p>
+        </div>
+      </div>
+
+      {/* Trust footer */}
+      <div className="login-trust-foot" aria-label="Customer trust">
+        <span className="login-trust-stars">★★★★★</span>
+        <span>Trusted by 200+ happy pet owners · Las Piñas</span>
       </div>
     </div>
   );

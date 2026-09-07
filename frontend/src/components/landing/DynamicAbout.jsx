@@ -13,6 +13,13 @@ const DEFAULT_ABOUT = {
   ],
 };
 
+const DEFAULT_PANEL_ITEMS = [
+  "Centralized veterinary and pet care services",
+  "Customer account and pet profile management",
+  "Organized service request and reservation tracking",
+  "Reliable front desk and care coordination",
+];
+
 const DynamicAbout = ({ content }) => {
   const data = content ?? DEFAULT_ABOUT;
   const points = data.points || DEFAULT_ABOUT.points;
@@ -20,11 +27,11 @@ const DynamicAbout = ({ content }) => {
   return (
     <section id="about" className="landing-about">
       <div className="landing-about-card">
-        {(data.image || facilityImg) && (
-          <div className="landing-about-image">
-            <img src={data.image || facilityImg} alt="Pawesome Retreat facilities" />
-          </div>
-        )}
+        <div className="landing-about-image">
+          <img src={data.image || facilityImg} alt="Pawesome Retreat facilities" />
+          <div className="landing-about-est-badge">Est. 2020 · Las Piñas</div>
+        </div>
+
         <div className="landing-about-copy">
           <span className="landing-eyebrow">{data.eyebrow}</span>
           <h2>{data.headline}</h2>
@@ -43,10 +50,12 @@ const DynamicAbout = ({ content }) => {
         <div className="landing-about-panel">
           <h3>Why customers choose Pawesome</h3>
           <ul>
-            <li>Centralized veterinary and pet care services</li>
-            <li>Customer account and pet profile management</li>
-            <li>Organized service request and reservation tracking</li>
-            <li>Reliable front desk and care coordination</li>
+            {DEFAULT_PANEL_ITEMS.map((item) => (
+              <li key={item}>
+                <span className="landing-about-check">✓</span>
+                {item}
+              </li>
+            ))}
           </ul>
         </div>
       </div>

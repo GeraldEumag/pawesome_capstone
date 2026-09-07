@@ -15,6 +15,7 @@ const SECTIONS = [
   { key: "trust_stats", label: "Quick Stats", icon: faChartBar },
   { key: "facilities_gallery", label: "Facilities Gallery", icon: faImages },
   { key: "footer", label: "Footer", icon: faRectangleAd },
+  { key: "auth_pages", label: "Auth Page Photos", icon: faImage },
 ];
 
 const deepClone = (obj) => JSON.parse(JSON.stringify(obj));
@@ -257,7 +258,12 @@ const AdminLandingPageEditor = () => {
             {renderInput("Description paragraph", "hero.description", "textarea")}
             {renderInput("Main button text", "hero.primary_cta")}
             {renderInput("Second button text", "hero.secondary_cta")}
-            {renderImageField("Hero background image", "hero.image")}
+            <p className="editor-helper-text">
+              The three images below appear as a photo mosaic on the right side of the hero banner. Each slot falls back to a default facility photo if left empty.
+            </p>
+            {renderImageField("Hero mosaic photo — Slot 1 (main / left)", "hero.image")}
+            {renderImageField("Hero mosaic photo — Slot 2 (top-right)", "hero.image_2")}
+            {renderImageField("Hero mosaic photo — Slot 3 (bottom-right)", "hero.image_3")}
             <div className="editor-array">
               <div className="editor-array-header">
                 <strong>Topic labels (small badges under buttons)</strong>
@@ -540,6 +546,16 @@ const AdminLandingPageEditor = () => {
             {renderInput("Contact phone number", "footer.phone")}
             {renderInput("Contact email", "footer.email")}
             {renderInput("Contact address", "footer.address", "textarea")}
+          </div>
+        );
+      case "auth_pages":
+        return (
+          <div className="editor-form">
+            <p className="editor-helper-text">
+              Upload photos to use as full-bleed background images on the Login and Registration pages. If left empty, default facility photos are used automatically.
+            </p>
+            {renderImageField("Login page background photo", "auth_pages.login_bg_image")}
+            {renderImageField("Registration page background photo", "auth_pages.register_bg_image")}
           </div>
         );
       default:

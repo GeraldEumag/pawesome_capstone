@@ -1,6 +1,5 @@
 import React from "react";
 import DatePicker from "react-datepicker";
-import { FaCalendarAlt } from "react-icons/fa";
 import "react-datepicker/dist/react-datepicker.css";
 import "./DatePickerInput.css";
 
@@ -45,9 +44,6 @@ const DatePickerInput = ({
         popperClassName="paws-datepicker-popper"
         popperPlacement="bottom-start"
       />
-      <span className="paws-datepicker-icon">
-        <FaCalendarAlt />
-      </span>
     </div>
   );
 };

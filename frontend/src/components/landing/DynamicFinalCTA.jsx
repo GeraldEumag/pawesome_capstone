@@ -13,15 +13,20 @@ const DynamicFinalCTA = ({ content }) => {
 
   return (
     <section className="landing-cta">
+      {/* Decorative paw watermarks */}
+      <div className="landing-cta-paw landing-cta-paw-left" aria-hidden="true">🐾</div>
+      <div className="landing-cta-paw landing-cta-paw-right" aria-hidden="true">🐾</div>
+
       <div>
         <span className="landing-eyebrow">{data.eyebrow}</span>
         <h2>{data.headline}</h2>
         <p>{data.description}</p>
-        <div className="landing-cta-buttons">
-          <Link to="/register" className="landing-btn landing-btn-primary">
+        {/* Fixed: was landing-cta-buttons, CSS expects landing-cta-actions */}
+        <div className="landing-cta-actions">
+          <Link to="/register" className="landing-btn landing-btn-light">
             {data.primary_cta}
           </Link>
-          <a href="#contact" className="landing-btn landing-btn-secondary">
+          <a href="#contact" className="landing-btn landing-btn-outline-light">
             {data.secondary_cta}
           </a>
         </div>

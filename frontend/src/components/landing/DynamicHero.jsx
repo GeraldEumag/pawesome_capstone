@@ -1,5 +1,7 @@
 import { Link } from "react-router-dom";
-import pawesomeLogo from "../../assets/pawesome.jpg";
+import dogHotelImg from "../../assets/DOGHOTEL.jpg";
+import catHotelImg from "../../assets/CATHOTEL.jpg";
+import playgroundImg from "../../assets/play ground.jpg";
 
 const DEFAULT_HERO = {
   eyebrow: "Premium Pet Care & Veterinary Services",
@@ -14,8 +16,17 @@ const DEFAULT_HERO = {
 const DynamicHero = ({ content, onBookService }) => {
   const data = content ?? DEFAULT_HERO;
 
+  const img1 = data.image || dogHotelImg;
+  const img2 = data.image_2 || catHotelImg;
+  const img3 = data.image_3 || playgroundImg;
+
   return (
-    <section id="home" className="landing-hero" style={{ position: "relative" }}>
+    <section id="home" className="landing-hero">
+      {/* Animated background blobs */}
+      <div className="landing-blob landing-blob-1" aria-hidden="true" />
+      <div className="landing-blob landing-blob-2" aria-hidden="true" />
+      <div className="landing-blob landing-blob-3" aria-hidden="true" />
+
       <div className="landing-hero-content">
         <div className="landing-hero-copy">
           <span className="landing-eyebrow">{data.eyebrow}</span>
@@ -40,18 +51,51 @@ const DynamicHero = ({ content, onBookService }) => {
           </div>
         </div>
 
+        {/* 3-Photo Mosaic */}
         <div className="landing-hero-visual">
-          <div className="landing-showcase-card">
-            <div className="landing-showcase-image">
-              <img
-                src={data.image || pawesomeLogo}
-                alt="Pawesome Retreat pet care center"
-              />
+          <div className="landing-hero-mosaic">
+            {/* Floating star rating badge */}
+            <div className="landing-mosaic-badge" aria-label="4.9 star rating">
+              <span className="landing-mosaic-badge-stars">★★★★★</span>
+              <span className="landing-mosaic-badge-text">Trusted Pet Care</span>
             </div>
-            <div className="landing-showcase-body">
-              <span>Trusted Pet Care Center</span>
-              <h2>Pawesome Retreat Inc.</h2>
-              <p>Pet Hotel, Grooming, Supplies, and Veterinary Clinic</p>
+
+            <div className="landing-mosaic-grid">
+              {/* Left tall photo */}
+              <div className="landing-mosaic-left">
+                <img
+                  src={img1}
+                  alt="Pawesome pet hotel"
+                  loading="lazy"
+                />
+              </div>
+              {/* Right stacked photos */}
+              <div className="landing-mosaic-right">
+                <div className="landing-mosaic-top">
+                  <img
+                    src={img2}
+                    alt="Pet care facility"
+                    loading="lazy"
+                  />
+                </div>
+                <div className="landing-mosaic-bottom">
+                  <img
+                    src={img3}
+                    alt="Pet playground"
+                    loading="lazy"
+                  />
+                  {/* Overlay label */}
+                  <div className="landing-mosaic-overlay-label">
+                    <span>Pawesome Retreat Inc.</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Floating trust chip */}
+            <div className="landing-mosaic-trust-chip">
+              <span className="landing-mosaic-trust-icon">🐾</span>
+              <span>200+ happy pet owners</span>
             </div>
           </div>
         </div>

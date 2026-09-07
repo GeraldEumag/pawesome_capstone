@@ -22,6 +22,7 @@ class LandingPageContentController extends Controller
         'trust_stats',
         'facilities_gallery',
         'footer',
+        'auth_pages',
     ];
 
     public function showPublic(): JsonResponse

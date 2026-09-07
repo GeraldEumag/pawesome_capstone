@@ -168,6 +168,14 @@ class LandingPageContentSeeder extends Seeder
                     'address'     => 'Aldana Street San Isidro Village, Las Piñas, Philippines, 1740',
                 ],
             ],
+            [
+                'section_key' => 'auth_pages',
+                'content_type' => 'json',
+                'content_data' => [
+                    'login_bg_image'    => null,
+                    'register_bg_image' => null,
+                ],
+            ],
         ];
 
         foreach ($contents as $content) {
