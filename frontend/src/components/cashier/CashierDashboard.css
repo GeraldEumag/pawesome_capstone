@@ -193,19 +193,17 @@
 
 .cashier-main {
   flex: 1;
-  margin-left: 260px;
+  /* margin-left: 260px; */ /* dead sidebar offset — DashboardLayout uses .app-main, not .cashier-main */
   padding: 2rem 2.5rem 3rem;
   box-sizing: border-box;
   min-height: 100vh;
-  transition: margin-left 0.25s ease;
+  /* transition: margin-left 0.25s ease; */ /* dead — no margin-left to transition */
   background: transparent;
   position: relative;
   z-index: 1;
 }
 
-.cashier-dashboard.collapsed .cashier-main {
-  margin-left: 90px;
-}
+/* .cashier-dashboard.collapsed .cashier-main { margin-left: 90px; } — dead sidebar offset */
 
 /* Navbar */
 
@@ -3931,8 +3929,23 @@
   color: #f97316;
 }
 
-/* Remove old svg direct color on kpi card � replaced by icon wrapper */
+/* Remove old svg direct color on kpi card � replaced by icon wrapper */
 .cashier-kpi-card svg {
   color: inherit;
   font-size: 1.1rem;
+}
+
+/* ── TABLET/MOBILE: quick-actions-grid responsive ── */
+@media (max-width: 991px) {
+  .quick-actions-grid {
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 14px;
+  }
+}
+
+@media (max-width: 767px) {
+  .quick-actions-grid {
+    grid-template-columns: 1fr !important;
+    gap: 12px;
+  }
 }

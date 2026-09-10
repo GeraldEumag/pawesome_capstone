@@ -26,20 +26,11 @@
   display: none;
 }
 
-.vet-dashboard.collapsed .app-main {
-  margin-left: 90px;
-  width: calc(100% - 90px);
-}
+/* .vet-dashboard.collapsed .app-main — removed: collapsed sidebar pattern no longer exists */
 
 /* TOPBAR */
 
-.vet-navbar {
-  position: sticky;
-  top: 0;
-  z-index: 100;
-  overflow: visible;
-  gap: 1rem;
-}
+/* .vet-navbar — removed: DashboardLayout uses .app-topbar */
 
 .navbar-left {
   min-width: 0;
@@ -1203,5 +1194,20 @@ button:disabled {
   .boarder-card,
   .appointment-card {
     padding: 1rem;
+  }
+}
+
+/* ── TABLET (768–991px): collapse main grids earlier ── */
+@media (max-width: 991px) {
+  .vet-main-grid,
+  .vet-bottom-grid {
+    grid-template-columns: 1fr !important;
+    gap: 16px;
+  }
+  .vet-qa-grid {
+    grid-template-columns: repeat(2, 1fr) !important;
+  }
+  .alert-grid {
+    grid-template-columns: repeat(2, 1fr) !important;
   }
 }

@@ -1,0 +1,627 @@
+/*
+ * mobilePolish.css — Pawesome Global 4-Screen Responsive Polish
+ *
+ * Imported LAST in index.jsx so it wins the cascade over all component CSS.
+ * Uses CSS attribute selectors to cover Pawesome's 222+ card variants,
+ * 124+ grid patterns, and 70+ modal patterns across all 8 roles in one file.
+ *
+ * Breakpoints:
+ *   Laptop    : max-width 1200px
+ *   Tablet    : max-width 991px
+ *   Phone     : max-width 767px
+ *   Small Phone: max-width 639px
+ */
+
+/* ══════════════════════════════════════════════════════════════
+   A. IMAGES — always responsive
+   ══════════════════════════════════════════════════════════════ */
+img:not([class*="logo-image"]):not([class*="sidebar-logo"]):not([class*="avatar"]) {
+  max-width: 100%;
+  height: auto;
+}
+
+/* ══════════════════════════════════════════════════════════════
+   B. TYPOGRAPHY — fluid scaling across all 4 breakpoints
+   ══════════════════════════════════════════════════════════════ */
+
+/* Laptop */
+@media (max-width: 1200px) {
+  h1:not(.landing-hero h1):not(.hero-title) {
+    font-size: clamp(1.6rem, 3vw, 2.2rem);
+  }
+  h2 { font-size: clamp(1.3rem, 2.5vw, 1.75rem); }
+  h3 { font-size: clamp(1.05rem, 2vw, 1.4rem); }
+}
+
+/* Tablet */
+@media (max-width: 991px) {
+  h1:not(.landing-hero h1):not(.hero-title) {
+    font-size: clamp(1.4rem, 4vw, 1.9rem);
+  }
+  h2 { font-size: clamp(1.15rem, 3.5vw, 1.55rem); }
+  h3 { font-size: clamp(1rem, 3vw, 1.25rem); }
+  /* Stat/KPI numbers */
+  [class*="stat"] h2, [class*="kpi"] h2, [class*="metric"] h2,
+  [class*="stat"] h3, [class*="kpi"] h3, [class*="metric"] h3 {
+    font-size: clamp(1.5rem, 5vw, 2rem) !important;
+  }
+}
+
+/* Phone */
+@media (max-width: 767px) {
+  h1:not(.landing-hero h1):not(.hero-title) {
+    font-size: clamp(1.15rem, 6vw, 1.55rem) !important;
+  }
+  h2 { font-size: clamp(1rem, 5vw, 1.35rem) !important; }
+  h3 { font-size: clamp(0.92rem, 4.5vw, 1.15rem) !important; }
+  h4 { font-size: clamp(0.88rem, 4vw, 1rem) !important; }
+  p:not(.app-topbar p):not([class*="topbar"] p):not([class*="navbar"] p) {
+    font-size: clamp(0.82rem, 3.5vw, 0.94rem);
+  }
+  /* Section headings inside cards/panels */
+  [class*="-section"] h2,
+  [class*="-section"] h3,
+  [class*="-panel"] h2,
+  [class*="-panel"] h3 {
+    font-size: clamp(0.95rem, 4.5vw, 1.1rem) !important;
+  }
+}
+
+/* Small Phone */
+@media (max-width: 639px) {
+  h1:not(.landing-hero h1):not(.hero-title) {
+    font-size: clamp(1rem, 5.5vw, 1.3rem) !important;
+  }
+  h2 { font-size: clamp(0.92rem, 5vw, 1.1rem) !important; }
+  h3 { font-size: clamp(0.85rem, 4vw, 0.98rem) !important; }
+  h4 { font-size: clamp(0.8rem, 3.8vw, 0.92rem) !important; }
+}
+
+/* ══════════════════════════════════════════════════════════════
+   C. TOPBAR / NAVBAR — all role naming variants
+   ══════════════════════════════════════════════════════════════ */
+
+/* Tablet */
+@media (max-width: 991px) {
+  .navbar-left h1,
+  [class*="-navbar"] h1,
+  [class*="-topbar"] h1 {
+    font-size: clamp(1.2rem, 3.5vw, 1.5rem) !important;
+  }
+}
+
+/* Phone — topbar h1 colour safety net (overrides any per-role gradient text) */
+@media (max-width: 767px) {
+  /* Kill gradient-clip text that would make the title invisible on light bg */
+  .app-topbar h1,
+  .app-topbar .navbar-left h1 {
+    color: #333333 !important;
+    -webkit-text-fill-color: #333333 !important;
+    background: transparent !important;
+    background-image: none !important;
+    -webkit-background-clip: unset !important;
+    background-clip: unset !important;
+  }
+
+  /* Subtitle always hidden */
+  .navbar-left p,
+  .app-topbar p { display: none !important; }
+
+  /* Actions row: never wrap, never shrink, compact gap */
+  .navbar-actions {
+    display: flex !important;
+    align-items: center !important;
+    flex-wrap: nowrap !important;
+    flex-shrink: 0 !important;
+    gap: 6px !important;
+  }
+}
+
+/* ══════════════════════════════════════════════════════════════
+   D. TOUCH TARGETS — 44px minimum on tablet + phone
+   ══════════════════════════════════════════════════════════════ */
+@media (max-width: 991px) {
+  button:not([class*="close"]):not([class*="icon-btn"]):not(.mobile-close-btn):not([class*="react-"]):not(.dashboard-profile-upload):not([class*="-upload"]):not([class*="icon-only"]),
+  a[class*="-btn"],
+  a[class*="btn-"],
+  .btn,
+  select {
+    min-height: 44px;
+  }
+}
+
+/* ══════════════════════════════════════════════════════════════
+   E. CARDS — all 222+ naming variants, 4 breakpoints
+   ══════════════════════════════════════════════════════════════ */
+
+/* Tablet: slightly reduce padding */
+@media (max-width: 991px) {
+  [class*="-card"]:not([class*="recharts"]):not([class*="pos-cart"]):not([class*="swiper"]),
+  .card,
+  .panel,
+  .premium-card,
+  .overview-card,
+  .metric-card,
+  .stat-card,
+  .quick-action-card,
+  .dashboard-card,
+  .feature-card,
+  .info-card {
+    padding: 1.1rem !important;
+  }
+}
+
+/* Phone: reduce padding + border-radius */
+@media (max-width: 767px) {
+  [class*="-card"]:not([class*="recharts"]):not([class*="pos-cart"]):not([class*="swiper"]),
+  .card,
+  .panel,
+  .premium-card,
+  .overview-card,
+  .metric-card,
+  .stat-card,
+  .quick-action-card,
+  .dashboard-card,
+  .feature-card,
+  .info-card {
+    padding: 1rem !important;
+    border-radius: 18px !important;
+  }
+}
+
+/* Small Phone */
+@media (max-width: 639px) {
+  [class*="-card"]:not([class*="recharts"]):not([class*="pos-cart"]):not([class*="swiper"]),
+  .card,
+  .panel,
+  .premium-card,
+  .overview-card,
+  .metric-card,
+  .stat-card,
+  .quick-action-card,
+  .dashboard-card,
+  .feature-card,
+  .info-card {
+    padding: 0.85rem !important;
+    border-radius: 14px !important;
+  }
+}
+
+/* ── STAT / KPI CARD INTERNAL LAYOUT on mobile ──
+   Converts tall vertical cards to compact horizontal (icon left, text right)
+   Covers: .overview-card (Admin/Customer), .app-stat-card (shared),
+   and any card whose h3 is the big stat number. */
+@media (max-width: 767px) {
+  /* Shared: protect stat numbers from the global h3 size-down rule */
+  .overview-card h3,
+  .app-stat-card h3,
+  .metric-card h3,
+  .stat-card h3,
+  [class*="stat-card"] h3,
+  [class*="kpi-card"] h3,
+  [class*="overview-card"] h3 {
+    font-size: clamp(1.35rem, 6vw, 1.9rem) !important;
+    line-height: 1.1 !important;
+    margin: 0 !important;
+  }
+
+  /* Horizontal layout: icon column left, text column right */
+  .overview-card {
+    display: grid !important;
+    grid-template-columns: 50px 1fr !important;
+    grid-template-rows: auto auto auto !important;
+    column-gap: 14px !important;
+    row-gap: 2px !important;
+    align-items: start !important;
+  }
+  /* Top (icon + dot): spans all text rows in column 1 */
+  .overview-card-top {
+    grid-column: 1 !important;
+    grid-row: 1 / span 3 !important;
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    justify-content: flex-start !important;
+    gap: 6px !important;
+    margin-bottom: 0 !important;
+  }
+  .overview-card-icon {
+    width: 44px !important;
+    height: 44px !important;
+    min-width: 44px !important;
+    border-radius: 14px !important;
+  }
+  .overview-card-dot {
+    width: 8px !important;
+    height: 8px !important;
+    box-shadow: 0 0 0 3px rgba(255, 95, 147, 0.15) !important;
+  }
+  /* h3, p, small into column 2 rows 1, 2, 3 */
+  .overview-card h3 {
+    grid-column: 2 !important;
+    grid-row: 1 !important;
+  }
+  .overview-card p {
+    grid-column: 2 !important;
+    grid-row: 2 !important;
+    font-size: 0.82rem !important;
+    margin: 0 !important;
+  }
+  .overview-card small {
+    grid-column: 2 !important;
+    grid-row: 3 !important;
+    font-size: 0.73rem !important;
+    margin: 0 !important;
+  }
+}
+
+/* ══════════════════════════════════════════════════════════════
+   F. GRIDS — collapse all 124+ multi-column patterns
+   ══════════════════════════════════════════════════════════════ */
+
+/* Laptop: 4-col → 2-col for common KPI/summary grids */
+@media (max-width: 1200px) {
+  [class*="-kpi-grid"],
+  [class*="-summary-grid"],
+  [class*="-quick-actions"]:not([class*="flex"]) {
+    grid-template-columns: repeat(2, 1fr) !important;
+  }
+}
+
+/* Tablet: 4-col / 3-col → 2-col */
+@media (max-width: 991px) {
+  [class*="-kpi-grid"],
+  [class*="-quick-actions"]:not([class*="flex"]),
+  [class*="-summary-grid"],
+  [class*="-stats-grid"],
+  [class*="-actions-grid"],
+  [class*="-overview-cards"],
+  [class*="-overview-grid"] {
+    grid-template-columns: repeat(2, 1fr) !important;
+  }
+}
+
+/* Phone: everything → 1 column */
+@media (max-width: 767px) {
+  [class*="-grid"]:not([class*="app-grid"]):not(.recharts-cartesian-grid):not([class*="pos-"]),
+  [class*="-cards"]:not([class*="pos-cart-"]):not([class*="recharts"]),
+  [class*="-stats"]:not([class*="recharts"]):not([class*="inline"]),
+  [class*="-summary"]:not([class*="recharts"]):not([class*="modal"]),
+  [class*="-actions-grid"],
+  [class*="-quick-actions"],
+  [class*="-overview-grid"],
+  [class*="-kpi-grid"],
+  [class*="-overview-cards"],
+  [class*="-stats-grid"],
+  [class*="-bottom-grid"],
+  [class*="-analytics-grid"] {
+    grid-template-columns: 1fr !important;
+  }
+  /* Ensure flex rows wrap */
+  [class*="-hero"],
+  [class*="-header"] {
+    flex-wrap: wrap !important;
+  }
+}
+
+/* ══════════════════════════════════════════════════════════════
+   G. TOOLBARS / ACTION BARS
+   ══════════════════════════════════════════════════════════════ */
+
+/* Tablet: wrap */
+@media (max-width: 991px) {
+  [class*="-toolbar"],
+  [class*="-tools"],
+  [class*="-filters"],
+  [class*="-filter-bar"] {
+    flex-wrap: wrap !important;
+    gap: 8px !important;
+  }
+}
+
+/* Phone: full stack, stretch inputs */
+@media (max-width: 767px) {
+  [class*="-toolbar"],
+  [class*="-tools"],
+  [class*="-filters"],
+  [class*="-filter-bar"],
+  [class*="-topbar-actions"],
+  [class*="-header-actions"] {
+    flex-direction: column !important;
+    align-items: stretch !important;
+    gap: 8px !important;
+  }
+
+  [class*="-toolbar"] input,
+  [class*="-toolbar"] select,
+  [class*="-toolbar"] button,
+  [class*="-tools"] input,
+  [class*="-tools"] select,
+  [class*="-filters"] input,
+  [class*="-filters"] select,
+  [class*="-filter-bar"] input,
+  [class*="-filter-bar"] select {
+    width: 100% !important;
+    min-width: 0 !important;
+  }
+}
+
+/* ══════════════════════════════════════════════════════════════
+   H. FORMS
+   ══════════════════════════════════════════════════════════════ */
+
+/* Tablet: 3-col/4-col forms → 2-col */
+@media (max-width: 991px) {
+  [class*="-form-grid"],
+  .form-grid {
+    grid-template-columns: 1fr 1fr !important;
+  }
+}
+
+/* Phone: all forms → single column */
+@media (max-width: 767px) {
+  [class*="-form-grid"],
+  [class*="form-row"],
+  .form-grid,
+  .form-row,
+  [class*="-booking-form"],
+  [class*="-service-form"] {
+    grid-template-columns: 1fr !important;
+    flex-direction: column !important;
+  }
+
+  .form-group,
+  [class*="-form-group"],
+  [class*="-field"] {
+    width: 100% !important;
+    min-width: 0 !important;
+  }
+
+  label {
+    font-size: 0.88rem;
+  }
+
+  /* File upload areas */
+  [class*="-upload"],
+  [class*="file-upload"],
+  [class*="upload-area"] {
+    width: 100% !important;
+    min-width: 0 !important;
+  }
+}
+
+/* ══════════════════════════════════════════════════════════════
+   I. MODALS — near full-screen on phone, max 90vw on tablet
+   ══════════════════════════════════════════════════════════════ */
+
+/* Tablet */
+@media (max-width: 991px) {
+  [class*="modal-content"],
+  [class*="modal-body"],
+  [class*="-modal-wrapper"],
+  [class*="-modal-inner"],
+  [class*="-modal-box"],
+  [class*="-modal-container"] {
+    width: min(90vw, 600px) !important;
+    max-height: 90vh !important;
+    overflow-y: auto !important;
+    border-radius: 22px !important;
+  }
+}
+
+/* Phone */
+@media (max-width: 767px) {
+  [class*="modal-content"],
+  [class*="modal-body"],
+  [class*="-modal-wrapper"],
+  [class*="-modal-inner"],
+  [class*="-modal-box"],
+  [class*="-modal-container"],
+  [class*="-popup"] {
+    width: min(95vw, 520px) !important;
+    max-height: 88vh !important;
+    overflow-y: auto !important;
+    border-radius: 20px !important;
+    margin: auto !important;
+  }
+
+  /* Modal action rows → vertical stack */
+  [class*="modal-actions"],
+  [class*="modal-footer"],
+  [class*="-form-actions"],
+  [class*="-btn-row"],
+  [class*="-action-row"],
+  [class*="-modal-footer"],
+  [class*="-modal-actions"] {
+    flex-direction: column !important;
+    gap: 8px !important;
+  }
+
+  [class*="modal-actions"] button,
+  [class*="modal-footer"] button,
+  [class*="-form-actions"] button,
+  [class*="-modal-footer"] button,
+  [class*="-modal-actions"] button {
+    width: 100% !important;
+  }
+
+  /* Modal form grids inside modals */
+  [class*="modal"] [class*="-form-grid"],
+  [class*="modal"] .form-grid {
+    grid-template-columns: 1fr !important;
+  }
+}
+
+/* ══════════════════════════════════════════════════════════════
+   J. TABLES — horizontal scroll + compact sizing
+   ══════════════════════════════════════════════════════════════ */
+
+/* Tablet: ensure all table wrappers scroll horizontally */
+@media (max-width: 991px) {
+  [class*="-table-wrapper"],
+  [class*="table-scroll"],
+  [class*="-table-scroll"],
+  .table-container,
+  .table-responsive,
+  [class*="-table-container"],
+  [class*="-table-wrap"] {
+    overflow-x: auto !important;
+    -webkit-overflow-scrolling: touch !important;
+  }
+
+  table {
+    font-size: 0.88rem;
+    min-width: max-content;
+  }
+
+  table th,
+  table td {
+    padding: 10px 12px;
+    white-space: nowrap;
+  }
+}
+
+/* Phone: more compact */
+@media (max-width: 767px) {
+  table { font-size: 0.82rem; }
+  table th { font-size: 0.78rem; }
+  table th, table td { padding: 8px 10px; }
+}
+
+/* Small Phone */
+@media (max-width: 639px) {
+  table { font-size: 0.78rem; }
+  table th { font-size: 0.74rem; }
+  table th, table td { padding: 6px 8px; }
+}
+
+/* ══════════════════════════════════════════════════════════════
+   K. IOS INPUT ZOOM PREVENTION
+   (iOS zooms in when input font-size < 16px)
+   ══════════════════════════════════════════════════════════════ */
+@media (max-width: 767px) {
+  input,
+  select,
+  textarea {
+    font-size: 16px !important;
+  }
+}
+
+/* ══════════════════════════════════════════════════════════════
+   L. SIDEBAR — ensure mobile overlay behavior is smooth
+   ══════════════════════════════════════════════════════════════ */
+@media (max-width: 767px) {
+  /* When sidebar is open, prevent body from scrolling behind overlay */
+  body.sidebar-open {
+    overflow: hidden;
+  }
+
+  /* Hamburger button — always 44×44px touch target */
+  .mobile-menu-toggle {
+    min-width: 44px !important;
+    min-height: 44px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+  }
+
+  /* Backdrop covers full screen */
+  .mobile-backdrop {
+    position: fixed !important;
+    inset: 0 !important;
+    z-index: 999 !important;
+    background: rgba(0, 0, 0, 0.45) !important;
+  }
+}
+
+/* ══════════════════════════════════════════════════════════════
+   M. OVERFLOW SAFETY — prevent horizontal scroll on page
+   ══════════════════════════════════════════════════════════════ */
+@media (max-width: 767px) {
+  /* Clip overflow on page root — but NOT on table wrappers */
+  .app-dashboard,
+  .app-main,
+  [class*="-dashboard"],
+  [class*="-main"] {
+    overflow-x: clip !important;
+  }
+
+  /* Ensure text elements don't force horizontal overflow */
+  [class*="-title"],
+  [class*="-heading"],
+  [class*="-label"] {
+    word-break: break-word;
+    overflow-wrap: anywhere;
+  }
+
+  /* Prevent decorative blobs/orbs from creating scroll */
+  [class*="-orb"],
+  [class*="-blob"],
+  [class*="-circle-bg"],
+  [class*="-decoration"] {
+    max-width: 60vw !important;
+    max-height: 60vw !important;
+    overflow: hidden !important;
+  }
+}
+
+/* ══════════════════════════════════════════════════════════════
+   N. CHARTS / RECHARTS — constrain to container width
+   ══════════════════════════════════════════════════════════════ */
+@media (max-width: 991px) {
+  [class*="-chart"],
+  [class*="chart-wrapper"],
+  [class*="chart-container"],
+  .recharts-wrapper,
+  .recharts-responsive-container {
+    max-width: 100% !important;
+    overflow: hidden !important;
+  }
+}
+
+/* ══════════════════════════════════════════════════════════════
+   O. REPORTS / PRINT AREAS
+   ══════════════════════════════════════════════════════════════ */
+@media (max-width: 767px) {
+  [class*="-report-header"],
+  [class*="-report-filters"],
+  [class*="-report-actions"] {
+    flex-direction: column !important;
+    align-items: stretch !important;
+    gap: 8px !important;
+  }
+
+  [class*="-report-filters"] input,
+  [class*="-report-filters"] select,
+  [class*="-report-actions"] button {
+    width: 100% !important;
+  }
+}
+
+/* ══════════════════════════════════════════════════════════════
+   P. HERO / WELCOME SECTIONS — stack on phone
+   ══════════════════════════════════════════════════════════════ */
+@media (max-width: 767px) {
+  [class*="-hero"],
+  [class*="-welcome-section"],
+  [class*="-hero-content"] {
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    gap: 12px !important;
+    padding: 1rem !important;
+  }
+
+  [class*="-hero"] h1,
+  [class*="-welcome-section"] h1,
+  [class*="-hero-content"] h1 {
+    font-size: clamp(1.1rem, 6vw, 1.5rem) !important;
+  }
+
+  [class*="-hero-actions"],
+  [class*="-welcome-actions"] {
+    flex-direction: row !important;
+    flex-wrap: wrap !important;
+    width: 100% !important;
+    gap: 8px !important;
+  }
+}

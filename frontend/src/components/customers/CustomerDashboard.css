@@ -80,10 +80,6 @@
   transition: margin-left 0.3s ease;
 }
 
-.customer-dashboard.collapsed .customer-main {
-  margin-left: 80px;
-}
-
 /* ===== TOP NAVBAR ===== */
 
 .customer-navbar {
@@ -1497,14 +1493,15 @@
   }
 }
 
-/* Final demo mobile polish: keep content clear beside the compact sidebar. */
+/* Final demo mobile polish: sidebar hides off-screen on mobile — content fills full width. */
 @media (max-width: 768px) {
+  /* Sidebar hides off-screen on mobile — content fills full width */
   .customer-main,
   .customer-dashboard.collapsed .customer-main {
-    margin-left: 82px !important;
-    width: calc(100% - 82px) !important;
+    margin-left: 0 !important;
+    width: 100% !important;
+    max-width: 100% !important;
     padding: 1rem !important;
-    padding-top: 1rem !important;
     min-width: 0 !important;
   }
 
@@ -1580,5 +1577,17 @@
 
 /* Final theme verification fixes: keep this file aligned with the centralized theme variables. */
 
+/* Quick actions grid - collapse to 1 column on mobile */
+@media (max-width: 767px) {
+  .quick-actions-grid {
+    grid-template-columns: 1fr !important;
+  }
+}
 
+/* Quick actions grid - 2 columns on tablet */
+@media (max-width: 991px) {
+  .quick-actions-grid {
+    grid-template-columns: repeat(2, 1fr) !important;
+  }
+}
 

@@ -540,3 +540,24 @@
     background: #fff;
   }
 }
+
+/* ── TABLET (640–991px): 2-col overview cards ── */
+@media (max-width: 991px) {
+  .overview-cards {
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 14px;
+  }
+  .dashboard-grid,
+  .dashboard-bottom,
+  .inventory-analytics-grid {
+    grid-template-columns: 1fr !important;
+    gap: 14px;
+  }
+}
+
+@media (max-width: 767px) {
+  .activity-info h3 {
+    white-space: normal;
+    word-break: break-word;
+  }
+}

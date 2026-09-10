@@ -1042,3 +1042,20 @@
     background: #f8fafc !important;
   }
 }
+
+@media (max-width: 991px) {
+  .ui-stats-grid {
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 14px;
+  }
+}
+
+@media (max-width: 767px) {
+  .batch-details {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+  .batch-table {
+    min-width: max-content;
+  }
+}

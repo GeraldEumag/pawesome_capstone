@@ -20,6 +20,7 @@ const DatePickerInput = ({
   showYearDropdown = true,
   scrollableYearDropdown = true,
   yearDropdownItemNumber = 100,
+  withPortal = false,
 }) => {
   return (
     <div className={`paws-datepicker-wrap ${className}`}>
@@ -43,6 +44,7 @@ const DatePickerInput = ({
         calendarClassName="paws-datepicker-calendar"
         popperClassName="paws-datepicker-popper"
         popperPlacement="bottom-start"
+        withPortal={withPortal}
       />
     </div>
   );

@@ -1,0 +1,98 @@
+{
+    "title": "Pawesome Cross-Role E2E Production Readiness Audit (HTTP)",
+    "started_at": "2026-09-05T04:29:47+02:00",
+    "api_base": "http://127.0.0.1:8000/api",
+    "seed": "374582",
+    "overall": "FAIL",
+    "summary": {
+        "pass": 5,
+        "fail": 2,
+        "warn": 0,
+        "blockers": 1
+    },
+    "findings": [
+        {
+            "type": "pass",
+            "gate": "auth",
+            "message": "Login as customer",
+            "at": "2026-09-05T04:29:49+02:00",
+            "detail": {
+                "email": "customer@example.com",
+                "token_len": 51
+            }
+        },
+        {
+            "type": "pass",
+            "gate": "auth",
+            "message": "Login as receptionist",
+            "at": "2026-09-05T04:29:50+02:00",
+            "detail": {
+                "email": "receptionist@example.com",
+                "token_len": 51
+            }
+        },
+        {
+            "type": "fail",
+            "gate": "auth",
+            "message": "Login failed for cashier",
+            "at": "2026-09-05T04:29:51+02:00",
+            "detail": {
+                "status": 401,
+                "error": "",
+                "body": "{\"message\":\"Invalid credentials\"}"
+            }
+        },
+        {
+            "type": "pass",
+            "gate": "auth",
+            "message": "Login as inventory",
+            "at": "2026-09-05T04:29:53+02:00",
+            "detail": {
+                "email": "inventory@example.com",
+                "token_len": 51
+            }
+        },
+        {
+            "type": "pass",
+            "gate": "auth",
+            "message": "Login as veterinary",
+            "at": "2026-09-05T04:29:54+02:00",
+            "detail": {
+                "email": "vet@example.com",
+                "token_len": 51
+            }
+        },
+        {
+            "type": "fail",
+            "gate": "auth",
+            "message": "Login failed for manager",
+            "at": "2026-09-05T04:29:55+02:00",
+            "detail": {
+                "status": 401,
+                "error": "",
+                "body": "{\"message\":\"Invalid credentials\"}"
+            }
+        },
+        {
+            "type": "pass",
+            "gate": "auth",
+            "message": "Login as admin",
+            "at": "2026-09-05T04:29:57+02:00",
+            "detail": {
+                "email": "admin@example.com",
+                "token_len": 51
+            }
+        },
+        {
+            "type": "blocker",
+            "gate": "auth",
+            "message": "Authentication gate failed; cannot proceed with workflow audit",
+            "at": "2026-09-05T04:29:57+02:00"
+        }
+    ],
+    "workflow": [],
+    "blockers": [
+        "[auth] Authentication gate failed; cannot proceed with workflow audit"
+    ],
+    "completed_at": "2026-09-05T04:29:57+02:00"
+}

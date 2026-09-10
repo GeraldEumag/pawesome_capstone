@@ -914,3 +914,15 @@
     align-items: flex-start;
   }
 }
+
+/* ── TABLET (768–991px): 2-col stats, wrap toolbar ── */
+@media (max-width: 991px) {
+  .receptionist-stats {
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 14px;
+  }
+  .receptionist-toolbar {
+    grid-template-columns: 1fr 1fr !important;
+    gap: 10px;
+  }
+}

@@ -54,14 +54,12 @@
   flex: 1;
   min-width: 0;
   min-height: 100vh;
-  margin-left: 260px;
+  /* margin-left: 260px; */  /* dead — DashboardLayout uses .app-main */
   padding-top: 98px;
   transition: margin-left 0.25s ease;
 }
 
-.manager-dashboard.collapsed .manager-main {
-  margin-left: 90px;
-}
+/* .manager-dashboard.collapsed .manager-main — removed: collapsed sidebar pattern no longer exists */
 
 /* Topbar */
 
@@ -69,7 +67,7 @@
   position: fixed;
   top: 0;
   right: 0;
-  left: 260px;
+  /* left: 260px; */  /* dead — DashboardLayout uses .app-topbar */
   z-index: 1200;
   min-height: 92px;
   display: flex;
@@ -84,9 +82,7 @@
   transition: left 0.25s ease;
 }
 
-.manager-dashboard.collapsed .manager-navbar {
-  left: 90px;
-}
+/* .manager-dashboard.collapsed .manager-navbar — removed: collapsed sidebar pattern no longer exists */
 
 .manager-navbar-title {
   min-width: 0;
@@ -1068,5 +1064,17 @@
   .manager-icon-btn:hover,
   .manager-panel-header button:hover {
     transform: none;
+  }
+}
+
+/* ── TABLET (768–991px): 2-column KPI cards ── */
+@media (max-width: 991px) {
+  .manager-summary-grid,
+  .manager-quick-actions {
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 16px;
+  }
+  .manager-payroll-summary {
+    grid-template-columns: repeat(2, 1fr) !important;
   }
 }

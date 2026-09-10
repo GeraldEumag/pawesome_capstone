@@ -620,6 +620,33 @@
   border-top: 1px solid var(--hotel-border);
 }
 
+/* Robust modal scrolling: pin header/actions, scroll only the content.
+   Scoped to this page so global mobilePolish [class*="modal-content"]
+   !important rules (which collapse the modal and hide the scrollbar in
+   the production build) cannot override the scroll container here. */
+.hotel-bookings .booking-modal {
+  display: flex;
+  flex-direction: column;
+  max-height: calc(100vh - 40px);
+  overflow: hidden;
+}
+
+.hotel-bookings .modal-header {
+  flex-shrink: 0;
+}
+
+.hotel-bookings .modal-content {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  max-height: none !important;
+  width: auto !important;
+}
+
+.hotel-bookings .modal-actions {
+  flex-shrink: 0;
+}
+
 /* Info Grid */
 .info-grid {
   display: grid;
@@ -764,6 +791,23 @@
 }
 
 /* Vaccination card link/button */
+.vaccination-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.info-label {
+  display: block;
+  margin-bottom: 6px;
+  color: var(--hotel-muted, #64748b);
+  font-size: 0.72rem;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
 .vaccination-link {
   display: inline-flex;
   align-items: center;
@@ -780,4 +824,41 @@
 
 .vaccination-link:hover {
   background: rgba(59, 130, 246, 0.14);
+}
+
+.vaccination-verify-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.55rem 1.1rem;
+  border: none;
+  border-radius: 10px;
+  background: var(--hotel-primary, #f97316);
+  color: #fff;
+  font-size: 0.9rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: transform 0.15s ease, opacity 0.15s ease;
+}
+
+.vaccination-verify-btn:hover:not(:disabled) {
+  transform: translateY(-1px);
+  opacity: 0.92;
+}
+
+.vaccination-verify-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.vaccination-verified-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.35rem 0.7rem;
+  border-radius: 999px;
+  background: rgba(5, 150, 105, 0.1);
+  color: #059669;
+  font-size: 0.85rem;
+  font-weight: 600;
 }

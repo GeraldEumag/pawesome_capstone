@@ -73,7 +73,7 @@
   display: grid;
   gap: 1.35rem;
   padding: 1.5rem;
-  overflow-x: hidden;
+  overflow-x: clip;
   color: var(--color-text);
 }
 
@@ -1350,6 +1350,18 @@
   }
 }
 
+@media (max-width: 991px) {
+  .pets-layout {
+    grid-template-columns: 1fr !important;
+    gap: 16px;
+  }
+
+  .pets-stats-grid {
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 12px;
+  }
+}
+
 @media (max-width: 768px) {
   .customer-pets {
     padding: 1rem;
@@ -1453,4 +1465,11 @@
 
 .dark-mode .field-error {
   color: #f87171;
+}
+
+@media (max-width: 767px) {
+  .pets-hero::after {
+    width: clamp(120px, 30vw, 200px) !important;
+    height: clamp(120px, 30vw, 200px) !important;
+  }
 }

@@ -19,7 +19,7 @@
   height: 100vh;
   background: var(--color-bg, #fff1f7);
   color: var(--color-text, #1f2937);
-  overflow: hidden;
+  overflow: visible;
   position: relative;
 }
 
@@ -290,7 +290,7 @@
 .pos-product-area {
   flex: 1;
   overflow-y: auto;
-  overflow-x: hidden;
+  overflow-x: auto;
   background: var(--color-bg, #fff1f7);
   display: flex;
   flex-direction: column;
@@ -1829,5 +1829,10 @@
 @media (max-width: 480px) {
   .pos-product-grid {
     grid-template-columns: repeat(2, 1fr);
+  }
+
+  .pos-cart-drawer {
+    width: 100% !important;
+    max-width: 100% !important;
   }
 }

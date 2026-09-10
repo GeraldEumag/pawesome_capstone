@@ -170,8 +170,12 @@
     z-index: 1350;
   }
 
-  /* Topbar */
-  .app-topbar,
+  /* Topbar — stay single row, no wrapping */
+  .app-topbar {
+    flex-wrap: nowrap;
+    gap: 8px;
+  }
+  /* Legacy role navbars can still wrap if needed */
   .admin-navbar,
   .cashier-navbar,
   .customer-navbar,

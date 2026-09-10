@@ -1197,3 +1197,9 @@
     grid-template-columns: repeat(2, 1fr);
   }
 }
+
+@media (max-width: 480px) {
+  .staff-perf-summary {
+    grid-template-columns: 1fr !important;
+  }
+}

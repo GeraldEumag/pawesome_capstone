@@ -81,7 +81,7 @@
 
 .booking-hero {
   position: relative;
-  overflow: hidden;
+  overflow: visible;
   display: flex;
   justify-content: space-between;
   gap: 1.25rem;
@@ -1095,5 +1095,20 @@
 
   .appointment-modal {
     border-radius: 20px;
+  }
+}
+
+@media (max-width: 767px) {
+  .booking-hero-actions {
+    min-width: 0 !important;
+    width: 100%;
+    flex-wrap: wrap;
+  }
+}
+
+@media (max-width: 767px) {
+  .booking-hero::after {
+    width: clamp(120px, 30vw, 180px) !important;
+    height: clamp(120px, 30vw, 180px) !important;
   }
 }

@@ -1197,10 +1197,26 @@ const ReceptionistApprovals = () => {
                     >
                       <FaEye /> View Vaccination Card
                     </button>
-                    {selectedRequest.vaccination_card_verified_at && (
+                    {selectedRequest.vaccination_card_verified_at ? (
                       <span className="vaccination-verified-badge">
                         <FaCheckCircle /> Verified
                       </span>
+                    ) : (
+                      <button
+                        type="button"
+                        className="vaccination-verify-btn"
+                        onClick={verifyVaccination}
+                        disabled={processingId === getRequestId(selectedRequest)}
+                      >
+                        {processingId === getRequestId(selectedRequest) ? (
+                          <FaSpinner className="spin" />
+                        ) : (
+                          <FaCheckCircle />
+                        )}
+                        {processingId === getRequestId(selectedRequest)
+                          ? " Verifying..."
+                          : " Verify Vaccination Card"}
+                      </button>
                     )}
                   </div>
                 )}

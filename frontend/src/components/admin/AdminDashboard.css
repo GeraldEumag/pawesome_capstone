@@ -15,7 +15,7 @@
 
 .admin-main {
   flex: 1;
-  margin-left: 260px;
+  /* margin-left: 260px; */  /* dead — DashboardLayout uses .app-main */
   width: calc(100% - 260px);
   min-height: 100vh;
   padding: 2rem;
@@ -29,11 +29,11 @@
 .admin-navbar,
 .top-navbar {
   position: fixed;
-  left: 260px;
+  /* left: 260px; */  /* dead — DashboardLayout uses .app-topbar */
   right: 0;
   top: 0;
   z-index: 999;
-  width: calc(100% - 260px);
+  /* width: calc(100% - 260px); */  /* dead — DashboardLayout uses .app-topbar */
   min-height: 108px;
 
   display: grid;
@@ -73,17 +73,7 @@
   line-height: 1.45;
 }
 
-.mobile-menu-toggle {
-  display: none;
-  width: 44px;
-  height: 44px;
-  min-width: 44px;
-  border: none;
-  border-radius: 16px;
-  background: rgba(255, 95, 147, 0.12);
-  color: var(--color-primary);
-  cursor: pointer;
-}
+/* .mobile-menu-toggle — removed: duplicates DashboardLayout hamburger */
 
 /* STATUS STRIP */
 
@@ -144,8 +134,7 @@
 }
 
 .admin-icon-btn:hover,
-.theme-toggle-btn:hover,
-.mobile-menu-toggle:hover {
+.theme-toggle-btn:hover {
   transform: translateY(-2px);
   box-shadow: var(--shadow-primary);
 }
@@ -977,10 +966,7 @@
     padding: 1rem;
   }
 
-  .mobile-menu-toggle {
-    display: grid;
-    place-items: center;
-  }
+  /* .mobile-menu-toggle { display: grid; place-items: center; } — removed: duplicates DashboardLayout hamburger */
 
   .navbar-actions {
     gap: 0.5rem;
@@ -1060,5 +1046,20 @@
   .overview-card,
   .admin-quick-action-card {
     border-radius: 22px;
+  }
+}
+
+/* ── TABLET (768–991px): 2-column KPI cards ── */
+@media (max-width: 991px) {
+  .overview-cards,
+  .admin-quick-actions {
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 16px;
+  }
+  .completion-metrics {
+    grid-template-columns: 1fr !important;
+  }
+  .system-status-grid {
+    grid-template-columns: 1fr !important;
   }
 }

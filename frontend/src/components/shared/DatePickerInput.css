@@ -193,6 +193,17 @@
   z-index: 1000;
 }
 
+/* Portal mode (used inside scrollable modals so the calendar isn't clipped) */
+.react-datepicker__portal {
+  z-index: 13000;
+  background-color: transparent;
+}
+
+.react-datepicker__portal .react-datepicker {
+  margin: 12vh auto;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.1);
+}
+
 /* ── Dark mode overrides ── */
 
 

@@ -1573,6 +1573,7 @@ const ReceptionistBookings = () => {
                   <div className="form-group">
                     <label>New Date</label>
                     <DatePickerInput
+                      withPortal
                       selected={newDate ? new Date(newDate) : null}
                       onChange={(date) => {
                         const dateStr = date ? date.toISOString().split("T")[0] : "";
@@ -1738,6 +1739,7 @@ const ReceptionistBookings = () => {
                   <div className="form-group">
                     <label>Approved New Date</label>
                     <DatePickerInput
+                      withPortal
                       selected={rescheduleNewDate ? new Date(rescheduleNewDate) : null}
                       onChange={(date) => setRescheduleNewDate(date ? date.toISOString().split("T")[0] : "")}
                       placeholderText="Pick a date..."

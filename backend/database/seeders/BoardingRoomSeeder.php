@@ -10,8 +10,9 @@ class BoardingRoomSeeder extends Seeder
     /**
      * Run the database seeds.
      *
-     * MANUAL-ONLY SEEDER - Do NOT add to DatabaseSeeder.php
-     * Run manually: php artisan db:seed --class=BoardingRoomSeeder
+     * Registered in DatabaseSeeder so migrate:fresh --seed populates
+     * Pet Hotel rooms. Also safe to run standalone:
+     * php artisan db:seed --class=BoardingRoomSeeder
      */
     public function run(): void
     {

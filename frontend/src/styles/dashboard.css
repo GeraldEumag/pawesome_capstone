@@ -85,3 +85,74 @@
   font-weight: 700;
 }
 
+/* ─── LAPTOP (992px – 1200px) ─────────────────────────────────── */
+@media (max-width: 1200px) {
+  .app-grid-4 { grid-template-columns: repeat(2, 1fr); }
+  .app-grid-3 { grid-template-columns: repeat(2, 1fr); }
+  .app-content { padding: 22px; }
+}
+
+/* ─── TABLET (768px – 991px) ──────────────────────────────────── */
+@media (max-width: 991px) {
+  .app-topbar { min-height: auto; padding: 16px 20px; }
+  .app-topbar h1 { font-size: 1.4rem; }
+  .app-content { padding: 18px; }
+  .app-grid-2, .app-grid-3, .app-grid-4 { grid-template-columns: 1fr; gap: 16px; }
+  .app-stat-card h3 { font-size: 1.6rem; }
+}
+
+/* ─── PHONE (< 767px) ─────────────────────────────────────────── */
+@media (max-width: 767px) {
+  .app-main { margin-left: 0 !important; width: 100% !important; }
+
+  /* Single-row topbar: hamburger | title (flex:1) | actions */
+  .app-topbar {
+    padding: 0 12px;
+    min-height: 58px;
+    height: 58px;
+    flex-wrap: nowrap;
+    justify-content: flex-start;
+    align-items: center;
+    gap: 8px;
+  }
+  /* hamburger stays its natural size */
+  .app-topbar .mobile-menu-toggle { flex-shrink: 0; }
+  /* title fills the middle */
+  .app-topbar .navbar-left {
+    flex: 1 1 0%;
+    min-width: 0;
+  }
+  /* actions pack right, never shrink */
+  .app-topbar .navbar-actions { flex-shrink: 0; }
+
+  /* Title text: solid dark colour so it shows on any background */
+  .app-topbar h1 {
+    font-size: clamp(0.88rem, 3.8vw, 1.05rem);
+    font-weight: 800;
+    margin: 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    color: #333333;
+    -webkit-text-fill-color: #333333;
+    background: transparent;
+    background-image: none;
+    -webkit-background-clip: unset;
+    background-clip: unset;
+  }
+  .app-topbar p { display: none; }
+
+  .app-content { padding: 14px; }
+  .app-section { margin-bottom: 18px; }
+  .app-grid-2, .app-grid-3, .app-grid-4 { grid-template-columns: 1fr; gap: 12px; }
+  .app-stat-card { padding: 1rem; }
+  .app-stat-card h3 { font-size: 1.45rem; }
+}
+
+/* ─── SMALL PHONE (< 639px) ──────────────────────────────────── */
+@media (max-width: 639px) {
+  .app-topbar h1 { font-size: clamp(1rem, 5vw, 1.15rem); }
+  .app-content { padding: 10px; }
+  .app-section { margin-bottom: 14px; }
+}
+

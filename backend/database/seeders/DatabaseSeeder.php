@@ -20,6 +20,8 @@ class DatabaseSeeder extends Seeder
             PawesomeLiveDemoSeeder::class, // Comprehensive live demo data
             BitposItemsSeeder::class, // BitPOS inventory items
             LandingPageContentSeeder::class, // Landing page CMS content
+            BoardingRoomSeeder::class, // Pet Hotel boarding rooms (dog/cat/daycare)
+            HotelRoomSeeder::class, // Legacy Pet Hotel rooms (receptionist Hotel Rooms tab)
         ]);
     }
 }

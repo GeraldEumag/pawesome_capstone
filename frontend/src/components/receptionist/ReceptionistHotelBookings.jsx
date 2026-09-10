@@ -242,6 +242,30 @@ const ReceptionistHotelBookings = () => {
     }
   };
 
+  const verifyVaccination = async (booking) => {
+    try {
+      setProcessingId(booking.id);
+      setError("");
+      await apiRequest(`/receptionist/boarding-requests/${booking.id}/verify-vaccination`, {
+        method: "POST",
+      });
+      const verifiedAt = new Date().toISOString();
+      setSelectedBooking((prev) =>
+        prev ? { ...prev, vaccination_card_verified_at: verifiedAt } : prev
+      );
+      setBookings((prev) =>
+        prev.map((b) =>
+          b.id === booking.id ? { ...b, vaccination_card_verified_at: verifiedAt } : b
+        )
+      );
+      showMessage("success", "Vaccination card verified.");
+    } catch (err) {
+      showMessage("error", err.message || "Failed to verify vaccination card.");
+    } finally {
+      setProcessingId(null);
+    }
+  };
+
   const updateScheduleDraft = (bookingId, field, value) => {
     setScheduleDraft((prev) => ({
       ...prev,
@@ -804,31 +828,48 @@ const ReceptionistHotelBookings = () => {
                   wide
                 />
                 {selectedBooking.vaccination_card && (
-                  <div className="info-item wide">
+                  <div className="info-item full-width">
                     <span className="info-label">Vaccination Card</span>
-                    <button
-                      type="button"
-                      className="vaccination-link"
-                      onClick={async () => {
-                        const win = window.open("", "_blank");
-                        if (!win) {
-                          showError("Popup blocked. Please allow popups for this site.");
-                          return;
-                        }
-                        try {
-                          const url = await getAuthenticatedFileUrl(
-                            selectedBooking.vaccination_card_url || `/files/vaccination-cards/${selectedBooking.id}/view`
-                          );
-                          win.location.href = url;
-                        } catch (err) {
-                          win.close();
-                          console.error("Vaccination card open error:", err);
-                          showError(err.message || "Failed to open vaccination card.");
-                        }
-                      }}
-                    >
-                      <FontAwesomeIcon icon={faEye} /> View Vaccination Card
-                    </button>
+                    <div className="vaccination-actions">
+                      <button
+                        type="button"
+                        className="vaccination-link"
+                        onClick={async () => {
+                          const win = window.open("", "_blank");
+                          if (!win) {
+                            showError("Popup blocked. Please allow popups for this site.");
+                            return;
+                          }
+                          try {
+                            const url = await getAuthenticatedFileUrl(
+                              selectedBooking.vaccination_card_url || `/files/vaccination-cards/${selectedBooking.id}/view`
+                            );
+                            win.location.href = url;
+                          } catch (err) {
+                            win.close();
+                            console.error("Vaccination card open error:", err);
+                            showError(err.message || "Failed to open vaccination card.");
+                          }
+                        }}
+                      >
+                        <FontAwesomeIcon icon={faEye} /> View Vaccination Card
+                      </button>
+                      {selectedBooking.vaccination_card_verified_at ? (
+                        <span className="vaccination-verified-badge">
+                          <FontAwesomeIcon icon={faCheckCircle} /> Verified
+                        </span>
+                      ) : (
+                        <button
+                          type="button"
+                          className="vaccination-verify-btn"
+                          onClick={() => verifyVaccination(selectedBooking)}
+                          disabled={processingId === selectedBooking.id}
+                        >
+                          <FontAwesomeIcon icon={faCheckCircle} />
+                          {processingId === selectedBooking.id ? " Verifying..." : " Verify Vaccination Card"}
+                        </button>
+                      )}
+                    </div>
                   </div>
                 )}
               </div>
@@ -885,6 +926,7 @@ const ReceptionistHotelBookings = () => {
                     <div className="form-group">
                       <label>Check In Date</label>
                       <DatePickerInput
+                        withPortal
                         selected={(() => {
                           const val = scheduleDraft[selectedBooking.id]?.check_in || getDateValue(selectedBooking.check_in);
                           return val ? new Date(val) : null;
@@ -899,6 +941,7 @@ const ReceptionistHotelBookings = () => {
                     <div className="form-group">
                       <label>Check Out Date</label>
                       <DatePickerInput
+                        withPortal
                         selected={(() => {
                           const val = scheduleDraft[selectedBooking.id]?.check_out || getDateValue(selectedBooking.check_out);
                           return val ? new Date(val) : null;

@@ -2,7 +2,7 @@
   position: relative;
   min-height: 100vh;
   padding: 2rem;
-  overflow: hidden;
+  overflow: visible;
   background: var(
     --color-bg-gradient,
     linear-gradient(135deg, #ffc8dd, #ffd6e8, #fff1f7)
@@ -379,3 +379,14 @@
 }
 
 .receipt-btn:hover { background: #e2e8f0; }
+
+@media (max-width: 767px) {
+  .customer-payments-bg-orb.orb-one {
+    width: clamp(140px, 40vw, 200px) !important;
+    height: clamp(140px, 40vw, 200px) !important;
+  }
+  .customer-payments-bg-orb.orb-two {
+    width: clamp(120px, 35vw, 180px) !important;
+    height: clamp(120px, 35vw, 180px) !important;
+  }
+}

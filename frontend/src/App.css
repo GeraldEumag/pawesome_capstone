@@ -247,8 +247,8 @@
   }
 }
 
-/* Final demo mobile layout guardrails */
-@media (max-width: 768px) {
+/* Mobile layout — sidebar slides off-screen, content fills full width */
+@media (max-width: 767px) {
   .admin-main,
   .cashier-main,
   .customer-main,
@@ -257,56 +257,13 @@
   .receptionist-main,
   .vet-main,
   .app-main {
-    margin-left: 82px !important;
-    width: calc(100% - 82px) !important;
-    max-width: calc(100% - 82px) !important;
-    box-sizing: border-box !important;
-  }
-
-  .admin-navbar,
-  .cashier-navbar,
-  .customer-navbar,
-  .inventory-navbar,
-  .manager-navbar,
-  .receptionist-navbar,
-  .app-topbar {
-    left: 82px !important;
-    width: calc(100% - 82px) !important;
-    max-width: calc(100% - 82px) !important;
-    box-sizing: border-box !important;
-  }
-
-  .customer-navbar,
-  .customer-topbar,
-  .inventory-navbar {
-    position: relative !important;
-    top: auto !important;
-    left: 0 !important;
-    right: auto !important;
+    margin-left: 0 !important;
     width: 100% !important;
     max-width: 100% !important;
+    box-sizing: border-box !important;
   }
 
-  .customer-main,
-  .inventory-main {
-    padding-top: 1rem !important;
-  }
-
-  .vet-navbar,
-  .vet-hero,
-  .vet-alerts,
-  .vet-summary-grid,
-  .vet-main-grid,
-  .vet-bottom-grid,
-  .dashboard-boarders,
-  .vet-panel {
-    margin-left: 0 !important;
-    margin-right: 0 !important;
-  }
-
-  .navbar-left h1,
-  .customer-navbar h1,
-  .inventory-navbar h1 {
+  .navbar-left h1 {
     overflow-wrap: anywhere;
   }
 }
