@@ -581,3 +581,48 @@
     max-height: 90vh;
   }
 }
+
+@media (max-width: 480px) {
+  .customer-history {
+    padding: 12px;
+  }
+
+  .header-content h1 {
+    font-size: 1.4rem;
+  }
+
+  .header-actions {
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .refresh-btn,
+  .export-btn {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .search-box {
+    min-width: 0;
+  }
+
+  .toolbar-controls {
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .toolbar-controls label,
+  .toolbar-controls select {
+    width: 100%;
+  }
+
+  .card-header,
+  .card-body,
+  .card-footer {
+    padding: 14px;
+  }
+
+  .history-card {
+    border-radius: 16px;
+  }
+}

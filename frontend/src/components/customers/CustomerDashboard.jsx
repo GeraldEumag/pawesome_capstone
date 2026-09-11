@@ -21,7 +21,7 @@ import {
 import CustomerSidebar from "./CustomerSidebar";
 import DashboardLayout from "../shared/DashboardLayout";
 import PetAvatar from "../shared/PetAvatar";
-import { apiRequest, clearAuthStorage, uploadProfilePhoto } from "../../api/client";
+import { apiRequest, clearAuthStorage } from "../../api/client";
 import { fetchAndApplySystemTheme } from "../../utils/theme";
 import "../../styles/dashboardGlobal.css";
 import "./CustomerDashboard.css";
@@ -40,16 +40,6 @@ const CustomerDashboard = () => {
   const [error, setError] = useState("");
   const [searchTerm, setSearchTerm] = useState("");
 
-
-  const handleProfilePhotoUpload = async (file) => {
-    try {
-      const data = await uploadProfilePhoto(file);
-      const photoUrl = data?.profile_photo || data?.url || "";
-      if (photoUrl) updateUser({ profile_photo: photoUrl });
-    } catch (err) {
-      showError("Failed to upload profile photo: " + err.message);
-    }
-  };
 
   const location = useLocation();
   const normalizedPath = location.pathname.replace(/\/+$/, "");
@@ -258,7 +248,6 @@ const CustomerDashboard = () => {
       role="customer"
       name={name}
       profilePhoto={profilePhoto}
-      onProfileUpload={handleProfilePhotoUpload}
       extraActions={extraActions}
       showChatbot
       chatbotTitle="Customer Assistant"

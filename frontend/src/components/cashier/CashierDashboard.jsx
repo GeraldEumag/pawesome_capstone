@@ -31,7 +31,7 @@ import {
 import CashierSidebar from "./CashierSidebar";
 import DashboardLayout from "../shared/DashboardLayout";
 import "./CashierDashboard.css";
-import { apiRequest, uploadProfilePhoto } from "../../api/client";
+import { apiRequest } from "../../api/client";
 import { formatCurrency } from "../../utils/currency";
 import { useAuth } from "../../context/AuthContext";
 import { showAlert, showSuccess, showError } from "../../utils/alert.jsx";
@@ -79,16 +79,6 @@ const CashierDashboard = () => {
   const { user, updateUser } = useAuth();
   const name = user?.name || "Cashier";
   const profilePhoto = user?.profile_photo || "";
-
-  const handleProfilePhotoUpload = async (file) => {
-    try {
-      const data = await uploadProfilePhoto(file);
-      const photoUrl = data?.profile_photo || data?.url || "";
-      if (photoUrl) updateUser({ profile_photo: photoUrl });
-    } catch (err) {
-      showError("Failed to upload profile photo: " + err.message);
-    }
-  };
 
   const [dashboardData, setDashboardData] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -950,7 +940,6 @@ Thank you for choosing Pawesome!
       role="cashier"
       name={name}
       profilePhoto={profilePhoto}
-      onProfileUpload={handleProfilePhotoUpload}
       extraActions={extraActions}
       showChatbot
       chatbotTitle="Cashier Assistant"

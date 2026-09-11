@@ -1314,10 +1314,16 @@
   }
 }
 
+/* Consolidated mobile rules (max-width: 768px) — merged from previous duplicate blocks */
 @media (max-width: 768px) {
   .customer-main,
   .customer-dashboard.collapsed .customer-main {
-    margin-left: 0;
+    margin-left: 0 !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    padding: 1rem !important;
+    padding-top: 125px !important;
+    min-width: 0 !important;
   }
 
   .customer-overview-page,
@@ -1325,8 +1331,60 @@
     padding: 1rem;
   }
 
-  .customer-navbar {
-    padding: 1rem;
+  .customer-navbar,
+  .customer-topbar {
+    position: relative !important;
+    left: auto !important;
+    right: auto !important;
+    top: auto !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    min-height: auto !important;
+    padding: 0.95rem !important;
+    margin: 0 0 1rem !important;
+    display: grid !important;
+    grid-template-columns: minmax(0, 1fr) !important;
+    align-items: stretch !important;
+    gap: 0.75rem !important;
+  }
+
+  .customer-navbar .navbar-left,
+  .customer-topbar .navbar-left {
+    width: 100% !important;
+    min-width: 0 !important;
+  }
+
+  .customer-navbar h1,
+  .customer-topbar h1 {
+    font-size: 1.3rem !important;
+    line-height: 1.15 !important;
+    max-width: 100% !important;
+    white-space: normal !important;
+    word-break: normal !important;
+    overflow-wrap: anywhere !important;
+    letter-spacing: 0 !important;
+  }
+
+  .customer-navbar p,
+  .customer-topbar p {
+    font-size: 0.84rem !important;
+    line-height: 1.35 !important;
+  }
+
+  .customer-navbar .search-group,
+  .customer-topbar .search-group {
+    width: 100% !important;
+    max-width: none !important;
+    margin: 0 !important;
+  }
+
+  .customer-navbar .navbar-actions,
+  .customer-topbar .navbar-actions {
+    width: 100% !important;
+    display: grid !important;
+    grid-template-columns: minmax(0, 1fr) 48px !important;
+    gap: 0.6rem !important;
+    justify-content: stretch !important;
   }
 
   .customer-hero-panel {
@@ -1363,8 +1421,9 @@
   }
 
   .customer-profile-btn {
-    width: 100%;
-    justify-content: flex-start;
+    min-width: 0 !important;
+    width: 100% !important;
+    justify-content: flex-start !important;
   }
 }
 
@@ -1474,98 +1533,6 @@
   background-clip: text;
   -webkit-text-fill-color: transparent;
   font-weight: 900;
-}
-
-@media (max-width: 768px) {
-  .customer-main {
-    margin-left: 0;
-    width: 100%;
-    padding: 1rem;
-    padding-top: 125px;
-  }
-
-  .customer-navbar,
-  .customer-topbar {
-    left: 0;
-    width: 100%;
-    min-height: 105px;
-    padding: 1rem;
-  }
-}
-
-/* Final demo mobile polish: sidebar hides off-screen on mobile — content fills full width. */
-@media (max-width: 768px) {
-  /* Sidebar hides off-screen on mobile — content fills full width */
-  .customer-main,
-  .customer-dashboard.collapsed .customer-main {
-    margin-left: 0 !important;
-    width: 100% !important;
-    max-width: 100% !important;
-    padding: 1rem !important;
-    min-width: 0 !important;
-  }
-
-  .customer-navbar,
-  .customer-topbar {
-    position: relative !important;
-    left: auto !important;
-    right: auto !important;
-    top: auto !important;
-    width: 100% !important;
-    max-width: 100% !important;
-    min-height: auto !important;
-    display: grid !important;
-    grid-template-columns: minmax(0, 1fr) !important;
-    align-items: stretch !important;
-    gap: 0.75rem !important;
-    padding: 0.95rem !important;
-    margin: 0 0 1rem !important;
-  }
-
-  .customer-navbar .navbar-left,
-  .customer-topbar .navbar-left {
-    width: 100% !important;
-    min-width: 0 !important;
-  }
-
-  .customer-navbar h1,
-  .customer-topbar h1 {
-    font-size: 1.3rem !important;
-    line-height: 1.15 !important;
-    max-width: 100% !important;
-    white-space: normal !important;
-    word-break: normal !important;
-    overflow-wrap: anywhere !important;
-    letter-spacing: 0 !important;
-  }
-
-  .customer-navbar p,
-  .customer-topbar p {
-    font-size: 0.84rem !important;
-    line-height: 1.35 !important;
-  }
-
-  .customer-navbar .search-group,
-  .customer-topbar .search-group {
-    width: 100% !important;
-    max-width: none !important;
-    margin: 0 !important;
-  }
-
-  .customer-navbar .navbar-actions,
-  .customer-topbar .navbar-actions {
-    width: 100% !important;
-    display: grid !important;
-    grid-template-columns: minmax(0, 1fr) 48px !important;
-    gap: 0.6rem !important;
-    justify-content: stretch !important;
-  }
-
-  .customer-profile-btn {
-    min-width: 0 !important;
-    width: 100% !important;
-    justify-content: flex-start !important;
-  }
 }
 
 @media (max-width: 420px) {

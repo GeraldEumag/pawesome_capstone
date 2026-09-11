@@ -191,6 +191,21 @@
 
 /* ===== RESPONSIVE ===== */
 
+@media (max-width: 768px) {
+  .userinfo-section {
+    padding: 1.25rem;
+  }
+
+  .userinfo-profile-row {
+    gap: 1rem;
+  }
+
+  .userinfo-field {
+    gap: 0.75rem;
+    padding: 0.85rem 1.25rem;
+  }
+}
+
 @media (max-width: 480px) {
   .userinfo-section {
     padding: 1rem;

@@ -277,6 +277,12 @@
   .receptionist-main,
   .vet-main,
   .app-main {
+    padding-left: 0 !important;
+    padding-right: 0 !important;
+  }
+
+  .app-content,
+  .dashboard-content {
     padding-left: 0.75rem !important;
     padding-right: 0.75rem !important;
   }

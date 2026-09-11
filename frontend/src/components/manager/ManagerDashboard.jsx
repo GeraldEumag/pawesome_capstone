@@ -197,18 +197,6 @@ const ManagerDashboard = () => {
     window.managerDashboardToastTimer = window.setTimeout(() => setToast(null), 3500);
   }, []);
 
-  const handleProfilePhotoUpload = async (file) => {
-    try {
-      const { uploadProfilePhoto } = await import("../../api/client");
-      const data = await uploadProfilePhoto(file);
-      const photoUrl = data?.profile_photo || data?.url || "";
-      if (photoUrl) updateUser({ profile_photo: photoUrl });
-      showToast("Profile photo updated successfully.", "success");
-    } catch (err) {
-      showToast(err.message || "Failed to upload profile photo.", "error");
-    }
-  };
-
   const fetchDashboardData = useCallback(
     async ({ silent = false } = {}) => {
       if (!showOverview) return;
@@ -528,7 +516,6 @@ const ManagerDashboard = () => {
       role="manager"
       name={name}
       profilePhoto={profilePhoto}
-      onProfileUpload={handleProfilePhotoUpload}
       extraActions={extraActions}
       className="manager-dashboard"
     >

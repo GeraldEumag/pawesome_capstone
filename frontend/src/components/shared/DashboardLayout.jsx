@@ -12,7 +12,6 @@ const DashboardLayout = ({
   role,
   profilePhoto = "",
   name = "",
-  onProfileUpload,
   extraActions,
   children,
   showChatbot = false,
@@ -57,14 +56,11 @@ const DashboardLayout = ({
           <div className="navbar-actions">
             {extraActions}
 
-            {onProfileUpload && (
-              <DashboardProfile
-                name={name}
-                role={role}
-                image={profilePhoto}
-                onUpload={onProfileUpload}
-              />
-            )}
+            <DashboardProfile
+              name={name}
+              role={role}
+              image={profilePhoto}
+            />
 
             <NotificationDropdown role={role} />
           </div>

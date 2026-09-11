@@ -42,7 +42,7 @@ import {
 import AdminSidebar from "./AdminSidebar";
 import DashboardLayout from "../shared/DashboardLayout";
 import "./AdminDashboard.css";
-import { apiRequest, uploadProfilePhoto } from "../../api/client";
+import { apiRequest } from "../../api/client";
 import { formatCurrency } from "../../utils/currency";
 import { normalizeList } from "../../utils/normalizeList";
 import { useAuth } from "../../context/AuthContext";
@@ -69,17 +69,6 @@ const AdminDashboard = () => {
   const location = useLocation();
   const normalizedPath = location.pathname.replace(/\/+$/, "");
   const showOverview = normalizedPath === "/admin";
-
-
-  const handleProfilePhotoUpload = async (file) => {
-    try {
-      const data = await uploadProfilePhoto(file);
-      const photoUrl = data?.profile_photo || data?.url || "";
-      if (photoUrl) updateUser({ profile_photo: photoUrl });
-    } catch (err) {
-      showError("Failed to upload profile photo: " + err.message);
-    }
-  };
 
   const fetchDashboardData = useCallback(
     async ({ silent = false } = {}) => {
@@ -425,7 +414,6 @@ const AdminDashboard = () => {
       role="admin"
       name={name}
       profilePhoto={profilePhoto}
-      onProfileUpload={handleProfilePhotoUpload}
       extraActions={extraActions}
       showChatbot
       chatbotTitle="Admin Assistant"

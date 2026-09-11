@@ -193,3 +193,36 @@
     min-width: 120px;
   }
 }
+
+@media (max-width: 480px) {
+  .customer-services-page {
+    padding: 0.75rem;
+  }
+
+  .cs-hero {
+    padding: 1.25rem 0.85rem;
+  }
+
+  .cs-hero h1 {
+    font-size: 1.3rem;
+  }
+
+  .cs-cards {
+    grid-template-columns: 1fr;
+    gap: 0.75rem;
+  }
+
+  .cs-card {
+    padding: 1.25rem 1rem;
+  }
+
+  .cs-tabs {
+    flex-direction: column;
+  }
+
+  .cs-tab {
+    width: 100%;
+    min-width: 0;
+    justify-content: center;
+  }
+}

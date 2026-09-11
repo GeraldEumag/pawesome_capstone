@@ -314,26 +314,6 @@
   font-weight: 800;
 }
 
-/* Tablet */
-@media (max-width: 992px) {
-  .customer-payments-page {
-    padding: 1.25rem;
-  }
-
-  .customer-payments-header {
-    align-items: flex-start;
-    flex-direction: column;
-  }
-
-  .customer-payments-main-btn {
-    width: fit-content;
-  }
-
-  .customer-payments-summary-grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-}
-
 /* Mobile */
 @media (max-width: 640px) {
   .customer-payments-page {

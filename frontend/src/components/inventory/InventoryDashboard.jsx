@@ -31,7 +31,7 @@ import {
 } from "recharts";
 import InventorySidebar from "./InventorySidebar";
 import DashboardLayout from "../shared/DashboardLayout";
-import { apiRequest, uploadProfilePhoto } from "../../api/client";
+import { apiRequest } from "../../api/client";
 import "./InventoryDashboard.css";
 
 const InventoryDashboard = () => {
@@ -42,16 +42,6 @@ const InventoryDashboard = () => {
   const [dashboardData, setDashboardData] = useState(null);
   const [dashboardError, setDashboardError] = useState("");
   const location = useLocation();
-
-  const handleProfilePhotoUpload = async (file) => {
-    try {
-      const data = await uploadProfilePhoto(file);
-      const photoUrl = data?.profile_photo || data?.url || "";
-      if (photoUrl) updateUser({ profile_photo: photoUrl });
-    } catch (err) {
-      showError("Failed to upload profile photo: " + err.message);
-    }
-  };
 
   const normalizedPath = location.pathname.replace(/\/+$/, "");
   const showOverview = normalizedPath === "/inventory";
@@ -215,7 +205,6 @@ const InventoryDashboard = () => {
       role="inventory"
       name={name}
       profilePhoto={profilePhoto}
-      onProfileUpload={handleProfilePhotoUpload}
       extraActions={extraActions}
       showChatbot
       chatbotTitle="Inventory Assistant"

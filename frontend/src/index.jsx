@@ -15,6 +15,7 @@ import './styles/unifiedReports.css';
 import './styles/theme.css';
 import './styles/sweetalert-theme.css';
 import './styles/mobilePolish.css';
+import './styles/customerMobilePolish.css';
 import { AuthProvider } from './context/AuthContext';
 import App from './App.jsx';
 

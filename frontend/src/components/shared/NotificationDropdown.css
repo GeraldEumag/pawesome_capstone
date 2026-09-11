@@ -212,6 +212,12 @@
     right: 12px;
     width: min(340px, calc(100vw - 24px));
   }
+
+  .pawesome-notification-btn {
+    width: 44px;
+    height: 44px;
+    border-radius: 12px;
+  }
 }
 
 @media (max-width: 480px) {

@@ -290,4 +290,55 @@
   .vet-container {
     gap: 1rem;
   }
+
+  .vet-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.5rem;
+    padding: 1.25rem 1rem;
+  }
+
+  .vet-tabs {
+    flex-wrap: wrap;
+    gap: 0.4rem;
+  }
+
+  .vet-tabs button {
+    flex: 1;
+    min-width: 120px;
+    justify-content: center;
+  }
+
+  .vet-item {
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    padding: 0.6rem 0.85rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .vet-container {
+    gap: 0.85rem;
+  }
+
+  .vet-header {
+    padding: 1rem 0.85rem;
+  }
+
+  .vet-header h1 {
+    font-size: 1.2rem;
+  }
+
+  .vet-tabs {
+    flex-direction: column;
+  }
+
+  .vet-tabs button {
+    width: 100%;
+    min-width: 0;
+  }
+
+  .vet-form button[type="submit"] {
+    font-size: 0.9rem;
+  }
 }

@@ -6,8 +6,8 @@
 
 .dashboard-profile-btn {
   min-width: 170px;
-  height: 54px;
-  padding: 0 44px 0 14px;
+  height: 48px;
+  padding: 0 14px;
   border: 1px solid var(--color-border, #e0e0e0);
   border-radius: 999px;
   background: var(--color-surface, #ffffff);
@@ -56,70 +56,6 @@
   color: var(--color-muted, #666666);
 }
 
-.dashboard-profile-upload {
-  position: absolute;
-  right: 8px;
-  width: 32px;
-  height: 32px;
-  border-radius: 50%;
-  border: none;
-  background: linear-gradient(135deg, var(--color-primary, #6366f1), var(--color-primary-light, #818cf8));
-  color: white;
-  display: grid;
-  place-items: center;
-  cursor: pointer;
-  box-shadow: var(--shadow-primary, 0 2px 8px rgba(99, 102, 241, 0.4));
-  transition: opacity 0.2s ease;
-}
-
-.dashboard-profile-upload.uploading {
-  opacity: 0.7;
-  cursor: not-allowed;
-}
-
-.dashboard-profile-upload .spin {
-  animation: dp-spin 0.8s linear infinite;
-}
-
-@keyframes dp-spin {
-  from { transform: rotate(0deg); }
-  to   { transform: rotate(360deg); }
-}
-
-.dashboard-profile-toast {
-  position: absolute;
-  bottom: calc(100% + 10px);
-  right: 0;
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  padding: 7px 12px;
-  border-radius: 10px;
-  font-size: 0.78rem;
-  font-weight: 700;
-  white-space: nowrap;
-  z-index: 9999;
-  box-shadow: 0 4px 14px rgba(0,0,0,0.12);
-  animation: dp-fadein 0.25s ease;
-}
-
-.dashboard-profile-toast.success {
-  background: #d1fae5;
-  color: #065f46;
-  border: 1px solid rgba(16,185,129,0.3);
-}
-
-.dashboard-profile-toast.error {
-  background: #fee2e2;
-  color: #991b1b;
-  border: 1px solid rgba(239,68,68,0.3);
-}
-
-@keyframes dp-fadein {
-  from { opacity: 0; transform: translateY(6px); }
-  to   { opacity: 1; transform: translateY(0); }
-}
-
 /* ── MOBILE: collapse profile button to avatar-only circle ── */
 @media (max-width: 767px) {
   .dashboard-profile-btn {
@@ -133,16 +69,5 @@
   }
   .dashboard-profile-info {
     display: none !important;
-  }
-  /* Camera upload badge — stays a small circle, never stretches */
-  .dashboard-profile-upload {
-    min-height: 0 !important;
-    width: 20px !important;
-    height: 20px !important;
-    right: -3px !important;
-    top: -3px !important;
-    bottom: auto !important;
-    font-size: 9px !important;
-    padding: 0 !important;
   }
 }

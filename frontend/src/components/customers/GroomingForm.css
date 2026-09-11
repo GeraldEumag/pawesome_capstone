@@ -355,3 +355,70 @@
   background: rgba(107, 114, 128, 0.1);
   color: #374151;
 }
+
+/* ===== RESPONSIVE ===== */
+
+@media (max-width: 768px) {
+  .grooming-header {
+    flex-direction: column;
+    align-items: flex-start;
+    padding: 1.25rem 1rem;
+    gap: 0.5rem;
+  }
+
+  .grooming-tabs {
+    flex-wrap: wrap;
+    gap: 0.4rem;
+  }
+
+  .grooming-tabs button {
+    flex: 1;
+    min-width: 120px;
+    justify-content: center;
+  }
+
+  .grooming-card {
+    padding: 1rem;
+  }
+
+  .grooming-item {
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    padding: 0.6rem 0.85rem;
+  }
+
+  .grooming-item-body {
+    flex: 1 1 100%;
+  }
+}
+
+@media (max-width: 480px) {
+  .grooming-container {
+    gap: 0.85rem;
+  }
+
+  .grooming-header {
+    padding: 1rem 0.85rem;
+  }
+
+  .grooming-header h1 {
+    font-size: 1.2rem;
+  }
+
+  .grooming-tabs {
+    flex-direction: column;
+  }
+
+  .grooming-tabs button {
+    width: 100%;
+    min-width: 0;
+  }
+
+  .grooming-card {
+    padding: 0.85rem;
+  }
+
+  .grooming-form button[type="submit"] {
+    font-size: 0.9rem;
+  }
+}

@@ -1,0 +1,134 @@
+/*
+ * customerMobilePolish.css — Customer portal mobile enhancements
+ *
+ * Imported AFTER mobilePolish.css in index.jsx so it wins the cascade for
+ * customer-specific overrides. Focuses on touch targets, safe-area insets
+ * (notch/home-indicator), and small-phone spacing refinements.
+ *
+ * Breakpoints (aligned with responsive.css):
+ *   Phone      : max-width 767px
+ *   Small Phone : max-width 480px
+ */
+
+/* ══════════════════════════════════════════════════════════════
+   A. SAFE-AREA INSETS — avoid notch / home indicator overlap
+   ══════════════════════════════════════════════════════════════ */
+
+@media (max-width: 767px) {
+  /* Safe-area padding on CONTENT only (not .app-main — topbar must fill full width) */
+  .customer-dashboard .app-content,
+  .customer-dashboard .dashboard-content {
+    padding-left: max(1rem, env(safe-area-inset-left)) !important;
+    padding-right: max(1rem, env(safe-area-inset-right)) !important;
+  }
+
+  /* Topbar: internal padding for safe-area, but background fills full width */
+  .customer-dashboard .app-topbar {
+    padding-left: max(0.75rem, env(safe-area-inset-left)) !important;
+    padding-right: max(0.75rem, env(safe-area-inset-right)) !important;
+  }
+
+  .customer-sidebar {
+    padding-left: env(safe-area-inset-left) !important;
+  }
+
+  .customer-sidebar .sidebar-footer {
+    padding-bottom: max(1rem, env(safe-area-inset-bottom)) !important;
+  }
+}
+
+/* ══════════════════════════════════════════════════════════════
+   B. TOUCH TARGETS — ensure 44x44px minimum on customer buttons
+   ══════════════════════════════════════════════════════════════ */
+
+@media (max-width: 767px) {
+  /* Customer nav links */
+  .customer-sidebar .nav-link {
+    min-height: 44px;
+    padding-top: 0.75rem;
+    padding-bottom: 0.75rem;
+  }
+
+  /* Customer action buttons (book, pay, view, refresh, export) */
+  .customer-dashboard .primary-btn,
+  .customer-dashboard .secondary-btn,
+  .customer-payments-main-btn,
+  .cs-card-action,
+  .view-btn,
+  .view-proof-btn,
+  .refresh-btn,
+  .export-btn,
+  .mark-all-read-btn,
+  .retry-btn,
+  .receipt-btn,
+  .pets-submit-btn,
+  .pets-reset-btn,
+  .pet-edit-btn,
+  .pet-delete-btn,
+  .pet-history-btn,
+  .grooming-form button[type="submit"],
+  .vet-form button[type="submit"],
+  .booking-actions button,
+  .confinement-action-btn,
+  .confinement-file-label {
+    min-height: 44px;
+  }
+
+  /* Status badges / chips stay compact but readable */
+  .status-badge,
+  .status,
+  .payment-status {
+    min-height: 28px;
+  }
+}
+
+/* ══════════════════════════════════════════════════════════════
+   C. SMALL-PHONE SPACING — more usable width on <=480px
+   ══════════════════════════════════════════════════════════════ */
+
+@media (max-width: 480px) {
+  .customer-services-page,
+  .customer-status-page,
+  .customer-notifications,
+  .customer-history,
+  .customer-payments-page,
+  .customer-pets,
+  .customer-medical-confinements,
+  .grooming-container,
+  .vet-container,
+  .customer-hotel-reservation {
+    padding-left: 0.75rem !important;
+    padding-right: 0.75rem !important;
+  }
+
+  /* Cards: tighter radius on very small screens */
+  .customer-card,
+  .stat-card,
+  .quick-action-card,
+  .panel,
+  .history-card,
+  .cs-card,
+  .notifications-panel,
+  .customer-payments-panel,
+  .pets-card,
+  .grooming-card {
+    border-radius: 18px !important;
+  }
+}
+
+/* ══════════════════════════════════════════════════════════════
+   D. HORIZONTAL SCROLL SAFETY — tables scroll, never overflow
+   ══════════════════════════════════════════════════════════════ */
+
+@media (max-width: 767px) {
+  .customer-payments-table-wrapper,
+  .customer-status-table-wrap {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .customer-payments-table,
+  .customer-status-table {
+    min-width: 560px;
+  }
+}

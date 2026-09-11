@@ -26,7 +26,7 @@ import {
   faUserDoctor,
 } from "@fortawesome/free-solid-svg-icons";
 
-import { apiRequest, uploadProfilePhoto } from "../../api/client";
+import { apiRequest } from "../../api/client";
 import VeterinarySidebar from "./VeterinarySidebar";
 import DashboardLayout from "../shared/DashboardLayout";
 import toast from "react-hot-toast";
@@ -42,16 +42,6 @@ const VetDashboard = () => {
   const [loadingBoarders, setLoadingBoarders] = useState(false);
   const [loading, setLoading] = useState(true);
   const [lastUpdated, setLastUpdated] = useState(new Date());
-
-  const handleProfilePhotoUpload = async (file) => {
-    try {
-      const data = await uploadProfilePhoto(file);
-      const photoUrl = data?.profile_photo || data?.url || "";
-      if (photoUrl) updateUser({ profile_photo: photoUrl });
-    } catch (err) {
-      showError("Failed to upload profile photo: " + err.message);
-    }
-  };
 
   const location = useLocation();
   const normalizedPath = location.pathname.replace(/\/+$/, "");
@@ -256,7 +246,6 @@ const VetDashboard = () => {
       role="veterinary"
       name={name}
       profilePhoto={profilePhoto}
-      onProfileUpload={handleProfilePhotoUpload}
       showChatbot
       chatbotTitle="Veterinary Assistant"
       chatbotSubtitle="Appointments, patient workflow, and dashboard help"
