@@ -90,7 +90,7 @@ const AdminDashboard = () => {
           throw dashboardResult.reason;
         }
 
-        setDashboardData(dashboardResult.value || {});
+        setDashboardData(dashboardResult.value?.data || dashboardResult.value || {});
         setSystemHealth(
           healthResult.status === "fulfilled" ? healthResult.value || null : null
         );

@@ -7,14 +7,14 @@ import { apiRequest, API_URL } from "../api/client";
 
 const HEALTH_CHECK_ENDPOINTS = [
   { path: "/health", name: "Health Check", required: true },
-  { path: "/api/auth/me", name: "Auth Endpoint", required: true },
+  { path: "/auth/me", name: "Auth Endpoint", required: true },
   { path: "/admin/reports/executive", name: "Executive Dashboard API", required: false },
   { path: "/admin/reports/predictive", name: "Predictive Analytics API", required: false },
   { path: "/admin/reports/customers/segments", name: "Customer Segmentation API", required: false },
   { path: "/admin/reports/comparison", name: "Comparative Reporting API", required: false },
   { path: "/admin/reports/alerts", name: "Automated Alerts API", required: false },
   { path: "/admin/reports/sales-analysis", name: "Sales Analysis API", required: false },
-  { path: "/admin/reports/inventory-opt", name: "Inventory Optimization API", required: false },
+  { path: "/admin/reports/inventory-optimization", name: "Inventory Optimization API", required: false },
   { path: "/admin/reports/staff-performance", name: "Staff Performance API", required: false },
 ];
 
@@ -151,7 +151,7 @@ export const checkAdvancedAPIs = async () => {
     "/admin/reports/comparison",
     "/admin/reports/alerts",
     "/admin/reports/sales-analysis",
-    "/admin/reports/inventory-opt",
+    "/admin/reports/inventory-optimization",
     "/admin/reports/staff-performance",
   ];
   

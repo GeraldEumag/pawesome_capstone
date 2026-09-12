@@ -7,6 +7,7 @@ use App\Models\Sale;
 use App\Models\Appointment;
 use App\Models\InventoryItem;
 use App\Models\ActivityLog;
+use App\Models\User;
 use App\Services\WorkflowNotifier;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
@@ -262,6 +263,9 @@ class DashboardController extends Controller
         return response()->json([
             'transactions' => $paginated,
             'data' => $paginated,
+            'salespeople' => User::whereIn('role', ['cashier', 'admin', 'manager'])
+                ->orderBy('name')
+                ->get(['id', 'name', 'role']),
             'meta' => [
                 'total'        => $total,
                 'per_page'     => $perPage,

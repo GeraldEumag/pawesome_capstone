@@ -13,7 +13,7 @@ const ReceptionistWalkIns = lazy(() => import("../components/receptionist/Recept
 const CustomerManagement = lazy(() => import("../components/receptionist/ReceptionistCustomerManagement"));
 const CustomersProfile = lazy(() => import("../components/receptionist/ReceptionistCustomersProfile"));
 const ProfileSettings = lazy(() => import("../components/shared/ProfileSettings"));
-const Reports = lazy(() => import("../components/customers/CustomerReports"));
+const Reports = lazy(() => import("../components/receptionist/ReceptionistReports"));
 const ReceptionistHistory = lazy(() => import("../components/receptionist/ReceptionistHistory"));
 const MyPayroll = lazy(() => import("../components/shared/MyPayroll"));
 

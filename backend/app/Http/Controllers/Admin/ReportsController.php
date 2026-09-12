@@ -11,6 +11,7 @@ use App\Models\Attendance;
 use App\Models\Payroll;
 use App\Models\Sale;
 use App\Models\User;
+use App\Services\RevenueService;
 use Illuminate\Database\Query\Builder;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
@@ -261,10 +262,11 @@ class ReportsController extends Controller
             ->limit(250)
             ->get();
 
-        $posRevenue = $this->dateRange(DB::table('sales'), $request)->sum('amount');
-        $paidOrderRevenue = (clone $orders)->where('payment_status', 'paid')->sum('total_amount');
-        $paidBoardingRevenue = $boardingPayments->where('payment_status', 'paid')->sum('amount');
-        $paidConfinementRevenue = $confinementPayments->where('payment_status', 'paid')->sum('amount');
+        $posRevenue = $this->dateRange(DB::table('sales'), $request)
+            ->whereNotIn('type', ['refund', 'multi_payment'])
+            ->whereNotIn('status', ['voided', 'cancelled'])
+            ->sum('amount');
+        $salesRows = $this->salesRows($request);
 
         $message = null;
         if ($paymentRows->isEmpty() && $rows->isEmpty()) {
@@ -274,7 +276,7 @@ class ReportsController extends Controller
         return response()->json([
             'success' => true,
             'summary' => [
-                'total_revenue' => (float) $paidOrderRevenue + (float) $posRevenue + (float) $paidBoardingRevenue + (float) $paidConfinementRevenue,
+                'total_revenue' => $this->unifiedRevenue($request),
                 'total_cashier_transactions' => $this->dateRange(DB::table('sales'), $request)->count(),
                 'pos_sales' => (float) $posRevenue,
                 'pending_payment_proofs' => $paymentRows->where('payment_status', 'pending')->count(),
@@ -284,7 +286,7 @@ class ReportsController extends Controller
             ],
             'data' => [
                 'summary' => [
-                    'total_revenue' => (float) $paidOrderRevenue + (float) $posRevenue + (float) $paidBoardingRevenue + (float) $paidConfinementRevenue,
+                    'total_revenue' => $this->unifiedRevenue($request),
                     'paid_orders' => (clone $orders)->where('payment_status', 'paid')->count(),
                     'pending_payment_proofs' => $paymentRows->where('payment_status', 'pending')->count(),
                     'rejected_payment_proofs' => $paymentRows->where('payment_status', 'rejected')->count(),
@@ -295,9 +297,11 @@ class ReportsController extends Controller
                 ],
                 'orders' => $rows,
                 'payment_verifications' => $paymentRows,
-                'transactions' => $this->salesRows($request),
+                'transactions' => $salesRows,
+                'salespeople' => User::whereIn('role', ['cashier', 'admin', 'manager'])->orderBy('name')->get(['id', 'name', 'role']),
             ],
             'charts' => [
+                'trend' => $this->dailyTrend($salesRows),
                 'payment_methods' => $paymentRows->groupBy(fn ($row) => $row->payment_method ?: 'Unspecified')
                     ->map(fn ($group, $method) => ['method' => $method, 'count' => $group->count(), 'amount' => (float) $group->sum('amount')])
                     ->values(),
@@ -593,6 +597,9 @@ class ReportsController extends Controller
                 'monthly_completed' => $completed,
                 'period' => $this->periodLabel($request),
             ],
+            'charts' => [
+                'trend' => $this->dailyTrend($this->appointmentRows($request), 'scheduled_at', 'price'),
+            ],
             'message' => $message,
         ]);
     }
@@ -854,6 +861,7 @@ class ReportsController extends Controller
                 'generated_at' => now()->toIso8601String(),
             ],
             'charts' => [
+                'trend' => $this->dailyTrend($payments),
                 'payment_methods' => $payments->groupBy(fn ($payment) => $payment->payment_method ?: 'Unspecified')
                     ->map(fn ($group, $method) => ['method' => $method, 'count' => $group->count(), 'amount' => (float) $group->sum('amount')])
                     ->values(),
@@ -870,10 +878,42 @@ class ReportsController extends Controller
                 'customer_orders.*',
                 DB::raw('COALESCE(customer_orders.customer_name, customer_orders.customer_email, CONCAT("Customer #", customer_orders.customer_id)) as customer_display'),
                 DB::raw('DATE(customer_orders.created_at) as date'),
+                DB::raw('"store" as order_source'),
             ])
             ->latest('customer_orders.created_at')
             ->limit(500)
             ->get();
+
+        // POS sales are orders too — merge them so walk-in sales appear here
+        if ($this->tableExists('sales')) {
+            $posSales = $this->dateRange(DB::table('sales'), $request, 'sales.created_at')
+                ->leftJoin('customers', 'customers.id', '=', 'sales.customer_id')
+                ->select([
+                    'sales.id',
+                    'sales.customer_id',
+                    DB::raw('COALESCE(sales.transaction_number, CONCAT("POS-", sales.id)) as receipt_number'),
+                    'sales.type as order_type',
+                    'sales.status',
+                    DB::raw('CASE WHEN sales.status IN ("completed","paid") THEN "paid" WHEN sales.status = "voided" THEN "voided" ELSE "unpaid" END as payment_status'),
+                    DB::raw($this->firstAvailableColumn('sales', ['payment_method', 'payment_type'], '"cash"') . ' as payment_method'),
+                    'sales.total_amount',
+                    'sales.subtotal',
+                    'sales.tax_amount',
+                    'sales.discount_amount',
+                    'sales.created_at',
+                    'sales.updated_at',
+                    DB::raw('COALESCE(customers.name, "Walk-in") as customer_display'),
+                    DB::raw('DATE(sales.created_at) as date'),
+                    DB::raw('"pos" as order_source'),
+                ])
+                ->latest('sales.created_at')
+                ->limit(500)
+                ->get();
+
+            $orders = $orders->concat($posSales);
+        }
+
+        $orders = $orders->sortByDesc('created_at')->values();
 
         // Real revenue trend grouped by order date
         $trend = $orders->groupBy('date')->map(fn ($group, $date) => [
@@ -915,6 +955,7 @@ class ReportsController extends Controller
                     'service_requests.status',
                     'service_requests.payment_status',
                     'service_requests.created_at',
+                    DB::raw($this->firstAvailableColumn('service_requests', ['total_amount', 'price', 'service_price'], '0') . ' as amount'),
                     DB::raw('"service_request" as source'),
                 ])
                 ->latest('service_requests.created_at')
@@ -937,6 +978,7 @@ class ReportsController extends Controller
                     'appointments.status',
                     DB::raw('NULL as payment_status'),
                     'appointments.created_at',
+                    DB::raw($this->firstAvailableColumn('appointments', ['price', 'amount', 'total_amount'], '0') . ' as amount'),
                     DB::raw('"appointment" as source'),
                 ])
                 ->latest('appointments.created_at')
@@ -959,6 +1001,7 @@ class ReportsController extends Controller
                     'boardings.status',
                     DB::raw($this->columnSelect('boardings', 'payment_status', 'NULL', 'payment_status')),
                     'boardings.created_at',
+                    DB::raw($this->firstAvailableColumn('boardings', ['total_amount', 'amount', 'price'], '0') . ' as amount'),
                     DB::raw('"boarding" as source'),
                 ])
                 ->latest('boardings.created_at')
@@ -979,6 +1022,7 @@ class ReportsController extends Controller
                     'medical_confinements.status',
                     'medical_confinements.payment_status',
                     'medical_confinements.created_at',
+                    DB::raw($this->firstAvailableColumn('medical_confinements', ['total_amount', 'amount', 'price'], '0') . ' as amount'),
                     DB::raw('"medical_confinement" as source'),
                 ])
                 ->latest('medical_confinements.created_at')
@@ -1010,6 +1054,7 @@ class ReportsController extends Controller
                 'generated_at' => now()->toIso8601String(),
             ],
             'charts' => [
+                'trend' => $this->dailyTrend($requests),
                 'service_types' => $requests->groupBy('service_type')
                     ->map(fn ($group, $type) => ['type' => $type ?: 'unknown', 'count' => $group->count()])
                     ->values(),
@@ -1050,16 +1095,12 @@ class ReportsController extends Controller
     private function overviewMetrics(Request $request): array
     {
         $orders = $this->customerOrdersBase($request);
-        $paidOrders = $this->customerOrdersBase($request)->where('payment_status', 'paid');
-        $salesRevenue = $this->dateRange(DB::table('sales'), $request)->sum('amount');
         $boardingPayments = $this->paymentRowsFromTable($request, 'boardings', 'boarding', 'Boarding');
         $confinementPayments = $this->paymentRowsFromTable($request, 'medical_confinements', 'medical_confinement', 'Medical Confinement');
         $serviceRequests = $this->serviceRequestsBase($request);
         $appointments = $this->appointmentsBase($request);
         $boardings = $this->boardingsBase($request);
         $confinements = $this->medicalConfinementsBase($request);
-        $paidBoardingRevenue = $boardingPayments->whereIn('payment_status', ['paid', 'completed', 'verified'])->sum('amount');
-        $paidConfinementRevenue = $confinementPayments->whereIn('payment_status', ['paid', 'completed', 'verified'])->sum('amount');
 
         return [
             'total_customers' => Customer::count(),
@@ -1068,7 +1109,7 @@ class ReportsController extends Controller
             'total_orders' => (clone $orders)->count(),
             'total_services' => (clone $serviceRequests)->count() + (clone $appointments)->count() + (clone $boardings)->count() + (clone $confinements)->count(),
             'total_payments' => $this->paymentRows($request)->count(),
-            'total_revenue' => (float) $paidOrders->sum('total_amount') + (float) $salesRevenue + (float) $paidBoardingRevenue + (float) $paidConfinementRevenue,
+            'total_revenue' => $this->unifiedRevenue($request),
             'pending_approvals' => $this->customerOrdersBase($request)->where('status', 'pending')->count()
                 + $this->serviceRequestsBase($request)->where('status', 'pending')->count()
                 + $this->boardingsBase($request)->where('status', 'pending')->count()
@@ -1089,6 +1130,21 @@ class ReportsController extends Controller
             'paid_orders' => $this->customerOrdersBase($request)->where('payment_status', 'paid')->count(),
             'rejected_orders' => $this->customerOrdersBase($request)->where('status', 'rejected')->count(),
         ];
+    }
+
+    /**
+     * Total revenue across every paid source for the request's date range.
+     */
+    private function unifiedRevenue(Request $request): float
+    {
+        $from = $request->query('from') ?: $request->query('start_date') ?: $request->query('startDate');
+        $to = $request->query('to') ?: $request->query('end_date') ?: $request->query('endDate');
+        $datePattern = '/^\d{4}-\d{2}-\d{2}$/';
+
+        return (new RevenueService())->total(
+            $from && preg_match($datePattern, $from) ? Carbon::parse($from) : null,
+            $to && preg_match($datePattern, $to) ? Carbon::parse($to) : null
+        );
     }
 
     private function activeFilters(Request $request): array
@@ -1724,6 +1780,113 @@ class ReportsController extends Controller
     }
 
     /**
+     * Build a per-day trend series from a collection of DB rows.
+     */
+    private function dailyTrend($rows, string $dateColumn = 'created_at', string $amountColumn = 'amount')
+    {
+        return collect($rows)
+            ->groupBy(function ($row) use ($dateColumn) {
+                $raw = $row->{$dateColumn} ?? $row->date ?? $row->created_at ?? null;
+                if (!$raw) {
+                    return 'unknown';
+                }
+                try {
+                    return Carbon::parse($raw)->format('Y-m-d');
+                } catch (\Throwable) {
+                    return 'unknown';
+                }
+            })
+            ->filter(fn ($group, $date) => $date !== 'unknown')
+            ->map(fn ($group, $date) => [
+                'date' => $date,
+                'revenue' => (float) $group->sum(fn ($row) => (float) ($row->{$amountColumn} ?? $row->amount ?? $row->total_amount ?? 0)),
+                'orders' => $group->count(),
+                'count' => $group->count(),
+            ])
+            ->sortKeys()
+            ->values();
+    }
+
+    /**
+     * Per-weekday seasonality factors (weekday avg / overall avg).
+     * $daily: [['date' => 'Y-m-d', 'actual' => float], ...]
+     */
+    private function weekdayFactors(array $daily): array
+    {
+        $sums = array_fill(0, 7, 0.0);
+        $counts = array_fill(0, 7, 0);
+
+        foreach ($daily as $row) {
+            $weekday = Carbon::parse($row['date'])->dayOfWeek;
+            $sums[$weekday] += (float) $row['actual'];
+            $counts[$weekday]++;
+        }
+
+        $n = count($daily);
+        $overall = $n > 0 ? array_sum(array_column($daily, 'actual')) / $n : 0;
+
+        $factors = [];
+        for ($w = 0; $w < 7; $w++) {
+            $avg = $counts[$w] > 0 ? $sums[$w] / $counts[$w] : $overall;
+            $factors[$w] = $overall > 0 ? max(0.2, $avg / $overall) : 1.0;
+        }
+
+        return $factors;
+    }
+
+    /**
+     * Forecast future values via least-squares linear trend scaled by
+     * day-of-week seasonality, with confidence bounds from residual std dev.
+     * $daily: chronological [['date' => 'Y-m-d', 'actual' => float], ...]
+     */
+    private function forecastSeries(array $daily, int $days): array
+    {
+        $n = count($daily);
+        if ($n === 0) {
+            return [];
+        }
+
+        $sumX = $n * ($n - 1) / 2;
+        $sumY = array_sum(array_column($daily, 'actual'));
+        $sumXY = 0;
+        $sumX2 = 0;
+        foreach ($daily as $i => $row) {
+            $sumXY += $i * (float) $row['actual'];
+            $sumX2 += $i * $i;
+        }
+        $denom = $n * $sumX2 - $sumX * $sumX;
+        $slope = $denom != 0 ? ($n * $sumXY - $sumX * $sumY) / $denom : 0;
+        $intercept = ($sumY - $slope * $sumX) / $n;
+
+        $factors = $this->weekdayFactors($daily);
+
+        $residuals = [];
+        foreach ($daily as $i => $row) {
+            $w = Carbon::parse($row['date'])->dayOfWeek;
+            $residuals[] = $row['actual'] - ($intercept + $slope * $i) * $factors[$w];
+        }
+        $stdDev = sqrt(array_sum(array_map(fn ($r) => $r * $r, $residuals)) / max(1, $n - 1));
+
+        $forecast = [];
+        for ($i = 1; $i <= $days; $i++) {
+            $date = Carbon::now()->addDays($i);
+            $x = $n - 1 + $i;
+            $predicted = max(0, ($intercept + $slope * $x) * $factors[$date->dayOfWeek]);
+            $margin = 1.28 * $stdDev * sqrt($i / max(1, $days));
+
+            $forecast[] = [
+                'date' => $date->format('Y-m-d'),
+                'predicted' => round($predicted, 2),
+                'upper_bound' => round($predicted + $margin, 2),
+                'lower_bound' => round(max(0, $predicted - $margin), 2),
+                'confidence' => round(max(60, 95 - ($i / max(1, $days)) * 25), 1),
+            ];
+        }
+
+        return $forecast;
+    }
+
+    /**
      * Executive Dashboard - Real-time KPIs with ACCURATE data
      */
     public function executiveOverview(Request $request)
@@ -1732,15 +1895,16 @@ class ReportsController extends Controller
         $to = $request->query('to', Carbon::today()->toDateString());
         $fromDate = Carbon::parse($from)->startOfDay();
         $toDate = Carbon::parse($to)->endOfDay();
+        $revenueService = new RevenueService();
 
-        // ACCURATE revenue calculations
-        $todayRevenue = (float) Sale::whereDate('created_at', Carbon::today())->sum('amount') ?? 0;
-        $yesterdayRevenue = (float) Sale::whereDate('created_at', Carbon::yesterday())->sum('amount') ?? 0;
-        $periodRevenue = (float) Sale::whereBetween('created_at', [$fromDate, $toDate])->sum('amount') ?? 0;
-        
-        // ACCURATE order counts
-        $todayOrders = Sale::whereDate('created_at', Carbon::today())->count();
-        $periodOrders = Sale::whereBetween('created_at', [$fromDate, $toDate])->count();
+        // Revenue counts every paid source (POS, orders, services, boarding, confinement)
+        $todayRevenue = $revenueService->total(Carbon::today(), Carbon::today());
+        $yesterdayRevenue = $revenueService->total(Carbon::yesterday(), Carbon::yesterday());
+        $periodRevenue = $revenueService->total($fromDate, $toDate);
+
+        // Order counts across all revenue sources
+        $todayOrders = $revenueService->count(Carbon::today(), Carbon::today());
+        $periodOrders = $revenueService->count($fromDate, $toDate);
         
         // Status breakdown - ACCURATE counts from real data
         $statusBreakdown = Sale::whereBetween('created_at', [$fromDate, $toDate])
@@ -1776,18 +1940,18 @@ class ReportsController extends Controller
         $lowStockItems = InventoryItem::whereRaw('stock <= reorder_level')->count();
         $criticalStockItems = InventoryItem::whereRaw('stock <= reorder_level / 2')->count();
 
-        // ACCURATE revenue trend (last 30 days with proper date formatting)
+        // Revenue trend (last 30 days, all paid sources)
+        $dailyMap = $revenueService->daily(Carbon::now()->subDays(29), Carbon::now());
         $revenueTrend = [];
         for ($i = 29; $i >= 0; $i--) {
             $date = Carbon::now()->subDays($i);
-            $dayRevenue = (float) Sale::whereDate('created_at', $date)->sum('amount') ?? 0;
-            $dayOrders = Sale::whereDate('created_at', $date)->count();
-            
+            $day = $dailyMap[$date->format('Y-m-d')] ?? ['revenue' => 0, 'count' => 0];
+
             $revenueTrend[] = [
                 'date' => $date->format('M d'),
                 'full_date' => $date->format('Y-m-d'),
-                'revenue' => $dayRevenue,
-                'orders' => $dayOrders,
+                'revenue' => (float) $day['revenue'],
+                'orders' => (int) $day['count'],
             ];
         }
 
@@ -1795,14 +1959,14 @@ class ReportsController extends Controller
         $daysDiff = $fromDate->diffInDays($toDate) + 1;
         $previousPeriodStart = $fromDate->copy()->subDays($daysDiff);
         $previousPeriodEnd = $fromDate->copy()->subDay();
-        
-        $previousRevenue = (float) Sale::whereBetween('created_at', [$previousPeriodStart, $previousPeriodEnd])->sum('amount') ?? 0;
-        $previousOrders = Sale::whereBetween('created_at', [$previousPeriodStart, $previousPeriodEnd])->count();
-        
+
+        $previousRevenue = $revenueService->total($previousPeriodStart, $previousPeriodEnd);
+        $previousOrders = $revenueService->count($previousPeriodStart, $previousPeriodEnd);
+
         // Calculate accurate YoY growth if data exists
         $lastYearStart = $fromDate->copy()->subYear();
         $lastYearEnd = $toDate->copy()->subYear();
-        $lastYearRevenue = (float) Sale::whereBetween('created_at', [$lastYearStart, $lastYearEnd])->sum('amount') ?? 0;
+        $lastYearRevenue = $revenueService->total($lastYearStart, $lastYearEnd);
         $yoyGrowth = $lastYearRevenue > 0 ? round((($periodRevenue - $lastYearRevenue) / $lastYearRevenue) * 100, 1) : 0;
 
         // Detect anomalies based on ACCURATE data
@@ -1850,6 +2014,15 @@ class ReportsController extends Controller
                 'status_breakdown' => $completeStatusBreakdown,
                 'revenue_trend' => $revenueTrend,
                 'anomalies' => $anomalies,
+                'predictions' => [
+                    'next_month_revenue' => (float) array_sum(array_column(
+                        $this->forecastSeries(array_map(
+                            fn ($d) => ['date' => $d['full_date'], 'actual' => $d['revenue']],
+                            $revenueTrend
+                        ), 30),
+                        'predicted'
+                    )),
+                ],
                 'comparisons' => [
                     'previous_revenue' => $previousRevenue,
                     'previous_orders' => $previousOrders,
@@ -1866,41 +2039,78 @@ class ReportsController extends Controller
     public function predictiveAnalytics(Request $request)
     {
         $metric = $request->query('metric', 'revenue');
-        $forecastDays = $request->query('forecast_days', 30);
+        $forecastDays = max(7, min(90, (int) $request->query('forecast_days', 30)));
 
+        // Forecast on unified revenue (all paid sources), not just POS sales
+        $dailyMap = (new RevenueService())->daily(Carbon::now()->subDays(89), Carbon::now());
         $historicalData = [];
         for ($i = 89; $i >= 0; $i--) {
             $date = Carbon::now()->subDays($i);
+            $day = $dailyMap[$date->format('Y-m-d')] ?? ['revenue' => 0, 'count' => 0];
             $historicalData[] = [
                 'date' => $date->format('Y-m-d'),
-                'actual' => (float) ($metric === 'revenue' ? Sale::whereDate('created_at', $date)->sum('amount') : Sale::whereDate('created_at', $date)->count()),
+                'actual' => (float) ($metric === 'revenue' ? $day['revenue'] : $day['count']),
             ];
         }
 
-        $last30Days = array_slice($historicalData, -30);
-        $avgValue = array_sum(array_column($last30Days, 'actual')) / count($last30Days);
+        $forecastData = $this->forecastSeries($historicalData, $forecastDays);
+        $weekdayFactors = $this->weekdayFactors($historicalData);
+        $weekendAvg = ($weekdayFactors[0] + $weekdayFactors[6]) / 2;
+        $weekdayAvg = array_sum(array_slice($weekdayFactors, 1, 5)) / 5;
+        $weekendBoostPct = $weekdayAvg > 0 ? round(($weekendAvg / $weekdayAvg - 1) * 100, 1) : 0;
 
-        $forecastData = [];
-        for ($i = 1; $i <= $forecastDays; $i++) {
-            $predicted = $avgValue * pow(1.02, $i / 30);
-            $forecastData[] = [
-                'date' => Carbon::now()->addDays($i)->format('Y-m-d'),
-                'predicted' => round($predicted, 2),
-                'upper_bound' => round($predicted * 1.15, 2),
-                'lower_bound' => round($predicted * 0.85, 2),
-                'confidence' => max(70, 95 - $i),
+        $totalForecast = array_sum(array_column($forecastData, 'predicted'));
+        $last30 = array_slice($historicalData, -30);
+        $prev30 = array_slice($historicalData, -60, 30);
+        $last30Total = array_sum(array_column($last30, 'actual'));
+        $prev30Total = array_sum(array_column($prev30, 'actual'));
+        $trendPct = $prev30Total > 0 ? round(($last30Total - $prev30Total) / $prev30Total * 100, 1) : 0;
+
+        $recommendations = [];
+        if ($weekendBoostPct > 5) {
+            $weekendDays = intdiv($forecastDays, 7) * 2;
+            $avgDailyForecast = $forecastDays > 0 ? $totalForecast / $forecastDays : 0;
+            $impact = $avgDailyForecast * ($weekendBoostPct / 100) * $weekendDays;
+            $recommendations[] = [
+                'type' => 'opportunity',
+                'title' => 'Weekend Revenue Spike Expected',
+                'description' => "Revenue typically rises {$weekendBoostPct}% on weekends based on the last 90 days",
+                'impact' => '+₱' . number_format($impact, 0) . ' potential',
+                'action' => 'View Schedule',
+            ];
+        }
+        if ($trendPct < -5) {
+            $recommendations[] = [
+                'type' => 'warning',
+                'title' => 'Downward Trend Detected',
+                'description' => "Last 30 days are {$trendPct}% below the prior 30 days",
+                'impact' => $metric === 'revenue' ? '₱' . number_format(abs($last30Total - $prev30Total), 0) . ' shortfall' : abs($last30Total - $prev30Total) . ' fewer orders',
+                'action' => 'Review Sales',
+            ];
+        } elseif ($trendPct > 5) {
+            $recommendations[] = [
+                'type' => 'opportunity',
+                'title' => 'Growth Trend Detected',
+                'description' => "Last 30 days are {$trendPct}% above the prior 30 days",
+                'impact' => $metric === 'revenue' ? '+₱' . number_format($last30Total - $prev30Total, 0) : '+' . ($last30Total - $prev30Total) . ' orders',
+                'action' => 'View Details',
             ];
         }
 
         return response()->json([
             'success' => true,
             'data' => [
+                'metric' => $metric,
                 'historical_data' => $historicalData,
                 'forecast_data' => $forecastData,
-                'seasonality' => ['weekend_boost' => 1.2, 'monthly_peak' => 'last_friday'],
-                'recommendations' => [
-                    ['type' => 'opportunity', 'title' => 'Weekend Revenue Spike Expected', 'description' => 'Revenue typically increases 20% on weekends', 'impact' => '+₱15,000 potential', 'action' => 'View Schedule'],
+                'seasonality' => [
+                    'weekend_boost' => round($weekendAvg, 3),
+                    'weekend_boost_pct' => $weekendBoostPct,
+                    'weekday_factors' => $weekdayFactors,
                 ],
+                'trend_pct' => $trendPct,
+                'forecast_total' => round($totalForecast, 2),
+                'recommendations' => $recommendations,
             ],
         ]);
     }
@@ -1955,37 +2165,40 @@ class ReportsController extends Controller
         $primaryMetrics = $this->getPeriodMetrics($primaryFrom, $primaryTo);
         $comparisonMetrics = $this->getPeriodMetrics($comparisonFrom, $comparisonTo);
 
-        // Real daily trend data for primary period
+        // Real daily trend data for primary period (all paid sources)
+        $revenueService = new RevenueService();
+        $currentDaily = $revenueService->daily($primaryFrom, $primaryTo);
+        $previousDaily = $revenueService->daily($comparisonFrom, $comparisonTo);
         $dailyTrend = [];
         $daysInMonth = $primaryFrom->daysInMonth;
         for ($i = 1; $i <= $daysInMonth; $i++) {
             $date = $primaryFrom->copy()->addDays($i - 1);
-            $currentRevenue = (float) Sale::whereDate('created_at', $date)->sum('amount') ?? 0;
             $prevDate = $date->copy()->subMonth();
-            $previousRevenue = (float) Sale::whereDate('created_at', $prevDate)->sum('amount') ?? 0;
             $dailyTrend[] = [
                 'day' => $date->format('M d'),
-                'current' => $currentRevenue,
-                'previous' => $previousRevenue,
+                'current' => (float) ($currentDaily[$date->format('Y-m-d')]['revenue'] ?? 0),
+                'previous' => (float) ($previousDaily[$prevDate->format('Y-m-d')]['revenue'] ?? 0),
             ];
         }
 
-        // Real category breakdown by sales type for both periods
-        $categoryBreakdown = Sale::whereBetween('created_at', [$primaryFrom, $primaryTo])
-            ->select('type', DB::raw('SUM(amount) as current'))
-            ->whereNotNull('type')
-            ->groupBy('type')
-            ->get()
-            ->map(function ($item) use ($comparisonFrom, $comparisonTo) {
-                $previous = (float) Sale::where('type', $item->type)
-                    ->whereBetween('created_at', [$comparisonFrom, $comparisonTo])
-                    ->sum('amount') ?? 0;
-                return [
-                    'category' => ucfirst($item->type),
-                    'current' => (float) $item->current,
-                    'previous' => $previous,
-                ];
-            })->values()->all();
+        // Revenue breakdown by source for both periods
+        $currentBreakdown = $revenueService->breakdown($primaryFrom, $primaryTo);
+        $previousBreakdown = $revenueService->breakdown($comparisonFrom, $comparisonTo);
+        $sourceLabels = [
+            'pos' => 'POS Sales',
+            'orders' => 'Store Orders',
+            'services' => 'Service Requests',
+            'boarding' => 'Hotel Boarding',
+            'confinement' => 'Medical Confinement',
+        ];
+        $categoryBreakdown = [];
+        foreach ($sourceLabels as $key => $label) {
+            $categoryBreakdown[] = [
+                'category' => $label,
+                'current' => (float) ($currentBreakdown[$key] ?? 0),
+                'previous' => (float) ($previousBreakdown[$key] ?? 0),
+            ];
+        }
 
         return response()->json([
             'success' => true,
@@ -2004,9 +2217,15 @@ class ReportsController extends Controller
 
     private function getPeriodMetrics($from, $to)
     {
-        $revenue = Sale::whereBetween('created_at', [$from, $to])->sum('amount') ?? 0;
-        $orders = Sale::whereBetween('created_at', [$from, $to])->count();
-        return ['revenue' => (float) $revenue, 'orders' => $orders, 'customers' => Sale::whereBetween('created_at', [$from, $to])->distinct('customer_id')->count(), 'avg_order_value' => $orders > 0 ? round($revenue / $orders, 2) : 0];
+        $revenueService = new RevenueService();
+        $revenue = $revenueService->total($from, $to);
+        $orders = $revenueService->count($from, $to);
+        return [
+            'revenue' => (float) $revenue,
+            'orders' => $orders,
+            'customers' => Sale::whereBetween('created_at', [$from, $to])->distinct('customer_id')->count(),
+            'avg_order_value' => $orders > 0 ? round($revenue / $orders, 2) : 0,
+        ];
     }
 
     /**
@@ -2014,26 +2233,161 @@ class ReportsController extends Controller
      */
     public function automatedAlerts(Request $request)
     {
+        $this->evaluateAlerts();
+
+        $alerts = $this->tableExists('report_alerts')
+            ? DB::table('report_alerts')->orderBy('id')->get()->map(fn ($alert) => [
+                'id' => $alert->id,
+                'name' => $alert->name,
+                'type' => $alert->type,
+                'enabled' => (bool) $alert->enabled,
+                'threshold' => (float) $alert->threshold,
+                'channels' => json_decode($alert->channels ?? '[]', true) ?: [],
+                'frequency' => $alert->frequency,
+                'created_at' => $alert->created_at,
+            ])->values()
+            : collect();
+
+        $history = $this->tableExists('report_alert_history')
+            ? DB::table('report_alert_history')
+                ->latest('triggered_at')
+                ->limit(50)
+                ->get()
+                ->map(fn ($row) => [
+                    'id' => $row->id,
+                    'report_alert_id' => $row->report_alert_id,
+                    'title' => $row->title,
+                    'message' => $row->message,
+                    'context' => json_decode($row->context ?? 'null', true),
+                    'timestamp' => $row->triggered_at,
+                    'status' => 'triggered',
+                ])->values()
+            : collect();
+
         return response()->json([
             'success' => true,
             'data' => [
-                'alerts' => [
-                    ['id' => 1, 'name' => 'Revenue Drop Alert', 'type' => 'revenue_drop', 'enabled' => true, 'threshold' => 15000, 'channels' => ['email' => true, 'dashboard' => true], 'frequency' => 'immediate'],
-                    ['id' => 2, 'name' => 'Low Stock Alert', 'type' => 'low_stock', 'enabled' => true, 'threshold' => 10, 'channels' => ['email' => true, 'sms' => true], 'frequency' => 'daily'],
-                ],
-                'history' => [['id' => 1, 'title' => 'Revenue Drop Alert', 'message' => 'Daily revenue dropped below threshold', 'timestamp' => now()->subHours(2)->toIso8601String(), 'status' => 'triggered']],
+                'alerts' => $alerts,
+                'history' => $history,
             ],
         ]);
     }
 
     public function createAlert(Request $request)
     {
-        return response()->json(['success' => true, 'message' => 'Alert created']);
+        $validated = $request->validate([
+            'name' => 'required|string|max:150',
+            'type' => 'required|string|in:revenue_drop,low_stock,pending_approvals',
+            'threshold' => 'required|numeric|min:0',
+            'channels' => 'nullable|array',
+            'channels.*' => 'boolean',
+            'frequency' => 'nullable|string|in:immediate,daily,weekly',
+            'enabled' => 'nullable|boolean',
+        ]);
+
+        if (!$this->tableExists('report_alerts')) {
+            return response()->json(['success' => false, 'message' => 'Alerts storage is not installed. Run migrations.'], 503);
+        }
+
+        $id = DB::table('report_alerts')->insertGetId([
+            'name' => $validated['name'],
+            'type' => $validated['type'],
+            'threshold' => $validated['threshold'],
+            'channels' => json_encode($validated['channels'] ?? ['dashboard' => true]),
+            'frequency' => $validated['frequency'] ?? 'daily',
+            'enabled' => $validated['enabled'] ?? true,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        return response()->json(['success' => true, 'message' => 'Alert created', 'id' => $id], 201);
     }
 
     public function deleteAlert($id)
     {
-        return response()->json(['success' => true, 'message' => 'Alert deleted']);
+        if (!$this->tableExists('report_alerts')) {
+            return response()->json(['success' => false, 'message' => 'Alerts storage is not installed. Run migrations.'], 503);
+        }
+
+        $deleted = DB::table('report_alerts')->where('id', $id)->delete();
+
+        return $deleted
+            ? response()->json(['success' => true, 'message' => 'Alert deleted'])
+            : response()->json(['success' => false, 'message' => 'Alert not found'], 404);
+    }
+
+    private function evaluateAlerts(): void
+    {
+        if (!$this->tableExists('report_alerts') || !$this->tableExists('report_alert_history')) {
+            return;
+        }
+
+        $alerts = DB::table('report_alerts')->where('enabled', true)->get();
+
+        foreach ($alerts as $alert) {
+            [$triggered, $message, $context] = $this->evaluateAlert($alert);
+            if (!$triggered) {
+                continue;
+            }
+
+            $windowMinutes = match ($alert->frequency) {
+                'immediate' => 60,
+                'weekly' => 10080,
+                default => 1440,
+            };
+
+            $alreadyLogged = DB::table('report_alert_history')
+                ->where('report_alert_id', $alert->id)
+                ->where('triggered_at', '>=', now()->subMinutes($windowMinutes))
+                ->exists();
+
+            if ($alreadyLogged) {
+                continue;
+            }
+
+            DB::table('report_alert_history')->insert([
+                'report_alert_id' => $alert->id,
+                'title' => $alert->name,
+                'message' => $message,
+                'context' => json_encode($context),
+                'triggered_at' => now(),
+            ]);
+        }
+    }
+
+    private function evaluateAlert($alert): array
+    {
+        $threshold = (float) $alert->threshold;
+
+        return match ($alert->type) {
+            'revenue_drop' => (function () use ($threshold) {
+                $todayRevenue = (float) Sale::whereDate('created_at', Carbon::today())->sum('amount');
+                return [
+                    $todayRevenue < $threshold,
+                    "Today's revenue (₱" . number_format($todayRevenue, 2) . ") is below the ₱" . number_format($threshold, 2) . " threshold.",
+                    ['today_revenue' => $todayRevenue, 'threshold' => $threshold],
+                ];
+            })(),
+            'low_stock' => (function () use ($threshold) {
+                $lowStock = InventoryItem::whereNull('archived_at')->whereRaw('stock <= reorder_level')->count();
+                return [
+                    $lowStock >= $threshold,
+                    "{$lowStock} item(s) at or below reorder level (threshold: " . (int) $threshold . ").",
+                    ['low_stock_items' => $lowStock, 'threshold' => $threshold],
+                ];
+            })(),
+            'pending_approvals' => (function () use ($threshold) {
+                $pending = $this->tableExists('service_requests')
+                    ? DB::table('service_requests')->where('status', 'pending')->count()
+                    : 0;
+                return [
+                    $pending >= $threshold,
+                    "{$pending} service request(s) pending approval (threshold: " . (int) $threshold . ").",
+                    ['pending_approvals' => $pending, 'threshold' => $threshold],
+                ];
+            })(),
+            default => [false, null, null],
+        };
     }
 
     /**
@@ -2053,13 +2407,16 @@ class ReportsController extends Controller
         $startDate = Carbon::now()->subDays($days);
         $endDate = Carbon::now();
 
-        // ACCURATE daily data
+        // ACCURATE daily data across all paid revenue sources
+        $revenueService = new RevenueService();
+        $dailyMap = $revenueService->daily($startDate, $endDate);
         $dailyData = [];
         for ($i = $days; $i >= 0; $i--) {
             $date = Carbon::now()->subDays($i);
-            $revenue = (float) Sale::whereDate('created_at', $date)->sum('amount') ?? 0;
-            $orders = Sale::whereDate('created_at', $date)->count();
-            
+            $day = $dailyMap[$date->format('Y-m-d')] ?? ['revenue' => 0, 'count' => 0];
+            $revenue = (float) $day['revenue'];
+            $orders = (int) $day['count'];
+
             $dailyData[] = [
                 'date' => $date->format('M d'),
                 'full_date' => $date->format('Y-m-d'),
@@ -2094,6 +2451,25 @@ class ReportsController extends Controller
                     'growth' => $growth,
                 ];
             });
+
+        // Append non-POS revenue sources so the breakdown covers all income
+        $sourceBreakdown = $revenueService->breakdown($startDate, $endDate);
+        $sourceLabels = [
+            'orders' => 'Store Orders',
+            'services' => 'Service Requests',
+            'boarding' => 'Hotel Boarding',
+            'confinement' => 'Medical Confinement',
+        ];
+        $extraSources = collect($sourceLabels)
+            ->map(fn ($label, $key) => [
+                'name' => $label,
+                'value' => (float) ($sourceBreakdown[$key] ?? 0),
+                'orders' => 0,
+                'growth' => 0,
+            ])
+            ->filter(fn ($row) => $row['value'] > 0)
+            ->values();
+        $categoryData = $categoryData->concat($extraSources)->sortByDesc('value')->values();
 
         // ACCURATE hourly sales pattern (if sales have time data)
         $hourlyData = [];
@@ -2188,12 +2564,49 @@ class ReportsController extends Controller
             ['category' => 'C - Low Value', 'items' => $cItems['count'], 'value' => round($cItems['value'], 2), 'percentage' => $totalValue > 0 ? round($cItems['value'] / $totalValue * 100, 1) : 0, 'color' => '#94a3b8'],
         ];
 
+        $stockData = InventoryItem::whereNull('archived_at')
+            ->select(
+                DB::raw('COALESCE(category, "Uncategorized") as category'),
+                DB::raw('COUNT(*) as items'),
+                DB::raw('SUM(stock) as units'),
+                DB::raw('SUM(stock * price) as value'),
+                DB::raw('SUM(CASE WHEN stock <= 0 THEN 1 ELSE 0 END) as out_of_stock'),
+                DB::raw('SUM(CASE WHEN stock > 0 AND stock <= reorder_level THEN 1 ELSE 0 END) as low_stock')
+            )
+            ->groupBy('category')
+            ->orderByDesc('value')
+            ->get()
+            ->map(fn ($row) => [
+                'category' => $row->category,
+                'items' => (int) $row->items,
+                'units' => (int) $row->units,
+                'value' => (float) $row->value,
+                'out_of_stock' => (int) $row->out_of_stock,
+                'low_stock' => (int) $row->low_stock,
+            ])
+            ->values();
+
+        $reorderRecommendations = InventoryItem::whereNull('archived_at')
+            ->whereRaw('stock <= reorder_level')
+            ->orderBy('stock')
+            ->limit(50)
+            ->get()
+            ->map(fn ($item) => [
+                'id' => $item->id,
+                'name' => $item->name,
+                'category' => $item->category ?? 'Uncategorized',
+                'stock' => (int) $item->stock,
+                'reorder_level' => (int) $item->reorder_level,
+                'suggested_order_qty' => max(0, ($item->reorder_level * 2) - $item->stock),
+            ])
+            ->values();
+
         return response()->json([
             'success' => true,
             'data' => [
                 'abcData' => $abcData,
-                'stockData' => [],
-                'reorderRecommendations' => [],
+                'stockData' => $stockData,
+                'reorderRecommendations' => $reorderRecommendations,
                 'lowStockCount' => $lowStockCount,
             ],
         ]);

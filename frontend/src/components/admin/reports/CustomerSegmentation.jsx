@@ -6,8 +6,6 @@ import {
   faUserSlash,
   faUsers,
   faChartPie,
-  faArrowUp,
-  faArrowDown,
   faExclamationTriangle,
   faBullseye,
   faSync,
@@ -36,15 +34,11 @@ import './CustomerSegmentation.css';
  * RFM Analysis: Recency, Frequency, Monetary segmentation
  */
 
-const SegmentCard = ({ title, count, revenue, color, icon, trend, description, action }) => (
+const SegmentCard = ({ title, count, revenue, color, icon, description }) => (
   <div className={`segment-card ${color}`}>
     <div className="segment-header">
       <div className={`segment-icon ${color}`}>
         <FontAwesomeIcon icon={icon} />
-      </div>
-      <div className="segment-trend">
-        <FontAwesomeIcon icon={trend === 'up' ? faArrowUp : faArrowDown} />
-        <span>{trend === 'up' ? '+12%' : '-8%'}</span>
       </div>
     </div>
     <h3 className="segment-title">{title}</h3>
@@ -59,7 +53,6 @@ const SegmentCard = ({ title, count, revenue, color, icon, trend, description, a
       </div>
     </div>
     <p className="segment-description">{description}</p>
-    <button className="segment-action">{action}</button>
   </div>
 );
 
@@ -95,50 +88,82 @@ const CustomerSegmentation = ({ data: initialData = {} }) => {
 
   const { customers = [], segments = {}, rfmData = [] } = data;
 
-  // Calculate segments from REAL data
+  // Use backend-computed segment aggregates; fall back to client computation
+  // with snake_case field mapping only when the aggregate payload is absent.
   const segmentAnalysis = useMemo(() => {
+    if (segments && (segments.vip || segments.loyal || segments.atRisk || segments.lost || segments.new)) {
+      return {
+        vip: {
+          count: segments.vip?.count || 0,
+          revenue: segments.vip?.revenue || 0,
+          avgOrder: segments.vip?.avg_order || 0,
+        },
+        loyal: {
+          count: segments.loyal?.count || 0,
+          revenue: segments.loyal?.revenue || 0,
+          avgOrder: segments.loyal?.avg_order || 0,
+        },
+        atRisk: {
+          count: segments.atRisk?.count || 0,
+          revenue: segments.atRisk?.revenue || 0,
+          recoverable: segments.atRisk?.recoverable || 0,
+        },
+        lost: {
+          count: segments.lost?.count || 0,
+          revenue: segments.lost?.revenue || 0,
+        },
+        new: {
+          count: segments.new?.count || 0,
+          revenue: segments.new?.revenue || 0,
+        },
+      };
+    }
+
     const now = new Date();
-    
-    const vip = customers.filter(c => c.totalSpent > 50000 && c.orders > 10);
-    const loyal = customers.filter(c => c.totalSpent > 20000 && c.orders > 5);
+    const spent = (c) => Number(c.totalSpent ?? c.total_spent ?? 0);
+    const orderCount = (c) => Number(c.orders ?? 0);
+    const lastOrder = (c) => c.lastOrderDate ?? c.last_order_date;
+
+    const vip = customers.filter(c => spent(c) > 50000 && orderCount(c) > 10);
+    const loyal = customers.filter(c => spent(c) > 20000 && orderCount(c) > 5);
     const atRisk = customers.filter(c => {
-      const lastOrder = new Date(c.lastOrderDate);
-      const daysSince = (now - lastOrder) / (1000 * 60 * 60 * 24);
-      return daysSince > 45 && c.totalSpent > 10000;
+      const date = lastOrder(c) ? new Date(lastOrder(c)) : null;
+      const daysSince = date && !Number.isNaN(date.getTime()) ? (now - date) / (1000 * 60 * 60 * 24) : 999;
+      return daysSince > 45 && spent(c) > 10000;
     });
     const lost = customers.filter(c => {
-      const lastOrder = new Date(c.lastOrderDate);
-      const daysSince = (now - lastOrder) / (1000 * 60 * 60 * 24);
+      const date = lastOrder(c) ? new Date(lastOrder(c)) : null;
+      const daysSince = date && !Number.isNaN(date.getTime()) ? (now - date) / (1000 * 60 * 60 * 24) : 999;
       return daysSince > 90;
     });
-    const newCustomers = customers.filter(c => c.orders <= 2);
+    const newCustomers = customers.filter(c => orderCount(c) <= 2);
 
     return {
       vip: {
         count: vip.length,
-        revenue: vip.reduce((sum, c) => sum + c.totalSpent, 0),
-        avgOrder: vip.length > 0 ? vip.reduce((sum, c) => sum + c.totalSpent, 0) / vip.reduce((sum, c) => sum + c.orders, 0) : 0,
+        revenue: vip.reduce((sum, c) => sum + spent(c), 0),
+        avgOrder: vip.length > 0 ? vip.reduce((sum, c) => sum + spent(c), 0) / Math.max(1, vip.reduce((sum, c) => sum + orderCount(c), 0)) : 0,
       },
       loyal: {
         count: loyal.length,
-        revenue: loyal.reduce((sum, c) => sum + c.totalSpent, 0),
-        avgOrder: loyal.length > 0 ? loyal.reduce((sum, c) => sum + c.totalSpent, 0) / loyal.reduce((sum, c) => sum + c.orders, 0) : 0,
+        revenue: loyal.reduce((sum, c) => sum + spent(c), 0),
+        avgOrder: loyal.length > 0 ? loyal.reduce((sum, c) => sum + spent(c), 0) / Math.max(1, loyal.reduce((sum, c) => sum + orderCount(c), 0)) : 0,
       },
       atRisk: {
         count: atRisk.length,
-        revenue: atRisk.reduce((sum, c) => sum + c.totalSpent, 0),
-        recoverable: atRisk.reduce((sum, c) => sum + c.totalSpent * 0.3, 0), // 30% recovery potential
+        revenue: atRisk.reduce((sum, c) => sum + spent(c), 0),
+        recoverable: atRisk.reduce((sum, c) => sum + spent(c) * 0.3, 0),
       },
       lost: {
         count: lost.length,
-        revenue: lost.reduce((sum, c) => sum + c.totalSpent, 0),
+        revenue: lost.reduce((sum, c) => sum + spent(c), 0),
       },
       new: {
         count: newCustomers.length,
-        revenue: newCustomers.reduce((sum, c) => sum + c.totalSpent, 0),
+        revenue: newCustomers.reduce((sum, c) => sum + spent(c), 0),
       },
     };
-  }, [customers]);
+  }, [customers, segments]);
 
   // Chart data
   const pieData = useMemo(() => [
@@ -224,9 +249,7 @@ const CustomerSegmentation = ({ data: initialData = {} }) => {
           revenue={segmentAnalysis.vip.revenue}
           color="primary"
           icon={faCrown}
-          trend="up"
           description="High value, frequent buyers. Your most valuable customers."
-          action="View VIP Program"
         />
         <SegmentCard
           title="Loyal Customers"
@@ -234,9 +257,7 @@ const CustomerSegmentation = ({ data: initialData = {} }) => {
           revenue={segmentAnalysis.loyal.revenue}
           color="success"
           icon={faUsers}
-          trend="up"
           description="Consistent buyers with good order history."
-          action="Send Rewards"
         />
         <SegmentCard
           title="At Risk"
@@ -244,9 +265,7 @@ const CustomerSegmentation = ({ data: initialData = {} }) => {
           revenue={segmentAnalysis.atRisk.revenue}
           color="warning"
           icon={faUserClock}
-          trend="down"
           description={`Haven't ordered in 45+ days. Recovery potential: ${formatCurrency(segmentAnalysis.atRisk.recoverable)}`}
-          action="Launch Win-back"
         />
         <SegmentCard
           title="Lost Customers"
@@ -254,9 +273,7 @@ const CustomerSegmentation = ({ data: initialData = {} }) => {
           revenue={segmentAnalysis.lost.revenue}
           color="danger"
           icon={faUserSlash}
-          trend="down"
           description="No orders in 90+ days. Aggressive re-engagement needed."
-          action="Re-engagement Campaign"
         />
       </section>
 
@@ -326,7 +343,6 @@ const CustomerSegmentation = ({ data: initialData = {} }) => {
               <p>Launch targeted email campaign with 15% discount for {segmentAnalysis.atRisk.count} at-risk customers</p>
               <small>Expected recovery: {formatCurrency(segmentAnalysis.atRisk.recoverable)}</small>
             </div>
-            <button className="cs-action-btn">Launch</button>
           </div>
           <div className="cs-action-item">
             <div className="cs-action-priority medium">Medium</div>
@@ -335,7 +351,6 @@ const CustomerSegmentation = ({ data: initialData = {} }) => {
               <p>Invite {segmentAnalysis.vip.count} VIP customers to exclusive grooming event</p>
               <small>Retention impact: High</small>
             </div>
-            <button className="cs-action-btn">Plan Event</button>
           </div>
         </div>
       </section>

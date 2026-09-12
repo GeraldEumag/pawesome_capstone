@@ -8,6 +8,7 @@ use App\Models\Customer;
 use App\Models\Appointment;
 use App\Models\InventoryItem;
 use App\Models\Sale;
+use App\Services\RevenueService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
@@ -17,6 +18,7 @@ class DashboardController extends Controller
     public function overview()
     {
         $today = Carbon::today();
+        $revenue = new RevenueService();
 
         return response()->json([
             'success' => true,
@@ -27,8 +29,8 @@ class DashboardController extends Controller
                 'total_appointments' => Appointment::count(),
                 'today_appointments' => Appointment::whereDate('scheduled_at', $today)->count(),
                 'completed_appointments' => Appointment::where('status', 'completed')->count(),
-                'total_revenue' => (float) Sale::sum('amount'),
-                'today_revenue' => (float) Sale::whereDate('created_at', $today)->sum('amount'),
+                'total_revenue' => $revenue->total(),
+                'today_revenue' => $revenue->total($today, $today),
                 'low_stock_items' => InventoryItem::whereNull('archived_at')->whereRaw('stock <= reorder_level')->where('stock', '>', 0)->count(),
                 'active_modules' => count(array_filter($this->getActiveModules())),
                 'appointments_by_status' => Appointment::selectRaw('status, COUNT(*) as count')
@@ -92,10 +94,9 @@ class DashboardController extends Controller
             'appointments_by_status' => Appointment::selectRaw('status, count(*) as count')
                 ->groupBy('status')
                 ->get(),
-            'monthly_revenue' => Sale::selectRaw('MONTH(created_at) as month, SUM(amount) as total')
-                ->whereYear('created_at', Carbon::now()->year)
-                ->groupBy('month')
-                ->get(),
+            'monthly_revenue' => collect((new RevenueService())->monthly(Carbon::now()->year))
+                ->map(fn ($total, $month) => (object) ['month' => $month, 'total' => $total])
+                ->values(),
         ]);
     }
 

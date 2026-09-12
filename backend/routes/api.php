@@ -219,6 +219,11 @@ Route::middleware(['auth.api', 'throttle:api', 'role:admin'])->prefix('admin')->
     Route::get('reports/comparison', [ReportsController::class, 'comparativeReporting']);
     Route::get('reports/sales-analysis', [ReportsController::class, 'salesAnalysis']);
     Route::get('reports/staff-performance', [ReportsController::class, 'staffPerformance']);
+    Route::get('reports/predictive', [ReportsController::class, 'predictiveAnalytics']);
+    Route::get('reports/inventory-optimization', [ReportsController::class, 'inventoryOptimization']);
+    Route::get('reports/alerts', [ReportsController::class, 'automatedAlerts']);
+    Route::post('reports/alerts', [ReportsController::class, 'createAlert']);
+    Route::delete('reports/alerts/{id}', [ReportsController::class, 'deleteAlert']);
 
     // Supplier Management
     Route::get('suppliers', [SupplierController::class, 'index']);

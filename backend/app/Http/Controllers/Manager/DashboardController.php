@@ -57,7 +57,7 @@ class DashboardController extends Controller
             'pending_payments' => DB::table('customer_orders')->where('payment_status', 'pending')->count() + $pendingServicePayments,
             'rejected_payments' => DB::table('customer_orders')->where('payment_status', 'rejected')->count() + $rejectedServicePayments,
             'rejected_orders' => DB::table('customer_orders')->whereIn('status', ['rejected', 'cancelled'])->count(),
-            'sales_total' => Sale::where('status', 'completed')->sum('amount') + $paidOrderRevenue + $paidServiceRevenue,
+            'sales_total' => (new \App\Services\RevenueService())->total(),
             'paid_service_revenue' => $paidServiceRevenue,
             'paid_service_count' => $paidServiceCount,
             'pending_service_payments' => $pendingServicePayments,

@@ -21,6 +21,10 @@ import {
   Area,
   BarChart,
   Bar,
+  PieChart,
+  Pie,
+  Cell,
+  Legend,
   XAxis,
   YAxis,
   CartesianGrid,
@@ -137,11 +141,13 @@ const ExecutiveDashboard = ({ data: initialData = {} }) => {
 
   const {
     summary = {},
-    revenueTrend = [],
     anomalies = [],
     predictions = {},
     comparisons = {},
   } = data;
+
+  const revenueTrend = data.revenueTrend || data.revenue_trend || [];
+  const statusBreakdown = data.status_breakdown || data.statusBreakdown || {};
 
   // Calculate derived metrics from real API data only
   const metrics = useMemo(() => {
@@ -177,6 +183,13 @@ const ExecutiveDashboard = ({ data: initialData = {} }) => {
     if (revenueTrend.length > 0) return revenueTrend;
     return [];
   }, [revenueTrend]);
+
+  // Status breakdown pie data from API
+  const statusBreakdownData = useMemo(() => {
+    return Object.entries(statusBreakdown)
+      .filter(([, v]) => (v?.count || 0) > 0)
+      .map(([name, v]) => ({ name: name.charAt(0).toUpperCase() + name.slice(1), value: v.count || 0 }));
+  }, [statusBreakdown]);
 
   // Loading state
   if (loading) {
@@ -315,44 +328,80 @@ const ExecutiveDashboard = ({ data: initialData = {} }) => {
 
       {/* Revenue Trend Chart */}
       <section className="exec-charts-grid">
-        <ChartContainer title="Revenue Trend" subtitle="30-day performance vs target" height={350}>
-          <ResponsiveContainer width="100%" height="100%">
-            <AreaChart data={chartData}>
-              <defs>
-                <linearGradient id="revenueGradient" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor={CHART_COLORS[0]} stopOpacity={0.3}/>
-                  <stop offset="95%" stopColor={CHART_COLORS[0]} stopOpacity={0}/>
-                </linearGradient>
-              </defs>
-              <CartesianGrid strokeDasharray="3 3" vertical={false} />
-              <XAxis dataKey="date" tick={{ fontSize: 11 }} interval={4} />
-              <YAxis tick={{ fontSize: 12 }} tickFormatter={(val) => `₱${val/1000}k`} />
-              <Tooltip 
-                formatter={(value) => formatCurrency(value)}
-                labelStyle={{ color: '#666' }}
-              />
-              <Area 
-                type="monotone" 
-                dataKey="revenue" 
-                stroke={CHART_COLORS[0]} 
-                strokeWidth={2}
-                fill="url(#revenueGradient)"
-              />
-            </AreaChart>
-          </ResponsiveContainer>
+        <ChartContainer title="Revenue Trend" subtitle="30-day performance" height={350}>
+          {chartData.length === 0 ? (
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', color: '#94a3b8' }}>
+              <p>No trend data available for this period</p>
+            </div>
+          ) : (
+            <ResponsiveContainer width="100%" height="100%">
+              <AreaChart data={chartData}>
+                <defs>
+                  <linearGradient id="revenueGradient" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor={CHART_COLORS[0]} stopOpacity={0.3}/>
+                    <stop offset="95%" stopColor={CHART_COLORS[0]} stopOpacity={0}/>
+                  </linearGradient>
+                </defs>
+                <CartesianGrid strokeDasharray="3 3" vertical={false} />
+                <XAxis dataKey="date" tick={{ fontSize: 11 }} interval={4} />
+                <YAxis tick={{ fontSize: 12 }} tickFormatter={(val) => `₱${val/1000}k`} />
+                <Tooltip
+                  formatter={(value) => formatCurrency(value)}
+                  labelStyle={{ color: '#666' }}
+                />
+                <Area
+                  type="monotone"
+                  dataKey="revenue"
+                  stroke={CHART_COLORS[0]}
+                  strokeWidth={2}
+                  fill="url(#revenueGradient)"
+                />
+              </AreaChart>
+            </ResponsiveContainer>
+          )}
         </ChartContainer>
 
         <ChartContainer title="Orders Trend" subtitle="Daily order volume" height={350}>
-          <ResponsiveContainer width="100%" height="100%">
-            <BarChart data={chartData}>
-              <CartesianGrid strokeDasharray="3 3" vertical={false} />
-              <XAxis dataKey="date" tick={{ fontSize: 11 }} interval={4} />
-              <YAxis tick={{ fontSize: 12 }} />
-              <Tooltip />
-              <Bar dataKey="orders" fill={CHART_COLORS[1]} radius={[4, 4, 0, 0]} />
-            </BarChart>
-          </ResponsiveContainer>
+          {chartData.length === 0 ? (
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', color: '#94a3b8' }}>
+              <p>No order data available for this period</p>
+            </div>
+          ) : (
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={chartData}>
+                <CartesianGrid strokeDasharray="3 3" vertical={false} />
+                <XAxis dataKey="date" tick={{ fontSize: 11 }} interval={4} />
+                <YAxis tick={{ fontSize: 12 }} />
+                <Tooltip />
+                <Bar dataKey="orders" fill={CHART_COLORS[1]} radius={[4, 4, 0, 0]} />
+              </BarChart>
+            </ResponsiveContainer>
+          )}
         </ChartContainer>
+
+        {statusBreakdownData.length > 0 && (
+          <ChartContainer title="Order Status" subtitle="Distribution by status" height={350}>
+            <ResponsiveContainer width="100%" height="100%">
+              <PieChart>
+                <Pie
+                  data={statusBreakdownData}
+                  cx="50%"
+                  cy="50%"
+                  innerRadius={60}
+                  outerRadius={100}
+                  paddingAngle={4}
+                  dataKey="value"
+                >
+                  {statusBreakdownData.map((entry, index) => (
+                    <Cell key={`cell-${index}`} fill={CHART_COLORS[index % CHART_COLORS.length]} />
+                  ))}
+                </Pie>
+                <Tooltip formatter={(value, name) => [`${value} orders`, name]} />
+                <Legend />
+              </PieChart>
+            </ResponsiveContainer>
+          </ChartContainer>
+        )}
       </section>
 
       {/* Period Comparison */}
