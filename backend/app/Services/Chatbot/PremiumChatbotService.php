@@ -91,7 +91,7 @@ class PremiumChatbotService
         if ($intent !== 'legacy_general') {
             $response = $this->systemAssistantResponse($user, $role, $intent, $message, $sessionContext);
             $formattedResponse = $this->formatResponse($response, $role, $channel, $intent);
-            $this->storeContext($user?->id, $intent, $message, $formattedResponse);
+            $this->storeContext($user?->id, $intent, $message, $formattedResponse, $channel);
 
             return $formattedResponse;
         }
@@ -101,7 +101,10 @@ class PremiumChatbotService
         // Check FAQ first for precise answers
         $faqResponse = $this->enhancedFaqResponse($message, $role);
         if ($faqResponse && $faqResponse['confidence'] > 0.8) {
-            return $this->formatResponse($faqResponse, $role, $channel, $intent);
+            $formattedResponse = $this->formatResponse($faqResponse, $role, $channel, $intent);
+            $this->storeContext($user?->id, $intent, $message, $formattedResponse, $channel);
+
+            return $formattedResponse;
         }
         
         // Get contextual response based on intent
@@ -129,7 +132,7 @@ class PremiumChatbotService
         $formattedResponse = $this->formatResponse($response, $role, $channel, $intent);
 
         // Store context for follow-up (with full response for logging)
-        $this->storeContext($user?->id, $intent, $message, $formattedResponse);
+        $this->storeContext($user?->id, $intent, $message, $formattedResponse, $channel);
 
         return $formattedResponse;
     }
@@ -1564,7 +1567,7 @@ class PremiumChatbotService
         };
     }
 
-    private function storeContext(?int $userId, string $intent, string $message, ?array $response = null): void
+    private function storeContext(?int $userId, string $intent, string $message, ?array $response = null, string $channel = 'web'): void
     {
         if ($userId) {
             $this->conversationContext[$userId] = [
@@ -1579,7 +1582,7 @@ class PremiumChatbotService
                 ChatbotLog::create([
                     'user_id' => $userId,
                     'role' => $user?->role ?? 'guest',
-                    'channel' => 'web',
+                    'channel' => $channel,
                     'type' => 'general',
                     'intent' => $intent,
                     'scope' => $this->roleScopeService->normalizeRole($user?->role),

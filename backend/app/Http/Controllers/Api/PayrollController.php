@@ -7,6 +7,7 @@ use App\Models\Attendance;
 use App\Models\Notification;
 use App\Models\Payroll;
 use App\Models\User;
+use App\Services\Payroll\PayrollComputationService;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
@@ -14,6 +15,11 @@ use Illuminate\Support\Facades\Auth;
 
 class PayrollController extends Controller
 {
+    public function __construct(
+        private readonly PayrollComputationService $payrollComputation,
+    ) {
+    }
+
     /**
      * List all payroll records with optional filters
      */
@@ -99,96 +105,7 @@ class PayrollController extends Controller
         $startDate = $validated['period_start'];
         $endDate = $validated['period_end'];
 
-        $employees = User::whereIn('role', [
-            'manager', 'cashier', 'receptionist', 'veterinary',
-            'inventory', 'payroll', 'staff', 'groomer',
-        ])->where('is_active', true)->get();
-
-        $results = [];
-
-        foreach ($employees as $employee) {
-            $attendanceRecords = Attendance::where('user_id', $employee->id)
-                ->whereBetween('date', [$startDate, $endDate])
-                ->get();
-
-            $presentDays = $attendanceRecords->whereIn('status', ['present'])->count();
-            $lateDays = $attendanceRecords->where('status', 'late')->count();
-            $absentDays = $attendanceRecords->where('status', 'absent')->count();
-            $regularHours = $attendanceRecords->sum('total_hours');
-            $overtimeHours = $attendanceRecords->sum('overtime_hours');
-
-            $baseSalary = $employee->base_salary ?? 15000;
-            $hourlyRate = $employee->hourly_rate ?? ($baseSalary / 160);
-            $dailyRate = $baseSalary / 22;
-            $lateDeductions = $lateDays * ($dailyRate * 0.1);
-            $absentDeductions = $absentDays * $dailyRate;
-            $overtimePay = $overtimeHours * ($hourlyRate * 1.5);
-
-            // PhilHealth 2025: 5% premium, max P5,000, employee share 50%
-            $philhealthPremium = max(500, min($baseSalary * 0.05, 5000));
-            $philhealth = $philhealthPremium / 2;
-
-            // SSS 2025: employee share 5.0% of MSC, MSC 5,000-35,000
-            if ($baseSalary <= 0) {
-                $sss = 0;
-            } elseif ($baseSalary <= 5250) {
-                $sss = 250; // 5,000 * 5%
-            } elseif ($baseSalary >= 34750) {
-                $sss = 1750; // 35,000 * 5%
-            } else {
-                $msc = (int) ceil($baseSalary / 500) * 500;
-                $sss = round($msc * 0.05, 2);
-            }
-
-            $pagibig = 100; // Fixed P100 for Pag-IBIG
-
-            $grossPay = $baseSalary + $overtimePay;
-
-            // BIR withholding tax (2023 onwards, RR 11-2018 Annex E)
-            // Taxable income = gross_pay - SSS - PhilHealth - Pag-IBIG
-            $taxableIncome = $grossPay - $sss - $philhealth - $pagibig;
-            $tax = 0;
-            if ($taxableIncome > 20833) {
-                if ($taxableIncome <= 33332) {
-                    $tax = ($taxableIncome - 20833) * 0.15;
-                } elseif ($taxableIncome <= 66666) {
-                    $tax = 1875 + ($taxableIncome - 33333) * 0.20;
-                } elseif ($taxableIncome <= 166666) {
-                    $tax = 8541.80 + ($taxableIncome - 66667) * 0.25;
-                } elseif ($taxableIncome <= 666666) {
-                    $tax = 33541.80 + ($taxableIncome - 166667) * 0.30;
-                } else {
-                    $tax = 183541.80 + ($taxableIncome - 666667) * 0.35;
-                }
-            }
-
-            $totalDeductions = $sss + $philhealth + $pagibig + $tax + $lateDeductions + $absentDeductions;
-            $netPay = max(0, $grossPay - $totalDeductions);
-
-            $results[] = [
-                'user_id' => $employee->id,
-                'employee_name' => $employee->name,
-                'role' => $employee->role,
-                'department' => $employee->department ?? 'Unassigned',
-                'base_salary' => round($baseSalary, 2),
-                'hourly_rate' => round($hourlyRate, 2),
-                'present_days' => $presentDays,
-                'late_days' => $lateDays,
-                'absent_days' => $absentDays,
-                'regular_hours' => round($regularHours, 2),
-                'overtime_hours' => round($overtimeHours, 2),
-                'overtime_pay' => round($overtimePay, 2),
-                'late_deductions' => round($lateDeductions, 2),
-                'absent_deductions' => round($absentDeductions, 2),
-                'sss_contribution' => round($sss, 2),
-                'philhealth_contribution' => round($philhealth, 2),
-                'pagibig_contribution' => $pagibig,
-                'tax_deduction' => round($tax, 2),
-                'gross_pay' => round($grossPay, 2),
-                'total_deductions' => round($totalDeductions, 2),
-                'net_pay' => round($netPay, 2),
-            ];
-        }
+        $results = $this->payrollComputation->computeForAllStaff($startDate, $endDate);
 
         return response()->json([
             'success' => true,
@@ -218,47 +135,21 @@ class PayrollController extends Controller
         $periodLabel = Carbon::parse($startDate)->format('M d') . ' - ' . Carbon::parse($endDate)->format('M d, Y');
 
         // Get all employees (staff roles)
-        $employees = User::whereIn('role', [
-            'manager',
-            'cashier',
-            'receptionist',
-            'veterinary',
-            'inventory',
-            'payroll',
-            'staff',
-            'groomer',
-        ])->where('is_active', true)->get();
+        $employees = $this->payrollComputation->staffEmployees();
+
+        $attendanceByUser = Attendance::whereBetween('date', [$startDate, $endDate])
+            ->get()
+            ->groupBy('user_id');
 
         $generated = [];
         $errors = [];
 
         foreach ($employees as $employee) {
             try {
-                // Get attendance records for the period
-                $attendanceRecords = Attendance::where('user_id', $employee->id)
-                    ->whereBetween('date', [$startDate, $endDate])
-                    ->get();
-
-                // Calculate attendance metrics
-                $presentDays = $attendanceRecords->whereIn('status', ['present'])->count();
-                $lateDays = $attendanceRecords->where('status', 'late')->count();
-                $earlyLeaveDays = $attendanceRecords->where('status', 'early_leave')->count();
-                $absentDays = $attendanceRecords->where('status', 'absent')->count();
-
-                $regularHours = $attendanceRecords->sum('total_hours');
-                $overtimeHours = $attendanceRecords->sum('overtime_hours');
-
-                // Get employee salary info
-                $baseSalary = $employee->base_salary ?? 15000; // Default minimum
-                $hourlyRate = $employee->hourly_rate ?? ($baseSalary / 160); // 160 hours per month
-
-                // Calculate deductions
-                $dailyRate = $baseSalary / 22; // 22 working days per month
-                $lateDeductions = $lateDays * ($dailyRate * 0.1); // 10% per late
-                $absentDeductions = $absentDays * $dailyRate;
-
-                // Calculate earnings
-                $overtimePay = $overtimeHours * ($hourlyRate * 1.5); // 1.5x for OT
+                $computed = $this->payrollComputation->computeFromAttendance(
+                    $employee,
+                    $attendanceByUser->get($employee->id, collect())
+                );
 
                 // Create or update payroll record
                 $payroll = Payroll::updateOrCreate(
@@ -269,21 +160,21 @@ class PayrollController extends Controller
                     ],
                     [
                         'pay_period_label' => $periodLabel,
-                        'department' => $employee->department ?? 'Unassigned',
-                        'position' => $employee->position ?? $employee->role,
-                        'base_salary' => $baseSalary,
-                        'hourly_rate' => round($hourlyRate, 2),
+                        'department' => $computed['department'],
+                        'position' => $computed['position'],
+                        'base_salary' => $computed['base_salary'],
+                        'hourly_rate' => $computed['hourly_rate'],
                         'working_days' => 22,
-                        'present_days' => $presentDays,
-                        'absent_days' => $absentDays,
-                        'regular_hours' => round($regularHours, 2),
-                        'overtime_hours' => round($overtimeHours, 2),
-                        'overtime_pay' => round($overtimePay, 2),
+                        'present_days' => $computed['present_days'],
+                        'absent_days' => $computed['absent_days'],
+                        'regular_hours' => $computed['regular_hours'],
+                        'overtime_hours' => $computed['overtime_hours'],
+                        'overtime_pay' => $computed['overtime_pay'],
                         'bonus' => 0,
                         'allowances' => 0,
                         'deductions' => 0,
-                        'late_deductions' => round($lateDeductions, 2),
-                        'absent_deductions' => round($absentDeductions, 2),
+                        'late_deductions' => $computed['late_deductions'],
+                        'absent_deductions' => $computed['absent_deductions'],
                         'status' => 'draft',
                         'processed_by' => Auth::id(),
                         'processed_at' => now(),

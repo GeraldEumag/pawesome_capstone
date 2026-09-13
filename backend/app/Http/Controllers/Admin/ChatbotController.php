@@ -40,6 +40,31 @@ class ChatbotController extends Controller
         ]);
     }
 
+    public function stats(): JsonResponse
+    {
+        $base = fn () => ChatbotLog::query()->whereNotNull('user_id');
+
+        return response()->json([
+            'success' => true,
+            'data' => [
+                'total_chats' => $base()->count(),
+                'unique_users' => $base()->distinct('user_id')->count('user_id'),
+                'chats_today' => $base()->whereDate('created_at', today())->count(),
+                'top_intents' => $base()
+                    ->selectRaw('intent, COUNT(*) as count')
+                    ->groupBy('intent')
+                    ->orderBy('count', 'desc')
+                    ->limit(5)
+                    ->get(),
+                'channels' => $base()
+                    ->selectRaw('channel, COUNT(*) as count')
+                    ->groupBy('channel')
+                    ->orderBy('count', 'desc')
+                    ->get(),
+            ],
+        ]);
+    }
+
     public function userHistory(User $user): JsonResponse
     {
         $history = ChatbotLog::query()
@@ -49,6 +74,7 @@ class ChatbotController extends Controller
                 'id',
                 'intent',
                 'scope',
+                'channel',
                 'user_message',
                 'bot_response',
                 'created_at',

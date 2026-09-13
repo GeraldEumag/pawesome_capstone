@@ -4,16 +4,42 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\LoginLog;
+use App\Models\User;
 use Illuminate\Http\Request;
 
 class LoginLogController extends Controller
 {
+    /**
+     * Scope a query to staff emails only (all roles except customer).
+     * Uses the email column so rows with a null user_id still match.
+     */
+    private function scopeStaff($query)
+    {
+        return $query->whereIn(
+            'email',
+            User::where('role', '!=', 'customer')->select('email')
+        );
+    }
+
     /**
      * Get all login logs with filtering
      */
     public function index(Request $request)
     {
         $query = LoginLog::with('user');
+
+        // Staff-only scope (opt-in; admin monitoring views pass scope=staff)
+        if ($request->get('scope') === 'staff') {
+            $this->scopeStaff($query);
+        }
+
+        // Filter by user role
+        if ($request->has('role') && $request->role !== 'all') {
+            $query->whereIn(
+                'email',
+                User::where('role', $request->role)->select('email')
+            );
+        }
 
         // Filter by action (login/logout)
         if ($request->has('action') && $request->action !== 'all') {
@@ -67,32 +93,49 @@ class LoginLogController extends Controller
     {
         $days = $request->get('days', 30);
         $since = now()->subDays($days);
+        $staffOnly = $request->get('scope') === 'staff';
+
+        $base = function () use ($staffOnly) {
+            $query = LoginLog::query();
+            if ($staffOnly) {
+                $this->scopeStaff($query);
+            }
+            return $query;
+        };
 
         $stats = [
-            'total_logins' => LoginLog::where('created_at', '>=', $since)
+            'total_logins' => $base()->where('created_at', '>=', $since)
                 ->where('action', 'login')
                 ->count(),
-            'successful_logins' => LoginLog::where('created_at', '>=', $since)
+            'successful_logins' => $base()->where('created_at', '>=', $since)
                 ->where('action', 'login')
                 ->where('status', 'success')
                 ->count(),
-            'failed_logins' => LoginLog::where('created_at', '>=', $since)
+            'failed_logins' => $base()->where('created_at', '>=', $since)
                 ->where('action', 'login')
                 ->where('status', 'failed')
                 ->count(),
-            'unique_users' => LoginLog::where('created_at', '>=', $since)
+            'unique_users' => $base()->where('created_at', '>=', $since)
                 ->where('action', 'login')
                 ->where('status', 'success')
                 ->distinct('user_id')
                 ->count('user_id'),
-            'daily_logins' => LoginLog::where('created_at', '>=', $since)
+            'active_sessions' => $base()->where('action', 'login')
+                ->where('status', 'success')
+                ->whereNull('logged_out_at')
+                ->count(),
+            'logins_today' => $base()->where('action', 'login')
+                ->where('status', 'success')
+                ->whereDate('created_at', today())
+                ->count(),
+            'daily_logins' => $base()->where('created_at', '>=', $since)
                 ->where('action', 'login')
                 ->where('status', 'success')
                 ->selectRaw('DATE(created_at) as date, count(*) as count')
                 ->groupBy('date')
                 ->orderBy('date', 'asc')
                 ->get(),
-            'top_users' => LoginLog::where('created_at', '>=', $since)
+            'top_users' => $base()->where('created_at', '>=', $since)
                 ->where('action', 'login')
                 ->where('status', 'success')
                 ->with('user:id,name,email,role')

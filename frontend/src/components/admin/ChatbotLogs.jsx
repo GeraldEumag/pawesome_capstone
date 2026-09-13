@@ -6,18 +6,14 @@ import {
   faChartLine,
   faCheckCircle,
   faClock,
-  faCoins,
   faComments,
   faDownload,
   faEdit,
-  faFilter,
-  faMagnifyingGlass,
   faPlus,
   faRobot,
   faRotateRight,
   faSave,
   faSpinner,
-  faTags,
   faTimes,
   faTrash,
   faTriangleExclamation,
@@ -77,6 +73,7 @@ const ChatbotLogs = () => {
   const [activeTab, setActiveTab] = useState("logs");
 
   const [chatLogs, setChatLogs] = useState([]);
+  const [chatStats, setChatStats] = useState(null);
   const [selectedUser, setSelectedUser] = useState(null);
   const [userChats, setUserChats] = useState([]);
 
@@ -92,6 +89,7 @@ const ChatbotLogs = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [scopeFilter, setScopeFilter] = useState("all");
   const [serviceCategoryFilter, setServiceCategoryFilter] = useState("all");
+  const [logRoleFilter, setLogRoleFilter] = useState("all");
 
   const [loading, setLoading] = useState(true);
   const [detailsLoading, setDetailsLoading] = useState(false);
@@ -184,6 +182,8 @@ const ChatbotLogs = () => {
   const normalizeChat = (chat, index) => ({
     id: chat.id || index + 1,
     intent: chat.intent || chat.category || "general",
+    channel: chat.channel || "web",
+    scope: chat.scope || "",
     user_message: chat.user_message || chat.message || chat.question || "",
     bot_response: chat.bot_response || chat.response || chat.answer || "",
     created_at: chat.created_at || chat.timestamp || "",
@@ -238,13 +238,15 @@ const ChatbotLogs = () => {
         setLoading(true);
       }
 
-      const [logsData, faqData, serviceData] = await Promise.all([
+      const [logsData, statsData, faqData, serviceData] = await Promise.all([
         apiRequest("/admin/chatbot/logs"),
+        apiRequest("/admin/chatbot/logs/stats"),
         apiRequest("/admin/chatbot/faqs"),
         apiRequest("/admin/services"),
       ]);
 
       setChatLogs(safeArray(logsData).map(normalizeLog));
+      setChatStats(statsData?.data || null);
       setFaqs(safeArray(faqData).map(normalizeFaq));
       setServices(safeArray(serviceData).map(normalizeService));
       setLastUpdated(new Date().toLocaleString("en-PH"));
@@ -260,6 +262,16 @@ const ChatbotLogs = () => {
 
   useEffect(() => {
     loadData();
+  }, []);
+
+  // Silent refresh every 60s while the tab is visible
+  useEffect(() => {
+    const timer = window.setInterval(() => {
+      if (document.visibilityState === "visible") {
+        loadData({ silent: true });
+      }
+    }, 60000);
+    return () => window.clearInterval(timer);
   }, []);
 
   const loadUserChats = async (userId) => {
@@ -457,9 +469,12 @@ const ChatbotLogs = () => {
         .join(" ")
         .toLowerCase();
 
-      return !keyword || searchable.includes(keyword);
+      const matchesSearch = !keyword || searchable.includes(keyword);
+      const matchesRole = logRoleFilter === "all" || log.user_role === logRoleFilter;
+
+      return matchesSearch && matchesRole;
     });
-  }, [chatLogs, searchTerm]);
+  }, [chatLogs, searchTerm, logRoleFilter]);
 
   const filteredFaqs = useMemo(() => {
     const keyword = searchTerm.trim().toLowerCase();
@@ -494,24 +509,25 @@ const ChatbotLogs = () => {
     });
   }, [services, searchTerm, serviceCategoryFilter]);
 
-  const stats = useMemo(() => {
-    const totalChats = chatLogs.reduce(
-      (sum, log) => sum + Number(log.total_chats || 0),
-      0
-    );
-
-    return [
+  const stats = useMemo(
+    () => [
       {
-        label: "Total Users",
-        value: chatLogs.length,
+        label: "Total Chats",
+        value: chatStats?.total_chats ?? chatLogs.reduce((sum, log) => sum + Number(log.total_chats || 0), 0),
+        icon: faComments,
+        tone: "info",
+      },
+      {
+        label: "Unique Chatters",
+        value: chatStats?.unique_users ?? chatLogs.length,
         icon: faUser,
         tone: "primary",
       },
       {
-        label: "Total Chats",
-        value: totalChats,
-        icon: faComments,
-        tone: "info",
+        label: "Chats Today",
+        value: chatStats?.chats_today ?? 0,
+        icon: faChartLine,
+        tone: "warning",
       },
       {
         label: "Active FAQs",
@@ -519,14 +535,11 @@ const ChatbotLogs = () => {
         icon: faBook,
         tone: "success",
       },
-      {
-        label: "Services",
-        value: services.length,
-        icon: faCoins,
-        tone: "warning",
-      },
-    ];
-  }, [chatLogs, faqs, services]);
+    ],
+    [chatStats, chatLogs, faqs]
+  );
+
+  const topIntents = useMemo(() => chatStats?.top_intents || [], [chatStats]);
 
   const exportColumns = [
     { key: "user_id", label: "User ID" },
@@ -556,10 +569,43 @@ const ChatbotLogs = () => {
     showMessage("success", "Chatbot logs exported successfully.");
   };
 
+  const exportUserChats = () => {
+    if (!selectedUser || userChats.length === 0) {
+      showMessage("error", "No conversation available to export.");
+      return;
+    }
+
+    const rows = userChats.map((chat) => ({
+      id: chat.id,
+      intent: chat.intent,
+      channel: chat.channel,
+      user_message: chat.user_message,
+      bot_response: chat.bot_response,
+      created_at: formatDateTime(chat.created_at),
+    }));
+
+    const columns = [
+      { key: "id", label: "ID" },
+      { key: "intent", label: "Intent" },
+      { key: "channel", label: "Channel" },
+      { key: "user_message", label: "User Message" },
+      { key: "bot_response", label: "Bot Response" },
+      { key: "created_at", label: "Time" },
+    ];
+
+    const safeName = String(selectedUser.user_name || "user")
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, "-");
+
+    exportToCSV(rows, columns, `chatbot-conversation-${safeName}`);
+    showMessage("success", "Conversation exported successfully.");
+  };
+
   const clearFilters = () => {
     setSearchTerm("");
     setScopeFilter("all");
     setServiceCategoryFilter("all");
+    setLogRoleFilter("all");
   };
 
   return (
@@ -611,18 +657,18 @@ const ChatbotLogs = () => {
             {refreshing ? "Refreshing..." : "Refresh Data"}
           </button>
 
-          <div style={{ position: "relative" }}>
+          <div className="cb-export-wrap">
             <button className="secondary-btn" type="button" onClick={() => setShowExportDropdown(!showExportDropdown)}>
               <FontAwesomeIcon icon={faDownload} />
-              Export Logs ▼
+              Export Logs ▾
             </button>
             {showExportDropdown && (
               <>
-                <div style={{ position: "fixed", top: 0, left: 0, right: 0, bottom: 0, zIndex: 998 }} onClick={() => setShowExportDropdown(false)} />
-                <div style={{ position: "absolute", top: "100%", right: 0, background: "#fff", border: "1px solid #e2e8f0", borderRadius: 8, boxShadow: "0 8px 24px rgba(0,0,0,0.12)", zIndex: 999, minWidth: 160, overflow: "hidden" }}>
-                  <button className="secondary-btn" type="button" style={{ width: "100%", border: "none", background: "#fff", textAlign: "left", padding: "10px 14px" }} onClick={() => handleExport("csv")}>Export as CSV</button>
-                  <button className="secondary-btn" type="button" style={{ width: "100%", border: "none", background: "#fff", textAlign: "left", padding: "10px 14px" }} onClick={() => handleExport("excel")}>Export as Excel</button>
-                  <button className="secondary-btn" type="button" style={{ width: "100%", border: "none", background: "#fff", textAlign: "left", padding: "10px 14px" }} onClick={() => handleExport("pdf")}>Export as PDF</button>
+                <div className="cb-export-backdrop" onClick={() => setShowExportDropdown(false)} />
+                <div className="cb-export-menu">
+                  <button type="button" onClick={() => handleExport("csv")}>Export as CSV</button>
+                  <button type="button" onClick={() => handleExport("excel")}>Export as Excel</button>
+                  <button type="button" onClick={() => handleExport("pdf")}>Export as PDF</button>
                 </div>
               </>
             )}
@@ -644,9 +690,20 @@ const ChatbotLogs = () => {
         ))}
       </section>
 
+      {topIntents.length > 0 && (
+        <section className="chatbot-intent-strip">
+          <span className="intent-strip-label">Top topics:</span>
+          {topIntents.map((item) => (
+            <span className="intent-chip" key={item.intent}>
+              {item.intent || "general"}
+              <em>{item.count}</em>
+            </span>
+          ))}
+        </section>
+      )}
+
       <section className="chatbot-toolbar">
         <div className="chatbot-search-box">
-          <FontAwesomeIcon icon={faMagnifyingGlass} />
           <input
             type="text"
             placeholder="Search logs, FAQs, services, keywords..."
@@ -661,9 +718,24 @@ const ChatbotLogs = () => {
           )}
         </div>
 
+        {activeTab === "logs" && (
+          <div className="chatbot-filter-box">
+            <select
+              value={logRoleFilter}
+              onChange={(event) => setLogRoleFilter(event.target.value)}
+            >
+              <option value="all">All Roles</option>
+              {[...new Set(chatLogs.map((log) => log.user_role).filter(Boolean))].map((role) => (
+                <option value={role} key={role}>
+                  {role}
+                </option>
+              ))}
+            </select>
+          </div>
+        )}
+
         {activeTab === "faqs" && (
           <div className="chatbot-filter-box">
-            <FontAwesomeIcon icon={faFilter} />
             <select
               value={scopeFilter}
               onChange={(event) => setScopeFilter(event.target.value)}
@@ -680,7 +752,6 @@ const ChatbotLogs = () => {
 
         {activeTab === "services" && (
           <div className="chatbot-filter-box">
-            <FontAwesomeIcon icon={faTags} />
             <select
               value={serviceCategoryFilter}
               onChange={(event) => setServiceCategoryFilter(event.target.value)}
@@ -770,7 +841,9 @@ const ChatbotLogs = () => {
                           <p>{log.total_chats || 0} chatbot interaction(s)</p>
                         </div>
 
-                        <span className="pill">{log.user_role || "user"}</span>
+                        <span className={`pill role-${log.user_role || "user"}`}>
+                          {log.user_role || "user"}
+                        </span>
                       </div>
 
                       <span className="card-meta">
@@ -804,6 +877,18 @@ const ChatbotLogs = () => {
                         : "Select a user from the left panel to view messages."}
                     </p>
                   </div>
+
+                  {selectedUser && userChats.length > 0 && (
+                    <button
+                      type="button"
+                      className="secondary-btn"
+                      onClick={exportUserChats}
+                      title="Export this conversation as CSV"
+                    >
+                      <FontAwesomeIcon icon={faDownload} />
+                      Export
+                    </button>
+                  )}
                 </div>
 
                 {detailsLoading ? (
@@ -816,7 +901,9 @@ const ChatbotLogs = () => {
                     {userChats.map((chat) => (
                       <article key={chat.id} className="chat-thread">
                         <span className="chat-intent">
-                          {chat.intent || "general"} • {formatDateTime(chat.created_at)}
+                          <span className="chat-chip intent">{chat.intent || "general"}</span>
+                          <span className="chat-chip channel">{chat.channel || "web"}</span>
+                          {formatDateTime(chat.created_at)}
                         </span>
 
                         <div className="bubble user-bubble">

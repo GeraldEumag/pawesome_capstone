@@ -8,11 +8,7 @@ import {
   faCircleInfo,
   faDownload,
   faEdit,
-  faEnvelope,
   faEye,
-  faFilter,
-  faIdBadge,
-  faMagnifyingGlass,
   faRotateRight,
   faShieldAlt,
   faSpinner,
@@ -557,7 +553,6 @@ const ManageUsers = () => {
 
       <section className="users-filter-bar">
         <div className="search-box">
-          <FontAwesomeIcon icon={faMagnifyingGlass} />
           <input
             type="text"
             placeholder="Search by name, email, username, role, or ID..."
@@ -573,7 +568,6 @@ const ManageUsers = () => {
         </div>
 
         <div className="filter-box">
-          <FontAwesomeIcon icon={faIdBadge} />
           <select
             value={filterRole}
             onChange={(event) => setFilterRole(event.target.value)}
@@ -588,7 +582,6 @@ const ManageUsers = () => {
         </div>
 
         <div className="filter-box">
-          <FontAwesomeIcon icon={faFilter} />
           <select
             value={filterStatus}
             onChange={(event) => setFilterStatus(event.target.value)}
@@ -696,7 +689,6 @@ const ManageUsers = () => {
                       <td className="user-username">{user.username || "N/A"}</td>
 
                       <td className="user-email">
-                        <FontAwesomeIcon icon={faEnvelope} />
                         <span>{user.email || "No email"}</span>
                       </td>
 
@@ -720,33 +712,35 @@ const ManageUsers = () => {
 
                       <td className="user-date">{formatDate(user.created_at)}</td>
 
-                      <td className="user-actions">
-                        <button
-                          className="action-btn view-btn"
-                          type="button"
-                          onClick={() => openModal("view", user)}
-                          title="View User"
-                        >
-                          <FontAwesomeIcon icon={faEye} />
-                        </button>
+                      <td>
+                        <div className="user-actions">
+                          <button
+                            className="action-btn view-btn"
+                            type="button"
+                            onClick={() => openModal("view", user)}
+                            title="View User"
+                          >
+                            <FontAwesomeIcon icon={faEye} />
+                          </button>
 
-                        <button
-                          className="action-btn edit-btn"
-                          type="button"
-                          onClick={() => openModal("edit", user)}
-                          title="Edit User"
-                        >
-                          <FontAwesomeIcon icon={faEdit} />
-                        </button>
+                          <button
+                            className="action-btn edit-btn"
+                            type="button"
+                            onClick={() => openModal("edit", user)}
+                            title="Edit User"
+                          >
+                            <FontAwesomeIcon icon={faEdit} />
+                          </button>
 
-                        <button
-                          className="action-btn delete-btn"
-                          type="button"
-                          onClick={() => openModal("delete", user)}
-                          title="Delete User"
-                        >
-                          <FontAwesomeIcon icon={faTrash} />
-                        </button>
+                          <button
+                            className="action-btn delete-btn"
+                            type="button"
+                            onClick={() => openModal("delete", user)}
+                            title="Delete User"
+                          >
+                            <FontAwesomeIcon icon={faTrash} />
+                          </button>
+                        </div>
                       </td>
                     </tr>
                   );

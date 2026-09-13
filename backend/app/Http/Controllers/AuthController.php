@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\User;
 use App\Models\Customer;
+use App\Models\LoginLog;
 use App\Mail\EmailVerificationMail;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -126,6 +127,8 @@ class AuthController extends Controller
         }
 
         $token = $user->createToken('pawesome-token')->plainTextToken;
+
+        LoginLog::logLogin($user->id, $user->email, 'success');
 
         return response()->json([
             'message' => 'Login successful',
@@ -358,6 +361,7 @@ class AuthController extends Controller
     {
         $user = $request->user();
         if ($user) {
+            LoginLog::logLogout($user->id, $user->email);
             $user->currentAccessToken()?->delete();
         }
 

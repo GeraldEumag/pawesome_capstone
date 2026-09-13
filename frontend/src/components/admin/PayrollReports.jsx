@@ -4,7 +4,6 @@ import {
   faArrowDown,
   faArrowUp,
   faBuilding,
-  faCalendarAlt,
   faChartBar,
   faChartLine,
   faDownload,
@@ -12,11 +11,10 @@ import {
   faFileCsv,
   faFileExcel,
   faFilePdf,
-  faFilter,
-  faPrint,
-  faMagnifyingGlass,
   faMinus,
   faMoneyBillWave,
+  faPlay,
+  faPrint,
   faRotateRight,
   faSpinner,
   faTimes,
@@ -24,6 +22,7 @@ import {
   faUserTie,
   faUsers,
   faWallet,
+  faClock,
 } from "@fortawesome/free-solid-svg-icons";
 import {
   ResponsiveContainer,
@@ -40,7 +39,7 @@ import {
 } from "recharts";
 import { apiRequest } from "../../api/client";
 import { formatCurrency } from "../../utils/currency";
-import { normalizeList } from "../../utils/normalizeList";
+import { showSuccess, showError } from "../../utils/alert.jsx";
 import { exportToCSV, exportToPDF, exportToExcel } from "../../utils/reportExport";
 import StandardTable from "../../components/shared/StandardTable";
 import "./PayrollReports.css";
@@ -55,51 +54,37 @@ const CHART_COLORS = [
   "#ec4899",
 ];
 
-const REPORT_TYPES = [
-  { key: "summary", label: "Summary", icon: faMoneyBillWave },
-  { key: "department", label: "Department", icon: faBuilding },
-  { key: "trend", label: "Trends", icon: faChartLine },
-  { key: "topEarners", label: "Top Earners", icon: faUserTie },
-  { key: "records", label: "Records", icon: faWallet },
+const PERIODS = [
+  { key: "weekly", label: "This Week" },
+  { key: "monthly", label: "This Month" },
+  { key: "quarterly", label: "This Quarter" },
+  { key: "yearly", label: "This Year" },
 ];
 
-const PERIODS = ["weekly", "monthly", "quarterly", "yearly"];
-
-const FALLBACK_DEPARTMENTS = [
-  "Veterinary",
-  "Customer Service",
-  "Management",
-  "Grooming",
-  "Reception",
-  "Inventory",
-  "Cashier",
+const GENERATE_PRESETS = [
+  { key: "week", label: "Current Week" },
+  { key: "month", label: "Current Month" },
+  { key: "prev_month", label: "Previous Month" },
+  { key: "quarter", label: "Current Quarter" },
+  { key: "custom", label: "Custom Range" },
 ];
 
 const safeNumber = (value) => Number(value || 0);
 
-const safeArray = (value) => {
-  if (Array.isArray(value)) return value;
-  if (Array.isArray(value?.data)) return value.data;
-  if (Array.isArray(value?.records)) return value.records;
-  if (Array.isArray(value?.items)) return value.items;
-  if (Array.isArray(value?.payrolls)) return value.payrolls;
-  if (Array.isArray(value?.employees)) return value.employees;
-  if (Array.isArray(value?.salaries)) return value.salaries;
-  return [];
-};
-
 const PayrollReports = () => {
   const [selectedPeriod, setSelectedPeriod] = useState("monthly");
   const [selectedDepartment, setSelectedDepartment] = useState("all");
-  const [reportType, setReportType] = useState("summary");
+  const [searchInput, setSearchInput] = useState("");
   const [searchTerm, setSearchTerm] = useState("");
 
-  const [payrollData, setPayrollData] = useState({
+  const [report, setReport] = useState({
+    payrolls: [],
     summary: {},
     departmentBreakdown: [],
     monthlyTrend: [],
     topEarners: [],
-    payrolls: [],
+    attendanceSummary: {},
+    periodLabel: "",
   });
 
   const [selectedRecord, setSelectedRecord] = useState(null);
@@ -107,95 +92,21 @@ const PayrollReports = () => {
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState("");
   const [lastUpdated, setLastUpdated] = useState("");
+  const [showExportDropdown, setShowExportDropdown] = useState(false);
+  const [sortKey, setSortKey] = useState("net_pay");
+  const [sortDirection, setSortDirection] = useState("desc");
 
-  const normalizePayload = (result) => {
-    const root =
-      result?.data?.data && !Array.isArray(result.data.data)
-        ? result.data.data
-        : result?.data && !Array.isArray(result.data)
-        ? result.data
-        : result || {};
+  const [showGenerate, setShowGenerate] = useState(false);
+  const [generatePreset, setGeneratePreset] = useState("month");
+  const [generateStart, setGenerateStart] = useState("");
+  const [generateEnd, setGenerateEnd] = useState("");
+  const [generating, setGenerating] = useState(false);
 
-    const payrolls = safeArray(
-      root.payrolls ||
-        root.records ||
-        root.salaries ||
-        root.employees ||
-        root.data ||
-        result?.payrolls ||
-        result?.records ||
-        result
-    );
-
-    const departmentBreakdown = normalizeList(
-      root.departmentBreakdown ||
-        root.department_breakdown ||
-        root.departments ||
-        root.departmentSummary,
-      ["data", "records", "items"]
-    );
-
-    const monthlyTrend = normalizeList(
-      root.monthlyTrend || root.monthly_trend || root.trend || root.payrollTrend,
-      ["data", "records", "items"]
-    );
-
-    const topEarners = normalizeList(
-      root.topEarners || root.top_earners || root.highestPaid || root.top_employees,
-      ["data", "records", "items"]
-    );
-
-    const summary = root.summary || result?.summary || {};
-
-    return {
-      summary,
-      departmentBreakdown,
-      monthlyTrend,
-      topEarners,
-      payrolls,
-    };
-  };
-
-  const normalizePayrollRecord = (record, index) => {
-    const employee = record.user || record.employee || {};
-
-    return {
-      id: record.id || record.payroll_id || index + 1,
-      employeeName:
-        record.employee_name ||
-        employee.name ||
-        record.name ||
-        record.staff_name ||
-        "Unknown Employee",
-      employeeId:
-        record.employee_id ||
-        record.user_id ||
-        employee.id ||
-        `EMP${String(index + 1).padStart(3, "0")}`,
-      department: record.department || employee.department || "Unassigned",
-      position: record.position || employee.position || record.role || "Staff",
-      baseSalary: safeNumber(record.base_salary || record.salary || record.basic_pay),
-      bonus: safeNumber(record.bonus || record.total_bonus || record.allowance),
-      deductions:
-        safeNumber(record.deductions) ||
-        safeNumber(record.total_deductions) ||
-        safeNumber(record.sss_contribution) +
-          safeNumber(record.philhealth_contribution) +
-          safeNumber(record.pagibig_contribution) +
-          safeNumber(record.tax_deduction),
-      netPay: safeNumber(record.net_pay || record.netPay || record.total_net_pay),
-      grossPay: safeNumber(record.gross_pay || record.grossPay || record.total_gross_pay),
-      status: record.status || record.payment_status || "pending",
-      payPeriod:
-        record.pay_period_label ||
-        record.pay_period ||
-        record.period ||
-        selectedPeriod,
-      paymentDate: record.payment_date || record.paid_at || record.updated_at || "",
-      createdAt: record.created_at || record.date || "",
-      raw: record,
-    };
-  };
+  // Debounce the search box before it reaches the API params
+  useEffect(() => {
+    const timer = setTimeout(() => setSearchTerm(searchInput.trim()), 400);
+    return () => clearTimeout(timer);
+  }, [searchInput]);
 
   const loadPayrollData = useCallback(
     async ({ silent = false } = {}) => {
@@ -205,51 +116,36 @@ const PayrollReports = () => {
         } else {
           setLoading(true);
         }
-
         setError("");
 
         const params = new URLSearchParams();
         params.append("period", selectedPeriod);
-
         if (selectedDepartment !== "all") {
           params.append("department", selectedDepartment);
         }
-
-        if (searchTerm.trim()) {
-          params.append("search", searchTerm.trim());
+        if (searchTerm) {
+          params.append("search", searchTerm);
         }
 
-        let result;
+        const result = await apiRequest(`/manager/reports/payroll?${params.toString()}`);
+        const root = result?.data || {};
 
-        try {
-          result = await apiRequest(`/manager/reports/payroll?${params.toString()}`);
-        } catch (reportError) {
-          const records = await apiRequest(`/manager/payroll?${params.toString()}`);
-          result = {
-            payrolls: normalizeList(records, ["data", "records", "items", "payrolls"]),
-          };
-        }
-        const normalized = normalizePayload(result);
-
-        setPayrollData({
-          summary: normalized.summary || {},
-          departmentBreakdown: normalized.departmentBreakdown || [],
-          monthlyTrend: normalized.monthlyTrend || [],
-          topEarners: normalized.topEarners || [],
-          payrolls: normalized.payrolls.map(normalizePayrollRecord),
+        setReport({
+          payrolls: Array.isArray(root.payrolls) ? root.payrolls : [],
+          summary: root.summary || {},
+          departmentBreakdown: Array.isArray(root.department_breakdown)
+            ? root.department_breakdown
+            : [],
+          monthlyTrend: Array.isArray(root.monthly_trend) ? root.monthly_trend : [],
+          topEarners: Array.isArray(root.top_earners) ? root.top_earners : [],
+          attendanceSummary: root.attendance_summary || {},
+          periodLabel: root.period || "",
         });
 
         setLastUpdated(new Date().toLocaleString("en-PH"));
       } catch (err) {
         console.error("Payroll report error:", err);
         setError(err.message || "Failed to load payroll data.");
-        setPayrollData({
-          summary: {},
-          departmentBreakdown: [],
-          monthlyTrend: [],
-          topEarners: [],
-          payrolls: [],
-        });
       } finally {
         setLoading(false);
         setRefreshing(false);
@@ -262,166 +158,39 @@ const PayrollReports = () => {
     loadPayrollData();
   }, [loadPayrollData]);
 
-  const payrollRecords = useMemo(
-    () => normalizeList(payrollData.payrolls, ["data", "records", "items"]),
-    [payrollData.payrolls]
+  const departments = useMemo(
+    () =>
+      Array.from(
+        new Set(
+          report.payrolls.map((row) => row.department).filter(Boolean)
+        )
+      ),
+    [report.payrolls]
   );
 
-  const departmentBreakdown = useMemo(() => {
-    const list = normalizeList(payrollData.departmentBreakdown, [
-      "data",
-      "records",
-      "items",
-    ]);
+  const summary = report.summary || {};
 
-    if (list.length > 0) {
-      return list.map((item) => ({
-        department: item.department || item.name || "Unassigned",
-        employees: safeNumber(item.employees || item.employee_count || item.count),
-        totalSalary: safeNumber(item.totalSalary || item.total_salary || item.totalPayroll),
-        average: safeNumber(item.average || item.averageSalary || item.average_salary),
-        percentage: safeNumber(item.percentage),
-        trend: safeNumber(item.trend || item.growth),
-      }));
-    }
+  const sortedRecords = useMemo(() => {
+    const list = [...report.payrolls];
+    if (!sortKey) return list;
 
-    const grouped = payrollRecords.reduce((acc, record) => {
-      const department = record.department || "Unassigned";
-
-      if (!acc[department]) {
-        acc[department] = {
-          department,
-          employees: 0,
-          totalSalary: 0,
-          average: 0,
-          percentage: 0,
-          trend: 0,
-        };
+    list.sort((a, b) => {
+      const av = a[sortKey];
+      const bv = b[sortKey];
+      if (typeof av === "number" && typeof bv === "number") {
+        return sortDirection === "asc" ? av - bv : bv - av;
       }
-
-      acc[department].employees += 1;
-      acc[department].totalSalary += safeNumber(record.netPay || record.baseSalary);
-
-      return acc;
-    }, {});
-
-    const totalSalary = Object.values(grouped).reduce(
-      (sum, item) => sum + item.totalSalary,
-      0
-    );
-
-    return Object.values(grouped).map((item) => ({
-      ...item,
-      average: item.employees ? item.totalSalary / item.employees : 0,
-      percentage: totalSalary ? Math.round((item.totalSalary / totalSalary) * 100) : 0,
-    }));
-  }, [payrollData.departmentBreakdown, payrollRecords]);
-
-  const monthlyTrendData = useMemo(() => {
-    const list = normalizeList(payrollData.monthlyTrend, ["data", "records", "items"]);
-
-    return list.map((item) => ({
-      month: item.month || item.month_name || item.label || item.period || "N/A",
-      payroll: safeNumber(item.payroll || item.totalPayroll || item.total_payroll || item.amount),
-      employees: safeNumber(item.employees || item.employee_count || item.totalEmployees),
-    }));
-  }, [payrollData.monthlyTrend]);
-
-  const topEarnersData = useMemo(() => {
-    const list = normalizeList(payrollData.topEarners, ["data", "records", "items"]);
-
-    if (list.length > 0) {
-      return list.map((item) => ({
-        id: item.id || item.employee_id || item.name,
-        name: item.name || item.employee_name || item.user?.name || "Unknown Employee",
-        position: item.position || item.role || "Staff",
-        department: item.department || "Unassigned",
-        salary: safeNumber(item.salary || item.net_pay || item.base_salary),
-      }));
-    }
-
-    return [...payrollRecords]
-      .sort((a, b) => safeNumber(b.netPay) - safeNumber(a.netPay))
-      .slice(0, 8)
-      .map((record) => ({
-        id: record.id,
-        name: record.employeeName,
-        position: record.position,
-        department: record.department,
-        salary: safeNumber(record.netPay || record.baseSalary),
-      }));
-  }, [payrollData.topEarners, payrollRecords]);
-
-  const departments = useMemo(() => {
-    const fromBreakdown = departmentBreakdown.map((item) => item.department).filter(Boolean);
-    const fromPayroll = payrollRecords.map((item) => item.department).filter(Boolean);
-    return Array.from(new Set([...FALLBACK_DEPARTMENTS, ...fromBreakdown, ...fromPayroll]));
-  }, [departmentBreakdown, payrollRecords]);
-
-  const filteredPayrollRecords = useMemo(() => {
-    const keyword = searchTerm.trim().toLowerCase();
-
-    return payrollRecords.filter((record) => {
-      const matchesDepartment =
-        selectedDepartment === "all" || record.department === selectedDepartment;
-
-      const searchableText = [
-        record.employeeName,
-        record.employeeId,
-        record.department,
-        record.position,
-        record.status,
-        record.payPeriod,
-      ]
-        .filter(Boolean)
-        .join(" ")
-        .toLowerCase();
-
-      const matchesSearch = !keyword || searchableText.includes(keyword);
-
-      return matchesDepartment && matchesSearch;
+      return sortDirection === "asc"
+        ? String(av ?? "").localeCompare(String(bv ?? ""))
+        : String(bv ?? "").localeCompare(String(av ?? ""));
     });
-  }, [payrollRecords, selectedDepartment, searchTerm]);
+    return list;
+  }, [report.payrolls, sortKey, sortDirection]);
 
-  const filteredDepartmentData = useMemo(() => {
-    if (selectedDepartment === "all") return departmentBreakdown;
-    return departmentBreakdown.filter((dept) => dept.department === selectedDepartment);
-  }, [selectedDepartment, departmentBreakdown]);
-
-  const derivedSummary = useMemo(() => {
-    const backendSummary = payrollData.summary || {};
-    const totalPayroll =
-      safeNumber(backendSummary.totalPayroll || backendSummary.total_payroll) ||
-      filteredPayrollRecords.reduce((sum, record) => sum + safeNumber(record.netPay), 0);
-
-    const totalEmployees =
-      safeNumber(backendSummary.totalEmployees || backendSummary.total_employees) ||
-      filteredPayrollRecords.length;
-
-    const totalBonuses =
-      safeNumber(backendSummary.totalBonuses || backendSummary.total_bonuses) ||
-      filteredPayrollRecords.reduce((sum, record) => sum + safeNumber(record.bonus), 0);
-
-    const totalDeductions =
-      safeNumber(backendSummary.totalDeductions || backendSummary.total_deductions) ||
-      filteredPayrollRecords.reduce(
-        (sum, record) => sum + safeNumber(record.deductions),
-        0
-      );
-
-    const averageSalary =
-      safeNumber(backendSummary.averageSalary || backendSummary.average_salary) ||
-      (totalEmployees ? totalPayroll / totalEmployees : 0);
-
-    return {
-      totalPayroll,
-      totalEmployees,
-      averageSalary,
-      totalBonuses,
-      totalDeductions,
-      growth: safeNumber(backendSummary.growth || backendSummary.payroll_growth),
-    };
-  }, [payrollData.summary, filteredPayrollRecords]);
+  const handleSort = (key, direction) => {
+    setSortKey(key);
+    setSortDirection(direction);
+  };
 
   const getGrowthIcon = (growth) => {
     if (growth > 0) return faArrowUp;
@@ -437,10 +206,8 @@ const PayrollReports = () => {
 
   const formatDate = (value) => {
     if (!value) return "N/A";
-
     const date = new Date(value);
     if (Number.isNaN(date.getTime())) return value;
-
     return date.toLocaleDateString("en-PH", {
       year: "numeric",
       month: "short",
@@ -448,44 +215,222 @@ const PayrollReports = () => {
     });
   };
 
+  const resolveGenerateDates = () => {
+    const now = new Date();
+    const iso = (d) => d.toISOString().slice(0, 10);
+
+    switch (generatePreset) {
+      case "week": {
+        const start = new Date(now);
+        start.setDate(now.getDate() - ((now.getDay() + 6) % 7));
+        const end = new Date(start);
+        end.setDate(start.getDate() + 6);
+        return { start: iso(start), end: iso(end) };
+      }
+      case "month":
+        return {
+          start: iso(new Date(now.getFullYear(), now.getMonth(), 1)),
+          end: iso(new Date(now.getFullYear(), now.getMonth() + 1, 0)),
+        };
+      case "prev_month":
+        return {
+          start: iso(new Date(now.getFullYear(), now.getMonth() - 1, 1)),
+          end: iso(new Date(now.getFullYear(), now.getMonth(), 0)),
+        };
+      case "quarter": {
+        const qStart = new Date(now.getFullYear(), Math.floor(now.getMonth() / 3) * 3, 1);
+        const qEnd = new Date(qStart.getFullYear(), qStart.getMonth() + 3, 0);
+        return { start: iso(qStart), end: iso(qEnd) };
+      }
+      default:
+        return { start: generateStart, end: generateEnd };
+    }
+  };
+
+  const handleGenerate = async () => {
+    const { start, end } = resolveGenerateDates();
+
+    if (!start || !end) {
+      showError("Please choose a period or a custom date range.");
+      return;
+    }
+    if (new Date(start) > new Date(end)) {
+      showError("Start date must be before the end date.");
+      return;
+    }
+
+    setGenerating(true);
+    try {
+      const result = await apiRequest("/manager/payroll/generate", {
+        method: "POST",
+        body: JSON.stringify({ period_start: start, period_end: end }),
+      });
+
+      const count = result?.summary?.generated_count ?? result?.data?.length ?? 0;
+      showSuccess(`Payroll generated from attendance — ${count} record(s).`);
+      setShowGenerate(false);
+      await loadPayrollData({ silent: true });
+    } catch (err) {
+      console.error("Generate payroll error:", err);
+      showError(err.message || "Failed to generate payroll.");
+    } finally {
+      setGenerating(false);
+    }
+  };
+
   const exportColumns = [
-    { key: "employeeId", label: "Employee ID" },
-    { key: "employeeName", label: "Employee Name" },
+    { key: "payroll_id", label: "Payroll ID" },
+    { key: "employee_name", label: "Employee" },
     { key: "department", label: "Department" },
     { key: "position", label: "Position" },
-    { key: "baseSalary", label: "Base Salary", format: "currency" },
-    { key: "bonus", label: "Bonus", format: "currency" },
-    { key: "deductions", label: "Deductions", format: "currency" },
-    { key: "netPay", label: "Net Pay", format: "currency" },
-    { key: "payPeriod", label: "Pay Period" },
+    { key: "present_days", label: "Present" },
+    { key: "absent_days", label: "Absent" },
+    { key: "regular_hours", label: "Hours" },
+    { key: "overtime_hours", label: "OT Hours" },
+    { key: "base_salary", label: "Base Salary", format: "currency" },
+    { key: "overtime_pay", label: "OT Pay", format: "currency" },
+    { key: "total_deductions", label: "Deductions", format: "currency" },
+    { key: "net_pay", label: "Net Pay", format: "currency" },
     { key: "status", label: "Status" },
-    { key: "paymentDate", label: "Payment Date", format: "date" },
+    { key: "period", label: "Period" },
   ];
-
-  const [showExportDropdown, setShowExportDropdown] = useState(false);
 
   const handleExport = (format) => {
     setShowExportDropdown(false);
-    if (!filteredPayrollRecords || filteredPayrollRecords.length === 0) return;
-    const filename = `payroll-report-${selectedPeriod}`;
-    if (format === "csv") exportToCSV(filteredPayrollRecords, exportColumns, filename);
-    else if (format === "excel") exportToExcel(filteredPayrollRecords, exportColumns, filename);
-    else if (format === "pdf") exportToPDF(filteredPayrollRecords, exportColumns, "Payroll Report", filename);
+    if (sortedRecords.length === 0) {
+      showError("No payroll records to export.");
+      return;
+    }
+    const filename = `payroll-${report.periodLabel || selectedPeriod}`;
+    if (format === "csv") exportToCSV(sortedRecords, exportColumns, filename);
+    else if (format === "excel") exportToExcel(sortedRecords, exportColumns, filename);
+    else if (format === "pdf") exportToPDF(sortedRecords, exportColumns, "Payroll Report", filename);
+    showSuccess("Payroll report exported.");
   };
 
   const clearFilters = () => {
-    setSearchTerm("");
+    setSearchInput("");
     setSelectedDepartment("all");
     setSelectedPeriod("monthly");
   };
 
-  const renderEmptyState = (title, message) => (
-    <div className="payroll-empty-state">
-      <FontAwesomeIcon icon={faTriangleExclamation} />
-      <h3>{title}</h3>
-      <p>{message}</p>
-    </div>
+  const statusPill = (status) => (
+    <span className={`pr-status-pill ${status || "draft"}`}>
+      {status === "preview" ? "Preview" : status || "draft"}
+    </span>
   );
+
+  const rosterColumns = [
+    {
+      key: "employee_name",
+      label: "Employee",
+      sortable: true,
+      render: (value, record) => (
+        <div className="pr-employee-cell">
+          <span className="pr-avatar">
+            <FontAwesomeIcon icon={faUserTie} />
+          </span>
+          <div>
+            <strong>{value}</strong>
+            <small>{record.position || record.role || "Staff"}</small>
+          </div>
+        </div>
+      ),
+    },
+    { key: "department", label: "Department", sortable: true },
+    {
+      key: "present_days",
+      label: "Attendance",
+      sortable: true,
+      render: (value, record) => (
+        <div className="pr-attendance-cell">
+          <strong>{value}d</strong>
+          <small>
+            {safeNumber(record.absent_days)} absent
+            {safeNumber(record.late_days) > 0 ? ` · ${record.late_days} late` : ""}
+          </small>
+        </div>
+      ),
+    },
+    {
+      key: "regular_hours",
+      label: "Hours",
+      sortable: true,
+      render: (value, record) => (
+        <div className="pr-attendance-cell">
+          <strong>{safeNumber(value).toFixed(1)}h</strong>
+          <small>+{safeNumber(record.overtime_hours).toFixed(1)} OT</small>
+        </div>
+      ),
+    },
+    { key: "gross_pay", label: "Gross", sortable: true, format: "currency" },
+    {
+      key: "total_deductions",
+      label: "Deductions",
+      sortable: true,
+      render: (value) => (
+        <span className="pr-amount-negative">-{formatCurrency(value)}</span>
+      ),
+    },
+    {
+      key: "net_pay",
+      label: "Net Pay",
+      sortable: true,
+      render: (value) => <span className="pr-net-pay">{formatCurrency(value)}</span>,
+    },
+    {
+      key: "status",
+      label: "Status",
+      sortable: true,
+      render: (value) => statusPill(value),
+    },
+    {
+      key: "actions",
+      label: "",
+      render: (_value, record) => (
+        <button
+          type="button"
+          className="pr-view-btn"
+          onClick={() => setSelectedRecord(record)}
+        >
+          <FontAwesomeIcon icon={faEye} />
+          View
+        </button>
+      ),
+    },
+  ];
+
+  const statCards = [
+    {
+      label: "Total Net Payroll",
+      value: formatCurrency(summary.total_payroll ?? summary.total_net ?? 0),
+      icon: faMoneyBillWave,
+      tone: "primary",
+      sub: `${summary.paid || 0} paid · ${summary.pending || 0} pending`,
+      growth: summary.growth,
+    },
+    {
+      label: "Employees Covered",
+      value: summary.total_employees || 0,
+      icon: faUsers,
+      tone: "info",
+      sub: `${summary.total_records || 0} saved · ${summary.preview || 0} preview`,
+    },
+    {
+      label: "Average Net Pay",
+      value: formatCurrency(summary.average_salary || 0),
+      icon: faChartBar,
+      tone: "warning",
+      sub: `Gross ${formatCurrency(summary.total_gross || 0)}`,
+    },
+    {
+      label: "Total Deductions",
+      value: formatCurrency(summary.total_deductions || 0),
+      icon: faWallet,
+      tone: "success",
+      sub: `OT paid ${formatCurrency(summary.total_overtime_pay || 0)}`,
+    },
+  ];
 
   return (
     <div className="payroll-reports">
@@ -493,19 +438,28 @@ const PayrollReports = () => {
         <div>
           <span className="payroll-eyebrow">
             <FontAwesomeIcon icon={faMoneyBillWave} />
-            Payroll Analytics
+            Payroll Intelligence
           </span>
 
-          <h1>Payroll Reports & Analytics</h1>
+          <h1>Payroll Reports &amp; Analytics</h1>
           <p>
-            Review salary totals, department spending, payroll trends, top earners,
-            and payroll records from live backend data.
+            Attendance-driven payroll for {report.periodLabel || "the selected period"}.
+            Preview rows are computed live from attendance — generate to save them.
           </p>
 
           <small>Last updated: {lastUpdated || "Not refreshed yet"}</small>
         </div>
 
         <div className="payroll-header-actions">
+          <button
+            type="button"
+            className="payroll-primary-btn"
+            onClick={() => setShowGenerate(true)}
+          >
+            <FontAwesomeIcon icon={faPlay} />
+            Generate Payroll
+          </button>
+
           <button
             type="button"
             className={`payroll-secondary-btn ${refreshing ? "refreshing" : ""}`}
@@ -516,75 +470,99 @@ const PayrollReports = () => {
             {refreshing ? "Refreshing..." : "Refresh"}
           </button>
 
-          <div style={{ position: "relative" }}>
-            <button type="button" className="payroll-secondary-btn" onClick={() => setShowExportDropdown(!showExportDropdown)}>
-              <FontAwesomeIcon icon={faFileCsv} />
-              Export ▼
+          <div className="pr-export-wrap">
+            <button
+              type="button"
+              className="payroll-secondary-btn"
+              onClick={() => setShowExportDropdown(!showExportDropdown)}
+            >
+              <FontAwesomeIcon icon={faDownload} />
+              Export ▾
             </button>
             {showExportDropdown && (
               <>
-                <div style={{ position: "fixed", top: 0, left: 0, right: 0, bottom: 0, zIndex: 998 }} onClick={() => setShowExportDropdown(false)} />
-                <div style={{ position: "absolute", top: "100%", right: 0, background: "#fff", border: "1px solid #e2e8f0", borderRadius: 8, boxShadow: "0 8px 24px rgba(0,0,0,0.12)", zIndex: 999, minWidth: 160, overflow: "hidden" }}>
-                  <button type="button" style={{ display: "block", width: "100%", padding: "10px 16px", border: "none", background: "#fff", color: "#374151", fontSize: 13, textAlign: "left", cursor: "pointer" }} onClick={() => handleExport("csv")}>Export as CSV</button>
-                  <button type="button" style={{ display: "block", width: "100%", padding: "10px 16px", border: "none", background: "#fff", color: "#374151", fontSize: 13, textAlign: "left", cursor: "pointer" }} onClick={() => handleExport("excel")}>Export as Excel</button>
-                  <button type="button" style={{ display: "block", width: "100%", padding: "10px 16px", border: "none", background: "#fff", color: "#374151", fontSize: 13, textAlign: "left", cursor: "pointer" }} onClick={() => handleExport("pdf")}>Export as PDF</button>
+                <div
+                  className="pr-export-backdrop"
+                  onClick={() => setShowExportDropdown(false)}
+                />
+                <div className="pr-export-menu">
+                  <button type="button" onClick={() => handleExport("csv")}>
+                    Export as CSV
+                  </button>
+                  <button type="button" onClick={() => handleExport("excel")}>
+                    Export as Excel
+                  </button>
+                  <button type="button" onClick={() => handleExport("pdf")}>
+                    Export as PDF
+                  </button>
                 </div>
               </>
             )}
           </div>
-
-          <button type="button" className="payroll-primary-btn" onClick={() => window.print()}>
-            <FontAwesomeIcon icon={faFilePdf} />
-            Print / PDF
-          </button>
         </div>
+      </section>
+
+      <section className="payroll-stat-grid">
+        {statCards.map((item) => (
+          <article className={`pr-stat-card ${item.tone}`} key={item.label}>
+            <span className="pr-stat-icon">
+              <FontAwesomeIcon icon={item.icon} />
+            </span>
+            <div>
+              <strong>{item.value}</strong>
+              <p>{item.label}</p>
+              {item.growth !== undefined ? (
+                <small className={`growth-indicator ${getGrowthColor(item.growth)}`}>
+                  <FontAwesomeIcon icon={getGrowthIcon(item.growth)} />
+                  {item.growth || 0}% vs previous
+                </small>
+              ) : (
+                <small>{item.sub}</small>
+              )}
+            </div>
+          </article>
+        ))}
       </section>
 
       <section className="payroll-controls">
         <div className="payroll-search-box">
-          <FontAwesomeIcon icon={faMagnifyingGlass} />
           <input
             type="text"
-            placeholder="Search employee, ID, department, position, status..."
-            value={searchTerm}
-            onChange={(event) => setSearchTerm(event.target.value)}
+            placeholder="Search employee, department, position, status..."
+            value={searchInput}
+            onChange={(event) => setSearchInput(event.target.value)}
           />
-
-          {searchTerm && (
-            <button type="button" onClick={() => setSearchTerm("")}>
+          {searchInput && (
+            <button type="button" onClick={() => setSearchInput("")}>
               <FontAwesomeIcon icon={faTimes} />
             </button>
           )}
         </div>
 
-        <label className="payroll-filter-box">
-          <FontAwesomeIcon icon={faCalendarAlt} />
-          <select
-            value={selectedPeriod}
-            onChange={(event) => setSelectedPeriod(event.target.value)}
-          >
-            {PERIODS.map((period) => (
-              <option key={period} value={period}>
-                {period.charAt(0).toUpperCase() + period.slice(1)}
-              </option>
-            ))}
-          </select>
-        </label>
+        <select
+          className="payroll-select"
+          value={selectedPeriod}
+          onChange={(event) => setSelectedPeriod(event.target.value)}
+        >
+          {PERIODS.map((period) => (
+            <option key={period.key} value={period.key}>
+              {period.label}
+            </option>
+          ))}
+        </select>
 
-        <label className="payroll-filter-box">
-          <FontAwesomeIcon icon={faFilter} />
-          <select
-            value={selectedDepartment}
-            onChange={(event) => setSelectedDepartment(event.target.value)}
-          >
-            <option value="all">All Departments</option>
-            {departments.map((department) => (
-              <option key={department} value={department}>
-                {department}
-              </option>
-            ))}
-          </select>
-        </label>
+        <select
+          className="payroll-select"
+          value={selectedDepartment}
+          onChange={(event) => setSelectedDepartment(event.target.value)}
+        >
+          <option value="all">All Departments</option>
+          {departments.map((department) => (
+            <option key={department} value={department}>
+              {department}
+            </option>
+          ))}
+        </select>
 
         <button type="button" className="payroll-clear-btn" onClick={clearFilters}>
           <FontAwesomeIcon icon={faTimes} />
@@ -592,25 +570,11 @@ const PayrollReports = () => {
         </button>
       </section>
 
-      <section className="payroll-report-tabs">
-        {REPORT_TYPES.map((type) => (
-          <button
-            key={type.key}
-            type="button"
-            className={reportType === type.key ? "active" : ""}
-            onClick={() => setReportType(type.key)}
-          >
-            <FontAwesomeIcon icon={type.icon} />
-            {type.label}
-          </button>
-        ))}
-      </section>
-
       {loading && (
         <div className="payroll-loading-state">
           <FontAwesomeIcon icon={faSpinner} spin />
           <h3>Loading payroll data...</h3>
-          <p>Please wait while the system prepares the payroll report.</p>
+          <p>Computing payroll from attendance records.</p>
         </div>
       )}
 
@@ -627,407 +591,179 @@ const PayrollReports = () => {
 
       {!loading && !error && (
         <>
-          {reportType === "summary" && (
-            <section className="payroll-report-content">
-              <div className="payroll-summary-grid">
-                <article className="payroll-summary-card">
-                  <span>
-                    <FontAwesomeIcon icon={faMoneyBillWave} />
-                  </span>
-                  <div>
-                    <strong>{formatCurrency(derivedSummary.totalPayroll)}</strong>
-                    <p>Total Payroll</p>
-                    <small className={`growth-indicator ${getGrowthColor(derivedSummary.growth)}`}>
-                      <FontAwesomeIcon icon={getGrowthIcon(derivedSummary.growth)} />
-                      {derivedSummary.growth || 0}% growth
-                    </small>
-                  </div>
-                </article>
+          <section className="payroll-panel pr-roster-panel">
+            <div className="payroll-panel-heading">
+              <div>
+                <h3>Employee Payroll Roster</h3>
+                <p>
+                  {sortedRecords.length} employee(s) · computed from manager
+                  attendance for {report.periodLabel || "this period"}
+                  {safeNumber(report.attendanceSummary?.staff_with_attendance) === 0 &&
+                    " — no attendance recorded yet, showing base salary preview"}
+                </p>
+              </div>
+              <div className="pr-attendance-badge">
+                <FontAwesomeIcon icon={faClock} />
+                {safeNumber(report.attendanceSummary?.staff_with_attendance)} staff clocked in ·{" "}
+                {safeNumber(report.attendanceSummary?.total_hours).toFixed(0)}h logged
+              </div>
+            </div>
 
-                <article className="payroll-summary-card">
-                  <span>
-                    <FontAwesomeIcon icon={faUsers} />
-                  </span>
-                  <div>
-                    <strong>{derivedSummary.totalEmployees}</strong>
-                    <p>Total Employees</p>
-                    <small>Filtered payroll records</small>
-                  </div>
-                </article>
+            <StandardTable
+              columns={rosterColumns}
+              data={sortedRecords}
+              sortKey={sortKey}
+              sortDirection={sortDirection}
+              onSort={handleSort}
+              emptyMessage="No employees found for the current filters."
+              pageSize={10}
+            />
+          </section>
 
-                <article className="payroll-summary-card">
-                  <span>
-                    <FontAwesomeIcon icon={faChartBar} />
-                  </span>
-                  <div>
-                    <strong>{formatCurrency(derivedSummary.averageSalary)}</strong>
-                    <p>Average Salary</p>
-                    <small>Based on net pay</small>
-                  </div>
-                </article>
-
-                <article className="payroll-summary-card">
-                  <span>
-                    <FontAwesomeIcon icon={faWallet} />
-                  </span>
-                  <div>
-                    <strong>{formatCurrency(derivedSummary.totalBonuses)}</strong>
-                    <p>Total Bonuses</p>
-                    <small>
-                      Deductions: {formatCurrency(derivedSummary.totalDeductions)}
-                    </small>
-                  </div>
-                </article>
+          <section className="payroll-dashboard-grid">
+            <article className="payroll-panel">
+              <div className="payroll-panel-heading">
+                <div>
+                  <h3>
+                    <FontAwesomeIcon icon={faBuilding} /> Department Cost Overview
+                  </h3>
+                  <p>Net payroll distribution by department.</p>
+                </div>
               </div>
 
-              <div className="payroll-dashboard-grid">
-                <article className="payroll-panel">
-                  <div className="payroll-panel-heading">
-                    <div>
-                      <h3>Department Cost Overview</h3>
-                      <p>Distribution of payroll spending by department.</p>
-                    </div>
-                  </div>
+              {report.departmentBreakdown.length === 0 ? (
+                <div className="payroll-empty-state">
+                  <FontAwesomeIcon icon={faTriangleExclamation} />
+                  <h3>No department data</h3>
+                  <p>No department breakdown for this period.</p>
+                </div>
+              ) : (
+                <div className="payroll-chart-box">
+                  <ResponsiveContainer width="100%" height={300}>
+                    <BarChart data={report.departmentBreakdown}>
+                      <CartesianGrid strokeDasharray="3 3" vertical={false} />
+                      <XAxis dataKey="department" />
+                      <YAxis tickFormatter={(value) => `₱${value / 1000}k`} />
+                      <Tooltip formatter={(value) => formatCurrency(value)} />
+                      <Bar dataKey="total_salary" name="Net Payroll" radius={[12, 12, 0, 0]}>
+                        {report.departmentBreakdown.map((entry, index) => (
+                          <Cell
+                            key={entry.department}
+                            fill={CHART_COLORS[index % CHART_COLORS.length]}
+                          />
+                        ))}
+                      </Bar>
+                    </BarChart>
+                  </ResponsiveContainer>
+                </div>
+              )}
+            </article>
 
-                  {departmentBreakdown.length === 0 ? (
-                    renderEmptyState("No department data", "No department breakdown was returned.")
-                  ) : (
-                    <div className="payroll-chart-box">
-                      <ResponsiveContainer width="100%" height={320}>
-                        <BarChart data={departmentBreakdown}>
-                          <CartesianGrid strokeDasharray="3 3" vertical={false} />
-                          <XAxis dataKey="department" />
-                          <YAxis tickFormatter={(value) => `₱${value / 1000}k`} />
-                          <Tooltip formatter={(value) => formatCurrency(value)} />
-                          <Bar dataKey="totalSalary" name="Total Salary" radius={[12, 12, 0, 0]}>
-                            {departmentBreakdown.map((entry, index) => (
-                              <Cell
-                                key={entry.department}
-                                fill={CHART_COLORS[index % CHART_COLORS.length]}
-                              />
-                            ))}
-                          </Bar>
-                        </BarChart>
-                      </ResponsiveContainer>
-                    </div>
-                  )}
-                </article>
-
-                <article className="payroll-panel payroll-health-panel">
-                  <div className="payroll-panel-heading">
-                    <div>
-                      <h3>Payroll Snapshot</h3>
-                      <p>Quick view of the current payroll dataset.</p>
-                    </div>
-                  </div>
-
-                  <div className="payroll-health-list">
-                    <div>
-                      <span>Records</span>
-                      <strong>{filteredPayrollRecords.length}</strong>
-                    </div>
-                    <div>
-                      <span>Departments</span>
-                      <strong>{departmentBreakdown.length}</strong>
-                    </div>
-                    <div>
-                      <span>Top Earners</span>
-                      <strong>{topEarnersData.length}</strong>
-                    </div>
-                    <div>
-                      <span>Period</span>
-                      <strong>{selectedPeriod}</strong>
-                    </div>
-                  </div>
-                </article>
+            <article className="payroll-panel">
+              <div className="payroll-panel-heading">
+                <div>
+                  <h3>
+                    <FontAwesomeIcon icon={faChartLine} /> Payroll Trend
+                  </h3>
+                  <p>Saved payroll totals over recent months.</p>
+                </div>
               </div>
-            </section>
-          )}
 
-          {reportType === "department" && (
-            <section className="payroll-report-content">
-              <article className="payroll-panel">
-                <div className="payroll-panel-heading">
-                  <div>
-                    <h3>Department Payroll Comparison</h3>
-                    <p>Compare employee count, total salary, average salary, and growth.</p>
-                  </div>
+              {report.monthlyTrend.length === 0 ? (
+                <div className="payroll-empty-state">
+                  <FontAwesomeIcon icon={faTriangleExclamation} />
+                  <h3>No trend data</h3>
+                  <p>Generate payroll to start building history.</p>
                 </div>
-
-                {filteredDepartmentData.length === 0 ? (
-                  renderEmptyState("No department records", "Try changing the department filter.")
-                ) : (
-                  <>
-                    <div className="payroll-chart-box">
-                      <ResponsiveContainer width="100%" height={340}>
-                        <BarChart data={filteredDepartmentData}>
-                          <CartesianGrid strokeDasharray="3 3" vertical={false} />
-                          <XAxis dataKey="department" />
-                          <YAxis tickFormatter={(value) => `₱${value / 1000}k`} />
-                          <Tooltip formatter={(value) => formatCurrency(value)} />
-                          <Bar dataKey="totalSalary" name="Total Salary" radius={[12, 12, 0, 0]}>
-                            {filteredDepartmentData.map((entry, index) => (
-                              <Cell
-                                key={entry.department}
-                                fill={CHART_COLORS[index % CHART_COLORS.length]}
-                              />
-                            ))}
-                          </Bar>
-                        </BarChart>
-                      </ResponsiveContainer>
-                    </div>
-
-                    <StandardTable
-                      columns={[
-                        { key: "department", label: "Department", sortable: true, render: (value) => (
-                          <div className="department-name">
-                            <FontAwesomeIcon icon={faBuilding} />
-                            {value}
-                          </div>
-                        )},
-                        { key: "employees", label: "Employees", sortable: true },
-                        { key: "totalSalary", label: "Total Salary", sortable: true, format: "currency" },
-                        { key: "average", label: "Average Salary", sortable: true, format: "currency" },
-                        { key: "percentage", label: "% of Total", sortable: true, render: (value) => `${value || 0}%` },
-                        { key: "trend", label: "Trend", sortable: true, render: (value) => (
-                          <span className={`trend-indicator ${getGrowthColor(value)}`}>
-                            <FontAwesomeIcon icon={getGrowthIcon(value)} />
-                            {value || 0}%
-                          </span>
-                        )},
-                      ]}
-                      data={filteredDepartmentData}
-                      emptyMessage="No department data found."
-                      pageSize={10}
-                    />
-                  </>
-                )}
-              </article>
-            </section>
-          )}
-
-          {reportType === "trend" && (
-            <section className="payroll-report-content">
-              <article className="payroll-panel">
-                <div className="payroll-panel-heading">
-                  <div>
-                    <h3>Payroll Growth Analysis</h3>
-                    <p>Payroll amount and employee count movement across periods.</p>
-                  </div>
+              ) : (
+                <div className="payroll-chart-box">
+                  <ResponsiveContainer width="100%" height={300}>
+                    <LineChart data={report.monthlyTrend}>
+                      <CartesianGrid strokeDasharray="3 3" vertical={false} />
+                      <XAxis dataKey="month" />
+                      <YAxis tickFormatter={(value) => `₱${value / 1000}k`} />
+                      <Tooltip formatter={(value) => formatCurrency(value)} />
+                      <Legend />
+                      <Line
+                        type="monotone"
+                        dataKey="payroll"
+                        name="Net Payroll"
+                        stroke="#ff5f93"
+                        strokeWidth={4}
+                        dot={{ r: 5 }}
+                        activeDot={{ r: 8 }}
+                      />
+                    </LineChart>
+                  </ResponsiveContainer>
                 </div>
+              )}
+            </article>
+          </section>
 
-                {monthlyTrendData.length === 0 ? (
-                  renderEmptyState("No trend data", "Monthly trend data is not available yet.")
-                ) : (
-                  <div className="payroll-chart-box large">
-                    <ResponsiveContainer width="100%" height={360}>
-                      <LineChart data={monthlyTrendData}>
-                        <CartesianGrid strokeDasharray="3 3" vertical={false} />
-                        <XAxis dataKey="month" />
-                        <YAxis yAxisId="left" tickFormatter={(value) => `₱${value / 1000}k`} />
-                        <YAxis yAxisId="right" orientation="right" />
-                        <Tooltip
-                          formatter={(value, name) =>
-                            name === "payroll" ? formatCurrency(value) : value
-                          }
-                        />
-                        <Legend />
-                        <Line
-                          yAxisId="left"
-                          type="monotone"
-                          dataKey="payroll"
-                          name="Payroll"
-                          stroke="#ff5f93"
-                          strokeWidth={4}
-                          dot={{ r: 5 }}
-                          activeDot={{ r: 8 }}
-                        />
-                        <Line
-                          yAxisId="right"
-                          type="monotone"
-                          dataKey="employees"
-                          name="Employees"
-                          stroke="#fb7185"
-                          strokeWidth={3}
-                          dot={{ r: 5 }}
-                        />
-                      </LineChart>
-                    </ResponsiveContainer>
-                  </div>
-                )}
-
-                <div className="trend-insights">
-                  <div className="insight-card">
-                    <h4>Key Insight</h4>
-                    <p>
-                      Payroll insights are based on live payroll records returned by the
-                      backend. No fake or fallback business values are displayed.
-                    </p>
-                  </div>
-
-                  <div className="insight-card">
-                    <h4>Forecast Status</h4>
-                    <p>
-                      Forecasting is unavailable unless the backend provides projected
-                      payroll data.
-                    </p>
-                    <p>Current employee count: {derivedSummary.totalEmployees}</p>
-                  </div>
+          <section className="payroll-dashboard-grid">
+            <article className="payroll-panel">
+              <div className="payroll-panel-heading">
+                <div>
+                  <h3>Top Earners</h3>
+                  <p>Highest net pay this period.</p>
                 </div>
-              </article>
-            </section>
-          )}
+              </div>
 
-          {reportType === "topEarners" && (
-            <section className="payroll-report-content">
-              <article className="payroll-panel">
-                <div className="payroll-panel-heading">
-                  <div>
-                    <h3>Top Earners by Net Pay</h3>
-                    <p>Highest earning employees based on available payroll records.</p>
-                  </div>
+              {report.topEarners.length === 0 ? (
+                <div className="payroll-empty-state">
+                  <FontAwesomeIcon icon={faTriangleExclamation} />
+                  <h3>No earners yet</h3>
+                  <p>Payroll rows will appear once computed.</p>
                 </div>
-
-                {topEarnersData.length === 0 ? (
-                  renderEmptyState("No top earners", "No payroll records are available.")
-                ) : (
-                  <>
-                    <div className="earners-list">
-                      {topEarnersData.map((earner, index) => (
-                        <div key={earner.id || earner.name} className="earner-card">
-                          <div className="earner-rank">#{index + 1}</div>
-                          <div className="earner-info">
-                            <h4>{earner.name}</h4>
-                            <p>{earner.position}</p>
-                            <span>{earner.department}</span>
-                          </div>
-                          <div className="earner-salary">
-                            <strong>{formatCurrency(earner.salary)}</strong>
-                            <small>net pay</small>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-
-                    <div className="payroll-chart-box">
-                      <ResponsiveContainer width="100%" height={300}>
-                        <BarChart data={topEarnersData}>
-                          <CartesianGrid strokeDasharray="3 3" vertical={false} />
-                          <XAxis dataKey="name" />
-                          <YAxis tickFormatter={(value) => `₱${value / 1000}k`} />
-                          <Tooltip formatter={(value) => formatCurrency(value)} />
-                          <Bar dataKey="salary" name="Salary" radius={[12, 12, 0, 0]}>
-                            {topEarnersData.map((entry, index) => (
-                              <Cell
-                                key={entry.id || entry.name}
-                                fill={CHART_COLORS[index % CHART_COLORS.length]}
-                              />
-                            ))}
-                          </Bar>
-                        </BarChart>
-                      </ResponsiveContainer>
-                    </div>
-                  </>
-                )}
-              </article>
-            </section>
-          )}
-
-          {reportType === "records" && (
-            <section className="payroll-report-content">
-              <article className="payroll-panel">
-                <div className="payroll-panel-heading">
-                  <div>
-                    <h3>Payroll Records</h3>
-                    <p>
-                      Showing {filteredPayrollRecords.length} payroll record(s) from the
-                      current filters.
-                    </p>
-                  </div>
-                </div>
-
-                <StandardTable
-                  columns={[
-                    { key: "employeeName", label: "Employee", sortable: true, render: (value, record) => (
-                      <div className="employee-cell">
-                        <span><FontAwesomeIcon icon={faUserTie} /></span>
-                        <div>
-                          <strong>{value}</strong>
-                          <small>{record.employeeId}</small>
-                        </div>
+              ) : (
+                <div className="earners-list">
+                  {report.topEarners.map((earner, index) => (
+                    <div key={earner.id || earner.user_id} className="earner-card">
+                      <div className="earner-rank">#{index + 1}</div>
+                      <div className="earner-info">
+                        <h4>{earner.employee_name}</h4>
+                        <p>{earner.position || earner.role || "Staff"}</p>
+                        <span>{earner.department}</span>
                       </div>
-                    )},
-                    { key: "department", label: "Department", sortable: true },
-                    { key: "baseSalary", label: "Base Salary", sortable: true, format: "currency" },
-                    { key: "bonus", label: "Bonus", sortable: true, render: (value) => (
-                      <span className="amount-positive">+{formatCurrency(value)}</span>
-                    )},
-                    { key: "deductions", label: "Deductions", sortable: true, render: (value) => (
-                      <span className="amount-negative">-{formatCurrency(value)}</span>
-                    )},
-                    { key: "netPay", label: "Net Pay", sortable: true, render: (value) => (
-                      <span className="net-pay">{formatCurrency(value)}</span>
-                    )},
-                    { key: "payPeriod", label: "Period", sortable: true },
-                    { key: "status", label: "Status", sortable: true, render: (value) => (
-                      <span className={`status-pill ${value}`}>{value}</span>
-                    )},
-                    { key: "paymentDate", label: "Date", sortable: true, render: (value, record) => formatDate(value || record.createdAt) },
-                    { key: "actions", label: "Action", sortable: false, render: (_value, record) => (
-                      <button
-                        type="button"
-                        className="view-record-btn"
-                        onClick={() => setSelectedRecord(record)}
-                      >
-                        <FontAwesomeIcon icon={faEye} />
-                        View
-                      </button>
-                    )},
-                  ]}
-                  data={filteredPayrollRecords}
-                  emptyMessage="No payroll records found. Try clearing the filters."
-                  pageSize={10}
-                />
-              </article>
-            </section>
-          )}
+                      <div className="earner-salary">
+                        <strong>{formatCurrency(earner.net_pay)}</strong>
+                        <small>{statusPill(earner.status)}</small>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </article>
 
-          <section className="payroll-export-panel">
-            <div>
-              <h3>Export Options</h3>
-              <p>Download filtered payroll records or print the current report view.</p>
-            </div>
+            <article className="payroll-panel payroll-health-panel">
+              <div className="payroll-panel-heading">
+                <div>
+                  <h3>Payroll Snapshot</h3>
+                  <p>Status breakdown for {report.periodLabel || "this period"}.</p>
+                </div>
+              </div>
 
-            <div className="payroll-export-actions">
-              <button type="button" onClick={() => handleExport("csv")}>
-                <FontAwesomeIcon icon={faFileCsv} />
-                Download CSV
-              </button>
-
-              <button type="button" onClick={() => handleExport("excel")}>
-                <FontAwesomeIcon icon={faFileExcel} />
-                Download Excel
-              </button>
-
-              <button type="button" onClick={() => handleExport("pdf")}>
-                <FontAwesomeIcon icon={faFilePdf} />
-                Download PDF
-              </button>
-
-              <button type="button" onClick={() => window.print()}>
-                <FontAwesomeIcon icon={faPrint} />
-                Print
-              </button>
-
-              <button
-                type="button"
-                onClick={() => loadPayrollData({ silent: true })}
-                disabled={refreshing}
-              >
-                <FontAwesomeIcon icon={refreshing ? faSpinner : faRotateRight} />
-                Refresh Data
-              </button>
-            </div>
+              <div className="payroll-health-list">
+                <div>
+                  <span>Saved records</span>
+                  <strong>{summary.total_records || 0}</strong>
+                </div>
+                <div>
+                  <span>Preview (from attendance)</span>
+                  <strong>{summary.preview || 0}</strong>
+                </div>
+                <div>
+                  <span>Draft / Pending / Paid</span>
+                  <strong>
+                    {summary.draft || 0} / {summary.pending || 0} / {summary.paid || 0}
+                  </strong>
+                </div>
+                <div>
+                  <span>Period</span>
+                  <strong>{report.periodLabel || selectedPeriod}</strong>
+                </div>
+              </div>
+            </article>
           </section>
         </>
       )}
@@ -1039,73 +775,206 @@ const PayrollReports = () => {
               <div>
                 <span className="payroll-eyebrow">
                   <FontAwesomeIcon icon={faUserTie} />
-                  Payroll Record
+                  Payroll Record {selectedRecord.is_preview ? "· Preview" : ""}
                 </span>
-                <h2>{selectedRecord.employeeName}</h2>
+                <h2>{selectedRecord.employee_name}</h2>
+                <small>
+                  {selectedRecord.department} · {selectedRecord.position || selectedRecord.role}
+                </small>
               </div>
-
               <button type="button" onClick={() => setSelectedRecord(null)}>
                 <FontAwesomeIcon icon={faTimes} />
               </button>
             </div>
 
             <div className="payroll-modal-body">
-              <div className="record-detail-grid">
-                <div>
-                  <small>Employee ID</small>
-                  <strong>{selectedRecord.employeeId}</strong>
+              <div className="pr-modal-grid">
+                <div className="pr-modal-section">
+                  <h4>Attendance</h4>
+                  <div className="pr-modal-row">
+                    <span>Present days</span>
+                    <strong>{selectedRecord.present_days ?? 0}</strong>
+                  </div>
+                  <div className="pr-modal-row">
+                    <span>Absent days</span>
+                    <strong>{selectedRecord.absent_days ?? 0}</strong>
+                  </div>
+                  <div className="pr-modal-row">
+                    <span>Regular hours</span>
+                    <strong>{safeNumber(selectedRecord.regular_hours).toFixed(2)}h</strong>
+                  </div>
+                  <div className="pr-modal-row">
+                    <span>Overtime hours</span>
+                    <strong>{safeNumber(selectedRecord.overtime_hours).toFixed(2)}h</strong>
+                  </div>
                 </div>
-                <div>
-                  <small>Department</small>
-                  <strong>{selectedRecord.department}</strong>
+
+                <div className="pr-modal-section">
+                  <h4>Earnings</h4>
+                  <div className="pr-modal-row">
+                    <span>Base salary</span>
+                    <strong>{formatCurrency(selectedRecord.base_salary)}</strong>
+                  </div>
+                  <div className="pr-modal-row">
+                    <span>Overtime pay</span>
+                    <strong>{formatCurrency(selectedRecord.overtime_pay)}</strong>
+                  </div>
+                  <div className="pr-modal-row">
+                    <span>Bonus + allowances</span>
+                    <strong>
+                      {formatCurrency(
+                        safeNumber(selectedRecord.bonus) + safeNumber(selectedRecord.allowances)
+                      )}
+                    </strong>
+                  </div>
+                  <div className="pr-modal-row pr-modal-total">
+                    <span>Gross pay</span>
+                    <strong>{formatCurrency(selectedRecord.gross_pay)}</strong>
+                  </div>
                 </div>
-                <div>
-                  <small>Position</small>
-                  <strong>{selectedRecord.position}</strong>
-                </div>
-                <div>
-                  <small>Pay Period</small>
-                  <strong>{selectedRecord.payPeriod}</strong>
-                </div>
-                <div>
-                  <small>Status</small>
-                  <strong>{selectedRecord.status}</strong>
-                </div>
-                <div>
-                  <small>Payment Date</small>
-                  <strong>{formatDate(selectedRecord.paymentDate)}</strong>
+
+                <div className="pr-modal-section">
+                  <h4>Deductions</h4>
+                  <div className="pr-modal-row">
+                    <span>SSS</span>
+                    <strong>{formatCurrency(selectedRecord.sss_contribution)}</strong>
+                  </div>
+                  <div className="pr-modal-row">
+                    <span>PhilHealth</span>
+                    <strong>{formatCurrency(selectedRecord.philhealth_contribution)}</strong>
+                  </div>
+                  <div className="pr-modal-row">
+                    <span>Pag-IBIG</span>
+                    <strong>{formatCurrency(selectedRecord.pagibig_contribution)}</strong>
+                  </div>
+                  <div className="pr-modal-row">
+                    <span>Withholding tax</span>
+                    <strong>{formatCurrency(selectedRecord.tax_deduction)}</strong>
+                  </div>
+                  <div className="pr-modal-row">
+                    <span>Late / absent</span>
+                    <strong>
+                      {formatCurrency(
+                        safeNumber(selectedRecord.late_deductions) +
+                          safeNumber(selectedRecord.absent_deductions)
+                      )}
+                    </strong>
+                  </div>
+                  <div className="pr-modal-row pr-modal-total">
+                    <span>Total deductions</span>
+                    <strong>
+                      {formatCurrency(
+                        selectedRecord.total_deductions ??
+                          safeNumber(selectedRecord.sss_contribution) +
+                            safeNumber(selectedRecord.philhealth_contribution) +
+                            safeNumber(selectedRecord.pagibig_contribution) +
+                            safeNumber(selectedRecord.tax_deduction) +
+                            safeNumber(selectedRecord.late_deductions) +
+                            safeNumber(selectedRecord.absent_deductions) +
+                            safeNumber(selectedRecord.deductions)
+                      )}
+                    </strong>
+                  </div>
                 </div>
               </div>
 
-              <div className="modal-breakdown">
-                <h3>Payroll Breakdown</h3>
-                <div>
-                  <span>Base Salary</span>
-                  <strong>{formatCurrency(selectedRecord.baseSalary)}</strong>
-                </div>
-                <div>
-                  <span>Bonus</span>
-                  <strong className="amount-positive">
-                    +{formatCurrency(selectedRecord.bonus)}
-                  </strong>
-                </div>
-                <div>
-                  <span>Deductions</span>
-                  <strong className="amount-negative">
-                    -{formatCurrency(selectedRecord.deductions)}
-                  </strong>
-                </div>
-                <div className="total">
-                  <span>Net Pay</span>
-                  <strong>{formatCurrency(selectedRecord.netPay)}</strong>
-                </div>
+              <div className="pr-modal-netpay">
+                <span>Net Pay</span>
+                <strong>{formatCurrency(selectedRecord.net_pay)}</strong>
+                <small>
+                  {statusPill(selectedRecord.status)}
+                  {selectedRecord.payment_date
+                    ? ` · Paid ${formatDate(selectedRecord.payment_date)} via ${selectedRecord.payment_method || "—"}`
+                    : selectedRecord.is_preview
+                    ? " · Computed from attendance — not yet generated"
+                    : ""}
+                </small>
               </div>
             </div>
+          </div>
+        </div>
+      )}
 
-            <div className="payroll-modal-footer">
-              <button type="button" onClick={() => setSelectedRecord(null)}>
-                Close
+      {showGenerate && (
+        <div className="payroll-modal-overlay" onClick={() => !generating && setShowGenerate(false)}>
+          <div className="payroll-modal pr-generate-modal" onClick={(e) => e.stopPropagation()}>
+            <div className="payroll-modal-header">
+              <div>
+                <span className="payroll-eyebrow">
+                  <FontAwesomeIcon icon={faPlay} />
+                  Generate Payroll
+                </span>
+                <h2>Create payroll from attendance</h2>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowGenerate(false)}
+                disabled={generating}
+              >
+                <FontAwesomeIcon icon={faTimes} />
               </button>
+            </div>
+
+            <div className="payroll-modal-body">
+              <div className="pr-preset-grid">
+                {GENERATE_PRESETS.map((preset) => (
+                  <button
+                    key={preset.key}
+                    type="button"
+                    className={`pr-preset-btn ${generatePreset === preset.key ? "active" : ""}`}
+                    onClick={() => setGeneratePreset(preset.key)}
+                  >
+                    {preset.label}
+                  </button>
+                ))}
+              </div>
+
+              {generatePreset === "custom" && (
+                <div className="pr-date-row">
+                  <label>
+                    Start date
+                    <input
+                      type="date"
+                      value={generateStart}
+                      onChange={(e) => setGenerateStart(e.target.value)}
+                    />
+                  </label>
+                  <label>
+                    End date
+                    <input
+                      type="date"
+                      value={generateEnd}
+                      onChange={(e) => setGenerateEnd(e.target.value)}
+                    />
+                  </label>
+                </div>
+              )}
+
+              <p className="pr-generate-note">
+                Payroll is computed from manager attendance records (days worked,
+                late/absent, hours, overtime) with statutory deductions applied.
+                Existing records for the same period are updated.
+              </p>
+
+              <div className="management-actions pr-generate-actions">
+                <button
+                  type="button"
+                  className="payroll-primary-btn"
+                  onClick={handleGenerate}
+                  disabled={generating}
+                >
+                  <FontAwesomeIcon icon={generating ? faSpinner : faPlay} spin={generating} />
+                  {generating ? "Generating..." : "Generate"}
+                </button>
+                <button
+                  type="button"
+                  className="payroll-secondary-btn"
+                  onClick={() => setShowGenerate(false)}
+                  disabled={generating}
+                >
+                  Cancel
+                </button>
+              </div>
             </div>
           </div>
         </div>

@@ -266,14 +266,6 @@
   overflow: hidden;
 }
 
-.search-box > svg,
-.filter-box > svg {
-  position: absolute;
-  left: 16px;
-  color: var(--color-primary);
-  pointer-events: none;
-}
-
 .search-box input,
 .filter-box select {
   width: 100%;
@@ -281,15 +273,18 @@
   border: none;
   outline: none;
   background: transparent;
-  padding: 0 1rem 0 3rem;
   font-size: 0.93rem;
   font-weight: 750;
   color: var(--color-text);
 }
 
+.search-box input {
+  padding: 0 2.75rem 0 1.1rem;
+}
+
 .filter-box select {
   appearance: none;
-  padding-right: 2rem;
+  padding: 0 2rem 0 1.1rem;
 }
 
 .search-box button {
@@ -363,19 +358,20 @@
 .users-table {
   width: 100%;
   min-width: 1040px;
-  border-collapse: separate;
-  border-spacing: 0 0.65rem;
-  padding: 0.25rem 1rem 1rem;
+  border-collapse: collapse;
 }
 
 .users-table thead th {
-  padding: 0.7rem 0.75rem;
+  padding: 0.9rem 0.75rem;
   text-align: left;
   color: var(--color-muted);
   font-size: 0.74rem;
   font-weight: 950;
   text-transform: uppercase;
   letter-spacing: 0.055em;
+  background: rgba(255, 95, 147, 0.06);
+  border-bottom: 2px solid rgba(255, 95, 147, 0.12);
+  white-space: nowrap;
 }
 
 .users-table th button {
@@ -390,32 +386,34 @@
 }
 
 .users-table tbody tr {
-  transition: 0.22s ease;
+  transition: background 0.18s ease;
 }
 
 .users-table tbody tr:hover {
-  transform: translateY(-2px);
+  background: rgba(255, 95, 147, 0.045);
 }
 
 .users-table td {
-  padding: 0.95rem 0.75rem;
+  padding: 0.85rem 0.75rem;
   vertical-align: middle;
   color: var(--color-text);
   font-size: 0.9rem;
   font-weight: 750;
-  background: rgba(255, 255, 255, 0.66);
-  border-top: 1px solid rgba(255, 95, 147, 0.08);
   border-bottom: 1px solid rgba(255, 95, 147, 0.08);
 }
 
-.users-table td:first-child {
-  border-left: 1px solid rgba(255, 95, 147, 0.08);
-  border-radius: 18px 0 0 18px;
+.users-table tbody tr:last-child td {
+  border-bottom: none;
 }
 
+.users-table th:first-child,
+.users-table td:first-child {
+  padding-left: 1.35rem;
+}
+
+.users-table th:last-child,
 .users-table td:last-child {
-  border-right: 1px solid rgba(255, 95, 147, 0.08);
-  border-radius: 0 18px 18px 0;
+  padding-right: 1.35rem;
 }
 
 .user-id {
@@ -457,18 +455,12 @@
 }
 
 .user-email {
-  display: flex;
-  align-items: center;
-  gap: 0.45rem;
-  min-width: 0;
+  max-width: 240px;
   color: var(--color-text);
 }
 
-.user-email svg {
-  color: var(--color-primary);
-}
-
 .user-email span {
+  display: block;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;

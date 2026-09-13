@@ -84,6 +84,8 @@ class Payroll extends Model
         'gross_pay' => 'decimal:2',
         'net_pay' => 'decimal:2',
         'payment_date' => 'date',
+        'pay_period_start' => 'date',
+        'pay_period_end' => 'date',
         'processed_at' => 'datetime',
         'approved_at' => 'datetime',
         'manual_attendance' => 'array',

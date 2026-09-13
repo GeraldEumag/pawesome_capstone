@@ -188,6 +188,7 @@ Route::middleware(['auth.api', 'throttle:api', 'role:admin'])->prefix('admin')->
     Route::get('customers/{id}/purchases', [CustomersController::class, 'purchases']);
 
     Route::get('chatbot/logs', [ChatbotController::class, 'index']);
+    Route::get('chatbot/logs/stats', [ChatbotController::class, 'stats']);
     Route::get('chatbot/logs/user/{user}', [ChatbotController::class, 'userHistory']);
     Route::get('chatbot/faqs', [ChatbotFaqController::class, 'index']);
     Route::post('chatbot/faqs', [ChatbotFaqController::class, 'store']);
