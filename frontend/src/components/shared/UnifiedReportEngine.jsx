@@ -73,6 +73,7 @@ const AdvancedFilterPanel = ({
   customFilters = [],
 }) => {
   const [showSavedFilters, setShowSavedFilters] = useState(false);
+  const [showAdvanced, setShowAdvanced] = useState(false);
   const [filterName, setFilterName] = useState('');
   const [activePreset, setActivePreset] = useState('month');
 
@@ -108,118 +109,137 @@ const AdvancedFilterPanel = ({
 
   return (
     <div className="ure-filter-panel">
-      {/* Date Range Presets */}
-      <div className="ure-date-presets">
-        {DATE_PRESETS.map((preset) => (
+      {/* ── Tier 1: search + preset strip + actions ── */}
+      <div className="ure-filter-top">
+        {/* Search Input */}
+        <div className="ure-search-box">
+          <FontAwesomeIcon icon={faSearch} />
+          <input
+            type="text"
+            placeholder="Search records..."
+            value={filters.searchTerm || ''}
+            onChange={(e) => onFilterChange({ ...filters, searchTerm: e.target.value })}
+          />
+          {filters.searchTerm && (
+            <button
+              type="button"
+              className="ure-clear-search"
+              onClick={() => onFilterChange({ ...filters, searchTerm: '' })}
+            >
+              <FontAwesomeIcon icon={faTimes} />
+            </button>
+          )}
+        </div>
+
+        {/* Date Range Presets — scrollable strip, never clipped */}
+        <div className="ure-date-presets">
+          {DATE_PRESETS.map((preset) => (
+            <button
+              key={preset.key}
+              type="button"
+              className={`ure-preset-btn ${activePreset === preset.key ? 'active' : ''}`}
+              onClick={() => handlePresetClick(preset.key)}
+            >
+              <FontAwesomeIcon icon={preset.icon} />
+              {preset.label}
+            </button>
+          ))}
+        </div>
+
+        {/* Action Buttons */}
+        <div className="ure-filter-actions">
           <button
-            key={preset.key}
             type="button"
-            className={`ure-preset-btn ${activePreset === preset.key ? 'active' : ''}`}
-            onClick={() => handlePresetClick(preset.key)}
+            className={`ure-filter-toggle ${showAdvanced ? 'open' : ''}`}
+            onClick={() => setShowAdvanced((v) => !v)}
+            aria-expanded={showAdvanced}
           >
-            <FontAwesomeIcon icon={preset.icon} />
-            {preset.label}
+            <FontAwesomeIcon icon={faFilter} />
+            Filters
+            {activeFilterCount > 0 && <span className="ure-count-badge">{activeFilterCount}</span>}
+            <FontAwesomeIcon icon={faChevronDown} className="ure-toggle-caret" />
           </button>
-        ))}
-      </div>
-
-      {/* Custom Date Range */}
-      <div className="ure-custom-date-range">
-        <label>
-          From
-          <input
-            type="date"
-            value={dateRange.startDate || ''}
-            onChange={(e) => onDateRangeChange({ ...dateRange, startDate: e.target.value })}
-          />
-        </label>
-        <label>
-          To
-          <input
-            type="date"
-            value={dateRange.endDate || ''}
-            onChange={(e) => onDateRangeChange({ ...dateRange, endDate: e.target.value })}
-          />
-        </label>
-      </div>
-
-      {/* Search Input */}
-      <div className="ure-search-box">
-        <FontAwesomeIcon icon={faSearch} />
-        <input
-          type="text"
-          placeholder="Search records..."
-          value={filters.searchTerm || ''}
-          onChange={(e) => onFilterChange({ ...filters, searchTerm: e.target.value })}
-        />
-        {filters.searchTerm && (
-          <button
-            type="button"
-            className="ure-clear-search"
-            onClick={() => onFilterChange({ ...filters, searchTerm: '' })}
-          >
+          <button type="button" className="ure-btn-clear" onClick={onClearFilters} disabled={activeFilterCount === 0}>
             <FontAwesomeIcon icon={faTimes} />
+            Clear
           </button>
-        )}
+          <button type="button" className="ure-btn-apply" onClick={() => onApplyFilters()}>
+            Apply
+          </button>
+        </div>
       </div>
 
-      {/* Status Filter */}
-      {statusOptions.length > 0 && (
-        <div className="ure-status-filter">
-          <label>Status</label>
-          <select
-            value={filters.status || 'all'}
-            onChange={(e) => onFilterChange({ ...filters, status: e.target.value })}
-          >
-            <option value="all">All Statuses</option>
-            {statusOptions.map((status) => (
-              <option key={status} value={normalizeStatus(status)}>
-                {formatLabel(status)}
-              </option>
-            ))}
-          </select>
+      {/* ── Tier 2: collapsible advanced filters ── */}
+      {showAdvanced && (
+        <div className="ure-filter-advanced">
+          {/* Custom Date Range */}
+          <div className="ure-field">
+            <label>From</label>
+            <input
+              type="date"
+              value={dateRange.startDate || ''}
+              onChange={(e) => onDateRangeChange({ ...dateRange, startDate: e.target.value })}
+            />
+          </div>
+          <div className="ure-field">
+            <label>To</label>
+            <input
+              type="date"
+              value={dateRange.endDate || ''}
+              onChange={(e) => onDateRangeChange({ ...dateRange, endDate: e.target.value })}
+            />
+          </div>
+
+          {/* Status Filter */}
+          {statusOptions.length > 0 && (
+            <div className="ure-field">
+              <label>Status</label>
+              <select
+                value={filters.status || 'all'}
+                onChange={(e) => onFilterChange({ ...filters, status: e.target.value })}
+              >
+                <option value="all">All Statuses</option>
+                {statusOptions.map((status) => (
+                  <option key={status} value={normalizeStatus(status)}>
+                    {formatLabel(status)}
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
+
+          {/* Custom Filters */}
+          {customFilters.map((customFilter) => (
+            <div key={customFilter.key} className="ure-field">
+              <label>{customFilter.label}</label>
+              <select
+                value={filters[customFilter.key] || 'all'}
+                onChange={(e) => onFilterChange({ ...filters, [customFilter.key]: e.target.value })}
+              >
+                <option value="all">All {customFilter.label}</option>
+                {customFilter.options.map((opt) => (
+                  <option key={opt.value} value={opt.value}>
+                    {opt.label}
+                  </option>
+                ))}
+              </select>
+            </div>
+          ))}
+
+          {onSaveFilter && (
+            <div className="ure-field ure-field-save">
+              <button
+                type="button"
+                className="ure-btn-save"
+                onClick={() => setShowSavedFilters(!showSavedFilters)}
+              >
+                <FontAwesomeIcon icon={faSave} />
+                Save Preset
+              </button>
+            </div>
+          )}
         </div>
       )}
-
-      {/* Custom Filters */}
-      {customFilters.map((customFilter) => (
-        <div key={customFilter.key} className="ure-custom-filter">
-          <label>{customFilter.label}</label>
-          <select
-            value={filters[customFilter.key] || 'all'}
-            onChange={(e) => onFilterChange({ ...filters, [customFilter.key]: e.target.value })}
-          >
-            <option value="all">All {customFilter.label}</option>
-            {customFilter.options.map((opt) => (
-              <option key={opt.value} value={opt.value}>
-                {opt.label}
-              </option>
-            ))}
-          </select>
-        </div>
-      ))}
-
-      {/* Action Buttons */}
-      <div className="ure-filter-actions">
-        <button type="button" className="ure-btn-clear" onClick={onClearFilters}>
-          <FontAwesomeIcon icon={faTimes} />
-          Clear ({activeFilterCount})
-        </button>
-        <button type="button" className="ure-btn-apply" onClick={onApplyFilters}>
-          <FontAwesomeIcon icon={faFilter} />
-          Apply Filters
-        </button>
-        {onSaveFilter && (
-          <button
-            type="button"
-            className="ure-btn-save"
-            onClick={() => setShowSavedFilters(!showSavedFilters)}
-          >
-            <FontAwesomeIcon icon={faSave} />
-            Save
-          </button>
-        )}
-      </div>
 
       {/* Save Filter Dialog */}
       {showSavedFilters && (

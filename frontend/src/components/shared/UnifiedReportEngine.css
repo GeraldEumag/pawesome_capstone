@@ -13,10 +13,10 @@
   --ure-secondary: #64748b;
   
   --ure-bg: #ffffff;
-  --ure-surface: rgba(255, 255, 255, 0.95);
-  --ure-surface-hover: rgba(255, 255, 255, 1);
-  --ure-border: rgba(255, 95, 147, 0.18);
-  --ure-border-strong: rgba(255, 95, 147, 0.3);
+  --ure-surface: #ffffff;
+  --ure-surface-hover: #ffffff;
+  --ure-border: #e8edf4;
+  --ure-border-strong: #d7deea;
   --ure-text: #1f2937;
   --ure-text-muted: #64748b;
   --ure-heading: #111827;
@@ -37,116 +37,214 @@
   padding: 1rem 0;
 }
 
-/* Filter Panel */
+/* Filter Panel — two-tier: toolbar + collapsible advanced filters */
 .ure-filter-panel {
   background: var(--ure-surface);
-  border: 1px solid var(--ure-border);
-  border-radius: var(--ure-radius-xl);
-  padding: 1.25rem;
-  box-shadow: var(--ure-shadow);
-  display: grid;
-  gap: 1rem;
+  border: 1px solid #e8edf4;
+  border-radius: 14px;
+  padding: 0.875rem 1.125rem;
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.05);
+  display: flex;
+  flex-direction: column;
+  gap: 0.875rem;
 }
 
-/* Date Presets */
-.ure-date-presets {
+/* Tier 1 — always-visible toolbar */
+.ure-filter-top {
   display: flex;
   flex-wrap: wrap;
-  gap: 0.5rem;
+  align-items: center;
+  gap: 0.625rem;
+}
+
+/* Date Presets — horizontally scrollable strip, never clipped */
+.ure-date-presets {
+  display: flex;
+  flex-wrap: nowrap;
+  gap: 0;
+  flex: 1;
+  min-width: 0;
+  background: #f1f5f9;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 3px;
+  overflow-x: auto;
+  scrollbar-width: thin;
+  scrollbar-color: #cbd5e1 transparent;
+}
+
+.ure-date-presets::-webkit-scrollbar {
+  height: 4px;
+}
+
+.ure-date-presets::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 999px;
 }
 
 .ure-preset-btn {
   display: inline-flex;
   align-items: center;
   gap: 0.375rem;
-  padding: 0.5rem 0.875rem;
-  border: 1px solid var(--ure-border);
-  border-radius: var(--ure-radius-pill);
-  background: var(--ure-surface);
-  color: var(--ure-text);
-  font-size: 0.8125rem;
-  font-weight: 600;
+  padding: 0.45rem 0.95rem;
+  border: none;
+  border-radius: 9px;
+  background: transparent;
+  color: var(--ure-text-muted);
+  font-size: 0.78rem;
+  font-weight: 700;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: all 0.18s ease;
+  white-space: nowrap;
+  flex-shrink: 0;
 }
 
-.ure-preset-btn:hover {
-  border-color: var(--ure-primary);
+.ure-preset-btn svg {
+  font-size: 0.72rem;
+}
+
+.ure-preset-btn:hover:not(.active) {
   color: var(--ure-primary);
 }
 
 .ure-preset-btn.active {
-  background: linear-gradient(135deg, var(--ure-primary), var(--ure-primary-light));
-  border-color: var(--ure-primary);
-  color: white;
-  box-shadow: var(--ure-shadow-primary);
+  background: #fff;
+  color: var(--ure-primary);
+  box-shadow: 0 1px 4px rgba(15, 23, 42, 0.12);
 }
 
-/* Custom Date Range */
-.ure-custom-date-range {
+/* Tier 2 — collapsible advanced filters grid */
+.ure-filter-advanced {
   display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 1rem;
+  grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+  gap: 0.75rem;
+  padding: 0.875rem;
+  background: #f8fafc;
+  border: 1px solid #e8edf4;
+  border-radius: 12px;
+  animation: ureFiltersIn 0.2s ease;
 }
 
-.ure-custom-date-range label,
-.ure-status-filter label,
-.ure-custom-filter label {
+@keyframes ureFiltersIn {
+  from { opacity: 0; transform: translateY(-4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.ure-field {
   display: flex;
   flex-direction: column;
-  gap: 0.375rem;
-  font-size: 0.8125rem;
-  font-weight: 600;
-  color: var(--ure-text);
+  gap: 0.35rem;
+  min-width: 0;
 }
 
-.ure-custom-date-range input,
-.ure-status-filter select,
-.ure-custom-filter select,
-.ure-search-box input {
-  padding: 0.625rem 0.875rem;
-  border: 1px solid var(--ure-border);
-  border-radius: var(--ure-radius);
+.ure-field label {
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: var(--ure-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.ure-field input,
+.ure-field select {
+  height: 38px;
+  padding: 0 0.75rem;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
   background: var(--ure-bg);
   color: var(--ure-text);
-  font-size: 0.875rem;
-  transition: all 0.2s ease;
+  font-size: 0.82rem;
+  font-weight: 500;
+  font-family: inherit;
+  width: 100%;
+  min-width: 0;
+  transition: border-color 0.18s ease, box-shadow 0.18s ease;
 }
 
-.ure-custom-date-range input:focus,
-.ure-status-filter select:focus,
-.ure-custom-filter select:focus,
+.ure-field input:focus,
+.ure-field select:focus,
 .ure-search-box input:focus {
   outline: none;
   border-color: var(--ure-primary);
-  box-shadow: 0 0 0 3px rgba(255, 95, 147, 0.1);
+  box-shadow: 0 0 0 3px rgba(255, 95, 147, 0.12);
 }
 
-/* Search Box */
+.ure-field-save {
+  justify-content: flex-end;
+}
+
+/* Filter toggle button (opens tier 2) */
+.ure-filter-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  height: 38px;
+  padding: 0 0.95rem;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  background: var(--ure-surface);
+  color: var(--ure-text);
+  font-size: 0.8rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.18s ease;
+  font-family: inherit;
+  white-space: nowrap;
+}
+
+.ure-filter-toggle:hover,
+.ure-filter-toggle.open {
+  border-color: var(--ure-primary);
+  color: var(--ure-primary);
+  background: rgba(255, 95, 147, 0.05);
+}
+
+.ure-toggle-caret {
+  font-size: 0.65rem;
+  transition: transform 0.2s ease;
+}
+
+.ure-filter-toggle.open .ure-toggle-caret {
+  transform: rotate(180deg);
+}
+
+/* Search input (lives in tier 1) */
+.ure-search-box input {
+  width: 100%;
+  height: 38px;
+  padding: 0 2.25rem;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  background: var(--ure-bg);
+  color: var(--ure-text);
+  font-size: 0.82rem;
+  font-weight: 500;
+  font-family: inherit;
+  transition: border-color 0.18s ease, box-shadow 0.18s ease;
+}
+
+/* Search Box — fixed width in the top toolbar */
 .ure-search-box {
   position: relative;
   display: flex;
   align-items: center;
+  flex: 0 0 240px;
+  min-width: 180px;
 }
 
 .ure-search-box svg {
   position: absolute;
-  left: 0.875rem;
+  left: 0.8rem;
   color: var(--ure-text-muted);
+  font-size: 0.8rem;
   pointer-events: none;
-}
-
-.ure-search-box input {
-  width: 100%;
-  padding-left: 2.5rem;
-  padding-right: 2.5rem;
 }
 
 .ure-clear-search {
   position: absolute;
-  right: 0.5rem;
-  width: 1.75rem;
-  height: 1.75rem;
+  right: 0.4rem;
+  width: 1.6rem;
+  height: 1.6rem;
   display: grid;
   place-items: center;
   border: none;
@@ -154,6 +252,7 @@
   background: rgba(255, 95, 147, 0.1);
   color: var(--ure-primary);
   cursor: pointer;
+  font-size: 0.7rem;
   transition: all 0.2s ease;
 }
 
@@ -162,21 +261,12 @@
   color: white;
 }
 
-/* Status & Custom Filters */
-.ure-status-filter,
-.ure-custom-filter {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: 1rem;
-}
-
-/* Filter Actions */
+/* Filter Actions — right-aligned, compact */
 .ure-filter-actions {
   display: flex;
   flex-wrap: wrap;
-  gap: 0.75rem;
-  padding-top: 0.5rem;
-  border-top: 1px solid var(--ure-border);
+  gap: 0.5rem;
+  margin-left: auto;
 }
 
 .ure-btn-clear,
@@ -184,25 +274,45 @@
 .ure-btn-save {
   display: inline-flex;
   align-items: center;
-  gap: 0.5rem;
-  padding: 0.625rem 1rem;
-  border-radius: var(--ure-radius);
-  font-size: 0.875rem;
-  font-weight: 600;
+  gap: 0.45rem;
+  height: 38px;
+  padding: 0 0.95rem;
+  border-radius: 10px;
+  font-size: 0.8rem;
+  font-weight: 700;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: all 0.18s ease;
+  font-family: inherit;
 }
 
 .ure-btn-clear {
-  border: 1px solid var(--ure-border);
+  border: 1px solid #e2e8f0;
   background: var(--ure-surface);
-  color: var(--ure-text);
+  color: var(--ure-text-muted);
 }
 
-.ure-btn-clear:hover {
+.ure-btn-clear:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.ure-btn-clear:hover:not(:disabled) {
   border-color: var(--ure-danger);
   color: var(--ure-danger);
   background: rgba(239, 68, 68, 0.05);
+}
+
+.ure-count-badge {
+  display: inline-grid;
+  place-items: center;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
+  border-radius: 999px;
+  background: var(--ure-danger);
+  color: #fff;
+  font-size: 0.65rem;
+  font-weight: 800;
 }
 
 .ure-btn-apply {
@@ -218,7 +328,7 @@
 }
 
 .ure-btn-save {
-  border: 1px solid var(--ure-border);
+  border: 1px solid #e2e8f0;
   background: var(--ure-surface);
   color: var(--ure-secondary);
 }
@@ -313,38 +423,30 @@
 .ure-summary-card {
   display: flex;
   align-items: center;
-  gap: 1rem;
-  padding: 1.4rem;
-  background: rgba(255, 255, 255, 0.97);
+  gap: 0.9rem;
+  padding: 1.15rem 1.25rem;
+  background: var(--ure-surface);
   border: 1px solid var(--ure-border);
   border-radius: var(--ure-radius-lg);
-  box-shadow: var(--ure-shadow);
-  transition: all 0.25s ease;
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.05);
+  transition: all 0.2s ease;
   position: relative;
   overflow: hidden;
 }
 
-.ure-summary-card::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(135deg, rgba(255, 95, 147, 0.04) 0%, transparent 60%);
-  pointer-events: none;
-}
-
 .ure-summary-card:hover {
-  transform: translateY(-3px);
+  transform: translateY(-2px);
   box-shadow: var(--ure-shadow-lg);
   border-color: var(--ure-border-strong);
 }
 
 .ure-card-icon {
-  width: 52px;
-  height: 52px;
+  width: 46px;
+  height: 46px;
   display: grid;
   place-items: center;
-  border-radius: var(--ure-radius);
-  font-size: 1.3rem;
+  border-radius: 12px;
+  font-size: 1.15rem;
   flex-shrink: 0;
 }
 
@@ -356,7 +458,7 @@
 }
 
 .ure-card-content strong {
-  font-size: 1.85rem;
+  font-size: 1.6rem;
   font-weight: 800;
   color: var(--ure-heading);
   line-height: 1.1;
@@ -364,11 +466,11 @@
 }
 
 .ure-card-content span {
-  font-size: 0.8rem;
+  font-size: 0.72rem;
   color: var(--ure-text-muted);
-  font-weight: 600;
+  font-weight: 700;
   text-transform: uppercase;
-  letter-spacing: 0.04em;
+  letter-spacing: 0.05em;
 }
 
 .ure-change {
@@ -428,18 +530,18 @@
 .ure-charts-section {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
-  gap: 1.5rem;
-  min-height: 380px;
+  gap: 1.25rem;
+  min-height: 340px;
 }
 
 .ure-chart-container {
-  background: rgba(255, 255, 255, 0.97);
+  background: var(--ure-surface);
   border: 1px solid var(--ure-border);
-  border-radius: var(--ure-radius-xl);
-  padding: 1.5rem;
-  box-shadow: var(--ure-shadow);
+  border-radius: var(--ure-radius-lg);
+  padding: 1.25rem;
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.05);
   min-width: 0;
-  min-height: 380px;
+  min-height: 340px;
   display: flex;
   flex-direction: column;
 }
@@ -448,22 +550,22 @@
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
-  margin-bottom: 1.25rem;
-  padding-bottom: 0.875rem;
+  margin-bottom: 1rem;
+  padding-bottom: 0.75rem;
   border-bottom: 1px solid var(--ure-border);
 }
 
 .ure-chart-header h3 {
   margin: 0;
-  font-size: 1rem;
+  font-size: 0.95rem;
   font-weight: 800;
   color: var(--ure-heading);
   letter-spacing: -0.01em;
 }
 
 .ure-chart-header p {
-  margin: 0.2rem 0 0;
-  font-size: 0.8rem;
+  margin: 0.15rem 0 0;
+  font-size: 0.78rem;
   color: var(--ure-text-muted);
 }
 
@@ -508,7 +610,7 @@
   border: 1px solid var(--ure-border);
   border-radius: var(--ure-radius-lg);
   padding: 1.25rem;
-  box-shadow: var(--ure-shadow);
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.05);
 }
 
 .ure-table-header {
@@ -537,20 +639,21 @@
 }
 
 .ure-table-actions button {
-  padding: 0.5rem 1rem;
+  height: 34px;
+  padding: 0 0.8rem;
   border: 1px solid var(--ure-border);
-  border-radius: var(--ure-radius);
+  border-radius: 8px;
   background: var(--ure-surface);
-  color: var(--ure-text);
-  font-size: 0.8125rem;
-  font-weight: 600;
+  color: var(--ure-text-muted);
+  font-size: 0.75rem;
+  font-weight: 700;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: all 0.18s ease;
 }
 
 .ure-table-actions button:hover {
   border-color: var(--ure-primary);
-  background: rgba(255, 95, 147, 0.05);
+  background: rgba(255, 95, 147, 0.06);
   color: var(--ure-primary);
 }
 
@@ -627,36 +730,51 @@
   .unified-report-engine {
     gap: 1rem;
   }
-  
+
   .ure-filter-panel {
-    padding: 1rem;
+    padding: 0.75rem;
   }
-  
-  .ure-custom-date-range {
+
+  .ure-filter-top {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .ure-search-box {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .ure-date-presets {
+    flex: none;
+    width: 100%;
+  }
+
+  .ure-filter-advanced {
     grid-template-columns: 1fr;
   }
-  
+
+  .ure-filter-actions {
+    margin-left: 0;
+  }
+
+  .ure-filter-actions button {
+    flex: 1;
+    justify-content: center;
+  }
+
   .ure-summary-cards.grid {
     grid-template-columns: repeat(2, 1fr);
   }
-  
+
   .ure-charts-section {
     grid-template-columns: 1fr;
   }
-  
+
   .ure-chart-header,
   .ure-table-header {
     flex-direction: column;
     gap: 0.75rem;
-  }
-  
-  .ure-filter-actions {
-    flex-direction: column;
-  }
-  
-  .ure-filter-actions button {
-    width: 100%;
-    justify-content: center;
   }
 }
 
