@@ -74,6 +74,7 @@ const safeNumber = (value) => Number(value || 0);
 const PayrollReports = () => {
   const [selectedPeriod, setSelectedPeriod] = useState("monthly");
   const [selectedDepartment, setSelectedDepartment] = useState("all");
+  const [personType, setPersonType] = useState("all");
   const [searchInput, setSearchInput] = useState("");
   const [searchTerm, setSearchTerm] = useState("");
 
@@ -126,6 +127,9 @@ const PayrollReports = () => {
         if (searchTerm) {
           params.append("search", searchTerm);
         }
+        if (personType !== "all") {
+          params.append("person_type", personType);
+        }
 
         const result = await apiRequest(`/manager/reports/payroll?${params.toString()}`);
         const root = result?.data || {};
@@ -151,7 +155,7 @@ const PayrollReports = () => {
         setRefreshing(false);
       }
     },
-    [selectedPeriod, selectedDepartment, searchTerm]
+    [selectedPeriod, selectedDepartment, personType, searchTerm]
   );
 
   useEffect(() => {
@@ -311,6 +315,7 @@ const PayrollReports = () => {
   const clearFilters = () => {
     setSearchInput("");
     setSelectedDepartment("all");
+    setPersonType("all");
     setSelectedPeriod("monthly");
   };
 
@@ -332,7 +337,11 @@ const PayrollReports = () => {
           </span>
           <div>
             <strong>{value}</strong>
-            <small>{record.position || record.role || "Staff"}</small>
+            <small>
+              {record.position || record.role || "Staff"}
+              {record.employee_no ? ` · ${record.employee_no}` : ""}
+              {record.person_type === "employee" ? " · Staff Record" : ""}
+            </small>
           </div>
         </div>
       ),
@@ -562,6 +571,16 @@ const PayrollReports = () => {
               {department}
             </option>
           ))}
+        </select>
+
+        <select
+          className="payroll-select"
+          value={personType}
+          onChange={(event) => setPersonType(event.target.value)}
+        >
+          <option value="all">All People</option>
+          <option value="account">With Account</option>
+          <option value="employee">Staff Member (No Account)</option>
         </select>
 
         <button type="button" className="payroll-clear-btn" onClick={clearFilters}>

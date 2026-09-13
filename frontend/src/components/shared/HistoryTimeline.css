@@ -173,20 +173,26 @@
   padding: 18px 20px;
   background: var(--color-surface, #fff);
   border: 1px solid var(--color-border, #e2e8f0);
-  border-radius: var(--ht-radius);
+  border-radius: 16px;
   box-shadow: 0 1px 4px rgba(0, 0, 0, 0.04);
   transition: box-shadow 0.18s ease, transform 0.18s ease;
 }
 
 .ht-stat-card:hover {
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+  box-shadow: 0 6px 20px color-mix(in srgb, var(--ht-accent) 18%, transparent);
   transform: translateY(-2px);
 }
 
-.ht-stat-card svg {
-  color: var(--ht-accent);
+.ht-stat-icon {
+  width: 44px;
+  height: 44px;
   flex-shrink: 0;
-  opacity: 0.85;
+  border-radius: 13px;
+  display: grid;
+  place-items: center;
+  color: #fff;
+  background: linear-gradient(135deg, var(--ht-accent), color-mix(in srgb, var(--ht-accent) 55%, #fff));
+  box-shadow: 0 6px 16px color-mix(in srgb, var(--ht-accent) 32%, transparent);
 }
 
 .ht-stat-card div {
@@ -354,7 +360,7 @@
   gap: 0;
   background: var(--color-surface, #fff);
   border: 1px solid var(--color-border, #e2e8f0);
-  border-radius: var(--ht-radius);
+  border-radius: 16px;
   overflow: hidden;
   cursor: pointer;
   transition: box-shadow 0.18s ease, transform 0.15s ease, border-color 0.18s;
@@ -368,10 +374,10 @@
 }
 
 .ht-entry-accent {
-  width: 4px;
+  width: 5px;
   flex-shrink: 0;
-  background: var(--ht-accent);
-  opacity: 0.75;
+  background: linear-gradient(180deg, var(--ht-accent), color-mix(in srgb, var(--ht-accent) 50%, #fff));
+  opacity: 0.8;
   transition: opacity 0.18s;
 }
 
@@ -405,11 +411,18 @@
 }
 
 .ht-entry-ref {
-  font-size: 11px;
-  font-weight: 700;
+  display: inline-flex;
+  align-items: center;
+  width: fit-content;
+  font-size: 10.5px;
+  font-weight: 800;
   color: var(--ht-accent);
-  letter-spacing: 0.05em;
+  letter-spacing: 0.06em;
   text-transform: uppercase;
+  padding: 2px 8px;
+  border-radius: 6px;
+  background: color-mix(in srgb, var(--ht-accent) 10%, transparent);
+  border: 1px solid color-mix(in srgb, var(--ht-accent) 22%, transparent);
 }
 
 .ht-entry-action {

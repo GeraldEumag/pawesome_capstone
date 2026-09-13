@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import { exportToCSV, exportToPDF, exportToExcel } from "../../utils/reportExport";
 import "./HistoryTimeline.css";
 
@@ -60,6 +60,21 @@ const HistoryTimeline = ({
   const [selectedEntry, setSelectedEntry] = useState(null);
   const [localPage, setLocalPage] = useState(1);
   const [showExportDropdown, setShowExportDropdown] = useState(false);
+  const [inputValue, setInputValue] = useState(searchTerm || "");
+  const searchTimer = useRef(null);
+
+  // Keep the local input in sync when the parent resets/changes the term.
+  useEffect(() => {
+    setInputValue(searchTerm || "");
+  }, [searchTerm]);
+
+  // Debounce so a keystroke does not fire an API request per character.
+  const handleSearchInput = (value) => {
+    setInputValue(value);
+    if (!onSearchChange) return;
+    clearTimeout(searchTimer.current);
+    searchTimer.current = setTimeout(() => onSearchChange(value), 350);
+  };
 
   // Unified export handler — uses shared utilities if exportColumns provided,
   // otherwise falls back to the legacy onExport callback (CSV only)
@@ -152,21 +167,27 @@ const HistoryTimeline = ({
       {/* Stats row */}
       <div className="ht-stats">
         <div className="ht-stat-card">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+          <span className="ht-stat-icon">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+          </span>
           <div>
             <strong>{stats.total}</strong>
             <span>Total Records</span>
           </div>
         </div>
         <div className="ht-stat-card">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+          <span className="ht-stat-icon">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+          </span>
           <div>
             <strong>{stats.today}</strong>
             <span>Today</span>
           </div>
         </div>
         <div className="ht-stat-card">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+          <span className="ht-stat-icon">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+          </span>
           <div>
             <strong>{totalPages}</strong>
             <span>Pages</span>
@@ -182,8 +203,8 @@ const HistoryTimeline = ({
             <input
               type="text"
               placeholder="Search records..."
-              value={searchTerm || ""}
-              onChange={(e) => onSearchChange(e.target.value)}
+              value={inputValue}
+              onChange={(e) => handleSearchInput(e.target.value)}
             />
           </div>
         )}

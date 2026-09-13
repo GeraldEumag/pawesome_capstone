@@ -3,6 +3,7 @@ import { Routes, Route, Navigate } from "react-router-dom";
 import ProtectedRoute from "../components/ProtectedRoute";
 import ManagerDashboard from "../components/manager/ManagerDashboard";
 import ManagerStaff from "../components/manager/ManagerStaff";
+import EmployeeDirectory from "../components/shared/EmployeeDirectory";
 import PayrollManagement from "../components/manager/PayrollManagement";
 import ManagerAttendance from "../components/manager/ManagerAttendance";
 import BarcodeAttendanceKiosk from "../components/manager/BarcodeAttendanceKiosk";
@@ -27,6 +28,15 @@ const ManagerRoutes = () => (
 
       {/* Core routes */}
       <Route path="staff" element={<ManagerStaff />} />
+      <Route
+        path="employees"
+        element={
+          <EmployeeDirectory
+            roleAccent="#7c3aed"
+            roleLabel="Manager — Staff Records"
+          />
+        }
+      />
       <Route path="payroll" element={<PayrollManagement />} />
       {/* Redirect old standalone computation URL to payroll (now a tab inside Payroll) */}
       <Route path="payroll/computation" element={<Navigate to="/manager/payroll" replace />} />

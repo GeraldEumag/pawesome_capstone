@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Attendance;
 use App\Models\Notification;
 use App\Models\Payroll;
+use App\Models\Employee;
 use App\Models\User;
 use App\Services\Payroll\PayrollComputationService;
 use Carbon\Carbon;
@@ -25,7 +26,15 @@ class PayrollController extends Controller
      */
     public function index(Request $request): JsonResponse
     {
-        $query = Payroll::with(['user', 'processor']);
+        $query = Payroll::with(['user', 'employee', 'processor']);
+
+        // Filter by person type: account users vs non-account employees
+        $personType = $request->query('person_type', 'all');
+        if ($personType === 'account') {
+            $query->whereNotNull('user_id')->whereNull('employee_id');
+        } elseif ($personType === 'employee') {
+            $query->whereNotNull('employee_id');
+        }
 
         // Filter by pay period label
         if ($request->has('pay_period')) {
@@ -58,8 +67,14 @@ class PayrollController extends Controller
             $search = $request->search;
             $query->where(function ($q) use ($search) {
                 $q->where('payroll_id', 'like', "%{$search}%")
+                  ->orWhere('employee_name', 'like', "%{$search}%")
                   ->orWhereHas('user', function ($uq) use ($search) {
                       $uq->where('name', 'like', "%{$search}%");
+                  })
+                  ->orWhereHas('employee', function ($eq) use ($search) {
+                      $eq->where('first_name', 'like', "%{$search}%")
+                         ->orWhere('last_name', 'like', "%{$search}%")
+                         ->orWhere('employee_no', 'like', "%{$search}%");
                   });
             });
         }
@@ -105,7 +120,7 @@ class PayrollController extends Controller
         $startDate = $validated['period_start'];
         $endDate = $validated['period_end'];
 
-        $results = $this->payrollComputation->computeForAllStaff($startDate, $endDate);
+        $results = $this->payrollComputation->computeForAllPeople($startDate, $endDate);
 
         return response()->json([
             'success' => true,
@@ -134,31 +149,47 @@ class PayrollController extends Controller
         $endDate = $validated['period_end'];
         $periodLabel = Carbon::parse($startDate)->format('M d') . ' - ' . Carbon::parse($endDate)->format('M d, Y');
 
-        // Get all employees (staff roles)
-        $employees = $this->payrollComputation->staffEmployees();
+        // Get all payable people: staff users + non-account employee records
+        $people = $this->payrollComputation->staffEmployees()
+            ->map(fn ($user) => ['person' => $user, 'isEmployee' => false])
+            ->concat(
+                $this->payrollComputation->activeEmployees()
+                    ->map(fn ($employee) => ['person' => $employee, 'isEmployee' => true])
+            );
 
-        $attendanceByUser = Attendance::whereBetween('date', [$startDate, $endDate])
-            ->get()
-            ->groupBy('user_id');
+        $attendanceRows = Attendance::whereBetween('date', [$startDate, $endDate])->get();
+        $attendanceByUser = $attendanceRows->whereNotNull('user_id')->groupBy('user_id');
+        $attendanceByEmployee = $attendanceRows->whereNotNull('employee_id')->groupBy('employee_id');
 
         $generated = [];
         $errors = [];
 
-        foreach ($employees as $employee) {
+        foreach ($people as $entry) {
+            $employee = $entry['person'];
+            $isEmployee = $entry['isEmployee'];
+
             try {
                 $computed = $this->payrollComputation->computeFromAttendance(
                     $employee,
-                    $attendanceByUser->get($employee->id, collect())
+                    $isEmployee
+                        ? $attendanceByEmployee->get($employee->id, collect())
+                        : $attendanceByUser->get($employee->id, collect())
                 );
 
-                // Create or update payroll record
+                // Create or update payroll record — keyed on whichever person
+                // type this row belongs to.
                 $payroll = Payroll::updateOrCreate(
+                    array_merge(
+                        $isEmployee
+                            ? ['employee_id' => $employee->id]
+                            : ['user_id' => $employee->id],
+                        [
+                            'pay_period_start' => $startDate,
+                            'pay_period_end' => $endDate,
+                        ]
+                    ),
                     [
-                        'user_id' => $employee->id,
-                        'pay_period_start' => $startDate,
-                        'pay_period_end' => $endDate,
-                    ],
-                    [
+                        'employee_name' => $computed['employee_name'],
                         'pay_period_label' => $periodLabel,
                         'department' => $computed['department'],
                         'position' => $computed['position'],
@@ -185,10 +216,11 @@ class PayrollController extends Controller
                 $payroll->calculatePayroll();
                 $payroll->save();
 
-                $generated[] = $payroll->load('user');
+                $generated[] = $payroll->load(['user', 'employee']);
             } catch (\Exception $e) {
                 $errors[] = [
-                    'user_id' => $employee->id,
+                    'user_id' => $isEmployee ? null : $employee->id,
+                    'employee_id' => $isEmployee ? $employee->id : null,
                     'name' => $employee->name,
                     'error' => $e->getMessage(),
                 ];
@@ -246,13 +278,14 @@ class PayrollController extends Controller
             'processed_at' => now(),
         ]);
 
-        $payroll->load('user');
+        $payroll->load(['user', 'employee']);
+        $payeeName = $payroll->user?->name ?? $payroll->employee?->name ?? $payroll->employee_name ?? 'employee';
 
         // Send notifications
         Notification::create([
             'role' => 'manager',
             'title' => 'Payroll Approved',
-            'message' => 'Payroll for ' . ($payroll->user->name ?? 'employee') . ' has been approved.',
+            'message' => "Payroll for {$payeeName} has been approved.",
             'type' => 'success',
             'related_type' => 'payroll',
             'related_id' => $payroll->id,
@@ -261,7 +294,7 @@ class PayrollController extends Controller
         Notification::create([
             'role' => 'manager',
             'title' => 'Payroll Payment Required',
-            'message' => 'Approved payroll for ' . ($payroll->user->name ?? 'employee') . ' is ready for payment release.',
+            'message' => "Approved payroll for {$payeeName} is ready for payment release.",
             'type' => 'warning',
             'related_type' => 'payroll',
             'related_id' => $payroll->id,
@@ -270,7 +303,7 @@ class PayrollController extends Controller
         return response()->json([
             'success' => true,
             'message' => 'Payroll approved successfully.',
-            'data' => $payroll->load(['user', 'processor']),
+            'data' => $payroll->load(['user', 'employee', 'processor']),
         ]);
     }
 
@@ -362,6 +395,7 @@ class PayrollController extends Controller
     {
         $validated = $request->validate([
             'user_id' => 'nullable|exists:users,id',
+            'employee_id' => 'nullable|exists:employees,id',
             'employee_name' => 'nullable|string|max:255',
             'pay_period_start' => 'required|date',
             'pay_period_end' => 'required|date|after_or_equal:pay_period_start',
@@ -403,20 +437,25 @@ class PayrollController extends Controller
         ]);
 
         $user = !empty($validated['user_id']) ? User::find($validated['user_id']) : null;
+        $employee = !empty($validated['employee_id']) ? Employee::find($validated['employee_id']) : null;
         $periodLabel = Carbon::parse($validated['pay_period_start'])->format('M d') . ' - ' . Carbon::parse($validated['pay_period_end'])->format('M d, Y');
 
-        // Require either user_id or employee_name
-        if (!$user && empty($validated['employee_name'])) {
+        // Require a person reference: user account, employee record, or free-text name
+        if (!$user && !$employee && empty($validated['employee_name'])) {
             return response()->json([
                 'success' => false,
                 'message' => 'Please select an employee or enter an employee name.',
             ], 422);
         }
 
+        if ($employee) {
+            $validated['employee_name'] = $employee->name;
+        }
+
         $payroll = Payroll::create(array_merge($validated, [
             'pay_period_label' => $periodLabel,
-            'department' => $user->department ?? ($validated['department'] ?? 'Unassigned'),
-            'position' => $user ? ($user->position ?? $user->role) : 'Staff',
+            'department' => $user?->department ?? $employee?->department ?? ($validated['department'] ?? 'Unassigned'),
+            'position' => $user ? ($user->position ?? $user->role) : ($employee?->position ?? 'Staff'),
             'status' => 'draft',
             'processed_by' => Auth::id(),
             'processed_at' => now(),

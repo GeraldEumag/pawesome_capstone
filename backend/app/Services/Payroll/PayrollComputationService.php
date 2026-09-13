@@ -3,20 +3,26 @@
 namespace App\Services\Payroll;
 
 use App\Models\Attendance;
+use App\Models\Employee;
 use App\Models\User;
 
 /**
  * Attendance-driven payroll computation shared by preview (compute),
- * generation (generate), and report views.
+ * generation (generate), and report views. Works for both account
+ * users and non-account employee records.
  */
 class PayrollComputationService
 {
     /**
      * Compute a payroll row for one employee from their attendance in a period.
      */
-    public function computeForUser(User $employee, string $startDate, string $endDate): array
+    public function computeForUser(User|Employee $employee, string $startDate, string $endDate): array
     {
-        $attendanceRecords = Attendance::where('user_id', $employee->id)
+        $attendanceRecords = $employee instanceof Employee
+            ? Attendance::where('employee_id', $employee->id)
+            : Attendance::where('user_id', $employee->id);
+
+        $attendanceRecords = $attendanceRecords
             ->whereBetween('date', [$startDate, $endDate])
             ->get();
 
@@ -28,8 +34,10 @@ class PayrollComputationService
      *
      * @param  \Illuminate\Support\Collection<int, Attendance>  $attendanceRecords
      */
-    public function computeFromAttendance(User $employee, $attendanceRecords): array
+    public function computeFromAttendance(User|Employee $employee, $attendanceRecords): array
     {
+        $isEmployee = $employee instanceof Employee;
+
         $presentDays = $attendanceRecords->where('status', 'present')->count();
         $lateDays = $attendanceRecords->where('status', 'late')->count();
         $earlyLeaveDays = $attendanceRecords->where('status', 'early_leave')->count();
@@ -55,11 +63,14 @@ class PayrollComputationService
         $netPay = max(0, $grossPay - $totalDeductions);
 
         return [
-            'user_id' => $employee->id,
+            'user_id' => $isEmployee ? null : $employee->id,
+            'employee_id' => $isEmployee ? $employee->id : null,
+            'person_type' => $isEmployee ? 'employee' : 'account',
+            'employee_no' => $employee->employee_no,
             'employee_name' => $employee->name,
-            'role' => $employee->role,
+            'role' => $isEmployee ? ($employee->position ?? 'employee') : $employee->role,
             'department' => $employee->department ?? 'Unassigned',
-            'position' => $employee->position ?? $employee->role ?? 'Staff',
+            'position' => $employee->position ?? ($isEmployee ? 'Staff' : ($employee->role ?? 'Staff')),
             'base_salary' => round($baseSalary, 2),
             'hourly_rate' => round($hourlyRate, 2),
             'present_days' => $presentDays,
@@ -92,6 +103,7 @@ class PayrollComputationService
         $employees = $this->staffEmployees();
 
         $attendanceByUser = Attendance::whereBetween('date', [$startDate, $endDate])
+            ->whereNotNull('user_id')
             ->get()
             ->groupBy('user_id');
 
@@ -104,6 +116,41 @@ class PayrollComputationService
             ->all();
     }
 
+    /**
+     * Compute payroll for every active non-account employee over a period.
+     *
+     * @return array<int, array>
+     */
+    public function computeForAllEmployees(string $startDate, string $endDate): array
+    {
+        $attendanceByEmployee = Attendance::whereBetween('date', [$startDate, $endDate])
+            ->whereNotNull('employee_id')
+            ->get()
+            ->groupBy('employee_id');
+
+        return Employee::where('is_active', true)
+            ->get()
+            ->map(fn (Employee $employee) => $this->computeFromAttendance(
+                $employee,
+                $attendanceByEmployee->get($employee->id, collect())
+            ))
+            ->values()
+            ->all();
+    }
+
+    /**
+     * Both account staff and non-account employees in one list.
+     *
+     * @return array<int, array>
+     */
+    public function computeForAllPeople(string $startDate, string $endDate): array
+    {
+        return array_merge(
+            $this->computeForAllStaff($startDate, $endDate),
+            $this->computeForAllEmployees($startDate, $endDate)
+        );
+    }
+
     public function staffEmployees()
     {
         return User::whereIn('role', [
@@ -111,6 +158,12 @@ class PayrollComputationService
             'inventory', 'payroll', 'staff', 'groomer',
             'super_receptionist', 'super_admin', 'admin',
         ])->where('is_active', true)->get();
+    }
+
+    /** @return \Illuminate\Support\Collection<int, Employee> */
+    public function activeEmployees()
+    {
+        return Employee::where('is_active', true)->get();
     }
 
     /** SSS 2025: employee share 5.0% of Monthly Salary Credit (5,000–35,000). */

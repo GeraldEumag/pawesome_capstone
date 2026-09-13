@@ -379,15 +379,17 @@ class ReportsController extends Controller
 
     public function payrollReports(Request $request)
     {
-        $payroll = Payroll::with('user')->latest('pay_period_start')->limit(300)->get();
-        $attendance = Attendance::with('user')->latest('date')->limit(300)->get();
+        $payroll = Payroll::with(['user', 'employee'])->latest('pay_period_start')->limit(300)->get();
+        $attendance = Attendance::with(['user', 'employee'])->latest('date')->limit(300)->get();
 
         $payrollRows = $payroll->map(fn ($record) => [
             'id' => $record->id,
-            'employee_name' => $record->user?->name ?? 'Unknown Employee',
-            'employee_id' => $record->user_id,
-            'department' => $record->user?->department ?? $record->user?->role ?? 'Unassigned',
-            'role' => $record->user?->role ?? 'Staff',
+            'employee_name' => $record->user?->name ?? $record->employee?->name ?? $record->employee_name ?? 'Unknown Employee',
+            'employee_id' => $record->user_id ?? $record->employee_id,
+            'person_type' => $record->employee_id ? 'employee' : 'account',
+            'employee_no' => $record->employee?->employee_no ?? $record->user?->employee_no,
+            'department' => $record->department ?? $record->user?->department ?? $record->employee?->department ?? 'Unassigned',
+            'role' => $record->user?->role ?? $record->employee?->position ?? 'Staff',
             'payroll_period' => trim(($record->pay_period_start ?? '') . ' - ' . ($record->pay_period_end ?? '')),
             'attendance_days' => (float) ($record->attendance_days ?? $record->days_worked ?? 0),
             'overtime_pay' => (float) ($record->overtime_pay ?? 0),
@@ -401,10 +403,12 @@ class ReportsController extends Controller
 
         $attendanceRows = $attendance->map(fn ($record) => [
             'id' => $record->id,
-            'employee_name' => $record->user?->name ?? 'Unknown Employee',
-            'employee_id' => $record->user_id,
-            'department' => $record->user?->department ?? $record->user?->role ?? 'Unassigned',
-            'role' => $record->user?->role ?? 'Staff',
+            'employee_name' => $record->user?->name ?? $record->employee?->name ?? 'Unknown Employee',
+            'employee_id' => $record->user_id ?? $record->employee_id,
+            'person_type' => $record->employee_id ? 'employee' : 'account',
+            'employee_no' => $record->user?->employee_no ?? $record->employee?->employee_no,
+            'department' => $record->user?->department ?? $record->employee?->department ?? 'Unassigned',
+            'role' => $record->user?->role ?? $record->employee?->position ?? 'Staff',
             'date' => $record->date,
             'status' => $record->status,
             'time_in' => $record->check_in,
@@ -435,7 +439,7 @@ class ReportsController extends Controller
 
     public function managerAttendance(Request $request)
     {
-        $query = Attendance::with('user')->latest('date');
+        $query = Attendance::with(['user', 'employee'])->latest('date');
 
         if ($request->has('start_date') && $request->has('end_date')) {
             $query->whereBetween('date', [$request->query('start_date'), $request->query('end_date')]);
@@ -452,10 +456,12 @@ class ReportsController extends Controller
                 'attendance' => $records->map(fn ($r) => [
                     'id' => $r->id,
                     'user_id' => $r->user_id,
-                    'employee_name' => $r->user?->name ?? 'Unknown',
-                    'employee_id' => $r->user_id,
-                    'department' => $r->user?->department ?? 'Unassigned',
-                    'role' => $r->user?->role ?? 'Staff',
+                    'employee_name' => $r->user?->name ?? $r->employee?->name ?? 'Unknown',
+                    'employee_id' => $r->user_id ?? $r->employee_id,
+                    'employee_no' => $r->user?->employee_no ?? $r->employee?->employee_no,
+                    'person_type' => $r->employee_id ? 'employee' : 'account',
+                    'department' => $r->user?->department ?? $r->employee?->department ?? 'Unassigned',
+                    'role' => $r->user?->role ?? $r->employee?->position ?? 'Staff',
                     'date' => $r->date?->toDateString(),
                     'time_in' => $r->check_in,
                     'time_out' => $r->check_out,
@@ -492,12 +498,20 @@ class ReportsController extends Controller
         // Resolve the reporting period from `period` or explicit start/end dates.
         [$periodStart, $periodEnd, $periodKey] = $this->resolvePayrollPeriod($request);
 
-        $savedQuery = Payroll::with('user')
+        $personType = $request->query('person_type', 'all');
+
+        $savedQuery = Payroll::with(['user', 'employee'])
             ->where(function ($q) use ($periodStart, $periodEnd) {
                 $q->whereBetween('pay_period_start', [$periodStart, $periodEnd])
                   ->orWhereBetween('pay_period_end', [$periodStart, $periodEnd]);
             })
             ->latest('pay_period_start');
+
+        if ($personType === 'account') {
+            $savedQuery->whereNotNull('user_id')->whereNull('employee_id');
+        } elseif ($personType === 'employee') {
+            $savedQuery->whereNotNull('employee_id');
+        }
 
         if ($request->filled('department') && $request->department !== 'all') {
             $savedQuery->where('department', $request->department);
@@ -516,17 +530,33 @@ class ReportsController extends Controller
 
         $savedRows = $saved->map(fn ($r) => $this->payrollRow($r) + ['is_preview' => false]);
 
-        // Live-compute payroll from attendance for staff without a saved record.
-        $savedUserIds = $saved->pluck('user_id')->unique();
-        $computed = collect($computation->computeForAllStaff(
-            $periodStart->toDateString(),
-            $periodEnd->toDateString()
-        ))->reject(fn ($row) => $savedUserIds->contains($row['user_id']));
+        // Live-compute payroll from attendance for people without a saved
+        // record — account users and non-account employees alike.
+        $savedUserIds = $saved->pluck('user_id')->filter()->unique();
+        $savedEmployeeIds = $saved->pluck('employee_id')->filter()->unique();
+
+        $computed = collect();
+        if ($personType !== 'employee') {
+            $computed = $computed->concat(
+                collect($computation->computeForAllStaff(
+                    $periodStart->toDateString(),
+                    $periodEnd->toDateString()
+                ))->reject(fn ($row) => $savedUserIds->contains($row['user_id']))
+            );
+        }
+        if ($personType !== 'account') {
+            $computed = $computed->concat(
+                collect($computation->computeForAllEmployees(
+                    $periodStart->toDateString(),
+                    $periodEnd->toDateString()
+                ))->reject(fn ($row) => $savedEmployeeIds->contains($row['employee_id']))
+            );
+        }
 
         $previewRows = $computed->map(fn ($row) => array_merge($row, [
-            'id' => 'preview-' . $row['user_id'],
+            'id' => 'preview-' . $row['person_type'] . '-' . ($row['user_id'] ?? $row['employee_id']),
             'payroll_id' => null,
-            'employee_id' => $row['user_id'],
+            'employee_id' => $row['user_id'] ?? $row['employee_id'],
             'period' => $periodKey,
             'pay_period_start' => $periodStart->toDateString(),
             'pay_period_end' => $periodEnd->toDateString(),
@@ -627,7 +657,9 @@ class ReportsController extends Controller
                 'top_earners' => $allRows->sortByDesc('net_pay')->take(8)->values(),
                 'attendance_summary' => [
                     'staff_with_attendance' => Attendance::whereBetween('date', [$periodStart, $periodEnd])
-                        ->distinct('user_id')->count('user_id'),
+                        ->distinct('user_id')->count('user_id')
+                        + Attendance::whereBetween('date', [$periodStart, $periodEnd])
+                            ->distinct('employee_id')->count('employee_id'),
                     'total_hours' => round(Attendance::whereBetween('date', [$periodStart, $periodEnd])->sum('total_hours'), 2),
                 ],
                 'by_status' => $byStatus,
@@ -641,11 +673,14 @@ class ReportsController extends Controller
             'id' => $r->id,
             'payroll_id' => $r->payroll_id,
             'user_id' => $r->user_id,
-            'employee_id' => $r->user_id,
-            'employee_name' => $r->user?->name ?? $r->employee_name ?? 'Unknown',
-            'department' => $r->department ?? $r->user?->department ?? 'Unassigned',
-            'role' => $r->user?->role ?? 'Staff',
-            'position' => $r->position ?? $r->user?->position ?? 'Staff',
+            'employee_record_id' => $r->employee_id,
+            'employee_id' => $r->user_id ?? $r->employee_id,
+            'person_type' => $r->employee_id ? 'employee' : 'account',
+            'employee_no' => $r->employee?->employee_no ?? $r->user?->employee_no,
+            'employee_name' => $r->user?->name ?? $r->employee?->name ?? $r->employee_name ?? 'Unknown',
+            'department' => $r->department ?? $r->user?->department ?? $r->employee?->department ?? 'Unassigned',
+            'role' => $r->user?->role ?? $r->employee?->position ?? 'Staff',
+            'position' => $r->position ?? $r->user?->position ?? $r->employee?->position ?? 'Staff',
             'period' => $r->pay_period_label,
             'pay_period_start' => $r->pay_period_start?->toDateString(),
             'pay_period_end' => $r->pay_period_end?->toDateString(),
@@ -656,6 +691,9 @@ class ReportsController extends Controller
             'regular_hours' => (float) $r->regular_hours,
             'overtime_hours' => (float) $r->overtime_hours,
             'overtime_pay' => (float) $r->overtime_pay,
+            'regular_holiday_pay' => (float) ($r->regular_holiday_pay ?? 0),
+            'special_holiday_pay' => (float) ($r->special_holiday_pay ?? 0),
+            'night_differential' => (float) ($r->night_differential ?? 0),
             'bonus' => (float) ($r->bonus ?? 0),
             'allowances' => (float) ($r->allowances ?? 0),
             'gross_pay' => (float) $r->gross_pay,
@@ -672,6 +710,7 @@ class ReportsController extends Controller
             'payment_date' => $r->payment_date?->toDateString(),
             'payment_method' => $r->payment_method,
             'remarks' => $r->remarks,
+            'created_at' => $r->created_at?->toDateString(),
         ];
     }
 

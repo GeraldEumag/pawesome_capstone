@@ -5,6 +5,7 @@ import {
   faChartPie,
   faUsers,
   faUserPlus,
+  faIdBadge,
   faHistory,
   faKey,
   faComments,
@@ -39,6 +40,7 @@ const NAV_SECTIONS = [
     items: [
       { to: "/admin/users", label: "Manage Users", icon: faUsers },
       { to: "/admin/users/create", label: "Create User", icon: faUserPlus },
+      { to: "/admin/employees", label: "Employee Directory", icon: faIdBadge },
     ],
   },
   {

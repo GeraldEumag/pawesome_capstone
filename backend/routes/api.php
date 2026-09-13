@@ -43,6 +43,7 @@ use App\Http\Controllers\AppointmentController;
 use App\Http\Controllers\AttendanceController;
 use App\Http\Controllers\AttendanceRecordController;
 use App\Http\Controllers\PayrollController;
+use App\Http\Controllers\EmployeeController;
 use App\Http\Controllers\Api\PayrollController as ApiPayrollController;
 use App\Http\Controllers\GiftCardController;
 use App\Http\Controllers\GroomingController;
@@ -653,6 +654,15 @@ Route::middleware(['auth.api', 'throttle:api'])->prefix('manager')->group(functi
         Route::post('leaves', [\App\Http\Controllers\Manager\LeaveController::class, 'store']);
         Route::post('leaves/{id}/approve', [\App\Http\Controllers\Manager\LeaveController::class, 'approve']);
         Route::post('leaves/{id}/reject', [\App\Http\Controllers\Manager\LeaveController::class, 'reject']);
+    });
+
+    // Employee records (non-account staff) — Manager + Admin.
+    Route::middleware('role:manager,admin')->group(function () {
+        Route::get('employees', [EmployeeController::class, 'index']);
+        Route::post('employees', [EmployeeController::class, 'store']);
+        Route::get('employees/{employee}', [EmployeeController::class, 'show']);
+        Route::put('employees/{employee}', [EmployeeController::class, 'update']);
+        Route::delete('employees/{employee}', [EmployeeController::class, 'destroy']);
     });
 
     // Schedule operations are owned by Manager, with Admin as system override.

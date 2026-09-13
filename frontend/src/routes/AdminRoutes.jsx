@@ -16,6 +16,7 @@ const AdminSettings = lazy(() => import("../components/admin/AdminSettings"));
 const AdminLandingPageEditor = lazy(() => import("../components/admin/AdminLandingPageEditor"));
 const LoginHistory = lazy(() => import("../components/admin/LoginHistory"));
 const PayrollReports = lazy(() => import("../components/admin/PayrollReports"));
+const EmployeeDirectory = lazy(() => import("../components/shared/EmployeeDirectory"));
 
 // Admin monitoring reports - read-only system-wide views
 const CashierReports = lazy(() => import("../components/admin/CashierAdminReports"));
@@ -75,6 +76,15 @@ const AdminRoutes = () => (
         <Route path="profile" element={<ProfileSettings />} />
         <Route path="users" element={<ManageUsers />} />
         <Route path="users/create" element={<CreateUser />} />
+        <Route
+          path="employees"
+          element={
+            <EmployeeDirectory
+              roleAccent="#ff5f93"
+              roleLabel="Admin — Staff Records"
+            />
+          }
+        />
         <Route path="reports" element={<AdminReports />} />
         <Route path="reports/cashier" element={<CashierReports />} />
         <Route path="reports/inventory" element={<InventoryReports />} />

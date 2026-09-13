@@ -3,17 +3,13 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
   faCalendarAlt,
   faCalendarCheck,
-  faCalendarDay,
   faChartLine,
   faCheckCircle,
-  faClock,
   faEye,
   faFileInvoiceDollar,
-  faFingerprint,
   faMoneyBillWave,
   faTriangleExclamation,
   faUserCheck,
-  faUserTimes,
   faUsers,
   faSpinner,
   faFileExcel,
@@ -158,32 +154,6 @@ const getRole = (record) =>
   record.user?.role ||
   "Staff";
 
-const normalizeAttendance = (record, index) => {
-  const status = normalizeStatus(record.status || record.attendance_status);
-  const reviewStatus = normalizeStatus(
-    record.review_status ||
-      record.manager_review_status ||
-      record.reviewStatus ||
-      (record.reviewed || record.is_reviewed ? "reviewed" : "pending")
-  );
-
-  return {
-    id: record.id || record.attendance_id || `attendance-${index}`,
-    employeeName: getEmployeeName(record),
-    employeeId: record.employee_id || record.staff_id || record.employee?.id || "N/A",
-    department: getDepartment(record),
-    role: getRole(record),
-    date: record.date || record.attendance_date || record.created_at,
-    timeIn: record.time_in || record.check_in || "",
-    timeOut: record.time_out || record.check_out || "",
-    status,
-    reviewStatus,
-    overtime: safeNumber(record.overtime_hours || record.overtime || record.ot_hours || 0),
-    undertime: safeNumber(record.undertime_hours || record.undertime || 0),
-    remarks: record.remarks || record.notes || record.manager_remarks || "",
-  };
-};
-
 const normalizePayroll = (record, index) => {
   const grossPay = safeNumber(record.gross_pay || record.total_gross_pay || record.amount || 0);
   const deductions = safeNumber(record.total_deductions || record.deductions || 0);
@@ -199,6 +169,9 @@ const normalizePayroll = (record, index) => {
     period: record.payroll_period || record.period || record.month || record.cutoff || "N/A",
     date: record.created_at || record.updated_at || record.payroll_date,
     attendanceDays: safeNumber(record.attendance_days || record.days_worked || record.present_days || 0),
+    regularHolidayPay: safeNumber(record.regular_holiday_pay || 0),
+    specialHolidayPay: safeNumber(record.special_holiday_pay || 0),
+    nightDifferential: safeNumber(record.night_differential || 0),
     lateDeductions: safeNumber(record.late_deductions || record.late_deduction || 0),
     absenceDeductions: safeNumber(record.absence_deductions || record.absent_deductions || 0),
     overtimePay: safeNumber(record.overtime_pay || record.overtime_amount || 0),
@@ -235,37 +208,6 @@ const getMonthKey = (dateValue) => {
   });
 };
 
-const normalizeLeave = (record, index) => ({
-  id: record.id || `leave-${index}`,
-  employeeName: record.employee_name || record.user?.name || "Unknown",
-  employeeId: record.user_id || record.employee_id || "N/A",
-  department: record.employee_role || record.user?.department || "Unassigned",
-  role: record.employee_role || record.user?.role || "Staff",
-  type: record.type || "leave",
-  startDate: record.start_date,
-  endDate: record.end_date,
-  days: safeNumber(record.days || 0),
-  reason: record.reason || "",
-  status: normalizeStatus(record.status),
-  managerRemarks: record.manager_remarks || "",
-  reviewedBy: record.reviewed_by_name || "",
-  reviewedAt: record.reviewed_at,
-  createdAt: record.created_at,
-});
-
-const normalizeSchedule = (record, index) => ({
-  id: record.id || `schedule-${index}`,
-  employeeName: record.employee_name || record.user?.name || "Unknown",
-  employeeId: record.user_id || record.employee_id || "N/A",
-  department: record.employee_department || record.user?.department || "Unassigned",
-  role: record.employee_role || record.user?.role || "Staff",
-  dayOfWeek: record.day_of_week || record.day || "",
-  shiftStart: record.shift_start || "",
-  shiftEnd: record.shift_end || "",
-  isOffDay: !!record.is_off_day,
-  createdAt: record.created_at,
-});
-
 const TAB_CONFIG = [
   { key: 'summary', label: 'Summary', icon: faChartLine },
   { key: 'sales', label: 'Sales Report', icon: faFileInvoiceDollar },
@@ -289,7 +231,7 @@ const ManagerReports = ({ initialTab }) => {
   const [staff, setStaff] = useState([]);
   const [payroll, setPayroll] = useState([]);
   const [liveSummary, setLiveSummary] = useState({});
-  const [departments, setDepartments] = useState([]);
+  const [lastUpdated, setLastUpdated] = useState("");
   const [reportErrors, setReportErrors] = useState({});
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -301,7 +243,8 @@ const ManagerReports = ({ initialTab }) => {
   const [endDate, setEndDate] = useState(defaultRange.endDate);
   const [selectedRecord, setSelectedRecord] = useState(null);
   const [toast, setToast] = useState(null);
-  const [theme, setTheme] = useState("light");
+  const [sortKey, setSortKey] = useState("");
+  const [sortDirection, setSortDirection] = useState("asc");
 
   // Data loading function
   const fetchReportData = useCallback(
@@ -369,6 +312,7 @@ const ManagerReports = ({ initialTab }) => {
         setStaff(staffList.map(normalizeStaff));
         setPayroll(payrollList.map(normalizePayroll));
         setReportErrors(nextErrors);
+        setLastUpdated(new Date().toLocaleString("en-PH"));
 
         if (
           !liveResponse &&
@@ -556,68 +500,41 @@ const ManagerReports = ({ initialTab }) => {
     });
   }, [departmentFilter, searchTerm, staff, statusFilter]);
 
-  // Filter functions
-  const filterData = (data, filters) => {
-    const search = filters.searchTerm?.trim().toLowerCase() || '';
-    const status = filters.status || 'all';
-    const dept = filters.department || 'all';
-    const start = filters.startDate;
-    const end = filters.endDate;
+  const departments = useMemo(
+    () =>
+      Array.from(
+        new Set(
+          [...staff, ...payroll]
+            .map((record) => record.department)
+            .filter(Boolean)
+        )
+      ).sort(),
+    [staff, payroll]
+  );
 
-    return data.filter(item => {
-      // Search filter
-      if (search) {
-        const searchableText = Object.values(item || {}).join(' ').toLowerCase();
-        if (!searchableText.includes(search)) return false;
-      }
-      
-      // Status filter
-      if (status !== 'all' && item.status !== status) return false;
-      
-      // Department filter
-      if (dept !== 'all' && item.department !== dept) return false;
-      
-      // Date filter
-      if (start || end) {
-        const itemDate = new Date(item.date || item.created_at);
-        if (start && itemDate < new Date(start)) return false;
-        if (end && itemDate > new Date(end)) return false;
-      }
-      
-      return true;
-    });
-  };
-
-  // Get filtered data for current tab
-  const getFilteredData = useCallback((filters) => {
-    switch (activeTab) {
-      case 'sales': return filterData(salesData, filters);
-      case 'payments': return filterData(paymentsData, filters);
-      case 'inventory': return filterData(inventoryData, filters);
-      case 'services': return filterData(servicesData, filters);
-      case 'customers': return filterData(customersData, filters);
-      case 'staff': return filterData(staff, filters);
-      case 'payroll': return filterData(payroll, filters);
-      default: {
-        const all = [...salesData, ...paymentsData, ...inventoryData, ...servicesData, ...customersData, ...staff, ...payroll];
-        return filterData(all, filters);
-      }
-    }
-  }, [activeTab, salesData, paymentsData, inventoryData, servicesData, customersData, staff, payroll]);
-
-  // Calculate summary stats
+  // Summary stats — map the backend's snake_case keys and fall back to
+  // the loaded per-tab datasets when a metric is not provided.
   const summary = useMemo(() => {
-    return liveSummary || {
-      totalSales: 0,
-      totalReservations: 0,
-      totalPayments: 0,
-      totalInventory: 0,
-      totalServices: 0,
-      totalCustomers: 0,
-      totalStaff: 0,
-      totalPayroll: 0,
+    const s = liveSummary || {};
+    return {
+      totalSales: safeNumber(s.totalSales ?? s.total_revenue ?? s.total_sales),
+      totalReservations:
+        safeNumber(s.totalReservations ?? s.total_reservations) ||
+        safeNumber(s.active_appointments) + safeNumber(s.active_boarding_stays),
+      totalPayments: safeNumber(s.totalPayments ?? s.total_payments),
+      totalInventory:
+        safeNumber(s.totalInventory ?? s.total_inventory) || inventoryData.length,
+      totalServices:
+        safeNumber(s.totalServices ?? s.total_services) || servicesData.length,
+      totalCustomers:
+        safeNumber(s.totalCustomers ?? s.total_customers) || customersData.length,
+      totalStaff: safeNumber(s.totalStaff ?? s.total_staff) || staff.length,
+      totalPayroll: payroll.reduce((sum, r) => sum + safeNumber(r.netPay), 0),
+      pendingApprovals: safeNumber(s.pending_approvals),
+      lowStock: safeNumber(s.low_stock_items),
+      inventoryValue: safeNumber(s.inventory_value),
     };
-  }, [liveSummary]);
+  }, [liveSummary, inventoryData.length, servicesData.length, customersData.length, staff.length, payroll]);
 
   const salesStatusChart = useMemo(() => {
     const counts = {};
@@ -700,6 +617,27 @@ const ManagerReports = ({ initialTab }) => {
     setEndDate(defaultRange.endDate);
   };
 
+  const handleSort = (key, direction) => {
+    setSortKey(direction ? key : "");
+    setSortDirection(direction || "asc");
+  };
+
+  const applySort = (data) => {
+    if (!sortKey) return data;
+    return [...data].sort((a, b) => {
+      const av = a[sortKey];
+      const bv = b[sortKey];
+      if (typeof av === "number" && typeof bv === "number") {
+        return sortDirection === "asc" ? av - bv : bv - av;
+      }
+      return sortDirection === "asc"
+        ? String(av ?? "").localeCompare(String(bv ?? ""))
+        : String(bv ?? "").localeCompare(String(av ?? ""));
+    });
+  };
+
+  const tableSortProps = { sortKey, sortDirection, onSort: handleSort };
+
   const getActiveDataset = () => {
     if (activeTab === "sales") return filteredSales;
     if (activeTab === "payments") return filteredPayments;
@@ -762,14 +700,6 @@ const ManagerReports = ({ initialTab }) => {
         { key: "phone", label: "Phone" },
       ];
     }
-    if (activeTab === "staff") {
-      return [
-        { key: "id", label: "ID" },
-        { key: "name", label: "Name" },
-        { key: "role", label: "Role" },
-        { key: "status", label: "Status" },
-      ];
-    }
     if (activeTab === "payroll") {
       return [
         { key: "employeeName", label: "Employee" },
@@ -782,28 +712,6 @@ const ManagerReports = ({ initialTab }) => {
         { key: "deductions", label: "Deductions" },
         { key: "netPay", label: "Net Pay" },
         { key: "status", label: "Status" },
-      ];
-    }
-    if (activeTab === "leave") {
-      return [
-        { key: "employeeName", label: "Employee" },
-        { key: "department", label: "Department" },
-        { key: "type", label: "Type" },
-        { key: "startDate", label: "From" },
-        { key: "endDate", label: "To" },
-        { key: "days", label: "Days" },
-        { key: "status", label: "Status" },
-        { key: "reason", label: "Reason" },
-      ];
-    }
-    if (activeTab === "schedule") {
-      return [
-        { key: "employeeName", label: "Employee" },
-        { key: "department", label: "Department" },
-        { key: "dayOfWeek", label: "Day" },
-        { key: "shiftStart", label: "Start" },
-        { key: "shiftEnd", label: "End" },
-        { key: "isOffDay", label: "Off Day" },
       ];
     }
     if (activeTab === "staff") {
@@ -997,83 +905,53 @@ const ManagerReports = ({ initialTab }) => {
     </>
   );
 
-  const attendanceColumns = [
-    { key: "employeeName", label: "Employee", sortable: true, render: (value, record) => (
-      <div>
-        <strong>{value}</strong>
-        <small style={{ display: "block", color: "#64748b" }}>{record.employeeId}</small>
-      </div>
-    )},
-    { key: "department", label: "Department", sortable: true },
-    { key: "role", label: "Role", sortable: true },
-    { key: "date", label: "Date", sortable: true, render: (value) => formatDate(value) },
-    { key: "status", label: "Status", sortable: true, render: (value) => <StatusBadge status={value} /> },
-    { key: "reviewStatus", label: "Review", sortable: true, render: (value) => <StatusBadge status={value} /> },
-    { key: "overtime", label: "Overtime", sortable: true, render: (value) => `${value}h` },
-    { key: "undertime", label: "Undertime", sortable: true, render: (value) => `${value}h` },
-    { key: "actions", label: "Actions", sortable: false, render: (_value, record) => (
-      <button
-        type="button"
-        className="report-view-btn"
-        onClick={() => setSelectedRecord({ type: "attendance", record })}
-      >
-        <FontAwesomeIcon icon={faEye} />
-        View
-      </button>
-    )},
-  ];
-
-  const renderAttendanceTab = () => (
-    <StandardTable
-      columns={attendanceColumns}
-      data={filteredAttendance}
-      emptyMessage="No attendance records found."
-      pageSize={10}
-    />
-  );
-
   const renderSalesTab = () => (
     <StandardTable
       columns={[{ key: "id", label: "ID" }, { key: "date", label: "Date" }, { key: "amount", label: "Amount" }, { key: "status", label: "Status" }]}
-      data={filteredSales}
+      data={applySort(filteredSales)}
       emptyMessage="No sales records found."
       pageSize={10}
+      {...tableSortProps}
     />
   );
 
   const renderPaymentsTab = () => (
     <StandardTable
       columns={[{ key: "id", label: "ID" }, { key: "date", label: "Date" }, { key: "amount", label: "Amount" }, { key: "method", label: "Method" }, { key: "status", label: "Status" }]}
-      data={filteredPayments}
+      data={applySort(filteredPayments)}
       emptyMessage="No payment records found."
       pageSize={10}
+      {...tableSortProps}
     />
   );
 
   const renderInventoryTab = () => (
     <StandardTable
       columns={[{ key: "id", label: "ID" }, { key: "name", label: "Name" }, { key: "quantity", label: "Quantity" }, { key: "status", label: "Status" }]}
-      data={filteredInventory}
+      data={applySort(filteredInventory)}
       emptyMessage="No inventory records found."
       pageSize={10}
+      {...tableSortProps}
     />
   );
 
   const renderServicesTab = () => (
     <StandardTable
       columns={[{ key: "id", label: "ID" }, { key: "date", label: "Date" }, { key: "service", label: "Service" }, { key: "status", label: "Status" }]}
-      data={filteredServices}
+      data={applySort(filteredServices)}
       emptyMessage="No service records found."
       pageSize={10}
+      {...tableSortProps}
     />
   );
 
   const renderCustomersTab = () => (
     <StandardTable
       columns={[{ key: "id", label: "ID" }, { key: "name", label: "Name" }, { key: "email", label: "Email" }, { key: "phone", label: "Phone" }]}
-      data={filteredCustomers}
+      data={applySort(filteredCustomers)}
       emptyMessage="No customer records found."
       pageSize={10}
+      {...tableSortProps}
     />
   );
 
@@ -1110,9 +988,10 @@ const ManagerReports = ({ initialTab }) => {
   const renderPayrollTab = () => (
     <StandardTable
       columns={payrollColumns}
-      data={filteredPayroll}
+      data={applySort(filteredPayroll)}
       emptyMessage="No payroll records found."
       pageSize={10}
+      {...tableSortProps}
     />
   );
 
@@ -1144,9 +1023,10 @@ const ManagerReports = ({ initialTab }) => {
   const renderStaffTab = () => (
     <StandardTable
       columns={staffColumns}
-      data={filteredStaff}
+      data={applySort(filteredStaff)}
       emptyMessage="No staff records found."
       pageSize={10}
+      {...tableSortProps}
     />
   );
 
@@ -1158,9 +1038,9 @@ const ManagerReports = ({ initialTab }) => {
       loading={false}
       error=""
       onRefresh={() => fetchReportData({ silent: true })}
-      lastUpdated={formatDateTime(new Date())}
+      lastUpdated={lastUpdated || "Not refreshed yet"}
     >
-    <div className={`manager-reports ${theme}`}>
+    <div className="manager-reports light">
 
       {error && (
         <div className="reports-alert error">
@@ -1174,13 +1054,13 @@ const ManagerReports = ({ initialTab }) => {
 
       <section className="reports-summary-grid">
         <SummaryCard
-          label="Total Sales"
-          value={summary.totalSales || 0}
+          label="Total Revenue"
+          value={formatCurrency(summary.totalSales)}
           icon={faFileInvoiceDollar}
           tone="money"
         />
         <SummaryCard
-          label="Total Reservations"
+          label="Active Reservations"
           value={summary.totalReservations || 0}
           icon={faCalendarCheck}
           tone="primary"
@@ -1194,6 +1074,7 @@ const ManagerReports = ({ initialTab }) => {
         <SummaryCard
           label="Inventory Items"
           value={summary.totalInventory || 0}
+          sub={summary.lowStock > 0 ? `${summary.lowStock} low stock` : "Stock healthy"}
           icon={faTriangleExclamation}
           tone="warning"
         />
@@ -1216,8 +1097,8 @@ const ManagerReports = ({ initialTab }) => {
           tone="success"
         />
         <SummaryCard
-          label="Total Payroll"
-          value={summary.totalPayroll || 0}
+          label="Total Payroll (Net)"
+          value={formatCurrency(summary.totalPayroll)}
           icon={faFileInvoiceDollar}
           tone="money"
         />
@@ -1238,6 +1119,71 @@ const ManagerReports = ({ initialTab }) => {
             </button>
           );
         })}
+      </section>
+
+      <section className="reports-filters">
+        <div className="reports-search-box">
+          <input
+            type="text"
+            placeholder="Search this report..."
+            value={searchTerm}
+            onChange={(event) => setSearchTerm(event.target.value)}
+          />
+          {searchTerm && (
+            <button type="button" onClick={() => setSearchTerm("")}>
+              <FontAwesomeIcon icon={faXmark} />
+            </button>
+          )}
+        </div>
+
+        <select
+          className="reports-select"
+          value={statusFilter}
+          onChange={(event) => setStatusFilter(event.target.value)}
+        >
+          <option value="all">All Statuses</option>
+          {statuses.map((status) => (
+            <option key={status} value={status}>
+              {formatLabel(status)}
+            </option>
+          ))}
+        </select>
+
+        {(activeTab === "staff" || activeTab === "payroll") && (
+          <select
+            className="reports-select"
+            value={departmentFilter}
+            onChange={(event) => setDepartmentFilter(event.target.value)}
+          >
+            <option value="all">All Departments</option>
+            {departments.map((department) => (
+              <option key={department} value={department}>
+                {department}
+              </option>
+            ))}
+          </select>
+        )}
+
+        <div className="reports-date-range">
+          <input
+            type="date"
+            value={startDate}
+            onChange={(event) => setStartDate(event.target.value)}
+            aria-label="Start date"
+          />
+          <span>–</span>
+          <input
+            type="date"
+            value={endDate}
+            onChange={(event) => setEndDate(event.target.value)}
+            aria-label="End date"
+          />
+        </div>
+
+        <button type="button" className="reports-clear-btn" onClick={clearFilters}>
+          <FontAwesomeIcon icon={faXmark} />
+          Clear
+        </button>
       </section>
 
       {loading && (
@@ -1264,7 +1210,7 @@ const ManagerReports = ({ initialTab }) => {
 
             <div className="reports-header-actions">
               <p>
-                Last updated: <strong>{formatDateTime(new Date())}</strong>
+                Last updated: <strong>{lastUpdated || "Not refreshed yet"}</strong>
               </p>
               <div className="manager-export-actions">
                 <button className="export-btn-sm excel" type="button" onClick={() => handleExport("excel")} title="Export Excel">
@@ -1340,23 +1286,17 @@ const getTabTitle = (activeTab) => {
   return "Executive Report Summary";
 };
 
-const SummaryCard = ({ label, value, icon, tone }) => (
+const SummaryCard = ({ label, value, icon, tone, sub }) => (
   <article className={`reports-summary-card ${tone}`}>
-    <span>
+    <span className="reports-card-icon">
       <FontAwesomeIcon icon={icon} />
     </span>
     <div>
       <strong>{value}</strong>
       <p>{label}</p>
+      {sub && <small>{sub}</small>}
     </div>
   </article>
-);
-
-const FilterField = ({ label, children }) => (
-  <label className="reports-filter-field">
-    <span>{label}</span>
-    {children}
-  </label>
 );
 
 const ChartCard = ({ title, children, wide = false }) => (

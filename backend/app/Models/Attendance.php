@@ -14,6 +14,7 @@ class Attendance extends Model
 
     protected $fillable = [
         'user_id',
+        'employee_id',
         'date',
         'check_in',
         'check_out',
@@ -51,6 +52,11 @@ class Attendance extends Model
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
+    }
+
+    public function employee(): BelongsTo
+    {
+        return $this->belongsTo(Employee::class);
     }
 
     public function approver(): BelongsTo
@@ -128,6 +134,11 @@ class Attendance extends Model
     public function scopeForUser($query, $userId)
     {
         return $query->where('user_id', $userId);
+    }
+
+    public function scopeForEmployee($query, $employeeId)
+    {
+        return $query->where('employee_id', $employeeId);
     }
 
     public function scopeForPeriod($query, $startDate, $endDate)

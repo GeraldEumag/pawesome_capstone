@@ -19,6 +19,7 @@ class User extends Authenticatable
     protected $fillable = [
         'name',
         'username',
+        'employee_no',
         'email',
         'password',
         'role',
@@ -97,9 +98,27 @@ class User extends Authenticatable
         return $this->hasOne(Customer::class);
     }
 
+    public function employeeRecord()
+    {
+        return $this->hasOne(Employee::class);
+    }
+
     public function isAdmin(): bool
     {
         return in_array($this->role, ['admin', 'super_admin'], true);
+    }
+
+    /**
+     * Auto-assign a unified employee number (used as the attendance kiosk
+     * barcode) to staff accounts. Customers don't get one.
+     */
+    protected static function booted(): void
+    {
+        static::creating(function (User $user) {
+            if (!$user->employee_no && $user->role && $user->role !== 'customer') {
+                $user->employee_no = Employee::nextEmployeeNo();
+            }
+        });
     }
 
     public function isSuperAdmin(): bool

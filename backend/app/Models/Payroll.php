@@ -13,6 +13,7 @@ class Payroll extends Model
     protected $fillable = [
         'payroll_id',
         'user_id',
+        'employee_id',
         'employee_name',
         'department',
         'position',
@@ -96,6 +97,11 @@ class Payroll extends Model
         return $this->belongsTo(User::class);
     }
 
+    public function employee(): BelongsTo
+    {
+        return $this->belongsTo(Employee::class);
+    }
+
     public function processor(): BelongsTo
     {
         return $this->belongsTo(User::class, 'processed_by');
@@ -119,15 +125,16 @@ class Payroll extends Model
 
     public function calculatePayroll(): void
     {
-        $user = $this->user;
+        $person = $this->user ?? $this->employee;
 
-        if (!$user) {
+        if (!$person) {
             return;
         }
 
         // Set employee details
-        $this->department = $user->department ?? 'Unassigned';
-        $this->position = $user->position ?? 'Staff';
+        $this->department = $person->department ?? 'Unassigned';
+        $this->position = $person->position ?? 'Staff';
+        $this->employee_name = $this->employee_name ?: $person->name;
 
         // Calculate working days in period
         $startDate = \Carbon\Carbon::parse($this->pay_period_start);
@@ -136,18 +143,19 @@ class Payroll extends Model
             return !$date->isWeekend();
         }, $endDate);
 
-        // Get attendance records for the period
-        $attendanceRecords = Attendance::forPeriod($this->pay_period_start, $this->pay_period_end)
-            ->forUser($this->user_id)
-            ->get();
+        // Get attendance records for the period (user account or employee record)
+        $attendanceQuery = Attendance::forPeriod($this->pay_period_start, $this->pay_period_end);
+        $attendanceRecords = $this->employee_id
+            ? $attendanceQuery->forEmployee($this->employee_id)->get()
+            : $attendanceQuery->forUser($this->user_id)->get();
 
         $this->present_days = $attendanceRecords->whereIn('status', ['present', 'late', 'early_leave'])->count();
         $this->absent_days = $attendanceRecords->where('status', 'absent')->count();
         $this->regular_hours = $attendanceRecords->sum('total_hours');
         $this->overtime_hours = $attendanceRecords->sum('overtime_hours');
 
-        // Use user's hourly rate or calculate from base salary
-        $this->hourly_rate = (float) ($user->hourly_rate ?? ($user->base_salary ? $user->base_salary / 160 : 0));
+        // Use person's hourly rate or calculate from base salary
+        $this->hourly_rate = (float) ($person->hourly_rate ?? ($person->base_salary ? $person->base_salary / 160 : 0));
 
         // Calculate earnings
         $dailyRate = $this->base_salary / 22; // Assuming 22 working days per month

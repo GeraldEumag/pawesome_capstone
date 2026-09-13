@@ -13,7 +13,7 @@ class AttendanceController extends Controller
 {
     public function index(Request $request): JsonResponse
     {
-        $query = Attendance::with(['user', 'approver']);
+        $query = Attendance::with(['user', 'employee', 'approver']);
 
         // Filter by date
         if ($request->has('date')) {
@@ -35,19 +35,29 @@ class AttendanceController extends Controller
             $query->where('status', $request->status);
         }
 
-        // Filter by department (via user relationship)
+        // Filter by department (user or employee relationship)
         if ($request->has('department')) {
-            $query->whereHas('user', function ($q) use ($request) {
-                $q->where('department', $request->department);
+            $query->where(function ($outer) use ($request) {
+                $outer->whereHas('user', function ($q) use ($request) {
+                    $q->where('department', $request->department);
+                })->orWhereHas('employee', function ($q) use ($request) {
+                    $q->where('department', $request->department);
+                });
             });
         }
 
         // Search by name or email
         if ($request->has('search')) {
             $search = $request->search;
-            $query->whereHas('user', function ($q) use ($search) {
-                $q->where('name', 'like', "%{$search}%")
-                  ->orWhere('email', 'like', "%{$search}%");
+            $query->where(function ($outer) use ($search) {
+                $outer->whereHas('user', function ($q) use ($search) {
+                    $q->where('name', 'like', "%{$search}%")
+                      ->orWhere('email', 'like', "%{$search}%");
+                })->orWhereHas('employee', function ($q) use ($search) {
+                    $q->where('first_name', 'like', "%{$search}%")
+                      ->orWhere('last_name', 'like', "%{$search}%")
+                      ->orWhere('employee_no', 'like', "%{$search}%");
+                });
             });
         }
 

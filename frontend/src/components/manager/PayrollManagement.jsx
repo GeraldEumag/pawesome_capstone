@@ -159,6 +159,8 @@ const normalizePayroll = (record, index) => {
     payrollId: record.payroll_id || record.reference_no || `PAY-${String(index + 1).padStart(4, "0")}`,
     employeeName: getEmployeeName(record),
     employeeId: record.employee_id || record.staff_id || record.user_id || record.employee?.id || "N/A",
+    personType: record.person_type || (record.employee_id && !record.user_id ? "employee" : "account"),
+    employeeNo: record.employee_no || record.user?.employee_no || record.employee?.employee_no || "",
     department: getDepartment(record),
     role: getRole(record),
     period: getPayrollPeriod(record),
@@ -247,6 +249,7 @@ const PayrollManagement = () => {
   const [selectedDepartment, setSelectedDepartment] = useState("all");
   const [selectedRole, setSelectedRole] = useState("all");
   const [selectedStatus, setSelectedStatus] = useState("all");
+  const [personType, setPersonType] = useState("all");
   const [sortBy, setSortBy] = useState("employeeName");
   const [sortOrder, setSortOrder] = useState("asc");
   const [showFilters, setShowFilters] = useState(false);
@@ -379,12 +382,16 @@ const PayrollManagement = () => {
         const matchesStatus =
           selectedStatus === "all" || payroll.status === selectedStatus;
 
+        const matchesPersonType =
+          personType === "all" || payroll.personType === personType;
+
         return (
           matchesSearch &&
           matchesPeriod &&
           matchesDepartment &&
           matchesRole &&
-          matchesStatus
+          matchesStatus &&
+          matchesPersonType
         );
       })
       .sort((a, b) => {
@@ -409,6 +416,7 @@ const PayrollManagement = () => {
     selectedDepartment,
     selectedRole,
     selectedStatus,
+    personType,
     sortBy,
     sortOrder,
   ]);
@@ -478,6 +486,7 @@ const PayrollManagement = () => {
     setSelectedDepartment("all");
     setSelectedRole("all");
     setSelectedStatus("all");
+    setPersonType("all");
     setSortBy("employeeName");
     setSortOrder("asc");
   };
@@ -1013,6 +1022,17 @@ const PayrollManagement = () => {
                     {formatLabel(status)}
                   </option>
                 ))}
+              </select>
+            </FilterField>
+
+            <FilterField label="Person Type">
+              <select
+                value={personType}
+                onChange={(event) => setPersonType(event.target.value)}
+              >
+                <option value="all">All People</option>
+                <option value="account">With Account</option>
+                <option value="employee">Staff Member (No Account)</option>
               </select>
             </FilterField>
 
