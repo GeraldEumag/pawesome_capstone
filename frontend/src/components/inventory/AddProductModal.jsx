@@ -12,6 +12,9 @@ import {
   faChevronLeft,
   faChevronRight,
   faBuilding,
+  faEdit,
+  faCloudArrowUp,
+  faImage,
 } from "@fortawesome/free-solid-svg-icons";
 import "./AddProductModal.css";
 
@@ -285,13 +288,15 @@ const AddProductModal = ({ isOpen, onClose, onSuccess, editItem = null }) => {
       <div className="modal-content product-modal" onClick={(e) => e.stopPropagation()}>
         <div className="modal-header">
           <div className="modal-title">
-            <span className="modal-icon">{editItem ? "Edit" : "Add"}</span>
+            <span className="modal-icon">
+              <FontAwesomeIcon icon={editItem ? faEdit : faBoxOpen} />
+            </span>
             <div>
               <h3>{editItem ? "Edit Product" : "Add New Product"}</h3>
               <p>{editItem ? "Update product details" : "Create a new inventory item"}</p>
             </div>
           </div>
-          <button className="btn-close" onClick={onClose}>
+          <button className="btn-close" onClick={onClose} aria-label="Close">
             ×
           </button>
         </div>
@@ -438,6 +443,7 @@ const AddProductModal = ({ isOpen, onClose, onSuccess, editItem = null }) => {
                       <label className="photo-upload-label">
                         <input type="file" accept="image/*" onChange={handlePhotoChange} className="photo-input" />
                         <div className="photo-upload-placeholder">
+                          <FontAwesomeIcon icon={faCloudArrowUp} className="upload-icon" />
                           <span>Click to upload product photo</span>
                           <small>JPEG, PNG, GIF up to 5MB</small>
                         </div>
@@ -542,13 +548,12 @@ const AddProductModal = ({ isOpen, onClose, onSuccess, editItem = null }) => {
                   <h4>Expiry & Issue Method</h4>
                   <div className="form-grid">
                     <div className="form-group">
-                      <label>
+                      <label className="checkbox-label">
                         <input
                           type="checkbox"
                           name="requires_expiry_tracking"
                           checked={formData.requires_expiry_tracking}
                           onChange={handleChange}
-                          style={{ width: "auto", marginRight: "8px" }}
                         />
                         Requires Expiry Tracking
                       </label>
@@ -668,8 +673,7 @@ const AddProductModal = ({ isOpen, onClose, onSuccess, editItem = null }) => {
                             <img
                               src={formData.batch_proof_preview}
                               alt="Batch proof"
-                              className="photo-preview-img"
-                              style={{ maxHeight: 100 }}
+                              className="photo-preview-img compact"
                             />
                             <button
                               type="button"
@@ -680,7 +684,7 @@ const AddProductModal = ({ isOpen, onClose, onSuccess, editItem = null }) => {
                             </button>
                           </div>
                         ) : (
-                          <label className="photo-upload-label" style={{ padding: 12 }}>
+                          <label className="photo-upload-label compact">
                             <input
                               type="file"
                               accept="image/*"
@@ -688,6 +692,7 @@ const AddProductModal = ({ isOpen, onClose, onSuccess, editItem = null }) => {
                               className="photo-input"
                             />
                             <div className="photo-upload-placeholder">
+                              <FontAwesomeIcon icon={faImage} className="upload-icon" />
                               <span>Click to upload receipt/proof</span>
                               <small>JPEG, PNG, GIF up to 5MB</small>
                             </div>
@@ -716,11 +721,10 @@ const AddProductModal = ({ isOpen, onClose, onSuccess, editItem = null }) => {
                           onChange={handleChange}
                           placeholder="Select or type supplier..."
                           readOnly
-                          style={{ flex: 1 }}
                         />
                         <button
                           type="button"
-                          className="btn-cancel"
+                          className="supplier-btn"
                           onClick={() => setShowSupplierModal(true)}
                           title="Select Supplier"
                         >

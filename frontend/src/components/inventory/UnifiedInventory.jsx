@@ -6,7 +6,7 @@ import {
   faPlus, faEdit, faSearch, faBox,
   faSync, faArchive, faImage,
   faWarehouse, faBoxes, faBell, faSort, faSortUp, faSortDown,
-  faChevronDown, faChevronUp, faDownload, faHistory, faInfoCircle,
+  faChevronDown, faDownload, faHistory, faInfoCircle,
   faSlidersH, faAdjust,
 } from "@fortawesome/free-solid-svg-icons";
 import { inventoryApi } from "../../api/inventory.jsx";
@@ -456,11 +456,11 @@ const UnifiedInventory = () => {
             </button>
             {showExportDropdown && (
               <>
-                <div style={{ position: "fixed", top: 0, left: 0, right: 0, bottom: 0, zIndex: 998 }} onClick={() => setShowExportDropdown(false)} />
-                <div style={{ position: "absolute", top: "100%", right: 0, background: "#fff", border: "1px solid #e2e8f0", borderRadius: 8, boxShadow: "0 8px 24px rgba(0,0,0,0.12)", zIndex: 999, minWidth: 160, overflow: "hidden" }}>
-                  <button style={{ display: "block", width: "100%", padding: "10px 16px", border: "none", background: "#fff", color: "#374151", fontSize: 13, textAlign: "left", cursor: "pointer" }} onClick={() => handleExport("csv")}>Export as CSV</button>
-                  <button style={{ display: "block", width: "100%", padding: "10px 16px", border: "none", background: "#fff", color: "#374151", fontSize: 13, textAlign: "left", cursor: "pointer" }} onClick={() => handleExport("excel")}>Export as Excel</button>
-                  <button style={{ display: "block", width: "100%", padding: "10px 16px", border: "none", background: "#fff", color: "#374151", fontSize: 13, textAlign: "left", cursor: "pointer" }} onClick={() => handleExport("pdf")}>Export as PDF</button>
+                <div className="export-backdrop" onClick={() => setShowExportDropdown(false)} />
+                <div className="export-dropdown">
+                  <button className="export-btn-item" onClick={() => handleExport("csv")}>Export as CSV</button>
+                  <button className="export-btn-item" onClick={() => handleExport("excel")}>Export as Excel</button>
+                  <button className="export-btn-item" onClick={() => handleExport("pdf")}>Export as PDF</button>
                 </div>
               </>
             )}
@@ -565,7 +565,7 @@ const UnifiedInventory = () => {
             <select value={categoryFilter} onChange={(e) => setCategoryFilter(e.target.value)}>
               <option value="all">All</option>
               {CATEGORIES.map((c) => (
-                <option key={c.value} value={c.value}>{c.icon} {c.label}</option>
+                <option key={c.value} value={c.value}>{c.label}</option>
               ))}
             </select>
           </div>
@@ -636,15 +636,11 @@ const UnifiedInventory = () => {
                   </th>
                 )}
                 <th className="sortable" onClick={() => handleSort("sku")}>SKU {renderSortIcon("sku")}</th>
-                <th className="sortable" onClick={() => handleSort("barcode")}>Barcode {renderSortIcon("barcode")}</th>
                 <th className="sortable" onClick={() => handleSort("name")}>Product {renderSortIcon("name")}</th>
                 <th className="sortable" onClick={() => handleSort("category")}>Category {renderSortIcon("category")}</th>
-                <th className="sortable" onClick={() => handleSort("brand")}>Brand {renderSortIcon("brand")}</th>
-                <th className="sortable" onClick={() => handleSort("generic_name")}>Generic Name {renderSortIcon("generic_name")}</th>
                 <th className="sortable" onClick={() => handleSort("supplier")}>Supplier {renderSortIcon("supplier")}</th>
                 <th className="sortable numeric" onClick={() => handleSort("stock")}>Stock {renderSortIcon("stock")}</th>
                 <th className="sortable numeric" onClick={() => handleSort("price")}>Price {renderSortIcon("price")}</th>
-                <th>Cost</th>
                 <th>Status</th>
                 <th className="actions-col">Actions</th>
               </tr>
@@ -658,19 +654,23 @@ const UnifiedInventory = () => {
                         <input type="checkbox" checked={selectedItems.includes(item.id)} onChange={() => handleSelectItem(item.id)} />
                       </td>
                     )}
-                    <td className="sku-cell">{item.sku || "—"}</td>
-                    <td className="barcode-cell">{item.barcode || "—"}</td>
+                    <td className="sku-cell">
+                      <div className="sku-primary">{item.sku || "—"}</div>
+                      {item.barcode && item.barcode !== item.sku && (
+                        <div className="sku-secondary">{item.barcode}</div>
+                      )}
+                    </td>
                     <td className="name-cell">
                       <div className="product-name">{item.name}</div>
-                      <div className="product-brand">{item.brand}</div>
+                      {(item.brand || item.generic_name) && (
+                        <div className="product-brand">{[item.brand, item.generic_name].filter(Boolean).join(" · ")}</div>
+                      )}
                     </td>
                     <td>
                       <span className="category-badge">
                         {item.category || "—"}
                       </span>
                     </td>
-                    <td>{item.brand || "—"}</td>
-                    <td>{item.generic_name || "—"}</td>
                     <td>{item.supplier || "—"}</td>
                     <td className="numeric">
                       <span className={`stock-value ${getStock(item) <= getMinStock(item) && getStock(item) > 0 ? "low" : ""} ${getStock(item) === 0 ? "out" : ""}`}>
@@ -678,9 +678,9 @@ const UnifiedInventory = () => {
                       </span>
                       <span className="min-stock">/ {getMinStock(item)}</span>
                     </td>
-                    <td className="numeric price-cell">₱{(item.price || 0).toLocaleString()}</td>
-                    <td className="cost-cell">
-                      {item.cost ? `₱${item.cost.toLocaleString()}` : <span className="no-cost">—</span>}
+                    <td className="numeric price-cell">
+                      <div>₱{(item.price || 0).toLocaleString()}</div>
+                      {item.cost ? <div className="cost-subtext">Cost ₱{Number(item.cost).toLocaleString()}</div> : null}
                     </td>
                     <td>
                       {activeTab === "archived" ? (
@@ -696,6 +696,13 @@ const UnifiedInventory = () => {
                         </button>
                       ) : (
                         <div className="action-group">
+                          <button
+                            className={`btn-icon batches ${expandedItems.has(item.id) ? "expanded" : ""}`}
+                            onClick={() => toggleExpand(item.id)}
+                            title={expandedItems.has(item.id) ? "Hide Batches" : "View Batches"}
+                          >
+                            <FontAwesomeIcon icon={faChevronDown} />
+                          </button>
                           <button className="btn-icon info" onClick={() => handleViewInfo(item)} title="View Info">
                             <FontAwesomeIcon icon={faInfoCircle} />
                           </button>
@@ -721,7 +728,7 @@ const UnifiedInventory = () => {
                   {/* Expandable batch row */}
                   {activeTab === "active" && expandedItems.has(item.id) && (
                     <tr className="batch-row">
-                      <td colSpan={13}>
+                      <td colSpan={9}>
                         <div className="batch-details">
                           <h4><FontAwesomeIcon icon={faBoxes} /> Batches for {item.name}</h4>
                           {loadingBatches[item.id] ? (
@@ -754,16 +761,6 @@ const UnifiedInventory = () => {
                             <p>No batch records for this item.</p>
                           )}
                         </div>
-                      </td>
-                    </tr>
-                  )}
-                  {activeTab === "active" && (
-                    <tr className="expand-toggle-row">
-                      <td colSpan={13}>
-                        <button className="btn-expand" onClick={() => toggleExpand(item.id)}>
-                          <FontAwesomeIcon icon={expandedItems.has(item.id) ? faChevronUp : faChevronDown} />
-                          {expandedItems.has(item.id) ? " Hide Batches" : " View Batches"}
-                        </button>
                       </td>
                     </tr>
                   )}
@@ -873,6 +870,7 @@ const UnifiedInventory = () => {
                 <div><label>Barcode</label><p>{infoItem.barcode || "—"}</p></div>
                 <div><label>Category</label><p>{infoItem.category}</p></div>
                 <div><label>Brand</label><p>{infoItem.brand || "—"}</p></div>
+                <div><label>Generic Name</label><p>{infoItem.generic_name || "—"}</p></div>
                 <div><label>Supplier</label><p>{infoItem.supplier || "—"}</p></div>
                 <div><label>Stock</label><p>{getStock(infoItem)} / {getMinStock(infoItem)} min</p></div>
                 <div><label>Price</label><p>₱{(infoItem.price || 0).toLocaleString()}</p></div>
