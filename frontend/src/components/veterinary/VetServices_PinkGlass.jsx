@@ -11,8 +11,6 @@ import {
   faRotateRight,
   faTimes,
   faSave,
-  faPaw,
-  faClock,
   faTag,
   faCheckCircle,
   faBan,
@@ -211,6 +209,14 @@ const VetServices = () => {
     return matchesSearch && matchesCategory;
   });
 
+  const formatDuration = (minutes) => {
+    const mins = parseInt(minutes, 10);
+    if (!mins) return "—";
+    if (mins % 60 === 0) return `${mins / 60} hr`;
+    if (mins > 60) return `${Math.floor(mins / 60)}h ${mins % 60}m`;
+    return `${mins} min`;
+  };
+
   const modalFormFields = [
     { label: "Service Name *", key: "name", type: "text", placeholder: "e.g., General Consultation", required: true },
     { label: "Price (₱) *", key: "price", type: "number", placeholder: "0.00", required: true, step: "0.01", min: "0" },
@@ -260,24 +266,24 @@ const VetServices = () => {
 
   return (
     <div className="vs-page">
-      <div className="vs-hero">
-        <div className="vs-hero-content">
-          <h1 className="vs-hero-title">Services Management</h1>
-          <p className="vs-hero-subtitle">
+      <header className="vs-header">
+        <div className="vs-header-text">
+          <h1 className="vs-title">Services Management</h1>
+          <p className="vs-subtitle">
             Manage veterinary services offered to customers. Create, edit, and organize services that appear in booking forms.
           </p>
-          <div className="vs-hero-actions">
-            <button className="vs-btn vs-btn--secondary" onClick={handleRefresh} disabled={refreshing}>
-              <FontAwesomeIcon icon={faRotateRight} className={refreshing ? "vs-spin" : ""} />
-              {refreshing ? "Refreshing..." : "Refresh"}
-            </button>
-            <button className="vs-btn vs-btn--primary" onClick={() => setShowCreateModal(true)}>
-              <FontAwesomeIcon icon={faPlus} />
-              Create Service
-            </button>
-          </div>
         </div>
-      </div>
+        <div className="vs-header-actions">
+          <button className="vs-btn vs-btn--secondary" onClick={handleRefresh} disabled={refreshing}>
+            <FontAwesomeIcon icon={faRotateRight} className={refreshing ? "vs-spin" : ""} />
+            {refreshing ? "Refreshing..." : "Refresh"}
+          </button>
+          <button className="vs-btn vs-btn--primary" onClick={() => setShowCreateModal(true)}>
+            <FontAwesomeIcon icon={faPlus} />
+            Create Service
+          </button>
+        </div>
+      </header>
 
       {error && (
         <div className="vs-error-alert">
@@ -322,63 +328,69 @@ const VetServices = () => {
           <p>{searchTerm || categoryFilter !== "all" ? "Try adjusting your search or filters." : "Start by creating your first service."}</p>
         </div>
       ) : (
-        <div className="vs-services-grid">
-          {filteredServices.map((service) => (
-            <div key={service.id} className="vs-service-card">
-              <div className="vs-service-header">
-                <div className="vs-service-info">
-                  <h3 className="vs-service-name">{service.name}</h3>
-                  <span className="vs-service-category">
-                    <FontAwesomeIcon icon={faTag} />
-                    {service.category}
-                  </span>
-                </div>
-                <div className="vs-service-actions">
-                  <button
-                    className={`vs-action-btn ${service.is_active ? "vs-action-btn--toggle-on" : "vs-action-btn--toggle-off"}`}
-                    onClick={() => handleToggleService(service.id, service.is_active)}
-                    title={service.is_active ? "Deactivate service" : "Activate service"}
-                  >
-                    <FontAwesomeIcon icon={service.is_active ? faCheckCircle : faBan} />
-                  </button>
-                  <button className="vs-action-btn vs-action-btn--edit" onClick={() => openEditModal(service)} title="Edit service">
-                    <FontAwesomeIcon icon={faEdit} />
-                  </button>
-                  <button className="vs-action-btn vs-action-btn--delete" onClick={() => handleDeleteService(service.id)} title="Delete service">
-                    <FontAwesomeIcon icon={faTrash} />
-                  </button>
-                </div>
-              </div>
-
-              <div className="vs-service-details">
-                <div className="vs-detail-item">
-                  <div className="vs-detail-icon"><FontAwesomeIcon icon={faPaw} /></div>
-                  <div className="vs-detail-content">
-                    <div className="vs-detail-label">Price</div>
-                    <div className="vs-detail-value">₱{parseFloat(service.price).toFixed(2)}</div>
-                  </div>
-                </div>
-                {service.duration_minutes && (
-                  <div className="vs-detail-item">
-                    <div className="vs-detail-icon"><FontAwesomeIcon icon={faClock} /></div>
-                    <div className="vs-detail-content">
-                      <div className="vs-detail-label">Duration</div>
-                      <div className="vs-detail-value">{service.duration_minutes} minutes</div>
-                    </div>
-                  </div>
-                )}
-              </div>
-
-              {service.description && (
-                <p className="vs-service-description">{service.description}</p>
-              )}
-
-              <span className={`vs-service-status ${service.is_active ? "vs-service-status--active" : "vs-service-status--inactive"}`}>
-                <FontAwesomeIcon icon={service.is_active ? faCheckCircle : faBan} />
-                {service.is_active ? "Active" : "Inactive"}
-              </span>
-            </div>
-          ))}
+        <div className="vs-table-container">
+          <div className="vs-table-scroll">
+            <table className="vs-table">
+              <thead>
+                <tr>
+                  <th>Service</th>
+                  <th>Category</th>
+                  <th>Price</th>
+                  <th>Duration</th>
+                  <th>Status</th>
+                  <th className="vs-col-actions">Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {filteredServices.map((service) => (
+                  <tr key={service.id} className={!service.is_active ? "vs-row--inactive" : ""}>
+                    <td>
+                      <div className="vs-service-cell">
+                        <span className="vs-service-name">{service.name}</span>
+                        {service.description && (
+                          <span className="vs-service-desc">{service.description}</span>
+                        )}
+                      </div>
+                    </td>
+                    <td>
+                      <span className="vs-service-category">
+                        <FontAwesomeIcon icon={faTag} />
+                        {service.category}
+                      </span>
+                    </td>
+                    <td className="vs-price-cell">₱{parseFloat(service.price).toFixed(2)}</td>
+                    <td className="vs-duration-cell">{formatDuration(service.duration_minutes)}</td>
+                    <td>
+                      <span className={`vs-service-status ${service.is_active ? "vs-service-status--active" : "vs-service-status--inactive"}`}>
+                        <FontAwesomeIcon icon={service.is_active ? faCheckCircle : faBan} />
+                        {service.is_active ? "Active" : "Inactive"}
+                      </span>
+                    </td>
+                    <td>
+                      <div className="vs-service-actions">
+                        <button
+                          className={`vs-action-btn ${service.is_active ? "vs-action-btn--toggle-on" : "vs-action-btn--toggle-off"}`}
+                          onClick={() => handleToggleService(service.id, service.is_active)}
+                          title={service.is_active ? "Deactivate service" : "Activate service"}
+                        >
+                          <FontAwesomeIcon icon={service.is_active ? faCheckCircle : faBan} />
+                        </button>
+                        <button className="vs-action-btn vs-action-btn--edit" onClick={() => openEditModal(service)} title="Edit service">
+                          <FontAwesomeIcon icon={faEdit} />
+                        </button>
+                        <button className="vs-action-btn vs-action-btn--delete" onClick={() => handleDeleteService(service.id)} title="Delete service">
+                          <FontAwesomeIcon icon={faTrash} />
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+          <div className="vs-table-footer">
+            Showing {filteredServices.length} of {services.length} services
+          </div>
         </div>
       )}
 
