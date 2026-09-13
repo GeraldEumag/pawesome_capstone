@@ -207,17 +207,18 @@ const BarcodeAttendanceKiosk = () => {
       </section>
 
       {/* ── Scan Panel ───────────────────────────────────────────── */}
-      <section className="bk-scan-panel">
+      <section className={`bk-scan-panel ${loading ? "is-loading" : ""}`}>
         <div className="bk-scan-icon-wrap">
-          {loading ? (
-            <FontAwesomeIcon icon={faSpinner} spin className="bk-scan-icon loading" />
-          ) : (
-            <FontAwesomeIcon icon={faBarcode} className="bk-scan-icon" />
-          )}
+          <FontAwesomeIcon icon={faBarcode} className="bk-scan-icon" />
+          {loading && <span className="bk-scan-line" aria-hidden="true" />}
         </div>
 
         <p className="bk-scan-label">
-          {loading ? "Processing scan…" : "Scan employee barcode or type employee ID"}
+          {loading ? (
+            <span className="bk-processing">Processing scan</span>
+          ) : (
+            "Scan employee barcode or type employee ID"
+          )}
         </p>
 
         <div className="bk-input-wrap" onClick={(e) => e.stopPropagation()}>
@@ -257,7 +258,7 @@ const BarcodeAttendanceKiosk = () => {
           disabled={loading || !barcodeInput.trim()}
         >
           {loading ? (
-            <><FontAwesomeIcon icon={faSpinner} spin /> Processing…</>
+            <><span className="bk-btn-spinner" aria-hidden="true" /> Recording…</>
           ) : (
             <><FontAwesomeIcon icon={faUserCheck} /> Record Attendance</>
           )}
