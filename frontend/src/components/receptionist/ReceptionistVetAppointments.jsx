@@ -4,8 +4,6 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
   faStethoscope,
   faCalendarAlt,
-  faSearch,
-  faFilter,
   faPlus,
   faEdit,
   faTrash,
@@ -460,8 +458,7 @@ const VetAppointments = () => {
       {/* Filters */}
       <div className="appointments-controls">
         <div className="search-filter-group">
-          <div className="search-box">
-            <FontAwesomeIcon icon={faSearch} />
+          <div className="va-search-box">
             <input
               type="text"
               placeholder="Search by pet name, owner, or doctor..."
@@ -469,8 +466,7 @@ const VetAppointments = () => {
               onChange={(e) => setSearchTerm(e.target.value)}
             />
           </div>
-          <div className="filter-dropdown">
-            <FontAwesomeIcon icon={faFilter} />
+          <div className="va-filter-dropdown">
             <select
               value={filterStatus}
               onChange={(e) => setFilterStatus(e.target.value)}
@@ -482,7 +478,7 @@ const VetAppointments = () => {
               <option value="cancelled">Cancelled</option>
             </select>
           </div>
-          <div className="filter-dropdown">
+          <div className="va-filter-dropdown">
             <FontAwesomeIcon icon={faUserMd} />
             <select
               value={filterDoctor}

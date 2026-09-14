@@ -5,7 +5,6 @@ import {
   faStethoscope,
   faCalendarAlt,
   faSearch,
-  faFilter,
   faPlus,
   faCheckCircle,
   faTimesCircle,
@@ -394,41 +393,36 @@ const ReceptionistVeterinaryBookings = () => {
       {/* Filters */}
       <div className="vet-controls">
         <div className="vet-search-box">
-          <div className="vet-search-box">
-            <FontAwesomeIcon icon={faSearch} />
-            <input
-              type="text"
-              placeholder="Search by pet name, owner, or doctor..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-            />
-          </div>
-          <div className="vet-filter-box">
-            <FontAwesomeIcon icon={faFilter} />
-            <select
-              value={filterStatus}
-              onChange={(e) => setFilterStatus(e.target.value)}
-            >
-              <option value="all">All Status</option>
-              <option value="pending">Pending</option>
-              <option value="approved">Approved</option>
-              <option value="completed">Completed</option>
-              <option value="cancelled">Cancelled</option>
-              <option value="rejected">Rejected</option>
-            </select>
-          </div>
-          <div className="vet-filter-box">
-            <FontAwesomeIcon icon={faUserMd} />
-            <select
-              value={filterDoctor}
-              onChange={(e) => setFilterDoctor(e.target.value)}
-            >
-              <option value="all">All Doctors</option>
-              {doctors.map(doctor => (
-                <option key={doctor} value={doctor}>{doctor}</option>
-              ))}
-            </select>
-          </div>
+          <input
+            type="text"
+            placeholder="Search by pet name, owner, or doctor..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+          />
+        </div>
+        <div className="vet-filter-box">
+          <select
+            value={filterStatus}
+            onChange={(e) => setFilterStatus(e.target.value)}
+          >
+            <option value="all">All Status</option>
+            <option value="pending">Pending</option>
+            <option value="approved">Approved</option>
+            <option value="completed">Completed</option>
+            <option value="cancelled">Cancelled</option>
+            <option value="rejected">Rejected</option>
+          </select>
+        </div>
+        <div className="vet-filter-box">
+          <select
+            value={filterDoctor}
+            onChange={(e) => setFilterDoctor(e.target.value)}
+          >
+            <option value="all">All Doctors</option>
+            {doctors.map(doctor => (
+              <option key={doctor} value={doctor}>{doctor}</option>
+            ))}
+          </select>
         </div>
       </div>
 

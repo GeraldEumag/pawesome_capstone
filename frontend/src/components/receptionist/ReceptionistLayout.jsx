@@ -1,12 +1,14 @@
-import { Outlet, useNavigate, useLocation } from "react-router-dom";
+import { Outlet, useLocation } from "react-router-dom";
 import ReceptionistSidebar from "./ReceptionistSidebar";
-import { FaRedoAlt, FaUserTie } from "react-icons/fa";
 import DashboardLayout from "../shared/DashboardLayout";
+import { useAuth } from "../../context/AuthContext";
 import "./ReceptionistLayout.css";
 
 const ReceptionistLayout = () => {
-  const navigate = useNavigate();
   const location = useLocation();
+  const { user } = useAuth();
+  const name = user?.name || "Receptionist";
+  const profilePhoto = user?.profile_photo || "";
   const normalizedPath = location.pathname.replace(/\/+$/, "");
 
   const ROUTE_META = [
@@ -27,39 +29,14 @@ const ReceptionistLayout = () => {
 
   const pageMeta = ROUTE_META.find((r) => r.path === normalizedPath) || ROUTE_META[0];
 
-  const extraActions = (
-    <>
-      <button
-        className="topbar-user"
-        type="button"
-        onClick={() => navigate("/receptionist/profile")}
-      >
-        <span className="topbar-avatar">
-          <FaUserTie />
-        </span>
-        <span>
-          <strong>Receptionist</strong>
-          <small>Front Desk</small>
-        </span>
-      </button>
-      <button
-        className="topbar-icon"
-        type="button"
-        title="Refresh"
-        onClick={() => window.location.reload()}
-      >
-        <FaRedoAlt />
-      </button>
-    </>
-  );
-
   return (
     <DashboardLayout
       sidebar={<ReceptionistSidebar />}
       title={pageMeta.title}
       subtitle={pageMeta.subtitle}
       role="receptionist"
-      extraActions={extraActions}
+      name={name}
+      profilePhoto={profilePhoto}
       className="receptionist-layout"
     >
       <Outlet />

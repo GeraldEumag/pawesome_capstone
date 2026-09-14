@@ -3,8 +3,6 @@ import { showAlert, showSuccess, showError } from "../../utils/alert.jsx";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
   faUsers,
-  faSearch,
-  faFilter,
   faPlus,
   faEye,
   faPhone,
@@ -219,9 +217,8 @@ const ReceptionistCustomerManagement = () => {
       </div>
 
       <div className="customers-controls">
-        <div className="search-filter-group">
-          <div className="search-box">
-            <FontAwesomeIcon icon={faSearch} />
+        <div className="cm-search-filter-group">
+          <div className="cm-search-box">
             <input
               type="text"
               placeholder="Search by name, email, or phone..."
@@ -230,8 +227,7 @@ const ReceptionistCustomerManagement = () => {
             />
           </div>
 
-          <div className="filter-dropdown">
-            <FontAwesomeIcon icon={faFilter} />
+          <div className="cm-filter-dropdown">
             <select value={filterStatus} onChange={(e) => setFilterStatus(e.target.value)}>
               <option value="all">All Status</option>
               <option value="active">Active</option>

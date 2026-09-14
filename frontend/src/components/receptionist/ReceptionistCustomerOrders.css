@@ -280,12 +280,6 @@
   grid-template-columns: minmax(260px, 1fr) 220px 240px auto;
   gap: 0.85rem;
   align-items: center;
-  padding: 1.1rem;
-  border: 1px solid var(--orders-border);
-  border-radius: var(--orders-radius-card);
-  background: var(--orders-surface);
-  box-shadow: var(--orders-shadow-card);
-  backdrop-filter: blur(18px);
 }
 
 .orders-search-box,
@@ -301,23 +295,16 @@
   overflow: hidden;
 }
 
-.orders-search-box > svg,
-.orders-filter-box > svg {
-  position: absolute;
-  left: 16px;
-  color: var(--orders-primary);
-  pointer-events: none;
-}
-
 .orders-search-box input,
 .orders-filter-box select {
   width: 100%;
   min-height: 54px;
-  border: none;
+  border: none !important;
   outline: none;
-  background: transparent;
+  background: transparent !important;
+  box-shadow: none !important;
   color: var(--orders-text);
-  padding: 0 1rem 0 3rem;
+  padding: 0 1rem;
   font: inherit;
   font-weight: 750;
 }

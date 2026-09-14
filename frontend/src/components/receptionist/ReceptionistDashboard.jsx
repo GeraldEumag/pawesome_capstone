@@ -9,7 +9,6 @@ import {
   FaCut,
   FaDownload,
   FaEye,
-  FaFilter,
   FaHotel,
   FaInfoCircle,
   FaPaw,
@@ -549,7 +548,6 @@ const ReceptionistDashboard = () => {
 
       <section className="receptionist-toolbar fade-up">
         <div className="receptionist-search">
-          <FaSearch />
           <input
             type="text"
             placeholder="Search request, customer, pet, service, status..."
@@ -565,7 +563,6 @@ const ReceptionistDashboard = () => {
         </div>
 
         <label className="receptionist-filter">
-          <FaFilter />
           <select
             value={statusFilter}
             onChange={(event) => setStatusFilter(event.target.value)}
@@ -579,7 +576,6 @@ const ReceptionistDashboard = () => {
         </label>
 
         <label className="receptionist-filter">
-          <FaPaw />
           <select
             value={typeFilter}
             onChange={(event) => setTypeFilter(event.target.value)}
@@ -593,7 +589,6 @@ const ReceptionistDashboard = () => {
         </label>
 
         <label className="receptionist-filter">
-          <FaCashRegister />
           <select
             value={paymentFilter}
             onChange={(event) => setPaymentFilter(event.target.value)}

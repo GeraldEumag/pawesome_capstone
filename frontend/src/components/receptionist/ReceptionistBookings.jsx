@@ -1254,7 +1254,6 @@ const ReceptionistBookings = () => {
 
       <section className="booking-tools">
         <div className="booking-search-wrap">
-          <FontAwesomeIcon icon={faSearch} />
           <input
             type="text"
             placeholder="Search by pet, owner, service, type, status, or booking ID..."
@@ -1271,7 +1270,6 @@ const ReceptionistBookings = () => {
         </div>
 
         <label className="booking-filter">
-          <FontAwesomeIcon icon={faPaw} />
           <select value={typeFilter} onChange={(event) => setTypeFilter(event.target.value)}>
             {TYPE_OPTIONS.map((option) => (
               <option key={option.value} value={option.value}>
@@ -1282,7 +1280,6 @@ const ReceptionistBookings = () => {
         </label>
 
         <label className="booking-filter">
-          <FontAwesomeIcon icon={faMoneyBillWave} />
           <select
             value={paymentFilter}
             onChange={(event) => setPaymentFilter(event.target.value)}

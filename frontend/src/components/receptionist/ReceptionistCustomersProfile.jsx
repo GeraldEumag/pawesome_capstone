@@ -8,7 +8,6 @@ import {
   faChartLine,
   faEnvelope,
   faEye,
-  faFilter,
   faHome,
   faMapMarkerAlt,
   faPaw,
@@ -741,7 +740,6 @@ const CustomersProfile = () => {
 
       <section className="customer-controls">
         <div className="customer-search-box">
-          <FontAwesomeIcon icon={faSearch} />
           <input
             type="text"
             placeholder="Search customer, email, phone, address, or pet name..."
@@ -757,7 +755,6 @@ const CustomersProfile = () => {
         </div>
 
         <label className="customer-filter-box">
-          <FontAwesomeIcon icon={faFilter} />
           <select
             value={filterType}
             onChange={(event) => setFilterType(event.target.value)}

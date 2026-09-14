@@ -9,11 +9,9 @@ import {
   faCut,
   faDownload,
   faEye,
-  faFilter,
   faInfoCircle,
   faPaw,
   faRefresh,
-  faSearch,
   faShower,
   faSpinner,
   faTimes,
@@ -444,30 +442,26 @@ const ReceptionistGroomingBookings = () => {
 
       {/* Filters */}
       <div className="grooming-filters">
-        <div className="filter-group">
-          <div className="search-box">
-            <FontAwesomeIcon icon={faSearch} />
-            <input
-              type="text"
-              placeholder="Search by pet, customer, or service..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-            />
-          </div>
+        <div className="gb-search-box">
+          <input
+            type="text"
+            placeholder="Search by pet, customer, or service..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+          />
+        </div>
 
-          <div className="filter-select">
-            <FontAwesomeIcon icon={faFilter} />
-            <select
-              value={filterStatus}
-              onChange={(e) => setFilterStatus(e.target.value)}
-            >
-              {STATUS_OPTIONS.map((opt) => (
-                <option key={opt.value} value={opt.value}>
-                  {opt.label}
-                </option>
-              ))}
-            </select>
-          </div>
+        <div className="gb-filter-select">
+          <select
+            value={filterStatus}
+            onChange={(e) => setFilterStatus(e.target.value)}
+          >
+            {STATUS_OPTIONS.map((opt) => (
+              <option key={opt.value} value={opt.value}>
+                {opt.label}
+              </option>
+            ))}
+          </select>
         </div>
       </div>
 

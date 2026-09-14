@@ -9,7 +9,6 @@ import {
   faDownload,
   faEnvelope,
   faEye,
-  faFilter,
   faMoneyBillWave,
   faReceipt,
   faRefresh,
@@ -666,7 +665,6 @@ export default function ReceptionistCustomerOrders() {
 
       <section className="orders-controls">
         <div className="orders-search-box">
-          <FontAwesomeIcon icon={faSearch} />
           <input
             type="text"
             placeholder="Search order ID, customer, email, payment, or type..."
@@ -682,7 +680,6 @@ export default function ReceptionistCustomerOrders() {
         </div>
 
         <label className="orders-filter-box">
-          <FontAwesomeIcon icon={faFilter} />
           <select
             value={statusFilter}
             onChange={(event) => setStatusFilter(event.target.value)}
@@ -696,7 +693,6 @@ export default function ReceptionistCustomerOrders() {
         </label>
 
         <label className="orders-filter-box">
-          <FontAwesomeIcon icon={faMoneyBillWave} />
           <select
             value={paymentStatusFilter}
             onChange={(event) => setPaymentStatusFilter(event.target.value)}

@@ -301,12 +301,6 @@
   grid-template-columns: minmax(260px, 1fr) 260px auto;
   gap: 0.85rem;
   align-items: center;
-  padding: 1.1rem;
-  border: 1px solid var(--cp-border);
-  border-radius: var(--cp-radius-card);
-  background: var(--cp-surface);
-  box-shadow: var(--cp-shadow-card);
-  backdrop-filter: blur(18px);
 }
 
 .customer-search-box,
@@ -322,25 +316,22 @@
   overflow: hidden;
 }
 
-.customer-search-box > svg,
-.customer-filter-box > svg {
-  position: absolute;
-  left: 16px;
-  color: var(--cp-primary);
-  pointer-events: none;
-}
-
 .customer-search-box input,
 .customer-filter-box select {
   width: 100%;
   min-height: 54px;
-  border: none;
+  border: none !important;
   outline: none;
-  background: transparent;
+  background: transparent !important;
+  box-shadow: none !important;
   color: var(--cp-text);
-  padding: 0 1rem 0 3rem;
+  padding: 0 1rem;
   font: inherit;
   font-weight: 750;
+}
+
+.customer-search-box input {
+  padding-right: 3rem;
 }
 
 .customer-filter-box select {

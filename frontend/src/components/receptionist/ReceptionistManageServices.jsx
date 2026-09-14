@@ -12,7 +12,6 @@ import {
   faWrench,
   faToggleOn,
   faToggleOff,
-  faSearch,
   faSpinner,
   faTimes,
   faBed,
@@ -393,8 +392,7 @@ const ReceptionistManageServices = () => {
 
           {/* Toolbar */}
           <div className="services-toolbar">
-            <div className="search-box">
-              <FontAwesomeIcon icon={faSearch} />
+            <div className="services-search-box">
               <input
                 type="text"
                 placeholder="Search services..."
@@ -551,8 +549,7 @@ const ReceptionistManageServices = () => {
 
           {/* Toolbar */}
           <div className="services-toolbar">
-            <div className="search-box">
-              <FontAwesomeIcon icon={faSearch} />
+            <div className="services-search-box">
               <input
                 type="text"
                 placeholder="Search rooms..."
