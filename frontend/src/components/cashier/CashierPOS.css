@@ -115,6 +115,99 @@
   font-size: 13px;
 }
 
+/* ── Webcam scanner integration ── */
+
+/* Wrapper that holds the search bar + camera button + floating panel */
+.pos-search-area {
+  flex: 1;
+  max-width: 560px;
+  margin: 0 auto;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  position: relative;
+}
+
+/* Override: the inner .pos-search-wrap no longer needs max-width / margin */
+.pos-search-area .pos-search-wrap {
+  flex: 1;
+  max-width: none;
+  margin: 0;
+}
+
+/* Camera toggle button */
+.pos-cam-btn {
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  border: 1.5px solid var(--color-border, rgba(255,95,147,.18));
+  background: var(--color-surface-solid, #fff);
+  color: var(--color-muted, #64748b);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.15s;
+  flex-shrink: 0;
+}
+
+.pos-cam-btn:hover {
+  background: rgba(255, 95, 147, 0.08);
+  border-color: var(--color-primary, #ff5f93);
+  color: var(--color-primary, #ff5f93);
+}
+
+.pos-cam-btn.active {
+  background: var(--color-primary, #ff5f93);
+  border-color: var(--color-primary, #ff5f93);
+  color: #fff;
+  box-shadow: 0 4px 12px rgba(255, 95, 147, 0.3);
+}
+
+/* Floating scanner panel — drops below the search area */
+.pos-webcam-panel {
+  position: absolute;
+  top: calc(100% + 8px);
+  left: 0;
+  right: 0;
+  z-index: 900;
+  background: rgba(255, 255, 255, 0.97);
+  border: 1.5px solid rgba(255, 95, 147, 0.22);
+  border-radius: 14px;
+  box-shadow: 0 16px 48px rgba(15, 23, 42, 0.18);
+  padding: 0.75rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  backdrop-filter: blur(12px);
+}
+
+.pos-webcam-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 0.82rem;
+  font-weight: 800;
+  color: #1f2937;
+}
+
+.pos-webcam-close {
+  border: none;
+  background: none;
+  cursor: pointer;
+  color: #64748b;
+  font-size: 14px;
+  padding: 2px;
+  display: flex;
+  align-items: center;
+  transition: color 0.15s;
+}
+
+.pos-webcam-close:hover {
+  color: #ef4444;
+}
+
 /* Right buttons */
 .pos-topbar-right {
   display: flex;

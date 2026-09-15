@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useMemo } from "react";
+import React, { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import StatusDot from "../shared/StatusDot";
 import { exportToCSV as exportCSVUtil, exportToPDF, exportToExcel } from "../../utils/reportExport";
@@ -7,7 +7,7 @@ import {
   faSync, faArchive, faImage,
   faWarehouse, faBoxes, faBell, faSort, faSortUp, faSortDown,
   faChevronDown, faDownload, faHistory, faInfoCircle,
-  faSlidersH, faAdjust,
+  faSlidersH, faAdjust, faCamera, faXmark,
 } from "@fortawesome/free-solid-svg-icons";
 import { inventoryApi } from "../../api/inventory.jsx";
 import { normalizeList } from "../../api/client";
@@ -15,6 +15,7 @@ import AddProductModal from "./AddProductModal";
 import StockAdjustmentModal from "./StockAdjustmentModal";
 import PremiumToast from "../shared/PremiumToast";
 import DeleteConfirmModal from "../shared/DeleteConfirmModal";
+import QrScanner from "../shared/QrScanner";
 import "./UnifiedInventory.css";
 
 const CATEGORIES = [
@@ -79,6 +80,11 @@ const UnifiedInventory = () => {
   const [showHistoryModal, setShowHistoryModal] = useState(false);
   const [historyLogs, setHistoryLogs] = useState([]);
   const [loadingHistory, setLoadingHistory] = useState(false);
+
+  // Barcode scanner
+  const [showScanModal, setShowScanModal] = useState(false);
+  const [scanHighlightId, setScanHighlightId] = useState(null); // highlighted row after scan
+  const scanHighlightTimer = useRef(null);
 
   // Toast
   const [toast, setToast] = useState({ show: false, type: "success", title: "", message: "" });
@@ -351,6 +357,31 @@ const UnifiedInventory = () => {
     }
   };
 
+  // ---- Barcode scan ----
+  const handleBarcodeScan = useCallback(async (code) => {
+    setShowScanModal(false);
+    try {
+      const res = await inventoryApi.lookupByBarcode(code);
+      const item = res?.item ?? res;
+      if (!item || !item.id) {
+        showToast("error", "Not Found", "Barcode not found in inventory.");
+        return;
+      }
+      // Switch to active tab and populate the search box with the product name
+      setActiveTab("active");
+      setSearchTerm(item.name ?? "");
+      // Highlight the matching row for 2 seconds
+      clearTimeout(scanHighlightTimer.current);
+      setScanHighlightId(item.id);
+      scanHighlightTimer.current = setTimeout(() => setScanHighlightId(null), 2000);
+    } catch (err) {
+      showToast("error", "Barcode Error", err.message || "Barcode not found in inventory.");
+    }
+  }, []);
+
+  // Cleanup highlight timer on unmount
+  useEffect(() => () => clearTimeout(scanHighlightTimer.current), []);
+
   // ---- Adjust stock ----
   const handleAdjust = (item) => { setAdjustItem(item); setShowAdjustModal(true); };
 
@@ -549,6 +580,13 @@ const UnifiedInventory = () => {
           <input type="text" placeholder="Search by name, SKU, barcode, brand..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />
         </div>
         <div className="ui-filter-actions">
+          <button
+            className={`btn btn-scan-barcode ${showScanModal ? "active" : ""}`}
+            onClick={() => setShowScanModal(true)}
+            title="Scan barcode to find item"
+          >
+            <FontAwesomeIcon icon={faCamera} /> Scan Barcode
+          </button>
           <button className={`btn btn-filter ${showFilters ? "active" : ""}`} onClick={() => setShowFilters(!showFilters)}>
             <FontAwesomeIcon icon={faSlidersH} /> Filters
           </button>
@@ -648,7 +686,7 @@ const UnifiedInventory = () => {
             <tbody>
               {paginatedItems.map((item) => (
                 <React.Fragment key={item.id}>
-                  <tr className={`${getStock(item) === 0 ? "out-of-stock-row" : ""} ${selectedItems.includes(item.id) ? "selected" : ""}`}>
+                  <tr className={`${getStock(item) === 0 ? "out-of-stock-row" : ""} ${selectedItems.includes(item.id) ? "selected" : ""} ${scanHighlightId === item.id ? "scan-highlight" : ""}`}>
                     {activeTab === "active" && (
                       <td className="checkbox-col">
                         <input type="checkbox" checked={selectedItems.includes(item.id)} onChange={() => handleSelectItem(item.id)} />
@@ -956,6 +994,31 @@ const UnifiedInventory = () => {
               &times;
             </button>
             <img src={viewPhotoUrl} alt="Product" />
+          </div>
+        </div>
+      )}
+
+      {/* ── Barcode Scan Modal ── */}
+      {showScanModal && (
+        <div className="inv-scan-overlay" onClick={() => setShowScanModal(false)}>
+          <div className="inv-scan-modal" onClick={(e) => e.stopPropagation()}>
+            <div className="inv-scan-modal-header">
+              <span className="inv-scan-modal-title">
+                <FontAwesomeIcon icon={faCamera} /> Scan Barcode
+              </span>
+              <button
+                type="button"
+                className="inv-scan-modal-close"
+                onClick={() => setShowScanModal(false)}
+                aria-label="Close scanner"
+              >
+                <FontAwesomeIcon icon={faXmark} />
+              </button>
+            </div>
+            <p className="inv-scan-modal-hint">
+              Point your webcam at an item&apos;s barcode to find it in the inventory.
+            </p>
+            <QrScanner onScan={handleBarcodeScan} stopOnScan={true} />
           </div>
         </div>
       )}
