@@ -8,10 +8,8 @@ import {
   faCalendarAlt,
   faNotesMedical,
   faExclamationTriangle,
-  faSearch,
   faSync,
   faUser,
-  faFilter,
 } from "@fortawesome/free-solid-svg-icons";
 
 import { apiRequest } from "../../api/client";
@@ -135,8 +133,7 @@ const VeterinaryCurrentBoarders = () => {
       </div>
 
       <div className="boarders-filters">
-        <div className="search-box">
-          <FontAwesomeIcon icon={faSearch} />
+        <div className="boarders-search">
           <input
             type="text"
             placeholder="Search by pet name, owner, or room..."
@@ -144,8 +141,7 @@ const VeterinaryCurrentBoarders = () => {
             onChange={(e) => setSearchTerm(e.target.value)}
           />
         </div>
-        <div className="filter-box">
-          <FontAwesomeIcon icon={faFilter} />
+        <div className="boarders-species-filter">
           <select
             value={filterSpecies}
             onChange={(e) => setFilterSpecies(e.target.value)}

@@ -167,7 +167,7 @@
   flex-wrap: wrap;
 }
 
-.search-box {
+.boarders-search {
   position: relative;
   display: flex;
   align-items: center;
@@ -184,17 +184,12 @@
   transition: border-color 0.2s ease, box-shadow 0.2s ease;
 }
 
-.search-box:focus-within {
+.boarders-search:focus-within {
   border-color: var(--veterinary-primary);
   box-shadow: 0 0 0 4px var(--vet-input-focus-ring);
 }
 
-.search-box svg {
-  color: var(--veterinary-primary);
-  flex-shrink: 0;
-}
-
-.search-box input {
+.boarders-search input {
   border: none;
   background: none;
   outline: none;
@@ -205,11 +200,11 @@
   font-family: inherit;
 }
 
-.search-box input::placeholder {
+.boarders-search input::placeholder {
   color: var(--veterinary-text-muted);
 }
 
-.filter-box {
+.boarders-species-filter {
   display: flex;
   align-items: center;
   gap: 10px;
@@ -223,16 +218,11 @@
   transition: border-color 0.2s ease;
 }
 
-.filter-box:focus-within {
+.boarders-species-filter:focus-within {
   border-color: var(--veterinary-primary);
 }
 
-.filter-box svg {
-  color: var(--veterinary-primary);
-  flex-shrink: 0;
-}
-
-.filter-box select {
+.boarders-species-filter select {
   border: none;
   background: none;
   outline: none;
@@ -604,8 +594,8 @@
     align-items: stretch;
   }
 
-  .search-box,
-  .filter-box {
+  .boarders-search,
+  .boarders-species-filter {
     width: 100%;
   }
 

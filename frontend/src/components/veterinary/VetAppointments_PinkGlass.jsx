@@ -11,7 +11,6 @@ import {
   faClock,
   faCheckCircle,
   faTimesCircle,
-  faSearch,
   faSpinner,
   faExclamationTriangle,
   faRotateRight,
@@ -484,7 +483,6 @@ const VetAppointments = () => {
       <div className="appointments-controls">
         <div className="search-filter">
           <div className="search-box">
-            <FontAwesomeIcon icon={faSearch} />
             <input
               type="text"
               placeholder="Search by pet, owner, service, status, or notes..."

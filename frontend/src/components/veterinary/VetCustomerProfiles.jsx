@@ -1,7 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
-  faSearch,
   faUser,
   faEnvelope,
   faPhone,
@@ -433,7 +432,6 @@ const VetCustomerProfiles = () => {
 
       <div className="premium-card vet-profiles-search">
         <div className="vet-search-box">
-          <FontAwesomeIcon icon={faSearch} />
           <input
             type="text"
             placeholder="Search customer, email, phone, address, pet name, species, or breed..."
