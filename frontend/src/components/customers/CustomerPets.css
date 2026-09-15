@@ -848,17 +848,7 @@
   min-width: 0;
 }
 
-.pets-search-box > svg {
-  position: absolute;
-  left: 16px;
-  top: 50%;
-  color: var(--color-primary);
-  transform: translateY(-50%);
-  pointer-events: none;
-}
-
 .pets-search-box input {
-  padding-left: 3rem;
   padding-right: 2.8rem;
   border-radius: var(--radius-pill);
 }

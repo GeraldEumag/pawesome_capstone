@@ -33,7 +33,7 @@ const CustomerRoutes = () => (
 
       {/* Core customer routes */}
       <Route path="services" element={<CustomerServices />} />
-      <Route path="bookings" element={<Navigate to="/customer/services" replace />} />
+      <Route path="bookings" element={<CustomerServices initialTab="my" />} />
       <Route path="booking" element={<Navigate to="/customer/services" replace />} />
       <Route path="requests" element={<Navigate to="/customer/services" replace />} />
       <Route path="pets" element={<CustomerPets />} />

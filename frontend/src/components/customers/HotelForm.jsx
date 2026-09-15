@@ -385,12 +385,13 @@ const HotelForm = () => {
 
   return (
     <div className="customer-hotel-reservation">
-      <div className="hotel-header">
-        <div className="header-left">
-          <h1><FontAwesomeIcon icon={faHotel} /> Pet Hotel</h1>
+      <header className="hotel-header">
+        <div>
+          <span className="hotel-kicker">Customer Portal</span>
+          <h3><FontAwesomeIcon icon={faHotel} /> Pet Hotel</h3>
           <p>Book and track a live pet boarding stay</p>
         </div>
-      </div>
+      </header>
 
       {error && (
         <div className="hotel-error">
@@ -670,14 +671,14 @@ const HotelForm = () => {
                 const logs = careLogs[booking.id] || [];
 
                 return (
-                  <div key={booking.id} className="booking-card" style={{ borderLeftColor: statusStyle.color }}>
+                  <div key={booking.id} className="booking-card">
                     <div className="booking-card-top">
                       <div className="booking-card-avatar">
                         <FontAwesomeIcon icon={faPaw} />
                       </div>
                       <div className="booking-card-meta">
-                        <h4>Boarding #{booking.id}</h4>
-                        <p>{booking.pet?.name || booking.pet_name}</p>
+                        <h4>{booking.pet?.name || booking.pet_name || "Pet"}</h4>
+                        <p>Boarding #{booking.id}</p>
                       </div>
                       <span className="status-badge" style={{ backgroundColor: statusStyle.bg, color: statusStyle.color }}>
                         {booking.status}
@@ -696,7 +697,7 @@ const HotelForm = () => {
                         </div>
                         <div>
                           <span className="bcg-label"><FontAwesomeIcon icon={faReceipt} /> Payment</span>
-                          <span className="bcg-value" style={{ textTransform: "capitalize" }}>{booking.payment_status || "unpaid"}</span>
+                          <span className={`bcg-payment ${String(booking.payment_status || "unpaid").toLowerCase()}`}>{booking.payment_status || "unpaid"}</span>
                         </div>
                         <div>
                           <span className="bcg-label">Total</span>
