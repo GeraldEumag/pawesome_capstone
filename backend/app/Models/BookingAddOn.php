@@ -23,6 +23,10 @@ class BookingAddOn extends Model
         'unit_price',
         'number_of_days',
         'subtotal',
+        'inventory_deducted_at',
+        'inventory_deducted_by',
+        'inventory_deducted_quantity',
+        'deduction_status',
     ];
 
     protected $casts = [

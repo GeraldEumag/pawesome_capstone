@@ -1196,15 +1196,24 @@ class BoardingController extends Controller
         }
 
         $oldStatus = $boarding->status;
-        $boarding->update([
-            'status' => 'rejected',
-            'rejected_by' => $request->user()?->id,
-            'rejected_at' => now(),
-            'rejection_reason' => $request->input('rejection_reason'),
-        ]);
-        if ($boarding->hotelRoom && in_array($boarding->hotelRoom->status, ['reserved'], true)) {
-            $boarding->hotelRoom->update(['status' => 'available']);
-        }
+
+        // Restore inventory for add-ons that were already deducted (approved
+        // bookings) before rejecting. No-op when nothing was deducted.
+        $addOnInventoryService = new BoardingAddOnInventoryService();
+
+        DB::transaction(function () use ($boarding, $request, $addOnInventoryService) {
+            $boarding->update([
+                'status' => 'rejected',
+                'rejected_by' => $request->user()?->id,
+                'rejected_at' => now(),
+                'rejection_reason' => $request->input('rejection_reason'),
+            ]);
+            if ($boarding->hotelRoom && in_array($boarding->hotelRoom->status, ['reserved'], true)) {
+                $boarding->hotelRoom->update(['status' => 'available']);
+            }
+
+            $addOnInventoryService->restoreAddOnInventory($boarding, 'receptionist');
+        });
 
         // Send notification
         NotificationService::notifyBoardingStatusChange($boarding, $oldStatus);
