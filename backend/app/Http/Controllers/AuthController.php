@@ -6,6 +6,7 @@ use App\Models\User;
 use App\Models\Customer;
 use App\Models\LoginLog;
 use App\Mail\EmailVerificationMail;
+use App\Mail\PasswordResetMail;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
@@ -189,11 +190,21 @@ class AuthController extends Controller
         }
 
         $allowedFields = [
-            'name', 'first_name', 'middle_name', 'last_name', 'username', 'email', 
+            'name', 'first_name', 'middle_name', 'last_name', 'username', 'email',
             'phone', 'address', 'city', 'state', 'zip_code', 'country', 'bio'
         ];
-        
+
+        $emailChanged = $request->filled('email')
+            && $request->email !== $user->email;
+
         $user->update($request->only($allowedFields));
+
+        // A changed email must be re-verified before the customer can book again.
+        if ($emailChanged && $user->role === 'customer') {
+            $user->email_verified_at = null;
+            $user->save();
+            $this->sendVerificationEmail($user);
+        }
 
         return response()->json([
             'message' => 'Profile updated successfully',
@@ -293,22 +304,9 @@ class AuthController extends Controller
                 'created_at' => now(),
             ]);
 
-            // Send the reset token via email — never expose it in the API response.
+            // Send the reset link via email — never expose it in the API response.
             try {
-                Mail::raw(
-                    "Hello,\n\n"
-                    . "You requested a password reset for your Pawesome account.\n\n"
-                    . "Your password reset token is:\n\n"
-                    . $token . "\n\n"
-                    . "Use this token on the password reset page to set a new password.\n"
-                    . "This token will expire in " . config('auth.passwords.users.expire', 60) . " minutes.\n\n"
-                    . "If you did not request a password reset, you can safely ignore this email.\n\n"
-                    . "— Pawesome Retreat Inc.",
-                    function ($message) use ($email) {
-                        $message->to($email)
-                            ->subject('Pawesome — Password Reset Token');
-                    }
-                );
+                Mail::to($email)->queue(new PasswordResetMail($token, $email));
             } catch (\Throwable $e) {
                 Log::error('Failed to send password reset email: ' . $e->getMessage());
             }
@@ -322,7 +320,7 @@ class AuthController extends Controller
     public function resetPassword(Request $request)
     {
         $validator = Validator::make($request->all(), [
-            'email' => 'required|string|email|exists:users,email',
+            'email' => 'required|string|email',
             'token' => 'required|string',
             'new_password' => 'required|string|min:8|confirmed',
         ]);
@@ -334,6 +332,7 @@ class AuthController extends Controller
         $table = config('auth.passwords.users.table');
         $resetRecord = DB::table($table)->where('email', $request->email)->first();
 
+        // Generic message so the response cannot be used to enumerate accounts.
         if (!$resetRecord || !Hash::check($request->token, $resetRecord->token)) {
             return response()->json(['message' => 'Invalid or expired reset token'], 422);
         }
@@ -345,6 +344,11 @@ class AuthController extends Controller
         }
 
         $user = User::where('email', $request->email)->first();
+
+        if (!$user) {
+            return response()->json(['message' => 'Invalid or expired reset token'], 422);
+        }
+
         $user->update([
             'password' => Hash::make($request->new_password),
             'api_token' => null,
@@ -404,26 +408,23 @@ class AuthController extends Controller
             return response()->json(['errors' => $validator->errors()], 422);
         }
 
+        $user = User::where('email', $request->email)->first();
+
+        // Idempotent: a previously verified link (repeat click, prefetch, or a
+        // duplicate request after the token row was consumed) is a success.
+        if ($user && $user->email_verified_at) {
+            return response()->json(['message' => 'Email already verified.']);
+        }
+
         $record = DB::table('email_verification_tokens')->where('email', $request->email)->first();
 
-        if (!$record || !Hash::check($request->token, $record->token)) {
+        if (!$user || !$record || !Hash::check($request->token, $record->token)) {
             return response()->json(['message' => 'Invalid or expired verification token.'], 422);
         }
 
         if (Carbon::parse($record->created_at)->addMinutes(60)->isPast()) {
             DB::table('email_verification_tokens')->where('email', $request->email)->delete();
             return response()->json(['message' => 'Verification token has expired.'], 422);
-        }
-
-        $user = User::where('email', $request->email)->first();
-
-        if (!$user) {
-            return response()->json(['message' => 'User not found.'], 404);
-        }
-
-        if ($user->email_verified_at) {
-            DB::table('email_verification_tokens')->where('email', $request->email)->delete();
-            return response()->json(['message' => 'Email already verified.']);
         }
 
         $user->email_verified_at = now();
@@ -437,22 +438,23 @@ class AuthController extends Controller
     public function resendVerificationEmail(Request $request)
     {
         $validator = Validator::make($request->all(), [
-            'email' => 'required|string|email|exists:users,email',
+            'email' => 'required|string|email',
         ]);
 
         if ($validator->fails()) {
             return response()->json(['errors' => $validator->errors()], 422);
         }
 
+        // Generic response so this endpoint cannot be used to enumerate accounts.
         $user = User::where('email', $request->email)->first();
 
-        if ($user->email_verified_at) {
-            return response()->json(['message' => 'Email already verified.']);
+        if ($user && !$user->email_verified_at) {
+            $this->sendVerificationEmail($user);
         }
 
-        $this->sendVerificationEmail($user);
-
-        return response()->json(['message' => 'A new verification link has been sent to your email.']);
+        return response()->json([
+            'message' => 'If the email is registered and not yet verified, a new verification link has been sent.',
+        ]);
     }
 
     private function sendVerificationEmail(User $user): void

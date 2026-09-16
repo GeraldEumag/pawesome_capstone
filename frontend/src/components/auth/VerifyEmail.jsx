@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { apiRequest } from "../../api/client";
 import { showSuccess, showError } from "../../utils/alert.jsx";
@@ -18,9 +18,11 @@ const VerifyEmail = () => {
   );
   const [emailInput, setEmailInput] = useState(email || "");
   const [resending, setResending] = useState(false);
+  const didVerify = useRef(false);
 
   useEffect(() => {
-    if (token && email) {
+    if (token && email && !didVerify.current) {
+      didVerify.current = true;
       apiRequest("/auth/email/verify", {
         method: "POST",
         body: JSON.stringify({ email, token }),
