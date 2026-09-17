@@ -20,7 +20,9 @@ test.describe('Cashier Dashboard end-to-end', () => {
   });
 
   test('dashboard title is visible', async ({ page }) => {
-    await page.goto(frontendUrl + dashboardPath);
+    // /cashier intentionally lands on the full-screen POS; the card dashboard
+    // lives at /cashier/dashboard.
+    await page.goto(frontendUrl + dashboardPath + '/dashboard');
     await expect(page.locator('h1, h2').filter({ hasText: /cashier|sales|dashboard/i }).first()).toBeVisible();
   });
 
@@ -29,7 +31,7 @@ test.describe('Cashier Dashboard end-to-end', () => {
     if (!process.env.E2E_LIVE) {
       await page.route('**/api/cashier/dashboard', route => route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(mock) }));
     }
-    await page.goto(frontendUrl + dashboardPath);
+    await page.goto(frontendUrl + dashboardPath + '/dashboard');
     await expect(page.locator('.cashier-kpi-card, [class*="card"], [class*="stat"]').first()).toBeVisible();
     await expect(page.locator('text=/sales|transaction/i').first()).toBeVisible();
   });
@@ -91,6 +93,7 @@ test.describe('Cashier Dashboard end-to-end', () => {
     const forbiddenPaths = ['/admin', '/manager', '/veterinary'];
     for (const path of forbiddenPaths) {
       await page.goto(frontendUrl + path);
+      await page.waitForURL(new RegExp(dashboardPath), { timeout: 8000 }).catch(() => {});
       const currentUrl = page.url();
       const blocked = currentUrl.includes('/unauthorized') || currentUrl.includes('/forbidden') || currentUrl.includes(dashboardPath) || await page.locator('text=/access denied|forbidden|unauthorized/i').first().isVisible().catch(() => false);
       expect(blocked).toBeTruthy();

@@ -36,7 +36,10 @@ test.describe('Customer Dashboard end-to-end', () => {
 
   test('refresh button reloads data', async ({ page }) => {
     await page.goto(frontendUrl + dashboardPath);
-    await page.locator('button:has-text("refresh"), button:has([data-icon="rotate"]), [title*="refresh" i]').first().click().catch(() => {});
+    // No dedicated refresh button exists on the dashboard; data loads on mount.
+    // Keep a short click budget so a missing button doesn't consume the test timeout.
+    await page.locator('button:has-text("refresh"), button:has([data-icon="rotate"]), [title*="refresh" i]')
+      .first().click({ timeout: 3000 }).catch(() => {});
     await expect(page.locator('.overview-card, [class*="card"]').first()).toBeVisible();
   });
 
@@ -71,8 +74,9 @@ test.describe('Customer Dashboard end-to-end', () => {
     await page.goto(frontendUrl + dashboardPath);
     await page.waitForLoadState('networkidle');
 
-    // Look for book/request button
-    const bookBtn = page.locator('button:has-text("book"), button:has-text("Book"), button:has-text("request"), button:has-text("Request"), button:has-text("new"), button:has-text("New"), [data-testid*="book"]').first();
+    // Look for book/request control — dashboard uses NavLink cards ("Book Services"),
+    // not buttons, so match both.
+    const bookBtn = page.locator('button:has-text("book"), button:has-text("Book"), a:has-text("book"), a:has-text("Book"), button:has-text("request"), button:has-text("Request"), a:has-text("request"), a:has-text("Request"), button:has-text("new"), button:has-text("New"), [data-testid*="book"]').first();
 
     if (await bookBtn.isVisible().catch(() => false)) {
       await bookBtn.click();
@@ -99,6 +103,9 @@ test.describe('Customer Dashboard end-to-end', () => {
     const forbiddenPaths = ['/admin', '/cashier', '/veterinary'];
     for (const path of forbiddenPaths) {
       await page.goto(frontendUrl + path);
+      // ProtectedRoute performs a client-side redirect — wait for it to settle
+      // before reading the URL.
+      await page.waitForURL(new RegExp(dashboardPath), { timeout: 8000 }).catch(() => {});
       const currentUrl = page.url();
       const blocked = currentUrl.includes('/unauthorized') || currentUrl.includes('/forbidden') || currentUrl.includes(dashboardPath) || await page.locator('text=/access denied|forbidden|unauthorized/i').first().isVisible().catch(() => false);
       expect(blocked).toBeTruthy();

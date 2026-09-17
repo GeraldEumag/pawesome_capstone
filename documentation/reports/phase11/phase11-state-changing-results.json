@@ -1,9 +1,9 @@
 {
   "setup": {
     "backendUrl": "http://127.0.0.1:8000",
-    "frontendUrl": "http://localhost:3000",
+    "frontendUrl": "http://localhost:3002",
     "browserPreview": "http://127.0.0.1:64422",
-    "testDate": "2026-06-10T21:10:20.377Z",
+    "testDate": "2026-09-16T23:51:48.934Z",
     "tester": "Codex automated Playwright"
   },
   "workflows": [
@@ -16,7 +16,7 @@
       "status": "PASS",
       "notes": "",
       "records": {
-        "serviceRequestId": 32,
+        "serviceRequestId": 5,
         "finalStatus": "approved"
       },
       "screenshots": [
@@ -34,7 +34,7 @@
       "status": "PASS",
       "notes": "Service-request hotel/boarding approval persisted. Dedicated boarding status progression was not available through stable UI selectors in this automated pass.",
       "records": {
-        "serviceRequestId": 33,
+        "serviceRequestId": 6,
         "finalStatus": "approved"
       },
       "screenshots": [
@@ -51,7 +51,7 @@
       "status": "PASS",
       "notes": "Reject without reason was blocked or rejected before the explicit reason submission.",
       "records": {
-        "serviceRequestId": 34,
+        "serviceRequestId": 7,
         "paymentStatus": "rejected"
       },
       "screenshots": [
@@ -69,9 +69,9 @@
       "status": "PASS",
       "notes": "",
       "records": {
-        "serviceRequestId": 35,
+        "serviceRequestId": 8,
         "paymentStatus": "paid",
-        "receiptNumber": "SR-REC-20260610211307-35"
+        "receiptNumber": "SR-REC-20260916235438-8"
       },
       "screenshots": [
         "documentation/screenshots/phase11/cashier-payment-verification.png",
@@ -90,9 +90,9 @@
       "records": {
         "itemId": 274,
         "itemName": "4IN1 VACCINE",
-        "beforeStock": 97,
-        "afterStock": 96,
-        "transactionId": 8
+        "beforeStock": 99,
+        "afterStock": 98,
+        "transactionId": 3
       },
       "screenshots": [
         "documentation/screenshots/phase11/inventory-stock-before.png",
@@ -111,8 +111,8 @@
       "status": "PASS",
       "notes": "",
       "records": {
-        "serviceRequestId": 36,
-        "appointmentId": 7,
+        "serviceRequestId": 9,
+        "appointmentId": 2,
         "status": "awaiting_payment"
       },
       "screenshots": [
@@ -122,21 +122,14 @@
     },
     {
       "workflow": "Generic/Brand Inventory Flow",
-      "browserSubmitted": true,
-      "dbStatusUpdated": true,
-      "nextRoleSawResult": true,
+      "browserSubmitted": false,
+      "dbStatusUpdated": false,
+      "nextRoleSawResult": false,
       "consoleNetworkClean": true,
-      "status": "PASS",
-      "notes": "",
-      "records": {
-        "itemId": 843,
-        "itemName": "PHASE11_TEST Medicine 1781126182170",
-        "genericName": "PHASE11_TEST Generic",
-        "brand": "PHASE11_TEST Brand"
-      },
-      "screenshots": [
-        "documentation/screenshots/phase11/inventory-generic-brand.png"
-      ]
+      "status": "FAIL",
+      "notes": "POST /inventory/items failed: 422 {\"errors\":[\"The barcode field is required for sellable items.\"]}",
+      "records": {},
+      "screenshots": []
     },
     {
       "workflow": "Notifications Flow",
@@ -199,7 +192,17 @@
       "screenshots": []
     }
   ],
-  "issues": [],
+  "issues": [
+    {
+      "severity": "Medium",
+      "module": "Inventory",
+      "page": "/inventory/products",
+      "error": "POST /inventory/items failed: 422 {\"errors\":[\"The barcode field is required for sellable items.\"]}",
+      "routeFile": "frontend/e2e/phase11-state-changing-workflows.spec.js",
+      "fixApplied": "No code fix applied by Phase 11 audit",
+      "status": "Open"
+    }
+  ],
   "screenshots": [
     "documentation/screenshots/phase11/customer-request-submitted.png",
     "documentation/screenshots/phase11/receptionist-request-approval-scheduling.png",
@@ -219,274 +222,45 @@
     "documentation/screenshots/phase11/manager-report-after-pos.png",
     "documentation/screenshots/phase11/vet-consultation-form-saved.png",
     "documentation/screenshots/phase11/customer-vet-status.png",
-    "documentation/screenshots/phase11/inventory-generic-brand.png",
     "documentation/screenshots/phase11/notifications-customer.png",
     "documentation/screenshots/phase11/notifications-receptionist.png",
     "documentation/screenshots/phase11/notifications-cashier.png",
     "documentation/screenshots/phase11/notifications-vet.png"
   ],
-  "network": [],
-  "console": [
+  "network": [
     {
-      "type": "error",
-      "text": "Failed to load resource: net::ERR_NETWORK_ACCESS_DENIED",
-      "url": "http://localhost:3000/customer/services"
-    },
-    {
-      "type": "error",
-      "text": "Failed to load resource: net::ERR_NETWORK_ACCESS_DENIED",
-      "url": "http://localhost:3000/receptionist/appointments-boarding"
-    },
-    {
-      "type": "error",
-      "text": "Warning: Encountered two children with the same key, `%s`. Keys should be unique so that components maintain their identity across updates. Non-unique keys may cause children to be duplicated and/or omitted — the behavior is unsupported and could change in a future version.%s hotel-4 \n    at tbody\n    at table\n    at div\n    at section\n    at div\n    at ReceptionistAppointmentsBoarding (http://localhost:3000/src/components/receptionist/ReceptionistAppointmentsBoarding.jsx:173:130)\n    at RenderedRoute (http://localhost:3000/node_modules/.vite/deps/react-router-dom.js?v=5b932005:6429:26)\n    at Outlet (http://localhost:3000/node_modules/.vite/deps/react-router-dom.js?v=5b932005:7227:26)\n    at section\n    at main\n    at div\n    at DashboardLayout (http://localhost:3000/src/components/shared/DashboardLayout.jsx:25:3)\n    at ReceptionistLayout (http://localhost:3000/src/components/receptionist/ReceptionistLayout.jsx:25:20)\n    at ProtectedRoute (http://localhost:3000/src/components/ProtectedRoute.jsx:43:27)\n    at RenderedRoute (http://localhost:3000/node_modules/.vite/deps/react-router-dom.js?v=5b932005:6429:26)\n    at Routes (http://localhost:3000/node_modules/.vite/deps/react-router-dom.js?v=5b932005:7306:3)\n    at Suspense\n    at ReceptionistRoutes\n    at RenderedRoute (http://localhost:3000/node_modules/.vite/deps/react-router-dom.js?v=5b932005:6429:26)\n    at Routes (http://localhost:3000/node_modules/.vite/deps/react-router-dom.js?v=5b932005:7306:3)\n    at Router (http://localhost:3000/node_modules/.vite/deps/react-router-dom.js?v=5b932005:7236:13)\n    at BrowserRouter (http://localhost:3000/node_modules/.vite/deps/react-router-dom.js?v=5b932005:10540:3)\n    at AppRoutes\n    at ErrorBoundary (http://localhost:3000/src/components/shared/ErrorBoundary.jsx?t=1781120341324:7:5)\n    at App (http://localhost:3000/src/App.jsx?t=1781124390664:26:3)\n    at AuthProvider (http://localhost:3000/src/context/AuthContext.jsx:39:32)",
-      "url": "http://localhost:3000/receptionist/appointments-boarding"
-    },
-    {
-      "type": "error",
-      "text": "Warning: Encountered two children with the same key, `%s`. Keys should be unique so that components maintain their identity across updates. Non-unique keys may cause children to be duplicated and/or omitted — the behavior is unsupported and could change in a future version.%s hotel-4 \n    at tbody\n    at table\n    at div\n    at section\n    at div\n    at ReceptionistAppointmentsBoarding (http://localhost:3000/src/components/receptionist/ReceptionistAppointmentsBoarding.jsx:173:130)\n    at RenderedRoute (http://localhost:3000/node_modules/.vite/deps/react-router-dom.js?v=5b932005:6429:26)\n    at Outlet (http://localhost:3000/node_modules/.vite/deps/react-router-dom.js?v=5b932005:7227:26)\n    at section\n    at main\n    at div\n    at DashboardLayout (http://localhost:3000/src/components/shared/DashboardLayout.jsx:25:3)\n    at ReceptionistLayout (http://localhost:3000/src/components/receptionist/ReceptionistLayout.jsx:25:20)\n    at ProtectedRoute (http://localhost:3000/src/components/ProtectedRoute.jsx:43:27)\n    at RenderedRoute (http://localhost:3000/node_modules/.vite/deps/react-router-dom.js?v=5b932005:6429:26)\n    at Routes (http://localhost:3000/node_modules/.vite/deps/react-router-dom.js?v=5b932005:7306:3)\n    at Suspense\n    at ReceptionistRoutes\n    at RenderedRoute (http://localhost:3000/node_modules/.vite/deps/react-router-dom.js?v=5b932005:6429:26)\n    at Routes (http://localhost:3000/node_modules/.vite/deps/react-router-dom.js?v=5b932005:7306:3)\n    at Router (http://localhost:3000/node_modules/.vite/deps/react-router-dom.js?v=5b932005:7236:13)\n    at BrowserRouter (http://localhost:3000/node_modules/.vite/deps/react-router-dom.js?v=5b932005:10540:3)\n    at AppRoutes\n    at ErrorBoundary (http://localhost:3000/src/components/shared/ErrorBoundary.jsx?t=1781120341324:7:5)\n    at App (http://localhost:3000/src/App.jsx?t=1781124390664:26:3)\n    at AuthProvider (http://localhost:3000/src/context/AuthContext.jsx:39:32)",
-      "url": "http://localhost:3000/receptionist/appointments-boarding"
-    },
-    {
-      "type": "error",
-      "text": "Warning: Encountered two children with the same key, `%s`. Keys should be unique so that components maintain their identity across updates. Non-unique keys may cause children to be duplicated and/or omitted — the behavior is unsupported and could change in a future version.%s hotel-4 \n    at tbody\n    at table\n    at div\n    at section\n    at div\n    at ReceptionistAppointmentsBoarding (http://localhost:3000/src/components/receptionist/ReceptionistAppointmentsBoarding.jsx:173:130)\n    at RenderedRoute (http://localhost:3000/node_modules/.vite/deps/react-router-dom.js?v=5b932005:6429:26)\n    at Outlet (http://localhost:3000/node_modules/.vite/deps/react-router-dom.js?v=5b932005:7227:26)\n    at section\n    at main\n    at div\n    at DashboardLayout (http://localhost:3000/src/components/shared/DashboardLayout.jsx:25:3)\n    at ReceptionistLayout (http://localhost:3000/src/components/receptionist/ReceptionistLayout.jsx:25:20)\n    at ProtectedRoute (http://localhost:3000/src/components/ProtectedRoute.jsx:43:27)\n    at RenderedRoute (http://localhost:3000/node_modules/.vite/deps/react-router-dom.js?v=5b932005:6429:26)\n    at Routes (http://localhost:3000/node_modules/.vite/deps/react-router-dom.js?v=5b932005:7306:3)\n    at Suspense\n    at ReceptionistRoutes\n    at RenderedRoute (http://localhost:3000/node_modules/.vite/deps/react-router-dom.js?v=5b932005:6429:26)\n    at Routes (http://localhost:3000/node_modules/.vite/deps/react-router-dom.js?v=5b932005:7306:3)\n    at Router (http://localhost:3000/node_modules/.vite/deps/react-router-dom.js?v=5b932005:7236:13)\n    at BrowserRouter (http://localhost:3000/node_modules/.vite/deps/react-router-dom.js?v=5b932005:10540:3)\n    at AppRoutes\n    at ErrorBoundary (http://localhost:3000/src/components/shared/ErrorBoundary.jsx?t=1781120341324:7:5)\n    at App (http://localhost:3000/src/App.jsx?t=1781124390664:26:3)\n    at AuthProvider (http://localhost:3000/src/context/AuthContext.jsx:39:32)",
-      "url": "http://localhost:3000/receptionist/appointments-boarding"
-    },
-    {
-      "type": "error",
-      "text": "Failed to load resource: net::ERR_NETWORK_ACCESS_DENIED",
-      "url": "http://localhost:3000/customer/services"
-    },
-    {
-      "type": "error",
-      "text": "Failed to load resource: net::ERR_NETWORK_ACCESS_DENIED",
-      "url": "http://localhost:3000/receptionist/appointments-boarding"
-    },
-    {
-      "type": "error",
-      "text": "Warning: Encountered two children with the same key, `%s`. Keys should be unique so that components maintain their identity across updates. Non-unique keys may cause children to be duplicated and/or omitted — the behavior is unsupported and could change in a future version.%s hotel-4 \n    at tbody\n    at table\n    at div\n    at section\n    at div\n    at ReceptionistAppointmentsBoarding (http://localhost:3000/src/components/receptionist/ReceptionistAppointmentsBoarding.jsx:173:130)\n    at RenderedRoute (http://localhost:3000/node_modules/.vite/deps/react-router-dom.js?v=5b932005:6429:26)\n    at Outlet (http://localhost:3000/node_modules/.vite/deps/react-router-dom.js?v=5b932005:7227:26)\n    at section\n    at main\n    at div\n    at DashboardLayout (http://localhost:3000/src/components/shared/DashboardLayout.jsx:25:3)\n    at ReceptionistLayout (http://localhost:3000/src/components/receptionist/ReceptionistLayout.jsx:25:20)\n    at ProtectedRoute (http://localhost:3000/src/components/ProtectedRoute.jsx:43:27)\n    at RenderedRoute (http://localhost:3000/node_modules/.vite/deps/react-router-dom.js?v=5b932005:6429:26)\n    at Routes (http://localhost:3000/node_modules/.vite/deps/react-router-dom.js?v=5b932005:7306:3)\n    at Suspense\n    at ReceptionistRoutes\n    at RenderedRoute (http://localhost:3000/node_modules/.vite/deps/react-router-dom.js?v=5b932005:6429:26)\n    at Routes (http://localhost:3000/node_modules/.vite/deps/react-router-dom.js?v=5b932005:7306:3)\n    at Router (http://localhost:3000/node_modules/.vite/deps/react-router-dom.js?v=5b932005:7236:13)\n    at BrowserRouter (http://localhost:3000/node_modules/.vite/deps/react-router-dom.js?v=5b932005:10540:3)\n    at AppRoutes\n    at ErrorBoundary (http://localhost:3000/src/components/shared/ErrorBoundary.jsx?t=1781120341324:7:5)\n    at App (http://localhost:3000/src/App.jsx?t=1781124390664:26:3)\n    at AuthProvider (http://localhost:3000/src/context/AuthContext.jsx:39:32)",
-      "url": "http://localhost:3000/receptionist/appointments-boarding"
-    },
-    {
-      "type": "error",
-      "text": "Warning: Encountered two children with the same key, `%s`. Keys should be unique so that components maintain their identity across updates. Non-unique keys may cause children to be duplicated and/or omitted — the behavior is unsupported and could change in a future version.%s hotel-4 \n    at tbody\n    at table\n    at div\n    at section\n    at div\n    at ReceptionistAppointmentsBoarding (http://localhost:3000/src/components/receptionist/ReceptionistAppointmentsBoarding.jsx:173:130)\n    at RenderedRoute (http://localhost:3000/node_modules/.vite/deps/react-router-dom.js?v=5b932005:6429:26)\n    at Outlet (http://localhost:3000/node_modules/.vite/deps/react-router-dom.js?v=5b932005:7227:26)\n    at section\n    at main\n    at div\n    at DashboardLayout (http://localhost:3000/src/components/shared/DashboardLayout.jsx:25:3)\n    at ReceptionistLayout (http://localhost:3000/src/components/receptionist/ReceptionistLayout.jsx:25:20)\n    at ProtectedRoute (http://localhost:3000/src/components/ProtectedRoute.jsx:43:27)\n    at RenderedRoute (http://localhost:3000/node_modules/.vite/deps/react-router-dom.js?v=5b932005:6429:26)\n    at Routes (http://localhost:3000/node_modules/.vite/deps/react-router-dom.js?v=5b932005:7306:3)\n    at Suspense\n    at ReceptionistRoutes\n    at RenderedRoute (http://localhost:3000/node_modules/.vite/deps/react-router-dom.js?v=5b932005:6429:26)\n    at Routes (http://localhost:3000/node_modules/.vite/deps/react-router-dom.js?v=5b932005:7306:3)\n    at Router (http://localhost:3000/node_modules/.vite/deps/react-router-dom.js?v=5b932005:7236:13)\n    at BrowserRouter (http://localhost:3000/node_modules/.vite/deps/react-router-dom.js?v=5b932005:10540:3)\n    at AppRoutes\n    at ErrorBoundary (http://localhost:3000/src/components/shared/ErrorBoundary.jsx?t=1781120341324:7:5)\n    at App (http://localhost:3000/src/App.jsx?t=1781124390664:26:3)\n    at AuthProvider (http://localhost:3000/src/context/AuthContext.jsx:39:32)",
-      "url": "http://localhost:3000/receptionist/appointments-boarding"
-    },
-    {
-      "type": "error",
-      "text": "Failed to load resource: net::ERR_NETWORK_ACCESS_DENIED",
-      "url": "http://localhost:3000/customer/services"
-    },
-    {
-      "type": "error",
-      "text": "Failed to load resource: net::ERR_NETWORK_ACCESS_DENIED",
-      "url": "http://localhost:3000/customer/payments"
-    },
-    {
-      "type": "error",
-      "text": "Failed to load resource: net::ERR_NETWORK_ACCESS_DENIED",
-      "url": "http://localhost:3000/cashier/payment-verification"
-    },
-    {
-      "type": "error",
-      "text": "Warning: Encountered two children with the same key, `%s`. Keys should be unique so that components maintain their identity across updates. Non-unique keys may cause children to be duplicated and/or omitted — the behavior is unsupported and could change in a future version.%s 5 \n    at tbody\n    at table\n    at div\n    at div\n    at div\n    at section\n    at main\n    at div\n    at CashierPaymentVerification (http://localhost:3000/src/components/cashier/CashierPaymentVerification.jsx:80:20)\n    at RenderedRoute (http://localhost:3000/node_modules/.vite/deps/react-router-dom.js?v=5b932005:6429:26)\n    at Outlet (http://localhost:3000/node_modules/.vite/deps/react-router-dom.js?v=5b932005:7227:26)\n    at section\n    at section\n    at section\n    at main\n    at div\n    at DashboardLayout (http://localhost:3000/src/components/shared/DashboardLayout.jsx:25:3)\n    at CashierDashboard (http://localhost:3000/src/components/cashier/CashierDashboard.jsx:82:32)\n    at ProtectedRoute (http://localhost:3000/src/components/ProtectedRoute.jsx:43:27)\n    at RenderedRoute (http://localhost:3000/node_modules/.vite/deps/react-router-dom.js?v=5b932005:6429:26)\n    at Routes (http://localhost:3000/node_modules/.vite/deps/react-router-dom.js?v=5b932005:7306:3)\n    at CashierRoutes\n    at RenderedRoute (http://localhost:3000/node_modules/.vite/deps/react-router-dom.js?v=5b932005:6429:26)\n    at Routes (http://localhost:3000/node_modules/.vite/deps/react-router-dom.js?v=5b932005:7306:3)\n    at Router (http://localhost:3000/node_modules/.vite/deps/react-router-dom.js?v=5b932005:7236:13)\n    at BrowserRouter (http://localhost:3000/node_modules/.vite/deps/react-router-dom.js?v=5b932005:10540:3)\n    at AppRoutes\n    at ErrorBoundary (http://localhost:3000/src/components/shared/ErrorBoundary.jsx?t=1781120341324:7:5)\n    at App (http://localhost:3000/src/App.jsx?t=1781124390664:26:3)\n    at AuthProvider (http://localhost:3000/src/context/AuthContext.jsx:39:32)",
-      "url": "http://localhost:3000/cashier/payment-verification"
-    },
-    {
-      "type": "error",
-      "text": "Warning: Encountered two children with the same key, `%s`. Keys should be unique so that components maintain their identity across updates. Non-unique keys may cause children to be duplicated and/or omitted — the behavior is unsupported and could change in a future version.%s 5 \n    at div\n    at div\n    at div\n    at section\n    at main\n    at div\n    at CashierPaymentVerification (http://localhost:3000/src/components/cashier/CashierPaymentVerification.jsx:80:20)\n    at RenderedRoute (http://localhost:3000/node_modules/.vite/deps/react-router-dom.js?v=5b932005:6429:26)\n    at Outlet (http://localhost:3000/node_modules/.vite/deps/react-router-dom.js?v=5b932005:7227:26)\n    at section\n    at section\n    at section\n    at main\n    at div\n    at DashboardLayout (http://localhost:3000/src/components/shared/DashboardLayout.jsx:25:3)\n    at CashierDashboard (http://localhost:3000/src/components/cashier/CashierDashboard.jsx:82:32)\n    at ProtectedRoute (http://localhost:3000/src/components/ProtectedRoute.jsx:43:27)\n    at RenderedRoute (http://localhost:3000/node_modules/.vite/deps/react-router-dom.js?v=5b932005:6429:26)\n    at Routes (http://localhost:3000/node_modules/.vite/deps/react-router-dom.js?v=5b932005:7306:3)\n    at CashierRoutes\n    at RenderedRoute (http://localhost:3000/node_modules/.vite/deps/react-router-dom.js?v=5b932005:6429:26)\n    at Routes (http://localhost:3000/node_modules/.vite/deps/react-router-dom.js?v=5b932005:7306:3)\n    at Router (http://localhost:3000/node_modules/.vite/deps/react-router-dom.js?v=5b932005:7236:13)\n    at BrowserRouter (http://localhost:3000/node_modules/.vite/deps/react-router-dom.js?v=5b932005:10540:3)\n    at AppRoutes\n    at ErrorBoundary (http://localhost:3000/src/components/shared/ErrorBoundary.jsx?t=1781120341324:7:5)\n    at App (http://localhost:3000/src/App.jsx?t=1781124390664:26:3)\n    at AuthProvider (http://localhost:3000/src/context/AuthContext.jsx:39:32)",
-      "url": "http://localhost:3000/cashier/payment-verification"
-    },
-    {
-      "type": "error",
-      "text": "Warning: Encountered two children with the same key, `%s`. Keys should be unique so that components maintain their identity across updates. Non-unique keys may cause children to be duplicated and/or omitted — the behavior is unsupported and could change in a future version.%s 5 \n    at tbody\n    at table\n    at div\n    at div\n    at div\n    at section\n    at main\n    at div\n    at CashierPaymentVerification (http://localhost:3000/src/components/cashier/CashierPaymentVerification.jsx:80:20)\n    at RenderedRoute (http://localhost:3000/node_modules/.vite/deps/react-router-dom.js?v=5b932005:6429:26)\n    at Outlet (http://localhost:3000/node_modules/.vite/deps/react-router-dom.js?v=5b932005:7227:26)\n    at section\n    at section\n    at section\n    at main\n    at div\n    at DashboardLayout (http://localhost:3000/src/components/shared/DashboardLayout.jsx:25:3)\n    at CashierDashboard (http://localhost:3000/src/components/cashier/CashierDashboard.jsx:82:32)\n    at ProtectedRoute (http://localhost:3000/src/components/ProtectedRoute.jsx:43:27)\n    at RenderedRoute (http://localhost:3000/node_modules/.vite/deps/react-router-dom.js?v=5b932005:6429:26)\n    at Routes (http://localhost:3000/node_modules/.vite/deps/react-router-dom.js?v=5b932005:7306:3)\n    at CashierRoutes\n    at RenderedRoute (http://localhost:3000/node_modules/.vite/deps/react-router-dom.js?v=5b932005:6429:26)\n    at Routes (http://localhost:3000/node_modules/.vite/deps/react-router-dom.js?v=5b932005:7306:3)\n    at Router (http://localhost:3000/node_modules/.vite/deps/react-router-dom.js?v=5b932005:7236:13)\n    at BrowserRouter (http://localhost:3000/node_modules/.vite/deps/react-router-dom.js?v=5b932005:10540:3)\n    at AppRoutes\n    at ErrorBoundary (http://localhost:3000/src/components/shared/ErrorBoundary.jsx?t=1781120341324:7:5)\n    at App (http://localhost:3000/src/App.jsx?t=1781124390664:26:3)\n    at AuthProvider (http://localhost:3000/src/context/AuthContext.jsx:39:32)",
-      "url": "http://localhost:3000/cashier/payment-verification"
-    },
-    {
-      "type": "error",
-      "text": "Warning: Encountered two children with the same key, `%s`. Keys should be unique so that components maintain their identity across updates. Non-unique keys may cause children to be duplicated and/or omitted — the behavior is unsupported and could change in a future version.%s 5 \n    at div\n    at div\n    at div\n    at section\n    at main\n    at div\n    at CashierPaymentVerification (http://localhost:3000/src/components/cashier/CashierPaymentVerification.jsx:80:20)\n    at RenderedRoute (http://localhost:3000/node_modules/.vite/deps/react-router-dom.js?v=5b932005:6429:26)\n    at Outlet (http://localhost:3000/node_modules/.vite/deps/react-router-dom.js?v=5b932005:7227:26)\n    at section\n    at section\n    at section\n    at main\n    at div\n    at DashboardLayout (http://localhost:3000/src/components/shared/DashboardLayout.jsx:25:3)\n    at CashierDashboard (http://localhost:3000/src/components/cashier/CashierDashboard.jsx:82:32)\n    at ProtectedRoute (http://localhost:3000/src/components/ProtectedRoute.jsx:43:27)\n    at RenderedRoute (http://localhost:3000/node_modules/.vite/deps/react-router-dom.js?v=5b932005:6429:26)\n    at Routes (http://localhost:3000/node_modules/.vite/deps/react-router-dom.js?v=5b932005:7306:3)\n    at CashierRoutes\n    at RenderedRoute (http://localhost:3000/node_modules/.vite/deps/react-router-dom.js?v=5b932005:6429:26)\n    at Routes (http://localhost:3000/node_modules/.vite/deps/react-router-dom.js?v=5b932005:7306:3)\n    at Router (http://localhost:3000/node_modules/.vite/deps/react-router-dom.js?v=5b932005:7236:13)\n    at BrowserRouter (http://localhost:3000/node_modules/.vite/deps/react-router-dom.js?v=5b932005:10540:3)\n    at AppRoutes\n    at ErrorBoundary (http://localhost:3000/src/components/shared/ErrorBoundary.jsx?t=1781120341324:7:5)\n    at App (http://localhost:3000/src/App.jsx?t=1781124390664:26:3)\n    at AuthProvider (http://localhost:3000/src/context/AuthContext.jsx:39:32)",
-      "url": "http://localhost:3000/cashier/payment-verification"
-    },
-    {
-      "type": "error",
-      "text": "Failed to load resource: net::ERR_NETWORK_ACCESS_DENIED",
-      "url": "http://localhost:3000/customer/payments"
-    },
-    {
-      "type": "error",
-      "text": "Failed to load resource: net::ERR_NETWORK_ACCESS_DENIED",
-      "url": "http://localhost:3000/cashier/payment-verification"
-    },
-    {
-      "type": "error",
-      "text": "Warning: Encountered two children with the same key, `%s`. Keys should be unique so that components maintain their identity across updates. Non-unique keys may cause children to be duplicated and/or omitted — the behavior is unsupported and could change in a future version.%s 5 \n    at tbody\n    at table\n    at div\n    at div\n    at div\n    at section\n    at main\n    at div\n    at CashierPaymentVerification (http://localhost:3000/src/components/cashier/CashierPaymentVerification.jsx:80:20)\n    at RenderedRoute (http://localhost:3000/node_modules/.vite/deps/react-router-dom.js?v=5b932005:6429:26)\n    at Outlet (http://localhost:3000/node_modules/.vite/deps/react-router-dom.js?v=5b932005:7227:26)\n    at section\n    at section\n    at section\n    at main\n    at div\n    at DashboardLayout (http://localhost:3000/src/components/shared/DashboardLayout.jsx:25:3)\n    at CashierDashboard (http://localhost:3000/src/components/cashier/CashierDashboard.jsx:82:32)\n    at ProtectedRoute (http://localhost:3000/src/components/ProtectedRoute.jsx:43:27)\n    at RenderedRoute (http://localhost:3000/node_modules/.vite/deps/react-router-dom.js?v=5b932005:6429:26)\n    at Routes (http://localhost:3000/node_modules/.vite/deps/react-router-dom.js?v=5b932005:7306:3)\n    at CashierRoutes\n    at RenderedRoute (http://localhost:3000/node_modules/.vite/deps/react-router-dom.js?v=5b932005:6429:26)\n    at Routes (http://localhost:3000/node_modules/.vite/deps/react-router-dom.js?v=5b932005:7306:3)\n    at Router (http://localhost:3000/node_modules/.vite/deps/react-router-dom.js?v=5b932005:7236:13)\n    at BrowserRouter (http://localhost:3000/node_modules/.vite/deps/react-router-dom.js?v=5b932005:10540:3)\n    at AppRoutes\n    at ErrorBoundary (http://localhost:3000/src/components/shared/ErrorBoundary.jsx?t=1781120341324:7:5)\n    at App (http://localhost:3000/src/App.jsx?t=1781124390664:26:3)\n    at AuthProvider (http://localhost:3000/src/context/AuthContext.jsx:39:32)",
-      "url": "http://localhost:3000/cashier/payment-verification"
-    },
-    {
-      "type": "error",
-      "text": "Warning: Encountered two children with the same key, `%s`. Keys should be unique so that components maintain their identity across updates. Non-unique keys may cause children to be duplicated and/or omitted — the behavior is unsupported and could change in a future version.%s 5 \n    at div\n    at div\n    at div\n    at section\n    at main\n    at div\n    at CashierPaymentVerification (http://localhost:3000/src/components/cashier/CashierPaymentVerification.jsx:80:20)\n    at RenderedRoute (http://localhost:3000/node_modules/.vite/deps/react-router-dom.js?v=5b932005:6429:26)\n    at Outlet (http://localhost:3000/node_modules/.vite/deps/react-router-dom.js?v=5b932005:7227:26)\n    at section\n    at section\n    at section\n    at main\n    at div\n    at DashboardLayout (http://localhost:3000/src/components/shared/DashboardLayout.jsx:25:3)\n    at CashierDashboard (http://localhost:3000/src/components/cashier/CashierDashboard.jsx:82:32)\n    at ProtectedRoute (http://localhost:3000/src/components/ProtectedRoute.jsx:43:27)\n    at RenderedRoute (http://localhost:3000/node_modules/.vite/deps/react-router-dom.js?v=5b932005:6429:26)\n    at Routes (http://localhost:3000/node_modules/.vite/deps/react-router-dom.js?v=5b932005:7306:3)\n    at CashierRoutes\n    at RenderedRoute (http://localhost:3000/node_modules/.vite/deps/react-router-dom.js?v=5b932005:6429:26)\n    at Routes (http://localhost:3000/node_modules/.vite/deps/react-router-dom.js?v=5b932005:7306:3)\n    at Router (http://localhost:3000/node_modules/.vite/deps/react-router-dom.js?v=5b932005:7236:13)\n    at BrowserRouter (http://localhost:3000/node_modules/.vite/deps/react-router-dom.js?v=5b932005:10540:3)\n    at AppRoutes\n    at ErrorBoundary (http://localhost:3000/src/components/shared/ErrorBoundary.jsx?t=1781120341324:7:5)\n    at App (http://localhost:3000/src/App.jsx?t=1781124390664:26:3)\n    at AuthProvider (http://localhost:3000/src/context/AuthContext.jsx:39:32)",
-      "url": "http://localhost:3000/cashier/payment-verification"
-    },
-    {
-      "type": "error",
-      "text": "Warning: Encountered two children with the same key, `%s`. Keys should be unique so that components maintain their identity across updates. Non-unique keys may cause children to be duplicated and/or omitted — the behavior is unsupported and could change in a future version.%s 5 \n    at tbody\n    at table\n    at div\n    at div\n    at div\n    at section\n    at main\n    at div\n    at CashierPaymentVerification (http://localhost:3000/src/components/cashier/CashierPaymentVerification.jsx:80:20)\n    at RenderedRoute (http://localhost:3000/node_modules/.vite/deps/react-router-dom.js?v=5b932005:6429:26)\n    at Outlet (http://localhost:3000/node_modules/.vite/deps/react-router-dom.js?v=5b932005:7227:26)\n    at section\n    at section\n    at section\n    at main\n    at div\n    at DashboardLayout (http://localhost:3000/src/components/shared/DashboardLayout.jsx:25:3)\n    at CashierDashboard (http://localhost:3000/src/components/cashier/CashierDashboard.jsx:82:32)\n    at ProtectedRoute (http://localhost:3000/src/components/ProtectedRoute.jsx:43:27)\n    at RenderedRoute (http://localhost:3000/node_modules/.vite/deps/react-router-dom.js?v=5b932005:6429:26)\n    at Routes (http://localhost:3000/node_modules/.vite/deps/react-router-dom.js?v=5b932005:7306:3)\n    at CashierRoutes\n    at RenderedRoute (http://localhost:3000/node_modules/.vite/deps/react-router-dom.js?v=5b932005:6429:26)\n    at Routes (http://localhost:3000/node_modules/.vite/deps/react-router-dom.js?v=5b932005:7306:3)\n    at Router (http://localhost:3000/node_modules/.vite/deps/react-router-dom.js?v=5b932005:7236:13)\n    at BrowserRouter (http://localhost:3000/node_modules/.vite/deps/react-router-dom.js?v=5b932005:10540:3)\n    at AppRoutes\n    at ErrorBoundary (http://localhost:3000/src/components/shared/ErrorBoundary.jsx?t=1781120341324:7:5)\n    at App (http://localhost:3000/src/App.jsx?t=1781124390664:26:3)\n    at AuthProvider (http://localhost:3000/src/context/AuthContext.jsx:39:32)",
-      "url": "http://localhost:3000/cashier/payment-verification"
-    },
-    {
-      "type": "error",
-      "text": "Warning: Encountered two children with the same key, `%s`. Keys should be unique so that components maintain their identity across updates. Non-unique keys may cause children to be duplicated and/or omitted — the behavior is unsupported and could change in a future version.%s 5 \n    at div\n    at div\n    at div\n    at section\n    at main\n    at div\n    at CashierPaymentVerification (http://localhost:3000/src/components/cashier/CashierPaymentVerification.jsx:80:20)\n    at RenderedRoute (http://localhost:3000/node_modules/.vite/deps/react-router-dom.js?v=5b932005:6429:26)\n    at Outlet (http://localhost:3000/node_modules/.vite/deps/react-router-dom.js?v=5b932005:7227:26)\n    at section\n    at section\n    at section\n    at main\n    at div\n    at DashboardLayout (http://localhost:3000/src/components/shared/DashboardLayout.jsx:25:3)\n    at CashierDashboard (http://localhost:3000/src/components/cashier/CashierDashboard.jsx:82:32)\n    at ProtectedRoute (http://localhost:3000/src/components/ProtectedRoute.jsx:43:27)\n    at RenderedRoute (http://localhost:3000/node_modules/.vite/deps/react-router-dom.js?v=5b932005:6429:26)\n    at Routes (http://localhost:3000/node_modules/.vite/deps/react-router-dom.js?v=5b932005:7306:3)\n    at CashierRoutes\n    at RenderedRoute (http://localhost:3000/node_modules/.vite/deps/react-router-dom.js?v=5b932005:6429:26)\n    at Routes (http://localhost:3000/node_modules/.vite/deps/react-router-dom.js?v=5b932005:7306:3)\n    at Router (http://localhost:3000/node_modules/.vite/deps/react-router-dom.js?v=5b932005:7236:13)\n    at BrowserRouter (http://localhost:3000/node_modules/.vite/deps/react-router-dom.js?v=5b932005:10540:3)\n    at AppRoutes\n    at ErrorBoundary (http://localhost:3000/src/components/shared/ErrorBoundary.jsx?t=1781120341324:7:5)\n    at App (http://localhost:3000/src/App.jsx?t=1781124390664:26:3)\n    at AuthProvider (http://localhost:3000/src/context/AuthContext.jsx:39:32)",
-      "url": "http://localhost:3000/cashier/payment-verification"
-    },
-    {
-      "type": "error",
-      "text": "Failed to load resource: net::ERR_NETWORK_ACCESS_DENIED",
-      "url": "http://localhost:3000/customer/payments"
-    },
-    {
-      "type": "error",
-      "text": "Failed to load resource: net::ERR_NETWORK_ACCESS_DENIED",
-      "url": "http://localhost:3000/manager/reports"
-    },
-    {
-      "type": "error",
-      "text": "Failed to load resource: net::ERR_NETWORK_ACCESS_DENIED",
-      "url": "http://localhost:3000/inventory/products"
-    },
-    {
-      "type": "error",
-      "text": "Failed to load resource: net::ERR_NETWORK_ACCESS_DENIED",
-      "url": "http://localhost:3000/cashier/pos"
-    },
-    {
-      "type": "error",
-      "text": "Failed to load resource: net::ERR_NETWORK_ACCESS_DENIED",
-      "url": "http://localhost:3000/inventory/products"
-    },
-    {
-      "type": "error",
-      "text": "Failed to load resource: net::ERR_NETWORK_ACCESS_DENIED",
-      "url": "http://localhost:3000/inventory/history"
-    },
-    {
-      "type": "error",
-      "text": "Failed to load resource: net::ERR_NETWORK_ACCESS_DENIED",
-      "url": "http://localhost:3000/manager/reports"
-    },
-    {
-      "type": "error",
-      "text": "Failed to load resource: net::ERR_NETWORK_ACCESS_DENIED",
-      "url": "http://localhost:3000/veterinary/appointments/7/consult"
-    },
-    {
-      "type": "error",
-      "text": "Failed to load resource: net::ERR_NETWORK_ACCESS_DENIED",
-      "url": "http://localhost:3000/customer/services"
-    },
-    {
-      "type": "error",
-      "text": "Failed to load resource: net::ERR_NETWORK_ACCESS_DENIED",
-      "url": "http://localhost:3000/inventory/products"
-    },
-    {
-      "type": "error",
-      "text": "Failed to load resource: net::ERR_NETWORK_ACCESS_DENIED",
-      "url": "http://localhost:3000/customer/notifications"
-    },
-    {
-      "type": "error",
-      "text": "Failed to load resource: net::ERR_NETWORK_ACCESS_DENIED",
-      "url": "http://localhost:3000/receptionist/appointments-boarding"
-    },
-    {
-      "type": "error",
-      "text": "Warning: Encountered two children with the same key, `%s`. Keys should be unique so that components maintain their identity across updates. Non-unique keys may cause children to be duplicated and/or omitted — the behavior is unsupported and could change in a future version.%s hotel-4 \n    at tbody\n    at table\n    at div\n    at section\n    at div\n    at ReceptionistAppointmentsBoarding (http://localhost:3000/src/components/receptionist/ReceptionistAppointmentsBoarding.jsx:173:130)\n    at RenderedRoute (http://localhost:3000/node_modules/.vite/deps/react-router-dom.js?v=5b932005:6429:26)\n    at Outlet (http://localhost:3000/node_modules/.vite/deps/react-router-dom.js?v=5b932005:7227:26)\n    at section\n    at main\n    at div\n    at DashboardLayout (http://localhost:3000/src/components/shared/DashboardLayout.jsx:25:3)\n    at ReceptionistLayout (http://localhost:3000/src/components/receptionist/ReceptionistLayout.jsx:25:20)\n    at ProtectedRoute (http://localhost:3000/src/components/ProtectedRoute.jsx:43:27)\n    at RenderedRoute (http://localhost:3000/node_modules/.vite/deps/react-router-dom.js?v=5b932005:6429:26)\n    at Routes (http://localhost:3000/node_modules/.vite/deps/react-router-dom.js?v=5b932005:7306:3)\n    at Suspense\n    at ReceptionistRoutes\n    at RenderedRoute (http://localhost:3000/node_modules/.vite/deps/react-router-dom.js?v=5b932005:6429:26)\n    at Routes (http://localhost:3000/node_modules/.vite/deps/react-router-dom.js?v=5b932005:7306:3)\n    at Router (http://localhost:3000/node_modules/.vite/deps/react-router-dom.js?v=5b932005:7236:13)\n    at BrowserRouter (http://localhost:3000/node_modules/.vite/deps/react-router-dom.js?v=5b932005:10540:3)\n    at AppRoutes\n    at ErrorBoundary (http://localhost:3000/src/components/shared/ErrorBoundary.jsx?t=1781120341324:7:5)\n    at App (http://localhost:3000/src/App.jsx?t=1781124390664:26:3)\n    at AuthProvider (http://localhost:3000/src/context/AuthContext.jsx:39:32)",
-      "url": "http://localhost:3000/receptionist/appointments-boarding"
-    },
-    {
-      "type": "error",
-      "text": "Warning: Encountered two children with the same key, `%s`. Keys should be unique so that components maintain their identity across updates. Non-unique keys may cause children to be duplicated and/or omitted — the behavior is unsupported and could change in a future version.%s hotel-4 \n    at tbody\n    at table\n    at div\n    at section\n    at div\n    at ReceptionistAppointmentsBoarding (http://localhost:3000/src/components/receptionist/ReceptionistAppointmentsBoarding.jsx:173:130)\n    at RenderedRoute (http://localhost:3000/node_modules/.vite/deps/react-router-dom.js?v=5b932005:6429:26)\n    at Outlet (http://localhost:3000/node_modules/.vite/deps/react-router-dom.js?v=5b932005:7227:26)\n    at section\n    at main\n    at div\n    at DashboardLayout (http://localhost:3000/src/components/shared/DashboardLayout.jsx:25:3)\n    at ReceptionistLayout (http://localhost:3000/src/components/receptionist/ReceptionistLayout.jsx:25:20)\n    at ProtectedRoute (http://localhost:3000/src/components/ProtectedRoute.jsx:43:27)\n    at RenderedRoute (http://localhost:3000/node_modules/.vite/deps/react-router-dom.js?v=5b932005:6429:26)\n    at Routes (http://localhost:3000/node_modules/.vite/deps/react-router-dom.js?v=5b932005:7306:3)\n    at Suspense\n    at ReceptionistRoutes\n    at RenderedRoute (http://localhost:3000/node_modules/.vite/deps/react-router-dom.js?v=5b932005:6429:26)\n    at Routes (http://localhost:3000/node_modules/.vite/deps/react-router-dom.js?v=5b932005:7306:3)\n    at Router (http://localhost:3000/node_modules/.vite/deps/react-router-dom.js?v=5b932005:7236:13)\n    at BrowserRouter (http://localhost:3000/node_modules/.vite/deps/react-router-dom.js?v=5b932005:10540:3)\n    at AppRoutes\n    at ErrorBoundary (http://localhost:3000/src/components/shared/ErrorBoundary.jsx?t=1781120341324:7:5)\n    at App (http://localhost:3000/src/App.jsx?t=1781124390664:26:3)\n    at AuthProvider (http://localhost:3000/src/context/AuthContext.jsx:39:32)",
-      "url": "http://localhost:3000/receptionist/appointments-boarding"
-    },
-    {
-      "type": "error",
-      "text": "Warning: Encountered two children with the same key, `%s`. Keys should be unique so that components maintain their identity across updates. Non-unique keys may cause children to be duplicated and/or omitted — the behavior is unsupported and could change in a future version.%s hotel-4 \n    at tbody\n    at table\n    at div\n    at section\n    at div\n    at ReceptionistAppointmentsBoarding (http://localhost:3000/src/components/receptionist/ReceptionistAppointmentsBoarding.jsx:173:130)\n    at RenderedRoute (http://localhost:3000/node_modules/.vite/deps/react-router-dom.js?v=5b932005:6429:26)\n    at Outlet (http://localhost:3000/node_modules/.vite/deps/react-router-dom.js?v=5b932005:7227:26)\n    at section\n    at main\n    at div\n    at DashboardLayout (http://localhost:3000/src/components/shared/DashboardLayout.jsx:25:3)\n    at ReceptionistLayout (http://localhost:3000/src/components/receptionist/ReceptionistLayout.jsx:25:20)\n    at ProtectedRoute (http://localhost:3000/src/components/ProtectedRoute.jsx:43:27)\n    at RenderedRoute (http://localhost:3000/node_modules/.vite/deps/react-router-dom.js?v=5b932005:6429:26)\n    at Routes (http://localhost:3000/node_modules/.vite/deps/react-router-dom.js?v=5b932005:7306:3)\n    at Suspense\n    at ReceptionistRoutes\n    at RenderedRoute (http://localhost:3000/node_modules/.vite/deps/react-router-dom.js?v=5b932005:6429:26)\n    at Routes (http://localhost:3000/node_modules/.vite/deps/react-router-dom.js?v=5b932005:7306:3)\n    at Router (http://localhost:3000/node_modules/.vite/deps/react-router-dom.js?v=5b932005:7236:13)\n    at BrowserRouter (http://localhost:3000/node_modules/.vite/deps/react-router-dom.js?v=5b932005:10540:3)\n    at AppRoutes\n    at ErrorBoundary (http://localhost:3000/src/components/shared/ErrorBoundary.jsx?t=1781120341324:7:5)\n    at App (http://localhost:3000/src/App.jsx?t=1781124390664:26:3)\n    at AuthProvider (http://localhost:3000/src/context/AuthContext.jsx:39:32)",
-      "url": "http://localhost:3000/receptionist/appointments-boarding"
-    },
-    {
-      "type": "error",
-      "text": "Warning: Encountered two children with the same key, `%s`. Keys should be unique so that components maintain their identity across updates. Non-unique keys may cause children to be duplicated and/or omitted — the behavior is unsupported and could change in a future version.%s hotel-4 \n    at tbody\n    at table\n    at div\n    at section\n    at div\n    at ReceptionistAppointmentsBoarding (http://localhost:3000/src/components/receptionist/ReceptionistAppointmentsBoarding.jsx:173:130)\n    at RenderedRoute (http://localhost:3000/node_modules/.vite/deps/react-router-dom.js?v=5b932005:6429:26)\n    at Outlet (http://localhost:3000/node_modules/.vite/deps/react-router-dom.js?v=5b932005:7227:26)\n    at section\n    at main\n    at div\n    at DashboardLayout (http://localhost:3000/src/components/shared/DashboardLayout.jsx:25:3)\n    at ReceptionistLayout (http://localhost:3000/src/components/receptionist/ReceptionistLayout.jsx:25:20)\n    at ProtectedRoute (http://localhost:3000/src/components/ProtectedRoute.jsx:43:27)\n    at RenderedRoute (http://localhost:3000/node_modules/.vite/deps/react-router-dom.js?v=5b932005:6429:26)\n    at Routes (http://localhost:3000/node_modules/.vite/deps/react-router-dom.js?v=5b932005:7306:3)\n    at Suspense\n    at ReceptionistRoutes\n    at RenderedRoute (http://localhost:3000/node_modules/.vite/deps/react-router-dom.js?v=5b932005:6429:26)\n    at Routes (http://localhost:3000/node_modules/.vite/deps/react-router-dom.js?v=5b932005:7306:3)\n    at Router (http://localhost:3000/node_modules/.vite/deps/react-router-dom.js?v=5b932005:7236:13)\n    at BrowserRouter (http://localhost:3000/node_modules/.vite/deps/react-router-dom.js?v=5b932005:10540:3)\n    at AppRoutes\n    at ErrorBoundary (http://localhost:3000/src/components/shared/ErrorBoundary.jsx?t=1781120341324:7:5)\n    at App (http://localhost:3000/src/App.jsx?t=1781124390664:26:3)\n    at AuthProvider (http://localhost:3000/src/context/AuthContext.jsx:39:32)",
-      "url": "http://localhost:3000/receptionist/appointments-boarding"
-    },
-    {
-      "type": "error",
-      "text": "Failed to load resource: net::ERR_NETWORK_ACCESS_DENIED",
-      "url": "http://localhost:3000/cashier/payment-verification"
-    },
-    {
-      "type": "error",
-      "text": "Warning: Encountered two children with the same key, `%s`. Keys should be unique so that components maintain their identity across updates. Non-unique keys may cause children to be duplicated and/or omitted — the behavior is unsupported and could change in a future version.%s 5 \n    at tbody\n    at table\n    at div\n    at div\n    at div\n    at section\n    at main\n    at div\n    at CashierPaymentVerification (http://localhost:3000/src/components/cashier/CashierPaymentVerification.jsx:80:20)\n    at RenderedRoute (http://localhost:3000/node_modules/.vite/deps/react-router-dom.js?v=5b932005:6429:26)\n    at Outlet (http://localhost:3000/node_modules/.vite/deps/react-router-dom.js?v=5b932005:7227:26)\n    at section\n    at section\n    at section\n    at main\n    at div\n    at DashboardLayout (http://localhost:3000/src/components/shared/DashboardLayout.jsx:25:3)\n    at CashierDashboard (http://localhost:3000/src/components/cashier/CashierDashboard.jsx:82:32)\n    at ProtectedRoute (http://localhost:3000/src/components/ProtectedRoute.jsx:43:27)\n    at RenderedRoute (http://localhost:3000/node_modules/.vite/deps/react-router-dom.js?v=5b932005:6429:26)\n    at Routes (http://localhost:3000/node_modules/.vite/deps/react-router-dom.js?v=5b932005:7306:3)\n    at CashierRoutes\n    at RenderedRoute (http://localhost:3000/node_modules/.vite/deps/react-router-dom.js?v=5b932005:6429:26)\n    at Routes (http://localhost:3000/node_modules/.vite/deps/react-router-dom.js?v=5b932005:7306:3)\n    at Router (http://localhost:3000/node_modules/.vite/deps/react-router-dom.js?v=5b932005:7236:13)\n    at BrowserRouter (http://localhost:3000/node_modules/.vite/deps/react-router-dom.js?v=5b932005:10540:3)\n    at AppRoutes\n    at ErrorBoundary (http://localhost:3000/src/components/shared/ErrorBoundary.jsx?t=1781120341324:7:5)\n    at App (http://localhost:3000/src/App.jsx?t=1781124390664:26:3)\n    at AuthProvider (http://localhost:3000/src/context/AuthContext.jsx:39:32)",
-      "url": "http://localhost:3000/cashier/payment-verification"
-    },
-    {
-      "type": "error",
-      "text": "Warning: Encountered two children with the same key, `%s`. Keys should be unique so that components maintain their identity across updates. Non-unique keys may cause children to be duplicated and/or omitted — the behavior is unsupported and could change in a future version.%s 5 \n    at div\n    at div\n    at div\n    at section\n    at main\n    at div\n    at CashierPaymentVerification (http://localhost:3000/src/components/cashier/CashierPaymentVerification.jsx:80:20)\n    at RenderedRoute (http://localhost:3000/node_modules/.vite/deps/react-router-dom.js?v=5b932005:6429:26)\n    at Outlet (http://localhost:3000/node_modules/.vite/deps/react-router-dom.js?v=5b932005:7227:26)\n    at section\n    at section\n    at section\n    at main\n    at div\n    at DashboardLayout (http://localhost:3000/src/components/shared/DashboardLayout.jsx:25:3)\n    at CashierDashboard (http://localhost:3000/src/components/cashier/CashierDashboard.jsx:82:32)\n    at ProtectedRoute (http://localhost:3000/src/components/ProtectedRoute.jsx:43:27)\n    at RenderedRoute (http://localhost:3000/node_modules/.vite/deps/react-router-dom.js?v=5b932005:6429:26)\n    at Routes (http://localhost:3000/node_modules/.vite/deps/react-router-dom.js?v=5b932005:7306:3)\n    at CashierRoutes\n    at RenderedRoute (http://localhost:3000/node_modules/.vite/deps/react-router-dom.js?v=5b932005:6429:26)\n    at Routes (http://localhost:3000/node_modules/.vite/deps/react-router-dom.js?v=5b932005:7306:3)\n    at Router (http://localhost:3000/node_modules/.vite/deps/react-router-dom.js?v=5b932005:7236:13)\n    at BrowserRouter (http://localhost:3000/node_modules/.vite/deps/react-router-dom.js?v=5b932005:10540:3)\n    at AppRoutes\n    at ErrorBoundary (http://localhost:3000/src/components/shared/ErrorBoundary.jsx?t=1781120341324:7:5)\n    at App (http://localhost:3000/src/App.jsx?t=1781124390664:26:3)\n    at AuthProvider (http://localhost:3000/src/context/AuthContext.jsx:39:32)",
-      "url": "http://localhost:3000/cashier/payment-verification"
-    },
-    {
-      "type": "error",
-      "text": "Warning: Encountered two children with the same key, `%s`. Keys should be unique so that components maintain their identity across updates. Non-unique keys may cause children to be duplicated and/or omitted — the behavior is unsupported and could change in a future version.%s 5 \n    at tbody\n    at table\n    at div\n    at div\n    at div\n    at section\n    at main\n    at div\n    at CashierPaymentVerification (http://localhost:3000/src/components/cashier/CashierPaymentVerification.jsx:80:20)\n    at RenderedRoute (http://localhost:3000/node_modules/.vite/deps/react-router-dom.js?v=5b932005:6429:26)\n    at Outlet (http://localhost:3000/node_modules/.vite/deps/react-router-dom.js?v=5b932005:7227:26)\n    at section\n    at section\n    at section\n    at main\n    at div\n    at DashboardLayout (http://localhost:3000/src/components/shared/DashboardLayout.jsx:25:3)\n    at CashierDashboard (http://localhost:3000/src/components/cashier/CashierDashboard.jsx:82:32)\n    at ProtectedRoute (http://localhost:3000/src/components/ProtectedRoute.jsx:43:27)\n    at RenderedRoute (http://localhost:3000/node_modules/.vite/deps/react-router-dom.js?v=5b932005:6429:26)\n    at Routes (http://localhost:3000/node_modules/.vite/deps/react-router-dom.js?v=5b932005:7306:3)\n    at CashierRoutes\n    at RenderedRoute (http://localhost:3000/node_modules/.vite/deps/react-router-dom.js?v=5b932005:6429:26)\n    at Routes (http://localhost:3000/node_modules/.vite/deps/react-router-dom.js?v=5b932005:7306:3)\n    at Router (http://localhost:3000/node_modules/.vite/deps/react-router-dom.js?v=5b932005:7236:13)\n    at BrowserRouter (http://localhost:3000/node_modules/.vite/deps/react-router-dom.js?v=5b932005:10540:3)\n    at AppRoutes\n    at ErrorBoundary (http://localhost:3000/src/components/shared/ErrorBoundary.jsx?t=1781120341324:7:5)\n    at App (http://localhost:3000/src/App.jsx?t=1781124390664:26:3)\n    at AuthProvider (http://localhost:3000/src/context/AuthContext.jsx:39:32)",
-      "url": "http://localhost:3000/cashier/payment-verification"
-    },
-    {
-      "type": "error",
-      "text": "Warning: Encountered two children with the same key, `%s`. Keys should be unique so that components maintain their identity across updates. Non-unique keys may cause children to be duplicated and/or omitted — the behavior is unsupported and could change in a future version.%s 5 \n    at div\n    at div\n    at div\n    at section\n    at main\n    at div\n    at CashierPaymentVerification (http://localhost:3000/src/components/cashier/CashierPaymentVerification.jsx:80:20)\n    at RenderedRoute (http://localhost:3000/node_modules/.vite/deps/react-router-dom.js?v=5b932005:6429:26)\n    at Outlet (http://localhost:3000/node_modules/.vite/deps/react-router-dom.js?v=5b932005:7227:26)\n    at section\n    at section\n    at section\n    at main\n    at div\n    at DashboardLayout (http://localhost:3000/src/components/shared/DashboardLayout.jsx:25:3)\n    at CashierDashboard (http://localhost:3000/src/components/cashier/CashierDashboard.jsx:82:32)\n    at ProtectedRoute (http://localhost:3000/src/components/ProtectedRoute.jsx:43:27)\n    at RenderedRoute (http://localhost:3000/node_modules/.vite/deps/react-router-dom.js?v=5b932005:6429:26)\n    at Routes (http://localhost:3000/node_modules/.vite/deps/react-router-dom.js?v=5b932005:7306:3)\n    at CashierRoutes\n    at RenderedRoute (http://localhost:3000/node_modules/.vite/deps/react-router-dom.js?v=5b932005:6429:26)\n    at Routes (http://localhost:3000/node_modules/.vite/deps/react-router-dom.js?v=5b932005:7306:3)\n    at Router (http://localhost:3000/node_modules/.vite/deps/react-router-dom.js?v=5b932005:7236:13)\n    at BrowserRouter (http://localhost:3000/node_modules/.vite/deps/react-router-dom.js?v=5b932005:10540:3)\n    at AppRoutes\n    at ErrorBoundary (http://localhost:3000/src/components/shared/ErrorBoundary.jsx?t=1781120341324:7:5)\n    at App (http://localhost:3000/src/App.jsx?t=1781124390664:26:3)\n    at AuthProvider (http://localhost:3000/src/context/AuthContext.jsx:39:32)",
-      "url": "http://localhost:3000/cashier/payment-verification"
-    },
-    {
-      "type": "error",
-      "text": "Failed to load resource: net::ERR_NETWORK_ACCESS_DENIED",
-      "url": "http://localhost:3000/veterinary/appointments"
-    },
-    {
-      "type": "warning",
-      "text": "Please do not use @import CSS syntax in createGlobalStyle at this time, as the CSSOM APIs we use in production do not handle it well. Instead, we recommend using a library such as react-helmet to inject a typical <link> meta tag to the stylesheet, or simply embedding it manually in your index.html <head> section for a simpler app.",
-      "url": "http://localhost:3000/veterinary/appointments"
-    },
-    {
-      "type": "warning",
-      "text": "Please do not use @import CSS syntax in createGlobalStyle at this time, as the CSSOM APIs we use in production do not handle it well. Instead, we recommend using a library such as react-helmet to inject a typical <link> meta tag to the stylesheet, or simply embedding it manually in your index.html <head> section for a simpler app.",
-      "url": "http://localhost:3000/veterinary/appointments"
-    },
-    {
-      "type": "warning",
-      "text": "styled-components: it looks like an unknown prop \"variant\" is being sent through to the DOM, which will likely trigger a React console error. If you would like automatic filtering of unknown props, you can opt-into that behavior via `<StyleSheetManager shouldForwardProp={...}>` (connect an API like `@emotion/is-prop-valid`) or consider using transient props (`$` prefix for automatic filtering.)",
-      "url": "http://localhost:3000/veterinary/appointments"
+      "status": "REQUEST_FAILED",
+      "method": "GET",
+      "url": "http://localhost:8000/api/veterinary/appointments",
+      "page": "http://localhost:3002/veterinary/appointments",
+      "failure": "net::ERR_ABORTED"
     }
   ],
+  "console": [],
   "createdRecords": [
     {
       "type": "service_request",
-      "id": 32,
+      "id": 5,
       "label": "grooming/service request"
     },
     {
       "type": "service_request",
-      "id": 33,
+      "id": 6,
       "label": "boarding request"
     },
     {
       "type": "service_request",
-      "id": 34,
+      "id": 7,
       "label": "payment reject request"
     },
     {
       "type": "service_request",
-      "id": 35,
+      "id": 8,
       "label": "payment verify request"
     },
     {
       "type": "service_request",
-      "id": 36,
+      "id": 9,
       "label": "veterinary request"
     }
   ],

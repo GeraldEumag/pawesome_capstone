@@ -6,10 +6,10 @@ const apiUrl = process.env.E2E_API_URL || "http://127.0.0.1:8000/api";
 const accounts = {
   customer: { email: "customer@example.com", password: "Password123!", dashboard: "/customer" },
   receptionist: { email: "receptionist@example.com", password: "Password123!", dashboard: "/receptionist" },
-  cashier: { email: "cashier@example.com", password: "password123", dashboard: "/cashier" },
+  cashier: { email: "cashier@example.com", password: "Password123!", dashboard: "/cashier" },
   inventory: { email: "inventory@example.com", password: "Password123!", dashboard: "/inventory" },
   veterinary: { email: "vet@example.com", password: "Password123!", dashboard: "/veterinary" },
-  manager: { email: "manager@example.com", password: "password123", dashboard: "/manager" },
+  manager: { email: "manager@example.com", password: "Password123!", dashboard: "/manager" },
   admin: { email: "admin@example.com", password: "Password123!", dashboard: "/admin" },
 };
 

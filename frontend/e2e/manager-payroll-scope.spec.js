@@ -19,7 +19,8 @@ const managerPages = [
   { path: "/manager/leave", label: "manager-leave", api: "/api/manager/leaves" },
   { path: "/manager/schedule", label: "manager-schedule", api: "/api/manager/schedules" },
   { path: "/manager/payroll", label: "manager-payroll", api: "/api/manager/payroll" },
-  { path: "/manager/payroll/computation", label: "manager-payroll-computation", api: "/api/manager/payroll" },
+  // Legacy URL — ManagerRoutes redirects this to /manager/payroll (now a tab).
+  { path: "/manager/payroll/computation", label: "manager-payroll-computation", api: "/api/manager/payroll", redirectsTo: "/manager/payroll" },
   { path: "/manager/reports", label: "manager-reports", api: "/api/manager/reports/live" },
 ];
 
@@ -132,11 +133,12 @@ test("Manager payroll scope pages render in browser", async ({ page }) => {
     const currentUrl = page.url();
     const textLength = await bodyTextLength(page);
     const shot = await screenshot(page, managerPage.label);
+    const expectedRoute = managerPage.redirectsTo || managerPage.path;
     const pageResult = {
       path: managerPage.path,
       url: currentUrl,
       rendered: textLength > 40,
-      stayedOnRoute: currentUrl.includes(managerPage.path),
+      stayedOnRoute: currentUrl.includes(expectedRoute),
       textLength,
       screenshot: shot,
     };
