@@ -64,7 +64,8 @@ const Login = () => {
         username: response.user.username,
         email: response.user.email,
         profile_photo: response.user.profile_photo
-          ? (response.user.profile_photo.includes("?v=")
+          ? (response.user.profile_photo.startsWith("data:") ||
+             response.user.profile_photo.includes("?v=")
               ? response.user.profile_photo
               : `${response.user.profile_photo}?v=${Date.now()}`)
           : "",

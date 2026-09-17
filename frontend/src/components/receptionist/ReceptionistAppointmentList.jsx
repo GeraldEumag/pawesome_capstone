@@ -21,6 +21,7 @@ import {
   faPen,
   faRefresh,
 } from "@fortawesome/free-solid-svg-icons";
+import { resolveAvatarUrl } from "../../utils/avatar";
 import "./ReceptionistAppointmentList.css";
 
 const STORAGE_KEY = "receptionistProfileData";
@@ -336,7 +337,7 @@ const AppointmentList = () => {
         <div className="profile-hero-card">
           <div className="hero-avatar">
             {activeProfile.profileImage ? (
-              <img src={activeProfile.profileImage} alt="Receptionist profile" />
+              <img src={resolveAvatarUrl(activeProfile.profileImage)} alt="Receptionist profile" />
             ) : (
               <FontAwesomeIcon icon={faUser} />
             )}
@@ -440,7 +441,7 @@ const AppointmentList = () => {
               <div className="avatar-container">
                 {activeProfile.profileImage ? (
                   <img
-                    src={activeProfile.profileImage}
+                    src={resolveAvatarUrl(activeProfile.profileImage)}
                     alt="Profile"
                     className="avatar-img"
                   />

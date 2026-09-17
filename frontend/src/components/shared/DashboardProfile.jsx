@@ -1,15 +1,8 @@
 import { useNavigate } from "react-router-dom";
 import { FaUserCircle } from "react-icons/fa";
 import { formatRoleLabel } from "../../utils/roleLabels";
+import { resolveAvatarUrl } from "../../utils/avatar";
 import "./DashboardProfile.css";
-
-const resolveProfilePhoto = (url) => {
-  if (!url) return "";
-  if (url.startsWith("http")) return url;
-  if (url.startsWith("/")) return `${window.location.origin}${url}`;
-  // Relative path without leading slash — resolve against origin
-  return `${window.location.origin}/${url}`;
-};
 
 const ROLE_PROFILE_PATHS = {
   admin: "/admin/profile",
@@ -47,7 +40,7 @@ export default function DashboardProfile({
         <span className="dashboard-profile-avatar">
           {image ? (
             <img
-              src={resolveProfilePhoto(image)}
+              src={resolveAvatarUrl(image)}
               alt={`${name} profile`}
               onError={(e) => { e.target.style.display = "none"; e.target.nextSibling.style.display = "flex"; }}
             />

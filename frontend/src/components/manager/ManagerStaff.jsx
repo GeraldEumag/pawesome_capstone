@@ -32,6 +32,7 @@ import {
   faXmark,
 } from "@fortawesome/free-solid-svg-icons";
 import { apiRequest } from "../../api/client";
+import { resolveAvatarUrl } from "../../utils/avatar";
 import { formatCurrency } from "../../utils/currency";
 import { exportToCSV, exportToPDF, exportToExcel } from "../../utils/reportExport";
 import FingerprintEnrollment from "./FingerprintEnrollment";
@@ -965,7 +966,7 @@ const ManagerStaff = () => {
                             }
                           >
                             {person.avatar ? (
-                              <img src={person.avatar} alt={person.name} />
+                              <img src={resolveAvatarUrl(person.avatar)} alt={person.name} />
                             ) : (
                               person.name.charAt(0).toUpperCase()
                             )}
@@ -1294,7 +1295,7 @@ const ProfileModal = ({ staff, activeTab, onTabChange, onClose }) => {
                   }
                 >
                   {staff.avatar ? (
-                    <img src={staff.avatar} alt={staff.name} />
+                    <img src={resolveAvatarUrl(staff.avatar)} alt={staff.name} />
                   ) : (
                     staff.name.charAt(0)
                   )}

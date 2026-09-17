@@ -1,12 +1,6 @@
 import { useState } from "react";
 import { FaUserCircle } from "react-icons/fa";
-
-const resolveUrl = (url) => {
-  if (!url) return null;
-  if (url.startsWith("http")) return url;
-  if (url.startsWith("/")) return `${window.location.origin}${url}`;
-  return `${window.location.origin}/${url}`;
-};
+import { resolveAvatarUrl } from "../../utils/avatar";
 
 const getInitials = (name) => {
   const parts = String(name || "?").trim().split(" ").filter(Boolean);
@@ -18,7 +12,7 @@ const getInitials = (name) => {
 const CustomerAvatar = ({ customer, size = 48, className = "", showInitialsFallback = true }) => {
   const [imgError, setImgError] = useState(false);
 
-  const photoUrl = resolveUrl(
+  const photoUrl = resolveAvatarUrl(
     customer?.profile_photo ||
     customer?.user?.profile_photo ||
     customer?.avatar ||

@@ -181,6 +181,21 @@ DB_CONNECTION=mysql DB_DATABASE=pawesome_test php artisan test --filter=EmailAut
 - These are Windows TCP/IP stack issues, not application defects.
 - Mitigation: reboot, or run tests on Linux/Docker.
 
+## Issue Tracking
+
+- **Profile Photo Fallback: FIXED** — 12/12 browser/API/database checks passed.
+  `User::profile_photo` returns a deterministic-color initials `data:` URI when
+  no photo is uploaded; `frontend/src/utils/avatar.js` (`resolveAvatarUrl`)
+  passes `data:`/`blob:`/`http` through (stripping corrupted `?v=` suffixes)
+  and resolves `/api/...` paths against the `VITE_API_BASE_URL` origin.
+  Verified in Chromium: topbar, ProfileSettings, receptionist customer list,
+  and manager staff list all render the avatar; uploaded photos load via
+  `/api/files/profile-photos/{id}/view`.
+- **Veterinary Profile Navigation: OPEN** — `DashboardProfile.ROLE_PROFILE_PATHS`
+  maps `veterinary → /vet/profile`, but vet routes mount at `/veterinary/*`.
+  Vet topbar avatar click navigates to a dead route. (P2 follow-up; unrelated
+  to the avatar fix — do not reopen it.)
+
 ## Reports
 
 | Gate | Report Path |

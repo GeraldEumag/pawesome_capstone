@@ -12,6 +12,7 @@ import {
   faCog, faPalette, faLanguage,
 } from "@fortawesome/free-solid-svg-icons";
 import { apiRequest, uploadProfilePhoto } from "../../api/client";
+import { resolveAvatarUrl } from "../../utils/avatar";
 import styled, { createGlobalStyle } from "styled-components";
 import {
   fadeIn, pulse,
@@ -1051,7 +1052,7 @@ const ProfileSettings = () => {
                       <AvatarInner>
                         {profileData.profileImage ? (
                           <AvatarImage
-                            src={profileData.profileImage.startsWith("/") ? `${window.location.origin}${profileData.profileImage}` : profileData.profileImage}
+                            src={resolveAvatarUrl(profileData.profileImage)}
                             alt="Avatar"
                             onError={(e) => { e.target.style.display = "none"; }}
                           />

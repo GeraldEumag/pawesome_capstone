@@ -12,6 +12,7 @@ import {
 } from "@fortawesome/free-solid-svg-icons";
 import { apiRequest, uploadProfilePhoto } from "../api/client";
 import { useAuth } from "../context/AuthContext";
+import { resolveAvatarUrl } from "../utils/avatar";
 import "./ProfilePage.css";
 
 export default function ProfilePage({
@@ -284,7 +285,7 @@ export default function ProfilePage({
           <div className="profile-hero-avatar">
             {profileData.profileImage ? (
               <img
-                src={profileData.profileImage.startsWith("/") ? `${window.location.origin}${profileData.profileImage}` : profileData.profileImage}
+                src={resolveAvatarUrl(profileData.profileImage)}
                 alt="Profile"
                 onError={(e) => { e.target.style.display = "none"; }}
               />
@@ -354,7 +355,7 @@ export default function ProfilePage({
                   <div className="profile-avatar-main">
                     {profileData.profileImage ? (
                       <img
-                        src={profileData.profileImage.startsWith("/") ? `${window.location.origin}${profileData.profileImage}` : profileData.profileImage}
+                        src={resolveAvatarUrl(profileData.profileImage)}
                         alt="Profile"
                         onError={(e) => { e.target.style.display = "none"; }}
                       />
