@@ -21,6 +21,21 @@ export default defineConfig({
       name: "chromium",
       use: { ...devices["Desktop Chrome"] },
     },
+    ...[
+      ["mobile-360", 360, 800],
+      ["mobile-390", 390, 844],
+      ["mobile-412", 412, 915],
+      ["tablet-portrait-768", 768, 1024],
+    ].map(([name, width, height]) => ({
+      name,
+      testMatch: /mobile-portrait-audit\.spec\.js/,
+      use: {
+        ...devices["Desktop Chrome"],
+        viewport: { width, height },
+        isMobile: true,
+        hasTouch: true,
+      },
+    })),
   ],
   webServer: startFrontend
     ? {

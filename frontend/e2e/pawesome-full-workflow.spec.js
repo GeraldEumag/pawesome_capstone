@@ -11,10 +11,10 @@ const apiBase = process.env.E2E_API_URL || "http://127.0.0.1:8000/api";
 const credentials = {
   customer: { email: process.env.E2E_CUSTOMER_EMAIL || "customer@example.com", password: process.env.E2E_CUSTOMER_PASSWORD || "Password123!", route: "/customer" },
   receptionist: { email: process.env.E2E_RECEPTIONIST_EMAIL || "receptionist@example.com", password: process.env.E2E_RECEPTIONIST_PASSWORD || "Password123!", route: "/receptionist/bookings/veterinary" },
-  cashier: { email: process.env.E2E_CASHIER_EMAIL || "cashier@example.com", password: process.env.E2E_CASHIER_PASSWORD || "Password123!", route: "/cashier/dashboard/payment-verification" },
+  cashier: { email: process.env.E2E_CASHIER_EMAIL || "cashier@example.com", password: process.env.E2E_CASHIER_PASSWORD || "password123", route: "/cashier/dashboard/payment-verification" },
   inventory: { email: process.env.E2E_INVENTORY_EMAIL || "inventory@example.com", password: process.env.E2E_INVENTORY_PASSWORD || "Password123!", route: "/inventory/history" },
   veterinary: { email: process.env.E2E_VETERINARY_EMAIL || "vet@example.com", password: process.env.E2E_VETERINARY_PASSWORD || "Password123!", route: "/veterinary/appointments" },
-  manager: { email: process.env.E2E_MANAGER_EMAIL || "manager@example.com", password: process.env.E2E_MANAGER_PASSWORD || "Password123!", route: "/manager/reports" },
+  manager: { email: process.env.E2E_MANAGER_EMAIL || "manager@example.com", password: process.env.E2E_MANAGER_PASSWORD || "password123", route: "/manager/reports" },
   admin: { email: process.env.E2E_ADMIN_EMAIL || "admin@example.com", password: process.env.E2E_ADMIN_PASSWORD || "Password123!", route: "/admin/reports" },
 };
 

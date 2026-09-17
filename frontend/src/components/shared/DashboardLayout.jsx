@@ -1,4 +1,5 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
+import { useLocation } from "react-router-dom";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faBars } from "@fortawesome/free-solid-svg-icons";
 import DashboardProfile from "./DashboardProfile";
@@ -20,9 +21,30 @@ const DashboardLayout = ({
   className = "",
 }) => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const location = useLocation();
 
   const toggleMenu = () => setMobileMenuOpen((prev) => !prev);
   const closeMenu = () => setMobileMenuOpen(false);
+
+  useEffect(() => {
+    if (!mobileMenuOpen) return undefined;
+
+    const handleKeyDown = (event) => {
+      if (event.key === "Escape") closeMenu();
+    };
+
+    document.addEventListener("keydown", handleKeyDown);
+    document.body.classList.add("sidebar-open");
+
+    return () => {
+      document.removeEventListener("keydown", handleKeyDown);
+      document.body.classList.remove("sidebar-open");
+    };
+  }, [mobileMenuOpen]);
+
+  useEffect(() => {
+    setMobileMenuOpen(false);
+  }, [location.pathname]);
 
   const sidebarWithProps = sidebar
     ? React.cloneElement(sidebar, {
@@ -35,7 +57,11 @@ const DashboardLayout = ({
     <div className={`app-dashboard ${className} ${mobileMenuOpen ? "mobile-open" : ""}`}>
       {sidebarWithProps}
 
-      <div className="mobile-backdrop" onClick={closeMenu} />
+      <div
+        className={`mobile-backdrop ${mobileMenuOpen ? "active" : ""}`}
+        onClick={closeMenu}
+        aria-hidden={!mobileMenuOpen}
+      />
 
       <main className="app-main">
         <header className="app-topbar">
@@ -43,6 +69,7 @@ const DashboardLayout = ({
             className="mobile-menu-toggle"
             onClick={toggleMenu}
             aria-label="Toggle mobile menu"
+            aria-expanded={mobileMenuOpen}
             type="button"
           >
             <FontAwesomeIcon icon={faBars} />

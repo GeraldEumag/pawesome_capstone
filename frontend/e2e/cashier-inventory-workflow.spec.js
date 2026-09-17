@@ -5,13 +5,13 @@ const path = require("node:path");
 const rootDir = path.resolve(__dirname, "../..");
 const evidenceDir = path.join(rootDir, "browser-evidence", "cashier-inventory-workflow");
 const resultPath = path.join(evidenceDir, "cashier-inventory-workflow-results.json");
-const frontendUrl = process.env.E2E_BASE_URL || "http://127.0.0.1:3000";
+const frontendUrl = process.env.E2E_BASE_URL || "http://127.0.0.1:3002";
 const apiUrl = process.env.E2E_API_URL || "http://127.0.0.1:8000/api";
 
 const accounts = {
-  cashier: { email: "cashier@example.com", password: "Password123!", dashboard: "/cashier" },
+  cashier: { email: "cashier@example.com", password: "password123", dashboard: "/cashier" },
   inventory: { email: "inventory@example.com", password: "Password123!", dashboard: "/inventory" },
-  manager: { email: "manager@example.com", password: "Password123!", dashboard: "/manager" },
+  manager: { email: "manager@example.com", password: "password123", dashboard: "/manager" },
 };
 
 const run = {

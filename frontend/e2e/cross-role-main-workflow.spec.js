@@ -5,14 +5,14 @@ const path = require("node:path");
 const rootDir = path.resolve(__dirname, "../..");
 const evidenceDir = path.join(rootDir, "browser-evidence", "cross-role-main-workflow");
 const resultPath = path.join(evidenceDir, "cross-role-main-workflow-results.json");
-const frontendUrl = process.env.E2E_BASE_URL || "http://127.0.0.1:3000";
+const frontendUrl = process.env.E2E_BASE_URL || "http://127.0.0.1:3002";
 const apiUrl = process.env.E2E_API_URL || "http://127.0.0.1:8000/api";
 
 const accounts = {
   customer: { email: "customer@example.com", password: "Password123!", dashboard: "/customer" },
   receptionist: { email: "receptionist@example.com", password: "Password123!", dashboard: "/receptionist" },
   veterinary: { email: "vet@example.com", password: "Password123!", dashboard: "/veterinary" },
-  manager: { email: "manager@example.com", password: "Password123!", dashboard: "/manager" },
+  manager: { email: "manager@example.com", password: "password123", dashboard: "/manager" },
 };
 
 const run = {

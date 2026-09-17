@@ -8,17 +8,17 @@ const reportDir = path.join(rootDir, "documentation", "reports", "phase11");
 const resultPath = path.join(reportDir, "phase11-state-changing-results.json");
 const proofPath = path.join(reportDir, "phase11-proof.png");
 
-const frontendUrl = process.env.E2E_BASE_URL || "http://127.0.0.1:3000";
+const frontendUrl = process.env.E2E_BASE_URL || "http://127.0.0.1:3002";
 const backendUrl = "http://127.0.0.1:8000";
 const apiUrl = `${backendUrl}/api`;
 
 const credentials = {
   customer: { email: "customer@example.com", password: "Password123!", dashboard: "/customer" },
   receptionist: { email: "receptionist@example.com", password: "Password123!", dashboard: "/receptionist" },
-  cashier: { email: "cashier@example.com", password: "Password123!", dashboard: "/cashier" },
+  cashier: { email: "cashier@example.com", password: "password123", dashboard: "/cashier" },
   inventory: { email: "inventory@example.com", password: "Password123!", dashboard: "/inventory" },
   vet: { email: "vet@example.com", password: "Password123!", dashboard: "/veterinary" },
-  manager: { email: "manager@example.com", password: "Password123!", dashboard: "/manager" },
+  manager: { email: "manager@example.com", password: "password123", dashboard: "/manager" },
   admin: { email: "admin@example.com", password: "Password123!", dashboard: "/admin" },
 };
 

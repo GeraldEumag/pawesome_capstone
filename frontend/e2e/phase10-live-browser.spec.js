@@ -1,5 +1,5 @@
 const { test, expect } = require("@playwright/test");
-const frontendUrl = process.env.E2E_BASE_URL || "http://127.0.0.1:3000";
+const frontendUrl = process.env.E2E_BASE_URL || "http://127.0.0.1:3002";
 const fs = require("node:fs");
 const path = require("node:path");
 
@@ -25,7 +25,7 @@ const roles = [
   {
     key: "cashier",
     email: "cashier@example.com",
-    password: "Password123!",
+    password: "password123",
     dashboard: "/cashier",
     pages: ["/cashier/pos", "/cashier/payment-verification", "/cashier/history", "/cashier/reports"],
   },
@@ -46,7 +46,7 @@ const roles = [
   {
     key: "manager",
     email: "manager@example.com",
-    password: "Password123!",
+    password: "password123",
     dashboard: "/manager",
     pages: ["/manager/reports", "/manager/staff", "/manager/attendance", "/manager/history"],
   },

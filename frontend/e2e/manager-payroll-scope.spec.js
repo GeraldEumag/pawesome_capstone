@@ -8,7 +8,7 @@ const resultPath = path.join(evidenceDir, "manager-payroll-scope-results.json");
 
 const manager = {
   email: "manager@example.com",
-  password: "Password123!",
+  password: "password123",
   dashboard: "/manager",
 };
 
