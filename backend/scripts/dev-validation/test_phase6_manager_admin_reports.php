@@ -4,7 +4,7 @@
  * Phase 6: Manager/Admin Reports and Records Monitoring API Validation
  * 
  * Tests:
- * 1. Login as manager@example.com / Password123!
+ * 1. Login as manager@example.com / password123
  * 2. Verify Manager dashboard loads report summary data
  * 3. Verify sales/POS transaction data appears in manager reports
  * 4. Verify payment verification data appears in manager reports
@@ -76,10 +76,10 @@ echo "PHASE 6: MANAGER/ADMIN REPORTS AND RECORDS MONITORING\n";
 echo "========================================\n\n";
 
 // Test 1: Login as manager@example.com
-echo "Test 1: Login as manager@example.com / Password123!\n";
+echo "Test 1: Login as manager@example.com / password123\n";
 $managerLogin = makeRequest('/auth/login', 'POST', [
     'email' => 'manager@example.com',
-    'password' => 'Password123!'
+    'password' => 'password123'
 ]);
 
 if ($managerLogin['status'] === 200 && (isset($managerLogin['body']['access_token']) || isset($managerLogin['body']['token']))) {

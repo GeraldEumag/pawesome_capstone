@@ -119,10 +119,10 @@ if ($receptionistLogin['status'] === 200 && (isset($receptionistLogin['body']['a
 }
 
 // Cashier login
-echo "\nTest 5: Login as cashier@example.com / Password123!\n";
+echo "\nTest 5: Login as cashier@example.com / password123\n";
 $cashierLogin = makeRequest('/auth/login', 'POST', [
     'email' => 'cashier@example.com',
-    'password' => 'Password123!',
+    'password' => 'password123',
 ]);
 if ($cashierLogin['status'] === 200 && (isset($cashierLogin['body']['access_token']) || isset($cashierLogin['body']['token']))) {
     $tokens['cashier'] = $cashierLogin['body']['access_token'] ?? $cashierLogin['body']['token'];
@@ -147,10 +147,10 @@ if ($vetLogin['status'] === 200 && (isset($vetLogin['body']['access_token']) || 
 }
 
 // Manager login
-echo "\nTest 7: Login as manager@example.com / Password123!\n";
+echo "\nTest 7: Login as manager@example.com / password123\n";
 $managerLogin = makeRequest('/auth/login', 'POST', [
     'email' => 'manager@example.com',
-    'password' => 'Password123!',
+    'password' => 'password123',
 ]);
 if ($managerLogin['status'] === 200 && (isset($managerLogin['body']['access_token']) || isset($managerLogin['body']['token']))) {
     $tokens['manager'] = $managerLogin['body']['access_token'] ?? $managerLogin['body']['token'];

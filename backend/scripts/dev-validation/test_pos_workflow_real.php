@@ -20,7 +20,7 @@ echo "=== Real POS Transaction Workflow Test ===\n\n";
 // Configuration
 $baseUrl = 'http://127.0.0.1:8000/api';
 $cashierEmail = 'cashier@example.com';
-$cashierPassword = 'Password123!';
+$cashierPassword = 'password123';
 
 // Step 1: Login as cashier
 echo "Step 1: Login as cashier\n";
