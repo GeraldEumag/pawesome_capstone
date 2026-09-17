@@ -86,27 +86,63 @@ class PremiumChatbotService
     {
         $role = $this->roleScopeService->normalizeRole($user?->role);
         $config = $this->roleScopeService->getRoleConfig($user);
-        $intent = $this->detectSystemIntent($message, $sessionContext);
+        $intent = $this->detectSystemIntent($message, $role, $sessionContext);
 
         if ($intent !== 'legacy_general') {
             $response = $this->systemAssistantResponse($user, $role, $intent, $message, $sessionContext);
             $formattedResponse = $this->formatResponse($response, $role, $channel, $intent);
-            $this->storeContext($user?->id, $intent, $message, $formattedResponse, $channel);
+            $this->storeContext($user?->id, $intent, $message, $formattedResponse, $channel, $sessionContext);
 
             return $formattedResponse;
         }
 
         $intent = $this->detectIntentAdvanced($message);
-        
-        // Check FAQ first for precise answers
-        $faqResponse = $this->enhancedFaqResponse($message, $role);
-        if ($faqResponse && $faqResponse['confidence'] > 0.8) {
-            $formattedResponse = $this->formatResponse($faqResponse, $role, $channel, $intent);
-            $this->storeContext($user?->id, $intent, $message, $formattedResponse, $channel);
 
-            return $formattedResponse;
+        // Intent routing driven by config/chatbot.php
+        $hybridMode = config('chatbot.hybrid_mode', 'faq_first');
+        $isRuleBasedIntent = in_array($intent, config('chatbot.rule_based_intents', []), true);
+        $aiEligible = !$isRuleBasedIntent && $this->isAiEligibleIntent($intent);
+
+        // FAQ first (faq_first / smart), unless ai_first mode with an AI-eligible intent
+        $faqResponse = null;
+        if (!($hybridMode === 'ai_first' && $aiEligible)) {
+            $faqResponse = $this->enhancedFaqResponse($message, $role, $hybridMode === 'smart');
+            if ($faqResponse && $faqResponse['confidence'] > 0.8) {
+                $formattedResponse = $this->formatResponse($faqResponse, $role, $channel, $intent);
+                $this->storeContext($user?->id, $intent, $message, $formattedResponse, $channel, $sessionContext);
+
+                return $formattedResponse;
+            }
         }
-        
+
+        // AI-eligible intents reach Gemini directly — not gated behind FAQ confidence
+        if ($aiEligible && $this->aiService->isEnabled()) {
+            $aiResponse = $this->aiService->generateResponse($message, $role);
+            if ($aiResponse) {
+                $response = [
+                    'message' => $aiResponse['message'],
+                    'suggestions' => $aiResponse['suggestions'] ?? [],
+                    'source' => $aiResponse['source'] ?? 'ai',
+                    'confidence' => 0.75,
+                ];
+                $formattedResponse = $this->formatResponse($response, $role, $channel, $intent);
+                $this->storeContext($user?->id, $intent, $message, $formattedResponse, $channel, $sessionContext);
+
+                return $formattedResponse;
+            }
+
+            // ai_first mode: fall back to FAQ when the AI call fails
+            if ($hybridMode === 'ai_first' && $faqResponse === null) {
+                $faqResponse = $this->enhancedFaqResponse($message, $role);
+                if ($faqResponse && $faqResponse['confidence'] > 0.8) {
+                    $formattedResponse = $this->formatResponse($faqResponse, $role, $channel, $intent);
+                    $this->storeContext($user?->id, $intent, $message, $formattedResponse, $channel, $sessionContext);
+
+                    return $formattedResponse;
+                }
+            }
+        }
+
         // Get contextual response based on intent
         $response = match ($intent) {
             'greeting' => $this->greetingResponse($role, $user),
@@ -132,9 +168,29 @@ class PremiumChatbotService
         $formattedResponse = $this->formatResponse($response, $role, $channel, $intent);
 
         // Store context for follow-up (with full response for logging)
-        $this->storeContext($user?->id, $intent, $message, $formattedResponse, $channel);
+        $this->storeContext($user?->id, $intent, $message, $formattedResponse, $channel, $sessionContext);
 
         return $formattedResponse;
+    }
+
+    /**
+     * Whether the detected intent is allowed to use the AI service, per
+     * chatbot.ai_eligible_intents / chatbot.ai_for_unknown_intents config.
+     */
+    private function isAiEligibleIntent(string $intent): bool
+    {
+        // Map internal intent names onto the config's vocabulary
+        $aliases = [
+            'farewell' => 'goodbye',
+            'support' => 'help',
+        ];
+        $configIntent = $aliases[$intent] ?? $intent;
+
+        if (in_array($configIntent, config('chatbot.ai_eligible_intents', []), true)) {
+            return true;
+        }
+
+        return $intent === 'general' && (bool) config('chatbot.ai_for_unknown_intents', true);
     }
 
     /**
@@ -232,7 +288,7 @@ class PremiumChatbotService
         return 'general';
     }
 
-    private function detectSystemIntent(string $message, array $context = []): string
+    private function detectSystemIntent(string $message, string $role = 'guest', array $context = []): string
     {
         $text = strtolower(trim($message));
 
@@ -240,24 +296,31 @@ class PremiumChatbotService
             return 'greeting';
         }
 
-        if (preg_match('/\b(payment history|history ng payment|paid history|payments)\b/i', $text)) {
-            return 'payment_history';
+        // Customer-private payment intents — staff wording containing
+        // "pay"/"payment" must not shadow staff intents (P1-6), and the
+        // staff-only pending_payments check must not shadow these for
+        // customers, so they are evaluated first.
+        if ($role === 'customer') {
+            if (preg_match('/\b(payment history|history ng payment|paid history|payments)\b/i', $text)) {
+                return 'payment_history';
+            }
+
+            if (preg_match('/\b(help|tulong|paano|what can you do|guide|how do i|how to|how can)\b/i', $text)
+                && preg_match('/\b(upload|proof|pay|payment|bayad|magbayad)\b/i', $text)) {
+                return 'upload_payment_help';
+            }
+
+            if (preg_match('/\b(upload|proof|resibo|receipt|pay|payment|bayad|paid na ba|bayad na)\b/i', $text)) {
+                return 'check_payment_status';
+            }
         }
 
         if (preg_match('/\b(pending payment|payment proof|proofs|verify payment|verification|bayad.*pending)\b/i', $text)) {
             return 'pending_payments';
         }
 
-        if (preg_match('/\b(help|tulong|paano|how|what can you do|guide)\b/i', $text)) {
-            if (preg_match('/\b(upload|proof|pay|payment|bayad|magbayad)\b/i', $text)) {
-                return 'upload_payment_help';
-            }
-
+        if (preg_match('/\b(help|tulong|paano|what can you do|guide|how do i|how to|how can)\b/i', $text)) {
             return 'help';
-        }
-
-        if (preg_match('/\b(upload|proof|resibo|receipt|pay|payment|bayad|paid na ba|bayad na)\b/i', $text)) {
-            return 'check_payment_status';
         }
 
         if (preg_match('/\b(low stock|reorder|kulang.*stock|critical stock)\b/i', $text)) {
@@ -820,48 +883,99 @@ class PremiumChatbotService
 
     /**
      * Enhanced FAQ Response with Confidence Score
+     *
+     * Scope isolation (P0-3): only FAQs scoped to 'general', 'all', or the
+     * caller's role are eligible — role-scoped FAQs never leak across roles.
+     *
+     * Matching (P1-5): keyword-overlap scoring instead of reversed-substring
+     * checks. A FAQ matches when >=50% of its keywords appear in the message,
+     * or >=50% of its question's >3-char words appear. Highest scorer wins.
+     * In strict mode ('smart' hybrid), only a full match (ratio 1.0) qualifies.
      */
-    private function enhancedFaqResponse(string $message, string $role): ?array
+    private function enhancedFaqResponse(string $message, string $role, bool $strict = false): ?array
     {
-        $normalizedMessage = strtolower($message);
-        
-        // Load all active FAQs from cache (10-min TTL), then match in-memory
+        $normalizedMessage = $this->normalizeForMatching($message);
+
+        // Load all active FAQs from cache (10-min TTL), then match in-memory.
+        // Invalidated by Admin\ChatbotFaqController on every mutation.
         $allFaqs = Cache::remember('chatbot_faqs_all', 600, function () {
             return ChatbotFaq::where('is_active', true)->get();
         });
 
-        $faq = $allFaqs->first(function ($f) use ($normalizedMessage) {
-            // keywords is cast as array on the model — join into a searchable string
-            $keywordsStr = is_array($f->keywords)
-                ? strtolower(implode(' ', $f->keywords))
-                : strtolower((string) ($f->keywords ?? ''));
-            return str_contains(strtolower($f->question), $normalizedMessage)
-                || str_contains($keywordsStr, $normalizedMessage);
+        $faqs = $allFaqs->filter(function ($f) use ($role) {
+            $scope = strtolower((string) ($f->scope ?? 'general'));
+            return in_array($scope, ['general', 'all', strtolower($role)], true);
         });
-        
-        if ($faq) {
-            return [
-                'message' => $faq->answer,
-                'confidence' => 0.9,
-                'source' => 'faq',
-                'faq_id' => $faq->id,
-                'suggestions' => $this->getRelatedSuggestions($faq->category),
-            ];
-        }
-        
-        // Try AI service if enabled
-        if ($this->aiService->isEnabled()) {
-            $aiResponse = $this->aiService->generateResponse($message, $role);
-            if ($aiResponse) {
-                return [
-                    'message' => $aiResponse,
-                    'confidence' => 0.75,
-                    'source' => 'ai',
-                ];
+
+        $best = null;
+        $bestRatio = 0.0;
+
+        foreach ($faqs as $faq) {
+            $keywords = is_array($faq->keywords) ? $faq->keywords : [];
+            $keywords = array_values(array_filter(
+                array_map(fn ($k) => strtolower(trim((string) $k)), $keywords),
+                fn ($k) => $k !== ''
+            ));
+
+            $questionWords = array_values(array_filter(
+                preg_split('/\s+/', $this->normalizeForMatching((string) $faq->question)),
+                fn ($w) => strlen($w) > 3
+            ));
+
+            $kwScore = 0;
+            foreach ($keywords as $kw) {
+                // Multi-word keyword phrases match on containment; single
+                // words match on word boundaries to avoid partial hits.
+                if (str_contains($kw, ' ')) {
+                    if (str_contains($normalizedMessage, $kw)) {
+                        $kwScore++;
+                    }
+                } elseif (preg_match('/\b' . preg_quote($kw, '/') . '\b/u', $normalizedMessage)) {
+                    $kwScore++;
+                }
+            }
+
+            $qScore = 0;
+            foreach ($questionWords as $w) {
+                if (preg_match('/\b' . preg_quote($w, '/') . '\b/u', $normalizedMessage)) {
+                    $qScore++;
+                }
+            }
+
+            $ratio = max(
+                count($keywords) > 0 ? $kwScore / count($keywords) : 0,
+                count($questionWords) > 0 ? $qScore / count($questionWords) : 0
+            );
+
+            if ($ratio >= 0.5 && $ratio > $bestRatio) {
+                $best = $faq;
+                $bestRatio = $ratio;
             }
         }
-        
-        return null;
+
+        if (!$best) {
+            return null;
+        }
+
+        if ($strict && $bestRatio < 1.0) {
+            return null;
+        }
+
+        return [
+            'message' => $best->answer,
+            'confidence' => 0.9,
+            'source' => 'faq',
+            'faq_id' => $best->id,
+            'match_ratio' => $bestRatio,
+            'suggestions' => $this->getRelatedSuggestions($best->category ?? 'general'),
+        ];
+    }
+
+    private function normalizeForMatching(string $text): string
+    {
+        $text = strtolower($text);
+        $text = preg_replace('/[^\p{L}\p{N}\s]/u', ' ', $text);
+        return trim(preg_replace('/\s+/', ' ', $text));
     }
 
     /**
@@ -1567,7 +1681,7 @@ class PremiumChatbotService
         };
     }
 
-    private function storeContext(?int $userId, string $intent, string $message, ?array $response = null, string $channel = 'web'): void
+    private function storeContext(?int $userId, string $intent, string $message, ?array $response = null, string $channel = 'web', array $sessionContext = []): void
     {
         if ($userId) {
             $this->conversationContext[$userId] = [
@@ -1575,6 +1689,8 @@ class PremiumChatbotService
                 'last_message' => $message,
                 'timestamp' => now(),
             ];
+
+            $conversationId = $sessionContext['conversation_id'] ?? null;
 
             // Persist chatbot log to database
             try {
@@ -1593,6 +1709,7 @@ class PremiumChatbotService
                     'metadata' => [
                         'timestamp' => now()->toIso8601String(),
                         'session_id' => uniqid('chat_', true),
+                        'conversation_id' => $conversationId,
                         'confidence' => $response['confidence'] ?? null,
                         'source' => $response['source'] ?? null,
                         'status' => 'success',

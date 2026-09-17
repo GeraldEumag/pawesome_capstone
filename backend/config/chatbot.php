@@ -16,11 +16,11 @@ return [
     // Get your free Gemini API key from: https://ai.google.dev
     'ai_enabled' => env('CHATBOT_AI_ENABLED', false),
 
-    // Google Gemini API Key (FREE tier: 1,500 requests/day)
+    // Google Gemini API Key (free tier available at https://ai.google.dev)
     'ai_api_key' => env('CHATBOT_AI_API_KEY', null),
 
-    // Model: gemini-1.5-flash (fast/cheap) or gemini-1.5-pro (powerful)
-    'ai_model' => env('CHATBOT_AI_MODEL', 'gemini-1.5-flash'),
+    // Model: gemini-3.6-flash (fast/cheap) or gemini-3.6-pro (powerful)
+    'ai_model' => env('CHATBOT_AI_MODEL', 'gemini-3.6-flash'),
 
     // Google Gemini API endpoint
     'ai_base_url' => env('CHATBOT_AI_BASE_URL', 'https://generativelanguage.googleapis.com/v1beta'),

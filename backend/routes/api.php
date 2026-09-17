@@ -269,12 +269,16 @@ Route::middleware(['auth.api', 'throttle:api'])->prefix('chatbot')->group(functi
     Route::post('message', [SharedChatbotController::class, 'message']);
     Route::get('workflow/booking-options', [ChatbotWorkflowController::class, 'bookingOptions']);
     Route::post('workflow/bookings', [ChatbotWorkflowController::class, 'createBooking'])->middleware('verified');
-    Route::post('workflow/appointments/lookup', [ChatbotWorkflowController::class, 'lookupAppointments']);
+    // Inventory role excluded — no legitimate need to enumerate all appointments/customers
+    Route::post('workflow/appointments/lookup', [ChatbotWorkflowController::class, 'lookupAppointments'])
+        ->middleware('role:customer,receptionist,cashier,manager,admin,veterinary');
     Route::post('workflow/inventory/search', [ChatbotWorkflowController::class, 'searchInventory']);
     // Hotel booking workflow routes
     Route::get('workflow/hotel-options', [ChatbotWorkflowController::class, 'hotelOptions']);
     Route::get('workflow/hotel/availability', [ChatbotWorkflowController::class, 'checkHotelAvailability']);
-    Route::post('workflow/hotel-bookings', [ChatbotWorkflowController::class, 'createHotelBooking'])->middleware('verified');
+    // Only customer-facing + front-desk roles may create hotel bookings via chatbot
+    Route::post('workflow/hotel-bookings', [ChatbotWorkflowController::class, 'createHotelBooking'])
+        ->middleware(['verified', 'role:customer,receptionist,admin']);
 });
 
 Route::middleware(['auth.api', 'throttle:api', 'role:customer'])->prefix('customer')->group(function () {

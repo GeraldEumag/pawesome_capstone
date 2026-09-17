@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\ChatbotFaq;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 
 class ChatbotFaqController extends Controller
 {
@@ -41,6 +42,8 @@ class ChatbotFaqController extends Controller
             'sort_order' => $data['sort_order'] ?? 0,
         ]);
 
+        $this->invalidateFaqCache();
+
         return response()->json([
             'success' => true,
             'data' => $faq,
@@ -68,6 +71,8 @@ class ChatbotFaqController extends Controller
             'sort_order' => $data['sort_order'] ?? 0,
         ]);
 
+        $this->invalidateFaqCache();
+
         return response()->json([
             'success' => true,
             'data' => $faq,
@@ -78,9 +83,24 @@ class ChatbotFaqController extends Controller
     {
         $faq->delete();
 
+        $this->invalidateFaqCache();
+
         return response()->json([
             'success' => true,
             'message' => 'FAQ deleted',
         ]);
+    }
+
+    /**
+     * Clear FAQ caches used by PremiumChatbotService ('chatbot_faqs_all')
+     * and the per-role caches used by KnowledgeBaseService ('chatbot_faqs_{role}').
+     */
+    protected function invalidateFaqCache(): void
+    {
+        Cache::forget('chatbot_faqs_all');
+
+        foreach (['customer', 'receptionist', 'cashier', 'inventory', 'veterinary', 'manager', 'admin', 'guest', 'general'] as $role) {
+            Cache::forget("chatbot_faqs_{$role}");
+        }
     }
 }

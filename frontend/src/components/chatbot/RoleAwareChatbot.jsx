@@ -109,6 +109,11 @@ function saveLiveChatSession(data) {
   } catch { }
 }
 
+const newConversationId = () =>
+  typeof crypto !== "undefined" && crypto.randomUUID
+    ? crypto.randomUUID()
+    : `conv-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+
 // ── Booking flow steps ─────────────────────────────────────────────────────
 const APPT_STEPS = ["select_pet", "select_service", "select_date", "add_notes", "confirm", "done"];
 const HOTEL_STEPS = ["select_pet", "select_checkin", "select_checkout", "select_room", "add_notes", "confirm", "done"];
@@ -135,6 +140,7 @@ const RoleAwareChatbot = ({
     lastEntityType: null,
     lastRequestId: null,
     lastPaymentStatus: null,
+    conversation_id: newConversationId(),
   });
   const [workflowState, setWorkflowState] = useState({
     loading: false,
@@ -182,7 +188,12 @@ const RoleAwareChatbot = ({
       setMessages(cached);
       try {
         const rawCtx = localStorage.getItem(`pawesome_chat_ctx_${role}`);
-        if (rawCtx) setSessionContext(JSON.parse(rawCtx));
+        if (rawCtx) {
+          const parsedCtx = JSON.parse(rawCtx);
+          // Backfill conversation_id for caches written before session tracking
+          if (!parsedCtx.conversation_id) parsedCtx.conversation_id = newConversationId();
+          setSessionContext(parsedCtx);
+        }
       } catch { }
       setIsBootstrapping(false);
       return;
@@ -899,7 +910,13 @@ const RoleAwareChatbot = ({
     setError("");
     setTypingMessage("");
     setIsTyping(false);
-    setSessionContext({ lastIntent: null, lastEntityType: null, lastRequestId: null, lastPaymentStatus: null });
+    setSessionContext({
+      lastIntent: null,
+      lastEntityType: null,
+      lastRequestId: null,
+      lastPaymentStatus: null,
+      conversation_id: newConversationId(),
+    });
     // Clear persisted state so next open starts fresh
     clearChatCache(role);
     saveLiveChatSession(null);
