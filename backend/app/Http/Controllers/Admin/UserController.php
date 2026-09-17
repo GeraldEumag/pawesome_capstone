@@ -3,12 +3,16 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Mail\AccountWelcomeMail;
 use App\Models\Customer;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Str;
 
 class UserController extends Controller
 {
@@ -89,10 +93,38 @@ class UserController extends Controller
             return $user;
         });
 
+        $this->sendWelcomeEmail($user);
+
         return response()->json([
             'message' => 'User created successfully',
             'user' => $user,
         ], 201);
+    }
+
+    /**
+     * Email a new account a set-your-own-password link (reuses the hashed,
+     * expiring password_reset_tokens machinery) so admins never need to
+     * hand out plaintext credentials.
+     */
+    private function sendWelcomeEmail(User $user): void
+    {
+        try {
+            $token = Str::random(64);
+            $table = config('auth.passwords.users.table');
+
+            DB::table($table)->where('email', $user->email)->delete();
+            DB::table($table)->insert([
+                'email' => $user->email,
+                'token' => Hash::make($token),
+                'created_at' => now(),
+            ]);
+
+            Mail::to($user->email)->queue(
+                new AccountWelcomeMail($token, $user->email, $user->name, $user->username, $user->role)
+            );
+        } catch (\Throwable $e) {
+            Log::error('Failed to send welcome email: ' . $e->getMessage());
+        }
     }
 
     public function update(Request $request, $id)

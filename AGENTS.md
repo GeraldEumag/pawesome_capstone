@@ -91,6 +91,13 @@ and customer notifications (`CustomerNotificationMail`).
   React redirects unverified customers to `/verify-email`.
 - Changing email via `PUT /api/auth/profile` re-triggers verification
   (customers only).
+- `POST /api/admin/users` (admin-created accounts) → `AccountWelcomeMail` with
+  a set-your-own-password link (reuses `password_reset_tokens`) — plaintext
+  credentials are never emailed. Admin/seeded accounts are pre-verified
+  (`email_verified_at` set at creation); verification applies to customers only.
+- `User::profile_photo` falls back to an email-derived Gravatar URL
+  (`d=initials`) when no photo is uploaded — every dashboard/navbar shows an
+  identity avatar automatically. Raw value via `getRawOriginal('profile_photo')`.
 
 ### Mailer configuration
 

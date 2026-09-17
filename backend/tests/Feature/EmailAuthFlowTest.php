@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Mail\AccountWelcomeMail;
 use App\Mail\EmailVerificationMail;
 use App\Mail\PasswordResetMail;
 use App\Models\User;
@@ -274,5 +275,72 @@ class EmailAuthFlowTest extends TestCase
         $this->assertSame('staff-new@example.com', $fresh->email);
         $this->assertNotNull($fresh->email_verified_at);
         Mail::assertNothingQueued();
+    }
+
+    /* ---------------------------------------------------------------
+     | Admin-created accounts — welcome email + set-password link
+     * -------------------------------------------------------------- */
+
+    public function test_admin_created_user_receives_welcome_set_password_link(): void
+    {
+        Mail::fake();
+        $admin = User::factory()->create(['role' => 'admin', 'email' => 'admin@example.com']);
+
+        $this->postJson('/api/admin/users', [
+            'name' => 'New Cashier',
+            'first_name' => 'New',
+            'last_name' => 'Cashier',
+            'username' => 'newcashier',
+            'email' => 'newcashier@example.com',
+            'password' => 'TempPass123!',
+            'role' => 'cashier',
+        ], $this->bearer($admin))->assertCreated();
+
+        Mail::assertQueued(AccountWelcomeMail::class, fn ($mail) => $mail->email === 'newcashier@example.com');
+        $this->assertDatabaseHas('password_reset_tokens', ['email' => 'newcashier@example.com']);
+
+        // The emailed token must actually work through the normal reset flow.
+        $token = null;
+        Mail::assertQueued(AccountWelcomeMail::class, function ($mail) use (&$token) {
+            $token = $mail->token;
+            return true;
+        });
+
+        $this->postJson('/api/auth/password/reset', [
+            'email' => 'newcashier@example.com',
+            'token' => $token,
+            'new_password' => 'ChosenPass789!',
+            'new_password_confirmation' => 'ChosenPass789!',
+        ])->assertOk();
+
+        $user = User::where('email', 'newcashier@example.com')->firstOrFail();
+        $this->assertTrue(Hash::check('ChosenPass789!', $user->password));
+    }
+
+    /* ---------------------------------------------------------------
+     | Email-derived avatar (Gravatar fallback)
+     * -------------------------------------------------------------- */
+
+    public function test_user_without_photo_gets_email_derived_avatar(): void
+    {
+        $user = User::factory()->create([
+            'role' => 'customer',
+            'email' => 'avatar@example.com',
+            'profile_photo' => null,
+        ]);
+
+        $expected = md5('avatar@example.com');
+        $this->assertStringContainsString("gravatar.com/avatar/{$expected}", $user->profile_photo);
+    }
+
+    public function test_user_with_uploaded_photo_keeps_it(): void
+    {
+        $user = User::factory()->create([
+            'role' => 'customer',
+            'email' => 'hasphoto@example.com',
+            'profile_photo' => 'profile_photos/abc.jpg',
+        ]);
+
+        $this->assertSame("/api/files/profile-photos/{$user->id}/view", $user->profile_photo);
     }
 }

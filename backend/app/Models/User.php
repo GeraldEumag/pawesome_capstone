@@ -81,10 +81,18 @@ class User extends Authenticatable
     /**
      * Always return the API-accessible URL for the profile photo.
      * This ensures img tags can load it directly without auth headers.
+     * When no photo is uploaded, falls back to the avatar derived from the
+     * account email (Gravatar — real photo if registered, initials otherwise),
+     * so every user has an identity image. The raw stored value is still
+     * available via getRawOriginal('profile_photo').
      */
     public function getProfilePhotoAttribute($value): ?string
     {
-        if (!$value) return null;
+        if (!$value) {
+            $hash = md5(strtolower(trim((string) $this->email)));
+            $name = urlencode($this->name ?: (string) $this->email);
+            return "https://www.gravatar.com/avatar/{$hash}?s=200&d=initials&name={$name}";
+        }
         // Already a full URL or API path (possibly with ?v= cache buster)
         $base = strtok($value, '?');
         if (str_starts_with($base, '/api/') || str_starts_with($base, 'http')) {
