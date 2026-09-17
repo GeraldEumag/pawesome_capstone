@@ -1,71 +1,71 @@
 {
-  "startedAt": "2026-06-25T20:18:37.853Z",
-  "frontendUrl": "http://127.0.0.1:3000",
+  "startedAt": "2026-09-16T23:32:33.040Z",
+  "frontendUrl": "http://localhost:3002",
   "backendUrl": "http://127.0.0.1:8000",
   "login": true,
   "pages": [
     {
       "path": "/manager",
-      "url": "http://127.0.0.1:3000/manager",
+      "url": "http://localhost:3002/manager",
       "rendered": true,
       "stayedOnRoute": true,
-      "textLength": 2745,
+      "textLength": 2707,
       "screenshot": "browser-evidence/manager-payroll-scope/manager-dashboard.png"
     },
     {
       "path": "/manager/staff",
-      "url": "http://127.0.0.1:3000/manager/staff",
+      "url": "http://localhost:3002/manager/staff",
       "rendered": true,
       "stayedOnRoute": true,
-      "textLength": 1370,
+      "textLength": 1273,
       "screenshot": "browser-evidence/manager-payroll-scope/manager-staff.png"
     },
     {
       "path": "/manager/attendance",
-      "url": "http://127.0.0.1:3000/manager/attendance",
+      "url": "http://localhost:3002/manager/attendance",
       "rendered": true,
       "stayedOnRoute": true,
-      "textLength": 1206,
+      "textLength": 1109,
       "screenshot": "browser-evidence/manager-payroll-scope/manager-attendance.png"
     },
     {
       "path": "/manager/leave",
-      "url": "http://127.0.0.1:3000/manager/leave",
+      "url": "http://localhost:3002/manager/leave",
       "rendered": true,
       "stayedOnRoute": true,
-      "textLength": 701,
+      "textLength": 604,
       "screenshot": "browser-evidence/manager-payroll-scope/manager-leave.png"
     },
     {
       "path": "/manager/schedule",
-      "url": "http://127.0.0.1:3000/manager/schedule",
+      "url": "http://localhost:3002/manager/schedule",
       "rendered": true,
       "stayedOnRoute": true,
-      "textLength": 1151,
+      "textLength": 1344,
       "screenshot": "browser-evidence/manager-payroll-scope/manager-schedule.png"
     },
     {
       "path": "/manager/payroll",
-      "url": "http://127.0.0.1:3000/manager/payroll",
+      "url": "http://localhost:3002/manager/payroll",
       "rendered": true,
       "stayedOnRoute": true,
-      "textLength": 1179,
+      "textLength": 1120,
       "screenshot": "browser-evidence/manager-payroll-scope/manager-payroll.png"
     },
     {
       "path": "/manager/payroll/computation",
-      "url": "http://127.0.0.1:3000/manager/payroll/computation",
+      "url": "http://localhost:3002/manager/payroll",
       "rendered": true,
       "stayedOnRoute": true,
-      "textLength": 554,
+      "textLength": 1120,
       "screenshot": "browser-evidence/manager-payroll-scope/manager-payroll-computation.png"
     },
     {
       "path": "/manager/reports",
-      "url": "http://127.0.0.1:3000/manager/reports",
+      "url": "http://localhost:3002/manager/reports",
       "rendered": true,
       "stayedOnRoute": true,
-      "textLength": 1367,
+      "textLength": 1316,
       "screenshot": "browser-evidence/manager-payroll-scope/manager-reports.png"
     }
   ],
@@ -74,176 +74,99 @@
     {
       "status": "REQUEST_FAILED",
       "method": "GET",
-      "url": "http://127.0.0.1:8000/api/manager/reports/payments",
-      "page": "http://127.0.0.1:3000/manager",
+      "url": "http://localhost:8000/api/manager/reports/inventory",
+      "page": "http://localhost:3002/manager",
       "failure": "net::ERR_ABORTED"
     },
     {
       "status": "REQUEST_FAILED",
       "method": "GET",
-      "url": "http://127.0.0.1:8000/api/notifications?role=manager",
-      "page": "http://127.0.0.1:3000/manager",
+      "url": "http://localhost:8000/api/manager/dashboard",
+      "page": "http://localhost:3002/manager",
       "failure": "net::ERR_ABORTED"
     },
     {
       "status": "REQUEST_FAILED",
       "method": "GET",
-      "url": "http://127.0.0.1:8000/api/manager/reports/veterinary-services",
-      "page": "http://127.0.0.1:3000/manager",
+      "url": "http://localhost:8000/api/manager/reports/inventory",
+      "page": "http://localhost:3002/manager",
       "failure": "net::ERR_ABORTED"
     },
     {
       "status": "REQUEST_FAILED",
       "method": "GET",
-      "url": "http://127.0.0.1:8000/api/manager/reports/inventory",
-      "page": "http://127.0.0.1:3000/manager",
+      "url": "http://localhost:8000/api/manager/reports/payments",
+      "page": "http://localhost:3002/manager",
       "failure": "net::ERR_ABORTED"
     },
     {
       "status": "REQUEST_FAILED",
       "method": "GET",
-      "url": "http://127.0.0.1:8000/api/manager/reports/payments",
-      "page": "http://127.0.0.1:3000/manager",
+      "url": "http://localhost:8000/api/settings/public",
+      "page": "http://localhost:3002/manager",
       "failure": "net::ERR_ABORTED"
     },
     {
       "status": "REQUEST_FAILED",
       "method": "GET",
-      "url": "http://127.0.0.1:8000/api/manager/reports/inventory",
-      "page": "http://127.0.0.1:3000/manager",
+      "url": "http://localhost:8000/api/manager/history",
+      "page": "http://localhost:3002/manager",
       "failure": "net::ERR_ABORTED"
     },
     {
       "status": "REQUEST_FAILED",
       "method": "GET",
-      "url": "http://127.0.0.1:8000/api/settings/public",
-      "page": "http://127.0.0.1:3000/manager",
+      "url": "http://localhost:8000/api/manager/reports/veterinary-services",
+      "page": "http://localhost:3002/manager",
       "failure": "net::ERR_ABORTED"
     },
     {
       "status": "REQUEST_FAILED",
       "method": "GET",
-      "url": "http://127.0.0.1:8000/api/manager/dashboard",
-      "page": "http://127.0.0.1:3000/manager",
+      "url": "http://localhost:8000/api/manager/reports/veterinary-services",
+      "page": "http://localhost:3002/manager",
       "failure": "net::ERR_ABORTED"
     },
     {
       "status": "REQUEST_FAILED",
       "method": "GET",
-      "url": "http://127.0.0.1:8000/api/manager/reports/services",
-      "page": "http://127.0.0.1:3000/manager",
+      "url": "http://localhost:8000/api/manager/history",
+      "page": "http://localhost:3002/manager",
       "failure": "net::ERR_ABORTED"
     },
     {
       "status": "REQUEST_FAILED",
       "method": "GET",
-      "url": "http://127.0.0.1:8000/api/settings/public",
-      "page": "http://127.0.0.1:3000/manager",
+      "url": "http://localhost:8000/api/notifications?role=manager",
+      "page": "http://localhost:3002/manager",
       "failure": "net::ERR_ABORTED"
     },
     {
       "status": "REQUEST_FAILED",
       "method": "GET",
-      "url": "http://127.0.0.1:8000/api/manager/reports/services",
-      "page": "http://127.0.0.1:3000/manager",
+      "url": "http://localhost:8000/api/manager/reports/services",
+      "page": "http://localhost:3002/manager",
       "failure": "net::ERR_ABORTED"
     },
     {
       "status": "REQUEST_FAILED",
       "method": "GET",
-      "url": "http://127.0.0.1:8000/api/manager/history",
-      "page": "http://127.0.0.1:3000/manager",
+      "url": "http://localhost:8000/api/manager/staff",
+      "page": "http://localhost:3002/manager/staff",
       "failure": "net::ERR_ABORTED"
     },
     {
       "status": "REQUEST_FAILED",
       "method": "GET",
-      "url": "http://127.0.0.1:8000/api/notifications?role=manager",
-      "page": "http://127.0.0.1:3000/manager",
+      "url": "http://localhost:8000/api/manager/schedules",
+      "page": "http://localhost:3002/manager/schedule",
       "failure": "net::ERR_ABORTED"
     },
     {
       "status": "REQUEST_FAILED",
       "method": "GET",
-      "url": "http://127.0.0.1:8000/api/manager/reports/veterinary-services",
-      "page": "http://127.0.0.1:3000/manager",
-      "failure": "net::ERR_ABORTED"
-    },
-    {
-      "status": "REQUEST_FAILED",
-      "method": "GET",
-      "url": "http://127.0.0.1:8000/api/manager/history",
-      "page": "http://127.0.0.1:3000/manager",
-      "failure": "net::ERR_ABORTED"
-    },
-    {
-      "status": "REQUEST_FAILED",
-      "method": "GET",
-      "url": "http://127.0.0.1:8000/api/manager/staff",
-      "page": "http://127.0.0.1:3000/manager/staff",
-      "failure": "net::ERR_ABORTED"
-    },
-    {
-      "status": "REQUEST_FAILED",
-      "method": "GET",
-      "url": "http://127.0.0.1:8000/api/notifications?role=manager",
-      "page": "http://127.0.0.1:3000/manager/staff",
-      "failure": "net::ERR_ABORTED"
-    },
-    {
-      "status": "REQUEST_FAILED",
-      "method": "GET",
-      "url": "http://127.0.0.1:8000/api/manager/leaves?",
-      "page": "http://127.0.0.1:3000/manager/leave",
-      "failure": "net::ERR_ABORTED"
-    },
-    {
-      "status": "REQUEST_FAILED",
-      "method": "GET",
-      "url": "http://127.0.0.1:8000/api/notifications?role=manager",
-      "page": "http://127.0.0.1:3000/manager/leave",
-      "failure": "net::ERR_ABORTED"
-    },
-    {
-      "status": "REQUEST_FAILED",
-      "method": "GET",
-      "url": "http://127.0.0.1:8000/api/manager/schedules",
-      "page": "http://127.0.0.1:3000/manager/schedule",
-      "failure": "net::ERR_ABORTED"
-    },
-    {
-      "status": "REQUEST_FAILED",
-      "method": "GET",
-      "url": "http://127.0.0.1:8000/api/notifications?role=manager",
-      "page": "http://127.0.0.1:3000/manager/schedule",
-      "failure": "net::ERR_ABORTED"
-    },
-    {
-      "status": "REQUEST_FAILED",
-      "method": "GET",
-      "url": "http://127.0.0.1:8000/api/notifications?role=manager",
-      "page": "http://127.0.0.1:3000/manager/schedule",
-      "failure": "net::ERR_ABORTED"
-    },
-    {
-      "status": "REQUEST_FAILED",
-      "method": "GET",
-      "url": "http://127.0.0.1:8000/api/notifications?role=manager",
-      "page": "http://127.0.0.1:3000/manager/payroll",
-      "failure": "net::ERR_ABORTED"
-    },
-    {
-      "status": "REQUEST_FAILED",
-      "method": "GET",
-      "url": "http://127.0.0.1:8000/api/manager/payroll?",
-      "page": "http://127.0.0.1:3000/manager/payroll",
-      "failure": "net::ERR_ABORTED"
-    },
-    {
-      "status": "REQUEST_FAILED",
-      "method": "GET",
-      "url": "http://127.0.0.1:8000/api/notifications?role=manager",
-      "page": "http://127.0.0.1:3000/manager/payroll/computation",
+      "url": "http://localhost:8000/api/notifications?role=manager",
+      "page": "http://localhost:3002/manager/payroll",
       "failure": "net::ERR_ABORTED"
     }
   ],

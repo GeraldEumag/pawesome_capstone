@@ -14,6 +14,21 @@ use Illuminate\Http\Request;
 
 class ChatbotWorkflowController extends Controller
 {
+    /**
+     * Boarding statuses that occupy/hold a room and therefore block new
+     * overlapping bookings. Terminal statuses (checked_out, completed,
+     * cancelled, rejected) do not block.
+     */
+    private const BLOCKING_BOARDING_STATUSES = [
+        'pending',
+        'approved',
+        'scheduled',
+        'confirmed',
+        'checked_in',
+        'in_care',
+        'ready_for_pickup',
+    ];
+
     public function bookingOptions(Request $request): JsonResponse
     {
         $user = $request->user();
@@ -173,7 +188,7 @@ class ChatbotWorkflowController extends Controller
         // Get available rooms for the date range
         $query = HotelRoom::where('status', 'available')
             ->whereDoesntHave('boardings', function ($q) use ($data) {
-                $q->where('status', 'checked_in')
+                $q->whereIn('status', self::BLOCKING_BOARDING_STATUSES)
                     ->where(function ($dateQuery) use ($data) {
                         $dateQuery->whereBetween('check_in', [$data['check_in'], $data['check_out']])
                             ->orWhereBetween('check_out', [$data['check_in'], $data['check_out']])
@@ -236,7 +251,7 @@ class ChatbotWorkflowController extends Controller
             $room = HotelRoom::find($data['hotel_room_id']);
             // Check if room is available for dates
             $conflict = Boarding::where('hotel_room_id', $room->id)
-                ->where('status', 'checked_in')
+                ->whereIn('status', self::BLOCKING_BOARDING_STATUSES)
                 ->where(function ($q) use ($data) {
                     $q->whereBetween('check_in', [$data['check_in'], $data['check_out']])
                         ->orWhereBetween('check_out', [$data['check_in'], $data['check_out']])
@@ -253,7 +268,7 @@ class ChatbotWorkflowController extends Controller
             // Auto-assign first available room
             $room = HotelRoom::where('status', 'available')
                 ->whereDoesntHave('boardings', function ($q) use ($data) {
-                    $q->where('status', 'checked_in')
+                    $q->whereIn('status', self::BLOCKING_BOARDING_STATUSES)
                         ->where(function ($dateQuery) use ($data) {
                             $dateQuery->whereBetween('check_in', [$data['check_in'], $data['check_out']])
                                 ->orWhereBetween('check_out', [$data['check_in'], $data['check_out']])

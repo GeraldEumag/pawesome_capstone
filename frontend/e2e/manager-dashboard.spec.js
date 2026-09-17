@@ -88,6 +88,7 @@ test.describe('Manager Dashboard end-to-end', () => {
     const forbiddenPaths = ['/admin'];
     for (const path of forbiddenPaths) {
       await page.goto(frontendUrl + path);
+      await page.waitForURL(new RegExp(dashboardPath), { timeout: 8000 }).catch(() => {});
       const currentUrl = page.url();
       const blocked = currentUrl.includes('/unauthorized') || currentUrl.includes('/forbidden') || currentUrl.includes(dashboardPath) || await page.locator('text=/access denied|forbidden|unauthorized/i').first().isVisible().catch(() => false);
       expect(blocked).toBeTruthy();

@@ -69,13 +69,92 @@ php pawesome_report_reconciliation_audit.php   # Gate D: Report reconciliation
 | veterinary | vet@example.com | Password123! |
 | customer | customer@example.com | Password123! |
 
+## Email & Verification
+
+Transactional email covers: customer email verification, password reset links,
+and customer notifications (`CustomerNotificationMail`).
+
+### Flow
+
+- `POST /api/auth/register` → creates customer (`email_verified_at = null`) →
+  hashed token in `email_verification_tokens` (60-min expiry) → queued
+  `EmailVerificationMail` → link `{FRONTEND_URL}/verify-email?token=…&email=…`
+- `POST /api/auth/email/verify` → sets `email_verified_at`, deletes token
+- `POST /api/auth/email/resend` → generic response (no account enumeration)
+- `POST /api/auth/password/forgot` → hashed token in `password_reset_tokens`
+  (60-min expiry) → queued `PasswordResetMail` → link
+  `{FRONTEND_URL}/forgot-password?email=…&token=…`
+- `POST /api/auth/password/reset` → generic "invalid or expired" errors
+  (no account enumeration)
+- `verified` middleware (`EnsureEmailIsVerified`) blocks unverified **customers**
+  from all booking/checkout POSTs; staff roles are exempt. Login is allowed —
+  React redirects unverified customers to `/verify-email`.
+- Changing email via `PUT /api/auth/profile` re-triggers verification
+  (customers only).
+- `POST /api/admin/users` (admin-created accounts) → `AccountWelcomeMail` with
+  a set-your-own-password link (reuses `password_reset_tokens`) — plaintext
+  credentials are never emailed. Admin/seeded accounts are pre-verified
+  (`email_verified_at` set at creation); verification applies to customers only.
+- `User::profile_photo` falls back to a locally generated initials avatar
+  (data-URI SVG, deterministic color per name) when no photo is uploaded —
+  every dashboard/navbar shows an identity avatar automatically with no
+  external service dependency. Raw value via `getRawOriginal('profile_photo')`.
+
+### Mailer configuration
+
+| Environment | Driver | Notes |
+| --- | --- | --- |
+| Local dev | `MAIL_MAILER=log` | Emails (incl. links) written to `storage/logs/laravel.log` |
+| Tests | `MAIL_MAILER=array` | `phpunit.xml` / `.env.testing`; use `Mail::fake()` |
+| Demo/Prod | Brevo SMTP | `smtp-relay.brevo.com:587`, `MAIL_SCHEME=smtp` (STARTTLS) |
+
+Brevo setup: app.brevo.com → **SMTP & API → SMTP** → use the **SMTP login**
+as `MAIL_USERNAME` and a generated **SMTP key** as `MAIL_PASSWORD` (not the
+REST API key). `MAIL_FROM_ADDRESS` must be a Brevo-verified sender
+(SMTP & API → Senders; single-sender verification works without a domain).
+Never put mail credentials in frontend code or `VITE_*` vars.
+
+Dev alternative: Mailtrap (`sandbox.smtp.mailtrap.io:2525`) — see commented
+block in `backend/.env.example`.
+
+### Queue
+
+Mail is queued (`ShouldQueue`). `QUEUE_CONNECTION=sync` is fine for dev and
+for the Render free tier — render.yaml uses `sync` because no worker service
+is provisioned. If a `type: worker` running `php artisan queue:work` is added,
+switch `QUEUE_CONNECTION` back to `redis`.
+
+### Domain authentication (deployment requirement — not yet implemented)
+
+Without a real sending domain, SPF/DKIM/DMARC **cannot** be configured — this
+is a documented requirement, not a claim. When a domain is available:
+
+1. Brevo → **Senders, Domains & Dedicated IPs → Domains** → add domain.
+2. Publish the DNS records Brevo provides: SPF (`v=spf1 include:spf.brevo.com …`),
+   DKIM (Brevo-generated `mail._domainkey` TXT), and DMARC
+   (`_dmarc` TXT, e.g. `v=DMARC1; p=quarantine; rua=mailto:postmaster@domain`).
+3. Set `MAIL_FROM_ADDRESS` to an address on that domain.
+
+### Tests
+
+`backend/tests/Feature/EmailAuthFlowTest.php` covers the full flow.
+Note: the suite requires MySQL (migrations use MySQL-specific syntax);
+sqlite `:memory:` fails. Run against a dedicated test DB:
+
+```bash
+mysql -u root -e "CREATE DATABASE IF NOT EXISTS pawesome_test;"
+DB_CONNECTION=mysql DB_DATABASE=pawesome_test php artisan test --filter=EmailAuthFlowTest
+```
+
 ## Production Deployment
 
 ### Backend (Render)
 - Config: `backend/render.yaml`
 - Set `APP_ENV=production`, `APP_DEBUG=false`
 - Auto-generates `APP_KEY` and `DB_PASSWORD`
-- Uses Redis for cache/queue, file for sessions
+- Uses Redis for cache, file for sessions, `sync` queue (no worker provisioned)
+- `MAIL_USERNAME`/`MAIL_PASSWORD` are `sync: false` — set them in the Render
+  dashboard from the Brevo SMTP credentials
 
 ### Frontend (Vercel)
 - Config: `frontend/vercel.json`
@@ -91,6 +170,9 @@ php pawesome_report_reconciliation_audit.php   # Gate D: Report reconciliation
 - [ ] `CACHE_STORE=redis`
 - [ ] `SESSION_DRIVER=file` or Redis
 - [ ] `VITE_API_BASE_URL` points to production backend
+- [ ] `MAIL_USERNAME`/`MAIL_PASSWORD` set in Render dashboard (Brevo SMTP key)
+- [ ] `MAIL_FROM_ADDRESS` is a Brevo-verified sender
+- [ ] SPF/DKIM/DMARC DNS records published (requires a real domain)
 
 ## Known Windows Development Issues
 

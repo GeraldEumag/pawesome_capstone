@@ -34,6 +34,12 @@ class ApiTokenAuth
             return response()->json(['message' => 'Unauthenticated.'], 401);
         }
 
+        // Deactivated accounts must not retain API access via previously issued
+        // tokens. The database user record is authoritative — not the token.
+        if (isset($user->is_active) && !$user->is_active) {
+            return response()->json(['message' => 'Unauthenticated.'], 401);
+        }
+
         if (method_exists($user, 'withAccessToken')) {
             $user->withAccessToken($accessToken);
         }

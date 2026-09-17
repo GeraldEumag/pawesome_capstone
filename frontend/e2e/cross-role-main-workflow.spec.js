@@ -12,7 +12,7 @@ const accounts = {
   customer: { email: "customer@example.com", password: "Password123!", dashboard: "/customer" },
   receptionist: { email: "receptionist@example.com", password: "Password123!", dashboard: "/receptionist" },
   veterinary: { email: "vet@example.com", password: "Password123!", dashboard: "/veterinary" },
-  manager: { email: "manager@example.com", password: "password123", dashboard: "/manager" },
+  manager: { email: "manager@example.com", password: "Password123!", dashboard: "/manager" },
 };
 
 const run = {

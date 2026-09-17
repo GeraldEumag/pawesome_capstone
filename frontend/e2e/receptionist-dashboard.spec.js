@@ -129,6 +129,8 @@ test.describe('Receptionist Dashboard end-to-end', () => {
     const forbiddenPaths = ['/admin', '/manager'];
     for (const path of forbiddenPaths) {
       await page.goto(frontendUrl + path);
+      // ProtectedRoute performs a client-side redirect — wait for it to settle.
+      await page.waitForURL(new RegExp(dashboardPath), { timeout: 8000 }).catch(() => {});
       const currentUrl = page.url();
       const blocked = currentUrl.includes('/unauthorized') || 
                       currentUrl.includes('/forbidden') || 

@@ -123,11 +123,11 @@ class CustomerStoreController extends Controller
             $orderType = $request->input('orderType') ?? $request->input('order_type') ?? 'Pick-up';
 
             $computedSubtotal = 0;
+            $serverPrices = [];
 
             foreach ($items as $item) {
                 $productId = $item['product_id'] ?? $item['id'];
                 $quantity = (int) ($item['quantity'] ?? $item['qty'] ?? 1);
-                $price = (float) ($item['price'] ?? $item['unit_price'] ?? 0);
 
                 $inventoryItem = DB::table('inventory_items')
                     ->where('id', $productId)
@@ -142,7 +142,7 @@ class CustomerStoreController extends Controller
                     ], 422);
                 }
 
-                $availableStock = (int) ($inventoryItem->stock ?? $inventoryItem->quantity ?? 0);
+                $availableStock = (int) ($inventoryItem->stock ?? 0);
 
                 if ($availableStock < $quantity) {
                     DB::rollBack();
@@ -153,8 +153,18 @@ class CustomerStoreController extends Controller
                     ], 422);
                 }
 
-                $computedSubtotal += $price * $quantity;
+                // Price is authoritative from the database — the client-supplied
+                // price/line_total/total_amount values are never persisted.
+                $serverPrice = (float) $inventoryItem->price;
+                $serverPrices[$productId] = $serverPrice;
+                $computedSubtotal += $serverPrice * $quantity;
             }
+
+            // Server-side totals: client totals are display hints only.
+            $subtotal = $computedSubtotal;
+            $discountAmount = min(max($discountAmount, 0), $computedSubtotal);
+            $discountApplied = min(max($discountApplied, 0), $computedSubtotal);
+            $totalAmount = max($computedSubtotal - $discountAmount, 0);
 
             $orderData = [
                 'created_at' => now(),
@@ -191,8 +201,8 @@ class CustomerStoreController extends Controller
             foreach ($items as $item) {
                 $productId = $item['product_id'] ?? $item['id'];
                 $quantity = (int) ($item['quantity'] ?? $item['qty'] ?? 1);
-                $price = (float) ($item['price'] ?? $item['unit_price'] ?? 0);
-                $lineTotal = (float) ($item['line_total'] ?? $item['subtotal'] ?? ($price * $quantity));
+                $price = $serverPrices[$productId] ?? 0;
+                $lineTotal = $price * $quantity;
 
                 $itemData = [
                     'created_at' => now(),

@@ -10,14 +10,18 @@ class AiChatbotService
     private ?string $apiKey;
     private string $model;
     private string $baseUrl;
+    private int $timeout;
+    private int $maxTokens;
     private bool $enabled;
 
     public function __construct()
     {
         $this->apiKey = config('chatbot.ai_api_key');
-        // Gemini models: gemini-1.5-flash (fast/cheap), gemini-1.5-pro (powerful)
-        $this->model = config('chatbot.ai_model', 'gemini-1.5-flash');
+        // Gemini models: gemini-3.6-flash (fast/cheap), gemini-3.6-pro (powerful)
+        $this->model = config('chatbot.ai_model', 'gemini-3.6-flash');
         $this->baseUrl = config('chatbot.ai_base_url', 'https://generativelanguage.googleapis.com/v1beta');
+        $this->timeout = (int) config('chatbot.ai_timeout', 30);
+        $this->maxTokens = (int) config('chatbot.ai_max_tokens', 500);
         $this->enabled = config('chatbot.ai_enabled', false) && !empty($this->apiKey);
     }
 
@@ -41,12 +45,13 @@ class AiChatbotService
         try {
             $systemPrompt = $this->buildSystemPrompt($role, $context);
             
-            // Gemini API endpoint structure
-            $endpoint = "{$this->baseUrl}/models/{$this->model}:generateContent?key={$this->apiKey}";
-            
+            // Gemini API endpoint — key sent via header so it never lands in URLs or logs
+            $endpoint = "{$this->baseUrl}/models/{$this->model}:generateContent";
+
             $response = Http::withHeaders([
                 'Content-Type' => 'application/json',
-            ])->timeout(30)->post($endpoint, [
+                'x-goog-api-key' => $this->apiKey,
+            ])->timeout($this->timeout)->post($endpoint, [
                 'contents' => [
                     [
                         'role' => 'user',
@@ -57,7 +62,7 @@ class AiChatbotService
                 ],
                 'generationConfig' => [
                     'temperature' => 0.7,
-                    'maxOutputTokens' => 500,
+                    'maxOutputTokens' => $this->maxTokens,
                     'topP' => 0.95,
                     'topK' => 40,
                 ],
@@ -282,10 +287,11 @@ class AiChatbotService
         }
 
         try {
-            $endpoint = "{$this->baseUrl}/models/{$this->model}:generateContent?key={$this->apiKey}";
-            
+            $endpoint = "{$this->baseUrl}/models/{$this->model}:generateContent";
+
             $response = Http::withHeaders([
                 'Content-Type' => 'application/json',
+                'x-goog-api-key' => $this->apiKey,
             ])->timeout(15)->post($endpoint, [
                 'contents' => [
                     [

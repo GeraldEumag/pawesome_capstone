@@ -36,8 +36,12 @@ services:
         value: redis
       - key: CACHE_STORE
         value: redis
+      # Only mailables use the queue; sync keeps email delivery working on the
+      # free tier (no background worker service is provisioned). If you add a
+      # `type: worker` service running `php artisan queue:work`, switch this
+      # back to redis.
       - key: QUEUE_CONNECTION
-        value: redis
+        value: sync
       - key: REDIS_HOST
         value: redis
       - key: REDIS_PORT
@@ -50,6 +54,25 @@ services:
         value: pawesome-frontend.vercel.app
       - key: FILESYSTEM_DISK
         value: public
+      # Brevo SMTP — set MAIL_USERNAME/MAIL_PASSWORD in the Render dashboard
+      # (SMTP key from Brevo → SMTP & API → SMTP). MAIL_FROM_ADDRESS must be a
+      # Brevo-verified sender.
+      - key: MAIL_MAILER
+        value: smtp
+      - key: MAIL_SCHEME
+        value: smtp
+      - key: MAIL_HOST
+        value: smtp-relay.brevo.com
+      - key: MAIL_PORT
+        value: 587
+      - key: MAIL_FROM_ADDRESS
+        value: kiezerherristpascua@gmail.com
+      - key: MAIL_FROM_NAME
+        value: Pawesome Retreat
+      - key: MAIL_USERNAME
+        sync: false
+      - key: MAIL_PASSWORD
+        sync: false
       - key: LOG_LEVEL
         value: error
 

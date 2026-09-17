@@ -64,11 +64,6 @@ class POSController extends Controller
         try {
             DB::beginTransaction();
 
-            // Use frontend-computed VAT-inclusive totals
-            $subtotal = (float) ($payload['subtotal'] ?? 0);
-            $taxAmount = (float) ($payload['tax'] ?? 0);
-            $discountAmount = (float) ($payload['discount'] ?? 0);
-            $totalAmount = (float) ($payload['total'] ?? 0);
             $saleCustomerId = null;
 
             if (!empty($payload['customer_id'])) {
@@ -81,18 +76,11 @@ class POSController extends Controller
                 }
             }
 
-            // Validate item-level math roughly matches frontend totals
-            $computedSubtotal = 0;
-            foreach ($payload['items'] as $item) {
-                $itemTotal = $item['unit_price'] * $item['quantity'];
-                $itemDiscount = $item['discount_amount'] ?? 0;
-                $computedSubtotal += ($itemTotal - $itemDiscount);
-            }
-            if (abs($computedSubtotal - $subtotal) > 0.10) {
-                $subtotal = $computedSubtotal;
-                $taxAmount = round($subtotal * 0.12 / 1.12, 2);
-                $totalAmount = max($subtotal - $discountAmount, 0);
-            }
+            // Authoritative pricing is resolved server-side from the database.
+            // Client-supplied unit_price/subtotal/tax/discount/total are ignored
+            // for persistence — only item IDs, quantities and discounts are inputs.
+            $serverUnitPrices = [];
+            $serverItems = [];
 
             foreach ($payload['items'] as $item) {
                 if (($item['item_type'] ?? null) !== 'product' || empty($item['item_id'])) {
@@ -113,7 +101,34 @@ class POSController extends Controller
                 if ((int) $inventoryItem->stock < (int) $item['quantity']) {
                     throw new \Exception("Insufficient stock for {$inventoryItem->name}. Available: {$inventoryItem->stock}, Requested: {$item['quantity']}");
                 }
+
+                $serverUnitPrices['product:' . $item['item_id']] = (float) $inventoryItem->price;
             }
+
+            foreach ($payload['items'] as $index => $item) {
+                $quantity = (int) $item['quantity'];
+
+                if (($item['item_type'] ?? null) === 'product') {
+                    $unitPrice = $serverUnitPrices['product:' . $item['item_id']];
+                } else {
+                    $service = Service::find($item['service_id']);
+                    $unitPrice = (float) ($service->price ?? 0);
+                }
+
+                $lineGross = $unitPrice * $quantity;
+                $lineDiscount = min(max((float) ($item['discount_amount'] ?? 0), 0), $lineGross);
+
+                $serverItems[$index] = [
+                    'unit_price' => $unitPrice,
+                    'discount_amount' => $lineDiscount,
+                    'total_price' => $lineGross - $lineDiscount,
+                ];
+            }
+
+            $subtotal = array_sum(array_column($serverItems, 'total_price'));
+            $taxAmount = round($subtotal * 0.12 / 1.12, 2);
+            $discountAmount = min(max((float) ($payload['discount'] ?? 0), 0), $subtotal);
+            $totalAmount = max($subtotal - $discountAmount, 0);
 
             // Create the sale. Some upgraded databases keep payment details only
             // in the payments table, while newer schemas also mirror it on sales.
@@ -138,11 +153,9 @@ class POSController extends Controller
 
             $sale = Sale::create($saleData);
 
-            // Create sale items
-            foreach ($payload['items'] as $item) {
-                $itemTotal = $item['unit_price'] * $item['quantity'];
-                $itemDiscount = $item['discount_amount'] ?? 0;
-                $finalTotal = $itemTotal - $itemDiscount;
+            // Create sale items using the server-computed prices resolved above
+            foreach ($payload['items'] as $index => $item) {
+                $serverItem = $serverItems[$index];
 
                 SaleItem::create([
                     'sale_id' => $sale->id,
@@ -151,9 +164,9 @@ class POSController extends Controller
                     'item_name' => $item['item_name'],
                     'item_type' => $item['item_type'],
                     'quantity' => $item['quantity'],
-                    'unit_price' => $item['unit_price'],
-                    'discount_amount' => $itemDiscount,
-                    'total_price' => $finalTotal,
+                    'unit_price' => $serverItem['unit_price'],
+                    'discount_amount' => $serverItem['discount_amount'],
+                    'total_price' => $serverItem['total_price'],
                 ]);
 
                 // Update inventory for products using centralized InventoryService

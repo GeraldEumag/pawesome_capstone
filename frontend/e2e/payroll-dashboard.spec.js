@@ -36,8 +36,9 @@ test.describe('Manager Payroll end-to-end', () => {
 
   test('refresh button reloads data', async ({ page }) => {
     await page.goto(frontendUrl + dashboardPath);
-    await page.locator('button:has-text("refresh"), button:has([data-icon="rotate"]), [title*="refresh" i]').first().click().catch(() => {});
-    await expect(page.locator('.summary-card, [class*="card"]').first()).toBeVisible();
+    await page.locator('button:has-text("refresh"), button:has([data-icon="rotate"]), [title*="refresh" i]')
+      .first().click({ timeout: 3000 }).catch(() => {});
+    await expect(page.locator('.summary-card, [class*="card"]').first()).toBeVisible({ timeout: 15000 });
   });
 
   test('main navigation works', async ({ page }) => {
@@ -69,9 +70,9 @@ test.describe('Manager Payroll end-to-end', () => {
     await page.goto(frontendUrl + dashboardPath);
     await page.waitForLoadState('networkidle');
 
-    // Look for generate payroll button
-    const generateBtn = page.locator('button:has-text("generate"), button:has-text("Generate"), button:has-text("process"), button:has-text("Process"), button:has-text("run"), button:has-text("Run"]').first();
-    const payslipBtn = page.locator('button:has-text("payslip"), button:has-text("Payslip"), button:has-text("view"), button:has-text("View"), a:has-text("payslip"), a:has-text("Payslip"]').first();
+    // Payroll actions are labeled "Compute Payroll" / "Manual Entry" on this page.
+    const generateBtn = page.locator('button:has-text("generate"), button:has-text("Generate"), button:has-text("process"), button:has-text("Process"), button:has-text("run"), button:has-text("Run"), button:has-text("compute"), button:has-text("Compute"), button:has-text("manual"), button:has-text("Manual")').first();
+    const payslipBtn = page.locator('button:has-text("payslip"), button:has-text("Payslip"), button:has-text("view"), button:has-text("View"), a:has-text("payslip"), a:has-text("Payslip")').first();
 
     if (await generateBtn.isVisible().catch(() => false)) {
       await generateBtn.click();
@@ -89,8 +90,10 @@ test.describe('Manager Payroll end-to-end', () => {
     const forbiddenPaths = ['/admin', '/cashier', '/veterinary'];
     for (const path of forbiddenPaths) {
       await page.goto(frontendUrl + path);
+      // ProtectedRoute redirects to the role home (/manager), not this sub-path.
+      await page.waitForURL(new RegExp('/manager'), { timeout: 8000 }).catch(() => {});
       const currentUrl = page.url();
-      const blocked = currentUrl.includes('/unauthorized') || currentUrl.includes('/forbidden') || currentUrl.includes(dashboardPath) || await page.locator('text=/access denied|forbidden|unauthorized/i').first().isVisible().catch(() => false);
+      const blocked = currentUrl.includes('/unauthorized') || currentUrl.includes('/forbidden') || currentUrl.includes('/manager') || await page.locator('text=/access denied|forbidden|unauthorized/i').first().isVisible().catch(() => false);
       expect(blocked).toBeTruthy();
     }
   });

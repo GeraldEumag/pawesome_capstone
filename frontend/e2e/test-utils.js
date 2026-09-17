@@ -4,9 +4,9 @@ const frontendUrl = process.env.E2E_BASE_URL || 'http://127.0.0.1:3000';
 // Default credentials for test accounts (matching the live dev/prototype database)
 const DEFAULT_CREDENTIALS = {
   admin:        { email: 'admin@example.com',      password: 'Password123!' },
-  manager:      { email: 'manager@example.com',    password: 'password123' },
+  manager:      { email: 'manager@example.com',    password: 'Password123!' },
   veterinary:   { email: 'vet@example.com',        password: 'Password123!' },
-  cashier:      { email: 'cashier@example.com',    password: 'password123' },
+  cashier:      { email: 'cashier@example.com',    password: 'Password123!' },
   inventory:    { email: 'inventory@example.com',  password: 'Password123!' },
   receptionist: { email: 'receptionist@example.com', password: 'Password123!' },
   customer:     { email: 'customer@example.com',   password: 'Password123!' },

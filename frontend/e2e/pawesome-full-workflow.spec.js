@@ -25,6 +25,7 @@ const audit = {
   screenshots: [],
   console: [],
   network: [],
+  aborted: [],
   records: {},
   checks: [],
 };
@@ -47,7 +48,7 @@ function writeReport() {
   audit.completedAt = new Date().toISOString();
   const screenshotRows = audit.screenshots.map((s) => `| ${s.name} | \`${s.file}\` |`).join("\n") || "| None | N/A |";
   const checkRows = audit.checks.map((c) => `| ${c.name} | ${c.status} | ${c.detail || ""} |`).join("\n") || "| None | N/A | |";
-  const issueRows = [...audit.console, ...audit.network]
+  const issueRows = [...audit.console, ...audit.network, ...audit.aborted]
     .map((i) => `| ${i.kind || i.type || "network"} | ${i.status || ""} | ${String(i.text || i.url || i.message).replace(/\|/g, "\\|")} |`)
     .join("\n") || "| None detected |  |  |";
 
@@ -116,7 +117,15 @@ function attachAudit(page) {
   });
   page.on("requestfailed", (request) => {
     if (request.url().includes("/api/")) {
-      audit.network.push({ kind: "network", status: "REQUEST_FAILED", url: request.url(), method: request.method(), message: request.failure()?.errorText });
+      const errorText = request.failure()?.errorText || "";
+      // net::ERR_ABORTED is a client-side cancellation (context closing or
+      // navigation while a poll/fetch is in-flight) — record it for evidence
+      // but it is not an API 404/500 failure.
+      if (errorText.includes("ERR_ABORTED")) {
+        audit.aborted.push({ kind: "aborted", status: "ERR_ABORTED", url: request.url(), method: request.method() });
+        return;
+      }
+      audit.network.push({ kind: "network", status: "REQUEST_FAILED", url: request.url(), method: request.method(), message: errorText });
     }
   });
 }
