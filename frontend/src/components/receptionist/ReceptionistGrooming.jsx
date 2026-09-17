@@ -9,7 +9,6 @@ import {
   faCut,
   faDownload,
   faEye,
-  faFilter,
   faInfoCircle,
   faPaw,
   faRefresh,
@@ -545,7 +544,6 @@ const Grooming = () => {
 
       <section className="grooming-controls">
         <div className="grooming-search-box">
-          <FontAwesomeIcon icon={faSearch} />
           <input
             type="text"
             placeholder="Search pet, customer, service, notes, or status..."
@@ -561,7 +559,6 @@ const Grooming = () => {
         </div>
 
         <label className="grooming-filter-box">
-          <FontAwesomeIcon icon={faFilter} />
           <select
             value={filterStatus}
             onChange={(event) => setFilterStatus(event.target.value)}
@@ -575,7 +572,6 @@ const Grooming = () => {
         </label>
 
         <label className="grooming-filter-box">
-          <FontAwesomeIcon icon={faCut} />
           <select
             value={filterService}
             onChange={(event) => setFilterService(event.target.value)}

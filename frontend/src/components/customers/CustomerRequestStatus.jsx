@@ -40,7 +40,7 @@ const getCustomerName = (item) =>
 const getPetName = (item) =>
   safeText(item?.pet_name || item?.pet?.name || item?.pet, "N/A");
 
-const CustomerRequestStatus = () => {
+const CustomerRequestStatus = ({ embedded = false }) => {
   const { user } = useAuth();
   const [requests, setRequests] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
@@ -196,15 +196,17 @@ const CustomerRequestStatus = () => {
   };
 
   return (
-    <div className="customer-status-page">
-      <section className="customer-status-hero">
-        <span className="customer-status-badge">Customer Portal</span>
-        <h1>My Booking Requests</h1>
-        <p>
-          Track your submitted pet service requests and see whether they are
-          pending, approved, rejected, or waiting for payment.
-        </p>
-      </section>
+    <div className={`customer-status-page${embedded ? " embedded" : ""}`}>
+      {!embedded && (
+        <section className="customer-status-hero">
+          <span className="customer-status-badge">Customer Portal</span>
+          <h1>My Booking Requests</h1>
+          <p>
+            Track your submitted pet service requests and see whether they are
+            pending, approved, rejected, or waiting for payment.
+          </p>
+        </section>
+      )}
 
       <section className="customer-status-toolbar">
         <div className="customer-status-search">

@@ -855,6 +855,26 @@ export const inventoryApi = {
       throw error;
     }
   },
+
+  /**
+   * Lookup an inventory item by its barcode.
+   * Uses the shared product barcode endpoint (GET /products/barcode/{barcode}).
+   * Accessible to cashier, inventory, and admin roles.
+   *
+   * @async
+   * @param {string} barcode - Barcode value to look up
+   * @returns {Promise<Object>} Item details: { id, name, sku, barcode, price, stock, ... }
+   * @throws {Error} When barcode is empty, not found, or request fails
+   */
+  lookupByBarcode: async (barcode) => {
+    const trimmed = String(barcode ?? "").trim();
+    if (!trimmed) throw new Error("Barcode is empty.");
+    try {
+      return await apiRequest(`/products/barcode/${encodeURIComponent(trimmed)}`);
+    } catch (error) {
+      throw error;
+    }
+  },
 };
 
 export default inventoryApi;

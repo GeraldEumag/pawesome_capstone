@@ -2,6 +2,7 @@ import React, { useCallback, useEffect, useRef, useState } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
   faBarcode,
+  faCamera,
   faCheckCircle,
   faClock,
   faExclamationTriangle,
@@ -15,6 +16,7 @@ import {
   faXmarkCircle,
 } from "@fortawesome/free-solid-svg-icons";
 import { apiRequest } from "../../api/client";
+import QrScanner from "../shared/QrScanner";
 import "./BarcodeAttendanceKiosk.css";
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
@@ -53,6 +55,10 @@ const BarcodeAttendanceKiosk = () => {
   const [logLoading, setLogLoading] = useState(false);
   const [clockStr, setClockStr] = useState("");
   const [dateStr, setDateStr] = useState("");
+
+  // Webcam scanner mode
+  const [scanMode, setScanMode] = useState("text"); // "text" | "webcam"
+  const [webcamKey, setWebcamKey] = useState(0); // increment to remount scanner after each scan
 
   const inputRef = useRef(null);
   const resultTimerRef = useRef(null);
@@ -121,10 +127,15 @@ const BarcodeAttendanceKiosk = () => {
       if (res?.success) {
         setResult({ type: "success", message: res.message, data: res.data });
         loadTodayLog();
-        // Auto-dismiss result after 3.5 s then re-focus
+        // Auto-dismiss result after 3.5 s then re-focus / restart webcam
         clearTimeout(resultTimerRef.current);
         resultTimerRef.current = setTimeout(() => {
           setResult(null);
+          // Remount the webcam scanner so it's ready for the next employee
+          setScanMode((prev) => {
+            if (prev === "webcam") setWebcamKey((k) => k + 1);
+            return prev;
+          });
         }, 3500);
       } else {
         setError(res?.message || "Scan failed. Please try again.");
@@ -145,6 +156,11 @@ const BarcodeAttendanceKiosk = () => {
       handleScan(barcodeInput);
     }
   };
+
+  // Webcam scan callback — feeds into the same handleScan used by the text input
+  const handleWebcamScan = useCallback((code) => {
+    handleScan(code);
+  }, [handleScan]);
 
   // Dismiss result on click anywhere outside the result card
   const handleDismissResult = () => {
@@ -209,60 +225,106 @@ const BarcodeAttendanceKiosk = () => {
       {/* ── Scan Panel ───────────────────────────────────────────── */}
       <section className={`bk-scan-panel ${loading ? "is-loading" : ""}`}>
         <div className="bk-scan-icon-wrap">
-          <FontAwesomeIcon icon={faBarcode} className="bk-scan-icon" />
+          <FontAwesomeIcon icon={scanMode === "webcam" ? faCamera : faBarcode} className="bk-scan-icon" />
           {loading && <span className="bk-scan-line" aria-hidden="true" />}
         </div>
 
         <p className="bk-scan-label">
           {loading ? (
             <span className="bk-processing">Processing scan</span>
+          ) : scanMode === "webcam" ? (
+            "Point your webcam at an employee barcode or QR code"
           ) : (
             "Scan employee barcode or type employee ID"
           )}
         </p>
 
-        <div className="bk-input-wrap" onClick={(e) => e.stopPropagation()}>
-          <FontAwesomeIcon icon={faKeyboard} className="bk-input-icon" />
-          <input
-            ref={inputRef}
-            type="text"
-            className="bk-input"
-            value={barcodeInput}
-            onChange={(e) => setBarcodeInput(e.target.value)}
-            onKeyDown={handleKeyDown}
-            placeholder="Scan barcode or type EMP001 / 1 and press Enter…"
-            autoComplete="off"
-            autoCorrect="off"
-            autoCapitalize="off"
-            spellCheck={false}
+        {/* ── Mode toggle ── */}
+        <div className="bk-mode-toggle" onClick={(e) => e.stopPropagation()}>
+          <button
+            type="button"
+            className={`bk-mode-btn ${scanMode === "text" ? "active" : ""}`}
+            onClick={() => setScanMode("text")}
             disabled={loading}
-            aria-label="Employee barcode input"
-          />
-          {barcodeInput && (
-            <button
-              type="button"
-              className="bk-input-clear"
-              onClick={(e) => { e.stopPropagation(); setBarcodeInput(""); focusInput(); }}
-              tabIndex={-1}
-              aria-label="Clear input"
-            >
-              <FontAwesomeIcon icon={faXmarkCircle} />
-            </button>
-          )}
+          >
+            <FontAwesomeIcon icon={faKeyboard} /> Type / USB Scanner
+          </button>
+          <button
+            type="button"
+            className={`bk-mode-btn ${scanMode === "webcam" ? "active" : ""}`}
+            onClick={() => setScanMode("webcam")}
+            disabled={loading}
+          >
+            <FontAwesomeIcon icon={faCamera} /> Webcam Scan
+          </button>
         </div>
 
-        <button
-          type="button"
-          className="bk-submit-btn"
-          onClick={(e) => { e.stopPropagation(); handleScan(barcodeInput); }}
-          disabled={loading || !barcodeInput.trim()}
-        >
-          {loading ? (
-            <><span className="bk-btn-spinner" aria-hidden="true" /> Recording…</>
-          ) : (
-            <><FontAwesomeIcon icon={faUserCheck} /> Record Attendance</>
-          )}
-        </button>
+        {/* ── Text input mode ── */}
+        {scanMode === "text" && (
+          <>
+            <div className="bk-input-wrap" onClick={(e) => e.stopPropagation()}>
+              <FontAwesomeIcon icon={faKeyboard} className="bk-input-icon" />
+              <input
+                ref={inputRef}
+                type="text"
+                className="bk-input"
+                value={barcodeInput}
+                onChange={(e) => setBarcodeInput(e.target.value)}
+                onKeyDown={handleKeyDown}
+                placeholder="Scan barcode or type EMP001 / 1 and press Enter…"
+                autoComplete="off"
+                autoCorrect="off"
+                autoCapitalize="off"
+                spellCheck={false}
+                disabled={loading}
+                aria-label="Employee barcode input"
+              />
+              {barcodeInput && (
+                <button
+                  type="button"
+                  className="bk-input-clear"
+                  onClick={(e) => { e.stopPropagation(); setBarcodeInput(""); focusInput(); }}
+                  tabIndex={-1}
+                  aria-label="Clear input"
+                >
+                  <FontAwesomeIcon icon={faXmarkCircle} />
+                </button>
+              )}
+            </div>
+
+            <button
+              type="button"
+              className="bk-submit-btn"
+              onClick={(e) => { e.stopPropagation(); handleScan(barcodeInput); }}
+              disabled={loading || !barcodeInput.trim()}
+            >
+              {loading ? (
+                <><span className="bk-btn-spinner" aria-hidden="true" /> Recording…</>
+              ) : (
+                <><FontAwesomeIcon icon={faUserCheck} /> Record Attendance</>
+              )}
+            </button>
+          </>
+        )}
+
+        {/* ── Webcam mode ── */}
+        {scanMode === "webcam" && !loading && (
+          <div className="bk-webcam-wrap" onClick={(e) => e.stopPropagation()}>
+            <QrScanner
+              key={webcamKey}
+              onScan={handleWebcamScan}
+              stopOnScan={true}
+              className="bk-qr-scanner"
+            />
+          </div>
+        )}
+
+        {scanMode === "webcam" && loading && (
+          <div className="bk-webcam-processing">
+            <span className="bk-btn-spinner" aria-hidden="true" />
+            <span className="bk-processing">Recording attendance</span>
+          </div>
+        )}
       </section>
 
       {/* ── Error Alert ──────────────────────────────────────────── */}

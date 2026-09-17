@@ -738,6 +738,89 @@
   color: var(--bk-heading);
 }
 
+/* ── Mode Toggle (Text / Webcam) ───────────────────────────────────────────── */
+
+.bk-mode-toggle {
+  display: flex;
+  gap: 0.5rem;
+  padding: 0.3rem;
+  background: rgba(100, 116, 139, 0.07);
+  border-radius: var(--bk-radius-sm);
+  border: 1px solid var(--bk-border);
+}
+
+.bk-mode-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.45rem 1rem;
+  border: none;
+  border-radius: 8px;
+  font: inherit;
+  font-size: 0.82rem;
+  font-weight: 800;
+  color: var(--bk-muted);
+  background: transparent;
+  cursor: pointer;
+  transition: 0.18s ease;
+  white-space: nowrap;
+}
+
+.bk-mode-btn:hover:not(:disabled):not(.active) {
+  background: rgba(255, 95, 147, 0.07);
+  color: var(--bk-primary);
+}
+
+.bk-mode-btn.active {
+  background: var(--bk-primary);
+  color: #fff;
+  box-shadow: 0 4px 12px rgba(255, 95, 147, 0.28);
+}
+
+.bk-mode-btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+/* ── Webcam scanner wrapper ──────────────────────────────────────────────── */
+
+.bk-webcam-wrap {
+  width: 100%;
+  max-width: 360px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.bk-qr-scanner {
+  width: 100%;
+}
+
+/* Processing overlay when a webcam scan is being processed */
+.bk-webcam-processing {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 1.25rem 2rem;
+  background: rgba(255, 95, 147, 0.05);
+  border: 1px solid rgba(255, 95, 147, 0.18);
+  border-radius: var(--bk-radius-sm);
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--bk-primary);
+}
+
+.bk-webcam-processing .bk-btn-spinner {
+  width: 18px;
+  height: 18px;
+  border-width: 2px;
+  border-color: rgba(255, 95, 147, 0.3);
+  border-top-color: var(--bk-primary);
+  border-radius: 50%;
+  animation: bkSpin 0.7s linear infinite;
+  flex-shrink: 0;
+}
+
 /* ── Responsive ────────────────────────────────────────────────────────────── */
 
 @media (max-width: 768px) {

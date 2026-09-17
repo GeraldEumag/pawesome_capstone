@@ -3,6 +3,99 @@
    Brand: #ff5f93
    ============================================================ */
 
+/* ── Barcode field with inline camera scan button ── */
+.barcode-input-row {
+  display: flex;
+  gap: 8px;
+  align-items: stretch;
+}
+
+.barcode-input-row input {
+  flex: 1;
+  min-width: 0;
+}
+
+.btn-scan-barcode-inline {
+  padding: 0 14px;
+  background: #7c3aed;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 15px;
+  transition: background 0.2s, opacity 0.2s;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.btn-scan-barcode-inline:hover:not(:disabled) {
+  background: #6d28d9;
+}
+
+.btn-scan-barcode-inline.active {
+  background: #5b21b6;
+}
+
+.btn-scan-barcode-inline:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* ── Portal scanner overlay (renders into document.body, above the modal) ── */
+.apm-scan-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.55);
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.apm-scan-panel {
+  background: #fff;
+  border-radius: 14px;
+  padding: 20px;
+  width: min(480px, 95vw);
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.35);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.apm-scan-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-weight: 700;
+  font-size: 15px;
+  color: #111827;
+}
+
+.apm-scan-close {
+  background: none;
+  border: none;
+  font-size: 22px;
+  line-height: 1;
+  cursor: pointer;
+  color: #6b7280;
+  padding: 0 4px;
+}
+
+.apm-scan-close:hover {
+  color: #111827;
+}
+
+.apm-scan-hint {
+  font-size: 13px;
+  color: #6b7280;
+  margin: 0;
+}
+
 /* ---- Overlay ---- */
 .modal-overlay {
   position: fixed;

@@ -1,0 +1,487 @@
+/* ============================================================
+   Barcode Generator — Product Label Generator
+   ============================================================ */
+
+.bg-page {
+  padding: 1.5rem;
+  max-width: 1300px;
+  margin: 0 auto;
+  font-family: Inter, Jost, system-ui, sans-serif;
+  color: #1f2937;
+}
+
+.bg-page,
+.bg-page * { box-sizing: border-box; }
+
+/* ── Hero ── */
+.bg-hero {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 1rem;
+  padding: clamp(1.25rem, 3vw, 1.75rem) clamp(1.5rem, 3vw, 2rem);
+  background: radial-gradient(circle at top right, rgba(255, 95, 147, 0.14), transparent 40%),
+              rgba(255, 255, 255, 0.9);
+  border: 1px solid rgba(255, 95, 147, 0.18);
+  border-radius: 24px;
+  box-shadow: 0 20px 50px rgba(255, 95, 147, 0.1);
+  backdrop-filter: blur(16px);
+  margin-bottom: 1.25rem;
+}
+
+.bg-eyebrow {
+  display: inline-flex;
+  padding: 0.2rem 0.7rem;
+  border-radius: 999px;
+  background: rgba(255, 95, 147, 0.1);
+  color: #ff5f93;
+  border: 1px solid rgba(255, 95, 147, 0.15);
+  font-size: 0.68rem;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  margin-bottom: 0.4rem;
+}
+
+.bg-hero-left { display: flex; flex-direction: column; gap: 0.35rem; }
+
+.bg-hero-left h1 {
+  margin: 0;
+  font-size: clamp(1.4rem, 2.5vw, 2rem);
+  font-weight: 950;
+  letter-spacing: -0.04em;
+  color: #111827;
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+}
+
+.bg-hero-left h1 svg { color: #ff5f93; }
+
+.bg-hero-left p {
+  margin: 0;
+  font-size: 0.9rem;
+  color: #64748b;
+  font-weight: 600;
+}
+
+.bg-hero-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+}
+
+/* ── Buttons ── */
+.bg-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0.6rem 1.25rem;
+  border-radius: 999px;
+  font-size: 0.875rem;
+  font-weight: 800;
+  cursor: pointer;
+  border: none;
+  transition: 0.18s ease;
+  white-space: nowrap;
+}
+
+.bg-btn--primary {
+  background: linear-gradient(135deg, #ff5f93, #ff8db5);
+  color: #fff;
+  box-shadow: 0 8px 20px rgba(255, 95, 147, 0.35);
+}
+
+.bg-btn--primary:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 10px 28px rgba(255, 95, 147, 0.45);
+}
+
+.bg-btn--primary:disabled { opacity: 0.45; cursor: not-allowed; transform: none; }
+
+.bg-btn--outline {
+  background: #fff;
+  color: #64748b;
+  border: 1.5px solid #e2e8f0;
+}
+
+.bg-btn--outline:hover:not(:disabled) {
+  border-color: #ff5f93;
+  color: #ff5f93;
+}
+
+.bg-btn--outline:disabled { opacity: 0.45; cursor: not-allowed; }
+
+.bg-btn--ghost {
+  background: rgba(100, 116, 139, 0.07);
+  color: #374151;
+  border: 1px solid transparent;
+}
+
+.bg-btn--ghost:hover { background: rgba(255, 95, 147, 0.07); color: #ff5f93; }
+
+/* ── Controls bar ── */
+.bg-controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  align-items: center;
+  margin-bottom: 1.25rem;
+}
+
+.bg-search-wrap {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex: 1;
+  min-width: 200px;
+  max-width: 420px;
+  padding: 0.55rem 0.9rem;
+  background: #fff;
+  border: 1.5px solid #e2e8f0;
+  border-radius: 10px;
+  transition: border-color 0.15s;
+}
+
+.bg-search-wrap:focus-within { border-color: #ff5f93; }
+
+.bg-search-icon { color: #94a3b8; font-size: 0.85rem; flex-shrink: 0; }
+
+.bg-search-input {
+  flex: 1;
+  border: none;
+  background: transparent;
+  font-size: 0.875rem;
+  color: #1f2937;
+  outline: none;
+  min-width: 0;
+}
+
+.bg-search-clear {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: #94a3b8;
+  font-size: 0.85rem;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  transition: color 0.15s;
+}
+.bg-search-clear:hover { color: #ef4444; }
+
+.bg-selection-row {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.bg-count {
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: #64748b;
+}
+
+/* ── Toast ── */
+.bg-toast {
+  padding: 0.7rem 1.1rem;
+  background: #fef3c7;
+  border: 1px solid #fcd34d;
+  border-radius: 10px;
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: #92400e;
+  margin-bottom: 1rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+/* ── State messages ── */
+.bg-state-msg {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  justify-content: center;
+  padding: 3rem 2rem;
+  color: #64748b;
+  font-weight: 700;
+  font-size: 0.95rem;
+}
+
+.bg-state-msg.error { color: #dc2626; }
+
+/* ── Label grid ── */
+.bg-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 1rem;
+}
+
+/* ── Card ── */
+.bg-card {
+  position: relative;
+  background: #fff;
+  border: 2px solid #e2e8f0;
+  border-radius: 14px;
+  padding: 0.9rem;
+  transition: border-color 0.15s, box-shadow 0.15s;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.bg-card:hover { border-color: rgba(255, 95, 147, 0.35); box-shadow: 0 6px 20px rgba(255, 95, 147, 0.1); }
+.bg-card.selected { border-color: #ff5f93; box-shadow: 0 6px 20px rgba(255, 95, 147, 0.18); }
+
+.bg-card-check {
+  position: absolute;
+  top: 0.6rem;
+  left: 0.6rem;
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: #94a3b8;
+  font-size: 1rem;
+  padding: 0;
+  z-index: 1;
+  transition: color 0.15s;
+}
+.bg-card.selected .bg-card-check,
+.bg-card-check:hover { color: #ff5f93; }
+
+.bg-card-print-btn {
+  position: absolute;
+  top: 0.5rem;
+  right: 0.5rem;
+  background: none;
+  border: 1px solid #e2e8f0;
+  border-radius: 6px;
+  color: #64748b;
+  font-size: 0.82rem;
+  padding: 0.3rem 0.5rem;
+  cursor: pointer;
+  transition: 0.15s;
+}
+.bg-card-print-btn:hover { background: rgba(255, 95, 147, 0.07); color: #ff5f93; border-color: #ff5f93; }
+
+/* ── Label preview inside card ── */
+.bg-label-preview {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.4rem;
+  padding-top: 1.5rem;
+}
+
+.bg-barcode-svg {
+  width: 100%;
+  max-width: 190px;
+  height: auto;
+}
+
+.bg-no-code {
+  font-size: 0.75rem;
+  color: #94a3b8;
+  font-style: italic;
+}
+
+.bg-label-meta {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.15rem;
+  width: 100%;
+}
+
+.bg-label-name {
+  font-size: 0.88rem;
+  font-weight: 800;
+  color: #111827;
+  text-align: center;
+  line-height: 1.2;
+  word-break: break-word;
+}
+
+.bg-label-category {
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: #ff5f93;
+  background: rgba(255, 95, 147, 0.1);
+  border-radius: 999px;
+  padding: 0.1rem 0.5rem;
+}
+
+.bg-label-sku-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+  gap: 0.25rem;
+}
+
+.bg-label-sku { font-size: 0.72rem; color: #64748b; font-weight: 700; }
+.bg-label-price { font-size: 0.78rem; color: #059669; font-weight: 900; }
+
+.bg-label-qr-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  width: 100%;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.bg-label-code {
+  font-size: 0.72rem;
+  font-family: monospace;
+  color: #374151;
+  word-break: break-all;
+  text-align: center;
+}
+
+/* ── SKU fallback badge + save button ── */
+.bg-sku-badge-row {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  flex-wrap: wrap;
+  justify-content: center;
+  padding-top: 0.25rem;
+  border-top: 1px dashed #e2e8f0;
+  width: 100%;
+}
+
+.bg-sku-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  font-size: 0.65rem;
+  font-weight: 800;
+  color: #92400e;
+  background: #fef3c7;
+  border: 1px solid #fcd34d;
+  border-radius: 999px;
+  padding: 0.15rem 0.5rem;
+}
+
+.bg-save-barcode-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  font-size: 0.68rem;
+  font-weight: 800;
+  color: #fff;
+  background: #ff5f93;
+  border: none;
+  border-radius: 999px;
+  padding: 0.2rem 0.6rem;
+  cursor: pointer;
+  transition: 0.15s;
+}
+.bg-save-barcode-btn:hover:not(:disabled) { background: #e0487b; }
+.bg-save-barcode-btn:disabled { opacity: 0.55; cursor: not-allowed; }
+
+/* ── Spinners ── */
+.bg-spinner,
+.bg-spinner-lg {
+  display: inline-block;
+  border-radius: 50%;
+  animation: bgSpin 0.7s linear infinite;
+}
+
+.bg-spinner {
+  width: 10px;
+  height: 10px;
+  border: 2px solid rgba(255,255,255,0.35);
+  border-top-color: #fff;
+}
+
+.bg-spinner-lg {
+  width: 28px;
+  height: 28px;
+  border: 3px solid rgba(255, 95, 147, 0.2);
+  border-top-color: #ff5f93;
+}
+
+@keyframes bgSpin { to { transform: rotate(360deg); } }
+
+/* ============================================================
+   PRINT SHEET — off-screen on screen, visible during window.print()
+   Off-screen (not display:none) so jsbarcode can render SVGs with real dimensions.
+   ============================================================ */
+
+.bg-print-sheet {
+  position: fixed;
+  left: -9999px;
+  top: 0;
+  width: 210mm;
+  background: white;
+  pointer-events: none;
+  z-index: -1;
+}
+
+/* Label styles — always on so the off-screen print sheet renders correctly */
+.bg-print-label {
+  width: 60mm;
+  min-height: 30mm;
+  border: 0.3pt solid #ccc;
+  border-radius: 2mm;
+  padding: 2mm 2.5mm;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1mm;
+  page-break-inside: avoid;
+  background: white;
+  box-sizing: border-box;
+}
+
+.bg-print-barcode-svg {
+  width: 100%;
+  height: auto;
+  max-height: 14mm;
+}
+
+.bg-print-nocode {
+  font-size: 9px;
+  color: #999;
+  font-style: italic;
+}
+
+.bg-print-name {
+  font-size: 10px;
+  font-weight: 700;
+  text-align: center;
+  color: #000;
+  line-height: 1.2;
+  word-break: break-word;
+  font-family: sans-serif;
+}
+
+.bg-print-sku-price {
+  display: flex;
+  justify-content: space-between;
+  width: 100%;
+  font-size: 9px;
+  color: #333;
+  font-family: sans-serif;
+}
+
+.bg-print-qr-row {
+  display: flex;
+  align-items: center;
+  gap: 2mm;
+}
+
+.bg-print-code {
+  font-size: 8px;
+  font-family: monospace;
+  color: #333;
+  word-break: break-all;
+  max-width: 20mm;
+}
+
+@page { size: A4 portrait; margin: 8mm; }

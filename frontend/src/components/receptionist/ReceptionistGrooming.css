@@ -306,12 +306,6 @@
   grid-template-columns: minmax(260px, 1fr) 220px 220px auto;
   gap: 0.85rem;
   align-items: center;
-  padding: 1.1rem;
-  border: 1px solid var(--groom-border);
-  border-radius: var(--groom-radius-card);
-  background: var(--groom-surface);
-  box-shadow: var(--groom-shadow-card);
-  backdrop-filter: blur(18px);
 }
 
 .grooming-search-box,
@@ -327,23 +321,16 @@
   overflow: hidden;
 }
 
-.grooming-search-box > svg,
-.grooming-filter-box > svg {
-  position: absolute;
-  left: 16px;
-  color: var(--groom-primary);
-  pointer-events: none;
-}
-
 .grooming-search-box input,
 .grooming-filter-box select {
   width: 100%;
   min-height: 54px;
-  border: none;
+  border: none !important;
   outline: none;
-  background: transparent;
+  background: transparent !important;
+  box-shadow: none !important;
   color: var(--groom-text);
-  padding: 0 1rem 0 3rem;
+  padding: 0 1rem;
   font: inherit;
   font-weight: 750;
 }

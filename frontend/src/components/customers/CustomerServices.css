@@ -1,26 +1,18 @@
 /* CustomerServices.css */
-/* Clean modern Customer Services UI */
+/* Matches the CustomerPayments design language */
 
 .customer-services-page {
-  --cs-primary: var(--color-primary, #ff5f93);
-  --cs-primary-hover: var(--color-primary-hover, #ff4f85);
-  --cs-surface: var(--color-surface, rgba(255,255,255,0.86));
-  --cs-border: var(--color-border, rgba(255,95,147,0.18));
-  --cs-heading: var(--color-heading, #191919);
-  --cs-text: var(--color-text, #1f2937);
-  --cs-muted: var(--color-muted, #64748b);
-  --cs-shadow: var(--shadow-soft, 0 12px 28px rgba(15,23,42,0.08));
-  --cs-shadow-hover: var(--shadow-card, 0 18px 45px rgba(255,95,147,0.14));
-  --cs-radius: var(--radius-lg, 22px);
-  --cs-radius-sm: var(--radius-md, 16px);
-  --cs-radius-pill: var(--radius-pill, 999px);
-
-  width: 100%;
-  max-width: 100%;
-  padding: 1.5rem;
-  color: var(--cs-text);
-  font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-  box-sizing: border-box;
+  position: relative;
+  min-height: 100vh;
+  padding: 2rem;
+  overflow: visible;
+  background: var(
+    --color-bg-gradient,
+    linear-gradient(135deg, #ffc8dd, #ffd6e8, #fff1f7)
+  );
+  color: var(--color-text, #1f2937);
+  font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI",
+    sans-serif;
 }
 
 .customer-services-page *,
@@ -29,85 +21,124 @@
   box-sizing: border-box;
 }
 
-/* Hero */
-.cs-hero {
-  padding: 2rem 1.5rem;
+/* Header */
+.cs-header {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  gap: 1rem;
   margin-bottom: 1.5rem;
-  text-align: center;
-  border: 1px solid var(--cs-border);
-  border-radius: var(--radius-card, 26px);
-  background: var(--cs-surface);
-  box-shadow: var(--cs-shadow-hover);
-  backdrop-filter: blur(16px);
 }
 
-.cs-badge {
+.cs-kicker {
   display: inline-flex;
-  align-items: center;
-  gap: 0.35rem;
-  padding: 0.35rem 0.75rem;
-  border-radius: var(--cs-radius-pill);
-  background: rgba(236, 72, 153, 0.1);
-  color: var(--cs-primary);
+  margin-bottom: 0.45rem;
+  color: var(--color-primary, #ff5f93);
   font-size: 0.78rem;
-  font-weight: 600;
+  font-weight: 900;
   text-transform: uppercase;
-  letter-spacing: 0.06em;
-  margin-bottom: 0.75rem;
+  letter-spacing: 0.08em;
 }
 
-.cs-hero h1 {
-  margin: 0 0 0.5rem;
-  font-size: clamp(1.6rem, 3.2vw, 2.2rem);
-  font-weight: 700;
-  color: var(--cs-heading);
-  letter-spacing: -0.02em;
-}
-
-.cs-hero p {
+.cs-header h3 {
   margin: 0;
-  color: var(--cs-muted);
-  font-size: 0.95rem;
+  color: var(--color-heading, #191919);
+  font-size: clamp(1.65rem, 3vw, 2.25rem);
+  font-weight: 950;
+  letter-spacing: -0.045em;
+}
+
+.cs-header p {
+  max-width: 620px;
+  margin: 0.55rem 0 0;
+  color: var(--color-muted, #64748b);
+  font-size: 0.98rem;
   line-height: 1.55;
 }
 
-/* Tabs */
-.cs-tabs {
+/* Panel */
+.cs-panel {
+  position: relative;
+  z-index: 1;
+  border-radius: 26px;
+  background: var(--color-surface, rgba(255, 255, 255, 0.86));
+  border: 1px solid var(--color-border, rgba(255, 95, 147, 0.18));
+  box-shadow: var(--shadow-card, 0 18px 45px rgba(255, 95, 147, 0.16));
+  backdrop-filter: blur(16px);
+  overflow: hidden;
+}
+
+.cs-panel-header {
   display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  gap: 1rem;
+  padding: 1.35rem 1.5rem;
+  border-bottom: 1px solid rgba(255, 95, 147, 0.14);
+}
+
+.cs-panel-header h4 {
+  margin: 0;
+  color: var(--color-heading, #191919);
+  font-size: 1.3rem;
+  font-weight: 950;
+  letter-spacing: -0.035em;
+}
+
+.cs-panel-header p {
+  margin: 0.35rem 0 0;
+  color: var(--color-muted, #64748b);
+  font-size: 0.92rem;
+  line-height: 1.45;
+}
+
+.cs-panel-body {
+  padding: 1.5rem;
+}
+
+/* Tabs (segmented control inside panel header) */
+.cs-tabs {
+  display: inline-flex;
   align-items: center;
-  gap: 0.5rem;
-  margin-bottom: 1.5rem;
+  gap: 0.35rem;
   padding: 0.35rem;
-  border: 1px solid var(--cs-border);
-  border-radius: var(--radius-card, 26px);
-  background: rgba(255, 95, 147, 0.04);
+  border: 1px solid var(--color-border, rgba(255, 95, 147, 0.18));
+  border-radius: 999px;
+  background: rgba(255, 95, 147, 0.05);
+  white-space: nowrap;
 }
 
 .cs-tab {
   display: inline-flex;
   align-items: center;
-  gap: 0.5rem;
-  padding: 0.6rem 1.1rem;
+  gap: 0.45rem;
+  padding: 0.55rem 1.05rem;
   border: none;
-  border-radius: var(--cs-radius-sm);
+  border-radius: 999px;
   background: transparent;
-  color: var(--cs-muted);
-  font-size: 0.9rem;
-  font-weight: 600;
+  color: var(--color-muted, #64748b);
+  font-family: inherit;
+  font-size: 0.86rem;
+  font-weight: 800;
   cursor: pointer;
-  transition: 0.18s ease;
+  transition: 0.2s ease;
 }
 
 .cs-tab:hover:not(.active) {
-  background: rgba(0, 0, 0, 0.04);
-  color: var(--cs-text);
+  color: var(--color-heading, #191919);
+  background: rgba(255, 255, 255, 0.7);
 }
 
 .cs-tab.active {
-  background: var(--cs-surface);
-  color: var(--cs-primary);
-  box-shadow: var(--cs-shadow-hover);
-  backdrop-filter: blur(8px);
+  background: linear-gradient(
+    135deg,
+    var(--color-primary, #ff5f93),
+    var(--color-primary-light, #ff8db5)
+  );
+  color: #ffffff;
+  box-shadow: 0 10px 22px rgba(255, 95, 147, 0.28);
 }
 
 /* Service cards */
@@ -118,47 +149,47 @@
 }
 
 .cs-card {
-  padding: 1.6rem;
-  text-align: center;
+  padding: 1.5rem;
   cursor: pointer;
-  border: 1px solid var(--cs-border);
-  border-radius: var(--cs-radius);
-  background: var(--cs-surface);
-  box-shadow: var(--cs-shadow);
+  border-radius: 24px;
+  background: var(--color-surface, rgba(255, 255, 255, 0.86));
+  border: 1px solid var(--color-border, rgba(255, 95, 147, 0.18));
+  box-shadow: var(--shadow-soft, 0 12px 28px rgba(15, 23, 42, 0.08));
   backdrop-filter: blur(12px);
-  transition: transform 0.22s ease, box-shadow 0.22s ease, border-color 0.22s ease;
+  transition: transform 0.22s ease, box-shadow 0.22s ease,
+    border-color 0.22s ease;
 }
 
-.cs-card:hover {
-  box-shadow: var(--cs-shadow-hover);
-  border-color: var(--color-primary, #ff5f93);
+.cs-card:hover,
+.cs-card:focus-visible {
   transform: translateY(-4px);
+  border-color: rgba(255, 95, 147, 0.4);
+  box-shadow: 0 24px 55px rgba(255, 95, 147, 0.2);
+  outline: none;
 }
 
 .cs-card-icon {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 60px;
-  height: 60px;
-  border-radius: var(--cs-radius-sm);
+  display: grid;
+  place-items: center;
+  width: 52px;
+  height: 52px;
+  border-radius: 18px;
   margin-bottom: 1rem;
-  font-size: 1.5rem;
-  background: rgba(255, 95, 147, 0.1);
-  color: var(--cs-primary);
-  box-shadow: 0 8px 20px rgba(255, 95, 147, 0.14);
+  color: #ffffff;
+  font-size: 1.25rem;
 }
 
 .cs-card h3 {
   margin: 0 0 0.4rem;
   font-size: 1.05rem;
-  font-weight: 700;
-  color: var(--cs-heading);
+  font-weight: 950;
+  letter-spacing: -0.02em;
+  color: var(--color-heading, #191919);
 }
 
 .cs-card p {
-  margin: 0 0 1.1rem;
-  color: var(--cs-muted);
+  margin: 0 0 1.15rem;
+  color: var(--color-muted, #64748b);
   font-size: 0.88rem;
   line-height: 1.5;
 }
@@ -166,45 +197,57 @@
 .cs-card-action {
   display: inline-flex;
   align-items: center;
+  gap: 0.45rem;
   padding: 0.55rem 1.1rem;
-  border-radius: var(--cs-radius-pill);
+  border-radius: 999px;
   color: #fff;
-  font-size: 0.85rem;
-  font-weight: 600;
+  font-size: 0.82rem;
+  font-weight: 900;
+  transition: transform 0.2s ease;
 }
 
-/* Responsive */
-@media (max-width: 768px) {
+.cs-card:hover .cs-card-action {
+  transform: translateX(2px);
+}
+
+/* Tablet */
+@media (max-width: 992px) {
+  .customer-services-page {
+    padding: 1.25rem;
+  }
+
+  .cs-header {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .cs-panel-header {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+}
+
+/* Mobile */
+@media (max-width: 640px) {
   .customer-services-page {
     padding: 1rem;
   }
 
-  .cs-hero {
-    padding: 1.5rem 1rem;
+  .cs-panel-header {
+    padding: 1.1rem;
+  }
+
+  .cs-panel-body {
+    padding: 1rem;
   }
 
   .cs-tabs {
-    flex-wrap: wrap;
+    width: 100%;
   }
 
   .cs-tab {
     flex: 1;
     justify-content: center;
-    min-width: 120px;
-  }
-}
-
-@media (max-width: 480px) {
-  .customer-services-page {
-    padding: 0.75rem;
-  }
-
-  .cs-hero {
-    padding: 1.25rem 0.85rem;
-  }
-
-  .cs-hero h1 {
-    font-size: 1.3rem;
   }
 
   .cs-cards {
@@ -214,15 +257,5 @@
 
   .cs-card {
     padding: 1.25rem 1rem;
-  }
-
-  .cs-tabs {
-    flex-direction: column;
-  }
-
-  .cs-tab {
-    width: 100%;
-    min-width: 0;
-    justify-content: center;
   }
 }

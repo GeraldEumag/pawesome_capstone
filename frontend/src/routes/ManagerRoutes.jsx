@@ -12,6 +12,7 @@ import ManagerSchedule from "../components/manager/ManagerSchedule";
 import ManagerReports from "../components/manager/ManagerReports";
 import ManagerHistory from "../components/manager/ManagerHistory";
 import ProfileSettings from "../components/shared/ProfileSettings";
+import EmployeeIdPrinter from "../components/manager/EmployeeIdPrinter";
 
 const ManagerRoutes = () => (
   <Routes>
@@ -55,6 +56,7 @@ const ManagerRoutes = () => (
       <Route path="payments" element={<Navigate to="/manager/reports" replace />} />
       <Route path="inventory" element={<Navigate to="/manager/reports" replace />} />
       <Route path="customers" element={<Navigate to="/manager/reports" replace />} />
+      <Route path="id-cards" element={<EmployeeIdPrinter />} />
       <Route path="profile" element={<ProfileSettings />} />
     </Route>
   </Routes>

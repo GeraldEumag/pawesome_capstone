@@ -323,12 +323,6 @@
   grid-template-columns: minmax(260px, 1fr) 190px 210px 190px auto;
   gap: 0.85rem;
   align-items: center;
-  padding: 1.1rem;
-  border: 1px solid var(--rd-border);
-  border-radius: var(--rd-radius-card);
-  background: var(--rd-surface);
-  box-shadow: var(--rd-shadow-card);
-  backdrop-filter: blur(18px);
 }
 
 .receptionist-search,
@@ -344,23 +338,16 @@
   overflow: hidden;
 }
 
-.receptionist-search > svg,
-.receptionist-filter > svg {
-  position: absolute;
-  left: 16px;
-  color: var(--rd-primary);
-  pointer-events: none;
-}
-
 .receptionist-search input,
 .receptionist-filter select {
   width: 100%;
   min-height: 54px;
-  border: none;
+  border: none !important;
   outline: none;
-  background: transparent;
+  background: transparent !important;
+  box-shadow: none !important;
   color: var(--rd-text);
-  padding: 0 1rem 0 3rem;
+  padding: 0 1rem;
   font: inherit;
   font-weight: 750;
 }

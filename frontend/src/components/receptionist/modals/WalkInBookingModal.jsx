@@ -2,7 +2,6 @@ import React, { useState, useEffect, useRef } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
   faTimes,
-  faSearch,
   faSpinner,
   faUser,
   faPaw,
@@ -457,8 +456,7 @@ const WalkInBookingModal = ({ serviceType, onClose, onSuccess }) => {
       <p className="step-description">Search and select an existing customer</p>
 
       {/* Search Bar */}
-      <div className="search-box large">
-        <FontAwesomeIcon icon={faSearch} />
+      <div className="walkin-search-box large">
         <input
           type="text"
           placeholder="Search customers by name, email or phone..."

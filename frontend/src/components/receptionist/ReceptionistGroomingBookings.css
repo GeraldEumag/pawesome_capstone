@@ -197,24 +197,13 @@
 /* Filters */
 .grooming-filters {
   display: grid;
-  grid-template-columns: 1fr auto;
-  gap: 12px;
-  align-items: center;
-  padding: 14px 16px;
-  background: var(--grooming-surface);
-  border: 1px solid var(--grooming-border);
-  border-radius: 10px;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.05);
-}
-
-.filter-group {
-  display: flex;
+  grid-template-columns: 1fr 180px;
   gap: 12px;
   align-items: center;
 }
 
-.search-box,
-.filter-select {
+.gb-search-box,
+.gb-filter-select {
   position: relative;
   display: flex;
   align-items: center;
@@ -225,36 +214,28 @@
   overflow: hidden;
 }
 
-.search-box svg,
-.filter-select svg {
-  position: absolute;
-  left: 12px;
-  color: var(--grooming-muted);
-  pointer-events: none;
-  font-size: 0.85rem;
-}
-
-.search-box input,
-.filter-select select {
+.gb-search-box input,
+.gb-filter-select select {
   width: 100%;
   height: 100%;
-  border: none;
+  border: none !important;
   outline: none;
-  background: transparent;
+  background: transparent !important;
+  box-shadow: none !important;
   color: var(--grooming-text);
-  padding: 0 12px 0 36px;
+  padding: 0 12px;
   font: inherit;
   font-size: 0.85rem;
 }
 
-.filter-select select {
+.gb-filter-select select {
   appearance: none;
   padding-right: 28px;
   cursor: pointer;
 }
 
-.search-box:focus-within,
-.filter-select:focus-within {
+.gb-search-box:focus-within,
+.gb-filter-select:focus-within {
   border-color: var(--grooming-primary);
 }
 
@@ -539,7 +520,6 @@
 @media (max-width: 1180px) {
   .grooming-stats { grid-template-columns: repeat(3, 1fr); }
   .grooming-filters { grid-template-columns: 1fr; }
-  .filter-group { flex-wrap: wrap; }
   .grooming-header { flex-direction: column; }
   .header-actions { width: 100%; justify-content: flex-end; }
 }

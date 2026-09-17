@@ -226,19 +226,10 @@
   width: min(100%, 720px);
 }
 
-.vet-search-box > svg {
-  position: absolute;
-  left: 16px;
-  top: 50%;
-  transform: translateY(-50%);
-  color: var(--veterinary-primary);
-  pointer-events: none;
-}
-
 .vet-search-box input {
   width: 100%;
   min-height: 50px;
-  padding: 0.85rem 2.9rem 0.85rem 3rem;
+  padding: 0.85rem 2.9rem 0.85rem 1.15rem;
   border-radius: var(--radius-pill);
   border: 1px solid var(--veterinary-glass-border);
   background: var(--veterinary-card-bg);

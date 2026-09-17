@@ -79,6 +79,11 @@ const ManagerSidebar = ({ mobileOpen, onMobileMenuToggle }) => {
               Attendance Kiosk
             </NavLink>
           </li>
+          <li className="nav-item nav-item-sub">
+            <NavLink to="/manager/id-cards" onClick={handleNavClick}>
+              Employee ID Cards
+            </NavLink>
+          </li>
           <li className="nav-item">
             <NavLink to="/manager/leave" onClick={handleNavClick}>
               Leave

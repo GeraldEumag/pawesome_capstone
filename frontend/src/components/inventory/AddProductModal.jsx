@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from "react";
+import ReactDOM from "react-dom";
 import { inventoryApi } from "../../api/inventory.jsx";
 import { formatCurrency } from "../../utils/currency";
 import DatePickerInput from "../shared/DatePickerInput";
 import SupplierModal from "./SupplierModal";
+import QrScanner from "../shared/QrScanner";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
   faBoxOpen,
@@ -15,6 +17,7 @@ import {
   faEdit,
   faCloudArrowUp,
   faImage,
+  faCamera,
 } from "@fortawesome/free-solid-svg-icons";
 import "./AddProductModal.css";
 
@@ -57,6 +60,11 @@ const AddProductModal = ({ isOpen, onClose, onSuccess, editItem = null }) => {
   const [errors, setErrors] = useState({});
   const [photoPreview, setPhotoPreview] = useState(null);
   const [showSupplierModal, setShowSupplierModal] = useState(false);
+
+  // Barcode webcam scanner
+  const [showBarcodeScanner, setShowBarcodeScanner] = useState(false);
+  const [barcodeError, setBarcodeError] = useState("");
+  const [barcodeChecking, setBarcodeChecking] = useState(false);
 
   useEffect(() => {
     if (editItem) {
@@ -118,6 +126,36 @@ const AddProductModal = ({ isOpen, onClose, onSuccess, editItem = null }) => {
     setErrors({});
     setCurrentStep(1);
   }, [editItem, isOpen]);
+
+  /* ── Barcode webcam scan handler ── */
+  const handleBarcodeScan = async (code) => {
+    setShowBarcodeScanner(false);
+    setBarcodeChecking(true);
+    setBarcodeError("");
+    try {
+      const res = await inventoryApi.lookupByBarcode(code);
+      const found = res?.item ?? res;
+      if (found?.id) {
+        // Barcode already belongs to an existing product
+        setBarcodeError(
+          `Barcode already assigned to "${found.name}". Choose a different barcode.`
+        );
+        return;
+      }
+    } catch (err) {
+      // 404 means barcode is not in inventory — safe to use
+      const msg = err.message?.toLowerCase() ?? "";
+      if (!msg.includes("404") && !msg.includes("not found")) {
+        setBarcodeError("Could not verify barcode. Please try again.");
+        return;
+      }
+    } finally {
+      setBarcodeChecking(false);
+    }
+    // Safe — pre-fill the barcode field and clear any previous error
+    setBarcodeError("");
+    setFormData((prev) => ({ ...prev, barcode: code }));
+  };
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
@@ -371,16 +409,63 @@ const AddProductModal = ({ isOpen, onClose, onSuccess, editItem = null }) => {
 
                     <div className="form-group">
                       <label>Barcode</label>
-                      <input
-                        type="text"
-                        name="barcode"
-                        value={formData.barcode}
-                        onChange={handleChange}
-                        placeholder="e.g., 8938501234567 (scan or type)"
-                        className={errors.barcode ? "error" : ""}
-                        autoComplete="off"
-                      />
-                      <small className="helper-text">Unique product barcode for POS scanning. Leave blank if none.</small>
+                      <div className="barcode-input-row">
+                        <input
+                          type="text"
+                          name="barcode"
+                          value={formData.barcode}
+                          onChange={handleChange}
+                          placeholder="e.g., 8938501234567 (scan or type)"
+                          className={errors.barcode ? "error" : ""}
+                          autoComplete="off"
+                        />
+                        <button
+                          type="button"
+                          className={`btn-scan-barcode-inline${showBarcodeScanner ? " active" : ""}`}
+                          onClick={() => { setShowBarcodeScanner((v) => !v); setBarcodeError(""); }}
+                          title={showBarcodeScanner ? "Close scanner" : "Scan barcode with webcam"}
+                          disabled={barcodeChecking}
+                        >
+                          <FontAwesomeIcon icon={faCamera} />
+                        </button>
+                      </div>
+
+                      {barcodeChecking && <small className="helper-text">Checking barcode…</small>}
+                      {barcodeError && <span className="error-text">{barcodeError}</span>}
+                      {!barcodeError && !barcodeChecking && (
+                        <small className="helper-text">
+                          Unique product barcode for POS scanning. Leave blank if none. Click 📷 to scan with webcam.
+                        </small>
+                      )}
+
+                      {/* Portal: renders outside the modal's overflow:hidden DOM so the camera works */}
+                      {showBarcodeScanner && ReactDOM.createPortal(
+                        <div
+                          className="apm-scan-overlay"
+                          onClick={() => setShowBarcodeScanner(false)}
+                        >
+                          <div
+                            className="apm-scan-panel"
+                            onClick={(e) => e.stopPropagation()}
+                          >
+                            <div className="apm-scan-header">
+                              <span>📷 Scan Product Barcode</span>
+                              <button
+                                type="button"
+                                className="apm-scan-close"
+                                onClick={() => setShowBarcodeScanner(false)}
+                              >
+                                ×
+                              </button>
+                            </div>
+                            <p className="apm-scan-hint">
+                              Hold the product barcode horizontally inside the scanning bar.
+                            </p>
+                            <QrScanner onScan={handleBarcodeScan} stopOnScan={true} />
+                          </div>
+                        </div>,
+                        document.body
+                      )}
                     </div>
 
                     <div className="form-group">

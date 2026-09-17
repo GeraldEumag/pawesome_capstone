@@ -29,6 +29,11 @@
   box-sizing: border-box;
 }
 
+.customer-status-page.embedded {
+  padding: 0;
+  min-height: 0;
+}
+
 /* Shared card surface */
 .customer-status-hero,
 .customer-status-toolbar,

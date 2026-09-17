@@ -8,10 +8,8 @@ import {
   faDoorOpen,
   faDownload,
   faEye,
-  faFilter,
   faHotel,
   faInfoCircle,
-  faMoneyBillWave,
   faPaw,
   faRefresh,
   faSearch,
@@ -517,7 +515,6 @@ const ReceptionistHotelBookings = () => {
 
       <section className="hotel-controls">
         <div className="hotel-search-box">
-          <FontAwesomeIcon icon={faSearch} />
           <input
             type="text"
             placeholder="Search pet, customer, room, phone, notes..."
@@ -533,7 +530,6 @@ const ReceptionistHotelBookings = () => {
         </div>
 
         <label className="hotel-filter-box">
-          <FontAwesomeIcon icon={faFilter} />
           <select
             value={filterStatus}
             onChange={(event) => setFilterStatus(event.target.value)}
@@ -547,7 +543,6 @@ const ReceptionistHotelBookings = () => {
         </label>
 
         <label className="hotel-filter-box">
-          <FontAwesomeIcon icon={faMoneyBillWave} />
           <select
             value={filterPayment}
             onChange={(event) => setFilterPayment(event.target.value)}

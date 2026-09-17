@@ -19,7 +19,7 @@ import {
   faShoppingCart, faCreditCard, faMoneyBillWave, faMobileScreen,
   faTag, faReceipt, faTriangleExclamation, faPlus,
   faMinus, faXmark, faPrint, faClock, faBox, faCheckCircle,
-  faBarcode, faKeyboard,
+  faBarcode, faKeyboard, faCamera,
   faBolt, faUser, faList,
   faStore, faHistory, faBan, faCalculator, faExpand, faCompress,
   faBars, faChartBar, faUserCircle, faClipboardList, faWallet,
@@ -27,6 +27,7 @@ import {
   faChevronRight, faChevronLeft, faArrowLeft, faDeleteLeft,
   faSearch, faTag as faTagSolid, faPercent,
 } from "@fortawesome/free-solid-svg-icons";
+import QrScanner from "../shared/QrScanner";
 
 /* ---------- Constants -------------------------------------------- */
 const PRODUCT_ENDPOINT  = "/cashier/inventory/sellable";
@@ -110,6 +111,9 @@ const CashierPOS = () => {
   const [showNavMenu, setShowNavMenu]     = useState(false);
   const [viewPhotoUrl, setViewPhotoUrl]   = useState(null);
   const [showHelp, setShowHelp]           = useState(false);
+
+  /* ── Webcam barcode scanner ──────────────────────────── */
+  const [posWebcamOpen, setPosWebcamOpen] = useState(false);
 
   const searchRef                 = useRef(null);
   const navMenuRef                = useRef(null);
@@ -397,6 +401,31 @@ const CashierPOS = () => {
     }
   }, [searchQuery, filteredProducts, addToCart, addToast]);
 
+  /* ── Webcam barcode scan handler ─────────────────────── */
+  const handleWebcamScan = useCallback(async (code) => {
+    setPosWebcamOpen(false);
+    const trimmed = code.trim();
+    if (!trimmed) return;
+    if (barcodeLookupInFlightRef.current) return;
+    barcodeLookupInFlightRef.current = true;
+    try {
+      const item = await lookupBarcode(trimmed);
+      if (item) {
+        const sellable = item.is_sellable ?? item.sellable ?? true;
+        const stock    = getAvailableStock(item);
+        if (!sellable) addToast("Item is not available for POS sale.", "warn");
+        else if (stock <= 0) addToast(`${item.name} is out of stock.`, "warn");
+        else { addToCart(normProduct(item)); addToast(`${item.name} added`, "success"); }
+      } else {
+        addToast("Barcode not found.", "error");
+      }
+    } catch (err) {
+      addToast(err?.message || "Barcode not found or lookup failed.", "error");
+    } finally {
+      barcodeLookupInFlightRef.current = false;
+    }
+  }, [addToCart, addToast]);
+
   /* ── Keyboard shortcuts ──────────────────────────────── */
   useEffect(() => {
     const handler = (e) => {
@@ -533,21 +562,53 @@ const CashierPOS = () => {
             <span className="pos-brand-name">Pawesome POS</span>
           </div>
 
-          <div className="pos-search-wrap">
-            <FontAwesomeIcon icon={faBarcode} className="pos-search-icon" />
-            <input
-              ref={searchRef}
-              className="pos-search-input"
-              type="text"
-              placeholder="Search products or scan barcode…  (Enter to add)"
-              value={searchQuery}
-              onChange={e => setSearchQuery(e.target.value)}
-              onKeyDown={e => { if (e.key === "Enter") { e.preventDefault(); handleSearchEnter(); } }}
-            />
-            {searchQuery && (
-              <button className="pos-search-clear" onClick={() => setSearchQuery("")}>
-                <FontAwesomeIcon icon={faXmark} />
-              </button>
+          <div className="pos-search-area">
+            <div className="pos-search-wrap">
+              <FontAwesomeIcon icon={faBarcode} className="pos-search-icon" />
+              <input
+                ref={searchRef}
+                className="pos-search-input"
+                type="text"
+                placeholder="Search products or scan barcode…  (Enter to add)"
+                value={searchQuery}
+                onChange={e => setSearchQuery(e.target.value)}
+                onKeyDown={e => { if (e.key === "Enter") { e.preventDefault(); handleSearchEnter(); } }}
+              />
+              {searchQuery && (
+                <button className="pos-search-clear" onClick={() => setSearchQuery("")}>
+                  <FontAwesomeIcon icon={faXmark} />
+                </button>
+              )}
+            </div>
+            <button
+              type="button"
+              className={`pos-cam-btn ${posWebcamOpen ? "active" : ""}`}
+              onClick={() => setPosWebcamOpen((v) => !v)}
+              title={posWebcamOpen ? "Close webcam scanner" : "Scan barcode with webcam"}
+              aria-label="Toggle webcam scanner"
+            >
+              <FontAwesomeIcon icon={faCamera} />
+            </button>
+
+            {/* Floating webcam scanner panel */}
+            {posWebcamOpen && (
+              <div className="pos-webcam-panel" onClick={(e) => e.stopPropagation()}>
+                <div className="pos-webcam-header">
+                  <span>Scan Product Barcode</span>
+                  <button
+                    type="button"
+                    className="pos-webcam-close"
+                    onClick={() => setPosWebcamOpen(false)}
+                    aria-label="Close scanner"
+                  >
+                    <FontAwesomeIcon icon={faXmark} />
+                  </button>
+                </div>
+                <QrScanner
+                  onScan={handleWebcamScan}
+                  stopOnScan={true}
+                />
+              </div>
             )}
           </div>
 

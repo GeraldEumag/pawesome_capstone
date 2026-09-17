@@ -1,0 +1,459 @@
+/* ============================================================
+   Employee ID Printer — Manager Portal
+   ============================================================ */
+
+.eip-page {
+  padding: 1.5rem;
+  max-width: 1200px;
+  margin: 0 auto;
+  font-family: Inter, Jost, system-ui, sans-serif;
+  color: #1f2937;
+}
+
+.eip-page,
+.eip-page * { box-sizing: border-box; }
+
+/* ── Hero ── */
+.eip-hero {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 1rem;
+  padding: clamp(1.25rem, 3vw, 1.75rem) clamp(1.5rem, 3vw, 2rem);
+  background: radial-gradient(circle at top right, rgba(124, 58, 237, 0.12), transparent 40%),
+              rgba(255, 255, 255, 0.9);
+  border: 1px solid rgba(124, 58, 237, 0.2);
+  border-radius: 24px;
+  box-shadow: 0 20px 50px rgba(124, 58, 237, 0.1);
+  backdrop-filter: blur(16px);
+  margin-bottom: 1.25rem;
+}
+
+.eip-eyebrow {
+  display: inline-flex;
+  padding: 0.2rem 0.7rem;
+  border-radius: 999px;
+  background: rgba(124, 58, 237, 0.1);
+  color: #7c3aed;
+  border: 1px solid rgba(124, 58, 237, 0.15);
+  font-size: 0.68rem;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  margin-bottom: 0.4rem;
+}
+
+.eip-hero-left { display: flex; flex-direction: column; gap: 0.35rem; }
+
+.eip-hero-left h1 {
+  margin: 0;
+  font-size: clamp(1.4rem, 2.5vw, 2rem);
+  font-weight: 950;
+  letter-spacing: -0.04em;
+  color: #111827;
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+}
+
+.eip-hero-left h1 svg { color: #7c3aed; }
+
+.eip-hero-left p {
+  margin: 0;
+  font-size: 0.9rem;
+  color: #64748b;
+  font-weight: 600;
+}
+
+.eip-hero-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+}
+
+/* ── Buttons ── */
+.eip-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0.6rem 1.25rem;
+  border-radius: 999px;
+  font-size: 0.875rem;
+  font-weight: 800;
+  cursor: pointer;
+  border: none;
+  transition: 0.18s ease;
+  white-space: nowrap;
+}
+
+.eip-btn--primary {
+  background: linear-gradient(135deg, #7c3aed, #9d5cf6);
+  color: #fff;
+  box-shadow: 0 8px 20px rgba(124, 58, 237, 0.35);
+}
+
+.eip-btn--primary:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 10px 28px rgba(124, 58, 237, 0.45);
+}
+
+.eip-btn--primary:disabled { opacity: 0.45; cursor: not-allowed; transform: none; }
+
+.eip-btn--outline {
+  background: #fff;
+  color: #64748b;
+  border: 1.5px solid #e2e8f0;
+}
+
+.eip-btn--outline:hover:not(:disabled) {
+  border-color: #7c3aed;
+  color: #7c3aed;
+}
+
+.eip-btn--outline:disabled { opacity: 0.45; cursor: not-allowed; }
+
+.eip-btn--ghost {
+  background: rgba(100, 116, 139, 0.07);
+  color: #374151;
+  border: 1px solid transparent;
+}
+
+.eip-btn--ghost:hover { background: rgba(124, 58, 237, 0.07); color: #7c3aed; }
+
+/* ── Controls ── */
+.eip-controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  align-items: center;
+  margin-bottom: 1.25rem;
+}
+
+.eip-search-wrap {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex: 1;
+  min-width: 200px;
+  max-width: 360px;
+  padding: 0.55rem 0.9rem;
+  background: #fff;
+  border: 1.5px solid #e2e8f0;
+  border-radius: 10px;
+  transition: border-color 0.15s;
+}
+
+.eip-search-wrap:focus-within { border-color: #7c3aed; }
+
+.eip-search-icon { color: #94a3b8; font-size: 0.85rem; flex-shrink: 0; }
+
+.eip-search-input {
+  flex: 1;
+  border: none;
+  background: transparent;
+  font-size: 0.875rem;
+  color: #1f2937;
+  outline: none;
+  min-width: 0;
+}
+
+.eip-search-clear {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: #94a3b8;
+  font-size: 0.85rem;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  transition: color 0.15s;
+}
+.eip-search-clear:hover { color: #ef4444; }
+
+.eip-role-select {
+  padding: 0.55rem 0.8rem;
+  background: #fff;
+  border: 1.5px solid #e2e8f0;
+  border-radius: 10px;
+  font-size: 0.875rem;
+  font-weight: 700;
+  color: #374151;
+  cursor: pointer;
+  outline: none;
+  transition: border-color 0.15s;
+}
+
+.eip-role-select:focus { border-color: #7c3aed; }
+
+.eip-selection-row {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.eip-count {
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: #64748b;
+}
+
+/* ── Toast ── */
+.eip-toast {
+  padding: 0.7rem 1.1rem;
+  background: #fef3c7;
+  border: 1px solid #fcd34d;
+  border-radius: 10px;
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: #92400e;
+  margin-bottom: 1rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+/* ── State messages ── */
+.eip-state-msg {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  justify-content: center;
+  padding: 3rem 2rem;
+  color: #64748b;
+  font-weight: 700;
+  font-size: 0.95rem;
+}
+.eip-state-msg.error { color: #dc2626; }
+
+/* ── Card grid ── */
+.eip-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 1rem;
+}
+
+/* ── ID card ── */
+.eip-card {
+  position: relative;
+  background: #fff;
+  border: 2px solid #e2e8f0;
+  border-radius: 16px;
+  padding: 1rem;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+
+.eip-card:hover { border-color: rgba(124, 58, 237, 0.35); box-shadow: 0 6px 20px rgba(124, 58, 237, 0.1); }
+.eip-card.selected { border-color: #7c3aed; box-shadow: 0 6px 20px rgba(124, 58, 237, 0.18); }
+
+.eip-card-check {
+  position: absolute;
+  top: 0.6rem;
+  left: 0.6rem;
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: #94a3b8;
+  font-size: 1rem;
+  padding: 0;
+  z-index: 1;
+  transition: color 0.15s;
+}
+.eip-card.selected .eip-card-check,
+.eip-card-check:hover { color: #7c3aed; }
+
+.eip-card-print-btn {
+  position: absolute;
+  top: 0.5rem;
+  right: 0.5rem;
+  background: none;
+  border: 1px solid #e2e8f0;
+  border-radius: 6px;
+  color: #64748b;
+  font-size: 0.82rem;
+  padding: 0.3rem 0.5rem;
+  cursor: pointer;
+  transition: 0.15s;
+}
+.eip-card-print-btn:hover { background: rgba(124, 58, 237, 0.07); color: #7c3aed; border-color: #7c3aed; }
+
+/* ── ID card inner preview ── */
+.eip-card-preview {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  padding-top: 1.5rem;
+}
+
+.eip-card-clinic {
+  font-size: 0.78rem;
+  font-weight: 900;
+  color: #7c3aed;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.eip-card-divider {
+  width: 100%;
+  height: 1px;
+  background: #e2e8f0;
+  margin: 0.1rem 0;
+}
+
+.eip-card-info {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.2rem;
+}
+
+.eip-card-empno {
+  font-size: 0.72rem;
+  font-family: monospace;
+  color: #64748b;
+  font-weight: 800;
+}
+
+.eip-card-name {
+  font-size: 1rem;
+  font-weight: 900;
+  color: #111827;
+  text-align: center;
+  line-height: 1.2;
+  word-break: break-word;
+}
+
+.eip-role-tag {
+  font-size: 0.7rem;
+  font-weight: 800;
+  color: #fff;
+  background: linear-gradient(135deg, #7c3aed, #9d5cf6);
+  border-radius: 999px;
+  padding: 0.15rem 0.6rem;
+}
+
+.eip-card-codes {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.35rem;
+  width: 100%;
+}
+
+.eip-barcode-svg {
+  width: 100%;
+  max-width: 200px;
+  height: auto;
+}
+
+.eip-barcode-value {
+  font-size: 0.7rem;
+  font-family: monospace;
+  color: #374151;
+  font-weight: 700;
+}
+
+.eip-no-code {
+  font-size: 0.75rem;
+  color: #94a3b8;
+  font-style: italic;
+}
+
+/* ── Spinners ── */
+.eip-spinner-lg {
+  display: inline-block;
+  width: 28px;
+  height: 28px;
+  border: 3px solid rgba(124, 58, 237, 0.2);
+  border-top-color: #7c3aed;
+  border-radius: 50%;
+  animation: eipSpin 0.7s linear infinite;
+}
+
+@keyframes eipSpin { to { transform: rotate(360deg); } }
+
+/* ============================================================
+   PRINT SHEET — off-screen on screen, visible during window.print()
+   Off-screen (not display:none) so jsbarcode can render SVGs with real dimensions.
+   ============================================================ */
+
+.eip-print-sheet {
+  position: fixed;
+  left: -9999px;
+  top: 0;
+  width: 210mm;
+  background: white;
+  pointer-events: none;
+  z-index: -1;
+}
+
+/* Card styles — always on so the off-screen print sheet renders correctly */
+.eip-print-card {
+  width: 85mm;
+  min-height: 54mm;
+  border: 0.5pt solid #ccc;
+  border-radius: 3mm;
+  padding: 3mm 4mm;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2mm;
+  page-break-inside: avoid;
+  background: white;
+  box-sizing: border-box;
+}
+
+.eip-print-clinic {
+  font-size: 11px;
+  font-weight: 900;
+  color: #7c3aed;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  font-family: sans-serif;
+}
+
+.eip-print-rule {
+  width: 100%;
+  height: 1px;
+  background: #ccc;
+  margin: 1mm 0;
+}
+
+.eip-print-empno {
+  font-size: 10px;
+  font-family: monospace;
+  color: #555;
+  font-weight: 700;
+}
+
+.eip-print-name {
+  font-size: 13px;
+  font-weight: 700;
+  color: #000;
+  text-align: center;
+  line-height: 1.2;
+  font-family: sans-serif;
+}
+
+.eip-print-role {
+  font-size: 10px;
+  color: #7c3aed;
+  font-weight: 700;
+  font-family: sans-serif;
+}
+
+.eip-print-barcode-svg {
+  width: 68mm;
+  height: auto;
+  max-height: 14mm;
+}
+
+.eip-print-code {
+  font-size: 9px;
+  font-family: monospace;
+  color: #333;
+}
+
+@page { size: A4 portrait; margin: 8mm; }

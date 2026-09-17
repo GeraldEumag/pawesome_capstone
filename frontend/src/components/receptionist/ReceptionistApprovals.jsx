@@ -6,11 +6,9 @@ import {
   FaCut,
   FaDownload,
   FaEye,
-  FaFilter,
   FaHotel,
   FaInfoCircle,
   FaPaw,
-  FaSearch,
   FaSpinner,
   FaSyncAlt,
   FaTimes,
@@ -905,7 +903,6 @@ const ReceptionistApprovals = () => {
 
       <section className="approvals-controls">
         <div className="approvals-search-box">
-          <FaSearch />
           <input
             type="text"
             placeholder="Search customer, pet, service, type, notes, or request ID..."
@@ -921,7 +918,6 @@ const ReceptionistApprovals = () => {
         </div>
 
         <label className="approvals-filter-box">
-          <FaFilter />
           <select
             value={typeFilter}
             onChange={(event) => setTypeFilter(event.target.value)}
@@ -935,7 +931,6 @@ const ReceptionistApprovals = () => {
         </label>
 
         <label className="approvals-filter-box">
-          <FaUserMd />
           <select
             value={vetFilter}
             onChange={(event) => setVetFilter(event.target.value)}

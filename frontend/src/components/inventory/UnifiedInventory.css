@@ -120,6 +120,25 @@
 
 .btn-danger:hover { background: #dc2626; }
 
+.btn-scan-barcode {
+  background: #fff;
+  color: #64748b;
+  border-color: #e6eaf0;
+  padding: 0.5rem 0.95rem;
+  font-size: 0.85rem;
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.05);
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.btn-scan-barcode:hover,
+.btn-scan-barcode.active {
+  background: rgba(255, 95, 147, 0.07);
+  color: #ff5f93;
+  border-color: #ffb3cb;
+}
+
 .btn-filter {
   background: #fff;
   color: #64748b;
@@ -1129,4 +1148,95 @@
     background: #f8fafc !important;
     color: #1e293b !important;
   }
+}
+
+/* ============================================================
+   Barcode Scanner Modal
+   ============================================================ */
+
+.inv-scan-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 5000;
+  background: rgba(15, 23, 42, 0.55);
+  backdrop-filter: blur(8px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+}
+
+.inv-scan-modal {
+  width: min(400px, 92vw);
+  background: rgba(255, 255, 255, 0.97);
+  border-radius: 20px;
+  padding: 1.25rem;
+  border: 1px solid rgba(255, 95, 147, 0.18);
+  box-shadow: 0 24px 64px rgba(15, 23, 42, 0.22);
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  animation: invScanPop 0.25s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+}
+
+@keyframes invScanPop {
+  from { transform: scale(0.94); opacity: 0; }
+  to   { transform: scale(1);    opacity: 1; }
+}
+
+.inv-scan-modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.inv-scan-modal-title {
+  font-size: 1rem;
+  font-weight: 800;
+  color: #111827;
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+}
+
+.inv-scan-modal-title svg {
+  color: #ff5f93;
+}
+
+.inv-scan-modal-close {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: #64748b;
+  font-size: 1rem;
+  padding: 0.25rem;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  transition: color 0.15s;
+}
+
+.inv-scan-modal-close:hover {
+  color: #ef4444;
+}
+
+.inv-scan-modal-hint {
+  margin: 0;
+  font-size: 0.82rem;
+  color: #64748b;
+  font-weight: 600;
+  text-align: center;
+}
+
+/* ── Scan row highlight ── */
+@keyframes invScanHighlight {
+  0%   { background-color: rgba(255, 95, 147, 0.22); }
+  80%  { background-color: rgba(255, 95, 147, 0.12); }
+  100% { background-color: transparent; }
+}
+
+.ui-table tbody tr.scan-highlight td {
+  animation: invScanHighlight 2s ease forwards;
+  outline: 2px solid rgba(255, 95, 147, 0.4);
+  outline-offset: -1px;
 }

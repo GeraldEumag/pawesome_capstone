@@ -14,6 +14,7 @@ import {
   faTimes,
   faWallet,
   faArrowLeft,
+  faBarcode,
 } from "@fortawesome/free-solid-svg-icons";
 import { showConfirm } from "../../utils/alert.jsx";
 import { apiRequest, clearAuthStorage } from "../../api/client";
@@ -27,6 +28,7 @@ const NAV_SECTIONS = [
       { to: "/inventory", label: "Dashboard", icon: faWarehouse, end: true },
       { to: "/inventory/stock", label: "Stock Management", icon: faBoxes },
       { to: "/inventory/history", label: "History", icon: faHistory },
+      { to: "/inventory/barcodes", label: "Barcode Generator", icon: faBarcode },
     ],
   },
   {

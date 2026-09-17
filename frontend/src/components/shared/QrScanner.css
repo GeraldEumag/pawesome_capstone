@@ -1,0 +1,185 @@
+/* ===== QrScanner — reusable webcam barcode / QR scanner ===== */
+
+.qr-scanner {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.75rem;
+  width: 100%;
+}
+
+/* ── HTTPS warning ── */
+.qrs-warning {
+  width: 100%;
+  padding: 0.6rem 1rem;
+  background: #fef3c7;
+  border: 1px solid #f59e0b;
+  border-radius: 8px;
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: #92400e;
+  text-align: center;
+}
+
+.qrs-warning code {
+  background: rgba(0, 0, 0, 0.08);
+  padding: 0.1rem 0.3rem;
+  border-radius: 4px;
+  font-family: monospace;
+}
+
+/* ── Camera picker ── */
+.qrs-camera-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  width: 100%;
+  max-width: 320px;
+}
+
+.qrs-camera-label {
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: #64748b;
+  white-space: nowrap;
+}
+
+.qrs-camera-select {
+  flex: 1;
+  padding: 0.4rem 0.6rem;
+  border: 1.5px solid rgba(255, 95, 147, 0.25);
+  border-radius: 8px;
+  background: #f8fafc;
+  color: #1f2937;
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+  outline: none;
+  transition: border-color 0.18s;
+}
+
+.qrs-camera-select:focus {
+  border-color: #ff5f93;
+}
+
+.qrs-camera-select:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+/* ── Viewfinder container ── */
+.qrs-viewfinder {
+  width: 100%;
+  max-width: 320px;
+  min-height: 200px;
+  border-radius: 14px;
+  overflow: hidden;
+  background: #0f172a;
+  border: 2px solid rgba(255, 95, 147, 0.2);
+  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.18), 0 0 0 1px rgba(255, 95, 147, 0.08);
+  position: relative;
+}
+
+/* The library injects a video + its own UI elements into this div.
+   Force the video to fill the container properly. */
+.qrs-viewfinder video {
+  width: 100% !important;
+  height: auto !important;
+  display: block;
+}
+
+/* Override the library's default button styles it injects */
+.qrs-viewfinder button {
+  display: none !important; /* hide the library's built-in "stop" button */
+}
+
+/* Override the scanning border box injected by the library */
+.qrs-viewfinder #qr-shaded-region {
+  border-color: rgba(255, 95, 147, 0.6) !important;
+}
+
+/* ── Error ── */
+.qrs-error {
+  width: 100%;
+  max-width: 320px;
+  padding: 0.65rem 1rem;
+  background: #fee2e2;
+  border: 1px solid rgba(239, 68, 68, 0.25);
+  border-radius: 8px;
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: #991b1b;
+  text-align: center;
+}
+
+/* ── Controls ── */
+.qrs-controls {
+  display: flex;
+  justify-content: center;
+}
+
+.qrs-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0.6rem 1.5rem;
+  border: none;
+  border-radius: 999px;
+  font-size: 0.88rem;
+  font-weight: 800;
+  cursor: pointer;
+  transition: 0.2s ease;
+  outline: none;
+}
+
+.qrs-btn-icon {
+  font-size: 1rem;
+}
+
+.qrs-btn--start {
+  background: linear-gradient(135deg, #ff5f93, #ff8db5);
+  color: #fff;
+  box-shadow: 0 8px 20px rgba(255, 95, 147, 0.35);
+}
+
+.qrs-btn--start:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 10px 28px rgba(255, 95, 147, 0.45);
+}
+
+.qrs-btn--start:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+.qrs-btn--start:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+.qrs-btn--stop {
+  background: #f1f5f9;
+  color: #ef4444;
+  border: 1.5px solid #fecaca;
+}
+
+.qrs-btn--stop:hover {
+  background: #fee2e2;
+  transform: translateY(-1px);
+}
+
+/* ── Scanning hint ── */
+.qrs-hint {
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: #64748b;
+  text-align: center;
+  margin: 0;
+  animation: qrsHintPulse 2s ease-in-out infinite;
+}
+
+@keyframes qrsHintPulse {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0.5; }
+}

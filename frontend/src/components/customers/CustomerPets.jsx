@@ -16,7 +16,6 @@ import {
   FaNotesMedical,
   FaPaw,
   FaPlus,
-  FaSearch,
   FaStethoscope,
   FaSyncAlt,
   FaTimes,
@@ -786,7 +785,6 @@ const CustomerPets = () => {
 
           <div className="pets-toolbar">
             <div className="pets-search-box">
-              <FaSearch />
               <input
                 type="text"
                 placeholder="Search pet, type of pet, breed, notes..."
