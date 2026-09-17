@@ -73,9 +73,13 @@ class UserController extends Controller
                 'emergency_contact_person' => $request->emergency_contact_person,
                 'emergency_contact_number' => $request->emergency_contact_number,
                 'role' => $request->role,
-                'email_verified_at' => now(),
                 'is_active' => $request->is_active ?? true,
             ]);
+
+            // email_verified_at is intentionally not mass-assignable — set it
+            // directly. Admin-provisioned accounts are vouched for by the admin.
+            $user->email_verified_at = now();
+            $user->save();
 
             if ($request->role === 'customer') {
                 Customer::updateOrCreate(

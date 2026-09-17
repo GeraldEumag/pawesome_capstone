@@ -81,17 +81,15 @@ class User extends Authenticatable
     /**
      * Always return the API-accessible URL for the profile photo.
      * This ensures img tags can load it directly without auth headers.
-     * When no photo is uploaded, falls back to the avatar derived from the
-     * account email (Gravatar — real photo if registered, initials otherwise),
-     * so every user has an identity image. The raw stored value is still
-     * available via getRawOriginal('profile_photo').
+     * When no photo is uploaded, falls back to a locally generated initials
+     * avatar (data-URI SVG) so every user has an identity image with no
+     * external dependency. The raw stored value is still available via
+     * getRawOriginal('profile_photo').
      */
     public function getProfilePhotoAttribute($value): ?string
     {
         if (!$value) {
-            $hash = md5(strtolower(trim((string) $this->email)));
-            $name = urlencode($this->name ?: (string) $this->email);
-            return "https://www.gravatar.com/avatar/{$hash}?s=200&d=initials&name={$name}";
+            return $this->initialsAvatarUrl();
         }
         // Already a full URL or API path (possibly with ?v= cache buster)
         $base = strtok($value, '?');
@@ -99,6 +97,30 @@ class User extends Authenticatable
             return $value;
         }
         return "/api/files/profile-photos/{$this->id}/view";
+    }
+
+    /**
+     * Inline SVG initials avatar — deterministic color derived from the name
+     * so each user keeps a consistent identity color.
+     */
+    private function initialsAvatarUrl(): string
+    {
+        $name = trim((string) ($this->name ?: $this->email ?: '?'));
+        $parts = preg_split('/\s+/', $name) ?: [];
+        $initials = count($parts) > 1
+            ? mb_strtoupper(mb_substr($parts[0], 0, 1) . mb_substr(end($parts), 0, 1))
+            : mb_strtoupper(mb_substr($name, 0, 1));
+
+        $palette = ['#d63384', '#7c3aed', '#0d9488', '#ea580c', '#2563eb', '#be185d', '#4d7c0f'];
+        $bg = $palette[crc32(strtolower($name)) % count($palette)];
+
+        $svg = '<svg xmlns="http://www.w3.org/2000/svg" width="200" height="200">'
+            . '<rect width="200" height="200" fill="' . $bg . '"/>'
+            . '<text x="50%" y="50%" dy=".36em" text-anchor="middle" fill="#fff"'
+            . ' font-family="Arial, sans-serif" font-size="84" font-weight="700">'
+            . htmlspecialchars($initials, ENT_XML1) . '</text></svg>';
+
+        return 'data:image/svg+xml;base64,' . base64_encode($svg);
     }
 
     public function customer()

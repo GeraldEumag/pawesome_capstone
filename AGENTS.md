@@ -95,9 +95,10 @@ and customer notifications (`CustomerNotificationMail`).
   a set-your-own-password link (reuses `password_reset_tokens`) — plaintext
   credentials are never emailed. Admin/seeded accounts are pre-verified
   (`email_verified_at` set at creation); verification applies to customers only.
-- `User::profile_photo` falls back to an email-derived Gravatar URL
-  (`d=initials`) when no photo is uploaded — every dashboard/navbar shows an
-  identity avatar automatically. Raw value via `getRawOriginal('profile_photo')`.
+- `User::profile_photo` falls back to a locally generated initials avatar
+  (data-URI SVG, deterministic color per name) when no photo is uploaded —
+  every dashboard/navbar shows an identity avatar automatically with no
+  external service dependency. Raw value via `getRawOriginal('profile_photo')`.
 
 ### Mailer configuration
 

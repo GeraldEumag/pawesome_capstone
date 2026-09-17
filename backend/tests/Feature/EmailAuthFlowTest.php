@@ -321,16 +321,21 @@ class EmailAuthFlowTest extends TestCase
      | Email-derived avatar (Gravatar fallback)
      * -------------------------------------------------------------- */
 
-    public function test_user_without_photo_gets_email_derived_avatar(): void
+    public function test_user_without_photo_gets_initials_avatar(): void
     {
         $user = User::factory()->create([
             'role' => 'customer',
+            'name' => 'Juan Dela Cruz',
             'email' => 'avatar@example.com',
             'profile_photo' => null,
         ]);
 
-        $expected = md5('avatar@example.com');
-        $this->assertStringContainsString("gravatar.com/avatar/{$expected}", $user->profile_photo);
+        $avatar = $user->profile_photo;
+        $this->assertStringStartsWith('data:image/svg+xml;base64,', $avatar);
+        // Data-URI is a self-contained SVG with the user's initials — no
+        // external service required.
+        $svg = base64_decode(substr($avatar, strlen('data:image/svg+xml;base64,')));
+        $this->assertStringContainsString('JC', $svg);
     }
 
     public function test_user_with_uploaded_photo_keeps_it(): void
