@@ -56,7 +56,7 @@ function makeRequest($endpoint, $method = 'GET', $data = null, $token = null) {
 }
 
 function login($email, $password) {
-    $response = makeRequest('/login', 'POST', [
+    $response = makeRequest('/auth/login', 'POST', [
         'email' => $email,
         'password' => $password,
     ]);
@@ -89,12 +89,12 @@ function checkNotification($notifications, $expectedTitle, $expectedType, $expec
     return null;
 }
 
-// Test credentials
+// Test credentials (per AGENTS.md seeded accounts)
 $credentials = [
-    'customer' => ['email' => 'customer@example.com', 'password' => 'password'],
-    'receptionist' => ['email' => 'receptionist@example.com', 'password' => 'password'],
-    'cashier' => ['email' => 'cashier@example.com', 'password' => 'password'],
-    'veterinary' => ['email' => 'veterinary@example.com', 'password' => 'password'],
+    'customer' => ['email' => 'customer@example.com', 'password' => 'Password123!'],
+    'receptionist' => ['email' => 'receptionist@example.com', 'password' => 'Password123!'],
+    'cashier' => ['email' => 'cashier@example.com', 'password' => 'password123'],
+    'veterinary' => ['email' => 'vet@example.com', 'password' => 'Password123!'],
 ];
 
 echo "=== Phase 7B Workflow Notification Trigger Validation ===\n\n";
