@@ -1,0 +1,713 @@
+{
+    "title": "Pawesome Cross-Role E2E Production Readiness Audit (HTTP)",
+    "started_at": "2026-09-17T15:09:01+02:00",
+    "api_base": "http://127.0.0.1:8000/api",
+    "seed": "398085",
+    "overall": "PASS",
+    "summary": {
+        "pass": 28,
+        "fail": 0,
+        "warn": 1,
+        "blockers": 0
+    },
+    "findings": [
+        {
+            "type": "pass",
+            "gate": "auth",
+            "message": "Login as customer",
+            "at": "2026-09-17T15:09:03+02:00",
+            "detail": {
+                "email": "customer@example.com",
+                "token_len": 52
+            }
+        },
+        {
+            "type": "pass",
+            "gate": "auth",
+            "message": "Login as receptionist",
+            "at": "2026-09-17T15:09:05+02:00",
+            "detail": {
+                "email": "receptionist@example.com",
+                "token_len": 52
+            }
+        },
+        {
+            "type": "pass",
+            "gate": "auth",
+            "message": "Login as cashier",
+            "at": "2026-09-17T15:09:06+02:00",
+            "detail": {
+                "email": "cashier@example.com",
+                "token_len": 52
+            }
+        },
+        {
+            "type": "pass",
+            "gate": "auth",
+            "message": "Login as inventory",
+            "at": "2026-09-17T15:09:08+02:00",
+            "detail": {
+                "email": "inventory@example.com",
+                "token_len": 52
+            }
+        },
+        {
+            "type": "pass",
+            "gate": "auth",
+            "message": "Login as veterinary",
+            "at": "2026-09-17T15:09:10+02:00",
+            "detail": {
+                "email": "vet@example.com",
+                "token_len": 52
+            }
+        },
+        {
+            "type": "pass",
+            "gate": "auth",
+            "message": "Login as manager",
+            "at": "2026-09-17T15:09:11+02:00",
+            "detail": {
+                "email": "manager@example.com",
+                "token_len": 52
+            }
+        },
+        {
+            "type": "pass",
+            "gate": "auth",
+            "message": "Login as admin",
+            "at": "2026-09-17T15:09:13+02:00",
+            "detail": {
+                "email": "admin@example.com",
+                "token_len": 52
+            }
+        },
+        {
+            "type": "pass",
+            "gate": "customer",
+            "message": "Buddy pet resolved",
+            "at": "2026-09-17T15:09:16+02:00",
+            "detail": {
+                "pet_id": 3
+            }
+        },
+        {
+            "type": "pass",
+            "gate": "customer",
+            "message": "Customer submitted vet request",
+            "at": "2026-09-17T15:09:17+02:00",
+            "detail": {
+                "service_request_id": 11,
+                "status": "pending"
+            }
+        },
+        {
+            "type": "pass",
+            "gate": "receptionist",
+            "message": "Receptionist sees the pending customer request",
+            "at": "2026-09-17T15:09:18+02:00",
+            "detail": {
+                "count": 2
+            }
+        },
+        {
+            "type": "pass",
+            "gate": "receptionist",
+            "message": "Available veterinarian found",
+            "at": "2026-09-17T15:09:19+02:00",
+            "detail": {
+                "vet_id": 8,
+                "name": "Veterinarian"
+            }
+        },
+        {
+            "type": "pass",
+            "gate": "receptionist",
+            "message": "Receptionist approved request",
+            "at": "2026-09-17T15:09:23+02:00",
+            "detail": {
+                "response_status": 200,
+                "data": {
+                    "id": 11,
+                    "request_type": "vet",
+                    "service_type": "vet",
+                    "type": "vet",
+                    "customer_name": "Customer",
+                    "customer": "Customer",
+                    "customer_id": 9,
+                    "customer_email": "customer@example.com",
+                    "email": "customer@example.com",
+                    "pet_id": 3,
+                    "pet_name": "Buddy",
+                    "pet": "Buddy",
+                    "service_name": "General Check-up",
+                    "service": "General Check-up",
+                    "request_date": "2026-10-10",
+                    "date": "2026-10-10",
+                    "request_time": "11:45",
+                    "time": "11:45",
+                    "status": "approved",
+                    "payment_status": "unpaid",
+                    "payment": "unpaid",
+                    "notes": "CROSS_ROLE_E2E_AUDIT 398085",
+                    "price": "500.00",
+                    "amount": "500.00",
+                    "total_amount": "500.00",
+                    "created_at": "2026-09-17T13:09:17.000000Z"
+                }
+            }
+        },
+        {
+            "type": "pass",
+            "gate": "customer",
+            "message": "Customer uploaded payment proof",
+            "at": "2026-09-17T15:09:24+02:00",
+            "detail": {
+                "success": true,
+                "message": "Payment proof uploaded successfully. Waiting for cashier verification.",
+                "request": {
+                    "id": 11,
+                    "customer_id": 9,
+                    "customer": "Customer",
+                    "customer_name": "Customer",
+                    "email": "customer@example.com",
+                    "customer_email": "customer@example.com",
+                    "pet_id": 3,
+                    "pet": "Buddy",
+                    "pet_name": "Buddy",
+                    "type": "vet",
+                    "request_type": "vet",
+                    "service_type": "General Check-up",
+                    "service": "General Check-up",
+                    "service_name": "General Check-up",
+                    "date": "2026-10-10",
+                    "request_date": "2026-10-10",
+                    "requested_date": "2026-10-10",
+                    "time": "11:45",
+                    "request_time": "11:45",
+                    "notes": "CROSS_ROLE_E2E_AUDIT 398085",
+                    "status": "approved",
+                    "price": "500.00",
+                    "amount": "500.00",
+                    "payment": "pending",
+                    "payment_status": "pending",
+                    "payment_method": "gcash",
+                    "payment_reference": "GCASH-REF-398085",
+                    "payment_proof": "payment-proofs/proof_1789650564_LPOYQmKYXh.png",
+                    "created_at": "2026-09-17T13:09:17.000000Z"
+                },
+                "payment_status": "pending",
+                "proof_url": "/api/files/payment-proofs/service-request/11/view"
+            }
+        },
+        {
+            "type": "pass",
+            "gate": "cashier",
+            "message": "Cashier sees the service_request payment request",
+            "at": "2026-09-17T15:09:25+02:00",
+            "detail": {
+                "count": 2
+            }
+        },
+        {
+            "type": "pass",
+            "gate": "cashier",
+            "message": "Cashier verified payment",
+            "at": "2026-09-17T15:09:26+02:00",
+            "detail": {
+                "success": true,
+                "message": "Service request payment verified successfully.",
+                "payment_status": "paid",
+                "receipt_number": "SR-REC-20260917130926-11"
+            }
+        },
+        {
+            "type": "pass",
+            "gate": "veterinary",
+            "message": "Veterinarian sees the approved appointment",
+            "at": "2026-09-17T15:09:27+02:00",
+            "detail": {
+                "appointment_id": 4
+            }
+        },
+        {
+            "type": "pass",
+            "gate": "veterinary",
+            "message": "Veterinarian started appointment",
+            "at": "2026-09-17T15:09:31+02:00",
+            "detail": {
+                "message": "Appointment started successfully",
+                "appointment": {
+                    "id": 4,
+                    "service_request_id": 11,
+                    "customer_id": 5,
+                    "pet_id": 3,
+                    "service_id": 1,
+                    "veterinarian_id": 8,
+                    "status": "in_progress",
+                    "scheduled_at": "2026-10-10T11:45:00.000000Z",
+                    "started_at": "2026-09-17T13:09:29.000000Z",
+                    "completed_at": null,
+                    "price": 500,
+                    "payment_status": "paid",
+                    "consultation_fee": "500.00",
+                    "base_amount": "500.00",
+                    "additional_charges": "0.00",
+                    "total_amount": "500.00",
+                    "amount_paid": "500.00",
+                    "balance_due": "0.00",
+                    "paid_at": "2026-09-17T13:09:26.000000Z",
+                    "verified_by": 6,
+                    "verified_at": "2026-09-17 13:09:26",
+                    "cashier_remarks": null,
+                    "receipt_number": "SR-REC-20260917130926-11",
+                    "reference_number": null,
+                    "notes": "CROSS_ROLE_E2E_AUDIT 398085\n[Started]: Started in audit 398085",
+                    "diagnosis": null,
+                    "treatment_notes": null,
+                    "prescription": null,
+                    "vet_remarks": null,
+                    "cancellation_reason": null,
+                    "created_at": "2026-09-17T13:09:20.000000Z",
+                    "updated_at": "2026-09-17T13:09:29.000000Z",
+                    "reminder_sent_at": null,
+                    "customer": {
+                        "id": 5,
+                        "user_id": 9,
+                        "name": "Customer",
+                        "email": "customer@example.com",
+                        "phone": null,
+                        "address": null,
+                        "loyalty_points": 0,
+                        "is_active": true,
+                        "telegram_chat_id": null,
+                        "notification_preferences": null,
+                        "created_at": "2026-09-16T23:42:56.000000Z",
+                        "updated_at": "2026-09-16T23:42:56.000000Z",
+                        "profile_photo": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyMDAiIGhlaWdodD0iMjAwIj48cmVjdCB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgZmlsbD0iIzdjM2FlZCIvPjx0ZXh0IHg9IjUwJSIgeT0iNTAlIiBkeT0iLjM2ZW0iIHRleHQtYW5jaG9yPSJtaWRkbGUiIGZpbGw9IiNmZmYiIGZvbnQtZmFtaWx5PSJBcmlhbCwgc2Fucy1zZXJpZiIgZm9udC1zaXplPSI4NCIgZm9udC13ZWlnaHQ9IjcwMCI+QzwvdGV4dD48L3N2Zz4="
+                    },
+                    "pet": {
+                        "id": 3,
+                        "customer_id": 5,
+                        "name": "Buddy",
+                        "species": "Dog",
+                        "breed": "Golden Retriever",
+                        "birthdate": null,
+                        "age": null,
+                        "gender": "Male",
+                        "image": null,
+                        "birth_date": null,
+                        "notes": "Demo pet recreated by cross-role workflow test.",
+                        "status": "active",
+                        "archived_at": null,
+                        "archived_by": null,
+                        "created_at": "2026-09-16T23:42:56.000000Z",
+                        "updated_at": "2026-09-16T23:42:56.000000Z",
+                        "deleted_at": null,
+                        "image_url": null
+                    },
+                    "service": {
+                        "id": 1,
+                        "name": "General Check-up",
+                        "category": "Consultation",
+                        "price": "500.00",
+                        "duration": 30,
+                        "is_active": true,
+                        "description": "Routine veterinary check-up and wellness exam.",
+                        "duration_minutes": 30,
+                        "created_at": "2026-09-13T23:46:46.000000Z",
+                        "updated_at": "2026-09-13T23:46:46.000000Z"
+                    },
+                    "veterinarian": {
+                        "id": 8,
+                        "employee_no": null,
+                        "name": "Veterinarian",
+                        "first_name": "Veterinarian",
+                        "middle_name": null,
+                        "last_name": "",
+                        "phone": null,
+                        "address": null,
+                        "city": null,
+                        "state": null,
+                        "zip_code": null,
+                        "country": null,
+                        "bio": null,
+                        "profile_image": null,
+                        "date_of_birth": null,
+                        "gender": null,
+                        "emergency_contact_person": null,
+                        "emergency_contact_number": null,
+                        "suffix": null,
+                        "username": "vet",
+                        "email": "vet@example.com",
+                        "email_verified_at": "2026-09-13T23:46:46.000000Z",
+                        "role": "veterinary",
+                        "base_salary": "32000.00",
+                        "hourly_rate": "180.00",
+                        "work_start_time": "08:00:00",
+                        "work_end_time": "17:00:00",
+                        "working_days_per_week": 5,
+                        "department": "Veterinary",
+                        "position": "Veterinarian",
+                        "employment_date": null,
+                        "employment_status": "active",
+                        "is_active": true,
+                        "telegram_chat_id": null,
+                        "profile_photo": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyMDAiIGhlaWdodD0iMjAwIj48cmVjdCB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgZmlsbD0iIzRkN2MwZiIvPjx0ZXh0IHg9IjUwJSIgeT0iNTAlIiBkeT0iLjM2ZW0iIHRleHQtYW5jaG9yPSJtaWRkbGUiIGZpbGw9IiNmZmYiIGZvbnQtZmFtaWx5PSJBcmlhbCwgc2Fucy1zZXJpZiIgZm9udC1zaXplPSI4NCIgZm9udC13ZWlnaHQ9IjcwMCI+VjwvdGV4dD48L3N2Zz4=",
+                        "telegram_username": null,
+                        "telegram_linked_at": null,
+                        "created_at": "2026-09-13T23:46:46.000000Z",
+                        "updated_at": "2026-09-13T23:46:46.000000Z"
+                    }
+                },
+                "medical_record": {
+                    "appointment_id": 4,
+                    "pet_id": 3,
+                    "veterinarian_id": 8,
+                    "visit_date": "2026-09-17T13:09:31.000000Z",
+                    "chief_complaint": "CROSS_ROLE_E2E_AUDIT 398085\n[Started]: Started in audit 398085",
+                    "status": "draft",
+                    "updated_at": "2026-09-17T13:09:31.000000Z",
+                    "created_at": "2026-09-17T13:09:31.000000Z",
+                    "id": 2
+                }
+            }
+        },
+        {
+            "type": "pass",
+            "gate": "veterinary",
+            "message": "Veterinarian updated medical info",
+            "at": "2026-09-17T15:09:32+02:00"
+        },
+        {
+            "type": "pass",
+            "gate": "veterinary",
+            "message": "Veterinarian finalized medical record",
+            "at": "2026-09-17T15:09:33+02:00",
+            "detail": {
+                "message": "Medical record finalized successfully",
+                "record": {
+                    "id": 2,
+                    "pet_id": 3,
+                    "appointment_id": 4,
+                    "veterinarian_id": 8,
+                    "visit_date": "2026-09-17T13:09:31.000000Z",
+                    "chief_complaint": "CROSS_ROLE_E2E_AUDIT 398085\n[Started]: Started in audit 398085",
+                    "symptoms": null,
+                    "physical_examination": null,
+                    "diagnosis": null,
+                    "secondary_diagnosis": null,
+                    "treatment_plan": null,
+                    "procedure_notes": null,
+                    "follow_up_instructions": null,
+                    "weight_kg": null,
+                    "temperature_celsius": null,
+                    "heart_rate": null,
+                    "respiratory_rate": null,
+                    "body_condition_score": null,
+                    "status": "finalized",
+                    "is_editable": true,
+                    "locked_at": null,
+                    "locked_by": null,
+                    "notes": null,
+                    "created_at": "2026-09-17T13:09:31.000000Z",
+                    "updated_at": "2026-09-17T13:09:33.000000Z"
+                }
+            }
+        },
+        {
+            "type": "pass",
+            "gate": "inventory",
+            "message": "Inventory item available",
+            "at": "2026-09-17T15:09:34+02:00",
+            "detail": {
+                "item_id": 274,
+                "quantity": 98
+            }
+        },
+        {
+            "type": "warn",
+            "gate": "inventory",
+            "message": "Skipped appointment inventory usage due to missing appointmentId or no consumable item",
+            "at": "2026-09-17T15:09:35+02:00"
+        },
+        {
+            "type": "pass",
+            "gate": "inventory",
+            "message": "Inventory manager sees item after stock movement",
+            "at": "2026-09-17T15:09:36+02:00",
+            "detail": {
+                "item_id": 274,
+                "quantity_before": 98,
+                "quantity_after": 98
+            }
+        },
+        {
+            "type": "pass",
+            "gate": "veterinary",
+            "message": "Veterinarian finalized bill",
+            "at": "2026-09-17T15:09:37+02:00",
+            "detail": {
+                "success": true,
+                "billing": {
+                    "items": [
+                        {
+                            "id": 10,
+                            "service_type": "veterinary",
+                            "item_name_snapshot": null,
+                            "item_sku_snapshot": null,
+                            "pet_name_snapshot": null,
+                            "service_name_snapshot": null,
+                            "service_id": 4,
+                            "appointment_id": null,
+                            "pet_id": 3,
+                            "customer_id": 5,
+                            "customer_email": "customer@example.com",
+                            "inventory_item_id": null,
+                            "batch_id": null,
+                            "batch_deductions": null,
+                            "quantity_used": 1,
+                            "unit": "session",
+                            "usage_type": null,
+                            "used_by": 4,
+                            "role": null,
+                            "notes": null,
+                            "item_type": "base_service",
+                            "description": "General Check-up",
+                            "unit_price": "500.00",
+                            "total_price": "500.00",
+                            "charge_amount": "0.00",
+                            "is_billable": true,
+                            "is_paid": true,
+                            "created_at": "2026-09-17T13:09:23.000000Z",
+                            "updated_at": "2026-09-17T13:09:26.000000Z",
+                            "quantity": 1,
+                            "inventory_item": null,
+                            "user": {
+                                "id": 4,
+                                "employee_no": null,
+                                "name": "Receptionist",
+                                "first_name": "Receptionist",
+                                "middle_name": null,
+                                "last_name": "",
+                                "phone": null,
+                                "address": null,
+                                "city": null,
+                                "state": null,
+                                "zip_code": null,
+                                "country": null,
+                                "bio": null,
+                                "profile_image": null,
+                                "date_of_birth": null,
+                                "gender": null,
+                                "emergency_contact_person": null,
+                                "emergency_contact_number": null,
+                                "suffix": null,
+                                "username": "receptionist",
+                                "email": "receptionist@example.com",
+                                "email_verified_at": "2026-09-13T23:46:45.000000Z",
+                                "role": "receptionist",
+                                "base_salary": "32000.00",
+                                "hourly_rate": "180.00",
+                                "work_start_time": "08:00:00",
+                                "work_end_time": "17:00:00",
+                                "working_days_per_week": 5,
+                                "department": "Front Desk",
+                                "position": "Receptionist",
+                                "employment_date": null,
+                                "employment_status": "active",
+                                "is_active": true,
+                                "telegram_chat_id": null,
+                                "profile_photo": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyMDAiIGhlaWdodD0iMjAwIj48cmVjdCB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgZmlsbD0iI2Q2MzM4NCIvPjx0ZXh0IHg9IjUwJSIgeT0iNTAlIiBkeT0iLjM2ZW0iIHRleHQtYW5jaG9yPSJtaWRkbGUiIGZpbGw9IiNmZmYiIGZvbnQtZmFtaWx5PSJBcmlhbCwgc2Fucy1zZXJpZiIgZm9udC1zaXplPSI4NCIgZm9udC13ZWlnaHQ9IjcwMCI+UjwvdGV4dD48L3N2Zz4=",
+                                "telegram_username": null,
+                                "telegram_linked_at": null,
+                                "created_at": "2026-09-13T23:46:45.000000Z",
+                                "updated_at": "2026-09-13T23:46:45.000000Z"
+                            }
+                        }
+                    ],
+                    "total_bill": 500,
+                    "total_paid": 500,
+                    "balance_due": 0,
+                    "has_unpaid_balance": false,
+                    "base_amount": 500,
+                    "additional_charges": 0,
+                    "payment_status": "paid"
+                },
+                "completion_status": {
+                    "can_complete": true,
+                    "balance_due": 0,
+                    "message": "Service can be completed. All payments settled."
+                }
+            }
+        },
+        {
+            "type": "pass",
+            "gate": "veterinary",
+            "message": "Veterinarian completed appointment",
+            "at": "2026-09-17T15:09:41+02:00",
+            "detail": {
+                "message": "Appointment marked as completed",
+                "appointment": {
+                    "id": 4,
+                    "service_request_id": 11,
+                    "customer_id": 5,
+                    "pet_id": 3,
+                    "service_id": 1,
+                    "veterinarian_id": 8,
+                    "status": "completed",
+                    "scheduled_at": "2026-10-10T11:45:00.000000Z",
+                    "started_at": "2026-09-17T13:09:29.000000Z",
+                    "completed_at": "2026-09-17T13:09:38.000000Z",
+                    "price": 500,
+                    "payment_status": "paid",
+                    "consultation_fee": "500.00",
+                    "base_amount": "500.00",
+                    "additional_charges": "0.00",
+                    "total_amount": "500.00",
+                    "amount_paid": "500.00",
+                    "balance_due": "0.00",
+                    "paid_at": "2026-09-17T13:09:37.000000Z",
+                    "verified_by": 6,
+                    "verified_at": "2026-09-17 13:09:26",
+                    "cashier_remarks": null,
+                    "receipt_number": "SR-REC-20260917130926-11",
+                    "reference_number": null,
+                    "notes": "CROSS_ROLE_E2E_AUDIT 398085\n[Started]: Started in audit 398085\n[Completion notes]: Completed in audit 398085",
+                    "diagnosis": "Healthy with mild seasonal allergy",
+                    "treatment_notes": "Prescribed antihistamine and rest",
+                    "prescription": "Antihistamine 5mg daily x7 days",
+                    "vet_remarks": null,
+                    "cancellation_reason": null,
+                    "created_at": "2026-09-17T13:09:20.000000Z",
+                    "updated_at": "2026-09-17T13:09:38.000000Z",
+                    "reminder_sent_at": null,
+                    "customer": {
+                        "id": 5,
+                        "user_id": 9,
+                        "name": "Customer",
+                        "email": "customer@example.com",
+                        "phone": null,
+                        "address": null,
+                        "loyalty_points": 0,
+                        "is_active": true,
+                        "telegram_chat_id": null,
+                        "notification_preferences": null,
+                        "created_at": "2026-09-16T23:42:56.000000Z",
+                        "updated_at": "2026-09-16T23:42:56.000000Z",
+                        "profile_photo": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyMDAiIGhlaWdodD0iMjAwIj48cmVjdCB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgZmlsbD0iIzdjM2FlZCIvPjx0ZXh0IHg9IjUwJSIgeT0iNTAlIiBkeT0iLjM2ZW0iIHRleHQtYW5jaG9yPSJtaWRkbGUiIGZpbGw9IiNmZmYiIGZvbnQtZmFtaWx5PSJBcmlhbCwgc2Fucy1zZXJpZiIgZm9udC1zaXplPSI4NCIgZm9udC13ZWlnaHQ9IjcwMCI+QzwvdGV4dD48L3N2Zz4="
+                    },
+                    "pet": {
+                        "id": 3,
+                        "customer_id": 5,
+                        "name": "Buddy",
+                        "species": "Dog",
+                        "breed": "Golden Retriever",
+                        "birthdate": null,
+                        "age": null,
+                        "gender": "Male",
+                        "image": null,
+                        "birth_date": null,
+                        "notes": "Demo pet recreated by cross-role workflow test.",
+                        "status": "active",
+                        "archived_at": null,
+                        "archived_by": null,
+                        "created_at": "2026-09-16T23:42:56.000000Z",
+                        "updated_at": "2026-09-16T23:42:56.000000Z",
+                        "deleted_at": null,
+                        "image_url": null
+                    },
+                    "service": {
+                        "id": 1,
+                        "name": "General Check-up",
+                        "category": "Consultation",
+                        "price": "500.00",
+                        "duration": 30,
+                        "is_active": true,
+                        "description": "Routine veterinary check-up and wellness exam.",
+                        "duration_minutes": 30,
+                        "created_at": "2026-09-13T23:46:46.000000Z",
+                        "updated_at": "2026-09-13T23:46:46.000000Z"
+                    },
+                    "veterinarian": {
+                        "id": 8,
+                        "employee_no": null,
+                        "name": "Veterinarian",
+                        "first_name": "Veterinarian",
+                        "middle_name": null,
+                        "last_name": "",
+                        "phone": null,
+                        "address": null,
+                        "city": null,
+                        "state": null,
+                        "zip_code": null,
+                        "country": null,
+                        "bio": null,
+                        "profile_image": null,
+                        "date_of_birth": null,
+                        "gender": null,
+                        "emergency_contact_person": null,
+                        "emergency_contact_number": null,
+                        "suffix": null,
+                        "username": "vet",
+                        "email": "vet@example.com",
+                        "email_verified_at": "2026-09-13T23:46:46.000000Z",
+                        "role": "veterinary",
+                        "base_salary": "32000.00",
+                        "hourly_rate": "180.00",
+                        "work_start_time": "08:00:00",
+                        "work_end_time": "17:00:00",
+                        "working_days_per_week": 5,
+                        "department": "Veterinary",
+                        "position": "Veterinarian",
+                        "employment_date": null,
+                        "employment_status": "active",
+                        "is_active": true,
+                        "telegram_chat_id": null,
+                        "profile_photo": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyMDAiIGhlaWdodD0iMjAwIj48cmVjdCB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgZmlsbD0iIzRkN2MwZiIvPjx0ZXh0IHg9IjUwJSIgeT0iNTAlIiBkeT0iLjM2ZW0iIHRleHQtYW5jaG9yPSJtaWRkbGUiIGZpbGw9IiNmZmYiIGZvbnQtZmFtaWx5PSJBcmlhbCwgc2Fucy1zZXJpZiIgZm9udC1zaXplPSI4NCIgZm9udC13ZWlnaHQ9IjcwMCI+VjwvdGV4dD48L3N2Zz4=",
+                        "telegram_username": null,
+                        "telegram_linked_at": null,
+                        "created_at": "2026-09-13T23:46:46.000000Z",
+                        "updated_at": "2026-09-13T23:46:46.000000Z"
+                    }
+                }
+            }
+        },
+        {
+            "type": "pass",
+            "gate": "customer-back",
+            "message": "Customer sees own request after workflow",
+            "at": "2026-09-17T15:09:42+02:00",
+            "detail": {
+                "status": "approved",
+                "payment_status": "paid"
+            }
+        },
+        {
+            "type": "pass",
+            "gate": "manager",
+            "message": "Manager dashboard loads",
+            "at": "2026-09-17T15:09:43+02:00"
+        },
+        {
+            "type": "pass",
+            "gate": "manager",
+            "message": "Manager reports overview loads",
+            "at": "2026-09-17T15:09:45+02:00"
+        },
+        {
+            "type": "pass",
+            "gate": "manager",
+            "message": "Manager services report loads",
+            "at": "2026-09-17T15:09:46+02:00"
+        },
+        {
+            "type": "pass",
+            "gate": "rbac",
+            "message": "Customer cannot access receptionist endpoints (403)",
+            "at": "2026-09-17T15:09:47+02:00"
+        }
+    ],
+    "workflow": [],
+    "blockers": [],
+    "completed_at": "2026-09-17T15:09:47+02:00"
+}
