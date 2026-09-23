@@ -23,6 +23,8 @@ export const usePaymentApprovals = (user) => {
   
   // Proof modal
   const [proofModal, setProofModal] = useState(null);
+  const proofRequestRef = useRef(null);
+  const proofBlobUrlRef = useRef(null);
 
   // Fetch requests
   const fetchRequests = useCallback(async ({ silent = false } = {}) => {
@@ -67,30 +69,100 @@ export const usePaymentApprovals = (user) => {
 
   // Proof modal handlers
   const openProof = useCallback(async (proofUrl, payment) => {
-    setProofModal({ blobUrl: null, isPdf: false, loading: true, error: null, payment: null });
+    proofRequestRef.current?.controller.abort();
+    proofRequestRef.current = null;
+    if (proofBlobUrlRef.current) {
+      URL.revokeObjectURL(proofBlobUrlRef.current);
+      proofBlobUrlRef.current = null;
+    }
+
     if (!proofUrl) {
       setProofModal({ blobUrl: null, isPdf: false, loading: false, error: null, payment });
       return;
     }
+
+    const controller = new AbortController();
+    const requestId = Symbol("proof-request");
+    proofRequestRef.current = { controller, requestId };
+    setProofModal({ blobUrl: null, isPdf: false, loading: true, error: null, payment });
+
+    let timedOut = false;
+    const timeoutId = setTimeout(() => {
+      timedOut = true;
+      controller.abort();
+    }, 20000);
+
     try {
       const token = getToken();
-      const res = await fetch(proofUrl, {
-        headers: { Authorization: `Bearer ${token}` },
+      const response = await fetch(proofUrl, {
+        headers: {
+          Accept: "image/*, application/pdf",
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+        signal: controller.signal,
       });
-      if (!res.ok) throw new Error(`Server returned ${res.status}`);
-      const blob = await res.blob();
+
+      if (!response.ok) {
+        const message = response.status === 401 || response.status === 403
+          ? "You do not have permission to view this proof. Refresh your session or contact an administrator."
+          : response.status === 404
+            ? "The payment proof file could not be found."
+            : `Unable to load payment proof (HTTP ${response.status}).`;
+        throw new Error(message);
+      }
+
+      const contentType = (response.headers.get("content-type") || "").split(";")[0].trim().toLowerCase();
+      const allowedTypes = ["image/jpeg", "image/png", "image/webp", "application/pdf"];
+      if (!allowedTypes.includes(contentType)) {
+        throw new Error(`The server returned an unsupported file type${contentType ? ` (${contentType})` : ""}.`);
+      }
+
+      const contentLength = Number(response.headers.get("content-length"));
+      const maxFileSize = 5 * 1024 * 1024;
+      if (contentLength > maxFileSize) {
+        throw new Error("The proof file is too large to preview (maximum 5 MB).");
+      }
+
+      const blob = await response.blob();
+      if (blob.size > maxFileSize) {
+        throw new Error("The proof file is too large to preview (maximum 5 MB).");
+      }
+
+      if (proofRequestRef.current?.requestId !== requestId) return;
+
       const blobUrl = URL.createObjectURL(blob);
-      const isPdf = blob.type === "application/pdf";
-      setProofModal({ blobUrl, isPdf, loading: false, error: null, payment });
-    } catch (err) {
-      setProofModal({ blobUrl: null, isPdf: false, loading: false, error: err.message, payment });
+      proofBlobUrlRef.current = blobUrl;
+      setProofModal({ blobUrl, isPdf: contentType === "application/pdf", loading: false, error: null, payment });
+    } catch (error) {
+      if (proofRequestRef.current?.requestId !== requestId) return;
+      const message = timedOut
+        ? "Loading the proof timed out. Check the connection and retry."
+        : error.name === "AbortError"
+          ? "Loading was cancelled."
+          : error.message || "Failed to load payment proof.";
+      setProofModal({ blobUrl: null, isPdf: false, loading: false, error: message, payment });
+    } finally {
+      clearTimeout(timeoutId);
+      if (proofRequestRef.current?.requestId === requestId) {
+        proofRequestRef.current = null;
+      }
     }
   }, []);
 
   const closeProof = useCallback(() => {
-    if (proofModal?.blobUrl) URL.revokeObjectURL(proofModal.blobUrl);
+    proofRequestRef.current?.controller.abort();
+    proofRequestRef.current = null;
+    if (proofBlobUrlRef.current) {
+      URL.revokeObjectURL(proofBlobUrlRef.current);
+      proofBlobUrlRef.current = null;
+    }
     setProofModal(null);
-  }, [proofModal]);
+  }, []);
+
+  useEffect(() => () => {
+    proofRequestRef.current?.controller.abort();
+    if (proofBlobUrlRef.current) URL.revokeObjectURL(proofBlobUrlRef.current);
+  }, []);
 
   // Print receipt helper — uses shared receiptPrinter utility
   const printReceipt = useCallback((data, payment, referenceNumber = "") => {
@@ -150,7 +222,7 @@ export const usePaymentApprovals = (user) => {
 
       if (data && data.success) {
         printReceipt(data, payment, referenceNumber);
-        showSuccess(data.message || `Payment verified. Receipt: ${data.receipt_number || "Generated"}`);
+        await showSuccess(data.message || `Payment verified. Receipt: ${data.receipt_number || "Generated"}`);
         fetchRequests({ silent: true });
         return data;
       } else {

@@ -2,6 +2,10 @@
 
 @import "sweetalert2/dist/sweetalert2.min.css";
 
+.swal2-container {
+  z-index: 200000;
+}
+
 .swal2-light-popup {
   border-radius: 16px !important;
   box-shadow: 0 20px 60px rgba(0, 0, 0, 0.12), 0 4px 16px rgba(0, 0, 0, 0.06) !important;

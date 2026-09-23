@@ -444,6 +444,11 @@
   border-color: transparent;
   color: #ffffff;
   box-shadow: 0 4px 16px rgba(255, 95, 147, 0.4);
+  animation: stepPulse 2s ease-in-out infinite;
+}
+@keyframes stepPulse {
+  0%, 100% { box-shadow: 0 4px 16px rgba(255, 95, 147, 0.4); }
+  50% { box-shadow: 0 4px 24px rgba(255, 95, 147, 0.6); }
 }
 .register-step strong {
   display: block;

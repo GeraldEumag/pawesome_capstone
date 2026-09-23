@@ -723,6 +723,14 @@
   object-fit: contain;
 }
 
+.pa-proof-pdf {
+  width: 100%;
+  min-height: 400px;
+  border: 0;
+  border-radius: 8px;
+  background: #fff;
+}
+
 .pa-proof-loading {
   display: flex;
   flex-direction: column;
@@ -731,6 +739,15 @@
   padding: 40px;
   color: var(--color-muted);
   gap: 12px;
+}
+
+.pa-proof-error {
+  color: #b91c1c;
+  text-align: center;
+}
+
+.pa-proof-no-file {
+  color: #166534;
 }
 
 .pa-reference-section {

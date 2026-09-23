@@ -217,10 +217,8 @@ const NewWalkInBookingModal = ({ onClose, onSuccess }) => {
       setError("Please select a service.");
       return;
     }
-    if (form.bookingType === "hotel" && !form.vaccinationCard) {
-      setError("Vaccination card is required for hotel bookings.");
-      return;
-    }
+    // Vaccination card is now optional for hotel bookings
+    // Removed requirement to allow walk-in booking without vaccination card
 
     try {
       setProcessing(true);
@@ -246,7 +244,9 @@ const NewWalkInBookingModal = ({ onClose, onSuccess }) => {
         payload.append("check_in_date", form.appointmentDate);
         payload.append("number_of_days", numberOfDays);
         payload.append("notes", buildNotes());
-        payload.append("vaccination_card", form.vaccinationCard);
+        if (form.vaccinationCard) {
+          payload.append("vaccination_card", form.vaccinationCard);
+        }
         // Optional fields
         if (paidAmount > 0) {
           payload.append("paid_amount", paidAmount);
@@ -465,16 +465,15 @@ const NewWalkInBookingModal = ({ onClose, onSuccess }) => {
                       </select>
                     </div>
                     <div className="hub-form-group full">
-                      <label>Vaccination Card *</label>
+                      <label>Vaccination Card (Optional)</label>
                       <input
                         type="file"
                         name="vaccinationCard"
                         accept="image/*,.pdf"
                         onChange={(e) => setForm((prev) => ({ ...prev, vaccinationCard: e.target.files[0] }))}
-                        required
                       />
                       <small style={{ color: "var(--color-muted, #6b7280)", fontSize: "12px" }}>
-                        Upload a photo or PDF of the pet&apos;s vaccination records (required for boarding)
+                        Upload a photo or PDF of the pet&apos;s vaccination records (optional)
                       </small>
                     </div>
                   </>

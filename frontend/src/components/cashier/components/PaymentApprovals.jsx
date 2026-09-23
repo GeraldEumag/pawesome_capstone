@@ -378,21 +378,44 @@ const PaymentApprovals = () => {
             </div>
             <div className="pa-modal-body">
               <div className="pa-proof-image-container">
-                {proofModal.blobUrl ? (
-                  <img 
-                    src={proofModal.blobUrl} 
-                    alt="Payment Proof" 
+                {proofModal.loading ? (
+                  <div className="pa-proof-loading">
+                    <FontAwesomeIcon icon={faSpinner} spin size="2x" />
+                    <p>Loading proof...</p>
+                  </div>
+                ) : proofModal.error ? (
+                  <div className="pa-proof-loading pa-proof-error">
+                    <p>{proofModal.error}</p>
+                    {proofModal.payment?.proof_url && (
+                      <button
+                        type="button"
+                        className="pa-btn-secondary"
+                        onClick={() => openProof(proofModal.payment.proof_url, proofModal.payment)}
+                      >
+                        Retry
+                      </button>
+                    )}
+                  </div>
+                ) : proofModal.blobUrl && proofModal.isPdf ? (
+                  <iframe
+                    src={proofModal.blobUrl}
+                    title="Payment proof PDF"
+                    className="pa-proof-pdf"
+                  />
+                ) : proofModal.blobUrl ? (
+                  <img
+                    src={proofModal.blobUrl}
+                    alt="Payment proof"
                     className="pa-proof-image"
                   />
                 ) : proofModal.payment && !proofModal.payment.proof_url ? (
-                  <div className="pa-proof-loading" style={{ background: "#f0fdf4", color: "#166534" }}>
+                  <div className="pa-proof-loading pa-proof-no-file">
                     <FontAwesomeIcon icon={faCheck} size="2x" />
                     <p>Counter payment — no proof uploaded.</p>
                   </div>
                 ) : (
                   <div className="pa-proof-loading">
-                    <FontAwesomeIcon icon={faSpinner} spin size="2x" />
-                    <p>Loading proof...</p>
+                    <p>No payment proof is available.</p>
                   </div>
                 )}
               </div>

@@ -30,30 +30,92 @@ const CashierPaymentVerification = () => {
   const [proofModal, setProofModal] = useState(null);
   const [searchQuery, setSearchQuery] = useState("");
   const rateLimitedRef = useRef(false);
+  const abortControllerRef = useRef(null);
+  const proofModalRef = useRef(null);
   const [typeFilter, setTypeFilter] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
 
   const openProof = useCallback(async (proofUrl) => {
+    abortControllerRef.current?.abort();
+    if (proofModalRef.current) {
+      URL.revokeObjectURL(proofModalRef.current);
+      proofModalRef.current = null;
+    }
+
+    const controller = new AbortController();
+    abortControllerRef.current = controller;
+    let timedOut = false;
+    const timeoutId = setTimeout(() => {
+      timedOut = true;
+      controller.abort();
+    }, 20000);
     setProofModal({ blobUrl: null, isPdf: false, loading: true, error: null });
+
     try {
       const token = getToken();
-      const res = await fetch(proofUrl, {
-        headers: { Authorization: `Bearer ${token}` },
+      const response = await fetch(proofUrl, {
+        headers: {
+          Accept: "image/*, application/pdf",
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+        signal: controller.signal,
       });
-      if (!res.ok) throw new Error(`Server returned ${res.status}`);
-      const blob = await res.blob();
+
+      if (!response.ok) {
+        const message = response.status === 401 || response.status === 403
+          ? "You do not have permission to view this proof. Refresh your session or contact an administrator."
+          : response.status === 404
+            ? "The payment proof file could not be found."
+            : `Unable to load payment proof (HTTP ${response.status}).`;
+        throw new Error(message);
+      }
+
+      const contentType = (response.headers.get("content-type") || "").split(";")[0].trim().toLowerCase();
+      const allowedTypes = ["image/jpeg", "image/png", "image/webp", "application/pdf"];
+      if (!allowedTypes.includes(contentType)) {
+        throw new Error("The server returned an unsupported proof file type.");
+      }
+
+      const maxFileSize = 5 * 1024 * 1024;
+      const contentLength = Number(response.headers.get("content-length"));
+      if (contentLength > maxFileSize) {
+        throw new Error("The proof file is too large to preview (maximum 5 MB).");
+      }
+
+      const blob = await response.blob();
+      if (blob.size > maxFileSize) {
+        throw new Error("The proof file is too large to preview (maximum 5 MB).");
+      }
+      if (abortControllerRef.current !== controller) return;
+
       const blobUrl = URL.createObjectURL(blob);
-      const isPdf = blob.type === "application/pdf";
-      setProofModal({ blobUrl, isPdf, loading: false, error: null });
-    } catch (err) {
-      setProofModal({ blobUrl: null, isPdf: false, loading: false, error: err.message });
+      proofModalRef.current = blobUrl;
+      setProofModal({ blobUrl, isPdf: contentType === "application/pdf", loading: false, error: null });
+    } catch (error) {
+      if (abortControllerRef.current !== controller) return;
+      const message = timedOut
+        ? "Loading the proof timed out. Check the connection and retry."
+        : error.name === "AbortError"
+          ? "Loading was cancelled."
+          : error.message || "Failed to load payment proof.";
+      setProofModal({ blobUrl: null, isPdf: false, loading: false, error: message });
+    } finally {
+      clearTimeout(timeoutId);
+      if (abortControllerRef.current === controller) {
+        abortControllerRef.current = null;
+      }
     }
   }, []);
 
   const closeProof = useCallback(() => {
-    if (proofModal?.blobUrl) URL.revokeObjectURL(proofModal.blobUrl);
+    abortControllerRef.current?.abort();
+    abortControllerRef.current = null;
+    if (proofModalRef.current) {
+      URL.revokeObjectURL(proofModalRef.current);
+      proofModalRef.current = null;
+    }
     setProofModal(null);
-  }, [proofModal]);
+  }, []);
 
   const fetchRequests = async (silent = false) => {
     if (rateLimitedRef.current) return;
@@ -178,7 +240,21 @@ const CashierPaymentVerification = () => {
   useEffect(() => {
     fetchRequests();
     const interval = setInterval(() => fetchRequests(true), 60000);
-    return () => clearInterval(interval);
+
+    // Cleanup on unmount
+    return () => {
+      clearInterval(interval);
+      // Abort any in-progress proof fetch
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort();
+        abortControllerRef.current = null;
+      }
+      // Clean up blob URL
+      if (proofModalRef.current) {
+        URL.revokeObjectURL(proofModalRef.current);
+        proofModalRef.current = null;
+      }
+    };
   }, []);
 
   const filteredRequests = useMemo(() => {

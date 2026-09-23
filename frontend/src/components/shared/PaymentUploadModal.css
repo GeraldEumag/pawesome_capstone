@@ -3,11 +3,13 @@
 .pum-overlay {
   position: fixed;
   inset: 0;
-  background: rgba(0, 0, 0, 0.55);
+  width: 100vw;
+  height: 100vh;
+  background: rgba(0, 0, 0, 0.5);
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 9999;
+  z-index: 100000;
   padding: 1rem;
 }
 
@@ -174,6 +176,24 @@
   max-width: 100%;
   max-height: 220px;
   object-fit: contain;
+}
+
+.pum-preview-pdf {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 1.5rem;
+  color: #475569;
+}
+
+.pum-preview-pdf span:first-child {
+  font-size: 2rem;
+}
+
+.pum-preview-pdf span:last-child {
+  font-size: 0.85rem;
+  font-weight: 500;
 }
 
 /* Reference number input */

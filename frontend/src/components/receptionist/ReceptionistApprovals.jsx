@@ -1196,7 +1196,7 @@ const ReceptionistApprovals = () => {
                       <span className="vaccination-verified-badge">
                         <FaCheckCircle /> Verified
                       </span>
-                    ) : (
+                    ) : selectedRequest.vaccination_card ? (
                       <button
                         type="button"
                         className="vaccination-verify-btn"
@@ -1212,6 +1212,10 @@ const ReceptionistApprovals = () => {
                           ? " Verifying..."
                           : " Verify Vaccination Card"}
                       </button>
+                    ) : (
+                      <span style={{ color: "var(--color-muted)", fontSize: "0.85rem" }}>
+                        No vaccination card uploaded
+                      </span>
                     )}
                   </div>
                 )}
@@ -1308,6 +1312,13 @@ const ReceptionistApprovals = () => {
                         : "Verify Vaccination Card"}
                     </button>
                   )}
+                </div>
+              )}
+              {actionType === "approve" && !selectedRequest.vaccination_card && (
+                <div className="vaccination-card-section" style={{ padding: "0.75rem", background: "rgba(255, 245, 157, 0.1)", borderRadius: "12px", border: "1px solid rgba(245, 158, 11, 0.2)" }}>
+                  <small style={{ color: "var(--color-muted)" }}>
+                    <FaInfoCircle /> No vaccination card uploaded (optional)
+                  </small>
                 </div>
               )}
 

@@ -241,7 +241,7 @@ class BoardingController extends Controller
             'number_of_days' => 'required|integer|min:1',
             'check_in_time' => 'nullable|date_format:H:i',
             'check_out_time' => 'nullable|date_format:H:i',
-            'vaccination_card' => 'required|file|mimes:jpg,jpeg,png,pdf|max:5120',
+            'vaccination_card' => 'nullable|file|mimes:jpg,jpeg,png,pdf|max:5120',
             'notes' => 'nullable|string',
             'add_ons' => 'nullable|array',
             'add_ons.*.id' => 'required|exists:add_ons,id',
@@ -622,9 +622,8 @@ class BoardingController extends Controller
             return response()->json(['error' => 'Only pending boarding requests can be confirmed'], 422);
         }
 
-        if ($boarding->vaccination_card && !$boarding->vaccination_card_verified_at) {
-            return response()->json(['error' => 'Vaccination card must be verified before approval.'], 422);
-        }
+        // Vaccination card verification is now optional
+        // Removed blocking requirement to allow approval without vaccination card
 
         $oldStatus = $boarding->status;
         

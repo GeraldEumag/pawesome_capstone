@@ -119,24 +119,24 @@ const Register = () => {
       if (!formData.lastName.trim())     errors.lastName     = "Last name is required.";
       if (!formData.emailAddress.trim()) errors.emailAddress = "Email address is required.";
       else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.emailAddress))
-                                         errors.emailAddress = "Enter a valid email address.";
+                                         errors.emailAddress = "Enter a valid email address (e.g., name@example.com).";
       if (formData.contactNumber.trim() && !/^09\d{9}$/.test(formData.contactNumber.trim()))
-        errors.contactNumber = "Use a valid 11-digit PH number starting with 09.";
+        errors.contactNumber = "Use a valid 11-digit PH number starting with 09 (e.g., 09123456789).";
     }
     if (step === 2) {
       if (!formData.username.trim())           errors.username = "Username is required.";
       else if (formData.username.trim().length < 4) errors.username = "Username must be at least 4 characters.";
       if (!formData.password)                   errors.password = "Password is required.";
-      else if (formData.password.length < 8)    errors.password = "Password must be at least 8 characters.";
+      else if (formData.password.length < 8)    errors.password = "Password must be at least 8 characters long.";
       else if (!/[A-Za-z]/.test(formData.password) || !/\d/.test(formData.password))
-                                                errors.password = "Password must contain letters and numbers.";
+                                                errors.password = "Password must contain both letters and numbers.";
       if (!formData.confirmPassword)              errors.confirmPassword = "Please confirm your password.";
       else if (formData.password !== formData.confirmPassword) errors.confirmPassword = "Passwords do not match.";
     }
     if (step === 3) {
       if (formData.emergencyContactNumber.trim() && !/^09\d{9}$/.test(formData.emergencyContactNumber.trim()))
-        errors.emergencyContactNumber = "Use a valid 11-digit PH number starting with 09.";
-      if (!formData.termsAccepted) errors.termsAccepted = "You must agree to the Terms of Service and Privacy Policy.";
+        errors.emergencyContactNumber = "Use a valid 11-digit PH number starting with 09 (e.g., 09123456789).";
+      if (!formData.termsAccepted) errors.termsAccepted = "You must agree to the Terms of Service and Privacy Policy to continue.";
     }
     return errors;
   };

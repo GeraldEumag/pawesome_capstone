@@ -198,11 +198,8 @@ const HotelForm = () => {
       return;
     }
 
-    if (!vaccinationCard) {
-      setError("Please upload a vaccination card photo.");
-      showWarning("Please upload a vaccination card photo.");
-      return;
-    }
+    // Vaccination card is now optional
+    // Removed requirement to allow booking without vaccination card
 
     try {
       setLoading(true);
@@ -224,7 +221,9 @@ const HotelForm = () => {
         formData.append("hotel_room_id", bookingForm.hotel_room_id);
       }
       formData.append("notes", bookingForm.notes || "");
-      formData.append("vaccination_card", vaccinationCard);
+      if (vaccinationCard) {
+        formData.append("vaccination_card", vaccinationCard);
+      }
 
       await apiRequest("/customer/boardings", {
         method: "POST",
@@ -625,7 +624,7 @@ const HotelForm = () => {
               </div>
 
               <div className="form-group">
-                <label>Vaccination Card *</label>
+                <label>Vaccination Card (Optional)</label>
                 <input
                   type="file"
                   accept="image/*,.pdf"

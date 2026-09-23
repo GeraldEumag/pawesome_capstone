@@ -853,7 +853,7 @@ const ReceptionistHotelBookings = () => {
                         <span className="vaccination-verified-badge">
                           <FontAwesomeIcon icon={faCheckCircle} /> Verified
                         </span>
-                      ) : (
+                      ) : selectedBooking.vaccination_card ? (
                         <button
                           type="button"
                           className="vaccination-verify-btn"
@@ -863,6 +863,10 @@ const ReceptionistHotelBookings = () => {
                           <FontAwesomeIcon icon={faCheckCircle} />
                           {processingId === selectedBooking.id ? " Verifying..." : " Verify Vaccination Card"}
                         </button>
+                      ) : (
+                        <span className="vaccination-status" style={{ color: "var(--color-muted)", fontSize: "0.85rem" }}>
+                          No vaccination card uploaded
+                        </span>
                       )}
                     </div>
                   </div>
@@ -934,6 +938,19 @@ const ReceptionistHotelBookings = () => {
                     </div>
 
                     <div className="form-group">
+                      <label>Check In Time</label>
+                      <input
+                        type="time"
+                        value={scheduleDraft[selectedBooking.id]?.check_in_time || selectedBooking.check_in_time || "09:00"}
+                        onChange={(event) =>
+                          updateScheduleDraft(selectedBooking.id, "check_in_time", event.target.value)
+                        }
+                      />
+                    </div>
+                  </div>
+
+                  <div className="form-row">
+                    <div className="form-group">
                       <label>Check Out Date</label>
                       <DatePickerInput
                         withPortal
@@ -945,6 +962,17 @@ const ReceptionistHotelBookings = () => {
                           updateScheduleDraft(selectedBooking.id, "check_out", date ? date.toISOString().split("T")[0] : "")
                         }
                         placeholderText="Pick check-out..."
+                      />
+                    </div>
+
+                    <div className="form-group">
+                      <label>Check Out Time</label>
+                      <input
+                        type="time"
+                        value={scheduleDraft[selectedBooking.id]?.check_out_time || selectedBooking.check_out_time || "17:00"}
+                        onChange={(event) =>
+                          updateScheduleDraft(selectedBooking.id, "check_out_time", event.target.value)
+                        }
                       />
                     </div>
                   </div>

@@ -157,6 +157,26 @@ class ChatbotController extends Controller
             ]);
         }
 
+        // Contact information
+        if (collect(['contact', 'phone', 'email', 'reach', 'call'])->some(fn ($kw) => str_contains($message, $kw))) {
+            return response()->json([
+                'reply'       => "You can reach us at:\n📞 Phone: (555) 123-4567\n📧 Email: info@pawsitive.com\n🏢 Address: 123 Pet Care Lane, Animal City, AC 12345\n\nFor urgent matters during business hours, please call our main line.",
+                'intent'      => 'contact_guest',
+                'suggestions' => ['What are your hours?', 'How do I register?', 'What services do you offer?'],
+                'source'      => 'public_rule',
+            ]);
+        }
+
+        // Emergency services
+        if (collect(['emergency', 'urgent', '24/7', 'after hours'])->some(fn ($kw) => str_contains($message, $kw))) {
+            return response()->json([
+                'reply'       => "Yes, we offer 24/7 emergency veterinary services for existing clients. Please call our emergency hotline at (555) 123-4567 and press 1 for emergencies.",
+                'intent'      => 'emergency_guest',
+                'suggestions' => ['What are your hours?', 'How do I register?', 'What services do you offer?'],
+                'source'      => 'public_rule',
+            ]);
+        }
+
         // Register / signup
         if (collect(['register', 'sign up', 'create account', 'how to join', 'new account'])->some(fn ($kw) => str_contains($message, $kw))) {
             return response()->json([

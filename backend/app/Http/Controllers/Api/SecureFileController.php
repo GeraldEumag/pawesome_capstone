@@ -79,7 +79,7 @@ class SecureFileController extends Controller
         
         if ($user->role === 'customer') {
             $canAccess = $isOwner;
-        } elseif (in_array($user->role, ['admin', 'cashier'])) {
+        } elseif (in_array($user->role, ['admin', 'super_admin', 'cashier', 'super_receptionist'])) {
             // Admin and cashier can access all payment proofs
             $canAccess = true;
         } elseif (in_array($user->role, ['receptionist', 'manager'])) {
@@ -181,7 +181,7 @@ class SecureFileController extends Controller
         $canAccess = false;
         if ($user->role === 'customer') {
             $canAccess = $isOwner;
-        } elseif (in_array($user->role, ['admin', 'receptionist', 'manager', 'cashier', 'veterinary'])) {
+        } elseif (in_array($user->role, ['admin', 'super_admin', 'receptionist', 'super_receptionist', 'manager', 'cashier', 'veterinary'])) {
             $canAccess = true;
         }
 
@@ -195,9 +195,23 @@ class SecureFileController extends Controller
             return response()->json(['message' => 'Vaccination card not found'], 404);
         }
 
+        // Determine file path and handle legacy files
         $disk = 'private';
-        if (!Storage::disk($disk)->exists($filePath)) {
-            return response()->json(['message' => 'File not found'], 404);
+
+        // Handle legacy public storage files
+        if (str_starts_with($filePath, 'vaccination_cards/') || str_starts_with($filePath, 'vaccination-cards/')) {
+            if (Storage::disk('public')->exists($filePath)) {
+                $disk = 'public';
+            } elseif (Storage::disk('private')->exists($filePath)) {
+                $disk = 'private';
+            } else {
+                return response()->json(['message' => 'File not found'], 404);
+            }
+        } else {
+            // New private storage format
+            if (!Storage::disk('private')->exists($filePath)) {
+                return response()->json(['message' => 'File not found'], 404);
+            }
         }
 
         $fileContents = Storage::disk($disk)->get($filePath);

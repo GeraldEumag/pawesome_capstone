@@ -25,7 +25,7 @@ import {
   FaUser,
   FaWrench,
 } from "react-icons/fa";
-import { apiRequest } from "../../api/client";
+import { apiRequest, getAuthenticatedFileUrl } from "../../api/client";
 import { exportToCSV, exportToPDF, exportToExcel } from "../../utils/reportExport";
 import ServiceManagerModal from "./ServiceManagerModal";
 import "./ReceptionistDashboard.css";
@@ -385,12 +385,24 @@ const ReceptionistDashboard = () => {
     return sortConfig.direction === "asc" ? <FaSortUp /> : <FaSortDown />;
   };
 
-  const openVaccinationCard = (url) => {
+  const openVaccinationCard = async (url) => {
     if (!url) {
       showWarning("No vaccination card available");
       return;
     }
-    window.open(url, "_blank");
+
+    const win = window.open("", "_blank");
+    if (!win) {
+      showError("Popup blocked. Please allow popups for this site.");
+      return;
+    }
+
+    try {
+      win.location.href = await getAuthenticatedFileUrl(url);
+    } catch (err) {
+      win.close();
+      showError(err.message || "Failed to open vaccination card.");
+    }
   };
 
   const handleSort = (key) => {

@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { createPortal } from "react-dom";
 import gcashQr from "../../assets/PAWESOME TEST GCASH.png";
 import { apiRequest } from "../../api/client";
 import { showSuccess, showError } from "../../utils/alert.jsx";
@@ -11,15 +12,43 @@ const PaymentUploadModal = ({ open, onClose, onSuccess, endpoint, title }) => {
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState("");
 
+  // Lock body scroll when modal opens
+  useEffect(() => {
+    if (open) {
+      document.body.style.overflow = "hidden";
+      document.body.style.position = "fixed";
+      document.body.style.width = "100%";
+      document.body.style.top = "0";
+    } else {
+      document.body.style.overflow = "";
+      document.body.style.position = "";
+      document.body.style.width = "";
+      document.body.style.top = "";
+    }
+
+    return () => {
+      document.body.style.overflow = "";
+      document.body.style.position = "";
+      document.body.style.width = "";
+      document.body.style.top = "";
+    };
+  }, [open]);
+
   if (!open) return null;
 
   const handleFileChange = (e) => {
     const selected = e.target.files?.[0];
     if (!selected) return;
 
-    const allowed = ["image/jpeg", "image/jpg", "image/png"];
+    const allowed = ["image/jpeg", "image/jpg", "image/png", "application/pdf"];
     if (!allowed.includes(selected.type)) {
-      setError("Please upload a JPG or PNG image only.");
+      setError("Please upload a JPG, PNG image, or PDF only.");
+      return;
+    }
+
+    const maxSize = 5 * 1024 * 1024; // 5MB
+    if (selected.size > maxSize) {
+      setError("File size must be less than 5MB.");
       return;
     }
 
@@ -65,7 +94,7 @@ const PaymentUploadModal = ({ open, onClose, onSuccess, endpoint, title }) => {
 
   const canConfirm = !!file && referenceNumber.trim().length > 0 && !uploading;
 
-  return (
+  return createPortal(
     <div className="pum-overlay" onClick={handleClose}>
       <div className="pum-modal" onClick={(e) => e.stopPropagation()}>
         <div className="pum-header">
@@ -92,7 +121,7 @@ const PaymentUploadModal = ({ open, onClose, onSuccess, endpoint, title }) => {
           <div className="pum-step">
             <p className="pum-step-label">
               <span className="pum-step-number">1</span>
-              Select receipt photo <span className="pum-required">(JPG or PNG only)</span>
+              Select receipt photo <span className="pum-required">(JPG, PNG, or PDF only, max 5MB)</span>
             </p>
             <label className="pum-file-label" htmlFor="pum-file-input">
               {file ? `📎 ${file.name}` : "Choose File"}
@@ -100,17 +129,24 @@ const PaymentUploadModal = ({ open, onClose, onSuccess, endpoint, title }) => {
             <input
               id="pum-file-input"
               type="file"
-              accept="image/jpeg,image/png,image/jpg"
+              accept="image/jpeg,image/png,image/jpg,application/pdf"
               className="pum-file-input"
               onChange={handleFileChange}
             />
             {previewUrl && (
               <div className="pum-preview">
-                <img
-                  src={previewUrl}
-                  alt="Receipt preview"
-                  className="pum-preview-img"
-                />
+                {file.type === "application/pdf" ? (
+                  <div className="pum-preview-pdf">
+                    <span>📄 PDF Document</span>
+                    <span>{file.name}</span>
+                  </div>
+                ) : (
+                  <img
+                    src={previewUrl}
+                    alt="Receipt preview"
+                    className="pum-preview-img"
+                  />
+                )}
               </div>
             )}
           </div>
@@ -150,7 +186,8 @@ const PaymentUploadModal = ({ open, onClose, onSuccess, endpoint, title }) => {
           </button>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 };
 

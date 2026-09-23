@@ -588,6 +588,17 @@ tr:hover td,
   background: linear-gradient(135deg, var(--color-primary), var(--color-primary-light)) !important;
   color: #ffffff !important;
   border-color: transparent !important;
+  font-weight: 950 !important;
+  box-shadow: 0 4px 16px rgba(255, 95, 147, 0.4) !important;
+  transition: all 0.2s ease !important;
+}
+
+.btn-primary:hover,
+.primary-btn:hover,
+.action-btn-primary:hover,
+.export-btn:hover {
+  transform: translateY(-2px) scale(1.02) !important;
+  box-shadow: 0 6px 24px rgba(255, 95, 147, 0.5) !important;
 }
 
 .badge,
