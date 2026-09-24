@@ -61,7 +61,7 @@ class CustomerOrderController extends Controller
                 'payment_method' => $order->payment_method ?? null,
                 'payment_reference' => $order->payment_reference ?? null,
                 'payment_proof' => $order->payment_proof ?? null,
-                'proof_url' => $order->payment_proof ? asset('storage/' . $order->payment_proof) : null,
+                'proof_url' => $order->payment_proof ? url('/api/files/payment-proofs/customer-order/' . $order->id . '/view') : null,
                 'payment_status' => $order->payment_status ?? 'unpaid',
                 'status' => $order->status ?? 'pending',
                 'approved_by' => $order->approved_by ?? null,

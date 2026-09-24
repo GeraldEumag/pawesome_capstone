@@ -1,5 +1,8 @@
 <?php
 
+$privateDriver = env('PRIVATE_STORAGE_DRIVER', 'local');
+$publicDriver = env('PUBLIC_STORAGE_DRIVER', 'local');
+
 return [
 
     /*
@@ -39,18 +42,34 @@ return [
         ],
 
         'private' => [
-            'driver' => 'local',
-            'root' => storage_path('app/private'),
-            'throw' => false,
+            'driver' => $privateDriver,
+            'root' => $privateDriver === 'local' ? storage_path('app/private') : env('PRIVATE_STORAGE_ROOT', ''),
+            'key' => env('AWS_ACCESS_KEY_ID'),
+            'secret' => env('AWS_SECRET_ACCESS_KEY'),
+            'region' => env('AWS_DEFAULT_REGION'),
+            'bucket' => env('AWS_PRIVATE_BUCKET', env('AWS_BUCKET')),
+            'url' => env('AWS_PRIVATE_URL'),
+            'endpoint' => env('AWS_ENDPOINT'),
+            'use_path_style_endpoint' => env('AWS_USE_PATH_STYLE_ENDPOINT', false),
+            // On s3/R2, leave visibility unset: R2 and ACL-disabled S3 buckets reject a
+            // "public-read" ACL, so object access is governed by the bucket policy/custom domain.
+            'visibility' => $privateDriver === 'local' ? 'private' : null,
+            'throw' => true,
             'report' => false,
         ],
 
         'public' => [
-            'driver' => 'local',
-            'root' => storage_path('app/public'),
-            'url' => rtrim(env('APP_URL', 'http://localhost'), '/').'/storage',
-            'visibility' => 'public',
-            'throw' => false,
+            'driver' => $publicDriver,
+            'root' => $publicDriver === 'local' ? storage_path('app/public') : env('PUBLIC_STORAGE_ROOT', ''),
+            'key' => env('AWS_ACCESS_KEY_ID'),
+            'secret' => env('AWS_SECRET_ACCESS_KEY'),
+            'region' => env('AWS_DEFAULT_REGION'),
+            'bucket' => env('AWS_PUBLIC_BUCKET', env('AWS_BUCKET')),
+            'url' => env('AWS_PUBLIC_URL', rtrim(env('APP_URL', 'http://localhost'), '/').'/storage'),
+            'endpoint' => env('AWS_ENDPOINT'),
+            'use_path_style_endpoint' => env('AWS_USE_PATH_STYLE_ENDPOINT', false),
+            'visibility' => $publicDriver === 'local' ? 'public' : null,
+            'throw' => true,
             'report' => false,
         ],
 

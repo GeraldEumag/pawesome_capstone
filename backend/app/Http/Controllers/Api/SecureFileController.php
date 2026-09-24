@@ -8,6 +8,7 @@ use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
+use Symfony\Component\HttpFoundation\HeaderUtils;
 
 class SecureFileController extends Controller
 {
@@ -150,7 +151,7 @@ class SecureFileController extends Controller
         // Return file response
         return response($fileContents)
             ->header('Content-Type', $mimeType)
-            ->header('Content-Disposition', 'inline; filename="payment_proof_' . $id . '.' . pathinfo($filePath, PATHINFO_EXTENSION))
+            ->header('Content-Disposition', $this->inlineDisposition('payment_proof_' . $id . '.' . $extension))
             ->header('Cache-Control', 'private, max-age=3600') // Cache for 1 hour
             ->header('X-Content-Type-Options', 'nosniff'); // Prevent MIME type sniffing
     }
@@ -238,7 +239,7 @@ class SecureFileController extends Controller
 
         return response($fileContents)
             ->header('Content-Type', $mimeType)
-            ->header('Content-Disposition', 'inline; filename="vaccination_card_' . $id . '.' . pathinfo($filePath, PATHINFO_EXTENSION))
+            ->header('Content-Disposition', $this->inlineDisposition('vaccination_card_' . $id . '.' . $extension))
             ->header('Cache-Control', 'private, max-age=3600')
             ->header('X-Content-Type-Options', 'nosniff');
     }
@@ -296,7 +297,7 @@ class SecureFileController extends Controller
 
         return response($fileContents)
             ->header('Content-Type', $mimeType)
-            ->header('Content-Disposition', 'inline; filename="profile_' . $userId . '.' . pathinfo($filePath, PATHINFO_EXTENSION) . '"')
+            ->header('Content-Disposition', $this->inlineDisposition('profile_' . $userId . '.' . $extension))
             ->header('Cache-Control', 'public, max-age=86400') // Cache for 1 day
             ->header('X-Content-Type-Options', 'nosniff');
     }
@@ -339,10 +340,13 @@ class SecureFileController extends Controller
         }
 
         $filePath = $pet->image;
-        $disk = 'public';
+        $disk = 'private';
 
         if (!Storage::disk($disk)->exists($filePath)) {
-            return response()->json(['message' => 'File not found'], 404);
+            $disk = 'public';
+            if (!Storage::disk($disk)->exists($filePath)) {
+                return response()->json(['message' => 'File not found'], 404);
+            }
         }
 
         $fileContents = Storage::disk($disk)->get($filePath);
@@ -369,8 +373,15 @@ class SecureFileController extends Controller
 
         return response($fileContents)
             ->header('Content-Type', $mimeType)
-            ->header('Content-Disposition', 'inline; filename="pet_' . $petId . '.' . $extension . '"')
-            ->header('Cache-Control', 'public, max-age=86400')
+            ->header('Content-Disposition', $this->inlineDisposition('pet_' . $petId . '.' . $extension))
+            ->header('Cache-Control', 'private, max-age=3600')
             ->header('X-Content-Type-Options', 'nosniff');
+    }
+
+    private function inlineDisposition(string $filename): string
+    {
+        $safe = preg_replace('/[^A-Za-z0-9._-]/', '_', $filename);
+
+        return HeaderUtils::makeDisposition(HeaderUtils::DISPOSITION_INLINE, $safe, $safe);
     }
 }

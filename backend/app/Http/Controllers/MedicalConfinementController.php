@@ -7,6 +7,7 @@ use App\Models\Customer;
 use App\Models\HotelRoom;
 use App\Models\MedicalConfinement;
 use App\Models\MedicalProgressNote;
+use App\Services\FileStorageService;
 use App\Services\WorkflowNotifier;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -171,13 +172,17 @@ class MedicalConfinementController extends Controller
             return response()->json(['errors' => $validator->errors()], 422);
         }
 
-        $path = $request->file('payment_proof')->store('payment-proofs/confinements', 'public');
-        $confinement->update([
-            'payment_method' => $request->payment_method,
-            'payment_reference' => $request->payment_reference,
-            'payment_proof' => $path,
-            'payment_status' => 'pending',
-        ]);
+        // Replaced proofs are retained as payment evidence (deleteOld: false).
+        FileStorageService::storeAndPersist(
+            $request->file('payment_proof'), 'payment-proofs/confinements', 'private',
+            fn (string $path) => $confinement->update([
+                'payment_method' => $request->payment_method,
+                'payment_reference' => $request->payment_reference,
+                'payment_proof' => $path,
+                'payment_status' => 'pending',
+            ]),
+            deleteOld: false,
+        );
 
         WorkflowNotifier::notifyRole('cashier', 'Confinement payment proof submitted', "{$confinement->pet_name} has a pending confinement payment proof.", 'info', 'medical_confinement', $confinement->id);
 
@@ -221,8 +226,7 @@ class MedicalConfinementController extends Controller
             return response()->json(['errors' => $validator->errors()], 422);
         }
 
-        $path = $request->hasFile('photo') ? $request->file('photo')->store('care-logs/confinements', 'public') : null;
-        $log = BoardingCareLog::create([
+        $createLog = fn (?string $path = null) => BoardingCareLog::create([
             'confinement_id' => $confinement->id,
             'logged_by' => $request->user()?->id,
             'log_type' => $request->log_type,
@@ -234,6 +238,9 @@ class MedicalConfinementController extends Controller
             'health_observation' => $request->health_observation,
             'photo_path' => $path,
         ]);
+        $log = $request->hasFile('photo')
+            ? FileStorageService::storeAndPersist($request->file('photo'), 'care-logs/confinements', 'public', $createLog)
+            : $createLog();
 
         if ($request->filled('health_observation')) {
             WorkflowNotifier::notifyRole('veterinary', 'Confinement care health observation', "A care log for {$confinement->pet_name} includes a health observation.", 'warning', 'medical_confinement', $confinement->id);

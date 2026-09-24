@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Storage;
 
 class InventoryItem extends Model
 {
@@ -589,6 +590,11 @@ class InventoryItem extends Model
             return $this->photo;
         }
 
-        return asset($this->photo);
+        // Legacy uploads were written directly under public/uploads.
+        if (str_starts_with($this->photo, 'uploads/')) {
+            return asset($this->photo);
+        }
+
+        return Storage::disk('public')->url($this->photo);
     }
 }

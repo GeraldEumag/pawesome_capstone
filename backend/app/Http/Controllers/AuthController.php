@@ -7,6 +7,7 @@ use App\Models\Customer;
 use App\Models\LoginLog;
 use App\Mail\EmailVerificationMail;
 use App\Mail\PasswordResetMail;
+use App\Services\FileStorageService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
@@ -226,15 +227,12 @@ class AuthController extends Controller
 
         // Use getRawOriginal to bypass the accessor and get the actual storage path
         $oldPath = $user->getRawOriginal('profile_photo');
-        if ($oldPath && !str_starts_with($oldPath, '/api/')) {
-            Storage::disk('public')->delete($oldPath);
-        }
 
-        $path = $validated['profile_photo']->store('profile_photos', 'public');
-
-        $user->update([
-            'profile_photo' => $path,
-        ]);
+        FileStorageService::storeAndPersist(
+            $validated['profile_photo'], 'profile_photos', 'public',
+            fn (string $path) => $user->update(['profile_photo' => $path]),
+            oldPath: $oldPath && !str_starts_with($oldPath, '/api/') ? $oldPath : null,
+        );
 
         // After update, the accessor will return the correct API URL
         $user->refresh();

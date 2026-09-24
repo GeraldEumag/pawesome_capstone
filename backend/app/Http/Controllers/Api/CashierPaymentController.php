@@ -55,7 +55,7 @@ class CashierPaymentController extends Controller
                     'payment_method' => $request->payment_method,
                     'payment_reference' => $request->payment_reference,
                     'payment_proof' => $request->payment_proof,
-                    'proof_url' => $request->payment_proof ? asset('storage/' . $request->payment_proof) : null,
+                    'proof_url' => $request->payment_proof ? url('/api/files/payment-proofs/service-request/' . $request->id . '/view') : null,
                     'created_at' => $request->created_at,
                 ];
             });

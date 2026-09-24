@@ -154,7 +154,7 @@ class LandingPageContentController extends Controller
 
         $file = $request->file('image');
         $path = $file->store('landing-page', 'public');
-        $url = Storage::url($path);
+        $url = Storage::disk('public')->url($path);
 
         return response()->json([
             'success' => true,

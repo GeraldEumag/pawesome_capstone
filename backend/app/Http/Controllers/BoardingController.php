@@ -9,6 +9,7 @@ use App\Models\HotelRoom;
 use App\Models\Pet;
 use App\Models\Customer;
 use App\Models\ServiceItemUsage;
+use App\Services\FileStorageService;
 use App\Services\NotificationService;
 use App\Services\WorkflowNotifier;
 use App\Services\BookingAvailabilityService;
@@ -352,12 +353,6 @@ class BoardingController extends Controller
             // Keep status as 'pending' but note approval requirement in notes
         }
         
-        // Handle vaccination card upload
-        $vaccinationCardPath = null;
-        if ($request->hasFile('vaccination_card')) {
-            $vaccinationCardPath = $request->file('vaccination_card')->store('vaccination_cards', 'private');
-        }
-
         $boardingData = [
             'pet_id' => $request->pet_id,
             'pet_name' => $pet ? $pet->name : null,
@@ -379,7 +374,7 @@ class BoardingController extends Controller
             'status' => $status,
             'total_amount' => $finalTotal,
             'payment_status' => $initialPaymentStatus,
-            'vaccination_card' => $vaccinationCardPath,
+            'vaccination_card' => null,
             'notes' => $request->notes,
         ];
 
@@ -430,7 +425,10 @@ class BoardingController extends Controller
         );
         
         // Create boarding and room reservation in a transaction
-        $result = DB::transaction(function () use ($boardingData, $request, $selectedAddOns, $checkOutDate, $useHotelRoom) {
+        $createBoarding = fn (?string $vaccinationCardPath = null) => DB::transaction(function () use ($boardingData, $request, $selectedAddOns, $checkOutDate, $useHotelRoom, $vaccinationCardPath) {
+            if ($vaccinationCardPath && array_key_exists('vaccination_card', $boardingData)) {
+                $boardingData['vaccination_card'] = $vaccinationCardPath;
+            }
             $boarding = Boarding::create($boardingData);
 
             // Create room reservation (only for boarding rooms, not legacy hotel rooms)
@@ -468,6 +466,10 @@ class BoardingController extends Controller
 
             return $boarding;
         });
+
+        $result = $request->hasFile('vaccination_card')
+            ? FileStorageService::storeAndPersist($request->file('vaccination_card'), 'vaccination_cards', 'private', $createBoarding)
+            : $createBoarding();
 
         $result->load(['pet', 'customer', 'roomReservation.room']);
 
@@ -1287,17 +1289,18 @@ class BoardingController extends Controller
             return response()->json(['errors' => $validator->errors()], 422);
         }
 
-        // Store the uploaded file in private storage
-        $originalName = $request->file('payment_proof')->getClientOriginalName();
-        $extension = $request->file('payment_proof')->getClientOriginalExtension();
-        $randomName = 'boarding_proof_' . time() . '_' . Str::random(10) . '.' . $extension;
-        $path = $request->file('payment_proof')->storeAs('payment-proofs/boardings', $randomName, 'private');
-        $boarding->update([
-            'payment_method' => $request->payment_method,
-            'payment_reference' => $request->payment_reference,
-            'payment_proof' => $path,
-            'payment_status' => 'pending',
-        ]);
+        // Replaced proofs are retained as payment evidence (deleteOld: false).
+        FileStorageService::storeAndPersist(
+            $request->file('payment_proof'), 'payment-proofs/boardings', 'private',
+            fn (string $path) => $boarding->update([
+                'payment_method' => $request->payment_method,
+                'payment_reference' => $request->payment_reference,
+                'payment_proof' => $path,
+                'payment_status' => 'pending',
+            ]),
+            deleteOld: false,
+            prefix: 'boarding_proof',
+        );
 
         WorkflowNotifier::notifyRole('cashier', 'Boarding payment proof submitted', "{$boarding->pet_name} has a pending boarding payment proof.", 'info', 'boarding', $boarding->id);
 
@@ -1341,8 +1344,7 @@ class BoardingController extends Controller
             return response()->json(['errors' => $validator->errors()], 422);
         }
 
-        $path = $request->hasFile('photo') ? $request->file('photo')->store('care-logs/boardings', 'public') : null;
-        $log = BoardingCareLog::create([
+        $createLog = fn (?string $path = null) => BoardingCareLog::create([
             'boarding_id' => $boarding->id,
             'logged_by' => $request->user()?->id,
             'log_type' => $request->log_type,
@@ -1354,6 +1356,9 @@ class BoardingController extends Controller
             'health_observation' => $request->health_observation,
             'photo_path' => $path,
         ]);
+        $log = $request->hasFile('photo')
+            ? FileStorageService::storeAndPersist($request->file('photo'), 'care-logs/boardings', 'public', $createLog)
+            : $createLog();
 
         if ($request->filled('health_observation')) {
             WorkflowNotifier::notifyRole('veterinary', 'Boarding health observation', "A care log for {$boarding->pet_name} includes a health observation.", 'warning', 'boarding', $boarding->id);

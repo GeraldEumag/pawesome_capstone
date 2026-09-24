@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Pet;
 use App\Models\Customer;
+use App\Services\FileStorageService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Carbon;
@@ -110,11 +111,12 @@ class PetController extends Controller
             'notes' => $validated['notes'] ?? null,
         ];
 
-        if ($request->hasFile('image')) {
-            $petData['image'] = $request->file('image')->store('pet_photos', 'public');
-        }
-
-        $pet = Pet::create($petData);
+        $pet = $request->hasFile('image')
+            ? FileStorageService::storeAndPersist(
+                $request->file('image'), 'pet_photos', 'private',
+                fn (string $path) => Pet::create($petData + ['image' => $path])
+            )
+            : Pet::create($petData);
 
         return response()->json([
             'message' => 'Pet added successfully.',
@@ -160,13 +162,18 @@ class PetController extends Controller
         $validated['age'] = $birth ? Carbon::parse($birth)->age : null;
 
         if ($request->hasFile('image')) {
-            if ($pet->image) {
-                Storage::disk('public')->delete($pet->image);
-            }
-            $validated['image'] = $request->file('image')->store('pet_photos', 'public');
+            $oldImage = $pet->image;
+            $oldDisk = $oldImage && !Storage::disk('private')->exists($oldImage) ? 'public' : 'private';
+            FileStorageService::storeAndPersist(
+                $request->file('image'), 'pet_photos', 'private',
+                fn (string $path) => $pet->update(['image' => $path] + $validated),
+                oldPath: $oldImage,
+                oldDisk: $oldDisk,
+            );
+        } else {
+            unset($validated['image']);
+            $pet->update($validated);
         }
-
-        $pet->update($validated);
 
         return response()->json([
             'message' => 'Pet updated successfully',

@@ -787,7 +787,7 @@ const UnifiedInventory = () => {
                                     <td>{batch.unit_cost ? `₱${parseFloat(batch.unit_cost).toFixed(2)}` : "—"}</td>
                                     <td>
                                       {batch.proof_photo ? (
-                                        <a href={batch.proof_photo} target="_blank" rel="noopener noreferrer">View</a>
+                                        <a href={batch.proof_photo_url || batch.proof_photo} target="_blank" rel="noopener noreferrer">View</a>
                                       ) : "—"}
                                     </td>
                                     <td><span className={`batch-status ${batch.status}`}>{batch.status}</span></td>

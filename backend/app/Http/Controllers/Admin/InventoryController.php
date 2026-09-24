@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Admin;
 
+use App\Http\Controllers\Concerns\HandlesInventoryUploads;
 use App\Http\Controllers\Controller;
 use App\Models\ActivityLog;
 use App\Models\InventoryItem;
@@ -18,6 +19,8 @@ use Illuminate\Validation\ValidationException;
 
 class InventoryController extends Controller
 {
+    use HandlesInventoryUploads;
+
     private InventoryService $inventoryService;
 
     public function __construct(InventoryService $inventoryService)
@@ -75,53 +78,21 @@ class InventoryController extends Controller
     }
 
     /**
-     * Handle photo file upload for inventory items
-     */
-    private function handlePhotoUpload(Request $request, array $data): array
-    {
-        if ($request->hasFile('photo')) {
-            $file = $request->file('photo');
-            if ($file->isValid()) {
-                $uploadDir = public_path('uploads/inventory');
-                if (!is_dir($uploadDir)) {
-                    mkdir($uploadDir, 0755, true);
-                }
-                $filename = 'inv_' . time() . '_' . uniqid() . '.' . $file->getClientOriginalExtension();
-                $file->move($uploadDir, $filename);
-                $data['photo'] = 'uploads/inventory/' . $filename;
-            }
-        }
-        return $data;
-    }
-
-    /**
      * Store a newly created inventory item
      */
     public function store(Request $request)
     {
         try {
-            $data = $this->handlePhotoUpload($request, $request->all());
+            $data = $request->all();
 
             // Parse batchData from JSON string (multipart/form-data sends it as string)
             if (!empty($data['batchData']) && is_string($data['batchData'])) {
                 $data['batchData'] = json_decode($data['batchData'], true) ?? [];
             }
 
-            // Handle batch proof photo upload
-            if ($request->hasFile('batch_proof')) {
-                $file = $request->file('batch_proof');
-                if ($file->isValid()) {
-                    $uploadDir = public_path('uploads/inventory/batches');
-                    if (!is_dir($uploadDir)) {
-                        mkdir($uploadDir, 0755, true);
-                    }
-                    $filename = 'batch_' . time() . '_' . uniqid() . '.' . $file->getClientOriginalExtension();
-                    $file->move($uploadDir, $filename);
-                    $data['batchData']['proof_photo'] = 'uploads/inventory/batches/' . $filename;
-                }
-            }
-
-            $result = $this->inventoryService->createItem($data);
+            $result = $this->saveWithInventoryUploads(
+                $request, $data, fn (array $data) => $this->inventoryService->createItem($data), withBatchProof: true
+            );
             return response()->json($result, 201);
         } catch (ValidationException $e) {
             return response()->json(['errors' => $e->errors()], 422);
@@ -148,8 +119,10 @@ class InventoryController extends Controller
     public function update(Request $request, $id)
     {
         try {
-            $data = $this->handlePhotoUpload($request, $request->all());
-            $result = $this->inventoryService->updateItem($id, $data);
+            $result = $this->saveWithInventoryUploads(
+                $request, $request->all(), fn (array $data) => $this->inventoryService->updateItem($id, $data),
+                oldPhoto: InventoryItem::findOrFail($id)->photo,
+            );
             return response()->json($result);
         } catch (ValidationException $e) {
             return response()->json(['errors' => $e->errors()], 422);

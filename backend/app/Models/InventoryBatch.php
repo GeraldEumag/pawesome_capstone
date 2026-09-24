@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Support\Facades\Storage;
 
 class InventoryBatch extends Model
 {
@@ -30,6 +31,20 @@ class InventoryBatch extends Model
         'manufacturing_date' => 'date',
         'expiration_date' => 'date',
     ];
+
+    protected $appends = ['proof_photo_url'];
+
+    public function getProofPhotoUrlAttribute(): ?string
+    {
+        if (empty($this->proof_photo) || str_starts_with($this->proof_photo, 'http')) {
+            return $this->proof_photo ?: null;
+        }
+
+        // Legacy uploads were written directly under public/uploads.
+        return str_starts_with($this->proof_photo, 'uploads/')
+            ? asset($this->proof_photo)
+            : Storage::disk('public')->url($this->proof_photo);
+    }
 
     /**
      * Get the inventory item this batch belongs to

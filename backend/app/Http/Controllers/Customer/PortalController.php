@@ -12,6 +12,7 @@ use App\Models\ServiceRequest;
 use App\Models\Sale;
 use App\Models\ChatbotLog;
 use App\Models\Notification;
+use App\Services\FileStorageService;
 use Illuminate\Support\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -282,11 +283,12 @@ class PortalController extends Controller
 
         $petData = array_merge($data, ['customer_id' => $cust->id]);
 
-        if ($request->hasFile('image')) {
-            $petData['image'] = $request->file('image')->store('pet_photos', 'public');
-        }
-
-        $pet = Pet::create($petData);
+        $pet = $request->hasFile('image')
+            ? FileStorageService::storeAndPersist(
+                $request->file('image'), 'pet_photos', 'private',
+                fn (string $path) => Pet::create(['image' => $path] + $petData)
+            )
+            : Pet::create($petData);
         return response()->json([
             'pet' => $pet,
             'image_url' => $pet->image_url,

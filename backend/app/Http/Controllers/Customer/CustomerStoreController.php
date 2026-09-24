@@ -10,6 +10,7 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Str;
+use App\Services\FileStorageService;
 use App\Services\WorkflowNotifier;
 use App\Models\ActivityLog;
 
@@ -431,15 +432,8 @@ class CustomerStoreController extends Controller
             ], 422);
         }
 
-        // Store uploaded file in private storage
-        $originalName = $request->file('payment_proof')->getClientOriginalName();
-        $extension = $request->file('payment_proof')->getClientOriginalExtension();
-        $randomName = 'order_proof_' . time() . '_' . Str::random(10) . '.' . $extension;
-        $path = $request->file('payment_proof')->storeAs('payment-proofs/orders', $randomName, 'private');
-
         $update = [
             'payment_method' => $validated['payment_method'] ?? $order->payment_method,
-            'payment_proof' => $path,
             'payment_status' => 'pending',
             'updated_at' => now(),
         ];
@@ -448,7 +442,16 @@ class CustomerStoreController extends Controller
             $update['payment_reference'] = $validated['payment_reference'] ?? null;
         }
 
-        DB::table('customer_orders')->where('id', $order->id)->update($update);
+        // Replaced proofs are retained as payment evidence (deleteOld: false).
+        $path = FileStorageService::storeAndPersist(
+            $request->file('payment_proof'), 'payment-proofs/orders', 'private',
+            function (string $path) use ($order, $update) {
+                DB::table('customer_orders')->where('id', $order->id)->update($update + ['payment_proof' => $path]);
+                return $path;
+            },
+            deleteOld: false,
+            prefix: 'order_proof',
+        );
 
         WorkflowNotifier::notifyUser(
             $user->id,
@@ -481,7 +484,7 @@ class CustomerStoreController extends Controller
             'order_id' => $order->id,
             'payment_status' => 'pending',
             'payment_proof' => $path,
-            'proof_url' => $path ? asset('storage/' . $path) : null,
+            'proof_url' => url('/api/files/payment-proofs/customer-order/' . $order->id . '/view'),
         ]);
     }
 

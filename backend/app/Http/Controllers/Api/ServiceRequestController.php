@@ -11,6 +11,7 @@ use App\Models\ServiceRequest;
 use App\Models\ActivityLog;
 use App\Models\Pet;
 use App\Models\BoardingRoom;
+use App\Services\FileStorageService;
 use App\Services\WorkflowNotifier;
 use App\Services\BookingAvailabilityService;
 use App\Services\PetServiceCompatibilityService;
@@ -554,18 +555,18 @@ class ServiceRequestController extends Controller
             ], 422);
         }
 
-        // Store the uploaded file in private storage
-        $originalName = $request->file('payment_proof')->getClientOriginalName();
-        $extension = $request->file('payment_proof')->getClientOriginalExtension();
-        $randomName = 'proof_' . time() . '_' . Str::random(10) . '.' . $extension;
-        $path = $request->file('payment_proof')->storeAs('payment-proofs', $randomName, 'private');
-
-        $serviceRequest->update([
-            'payment_method' => $validated['payment_method'] ?? 'Online Payment',
-            'payment_reference' => $validated['payment_reference'],
-            'payment_proof' => $path,
-            'payment_status' => 'pending',
-        ]);
+        // Replaced (rejected) proofs are retained as payment evidence (deleteOld: false).
+        FileStorageService::storeAndPersist(
+            $request->file('payment_proof'), 'payment-proofs', 'private',
+            fn (string $path) => $serviceRequest->update([
+                'payment_method' => $validated['payment_method'] ?? 'Online Payment',
+                'payment_reference' => $validated['payment_reference'],
+                'payment_proof' => $path,
+                'payment_status' => 'pending',
+            ]),
+            deleteOld: false,
+            prefix: 'proof',
+        );
 
         // Notify cashier role
         $this->notifyRole(
@@ -598,7 +599,7 @@ class ServiceRequestController extends Controller
             'message' => 'Payment proof uploaded successfully. Waiting for cashier verification.',
             'request' => $this->formatRequest($serviceRequest),
             'payment_status' => 'pending',
-            'proof_url' => $path ? "/api/files/payment-proofs/service-request/{$serviceRequest->id}/view" : null,
+            'proof_url' => "/api/files/payment-proofs/service-request/{$serviceRequest->id}/view",
         ]);
     }
 

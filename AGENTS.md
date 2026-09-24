@@ -195,6 +195,25 @@ DB_CONNECTION=mysql DB_DATABASE=pawesome_test php artisan test --filter=EmailAut
   maps `veterinary → /vet/profile`, but vet routes mount at `/veterinary/*`.
   Vet topbar avatar click navigates to a dead route. (P2 follow-up; unrelated
   to the avatar fix — do not reopen it.)
+- **Storage Hardening: FIXED** — all uploads go through
+  `App\Services\FileStorageService::storeAndPersist()` (store → DB write in a
+  transaction → delete new file on failure → delete replaced file only after
+  success). Controllers keep their own validation/business rules. Payment proofs
+  pass `deleteOld: false`: replaced/rejected proofs are retained as evidence.
+  Inventory photos/batch proofs are image-validated and stored on the `public`
+  disk (`HandlesInventoryUploads` trait) — never written under `public/`.
+  `private`/`public` disks use `throw => true`; S3/R2 roots come from
+  `PRIVATE_STORAGE_ROOT`/`PUBLIC_STORAGE_ROOT` (never local paths); storage
+  failures render as a 503 JSON (`bootstrap/app.php`). Local dev needs
+  `php artisan storage:link` once for public-disk URLs.
+  Tests: `php artisan test --filter="StorageLifecycleTest|PrivatePetPhotoTest|PrivateConfinementPaymentProofTest"`;
+  browser: `E2E_BASE_URL=http://localhost:3000 npx playwright test e2e/storage-hardening.spec.js --project=chromium`
+  (evidence in `browser-evidence/storage-hardening/`).
+- **Known unrelated test failures: OPEN — requires separate investigation** —
+  8 full-suite failures observed during storage hardening (DatabaseIntegrityTest ×2,
+  EndToEndBusinessFlowTest, FullSystemIntegrationTest, PayrollEndToEndTest ×2,
+  ReportsTest inventory count, VeterinaryWorkflowTest). None exercise upload code,
+  but they have NOT been confirmed against a clean-checkout baseline yet.
 
 ## Reports
 
