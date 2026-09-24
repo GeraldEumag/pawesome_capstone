@@ -106,7 +106,7 @@ class BitposItemsSeeder extends Seeder
 
     public function run(): void
     {
-        $csvPath = base_path('../frontend/src/assets/ITEMS FILES (BITPOS).csv');
+        $csvPath = base_path('database/seeders/ITEMS FILES (BITPOS).csv');
 
         if (!file_exists($csvPath)) {
             $this->command->error("CSV file not found at: {$csvPath}");
