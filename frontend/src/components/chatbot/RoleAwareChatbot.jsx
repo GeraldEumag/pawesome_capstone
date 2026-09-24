@@ -967,11 +967,11 @@ const RoleAwareChatbot = ({
     inventory: [
       { label: "Inventory Items", icon: faBoxOpen, path: "/inventory/stock" },
       { label: "Low Stock", icon: faTriangleExclamation, message: "low stock items" },
-      { label: "Stock Logs", icon: faChartLine, path: "/inventory/logs" },
+      { label: "Stock Logs", icon: faChartLine, path: "/inventory/history" },
     ],
     veterinary: [
       { label: "Today's Appointments", icon: faCalendarCheck, path: "/veterinary/appointments" },
-      { label: "Pet Records", icon: faUsers, path: "/veterinary/records" },
+      { label: "Pet Records", icon: faUsers, path: "/veterinary/customer-profiles" },
     ],
     manager: [
       { label: "Reports", icon: faChartLine, path: "/manager/reports" },

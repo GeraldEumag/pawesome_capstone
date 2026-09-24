@@ -191,10 +191,10 @@ DB_CONNECTION=mysql DB_DATABASE=pawesome_test php artisan test --filter=EmailAut
   Verified in Chromium: topbar, ProfileSettings, receptionist customer list,
   and manager staff list all render the avatar; uploaded photos load via
   `/api/files/profile-photos/{id}/view`.
-- **Veterinary Profile Navigation: OPEN** — `DashboardProfile.ROLE_PROFILE_PATHS`
-  maps `veterinary → /vet/profile`, but vet routes mount at `/veterinary/*`.
-  Vet topbar avatar click navigates to a dead route. (P2 follow-up; unrelated
-  to the avatar fix — do not reopen it.)
+- **Veterinary Profile Navigation: FIXED** — `DashboardProfile.ROLE_PROFILE_PATHS`
+  now maps `veterinary → /veterinary/profile`, matching the `/veterinary/*`
+  route mount. Browser-verified in `e2e/role-deep-links.spec.js` alongside the
+  vet `/vet/*` → `/veterinary/*` notification deep-link fixes.
 - **Storage Hardening: FIXED** — all uploads go through
   `App\Services\FileStorageService::storeAndPersist()` (store → DB write in a
   transaction → delete new file on failure → delete replaced file only after

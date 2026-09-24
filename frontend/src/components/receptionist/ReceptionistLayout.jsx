@@ -20,6 +20,7 @@ const ReceptionistLayout = () => {
     { path: "/receptionist/walk-ins", title: "Walk-in Customers", subtitle: "Create bookings for walk-in customers with or without accounts." },
     { path: "/receptionist/appointments-boarding", title: "Hotel Bookings", subtitle: "Manage pet hotel and boarding reservations, check-ins, and check-outs." },
     { path: "/receptionist/customers", title: "Customer Management", subtitle: "View, edit, and organize customer records and profiles." },
+    { path: "/receptionist/orders", title: "Customer Orders", subtitle: "Review and approve customer store orders." },
     { path: "/receptionist/history", title: "Activity History", subtitle: "Review past front desk actions, check-ins, and changes." },
     { path: "/receptionist/reports", title: "Reports", subtitle: "Access front desk analytics, booking summaries, and trends." },
     { path: "/receptionist/chatbot", title: "Chatbot", subtitle: "Get instant help from our AI assistant." },

@@ -10,7 +10,7 @@ const ROLE_PROFILE_PATHS = {
   manager: "/manager/profile",
   cashier: "/cashier/profile",
   customer: "/customer/profile",
-  veterinary: "/vet/profile",
+  veterinary: "/veterinary/profile",
   receptionist: "/receptionist/profile",
   super_receptionist: "/super-receptionist/profile",
   inventory: "/inventory/profile",

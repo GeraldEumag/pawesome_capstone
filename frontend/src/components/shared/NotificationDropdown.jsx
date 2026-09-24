@@ -107,7 +107,7 @@ const NotificationDropdown = ({ role }) => {
     // Customer navigation
     if (role === "customer") {
       if (relatedType.includes("order") || text.includes("order")) {
-        return "/customer/orders";
+        return "/customer/bookings";
       }
       if (relatedType.includes("payment") || text.includes("payment")) {
         return "/customer/payments";
@@ -121,7 +121,7 @@ const NotificationDropdown = ({ role }) => {
     if (role === "admin") {
       if (relatedType.includes("payment")) return "/admin/reports/payments";
       if (relatedType.includes("order")) return "/admin/reports/orders";
-      if (relatedType.includes("service") || relatedType.includes("booking")) return "/admin/reports/service-requests";
+      if (relatedType.includes("service") || relatedType.includes("booking")) return "/admin/reports/services";
       if (relatedType.includes("appointment") || relatedType.includes("vet")) return "/admin/reports/veterinary";
       if (relatedType.includes("inventory") || relatedType.includes("stock")) return "/admin/reports/inventory";
       if (relatedType.includes("user") || text.includes("user")) return "/admin/users";
@@ -173,15 +173,15 @@ const NotificationDropdown = ({ role }) => {
 
     if (role === "veterinary" || role === "vet") {
       if (relatedType.includes("board") || text.includes("boarding") || text.includes("boarder")) {
-        return "/vet/current-boarders";
+        return "/veterinary/current-boarders";
       }
       if (relatedType.includes("customer") || relatedType.includes("profile") || text.includes("customer") || text.includes("profile")) {
-        return "/vet/customer-profiles";
+        return "/veterinary/customer-profiles";
       }
       if (relatedType.includes("report") || text.includes("report")) {
-        return "/vet/reports";
+        return "/veterinary/reports";
       }
-      return "/vet/appointments";
+      return "/veterinary/appointments";
     }
 
     if (role === "receptionist") {
