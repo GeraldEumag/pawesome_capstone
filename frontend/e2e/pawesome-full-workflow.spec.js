@@ -58,7 +58,7 @@ Status: **${audit.status}**
 
 Started: ${audit.startedAt}
 Completed: ${audit.completedAt}
-Frontend: ${process.env.E2E_BASE_URL || "http://localhost:3002"}
+Frontend: ${process.env.E2E_BASE_URL || "http://localhost:3000"}
 Backend API: ${apiBase}
 
 ## Workflow Checks
@@ -89,7 +89,7 @@ ${issueRows}
 
 \`\`\`powershell
 cd frontend
-$env:E2E_BASE_URL = "http://localhost:3002"
+$env:E2E_BASE_URL = "http://localhost:3000"
 $env:E2E_API_URL = "http://127.0.0.1:8000/api"
 npx playwright test e2e/pawesome-full-workflow.spec.js --config=playwright.config.js
 \`\`\`
@@ -153,15 +153,10 @@ async function api(request, session, method, endpoint, options = {}) {
   return body;
 }
 
+const { apiLogin: sharedApiLogin } = require("./test-utils");
+
 async function loginByApi(request, role) {
-  const account = credentials[role];
-  const response = await request.post(`${apiBase}/auth/login`, {
-    headers: { Accept: "application/json" },
-    data: { login: account.email, email: account.email, password: account.password },
-  });
-  if (!response.ok()) throw new Error(`Login failed for ${role}: ${response.status()} ${await response.text()}`);
-  const body = await response.json();
-  return { token: body.token || body.access_token, user: body.user };
+  return sharedApiLogin(request, role);
 }
 
 async function loginThroughUi(page, role) {
@@ -180,7 +175,7 @@ async function loginThroughUi(page, role) {
 }
 
 async function openAsRole(browser, role, route, screenshotName) {
-  const context = await browser.newContext({ baseURL: process.env.E2E_BASE_URL || "http://localhost:3002" });
+  const context = await browser.newContext({ baseURL: process.env.E2E_BASE_URL || "http://localhost:3000" });
   const session = await loginByApi(context.request, role);
   await context.addInitScript(({ token, user, role }) => {
     window.localStorage.setItem("token", token);

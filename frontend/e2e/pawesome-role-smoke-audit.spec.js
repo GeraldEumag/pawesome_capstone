@@ -1,6 +1,6 @@
 const { test, expect } = require("@playwright/test");
 
-const frontendUrl = process.env.E2E_BASE_URL || "http://127.0.0.1:3002";
+const frontendUrl = process.env.E2E_BASE_URL || "http://127.0.0.1:3000";
 const apiUrl = process.env.E2E_API_URL || "http://127.0.0.1:8000/api";
 
 const accounts = {
@@ -13,17 +13,10 @@ const accounts = {
   admin: { email: "admin@example.com", password: "Password123!", dashboard: "/admin" },
 };
 
+const { apiLogin: sharedApiLogin } = require("./test-utils");
+
 async function apiLogin(request, role) {
-  const account = accounts[role];
-  const response = await request.post(`${apiUrl}/auth/login`, {
-    headers: { Accept: "application/json" },
-    data: { login: account.email, email: account.email, password: account.password },
-  });
-  if (!response.ok()) {
-    throw new Error(`API login failed for ${role}: ${response.status()} ${await response.text()}`);
-  }
-  const body = await response.json();
-  return { token: body.token || body.access_token, user: body.user || {} };
+  return sharedApiLogin(request, role);
 }
 
 test.describe.configure({ mode: "serial" });

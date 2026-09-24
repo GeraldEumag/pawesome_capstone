@@ -9,34 +9,15 @@ const evidenceDir = path.join(rootDir, "browser-evidence", "role-deep-links");
 const frontendUrl = process.env.E2E_BASE_URL || "http://localhost:3000";
 const apiUrl = `${process.env.E2E_API_URL || "http://127.0.0.1:8000"}/api`;
 
-const accounts = {
-  veterinary: { email: "vet@example.com", password: "Password123!" },
-  admin: { email: "admin@example.com", password: "Password123!" },
-  inventory: { email: "inventory@example.com", password: "Password123!" },
-  receptionist: { email: "receptionist@example.com", password: "Password123!" },
-  customer: { email: "customer@example.com", password: "Password123!" },
-};
+const { apiLogin: sharedApiLogin } = require("./test-utils");
 
 async function apiLogin(request, role) {
-  const { email, password } = accounts[role];
-  const res = await request.post(`${apiUrl}/auth/login`, {
-    headers: { Accept: "application/json" },
-    data: { login: email, email, password },
-  });
-  expect(res.ok(), `login ${role}`).toBeTruthy();
-  const body = await res.json();
-  return body.token || body.access_token;
+  const session = await sharedApiLogin(request, role);
+  return session.token;
 }
 
 async function openAs(browser, request, role, route) {
-  const { email, password } = accounts[role];
-  const res = await request.post(`${apiUrl}/auth/login`, {
-    headers: { Accept: "application/json" },
-    data: { login: email, email, password },
-  });
-  expect(res.ok(), `login ${role}`).toBeTruthy();
-  const body = await res.json();
-  const session = { token: body.token || body.access_token, user: body.user };
+  const session = await sharedApiLogin(request, role);
   const context = await browser.newContext({ baseURL: frontendUrl });
   await context.addInitScript(({ token, user }) => {
     localStorage.setItem("token", token);
@@ -61,6 +42,42 @@ async function expectRenderedPage(page, urlPattern) {
 test.beforeAll(() => fs.mkdirSync(evidenceDir, { recursive: true }));
 
 test("vet: appointment notification opens Veterinary Appointments", async ({ browser, request }) => {
+  test.setTimeout(90000); // API provisioning (3 logins + pet + request + approve) + UI navigation
+  // Self-provision: customer vet request -> receptionist approves with a vet
+  // assigned -> Appointment::created notifies the veterinarian. Without this,
+  // the test depends on ambient seed data that may not exist.
+  const customer = await sharedApiLogin(request, "customer");
+  const receptionist = await sharedApiLogin(request, "receptionist");
+  const vet = await sharedApiLogin(request, "veterinary");
+  const authH = (t) => ({ Accept: "application/json", Authorization: `Bearer ${t}` });
+
+  const petRes = await request.post(`${apiUrl}/pets`, {
+    headers: authH(customer.token),
+    data: { name: `E2E Notify Pet ${Date.now()}`, species: "Dog" },
+  });
+  expect(petRes.ok(), "create pet").toBeTruthy();
+  const petBody = await petRes.json();
+  const pet = petBody.pet || petBody;
+
+  const date = new Date(Date.now() + 10 * 86400000).toISOString().slice(0, 10);
+  const reqRes = await request.post(`${apiUrl}/customer/requests`, {
+    headers: authH(customer.token),
+    data: {
+      customer_name: customer.user.name, customer_email: customer.user.email,
+      pet_id: pet.id, pet_name: pet.name, request_type: "vet", service_type: "vet",
+      service_name: "Consultation", request_date: date, request_time: "10:00",
+      requested_date: date, requested_time: "10:00", notes: "E2E vet notification deep link",
+    },
+  });
+  expect(reqRes.ok(), "create vet request").toBeTruthy();
+  const requestId = (await reqRes.json()).request.id;
+
+  const approveRes = await request.post(`${apiUrl}/receptionist/requests/${requestId}/approve`, {
+    headers: authH(receptionist.token),
+    data: { veterinarian_id: vet.user.id, receptionist_remarks: "E2E" },
+  });
+  expect(approveRes.ok(), "receptionist approve assigns vet").toBeTruthy();
+
   const { page, context } = await openAs(browser, request, "veterinary", "/veterinary/history");
   await page.locator(".pawesome-notification-btn").click();
   const item = page.locator(".pawesome-notification-item", { hasText: /Appointment/ }).first();

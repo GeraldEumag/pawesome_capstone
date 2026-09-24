@@ -1,166 +1,247 @@
 const { test, expect } = require('@playwright/test');
+const { execSync } = require('node:child_process');
+const path = require('node:path');
+
+const frontendUrl = process.env.E2E_BASE_URL || 'http://localhost:3000';
+const apiUrl = `${process.env.E2E_API_URL || 'http://127.0.0.1:8000'}/api`;
+const backendDir = path.resolve(__dirname, '..', '..', 'backend');
+
+// 1x1 PNG used for payment-proof uploads.
+const PROOF_PNG = Buffer.from(
+  'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==',
+  'base64'
+);
+
+const { apiLogin: sharedApiLogin } = require('./test-utils');
+
+// /api/auth/login is throttled to 5/min per account — reuse one session per role.
+async function apiSession(request, role) {
+  return sharedApiLogin(request, role);
+}
+
+function auth(token) {
+  return { Accept: 'application/json', Authorization: `Bearer ${token}` };
+}
+
+// Browser session via token injection (same approach as role-deep-links.spec.js).
+async function openAs(browser, session, route) {
+  const context = await browser.newContext({ baseURL: frontendUrl });
+  await context.addInitScript(({ token, user }) => {
+    localStorage.setItem('token', token);
+    localStorage.setItem('role', user.role);
+    localStorage.setItem('name', user.name || user.email);
+    localStorage.setItem('email', user.email);
+  }, session);
+  const page = await context.newPage();
+  await page.goto(route);
+  return { page, context };
+}
+
+async function findConfinement(request, token, marker) {
+  const res = await request.get(`${apiUrl}/customer/medical-confinements`, { headers: auth(token) });
+  expect(res.ok(), 'list confinements').toBeTruthy();
+  const body = await res.json();
+  const records = Array.isArray(body) ? body : body.medical_confinements || body.data || [];
+  return records.find((r) => r.diagnosis === marker);
+}
 
 test.describe('Phase 4 Payment Workflow E2E', () => {
-  test('Customer uploads payment proof → Cashier verifies → Customer sees status', async ({ page }) => {
-    // Step 1: Customer logs in
-    await page.goto('http://localhost:3000/login');
-    await page.fill('input[name="email"]', 'customer@example.com');
-    await page.fill('input[name="password"]', 'Password123!');
-    await page.click('button[type="submit"]');
-    await page.waitForURL('**/customer', { timeout: 10000 });
+  // Vite dev-server cold loads and XAMPP are slow; 30s is not enough.
+  test.setTimeout(120000);
 
-    // Step 2: Navigate to payments
-    await page.goto('http://localhost:3000/customer/payments');
-    await page.waitForSelector('.customer-payments-page', { timeout: 10000 });
+  // Reseed the two confinement fixtures (payment_status='unpaid') plus the
+  // pending boarding fixture so reruns are deterministic. Requires the local
+  // backend + seeded dev DB.
+  test.beforeAll(() => {
+    execSync(`${process.env.PHP_BINARY || 'php'} pawesome_e2e_payment_fixture_seed.php`, {
+      cwd: backendDir,
+      stdio: 'inherit',
+    });
+  });
 
-    // Step 3: Find an approved/scheduled order to upload payment proof
-    // Look for payment status indicators
-    const unpaidPayments = await page.locator('tr').filter({ hasText: /unpaid|rejected/i }).count();
-    console.log(`Found ${unpaidPayments} unpaid/rejected payments`);
+  test('customer uploads confinement proof → cashier verifies → customer sees paid', async ({ request, browser }) => {
+    const customerSession = await apiSession(request, 'customer');
+    const customerToken = customerSession.token;
+    const fixture = await findConfinement(request, customerToken, 'PW-E2E-VERIFY');
+    expect(fixture, 'seeded verify fixture').toBeTruthy();
+    expect(['unpaid', 'rejected', 'partial']).toContain(fixture.payment_status);
 
-    // Step 4: Upload payment proof (if unpaid payment exists)
-    if (unpaidPayments > 0) {
-      // Click upload button for first unpaid payment
-      const uploadButton = page.locator('button:has-text("Upload Payment")').first();
-      if (await uploadButton.isVisible()) {
-        await uploadButton.click();
+    // Step 1 — real UI upload through the customer confinements page.
+    const { page, context } = await openAs(browser, customerSession, '/customer/medical-confinements');
+    const card = page.locator('.confinement-card', { hasText: `Confinement #${fixture.id}` });
+    await expect(card).toBeVisible({ timeout: 20000 });
+    await card.getByRole('button', { name: 'Upload Payment Proof' }).click();
 
-        // Wait for modal
-        await page.waitForSelector('.pum-modal', { timeout: 5000 });
+    await expect(page.locator('.pum-modal')).toBeVisible();
+    await page.locator('#pum-file-input').setInputFiles({
+      name: 'e2e-proof.png',
+      mimeType: 'image/png',
+      buffer: PROOF_PNG,
+    });
+    await page.locator('.pum-ref-input').fill('E2E-REF-100001');
+    await page.locator('.pum-confirm-btn').click();
+    await expect(page.locator('.pum-modal')).toBeHidden({ timeout: 15000 });
 
-        // Upload a test file (would need actual file upload in real test)
-        // For now, verify modal UI elements are present
-        await expect(page.locator('.pum-title')).toBeVisible();
-        await expect(page.locator('.pum-file-input')).toBeVisible();
-        await expect(page.locator('.pum-ref-input')).toBeVisible();
+    // Step 2 — persisted state: pending with a stored private proof path.
+    const afterUpload = await findConfinement(request, customerToken, 'PW-E2E-VERIFY');
+    expect(afterUpload.payment_status).toBe('pending');
+    expect(afterUpload.payment_proof).toBeTruthy();
 
-        // Close modal
-        await page.click('.pum-close');
-      }
+    // Step 3 — non-cashier roles cannot verify payments.
+    const receptionistToken = (await apiSession(request, 'receptionist')).token;
+    for (const [label, token] of [['customer', customerToken], ['receptionist', receptionistToken]]) {
+      const res = await request.post(`${apiUrl}/cashier/confinement-payments/${fixture.id}/verify`, {
+        headers: auth(token),
+        data: { reference_number: 'E2E-REF-100001' },
+      });
+      expect(res.status(), `${label} must not verify payments`).toBe(403);
     }
 
-    // Step 5: Customer logs out
-    await page.click('button[aria-label="Logout"]');
-    await page.waitForURL('**/login', { timeout: 10000 });
+    // Step 4 — cashier sees the pending request and verifies it.
+    const cashierToken = (await apiSession(request, 'cashier')).token;
+    const pendingRes = await request.get(`${apiUrl}/cashier/confinement-payments/pending`, { headers: auth(cashierToken) });
+    expect(pendingRes.ok()).toBeTruthy();
+    const pending = (await pendingRes.json()).payments || [];
+    expect(
+      pending.some((p) => p.payable_type === 'medical_confinement' && p.id === fixture.id),
+      'fixture appears in cashier pending queue'
+    ).toBeTruthy();
 
-    // Step 6: Cashier logs in
-    await page.fill('input[name="email"]', 'cashier@example.com');
-    await page.fill('input[name="password"]', 'password123');
-    await page.click('button[type="submit"]');
-    await page.waitForURL('**/cashier', { timeout: 10000 });
+    const verifyRes = await request.post(`${apiUrl}/cashier/confinement-payments/${fixture.id}/verify`, {
+      headers: auth(cashierToken),
+      data: { reference_number: 'E2E-REF-100001', cashier_remarks: 'E2E verification' },
+    });
+    expect(verifyRes.ok(), await verifyRes.text()).toBeTruthy();
+    expect((await verifyRes.json()).payment_status).toBe('paid');
 
-    // Step 7: Navigate to payment approvals
-    await page.goto('http://localhost:3000/cashier/dashboard');
-    await page.waitForSelector('.cashier-dashboard', { timeout: 10000 });
+    // Step 5 — customer-visible status updates to paid.
+    await page.reload();
+    await expect(card).toContainText('paid', { timeout: 20000 });
 
-    // Step 8: Verify pending payments are visible
-    const pendingPayments = await page.locator('text=/pending/i').count();
-    console.log(`Cashier sees ${pendingPayments} pending payments`);
+    // Step 6 — proof file is served only through the authorized endpoint.
+    const ownerView = await request.get(
+      `${apiUrl}/files/payment-proofs/medical_confinement/${fixture.id}/view`,
+      { headers: auth(customerToken) }
+    );
+    expect(ownerView.status(), 'owner can view own proof').toBe(200);
+    const anonView = await request.get(`${apiUrl}/files/payment-proofs/medical_confinement/${fixture.id}/view`);
+    expect(anonView.status(), 'anonymous cannot view proof').toBe(401);
 
-    // Step 9: Cashier logs out
-    await page.click('button[aria-label="Logout"]');
-    await page.waitForURL('**/login', { timeout: 10000 });
-
-    // Step 10: Customer logs back in to check status
-    await page.fill('input[name="email"]', 'customer@example.com');
-    await page.fill('input[name="password"]', 'Password123!');
-    await page.click('button[type="submit"]');
-    await page.waitForURL('**/customer', { timeout: 10000 });
-
-    await page.goto('http://localhost:3000/customer/payments');
-    await page.waitForSelector('.customer-payments-page', { timeout: 10000 });
-
-    // Step 11: Verify payment status is visible
-    const paymentStatuses = await page.locator('td').count();
-    expect(paymentStatuses).toBeGreaterThan(0);
+    await context.close();
   });
 
-  test('Vaccination card optional - Customer booking without card', async ({ page }) => {
-    // Login as customer
-    await page.goto('http://localhost:3000/login');
-    await page.fill('input[name="email"]', 'customer@example.com');
-    await page.fill('input[name="password"]', 'Password123!');
-    await page.click('button[type="submit"]');
-    await page.waitForURL('**/customer', { timeout: 10000 });
+  test('cashier rejects confinement proof → customer sees rejected and can re-upload', async ({ request, browser }) => {
+    const customerSession = await apiSession(request, 'customer');
+    const customerToken = customerSession.token;
+    const fixture = await findConfinement(request, customerToken, 'PW-E2E-REJECT');
+    expect(fixture, 'seeded reject fixture').toBeTruthy();
+    expect(['unpaid', 'rejected', 'partial']).toContain(fixture.payment_status);
 
-    // Navigate to hotel booking
-    await page.goto('http://localhost:3000/customer/hotel');
-    await page.waitForSelector('.hotel-form', { timeout: 10000 });
+    // Upload via API (UI upload is covered by the verify test).
+    const upload = await request.post(
+      `${apiUrl}/customer/medical-confinements/${fixture.id}/payment-proof`,
+      {
+        headers: auth(customerToken),
+        multipart: {
+          payment_proof: { name: 'e2e-proof.png', mimeType: 'image/png', buffer: PROOF_PNG },
+          payment_reference: 'E2E-REF-200002',
+          payment_method: 'GCash',
+        },
+      }
+    );
+    expect(upload.ok(), await upload.text()).toBeTruthy();
+    expect((await upload.json()).medical_confinement.payment_status).toBe('pending');
 
-    // Verify vaccination card is optional (not required attribute)
-    const vaccinationInput = page.locator('input[type="file"]');
-    const isRequired = await vaccinationInput.getAttribute('required');
-    expect(isRequired).toBeNull();
+    const cashierToken = (await apiSession(request, 'cashier')).token;
+    const rejectRes = await request.post(`${apiUrl}/cashier/confinement-payments/${fixture.id}/reject`, {
+      headers: auth(cashierToken),
+      data: { rejection_reason: 'E2E: illegible receipt image' },
+    });
+    expect(rejectRes.ok(), await rejectRes.text()).toBeTruthy();
+    expect((await rejectRes.json()).payment_status).toBe('rejected');
 
-    // Verify label shows "(Optional)"
-    const vaccinationLabel = page.locator('label:has-text("Vaccination Card")');
-    const labelText = await vaccinationLabel.textContent();
-    expect(labelText).toContain('Optional');
+    // Customer sees rejected status and the re-upload affordance returns.
+    const { page, context } = await openAs(browser, customerSession, '/customer/medical-confinements');
+    const card = page.locator('.confinement-card', { hasText: `Confinement #${fixture.id}` });
+    await expect(card).toContainText('rejected', { timeout: 20000 });
+    await expect(card.getByRole('button', { name: 'Upload Payment Proof' })).toBeVisible();
+    await context.close();
   });
 
-  test('Receptionist approval without vaccination card', async ({ page }) => {
-    // Login as receptionist
-    await page.goto('http://localhost:3000/login');
-    await page.fill('input[name="email"]', 'receptionist@example.com');
-    await page.fill('input[name="password"]', 'Password123!');
-    await page.click('button[type="submit"]');
-    await page.waitForURL('**/receptionist', { timeout: 10000 });
+  test('Vaccination card optional - Customer booking without card', async ({ request, browser }) => {
+    const session = await apiSession(request, 'customer');
+    const { page, context } = await openAs(browser, session, '/customer/hotel');
 
-    // Navigate to approvals
-    await page.goto('http://localhost:3000/receptionist/approvals');
-    await page.waitForSelector('.approvals-table', { timeout: 10000 });
+    await expect(page.locator('.customer-hotel-reservation')).toBeVisible({ timeout: 20000 });
 
-    // Verify approve buttons are visible (not blocked by vaccination card)
-    const approveButtons = await page.locator('button:has-text("Approve")').count();
-    expect(approveButtons).toBeGreaterThanOrEqual(0);
+    // Vaccination card input is optional (no required attribute)
+    const vaccinationInput = page.locator('.customer-hotel-reservation input[type="file"]');
+    await expect(vaccinationInput).toBeVisible();
+    expect(await vaccinationInput.getAttribute('required')).toBeNull();
+
+    // Label shows "(Optional)"
+    await expect(page.locator('label:has-text("Vaccination Card")')).toContainText('Optional');
+    await context.close();
+  });
+
+  test('Receptionist can approve a pending boarding without a vaccination card', async ({ request, browser }) => {
+    const session = await apiSession(request, 'receptionist');
+    const { page, context } = await openAs(browser, session, '/receptionist/bookings/hotel');
+
+    await expect(page.locator('.hotel-bookings')).toBeVisible({ timeout: 20000 });
+
+    // Isolate the seeded pending boarding (no vaccination card) via search —
+    // the bookings haystack includes the notes marker.
+    await page.locator('.hotel-search-box input').fill('PW-E2E-APPROVAL');
+    const row = page.locator('tr.booking-row', { hasText: 'Buddy' }).first();
+    await expect(row).toBeVisible({ timeout: 20000 });
+    await expect(row.locator('.status-badge')).toContainText(/pending/i);
+
+    // Approve is available and enabled despite the missing vaccination card.
+    const approveBtn = row.locator('button[title="Approve"]');
+    await expect(approveBtn).toBeVisible();
+    await expect(approveBtn).toBeEnabled();
+    await approveBtn.click();
+
+    // Approval goes through a confirmation modal with an async availability
+    // check; the submit button stays disabled until the check resolves.
+    const modal = page.locator('.appointment-modal');
+    await expect(modal).toBeVisible({ timeout: 10000 });
+    const confirmBtn = modal.locator('button.primary-btn[type="submit"]');
+    await expect(confirmBtn).toBeEnabled({ timeout: 20000 });
+    await confirmBtn.click();
+    await expect(page.locator('.hotel-toast.success')).toBeVisible({ timeout: 15000 });
+
+    await context.close();
   });
 
   test('Chatbot FAQ contact information', async ({ page }) => {
     // Navigate to landing page
-    await page.goto('http://localhost:3000/');
+    await page.goto('/');
 
     // Open chatbot
     await page.click('.lc-toggle');
     await page.waitForSelector('.lc-panel', { timeout: 5000 });
 
-    // Wait for initial greeting
-    await page.waitForTimeout(1000);
-
-    // Count initial messages
-    const initialMessageCount = await page.locator('.lc-bubble').count();
-
-    // Ask about contact information
+    // Ask about contact information — the public chatbot endpoint is
+    // rule-based and deterministic; send is disabled while the welcome
+    // message is still loading.
     await page.fill('.lc-input-bar input', 'What is your contact information?');
+    await expect(page.locator('.lc-send-btn')).toBeEnabled({ timeout: 15000 });
     await page.click('.lc-send-btn');
 
-    // Wait for response (longer timeout for API call)
-    await page.waitForTimeout(3000);
+    // Assert on the bot bubble specifically — .lc-bubble also matches the
+    // user's own message, which races the reply when using fixed sleeps.
+    const botBubble = page.locator('.lc-msg-bot .lc-bubble').last();
+    await expect(botBubble).toContainText('(555) 123-4567', { timeout: 15000 });
 
-    // Verify a new message was added
-    const newMessageCount = await page.locator('.lc-bubble').count();
-    expect(newMessageCount).toBeGreaterThan(initialMessageCount);
-
-    // Get the last message (should be the bot response)
-    const lastMessage = page.locator('.lc-bubble').last();
-    const chatResponse = await lastMessage.textContent();
-
-    // Check if it contains contact info or try alternative question
-    if (chatResponse.includes('(555) 123-4567')) {
-      expect(chatResponse).toContain('info@pawsitive.com');
-      expect(chatResponse).not.toContain('[Please provide');
-    } else {
-      // Try asking about phone specifically
-      await page.fill('.lc-input-bar input', 'What is your phone number?');
-      await page.click('.lc-send-btn');
-      await page.waitForTimeout(3000);
-
-      const phoneResponse = await page.locator('.lc-bubble').last().textContent();
-      expect(phoneResponse).toContain('(555) 123-4567');
-    }
+    const chatResponse = await botBubble.textContent();
+    expect(chatResponse).toContain('info@pawsitive.com');
+    expect(chatResponse).not.toContain('[Please provide');
   });
 
   test('Landing page z-index hierarchy', async ({ page }) => {
-    await page.goto('http://localhost:3000/');
+    await page.goto('/');
 
     // Get z-index of header
     const headerZIndex = await page.locator('.landing-header').evaluate(el => {
@@ -177,7 +258,7 @@ test.describe('Phase 4 Payment Workflow E2E', () => {
   });
 
   test('Registration error messages with examples', async ({ page }) => {
-    await page.goto('http://localhost:3000/register');
+    await page.goto('/register');
 
     // Test email validation with invalid email
     await page.fill('input[name="emailAddress"]', 'invalid-email');

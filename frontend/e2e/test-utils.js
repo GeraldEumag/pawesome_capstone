@@ -1,5 +1,5 @@
 // Helper utilities for E2E tests
-const frontendUrl = process.env.E2E_BASE_URL || 'http://127.0.0.1:3002';
+const frontendUrl = process.env.E2E_BASE_URL || 'http://127.0.0.1:3000';
 
 // Default credentials for test accounts (matching the live dev/prototype database)
 const DEFAULT_CREDENTIALS = {
@@ -71,6 +71,42 @@ async function loginAs(page, role = 'admin') {
 }
 
 /**
+ * API login for request-fixture use (no page). Shares the per-worker token
+ * cache with loginAs so repeated spec-level logins never hit the
+ * /auth/login 5/min throttle. Returns { token, user }.
+ */
+async function apiLogin(request, role = 'admin') {
+  const roleUpper = role.toUpperCase();
+  const defaults = DEFAULT_CREDENTIALS[role] || DEFAULT_CREDENTIALS.admin;
+  const email = process.env[`E2E_${roleUpper}_EMAIL`] || defaults.email;
+  const password = process.env[`E2E_${roleUpper}_PASSWORD`] || defaults.password;
+  const apiBase = process.env.E2E_API_URL || 'http://127.0.0.1:8000/api';
+
+  const cacheKey = `${role}:${email}`;
+  let data = tokenCache.get(cacheKey);
+
+  if (!data) {
+    let response;
+    for (let attempt = 0; attempt < 2; attempt++) {
+      response = await request.post(`${apiBase}/auth/login`, {
+        data: { login: email, email, password },
+        headers: { Accept: 'application/json' },
+      });
+      if (response.status() !== 429) break;
+      // Throttle window is 60s per account+IP; wait it out once.
+      await new Promise((resolve) => setTimeout(resolve, 61000));
+    }
+    if (!response.ok()) {
+      throw new Error(`Login failed for ${role}: ${response.status()} ${await response.text()}`);
+    }
+    data = await response.json();
+    tokenCache.set(cacheKey, data);
+  }
+
+  return { token: data.token || data.access_token, user: data.user };
+}
+
+/**
  * Mock login for isolated tests (no backend required)
  */
 async function mockLoginAs(page, role, name = `E2E ${role}`) {
@@ -96,11 +132,12 @@ async function expectDashboardRedirect(page, role) {
   await page.waitForURL(`**${expectedPath}`, { timeout: 10000 });
 }
 
-module.exports = { 
-  loginAs, 
-  mockLoginAs, 
-  getDashboardPath, 
+module.exports = {
+  loginAs,
+  apiLogin,
+  mockLoginAs,
+  getDashboardPath,
   expectDashboardRedirect,
   DEFAULT_CREDENTIALS,
-  ROLE_DASHBOARDS 
+  ROLE_DASHBOARDS
 };

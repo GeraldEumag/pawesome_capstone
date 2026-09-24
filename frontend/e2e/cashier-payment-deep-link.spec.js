@@ -10,21 +10,10 @@ const frontendUrl = process.env.E2E_BASE_URL || "http://localhost:3000";
 const apiUrl = `${process.env.E2E_API_URL || "http://127.0.0.1:8000"}/api`;
 const PNG = fs.readFileSync(path.join(__dirname, "..", "src", "assets", "PAWESOME TEST GCASH.png"));
 
-const accounts = {
-  customer: { email: "customer@example.com", password: "Password123!" },
-  receptionist: { email: "receptionist@example.com", password: "Password123!" },
-  cashier: { email: "cashier@example.com", password: "password123" },
-};
+const { apiLogin: sharedApiLogin } = require("./test-utils");
 
 async function login(request, role) {
-  const { email, password } = accounts[role];
-  const res = await request.post(`${apiUrl}/auth/login`, {
-    headers: { Accept: "application/json" },
-    data: { login: email, email, password },
-  });
-  expect(res.ok(), `login ${role}`).toBeTruthy();
-  const body = await res.json();
-  return { token: body.token || body.access_token, user: body.user };
+  return sharedApiLogin(request, role);
 }
 
 async function api(request, session, method, endpoint, options = {}) {

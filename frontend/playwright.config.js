@@ -1,6 +1,6 @@
 import { defineConfig, devices } from "@playwright/test";
 
-const baseURL = process.env.E2E_BASE_URL || "http://localhost:3002";
+const baseURL = process.env.E2E_BASE_URL || "http://localhost:3000";
 const startFrontend = process.env.PW_START_FRONTEND === "true";
 
 export default defineConfig({
@@ -8,7 +8,7 @@ export default defineConfig({
   outputDir: "./test-results",
   fullyParallel: false,
   forbidOnly: !!process.env.CI,
-  retries: process.env.CI ? 2 : 0,
+  retries: process.env.CI ? 2 : 1,
   workers: process.env.CI ? 1 : undefined,
   reporter: [["list"], ["html", { outputFolder: "playwright-report", open: "never" }]],
   use: {
@@ -39,7 +39,7 @@ export default defineConfig({
   ],
   webServer: startFrontend
     ? {
-        command: "npm run dev -- --host 127.0.0.1 --port 3002",
+        command: "npm run dev -- --host 127.0.0.1 --port 3000",
         url: baseURL,
         reuseExistingServer: !process.env.CI,
       }

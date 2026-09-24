@@ -8,7 +8,7 @@ const reportDir = path.join(rootDir, "documentation", "reports", "phase11");
 const resultPath = path.join(reportDir, "phase11-state-changing-results.json");
 const proofPath = path.join(reportDir, "phase11-proof.png");
 
-const frontendUrl = process.env.E2E_BASE_URL || "http://127.0.0.1:3002";
+const frontendUrl = process.env.E2E_BASE_URL || "http://127.0.0.1:3000";
 const backendUrl = "http://127.0.0.1:8000";
 const apiUrl = `${backendUrl}/api`;
 
@@ -133,19 +133,12 @@ function attachAudit(page) {
   });
 }
 
+const { apiLogin: sharedApiLogin } = require("./test-utils");
+
 async function apiLogin(request, role) {
-  const account = credentials[role];
-  const response = await request.post(`${apiUrl}/auth/login`, {
-    headers: { Accept: "application/json" },
-    data: { login: account.email, email: account.email, password: account.password },
-  });
-  if (!response.ok()) {
-    throw new Error(`API login failed for ${role}: ${response.status()} ${await response.text()}`);
-  }
-  const data = await response.json();
-  const token = data.token || data.access_token;
-  if (!token) throw new Error(`API login for ${role} did not return a token`);
-  return { token, user: data.user || {} };
+  const session = await sharedApiLogin(request, role);
+  if (!session.token) throw new Error(`API login for ${role} did not return a token`);
+  return { token: session.token, user: session.user || {} };
 }
 
 async function api(request, session, method, endpoint, options = {}) {

@@ -8,7 +8,7 @@ test.describe('Phase 2 Vaccination Card Verification', () => {
     await loginAs(page, 'customer');
 
     // Navigate to hotel booking
-    await page.goto('http://localhost:3000/customer/hotel');
+    await page.goto('/customer/hotel');
 
     // Wait for page to load
     await page.waitForSelector('.customer-hotel-reservation', { timeout: 10000 });
@@ -32,8 +32,10 @@ test.describe('Phase 2 Vaccination Card Verification', () => {
       await page.fill('input[name="number_of_days"]', '2');
 
       // Filling pet + dates auto-fetches room availability; pick the first open room.
+      // If this window has no available room, skip to the next date window.
       const roomCard = page.locator('.rooms-grid .room-card:not(.unavailable)').first();
-      await roomCard.waitFor({ state: 'visible', timeout: 15000 });
+      const hasRoom = await roomCard.waitFor({ state: 'visible', timeout: 15000 }).then(() => true).catch(() => false);
+      if (!hasRoom) continue;
       await roomCard.click();
 
       await page.click('button[type="submit"]');
@@ -70,7 +72,7 @@ test.describe('Phase 2 Vaccination Card Verification', () => {
     await loginAs(page, 'receptionist');
 
     // Navigate to hotel bookings
-    await page.goto('http://localhost:3000/receptionist/bookings/hotel');
+    await page.goto('/receptionist/bookings/hotel');
 
     // Wait for bookings to load (table renders once the loading state clears)
     await page.waitForSelector('.bookings-table', { timeout: 20000 });
@@ -85,7 +87,7 @@ test.describe('Phase 2 Vaccination Card Verification', () => {
     await loginAs(page, 'receptionist');
 
     // Approvals live on the hotel bookings board (/receptionist/approvals redirects here)
-    await page.goto('http://localhost:3000/receptionist/bookings/hotel');
+    await page.goto('/receptionist/bookings/hotel');
 
     // Wait for bookings table to load (renders once the loading state clears)
     await page.waitForSelector('.bookings-table', { timeout: 20000 });
@@ -101,7 +103,7 @@ test.describe('Phase 2 Vaccination Card Verification', () => {
     await loginAs(page, 'receptionist');
 
     // Navigate to walk-ins and open the Hotel / Boarding booking modal
-    await page.goto('http://localhost:3000/receptionist/walk-ins');
+    await page.goto('/receptionist/walk-ins');
     await page.waitForSelector('.walkins-page', { timeout: 10000 });
     await page.locator('.service-card', { hasText: 'Hotel' }).first().click();
     await page.waitForSelector('.walkin-modal', { timeout: 10000 });
@@ -129,7 +131,7 @@ test.describe('Phase 2 Vaccination Card Verification', () => {
 
   test('Chatbot FAQ shows original verified project content', async ({ page }) => {
     // Navigate to landing page
-    await page.goto('http://localhost:3000/');
+    await page.goto('/');
 
     // Open chatbot
     await page.click('.lc-toggle');

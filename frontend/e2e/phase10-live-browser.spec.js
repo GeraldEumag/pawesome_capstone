@@ -1,5 +1,5 @@
 const { test, expect } = require("@playwright/test");
-const frontendUrl = process.env.E2E_BASE_URL || "http://127.0.0.1:3002";
+const frontendUrl = process.env.E2E_BASE_URL || "http://127.0.0.1:3000";
 const fs = require("node:fs");
 const path = require("node:path");
 

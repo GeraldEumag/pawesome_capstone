@@ -5,7 +5,7 @@ const path = require("node:path");
 const rootDir = path.resolve(__dirname, "../..");
 const evidenceDir = path.join(rootDir, "browser-evidence", "cross-role-main-workflow");
 const resultPath = path.join(evidenceDir, "cross-role-main-workflow-results.json");
-const frontendUrl = process.env.E2E_BASE_URL || "http://127.0.0.1:3002";
+const frontendUrl = process.env.E2E_BASE_URL || "http://127.0.0.1:3000";
 const apiUrl = process.env.E2E_API_URL || "http://127.0.0.1:8000/api";
 
 const accounts = {
@@ -183,28 +183,10 @@ async function logout(page) {
   await page.waitForURL("**/login", { timeout: 15000 }).catch(() => {});
 }
 
+const { apiLogin: sharedApiLogin } = require("./test-utils");
+
 async function apiLogin(request, role) {
-  const account = accounts[role];
-  for (let attempt = 1; attempt <= 3; attempt++) {
-    try {
-      const response = await request.post(`${apiUrl}/auth/login`, {
-        headers: { Accept: "application/json" },
-        data: { login: account.email, email: account.email, password: account.password },
-        timeout: 30000,
-      });
-      if (!response.ok()) {
-        throw new Error(`API login failed for ${role}: ${response.status()} ${await response.text()}`);
-      }
-      const body = await response.json();
-      return { token: body.token || body.access_token, user: body.user || {} };
-    } catch (err) {
-      if (attempt < 3) {
-        await new Promise((r) => setTimeout(r, 5000));
-      } else {
-        throw err;
-      }
-    }
-  }
+  return sharedApiLogin(request, role);
 }
 
 async function api(request, session, method, endpoint, options = {}) {
