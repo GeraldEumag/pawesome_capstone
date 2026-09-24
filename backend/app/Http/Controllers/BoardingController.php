@@ -1373,7 +1373,7 @@ class BoardingController extends Controller
             'photo_path' => $path,
         ]);
         $log = $request->hasFile('photo')
-            ? FileStorageService::storeAndPersist($request->file('photo'), 'care-logs/boardings', 'public', $createLog)
+            ? FileStorageService::storeAndPersist($request->file('photo'), 'care-logs/boardings', 'private', $createLog)
             : $createLog();
 
         if ($request->filled('health_observation')) {

@@ -3,11 +3,12 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Models\BoardingCareLog;
+use App\Models\Customer;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Str;
 use Symfony\Component\HttpFoundation\HeaderUtils;
 
 class SecureFileController extends Controller
@@ -24,49 +25,27 @@ class SecureFileController extends Controller
         }
 
         $record = null;
-        $isOwner = false;
 
         // Determine record type and fetch data
         switch ($type) {
             case 'service-request':
                 $record = DB::table('service_requests')->where('id', $id)->first();
-                if ($record && $user->role === 'customer') {
-                    // Customer can only access their own requests
-                    $isOwner = ($record->customer_id == $user->id) || 
-                              ($record->customer_email === $user->email);
-                }
-                break;
-                
-            case 'customer-order':
-                $record = DB::table('customer_orders')->where('id', $id)->first();
-                if ($record && $user->role === 'customer') {
-                    // Customer can only access their own orders
-                    $isOwner = ($record->customer_id == $user->id);
-                }
-                break;
-                
-            case 'boarding':
-                $record = DB::table('boardings')->where('id', $id)->first();
-                if ($record && $user->role === 'customer') {
-                    $isOwner = ($record->customer_id == $user->id);
-                }
                 break;
 
+            case 'customer-order':
+                $record = DB::table('customer_orders')->where('id', $id)->first();
+                break;
+
+            case 'boarding':
             case 'boarding-vaccination':
                 $record = DB::table('boardings')->where('id', $id)->first();
-                if ($record && $user->role === 'customer') {
-                    $isOwner = ($record->customer_id == $user->id);
-                }
                 break;
 
             case 'medical_confinement':
             case 'medical-confinement':
                 $record = DB::table('medical_confinements')->where('id', $id)->first();
-                if ($record && $user->role === 'customer') {
-                    $isOwner = ($record->customer_id == $user->id);
-                }
                 break;
-                
+
             default:
                 return response()->json(['message' => 'Invalid file type'], 400);
         }
@@ -79,8 +58,8 @@ class SecureFileController extends Controller
         $canAccess = false;
         
         if ($user->role === 'customer') {
-            $canAccess = $isOwner;
-        } elseif (in_array($user->role, ['admin', 'super_admin', 'cashier', 'super_receptionist'])) {
+            $canAccess = $this->recordBelongsToCustomer($record, $user);
+        } elseif (in_array($user->role, ['admin', 'super_admin', 'cashier', 'super_receptionist'], true)) {
             // Admin and cashier can access all payment proofs
             $canAccess = true;
         } elseif (in_array($user->role, ['receptionist', 'manager'])) {
@@ -378,10 +357,104 @@ class SecureFileController extends Controller
             ->header('X-Content-Type-Options', 'nosniff');
     }
 
+    /**
+     * Securely view care-log photos (boarding and medical confinement).
+     *
+     * Access: the owning customer, plus staff roles that work with care
+     * records (receptionist, veterinary, manager, admin). Cashier and
+     * inventory have no care-record workflow and are denied.
+     */
+    public function viewCareLogPhoto(Request $request, $id)
+    {
+        $user = Auth::user();
+
+        if (!$user) {
+            return response()->json(['message' => 'Unauthenticated'], 401);
+        }
+
+        $log = BoardingCareLog::with(['boarding', 'confinement'])->find($id);
+
+        if (!$log) {
+            return response()->json(['message' => 'Care log not found'], 404);
+        }
+
+        $record = $log->boarding ?? $log->confinement;
+
+        if ($user->role === 'customer') {
+            $canAccess = $record !== null && $this->recordBelongsToCustomer($record, $user);
+        } else {
+            $canAccess = in_array($user->role, [
+                'admin', 'super_admin', 'manager',
+                'receptionist', 'super_receptionist', 'veterinary',
+            ], true);
+        }
+
+        if (!$canAccess) {
+            return response()->json(['message' => 'Forbidden'], 403);
+        }
+
+        $filePath = $log->photo_path;
+
+        if (!$filePath) {
+            return response()->json(['message' => 'Care log photo not found'], 404);
+        }
+
+        // New uploads live on the private disk; fall back to the public disk
+        // for historical files that predate the private-storage policy.
+        $disk = Storage::disk('private')->exists($filePath) ? 'private' : 'public';
+
+        if (!Storage::disk($disk)->exists($filePath)) {
+            return response()->json(['message' => 'File not found'], 404);
+        }
+
+        $fileContents = Storage::disk($disk)->get($filePath);
+
+        $extension = strtolower(pathinfo($filePath, PATHINFO_EXTENSION));
+        $mimeTypes = [
+            'jpg' => 'image/jpeg',
+            'jpeg' => 'image/jpeg',
+            'png' => 'image/png',
+        ];
+
+        $mimeType = $mimeTypes[$extension] ?? 'application/octet-stream';
+
+        if (!$fileContents || $mimeType === 'application/octet-stream') {
+            return response()->json(['message' => 'File not readable'], 404);
+        }
+
+        return response($fileContents)
+            ->header('Content-Type', $mimeType)
+            ->header('Content-Disposition', $this->inlineDisposition('care_log_' . $id . '.' . $extension))
+            ->header('Cache-Control', 'private, max-age=3600')
+            ->header('X-Content-Type-Options', 'nosniff');
+    }
+
     private function inlineDisposition(string $filename): string
     {
         $safe = preg_replace('/[^A-Za-z0-9._-]/', '_', $filename);
 
         return HeaderUtils::makeDisposition(HeaderUtils::DISPOSITION_INLINE, $safe, $safe);
+    }
+
+    /**
+     * customer_id is stored inconsistently across tables: customer_orders use the
+     * users.id while boardings/medical_confinements use customers.id. Resolve all
+     * three identifiers so ownership checks work for every record source.
+     */
+    private function recordBelongsToCustomer($record, $user): bool
+    {
+        if (($record->customer_email ?? null) === $user->email) {
+            return true;
+        }
+
+        if ((int) ($record->customer_id ?? 0) === (int) $user->id) {
+            return true;
+        }
+
+        $customerId = Customer::where('user_id', $user->id)
+            ->orWhere('email', $user->email)
+            ->value('id');
+
+        return $customerId !== null && (int) $record->customer_id === (int) $customerId;
     }
 }

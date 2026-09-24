@@ -1076,6 +1076,7 @@ Route::middleware(['auth.api', 'throttle:api'])->prefix('files')->group(function
     Route::get('/payment-proofs/{type}/{id}/view', [SecureFileController::class, 'viewPaymentProof']);
     Route::get('/vaccination-cards/{id}/view', [SecureFileController::class, 'viewVaccinationCard']);
     Route::get('/pet-photos/{petId}/view', [SecureFileController::class, 'viewPetImage']);
+    Route::get('/care-logs/{id}/view', [SecureFileController::class, 'viewCareLogPhoto']);
 });
 
 // Profile photos are public (avatars are not sensitive)

@@ -252,7 +252,7 @@ class MedicalConfinementController extends Controller
             'photo_path' => $path,
         ]);
         $log = $request->hasFile('photo')
-            ? FileStorageService::storeAndPersist($request->file('photo'), 'care-logs/confinements', 'public', $createLog)
+            ? FileStorageService::storeAndPersist($request->file('photo'), 'care-logs/confinements', 'private', $createLog)
             : $createLog();
 
         if ($request->filled('health_observation')) {

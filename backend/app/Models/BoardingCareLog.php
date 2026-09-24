@@ -23,6 +23,19 @@ class BoardingCareLog extends Model
         'photo_path',
     ];
 
+    protected $hidden = ['photo_path'];
+
+    protected $appends = ['photo_url'];
+
+    /**
+     * Care-log photos are private files — expose an authenticated viewing
+     * endpoint instead of the storage path.
+     */
+    public function getPhotoUrlAttribute(): ?string
+    {
+        return $this->photo_path ? "/api/files/care-logs/{$this->id}/view" : null;
+    }
+
     public const VALID_TYPES = [
         'feeding',
         'water',
