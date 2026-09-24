@@ -15,6 +15,8 @@ Common target:
 
 `backend/render.yaml` and `backend/.github/workflows/deploy.yml` are legacy files and are not the canonical deployment configuration. The latter is nested below `backend/`, so GitHub Actions does not discover it as a workflow. `.github/workflows/ci.yml` runs tests/build only and deliberately does not deploy.
 
+`backend/railway.json` is the checked-in Railway service configuration: `preDeployCommand` runs `php artisan migrate --force` before the new version takes traffic, `startCommand` runs `php artisan storage:link && php artisan serve --host=0.0.0.0 --port=$PORT`, and `/api/health` is the healthcheck path. Dashboard values still override for anything not set in the file. The application trusts `TRUSTED_PROXIES` (default `*`) for `X-Forwarded-*` handling so HTTPS URLs are generated correctly behind the Railway/Vercel/Cloudflare edge.
+
 ## Mode A — Capstone demo
 
 ### Services

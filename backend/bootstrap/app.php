@@ -15,6 +15,10 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
+        // Trust X-Forwarded-* from the deployment edge (Railway/Render/Vercel all
+        // terminate TLS upstream). Without this, url()/asset()/mail links come
+        // out as http:// and SESSION_SECURE_COOKIE breaks behind the proxy.
+        $middleware->trustProxies(at: env('TRUSTED_PROXIES', '*'));
         $middleware->use([
             \App\Http\Middleware\Cors::class,
             \App\Http\Middleware\SecurityHeaders::class,
