@@ -7,6 +7,7 @@ use App\Models\User;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
 
 class AttendanceController extends Controller
@@ -269,28 +270,30 @@ class AttendanceController extends Controller
         $today = Carbon::today()->toDateString();
         $now = Carbon::now()->format('H:i');
 
-        // Check if already checked in today
-        $existing = Attendance::where('user_id', $userId)
-            ->where('date', $today)
-            ->first();
+        // Lock the user row inside the same transaction so the check-then-create
+        // cannot race a concurrent check-in for the same user into a duplicate.
+        $user = null;
+        $attendance = DB::transaction(function () use ($userId, $today, $now, $request, &$user) {
+            $user = User::lockForUpdate()->find($userId);
 
-        if ($existing && $existing->check_in) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Already checked in today.',
-            ], 422);
-        }
+            $existing = Attendance::where('user_id', $userId)
+                ->where('date', $today)
+                ->lockForUpdate()
+                ->first();
 
-        $user = User::find($userId);
+            if ($existing && $existing->check_in) {
+                return null;
+            }
 
-        if ($existing) {
-            $existing->update([
-                'check_in' => $now,
-                'location' => $request->location,
-            ]);
-            $attendance = $existing;
-        } else {
-            $attendance = Attendance::create([
+            if ($existing) {
+                $existing->update([
+                    'check_in' => $now,
+                    'location' => $request->location,
+                ]);
+                return $existing;
+            }
+
+            return Attendance::create([
                 'user_id' => $userId,
                 'date' => $today,
                 'check_in' => $now,
@@ -298,6 +301,13 @@ class AttendanceController extends Controller
                 'salary_rate' => $user->hourly_rate ?? ($user->base_salary / 160),
                 'approved_by' => $userId,
             ]);
+        });
+
+        if (!$attendance) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Already checked in today.',
+            ], 422);
         }
 
         return response()->json([

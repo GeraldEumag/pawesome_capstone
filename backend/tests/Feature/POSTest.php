@@ -122,7 +122,8 @@ class POSTest extends TestCase
     }
 
     /**
-     * Test sale calculation accuracy
+     * Test sale calculation accuracy: totals are server-computed VAT-inclusive
+     * and client-supplied discounts are not honored (no discount engine exists).
      */
     public function test_sale_calculation_accuracy(): void
     {
@@ -155,6 +156,7 @@ class POSTest extends TestCase
                     'item_name' => $product1->name,
                     'quantity' => 2,
                     'unit_price' => 500,
+                    'discount_amount' => 400, // must be ignored by the server
                 ],
                 [
                     'item_id' => $product2->id,
@@ -166,14 +168,22 @@ class POSTest extends TestCase
             ],
             'payment_method' => 'cash',
             'cash_received' => 1500,
+            'discount' => 200, // must be ignored by the server
             'discount_amount' => 100,
         ], $this->withCashierAuth());
 
         $response->assertStatus(200);
 
         $transaction = $response->json('transaction');
-        // Subtotal: 1300, Tax: ~156 (12%), Discount: 100, Total: ~1356
-        $this->assertGreaterThan(0, $transaction['total_amount']);
+        // Gross subtotal 1300 is VAT-inclusive; VAT extracted = 1300 * 0.12 / 1.12.
+        $this->assertEquals(1300, $transaction['total_amount']);
+        $this->assertEquals(139.29, $transaction['tax_amount']);
+
+        $sale = Sale::latest('id')->first();
+        $this->assertEquals(1300, (float) $sale->subtotal);
+        $this->assertEquals(0, (float) $sale->discount_amount);
+        $this->assertEquals(1300, (float) $sale->total_amount);
+        $this->assertEquals(0, (float) $sale->items->sum('discount_amount'));
     }
 
     /**

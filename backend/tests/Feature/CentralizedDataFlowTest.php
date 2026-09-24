@@ -79,6 +79,7 @@ class CentralizedDataFlowTest extends TestCase
             $response = $this->actingAs($this->admin)
                 ->postJson('/api/admin/inventory/items', [
                     'sku' => "FLOW-{$category}-00" . ($index + 1),
+                    'barcode' => 'FLOW-' . strtoupper(substr($category, 0, 3)) . '-' . ($index + 1),
                     'name' => "{$category} Test Item",
                     'category' => $category,
                     'brand' => 'TestBrand',
@@ -452,7 +453,7 @@ class CentralizedDataFlowTest extends TestCase
                 // Verify no invalid categories exist
                 $allCategories = collect($json)
                     ->dot()
-                    ->filter(fn ($value, $key) => str_contains($key, 'category'))
+                    ->filter(fn ($value, $key) => $key === 'category' || str_ends_with($key, '.category'))
                     ->values();
 
                 $validCategories = ['Food', 'Accessories', 'Grooming', 'Toys', 'Health', 'Services'];
@@ -530,6 +531,7 @@ class CentralizedDataFlowTest extends TestCase
         $adminResponse = $this->actingAs($this->admin)
             ->postJson('/api/admin/inventory/items', [
                 'sku' => 'COMPLETE-FLOW-001',
+                'barcode' => 'COMPLETEFLOW001',
                 'name' => 'Complete Flow Product',
                 'category' => 'Food',
                 'brand' => 'TestBrand',

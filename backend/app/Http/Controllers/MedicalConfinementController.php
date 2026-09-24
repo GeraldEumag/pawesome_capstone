@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\ActivityLog;
 use App\Models\BoardingCareLog;
 use App\Models\Customer;
 use App\Models\HotelRoom;
@@ -11,6 +12,7 @@ use App\Services\FileStorageService;
 use App\Services\WorkflowNotifier;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
 
 class MedicalConfinementController extends Controller
@@ -134,15 +136,26 @@ class MedicalConfinementController extends Controller
             return response()->json(['error' => 'Assign a medical room or ward before admission'], 422);
         }
 
-        $confinement->update([
-            'status' => 'admitted',
-            'admitted_by' => $request->user()?->id,
-            'admitted_at' => now(),
-        ]);
-        $confinement->room?->update(['status' => 'occupied']);
+        $oldStatus = $confinement->status;
+        // Status + room occupancy must commit together.
+        DB::transaction(function () use ($confinement, $request) {
+            $confinement->update([
+                'status' => 'admitted',
+                'admitted_by' => $request->user()?->id,
+                'admitted_at' => now(),
+            ]);
+            $confinement->room?->update(['status' => 'occupied']);
+        });
 
         WorkflowNotifier::notifyRole('veterinary', 'Pet admitted for confinement', "{$confinement->pet_name} has been admitted for medical confinement.", 'info', 'medical_confinement', $confinement->id);
         WorkflowNotifier::notifyEmail($confinement->customer_email, 'Pet admitted', "{$confinement->pet_name} has been admitted for medical observation.", 'info', 'medical_confinement', $confinement->id);
+
+        ActivityLog::log($request->user()?->id, 'confinement_admitted', "Medical confinement #{$confinement->id} admitted", [
+            'category' => 'medical',
+            'reference_type' => 'medical_confinement',
+            'reference_id' => $confinement->id,
+            'changes' => ['status' => ['old' => $oldStatus, 'new' => 'admitted']],
+        ]);
 
         return response()->json([
             'message' => 'Pet admitted for medical confinement',
@@ -283,22 +296,27 @@ class MedicalConfinementController extends Controller
             return response()->json(['errors' => $validator->errors()], 422);
         }
 
-        $note = MedicalProgressNote::create([
-            'confinement_id' => $confinement->id,
-            'vet_id' => $request->user()?->id,
-            'note_type' => $request->note_type,
-            'diagnosis_update' => $request->diagnosis_update,
-            'treatment_given' => $request->treatment_given,
-            'medication_given' => $request->medication_given,
-            'vital_signs' => $request->vital_signs,
-            'prescription' => $request->prescription,
-            'recommendations' => $request->recommendations,
-            'status' => $request->status,
-        ]);
+        // Progress note + optional status transition must commit together.
+        $note = DB::transaction(function () use ($confinement, $request) {
+            $note = MedicalProgressNote::create([
+                'confinement_id' => $confinement->id,
+                'vet_id' => $request->user()?->id,
+                'note_type' => $request->note_type,
+                'diagnosis_update' => $request->diagnosis_update,
+                'treatment_given' => $request->treatment_given,
+                'medication_given' => $request->medication_given,
+                'vital_signs' => $request->vital_signs,
+                'prescription' => $request->prescription,
+                'recommendations' => $request->recommendations,
+                'status' => $request->status,
+            ]);
 
-        if ($request->filled('status')) {
-            $confinement->update(['status' => $request->status]);
-        }
+            if ($request->filled('status')) {
+                $confinement->update(['status' => $request->status]);
+            }
+
+            return $note;
+        });
 
         WorkflowNotifier::notifyEmail($confinement->customer_email, 'Medical progress updated', "A medical progress note was added for {$confinement->pet_name}.", 'info', 'medical_confinement', $confinement->id);
 
@@ -323,18 +341,29 @@ class MedicalConfinementController extends Controller
             return response()->json(['error' => 'Only admitted pets can be cleared for discharge'], 422);
         }
 
-        $confinement->update([
-            'status' => 'ready_for_discharge',
-            'discharge_cleared_by' => $request->user()?->id,
-            'discharge_cleared_at' => now(),
-        ]);
+        $oldStatus = $confinement->status;
+        // Status change and its discharge-clearance progress note must commit together.
+        DB::transaction(function () use ($confinement, $request) {
+            $confinement->update([
+                'status' => 'ready_for_discharge',
+                'discharge_cleared_by' => $request->user()?->id,
+                'discharge_cleared_at' => now(),
+            ]);
 
-        MedicalProgressNote::create([
-            'confinement_id' => $confinement->id,
-            'vet_id' => $request->user()?->id,
-            'note_type' => 'discharge_clearance',
-            'recommendations' => $request->input('recommendations'),
-            'status' => 'ready_for_discharge',
+            MedicalProgressNote::create([
+                'confinement_id' => $confinement->id,
+                'vet_id' => $request->user()?->id,
+                'note_type' => 'discharge_clearance',
+                'recommendations' => $request->input('recommendations'),
+                'status' => 'ready_for_discharge',
+            ]);
+        });
+
+        ActivityLog::log($request->user()?->id, 'confinement_cleared_for_discharge', "Medical confinement #{$confinement->id} cleared for discharge", [
+            'category' => 'medical',
+            'reference_type' => 'medical_confinement',
+            'reference_id' => $confinement->id,
+            'changes' => ['status' => ['old' => $oldStatus, 'new' => 'ready_for_discharge']],
         ]);
 
         WorkflowNotifier::notifyRole('receptionist', 'Pet ready for discharge', "{$confinement->pet_name} is medically cleared for discharge.", 'success', 'medical_confinement', $confinement->id);
@@ -355,12 +384,22 @@ class MedicalConfinementController extends Controller
             return response()->json(['error' => 'Payment must be settled before release'], 422);
         }
 
-        $confinement->update([
-            'status' => 'completed',
-            'discharged_by' => $request->user()?->id,
-            'discharged_at' => now(),
+        // Status + room release must commit together.
+        DB::transaction(function () use ($confinement, $request) {
+            $confinement->update([
+                'status' => 'completed',
+                'discharged_by' => $request->user()?->id,
+                'discharged_at' => now(),
+            ]);
+            $confinement->room?->update(['status' => 'available']);
+        });
+
+        ActivityLog::log($request->user()?->id, 'confinement_released', "Medical confinement #{$confinement->id} released", [
+            'category' => 'medical',
+            'reference_type' => 'medical_confinement',
+            'reference_id' => $confinement->id,
+            'changes' => ['status' => ['old' => 'ready_for_discharge', 'new' => 'completed']],
         ]);
-        $confinement->room?->update(['status' => 'available']);
 
         WorkflowNotifier::notifyEmail($confinement->customer_email, 'Pet discharged', "{$confinement->pet_name} has been discharged and released.", 'success', 'medical_confinement', $confinement->id);
 
@@ -375,7 +414,15 @@ class MedicalConfinementController extends Controller
             return response()->json(['error' => 'Only admitted pets can move into observation or treatment'], 422);
         }
 
+        $oldStatus = $confinement->status;
         $confinement->update(['status' => $status]);
+
+        ActivityLog::log(request()->user()?->id, 'confinement_status_changed', "Medical confinement #{$confinement->id} status changed to {$status}", [
+            'category' => 'medical',
+            'reference_type' => 'medical_confinement',
+            'reference_id' => $confinement->id,
+            'changes' => ['status' => ['old' => $oldStatus, 'new' => $status]],
+        ]);
 
         return response()->json(['message' => 'Medical confinement status updated', 'medical_confinement' => $confinement->fresh()]);
     }

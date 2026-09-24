@@ -725,10 +725,14 @@ Route::middleware(['auth.api', 'throttle:api', 'role:admin'])->prefix('admin/sal
 
 // Employee self-service routes
 Route::middleware(['auth.api', 'throttle:api'])->group(function () {
-    Route::post('/attendance/check-in', [AttendanceController::class, 'checkIn']);
-    Route::post('/attendance/check-out', [AttendanceController::class, 'checkOut']);
     Route::get('/my-payroll', [PayrollController::class, 'myPayroll']);
     Route::get('/my-payroll/{id}/payslip', [PayrollController::class, 'payslip']);
+});
+
+// Attendance punching is staff-only — customers have no attendance workflow.
+Route::middleware(['auth.api', 'throttle:api', 'role:receptionist,cashier,inventory,veterinary,manager,admin'])->group(function () {
+    Route::post('/attendance/check-in', [AttendanceController::class, 'checkIn']);
+    Route::post('/attendance/check-out', [AttendanceController::class, 'checkOut']);
 });
 
 Route::middleware(['auth.api', 'throttle:api', 'role:veterinary,vet'])->prefix('veterinary')->group(function () {

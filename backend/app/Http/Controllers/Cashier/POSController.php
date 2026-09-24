@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Cashier;
 
 use App\Http\Controllers\Controller;
+use App\Models\ActivityLog;
 use App\Models\Sale;
 use App\Models\SaleItem;
 use App\Models\Payment;
@@ -78,7 +79,10 @@ class POSController extends Controller
 
             // Authoritative pricing is resolved server-side from the database.
             // Client-supplied unit_price/subtotal/tax/discount/total are ignored
-            // for persistence — only item IDs, quantities and discounts are inputs.
+            // for persistence — only item IDs and quantities are inputs.
+            // There is no server-side discount engine yet, so client-supplied
+            // discounts are never honored: applying them would let any cashier
+            // arbitrarily reduce recorded sale amounts while stock is deducted.
             $serverUnitPrices = [];
             $serverItems = [];
 
@@ -116,7 +120,8 @@ class POSController extends Controller
                 }
 
                 $lineGross = $unitPrice * $quantity;
-                $lineDiscount = min(max((float) ($item['discount_amount'] ?? 0), 0), $lineGross);
+                // Discounts require a server-side policy engine; client input is ignored.
+                $lineDiscount = 0.0;
 
                 $serverItems[$index] = [
                     'unit_price' => $unitPrice,
@@ -127,8 +132,9 @@ class POSController extends Controller
 
             $subtotal = array_sum(array_column($serverItems, 'total_price'));
             $taxAmount = round($subtotal * 0.12 / 1.12, 2);
-            $discountAmount = min(max((float) ($payload['discount'] ?? 0), 0), $subtotal);
-            $totalAmount = max($subtotal - $discountAmount, 0);
+            // Sale-level discounts are likewise not client-authoritative.
+            $discountAmount = 0.0;
+            $totalAmount = $subtotal;
 
             // Create the sale. Some upgraded databases keep payment details only
             // in the payments table, while newer schemas also mirror it on sales.
@@ -215,6 +221,19 @@ class POSController extends Controller
             ]);
 
             DB::commit();
+
+            ActivityLog::log(Auth::id(), 'pos_sale_completed', "POS sale {$sale->transaction_number} completed", [
+                'category' => 'pos',
+                'reference_type' => 'sale',
+                'reference_id' => $sale->id,
+                'metadata' => [
+                    'transaction_number' => $sale->transaction_number,
+                    'invoice_number' => $invoice->invoice_number,
+                    'total_amount' => $totalAmount,
+                    'payment_method' => $payload['payment_method'],
+                    'item_count' => count($payload['items'] ?? []),
+                ],
+            ]);
 
             return response()->json([
                 'success' => true,
@@ -402,9 +421,12 @@ class POSController extends Controller
         try {
             DB::beginTransaction();
 
-            $sale = Sale::with('items')->findOrFail($id);
+            // Lock the sale row so two concurrent voids can't both pass the
+            // cancelled check and double-restore stock / double-refund.
+            $sale = Sale::with('items')->lockForUpdate()->findOrFail($id);
 
             if ($sale->status === 'cancelled') {
+                DB::rollBack();
                 return response()->json([
                     'success' => false,
                     'message' => 'Transaction is already cancelled',
@@ -436,9 +458,21 @@ class POSController extends Controller
             }
 
             // Cancel the sale
+            $oldSaleStatus = $sale->status;
             $sale->markAsCancelled($request->reason);
 
             DB::commit();
+
+            ActivityLog::log(Auth::id(), 'pos_sale_voided', "POS sale {$sale->transaction_number} voided", [
+                'category' => 'pos',
+                'reference_type' => 'sale',
+                'reference_id' => $sale->id,
+                'changes' => ['status' => ['old' => $oldSaleStatus, 'new' => 'cancelled']],
+                'metadata' => [
+                    'transaction_number' => $sale->transaction_number,
+                    'reason' => $request->reason,
+                ],
+            ]);
 
             return response()->json([
                 'success' => true,

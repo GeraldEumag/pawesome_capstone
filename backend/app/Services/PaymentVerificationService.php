@@ -5,6 +5,7 @@ namespace App\Services;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use App\Models\ActivityLog;
 use App\Services\WorkflowNotifier;
 
 class PaymentVerificationService
@@ -14,6 +15,28 @@ class PaymentVerificationService
      * Returns array with standardized keys: success, message, payment_status, receipt_number
      */
     public function verify(string $type, int $id, $request)
+    {
+        $before = $this->paymentStatusOf($type, $id);
+        $result = $this->performVerify($type, $id, $request);
+
+        if (($result['success'] ?? false) === true) {
+            ActivityLog::log(Auth::id(), 'payment_verified', "Payment verified for {$type} #{$id}", [
+                'category' => 'payment',
+                'reference_type' => $type,
+                'reference_id' => $id,
+                'changes' => ['payment_status' => ['old' => $before, 'new' => $result['payment_status'] ?? 'paid']],
+                'metadata' => [
+                    'receipt_number' => $result['receipt_number'] ?? null,
+                    'reference_number' => $request->input('reference_number'),
+                    'payment_method' => $request->input('payment_method'),
+                ],
+            ]);
+        }
+
+        return $result;
+    }
+
+    private function performVerify(string $type, int $id, $request)
     {
         $referenceNumber = $request->input('reference_number');
         $paymentMethod = $request->input('payment_method');
@@ -29,70 +52,74 @@ class PaymentVerificationService
         }
 
         try {
-            if ($type === 'boarding') {
-                return $this->verifyTablePayment('boardings', 'BD-REC-', $id, $request, 'Boarding payment verified successfully.', $referenceNumber);
-            }
-
-            if ($type === 'appointment' || $type === 'veterinary') {
-                return $this->verifyTablePayment('appointments', 'VT-REC-', $id, $request, 'Veterinary payment verified successfully.', $referenceNumber);
-            }
-
-            if ($type === 'grooming') {
-                return $this->verifyTablePayment('groomings', 'GR-REC-', $id, $request, 'Grooming payment verified successfully.', $referenceNumber);
-            }
-
-            if ($type === 'medical_confinement' || $type === 'confinement') {
-                return $this->verifyTablePayment('medical_confinements', 'MC-REC-', $id, $request, 'Medical confinement payment verified successfully.', $referenceNumber);
-            }
-
-            if ($type === 'service_request' || $type === 'service') {
-                $sr = DB::table('service_requests')->where('id', $id)->first();
-                if (!$sr) return ['success' => false, 'message' => 'Service request not found', 'status' => 404];
-                if (($sr->payment_status ?? 'unpaid') !== 'pending') {
-                    return ['success' => false, 'message' => 'Only pending payment proofs can be verified', 'status' => 422, 'payment_status' => $sr->payment_status];
+            // All payment-state writes + linked service/billing syncs must commit
+            // together or not at all. In-app notifications are DB rows and roll
+            // back with the transaction — they are intentionally inside it.
+            return DB::transaction(function () use ($type, $id, $request, $referenceNumber) {
+                if ($type === 'boarding') {
+                    return $this->verifyTablePayment('boardings', 'BD-REC-', $id, $request, 'Boarding payment verified successfully.', $referenceNumber);
                 }
 
-                $receiptNumber = 'SR-REC-' . now()->format('YmdHis') . '-' . $id;
+                if ($type === 'appointment' || $type === 'veterinary') {
+                    return $this->verifyTablePayment('appointments', 'VT-REC-', $id, $request, 'Veterinary payment verified successfully.', $referenceNumber);
+                }
 
-                DB::table('service_requests')->where('id', $id)->update([
+                if ($type === 'grooming') {
+                    return $this->verifyTablePayment('groomings', 'GR-REC-', $id, $request, 'Grooming payment verified successfully.', $referenceNumber);
+                }
+
+                if ($type === 'medical_confinement' || $type === 'confinement') {
+                    return $this->verifyTablePayment('medical_confinements', 'MC-REC-', $id, $request, 'Medical confinement payment verified successfully.', $referenceNumber);
+                }
+
+                if ($type === 'service_request' || $type === 'service') {
+                    $sr = DB::table('service_requests')->where('id', $id)->lockForUpdate()->first();
+                    if (!$sr) return ['success' => false, 'message' => 'Service request not found', 'status' => 404];
+                    if (($sr->payment_status ?? 'unpaid') !== 'pending') {
+                        return ['success' => false, 'message' => 'Only pending payment proofs can be verified', 'status' => 422, 'payment_status' => $sr->payment_status];
+                    }
+
+                    $receiptNumber = 'SR-REC-' . now()->format('YmdHis') . '-' . $id;
+
+                    DB::table('service_requests')->where('id', $id)->update([
+                        'payment_status' => 'paid',
+                        'paid_at' => now(),
+                        'verified_by' => Auth::id(),
+                        'verified_at' => now(),
+                        'cashier_remarks' => $request->input('cashier_remarks', 'Payment verified by cashier'),
+                        'receipt_number' => $receiptNumber,
+                        'reference_number' => $referenceNumber,
+                    ]);
+
+                    $this->markLinkedServiceAsPaidFromRequest($sr, $id, $receiptNumber);
+
+                    WorkflowNotifier::notifyEmail($sr->customer_email ?? null, 'Payment Verified', "Your payment for {$sr->service_name} has been verified. Receipt: {$receiptNumber}", 'success', 'service_request', $id);
+
+                    return ['success' => true, 'message' => 'Service request payment verified successfully.', 'payment_status' => 'paid', 'receipt_number' => $receiptNumber];
+                }
+
+                // default: customer_order
+                $order = DB::table('customer_orders')->where('id', $id)->lockForUpdate()->first();
+                if (!$order) return ['success' => false, 'message' => 'Order not found', 'status' => 404];
+                if ((($order->payment_status) ?? 'unpaid') !== 'pending') {
+                    return ['success' => false, 'message' => 'Only pending payment proofs can be verified', 'status' => 422, 'payment_status' => $order->payment_status ?? 'unpaid'];
+                }
+
+                $receiptNumber = $order->receipt_number ?? ('REC-' . now()->format('YmdHis') . '-' . $order->id);
+
+                DB::table('customer_orders')->where('id', $id)->update([
                     'payment_status' => 'paid',
                     'paid_at' => now(),
                     'verified_by' => Auth::id(),
                     'verified_at' => now(),
-                    'cashier_remarks' => $request->input('cashier_remarks', 'Payment verified by cashier'),
+                    'cashier_remarks' => $request->input('cashier_remarks'),
                     'receipt_number' => $receiptNumber,
                     'reference_number' => $referenceNumber,
+                    'updated_at' => now(),
                 ]);
 
-                $this->markLinkedServiceAsPaidFromRequest($sr, $id, $receiptNumber);
-
-                WorkflowNotifier::notifyEmail($sr->customer_email ?? null, 'Payment Verified', "Your payment for {$sr->service_name} has been verified. Receipt: {$receiptNumber}", 'success', 'service_request', $id);
-
-                return ['success' => true, 'message' => 'Service request payment verified successfully.', 'payment_status' => 'paid', 'receipt_number' => $receiptNumber];
-            }
-
-            // default: customer_order
-            $order = DB::table('customer_orders')->where('id', $id)->first();
-            if (!$order) return ['success' => false, 'message' => 'Order not found', 'status' => 404];
-            if ((($order->payment_status) ?? 'unpaid') !== 'pending') {
-                return ['success' => false, 'message' => 'Only pending payment proofs can be verified', 'status' => 422, 'payment_status' => $order->payment_status ?? 'unpaid'];
-            }
-
-            $receiptNumber = $order->receipt_number ?? ('REC-' . now()->format('YmdHis') . '-' . $order->id);
-
-            DB::table('customer_orders')->where('id', $id)->update([
-                'payment_status' => 'paid',
-                'paid_at' => now(),
-                'verified_by' => Auth::id(),
-                'verified_at' => now(),
-                'cashier_remarks' => $request->input('cashier_remarks'),
-                'receipt_number' => $receiptNumber,
-                'reference_number' => $referenceNumber,
-                'updated_at' => now(),
-            ]);
-
-            return ['success' => true, 'message' => 'Payment verified successfully', 'payment_status' => 'paid', 'receipt_number' => $receiptNumber];
-
+                return ['success' => true, 'message' => 'Payment verified successfully', 'payment_status' => 'paid', 'receipt_number' => $receiptNumber];
+            });
         } catch (\Throwable $e) {
             Log::error('PaymentVerificationService::verify error - ' . $e->getMessage());
             return ['success' => false, 'message' => $e->getMessage(), 'status' => 500];
@@ -100,6 +127,24 @@ class PaymentVerificationService
     }
 
     public function reject(string $type, int $id, $request)
+    {
+        $before = $this->paymentStatusOf($type, $id);
+        $result = $this->performReject($type, $id, $request);
+
+        if (($result['success'] ?? false) === true) {
+            ActivityLog::log(Auth::id(), 'payment_rejected', "Payment rejected for {$type} #{$id}", [
+                'category' => 'payment',
+                'reference_type' => $type,
+                'reference_id' => $id,
+                'changes' => ['payment_status' => ['old' => $before, 'new' => 'rejected']],
+                'metadata' => ['rejection_reason' => $request->input('rejection_reason')],
+            ]);
+        }
+
+        return $result;
+    }
+
+    private function performReject(string $type, int $id, $request)
     {
         $rejectionReason = trim((string) $request->input('rejection_reason', ''));
 
@@ -112,65 +157,80 @@ class PaymentVerificationService
         }
 
         try {
-            if ($type === 'boarding') {
-                return $this->rejectTablePayment('boardings', $id, $request, 'Boarding payment rejected', $rejectionReason);
-            }
-
-            if ($type === 'appointment' || $type === 'veterinary') {
-                return $this->rejectTablePayment('appointments', $id, $request, 'Veterinary payment rejected', $rejectionReason);
-            }
-
-            if ($type === 'grooming') {
-                return $this->rejectTablePayment('groomings', $id, $request, 'Grooming payment rejected', $rejectionReason);
-            }
-
-            if ($type === 'medical_confinement' || $type === 'confinement') {
-                return $this->rejectTablePayment('medical_confinements', $id, $request, 'Medical confinement payment rejected', $rejectionReason);
-            }
-
-            if ($type === 'service_request' || $type === 'service') {
-                $sr = DB::table('service_requests')->where('id', $id)->first();
-                if (!$sr) return ['success' => false, 'message' => 'Service request not found', 'status' => 404];
-                if (($sr->payment_status ?? 'unpaid') !== 'pending') {
-                    return ['success' => false, 'message' => 'Only pending payment proofs can be rejected', 'status' => 422, 'payment_status' => $sr->payment_status];
+            return DB::transaction(function () use ($type, $id, $request, $rejectionReason) {
+                if ($type === 'boarding') {
+                    return $this->rejectTablePayment('boardings', $id, $request, 'Boarding payment rejected', $rejectionReason);
                 }
 
-                DB::table('service_requests')->where('id', $id)->update([
+                if ($type === 'appointment' || $type === 'veterinary') {
+                    return $this->rejectTablePayment('appointments', $id, $request, 'Veterinary payment rejected', $rejectionReason);
+                }
+
+                if ($type === 'grooming') {
+                    return $this->rejectTablePayment('groomings', $id, $request, 'Grooming payment rejected', $rejectionReason);
+                }
+
+                if ($type === 'medical_confinement' || $type === 'confinement') {
+                    return $this->rejectTablePayment('medical_confinements', $id, $request, 'Medical confinement payment rejected', $rejectionReason);
+                }
+
+                if ($type === 'service_request' || $type === 'service') {
+                    $sr = DB::table('service_requests')->where('id', $id)->lockForUpdate()->first();
+                    if (!$sr) return ['success' => false, 'message' => 'Service request not found', 'status' => 404];
+                    if (($sr->payment_status ?? 'unpaid') !== 'pending') {
+                        return ['success' => false, 'message' => 'Only pending payment proofs can be rejected', 'status' => 422, 'payment_status' => $sr->payment_status];
+                    }
+
+                    DB::table('service_requests')->where('id', $id)->update([
+                        'payment_status' => 'rejected',
+                        'rejected_by' => Auth::id(),
+                        'rejected_at' => now(),
+                        'rejection_reason' => $rejectionReason,
+                    ]);
+
+                    WorkflowNotifier::notifyEmail($sr->customer_email ?? null, 'Payment Rejected', "Your payment for {$sr->service_name} was rejected. Reason: {$rejectionReason}", 'error', 'service_request', $id);
+
+                    return ['success' => true, 'message' => 'Service request payment rejected', 'payment_status' => 'rejected'];
+                }
+
+                $order = DB::table('customer_orders')->where('id', $id)->lockForUpdate()->first();
+                if (!$order) return ['success' => false, 'message' => 'Order not found', 'status' => 404];
+                if ((($order->payment_status) ?? 'unpaid') !== 'pending') {
+                    return ['success' => false, 'message' => 'Only pending payment proofs can be rejected', 'status' => 422, 'payment_status' => $order->payment_status ?? 'unpaid'];
+                }
+
+                DB::table('customer_orders')->where('id', $id)->update([
                     'payment_status' => 'rejected',
                     'rejected_by' => Auth::id(),
                     'rejected_at' => now(),
                     'rejection_reason' => $rejectionReason,
                 ]);
 
-                WorkflowNotifier::notifyEmail($sr->customer_email ?? null, 'Payment Rejected', "Your payment for {$sr->service_name} was rejected. Reason: {$rejectionReason}", 'error', 'service_request', $id);
-
-                return ['success' => true, 'message' => 'Service request payment rejected', 'payment_status' => 'rejected'];
-            }
-
-            $order = DB::table('customer_orders')->where('id', $id)->first();
-            if (!$order) return ['success' => false, 'message' => 'Order not found', 'status' => 404];
-            if ((($order->payment_status) ?? 'unpaid') !== 'pending') {
-                return ['success' => false, 'message' => 'Only pending payment proofs can be rejected', 'status' => 422, 'payment_status' => $order->payment_status ?? 'unpaid'];
-            }
-
-            DB::table('customer_orders')->where('id', $id)->update([
-                'payment_status' => 'rejected',
-                'rejected_by' => Auth::id(),
-                'rejected_at' => now(),
-                'rejection_reason' => $rejectionReason,
-            ]);
-
-            return ['success' => true, 'message' => 'Payment rejected', 'payment_status' => 'rejected'];
-
+                return ['success' => true, 'message' => 'Payment rejected', 'payment_status' => 'rejected'];
+            });
         } catch (\Throwable $e) {
             Log::error('PaymentVerificationService::reject error - ' . $e->getMessage());
             return ['success' => false, 'message' => $e->getMessage(), 'status' => 500];
         }
     }
 
+    private function paymentStatusOf(string $type, int $id): ?string
+    {
+        $table = match ($type) {
+            'boarding' => 'boardings',
+            'appointment', 'veterinary' => 'appointments',
+            'grooming' => 'groomings',
+            'medical_confinement', 'confinement' => 'medical_confinements',
+            'service_request', 'service' => 'service_requests',
+            default => 'customer_orders',
+        };
+
+        return DB::table($table)->where('id', $id)->value('payment_status');
+    }
+
     private function verifyTablePayment(string $table, string $prefix, int $id, $request, string $message, ?string $referenceNumber = null): array
     {
-        $record = DB::table($table)->where('id', $id)->first();
+        $record = DB::table($table)->where('id', $id)->lockForUpdate()->first();
         if (!$record) {
             return ['success' => false, 'message' => 'Payment record not found', 'status' => 404];
         }
@@ -210,7 +270,7 @@ class PaymentVerificationService
 
     private function rejectTablePayment(string $table, int $id, $request, string $message, string $rejectionReason): array
     {
-        $record = DB::table($table)->where('id', $id)->first();
+        $record = DB::table($table)->where('id', $id)->lockForUpdate()->first();
         if (!$record) {
             return ['success' => false, 'message' => 'Payment record not found', 'status' => 404];
         }
@@ -266,7 +326,7 @@ class PaymentVerificationService
         }
 
         [$table, $serviceType] = $linked;
-        $record = DB::table($table)->where('service_request_id', $serviceRequestId)->first();
+        $record = DB::table($table)->where('service_request_id', $serviceRequestId)->lockForUpdate()->first();
         if (!$record) {
             return;
         }

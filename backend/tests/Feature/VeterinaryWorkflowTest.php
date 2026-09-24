@@ -73,6 +73,7 @@ class VeterinaryWorkflowTest extends TestCase
     public function test_veterinary_can_create_start_complete_and_edit_assigned_appointment(): void
     {
         $vet = $this->userWithToken('veterinary');
+        $cashier = $this->userWithToken('cashier');
         $customer = Customer::factory()->create();
         $pet = Pet::factory()->create(['customer_id' => $customer->id]);
         $service = Service::factory()->create(['price' => 750]);
@@ -103,6 +104,17 @@ class VeterinaryWorkflowTest extends TestCase
             'treatment_plan' => 'Continue observation and home care',
             'status' => MedicalRecord::STATUS_FINALIZED,
         ]);
+
+        $this->withHeaders($this->authHeader($cashier))
+            ->postJson("/api/appointments/{$appointmentId}/pay")
+            ->assertOk()
+            ->assertJsonPath('appointment.payment_status', 'paid');
+
+        $this->withHeaders($this->authHeader($cashier))
+            ->postJson("/api/appointments/{$appointmentId}/pay")
+            ->assertStatus(422);
+
+        $this->assertDatabaseCount('sales', 1);
 
         $this->withHeaders($this->authHeader($vet))
             ->postJson("/api/veterinary/appointments/{$appointmentId}/complete")

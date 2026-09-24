@@ -183,6 +183,15 @@ class CustomerOrderController extends Controller
         try {
             DB::beginTransaction();
 
+            // Re-read the order under a row lock so concurrent approvals
+            // serialize: the second waiter sees 'approved' and stops before
+            // any stock deduction happens.
+            $order = DB::table('customer_orders')->where('id', $id)->lockForUpdate()->first();
+            if (!$order || $order->status !== 'pending') {
+                DB::rollBack();
+                return response()->json(['message' => 'Only pending orders can be approved'], 422);
+            }
+
             // Get order items
             $itemsQuery = DB::table('customer_order_items');
 
@@ -192,13 +201,17 @@ class CustomerOrderController extends Controller
                 $itemsQuery->where('order_id', $order->id);
             }
 
-            $items = $itemsQuery->get();
+            // Deterministic lock order reduces deadlock risk when two orders
+            // share inventory items.
+            $items = $itemsQuery->get()->sortBy('inventory_item_id')->values();
 
-            // Check stock availability for all items
+            // Check stock availability for all items under row locks so a
+            // concurrent order approval cannot race the stock check.
             $insufficientStockItems = [];
             foreach ($items as $item) {
                 $inventoryItem = DB::table('inventory_items')
                     ->where('id', $item->inventory_item_id)
+                    ->lockForUpdate()
                     ->first();
 
                 if (!$inventoryItem) {
@@ -354,6 +367,14 @@ class CustomerOrderController extends Controller
         try {
             DB::beginTransaction();
 
+            // Lock the order row and re-check status inside the transaction so
+            // a concurrent approve/reject/cancel cannot double-restore stock.
+            $order = DB::table('customer_orders')->where('id', $id)->lockForUpdate()->first();
+            if (!$order || $order->status === 'completed' || $order->status === 'rejected') {
+                DB::rollBack();
+                return response()->json(['message' => 'Order cannot be rejected in its current state'], 422);
+            }
+
             // If order was already approved, restore stock
             if ($order->status === 'approved') {
                 $itemsQuery = DB::table('customer_order_items');
@@ -364,11 +385,12 @@ class CustomerOrderController extends Controller
                     $itemsQuery->where('order_id', $order->id);
                 }
 
-                $items = $itemsQuery->get();
+                $items = $itemsQuery->get()->sortBy('inventory_item_id')->values();
 
                 foreach ($items as $item) {
                     $inventoryItem = DB::table('inventory_items')
                         ->where('id', $item->inventory_item_id)
+                        ->lockForUpdate()
                         ->first();
 
                     if ($inventoryItem) {
@@ -500,6 +522,14 @@ class CustomerOrderController extends Controller
         try {
             DB::beginTransaction();
 
+            // Lock the order row and re-check status inside the transaction so
+            // a concurrent approve/reject/cancel cannot double-restore stock.
+            $order = DB::table('customer_orders')->where('id', $id)->lockForUpdate()->first();
+            if (!$order || in_array($order->status, ['completed', 'cancelled'], true)) {
+                DB::rollBack();
+                return response()->json(['message' => 'Order cannot be cancelled in its current state'], 422);
+            }
+
             // If order was already approved, restore stock
             if ($order->status === 'approved') {
                 $itemsQuery = DB::table('customer_order_items');
@@ -510,11 +540,12 @@ class CustomerOrderController extends Controller
                     $itemsQuery->where('order_id', $order->id);
                 }
 
-                $items = $itemsQuery->get();
+                $items = $itemsQuery->get()->sortBy('inventory_item_id')->values();
 
                 foreach ($items as $item) {
                     $inventoryItem = DB::table('inventory_items')
                         ->where('id', $item->inventory_item_id)
+                        ->lockForUpdate()
                         ->first();
 
                     if ($inventoryItem) {

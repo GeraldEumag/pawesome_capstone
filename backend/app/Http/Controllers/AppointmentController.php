@@ -16,6 +16,7 @@ use App\Services\BookingAvailabilityService;
 use App\Services\ServiceBillingService;
 use App\Models\ActivityLog;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Carbon;
 
@@ -611,32 +612,50 @@ class AppointmentController extends Controller
         ]);
     }
 
-    public function markAsPaid($id)
+    public function markAsPaid(Request $request, $id)
     {
-        $appointment = Appointment::with(['customer', 'service'])->find($id);
+        return DB::transaction(function () use ($request, $id) {
+            $appointment = Appointment::with(['customer', 'service'])
+                ->lockForUpdate()
+                ->find($id);
 
-        if (!$appointment) {
-            return response()->json(['message' => 'Appointment not found'], 404);
-        }
+            if (!$appointment) {
+                return response()->json(['message' => 'Appointment not found'], 404);
+            }
 
-        $sale = Sale::create([
-            'customer_id' => $appointment->customer_id,
-            'cashier_id' => auth()->id(),
-            'type' => 'appointment',
-            'status' => 'completed',
-            'payment_type' => request('payment_type', 'cash'),
-            'subtotal' => $appointment->price,
-            'total_amount' => $appointment->price,
-            'amount' => $appointment->price,
-            'notes' => 'Payment for appointment #' . $appointment->id,
-        ]);
+            if ($appointment->payment_status === 'paid') {
+                return response()->json(['message' => 'Appointment payment is already verified'], 422);
+            }
 
-        return response()->json([
-            'success' => true,
-            'message' => 'Appointment payment recorded',
-            'sale' => $sale,
-            'appointment' => $appointment,
-        ]);
+            $amount = (float) ($appointment->total_amount > 0 ? $appointment->total_amount : ($appointment->price ?? 0));
+            $paymentMethod = $request->input('payment_type', 'cash');
+            $sale = Sale::create([
+                'customer_id' => $appointment->customer_id,
+                'cashier_id' => $request->user()?->id,
+                'type' => 'appointment',
+                'status' => 'completed',
+                'payment_type' => $paymentMethod,
+                'subtotal' => $amount,
+                'total_amount' => $amount,
+                'amount' => $amount,
+                'notes' => 'Payment for appointment #' . $appointment->id,
+            ]);
+
+            $appointment->update([
+                'payment_status' => 'paid',
+                'amount_paid' => $amount,
+                'balance_due' => 0,
+                'paid_at' => now(),
+                'verified_by' => $request->user()?->id,
+            ]);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Appointment payment recorded',
+                'sale' => $sale,
+                'appointment' => $appointment->fresh(),
+            ]);
+        });
     }
 
     /**

@@ -41,7 +41,8 @@ class InventoryService
      */
     public function createItem(array $data): array
     {
-        $validated = $this->validateItemData($data, true, null);
+        return DB::transaction(function () use ($data) {
+            $validated = $this->validateItemData($data, true, null);
 
         // Auto-generate SKU if not provided
         if (empty($validated['sku'])) {
@@ -92,20 +93,21 @@ class InventoryService
             );
         }
 
-        // Ensure stock field is synchronized with batch totals
-        if ($item->batches()->exists()) {
-            $item->stock = $item->getBatchStock();
-            $item->save();
-        }
+            // Ensure stock field is synchronized with batch totals
+            if ($item->batches()->exists()) {
+                $item->stock = $item->getBatchStock();
+                $item->save();
+            }
 
-        return [
-            'message' => 'Item created successfully',
-            'item' => $item->fresh()->load('batches'),
-            'stock_action' => 'initial',
-            'new_stock' => $item->stock,
-            'has_batch' => $batchData !== null,
-            'batch_total' => $item->batches()->sum('remaining_quantity'),
-        ];
+            return [
+                'message' => 'Item created successfully',
+                'item' => $item->fresh()->load('batches'),
+                'stock_action' => 'initial',
+                'new_stock' => $item->stock,
+                'has_batch' => $batchData !== null,
+                'batch_total' => $item->batches()->sum('remaining_quantity'),
+            ];
+        });
     }
 
     /**
@@ -113,42 +115,44 @@ class InventoryService
      */
     public function updateItem(int $id, array $data): array
     {
-        $item = InventoryItem::findOrFail($id);
-        $validated = $this->validateItemData($data, false, $id);
+        return DB::transaction(function () use ($id, $data) {
+            $item = InventoryItem::lockForUpdate()->findOrFail($id);
+            $validated = $this->validateItemData($data, false, $id);
 
-        // Track stock change for logging
-        $oldStock = $item->stock;
-        $inputStock = $validated['stock'] ?? $validated['stock_quantity'] ?? ($validated['quantity'] ?? null);
-        $addStock = $validated['add_stock'] ?? false;
+            // Track stock change for logging
+            $oldStock = $item->stock;
+            $inputStock = $validated['stock'] ?? $validated['stock_quantity'] ?? ($validated['quantity'] ?? null);
+            $addStock = $validated['add_stock'] ?? false;
 
-        // Determine new stock value
-        $stockAction = $this->getStockAction($item, $inputStock, $addStock);
-        $newStock = $this->calculateNewStock($item, $inputStock, $addStock);
-        $validated['stock'] = $newStock;
+            // Determine new stock value
+            $stockAction = $this->getStockAction($item, $inputStock, $addStock);
+            $newStock = $this->calculateNewStock($item, $inputStock, $addStock);
+            $validated['stock'] = $newStock;
 
-        // Remove fields that don't exist in database
-        unset($validated['quantity'], $validated['stock_quantity'], $validated['add_stock']);
+            // Remove fields that don't exist in database
+            unset($validated['quantity'], $validated['stock_quantity'], $validated['add_stock']);
 
-        $item->update($validated);
+            $item->update($validated);
 
-        // Log stock adjustment if changed
-        if ($oldStock !== $newStock) {
-            $delta = $newStock - $oldStock;
-            $reason = $this->getStockAdjustmentReason($item, $addStock, $delta);
-            $referenceType = $this->getStockReferenceType($item, $addStock);
-            $this->logStockChange($item->id, $delta, $reason, $referenceType);
+            // Log stock adjustment if changed
+            if ($oldStock !== $newStock) {
+                $delta = $newStock - $oldStock;
+                $reason = $this->getStockAdjustmentReason($item, $addStock, $delta);
+                $referenceType = $this->getStockReferenceType($item, $addStock);
+                $this->logStockChange($item->id, $delta, $reason, $referenceType);
 
-            // Check for low/out of stock and create notifications
-            $this->checkAndCreateStockNotifications($item->fresh());
-        }
+                // Check for low/out of stock and create notifications
+                $this->checkAndCreateStockNotifications($item->fresh());
+            }
 
-        return [
-            'message' => 'Item updated successfully',
-            'item' => $item->fresh(),
-            'stock_action' => $stockAction,
-            'previous_stock' => $oldStock,
-            'new_stock' => $newStock,
-        ];
+            return [
+                'message' => 'Item updated successfully',
+                'item' => $item->fresh(),
+                'stock_action' => $stockAction,
+                'previous_stock' => $oldStock,
+                'new_stock' => $newStock,
+            ];
+        });
     }
 
     /**
@@ -156,7 +160,8 @@ class InventoryService
      */
     public function archiveItem(int $id, string $reason = ''): array
     {
-        $item = InventoryItem::findOrFail($id);
+        return DB::transaction(function () use ($id, $reason) {
+            $item = InventoryItem::lockForUpdate()->findOrFail($id);
 
         // Check if item has stock - block archive if stock exists
         if ($item->stock > 0) {
@@ -210,6 +215,7 @@ class InventoryService
             'archived_at' => $item->archived_at,
             'archive_reason' => $reason,
         ];
+        });
     }
 
     /**
@@ -217,29 +223,31 @@ class InventoryService
      */
     public function deleteItem(int $id, bool $forceDelete = false): array
     {
-        $item = InventoryItem::findOrFail($id);
+        return DB::transaction(function () use ($id, $forceDelete) {
+            $item = InventoryItem::lockForUpdate()->findOrFail($id);
 
-        // Only allow hard delete for items with no history
-        $saleItemsCount = DB::table('sale_items')
-            ->where('product_id', $id)
-            ->count();
+            // Only allow hard delete for items with no history
+            $saleItemsCount = DB::table('sale_items')
+                ->where('product_id', $id)
+                ->count();
 
-        $logsCount = DB::table('inventory_logs')
-            ->where('inventory_item_id', $id)
-            ->count();
+            $logsCount = DB::table('inventory_logs')
+                ->where('inventory_item_id', $id)
+                ->count();
 
-        $batchesCount = $item->batches()->count();
+            $batchesCount = $item->batches()->count();
 
-        if (!$forceDelete && ($saleItemsCount > 0 || $logsCount > 0 || $batchesCount > 0)) {
-            throw new \Exception("Item has transaction history and cannot be permanently deleted. Use archive instead.");
-        }
+            if (!$forceDelete && ($saleItemsCount > 0 || $logsCount > 0 || $batchesCount > 0)) {
+                throw new \Exception("Item has transaction history and cannot be permanently deleted. Use archive instead.");
+            }
 
-        // Log the deletion
-        $this->logStockChange($item->id, -$item->stock, 'Item permanently deleted', 'permanent_deletion');
+            // Log the deletion
+            $this->logStockChange($item->id, -$item->stock, 'Item permanently deleted', 'permanent_deletion');
 
-        $item->delete();
+            $item->delete();
 
-        return ['message' => 'Item permanently deleted successfully'];
+            return ['message' => 'Item permanently deleted successfully'];
+        });
     }
 
     /**
@@ -341,7 +349,10 @@ class InventoryService
      */
     public function deductStock(int $itemId, int $quantity, string $reason = 'Sale', string $referenceType = 'sale', ?int $referenceId = null, ?int $batchId = null): array
     {
-        $item = InventoryItem::findOrFail($itemId);
+        // Serialize stock mutations: all real callers run inside a transaction,
+        // so the row lock makes the stock check + deduction atomic. Outside a
+        // transaction FOR UPDATE is a harmless no-op.
+        $item = InventoryItem::lockForUpdate()->findOrFail($itemId);
 
         // Check if item has expired batches - BLOCK SALE
         if ($item->hasExpiredBatches()) {
@@ -430,7 +441,7 @@ class InventoryService
      */
     public function addStock(int $itemId, int $quantity, string $reason = 'Restock', string $referenceType = 'restock', ?int $referenceId = null, ?array $batchData = null): array
     {
-        $item = InventoryItem::findOrFail($itemId);
+        $item = InventoryItem::lockForUpdate()->findOrFail($itemId);
 
         $stockBefore = $item->stock;
 

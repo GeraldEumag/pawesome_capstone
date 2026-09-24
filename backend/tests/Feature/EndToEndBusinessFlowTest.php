@@ -77,6 +77,7 @@ class EndToEndBusinessFlowTest extends TestCase
         // Product 1: Dog Food - 50 units
         $dogFood = $this->postJson('/api/admin/inventory/items', [
             'sku' => 'DOG-FOOD-001',
+            'barcode' => 'DOGFOOD001',
             'name' => 'Premium Dog Food 5kg',
             'category' => 'Food',
             'price' => 850.00,
@@ -90,6 +91,7 @@ class EndToEndBusinessFlowTest extends TestCase
         // Product 2: Cat Toy - 30 units
         $catToy = $this->postJson('/api/admin/inventory/items', [
             'sku' => 'CAT-TOY-001',
+            'barcode' => 'CATTOY001',
             'name' => 'Interactive Cat Toy',
             'category' => 'Toys',
             'price' => 350.00,
@@ -103,6 +105,7 @@ class EndToEndBusinessFlowTest extends TestCase
         // Product 3: Shampoo - 20 units
         $shampoo = $this->postJson('/api/admin/inventory/items', [
             'sku' => 'GROOM-SHAMPOO',
+            'barcode' => 'GROOMSHAMPOO',
             'name' => 'Pet Shampoo 500ml',
             'category' => 'Grooming',
             'price' => 250.00,
@@ -168,9 +171,9 @@ class EndToEndBusinessFlowTest extends TestCase
         $sale1->assertStatus(200);
         $this->assertTrue($sale1->json('success'));
         
-        // Calculate expected: (5 × 850) + (2 × 350) = 4250 + 700 = 4950 (subtotal)
-        // With 12% tax: 4950 × 1.12 = 5544
-        $this->assertEquals(5544.00, $sale1->json('transaction.total_amount'));
+        // Prices include VAT; the VAT portion is extracted from the gross total.
+        $this->assertEquals(4950.00, $sale1->json('transaction.total_amount'));
+        $this->assertEquals(530.36, $sale1->json('transaction.tax_amount'));
         
         // ============================================
         // STEP 4: Verify Stock Updated After Sale #1
@@ -222,9 +225,9 @@ class EndToEndBusinessFlowTest extends TestCase
         $sale2->assertStatus(200);
         $this->assertTrue($sale2->json('success'));
         
-        // Calculate: (10 × 850) + (3 × 250) = 8500 + 750 = 9250 (subtotal)
-        // With 12% tax: 9250 × 1.12 = 10360
-        $this->assertEquals(10360.00, $sale2->json('transaction.total_amount'));
+        // Prices include VAT; the VAT portion is extracted from the gross total.
+        $this->assertEquals(9250.00, $sale2->json('transaction.total_amount'));
+        $this->assertEquals(991.07, $sale2->json('transaction.tax_amount'));
         
         // ============================================
         // STEP 6: Final Stock Verification
@@ -249,8 +252,8 @@ class EndToEndBusinessFlowTest extends TestCase
         $finalReports = $this->getJson('/api/admin/reports/summary', $this->withAdminAuth());
         $finalReports->assertStatus(200);
         
-        // Total Revenue: 5544 + 10360 = 15,904 (with tax)
-        $this->assertEquals(15904.00, $finalReports->json('data.total_revenue'));
+        // Revenue uses VAT-inclusive sale totals.
+        $this->assertEquals(14200.00, $finalReports->json('data.total_revenue'));
         
         // Total Transactions: 2
         $this->assertEquals(2, $finalReports->json('data.total_transactions'));
@@ -258,8 +261,8 @@ class EndToEndBusinessFlowTest extends TestCase
         // Today's transactions: 2 (both today)
         $this->assertEquals(2, $finalReports->json('data.today_transactions'));
         
-        // Today's revenue: 15,904 (with tax)
-        $this->assertEquals(15904.00, $finalReports->json('data.today_revenue'));
+        // Today's revenue is the sum of VAT-inclusive sale totals.
+        $this->assertEquals(14200.00, $finalReports->json('data.today_revenue'));
         
         // Inventory still shows 3 items
         $this->assertEquals(3, $finalReports->json('data.total_inventory_items'));
@@ -303,7 +306,7 @@ class EndToEndBusinessFlowTest extends TestCase
         // - Admin created 3 inventory items
         // - Cashier made 2 sales with correct totals (including tax)
         // - Stock was correctly reduced: Dog Food (50→35), Cat Toy (30→28), Shampoo (20→17)
-        // - Reports show correct revenue: ₱15,904 with 2 transactions
+        // - Reports show correct VAT-inclusive revenue: ₱14,200 with 2 transactions
         // - All dashboards show consistent data
         // ============================================
     }
@@ -318,6 +321,7 @@ class EndToEndBusinessFlowTest extends TestCase
         // Create item with only 5 units
         $item = $this->postJson('/api/admin/inventory/items', [
             'sku' => 'LIMITED-001',
+            'barcode' => 'LIMITED0001',
             'name' => 'Limited Edition Item',
             'category' => 'Accessories',
             'price' => 1000.00,
