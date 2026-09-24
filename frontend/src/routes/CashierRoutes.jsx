@@ -30,6 +30,16 @@ const CashierRoutes = () => (
       }
     />
 
+    {/* Deep link used by cashier notifications and the chatbot: POS opened on Payment Approvals */}
+    <Route
+      path="payment-verification"
+      element={
+        <ProtectedRoute>
+          <CashierPOS initialTab="payment-approvals" />
+        </ProtectedRoute>
+      }
+    />
+
     {/* Dashboard wrapper with sidebar for other features */}
     <Route
       path="dashboard"

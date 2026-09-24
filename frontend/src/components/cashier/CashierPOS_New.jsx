@@ -1,5 +1,5 @@
 ﻿import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 import { apiRequest } from "../../api/client";
 import { lookupBarcode } from "../../api/pos";
@@ -73,16 +73,23 @@ const stockStatus = (stock) => {
 const isProductOutOfStock = (product) => getAvailableStock(product) <= 0;
 
 /* ---------- Main Component --------------------------------------- */
-const CashierPOS = () => {
+const CashierPOS = ({ initialTab }) => {
   const { user } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
 
   /* ── Core state ─────────────────────────────────────── */
   const [products, setProducts]           = useState([]);
   const [services, setServices]           = useState([]);
   const [cart, setCart]                   = useState([]);
   const [activeCategory, setActiveCategory] = useState("all");
-  const [activeTab, setActiveTab]         = useState("products");
+  const [activeTab, setActiveTab]         = useState(initialTab || "products");
+
+  // Deep links (e.g. /cashier/payment-verification from notifications) re-select their tab on
+  // every navigation without remounting, so an in-progress cart is preserved.
+  useEffect(() => {
+    if (initialTab) setActiveTab(initialTab);
+  }, [initialTab, location.key]);
   const [pendingCount, setPendingCount]   = useState(0);
   const [searchQuery, setSearchQuery]     = useState("");
   const [orderType, setOrderType]         = useState("walk-in");
