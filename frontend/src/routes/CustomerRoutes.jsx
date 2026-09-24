@@ -35,7 +35,7 @@ const CustomerRoutes = () => (
       <Route path="services" element={<CustomerServices />} />
       <Route path="bookings" element={<CustomerServices initialTab="my" />} />
       <Route path="booking" element={<Navigate to="/customer/services" replace />} />
-      <Route path="requests" element={<Navigate to="/customer/services" replace />} />
+      <Route path="requests" element={<Navigate to="/customer/bookings" replace />} />
       <Route path="pets" element={<CustomerPets />} />
       <Route path="hotel" element={<HotelForm />} />
       <Route path="grooming" element={<GroomingForm />} />
