@@ -5,10 +5,11 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Payroll extends Model
 {
-    use HasFactory;
+    use HasFactory, SoftDeletes;
 
     protected $fillable = [
         'payroll_id',
@@ -257,8 +258,8 @@ class Payroll extends Model
 
     public function scopeForPeriod($query, $startDate, $endDate)
     {
-        return $query->where('pay_period_start', $startDate)
-                     ->where('pay_period_end', $endDate);
+        return $query->whereDate('pay_period_start', $startDate)
+                     ->whereDate('pay_period_end', $endDate);
     }
 
     public function scopeForUser($query, $userId)

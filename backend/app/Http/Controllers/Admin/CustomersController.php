@@ -187,6 +187,18 @@ class CustomersController extends Controller
         return response()->json(['message' => 'Customer deleted successfully']);
     }
 
+    public function restore($id)
+    {
+        $customer = Customer::withTrashed()->find($id);
+        if (!$customer || !$customer->trashed()) {
+            return response()->json(['message' => 'Customer not found or not deleted'], 404);
+        }
+
+        $customer->restore();
+
+        return response()->json(['message' => 'Customer restored successfully']);
+    }
+
     /**
      * Get customer's pets
      */

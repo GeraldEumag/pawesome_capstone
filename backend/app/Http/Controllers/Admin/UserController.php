@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Mail\AccountWelcomeMail;
+use App\Models\ActivityLog;
 use App\Models\Customer;
 use App\Models\User;
 use Illuminate\Http\Request;
@@ -99,6 +100,13 @@ class UserController extends Controller
 
         $this->sendWelcomeEmail($user);
 
+        ActivityLog::log(auth()->id(), 'user_created', "User #{$user->id} ({$user->email}) created", [
+            'category' => 'user_management',
+            'reference_type' => 'user',
+            'reference_id' => $user->id,
+            'metadata' => ['email' => $user->email, 'role' => $user->role],
+        ]);
+
         return response()->json([
             'message' => 'User created successfully',
             'user' => $user,
@@ -150,7 +158,27 @@ class UserController extends Controller
             return response()->json(['errors' => $validator->errors()], 422);
         }
 
-        $user->update($request->only(['name', 'first_name', 'last_name', 'email', 'username', 'role', 'is_active']));
+        $updatable = ['name', 'first_name', 'last_name', 'email', 'username', 'role', 'is_active'];
+        $before = $user->only($updatable);
+        $user->update($request->only($updatable));
+
+        $changes = [];
+        foreach ($updatable as $field) {
+            $old = $before[$field] ?? null;
+            $new = $user->{$field};
+            if ($old != $new) {
+                $changes[$field] = ['old' => $old, 'new' => $new];
+            }
+        }
+
+        if ($changes !== []) {
+            ActivityLog::log(auth()->id(), 'user_updated', "User #{$user->id} ({$user->email}) updated", [
+                'category' => 'user_management',
+                'reference_type' => 'user',
+                'reference_id' => $user->id,
+                'changes' => $changes,
+            ]);
+        }
 
         return response()->json([
             'message' => 'User updated successfully',
@@ -167,6 +195,13 @@ class UserController extends Controller
 
         $user->is_active = !$user->is_active;
         $user->save();
+
+        ActivityLog::log(auth()->id(), 'user_status_toggled', "User #{$user->id} ({$user->email}) " . ($user->is_active ? 'activated' : 'deactivated'), [
+            'category' => 'user_management',
+            'reference_type' => 'user',
+            'reference_id' => $user->id,
+            'changes' => ['is_active' => ['old' => !$user->is_active, 'new' => $user->is_active]],
+        ]);
 
         return response()->json([
             'message' => 'User status toggled',
@@ -186,12 +221,13 @@ class UserController extends Controller
             return response()->json(['message' => 'You cannot delete your own account'], 403);
         }
 
-        // Prevent deletion if user has active pets, appointments, or boardings
-        $hasPets = \App\Models\Pet::where('customer_id', $user->id)->exists();
-        $hasAppointments = \App\Models\Appointment::where('customer_id', $user->id)->exists();
-        $hasBoardings = \App\Models\Boarding::whereHas('pet', function ($q) use ($user) {
-            $q->where('customer_id', $user->id);
-        })->exists();
+        // Prevent deletion if user has active pets, appointments, or boardings.
+        // Operational records hang off the linked customers row (user_id), not
+        // the users.id directly — traverse the real relationship.
+        $customerId = $user->customer?->id;
+        $hasPets = $customerId && \App\Models\Pet::where('customer_id', $customerId)->exists();
+        $hasAppointments = $customerId && \App\Models\Appointment::where('customer_id', $customerId)->exists();
+        $hasBoardings = $customerId && \App\Models\Boarding::where('customer_id', $customerId)->exists();
 
         if ($hasPets || $hasAppointments || $hasBoardings) {
             return response()->json([
@@ -199,8 +235,33 @@ class UserController extends Controller
             ], 422);
         }
 
+        ActivityLog::log(auth()->id(), 'user_deleted', "User #{$user->id} ({$user->email}) deleted", [
+            'category' => 'user_management',
+            'reference_type' => 'user',
+            'reference_id' => $user->id,
+            'metadata' => ['email' => $user->email, 'role' => $user->role],
+        ]);
+
         $user->delete();
 
         return response()->json(['message' => 'User deleted successfully']);
+    }
+
+    public function restore($id)
+    {
+        $user = User::withTrashed()->find($id);
+        if (!$user || !$user->trashed()) {
+            return response()->json(['message' => 'User not found or not deleted'], 404);
+        }
+
+        $user->restore();
+
+        ActivityLog::log(auth()->id(), 'user_restored', "User #{$user->id} ({$user->email}) restored", [
+            'category' => 'user_management',
+            'reference_type' => 'user',
+            'reference_id' => $user->id,
+        ]);
+
+        return response()->json(['message' => 'User restored successfully']);
     }
 }

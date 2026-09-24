@@ -219,6 +219,7 @@ class DatabaseIntegrityTest extends TestCase
     {
         $itemData = [
             'sku' => 'ADMIN-TEST-001',
+            'barcode' => 'ADMINTEST001',
             'name' => 'Admin Test Product',
             'category' => 'Health',
             'price' => 1500.00,
@@ -377,9 +378,9 @@ class DatabaseIntegrityTest extends TestCase
         $sale = Sale::where('customer_id', $this->customerRecord->id)->first();
         $this->assertNotNull($sale);
         
-        // 1000 + 12% VAT = 1120
-        $expectedTotal = 1120;
-        $this->assertEquals($expectedTotal, $sale->total_amount);
+        // Prices include VAT; the VAT portion is extracted from the gross total.
+        $this->assertEquals(1000, $sale->total_amount);
+        $this->assertEquals(107.14, $sale->tax_amount);
     }
 
     // ============================================
@@ -411,13 +412,13 @@ class DatabaseIntegrityTest extends TestCase
             'pet_id' => $this->pet->id,
             'service_id' => $service->id,
             'veterinarian_id' => $this->veterinary->id,
-            'status' => 'pending',
+            'status' => 'approved',
         ]);
 
         // Verify appointment can be retrieved
         $appointment = Appointment::where('customer_id', $this->customerRecord->id)->first();
         $this->assertNotNull($appointment);
-        $this->assertEquals('pending', $appointment->status);
+        $this->assertEquals('approved', $appointment->status);
     }
 
     public function test_receptionist_hotel_booking_database_flow(): void
@@ -436,8 +437,8 @@ class DatabaseIntegrityTest extends TestCase
             'customer_id' => $this->customerRecord->id,
             'pet_id' => $this->pet->id,
             'hotel_room_id' => $room->id,
-            'check_in' => now()->addDay()->format('Y-m-d'),
-            'check_out' => now()->addDays(3)->format('Y-m-d'),
+            'check_in_date' => now()->addDay()->format('Y-m-d'),
+            'number_of_days' => 2,
             'special_requests' => 'Needs quiet room',
         ], $this->withAuth($this->receptionist, $this->receptionistToken));
 
@@ -610,8 +611,9 @@ class DatabaseIntegrityTest extends TestCase
         
         $response = $this->postJson('/api/admin/inventory/items', [
             'sku' => 'EXPIRY-TEST-001',
+            'barcode' => 'EXPIRYTEST001',
             'name' => 'Expiry Test Product',
-            'category' => 'Medicine',
+            'category' => 'Health',
             'price' => 500,
             'stock' => 30,
             'reorder_level' => 5,
@@ -670,9 +672,8 @@ class DatabaseIntegrityTest extends TestCase
         // Delete customer
         $customer->delete();
         
-        // Verify pet is also deleted (if cascade is configured)
-        // Or verify pet still exists (if set null)
-        $this->assertDatabaseMissing('customers', ['id' => $customer->id]);
+        // Customer is soft-deleted: hidden from normal queries, row preserved
+        $this->assertSoftDeleted('customers', ['id' => $customer->id]);
         
         // Check pet status
         $petExists = Pet::where('id', $pet->id)->exists();

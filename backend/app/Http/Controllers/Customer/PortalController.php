@@ -305,6 +305,29 @@ class PortalController extends Controller
             return response()->json(['message' => 'Pet not found'], 404);
         }
 
+        $hasActiveAppointment = $pet->appointments()
+            ->whereIn('status', ['pending', 'pending_review', 'approved', 'scheduled', 'in_progress', 'in_consultation', 'needs_confinement', 'treated'])
+            ->whereDate('scheduled_at', '>=', now())
+            ->exists();
+        $hasActiveGrooming = $pet->groomingAppointments()
+            ->whereIn('status', ['pending', 'pending_review', 'approved', 'scheduled'])
+            ->where(function ($query) {
+                $today = now()->toDateString();
+                $query->whereDate('request_date', '>=', $today)
+                      ->orWhereDate('preferred_date', '>=', $today);
+            })
+            ->exists();
+        $hasActiveBoarding = $pet->boardings()
+            ->whereIn('status', ['pending', 'pending_review', 'approved', 'checked_in'])
+            ->whereDate('check_out_date', '>=', now())
+            ->exists();
+
+        if ($hasActiveAppointment || $hasActiveGrooming || $hasActiveBoarding) {
+            return response()->json([
+                'message' => 'This pet cannot be deleted because it has an active booking or appointment.',
+            ], 422);
+        }
+
         $pet->delete();
         return response()->json(['message' => 'Pet deleted successfully']);
     }

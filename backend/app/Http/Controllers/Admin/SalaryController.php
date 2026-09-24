@@ -88,6 +88,22 @@ class SalaryController extends Controller
     public function destroy($id)
     {
         $user = User::findOrFail($id);
+
+        if ($user->id === auth()->id()) {
+            return response()->json(['message' => 'You cannot delete your own account'], 403);
+        }
+
+        $customerId = $user->customer?->id;
+        $hasPets = $customerId && \App\Models\Pet::where('customer_id', $customerId)->exists();
+        $hasAppointments = $customerId && \App\Models\Appointment::where('customer_id', $customerId)->exists();
+        $hasBoardings = $customerId && \App\Models\Boarding::where('customer_id', $customerId)->exists();
+
+        if ($hasPets || $hasAppointments || $hasBoardings) {
+            return response()->json([
+                'message' => 'Cannot delete user with active pets, appointments, or boardings'
+            ], 422);
+        }
+
         $user->delete();
 
         return response()->json([

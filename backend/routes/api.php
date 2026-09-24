@@ -140,6 +140,7 @@ Route::middleware(['auth.api', 'throttle:api', 'role:admin'])->prefix('admin')->
     Route::put('users/{id}', [UserController::class, 'update']);
     Route::patch('users/{id}/toggle', [UserController::class, 'toggle']);
     Route::delete('users/{id}', [UserController::class, 'destroy']);
+    Route::post('users/{id}/restore', [UserController::class, 'restore']);
 
     // Inventory Management (Admin Routes)
     Route::get('inventory', [InventoryController::class, 'index']);
@@ -183,6 +184,7 @@ Route::middleware(['auth.api', 'throttle:api', 'role:admin'])->prefix('admin')->
     Route::get('customers/{id}', [CustomersController::class, 'show']);
     Route::put('customers/{id}', [CustomersController::class, 'update']);
     Route::delete('customers/{id}', [CustomersController::class, 'destroy']);
+    Route::post('customers/{id}/restore', [CustomersController::class, 'restore']);
     Route::get('customers/{id}/pets', [CustomersController::class, 'pets']);
     Route::post('customers/{id}/pets', [CustomersController::class, 'addPet']);
     Route::get('customers/search', [CustomersController::class, 'search']);
@@ -967,8 +969,10 @@ Route::middleware(['auth.api', 'throttle:api', 'role:receptionist'])->prefix('ve
     Route::post('/', [VetController::class, 'store']);
     Route::get('/{id}', [VetController::class, 'show']);
     Route::patch('/{id}/status', [VetController::class, 'updateStatus']);
-    Route::delete('/{id}', [VetController::class, 'destroy']);
 });
+
+// Hard-deleting a vet appointment is destructive — admin only.
+Route::middleware(['auth.api', 'throttle:api', 'role:admin'])->delete('vet/{id}', [VetController::class, 'destroy']);
 
 // Admin Vet View-Only Routes
 Route::middleware(['auth.api', 'throttle:api', 'role:admin'])->prefix('admin/vet')->group(function () {
