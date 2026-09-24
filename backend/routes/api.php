@@ -245,17 +245,21 @@ Route::middleware(['auth.api', 'throttle:api', 'role:admin'])->prefix('admin')->
     Route::get('login-logs/recent', [LoginLogController::class, 'recent']);
     Route::get('login-logs/user/{userId}', [LoginLogController::class, 'userLogs']);
 
-    // Activity Log Routes
-    Route::get('activity-logs', [ActivityLogController::class, 'index']);
-    Route::get('activity-logs/statistics', [ActivityLogController::class, 'statistics']);
-    Route::get('activity-logs/filters', [ActivityLogController::class, 'filters']);
-    Route::get('activity-logs/{id}', [ActivityLogController::class, 'show']);
-    Route::get('activity-logs/user/{userId}', [ActivityLogController::class, 'userLogs']);
+    // Activity Log Routes moved to the shared admin+manager group below.
 
     // Appointments overview (for History.jsx admin history view)
     Route::get('appointments', [AppointmentController::class, 'index']);
 
     Route::get('reports/customers/{id}', [CustomerReportController::class, 'getCustomerDetail']);
+});
+
+// Activity Log Routes — read-only audit trail for admin and manager
+Route::middleware(['auth.api', 'throttle:api', 'role:admin,manager'])->prefix('admin')->group(function () {
+    Route::get('activity-logs', [ActivityLogController::class, 'index']);
+    Route::get('activity-logs/statistics', [ActivityLogController::class, 'statistics']);
+    Route::get('activity-logs/filters', [ActivityLogController::class, 'filters']);
+    Route::get('activity-logs/{id}', [ActivityLogController::class, 'show']);
+    Route::get('activity-logs/user/{userId}', [ActivityLogController::class, 'userLogs']);
 });
 
 // Services Management (admin + veterinary)

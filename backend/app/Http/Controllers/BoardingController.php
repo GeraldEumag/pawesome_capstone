@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\ActivityLog;
 use App\Models\Boarding;
 use App\Models\BoardingCareLog;
 use App\Models\BoardingRoom;
@@ -705,6 +706,13 @@ class BoardingController extends Controller
         // Send notification
         NotificationService::notifyBoardingStatusChange($result['boarding'], $oldStatus);
 
+        ActivityLog::log($request->user()?->id, 'boarding_approved', "Boarding reservation #{$boarding->id} approved", [
+            'category' => 'booking',
+            'reference_type' => 'boarding',
+            'reference_id' => $boarding->id,
+            'changes' => ['status' => ['old' => $oldStatus, 'new' => 'approved']],
+        ]);
+
         return response()->json([
             'message' => 'Boarding request approved and inventory deducted',
             'boarding' => $result['boarding']->fresh(['pet', 'customer', 'hotelRoom', 'bookingAddOns']),
@@ -1218,6 +1226,14 @@ class BoardingController extends Controller
 
         // Send notification
         NotificationService::notifyBoardingStatusChange($boarding, $oldStatus);
+
+        ActivityLog::log($request->user()?->id, 'boarding_rejected', "Boarding reservation #{$boarding->id} rejected", [
+            'category' => 'booking',
+            'reference_type' => 'boarding',
+            'reference_id' => $boarding->id,
+            'changes' => ['status' => ['old' => $oldStatus, 'new' => 'rejected']],
+            'metadata' => ['rejection_reason' => $request->input('rejection_reason')],
+        ]);
 
         return response()->json([
             'message' => 'Reservation rejected',
