@@ -75,9 +75,11 @@ class BoardingRoom extends Model
      */
     public function isAvailable($checkIn, $checkOut)
     {
-        return !$this->activeReservations()
+        $blockingCount = $this->activeReservations()
             ->overlappingDates($checkIn, $checkOut)
-            ->exists();
+            ->count();
+
+        return $blockingCount < (int) ($this->total_rooms ?? 1);
     }
 
     /**
