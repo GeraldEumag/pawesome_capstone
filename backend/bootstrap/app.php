@@ -23,6 +23,7 @@ return Application::configure(basePath: dirname(__DIR__))
             \App\Http\Middleware\Cors::class,
             \App\Http\Middleware\SecurityHeaders::class,
         ]);
+        $middleware->appendToGroup('api', \App\Http\Middleware\NormalizeApiResponse::class);
         $middleware->alias([
             'role' => \App\Http\Middleware\EnsureRole::class,
             'auth.api' => \App\Http\Middleware\ApiTokenAuth::class,

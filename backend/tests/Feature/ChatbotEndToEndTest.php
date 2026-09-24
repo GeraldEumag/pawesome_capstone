@@ -241,12 +241,16 @@ class ChatbotEndToEndTest extends TestCase
         
         $response->assertStatus(200)
             ->assertJsonStructure([
-                '*' => [
-                    'id',
-                    'sku',
-                    'name',
-                    'stock',
-                    'price',
+                'success',
+                'message',
+                'data' => [
+                    '*' => [
+                        'id',
+                        'sku',
+                        'name',
+                        'stock',
+                        'price',
+                    ]
                 ]
             ]);
     }
@@ -258,7 +262,7 @@ class ChatbotEndToEndTest extends TestCase
         ], $this->withAuth($this->customerUser));
         
         $response->assertStatus(200);
-        $this->assertEmpty($response->json());
+        $this->assertEmpty($response->json('data'));
     }
 
     // ============================================
