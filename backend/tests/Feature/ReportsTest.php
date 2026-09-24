@@ -118,8 +118,8 @@ class ReportsTest extends TestCase
 
         $response->assertStatus(200);
         $this->assertEquals(23, $response->json('data.total_inventory_items'));
-        // Low stock includes: 5 items with stock=5 + 3 out of stock items with stock=0
-        $this->assertEquals(8, $response->json('data.low_stock_items'));
+        // Out-of-stock items are counted separately from positive low stock.
+        $this->assertEquals(5, $response->json('data.low_stock_items'));
         $this->assertEquals(3, $response->json('data.out_of_stock_items'));
     }
 

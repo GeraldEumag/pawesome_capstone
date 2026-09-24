@@ -196,6 +196,13 @@ class PayrollController extends Controller
             ], 404);
         }
 
+        if ($payroll->status === 'paid') {
+            return response()->json([
+                'success' => false,
+                'message' => 'Cannot delete paid payroll records.',
+            ], 422);
+        }
+
         $payroll->delete();
 
         return response()->json([

@@ -151,6 +151,7 @@ class FullSystemIntegrationTest extends TestCase
         // Add dog food with expiry (normal add) - use admin route
         $dogFood = $this->postJson('/api/admin/inventory/items', [
             'sku' => 'DOG-FOOD-PREM',
+            'barcode' => 'DOGFOODPREM',
             'name' => 'Premium Dog Food 10kg',
             'category' => 'Food',
             'price' => 1200,
@@ -166,6 +167,7 @@ class FullSystemIntegrationTest extends TestCase
         // Add expired item (should be tracked) - use admin route
         $expiredItem = $this->postJson('/api/admin/inventory/items', [
             'sku' => 'MED-VIT-OLD',
+            'barcode' => 'MEDVITOLD',
             'name' => 'Old Vitamins',
             'category' => 'Health',
             'price' => 300,
@@ -197,7 +199,7 @@ class FullSystemIntegrationTest extends TestCase
         // Chatbot log should be created
         $this->assertDatabaseHas('chatbot_logs', [
             'user_id' => $this->customerUser->id,
-            'intent' => 'inventory',
+            'intent' => 'inventory_stock_check',
         ]);
         
         // ============================================
@@ -230,8 +232,8 @@ class FullSystemIntegrationTest extends TestCase
             'pet_id' => Pet::where('customer_id', $this->customer->id)->first()->id,
             'customer_id' => $this->customer->id,
             'hotel_room_id' => $room->id,
-            'check_in' => now()->addDay()->format('Y-m-d'),
-            'check_out' => now()->addDays(3)->format('Y-m-d'),
+            'check_in_date' => now()->addDay()->format('Y-m-d'),
+            'number_of_days' => 2,
             'special_requests' => 'Needs medication twice daily',
         ], $this->withAuth($this->receptionist, $this->receptionistToken));
         
@@ -285,6 +287,9 @@ class FullSystemIntegrationTest extends TestCase
             'category' => 'Toys',
             'price' => 350,
             'stock' => 30,
+            'status' => 'active',
+            'is_sellable' => true,
+            'expiry_date' => null,
         ]);
         
         $sale2 = $this->postJson('/api/cashier/pos/transaction', [
@@ -298,7 +303,6 @@ class FullSystemIntegrationTest extends TestCase
                     'unit_price' => 350.00,
                 ],
                 [
-                    'item_id' => Service::where('name', 'Vaccination')->first()->id,
                     'service_id' => Service::where('name', 'Vaccination')->first()->id,
                     'item_type' => 'service',
                     'item_name' => 'Vaccination',
@@ -417,13 +421,16 @@ class FullSystemIntegrationTest extends TestCase
             'name' => 'Test Item',
             'stock' => 100,
             'price' => 500,
+            'status' => 'active',
+            'is_sellable' => true,
+            'expiry_date' => null,
         ]);
         
         // Simulate multiple sales reducing stock
         $initialStock = $item->stock;
         
         // Sale 1: Reduce by 10
-        $this->postJson('/api/cashier/pos/transaction', [
+        $sale1 = $this->postJson('/api/cashier/pos/transaction', [
             'customer_id' => $this->customer->id,
             'items' => [
                 [
@@ -437,9 +444,10 @@ class FullSystemIntegrationTest extends TestCase
             'payment_method' => 'cash',
             'cash_received' => 6000,
         ], $this->withAuth($this->cashier));
+        $sale1->assertOk()->assertJsonPath('success', true);
         
         // Sale 2: Reduce by 15
-        $this->postJson('/api/cashier/pos/transaction', [
+        $sale2 = $this->postJson('/api/cashier/pos/transaction', [
             'customer_id' => $this->customer->id,
             'items' => [
                 [
@@ -452,17 +460,20 @@ class FullSystemIntegrationTest extends TestCase
             ],
             'payment_method' => 'gcash',
         ], $this->withAuth($this->cashier));
+        $sale2->assertOk()->assertJsonPath('success', true);
         
-        // Inventory update: Add 20 (may not be supported by endpoint)
-        $this->putJson("/api/admin/inventory/items/{$item->id}", [
+        // Inventory update: Add 20
+        $inventoryUpdate = $this->putJson("/api/inventory/items/{$item->id}", [
             'stock' => 20,
             'add_stock' => true,
         ], $this->withAuth($this->inventory, $this->inventoryToken));
-        
-        // Verify final stock after sales: 100 - 10 - 15 = 75
-        // Note: Stock update via add_stock may require different endpoint
+        $inventoryUpdate->assertOk()
+            ->assertJsonPath('stock_action', 'added')
+            ->assertJsonPath('new_stock', 95);
+
+        // Verify final stock after sales and restock: 100 - 10 - 15 + 20 = 95
         $item->refresh();
-        $this->assertEquals(75, $item->stock); // Only sales deducted, add_stock not applied
+        $this->assertEquals($initialStock - 10 - 15 + 20, $item->stock);
         
         // Verify all transactions recorded
         $this->assertEquals(2, Sale::where('cashier_id', $this->cashier->id)->count());
@@ -551,6 +562,9 @@ class FullSystemIntegrationTest extends TestCase
             'name' => 'Tax Test Item',
             'price' => 1000,
             'stock' => 10,
+            'status' => 'active',
+            'is_sellable' => true,
+            'archived_at' => null,
         ]);
         
         $sale = $this->postJson('/api/cashier/pos/transaction', [
@@ -570,11 +584,10 @@ class FullSystemIntegrationTest extends TestCase
         
         $sale->assertStatus(200);
         
-        // Calculate expected: 1000 + 12% VAT = 1120
-        $subtotal = 1000;
-        $expectedTax = $subtotal * 0.12; // 120
-        $expectedTotal = $subtotal + $expectedTax; // 1120
-        
+        // Prices include VAT; the VAT portion is extracted from the gross total.
+        $expectedTax = 107.14;
+        $expectedTotal = 1000;
+
         $transaction = $sale->json('transaction');
         $this->assertEqualsWithDelta($expectedTax, $transaction['tax_amount'], 0.01);
         $this->assertEqualsWithDelta($expectedTotal, $transaction['total_amount'], 0.01);
@@ -665,6 +678,7 @@ class FullSystemIntegrationTest extends TestCase
         // 1. Frontend creates inventory via API
         $item = $this->postJson('/api/admin/inventory/items', [
             'sku' => 'FLOW-TEST-001',
+            'barcode' => 'FLOWTEST001',
             'name' => 'Flow Test Product',
             'category' => 'Accessories',
             'price' => 750,

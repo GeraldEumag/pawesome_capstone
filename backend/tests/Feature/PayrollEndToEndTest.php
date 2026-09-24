@@ -340,7 +340,14 @@ class PayrollEndToEndTest extends TestCase
 
         $first->assertStatus(200);
 
-        // Second generation for same period (should update, not duplicate)
+        $payroll = Payroll::where('user_id', $this->employee->id)
+            ->whereDate('pay_period_start', $periodStart)
+            ->whereDate('pay_period_end', $periodEnd)
+            ->firstOrFail();
+        $payrollId = $payroll->id;
+        $payroll->update(['status' => 'paid']);
+
+        // Second generation for the same period must preserve the existing payroll.
         $second = $this->postJson('/api/manager/payroll/generate', [
             'period_start' => $periodStart,
             'period_end' => $periodEnd,
@@ -348,13 +355,14 @@ class PayrollEndToEndTest extends TestCase
 
         $second->assertStatus(200);
 
-        // Should have only one payroll record for this user+period
-        $count = Payroll::where('user_id', $this->employee->id)
-            ->where('pay_period_start', $periodStart)
-            ->where('pay_period_end', $periodEnd)
-            ->count();
+        $matchingPayrolls = Payroll::where('user_id', $this->employee->id)
+            ->whereDate('pay_period_start', $periodStart)
+            ->whereDate('pay_period_end', $periodEnd)
+            ->get();
 
-        $this->assertEquals(1, $count, 'Duplicate payroll should not be created');
+        $this->assertCount(1, $matchingPayrolls, 'Duplicate payroll should not be created');
+        $this->assertSame($payrollId, $matchingPayrolls->first()->id);
+        $this->assertSame('paid', $matchingPayrolls->first()->status);
     }
 
     /**

@@ -145,8 +145,8 @@ class PayrollController extends Controller
             'period_end' => 'required|date|after_or_equal:period_start',
         ]);
 
-        $startDate = $validated['period_start'];
-        $endDate = $validated['period_end'];
+        $startDate = Carbon::parse($validated['period_start'])->toDateString();
+        $endDate = Carbon::parse($validated['period_end'])->toDateString();
         $periodLabel = Carbon::parse($startDate)->format('M d') . ' - ' . Carbon::parse($endDate)->format('M d, Y');
 
         // Get all payable people: staff users + non-account employee records
@@ -163,12 +163,27 @@ class PayrollController extends Controller
 
         $generated = [];
         $errors = [];
+        $skipped = [];
 
         foreach ($people as $entry) {
             $employee = $entry['person'];
             $isEmployee = $entry['isEmployee'];
 
             try {
+                $existingPayroll = Payroll::query()
+                    ->where($isEmployee ? 'employee_id' : 'user_id', $employee->id)
+                    ->whereDate('pay_period_start', $startDate)
+                    ->whereDate('pay_period_end', $endDate)
+                    ->exists();
+
+                if ($existingPayroll) {
+                    $skipped[] = [
+                        'user_id' => $isEmployee ? null : $employee->id,
+                        'employee_id' => $isEmployee ? $employee->id : null,
+                    ];
+                    continue;
+                }
+
                 $computed = $this->payrollComputation->computeFromAttendance(
                     $employee,
                     $isEmployee
@@ -251,9 +266,11 @@ class PayrollController extends Controller
             'message' => 'Payroll generated from attendance records.',
             'data' => $generated,
             'errors' => $errors,
+            'skipped' => $skipped,
             'summary' => [
                 'generated_count' => count($generated),
                 'error_count' => count($errors),
+                'skipped_count' => count($skipped),
                 'period_start' => $startDate,
                 'period_end' => $endDate,
             ],
@@ -550,6 +567,12 @@ class PayrollController extends Controller
         }
 
         $payroll->update($validated);
+
+        if ($request->hasAny(['base_salary', 'bonus', 'allowances', 'deductions', 'overtime_hours', 'overtime_pay'])) {
+            $payroll->calculatePayroll();
+            $payroll->save();
+        }
+
         $payroll->load(['user', 'processor', 'approver']);
 
         return response()->json([

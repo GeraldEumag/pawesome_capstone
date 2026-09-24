@@ -568,6 +568,8 @@ class InventoryController extends Controller
             ->orderBy('name')
             ->get()
             ->map(function ($item) {
+                // Public catalog payload — internal fields (reorder_level,
+                // supplier) are intentionally omitted.
                 return [
                     'id' => $item->id,
                     'name' => $item->name,
@@ -575,11 +577,9 @@ class InventoryController extends Controller
                     'description' => $item->description,
                     'price' => (float) $item->price,
                     'stock' => $item->stock,
-                    'reorder_level' => $item->reorder_level,
                     'status' => $item->status,
                     'is_sellable' => $item->is_sellable,
                     'brand' => $item->brand,
-                    'supplier' => $item->supplier,
                     'photo_url' => $item->photo_url,
                 ];
             });
