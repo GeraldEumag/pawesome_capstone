@@ -9,6 +9,7 @@ use App\Models\Payroll;
 use App\Models\Employee;
 use App\Models\User;
 use App\Services\Payroll\PayrollComputationService;
+use App\Services\WorkflowNotifier;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
@@ -244,21 +245,21 @@ class PayrollController extends Controller
 
         // Send notifications after generation
         if (count($generated) > 0) {
-            Notification::create([
-                'role' => 'manager',
-                'title' => 'Payroll Generated',
-                'message' => 'Payroll has been generated for ' . $periodLabel . ' (' . count($generated) . ' employees).',
-                'type' => 'info',
-                'related_type' => 'payroll',
-            ]);
+            WorkflowNotifier::notifyRole(
+                'manager',
+                'Payroll Generated',
+                'Payroll has been generated for ' . $periodLabel . ' (' . count($generated) . ' employees).',
+                'info',
+                'payroll'
+            );
 
-            Notification::create([
-                'role' => 'manager',
-                'title' => 'Payroll Ready for Review',
-                'message' => 'New payroll records are ready for review and approval.',
-                'type' => 'success',
-                'related_type' => 'payroll',
-            ]);
+            WorkflowNotifier::notifyRole(
+                'manager',
+                'Payroll Ready for Review',
+                'New payroll records are ready for review and approval.',
+                'success',
+                'payroll'
+            );
         }
 
         return response()->json([
@@ -299,23 +300,23 @@ class PayrollController extends Controller
         $payeeName = $payroll->user?->name ?? $payroll->employee?->name ?? $payroll->employee_name ?? 'employee';
 
         // Send notifications
-        Notification::create([
-            'role' => 'manager',
-            'title' => 'Payroll Approved',
-            'message' => "Payroll for {$payeeName} has been approved.",
-            'type' => 'success',
-            'related_type' => 'payroll',
-            'related_id' => $payroll->id,
-        ]);
+        WorkflowNotifier::notifyRole(
+            'manager',
+            'Payroll Approved',
+            "Payroll for {$payeeName} has been approved.",
+            'success',
+            'payroll',
+            $payroll->id
+        );
 
-        Notification::create([
-            'role' => 'manager',
-            'title' => 'Payroll Payment Required',
-            'message' => "Approved payroll for {$payeeName} is ready for payment release.",
-            'type' => 'warning',
-            'related_type' => 'payroll',
-            'related_id' => $payroll->id,
-        ]);
+        WorkflowNotifier::notifyRole(
+            'manager',
+            'Payroll Payment Required',
+            "Approved payroll for {$payeeName} is ready for payment release.",
+            'warning',
+            'payroll',
+            $payroll->id
+        );
 
         return response()->json([
             'success' => true,
@@ -349,14 +350,14 @@ class PayrollController extends Controller
         $payroll->load('user');
 
         // Send notifications
-        Notification::create([
-            'role' => 'manager',
-            'title' => 'Payroll Paid',
-            'message' => 'Payroll for ' . ($payroll->user->name ?? 'employee') . ' has been marked as paid.',
-            'type' => 'success',
-            'related_type' => 'payroll',
-            'related_id' => $payroll->id,
-        ]);
+        WorkflowNotifier::notifyRole(
+            'manager',
+            'Payroll Paid',
+            'Payroll for ' . ($payroll->user->name ?? 'employee') . ' has been marked as paid.',
+            'success',
+            'payroll',
+            $payroll->id
+        );
 
         Notification::create([
             'user_id' => $payroll->user_id,
@@ -480,14 +481,14 @@ class PayrollController extends Controller
 
         $payroll->load('user');
 
-        Notification::create([
-            'role' => 'manager',
-            'title' => 'Payroll Created',
-            'message' => 'Manual payroll created for ' . ($payroll->employee_name ?? $payroll->user->name ?? 'employee') . ' for ' . $periodLabel . '.',
-            'type' => 'success',
-            'related_type' => 'payroll',
-            'related_id' => $payroll->id,
-        ]);
+        WorkflowNotifier::notifyRole(
+            'manager',
+            'Payroll Created',
+            'Manual payroll created for ' . ($payroll->employee_name ?? $payroll->user->name ?? 'employee') . ' for ' . $periodLabel . '.',
+            'success',
+            'payroll',
+            $payroll->id
+        );
 
         return response()->json([
             'success' => true,

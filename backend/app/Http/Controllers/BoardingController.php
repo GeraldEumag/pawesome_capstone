@@ -479,9 +479,8 @@ class BoardingController extends Controller
             $result->vaccination_card_url = url('/api/files/vaccination-cards/' . $result->id . '/view');
         }
 
-        // Send notifications
+        // Send notifications (notifyBoardingCreated already covers customer + receptionist/manager/admin roles)
         NotificationService::notifyBoardingCreated($result);
-        WorkflowNotifier::notifyRole('receptionist', 'New boarding request', "{$result->pet_name} has a pending pet hotel request.", 'info', 'boarding', $result->id);
 
         return response()->json([
             'message' => 'Reservation created successfully',

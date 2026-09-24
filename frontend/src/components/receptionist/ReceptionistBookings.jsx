@@ -686,26 +686,6 @@ const ReceptionistBookings = () => {
     }
   };
 
-  const sendCustomerNotification = async (booking, action, note) => {
-    try {
-      await apiRequest("/notifications/booking-status", {
-        method: "POST",
-        body: JSON.stringify({
-          customer_id: booking.customerId,
-          booking_id: booking.id,
-          booking_type: booking.type,
-          pet_name: booking.petName,
-          service: booking.service,
-          action,
-          note,
-          date: booking.appointmentDate || booking.checkIn,
-        }),
-      });
-    } catch {
-      // Notification failure should not block receptionist workflow.
-    }
-  };
-
   const openActionModal = (booking, type) => {
     setSelectedBooking(booking);
     setActionType(type);
@@ -821,8 +801,6 @@ const ReceptionistBookings = () => {
         body: JSON.stringify(payload),
       });
 
-      await sendCustomerNotification(selectedBooking, actionType, actionNote);
-
       notify("success", `Booking ${actionType}d successfully.`);
       closeActionModal();
       await fetchBookings({ silent: true });
@@ -865,12 +843,6 @@ const ReceptionistBookings = () => {
           note: cancelNote,
         }),
       });
-
-      await sendCustomerNotification(
-        selectedCancelBooking,
-        cancelAction === "approve" ? "cancelled" : "cancel_rejected",
-        cancelNote
-      );
 
       notify(
         "success",
@@ -947,12 +919,6 @@ const ReceptionistBookings = () => {
         method,
         body: JSON.stringify(payload),
       });
-
-      await sendCustomerNotification(
-        selectedRescheduleBooking,
-        rescheduleAction === "approve" ? "rescheduled" : "reschedule_rejected",
-        rescheduleNote
-      );
 
       notify(
         "success",

@@ -655,23 +655,7 @@ class ServiceRequestController extends Controller
     private function notifyRole($role, $title, $message, $type = 'info', $relatedType = null, $relatedId = null, $data = [])
     {
         try {
-            $users = \App\Models\User::where('role', $role)
-                ->where('is_active', true)
-                ->get();
-
-            foreach ($users as $user) {
-                \App\Models\Notification::create([
-                    'user_id' => $user->id,
-                    'role' => $role,
-                    'title' => $title,
-                    'message' => $message,
-                    'type' => $type,
-                    'related_type' => $relatedType,
-                    'related_id' => $relatedId,
-                    'data' => !empty($data) ? json_encode($data) : null,
-                    'read' => false,
-                ]);
-            }
+            WorkflowNotifier::notifyRole($role, $title, $message, $type, $relatedType, $relatedId, $data);
         } catch (\Throwable $e) {
             Log::warning('notifyRole failed: ' . $e->getMessage());
         }

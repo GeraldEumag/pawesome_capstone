@@ -965,32 +965,40 @@ class InventoryService
             return;
         }
 
-        // Get all admins and inventory managers
-        $users = User::whereIn('role', ['admin', 'super_admin', 'inventory'])->get();
+        // Inventory staff, managers and admins (including composite roles)
+        $users = User::whereIn('role', ['admin', 'super_admin', 'manager', 'inventory', 'super_receptionist'])
+            ->where('is_active', true)
+            ->get();
+
+        $title = $newStock <= 0 ? 'Out of Stock Alert' : 'Low Stock Alert';
+        $type = $newStock <= 0 ? 'error' : 'warning';
+        $message = $newStock <= 0
+            ? "{$item->name} is now OUT OF STOCK."
+            : "{$item->name} is running low ({$newStock} left, reorder at {$reorderLevel}).";
 
         foreach ($users as $user) {
-            // OUT OF STOCK
-            if ($newStock <= 0) {
-                Notification::create([
-                    'user_id' => $user->id,
-                    'title' => 'Out of Stock Alert',
-                    'message' => "{$item->name} is now OUT OF STOCK.",
-                    'type' => 'error',
-                    'related_type' => 'inventory',
-                    'related_id' => $item->id,
-                ]);
+            // Deduplicate: skip if this user already has an unread alert for the
+            // same item at the same severity level (prevents spam on repeat
+            // deductions while stock stays below the reorder level).
+            $alreadyNotified = Notification::where('user_id', $user->id)
+                ->where('related_type', 'inventory')
+                ->where('related_id', $item->id)
+                ->where('title', $title)
+                ->where('read', false)
+                ->exists();
+
+            if ($alreadyNotified) {
+                continue;
             }
-            // LOW STOCK
-            else {
-                Notification::create([
-                    'user_id' => $user->id,
-                    'title' => 'Low Stock Alert',
-                    'message' => "{$item->name} is running low ({$newStock} left, reorder at {$reorderLevel}).",
-                    'type' => 'warning',
-                    'related_type' => 'inventory',
-                    'related_id' => $item->id,
-                ]);
-            }
+
+            Notification::create([
+                'user_id' => $user->id,
+                'title' => $title,
+                'message' => $message,
+                'type' => $type,
+                'related_type' => 'inventory',
+                'related_id' => $item->id,
+            ]);
         }
     }
 }

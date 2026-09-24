@@ -48,7 +48,10 @@ class WorkflowNotifier
             $targetRoles[] = 'super_receptionist';
         }
 
-        User::whereIn('role', $targetRoles)->get()->each(function (User $user) use ($role, $title, $message, $type, $relatedType, $relatedId, $data) {
+        User::whereIn('role', $targetRoles)
+            ->where('is_active', true)
+            ->get()
+            ->each(function (User $user) use ($role, $title, $message, $type, $relatedType, $relatedId, $data) {
             Notification::create([
                 'user_id' => $user->id,
                 'role' => $role,

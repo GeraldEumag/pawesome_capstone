@@ -675,8 +675,12 @@ class ReceptionistRequestController extends Controller
                 ]);
             }
 
-            // Notify assigned veterinarian about the new scheduled appointment
-            WorkflowNotifier::notifyUser($vet->id, 'New Scheduled Appointment', "You have a new veterinary appointment for {$pet->name} scheduled at {$scheduledAt->format('Y-m-d H:i')}.", 'info', 'appointment', $appointment->id);
+            // Notify assigned veterinarian about the new scheduled appointment.
+            // On the create path the Appointment::created model hook already
+            // notifies the veterinarian via notifyAppointmentCreated().
+            if (!$appointment->wasRecentlyCreated) {
+                WorkflowNotifier::notifyUser($vet->id, 'New Scheduled Appointment', "You have a new veterinary appointment for {$pet->name} scheduled at {$scheduledAt->format('Y-m-d H:i')}.", 'info', 'appointment', $appointment->id);
+            }
 
             // Auto-create base service billing item so vet sees the consultation fee
             $baseItemExists = ServiceItemUsage::where('service_type', ServiceItemUsage::SERVICE_VETERINARY)
