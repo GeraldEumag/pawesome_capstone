@@ -175,6 +175,11 @@ const NotificationDropdown = ({ role }) => {
       if (relatedType.includes("board") || text.includes("boarding") || text.includes("boarder")) {
         return "/veterinary/current-boarders";
       }
+      // Appointment notifications must win over the word "customer" in the
+      // message body (e.g. "New appointment with Customer on ...").
+      if (relatedType.includes("appointment") || text.includes("appointment")) {
+        return "/veterinary/appointments";
+      }
       if (relatedType.includes("customer") || relatedType.includes("profile") || text.includes("customer") || text.includes("profile")) {
         return "/veterinary/customer-profiles";
       }
