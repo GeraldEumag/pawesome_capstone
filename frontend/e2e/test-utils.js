@@ -23,6 +23,12 @@ const ROLE_DASHBOARDS = {
   customer: '/customer',
 };
 
+// One real login per role per worker. The backend throttles /auth/login to
+// 5 requests/minute per account+IP, so re-authenticating in every beforeEach
+// produces 429s mid-suite. Cached credentials are still injected per test,
+// keeping browser-context isolation.
+const tokenCache = new Map();
+
 /**
  * Login as a specific role using live backend
  * Uses env vars: E2E_{ROLE}_EMAIL and E2E_{ROLE}_PASSWORD
@@ -37,16 +43,22 @@ async function loginAs(page, role = 'admin') {
   const apiBase = process.env.VITE_API_BASE_URL || process.env.REACT_APP_API_URL || 'http://127.0.0.1:8000/api';
   const expectedPath = ROLE_DASHBOARDS[role] || '/dashboard';
 
-  const response = await page.request.post(`${apiBase}/auth/login`, {
-    data: { login: email, password },
-    headers: { Accept: 'application/json' },
-  });
+  const cacheKey = `${role}:${email}`;
+  let data = tokenCache.get(cacheKey);
 
-  if (!response.ok()) {
-    throw new Error(`Login failed for ${role}: ${response.status()} ${await response.text()}`);
+  if (!data) {
+    const response = await page.request.post(`${apiBase}/auth/login`, {
+      data: { login: email, password },
+      headers: { Accept: 'application/json' },
+    });
+
+    if (!response.ok()) {
+      throw new Error(`Login failed for ${role}: ${response.status()} ${await response.text()}`);
+    }
+
+    data = await response.json();
+    tokenCache.set(cacheKey, data);
   }
-
-  const data = await response.json();
   await page.addInitScript(({ token, user }) => {
     window.localStorage.setItem('token', token);
     window.localStorage.setItem('role', user.role);
