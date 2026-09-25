@@ -2,6 +2,7 @@ import React, { useEffect, useRef, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { apiRequest } from "../../api/client";
 import { showSuccess, showError } from "../../utils/alert.jsx";
+import logo from "../../assets/pawesome.jpg";
 import "./Register.css";
 
 const VerifyEmail = () => {
@@ -73,45 +74,53 @@ const VerifyEmail = () => {
 
   return (
     <main className="register-page">
-      <section className="register-shell">
-        <div className="register-form-panel" style={{ maxWidth: 520, margin: "auto" }}>
-          <h1 className="register-form-title">Email Verification</h1>
-          <p className={`verify-message verify-message--${statusClass}`}>{message}</p>
+      <section className="register-shell" style={{ gridTemplateColumns: "1fr" }}>
+        <section className="register-card" style={{ maxWidth: 520, width: "100%", margin: "auto" }}>
+          <div className="register-card-header">
+            <img src={logo} alt="Pawesome" className="register-card-logo" />
+            <p className="register-card-brand">PAWESOME RETREAT</p>
+            <p className="register-card-sub">Email Verification</p>
+          </div>
 
-          {status !== "success" && (
-            <form className="register-form" onSubmit={handleResend}>
-              <label htmlFor="verifyEmail">Email address</label>
-              <input
-                id="verifyEmail"
-                type="email"
-                className="register-input"
-                value={emailInput}
-                onChange={(e) => setEmailInput(e.target.value)}
-                placeholder="your-email@example.com"
-                disabled={resending || status === "verifying"}
-                required
-              />
+          <div className="register-card-body">
+            <p className={`verify-message verify-message--${statusClass}`}>{message}</p>
 
+            {status !== "success" && (
+              <form className="register-form" onSubmit={handleResend}>
+                <div className="register-form-group">
+                  <label htmlFor="verifyEmail">Email address</label>
+                  <input
+                    id="verifyEmail"
+                    type="email"
+                    value={emailInput}
+                    onChange={(e) => setEmailInput(e.target.value)}
+                    placeholder="your-email@example.com"
+                    disabled={resending || status === "verifying"}
+                    required
+                  />
+                </div>
+
+                <button
+                  type="submit"
+                  className="register-primary-btn"
+                  disabled={resending || status === "verifying"}
+                >
+                  {resending ? "Sending..." : "Resend verification email"}
+                </button>
+              </form>
+            )}
+
+            {status === "success" && (
               <button
-                type="submit"
-                className="register-submit-btn"
-                disabled={resending || status === "verifying"}
+                type="button"
+                className="register-primary-btn"
+                onClick={() => navigate("/login")}
               >
-                {resending ? "Sending..." : "Resend verification email"}
+                Continue to login
               </button>
-            </form>
-          )}
-
-          {status === "success" && (
-            <button
-              type="button"
-              className="register-submit-btn"
-              onClick={() => navigate("/login")}
-            >
-              Continue to login
-            </button>
-          )}
-        </div>
+            )}
+          </div>
+        </section>
       </section>
     </main>
   );

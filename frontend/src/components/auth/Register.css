@@ -899,3 +899,27 @@
   .register-step strong { font-size: 0.72rem; }
   .reg-paw-deco { font-size: 6rem; }
 }
+
+/* ══════════════════════════════════
+   EMAIL VERIFICATION PAGE
+══════════════════════════════════ */
+.verify-message {
+  margin: 0;
+  padding: 0.85rem 1rem;
+  border-radius: 14px;
+  font-size: 0.95rem;
+  line-height: 1.55;
+  text-align: center;
+}
+.verify-message--info {
+  background: rgba(255, 95, 147, 0.08);
+  color: var(--reg-text);
+}
+.verify-message--success {
+  background: rgba(5, 150, 105, 0.1);
+  color: var(--reg-success);
+}
+.verify-message--error {
+  background: rgba(220, 38, 38, 0.08);
+  color: var(--reg-danger);
+}

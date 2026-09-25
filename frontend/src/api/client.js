@@ -137,6 +137,13 @@ export const apiRequest = async (endpoint, methodOrOptions = "GET", data = null,
     if (error.name === 'AbortError') {
       throw new Error('Request was cancelled');
     }
+    // fetch() throws a bare TypeError ("Failed to fetch") when the network
+    // request itself fails (server unreachable, dropped connection, CORS
+    // block). Translate it so pages show a friendly message instead of the
+    // raw browser error.
+    if (error instanceof TypeError) {
+      throw new Error('Cannot reach the server right now. Please check your connection and try again.');
+    }
     throw error;
   }
 };
