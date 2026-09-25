@@ -68,7 +68,7 @@ test.describe('Manager Payroll end-to-end', () => {
     }
 
     await page.goto(frontendUrl + dashboardPath);
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
 
     // Payroll actions are labeled "Compute Payroll" / "Manual Entry" on this page.
     const generateBtn = page.locator('button:has-text("generate"), button:has-text("Generate"), button:has-text("process"), button:has-text("Process"), button:has-text("run"), button:has-text("Run"), button:has-text("compute"), button:has-text("Compute"), button:has-text("manual"), button:has-text("Manual")').first();

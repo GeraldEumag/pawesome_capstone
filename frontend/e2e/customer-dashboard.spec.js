@@ -54,6 +54,7 @@ test.describe('Customer Dashboard end-to-end', () => {
   });
 
   test('can create new booking or service request', async ({ page }) => {
+    test.setTimeout(90000); // dashboard fetch can starve under parallel load
     let bookingCalled = false;
 
     if (!process.env.E2E_LIVE) {
@@ -72,12 +73,16 @@ test.describe('Customer Dashboard end-to-end', () => {
     }
 
     await page.goto(frontendUrl + dashboardPath);
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
 
     // Look for book/request control — dashboard uses NavLink cards ("Book Services"),
     // not buttons, so match both.
     const bookBtn = page.locator('button:has-text("book"), button:has-text("Book"), a:has-text("book"), a:has-text("Book"), button:has-text("request"), button:has-text("Request"), a:has-text("request"), a:has-text("Request"), button:has-text("new"), button:has-text("New"), [data-testid*="book"]').first();
 
+    // Quick-action cards render only after the dashboard fetch resolves —
+    // wait for the loading state to clear first (can be slow under load).
+    await page.locator('text=Loading your customer dashboard').waitFor({ state: 'hidden', timeout: 45000 }).catch(() => {});
+    await bookBtn.waitFor({ state: 'visible', timeout: 30000 }).catch(() => {});
     if (await bookBtn.isVisible().catch(() => false)) {
       await bookBtn.click();
       await page.waitForTimeout(500);

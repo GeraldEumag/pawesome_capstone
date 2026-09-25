@@ -4,6 +4,7 @@ import Papa from "papaparse";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import * as XLSX from "xlsx";
+import { sanitizeCsvRecords } from "../../utils/csvSanitize";
 import "./MonthlyInventoryAudit.css";
 import { showAlert, showSuccess, showError } from "../../utils/alert.jsx";
 import StatusDot from "../shared/StatusDot";
@@ -352,7 +353,7 @@ const MonthlyInventoryAudit = () => {
       "Reason": auditRow.reason || "",
     }));
 
-    const csv = Papa.unparse(csvData);
+    const csv = Papa.unparse(sanitizeCsvRecords(csvData));
     const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
     const url = URL.createObjectURL(blob);
     const link = document.createElement("a");

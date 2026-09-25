@@ -5,6 +5,7 @@
 
 import { format } from 'date-fns';
 import { showWarning, showError } from './alert.jsx';
+import { sanitizeCsvCell } from './csvSanitize';
 
 /**
  * Export data to CSV
@@ -20,7 +21,7 @@ export const exportToCSV = (data, filename, headers) => {
     csvHeaders.join(','),
     ...data.map(row =>
       csvHeaders.map(header => {
-        const value = row[header];
+        const value = sanitizeCsvCell(row[header]);
         // Escape values containing commas or quotes
         const escaped = typeof value === 'string' && (value.includes(',') || value.includes('"'))
           ? `"${value.replace(/"/g, '""')}"`

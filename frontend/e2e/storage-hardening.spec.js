@@ -10,7 +10,8 @@ const rootDir = path.resolve(__dirname, "../..");
 const privateRoot = path.join(rootDir, "backend", "storage", "app", "private");
 const evidenceDir = path.join(rootDir, "browser-evidence", "storage-hardening");
 const frontendUrl = process.env.E2E_BASE_URL || "http://localhost:3000";
-const apiUrl = `${process.env.E2E_API_URL || "http://127.0.0.1:8000"}/api`;
+const apiUrl = `${(process.env.E2E_API_URL || "http://127.0.0.1:8000").replace(/\/api\/?$/, "")}/api`;
+const isLocalDeployment = /^https?:\/\/(localhost|127\.0\.0\.1)/.test(frontendUrl);
 
 const PNG = fs.readFileSync(path.join(__dirname, "..", "src", "assets", "PAWESOME TEST GCASH.png"));
 
@@ -57,14 +58,14 @@ async function customerUploadsProofInUi(browser, session, requestId, reference, 
     page.locator(".pum-confirm-btn").click(),
   ]);
   expect(upload.status(), await upload.text()).toBe(200);
-  await expect(row.locator(".customer-payment-pill")).toHaveText(/pending/i, { timeout: 15000 });
+  await expect(row.locator(".customer-payment-pill")).toHaveText(/pending/i, { timeout: 30000 });
   await page.screenshot({ path: path.join(evidenceDir, shot) });
   await context.close();
   return errors;
 }
 
 test("payment proof storage lifecycle: customer UI -> DB/file -> cashier UI -> resubmit retains evidence", async ({ browser, request }) => {
-  test.setTimeout(180000);
+  test.setTimeout(360000);
   fs.mkdirSync(evidenceDir, { recursive: true });
   const customer = await login(request, "customer");
   const receptionist = await login(request, "receptionist");
@@ -91,8 +92,10 @@ test("payment proof storage lifecycle: customer UI -> DB/file -> cashier UI -> r
   const afterFirst = await findMine();
   expect(afterFirst.payment_status).toBe("pending");
   expect(afterFirst.payment_proof).toMatch(/^payment-proofs\/proof_\d+_[A-Za-z0-9]{10}\.png$/);
-  expect(fs.existsSync(path.join(privateRoot, afterFirst.payment_proof)), "proof stored on private disk").toBeTruthy();
-  expect(fs.existsSync(path.join(rootDir, "backend", "storage", "app", "public", afterFirst.payment_proof)), "not on public disk").toBeFalsy();
+  if (isLocalDeployment) {
+    expect(fs.existsSync(path.join(privateRoot, afterFirst.payment_proof)), "proof stored on private disk").toBeTruthy();
+    expect(fs.existsSync(path.join(rootDir, "backend", "storage", "app", "public", afterFirst.payment_proof)), "not on public disk").toBeFalsy();
+  }
 
   // 3. Cashier (next role) opens the proof in the live Payment Approvals UI.
   const cashierView = await openAs(browser, cashier, "/cashier/pos");
@@ -121,8 +124,10 @@ test("payment proof storage lifecycle: customer UI -> DB/file -> cashier UI -> r
   const afterSecond = await findMine();
   expect(afterSecond.payment_status).toBe("pending");
   expect(afterSecond.payment_proof).not.toBe(afterFirst.payment_proof);
-  expect(fs.existsSync(path.join(privateRoot, afterSecond.payment_proof)), "new proof stored").toBeTruthy();
-  expect(fs.existsSync(path.join(privateRoot, afterFirst.payment_proof)), "rejected proof retained as evidence").toBeTruthy();
+  if (isLocalDeployment) {
+    expect(fs.existsSync(path.join(privateRoot, afterSecond.payment_proof)), "new proof stored").toBeTruthy();
+    expect(fs.existsSync(path.join(privateRoot, afterFirst.payment_proof)), "rejected proof retained as evidence").toBeTruthy();
+  }
 
   fs.writeFileSync(path.join(evidenceDir, "result.json"), JSON.stringify({
     date: new Date().toISOString(), requestId, firstProof: afterFirst.payment_proof, secondProof: afterSecond.payment_proof,

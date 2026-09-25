@@ -2,9 +2,9 @@
 
 Status: **PASSED**
 
-Started: 2026-09-16T23:49:35.845Z
-Completed: 2026-09-16T23:51:30.891Z
-Frontend: http://localhost:3002
+Started: 2026-09-25T00:39:21.390Z
+Completed: 2026-09-25T00:43:09.017Z
+Frontend: http://localhost:3000
 Backend API: http://127.0.0.1:8000/api
 
 ## Workflow Checks
@@ -18,12 +18,12 @@ Backend API: http://127.0.0.1:8000/api
 | Login for veterinary | PASS | vet@example.com |
 | Login for manager | PASS | manager@example.com |
 | Login for admin | PASS | admin@example.com |
-| Customer creates booking/request/order | PASS | service_request #4 |
-| Receptionist approves or schedules | PASS | service_request #4 |
-| Customer uploads payment proof | PASS | service_request #4 |
-| Cashier verifies/rejects payment | PASS | verified service_request #4 |
+| Customer creates booking/request/order | PASS | service_request #140 |
+| Receptionist approves or schedules | PASS | service_request #140 |
+| Customer uploads payment proof | PASS | service_request #140 |
+| Cashier verifies/rejects payment | PASS | verified service_request #140 |
 | Inventory stock/log check | PASS | inventory item #274 |
-| Veterinary appointment status update | PASS | vet appointment #2 completed via current /vet status route |
+| Veterinary appointment status update | PASS | vet appointment #7 completed via current /vet status route |
 | Manager/Admin reports visibility | PASS | manager and admin overview reports loaded |
 
 ## Evidence Screenshots
@@ -50,9 +50,9 @@ Backend API: http://127.0.0.1:8000/api
 
 ```json
 {
-  "petId": 5,
-  "serviceRequestId": 4,
-  "vetAppointmentId": 2
+  "petId": 90,
+  "serviceRequestId": 140,
+  "vetAppointmentId": 7
 }
 ```
 
@@ -66,7 +66,7 @@ Backend API: http://127.0.0.1:8000/api
 
 ```powershell
 cd frontend
-$env:E2E_BASE_URL = "http://localhost:3002"
+$env:E2E_BASE_URL = "http://localhost:3000"
 $env:E2E_API_URL = "http://127.0.0.1:8000/api"
 npx playwright test e2e/pawesome-full-workflow.spec.js --config=playwright.config.js
 ```

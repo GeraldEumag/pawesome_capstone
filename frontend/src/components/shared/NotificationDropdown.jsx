@@ -18,7 +18,7 @@ import "./NotificationDropdown.css";
 const NotificationDropdown = ({ role }) => {
   const navigate = useNavigate();
   const { token, role: authRole } = useAuth();
-  const notificationRole = role || authRole || "manager";
+  const notificationRole = role || authRole || "";
   const [isOpen, setIsOpen] = useState(false);
   const [notifications, setNotifications] = useState([]);
   const [unreadCount, setUnreadCount] = useState(0);

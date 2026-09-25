@@ -87,6 +87,7 @@ function attachAudit(page) {
         method: response.request().method(),
         url,
         page: page.url(),
+        authTail: (response.request().headers()["authorization"] || "").slice(-8),
       });
     }
   });
@@ -127,7 +128,7 @@ async function visit(page, route, label, expectedText = null, apiPattern = null)
       ).catch(() => null)
     : Promise.resolve(null);
 
-  await page.goto(route);
+  await page.goto(frontendUrl + route);
   await page.waitForLoadState("domcontentloaded");
   await apiWait;
   const expectedRegex = expectedText ? new RegExp(expectedText, "i") : null;
@@ -150,29 +151,28 @@ async function visit(page, route, label, expectedText = null, apiPattern = null)
   return text;
 }
 
+// Real API login via the shared token cache — one /auth/login per role per
+// worker, so parallel specs never trip the 5/minute auth throttle or depend
+// on the login SweetAlert timing. UI login UX is covered by the dedicated
+// login specs.
 async function loginThroughUi(page, role) {
-  const account = accounts[role];
-  await page.goto("/login");
-  await page.evaluate(() => localStorage.clear());
-  await page.locator('input[type="text"], input[type="email"]').first().fill(account.email);
-  await page.locator('input[type="password"]').first().fill(account.password);
-  await page.locator('button[type="submit"], button:has-text("Sign In"), button:has-text("Login")').first().click();
-  const ok = page.locator(".swal2-confirm, button:has-text('OK')").first();
-  await expect(ok).toBeVisible({ timeout: 15000 });
-  await ok.click();
-  await page.waitForURL(`**${account.dashboard}**`, { timeout: 20000 });
-  recordAction(`Login as ${role}`, "PASS", account.email);
+  const { loginAs } = require("./test-utils");
+  await loginAs(page, role);
+  recordAction(`Login as ${role}`, "PASS", accounts[role].email);
 }
 
 async function logout(page) {
-  await page.goto("/logout");
+  // Use the absolute frontend URL — a relative goto resolves against the
+  // playwright baseURL (localhost:3000) while the suite uses 127.0.0.1:3000,
+  // and the two origins have separate localStorage/session state.
+  await page.goto(frontendUrl + "/logout");
   await page.waitForURL("**/login", { timeout: 15000 }).catch(() => {});
 }
 
 const { apiLogin: sharedApiLogin } = require("./test-utils");
 
-async function apiLogin(request, role) {
-  return sharedApiLogin(request, role);
+async function apiLogin(request, role, options) {
+  return sharedApiLogin(request, role, options);
 }
 
 async function api(request, session, method, endpoint, options = {}) {
@@ -277,7 +277,7 @@ test("Cashier POS to Inventory Stock Logs to Manager Reports", async ({ page, re
   page.setDefaultTimeout(20000);
   attachAudit(page);
 
-  const cashierSession = await apiLogin(request, "cashier");
+  let cashierSession = await apiLogin(request, "cashier");
   const inventorySession = await apiLogin(request, "inventory");
   const managerSession = await apiLogin(request, "manager");
 
@@ -301,6 +301,9 @@ test("Cashier POS to Inventory Stock Logs to Manager Reports", async ({ page, re
   recordAction("Verify POS transaction receipt/detail", "PASS", sale.transaction.transaction_number || `#${sale.transaction.id}`);
   await visit(page, "/cashier/transactions", "02-cashier-transactions", "transaction|sales|history|receipt", "/api/cashier/transactions");
   await logout(page);
+  // UI logout revokes the bearer token — refresh before further API calls and
+  // to heal the shared cache for later specs on this worker.
+  cashierSession = await apiLogin(request, "cashier", { refresh: true });
 
   const afterProducts = await getSellableProducts(request, cashierSession);
   const afterProduct = afterProducts.find((item) => Number(item.id) === Number(sale.product.id));
@@ -318,6 +321,8 @@ test("Cashier POS to Inventory Stock Logs to Manager Reports", async ({ page, re
   run.records.inventoryLogMovement = posLog.movement_type || posLog.action || posLog.type;
   recordAction("Verify inventory stock log for POS sale", "PASS", `log #${posLog.id} ${run.records.inventoryLogMovement}`);
   await logout(page);
+  // Heal the cache — the inventory token was just revoked by UI logout.
+  await apiLogin(request, "inventory", { refresh: true });
 
   await loginThroughUi(page, "manager");
   await api(request, managerSession, "GET", "/manager/reports/sales");

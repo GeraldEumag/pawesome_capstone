@@ -66,7 +66,7 @@ test.describe('Manager Dashboard end-to-end', () => {
     }
 
     await page.goto(frontendUrl + dashboardPath);
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
 
     // Look for reports link/button
     const reportsLink = page.locator('a:has-text("report"), a:has-text("Report"), button:has-text("report"), button:has-text("Report"), a[href*="report"], [data-testid*="report"]').first();

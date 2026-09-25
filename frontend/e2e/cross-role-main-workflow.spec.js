@@ -185,8 +185,8 @@ async function logout(page) {
 
 const { apiLogin: sharedApiLogin } = require("./test-utils");
 
-async function apiLogin(request, role) {
-  return sharedApiLogin(request, role);
+async function apiLogin(request, role, options) {
+  return sharedApiLogin(request, role, options);
 }
 
 async function api(request, session, method, endpoint, options = {}) {
@@ -316,6 +316,9 @@ test("Customer to Receptionist to Veterinary to Manager Reports", async ({ page,
   await visit(page, "/customer/pets", "02-customer-buddy-pet", "Buddy", "/api/customer/pets");
   await visit(page, "/customer/services", "03-customer-pending-request", "pending|request|appointment|service", "/api/customer/my-requests");
   await logout(page);
+  // UI logout revokes the bearer token — refresh so the shared cache stays
+  // valid for later specs on this worker.
+  await apiLogin(request, "customer", { refresh: true });
 
   await loginThroughUi(page, "receptionist", request);
   await visit(page, "/receptionist/bookings/veterinary", "04-receptionist-pending-vet-request", "pending|vet|appointment|request", "/api/receptionist/requests");
@@ -333,6 +336,7 @@ test("Customer to Receptionist to Veterinary to Manager Reports", async ({ page,
   recordAction("Receptionist approves vet request via API", "PASS", `request #${vetRequest.id}, vet #${assignedVet.id}`);
   await visit(page, "/receptionist/bookings/veterinary", "05-receptionist-approved-vet-request", "approved|scheduled|pending|vet", "/api/receptionist/requests");
   await logout(page);
+  await apiLogin(request, "receptionist", { refresh: true });
 
   await loginThroughUi(page, "veterinary", request);
   await visit(page, "/veterinary/appointments", "06-veterinary-appointments", "appointment|vet|patient|pending|approved", "/api/veterinary/appointments");
@@ -342,6 +346,7 @@ test("Customer to Receptionist to Veterinary to Manager Reports", async ({ page,
   recordAction("Veterinary updates appointment status via API", "PASS", `appointment #${approvedAppointment.id} to in_progress`);
   await visit(page, "/veterinary/appointments", "07-veterinary-updated-appointment", "in progress|in_progress|appointment|vet|patient", "/api/veterinary/appointments");
   await logout(page);
+  await apiLogin(request, "veterinary", { refresh: true });
 
   await loginThroughUi(page, "manager", request);
   await api(request, managerSession, "GET", "/manager/reports/overview");

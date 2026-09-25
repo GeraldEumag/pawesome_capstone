@@ -1,16 +1,11 @@
 const { test, expect } = require("@playwright/test");
+const { loginAs } = require("./test-utils");
 const fs = require("node:fs");
 const path = require("node:path");
 
 const rootDir = path.resolve(__dirname, "../..");
 const evidenceDir = path.join(rootDir, "browser-evidence", "manager-payroll-scope");
 const resultPath = path.join(evidenceDir, "manager-payroll-scope-results.json");
-
-const manager = {
-  email: "manager@example.com",
-  password: "password123",
-  dashboard: "/manager",
-};
 
 const managerPages = [
   { path: "/manager", label: "manager-dashboard", api: "/api/manager/dashboard" },
@@ -57,18 +52,11 @@ async function openPageAndWaitForApi(page, managerPage) {
   await page.waitForTimeout(1000);
 }
 
+// Uses the shared cached login (one /auth/login per role per worker) so this
+// spec doesn't trip the 5/minute auth throttle or depend on the login
+// SweetAlert flow — the point of this spec is page rendering, not login UX.
 async function loginAsManager(page) {
-  await page.goto("/login");
-  await page.evaluate(() => localStorage.clear());
-  await page.locator('input[type="text"], input[type="email"]').first().fill(manager.email);
-  await page.locator('input[type="password"]').first().fill(manager.password);
-  await page.locator('button[type="submit"], button:has-text("Sign In"), button:has-text("Login")').first().click();
-
-  const sweetAlertOk = page.locator(".swal2-confirm, button:has-text('OK')").first();
-  await expect(sweetAlertOk).toBeVisible({ timeout: 15000 });
-  await sweetAlertOk.click();
-
-  await page.waitForURL(`**${manager.dashboard}**`, { timeout: 20000 });
+  await loginAs(page, "manager");
 }
 
 test.describe.configure({ mode: "serial" });

@@ -167,11 +167,11 @@ async function loginThroughUi(page, role) {
   await page.locator('input[type="password"], input[name="password"]').first().fill(account.password);
   await page.locator('button[type="submit"], button:has-text("Login"), button:has-text("Sign in")').first().click();
   const ok = page.locator(".swal2-confirm, button:has-text('OK')").first();
-  await ok.waitFor({ state: "visible", timeout: 10000 }).catch(() => {});
+  await ok.waitFor({ state: "visible", timeout: 20000 }).catch(() => {});
   if (await ok.isVisible().catch(() => false)) {
     await ok.click();
   }
-  await page.waitForURL(new RegExp(account.route.split("/")[1]), { timeout: 15000 });
+  await page.waitForURL(new RegExp(account.route.split("/")[1]), { timeout: 30000 });
 }
 
 async function openAsRole(browser, role, route, screenshotName) {

@@ -1,7 +1,7 @@
 {
-  "startedAt": "2026-09-16T23:42:53.204Z",
-  "completedAt": "2026-09-16T23:45:08.712Z",
-  "frontendUrl": "http://localhost:3002",
+  "startedAt": "2026-09-25T00:39:02.343Z",
+  "completedAt": "2026-09-25T00:42:54.211Z",
+  "frontendUrl": "http://127.0.0.1:3000",
   "apiUrl": "http://127.0.0.1:8000/api",
   "status": "PASSED",
   "pages": [
@@ -78,7 +78,7 @@
     {
       "name": "Create pending customer vet request",
       "status": "PASS",
-      "detail": "request #2"
+      "detail": "request #139"
     },
     {
       "name": "Resolve available veterinarian",
@@ -98,7 +98,7 @@
     {
       "name": "Receptionist approves vet request via API",
       "status": "PASS",
-      "detail": "request #2, vet #8"
+      "detail": "request #139, vet #8"
     },
     {
       "name": "Login as veterinary",
@@ -108,7 +108,7 @@
     {
       "name": "Veterinary updates appointment status via API",
       "status": "PASS",
-      "detail": "appointment #1 to in_progress"
+      "detail": "appointment #36 to in_progress"
     },
     {
       "name": "Login as manager",
@@ -134,9 +134,9 @@
   ],
   "records": {
     "buddyPetId": 3,
-    "vetRequestId": 2,
+    "vetRequestId": 139,
     "assignedVeterinarianId": 8,
-    "approvedAppointmentId": 1
+    "approvedAppointmentId": 36
   },
   "console": [],
   "httpFailures": [],
@@ -144,301 +144,421 @@
     {
       "method": "GET",
       "url": "http://localhost:8000/api/settings/public",
-      "page": "http://localhost:3002/login",
+      "page": "http://127.0.0.1:3000/login",
       "failure": "net::ERR_ABORTED"
     },
     {
       "method": "GET",
       "url": "http://localhost:8000/api/settings/public",
-      "page": "http://localhost:3002/login",
-      "failure": "net::ERR_ABORTED"
-    },
-    {
-      "method": "GET",
-      "url": "http://localhost:8000/api/chatbot/welcome",
-      "page": "http://localhost:3002/customer",
-      "failure": "net::ERR_ABORTED"
-    },
-    {
-      "method": "GET",
-      "url": "http://localhost:8000/api/settings/public",
-      "page": "http://localhost:3002/customer",
-      "failure": "net::ERR_ABORTED"
-    },
-    {
-      "method": "GET",
-      "url": "http://localhost:8000/api/settings/public",
-      "page": "http://localhost:3002/customer",
+      "page": "http://127.0.0.1:3000/login",
       "failure": "net::ERR_ABORTED"
     },
     {
       "method": "GET",
       "url": "http://localhost:8000/api/customer/dashboard",
-      "page": "http://localhost:3002/customer",
-      "failure": "net::ERR_ABORTED"
-    },
-    {
-      "method": "GET",
-      "url": "http://localhost:8000/api/customer/pets/archived",
-      "page": "http://localhost:3002/customer/pets",
+      "page": "http://127.0.0.1:3000/customer",
       "failure": "net::ERR_ABORTED"
     },
     {
       "method": "GET",
       "url": "http://localhost:8000/api/settings/public",
-      "page": "http://localhost:3002/customer/pets",
-      "failure": "net::ERR_ABORTED"
-    },
-    {
-      "method": "GET",
-      "url": "http://localhost:8000/api/customer/pets",
-      "page": "http://localhost:3002/customer/pets",
+      "page": "http://127.0.0.1:3000/customer",
       "failure": "net::ERR_ABORTED"
     },
     {
       "method": "GET",
       "url": "http://localhost:8000/api/settings/public",
-      "page": "http://localhost:3002/customer/pets",
+      "page": "http://127.0.0.1:3000/customer",
+      "failure": "net::ERR_ABORTED"
+    },
+    {
+      "method": "GET",
+      "url": "http://localhost:8000/api/chatbot/welcome",
+      "page": "http://127.0.0.1:3000/customer",
+      "failure": "net::ERR_ABORTED"
+    },
+    {
+      "method": "GET",
+      "url": "http://localhost:8000/api/customer/dashboard",
+      "page": "http://127.0.0.1:3000/customer",
       "failure": "net::ERR_ABORTED"
     },
     {
       "method": "GET",
       "url": "http://localhost:8000/api/notifications?role=customer",
-      "page": "http://localhost:3002/customer/services",
+      "page": "http://127.0.0.1:3000/customer",
       "failure": "net::ERR_ABORTED"
     },
     {
       "method": "GET",
       "url": "http://localhost:8000/api/settings/public",
-      "page": "http://localhost:3002/login",
+      "page": "http://127.0.0.1:3000/customer",
+      "failure": "net::ERR_ABORTED"
+    },
+    {
+      "method": "GET",
+      "url": "http://localhost:8000/api/notifications?role=customer",
+      "page": "http://127.0.0.1:3000/customer",
       "failure": "net::ERR_ABORTED"
     },
     {
       "method": "GET",
       "url": "http://localhost:8000/api/settings/public",
-      "page": "http://localhost:3002/login",
+      "page": "http://127.0.0.1:3000/customer",
+      "failure": "net::ERR_ABORTED"
+    },
+    {
+      "method": "GET",
+      "url": "http://localhost:8000/api/chatbot/welcome",
+      "page": "http://127.0.0.1:3000/customer",
+      "failure": "net::ERR_ABORTED"
+    },
+    {
+      "method": "GET",
+      "url": "http://localhost:8000/api/settings/public",
+      "page": "http://127.0.0.1:3000/customer",
+      "failure": "net::ERR_ABORTED"
+    },
+    {
+      "method": "GET",
+      "url": "http://localhost:8000/api/settings/public",
+      "page": "http://127.0.0.1:3000/customer",
+      "failure": "net::ERR_ABORTED"
+    },
+    {
+      "method": "GET",
+      "url": "http://localhost:8000/api/notifications?role=customer",
+      "page": "http://127.0.0.1:3000/customer",
+      "failure": "net::ERR_ABORTED"
+    },
+    {
+      "method": "GET",
+      "url": "http://localhost:8000/api/notifications?role=customer",
+      "page": "http://127.0.0.1:3000/customer",
+      "failure": "net::ERR_ABORTED"
+    },
+    {
+      "method": "GET",
+      "url": "http://localhost:8000/api/chatbot/welcome",
+      "page": "http://127.0.0.1:3000/customer",
+      "failure": "net::ERR_ABORTED"
+    },
+    {
+      "method": "GET",
+      "url": "http://localhost:8000/api/customer/dashboard",
+      "page": "http://127.0.0.1:3000/customer",
+      "failure": "net::ERR_ABORTED"
+    },
+    {
+      "method": "GET",
+      "url": "http://localhost:8000/api/settings/public",
+      "page": "http://127.0.0.1:3000/customer/pets",
+      "failure": "net::ERR_ABORTED"
+    },
+    {
+      "method": "GET",
+      "url": "http://localhost:8000/api/notifications?role=customer",
+      "page": "http://127.0.0.1:3000/customer/pets",
+      "failure": "net::ERR_ABORTED"
+    },
+    {
+      "method": "GET",
+      "url": "http://localhost:8000/api/customer/pets",
+      "page": "http://127.0.0.1:3000/customer/pets",
+      "failure": "net::ERR_ABORTED"
+    },
+    {
+      "method": "GET",
+      "url": "http://localhost:8000/api/settings/public",
+      "page": "http://127.0.0.1:3000/login",
+      "failure": "net::ERR_ABORTED"
+    },
+    {
+      "method": "GET",
+      "url": "http://localhost:8000/api/settings/public",
+      "page": "http://127.0.0.1:3000/login",
+      "failure": "net::ERR_ABORTED"
+    },
+    {
+      "method": "GET",
+      "url": "http://localhost:8000/api/settings/public",
+      "page": "http://127.0.0.1:3000/receptionist/bookings/hotel",
       "failure": "net::ERR_ABORTED"
     },
     {
       "method": "GET",
       "url": "http://localhost:8000/api/notifications?role=receptionist",
-      "page": "http://localhost:3002/receptionist/bookings/veterinary",
-      "failure": "net::ERR_ABORTED"
-    },
-    {
-      "method": "GET",
-      "url": "http://localhost:8000/api/receptionist/veterinarians/available",
-      "page": "http://localhost:3002/receptionist/bookings/veterinary",
+      "page": "http://127.0.0.1:3000/receptionist/bookings/hotel",
       "failure": "net::ERR_ABORTED"
     },
     {
       "method": "GET",
       "url": "http://localhost:8000/api/notifications?role=receptionist",
-      "page": "http://localhost:3002/receptionist/bookings/veterinary",
+      "page": "http://127.0.0.1:3000/receptionist/bookings/hotel",
+      "failure": "net::ERR_ABORTED"
+    },
+    {
+      "method": "GET",
+      "url": "http://localhost:8000/api/settings/public",
+      "page": "http://127.0.0.1:3000/receptionist/bookings/hotel",
+      "failure": "net::ERR_ABORTED"
+    },
+    {
+      "method": "GET",
+      "url": "http://localhost:8000/api/notifications?role=receptionist",
+      "page": "http://127.0.0.1:3000/receptionist/bookings/veterinary",
       "failure": "net::ERR_ABORTED"
     },
     {
       "method": "GET",
       "url": "http://localhost:8000/api/receptionist/requests",
-      "page": "http://localhost:3002/receptionist/bookings/veterinary",
+      "page": "http://127.0.0.1:3000/receptionist/bookings/veterinary",
+      "failure": "net::ERR_ABORTED"
+    },
+    {
+      "method": "GET",
+      "url": "http://localhost:8000/api/receptionist/veterinarians/available",
+      "page": "http://127.0.0.1:3000/receptionist/bookings/veterinary",
+      "failure": "net::ERR_ABORTED"
+    },
+    {
+      "method": "GET",
+      "url": "http://localhost:8000/api/receptionist/veterinarians/available",
+      "page": "http://127.0.0.1:3000/receptionist/bookings/veterinary",
       "failure": "net::ERR_ABORTED"
     },
     {
       "method": "GET",
       "url": "http://localhost:8000/api/settings/public",
-      "page": "http://localhost:3002/login",
+      "page": "http://127.0.0.1:3000/login",
       "failure": "net::ERR_ABORTED"
     },
     {
       "method": "GET",
       "url": "http://localhost:8000/api/settings/public",
-      "page": "http://localhost:3002/login",
+      "page": "http://127.0.0.1:3000/login",
+      "failure": "net::ERR_ABORTED"
+    },
+    {
+      "method": "GET",
+      "url": "http://localhost:8000/api/settings/public",
+      "page": "http://127.0.0.1:3000/veterinary",
+      "failure": "net::ERR_ABORTED"
+    },
+    {
+      "method": "GET",
+      "url": "http://localhost:8000/api/settings/public",
+      "page": "http://127.0.0.1:3000/veterinary",
       "failure": "net::ERR_ABORTED"
     },
     {
       "method": "GET",
       "url": "http://localhost:8000/api/veterinary/appointments",
-      "page": "http://localhost:3002/veterinary/appointments",
+      "page": "http://127.0.0.1:3000/veterinary/appointments",
+      "failure": "net::ERR_ABORTED"
+    },
+    {
+      "method": "GET",
+      "url": "http://localhost:8000/api/notifications?role=veterinary",
+      "page": "http://127.0.0.1:3000/veterinary/appointments",
       "failure": "net::ERR_ABORTED"
     },
     {
       "method": "GET",
       "url": "http://localhost:8000/api/veterinary/appointments",
-      "page": "http://localhost:3002/veterinary/appointments",
+      "page": "http://127.0.0.1:3000/veterinary/appointments",
+      "failure": "net::ERR_ABORTED"
+    },
+    {
+      "method": "GET",
+      "url": "http://localhost:8000/api/notifications?role=veterinary",
+      "page": "http://127.0.0.1:3000/veterinary/appointments",
       "failure": "net::ERR_ABORTED"
     },
     {
       "method": "GET",
       "url": "http://localhost:8000/api/settings/public",
-      "page": "http://localhost:3002/login",
+      "page": "http://127.0.0.1:3000/login",
       "failure": "net::ERR_ABORTED"
     },
     {
       "method": "GET",
       "url": "http://localhost:8000/api/settings/public",
-      "page": "http://localhost:3002/login",
+      "page": "http://127.0.0.1:3000/login",
+      "failure": "net::ERR_ABORTED"
+    },
+    {
+      "method": "GET",
+      "url": "http://localhost:8000/api/manager/dashboard",
+      "page": "http://127.0.0.1:3000/manager",
+      "failure": "net::ERR_ABORTED"
+    },
+    {
+      "method": "GET",
+      "url": "http://localhost:8000/api/manager/history",
+      "page": "http://127.0.0.1:3000/manager",
+      "failure": "net::ERR_ABORTED"
+    },
+    {
+      "method": "GET",
+      "url": "http://localhost:8000/api/manager/reports/veterinary-services",
+      "page": "http://127.0.0.1:3000/manager",
       "failure": "net::ERR_ABORTED"
     },
     {
       "method": "GET",
       "url": "http://localhost:8000/api/notifications?role=manager",
-      "page": "http://localhost:3002/manager",
+      "page": "http://127.0.0.1:3000/manager",
       "failure": "net::ERR_ABORTED"
     },
     {
       "method": "GET",
       "url": "http://localhost:8000/api/manager/reports/payments",
-      "page": "http://localhost:3002/manager",
-      "failure": "net::ERR_ABORTED"
-    },
-    {
-      "method": "GET",
-      "url": "http://localhost:8000/api/manager/reports/payments",
-      "page": "http://localhost:3002/manager",
-      "failure": "net::ERR_ABORTED"
-    },
-    {
-      "method": "GET",
-      "url": "http://localhost:8000/api/manager/reports/services",
-      "page": "http://localhost:3002/manager",
-      "failure": "net::ERR_ABORTED"
-    },
-    {
-      "method": "GET",
-      "url": "http://localhost:8000/api/manager/reports/inventory",
-      "page": "http://localhost:3002/manager",
-      "failure": "net::ERR_ABORTED"
-    },
-    {
-      "method": "GET",
-      "url": "http://localhost:8000/api/settings/public",
-      "page": "http://localhost:3002/manager",
-      "failure": "net::ERR_ABORTED"
-    },
-    {
-      "method": "GET",
-      "url": "http://localhost:8000/api/manager/reports/services",
-      "page": "http://localhost:3002/manager",
+      "page": "http://127.0.0.1:3000/manager",
       "failure": "net::ERR_ABORTED"
     },
     {
       "method": "GET",
       "url": "http://localhost:8000/api/manager/dashboard",
-      "page": "http://localhost:3002/manager",
+      "page": "http://127.0.0.1:3000/manager",
       "failure": "net::ERR_ABORTED"
     },
     {
       "method": "GET",
-      "url": "http://localhost:8000/api/manager/reports/veterinary-services",
-      "page": "http://localhost:3002/manager",
+      "url": "http://localhost:8000/api/manager/reports/services",
+      "page": "http://127.0.0.1:3000/manager",
       "failure": "net::ERR_ABORTED"
     },
     {
       "method": "GET",
       "url": "http://localhost:8000/api/notifications?role=manager",
-      "page": "http://localhost:3002/manager",
-      "failure": "net::ERR_ABORTED"
-    },
-    {
-      "method": "GET",
-      "url": "http://localhost:8000/api/manager/history",
-      "page": "http://localhost:3002/manager",
-      "failure": "net::ERR_ABORTED"
-    },
-    {
-      "method": "GET",
-      "url": "http://localhost:8000/api/manager/reports/veterinary-services",
-      "page": "http://localhost:3002/manager",
+      "page": "http://127.0.0.1:3000/manager",
       "failure": "net::ERR_ABORTED"
     },
     {
       "method": "GET",
       "url": "http://localhost:8000/api/manager/reports/inventory",
-      "page": "http://localhost:3002/manager",
-      "failure": "net::ERR_ABORTED"
-    },
-    {
-      "method": "GET",
-      "url": "http://localhost:8000/api/manager/dashboard",
-      "page": "http://localhost:3002/manager",
+      "page": "http://127.0.0.1:3000/manager",
       "failure": "net::ERR_ABORTED"
     },
     {
       "method": "GET",
       "url": "http://localhost:8000/api/settings/public",
-      "page": "http://localhost:3002/manager",
+      "page": "http://127.0.0.1:3000/manager",
+      "failure": "net::ERR_ABORTED"
+    },
+    {
+      "method": "GET",
+      "url": "http://localhost:8000/api/settings/public",
+      "page": "http://127.0.0.1:3000/manager",
+      "failure": "net::ERR_ABORTED"
+    },
+    {
+      "method": "GET",
+      "url": "http://localhost:8000/api/manager/reports/inventory",
+      "page": "http://127.0.0.1:3000/manager",
       "failure": "net::ERR_ABORTED"
     },
     {
       "method": "GET",
       "url": "http://localhost:8000/api/manager/history",
-      "page": "http://localhost:3002/manager",
+      "page": "http://127.0.0.1:3000/manager",
+      "failure": "net::ERR_ABORTED"
+    },
+    {
+      "method": "GET",
+      "url": "http://localhost:8000/api/manager/reports/veterinary-services",
+      "page": "http://127.0.0.1:3000/manager",
       "failure": "net::ERR_ABORTED"
     },
     {
       "method": "GET",
       "url": "http://localhost:8000/api/manager/reports/payments",
-      "page": "http://localhost:3002/manager",
-      "failure": "net::ERR_ABORTED"
-    },
-    {
-      "method": "GET",
-      "url": "http://localhost:8000/api/manager/reports/veterinary-services",
-      "page": "http://localhost:3002/manager",
-      "failure": "net::ERR_ABORTED"
-    },
-    {
-      "method": "GET",
-      "url": "http://localhost:8000/api/manager/reports/inventory",
-      "page": "http://localhost:3002/manager",
-      "failure": "net::ERR_ABORTED"
-    },
-    {
-      "method": "GET",
-      "url": "http://localhost:8000/api/manager/history",
-      "page": "http://localhost:3002/manager",
-      "failure": "net::ERR_ABORTED"
-    },
-    {
-      "method": "GET",
-      "url": "http://localhost:8000/api/manager/history",
-      "page": "http://localhost:3002/manager",
+      "page": "http://127.0.0.1:3000/manager",
       "failure": "net::ERR_ABORTED"
     },
     {
       "method": "GET",
       "url": "http://localhost:8000/api/manager/reports/services",
-      "page": "http://localhost:3002/manager",
+      "page": "http://127.0.0.1:3000/manager",
       "failure": "net::ERR_ABORTED"
     },
     {
       "method": "GET",
       "url": "http://localhost:8000/api/manager/reports/services",
-      "page": "http://localhost:3002/manager",
+      "page": "http://127.0.0.1:3000/manager",
       "failure": "net::ERR_ABORTED"
     },
     {
       "method": "GET",
       "url": "http://localhost:8000/api/settings/public",
-      "page": "http://localhost:3002/manager",
+      "page": "http://127.0.0.1:3000/manager",
       "failure": "net::ERR_ABORTED"
     },
     {
       "method": "GET",
       "url": "http://localhost:8000/api/manager/reports/veterinary-services",
-      "page": "http://localhost:3002/manager",
-      "failure": "net::ERR_ABORTED"
-    },
-    {
-      "method": "GET",
-      "url": "http://localhost:8000/api/manager/reports/inventory",
-      "page": "http://localhost:3002/manager",
+      "page": "http://127.0.0.1:3000/manager",
       "failure": "net::ERR_ABORTED"
     },
     {
       "method": "GET",
       "url": "http://localhost:8000/api/manager/dashboard",
-      "page": "http://localhost:3002/manager",
+      "page": "http://127.0.0.1:3000/manager",
+      "failure": "net::ERR_ABORTED"
+    },
+    {
+      "method": "GET",
+      "url": "http://localhost:8000/api/manager/reports/inventory",
+      "page": "http://127.0.0.1:3000/manager",
+      "failure": "net::ERR_ABORTED"
+    },
+    {
+      "method": "GET",
+      "url": "http://localhost:8000/api/manager/reports/services",
+      "page": "http://127.0.0.1:3000/manager",
+      "failure": "net::ERR_ABORTED"
+    },
+    {
+      "method": "GET",
+      "url": "http://localhost:8000/api/manager/reports/payments",
+      "page": "http://127.0.0.1:3000/manager",
+      "failure": "net::ERR_ABORTED"
+    },
+    {
+      "method": "GET",
+      "url": "http://localhost:8000/api/notifications?role=manager",
+      "page": "http://127.0.0.1:3000/manager",
+      "failure": "net::ERR_ABORTED"
+    },
+    {
+      "method": "GET",
+      "url": "http://localhost:8000/api/manager/history",
+      "page": "http://127.0.0.1:3000/manager",
+      "failure": "net::ERR_ABORTED"
+    },
+    {
+      "method": "GET",
+      "url": "http://localhost:8000/api/manager/history",
+      "page": "http://127.0.0.1:3000/manager",
+      "failure": "net::ERR_ABORTED"
+    },
+    {
+      "method": "GET",
+      "url": "http://localhost:8000/api/manager/reports/veterinary-services",
+      "page": "http://127.0.0.1:3000/manager",
+      "failure": "net::ERR_ABORTED"
+    },
+    {
+      "method": "GET",
+      "url": "http://localhost:8000/api/manager/reports/inventory",
+      "page": "http://127.0.0.1:3000/manager",
+      "failure": "net::ERR_ABORTED"
+    },
+    {
+      "method": "GET",
+      "url": "http://localhost:8000/api/settings/public",
+      "page": "http://127.0.0.1:3000/manager",
       "failure": "net::ERR_ABORTED"
     }
   ],

@@ -70,7 +70,7 @@ test.describe('Cashier Dashboard end-to-end', () => {
     }
 
     await page.goto(frontendUrl + dashboardPath);
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
 
     // Look for payment actions
     const payBtn = page.locator('button:has-text("pay"), button:has-text("Pay"), button:has-text("mark paid"), button[class*="pay"]').first();

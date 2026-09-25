@@ -50,9 +50,11 @@ test.describe('Phase 4 Payment Workflow E2E', () => {
   test.setTimeout(120000);
 
   // Reseed the two confinement fixtures (payment_status='unpaid') plus the
-  // pending boarding fixture so reruns are deterministic. Requires the local
+  // pending boarding fixture so reruns are deterministic. beforeEach (not
+  // beforeAll) so Playwright retries also start from a clean fixture state —
+  // a failed attempt can leave payment_status='pending'. Requires the local
   // backend + seeded dev DB.
-  test.beforeAll(() => {
+  test.beforeEach(() => {
     execSync(`${process.env.PHP_BINARY || 'php'} pawesome_e2e_payment_fixture_seed.php`, {
       cwd: backendDir,
       stdio: 'inherit',
@@ -198,18 +200,12 @@ test.describe('Phase 4 Payment Workflow E2E', () => {
     await expect(row.locator('.status-badge')).toContainText(/pending/i);
 
     // Approve is available and enabled despite the missing vaccination card.
+    // ReceptionistHotelBookings approves directly via runAction — no modal —
+    // and renders .hotel-toast.success / .hotel-toast.error for the outcome.
     const approveBtn = row.locator('button[title="Approve"]');
     await expect(approveBtn).toBeVisible();
     await expect(approveBtn).toBeEnabled();
     await approveBtn.click();
-
-    // Approval goes through a confirmation modal with an async availability
-    // check; the submit button stays disabled until the check resolves.
-    const modal = page.locator('.appointment-modal');
-    await expect(modal).toBeVisible({ timeout: 10000 });
-    const confirmBtn = modal.locator('button.primary-btn[type="submit"]');
-    await expect(confirmBtn).toBeEnabled({ timeout: 20000 });
-    await confirmBtn.click();
     await expect(page.locator('.hotel-toast.success')).toBeVisible({ timeout: 15000 });
 
     await context.close();

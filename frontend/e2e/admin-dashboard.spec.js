@@ -97,7 +97,7 @@ test.describe('Admin Dashboard end-to-end', () => {
     // User management lives at /admin/users — the sidebar group's links may be
     // collapsed on the dashboard, so navigate directly.
     await page.goto(frontendUrl + dashboardPath + '/users');
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
 
     const usersLink = page.locator('a:has-text("user"), a:has-text("User"), a[href*="user"], button:has-text("user"), button:has-text("User"], [data-testid*="user"]').first();
 

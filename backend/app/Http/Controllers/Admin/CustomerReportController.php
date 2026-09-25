@@ -234,13 +234,15 @@ class CustomerReportController extends Controller
             // Add CSV headers
             fputcsv($file, $headers);
             
-            // Add customer data
-            foreach ($data['customers'] as $customer) {
+            // Add customer data (sanitize user-controlled text against CSV
+            // formula injection — values starting with = + - @ tab/CR would
+            // otherwise execute as formulas when opened in Excel)
+            foreach (($data['data']['customers'] ?? []) as $customer) {
                 fputcsv($file, [
                     $customer['customer_id'],
-                    $customer['name'],
-                    $customer['email'],
-                    $customer['phone'],
+                    $this->sanitizeCsvCell($customer['name']),
+                    $this->sanitizeCsvCell($customer['email']),
+                    $this->sanitizeCsvCell($customer['phone']),
                     $customer['status'],
                     $customer['total_orders'],
                     $customer['total_order_amount'],
@@ -261,6 +263,19 @@ class CustomerReportController extends Controller
         ]);
     }
 
+    /**
+     * Neutralize spreadsheet formula injection in CSV exports: prefix values
+     * beginning with =, +, -, @, tab or CR so Excel renders them literally.
+     */
+    private function sanitizeCsvCell($value)
+    {
+        if ($value === null || !is_string($value)) {
+            return $value;
+        }
+
+        return preg_match('/^[\s]*[=+\-@\t\r]/', $value) ? "'" . $value : $value;
+    }
+
     public function exportCustomerReportsPdf(Request $request)
     {
         $reports = $this->getCustomerReports($request);
@@ -279,8 +294,8 @@ class CustomerReportController extends Controller
                 ['key' => 'total_payments', 'label' => 'Payments'],
                 ['key' => 'balance_amount', 'label' => 'Balance'],
             ],
-            'rows' => $data['customers'] ?? [],
-            'summary' => $data['summary'] ?? [],
+            'rows' => $data['data']['customers'] ?? [],
+            'summary' => $data['data']['summary'] ?? [],
             'generated_at' => now()->toIso8601String(),
         ]);
     }

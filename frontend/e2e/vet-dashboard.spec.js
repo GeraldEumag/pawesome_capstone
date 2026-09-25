@@ -73,7 +73,7 @@ test.describe('Vet Dashboard end-to-end', () => {
     }
 
     await page.goto(frontendUrl + dashboardPath);
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
 
     // Look for complete or update buttons
     const completeBtn = page.locator('button:has-text("complete"), button:has-text("Complete"), button:has-text("done"), button:has-text("Done"), button[class*="complete"]').first();
@@ -87,12 +87,17 @@ test.describe('Vet Dashboard end-to-end', () => {
       await page.waitForTimeout(500);
     }
 
+    // Appointment rows (or the empty state) render only after the fetch
+    // resolves — wait for whichever appears before asserting.
+    const emptyState = page.locator('text=/no appointments|0 cases|no clinical/i').first();
+    await completeBtn.or(statusBtn).or(emptyState).first()
+      .waitFor({ state: 'visible', timeout: 20000 }).catch(() => {});
+
     const hasActionButton = await completeBtn.isVisible().catch(() => false) || await statusBtn.isVisible().catch(() => false);
     if (process.env.E2E_LIVE && !hasActionButton) {
       // Complete/Start buttons only render per appointment row. With zero
       // appointments seeded, the correct UI is the empty state — the real
       // complete flow is exercised by cross-role-main-workflow.spec.js.
-      const emptyState = page.locator('text=/no appointments|0 cases|no clinical/i').first();
       expect(await emptyState.isVisible().catch(() => false)).toBeTruthy();
     } else {
       expect(hasActionButton).toBeTruthy();

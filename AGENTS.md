@@ -11,7 +11,7 @@ Two composite "super" roles extend the base roles:
 
 ## Architecture
 
-- **Backend:** Laravel 11 (PHP 8.2+) at `backend/`
+- **Backend:** Laravel 12 (PHP 8.2+) at `backend/`
 - **Frontend:** React 18 + Vite at `frontend/`
 - **Database:** MySQL
 - **Auth:** Laravel Sanctum personal access tokens + custom ApiTokenAuth middleware
@@ -23,7 +23,7 @@ Two composite "super" roles extend the base roles:
 ```bash
 cd backend
 composer install
-php artisan migrate:fresh --seed    # Fresh DB with seed data
+php artisan migrate --seed          # Local/demo initialization only
 php artisan serve --host=127.0.0.1 --port=8000
 php artisan route:cache              # Production route caching
 php artisan view:cache               # Production view caching
@@ -119,10 +119,10 @@ block in `backend/.env.example`.
 
 ### Queue
 
-Mail is queued (`ShouldQueue`). `QUEUE_CONNECTION=sync` is fine for dev and
-for the Render free tier — render.yaml uses `sync` because no worker service
-is provisioned. If a `type: worker` running `php artisan queue:work` is added,
-switch `QUEUE_CONNECTION` back to `redis`.
+Mailables implement `ShouldQueue`. The capstone demo may use
+`QUEUE_CONNECTION=sync` to avoid needing a worker. Business production should
+use Redis with a dedicated `php artisan queue:work` service and monitored
+failed jobs.
 
 ### Domain authentication (deployment requirement — not yet implemented)
 
@@ -146,33 +146,35 @@ mysql -u root -e "CREATE DATABASE IF NOT EXISTS pawesome_test;"
 DB_CONNECTION=mysql DB_DATABASE=pawesome_test php artisan test --filter=EmailAuthFlowTest
 ```
 
-## Production Deployment
+## Deployment
 
-### Backend (Render)
-- Config: `backend/render.yaml`
-- Set `APP_ENV=production`, `APP_DEBUG=false`
-- Auto-generates `APP_KEY` and `DB_PASSWORD`
-- Uses Redis for cache, file for sessions, `sync` queue (no worker provisioned)
-- `MAIL_USERNAME`/`MAIL_PASSWORD` are `sync: false` — set them in the Render
-  dashboard from the Brevo SMTP credentials
+The supported target is Vercel for the React/Vite frontend and Railway for the
+Laravel API/MySQL service. The legacy `backend/render.yaml` and nested
+`backend/.github/workflows/deploy.yml` are not active canonical deployment
+configuration; review `docs/DEPLOYMENT.md` before using any provider settings.
 
-### Frontend (Vercel)
-- Config: `frontend/vercel.json`
-- Set `VITE_API_BASE_URL` to production backend URL
-- SPA routing handled by rewrites
+### Capstone demo
+- Vercel frontend, Railway Laravel API and MySQL.
+- Use a Railway persistent volume mounted at Laravel `storage/app` before using
+  local public/private upload disks.
+- `QUEUE_CONNECTION=sync` and file cache are acceptable for a controlled demo.
 
-### Production Checklist
-- [ ] `APP_DEBUG=false`
-- [ ] `APP_ENV=production`
-- [ ] Strong production `DB_PASSWORD`
-- [ ] Real `CORS_ALLOWED_ORIGINS` (not placeholder)
-- [ ] Fresh production `APP_KEY`
-- [ ] `CACHE_STORE=redis`
-- [ ] `SESSION_DRIVER=file` or Redis
-- [ ] `VITE_API_BASE_URL` points to production backend
-- [ ] `MAIL_USERNAME`/`MAIL_PASSWORD` set in Render dashboard (Brevo SMTP key)
-- [ ] `MAIL_FROM_ADDRESS` is a Brevo-verified sender
-- [ ] SPF/DKIM/DMARC DNS records published (requires a real domain)
+### Business production
+- Separate staging and production Railway services/databases.
+- Use Redis with a dedicated queue worker and scheduler.
+- Use separate private and public S3-compatible buckets; private payment proofs
+  must never be publicly readable.
+- Configure backups, restore drills, monitoring, and gated releases.
+
+### Release checklist
+- [ ] `APP_DEBUG=false`, production `APP_KEY`, and production database credentials
+- [ ] Exact production CORS/Sanctum/frontend/API domains
+- [ ] Persistent demo volume or verified private/public object storage
+- [ ] Queue worker/scheduler enabled where required
+- [ ] No demo seed accounts in business production
+- [ ] Dependency audit reviewed and exceptions documented
+- [ ] Backup and rollback procedures tested
+- [ ] CI, health check, and post-deploy smoke checks pass
 
 ## Known Windows Development Issues
 
@@ -214,6 +216,25 @@ DB_CONNECTION=mysql DB_DATABASE=pawesome_test php artisan test --filter=EmailAut
   EndToEndBusinessFlowTest, FullSystemIntegrationTest, PayrollEndToEndTest ×2,
   ReportsTest inventory count, VeterinaryWorkflowTest). None exercise upload code,
   but they have NOT been confirmed against a clean-checkout baseline yet.
+- **E2E hygiene & reliability: FIXED** — suite defaults to live mode
+  (`E2E_LIVE=true`; opt out with `0`/`false`), port drift `:3002`→`:3000` and
+  the `localhost`/`127.0.0.1` origin split are resolved, login throttling is
+  avoided via the shared token cache in `e2e/test-utils.js` (`apiLogin`
+  supports `{ refresh: true }` for post-logout re-issue), and data-dependent
+  tests provision fixtures via API. Two app-level bugs were found and fixed:
+  `CustomerRequestStatus` emptied the whole table if any one of its three
+  fetches failed, and `NotificationDropdown` defaulted unresolved roles to
+  `"manager"`. Full-suite result: 105 passed / 13 failed at 4 workers; the
+  residuals are Windows/dev-server load starvation — all pass at
+  `--workers=2` or in isolation. Details and rerun guidance:
+  `docs/E2E_RELIABILITY_AUDIT.md`.
+- **Cashier notification deep link: FIXED** — `/cashier/payment-verification`
+  (used by `NotificationDropdown` and the chatbot) previously hit the `*` catch-all
+  and opened POS on the Products tab. It is now a real route rendering
+  `CashierPOS initialTab="payment-approvals"`; the tab is re-selected on each
+  navigation without remounting (cart preserved). `CashierPaymentVerification.jsx`
+  is unrouted legacy — the live approvals UI is `PaymentApprovals` inside POS.
+  Browser: `E2E_BASE_URL=http://localhost:3000 npx playwright test e2e/cashier-payment-deep-link.spec.js --project=chromium`.
 
 ## Reports
 

@@ -1,9 +1,9 @@
 {
   "setup": {
     "backendUrl": "http://127.0.0.1:8000",
-    "frontendUrl": "http://localhost:3002",
+    "frontendUrl": "http://127.0.0.1:3000",
     "browserPreview": "http://127.0.0.1:64422",
-    "testDate": "2026-09-16T23:51:48.934Z",
+    "testDate": "2026-09-25T00:21:51.088Z",
     "tester": "Codex automated Playwright"
   },
   "workflows": [
@@ -16,7 +16,7 @@
       "status": "PASS",
       "notes": "",
       "records": {
-        "serviceRequestId": 5,
+        "serviceRequestId": 128,
         "finalStatus": "approved"
       },
       "screenshots": [
@@ -34,7 +34,7 @@
       "status": "PASS",
       "notes": "Service-request hotel/boarding approval persisted. Dedicated boarding status progression was not available through stable UI selectors in this automated pass.",
       "records": {
-        "serviceRequestId": 6,
+        "serviceRequestId": 129,
         "finalStatus": "approved"
       },
       "screenshots": [
@@ -51,7 +51,7 @@
       "status": "PASS",
       "notes": "Reject without reason was blocked or rejected before the explicit reason submission.",
       "records": {
-        "serviceRequestId": 7,
+        "serviceRequestId": 130,
         "paymentStatus": "rejected"
       },
       "screenshots": [
@@ -69,9 +69,9 @@
       "status": "PASS",
       "notes": "",
       "records": {
-        "serviceRequestId": 8,
+        "serviceRequestId": 132,
         "paymentStatus": "paid",
-        "receiptNumber": "SR-REC-20260916235438-8"
+        "receiptNumber": "SR-REC-20260925002630-132"
       },
       "screenshots": [
         "documentation/screenshots/phase11/cashier-payment-verification.png",
@@ -81,44 +81,25 @@
     },
     {
       "workflow": "POS and Inventory Stock Deduction Flow",
-      "browserSubmitted": true,
-      "dbStatusUpdated": true,
-      "nextRoleSawResult": true,
+      "browserSubmitted": false,
+      "dbStatusUpdated": false,
+      "nextRoleSawResult": false,
       "consoleNetworkClean": true,
-      "status": "PASS",
-      "notes": "",
-      "records": {
-        "itemId": 274,
-        "itemName": "4IN1 VACCINE",
-        "beforeStock": 99,
-        "afterStock": 98,
-        "transactionId": 3
-      },
-      "screenshots": [
-        "documentation/screenshots/phase11/inventory-stock-before.png",
-        "documentation/screenshots/phase11/cashier-pos-success.png",
-        "documentation/screenshots/phase11/inventory-stock-after.png",
-        "documentation/screenshots/phase11/inventory-log.png",
-        "documentation/screenshots/phase11/manager-report-after-pos.png"
-      ]
+      "status": "FAIL",
+      "notes": "POST /cashier/pos/transaction failed: 500 Transaction failed: Insufficient batch stock for 4IN1 VACCINE. Needed: 1, Available in batches: 0",
+      "records": {},
+      "screenshots": []
     },
     {
       "workflow": "Veterinary Consultation Flow",
-      "browserSubmitted": true,
-      "dbStatusUpdated": true,
-      "nextRoleSawResult": true,
+      "browserSubmitted": false,
+      "dbStatusUpdated": false,
+      "nextRoleSawResult": false,
       "consoleNetworkClean": true,
-      "status": "PASS",
-      "notes": "",
-      "records": {
-        "serviceRequestId": 9,
-        "appointmentId": 2,
-        "status": "awaiting_payment"
-      },
-      "screenshots": [
-        "documentation/screenshots/phase11/vet-consultation-form-saved.png",
-        "documentation/screenshots/phase11/customer-vet-status.png"
-      ]
+      "status": "FAIL",
+      "notes": "POST /veterinary/consultations/34/start failed: 403 Forbidden.",
+      "records": {},
+      "screenshots": []
     },
     {
       "workflow": "Generic/Brand Inventory Flow",
@@ -127,7 +108,7 @@
       "nextRoleSawResult": false,
       "consoleNetworkClean": true,
       "status": "FAIL",
-      "notes": "POST /inventory/items failed: 422 {\"errors\":[\"The barcode field is required for sellable items.\"]}",
+      "notes": "POST /inventory/items failed: 422 Unprocessable Content",
       "records": {},
       "screenshots": []
     },
@@ -194,10 +175,28 @@
   ],
   "issues": [
     {
+      "severity": "High",
+      "module": "POS/Inventory",
+      "page": "/cashier/pos",
+      "error": "POST /cashier/pos/transaction failed: 500 Transaction failed: Insufficient batch stock for 4IN1 VACCINE. Needed: 1, Available in batches: 0",
+      "routeFile": "frontend/e2e/phase11-state-changing-workflows.spec.js",
+      "fixApplied": "No code fix applied by Phase 11 audit",
+      "status": "Open"
+    },
+    {
+      "severity": "High",
+      "module": "Veterinary",
+      "page": "/veterinary/appointments",
+      "error": "POST /veterinary/consultations/34/start failed: 403 Forbidden.",
+      "routeFile": "frontend/e2e/phase11-state-changing-workflows.spec.js",
+      "fixApplied": "No code fix applied by Phase 11 audit",
+      "status": "Open"
+    },
+    {
       "severity": "Medium",
       "module": "Inventory",
       "page": "/inventory/products",
-      "error": "POST /inventory/items failed: 422 {\"errors\":[\"The barcode field is required for sellable items.\"]}",
+      "error": "POST /inventory/items failed: 422 Unprocessable Content",
       "routeFile": "frontend/e2e/phase11-state-changing-workflows.spec.js",
       "fixApplied": "No code fix applied by Phase 11 audit",
       "status": "Open"
@@ -216,53 +215,80 @@
     "documentation/screenshots/phase11/customer-paid-receipt.png",
     "documentation/screenshots/phase11/manager-report-after-transaction.png",
     "documentation/screenshots/phase11/inventory-stock-before.png",
-    "documentation/screenshots/phase11/cashier-pos-success.png",
-    "documentation/screenshots/phase11/inventory-stock-after.png",
-    "documentation/screenshots/phase11/inventory-log.png",
-    "documentation/screenshots/phase11/manager-report-after-pos.png",
-    "documentation/screenshots/phase11/vet-consultation-form-saved.png",
-    "documentation/screenshots/phase11/customer-vet-status.png",
     "documentation/screenshots/phase11/notifications-customer.png",
     "documentation/screenshots/phase11/notifications-receptionist.png",
     "documentation/screenshots/phase11/notifications-cashier.png",
     "documentation/screenshots/phase11/notifications-vet.png"
   ],
-  "network": [
+  "network": [],
+  "console": [
     {
-      "status": "REQUEST_FAILED",
-      "method": "GET",
-      "url": "http://localhost:8000/api/veterinary/appointments",
-      "page": "http://localhost:3002/veterinary/appointments",
-      "failure": "net::ERR_ABORTED"
+      "type": "error",
+      "text": "Warning: Encountered two children with the same key, `%s`. Keys should be unique so that components maintain their identity across updates. Non-unique keys may cause children to be duplicated and/or omitted — the behavior is unsupported and could change in a future version.%s 16 \n    at div\n    at div\n    at PaymentApprovals (http://127.0.0.1:3000/src/components/cashier/components/PaymentApprovals.jsx:40:20)\n    at div\n    at main\n    at div\n    at CashierPOS (http://127.0.0.1:3000/src/components/cashier/CashierPOS_New.jsx:116:23)\n    at ProtectedRoute (http://127.0.0.1:3000/src/components/ProtectedRoute.jsx:43:27)\n    at RenderedRoute (http://127.0.0.1:3000/node_modules/.vite/deps/react-router-dom.js?v=7b542060:6758:26)\n    at Routes (http://127.0.0.1:3000/node_modules/.vite/deps/react-router-dom.js?v=7b542060:7700:3)\n    at CashierRoutes\n    at RenderedRoute (http://127.0.0.1:3000/node_modules/.vite/deps/react-router-dom.js?v=7b542060:6758:26)\n    at Routes (http://127.0.0.1:3000/node_modules/.vite/deps/react-router-dom.js?v=7b542060:7700:3)\n    at Router (http://127.0.0.1:3000/node_modules/.vite/deps/react-router-dom.js?v=7b542060:7639:13)\n    at BrowserRouter (http://127.0.0.1:3000/node_modules/.vite/deps/react-router-dom.js?v=7b542060:10958:3)\n    at AppRoutes\n    at ErrorBoundary (http://127.0.0.1:3000/src/components/shared/ErrorBoundary.jsx:7:5)\n    at App (http://127.0.0.1:3000/src/App.jsx?t=1790294703613:26:3)\n    at AuthProvider (http://127.0.0.1:3000/src/context/AuthContext.jsx:39:32)",
+      "url": "http://127.0.0.1:3000/cashier/payment-verification"
+    },
+    {
+      "type": "error",
+      "text": "Warning: Encountered two children with the same key, `%s`. Keys should be unique so that components maintain their identity across updates. Non-unique keys may cause children to be duplicated and/or omitted — the behavior is unsupported and could change in a future version.%s 16 \n    at div\n    at div\n    at PaymentApprovals (http://127.0.0.1:3000/src/components/cashier/components/PaymentApprovals.jsx:40:20)\n    at div\n    at main\n    at div\n    at CashierPOS (http://127.0.0.1:3000/src/components/cashier/CashierPOS_New.jsx:116:23)\n    at ProtectedRoute (http://127.0.0.1:3000/src/components/ProtectedRoute.jsx:43:27)\n    at RenderedRoute (http://127.0.0.1:3000/node_modules/.vite/deps/react-router-dom.js?v=7b542060:6758:26)\n    at Routes (http://127.0.0.1:3000/node_modules/.vite/deps/react-router-dom.js?v=7b542060:7700:3)\n    at CashierRoutes\n    at RenderedRoute (http://127.0.0.1:3000/node_modules/.vite/deps/react-router-dom.js?v=7b542060:6758:26)\n    at Routes (http://127.0.0.1:3000/node_modules/.vite/deps/react-router-dom.js?v=7b542060:7700:3)\n    at Router (http://127.0.0.1:3000/node_modules/.vite/deps/react-router-dom.js?v=7b542060:7639:13)\n    at BrowserRouter (http://127.0.0.1:3000/node_modules/.vite/deps/react-router-dom.js?v=7b542060:10958:3)\n    at AppRoutes\n    at ErrorBoundary (http://127.0.0.1:3000/src/components/shared/ErrorBoundary.jsx:7:5)\n    at App (http://127.0.0.1:3000/src/App.jsx?t=1790294703613:26:3)\n    at AuthProvider (http://127.0.0.1:3000/src/context/AuthContext.jsx:39:32)",
+      "url": "http://127.0.0.1:3000/cashier/payment-verification"
+    },
+    {
+      "type": "error",
+      "text": "Warning: Encountered two children with the same key, `%s`. Keys should be unique so that components maintain their identity across updates. Non-unique keys may cause children to be duplicated and/or omitted — the behavior is unsupported and could change in a future version.%s 16 \n    at div\n    at div\n    at PaymentApprovals (http://127.0.0.1:3000/src/components/cashier/components/PaymentApprovals.jsx:40:20)\n    at div\n    at main\n    at div\n    at CashierPOS (http://127.0.0.1:3000/src/components/cashier/CashierPOS_New.jsx:116:23)\n    at ProtectedRoute (http://127.0.0.1:3000/src/components/ProtectedRoute.jsx:43:27)\n    at RenderedRoute (http://127.0.0.1:3000/node_modules/.vite/deps/react-router-dom.js?v=7b542060:6758:26)\n    at Routes (http://127.0.0.1:3000/node_modules/.vite/deps/react-router-dom.js?v=7b542060:7700:3)\n    at CashierRoutes\n    at RenderedRoute (http://127.0.0.1:3000/node_modules/.vite/deps/react-router-dom.js?v=7b542060:6758:26)\n    at Routes (http://127.0.0.1:3000/node_modules/.vite/deps/react-router-dom.js?v=7b542060:7700:3)\n    at Router (http://127.0.0.1:3000/node_modules/.vite/deps/react-router-dom.js?v=7b542060:7639:13)\n    at BrowserRouter (http://127.0.0.1:3000/node_modules/.vite/deps/react-router-dom.js?v=7b542060:10958:3)\n    at AppRoutes\n    at ErrorBoundary (http://127.0.0.1:3000/src/components/shared/ErrorBoundary.jsx:7:5)\n    at App (http://127.0.0.1:3000/src/App.jsx?t=1790294703613:26:3)\n    at AuthProvider (http://127.0.0.1:3000/src/context/AuthContext.jsx:39:32)",
+      "url": "http://127.0.0.1:3000/cashier/payment-verification"
+    },
+    {
+      "type": "error",
+      "text": "Warning: Encountered two children with the same key, `%s`. Keys should be unique so that components maintain their identity across updates. Non-unique keys may cause children to be duplicated and/or omitted — the behavior is unsupported and could change in a future version.%s 16 \n    at div\n    at div\n    at PaymentApprovals (http://127.0.0.1:3000/src/components/cashier/components/PaymentApprovals.jsx:40:20)\n    at div\n    at main\n    at div\n    at CashierPOS (http://127.0.0.1:3000/src/components/cashier/CashierPOS_New.jsx:116:23)\n    at ProtectedRoute (http://127.0.0.1:3000/src/components/ProtectedRoute.jsx:43:27)\n    at RenderedRoute (http://127.0.0.1:3000/node_modules/.vite/deps/react-router-dom.js?v=7b542060:6758:26)\n    at Routes (http://127.0.0.1:3000/node_modules/.vite/deps/react-router-dom.js?v=7b542060:7700:3)\n    at CashierRoutes\n    at RenderedRoute (http://127.0.0.1:3000/node_modules/.vite/deps/react-router-dom.js?v=7b542060:6758:26)\n    at Routes (http://127.0.0.1:3000/node_modules/.vite/deps/react-router-dom.js?v=7b542060:7700:3)\n    at Router (http://127.0.0.1:3000/node_modules/.vite/deps/react-router-dom.js?v=7b542060:7639:13)\n    at BrowserRouter (http://127.0.0.1:3000/node_modules/.vite/deps/react-router-dom.js?v=7b542060:10958:3)\n    at AppRoutes\n    at ErrorBoundary (http://127.0.0.1:3000/src/components/shared/ErrorBoundary.jsx:7:5)\n    at App (http://127.0.0.1:3000/src/App.jsx?t=1790294703613:26:3)\n    at AuthProvider (http://127.0.0.1:3000/src/context/AuthContext.jsx:39:32)",
+      "url": "http://127.0.0.1:3000/cashier/payment-verification"
+    },
+    {
+      "type": "error",
+      "text": "Warning: Encountered two children with the same key, `%s`. Keys should be unique so that components maintain their identity across updates. Non-unique keys may cause children to be duplicated and/or omitted — the behavior is unsupported and could change in a future version.%s 16 \n    at div\n    at div\n    at PaymentApprovals (http://127.0.0.1:3000/src/components/cashier/components/PaymentApprovals.jsx:40:20)\n    at div\n    at main\n    at div\n    at CashierPOS (http://127.0.0.1:3000/src/components/cashier/CashierPOS_New.jsx:116:23)\n    at ProtectedRoute (http://127.0.0.1:3000/src/components/ProtectedRoute.jsx:43:27)\n    at RenderedRoute (http://127.0.0.1:3000/node_modules/.vite/deps/react-router-dom.js?v=7b542060:6758:26)\n    at Routes (http://127.0.0.1:3000/node_modules/.vite/deps/react-router-dom.js?v=7b542060:7700:3)\n    at CashierRoutes\n    at RenderedRoute (http://127.0.0.1:3000/node_modules/.vite/deps/react-router-dom.js?v=7b542060:6758:26)\n    at Routes (http://127.0.0.1:3000/node_modules/.vite/deps/react-router-dom.js?v=7b542060:7700:3)\n    at Router (http://127.0.0.1:3000/node_modules/.vite/deps/react-router-dom.js?v=7b542060:7639:13)\n    at BrowserRouter (http://127.0.0.1:3000/node_modules/.vite/deps/react-router-dom.js?v=7b542060:10958:3)\n    at AppRoutes\n    at ErrorBoundary (http://127.0.0.1:3000/src/components/shared/ErrorBoundary.jsx:7:5)\n    at App (http://127.0.0.1:3000/src/App.jsx?t=1790294703613:26:3)\n    at AuthProvider (http://127.0.0.1:3000/src/context/AuthContext.jsx:39:32)",
+      "url": "http://127.0.0.1:3000/cashier/payment-verification"
+    },
+    {
+      "type": "error",
+      "text": "Warning: Encountered two children with the same key, `%s`. Keys should be unique so that components maintain their identity across updates. Non-unique keys may cause children to be duplicated and/or omitted — the behavior is unsupported and could change in a future version.%s 16 \n    at div\n    at div\n    at PaymentApprovals (http://127.0.0.1:3000/src/components/cashier/components/PaymentApprovals.jsx:40:20)\n    at div\n    at main\n    at div\n    at CashierPOS (http://127.0.0.1:3000/src/components/cashier/CashierPOS_New.jsx:116:23)\n    at ProtectedRoute (http://127.0.0.1:3000/src/components/ProtectedRoute.jsx:43:27)\n    at RenderedRoute (http://127.0.0.1:3000/node_modules/.vite/deps/react-router-dom.js?v=7b542060:6758:26)\n    at Routes (http://127.0.0.1:3000/node_modules/.vite/deps/react-router-dom.js?v=7b542060:7700:3)\n    at CashierRoutes\n    at RenderedRoute (http://127.0.0.1:3000/node_modules/.vite/deps/react-router-dom.js?v=7b542060:6758:26)\n    at Routes (http://127.0.0.1:3000/node_modules/.vite/deps/react-router-dom.js?v=7b542060:7700:3)\n    at Router (http://127.0.0.1:3000/node_modules/.vite/deps/react-router-dom.js?v=7b542060:7639:13)\n    at BrowserRouter (http://127.0.0.1:3000/node_modules/.vite/deps/react-router-dom.js?v=7b542060:10958:3)\n    at AppRoutes\n    at ErrorBoundary (http://127.0.0.1:3000/src/components/shared/ErrorBoundary.jsx:7:5)\n    at App (http://127.0.0.1:3000/src/App.jsx?t=1790294703613:26:3)\n    at AuthProvider (http://127.0.0.1:3000/src/context/AuthContext.jsx:39:32)",
+      "url": "http://127.0.0.1:3000/cashier/payment-verification"
+    },
+    {
+      "type": "error",
+      "text": "Warning: Encountered two children with the same key, `%s`. Keys should be unique so that components maintain their identity across updates. Non-unique keys may cause children to be duplicated and/or omitted — the behavior is unsupported and could change in a future version.%s 16 \n    at div\n    at div\n    at PaymentApprovals (http://127.0.0.1:3000/src/components/cashier/components/PaymentApprovals.jsx:40:20)\n    at div\n    at main\n    at div\n    at CashierPOS (http://127.0.0.1:3000/src/components/cashier/CashierPOS_New.jsx:116:23)\n    at ProtectedRoute (http://127.0.0.1:3000/src/components/ProtectedRoute.jsx:43:27)\n    at RenderedRoute (http://127.0.0.1:3000/node_modules/.vite/deps/react-router-dom.js?v=7b542060:6758:26)\n    at Routes (http://127.0.0.1:3000/node_modules/.vite/deps/react-router-dom.js?v=7b542060:7700:3)\n    at CashierRoutes\n    at RenderedRoute (http://127.0.0.1:3000/node_modules/.vite/deps/react-router-dom.js?v=7b542060:6758:26)\n    at Routes (http://127.0.0.1:3000/node_modules/.vite/deps/react-router-dom.js?v=7b542060:7700:3)\n    at Router (http://127.0.0.1:3000/node_modules/.vite/deps/react-router-dom.js?v=7b542060:7639:13)\n    at BrowserRouter (http://127.0.0.1:3000/node_modules/.vite/deps/react-router-dom.js?v=7b542060:10958:3)\n    at AppRoutes\n    at ErrorBoundary (http://127.0.0.1:3000/src/components/shared/ErrorBoundary.jsx:7:5)\n    at App (http://127.0.0.1:3000/src/App.jsx?t=1790294703613:26:3)\n    at AuthProvider (http://127.0.0.1:3000/src/context/AuthContext.jsx:39:32)",
+      "url": "http://127.0.0.1:3000/cashier/payment-verification"
+    },
+    {
+      "type": "error",
+      "text": "Warning: Encountered two children with the same key, `%s`. Keys should be unique so that components maintain their identity across updates. Non-unique keys may cause children to be duplicated and/or omitted — the behavior is unsupported and could change in a future version.%s 16 \n    at div\n    at div\n    at PaymentApprovals (http://127.0.0.1:3000/src/components/cashier/components/PaymentApprovals.jsx:40:20)\n    at div\n    at main\n    at div\n    at CashierPOS (http://127.0.0.1:3000/src/components/cashier/CashierPOS_New.jsx:116:23)\n    at ProtectedRoute (http://127.0.0.1:3000/src/components/ProtectedRoute.jsx:43:27)\n    at RenderedRoute (http://127.0.0.1:3000/node_modules/.vite/deps/react-router-dom.js?v=7b542060:6758:26)\n    at Routes (http://127.0.0.1:3000/node_modules/.vite/deps/react-router-dom.js?v=7b542060:7700:3)\n    at CashierRoutes\n    at RenderedRoute (http://127.0.0.1:3000/node_modules/.vite/deps/react-router-dom.js?v=7b542060:6758:26)\n    at Routes (http://127.0.0.1:3000/node_modules/.vite/deps/react-router-dom.js?v=7b542060:7700:3)\n    at Router (http://127.0.0.1:3000/node_modules/.vite/deps/react-router-dom.js?v=7b542060:7639:13)\n    at BrowserRouter (http://127.0.0.1:3000/node_modules/.vite/deps/react-router-dom.js?v=7b542060:10958:3)\n    at AppRoutes\n    at ErrorBoundary (http://127.0.0.1:3000/src/components/shared/ErrorBoundary.jsx:7:5)\n    at App (http://127.0.0.1:3000/src/App.jsx?t=1790294703613:26:3)\n    at AuthProvider (http://127.0.0.1:3000/src/context/AuthContext.jsx:39:32)",
+      "url": "http://127.0.0.1:3000/cashier/payment-verification"
     }
   ],
-  "console": [],
   "createdRecords": [
     {
       "type": "service_request",
-      "id": 5,
+      "id": 128,
       "label": "grooming/service request"
     },
     {
       "type": "service_request",
-      "id": 6,
+      "id": 129,
       "label": "boarding request"
     },
     {
       "type": "service_request",
-      "id": 7,
+      "id": 130,
       "label": "payment reject request"
     },
     {
       "type": "service_request",
-      "id": 8,
+      "id": 132,
       "label": "payment verify request"
     },
     {
       "type": "service_request",
-      "id": 9,
+      "id": 135,
       "label": "veterinary request"
     }
   ],
-  "finalVerdict": "Demo Ready"
+  "finalVerdict": "Not Ready -- Critical browser issues remain"
 }

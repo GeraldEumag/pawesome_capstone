@@ -1,4 +1,5 @@
 import { apiRequest } from './client';
+import { sanitizeCsvCell } from '../utils/csvSanitize';
 
 /**
  * Medical Records API
@@ -217,7 +218,7 @@ export function exportMedicalRecordsToCSV(records) {
   ]);
   
   const csvContent = [headers, ...rows]
-    .map(row => row.map(cell => `"${cell}"`).join(','))
+    .map(row => row.map(cell => `"${sanitizeCsvCell(cell)}"`).join(','))
     .join('\n');
   
   const blob = new Blob([csvContent], { type: 'text/csv' });

@@ -61,9 +61,9 @@ const CustomerRequestStatus = ({ embedded = false }) => {
       }
 
       const [requestsData, ordersData, boardingsData] = await Promise.all([
-        apiRequest(`/customer/my-requests?email=${encodeURIComponent(email)}`),
-        apiRequest("/customer/store/orders"),
-        apiRequest("/customer/boarding-requests"),
+        apiRequest(`/customer/my-requests?email=${encodeURIComponent(email)}`).catch(() => []),
+        apiRequest("/customer/store/orders").catch(() => []),
+        apiRequest("/customer/boarding-requests").catch(() => []),
       ]);
 
       const serviceRequests = normalizeList(requestsData, ["requests", "service_requests", "grooming_requests"]).map((item) => ({

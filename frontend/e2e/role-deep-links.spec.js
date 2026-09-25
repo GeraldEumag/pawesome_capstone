@@ -81,7 +81,7 @@ test("vet: appointment notification opens Veterinary Appointments", async ({ bro
   const { page, context } = await openAs(browser, request, "veterinary", "/veterinary/history");
   await page.locator(".pawesome-notification-btn").click();
   const item = page.locator(".pawesome-notification-item", { hasText: /Appointment/ }).first();
-  await expect(item).toBeVisible({ timeout: 20000 });
+  await expect(item).toBeVisible({ timeout: 45000 });
   await item.click();
   await expectRenderedPage(page, /\/veterinary\/appointments$/);
   await page.screenshot({ path: path.join(evidenceDir, "vet-notification-appointments.png") });
@@ -98,7 +98,9 @@ test("vet: topbar profile opens Veterinary profile", async ({ browser, request }
 test("vet: chatbot Pet Records opens customer/pet profiles", async ({ browser, request }) => {
   const { page, context } = await openAs(browser, request, "veterinary", "/veterinary/appointments");
   await page.locator(".rbac-chatbot-toggle").click();
-  await page.locator(".rbac-quick-action", { hasText: "Pet Records" }).click();
+  const petRecords = page.locator(".rbac-quick-action", { hasText: "Pet Records" });
+  await petRecords.waitFor({ state: "visible", timeout: 45000 });
+  await petRecords.click();
   await expectRenderedPage(page, /\/veterinary\/customer-profiles$/);
   await context.close();
 });
@@ -106,7 +108,9 @@ test("vet: chatbot Pet Records opens customer/pet profiles", async ({ browser, r
 test("inventory: chatbot Stock Logs opens stock movement history", async ({ browser, request }) => {
   const { page, context } = await openAs(browser, request, "inventory", "/inventory/stock");
   await page.locator(".rbac-chatbot-toggle").click();
-  await page.locator(".rbac-quick-action", { hasText: "Stock Logs" }).click();
+  const stockLogs = page.locator(".rbac-quick-action", { hasText: "Stock Logs" });
+  await stockLogs.waitFor({ state: "visible", timeout: 45000 });
+  await stockLogs.click();
   await expectRenderedPage(page, /\/inventory\/history$/);
   await page.screenshot({ path: path.join(evidenceDir, "inventory-chatbot-stock-logs.png") });
   await context.close();

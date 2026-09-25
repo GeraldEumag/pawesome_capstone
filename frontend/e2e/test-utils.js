@@ -75,7 +75,7 @@ async function loginAs(page, role = 'admin') {
  * cache with loginAs so repeated spec-level logins never hit the
  * /auth/login 5/min throttle. Returns { token, user }.
  */
-async function apiLogin(request, role = 'admin') {
+async function apiLogin(request, role = 'admin', { refresh = false } = {}) {
   const roleUpper = role.toUpperCase();
   const defaults = DEFAULT_CREDENTIALS[role] || DEFAULT_CREDENTIALS.admin;
   const email = process.env[`E2E_${roleUpper}_EMAIL`] || defaults.email;
@@ -83,7 +83,7 @@ async function apiLogin(request, role = 'admin') {
   const apiBase = process.env.E2E_API_URL || 'http://127.0.0.1:8000/api';
 
   const cacheKey = `${role}:${email}`;
-  let data = tokenCache.get(cacheKey);
+  let data = refresh ? null : tokenCache.get(cacheKey);
 
   if (!data) {
     let response;
@@ -107,9 +107,30 @@ async function apiLogin(request, role = 'admin') {
 }
 
 /**
+ * Catch-all API mock for mock-mode tests: any endpoint not intercepted by a
+ * test-specific page.route() gets a benign 200 {} instead of hitting the real
+ * backend — where the fake TEST_API_TOKEN would 401, clear auth, and redirect
+ * to /login mid-test. Registered before test-specific routes, and Playwright
+ * matches the most recently registered route first, so specific mocks win.
+ */
+async function mockApiFallback(page) {
+  // Match only real API calls: the backend origin, or root-relative /api/*
+  // paths. A bare glob like '**/api/**' also matches module URLs such as
+  // /src/api/client.js, which would be fulfilled as JSON and break the app.
+  const apiBase = process.env.E2E_API_URL || 'http://127.0.0.1:8000/api';
+  const apiOrigin = new URL(apiBase).origin;
+  await page.route(
+    (url) => url.origin === apiOrigin || url.pathname.startsWith('/api/'),
+    (route) =>
+      route.fulfill({ status: 200, contentType: 'application/json', body: '{}' })
+  );
+}
+
+/**
  * Mock login for isolated tests (no backend required)
  */
 async function mockLoginAs(page, role, name = `E2E ${role}`) {
+  await mockApiFallback(page);
   await page.addInitScript(({ role, name }) => {
     window.localStorage.setItem('token', 'TEST_API_TOKEN');
     window.localStorage.setItem('name', name);

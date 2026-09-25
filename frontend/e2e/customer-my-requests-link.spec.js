@@ -55,8 +55,10 @@ async function openAs(browser, session, route) {
 
 async function clickChatbotMyRequests(page) {
   await page.locator(".rbac-chatbot-toggle").click();
+  // Quick actions render only after the chatbot welcome bootstrap resolves —
+  // under parallel load that fetch can take a while.
   const action = page.locator(".rbac-quick-action", { hasText: "My Requests" });
-  await expect(action).toBeVisible({ timeout: 20000 });
+  await expect(action).toBeVisible({ timeout: 45000 });
   await action.click();
 }
 
@@ -64,7 +66,7 @@ async function expectMyRequestsTab(page) {
   await expect(page.locator(".cs-tab.active")).toHaveText(/My Requests/);
   await expect(page.locator(".cs-panel-header h4")).toHaveText("My Requests");
   // The customer's submitted requests (with live status) load, not just an empty shell.
-  await expect(page.locator(".customer-status-table tbody tr").first()).toBeVisible({ timeout: 20000 });
+  await expect(page.locator(".customer-status-table tbody tr").first()).toBeVisible({ timeout: 30000 });
 }
 
 for (const [label, startRoute] of [["dashboard", "/customer"], ["services-book-tab", "/customer/services"]]) {

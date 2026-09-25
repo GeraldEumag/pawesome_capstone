@@ -65,7 +65,7 @@ test.describe('Inventory Dashboard end-to-end', () => {
 
     // Item CRUD lives on the products page, not the dashboard overview.
     await page.goto(frontendUrl + dashboardPath + '/products');
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
 
     // Look for add/create item button
     const addBtn = page.locator('button:has-text("add"), button:has-text("Add"), button:has-text("new"), button:has-text("New"), button:has-text("+"), [data-testid*="add"]').first();
@@ -111,12 +111,19 @@ test.describe('Inventory Dashboard end-to-end', () => {
       });
     }
 
+    test.setTimeout(90000); // inventory list fetch can starve under parallel load
     await page.goto(frontendUrl + dashboardPath + '/products');
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
+
+    // Rows render only after the inventory fetch resolves — wait for the
+    // "Loading inventory..." state to clear first.
+    await page.locator('text=Loading inventory').waitFor({ state: 'hidden', timeout: 45000 }).catch(() => {});
 
     // Stock adjust is an icon-only per-row button (title="Adjust Stock").
     const adjustBtn = page.locator('button:has-text("adjust"), button:has-text("Adjust"), button:has-text("update stock"), button[class*="stock"], button[title*="adjust" i], .btn-icon.adjust').first();
     const actionBtn = page.locator('button:has-text("action"), [data-testid*="action"]').first();
+
+    await adjustBtn.waitFor({ state: 'visible', timeout: 30000 }).catch(() => {});
 
     if (await adjustBtn.isVisible().catch(() => false)) {
       await adjustBtn.click();

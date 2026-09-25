@@ -217,6 +217,31 @@ class ReportsTest extends TestCase
     }
 
     // ============================================
+    // CSV EXPORT FORMULA-INJECTION GUARD
+    // ============================================
+
+    public function test_customer_csv_export_neutralizes_formula_prefixes(): void
+    {
+        Customer::factory()->create([
+            'name' => '=HYPERLINK("https://evil.example","click")',
+            'email' => '=cmd@example.com',
+            'phone' => '+63999111222',
+        ]);
+
+        $response = $this->get('/api/admin/reports/customers/export', $this->withAdminAuth());
+        $response->assertOk();
+        $response->assertHeader('content-type', 'text/csv; charset=UTF-8');
+
+        $body = $response->streamedContent();
+
+        // Formula-leading values must be prefixed with a single quote so Excel
+        // treats them as text instead of executing them.
+        $this->assertStringContainsString("'=HYPERLINK", $body);
+        $this->assertStringContainsString("'=cmd@example.com", $body);
+        $this->assertStringContainsString("'+63999111222", $body);
+    }
+
+    // ============================================
     // HELPER METHOD
     // ============================================
 

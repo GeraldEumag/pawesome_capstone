@@ -6,6 +6,7 @@
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import * as XLSX from "xlsx";
+import { sanitizeCsvCell } from "./csvSanitize";
 
 export const getNestedValue = (row, key) => {
   if (!row || !key) return undefined;
@@ -33,7 +34,7 @@ export const exportToCSV = (data, columns, filename = "report") => {
   // Create rows
   const rows = data.map((row) =>
     columns.map((col) => {
-      const value = getNestedValue(row, col.key);
+      const value = sanitizeCsvCell(getNestedValue(row, col.key));
       // Handle values that might contain commas or quotes
       if (value === null || value === undefined) return "";
       const stringValue = String(value);
