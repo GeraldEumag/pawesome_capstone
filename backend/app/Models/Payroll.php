@@ -44,6 +44,7 @@ class Payroll extends Model
         'pagibig_contribution',
         'late_deductions',
         'absent_deductions',
+        'paid_leave_days',
         'salary_loan',
         'cash_advance',
         'gross_pay',
@@ -137,23 +138,32 @@ class Payroll extends Model
         $this->position = $person->position ?? 'Staff';
         $this->employee_name = $this->employee_name ?: $person->name;
 
-        // Calculate working days in period
-        $startDate = \Carbon\Carbon::parse($this->pay_period_start);
-        $endDate = \Carbon\Carbon::parse($this->pay_period_end);
-        $this->working_days = $startDate->diffInDaysFiltered(function ($date) {
-            return !$date->isWeekend();
-        }, $endDate);
+        $startDate = \Carbon\Carbon::parse($this->pay_period_start)->toDateString();
+        $endDate = \Carbon\Carbon::parse($this->pay_period_end)->toDateString();
+
+        /** @var \App\Services\Payroll\PayrollComputationService $service */
+        $service = app(\App\Services\Payroll\PayrollComputationService::class);
 
         // Get attendance records for the period (user account or employee record)
-        $attendanceQuery = Attendance::forPeriod($this->pay_period_start, $this->pay_period_end);
+        $attendanceQuery = Attendance::forPeriod($startDate, $endDate);
         $attendanceRecords = $this->employee_id
             ? $attendanceQuery->forEmployee($this->employee_id)->get()
             : $attendanceQuery->forUser($this->user_id)->get();
 
-        $this->present_days = $attendanceRecords->whereIn('status', ['present', 'late', 'early_leave'])->count();
-        $this->absent_days = $attendanceRecords->where('status', 'absent')->count();
-        $this->regular_hours = $attendanceRecords->sum('total_hours');
-        $this->overtime_hours = $attendanceRecords->sum('overtime_hours');
+        // Shared attendance rollup: present/late/early-leave/absent plus
+        // auto-absence for scheduled workdays and absent→paid-leave conversion.
+        $stats = $service->attendanceStats($person, $attendanceRecords, $startDate, $endDate);
+        $factor = $service->periodFactor($startDate, $endDate);
+
+        if ($stats['working_days'] !== null) {
+            $this->working_days = $stats['working_days'];
+        }
+
+        $this->present_days = $stats['present_days'];
+        $this->absent_days = $stats['absent_days'];
+        $this->paid_leave_days = $stats['paid_leave_days'];
+        $this->regular_hours = $stats['regular_hours'];
+        $this->overtime_hours = $stats['overtime_hours'];
 
         // Use person's hourly rate or calculate from base salary
         $this->hourly_rate = (float) ($person->hourly_rate ?? ($person->base_salary ? $person->base_salary / 160 : 0));
@@ -161,22 +171,34 @@ class Payroll extends Model
         // Calculate earnings
         $dailyRate = $this->base_salary / 22; // Assuming 22 working days per month
         $this->absent_deductions = (float) ($this->absent_days * $dailyRate);
-        $this->late_deductions = (float) ($attendanceRecords->where('is_late', true)->count() * ($dailyRate * 0.1)); // 10% deduction per late
+        $this->late_deductions = (float) ($stats['late_days'] * ($dailyRate * 0.1)); // 10% deduction per late
 
         // Calculate overtime pay (1.5x rate)
         $this->overtime_pay = (float) ($this->overtime_hours * ($this->hourly_rate * 1.5));
 
+        // Semi-monthly periods (1–15 / 16–end) pay half the monthly base and
+        // deduct half the monthly statutory contributions.
+        $periodBase = (float) $this->base_salary * $factor;
+
         // Calculate mandatory deductions (Philippine standard)
-        $this->sss_contribution = (float) $this->calculateSSS();
-        $this->philhealth_contribution = (float) $this->calculatePhilHealth();
-        $this->pagibig_contribution = 100.0; // Fixed P100 for Pag-IBIG
+        $this->sss_contribution = (float) $this->calculateSSS() * $factor;
+        $this->philhealth_contribution = (float) $this->calculatePhilHealth() * $factor;
+        $this->pagibig_contribution = 100.0 * $factor; // Fixed P100/month for Pag-IBIG
 
         // Calculate gross pay
-        $this->gross_pay = (float) ($this->base_salary + $this->overtime_pay + $this->bonus + $this->allowances);
+        $this->gross_pay = (float) ($periodBase + $this->overtime_pay + $this->bonus + $this->allowances);
 
         // Calculate withholding tax (BIR 2023-onwards, RR 11-2018 Annex E)
-        // Taxable income = gross_pay - statutory contributions (SSS, PhilHealth, Pag-IBIG)
-        $this->tax_deduction = (float) $this->calculateWithholdingTax();
+        // For half-month periods, evaluate the monthly-equivalent taxable
+        // income and halve the result so both cutoffs reconcile.
+        $this->tax_deduction = $factor >= 1.0
+            ? (float) $this->calculateWithholdingTax()
+            : (float) ($factor * $this->calculateWithholdingTax(
+                $this->gross_pay / $factor,
+                $this->sss_contribution / $factor,
+                $this->philhealth_contribution / $factor,
+                $this->pagibig_contribution / $factor
+            ));
 
         // Calculate total deductions
         $totalDeductions = $this->sss_contribution + $this->philhealth_contribution +
@@ -191,12 +213,16 @@ class Payroll extends Model
      * Calculate BIR monthly withholding tax on compensation (2023 onwards, RR 11-2018 Annex E).
      * Taxable income = gross_pay - SSS - PhilHealth - Pag-IBIG (non-taxable statutory contributions).
      */
-    private function calculateWithholdingTax(): float
-    {
-        $taxableIncome = (float) $this->gross_pay
-            - (float) $this->sss_contribution
-            - (float) $this->philhealth_contribution
-            - (float) $this->pagibig_contribution;
+    private function calculateWithholdingTax(
+        ?float $grossPay = null,
+        ?float $sss = null,
+        ?float $philhealth = null,
+        ?float $pagibig = null
+    ): float {
+        $taxableIncome = ($grossPay ?? (float) $this->gross_pay)
+            - ($sss ?? (float) $this->sss_contribution)
+            - ($philhealth ?? (float) $this->philhealth_contribution)
+            - ($pagibig ?? (float) $this->pagibig_contribution);
 
         if ($taxableIncome <= 0) {
             return 0.0;

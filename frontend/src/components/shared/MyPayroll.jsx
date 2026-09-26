@@ -33,6 +33,30 @@ const STATUS_ICONS = {
   cancelled: { icon: faCircle, color: "#ef4444" },
 };
 
+// Semi-monthly periods (1–15 / 16–end) pay half the monthly base.
+const periodFactorFor = (payroll, slip) => {
+  if (slip?.period_factor != null) return Number(slip.period_factor);
+  const start = payroll?.pay_period_start;
+  const end = payroll?.pay_period_end;
+  if (!start || !end) return 1;
+  const sd = new Date(start);
+  const ed = new Date(end);
+  if (Number.isNaN(sd.getTime()) || Number.isNaN(ed.getTime())) return 1;
+  return sd.getFullYear() === ed.getFullYear() &&
+    sd.getMonth() === ed.getMonth() &&
+    (ed - sd) / 86400000 < 20
+    ? 0.5
+    : 1;
+};
+
+const periodBaseSalary = (payroll, slip) =>
+  slip?.earnings?.base_salary != null
+    ? Number(slip.earnings.base_salary)
+    : Number(payroll?.base_salary ?? 0) * periodFactorFor(payroll, slip);
+
+const paidLeaveDaysOf = (payroll, slip) =>
+  Number(slip?.attendance?.paid_leave_days ?? payroll?.paid_leave_days ?? 0);
+
 const MyPayroll = ({ roleAccent = "#0891b2", roleLabel = "Employee" }) => {
   const [payrolls, setPayrolls] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -138,7 +162,8 @@ const MyPayroll = ({ roleAccent = "#0891b2", roleLabel = "Employee" }) => {
     doc.text(`Status: ${status}`, 14, 88);
 
     // Earnings table
-    const baseSalary = Number(slip?.earnings?.base_salary ?? payroll.base_salary ?? payroll.baseSalary ?? 0);
+    const factor = periodFactorFor(payroll, slip);
+    const baseSalary = periodBaseSalary(payroll, slip);
     const otPay = Number(slip?.earnings?.overtime_pay ?? payroll.overtime_pay ?? payroll.overtimePay ?? 0);
     const bonus = Number(slip?.earnings?.bonus ?? payroll.bonus ?? 0);
     const allowances = Number(slip?.earnings?.allowances ?? payroll.allowances ?? payroll.allowance ?? 0);
@@ -168,6 +193,7 @@ const MyPayroll = ({ roleAccent = "#0891b2", roleLabel = "Employee" }) => {
     const absentDed = Number(slip?.deductions?.absent_deductions ?? payroll.absent_deductions ?? payroll.absenceDeductions ?? 0);
     const otherDed = Number(slip?.deductions?.other_deductions ?? payroll.deductions ?? 0);
     const totalDed = sss + philhealth + pagibig + tax + lateDed + absentDed + otherDed;
+    const paidLeaveDays = Number(slip?.attendance?.paid_leave_days ?? payroll.paid_leave_days ?? 0);
 
     const afterEarningsY = doc.lastAutoTable.finalY + 8;
 
@@ -181,6 +207,9 @@ const MyPayroll = ({ roleAccent = "#0891b2", roleLabel = "Employee" }) => {
         ["Withholding Tax", formatCurrency(tax)],
         ["Late Deductions", formatCurrency(lateDed)],
         ["Absence Deductions", formatCurrency(absentDed)],
+        ...(paidLeaveDays > 0
+          ? [["Paid Leave Days (converted, not deducted)", `${paidLeaveDays} day(s)`]]
+          : []),
         ["Other Deductions", formatCurrency(otherDed)],
         ["Total Deductions", formatCurrency(totalDed)],
       ],
@@ -205,7 +234,7 @@ const MyPayroll = ({ roleAccent = "#0891b2", roleLabel = "Employee" }) => {
     const absentDays = slip?.attendance?.absent_days ?? payroll.absent_days ?? "N/A";
     const regHours = slip?.attendance?.regular_hours ?? payroll.regular_hours ?? payroll.regularHours ?? "N/A";
     const otHours = slip?.attendance?.overtime_hours ?? payroll.overtime_hours ?? payroll.overtimeHours ?? "N/A";
-    doc.text(`Attendance: ${presentDays} present, ${absentDays} absent | ${regHours} regular hrs, ${otHours} OT hrs`, 14, afterNetY);
+    doc.text(`Attendance: ${presentDays} present, ${absentDays} absent, ${paidLeaveDays} paid leave | ${regHours} regular hrs, ${otHours} OT hrs`, 14, afterNetY);
 
     // Payment info
     const payDate = slip?.payment_date || payroll.payment_date || "N/A";
@@ -404,7 +433,10 @@ const PayslipDetail = ({ payroll, slip, roleAccent }) => {
           <tr><th>Earnings</th><th>Amount</th></tr>
         </thead>
         <tbody>
-          <tr><td>Base Salary</td><td>{formatCurrency(payroll.base_salary)}</td></tr>
+          <tr>
+            <td>{periodFactorFor(payroll, slip) === 0.5 ? "Base Salary (half-month cutoff)" : "Base Salary"}</td>
+            <td>{formatCurrency(periodBaseSalary(payroll, slip))}</td>
+          </tr>
           <tr><td>Overtime Pay</td><td>{formatCurrency(payroll.overtime_pay)}</td></tr>
           <tr><td>Bonus</td><td>{formatCurrency(payroll.bonus)}</td></tr>
           <tr><td>Allowances</td><td>{formatCurrency(payroll.allowances)}</td></tr>
@@ -423,6 +455,9 @@ const PayslipDetail = ({ payroll, slip, roleAccent }) => {
           <tr><td>Withholding Tax</td><td>{formatCurrency(tax)}</td></tr>
           <tr><td>Late Deductions</td><td>{formatCurrency(lateDed)}</td></tr>
           <tr><td>Absence Deductions</td><td>{formatCurrency(absentDed)}</td></tr>
+          {paidLeaveDaysOf(payroll, slip) > 0 && (
+            <tr><td>Paid Leave Days (converted, not deducted)</td><td>{paidLeaveDaysOf(payroll, slip)} day(s)</td></tr>
+          )}
           <tr><td>Other Deductions</td><td>{formatCurrency(otherDed)}</td></tr>
           <tr className="mp-subtotal-row"><td>Total Deductions</td><td>{formatCurrency(totalDed)}</td></tr>
         </tbody>
@@ -469,7 +504,10 @@ const PayslipPrintArea = ({ payroll, slip }) => {
       <table>
         <thead><tr><th>Earnings</th><th>Amount</th></tr></thead>
         <tbody>
-          <tr><td>Base Salary</td><td>{formatCurrency(payroll.base_salary)}</td></tr>
+          <tr>
+            <td>{periodFactorFor(payroll, slip) === 0.5 ? "Base Salary (half-month cutoff)" : "Base Salary"}</td>
+            <td>{formatCurrency(periodBaseSalary(payroll, slip))}</td>
+          </tr>
           <tr><td>Overtime Pay</td><td>{formatCurrency(payroll.overtime_pay)}</td></tr>
           <tr><td>Bonus</td><td>{formatCurrency(payroll.bonus)}</td></tr>
           <tr><td>Allowances</td><td>{formatCurrency(payroll.allowances)}</td></tr>
@@ -486,6 +524,9 @@ const PayslipPrintArea = ({ payroll, slip }) => {
           <tr><td>Withholding Tax</td><td>{formatCurrency(tax)}</td></tr>
           <tr><td>Late Deductions</td><td>{formatCurrency(lateDed)}</td></tr>
           <tr><td>Absence Deductions</td><td>{formatCurrency(absentDed)}</td></tr>
+          {paidLeaveDaysOf(payroll, slip) > 0 && (
+            <tr><td>Paid Leave Days (converted, not deducted)</td><td>{paidLeaveDaysOf(payroll, slip)} day(s)</td></tr>
+          )}
           <tr><td>Other Deductions</td><td>{formatCurrency(otherDed)}</td></tr>
           <tr className="net-row"><td>Total Deductions</td><td>{formatCurrency(totalDed)}</td></tr>
         </tbody>

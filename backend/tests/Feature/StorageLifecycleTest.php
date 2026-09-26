@@ -65,7 +65,7 @@ class StorageLifecycleTest extends TestCase
         // Customer uploads proof -> DB pending, file on private disk only.
         $this->actingWithToken($customer)
             ->postJson("/api/customer/requests/{$request->id}/payment-proof", [
-                'payment_method' => 'GCash',
+                'payment_method' => 'gcash',
                 'payment_reference' => 'REF-001',
                 'payment_proof' => $this->png(),
             ])->assertOk()->assertJsonPath('payment_status', 'pending');
@@ -98,7 +98,7 @@ class StorageLifecycleTest extends TestCase
 
         $this->actingWithToken($customer)
             ->postJson("/api/customer/requests/{$request->id}/payment-proof", [
-                'payment_method' => 'GCash',
+                'payment_method' => 'gcash',
                 'payment_reference' => 'REF-002',
                 'payment_proof' => $this->png('proof2.png'),
             ])->assertOk();
@@ -108,6 +108,57 @@ class StorageLifecycleTest extends TestCase
         $this->assertSame('pending', $request->fresh()->payment_status);
         Storage::disk('private')->assertExists($secondPath);
         Storage::disk('private')->assertExists($firstPath);
+    }
+
+    public function test_cash_payment_needs_no_proof_and_appears_in_cashier_queue(): void
+    {
+        $customer = User::factory()->create(['role' => 'customer']);
+        $cashier = User::factory()->create(['role' => 'cashier']);
+        $request = $this->approvedServiceRequest($customer);
+
+        // Cash: no proof file or reference required — cashier verifies at the counter.
+        $this->actingWithToken($customer)
+            ->postJson("/api/customer/requests/{$request->id}/payment-proof", [
+                'payment_method' => 'cash',
+            ])->assertOk()->assertJsonPath('payment_status', 'pending');
+
+        $fresh = $request->fresh();
+        $this->assertSame('cash', $fresh->payment_method);
+        $this->assertSame('pending', $fresh->payment_status);
+        $this->assertNull($fresh->payment_proof);
+
+        $queue = $this->actingWithToken($cashier)
+            ->getJson('/api/cashier/payment-requests')
+            ->assertOk()
+            ->json('payments');
+
+        $this->assertNotNull(
+            collect($queue)->first(fn ($p) => $p['type'] === 'service_request' && $p['id'] === $request->id),
+            'Cash submissions must be visible to the cashier for verification'
+        );
+    }
+
+    public function test_digital_payment_requires_proof_and_known_method(): void
+    {
+        $customer = User::factory()->create(['role' => 'customer']);
+        $request = $this->approvedServiceRequest($customer);
+
+        // GCash/Maya still require a proof file.
+        $this->actingWithToken($customer)
+            ->postJson("/api/customer/requests/{$request->id}/payment-proof", [
+                'payment_method' => 'gcash',
+                'payment_reference' => 'REF-001',
+            ])->assertStatus(422);
+
+        // Unknown methods are rejected.
+        $this->actingWithToken($customer)
+            ->postJson("/api/customer/requests/{$request->id}/payment-proof", [
+                'payment_method' => 'paypal',
+                'payment_reference' => 'REF-001',
+                'payment_proof' => $this->png(),
+            ])->assertStatus(422);
+
+        $this->assertSame('unpaid', $request->fresh()->payment_status);
     }
 
     public function test_storage_write_failure_returns_503_and_leaves_record_unchanged(): void
@@ -121,7 +172,7 @@ class StorageLifecycleTest extends TestCase
 
         $this->actingWithToken($customer)
             ->postJson("/api/customer/requests/{$request->id}/payment-proof", [
-                'payment_method' => 'GCash',
+                'payment_method' => 'gcash',
                 'payment_reference' => 'REF-001',
                 'payment_proof' => $this->png(),
             ])->assertStatus(503)->assertJsonStructure(['message']);

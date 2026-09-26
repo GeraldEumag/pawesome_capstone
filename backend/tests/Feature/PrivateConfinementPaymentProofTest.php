@@ -53,7 +53,7 @@ class PrivateConfinementPaymentProofTest extends TestCase
         $this->withHeaders([
             'Authorization' => 'Bearer ' . $user->plain_text_token,
         ])->postJson("/api/customer/medical-confinements/{$confinement->id}/payment-proof", [
-            'payment_method' => 'GCash',
+            'payment_method' => 'gcash',
             'payment_reference' => 'TEST-REFERENCE',
             'payment_proof' => UploadedFile::fake()->createWithContent(
                 'proof.png',

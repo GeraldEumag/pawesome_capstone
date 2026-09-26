@@ -161,6 +161,7 @@ class GroomingController extends Controller
     {
         $validator = Validator::make($request->all(), [
             'status' => 'required|in:pending,approved,rejected,completed,cancelled',
+            'reason' => 'required_if:status,rejected|string|max:500',
         ]);
 
         if ($validator->fails()) {
@@ -197,7 +198,11 @@ class GroomingController extends Controller
             }
         }
 
-        $appointment->update(['status' => $request->status]);
+        $update = ['status' => $request->status];
+        if ($request->status === 'rejected' && $request->filled('reason')) {
+            $update['notes'] = trim(($appointment->notes ? $appointment->notes . "\n" : '') . '[Rejected] ' . $request->reason);
+        }
+        $appointment->update($update);
 
         return response()->json([
             'success' => true,

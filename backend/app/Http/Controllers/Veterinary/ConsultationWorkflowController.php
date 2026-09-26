@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Veterinary;
 use App\Http\Controllers\Controller;
 use App\Models\Appointment;
 use App\Models\MedicalConfinement;
+use App\Models\MedicalRecord;
 use App\Models\ServiceItemUsage;
 use App\Services\ServiceBillingService;
 use App\Services\WorkflowNotifier;
@@ -52,7 +53,9 @@ class ConsultationWorkflowController extends Controller
             return response()->json(['error' => 'Only scheduled consultations can be started'], 422);
         }
 
-        if ($appointment->veterinarian_id && (int) $appointment->veterinarian_id !== (int) $request->user()->id) {
+        if ($appointment->veterinarian_id
+            && (int) $appointment->veterinarian_id !== (int) $request->user()->id
+            && !$request->user()->hasRoleAccess('admin')) {
             return response()->json(['error' => 'This consultation is assigned to another veterinarian'], 403);
         }
 
@@ -62,9 +65,26 @@ class ConsultationWorkflowController extends Controller
             'started_at' => now(),
         ]);
 
+        $medicalRecord = MedicalRecord::firstOrCreate(
+            [
+                'appointment_id' => $appointment->id,
+                'pet_id' => $appointment->pet_id,
+            ],
+            [
+                'veterinarian_id' => $appointment->veterinarian_id ?: $request->user()->id,
+                'visit_date' => now(),
+                'chief_complaint' => $appointment->notes,
+                'status' => MedicalRecord::STATUS_DRAFT,
+            ]
+        );
+
         WorkflowNotifier::notifyUser($appointment->customer?->user_id, 'Consultation started', 'Your pet consultation has started.', 'info', 'appointment', $appointment->id);
 
-        return response()->json(['message' => 'Consultation started', 'consultation' => $appointment->fresh(['customer', 'pet', 'service', 'veterinarian'])]);
+        return response()->json([
+            'message' => 'Consultation started',
+            'consultation' => $appointment->fresh(['customer', 'pet', 'service', 'veterinarian']),
+            'medical_record' => $medicalRecord,
+        ]);
     }
 
     public function complete(Request $request, $id): JsonResponse
@@ -75,7 +95,9 @@ class ConsultationWorkflowController extends Controller
             return response()->json(['error' => 'Only active consultations can be completed'], 422);
         }
 
-        if ($appointment->veterinarian_id && (int) $appointment->veterinarian_id !== (int) $request->user()->id) {
+        if ($appointment->veterinarian_id
+            && (int) $appointment->veterinarian_id !== (int) $request->user()->id
+            && !$request->user()->hasRoleAccess('admin')) {
             return response()->json(['error' => 'This consultation is assigned to another veterinarian'], 403);
         }
 
@@ -88,6 +110,12 @@ class ConsultationWorkflowController extends Controller
 
         if ($validator->fails()) {
             return response()->json(['errors' => $validator->errors()], 422);
+        }
+
+        if (!$appointment->medicalRecords()->where('status', MedicalRecord::STATUS_FINALIZED)->exists()) {
+            return response()->json([
+                'error' => 'Save and finalize the medical record before completing this consultation',
+            ], 422);
         }
 
         // Sync billing totals so cashier sees an accurate bill
@@ -120,7 +148,9 @@ class ConsultationWorkflowController extends Controller
             return response()->json(['error' => 'Confinement can only be recommended during or after active consultation'], 422);
         }
 
-        if ($appointment->veterinarian_id && (int) $appointment->veterinarian_id !== (int) $request->user()->id) {
+        if ($appointment->veterinarian_id
+            && (int) $appointment->veterinarian_id !== (int) $request->user()->id
+            && !$request->user()->hasRoleAccess('admin')) {
             return response()->json(['error' => 'This consultation is assigned to another veterinarian'], 403);
         }
 

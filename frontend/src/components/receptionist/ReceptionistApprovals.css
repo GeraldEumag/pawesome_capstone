@@ -159,7 +159,7 @@
 .approve-btn,
 .reject-btn,
 .close-modal-btn,
-.approval-modal-actions button {
+.hbk-foot button {
   min-height: 44px;
   border: none;
   border-radius: var(--ap-radius-pill);
@@ -211,7 +211,7 @@
 .approve-btn:hover,
 .reject-btn:hover,
 .close-modal-btn:hover,
-.approval-modal-actions button:hover {
+.hbk-foot button:hover {
   transform: translateY(-2px);
 }
 
@@ -222,7 +222,7 @@
 .view-btn:disabled,
 .approve-btn:disabled,
 .reject-btn:disabled,
-.approval-modal-actions button:disabled {
+.hbk-foot button:disabled {
   opacity: 0.6;
   cursor: not-allowed;
   transform: none;
@@ -639,41 +639,9 @@
   font-weight: 750;
 }
 
-.approval-modal-overlay {
-  position: fixed;
-  inset: 0;
-  z-index: 12000;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 1rem;
-  background: rgba(15, 23, 42, 0.52);
-  backdrop-filter: blur(10px);
-}
-
-.approval-modal {
+/* Modal shell comes from shared hbk-* (styles/bookingModal.css) */
+.hbk-modal {
   width: min(760px, 100%);
-  max-height: 92vh;
-  overflow-y: auto;
-  border: 1px solid var(--ap-border);
-  border-radius: var(--ap-radius-card);
-  background: var(--ap-surface-solid);
-  box-shadow: 0 30px 90px rgba(15, 23, 42, 0.26);
-}
-
-.approval-modal-header {
-  display: flex;
-  justify-content: space-between;
-  gap: 1rem;
-  padding: 1.35rem;
-  border-bottom: 1px solid var(--ap-border);
-}
-
-.approval-modal-header h2 {
-  margin: 0.4rem 0 0;
-  color: var(--ap-heading);
-  font-size: 1.45rem;
-  font-weight: 950;
 }
 
 .close-modal-btn {
@@ -693,11 +661,7 @@
   color: #ffffff;
 }
 
-.approval-modal-body {
-  display: grid;
-  gap: 1rem;
-  padding: 1.35rem;
-}
+
 
 .approval-detail-grid {
   display: grid;
@@ -789,14 +753,7 @@
   box-shadow: 0 0 0 4px rgba(255, 95, 147, 0.14);
 }
 
-.approval-modal-actions {
-  display: flex;
-  justify-content: flex-end;
-  flex-wrap: wrap;
-  gap: 0.75rem;
-  padding: 1rem 1.35rem;
-  border-top: 1px solid var(--ap-border);
-}
+
 
 /* Dark mode */
 
@@ -849,16 +806,13 @@
 
   .approvals-hero,
   .approvals-controls,
-  .approval-card,
-  .approval-modal {
+  .approval-card {
     border-radius: 22px;
   }
 
   .approvals-hero,
   .approvals-controls,
-  .approval-card-header,
-  .approval-modal-header,
-  .approval-modal-body {
+  .approval-card-header {
     padding: 1.15rem;
   }
 
@@ -870,18 +824,13 @@
   }
 
   .approval-summary-card,
-  .clear-btn,
-  .approval-modal-actions button {
+  .clear-btn {
     width: 100%;
   }
 
   .approval-card-header {
     flex-direction: column;
     align-items: flex-start;
-  }
-
-  .approval-modal-actions {
-    flex-direction: column;
   }
 }
 
@@ -978,10 +927,6 @@
   .approval-summary-card {
     align-items: flex-start;
     flex-direction: column;
-  }
-
-  .approval-modal {
-    border-radius: 20px;
   }
 }
 

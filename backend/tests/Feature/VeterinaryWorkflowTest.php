@@ -140,6 +140,50 @@ class VeterinaryWorkflowTest extends TestCase
             ->assertJsonPath('notes', 'Updated consult');
     }
 
+    public function test_completed_appointment_leaves_active_board_stays_in_history_and_pet_records(): void
+    {
+        $vet = $this->userWithToken('veterinary');
+        $customer = Customer::factory()->create();
+        $pet = Pet::factory()->create(['customer_id' => $customer->id]);
+        $service = Service::factory()->create();
+
+        $completed = Appointment::factory()->create([
+            'customer_id' => $customer->id,
+            'pet_id' => $pet->id,
+            'service_id' => $service->id,
+            'veterinarian_id' => $vet->id,
+            'status' => 'completed',
+            'scheduled_at' => now()->subDay(),
+        ]);
+
+        MedicalRecord::create([
+            'appointment_id' => $completed->id,
+            'pet_id' => $pet->id,
+            'veterinarian_id' => $vet->id,
+            'visit_date' => now(),
+            'diagnosis' => 'Completed consultation record',
+            'status' => MedicalRecord::STATUS_FINALIZED,
+        ]);
+
+        // Active board excludes terminal appointments.
+        $this->withHeaders($this->authHeader($vet))
+            ->getJson('/api/veterinary/appointments')
+            ->assertOk()
+            ->assertJsonMissing(['id' => $completed->id]);
+
+        // History retains the completed appointment.
+        $this->withHeaders($this->authHeader($vet))
+            ->getJson('/api/veterinary/history?status=completed')
+            ->assertOk()
+            ->assertJsonFragment(['id' => $completed->id]);
+
+        // The pet's medical history includes the appointment-linked record.
+        $this->withHeaders($this->authHeader($vet))
+            ->getJson("/api/veterinary/pets/{$pet->id}/medical-records")
+            ->assertOk()
+            ->assertJsonFragment(['appointment_id' => $completed->id]);
+    }
+
     public function test_veterinary_can_update_status_with_patch_for_list_actions(): void
     {
         $vet = $this->userWithToken('vet');
@@ -362,7 +406,7 @@ class VeterinaryWorkflowTest extends TestCase
 
         $this->withHeaders($this->authHeader($customerUser))
             ->post("/api/customer/requests/{$requestId}/payment-proof", [
-                'payment_method' => 'GCash',
+                'payment_method' => 'gcash',
                 'payment_reference' => 'PAY-12345',
                 'payment_proof' => UploadedFile::fake()->create('proof.pdf', 20, 'application/pdf'),
             ])
@@ -372,7 +416,7 @@ class VeterinaryWorkflowTest extends TestCase
         $this->assertDatabaseHas('service_requests', [
             'id' => $requestId,
             'payment_status' => 'pending',
-            'payment_method' => 'GCash',
+            'payment_method' => 'gcash',
             'payment_reference' => 'PAY-12345',
         ]);
 

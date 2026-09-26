@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react";
-import { showConfirm } from "../../utils/alert.jsx";
+import { showReasonPrompt } from "../../utils/alert.jsx";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
   faBirthdayCake,
@@ -444,20 +444,11 @@ const CustomersProfile = () => {
     try {
       setSaving(true);
 
-      if (
-        customerMode === "edit" &&
-        selectedCustomer?.id &&
-        typeof receptionistProfileApi.updateCustomer === "function"
-      ) {
-        await receptionistProfileApi.updateCustomer(selectedCustomer.id, payload);
-      } else if (customerMode === "edit") {
-        setCustomers((prev) =>
-          prev.map((customer) =>
-            String(getCustomerId(customer)) === String(getCustomerId(selectedCustomer))
-              ? { ...customer, ...payload }
-              : customer
-          )
-        );
+      if (customerMode === "edit") {
+        if (!selectedCustomer?.id) {
+          throw new Error("No customer selected to update.");
+        }
+        await receptionistProfileApi.updateCustomer(getCustomerId(selectedCustomer), payload);
       } else {
         await receptionistProfileApi.createCustomer(payload);
       }
@@ -486,16 +477,18 @@ const CustomersProfile = () => {
 
   const handleDeleteCustomer = async (customer) => {
     const customerId = getCustomerId(customer);
-    const confirmed = await showConfirm(`Delete ${getCustomerName(customer)}?`);
+    const reason = await showReasonPrompt(
+      `Delete ${getCustomerName(customer)}'s account? This action is recorded — please state why this account must be deleted.`,
+      "Delete Customer Account",
+      "Delete Account"
+    );
 
-    if (!confirmed) return;
+    if (reason === null) return;
 
     try {
       setSaving(true);
 
-      if (typeof receptionistProfileApi.deleteCustomer === "function") {
-        await receptionistProfileApi.deleteCustomer(customerId);
-      }
+      await receptionistProfileApi.deleteCustomer(customerId, reason);
 
       setCustomers((prev) =>
         prev.filter((item) => String(getCustomerId(item)) !== String(customerId))
@@ -505,7 +498,7 @@ const CustomersProfile = () => {
         setSelectedCustomer(null);
       }
 
-      showMessage("success", "Customer removed from the current list.");
+      showMessage("success", "Customer account deleted successfully.");
     } catch (err) {
       showMessage("error", err.message || "Failed to delete customer.");
     } finally {
@@ -569,18 +562,11 @@ const CustomersProfile = () => {
     try {
       setSaving(true);
 
-      if (
-        petMode === "edit" &&
-        selectedPet?.id &&
-        typeof receptionistProfileApi.updatePet === "function"
-      ) {
+      if (petMode === "edit") {
+        if (!selectedPet?.id) {
+          throw new Error("No pet selected to update.");
+        }
         await receptionistProfileApi.updatePet(selectedPet.id, payload);
-      } else if (petMode === "edit") {
-        setPets((prev) =>
-          prev.map((pet) =>
-            String(pet.id) === String(selectedPet.id) ? { ...pet, ...payload } : pet
-          )
-        );
       } else {
         await receptionistProfileApi.createPet(payload);
       }
@@ -603,15 +589,17 @@ const CustomersProfile = () => {
   };
 
   const handleDeletePet = async (pet) => {
-    const confirmed = await showConfirm(`Delete ${pet.name}?`);
-    if (!confirmed) return;
+    const reason = await showReasonPrompt(
+      `Delete ${pet.name}? This action is recorded — please state why this pet record must be deleted.`,
+      "Delete Pet",
+      "Delete Pet"
+    );
+    if (reason === null) return;
 
     try {
       setSaving(true);
 
-      if (typeof receptionistProfileApi.deletePet === "function") {
-        await receptionistProfileApi.deletePet(pet.id);
-      }
+      await receptionistProfileApi.deletePet(pet.id, reason);
 
       setPets((prev) => prev.filter((item) => String(item.id) !== String(pet.id)));
 
@@ -619,7 +607,7 @@ const CustomersProfile = () => {
         setSelectedPet(null);
       }
 
-      showMessage("success", "Pet removed from the current list.");
+      showMessage("success", "Pet deleted successfully.");
     } catch (err) {
       showMessage("error", err.message || "Failed to delete pet.");
     } finally {

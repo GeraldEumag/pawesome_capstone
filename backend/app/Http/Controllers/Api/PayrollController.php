@@ -118,6 +118,13 @@ class PayrollController extends Controller
             'period_end' => 'required|date|after_or_equal:period_start',
         ]);
 
+        if (!PayrollComputationService::isSemiMonthlyPeriod($validated['period_start'], $validated['period_end'])) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Invalid pay period. Payroll must run for the 1st–15th or the 16th–end of a month.',
+            ], 422);
+        }
+
         $startDate = $validated['period_start'];
         $endDate = $validated['period_end'];
 
@@ -145,6 +152,13 @@ class PayrollController extends Controller
             'period_start' => 'required|date',
             'period_end' => 'required|date|after_or_equal:period_start',
         ]);
+
+        if (!PayrollComputationService::isSemiMonthlyPeriod($validated['period_start'], $validated['period_end'])) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Invalid pay period. Payroll must run for the 1st–15th or the 16th–end of a month.',
+            ], 422);
+        }
 
         $startDate = Carbon::parse($validated['period_start'])->toDateString();
         $endDate = Carbon::parse($validated['period_end'])->toDateString();
@@ -189,7 +203,9 @@ class PayrollController extends Controller
                     $employee,
                     $isEmployee
                         ? $attendanceByEmployee->get($employee->id, collect())
-                        : $attendanceByUser->get($employee->id, collect())
+                        : $attendanceByUser->get($employee->id, collect()),
+                    $startDate,
+                    $endDate
                 );
 
                 // Create or update payroll record — keyed on whichever person
@@ -211,9 +227,10 @@ class PayrollController extends Controller
                         'position' => $computed['position'],
                         'base_salary' => $computed['base_salary'],
                         'hourly_rate' => $computed['hourly_rate'],
-                        'working_days' => 22,
+                        'working_days' => $computed['working_days'] ?? 22,
                         'present_days' => $computed['present_days'],
                         'absent_days' => $computed['absent_days'],
+                        'paid_leave_days' => $computed['paid_leave_days'],
                         'regular_hours' => $computed['regular_hours'],
                         'overtime_hours' => $computed['overtime_hours'],
                         'overtime_pay' => $computed['overtime_pay'],
@@ -424,6 +441,7 @@ class PayrollController extends Controller
             'working_days' => 'nullable|integer|min:0',
             'present_days' => 'nullable|integer|min:0',
             'absent_days' => 'nullable|integer|min:0',
+            'paid_leave_days' => 'nullable|integer|min:0',
             'regular_hours' => 'nullable|numeric|min:0',
             'overtime_hours' => 'nullable|numeric|min:0',
             'overtime_pay' => 'nullable|numeric|min:0',
@@ -453,6 +471,13 @@ class PayrollController extends Controller
             'remarks' => 'nullable|string',
             'manual_attendance' => 'nullable|array',
         ]);
+
+        if (!PayrollComputationService::isSemiMonthlyPeriod($validated['pay_period_start'], $validated['pay_period_end'])) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Invalid pay period. Payroll must run for the 1st–15th or the 16th–end of a month.',
+            ], 422);
+        }
 
         $user = !empty($validated['user_id']) ? User::find($validated['user_id']) : null;
         $employee = !empty($validated['employee_id']) ? Employee::find($validated['employee_id']) : null;
@@ -523,6 +548,7 @@ class PayrollController extends Controller
             'working_days' => 'nullable|integer|min:0',
             'present_days' => 'nullable|integer|min:0',
             'absent_days' => 'nullable|integer|min:0',
+            'paid_leave_days' => 'nullable|integer|min:0',
             'regular_hours' => 'nullable|numeric|min:0',
             'overtime_hours' => 'nullable|numeric|min:0',
             'overtime_pay' => 'nullable|numeric|min:0',
@@ -556,8 +582,16 @@ class PayrollController extends Controller
 
         // Recompute period label if dates changed
         if (isset($validated['pay_period_start']) || isset($validated['pay_period_end'])) {
-            $start = $validated['pay_period_start'] ?? $payroll->pay_period_start;
-            $end = $validated['pay_period_end'] ?? $payroll->pay_period_end;
+            $start = Carbon::parse($validated['pay_period_start'] ?? $payroll->pay_period_start)->toDateString();
+            $end = Carbon::parse($validated['pay_period_end'] ?? $payroll->pay_period_end)->toDateString();
+
+            if (!PayrollComputationService::isSemiMonthlyPeriod($start, $end)) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Invalid pay period. Payroll must run for the 1st–15th or the 16th–end of a month.',
+                ], 422);
+            }
+
             $validated['pay_period_label'] = Carbon::parse($start)->format('M d') . ' - ' . Carbon::parse($end)->format('M d, Y');
         }
 

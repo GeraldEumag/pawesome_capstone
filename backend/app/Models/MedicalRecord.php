@@ -94,24 +94,24 @@ class MedicalRecord extends Model
      */
     public function canBeEditedBy(User $user): bool
     {
-        // Only veterinarians can edit
-        if (!$user->hasRoleAccess('veterinary', 'vet', 'veterinarian')) {
-            return false;
-        }
-
         // Locked records cannot be edited
         if ($this->status === self::STATUS_LOCKED) {
             return false;
         }
 
-        // Draft records can be edited by the creating vet
-        if ($this->status === self::STATUS_DRAFT) {
-            return $this->veterinarian_id === $user->id;
+        // Admins can edit any non-locked record
+        if ($user->hasRoleAccess('admin')) {
+            return true;
         }
 
-        // Finalized records can only be edited by admin or the original vet
-        if ($this->status === self::STATUS_FINALIZED) {
-            return $user->hasRoleAccess('admin') || $this->veterinarian_id === $user->id;
+        // Only veterinarians can edit
+        if (!$user->hasRoleAccess('veterinary', 'vet', 'veterinarian')) {
+            return false;
+        }
+
+        // Draft and finalized records can be edited by the creating vet
+        if (in_array($this->status, [self::STATUS_DRAFT, self::STATUS_FINALIZED], true)) {
+            return $this->veterinarian_id === $user->id;
         }
 
         return false;

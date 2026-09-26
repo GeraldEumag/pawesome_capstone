@@ -18,10 +18,11 @@ import {
   faTimesCircle,
   faUser,
 } from "@fortawesome/free-solid-svg-icons";
+import "../../styles/bookingModal.css";
 import "./ReceptionistHotelBookings.css";
 import { apiRequest, getAuthenticatedFileUrl } from "../../api/client";
 import { exportToCSV, exportToPDF, exportToExcel } from "../../utils/reportExport";
-import { showError } from "../../utils/alert.jsx";
+import { showError, showReasonPrompt } from "../../utils/alert.jsx";
 import DatePickerInput from "../../components/shared/DatePickerInput";
 import PetAvatar from "../shared/PetAvatar";
 import {
@@ -75,6 +76,15 @@ const CARE_LOG_TYPES = [
 
 const getRoomOptionName = (room) =>
   room.name || room.room_number || room.room_name || `Room #${room.id}`;
+
+const formatTime12 = (value) => {
+  if (!value) return "";
+  const [h = 0, m = 0] = String(value).split(":");
+  const hour = Number(h);
+  const meridiem = hour >= 12 ? "PM" : "AM";
+  const hour12 = hour % 12 === 0 ? 12 : hour % 12;
+  return `${hour12}:${String(m).padStart(2, "0")} ${meridiem}`;
+};
 
 const ReceptionistHotelBookings = () => {
   const [searchTerm, setSearchTerm] = useState("");
@@ -215,6 +225,20 @@ const ReceptionistHotelBookings = () => {
     });
   }, [bookings, searchTerm, filterStatus, filterPayment]);
 
+  const rejectBooking = async (booking) => {
+    const reason = await showReasonPrompt(
+      `Reject booking ${booking.id ? `#${booking.id}` : ""} for ${booking.pet?.name || booking.pet_name || "this pet"}? Please provide a reason.`,
+      "Reject Booking"
+    );
+    if (!reason) return;
+    await runAction(
+      booking,
+      `/receptionist/boarding-requests/${booking.id}/reject`,
+      "Boarding rejected.",
+      { rejection_reason: reason }
+    );
+  };
+
   const runAction = async (booking, endpoint, message, body = null, method = "POST") => {
     try {
       setProcessingId(booking.id);
@@ -289,9 +313,9 @@ const ReceptionistHotelBookings = () => {
       {
         hotel_room_id: draft.hotel_room_id,
         check_in: draft.check_in || getDateValue(booking.check_in),
-        check_out: draft.check_out || getDateValue(booking.check_out),
+        check_out: draft.check_in || getDateValue(booking.check_in),
         check_in_time: draft.check_in_time || booking.check_in_time || "09:00",
-        check_out_time: draft.check_out_time || booking.check_out_time || "17:00",
+        check_out_time: draft.check_out_time || booking.check_out_time || "18:00",
         total_amount: draft.total_amount || booking.total_amount || booking.amount || 0,
       }
     );
@@ -694,14 +718,7 @@ const ReceptionistHotelBookings = () => {
                             <button
                               type="button"
                               className="action-btn reject-btn"
-                              onClick={() =>
-                                runAction(
-                                  booking,
-                                  `/receptionist/boarding-requests/${booking.id}/reject`,
-                                  "Boarding rejected.",
-                                  { rejection_reason: "Rejected via hotel dashboard" }
-                                )
-                              }
+                              onClick={() => rejectBooking(booking)}
                               disabled={isProcessing(booking)}
                               title="Reject"
                             >
@@ -774,57 +791,109 @@ const ReceptionistHotelBookings = () => {
         )}
       </section>
 
-      {selectedBooking && (
-        <div className="booking-modal-overlay" onClick={() => setSelectedBooking(null)}>
-          <div className="booking-modal" onClick={(event) => event.stopPropagation()}>
-            <div className="modal-header">
-              <div>
-                <span className="hotel-eyebrow">
-                  <FontAwesomeIcon icon={faInfoCircle} />
-                  Boarding Details
-                </span>
-                <h2>Boarding #{selectedBooking.id}</h2>
+      {selectedBooking && (() => {
+        const bookingStatus = normalizeStatus(selectedBooking.status);
+        const payStatus = normalizePaymentStatus(selectedBooking.payment_status);
+        const stayDate = getDateValue(selectedBooking.check_in);
+        const stayHours = `${formatTime12(selectedBooking.check_in_time || "09:00")} – ${formatTime12(selectedBooking.check_out_time || "19:00")}`;
+
+        return (
+          <div className="hbk-overlay" onClick={() => setSelectedBooking(null)}>
+            <div className="hbk-modal" onClick={(event) => event.stopPropagation()}>
+              <div className="hbk-head">
+                <div className="hbk-head-left">
+                  <span className="hotel-eyebrow">
+                    <FontAwesomeIcon icon={faInfoCircle} />
+                    Boarding Details
+                  </span>
+                  <div className="hbk-title-row">
+                    <h2>Boarding #{selectedBooking.id}</h2>
+                    <span className={`hbk-pill is-${bookingStatus}`}>
+                      {formatStatus(bookingStatus)}
+                    </span>
+                  </div>
+                </div>
+
+                <button
+                  type="button"
+                  className="close-btn"
+                  onClick={() => setSelectedBooking(null)}
+                >
+                  <FontAwesomeIcon icon={faTimes} />
+                </button>
               </div>
 
-              <button
-                type="button"
-                className="close-btn"
-                onClick={() => setSelectedBooking(null)}
-              >
-                <FontAwesomeIcon icon={faTimes} />
-              </button>
-            </div>
+              <div className="hbk-body">
+                {/* Guest summary */}
+                <div className="hbk-guest">
+                  <div className="hbk-guest-avatar">
+                    <PetAvatar pet={selectedBooking.pet} size={52} />
+                  </div>
+                  <div className="hbk-guest-meta">
+                    <strong>{getPetName(selectedBooking)}</strong>
+                    <span>
+                      <FontAwesomeIcon icon={faUser} />
+                      {getCustomerName(selectedBooking)}
+                    </span>
+                    <span className="hbk-guest-phone">
+                      {getCustomerPhone(selectedBooking) || "No phone on file"}
+                    </span>
+                  </div>
+                  <div className="hbk-guest-billing">
+                    <label>Total Amount</label>
+                    <strong>
+                      {formatCurrency(
+                        selectedBooking.total_amount || selectedBooking.amount || 0
+                      )}
+                    </strong>
+                    <span className={`hbk-pay is-${payStatus}`}>
+                      {formatStatus(payStatus)}
+                    </span>
+                  </div>
+                </div>
 
-            <div className="modal-content">
-              <div className="info-grid">
-                <InfoItem label="Pet" value={getPetName(selectedBooking)} />
-                <InfoItem label="Customer" value={getCustomerName(selectedBooking)} />
-                <InfoItem label="Phone" value={getCustomerPhone(selectedBooking)} />
-                <InfoItem label="Room" value={getRoomName(selectedBooking)} />
-                <InfoItem label="Check In" value={formatDate(selectedBooking.check_in)} />
-                <InfoItem label="Check Out" value={formatDate(selectedBooking.check_out)} />
-                <InfoItem
-                  label="Payment"
-                  value={formatStatus(normalizePaymentStatus(selectedBooking.payment_status))}
-                />
-                <InfoItem
-                  label="Status"
-                  value={formatStatus(normalizeStatus(selectedBooking.status))}
-                />
-                <InfoItem
-                  label="Amount"
-                  value={formatCurrency(
-                    selectedBooking.total_amount || selectedBooking.amount || 0
-                  )}
-                />
-                <InfoItem
-                  label="Instructions"
-                  value={selectedBooking.notes || "None"}
-                  wide
-                />
+                {/* Stay details */}
+                <div className="hbk-grid">
+                  <div className="hbk-cell">
+                    <label>
+                      <FontAwesomeIcon icon={faDoorOpen} /> Room / Kennel
+                    </label>
+                    <span>{getRoomName(selectedBooking)}</span>
+                  </div>
+                  <div className="hbk-cell">
+                    <label>
+                      <FontAwesomeIcon icon={faCalendarAlt} /> Stay Date
+                    </label>
+                    <span>{formatDate(stayDate)}</span>
+                  </div>
+                  <div className="hbk-cell">
+                    <label>
+                      <FontAwesomeIcon icon={faClock} /> Visit Hours
+                    </label>
+                    <span>{stayHours}</span>
+                  </div>
+                  <div className="hbk-cell full">
+                    <label>
+                      <FontAwesomeIcon icon={faClipboardList} /> Instructions
+                    </label>
+                    <span>{selectedBooking.notes || "None"}</span>
+                  </div>
+                </div>
+
+                {/* Vaccination card */}
                 {selectedBooking.vaccination_card && (
-                  <div className="info-item full-width">
-                    <span className="info-label">Vaccination Card</span>
+                  <div className="hbk-vax">
+                    <div className="hbk-vax-info">
+                      <FontAwesomeIcon icon={faCheckCircle} className="hbk-vax-icon" />
+                      <div>
+                        <strong>Vaccination Card</strong>
+                        <span>
+                          {selectedBooking.vaccination_card_verified_at
+                            ? `Verified ${formatDateTime(selectedBooking.vaccination_card_verified_at)}`
+                            : "Uploaded — pending verification"}
+                        </span>
+                      </div>
+                    </div>
                     <div className="vaccination-actions">
                       <button
                         type="button"
@@ -847,13 +916,9 @@ const ReceptionistHotelBookings = () => {
                           }
                         }}
                       >
-                        <FontAwesomeIcon icon={faEye} /> View Vaccination Card
+                        <FontAwesomeIcon icon={faEye} /> View Card
                       </button>
-                      {selectedBooking.vaccination_card_verified_at ? (
-                        <span className="vaccination-verified-badge">
-                          <FontAwesomeIcon icon={faCheckCircle} /> Verified
-                        </span>
-                      ) : selectedBooking.vaccination_card ? (
+                      {!selectedBooking.vaccination_card_verified_at && (
                         <button
                           type="button"
                           className="vaccination-verify-btn"
@@ -861,221 +926,202 @@ const ReceptionistHotelBookings = () => {
                           disabled={processingId === selectedBooking.id}
                         >
                           <FontAwesomeIcon icon={faCheckCircle} />
-                          {processingId === selectedBooking.id ? " Verifying..." : " Verify Vaccination Card"}
+                          {processingId === selectedBooking.id ? " Verifying..." : " Verify"}
                         </button>
-                      ) : (
-                        <span className="vaccination-status" style={{ color: "var(--color-muted)", fontSize: "0.85rem" }}>
-                          No vaccination card uploaded
-                        </span>
                       )}
+                    </div>
+                  </div>
+                )}
+
+                {["pending", "approved"].includes(bookingStatus) && (
+                  <div className="hbk-panel">
+                    <div className="hbk-panel-head">
+                      <h3>Schedule / Assign Room</h3>
+                      <p>Select an available room and finalize the stay details.</p>
+                    </div>
+
+                    <div className="form-row">
+                      <div className="form-group">
+                        <label>Room / Kennel</label>
+                        <select
+                          value={scheduleDraft[selectedBooking.id]?.hotel_room_id || ""}
+                          onChange={(event) =>
+                            updateScheduleDraft(
+                              selectedBooking.id,
+                              "hotel_room_id",
+                              event.target.value
+                            )
+                          }
+                        >
+                          <option value="">Select room</option>
+                          {rooms.map((room) => (
+                            <option key={room.id} value={room.id}>
+                              {getRoomOptionName(room)} ({room.status || "available"})
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+
+                      <div className="form-group">
+                        <label>Total Amount</label>
+                        <input
+                          type="number"
+                          min="0"
+                          step="0.01"
+                          value={scheduleDraft[selectedBooking.id]?.total_amount || ""}
+                          onChange={(event) =>
+                            updateScheduleDraft(
+                              selectedBooking.id,
+                              "total_amount",
+                              event.target.value
+                            )
+                          }
+                          placeholder="0.00"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="form-row">
+                      <div className="form-group">
+                        <label>Stay Date (same-day check-in/check-out)</label>
+                        <DatePickerInput
+                          withPortal
+                          selected={(() => {
+                            const val = scheduleDraft[selectedBooking.id]?.check_in || stayDate;
+                            return val ? new Date(val) : null;
+                          })()}
+                          onChange={(date) =>
+                            updateScheduleDraft(selectedBooking.id, "check_in", date ? date.toISOString().split("T")[0] : "")
+                          }
+                          placeholderText="Pick stay date..."
+                        />
+                      </div>
+
+                      <div className="form-group">
+                        <label>Check In Time</label>
+                        <input
+                          type="time"
+                          min="09:00"
+                          max="19:00"
+                          value={scheduleDraft[selectedBooking.id]?.check_in_time || selectedBooking.check_in_time || "09:00"}
+                          onChange={(event) =>
+                            updateScheduleDraft(selectedBooking.id, "check_in_time", event.target.value)
+                          }
+                        />
+                      </div>
+                    </div>
+
+                    <div className="form-row">
+                      <div className="form-group">
+                        <label>Check Out Time</label>
+                        <input
+                          type="time"
+                          min="09:00"
+                          max="19:00"
+                          value={scheduleDraft[selectedBooking.id]?.check_out_time || selectedBooking.check_out_time || "18:00"}
+                          onChange={(event) =>
+                            updateScheduleDraft(selectedBooking.id, "check_out_time", event.target.value)
+                          }
+                        />
+                        <small className="hbk-hint">
+                          Store hours 9:00 AM – 7:00 PM · same-day checkout
+                        </small>
+                      </div>
+                    </div>
+
+                    <div className="form-actions">
+                      <button
+                        type="button"
+                        className="submit-btn"
+                        onClick={() => scheduleBooking(selectedBooking)}
+                        disabled={isProcessing(selectedBooking)}
+                      >
+                        {isProcessing(selectedBooking) && (
+                          <FontAwesomeIcon icon={faSpinner} spin />
+                        )}
+                        Schedule Boarding
+                      </button>
+                    </div>
+                  </div>
+                )}
+
+                {["checked_in", "in_care"].includes(bookingStatus) && (
+                  <div className="hbk-panel">
+                    <div className="hbk-panel-head">
+                      <h3>Add Care Log</h3>
+                      <p>Record feeding, cleaning, walking, medication, or care updates.</p>
+                    </div>
+
+                    <div className="form-row">
+                      <div className="form-group">
+                        <label>Care Log Type</label>
+                        <select
+                          value={careDraft.log_type}
+                          onChange={(event) =>
+                            setCareDraft((prev) => ({
+                              ...prev,
+                              log_type: event.target.value,
+                            }))
+                          }
+                        >
+                          {CARE_LOG_TYPES.map((type) => (
+                            <option key={type.value} value={type.value}>
+                              {type.label}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+                    </div>
+
+                    <div className="form-row">
+                      <div className="form-group full-width">
+                        <label>Notes</label>
+                        <textarea
+                          rows="4"
+                          value={careDraft.notes}
+                          onChange={(event) =>
+                            setCareDraft((prev) => ({
+                              ...prev,
+                              notes: event.target.value,
+                            }))
+                          }
+                          placeholder="Write care notes here..."
+                        />
+                      </div>
+                    </div>
+
+                    <div className="form-actions">
+                      <button
+                        type="button"
+                        className="submit-btn"
+                        onClick={() => addCareLog(selectedBooking)}
+                        disabled={isProcessing(selectedBooking)}
+                      >
+                        {isProcessing(selectedBooking) && (
+                          <FontAwesomeIcon icon={faSpinner} spin />
+                        )}
+                        Add Care Log
+                      </button>
                     </div>
                   </div>
                 )}
               </div>
 
-              {["pending", "approved"].includes(normalizeStatus(selectedBooking.status)) && (
-                <div className="booking-form">
-                  <div className="form-title">
-                    <h3>Schedule / Assign Room</h3>
-                    <p>Select an available room and finalize the stay details.</p>
-                  </div>
-
-                  <div className="form-row">
-                    <div className="form-group">
-                      <label>Room / Kennel</label>
-                      <select
-                        value={scheduleDraft[selectedBooking.id]?.hotel_room_id || ""}
-                        onChange={(event) =>
-                          updateScheduleDraft(
-                            selectedBooking.id,
-                            "hotel_room_id",
-                            event.target.value
-                          )
-                        }
-                      >
-                        <option value="">Select room</option>
-                        {rooms.map((room) => (
-                          <option key={room.id} value={room.id}>
-                            {getRoomOptionName(room)} ({room.status || "available"})
-                          </option>
-                        ))}
-                      </select>
-                    </div>
-
-                    <div className="form-group">
-                      <label>Total Amount</label>
-                      <input
-                        type="number"
-                        min="0"
-                        step="0.01"
-                        value={scheduleDraft[selectedBooking.id]?.total_amount || ""}
-                        onChange={(event) =>
-                          updateScheduleDraft(
-                            selectedBooking.id,
-                            "total_amount",
-                            event.target.value
-                          )
-                        }
-                        placeholder="0.00"
-                      />
-                    </div>
-                  </div>
-
-                  <div className="form-row">
-                    <div className="form-group">
-                      <label>Check In Date</label>
-                      <DatePickerInput
-                        withPortal
-                        selected={(() => {
-                          const val = scheduleDraft[selectedBooking.id]?.check_in || getDateValue(selectedBooking.check_in);
-                          return val ? new Date(val) : null;
-                        })()}
-                        onChange={(date) =>
-                          updateScheduleDraft(selectedBooking.id, "check_in", date ? date.toISOString().split("T")[0] : "")
-                        }
-                        placeholderText="Pick check-in..."
-                      />
-                    </div>
-
-                    <div className="form-group">
-                      <label>Check In Time</label>
-                      <input
-                        type="time"
-                        value={scheduleDraft[selectedBooking.id]?.check_in_time || selectedBooking.check_in_time || "09:00"}
-                        onChange={(event) =>
-                          updateScheduleDraft(selectedBooking.id, "check_in_time", event.target.value)
-                        }
-                      />
-                    </div>
-                  </div>
-
-                  <div className="form-row">
-                    <div className="form-group">
-                      <label>Check Out Date</label>
-                      <DatePickerInput
-                        withPortal
-                        selected={(() => {
-                          const val = scheduleDraft[selectedBooking.id]?.check_out || getDateValue(selectedBooking.check_out);
-                          return val ? new Date(val) : null;
-                        })()}
-                        onChange={(date) =>
-                          updateScheduleDraft(selectedBooking.id, "check_out", date ? date.toISOString().split("T")[0] : "")
-                        }
-                        placeholderText="Pick check-out..."
-                      />
-                    </div>
-
-                    <div className="form-group">
-                      <label>Check Out Time</label>
-                      <input
-                        type="time"
-                        value={scheduleDraft[selectedBooking.id]?.check_out_time || selectedBooking.check_out_time || "17:00"}
-                        onChange={(event) =>
-                          updateScheduleDraft(selectedBooking.id, "check_out_time", event.target.value)
-                        }
-                      />
-                    </div>
-                  </div>
-
-                  <div className="form-actions">
-                    <button
-                      type="button"
-                      className="submit-btn"
-                      onClick={() => scheduleBooking(selectedBooking)}
-                      disabled={isProcessing(selectedBooking)}
-                    >
-                      {isProcessing(selectedBooking) && (
-                        <FontAwesomeIcon icon={faSpinner} spin />
-                      )}
-                      Schedule Boarding
-                    </button>
-                  </div>
-                </div>
-              )}
-
-              {["checked_in", "in_care"].includes(normalizeStatus(selectedBooking.status)) && (
-                <div className="booking-form">
-                  <div className="form-title">
-                    <h3>Add Care Log</h3>
-                    <p>Record feeding, cleaning, walking, medication, or care updates.</p>
-                  </div>
-
-                  <div className="form-row">
-                    <div className="form-group">
-                      <label>Care Log Type</label>
-                      <select
-                        value={careDraft.log_type}
-                        onChange={(event) =>
-                          setCareDraft((prev) => ({
-                            ...prev,
-                            log_type: event.target.value,
-                          }))
-                        }
-                      >
-                        {CARE_LOG_TYPES.map((type) => (
-                          <option key={type.value} value={type.value}>
-                            {type.label}
-                          </option>
-                        ))}
-                      </select>
-                    </div>
-                  </div>
-
-                  <div className="form-row">
-                    <div className="form-group full-width">
-                      <label>Notes</label>
-                      <textarea
-                        rows="4"
-                        value={careDraft.notes}
-                        onChange={(event) =>
-                          setCareDraft((prev) => ({
-                            ...prev,
-                            notes: event.target.value,
-                          }))
-                        }
-                        placeholder="Write care notes here..."
-                      />
-                    </div>
-                  </div>
-
-                  <div className="form-actions">
-                    <button
-                      type="button"
-                      className="submit-btn"
-                      onClick={() => addCareLog(selectedBooking)}
-                      disabled={isProcessing(selectedBooking)}
-                    >
-                      {isProcessing(selectedBooking) && (
-                        <FontAwesomeIcon icon={faSpinner} spin />
-                      )}
-                      Add Care Log
-                    </button>
-                  </div>
-                </div>
-              )}
-            </div>
-
-            <div className="modal-actions">
-              <button
-                type="button"
-                className="secondary-btn"
-                onClick={() => setSelectedBooking(null)}
-              >
-                Close
-              </button>
+              <div className="hbk-foot">
+                <button
+                  type="button"
+                  className="secondary-btn"
+                  onClick={() => setSelectedBooking(null)}
+                >
+                  Close
+                </button>
+              </div>
             </div>
           </div>
-        </div>
-      )}
+        );
+      })()}
     </div>
   );
 };
-
-const InfoItem = ({ label, value, wide = false }) => (
-  <div className={`info-item ${wide ? "full-width" : ""}`}>
-    <label>{label}</label>
-    <span>{value || "N/A"}</span>
-  </div>
-);
 
 export default ReceptionistHotelBookings;

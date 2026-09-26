@@ -405,73 +405,19 @@
   font-weight: 600;
 }
 
-/* Modal */
-.modal-overlay {
-  position: fixed;
-  inset: 0;
-  z-index: 12000;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 20px;
-  background: rgba(0, 0, 0, 0.4);
-  backdrop-filter: blur(6px);
-}
-
-.modal-content {
+/* Detail modal shell comes from shared hbk-* (styles/bookingModal.css) */
+.hbk-modal {
   width: min(600px, 100%);
-  max-height: 90vh;
-  overflow-y: auto;
-  background: var(--grooming-surface);
-  border: 1px solid var(--grooming-border);
-  border-radius: 12px;
-  box-shadow: 0 20px 60px rgba(0,0,0,0.15);
 }
 
-.modal-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 16px;
-  padding: 20px 24px;
-  border-bottom: 1px solid var(--grooming-border);
-}
-
-.modal-header h2 {
-  margin: 0;
-  color: var(--grooming-heading);
-  font-size: 1.25rem;
-  font-weight: 600;
+.hbk-head h2 {
   display: flex;
   align-items: center;
   gap: 10px;
 }
 
-.modal-header h2 svg {
+.hbk-head h2 svg {
   color: var(--grooming-primary);
-}
-
-.close-btn {
-  width: 36px;
-  height: 36px;
-  display: grid;
-  place-items: center;
-  border: 1px solid var(--grooming-border);
-  border-radius: 8px;
-  background: var(--grooming-surface-alt);
-  color: var(--grooming-muted);
-  cursor: pointer;
-  transition: all 0.15s ease;
-}
-
-.close-btn:hover {
-  background: var(--grooming-danger-bg);
-  color: var(--grooming-danger);
-  border-color: var(--grooming-danger);
-}
-
-.modal-body {
-  padding: 20px 24px;
 }
 
 .detail-grid {
@@ -508,13 +454,7 @@
   word-break: break-word;
 }
 
-.modal-footer {
-  display: flex;
-  justify-content: flex-end;
-  gap: 10px;
-  padding: 14px 24px;
-  border-top: 1px solid var(--grooming-border);
-}
+
 
 /* Responsive */
 @media (max-width: 1180px) {
@@ -528,9 +468,7 @@
   .grooming-bookings { padding: 16px; gap: 16px; }
   .grooming-stats { grid-template-columns: repeat(2, 1fr); }
   .detail-grid { grid-template-columns: 1fr; }
-  .stat-card,
-  .modal-footer button { width: 100%; }
-  .modal-footer { flex-direction: column; }
+  .stat-card { width: 100%; }
 }
 
 @media (max-width: 480px) {

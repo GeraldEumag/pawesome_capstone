@@ -8,6 +8,7 @@ import Register from "../components/auth/Register";
 import VerifyEmail from "../components/auth/VerifyEmail";
 import ForgotPassword from "../components/auth/ForgotPassword";
 import Logout from "../components/auth/Logout";
+import KioskGate from "../components/kiosk/KioskGate";
 import Dashboard from "../components/Dashboard";
 import ProtectedRoute from "../components/ProtectedRoute";
 import AuthRedirectListener from "../components/shared/AuthRedirectListener";
@@ -33,6 +34,9 @@ const AppRoutes = () => (
       <Route path="/verify-email" element={<VerifyEmail />} />
       <Route path="/forgot-password" element={<ForgotPassword />} />
       <Route path="/logout" element={<Logout />} />
+
+      {/* Public employee attendance kiosk — PIN-gated, no login required */}
+      <Route path="/attendance-kiosk" element={<KioskGate />} />
 
       {/* User dashboard */}
       <Route

@@ -412,11 +412,22 @@ class ReceptionistRequestController extends Controller
     {
         $validated = $request->validate([
             'status' => 'required|in:pending,approved,rejected,cancelled,completed,in_progress,checked_in',
+            'rejection_reason' => 'required_if:status,rejected|string|max:1000',
         ]);
 
         /** @var ServiceRequest $serviceRequest */
         $serviceRequest = ServiceRequest::findOrFail($id);
         $serviceRequest->status = $validated['status'];
+
+        if ($validated['status'] === 'rejected') {
+            $serviceRequest->rejection_reason = $validated['rejection_reason'];
+            if (Schema::hasColumn('service_requests', 'rejected_by')) {
+                $serviceRequest->rejected_by = $request->user()?->id;
+            }
+            if (Schema::hasColumn('service_requests', 'rejected_at')) {
+                $serviceRequest->rejected_at = now();
+            }
+        }
 
         if (in_array($validated['status'], ['rejected', 'cancelled'])) {
             $serviceRequest->payment_status = 'unpaid';

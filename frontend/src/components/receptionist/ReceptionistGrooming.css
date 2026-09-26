@@ -162,7 +162,7 @@
 .clear-btn,
 .danger-btn,
 .action-btn,
-.modal-actions button {
+.hbk-foot button {
   min-height: 44px;
   border: none;
   border-radius: var(--groom-radius-pill);
@@ -203,7 +203,7 @@
 .clear-btn:hover,
 .danger-btn:hover,
 .action-btn:hover,
-.modal-actions button:hover {
+.hbk-foot button:hover {
   transform: translateY(-2px);
 }
 
@@ -628,77 +628,9 @@
   font-weight: 750;
 }
 
-/* Modal */
-
-.grooming-modal-overlay {
-  position: fixed;
-  inset: 0;
-  z-index: 12000;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 1rem;
-  background: rgba(15, 23, 42, 0.52);
-  backdrop-filter: blur(10px);
-}
-
-.grooming-modal {
+/* Detail modal shell comes from shared hbk-* (styles/bookingModal.css) */
+.hbk-modal {
   width: min(760px, 100%);
-  max-height: 92vh;
-  overflow-y: auto;
-  border: 1px solid var(--groom-border);
-  border-radius: var(--groom-radius-card);
-  background: var(--groom-surface-solid);
-  box-shadow: 0 30px 90px rgba(15, 23, 42, 0.26);
-}
-
-.modal-header {
-  display: flex;
-  justify-content: space-between;
-  gap: 1rem;
-  padding: 1.35rem;
-  border-bottom: 1px solid var(--groom-border);
-}
-
-.modal-header h2 {
-  margin: 0.4rem 0 0;
-  color: var(--groom-heading);
-  font-size: 1.45rem;
-  font-weight: 950;
-}
-
-.close-btn {
-  width: 42px;
-  height: 42px;
-  min-width: 42px;
-  display: grid;
-  place-items: center;
-  border: 1px solid var(--groom-border);
-  border-radius: 14px;
-  background: var(--groom-surface);
-  color: var(--groom-heading);
-  cursor: pointer;
-  transition: 0.2s ease;
-}
-
-.close-btn:hover {
-  background: var(--groom-primary);
-  color: #ffffff;
-}
-
-.modal-content {
-  display: grid;
-  gap: 1rem;
-  padding: 1.35rem;
-}
-
-.modal-actions {
-  display: flex;
-  justify-content: flex-end;
-  flex-wrap: wrap;
-  gap: 0.75rem;
-  padding: 1rem 1.35rem;
-  border-top: 1px solid var(--groom-border);
 }
 
 .info-grid {
@@ -772,15 +704,12 @@
 
   .grooming-hero,
   .grooming-controls,
-  .grooming-table-card,
-  .grooming-modal {
+  .grooming-table-card {
     border-radius: 22px;
   }
 
   .grooming-hero,
-  .grooming-controls,
-  .modal-content,
-  .modal-header {
+  .grooming-controls {
     padding: 1.15rem;
   }
 
@@ -791,13 +720,8 @@
   }
 
   .grooming-summary-card,
-  .clear-btn,
-  .modal-actions button {
+  .clear-btn {
     width: 100%;
-  }
-
-  .modal-actions {
-    flex-direction: column;
   }
 }
 
@@ -807,7 +731,4 @@
     flex-direction: column;
   }
 
-  .grooming-modal {
-    border-radius: 20px;
-  }
 }

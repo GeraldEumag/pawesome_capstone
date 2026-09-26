@@ -3,12 +3,11 @@ import ReactDOM from "react-dom";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
   faBarcode, faCheckSquare, faFilter,
-  faPrint, faQrcode, faRotateRight,
+  faPrint, faRotateRight,
   faSearch, faSave, faSquare, faTag,
   faTriangleExclamation, faXmark,
 } from "@fortawesome/free-solid-svg-icons";
 import JsBarcode from "jsbarcode";
-import { QRCodeSVG } from "qrcode.react";
 import { inventoryApi } from "../../api/inventory.jsx";
 import { normalizeList } from "../../api/client";
 import "./BarcodeGenerator.css";
@@ -83,12 +82,7 @@ const LabelCard = React.memo(({ item, selected, onToggle, onPrintOne, onSaveBarc
           <span className="bg-label-price">{formatPrice(item.price)}</span>
         </div>
 
-        <div className="bg-label-qr-row">
-          {code ? (
-            <QRCodeSVG value={code} size={56} level="M" bgColor="#fff" fgColor="#111827" />
-          ) : (
-            <span className="bg-no-code">No QR</span>
-          )}
+        <div className="bg-label-code-row">
           <span className="bg-label-code">{code || "—"}</span>
         </div>
 
@@ -135,12 +129,7 @@ const PrintSheet = ({ items }) => (
             <span>{item.sku || "—"}</span>
             <span>{formatPrice(item.price)}</span>
           </div>
-          <div className="bg-print-qr-row">
-            {code && (
-              <QRCodeSVG value={code} size={48} level="M" bgColor="#fff" fgColor="#000" />
-            )}
-            <span className="bg-print-code">{code}</span>
-          </div>
+          <span className="bg-print-code">{code}</span>
         </div>
       );
     })}
@@ -206,7 +195,7 @@ const BarcodeGenerator = () => {
       const printSheet = document.querySelector(".bg-print-sheet");
       if (!printSheet || !printSheet.firstElementChild) return;
 
-      // Deep-clone the already-rendered print sheet (barcodes + QR SVGs included)
+      // Deep-clone the already-rendered print sheet (barcode SVGs included)
       const clone = printSheet.cloneNode(true);
       clone.style.cssText = ""; // clear off-screen positioning
 
@@ -230,7 +219,6 @@ const BarcodeGenerator = () => {
   .bg-print-barcode-svg { width: 100%; height: auto; max-height: 14mm; }
   .bg-print-name { font-size: 10px; font-weight: 700; text-align: center; color: #000; line-height: 1.2; word-break: break-word; }
   .bg-print-sku-price { display: flex; justify-content: space-between; width: 100%; font-size: 9px; color: #333; }
-  .bg-print-qr-row { display: flex; align-items: center; gap: 2mm; }
   .bg-print-code { font-size: 8px; font-family: monospace; color: #333; word-break: break-all; }
   .bg-print-nocode { font-size: 9px; color: #999; font-style: italic; }
   @page { size: A4 portrait; margin: 8mm; }
@@ -322,7 +310,7 @@ const BarcodeGenerator = () => {
             <FontAwesomeIcon icon={faBarcode} />
             Barcode Generator
           </h1>
-          <p>Generate and print scannable barcode + QR code labels for your products.</p>
+          <p>Generate and print scannable barcode labels for your products.</p>
         </div>
         <div className="bg-hero-actions">
           <button

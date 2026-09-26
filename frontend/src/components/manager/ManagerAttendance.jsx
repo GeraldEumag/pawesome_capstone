@@ -5,7 +5,6 @@ import {
   faCalendarAlt,
   faCalendarDays,
   faCheckCircle,
-  faCheckSquare,
   faChevronDown,
   faChevronLeft,
   faChevronRight,
@@ -21,9 +20,6 @@ import {
   faRefresh,
   faSearch,
   faSpinner,
-  faSquare,
-  faThumbsDown,
-  faThumbsUp,
   faThList,
   faTriangleExclamation,
   faUserCheck,
@@ -229,18 +225,6 @@ const normalizeAttendanceRecord = (record, fallbackDate) => {
       record.manager_remarks ||
       record.attendance_remarks ||
       "",
-    reviewStatus: normalizeStatus(
-      record.review_status ||
-        record.manager_review_status ||
-        record.reviewStatus ||
-        (record.reviewed || record.is_reviewed ? "reviewed" : "pending")
-    ),
-    approvedBy:
-      record.approved_by ||
-      record.reviewed_by ||
-      record.approver?.name ||
-      record.manager?.name ||
-      "N/A",
     salaryRate: safeNumber(record.salary_rate || record.salaryRate || 0),
     dailyEarnings: safeNumber(
       record.daily_earnings || record.dailyEarnings || record.amount || 0
@@ -260,7 +244,6 @@ const ManagerAttendance = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedDepartment, setSelectedDepartment] = useState("all");
   const [selectedStatus, setSelectedStatus] = useState("all");
-  const [selectedReviewStatus, setSelectedReviewStatus] = useState("all");
   const [selectedDate, setSelectedDate] = useState(TODAY);
 
   const [sortBy, setSortBy] = useState("name");
@@ -275,7 +258,6 @@ const ManagerAttendance = () => {
   const [showDetailsModal, setShowDetailsModal] = useState(false);
   const [showRemarksModal, setShowRemarksModal] = useState(false);
   const [remarksForm, setRemarksForm] = useState(DEFAULT_REMARKS_FORM);
-  const [selectedIds, setSelectedIds] = useState(new Set());
   const [viewMode, setViewMode] = useState("list");
   const [calendarMonth, setCalendarMonth] = useState(() => {
     const d = new Date();
@@ -402,15 +384,10 @@ const ManagerAttendance = () => {
         const matchesStatus =
           selectedStatus === "all" || record.status === selectedStatus;
 
-        const matchesReviewStatus =
-          selectedReviewStatus === "all" ||
-          record.reviewStatus === selectedReviewStatus;
-
         return (
           matchesSearch &&
           matchesDepartment &&
-          matchesStatus &&
-          matchesReviewStatus
+          matchesStatus
         );
       })
       .sort((a, b) => {
@@ -426,7 +403,6 @@ const ManagerAttendance = () => {
     searchTerm,
     selectedDepartment,
     selectedStatus,
-    selectedReviewStatus,
     sortBy,
     sortOrder,
   ]);
@@ -453,9 +429,6 @@ const ManagerAttendance = () => {
     ).length;
     const leave = attendance.filter((record) =>
       ["leave", "on_leave"].includes(record.status)
-    ).length;
-    const pendingReview = attendance.filter(
-      (record) => record.reviewStatus !== "reviewed"
     ).length;
 
     const totalHours = attendance.reduce(
@@ -489,7 +462,6 @@ const ManagerAttendance = () => {
       late,
       halfDay,
       leave,
-      pendingReview,
       totalHours,
       averageHours: total ? totalHours / total : 0,
       overtimeHours,
@@ -514,7 +486,6 @@ const ManagerAttendance = () => {
     setSearchTerm("");
     setSelectedDepartment("all");
     setSelectedStatus("all");
-    setSelectedReviewStatus("all");
     setSortBy("name");
     setSortOrder("asc");
     setCurrentPage(1);
@@ -578,107 +549,6 @@ const ManagerAttendance = () => {
     }
   };
 
-  const handleReviewAction = async (record, action) => {
-    setActionLoadingId(record.id);
-
-    try {
-      await apiRequest(`/manager/attendance/${record.id}/review`, {
-        method: "POST",
-        body: JSON.stringify({
-          review_status: action === "approve" ? "reviewed" : "rejected",
-        }),
-      });
-
-      setAttendance((prev) =>
-        prev.map((item) =>
-          item.id === record.id
-            ? { ...item, reviewStatus: action === "approve" ? "reviewed" : "rejected" }
-            : item
-        )
-      );
-
-      showToast(
-        `Attendance record ${action === "approve" ? "approved" : "rejected"}.`,
-        "success"
-      );
-    } catch (err) {
-      console.error(`Review ${action} error:`, err);
-
-      setAttendance((prev) =>
-        prev.map((item) =>
-          item.id === record.id
-            ? { ...item, reviewStatus: action === "approve" ? "reviewed" : "rejected" }
-            : item
-        )
-      );
-
-      showToast(
-        `${action === "approve" ? "Approved" : "Rejected"} on-screen. Backend endpoint may need verification.`,
-        "warning"
-      );
-    } finally {
-      setActionLoadingId(null);
-    }
-  };
-
-  const toggleSelect = (id) => {
-    setSelectedIds((prev) => {
-      const next = new Set(prev);
-      if (next.has(id)) next.delete(id);
-      else next.add(id);
-      return next;
-    });
-  };
-
-  const toggleSelectAll = () => {
-    const pageIds = new Set(paginatedAttendance.map((r) => r.id));
-    const allSelected = pageIds.size > 0 && [...pageIds].every((id) => selectedIds.has(id));
-    setSelectedIds((prev) => {
-      const next = new Set(prev);
-      if (allSelected) {
-        pageIds.forEach((id) => next.delete(id));
-      } else {
-        pageIds.forEach((id) => next.add(id));
-      }
-      return next;
-    });
-  };
-
-  const clearSelection = () => setSelectedIds(new Set());
-
-  const handleBulkAction = async (action) => {
-    if (selectedIds.size === 0) return;
-    const ids = [...selectedIds];
-    let succeeded = 0;
-    let failed = 0;
-
-    for (const id of ids) {
-      try {
-        await apiRequest(`/manager/attendance/${id}/review`, {
-          method: "POST",
-          body: JSON.stringify({ review_status: action === "approve" ? "reviewed" : "rejected" }),
-        });
-        succeeded++;
-      } catch {
-        failed++;
-      }
-    }
-
-    setAttendance((prev) =>
-      prev.map((item) =>
-        selectedIds.has(item.id)
-          ? { ...item, reviewStatus: action === "approve" ? "reviewed" : "rejected" }
-          : item
-      )
-    );
-
-    setSelectedIds(new Set());
-    showToast(
-      `${action === "approve" ? "Approved" : "Rejected"} ${succeeded} records${failed > 0 ? `, ${failed} failed` : ""}.`,
-      failed > 0 ? "warning" : "success"
-    );
-  };
-
   const exportColumns = [
     { key: "employeeId", label: "Employee ID" },
     { key: "name", label: "Name" },
@@ -693,7 +563,6 @@ const ManagerAttendance = () => {
     { key: "overtime", label: "Overtime" },
     { key: "undertime", label: "Undertime" },
     { key: "remarks", label: "Remarks" },
-    { key: "reviewStatus", label: "Review Status" },
   ];
 
   const handleExport = (format) => {
@@ -716,7 +585,6 @@ const ManagerAttendance = () => {
       overtime: record.overtime,
       undertime: record.undertime,
       remarks: record.remarks,
-      reviewStatus: formatStatus(record.reviewStatus),
     }));
 
     const filename = "manager-attendance";
@@ -751,8 +619,8 @@ const ManagerAttendance = () => {
           <span className="attendance-eyebrow">Manager Attendance</span>
           <h1>Attendance Management</h1>
           <p>
-            Monitor employee attendance, review daily records, update remarks,
-            and prepare attendance data for payroll validation.
+            Monitor employee attendance, manage daily records and remarks,
+            and keep payroll-ready attendance data accurate.
           </p>
         </div>
 
@@ -790,29 +658,6 @@ const ManagerAttendance = () => {
           </button>
         </div>
       </section>
-
-      {selectedIds.size > 0 && (
-        <section className="attendance-bulk-bar">
-          <span>
-            <FontAwesomeIcon icon={faCheckSquare} />
-            <strong>{selectedIds.size}</strong> selected
-          </span>
-          <div>
-            <button type="button" className="attendance-btn success" onClick={() => handleBulkAction("approve")}>
-              <FontAwesomeIcon icon={faThumbsUp} />
-              Approve Selected
-            </button>
-            <button type="button" className="attendance-btn danger" onClick={() => handleBulkAction("reject")}>
-              <FontAwesomeIcon icon={faThumbsDown} />
-              Reject Selected
-            </button>
-            <button type="button" className="attendance-btn secondary" onClick={clearSelection}>
-              <FontAwesomeIcon icon={faXmark} />
-              Clear
-            </button>
-          </div>
-        </section>
-      )}
 
       {error && (
         <div className="attendance-alert error">
@@ -867,12 +712,6 @@ const ManagerAttendance = () => {
         <SummaryCard title="Absent" value={statistics.absent} icon={faUserTimes} tone="danger" />
         <SummaryCard title="Half-day" value={statistics.halfDay} icon={faHourglassHalf} tone="info" />
         <SummaryCard title="Leave" value={statistics.leave} icon={faCalendarAlt} tone="neutral" />
-        <SummaryCard
-          title="Pending Review"
-          value={statistics.pendingReview}
-          icon={faTriangleExclamation}
-          tone="review"
-        />
       </section>
 
       <section className="attendance-controls-card">
@@ -950,17 +789,6 @@ const ManagerAttendance = () => {
             />
 
             <FilterSelect
-              label="Review Status"
-              value={selectedReviewStatus}
-              onChange={setSelectedReviewStatus}
-              options={[
-                { value: "all", label: "All Review Status" },
-                { value: "pending", label: "Pending" },
-                { value: "reviewed", label: "Reviewed" },
-              ]}
-            />
-
-            <FilterSelect
               label="Sort By"
               value={sortBy}
               onChange={setSortBy}
@@ -969,7 +797,6 @@ const ManagerAttendance = () => {
                 { value: "department", label: "Department" },
                 { value: "role", label: "Role" },
                 { value: "status", label: "Status" },
-                { value: "reviewStatus", label: "Review Status" },
               ]}
             />
 
@@ -1041,8 +868,6 @@ const ManagerAttendance = () => {
             records={filteredAttendance}
             month={calendarMonth}
             onMonthChange={setCalendarMonth}
-            selectedIds={selectedIds}
-            onToggleSelect={toggleSelect}
           />
         ) : (
           <>
@@ -1050,23 +875,6 @@ const ManagerAttendance = () => {
               <table className="attendance-table">
                 <thead>
                   <tr>
-                    <th>
-                      <button
-                        type="button"
-                        className="attendance-select-all"
-                        onClick={toggleSelectAll}
-                        title="Select all on page"
-                      >
-                        <FontAwesomeIcon
-                          icon={
-                            paginatedAttendance.length > 0 &&
-                            paginatedAttendance.every((r) => selectedIds.has(r.id))
-                              ? faCheckSquare
-                              : faSquare
-                          }
-                        />
-                      </button>
-                    </th>
                     <SortableHeader label="Employee" field="name" sortBy={sortBy} sortOrder={sortOrder} onSort={handleSort} />
                     <SortableHeader label="Role" field="role" sortBy={sortBy} sortOrder={sortOrder} onSort={handleSort} />
                     <SortableHeader label="Department" field="department" sortBy={sortBy} sortOrder={sortOrder} onSort={handleSort} />
@@ -1077,26 +885,13 @@ const ManagerAttendance = () => {
                     <th>Overtime</th>
                     <th>Undertime</th>
                     <th>Remarks</th>
-                    <SortableHeader label="Review" field="reviewStatus" sortBy={sortBy} sortOrder={sortOrder} onSort={handleSort} />
                     <th>Actions</th>
                   </tr>
                 </thead>
 
                 <tbody>
                   {paginatedAttendance.map((record) => (
-                    <tr key={record.id} className={selectedIds.has(record.id) ? "selected" : ""}>
-                      <td>
-                        <button
-                          type="button"
-                          className="attendance-select-row"
-                          onClick={() => toggleSelect(record.id)}
-                        >
-                          <FontAwesomeIcon
-                            icon={selectedIds.has(record.id) ? faCheckSquare : faSquare}
-                          />
-                        </button>
-                      </td>
-
+                    <tr key={record.id}>
                       <td>
                         <div className="attendance-employee-cell">
                           <span>{record.name.charAt(0).toUpperCase()}</span>
@@ -1143,12 +938,6 @@ const ManagerAttendance = () => {
                       </td>
 
                       <td>
-                        <span className={`attendance-review ${record.reviewStatus}`}>
-                          {formatStatus(record.reviewStatus)}
-                        </span>
-                      </td>
-
-                      <td>
                         <div className="attendance-actions">
                           <button
                             type="button"
@@ -1166,46 +955,6 @@ const ManagerAttendance = () => {
                             onClick={() => handleOpenRemarks(record)}
                           >
                             <FontAwesomeIcon icon={faPenToSquare} />
-                          </button>
-
-                          <button
-                            type="button"
-                            className="review"
-                            title="Approve"
-                            disabled={
-                              actionLoadingId === record.id ||
-                              record.reviewStatus === "reviewed"
-                            }
-                            onClick={() => handleReviewAction(record, "approve")}
-                          >
-                            <FontAwesomeIcon
-                              icon={
-                                actionLoadingId === record.id
-                                  ? faSpinner
-                                  : faThumbsUp
-                              }
-                              spin={actionLoadingId === record.id}
-                            />
-                          </button>
-
-                          <button
-                            type="button"
-                            className="reject"
-                            title="Reject"
-                            disabled={
-                              actionLoadingId === record.id ||
-                              record.reviewStatus === "rejected"
-                            }
-                            onClick={() => handleReviewAction(record, "reject")}
-                          >
-                            <FontAwesomeIcon
-                              icon={
-                                actionLoadingId === record.id
-                                  ? faSpinner
-                                  : faThumbsDown
-                              }
-                              spin={actionLoadingId === record.id}
-                            />
                           </button>
                         </div>
                       </td>
@@ -1233,7 +982,7 @@ const ManagerAttendance = () => {
                           )}
                         </strong>
                       </td>
-                      <td colSpan={4} />
+                      <td colSpan={2} />
                     </tr>
                   </tfoot>
                 )}
@@ -1340,7 +1089,7 @@ const STATUS_DOT_COLORS = {
   default: "#64748b",
 };
 
-const CalendarView = ({ records, month, onMonthChange, selectedIds, onToggleSelect }) => {
+const CalendarView = ({ records, month, onMonthChange }) => {
   const [year, mon] = month.split("-").map(Number);
   const firstDay = new Date(year, mon - 1, 1);
   const lastDay = new Date(year, mon, 0);
@@ -1401,15 +1150,13 @@ const CalendarView = ({ records, month, onMonthChange, selectedIds, onToggleSele
               <span className="attendance-calendar-date">{day}</span>
               <div className="attendance-calendar-dots">
                 {dayRecords.slice(0, 5).map((r) => (
-                  <button
+                  <span
                     key={r.id}
-                    type="button"
-                    className={selectedIds.has(r.id) ? "selected" : ""}
+                    className="attendance-calendar-dot"
                     style={{
                       backgroundColor: STATUS_DOT_COLORS[r.status] || STATUS_DOT_COLORS.default,
                     }}
                     title={`${r.name} — ${formatStatus(r.status)}`}
-                    onClick={() => onToggleSelect(r.id)}
                   />
                 ))}
                 {dayRecords.length > 5 && (
@@ -1511,7 +1258,6 @@ const DetailsModal = ({ record, onClose, onEdit }) => (
             ["Overtime", formatHours(record.overtime)],
             ["Undertime", formatHours(record.undertime)],
             ["Status", formatStatus(record.status)],
-            ["Review Status", formatStatus(record.reviewStatus)],
             ["Location", record.location],
           ]}
         />
@@ -1521,7 +1267,6 @@ const DetailsModal = ({ record, onClose, onEdit }) => (
           items={[
             ["Salary Rate", formatCurrency(record.salaryRate)],
             ["Daily Earnings", formatCurrency(record.dailyEarnings)],
-            ["Approved By", record.approvedBy],
           ]}
         />
 
@@ -1572,7 +1317,7 @@ const RemarksModal = ({ record, form, setForm, saving, onClose, onSave }) => (
                 remarks: event.target.value,
               }))
             }
-            placeholder="Add notes about late arrival, undertime, correction, or attendance validation..."
+            placeholder="Add notes about late arrival, undertime, or attendance corrections..."
           />
         </label>
       </div>
@@ -1621,7 +1366,6 @@ const PrintArea = ({ records, selectedDate, statistics }) => (
       <span>Present: {statistics.present}</span>
       <span>Late: {statistics.late}</span>
       <span>Absent: {statistics.absent}</span>
-      <span>Pending Review: {statistics.pendingReview}</span>
     </div>
 
     <table>
@@ -1634,7 +1378,6 @@ const PrintArea = ({ records, selectedDate, statistics }) => (
           <th>Time Out</th>
           <th>Status</th>
           <th>Total Hours</th>
-          <th>Review</th>
           <th>Remarks</th>
         </tr>
       </thead>
@@ -1648,7 +1391,6 @@ const PrintArea = ({ records, selectedDate, statistics }) => (
             <td>{formatTime(record.timeOut)}</td>
             <td>{formatStatus(record.status)}</td>
             <td>{formatHours(record.totalHours)}</td>
-            <td>{formatStatus(record.reviewStatus)}</td>
             <td>{record.remarks || ""}</td>
           </tr>
         ))}

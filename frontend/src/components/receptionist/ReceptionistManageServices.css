@@ -452,79 +452,24 @@
   justify-content: flex-end;
 }
 
-/* Modal */
-.modal-overlay {
-  position: fixed;
-  inset: 0;
-  background: rgba(0, 0, 0, 0.5);
-  display: flex;
+/* Modal shell comes from shared hbk-* (styles/bookingModal.css) */
+.hbk-modal {
+  width: min(560px, 100%);
+}
+
+.hbk-head {
   align-items: center;
-  justify-content: center;
-  z-index: 1000;
-  padding: 1rem;
 }
 
-.modal-content {
-  background: var(--services-surface);
-  border: 1px solid var(--services-border);
-  border-radius: 12px;
-  width: 100%;
-  max-width: 500px;
-  max-height: 90vh;
-  overflow-y: auto;
-  box-shadow: 0 20px 60px rgba(0,0,0,0.15);
-}
-
-.modal-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 20px 24px;
-  border-bottom: 1px solid var(--services-border);
-}
-
-.modal-header h2 {
+.hbk-head h2 {
   display: flex;
   align-items: center;
   gap: 10px;
-  margin: 0;
   font-size: 1.25rem;
-  color: var(--services-heading);
 }
 
-.modal-header h2 svg {
+.hbk-head h2 svg {
   color: var(--services-primary);
-}
-
-.close-btn {
-  width: 36px;
-  height: 36px;
-  display: grid;
-  place-items: center;
-  border: 1px solid var(--services-border);
-  border-radius: 8px;
-  background: var(--services-surface-alt);
-  cursor: pointer;
-  color: var(--services-muted);
-  transition: all 0.15s ease;
-}
-
-.close-btn:hover {
-  background: var(--services-danger-bg);
-  color: var(--services-danger);
-  border-color: var(--services-danger);
-}
-
-.modal-body {
-  padding: 1.25rem;
-}
-
-.modal-footer {
-  display: flex;
-  justify-content: flex-end;
-  gap: 12px;
-  padding: 16px 24px;
-  border-top: 1px solid var(--services-border);
 }
 
 /* Form */

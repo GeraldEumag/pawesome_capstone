@@ -69,6 +69,11 @@ const formatTime = (value) => {
   return text;
 };
 
+const personKey = (emp) => `${emp.person_type || "user"}-${emp.id}`;
+
+const recordPersonKey = (r) =>
+  `${r.person_type || (r.employee_id ? "employee" : "user")}-${r.employee_id ?? r.user_id}`;
+
 const ManagerSchedule = () => {
   const [records, setRecords] = useState([]);
   const [employees, setEmployees] = useState([]);
@@ -134,16 +139,16 @@ const ManagerSchedule = () => {
   const scheduleMap = useMemo(() => {
     const m = {};
     records.forEach((r) => {
-      const key = `${r.user_id}-${r.day_of_week}`;
+      const key = `${recordPersonKey(r)}-${r.day_of_week}`;
       m[key] = r;
     });
     return m;
   }, [records]);
 
-  const openEdit = (user_id, day_of_week) => {
-    const key = `${user_id}-${day_of_week}`;
+  const openEdit = (emp, day_of_week) => {
+    const key = `${personKey(emp)}-${day_of_week}`;
     const existing = scheduleMap[key];
-    setEditModal({ user_id, day_of_week, existing: existing || null });
+    setEditModal({ person_type: emp.person_type || "user", person_id: emp.id, day_of_week, existing: existing || null });
     setEditForm({
       shift_start: existing ? existing.shift_start || "" : "",
       shift_end: existing ? existing.shift_end || "" : "",
@@ -158,7 +163,9 @@ const ManagerSchedule = () => {
       await apiRequest("/manager/schedules", {
         method: "POST",
         body: JSON.stringify({
-          user_id: editModal.user_id,
+          ...(editModal.person_type === "employee"
+            ? { employee_id: editModal.person_id }
+            : { user_id: editModal.person_id }),
           day_of_week: editModal.day_of_week,
           shift_start: editForm.is_off_day ? null : editForm.shift_start,
           shift_end: editForm.is_off_day ? null : editForm.shift_end,
@@ -171,19 +178,23 @@ const ManagerSchedule = () => {
     } catch (err) {
       console.error("Save schedule error:", err);
       showToast("Updated locally. Backend may need verification.", "warning");
+      const emp = employees.find((e) => personKey(e) === `${editModal.person_type}-${editModal.person_id}`);
       // Optimistically update
       const newRecord = {
         id: editModal.existing?.id || Date.now(),
-        user_id: editModal.user_id,
+        person_type: editModal.person_type,
+        user_id: editModal.person_type === "user" ? editModal.person_id : null,
+        employee_id: editModal.person_type === "employee" ? editModal.person_id : null,
         day_of_week: editModal.day_of_week,
         shift_start: editForm.is_off_day ? null : editForm.shift_start,
         shift_end: editForm.is_off_day ? null : editForm.shift_end,
         is_off_day: editForm.is_off_day ? 1 : 0,
-        employee_name: employees.find((e) => e.id === editModal.user_id)?.name || "",
-        employee_role: employees.find((e) => e.id === editModal.user_id)?.role || "",
+        employee_name: emp?.name || "",
+        employee_role: emp?.role || "",
       };
+      const key = `${editModal.person_type}-${editModal.person_id}-${editModal.day_of_week}`;
       setRecords((prev) => {
-        const filtered = prev.filter((r) => !(r.user_id === editModal.user_id && r.day_of_week === editModal.day_of_week));
+        const filtered = prev.filter((r) => `${recordPersonKey(r)}-${r.day_of_week}` !== key);
         return [...filtered, newRecord];
       });
       setEditModal(null);
@@ -273,22 +284,25 @@ const ManagerSchedule = () => {
               </thead>
               <tbody>
                 {filteredEmployees.map((emp) => (
-                  <tr key={emp.id}>
+                  <tr key={personKey(emp)}>
                     <td className="schedule-employee-cell">
                       <span className="schedule-avatar" style={{ backgroundColor: getRoleColor(emp.role) }}>
                         {emp.name.charAt(0).toUpperCase()}
                       </span>
                       <div>
                         <strong>{emp.name}</strong>
-                        <small>{emp.role}</small>
+                        <small>
+                          {emp.role}
+                          {emp.person_type === "employee" && <em className="schedule-no-account"> · no account</em>}
+                        </small>
                       </div>
                     </td>
                     {DAYS.map((_, dayIdx) => {
-                      const key = `${emp.id}-${dayIdx}`;
+                      const key = `${personKey(emp)}-${dayIdx}`;
                       const s = scheduleMap[key];
                       const isOff = s?.is_off_day;
                       return (
-                        <td key={dayIdx} className="schedule-shift-cell">
+                        <td key={dayIdx} className="schedule-shift-cell" onClick={() => openEdit(emp, dayIdx)}>
                           {s ? (
                             <div className={`schedule-shift-tag ${isOff ? "off" : ""}`}>
                               {isOff ? (
@@ -333,7 +347,7 @@ const ManagerSchedule = () => {
               <div>
                 <span className="schedule-eyebrow">Edit Shift</span>
                 <h2>
-                  {employees.find((e) => e.id === editModal.user_id)?.name} — {DAYS[editModal.day_of_week]}
+                  {employees.find((e) => personKey(e) === `${editModal.person_type}-${editModal.person_id}`)?.name} — {DAYS[editModal.day_of_week]}
                 </h2>
               </div>
               <button type="button" onClick={() => setEditModal(null)}><FontAwesomeIcon icon={faXmark} /></button>

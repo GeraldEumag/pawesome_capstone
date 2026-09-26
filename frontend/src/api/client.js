@@ -118,10 +118,14 @@ export const apiRequest = async (endpoint, methodOrOptions = "GET", data = null,
     }
 
     if (!response.ok) {
+      // Laravel 422s carry per-field details under `errors` — prefer them over
+      // the generic HTTP reason phrase the envelope middleware injects into
+      // `message` (e.g. "Unprocessable Content").
+      const fieldErrors = Object.values(result?.errors || {}).flat().join(" ");
       const message =
+        fieldErrors ||
         result?.message ||
         result?.error ||
-        Object.values(result?.errors || {}).flat().join(" ") ||
         "Request failed.";
 
       const error = new Error(message);

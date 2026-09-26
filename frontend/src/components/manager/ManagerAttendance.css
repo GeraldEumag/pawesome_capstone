@@ -1353,21 +1353,10 @@
   align-items: center;
 }
 
-.attendance-calendar-dots button {
+.attendance-calendar-dot {
   width: 10px;
   height: 10px;
-  border: none;
   border-radius: 999px;
-  cursor: pointer;
-  transition: transform 0.15s ease;
-}
-
-.attendance-calendar-dots button:hover {
-  transform: scale(1.4);
-}
-
-.attendance-calendar-dots button.selected {
-  box-shadow: 0 0 0 2px #ffffff, 0 0 0 4px var(--attendance-primary);
 }
 
 .attendance-calendar-dots small {

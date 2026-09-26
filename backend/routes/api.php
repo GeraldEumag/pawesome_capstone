@@ -50,7 +50,6 @@ use App\Http\Controllers\GroomingController;
 use App\Http\Controllers\Api\AvailabilityController;
 use App\Http\Controllers\Api\GroomingController as ApiGroomingController;
 use App\Http\Controllers\PetController;
-use App\Http\Controllers\VetController;
 use App\Http\Controllers\Api\PaymentController;
 use App\Http\Controllers\Api\CashierPaymentController;
 use App\Http\Controllers\Api\ServiceBillingController;
@@ -78,6 +77,15 @@ Route::get('/settings/public', [SystemSettingController::class, 'getPublicSettin
 // Public landing page content (no auth)
 Route::get('/landing-page', [LandingPageContentController::class, 'showPublic']);
 
+// Public attendance kiosk — unlocked by the shared kiosk PIN
+// (X-Kiosk-Pin header / pin body) or by a valid staff bearer token.
+Route::post('/kiosk/verify', [\App\Http\Controllers\KioskController::class, 'verify'])
+    ->middleware('throttle:10,1');
+Route::middleware(['kiosk.pin', 'throttle:60,1'])->prefix('kiosk')->group(function () {
+    Route::post('punch', [BarcodeAttendanceController::class, 'punch']);
+    Route::get('log', [BarcodeAttendanceController::class, 'todayLog']);
+});
+
 // Admin-only settings routes
 Route::middleware(['auth.api', 'throttle:api', 'role:admin'])->group(function () {
     Route::get('/admin/settings', [SystemSettingController::class, 'getSettings']);
@@ -85,6 +93,7 @@ Route::middleware(['auth.api', 'throttle:api', 'role:admin'])->group(function ()
     Route::post('/admin/settings/general', [SystemSettingController::class, 'updateGeneral']);
     Route::post('/admin/settings/security', [SystemSettingController::class, 'updateSecurity']);
     Route::post('/admin/settings/notifications', [SystemSettingController::class, 'updateNotifications']);
+    Route::post('/admin/settings/kiosk-pin', [SystemSettingController::class, 'updateKioskPin']);
 });
 
 // Admin landing page content management
@@ -341,9 +350,6 @@ Route::middleware(['auth.api', 'throttle:api', 'role:customer'])->prefix('custom
     Route::post('boarding-requests/{id}/payment-proof', [BoardingController::class, 'uploadPaymentProof']);
     Route::get('boarding-requests/{id}/care-logs', [BoardingController::class, 'careLogs']);
 
-    Route::get('vet-consultations', [VetController::class, 'index']);
-    Route::post('vet-consultations', [VetController::class, 'store'])->middleware('verified');
-    Route::get('vet-consultations/{id}', [VetController::class, 'show']);
     Route::get('medical-confinements', [MedicalConfinementController::class, 'index']);
     Route::get('medical-confinements/{id}', [MedicalConfinementController::class, 'show']);
     Route::post('medical-confinements/{id}/payment-proof', [MedicalConfinementController::class, 'uploadPaymentProof']);
@@ -436,6 +442,8 @@ Route::middleware(['auth.api', 'throttle:api', 'role:receptionist'])->prefix('re
     Route::get('appointments', [ReceptionistDashboardController::class, 'appointments']);
     Route::get('customers', [ReceptionistDashboardController::class, 'customers']);
     Route::post('customers', [ReceptionistCustomerController::class, 'store']);
+    Route::put('customers/{id}', [ReceptionistCustomerController::class, 'update'])->whereNumber('id');
+    Route::delete('customers/{id}', [ReceptionistCustomerController::class, 'destroy'])->whereNumber('id');
     
     // IMPORTANT: Static routes must come before dynamic routes
     Route::get('appointment/list', [AppointmentController::class, 'index']);
@@ -635,13 +643,14 @@ Route::middleware(['auth.api', 'throttle:api'])->prefix('manager')->group(functi
 
     // Attendance and HR operations are owned by Manager, with Admin as system override.
     Route::middleware('role:manager,admin')->group(function () {
-        // Barcode kiosk routes must be defined before parameterised routes to avoid conflicts
-        Route::post('attendance/barcode-punch', [BarcodeAttendanceController::class, 'punch']);
-        Route::get('attendance/barcode-log', [BarcodeAttendanceController::class, 'todayLog']);
-
         Route::get('attendance', [AttendanceController::class, 'index']);
         Route::post('attendance/{id}/remarks', [AttendanceController::class, 'update']);
-        Route::post('attendance/{id}/review', [AttendanceController::class, 'update']);
+    });
+
+    // Attendance kiosk PIN — managers can rotate the shared PIN that unlocks
+    // the public /attendance-kiosk page.
+    Route::middleware('role:manager,admin')->group(function () {
+        Route::post('settings/kiosk-pin', [SystemSettingController::class, 'updateKioskPin']);
     });
 
     // Payroll operations are owned by Manager, with Admin as system override.
@@ -971,29 +980,6 @@ Route::middleware(['auth.api', 'throttle:api', 'role:customer'])->prefix('custom
     Route::get('/{id}', [GroomingController::class, 'show']);
 });
 
-// Vet Appointment Routes (Receptionist only)
-Route::middleware(['auth.api', 'throttle:api', 'role:receptionist'])->prefix('vet')->group(function () {
-    Route::get('/', [VetController::class, 'index']);
-    Route::post('/', [VetController::class, 'store']);
-    Route::get('/{id}', [VetController::class, 'show']);
-    Route::patch('/{id}/status', [VetController::class, 'updateStatus']);
-});
-
-// Hard-deleting a vet appointment is destructive — admin only.
-Route::middleware(['auth.api', 'throttle:api', 'role:admin'])->delete('vet/{id}', [VetController::class, 'destroy']);
-
-// Admin Vet View-Only Routes
-Route::middleware(['auth.api', 'throttle:api', 'role:admin'])->prefix('admin/vet')->group(function () {
-    Route::get('/', [VetController::class, 'index']);
-    Route::get('/{id}', [VetController::class, 'show']);
-});
-
-// Manager Vet View-Only Routes
-Route::middleware(['auth.api', 'throttle:api', 'role:manager'])->prefix('manager/vet')->group(function () {
-    Route::get('/', [VetController::class, 'index']);
-    Route::get('/{id}', [VetController::class, 'show']);
-});
-
 // Customer Pets Routes (View own pets, create new)
 Route::middleware(['auth.api', 'throttle:api', 'role:customer'])->prefix('customer/pets')->group(function () {
     Route::get('/', [PetController::class, 'index']);
@@ -1008,13 +994,6 @@ Route::middleware(['auth.api', 'throttle:api', 'role:customer'])->prefix('custom
     Route::delete('/{id}', [PetController::class, 'destroy'])->whereNumber('id');
     Route::post('/{id}/archive', [PetController::class, 'archive'])->whereNumber('id');
     Route::post('/{id}/unarchive', [PetController::class, 'unarchive'])->whereNumber('id');
-});
-
-// Customer Vet Routes (View own appointments, create new)
-Route::middleware(['auth.api', 'throttle:api', 'role:customer'])->prefix('customer/vet')->group(function () {
-    Route::get('/', [VetController::class, 'index']);
-    Route::post('/', [VetController::class, 'store'])->middleware('verified');
-    Route::get('/{id}', [VetController::class, 'show']);
 });
 
 // Pets Routes (Receptionist, Admin, Manager, Customer)

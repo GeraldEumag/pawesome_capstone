@@ -1,0 +1,154 @@
+.kiosk-gate {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1.5rem;
+  background: linear-gradient(160deg, #fff1f7 0%, #ffe3ef 55%, #ffcfe3 100%);
+}
+
+.kiosk-gate-card {
+  width: 100%;
+  max-width: 420px;
+  background: #ffffff;
+  border: 1px solid #ffd6e7;
+  border-radius: 24px;
+  box-shadow: 0 24px 60px rgba(255, 95, 147, 0.18);
+  padding: 2.5rem 2.25rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 0.9rem;
+}
+
+.kiosk-gate-icon {
+  width: 64px;
+  height: 64px;
+  border-radius: 18px;
+  display: grid;
+  place-items: center;
+  font-size: 1.6rem;
+  color: #ffffff;
+  background: linear-gradient(135deg, #ff5f93, #ff8db5);
+  box-shadow: 0 12px 28px rgba(255, 95, 147, 0.35);
+}
+
+.kiosk-gate-eyebrow {
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: #ff5f93;
+}
+
+.kiosk-gate-card h1 {
+  margin: 0;
+  font-size: 1.5rem;
+  font-weight: 900;
+  color: #1f2937;
+}
+
+.kiosk-gate-card p {
+  margin: 0;
+  font-size: 0.9rem;
+  color: #64748b;
+  line-height: 1.55;
+}
+
+.kiosk-gate-error {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  color: #b91c1c;
+  border-radius: 12px;
+  padding: 0.7rem 0.9rem;
+  font-size: 0.85rem;
+  font-weight: 600;
+  text-align: left;
+}
+
+.kiosk-gate-field {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  background: #f8fafc;
+  border: 2px solid #e2e8f0;
+  border-radius: 14px;
+  padding: 0 1rem;
+  color: #94a3b8;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.kiosk-gate-field:focus-within {
+  border-color: #ff5f93;
+  box-shadow: 0 0 0 4px rgba(255, 95, 147, 0.12);
+}
+
+.kiosk-gate-field input {
+  flex: 1;
+  border: none;
+  outline: none;
+  background: transparent;
+  padding: 0.95rem 0;
+  font-size: 1.05rem;
+  font-weight: 700;
+  letter-spacing: 0.2em;
+  color: #1f2937;
+}
+
+.kiosk-gate-submit {
+  width: 100%;
+  min-height: 50px;
+  border: none;
+  border-radius: 14px;
+  background: linear-gradient(135deg, #ff5f93, #ff8db5);
+  color: #ffffff;
+  font-size: 1rem;
+  font-weight: 800;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  box-shadow: 0 12px 28px rgba(255, 95, 147, 0.3);
+}
+
+.kiosk-gate-submit:hover:not(:disabled) {
+  transform: translateY(-2px);
+}
+
+.kiosk-gate-submit:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* Floating lock button shown while the kiosk is unlocked */
+.kiosk-lock-btn {
+  position: fixed;
+  top: 14px;
+  right: 14px;
+  z-index: 90;
+  width: 40px;
+  height: 40px;
+  border-radius: 999px;
+  border: 1px solid #ffd6e7;
+  background: rgba(255, 255, 255, 0.9);
+  color: #94a3b8;
+  font-size: 0.95rem;
+  cursor: pointer;
+  display: grid;
+  place-items: center;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.08);
+  transition: color 0.15s ease, border-color 0.15s ease;
+}
+
+.kiosk-lock-btn:hover {
+  color: #ff5f93;
+  border-color: #ff5f93;
+}

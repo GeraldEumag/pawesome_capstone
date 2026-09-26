@@ -661,68 +661,11 @@
   margin: 0;
 }
 
-/* Modal */
-.hub-modal-overlay {
-  position: fixed;
-  inset: 0;
-  background: rgba(0,0,0,0.45);
-  z-index: 1500;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 20px;
-  animation: fadeIn 0.2s ease;
-}
-
-@keyframes fadeIn {
-  from { opacity: 0; }
-  to { opacity: 1; }
-}
-
-.hub-modal {
-  background: var(--color-surface-solid, #fff);
-  border-radius: 16px;
-  width: 100%;
-  max-width: 640px;
-  max-height: 90vh;
-  overflow-y: auto;
-  box-shadow: 0 24px 48px rgba(0,0,0,0.2);
-  animation: slideUp 0.25s ease;
-}
-
-@keyframes slideUp {
-  from { transform: translateY(20px); opacity: 0; }
-  to { transform: translateY(0); opacity: 1; }
-}
-
-.hub-modal-header {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  padding: 20px 24px;
-  border-bottom: 1px solid var(--color-border, #f3f4f6);
-}
-
-.hub-modal-header h2 {
-  font-size: 20px;
-  font-weight: 700;
-  margin: 8px 0 0;
+/* Detail modal shell comes from shared hbk-* (styles/bookingModal.css) */
+.hbk-head h2 {
   display: flex;
   align-items: center;
   gap: 8px;
-}
-
-.hub-modal-header button {
-  background: none;
-  border: none;
-  font-size: 18px;
-  color: var(--color-subtle, #9ca3af);
-  cursor: pointer;
-  padding: 4px;
-}
-
-.hub-modal-body {
-  padding: 20px 24px;
 }
 
 .hub-detail-grid {
@@ -792,75 +735,7 @@
   box-shadow: 0 0 0 3px rgba(255, 95, 147, 0.15);
 }
 
-/* Modal Actions */
-.hub-modal-actions {
-  display: flex;
-  align-items: center;
-  justify-content: flex-end;
-  gap: 10px;
-  padding: 16px 24px;
-  border-top: 1px solid var(--color-border, #f3f4f6);
-  background: var(--color-surface-muted, #fafafa);
-  border-radius: 0 0 16px 16px;
-}
-
-.hub-modal-btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 10px 18px;
-  border-radius: 10px;
-  border: none;
-  font-size: 13px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.2s;
-}
-
-.hub-modal-btn.secondary {
-  background: var(--color-surface-muted, #f3f4f6);
-  color: var(--color-text, #4b5563);
-}
-
-.hub-modal-btn.approve {
-  background: #10b981;
-  color: #fff;
-}
-
-.hub-modal-btn.reject {
-  background: #ef4444;
-  color: #fff;
-}
-
-.hub-modal-btn.checkin {
-  background: #f97316;
-  color: #fff;
-}
-
-.hub-modal-btn.checkout {
-  background: #ef4444;
-  color: #fff;
-}
-
-.hub-modal-btn.start {
-  background: #8b5cf6;
-  color: #fff;
-}
-
-.hub-modal-btn.complete {
-  background: #10b981;
-  color: #fff;
-}
-
-.hub-modal-btn:hover:not(:disabled) {
-  transform: translateY(-1px);
-  filter: brightness(1.05);
-}
-
-.hub-modal-btn:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
-}
+/* Modal footer + action buttons come from shared hbk-* (styles/bookingModal.css) */
 
 /* Animations */
 .fade-up {
@@ -922,17 +797,7 @@
     text-transform: uppercase;
   }
 
-  .hub-modal {
-    max-width: 100%;
-    margin: 12px;
-  }
-
-  .hub-modal-actions {
-    flex-wrap: wrap;
-    justify-content: stretch;
-  }
-
-  .hub-modal-actions .hub-modal-btn {
+  .hbk-foot .hbk-btn {
     flex: 1;
     justify-content: center;
   }

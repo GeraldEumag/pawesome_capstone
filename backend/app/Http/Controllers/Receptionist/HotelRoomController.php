@@ -7,6 +7,7 @@ use App\Models\HotelRoom;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Validator;
 
 class HotelRoomController extends Controller
@@ -29,6 +30,24 @@ class HotelRoomController extends Controller
 
             if ($request->has('type')) {
                 $query->byType($request->type);
+            }
+
+            // ?date=YYYY-MM-DD — only list rooms free for that date:
+            // status 'available', no overlapping boarding, no active confinement
+            if ($request->filled('date')) {
+                $date = $request->query('date');
+                $query->where('status', 'available')
+                    ->whereDoesntHave('boardings', function ($q) use ($date) {
+                        $q->whereNotIn('status', ['rejected', 'cancelled', 'checked_out', 'completed'])
+                            ->where('check_in', '<=', $date)
+                            ->where('check_out', '>=', $date);
+                    });
+
+                if (Schema::hasTable('medical_confinements')) {
+                    $query->whereDoesntHave('medicalConfinements', function ($q) {
+                        $q->whereIn('status', ['approved_for_admission', 'admitted', 'under_observation', 'under_treatment', 'ready_for_discharge']);
+                    });
+                }
             }
 
             $rooms = $query->orderBy('room_number')->get();

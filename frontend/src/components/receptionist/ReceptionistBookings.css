@@ -159,7 +159,7 @@
 .secondary-btn,
 .clear-btn,
 .action-btn,
-.modal-actions button {
+.hbk-foot button {
   min-height: 44px;
   border: none;
   border-radius: var(--rb-radius-pill);
@@ -194,13 +194,13 @@
 .secondary-btn:hover,
 .clear-btn:hover,
 .action-btn:hover,
-.modal-actions button:hover {
+.hbk-foot button:hover {
   transform: translateY(-2px);
 }
 
 .primary-btn:disabled,
 .secondary-btn:disabled,
-.modal-actions button:disabled {
+.hbk-foot button:disabled {
   opacity: 0.65;
   cursor: not-allowed;
   transform: none;
@@ -634,7 +634,7 @@
 
 /* Modal */
 
-.appointment-modal-overlay {
+.hbk-overlay {
   position: fixed;
   inset: 0;
   z-index: 12000;
@@ -647,7 +647,7 @@
   backdrop-filter: blur(10px);
 }
 
-.appointment-modal {
+.hbk-modal {
   width: min(820px, 100%);
   max-height: calc(100vh - 56px);
   display: flex;
@@ -659,11 +659,11 @@
   box-shadow: 0 30px 90px rgba(15, 23, 42, 0.26);
 }
 
-.appointment-modal.large-modal {
+.hbk-modal.hbk-modal-lg {
   width: min(980px, 100%);
 }
 
-.modal-header {
+.hbk-head {
   flex-shrink: 0;
   display: flex;
   justify-content: space-between;
@@ -672,7 +672,7 @@
   border-bottom: 1px solid var(--rb-border);
 }
 
-.modal-header h2 {
+.hbk-head h2 {
   margin: 0.4rem 0 0;
   color: var(--rb-heading);
   font-size: 1.45rem;
@@ -698,7 +698,7 @@
   color: #ffffff;
 }
 
-.modal-content {
+.hbk-body {
   flex: 1;
   min-height: 0;
   display: grid;
@@ -707,7 +707,7 @@
   overflow-y: auto;
 }
 
-.modal-actions {
+.hbk-foot {
   display: flex;
   justify-content: flex-end;
   flex-wrap: wrap;
@@ -715,7 +715,7 @@
 }
 
 /* Sticky action footer for forms inside modal content */
-.modal-content .modal-actions {
+.hbk-body .hbk-foot {
   position: sticky;
   bottom: 0;
   z-index: 20;
@@ -727,7 +727,7 @@
 }
 
 /* Footer actions directly under modal */
-.appointment-modal > .modal-actions {
+.hbk-modal > .hbk-foot {
   flex-shrink: 0;
   padding: 1rem 1.35rem;
   background: rgba(255, 255, 255, 0.96);
@@ -735,7 +735,7 @@
   backdrop-filter: blur(14px);
 }
 
-.modal-actions button {
+.hbk-foot button {
   min-height: 46px;
   padding: 0 1.35rem;
   border-radius: var(--rb-radius-pill);
@@ -1014,22 +1014,22 @@
   .booking-hero,
   .booking-tools,
   .bookings-table-container,
-  .appointment-modal {
+  .hbk-modal {
     border-radius: 22px;
   }
 
-  .appointment-modal-overlay {
+  .hbk-overlay {
     padding: 14px 10px;
   }
 
-  .appointment-modal {
+  .hbk-modal {
     max-height: calc(100vh - 28px);
   }
 
   .booking-hero,
   .booking-tools,
-  .modal-content,
-  .modal-header {
+  .hbk-body,
+  .hbk-head {
     padding: 1.15rem;
   }
 
@@ -1052,20 +1052,20 @@
     width: 100%;
   }
 
-  .modal-actions {
+  .hbk-foot {
     flex-direction: column;
   }
 
-  .modal-actions button {
+  .hbk-foot button {
     width: 100%;
   }
 
-  .modal-content .modal-actions {
+  .hbk-body .hbk-foot {
     margin: 1rem -1.15rem -1.15rem;
     padding: 1rem 1.15rem;
   }
 
-  .appointment-modal > .modal-actions {
+  .hbk-modal > .hbk-foot {
     padding: 1rem 1.15rem;
   }
 
@@ -1080,7 +1080,7 @@
     flex-direction: column;
   }
 
-  .appointment-modal {
+  .hbk-modal {
     border-radius: 20px;
   }
 }

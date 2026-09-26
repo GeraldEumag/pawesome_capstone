@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { apiRequest } from "../../../api/client";
 import { getToken } from "../../../utils/auth";
-import { showSuccess, showError, showPrompt, showConfirm, showAlert } from "../../../utils/alert.jsx";
+import { showSuccess, showError, showReasonPrompt, showConfirm, showAlert } from "../../../utils/alert.jsx";
 import { printReceipt as printReceiptUtil } from "../../../utils/receiptPrinter";
 import { exportToCSV as exportCSVUtil, exportToPDF, exportToExcel } from "../../../utils/reportExport";
 
@@ -239,8 +239,8 @@ export const usePaymentApprovals = (user) => {
 
   // Reject single payment
   const rejectPayment = useCallback(async (payment) => {
-    const cashier_remarks = await showPrompt("Reason for rejecting this payment proof:");
-    if (cashier_remarks === null) return;
+    const cashier_remarks = await showReasonPrompt("Reason for rejecting this payment proof:", "Reject Payment");
+    if (!cashier_remarks) return;
 
     try {
       setActionLoading(`${payment.id}-reject`);
@@ -299,8 +299,8 @@ export const usePaymentApprovals = (user) => {
   const bulkReject = useCallback(async () => {
     if (selectedIds.length === 0) return;
     
-    const cashier_remarks = await showPrompt(`Reason for rejecting ${selectedIds.length} payment${selectedIds.length > 1 ? 's' : ''}:`);
-    if (cashier_remarks === null) return;
+    const cashier_remarks = await showReasonPrompt(`Reason for rejecting ${selectedIds.length} payment${selectedIds.length > 1 ? 's' : ''}:`, "Reject Payments");
+    if (!cashier_remarks) return;
 
     let successCount = 0;
     for (const id of selectedIds) {

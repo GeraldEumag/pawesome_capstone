@@ -38,7 +38,10 @@ class CashierPaymentController extends Controller
 
         // Get service request payments
         $servicePayments = ServiceRequest::where('payment_status', 'pending')
-            ->whereNotNull('payment_proof')
+            ->where(function ($q) {
+                $q->whereNotNull('payment_proof')
+                  ->orWhere('payment_method', 'cash');
+            })
             ->latest()
             ->get()
             ->map(function ($request) {

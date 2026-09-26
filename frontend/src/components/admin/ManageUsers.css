@@ -530,6 +530,11 @@
   transform: translateY(-2px);
 }
 
+.status-toggle.status-readonly {
+  cursor: default;
+  pointer-events: none;
+}
+
 .status-dot {
   width: 8px;
   height: 8px;

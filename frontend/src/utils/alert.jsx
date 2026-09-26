@@ -129,3 +129,27 @@ export const showPrompt = async (
   }
   return null;
 };
+
+export const showReasonPrompt = async (
+  message,
+  title = "Reason Required",
+  confirmText = "Submit"
+) => {
+  const result = await Swal.fire({
+    ...lightTheme,
+    title,
+    text: message,
+    input: "textarea",
+    inputPlaceholder: "Enter reason...",
+    inputValidator: (value) =>
+      !value || !value.trim() ? "A reason is required." : undefined,
+    showCancelButton: true,
+    confirmButtonText: confirmText,
+    cancelButtonText: "Cancel",
+    reverseButtons: true,
+  });
+  if (result.isConfirmed) {
+    return result.value.trim();
+  }
+  return null;
+};

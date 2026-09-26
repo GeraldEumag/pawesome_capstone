@@ -90,7 +90,7 @@ class ServiceItemUsage extends Model
      */
     public function appointment(): BelongsTo
     {
-        return $this->belongsTo(VetAppointment::class, 'appointment_id');
+        return $this->belongsTo(Appointment::class, 'appointment_id');
     }
 
     /**

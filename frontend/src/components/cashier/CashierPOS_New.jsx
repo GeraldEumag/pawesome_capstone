@@ -17,15 +17,14 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
   faPaw, faRotateRight, faTrash, faBoxOpen,
   faShoppingCart, faCreditCard, faMoneyBillWave, faMobileScreen,
-  faTag, faReceipt, faTriangleExclamation, faPlus,
+  faTriangleExclamation, faPlus,
   faMinus, faXmark, faPrint, faClock, faBox, faCheckCircle,
   faBarcode, faKeyboard, faCamera,
   faBolt, faUser, faList,
-  faStore, faHistory, faBan, faCalculator, faExpand, faCompress,
+  faStore, faHistory, faBan, faExpand, faCompress,
   faBars, faChartBar, faUserCircle, faClipboardList, faWallet,
   faBone, faScissors, faBasketball, faPills, faBriefcaseMedical,
-  faChevronRight, faChevronLeft, faArrowLeft, faDeleteLeft,
-  faSearch, faTag as faTagSolid, faPercent,
+  faDeleteLeft,
 } from "@fortawesome/free-solid-svg-icons";
 import QrScanner from "../shared/QrScanner";
 
@@ -92,14 +91,12 @@ const CashierPOS = ({ initialTab }) => {
   }, [initialTab, location.key]);
   const [pendingCount, setPendingCount]   = useState(0);
   const [searchQuery, setSearchQuery]     = useState("");
-  const [orderType, setOrderType]         = useState("walk-in");
+  const orderType                          = "walk-in";
   const [customers, setCustomers]         = useState([]);
   const [customerId, setCustomerId]       = useState(null);
   const [customerName, setCustomerName]   = useState("");
 
   /* ── UI state ────────────────────────────────────────── */
-  const [cartOpen, setCartOpen]           = useState(false);
-  const [paymentOpen, setPaymentOpen]     = useState(false);
   const [paymentMethod, setPaymentMethod] = useState("Cash");
   const [amountReceived, setAmountReceived] = useState("");
   const [referenceNumber, setReferenceNumber] = useState("");
@@ -344,9 +341,6 @@ const CashierPOS = ({ initialTab }) => {
     setPaymentMethod("Cash");
     setAmountReceived("");
     setReferenceNumber("");
-    setCartOpen(false);
-    setPaymentOpen(false);
-    setOrderType("walk-in");
   }, []);
 
   /* ── Totals ─────────────────────────────────────────── */
@@ -439,10 +433,8 @@ const CashierPOS = ({ initialTab }) => {
       if (e.key === "F1") { e.preventDefault(); setShowHelp(true); }
       if (e.key === "F2") { e.preventDefault(); searchRef.current?.focus(); }
       if (e.key === "F3") { e.preventDefault(); if (cart.length > 0) clearOrder(); }
-      if (e.key === "F4") { e.preventDefault(); if (cart.length > 0) { setCartOpen(true); setPaymentOpen(true); } }
+      if (e.key === "F4") { e.preventDefault(); if (cart.length > 0) { document.querySelector(".pos-confirm-btn")?.focus(); document.querySelector(".pos-order-panel")?.scrollTo({ top: Number.MAX_SAFE_INTEGER, behavior: "smooth" }); } }
       if (e.key === "Escape") {
-        if (paymentOpen) { setPaymentOpen(false); return; }
-        if (cartOpen)    { setCartOpen(false);    return; }
         if (completedReceipt) { setCompletedReceipt(null); return; }
         if (searchQuery) { setSearchQuery("");    return; }
       }
@@ -453,7 +445,7 @@ const CashierPOS = ({ initialTab }) => {
     };
     window.addEventListener("keydown", handler);
     return () => window.removeEventListener("keydown", handler);
-  }, [cart.length, searchQuery, cartOpen, paymentOpen, completedReceipt, handleSearchEnter, clearOrder]);
+  }, [cart.length, searchQuery, completedReceipt, handleSearchEnter, clearOrder]);
 
   /* ── Numpad input ────────────────────────────────────── */
   const handleNumpad = useCallback((key) => {
@@ -525,7 +517,6 @@ const CashierPOS = ({ initialTab }) => {
       addToast(err.message || "Checkout failed. Please try again.", "error");
     } finally {
       setCheckoutLoading(false);
-      setPaymentOpen(false);
     }
   }, [canCheckout, orderType, customerId, customerName, paymentMethod, amountReceived, total, subtotal, vatAmount, netAmount, referenceNumber, cart, addToast, clearOrder, fetchProducts, fetchServices]);
 
@@ -561,6 +552,7 @@ const CashierPOS = ({ initialTab }) => {
   return (
     <>
       <div className="pos-kiosk">
+      <div className="pos-main">
 
         {/* ── TopBar ──────────────────────────────────── */}
         <header className="pos-topbar">
@@ -814,29 +806,16 @@ const CashierPOS = ({ initialTab }) => {
             </>
           )}
         </main>
-
-        {/* ── Floating Cart Button ───────────────────────── */}
-        {cart.length > 0 && (
-          <button className="pos-cart-fab" onClick={() => setCartOpen(true)}>
-            <FontAwesomeIcon icon={faShoppingCart} />
-            <span className="pos-cart-fab-count">{cartCount}</span>
-            <span className="pos-cart-fab-total">{fmt(total)}</span>
-            <FontAwesomeIcon icon={faChevronRight} className="pos-cart-fab-arrow" />
-          </button>
-        )}
       </div>
 
-      {/* ── Cart Drawer ───────────────────────────────────── */}
-      {cartOpen && <div className="pos-drawer-overlay" onClick={() => setCartOpen(false)} />}
-      <div className={`pos-cart-drawer${cartOpen ? " open" : ""}`}>
-        {/* Drawer Header */}
+      {/* ── Current Order + Payment — permanently docked panel ── */}
+      <aside className="pos-order-panel">
+        {/* Panel Header */}
         <div className="pos-drawer-header">
-          <button className="pos-drawer-close" onClick={() => setCartOpen(false)}>
-            <FontAwesomeIcon icon={faArrowLeft} />
-          </button>
           <div className="pos-drawer-title">
             <FontAwesomeIcon icon={faShoppingCart} />
             Current Order
+            {cartCount > 0 && <span className="pos-order-count">{cartCount}</span>}
           </div>
           <button
             className="pos-drawer-clear"
@@ -877,22 +856,6 @@ const CashierPOS = ({ initialTab }) => {
               onChange={(e) => setCustomerName(e.target.value)}
             />
           )}
-        </div>
-
-        {/* Order Type */}
-        <div className="pos-drawer-section pos-drawer-section--tight">
-          <div className="pos-drawer-label"><FontAwesomeIcon icon={faStore} /> Order Type</div>
-          <div className="pos-order-type-row">
-            {["walk-in", "takeout"].map(ot => (
-              <button
-                key={ot}
-                className={`pos-order-type-btn${orderType === ot ? " active" : ""}`}
-                onClick={() => setOrderType(ot)}
-              >
-                {ot === "walk-in" ? "Walk-in" : "Takeout"}
-              </button>
-            ))}
-          </div>
         </div>
 
         {/* Cart Items */}
@@ -960,135 +923,122 @@ const CashierPOS = ({ initialTab }) => {
           </div>
         </div>
 
-        {/* Checkout Button */}
-        <div className="pos-drawer-actions">
-          <button
-            className="pos-checkout-btn"
-            onClick={() => setPaymentOpen(true)}
-            disabled={cart.length === 0}
-          >
-            <FontAwesomeIcon icon={faCreditCard} />
-            Proceed to Payment — {fmt(total)}
-          </button>
-        </div>
-      </div>
-
-      {/* ── Payment Modal ─────────────────────────────────── */}
-      {paymentOpen && (
-        <div className="pos-payment-overlay">
-          <div className="pos-payment-modal">
-            {/* Modal Header */}
-            <div className="pos-payment-header">
-              <button className="pos-payment-back" onClick={() => setPaymentOpen(false)}>
-                <FontAwesomeIcon icon={faArrowLeft} />
-              </button>
-              <div className="pos-payment-title">Payment</div>
-              <div className="pos-payment-amount-due">
-                <span className="pos-payment-amount-label">Amount Due</span>
-                <span className="pos-payment-amount-value">{fmt(total)}</span>
-              </div>
-            </div>
-
-            {/* Payment Method */}
-            <div className="pos-payment-methods">
-              {PAYMENT_METHODS.map(pm => (
-                <button
-                  key={pm.value}
-                  className={`pos-pm-btn${paymentMethod === pm.value ? " active" : ""}`}
-                  style={{ "--pm-color": pm.color }}
-                  onClick={() => { setPaymentMethod(pm.value); setAmountReceived(""); setReferenceNumber(""); }}
-                >
-                  <FontAwesomeIcon icon={pm.icon} className="pos-pm-icon" />
-                  <span>{pm.label}</span>
-                </button>
-              ))}
-            </div>
-
-            {/* Cash Numpad */}
-            {paymentMethod === "Cash" && (
-              <div className="pos-numpad-section">
-                {/* Amount display */}
-                <div className="pos-numpad-display">
-                  <div className="pos-numpad-received-label">Cash Received</div>
-                  <div className="pos-numpad-received-value">
-                    {amountReceived ? `₱${Number(amountReceived).toLocaleString("en-PH")}` : <span className="pos-numpad-placeholder">₱0</span>}
-                  </div>
-                  {amountReceived && Number(amountReceived) >= total && (
-                    <div className="pos-numpad-change">
-                      Change: <strong>{fmt(change)}</strong>
-                    </div>
-                  )}
-                </div>
-
-                {/* Bill presets */}
-                <div className="pos-bill-presets">
-                  {BILL_PRESETS.map(a => (
-                    <button key={a} className="pos-bill-btn" onClick={() => handleBillPreset(a)}>
-                      ₱{a.toLocaleString()}
-                    </button>
-                  ))}
-                  <button className="pos-bill-btn pos-bill-btn--exact" onClick={() => handleBillPreset(Math.ceil(total))}>
-                    Exact
-                  </button>
-                </div>
-
-                {/* Numpad */}
-                <div className="pos-numpad">
-                  {["1","2","3","4","5","6","7","8","9","00","0","⌫"].map(k => (
-                    <button
-                      key={k}
-                      className={`pos-numpad-key${k === "⌫" ? " pos-numpad-key--delete" : ""}`}
-                      onClick={() => handleNumpad(k)}
-                    >
-                      {k === "⌫" ? <FontAwesomeIcon icon={faDeleteLeft} /> : k}
-                    </button>
-                  ))}
-                </div>
-
-                <button className="pos-numpad-clear" onClick={() => handleNumpad("C")}>
-                  Clear Amount
-                </button>
-              </div>
-            )}
-
-            {/* GCash / Maya Reference */}
-            {(paymentMethod === "GCash" || paymentMethod === "Maya") && (
-              <div className="pos-digital-section">
-                <div className="pos-digital-icon">
-                  <FontAwesomeIcon icon={paymentMethod === "GCash" ? faMobileScreen : faWallet} />
-                </div>
-                <div className="pos-digital-instruction">
-                  Ask customer to show their {paymentMethod} payment screenshot, then enter the reference number below.
-                </div>
-                <input
-                  className="pos-digital-ref-input"
-                  type="text"
-                  placeholder={`Enter ${paymentMethod} reference number`}
-                  value={referenceNumber}
-                  onChange={e => setReferenceNumber(e.target.value)}
-                  autoFocus
-                />
-                <div className="pos-digital-amount">
-                  <span>Amount to collect:</span>
-                  <strong>{fmt(total)}</strong>
-                </div>
-              </div>
-            )}
-
-            {/* Confirm */}
-            <div className="pos-payment-footer">
-              <button
-                className="pos-confirm-btn"
-                onClick={handleCheckout}
-                disabled={!canCheckout || checkoutLoading}
-              >
-                <FontAwesomeIcon icon={checkoutLoading ? faClock : faCheckCircle} />
-                {checkoutLoading ? "Processing…" : `Complete Payment — ${fmt(total)}`}
-              </button>
-            </div>
+        {/* Payment — always on screen, no drawer/modal needed */}
+        <div className="pos-order-pay">
+          <div className="pos-order-pay-head">
+            <span className="pos-order-pay-title">
+              <FontAwesomeIcon icon={faCreditCard} /> Payment
+            </span>
+            <span className="pos-order-pay-due">
+              <span className="pos-payment-amount-label">Amount Due</span>
+              <strong>{fmt(total)}</strong>
+            </span>
           </div>
+
+          {/* Payment Method */}
+          <div className="pos-payment-methods">
+            {PAYMENT_METHODS.map(pm => (
+              <button
+                key={pm.value}
+                className={`pos-pm-btn${paymentMethod === pm.value ? " active" : ""}`}
+                style={{ "--pm-color": pm.color }}
+                onClick={() => { setPaymentMethod(pm.value); setAmountReceived(""); setReferenceNumber(""); }}
+              >
+                <FontAwesomeIcon icon={pm.icon} className="pos-pm-icon" />
+                <span>{pm.label}</span>
+              </button>
+            ))}
+          </div>
+
+          {/* Cash Numpad */}
+          {paymentMethod === "Cash" && (
+            <div className="pos-numpad-section">
+              {/* Amount display */}
+              <div className="pos-numpad-display">
+                <div className="pos-numpad-received-label">Cash Received</div>
+                <div className="pos-numpad-received-value">
+                  {amountReceived ? `₱${Number(amountReceived).toLocaleString("en-PH")}` : <span className="pos-numpad-placeholder">₱0</span>}
+                </div>
+                {amountReceived && Number(amountReceived) >= total ? (
+                  <div className="pos-numpad-change">
+                    Change: <strong>{fmt(change)}</strong>
+                  </div>
+                ) : amountReceived && (
+                  <div className="pos-numpad-change pos-numpad-change--short">
+                    Short: <strong>{fmt(total - Number(amountReceived))}</strong>
+                  </div>
+                )}
+              </div>
+
+              {/* Bill presets */}
+              <div className="pos-bill-presets">
+                {BILL_PRESETS.map(a => (
+                  <button key={a} className="pos-bill-btn" onClick={() => handleBillPreset(a)}>
+                    ₱{a.toLocaleString()}
+                  </button>
+                ))}
+                <button className="pos-bill-btn pos-bill-btn--exact" onClick={() => handleBillPreset(Math.ceil(total))}>
+                  Exact
+                </button>
+              </div>
+
+              {/* Numpad */}
+              <div className="pos-numpad">
+                {["1","2","3","4","5","6","7","8","9","00","0","⌫"].map(k => (
+                  <button
+                    key={k}
+                    className={`pos-numpad-key${k === "⌫" ? " pos-numpad-key--delete" : ""}`}
+                    onClick={() => handleNumpad(k)}
+                  >
+                    {k === "⌫" ? <FontAwesomeIcon icon={faDeleteLeft} /> : k}
+                  </button>
+                ))}
+              </div>
+
+              <button className="pos-numpad-clear" onClick={() => handleNumpad("C")}>
+                Clear Amount
+              </button>
+            </div>
+          )}
+
+          {/* GCash / Maya Reference */}
+          {(paymentMethod === "GCash" || paymentMethod === "Maya") && (
+            <div className="pos-digital-section">
+              <div className="pos-digital-instruction">
+                Ask customer to show their {paymentMethod} payment screenshot, then enter the reference number below.
+              </div>
+              <input
+                className="pos-digital-ref-input"
+                type="text"
+                placeholder={`Enter ${paymentMethod} reference number`}
+                value={referenceNumber}
+                onChange={e => setReferenceNumber(e.target.value)}
+              />
+              <div className="pos-digital-amount">
+                <span>Amount to collect:</span>
+                <strong>{fmt(total)}</strong>
+              </div>
+            </div>
+          )}
+
         </div>
-      )}
+
+        {/* Confirm — pinned to the panel bottom so it never scrolls off */}
+        <div className="pos-order-foot">
+          <button
+            className="pos-confirm-btn"
+            onClick={handleCheckout}
+            disabled={!canCheckout || checkoutLoading}
+          >
+            <FontAwesomeIcon icon={checkoutLoading ? faClock : faCheckCircle} />
+            {checkoutLoading ? "Processing…" : `Complete Payment — ${fmt(total)}`}
+          </button>
+          {cart.length === 0 && (
+            <div className="pos-order-pay-hint">Add items to the order to take payment.</div>
+          )}
+        </div>
+      </aside>
+      </div>
 
       {/* ── Receipt Modal ─────────────────────────────────── */}
       {completedReceipt && (
@@ -1134,12 +1084,8 @@ const CashierPOS = ({ initialTab }) => {
                 <div className="pos-receipt-row"><span>Net (ex-VAT)</span><span>{fmt(completedReceipt.net_amount)}</span></div>
                 <div className="pos-receipt-row"><span>VAT 12%</span><span>{fmt(completedReceipt.vat_amount)}</span></div>
                 <div className="pos-receipt-total"><span>TOTAL</span><span>{fmt(completedReceipt.total)}</span></div>
-                {completedReceipt.payment_method === "Cash" && (
-                  <>
-                    <div className="pos-receipt-row"><span>Cash Received</span><span>{fmt(completedReceipt.amount_received)}</span></div>
-                    <div className="pos-receipt-row pos-receipt-row--bold"><span>Change</span><span>{fmt(completedReceipt.change)}</span></div>
-                  </>
-                )}
+                <div className="pos-receipt-row"><span>Amount Received ({completedReceipt.payment_method})</span><span>{fmt(completedReceipt.amount_received)}</span></div>
+                <div className="pos-receipt-row pos-receipt-row--bold"><span>Change</span><span>{fmt(completedReceipt.change)}</span></div>
                 <div className="pos-receipt-divider" />
                 <div className="pos-receipt-footer">
                   Thank you for shopping with us!<br />

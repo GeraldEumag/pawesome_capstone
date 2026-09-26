@@ -15,7 +15,7 @@ import {
   faUsers,
   faXmarkCircle,
 } from "@fortawesome/free-solid-svg-icons";
-import { apiRequest } from "../../api/client";
+import { kioskRequest } from "../../api/kiosk";
 import QrScanner from "../shared/QrScanner";
 import "./BarcodeAttendanceKiosk.css";
 
@@ -93,7 +93,7 @@ const BarcodeAttendanceKiosk = () => {
   const loadTodayLog = useCallback(async () => {
     try {
       setLogLoading(true);
-      const res = await apiRequest("/manager/attendance/barcode-log");
+      const res = await kioskRequest("/kiosk/log");
       setTodayLog(Array.isArray(res?.data) ? res.data : []);
     } catch {
       // silently fail; log is non-critical
@@ -119,9 +119,9 @@ const BarcodeAttendanceKiosk = () => {
     setBarcodeInput("");
 
     try {
-      const res = await apiRequest("/manager/attendance/barcode-punch", {
+      const res = await kioskRequest("/kiosk/punch", {
         method: "POST",
-        body: JSON.stringify({ barcode: trimmed }),
+        body: { barcode: trimmed },
       });
 
       if (res?.success) {

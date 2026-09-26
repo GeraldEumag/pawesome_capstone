@@ -426,6 +426,7 @@ class ServiceRequestController extends Controller
     {
         $validated = $request->validate([
             'status' => 'required|in:pending,approved,rejected,rescheduled',
+            'rejection_reason' => 'required_if:status,rejected|string|max:1000',
         ]);
 
         /** @var ServiceRequest|null $serviceRequest */
@@ -442,10 +443,17 @@ class ServiceRequestController extends Controller
             ? 'unpaid'
             : 'unpaid';
 
-        $serviceRequest->update([
+        $statusUpdate = [
             'status' => $validated['status'],
             'payment_status' => $paymentStatus,
-        ]);
+        ];
+        if ($validated['status'] === 'rejected') {
+            $statusUpdate['rejection_reason'] = $validated['rejection_reason'];
+            $statusUpdate['rejected_by'] = Auth::id();
+            $statusUpdate['rejected_at'] = now();
+        }
+
+        $serviceRequest->update($statusUpdate);
 
         // Create room reservation if this is a hotel/boarding approval
         if ($validated['status'] === 'approved' && ($serviceRequest->request_type === 'hotel' || $serviceRequest->request_type === 'boarding')) {
@@ -454,9 +462,11 @@ class ServiceRequestController extends Controller
                 $room = \App\Models\BoardingRoom::find($serviceRequest->boarding_room_id);
                 if ($room) {
                     // Check availability one more time before creating reservation
+                    // (inclusive same-day overlap: check_in <= stay_date <= check_out)
+                    $stayDate = $serviceRequest->check_in_date ?? $serviceRequest->check_in_date;
                     $existingReservations = \App\Models\BoardingRoomReservation::where('room_id', $room->id)
-                        ->where('check_in_date', '<', $serviceRequest->check_out_date ?? $serviceRequest->check_in_date)
-                        ->where('check_out_date', '>', $serviceRequest->check_in_date ?? $serviceRequest->check_in_date)
+                        ->where('check_in_date', '<=', $stayDate)
+                        ->where('check_out_date', '>=', $stayDate)
                         ->whereIn('status', ['pending', 'approved', 'scheduled', 'checked_in'])
                         ->count();
                     
@@ -478,7 +488,8 @@ class ServiceRequestController extends Controller
                         // Create billing record for hotel stay
                         $checkIn = Carbon::parse($serviceRequest->check_in_date ?? $serviceRequest->check_in_date);
                         $checkOut = Carbon::parse($serviceRequest->check_out_date ?? $serviceRequest->check_in_date);
-                        $totalDays = $checkIn->diffInDays($checkOut);
+                        // Same-day stays (check_in == check_out) bill as 1 day
+                        $totalDays = max(1, $checkIn->diffInDays($checkOut));
                         
                         \App\Models\ServiceItemUsage::create([
                             'service_type' => 'boarding',
@@ -499,10 +510,14 @@ class ServiceRequestController extends Controller
             }
         }
 
+        $statusMessage = $validated['status'] === 'rejected'
+            ? "Your {$serviceRequest->service_name} request has been rejected. Reason: {$validated['rejection_reason']}"
+            : "Your {$serviceRequest->service_name} request is now {$validated['status']}.";
+
         WorkflowNotifier::notifyEmail(
             $serviceRequest->customer_email,
             'Service Request Updated',
-            "Your {$serviceRequest->service_name} request is now {$validated['status']}.",
+            $statusMessage,
             $validated['status'] === 'rejected' ? 'error' : 'success',
             'service_request',
             $serviceRequest->id
@@ -530,9 +545,9 @@ class ServiceRequestController extends Controller
         }
 
         $validated = $request->validate([
-            'payment_method' => 'nullable|string|max:255',
-            'payment_reference' => 'required|string|max:255',
-            'payment_proof' => 'required|file|mimes:jpg,jpeg,png,pdf|max:5120',
+            'payment_method' => 'required|in:cash,gcash,maya',
+            'payment_reference' => 'required_unless:payment_method,cash|nullable|string|max:255',
+            'payment_proof' => 'required_unless:payment_method,cash|nullable|file|mimes:jpg,jpeg,png,pdf|max:5120',
         ]);
 
         $serviceRequest = ServiceRequest::findOrFail($id);
@@ -555,24 +570,37 @@ class ServiceRequestController extends Controller
             ], 422);
         }
 
-        // Replaced (rejected) proofs are retained as payment evidence (deleteOld: false).
-        FileStorageService::storeAndPersist(
-            $request->file('payment_proof'), 'payment-proofs', 'private',
-            fn (string $path) => $serviceRequest->update([
-                'payment_method' => $validated['payment_method'] ?? 'Online Payment',
-                'payment_reference' => $validated['payment_reference'],
-                'payment_proof' => $path,
-                'payment_status' => 'pending',
-            ]),
-            deleteOld: false,
-            prefix: 'proof',
-        );
+        $paymentData = [
+            'payment_method' => $validated['payment_method'],
+            'payment_reference' => $validated['payment_reference'] ?? null,
+            'payment_status' => 'pending',
+        ];
+
+        if ($request->hasFile('payment_proof')) {
+            // Replaced (rejected) proofs are retained as payment evidence (deleteOld: false).
+            FileStorageService::storeAndPersist(
+                $request->file('payment_proof'), 'payment-proofs', 'private',
+                fn (string $path) => $serviceRequest->update($paymentData + [
+                    'payment_proof' => $path,
+                ]),
+                deleteOld: false,
+                prefix: 'proof',
+            );
+        } else {
+            // Cash payments are verified by the cashier at the counter — no proof file.
+            $serviceRequest->update($paymentData);
+        }
+
+        $isCash = $validated['payment_method'] === 'cash';
 
         // Notify cashier role
         $this->notifyRole(
             'cashier',
-            'New Payment Proof Uploaded',
-            'A customer uploaded payment proof for service request #' . $serviceRequest->id,
+            $isCash ? 'New Cash Payment' : 'New Payment Proof Uploaded',
+            ($isCash
+                ? 'A customer will pay in cash at the counter for service request #'
+                : 'A customer uploaded payment proof for service request #')
+                . $serviceRequest->id,
             'info',
             'service_request',
             $serviceRequest->id
@@ -581,8 +609,10 @@ class ServiceRequestController extends Controller
         // Notify customer about payment pending verification
         WorkflowNotifier::notifyEmail(
             $serviceRequest->customer_email,
-            'Payment Proof Submitted',
-            "Your payment proof for {$serviceRequest->service_name} is pending verification.",
+            'Payment Submitted',
+            $isCash
+                ? "Your cash payment for {$serviceRequest->service_name} is pending verification at the counter."
+                : "Your payment proof for {$serviceRequest->service_name} is pending verification.",
             'info',
             'service_request',
             $serviceRequest->id
@@ -596,7 +626,7 @@ class ServiceRequestController extends Controller
 
         return response()->json([
             'success' => true,
-            'message' => 'Payment proof uploaded successfully. Waiting for cashier verification.',
+            'message' => 'Payment submitted successfully. Waiting for cashier verification.',
             'request' => $this->formatRequest($serviceRequest),
             'payment_status' => 'pending',
             'proof_url' => "/api/files/payment-proofs/service-request/{$serviceRequest->id}/view",

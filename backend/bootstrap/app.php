@@ -27,6 +27,7 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->alias([
             'role' => \App\Http\Middleware\EnsureRole::class,
             'auth.api' => \App\Http\Middleware\ApiTokenAuth::class,
+            'kiosk.pin' => \App\Http\Middleware\KioskPinAuth::class,
             'throttle' => \Illuminate\Routing\Middleware\ThrottleRequests::class,
             'verified' => \App\Http\Middleware\EnsureEmailIsVerified::class,
         ]);

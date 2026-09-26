@@ -802,7 +802,6 @@
 .btn-icon.unarchive:hover { border-color: #6ee7b7; color: #059669; background: rgba(16, 185, 129, 0.07); }
 .btn-icon.info:hover    { border-color: #c4b5fd; color: #7c3aed; background: rgba(139, 92, 246, 0.06); }
 .btn-icon.history:hover { border-color: #67e8f9; color: #0891b2; background: rgba(6, 182, 212, 0.06); }
-.btn-icon.photo:hover   { border-color: #6ee7b7; color: #059669; background: rgba(16, 185, 129, 0.07); }
 .btn-icon.disabled      { opacity: 0.35; cursor: not-allowed; }
 .btn-icon.disabled:hover { border-color: #e9edf3; color: #94a3b8; background: #fff; }
 

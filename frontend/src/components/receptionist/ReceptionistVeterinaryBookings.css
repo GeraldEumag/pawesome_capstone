@@ -420,78 +420,7 @@
   font-weight: 600;
 }
 
-/* Modal */
-.booking-modal-overlay {
-  position: fixed;
-  inset: 0;
-  z-index: 12000;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 20px;
-  background: rgba(0, 0, 0, 0.4);
-  backdrop-filter: blur(6px);
-}
-
-.booking-modal {
-  width: min(800px, 100%);
-  max-height: 90vh;
-  overflow-y: auto;
-  background: var(--vet-surface);
-  border: 1px solid var(--vet-border);
-  border-radius: 12px;
-  box-shadow: 0 20px 60px rgba(0,0,0,0.15);
-}
-
-.modal-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  gap: 16px;
-  padding: 20px 24px;
-  border-bottom: 1px solid var(--vet-border);
-}
-
-.modal-header h2 {
-  margin: 6px 0 0;
-  color: var(--vet-heading);
-  font-size: 1.25rem;
-  font-weight: 600;
-}
-
-.close-btn {
-  width: 36px;
-  height: 36px;
-  display: grid;
-  place-items: center;
-  border: 1px solid var(--vet-border);
-  border-radius: 8px;
-  background: var(--vet-surface-alt);
-  color: var(--vet-muted);
-  cursor: pointer;
-  transition: all 0.15s ease;
-}
-
-.close-btn:hover {
-  background: var(--vet-danger-bg);
-  color: var(--vet-danger);
-  border-color: var(--vet-danger);
-}
-
-.modal-content {
-  padding: 20px 24px;
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-}
-
-.modal-actions {
-  display: flex;
-  justify-content: flex-end;
-  gap: 10px;
-  padding: 14px 24px;
-  border-top: 1px solid var(--vet-border);
-}
+/* Detail modal shell comes from shared hbk-* (styles/bookingModal.css) */
 
 /* Info Grid */
 .info-grid {
@@ -612,9 +541,7 @@
   .vet-controls,
   .info-grid,
   .form-row { grid-template-columns: 1fr; }
-  .vet-summary-card,
-  .modal-actions button { width: 100%; }
-  .modal-actions { flex-direction: column; }
+  .vet-summary-card { width: 100%; }
 }
 
 @media (max-width: 480px) {

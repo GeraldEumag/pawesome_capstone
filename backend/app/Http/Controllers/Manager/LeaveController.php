@@ -132,6 +132,10 @@ class LeaveController extends Controller
 
     public function reject(Request $request, int $id): JsonResponse
     {
+        $validated = $request->validate([
+            'remarks' => 'required|string|max:500',
+        ]);
+
         $record = DB::table('leave_requests')->where('id', $id)->first();
 
         if (!$record) {
@@ -140,7 +144,7 @@ class LeaveController extends Controller
 
         DB::table('leave_requests')->where('id', $id)->update([
             'status' => 'rejected',
-            'manager_remarks' => $request->input('remarks', ''),
+            'manager_remarks' => $validated['remarks'],
             'reviewed_by' => Auth::id(),
             'reviewed_at' => now(),
             'updated_at' => now(),

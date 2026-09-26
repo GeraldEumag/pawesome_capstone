@@ -4,7 +4,7 @@ import { getToken } from "../../utils/auth";
 import { useAuth } from "../../context/AuthContext";
 import { normalizeList } from "../../utils/normalizeList";
 import "./CashierPaymentVerification.css";
-import { showAlert, showSuccess, showError, showPrompt, showConfirm } from "../../utils/alert.jsx";
+import { showAlert, showSuccess, showError, showReasonPrompt, showConfirm } from "../../utils/alert.jsx";
 import { printReceipt as printReceiptUtil } from "../../utils/receiptPrinter";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faRotateRight, faInbox, faXmark } from "@fortawesome/free-solid-svg-icons";
@@ -212,8 +212,8 @@ const CashierPaymentVerification = () => {
   };
 
   const rejectPayment = async (payment) => {
-    const cashier_remarks = await showPrompt("Reason for rejecting this payment proof:");
-    if (cashier_remarks === null) return;
+    const cashier_remarks = await showReasonPrompt("Reason for rejecting this payment proof:", "Reject Payment");
+    if (!cashier_remarks) return;
 
     setActionLoading((prev) => ({ ...prev, [payment.id]: "reject" }));
     try {
