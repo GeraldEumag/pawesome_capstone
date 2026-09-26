@@ -22,6 +22,14 @@ use Illuminate\Support\Carbon;
 
 class AppointmentController extends Controller
 {
+    private const ACTIVE_APPOINTMENT_STATUSES = [
+        Appointment::STATUS_IN_PROGRESS,
+        Appointment::STATUS_IN_CONSULTATION,
+        Appointment::STATUS_NEEDS_CONFINEMENT,
+        Appointment::STATUS_TREATED,
+        Appointment::STATUS_AWAITING_PAYMENT,
+    ];
+
     private function currentCustomer(Request $request): ?Customer
     {
         $user = $request->user();
@@ -344,7 +352,7 @@ class AppointmentController extends Controller
         if (!$appointment->canBeCancelled()) {
             return response()->json([
                 'message' => 'Cannot cancel appointment with status: ' . $appointment->status,
-                'allowed_statuses' => ['pending', 'approved']
+                'allowed_statuses' => ['pending', 'approved', 'scheduled', 'in_progress', 'in_consultation', 'needs_confinement', 'treated', 'awaiting_payment']
             ], 422);
         }
 
@@ -354,6 +362,14 @@ class AppointmentController extends Controller
 
         if ($validator->fails()) {
             return response()->json(['errors' => $validator->errors()], 422);
+        }
+
+        if (in_array($appointment->status, self::ACTIVE_APPOINTMENT_STATUSES, true)
+            && trim((string) $request->input('reason')) === '') {
+            return response()->json([
+                'message' => 'A cancellation reason is required once the appointment is underway.',
+                'errors' => ['reason' => ['A cancellation reason is required.']],
+            ], 422);
         }
 
         $oldStatus = $appointment->status;
@@ -491,7 +507,7 @@ class AppointmentController extends Controller
         }
 
         // Only allow updating medical info for appointments in progress
-        if (!in_array($appointment->status, ['in_progress', 'treated'])) {
+        if (!in_array($appointment->status, ['in_progress', 'in_consultation', 'needs_confinement', 'treated'])) {
             return response()->json([
                 'message' => 'Can only update medical information for appointments in progress',
                 'current_status' => $appointment->status
@@ -674,7 +690,7 @@ class AppointmentController extends Controller
         }
 
         $validator = Validator::make($request->all(), [
-            'status' => 'required|in:pending,approved,scheduled,in_progress,treated,completed,cancelled,rejected,no_show',
+            'status' => 'required|in:' . implode(',', Appointment::VALID_STATUSES),
             'reason' => 'required_if:status,rejected|string|max:500',
         ]);
 
@@ -697,7 +713,23 @@ class AppointmentController extends Controller
             ], 422);
         }
 
+        // Cancelling an appointment that is already underway requires a reason.
+        if ($newStatus === Appointment::STATUS_CANCELLED
+            && in_array($oldStatus, self::ACTIVE_APPOINTMENT_STATUSES, true)
+            && trim((string) $request->input('reason')) === '') {
+            return response()->json([
+                'message' => 'A cancellation reason is required once the appointment is underway.',
+                'errors' => ['reason' => ['A cancellation reason is required.']],
+            ], 422);
+        }
+
         if ($newStatus === 'completed') {
+            if (!$appointment->medicalRecords()->where('status', MedicalRecord::STATUS_FINALIZED)->exists()) {
+                return response()->json([
+                    'message' => 'Finalize the consultation medical record before completing this appointment',
+                ], 422);
+            }
+
             $billingStatus = ServiceBillingService::canCompleteService(ServiceItemUsage::SERVICE_VETERINARY, (int) $appointment->id);
             $paymentStatus = strtolower((string) ($appointment->payment_status ?? 'unpaid'));
 
@@ -721,7 +753,7 @@ class AppointmentController extends Controller
 
         $appointment->status = $newStatus;
 
-        if ($newStatus === 'rejected') {
+        if (in_array($newStatus, ['rejected', 'cancelled'], true)) {
             $appointment->cancellation_reason = $request->input('reason');
         }
 
@@ -771,13 +803,17 @@ class AppointmentController extends Controller
     {
         $validTransitions = [
             'pending' => ['approved', 'scheduled', 'cancelled', 'rejected'],
-            'approved' => ['scheduled', 'in_progress', 'treated', 'completed', 'cancelled', 'no_show'],
-            'scheduled' => ['in_progress', 'treated', 'completed', 'cancelled', 'no_show'],
-            'in_progress' => ['treated', 'completed', 'cancelled', 'no_show'],
-            'treated' => ['completed', 'cancelled'],
+            'approved' => ['scheduled', 'in_progress', 'in_consultation', 'treated', 'completed', 'cancelled', 'no_show'],
+            'scheduled' => ['in_progress', 'in_consultation', 'treated', 'completed', 'cancelled', 'no_show'],
+            'in_progress' => ['in_consultation', 'treated', 'awaiting_payment', 'completed', 'cancelled', 'no_show'],
+            'in_consultation' => ['needs_confinement', 'treated', 'awaiting_payment', 'completed', 'cancelled'],
+            'needs_confinement' => ['in_consultation', 'treated', 'awaiting_payment', 'completed', 'cancelled'],
+            'treated' => ['awaiting_payment', 'completed', 'cancelled'],
+            'awaiting_payment' => ['completed', 'cancelled'],
             'completed' => [], // No transitions from completed
             'cancelled' => [], // No transitions from cancelled
-            'rejected' => ['pending'] // Can re-activate rejected appointments
+            'rejected' => ['pending'], // Can re-activate rejected appointments
+            'no_show' => [], // No transitions from no_show
         ];
 
         return in_array($newStatus, $validTransitions[$oldStatus] ?? []);

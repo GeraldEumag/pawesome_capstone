@@ -138,6 +138,7 @@ class NotificationMatrixTest extends TestCase
         ]);
 
         $this->as('customer')->postJson("/api/customer/requests/{$sr->id}/payment-proof", [
+            'payment_method' => 'gcash',
             'payment_reference' => 'REF123456',
             'payment_proof' => UploadedFile::fake()->createWithContent(
                 'proof.png',

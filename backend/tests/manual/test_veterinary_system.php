@@ -21,13 +21,13 @@ foreach ($vetUsers as $user) {
 
 // Check existing veterinary appointments
 echo "\n2. Checking Veterinary Appointments:\n";
-$vetAppointments = DB::table('vet_appointments')
+$vetAppointments = DB::table('appointments')
     ->orderBy('created_at', 'desc')
     ->limit(5)
-    ->get(['id', 'pet_id', 'appointment_date', 'status', 'created_at']);
+    ->get(['id', 'pet_id', 'scheduled_at', 'status', 'created_at']);
 
 foreach ($vetAppointments as $appointment) {
-    echo "ID: {$appointment->id}, Pet: {$appointment->pet_id}, Date: {$appointment->appointment_date}, Status: {$appointment->status}, Created: {$appointment->created_at}\n";
+    echo "ID: {$appointment->id}, Pet: {$appointment->pet_id}, Date: {$appointment->scheduled_at}, Status: {$appointment->status}, Created: {$appointment->created_at}\n";
 }
 
 // Check medical records

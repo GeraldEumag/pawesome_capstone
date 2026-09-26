@@ -15,14 +15,35 @@ class DashboardController extends Controller
 {
     private function assignedAppointments()
     {
-        return Appointment::query()->where('veterinarian_id', Auth::id());
+        $query = Appointment::query();
+        $user = Auth::user();
+
+        // Regular veterinarians only see appointments assigned to them.
+        // Admin/super_admin see the full appointment board.
+        if (!$user || !$user->hasRoleAccess('admin')) {
+            $query->where('veterinarian_id', Auth::id());
+        }
+
+        return $query;
+    }
+
+    private function appointmentPatientScope($query)
+    {
+        $user = Auth::user();
+
+        if ($user && $user->hasRoleAccess('admin')) {
+            return $query->whereHas('appointments');
+        }
+
+        $authId = Auth::id();
+        return $query->whereHas('appointments', function ($q) use ($authId) {
+            $q->where('veterinarian_id', $authId);
+        });
     }
 
     public function overview()
     {
         $today = Carbon::today();
-
-        $authId = Auth::id();
 
         $todayAssigned = $this->assignedAppointments()
             ->whereDate('scheduled_at', $today)
@@ -50,17 +71,10 @@ class DashboardController extends Controller
             'completed_appointments' => $this->assignedAppointments()
                 ->where('status', 'completed')
                 ->count(),
-            'total_patients' => Pet::whereHas('appointments', function ($query) use ($authId) {
-                $query->where('veterinarian_id', $authId);
-            })->count(),
-            'new_patients_this_month' => Pet::whereHas('appointments', function ($query) use ($authId) {
-                $query->where('veterinarian_id', $authId);
-            })->whereMonth('created_at', $today->month)->count(),
+            'total_patients' => $this->appointmentPatientScope(Pet::query())->count(),
+            'new_patients_this_month' => $this->appointmentPatientScope(Pet::query())->whereMonth('created_at', $today->month)->count(),
             'upcoming_appointments' => $upcomingAssigned->sortBy('scheduled_at')->values()->take(5),
-            'recent_patients' => Pet::with('customer')
-                ->whereHas('appointments', function ($query) use ($authId) {
-                    $query->where('veterinarian_id', $authId);
-                })
+            'recent_patients' => $this->appointmentPatientScope(Pet::with('customer'))
                 ->latest()
                 ->take(5)
                 ->get(),
@@ -76,14 +90,13 @@ class DashboardController extends Controller
 
     public function appointments()
     {
-        $authId = Auth::id();
-
-        // Only show appointments assigned to current veterinarian
-        // (i.e., ones that receptionist has approved and assigned)
+        // Regular veterinarians only see appointments assigned to them
+        // (i.e., ones that receptionist has approved and assigned);
+        // admin/super_admin see the full board.
         return response()->json(
-            Appointment::with(['customer', 'pet', 'service', 'veterinarian'])
-                ->where('veterinarian_id', $authId)
-                ->whereIn('status', ['approved', 'scheduled', 'in_progress', 'treated', 'awaiting_payment', 'completed', 'cancelled', 'no_show'])
+            $this->assignedAppointments()
+                ->with(['customer', 'pet', 'service', 'veterinarian'])
+                ->whereIn('status', ['approved', 'scheduled', 'in_progress', 'in_consultation', 'needs_confinement', 'treated', 'awaiting_payment'])
                 ->orderBy('scheduled_at')
                 ->get()
         );
@@ -91,16 +104,12 @@ class DashboardController extends Controller
 
     public function patients()
     {
-        $authId = Auth::id();
-
         return response()->json(
-            Pet::with(['customer', 'appointments' => function($query) {
-                $query->latest()->take(3);
-            }])
-                ->whereHas('appointments', function($query) use ($authId) {
-                    $query->where('veterinarian_id', $authId);
-                })
-                ->get()
+            $this->appointmentPatientScope(
+                Pet::with(['customer', 'appointments' => function($query) {
+                    $query->latest()->take(3);
+                }])
+            )->get()
         );
     }
 

@@ -11,7 +11,6 @@ use App\Models\Pet;
 use App\Models\Service;
 use App\Models\ServiceRequest;
 use App\Models\User;
-use App\Models\VetAppointment;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -209,21 +208,6 @@ class AuthorizationMatrixTest extends TestCase
 
         $this->assertDatabaseMissing('users', ['email' => 'new@example.com']);
         $this->assertSame('customer', $this->users['customer']->fresh()->role);
-    }
-
-    public function test_vet_appointment_hard_delete_is_admin_only(): void
-    {
-        $appt = VetAppointment::create([
-            'pet_name' => 'Buddy', 'service' => 'Checkup',
-            'appointment_date' => now()->addDay()->toDateString(), 'status' => 'pending',
-        ]);
-
-        $this->as('receptionist')->deleteJson("/api/vet/{$appt->id}")->assertForbidden();
-        $this->as('customer')->deleteJson("/api/vet/{$appt->id}")->assertForbidden();
-        $this->assertDatabaseHas('vet_appointments', ['id' => $appt->id]);
-
-        $this->as('admin')->deleteJson("/api/vet/{$appt->id}")->assertOk();
-        $this->assertSoftDeleted('vet_appointments', ['id' => $appt->id]);
     }
 
     public function test_attendance_punch_is_staff_only(): void

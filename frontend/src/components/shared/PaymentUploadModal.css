@@ -99,6 +99,85 @@
   max-width: 320px;
 }
 
+/* Payment method picker */
+.pum-methods {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.6rem;
+}
+
+.pum-method-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.7rem 0.5rem;
+  border: 1.5px solid #e2e8f0;
+  border-radius: 10px;
+  background: #f8fafc;
+  cursor: pointer;
+  transition: border-color 0.15s, background 0.15s, box-shadow 0.15s;
+}
+
+.pum-method-btn:hover {
+  border-color: #cbd5e1;
+  background: #f1f5f9;
+}
+
+.pum-method-btn.active {
+  border-color: #ff5f93;
+  background: #fff5f8;
+  box-shadow: 0 0 0 3px rgba(255, 95, 147, 0.12);
+}
+
+.pum-method-label {
+  font-size: 0.92rem;
+  font-weight: 700;
+  color: #1e293b;
+}
+
+.pum-method-hint {
+  font-size: 0.7rem;
+  color: #64748b;
+  text-align: center;
+}
+
+/* Cash panel */
+.pum-cash-panel {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 1.25rem;
+  border: 2px dashed #cbd5e1;
+  border-radius: 12px;
+  background: #f8fafc;
+  width: 100%;
+}
+
+.pum-cash-title {
+  font-weight: 700;
+  color: #1e293b;
+  font-size: 1rem;
+  margin: 0;
+}
+
+/* Maya badge (no QR asset available) */
+.pum-maya-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 160px;
+  height: 80px;
+  border: 2px solid #00a94f;
+  border-radius: 12px;
+  background: #f0fdf4;
+  color: #00a94f;
+  font-size: 1.4rem;
+  font-weight: 800;
+  letter-spacing: 0.05em;
+}
+
 /* Steps */
 .pum-step {
   display: flex;

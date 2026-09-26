@@ -24,6 +24,10 @@ class MedicalRecordController extends Controller
 
     private function vetCanAccessPet(Request $request, int $petId): bool
     {
+        if ($request->user()->hasRoleAccess('admin')) {
+            return true;
+        }
+
         return Appointment::where('pet_id', $petId)
             ->where('veterinarian_id', $request->user()->id)
             ->exists();
@@ -31,8 +35,14 @@ class MedicalRecordController extends Controller
 
     private function vetCanUseAppointment(Request $request, Appointment $appointment): bool
     {
+        $isActive = in_array($appointment->status, ['in_consultation', 'in_progress', 'treated'], true);
+
+        if ($request->user()->hasRoleAccess('admin')) {
+            return $isActive;
+        }
+
         return (int) $appointment->veterinarian_id === (int) $request->user()->id
-            && in_array($appointment->status, ['in_consultation', 'in_progress', 'treated'], true);
+            && $isActive;
     }
 
     /**
@@ -225,7 +235,7 @@ class MedicalRecordController extends Controller
             'respiratory_rate' => 'nullable|integer',
             'body_condition_score' => 'nullable|string',
             'notes' => 'nullable|string',
-            'status' => 'sometimes|in:draft,finalized,locked',
+            'status' => 'sometimes|in:draft,finalized',
         ]);
 
         if ($validator->fails()) {
@@ -438,7 +448,7 @@ class MedicalRecordController extends Controller
                 'weight' => 'nullable|numeric|min:0',
                 'temperature' => 'nullable|numeric|min:0',
                 'next_visit_date' => 'nullable|date',
-                'status' => 'nullable|string|max:50'
+                'status' => 'nullable|in:draft,finalized'
             ]);
 
             if ($validator->fails()) {
@@ -452,6 +462,13 @@ class MedicalRecordController extends Controller
             $pet = Pet::findOrFail($petId);
             $user = $request->user();
 
+            if (!$this->vetCanAccessPet($request, (int) $petId)) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Pet not found'
+                ], 404);
+            }
+
             $record = MedicalRecord::create([
                 'pet_id' => $petId,
                 'customer_id' => $pet->customer_id,
@@ -464,7 +481,7 @@ class MedicalRecordController extends Controller
                 'notes' => $request->notes,
                 'weight_kg' => $request->weight,
                 'temperature_celsius' => $request->temperature,
-                'status' => $request->status ?? 'completed',
+                'status' => $request->status ?? MedicalRecord::STATUS_FINALIZED,
             ]);
 
             return response()->json([
@@ -581,6 +598,10 @@ class MedicalRecordController extends Controller
     {
         $pet = Pet::findOrFail($petId);
         $user = $request->user();
+
+        if (!$this->vetCanAccessPet($request, (int) $petId)) {
+            return response()->json(['message' => 'Pet not found'], 404);
+        }
 
         $validator = Validator::make($request->all(), [
             'vaccine_name' => 'required|string|max:255',

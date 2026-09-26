@@ -293,6 +293,23 @@ const VetConsultation = () => {
     }
   };
 
+  // ── Complete appointment (after payment is verified) ─────
+  const completeAppointment = async () => {
+    try {
+      setSaving(true);
+      await apiRequest(`/veterinary/appointments/${id}/complete`, {
+        method: "POST",
+      });
+      toast.success("Appointment completed and moved to history.");
+      navigate("/veterinary/appointments");
+    } catch (err) {
+      toast.error(err.message || "Failed to complete appointment.");
+      await loadConsultation();
+    } finally {
+      setSaving(false);
+    }
+  };
+
   // ── Recommend confinement ────────────────────────────────
   const recommendConfinement = async () => {
     if (!isStarted) {
@@ -939,16 +956,40 @@ const VetConsultation = () => {
           Needs Confinement
         </button>
         {isConsultationComplete ? (
-          <button
-            type="button"
-            className="consult-btn consult-btn--billing"
-            onClick={() =>
-              navigate(`/veterinary/appointments/${id}/billing`)
-            }
-          >
-            <FontAwesomeIcon icon={faFileInvoiceDollar} />
-            View Billing
-          </button>
+          <>
+            <button
+              type="button"
+              className="consult-btn consult-btn--billing"
+              onClick={() =>
+                navigate(`/veterinary/appointments/${id}/billing`)
+              }
+            >
+              <FontAwesomeIcon icon={faFileInvoiceDollar} />
+              View Billing
+            </button>
+            {appointmentStatus === "awaiting_payment" && (
+              <button
+                type="button"
+                className="consult-btn consult-btn--primary"
+                onClick={completeAppointment}
+                disabled={saving || appointment?.payment_status !== "paid"}
+                title={
+                  appointment?.payment_status !== "paid"
+                    ? "Waiting for cashier to verify the customer's payment"
+                    : "Mark this appointment as completed"
+                }
+              >
+                {saving ? (
+                  <FontAwesomeIcon icon={faSpinner} spin />
+                ) : (
+                  <FontAwesomeIcon icon={faCircleCheck} />
+                )}
+                {appointment?.payment_status === "paid"
+                  ? "Complete Appointment"
+                  : "Awaiting Payment"}
+              </button>
+            )}
+          </>
         ) : (
           <button
             type="button"

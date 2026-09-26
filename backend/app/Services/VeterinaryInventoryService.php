@@ -6,7 +6,6 @@ use App\Models\InventoryItem;
 use App\Models\ServiceItemUsage;
 use App\Models\InventoryBatch;
 use App\Models\InventoryLog;
-use App\Models\VetAppointment;
 use App\Models\Pet;
 use App\Models\Appointment;
 use Illuminate\Support\Facades\DB;
@@ -86,19 +85,12 @@ class VeterinaryInventoryService
                     $stockAfter = $restoreResult['stock_after'];
                 }
 
-                // Get or create vet appointment record for foreign key constraint
-                $vetAppointment = \DB::table('vet_appointments')
-                    ->where('pet_id', $petId)
-                    ->first();
-                    
-                $vetAppointmentId = $vetAppointment ? $vetAppointment->id : null;
-
                 $unitPrice = (float) ($item['unit_price'] ?? $item['charge_amount'] ?? $inventoryItem->price ?? 0);
                 $totalPrice = round($newQuantity * $unitPrice, 2);
                 $payload = [
                     'service_type' => ServiceItemUsage::SERVICE_VETERINARY,
                     'service_id' => $appointmentId,
-                    'appointment_id' => $vetAppointmentId,
+                    'appointment_id' => $appointmentId,
                     'pet_id' => $petId,
                     'customer_id' => $appointment?->customer_id,
                     'customer_email' => $appointment?->customer?->email,

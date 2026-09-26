@@ -137,7 +137,16 @@ class Appointment extends Model
     // Check if appointment can be cancelled
     public function canBeCancelled(): bool
     {
-        return in_array($this->status, [self::STATUS_PENDING, self::STATUS_APPROVED]);
+        return in_array($this->status, [
+            self::STATUS_PENDING,
+            self::STATUS_APPROVED,
+            self::STATUS_SCHEDULED,
+            self::STATUS_IN_PROGRESS,
+            self::STATUS_IN_CONSULTATION,
+            self::STATUS_NEEDS_CONFINEMENT,
+            self::STATUS_TREATED,
+            self::STATUS_AWAITING_PAYMENT,
+        ], true);
     }
 
     // Check if appointment can be rescheduled

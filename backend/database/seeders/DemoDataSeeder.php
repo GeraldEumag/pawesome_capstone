@@ -9,9 +9,9 @@ use App\Models\Grooming;
 use App\Models\InventoryItem;
 use App\Models\InventoryLog;
 use App\Models\Pet;
+use App\Models\Appointment;
 use App\Models\Service;
 use App\Models\User;
-use App\Models\VetAppointment;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
 
@@ -47,7 +47,7 @@ class DemoDataSeeder extends Seeder
         $this->createGroomingAppointment($customer, $pet);
 
         // Create vet appointment
-        $this->createVetAppointment($pet);
+        $this->createVetAppointment($customer, $pet);
 
         // Create boarding reservation (may skip if no hotel rooms available)
         $this->createBoardingReservation($customer, $pet);
@@ -58,7 +58,7 @@ class DemoDataSeeder extends Seeder
         $this->command?->info('Demo data created successfully!');
         $this->command?->info('Pet: ' . $pet->name);
         $this->command?->info('Grooming: ' . Grooming::where('pet_id', $pet->id)->count() . ' appointment(s)');
-        $this->command?->info('Vet Appointments: ' . VetAppointment::where('pet_id', $pet->id)->count() . ' appointment(s)');
+        $this->command?->info('Vet Appointments: ' . Appointment::where('pet_id', $pet->id)->count() . ' appointment(s)');
         $this->command?->info('Boardings: ' . Boarding::where('pet_id', $pet->id)->count() . ' reservation(s)');
     }
 
@@ -126,10 +126,10 @@ class DemoDataSeeder extends Seeder
         $this->command?->info('Created grooming appointment for ' . $pet->name);
     }
 
-    private function createVetAppointment(Pet $pet): void
+    private function createVetAppointment(Customer $customer, Pet $pet): void
     {
         $service = Service::where('name', 'General Check-up')->first();
-        
+
         if (!$service) {
             $service = Service::firstOrCreate(
                 ['name' => 'General Check-up'],
@@ -144,16 +144,17 @@ class DemoDataSeeder extends Seeder
             );
         }
 
-        $appointment = VetAppointment::firstOrCreate(
+        Appointment::firstOrCreate(
             [
+                'customer_id' => $customer->id,
                 'pet_id' => $pet->id,
-                'appointment_date' => now()->addDays(1)->toDateString(),
+                'service_id' => $service->id,
+                'scheduled_at' => now()->addDay()->setTime(10, 0),
             ],
             [
-                'pet_name' => $pet->name,
-                'service' => $service->name,
-                'concern' => 'Annual wellness check-up and vaccination review',
                 'status' => 'pending',
+                'notes' => 'Annual wellness check-up and vaccination review',
+                'price' => $service->price ?? 0,
             ]
         );
 

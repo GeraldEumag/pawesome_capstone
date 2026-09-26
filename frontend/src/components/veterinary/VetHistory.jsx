@@ -16,7 +16,7 @@ const VetHistory = () => {
   const [error, setError]             = useState("");
   const [searchTerm, setSearchTerm]   = useState("");
   const [dateFilter, setDateFilter]   = useState("all");
-  const [statusFilter, setStatusFilter] = useState("completed,cancelled");
+  const [statusFilter, setStatusFilter] = useState("completed,cancelled,no_show");
   const [page, setPage]               = useState(1);
   const [meta, setMeta]               = useState(null);
 

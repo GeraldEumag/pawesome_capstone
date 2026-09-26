@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { showConfirm } from "../../utils/alert.jsx";
+import { showReasonPrompt } from "../../utils/alert.jsx";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
   faCalendarAlt,
@@ -151,6 +151,7 @@ const VetAppointments = () => {
       service: serviceName,
       price: apt?.price || apt?.amount || apt?.total_amount || null,
       status: normalizeStatus(apt?.status),
+      paymentStatus: normalizeStatus(apt?.payment_status),
       notes: apt?.notes || apt?.reason || apt?.description || "",
       scheduledAt,
       createdAt: apt?.created_at || apt?.createdAt || null,
@@ -336,7 +337,7 @@ const VetAppointments = () => {
     }
   };
 
-  const updateAppointmentStatus = async (appointmentId, nextStatus) => {
+  const updateAppointmentStatus = async (appointmentId, nextStatus, reason = null) => {
     if (!appointmentId) {
       toast.error("Appointment ID not found.");
       return;
@@ -353,7 +354,10 @@ const VetAppointments = () => {
       } else {
         await apiRequest(`/veterinary/appointments/${appointmentId}/status`, {
           method: "PATCH",
-          body: JSON.stringify({ status: nextStatus }),
+          body: JSON.stringify({
+            status: nextStatus,
+            ...(reason ? { reason } : {}),
+          }),
         });
       }
 
@@ -381,13 +385,35 @@ const VetAppointments = () => {
       return;
     }
 
-    const confirmCancel = await showConfirm(
-      "Cancel this appointment? This will update its status to cancelled."
+    const reason = await showReasonPrompt(
+      "Cancel this appointment? Please provide a reason — it will be recorded.",
+      "Cancellation reason"
     );
 
-    if (!confirmCancel) return;
+    if (reason === null) return;
 
-    await updateAppointmentStatus(appointmentId, "cancelled");
+    await updateAppointmentStatus(appointmentId, "cancelled", reason);
+  };
+
+  const completeAppointment = async (appointmentId) => {
+    try {
+      setActionLoadingId(`${appointmentId}-complete`);
+      await apiRequest(`/veterinary/appointments/${appointmentId}/complete`, {
+        method: "POST",
+      });
+      toast.success("Appointment completed and moved to history.");
+      setSelectedAppointment(null);
+      await fetchAppointments({ silent: true });
+    } catch (err) {
+      console.error("Failed to complete appointment:", err);
+      toast.error(
+        err?.response?.data?.message ||
+          err?.message ||
+          "Failed to complete appointment."
+      );
+    } finally {
+      setActionLoadingId(null);
+    }
   };
 
   const handleRefresh = () => {
@@ -643,6 +669,25 @@ const VetAppointments = () => {
                       {appointment.status === "awaiting_payment" ? "View Consultation" : "Consult"}
                     </button>
 
+                    {appointment.status === "awaiting_payment" && (
+                      <button
+                        className="action-btn complete-btn"
+                        type="button"
+                        disabled={
+                          appointment.paymentStatus !== "paid" ||
+                          actionLoadingId === `${appointment.id}-complete`
+                        }
+                        title={
+                          appointment.paymentStatus !== "paid"
+                            ? "Waiting for cashier to verify payment"
+                            : "Mark this appointment as completed"
+                        }
+                        onClick={() => completeAppointment(appointment.id)}
+                      >
+                        <FontAwesomeIcon icon={faCheckCircle} /> Complete
+                      </button>
+                    )}
+
                     <NavLink
                       className="action-btn edit-btn"
                       to={`/veterinary/appointments/${appointment.id}/edit`}
@@ -758,6 +803,25 @@ const VetAppointments = () => {
                 <FontAwesomeIcon icon={faCircleCheck} />
                 {selectedAppointment.status === "awaiting_payment" ? "View Consultation" : "Consult"}
               </button>
+
+              {selectedAppointment.status === "awaiting_payment" && (
+                <button
+                  className="action-btn complete-btn"
+                  type="button"
+                  disabled={
+                    selectedAppointment.paymentStatus !== "paid" ||
+                    actionLoadingId === `${selectedAppointment.id}-complete`
+                  }
+                  title={
+                    selectedAppointment.paymentStatus !== "paid"
+                      ? "Waiting for cashier to verify payment"
+                      : "Mark this appointment as completed"
+                  }
+                  onClick={() => completeAppointment(selectedAppointment.id)}
+                >
+                  <FontAwesomeIcon icon={faCheckCircle} /> Complete
+                </button>
+              )}
 
               <button
                 className="action-btn delete-btn"

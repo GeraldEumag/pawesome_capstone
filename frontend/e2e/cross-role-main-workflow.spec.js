@@ -272,20 +272,6 @@ async function createVetRequest(request, customerSession, pet) {
   return created.request || created.data || created;
 }
 
-async function createVetAppointment(request, customerSession, pet) {
-  const offset = 30 + (runSeed % 20);
-  const created = await api(request, customerSession, "POST", "/customer/vet", {
-    data: {
-      petId: pet.id,
-      petName: pet.name,
-      service: "checkup",
-      date: futureDate(offset),
-      concern: `CROSS_ROLE_MAIN_WORKFLOW appointment ${runSeed}`,
-    },
-  });
-  return created.appointment || created.data || created;
-}
-
 test.describe.configure({ mode: "serial" });
 test.setTimeout(300000);
 

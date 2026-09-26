@@ -24,7 +24,6 @@ a blanket `SoftDeletes` rollout. The governing distinction:
 | `Service` | `services` | Master data referenced by appointments/billing |
 | `Supplier` | `suppliers` | Master data referenced by inventory history |
 | `HotelRoom` / `BoardingRoom` | `hotel_rooms`, `boarding_rooms` | Referenced by confinement/boarding history |
-| `VetAppointment` | `vet_appointments` | Clinical/operational history |
 | `Grooming` | `groomings` | Operational history |
 | `MedicalRecord` | `medical_records` | Clinical history (locked records still cannot be deleted) |
 | `Attendance` | `attendance` | HR history |

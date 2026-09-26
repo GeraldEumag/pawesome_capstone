@@ -106,7 +106,8 @@ class MedicalConfinementController extends Controller
         }
 
         $room = HotelRoom::findOrFail($request->room_id);
-        if (!in_array($room->status, ['available', 'reserved'], true)) {
+        $isCurrentRoom = (int) $confinement->room_id === (int) $room->id;
+        if (!$isCurrentRoom && $room->status !== 'available') {
             return response()->json(['error' => 'Selected room is not available for admission'], 422);
         }
 
@@ -176,26 +177,34 @@ class MedicalConfinementController extends Controller
         }
 
         $validator = Validator::make($request->all(), [
-            'payment_method' => 'required|string|max:100',
-            'payment_reference' => 'required|string|max:255',
-            'payment_proof' => 'required|file|mimes:jpg,jpeg,png,pdf|max:5120',
+            'payment_method' => 'required|in:cash,gcash,maya',
+            'payment_reference' => 'required_unless:payment_method,cash|nullable|string|max:255',
+            'payment_proof' => 'required_unless:payment_method,cash|nullable|file|mimes:jpg,jpeg,png,pdf|max:5120',
         ]);
 
         if ($validator->fails()) {
             return response()->json(['errors' => $validator->errors()], 422);
         }
 
-        // Replaced proofs are retained as payment evidence (deleteOld: false).
-        FileStorageService::storeAndPersist(
-            $request->file('payment_proof'), 'payment-proofs/confinements', 'private',
-            fn (string $path) => $confinement->update([
-                'payment_method' => $request->payment_method,
-                'payment_reference' => $request->payment_reference,
-                'payment_proof' => $path,
-                'payment_status' => 'pending',
-            ]),
-            deleteOld: false,
-        );
+        $paymentData = [
+            'payment_method' => $request->payment_method,
+            'payment_reference' => $request->payment_reference,
+            'payment_status' => 'pending',
+        ];
+
+        if ($request->hasFile('payment_proof')) {
+            // Replaced proofs are retained as payment evidence (deleteOld: false).
+            FileStorageService::storeAndPersist(
+                $request->file('payment_proof'), 'payment-proofs/confinements', 'private',
+                fn (string $path) => $confinement->update($paymentData + [
+                    'payment_proof' => $path,
+                ]),
+                deleteOld: false,
+            );
+        } else {
+            // Cash payments are verified by the cashier at the counter — no proof file.
+            $confinement->update($paymentData);
+        }
 
         WorkflowNotifier::notifyRole('cashier', 'Confinement payment proof submitted', "{$confinement->pet_name} has a pending confinement payment proof.", 'info', 'medical_confinement', $confinement->id);
 

@@ -576,7 +576,10 @@ class DashboardController extends Controller
         $serviceRequests = DB::table('service_requests')
             ->where('status', 'approved')
             ->where('payment_status', 'pending')
-            ->whereNotNull('payment_proof')
+            ->where(function ($q) {
+                $q->whereNotNull('payment_proof')
+                  ->orWhere('payment_method', 'cash');
+            })
             ->orderBy('updated_at', 'desc')
             ->get()
             ->map(function ($request) {
@@ -605,7 +608,10 @@ class DashboardController extends Controller
         $boardings = DB::table('boardings')
             ->whereIn('status', ['approved', 'scheduled', 'checked_in', 'in_care', 'ready_for_pickup'])
             ->where('payment_status', 'pending')
-            ->whereNotNull('payment_proof')
+            ->where(function ($q) {
+                $q->whereNotNull('payment_proof')
+                  ->orWhere('payment_method', 'cash');
+            })
             ->orderBy('updated_at', 'desc')
             ->get()
             ->map(function ($boarding) {
@@ -633,7 +639,10 @@ class DashboardController extends Controller
 
         $confinements = DB::table('medical_confinements')
             ->where('payment_status', 'pending')
-            ->whereNotNull('payment_proof')
+            ->where(function ($q) {
+                $q->whereNotNull('payment_proof')
+                  ->orWhere('payment_method', 'cash');
+            })
             ->orderBy('updated_at', 'desc')
             ->get()
             ->map(function ($confinement) {
