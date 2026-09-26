@@ -299,7 +299,7 @@ class NotificationMatrixTest extends TestCase
             'pet_id' => $pet->id,
             'hotel_room_id' => $room->id,
             'check_in_date' => now()->addDays(3)->toDateString(),
-            'number_of_days' => 2,
+            'number_of_days' => 1,
         ]);
         $response->assertStatus(201);
 

@@ -438,7 +438,7 @@ class DatabaseIntegrityTest extends TestCase
             'pet_id' => $this->pet->id,
             'hotel_room_id' => $room->id,
             'check_in_date' => now()->addDay()->format('Y-m-d'),
-            'number_of_days' => 2,
+            'number_of_days' => 1,
             'special_requests' => 'Needs quiet room',
         ], $this->withAuth($this->receptionist, $this->receptionistToken));
 
