@@ -118,6 +118,13 @@ class PayrollController extends Controller
             'period_end' => 'required|date|after_or_equal:period_start',
         ]);
 
+        if (!PayrollComputationService::isSemiMonthlyPeriod($validated['period_start'], $validated['period_end'])) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Invalid pay period. Payroll must run for the 1st–15th or the 16th–end of a month.',
+            ], 422);
+        }
+
         $startDate = $validated['period_start'];
         $endDate = $validated['period_end'];
 
@@ -145,6 +152,13 @@ class PayrollController extends Controller
             'period_start' => 'required|date',
             'period_end' => 'required|date|after_or_equal:period_start',
         ]);
+
+        if (!PayrollComputationService::isSemiMonthlyPeriod($validated['period_start'], $validated['period_end'])) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Invalid pay period. Payroll must run for the 1st–15th or the 16th–end of a month.',
+            ], 422);
+        }
 
         $startDate = Carbon::parse($validated['period_start'])->toDateString();
         $endDate = Carbon::parse($validated['period_end'])->toDateString();
@@ -189,7 +203,9 @@ class PayrollController extends Controller
                     $employee,
                     $isEmployee
                         ? $attendanceByEmployee->get($employee->id, collect())
-                        : $attendanceByUser->get($employee->id, collect())
+                        : $attendanceByUser->get($employee->id, collect()),
+                    $startDate,
+                    $endDate
                 );
 
                 // Create or update payroll record — keyed on whichever person
@@ -211,9 +227,10 @@ class PayrollController extends Controller
                         'position' => $computed['position'],
                         'base_salary' => $computed['base_salary'],
                         'hourly_rate' => $computed['hourly_rate'],
-                        'working_days' => 22,
+                        'working_days' => $computed['working_days'] ?? 22,
                         'present_days' => $computed['present_days'],
                         'absent_days' => $computed['absent_days'],
+                        'paid_leave_days' => $computed['paid_leave_days'],
                         'regular_hours' => $computed['regular_hours'],
                         'overtime_hours' => $computed['overtime_hours'],
                         'overtime_pay' => $computed['overtime_pay'],
@@ -424,6 +441,7 @@ class PayrollController extends Controller
             'working_days' => 'nullable|integer|min:0',
             'present_days' => 'nullable|integer|min:0',
             'absent_days' => 'nullable|integer|min:0',
+            'paid_leave_days' => 'nullable|integer|min:0',
             'regular_hours' => 'nullable|numeric|min:0',
             'overtime_hours' => 'nullable|numeric|min:0',
             'overtime_pay' => 'nullable|numeric|min:0',
@@ -523,6 +541,7 @@ class PayrollController extends Controller
             'working_days' => 'nullable|integer|min:0',
             'present_days' => 'nullable|integer|min:0',
             'absent_days' => 'nullable|integer|min:0',
+            'paid_leave_days' => 'nullable|integer|min:0',
             'regular_hours' => 'nullable|numeric|min:0',
             'overtime_hours' => 'nullable|numeric|min:0',
             'overtime_pay' => 'nullable|numeric|min:0',

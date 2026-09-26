@@ -43,8 +43,9 @@ class PayrollCalculationTest extends TestCase
         $payroll = $this->createPayroll($user, 5000);
         $payroll->calculatePayroll();
 
-        // SSS 2025: salary <= 5,250 → MSC 5,000 → 5% = 250
-        $this->assertEquals(250, (float) $payroll->sss_contribution);
+        // SSS 2025: salary <= 5,250 → MSC 5,000 → 5% = 250 monthly,
+        // halved for the 1–15 semi-monthly cutoff = 125
+        $this->assertEquals(125, (float) $payroll->sss_contribution);
     }
 
     public function test_sss_contribution_for_high_salary(): void
@@ -53,8 +54,8 @@ class PayrollCalculationTest extends TestCase
         $payroll = $this->createPayroll($user, 50000);
         $payroll->calculatePayroll();
 
-        // SSS 2025 max: 35,000 MSC * 5% = 1,750
-        $this->assertEquals(1750, (float) $payroll->sss_contribution);
+        // SSS 2025 max: 35,000 MSC * 5% = 1,750 monthly, halved = 875
+        $this->assertEquals(875, (float) $payroll->sss_contribution);
     }
 
     public function test_philhealth_contribution_2025_rates(): void
@@ -64,8 +65,8 @@ class PayrollCalculationTest extends TestCase
         $payroll->calculatePayroll();
 
         // PhilHealth 2025: 5% premium, employee share 50%
-        // 30,000 * 0.05 = 1,500 premium, employee = 750
-        $this->assertEquals(750, (float) $payroll->philhealth_contribution);
+        // 30,000 * 0.05 = 1,500 premium, employee = 750 monthly, halved = 375
+        $this->assertEquals(375, (float) $payroll->philhealth_contribution);
     }
 
     public function test_philhealth_min_premium(): void
@@ -74,8 +75,8 @@ class PayrollCalculationTest extends TestCase
         $payroll = $this->createPayroll($user, 5000);
         $payroll->calculatePayroll();
 
-        // Min premium = 500, employee share = 250
-        $this->assertEquals(250, (float) $payroll->philhealth_contribution);
+        // Min premium = 500, employee share = 250 monthly, halved = 125
+        $this->assertEquals(125, (float) $payroll->philhealth_contribution);
     }
 
     public function test_philhealth_max_premium(): void
@@ -84,8 +85,8 @@ class PayrollCalculationTest extends TestCase
         $payroll = $this->createPayroll($user, 150000);
         $payroll->calculatePayroll();
 
-        // Max premium = 5,000, employee share = 2,500
-        $this->assertEquals(2500, (float) $payroll->philhealth_contribution);
+        // Max premium = 5,000, employee share = 2,500 monthly, halved = 1,250
+        $this->assertEquals(1250, (float) $payroll->philhealth_contribution);
     }
 
     public function test_withholding_tax_exempt_below_threshold(): void
@@ -111,8 +112,9 @@ class PayrollCalculationTest extends TestCase
         // PhilHealth: 25,000 * 0.05 = 1,250, employee = 625
         // Pag-IBIG: 100
         // Taxable = 25000 - 1250 - 625 - 100 = 23,025
-        // Tax = (23,025 - 20,833) * 0.15 = 2,192 * 0.15 = 328.80
-        $this->assertEqualsWithDelta(328.80, (float) $payroll->tax_deduction, 0.01);
+        // Tax = (23,025 - 20,833) * 0.15 = 2,192 * 0.15 = 328.80 monthly,
+        // halved for the semi-monthly cutoff = 164.40
+        $this->assertEqualsWithDelta(164.40, (float) $payroll->tax_deduction, 0.01);
     }
 
     public function test_withholding_tax_in_20_percent_bracket(): void
@@ -125,8 +127,8 @@ class PayrollCalculationTest extends TestCase
         // PhilHealth: 45,000 * 0.05 = 2,250, employee = 1,125
         // Pag-IBIG: 100
         // Taxable = 45000 - 1750 - 1125 - 100 = 42,025
-        // Tax = 1,875 + (42,025 - 33,333) * 0.20 = 1,875 + 8,692 * 0.20 = 1,875 + 1,738.40 = 3,613.40
-        $this->assertEqualsWithDelta(3613.40, (float) $payroll->tax_deduction, 0.01);
+        // Tax = 1,875 + (42,025 - 33,333) * 0.20 = 3,613.40 monthly, halved = 1,806.70
+        $this->assertEqualsWithDelta(1806.70, (float) $payroll->tax_deduction, 0.01);
     }
 
     public function test_withholding_tax_in_25_percent_bracket(): void
@@ -139,8 +141,8 @@ class PayrollCalculationTest extends TestCase
         // PhilHealth: 80,000 * 0.05 = 4,000, employee = 2,000
         // Pag-IBIG: 100
         // Taxable = 80000 - 1750 - 2000 - 100 = 76,150
-        // Tax = 8,541.80 + (76,150 - 66,667) * 0.25 = 8,541.80 + 9,483 * 0.25 = 8,541.80 + 2,370.75 = 10,912.55
-        $this->assertEqualsWithDelta(10912.55, (float) $payroll->tax_deduction, 0.01);
+        // Tax = 8,541.80 + (76,150 - 66,667) * 0.25 = 10,912.55 monthly, halved = 5,456.28
+        $this->assertEqualsWithDelta(5456.28, (float) $payroll->tax_deduction, 0.01);
     }
 
     public function test_net_pay_is_positive_after_all_deductions(): void

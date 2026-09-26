@@ -44,6 +44,7 @@ const AdminSettings = () => {
     maxLoginAttempts: 5,
     sessionTimeout: 60,
     twoFactorAuth: false,
+    kioskPin: "",
   });
 
   // Notification Settings
@@ -191,6 +192,14 @@ const AdminSettings = () => {
         method: "POST",
         body: JSON.stringify(payload),
       });
+
+      // The attendance kiosk PIN lives in its own endpoint/setting key.
+      if (settingType === "Security" && payload.kioskPin) {
+        await apiRequest("/admin/settings/kiosk-pin", {
+          method: "POST",
+          body: JSON.stringify({ kioskPin: payload.kioskPin }),
+        });
+      }
 
       showSuccess(`${settingType} settings saved successfully`);
     } catch (err) {
@@ -487,6 +496,28 @@ const AdminSettings = () => {
                     <span className="checkmark"></span>
                     Require Uppercase Letters (A-Z)
                   </label>
+                </div>
+              </div>
+
+              <div className="form-section">
+                <h4>
+                  <FontAwesomeIcon icon={faUserShield} /> Attendance Kiosk
+                </h4>
+                <div className="form-group">
+                  <label>Kiosk Access PIN</label>
+                  <input
+                    type="text"
+                    minLength={4}
+                    maxLength={64}
+                    value={securitySettings.kioskPin}
+                    onChange={(e) =>
+                      setSecuritySettings({ ...securitySettings, kioskPin: e.target.value })
+                    }
+                    placeholder="e.g. 1234"
+                  />
+                  <small>
+                    Employees enter this PIN to open the attendance kiosk at /attendance-kiosk.
+                  </small>
                 </div>
               </div>
 

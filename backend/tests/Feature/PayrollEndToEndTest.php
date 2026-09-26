@@ -124,8 +124,9 @@ class PayrollEndToEndTest extends TestCase
         $this->assertGreaterThan(0, $computedRow['gross_pay']);
         $this->assertGreaterThan(0, $computedRow['sss_contribution']);
         $this->assertGreaterThan(0, $computedRow['philhealth_contribution']);
-        $this->assertEquals(100, $computedRow['pagibig_contribution']);
-        // 25,000 salary → taxable ~23,150 → tax ~347.55
+        // Pag-IBIG is 100/month; semi-monthly cutoff pays half = 50
+        $this->assertEquals(50, $computedRow['pagibig_contribution']);
+        // 25,000 salary → monthly taxable ~23,025 → monthly tax ~328.80 → ~164.40 per cutoff
         $this->assertGreaterThan(0, $computedRow['tax_deduction']);
 
         // === STEP 3: Generate payroll ===
@@ -235,7 +236,8 @@ class PayrollEndToEndTest extends TestCase
         $this->assertEquals('Pawesome Retreat Inc.', $payslip['company_name']);
         $this->assertGreaterThan(0, $payslip['deductions']['sss']);
         $this->assertGreaterThan(0, $payslip['deductions']['philhealth']);
-        $this->assertEquals(100, $payslip['deductions']['pagibig']);
+        // Pag-IBIG is 100/month; semi-monthly cutoff deducts half = 50
+        $this->assertEquals(50, (float) $payslip['deductions']['pagibig']);
         $this->assertGreaterThan(0, $payslip['deductions']['tax']);
         $this->assertEquals('GCash', $payslip['payment_method']);
         $this->assertEquals('paid', $payslip['status']);

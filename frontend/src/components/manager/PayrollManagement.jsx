@@ -148,6 +148,23 @@ const getPayrollPeriod = (record) =>
   record.cutoff ||
   "N/A";
 
+// Semi-monthly periods (1–15 / 16–end of month) pay half the monthly base.
+const getPeriodFactor = (payroll) => {
+  const start = payroll?.raw?.pay_period_start;
+  const end = payroll?.raw?.pay_period_end;
+  if (!start || !end) return 1;
+
+  const sd = new Date(start);
+  const ed = new Date(end);
+  if (Number.isNaN(sd.getTime()) || Number.isNaN(ed.getTime())) return 1;
+
+  return sd.getFullYear() === ed.getFullYear() &&
+    sd.getMonth() === ed.getMonth() &&
+    (ed - sd) / 86400000 < 20
+    ? 0.5
+    : 1;
+};
+
 const normalizePayroll = (record, index) => {
   const grossPay = safeNumber(record.gross_pay || record.total_gross_pay || record.amount || 0);
   const deductions = safeNumber(record.deductions || record.total_deductions || 0);
@@ -171,6 +188,7 @@ const normalizePayroll = (record, index) => {
     attendanceDays: safeNumber(record.attendance_days || record.days_worked || record.present_days || 0),
     lateCount: safeNumber(record.late_count || record.late_days || 0),
     absentCount: safeNumber(record.absent_count || record.absent_days || 0),
+    paidLeaveDays: safeNumber(record.paid_leave_days || record.leave_days || 0),
     lateDeductions: safeNumber(record.late_deductions || record.late_deduction || 0),
     absenceDeductions: safeNumber(record.absence_deductions || record.absent_deductions || 0),
     overtimePay: safeNumber(record.overtime_pay || record.overtime_amount || 0),
@@ -238,7 +256,6 @@ const PayrollManagement = () => {
 
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
-  const [generating, setGenerating] = useState(false);
   const [actionLoadingId, setActionLoadingId] = useState(null);
 
   const [error, setError] = useState("");
@@ -254,8 +271,6 @@ const PayrollManagement = () => {
   const [sortOrder, setSortOrder] = useState("asc");
   const [showFilters, setShowFilters] = useState(false);
 
-  const [startDate, setStartDate] = useState("");
-  const [endDate, setEndDate] = useState("");
   const [showManualModal, setShowManualModal] = useState(false);
   const [editPayrollRecord, setEditPayrollRecord] = useState(null);
 
@@ -501,56 +516,6 @@ const PayrollManagement = () => {
     setSortOrder("asc");
   };
 
-  const handleGenerate = async () => {
-    if (!startDate || !endDate) {
-      showToast("Please select both start and end dates.", "error");
-      return;
-    }
-
-    if (new Date(startDate) > new Date(endDate)) {
-      showToast("Start date must be before the end date.", "error");
-      return;
-    }
-
-    setGenerating(true);
-
-    try {
-      try {
-        await payrollApi.generateForPeriod({
-          start_date: startDate,
-          end_date: endDate,
-        });
-      } catch (primaryError) {
-        await apiRequest("/manager/payroll/generate", {
-          method: "POST",
-          body: JSON.stringify({
-            start_date: startDate,
-            end_date: endDate,
-          }),
-        });
-      }
-
-      await createPayrollNotification(
-        `Payroll generated for ${startDate} to ${endDate}`,
-        "high"
-      );
-
-      await fetchPayrolls({ silent: true });
-      setStartDate("");
-      setEndDate("");
-      showToast("Payroll generated successfully.", "success");
-    } catch (err) {
-      console.error("Generate payroll error:", err);
-      showToast(
-        err.message ||
-          "Failed to generate payroll. Please verify the payroll generate endpoint.",
-        "error"
-      );
-    } finally {
-      setGenerating(false);
-    }
-  };
-
   const handleApprove = async (payroll) => {
     setActionLoadingId(payroll.id);
 
@@ -692,6 +657,8 @@ const PayrollManagement = () => {
 
     // Earnings table
     const baseSalary = Number(payroll.baseSalary || 0);
+    const periodFactor = getPeriodFactor(payroll);
+    const periodBase = baseSalary * periodFactor;
     const otPay = Number(payroll.overtimePay || 0);
     const bonus = Number(payroll.bonus || 0);
     const allowance = Number(payroll.allowance || 0);
@@ -701,7 +668,7 @@ const PayrollManagement = () => {
       startY: 92,
       head: [["Earnings", "Amount"]],
       body: [
-        ["Base Salary", formatCurrency(baseSalary)],
+        [periodFactor === 0.5 ? "Base Salary (half-month cutoff)" : "Base Salary", formatCurrency(periodBase)],
         ["Overtime Pay", formatCurrency(otPay)],
         ["Bonus", formatCurrency(bonus)],
         ["Allowances", formatCurrency(allowance)],
@@ -734,6 +701,9 @@ const PayrollManagement = () => {
         ["Withholding Tax", formatCurrency(tax)],
         ["Late Deductions", formatCurrency(lateDed)],
         ["Absence Deductions", formatCurrency(absentDed)],
+        ...(payroll.paidLeaveDays > 0
+          ? [[`Paid Leave Days (converted, not deducted)`, `${payroll.paidLeaveDays} day(s)`]]
+          : []),
         ["Other Deductions", formatCurrency(otherDed)],
         ["Total Deductions", formatCurrency(totalDed)],
       ],
@@ -753,7 +723,7 @@ const PayrollManagement = () => {
     // Attendance summary
     doc.setFontSize(9);
     doc.setTextColor(100, 116, 139);
-    doc.text(`Attendance: ${payroll.attendanceDays} present day(s) | ${payroll.regularHours} regular hrs | ${payroll.overtimeHours} OT hrs`, 14, afterDedY + 8);
+    doc.text(`Attendance: ${payroll.attendanceDays} present day(s) | ${payroll.paidLeaveDays} paid leave day(s) | ${payroll.regularHours} regular hrs | ${payroll.overtimeHours} OT hrs`, 14, afterDedY + 8);
     doc.text(`Payment Date: ${payroll.paymentDate ? formatDateTime(payroll.paymentDate) : "N/A"} | Method: ${payroll.paymentMethod || "N/A"}`, 14, afterDedY + 14);
 
     // Footer
@@ -1433,6 +1403,7 @@ const PayrollDetailsModal = ({ payroll, onClose, onPrint, onDownload }) => (
           <DetailItem label="Gross Pay" value={formatCurrency(payroll.grossPay)} />
           <DetailItem label="Late Count" value={payroll.lateCount} />
           <DetailItem label="Absent Count" value={payroll.absentCount} />
+          <DetailItem label="Paid Leave Days" value={payroll.paidLeaveDays} />
           <DetailItem label="Late Deductions" value={formatCurrency(payroll.lateDeductions)} />
           <DetailItem label="Absence Deductions" value={formatCurrency(payroll.absenceDeductions)} />
           <DetailItem label="Total Deductions" value={formatCurrency(payroll.deductions)} />
@@ -1517,7 +1488,10 @@ const PayslipPrint = ({ payroll }) => {
           </tr>
         </thead>
         <tbody>
-          <tr><td>Base Salary</td><td>{formatCurrency(payroll.baseSalary)}</td></tr>
+          <tr>
+            <td>{getPeriodFactor(payroll) === 0.5 ? "Base Salary (half-month cutoff)" : "Base Salary"}</td>
+            <td>{formatCurrency(payroll.baseSalary * getPeriodFactor(payroll))}</td>
+          </tr>
           <tr><td>Overtime Pay ({payroll.overtimeHours} hrs)</td><td>{formatCurrency(payroll.overtimePay)}</td></tr>
           <tr><td>Bonus</td><td>{formatCurrency(payroll.bonus)}</td></tr>
           <tr><td>Allowances</td><td>{formatCurrency(payroll.allowance)}</td></tr>
@@ -1539,6 +1513,9 @@ const PayslipPrint = ({ payroll }) => {
           <tr><td>Withholding Tax</td><td>{formatCurrency(tax)}</td></tr>
           <tr><td>Late Deductions ({payroll.lateCount} late)</td><td>{formatCurrency(lateDed)}</td></tr>
           <tr><td>Absence Deductions ({payroll.absentCount} absent)</td><td>{formatCurrency(absentDed)}</td></tr>
+          {payroll.paidLeaveDays > 0 && (
+            <tr><td>Paid Leave Days (converted, not deducted)</td><td>{payroll.paidLeaveDays} day(s)</td></tr>
+          )}
           <tr><td>Other Deductions</td><td>{formatCurrency(otherDed)}</td></tr>
           <tr className="net-row"><td>Total Deductions</td><td>{formatCurrency(totalDed)}</td></tr>
         </tbody>

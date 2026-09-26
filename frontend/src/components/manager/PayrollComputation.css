@@ -161,7 +161,9 @@
   letter-spacing: 0.06em;
 }
 
-.payroll-comp-period input[type="date"] {
+.payroll-comp-period input[type="date"],
+.payroll-comp-period input[type="month"],
+.payroll-comp-period select {
   min-height: 44px;
   padding: 0 0.75rem;
   border: 1px solid var(--comp-border);
@@ -171,6 +173,16 @@
   font-size: 0.95rem;
   font-weight: 650;
   outline: none;
+}
+
+.payroll-comp-period-label {
+  align-self: center;
+  padding: 0.45rem 0.85rem;
+  border-radius: var(--comp-radius-md);
+  background: #eef2ff;
+  color: #4338ca;
+  font-size: 0.85rem;
+  font-weight: 750;
 }
 
 .payroll-comp-btn {
@@ -381,6 +393,15 @@
 .payroll-comp-attendance .tag.present { background: #d1fae5; color: #047857; }
 .payroll-comp-attendance .tag.late { background: #fef3c7; color: #92400e; }
 .payroll-comp-attendance .tag.absent { background: #fee2e2; color: #991b1b; }
+.payroll-comp-attendance .tag.leave { background: #dbeafe; color: #1e40af; }
+
+.payroll-comp-half {
+  display: block;
+  margin-top: 2px;
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: #4338ca;
+}
 
 .payroll-comp-attendance small {
   display: block;

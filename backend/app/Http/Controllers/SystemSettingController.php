@@ -68,6 +68,7 @@ class SystemSettingController extends Controller
                 'maxLoginAttempts'   => (int) SystemSetting::get('security_max_login_attempts', 5),
                 'sessionTimeout'     => (int) SystemSetting::get('security_session_timeout', 60),
                 'twoFactorAuth'      => (bool) SystemSetting::get('security_two_factor_auth', false),
+                'kioskPin'           => (string) SystemSetting::get('attendance_kiosk_pin', ''),
             ],
             'notifications' => [
                 'emailNotifications' => (bool) SystemSetting::get('notif_email_notifications', true),
@@ -123,6 +124,20 @@ class SystemSettingController extends Controller
         SystemSetting::set('security_two_factor_auth', $request->boolean('twoFactorAuth') ? '1' : '0');
 
         return response()->json(['message' => 'Security settings saved successfully.']);
+    }
+
+    /**
+     * Admin-only — save the shared attendance-kiosk PIN.
+     */
+    public function updateKioskPin(Request $request)
+    {
+        $request->validate([
+            'kioskPin' => 'required|string|min:4|max:64',
+        ]);
+
+        SystemSetting::set('attendance_kiosk_pin', $request->kioskPin);
+
+        return response()->json(['message' => 'Attendance kiosk PIN saved successfully.']);
     }
 
     /**

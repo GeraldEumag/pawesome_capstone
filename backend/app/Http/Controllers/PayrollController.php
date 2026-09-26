@@ -364,11 +364,15 @@ class PayrollController extends Controller
             ], 403);
         }
 
+        $periodFactor = app(\App\Services\Payroll\PayrollComputationService::class)
+            ->periodFactor($payroll->pay_period_start?->toDateString(), $payroll->pay_period_end?->toDateString());
+
         $payslipData = [
             'company_name' => 'Pawesome Retreat Inc.',
             'payslip_date' => now()->toDateString(),
             'payroll_id' => $payroll->payroll_id,
             'pay_period' => $payroll->pay_period_label,
+            'period_factor' => $periodFactor,
             'employee' => [
                 'name' => $payroll->user->name,
                 'id' => $payroll->user->id,
@@ -376,7 +380,8 @@ class PayrollController extends Controller
                 'position' => $payroll->position,
             ],
             'earnings' => [
-                'base_salary' => $payroll->base_salary,
+                'base_salary' => round($payroll->base_salary * $periodFactor, 2),
+                'monthly_base_salary' => $payroll->base_salary,
                 'overtime_pay' => $payroll->overtime_pay,
                 'bonus' => $payroll->bonus,
                 'allowances' => $payroll->allowances,
@@ -399,6 +404,7 @@ class PayrollController extends Controller
                 'working_days' => $payroll->working_days,
                 'present_days' => $payroll->present_days,
                 'absent_days' => $payroll->absent_days,
+                'paid_leave_days' => $payroll->paid_leave_days ?? 0,
                 'regular_hours' => $payroll->regular_hours,
                 'overtime_hours' => $payroll->overtime_hours,
             ],

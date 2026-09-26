@@ -24,20 +24,30 @@ import "./PayrollComputation.css";
 
 const formatNum = (v) => (v == null ? "0.00" : Number(v).toFixed(2));
 
-const todayInput = () => {
+const currentMonthInput = () => {
   const d = new Date();
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
 };
 
-const monthStartInput = () => {
-  const d = new Date();
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-01`;
+const currentCutoff = () => (new Date().getDate() <= 15 ? "first" : "second");
+
+// Canonical semi-monthly periods: 1st–15th and 16th–last day of the month
+// (the second cutoff is the real last day: 28/29/30/31, not always the 30th).
+const periodForCutoff = (month, cutoff) => {
+  if (!month) return { start: "", end: "" };
+  const [year, mon] = month.split("-").map(Number);
+  const lastDay = new Date(year, mon, 0).getDate();
+  const pad = (n) => String(n).padStart(2, "0");
+  return cutoff === "first"
+    ? { start: `${month}-01`, end: `${month}-15` }
+    : { start: `${month}-16`, end: `${month}-${pad(lastDay)}` };
 };
 
 const PayrollComputation = () => {
   const navigate = useNavigate();
-  const [periodStart, setPeriodStart] = useState(monthStartInput());
-  const [periodEnd, setPeriodEnd] = useState(todayInput());
+  const [periodMonth, setPeriodMonth] = useState(currentMonthInput());
+  const [periodCutoff, setPeriodCutoff] = useState(currentCutoff());
+  const { start: periodStart, end: periodEnd } = periodForCutoff(periodMonth, periodCutoff);
   const [previewData, setPreviewData] = useState([]);
   const [loading, setLoading] = useState(false);
   const [generating, setGenerating] = useState(false);
@@ -53,6 +63,17 @@ const PayrollComputation = () => {
     window.clearTimeout(window.payrollCompToastTimer);
     window.payrollCompToastTimer = window.setTimeout(() => setToast(null), 3500);
   }, []);
+
+  const periodLabel = useMemo(() => {
+    if (!periodStart || !periodEnd) return "";
+    const fmt = (iso) =>
+      new Date(`${iso}T00:00:00`).toLocaleDateString("en-PH", {
+        month: "short",
+        day: "numeric",
+        year: "numeric",
+      });
+    return `${fmt(periodStart)} – ${fmt(periodEnd)}`;
+  }, [periodStart, periodEnd]);
 
   const computePreview = useCallback(async () => {
     if (!periodStart || !periodEnd) return;
@@ -79,15 +100,18 @@ const PayrollComputation = () => {
     }
   }, [periodStart, periodEnd, showToast]);
 
-  const updateField = (userId, field, value) => {
+  const rowKey = (r) => r.user_id ?? `emp-${r.employee_id}`;
+
+  const updateField = (key, field, value) => {
     setPreviewData((prev) =>
-      prev.map((r) => (r.user_id === userId ? { ...r, [field]: value } : r))
+      prev.map((r) => (rowKey(r) === key ? { ...r, [field]: value } : r))
     );
   };
 
   const computedRows = useMemo(() => {
     return previewData.map((r) => {
-      const base = Number(r.base_salary) || 0;
+      // Semi-monthly cutoffs pay the period share of the monthly base salary.
+      const base = (Number(r.base_salary) || 0) * (Number(r.period_factor) || 1);
       const otPay = Number(r.overtime_pay) || 0;
       const bonus = Number(r._bonus) || 0;
       const allowances = Number(r._allowances) || 0;
@@ -150,10 +174,10 @@ const PayrollComputation = () => {
 
       // Step 2: Apply edited bonus/allowances/deductions to generated records
       const generatedRecords = genResponse?.data || [];
-      const editedMap = new Map(computedRows.map((r) => [r.user_id, r]));
+      const editedMap = new Map(computedRows.map((r) => [rowKey(r), r]));
 
       for (const gen of generatedRecords) {
-        const edited = editedMap.get(gen.user_id);
+        const edited = editedMap.get(gen.user_id ?? `emp-${gen.employee_id}`);
         if (!edited) continue;
 
         const hasEdits =
@@ -215,13 +239,17 @@ const PayrollComputation = () => {
       <section className="payroll-comp-controls">
         <div className="payroll-comp-period">
           <label>
-            <span>Period Start</span>
-            <input type="date" value={periodStart} onChange={(e) => setPeriodStart(e.target.value)} />
+            <span>Payroll Month</span>
+            <input type="month" value={periodMonth} onChange={(e) => setPeriodMonth(e.target.value)} />
           </label>
           <label>
-            <span>Period End</span>
-            <input type="date" value={periodEnd} onChange={(e) => setPeriodEnd(e.target.value)} />
+            <span>Cutoff</span>
+            <select value={periodCutoff} onChange={(e) => setPeriodCutoff(e.target.value)}>
+              <option value="first">1st – 15th</option>
+              <option value="second">16th – end of month</option>
+            </select>
           </label>
+          {periodLabel && <span className="payroll-comp-period-label">{periodLabel}</span>}
           <button type="button" className="payroll-comp-btn primary" onClick={computePreview} disabled={loading}>
             <FontAwesomeIcon icon={loading ? faSpinner : faCalculator} spin={loading} />
             {loading ? "Computing..." : "Preview Computation"}
@@ -271,7 +299,7 @@ const PayrollComputation = () => {
                 </thead>
                 <tbody>
                   {paginated.map((r) => (
-                    <tr key={r.user_id}>
+                    <tr key={rowKey(r)}>
                       <td>
                         <div className="payroll-comp-employee">
                           <strong>{r.employee_name}</strong>
@@ -283,7 +311,11 @@ const PayrollComputation = () => {
                           <span className="tag present">{r.present_days} Present</span>
                           {r.late_days > 0 && <span className="tag late">{r.late_days} Late</span>}
                           {r.absent_days > 0 && <span className="tag absent">{r.absent_days} Absent</span>}
-                          <small>{formatNum(r.regular_hours)} hrs · {formatNum(r.overtime_hours)} OT</small>
+                          {r.paid_leave_days > 0 && <span className="tag leave">{r.paid_leave_days} Paid Leave</span>}
+                          <small>
+                            {r.working_days != null ? `${r.working_days} workdays · ` : ""}
+                            {formatNum(r.regular_hours)} hrs · {formatNum(r.overtime_hours)} OT
+                          </small>
                         </div>
                       </td>
                       <td>
@@ -291,8 +323,11 @@ const PayrollComputation = () => {
                           type="number"
                           className="payroll-comp-input number"
                           value={r.base_salary}
-                          onChange={(e) => updateField(r.user_id, "base_salary", Number(e.target.value))}
+                          onChange={(e) => updateField(rowKey(r), "base_salary", Number(e.target.value))}
                         />
+                        {Number(r.period_factor) === 0.5 && (
+                          <small className="payroll-comp-half">½ for cutoff</small>
+                        )}
                       </td>
                       <td>{formatCurrency(r.overtime_pay)}</td>
                       <td>
@@ -300,7 +335,7 @@ const PayrollComputation = () => {
                           type="number"
                           className="payroll-comp-input number"
                           value={r._bonus}
-                          onChange={(e) => updateField(r.user_id, "_bonus", Number(e.target.value))}
+                          onChange={(e) => updateField(rowKey(r), "_bonus", Number(e.target.value))}
                         />
                       </td>
                       <td>
@@ -308,28 +343,31 @@ const PayrollComputation = () => {
                           type="number"
                           className="payroll-comp-input number"
                           value={r._allowances}
-                          onChange={(e) => updateField(r.user_id, "_allowances", Number(e.target.value))}
+                          onChange={(e) => updateField(rowKey(r), "_allowances", Number(e.target.value))}
                         />
                       </td>
                       <td><strong>{formatCurrency(r._gross)}</strong></td>
                       <td>
-                        <span className="payroll-comp-ded" onClick={() => setShowBreakdown(showBreakdown === r.user_id ? null : r.user_id)}>
+                        <span className="payroll-comp-ded" onClick={() => setShowBreakdown(showBreakdown === rowKey(r) ? null : rowKey(r))}>
                           {formatCurrency(r._totalDed)}
                           <FontAwesomeIcon icon={faEye} />
                         </span>
-                        {showBreakdown === r.user_id && (
+                        {showBreakdown === rowKey(r) && (
                           <div className="payroll-comp-breakdown">
                             <div><small>SSS</small><span>{formatCurrency(r.sss_contribution)}</span></div>
                             <div><small>PhilHealth</small><span>{formatCurrency(r.philhealth_contribution)}</span></div>
                             <div><small>Pag-IBIG</small><span>{formatCurrency(r.pagibig_contribution)}</span></div>
                             <div><small>Late</small><span>{formatCurrency(r.late_deductions)}</span></div>
                             <div><small>Absent</small><span>{formatCurrency(r.absent_deductions)}</span></div>
+                            {r.paid_leave_days > 0 && (
+                              <div><small>Paid Leave</small><span>{r.paid_leave_days} day(s), not deducted</span></div>
+                            )}
                             <div><small>Other</small>
                               <input
                                 type="number"
                                 className="payroll-comp-input inline"
                                 value={r._otherDeductions}
-                                onChange={(e) => updateField(r.user_id, "_otherDeductions", Number(e.target.value))}
+                                onChange={(e) => updateField(rowKey(r), "_otherDeductions", Number(e.target.value))}
                               />
                             </div>
                           </div>
@@ -337,7 +375,7 @@ const PayrollComputation = () => {
                       </td>
                       <td><strong className="net">{formatCurrency(r._net)}</strong></td>
                       <td>
-                        <button type="button" className="payroll-comp-btn-icon" onClick={() => setShowBreakdown(showBreakdown === r.user_id ? null : r.user_id)}>
+                        <button type="button" className="payroll-comp-btn-icon" onClick={() => setShowBreakdown(showBreakdown === rowKey(r) ? null : rowKey(r))}>
                           <FontAwesomeIcon icon={faEye} />
                         </button>
                       </td>

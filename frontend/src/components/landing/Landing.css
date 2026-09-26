@@ -154,6 +154,7 @@ body {
   flex-shrink: 0;
 }
 
+.landing-header-attendance,
 .landing-header-login,
 .landing-header-register {
   min-height: 42px;
@@ -168,10 +169,16 @@ body {
   transition: 0.22s ease;
 }
 
+.landing-header-attendance,
 .landing-header-login {
   color: var(--landing-text);
   background: rgba(255, 255, 255, 0.75);
   border: 1px solid var(--landing-border);
+}
+
+.landing-header-attendance {
+  color: var(--landing-primary);
+  border-color: var(--landing-primary-light);
 }
 
 .landing-header-register {
@@ -180,6 +187,7 @@ body {
   box-shadow: var(--landing-shadow-primary);
 }
 
+.landing-header-attendance:hover,
 .landing-header-login:hover,
 .landing-header-register:hover {
   transform: translateY(-2px);
@@ -1852,6 +1860,7 @@ body {
   flex-shrink: 0;
 }
 
+.landing-mobile-nav-actions .landing-header-attendance,
 .landing-mobile-nav-actions .landing-header-login,
 .landing-mobile-nav-actions .landing-header-register {
   width: 100%;

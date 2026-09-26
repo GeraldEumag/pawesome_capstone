@@ -293,7 +293,6 @@ const ManageUsers = () => {
         email: formData.email.trim(),
         username: formData.username.trim(),
         role: formData.role,
-        is_active: formData.is_active,
       };
 
       await apiRequest(`/admin/users/${selectedUser.id}`, {
@@ -337,45 +336,6 @@ const ManageUsers = () => {
       showError(err.message || "Failed to delete user.");
     } finally {
       setProcessing(false);
-    }
-  };
-
-  const handleToggleStatus = async (user) => {
-    const currentStatus = isActiveUser(user);
-    const nextStatus = !currentStatus;
-
-    try {
-      setError("");
-
-      try {
-        await apiRequest(`/admin/users/${user.id}/toggle`, {
-          method: "PATCH",
-        });
-      } catch (toggleError) {
-        console.warn("Toggle endpoint failed. Trying PUT fallback:", toggleError);
-
-        await apiRequest(`/admin/users/${user.id}`, {
-          method: "PUT",
-          body: JSON.stringify({
-            name: user.name || "",
-            email: user.email || "",
-            username: user.username || "",
-            role: user.role || "customer",
-            is_active: nextStatus,
-          }),
-        });
-      }
-
-      setUsers((prev) =>
-        prev.map((item) =>
-          item.id === user.id ? { ...item, is_active: nextStatus } : item
-        )
-      );
-
-      showSuccess(`User ${nextStatus ? "activated" : "deactivated"} successfully.`);
-    } catch (err) {
-      console.error("Failed to toggle user status:", err);
-      showError(err.message || "Failed to toggle user status.");
     }
   };
 
@@ -699,15 +659,10 @@ const ManageUsers = () => {
                       </td>
 
                       <td className="user-status">
-                        <button
-                          className={`status-toggle ${active ? "active" : "inactive"}`}
-                          type="button"
-                          onClick={() => handleToggleStatus(user)}
-                          title={active ? "Deactivate user" : "Activate user"}
-                        >
+                        <span className={`status-toggle status-readonly ${active ? "active" : "inactive"}`}>
                           <span className="status-dot" />
                           {active ? "Active" : "Inactive"}
-                        </button>
+                        </span>
                       </td>
 
                       <td className="user-date">{formatDate(user.created_at)}</td>
@@ -875,16 +830,6 @@ const ManageUsers = () => {
                     </select>
                   </div>
 
-                  <label className="checkbox-label">
-                    <input
-                      type="checkbox"
-                      name="is_active"
-                      checked={formData.is_active}
-                      onChange={handleChange}
-                    />
-                    <span className="checkmark" />
-                    Active User
-                  </label>
                 </form>
               )}
 

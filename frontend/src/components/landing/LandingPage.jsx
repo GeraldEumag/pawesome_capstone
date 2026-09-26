@@ -110,6 +110,9 @@ const LandingPage = () => {
           </nav>
 
           <div className="landing-header-actions">
+            <Link to="/attendance-kiosk" className="landing-header-attendance">
+              Attendance
+            </Link>
             <Link to="/login" className="landing-header-login">
               Login
             </Link>
@@ -167,6 +170,9 @@ const LandingPage = () => {
         </div>
 
         <div className="landing-mobile-nav-actions">
+          <Link to="/attendance-kiosk" className="landing-header-attendance" onClick={() => setMobileNavOpen(false)}>
+            Employee Attendance
+          </Link>
           <Link to="/login" className="landing-header-login" onClick={() => setMobileNavOpen(false)}>
             Login
           </Link>

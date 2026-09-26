@@ -10,7 +10,6 @@ import {
   faSpinner,
   faTriangleExclamation,
   faUserCheck,
-  faUserSlash,
   faUsers,
   faXmark,
 } from "@fortawesome/free-solid-svg-icons";
@@ -300,19 +299,6 @@ const EmployeeDirectory = ({
     }
   };
 
-  const deactivate = useCallback(
-    async (emp) => {
-      try {
-        await apiRequest(`${endpoint}/${emp.id}`, { method: "DELETE" });
-        showToast("success", `${emp.name} deactivated.`);
-        fetchEmployees({ silent: true });
-      } catch (err) {
-        showToast("error", err.message || "Failed to deactivate employee.");
-      }
-    },
-    [endpoint, fetchEmployees]
-  );
-
   const columns = useMemo(
     () => [
       {
@@ -373,16 +359,11 @@ const EmployeeDirectory = ({
             <button type="button" title="Edit" onClick={() => openEdit(r)}>
               <FontAwesomeIcon icon={faPen} />
             </button>
-            {r.is_active && (
-              <button type="button" title="Deactivate" onClick={() => deactivate(r)}>
-                <FontAwesomeIcon icon={faUserSlash} />
-              </button>
-            )}
           </div>
         ),
       },
     ],
-    [deactivate]
+    []
   );
 
   return (
