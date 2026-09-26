@@ -446,6 +446,8 @@ Route::middleware(['auth.api', 'throttle:api', 'role:receptionist'])->prefix('re
     Route::get('appointments', [ReceptionistDashboardController::class, 'appointments']);
     Route::get('customers', [ReceptionistDashboardController::class, 'customers']);
     Route::post('customers', [ReceptionistCustomerController::class, 'store']);
+    Route::put('customers/{id}', [ReceptionistCustomerController::class, 'update'])->whereNumber('id');
+    Route::delete('customers/{id}', [ReceptionistCustomerController::class, 'destroy'])->whereNumber('id');
     
     // IMPORTANT: Static routes must come before dynamic routes
     Route::get('appointment/list', [AppointmentController::class, 'index']);

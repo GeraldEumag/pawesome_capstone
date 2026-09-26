@@ -205,7 +205,7 @@ class PetController extends Controller
             'status' => 'archived',
             'archived_at' => now(),
             'archived_by' => $request->user()->id,
-            'archive_reason' => 'Deleted via legacy endpoint - migrated to archive'
+            'archive_reason' => trim((string) ($request->input('reason') ?: $request->input('archive_reason') ?: 'Deleted via legacy endpoint - migrated to archive'))
         ]);
 
         return response()->json(['message' => 'Pet archived successfully']);
@@ -213,6 +213,10 @@ class PetController extends Controller
 
     public function archive(Request $request, $id)
     {
+        $request->validate([
+            'archive_reason' => 'required|string|min:3|max:500',
+        ]);
+
         $pet = Pet::findOrFail($id);
 
         if ($request->user()?->role === 'customer' && !$this->customerOwnsPet($request, $pet)) {
@@ -234,7 +238,7 @@ class PetController extends Controller
             'status' => 'archived',
             'archived_at' => now(),
             'archived_by' => $request->user()->id,
-            'archive_reason' => $request->input('archive_reason') ?: 'Customer request'
+            'archive_reason' => trim($request->input('archive_reason'))
         ]);
 
         return response()->json([

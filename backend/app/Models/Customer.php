@@ -22,6 +22,8 @@ class Customer extends Model
         'loyalty_points',
         'is_active',
         'user_id',
+        'deletion_reason',
+        'deleted_by',
     ];
 
     protected $appends = ['profile_photo'];
