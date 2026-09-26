@@ -19,6 +19,7 @@ import {
 } from "react-icons/fa";
 import { apiRequest, getAuthenticatedFileUrl } from "../../api/client";
 import { exportToCSV, exportToPDF, exportToExcel } from "../../utils/reportExport";
+import "../../styles/bookingModal.css";
 import "./ReceptionistApprovals.css";
 
 const TYPE_FILTERS = [
@@ -1140,9 +1141,9 @@ const ReceptionistApprovals = () => {
       </section>
 
       {detailsOpen && selectedRequest && (
-        <div className="approval-modal-overlay" onClick={closeDetails}>
-          <div className="approval-modal" onClick={(event) => event.stopPropagation()}>
-            <div className="approval-modal-header">
+        <div className="hbk-overlay" onClick={closeDetails}>
+          <div className="hbk-modal" onClick={(event) => event.stopPropagation()}>
+            <div className="hbk-head">
               <div>
                 <span className="approval-eyebrow">
                   <FaEye />
@@ -1156,7 +1157,7 @@ const ReceptionistApprovals = () => {
               </button>
             </div>
 
-            <div className="approval-modal-body">
+            <div className="hbk-body">
               <div className="approval-detail-grid">
                 <DetailItem label="Request Type" value={getTypeLabel(getRequestType(selectedRequest))} />
                 <DetailItem label="Service" value={getServiceName(selectedRequest)} />
@@ -1222,7 +1223,7 @@ const ReceptionistApprovals = () => {
               </div>
             </div>
 
-            <div className="approval-modal-actions">
+            <div className="hbk-foot">
               <button type="button" className="secondary-btn" onClick={closeDetails}>
                 Close
               </button>
@@ -1256,9 +1257,9 @@ const ReceptionistApprovals = () => {
       )}
 
       {actionOpen && selectedRequest && (
-        <div className="approval-modal-overlay" onClick={closeActionModal}>
-          <div className="approval-modal" onClick={(event) => event.stopPropagation()}>
-            <div className="approval-modal-header">
+        <div className="hbk-overlay" onClick={closeActionModal}>
+          <div className="hbk-modal" onClick={(event) => event.stopPropagation()}>
+            <div className="hbk-head">
               <div>
                 <span className="approval-eyebrow">
                   {actionType === "approve" ? <FaCheckCircle /> : <FaTimesCircle />}
@@ -1273,7 +1274,7 @@ const ReceptionistApprovals = () => {
               </button>
             </div>
 
-            <form className="approval-modal-body" onSubmit={handleActionSubmit}>
+            <form className="hbk-body" onSubmit={handleActionSubmit}>
               <div className="approval-action-summary">
                 <strong>{getServiceName(selectedRequest)}</strong>
                 <span>{getCustomerName(selectedRequest)} | {getPetName(selectedRequest)}</span>
@@ -1379,7 +1380,7 @@ const ReceptionistApprovals = () => {
                 />
               </div>
 
-              <div className="approval-modal-actions">
+              <div className="hbk-foot">
                 <button type="button" className="secondary-btn" onClick={closeActionModal}>
                   Cancel
                 </button>
@@ -1410,9 +1411,9 @@ const ReceptionistApprovals = () => {
       )}
 
       {bulkActionOpen && (
-        <div className="approval-modal-overlay" onClick={closeBulkAction}>
-          <div className="approval-modal" onClick={(event) => event.stopPropagation()}>
-            <div className="approval-modal-header">
+        <div className="hbk-overlay" onClick={closeBulkAction}>
+          <div className="hbk-modal" onClick={(event) => event.stopPropagation()}>
+            <div className="hbk-head">
               <div>
                 <span className="approval-eyebrow">
                   {bulkActionType === "approve" ? <FaCheckCircle /> : <FaTimesCircle />}
@@ -1425,7 +1426,7 @@ const ReceptionistApprovals = () => {
               </button>
             </div>
 
-            <form className="approval-modal-body" onSubmit={(e) => { e.preventDefault(); bulkActionType === "approve" ? runBulkApprove() : runBulkReject(); }}>
+            <form className="hbk-body" onSubmit={(e) => { e.preventDefault(); bulkActionType === "approve" ? runBulkApprove() : runBulkReject(); }}>
               {bulkActionType === "approve" && (
                 <div className="form-group">
                   <label>Default Veterinarian (for vet requests)</label>
@@ -1480,7 +1481,7 @@ const ReceptionistApprovals = () => {
                 />
               </div>
 
-              <div className="approval-modal-actions">
+              <div className="hbk-foot">
                 <button type="button" className="secondary-btn" onClick={closeBulkAction}>
                   Cancel
                 </button>

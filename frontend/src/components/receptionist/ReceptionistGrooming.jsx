@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useState } from "react";
-import { showConfirm } from "../../utils/alert.jsx";
+import { showConfirm, showReasonPrompt } from "../../utils/alert.jsx";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
   faCalendarAlt,
@@ -20,6 +20,7 @@ import {
   faUser,
   faWrench,
 } from "@fortawesome/free-solid-svg-icons";
+import "../../styles/bookingModal.css";
 import "./ReceptionistGrooming.css";
 import { apiRequest } from "../../api/client";
 import { exportToCSV, exportToPDF, exportToExcel } from "../../utils/reportExport";
@@ -248,9 +249,13 @@ const Grooming = () => {
       return;
     }
 
+    let rejectionReason = null;
     if (newStatus === "rejected") {
-      const confirmed = await showConfirm("Reject this grooming appointment?");
-      if (!confirmed) return;
+      rejectionReason = await showReasonPrompt(
+        "Reject this grooming appointment? Please provide a reason.",
+        "Reject Grooming Appointment"
+      );
+      if (!rejectionReason) return;
     }
 
     try {
@@ -269,7 +274,7 @@ const Grooming = () => {
         await apiRequest(`/receptionist/requests/${appointment.id}/reject`, {
           method: "POST",
           body: JSON.stringify({
-            rejection_reason: "Rejected via grooming dashboard",
+            rejection_reason: rejectionReason,
           }),
         });
       } else {
@@ -776,9 +781,9 @@ const Grooming = () => {
       </section>
 
       {selectedAppointment && (
-        <div className="grooming-modal-overlay" onClick={() => setSelectedAppointment(null)}>
-          <div className="grooming-modal" onClick={(event) => event.stopPropagation()}>
-            <div className="modal-header">
+        <div className="hbk-overlay" onClick={() => setSelectedAppointment(null)}>
+          <div className="hbk-modal" onClick={(event) => event.stopPropagation()}>
+            <div className="hbk-head">
               <div>
                 <span className="grooming-eyebrow">
                   <FontAwesomeIcon icon={faInfoCircle} />
@@ -810,7 +815,7 @@ const Grooming = () => {
               </div>
             )}
 
-            <div className="modal-content">
+            <div className="hbk-body">
               <div className="info-grid">
                 <InfoItem label="Pet" value={selectedAppointment.petName} />
                 <InfoItem label="Customer" value={selectedAppointment.customerName} />
@@ -822,7 +827,7 @@ const Grooming = () => {
               </div>
             </div>
 
-            <div className="modal-actions">
+            <div className="hbk-foot">
               <button
                 type="button"
                 className="secondary-btn"

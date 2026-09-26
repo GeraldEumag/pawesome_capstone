@@ -123,11 +123,13 @@ class BoardingRoomService
 
         $checkIn = Carbon::parse($checkInDate);
         $checkOut = Carbon::parse($checkOutDate);
-        $numberOfDays = $checkIn->diffInDays($checkOut);
 
-        if ($numberOfDays <= 0) {
+        if ($checkOut->lt($checkIn)) {
             return ['success' => false, 'message' => 'Invalid date range'];
         }
+
+        // Same-day boarding (9 AM - 7 PM): a stay is billed as one day.
+        $numberOfDays = max(1, (int) $checkIn->diffInDays($checkOut));
 
         $totalAmount = $room->daily_rate * $numberOfDays;
 

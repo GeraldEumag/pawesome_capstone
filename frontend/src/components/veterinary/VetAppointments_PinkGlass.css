@@ -788,81 +788,28 @@
 /* ─────────────────────────────────────────────────────────────
    Modal - Glass Style
 ───────────────────────────────────────────────────────────── */
-.appointment-modal-overlay {
-  position: fixed;
-  inset: 0;
-  z-index: 3000;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 20px;
-  background: rgba(0, 0, 0, 0.5);
-  backdrop-filter: blur(8px);
-  animation: fadeIn 0.3s ease;
-}
-
-.appointment-modal {
+/* Detail modal shell comes from shared hbk-* (styles/bookingModal.css) */
+.hbk-modal {
   width: min(720px, 100%);
-  max-height: 90vh;
-  overflow-y: auto;
-  padding: 32px;
-  border-radius: var(--veterinary-radius-2xl);
-  background: var(--veterinary-glass-bg);
-  border: 2px solid var(--veterinary-glass-border);
-  box-shadow: var(--veterinary-glass-shadow);
-  backdrop-filter: blur(20px);
-  animation: slideInUp 0.3s ease;
 }
 
-.appointment-modal-header {
-  display: flex;
-  justify-content: space-between;
-  gap: 16px;
-  padding-bottom: 20px;
-  margin-bottom: 20px;
-  border-bottom: 2px solid var(--veterinary-glass-border);
-}
-
-.appointment-modal-header h3 {
+.hbk-head h3 {
   margin: 0;
   color: var(--veterinary-text-primary);
   font-size: 24px;
   font-weight: 700;
 }
 
-.appointment-modal-header p {
+.hbk-head p {
   margin: 4px 0 0;
   color: var(--veterinary-text-secondary);
   font-weight: 500;
   font-size: 16px;
 }
 
-.modal-close-btn {
-  width: 44px;
-  height: 44px;
-  min-width: 44px;
-  border: 2px solid var(--veterinary-glass-border);
-  border-radius: var(--veterinary-radius-lg);
-  background: var(--veterinary-glass-bg);
-  color: var(--veterinary-text-secondary);
-  cursor: pointer;
-  transition: all 0.3s ease;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.modal-close-btn:hover {
-  background: var(--veterinary-error);
-  color: white;
-  border-color: var(--veterinary-error);
-  transform: translateY(-1px);
-}
-
-.appointment-modal-body {
+.hbk-body {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-  gap: 16px;
 }
 
 .modal-detail {
@@ -900,15 +847,7 @@
   word-break: break-word;
 }
 
-.appointment-modal-actions {
-  display: flex;
-  justify-content: flex-end;
-  gap: 12px;
-  flex-wrap: wrap;
-  padding-top: 20px;
-  margin-top: 20px;
-  border-top: 2px solid var(--veterinary-glass-border);
-}
+
 
 /* ─────────────────────────────────────────────────────────────
    Keyframe Animations
@@ -997,13 +936,11 @@
   border-color: rgba(255, 95, 147, 0.18);
 }
 
-[data-theme="dark"] .modal-overlay,
-[data-theme="dark"] .modal-backdrop {
+[data-theme="dark"] .hbk-overlay {
   background: rgba(0, 0, 0, 0.72);
 }
 
-[data-theme="dark"] .modal-card,
-[data-theme="dark"] .appointment-modal {
+[data-theme="dark"] .hbk-modal {
   background: rgba(25, 14, 35, 0.96);
   border-color: rgba(255, 95, 147, 0.18);
 }
@@ -1065,7 +1002,7 @@
   .appointments-controls,
   .appointment-card,
   .summary-card,
-  .appointment-modal {
+  .hbk-modal {
     border-radius: var(--veterinary-radius-xl);
   }
 
@@ -1095,17 +1032,8 @@
     width: fit-content;
   }
 
-  .appointment-modal-body {
+  .hbk-body {
     grid-template-columns: 1fr;
-  }
-
-  .appointment-modal-actions {
-    display: grid;
-    grid-template-columns: 1fr;
-  }
-
-  .appointment-modal-actions .action-btn {
-    width: 100%;
   }
 }
 

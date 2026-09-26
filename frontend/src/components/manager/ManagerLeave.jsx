@@ -160,6 +160,10 @@ const ManagerLeave = () => {
 
   const handleAction = async () => {
     if (!selectedRecord || !actionModal) return;
+    if (actionModal === "reject" && !remarks.trim()) {
+      showToast("Please provide a reason for rejecting this leave request.", "error");
+      return;
+    }
     setActionLoading(true);
     try {
       await apiRequest(`/manager/leaves/${selectedRecord.id}/${actionModal}`, {
@@ -434,8 +438,8 @@ const ManagerLeave = () => {
             <div className="leave-modal-body">
               <p>{getLeaveTypeMeta(selectedRecord.type).label} — {formatDate(selectedRecord.start_date)} to {formatDate(selectedRecord.end_date)}</p>
               <label className="leave-remarks-field">
-                <span>Manager Remarks (optional)</span>
-                <textarea rows={4} value={remarks} onChange={(e) => setRemarks(e.target.value)} placeholder="Add remarks..." />
+                <span>Manager Remarks {actionModal === "reject" ? "(required — reason for rejection)" : "(optional)"}</span>
+                <textarea rows={4} value={remarks} onChange={(e) => setRemarks(e.target.value)} placeholder={actionModal === "reject" ? "Enter reason for rejection..." : "Add remarks..."} />
               </label>
             </div>
             <div className="leave-modal-footer">

@@ -61,13 +61,20 @@ const PERIODS = [
   { key: "yearly", label: "This Year" },
 ];
 
-const GENERATE_PRESETS = [
-  { key: "week", label: "Current Week" },
-  { key: "month", label: "Current Month" },
-  { key: "prev_month", label: "Previous Month" },
-  { key: "quarter", label: "Current Quarter" },
-  { key: "custom", label: "Custom Range" },
-];
+// Payroll is semi-monthly: 1st–15th and 16th–last day of the month.
+const pad2 = (n) => String(n).padStart(2, "0");
+const currentMonthInput = () => {
+  const d = new Date();
+  return `${d.getFullYear()}-${pad2(d.getMonth() + 1)}`;
+};
+const periodForCutoff = (month, cutoff) => {
+  if (!month) return { start: "", end: "" };
+  const [year, mon] = month.split("-").map(Number);
+  const lastDay = new Date(year, mon, 0).getDate();
+  return cutoff === "first"
+    ? { start: `${month}-01`, end: `${month}-15` }
+    : { start: `${month}-16`, end: `${month}-${pad2(lastDay)}` };
+};
 
 const safeNumber = (value) => Number(value || 0);
 
@@ -98,9 +105,10 @@ const PayrollReports = () => {
   const [sortDirection, setSortDirection] = useState("desc");
 
   const [showGenerate, setShowGenerate] = useState(false);
-  const [generatePreset, setGeneratePreset] = useState("month");
-  const [generateStart, setGenerateStart] = useState("");
-  const [generateEnd, setGenerateEnd] = useState("");
+  const [generateMonth, setGenerateMonth] = useState(currentMonthInput());
+  const [generateCutoff, setGenerateCutoff] = useState(() =>
+    new Date().getDate() <= 15 ? "first" : "second"
+  );
   const [generating, setGenerating] = useState(false);
 
   // Debounce the search box before it reaches the API params
@@ -219,47 +227,11 @@ const PayrollReports = () => {
     });
   };
 
-  const resolveGenerateDates = () => {
-    const now = new Date();
-    const iso = (d) => d.toISOString().slice(0, 10);
-
-    switch (generatePreset) {
-      case "week": {
-        const start = new Date(now);
-        start.setDate(now.getDate() - ((now.getDay() + 6) % 7));
-        const end = new Date(start);
-        end.setDate(start.getDate() + 6);
-        return { start: iso(start), end: iso(end) };
-      }
-      case "month":
-        return {
-          start: iso(new Date(now.getFullYear(), now.getMonth(), 1)),
-          end: iso(new Date(now.getFullYear(), now.getMonth() + 1, 0)),
-        };
-      case "prev_month":
-        return {
-          start: iso(new Date(now.getFullYear(), now.getMonth() - 1, 1)),
-          end: iso(new Date(now.getFullYear(), now.getMonth(), 0)),
-        };
-      case "quarter": {
-        const qStart = new Date(now.getFullYear(), Math.floor(now.getMonth() / 3) * 3, 1);
-        const qEnd = new Date(qStart.getFullYear(), qStart.getMonth() + 3, 0);
-        return { start: iso(qStart), end: iso(qEnd) };
-      }
-      default:
-        return { start: generateStart, end: generateEnd };
-    }
-  };
-
   const handleGenerate = async () => {
-    const { start, end } = resolveGenerateDates();
+    const { start, end } = periodForCutoff(generateMonth, generateCutoff);
 
     if (!start || !end) {
-      showError("Please choose a period or a custom date range.");
-      return;
-    }
-    if (new Date(start) > new Date(end)) {
-      showError("Start date must be before the end date.");
+      showError("Please choose a pay month and cutoff.");
       return;
     }
 
@@ -935,44 +907,32 @@ const PayrollReports = () => {
             </div>
 
             <div className="payroll-modal-body">
-              <div className="pr-preset-grid">
-                {GENERATE_PRESETS.map((preset) => (
-                  <button
-                    key={preset.key}
-                    type="button"
-                    className={`pr-preset-btn ${generatePreset === preset.key ? "active" : ""}`}
-                    onClick={() => setGeneratePreset(preset.key)}
+              <div className="pr-date-row">
+                <label>
+                  Pay month
+                  <input
+                    type="month"
+                    value={generateMonth}
+                    onChange={(e) => setGenerateMonth(e.target.value)}
+                  />
+                </label>
+                <label>
+                  Cutoff
+                  <select
+                    value={generateCutoff}
+                    onChange={(e) => setGenerateCutoff(e.target.value)}
                   >
-                    {preset.label}
-                  </button>
-                ))}
+                    <option value="first">1st – 15th</option>
+                    <option value="second">16th – end of month</option>
+                  </select>
+                </label>
               </div>
 
-              {generatePreset === "custom" && (
-                <div className="pr-date-row">
-                  <label>
-                    Start date
-                    <input
-                      type="date"
-                      value={generateStart}
-                      onChange={(e) => setGenerateStart(e.target.value)}
-                    />
-                  </label>
-                  <label>
-                    End date
-                    <input
-                      type="date"
-                      value={generateEnd}
-                      onChange={(e) => setGenerateEnd(e.target.value)}
-                    />
-                  </label>
-                </div>
-              )}
-
               <p className="pr-generate-note">
-                Payroll is computed from manager attendance records (days worked,
+                Payroll is computed from attendance records (days worked,
                 late/absent, hours, overtime) with statutory deductions applied.
-                Existing records for the same period are updated.
+                Pay periods are semi-monthly: 1st–15th or 16th–end of month.
+                Existing records for the same period are skipped.
               </p>
 
               <div className="management-actions pr-generate-actions">

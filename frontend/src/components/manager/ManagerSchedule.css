@@ -316,6 +316,12 @@
   font-weight: 700;
 }
 
+.schedule-no-account {
+  font-style: normal;
+  color: #b45309;
+  font-weight: 800;
+}
+
 .schedule-shift-cell {
   cursor: pointer;
   transition: 0.15s ease;

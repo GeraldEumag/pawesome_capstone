@@ -151,22 +151,39 @@ class WalkInController extends Controller
                 if ($serviceType === 'hotel') {
                     $ratePerDay = (float)($bookingData['rate_per_day'] ?? 0);
                     $hotelRoomId = $bookingData['hotel_room_id'] ?? $bookingData['room_id'] ?? null;
-                    
-                    if ($hotelRoomId && $ratePerDay == 0) {
-                        $room = \App\Models\HotelRoom::find($hotelRoomId);
-                        if ($room) {
+
+                    if ($hotelRoomId) {
+                        $room = \App\Models\HotelRoom::lockForUpdate()->find($hotelRoomId);
+                        if (!$room || $room->status !== 'available') {
+                            return response()->json([
+                                'success' => false,
+                                'message' => 'Selected room is not available.',
+                            ], 422);
+                        }
+
+                        // Same-day boarding occupies the room for the whole date
+                        $date = $bookingData['request_date'];
+                        $conflict = Boarding::where('hotel_room_id', $room->id)
+                            ->whereNotIn('status', ['rejected', 'cancelled', 'checked_out', 'completed'])
+                            ->where('check_in', '<=', $date)
+                            ->where('check_out', '>=', $date)
+                            ->exists();
+                        if ($conflict) {
+                            return response()->json([
+                                'success' => false,
+                                'message' => 'Selected room is already booked for that date.',
+                            ], 422);
+                        }
+
+                        if ($ratePerDay == 0) {
                             $ratePerDay = (float)$room->daily_rate;
                         }
                     }
-                    
+
+                    // Store operates 9 AM - 7 PM: boarding stays are same-day
                     $numberOfDays = 1;
-                    if (!empty($bookingData['request_date']) && !empty($bookingData['check_out_date'])) {
-                        $checkIn = new \DateTime($bookingData['request_date']);
-                        $checkOut = new \DateTime($bookingData['check_out_date']);
-                        $diff = $checkIn->diff($checkOut);
-                        $numberOfDays = max(1, $diff->days);
-                    }
-                    
+                    $checkOutDate = $bookingData['request_date'];
+
                     $totalAmount = $ratePerDay * $numberOfDays;
 
                     // Update ServiceRequest price with the totalAmount
@@ -182,7 +199,7 @@ class WalkInController extends Controller
                         'customer_name' => $customer->name,
                         'customer_email' => $customer->email,
                         'check_in' => $bookingData['request_date'],
-                        'check_out' => $bookingData['check_out_date'] ?? null,
+                        'check_out' => $checkOutDate,
                         'hotel_room_id' => $hotelRoomId,
                         'boarding_type' => $bookingData['room_type'] ?? null,
                         'total_amount' => $totalAmount,

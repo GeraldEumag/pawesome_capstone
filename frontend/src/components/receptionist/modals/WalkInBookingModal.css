@@ -1,38 +1,8 @@
-/* WalkInBookingModal.css - Clean Professional Design */
-
-.walkin-modal-overlay {
-  position: fixed;
-  inset: 0;
-  background: rgba(15, 23, 42, 0.55);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 1000;
-  padding: 16px;
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
-}
-
-.walkin-modal {
-  background: #ffffff;
-  border: 1px solid rgba(255, 95, 147, 0.14);
-  border-radius: 16px;
-  width: 100%;
-  max-width: 600px;
-  max-height: 90vh;
-  overflow: hidden;
-  display: flex;
-  flex-direction: column;
-  box-shadow: 0 24px 80px rgba(15, 23, 42, 0.18), 0 8px 24px rgba(255, 95, 147, 0.1);
-}
+/* WalkInBookingModal.css — shell via shared hbk-* (styles/bookingModal.css) */
 
 /* Header */
-.modal-header {
-  display: flex;
-  justify-content: space-between;
+.hbk-head {
   align-items: center;
-  padding: 20px 24px;
-  border-bottom: 1px solid rgba(255, 95, 147, 0.1);
   background: rgba(255, 241, 247, 0.5);
 }
 
@@ -56,11 +26,8 @@
   color: white;
 }
 
-.modal-header h2 {
-  margin: 0;
+.hbk-head h2 {
   font-size: 1.25rem;
-  color: #0f172a;
-  font-weight: 600;
 }
 
 .step-indicator {
@@ -81,44 +48,13 @@
   background: var(--color-primary, #ff5f93);
 }
 
-.close-btn {
-  width: 36px;
-  height: 36px;
-  display: grid;
-  place-items: center;
-  border: 1px solid #e2e8f0;
-  border-radius: 8px;
-  background: #ffffff;
-  cursor: pointer;
-  color: #64748b;
-  transition: all 0.15s ease;
-}
-
-.close-btn:hover {
-  background: #fee2e2;
-  color: #ef4444;
-  border-color: #ef4444;
-}
-
-/* Error */
-.modal-error {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 12px 24px;
-  background: #fee2e2;
-  color: #991b1b;
-  font-size: 0.875rem;
-}
-
-.modal-error svg {
+/* Error — base styles come from .hbk-error */
+.hbk-error svg {
   flex-shrink: 0;
 }
 
 /* Body */
-.modal-body {
-  flex: 1;
-  overflow-y: auto;
+.hbk-body {
   padding: 24px;
 }
 
@@ -642,68 +578,18 @@
 }
 
 /* Footer */
-.modal-footer {
-  display: flex;
+.hbk-foot {
   justify-content: space-between;
-  padding: 16px 24px;
-  border-top: 1px solid #e2e8f0;
-  background: #ffffff;
 }
 
-.modal-footer .secondary-btn {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 10px 20px;
-  background: #ffffff;
-  color: #334155;
-  border: 1px solid #e2e8f0;
-  border-radius: 8px;
-  font-weight: 500;
-  font-size: 0.875rem;
-  cursor: pointer;
-  transition: all 0.15s ease;
-}
-
-.modal-footer .secondary-btn:hover {
-  background: #f8fafc;
-  border-color: #cbd5e1;
-}
-
-.modal-footer .primary-btn {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 10px 20px;
-  background: var(--color-primary, #ff5f93);
-  color: white;
-  border: none;
-  border-radius: 8px;
-  font-weight: 500;
-  font-size: 0.875rem;
-  cursor: pointer;
-  transition: all 0.15s ease;
-}
-
-.modal-footer .primary-btn:hover {
+.hbk-foot .primary-btn:hover:not(:disabled) {
   background: var(--color-primary-hover, #ff4f85);
-  transform: translateY(-1px);
-}
-
-.modal-footer .primary-btn:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
 }
 
 /* Responsive */
 @media (max-width: 640px) {
-  .walkin-modal-overlay {
-    padding: 16px;
-  }
-
-  .walkin-modal {
+  .hbk-modal {
     max-height: 95vh;
-    border-radius: 10px;
   }
 
   .mode-selection {
@@ -722,13 +608,7 @@
     grid-template-columns: repeat(2, 1fr);
   }
 
-  .modal-footer {
+  .hbk-foot {
     flex-direction: column-reverse;
-    gap: 10px;
-  }
-
-  .modal-footer button {
-    width: 100%;
-    justify-content: center;
   }
 }

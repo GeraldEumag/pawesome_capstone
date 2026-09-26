@@ -240,7 +240,7 @@ class BoardingController extends Controller
             'room_id' => 'nullable|exists:boarding_rooms,id',
             'hotel_room_id' => 'nullable|exists:hotel_rooms,id',
             'check_in_date' => 'required|date|after_or_equal:today',
-            'number_of_days' => 'required|integer|min:1',
+            'number_of_days' => 'nullable|integer|min:1|max:1',
             'check_in_time' => 'nullable|date_format:H:i',
             'check_out_time' => 'nullable|date_format:H:i',
             'vaccination_card' => 'nullable|file|mimes:jpg,jpeg,png,pdf|max:5120',
@@ -258,6 +258,17 @@ class BoardingController extends Controller
             return response()->json(['errors' => ['room_id' => ['A room must be selected.']]], 422);
         }
 
+        // Store operates 9:00 AM - 7:00 PM; boarding stays are same-day only.
+        $withinHours = function (?string $time): bool {
+            if (!$time) return true;
+            return $time >= '09:00' && $time <= '19:00';
+        };
+        if (!$withinHours($request->check_in_time) || !$withinHours($request->check_out_time)) {
+            return response()->json([
+                'errors' => ['check_in_time' => ['Bookings are only accepted within store hours (9:00 AM - 7:00 PM).']],
+            ], 422);
+        }
+
         if ($request->pet_id && $request->user()?->role === 'customer') {
             if (!Pet::where('id', $request->pet_id)->where('customer_id', $request->customer_id)->exists()) {
                 return response()->json(['error' => 'Pet not found'], 404);
@@ -269,16 +280,15 @@ class BoardingController extends Controller
             return response()->json(['error' => 'Pet not found'], 404);
         }
 
-        // Compute check-out date from number_of_days
+        // Same-day boarding: check-out is always the same date as check-in
         $checkIn = Carbon::parse($request->check_in_date);
-        $checkOut = $checkIn->copy()->addDays((int) $request->number_of_days);
-        $checkOutDate = $checkOut->toDateString();
+        $checkOutDate = $checkIn->toDateString();
 
-        // Calculate total amount using room-based pricing
+        // Calculate total amount using room-based pricing (one day only)
         if ($useHotelRoom) {
             $hotelRoom = \App\Models\HotelRoom::find($request->hotel_room_id);
             $dailyRate = (float) ($hotelRoom->daily_rate ?? 0);
-            $numberOfDays = max(1, (int) $request->number_of_days);
+            $numberOfDays = 1;
             $totalAmount = $dailyRate * $numberOfDays;
             $roomName = $hotelRoom->name ?? $hotelRoom->room_number;
             $roomType = $hotelRoom->type;
@@ -427,6 +437,39 @@ class BoardingController extends Controller
         
         // Create boarding and room reservation in a transaction
         $createBoarding = fn (?string $vaccinationCardPath = null) => DB::transaction(function () use ($boardingData, $request, $selectedAddOns, $checkOutDate, $useHotelRoom, $vaccinationCardPath) {
+            // Re-check hotel room availability inside the transaction to
+            // prevent race-condition double booking.
+            if ($useHotelRoom) {
+                $lockedRoom = \App\Models\HotelRoom::where('id', $request->hotel_room_id)
+                    ->lockForUpdate()
+                    ->first();
+
+                if (!$lockedRoom || $lockedRoom->status !== 'available') {
+                    throw new \Exception('Selected room is no longer available.');
+                }
+
+                $conflict = Boarding::where('hotel_room_id', $lockedRoom->id)
+                    ->whereNotIn('status', ['rejected', 'cancelled', 'checked_out', 'completed'])
+                    ->where('check_in', '<=', $checkOutDate)
+                    ->where('check_out', '>=', $request->check_in_date)
+                    ->exists();
+
+                if ($conflict) {
+                    throw new \Exception('Selected room is already booked for the selected date.');
+                }
+
+                if (Schema::hasTable('medical_confinements')) {
+                    $confined = DB::table('medical_confinements')
+                        ->where('room_id', $lockedRoom->id)
+                        ->whereIn('status', ['approved_for_admission', 'admitted', 'under_observation', 'under_treatment', 'ready_for_discharge'])
+                        ->exists();
+
+                    if ($confined) {
+                        throw new \Exception('Selected room is no longer available.');
+                    }
+                }
+            }
+
             if ($vaccinationCardPath && array_key_exists('vaccination_card', $boardingData)) {
                 $boardingData['vaccination_card'] = $vaccinationCardPath;
             }
@@ -468,9 +511,13 @@ class BoardingController extends Controller
             return $boarding;
         });
 
-        $result = $request->hasFile('vaccination_card')
-            ? FileStorageService::storeAndPersist($request->file('vaccination_card'), 'vaccination_cards', 'private', $createBoarding)
-            : $createBoarding();
+        try {
+            $result = $request->hasFile('vaccination_card')
+                ? FileStorageService::storeAndPersist($request->file('vaccination_card'), 'vaccination_cards', 'private', $createBoarding)
+                : $createBoarding();
+        } catch (\Exception $e) {
+            return response()->json(['errors' => ['room_id' => [$e->getMessage()]]], 422);
+        }
 
         $result->load(['pet', 'customer', 'roomReservation.room']);
 
@@ -522,7 +569,7 @@ class BoardingController extends Controller
         $validator = Validator::make($request->all(), [
             'hotel_room_id' => 'nullable|exists:hotel_rooms,id',
             'check_in' => 'nullable|date',
-            'check_out' => 'nullable|date|after:check_in',
+            'check_out' => 'nullable|date|after_or_equal:check_in',
             'status' => 'nullable|in:pending,approved,scheduled,confirmed,checked_in,in_care,ready_for_pickup,checked_out,completed,cancelled,rejected',
             'payment_status' => 'nullable|in:unpaid,pending,partial,paid,rejected,refunded',
             'notes' => 'nullable|string',
@@ -536,20 +583,21 @@ class BoardingController extends Controller
         if ($request->has('hotel_room_id') || $request->has('check_in') || $request->has('check_out')) {
             $roomId = $request->hotel_room_id ?? $boarding->hotel_room_id;
             $checkIn = $request->check_in ?? $boarding->check_in;
-            $checkOut = $request->check_out ?? $boarding->check_out;
+            // Same-day boarding: check-out always equals check-in
+            $checkOut = $checkIn;
 
             $room = HotelRoom::find($roomId);
+            if (!$room || $room->status !== 'available') {
+                return response()->json([
+                    'error' => 'Room is not available for the selected date'
+                ], 422);
+            }
+
             $conflicting = Boarding::where('hotel_room_id', $roomId)
                 ->where('id', '!=', $id)
-                ->whereIn('status', ['confirmed', 'checked_in'])
-                ->where(function ($query) use ($checkIn, $checkOut) {
-                    $query->whereBetween('check_in', [$checkIn, $checkOut])
-                        ->orWhereBetween('check_out', [$checkIn, $checkOut])
-                        ->orWhere(function ($q) use ($checkIn, $checkOut) {
-                            $q->where('check_in', '<=', $checkIn)
-                                ->where('check_out', '>=', $checkOut);
-                        });
-                })
+                ->whereNotIn('status', ['rejected', 'cancelled', 'checked_out', 'completed'])
+                ->where('check_in', '<=', $checkOut)
+                ->where('check_out', '>=', $checkIn)
                 ->exists();
 
             if ($conflicting) {
@@ -558,18 +606,21 @@ class BoardingController extends Controller
                 ], 422);
             }
 
-            // Recalculate total amount
-            $checkInDate = new \Carbon\Carbon($checkIn);
-            $checkOutDate = new \Carbon\Carbon($checkOut);
-            $days = $checkInDate->diffInDays($checkOutDate);
-            $boarding->total_amount = $days * $room->daily_rate;
+            // One-day pricing
+            $boarding->total_amount = (float) $room->daily_rate;
         }
 
-        $boarding->update($request->only([
+        // Enforce same-day check-in/check-out on any update touching dates
+        $updateData = $request->only([
             'hotel_room_id', 'check_in', 'check_out', 'status',
             'payment_status', 'special_requests', 'emergency_contact',
             'emergency_phone', 'notes'
-        ]));
+        ]);
+
+        // Same-day boarding: check-out always equals check-in
+        $updateData['check_out'] = $updateData['check_in'] ?? $boarding->check_in;
+
+        $boarding->update($updateData);
 
         $boarding->load(['pet', 'customer', 'hotelRoom']);
 
@@ -782,7 +833,7 @@ class BoardingController extends Controller
         $validator = Validator::make($request->all(), [
             'hotel_room_id' => 'required|exists:hotel_rooms,id',
             'check_in' => 'nullable|date|after_or_equal:today',
-            'check_out' => 'nullable|date|after:check_in',
+            'check_out' => 'nullable|date|after_or_equal:check_in',
             'check_in_time' => 'nullable|date_format:H:i',
             'check_out_time' => 'nullable|date_format:H:i',
             'total_amount' => 'nullable|numeric|min:0',
@@ -795,19 +846,21 @@ class BoardingController extends Controller
         }
 
         $checkIn = $request->input('check_in', optional($boarding->check_in)->toDateString() ?? $boarding->check_in);
-        $checkOut = $request->input('check_out', optional($boarding->check_out)->toDateString() ?? $boarding->check_out);
+        // Same-day boarding: check-out always equals check-in (9 AM - 7 PM)
+        $checkOut = $checkIn;
         $room = HotelRoom::findOrFail($request->hotel_room_id);
 
+        if ($room->status !== 'available' && $room->id !== $boarding->hotel_room_id) {
+            return response()->json(['error' => 'Selected room is not available.'], 422);
+        }
+
         // Enhanced double booking prevention - explicit database conflict check
+        // Inclusive overlap: a stay occupies every date check_in..check_out
         $conflictingBoarding = Boarding::where('hotel_room_id', $request->hotel_room_id)
-            ->whereIn('status', ['approved', 'scheduled', 'checked_in', 'in_stay'])
+            ->whereIn('status', ['pending', 'approved', 'scheduled', 'confirmed', 'checked_in', 'in_care', 'in_stay', 'ready_for_pickup'])
             ->where('id', '!=', $boarding->id)
-            ->where(function ($query) use ($checkIn, $checkOut) {
-                $query->where(function ($subQuery) use ($checkIn, $checkOut) {
-                    $subQuery->where('check_in', '<', $checkOut)
-                           ->where('check_out', '>', $checkIn);
-                });
-            })
+            ->where('check_in', '<=', $checkOut)
+            ->where('check_out', '>=', $checkIn)
             ->first();
 
         if ($conflictingBoarding) {
@@ -828,7 +881,7 @@ class BoardingController extends Controller
             return response()->json(['error' => 'Room is not available for selected dates'], 422);
         }
 
-        $days = max(1, \Carbon\Carbon::parse($checkIn)->diffInDays(\Carbon\Carbon::parse($checkOut)));
+        $days = 1;
         $boarding->update([
             'hotel_room_id' => $room->id,
             'check_in' => $checkIn,
@@ -1042,9 +1095,9 @@ class BoardingController extends Controller
     {
         $validator = Validator::make($request->all(), [
             'check_in' => 'nullable|date|after_or_equal:today',
-            'check_out' => 'nullable|date|after:check_in',
+            'check_out' => 'nullable|date|after_or_equal:check_in',
             'check_in_date' => 'nullable|date|after_or_equal:today',
-            'check_out_date' => 'nullable|date|after:check_in_date',
+            'check_out_date' => 'nullable|date|after_or_equal:check_in_date',
             'pet_id' => 'nullable|exists:pets,id',
             'species' => 'nullable|string|max:100',
             'size' => 'nullable|in:small,medium,large',
@@ -1057,7 +1110,8 @@ class BoardingController extends Controller
         }
 
         $checkIn = $request->query('check_in') ?: $request->query('check_in_date');
-        $checkOut = $request->query('check_out') ?: $request->query('check_out_date');
+        // Same-day stays: check-out defaults to check-in when not provided
+        $checkOut = $request->query('check_out') ?: $request->query('check_out_date') ?: $checkIn;
 
         if (!$checkIn || !$checkOut) {
             return response()->json([
@@ -1122,8 +1176,8 @@ class BoardingController extends Controller
                 $blockingCount = DB::table('boarding_room_reservations')
                     ->where($reservationRoomColumn, $room->id)
                     ->whereNotIn('status', ['rejected', 'cancelled', 'checked_out', 'completed'])
-                    ->where('check_in_date', '<', $checkOut)
-                    ->where('check_out_date', '>', $checkIn)
+                    ->where('check_in_date', '<=', $checkOut)
+                    ->where('check_out_date', '>=', $checkIn)
                     ->count();
             }
 
@@ -1131,7 +1185,7 @@ class BoardingController extends Controller
             $room->available_rooms = max(0, (int) ($room->total_rooms ?? 1) - $blockingCount);
 
             return $room;
-        })->values();
+        })->filter(fn ($room) => $room->available)->values();
 
         return response()->json([
             'success' => true,
@@ -1193,6 +1247,10 @@ class BoardingController extends Controller
      */
     public function reject(Request $request, $id): JsonResponse
     {
+        $request->validate([
+            'rejection_reason' => 'required|string|max:1000',
+        ]);
+
         $boarding = Boarding::findOrFail($id);
 
         if (in_array($boarding->status, ['checked_out', 'completed'], true)) {

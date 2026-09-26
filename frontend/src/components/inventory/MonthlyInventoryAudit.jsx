@@ -5,9 +5,15 @@ import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import * as XLSX from "xlsx";
 import { sanitizeCsvRecords } from "../../utils/csvSanitize";
+import { STORE_INFO } from "../../utils/storeInfo";
 import "./MonthlyInventoryAudit.css";
 import { showAlert, showSuccess, showError } from "../../utils/alert.jsx";
 import StatusDot from "../shared/StatusDot";
+
+const csvCell = (value) => {
+  const s = String(value ?? "");
+  return /[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
+};
 
 const getCurrentMonth = () => {
   const now = new Date();
@@ -353,12 +359,21 @@ const MonthlyInventoryAudit = () => {
       "Reason": auditRow.reason || "",
     }));
 
-    const csv = Papa.unparse(sanitizeCsvRecords(csvData));
+    const meta = [
+      [STORE_INFO.name],
+      [`Monthly Inventory Audit — ${month}`],
+      [`Generated: ${new Date().toLocaleDateString()}`],
+      [],
+    ]
+      .map((row) => row.map(csvCell).join(","))
+      .join("\n");
+
+    const csv = `${meta}\n${Papa.unparse(sanitizeCsvRecords(csvData))}`;
     const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
     const url = URL.createObjectURL(blob);
     const link = document.createElement("a");
     link.href = url;
-    link.setAttribute("download", `monthly_audit_${month}.csv`);
+    link.setAttribute("download", `${STORE_INFO.name.replace(/\s+/g, "-")}-monthly-audit-${month}.csv`);
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
@@ -374,15 +389,19 @@ const MonthlyInventoryAudit = () => {
     }
 
     const doc = new jsPDF();
-    
-    // Add title
-    doc.setFontSize(18);
-    doc.text("Monthly Inventory Audit Report", 14, 22);
-    
+
+    // Company + title header
+    doc.setFontSize(16);
+    doc.text(STORE_INFO.name, 105, 16, { align: "center" });
+    doc.setFontSize(10);
+    doc.text(STORE_INFO.address, 105, 22, { align: "center" });
+    doc.setFontSize(14);
+    doc.text("Monthly Inventory Audit Report", 105, 32, { align: "center" });
+
     // Add month info
-    doc.setFontSize(12);
-    doc.text(`Audit Month: ${month}`, 14, 32);
-    doc.text(`Generated: ${new Date().toLocaleDateString()}`, 14, 40);
+    doc.setFontSize(11);
+    doc.text(`Audit Month: ${month}`, 14, 44);
+    doc.text(`Generated: ${new Date().toLocaleDateString()}`, 14, 52);
     
     // Add summary stats
     const checked = checkedItems.length;
@@ -390,10 +409,10 @@ const MonthlyInventoryAudit = () => {
     const discrepancy = checkedItems.filter((auditRow) => calculateVariance(auditRow) !== 0).length;
     const totalVariance = checkedItems.reduce((sum, auditRow) => sum + calculateVariance(auditRow), 0);
     
-    doc.text(`Total Items: ${checked}`, 14, 50);
-    doc.text(`Matched: ${matched}`, 14, 58);
-    doc.text(`Discrepancies: ${discrepancy}`, 14, 66);
-    doc.text(`Total Variance: ${totalVariance}`, 14, 74);
+    doc.text(`Total Items: ${checked}`, 14, 62);
+    doc.text(`Matched: ${matched}`, 14, 70);
+    doc.text(`Discrepancies: ${discrepancy}`, 14, 78);
+    doc.text(`Total Variance: ${totalVariance}`, 14, 86);
     
     // Prepare table data
     const tableData = checkedItems.map(auditRow => [
@@ -411,7 +430,7 @@ const MonthlyInventoryAudit = () => {
     autoTable(doc, {
       head: [["Product", "SKU", "Category", "System Stock", "Actual Stock", "Variance", "Status", "Reason"]],
       body: tableData,
-      startY: 85,
+      startY: 95,
       styles: { 
         fontSize: 10,
         cellPadding: 3,
@@ -436,7 +455,7 @@ const MonthlyInventoryAudit = () => {
       }
     });
 
-    doc.save(`monthly_audit_${month}.pdf`);
+    doc.save(`${STORE_INFO.name.replace(/\s+/g, "-")}-monthly-audit-${month}.pdf`);
   };
 
   const handleExportExcel = () => {
@@ -460,9 +479,15 @@ const MonthlyInventoryAudit = () => {
     }));
 
     const wb = XLSX.utils.book_new();
-    const ws = XLSX.utils.json_to_sheet(wsData);
+    const ws = XLSX.utils.aoa_to_sheet([
+      [STORE_INFO.name],
+      [`Monthly Inventory Audit — ${month}`],
+      [`Generated: ${new Date().toLocaleDateString()}`],
+      [],
+    ]);
+    XLSX.utils.sheet_add_json(ws, wsData, { origin: -1 });
     XLSX.utils.book_append_sheet(wb, ws, "Monthly Audit");
-    XLSX.writeFile(wb, `monthly_audit_${month}.xlsx`);
+    XLSX.writeFile(wb, `${STORE_INFO.name.replace(/\s+/g, "-")}-monthly-audit-${month}.xlsx`);
   };
 
   return (

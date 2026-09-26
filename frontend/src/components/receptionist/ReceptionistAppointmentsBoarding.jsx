@@ -27,7 +27,7 @@ import {
   faWrench,
 } from "@fortawesome/free-solid-svg-icons";
 import { apiRequest, getAuthenticatedFileUrl } from "../../api/client";
-import { showConfirm } from "../../utils/alert.jsx";
+import { showConfirm, showReasonPrompt } from "../../utils/alert.jsx";
 import { exportToCSV, exportToPDF, exportToExcel } from "../../utils/reportExport";
 import { useUnifiedRequests } from "./hooks/useUnifiedRequests";
 import NewWalkInBookingModal from "./modals/NewWalkInBookingModal";
@@ -38,6 +38,7 @@ import {
   formatStatus,
   formatCurrency,
 } from "./utils/requestNormalization";
+import "../../styles/bookingModal.css";
 import "./ReceptionistAppointmentsBoarding.css";
 
 const STATUS_OPTIONS = [
@@ -317,22 +318,24 @@ const ReceptionistAppointmentsBoarding = () => {
           };
         }
       } else if (action === "reject") {
-        const confirmed = await showConfirm("Reject this request?");
-        if (!confirmed) { setBusyAction(""); return; }
+        const reason = extra.reason?.trim()
+          ? extra.reason.trim()
+          : await showReasonPrompt("Reject this request? Please provide a reason.");
+        if (!reason) { setBusyAction(""); return; }
 
         if (item.source === "service_request" || item.serviceRequestId) {
           endpoint = `/receptionist/requests/${requestId}/reject`;
-          payload = { rejection_reason: extra.reason || "Rejected by receptionist" };
+          payload = { rejection_reason: reason };
         } else if (isBoarding) {
           endpoint = `/receptionist/boarding-requests/${item.id}/reject`;
-          payload = { rejection_reason: extra.reason || "Rejected by receptionist" };
+          payload = { rejection_reason: reason };
         } else if (isGrooming) {
           endpoint = `/grooming/${item.id}/status`;
           method = "PUT";
-          payload = { status: "rejected" };
+          payload = { status: "rejected", reason };
         } else {
           endpoint = `/receptionist/requests/${requestId}/reject`;
-          payload = { rejection_reason: extra.reason || "Rejected by receptionist" };
+          payload = { rejection_reason: reason };
         }
       } else if (action === "check_in") {
         const confirmed = await showConfirm(`Check in ${item.petName}?`);
@@ -840,11 +843,11 @@ const ReceptionistAppointmentsBoarding = () => {
       {showServiceManager && <ServiceManagerModal onClose={() => setShowServiceManager(false)} />}
 
       {showDetailModal && selectedRequest && (
-        <div className="hub-modal-overlay" onClick={closeDetail}>
-          <div className="hub-modal" onClick={(e) => e.stopPropagation()}>
-            <div className="hub-modal-header">
+        <div className="hbk-overlay" onClick={closeDetail}>
+          <div className="hbk-modal" onClick={(e) => e.stopPropagation()}>
+            <div className="hbk-head">
               <div>
-                <span className="hub-eyebrow">
+                <span className="hbk-eyebrow">
                   <FontAwesomeIcon icon={faInfoCircle} />
                   Request Details
                 </span>
@@ -852,12 +855,12 @@ const ReceptionistAppointmentsBoarding = () => {
                   <TypeIcon type={selectedRequest.type} /> #{selectedRequest.id}
                 </h2>
               </div>
-              <button type="button" onClick={closeDetail}>
+              <button type="button" className="close-btn" onClick={closeDetail}>
                 <FontAwesomeIcon icon={faTimes} />
               </button>
             </div>
 
-            <div className="hub-modal-body">
+            <div className="hbk-body">
               <div className="hub-detail-grid">
                 <div><small>Pet</small><strong>{selectedRequest.petName}</strong></div>
                 <div><small>Type</small><strong>{selectedRequest.petType}{selectedRequest.breed ? ` · ${selectedRequest.breed}` : ""}</strong></div>
@@ -886,7 +889,7 @@ const ReceptionistAppointmentsBoarding = () => {
                     <div className="hub-vaccination-section" style={{ marginTop: "16px" }}>
                       <button
                         type="button"
-                        className="hub-modal-btn secondary"
+                        className="hbk-btn secondary"
                         onClick={() => openVaccinationCard(selectedRequest.raw?.vaccination_card_url || selectedRequest.raw?.vaccination_card)}
                       >
                         <FontAwesomeIcon icon={faEye} /> View Vaccination Card
@@ -898,7 +901,7 @@ const ReceptionistAppointmentsBoarding = () => {
                       ) : (
                         <button
                           type="button"
-                          className="hub-modal-btn approve"
+                          className="hbk-btn approve"
                           onClick={() => verifyVaccination(selectedRequest)}
                           disabled={isBusy(selectedRequest.id, "vaccination")}
                           style={{ marginLeft: "10px" }}
@@ -943,8 +946,8 @@ const ReceptionistAppointmentsBoarding = () => {
               )}
             </div>
 
-            <div className="hub-modal-actions">
-              <button type="button" className="hub-modal-btn secondary" onClick={closeDetail}>
+            <div className="hbk-foot">
+              <button type="button" className="hbk-btn secondary" onClick={closeDetail}>
                 Close
               </button>
 
@@ -952,7 +955,7 @@ const ReceptionistAppointmentsBoarding = () => {
                 <>
                   <button
                     type="button"
-                    className="hub-modal-btn approve"
+                    className="hbk-btn approve"
                     onClick={() => {
                       handleAction(selectedRequest, "approve", {
                         veterinarianId: vetAssignments[selectedRequest.id],
@@ -965,7 +968,7 @@ const ReceptionistAppointmentsBoarding = () => {
                   </button>
                   <button
                     type="button"
-                    className="hub-modal-btn reject"
+                    className="hbk-btn reject"
                     onClick={() => {
                       handleAction(selectedRequest, "reject");
                       closeDetail();
@@ -980,7 +983,7 @@ const ReceptionistAppointmentsBoarding = () => {
               {selectedRequest.type === "hotel" && selectedRequest.status === "approved" && (
                 <button
                   type="button"
-                  className="hub-modal-btn checkin"
+                  className="hbk-btn checkin"
                   onClick={() => {
                     handleAction(selectedRequest, "check_in");
                     closeDetail();
@@ -994,7 +997,7 @@ const ReceptionistAppointmentsBoarding = () => {
               {selectedRequest.type === "hotel" && selectedRequest.status === "checked_in" && (
                 <button
                   type="button"
-                  className="hub-modal-btn checkout"
+                  className="hbk-btn checkout"
                   onClick={() => {
                     handleAction(selectedRequest, "check_out");
                     closeDetail();
@@ -1008,7 +1011,7 @@ const ReceptionistAppointmentsBoarding = () => {
               {selectedRequest.type === "grooming" && selectedRequest.status === "approved" && (
                 <button
                   type="button"
-                  className="hub-modal-btn start"
+                  className="hbk-btn start"
                   onClick={() => {
                     handleAction(selectedRequest, "in_progress");
                     closeDetail();
@@ -1022,7 +1025,7 @@ const ReceptionistAppointmentsBoarding = () => {
               {selectedRequest.type === "grooming" && selectedRequest.status === "in_progress" && (
                 <button
                   type="button"
-                  className="hub-modal-btn complete"
+                  className="hbk-btn complete"
                   onClick={() => {
                     handleAction(selectedRequest, "completed");
                     closeDetail();

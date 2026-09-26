@@ -19,10 +19,11 @@ import {
   faShieldHeart,
 } from "@fortawesome/free-solid-svg-icons";
 import toast from "react-hot-toast";
-import { apiRequest } from "../../api/client";
+import { apiRequest, getAuthenticatedFileUrl } from "../../api/client";
 import { formatCurrency } from "../../utils/currency";
 import PetAvatar from "../shared/PetAvatar";
 import "./theme.css";
+import "../../styles/bookingModal.css";
 import "./VetCurrentBoarders.css";
 
 const VetCurrentBoarders = () => {
@@ -426,15 +427,15 @@ const VetCurrentBoarders = () => {
 
       {selectedBoarder && (
         <div
-          className="vet-boarder-modal-overlay"
+          className="hbk-overlay"
           onClick={() => setSelectedBoarder(null)}
           role="dialog"
         >
           <div
-            className="vet-boarder-modal"
+            className="hbk-modal"
             onClick={(event) => event.stopPropagation()}
           >
-            <div className="vet-boarder-modal-header">
+            <div className="hbk-head">
               <div>
                 <span className="vet-boarders-eyebrow">
                   <FontAwesomeIcon icon={faStethoscope} />
@@ -452,7 +453,7 @@ const VetCurrentBoarders = () => {
               </div>
 
               <button
-                className="vet-boarder-modal-close"
+                className="close-btn"
                 onClick={() => setSelectedBoarder(null)}
                 type="button"
               >
@@ -460,7 +461,7 @@ const VetCurrentBoarders = () => {
               </button>
             </div>
 
-            <div className="vet-boarder-modal-body">
+            <div className="hbk-body">
               <div className="vet-info-section">
                 <h4>
                   <FontAwesomeIcon icon={faPaw} />
@@ -579,7 +580,7 @@ const VetCurrentBoarders = () => {
               )}
             </div>
 
-            <div className="vet-boarder-modal-actions">
+            <div className="hbk-foot">
               <button
                 className="vet-boarders-refresh-btn"
                 type="button"
@@ -591,12 +592,33 @@ const VetCurrentBoarders = () => {
               <button
                 className="vet-view-btn"
                 type="button"
-                onClick={() => {
-                  toast.success("Medical record view ready for connection.");
+                disabled={!selectedBoarder.vaccination_card_url}
+                title={
+                  selectedBoarder.vaccination_card_url
+                    ? "Open vaccination card"
+                    : "No vaccination card uploaded"
+                }
+                onClick={async () => {
+                  const win = window.open("", "_blank");
+                  if (!win) {
+                    toast.error("Popup blocked. Please allow popups for this site.");
+                    return;
+                  }
+                  try {
+                    const url = await getAuthenticatedFileUrl(
+                      selectedBoarder.vaccination_card_url ||
+                        `/files/vaccination-cards/${selectedBoarder.id}/view`
+                    );
+                    win.location.href = url;
+                  } catch (err) {
+                    win.close();
+                    console.error("Vaccination card open error:", err);
+                    toast.error(err.message || "Failed to open vaccination card.");
+                  }
                 }}
               >
                 <FontAwesomeIcon icon={faStethoscope} />
-                Open Medical Record
+                View Vaccination Card
               </button>
             </div>
           </div>

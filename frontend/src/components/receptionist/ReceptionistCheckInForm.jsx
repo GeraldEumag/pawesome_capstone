@@ -20,6 +20,7 @@ import {
   faPhone,
   faInfoCircle,
 } from "@fortawesome/free-solid-svg-icons";
+import "../../styles/bookingModal.css";
 import "./ReceptionistCheckInForm.css";
 import { apiRequest } from "../../api/client";
 import PetAvatar from "../shared/PetAvatar";
@@ -446,9 +447,9 @@ const ReceptionistCheckInForm = () => {
       </section>
 
       {selectedBooking && (
-        <div className="checkin-modal-overlay" onClick={() => setSelectedBooking(null)}>
-          <div className="checkin-modal" onClick={(event) => event.stopPropagation()}>
-            <div className="checkin-modal-header">
+        <div className="hbk-overlay" onClick={() => setSelectedBooking(null)}>
+          <div className="hbk-modal" onClick={(event) => event.stopPropagation()}>
+            <div className="hbk-head">
               <div>
                 <span className="checkin-eyebrow">
                   <FontAwesomeIcon icon={faEye} />
@@ -459,14 +460,14 @@ const ReceptionistCheckInForm = () => {
 
               <button
                 type="button"
-                className="checkin-close-btn"
+                className="close-btn"
                 onClick={() => setSelectedBooking(null)}
               >
                 <FontAwesomeIcon icon={faTimes} />
               </button>
             </div>
 
-            <div className="checkin-modal-body">
+            <div className="hbk-body">
               <div className="checkin-detail-grid">
                 <DetailItem label="Pet" value={getPetName(selectedBooking)} />
                 <DetailItem label="Pet Type" value={getPetType(selectedBooking)} />
@@ -480,7 +481,7 @@ const ReceptionistCheckInForm = () => {
               </div>
             </div>
 
-            <div className="checkin-modal-actions">
+            <div className="hbk-foot">
               <button
                 type="button"
                 className="checkin-secondary-btn"

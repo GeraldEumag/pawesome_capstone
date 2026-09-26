@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useState } from "react";
-import { showConfirm } from "../../utils/alert.jsx";
+import { showConfirm, showReasonPrompt } from "../../utils/alert.jsx";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
   faCalendarAlt,
@@ -18,6 +18,7 @@ import {
   faTimesCircle,
   faUser,
 } from "@fortawesome/free-solid-svg-icons";
+import "../../styles/bookingModal.css";
 import "./ReceptionistGroomingBookings.css";
 import { apiRequest } from "../../api/client";
 import { exportToCSV, exportToPDF, exportToExcel } from "../../utils/reportExport";
@@ -270,12 +271,15 @@ const ReceptionistGroomingBookings = () => {
     };
   }, [groomingAppointments]);
 
-  const handleStatusChange = async (id, newStatus) => {
+  const handleStatusChange = async (id, newStatus, reason = null) => {
     try {
       setProcessingId(id);
       await apiRequest(`/receptionist/requests/${id}/status`, {
         method: "PATCH",
-        body: JSON.stringify({ status: newStatus }),
+        body: JSON.stringify({
+          status: newStatus,
+          ...(reason ? { rejection_reason: reason } : {}),
+        }),
       });
 
       await fetchAppointments({ silent: true });
@@ -293,8 +297,12 @@ const ReceptionistGroomingBookings = () => {
   };
 
   const handleReject = async (id) => {
-    if (!(await showConfirm("Reject this grooming booking?"))) return;
-    await handleStatusChange(id, "rejected");
+    const reason = await showReasonPrompt(
+      "Reject this grooming booking? Please provide a reason.",
+      "Reject Grooming Booking"
+    );
+    if (!reason) return;
+    await handleStatusChange(id, "rejected", reason);
   };
 
   const handleStart = async (id) => {
@@ -601,9 +609,9 @@ const ReceptionistGroomingBookings = () => {
 
       {/* Detail Modal */}
       {selectedAppointment && (
-        <div className="modal-overlay" onClick={() => setSelectedAppointment(null)}>
-          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-            <div className="modal-header">
+        <div className="hbk-overlay" onClick={() => setSelectedAppointment(null)}>
+          <div className="hbk-modal" onClick={(e) => e.stopPropagation()}>
+            <div className="hbk-head">
               <h2>
                 <FontAwesomeIcon icon={faInfoCircle} /> Booking Details
               </h2>
@@ -616,7 +624,7 @@ const ReceptionistGroomingBookings = () => {
               </button>
             </div>
 
-            <div className="modal-body">
+            <div className="hbk-body">
               <div className="detail-grid">
                 <div className="detail-item">
                   <label>Pet Name</label>
@@ -652,7 +660,7 @@ const ReceptionistGroomingBookings = () => {
               </div>
             </div>
 
-            <div className="modal-footer">
+            <div className="hbk-foot">
               <button
                 type="button"
                 className="secondary-btn"

@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react";
-import { showConfirm, showWarning, showError, showSuccess } from "../../utils/alert.jsx";
+import { showConfirm, showWarning, showError, showSuccess, showReasonPrompt } from "../../utils/alert.jsx";
 import {
   FaCalendarAlt,
   FaCalendarCheck,
@@ -28,6 +28,7 @@ import {
 import { apiRequest, getAuthenticatedFileUrl } from "../../api/client";
 import { exportToCSV, exportToPDF, exportToExcel } from "../../utils/reportExport";
 import ServiceManagerModal from "./ServiceManagerModal";
+import "../../styles/bookingModal.css";
 import "./ReceptionistDashboard.css";
 
 const STATUS_OPTIONS = [
@@ -290,9 +291,13 @@ const ReceptionistDashboard = () => {
       return;
     }
 
+    let rejectionReason = null;
     if (newStatus === "rejected") {
-      const confirmed = await showConfirm(`Reject ${request.id}?`);
-      if (!confirmed) return;
+      rejectionReason = await showReasonPrompt(
+        `Reject ${request.id}? Please provide a reason.`,
+        "Reject Request"
+      );
+      if (!rejectionReason) return;
     }
 
     const actionKey = `${request.rawId}-${newStatus}`;
@@ -302,7 +307,10 @@ const ReceptionistDashboard = () => {
 
       await apiRequest(`/receptionist/requests/${request.rawId}/status`, {
         method: "PATCH",
-        body: JSON.stringify({ status: newStatus }),
+        body: JSON.stringify({
+          status: newStatus,
+          ...(rejectionReason ? { rejection_reason: rejectionReason } : {}),
+        }),
       });
 
       setRequests((prev) =>
@@ -817,14 +825,14 @@ const ReceptionistDashboard = () => {
 
       {selectedRequest && (
         <div
-          className="request-modal-overlay"
+          className="hbk-overlay"
           onClick={() => setSelectedRequest(null)}
         >
           <div
-            className="request-modal fade-up"
+            className="hbk-modal fade-up"
             onClick={(event) => event.stopPropagation()}
           >
-            <div className="request-modal-header">
+            <div className="hbk-head">
               <div>
                 <span className="hero-badge">
                   <FaInfoCircle />
@@ -833,12 +841,12 @@ const ReceptionistDashboard = () => {
                 <h2>{selectedRequest.id}</h2>
               </div>
 
-              <button type="button" onClick={() => setSelectedRequest(null)}>
+              <button type="button" className="close-btn" onClick={() => setSelectedRequest(null)}>
                 <FaTimes />
               </button>
             </div>
 
-            <div className="request-modal-body">
+            <div className="hbk-body">
               <div className="request-detail-grid">
                 <div>
                   <small>Customer</small>
@@ -915,7 +923,7 @@ const ReceptionistDashboard = () => {
               </div>
             )}
 
-            <div className="request-modal-actions">
+            <div className="hbk-foot">
               <button
                 type="button"
                 className="modal-secondary-action"

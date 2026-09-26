@@ -21,6 +21,7 @@ import {
 } from "@fortawesome/free-solid-svg-icons";
 import { apiRequest } from "../../api/client";
 import { showConfirm } from "../../utils/alert.jsx";
+import "../../styles/bookingModal.css";
 import "./ReceptionistManageServices.css";
 
 const TABS = [
@@ -640,9 +641,9 @@ const ReceptionistManageServices = () => {
 
       {/* Service Form Modal */}
       {showServiceForm && (
-        <div className="modal-overlay" onClick={closeServiceForm}>
-          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-            <div className="modal-header">
+        <div className="hbk-overlay" onClick={closeServiceForm}>
+          <div className="hbk-modal" onClick={(e) => e.stopPropagation()}>
+            <div className="hbk-head">
               <h2>
                 {editingService ? (
                   <>
@@ -663,7 +664,7 @@ const ReceptionistManageServices = () => {
               </button>
             </div>
 
-            <div className="modal-body">
+            <div className="hbk-body">
               <div className="form-group">
                 <label>Service Name *</label>
                 <input
@@ -766,7 +767,7 @@ const ReceptionistManageServices = () => {
               </div>
             </div>
 
-            <div className="modal-footer">
+            <div className="hbk-foot">
               <button
                 type="button"
                 className="secondary-btn"
@@ -789,9 +790,9 @@ const ReceptionistManageServices = () => {
 
       {/* Room Form Modal */}
       {showRoomForm && (
-        <div className="modal-overlay" onClick={closeRoomForm}>
-          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-            <div className="modal-header">
+        <div className="hbk-overlay" onClick={closeRoomForm}>
+          <div className="hbk-modal" onClick={(e) => e.stopPropagation()}>
+            <div className="hbk-head">
               <h2>
                 {editingRoom ? (
                   <>
@@ -812,7 +813,7 @@ const ReceptionistManageServices = () => {
               </button>
             </div>
 
-            <div className="modal-body">
+            <div className="hbk-body">
               <div className="form-row">
                 <div className="form-group">
                   <label>Room Number *</label>
@@ -945,7 +946,7 @@ const ReceptionistManageServices = () => {
               </div>
             </div>
 
-            <div className="modal-footer">
+            <div className="hbk-foot">
               <button
                 type="button"
                 className="secondary-btn"

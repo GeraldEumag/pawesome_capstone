@@ -59,13 +59,15 @@ class BoardingRoomReservation extends Model
     }
 
     /**
-     * Scope for overlapping date reservations
+     * Scope for overlapping date reservations.
+     * Inclusive semantics — a stay occupies every date from check-in through
+     * check-out inclusive (store operates same-day 9 AM - 7 PM boarding).
      */
     public function scopeOverlappingDates($query, $checkIn, $checkOut)
     {
         return $query->where(function ($q) use ($checkIn, $checkOut) {
-            $q->where('check_in_date', '<', $checkOut)
-              ->where('check_out_date', '>', $checkIn);
+            $q->where('check_in_date', '<=', $checkOut)
+              ->where('check_out_date', '>=', $checkIn);
         });
     }
 

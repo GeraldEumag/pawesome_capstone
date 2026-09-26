@@ -28,9 +28,20 @@ const todayInput = () => {
   const d = new Date();
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
 };
-const monthStartInput = () => {
+
+const pad2 = (n) => String(n).padStart(2, "0");
+const currentMonthInput = () => {
   const d = new Date();
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-01`;
+  return `${d.getFullYear()}-${pad2(d.getMonth() + 1)}`;
+};
+// Canonical semi-monthly periods: 1st–15th and 16th–last day of the month.
+const periodForCutoff = (month, cutoff) => {
+  if (!month) return { start: "", end: "" };
+  const [year, mon] = month.split("-").map(Number);
+  const lastDay = new Date(year, mon, 0).getDate();
+  return cutoff === "first"
+    ? { start: `${month}-01`, end: `${month}-15` }
+    : { start: `${month}-16`, end: `${month}-${pad2(lastDay)}` };
 };
 
 const NumberInput = ({ label, value, onChange, min = 0, step = 0.01, prefix = "", disabled = false }) => (
@@ -114,8 +125,25 @@ const ManualPayrollModal = ({ onClose, onSaved, initialPayroll }) => {
   const [userId, setUserId] = useState(initialPayroll?.user_id || "");
   const [employeeName, setEmployeeName] = useState(initialPayroll?.employee_name || "");
   const [useManualName, setUseManualName] = useState(!initialPayroll?.user_id && !!initialPayroll?.employee_name);
-  const [periodStart, setPeriodStart] = useState(initialPayroll?.pay_period_start || monthStartInput());
-  const [periodEnd, setPeriodEnd] = useState(initialPayroll?.pay_period_end || todayInput());
+  // Pay period is always a semi-monthly cutoff (1st–15th / 16th–end of month)
+  const [periodMonth, setPeriodMonth] = useState(
+    initialPayroll?.pay_period_start?.slice(0, 7) || currentMonthInput()
+  );
+  const [periodCutoff, setPeriodCutoff] = useState(() => {
+    const start = initialPayroll?.pay_period_start;
+    if (start) return Number(String(start).slice(8, 10)) <= 15 ? "first" : "second";
+    return new Date().getDate() <= 15 ? "first" : "second";
+  });
+  const { start: periodStart, end: periodEnd } = useMemo(
+    () => periodForCutoff(periodMonth, periodCutoff),
+    [periodMonth, periodCutoff]
+  );
+  const periodLabel = useMemo(() => {
+    if (!periodStart || !periodEnd) return "";
+    const fmt = (d) => new Date(`${d}T00:00:00`).toLocaleDateString("en-PH", { month: "short", day: "numeric" });
+    const yr = new Date(`${periodEnd}T00:00:00`).getFullYear();
+    return `${fmt(periodStart)} – ${fmt(periodEnd)}, ${yr}`;
+  }, [periodStart, periodEnd]);
   const [payDate, setPayDate] = useState(initialPayroll?.payment_date || "");
   const [department, setDepartment] = useState(initialPayroll?.department || "");
 
@@ -517,12 +545,25 @@ const ManualPayrollModal = ({ onClose, onSaved, initialPayroll }) => {
                   />
                 )}
               </div>
-              <DateInput label="Period Start" value={periodStart} onChange={setPeriodStart} disabled={isReadonly} />
-              <DateInput label="Period End" value={periodEnd} onChange={setPeriodEnd} disabled={isReadonly} />
+              <label className="mpm-field">
+                <span>Pay Month</span>
+                <input type="month" value={periodMonth} onChange={(e) => setPeriodMonth(e.target.value)} disabled={isReadonly} />
+              </label>
+              <SelectInput
+                label="Cutoff"
+                value={periodCutoff}
+                onChange={setPeriodCutoff}
+                disabled={isReadonly}
+                options={[
+                  { value: "first", label: "1st – 15th" },
+                  { value: "second", label: "16th – end of month" },
+                ]}
+              />
               <DateInput label="Pay Date" value={payDate} onChange={setPayDate} disabled={isReadonly} />
               <TextInput label="Department" value={department} onChange={setDepartment} disabled={isReadonly} />
             </div>
             <div className="mpm-info-row">
+              <small><strong>Pay Period:</strong> {periodLabel || "—"}</small>
               <small><strong>Prepared By:</strong> {preparedByName}</small>
               <small><strong>Approved By:</strong> {payrollRecord?.approver?.name || (managerApproved ? preparedByName : "—")}</small>
               <small><strong>Date Approved:</strong> {managerApproveDate || "—"}</small>

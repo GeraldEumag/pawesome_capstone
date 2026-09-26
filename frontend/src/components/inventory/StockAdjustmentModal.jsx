@@ -1,19 +1,55 @@
 import React, { useState, useEffect } from "react";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import {
+  faArrowDown,
+  faArrowUp,
+  faBox,
+  faMinus,
+  faPlus,
+  faSpinner,
+  faTimes,
+  faTriangleExclamation,
+} from "@fortawesome/free-solid-svg-icons";
 import { inventoryApi } from "../../api/inventory.jsx";
 import "./StockAdjustmentModal.css";
 import { showAlert, showError } from "../../utils/alert.jsx";
 
+const REASONS = {
+  add: [
+    "New stock received",
+    "Returned by customer",
+    "Inventory correction",
+    "Found in warehouse",
+    "Other",
+  ],
+  remove: [
+    "Damaged/expired",
+    "Returned to supplier",
+    "Lost/stolen",
+    "Used for internal",
+    "Other",
+  ],
+};
+
+const QUICK_QTY = [5, 10, 25, 50, 100];
+
 const StockAdjustmentModal = ({ isOpen, onClose, item, onSuccess, initialType, initialQuantity }) => {
-  const [adjustmentType, setAdjustmentType] = useState(initialType || "add"); // 'add', 'remove'
+  const [adjustmentType, setAdjustmentType] = useState(initialType || "add");
   const [quantity, setQuantity] = useState(initialQuantity ? String(initialQuantity) : "");
   const [reason, setReason] = useState("");
   const [customReason, setCustomReason] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
-  // Helper to get stock quantity from multiple possible field names
-  const getStock = (itm) => Number(itm?.stock ?? itm?.quantity ?? itm?.stock_quantity ?? itm?.current_stock ?? 0);
-  const currentStock = getStock(item);
+  const currentStock = Number(item?.stock ?? item?.quantity ?? item?.stock_quantity ?? item?.current_stock ?? 0);
+  const qty = parseInt(quantity, 10);
+  const hasQty = !isNaN(qty) && qty > 0;
+  const newTotal = hasQty
+    ? adjustmentType === "add"
+      ? currentStock + qty
+      : Math.max(0, currentStock - qty)
+    : currentStock;
+  const delta = hasQty ? (adjustmentType === "add" ? qty : -qty) : 0;
 
   const resetForm = () => {
     setAdjustmentType(initialType || "add");
@@ -23,43 +59,29 @@ const StockAdjustmentModal = ({ isOpen, onClose, item, onSuccess, initialType, i
     setError(null);
   };
 
-  // Reset form when modal opens so new initialType/initialQuantity are respected
   useEffect(() => {
-    if (isOpen) {
-      setAdjustmentType(initialType || "add");
-      setQuantity(initialQuantity ? String(initialQuantity) : "");
-      setReason("");
-      setCustomReason("");
-      setError(null);
-    }
+    if (isOpen) resetForm();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isOpen, initialType, initialQuantity]);
-
-  // Auto-suggest quantity based on adjustment type (only when user switches type manually)
-  useEffect(() => {
-    if (!isOpen) return;
-    if (adjustmentType === "remove" && currentStock > 0 && !initialQuantity) {
-      setQuantity(Math.min(currentStock, 5).toString());
-    } else if (adjustmentType === "add" && !initialQuantity) {
-      setQuantity("");
-    }
-  }, [adjustmentType, item, currentStock, isOpen, initialQuantity]);
-
 
   const handleClose = () => {
     resetForm();
     onClose();
   };
 
+  const switchType = (type) => {
+    setAdjustmentType(type);
+    setReason("");
+    setCustomReason("");
+  };
+
   const validateForm = () => {
-    if (!quantity || parseInt(quantity) <= 0) {
-      return "Please enter a valid quantity";
-    }
-    if (!reason.trim()) {
-      return "Please provide a reason for this adjustment";
-    }
-    if (adjustmentType === "remove" && parseInt(quantity) > currentStock) {
+    if (!hasQty) return "Please enter a valid quantity";
+    if (adjustmentType === "remove" && qty > currentStock) {
       return `Cannot remove more than current stock (${currentStock})`;
     }
+    if (!reason) return "Please provide a reason for this adjustment";
+    if (reason === "Other" && !customReason.trim()) return "Please specify the reason";
     return null;
   };
 
@@ -74,23 +96,11 @@ const StockAdjustmentModal = ({ isOpen, onClose, item, onSuccess, initialType, i
     setError(null);
 
     try {
-      const finalReason = reason === "Other" ? customReason : reason;
-
-      // Send stock adjustment request
-
-      await inventoryApi.adjustStock(item.id, adjustmentType, Number(quantity), finalReason);
-
+      const finalReason = reason === "Other" ? customReason.trim() : reason;
+      await inventoryApi.adjustStock(item.id, adjustmentType, qty, finalReason);
       await onSuccess?.();
       onClose?.();
     } catch (err) {
-      console.error("[StockAdjustment] Failed:", err);
-      console.error("[StockAdjustment] Error details:", {
-        message: err.message,
-        response: err.response,
-        request: err.request,
-      });
-
-      // Show specific error message from backend or generic message
       const errorMsg = err.message || "Failed to adjust stock. Please try again.";
       setError(errorMsg);
       showError(`Error: ${errorMsg}`);
@@ -99,278 +109,168 @@ const StockAdjustmentModal = ({ isOpen, onClose, item, onSuccess, initialType, i
     }
   };
 
-  const getNewStockPreview = () => {
-    if (!quantity || isNaN(parseInt(quantity))) return currentStock;
-    const qty = parseInt(quantity);
-    switch (adjustmentType) {
-      case "add":
-        return currentStock + qty;
-      case "remove":
-        return Math.max(0, currentStock - qty);
-      default:
-        return currentStock;
-    }
-  };
-
-  const getAdjustmentReasons = () => {
-    switch (adjustmentType) {
-      case "add":
-        return [
-          "New stock received",
-          "Returned by customer",
-          "Inventory correction",
-          "Found in warehouse",
-          "Other",
-        ];
-      case "remove":
-        return [
-          "Damaged/expired",
-          "Returned to supplier",
-          "Lost/stolen",
-          "Used for internal",
-          "Other",
-        ];
-      default:
-        return ["Other"];
-    }
-  };
-
   if (!isOpen || !item) return null;
 
   return (
     <div className="modal-overlay" onClick={handleClose}>
-      <div className="modal-content stock-modal" onClick={(e) => e.stopPropagation()}>
+      <div className="modal-content adjustment-modal" onClick={(e) => e.stopPropagation()}>
         <div className="modal-header">
-          <div className="modal-title">
-            <span className="modal-icon">Stock</span>
-            <div>
-              <h3>Adjust Stock</h3>
-              <p>Update inventory quantity with reason tracking</p>
-            </div>
+          <div>
+            <h3>Adjust Stock</h3>
+            <p>Update inventory quantity with reason tracking</p>
           </div>
-          <button className="btn-close" onClick={handleClose}>
-            ×
+          <button type="button" className="modal-close-btn" onClick={handleClose} aria-label="Close">
+            <FontAwesomeIcon icon={faTimes} />
           </button>
         </div>
 
-        <form onSubmit={handleSubmit}>
-          <div className="modal-body">
-            {/* Product Info */}
-            <div className="product-info-card">
-              <div className="product-name">{item.name}</div>
-              <div className="product-meta">
-                <span className="sku">SKU: {item.sku || "N/A"}</span>
-                <span className="category">{item.category || "Uncategorized"}</span>
-              </div>
-              <div className="current-stock">
-                <span className="label">Current Stock:</span>
-                <span className={`value ${currentStock <= 10 ? "low" : ""}`}>
-                  {currentStock} units
-                </span>
-              </div>
+        <div className="modal-body">
+          {/* Product info */}
+          <div className="item-info">
+            <p className="item-name">
+              <FontAwesomeIcon icon={faBox} /> {item.name}
+            </p>
+            <p className="item-current-stock">
+              SKU: {item.sku || "N/A"} &middot; {item.category || "Uncategorized"} &middot;{" "}
+              Current stock: <strong>{currentStock} units</strong>
+            </p>
+          </div>
+
+          {error && <p className="error-message">{error}</p>}
+
+          {/* Adjustment type */}
+          <div className="adjustment-types">
+            <button
+              type="button"
+              className={`adjustment-type-btn ${adjustmentType === "add" ? "active add" : ""}`}
+              onClick={() => switchType("add")}
+            >
+              <FontAwesomeIcon icon={faPlus} /> Add Stock
+            </button>
+            <button
+              type="button"
+              className={`adjustment-type-btn ${adjustmentType === "remove" ? "active remove" : ""}`}
+              onClick={() => switchType("remove")}
+            >
+              <FontAwesomeIcon icon={faMinus} /> Remove Stock
+            </button>
+          </div>
+
+          {/* Quantity */}
+          <div className="quantity-section">
+            <label>{adjustmentType === "add" ? "Quantity to Add" : "Quantity to Remove"}</label>
+            <div className="quantity-stepper">
+              <button
+                type="button"
+                className="stepper-btn"
+                onClick={() => setQuantity(String(Math.max(1, (qty || 1) - 1)))}
+                aria-label="Decrease"
+              >
+                <FontAwesomeIcon icon={faMinus} />
+              </button>
+              <input
+                type="number"
+                className="quantity-input"
+                value={quantity}
+                onChange={(e) => setQuantity(e.target.value)}
+                placeholder="0"
+                min="1"
+              />
+              <button
+                type="button"
+                className="stepper-btn"
+                onClick={() => setQuantity(String((qty || 0) + 1))}
+                aria-label="Increase"
+              >
+                <FontAwesomeIcon icon={faPlus} />
+              </button>
             </div>
-
-            {/* Error Display */}
-            {error && <div className="error-banner">{error}</div>}
-
-            {/* Adjustment Type */}
-            <div className="adjustment-type">
-              <label>Adjustment Type</label>
-              <div className="type-buttons">
+            <div className="quick-qty">
+              {QUICK_QTY.map((n) => (
                 <button
+                  key={n}
                   type="button"
-                  className={`type-btn ${adjustmentType === "add" ? "active" : ""}`}
-                  onClick={() => setAdjustmentType("add")}
+                  className={`quick-qty-btn ${qty === n ? "active" : ""}`}
+                  onClick={() => setQuantity(String(n))}
                 >
-                  <span className="icon">+</span>
-                  <span>Add Stock</span>
-                </button>
-                <button
-                  type="button"
-                  className={`type-btn ${adjustmentType === "remove" ? "active" : ""}`}
-                  onClick={() => setAdjustmentType("remove")}
-                >
-                  <span className="icon">-</span>
-                  <span>Remove Stock</span>
-                </button>
-              </div>
-            </div>
-
-            {/* Quantity Input */}
-            <div className="form-group">
-              <label>
-                {adjustmentType === "add" && "Quantity to Add"}
-                {adjustmentType === "remove" && "Quantity to Remove"}
-              </label>
-              <div className="quantity-input">
-                <button
-                  type="button"
-                  className="qty-btn"
-                  onClick={() => setQuantity((prev) => Math.max(0, parseInt(prev || 0) - 1))}
-                >
-                  −
-                </button>
-                <input
-                  type="number"
-                  value={quantity}
-                  onChange={(e) => setQuantity(e.target.value)}
-                  placeholder="0"
-                  min="0"
-                />
-                <button
-                  type="button"
-                  className="qty-btn"
-                  onClick={() => setQuantity((prev) => parseInt(prev || 0) + 1)}
-                >
-                  +
-                </button>
-              </div>
-            </div>
-
-            {/* Quick Quantity Buttons */}
-            <div className="quick-quantities">
-              {[5, 10, 25, 50, 100].map((qty) => (
-                <button
-                  key={qty}
-                  type="button"
-                  className="quick-qty-btn"
-                  onClick={() => setQuantity(qty.toString())}
-                >
-                  +{qty}
+                  {n}
                 </button>
               ))}
             </div>
+          </div>
 
-            {/* Reason Selection */}
-            <div className="form-group">
-              <label>
-                Reason <span className="required">*</span>
-              </label>
-              <select
-                value={reason}
-                onChange={(e) => setReason(e.target.value)}
-                className={!reason ? "placeholder" : ""}
-              >
-                <option value="">Select a reason...</option>
-                {getAdjustmentReasons().map((r) => (
-                  <option key={r} value={r}>
-                    {r}
-                  </option>
-                ))}
-              </select>
+          {/* Result preview */}
+          <div className={`stock-preview ${hasQty ? (delta >= 0 ? "up" : "down") : ""}`}>
+            <div className="stock-preview-label">
+              New stock after {adjustmentType === "add" ? "adding" : "removing"}
             </div>
+            <div className={`stock-preview-value ${hasQty ? (delta >= 0 ? "positive" : "negative") : ""}`}>
+              {newTotal}
+            </div>
+            {hasQty && (
+              <div className={`stock-preview-delta ${delta >= 0 ? "positive" : "negative"}`}>
+                <FontAwesomeIcon icon={delta >= 0 ? faArrowUp : faArrowDown} />{" "}
+                {delta >= 0 ? `+${delta}` : delta} from {currentStock}
+              </div>
+            )}
+            {hasQty && newTotal === 0 && (
+              <div className="stock-preview-warning">
+                <FontAwesomeIcon icon={faTriangleExclamation} /> This will result in OUT OF STOCK
+              </div>
+            )}
+            {hasQty && newTotal > 0 && newTotal <= 10 && (
+              <div className="stock-preview-warning warn">
+                <FontAwesomeIcon icon={faTriangleExclamation} /> This will trigger LOW STOCK alert
+              </div>
+            )}
+          </div>
 
-            {/* Custom Reason Input */}
+          {/* Reason */}
+          <div className="reason-section">
+            <label>
+              Reason <span className="required">*</span>
+            </label>
+            <select
+              className="reason-select"
+              value={reason}
+              onChange={(e) => setReason(e.target.value)}
+            >
+              <option value="">Select a reason...</option>
+              {(REASONS[adjustmentType] || ["Other"]).map((r) => (
+                <option key={r} value={r}>{r}</option>
+              ))}
+            </select>
             {reason === "Other" && (
-              <div className="form-group">
-                <label>Specify Reason <span className="required">*</span></label>
-                <input
-                  type="text"
-                  value={customReason}
-                  onChange={(e) => setCustomReason(e.target.value)}
-                  placeholder="Enter custom reason..."
-                  autoFocus
-                  required
-                />
-              </div>
+              <textarea
+                className="custom-reason-input"
+                value={customReason}
+                onChange={(e) => setCustomReason(e.target.value)}
+                placeholder="Enter custom reason..."
+                autoFocus
+              />
             )}
-
-            {/* Smart Alert Warnings */}
-            {quantity && getNewStockPreview() <= 0 && (
-              <div className="alert-danger">
-                <span className="alert-icon">!</span>
-                <span>This will result in <strong>OUT OF STOCK</strong></span>
-              </div>
-            )}
-
-            {quantity && getNewStockPreview() > 0 && getNewStockPreview() <= 10 && (
-              <div className="alert-warning">
-                <span className="alert-icon">!</span>
-                <span>This will trigger <strong>LOW STOCK</strong> alert</span>
-              </div>
-            )}
-
-            {/* Preview */}
-            {quantity && (
-              <div className="adjustment-preview">
-                <div className="preview-row">
-                  <span>Current:</span>
-                  <strong>{currentStock} units</strong>
-                </div>
-                <div className="preview-row adjustment">
-                  <span>
-                    {adjustmentType === "add" && "Adding:"}
-                    {adjustmentType === "remove" && "Removing:"}
-                  </span>
-                  <strong>{quantity} units</strong>
-                </div>
-                <div className="preview-row new-total">
-                  <span>New Total:</span>
-                  <strong className={getNewStockPreview() <= 10 ? "low" : ""}>
-                    {getNewStockPreview()} units
-                  </strong>
-                </div>
-              </div>
-            )}
-
-            {/* Stock History Panel */}
-            <div className="stock-history-panel">
-              <h4 className="history-title">
-                Recent Adjustments
-              </h4>
-              {item.history?.length ? (
-                <ul className="history-list">
-                  {item.history.slice(0, 5).map((log, index) => (
-                    <li key={index} className="history-item">
-                      <div className="history-top">
-                        <span className={`history-badge ${log.type || log.adjustment_type || "adjustment"}`}>
-                          {(log.type || log.adjustment_type || "adjustment").toUpperCase()}
-                        </span>
-                        <span className="history-qty">
-                          {log.previous_stock ?? log.previous ?? "—"} → {log.new_stock ?? log.new ?? "—"}
-                        </span>
-                      </div>
-                      <div className="history-meta">
-                        <span className="history-reason">{log.reason || "No reason"}</span>
-                        <span className="history-date">
-                          {log.created_at ? new Date(log.created_at).toLocaleString() : "Unknown date"}
-                        </span>
-                      </div>
-                      {log.performed_by && (
-                        <div className="history-user">
-                          <span>{log.performed_by}</span>
-                          {log.role && <span className="user-role">({log.role})</span>}
-                        </div>
-                      )}
-                    </li>
-                  ))}
-                </ul>
-              ) : (
-                <p className="text-muted">No recent adjustments</p>
-              )}
-            </div>
           </div>
+        </div>
 
-          <div className="adjust-stock-footer">
-            <button
-              type="button"
-              className="cancel-adjustment-btn"
-              onClick={handleClose}
-              disabled={loading}
-            >
-              Cancel
-            </button>
-
-            <button
-              type="button"
-              className="save-adjustment-btn"
-              onClick={handleSubmit}
-              disabled={loading || !quantity || !reason}
-            >
-              {loading ? "Processing..." : "Save Adjustment"}
-            </button>
-          </div>
-        </form>
+        <div className="modal-footer">
+          <button type="button" className="btn-cancel" onClick={handleClose} disabled={loading}>
+            Cancel
+          </button>
+          <button
+            type="button"
+            className={`btn-confirm ${adjustmentType}`}
+            onClick={handleSubmit}
+            disabled={loading || !hasQty || !reason}
+          >
+            {loading ? (
+              <>
+                <FontAwesomeIcon icon={faSpinner} spin /> Processing...
+              </>
+            ) : (
+              <>{adjustmentType === "add" ? "Add Stock" : "Remove Stock"}</>
+            )}
+          </button>
+        </div>
       </div>
     </div>
   );

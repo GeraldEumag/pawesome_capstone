@@ -335,6 +335,114 @@
   box-shadow: 0 6px 18px rgba(239, 68, 68, 0.4);
 }
 
+/* ---- Header close button ---- */
+.modal-close-btn {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  border: none;
+  background: rgba(255, 255, 255, 0.2);
+  color: #fff;
+  font-size: 0.85rem;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.2s;
+}
+
+.modal-close-btn:hover { background: rgba(255, 255, 255, 0.35); }
+
+/* ---- Quantity stepper ---- */
+.quantity-stepper {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.quantity-stepper .quantity-input { flex: 1; }
+
+.stepper-btn {
+  width: 44px;
+  height: 44px;
+  flex-shrink: 0;
+  border-radius: 10px;
+  border: 1.5px solid #e2e8f0;
+  background: #fff;
+  color: #64748b;
+  font-size: 0.8rem;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: border-color 0.2s, color 0.2s, background 0.2s;
+}
+
+.stepper-btn:hover {
+  border-color: #ff8db5;
+  color: #ff5f93;
+  background: rgba(255, 95, 147, 0.06);
+}
+
+/* ---- Quick quantity chips ---- */
+.quick-qty {
+  display: flex;
+  gap: 0.4rem;
+  flex-wrap: wrap;
+}
+
+.quick-qty-btn {
+  padding: 0.3rem 0.7rem;
+  border-radius: 999px;
+  border: 1.5px solid #e2e8f0;
+  background: #fff;
+  color: #64748b;
+  font-size: 0.75rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.quick-qty-btn:hover { border-color: #ff8db5; color: #ff5f93; }
+
+.quick-qty-btn.active {
+  border-color: #ff5f93;
+  background: rgba(255, 95, 147, 0.1);
+  color: #ff5f93;
+}
+
+/* ---- Preview delta + warnings ---- */
+.stock-preview-delta {
+  margin-top: 0.35rem;
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+.stock-preview-delta.positive { color: #10b981; }
+.stock-preview-delta.negative { color: #ef4444; }
+
+.stock-preview-warning {
+  margin-top: 0.6rem;
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: #991b1b;
+  background: #fee2e2;
+  border-radius: 8px;
+  padding: 0.45rem 0.75rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.stock-preview-warning.warn {
+  color: #92400e;
+  background: #fef3c7;
+}
+
+.item-name svg { color: #ff5f93; margin-right: 0.35rem; }
+
+.required { color: #ef4444; }
+
 /* ---- Responsive ---- */
 @media (max-width: 520px) {
   .modal-content {

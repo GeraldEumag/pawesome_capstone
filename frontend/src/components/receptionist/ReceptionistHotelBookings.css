@@ -118,7 +118,7 @@
 .clear-btn,
 .submit-btn,
 .action-btn,
-.modal-actions button {
+.hbk-foot button {
   min-height: 40px;
   padding: 0 16px;
   border: none;
@@ -538,163 +538,10 @@
   font-size: 0.9rem;
 }
 
-/* Modal */
-.booking-modal-overlay {
-  position: fixed;
-  inset: 0;
-  z-index: 12000;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 20px;
-  background: rgba(0, 0, 0, 0.4);
-  backdrop-filter: blur(6px);
-}
-
-.booking-modal {
-  width: min(800px, 100%);
-  max-height: 90vh;
-  overflow-y: auto;
-  background: var(--hotel-surface);
-  border: 1px solid var(--hotel-border);
-  border-radius: 16px;
-  box-shadow: 0 20px 60px rgba(0,0,0,0.15);
-}
-
-.modal-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  gap: 16px;
-  padding: 20px 24px;
-  border-bottom: 1px solid var(--hotel-border);
-}
-
-.modal-header h2 {
-  margin: 6px 0 0;
-  color: var(--hotel-heading);
-  font-size: 1.25rem;
-  font-weight: 600;
-}
-
-.close-btn {
-  width: 36px;
-  height: 36px;
-  display: grid;
-  place-items: center;
-  border: 1px solid var(--hotel-border);
-  border-radius: 10px;
-  background: var(--hotel-surface-alt);
-  color: var(--hotel-muted);
-  cursor: pointer;
-  transition: all 0.15s ease;
-}
-
-.close-btn:hover {
-  background: var(--hotel-danger-bg);
-  color: var(--hotel-danger);
-  border-color: var(--hotel-danger);
-}
-
-.modal-content {
-  padding: 20px 24px;
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-}
-
-.modal-actions {
-  display: flex;
-  justify-content: flex-end;
-  gap: 10px;
-  padding: 14px 24px;
-  border-top: 1px solid var(--hotel-border);
-}
-
-/* Robust modal scrolling: pin header/actions, scroll only the content.
-   Scoped to this page so global mobilePolish [class*="modal-content"]
-   !important rules (which collapse the modal and hide the scrollbar in
-   the production build) cannot override the scroll container here. */
-.hotel-bookings .booking-modal {
-  display: flex;
-  flex-direction: column;
-  max-height: calc(100vh - 40px);
-  overflow: hidden;
-}
-
-.hotel-bookings .modal-header {
-  flex-shrink: 0;
-}
-
-.hotel-bookings .modal-content {
-  flex: 1 1 auto;
-  min-height: 0;
-  overflow-y: auto;
-  max-height: none !important;
-  width: auto !important;
-}
-
-.hotel-bookings .modal-actions {
-  flex-shrink: 0;
-}
-
-/* Info Grid */
-.info-grid {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 10px;
-}
-
-.info-item {
-  padding: 14px;
-  border-radius: 10px;
-  background: var(--hotel-surface-alt);
-  border: 1px solid var(--hotel-border);
-}
-
-.info-item.full-width { grid-column: 1 / -1; }
-
-.info-item label {
-  display: block;
-  margin-bottom: 4px;
-  color: var(--hotel-muted);
-  font-size: 0.72rem;
-  font-weight: 500;
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-}
-
-.info-item span {
-  color: var(--hotel-heading);
-  font-weight: 500;
-  font-size: 0.9rem;
-  word-break: break-word;
-}
+/* Booking detail modal uses the shared hbk-* design system
+   in src/styles/bookingModal.css */
 
 /* Form */
-.booking-form {
-  padding: 18px;
-  border-radius: 12px;
-  border: 1px solid var(--hotel-border);
-  background: var(--hotel-surface-alt);
-  display: flex;
-  flex-direction: column;
-  gap: 14px;
-}
-
-.form-title h3 {
-  margin: 0;
-  color: var(--hotel-heading);
-  font-size: 1rem;
-  font-weight: 600;
-}
-
-.form-title p {
-  margin: 4px 0 0;
-  color: var(--hotel-muted);
-  font-size: 0.85rem;
-}
-
 .form-row {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
@@ -766,14 +613,16 @@
   .hotel-bookings { padding: 16px; gap: 16px; }
   .hotel-summary-grid { grid-template-columns: repeat(2, 1fr); }
   .hotel-controls,
-  .info-grid,
+  .hbk-grid,
   .form-row { grid-template-columns: 1fr; }
   .hotel-summary-card,
   .clear-btn,
   .form-actions button,
-  .modal-actions button { width: 100%; }
-  .modal-actions,
+  .hbk-foot button { width: 100%; }
+  .hbk-foot,
   .form-actions { flex-direction: column; }
+  .hbk-guest { flex-wrap: wrap; }
+  .hbk-guest-billing { align-items: flex-start; text-align: left; }
 }
 
 @media (max-width: 480px) {

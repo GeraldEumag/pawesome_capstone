@@ -6,6 +6,7 @@ import {
   faTimes,
 } from "@fortawesome/free-solid-svg-icons";
 import { apiRequest } from "../../../api/client";
+import "../../../styles/bookingModal.css";
 import "./NewWalkInBookingModal.css";
 
 const initialForm = {
@@ -54,12 +55,6 @@ const formatCurrency = (value) => {
   }).format(amount);
 };
 
-const parseDurationDays = (duration) => {
-  if (!duration) return 1;
-  const match = String(duration).match(/(\d+)/);
-  return match ? Number(match[1]) : 1;
-};
-
 const getPaymentStatusFromAmount = (amount, paid) => {
   const total = Number(amount || 0);
   const paidAmt = Number(paid || 0);
@@ -92,12 +87,12 @@ const NewWalkInBookingModal = ({ onClose, onSuccess }) => {
           apiRequest("/customers").catch(() => null),
           apiRequest("/pets").catch(() => null),
           apiRequest("/services").catch(() => null),
-          apiRequest("/receptionist/hotel-rooms").catch(() => null),
+          apiRequest("/receptionist/hotel-rooms?status=available").catch(() => null),
         ]);
         setCustomers(safeArray(cData, "customers"));
         setPets(safeArray(pData, "pets"));
         setServices(safeArray(sData, "services"));
-        setHotelRooms(safeArray(hData, "rooms"));
+        setHotelRooms(safeArray(hData, "rooms").filter((r) => !r.status || r.status === "available"));
       } catch {
         setCustomers([]);
         setPets([]);
@@ -107,6 +102,14 @@ const NewWalkInBookingModal = ({ onClose, onSuccess }) => {
     };
     load();
   }, []);
+
+  // Refresh room availability when the booking date changes
+  useEffect(() => {
+    if (form.bookingType !== "hotel" || !form.appointmentDate) return;
+    apiRequest(`/receptionist/hotel-rooms?date=${encodeURIComponent(form.appointmentDate)}`)
+      .then((hData) => setHotelRooms(safeArray(hData, "rooms")))
+      .catch(() => {});
+  }, [form.appointmentDate, form.bookingType]);
 
   const vetServices = useMemo(() => {
     return services.filter((service) => {
@@ -132,7 +135,7 @@ const NewWalkInBookingModal = ({ onClose, onSuccess }) => {
   const calculatedAmount = useMemo(() => {
     if (form.bookingType === "hotel") {
       const dailyRate = roomRates[form.roomType] || roomRates["Standard Room"];
-      return dailyRate * parseDurationDays(form.duration);
+      return dailyRate; // same-day stay: one day rate
     }
     if (selectedService) {
       return Number(selectedService.price || selectedService.amount || 0);
@@ -232,7 +235,6 @@ const NewWalkInBookingModal = ({ onClose, onSuccess }) => {
 
       if (form.bookingType === "hotel") {
         endpoint = "/boardings";
-        const numberOfDays = parseDurationDays(form.duration);
         const hotelRoomId = resolveHotelRoomId(form.roomType);
 
         // Use FormData for file upload
@@ -242,7 +244,7 @@ const NewWalkInBookingModal = ({ onClose, onSuccess }) => {
         payload.append("customer_id", form.customerId);
         payload.append("hotel_room_id", hotelRoomId);
         payload.append("check_in_date", form.appointmentDate);
-        payload.append("number_of_days", numberOfDays);
+        payload.append("number_of_days", "1"); // same-day stay (9 AM - 7 PM)
         payload.append("notes", buildNotes());
         if (form.vaccinationCard) {
           payload.append("vaccination_card", form.vaccinationCard);
@@ -305,23 +307,23 @@ const NewWalkInBookingModal = ({ onClose, onSuccess }) => {
   };
 
   return (
-    <div className="hub-modal-overlay" onClick={onClose}>
-      <div className="hub-modal hub-booking-modal" onClick={(e) => e.stopPropagation()}>
-        <div className="hub-modal-header">
+    <div className="hbk-overlay" onClick={onClose}>
+      <div className="hbk-modal hbk-booking-modal" onClick={(e) => e.stopPropagation()}>
+        <div className="hbk-head">
           <div>
-            <span className="hub-eyebrow">
+            <span className="hbk-eyebrow">
               <FontAwesomeIcon icon={faPlus} />
               Walk-in Transaction
             </span>
             <h2>New Booking</h2>
           </div>
-          <button type="button" onClick={onClose} disabled={processing}>
+          <button type="button" className="close-btn" onClick={onClose} disabled={processing}>
             <FontAwesomeIcon icon={faTimes} />
           </button>
         </div>
 
-        <div className="hub-modal-body">
-          {error && <div className="hub-form-error">{error}</div>}
+        <div className="hbk-body">
+          {error && <div className="hbk-error">{error}</div>}
 
           <form onSubmit={handleSubmit}>
             <div className="hub-form-section">
@@ -448,13 +450,8 @@ const NewWalkInBookingModal = ({ onClose, onSuccess }) => {
                       )}
                     </div>
                     <div className="hub-form-group">
-                      <label>Duration *</label>
-                      <select name="duration" value={form.duration} onChange={handleInputChange} required>
-                        <option value="1 day">1 day</option>
-                        <option value="2 days">2 days</option>
-                        <option value="3 days">3 days</option>
-                        <option value="1 week">1 week</option>
-                      </select>
+                      <label>Duration</label>
+                      <input value="Same-day stay (9:00 AM – 7:00 PM)" disabled />
                     </div>
                     <div className="hub-form-group">
                       <label>Service *</label>
@@ -556,11 +553,11 @@ const NewWalkInBookingModal = ({ onClose, onSuccess }) => {
               </div>
             </div>
 
-            <div className="hub-modal-actions">
-              <button type="button" className="hub-modal-btn secondary" onClick={onClose} disabled={processing}>
+            <div className="hbk-foot">
+              <button type="button" className="hbk-btn secondary" onClick={onClose} disabled={processing}>
                 Cancel
               </button>
-              <button type="submit" className="hub-modal-btn approve" disabled={processing}>
+              <button type="submit" className="hbk-btn approve" disabled={processing}>
                 {processing && <FontAwesomeIcon icon={faSpinner} spin />} Create Booking
               </button>
             </div>

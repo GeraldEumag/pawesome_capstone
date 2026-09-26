@@ -197,7 +197,7 @@
 .hero-action-btn,
 .clear-filter-btn,
 .table-header-actions button,
-.request-modal-actions button {
+.hbk-foot button {
   min-height: 44px;
   border: none;
   border-radius: var(--rd-radius-pill);
@@ -232,7 +232,7 @@
 .hero-action-btn:hover,
 .clear-filter-btn:hover,
 .table-header-actions button:hover,
-.request-modal-actions button:hover {
+.hbk-foot button:hover {
   transform: translateY(-2px);
 }
 
@@ -663,66 +663,10 @@
   font-weight: 750;
 }
 
-/* MODAL */
+/* MODAL — shell comes from shared hbk-* (styles/bookingModal.css) */
 
-.request-modal-overlay {
-  position: fixed;
-  inset: 0;
-  z-index: 12000;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 1rem;
-  background: rgba(15, 23, 42, 0.52);
-  backdrop-filter: blur(10px);
-}
-
-.request-modal {
+.hbk-modal {
   width: min(760px, 100%);
-  max-height: 92vh;
-  overflow-y: auto;
-  border: 1px solid var(--rd-border);
-  border-radius: var(--rd-radius-card);
-  background: var(--rd-surface-solid);
-  box-shadow: 0 30px 90px rgba(15, 23, 42, 0.26);
-}
-
-.request-modal-header {
-  display: flex;
-  justify-content: space-between;
-  gap: 1rem;
-  padding: 1.35rem;
-  border-bottom: 1px solid var(--rd-border);
-}
-
-.request-modal-header h2 {
-  margin: 0.4rem 0 0;
-  color: var(--rd-heading);
-  font-size: 1.45rem;
-  font-weight: 950;
-}
-
-.request-modal-header button {
-  width: 42px;
-  height: 42px;
-  min-width: 42px;
-  border: 1px solid var(--rd-border);
-  border-radius: 14px;
-  background: var(--rd-surface);
-  color: var(--rd-heading);
-  cursor: pointer;
-  transition: 0.2s ease;
-}
-
-.request-modal-header button:hover {
-  background: var(--rd-primary);
-  color: #ffffff;
-}
-
-.request-modal-body {
-  display: grid;
-  gap: 1rem;
-  padding: 1.35rem;
 }
 
 .request-detail-grid {
@@ -765,15 +709,6 @@
   line-height: 1.55;
 }
 
-.request-modal-actions {
-  display: flex;
-  justify-content: flex-end;
-  flex-wrap: wrap;
-  gap: 0.75rem;
-  padding: 1rem 1.35rem;
-  border-top: 1px solid var(--rd-border);
-}
-
 .approve-action {
   color: #ffffff;
   background: linear-gradient(135deg, #10b981, #059669);
@@ -789,11 +724,7 @@
   background: linear-gradient(135deg, #f59e0b, #d97706);
 }
 
-.request-modal-actions button:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
-  transform: none;
-}
+
 
 /* ANIMATION */
 
@@ -881,21 +812,9 @@
   .receptionist-stat-card {
     width: 100%;
   }
-
-  .request-modal-actions {
-    flex-direction: column;
-  }
-
-  .request-modal-actions button {
-    width: 100%;
-  }
 }
 
 @media (max-width: 480px) {
-  .request-modal {
-    border-radius: 22px;
-  }
-
   .hero-mini-card {
     flex-direction: column;
     align-items: flex-start;

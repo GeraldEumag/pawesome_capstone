@@ -28,6 +28,7 @@ import { NavLink, useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
 import { apiRequest } from "../../api/client";
 import "./theme.css";
+import "../../styles/bookingModal.css";
 import "./VetAppointments_PinkGlass.css";
 
 const isRequestCancelled = (error, signal) =>
@@ -682,15 +683,15 @@ const VetAppointments = () => {
       )}
 
       {selectedAppointment && (
-        <div className="appointment-modal-overlay" onClick={() => setSelectedAppointment(null)}>
-          <div className="appointment-modal" onClick={(e) => e.stopPropagation()}>
-            <div className="appointment-modal-header">
+        <div className="hbk-overlay" onClick={() => setSelectedAppointment(null)}>
+          <div className="hbk-modal" onClick={(e) => e.stopPropagation()}>
+            <div className="hbk-head">
               <div>
                 <h3>{selectedAppointment.pet}</h3>
                 <p>{selectedAppointment.owner}</p>
               </div>
               <button
-                className="modal-close-btn"
+                className="close-btn"
                 type="button"
                 onClick={() => setSelectedAppointment(null)}
               >
@@ -698,7 +699,7 @@ const VetAppointments = () => {
               </button>
             </div>
 
-            <div className="appointment-modal-body">
+            <div className="hbk-body">
               <div className="modal-detail">
                 <strong>Status</strong>
                 <span className={`appointment-status ${selectedAppointment.status}`}>
@@ -738,7 +739,7 @@ const VetAppointments = () => {
               </div>
             </div>
 
-            <div className="appointment-modal-actions">
+            <div className="hbk-foot">
               <button
                 className="action-btn start-btn"
                 type="button"

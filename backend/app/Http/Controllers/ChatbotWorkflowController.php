@@ -181,22 +181,19 @@ class ChatbotWorkflowController extends Controller
     {
         $data = $request->validate([
             'check_in' => 'required|date',
-            'check_out' => 'required|date|after:check_in',
+            'check_out' => 'nullable|date|after_or_equal:check_in',
             'room_type' => 'nullable|string|in:standard,deluxe,suite',
         ]);
 
-        // Get available rooms for the date range
+        // Same-day boarding: check-out equals check-in (store open 9 AM - 7 PM)
+        $data['check_out'] = $data['check_in'];
+
+        // Get available rooms for the date
         $query = HotelRoom::where('status', 'available')
             ->whereDoesntHave('boardings', function ($q) use ($data) {
                 $q->whereIn('status', self::BLOCKING_BOARDING_STATUSES)
-                    ->where(function ($dateQuery) use ($data) {
-                        $dateQuery->whereBetween('check_in', [$data['check_in'], $data['check_out']])
-                            ->orWhereBetween('check_out', [$data['check_in'], $data['check_out']])
-                            ->orWhere(function ($overlap) use ($data) {
-                                $overlap->where('check_in', '<=', $data['check_in'])
-                                    ->where('check_out', '>=', $data['check_out']);
-                            });
-                    });
+                    ->where('check_in', '<=', $data['check_out'])
+                    ->where('check_out', '>=', $data['check_in']);
             });
 
         if (!empty($data['room_type'])) {
@@ -221,9 +218,12 @@ class ChatbotWorkflowController extends Controller
             'pet_id' => 'required|integer',
             'hotel_room_id' => 'nullable|integer|exists:hotel_rooms,id',
             'check_in' => 'required|date',
-            'check_out' => 'required|date|after:check_in',
+            'check_out' => 'nullable|date|after_or_equal:check_in',
             'special_requests' => 'nullable|string|max:1000',
         ]);
+
+        // Same-day boarding: check-out equals check-in (store open 9 AM - 7 PM)
+        $data['check_out'] = $data['check_in'];
 
         // Get customer
         if ($user?->role === 'customer') {
@@ -249,17 +249,15 @@ class ChatbotWorkflowController extends Controller
         $room = null;
         if (!empty($data['hotel_room_id'])) {
             $room = HotelRoom::find($data['hotel_room_id']);
-            // Check if room is available for dates
+            if ($room->status !== 'available') {
+                return response()->json(['message' => 'Selected room is not available.'], 422);
+            }
+            // Check if room is booked for the selected date
             $conflict = Boarding::where('hotel_room_id', $room->id)
                 ->whereIn('status', self::BLOCKING_BOARDING_STATUSES)
-                ->where(function ($q) use ($data) {
-                    $q->whereBetween('check_in', [$data['check_in'], $data['check_out']])
-                        ->orWhereBetween('check_out', [$data['check_in'], $data['check_out']])
-                        ->orWhere(function ($overlap) use ($data) {
-                            $overlap->where('check_in', '<=', $data['check_in'])
-                                ->where('check_out', '>=', $data['check_out']);
-                        });
-                })->exists();
+                ->where('check_in', '<=', $data['check_out'])
+                ->where('check_out', '>=', $data['check_in'])
+                ->exists();
 
             if ($conflict) {
                 return response()->json(['message' => 'Selected room is not available for those dates.'], 422);
@@ -269,14 +267,8 @@ class ChatbotWorkflowController extends Controller
             $room = HotelRoom::where('status', 'available')
                 ->whereDoesntHave('boardings', function ($q) use ($data) {
                     $q->whereIn('status', self::BLOCKING_BOARDING_STATUSES)
-                        ->where(function ($dateQuery) use ($data) {
-                            $dateQuery->whereBetween('check_in', [$data['check_in'], $data['check_out']])
-                                ->orWhereBetween('check_out', [$data['check_in'], $data['check_out']])
-                                ->orWhere(function ($overlap) use ($data) {
-                                    $overlap->where('check_in', '<=', $data['check_in'])
-                                        ->where('check_out', '>=', $data['check_out']);
-                                });
-                        });
+                        ->where('check_in', '<=', $data['check_out'])
+                        ->where('check_out', '>=', $data['check_in']);
                 })
                 ->orderBy('daily_rate')
                 ->first();
@@ -286,9 +278,8 @@ class ChatbotWorkflowController extends Controller
             }
         }
 
-        // Calculate total amount
-        $days = (new \DateTime($data['check_out']))->diff(new \DateTime($data['check_in']))->days;
-        $totalAmount = $room->daily_rate * $days;
+        // One-day pricing (same-day boarding)
+        $totalAmount = (float) $room->daily_rate;
 
         // Create boarding record
         $boarding = Boarding::create([

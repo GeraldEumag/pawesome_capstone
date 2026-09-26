@@ -25,6 +25,7 @@ import {
   faUser,
   faWrench,
 } from "@fortawesome/free-solid-svg-icons";
+import "../../styles/bookingModal.css";
 import "./ReceptionistBookings.css";
 import { apiRequest } from "../../api/client";
 import { exportToCSV, exportToPDF, exportToExcel } from "../../utils/reportExport";
@@ -716,6 +717,11 @@ const ReceptionistBookings = () => {
       return;
     }
 
+    if (actionType === "reject" && !actionNote.trim()) {
+      notify("error", "Please provide a reason for rejection.");
+      return;
+    }
+
     if (
       (actionType === "approve" || actionType === "reschedule") &&
       availability?.available === false
@@ -741,7 +747,7 @@ const ReceptionistBookings = () => {
         if (actionType === "reject") {
           endpoint = `/receptionist/boarding-requests/${selectedBooking.id}/reject`;
           method = "POST";
-          payload = { reason: actionNote };
+          payload = { rejection_reason: actionNote };
         }
 
         if (actionType === "reschedule") {
@@ -764,6 +770,7 @@ const ReceptionistBookings = () => {
               : actionType === "reject"
               ? "rejected"
               : "pending",
+          ...(actionType === "reject" ? { reason: actionNote } : {}),
           scheduled_at:
             actionType === "reschedule"
               ? combineDateTime(newDate, selectedBooking.appointmentTime || "10:00")
@@ -828,6 +835,11 @@ const ReceptionistBookings = () => {
   const handleCancelSubmit = async () => {
     if (!selectedCancelBooking) return;
 
+    if (cancelAction === "reject" && !cancelNote.trim()) {
+      notify("error", "Please provide a reason for rejecting this cancel request.");
+      return;
+    }
+
     try {
       setProcessing(true);
 
@@ -841,6 +853,10 @@ const ReceptionistBookings = () => {
         body: JSON.stringify({
           action: cancelAction,
           note: cancelNote,
+          reason: cancelNote || "Cancellation approved by receptionist",
+          rejection_reason:
+            cancelNote ||
+            (cancelAction === "approve" ? "Cancellation approved by receptionist" : ""),
         }),
       });
 
@@ -879,6 +895,11 @@ const ReceptionistBookings = () => {
 
     if (rescheduleAction === "approve" && !rescheduleNewDate) {
       notify("error", "Please select the approved new date.");
+      return;
+    }
+
+    if (rescheduleAction === "reject" && !rescheduleNote.trim()) {
+      notify("error", "Please provide a reason for rejecting this reschedule request.");
       return;
     }
 
@@ -1477,9 +1498,9 @@ const ReceptionistBookings = () => {
       </section>
 
       {showActionModal && selectedBooking && (
-        <div className="appointment-modal-overlay" onClick={closeActionModal}>
-          <div className="appointment-modal" onClick={(event) => event.stopPropagation()}>
-            <div className="modal-header">
+        <div className="hbk-overlay" onClick={closeActionModal}>
+          <div className="hbk-modal" onClick={(event) => event.stopPropagation()}>
+            <div className="hbk-head">
               <div>
                 <span className="rb-eyebrow">
                   <FontAwesomeIcon icon={faInfoCircle} />
@@ -1498,7 +1519,7 @@ const ReceptionistBookings = () => {
               </button>
             </div>
 
-            <div className="modal-content">
+            <div className="hbk-body">
               <BookingSummary booking={selectedBooking} />
 
               {(actionType === "approve" || actionType === "reschedule") && (
@@ -1568,7 +1589,7 @@ const ReceptionistBookings = () => {
                   />
                 </div>
 
-                <div className="modal-actions">
+                <div className="hbk-foot">
                   <button
                     type="button"
                     className="secondary-btn"
@@ -1600,9 +1621,9 @@ const ReceptionistBookings = () => {
       )}
 
       {showCancelModal && selectedCancelBooking && (
-        <div className="appointment-modal-overlay" onClick={closeCancelModal}>
-          <div className="appointment-modal" onClick={(event) => event.stopPropagation()}>
-            <div className="modal-header">
+        <div className="hbk-overlay" onClick={closeCancelModal}>
+          <div className="hbk-modal" onClick={(event) => event.stopPropagation()}>
+            <div className="hbk-head">
               <div>
                 <span className="rb-eyebrow">
                   <FontAwesomeIcon icon={faBan} />
@@ -1621,7 +1642,7 @@ const ReceptionistBookings = () => {
               </button>
             </div>
 
-            <div className="modal-content">
+            <div className="hbk-body">
               <BookingSummary booking={selectedCancelBooking} />
 
               <form
@@ -1645,7 +1666,7 @@ const ReceptionistBookings = () => {
                   />
                 </div>
 
-                <div className="modal-actions">
+                <div className="hbk-foot">
                   <button
                     type="button"
                     className="secondary-btn"
@@ -1667,9 +1688,9 @@ const ReceptionistBookings = () => {
       )}
 
       {showRescheduleModal && selectedRescheduleBooking && (
-        <div className="appointment-modal-overlay" onClick={closeRescheduleModal}>
-          <div className="appointment-modal" onClick={(event) => event.stopPropagation()}>
-            <div className="modal-header">
+        <div className="hbk-overlay" onClick={closeRescheduleModal}>
+          <div className="hbk-modal" onClick={(event) => event.stopPropagation()}>
+            <div className="hbk-head">
               <div>
                 <span className="rb-eyebrow">
                   <FontAwesomeIcon icon={faCalendarAlt} />
@@ -1688,7 +1709,7 @@ const ReceptionistBookings = () => {
               </button>
             </div>
 
-            <div className="modal-content">
+            <div className="hbk-body">
               <BookingSummary booking={selectedRescheduleBooking} />
 
               <form
@@ -1725,7 +1746,7 @@ const ReceptionistBookings = () => {
                   />
                 </div>
 
-                <div className="modal-actions">
+                <div className="hbk-foot">
                   <button
                     type="button"
                     className="secondary-btn"
@@ -1749,9 +1770,9 @@ const ReceptionistBookings = () => {
       )}
 
       {showDetailsModal && selectedDetailsBooking && (
-        <div className="appointment-modal-overlay" onClick={closeDetailsModal}>
-          <div className="appointment-modal" onClick={(event) => event.stopPropagation()}>
-            <div className="modal-header">
+        <div className="hbk-overlay" onClick={closeDetailsModal}>
+          <div className="hbk-modal" onClick={(event) => event.stopPropagation()}>
+            <div className="hbk-head">
               <div>
                 <span className="rb-eyebrow">
                   <FontAwesomeIcon icon={faEye} />
@@ -1765,7 +1786,7 @@ const ReceptionistBookings = () => {
               </button>
             </div>
 
-            <div className="modal-content">
+            <div className="hbk-body">
               <div className="detail-grid">
                 <DetailItem label="Booking ID" value={selectedDetailsBooking.id} />
                 <DetailItem label="Type" value={getTypeLabel(selectedDetailsBooking.type)} />
@@ -1798,7 +1819,7 @@ const ReceptionistBookings = () => {
               </div>
             </div>
 
-            <div className="modal-actions">
+            <div className="hbk-foot">
               <button type="button" className="secondary-btn" onClick={closeDetailsModal}>
                 Close
               </button>
@@ -1808,9 +1829,9 @@ const ReceptionistBookings = () => {
       )}
 
       {showHistoryModal && selectedHistoryBooking && (
-        <div className="appointment-modal-overlay" onClick={closeHistoryModal}>
-          <div className="appointment-modal" onClick={(event) => event.stopPropagation()}>
-            <div className="modal-header">
+        <div className="hbk-overlay" onClick={closeHistoryModal}>
+          <div className="hbk-modal" onClick={(event) => event.stopPropagation()}>
+            <div className="hbk-head">
               <div>
                 <span className="rb-eyebrow">
                   <FontAwesomeIcon icon={faHistory} />
@@ -1824,7 +1845,7 @@ const ReceptionistBookings = () => {
               </button>
             </div>
 
-            <div className="modal-content">
+            <div className="hbk-body">
               <BookingSummary booking={selectedHistoryBooking} />
 
               <div className="history-timeline">
@@ -1865,12 +1886,12 @@ const ReceptionistBookings = () => {
       )}
 
       {showNewBookingModal && (
-        <div className="appointment-modal-overlay" onClick={handleBookingCancel}>
+        <div className="hbk-overlay" onClick={handleBookingCancel}>
           <div
-            className="appointment-modal large-modal"
+            className="hbk-modal hbk-modal-lg"
             onClick={(event) => event.stopPropagation()}
           >
-            <div className="modal-header">
+            <div className="hbk-head">
               <div>
                 <span className="rb-eyebrow">
                   <FontAwesomeIcon icon={faPlus} />
@@ -1884,7 +1905,7 @@ const ReceptionistBookings = () => {
               </button>
             </div>
 
-            <div className="modal-content">
+            <div className="hbk-body">
               <form className="appointment-form" onSubmit={handleBookingSubmit}>
                 <div className="form-section-title">
                   <h3>Customer & Pet Information</h3>
@@ -2178,7 +2199,7 @@ const ReceptionistBookings = () => {
                   </div>
                 </div>
 
-                <div className="modal-actions">
+                <div className="hbk-foot">
                   <button
                     type="button"
                     className="secondary-btn"

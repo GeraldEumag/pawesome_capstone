@@ -1,8 +1,15 @@
 import React, { useState, useEffect, useMemo } from "react";
 import { inventoryApi } from "../../api/inventory.jsx";
-import { exportToCSV } from "../../utils/reportExport";
+import { STORE_INFO } from "../../utils/storeInfo";
 import "./MonthlyInventoryAudit.css";
 import { showAlert } from "../../utils/alert.jsx";
+
+const csvCell = (value) => {
+  const s = String(value ?? "");
+  return /[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
+};
+
+const auditItem = (audit) => audit?.item || audit || {};
 
 const getCurrentMonth = () => {
   const now = new Date();
@@ -52,30 +59,53 @@ const MonthlyAuditReport = () => {
       return;
     }
 
-    const columns = [
-      { key: "item_name", label: "Product Name" },
-      { key: "sku", label: "SKU" },
-      { key: "category", label: "Category" },
-      { key: "system_stock", label: "System Stock" },
-      { key: "actual_stock", label: "Actual Stock" },
-      { key: "variance", label: "Variance" },
-      { key: "status", label: "Audit Status" },
-      { key: "reason", label: "Reason" },
-      { key: "audit_date", label: "Audit Date" },
+    const headers = [
+      "Product Name",
+      "SKU",
+      "Category",
+      "System Stock",
+      "Actual Stock",
+      "Variance",
+      "Audit Status",
+      "Reason",
+      "Audit Date",
     ];
 
-    const exportData = audits.map((audit) => ({
-      ...audit,
-      item_name: audit.item?.name || "Unknown",
-      sku: audit.item?.sku || "N/A",
-      category: audit.item?.category || "N/A",
-      system_stock: Number(audit.system_stock || 0),
-      actual_stock: Number(audit.actual_stock || 0),
-      variance: Number(audit.variance || 0),
-      audit_date: audit.created_at ? new Date(audit.created_at).toLocaleDateString() : "N/A",
-    }));
+    const rows = audits.map((audit) => {
+      const item = auditItem(audit);
+      return [
+        item.name || "Unknown",
+        item.sku || "N/A",
+        item.category || "N/A",
+        Number(audit.system_stock || 0),
+        Number(audit.actual_stock || 0),
+        Number(audit.variance || 0),
+        audit.status || "",
+        audit.reason || "",
+        audit.created_at ? new Date(audit.created_at).toLocaleDateString() : "N/A",
+      ];
+    });
 
-    exportToCSV(exportData, columns, `audit-report-${month}`);
+    const csvContent = [
+      [STORE_INFO.name],
+      [`Monthly Inventory Audit Report — ${month}`],
+      [STORE_INFO.address],
+      [`Generated: ${new Date().toLocaleDateString()}`],
+      [],
+      headers,
+      ...rows,
+    ]
+      .map((row) => row.map(csvCell).join(","))
+      .join("\n");
+
+    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+    const link = document.createElement("a");
+    link.href = URL.createObjectURL(blob);
+    link.download = `${STORE_INFO.name.replace(/\s+/g, "-")}-audit-report-${month}.csv`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(link.href);
   };
 
   const handleExportPDF = () => {
@@ -161,7 +191,10 @@ const MonthlyAuditReport = () => {
         </head>
         <body>
           <div class="header">
-            <h1>Monthly Inventory Audit Report</h1>
+            <h1>${STORE_INFO.name}</h1>
+            <p>${STORE_INFO.tagline}</p>
+            <p>${STORE_INFO.address}</p>
+            <h2 style="margin-top: 15px;">Monthly Inventory Audit Report</h2>
             <p>Audit Month: ${month}</p>
             <p>Generated: ${new Date().toLocaleDateString()}</p>
           </div>
@@ -199,18 +232,18 @@ const MonthlyAuditReport = () => {
               </tr>
             </thead>
             <tbody>
-              ${audits.map((audit) => `
+              ${audits.map((audit) => { const item = auditItem(audit); return `
                 <tr class="${audit.status}">
-                  <td>${audit.item?.name || "Unknown"}</td>
-                  <td>${audit.item?.sku || "N/A"}</td>
-                  <td>${audit.item?.category || "N/A"}</td>
+                  <td>${item.name || "Unknown"}</td>
+                  <td>${item.sku || "N/A"}</td>
+                  <td>${item.category || "N/A"}</td>
                   <td>${audit.system_stock}</td>
                   <td>${audit.actual_stock}</td>
                   <td>${audit.variance}</td>
                   <td>${audit.status}</td>
                   <td>${audit.reason || "-"}</td>
                 </tr>
-              `).join("")}
+              `; }).join("")}
             </tbody>
           </table>
         </body>
@@ -228,7 +261,7 @@ const MonthlyAuditReport = () => {
       <div className="monthly-audit-hero">
         <div>
           <h2>Monthly Audit Report</h2>
-          <p>View and export completed inventory audit results.</p>
+          <p>{STORE_INFO.name} — view and export completed inventory audit results.</p>
         </div>
 
         <div className="audit-month-control">
@@ -307,15 +340,17 @@ const MonthlyAuditReport = () => {
               </thead>
 
               <tbody>
-                {audits.map((audit) => (
+                {audits.map((audit) => {
+                  const item = auditItem(audit);
+                  return (
                   <tr key={audit.id} className={audit.status}>
                     <td>
-                      <strong>{audit.item?.name || "Unknown"}</strong>
-                      <small>{audit.item?.brand || "No brand"}</small>
+                      <strong>{item.name || "Unknown"}</strong>
+                      <small>{item.brand || "No brand"}</small>
                     </td>
 
-                    <td>{audit.item?.sku || "N/A"}</td>
-                    <td>{audit.item?.category || "N/A"}</td>
+                    <td>{item.sku || "N/A"}</td>
+                    <td>{item.category || "N/A"}</td>
                     <td>{audit.system_stock}</td>
                     <td>{audit.actual_stock}</td>
                     <td className={Number(audit.variance) < 0 ? "negative" : Number(audit.variance) > 0 ? "positive" : ""}>
@@ -330,7 +365,8 @@ const MonthlyAuditReport = () => {
 
                     <td>{audit.reason || "-"}</td>
                   </tr>
-                ))}
+                  );
+                })}
 
                 {audits.length === 0 && (
                   <tr>

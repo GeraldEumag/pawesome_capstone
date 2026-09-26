@@ -892,6 +892,12 @@ class InventoryController extends Controller
 
                 $status = $variance === 0 ? 'matched' : 'discrepancy';
 
+                if ($status === 'discrepancy' && trim((string) ($row['reason'] ?? '')) === '') {
+                    throw ValidationException::withMessages([
+                        'items' => ["A reason is required for the discrepancy on \"{$item->name}\"."],
+                    ]);
+                }
+
                 $audit = InventoryMonthlyAudit::updateOrCreate(
                     [
                         'inventory_item_id' => $item->id,

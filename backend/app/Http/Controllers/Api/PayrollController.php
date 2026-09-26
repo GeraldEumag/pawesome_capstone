@@ -472,6 +472,13 @@ class PayrollController extends Controller
             'manual_attendance' => 'nullable|array',
         ]);
 
+        if (!PayrollComputationService::isSemiMonthlyPeriod($validated['pay_period_start'], $validated['pay_period_end'])) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Invalid pay period. Payroll must run for the 1st–15th or the 16th–end of a month.',
+            ], 422);
+        }
+
         $user = !empty($validated['user_id']) ? User::find($validated['user_id']) : null;
         $employee = !empty($validated['employee_id']) ? Employee::find($validated['employee_id']) : null;
         $periodLabel = Carbon::parse($validated['pay_period_start'])->format('M d') . ' - ' . Carbon::parse($validated['pay_period_end'])->format('M d, Y');
@@ -575,8 +582,16 @@ class PayrollController extends Controller
 
         // Recompute period label if dates changed
         if (isset($validated['pay_period_start']) || isset($validated['pay_period_end'])) {
-            $start = $validated['pay_period_start'] ?? $payroll->pay_period_start;
-            $end = $validated['pay_period_end'] ?? $payroll->pay_period_end;
+            $start = Carbon::parse($validated['pay_period_start'] ?? $payroll->pay_period_start)->toDateString();
+            $end = Carbon::parse($validated['pay_period_end'] ?? $payroll->pay_period_end)->toDateString();
+
+            if (!PayrollComputationService::isSemiMonthlyPeriod($start, $end)) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Invalid pay period. Payroll must run for the 1st–15th or the 16th–end of a month.',
+                ], 422);
+            }
+
             $validated['pay_period_label'] = Carbon::parse($start)->format('M d') . ' - ' . Carbon::parse($end)->format('M d, Y');
         }
 

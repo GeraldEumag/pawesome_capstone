@@ -17,6 +17,7 @@ import {
 } from "@fortawesome/free-solid-svg-icons";
 import { apiRequest } from "../../../api/client";
 import { showConfirm } from "../../../utils/alert.jsx";
+import "../../../styles/bookingModal.css";
 import "./WalkInBookingModal.css";
 
 const WalkInBookingModal = ({ serviceType, onClose, onSuccess }) => {
@@ -142,9 +143,10 @@ const WalkInBookingModal = ({ serviceType, onClose, onSuccess }) => {
     }
   };
 
-  const fetchHotelRooms = async () => {
+  const fetchHotelRooms = async (date = null) => {
     try {
-      const response = await apiRequest("/receptionist/hotel-rooms");
+      const query = date ? `?date=${encodeURIComponent(date)}` : "?status=available";
+      const response = await apiRequest(`/receptionist/hotel-rooms${query}`);
       setHotelRooms(response.rooms || []);
     } catch (err) {
       console.error("Failed to fetch hotel rooms:", err);
@@ -277,9 +279,6 @@ const WalkInBookingModal = ({ serviceType, onClose, onSuccess }) => {
     if (!bookingForm.request_date) return "Please select a date";
     
     if (serviceType === "hotel") {
-      if (!bookingForm.check_out_date) {
-        return "Check-out date is required";
-      }
       if (!bookingForm.room_id) {
         return "Please select a Room";
       }
@@ -333,7 +332,7 @@ const WalkInBookingModal = ({ serviceType, onClose, onSuccess }) => {
           request_time: null,
           notes: bookingForm.notes || "",
           ...(serviceType === "hotel" && {
-            check_out_date: bookingForm.check_out_date,
+            check_out_date: bookingForm.request_date,
             room_type: bookingForm.room_type,
             room_id: bookingForm.room_id,
             hotel_room_id: bookingForm.room_id,
@@ -805,9 +804,18 @@ const WalkInBookingModal = ({ serviceType, onClose, onSuccess }) => {
           <input
             type="date"
             value={bookingForm.request_date}
-            onChange={(e) =>
-              setBookingForm({ ...bookingForm, request_date: e.target.value })
-            }
+            onChange={(e) => {
+              const date = e.target.value;
+              setBookingForm({
+                ...bookingForm,
+                request_date: date,
+                check_out_date: serviceType === "hotel" ? date : bookingForm.check_out_date,
+                ...(serviceType === "hotel" && { room_id: "", room_type: "", rate_per_day: 0 }),
+              });
+              if (serviceType === "hotel" && date) {
+                fetchHotelRooms(date);
+              }
+            }}
           />
         </div>
 
@@ -825,30 +833,21 @@ const WalkInBookingModal = ({ serviceType, onClose, onSuccess }) => {
         }}>
           <span style={{ fontSize: "1.25rem" }}>🕘</span>
           <div>
-            <strong>Open 9:00 AM – 7:00 PM</strong> · Walk-in anytime on selected date.
+            <strong>Open 9:00 AM – 7:00 PM</strong> · {serviceType === "hotel" ? "Same-day check-in and check-out." : "Walk-in anytime on selected date."}
             <br />
-            <span style={{ fontSize: "0.75rem", color: "#4f46e5" }}>Charged per day or per package, not by the hour.</span>
+            <span style={{ fontSize: "0.75rem", color: "#4f46e5" }}>{serviceType === "hotel" ? "Charged one day rate per stay." : "Charged per day or per package, not by the hour."}</span>
           </div>
         </div>
 
         {/* Hotel-specific fields */}
         {serviceType === "hotel" && (
           <>
-            <div className="form-group">
-              <label>Check-out Date *</label>
-              <input
-                type="date"
-                value={bookingForm.check_out_date}
-                onChange={(e) =>
-                  setBookingForm({ ...bookingForm, check_out_date: e.target.value })
-                }
-              />
-            </div>
 
             <div className="form-group">
               <label>Room *</label>
               <select
                 value={bookingForm.room_id}
+                disabled={!bookingForm.request_date}
                 onChange={(e) => {
                   const r = hotelRooms.find((room) => String(room.id) === String(e.target.value));
                   setBookingForm({
@@ -859,13 +858,16 @@ const WalkInBookingModal = ({ serviceType, onClose, onSuccess }) => {
                   });
                 }}
               >
-                <option value="">Select Room</option>
+                <option value="">{bookingForm.request_date ? "Select Room" : "Select a date first"}</option>
                 {hotelRooms.map((room) => (
                   <option key={room.id} value={room.id}>
                     {room.name} ({room.type}) - ₱{room.daily_rate}/day
                   </option>
                 ))}
               </select>
+              {bookingForm.request_date && hotelRooms.length === 0 && (
+                <small className="error-text">No rooms available on this date.</small>
+              )}
             </div>
 
             <div className="form-group full-width">
@@ -988,10 +990,10 @@ const WalkInBookingModal = ({ serviceType, onClose, onSuccess }) => {
   };
 
   return (
-    <div className="walkin-modal-overlay" onClick={onClose}>
-      <div className="walkin-modal" onClick={(e) => e.stopPropagation()}>
+    <div className="hbk-overlay" onClick={onClose}>
+      <div className="hbk-modal hbk-modal-lg" onClick={(e) => e.stopPropagation()}>
         {/* Header */}
-        <div className="modal-header" style={{ borderColor: config.color }}>
+        <div className="hbk-head" style={{ borderColor: config.color }}>
           <div className="header-content">
             <div className="service-icon" style={{ background: config.color }}>
               <FontAwesomeIcon icon={config.icon} />
@@ -1014,17 +1016,17 @@ const WalkInBookingModal = ({ serviceType, onClose, onSuccess }) => {
 
         {/* Error */}
         {error && (
-          <div className="modal-error">
+          <div className="hbk-error">
             <FontAwesomeIcon icon={faExclamationTriangle} />
             <span>{error}</span>
           </div>
         )}
 
         {/* Content */}
-        <div className="modal-body">{renderStepContent()}</div>
+        <div className="hbk-body">{renderStepContent()}</div>
 
         {/* Footer */}
-        <div className="modal-footer">
+        <div className="hbk-foot">
           {step > 1 && (
             <button type="button" className="secondary-btn" onClick={prevStep}>
               <FontAwesomeIcon icon={faArrowLeft} /> Back

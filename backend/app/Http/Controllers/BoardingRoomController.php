@@ -124,8 +124,8 @@ class BoardingRoomController extends Controller
                     $blockingReservationCount = DB::table('boarding_room_reservations')
                         ->where($reservationRoomColumn, $room->id)
                         ->whereNotIn('status', ['rejected', 'cancelled', 'checked_out', 'completed'])
-                        ->where('check_in_date', '<', $checkOut)
-                        ->where('check_out_date', '>', $checkIn)
+                        ->where('check_in_date', '<=', $checkOut)
+                        ->where('check_out_date', '>=', $checkIn)
                         ->count();
                 }
 
@@ -133,8 +133,8 @@ class BoardingRoomController extends Controller
                     $blockingReservationCount += DB::table('boardings')
                         ->where('hotel_room_id', $room->id)
                         ->whereNotIn('status', ['rejected', 'cancelled', 'checked_out', 'completed'])
-                        ->where('check_in', '<', $checkOut)
-                        ->where('check_out', '>', $checkIn)
+                        ->where('check_in', '<=', $checkOut)
+                        ->where('check_out', '>=', $checkIn)
                         ->count();
                 }
 
@@ -152,6 +152,11 @@ class BoardingRoomController extends Controller
                     } else {
                         $room->hotel_category = 'other';
                     }
+                }
+
+                // Do not list rooms that are already booked or occupied
+                if (!$room->available) {
+                    continue;
                 }
 
                 $allRooms->push($room);
@@ -173,7 +178,18 @@ class BoardingRoomController extends Controller
                 ];
 
                 $hotelQuery = DB::table('hotel_rooms')
-                    ->whereNotIn('status', ['inactive', 'maintenance']);
+                    ->where('status', 'available');
+
+                // Exclude rooms with an active medical confinement
+                if (Schema::hasTable('medical_confinements')) {
+                    $confinedStatuses = ['approved_for_admission', 'admitted', 'under_observation', 'under_treatment', 'ready_for_discharge'];
+                    $hotelQuery->whereNotExists(function ($q) use ($confinedStatuses) {
+                        $q->select(DB::raw(1))
+                            ->from('medical_confinements')
+                            ->whereColumn('medical_confinements.room_id', 'hotel_rooms.id')
+                            ->whereIn('medical_confinements.status', $confinedStatuses);
+                    });
+                }
 
                 // Only include hotel rooms compatible with this species
                 $hotelQuery->where(function ($q) use ($species) {
@@ -194,13 +210,18 @@ class BoardingRoomController extends Controller
                         $blocking = DB::table('boardings')
                             ->where('hotel_room_id', $hr->id)
                             ->whereNotIn('status', ['rejected', 'cancelled', 'checked_out', 'completed'])
-                            ->where('check_in', '<', $checkOut)
-                            ->where('check_out', '>', $checkIn)
+                            ->where('check_in', '<=', $checkOut)
+                            ->where('check_out', '>=', $checkIn)
                             ->count();
                     }
 
                     $capacity = (int) ($hr->capacity ?? 1);
                     $available = $blocking < $capacity;
+
+                    // Do not list rooms that are already booked or occupied
+                    if (!$available) {
+                        continue;
+                    }
 
                     $mapped = (object) [
                         'id'                => 'hotel_' . $hr->id,
@@ -381,6 +402,10 @@ class BoardingRoomController extends Controller
      */
     public function reject(Request $request, $id): JsonResponse
     {
+        $request->validate([
+            'rejection_reason' => 'required|string|max:1000',
+        ]);
+
         $serviceRequest = ServiceRequest::find($id);
         
         if (!$serviceRequest) {
@@ -397,11 +422,14 @@ class BoardingRoomController extends Controller
             ], 422);
         }
 
+        $rejectionReason = $request->input('rejection_reason');
+
         // Update service request status
         $serviceRequest->update([
             'status' => 'rejected',
             'rejected_by' => Auth::id(),
             'rejected_at' => now(),
+            'rejection_reason' => $rejectionReason,
         ]);
 
         // Cancel related room reservation if it exists
@@ -416,7 +444,7 @@ class BoardingRoomController extends Controller
         WorkflowNotifier::notifyEmail(
             $serviceRequest->customer_email,
             'Boarding Request Rejected',
-            "Your {$serviceRequest->service_name} request has been rejected.",
+            "Your {$serviceRequest->service_name} request has been rejected. Reason: {$rejectionReason}",
             'error',
             'service_request',
             $serviceRequest->id

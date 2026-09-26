@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { showConfirm, showError, showWarning } from "../../utils/alert.jsx";
+import { showConfirm, showError, showWarning, showReasonPrompt } from "../../utils/alert.jsx";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
   faStethoscope,
@@ -21,6 +21,7 @@ import {
 } from "@fortawesome/free-solid-svg-icons";
 import { apiRequest } from "../../api/client";
 import PetAvatar from "../shared/PetAvatar";
+import "../../styles/bookingModal.css";
 import "./ReceptionistVeterinaryBookings.css";
 
 const ReceptionistVeterinaryBookings = () => {
@@ -155,11 +156,13 @@ const ReceptionistVeterinaryBookings = () => {
   };
 
   // Cancel/Reject appointment
-  const handleCancel = async (appointmentId, reason = "Cancelled by receptionist") => {
-    if (!(await showConfirm("Are you sure you want to cancel this appointment?"))) {
-      return;
-    }
-    
+  const handleCancel = async (appointmentId) => {
+    const reason = await showReasonPrompt(
+      "Cancel this appointment? Please provide a reason.",
+      "Cancel Appointment"
+    );
+    if (!reason) return;
+
     try {
       setActionLoading(true);
       await apiRequest(`/receptionist/requests/${appointmentId}/reject`, {
@@ -232,7 +235,11 @@ const ReceptionistVeterinaryBookings = () => {
 
   const handleBulkCancel = async () => {
     const ids = Array.from(selectedIds);
-    if (!(await showConfirm(`Cancel ${ids.length} selected appointments?`))) return;
+    const reason = await showReasonPrompt(
+      `Cancel ${ids.length} selected appointment${ids.length > 1 ? "s" : ""}? Please provide a reason.`,
+      "Cancel Appointments"
+    );
+    if (!reason) return;
     setActionLoading(true);
     setError("");
     try {
@@ -240,7 +247,7 @@ const ReceptionistVeterinaryBookings = () => {
         ids.map((id) =>
           apiRequest(`/receptionist/requests/${id}/status`, {
             method: "PATCH",
-            body: JSON.stringify({ status: "rejected" }),
+            body: JSON.stringify({ status: "rejected", rejection_reason: reason }),
           })
         )
       );
@@ -577,9 +584,9 @@ const ReceptionistVeterinaryBookings = () => {
 
       {/* Appointment Details Modal */}
       {selectedAppointment && (
-        <div className="appointment-modal-overlay" onClick={() => setSelectedAppointment(null)}>
-          <div className="appointment-modal" onClick={(e) => e.stopPropagation()}>
-            <div className="modal-header">
+        <div className="hbk-overlay" onClick={() => setSelectedAppointment(null)}>
+          <div className="hbk-modal" onClick={(e) => e.stopPropagation()}>
+            <div className="hbk-head">
               <h2>Booking Details</h2>
               <button
                 className="close-btn"
@@ -588,7 +595,7 @@ const ReceptionistVeterinaryBookings = () => {
                 ×
               </button>
             </div>
-            <div className="modal-content">
+            <div className="hbk-body">
               <div className="appointment-overview">
                 <div className="overview-section">
                   <h3>Pet Information</h3>
@@ -659,7 +666,7 @@ const ReceptionistVeterinaryBookings = () => {
                 </div>
               </div>
               
-              <div className="modal-actions">
+              <div className="hbk-foot">
                 <button className="secondary-btn" onClick={() => setSelectedAppointment(null)}>
                   Close
                 </button>

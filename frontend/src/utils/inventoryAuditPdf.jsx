@@ -1,4 +1,5 @@
 import { showAlert } from "./alert.jsx";
+import { STORE_INFO } from "./storeInfo";
 
 /**
  * Generate PDF for inventory audit report
@@ -144,9 +145,10 @@ export const generateInventoryAuditPdf = (logs) => {
 </head>
 <body>
   <div class="header">
-    <h1>📦 Inventory Audit Report</h1>
+    <h1>📦 ${STORE_INFO.name}</h1>
+    <p>${STORE_INFO.tagline} · ${STORE_INFO.address}</p>
+    <p><strong>Inventory Audit Report</strong></p>
     <p>Generated on ${new Date().toLocaleString("en-PH")}</p>
-    <p>Pawesome Petcare Inventory System</p>
   </div>
 
   <div class="summary">

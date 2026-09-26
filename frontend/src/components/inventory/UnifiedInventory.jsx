@@ -4,7 +4,7 @@ import StatusDot from "../shared/StatusDot";
 import { exportToCSV as exportCSVUtil, exportToPDF, exportToExcel } from "../../utils/reportExport";
 import {
   faPlus, faEdit, faSearch, faBox,
-  faSync, faArchive, faImage,
+  faSync, faArchive,
   faWarehouse, faBoxes, faBell, faSort, faSortUp, faSortDown,
   faChevronDown, faDownload, faHistory, faInfoCircle,
   faSlidersH, faAdjust, faCamera, faXmark,
@@ -70,7 +70,6 @@ const UnifiedInventory = () => {
   // Modals
   const [showAddModal, setShowAddModal] = useState(false);
   const [editingItem, setEditingItem] = useState(null);
-  const [viewPhotoUrl, setViewPhotoUrl] = useState(null);
   const [showInfoModal, setShowInfoModal] = useState(false);
   const [infoItem, setInfoItem] = useState(null);
   const [adjustItem, setAdjustItem] = useState(null);
@@ -747,9 +746,6 @@ const UnifiedInventory = () => {
                           <button className="btn-icon history" onClick={() => handleViewHistory(item)} title="History">
                             <FontAwesomeIcon icon={faHistory} />
                           </button>
-                          <button className={`btn-icon photo ${!item.photo_url ? "disabled" : ""}`} onClick={() => item.photo_url ? setViewPhotoUrl(item.photo_url) : showToast("info", "No Photo", `${item.name} has no photo.`)} title={item.photo_url ? "View Photo" : "No Photo"}>
-                            <FontAwesomeIcon icon={faImage} />
-                          </button>
                           <button className="btn-icon edit" onClick={() => handleEdit(item)} title="Edit">
                             <FontAwesomeIcon icon={faEdit} />
                           </button>
@@ -982,18 +978,6 @@ const UnifiedInventory = () => {
                 </table>
               )}
             </div>
-          </div>
-        </div>
-      )}
-
-      {/* View Photo Modal */}
-      {viewPhotoUrl && (
-        <div className="modal-overlay" onClick={() => setViewPhotoUrl(null)}>
-          <div className="modal-content photo-modal" onClick={(e) => e.stopPropagation()}>
-            <button className="btn-close" onClick={() => setViewPhotoUrl(null)}>
-              &times;
-            </button>
-            <img src={viewPhotoUrl} alt="Product" />
           </div>
         </div>
       )}

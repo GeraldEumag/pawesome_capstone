@@ -15,6 +15,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
+use Illuminate\Validation\ValidationException;
 
 class DashboardController extends Controller
 {
@@ -363,6 +364,12 @@ class DashboardController extends Controller
                 $variance = $actualStock - $systemStock;
                 $status = $variance === 0 ? 'matched' : 'discrepancy';
 
+                if ($status === 'discrepancy' && trim((string) ($row['reason'] ?? '')) === '') {
+                    throw ValidationException::withMessages([
+                        'items' => ["A reason is required for the discrepancy on \"{$item->name}\"."],
+                    ]);
+                }
+
                 $audit = InventoryMonthlyAudit::updateOrCreate(
                     [
                         'inventory_item_id' => $item->id,
@@ -586,6 +593,13 @@ class DashboardController extends Controller
         return [
             'id' => $audit->id,
             'inventory_item_id' => $audit->inventory_item_id,
+            'item' => $audit->item ? [
+                'id' => $audit->item->id,
+                'name' => $audit->item->name,
+                'sku' => $audit->item->sku,
+                'category' => $audit->item->category,
+                'brand' => $audit->item->brand,
+            ] : null,
             'name' => $audit->item?->name,
             'sku' => $audit->item?->sku,
             'category' => $audit->item?->category,

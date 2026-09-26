@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faTimes, faHotel, faScissors, faStethoscope, faCalendarAlt, faClock, faPaw, faPaperPlane, faPlusCircle, faTimesCircle, faUser, faEnvelope, faBed, faHeartbeat } from "@fortawesome/free-solid-svg-icons";
+import "../../styles/bookingModal.css";
 import "./ServiceBookingModal.css";
 import DatePickerInput from "../shared/DatePickerInput";
 import { apiRequest } from "../../api/client";
@@ -39,7 +40,7 @@ const timeSlots = generateTimeSlots();
 
 const getInitialForm = (serviceType) => {
   const base = { customer_name: "", customer_email: "", pet_name: "", pet_type: "" };
-  if (serviceType === "hotel") return { ...base, check_in_date: "", check_out_date: "", preferred_time: "", room_type: "", special_care_instructions: "" };
+  if (serviceType === "hotel") return { ...base, check_in_date: "", preferred_time: "", room_type: "", special_care_instructions: "" };
   if (serviceType === "grooming") return { ...base, grooming_service_type: "", preferred_date: "", preferred_time: "", special_grooming_instructions: "" };
   return { ...base, veterinary_service_type: "", preferred_date: "", preferred_time: "", main_reason_for_visit: "", flu_symptoms: "", observed_issues: "", appetite_condition: "", energy_level: "", symptom_duration: "", medications_taken: "", recent_exposure: "", urgency_level: "" };
 };
@@ -77,9 +78,7 @@ const ServiceBookingModal = ({ serviceType, onClose }) => {
     if (!formData.pet_name.trim()) ne.pet_name = "Pet name is required.";
     if (!formData.pet_type.trim()) ne.pet_type = "Pet type is required.";
     if (serviceType === "hotel") {
-      if (!formData.check_in_date) ne.check_in_date = "Check-in date is required.";
-      if (!formData.check_out_date) ne.check_out_date = "Check-out date is required.";
-      if (formData.check_in_date && formData.check_out_date) { const inDate = new Date(formData.check_in_date); const outDate = new Date(formData.check_out_date); if (outDate <= inDate) ne.check_out_date = "Check-out must be after check-in."; }
+      if (!formData.check_in_date) ne.check_in_date = "Stay date is required.";
       if (!formData.preferred_time) ne.preferred_time = "Preferred time is required.";
     }
     if (serviceType === "grooming") { if (!formData.grooming_service_type) ne.grooming_service_type = "Grooming service type is required."; if (!formData.preferred_date) ne.preferred_date = "Preferred date is required."; if (!formData.preferred_time) ne.preferred_time = "Preferred time is required."; }
@@ -90,7 +89,7 @@ const ServiceBookingModal = ({ serviceType, onClose }) => {
 
   const buildPayload = useCallback(() => {
     const base = { customer_name: formData.customer_name.trim(), customer_email: formData.customer_email.trim(), pet_name: formData.pet_name.trim(), pet_type: formData.pet_type.trim() };
-    if (serviceType === "hotel") return { ...base, request_type: "hotel", service_name: "Pet Hotel", requested_date: formData.check_in_date, requested_time: formData.preferred_time, check_in_date: formData.check_in_date, check_out_date: formData.check_out_date, room_type: formData.room_type, notes: formData.special_care_instructions || "", special_request: formData.special_care_instructions || "" };
+    if (serviceType === "hotel") return { ...base, request_type: "hotel", service_name: "Pet Hotel", requested_date: formData.check_in_date, requested_time: formData.preferred_time, check_in_date: formData.check_in_date, check_out_date: formData.check_in_date, room_type: formData.room_type, notes: formData.special_care_instructions || "", special_request: formData.special_care_instructions || "" };
     if (serviceType === "grooming") return { ...base, request_type: "grooming", service_name: formData.grooming_service_type, requested_date: formData.preferred_date, requested_time: formData.preferred_time, notes: formData.special_grooming_instructions || "", special_request: formData.special_grooming_instructions || "" };
     const healthParts = [];
     if (formData.flu_symptoms) healthParts.push(`Flu-like symptoms: ${formData.flu_symptoms}`);
@@ -134,29 +133,29 @@ const ServiceBookingModal = ({ serviceType, onClose }) => {
     } finally { setLoading(false); }
   };
 
-  const fe = (name) => errors[name] ? <span className="modal-field-error">{errors[name]}</span> : null;
+  const fe = (name) => errors[name] ? <span className="svc-field-error">{errors[name]}</span> : null;
 
   const renderCommonFields = () => (
     <>
-      <div className="modal-form-row">
-        <label className="modal-form-group">
+      <div className="svc-form-row">
+        <label className="svc-form-group">
           <span><FontAwesomeIcon icon={faUser} /> Customer Name *</span>
           <input type="text" name="customer_name" value={formData.customer_name} onChange={handleChange} placeholder="Your full name" readOnly={isCustomer} className={errors.customer_name ? "has-error" : ""} />
           {fe("customer_name")}
         </label>
-        <label className="modal-form-group">
+        <label className="svc-form-group">
           <span><FontAwesomeIcon icon={faEnvelope} /> Email *</span>
           <input type="email" name="customer_email" value={formData.customer_email} onChange={handleChange} placeholder="you@example.com" readOnly={isCustomer} className={errors.customer_email ? "has-error" : ""} />
           {fe("customer_email")}
         </label>
       </div>
-      <div className="modal-form-row">
-        <label className="modal-form-group">
+      <div className="svc-form-row">
+        <label className="svc-form-group">
           <span><FontAwesomeIcon icon={faPaw} /> Pet Name *</span>
           <input type="text" name="pet_name" value={formData.pet_name} onChange={handleChange} placeholder="e.g., Buddy" className={errors.pet_name ? "has-error" : ""} />
           {fe("pet_name")}
         </label>
-        <label className="modal-form-group">
+        <label className="svc-form-group">
           <span><FontAwesomeIcon icon={faPaw} /> Pet Type / Species *</span>
           <input type="text" name="pet_type" value={formData.pet_type} onChange={handleChange} placeholder="e.g., Dog, Cat, Rabbit" className={errors.pet_type ? "has-error" : ""} />
           {fe("pet_type")}
@@ -167,20 +166,19 @@ const ServiceBookingModal = ({ serviceType, onClose }) => {
 
   const renderHotelFields = () => (
     <>
-      <div className="modal-form-row">
-        <label className="modal-form-group">
-          <span><FontAwesomeIcon icon={faCalendarAlt} /> Check-in Date *</span>
-          <DatePickerInput selected={formData.check_in_date ? new Date(formData.check_in_date) : null} onChange={(date) => handleDateChange("check_in_date", date)} placeholderText="Pick check-in..." minDate={new Date()} required className={errors.check_in_date ? "has-error" : ""} />
+      <div className="svc-form-row">
+        <label className="svc-form-group">
+          <span><FontAwesomeIcon icon={faCalendarAlt} /> Stay Date *</span>
+          <DatePickerInput selected={formData.check_in_date ? new Date(formData.check_in_date) : null} onChange={(date) => handleDateChange("check_in_date", date)} placeholderText="Pick stay date..." minDate={new Date()} required className={errors.check_in_date ? "has-error" : ""} />
           {fe("check_in_date")}
         </label>
-        <label className="modal-form-group">
-          <span><FontAwesomeIcon icon={faCalendarAlt} /> Check-out Date *</span>
-          <DatePickerInput selected={formData.check_out_date ? new Date(formData.check_out_date) : null} onChange={(date) => handleDateChange("check_out_date", date)} placeholderText="Pick check-out..." minDate={formData.check_in_date ? new Date(formData.check_in_date) : new Date()} required className={errors.check_out_date ? "has-error" : ""} />
-          {fe("check_out_date")}
+        <label className="svc-form-group">
+          <span><FontAwesomeIcon icon={faCalendarAlt} /> Duration</span>
+          <input type="text" value="Same-day stay — 9:00 AM to 7:00 PM" disabled readOnly />
         </label>
       </div>
-      <div className="modal-form-row">
-        <label className="modal-form-group">
+      <div className="svc-form-row">
+        <label className="svc-form-group">
           <span><FontAwesomeIcon icon={faClock} /> Preferred Time *</span>
           <select name="preferred_time" value={formData.preferred_time} onChange={handleChange} className={errors.preferred_time ? "has-error" : ""}>
             <option value="">Select time</option>
@@ -188,12 +186,12 @@ const ServiceBookingModal = ({ serviceType, onClose }) => {
           </select>
           {fe("preferred_time")}
         </label>
-        <label className="modal-form-group">
+        <label className="svc-form-group">
           <span><FontAwesomeIcon icon={faBed} /> Room Type</span>
           <select name="room_type" value={formData.room_type} onChange={handleChange}>{ROOM_TYPES.map((opt) => <option key={opt.value} value={opt.value}>{opt.label}</option>)}</select>
         </label>
       </div>
-      <label className="modal-form-group full">
+      <label className="svc-form-group full">
         <span>Special Care Instructions</span>
         <textarea name="special_care_instructions" value={formData.special_care_instructions} onChange={handleChange} rows={3} placeholder="Dietary needs, medication, behavior notes..." />
       </label>
@@ -202,22 +200,22 @@ const ServiceBookingModal = ({ serviceType, onClose }) => {
 
   const renderGroomingFields = () => (
     <>
-      <div className="modal-form-row">
-        <label className="modal-form-group">
+      <div className="svc-form-row">
+        <label className="svc-form-group">
           <span><FontAwesomeIcon icon={faScissors} /> Grooming Service Type *</span>
           <select name="grooming_service_type" value={formData.grooming_service_type} onChange={handleChange} className={errors.grooming_service_type ? "has-error" : ""}>
             {GROOMING_TYPES.map((opt) => <option key={opt.value} value={opt.value}>{opt.label}</option>)}
           </select>
           {fe("grooming_service_type")}
         </label>
-        <label className="modal-form-group">
+        <label className="svc-form-group">
           <span><FontAwesomeIcon icon={faCalendarAlt} /> Preferred Date *</span>
           <DatePickerInput selected={formData.preferred_date ? new Date(formData.preferred_date) : null} onChange={(date) => handleDateChange("preferred_date", date)} placeholderText="Pick a date..." minDate={new Date()} required className={errors.preferred_date ? "has-error" : ""} />
           {fe("preferred_date")}
         </label>
       </div>
-      <div className="modal-form-row">
-        <label className="modal-form-group">
+      <div className="svc-form-row">
+        <label className="svc-form-group">
           <span><FontAwesomeIcon icon={faClock} /> Preferred Time *</span>
           <select name="preferred_time" value={formData.preferred_time} onChange={handleChange} className={errors.preferred_time ? "has-error" : ""}>
             <option value="">Select time</option>
@@ -226,7 +224,7 @@ const ServiceBookingModal = ({ serviceType, onClose }) => {
           {fe("preferred_time")}
         </label>
       </div>
-      <label className="modal-form-group full">
+      <label className="svc-form-group full">
         <span>Special Grooming Instructions</span>
         <textarea name="special_grooming_instructions" value={formData.special_grooming_instructions} onChange={handleChange} rows={3} placeholder="Sensitive skin, preferred products, style requests..." />
       </label>
@@ -235,22 +233,22 @@ const ServiceBookingModal = ({ serviceType, onClose }) => {
 
   const renderVetFields = () => (
     <>
-      <div className="modal-form-row">
-        <label className="modal-form-group">
+      <div className="svc-form-row">
+        <label className="svc-form-group">
           <span><FontAwesomeIcon icon={faStethoscope} /> Veterinary Service Type *</span>
           <select name="veterinary_service_type" value={formData.veterinary_service_type} onChange={handleChange} className={errors.veterinary_service_type ? "has-error" : ""}>
             {VET_TYPES.map((opt) => <option key={opt.value} value={opt.value}>{opt.label}</option>)}
           </select>
           {fe("veterinary_service_type")}
         </label>
-        <label className="modal-form-group">
+        <label className="svc-form-group">
           <span><FontAwesomeIcon icon={faCalendarAlt} /> Preferred Date *</span>
           <DatePickerInput selected={formData.preferred_date ? new Date(formData.preferred_date) : null} onChange={(date) => handleDateChange("preferred_date", date)} placeholderText="Pick a date..." minDate={new Date()} required className={errors.preferred_date ? "has-error" : ""} />
           {fe("preferred_date")}
         </label>
       </div>
-      <div className="modal-form-row">
-        <label className="modal-form-group">
+      <div className="svc-form-row">
+        <label className="svc-form-group">
           <span><FontAwesomeIcon icon={faClock} /> Preferred Time *</span>
           <select name="preferred_time" value={formData.preferred_time} onChange={handleChange} className={errors.preferred_time ? "has-error" : ""}>
             <option value="">Select time</option>
@@ -259,39 +257,39 @@ const ServiceBookingModal = ({ serviceType, onClose }) => {
           {fe("preferred_time")}
         </label>
       </div>
-      <label className="modal-form-group full">
+      <label className="svc-form-group full">
         <span>Main Reason for Visit *</span>
         <textarea name="main_reason_for_visit" value={formData.main_reason_for_visit} onChange={handleChange} rows={3} placeholder="Describe symptoms, concerns, or the reason for the visit..." className={errors.main_reason_for_visit ? "has-error" : ""} />
         {fe("main_reason_for_visit")}
       </label>
       {!showHealthInfo && (
-        <button type="button" className="modal-add-health-btn" onClick={() => setShowHealthInfo(true)}>
+        <button type="button" className="svc-add-health-btn" onClick={() => setShowHealthInfo(true)}>
           <FontAwesomeIcon icon={faPlusCircle} /> Add Additional Health Information
         </button>
       )}
       {showHealthInfo && (
-        <div className="modal-health-section">
-          <div className="modal-health-header">
+        <div className="svc-health-section">
+          <div className="svc-health-header">
             <h4><FontAwesomeIcon icon={faHeartbeat} /> Additional Health Information</h4>
-            <button type="button" className="modal-health-cancel" onClick={() => { setShowHealthInfo(false); setFormData((prev) => ({ ...prev, flu_symptoms: "", observed_issues: "", appetite_condition: "", energy_level: "", symptom_duration: "", medications_taken: "", recent_exposure: "", urgency_level: "" })); }}>
+            <button type="button" className="svc-health-cancel" onClick={() => { setShowHealthInfo(false); setFormData((prev) => ({ ...prev, flu_symptoms: "", observed_issues: "", appetite_condition: "", energy_level: "", symptom_duration: "", medications_taken: "", recent_exposure: "", urgency_level: "" })); }}>
               <FontAwesomeIcon icon={faTimesCircle} /> Cancel
             </button>
           </div>
-          <div className="modal-form-row">
-            <label className="modal-form-group"><span>Flu-like Symptoms</span><input type="text" name="flu_symptoms" value={formData.flu_symptoms} onChange={handleChange} placeholder="e.g., sneezing, coughing..." /></label>
-            <label className="modal-form-group"><span>Symptoms or Observed Issues</span><input type="text" name="observed_issues" value={formData.observed_issues} onChange={handleChange} placeholder="e.g., limping, scratching..." /></label>
+          <div className="svc-form-row">
+            <label className="svc-form-group"><span>Flu-like Symptoms</span><input type="text" name="flu_symptoms" value={formData.flu_symptoms} onChange={handleChange} placeholder="e.g., sneezing, coughing..." /></label>
+            <label className="svc-form-group"><span>Symptoms or Observed Issues</span><input type="text" name="observed_issues" value={formData.observed_issues} onChange={handleChange} placeholder="e.g., limping, scratching..." /></label>
           </div>
-          <div className="modal-form-row">
-            <label className="modal-form-group"><span>Appetite Condition</span><select name="appetite_condition" value={formData.appetite_condition} onChange={handleChange}>{APPETITE_OPTIONS.map((opt) => <option key={opt.value} value={opt.value}>{opt.label}</option>)}</select></label>
-            <label className="modal-form-group"><span>Energy Level</span><select name="energy_level" value={formData.energy_level} onChange={handleChange}>{ENERGY_LEVELS.map((opt) => <option key={opt.value} value={opt.value}>{opt.label}</option>)}</select></label>
+          <div className="svc-form-row">
+            <label className="svc-form-group"><span>Appetite Condition</span><select name="appetite_condition" value={formData.appetite_condition} onChange={handleChange}>{APPETITE_OPTIONS.map((opt) => <option key={opt.value} value={opt.value}>{opt.label}</option>)}</select></label>
+            <label className="svc-form-group"><span>Energy Level</span><select name="energy_level" value={formData.energy_level} onChange={handleChange}>{ENERGY_LEVELS.map((opt) => <option key={opt.value} value={opt.value}>{opt.label}</option>)}</select></label>
           </div>
-          <div className="modal-form-row">
-            <label className="modal-form-group"><span>Symptom Duration</span><input type="text" name="symptom_duration" value={formData.symptom_duration} onChange={handleChange} placeholder="e.g., 2 days, 1 week..." /></label>
-            <label className="modal-form-group"><span>Medication or Vitamins Taken</span><input type="text" name="medications_taken" value={formData.medications_taken} onChange={handleChange} placeholder="List any current medications..." /></label>
+          <div className="svc-form-row">
+            <label className="svc-form-group"><span>Symptom Duration</span><input type="text" name="symptom_duration" value={formData.symptom_duration} onChange={handleChange} placeholder="e.g., 2 days, 1 week..." /></label>
+            <label className="svc-form-group"><span>Medication or Vitamins Taken</span><input type="text" name="medications_taken" value={formData.medications_taken} onChange={handleChange} placeholder="List any current medications..." /></label>
           </div>
-          <div className="modal-form-row">
-            <label className="modal-form-group"><span>Recent Exposure or Possible Cause</span><input type="text" name="recent_exposure" value={formData.recent_exposure} onChange={handleChange} placeholder="e.g., new food, other sick pet..." /></label>
-            <label className="modal-form-group"><span>Urgency Level</span><select name="urgency_level" value={formData.urgency_level} onChange={handleChange}>{URGENCY_LEVELS.map((opt) => <option key={opt.value} value={opt.value}>{opt.label}</option>)}</select></label>
+          <div className="svc-form-row">
+            <label className="svc-form-group"><span>Recent Exposure or Possible Cause</span><input type="text" name="recent_exposure" value={formData.recent_exposure} onChange={handleChange} placeholder="e.g., new food, other sick pet..." /></label>
+            <label className="svc-form-group"><span>Urgency Level</span><select name="urgency_level" value={formData.urgency_level} onChange={handleChange}>{URGENCY_LEVELS.map((opt) => <option key={opt.value} value={opt.value}>{opt.label}</option>)}</select></label>
           </div>
         </div>
       )}
@@ -299,27 +297,36 @@ const ServiceBookingModal = ({ serviceType, onClose }) => {
   );
 
   return (
-    <div className="service-modal-backdrop" onClick={onClose}>
-      <div className={`service-modal-card ${config.accent}`} onClick={(e) => e.stopPropagation()} role="dialog" aria-modal="true" aria-labelledby="service-modal-title">
-        <button className="service-modal-close" onClick={onClose} aria-label="Close"><FontAwesomeIcon icon={faTimes} /></button>
-        <div className="service-modal-header">
-          <div className="service-modal-icon"><FontAwesomeIcon icon={config.icon} /></div>
-          <h2 id="service-modal-title">{config.title}</h2>
-          <p>Fill in the details and we will handle the rest.</p>
+    <div className="hbk-overlay" onClick={onClose}>
+      <div className={`hbk-modal ${config.accent}`} onClick={(e) => e.stopPropagation()} role="dialog" aria-modal="true" aria-labelledby="service-modal-title">
+        <div className="hbk-head">
+          <div>
+            <span className="hbk-eyebrow">
+              <FontAwesomeIcon icon={config.icon} />
+              Service Booking
+            </span>
+            <h2 id="service-modal-title">{config.title}</h2>
+            <p className="svc-subtitle">Fill in the details and we will handle the rest.</p>
+          </div>
+          <button type="button" className="close-btn" onClick={onClose} aria-label="Close">
+            <FontAwesomeIcon icon={faTimes} />
+          </button>
         </div>
-        <form className="service-modal-form" onSubmit={handleSubmit} noValidate>
+        <form className="hbk-body svc-form" onSubmit={handleSubmit} noValidate>
           {renderCommonFields()}
           {serviceType === "hotel" && renderHotelFields()}
           {serviceType === "grooming" && renderGroomingFields()}
           {serviceType === "vet" && renderVetFields()}
           {!isAuthenticated && (
-            <div className="modal-auth-notice">
+            <div className="svc-auth-notice">
               <p>A free customer account is required to process your booking. After submitting, you will be guided to create an account.</p>
             </div>
           )}
-          <button type="submit" className="modal-submit-btn" disabled={loading}>
-            <FontAwesomeIcon icon={faPaperPlane} /> {loading ? "Submitting..." : "Submit Booking Request"}
-          </button>
+          <div className="hbk-foot">
+            <button type="submit" className="svc-submit-btn" disabled={loading}>
+              <FontAwesomeIcon icon={faPaperPlane} /> {loading ? "Submitting..." : "Submit Booking Request"}
+            </button>
+          </div>
         </form>
       </div>
     </div>

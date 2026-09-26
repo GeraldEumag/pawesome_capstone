@@ -73,9 +73,8 @@ const HotelForm = () => {
     pet_type: "",
     pet_breed: "",
     check_in_date: "",
-    number_of_days: 1,
     check_in_time: "09:00",
-    check_out_time: "17:00",
+    check_out_time: "18:00",
     boarding_type: "standard",
     notes: "",
   });
@@ -127,13 +126,6 @@ const HotelForm = () => {
     if (draft.form_data?.preferred_time) updates.check_in_time = draft.form_data.preferred_time;
     if (draft.form_data?.room_type) updates.boarding_type = draft.form_data.room_type;
     if (draft.form_data?.special_care_instructions) updates.notes = draft.form_data.special_care_instructions;
-
-    if (draft.form_data?.check_in_date && draft.form_data?.check_out_date) {
-      const checkIn = new Date(draft.form_data.check_in_date);
-      const checkOut = new Date(draft.form_data.check_out_date);
-      const days = Math.max(1, Math.round((checkOut - checkIn) / (1000 * 60 * 60 * 24)));
-      updates.number_of_days = days;
-    }
 
     setBookingForm((prev) => ({ ...prev, ...updates }));
     clearDraft();
@@ -211,7 +203,7 @@ const HotelForm = () => {
       formData.append("pet_type", selectedPet?.type || selectedPet?.species || bookingForm.pet_type || "");
       formData.append("pet_breed", selectedPet?.breed || bookingForm.pet_breed || "");
       formData.append("check_in_date", bookingForm.check_in_date);
-      formData.append("number_of_days", String(bookingForm.number_of_days));
+      formData.append("number_of_days", "1");
       formData.append("check_in_time", bookingForm.check_in_time);
       formData.append("check_out_time", bookingForm.check_out_time);
       if (bookingForm.room_id) {
@@ -238,9 +230,8 @@ const HotelForm = () => {
         pet_type: "",
         pet_breed: "",
         check_in_date: "",
-        number_of_days: 1,
         check_in_time: "09:00",
-        check_out_time: "17:00",
+        check_out_time: "18:00",
         boarding_type: "standard",
         notes: "",
       });
@@ -310,7 +301,7 @@ const HotelForm = () => {
     ["unpaid", "rejected"].includes(booking.payment_status || "unpaid");
 
   const fetchBoardingAvailability = async (roomType = null) => {
-    if (!bookingForm.pet_id || !bookingForm.check_in_date || !bookingForm.number_of_days) {
+    if (!bookingForm.pet_id || !bookingForm.check_in_date) {
       setBoardingAvailability(null);
       return;
     }
@@ -319,15 +310,11 @@ const HotelForm = () => {
       setAvailabilityLoading(true);
       setError("");
 
-      const checkIn = new Date(bookingForm.check_in_date);
-      const checkOut = new Date(checkIn);
-      checkOut.setDate(checkOut.getDate() + parseInt(bookingForm.number_of_days, 10));
-      const checkOutDate = checkOut.toISOString().split("T")[0];
-
+      // Same-day stay: check-out equals check-in
       const params = new URLSearchParams({
         pet_id: bookingForm.pet_id,
         check_in_date: bookingForm.check_in_date,
-        check_out_date: checkOutDate,
+        check_out_date: bookingForm.check_in_date,
       });
 
       if (roomType) {
@@ -354,21 +341,21 @@ const HotelForm = () => {
     const { name, value } = e.target;
     setBookingForm((prev) => ({ ...prev, [name]: value }));
 
-    if ((name === "pet_id" || name === "check_in_date" || name === "number_of_days") && value) {
+    if ((name === "pet_id" || name === "check_in_date") && value) {
       const updatedForm = { ...bookingForm, [name]: value };
-      if (updatedForm.pet_id && updatedForm.check_in_date && updatedForm.number_of_days) {
+      if (updatedForm.pet_id && updatedForm.check_in_date) {
         fetchBoardingAvailability(updatedForm.room_type);
       }
     }
   };
 
-  // Calculate total amount when room is selected
+  // Calculate total amount when room is selected (same-day stay = 1 day)
   const calculateTotal = () => {
-    if (!selectedRoom || !bookingForm.check_in_date || !bookingForm.number_of_days) {
+    if (!selectedRoom || !bookingForm.check_in_date) {
       return { total: 0, days: 0, dailyRate: 0 };
     }
 
-    const days = Math.max(1, parseInt(bookingForm.number_of_days, 10));
+    const days = 1;
     const roomSubtotal = selectedRoom.daily_rate * days;
     const total = roomSubtotal;
 
@@ -468,7 +455,7 @@ const HotelForm = () => {
 
               <div className="form-row">
                 <div className="form-group">
-                  <label>Check-in Date *</label>
+                  <label>Stay Date *</label>
                   <DatePickerInput
                     selected={bookingForm.check_in_date ? new Date(bookingForm.check_in_date) : null}
                     onChange={(date) =>
@@ -479,22 +466,14 @@ const HotelForm = () => {
                         },
                       })
                     }
-                    placeholderText="Pick check-in date..."
+                    placeholderText="Pick stay date..."
                     minDate={new Date()}
                     required
                   />
                 </div>
                 <div className="form-group">
-                  <label>Number of Days *</label>
-                  <input
-                    type="number"
-                    name="number_of_days"
-                    min={1}
-                    max={30}
-                    value={bookingForm.number_of_days}
-                    onChange={handleChange}
-                    required
-                  />
+                  <label>Stay Duration</label>
+                  <input type="text" value="Same-day stay — check-out by 7:00 PM" disabled readOnly />
                 </div>
               </div>
 
@@ -558,7 +537,7 @@ const HotelForm = () => {
                 </div>
               )}
 
-              {bookingForm.check_in_date && bookingForm.number_of_days && !boardingAvailability && !availabilityLoading && (
+              {bookingForm.check_in_date && !boardingAvailability && !availabilityLoading && (
                 <div className="availability-prompt">
                   <p>Click above to check available rooms.</p>
                 </div>
@@ -578,8 +557,8 @@ const HotelForm = () => {
                       <span>₱{pricing.dailyRate}</span>
                     </div>
                     <div className="pricing-row">
-                      <span>Number of Days:</span>
-                      <span>{pricing.days}</span>
+                      <span>Duration:</span>
+                      <span>Same-day stay</span>
                     </div>
                     <div className="pricing-row">
                       <span>Room Subtotal:</span>

@@ -387,7 +387,7 @@ class AppointmentController extends Controller
         }
 
         $validator = Validator::make($request->all(), [
-            'reason' => 'nullable|string|max:500',
+            'reason' => 'required|string|max:500',
         ]);
 
         if ($validator->fails()) {
@@ -674,7 +674,8 @@ class AppointmentController extends Controller
         }
 
         $validator = Validator::make($request->all(), [
-            'status' => 'required|in:pending,approved,scheduled,in_progress,treated,completed,cancelled,rejected,no_show'
+            'status' => 'required|in:pending,approved,scheduled,in_progress,treated,completed,cancelled,rejected,no_show',
+            'reason' => 'required_if:status,rejected|string|max:500',
         ]);
 
         if ($validator->fails()) {
@@ -719,6 +720,10 @@ class AppointmentController extends Controller
         }
 
         $appointment->status = $newStatus;
+
+        if ($newStatus === 'rejected') {
+            $appointment->cancellation_reason = $request->input('reason');
+        }
 
         // Set completion timestamp if completing
         if ($newStatus === 'completed') {

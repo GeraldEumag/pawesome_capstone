@@ -18,6 +18,7 @@ import { formatCurrency } from "../../utils/currency";
 import PetAvatar from "../shared/PetAvatar";
 import CustomerAvatar from "../shared/CustomerAvatar";
 import DatePickerInput from "../shared/DatePickerInput";
+import "../../styles/bookingModal.css";
 import "./ReceptionistCustomerManagement.css";
 
 const ReceptionistCustomerManagement = () => {
@@ -360,16 +361,16 @@ const ReceptionistCustomerManagement = () => {
       </div>
 
       {selectedCustomer && !showBookingModal && (
-        <div className="customer-modal-overlay" onClick={() => setSelectedCustomer(null)}>
-          <div className="customer-modal" onClick={(e) => e.stopPropagation()}>
-            <div className="modal-header">
+        <div className="hbk-overlay" onClick={() => setSelectedCustomer(null)}>
+          <div className="hbk-modal" onClick={(e) => e.stopPropagation()}>
+            <div className="hbk-head">
               <h2>Customer Details</h2>
               <button className="close-btn" onClick={() => setSelectedCustomer(null)}>
                 ×
               </button>
             </div>
 
-            <div className="modal-content">
+            <div className="hbk-body">
               <div className="overview-section">
                 <h3>{getCustomerName(selectedCustomer)}</h3>
                 <p>{selectedCustomer.email}</p>
@@ -410,7 +411,7 @@ const ReceptionistCustomerManagement = () => {
                 )}
               </div>
 
-              <div className="modal-actions">
+              <div className="hbk-foot">
                 <button className="secondary-btn" onClick={() => setSelectedCustomer(null)}>
                   Close
                 </button>
@@ -425,16 +426,16 @@ const ReceptionistCustomerManagement = () => {
       )}
 
       {showBookingModal && selectedCustomer && (
-        <div className="customer-modal-overlay" onClick={() => setShowBookingModal(false)}>
-          <div className="customer-modal" onClick={(e) => e.stopPropagation()}>
-            <div className="modal-header">
+        <div className="hbk-overlay" onClick={() => setShowBookingModal(false)}>
+          <div className="hbk-modal" onClick={(e) => e.stopPropagation()}>
+            <div className="hbk-head">
               <h2>Create Booking for {getCustomerName(selectedCustomer)}</h2>
               <button className="close-btn" onClick={() => setShowBookingModal(false)}>
                 ×
               </button>
             </div>
 
-            <form className="modal-content" onSubmit={handleCreateBooking}>
+            <form className="hbk-body" onSubmit={handleCreateBooking}>
               <div className="info-grid">
                 <div className="info-item">
                   <label>Pet</label>
@@ -545,7 +546,7 @@ const ReceptionistCustomerManagement = () => {
                 </div>
               </div>
 
-              <div className="modal-actions">
+              <div className="hbk-foot">
                 <button
                   type="button"
                   className="secondary-btn"

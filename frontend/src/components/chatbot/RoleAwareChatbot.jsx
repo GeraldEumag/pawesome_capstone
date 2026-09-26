@@ -524,12 +524,12 @@ const RoleAwareChatbot = ({
         pet_id: Number(workflowState.form.hotel_pet_id),
         hotel_room_id: Number(workflowState.form.hotel_room_id),
         check_in: workflowState.form.check_in,
-        check_out: workflowState.form.check_out,
+        check_out: workflowState.form.check_in,
         special_requests: workflowState.form.special_requests,
       });
       setMessages((prev) => [...prev, {
         sender: "bot",
-        text: `Hotel booking request submitted for ${data.boarding?.pet?.name || "your pet"} from ${workflowState.form.check_in} to ${workflowState.form.check_out}. Waiting for receptionist approval.`,
+        text: `Hotel booking request submitted for ${data.boarding?.pet?.name || "your pet"} on ${workflowState.form.check_in} (same-day stay, 9 AM - 7 PM). Waiting for receptionist approval.`,
         suggestions: ["Check my booking status"],
       }]);
       closeWorkflow();
@@ -653,34 +653,25 @@ const RoleAwareChatbot = ({
   const convCheckIn = (dateStr) => {
     setMessages((prev) => [...prev, {
       sender: "user",
-      text: `📅 Check-in: ${dateStr}`,
+      text: `📅 Stay date: ${dateStr}`,
       timestamp: new Date().toISOString(),
     }]);
-    setMessages((prev) => [...prev, {
-      sender: "bot",
-      text: "And when will your pet check out?",
-      timestamp: new Date().toISOString(),
-      isBookingPrompt: true,
-    }]);
-    setConvFlow((prev) => ({ ...prev, step: "select_checkout", data: { ...prev.data, check_in: dateStr } }));
+    // Same-day stay (store open 9 AM - 7 PM): skip check-out, go to room select
+    convCheckOut(dateStr, dateStr);
   };
 
-  const convCheckOut = async (dateStr) => {
-    const cin = new Date(convFlow.data.check_in);
+  const convCheckOut = async (dateStr, checkInOverride = null) => {
+    const cin = new Date(checkInOverride || convFlow.data.check_in);
     const cout = new Date(dateStr);
-    if (cout <= cin) {
-      setError("Check-out must be after check-in.");
+    if (cout < cin) {
+      setError("Check-out must be on or after check-in.");
       return;
     }
     setError("");
-    setMessages((prev) => [...prev, {
-      sender: "user",
-      text: `📅 Check-out: ${dateStr}`,
-      timestamp: new Date().toISOString(),
-    }]);
 
-    // Load available rooms
-    setConvFlow((prev) => ({ ...prev, step: "select_room", loading: true, data: { ...prev.data, check_out: dateStr } }));
+    // Load available rooms (same-day: check_out = check_in)
+    const checkInStr = checkInOverride || convFlow.data.check_in;
+    setConvFlow((prev) => ({ ...prev, step: "select_room", loading: true, data: { ...prev.data, check_in: checkInStr, check_out: checkInStr } }));
     setMessages((prev) => [...prev, {
       sender: "bot",
       text: "Loading available rooms...",
@@ -780,7 +771,7 @@ const RoleAwareChatbot = ({
         });
         setMessages((prev) => [...prev, {
           sender: "bot",
-          text: `✅ Hotel stay request submitted!\n\nBooking ID: #${data.boarding?.id || "—"}\nPet: ${convFlow.data.pet_name}\nDates: ${convFlow.data.check_in} → ${convFlow.data.check_out}\n\n${CUSTOMER_APPROVAL_NOTICE}`,
+          text: `✅ Hotel stay request submitted!\n\nBooking ID: #${data.boarding?.id || "—"}\nPet: ${convFlow.data.pet_name}\nDate: ${convFlow.data.check_in} (same-day stay, 9 AM - 7 PM)\n\n${CUSTOMER_APPROVAL_NOTICE}`,
           timestamp: new Date().toISOString(),
           isBookingSuccess: true,
           suggestions: ["Check my booking status"],
@@ -1111,8 +1102,8 @@ const RoleAwareChatbot = ({
             ) : (
               <>
                 <div className="rbac-booking-confirm-row"><span>Pet</span><strong>{convFlow.data.pet_name}</strong></div>
-                <div className="rbac-booking-confirm-row"><span>Check-in</span><strong>{convFlow.data.check_in}</strong></div>
-                <div className="rbac-booking-confirm-row"><span>Check-out</span><strong>{convFlow.data.check_out}</strong></div>
+                <div className="rbac-booking-confirm-row"><span>Stay Date</span><strong>{convFlow.data.check_in}</strong></div>
+                <div className="rbac-booking-confirm-row"><span>Duration</span><strong>Same-day (9 AM - 7 PM)</strong></div>
                 <div className="rbac-booking-confirm-row"><span>Room</span><strong>{convFlow.data.room_label}</strong></div>
                 {convFlow.data.notes && <div className="rbac-booking-confirm-row"><span>Notes</span><strong>{convFlow.data.notes}</strong></div>}
               </>
@@ -1432,19 +1423,11 @@ const RoleAwareChatbot = ({
                     ))}
                   </select>
                 </label>
-                <label>Check-in Date
+                <label>Stay Date (same-day check-in/check-out)
                   <DatePickerInput
                     selected={workflowState.form.check_in ? new Date(workflowState.form.check_in) : null}
                     onChange={(date) => updateWorkflowForm("check_in", date ? date.toISOString().split("T")[0] : "")}
-                    placeholderText="Pick check-in..."
-                    required
-                  />
-                </label>
-                <label>Check-out Date
-                  <DatePickerInput
-                    selected={workflowState.form.check_out ? new Date(workflowState.form.check_out) : null}
-                    onChange={(date) => updateWorkflowForm("check_out", date ? date.toISOString().split("T")[0] : "")}
-                    placeholderText="Pick check-out..."
+                    placeholderText="Pick stay date..."
                     required
                   />
                 </label>
