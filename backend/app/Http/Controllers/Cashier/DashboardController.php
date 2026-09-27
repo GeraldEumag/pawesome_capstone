@@ -606,10 +606,13 @@ class DashboardController extends Controller
             });
 
         $boardings = DB::table('boardings')
-            ->whereIn('status', ['approved', 'scheduled', 'checked_in', 'in_care', 'ready_for_pickup'])
+            ->whereIn('status', ['pending', 'approved', 'scheduled', 'checked_in', 'in_care', 'ready_for_pickup'])
             ->where('payment_status', 'pending')
             ->where(function ($q) {
-                $q->whereNotNull('payment_proof')
+                // Walk-in bookings (pending status) have no proof yet — always show them
+                // Other statuses: only show if customer uploaded proof or indicated cash
+                $q->where('status', 'pending')
+                  ->orWhereNotNull('payment_proof')
                   ->orWhere('payment_method', 'cash');
             })
             ->orderBy('updated_at', 'desc')
@@ -669,8 +672,10 @@ class DashboardController extends Controller
             });
 
         // Get veterinary consultations awaiting payment (walk-in or online)
+        // Include pending/approved so walk-in bookings created by receptionist are visible;
+        // cashier can see the booking and will collect payment when status reaches awaiting_payment.
         $appointments = Appointment::with(['customer', 'pet', 'service'])
-            ->whereIn('status', ['awaiting_payment', 'treated'])
+            ->whereIn('status', ['pending', 'approved', 'in_consultation', 'needs_confinement', 'awaiting_payment', 'treated'])
             ->whereIn('payment_status', ['unpaid', 'pending'])
             ->orderBy('updated_at', 'desc')
             ->get()
@@ -697,7 +702,40 @@ class DashboardController extends Controller
                 ];
             });
 
-        $allPayments = $orders->concat($serviceRequests)->concat($boardings)->concat($confinements)->concat($appointments);
+        // Get grooming appointments pending payment (walk-in and online)
+        $groomings = DB::table('groomings')
+            ->whereNotIn('status', ['completed', 'cancelled', 'rejected'])
+            ->whereIn('payment_status', ['pending', 'unpaid'])
+            ->orderBy('updated_at', 'desc')
+            ->get()
+            ->map(function ($grooming) {
+                $customer = DB::table('customers')->where('id', $grooming->customer_id)->first();
+                $pet      = DB::table('pets')->where('id', $grooming->pet_id)->first();
+                return [
+                    'id'               => $grooming->id,
+                    'payable_type'     => 'grooming',
+                    'type'             => 'grooming',
+                    'source'           => 'grooming',
+                    'payment_source'   => 'grooming',
+                    'customer_name'    => $customer?->name ?? 'Customer',
+                    'customer_email'   => $customer?->email ?? null,
+                    'pet_name'         => $pet?->name ?? null,
+                    'request_type'     => 'Grooming',
+                    'service_name'     => $grooming->service ?? 'Grooming Service',
+                    'amount'           => $grooming->total_amount ?? $grooming->amount ?? 0,
+                    'payment_method'   => $grooming->payment_method ?? null,
+                    'payment_reference'=> $grooming->payment_reference ?? null,
+                    'payment_proof'    => $grooming->payment_proof ?? null,
+                    'proof_url'        => $grooming->payment_proof
+                        ? url('/api/files/payment-proofs/grooming/' . $grooming->id . '/view')
+                        : null,
+                    'request_date'     => $grooming->updated_at,
+                    'status'           => $grooming->status,
+                    'payment_status'   => $grooming->payment_status,
+                ];
+            });
+
+        $allPayments = $orders->concat($serviceRequests)->concat($boardings)->concat($confinements)->concat($appointments)->concat($groomings);
 
         return response()->json(['payments' => $allPayments]);
     }

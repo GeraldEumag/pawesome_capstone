@@ -32,10 +32,10 @@
   height: 100vh;
 }
 
-/* Right column: permanently docked order + payment panel */
+/* Right column: unified two-step order panel */
 .pos-order-panel {
-  width: 400px;
-  max-width: 42vw;
+  width: 360px;
+  max-width: 38vw;
   flex-shrink: 0;
   display: flex;
   flex-direction: column;
@@ -44,6 +44,133 @@
   border-left: 1px solid var(--color-border, rgba(255,95,147,.18));
   box-shadow: -8px 0 40px rgba(0,0,0,.06);
   z-index: 30;
+  overflow: hidden;
+}
+
+/* Step body — animates in when step changes */
+@keyframes pos-step-in {
+  from { opacity: 0; transform: translateX(14px); }
+  to   { opacity: 1; transform: none; }
+}
+
+.pos-step-body {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+  animation: pos-step-in 0.22s ease;
+}
+
+/* Step indicator breadcrumb */
+.pos-step-indicator {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 16px 6px;
+  flex-shrink: 0;
+}
+
+.pos-step-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  height: 26px;
+  padding: 0 12px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 700;
+  transition: all 0.2s;
+}
+
+.pos-step-chip--active  { background: var(--color-primary, #ff5f93); color: #fff; }
+.pos-step-chip--done    { background: #10b981; color: #fff; }
+.pos-step-chip--pending { background: #f1f5f9; color: #94a3b8; }
+
+.pos-step-connector {
+  flex: 1;
+  height: 2px;
+  background: #e2e8f0;
+  border-radius: 1px;
+  transition: background 0.25s;
+}
+
+.pos-step-connector--active { background: #10b981; }
+
+/* Proceed to payment CTA */
+.pos-drawer-foot {
+  flex-shrink: 0;
+  padding: 10px 14px 14px;
+  background: var(--color-surface-solid, #fff);
+}
+
+.pos-proceed-btn {
+  width: 100%;
+  height: 56px;
+  border-radius: 14px;
+  border: none;
+  background: linear-gradient(135deg, var(--color-primary, #ff5f93), var(--color-primary-light, #ff8db5));
+  color: #fff;
+  font-size: 14px;
+  font-weight: 800;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  box-shadow: 0 8px 24px rgba(255,95,147,.30);
+  transition: all 0.15s;
+}
+
+.pos-proceed-btn:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 32px rgba(255,95,147,.40);
+}
+
+.pos-proceed-btn:disabled {
+  background: #e5e7eb;
+  color: #9ca3af;
+  box-shadow: none;
+  cursor: not-allowed;
+}
+
+/* Back button + compact payment header */
+.pos-back-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  height: 32px;
+  padding: 0 12px;
+  border-radius: 8px;
+  border: 1px solid var(--color-border, rgba(255,95,147,.18));
+  background: transparent;
+  color: var(--color-muted, #64748b);
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.12s;
+  flex-shrink: 0;
+}
+
+.pos-back-btn:hover { background: #fee2e2; color: #dc2626; border-color: #fca5a5; }
+
+.pos-pay-summary-compact {
+  flex: 1;
+  display: flex;
+  align-items: baseline;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.pos-pay-item-count {
+  font-size: 12px;
+  color: var(--color-muted, #64748b);
+  font-weight: 500;
+}
+
+.pos-pay-total-label {
+  font-size: 22px;
+  font-weight: 900;
+  color: var(--color-primary, #ff5f93);
 }
 
 .pos-order-panel .pos-cart-items {
@@ -65,114 +192,61 @@
   justify-content: center;
 }
 
-/* Payment block — shrinks and scrolls internally on short screens so the
-   confirm button below never gets pushed off the panel */
-.pos-order-pay {
-  flex: 0 1 auto;
-  min-height: 0;
-  overflow-y: auto;
-  border-top: 1px solid var(--color-border, rgba(255,95,147,.18));
-  padding: 10px 14px;
-  background: var(--color-surface, #fdf7fa);
-}
-
 /* Confirm button pinned to the very bottom of the order panel */
 .pos-order-foot {
   flex-shrink: 0;
   padding: 10px 14px 14px;
-  background: var(--color-surface, #fdf7fa);
+  background: var(--color-surface-solid, #fff);
+  border-top: 1px solid var(--color-border, rgba(255,95,147,.18));
 }
 
-.pos-order-pay-head {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 10px;
-}
+.pos-order-foot .pos-confirm-btn { width: 100%; }
 
-.pos-order-pay-title {
-  font-size: 13px;
-  font-weight: 800;
-  color: var(--color-heading, #191919);
-  display: flex;
-  align-items: center;
-  gap: 7px;
-}
+.pos-numpad-change--short { color: #dc2626; }
 
-.pos-order-pay-due {
-  display: flex;
-  align-items: baseline;
-  gap: 8px;
-}
+/* Payment method tabs — compact inside the docked panel */
+.pos-order-panel .pos-payment-methods { padding: 8px 14px; }
+.pos-order-panel .pos-pm-btn { height: 44px; flex-direction: row; gap: 6px; font-size: 12px; }
+.pos-order-panel .pos-pm-icon { font-size: 15px; }
 
-.pos-order-pay-due .pos-payment-amount-label {
-  font-size: 10px;
-}
-
-.pos-order-pay-due strong {
-  font-size: 22px;
-  font-weight: 900;
-  color: var(--color-primary, #ff5f93);
-}
-
-.pos-order-foot .pos-confirm-btn {
-  width: 100%;
-}
-
-.pos-order-pay-hint {
-  margin-top: 8px;
-  text-align: center;
-  font-size: 11px;
-  color: var(--color-muted, #64748b);
-}
-
-.pos-numpad-change--short {
-  color: #dc2626;
-}
-
-/* Compact overrides — payment block lives inside the docked panel */
-.pos-order-pay .pos-payment-methods {
-  padding: 0;
-}
-
-.pos-order-pay .pos-pm-btn {
-  height: 44px;
-  flex-direction: row;
-  gap: 6px;
-  font-size: 12px;
-}
-
-.pos-order-pay .pos-pm-icon { font-size: 15px; }
-
-.pos-order-pay .pos-numpad-section {
-  flex: none;
+/* Numpad section fills remaining space in the payment step */
+.pos-order-panel .pos-numpad-section {
+  flex: 1;
+  min-height: 0;
   overflow: visible;
-  padding: 0;
-  gap: 8px;
-  margin-top: 10px;
+  padding: 0 14px 8px;
+  gap: 10px;
 }
 
-.pos-order-pay .pos-numpad-display { padding: 10px 14px; }
-.pos-order-pay .pos-numpad-received-value { font-size: 30px; }
-.pos-order-pay .pos-numpad-change { font-size: 15px; margin-top: 6px; }
-.pos-order-pay .pos-numpad-change strong { font-size: 17px; }
+.pos-order-panel .pos-numpad-display { padding: 10px 14px; flex-shrink: 0; }
+.pos-order-panel .pos-numpad-received-value { font-size: 30px; }
+.pos-order-panel .pos-numpad-change { font-size: 14px; margin-top: 4px; }
+.pos-order-panel .pos-numpad-change strong { font-size: 16px; }
 
-.pos-order-pay .pos-numpad { gap: 6px; }
-.pos-order-pay .pos-numpad-key { height: 40px; font-size: 16px; border-radius: 8px; }
-.pos-order-pay .pos-bill-btn { height: 30px; font-size: 11px; padding: 0 10px; }
-.pos-order-pay .pos-numpad-clear { height: 30px; }
+/* Numpad grid stretches to fill remaining height — no scrolling */
+.pos-order-panel .pos-numpad {
+  flex: 1;
+  min-height: 0;
+  gap: 6px;
+  grid-template-rows: repeat(4, 1fr);
+}
 
-.pos-order-pay .pos-digital-section {
-  flex: none;
-  padding: 0;
-  margin-top: 10px;
-  gap: 10px;
-  align-items: stretch;
+.pos-order-panel .pos-numpad-key { height: auto; min-height: 44px; font-size: 18px; border-radius: 8px; }
+.pos-order-panel .pos-bill-btn   { height: 30px; font-size: 11px; padding: 0 10px; }
+.pos-order-panel .pos-numpad-clear { height: 30px; flex-shrink: 0; }
+.pos-order-panel .pos-bill-presets { flex-shrink: 0; }
+
+.pos-order-panel .pos-digital-section {
+  flex: 1;
+  padding: 0 14px;
+  gap: 14px;
+  align-items: center;
+  justify-content: center;
   text-align: center;
 }
 
-.pos-order-pay .pos-digital-ref-input { height: 42px; font-size: 14px; }
-.pos-order-pay .pos-digital-amount { justify-content: center; }
+.pos-order-panel .pos-digital-ref-input { height: 44px; font-size: 14px; }
+.pos-order-panel .pos-digital-amount { justify-content: center; }
 
 /* ═══════════════════════════════════
    TOP BAR
@@ -1189,7 +1263,7 @@
 .pos-totals-grand span:last-child {
   font-size: 26px;
   font-weight: 900;
-  color: var(--color-heading, #191919);
+  color: var(--color-primary, #ff5f93);
 }
 
 /* ═══════════════════════════════════
@@ -1830,22 +1904,46 @@
 /* ═══════════════════════════════════
    RESPONSIVE
    ═══════════════════════════════════ */
-@media (max-width: 1080px) {
-  /* Stack the docked order panel under the products on narrow screens */
-  .pos-kiosk { flex-direction: column; overflow-y: auto; height: auto; min-height: 100vh; }
 
-  .pos-main { height: auto; min-height: 60vh; }
+/* Very short laptop windows: let the numpad section scroll as a last resort */
+@media (min-width: 1081px) and (max-height: 620px) {
+  .pos-order-panel .pos-numpad-section { overflow-y: auto; }
+  .pos-order-panel .pos-numpad { flex: none; grid-template-rows: none; }
+  .pos-order-panel .pos-numpad-key { height: 40px; }
+}
+
+@media (max-width: 1080px) {
+  /* Tablet / narrow laptop: products on top, single order panel below.
+     Page scrolls as one unit — numpad is never trapped in a scroll strip. */
+  .pos-kiosk {
+    flex-wrap: wrap;
+    overflow-y: auto;
+    height: auto;
+    min-height: 100vh;
+  }
+
+  .pos-main { flex: 1 1 100%; height: auto; min-height: 55vh; }
 
   .pos-order-panel {
     width: 100%;
-    max-width: 100%;
+    max-width: none;
     height: auto;
-    min-height: 50vh;
     border-left: none;
     border-top: 1px solid var(--color-border, rgba(255,95,147,.18));
+    box-shadow: none;
   }
 
+  .pos-step-body { min-height: auto; }
   .pos-order-panel .pos-cart-items { min-height: 160px; }
+
+  /* Payment step on tablet: flat layout, comfortable touch keys */
+  .pos-order-panel .pos-numpad-section { flex: none; }
+  .pos-order-panel .pos-numpad { flex: none; grid-template-rows: none; }
+  .pos-order-panel .pos-numpad-key { height: 52px; }
+}
+
+@media (max-width: 700px) {
+  .pos-order-panel .pos-numpad-key { height: 54px; }
 }
 
 @media (max-width: 768px) {

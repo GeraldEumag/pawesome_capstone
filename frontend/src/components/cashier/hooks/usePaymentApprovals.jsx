@@ -16,6 +16,7 @@ export const usePaymentApprovals = (user) => {
   // Filter states
   const [searchTerm, setSearchTerm] = useState("");
   const [typeFilter, setTypeFilter] = useState("all");
+  const [methodFilter, setMethodFilter] = useState("all");
   const [sortBy, setSortBy] = useState("date-desc");
   
   // Bulk selection
@@ -165,7 +166,8 @@ export const usePaymentApprovals = (user) => {
   }, []);
 
   // Print receipt helper — uses shared receiptPrinter utility
-  const printReceipt = useCallback((data, payment, referenceNumber = "") => {
+  // cashParams = { cashReceived?: number, change?: number }
+  const printReceipt = useCallback((data, payment, referenceNumber = "", cashParams = {}) => {
     const receiptNumber = data.receipt_number || data.receipt?.receipt_number || `REC-${payment.id}`;
     const amount = Number(data.amount || data.receipt?.total_amount || payment.amount || payment.total_amount || 0);
     const cashier = user?.name || "Cashier";
@@ -198,6 +200,8 @@ export const usePaymentApprovals = (user) => {
       paymentStatus: "paid",
       referenceNumber: refNum,
       verifiedBy: cashier,
+      amountReceived: cashParams.cashReceived ?? undefined,
+      change:         cashParams.change       ?? undefined,
       items,
       subtotal: amount,
       total: amount,
@@ -205,7 +209,8 @@ export const usePaymentApprovals = (user) => {
   }, [user]);
 
   // Verify single payment
-  const verifyPayment = useCallback(async (payment, referenceNumber = "") => {
+  // cashParams = { cashReceived?: number, change?: number }
+  const verifyPayment = useCallback(async (payment, referenceNumber = "", cashParams = {}) => {
     const confirmed = await showConfirm(
       `Verify payment of ₱${Number(payment.amount || payment.total_amount || 0).toLocaleString("en-PH")} from ${payment.customer_name || payment.customer?.name || "Customer"}?`
     );
@@ -218,10 +223,12 @@ export const usePaymentApprovals = (user) => {
         cashier_remarks: "Payment verified by cashier",
         reference_number: referenceNumber.trim(),
         payment_method: payment.payment_method || "counter",
+        ...(cashParams.cashReceived != null ? { cash_received: cashParams.cashReceived } : {}),
+        ...(cashParams.change       != null ? { change:         cashParams.change       } : {}),
       });
 
       if (data && data.success) {
-        printReceipt(data, payment, referenceNumber);
+        printReceipt(data, payment, referenceNumber, cashParams);
         await showSuccess(data.message || `Payment verified. Receipt: ${data.receipt_number || "Generated"}`);
         fetchRequests({ silent: true });
         return data;
@@ -334,7 +341,11 @@ export const usePaymentApprovals = (user) => {
           .includes(searchTerm.toLowerCase());
       const matchesType = typeFilter === "all" ||
         (item.request_type || item.type || "").toLowerCase() === typeFilter.toLowerCase();
-      return matchesSearch && matchesType;
+      const method = (item.payment_method || "").toLowerCase();
+      const matchesMethod = methodFilter === "all" ||
+        method === methodFilter.toLowerCase() ||
+        (methodFilter === "cash" && (!method || method === "cash" || method === "counter"));
+      return matchesSearch && matchesType && matchesMethod;
     });
 
     // Sort
@@ -358,7 +369,7 @@ export const usePaymentApprovals = (user) => {
     });
 
     return filtered;
-  }, [requests, searchTerm, typeFilter, sortBy]);
+  }, [requests, searchTerm, typeFilter, methodFilter, sortBy]);
 
   // Selection handlers (now defined after filteredRequests)
   const toggleSelection = useCallback((id) => {
@@ -433,6 +444,8 @@ export const usePaymentApprovals = (user) => {
     setSearchTerm,
     typeFilter,
     setTypeFilter,
+    methodFilter,
+    setMethodFilter,
     sortBy,
     setSortBy,
     

@@ -1,24 +1,91 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useMemo } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { 
-  faRefresh, 
-  faSpinner, 
-  faSearch, 
-  faFilter, 
-  faSort, 
-  faDownload,
+import {
+  faArrowsRotate,
+  faSpinner,
+  faMagnifyingGlass,
+  faFilter,
+  faSort,
+  faFileArrowDown,
   faCheck,
-  faTimes,
+  faXmark,
   faPaperclip,
-  faTimesCircle,
-  faPrint
+  faPrint,
+  faMoneyBillWave,
+  faMobileScreen,
+  faWallet,
+  faHotel,
+  faStethoscope,
+  faScissors,
+  faShoppingBag,
+  faBoxOpen,
+  faCheckCircle,
+  faTriangleExclamation,
+  faClockRotateLeft,
+  faDeleteLeft,
 } from "@fortawesome/free-solid-svg-icons";
-import { showSuccess, showError, showWarning, showAlert } from "../../../utils/alert.jsx";
+import { showSuccess, showError, showWarning } from "../../../utils/alert.jsx";
 import { printReceipt } from "../../../utils/receiptPrinter";
 import { usePaymentApprovals } from "../hooks/usePaymentApprovals.jsx";
 import { useAuth } from "../../../context/AuthContext";
 import "./PaymentApprovals.css";
 
+/* ── Payment method config ── */
+const METHOD_CONFIG = {
+  cash:    { label: "Cash",   color: "#10b981", bg: "#dcfce7", icon: faMoneyBillWave },
+  gcash:   { label: "GCash",  color: "#4f46e5", bg: "#ede9fe", icon: faMobileScreen  },
+  maya:    { label: "Maya",   color: "#0ea5e9", bg: "#e0f2fe", icon: faWallet        },
+  counter: { label: "Cash",   color: "#10b981", bg: "#dcfce7", icon: faMoneyBillWave },
+};
+
+const BILL_PRESETS = [50, 100, 200, 500, 1000];
+
+const getMethodConfig = (method) => {
+  const key = (method || "").toLowerCase();
+  return METHOD_CONFIG[key] || { label: method || "—", color: "#64748b", bg: "#f1f5f9", icon: faWallet };
+};
+
+const getTypeIcon = (type) => {
+  switch ((type || "").toLowerCase()) {
+    case "boarding":    return faHotel;
+    case "appointment": return faStethoscope;
+    case "grooming":    return faScissors;
+    case "service":     return faShoppingBag;
+    case "order":       return faBoxOpen;
+    default:            return faBoxOpen;
+  }
+};
+
+/* Customer initials avatar */
+const CustomerAvatar = ({ name }) => {
+  const initials = (name || "?")
+    .split(" ")
+    .filter(Boolean)
+    .slice(0, 2)
+    .map(w => w[0].toUpperCase())
+    .join("");
+  const hue = [...(name || "?")].reduce((acc, c) => acc + c.charCodeAt(0), 0) % 360;
+  return (
+    <div className="pa-avatar" style={{ background: `hsl(${hue},55%,50%)` }} aria-hidden="true">
+      {initials}
+    </div>
+  );
+};
+
+const isDigitalMethod = (method) => {
+  const m = (method || "").toLowerCase();
+  return m === "gcash" || m === "maya";
+};
+
+const isCashMethod = (method) => {
+  const m = (method || "").toLowerCase();
+  return !m || m === "cash" || m === "counter";
+};
+
+const fmt = (n) =>
+  Number(n || 0).toLocaleString("en-PH", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
+/* ── Main component ── */
 const PaymentApprovals = () => {
   const { user } = useAuth();
   const {
@@ -32,6 +99,8 @@ const PaymentApprovals = () => {
     setSearchTerm,
     typeFilter,
     setTypeFilter,
+    methodFilter,
+    setMethodFilter,
     sortBy,
     setSortBy,
     selectedIds,
@@ -49,120 +118,155 @@ const PaymentApprovals = () => {
     closeProof,
   } = usePaymentApprovals(user);
 
-  // State for reference number input in proof modal
+  /* ── Modal local state ── */
   const [referenceNumber, setReferenceNumber] = useState("");
-  const [isRefVerified, setIsRefVerified] = useState(false);
-  const [showReceipt, setShowReceipt] = useState(false);
-  const [receiptData, setReceiptData] = useState(null);
-  
-  // Use ref to always have latest value
+  const [cashReceived, setCashReceived]       = useState("");   // string, e.g. "500"
+  const [showReceipt, setShowReceipt]         = useState(false);
+  const [receiptData, setReceiptData]         = useState(null);
+
   const referenceNumberRef = useRef(referenceNumber);
   referenceNumberRef.current = referenceNumber;
-  
-  // Reset ref verified state when modal opens/closes
+  const cashReceivedRef = useRef(cashReceived);
+  cashReceivedRef.current = cashReceived;
+
+  /* Reset local modal state when modal opens/closes */
   useEffect(() => {
     if (!proofModal) {
-      setIsRefVerified(false);
       setReferenceNumber("");
+      setCashReceived("");
     }
   }, [proofModal]);
 
-  // Handle verify with reference number from modal
+  /* Derived cash values */
+  const amountDue  = Number(proofModal?.payment?.amount || proofModal?.payment?.total_amount || 0);
+  const cashNum    = Number(cashReceived) || 0;
+  const changeAmt  = useMemo(() => Math.max(cashNum - amountDue, 0), [cashNum, amountDue]);
+  const cashShort  = useMemo(() => (cashNum > 0 && cashNum < amountDue ? amountDue - cashNum : 0), [cashNum, amountDue]);
+  const cashReady  = cashNum >= amountDue && amountDue > 0;   // can proceed
+
+  /* ── Numpad handlers ── */
+  const handleNumpadKey = (key) => {
+    setCashReceived(prev => {
+      if (prev.length >= 9) return prev;        // max 9 digits
+      if (key === "." && prev.includes(".")) return prev;
+      if (key === "." && prev === "") return "0.";
+      return prev + key;
+    });
+  };
+
+  const handleDeleteKey = () => setCashReceived(prev => prev.slice(0, -1));
+
+  const handleBillPreset = (amount) => {
+    // Add bill to running total (like Square/Toast)
+    setCashReceived(prev => {
+      const current = Number(prev) || 0;
+      return String(current + amount);
+    });
+  };
+
+  const handleExact = () => setCashReceived(String(amountDue));
+
+  /* ── Verify handler ── */
   const handleVerifyFromModal = async () => {
-    const refNum = referenceNumberRef.current;
-    
-    if (!proofModal?.payment) {
-      showError("Payment data not available");
-      return;
+    if (!proofModal?.payment) { showError("Payment data not available"); return; }
+    const payment = proofModal.payment;
+    const refNum  = referenceNumberRef.current.trim();
+
+    if (isCashMethod(payment.payment_method)) {
+      // Cash: require amount entered AND sufficient
+      if (!cashReceivedRef.current || cashNum <= 0) {
+        showWarning("Please enter the cash amount received.");
+        return;
+      }
+      if (cashNum < amountDue) {
+        showWarning(`Cash received (₱${fmt(cashNum)}) is less than the amount due (₱${fmt(amountDue)}).`);
+        return;
+      }
+    } else {
+      // Digital: require reference number
+      if (!refNum) {
+        showWarning(`Please enter the ${getMethodConfig(payment.payment_method).label} reference number to verify.`);
+        return;
+      }
+      if (refNum.length < 6) {
+        showWarning("Reference number must be at least 6 characters.");
+        return;
+      }
     }
-    
-    const result = await verifyPayment(proofModal.payment, refNum?.trim() || "");
+
+    const cashParams = isCashMethod(payment.payment_method)
+      ? { cashReceived: cashNum, change: changeAmt }
+      : {};
+
+    const result = await verifyPayment(payment, refNum, cashParams);
     if (result?.success) {
-      // Show receipt after successful verification
-      const payment = proofModal.payment;
       setReceiptData({
-        id: payment.id,
-        customer_name: payment.customer_name,
-        service_name: payment.service_name || payment.request_type || "Service",
-        amount: payment.amount || 0,
-        receipt_number: result.receipt_number,
-        reference_number: refNum?.trim() || "Counter Payment",
-        paid_at: new Date().toISOString(),
-        verified_by: user?.name || "Cashier",
+        id:               payment.id,
+        customer_name:    payment.customer_name,
+        service_name:     payment.service_name || payment.request_type || "Service",
+        amount:           amountDue,
+        payment_method:   payment.payment_method || "Cash",
+        receipt_number:   result.receipt_number,
+        reference_number: refNum || null,
+        cash_received:    isCashMethod(payment.payment_method) ? cashNum : null,
+        change:           isCashMethod(payment.payment_method) ? changeAmt : null,
+        paid_at:          new Date().toISOString(),
+        verified_by:      user?.name || "Cashier",
       });
       closeProof();
       setShowReceipt(true);
       setReferenceNumber("");
+      setCashReceived("");
     }
   };
 
-  // Handle reject from modal
   const handleRejectFromModal = async () => {
-    if (!proofModal?.payment) {
-      showError("Payment data not available");
-      return;
-    }
+    if (!proofModal?.payment) { showError("Payment data not available"); return; }
     await rejectPayment(proofModal.payment);
     closeProof();
     setReferenceNumber("");
-  };
-
-  const getTypeIcon = (type) => {
-    switch (type?.toLowerCase()) {
-      case "boarding": return "🏨";
-      case "appointment": return "🩺";
-      case "grooming": return "✂️";
-      case "service": return "🛍️";
-      default: return "📦";
-    }
+    setCashReceived("");
   };
 
   return (
     <div className="payment-approvals">
-      {/* Header */}
+
+      {/* ── Header ── */}
       <div className="pa-header">
         <div className="pa-header-title">
           <span className="pa-badge">CASHIER</span>
           <h2>Payment Approvals</h2>
-          <p>Verify customer payment proofs and process transactions</p>
+          <p>Verify customer payments and process transactions</p>
         </div>
         <div className="pa-header-actions">
-          <button
-            className="pa-btn-secondary"
-            onClick={() => fetchRequests()}
-            disabled={refreshing}
-          >
-            <FontAwesomeIcon icon={refreshing ? faSpinner : faRefresh} spin={refreshing} />
-            {refreshing ? "Refreshing..." : "Refresh"}
+          <button className="pa-btn-secondary" onClick={() => fetchRequests()} disabled={refreshing}>
+            <FontAwesomeIcon icon={refreshing ? faSpinner : faArrowsRotate} spin={refreshing} />
+            {refreshing ? "Refreshing…" : "Refresh"}
           </button>
-          <button
-            className="pa-btn-primary"
-            onClick={exportToCSV}
-            disabled={filteredRequests.length === 0}
-          >
-            <FontAwesomeIcon icon={faDownload} /> Export CSV
+          <button className="pa-btn-primary" onClick={exportToCSV} disabled={filteredRequests.length === 0}>
+            <FontAwesomeIcon icon={faFileArrowDown} /> Export CSV
           </button>
         </div>
       </div>
 
-      {/* Stats */}
+      {/* ── Stats ── */}
       <div className="pa-stats">
         <div className="pa-stat-card">
-          <div className="pa-stat-icon">📋</div>
+          <div className="pa-stat-icon pa-stat-icon--blue"><FontAwesomeIcon icon={faClockRotateLeft} /></div>
           <div className="pa-stat-content">
             <span className="pa-stat-value">{stats.total}</span>
             <span className="pa-stat-label">Pending</span>
           </div>
         </div>
         <div className="pa-stat-card pa-stat-highlight">
-          <div className="pa-stat-icon">💰</div>
+          <div className="pa-stat-icon pa-stat-icon--green"><FontAwesomeIcon icon={faMoneyBillWave} /></div>
           <div className="pa-stat-content">
             <span className="pa-stat-value">₱{stats.totalAmount.toLocaleString("en-PH")}</span>
             <span className="pa-stat-label">Total Amount</span>
           </div>
         </div>
         <div className="pa-stat-card">
-          <div className="pa-stat-icon">✅</div>
+          <div className="pa-stat-icon pa-stat-icon--pink"><FontAwesomeIcon icon={faCheckCircle} /></div>
           <div className="pa-stat-content">
             <span className="pa-stat-value">{stats.verifiedToday}</span>
             <span className="pa-stat-label">Verified Today</span>
@@ -170,13 +274,13 @@ const PaymentApprovals = () => {
         </div>
       </div>
 
-      {/* Filters */}
+      {/* ── Filters ── */}
       <div className="pa-filters">
         <div className="pa-search">
-          <FontAwesomeIcon icon={faSearch} />
+          <FontAwesomeIcon icon={faMagnifyingGlass} className="pa-search-icon" />
           <input
             type="text"
-            placeholder="Search customer..."
+            placeholder="Search customer…"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
           />
@@ -190,7 +294,26 @@ const PaymentApprovals = () => {
             <option value="appointment">Appointment</option>
             <option value="grooming">Grooming</option>
             <option value="service">Service</option>
+            <option value="order">Order</option>
           </select>
+        </div>
+
+        <div className="pa-method-chips">
+          {[
+            { value: "all",   label: "All",   icon: null            },
+            { value: "cash",  label: "Cash",  icon: faMoneyBillWave  },
+            { value: "gcash", label: "GCash", icon: faMobileScreen   },
+            { value: "maya",  label: "Maya",  icon: faWallet         },
+          ].map(({ value, label, icon }) => (
+            <button
+              key={value}
+              className={`pa-method-chip${methodFilter === value ? " active" : ""}`}
+              data-method={value}
+              onClick={() => setMethodFilter(value)}
+            >
+              {icon && <FontAwesomeIcon icon={icon} />} {label}
+            </button>
+          ))}
         </div>
 
         <div className="pa-filter-group">
@@ -206,7 +329,7 @@ const PaymentApprovals = () => {
         </div>
 
         <div className="pa-filter-meta">
-          <span className="pa-result-count">{filteredRequests.length} results</span>
+          <span className="pa-result-count">{filteredRequests.length} result{filteredRequests.length !== 1 ? "s" : ""}</span>
           {lastUpdated && (
             <span className="pa-last-updated">
               Updated {lastUpdated.toLocaleTimeString("en-PH", { hour: "2-digit", minute: "2-digit" })}
@@ -215,7 +338,7 @@ const PaymentApprovals = () => {
         </div>
       </div>
 
-      {/* Bulk Actions */}
+      {/* ── Bulk Actions ── */}
       {selectedIds.length > 0 && (
         <div className="pa-bulk-bar">
           <div className="pa-bulk-info">
@@ -228,7 +351,7 @@ const PaymentApprovals = () => {
               <span>{selectedIds.length} selected</span>
             </label>
             <button className="pa-btn-clear" onClick={clearSelection}>
-              <FontAwesomeIcon icon={faTimesCircle} /> Clear
+              <FontAwesomeIcon icon={faXmark} /> Clear
             </button>
           </div>
           <div className="pa-bulk-actions">
@@ -236,62 +359,60 @@ const PaymentApprovals = () => {
               <FontAwesomeIcon icon={faCheck} /> Verify All
             </button>
             <button className="pa-btn-bulk-reject" onClick={bulkReject}>
-              <FontAwesomeIcon icon={faTimes} /> Reject All
+              <FontAwesomeIcon icon={faXmark} /> Reject All
             </button>
           </div>
         </div>
       )}
 
-      {/* Loading */}
+      {/* ── Loading ── */}
       {loading && (
         <div className="pa-loading">
           <FontAwesomeIcon icon={faSpinner} spin size="2x" />
-          <p>Loading payment requests...</p>
+          <p>Loading payment requests…</p>
         </div>
       )}
 
-      {/* Empty State */}
+      {/* ── Empty State ── */}
       {!loading && filteredRequests.length === 0 && (
         <div className="pa-empty">
-          <div className="pa-empty-icon">📭</div>
+          <div className="pa-empty-icon"><FontAwesomeIcon icon={faBoxOpen} /></div>
           <h3>No pending payments</h3>
           <p>
-            {searchTerm || typeFilter !== "all"
+            {searchTerm || typeFilter !== "all" || methodFilter !== "all"
               ? "Try adjusting your filters to see more results."
               : "New payment requests will appear here automatically."}
           </p>
-          {(searchTerm || typeFilter !== "all") && (
-            <button
-              className="pa-btn-primary"
-              onClick={() => {
-                setSearchTerm("");
-                setTypeFilter("all");
-              }}
-            >
+          {(searchTerm || typeFilter !== "all" || methodFilter !== "all") && (
+            <button className="pa-btn-primary" onClick={() => { setSearchTerm(""); setTypeFilter("all"); setMethodFilter("all"); }}>
               Clear Filters
             </button>
           )}
         </div>
       )}
 
-      {/* Payment Cards */}
+      {/* ── Payment Cards ── */}
       {!loading && filteredRequests.length > 0 && (
         <div className="pa-cards">
           {filteredRequests.map((payment) => {
-            const customerName = payment.customer_name || payment.customer?.name || "Unknown";
-            const customerEmail = payment.customer?.email || "No email";
-            const type = payment.request_type || payment.type || "-";
-            const service = payment.service_name || payment.service?.name || payment.order_name || "-";
-            const amount = Number(payment.amount || payment.total_amount || 0).toLocaleString("en-PH");
-            const hasProof = !!payment.proof_url;
+            const customerName  = payment.customer_name || payment.customer?.name || "Unknown";
+            const customerEmail = payment.customer?.email || payment.customer_email || "";
+            const type          = payment.request_type || payment.type || "-";
+            const service       = payment.service_name || payment.service?.name || payment.order_name || "-";
+            const amount        = Number(payment.amount || payment.total_amount || 0).toLocaleString("en-PH");
+            const hasProof      = !!payment.proof_url;
             const isVerifyLoading = actionLoading === `${payment.id}-verify`;
             const isRejectLoading = actionLoading === `${payment.id}-reject`;
+            const methodCfg     = getMethodConfig(payment.payment_method);
+            const payDate       = payment.request_date || payment.date || payment.created_at;
 
             return (
               <div
                 key={payment.id}
-                className={`pa-card ${selectedIds.includes(payment.id) ? "pa-card-selected" : ""}`}
+                className={`pa-card${selectedIds.includes(payment.id) ? " pa-card-selected" : ""}`}
               >
+                <div className="pa-card-accent" style={{ background: methodCfg.color }} />
+
                 <div className="pa-card-header">
                   <label className="pa-checkbox">
                     <input
@@ -299,23 +420,36 @@ const PaymentApprovals = () => {
                       checked={selectedIds.includes(payment.id)}
                       onChange={() => toggleSelection(payment.id)}
                     />
-                    <span className="pa-checkmark"></span>
+                    <span className="pa-checkmark" />
                   </label>
+
+                  <CustomerAvatar name={customerName} />
+
                   <div className="pa-customer">
-                    <span className="pa-customer-name">👤 {customerName}</span>
-                    <span className="pa-customer-email">{customerEmail}</span>
+                    <span className="pa-customer-name">{customerName}</span>
+                    {customerEmail && <span className="pa-customer-email">{customerEmail}</span>}
                   </div>
-                  <span className="pa-time">
-                    {new Date(payment.request_date || payment.date || payment.created_at).toLocaleTimeString("en-PH", {
-                      hour: "2-digit",
-                      minute: "2-digit"
-                    })}
-                  </span>
+
+                  <div className="pa-card-header-right">
+                    <span
+                      className="pa-method-badge"
+                      style={{ color: methodCfg.color, background: methodCfg.bg }}
+                    >
+                      <FontAwesomeIcon icon={methodCfg.icon} /> {methodCfg.label}
+                    </span>
+                    {payDate && (
+                      <span className="pa-time">
+                        {new Date(payDate).toLocaleTimeString("en-PH", { hour: "2-digit", minute: "2-digit" })}
+                      </span>
+                    )}
+                  </div>
                 </div>
 
                 <div className="pa-card-body">
                   <div className="pa-service">
-                    <span className="pa-service-icon">{getTypeIcon(type)}</span>
+                    <span className="pa-service-icon-wrap">
+                      <FontAwesomeIcon icon={getTypeIcon(type)} />
+                    </span>
                     <div className="pa-service-info">
                       <span className="pa-service-type">{type}</span>
                       <span className="pa-service-name">{service}</span>
@@ -324,10 +458,7 @@ const PaymentApprovals = () => {
                   <div className="pa-amount-section">
                     <span className="pa-amount">₱{amount}</span>
                     {hasProof && (
-                      <button
-                        className="pa-proof-btn"
-                        onClick={() => openProof(payment.proof_url, payment)}
-                      >
+                      <button className="pa-proof-btn" onClick={() => openProof(payment.proof_url, payment)}>
                         <FontAwesomeIcon icon={faPaperclip} /> View Proof
                       </button>
                     )}
@@ -337,27 +468,21 @@ const PaymentApprovals = () => {
                 <div className="pa-card-actions">
                   <button
                     className="pa-btn-verify"
-                    onClick={() => {
-                      if (payment.proof_url) {
-                        openProof(payment.proof_url, payment);
-                      } else {
-                        openProof(null, payment);
-                      }
-                    }}
+                    onClick={() => openProof(payment.proof_url || null, payment)}
                     disabled={isVerifyLoading || isRejectLoading}
                   >
-                    <FontAwesomeIcon icon={faCheck} /> Verify
+                    {isVerifyLoading
+                      ? <><FontAwesomeIcon icon={faSpinner} spin /> Verifying…</>
+                      : <><FontAwesomeIcon icon={faCheck} /> {isCashMethod(payment.payment_method) ? "Collect Cash" : "Verify"}</>}
                   </button>
                   <button
                     className="pa-btn-reject"
                     onClick={() => rejectPayment(payment)}
                     disabled={isVerifyLoading || isRejectLoading}
                   >
-                    {isRejectLoading ? (
-                      <><FontAwesomeIcon icon={faSpinner} spin /> Rejecting...</>
-                    ) : (
-                      <><FontAwesomeIcon icon={faTimes} /> Reject</>
-                    )}
+                    {isRejectLoading
+                      ? <><FontAwesomeIcon icon={faSpinner} spin /> Rejecting…</>
+                      : <><FontAwesomeIcon icon={faXmark} /> Reject</>}
                   </button>
                 </div>
               </div>
@@ -366,169 +491,219 @@ const PaymentApprovals = () => {
         </div>
       )}
 
-      {/* Proof Modal with Reference Number Input */}
-      {proofModal && (
-        <div className="pa-modal-overlay" onClick={closeProof}>
-          <div className="pa-modal pa-proof-modal" onClick={(e) => e.stopPropagation()}>
-            <div className="pa-modal-header">
-              <h3>Payment Proof</h3>
-              <button className="pa-modal-close" onClick={closeProof}>
-                <FontAwesomeIcon icon={faTimesCircle} />
-              </button>
-            </div>
-            <div className="pa-modal-body">
-              <div className="pa-proof-image-container">
-                {proofModal.loading ? (
-                  <div className="pa-proof-loading">
-                    <FontAwesomeIcon icon={faSpinner} spin size="2x" />
-                    <p>Loading proof...</p>
-                  </div>
-                ) : proofModal.error ? (
-                  <div className="pa-proof-loading pa-proof-error">
-                    <p>{proofModal.error}</p>
-                    {proofModal.payment?.proof_url && (
-                      <button
-                        type="button"
-                        className="pa-btn-secondary"
-                        onClick={() => openProof(proofModal.payment.proof_url, proofModal.payment)}
-                      >
-                        Retry
-                      </button>
+      {/* ── Proof / Verify Modal ── */}
+      {proofModal && (() => {
+        const isCash = isCashMethod(proofModal.payment?.payment_method);
+        return (
+          <div className="pa-modal-overlay" onClick={closeProof}>
+            <div
+              className={`pa-modal pa-proof-modal${isCash ? " pa-proof-modal--cash" : ""}`}
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="pa-modal-header">
+                <div>
+                  <h3>
+                    {isCash
+                      ? "Collect Cash Payment"
+                      : `Verify ${getMethodConfig(proofModal.payment?.payment_method).label} Payment`}
+                  </h3>
+                  <p className="pa-modal-sub">
+                    {proofModal.payment?.customer_name || "Customer"} —{" "}
+                    {proofModal.payment?.service_name || proofModal.payment?.request_type || "Service"}
+                  </p>
+                </div>
+                <button className="pa-modal-close" onClick={closeProof}>
+                  <FontAwesomeIcon icon={faXmark} />
+                </button>
+              </div>
+
+              {/* ── Cash collection layout ── */}
+              {isCash ? (
+                <div className="pa-modal-body pa-cash-collect">
+
+                  {/* Due / Received / Change display */}
+                  <div className="pa-cash-readout">
+                    <div className="pa-cash-readout-row pa-cash-due-row">
+                      <span>Amount Due</span>
+                      <strong className="pa-cash-due-val">₱{fmt(amountDue)}</strong>
+                    </div>
+                    <div className={`pa-cash-readout-row pa-cash-recv-row${cashReady ? " pa-cash-recv-row--ok" : ""}`}>
+                      <span>Cash Received</span>
+                      <strong className="pa-cash-recv-val">
+                        {cashReceived ? `₱${fmt(cashNum)}` : <span className="pa-cash-placeholder">₱0.00</span>}
+                      </strong>
+                    </div>
+                    {cashShort > 0 && (
+                      <div className="pa-cash-readout-row pa-cash-short-row">
+                        <span>Short</span>
+                        <strong className="pa-cash-short-val">−₱{fmt(cashShort)}</strong>
+                      </div>
+                    )}
+                    {cashReady && (
+                      <div className="pa-cash-readout-row pa-cash-change-row">
+                        <span>Change</span>
+                        <strong className="pa-cash-change-val">₱{fmt(changeAmt)}</strong>
+                      </div>
                     )}
                   </div>
-                ) : proofModal.blobUrl && proofModal.isPdf ? (
-                  <iframe
-                    src={proofModal.blobUrl}
-                    title="Payment proof PDF"
-                    className="pa-proof-pdf"
-                  />
-                ) : proofModal.blobUrl ? (
-                  <img
-                    src={proofModal.blobUrl}
-                    alt="Payment proof"
-                    className="pa-proof-image"
-                  />
-                ) : proofModal.payment && !proofModal.payment.proof_url ? (
-                  <div className="pa-proof-loading pa-proof-no-file">
-                    <FontAwesomeIcon icon={faCheck} size="2x" />
-                    <p>Counter payment — no proof uploaded.</p>
+
+                  {/* Bill presets */}
+                  <div className="pa-bill-presets">
+                    {BILL_PRESETS.map(b => (
+                      <button key={b} className="pa-bill-btn" onClick={() => handleBillPreset(b)}>
+                        ₱{b.toLocaleString()}
+                      </button>
+                    ))}
+                    <button className="pa-bill-btn pa-bill-btn--exact" onClick={handleExact}>
+                      Exact
+                    </button>
                   </div>
-                ) : (
-                  <div className="pa-proof-loading">
-                    <p>No payment proof is available.</p>
+
+                  {/* Numpad */}
+                  <div className="pa-cash-numpad">
+                    {["1","2","3","4","5","6","7","8","9","00","0"].map(k => (
+                      <button key={k} className="pa-numpad-key" onClick={() => handleNumpadKey(k)}>
+                        {k}
+                      </button>
+                    ))}
+                    <button className="pa-numpad-key pa-numpad-key--delete" onClick={handleDeleteKey}>
+                      <FontAwesomeIcon icon={faDeleteLeft} />
+                    </button>
                   </div>
-                )}
-              </div>
-              <div className="pa-reference-section">
-                <label htmlFor="referenceNumber" className="pa-reference-label">
-                  <strong>GCash / Counter Reference Number</strong>
-                  <span className="pa-reference-hint">Optional for counter payments</span>
-                </label>
-                <div className="pa-reference-input-group">
-                  <input
-                    type="text"
-                    id="referenceNumber"
-                    value={referenceNumber}
-                    onChange={(e) => setReferenceNumber(e.target.value)}
-                    placeholder="Enter GCash reference number from receipt"
-                    className="pa-reference-input"
-                  />
-                  <button
-                    className={`pa-btn-verify-ref ${isRefVerified ? 'verified' : ''}`}
-                    onClick={() => {
-                      if (!referenceNumber.trim()) {
-                        showWarning("Please enter a reference number");
-                        return;
-                      }
-                      if (referenceNumber.trim().length < 6) {
-                        showWarning("Reference number must be at least 6 characters");
-                        return;
-                      }
-                      setIsRefVerified(true);
-                      showSuccess("Reference number verified!");
-                    }}
-                    disabled={!referenceNumber.trim() || isRefVerified}
-                  >
-                    <FontAwesomeIcon icon={isRefVerified ? faCheck : faCheck} /> 
-                    {isRefVerified ? "Verified" : "Verify Ref #"}
-                  </button>
+
+                  {/* Optional receipt # */}
+                  <div className="pa-reference-section">
+                    <label htmlFor="paRefNum" className="pa-reference-label">
+                      <strong>Receipt / Reference Number</strong>
+                      <span className="pa-reference-hint">Optional</span>
+                    </label>
+                    <input
+                      type="text"
+                      id="paRefNum"
+                      value={referenceNumber}
+                      onChange={(e) => setReferenceNumber(e.target.value)}
+                      placeholder="Enter receipt or reference number (optional)"
+                      className="pa-reference-input"
+                    />
+                  </div>
                 </div>
+              ) : (
+                /* ── Digital payment layout (proof image + reference) ── */
+                <div className="pa-modal-body pa-proof-body">
+                  {/* Proof image */}
+                  <div className="pa-proof-image-container">
+                    {proofModal.loading ? (
+                      <div className="pa-proof-loading">
+                        <FontAwesomeIcon icon={faSpinner} spin size="2x" />
+                        <p>Loading proof…</p>
+                      </div>
+                    ) : proofModal.error ? (
+                      <div className="pa-proof-loading pa-proof-error">
+                        <FontAwesomeIcon icon={faTriangleExclamation} size="2x" />
+                        <p>{proofModal.error}</p>
+                        {proofModal.payment?.proof_url && (
+                          <button type="button" className="pa-btn-secondary" onClick={() => openProof(proofModal.payment.proof_url, proofModal.payment)}>
+                            Retry
+                          </button>
+                        )}
+                      </div>
+                    ) : proofModal.blobUrl && proofModal.isPdf ? (
+                      <iframe src={proofModal.blobUrl} title="Payment proof PDF" className="pa-proof-pdf" />
+                    ) : proofModal.blobUrl ? (
+                      <img src={proofModal.blobUrl} alt="Payment proof" className="pa-proof-image" />
+                    ) : (
+                      <div className="pa-proof-loading">
+                        <p>No payment proof available.</p>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Reference input */}
+                  <div className="pa-reference-section">
+                    <label htmlFor="paRefNum" className="pa-reference-label">
+                      <strong>{getMethodConfig(proofModal.payment?.payment_method).label} Reference Number</strong>
+                      <span className="pa-reference-hint">Required — enter from the payment screenshot</span>
+                    </label>
+                    <input
+                      type="text"
+                      id="paRefNum"
+                      value={referenceNumber}
+                      onChange={(e) => setReferenceNumber(e.target.value)}
+                      placeholder={`Enter ${getMethodConfig(proofModal.payment?.payment_method).label} reference number`}
+                      className="pa-reference-input"
+                      autoFocus
+                    />
+                  </div>
+                </div>
+              )}
+
+              <div className="pa-modal-footer">
+                <button className="pa-btn-reject" onClick={handleRejectFromModal} disabled={!!actionLoading}>
+                  {actionLoading === `${proofModal?.payment?.id}-reject`
+                    ? <><FontAwesomeIcon icon={faSpinner} spin /> Rejecting…</>
+                    : <><FontAwesomeIcon icon={faXmark} /> Reject</>}
+                </button>
+                <button
+                  className="pa-btn-verify"
+                  onClick={handleVerifyFromModal}
+                  disabled={!!actionLoading || (isCash && !cashReady)}
+                  title={isCash && !cashReady ? "Enter cash amount first" : ""}
+                >
+                  {actionLoading === `${proofModal?.payment?.id}-verify`
+                    ? <><FontAwesomeIcon icon={faSpinner} spin /> Processing…</>
+                    : isCash
+                      ? <><FontAwesomeIcon icon={faCheck} /> Collect &amp; Print Receipt</>
+                      : <><FontAwesomeIcon icon={faCheck} /> Verify Payment</>}
+                </button>
               </div>
-            </div>
-            <div className="pa-modal-footer">
-              <button 
-                className="pa-btn-reject" 
-                onClick={handleRejectFromModal}
-                disabled={actionLoading}
-              >
-                {actionLoading === `${proofModal?.payment?.id}-reject` ? (
-                  <><FontAwesomeIcon icon={faSpinner} spin /> Rejecting...</>
-                ) : (
-                  <><FontAwesomeIcon icon={faTimes} /> Reject</>
-                )}
-              </button>
-              <button 
-                className="pa-btn-verify" 
-                onClick={handleVerifyFromModal}
-                disabled={actionLoading}
-              >
-                {actionLoading === `${proofModal?.payment?.id}-verify` ? (
-                  <><FontAwesomeIcon icon={faSpinner} spin /> Verifying...</>
-                ) : (
-                  <><FontAwesomeIcon icon={faCheck} /> Verify Payment</>
-                )}
-              </button>
             </div>
           </div>
-        </div>
-      )}
+        );
+      })()}
 
-      {/* Receipt Modal */}
+      {/* ── Receipt Modal ── */}
       {showReceipt && receiptData && (
         <div className="pa-modal-overlay" onClick={() => setShowReceipt(false)}>
           <div className="pa-modal pa-receipt-modal" onClick={(e) => e.stopPropagation()}>
+            <div className="pa-modal-header">
+              <h3>Payment Verified</h3>
+              <button className="pa-modal-close" onClick={() => setShowReceipt(false)}>
+                <FontAwesomeIcon icon={faXmark} />
+              </button>
+            </div>
             <div className="pa-receipt">
               <div className="pa-receipt-header">
                 <h2>OFFICIAL RECEIPT</h2>
                 <p className="pa-receipt-number">{receiptData.receipt_number}</p>
               </div>
               <div className="pa-receipt-body">
-                <div className="pa-receipt-row">
-                  <span>Date:</span>
-                  <span>{new Date(receiptData.paid_at).toLocaleString('en-PH')}</span>
+                <div className="pa-receipt-row"><span>Date:</span><span>{new Date(receiptData.paid_at).toLocaleString("en-PH")}</span></div>
+                <div className="pa-receipt-row"><span>Customer:</span><span>{receiptData.customer_name || "N/A"}</span></div>
+                <div className="pa-receipt-row"><span>Service:</span><span>{receiptData.service_name || "Service"}</span></div>
+                <div className="pa-receipt-row"><span>Method:</span><span>{receiptData.payment_method || "—"}</span></div>
+                <div className="pa-receipt-row pa-receipt-row--total">
+                  <span>Amount Due:</span>
+                  <span>₱{fmt(receiptData.amount)}</span>
                 </div>
-                <div className="pa-receipt-row">
-                  <span>Customer:</span>
-                  <span>{receiptData?.customer_name || "N/A"}</span>
-                </div>
-                <div className="pa-receipt-row">
-                  <span>Service:</span>
-                  <span>{receiptData?.service_name || "Service"}</span>
-                </div>
-                <div className="pa-receipt-row">
-                  <span>Amount:</span>
-                  <span>₱{Number(receiptData?.amount || 0).toLocaleString('en-PH')}</span>
-                </div>
-                <div className="pa-receipt-row">
-                  <span>Reference #:</span>
-                  <span>{receiptData?.reference_number || "N/A"}</span>
-                </div>
-                <div className="pa-receipt-row">
-                  <span>Verified by:</span>
-                  <span>{receiptData?.verified_by || "Cashier"}</span>
-                </div>
+                {receiptData.cash_received != null && (
+                  <div className="pa-receipt-row"><span>Cash Received:</span><span>₱{fmt(receiptData.cash_received)}</span></div>
+                )}
+                {receiptData.change != null && (
+                  <div className="pa-receipt-row pa-receipt-row--change">
+                    <span>Change:</span><span>₱{fmt(receiptData.change)}</span>
+                  </div>
+                )}
+                {receiptData.reference_number && (
+                  <div className="pa-receipt-row"><span>Reference #:</span><span>{receiptData.reference_number}</span></div>
+                )}
+                <div className="pa-receipt-row"><span>Verified by:</span><span>{receiptData.verified_by || "Cashier"}</span></div>
               </div>
               <div className="pa-receipt-footer">
-                <p>Thank you for choosing Pawesome Vet Clinic!</p>
+                <p>Thank you for choosing Pawesome!</p>
               </div>
             </div>
             <div className="pa-modal-footer">
-              <button 
-                className="pa-btn-secondary" 
-                onClick={() => setShowReceipt(false)}
-              >
-                Close
-              </button>
+              <button className="pa-btn-secondary" onClick={() => setShowReceipt(false)}>Close</button>
               <button
                 className="pa-btn-primary"
                 onClick={() => {
@@ -539,17 +714,19 @@ const PaymentApprovals = () => {
                     date: r.paid_at ? new Date(r.paid_at).toLocaleString("en-PH") : new Date().toLocaleString("en-PH"),
                     cashier: user?.name || "Cashier",
                     customer: r.customer_name || "Customer",
-                    paymentMethod: r.payment_method || "Online Payment",
+                    paymentMethod: r.payment_method || "Cash",
                     paymentStatus: "paid",
                     referenceNumber: r.reference_number || "",
                     verifiedBy: r.verified_by || user?.name || "Cashier",
+                    amountReceived: r.cash_received ?? undefined,
+                    change: r.change ?? undefined,
                     items: [{ name: r.service_name || "Service", quantity: 1, unitPrice: Number(r.amount || 0), total: Number(r.amount || 0) }],
                     subtotal: Number(r.amount || 0),
                     total: Number(r.amount || 0),
                   });
                 }}
               >
-                <FontAwesomeIcon icon={faPrint} /> Print
+                <FontAwesomeIcon icon={faPrint} /> Print Receipt
               </button>
             </div>
           </div>
