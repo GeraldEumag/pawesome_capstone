@@ -818,48 +818,78 @@
 .pa-modal-footer .pa-btn-secondary,
 .pa-modal-footer .pa-btn-primary { flex: 1; }
 
-/* ── Receipt ── */
+/* ── Receipt — B&W Thermal Design ── */
 .pa-receipt {
   background: #fff;
-  padding: 24px 28px;
-  font-family: 'Courier New', monospace;
-  color: #1f2937;
+  font-family: 'OCR-B 10 BT', 'OCR B', 'Courier New', Courier, monospace;
+  color: #000;
   overflow-y: auto;
   flex: 1;
+  font-size: 13px;
+  border: 1px solid #999;
 }
 
-.pa-receipt-header {
-  text-align: center;
-  border-bottom: 2px dashed #e5e7eb;
-  padding-bottom: 16px;
-  margin-bottom: 16px;
+/* Store header — left-aligned */
+.pa-receipt-hd {
+  padding: 10px 10px 4px;
 }
 
-.pa-receipt-header h2 { margin: 0 0 6px; font-size: 1.2rem; letter-spacing: 2px; color: #111827; }
-.pa-receipt-number { margin: 0; font-size: 0.85rem; color: #6b7280; }
-
-.pa-receipt-body {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  padding-bottom: 16px;
-  border-bottom: 2px dashed #e5e7eb;
+.pa-receipt-name {
+  font-size: 15px;
+  font-weight: 900;
+  color: #000;
+  margin-bottom: 2px;
 }
 
+.pa-receipt-addr {
+  font-size: 10px;
+  color: #000;
+  line-height: 1.4;
+}
+
+.pa-receipt-sub {
+  font-size: 12px;
+  font-weight: 700;
+  color: #000;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  margin-top: 6px;
+}
+
+/* Label/value rows */
 .pa-receipt-row {
   display: flex;
   justify-content: space-between;
-  font-size: 0.88rem;
+  padding: 3px 10px;
+  font-size: 13px;
+  color: #000;
 }
 
-.pa-receipt-row span:first-child { color: #6b7280; }
-.pa-receipt-row span:last-child { font-weight: 600; color: #111827; }
+.pa-receipt-row span:first-child { color: #000; }
+.pa-receipt-row span:last-child  { font-weight: 600; }
 
-.pa-receipt-row--total span { font-weight: 700; color: #111827; font-size: 0.95rem; }
-.pa-receipt-row--change span:last-child { color: #10b981; font-size: 1rem; }
+/* TOTAL row */
+.pa-receipt-total {
+  display: flex;
+  justify-content: space-between;
+  padding: 6px 10px;
+  font-size: 18px;
+  font-weight: 900;
+  color: #000;
+}
 
-.pa-receipt-footer { text-align: center; padding-top: 14px; }
-.pa-receipt-footer p { margin: 0; font-size: 0.8rem; color: #9ca3af; font-style: italic; }
+/* Footer */
+.pa-receipt-footer {
+  text-align: center;
+  padding: 8px 10px 12px;
+}
+
+.pa-receipt-footer p {
+  margin: 0;
+  font-size: 10.5px;
+  color: #000;
+  line-height: 1.5;
+}
 
 /* ══════════════════════════════════════════
    Cash Collection UI (inline in modal)

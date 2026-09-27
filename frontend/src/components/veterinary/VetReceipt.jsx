@@ -4,15 +4,8 @@ import {
   faPrint,
   faDownload,
   faTimes,
-  faPaw,
-  faUser,
-  faMoneyBillWave,
   faFileInvoice,
   faSpinner,
-  faCalendarAlt,
-  faStethoscope,
-  faReceipt,
-  faCircleCheck,
 } from "@fortawesome/free-solid-svg-icons";
 import { apiRequest } from "../../api/client";
 import { formatCurrency } from "../../utils/currency";
@@ -66,6 +59,8 @@ const VetReceipt = () => {
         payment_status: receipt.status || 'pending',
         receipt_number: receipt.receipt_number || null,
         paid_date: receipt.paid_date || null,
+        pet_breed: receipt.pet_breed || null,
+        pet_age: receipt.pet_age || null,
         additional_services: receipt.additional_services || [],
       });
       setError("");
@@ -86,13 +81,10 @@ const VetReceipt = () => {
     try {
       if (!receiptData) return;
       const element = document.getElementById("receipt-content");
-
-      const canvas = await html2canvas(element);
+      const canvas = await html2canvas(element, { scale: 2 });
       const imgData = canvas.toDataURL("image/png");
-
       const pdf = new jsPDF("p", "mm", "a4");
       const width = pdf.internal.pageSize.getWidth();
-
       pdf.addImage(imgData, "PNG", 10, 10, width - 20, 0);
       pdf.save(`receipt-${receiptData.id}.pdf`);
     } catch (err) {
@@ -110,9 +102,9 @@ const VetReceipt = () => {
   if (loading) {
     return (
       <section className="app-content vet-receipt">
-        <div className="premium-card vet-loading-state">
-          <FontAwesomeIcon icon={faSpinner} className="spin-animation" />
-          <span>Loading receipt...</span>
+        <div className="vr-status">
+          <FontAwesomeIcon icon={faSpinner} spin />
+          <span>Loading receipt…</span>
         </div>
       </section>
     );
@@ -121,8 +113,8 @@ const VetReceipt = () => {
   if (error) {
     return (
       <section className="app-content vet-receipt">
-        <div className="premium-card vet-error-banner">
-          <span>⚠️ {error}</span>
+        <div className="vr-status vr-status--error">
+          <span>⚠ {error}</span>
         </div>
       </section>
     );
@@ -131,163 +123,102 @@ const VetReceipt = () => {
   if (!receiptData) {
     return (
       <section className="app-content vet-receipt">
-        <div className="premium-card vet-empty-state">
-          <FontAwesomeIcon icon={faFileInvoice} />
+        <div className="vr-status">
+          <FontAwesomeIcon icon={faFileInvoice} style={{ fontSize: "2rem" }} />
           <h3>No receipt selected</h3>
-          <p>Please select a receipt from the reports page to view details</p>
+          <p>Please select a receipt from the reports page.</p>
         </div>
       </section>
     );
   }
 
   return (
-    <section className="app-content vet-receipt" id="receipt-content">
-      <div className="receipt-container">
-        <div className="premium-card receipt-card">
-          <div className="receipt-header">
-            <div className="receipt-clinic-logo">
-              <FontAwesomeIcon icon={faPaw} />
-            </div>
-            <h1>Payment Receipt</h1>
-            <p className="receipt-clinic-name">{STORE_INFO.name}</p>
-            <p className="receipt-clinic-tagline">{STORE_INFO.tagline}</p>
-            <span className="receipt-id-badge">
-              <FontAwesomeIcon icon={faReceipt} /> Receipt #{receiptData.id}
-            </span>
-          </div>
+    <section className="app-content vet-receipt">
 
-          <div className="receipt-body">
-          <div className="receipt-section">
-            <h3><FontAwesomeIcon icon={faCalendarAlt} /> Service Information</h3>
-            <div className="receipt-info">
-              <div className="info-label">Date:</div>
-              <div className="info-value">{new Date(receiptData.date).toLocaleDateString()}</div>
-            </div>
-            <div className="receipt-info">
-              <div className="info-label">Time:</div>
-              <div className="info-value">{receiptData.time}</div>
-            </div>
-            <div className="receipt-info">
-              <div className="info-label">Type:</div>
-              <div className="info-value">{receiptData.service_type?.toUpperCase()}</div>
-            </div>
-            <div className="receipt-info">
-              <div className="info-label">Veterinarian:</div>
-              <div className="info-value">Dr. {receiptData.vet_name}</div>
-            </div>
-          </div>
+      {/* ── Captured area for PDF ── */}
+      <div className="vr-paper" id="receipt-content">
 
-          <div className="receipt-section">
-            <h3><FontAwesomeIcon icon={faPaw} /> Patient Information</h3>
-            <div className="receipt-info">
-              <div className="info-label">Pet Name:</div>
-              <div className="info-value">
-                <FontAwesomeIcon icon={faPaw} /> {receiptData.pet_name}
-              </div>
-            </div>
-            <div className="receipt-info">
-              <div className="info-label">Owner:</div>
-              <div className="info-value">
-                <FontAwesomeIcon icon={faUser} /> {receiptData.owner_name}
-              </div>
-            </div>
-            <div className="receipt-info">
-              <div className="info-label">Breed:</div>
-              <div className="info-value">{receiptData.pet_breed || "N/A"}</div>
-            </div>
-            <div className="receipt-info">
-              <div className="info-label">Age:</div>
-              <div className="info-value">{receiptData.pet_age || "N/A"}</div>
-            </div>
-          </div>
-
-          <div className="receipt-section">
-            <h3><FontAwesomeIcon icon={faStethoscope} /> Service Details</h3>
-            <div className="service-item">
-              <div className="service-header">
-                <div className="service-name">{receiptData.service_name}</div>
-                <div className="service-price">
-                  {formatCurrency(receiptData.service_cost)}
-                </div>
-              </div>
-              <div className="service-details">
-                {receiptData.description}
-              </div>
-            </div>
-            
-            {receiptData.additional_services && receiptData.additional_services.length > 0 && (
-              <div className="service-item">
-                <div className="service-header">
-                  <div className="service-name">Additional Services</div>
-                  <div className="service-price">
-                    {formatCurrency(receiptData.additional_services.reduce((sum, service) => sum + (service.cost || 0), 0))}
-                  </div>
-                </div>
-                <div className="service-details">
-                  {(receiptData?.additional_services || []).map((service, index) => (
-                    <div key={index} className="additional-service">
-                      {service.name} - {formatCurrency(service.cost)}
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-          </div>
-
-          <div className="receipt-footer">
-            <div className="total-section">
-              <div className="total-label">Subtotal:</div>
-              <div className="total-amount">{formatCurrency(receiptData.subtotal)}</div>
-            </div>
-
-            <div className="total-section">
-              <div className="total-label">VAT 12%:</div>
-              <div className="total-amount">{formatCurrency(receiptData.tax || computeVatBreakdown(receiptData.total).vatAmount)}</div>
-            </div>
-
-            <div className="total-section">
-              <div className="total-label">Total:</div>
-              <div className="total-amount">{formatCurrency(receiptData.total)}</div>
-            </div>
-            
-            <div className="payment-info">
-              <p><strong>Payment Method:</strong> {receiptData.payment_method}</p>
-              <p><strong>Status:</strong>{" "}
-                <span className={`badge ${
-                  receiptData.payment_status === "paid"
-                    ? "badge-success"
-                    : receiptData.payment_status === "pending"
-                    ? "badge-warning"
-                    : "badge-danger"
-                }`}>
-                  {receiptData.payment_status?.toUpperCase()}
-                </span>
-              </p>
-              {receiptData.paid_date && (
-                <p><strong>Paid on:</strong> {new Date(receiptData.paid_date).toLocaleDateString()}</p>
-              )}
-            </div>
-          </div>
-
-          <div className="receipt-thankyou">
-            <FontAwesomeIcon icon={faCircleCheck} />
-            <p>Thank you for trusting {STORE_INFO.name} with your pet's health!</p>
-          </div>
-
-          <div className="receipt-actions">
-            <button className="receipt-btn receipt-btn--primary" onClick={handlePrint}>
-              <FontAwesomeIcon icon={faPrint} /> Print
-            </button>
-            <button className="receipt-btn receipt-btn--secondary" onClick={handleDownloadPDF}>
-              <FontAwesomeIcon icon={faDownload} /> Download PDF
-            </button>
-            <button className="receipt-btn receipt-btn--ghost" onClick={handleClose}>
-              <FontAwesomeIcon icon={faTimes} /> Close
-            </button>
-          </div>
+        {/* Store header */}
+        <div className="vr-hd">
+          <div className="vr-name">{STORE_INFO.name.toUpperCase()}</div>
+          <div className="vr-addr">{STORE_INFO.address}</div>
+          <div className="vr-email">{STORE_INFO.email}</div>
+          <div className="vr-title">OFFICIAL RECEIPT</div>
         </div>
+
+        {/* Transaction info */}
+        <div className="vr-row"><span>Receipt #</span><span>{receiptData.id}</span></div>
+        <div className="vr-row"><span>Date</span><span>{new Date(receiptData.date).toLocaleDateString()}</span></div>
+        <div className="vr-row"><span>Time</span><span>{receiptData.time}</span></div>
+        <div className="vr-row"><span>Type</span><span>{receiptData.service_type?.toUpperCase()}</span></div>
+        <div className="vr-row"><span>Veterinarian</span><span>Dr. {receiptData.vet_name}</span></div>
+
+
+        {/* Patient info */}
+        <div className="vr-row"><span>Pet Name</span><span>{receiptData.pet_name}</span></div>
+        <div className="vr-row"><span>Owner</span><span>{receiptData.owner_name}</span></div>
+        <div className="vr-row"><span>Breed</span><span>{receiptData.pet_breed || "N/A"}</span></div>
+        <div className="vr-row"><span>Age</span><span>{receiptData.pet_age || "N/A"}</span></div>
+
+
+        {/* Service items */}
+        <div className="vr-item">
+          <div className="vr-item-name">{receiptData.service_name}</div>
+          <div className="vr-item-desc">{receiptData.description}</div>
+          <div className="vr-item-price">{formatCurrency(receiptData.service_cost)}</div>
         </div>
+
+        {receiptData.additional_services.length > 0 && (
+          <>
+    
+            <div className="vr-section-label">ADDITIONAL SERVICES</div>
+            {receiptData.additional_services.map((svc, i) => (
+              <div className="vr-item" key={i}>
+                <div className="vr-item-name">{svc.name}</div>
+                <div className="vr-item-price">{formatCurrency(svc.cost)}</div>
+              </div>
+            ))}
+          </>
+        )}
+
+
+        {/* Totals */}
+        <div className="vr-row"><span>Subtotal (incl. VAT)</span><span>{formatCurrency(receiptData.subtotal)}</span></div>
+        <div className="vr-row"><span>VAT 12%</span><span>{formatCurrency(receiptData.tax || computeVatBreakdown(receiptData.total).vatAmount)}</span></div>
+        <div className="vr-total">
+          <span>TOTAL</span>
+          <span>{formatCurrency(receiptData.total)}</span>
+        </div>
+
+        {/* Payment info */}
+        <div className="vr-row"><span>Payment Method</span><span>{receiptData.payment_method?.toUpperCase()}</span></div>
+        <div className="vr-row"><span>Status</span><span>{receiptData.payment_status?.toUpperCase()}</span></div>
+        {receiptData.paid_date && (
+          <div className="vr-row"><span>Paid on</span><span>{new Date(receiptData.paid_date).toLocaleDateString()}</span></div>
+        )}
+
+
+        {/* Footer */}
+        <div className="vr-footer">
+          <p>Thank you for trusting {STORE_INFO.name}<br />with your pet's health!</p>
+        </div>
+
       </div>
+      {/* ── End captured area ── */}
+
+      {/* Action buttons — screen only, excluded from PDF/print */}
+      <div className="vr-actions">
+        <button className="vr-btn vr-btn--primary" onClick={handlePrint}>
+          <FontAwesomeIcon icon={faPrint} /> Print
+        </button>
+        <button className="vr-btn vr-btn--secondary" onClick={handleDownloadPDF}>
+          <FontAwesomeIcon icon={faDownload} /> Download PDF
+        </button>
+        <button className="vr-btn vr-btn--ghost" onClick={handleClose}>
+          <FontAwesomeIcon icon={faTimes} /> Close
+        </button>
+      </div>
+
     </section>
   );
 };

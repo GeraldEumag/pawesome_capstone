@@ -672,34 +672,45 @@ const PaymentApprovals = () => {
               </button>
             </div>
             <div className="pa-receipt">
-              <div className="pa-receipt-header">
-                <h2>OFFICIAL RECEIPT</h2>
-                <p className="pa-receipt-number">{receiptData.receipt_number}</p>
+
+              {/* Store header */}
+              <div className="pa-receipt-hd">
+                <div className="pa-receipt-name">PAWESOME RETREAT INC.</div>
+                <div className="pa-receipt-addr">Aldana St., San Isidro Village, Las Piñas City</div>
+                <div className="pa-receipt-sub">OFFICIAL RECEIPT</div>
               </div>
-              <div className="pa-receipt-body">
-                <div className="pa-receipt-row"><span>Date:</span><span>{new Date(receiptData.paid_at).toLocaleString("en-PH")}</span></div>
-                <div className="pa-receipt-row"><span>Customer:</span><span>{receiptData.customer_name || "N/A"}</span></div>
-                <div className="pa-receipt-row"><span>Service:</span><span>{receiptData.service_name || "Service"}</span></div>
-                <div className="pa-receipt-row"><span>Method:</span><span>{receiptData.payment_method || "—"}</span></div>
-                <div className="pa-receipt-row pa-receipt-row--total">
-                  <span>Amount Due:</span>
-                  <span>₱{fmt(receiptData.amount)}</span>
-                </div>
-                {receiptData.cash_received != null && (
-                  <div className="pa-receipt-row"><span>Cash Received:</span><span>₱{fmt(receiptData.cash_received)}</span></div>
-                )}
-                {receiptData.change != null && (
-                  <div className="pa-receipt-row pa-receipt-row--change">
-                    <span>Change:</span><span>₱{fmt(receiptData.change)}</span>
-                  </div>
-                )}
-                {receiptData.reference_number && (
-                  <div className="pa-receipt-row"><span>Reference #:</span><span>{receiptData.reference_number}</span></div>
-                )}
-                <div className="pa-receipt-row"><span>Verified by:</span><span>{receiptData.verified_by || "Cashier"}</span></div>
+
+              {/* Transaction info */}
+              {receiptData.receipt_number && (
+                <div className="pa-receipt-row"><span>Receipt #</span><span>{receiptData.receipt_number}</span></div>
+              )}
+              <div className="pa-receipt-row"><span>Date</span><span>{new Date(receiptData.paid_at).toLocaleString("en-PH")}</span></div>
+              <div className="pa-receipt-row"><span>Customer</span><span>{receiptData.customer_name || "N/A"}</span></div>
+              <div className="pa-receipt-row"><span>Service</span><span>{receiptData.service_name || "Service"}</span></div>
+              <div className="pa-receipt-row"><span>Method</span><span>{(receiptData.payment_method || "—").toUpperCase()}</span></div>
+              {receiptData.reference_number && (
+                <div className="pa-receipt-row"><span>Reference #</span><span>{receiptData.reference_number}</span></div>
+              )}
+              <div className="pa-receipt-row"><span>Verified by</span><span>{receiptData.verified_by || "Cashier"}</span></div>
+
+              {/* Total */}
+              <div className="pa-receipt-total">
+                <span>TOTAL</span>
+                <span>₱{fmt(receiptData.amount)}</span>
               </div>
+
+              {/* Payment details */}
+              {receiptData.cash_received != null && (
+                <div className="pa-receipt-row"><span>Cash Received</span><span>₱{fmt(receiptData.cash_received)}</span></div>
+              )}
+              {receiptData.change != null && (
+                <div className="pa-receipt-row"><span>Change</span><span>₱{fmt(receiptData.change)}</span></div>
+              )}
+
+
+              {/* Footer */}
               <div className="pa-receipt-footer">
-                <p>Thank you for choosing Pawesome!</p>
+                <p>Thank you for choosing Pawesome Retreat Inc.!<br />Please keep this receipt.</p>
               </div>
             </div>
             <div className="pa-modal-footer">

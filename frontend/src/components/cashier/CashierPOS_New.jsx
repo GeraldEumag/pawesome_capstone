@@ -1069,41 +1069,55 @@ const CashierPOS = ({ initialTab }) => {
             </div>
             <div className="pos-modal-body">
               <div className="pos-receipt-paper">
-                <div className="pos-receipt-store">
-                  <h3>Pawesome Retreat Inc.</h3>
-                  <p>Official Cashier Receipt · {completedReceipt.date}</p>
+
+                {/* ── Store header ── */}
+                <div className="pos-receipt-hd">
+                  <div className="pos-receipt-name">PAWESOME RETREAT INC.</div>
+                  <div className="pos-receipt-addr">Aldana St., San Isidro Village, Las Piñas City</div>
+                  <div className="pos-receipt-sub">OFFICIAL CASHIER RECEIPT</div>
                 </div>
-                <div className="pos-receipt-divider" />
-                <div className="pos-receipt-row"><span>Transaction</span><span>{completedReceipt.transaction_id}</span></div>
+
+                {/* ── Transaction info ── */}
+                <div className="pos-receipt-row"><span>Receipt #</span><span>{completedReceipt.transaction_id}</span></div>
+                <div className="pos-receipt-row"><span>Date</span><span>{completedReceipt.date}</span></div>
                 <div className="pos-receipt-row"><span>Customer</span><span>{completedReceipt.customer_name}</span></div>
-                <div className="pos-receipt-row"><span>Payment</span><span>{completedReceipt.payment_method}</span></div>
+                <div className="pos-receipt-row"><span>Payment</span><span>{completedReceipt.payment_method.toUpperCase()}</span></div>
                 {completedReceipt.reference_number && (
                   <div className="pos-receipt-row"><span>Reference #</span><span>{completedReceipt.reference_number}</span></div>
                 )}
-                <div className="pos-receipt-divider" />
+
+
+                {/* ── Items ── */}
                 {completedReceipt.items.map((item, idx) => {
                   const unitPrice = item.unit_price || 0;
                   const lineTotal = unitPrice * item.quantity;
                   return (
-                    <div className="pos-receipt-item-row" key={idx}>
-                      <div className="item-name">{item.item_name}</div>
-                      <div className="item-meta">
-                        <span>{item.quantity} × {fmt(unitPrice)}</span>
-                        <span>{fmt(lineTotal)}</span>
-                      </div>
+                    <div className="pos-receipt-item" key={idx}>
+                      <div className="pos-receipt-item-name">{item.item_name}</div>
+                      <div className="pos-receipt-item-qty">{item.quantity} x {fmt(unitPrice)}</div>
+                      <div className="pos-receipt-item-price">{fmt(lineTotal)}</div>
                     </div>
                   );
                 })}
-                <div className="pos-receipt-divider" />
-                <div className="pos-receipt-row"><span>Net (ex-VAT)</span><span>{fmt(completedReceipt.net_amount)}</span></div>
+
+
+                {/* ── Subtotal / VAT ── */}
+                <div className="pos-receipt-row"><span>Subtotal (incl. VAT)</span><span>{fmt(completedReceipt.total)}</span></div>
                 <div className="pos-receipt-row"><span>VAT 12%</span><span>{fmt(completedReceipt.vat_amount)}</span></div>
-                <div className="pos-receipt-total"><span>TOTAL</span><span>{fmt(completedReceipt.total)}</span></div>
-                <div className="pos-receipt-row"><span>Amount Received ({completedReceipt.payment_method})</span><span>{fmt(completedReceipt.amount_received)}</span></div>
-                <div className="pos-receipt-row pos-receipt-row--bold"><span>Change</span><span>{fmt(completedReceipt.change)}</span></div>
-                <div className="pos-receipt-divider" />
+                <div className="pos-receipt-total">
+                  <span>TOTAL</span>
+                  <span>{fmt(completedReceipt.total)}</span>
+                </div>
+
+                {/* ── Payment details ── */}
+                <div className="pos-receipt-row"><span>Cash Received</span><span>{fmt(completedReceipt.amount_received)}</span></div>
+                <div className="pos-receipt-row"><span>Change</span><span>{fmt(completedReceipt.change)}</span></div>
+
+
+                {/* ── Footer ── */}
                 <div className="pos-receipt-footer">
                   Thank you for shopping with us!<br />
-                  Please keep this receipt for reference.
+                  Please keep this receipt.
                 </div>
               </div>
             </div>
