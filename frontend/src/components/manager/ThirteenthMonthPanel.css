@@ -1,0 +1,18 @@
+.tmp-container { padding: 20px; }
+.tmp-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; flex-wrap: wrap; gap: 10px; }
+.tmp-title { font-size: 1.1rem; font-weight: 700; color: #7c3aed; }
+.tmp-actions { display: flex; gap: 8px; align-items: center; }
+.tmp-select { padding: 6px 10px; border: 1px solid rgba(124,58,237,.3); border-radius: 8px; background: rgba(255,255,255,.6); }
+.tmp-btn { padding: 6px 14px; border-radius: 8px; border: 1px solid #7c3aed; color: #7c3aed; background: transparent; cursor: pointer; font-size: 0.82rem; }
+.tmp-btn.primary { background: #7c3aed; color: #fff; }
+.tmp-btn.sm { padding: 3px 10px; font-size: 0.76rem; }
+.tmp-btn:disabled { opacity: .6; cursor: not-allowed; }
+.tmp-summary { display: flex; gap: 24px; font-size: 0.85rem; margin-bottom: 16px; flex-wrap: wrap; }
+.tmp-table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
+.tmp-table th { background: rgba(124,58,237,.08); padding: 10px 12px; text-align: left; font-size: 0.78rem; color: #7c3aed; }
+.tmp-table td { padding: 10px 12px; border-bottom: 1px solid rgba(0,0,0,.05); }
+.tmp-status.accruing { color: #059669; font-weight: 600; }
+.tmp-status.paid { color: #94a3b8; font-weight: 600; }
+.tmp-status.partial { color: #f59e0b; font-weight: 600; }
+.tmp-msg { font-size: 0.85rem; color: #7c3aed; margin-bottom: 10px; }
+.tmp-loading { color: #94a3b8; padding: 24px; text-align: center; }

@@ -84,19 +84,50 @@ const ManagerSidebar = ({ mobileOpen, onMobileMenuToggle }) => {
               Leave
             </NavLink>
           </li>
-          <li className="nav-item">
-            <NavLink to="/manager/schedule" onClick={handleNavClick}>
-              Schedule
-            </NavLink>
-          </li>
+
           <li className="nav-item">
             <NavLink to="/manager/payroll" onClick={handleNavClick}>
               Payroll
             </NavLink>
           </li>
           <li className="nav-item">
+            <NavLink to="/manager/holidays" onClick={handleNavClick}>
+              Holidays
+            </NavLink>
+          </li>
+          <li className="nav-item">
+            <NavLink to="/manager/salary-loans" onClick={handleNavClick}>
+              Salary Loans
+            </NavLink>
+          </li>
+          <li className="nav-item">
+            <NavLink to="/manager/thirteenth-month" onClick={handleNavClick}>
+              13th Month
+            </NavLink>
+          </li>
+          <li className="nav-item">
+            <NavLink to="/manager/remittance-reports" onClick={handleNavClick}>
+              Remittance Reports
+            </NavLink>
+          </li>
+          <li className="nav-item">
+            <NavLink to="/manager/dtr-report" onClick={handleNavClick}>
+              DTR Report
+            </NavLink>
+          </li>
+          <li className="nav-item">
             <NavLink to="/manager/history" onClick={handleNavClick}>
               History / Audit Trail
+            </NavLink>
+          </li>
+          <li className="nav-item">
+            <NavLink to="/manager/my-leave" onClick={handleNavClick}>
+              My Leave
+            </NavLink>
+          </li>
+          <li className="nav-item">
+            <NavLink to="/manager/my-attendance" onClick={handleNavClick}>
+              My Attendance
             </NavLink>
           </li>
           <li className="nav-item">

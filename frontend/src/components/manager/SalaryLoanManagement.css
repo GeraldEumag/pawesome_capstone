@@ -1,0 +1,26 @@
+.slm-container { padding: 20px; }
+.slm-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
+.slm-title { font-size: 1.1rem; font-weight: 700; color: #7c3aed; }
+.slm-actions { display: flex; gap: 8px; align-items: center; }
+.slm-select { padding: 6px 10px; border: 1px solid rgba(124,58,237,.3); border-radius: 8px; background: rgba(255,255,255,.6); }
+.slm-table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
+.slm-table th { background: rgba(124,58,237,.08); padding: 10px 12px; text-align: left; font-size: 0.78rem; color: #7c3aed; }
+.slm-table td { padding: 10px 12px; border-bottom: 1px solid rgba(0,0,0,.05); }
+.slm-type { padding: 2px 8px; border-radius: 20px; font-size: 0.75rem; font-weight: 600; }
+.slm-type.salary_loan { background: rgba(124,58,237,.1); color: #7c3aed; }
+.slm-type.cash_advance { background: rgba(245,158,11,.1); color: #b45309; }
+.slm-status.active { color: #059669; font-weight: 600; }
+.slm-status.paid { color: #94a3b8; }
+.slm-status.cancelled { color: #ef4444; }
+.slm-btn { padding: 6px 14px; border-radius: 8px; border: 1px solid #7c3aed; color: #7c3aed; background: transparent; cursor: pointer; font-size: 0.82rem; }
+.slm-btn.primary { background: #7c3aed; color: #fff; }
+.slm-btn.sm { padding: 3px 10px; font-size: 0.76rem; }
+.slm-btn.danger { border-color: #ef4444; color: #ef4444; }
+.slm-btn:disabled { opacity: .6; cursor: not-allowed; }
+.slm-overlay { position: fixed; inset: 0; background: rgba(0,0,0,.4); display: flex; align-items: center; justify-content: center; z-index: 200; }
+.slm-modal { padding: 28px; width: 460px; display: flex; flex-direction: column; gap: 12px; max-height: 90vh; overflow-y: auto; }
+.slm-modal h4 { font-size: 1.05rem; font-weight: 700; color: #7c3aed; margin: 0; }
+.slm-modal label { display: flex; flex-direction: column; gap: 4px; font-size: 0.82rem; font-weight: 600; color: #475569; }
+.slm-modal input, .slm-modal select, .slm-modal textarea { padding: 8px 10px; border: 1px solid rgba(124,58,237,.25); border-radius: 8px; background: rgba(255,255,255,.6); }
+.slm-modal-footer { display: flex; justify-content: flex-end; gap: 8px; margin-top: 8px; }
+.slm-msg { color: #ef4444; font-size: 0.82rem; }

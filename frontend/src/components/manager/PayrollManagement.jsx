@@ -547,6 +547,11 @@ const PayrollManagement = () => {
   };
 
   const handleRelease = async (payroll) => {
+    const confirmed = window.confirm(
+      `Release payroll ${payroll.payrollId} for ${payroll.employeeName}?\n\nNet Pay: ${new Intl.NumberFormat("en-PH", { style: "currency", currency: "PHP" }).format(payroll.netPay)}\n\nThis will mark the period as LOCKED and queue a payslip email to the employee.`
+    );
+    if (!confirmed) return;
+
     setActionLoadingId(payroll.id);
 
     try {
@@ -555,20 +560,17 @@ const PayrollManagement = () => {
       } catch (primaryError) {
         await apiRequest(`/manager/payroll/${payroll.rawId}/release`, {
           method: "POST",
-          body: JSON.stringify({
-            status: "released",
-          }),
+          body: JSON.stringify({ status: "released" }),
         });
       }
 
-      await createPayrollNotification(`${payroll.payrollId} has been released.`, "high");
+      await createPayrollNotification(`${payroll.payrollId} has been released. Payslip email queued.`, "high");
       await fetchPayrolls({ silent: true });
-      showToast("Payroll marked as released successfully.", "success");
+      showToast("Payroll released. Payslip email queued for employee.", "success");
     } catch (err) {
       console.error("Release payroll error:", err);
       showToast(
-        err.message ||
-          "Failed to release payroll. Please verify the payroll release endpoint.",
+        err.message || "Failed to release payroll. Please verify the payroll release endpoint.",
         "error"
       );
     } finally {
@@ -1143,6 +1145,9 @@ const PayrollManagement = () => {
 
                       <td>
                         <StatusBadge status={payroll.status} />
+                        {["paid", "released", "approved"].includes(payroll.status) && (
+                          <span title="Period locked — attendance edits blocked" style={{ marginLeft: 4, fontSize: "0.75rem", color: "#7c3aed" }}>🔒</span>
+                        )}
                       </td>
 
                       <td>

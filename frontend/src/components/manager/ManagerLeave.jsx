@@ -26,12 +26,17 @@ import { exportToCSV, exportToPDF, exportToExcel } from "../../utils/reportExpor
 import "./ManagerLeave.css";
 
 const LEAVE_TYPES = [
-  { value: "sick_leave", label: "Sick Leave", color: "#ef4444" },
-  { value: "vacation_leave", label: "Vacation Leave", color: "#3b82f6" },
-  { value: "emergency_leave", label: "Emergency Leave", color: "#f59e0b" },
-  { value: "maternity_leave", label: "Maternity Leave", color: "#ec4899" },
-  { value: "paternity_leave", label: "Paternity Leave", color: "#8b5cf6" },
-  { value: "bereavement_leave", label: "Bereavement Leave", color: "#64748b" },
+  { value: "sick_leave",              label: "Sick Leave",              color: "#ef4444" },
+  { value: "vacation_leave",          label: "Vacation Leave",          color: "#3b82f6" },
+  { value: "emergency_leave",         label: "Emergency Leave",         color: "#f59e0b" },
+  { value: "maternity_leave",         label: "Maternity Leave",         color: "#ec4899" },
+  { value: "paternity_leave",         label: "Paternity Leave",         color: "#8b5cf6" },
+  { value: "bereavement_leave",       label: "Bereavement Leave",       color: "#64748b" },
+  { value: "service_incentive_leave", label: "Service Incentive Leave", color: "#10b981" },
+  { value: "solo_parent_leave",       label: "Solo Parent Leave",       color: "#06b6d4" },
+  { value: "magna_carta_leave",       label: "Magna Carta Leave",       color: "#f43f5e" },
+  { value: "special_leave_benefit",   label: "Special Leave Benefit",   color: "#a855f7" },
+  { value: "unpaid_leave",            label: "Unpaid Leave",            color: "#94a3b8" },
 ];
 
 const normalizeList = (payload, keys = []) => {
@@ -437,6 +442,19 @@ const ManagerLeave = () => {
             </div>
             <div className="leave-modal-body">
               <p>{getLeaveTypeMeta(selectedRecord.type).label} — {formatDate(selectedRecord.start_date)} to {formatDate(selectedRecord.end_date)}</p>
+              {selectedRecord.days_counted != null && (
+                <p style={{ fontSize: "0.85rem", color: "#7c3aed", marginBottom: 4 }}>
+                  Days counted: <strong>{selectedRecord.days_counted}</strong>
+                </p>
+              )}
+              {selectedRecord.balance_remaining != null && actionModal === "approve" && (
+                <p style={{ fontSize: "0.85rem", color: parseFloat(selectedRecord.balance_remaining) < parseFloat(selectedRecord.days_counted || 1) ? "#ef4444" : "#059669", marginBottom: 8 }}>
+                  Leave balance remaining: <strong>{selectedRecord.balance_remaining} days</strong>
+                  {parseFloat(selectedRecord.balance_remaining) < parseFloat(selectedRecord.days_counted || 1) && (
+                    <span style={{ marginLeft: 8, fontWeight: 700 }}>⚠ Insufficient balance</span>
+                  )}
+                </p>
+              )}
               <label className="leave-remarks-field">
                 <span>Manager Remarks {actionModal === "reject" ? "(required — reason for rejection)" : "(optional)"}</span>
                 <textarea rows={4} value={remarks} onChange={(e) => setRemarks(e.target.value)} placeholder={actionModal === "reject" ? "Enter reason for rejection..." : "Add remarks..."} />

@@ -41,6 +41,7 @@ class SalaryController extends Controller
 
         $email = Str::slug($data['name']) . '-' . Str::lower(Str::random(6)) . '@pawesome.local';
 
+        $salary = (float) ($data['baseSalary'] ?? 0);
         $user = User::create([
             'name' => $data['name'],
             'email' => $email,
@@ -49,7 +50,8 @@ class SalaryController extends Controller
             'is_active' => ($data['status'] ?? 'active') === 'active',
             'department' => $data['department'] ?? null,
             'position' => $data['position'] ?? null,
-            'base_salary' => $data['baseSalary'] ?? 0,
+            'base_salary' => $salary,
+            'hourly_rate' => $salary > 0 ? round($salary / 208, 4) : 0,
             'employment_status' => $data['status'] ?? 'active',
         ]);
 
@@ -70,11 +72,13 @@ class SalaryController extends Controller
             'status' => 'nullable|string|max:50',
         ]);
 
+        $newSalary = isset($data['baseSalary']) ? (float) $data['baseSalary'] : (float) $user->base_salary;
         $user->update([
             'name' => $data['name'] ?? $user->name,
             'department' => $data['department'] ?? $user->department,
             'position' => $data['position'] ?? $user->position,
-            'base_salary' => $data['baseSalary'] ?? $user->base_salary,
+            'base_salary' => $newSalary,
+            'hourly_rate' => $newSalary > 0 ? round($newSalary / 208, 4) : $user->hourly_rate,
             'employment_status' => $data['status'] ?? $user->employment_status,
             'is_active' => isset($data['status']) ? $data['status'] === 'active' : $user->is_active,
         ]);

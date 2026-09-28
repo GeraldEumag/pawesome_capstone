@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Support\CompanySchedule;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -165,32 +166,50 @@ class Payroll extends Model
         $this->regular_hours = $stats['regular_hours'];
         $this->overtime_hours = $stats['overtime_hours'];
 
-        // Use person's hourly rate or calculate from base salary
-        $this->hourly_rate = (float) ($person->hourly_rate ?? ($person->base_salary ? $person->base_salary / 160 : 0));
+        // Stored hourly_rate is authoritative; fallback = base_salary ÷ 208 (26 days × 8 h)
+        $this->hourly_rate = (float) ($person->hourly_rate
+            ? $person->hourly_rate
+            : ($person->base_salary ? round($person->base_salary / 208, 4) : 0));
 
-        // Calculate earnings
-        $dailyRate = $this->base_salary / 22; // Assuming 22 working days per month
+        $divisor   = CompanySchedule::dailyRateDivisor(); // 26
+        $dailyRate = (float) $this->base_salary / $divisor;
+
         $this->absent_deductions = (float) ($this->absent_days * $dailyRate);
-        $this->late_deductions = (float) ($stats['late_days'] * ($dailyRate * 0.1)); // 10% deduction per late
 
-        // Calculate overtime pay (1.5x rate)
+        // Per-minute late deduction (15-min grace tracked in stats)
+        $totalLateMinutes    = $stats['total_late_minutes'] ?? ($stats['late_days'] * 0);
+        $this->late_deductions = (float) ($totalLateMinutes * ($this->hourly_rate / 60));
+
+        // Night differential: 10% of hourly rate × night hours
+        $nightDiffMinutes       = $stats['night_diff_minutes'] ?? 0;
+        $this->night_differential = (float) (($nightDiffMinutes / 60) * ($this->hourly_rate * 0.10));
+
+        // Overtime (1.5×)
         $this->overtime_pay = (float) ($this->overtime_hours * ($this->hourly_rate * 1.5));
 
-        // Semi-monthly periods (1–15 / 16–end) pay half the monthly base and
-        // deduct half the monthly statutory contributions.
+        // Semi-monthly periods (1–15 / 16–end): half monthly base + half contributions
         $periodBase = (float) $this->base_salary * $factor;
 
-        // Calculate mandatory deductions (Philippine standard)
-        $this->sss_contribution = (float) $this->calculateSSS() * $factor;
+        // Mandatory deductions (Philippine standard)
+        $this->sss_contribution        = (float) $this->calculateSSS() * $factor;
         $this->philhealth_contribution = (float) $this->calculatePhilHealth() * $factor;
-        $this->pagibig_contribution = 100.0 * $factor; // Fixed P100/month for Pag-IBIG
+        // Pag-IBIG: 2% of salary capped at ₱100 employee share (HDMF Circular 274)
+        $this->pagibig_contribution    = (float) (min((float) $this->base_salary * 0.02, 100.0) * $factor);
 
-        // Calculate gross pay
-        $this->gross_pay = (float) ($periodBase + $this->overtime_pay + $this->bonus + $this->allowances);
+        // Gross pay: base + earnings − attendance deductions (before tax)
+        $this->gross_pay = (float) max(0,
+            $periodBase
+            + $this->overtime_pay
+            + $this->night_differential
+            + (float) ($this->regular_holiday_pay ?? 0)
+            + (float) ($this->special_holiday_pay ?? 0)
+            + (float) ($this->bonus ?? 0)
+            + (float) ($this->allowances ?? 0)
+            - $this->absent_deductions
+            - $this->late_deductions
+        );
 
-        // Calculate withholding tax (BIR 2023-onwards, RR 11-2018 Annex E)
-        // For half-month periods, evaluate the monthly-equivalent taxable
-        // income and halve the result so both cutoffs reconcile.
+        // Withholding tax (BIR 2023+, RR 11-2018 Annex E)
         $this->tax_deduction = $factor >= 1.0
             ? (float) $this->calculateWithholdingTax()
             : (float) ($factor * $this->calculateWithholdingTax(
@@ -200,12 +219,13 @@ class Payroll extends Model
                 $this->pagibig_contribution / $factor
             ));
 
-        // Calculate total deductions
-        $totalDeductions = $this->sss_contribution + $this->philhealth_contribution +
-                          $this->pagibig_contribution + $this->tax_deduction +
-                          $this->late_deductions + $this->absent_deductions + $this->deductions;
+        $totalDeductions = $this->sss_contribution + $this->philhealth_contribution
+            + $this->pagibig_contribution + $this->tax_deduction
+            + $this->late_deductions + $this->absent_deductions
+            + (float) ($this->deductions ?? 0)
+            + (float) ($this->salary_loan ?? 0)
+            + (float) ($this->cash_advance ?? 0);
 
-        // Calculate net pay
         $this->net_pay = (float) max(0, $this->gross_pay - $totalDeductions);
     }
 

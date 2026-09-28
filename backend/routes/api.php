@@ -684,11 +684,10 @@ Route::middleware(['auth.api', 'throttle:api'])->prefix('manager')->group(functi
         Route::delete('employees/{employee}', [EmployeeController::class, 'destroy']);
     });
 
-    // Schedule operations are owned by Manager, with Admin as system override.
+    // Company schedule settings (replaces per-employee work_schedules)
     Route::middleware('role:manager,admin')->group(function () {
-        Route::get('schedules', [\App\Http\Controllers\Manager\ScheduleController::class, 'index']);
-        Route::post('schedules', [\App\Http\Controllers\Manager\ScheduleController::class, 'store']);
-        Route::delete('schedules/{id}', [\App\Http\Controllers\Manager\ScheduleController::class, 'destroy']);
+        Route::get('company-schedule', [\App\Http\Controllers\Manager\CompanyScheduleController::class, 'show']);
+        Route::put('company-schedule', [\App\Http\Controllers\Manager\CompanyScheduleController::class, 'update']);
     });
 
     // Manager biometric attendance routes.
@@ -736,6 +735,68 @@ Route::middleware(['auth.api', 'throttle:api', 'role:admin'])->prefix('admin/sal
 Route::middleware(['auth.api', 'throttle:api'])->group(function () {
     Route::get('/my-payroll', [PayrollController::class, 'myPayroll']);
     Route::get('/my-payroll/{id}/payslip', [PayrollController::class, 'payslip']);
+    // Leave self-service
+    Route::get('/my-leaves', [\App\Http\Controllers\Api\MyLeaveController::class, 'index']);
+    Route::post('/my-leaves', [\App\Http\Controllers\Api\MyLeaveController::class, 'store']);
+    Route::get('/my-leaves/balance', [\App\Http\Controllers\Api\MyLeaveController::class, 'balance']);
+    Route::delete('/my-leaves/{id}', [\App\Http\Controllers\Api\MyLeaveController::class, 'cancel']);
+    // Attendance self-service
+    Route::get('/my-attendance', [\App\Http\Controllers\Api\MyAttendanceCorrectionController::class, 'attendance']);
+    Route::get('/my-attendance/corrections', [\App\Http\Controllers\Api\MyAttendanceCorrectionController::class, 'index']);
+    Route::post('/my-attendance/corrections', [\App\Http\Controllers\Api\MyAttendanceCorrectionController::class, 'store']);
+    // Loan self-service
+    Route::get('/my-loans', [\App\Http\Controllers\Api\MyLoanController::class, 'index']);
+    Route::post('/my-loans', [\App\Http\Controllers\Api\MyLoanController::class, 'store']);
+});
+
+// -----------------------------------------------------------------------
+// Manager HR Routes — Leave Balances, Holidays, Corrections, 13th Month,
+// Salary Loans, Remittance Reports
+// -----------------------------------------------------------------------
+Route::middleware(['auth.api', 'throttle:api', 'role:manager,admin'])->prefix('manager')->group(function () {
+
+    // Leave balances
+    Route::get('leave-balances', [\App\Http\Controllers\Manager\LeaveBalanceController::class, 'index']);
+    Route::get('leave-balances/{userId}/user', [\App\Http\Controllers\Manager\LeaveBalanceController::class, 'forUser']);
+    Route::get('leave-balances/{employeeId}/employee', [\App\Http\Controllers\Manager\LeaveBalanceController::class, 'forEmployee']);
+    Route::put('leave-balances/{leaveBalance}', [\App\Http\Controllers\Manager\LeaveBalanceController::class, 'update']);
+    Route::post('leave-balances/seed', [\App\Http\Controllers\Manager\LeaveBalanceController::class, 'seed']);
+
+    // Leave cancellation (for manager to cancel approved leaves)
+    Route::delete('leaves/{id}/cancel', [\App\Http\Controllers\Manager\LeaveController::class, 'cancel']);
+
+    // Holiday management
+    Route::get('holidays', [\App\Http\Controllers\Manager\HolidayController::class, 'index']);
+    Route::post('holidays', [\App\Http\Controllers\Manager\HolidayController::class, 'store']);
+    Route::put('holidays/{holiday}', [\App\Http\Controllers\Manager\HolidayController::class, 'update']);
+    Route::delete('holidays/{holiday}', [\App\Http\Controllers\Manager\HolidayController::class, 'destroy']);
+    Route::post('holidays/generate-recurring', [\App\Http\Controllers\Manager\HolidayController::class, 'generateRecurring']);
+
+    // Attendance corrections (manager review)
+    Route::get('attendance/corrections', [\App\Http\Controllers\Manager\AttendanceCorrectionController::class, 'index']);
+    Route::post('attendance/corrections/{correction}/approve', [\App\Http\Controllers\Manager\AttendanceCorrectionController::class, 'approve']);
+    Route::post('attendance/corrections/{correction}/reject', [\App\Http\Controllers\Manager\AttendanceCorrectionController::class, 'reject']);
+
+    // Today's attendance status board
+    Route::get('attendance/today-status', [\App\Http\Controllers\AttendanceController::class, 'todayStatus']);
+
+    // 13th month accruals
+    Route::get('payroll/thirteenth-month', [\App\Http\Controllers\Manager\ThirteenthMonthController::class, 'index']);
+    Route::post('payroll/thirteenth-month/accrue', [\App\Http\Controllers\Manager\ThirteenthMonthController::class, 'accrue']);
+    Route::post('payroll/thirteenth-month/{accrual}/pay', [\App\Http\Controllers\Manager\ThirteenthMonthController::class, 'pay']);
+
+    // Salary loans
+    Route::get('salary-loans', [\App\Http\Controllers\Manager\SalaryLoanController::class, 'index']);
+    Route::post('salary-loans', [\App\Http\Controllers\Manager\SalaryLoanController::class, 'store']);
+    Route::get('salary-loans/{salaryLoan}', [\App\Http\Controllers\Manager\SalaryLoanController::class, 'show']);
+    Route::put('salary-loans/{salaryLoan}', [\App\Http\Controllers\Manager\SalaryLoanController::class, 'update']);
+    Route::delete('salary-loans/{salaryLoan}', [\App\Http\Controllers\Manager\SalaryLoanController::class, 'cancel']);
+
+    // Government remittance reports (SSS, PhilHealth, Pag-IBIG)
+    Route::get('reports/remittance', [\App\Http\Controllers\Manager\RemittanceReportController::class, 'index']);
+
+    // DTR Report
+    Route::get('reports/dtr', [\App\Http\Controllers\AttendanceController::class, 'dtrReport']);
 });
 
 // Attendance punching is staff-only — customers have no attendance workflow.

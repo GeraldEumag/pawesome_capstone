@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Attendance;
 use App\Models\Employee;
 use App\Models\User;
+use App\Support\CompanySchedule;
 use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -108,9 +109,10 @@ class BarcodeAttendanceController extends Controller
             $attendance->status    = 'present';
             $attendance->source    = 'barcode';
 
-            // Late if after 08:00
-            $isLate = $now->format('H:i') > '08:00';
-            $attendance->is_late   = $isLate;
+            // Late check: grace period from company settings (default 15 min after shift_start)
+            $lateMinutes         = CompanySchedule::lateMinutes($now->format('H:i'));
+            $isLate              = $lateMinutes > 0;
+            $attendance->is_late = $isLate;
             if ($isLate) {
                 $attendance->status = 'late';
             }
