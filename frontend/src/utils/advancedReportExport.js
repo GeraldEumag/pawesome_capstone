@@ -6,70 +6,85 @@
 import { format } from 'date-fns';
 import { showWarning, showError } from './alert.jsx';
 import { sanitizeCsvCell } from './csvSanitize';
+import { getRole, getUserData } from './auth';
+import { exportFormalReportPDF } from './formalReportPdf';
 
 /**
  * Export data to CSV
  */
-export const exportToCSV = (data, filename, headers) => {
-  if (!data || data.length === 0) {
+export const exportToCSV = (data, filename, headers, metadata = {}) => {
+  if (!Array.isArray(data) || data.length === 0) {
     showWarning('No data to export');
     return;
   }
 
   const csvHeaders = headers || Object.keys(data[0]);
-  const csvRows = [
-    csvHeaders.join(','),
-    ...data.map(row =>
-      csvHeaders.map(header => {
-        const value = sanitizeCsvCell(row[header]);
-        // Escape values containing commas or quotes
-        const escaped = typeof value === 'string' && (value.includes(',') || value.includes('"'))
-          ? `"${value.replace(/"/g, '""')}"`
-          : value;
-        return escaped ?? '';
-      }).join(',')
-    ),
+  const csvEscape = (value) => {
+    const safeValue = String(sanitizeCsvCell(value) ?? '');
+    return /[",\n\r]/.test(safeValue) ? `"${safeValue.replace(/"/g, '""')}"` : safeValue;
+  };
+  const reportTitle = metadata.title || filename.replace(/[_-]+/g, ' ');
+  const reportMeta = [
+    [reportTitle],
+    ...(metadata.periodLabel ? [[`Reporting period: ${metadata.periodLabel}`]] : []),
+    [`Prepared by: ${metadata.preparedBy || getUserData().name || 'Authorized Staff'}`],
+    [`Prepared role: ${metadata.preparedRole || getRole() || 'Report Preparer'}`],
+    [`Generated: ${new Date().toLocaleString('en-PH')}`],
+    [],
   ];
-
-  const csvContent = '\uFEFF' + csvRows.join('\n'); // BOM for Excel UTF-8
+  const csvRows = [
+    ...reportMeta,
+    csvHeaders,
+    ...data.map(row => csvHeaders.map(header => row?.[header])),
+  ];
+  const csvContent = '\uFEFF' + csvRows.map(row => row.map(csvEscape).join(',')).join('\r\n');
   const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-  
+
   downloadFile(blob, `${filename}_${format(new Date(), 'yyyy-MM-dd')}.csv`);
 };
 
 /**
  * Export to Excel (XLSX format)
  */
-export const exportToExcel = async (data, filename, sheetName = 'Data') => {
-  if (!data || data.length === 0) {
+export const exportToExcel = async (data, filename, sheetName = 'Data', metadata = {}) => {
+  if (!Array.isArray(data) || data.length === 0) {
     showWarning('No data to export');
     return;
   }
 
   try {
-    // Dynamic import to reduce bundle size
     const XLSX = await import('xlsx');
-    
-    const worksheet = XLSX.utils.json_to_sheet(data);
+    const headers = Object.keys(data[0]);
+    const reportMeta = [
+      [metadata.title || filename.replace(/[_-]+/g, ' ')],
+      ...(metadata.periodLabel ? [[`Reporting period: ${metadata.periodLabel}`]] : []),
+      [`Prepared by: ${metadata.preparedBy || getUserData().name || 'Authorized Staff'}`],
+      [`Prepared role: ${metadata.preparedRole || getRole() || 'Report Preparer'}`],
+      [`Generated: ${new Date().toLocaleString('en-PH')}`],
+      [],
+    ];
+    const worksheetData = [
+      ...reportMeta,
+      headers,
+      ...data.map(row => headers.map(header => row?.[header] ?? '')),
+    ];
+    const worksheet = XLSX.utils.aoa_to_sheet(worksheetData);
+    const maxWidth = headers.map((header, index) => ({
+      width: Math.min(Math.max(
+        String(header).length,
+        ...data.map(row => String(row?.[header] ?? '').length)
+      ) + 2, 50),
+    }));
+    worksheet['!cols'] = maxWidth;
+
     const workbook = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(workbook, worksheet, sheetName);
-    
-    // Auto-width columns
-    const maxWidth = Object.keys(data[0]).reduce((acc, key) => {
-      const maxDataWidth = Math.max(
-        key.length,
-        ...data.map(row => String(row[key] || '').length)
-      );
-      acc[key] = { width: Math.min(maxDataWidth + 2, 50) };
-      return acc;
-    }, {});
-    worksheet['!cols'] = Object.values(maxWidth);
-    
+    const safeSheetName = String(sheetName || 'Data').replace(/[\\/?*\[\]:]/g, ' ').slice(0, 31) || 'Data';
+    XLSX.utils.book_append_sheet(workbook, worksheet, safeSheetName);
     XLSX.writeFile(workbook, `${filename}_${format(new Date(), 'yyyy-MM-dd')}.xlsx`);
   } catch (err) {
     console.error('Excel export error:', err);
-    // Fallback to CSV
-    exportToCSV(data, filename);
+    showError('Excel export failed. Please try again.');
+    throw err;
   }
 };
 
@@ -83,35 +98,31 @@ export const exportToPDF = async (data, filename, title, headers) => {
   }
 
   try {
-    // Dynamic import
-    const { jsPDF } = await import('jspdf');
-    const { default: autoTable } = await import('jspdf-autotable');
-
-    const doc = new jsPDF();
-
-    // Title
-    doc.setFontSize(16);
-    doc.text(title, 14, 20);
-
-    // Date
-    doc.setFontSize(10);
-    doc.text(`Generated: ${format(new Date(), 'PPP')}`, 14, 30);
-
-    // Table
     const tableHeaders = headers || Object.keys(data[0]);
-    autoTable(doc, {
-      head: [tableHeaders.map(h => h.toUpperCase())],
-      body: data.map(row => tableHeaders.map(h => row[h] ?? '')),
-      startY: 40,
-      styles: { fontSize: 8 },
-      headStyles: { fillColor: [255, 95, 147] },
+    return exportFormalReportPDF({
+      docRef: `${filename.toUpperCase().replace(/[^A-Z0-9]+/g, "-")}-${format(new Date(), "yyyyMMdd")}`,
+      title: title || "Business Report",
+      subtitle: `${title || "Business Report"} — detailed business report`,
+      periodLabel: "As of issue date",
+      infoFields: [{ label: "Records Included", value: data.length }],
+      summaryCards: [
+        { label: "Records Included", value: data.length },
+        { label: "Report Status", value: "Generated" },
+      ],
+      table: {
+        columns: tableHeaders.map((header) => ({ header: String(header).toUpperCase(), key: header })),
+        rows: data,
+      },
+      findings: [
+        `${data.length} record(s) are included in the detailed schedule. Review the source records and supporting documentation before approval.`,
+      ],
+      recommendations: ["Retain this report with its source records and obtain the required review and approval signatures."],
+      filename: `${filename}_${format(new Date(), "yyyy-MM-dd")}`,
     });
-    
-    doc.save(`${filename}_${format(new Date(), 'yyyy-MM-dd')}.pdf`);
   } catch (err) {
     console.error('PDF export error:', err);
-    showError('PDF export failed. Falling back to CSV.');
-    exportToCSV(data, filename, headers);
+    showError('PDF export failed. Please try again.');
+    throw err;
   }
 };
 
@@ -126,47 +137,244 @@ const downloadFile = (blob, filename) => {
   document.body.appendChild(link);
   link.click();
   document.body.removeChild(link);
-  URL.revokeObjectURL(url);
+  window.setTimeout(() => URL.revokeObjectURL(url), 1000);
 };
 
 /**
  * Export Executive Dashboard Data
  */
-export const exportExecutiveData = (data, format = 'csv') => {
-  const filename = 'Executive_Dashboard';
-  
-  // Export revenue trend
-  if (data.revenueTrend) {
-    const trendData = data.revenueTrend.map(item => ({
-      Date: item.date,
-      Revenue: item.revenue,
-      Orders: item.orders,
+const executiveNumber = (value) => {
+  const number = Number(value);
+  return Number.isFinite(number) ? number : 0;
+};
+
+const executiveCurrency = (value) =>
+  new Intl.NumberFormat('en-PH', { style: 'currency', currency: 'PHP' }).format(executiveNumber(value));
+
+const executiveReportData = (data = {}, period = {}) => {
+  const source = data || {};
+  const summary = source.summary || {};
+  const comparisons = source.comparisons || {};
+  const predictions = source.predictions || {};
+  const trend = source.revenueTrend || source.revenue_trend || [];
+  const periodTrend = Array.isArray(trend) ? trend.filter((item) => {
+    const date = item.full_date || item.date;
+    if (!date || !period.from || !period.to || !/^\d{4}-\d{2}-\d{2}$/.test(date)) return true;
+    return date >= period.from && date <= period.to;
+  }) : [];
+  const rawStatuses = source.statusBreakdown || source.status_breakdown || {};
+  const statusRows = Array.isArray(rawStatuses)
+    ? rawStatuses.map((row) => ({
+      Status: row.name || row.status || 'Unknown',
+      Orders: executiveNumber(row.count ?? row.orders ?? row.value),
+      Revenue: executiveNumber(row.revenue),
+    }))
+    : Object.entries(rawStatuses).map(([status, values]) => ({
+      Status: status.charAt(0).toUpperCase() + status.slice(1),
+      Orders: executiveNumber(values?.count ?? values?.orders ?? values),
+      Revenue: executiveNumber(values?.revenue),
     }));
-    
-    if (format === 'csv') exportToCSV(trendData, `${filename}_Trend`);
-    else if (format === 'excel') exportToExcel(trendData, `${filename}_Trend`, 'Revenue Trend');
-    else if (format === 'pdf') exportToPDF(trendData, `${filename}_Trend`, 'Executive Dashboard - Revenue Trend');
+  const summaryRows = [
+    { Metric: 'Revenue for selected period', Value: executiveNumber(summary.total_revenue ?? summary.totalRevenue) },
+    { Metric: 'Today revenue', Value: executiveNumber(summary.today_revenue ?? summary.todayRevenue) },
+    { Metric: 'Yesterday revenue', Value: executiveNumber(summary.yesterday_revenue ?? summary.yesterdayRevenue) },
+    { Metric: 'Orders for selected period', Value: executiveNumber(summary.total_orders ?? summary.totalOrders) },
+    { Metric: 'Today orders', Value: executiveNumber(summary.today_orders ?? summary.todayOrders) },
+    { Metric: 'Active customers', Value: executiveNumber(summary.active_customers ?? summary.activeCustomers) },
+    { Metric: 'Total customers', Value: executiveNumber(summary.total_customers ?? summary.totalCustomers) },
+    { Metric: 'Pending approvals', Value: executiveNumber(summary.pending_approvals ?? summary.pendingApprovals ?? summary.pending_requests) },
+    { Metric: 'Low-stock items', Value: executiveNumber(summary.low_stock_items ?? summary.lowStockItems) },
+    { Metric: 'Critical-stock items', Value: executiveNumber(summary.critical_stock_items ?? summary.criticalStockItems) },
+    { Metric: 'Next-month revenue forecast', Value: executiveNumber(predictions.next_month_revenue ?? predictions.nextMonthRevenue) },
+    { Metric: 'Previous-period revenue', Value: executiveNumber(comparisons.previous_revenue ?? comparisons.previousRevenue) },
+    { Metric: 'Previous-period orders', Value: executiveNumber(comparisons.previous_orders ?? comparisons.previousOrders) },
+    { Metric: 'Year-over-year growth (%)', Value: executiveNumber(comparisons.yoy_growth ?? comparisons.yoyGrowth) },
+  ];
+  const trendRows = periodTrend.map((item) => ({
+    Date: item.full_date || item.date || '',
+    Revenue: executiveNumber(item.revenue),
+    Orders: executiveNumber(item.orders ?? item.count),
+  }));
+  const anomalies = Array.isArray(source.anomalies) ? source.anomalies : [];
+  const alertRows = anomalies.map((alert) => ({
+    Type: alert.title || 'Alert',
+    Severity: alert.severity || 'Information',
+    Details: alert.message || '',
+  }));
+  if (alertRows.length === 0) {
+    alertRows.push({ Type: 'System status', Severity: 'Information', Details: 'No anomalies were reported for this dashboard refresh.' });
   }
-  
-  // Export summary
-  if (data.summary) {
-    const summaryData = [{
-      Metric: 'Total Revenue',
-      Value: data.summary.totalRevenue,
-    }, {
-      Metric: 'Today Revenue',
-      Value: data.summary.todayRevenue,
-    }, {
-      Metric: 'Total Orders',
-      Value: data.summary.totalOrders,
-    }, {
-      Metric: 'Active Customers',
-      Value: data.summary.activeCustomers,
-    }];
-    
-    if (format === 'csv') exportToCSV(summaryData, `${filename}_Summary`);
-    else if (format === 'excel') exportToExcel(summaryData, `${filename}_Summary`, 'Summary');
+  alertRows.push({
+    Type: 'Next-month forecast',
+    Severity: 'Projection',
+    Details: executiveNumber(predictions.next_month_revenue ?? predictions.nextMonthRevenue),
+  });
+
+  return { summaryRows, trendRows, statusRows, alertRows, summary, comparisons, predictions, anomalies };
+};
+
+const executiveMetaRows = (title, periodLabel, preparedBy, preparedRole) => [
+  [title],
+  [`Reporting period: ${periodLabel}`],
+  [`Prepared by: ${preparedBy}`],
+  [`Prepared role: ${preparedRole}`],
+  [`Generated: ${new Date().toLocaleString('en-PH')}`],
+  [],
+];
+
+const exportExecutiveCSV = (report, periodLabel, preparedBy, preparedRole) => {
+  const csvRows = [
+    ...executiveMetaRows('Executive Dashboard Report', periodLabel, preparedBy, preparedRole),
+    ['Executive Summary'],
+    ['Metric', 'Value'],
+    ...report.summaryRows.map((row) => [row.Metric, row.Value]),
+    [],
+    ['Revenue Trend'],
+    ['Date', 'Revenue', 'Orders'],
+    ...report.trendRows.map((row) => [row.Date, row.Revenue, row.Orders]),
+    [],
+    ['Order Status'],
+    ['Status', 'Orders', 'Revenue'],
+    ...report.statusRows.map((row) => [row.Status, row.Orders, row.Revenue]),
+    [],
+    ['Alerts & Forecast'],
+    ['Type', 'Severity', 'Details'],
+    ...report.alertRows.map((row) => [row.Type, row.Severity, row.Details]),
+  ];
+  const csvEscape = (value) => {
+    const safeValue = String(sanitizeCsvCell(value) ?? '');
+    return /[",\n\r]/.test(safeValue) ? `"${safeValue.replace(/"/g, '""')}"` : safeValue;
+  };
+  const csvContent = '\uFEFF' + csvRows.map((row) => row.map(csvEscape).join(',')).join('\r\n');
+  downloadFile(new Blob([csvContent], { type: 'text/csv;charset=utf-8;' }), `Executive_Dashboard_${format(new Date(), 'yyyy-MM-dd')}.csv`);
+};
+
+const exportExecutiveExcel = async (report, periodLabel, preparedBy, preparedRole) => {
+  const XLSX = await import('xlsx');
+  const workbook = XLSX.utils.book_new();
+  const sheets = [
+    { name: 'Summary', rows: report.summaryRows },
+    { name: 'Revenue Trend', rows: report.trendRows },
+    { name: 'Order Status', rows: report.statusRows },
+    { name: 'Alerts & Forecast', rows: report.alertRows },
+  ];
+  sheets.forEach(({ name, rows }) => {
+    const headers = Object.keys(rows[0] || (name === 'Summary'
+      ? { Metric: '', Value: '' }
+      : name === 'Revenue Trend'
+        ? { Date: '', Revenue: '', Orders: '' }
+        : name === 'Order Status'
+          ? { Status: '', Orders: '', Revenue: '' }
+          : { Type: '', Severity: '', Details: '' }));
+    const worksheet = XLSX.utils.aoa_to_sheet([
+      ...executiveMetaRows('Executive Dashboard Report', periodLabel, preparedBy, preparedRole),
+      headers,
+      ...rows.map((row) => headers.map((header) => row[header] ?? '')),
+    ]);
+    worksheet['!cols'] = headers.map((header) => ({
+      width: Math.min(Math.max(header.length, ...rows.map((row) => String(row[header] ?? '').length)) + 2, 48),
+    }));
+    XLSX.utils.book_append_sheet(workbook, worksheet, name);
+  });
+  XLSX.writeFile(workbook, `Executive_Dashboard_${format(new Date(), 'yyyy-MM-dd')}.xlsx`);
+};
+
+/** Export all Executive Dashboard data in one selected format. */
+export const exportExecutiveData = async (data, fileFormat = 'csv', context = {}) => {
+  const filename = 'Executive_Dashboard';
+  const report = executiveReportData(data, context.period);
+  const periodLabel = context.period?.periodLabel || 'As of issue date';
+  const preparedBy = getUserData().name || 'Authorized Staff';
+  const preparedRole = getRole() || 'Report Preparer';
+  const generatedDate = format(new Date(), 'yyyy-MM-dd');
+
+  if (fileFormat === 'csv') {
+    exportExecutiveCSV(report, periodLabel, preparedBy, preparedRole);
+    return;
   }
+  if (fileFormat === 'excel') {
+    try {
+      await exportExecutiveExcel(report, periodLabel, preparedBy, preparedRole);
+    } catch (err) {
+      console.error('Executive Excel export error:', err);
+      throw err;
+    }
+    return;
+  }
+  if (fileFormat === 'pdf') {
+    const summary = report.summary;
+    const predictions = report.predictions;
+    const findings = report.anomalies.length
+      ? report.anomalies.map((alert) => `${alert.title || 'Alert'}: ${alert.message || 'Review the flagged condition.'}`)
+      : ['No anomalies were reported for the selected dashboard period.'];
+    findings.push(`Next-month revenue forecast: ${executiveCurrency(predictions.next_month_revenue ?? predictions.nextMonthRevenue)}.`);
+    if (executiveNumber(summary.pending_approvals ?? summary.pendingApprovals) > 0) {
+      findings.push(`${executiveNumber(summary.pending_approvals ?? summary.pendingApprovals)} approval item(s) remain pending.`);
+    }
+    const recommendations = [];
+    if (executiveNumber(summary.low_stock_items ?? summary.lowStockItems) > 0) {
+      recommendations.push(`Review and replenish ${executiveNumber(summary.low_stock_items ?? summary.lowStockItems)} low-stock item(s).`);
+    }
+    if (executiveNumber(summary.pending_approvals ?? summary.pendingApprovals) > 0) {
+      recommendations.push('Review and resolve pending approval items according to the operating approval process.');
+    }
+    if (!recommendations.length) recommendations.push('Continue routine monitoring of revenue, order status, inventory, and operational alerts.');
+
+    try {
+      return exportFormalReportPDF({
+        docRef: `EXEC-${generatedDate.replace(/-/g, '')}`,
+        title: 'Executive Dashboard Report',
+        subtitle: 'Performance, revenue, and operational status report',
+        periodLabel,
+        orientation: 'landscape',
+        infoFields: [
+          { label: 'Selected Range', value: context.period?.from && context.period?.to ? `${context.period.from} through ${context.period.to}` : periodLabel },
+          { label: 'Last Refreshed', value: context.lastUpdated ? new Date(context.lastUpdated).toLocaleString('en-PH') : 'At export time' },
+          { label: 'Prepared By', value: preparedBy },
+        ],
+        summaryCards: [
+          { label: 'Period Revenue', value: executiveCurrency(summary.total_revenue ?? summary.totalRevenue) },
+          { label: 'Today Revenue', value: executiveCurrency(summary.today_revenue ?? summary.todayRevenue) },
+          { label: 'Period Orders', value: executiveNumber(summary.total_orders ?? summary.totalOrders) },
+          { label: 'Active Customers', value: executiveNumber(summary.active_customers ?? summary.activeCustomers) },
+          { label: 'Pending Approvals', value: executiveNumber(summary.pending_approvals ?? summary.pendingApprovals) },
+          { label: 'Low Stock', value: executiveNumber(summary.low_stock_items ?? summary.lowStockItems) },
+          { label: 'Next-Month Forecast', value: executiveCurrency(predictions.next_month_revenue ?? predictions.nextMonthRevenue) },
+        ],
+        analysis: {
+          title: 'Order Status Breakdown',
+          columns: [
+            { header: 'Status', key: 'Status' },
+            { header: 'Orders', key: 'Orders', align: 'right' },
+            { header: 'Revenue', key: 'Revenue', align: 'right', format: executiveCurrency },
+          ],
+          rows: report.statusRows,
+        },
+        table: {
+          title: 'Daily Revenue and Order Detail',
+          columns: [
+            { header: 'Date', key: 'Date' },
+            { header: 'Revenue', key: 'Revenue', align: 'right', format: executiveCurrency },
+            { header: 'Orders', key: 'Orders', align: 'right' },
+          ],
+          rows: report.trendRows,
+        },
+        findings,
+        recommendations,
+        signatures: [
+          { role: 'Prepared by', name: preparedBy, caption: preparedRole },
+          { role: 'Reviewed by', name: '', caption: 'Finance / Operations Reviewer' },
+          { role: 'Approved by', name: '', caption: 'Executive Approver' },
+        ],
+        filename: `${filename}_${generatedDate}`,
+      });
+    } catch (err) {
+      console.error('Executive PDF export error:', err);
+      throw err;
+    }
+  }
+
+  throw new Error(`Unsupported export format: ${fileFormat}`);
 };
 
 /**

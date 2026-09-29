@@ -1,24 +1,61 @@
 import React, { useEffect, useMemo, useState, useCallback } from "react";
 import { inventoryApi } from "../../api/inventory.jsx";
-import Papa from "papaparse";
-import jsPDF from "jspdf";
-import autoTable from "jspdf-autotable";
-import * as XLSX from "xlsx";
-import { sanitizeCsvRecords } from "../../utils/csvSanitize";
+import { exportFormalReportPDF } from "../../utils/formalReportPdf";
+import { getRole, getUserData } from "../../utils/auth";
+import { exportToCSV, exportToExcel } from "../../utils/reportExport";
 import { STORE_INFO } from "../../utils/storeInfo";
 import "./MonthlyInventoryAudit.css";
 import { showAlert, showSuccess, showError } from "../../utils/alert.jsx";
 import StatusDot from "../shared/StatusDot";
 
-const csvCell = (value) => {
-  const s = String(value ?? "");
-  return /[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
-};
+const auditExportColumns = [
+  { key: "product_name", label: "Product Name" },
+  { key: "sku", label: "SKU" },
+  { key: "category", label: "Category" },
+  { key: "brand", label: "Brand" },
+  { key: "system_stock", label: "System Stock" },
+  { key: "actual_stock", label: "Actual Stock" },
+  { key: "variance", label: "Variance" },
+  { key: "unit_cost", label: "Unit Cost", format: "currency" },
+  { key: "variance_value", label: "Estimated Variance Value", format: "currency" },
+  { key: "status", label: "Status" },
+  { key: "reason", label: "Reason" },
+];
+
+const auditExportRows = (rows) => rows.map((auditRow) => {
+  const unitCost = Number(auditRow.unit_cost ?? auditRow.item?.cost ?? 0);
+  const variance = Number(auditRow.variance || 0);
+  return {
+    product_name: auditRow.item?.name || "Unknown",
+    sku: auditRow.item?.sku || "N/A",
+    category: auditRow.item?.category || "N/A",
+    brand: auditRow.item?.brand || "N/A",
+    system_stock: Number(auditRow.system_stock || 0),
+    actual_stock: Number(auditRow.actual_stock || 0),
+    variance,
+    unit_cost: unitCost,
+    variance_value: variance * unitCost,
+    status: auditRow.status || "",
+    reason: auditRow.reason || "",
+  };
+});
 
 const getCurrentMonth = () => {
   const now = new Date();
   return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
 };
+
+const DISCREPANCY_REASONS = [
+  "Damage / Spoilage",
+  "Expired Stock",
+  "Theft / Shrinkage",
+  "Counting Error",
+  "Receiving Error (supplier short-shipped)",
+  "Unrecorded Stock Transfer",
+  "Unrecorded Sale",
+  "Return Not Processed",
+  "Sample / Demo Usage",
+];
 
 const getStockValue = (row) =>
   Number(row.system_stock ?? row.quantity ?? row.stock ?? row.item?.quantity ?? row.item?.stock ?? 0);
@@ -30,6 +67,8 @@ const normalizeAuditRow = (row) => {
     sku: row.sku,
     category: row.category,
     brand: row.brand,
+    cost: row.cost ?? row.unit_cost ?? 0,
+    price: row.price ?? row.unit_price ?? 0,
     stock: row.stock,
     quantity: row.quantity,
   };
@@ -347,115 +386,130 @@ const MonthlyInventoryAudit = () => {
       return;
     }
 
-    const csvData = checkedItems.map(auditRow => ({
-      "Product Name": auditRow.item?.name || "Unknown",
-      "SKU": auditRow.item?.sku || "N/A",
-      "Category": auditRow.item?.category || "N/A",
-      "Brand": auditRow.item?.brand || "N/A",
-      "System Stock": Number(auditRow.system_stock || 0),
-      "Actual Stock": Number(auditRow.actual_stock || 0),
-      "Variance": Number(auditRow.variance || 0),
-      "Status": auditRow.status,
-      "Reason": auditRow.reason || "",
-    }));
-
-    const meta = [
-      [STORE_INFO.name],
-      [`Monthly Inventory Audit — ${month}`],
-      [`Generated: ${new Date().toLocaleDateString()}`],
-      [],
-    ]
-      .map((row) => row.map(csvCell).join(","))
-      .join("\n");
-
-    const csv = `${meta}\n${Papa.unparse(sanitizeCsvRecords(csvData))}`;
-    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement("a");
-    link.href = url;
-    link.setAttribute("download", `${STORE_INFO.name.replace(/\s+/g, "-")}-monthly-audit-${month}.csv`);
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    URL.revokeObjectURL(url);
+    const csvData = auditExportRows(checkedItems);
+    exportToCSV(csvData, auditExportColumns, `${STORE_INFO.name.replace(/\s+/g, "-")}-monthly-audit-${month}`, {
+      title: "Monthly Inventory Audit",
+      periodLabel: month,
+    });
   };
 
   const handleExportPDF = () => {
     const checkedItems = items.filter((auditRow) => auditRow.actual_stock !== null && auditRow.actual_stock !== "");
-    
     if (checkedItems.length === 0) {
       showAlert("No checked items to export.");
       return;
     }
 
-    const doc = new jsPDF();
-
-    // Company + title header
-    doc.setFontSize(16);
-    doc.text(STORE_INFO.name, 105, 16, { align: "center" });
-    doc.setFontSize(10);
-    doc.text(STORE_INFO.address, 105, 22, { align: "center" });
-    doc.setFontSize(14);
-    doc.text("Monthly Inventory Audit Report", 105, 32, { align: "center" });
-
-    // Add month info
-    doc.setFontSize(11);
-    doc.text(`Audit Month: ${month}`, 14, 44);
-    doc.text(`Generated: ${new Date().toLocaleDateString()}`, 14, 52);
-    
-    // Add summary stats
-    const checked = checkedItems.length;
-    const matched = checkedItems.filter((auditRow) => calculateVariance(auditRow) === 0).length;
-    const discrepancy = checkedItems.filter((auditRow) => calculateVariance(auditRow) !== 0).length;
-    const totalVariance = checkedItems.reduce((sum, auditRow) => sum + calculateVariance(auditRow), 0);
-    
-    doc.text(`Total Items: ${checked}`, 14, 62);
-    doc.text(`Matched: ${matched}`, 14, 70);
-    doc.text(`Discrepancies: ${discrepancy}`, 14, 78);
-    doc.text(`Total Variance: ${totalVariance}`, 14, 86);
-    
-    // Prepare table data
-    const tableData = checkedItems.map(auditRow => [
-      auditRow.item?.name || "Unknown",
-      auditRow.item?.sku || "N/A",
-      auditRow.item?.category || "N/A",
-      auditRow.system_stock,
-      auditRow.actual_stock || 0,
-      calculateVariance(auditRow),
-      getStatus(auditRow),
-      auditRow.reason || ""
-    ]);
-
-    // Add table
-    autoTable(doc, {
-      head: [["Product", "SKU", "Category", "System Stock", "Actual Stock", "Variance", "Status", "Reason"]],
-      body: tableData,
-      startY: 95,
-      styles: { 
-        fontSize: 10,
-        cellPadding: 3,
-      },
-      headStyles: {
-        fillColor: [255, 95, 147],
-        textColor: 255,
-        fontStyle: 'bold'
-      },
-      alternateRowStyles: {
-        fillColor: [245, 245, 245]
-      },
-      columnStyles: {
-        0: { cellWidth: 40 }, // Product
-        1: { cellWidth: 20 }, // SKU
-        2: { cellWidth: 25 }, // Category
-        3: { cellWidth: 25, halign: 'center' }, // System Stock
-        4: { cellWidth: 25, halign: 'center' }, // Actual Stock
-        5: { cellWidth: 20, halign: 'center' }, // Variance
-        6: { cellWidth: 20, halign: 'center' }, // Status
-        7: { cellWidth: 35 }, // Reason
-      }
+    const currency = (value) => new Intl.NumberFormat("en-PH", { style: "currency", currency: "PHP" }).format(value || 0);
+    const unitCost = (row) => Number(row.unit_cost ?? row.item?.cost ?? 0);
+    const varianceValue = (row) => calculateVariance(row) * unitCost(row);
+    const matched = checkedItems.filter((row) => calculateVariance(row) === 0).length;
+    const discrepancies = checkedItems.filter((row) => calculateVariance(row) !== 0);
+    const netVariance = checkedItems.reduce((sum, row) => sum + calculateVariance(row), 0);
+    const netVarianceValue = checkedItems.reduce((sum, row) => sum + varianceValue(row), 0);
+    const shortageValue = discrepancies.reduce((sum, row) => sum + Math.max(0, -varianceValue(row)), 0);
+    const largestVariance = [...discrepancies].sort((a, b) => Math.abs(varianceValue(b)) - Math.abs(varianceValue(a)))[0];
+    const byReason = new Map();
+    discrepancies.forEach((row) => {
+      const reason = row.reason || "Reason not recorded";
+      const current = byReason.get(reason) || { reason, items: 0, units: 0, value: 0 };
+      current.items += 1;
+      current.units += calculateVariance(row);
+      current.value += varianceValue(row);
+      byReason.set(reason, current);
     });
 
-    doc.save(`${STORE_INFO.name.replace(/\s+/g, "-")}-monthly-audit-${month}.pdf`);
+    const findings = [];
+    if (discrepancies.length) {
+      findings.push(`${discrepancies.length} of ${checkedItems.length} counted items (${((discrepancies.length / checkedItems.length) * 100).toFixed(1)}%) have stock variances. The estimated net book value of those variances is ${currency(netVarianceValue)}; estimated shortage value is ${currency(shortageValue)}.`);
+      if (largestVariance) {
+        findings.push(`Largest valued variance: ${largestVariance.item?.name || "Unknown item"}, ${calculateVariance(largestVariance) > 0 ? "+" : ""}${calculateVariance(largestVariance)} unit(s), estimated at ${currency(varianceValue(largestVariance))}; recorded reason: ${largestVariance.reason || "not recorded"}.`);
+      }
+    } else {
+      findings.push(`All ${matched} counted item(s) reconciled to the system quantity. ${items.length - checkedItems.length} item(s) were not counted and are excluded from the detailed schedule.`);
+    }
+
+    const recommendationByReason = {
+      "Damage / Spoilage": "Review handling, storage conditions, and write-off controls for damaged or spoiled products.",
+      "Expired Stock": "Reinforce expiry-date monitoring and FIFO/FEFO rotation; document all disposals.",
+      "Theft / Shrinkage": "Review access controls, secure storage, and transaction logs for the affected items.",
+      "Counting Error": "Require an independent recount and use a documented two-person count for high-value items.",
+      "Receiving Error (supplier short-shipped)": "Reconcile receiving records against supplier invoices and delivery acknowledgments.",
+      "Unrecorded Stock Transfer": "Require transfers to be recorded and acknowledged by both sending and receiving locations.",
+      "Unrecorded Sale": "Reconcile point-of-sale transactions with inventory movements for the audit period.",
+      "Return Not Processed": "Review return authorization and restocking procedures and close pending returns promptly.",
+      "Sample / Demo Usage": "Record samples and demonstrations using an approved issue or consumption transaction.",
+    };
+    const recommendations = [...new Set(discrepancies.map((row) => recommendationByReason[row.reason]).filter(Boolean))];
+    if (discrepancies.length) recommendations.push("Assign an owner and target date for each unresolved discrepancy; retain recount and adjustment evidence with this report.");
+
+    const auditorName = checkedItems.find((row) => row.checked_by)?.checked_by || getUserData().name || "Authorized Staff";
+    const auditorRole = getRole() || "Inventory Auditor";
+    const totalCount = items.length;
+    const completion = totalCount ? `${checkedItems.length} / ${totalCount} (${Math.round((checkedItems.length / totalCount) * 100)}%)` : `${checkedItems.length}`;
+
+    exportFormalReportPDF({
+      docRef: `MIA-${month}`,
+      title: "Monthly Inventory Audit Report",
+      subtitle: "Physical Stock Count Reconciliation and Variance Assessment",
+      periodLabel: month,
+      orientation: "landscape",
+      infoFields: [
+        { label: "Items Counted", value: completion },
+        { label: "Audit Status", value: checkedItems.length === totalCount ? "Complete" : "In Progress" },
+        { label: "Counted By", value: auditorName },
+        { label: "Valuation Basis", value: "Current item unit cost; estimates only" },
+      ],
+      summaryCards: [
+        { label: "Items Audited", value: `${checkedItems.length} / ${totalCount}` },
+        { label: "Matched", value: `${matched} (${checkedItems.length ? ((matched / checkedItems.length) * 100).toFixed(1) : "0.0"}%)` },
+        { label: "Discrepancies", value: discrepancies.length },
+        { label: "Net Variance", value: `${netVariance > 0 ? "+" : ""}${netVariance} units` },
+        { label: "Variance Value", value: currency(netVarianceValue), sub: "Net estimated book value" },
+      ],
+      analysis: {
+        title: "Discrepancies by Reason",
+        columns: [
+          { header: "Reason", key: "reason" },
+          { header: "Items", key: "items", align: "right" },
+          { header: "Net Units", key: "units", align: "right" },
+          { header: "Estimated Value", key: "value", align: "right", format: currency },
+        ],
+        rows: [...byReason.values()],
+      },
+      table: {
+        title: "Detailed Stock Reconciliation",
+        fontSize: 6.2,
+        columns: [
+          { header: "Product", value: (row) => row.item?.name || "Unknown" },
+          { header: "SKU", value: (row) => row.item?.sku || "N/A" },
+          { header: "Category", value: (row) => row.item?.category || "N/A" },
+          { header: "System", key: "system_stock", align: "right" },
+          { header: "Actual", key: "actual_stock", align: "right" },
+          { header: "Variance", value: (row) => `${calculateVariance(row) > 0 ? "+" : ""}${calculateVariance(row)}`, align: "right" },
+          { header: "Unit Cost", value: (row) => currency(unitCost(row)), align: "right" },
+          { header: "Variance Value", value: (row) => currency(varianceValue(row)), align: "right" },
+          { header: "Status", value: (row) => getStatus(row) },
+          { header: "Reason", value: (row) => row.reason || "—" },
+        ],
+        rows: checkedItems,
+        foot: ["TOTAL", "", "", "", "", `${netVariance > 0 ? "+" : ""}${netVariance}`, "", currency(netVarianceValue), "", ""],
+        didParseCell: (hook) => {
+          if (hook.section === "body" && discrepancies.includes(checkedItems[hook.row.index])) {
+            hook.cell.styles.fillColor = [255, 244, 244];
+          }
+        },
+      },
+      findings,
+      recommendations,
+      certification: "I certify that the physical counts shown were recorded for the items and period stated. Variance values are estimates based on current item cost and do not replace approval of inventory adjustments or supporting documentation.",
+      signatures: [
+        { role: "Prepared by", name: auditorName, caption: auditorRole },
+        { role: "Reviewed by", name: "", caption: "Inventory Supervisor" },
+        { role: "Noted by", name: "", caption: "Store Manager" },
+      ],
+      filename: `${STORE_INFO.name.replace(/\s+/g, "-")}-monthly-audit-${month}`,
+    });
   };
 
   const handleExportExcel = () => {
@@ -466,28 +520,12 @@ const MonthlyInventoryAudit = () => {
       return;
     }
 
-    const wsData = checkedItems.map(auditRow => ({
-      "Product Name": auditRow.item?.name || "Unknown",
-      "SKU": auditRow.item?.sku || "N/A",
-      "Category": auditRow.item?.category || "N/A",
-      "Brand": auditRow.item?.brand || "N/A",
-      "System Stock": Number(auditRow.system_stock || 0),
-      "Actual Stock": Number(auditRow.actual_stock || 0),
-      "Variance": Number(auditRow.variance || 0),
-      "Status": auditRow.status,
-      "Reason": auditRow.reason || ""
-    }));
-
-    const wb = XLSX.utils.book_new();
-    const ws = XLSX.utils.aoa_to_sheet([
-      [STORE_INFO.name],
-      [`Monthly Inventory Audit — ${month}`],
-      [`Generated: ${new Date().toLocaleDateString()}`],
-      [],
-    ]);
-    XLSX.utils.sheet_add_json(ws, wsData, { origin: -1 });
-    XLSX.utils.book_append_sheet(wb, ws, "Monthly Audit");
-    XLSX.writeFile(wb, `${STORE_INFO.name.replace(/\s+/g, "-")}-monthly-audit-${month}.xlsx`);
+    const excelData = auditExportRows(checkedItems);
+    exportToExcel(excelData, auditExportColumns, `${STORE_INFO.name.replace(/\s+/g, "-")}-monthly-audit-${month}`, {
+      title: "Monthly Inventory Audit",
+      periodLabel: month,
+      sheetName: "Monthly Audit",
+    });
   };
 
   return (
@@ -672,19 +710,20 @@ const MonthlyInventoryAudit = () => {
                       </td>
 
                       <td>
-                        <input
-                          type="text"
+                        <select
                           value={auditRow.reason || ""}
                           onChange={(e) =>
                             updateItem(auditRow.id, "reason", e.target.value)
                           }
-                          placeholder={
-                            status === "discrepancy"
-                              ? "Required reason"
-                              : "Optional"
-                          }
                           className={`audit-input audit-input-sm ${status === "discrepancy" && !auditRow.reason?.trim() ? "input-required" : ""}`}
-                        />
+                        >
+                          <option value="">
+                            {status === "discrepancy" ? "— Required —" : "— Select —"}
+                          </option>
+                          {DISCREPANCY_REASONS.map((r) => (
+                            <option key={r} value={r}>{r}</option>
+                          ))}
+                        </select>
                       </td>
                     </tr>
                   );

@@ -1,17 +1,19 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
   faClockRotateLeft,
   faShieldHalved,
   faUser,
   faCalendarAlt,
-  faPrint,
+  faDownload,
   faChartBar,
   faCircleCheck,
   faCircleExclamation,
   faTriangleExclamation,
 } from "@fortawesome/free-solid-svg-icons";
 import { apiRequest } from "../../api/client";
+import { exportFormalReportPDF } from "../../utils/formalReportPdf";
+import { getRole, getUserData } from "../../utils/auth";
 import "./DTRReport.css";
 
 // Returns today as "YYYY-MM" string in local time (avoids UTC drift)
@@ -39,7 +41,7 @@ const DTRReport = () => {
   const [employee, setEmployee] = useState(null);
   const [loading, setLoading]   = useState(false);
   const [error, setError]       = useState("");
-  const printRef                = useRef();
+
 
   // Load staff list on mount — response: { staff: [...], attendance_today: n }
   useEffect(() => {
@@ -74,25 +76,54 @@ const DTRReport = () => {
   };
 
   const print = () => {
-    const win = window.open("", "_blank");
-    win.document.write(
-      `<html><head><title>DTR — ${employee?.name || ""}</title>
-      <style>
-        body { font-family: Arial, sans-serif; font-size: 11px; margin: 1cm; }
-        h2 { font-size: 14px; margin: 0 0 4px; }
-        .meta { font-size: 10px; color: #555; margin-bottom: 8px; }
-        table { width: 100%; border-collapse: collapse; margin-top: 8px; }
-        th, td { border: 1px solid #ccc; padding: 5px 7px; font-size: 10px; }
-        th { background: #f3f4f6; font-weight: bold; }
-        .absent { background: #fff5f5; }
-        .late-in { color: #b45309; }
-        footer { font-size: 9px; color: #888; margin-top: 8px; }
-      </style></head><body>`
-    );
-    win.document.write(printRef.current.innerHTML);
-    win.document.write("</body></html>");
-    win.document.close();
-    win.print();
+    if (!records) return;
+    const preparedBy = getUserData().name || "Authorized Staff";
+    const employeeName = employee?.name || records[0]?.name || "Employee";
+    const attendanceDays = records.filter((record) => ["present", "late", "early_leave"].includes(record.status)).length;
+    exportFormalReportPDF({
+      docRef: `DTR-${userId}-${startDate}-${endDate}`,
+      title: "Daily Time Record",
+      subtitle: "Employee Attendance Record for Payroll and DOLE Compliance",
+      periodLabel: `${periodLabel} (${startDate} to ${endDate})`,
+      infoFields: [
+        { label: "Employee", value: employeeName },
+        { label: "Employee No.", value: employee?.employee_no || records[0]?.employee_no || "Not recorded" },
+        { label: "Department", value: employee?.department || records[0]?.department || "Not recorded" },
+        { label: "Position / Role", value: employee?.position || employee?.role || "Not recorded" },
+      ],
+      summaryCards: [
+        { label: "Total Records", value: stats.total },
+        { label: "Present", value: stats.present },
+        { label: "Late", value: stats.late },
+        { label: "Absent", value: stats.absent },
+        { label: "On Leave", value: stats.leave },
+      ],
+      table: {
+        title: "Daily Attendance Register",
+        columns: [
+          { header: "Date", key: "date" },
+          { header: "Day", key: "day_of_week" },
+          { header: "Time In", key: "check_in", align: "center" },
+          { header: "Time Out", key: "check_out", align: "center" },
+          { header: "Hours", key: "total_hours", align: "right" },
+          { header: "Overtime", key: "overtime_hours", align: "right" },
+          { header: "Late Min.", key: "late_minutes", align: "right" },
+          { header: "Status", value: (record) => record.status?.replace(/_/g, " ") || "—" },
+        ],
+        rows: records,
+      },
+      findings: [
+        `${attendanceDays} day(s) are recorded as present, ${stats.late} as late, ${stats.absent} as absent, and ${stats.leave} as on leave for the selected period.`,
+      ],
+      recommendations: ["Employee and supervisor should review any missing punches or attendance exceptions and submit corrections through the approved process."],
+      certification: "I certify that this Daily Time Record is a report of attendance entries maintained by the system for the employee and period shown. The employee and authorized supervisor should review and sign this record; corrections must follow the established attendance-correction process.",
+      signatures: [
+        { role: "Prepared by", name: preparedBy, caption: getRole() || "Authorized Manager" },
+        { role: "Employee Acknowledgment", name: "", caption: employeeName },
+        { role: "Certified by", name: "", caption: "Department Supervisor" },
+      ],
+      filename: `DTR-${employeeName.replace(/\s+/g, "-")}-${startDate}-${endDate}`,
+    });
   };
 
   // Computed stats
@@ -178,8 +209,8 @@ const DTRReport = () => {
 
         {records && (
           <button className="dtr-btn secondary" onClick={print}>
-            <FontAwesomeIcon icon={faPrint} />
-            Print
+            <FontAwesomeIcon icon={faDownload} />
+            Export Formal PDF
           </button>
         )}
       </div>
@@ -194,7 +225,7 @@ const DTRReport = () => {
 
       {/* Printable section */}
       {records && (
-        <div ref={printRef}>
+        <div>
           {/* Employee Info Card */}
           <div className="dtr-info-card">
             <p className="dtr-info-name">

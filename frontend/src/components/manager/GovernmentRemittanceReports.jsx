@@ -11,6 +11,9 @@ import {
   faTriangleExclamation,
 } from "@fortawesome/free-solid-svg-icons";
 import { apiRequest } from "../../api/client";
+import { exportFormalReportPDF } from "../../utils/formalReportPdf";
+import { getRole, getUserData } from "../../utils/auth";
+import { exportToCSV } from "../../utils/reportExport";
 import "./GovernmentRemittanceReports.css";
 
 const AGENCIES = [
@@ -64,25 +67,68 @@ const GovernmentRemittanceReports = () => {
 
   const exportCSV = () => {
     if (!data?.data?.length) return;
-    const agency  = AGENCIES.find((a) => a.key === tab);
-    const headers = agency.headers.join(",");
-    const rows    = data.data
-      .map((r) =>
-        [
-          r.employee_name,
-          r.sss_no || r.philhealth_no || r.pagibig_no || "",
-          r.base_salary,
-          r.employee_share,
-          r.employer_share,
-          r.total,
-        ].join(",")
-      )
-      .join("\n");
-    const blob = new Blob([headers + "\n" + rows], { type: "text/csv" });
-    const a = document.createElement("a");
-    a.href = URL.createObjectURL(blob);
-    a.download = `${tab}-remittance-${period}.csv`;
-    a.click();
+    const agency = AGENCIES.find((a) => a.key === tab);
+    const identifierKey = tab === "sss" ? "sss_no" : tab === "philhealth" ? "philhealth_no" : "pagibig_no";
+    const columns = [
+      { key: "employee_name", label: agency.headers[0] },
+      { key: identifierKey, label: agency.headers[1] },
+      { key: "base_salary", label: agency.headers[2], format: "currency" },
+      { key: "employee_share", label: agency.headers[3], format: "currency" },
+      { key: "employer_share", label: agency.headers[4], format: "currency" },
+      { key: "total", label: agency.headers[5], format: "currency" },
+    ];
+    exportToCSV(data.data, columns, `${tab}-remittance-${period}`, {
+      title: `${agency.label} Government Remittance Report`,
+      periodLabel: period,
+    });
+  };
+
+  const exportPDF = () => {
+    if (!data) return;
+    const agency = AGENCIES.find((a) => a.key === tab);
+    const preparedBy = getUserData().name || "Authorized Staff";
+    const totalEmployees = data.data?.length || 0;
+    exportFormalReportPDF({
+      docRef: `${tab.toUpperCase()}-${period}`,
+      title: `${agency.label} Government Remittance Report`,
+      subtitle: `${agency.subtitle} — statutory contribution register`,
+      periodLabel: period,
+      infoFields: [
+        { label: "Agency", value: agency.subtitle },
+        { label: "Employees Listed", value: totalEmployees },
+        { label: "Prepared By", value: preparedBy },
+      ],
+      summaryCards: [
+        { label: "Employees", value: totalEmployees },
+        { label: "Employee Share", value: fmt(data.totals?.employee_total) },
+        { label: "Employer Share", value: fmt(data.totals?.employer_total) },
+        { label: "Grand Total", value: fmt(data.totals?.grand_total) },
+      ],
+      table: {
+        title: `${agency.label} Contribution Details`,
+        columns: [
+          { header: "Employee", key: "employee_name" },
+          { header: agency.headers[1], value: (row) => row.sss_no || row.philhealth_no || row.pagibig_no || "—" },
+          { header: "Base Salary", value: (row) => fmt(row.base_salary), align: "right" },
+          { header: "Employee Share", value: (row) => fmt(row.employee_share), align: "right" },
+          { header: "Employer Share", value: (row) => fmt(row.employer_share), align: "right" },
+          { header: "Total Remittance", value: (row) => fmt(row.total), align: "right" },
+        ],
+        rows: data.data || [],
+        foot: ["TOTAL", "", "", fmt(data.totals?.employee_total), fmt(data.totals?.employer_total), fmt(data.totals?.grand_total)],
+      },
+      findings: [
+        `${totalEmployees} employee record(s) are included for ${period}. Employee contributions total ${fmt(data.totals?.employee_total)} and employer contributions total ${fmt(data.totals?.employer_total)}.`,
+      ],
+      recommendations: ["Reconcile this contribution register against payroll records and the applicable agency remittance schedule before payment or filing."],
+      certification: "This schedule is prepared from payroll contribution data available for the selected reporting period. Verify employee identifiers and contribution amounts against current agency requirements before filing.",
+      signatures: [
+        { role: "Prepared by", name: preparedBy, caption: getRole() || "Payroll Personnel" },
+        { role: "Reviewed by", name: "", caption: "Payroll Reviewer" },
+        { role: "Approved by", name: "", caption: "Authorized Manager" },
+      ],
+      filename: `${tab}-remittance-${period}`,
+    });
   };
 
   const currentAgency = AGENCIES.find((a) => a.key === tab);
@@ -141,11 +187,19 @@ const GovernmentRemittanceReports = () => {
           <FontAwesomeIcon icon={faChartBar} />
           {loading ? "Generating…" : "Generate Report"}
         </button>
-        {data && data.data?.length > 0 && (
-          <button className="grr-btn secondary" onClick={exportCSV}>
-            <FontAwesomeIcon icon={faDownload} />
-            Export CSV
-          </button>
+        {data && (
+          <>
+            {data.data?.length > 0 && (
+              <button className="grr-btn secondary" onClick={exportCSV}>
+                <FontAwesomeIcon icon={faDownload} />
+                Export CSV
+              </button>
+            )}
+            <button className="grr-btn secondary" onClick={exportPDF}>
+              <FontAwesomeIcon icon={faDownload} />
+              Export Formal PDF
+            </button>
+          </>
         )}
       </div>
 

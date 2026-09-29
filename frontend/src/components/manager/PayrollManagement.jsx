@@ -34,8 +34,9 @@ import {
   faUsers,
   faXmark,
 } from "@fortawesome/free-solid-svg-icons";
-import jsPDF from "jspdf";
-import autoTable from "jspdf-autotable";
+import { exportFormalReportPDF } from "../../utils/formalReportPdf";
+import { getRole, getUserData } from "../../utils/auth";
+import { STORE_INFO } from "../../utils/storeInfo";
 import {
   Bar,
   BarChart,
@@ -51,7 +52,6 @@ import {
 } from "recharts";
 import "./PayrollManagement.css";
 import { exportToCSV as exportCSVUtil, exportToPDF as exportPDFUtil, exportToExcel } from "../../utils/reportExport";
-import { STORE_INFO } from "../../utils/storeInfo";
 
 const CHART_COLORS = ["#ff5f93", "#ff8db5", "#ffc8dd", "#f59e0b", "#10b981", "#3b82f6"];
 
@@ -133,7 +133,7 @@ const getDepartment = (record) =>
   record.employee?.department ||
   "Unassigned";
 
-const getRole = (record) =>
+const getRecordRole = (record) =>
   record.role ||
   record.position ||
   record.user?.role ||
@@ -179,7 +179,7 @@ const normalizePayroll = (record, index) => {
     personType: record.person_type || (record.employee_id && !record.user_id ? "employee" : "account"),
     employeeNo: record.employee_no || record.user?.employee_no || record.employee?.employee_no || "",
     department: getDepartment(record),
-    role: getRole(record),
+    role: getRecordRole(record),
     period: getPayrollPeriod(record),
     date: record.created_at || record.updated_at || record.payroll_date || record.generated_at,
     baseSalary: safeNumber(record.base_salary || record.baseSalary || 0),
@@ -621,67 +621,38 @@ const PayrollManagement = () => {
       status: formatLabel(p.status),
     }));
     const filename = `manager-payroll`;
-    if (format === "csv") exportCSVUtil(data, exportColumns, filename);
-    else if (format === "excel") exportToExcel(data, exportColumns, filename);
-    else if (format === "pdf") exportPDFUtil(data, exportColumns, "Manager Payroll Report", filename);
+    const periods = [...new Set(filteredPayrolls.map((payroll) => payroll.period).filter(Boolean))];
+    const periodLabel = periods.length ? periods.join(", ") : "Selected payroll records";
+    const totalGross = filteredPayrolls.reduce((sum, payroll) => sum + Number(payroll.grossPay || 0), 0);
+    const totalDeductions = filteredPayrolls.reduce((sum, payroll) => sum + Number(payroll.deductions || 0), 0);
+    const totalNet = filteredPayrolls.reduce((sum, payroll) => sum + Number(payroll.netPay || 0), 0);
+    const metadata = { title: "Manager Payroll Report", periodLabel };
+    if (format === "csv") exportCSVUtil(data, exportColumns, filename, metadata);
+    else if (format === "excel") exportToExcel(data, exportColumns, filename, metadata);
+    else if (format === "pdf") exportPDFUtil(data, exportColumns, "Manager Payroll Report", filename, {
+      ...metadata,
+      docRef: `PAYROLL-REGISTER-${new Date().toISOString().slice(0, 10)}`,
+      infoFields: [{ label: "Payroll Periods", value: periods.length }],
+      summaryCards: [
+        { label: "Payroll Records", value: filteredPayrolls.length },
+        { label: "Gross Pay", value: formatCurrency(totalGross) },
+        { label: "Deductions", value: formatCurrency(totalDeductions) },
+        { label: "Net Pay", value: formatCurrency(totalNet) },
+      ],
+      findings: [`${filteredPayrolls.length} payroll record(s) are included. Aggregate gross pay is ${formatCurrency(totalGross)}, aggregate deductions are ${formatCurrency(totalDeductions)}, and aggregate net pay is ${formatCurrency(totalNet)}.`],
+      recommendations: ["Reconcile this payroll register against approved payroll periods, payslips, and payment records before final sign-off."],
+    });
     showToast(`Payroll ${format.toUpperCase()} exported successfully.`, "success");
   };
 
   const downloadPayslipPDF = (payroll) => {
-    const doc = new jsPDF();
-
-    // Header — store info
-    doc.setFontSize(18);
-    doc.setTextColor(255, 95, 147);
-    doc.text(STORE_INFO.name, 14, 20);
-
-    doc.setFontSize(9);
-    doc.setTextColor(100, 116, 139);
-    doc.text(STORE_INFO.address, 14, 26);
-    doc.text(STORE_INFO.phone, 14, 31);
-
-    doc.setFontSize(14);
-    doc.setTextColor(31, 41, 55);
-    doc.text("Employee Payslip", 14, 42);
-
-    doc.setFontSize(9);
-    doc.setTextColor(100, 116, 139);
-    doc.text(`Generated: ${formatDateTime(new Date())}`, 14, 48);
-
-    // Employee info
-    doc.setFontSize(10);
-    doc.setTextColor(31, 41, 55);
-    doc.text(`Employee: ${payroll.employeeName}`, 14, 58);
-    doc.text(`Payroll ID: ${payroll.payrollId}`, 14, 64);
-    doc.text(`Pay Period: ${payroll.period}`, 14, 70);
-    doc.text(`Department: ${payroll.department}`, 14, 76);
-    doc.text(`Status: ${formatLabel(payroll.status)}`, 14, 82);
-
-    // Earnings table
     const baseSalary = Number(payroll.baseSalary || 0);
     const periodFactor = getPeriodFactor(payroll);
     const periodBase = baseSalary * periodFactor;
-    const otPay = Number(payroll.overtimePay || 0);
+    const overtimePay = Number(payroll.overtimePay || 0);
     const bonus = Number(payroll.bonus || 0);
     const allowance = Number(payroll.allowance || 0);
     const grossPay = Number(payroll.grossPay || 0);
-
-    autoTable(doc, {
-      startY: 92,
-      head: [["Earnings", "Amount"]],
-      body: [
-        [periodFactor === 0.5 ? "Base Salary (half-month cutoff)" : "Base Salary", formatCurrency(periodBase)],
-        ["Overtime Pay", formatCurrency(otPay)],
-        ["Bonus", formatCurrency(bonus)],
-        ["Allowances", formatCurrency(allowance)],
-        ["Gross Pay", formatCurrency(grossPay)],
-      ],
-      headStyles: { fillColor: [255, 95, 147], textColor: 255, fontStyle: "bold" },
-      bodyStyles: { fontSize: 10 },
-      columnStyles: { 1: { halign: "right", fontStyle: "bold" } },
-    });
-
-    // Deductions table — full statutory breakdown
     const sss = Number(payroll.sss || payroll.sssContribution || 0);
     const philhealth = Number(payroll.philhealth || payroll.philhealthContribution || 0);
     const pagibig = Number(payroll.pagibig || payroll.pagibigContribution || 0);
@@ -690,52 +661,66 @@ const PayrollManagement = () => {
     const absentDed = Number(payroll.absenceDeductions || 0);
     const otherDed = Number(payroll.deductions || 0);
     const totalDed = sss + philhealth + pagibig + tax + lateDed + absentDed + otherDed;
-
-    const afterEarningsY = doc.lastAutoTable.finalY + 8;
-
-    autoTable(doc, {
-      startY: afterEarningsY,
-      head: [["Deductions", "Amount"]],
-      body: [
-        ["SSS Contribution", formatCurrency(sss)],
-        ["PhilHealth Contribution", formatCurrency(philhealth)],
-        ["Pag-IBIG Contribution", formatCurrency(pagibig)],
-        ["Withholding Tax", formatCurrency(tax)],
-        ["Late Deductions", formatCurrency(lateDed)],
-        ["Absence Deductions", formatCurrency(absentDed)],
-        ...(payroll.paidLeaveDays > 0
-          ? [[`Paid Leave Days (converted, not deducted)`, `${payroll.paidLeaveDays} day(s)`]]
-          : []),
-        ["Other Deductions", formatCurrency(otherDed)],
-        ["Total Deductions", formatCurrency(totalDed)],
-      ],
-      headStyles: { fillColor: [239, 68, 68], textColor: 255, fontStyle: "bold" },
-      bodyStyles: { fontSize: 10 },
-      columnStyles: { 1: { halign: "right", fontStyle: "bold" } },
-    });
-
-    // Net pay
     const netPay = Number(payroll.netPay || 0);
-    const afterDedY = doc.lastAutoTable.finalY + 10;
+    const employeeName = payroll.employeeName || "Employee";
+    const preparer = getUserData().name || "Payroll Department";
 
-    doc.setFontSize(14);
-    doc.setTextColor(255, 95, 147);
-    doc.text(`Net Pay: ${formatCurrency(netPay)}`, 14, afterDedY);
-
-    // Attendance summary
-    doc.setFontSize(9);
-    doc.setTextColor(100, 116, 139);
-    doc.text(`Attendance: ${payroll.attendanceDays} present day(s) | ${payroll.paidLeaveDays} paid leave day(s) | ${payroll.regularHours} regular hrs | ${payroll.overtimeHours} OT hrs`, 14, afterDedY + 8);
-    doc.text(`Payment Date: ${payroll.paymentDate ? formatDateTime(payroll.paymentDate) : "N/A"} | Method: ${payroll.paymentMethod || "N/A"}`, 14, afterDedY + 14);
-
-    // Footer
-    doc.setFontSize(8);
-    doc.setTextColor(100, 116, 139);
-    doc.text("This payslip was generated by the Pawesome Payroll Management System.", 14, afterDedY + 24);
-    doc.text("Signatures: __________________ (Prepared By)   __________________ (Employee)", 14, afterDedY + 30);
-
-    const filename = `Payslip-${payroll.employeeName.replace(/\s+/g, "_")}-${payroll.period.replace(/\s+/g, "_")}.pdf`;
-    doc.save(filename);
+    exportFormalReportPDF({
+      docRef: `PAYSLIP-${payroll.payrollId || payroll.id}`,
+      title: "Employee Payslip",
+      subtitle: "Confidential payroll statement",
+      periodLabel: payroll.period,
+      infoFields: [
+        { label: "Employee", value: employeeName },
+        { label: "Payroll ID", value: payroll.payrollId },
+        { label: "Department", value: payroll.department },
+        { label: "Payroll Status", value: formatLabel(payroll.status) },
+        { label: "Payment Date", value: payroll.paymentDate ? formatDateTime(payroll.paymentDate) : "Not recorded" },
+        { label: "Payment Method", value: payroll.paymentMethod || "Not recorded" },
+        { label: "Attendance", value: `${payroll.attendanceDays || 0} present day(s); ${payroll.paidLeaveDays || 0} paid leave day(s)` },
+        { label: "Hours", value: `${payroll.regularHours || 0} regular; ${payroll.overtimeHours || 0} overtime` },
+      ],
+      summaryCards: [
+        { label: "Gross Pay", value: formatCurrency(grossPay) },
+        { label: "Total Deductions", value: formatCurrency(totalDed) },
+        { label: "Net Pay", value: formatCurrency(netPay) },
+      ],
+      table: {
+        title: "Earnings and Deductions Statement",
+        columns: [
+          { header: "Section", key: "section" },
+          { header: "Description", key: "description" },
+          { header: "Amount", value: (row) => row.amount == null ? "" : formatCurrency(row.amount), align: "right" },
+        ],
+        rows: [
+          { section: "Earnings", description: periodFactor === 0.5 ? "Base Salary (half-month cutoff)" : "Base Salary", amount: periodBase },
+          { section: "Earnings", description: "Overtime Pay", amount: overtimePay },
+          { section: "Earnings", description: "Bonus", amount: bonus },
+          { section: "Earnings", description: "Allowances", amount: allowance },
+          { section: "Earnings", description: "Gross Pay", amount: grossPay },
+          { section: "Deductions", description: "SSS Contribution", amount: sss },
+          { section: "Deductions", description: "PhilHealth Contribution", amount: philhealth },
+          { section: "Deductions", description: "Pag-IBIG Contribution", amount: pagibig },
+          { section: "Deductions", description: "Withholding Tax", amount: tax },
+          { section: "Deductions", description: "Late Deductions", amount: lateDed },
+          { section: "Deductions", description: "Absence Deductions", amount: absentDed },
+          ...(payroll.paidLeaveDays > 0 ? [{ section: "Attendance", description: "Paid Leave Days (not deducted)", amount: null }] : []),
+          { section: "Deductions", description: "Other Deductions", amount: otherDed },
+          { section: "Deductions", description: "Total Deductions", amount: totalDed },
+          { section: "Net Pay", description: "Net Pay", amount: netPay },
+        ],
+        foot: ["", "Net Pay Due", formatCurrency(netPay)],
+      },
+      findings: [`Gross pay of ${formatCurrency(grossPay)} less total deductions of ${formatCurrency(totalDed)} results in net pay of ${formatCurrency(netPay)} for this pay period.`],
+      recommendations: ["The employee should review the earnings, statutory contributions, and attendance-based deductions and promptly raise any discrepancy with Payroll."],
+      certification: "This payslip is a confidential payroll record generated from the payroll data for the period shown. It is not proof of payment unless payment status and transaction evidence confirm disbursement.",
+      signatures: [
+        { role: "Prepared by", name: preparer, caption: getRole() || "Payroll Personnel" },
+        { role: "Reviewed by", name: "", caption: "Authorized Payroll Reviewer" },
+        { role: "Received by", name: "", caption: `${employeeName} — Employee Signature` },
+      ],
+      filename: `Payslip-${employeeName.replace(/\s+/g, "_")}-${String(payroll.period || "period").replace(/\s+/g, "_")}`,
+    });
   };
 
   const printPayslip = (payroll) => {

@@ -3,10 +3,10 @@
  * Standardized export functions for CSV, PDF, and Excel formats
  */
 
-import jsPDF from "jspdf";
-import autoTable from "jspdf-autotable";
 import * as XLSX from "xlsx";
 import { sanitizeCsvCell } from "./csvSanitize";
+import { exportFormalReportPDF } from "./formalReportPdf";
+import { getRole, getUserData } from "./auth";
 
 export const getNestedValue = (row, key) => {
   if (!row || !key) return undefined;
@@ -22,43 +22,45 @@ export const getNestedValue = (row, key) => {
  * @param {Array} columns - Array of {key, label} objects defining columns
  * @param {string} filename - Output filename without extension
  */
-export const exportToCSV = (data, columns, filename = "report") => {
-  if (!data || !Array.isArray(data) || data.length === 0) {
+export const exportToCSV = (data, columns = [], filename = "report", metadata = {}) => {
+  if (!Array.isArray(data) || data.length === 0) {
     console.warn("No data to export");
     return;
   }
 
-  // Create headers
-  const headers = columns.map((col) => col.label || col.key);
-
-  // Create rows
-  const rows = data.map((row) =>
-    columns.map((col) => {
-      const value = sanitizeCsvCell(getNestedValue(row, col.key));
-      // Handle values that might contain commas or quotes
-      if (value === null || value === undefined) return "";
-      const stringValue = String(value);
-      if (stringValue.includes(",") || stringValue.includes('"') || stringValue.includes("\n")) {
-        return `"${stringValue.replace(/"/g, '""')}"`;
-      }
-      return stringValue;
-    })
-  );
-
-  // Combine into CSV content
-  const csvContent = [headers.join(","), ...rows.map((row) => row.join(","))].join("\n");
-
-  // Create and download blob
+  const exportColumns = Array.isArray(columns) && columns.length
+    ? columns.map((column) => typeof column === "string" ? { key: column, label: column } : column)
+    : Object.keys(data[0]).map((key) => ({ key, label: key }));
+  const headers = exportColumns.map((col) => col.label || col.key);
+  const reportMeta = [
+    [metadata.title || filename.replace(/[_-]+/g, " ")],
+    ...(metadata.periodLabel ? [[`Reporting period: ${metadata.periodLabel}`]] : []),
+    [`Prepared by: ${metadata.preparedBy || getUserData().name || "Authorized Staff"}`],
+    [`Prepared role: ${metadata.preparedRole || getRole() || "Report Preparer"}`],
+    [`Generated: ${new Date().toLocaleString("en-PH")}`],
+    [],
+  ];
+  const escapeCsv = (value) => {
+    const safeValue = String(sanitizeCsvCell(value) ?? "");
+    return /[",\n\r]/.test(safeValue) ? `"${safeValue.replace(/"/g, '""')}"` : safeValue;
+  };
+  const rows = [
+    ...reportMeta,
+    headers,
+    ...data.map((row) => exportColumns.map((col) => getNestedValue(row, col.key))),
+  ];
+  const csvContent = `\uFEFF${rows.map((row) => row.map(escapeCsv).join(",")).join("\r\n")}`;
   const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
   const link = document.createElement("a");
   const url = URL.createObjectURL(blob);
 
-  link.setAttribute("href", url);
-  link.setAttribute("download", `${filename}_${formatDateForFilename(new Date())}.csv`);
+  link.href = url;
+  link.download = `${filename}_${formatDateForFilename(new Date())}.csv`;
   link.style.visibility = "hidden";
   document.body.appendChild(link);
   link.click();
   document.body.removeChild(link);
+  window.setTimeout(() => URL.revokeObjectURL(url), 1000);
 };
 
 /**
@@ -68,63 +70,58 @@ export const exportToCSV = (data, columns, filename = "report") => {
  * @param {string} title - Report title
  * @param {string} filename - Output filename without extension
  */
-export const exportToPDF = (data, columns, title = "Report", filename = "report") => {
+export const exportToPDF = (data, columns, title = "Report", filename = "report", reportOptions = {}) => {
   if (!data || !Array.isArray(data)) {
     console.warn("No data to export");
     return;
   }
 
-  const doc = new jsPDF();
-  const pageWidth = doc.internal.pageSize.getWidth();
-
-  // Add title
-  doc.setFontSize(18);
-  doc.text(title, pageWidth / 2, 20, { align: "center" });
-
-  // Add date
-  doc.setFontSize(10);
-  doc.text(`Generated on: ${new Date().toLocaleString()}`, pageWidth / 2, 30, { align: "center" });
-
-  // Prepare table data
-  const headers = columns.map((col) => col.label || col.key);
-  const rows = data.map((row) =>
-    columns.map((col) => {
-      const value = getNestedValue(row, col.key);
+  const pdfColumns = columns.map((column) => ({
+    header: column.label || column.key,
+    key: column.key,
+    align: column.align,
+    width: column.width,
+    format: (value) => {
       if (value === null || value === undefined) return "";
-      if (col.format === "currency") return formatCurrencyForExport(value);
-      if (col.format === "date") return formatDateForExport(value);
+      if (column.format === "currency") return formatCurrencyForExport(value);
+      if (column.format === "date") return formatDateForExport(value);
       return String(value);
-    })
-  );
+    },
+  }));
+  const generatedBy = getUserData().name || "Authorized Staff";
+  const safeRef = reportOptions.docRef || `${filename.toUpperCase().replace(/[^A-Z0-9]+/g, "-").replace(/^-|-$/g, "")}-${formatDateForFilename(new Date())}`;
 
-  // Add table
-  autoTable(doc, {
-    head: [headers],
-    body: rows,
-    startY: 40,
-    styles: {
-      fontSize: 9,
-      cellPadding: 2,
+  return exportFormalReportPDF({
+    ...reportOptions,
+    docRef: safeRef,
+    title,
+    subtitle: reportOptions.subtitle || `${title} — detailed business report`,
+    periodLabel: reportOptions.periodLabel || "As of issue date",
+    infoFields: [
+      { label: "Records Included", value: data.length },
+      ...(reportOptions.infoFields || []),
+    ],
+    summaryCards: reportOptions.summaryCards || [
+      { label: "Records Included", value: data.length },
+      { label: "Report Status", value: data.length ? "Generated" : "No Records" },
+    ],
+    table: {
+      title: reportOptions.table?.title || "Detailed Records",
+      columns: pdfColumns,
+      rows: data,
+      ...(reportOptions.table || {}),
     },
-    headStyles: {
-      fillColor: [59, 130, 246],
-      textColor: 255,
-      fontStyle: "bold",
-    },
-    alternateRowStyles: {
-      fillColor: [249, 250, 251],
-    },
+    findings: reportOptions.findings || [
+      `${data.length} record(s) are included in the detailed schedule for this report. Review the underlying source records and supporting documentation before approval.`,
+    ],
+    recommendations: reportOptions.recommendations || [
+      "Retain this report with its source records and obtain the required review and approval signatures.",
+    ],
+    filename: `${filename}_${formatDateForFilename(new Date())}`,
+    signatures: reportOptions.signatures,
+    preparedBy: reportOptions.preparedBy || generatedBy,
+    preparedRole: reportOptions.preparedRole || getRole() || "Report Preparer",
   });
-
-  // Add footer with page numbers
-  const pageCount = doc.internal.getNumberOfPages();
-  for (let i = 1; i <= pageCount; i++) {
-    doc.setPage(i);
-    doc.setFontSize(8);
-    doc.text(`Page ${i} of ${pageCount}`, pageWidth - 20, doc.internal.pageSize.getHeight() - 10);
-  }
-
-  doc.save(`${filename}_${formatDateForFilename(new Date())}.pdf`);
 };
 
 /**
@@ -133,31 +130,62 @@ export const exportToPDF = (data, columns, title = "Report", filename = "report"
  * @param {Array} columns - Array of {key, label} objects defining columns
  * @param {string} filename - Output filename without extension
  */
-export const exportToExcel = (data, columns, filename = "report") => {
-  if (!data || !Array.isArray(data) || data.length === 0) {
+export const exportToExcel = (data, columns = [], filename = "report", metadata = {}) => {
+  if (!Array.isArray(data) || data.length === 0) {
     console.warn("No data to export");
     return;
   }
 
-  const headers = columns.map((col) => col.label || col.key);
-
-  const rows = data.map((row) =>
-    columns.map((col) => {
-      const value = getNestedValue(row, col.key);
-      if (value === null || value === undefined) return "";
-      const stringValue = String(value);
-      return stringValue.replace(/\t/g, " ").replace(/\n/g, " ");
-    })
-  );
-
-  const worksheetData = [headers, ...rows];
-  const worksheet = XLSX.utils.aoa_to_sheet(worksheetData);
+  const exportColumns = Array.isArray(columns) && columns.length
+    ? columns.map((column) => typeof column === "string" ? { key: column, label: column } : column)
+    : Object.keys(data[0]).map((key) => ({ key, label: key }));
+  const headers = exportColumns.map((col) => col.label || col.key);
+  const reportMeta = [
+    [metadata.title || filename.replace(/[_-]+/g, " ")],
+    ...(metadata.periodLabel ? [[`Reporting period: ${metadata.periodLabel}`]] : []),
+    [`Prepared by: ${metadata.preparedBy || getUserData().name || "Authorized Staff"}`],
+    [`Prepared role: ${metadata.preparedRole || getRole() || "Report Preparer"}`],
+    [`Generated: ${new Date().toLocaleString("en-PH")}`],
+    [],
+  ];
+  const rows = data.map((row) => exportColumns.map((column) => {
+    const value = getNestedValue(row, column.key);
+    if (value === null || value === undefined) return "";
+    if (column.format === "currency" && Number.isFinite(Number(value))) return Number(value);
+    if (column.format === "date" && value instanceof Date && !Number.isNaN(value.getTime())) return value;
+    if (typeof value === "object") return JSON.stringify(value);
+    return typeof value === "string" ? value.replace(/[\t\r\n]+/g, " ") : value;
+  }));
+  const worksheet = XLSX.utils.aoa_to_sheet([...reportMeta, headers, ...rows], { cellDates: true });
+  const headerRow = reportMeta.length;
+  const dataStartRow = headerRow + 1;
+  exportColumns.forEach((column, columnIndex) => {
+    if (column.format !== "currency" && column.format !== "date") return;
+    rows.forEach((row, rowIndex) => {
+      const address = XLSX.utils.encode_cell({ r: dataStartRow + rowIndex, c: columnIndex });
+      const cell = worksheet[address];
+      if (!cell || cell.v === "") return;
+      if (column.format === "date" && typeof cell.v === "string") {
+        const match = cell.v.match(/^(\d{4})-(\d{2})-(\d{2})/);
+        if (match) {
+          cell.v = new Date(Number(match[1]), Number(match[2]) - 1, Number(match[3]));
+          cell.t = "d";
+        }
+      }
+      cell.z = column.format === "currency" ? '"₱"#,##0.00' : "mmm d, yyyy";
+    });
+  });
+  worksheet["!cols"] = exportColumns.map((column, columnIndex) => ({
+    width: Math.min(Math.max(
+      String(headers[columnIndex]).length,
+      ...rows.map((row) => String(row[columnIndex] ?? "").length)
+    ) + 2, 50),
+  }));
   const workbook = XLSX.utils.book_new();
+  const sheetName = String(metadata.sheetName || "Report").replace(/[\\/?*\[\]:]/g, " ").slice(0, 31) || "Report";
+  XLSX.utils.book_append_sheet(workbook, worksheet, sheetName);
 
-  XLSX.utils.book_append_sheet(workbook, worksheet, "Report");
-
-  const outputFilename = `${filename}_${formatDateForFilename(new Date())}.xlsx`;
-  XLSX.writeFile(workbook, outputFilename);
+  XLSX.writeFile(workbook, `${filename}_${formatDateForFilename(new Date())}.xlsx`, { cellDates: true });
 };
 
 /**

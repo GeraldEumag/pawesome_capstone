@@ -12,8 +12,7 @@ import {
   faCircle,
   faClock,
 } from "@fortawesome/free-solid-svg-icons";
-import jsPDF from "jspdf";
-import autoTable from "jspdf-autotable";
+import { exportFormalReportPDF } from "../../utils/formalReportPdf";
 import { payrollApi } from "../../api/payroll";
 import { apiRequest } from "../../api/client";
 import { formatCurrency } from "../../utils/currency";
@@ -123,68 +122,16 @@ const MyPayroll = ({ roleAccent = "#0891b2", roleLabel = "Employee" }) => {
   };
 
   const downloadPayslipPDF = (payroll, slip) => {
-    const doc = new jsPDF();
-    const accent = roleAccent;
-
-    // Header
-    doc.setFontSize(18);
-    doc.setTextColor(accent);
-    doc.text(STORE_INFO.name, 14, 20);
-
-    doc.setFontSize(10);
-    doc.setTextColor(100, 116, 139);
-    doc.text(STORE_INFO.address, 14, 26);
-    doc.text(STORE_INFO.phone, 14, 31);
-
-    doc.setFontSize(14);
-    doc.setTextColor(31, 41, 55);
-    doc.text("Employee Payslip", 14, 42);
-
-    doc.setFontSize(9);
-    doc.setTextColor(100, 116, 139);
-    doc.text(`Generated: ${formatDateTime(new Date())}`, 14, 48);
-
-    // Employee info
-    doc.setFontSize(10);
-    doc.setTextColor(31, 41, 55);
-    const empName = payroll.user?.name || payroll.employee_name || payroll.employeeName || "N/A";
-    const empDept = payroll.department || "N/A";
-    const empRole = payroll.position || payroll.role || "N/A";
-    const payPeriod = payroll.pay_period_label || payroll.pay_period || payroll.period || "N/A";
+    const empName = payroll.user?.name || payroll.employee_name || payroll.employeeName || "Employee";
+    const empDept = payroll.department || "Not recorded";
+    const empRole = payroll.position || payroll.role || "Not recorded";
+    const payPeriod = payroll.pay_period_label || payroll.pay_period || payroll.period || "Not specified";
     const payrollId = payroll.payroll_id || payroll.payrollId || "N/A";
-    const status = formatLabel(payroll.status);
-
-    doc.text(`Employee: ${empName}`, 14, 58);
-    doc.text(`Payroll ID: ${payrollId}`, 14, 64);
-    doc.text(`Pay Period: ${payPeriod}`, 14, 70);
-    doc.text(`Department: ${empDept}`, 14, 76);
-    doc.text(`Position: ${empRole}`, 14, 82);
-    doc.text(`Status: ${status}`, 14, 88);
-
-    // Earnings table
-    const factor = periodFactorFor(payroll, slip);
     const baseSalary = periodBaseSalary(payroll, slip);
-    const otPay = Number(slip?.earnings?.overtime_pay ?? payroll.overtime_pay ?? payroll.overtimePay ?? 0);
+    const overtimePay = Number(slip?.earnings?.overtime_pay ?? payroll.overtime_pay ?? payroll.overtimePay ?? 0);
     const bonus = Number(slip?.earnings?.bonus ?? payroll.bonus ?? 0);
     const allowances = Number(slip?.earnings?.allowances ?? payroll.allowances ?? payroll.allowance ?? 0);
     const grossPay = Number(slip?.earnings?.gross_pay ?? payroll.gross_pay ?? payroll.grossPay ?? 0);
-
-    autoTable(doc, {
-      startY: 98,
-      head: [["Earnings", "Amount"]],
-      body: [
-        ["Base Salary", formatCurrency(baseSalary)],
-        ["Overtime Pay", formatCurrency(otPay)],
-        ["Bonus", formatCurrency(bonus)],
-        ["Allowances", formatCurrency(allowances)],
-        ["Gross Pay", formatCurrency(grossPay)],
-      ],
-      headStyles: { fillColor: [accent ? parseInt(accent.slice(1, 3), 16) : 8, accent ? parseInt(accent.slice(3, 5), 16) : 145, accent ? parseInt(accent.slice(5, 7), 16) : 178], textColor: 255, fontStyle: "bold" },
-      bodyStyles: { fontSize: 10 },
-      columnStyles: { 1: { halign: "right", fontStyle: "bold" } },
-    });
-
-    // Deductions table
     const sss = Number(slip?.deductions?.sss ?? payroll.sss_contribution ?? 0);
     const philhealth = Number(slip?.deductions?.philhealth ?? payroll.philhealth_contribution ?? 0);
     const pagibig = Number(slip?.deductions?.pagibig ?? payroll.pagibig_contribution ?? 0);
@@ -193,62 +140,74 @@ const MyPayroll = ({ roleAccent = "#0891b2", roleLabel = "Employee" }) => {
     const absentDed = Number(slip?.deductions?.absent_deductions ?? payroll.absent_deductions ?? payroll.absenceDeductions ?? 0);
     const otherDed = Number(slip?.deductions?.other_deductions ?? payroll.deductions ?? 0);
     const totalDed = sss + philhealth + pagibig + tax + lateDed + absentDed + otherDed;
-    const paidLeaveDays = Number(slip?.attendance?.paid_leave_days ?? payroll.paid_leave_days ?? 0);
-
-    const afterEarningsY = doc.lastAutoTable.finalY + 8;
-
-    autoTable(doc, {
-      startY: afterEarningsY,
-      head: [["Deductions", "Amount"]],
-      body: [
-        ["SSS Contribution", formatCurrency(sss)],
-        ["PhilHealth Contribution", formatCurrency(philhealth)],
-        ["Pag-IBIG Contribution", formatCurrency(pagibig)],
-        ["Withholding Tax", formatCurrency(tax)],
-        ["Late Deductions", formatCurrency(lateDed)],
-        ["Absence Deductions", formatCurrency(absentDed)],
-        ...(paidLeaveDays > 0
-          ? [["Paid Leave Days (converted, not deducted)", `${paidLeaveDays} day(s)`]]
-          : []),
-        ["Other Deductions", formatCurrency(otherDed)],
-        ["Total Deductions", formatCurrency(totalDed)],
-      ],
-      headStyles: { fillColor: [239, 68, 68], textColor: 255, fontStyle: "bold" },
-      bodyStyles: { fontSize: 10 },
-      columnStyles: { 1: { halign: "right", fontStyle: "bold" } },
-    });
-
-    // Net pay
+    const paidLeaveDays = paidLeaveDaysOf(payroll, slip);
     const netPay = Number(slip?.net_pay ?? payroll.net_pay ?? payroll.netPay ?? 0);
-    const afterDedY = doc.lastAutoTable.finalY + 10;
-
-    doc.setFontSize(14);
-    doc.setTextColor(accent);
-    doc.text(`Net Pay: ${formatCurrency(netPay)}`, 14, afterDedY);
-
-    // Attendance summary
-    const afterNetY = afterDedY + 10;
-    doc.setFontSize(9);
-    doc.setTextColor(100, 116, 139);
     const presentDays = slip?.attendance?.present_days ?? payroll.present_days ?? "N/A";
     const absentDays = slip?.attendance?.absent_days ?? payroll.absent_days ?? "N/A";
     const regHours = slip?.attendance?.regular_hours ?? payroll.regular_hours ?? payroll.regularHours ?? "N/A";
     const otHours = slip?.attendance?.overtime_hours ?? payroll.overtime_hours ?? payroll.overtimeHours ?? "N/A";
-    doc.text(`Attendance: ${presentDays} present, ${absentDays} absent, ${paidLeaveDays} paid leave | ${regHours} regular hrs, ${otHours} OT hrs`, 14, afterNetY);
+    const payDate = slip?.payment_date || payroll.payment_date || "Not recorded";
+    const payMethod = slip?.payment_method || payroll.payment_method || "Not recorded";
 
-    // Payment info
-    const payDate = slip?.payment_date || payroll.payment_date || "N/A";
-    const payMethod = slip?.payment_method || payroll.payment_method || "N/A";
-    doc.text(`Payment Date: ${formatDate(payDate)} | Method: ${payMethod}`, 14, afterNetY + 6);
-
-    // Footer
-    doc.setFontSize(8);
-    doc.setTextColor(100, 116, 139);
-    doc.text("This payslip was generated by the Pawesome Payroll Management System.", 14, afterNetY + 16);
-    doc.text("Signatures: __________________ (Prepared By)   __________________ (Employee)", 14, afterNetY + 22);
-
-    const filename = `Payslip-${empName.replace(/\s+/g, "_")}-${String(payPeriod).replace(/\s+/g, "_")}.pdf`;
-    doc.save(filename);
+    exportFormalReportPDF({
+      docRef: `PAYSLIP-${payrollId}`,
+      title: "Employee Payslip",
+      subtitle: "Confidential payroll statement",
+      periodLabel: payPeriod,
+      preparedBy: "Payroll Department",
+      preparedRole: "System-generated payroll record",
+      infoFields: [
+        { label: "Employee", value: empName },
+        { label: "Payroll ID", value: payrollId },
+        { label: "Department", value: empDept },
+        { label: "Position", value: empRole },
+        { label: "Status", value: formatLabel(payroll.status) },
+        { label: "Payment Date", value: payDate === "Not recorded" ? payDate : formatDate(payDate) },
+        { label: "Payment Method", value: payMethod },
+        { label: "Attendance", value: `${presentDays} present; ${absentDays} absent; ${paidLeaveDays} paid leave` },
+        { label: "Hours", value: `${regHours} regular; ${otHours} overtime` },
+      ],
+      summaryCards: [
+        { label: "Gross Pay", value: formatCurrency(grossPay) },
+        { label: "Deductions", value: formatCurrency(totalDed) },
+        { label: "Net Pay", value: formatCurrency(netPay) },
+      ],
+      table: {
+        title: "Earnings and Deductions Statement",
+        columns: [
+          { header: "Section", key: "section" },
+          { header: "Description", key: "description" },
+          { header: "Amount", value: (row) => row.amount == null ? "" : formatCurrency(row.amount), align: "right" },
+        ],
+        rows: [
+          { section: "Earnings", description: "Base Salary", amount: baseSalary },
+          { section: "Earnings", description: "Overtime Pay", amount: overtimePay },
+          { section: "Earnings", description: "Bonus", amount: bonus },
+          { section: "Earnings", description: "Allowances", amount: allowances },
+          { section: "Earnings", description: "Gross Pay", amount: grossPay },
+          { section: "Deductions", description: "SSS Contribution", amount: sss },
+          { section: "Deductions", description: "PhilHealth Contribution", amount: philhealth },
+          { section: "Deductions", description: "Pag-IBIG Contribution", amount: pagibig },
+          { section: "Deductions", description: "Withholding Tax", amount: tax },
+          { section: "Deductions", description: "Late Deductions", amount: lateDed },
+          { section: "Deductions", description: "Absence Deductions", amount: absentDed },
+          ...(paidLeaveDays > 0 ? [{ section: "Attendance", description: "Paid Leave Days (not deducted)", amount: null }] : []),
+          { section: "Deductions", description: "Other Deductions", amount: otherDed },
+          { section: "Deductions", description: "Total Deductions", amount: totalDed },
+          { section: "Net Pay", description: "Net Pay", amount: netPay },
+        ],
+        foot: ["", "Net Pay Due", formatCurrency(netPay)],
+      },
+      findings: [`Gross pay of ${formatCurrency(grossPay)} less total deductions of ${formatCurrency(totalDed)} results in net pay of ${formatCurrency(netPay)} for this period.`],
+      recommendations: ["Review all earning and deduction lines. Raise discrepancies with the Payroll Department before acknowledging receipt."],
+      certification: "This payslip is a confidential payroll record generated from payroll data for the period stated. It is not proof of disbursement unless payment status and transaction evidence confirm payment.",
+      signatures: [
+        { role: "Prepared by", name: "", caption: "Payroll Department" },
+        { role: "Reviewed by", name: "", caption: "Authorized Payroll Reviewer" },
+        { role: "Received by", name: empName, caption: "Employee Signature" },
+      ],
+      filename: `Payslip-${empName.replace(/\s+/g, "_")}-${String(payPeriod).replace(/\s+/g, "_")}`,
+    });
   };
 
   const printPayslip = (payroll) => {

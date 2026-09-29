@@ -1,5 +1,5 @@
 import { apiRequest } from './client';
-import { sanitizeCsvCell } from '../utils/csvSanitize';
+import { exportToCSV } from '../utils/reportExport';
 
 /**
  * Medical Records API
@@ -192,41 +192,31 @@ export function exportMedicalRecordToJSON(record) {
 // Generate CSV for medical records list
 export function exportMedicalRecordsToCSV(records) {
   if (!Array.isArray(records) || records.length === 0) return;
-  
-  const headers = [
-    'Record ID',
-    'Pet Name',
-    'Owner Name',
-    'Visit Date',
-    'Veterinarian',
-    'Diagnosis',
-    'Status',
-    'Weight (kg)',
-    'Temperature (°C)',
+
+  const columns = [
+    { key: 'record_id', label: 'Record ID' },
+    { key: 'pet_name', label: 'Pet Name' },
+    { key: 'owner_name', label: 'Owner Name' },
+    { key: 'visit_date', label: 'Visit Date' },
+    { key: 'veterinarian', label: 'Veterinarian' },
+    { key: 'diagnosis', label: 'Diagnosis' },
+    { key: 'status', label: 'Status' },
+    { key: 'weight_kg', label: 'Weight (kg)' },
+    { key: 'temperature_celsius', label: 'Temperature (°C)' },
   ];
-  
-  const rows = records.map(r => [
-    r.id,
-    r.pet?.name || '',
-    r.pet?.customer?.name || '',
-    r.visit_date ? new Date(r.visit_date).toLocaleDateString() : '',
-    r.veterinarian?.name || '',
-    (r.diagnosis || '').replace(/,/g, ';'),
-    r.status,
-    r.weight_kg || '',
-    r.temperature_celsius || '',
-  ]);
-  
-  const csvContent = [headers, ...rows]
-    .map(row => row.map(cell => `"${sanitizeCsvCell(cell)}"`).join(','))
-    .join('\n');
-  
-  const blob = new Blob([csvContent], { type: 'text/csv' });
-  const url = window.URL.createObjectURL(blob);
-  
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = `medical-records-${new Date().toISOString().split('T')[0]}.csv`;
-  a.click();
-  window.URL.revokeObjectURL(url);
+  const rows = records.map((record) => ({
+    record_id: record.id,
+    pet_name: record.pet?.name || '',
+    owner_name: record.pet?.customer?.name || '',
+    visit_date: record.visit_date ? new Date(record.visit_date).toLocaleDateString() : '',
+    veterinarian: record.veterinarian?.name || '',
+    diagnosis: record.diagnosis || '',
+    status: record.status || '',
+    weight_kg: record.weight_kg ?? '',
+    temperature_celsius: record.temperature_celsius ?? '',
+  }));
+
+  exportToCSV(rows, columns, `medical-records-${new Date().toISOString().split('T')[0]}`, {
+    title: 'Medical Records Report',
+  });
 }

@@ -1,10 +1,7 @@
 import { showAlert } from "./alert.jsx";
+import { exportFormalReportPDF } from "./formalReportPdf";
+import { getRole, getUserData } from "./auth";
 import { STORE_INFO } from "./storeInfo";
-
-/**
- * Generate PDF for inventory audit report
- * Uses browser print API for simplicity (production-ready)
- */
 
 export const generateInventoryAuditPdf = (logs) => {
   if (!logs || logs.length === 0) {
@@ -12,223 +9,82 @@ export const generateInventoryAuditPdf = (logs) => {
     return;
   }
 
-  // Calculate stats
-  const additions = logs
-    .filter((l) => l.quantity_change > 0)
-    .reduce((sum, l) => sum + l.quantity_change, 0);
-  const removals = logs
-    .filter((l) => l.quantity_change < 0)
-    .reduce((sum, l) => sum + Math.abs(l.quantity_change), 0);
-  const adjustments = logs.filter((l) => l.action === "adjustment").length;
-
-  // Get top user
-  const userCounts = logs.reduce((acc, log) => {
-    acc[log.user_name || "System"] = (acc[log.user_name || "System"] || 0) + 1;
-    return acc;
+  const additions = logs.filter((log) => Number(log.quantity_change) > 0).reduce((sum, log) => sum + Number(log.quantity_change), 0);
+  const removals = logs.filter((log) => Number(log.quantity_change) < 0).reduce((sum, log) => sum + Math.abs(Number(log.quantity_change)), 0);
+  const adjustments = logs.filter((log) => log.action === "adjustment").length;
+  const userCounts = logs.reduce((counts, log) => {
+    const user = log.user_name || "System";
+    counts[user] = (counts[user] || 0) + 1;
+    return counts;
   }, {});
   const topUser = Object.entries(userCounts).sort((a, b) => b[1] - a[1])[0]?.[0] || "N/A";
+  const actionGroups = Object.values(logs.reduce((groups, log) => {
+    const action = log.action || "Other";
+    const current = groups[action] || { action, count: 0, change: 0 };
+    current.count += 1;
+    current.change += Number(log.quantity_change || 0);
+    groups[action] = current;
+    return groups;
+  }, {}));
+  const preparedBy = logs.find((log) => log.user_name)?.user_name || getUserData().name || "Authorized Staff";
+  const dateText = (value) => value ? new Date(value).toLocaleString("en-PH") : "N/A";
+  const rows = [...logs].sort((a, b) => new Date(a.created_at || 0) - new Date(b.created_at || 0));
+  const netChange = additions - removals;
 
-  // Format date
-  const formatDate = (dateString) => {
-    if (!dateString) return "N/A";
-    return new Date(dateString).toLocaleString("en-PH", {
-      year: "numeric",
-      month: "short",
-      day: "numeric",
-      hour: "2-digit",
-      minute: "2-digit",
-    });
-  };
-
-  // Create print window
-  const printWindow = window.open("", "_blank");
-  if (!printWindow) {
-    showAlert("Please allow popups to export PDF");
-    return;
-  }
-
-  const html = `
-<!DOCTYPE html>
-<html>
-<head>
-  <title>Inventory Audit Report</title>
-  <style>
-    * { margin: 0; padding: 0; box-sizing: border-box; }
-    body { 
-      font-family: Arial, sans-serif; 
-      padding: 40px; 
-      color: #333;
-      line-height: 1.6;
-    }
-    .header { 
-      text-align: center; 
-      margin-bottom: 30px; 
-      border-bottom: 3px solid #ff5f93; 
-      padding-bottom: 20px;
-    }
-    .header h1 { color: #ff5f93; font-size: 24px; margin-bottom: 8px; }
-    .header p { color: #666; font-size: 12px; }
-    .summary { 
-      display: grid; 
-      grid-template-columns: repeat(4, 1fr); 
-      gap: 15px; 
-      margin-bottom: 30px;
-      background: #fff1f7;
-      padding: 20px;
-      border-radius: 8px;
-    }
-    .summary-item { text-align: center; }
-    .summary-item h3 { 
-      font-size: 24px; 
-      color: #ff5f93; 
-      margin-bottom: 4px;
-    }
-    .summary-item p { font-size: 11px; color: #666; }
-    .analytics {
-      background: #f0f9ff;
-      padding: 15px;
-      border-radius: 8px;
-      margin-bottom: 30px;
-      font-size: 12px;
-    }
-    .analytics-row {
-      display: flex;
-      gap: 30px;
-      flex-wrap: wrap;
-    }
-    table { 
-      width: 100%; 
-      border-collapse: collapse; 
-      font-size: 11px;
-      margin-top: 20px;
-    }
-    th { 
-      background: #ff5f93; 
-      color: white; 
-      padding: 10px; 
-      text-align: left;
-      font-weight: 600;
-    }
-    td { 
-      padding: 8px 10px; 
-      border-bottom: 1px solid #eee;
-    }
-    tr:nth-child(even) { background: #fafafa; }
-    .positive { color: #16a34a; font-weight: 600; }
-    .negative { color: #dc2626; font-weight: 600; }
-    .badge {
-      display: inline-block;
-      padding: 2px 8px;
-      border-radius: 4px;
-      font-size: 10px;
-      font-weight: 600;
-      text-transform: uppercase;
-    }
-    .badge-restock { background: #dcfce7; color: #166534; }
-    .badge-sale { background: #dbeafe; color: #1e40af; }
-    .badge-adjustment { background: #fef3c7; color: #92400e; }
-    .badge-remove { background: #fee2e2; color: #991b1b; }
-    .badge-expired { background: #f3f4f6; color: #374151; }
-    .footer {
-      margin-top: 30px;
-      text-align: center;
-      font-size: 10px;
-      color: #999;
-      border-top: 1px solid #eee;
-      padding-top: 20px;
-    }
-    @media print {
-      body { padding: 20px; }
-      .no-print { display: none; }
-    }
-  </style>
-</head>
-<body>
-  <div class="header">
-    <h1>📦 ${STORE_INFO.name}</h1>
-    <p>${STORE_INFO.tagline} · ${STORE_INFO.address}</p>
-    <p><strong>Inventory Audit Report</strong></p>
-    <p>Generated on ${new Date().toLocaleString("en-PH")}</p>
-  </div>
-
-  <div class="summary">
-    <div class="summary-item">
-      <h3>+${additions}</h3>
-      <p>Stock Added</p>
-    </div>
-    <div class="summary-item">
-      <h3>-${removals}</h3>
-      <p>Stock Removed</p>
-    </div>
-    <div class="summary-item">
-      <h3>${adjustments}</h3>
-      <p>Adjustments</p>
-    </div>
-    <div class="summary-item">
-      <h3>${logs.length}</h3>
-      <p>Total Entries</p>
-    </div>
-  </div>
-
-  <div class="analytics">
-    <div class="analytics-row">
-      <div><strong>Most Active Item:</strong> ${logs[0]?.item_name || "N/A"}</div>
-      <div><strong>Top User:</strong> ${topUser}</div>
-      <div><strong>Net Change:</strong> ${additions - removals > 0 ? "+" : ""}${additions - removals}</div>
-    </div>
-  </div>
-
-  <table>
-    <thead>
-      <tr>
-        <th>Date & Time</th>
-        <th>Item</th>
-        <th>Action</th>
-        <th>Change</th>
-        <th>Result</th>
-        <th>Reason</th>
-        <th>User</th>
-      </tr>
-    </thead>
-    <tbody>
-      ${logs
-        .map(
-          (log) => `
-        <tr>
-          <td>${formatDate(log.created_at)}</td>
-          <td>${log.item_name || `Item #${log.inventory_item_id}`}</td>
-          <td><span class="badge badge-${log.action}">${log.action}</span></td>
-          <td class="${log.quantity_change > 0 ? "positive" : log.quantity_change < 0 ? "negative" : ""}">
-            ${log.quantity_change > 0 ? "+" : ""}${log.quantity_change}
-          </td>
-          <td>${log.quantity_after} total</td>
-          <td>${log.reason || "N/A"}</td>
-          <td>${log.user_name || "System"}</td>
-        </tr>
-      `
-        )
-        .join("")}
-    </tbody>
-  </table>
-
-  <div class="footer">
-    <p>This is an official audit report from the Pawesome Petcare Inventory Management System.</p>
-    <p>© ${new Date().getFullYear()} Pawesome Petcare. All rights reserved.</p>
-  </div>
-
-  <script>
-    window.onload = () => {
-      setTimeout(() => {
-        window.print();
-        // Close window after print dialog (optional)
-        // setTimeout(() => window.close(), 500);
-      }, 500);
-    };
-  </script>
-</body>
-</html>
-  `;
-
-  printWindow.document.write(html);
-  printWindow.document.close();
+  exportFormalReportPDF({
+    docRef: `INV-MOV-${new Date().toISOString().slice(0, 10).replaceAll("-", "")}`,
+    title: "Inventory Movement Audit Report",
+    subtitle: "Inventory additions, removals, and adjustment activity",
+    periodLabel: rows.length ? `${dateText(rows[0].created_at)} – ${dateText(rows[rows.length - 1].created_at)}` : "No period recorded",
+    orientation: "landscape",
+    infoFields: [
+      { label: "Prepared By", value: preparedBy },
+      { label: "Most Active User", value: topUser },
+      { label: "Entries Reviewed", value: logs.length },
+    ],
+    summaryCards: [
+      { label: "Stock Added", value: `+${additions}` },
+      { label: "Stock Removed", value: `-${removals}` },
+      { label: "Adjustments", value: adjustments },
+      { label: "Net Change", value: `${netChange > 0 ? "+" : ""}${netChange}` },
+      { label: "Total Entries", value: logs.length },
+    ],
+    analysis: {
+      title: "Movement Activity by Type",
+      columns: [
+        { header: "Action", key: "action" },
+        { header: "Entries", key: "count", align: "right" },
+        { header: "Net Quantity Change", key: "change", align: "right" },
+      ],
+      rows: actionGroups,
+    },
+    table: {
+      title: "Detailed Movement Register",
+      fontSize: 6.5,
+      columns: [
+        { header: "Date & Time", value: (log) => dateText(log.created_at) },
+        { header: "Item", value: (log) => log.item_name || `Item #${log.inventory_item_id}` },
+        { header: "SKU", key: "sku" },
+        { header: "Action", key: "action" },
+        { header: "Change", value: (log) => `${Number(log.quantity_change) > 0 ? "+" : ""}${Number(log.quantity_change || 0)}`, align: "right" },
+        { header: "Resulting Stock", key: "quantity_after", align: "right" },
+        { header: "Reason", key: "reason" },
+        { header: "Performed By", key: "user_name" },
+      ],
+      rows,
+      foot: ["TOTAL", "", "", "", `${netChange > 0 ? "+" : ""}${netChange}`, "", "", ""],
+    },
+    findings: [
+      `${logs.length} inventory movement entry/entries were reviewed. Additions totaled ${additions} unit(s), removals totaled ${removals} unit(s), and net quantity movement was ${netChange > 0 ? "+" : ""}${netChange} unit(s).`,
+      `The user with the most recorded activity was ${topUser} (${userCounts[topUser] || 0} entries).`,
+    ],
+    recommendations: ["Investigate unusual or repeated adjustments and retain source documents for receipts, sales, transfers, and write-offs."],
+    certification: "This report summarizes inventory movement records maintained by the Pawesome inventory system. It should be reconciled against source transactions and supporting documents before approval.",
+    signatures: [
+      { role: "Prepared by", name: preparedBy, caption: getRole() || "Inventory Personnel" },
+      { role: "Reviewed by", name: "", caption: "Inventory Supervisor" },
+      { role: "Approved by", name: "", caption: "Authorized Manager" },
+    ],
+    filename: `${STORE_INFO.name.replace(/\s+/g, "-")}-inventory-movement-audit`,
+  });
 };
