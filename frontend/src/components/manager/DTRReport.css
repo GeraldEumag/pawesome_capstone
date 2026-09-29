@@ -145,6 +145,43 @@
   box-shadow: 0 0 0 3px rgba(255, 95, 147, 0.14);
 }
 
+/* ── Period preset pills ── */
+.dtr-period-pills {
+  display: flex;
+  gap: 0.35rem;
+  flex-wrap: wrap;
+}
+
+.dtr-period-pill {
+  display: inline-flex;
+  align-items: center;
+  min-height: 40px;
+  padding: 0 0.85rem;
+  border-radius: var(--dtr-radius-pill);
+  border: 1px solid var(--dtr-border);
+  background: var(--dtr-surface-solid);
+  color: var(--dtr-muted);
+  font: inherit;
+  font-size: 0.82rem;
+  font-weight: 750;
+  cursor: pointer;
+  transition: all 0.18s ease;
+  white-space: nowrap;
+}
+
+.dtr-period-pill:hover {
+  border-color: var(--dtr-primary);
+  color: var(--dtr-primary);
+  background: rgba(255, 95, 147, 0.05);
+}
+
+.dtr-period-pill.active {
+  background: linear-gradient(135deg, var(--dtr-primary), var(--dtr-primary-light));
+  color: #fff;
+  border-color: transparent;
+  box-shadow: 0 6px 16px rgba(255, 95, 147, 0.28);
+}
+
 /* ── Buttons ── */
 .dtr-btn {
   display: inline-flex;

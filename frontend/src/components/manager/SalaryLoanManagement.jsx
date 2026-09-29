@@ -44,7 +44,7 @@ const SalaryLoanManagement = () => {
 
   const loadUsers = () => {
     apiRequest("/manager/staff")
-      .then((res) => setUsers(res?.data || []))
+      .then((res) => setUsers(res?.staff || res?.data || []))
       .catch(() => {});
   };
 

@@ -531,20 +531,26 @@ class AttendanceController extends Controller
 
         $records = $query->get()->map(function ($a) {
             $person = $a->user ?? $a->employee;
+
+            // check_in / check_out are cast as datetime:H:i — use ->format() not (string) cast
+            // to avoid getting the full Carbon datetime string (e.g. "2026-09-29 08:30:00").
+            $checkIn  = $a->check_in  ? $a->check_in->format('H:i')  : null;
+            $checkOut = $a->check_out ? $a->check_out->format('H:i') : null;
+
             return [
-                'date'         => $a->date instanceof \Carbon\Carbon ? $a->date->toDateString() : $a->date,
-                'day_of_week'  => Carbon::parse($a->date)->format('D'),
-                'name'         => $person?->name ?? ($a->employee ? $a->employee->first_name . ' ' . $a->employee->last_name : 'Unknown'),
-                'employee_no'  => $person?->employee_no,
-                'department'   => $person?->department,
-                'position'     => $person?->position,
-                'check_in'     => $a->check_in ? substr((string) $a->check_in, 0, 5) : null,
-                'check_out'    => $a->check_out ? substr((string) $a->check_out, 0, 5) : null,
-                'total_hours'  => $a->total_hours,
+                'date'           => $a->date instanceof \Carbon\Carbon ? $a->date->toDateString() : $a->date,
+                'day_of_week'    => Carbon::parse($a->date)->format('D'),
+                'name'           => $person?->name ?? ($a->employee ? $a->employee->first_name . ' ' . $a->employee->last_name : 'Unknown'),
+                'employee_no'    => $person?->employee_no,
+                'department'     => $person?->department,
+                'position'       => $person?->position,
+                'check_in'       => $checkIn,
+                'check_out'      => $checkOut,
+                'total_hours'    => $a->total_hours,
                 'overtime_hours' => $a->overtime_hours,
-                'status'       => $a->status,
-                'is_late'      => (bool) $a->is_late,
-                'late_minutes' => $a->check_in ? CompanySchedule::lateMinutes(substr((string) $a->check_in, 0, 5)) : 0,
+                'status'         => $a->status,
+                'is_late'        => (bool) $a->is_late,
+                'late_minutes'   => $checkIn ? CompanySchedule::lateMinutes($checkIn) : 0,
             ];
         });
 

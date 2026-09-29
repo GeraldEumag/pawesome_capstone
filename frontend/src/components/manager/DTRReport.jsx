@@ -1,4 +1,4 @@
-import React, { useRef, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
   faClockRotateLeft,
@@ -14,23 +14,48 @@ import {
 import { apiRequest } from "../../api/client";
 import "./DTRReport.css";
 
-const DAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+// Returns today as "YYYY-MM" string in local time (avoids UTC drift)
+const todayYM = () => {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+};
+
+// Given "YYYY-MM" + period preset, compute [startDate, endDate] as "YYYY-MM-DD"
+const periodDates = (ym, preset) => {
+  const [y, m] = ym.split("-").map(Number);
+  const lastDay = new Date(y, m, 0).getDate(); // last day of month
+  if (preset === "first")  return [`${ym}-01`, `${ym}-15`];
+  if (preset === "second") return [`${ym}-16`, `${ym}-${String(lastDay).padStart(2, "0")}`];
+  // "whole"
+  return [`${ym}-01`, `${ym}-${String(lastDay).padStart(2, "0")}`];
+};
 
 const DTRReport = () => {
-  const [userId, setUserId]       = useState("");
-  const [users, setUsers]         = useState([]);
-  const [startDate, setStartDate] = useState(new Date().toISOString().slice(0, 8) + "01");
-  const [endDate, setEndDate]     = useState(new Date().toISOString().slice(0, 10));
-  const [records, setRecords]     = useState(null);
-  const [employee, setEmployee]   = useState(null);
-  const [loading, setLoading]     = useState(false);
-  const [error, setError]         = useState("");
-  const printRef                  = useRef();
+  const [userId, setUserId]     = useState("");
+  const [users, setUsers]       = useState([]);
+  const [month, setMonth]       = useState(todayYM());
+  const [preset, setPreset]     = useState("whole");
+  const [records, setRecords]   = useState(null);
+  const [employee, setEmployee] = useState(null);
+  const [loading, setLoading]   = useState(false);
+  const [error, setError]       = useState("");
+  const printRef                = useRef();
 
-  const loadUsers = () => {
-    if (users.length) return;
-    apiRequest("/manager/staff").then((res) => setUsers(res?.data || [])).catch(() => {});
-  };
+  // Load staff list on mount — response: { staff: [...], attendance_today: n }
+  useEffect(() => {
+    apiRequest("/manager/staff")
+      .then((res) => setUsers(res?.staff || res?.data || []))
+      .catch(() => {});
+  }, []);
+
+  // Derived dates from month + preset
+  const [startDate, endDate] = periodDates(month, preset);
+
+  // Label for the selected period
+  const periodLabel =
+    preset === "first"  ? `1–15 ${month}`   :
+    preset === "second" ? `16–End ${month}`  :
+                          `Full Month ${month}`;
 
   const generate = async () => {
     if (!userId) { setError("Select a staff member."); return; }
@@ -40,9 +65,7 @@ const DTRReport = () => {
         `/manager/reports/dtr?user_id=${userId}&start_date=${startDate}&end_date=${endDate}`
       );
       setRecords(res?.data || []);
-      // find employee info for header
-      const found = users.find((u) => String(u.id) === String(userId));
-      setEmployee(found || null);
+      setEmployee(users.find((u) => String(u.id) === String(userId)) || null);
     } catch (e) {
       setError(e.message || "Failed to load DTR.");
     } finally {
@@ -73,19 +96,13 @@ const DTRReport = () => {
   };
 
   // Computed stats
-  const stats = records
-    ? {
-        total:   records.length,
-        present: records.filter((r) => ["present", "late", "early_leave"].includes(r.status)).length,
-        late:    records.filter((r) => r.is_late).length,
-        absent:  records.filter((r) => r.status === "absent").length,
-        leave:   records.filter((r) => r.status === "on_leave").length,
-      }
-    : null;
-
-  const dayLabel = (r) => {
-    try { return DAYS[new Date(r.date + "T00:00").getDay()]; } catch { return "—"; }
-  };
+  const stats = records ? {
+    total:   records.length,
+    present: records.filter((r) => ["present", "late", "early_leave"].includes(r.status)).length,
+    late:    records.filter((r) => r.is_late).length,
+    absent:  records.filter((r) => r.status === "absent").length,
+    leave:   records.filter((r) => r.status === "on_leave").length,
+  } : null;
 
   return (
     <div className="dtr-page">
@@ -107,11 +124,11 @@ const DTRReport = () => {
 
       {/* Controls */}
       <div className="dtr-controls-card">
+        {/* Staff selector */}
         <div className="dtr-control-field">
           <label>Staff Member</label>
           <select
             value={userId}
-            onFocus={loadUsers}
             onChange={(e) => { setUserId(e.target.value); setRecords(null); }}
             className="dtr-input"
           >
@@ -122,24 +139,36 @@ const DTRReport = () => {
           </select>
         </div>
 
+        {/* Month picker */}
         <div className="dtr-control-field">
-          <label>From</label>
+          <label>Month</label>
           <input
-            type="date"
+            type="month"
             className="dtr-input"
-            value={startDate}
-            onChange={(e) => setStartDate(e.target.value)}
+            value={month}
+            onChange={(e) => { setMonth(e.target.value); setRecords(null); }}
           />
         </div>
 
+        {/* Period preset */}
         <div className="dtr-control-field">
-          <label>To</label>
-          <input
-            type="date"
-            className="dtr-input"
-            value={endDate}
-            onChange={(e) => setEndDate(e.target.value)}
-          />
+          <label>Period</label>
+          <div className="dtr-period-pills">
+            {[
+              { key: "first",  label: "1st – 15th" },
+              { key: "second", label: "16th – End" },
+              { key: "whole",  label: "Whole Month" },
+            ].map((p) => (
+              <button
+                key={p.key}
+                className={`dtr-period-pill${preset === p.key ? " active" : ""}`}
+                onClick={() => { setPreset(p.key); setRecords(null); }}
+                type="button"
+              >
+                {p.label}
+              </button>
+            ))}
+          </div>
         </div>
 
         <button className="dtr-btn primary" onClick={generate} disabled={loading}>
@@ -176,6 +205,7 @@ const DTRReport = () => {
               <span>
                 <FontAwesomeIcon icon={faCalendarAlt} />
                 Period: <strong>{startDate}</strong> — <strong>{endDate}</strong>
+                <span style={{ marginLeft: "0.4rem", opacity: 0.6 }}>({periodLabel})</span>
               </span>
               {employee?.role && (
                 <span>Role: <strong style={{ textTransform: "capitalize" }}>{employee.role}</strong></span>
@@ -235,7 +265,7 @@ const DTRReport = () => {
                   records.map((r, i) => (
                     <tr key={i} className={r.status === "absent" ? "dtr-row-absent" : ""}>
                       <td style={{ fontWeight: 750 }}>{r.date}</td>
-                      <td style={{ color: "var(--dtr-muted)" }}>{r.day_of_week || dayLabel(r)}</td>
+                      <td style={{ color: "var(--dtr-muted)" }}>{r.day_of_week || "—"}</td>
                       <td className={r.is_late ? "dtr-late-in" : ""}>{r.check_in || "—"}</td>
                       <td>{r.check_out || "—"}</td>
                       <td style={{ fontVariantNumeric: "tabular-nums" }}>{r.total_hours || "—"}</td>
@@ -258,7 +288,8 @@ const DTRReport = () => {
           </div>
 
           <p className="dtr-footer">
-            Total Records: {records.length} &nbsp;·&nbsp; Generated on {new Date().toLocaleDateString("en-PH")} &nbsp;·&nbsp; DAILY TIME RECORD — For DOLE Compliance
+            {periodLabel} &nbsp;·&nbsp; {startDate} to {endDate} &nbsp;·&nbsp;
+            Generated {new Date().toLocaleDateString("en-PH")} &nbsp;·&nbsp; DAILY TIME RECORD — DOLE Compliance
           </p>
         </div>
       )}
