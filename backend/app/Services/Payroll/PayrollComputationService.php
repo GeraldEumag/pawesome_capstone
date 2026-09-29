@@ -197,8 +197,8 @@ class PayrollComputationService
                         if ($record->check_in && $record->check_out) {
                             $nightDiffMinutes += CompanySchedule::nightDiffMinutes(
                                 $dateKey,
-                                substr((string) $record->check_in, 0, 5),
-                                substr((string) $record->check_out, 0, 5)
+                                ($record->check_in instanceof \Carbon\Carbon ? $record->check_in->format('H:i') : substr((string) $record->check_in, 0, 5)),
+                                ($record->check_out instanceof \Carbon\Carbon ? $record->check_out->format('H:i') : substr((string) $record->check_out, 0, 5))
                             );
                         }
                     }
@@ -222,10 +222,10 @@ class PayrollComputationService
 
                     // Check late using CompanySchedule grace
                     $checkIn = $record->check_in
-                        ? substr((string) $record->check_in, 0, 5)
+                        ? ($record->check_in instanceof \Carbon\Carbon ? $record->check_in->format('H:i') : substr((string) $record->check_in, 0, 5))
                         : null;
                     $checkOut = $record->check_out
-                        ? substr((string) $record->check_out, 0, 5)
+                        ? ($record->check_out instanceof \Carbon\Carbon ? $record->check_out->format('H:i') : substr((string) $record->check_out, 0, 5))
                         : null;
 
                     if ($checkIn) {
@@ -293,7 +293,7 @@ class PayrollComputationService
                     $paidLeaveDays++;
                 }
                 $checkIn = $record->check_in
-                    ? substr((string) $record->check_in, 0, 5)
+                    ? ($record->check_in instanceof \Carbon\Carbon ? $record->check_in->format('H:i') : substr((string) $record->check_in, 0, 5))
                     : null;
                 if ($checkIn) {
                     $lateMin = CompanySchedule::lateMinutes($checkIn);

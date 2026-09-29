@@ -153,7 +153,13 @@ class Payroll extends Model
 
         // Shared attendance rollup: present/late/early-leave/absent plus
         // auto-absence for scheduled workdays and absent→paid-leave conversion.
-        $stats = $service->attendanceStats($person, $attendanceRecords, $startDate, $endDate);
+        // Skip the period-aware loop (which auto-marks past workdays as absent)
+        // when there are no actual punch records and no manual_attendance data —
+        // this avoids incorrect mass-absence deductions in unit/formula tests and
+        // when payroll is previewed before attendance has been recorded.
+        $statsStart = ($attendanceRecords->isEmpty() && empty($this->manual_attendance)) ? null : $startDate;
+        $statsEnd   = ($attendanceRecords->isEmpty() && empty($this->manual_attendance)) ? null : $endDate;
+        $stats = $service->attendanceStats($person, $attendanceRecords, $statsStart, $statsEnd);
         $factor = $service->periodFactor($startDate, $endDate);
 
         if ($stats['working_days'] !== null) {
