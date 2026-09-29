@@ -654,11 +654,20 @@ Route::middleware(['auth.api', 'throttle:api'])->prefix('manager')->group(functi
     });
 
     // Payroll operations are owned by Manager, with Admin as system override.
+    // IMPORTANT: static/specific routes MUST be registered before wildcard {payroll}
+    // routes or the wildcard will swallow them (e.g. payroll/thirteenth-month).
     Route::middleware('role:manager,admin')->group(function () {
         Route::get('payroll', [ApiPayrollController::class, 'index']);
         Route::post('payroll', [ApiPayrollController::class, 'store']);
         Route::post('payroll/compute', [ApiPayrollController::class, 'compute']);
         Route::post('payroll/generate', [ApiPayrollController::class, 'generate']);
+
+        // 13th month — static sub-paths must come BEFORE the {payroll} wildcard
+        Route::get('payroll/thirteenth-month', [\App\Http\Controllers\Manager\ThirteenthMonthController::class, 'index']);
+        Route::post('payroll/thirteenth-month/accrue', [\App\Http\Controllers\Manager\ThirteenthMonthController::class, 'accrue']);
+        Route::post('payroll/thirteenth-month/{accrual}/pay', [\App\Http\Controllers\Manager\ThirteenthMonthController::class, 'pay']);
+
+        // Wildcard routes — must remain AFTER all static payroll sub-paths
         Route::post('payroll/{payroll}/approve', [ApiPayrollController::class, 'approve']);
         Route::post('payroll/{payroll}/release', [ApiPayrollController::class, 'markAsPaid']);
         Route::get('payroll/{payroll}', [ApiPayrollController::class, 'show']);
@@ -779,11 +788,6 @@ Route::middleware(['auth.api', 'throttle:api', 'role:manager,admin'])->prefix('m
 
     // Today's attendance status board
     Route::get('attendance/today-status', [\App\Http\Controllers\AttendanceController::class, 'todayStatus']);
-
-    // 13th month accruals
-    Route::get('payroll/thirteenth-month', [\App\Http\Controllers\Manager\ThirteenthMonthController::class, 'index']);
-    Route::post('payroll/thirteenth-month/accrue', [\App\Http\Controllers\Manager\ThirteenthMonthController::class, 'accrue']);
-    Route::post('payroll/thirteenth-month/{accrual}/pay', [\App\Http\Controllers\Manager\ThirteenthMonthController::class, 'pay']);
 
     // Salary loans
     Route::get('salary-loans', [\App\Http\Controllers\Manager\SalaryLoanController::class, 'index']);

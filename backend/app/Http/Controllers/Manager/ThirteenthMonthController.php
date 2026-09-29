@@ -22,63 +22,74 @@ class ThirteenthMonthController extends Controller
             ->get()
             ->map(fn ($a) => $this->format($a));
 
-        return response()->json(['success' => true, 'data' => $accruals]);
+        $totals = [
+            'total_accrued' => $accruals->sum('total_accrued'),
+            'total_paid'    => $accruals->sum('paid_amount'),
+        ];
+
+        return response()->json(['success' => true, 'data' => $accruals, 'totals' => $totals]);
     }
 
     /**
      * POST /manager/payroll/thirteenth-month/accrue
-     * Manually trigger accrual for a month (auto runs after payroll, but this
-     * allows ad-hoc triggering for catch-up).
+     * Manually trigger accrual for the current (or specified) month.
+     * month is optional — defaults to the current calendar month.
      */
     public function accrue(Request $request): JsonResponse
     {
         $data = $request->validate([
             'year'  => 'required|integer|min:2020',
-            'month' => 'required|integer|min:1|max:12',
+            'month' => 'nullable|integer|min:1|max:12',
         ]);
+
+        $year  = $data['year'];
+        $month = $data['month'] ?? now()->month;
 
         $service = app(PayrollComputationService::class);
         $count   = 0;
 
-        User::whereIn('role', $service->staffEmployees()->pluck('role')->unique()->toArray())
+        User::whereIn('role', ['manager', 'cashier', 'receptionist', 'veterinary', 'inventory', 'admin'])
             ->where('is_active', true)
             ->whereNotNull('base_salary')
-            ->each(function (User $user) use ($service, $data, &$count) {
-                $service->accrue13thMonth($user, $data['year'], $data['month'], (float) $user->base_salary);
+            ->each(function (User $user) use ($service, $year, $month, &$count) {
+                $service->accrue13thMonth($user, $year, $month, (float) $user->base_salary);
                 $count++;
             });
 
         Employee::where('is_active', true)->whereNotNull('base_salary')->each(
-            function (Employee $emp) use ($service, $data, &$count) {
-                $service->accrue13thMonth($emp, $data['year'], $data['month'], (float) $emp->base_salary);
+            function (Employee $emp) use ($service, $year, $month, &$count) {
+                $service->accrue13thMonth($emp, $year, $month, (float) $emp->base_salary);
                 $count++;
             }
         );
 
         return response()->json([
             'success' => true,
-            'message' => "13th month accrued for {$count} employees for {$data['year']}-{$data['month']}.",
+            'message' => "13th month accrued for {$count} employees for {$year}-" . str_pad($month, 2, '0', STR_PAD_LEFT) . ".",
         ]);
     }
 
-    /** POST /manager/payroll/thirteenth-month/{id}/pay */
+    /**
+     * POST /manager/payroll/thirteenth-month/{id}/pay
+     * Marks the full remaining balance as paid today.
+     * paid_amount and paid_date are optional — defaults to remaining balance and today.
+     */
     public function pay(Request $request, ThirteenthMonthAccrual $accrual): JsonResponse
     {
         if ($accrual->status === 'paid') {
             return response()->json(['message' => 'Already marked as paid.'], 422);
         }
 
-        $data = $request->validate([
-            'paid_amount' => 'required|numeric|min:0',
-            'paid_date'   => 'required|date',
-        ]);
+        $remaining = max(0, (float) $accrual->total_accrued - (float) $accrual->paid_amount);
 
-        $remaining = (float) $accrual->total_accrued - (float) $accrual->paid_amount;
-        $newPaid   = (float) $accrual->paid_amount + (float) $data['paid_amount'];
+        $paidAmount = $request->input('paid_amount', $remaining);
+        $paidDate   = $request->input('paid_date', now()->toDateString());
+
+        $newPaid = (float) $accrual->paid_amount + (float) $paidAmount;
 
         $accrual->update([
             'paid_amount' => $newPaid,
-            'paid_date'   => $data['paid_date'],
+            'paid_date'   => $paidDate,
             'status'      => $newPaid >= (float) $accrual->total_accrued ? 'paid' : 'partial',
         ]);
 
