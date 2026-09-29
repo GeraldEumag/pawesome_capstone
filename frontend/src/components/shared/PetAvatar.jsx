@@ -1,6 +1,6 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { FaDog, FaCat, FaPaw, FaDove } from "react-icons/fa";
-import { getToken } from "../../utils/auth";
+import { getAuthenticatedFileUrl } from "../../api/client";
 
 const API_BASE_URL =
   (typeof import.meta !== "undefined" && import.meta.env?.VITE_API_BASE_URL) ||
@@ -12,12 +12,6 @@ export const resolveImageUrl = (url) => {
   if (!url) return null;
   if (url.startsWith("http")) return url;
 
-  const token = getToken();
-  if (token && url.startsWith("/api/")) {
-    const separator = url.includes("?") ? "&" : "?";
-    return `${url}${separator}token=${encodeURIComponent(token)}`;
-  }
-
   if (url.startsWith("/")) {
     const origin = API_BASE_URL
       ? API_BASE_URL.replace(/\/api\/?$/, "").replace(/\/$/, "")
@@ -28,7 +22,7 @@ export const resolveImageUrl = (url) => {
   return url;
 };
 
-const getImageUrl = (pet) => resolveImageUrl(pet?.image_url || pet?.image || null);
+const getImageUrl = (pet) => pet?.image_url || pet?.image || null;
 
 const getSpeciesIcon = (species) => {
   const value = String(species || "").toLowerCase();
@@ -43,9 +37,41 @@ const getPetSpecies = (pet) =>
   pet?.species || pet?.type || pet?.pet_species || "Pet";
 
 const PetAvatar = ({ pet, size = 48, className = "" }) => {
-  const imageUrl = getImageUrl(pet);
+  const imageSource = getImageUrl(pet);
+  const [imageUrl, setImageUrl] = useState(null);
   const species = getPetSpecies(pet);
   const [imgError, setImgError] = useState(false);
+
+  useEffect(() => {
+    let cancelled = false;
+    let blobUrl = null;
+
+    setImgError(false);
+    setImageUrl(null);
+    if (!imageSource) return undefined;
+
+    if (imageSource.includes("/api/files/pet-photos/")) {
+      getAuthenticatedFileUrl(imageSource)
+        .then((url) => {
+          blobUrl = url;
+          if (cancelled) {
+            URL.revokeObjectURL(url);
+            return;
+          }
+          setImageUrl(url);
+        })
+        .catch(() => {
+          if (!cancelled) setImgError(true);
+        });
+    } else {
+      setImageUrl(resolveImageUrl(imageSource));
+    }
+
+    return () => {
+      cancelled = true;
+      if (blobUrl) URL.revokeObjectURL(blobUrl);
+    };
+  }, [imageSource]);
 
   if (imageUrl && !imgError) {
     return (

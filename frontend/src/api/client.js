@@ -27,9 +27,13 @@ const normalizeEndpoint = (endpoint) => {
     return endpoint;
   }
 
-  const fullUrl = `${API_URL}${endpoint.startsWith("/") ? endpoint : `/${endpoint}`}`;
-  
-  return fullUrl;
+  const baseUrl = API_URL.replace(/\/+$/, "");
+  const path = endpoint.startsWith("/") ? endpoint : `/${endpoint}`;
+  const normalizedPath = baseUrl.endsWith("/api") && /^\/api(?:\/|$)/.test(path)
+    ? path.slice(4) || "/"
+    : path;
+
+  return `${baseUrl}${normalizedPath}`;
 };
 
 const parseResponseText = (text) => {

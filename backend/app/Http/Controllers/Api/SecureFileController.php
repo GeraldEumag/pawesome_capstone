@@ -316,7 +316,7 @@ class SecureFileController extends Controller
                 ->first();
             $canAccess = $customer && (int) $pet->customer_id === (int) $customer->id;
         } else {
-            $canAccess = in_array($user->role, ['admin', 'receptionist', 'cashier', 'manager', 'veterinary', 'inventory']);
+            $canAccess = in_array($user->role, ['admin', 'super_admin', 'receptionist', 'super_receptionist', 'cashier', 'manager', 'veterinary', 'inventory'], true);
         }
 
         if (!$canAccess) {

@@ -918,20 +918,6 @@ const AddProductModal = ({ isOpen, onClose, onSuccess, editItem = null }) => {
             )}
           </div>
 
-          <SupplierModal
-            isOpen={showSupplierModal}
-            onClose={() => setShowSupplierModal(false)}
-            mode="select"
-            initialSupplierId={formData.supplier_id}
-            onSelectSupplier={(supplier) => {
-              setFormData((prev) => ({
-                ...prev,
-                supplier: supplier.name,
-                supplier_id: supplier.id,
-              }));
-            }}
-          />
-
           <div className="modal-footer step-footer">
             <button type="button" className="btn-cancel" onClick={onClose} disabled={loading}>
               Cancel
@@ -961,6 +947,20 @@ const AddProductModal = ({ isOpen, onClose, onSuccess, editItem = null }) => {
             )}
           </div>
         </form>
+
+        <SupplierModal
+          isOpen={showSupplierModal}
+          onClose={() => setShowSupplierModal(false)}
+          mode="select"
+          initialSupplierId={formData.supplier_id}
+          onSelectSupplier={(supplier) => {
+            setFormData((prev) => ({
+              ...prev,
+              supplier: supplier.name,
+              supplier_id: supplier.id,
+            }));
+          }}
+        />
       </div>
     </div>
   );
