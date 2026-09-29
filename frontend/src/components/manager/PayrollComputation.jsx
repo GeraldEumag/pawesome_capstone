@@ -20,6 +20,7 @@ import {
 } from "@fortawesome/free-solid-svg-icons";
 import { apiRequest } from "../../api/client";
 import { formatCurrency } from "../../utils/currency";
+import RowActionPopover from "../shared/RowActionPopover";
 import "./PayrollComputation.css";
 
 const formatNum = (v) => (v == null ? "0.00" : Number(v).toFixed(2));
@@ -391,9 +392,11 @@ const PayrollComputation = () => {
                       </td>
                       <td><strong className="net">{formatCurrency(r._net)}</strong></td>
                       <td>
-                        <button type="button" className="payroll-comp-btn-icon" onClick={() => setShowBreakdown(showBreakdown === rowKey(r) ? null : rowKey(r))}>
-                          <FontAwesomeIcon icon={faEye} />
-                        </button>
+                        <RowActionPopover rowLabel={r.employee_name}>
+                          <button type="button" title="View deduction breakdown" className="payroll-comp-btn-icon" onClick={() => setShowBreakdown(showBreakdown === rowKey(r) ? null : rowKey(r))}>
+                            <FontAwesomeIcon icon={faEye} />
+                          </button>
+                        </RowActionPopover>
                       </td>
                     </tr>
                   ))}

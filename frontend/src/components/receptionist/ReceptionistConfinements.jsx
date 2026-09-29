@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { apiRequest } from "../../api/client";
+import RowActionPopover from "../shared/RowActionPopover";
 
 const normalizeList = (result, keys = []) => {
   if (Array.isArray(result)) return result;
@@ -76,9 +77,10 @@ const ReceptionistConfinements = () => {
                   <td>{record.payment_status}</td>
                   <td>{record.room?.name || record.room?.room_number || "Unassigned"}</td>
                   <td className="actions">
+                    <RowActionPopover rowLabel={record.pet?.name || record.pet_name || record.id}>
                     {["recommended", "approved_for_admission"].includes(record.status) && (
                       <>
-                        <select value={draft.room_id || ""} onChange={(e) => setDrafts((prev) => ({ ...prev, [record.id]: { ...draft, room_id: e.target.value } }))}>
+                        <select aria-label="Assign room" value={draft.room_id || ""} onChange={(e) => setDrafts((prev) => ({ ...prev, [record.id]: { ...draft, room_id: e.target.value } }))}>
                           <option value="">Room</option>
                           {rooms.map((room) => <option key={room.id} value={room.id}>{room.name || room.room_number} ({room.status})</option>)}
                         </select>
@@ -92,6 +94,7 @@ const ReceptionistConfinements = () => {
                     {record.status === "ready_for_discharge" && (
                       <button onClick={() => action(record, `/receptionist/medical-confinements/${record.id}/release`, null, "Pet released.")}>Release</button>
                     )}
+                    </RowActionPopover>
                   </td>
                 </tr>
               );

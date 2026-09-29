@@ -30,6 +30,7 @@ import { apiRequest, getAuthenticatedFileUrl } from "../../api/client";
 import { showConfirm, showReasonPrompt } from "../../utils/alert.jsx";
 import { exportToCSV, exportToPDF, exportToExcel } from "../../utils/reportExport";
 import { useUnifiedRequests } from "./hooks/useUnifiedRequests";
+import RowActionPopover from "../shared/RowActionPopover";
 import NewWalkInBookingModal from "./modals/NewWalkInBookingModal";
 import ServiceManagerModal from "./ServiceManagerModal";
 import {
@@ -808,9 +809,9 @@ const ReceptionistAppointmentsBoarding = () => {
                       <span className="hub-amount">{formatCurrency(item.amount)}</span>
                     </td>
                     <td>
-                      <div className="hub-action-group">
+                      <RowActionPopover rowLabel={item.petName || item.customerName || item.id}>
                         {getQuickActions(item)}
-                      </div>
+                      </RowActionPopover>
                     </td>
                   </tr>
                 ))}

@@ -27,6 +27,7 @@ import {
 import toast from "react-hot-toast";
 import { apiRequest } from "../../api/client";
 import PetAvatar from "../shared/PetAvatar";
+import RowActionPopover from "../shared/RowActionPopover"
 import "./theme.css";
 import "./VetConsultation.css";
 
@@ -751,6 +752,7 @@ const VetConsultation = () => {
                     </td>
                     {!isFinalized && (
                       <td>
+                        <RowActionPopover rowLabel={row.medication_name || `Prescription ${index + 1}`}>
                         <button
                           type="button"
                           className="consult-rx-remove"
@@ -759,6 +761,7 @@ const VetConsultation = () => {
                         >
                           <FontAwesomeIcon icon={faTrash} />
                         </button>
+                        </RowActionPopover>
                       </td>
                     )}
                   </tr>

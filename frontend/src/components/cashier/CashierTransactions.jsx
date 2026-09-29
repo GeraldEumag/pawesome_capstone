@@ -22,6 +22,7 @@ import { formatCurrency } from "../../utils/currency";
 import { posApi } from "../../api/pos";
 import { printReceipt } from "../../utils/receiptPrinter";
 import { useNavigate } from "react-router-dom";
+import RowActionPopover from "../shared/RowActionPopover";
 
 const isGenericFetchFailure = (error) =>
   error?.name === "TypeError" && error?.message === "Failed to fetch";
@@ -300,6 +301,7 @@ const CashierTransactions = () => {
                   </span>
                 </td>
                 <td className="actions">
+                  <RowActionPopover rowLabel={transaction.customer || transaction.id}>
                   <button
                     className="action-btn view"
                     onClick={() => setSelectedTransaction(transaction)}
@@ -325,6 +327,7 @@ const CashierTransactions = () => {
                   >
                     <FontAwesomeIcon icon={faTrash} />
                   </button>
+                  </RowActionPopover>
                 </td>
               </tr>
             ))}

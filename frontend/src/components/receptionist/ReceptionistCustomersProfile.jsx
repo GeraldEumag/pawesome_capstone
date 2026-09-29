@@ -25,6 +25,7 @@ import "./ReceptionistCustomersProfile.css";
 import { receptionistProfileApi } from "../../api/receptionistProfileApi";
 import PetAvatar from "../shared/PetAvatar";
 import CustomerAvatar from "../shared/CustomerAvatar";
+import RowActionPopover from "../shared/RowActionPopover";
 
 const EMPTY_CUSTOMER_FORM = {
   firstName: "",
@@ -896,7 +897,8 @@ const CustomersProfile = () => {
                       </td>
 
                       <td>
-                        <div className="table-actions">
+                        <RowActionPopover rowLabel={customerName}>
+                          <div className="table-actions">
                           <button
                             type="button"
                             className="action-btn view-btn"
@@ -941,7 +943,8 @@ const CustomersProfile = () => {
                           >
                             <FontAwesomeIcon icon={faTrash} />
                           </button>
-                        </div>
+                          </div>
+                        </RowActionPopover>
                       </td>
                     </tr>
                   );

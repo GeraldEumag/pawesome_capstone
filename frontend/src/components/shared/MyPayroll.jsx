@@ -18,6 +18,7 @@ import { apiRequest } from "../../api/client";
 import { formatCurrency } from "../../utils/currency";
 import { STORE_INFO } from "../../utils/storeInfo";
 import { showAlert, showSuccess } from "../../utils/alert.jsx";
+import RowActionPopover from "./RowActionPopover";
 import "./MyPayroll.css";
 
 const formatLabel = (s) => (s ? s.charAt(0).toUpperCase() + s.slice(1) : "N/A");
@@ -303,6 +304,7 @@ const MyPayroll = ({ roleAccent = "#0891b2", roleLabel = "Employee" }) => {
                     </td>
                     <td>{formatDate(p.payment_date)}</td>
                     <td className="mp-actions">
+                      <RowActionPopover rowLabel={p.pay_period_label || p.payroll_id}>
                       <button className="mp-action-btn" onClick={() => viewPayslip(p)} title="View">
                         <FontAwesomeIcon icon={faEye} />
                       </button>
@@ -316,6 +318,7 @@ const MyPayroll = ({ roleAccent = "#0891b2", roleLabel = "Employee" }) => {
                           </button>
                         </>
                       )}
+                      </RowActionPopover>
                     </td>
                   </tr>
                 );

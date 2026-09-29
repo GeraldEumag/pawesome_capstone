@@ -82,6 +82,35 @@ export const getDateValue = (value) => {
   return String(value).includes("T") ? String(value).split("T")[0] : String(value).slice(0, 10);
 };
 
+export const getDateTimeTimestamp = (dateValue, timeValue) => {
+  if (!dateValue) return Number.POSITIVE_INFINITY;
+
+  const dateText = String(dateValue).trim();
+  const timeText = String(timeValue || "").trim();
+  const dateMatch = dateText.match(/^(\d{4})-(\d{2})-(\d{2})/);
+  const date = dateMatch
+    ? new Date(Number(dateMatch[1]), Number(dateMatch[2]) - 1, Number(dateMatch[3]))
+    : new Date(dateText);
+
+  if (Number.isNaN(date.getTime())) return Number.POSITIVE_INFINITY;
+  if (dateText.includes("T")) return date.getTime();
+
+  if (timeText.includes("T")) {
+    const combinedDateTime = new Date(timeText);
+    if (!Number.isNaN(combinedDateTime.getTime())) return combinedDateTime.getTime();
+  }
+
+  const timeMatch = timeText.match(/^(\d{1,2}):(\d{2})(?::(\d{2}))?\s*(AM|PM)?$/i);
+  if (timeMatch) {
+    let hour = Number(timeMatch[1]);
+    const meridiem = timeMatch[4]?.toUpperCase();
+    if (meridiem) hour = (hour % 12) + (meridiem === "PM" ? 12 : 0);
+    if (hour <= 23) date.setHours(hour, Number(timeMatch[2]), Number(timeMatch[3] || 0), 0);
+  }
+
+  return date.getTime();
+};
+
 export const formatDate = (value, fallback = "N/A") => {
   if (!value) return fallback;
   const date = new Date(value);

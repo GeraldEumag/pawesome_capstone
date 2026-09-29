@@ -11,6 +11,7 @@ import {
   faTriangleExclamation,
 } from "@fortawesome/free-solid-svg-icons";
 import { apiRequest } from "../../api/client";
+import RowActionPopover from "../shared/RowActionPopover";
 import "./ThirteenthMonthPanel.css";
 
 const fmt = (v) =>
@@ -191,12 +192,14 @@ const ThirteenthMonthPanel = () => {
                         </span>
                       </td>
                       <td>
-                        {r.status !== "paid" && (
-                          <button className="tmp-btn sm success" onClick={() => pay(r.id)}>
-                            <FontAwesomeIcon icon={faCircleCheck} />
-                            Pay Now
-                          </button>
-                        )}
+                        <RowActionPopover rowLabel={empName(r)}>
+                          {r.status !== "paid" && (
+                            <button className="tmp-btn sm success" onClick={() => pay(r.id)}>
+                              <FontAwesomeIcon icon={faCircleCheck} />
+                              Pay Now
+                            </button>
+                          )}
+                        </RowActionPopover>
                       </td>
                     </tr>
                   );

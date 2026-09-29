@@ -23,6 +23,7 @@ import {
 } from "@fortawesome/free-solid-svg-icons";
 import { apiRequest } from "../../api/client";
 import { exportToCSV, exportToPDF, exportToExcel } from "../../utils/reportExport";
+import RowActionPopover from "../shared/RowActionPopover";
 import "./ManagerLeave.css";
 
 const LEAVE_TYPES = [
@@ -390,20 +391,18 @@ const ManagerLeave = () => {
                           <td><StatusBadge status={r.status} /></td>
                           <td className="leave-reason">{r.reason || "—"}</td>
                           <td>
-                            <div className="leave-actions">
-                              {r.status === "pending" ? (
-                                <>
+                            {r.status === "pending" && (
+                              <RowActionPopover rowLabel={r.employee_name}>
+                                <div className="leave-actions">
                                   <button type="button" className="approve" onClick={() => openAction(r, "approve")}>
                                     <FontAwesomeIcon icon={faThumbsUp} /> Approve
                                   </button>
                                   <button type="button" className="reject" onClick={() => openAction(r, "reject")}>
                                     <FontAwesomeIcon icon={faThumbsDown} /> Reject
                                   </button>
-                                </>
-                              ) : (
-                                <StatusBadge status={r.status} />
-                              )}
-                            </div>
+                                </div>
+                              </RowActionPopover>
+                            )}
                           </td>
                         </tr>
                       );

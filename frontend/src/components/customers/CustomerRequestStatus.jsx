@@ -16,6 +16,7 @@ import { normalizeList } from "../../utils/normalizeList";
 import { showSuccess, showError } from "../../utils/alert.jsx";
 import { useAuth } from "../../context/AuthContext";
 import PaymentUploadModal from "../shared/PaymentUploadModal";
+import RowActionPopover from "../shared/RowActionPopover"
 
 const safeLower = (value) => {
   if (value === null || value === undefined) return "";
@@ -266,28 +267,29 @@ const CustomerRequestStatus = ({ embedded = false }) => {
                       </span>
                     </td>
                     <td className="col-action">
-                      <div className="col-action-buttons">
-                        {canPay(item) && (
-                          <button
-                            className="customer-pay-btn"
-                            onClick={() => openUploadModal(item)}
-                          >
-                            Pay
-                          </button>
-                        )}
-                        {canCancelBoarding(item) && (
-                          <button
-                            className="customer-cancel-btn"
-                            onClick={() => cancelBoarding(item)}
-                            title="Cancel boarding request"
-                          >
-                            <FaBan /> Cancel
-                          </button>
-                        )}
-                        {!canPay(item) && !canCancelBoarding(item) && (
-                          <span className="no-action">—</span>
-                        )}
-                      </div>
+                      {canPay(item) || canCancelBoarding(item) ? (
+                        <RowActionPopover rowLabel={`${getCustomerName(item)} ${getPetName(item)}`}>
+                          <div className="col-action-buttons">
+                            {canPay(item) && (
+                              <button
+                                className="customer-pay-btn"
+                                onClick={() => openUploadModal(item)}
+                              >
+                                Pay
+                              </button>
+                            )}
+                            {canCancelBoarding(item) && (
+                              <button
+                                className="customer-cancel-btn"
+                                onClick={() => cancelBoarding(item)}
+                                title="Cancel boarding request"
+                              >
+                                <FaBan /> Cancel
+                              </button>
+                            )}
+                          </div>
+                        </RowActionPopover>
+                      ) : <span className="no-action">—</span>}
                     </td>
                   </tr>
                 );

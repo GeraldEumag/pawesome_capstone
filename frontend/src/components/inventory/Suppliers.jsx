@@ -20,6 +20,7 @@ import {
 import { inventoryApi } from "../../api/inventory.jsx";
 import { showError, showSuccess } from "../../utils/alert.jsx";
 import { useAuth } from "../../context/AuthContext";
+import RowActionPopover from "../shared/RowActionPopover"
 import "./Suppliers.css";
 
 const emptyForm = {
@@ -251,7 +252,8 @@ const Suppliers = () => {
                     </span>
                   </td>
                   <td className="actions-col">
-                    <div className="sup-actions">
+                    <RowActionPopover rowLabel={s.name}>
+                      <div className="sup-actions">
                       <button type="button" className="sup-icon-btn" onClick={() => openEdit(s)} title="Edit">
                         <FontAwesomeIcon icon={faEdit} />
                       </button>
@@ -275,7 +277,8 @@ const Suppliers = () => {
                           <FontAwesomeIcon icon={faTrash} />
                         </button>
                       )}
-                    </div>
+                      </div>
+                    </RowActionPopover>
                   </td>
                 </tr>
               ))}

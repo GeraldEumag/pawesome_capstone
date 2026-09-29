@@ -25,6 +25,7 @@ import "./ReceptionistGrooming.css";
 import { apiRequest } from "../../api/client";
 import { exportToCSV, exportToPDF, exportToExcel } from "../../utils/reportExport";
 import PetAvatar from "../shared/PetAvatar";
+import RowActionPopover from "../shared/RowActionPopover";
 import GroomingInventoryUsage from "../grooming/GroomingInventoryUsage";
 import ServiceManagerModal from "./ServiceManagerModal";
 
@@ -706,6 +707,7 @@ const Grooming = () => {
                     </td>
 
                     <td className="actions">
+                      <RowActionPopover rowLabel={appointment.petName}>
                       <button
                         type="button"
                         className="action-btn view-btn"
@@ -771,6 +773,7 @@ const Grooming = () => {
                           />
                         </button>
                       )}
+                      </RowActionPopover>
                     </td>
                   </tr>
                 ))}

@@ -52,6 +52,7 @@ import {
 } from "recharts";
 import "./PayrollManagement.css";
 import { exportToCSV as exportCSVUtil, exportToPDF as exportPDFUtil, exportToExcel } from "../../utils/reportExport";
+import RowActionPopover from "../shared/RowActionPopover";
 
 const CHART_COLORS = ["#ff5f93", "#ff8db5", "#ffc8dd", "#f59e0b", "#10b981", "#3b82f6"];
 
@@ -1136,7 +1137,8 @@ const PayrollManagement = () => {
                       </td>
 
                       <td>
-                        <div className="payroll-actions">
+                        <RowActionPopover rowLabel={payroll.employeeName}>
+                          <div className="payroll-actions">
                           <button type="button" onClick={() => openDetails(payroll)}>
                             <FontAwesomeIcon icon={faEye} />
                             View
@@ -1192,7 +1194,8 @@ const PayrollManagement = () => {
                               </button>
                             </>
                           )}
-                        </div>
+                          </div>
+                        </RowActionPopover>
                       </td>
                     </tr>
                   ))}

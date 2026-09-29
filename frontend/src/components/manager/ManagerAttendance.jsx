@@ -31,6 +31,7 @@ import {
 import { apiRequest } from "../../api/client";
 import { formatCurrency } from "../../utils/currency";
 import { exportToCSV, exportToPDF, exportToExcel } from "../../utils/reportExport";
+import RowActionPopover from "../shared/RowActionPopover";
 import "./ManagerAttendance.css";
 
 const TODAY = new Date().toISOString().split("T")[0];
@@ -938,7 +939,8 @@ const ManagerAttendance = () => {
                       </td>
 
                       <td>
-                        <div className="attendance-actions">
+                        <RowActionPopover rowLabel={`${record.name} attendance`}>
+                          <div className="attendance-actions">
                           <button
                             type="button"
                             className="view"
@@ -956,7 +958,8 @@ const ManagerAttendance = () => {
                           >
                             <FontAwesomeIcon icon={faPenToSquare} />
                           </button>
-                        </div>
+                          </div>
+                        </RowActionPopover>
                       </td>
                     </tr>
                   ))}

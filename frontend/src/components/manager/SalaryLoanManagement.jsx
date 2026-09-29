@@ -9,6 +9,7 @@ import {
   faScaleBalanced,
 } from "@fortawesome/free-solid-svg-icons";
 import { apiRequest } from "../../api/client";
+import RowActionPopover from "../shared/RowActionPopover";
 import "./SalaryLoanManagement.css";
 
 const fmt = (v) => new Intl.NumberFormat("en-PH", { style: "currency", currency: "PHP" }).format(v || 0);
@@ -197,11 +198,13 @@ const SalaryLoanManagement = () => {
                       <span className={`slm-status-badge ${l.status}`}>{l.status}</span>
                     </td>
                     <td>
-                      {l.status === "active" && (
-                        <button className="slm-icon-btn" title="Cancel loan" onClick={() => cancel(l.id)}>
-                          <FontAwesomeIcon icon={faXmark} />
-                        </button>
-                      )}
+                      <RowActionPopover rowLabel={l.user?.name || l.employee?.name || `Loan ${l.id}`}>
+                        {l.status === "active" && (
+                          <button className="slm-icon-btn" title="Cancel loan" onClick={() => cancel(l.id)}>
+                            <FontAwesomeIcon icon={faXmark} />
+                          </button>
+                        )}
+                      </RowActionPopover>
                     </td>
                   </tr>
                 );

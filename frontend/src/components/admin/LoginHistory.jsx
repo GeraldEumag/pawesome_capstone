@@ -20,6 +20,7 @@ import {
 } from "@fortawesome/free-solid-svg-icons";
 import { apiRequest } from "../../api/client";
 import { exportToCSV, exportToPDF, exportToExcel } from "../../utils/reportExport";
+import RowActionPopover from "../shared/RowActionPopover";
 import "./LoginHistory.css";
 
 const STAFF_ROLE_OPTIONS = [
@@ -591,6 +592,7 @@ const LoginHistory = () => {
                           )}
                         </td>
                         <td>
+                          <RowActionPopover rowLabel={log.user?.name || log.email}>
                           <button
                             type="button"
                             className="lh-view-btn"
@@ -599,6 +601,7 @@ const LoginHistory = () => {
                           >
                             <FontAwesomeIcon icon={faEye} />
                           </button>
+                          </RowActionPopover>
                         </td>
                       </tr>
                     );

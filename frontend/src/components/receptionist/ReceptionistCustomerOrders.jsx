@@ -23,6 +23,7 @@ import {
 } from "@fortawesome/free-solid-svg-icons";
 import "./ReceptionistCustomerOrders.css";
 import { apiRequest } from "../../api/client";
+import RowActionPopover from "../shared/RowActionPopover";
 import { exportToCSV, exportToPDF, exportToExcel } from "../../utils/reportExport";
 
 const STATUS_OPTIONS = [
@@ -827,7 +828,8 @@ export default function ReceptionistCustomerOrders() {
                       </td>
 
                       <td>
-                        <div className="order-actions">
+                        <RowActionPopover rowLabel={getOrderNumber(order)}>
+                          <div className="order-actions">
                           <button
                             type="button"
                             className="action-btn view"
@@ -886,7 +888,8 @@ export default function ReceptionistCustomerOrders() {
                               {formatLabel(status)}
                             </span>
                           )}
-                        </div>
+                          </div>
+                        </RowActionPopover>
                       </td>
                     </tr>
                   );

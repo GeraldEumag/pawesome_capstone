@@ -12,6 +12,7 @@ import {
 import { inventoryApi } from "../../api/inventory.jsx";
 import { normalizeList } from "../../api/client";
 import AddProductModal from "./AddProductModal";
+import RowActionPopover from "../shared/RowActionPopover";
 import StockAdjustmentModal from "./StockAdjustmentModal";
 import PremiumToast from "../shared/PremiumToast";
 import DeleteConfirmModal from "../shared/DeleteConfirmModal";
@@ -686,11 +687,7 @@ const UnifiedInventory = () => {
               {paginatedItems.map((item) => (
                 <React.Fragment key={item.id}>
                   <tr className={`${getStock(item) === 0 ? "out-of-stock-row" : ""} ${selectedItems.includes(item.id) ? "selected" : ""} ${scanHighlightId === item.id ? "scan-highlight" : ""}`}>
-                    {activeTab === "active" && (
-                      <td className="checkbox-col">
-                        <input type="checkbox" checked={selectedItems.includes(item.id)} onChange={() => handleSelectItem(item.id)} />
-                      </td>
-                    )}
+                    {activeTab === "active" && <td className="checkbox-col" />}
                     <td className="sku-cell">
                       <div className="sku-primary">{item.sku || "—"}</div>
                       {item.barcode && item.barcode !== item.sku && (
@@ -727,36 +724,49 @@ const UnifiedInventory = () => {
                       )}
                     </td>
                     <td className="actions-col">
-                      {activeTab === "archived" ? (
-                        <button className="btn-icon unarchive" onClick={() => handleUnarchive(item.id)} title="Unarchive">
-                          <FontAwesomeIcon icon={faPlus} />
-                        </button>
-                      ) : (
-                        <div className="action-group">
-                          <button
-                            className={`btn-icon batches ${expandedItems.has(item.id) ? "expanded" : ""}`}
-                            onClick={() => toggleExpand(item.id)}
-                            title={expandedItems.has(item.id) ? "Hide Batches" : "View Batches"}
-                          >
-                            <FontAwesomeIcon icon={faChevronDown} />
+                      <RowActionPopover rowLabel={item.name || item.sku || item.id}>
+                        {activeTab === "archived" ? (
+                          <button className="btn-icon unarchive" onClick={() => handleUnarchive(item.id)} title="Unarchive">
+                            <FontAwesomeIcon icon={faPlus} />
                           </button>
-                          <button className="btn-icon info" onClick={() => handleViewInfo(item)} title="View Info">
-                            <FontAwesomeIcon icon={faInfoCircle} />
-                          </button>
-                          <button className="btn-icon history" onClick={() => handleViewHistory(item)} title="History">
-                            <FontAwesomeIcon icon={faHistory} />
-                          </button>
-                          <button className="btn-icon edit" onClick={() => handleEdit(item)} title="Edit">
-                            <FontAwesomeIcon icon={faEdit} />
-                          </button>
-                          <button className="btn-icon adjust" onClick={() => handleAdjust(item)} title="Adjust Stock">
-                            <FontAwesomeIcon icon={faAdjust} />
-                          </button>
-                          <button className="btn-icon archive" onClick={() => handleArchive(item)} title="Archive">
-                            <FontAwesomeIcon icon={faArchive} />
-                          </button>
-                        </div>
-                      )}
+                        ) : (
+                          <>
+                            <label className="row-action-popover-checkbox">
+                              <input
+                                type="checkbox"
+                                aria-label={`Select ${item.name || item.sku || "item"} for bulk archive`}
+                                checked={selectedItems.includes(item.id)}
+                                onChange={() => handleSelectItem(item.id)}
+                              />
+                              <span>Select for bulk archive</span>
+                            </label>
+                            <div className="action-group">
+                              <button
+                                className={`btn-icon batches ${expandedItems.has(item.id) ? "expanded" : ""}`}
+                                onClick={() => toggleExpand(item.id)}
+                                title={expandedItems.has(item.id) ? "Hide Batches" : "View Batches"}
+                              >
+                                <FontAwesomeIcon icon={faChevronDown} />
+                              </button>
+                              <button className="btn-icon info" onClick={() => handleViewInfo(item)} title="View Info">
+                                <FontAwesomeIcon icon={faInfoCircle} />
+                              </button>
+                              <button className="btn-icon history" onClick={() => handleViewHistory(item)} title="History">
+                                <FontAwesomeIcon icon={faHistory} />
+                              </button>
+                              <button className="btn-icon edit" onClick={() => handleEdit(item)} title="Edit">
+                                <FontAwesomeIcon icon={faEdit} />
+                              </button>
+                              <button className="btn-icon adjust" onClick={() => handleAdjust(item)} title="Adjust Stock">
+                                <FontAwesomeIcon icon={faAdjust} />
+                              </button>
+                              <button className="btn-icon archive" onClick={() => handleArchive(item)} title="Archive">
+                                <FontAwesomeIcon icon={faArchive} />
+                              </button>
+                            </div>
+                          </>
+                        )}
+                      </RowActionPopover>
                     </td>
                   </tr>
                   {/* Expandable batch row */}

@@ -26,6 +26,7 @@ import {
   FaWrench,
 } from "react-icons/fa";
 import { apiRequest, getAuthenticatedFileUrl } from "../../api/client";
+import RowActionPopover from "../shared/RowActionPopover";
 import { exportToCSV, exportToPDF, exportToExcel } from "../../utils/reportExport";
 import ServiceManagerModal from "./ServiceManagerModal";
 import "../../styles/bookingModal.css";
@@ -764,7 +765,8 @@ const ReceptionistDashboard = () => {
                     </td>
 
                     <td>
-                      <div className="table-actions">
+                      <RowActionPopover rowLabel={item.pet || item.customer || item.id}>
+                        <div className="table-actions">
                         <button
                           className="view"
                           type="button"
@@ -803,7 +805,8 @@ const ReceptionistDashboard = () => {
                         >
                           {isBusy(item, "pending") ? <FaSpinner /> : <FaUndoAlt />}
                         </button>
-                      </div>
+                        </div>
+                      </RowActionPopover>
                     </td>
                   </tr>
                 ))}

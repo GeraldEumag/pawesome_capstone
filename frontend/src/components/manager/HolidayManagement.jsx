@@ -11,6 +11,7 @@ import {
   faCalendarCheck,
 } from "@fortawesome/free-solid-svg-icons";
 import { apiRequest } from "../../api/client";
+import RowActionPopover from "../shared/RowActionPopover";
 import "./HolidayManagement.css";
 
 const EMPTY = { date: "", name: "", type: "regular", is_recurring: false };
@@ -173,14 +174,16 @@ const HolidayManagement = () => {
                         }
                       </td>
                       <td>
-                        <div className="hm-action-btns">
+                        <RowActionPopover rowLabel={h.name}>
+                          <div className="hm-action-btns">
                           <button className="hm-icon-btn edit" title="Edit" onClick={() => openEdit(h)}>
                             <FontAwesomeIcon icon={faPencil} />
                           </button>
                           <button className="hm-icon-btn delete" title="Delete" onClick={() => remove(h.id)}>
                             <FontAwesomeIcon icon={faTrash} />
                           </button>
-                        </div>
+                          </div>
+                        </RowActionPopover>
                       </td>
                     </tr>
                   ))}

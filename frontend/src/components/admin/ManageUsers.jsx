@@ -25,6 +25,7 @@ import { apiRequest } from "../../api/client";
 import { normalizeList } from "../../utils/normalizeList";
 import { showSuccess as showSwalSuccess, showError as showSwalError, showWarning } from "../../utils/alert.jsx";
 import { exportToCSV, exportToPDF, exportToExcel } from "../../utils/reportExport";
+import RowActionPopover from "../shared/RowActionPopover";
 import "./ManageUsers.css";
 
 const ROLE_OPTIONS = [
@@ -668,7 +669,8 @@ const ManageUsers = () => {
                       <td className="user-date">{formatDate(user.created_at)}</td>
 
                       <td>
-                        <div className="user-actions">
+                        <RowActionPopover rowLabel={user.name || user.email}>
+                          <div className="user-actions">
                           <button
                             className="action-btn view-btn"
                             type="button"
@@ -695,7 +697,8 @@ const ManageUsers = () => {
                           >
                             <FontAwesomeIcon icon={faTrash} />
                           </button>
-                        </div>
+                          </div>
+                        </RowActionPopover>
                       </td>
                     </tr>
                   );

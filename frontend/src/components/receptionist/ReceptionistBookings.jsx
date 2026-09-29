@@ -28,6 +28,7 @@ import {
 import "../../styles/bookingModal.css";
 import "./ReceptionistBookings.css";
 import { apiRequest } from "../../api/client";
+import RowActionPopover from "../shared/RowActionPopover";
 import { exportToCSV, exportToPDF, exportToExcel } from "../../utils/reportExport";
 import ServiceManagerModal from "./ServiceManagerModal";
 
@@ -1394,7 +1395,8 @@ const ReceptionistBookings = () => {
                     </td>
 
                     <td>
-                      <div className="action-buttons">
+                      <RowActionPopover rowLabel={booking.petName || booking.owner}>
+                        <div className="action-buttons">
                         <button
                           type="button"
                           className="action-btn details"
@@ -1487,7 +1489,8 @@ const ReceptionistBookings = () => {
                         >
                           <FontAwesomeIcon icon={faHistory} />
                         </button>
-                      </div>
+                        </div>
+                      </RowActionPopover>
                     </td>
                   </tr>
                 ))}

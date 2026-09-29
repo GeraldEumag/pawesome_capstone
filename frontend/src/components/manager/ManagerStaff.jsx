@@ -34,6 +34,7 @@ import {
 import { apiRequest } from "../../api/client";
 import { resolveAvatarUrl } from "../../utils/avatar";
 import { formatCurrency } from "../../utils/currency";
+import RowActionPopover from "../shared/RowActionPopover";
 import { exportToCSV, exportToPDF, exportToExcel } from "../../utils/reportExport";
 import FingerprintEnrollment from "./FingerprintEnrollment";
 import "./ManagerStaff.css";
@@ -1030,7 +1031,8 @@ const ManagerStaff = () => {
                       </td>
 
                       <td>
-                        <div className="staff-actions">
+                        <RowActionPopover rowLabel={person.name}>
+                          <div className="staff-actions">
                           <button type="button" onClick={() => openProfile(person)}>
                             <FontAwesomeIcon icon={faEye} />
                             Profile
@@ -1059,7 +1061,8 @@ const ManagerStaff = () => {
                             <FontAwesomeIcon icon={faFingerprint} />
                             Fingerprint
                           </button>
-                        </div>
+                          </div>
+                        </RowActionPopover>
                       </td>
                     </tr>
                   ))}

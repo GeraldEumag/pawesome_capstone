@@ -21,6 +21,7 @@ import {
 } from "@fortawesome/free-solid-svg-icons";
 import { apiRequest } from "../../api/client";
 import { showConfirm } from "../../utils/alert.jsx";
+import RowActionPopover from "../shared/RowActionPopover";
 import "../../styles/bookingModal.css";
 import "./ReceptionistManageServices.css";
 
@@ -465,7 +466,8 @@ const ReceptionistManageServices = () => {
                         </span>
                       </td>
                       <td>
-                        <div className="action-buttons">
+                        <RowActionPopover rowLabel={service.name}>
+                          <div className="action-buttons">
                           <button
                             type="button"
                             className="action-btn toggle-btn"
@@ -494,7 +496,8 @@ const ReceptionistManageServices = () => {
                           >
                             <FontAwesomeIcon icon={faTrash} />
                           </button>
-                        </div>
+                          </div>
+                        </RowActionPopover>
                       </td>
                     </tr>
                   ))}
