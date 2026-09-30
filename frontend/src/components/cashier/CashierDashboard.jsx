@@ -348,6 +348,7 @@ const CashierDashboard = () => {
   const cashierDashboardClasses = [
     "app-dashboard",
     "cashier-dashboard",
+    ...(normalizedPath === "/cashier/dashboard/pos" ? [] : ["cashier-workspace"]),
   ]
     .join(" ");
 

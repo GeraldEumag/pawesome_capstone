@@ -2,7 +2,7 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import ReactDOM from "react-dom";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
-  faIdCard, faCheckSquare, faFilter, faPrint,
+  faCheckSquare, faFilter, faPrint,
   faRotateRight, faSearch, faSquare, faTriangleExclamation,
   faXmark, faUsers,
 } from "@fortawesome/free-solid-svg-icons";
@@ -291,10 +291,7 @@ const EmployeeIdPrinter = () => {
       <div className="eip-hero">
         <div className="eip-hero-left">
           <span className="eip-eyebrow">Manager</span>
-          <h1>
-            <FontAwesomeIcon icon={faIdCard} />
-            Employee ID Cards
-          </h1>
+          <h1>Employee ID Cards</h1>
           <p>Generate and print employee ID cards with scannable barcodes for the attendance kiosk.</p>
         </div>
         <div className="eip-hero-actions">

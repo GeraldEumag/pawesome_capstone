@@ -12,7 +12,6 @@ import {
   FaChevronDown,
   FaChevronUp,
   FaUser,
-  FaClipboardList,
   FaRobot,
   FaComments,
   FaHistory,
@@ -40,7 +39,7 @@ const ReceptionistSidebar = ({ mobileOpen, onMobileMenuToggle }) => {
   };
 
   const handleNavClick = () => {
-    if (window.innerWidth <= 768 && onMobileMenuToggle) {
+    if (window.innerWidth <= 1024 && onMobileMenuToggle) {
       onMobileMenuToggle();
     }
   };
@@ -127,13 +126,6 @@ const ReceptionistSidebar = ({ mobileOpen, onMobileMenuToggle }) => {
           <li className="nav-item">
             <NavLink to="/receptionist/customer-profile" onClick={handleNavClick}>
               <FaUser className="nav-icon" /> Customer Profile
-            </NavLink>
-          </li>
-
-          {/* Customer Orders */}
-          <li className="nav-item">
-            <NavLink to="/receptionist/orders" onClick={handleNavClick}>
-              <FaClipboardList className="nav-icon" /> Customer Orders
             </NavLink>
           </li>
 

@@ -17,6 +17,7 @@ import { receptionistCustomerApi } from "../../api/receptionistCustomers";
 import { formatCurrency } from "../../utils/currency";
 import PetAvatar from "../shared/PetAvatar";
 import CustomerAvatar from "../shared/CustomerAvatar";
+import RowActionPopover from "../shared/RowActionPopover";
 import DatePickerInput from "../shared/DatePickerInput";
 import "../../styles/bookingModal.css";
 import "./ReceptionistCustomerManagement.css";
@@ -336,6 +337,7 @@ const ReceptionistCustomerManagement = () => {
                     </td>
 
                     <td className="actions">
+                      <RowActionPopover rowLabel={getCustomerName(customer)}>
                       <button
                         className="action-btn view-btn"
                         onClick={() => openCustomerDetails(customer)}
@@ -351,6 +353,7 @@ const ReceptionistCustomerManagement = () => {
                       >
                         <FontAwesomeIcon icon={faPlus} />
                       </button>
+                      </RowActionPopover>
                     </td>
                   </tr>
                 );

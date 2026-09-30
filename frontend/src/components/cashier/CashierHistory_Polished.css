@@ -9,11 +9,11 @@
 
 /* Hero/Header */
 
-.history-hero {
+.cashier-history-page .history-hero {
   margin-bottom: 1.5rem;
 }
 
-.history-header {
+.cashier-history-page .history-header {
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
@@ -28,7 +28,7 @@
   overflow: hidden;
 }
 
-.history-header::before {
+.cashier-history-page .history-header::before {
   content: "";
   position: absolute;
   width: 220px;
@@ -40,12 +40,12 @@
   pointer-events: none;
 }
 
-.header-content {
+.cashier-history-page .header-content {
   position: relative;
   z-index: 1;
 }
 
-.history-kicker {
+.cashier-history-page .history-kicker {
   display: inline-flex;
   align-items: center;
   margin-bottom: 0.45rem;
@@ -59,7 +59,7 @@
   letter-spacing: 0.08em;
 }
 
-.history-header .header-content h1 {
+.cashier-history-page .history-header .header-content h1 {
   font-size: clamp(1.7rem, 3vw, 2.2rem);
   font-weight: 950;
   color: var(--color-heading, #191919);
@@ -67,7 +67,7 @@
   letter-spacing: -0.045em;
 }
 
-.history-header .header-content p {
+.cashier-history-page .history-header .header-content p {
   color: var(--color-muted, #64748b);
   margin: 0;
   font-size: 0.95rem;
@@ -76,7 +76,7 @@
 
 /* Last Updated */
 
-.last-updated {
+.cashier-history-page .last-updated {
   position: relative;
   z-index: 1;
   display: flex;
@@ -93,16 +93,16 @@
   white-space: nowrap;
 }
 
-.last-updated span {
+.cashier-history-page .last-updated span {
   display: inline-flex;
   gap: 0.35rem;
 }
 
-.last-updated strong {
+.cashier-history-page .last-updated strong {
   color: var(--color-heading, #191919);
 }
 
-.refresh-mini {
+.cashier-history-page .refresh-mini {
   width: 34px;
   height: 34px;
   display: grid;
@@ -118,26 +118,26 @@
   box-shadow: 0 10px 20px rgba(255, 95, 147, 0.22);
 }
 
-.refresh-mini:hover {
+.cashier-history-page .refresh-mini:hover {
   transform: rotate(180deg) scale(1.05);
   box-shadow: 0 14px 26px rgba(255, 95, 147, 0.28);
 }
 
-.refresh-mini:disabled {
+.cashier-history-page .refresh-mini:disabled {
   cursor: not-allowed;
   opacity: 0.7;
 }
 
 /* Summary Cards */
 
-.history-summary-grid {
+.cashier-history-page .history-summary-grid {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 1rem;
   margin-top: 1rem;
 }
 
-.history-summary-card {
+.cashier-history-page .history-summary-card {
   padding: 1.15rem 1.2rem;
   border-radius: 24px;
   background: rgba(255, 255, 255, 0.78);
@@ -146,7 +146,7 @@
   backdrop-filter: blur(16px);
 }
 
-.history-summary-card span {
+.cashier-history-page .history-summary-card span {
   display: block;
   margin-bottom: 0.45rem;
   color: var(--color-muted, #64748b);
@@ -154,7 +154,7 @@
   font-weight: 800;
 }
 
-.history-summary-card strong {
+.cashier-history-page .history-summary-card strong {
   display: block;
   color: var(--color-heading, #191919);
   font-size: 1.55rem;
@@ -162,7 +162,7 @@
   letter-spacing: -0.035em;
 }
 
-.history-summary-card small {
+.cashier-history-page .history-summary-card small {
   display: block;
   margin-top: 0.35rem;
   color: var(--color-muted, #64748b);
@@ -171,12 +171,12 @@
 
 /* Content Area */
 
-.history-content {
+.cashier-history-page .history-content {
   flex: 1;
   overflow-y: auto;
 }
 
-.history-toolbar {
+.cashier-history-page .history-toolbar {
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -190,7 +190,7 @@
   backdrop-filter: blur(16px);
 }
 
-.history-toolbar h2 {
+.cashier-history-page .history-toolbar h2 {
   margin: 0 0 0.25rem;
   color: var(--color-heading, #191919);
   font-size: 1.2rem;
@@ -198,18 +198,18 @@
   letter-spacing: -0.035em;
 }
 
-.history-toolbar p {
+.cashier-history-page .history-toolbar p {
   margin: 0;
   color: var(--color-muted, #64748b);
   font-size: 0.9rem;
 }
 
-.history-search {
+.cashier-history-page .history-search {
   position: relative;
   width: min(420px, 100%);
 }
 
-.history-search span {
+.cashier-history-page .history-search span {
   position: absolute;
   left: 1rem;
   top: 50%;
@@ -218,7 +218,7 @@
   font-size: 1rem;
 }
 
-.history-search input {
+.cashier-history-page .history-search input {
   width: 100%;
   height: 46px;
   padding: 0 1rem 0 2.6rem;
@@ -231,14 +231,14 @@
   transition: border-color 0.2s ease, box-shadow 0.2s ease;
 }
 
-.history-search input:focus {
+.cashier-history-page .history-search input:focus {
   border-color: rgba(255, 95, 147, 0.55);
   box-shadow: 0 0 0 4px rgba(255, 95, 147, 0.12);
 }
 
 /* Table Container */
 
-.history-table-container {
+.cashier-history-page .history-table-container {
   background: rgba(255, 255, 255, 0.82);
   border-radius: 26px;
   border: 1px solid rgba(255, 95, 147, 0.18);
@@ -247,32 +247,32 @@
   backdrop-filter: blur(18px);
 }
 
-.history-table-wrapper {
+.cashier-history-page .history-table-wrapper {
   overflow-x: auto;
 }
 
-.history-table-wrapper::-webkit-scrollbar {
+.cashier-history-page .history-table-wrapper::-webkit-scrollbar {
   height: 8px;
 }
 
-.history-table-wrapper::-webkit-scrollbar-track {
+.cashier-history-page .history-table-wrapper::-webkit-scrollbar-track {
   background: rgba(255, 200, 221, 0.35);
 }
 
-.history-table-wrapper::-webkit-scrollbar-thumb {
+.cashier-history-page .history-table-wrapper::-webkit-scrollbar-thumb {
   background: linear-gradient(135deg, var(--color-primary), var(--color-primary-light, #ff8db5));
   border-radius: 999px;
 }
 
 /* Table */
 
-.history-table {
+.cashier-history-page .history-table {
   width: 100%;
   border-collapse: collapse;
   min-width: 780px;
 }
 
-.history-table thead {
+.cashier-history-page .history-table thead {
   background: linear-gradient(
     135deg,
     rgba(255, 200, 221, 0.86),
@@ -280,7 +280,7 @@
   );
 }
 
-.history-table th {
+.cashier-history-page .history-table th {
   padding: 1rem 1.1rem;
   text-align: left;
   font-size: 0.76rem;
@@ -292,7 +292,7 @@
   white-space: nowrap;
 }
 
-.history-table td {
+.cashier-history-page .history-table td {
   padding: 1rem 1.1rem;
   text-align: left;
   font-size: 0.92rem;
@@ -301,57 +301,57 @@
   white-space: nowrap;
 }
 
-.history-table tbody tr {
+.cashier-history-page .history-table tbody tr {
   transition: background 0.18s ease;
 }
 
-.history-table tbody tr:hover {
+.cashier-history-page .history-table tbody tr:hover {
   background: rgba(255, 95, 147, 0.07);
 }
 
-.history-table tbody tr:last-child td {
+.cashier-history-page .history-table tbody tr:last-child td {
   border-bottom: none;
 }
 
-.transaction-id {
+.cashier-history-page .transaction-id {
   color: var(--color-heading, #191919);
   font-weight: 950;
 }
 
-.amount-cell {
+.cashier-history-page .amount-cell {
   font-weight: 950;
   color: var(--color-success-text, #16a34a) !important;
 }
 
 /* Details Cell Styles */
-.details-cell {
+.cashier-history-page .details-cell {
   white-space: normal !important;
   max-width: 200px;
 }
 
-.service-details,
-.order-details,
-.pos-details {
+.cashier-history-page .service-details,
+.cashier-history-page .order-details,
+.cashier-history-page .pos-details {
   display: flex;
   flex-direction: column;
   gap: 0.25rem;
 }
 
-.service-name,
-.order-type,
-.pos-type {
+.cashier-history-page .service-name,
+.cashier-history-page .order-type,
+.cashier-history-page .pos-type {
   font-weight: 700;
   color: var(--color-heading, #191919);
   font-size: 0.85rem;
 }
 
-.pet-name {
+.cashier-history-page .pet-name {
   font-size: 0.8rem;
   color: var(--color-muted, #64748b);
   font-weight: 500;
 }
 
-.receipt {
+.cashier-history-page .receipt {
   font-size: 0.75rem;
   color: var(--color-muted, #64748b);
   font-weight: 500;
@@ -359,7 +359,7 @@
 
 /* Method Badge */
 
-.method-badge {
+.cashier-history-page .method-badge {
   display: inline-flex;
   align-items: center;
   gap: 0.45rem;
@@ -370,34 +370,34 @@
   text-transform: capitalize;
 }
 
-.method-badge.cash {
+.cashier-history-page .method-badge.cash {
   background: rgba(34, 197, 94, 0.13);
   color: var(--color-success-text, #15803d);
 }
 
-.method-badge.card {
+.cashier-history-page .method-badge.card {
   background: rgba(59, 130, 246, 0.13);
   color: var(--color-info-text, #1d4ed8);
 }
 
-.method-badge.gcash {
+.cashier-history-page .method-badge.gcash {
   background: rgba(99, 102, 241, 0.13);
   color: var(--color-info-text, #4338ca);
 }
 
-.method-badge.maya {
+.cashier-history-page .method-badge.maya {
   background: rgba(14, 165, 233, 0.13);
   color: var(--color-info-text, #0369a1);
 }
 
-.method-badge.online {
+.cashier-history-page .method-badge.online {
   background: rgba(168, 85, 247, 0.13);
   color: var(--color-info-text, #7e22ce);
 }
 
 /* Empty State */
 
-.history-empty {
+.cashier-history-page .history-empty {
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -412,7 +412,7 @@
   backdrop-filter: blur(18px);
 }
 
-.history-empty-icon {
+.cashier-history-page .history-empty-icon {
   width: 72px;
   height: 72px;
   display: grid;
@@ -423,14 +423,14 @@
   font-size: 2rem;
 }
 
-.history-empty h3 {
+.cashier-history-page .history-empty h3 {
   font-size: 1.15rem;
   font-weight: 950;
   color: var(--color-heading, #191919);
   margin: 0 0 0.4rem;
 }
 
-.history-empty p {
+.cashier-history-page .history-empty p {
   color: var(--color-muted, #64748b);
   margin: 0;
   font-size: 0.92rem;
@@ -439,7 +439,7 @@
 
 /* Retry Button */
 
-.history-retry-btn {
+.cashier-history-page .history-retry-btn {
   margin-top: 1rem;
   border: none;
   border-radius: 999px;
@@ -452,14 +452,14 @@
   transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
 
-.history-retry-btn:hover {
+.cashier-history-page .history-retry-btn:hover {
   transform: translateY(-2px);
   box-shadow: 0 16px 30px rgba(255, 95, 147, 0.28);
 }
 
 /* Loading State */
 
-.loading-state {
+.cashier-history-page .loading-state {
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -469,7 +469,7 @@
   color: var(--color-muted, #64748b);
 }
 
-.loading-spinner {
+.cashier-history-page .loading-spinner {
   width: 44px;
   height: 44px;
   border: 4px solid rgba(255, 95, 147, 0.16);
@@ -486,48 +486,48 @@
 
 /* Dark Mode Support */
 
-.cashier-dashboard.dark .history-header,
-.cashier-dashboard.dark .history-summary-card,
-.cashier-dashboard.dark .history-toolbar,
-.cashier-dashboard.dark .history-table-container,
-.cashier-dashboard.dark .history-empty {
+.cashier-dashboard.dark .cashier-history-page .history-header,
+.cashier-dashboard.dark .cashier-history-page .history-summary-card,
+.cashier-dashboard.dark .cashier-history-page .history-toolbar,
+.cashier-dashboard.dark .cashier-history-page .history-table-container,
+.cashier-dashboard.dark .cashier-history-page .history-empty {
   background: rgba(255, 255, 255, 0.06);
   border-color: rgba(255, 141, 181, 0.22);
   box-shadow: 0 18px 45px rgba(0, 0, 0, 0.28);
 }
 
-.cashier-dashboard.dark .last-updated {
+.cashier-dashboard.dark .cashier-history-page .last-updated {
   background: rgba(255, 255, 255, 0.08);
   border-color: rgba(255, 141, 181, 0.22);
 }
 
-.cashier-dashboard.dark .history-header .header-content h1,
-.cashier-dashboard.dark .last-updated strong,
-.cashier-dashboard.dark .history-summary-card strong,
-.cashier-dashboard.dark .history-toolbar h2,
-.cashier-dashboard.dark .history-table th,
-.cashier-dashboard.dark .history-table td,
-.cashier-dashboard.dark .transaction-id,
-.cashier-dashboard.dark .history-empty h3 {
+.cashier-dashboard.dark .cashier-history-page .history-header .header-content h1,
+.cashier-dashboard.dark .cashier-history-page .last-updated strong,
+.cashier-dashboard.dark .cashier-history-page .history-summary-card strong,
+.cashier-dashboard.dark .cashier-history-page .history-toolbar h2,
+.cashier-dashboard.dark .cashier-history-page .history-table th,
+.cashier-dashboard.dark .cashier-history-page .history-table td,
+.cashier-dashboard.dark .cashier-history-page .transaction-id,
+.cashier-dashboard.dark .cashier-history-page .history-empty h3 {
   color: #f8fafc;
 }
 
-.cashier-dashboard.dark .history-header .header-content p,
-.cashier-dashboard.dark .last-updated,
-.cashier-dashboard.dark .history-summary-card span,
-.cashier-dashboard.dark .history-summary-card small,
-.cashier-dashboard.dark .history-toolbar p,
-.cashier-dashboard.dark .history-empty p,
-.cashier-dashboard.dark .loading-state {
+.cashier-dashboard.dark .cashier-history-page .history-header .header-content p,
+.cashier-dashboard.dark .cashier-history-page .last-updated,
+.cashier-dashboard.dark .cashier-history-page .history-summary-card span,
+.cashier-dashboard.dark .cashier-history-page .history-summary-card small,
+.cashier-dashboard.dark .cashier-history-page .history-toolbar p,
+.cashier-dashboard.dark .cashier-history-page .history-empty p,
+.cashier-dashboard.dark .cashier-history-page .loading-state {
   color: #cbd5e1;
 }
 
-.cashier-dashboard.dark .history-search input {
+.cashier-dashboard.dark .cashier-history-page .history-search input {
   background: rgba(15, 23, 42, 0.38);
   color: #f8fafc;
 }
 
-.cashier-dashboard.dark .history-table thead {
+.cashier-dashboard.dark .cashier-history-page .history-table thead {
   background: linear-gradient(
     135deg,
     rgba(255, 95, 147, 0.22),
@@ -535,117 +535,117 @@
   );
 }
 
-.cashier-dashboard.dark .history-table td,
-.cashier-dashboard.dark .history-table th {
+.cashier-dashboard.dark .cashier-history-page .history-table td,
+.cashier-dashboard.dark .cashier-history-page .history-table th {
   border-bottom-color: rgba(255, 141, 181, 0.14);
 }
 
-.cashier-dashboard.dark .history-table tbody tr:hover {
+.cashier-dashboard.dark .cashier-history-page .history-table tbody tr:hover {
   background: rgba(255, 141, 181, 0.1);
 }
 
-.cashier-dashboard.dark .service-name,
-.cashier-dashboard.dark .order-type,
-.cashier-dashboard.dark .pos-type {
+.cashier-dashboard.dark .cashier-history-page .service-name,
+.cashier-dashboard.dark .cashier-history-page .order-type,
+.cashier-dashboard.dark .cashier-history-page .pos-type {
   color: #f8fafc;
 }
 
-.cashier-dashboard.dark .pet-name,
-.cashier-dashboard.dark .receipt {
+.cashier-dashboard.dark .cashier-history-page .pet-name,
+.cashier-dashboard.dark .cashier-history-page .receipt {
   color: #cbd5e1;
 }
 
 /* Responsive */
 
 @media (max-width: 900px) {
-  .history-header,
-  .history-toolbar {
+  .cashier-history-page .history-header,
+  .cashier-history-page .history-toolbar {
     flex-direction: column;
     align-items: stretch;
   }
 
-  .last-updated {
+  .cashier-history-page .last-updated {
     width: fit-content;
   }
 
-  .history-summary-grid {
+  .cashier-history-page .history-summary-grid {
     grid-template-columns: 1fr;
   }
 
-  .history-search {
+  .cashier-history-page .history-search {
     width: 100%;
   }
 }
 
 @media (max-width: 768px) {
-  .history-header {
+  .cashier-history-page .history-header {
     padding: 1.1rem;
     border-radius: 22px;
   }
 
-  .history-header .header-content h1 {
+  .cashier-history-page .history-header .header-content h1 {
     font-size: 1.45rem;
   }
 
-  .history-summary-card,
-  .history-toolbar {
+  .cashier-history-page .history-summary-card,
+  .cashier-history-page .history-toolbar {
     border-radius: 20px;
   }
 
-  .history-table-container,
-  .history-empty {
+  .cashier-history-page .history-table-container,
+  .cashier-history-page .history-empty {
     border-radius: 22px;
   }
 
-  .history-table th,
-  .history-table td {
+  .cashier-history-page .history-table th,
+  .cashier-history-page .history-table td {
     padding: 0.85rem 0.9rem;
     font-size: 0.84rem;
   }
 }
 
 @media (max-width: 480px) {
-  .history-header,
-  .history-toolbar {
+  .cashier-history-page .history-header,
+  .cashier-history-page .history-toolbar {
     padding: 1rem;
   }
 
-  .last-updated {
+  .cashier-history-page .last-updated {
     flex-direction: column;
     align-items: flex-start;
     border-radius: 18px;
     white-space: normal;
   }
 
-  .last-updated span {
+  .cashier-history-page .last-updated span {
     flex-direction: column;
   }
 
-  .refresh-mini {
+  .cashier-history-page .refresh-mini {
     width: 36px;
     height: 36px;
   }
 
-  .history-table {
+  .cashier-history-page .history-table {
     min-width: 720px;
   }
 }
 
 /* ── Dark Mode ── */
-[data-theme="dark"] .amount-cell          { color: var(--color-success-text, #86efac) !important; }
-[data-theme="dark"] .method-badge.cash    { color: var(--color-success-text, #86efac); }
-[data-theme="dark"] .method-badge.card,
-[data-theme="dark"] .method-badge.gcash,
-[data-theme="dark"] .method-badge.maya,
-[data-theme="dark"] .method-badge.online  { color: var(--color-info-text, #93c5fd); }
-[data-theme="dark"] .history-search input { background: rgba(15, 23, 42, 0.5); color: var(--color-text); }
+[data-theme="dark"] .cashier-history-page .amount-cell          { color: var(--color-success-text, #86efac) !important; }
+[data-theme="dark"] .cashier-history-page .method-badge.cash    { color: var(--color-success-text, #86efac); }
+[data-theme="dark"] .cashier-history-page .method-badge.card,
+[data-theme="dark"] .cashier-history-page .method-badge.gcash,
+[data-theme="dark"] .cashier-history-page .method-badge.maya,
+[data-theme="dark"] .cashier-history-page .method-badge.online  { color: var(--color-info-text, #93c5fd); }
+[data-theme="dark"] .cashier-history-page .history-search input { background: rgba(15, 23, 42, 0.5); color: var(--color-text); }
 
 @media (prefers-color-scheme: dark) {
-  .amount-cell          { color: var(--color-success-text, #86efac) !important; }
-  .method-badge.cash    { color: var(--color-success-text, #86efac); }
-  .method-badge.card,
-  .method-badge.gcash,
-  .method-badge.maya,
-  .method-badge.online  { color: var(--color-info-text, #93c5fd); }
-  .history-search input { background: rgba(15, 23, 42, 0.5); color: var(--color-text); }
+  .cashier-history-page .amount-cell          { color: var(--color-success-text, #86efac) !important; }
+  .cashier-history-page .method-badge.cash    { color: var(--color-success-text, #86efac); }
+  .cashier-history-page .method-badge.card,
+  .cashier-history-page .method-badge.gcash,
+  .cashier-history-page .method-badge.maya,
+  .cashier-history-page .method-badge.online  { color: var(--color-info-text, #93c5fd); }
+  .cashier-history-page .history-search input { background: rgba(15, 23, 42, 0.5); color: var(--color-text); }
 }

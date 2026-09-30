@@ -1,13 +1,11 @@
 import React, { useState, useEffect, useMemo } from "react";
 import { inventoryApi } from "../../api/inventory.jsx";
 import { STORE_INFO } from "../../utils/storeInfo";
+import { exportFormalReportPDF } from "../../utils/formalReportPdf";
+import { getRole, getUserData } from "../../utils/auth";
+import { exportToCSV } from "../../utils/reportExport";
 import "./MonthlyInventoryAudit.css";
 import { showAlert } from "../../utils/alert.jsx";
-
-const csvCell = (value) => {
-  const s = String(value ?? "");
-  return /[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
-};
 
 const auditItem = (audit) => audit?.item || audit || {};
 
@@ -59,53 +57,43 @@ const MonthlyAuditReport = () => {
       return;
     }
 
-    const headers = [
-      "Product Name",
-      "SKU",
-      "Category",
-      "System Stock",
-      "Actual Stock",
-      "Variance",
-      "Audit Status",
-      "Reason",
-      "Audit Date",
+    const columns = [
+      { key: "product_name", label: "Product Name" },
+      { key: "sku", label: "SKU" },
+      { key: "category", label: "Category" },
+      { key: "system_stock", label: "System Stock" },
+      { key: "actual_stock", label: "Actual Stock" },
+      { key: "variance", label: "Variance" },
+      { key: "unit_cost", label: "Unit Cost", format: "currency" },
+      { key: "variance_value", label: "Estimated Variance Value", format: "currency" },
+      { key: "status", label: "Audit Status" },
+      { key: "reason", label: "Reason" },
+      { key: "audit_date", label: "Audit Date" },
     ];
-
     const rows = audits.map((audit) => {
       const item = auditItem(audit);
-      return [
-        item.name || "Unknown",
-        item.sku || "N/A",
-        item.category || "N/A",
-        Number(audit.system_stock || 0),
-        Number(audit.actual_stock || 0),
-        Number(audit.variance || 0),
-        audit.status || "",
-        audit.reason || "",
-        audit.created_at ? new Date(audit.created_at).toLocaleDateString() : "N/A",
-      ];
+      const auditDate = audit.created_at ? new Date(audit.created_at) : null;
+      const unitCost = Number(audit.unit_cost ?? item.cost ?? 0);
+      const variance = Number(audit.variance || 0);
+      return {
+        product_name: item.name || "Unknown",
+        sku: item.sku || "N/A",
+        category: item.category || "N/A",
+        system_stock: Number(audit.system_stock || 0),
+        actual_stock: Number(audit.actual_stock || 0),
+        variance,
+        unit_cost: unitCost,
+        variance_value: variance * unitCost,
+        status: audit.status || "",
+        reason: audit.reason || "",
+        audit_date: auditDate && !Number.isNaN(auditDate.getTime()) ? auditDate.toLocaleDateString() : "N/A",
+      };
     });
 
-    const csvContent = [
-      [STORE_INFO.name],
-      [`Monthly Inventory Audit Report — ${month}`],
-      [STORE_INFO.address],
-      [`Generated: ${new Date().toLocaleDateString()}`],
-      [],
-      headers,
-      ...rows,
-    ]
-      .map((row) => row.map(csvCell).join(","))
-      .join("\n");
-
-    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
-    const link = document.createElement("a");
-    link.href = URL.createObjectURL(blob);
-    link.download = `${STORE_INFO.name.replace(/\s+/g, "-")}-audit-report-${month}.csv`;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    URL.revokeObjectURL(link.href);
+    exportToCSV(rows, columns, `${STORE_INFO.name.replace(/\s+/g, "-")}-audit-report-${month}`, {
+      title: "Monthly Inventory Audit Report",
+      periodLabel: month,
+    });
   };
 
   const handleExportPDF = () => {
@@ -114,146 +102,85 @@ const MonthlyAuditReport = () => {
       return;
     }
 
-    // Create print-friendly HTML content
-    const printContent = `
-      <html>
-        <head>
-          <title>Monthly Inventory Audit Report - ${month}</title>
-          <style>
-            body {
-              font-family: Arial, sans-serif;
-              padding: 20px;
-              color: #333;
-            }
-            .header {
-              text-align: center;
-              margin-bottom: 30px;
-              border-bottom: 2px solid #ff5f93;
-              padding-bottom: 20px;
-            }
-            .header h1 {
-              color: #ff5f93;
-              margin: 0;
-              font-size: 24px;
-            }
-            .header p {
-              margin: 5px 0;
-              color: #666;
-            }
-            .stats {
-              display: grid;
-              grid-template-columns: repeat(4, 1fr);
-              gap: 15px;
-              margin-bottom: 30px;
-            }
-            .stat-card {
-              border: 1px solid #ddd;
-              padding: 15px;
-              text-align: center;
-              border-radius: 8px;
-            }
-            .stat-card h3 {
-              margin: 0 0 5px 0;
-              color: #ff5f93;
-              font-size: 24px;
-            }
-            .stat-card p {
-              margin: 0;
-              font-size: 14px;
-              color: #666;
-            }
-            table {
-              width: 100%;
-              border-collapse: collapse;
-              margin-top: 20px;
-            }
-            th, td {
-              border: 1px solid #ddd;
-              padding: 12px;
-              text-align: left;
-            }
-            th {
-              background-color: #f5f5f5;
-              font-weight: bold;
-            }
-            .matched {
-              background-color: #d4edda;
-            }
-            .discrepancy {
-              background-color: #f8d7da;
-            }
-            @media print {
-              .no-print {
-                display: none;
-              }
-            }
-          </style>
-        </head>
-        <body>
-          <div class="header">
-            <h1>${STORE_INFO.name}</h1>
-            <p>${STORE_INFO.tagline}</p>
-            <p>${STORE_INFO.address}</p>
-            <h2 style="margin-top: 15px;">Monthly Inventory Audit Report</h2>
-            <p>Audit Month: ${month}</p>
-            <p>Generated: ${new Date().toLocaleDateString()}</p>
-          </div>
-          
-          <div class="stats">
-            <div class="stat-card">
-              <h3>${stats.total}</h3>
-              <p>Total Items</p>
-            </div>
-            <div class="stat-card">
-              <h3>${stats.matched}</h3>
-              <p>Matched</p>
-            </div>
-            <div class="stat-card">
-              <h3>${stats.discrepancy}</h3>
-              <p>Discrepancies</p>
-            </div>
-            <div class="stat-card">
-              <h3>${stats.totalVariance}</h3>
-              <p>Total Variance</p>
-            </div>
-          </div>
+    const currency = (value) => new Intl.NumberFormat("en-PH", { style: "currency", currency: "PHP" }).format(value || 0);
+    const costOf = (audit) => Number(audit.unit_cost ?? auditItem(audit).cost ?? 0);
+    const valueOf = (audit) => Number(audit.variance || 0) * costOf(audit);
+    const discrepancies = audits.filter((audit) => audit.status === "discrepancy");
+    const netValue = audits.reduce((sum, audit) => sum + valueOf(audit), 0);
+    const shortageValue = discrepancies.reduce((sum, audit) => sum + Math.max(0, -valueOf(audit)), 0);
+    const auditor = audits.find((audit) => audit.checked_by)?.checked_by || getUserData().name || "Authorized Staff";
+    const reasonGroups = new Map();
+    discrepancies.forEach((audit) => {
+      const reason = audit.reason || "Reason not recorded";
+      const current = reasonGroups.get(reason) || { reason, items: 0, units: 0, value: 0 };
+      current.items += 1;
+      current.units += Number(audit.variance || 0);
+      current.value += valueOf(audit);
+      reasonGroups.set(reason, current);
+    });
+    const findings = discrepancies.length
+      ? [`${discrepancies.length} of ${audits.length} completed audit line(s) have a stock variance. Estimated net book value is ${currency(netValue)}; estimated shortage value is ${currency(shortageValue)}.`]
+      : [`All ${stats.matched} reported item(s) match the recorded system quantity for ${month}.`];
 
-          <table>
-            <thead>
-              <tr>
-                <th>Product Name</th>
-                <th>SKU</th>
-                <th>Category</th>
-                <th>System Stock</th>
-                <th>Actual Stock</th>
-                <th>Variance</th>
-                <th>Status</th>
-                <th>Reason</th>
-              </tr>
-            </thead>
-            <tbody>
-              ${audits.map((audit) => { const item = auditItem(audit); return `
-                <tr class="${audit.status}">
-                  <td>${item.name || "Unknown"}</td>
-                  <td>${item.sku || "N/A"}</td>
-                  <td>${item.category || "N/A"}</td>
-                  <td>${audit.system_stock}</td>
-                  <td>${audit.actual_stock}</td>
-                  <td>${audit.variance}</td>
-                  <td>${audit.status}</td>
-                  <td>${audit.reason || "-"}</td>
-                </tr>
-              `; }).join("")}
-            </tbody>
-          </table>
-        </body>
-      </html>
-    `;
-
-    const printWindow = window.open("", "_blank");
-    printWindow.document.write(printContent);
-    printWindow.document.close();
-    printWindow.print();
+    exportFormalReportPDF({
+      docRef: `MIA-${month}`,
+      title: "Monthly Inventory Audit Report",
+      subtitle: "Completed Stock Count Reconciliation and Variance Assessment",
+      periodLabel: month,
+      orientation: "landscape",
+      infoFields: [
+        { label: "Completed Audit Lines", value: audits.length },
+        { label: "Auditor", value: auditor },
+        { label: "Valuation Basis", value: "Current item unit cost; estimates only" },
+      ],
+      summaryCards: [
+        { label: "Items Audited", value: stats.total },
+        { label: "Matched", value: `${stats.matched} (${stats.matchRate}%)` },
+        { label: "Discrepancies", value: stats.discrepancy },
+        { label: "Net Variance", value: `${stats.totalVariance} units` },
+        { label: "Variance Value", value: currency(netValue) },
+      ],
+      analysis: {
+        title: "Discrepancy Analysis by Reason",
+        columns: [
+          { header: "Reason", key: "reason" },
+          { header: "Items", key: "items", align: "right" },
+          { header: "Net Units", key: "units", align: "right" },
+          { header: "Est. Value", key: "value", format: currency, align: "right" },
+        ],
+        rows: [...reasonGroups.values()],
+      },
+      table: {
+        title: "Detailed Audit Schedule",
+        fontSize: 6.5,
+        columns: [
+          { header: "Product", value: (audit) => auditItem(audit).name || "Unknown" },
+          { header: "SKU", value: (audit) => auditItem(audit).sku || "N/A" },
+          { header: "Category", value: (audit) => auditItem(audit).category || "N/A" },
+          { header: "System", key: "system_stock", align: "right" },
+          { header: "Actual", key: "actual_stock", align: "right" },
+          { header: "Variance", key: "variance", align: "right" },
+          { header: "Unit Cost", value: (audit) => currency(costOf(audit)), align: "right" },
+          { header: "Variance Value", value: (audit) => currency(valueOf(audit)), align: "right" },
+          { header: "Status", key: "status" },
+          { header: "Reason", key: "reason" },
+          { header: "Auditor", key: "checked_by" },
+        ],
+        rows: audits,
+        foot: ["TOTAL", "", "", "", "", stats.totalVariance, "", currency(netValue), "", "", ""],
+      },
+      findings,
+      recommendations: discrepancies.length
+        ? ["Recount discrepant stock, document supporting evidence, and obtain approval before finalizing any stock correction.", "Review recurring reasons for variance and assign an owner and corrective-action date."]
+        : ["Continue the documented physical count and retain the signed report with monthly inventory records."],
+      certification: "I certify that this report reflects the completed audit records for the stated month. Peso values are estimates calculated using the current item cost and do not replace a financial valuation or approved adjustment.",
+      signatures: [
+        { role: "Prepared by", name: auditor, caption: getRole() || "Inventory Auditor" },
+        { role: "Reviewed by", name: "", caption: "Inventory Supervisor" },
+        { role: "Noted by", name: "", caption: "Store Manager" },
+      ],
+      filename: `${STORE_INFO.name.replace(/\s+/g, "-")}-audit-report-${month}`,
+    });
   };
 
   return (

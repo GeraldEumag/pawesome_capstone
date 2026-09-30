@@ -1,0 +1,29 @@
+.mac-container { padding: 20px; max-width: 900px; }
+.mac-title { font-size: 1.3rem; font-weight: 700; color: #7c3aed; margin-bottom: 16px; }
+.mac-columns { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+.mac-section-title { font-size: 1rem; font-weight: 700; color: #475569; margin-bottom: 10px; }
+.mac-list { display: flex; flex-direction: column; gap: 8px; max-height: 420px; overflow-y: auto; }
+.mac-item { padding: 12px 14px; cursor: pointer; transition: box-shadow .15s; }
+.mac-item.selected { box-shadow: 0 0 0 2px #7c3aed; }
+.mac-item-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px; }
+.mac-status { font-size: 0.73rem; font-weight: 700; padding: 2px 8px; border-radius: 20px; background: rgba(100,116,139,.1); color: #475569; }
+.mac-status.present { color: #059669; background: rgba(5,150,105,.1); }
+.mac-status.absent  { color: #ef4444; background: rgba(239,68,68,.1); }
+.mac-status.late    { color: #f59e0b; background: rgba(245,158,11,.1); }
+.mac-status.on_leave{ color: #8b5cf6; background: rgba(139,92,246,.1); }
+.mac-status-pill    { font-size: 0.73rem; font-weight: 700; padding: 2px 10px; border-radius: 20px; }
+.mac-times { display: flex; gap: 12px; font-size: 0.8rem; color: #475569; }
+.mac-reason { font-size: 0.8rem; color: #64748b; font-style: italic; margin: 4px 0 0; }
+.mac-remarks { font-size: 0.8rem; color: #ef4444; margin: 4px 0 0; }
+.mac-form { padding: 16px; display: flex; flex-direction: column; gap: 10px; }
+.mac-current { font-size: 0.82rem; color: #64748b; }
+.mac-form label { display: flex; flex-direction: column; gap: 4px; font-size: 0.8rem; font-weight: 600; color: #475569; }
+.mac-form input, .mac-form textarea { padding: 8px 10px; border: 1px solid rgba(124,58,237,.25); border-radius: 8px; background: rgba(255,255,255,.6); }
+.mac-btn { padding: 8px 18px; border-radius: 8px; border: 1px solid #7c3aed; color: #7c3aed; background: transparent; cursor: pointer; font-size: 0.85rem; font-weight: 600; }
+.mac-btn.primary { background: #7c3aed; color: #fff; }
+.mac-btn:disabled { opacity: .6; cursor: not-allowed; }
+.mac-msg { font-size: 0.85rem; padding: 8px 12px; border-radius: 8px; margin-bottom: 12px; }
+.mac-msg.success { background: rgba(5,150,105,.1); color: #059669; }
+.mac-msg.error   { background: rgba(239,68,68,.1); color: #ef4444; }
+.mac-empty { color: #94a3b8; font-size: 0.87rem; }
+@media (max-width: 640px) { .mac-columns { grid-template-columns: 1fr; } }

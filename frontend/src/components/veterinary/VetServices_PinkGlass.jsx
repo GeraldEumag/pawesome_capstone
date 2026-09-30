@@ -17,6 +17,7 @@ import {
 } from "@fortawesome/free-solid-svg-icons";
 import toast from "react-hot-toast";
 import { apiRequest } from "../../api/client";
+import RowActionPopover from "../shared/RowActionPopover"
 import "./theme.css";
 import "./VetServices_PinkGlass.css";
 
@@ -367,7 +368,8 @@ const VetServices = () => {
                       </span>
                     </td>
                     <td>
-                      <div className="vs-service-actions">
+                      <RowActionPopover rowLabel={service.name}>
+                        <div className="vs-service-actions">
                         <button
                           className={`vs-action-btn ${service.is_active ? "vs-action-btn--toggle-on" : "vs-action-btn--toggle-off"}`}
                           onClick={() => handleToggleService(service.id, service.is_active)}
@@ -381,7 +383,8 @@ const VetServices = () => {
                         <button className="vs-action-btn vs-action-btn--delete" onClick={() => handleDeleteService(service.id)} title="Delete service">
                           <FontAwesomeIcon icon={faTrash} />
                         </button>
-                      </div>
+                        </div>
+                      </RowActionPopover>
                     </td>
                   </tr>
                 ))}

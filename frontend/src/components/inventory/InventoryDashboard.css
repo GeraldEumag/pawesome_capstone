@@ -586,3 +586,526 @@
     word-break: break-word;
   }
 }
+
+.app-dashboard.inventory-dashboard {
+  --inventory-canvas: var(--color-bg, #f7f5ee);
+  --inventory-surface: #ffffff;
+  --inventory-surface-muted: #fbfaf7;
+  --inventory-border: var(--color-border, #e9e6de);
+  --inventory-ink: #282c2a;
+  --inventory-muted: #68716d;
+  --inventory-shadow: 0 8px 26px rgba(39, 43, 37, 0.07);
+  --inventory-shadow-raised: 0 16px 36px rgba(39, 43, 37, 0.11);
+  --color-bg-gradient: var(--inventory-canvas);
+  --color-surface: var(--inventory-surface);
+  --color-surface-solid: var(--inventory-surface);
+  --color-heading: var(--inventory-ink);
+  --color-text: var(--inventory-ink);
+  --color-muted: var(--inventory-muted);
+  --shadow-card: var(--inventory-shadow);
+  --shadow-soft: 0 4px 14px rgba(39, 43, 37, 0.06);
+  min-height: 100vh;
+  color: var(--inventory-ink);
+  background: var(--inventory-canvas) !important;
+}
+
+.app-dashboard.inventory-dashboard .app-main {
+  width: calc(100% - 260px);
+  min-width: 0;
+  margin-left: 260px;
+  overflow-x: clip;
+  background: transparent !important;
+}
+
+.app-dashboard.inventory-dashboard .app-topbar {
+  position: sticky;
+  top: 0;
+  z-index: 1100;
+  min-height: 80px;
+  height: auto;
+  margin: 0;
+  padding: 12px clamp(18px, 2.5vw, 36px);
+  border-bottom: 1px solid var(--inventory-border);
+  border-radius: 0;
+  background: #ffffff !important;
+  box-shadow: 0 4px 16px rgba(39, 43, 37, 0.045);
+  backdrop-filter: blur(16px);
+}
+
+.app-dashboard.inventory-dashboard .app-topbar .navbar-left {
+  min-width: 0;
+}
+
+.app-dashboard.inventory-dashboard .app-topbar .navbar-left h1 {
+  margin: 0;
+  color: var(--inventory-ink) !important;
+  -webkit-text-fill-color: var(--inventory-ink) !important;
+  background: none !important;
+  font-size: clamp(1.1rem, 1.6vw, 1.5rem);
+  font-weight: 750;
+  letter-spacing: -0.035em;
+}
+
+.app-dashboard.inventory-dashboard .app-topbar .navbar-left p {
+  margin: 4px 0 0;
+  color: var(--inventory-muted) !important;
+  font-size: 0.84rem;
+  font-weight: 450;
+}
+
+.app-dashboard.inventory-dashboard .app-main > .app-content.dashboard-content {
+  width: 100%;
+  max-width: 1680px;
+  min-height: 0;
+  margin: 0 auto;
+  padding: clamp(18px, 2.4vw, 34px);
+  overflow: visible;
+  background: transparent !important;
+}
+
+.app-dashboard.inventory-dashboard .app-main > .app-content.dashboard-content > .dashboard-content {
+  width: 100%;
+  max-width: none;
+  min-width: 0;
+  min-height: 0;
+  margin: 0;
+  padding: 0;
+  color: var(--inventory-ink);
+  background: transparent !important;
+}
+
+.app-dashboard.inventory-dashboard .overview-cards,
+.app-dashboard.inventory-dashboard .dashboard-grid,
+.app-dashboard.inventory-dashboard .dashboard-bottom,
+.app-dashboard.inventory-dashboard .inventory-analytics-grid,
+.app-dashboard.inventory-dashboard .ui-stats-grid,
+.app-dashboard.inventory-dashboard .charts-section,
+.app-dashboard.inventory-dashboard .chart-row,
+.app-dashboard.inventory-dashboard .audit-stats-grid,
+.app-dashboard.inventory-dashboard .audit-analytics-stats,
+.app-dashboard.inventory-dashboard .audit-analytics-charts,
+.app-dashboard.inventory-dashboard .suppliers-stats,
+.app-dashboard.inventory-dashboard .reports-summary-grid {
+  min-width: 0;
+}
+
+.app-dashboard.inventory-dashboard .overview-card,
+.app-dashboard.inventory-dashboard .panel,
+.app-dashboard.inventory-dashboard .metric-card,
+.app-dashboard.inventory-dashboard .ui-stat-card,
+.app-dashboard.inventory-dashboard .ui-reorder-panel,
+.app-dashboard.inventory-dashboard .ui-table-wrapper,
+.app-dashboard.inventory-dashboard .chart-container,
+.app-dashboard.inventory-dashboard .data-table-section,
+.app-dashboard.inventory-dashboard .audit-table-card,
+.app-dashboard.inventory-dashboard .audit-stat-card,
+.app-dashboard.inventory-dashboard .analytics-stat-card,
+.app-dashboard.inventory-dashboard .analytics-chart-card,
+.app-dashboard.inventory-dashboard .sup-stat,
+.app-dashboard.inventory-dashboard .suppliers-table-card,
+.app-dashboard.inventory-dashboard .reports-summary-card,
+.app-dashboard.inventory-dashboard .ht-root,
+.app-dashboard.inventory-dashboard .ht-content {
+  min-width: 0;
+  border: 1px solid var(--inventory-border);
+  border-radius: 18px;
+  background: var(--inventory-surface);
+  box-shadow: var(--inventory-shadow);
+  backdrop-filter: none;
+}
+
+.app-dashboard.inventory-dashboard .overview-cards {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 14px;
+  margin-bottom: 16px;
+}
+
+.app-dashboard.inventory-dashboard .overview-card {
+  min-height: 120px;
+  padding: 16px;
+}
+
+.app-dashboard.inventory-dashboard .overview-card-text h3,
+.app-dashboard.inventory-dashboard .panel h2,
+.app-dashboard.inventory-dashboard .panel-header h2,
+.app-dashboard.inventory-dashboard .ui-header-left h1,
+.app-dashboard.inventory-dashboard .reports-hero h1,
+.app-dashboard.inventory-dashboard .monthly-audit-hero h2,
+.app-dashboard.inventory-dashboard .suppliers-hero h1,
+.app-dashboard.inventory-dashboard .bg-hero-left h1 {
+  color: var(--inventory-ink);
+  letter-spacing: -0.03em;
+}
+
+.app-dashboard.inventory-dashboard .overview-card-text p,
+.app-dashboard.inventory-dashboard .overview-card-text small,
+.app-dashboard.inventory-dashboard .panel-header p,
+.app-dashboard.inventory-dashboard .reports-hero p,
+.app-dashboard.inventory-dashboard .monthly-audit-hero p,
+.app-dashboard.inventory-dashboard .suppliers-hero p,
+.app-dashboard.inventory-dashboard .bg-hero-left p {
+  color: var(--inventory-muted);
+}
+
+.app-dashboard.inventory-dashboard .dashboard-grid {
+  grid-template-columns: minmax(0, 1.45fr) minmax(280px, 0.8fr);
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+.app-dashboard.inventory-dashboard .dashboard-bottom {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+  margin-bottom: 0;
+}
+
+.app-dashboard.inventory-dashboard .panel {
+  padding: 18px;
+  border-radius: 18px;
+}
+
+.app-dashboard.inventory-dashboard .overview-panel {
+  min-height: 0;
+}
+
+.app-dashboard.inventory-dashboard .panel-header {
+  margin-bottom: 14px;
+  border-bottom-color: var(--inventory-border);
+}
+
+.app-dashboard.inventory-dashboard .activity-item,
+.app-dashboard.inventory-dashboard .stock-category-item {
+  min-width: 0;
+  border-color: var(--inventory-border);
+}
+
+.app-dashboard.inventory-dashboard .activity-info,
+.app-dashboard.inventory-dashboard .category-info {
+  min-width: 0;
+}
+
+.app-dashboard.inventory-dashboard .inventory-analytics-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.app-dashboard.inventory-dashboard .analytics-chart-card {
+  min-width: 0;
+  padding: 14px;
+  border: 1px solid var(--inventory-border);
+  border-radius: 14px;
+  background: var(--inventory-surface-muted);
+}
+
+.app-dashboard.inventory-dashboard .chart-box,
+.app-dashboard.inventory-dashboard .analytics-chart-container {
+  min-width: 0;
+  width: 100%;
+  overflow: hidden;
+}
+
+.app-dashboard.inventory-dashboard .unified-inventory,
+.app-dashboard.inventory-dashboard .inventory-reports-page,
+.app-dashboard.inventory-dashboard .reports-content,
+.app-dashboard.inventory-dashboard .inventory-reports-content,
+.app-dashboard.inventory-dashboard .monthly-audit-page,
+.app-dashboard.inventory-dashboard .audit-analytics-page,
+.app-dashboard.inventory-dashboard .suppliers-page,
+.app-dashboard.inventory-dashboard .bg-page {
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  margin: 0;
+  color: var(--inventory-ink);
+  background: transparent !important;
+}
+
+.app-dashboard.inventory-dashboard .unified-inventory,
+.app-dashboard.inventory-dashboard .inventory-reports-page,
+.app-dashboard.inventory-dashboard .monthly-audit-page,
+.app-dashboard.inventory-dashboard .audit-analytics-page,
+.app-dashboard.inventory-dashboard .suppliers-page,
+.app-dashboard.inventory-dashboard .bg-page {
+  padding: 0;
+}
+
+.app-dashboard.inventory-dashboard .ui-stats-grid,
+.app-dashboard.inventory-dashboard .audit-stats-grid,
+.app-dashboard.inventory-dashboard .audit-analytics-stats,
+.app-dashboard.inventory-dashboard .reports-summary-grid {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.app-dashboard.inventory-dashboard .ui-stat-card,
+.app-dashboard.inventory-dashboard .reports-summary-card,
+.app-dashboard.inventory-dashboard .audit-stat-card,
+.app-dashboard.inventory-dashboard .analytics-stat-card {
+  border-radius: 16px;
+  box-shadow: var(--inventory-shadow);
+}
+
+.app-dashboard.inventory-dashboard .ui-reorder-panel,
+.app-dashboard.inventory-dashboard .ui-table-wrapper,
+.app-dashboard.inventory-dashboard .audit-table-card,
+.app-dashboard.inventory-dashboard .data-table-section,
+.app-dashboard.inventory-dashboard .chart-container,
+.app-dashboard.inventory-dashboard .suppliers-table-card,
+.app-dashboard.inventory-dashboard .analytics-chart-card {
+  overflow: hidden;
+}
+
+.app-dashboard.inventory-dashboard .ui-table-wrapper,
+.app-dashboard.inventory-dashboard .audit-table-scroll,
+.app-dashboard.inventory-dashboard .analytics-data-table-scroll,
+.app-dashboard.inventory-dashboard .transactions-table-container,
+.app-dashboard.inventory-dashboard .standard-table-container,
+.app-dashboard.inventory-dashboard .suppliers-table-card,
+.app-dashboard.inventory-dashboard .data-table-section {
+  max-width: 100%;
+  overflow-x: auto;
+  overscroll-behavior-inline: contain;
+  -webkit-overflow-scrolling: touch;
+}
+
+.app-dashboard.inventory-dashboard .ui-table,
+.app-dashboard.inventory-dashboard .audit-table,
+.app-dashboard.inventory-dashboard .analytics-data-table,
+.app-dashboard.inventory-dashboard .suppliers-table,
+.app-dashboard.inventory-dashboard .standard-table {
+  min-width: 680px;
+}
+
+.app-dashboard.inventory-dashboard .ui-table thead tr,
+.app-dashboard.inventory-dashboard .audit-table thead,
+.app-dashboard.inventory-dashboard .analytics-data-table thead,
+.app-dashboard.inventory-dashboard .suppliers-table thead,
+.app-dashboard.inventory-dashboard .standard-table thead {
+  background: #f4f2ec;
+}
+
+.app-dashboard.inventory-dashboard .ui-table th,
+.app-dashboard.inventory-dashboard .audit-table th,
+.app-dashboard.inventory-dashboard .analytics-data-table th,
+.app-dashboard.inventory-dashboard .suppliers-table th,
+.app-dashboard.inventory-dashboard .standard-table th {
+  color: #606b65;
+  font-size: 0.73rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.app-dashboard.inventory-dashboard .ui-table tbody tr:hover td,
+.app-dashboard.inventory-dashboard .audit-table tbody tr:hover td,
+.app-dashboard.inventory-dashboard .analytics-data-table tbody tr:hover td,
+.app-dashboard.inventory-dashboard .suppliers-table tbody tr:hover td,
+.app-dashboard.inventory-dashboard .standard-table tbody tr:hover td {
+  background: #faf9f5;
+}
+
+.app-dashboard.inventory-dashboard .ui-header,
+.app-dashboard.inventory-dashboard .reports-hero,
+.app-dashboard.inventory-dashboard .monthly-audit-hero,
+.app-dashboard.inventory-dashboard .suppliers-hero,
+.app-dashboard.inventory-dashboard .bg-hero {
+  min-width: 0;
+  border: 1px solid var(--inventory-border);
+  border-radius: 18px;
+  background: var(--inventory-surface);
+  box-shadow: var(--inventory-shadow);
+  backdrop-filter: none;
+}
+
+.app-dashboard.inventory-dashboard .ui-filters-bar,
+.app-dashboard.inventory-dashboard .ui-filters-panel,
+.app-dashboard.inventory-dashboard .audit-toolbar,
+.app-dashboard.inventory-dashboard .audit-filters,
+.app-dashboard.inventory-dashboard .suppliers-toolbar,
+.app-dashboard.inventory-dashboard .bg-controls,
+.app-dashboard.inventory-dashboard .reports-filters {
+  min-width: 0;
+  flex-wrap: wrap;
+}
+
+.app-dashboard.inventory-dashboard .ui-search-box,
+.app-dashboard.inventory-dashboard .ui-filter-actions,
+.app-dashboard.inventory-dashboard .audit-header-actions,
+.app-dashboard.inventory-dashboard .audit-bulk-actions,
+.app-dashboard.inventory-dashboard .suppliers-hero-actions,
+.app-dashboard.inventory-dashboard .bg-hero-actions {
+  min-width: 0;
+  flex-wrap: wrap;
+}
+
+.app-dashboard.inventory-dashboard .app-main input:not([type="checkbox"]):not([type="radio"]):not([type="file"]),
+.app-dashboard.inventory-dashboard .app-main select,
+.app-dashboard.inventory-dashboard .app-main textarea {
+  min-height: 42px;
+  border-color: var(--inventory-border);
+  border-radius: 10px;
+  background: #ffffff;
+  color: var(--inventory-ink);
+  box-shadow: none;
+}
+
+.app-dashboard.inventory-dashboard .app-main textarea {
+  min-height: 96px;
+}
+
+.app-dashboard.inventory-dashboard .app-main input:focus,
+.app-dashboard.inventory-dashboard .app-main select:focus,
+.app-dashboard.inventory-dashboard .app-main textarea:focus {
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-primary) 18%, transparent);
+  outline: none;
+}
+
+.app-dashboard.inventory-dashboard .btn,
+.app-dashboard.inventory-dashboard .sup-btn,
+.app-dashboard.inventory-dashboard .bg-btn,
+.app-dashboard.inventory-dashboard .audit-header-actions button,
+.app-dashboard.inventory-dashboard .audit-pagination button {
+  min-height: 42px;
+  border-radius: 10px;
+}
+
+.app-dashboard.inventory-dashboard .sup-modal,
+.app-dashboard.inventory-dashboard .audit-modal,
+.app-dashboard.inventory-dashboard .inventory-modal,
+.app-dashboard.inventory-dashboard .bg-modal {
+  max-width: min(720px, calc(100vw - 28px));
+  max-height: min(88vh, 900px);
+  overflow-y: auto;
+  border: 1px solid var(--inventory-border);
+  border-radius: 18px;
+  background: var(--inventory-surface);
+  box-shadow: var(--inventory-shadow-raised);
+}
+
+.app-dashboard.inventory-dashboard .app-main :focus-visible {
+  outline: 3px solid color-mix(in srgb, var(--color-primary) 60%, white);
+  outline-offset: 2px;
+}
+
+@media (max-width: 1200px) {
+  .app-dashboard.inventory-dashboard .overview-cards,
+  .app-dashboard.inventory-dashboard .ui-stats-grid,
+  .app-dashboard.inventory-dashboard .reports-summary-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .app-dashboard.inventory-dashboard .dashboard-grid,
+  .app-dashboard.inventory-dashboard .dashboard-bottom,
+  .app-dashboard.inventory-dashboard .inventory-analytics-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+@media (max-width: 1024px) {
+  .app-dashboard.inventory-dashboard .app-sidebar.inventory-sidebar {
+    position: fixed;
+    inset: 0 auto 0 0;
+    transform: translateX(-100%);
+    transition: transform 0.25s ease;
+    z-index: 1400;
+  }
+
+  .app-dashboard.inventory-dashboard .app-sidebar.inventory-sidebar.mobile-open {
+    transform: translateX(0);
+  }
+
+  .app-dashboard.inventory-dashboard .mobile-menu-toggle {
+    display: grid !important;
+    place-items: center;
+  }
+
+  .app-dashboard.inventory-dashboard .app-main {
+    width: 100%;
+    margin-left: 0;
+  }
+
+  .app-dashboard.inventory-dashboard .mobile-backdrop {
+    display: none;
+  }
+
+  .app-dashboard.inventory-dashboard .mobile-backdrop.active {
+    display: block;
+    position: fixed;
+    inset: 0;
+    z-index: 1350;
+    background: rgba(23, 25, 23, 0.42);
+  }
+}
+
+@media (max-width: 767px) {
+  .app-dashboard.inventory-dashboard .app-topbar {
+    min-height: 64px;
+    height: auto;
+    padding: 8px 12px;
+    gap: 8px;
+  }
+
+  .app-dashboard.inventory-dashboard .app-topbar .navbar-left p {
+    display: none;
+  }
+
+  .app-dashboard.inventory-dashboard .app-main > .app-content.dashboard-content {
+    padding: 14px;
+  }
+
+  .app-dashboard.inventory-dashboard .overview-cards,
+  .app-dashboard.inventory-dashboard .ui-stats-grid,
+  .app-dashboard.inventory-dashboard .audit-stats-grid,
+  .app-dashboard.inventory-dashboard .audit-analytics-stats,
+  .app-dashboard.inventory-dashboard .reports-summary-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+  }
+
+  .app-dashboard.inventory-dashboard .panel-header,
+  .app-dashboard.inventory-dashboard .ui-header,
+  .app-dashboard.inventory-dashboard .reports-hero,
+  .app-dashboard.inventory-dashboard .monthly-audit-hero,
+  .app-dashboard.inventory-dashboard .suppliers-hero {
+    align-items: flex-start;
+    flex-wrap: wrap;
+  }
+
+  .app-dashboard.inventory-dashboard .ui-filters-panel {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .app-dashboard.inventory-dashboard .audit-header-actions,
+  .app-dashboard.inventory-dashboard .suppliers-hero-actions,
+  .app-dashboard.inventory-dashboard .bg-hero-actions {
+    width: 100%;
+  }
+
+  .app-dashboard.inventory-dashboard .audit-header-actions > button,
+  .app-dashboard.inventory-dashboard .suppliers-hero-actions > button,
+  .app-dashboard.inventory-dashboard .bg-hero-actions > button {
+    flex: 1 1 auto;
+  }
+}
+
+@media (max-width: 420px) {
+  .app-dashboard.inventory-dashboard .app-main > .app-content.dashboard-content {
+    padding: 10px;
+  }
+
+  .app-dashboard.inventory-dashboard .overview-cards,
+  .app-dashboard.inventory-dashboard .ui-stats-grid,
+  .app-dashboard.inventory-dashboard .audit-stats-grid,
+  .app-dashboard.inventory-dashboard .audit-analytics-stats,
+  .app-dashboard.inventory-dashboard .reports-summary-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .app-dashboard.inventory-dashboard .overview-card,
+  .app-dashboard.inventory-dashboard .panel,
+  .app-dashboard.inventory-dashboard .ui-stat-card,
+  .app-dashboard.inventory-dashboard .analytics-stat-card,
+  .app-dashboard.inventory-dashboard .sup-stat {
+    padding: 14px;
+  }
+}

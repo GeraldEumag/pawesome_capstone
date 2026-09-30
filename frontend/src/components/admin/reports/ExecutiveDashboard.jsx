@@ -45,6 +45,29 @@ import './ExecutiveDashboard.css';
  * Real-time KPI monitoring with trends, alerts, and predictive indicators
  */
 
+const toDateOnly = (date) => {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+};
+
+const getExecutivePeriod = (range, now = new Date()) => {
+  const to = new Date(now);
+  to.setHours(0, 0, 0, 0);
+  const from = new Date(to);
+  const days = range === 'week' ? 6 : range === 'month' ? 29 : 0;
+  from.setDate(from.getDate() - days);
+  const labels = { today: 'Today', week: 'Last 7 Days', month: 'Last 30 Days' };
+  const fromLabel = toDateOnly(from);
+  const toLabel = toDateOnly(to);
+  return {
+    from: fromLabel,
+    to: toLabel,
+    periodLabel: `${labels[range] || labels.today} (${fromLabel} to ${toLabel})`,
+  };
+};
+
 const KPICard = ({ title, value, subtitle, icon, trend, change, tone = 'primary', alert }) => (
   <div className={`exec-kpi-card ${tone} ${alert ? 'alert' : ''} ${trend ? `trend-${trend}` : ''}`}>
     <div className="exec-kpi-glow"></div>
@@ -93,22 +116,8 @@ const ExecutiveDashboard = ({ data: initialData = {} }) => {
     if (!silent) setLoading(true);
     setError(null);
     try {
-      const params = new URLSearchParams();
-      const today = new Date().toISOString().split('T')[0];
-      
-      if (timeRange === 'today') {
-        params.append('from', today);
-        params.append('to', today);
-      } else if (timeRange === 'week') {
-        const weekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
-        params.append('from', weekAgo);
-        params.append('to', today);
-      } else if (timeRange === 'month') {
-        const monthAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
-        params.append('from', monthAgo);
-        params.append('to', today);
-      }
-      
+      const period = getExecutivePeriod(timeRange);
+      const params = new URLSearchParams({ from: period.from, to: period.to });
       const response = await apiRequest(`/admin/reports/executive?${params}`);
       if (response?.success) {
         setData(response.data || {});
@@ -248,7 +257,11 @@ const ExecutiveDashboard = ({ data: initialData = {} }) => {
         </button>
         <ExportButton
           data={data}
-          onExport={(format) => exportExecutiveData(data, format)}
+          disabled={!data?.summary && !data?.revenueTrend && !data?.revenue_trend}
+          onExport={(format) => exportExecutiveData(data, format, {
+            period: getExecutivePeriod(timeRange),
+            lastUpdated,
+          })}
           filename="Executive_Dashboard"
           formats={['csv', 'excel', 'pdf']}
         />

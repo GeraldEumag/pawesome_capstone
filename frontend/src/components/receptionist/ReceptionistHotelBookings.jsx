@@ -25,6 +25,7 @@ import { exportToCSV, exportToPDF, exportToExcel } from "../../utils/reportExpor
 import { showError, showReasonPrompt } from "../../utils/alert.jsx";
 import DatePickerInput from "../../components/shared/DatePickerInput";
 import PetAvatar from "../shared/PetAvatar";
+import RowActionPopover from "../shared/RowActionPopover";
 import {
   normalizeList,
   normalizeStatus,
@@ -34,6 +35,7 @@ import {
   formatDateTime,
   formatCurrency,
   getDateValue,
+  getDateTimeTimestamp,
   getPetName,
   getCustomerName,
   getCustomerPhone,
@@ -222,7 +224,15 @@ const ReceptionistHotelBookings = () => {
       const matchesPayment = filterPayment === "all" || paymentStatus === filterPayment;
 
       return matchesSearch && matchesStatus && matchesPayment;
-    });
+    }).sort((a, b) =>
+      getDateTimeTimestamp(
+        a.check_in || a.check_in_date || a.booking_date || a.start_date || a.date,
+        a.check_in_time || a.booking_time || a.time
+      ) - getDateTimeTimestamp(
+        b.check_in || b.check_in_date || b.booking_date || b.start_date || b.date,
+        b.check_in_time || b.booking_time || b.time
+      )
+    );
   }, [bookings, searchTerm, filterStatus, filterPayment]);
 
   const rejectBooking = async (booking) => {
@@ -684,7 +694,8 @@ const ReceptionistHotelBookings = () => {
                       </td>
 
                       <td>
-                        <div className="actions-cell">
+                        <RowActionPopover rowLabel={getPetName(booking)}>
+                          <div className="actions-cell">
                           <button
                             type="button"
                             className="action-btn view-btn"
@@ -780,7 +791,8 @@ const ReceptionistHotelBookings = () => {
                             <FontAwesomeIcon icon={faDoorOpen} />
                           </button>
                         )}
-                        </div>
+                          </div>
+                        </RowActionPopover>
                       </td>
                     </tr>
                   );

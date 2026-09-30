@@ -26,6 +26,7 @@ import {
 import { apiRequest } from "../../api/client";
 import ServiceManagerModal from "./ServiceManagerModal";
 import PetAvatar from "../shared/PetAvatar";
+import RowActionPopover from "../shared/RowActionPopover";
 import "../../styles/bookingModal.css";
 import "./ReceptionistVetAppointments.css";
 
@@ -524,22 +525,13 @@ const VetAppointments = () => {
               <th>Service</th>
               <th>Status</th>
               <th>Urgency</th>
-              <th>Assign Vet</th>
               <th>Actions</th>
             </tr>
           </thead>
           <tbody>
             {filteredAppointments.map((appointment) => (
               <tr key={appointment.id} className={`appointment-row ${selectedIds.has(appointment.rawId) ? "selected" : ""}`}>
-                <td>
-                  {appointment.status === "pending" && (
-                    <input
-                      type="checkbox"
-                      checked={selectedIds.has(appointment.rawId)}
-                      onChange={() => toggleSelect(appointment.rawId)}
-                    />
-                  )}
-                </td>
+                <td className="row-selection-spacer" />
                 <td className="appointment-id">
                   <span className="id-badge">{appointment.id}</span>
                 </td>
@@ -595,32 +587,38 @@ const VetAppointments = () => {
                     {appointment.urgency}
                   </span>
                 </td>
-                <td>
-                  {appointment.status === 'pending' ? (
-                    <select
-                      value={vetAssignments[appointment.rawId] || ""}
-                      onChange={(event) =>
-                        setVetAssignments((current) => ({
-                          ...current,
-                          [appointment.rawId]: event.target.value,
-                        }))
-                      }
-                    >
-                      <option value="">
-                        {veterinarians.length ? "Choose vet" : "No active vets"}
-                      </option>
-                      {veterinarians.map((vet) => (
-                        <option key={vet.id} value={vet.id}>
-                          {vet.name}
-                        </option>
-                      ))}
-                    </select>
-                  ) : (
-                    <span>{appointment.doctor}</span>
-                  )}
-                </td>
                 <td className="actions">
-                  {appointment.status === 'pending' && (
+                  <RowActionPopover rowLabel={appointment.petName}>
+                    {appointment.status === "pending" && (
+                      <label className="row-action-popover-checkbox">
+                        <input
+                          type="checkbox"
+                          aria-label={`Select ${appointment.petName} for bulk actions`}
+                          checked={selectedIds.has(appointment.rawId)}
+                          onChange={() => toggleSelect(appointment.rawId)}
+                        />
+                        <span>Select for bulk actions</span>
+                      </label>
+                    )}
+                    {appointment.status === "pending" ? (
+                      <label className="row-action-popover-control">
+                        <span>Assign veterinarian</span>
+                        <select
+                          aria-label={`Assign veterinarian to ${appointment.petName}`}
+                          value={vetAssignments[appointment.rawId] || ""}
+                          onChange={(event) => setVetAssignments((current) => ({
+                            ...current,
+                            [appointment.rawId]: event.target.value,
+                          }))}
+                        >
+                          <option value="">{veterinarians.length ? "Choose vet" : "No active vets"}</option>
+                          {veterinarians.map((vet) => <option key={vet.id} value={vet.id}>{vet.name}</option>)}
+                        </select>
+                      </label>
+                    ) : (
+                      <div className="row-action-popover-control"><span>Assigned veterinarian: {appointment.doctor}</span></div>
+                    )}
+                    {appointment.status === 'pending' && (
                     <button 
                       className="action-btn approve-btn" 
                       title="Approve"
@@ -647,6 +645,7 @@ const VetAppointments = () => {
                       <FontAwesomeIcon icon={faTrash} />
                     </button>
                   )}
+                  </RowActionPopover>
                 </td>
               </tr>
             ))}

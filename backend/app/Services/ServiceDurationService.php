@@ -65,6 +65,20 @@ class ServiceDurationService
         'end' => '18:00',   // 6:00 PM
     ];
 
+    private const STORE_TIMEZONE = 'Asia/Manila';
+    private const STORE_CLOSING_TIME = '19:00';
+
+    public static function isSameDayBookingClosed(string $requestedDate): bool
+    {
+        $now = Carbon::now(self::STORE_TIMEZONE);
+        $today = $now->copy()->startOfDay();
+
+        return Carbon::parse($requestedDate, self::STORE_TIMEZONE)->toDateString() === $today->toDateString()
+            && $now->greaterThanOrEqualTo(
+                $today->copy()->setTimeFromTimeString(self::STORE_CLOSING_TIME)
+            );
+    }
+
     /**
      * Get service duration in minutes
      */

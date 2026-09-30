@@ -3949,3 +3949,384 @@
     gap: 12px;
   }
 }
+
+.app-dashboard.cashier-workspace {
+  --cashier-canvas: var(--color-bg, #f7f5ee);
+  --cashier-surface: #ffffff;
+  --cashier-surface-muted: #fbfaf7;
+  --cashier-border: var(--color-border, #e9e6de);
+  --cashier-ink: #282c2a;
+  --cashier-muted: #68716d;
+  --cashier-shadow: 0 8px 26px rgba(39, 43, 37, 0.07);
+  --cashier-shadow-raised: 0 16px 36px rgba(39, 43, 37, 0.11);
+  --color-bg-gradient: var(--cashier-canvas);
+  --color-surface: var(--cashier-surface);
+  --color-surface-solid: var(--cashier-surface);
+  --color-heading: var(--cashier-ink);
+  --color-text: var(--cashier-ink);
+  --color-muted: var(--cashier-muted);
+  --shadow-card: var(--cashier-shadow);
+  --shadow-soft: 0 4px 14px rgba(39, 43, 37, 0.06);
+  min-height: 100vh;
+  color: var(--cashier-ink);
+  background: var(--cashier-canvas) !important;
+}
+
+.app-dashboard.cashier-workspace .app-main {
+  width: calc(100% - 260px);
+  min-width: 0;
+  margin-left: 260px;
+  overflow-x: clip;
+  background: transparent !important;
+}
+
+.app-dashboard.cashier-workspace .app-topbar {
+  position: sticky;
+  top: 0;
+  z-index: 1100;
+  min-height: 80px;
+  height: auto;
+  margin: 0;
+  padding: 12px clamp(18px, 2.5vw, 36px);
+  border-bottom: 1px solid var(--cashier-border);
+  border-radius: 0;
+  background: #ffffff !important;
+  box-shadow: 0 4px 16px rgba(39, 43, 37, 0.045);
+  backdrop-filter: blur(16px);
+}
+
+.app-dashboard.cashier-workspace .app-topbar .navbar-left {
+  min-width: 0;
+}
+
+.app-dashboard.cashier-workspace .app-topbar .navbar-left h1 {
+  margin: 0;
+  color: var(--cashier-ink) !important;
+  -webkit-text-fill-color: var(--cashier-ink) !important;
+  background: none !important;
+  font-size: clamp(1.1rem, 1.6vw, 1.5rem);
+  font-weight: 750;
+  letter-spacing: -0.035em;
+}
+
+.app-dashboard.cashier-workspace .app-topbar .navbar-left p {
+  margin: 4px 0 0;
+  color: var(--cashier-muted) !important;
+  font-size: 0.84rem;
+  font-weight: 450;
+}
+
+.app-dashboard.cashier-workspace .app-topbar .navbar-actions {
+  width: auto;
+  min-width: 0 !important;
+  gap: 10px;
+  flex-wrap: wrap !important;
+}
+
+.app-dashboard.cashier-workspace .app-main > .app-content.dashboard-content {
+  width: 100%;
+  max-width: none;
+  min-height: 0;
+  margin: 0;
+  padding: 0;
+  overflow: visible;
+  background: transparent !important;
+}
+
+.app-dashboard.cashier-workspace .app-main > .app-content.dashboard-content > .app-content,
+.app-dashboard.cashier-workspace .app-main > .app-content.dashboard-content > .dashboard-content {
+  width: 100%;
+  max-width: 1680px;
+  min-width: 0;
+  min-height: 0;
+  margin: 0 auto;
+  padding: clamp(18px, 2.4vw, 34px);
+  color: var(--cashier-ink);
+  background: transparent !important;
+}
+
+.app-dashboard.cashier-workspace .cashier-transactions,
+.app-dashboard.cashier-workspace .cashier-reports,
+.app-dashboard.cashier-workspace .cashier-history,
+.app-dashboard.cashier-workspace .ht-root,
+.app-dashboard.cashier-workspace .reports-container,
+.app-dashboard.cashier-workspace .standard-report-layout,
+.app-dashboard.cashier-workspace .profile-settings-container,
+.app-dashboard.cashier-workspace .my-payroll-page {
+  min-width: 0;
+  min-height: 0;
+  color: var(--cashier-ink);
+  background: transparent !important;
+}
+
+.app-dashboard.cashier-workspace .cashier-kpi-card,
+.app-dashboard.cashier-workspace .cashier-panel,
+.app-dashboard.cashier-workspace .premium-card,
+.app-dashboard.cashier-workspace .cashier-action-card,
+.app-dashboard.cashier-workspace .quick-action-card,
+.app-dashboard.cashier-workspace .shift-summary-card,
+.app-dashboard.cashier-workspace .shift-highlight-card,
+.app-dashboard.cashier-workspace .sales-target-card,
+.app-dashboard.cashier-workspace .cashier-transaction-item,
+.app-dashboard.cashier-workspace .cashier-mini-stat,
+.app-dashboard.cashier-workspace .cashier-empty-state,
+.app-dashboard.cashier-workspace .transactions-table-container,
+.app-dashboard.cashier-workspace .transaction-modal,
+.app-dashboard.cashier-workspace .ht-header,
+.app-dashboard.cashier-workspace .ht-content,
+.app-dashboard.cashier-workspace .ht-stat-card,
+.app-dashboard.cashier-workspace .standard-report-layout .report-content,
+.app-dashboard.cashier-workspace .profile-settings-container .profile-card {
+  min-width: 0;
+  border: 1px solid var(--cashier-border);
+  border-radius: 18px;
+  background: var(--cashier-surface);
+  box-shadow: var(--cashier-shadow);
+  backdrop-filter: none;
+}
+
+.app-dashboard.cashier-workspace .cashier-kpi-grid {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.app-dashboard.cashier-workspace .cashier-kpi-card {
+  min-height: 142px;
+  padding: 18px;
+}
+
+.app-dashboard.cashier-workspace .cashier-kpi-card h3,
+.app-dashboard.cashier-workspace .cashier-panel h2,
+.app-dashboard.cashier-workspace .cashier-panel-header h2,
+.app-dashboard.cashier-workspace .cashier-side-stack h2,
+.app-dashboard.cashier-workspace .transactions-header h1,
+.app-dashboard.cashier-workspace .ht-title {
+  color: var(--cashier-ink);
+  letter-spacing: -0.03em;
+}
+
+.app-dashboard.cashier-workspace .cashier-kpi-card p,
+.app-dashboard.cashier-workspace .cashier-kpi-card small,
+.app-dashboard.cashier-workspace .cashier-panel-header p,
+.app-dashboard.cashier-workspace .premium-muted,
+.app-dashboard.cashier-workspace .transactions-header p,
+.app-dashboard.cashier-workspace .ht-subtitle {
+  color: var(--cashier-muted);
+}
+
+.app-dashboard.cashier-workspace .cashier-main-grid {
+  grid-template-columns: minmax(0, 1.5fr) minmax(280px, 0.8fr);
+  gap: 16px;
+}
+
+.app-dashboard.cashier-workspace .cashier-panel {
+  padding: 18px;
+}
+
+.app-dashboard.cashier-workspace .cashier-panel-header {
+  border-bottom-color: var(--cashier-border);
+}
+
+.app-dashboard.cashier-workspace .cashier-transaction-item,
+.app-dashboard.cashier-workspace .cashier-mini-stat,
+.app-dashboard.cashier-workspace .payment-method-item,
+.app-dashboard.cashier-workspace .transaction-item,
+.app-dashboard.cashier-workspace .ht-entry {
+  border-color: var(--cashier-border);
+  border-radius: 12px;
+  background: var(--cashier-surface-muted);
+  box-shadow: none;
+}
+
+.app-dashboard.cashier-workspace .cashier-list,
+.app-dashboard.cashier-workspace .transactions-content,
+.app-dashboard.cashier-workspace .payment-methods {
+  min-width: 0;
+}
+
+.app-dashboard.cashier-workspace .transactions-table-container,
+.app-dashboard.cashier-workspace .transactions-table-wrapper,
+.app-dashboard.cashier-workspace .ht-content,
+.app-dashboard.cashier-workspace .report-table-wrapper {
+  max-width: 100%;
+  overflow-x: auto;
+  overscroll-behavior-inline: contain;
+  -webkit-overflow-scrolling: touch;
+}
+
+.app-dashboard.cashier-workspace .transactions-table,
+.app-dashboard.cashier-workspace .products-table {
+  min-width: 680px;
+}
+
+.app-dashboard.cashier-workspace .transactions-table th,
+.app-dashboard.cashier-workspace .products-table th {
+  background: #f4f2ec;
+  color: #606b65;
+  font-size: 0.74rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.app-dashboard.cashier-workspace .transactions-table tbody tr:hover,
+.app-dashboard.cashier-workspace .products-table tbody tr:hover {
+  background: #faf9f5;
+}
+
+.app-dashboard.cashier-workspace .app-main input:not([type="checkbox"]):not([type="radio"]):not([type="file"]),
+.app-dashboard.cashier-workspace .app-main select,
+.app-dashboard.cashier-workspace .app-main textarea {
+  min-height: 42px;
+  border: 1px solid var(--cashier-border);
+  border-radius: 10px;
+  background: #ffffff;
+  color: var(--cashier-ink);
+  box-shadow: none;
+}
+
+.app-dashboard.cashier-workspace .app-main textarea {
+  min-height: 96px;
+}
+
+.app-dashboard.cashier-workspace .app-main input:focus,
+.app-dashboard.cashier-workspace .app-main select:focus,
+.app-dashboard.cashier-workspace .app-main textarea:focus {
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-primary) 18%, transparent);
+  outline: none;
+}
+
+.app-dashboard.cashier-workspace .btn-primary,
+.app-dashboard.cashier-workspace .btn-secondary,
+.app-dashboard.cashier-workspace .primary-btn,
+.app-dashboard.cashier-workspace .secondary-btn,
+.app-dashboard.cashier-workspace .transaction-btn,
+.app-dashboard.cashier-workspace .page-btn {
+  min-height: 42px;
+  border-radius: 10px;
+}
+
+.app-dashboard.cashier-workspace .app-modal,
+.app-dashboard.cashier-workspace .transaction-modal,
+.app-dashboard.cashier-workspace .proof-modal,
+.app-dashboard.cashier-workspace .shift-modal {
+  border: 1px solid var(--cashier-border);
+  border-radius: 18px;
+  background: var(--cashier-surface);
+  box-shadow: var(--cashier-shadow-raised);
+}
+
+.app-dashboard.cashier-workspace .app-main :focus-visible {
+  outline: 3px solid color-mix(in srgb, var(--color-primary) 60%, white);
+  outline-offset: 2px;
+}
+
+@media (max-width: 1200px) {
+  .app-dashboard.cashier-workspace .cashier-kpi-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .app-dashboard.cashier-workspace .cashier-main-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+@media (max-width: 1024px) {
+  .app-dashboard.cashier-workspace .app-sidebar.cashier-sidebar {
+    position: fixed;
+    inset: 0 auto 0 0;
+    transform: translateX(-100%);
+    transition: transform 0.25s ease;
+    z-index: 1400;
+  }
+
+  .app-dashboard.cashier-workspace .app-sidebar.cashier-sidebar.mobile-open {
+    transform: translateX(0);
+  }
+
+  .app-dashboard.cashier-workspace .mobile-menu-toggle {
+    display: grid !important;
+    place-items: center;
+  }
+
+  .app-dashboard.cashier-workspace .app-main {
+    width: 100%;
+    margin-left: 0;
+  }
+
+  .app-dashboard.cashier-workspace .mobile-backdrop {
+    display: none;
+  }
+
+  .app-dashboard.cashier-workspace .mobile-backdrop.active {
+    display: block;
+    position: fixed;
+    inset: 0;
+    z-index: 1350;
+    background: rgba(23, 25, 23, 0.42);
+  }
+
+  .app-dashboard.cashier-workspace .cashier-kpi-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 767px) {
+  .app-dashboard.cashier-workspace .app-topbar {
+    min-height: 64px;
+    height: auto;
+    padding: 8px 12px;
+    gap: 8px;
+  }
+
+  .app-dashboard.cashier-workspace .app-topbar h1 {
+    font-size: clamp(0.95rem, 4vw, 1.15rem);
+  }
+
+  .app-dashboard.cashier-workspace .app-topbar p {
+    display: none;
+  }
+
+  .app-dashboard.cashier-workspace .app-topbar .navbar-actions {
+    gap: 6px;
+  }
+
+  .app-dashboard.cashier-workspace .app-main > .app-content.dashboard-content > .app-content,
+  .app-dashboard.cashier-workspace .app-main > .app-content.dashboard-content > .dashboard-content {
+    padding: 14px;
+  }
+
+  .app-dashboard.cashier-workspace .cashier-kpi-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+  }
+
+  .app-dashboard.cashier-workspace .quick-actions-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 10px;
+  }
+
+  .app-dashboard.cashier-workspace .cashier-main-grid,
+  .app-dashboard.cashier-workspace .cashier-side-stack {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .app-dashboard.cashier-workspace .cashier-panel-header,
+  .app-dashboard.cashier-workspace .transactions-header,
+  .app-dashboard.cashier-workspace .header-actions {
+    align-items: flex-start;
+    flex-wrap: wrap;
+  }
+}
+
+@media (max-width: 420px) {
+  .app-dashboard.cashier-workspace .app-main > .app-content.dashboard-content > .app-content,
+  .app-dashboard.cashier-workspace .app-main > .app-content.dashboard-content > .dashboard-content {
+    padding: 10px;
+  }
+
+  .app-dashboard.cashier-workspace .cashier-kpi-grid,
+  .app-dashboard.cashier-workspace .quick-actions-grid {
+    grid-template-columns: minmax(0, 1fr) !important;
+  }
+}

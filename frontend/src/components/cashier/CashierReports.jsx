@@ -201,7 +201,8 @@ const CashierReports = () => {
   );
 
   return (
-    <UnifiedReportEngine
+    <div className="cashier-reports-page">
+      <UnifiedReportEngine
       title="Cashier Reports"
       subtitle="Payment transactions, sales analytics, and revenue tracking"
       icon={faMoneyBillWave}
@@ -217,8 +218,9 @@ const CashierReports = () => {
       tablePageSize={15}
       tableEmptyMessage="No transactions found"
       enableSavedFilters={true}
-      refreshInterval={30000}
-    />
+        refreshInterval={30000}
+      />
+    </div>
   );
 };
 

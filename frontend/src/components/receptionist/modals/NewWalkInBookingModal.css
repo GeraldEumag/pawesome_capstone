@@ -4,11 +4,11 @@
   width: min(720px, 100%);
 }
 
-.hub-form-section {
+.hbk-booking-modal .hub-form-section {
   margin-bottom: 24px;
 }
 
-.hub-form-section h4 {
+.hbk-booking-modal .hub-form-section h4 {
   font-size: 14px;
   font-weight: 700;
   color: #374151;
@@ -17,31 +17,31 @@
   border-bottom: 2px solid rgba(255, 95, 147, 0.15);
 }
 
-.hub-form-grid {
+.hbk-booking-modal .hub-form-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
   gap: 14px;
 }
 
-.hub-form-group {
+.hbk-booking-modal .hub-form-group {
   display: flex;
   flex-direction: column;
   gap: 5px;
 }
 
-.hub-form-group.full {
+.hbk-booking-modal .hub-form-group.full {
   grid-column: 1 / -1;
 }
 
-.hub-form-group label {
+.hbk-booking-modal .hub-form-group label {
   font-size: 12px;
   font-weight: 600;
   color: #374151;
 }
 
-.hub-form-group input,
-.hub-form-group select,
-.hub-form-group textarea {
+.hbk-booking-modal .hub-form-group input,
+.hbk-booking-modal .hub-form-group select,
+.hbk-booking-modal .hub-form-group textarea {
   padding: 10px 12px;
   border-radius: 10px;
   border: 1px solid #d1d5db;
@@ -52,24 +52,24 @@
   transition: border-color 0.2s;
 }
 
-.hub-form-group input:focus,
-.hub-form-group select:focus,
-.hub-form-group textarea:focus {
+.hbk-booking-modal .hub-form-group input:focus,
+.hbk-booking-modal .hub-form-group select:focus,
+.hbk-booking-modal .hub-form-group textarea:focus {
   border-color: var(--color-primary, #ff5f93);
   box-shadow: 0 0 0 3px rgba(255, 95, 147, 0.12);
 }
 
-.hub-form-group input:disabled {
+.hbk-booking-modal .hub-form-group input:disabled {
   background: #f3f4f6;
   color: #6b7280;
 }
 
-.hub-form-group textarea {
+.hbk-booking-modal .hub-form-group textarea {
   resize: vertical;
   min-height: 80px;
 }
 
-.hub-payment-preview {
+.hbk-booking-modal .hub-payment-preview {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   gap: 12px;
@@ -80,13 +80,13 @@
   margin-bottom: 16px;
 }
 
-.hub-payment-preview > div {
+.hbk-booking-modal .hub-payment-preview > div {
   display: flex;
   flex-direction: column;
   gap: 4px;
 }
 
-.hub-payment-preview span {
+.hbk-booking-modal .hub-payment-preview span {
   font-size: 11px;
   text-transform: uppercase;
   letter-spacing: 0.5px;
@@ -94,25 +94,25 @@
   font-weight: 600;
 }
 
-.hub-payment-preview strong {
+.hbk-booking-modal .hub-payment-preview strong {
   font-size: 16px;
   color: #111827;
 }
 
 @media (max-width: 768px) {
-  .hub-form-grid {
+  .hbk-booking-modal .hub-form-grid {
     grid-template-columns: 1fr;
   }
 
-  .hub-form-group.full {
+  .hbk-booking-modal .hub-form-group.full {
     grid-column: auto;
   }
 
-  .hub-payment-preview {
+  .hbk-booking-modal .hub-payment-preview {
     grid-template-columns: 1fr;
   }
 
-  .hbk-foot .hbk-btn {
+  .hbk-booking-modal .hbk-foot .hbk-btn {
     flex: 1;
     justify-content: center;
   }

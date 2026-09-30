@@ -1387,7 +1387,7 @@ body {
     height: 46px;
   }
 
-  .landing-header-login {
+  .landing-header-actions .landing-header-login {
     display: none;
   }
 

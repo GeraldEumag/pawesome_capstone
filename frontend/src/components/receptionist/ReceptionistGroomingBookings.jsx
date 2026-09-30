@@ -21,8 +21,10 @@ import {
 import "../../styles/bookingModal.css";
 import "./ReceptionistGroomingBookings.css";
 import { apiRequest } from "../../api/client";
+import { getDateTimeTimestamp } from "../../utils/apiNormalize";
 import { exportToCSV, exportToPDF, exportToExcel } from "../../utils/reportExport";
 import PetAvatar from "../shared/PetAvatar";
+import RowActionPopover from "../shared/RowActionPopover";
 
 const STATUS_OPTIONS = [
   { value: "all", label: "All Status" },
@@ -241,7 +243,9 @@ const ReceptionistGroomingBookings = () => {
           .includes(filterService.toLowerCase());
 
       return matchesSearch && matchesStatus && matchesService;
-    });
+    }).sort((a, b) =>
+      getDateTimeTimestamp(a.dateValue, a.timeValue) - getDateTimeTimestamp(b.dateValue, b.timeValue)
+    );
   }, [groomingAppointments, searchTerm, filterStatus, filterService]);
 
   const stats = useMemo(() => {
@@ -522,7 +526,8 @@ const ReceptionistGroomingBookings = () => {
                     </span>
                   </td>
                   <td>
-                    <div className="action-buttons">
+                    <RowActionPopover rowLabel={item.petName}>
+                      <div className="action-buttons">
                       <button
                         type="button"
                         className="action-btn view-btn"
@@ -590,7 +595,8 @@ const ReceptionistGroomingBookings = () => {
                           />
                         </button>
                       )}
-                    </div>
+                      </div>
+                    </RowActionPopover>
                   </td>
                 </tr>
               ))}

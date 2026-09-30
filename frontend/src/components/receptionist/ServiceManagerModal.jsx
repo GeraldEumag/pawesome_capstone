@@ -18,6 +18,7 @@ import {
 } from "react-icons/fa";
 import { apiRequest, normalizeList } from "../../api/client";
 import { showConfirm } from "../../utils/alert.jsx";
+import RowActionPopover from "../shared/RowActionPopover";
 import "./ServiceManagerModal.css";
 
 const TABS = [
@@ -828,7 +829,8 @@ const ServiceManagerModal = ({ onClose }) => {
                       </td>
                     ))}
                     <td>
-                      <div className="smm-actions">
+                      <RowActionPopover rowLabel={item.name || item.room_name || item.room_number || item.id}>
+                        <div className="smm-actions">
                         <button className="smm-icon-btn" onClick={() => startEdit(item)} title="Edit">
                           <FaEdit />
                         </button>
@@ -853,7 +855,8 @@ const ServiceManagerModal = ({ onClose }) => {
                             {item.status !== "inactive" ? <FaToggleOn /> : <FaToggleOff />}
                           </button>
                         )}
-                      </div>
+                        </div>
+                      </RowActionPopover>
                     </td>
                   </tr>
                 ))}

@@ -3,8 +3,10 @@
 namespace Tests\Feature;
 
 use App\Models\Attendance;
+use App\Models\Employee;
 use App\Models\Payroll;
 use App\Models\User;
+use App\Services\Payroll\PayrollComputationService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -171,5 +173,43 @@ class PayrollCalculationTest extends TestCase
 
         $expectedNet = (float) $payroll->gross_pay - $expectedDeductions;
         $this->assertEqualsWithDelta($expectedNet, (float) $payroll->net_pay, 0.01);
+    }
+
+    public function test_non_account_employee_payroll_stats_do_not_query_employee_id_from_leave_requests(): void
+    {
+        $employee = Employee::create([
+            'employee_no' => 'PAW-REG-0001',
+            'first_name' => 'Non-account',
+            'last_name' => 'Employee',
+            'is_active' => true,
+        ]);
+
+        $stats = app(PayrollComputationService::class)->attendanceStats(
+            $employee,
+            collect(),
+            '2026-09-01',
+            '2026-09-30'
+        );
+
+        $this->assertTrue($stats['is_employee']);
+    }
+
+    public function test_absence_command_does_not_query_employee_id_from_leave_requests(): void
+    {
+        $employee = Employee::create([
+            'employee_no' => 'PAW-REG-0002',
+            'first_name' => 'Non-account',
+            'last_name' => 'Employee',
+            'is_active' => true,
+        ]);
+
+        $this->artisan('attendance:mark-absent', ['--days' => 7])
+            ->assertExitCode(0);
+
+        $this->assertDatabaseHas('attendance', [
+            'employee_id' => $employee->id,
+            'status' => 'absent',
+            'source' => 'auto',
+        ]);
     }
 }

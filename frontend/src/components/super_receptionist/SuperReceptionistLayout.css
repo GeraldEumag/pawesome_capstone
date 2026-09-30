@@ -1,34 +1,100 @@
-/* Super Receptionist Layout - Purple accent */
+/* Super Receptionist Layout - cream workspace with pink accents */
 
-.super-receptionist-layout {
-  --layout-accent: #7c3aed;
+.app-dashboard.super-receptionist-layout {
+  --layout-accent: var(--color-primary, #ff5f93);
+  --sr-canvas: var(--color-bg, #f7f5ee);
+  --sr-surface: #ffffff;
+  --sr-surface-muted: #fbfaf7;
+  --sr-border: var(--color-border, #e9e6de);
+  --sr-ink: #282c2a;
+  --sr-muted: #68716d;
+  --sr-shadow: 0 8px 26px rgba(39, 43, 37, 0.07);
+  --sr-shadow-raised: 0 16px 36px rgba(39, 43, 37, 0.11);
+  --color-bg-gradient: var(--sr-canvas);
+  --color-surface: var(--sr-surface);
+  --color-surface-solid: var(--sr-surface);
+  --color-text: var(--sr-ink);
+  --color-heading: #252a27;
+  --color-muted: var(--sr-muted);
+  --shadow-card: var(--sr-shadow);
+  --shadow-soft: 0 4px 14px rgba(39, 43, 37, 0.06);
+  min-height: 100vh;
+  color: var(--sr-ink);
+  background: var(--sr-canvas) !important;
+}
+
+.app-dashboard.super-receptionist-layout .app-main {
+  width: calc(100% - 260px);
+  min-width: 0;
+  margin-left: 260px;
+  overflow-x: clip;
+  background: transparent !important;
+}
+
+.app-dashboard.super-receptionist-layout .app-topbar {
+  position: sticky;
+  top: 0;
+  z-index: 1100;
+  min-height: 80px;
+  padding: 12px clamp(18px, 2.5vw, 36px);
+  border-bottom: 1px solid var(--sr-border);
+  background: #ffffff;
+  box-shadow: 0 4px 16px rgba(39, 43, 37, 0.045);
+  backdrop-filter: blur(16px);
+}
+
+.app-dashboard.super-receptionist-layout .navbar-left {
+  min-width: 0;
+}
+
+.app-dashboard.super-receptionist-layout .navbar-left h1 {
+  margin: 0;
+  color: var(--sr-ink);
+  font-size: clamp(1.1rem, 1.6vw, 1.5rem);
+  font-weight: 750;
+  letter-spacing: -0.035em;
+}
+
+.app-dashboard.super-receptionist-layout .navbar-left p {
+  margin: 4px 0 0;
+  color: var(--sr-muted);
+  font-size: 0.84rem;
+  font-weight: 450;
+}
+
+.app-dashboard.super-receptionist-layout .navbar-actions {
+  gap: 10px;
+  flex-wrap: nowrap;
 }
 
 .super-receptionist-layout .topbar-user {
   display: flex;
   align-items: center;
   gap: 0.6rem;
-  padding: 0.4rem 0.75rem;
-  background: transparent;
-  border: 1px solid rgba(124, 58, 237, 0.2);
-  border-radius: 8px;
+  min-height: 44px;
+  padding: 0.35rem 0.75rem;
+  background: #ffffff;
+  border: 1px solid rgba(255, 95, 147, 0.18);
+  border-radius: 999px;
   cursor: pointer;
   transition: all 0.2s ease;
 }
 
 .super-receptionist-layout .topbar-user:hover {
-  background: rgba(124, 58, 237, 0.08);
-  border-color: rgba(124, 58, 237, 0.4);
+  background: rgba(255, 95, 147, 0.07);
+  border-color: rgba(255, 95, 147, 0.35);
+  box-shadow: 0 4px 14px rgba(255, 95, 147, 0.12);
 }
 
 .super-receptionist-layout .topbar-avatar {
   display: flex;
   align-items: center;
   justify-content: center;
+  flex: 0 0 auto;
   width: 32px;
   height: 32px;
   border-radius: 50%;
-  background: linear-gradient(135deg, #7c3aed, #a78bfa);
+  background: linear-gradient(135deg, var(--color-primary, #ff5f93), var(--color-primary-light, #ff8db5));
   color: #ffffff;
   font-size: 0.9rem;
 }
@@ -36,33 +102,444 @@
 .super-receptionist-layout .topbar-user strong {
   display: block;
   font-size: 0.82rem;
-  color: #1f2937;
+  color: var(--sr-ink);
   line-height: 1.2;
+  white-space: nowrap;
 }
 
 .super-receptionist-layout .topbar-user small {
   display: block;
   font-size: 0.68rem;
-  color: #6b7280;
+  color: var(--sr-muted);
   line-height: 1.2;
+  white-space: nowrap;
 }
 
 .super-receptionist-layout .topbar-icon {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 36px;
-  height: 36px;
-  background: transparent;
-  border: 1px solid #e5e7eb;
-  border-radius: 8px;
-  color: #6b7280;
+  width: 40px;
+  height: 40px;
+  background: #ffffff;
+  border: 1px solid var(--sr-border);
+  border-radius: 12px;
+  color: var(--sr-muted);
   cursor: pointer;
   transition: all 0.2s ease;
 }
 
 .super-receptionist-layout .topbar-icon:hover {
-  background: #f3f4f6;
-  color: #7c3aed;
-  border-color: #7c3aed;
+  background: rgba(255, 95, 147, 0.07);
+  color: var(--color-primary, #ff5f93);
+  border-color: rgba(255, 95, 147, 0.35);
+}
+
+.app-dashboard.super-receptionist-layout .app-content {
+  width: 100%;
+  max-width: 1680px;
+  margin: 0 auto;
+  padding: clamp(18px, 2.4vw, 34px);
+  color: var(--sr-ink);
+}
+
+.app-dashboard.super-receptionist-layout .app-content > * {
+  min-width: 0;
+  max-width: 100%;
+}
+
+/* Active page roots */
+.app-dashboard.super-receptionist-layout .hotel-bookings,
+.app-dashboard.super-receptionist-layout .vet-bookings,
+.app-dashboard.super-receptionist-layout .grooming-bookings,
+.app-dashboard.super-receptionist-layout .walkins-page,
+.app-dashboard.super-receptionist-layout .customer-management,
+.app-dashboard.super-receptionist-layout .manage-services-page,
+.app-dashboard.super-receptionist-layout .ht-root,
+.app-dashboard.super-receptionist-layout .cashier-transactions,
+.app-dashboard.super-receptionist-layout .standard-report-layout,
+.app-dashboard.super-receptionist-layout .unified-inventory,
+.app-dashboard.super-receptionist-layout .monthly-audit-page,
+.app-dashboard.super-receptionist-layout .my-payroll-page,
+.app-dashboard.super-receptionist-layout .unified-report-engine {
+  width: 100%;
+  min-width: 0;
+  min-height: 0;
+  max-width: none;
+  margin: 0;
+  padding: 0;
+  color: var(--sr-ink);
+  background: transparent !important;
+}
+
+/* Shared hero/header treatment */
+.app-dashboard.super-receptionist-layout .hotel-hero,
+.app-dashboard.super-receptionist-layout .vet-hero,
+.app-dashboard.super-receptionist-layout .grooming-header,
+.app-dashboard.super-receptionist-layout .walkins-hero,
+.app-dashboard.super-receptionist-layout .customers-header,
+.app-dashboard.super-receptionist-layout .services-header,
+.app-dashboard.super-receptionist-layout .ht-header,
+.app-dashboard.super-receptionist-layout .transactions-header,
+.app-dashboard.super-receptionist-layout .transactions-controls,
+.app-dashboard.super-receptionist-layout .standard-report-header,
+.app-dashboard.super-receptionist-layout .ui-header,
+.app-dashboard.super-receptionist-layout .monthly-audit-hero,
+.app-dashboard.super-receptionist-layout .my-payroll-hero {
+  min-width: 0;
+  margin-bottom: 1rem;
+  padding: clamp(18px, 2.3vw, 28px);
+  border: 1px solid var(--sr-border);
+  border-radius: 18px;
+  background: var(--sr-surface) !important;
+  box-shadow: var(--sr-shadow);
+  backdrop-filter: none;
+}
+
+/* Shared cards and content panels */
+.app-dashboard.super-receptionist-layout .hotel-table-card,
+.app-dashboard.super-receptionist-layout .vet-table-card,
+.app-dashboard.super-receptionist-layout .grooming-table-container,
+.app-dashboard.super-receptionist-layout .customers-table-container,
+.app-dashboard.super-receptionist-layout .services-table-container,
+.app-dashboard.super-receptionist-layout .hotel-summary-card,
+.app-dashboard.super-receptionist-layout .vet-summary-card,
+.app-dashboard.super-receptionist-layout .grooming-stats .stat-card,
+.app-dashboard.super-receptionist-layout .customer-management .summary-card,
+.app-dashboard.super-receptionist-layout .services-stats .stat-card,
+.app-dashboard.super-receptionist-layout .room-card,
+.app-dashboard.super-receptionist-layout .walkins-notes-card,
+.app-dashboard.super-receptionist-layout .walkins-recent,
+.app-dashboard.super-receptionist-layout .walkins-services .service-card,
+.app-dashboard.super-receptionist-layout .ht-stat-card,
+.app-dashboard.super-receptionist-layout .ht-content,
+.app-dashboard.super-receptionist-layout .transactions-table-container,
+.app-dashboard.super-receptionist-layout .transactions-empty,
+.app-dashboard.super-receptionist-layout .pagination,
+.app-dashboard.super-receptionist-layout .ui-stat-card,
+.app-dashboard.super-receptionist-layout .ui-critical-banner,
+.app-dashboard.super-receptionist-layout .ui-reorder-panel,
+.app-dashboard.super-receptionist-layout .ui-filters-panel,
+.app-dashboard.super-receptionist-layout .ui-table-wrapper,
+.app-dashboard.super-receptionist-layout .ui-activity,
+.app-dashboard.super-receptionist-layout .standard-summary-cards .summary-card,
+.app-dashboard.super-receptionist-layout .standard-table-container,
+.app-dashboard.super-receptionist-layout .standard-loading-state,
+.app-dashboard.super-receptionist-layout .standard-error-state,
+.app-dashboard.super-receptionist-layout .standard-empty-state,
+.app-dashboard.super-receptionist-layout .data-table-section,
+.app-dashboard.super-receptionist-layout .chart-container,
+.app-dashboard.super-receptionist-layout .ure-filter-panel,
+.app-dashboard.super-receptionist-layout .ure-summary-card,
+.app-dashboard.super-receptionist-layout .ure-chart-container,
+.app-dashboard.super-receptionist-layout .ure-table-section,
+.app-dashboard.super-receptionist-layout .audit-progress-section,
+.app-dashboard.super-receptionist-layout .audit-loading-card,
+.app-dashboard.super-receptionist-layout .audit-table-card,
+.app-dashboard.super-receptionist-layout .mp-summary-card,
+.app-dashboard.super-receptionist-layout .mp-table-wrapper {
+  min-width: 0;
+  border: 1px solid var(--sr-border);
+  border-radius: 16px;
+  background: var(--sr-surface);
+  box-shadow: var(--sr-shadow);
+  backdrop-filter: none;
+}
+
+.app-dashboard.super-receptionist-layout .hotel-summary-card,
+.app-dashboard.super-receptionist-layout .vet-summary-card,
+.app-dashboard.super-receptionist-layout .grooming-stats .stat-card,
+.app-dashboard.super-receptionist-layout .customer-management .summary-card,
+.app-dashboard.super-receptionist-layout .services-stats .stat-card,
+.app-dashboard.super-receptionist-layout .ht-stat-card,
+.app-dashboard.super-receptionist-layout .ui-stat-card,
+.app-dashboard.super-receptionist-layout .ure-summary-card,
+.app-dashboard.super-receptionist-layout .mp-summary-card {
+  padding: 16px;
+}
+
+.app-dashboard.super-receptionist-layout .hotel-hero h1,
+.app-dashboard.super-receptionist-layout .vet-hero h1,
+.app-dashboard.super-receptionist-layout .grooming-header h1,
+.app-dashboard.super-receptionist-layout .walkins-hero-title,
+.app-dashboard.super-receptionist-layout .customers-header h1,
+.app-dashboard.super-receptionist-layout .services-header h1,
+.app-dashboard.super-receptionist-layout .ht-title,
+.app-dashboard.super-receptionist-layout .transactions-header h1,
+.app-dashboard.super-receptionist-layout .standard-report-header .page-title,
+.app-dashboard.super-receptionist-layout .ui-header-left h1,
+.app-dashboard.super-receptionist-layout .monthly-audit-hero h2,
+.app-dashboard.super-receptionist-layout .my-payroll-hero h1 {
+  color: var(--sr-ink);
+  letter-spacing: -0.035em;
+}
+
+.app-dashboard.super-receptionist-layout .hotel-hero p,
+.app-dashboard.super-receptionist-layout .vet-hero p,
+.app-dashboard.super-receptionist-layout .grooming-header p,
+.app-dashboard.super-receptionist-layout .walkins-hero-sub,
+.app-dashboard.super-receptionist-layout .customers-header p,
+.app-dashboard.super-receptionist-layout .services-header p,
+.app-dashboard.super-receptionist-layout .ht-subtitle,
+.app-dashboard.super-receptionist-layout .transactions-header p,
+.app-dashboard.super-receptionist-layout .standard-report-header .page-subtitle,
+.app-dashboard.super-receptionist-layout .monthly-audit-hero p,
+.app-dashboard.super-receptionist-layout .my-payroll-hero p {
+  color: var(--sr-muted);
+  font-weight: 450;
+}
+
+/* Table/card overflow should stay inside its panel on narrow screens */
+.app-dashboard.super-receptionist-layout .hotel-table-scroll,
+.app-dashboard.super-receptionist-layout .vet-table-scroll,
+.app-dashboard.super-receptionist-layout .grooming-table-container,
+.app-dashboard.super-receptionist-layout .customers-table-container,
+.app-dashboard.super-receptionist-layout .services-table-container,
+.app-dashboard.super-receptionist-layout .transactions-table-container,
+.app-dashboard.super-receptionist-layout .transactions-table-wrapper,
+.app-dashboard.super-receptionist-layout .ui-table-wrapper,
+.app-dashboard.super-receptionist-layout .standard-table-container,
+.app-dashboard.super-receptionist-layout .audit-table-scroll,
+.app-dashboard.super-receptionist-layout .ht-content {
+  max-width: 100%;
+  overflow-x: auto;
+  overscroll-behavior-inline: contain;
+  -webkit-overflow-scrolling: touch;
+}
+
+.app-dashboard.super-receptionist-layout .app-main input:not([type="checkbox"]):not([type="radio"]):not([type="file"]),
+.app-dashboard.super-receptionist-layout .app-main select,
+.app-dashboard.super-receptionist-layout .app-main textarea {
+  min-height: 42px;
+  border-color: var(--sr-border);
+  border-radius: 10px;
+  background: #ffffff;
+  color: var(--sr-ink);
+  box-shadow: none;
+}
+
+.app-dashboard.super-receptionist-layout .app-main textarea {
+  min-height: 96px;
+}
+
+.app-dashboard.super-receptionist-layout .app-main input:focus,
+.app-dashboard.super-receptionist-layout .app-main select:focus,
+.app-dashboard.super-receptionist-layout .app-main textarea:focus {
+  border-color: var(--color-primary, #ff5f93);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-primary, #ff5f93) 18%, transparent);
+  outline: none;
+}
+
+.app-dashboard.super-receptionist-layout .app-main .primary-btn,
+.app-dashboard.super-receptionist-layout .app-main .secondary-btn,
+.app-dashboard.super-receptionist-layout .app-main .clear-btn,
+.app-dashboard.super-receptionist-layout .app-main .submit-btn,
+.app-dashboard.super-receptionist-layout .app-main .action-btn,
+.app-dashboard.super-receptionist-layout .app-main .btn,
+.app-dashboard.super-receptionist-layout .app-main .ht-btn,
+.app-dashboard.super-receptionist-layout .app-main .mp-btn,
+.app-dashboard.super-receptionist-layout .app-main .page-btn {
+  min-height: 42px;
+  border-radius: 10px;
+}
+
+.app-dashboard.super-receptionist-layout .hotel-state,
+.app-dashboard.super-receptionist-layout .vet-error-banner,
+.app-dashboard.super-receptionist-layout .loading-state,
+.app-dashboard.super-receptionist-layout .empty-state,
+.app-dashboard.super-receptionist-layout .hotel-empty-state,
+.app-dashboard.super-receptionist-layout .customer-empty-state,
+.app-dashboard.super-receptionist-layout .ht-empty,
+.app-dashboard.super-receptionist-layout .ui-empty,
+.app-dashboard.super-receptionist-layout .ui-loading,
+.app-dashboard.super-receptionist-layout .ui-error,
+.app-dashboard.super-receptionist-layout .audit-empty,
+.app-dashboard.super-receptionist-layout .mp-empty,
+.app-dashboard.super-receptionist-layout .mp-error {
+  border: 1px solid var(--sr-border);
+  border-radius: 16px;
+  background: var(--sr-surface);
+  box-shadow: var(--sr-shadow);
+}
+
+.app-dashboard.super-receptionist-layout .hotel-table-card th,
+.app-dashboard.super-receptionist-layout .vet-table th,
+.app-dashboard.super-receptionist-layout .grooming-table th,
+.app-dashboard.super-receptionist-layout .customers-table th,
+.app-dashboard.super-receptionist-layout .services-table th,
+.app-dashboard.super-receptionist-layout .transactions-table th,
+.app-dashboard.super-receptionist-layout .ui-table th,
+.app-dashboard.super-receptionist-layout .standard-table th,
+.app-dashboard.super-receptionist-layout .audit-table th,
+.app-dashboard.super-receptionist-layout .mp-table th {
+  background: #f4f2ec;
+  color: #606b65;
+  font-size: 0.74rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.app-dashboard.super-receptionist-layout .hotel-table-card tbody tr:hover,
+.app-dashboard.super-receptionist-layout .vet-table tbody tr:hover,
+.app-dashboard.super-receptionist-layout .grooming-table tbody tr:hover,
+.app-dashboard.super-receptionist-layout .customers-table tbody tr:hover,
+.app-dashboard.super-receptionist-layout .services-table tbody tr:hover,
+.app-dashboard.super-receptionist-layout .transactions-table tbody tr:hover,
+.app-dashboard.super-receptionist-layout .ui-table tbody tr:hover,
+.app-dashboard.super-receptionist-layout .standard-table tbody tr:hover,
+.app-dashboard.super-receptionist-layout .audit-table tbody tr:hover,
+.app-dashboard.super-receptionist-layout .mp-table tbody tr:hover {
+  background: #faf9f5;
+}
+
+.app-dashboard.super-receptionist-layout .app-main :focus-visible {
+  outline: 3px solid color-mix(in srgb, var(--color-primary, #ff5f93) 60%, white);
+  outline-offset: 2px;
+}
+
+@media (max-width: 1024px) {
+  .app-dashboard.super-receptionist-layout .app-sidebar.super-receptionist-sidebar {
+    position: fixed;
+    inset: 0 auto 0 0;
+    transform: translateX(-100%);
+    transition: transform 0.25s ease;
+    z-index: 1400;
+  }
+
+  .app-dashboard.super-receptionist-layout .app-sidebar.super-receptionist-sidebar.mobile-open {
+    transform: translateX(0);
+  }
+
+  .app-dashboard.super-receptionist-layout .mobile-menu-toggle {
+    display: grid !important;
+    place-items: center;
+  }
+
+  .app-dashboard.super-receptionist-layout .app-main {
+    width: 100%;
+    margin-left: 0;
+  }
+
+  .app-dashboard.super-receptionist-layout .mobile-backdrop {
+    display: none;
+  }
+
+  .app-dashboard.super-receptionist-layout .mobile-backdrop.active {
+    display: block;
+    position: fixed;
+    inset: 0;
+    z-index: 1350;
+    background: rgba(23, 25, 23, 0.42);
+  }
+}
+
+@media (max-width: 767px) {
+  .app-dashboard.super-receptionist-layout .app-topbar {
+    min-height: 64px;
+    height: auto;
+    padding: 8px 12px;
+    gap: 8px;
+  }
+
+  .app-dashboard.super-receptionist-layout .app-topbar h1 {
+    font-size: clamp(0.95rem, 4vw, 1.15rem);
+  }
+
+  .app-dashboard.super-receptionist-layout .app-topbar p,
+  .app-dashboard.super-receptionist-layout .topbar-user small {
+    display: none;
+  }
+
+  .app-dashboard.super-receptionist-layout .app-content {
+    padding: 14px;
+  }
+
+  .app-dashboard.super-receptionist-layout .hotel-hero,
+  .app-dashboard.super-receptionist-layout .vet-hero,
+  .app-dashboard.super-receptionist-layout .grooming-header,
+  .app-dashboard.super-receptionist-layout .walkins-hero,
+  .app-dashboard.super-receptionist-layout .customers-header,
+  .app-dashboard.super-receptionist-layout .services-header,
+  .app-dashboard.super-receptionist-layout .ht-header,
+  .app-dashboard.super-receptionist-layout .transactions-header,
+  .app-dashboard.super-receptionist-layout .standard-report-header,
+  .app-dashboard.super-receptionist-layout .ui-header,
+  .app-dashboard.super-receptionist-layout .monthly-audit-hero,
+  .app-dashboard.super-receptionist-layout .my-payroll-hero {
+    align-items: flex-start;
+    flex-direction: column;
+    padding: 16px;
+  }
+
+  .app-dashboard.super-receptionist-layout .hotel-hero-actions,
+  .app-dashboard.super-receptionist-layout .vet-hero-actions,
+  .app-dashboard.super-receptionist-layout .header-actions,
+  .app-dashboard.super-receptionist-layout .transactions-controls .search-filter-group,
+  .app-dashboard.super-receptionist-layout .ui-header-actions,
+  .app-dashboard.super-receptionist-layout .audit-month-control,
+  .app-dashboard.super-receptionist-layout .audit-header-actions {
+    width: 100%;
+    min-width: 0;
+    flex-wrap: wrap;
+  }
+
+  .app-dashboard.super-receptionist-layout .hotel-summary-grid,
+  .app-dashboard.super-receptionist-layout .vet-summary-grid,
+  .app-dashboard.super-receptionist-layout .grooming-stats,
+  .app-dashboard.super-receptionist-layout .summary-cards,
+  .app-dashboard.super-receptionist-layout .services-stats,
+  .app-dashboard.super-receptionist-layout .ht-stats,
+  .app-dashboard.super-receptionist-layout .ui-stats-grid,
+  .app-dashboard.super-receptionist-layout .standard-summary-cards .cards-grid,
+  .app-dashboard.super-receptionist-layout .ure-summary-cards.grid,
+  .app-dashboard.super-receptionist-layout .mp-summary-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+  }
+
+  .app-dashboard.super-receptionist-layout .hotel-controls,
+  .app-dashboard.super-receptionist-layout .vet-controls,
+  .app-dashboard.super-receptionist-layout .grooming-filters,
+  .app-dashboard.super-receptionist-layout .customers-controls,
+  .app-dashboard.super-receptionist-layout .services-toolbar,
+  .app-dashboard.super-receptionist-layout .transactions-controls,
+  .app-dashboard.super-receptionist-layout .ui-filters-bar,
+  .app-dashboard.super-receptionist-layout .ui-filters-panel,
+  .app-dashboard.super-receptionist-layout .audit-filters,
+  .app-dashboard.super-receptionist-layout .audit-toolbar {
+    align-items: stretch;
+    flex-wrap: wrap;
+  }
+
+  .app-dashboard.super-receptionist-layout .hotel-search-box,
+  .app-dashboard.super-receptionist-layout .vet-search-box,
+  .app-dashboard.super-receptionist-layout .gb-search-box,
+  .app-dashboard.super-receptionist-layout .cm-search-box,
+  .app-dashboard.super-receptionist-layout .services-search-box,
+  .app-dashboard.super-receptionist-layout .search-box,
+  .app-dashboard.super-receptionist-layout .ui-search-box,
+  .app-dashboard.super-receptionist-layout .ure-search-box,
+  .app-dashboard.super-receptionist-layout .search-group {
+    width: 100%;
+    max-width: none;
+  }
+}
+
+@media (max-width: 420px) {
+  .app-dashboard.super-receptionist-layout .app-content {
+    padding: 10px;
+  }
+
+  .app-dashboard.super-receptionist-layout .hotel-summary-grid,
+  .app-dashboard.super-receptionist-layout .vet-summary-grid,
+  .app-dashboard.super-receptionist-layout .grooming-stats,
+  .app-dashboard.super-receptionist-layout .summary-cards,
+  .app-dashboard.super-receptionist-layout .services-stats,
+  .app-dashboard.super-receptionist-layout .ht-stats,
+  .app-dashboard.super-receptionist-layout .ui-stats-grid,
+  .app-dashboard.super-receptionist-layout .standard-summary-cards .cards-grid,
+  .app-dashboard.super-receptionist-layout .ure-summary-cards.grid,
+  .app-dashboard.super-receptionist-layout .mp-summary-grid {
+    grid-template-columns: 1fr;
+  }
 }

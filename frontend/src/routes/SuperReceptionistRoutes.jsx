@@ -68,7 +68,7 @@ const SuperReceptionistRoutes = () => (
         <Route path="inventory/audit" element={<MonthlyInventoryAudit />} />
 
         {/* Account */}
-        <Route path="payroll" element={<MyPayroll roleAccent="#7c3aed" roleLabel="Super Receptionist" />} />
+        <Route path="payroll" element={<MyPayroll roleAccent="var(--color-primary)" roleLabel="Super Receptionist" />} />
         <Route path="profile" element={<ProfileSettings />} />
 
         {/* Catch-all */}

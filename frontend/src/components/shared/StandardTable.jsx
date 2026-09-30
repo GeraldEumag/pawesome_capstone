@@ -2,6 +2,7 @@ import React, { useMemo, useState } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faSort, faSortUp, faSortDown } from "@fortawesome/free-solid-svg-icons";
 import { getNestedValue } from "../../utils/reportExport";
+import RowActionPopover from "./RowActionPopover";
 import "./StandardTable.css";
 
 /**
@@ -77,32 +78,31 @@ const StandardTable = ({
 
   const renderCell = (column, item, index) => {
     const value = getNestedValue(item, column.key);
-    
+    let content;
+
     if (column.render) {
-      return column.render(value, item, index);
-    }
-    
-    // Handle different data types
-    if (typeof value === 'number' && column.format === 'currency') {
-      return new Intl.NumberFormat('en-PH', {
+      content = column.render(value, item, index);
+    } else if (typeof value === 'number' && column.format === 'currency') {
+      content = new Intl.NumberFormat('en-PH', {
         style: 'currency',
         currency: 'PHP'
       }).format(value);
+    } else if (typeof value === 'number' && column.format === 'number') {
+      content = new Intl.NumberFormat('en-PH').format(value);
+    } else if (column.format === 'date' && value) {
+      content = new Date(value).toLocaleDateString('en-PH');
+    } else if (column.format === 'datetime' && value) {
+      content = new Date(value).toLocaleString('en-PH');
+    } else {
+      content = value || '-';
     }
-    
-    if (typeof value === 'number' && column.format === 'number') {
-      return new Intl.NumberFormat('en-PH').format(value);
+
+    if (column.key === 'actions') {
+      const rowLabel = item?.name || item?.employeeName || item?.employee_name || item?.petName || item?.pet_name || item?.customer_name || item?.customerName || item?.id || 'row';
+      return <RowActionPopover rowLabel={rowLabel}>{content}</RowActionPopover>;
     }
-    
-    if (column.format === 'date' && value) {
-      return new Date(value).toLocaleDateString('en-PH');
-    }
-    
-    if (column.format === 'datetime' && value) {
-      return new Date(value).toLocaleString('en-PH');
-    }
-    
-    return value || '-';
+
+    return content;
   };
 
   const getRowKey = (item, index) => {

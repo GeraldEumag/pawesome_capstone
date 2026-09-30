@@ -261,7 +261,19 @@ const EmployeeDirectory = ({
     setShowForm(true);
   };
 
-  const setField = (key, value) => setForm((f) => ({ ...f, [key]: value }));
+  const setField = (key, value) => {
+    setForm((f) => {
+      const updated = { ...f, [key]: value };
+      // Auto-compute hourly_rate = base_salary ÷ 208 (26 days × 8 h) when salary changes
+      if (key === "base_salary") {
+        const salary = parseFloat(value);
+        if (!isNaN(salary) && salary > 0) {
+          updated.hourly_rate = (salary / 208).toFixed(4);
+        }
+      }
+      return updated;
+    });
+  };
 
   const submitForm = async () => {
     if (!form.first_name.trim() || !form.last_name.trim()) {
@@ -534,12 +546,21 @@ const EmployeeDirectory = ({
                             onChange={(e) => setField(key, e.target.checked)}
                           />
                         ) : (
-                          <input
-                            type={opts.type || "text"}
-                            step={opts.step}
-                            value={form[key] ?? ""}
-                            onChange={(e) => setField(key, e.target.value)}
-                          />
+                          <>
+                            <input
+                              type={opts.type || "text"}
+                              step={opts.step}
+                              value={form[key] ?? ""}
+                              onChange={(e) => setField(key, e.target.value)}
+                              readOnly={key === "hourly_rate" && !!form.base_salary}
+                              style={key === "hourly_rate" && form.base_salary ? { background: "rgba(124,58,237,0.07)" } : undefined}
+                            />
+                            {key === "hourly_rate" && form.base_salary && (
+                              <small style={{ color: "#7c3aed", fontSize: "0.75rem" }}>
+                                Auto-calculated from salary (÷ 208)
+                              </small>
+                            )}
+                          </>
                         )}
                       </label>
                     ))}

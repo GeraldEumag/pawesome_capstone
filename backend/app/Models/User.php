@@ -52,6 +52,10 @@ class User extends Authenticatable
         'gender',
         'emergency_contact_person',
         'emergency_contact_number',
+        'sss_no',
+        'philhealth_no',
+        'pagibig_no',
+        'tin',
         'api_token',
     ];
 

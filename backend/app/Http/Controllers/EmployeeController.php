@@ -73,7 +73,12 @@ class EmployeeController extends Controller
     {
         $validated = $this->validateData($request);
         $validated['employee_no'] = Employee::nextEmployeeNo();
-        $validated['is_active'] = $validated['is_active'] ?? true;
+        $validated['is_active']   = $validated['is_active'] ?? true;
+
+        // Auto-compute hourly_rate = base_salary ÷ 208 (26 days × 8 h) when not provided
+        if (empty($validated['hourly_rate']) && !empty($validated['base_salary'])) {
+            $validated['hourly_rate'] = round((float) $validated['base_salary'] / 208, 4);
+        }
 
         $employee = Employee::create($validated);
 
@@ -87,6 +92,14 @@ class EmployeeController extends Controller
     public function update(Request $request, Employee $employee): JsonResponse
     {
         $validated = $this->validateData($request, $employee->id);
+
+        // Re-compute hourly_rate when base_salary changed and no override was sent
+        if (!empty($validated['base_salary']) && !$request->has('hourly_rate')) {
+            $validated['hourly_rate'] = round((float) $validated['base_salary'] / 208, 4);
+        } elseif (empty($validated['hourly_rate']) && !$request->has('hourly_rate')) {
+            unset($validated['hourly_rate']); // preserve existing stored value
+        }
+
         $employee->update($validated);
 
         return response()->json([

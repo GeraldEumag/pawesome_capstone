@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { showConfirm } from "../../utils/alert.jsx";
 import { useAuth } from "../../context/AuthContext";
 import DatePickerInput from "../shared/DatePickerInput";
@@ -22,7 +22,7 @@ import {
   FaUserAlt,
 } from "react-icons/fa";
 import "./CustomerPets.css";
-import { apiRequest } from "../../api/client";
+import { apiRequest, getAuthenticatedFileUrl } from "../../api/client";
 import PetAvatar, { resolveImageUrl } from "../shared/PetAvatar";
 import {
   getSpeciesOptions,
@@ -101,8 +101,13 @@ const CustomerPets = () => {
   const [historyError, setHistoryError] = useState("");
 
   const [previewImage, setPreviewImage] = useState(null);
+  const previewImageRequest = useRef(0);
   const [editingPet, setEditingPet] = useState(null);
   const [editLoading, setEditLoading] = useState(false);
+
+  useEffect(() => () => {
+    if (previewImage?.startsWith("blob:")) URL.revokeObjectURL(previewImage);
+  }, [previewImage]);
 
   const showMessage = (type, text) => {
     setMessage({ type, text });
@@ -272,6 +277,7 @@ const CustomerPets = () => {
 
     if (type === "file" && files && files[0]) {
       const file = files[0];
+      previewImageRequest.current += 1;
       setFormData((prev) => ({ ...prev, image: file }));
       setPreviewImage(URL.createObjectURL(file));
       if (message.text) setMessage({ type: "", text: "" });
@@ -300,6 +306,7 @@ const CustomerPets = () => {
   };
 
   const resetForm = () => {
+    previewImageRequest.current += 1;
     setFormData(initialForm(customerEmail));
     setPreviewImage(null);
   };
@@ -373,7 +380,8 @@ const CustomerPets = () => {
     return d.toISOString().split("T")[0];
   };
 
-  const handleEditClick = (pet) => {
+  const handleEditClick = async (pet) => {
+    const requestId = ++previewImageRequest.current;
     setEditingPet(pet);
     setFormData({
       name: pet?.name || "",
@@ -385,7 +393,20 @@ const CustomerPets = () => {
       customer_email: customerEmail,
       image: null,
     });
-    setPreviewImage(resolveImageUrl(pet?.image_url || pet?.image || null));
+
+    const imageUrl = pet?.image_url || pet?.image || null;
+    setPreviewImage(null);
+    if (imageUrl?.includes("/api/files/pet-photos/")) {
+      try {
+        const blobUrl = await getAuthenticatedFileUrl(imageUrl);
+        if (previewImageRequest.current === requestId) setPreviewImage(blobUrl);
+        else URL.revokeObjectURL(blobUrl);
+      } catch {
+        if (previewImageRequest.current === requestId) setPreviewImage(null);
+      }
+      return;
+    }
+    setPreviewImage(resolveImageUrl(imageUrl));
   };
 
   const closeEditModal = () => {

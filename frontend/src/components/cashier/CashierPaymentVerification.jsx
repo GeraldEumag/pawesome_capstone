@@ -1,6 +1,7 @@
 import { useEffect, useState, useCallback, useMemo, useRef } from "react";
 import { apiRequest } from "../../api/client";
 import { getToken } from "../../utils/auth";
+import RowActionPopover from "../shared/RowActionPopover"
 import { useAuth } from "../../context/AuthContext";
 import { normalizeList } from "../../utils/normalizeList";
 import "./CashierPaymentVerification.css";
@@ -419,6 +420,7 @@ const CashierPaymentVerification = () => {
                               </span>
                             </td>
                             <td className="payment-actions">
+                              <RowActionPopover rowLabel={item.customer_name || item.customer?.name || item.id}>
                               <button className="verify-btn" type="button" disabled={!!action} onClick={() => verifyPayment(item)}>
                                 {action === "verify" ? <span className="btn-spinner" /> : null}
                                 {action === "verify" ? "Verifying…" : "Verify Payment"}
@@ -427,6 +429,7 @@ const CashierPaymentVerification = () => {
                                 {action === "reject" ? <span className="btn-spinner" /> : null}
                                 {action === "reject" ? "Rejecting…" : "Reject"}
                               </button>
+                              </RowActionPopover>
                             </td>
                           </tr>
                         );

@@ -61,5 +61,13 @@ class PrivatePetPhotoTest extends TestCase
             'Authorization' => 'Bearer ' . $other->createToken('test-token')->plainTextToken,
         ])->getJson("/api/files/pet-photos/{$pet['id']}/view")
             ->assertForbidden();
+
+        foreach (['super_admin', 'super_receptionist'] as $role) {
+            $staff = User::factory()->create(['role' => $role]);
+            $this->withHeaders([
+                'Authorization' => 'Bearer ' . $staff->createToken('test-token')->plainTextToken,
+            ])->get("/api/files/pet-photos/{$pet['id']}/view")
+                ->assertOk();
+        }
     }
 }

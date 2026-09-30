@@ -4,6 +4,7 @@ import { apiRequest, normalizeList } from "../../api/client";
 import { useAuth } from "../../context/AuthContext";
 import { getDraft, clearDraft } from "../../utils/preBookingDraft";
 import DatePickerInput from "../../components/shared/DatePickerInput";
+import { formatDateOnly, parseDateOnly } from "../../utils/date";
 import {
   validateServiceCompatibility,
   getSpecialCareWarning,
@@ -335,11 +336,11 @@ const VetForm = () => {
             </select>
 
             <DatePickerInput
-              selected={formData.request_date ? new Date(formData.request_date) : null}
+              selected={parseDateOnly(formData.request_date)}
               onChange={(date) =>
                 setFormData((prev) => ({
                   ...prev,
-                  request_date: date ? date.toISOString().split("T")[0] : "",
+                  request_date: formatDateOnly(date),
                 }))
               }
               placeholderText="Pick a date..."

@@ -496,12 +496,20 @@ const ManagerDashboard = () => {
   const ROUTE_META = [
     { path: "/manager", title: "Manager Dashboard", subtitle: "Executive monitoring dashboard for business performance, staff, attendance, and reports." },
     { path: "/manager/staff", title: "Staff Management", subtitle: "Manage employee records and workforce performance." },
+    { path: "/manager/employees", title: "Employee Directory", subtitle: "Manage staff records, employment details, and government IDs." },
     { path: "/manager/attendance", title: "Attendance", subtitle: "Manage staff attendance records and reviews." },
     { path: "/manager/attendance/kiosk", title: "Attendance Kiosk", subtitle: "Barcode scanner kiosk for staff check-in and check-out." },
+    { path: "/manager/id-cards", title: "Employee ID Cards", subtitle: "Review and print employee identification cards." },
     { path: "/manager/leave", title: "Leave", subtitle: "Manage staff leave requests and calendar." },
-    { path: "/manager/schedule", title: "Schedule", subtitle: "Manage staff schedules." },
     { path: "/manager/payroll", title: "Payroll", subtitle: "Manage payroll records, status, cost summaries, and computation." },
+    { path: "/manager/holidays", title: "Holidays", subtitle: "Manage regular and special non-working holiday records." },
+    { path: "/manager/salary-loans", title: "Salary Loans", subtitle: "Track employee loans, balances, and repayment progress." },
+    { path: "/manager/thirteenth-month", title: "13th Month", subtitle: "Review and process employee 13th-month pay." },
+    { path: "/manager/remittance-reports", title: "Remittance Reports", subtitle: "Generate SSS, PhilHealth, and Pag-IBIG remittance reports." },
+    { path: "/manager/dtr-report", title: "DTR Report", subtitle: "Generate daily time record reports for payroll and attendance review." },
     { path: "/manager/history", title: "History / Audit Trail", subtitle: "Review business activity and system audit logs." },
+    { path: "/manager/my-leave", title: "My Leave", subtitle: "File and track your own leave requests." },
+    { path: "/manager/my-attendance", title: "My Attendance", subtitle: "Review your attendance and request corrections." },
     { path: "/manager/reports", title: "Reports", subtitle: "Access sales, payment, inventory, service, customer, and staff performance reports." },
     { path: "/manager/profile", title: "Profile Settings", subtitle: "Manage your account details and preferences." },
   ];
@@ -859,9 +867,7 @@ const ManagerDashboard = () => {
             )}
           </section>
         ) : (
-          <section className="manager-dashboard-content">
-            <Outlet />
-          </section>
+          <Outlet />
         )}
     </DashboardLayout>
   );

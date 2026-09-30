@@ -78,43 +78,31 @@ class Attendance extends Model
     public function calculateHours(): void
     {
         if ($this->check_in && $this->check_out) {
-            $checkIn = \Carbon\Carbon::parse($this->check_in);
+            $checkIn  = \Carbon\Carbon::parse($this->check_in);
             $checkOut = \Carbon\Carbon::parse($this->check_out);
-            
+
             $totalMinutes = $checkIn->diffInMinutes($checkOut);
-            
-            // Subtract break time (default 1 hour = 60 minutes)
-            $breakMinutes = $this->break_time 
-                ? \Carbon\Carbon::parse($this->break_time)->diffInMinutes(\Carbon\Carbon::parse('00:00')) 
-                : 60;
-            
-            $workMinutes = max(0, $totalMinutes - $breakMinutes);
-            $this->total_hours = (float) round($workMinutes / 60, 2);
-            
-            // Calculate overtime (standard 8 hours)
-            $standardHours = 8;
-            if ($this->total_hours > $standardHours) {
-                $this->overtime_hours = (float) round($this->total_hours - $standardHours, 2);
+
+            // Break time: parse H:i as integer minutes (avoids diffInMinutes-from-midnight bug)
+            if ($this->break_time) {
+                $parts        = explode(':', (string) $this->break_time);
+                $breakMinutes = ((int) $parts[0]) * 60 + ((int) ($parts[1] ?? 0));
             } else {
-                $this->overtime_hours = 0.0;
+                $breakMinutes = \App\Support\CompanySchedule::breakMinutes();
             }
-            
-            // Check if late (after 08:00)
-            $this->is_late = $checkIn->format('H:i') > '08:00';
-            
-            // Check early leave (before 17:00)
-            $this->is_early_leave = $checkOut->format('H:i') < '17:00';
-            
-            // Update status based on time
-            if ($this->is_late && !$this->is_early_leave) {
-                $this->status = 'late';
-            } elseif ($this->is_early_leave && !$this->is_late) {
-                $this->status = 'early_leave';
-            } elseif ($this->is_late && $this->is_early_leave) {
-                $this->status = 'late';
-            } else {
-                $this->status = 'present';
-            }
+
+            $workMinutes        = max(0, $totalMinutes - $breakMinutes);
+            $this->total_hours  = (float) round($workMinutes / 60, 2);
+
+            // Overtime beyond company threshold (default 8 h)
+            $threshold = \App\Support\CompanySchedule::overtimeThreshold();
+            $this->overtime_hours = $this->total_hours > $threshold
+                ? (float) round($this->total_hours - $threshold, 2)
+                : 0.0;
+
+            // NOTE: is_late, is_early_leave, and status are intentionally NOT set
+            // here — the barcode kiosk and PayrollComputationService set them using
+            // the company shift_start / grace period so they are schedule-aware.
         }
     }
 

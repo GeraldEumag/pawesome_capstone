@@ -1558,3 +1558,832 @@
   }
 }
 
+.app-dashboard.customer-dashboard {
+  --customer-canvas: var(--color-bg, #f7f5ee);
+  --customer-surface: #ffffff;
+  --customer-surface-muted: #fbfaf7;
+  --customer-border: var(--color-border, #e9e6de);
+  --customer-ink: #282c2a;
+  --customer-muted: #68716d;
+  --customer-shadow: 0 8px 26px rgba(39, 43, 37, 0.07);
+  --customer-shadow-raised: 0 16px 36px rgba(39, 43, 37, 0.11);
+  --customer-radius: 18px;
+  --color-bg-gradient: var(--customer-canvas);
+  --color-surface: var(--customer-surface);
+  --color-surface-solid: #ffffff;
+  --color-text: var(--customer-ink);
+  --color-heading: #252a27;
+  --color-muted: var(--customer-muted);
+  --shadow-card: var(--customer-shadow);
+  --shadow-soft: 0 4px 14px rgba(39, 43, 37, 0.06);
+  --radius-card: var(--customer-radius);
+  --radius-lg: 16px;
+  min-height: 100vh;
+  color: var(--customer-ink);
+  background: var(--customer-canvas) !important;
+}
+
+.app-dashboard.customer-dashboard .app-main {
+  width: calc(100% - 260px);
+  min-width: 0;
+  margin-left: 260px;
+  overflow-x: clip;
+  background: transparent !important;
+}
+
+.app-dashboard.customer-dashboard .app-topbar {
+  position: sticky;
+  top: 0;
+  z-index: 1100;
+  min-height: 82px;
+  padding: 14px clamp(18px, 2.5vw, 36px);
+  border-bottom: 1px solid var(--customer-border) !important;
+  background: #ffffff !important;
+  box-shadow: 0 4px 16px rgba(39, 43, 37, 0.045) !important;
+  backdrop-filter: blur(16px);
+}
+
+.app-dashboard.customer-dashboard .navbar-left {
+  min-width: 0;
+  display: block;
+}
+
+.app-dashboard.customer-dashboard .navbar-left h1 {
+  margin: 0;
+  color: var(--customer-ink) !important;
+  -webkit-text-fill-color: var(--customer-ink) !important;
+  background: none !important;
+  font-size: clamp(1.12rem, 1.6vw, 1.5rem);
+  font-weight: 750;
+  letter-spacing: -0.035em;
+}
+
+.app-dashboard.customer-dashboard .navbar-left p {
+  margin: 4px 0 0;
+  color: var(--customer-muted) !important;
+  font-size: 0.84rem;
+  font-weight: 450;
+}
+
+.app-dashboard.customer-dashboard .navbar-actions {
+  gap: 10px;
+}
+
+.app-dashboard.customer-dashboard .app-content {
+  width: 100%;
+  max-width: 1680px;
+  margin: 0 auto;
+  padding: clamp(18px, 2.4vw, 34px);
+}
+
+.app-dashboard.customer-dashboard .dashboard-content {
+  min-height: 0;
+  padding: 0;
+  color: var(--customer-ink);
+}
+
+.app-dashboard.customer-dashboard .customer-overview-page {
+  display: grid;
+  gap: 20px;
+  min-width: 0;
+  padding: 0;
+}
+
+.app-dashboard.customer-dashboard .customer-hero-panel,
+.app-dashboard.customer-dashboard .overview-card,
+.app-dashboard.customer-dashboard .quick-action-card,
+.app-dashboard.customer-dashboard .upcoming-appointment-card,
+.app-dashboard.customer-dashboard .panel,
+.app-dashboard.customer-dashboard .customer-payment-summary-card,
+.app-dashboard.customer-dashboard .customer-payments-panel,
+.app-dashboard.customer-dashboard .cs-panel,
+.app-dashboard.customer-dashboard .cs-card,
+.app-dashboard.customer-dashboard .customer-status-hero,
+.app-dashboard.customer-dashboard .customer-status-table-wrap,
+.app-dashboard.customer-dashboard .customer-notifications .notifications-panel,
+.app-dashboard.customer-dashboard .userinfo-panel,
+.app-dashboard.customer-dashboard .medical-panel,
+.app-dashboard.customer-dashboard .confinement-card,
+.app-dashboard.customer-dashboard .hotel-header,
+.app-dashboard.customer-dashboard .booking-form-section,
+.app-dashboard.customer-dashboard .room-card,
+.app-dashboard.customer-dashboard .grooming-header,
+.app-dashboard.customer-dashboard .grooming-card,
+.app-dashboard.customer-dashboard .vet-header,
+.app-dashboard.customer-dashboard .vet-card,
+.app-dashboard.customer-dashboard .customer-chatbot-shell,
+.app-dashboard.customer-dashboard .chatbot-hero-card,
+.app-dashboard.customer-dashboard .chatbot-feature-card,
+.app-dashboard.customer-dashboard .chatbot-reminder-card,
+.app-dashboard.customer-dashboard .ht-header,
+.app-dashboard.customer-dashboard .ht-content,
+.app-dashboard.customer-dashboard .ht-stat-card,
+.app-dashboard.customer-dashboard .cr-insight-bar,
+.app-dashboard.customer-dashboard .cr-summary-card,
+.app-dashboard.customer-dashboard .cr-chart-card,
+.app-dashboard.customer-dashboard .cr-service-card,
+.app-dashboard.customer-dashboard .cr-table-card,
+.app-dashboard.customer-dashboard .customer-profile-settings > div > div > div {
+  border: 1px solid var(--customer-border);
+  border-radius: var(--customer-radius);
+  background: var(--customer-surface);
+  box-shadow: var(--customer-shadow);
+  backdrop-filter: none;
+}
+
+.app-dashboard.customer-dashboard .customer-overview-page,
+.app-dashboard.customer-dashboard .customer-services-page,
+.app-dashboard.customer-dashboard .customer-pets,
+.app-dashboard.customer-dashboard .customer-payments-page,
+.app-dashboard.customer-dashboard .customer-reports-content,
+.app-dashboard.customer-dashboard .customer-notifications,
+.app-dashboard.customer-dashboard .customer-medical-confinements,
+.app-dashboard.customer-dashboard .customer-status-page,
+.app-dashboard.customer-dashboard .customer-hotel-reservation,
+.app-dashboard.customer-dashboard .grooming-container,
+.app-dashboard.customer-dashboard .vet-container,
+.app-dashboard.customer-dashboard .customer-chatbot-page,
+.app-dashboard.customer-dashboard .userinfo-section,
+.app-dashboard.customer-dashboard .customer-history,
+.app-dashboard.customer-dashboard .ht-root,
+.app-dashboard.customer-dashboard .reports-container,
+.app-dashboard.customer-dashboard .standard-report-layout,
+.app-dashboard.customer-dashboard .customer-profile-settings {
+  min-width: 0;
+  color: var(--customer-ink);
+  background: transparent !important;
+}
+
+.app-dashboard.customer-dashboard .customer-overview-page > section,
+.app-dashboard.customer-dashboard .customer-services-page,
+.app-dashboard.customer-dashboard .customer-pets,
+.app-dashboard.customer-dashboard .customer-payments-page,
+.app-dashboard.customer-dashboard .customer-notifications,
+.app-dashboard.customer-dashboard .customer-medical-confinements,
+.app-dashboard.customer-dashboard .customer-status-page,
+.app-dashboard.customer-dashboard .customer-hotel-reservation,
+.app-dashboard.customer-dashboard .grooming-container,
+.app-dashboard.customer-dashboard .vet-container,
+.app-dashboard.customer-dashboard .customer-chatbot-page,
+.app-dashboard.customer-dashboard .userinfo-section,
+.app-dashboard.customer-dashboard .ht-root,
+.app-dashboard.customer-dashboard .customer-reports-content,
+.app-dashboard.customer-dashboard .reports-container {
+  padding: clamp(12px, 1.8vw, 22px);
+}
+
+.app-dashboard.customer-dashboard .customer-hero-panel {
+  align-items: center;
+  padding: clamp(20px, 2.8vw, 32px);
+  margin: 0;
+  background: var(--customer-surface);
+}
+
+.app-dashboard.customer-dashboard .customer-hero-panel h2,
+.app-dashboard.customer-dashboard .customer-payments-header h3,
+.app-dashboard.customer-dashboard .cs-header h3,
+.app-dashboard.customer-dashboard .hotel-header h2,
+.app-dashboard.customer-dashboard .grooming-header h2,
+.app-dashboard.customer-dashboard .vet-header h2,
+.app-dashboard.customer-dashboard .userinfo-header h2,
+.app-dashboard.customer-dashboard .notifications-page-header h2,
+.app-dashboard.customer-dashboard .medical-page-header h2,
+.app-dashboard.customer-dashboard .customer-status-hero h2 {
+  color: var(--customer-ink);
+  letter-spacing: -0.035em;
+}
+
+.app-dashboard.customer-dashboard .customer-hero-panel > div:first-child p,
+.app-dashboard.customer-dashboard .customer-payments-header p,
+.app-dashboard.customer-dashboard .cs-header p,
+.app-dashboard.customer-dashboard .notifications-page-header p,
+.app-dashboard.customer-dashboard .customer-status-hero p,
+.app-dashboard.customer-dashboard .userinfo-header p {
+  color: var(--customer-muted);
+  font-weight: 450;
+}
+
+.app-dashboard.customer-dashboard .overview-cards {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 14px;
+  margin: 0;
+}
+
+.app-dashboard.customer-dashboard .overview-card,
+.app-dashboard.customer-dashboard .quick-action-card,
+.app-dashboard.customer-dashboard .customer-payment-summary-card,
+.app-dashboard.customer-dashboard .pets-stat-card,
+.app-dashboard.customer-dashboard .customer-reports-content .cr-summary-card {
+  min-width: 0;
+  border: 1px solid var(--customer-border);
+  border-radius: var(--customer-radius);
+  background: var(--customer-surface);
+  box-shadow: var(--customer-shadow);
+  backdrop-filter: none;
+}
+
+.app-dashboard.customer-dashboard .overview-card {
+  min-height: 118px;
+  padding: 18px;
+}
+
+.app-dashboard.customer-dashboard .overview-card:hover,
+.app-dashboard.customer-dashboard .quick-action-card:hover,
+.app-dashboard.customer-dashboard .pet-card:hover,
+.app-dashboard.customer-dashboard .booking-card:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--customer-shadow-raised);
+}
+
+.app-dashboard.customer-dashboard .overview-card h3,
+.app-dashboard.customer-dashboard .customer-payment-summary-card h4,
+.app-dashboard.customer-dashboard .pets-stat-card strong,
+.app-dashboard.customer-dashboard .ht-stat-value,
+.app-dashboard.customer-dashboard .cr-summary-value {
+  color: var(--customer-ink);
+}
+
+.app-dashboard.customer-dashboard .overview-card p,
+.app-dashboard.customer-dashboard .overview-card small,
+.app-dashboard.customer-dashboard .pets-stat-card p,
+.app-dashboard.customer-dashboard .cr-summary-label {
+  color: var(--customer-muted);
+}
+
+.app-dashboard.customer-dashboard .quick-actions-grid {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.app-dashboard.customer-dashboard .quick-actions-section,
+.app-dashboard.customer-dashboard .upcoming-appointment-section {
+  margin: 0;
+}
+
+.app-dashboard.customer-dashboard .quick-actions-section .panel-header,
+.app-dashboard.customer-dashboard .upcoming-appointment-section .panel-header {
+  margin-bottom: 12px;
+  padding: 0;
+}
+
+.app-dashboard.customer-dashboard .quick-actions-section .panel-header h2,
+.app-dashboard.customer-dashboard .upcoming-appointment-section .panel-header h2,
+.app-dashboard.customer-dashboard .panel-header h2,
+.app-dashboard.customer-dashboard .cs-panel-header h4,
+.app-dashboard.customer-dashboard .medical-panel-header h3,
+.app-dashboard.customer-dashboard .customer-payments-panel-header h4,
+.app-dashboard.customer-dashboard .cr-section-head h3 {
+  color: var(--customer-ink);
+  letter-spacing: -0.025em;
+}
+
+.app-dashboard.customer-dashboard .dashboard-grid,
+.app-dashboard.customer-dashboard .dashboard-bottom {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+  margin: 0;
+}
+
+.app-dashboard.customer-dashboard .panel {
+  min-width: 0;
+  overflow: hidden;
+  border: 1px solid var(--customer-border);
+  border-radius: var(--customer-radius);
+  background: var(--customer-surface);
+  box-shadow: var(--customer-shadow);
+  backdrop-filter: none;
+}
+
+.app-dashboard.customer-dashboard .panel-header,
+.app-dashboard.customer-dashboard .customer-payments-panel-header,
+.app-dashboard.customer-dashboard .cs-panel-header,
+.app-dashboard.customer-dashboard .medical-panel-header,
+.app-dashboard.customer-dashboard .userinfo-header {
+  border-color: var(--customer-border);
+}
+
+.app-dashboard.customer-dashboard .pets-list,
+.app-dashboard.customer-dashboard .booking-list,
+.app-dashboard.customer-dashboard .reminders-list,
+.app-dashboard.customer-dashboard .customer-payments-panel-body {
+  gap: 10px;
+  padding: 16px;
+}
+
+.app-dashboard.customer-dashboard .pet-card,
+.app-dashboard.customer-dashboard .booking-card,
+.app-dashboard.customer-dashboard .reminder-item,
+.app-dashboard.customer-dashboard .loyalty-progress-card,
+.app-dashboard.customer-dashboard .customer-status-table-wrap,
+.app-dashboard.customer-dashboard .confinement-card,
+.app-dashboard.customer-dashboard .care-log-item,
+.app-dashboard.customer-dashboard .cr-service-item,
+.app-dashboard.customer-dashboard .ht-entry,
+.app-dashboard.customer-dashboard .notification-item,
+.app-dashboard.customer-dashboard .room-card,
+.app-dashboard.customer-dashboard .grooming-item,
+.app-dashboard.customer-dashboard .vet-item {
+  border: 1px solid var(--customer-border);
+  border-radius: 14px;
+  background: var(--customer-surface-muted);
+  box-shadow: none;
+}
+
+.app-dashboard.customer-dashboard .customer-status-toolbar,
+.app-dashboard.customer-dashboard .customer-payments-summary-grid,
+.app-dashboard.customer-dashboard .pets-toolbar,
+.app-dashboard.customer-dashboard .customer-notifications .notifications-toolbar,
+.app-dashboard.customer-dashboard .history-toolbar,
+.app-dashboard.customer-dashboard .cr-insight-bar,
+.app-dashboard.customer-dashboard .booking-form-section,
+.app-dashboard.customer-dashboard .hotel-availability,
+.app-dashboard.customer-dashboard .grooming-availability,
+.app-dashboard.customer-dashboard .vet-price-summary {
+  gap: 12px;
+}
+
+.app-dashboard.customer-dashboard .customer-payments-bg-orb {
+  display: none;
+}
+
+.app-dashboard.customer-dashboard .customer-payments-table-wrapper,
+.app-dashboard.customer-dashboard .customer-status-table-wrap,
+.app-dashboard.customer-dashboard .pets-list,
+.app-dashboard.customer-dashboard .history-table-wrap,
+.app-dashboard.customer-dashboard .cr-table-wrap {
+  max-width: 100%;
+  overflow-x: auto;
+  overscroll-behavior-inline: contain;
+  -webkit-overflow-scrolling: touch;
+}
+
+.app-dashboard.customer-dashboard .customer-payments-table,
+.app-dashboard.customer-dashboard .customer-status-table,
+.app-dashboard.customer-dashboard .cr-table {
+  min-width: 620px;
+}
+
+.app-dashboard.customer-dashboard .app-main input:not([type="checkbox"]),
+.app-dashboard.customer-dashboard .app-main select,
+.app-dashboard.customer-dashboard .app-main textarea {
+  min-height: 42px;
+  border: 1px solid var(--customer-border) !important;
+  border-radius: 10px !important;
+  background: #ffffff !important;
+  color: var(--customer-ink) !important;
+  box-shadow: none;
+}
+
+.app-dashboard.customer-dashboard .app-main textarea {
+  min-height: 96px;
+}
+
+.app-dashboard.customer-dashboard .app-main input:focus,
+.app-dashboard.customer-dashboard .app-main select:focus,
+.app-dashboard.customer-dashboard .app-main textarea:focus {
+  border-color: var(--color-primary) !important;
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-primary) 18%, transparent) !important;
+  outline: none;
+}
+
+.app-dashboard.customer-dashboard .primary-btn,
+.app-dashboard.customer-dashboard .customer-payments-main-btn,
+.app-dashboard.customer-dashboard .cs-card-action,
+.app-dashboard.customer-dashboard .customer-pay-btn,
+.app-dashboard.customer-dashboard .customer-cancel-btn,
+.app-dashboard.customer-dashboard .confinement-action-btn,
+.app-dashboard.customer-dashboard .hotel-tab.active,
+.app-dashboard.customer-dashboard .grooming-tab.active,
+.app-dashboard.customer-dashboard .vet-tab.active,
+.app-dashboard.customer-dashboard .ht-btn-primary {
+  min-height: 42px;
+  border-radius: 11px;
+  box-shadow: none;
+}
+
+.app-dashboard.customer-dashboard .secondary-btn,
+.app-dashboard.customer-dashboard .cs-tab,
+.app-dashboard.customer-dashboard .hotel-tab,
+.app-dashboard.customer-dashboard .grooming-tab,
+.app-dashboard.customer-dashboard .vet-tab,
+.app-dashboard.customer-dashboard .ht-btn-secondary {
+  min-height: 42px;
+  border-radius: 11px;
+}
+
+.app-dashboard.customer-dashboard .customer-payments-page .customer-payments-header,
+.app-dashboard.customer-dashboard .cs-header,
+.app-dashboard.customer-dashboard .hotel-header,
+.app-dashboard.customer-dashboard .grooming-header,
+.app-dashboard.customer-dashboard .vet-header,
+.app-dashboard.customer-dashboard .customer-chatbot-page .chatbot-hero-card,
+.app-dashboard.customer-dashboard .userinfo-header,
+.app-dashboard.customer-dashboard .notifications-page-header,
+.app-dashboard.customer-dashboard .medical-page-header,
+.app-dashboard.customer-dashboard .customer-status-hero,
+.app-dashboard.customer-dashboard .pets-hero,
+.app-dashboard.customer-dashboard .ht-header {
+  border: 1px solid var(--customer-border);
+  border-radius: var(--customer-radius);
+  background: var(--customer-surface);
+  box-shadow: var(--customer-shadow);
+}
+
+.app-dashboard.customer-dashboard .customer-reports-content {
+  color: var(--customer-ink);
+}
+
+.app-dashboard.customer-dashboard .customer-reports-content .cr-chart-card,
+.app-dashboard.customer-dashboard .customer-reports-content .cr-service-card,
+.app-dashboard.customer-dashboard .customer-reports-content .cr-table-card,
+.app-dashboard.customer-dashboard .customer-reports-content .cr-insight-bar {
+  border: 1px solid var(--customer-border);
+  border-radius: var(--customer-radius);
+  background: var(--customer-surface);
+  box-shadow: var(--customer-shadow);
+  backdrop-filter: none;
+}
+
+.app-dashboard.customer-dashboard .reports-container:has(.customer-reports-content) {
+  min-height: 0;
+  padding: 0;
+  background: transparent !important;
+}
+
+.app-dashboard.customer-dashboard .reports-container:has(.customer-reports-content) .reports-header {
+  border: 1px solid var(--customer-border);
+  border-radius: var(--customer-radius);
+  background: var(--customer-surface);
+  box-shadow: var(--customer-shadow);
+  backdrop-filter: none;
+}
+
+.app-dashboard.customer-dashboard .notifications-panel,
+.app-dashboard.customer-dashboard .customer-medical-confinements .medical-panel,
+.app-dashboard.customer-dashboard .ht-content,
+.app-dashboard.customer-dashboard .userinfo-panel,
+.app-dashboard.customer-dashboard .customer-chatbot-shell {
+  border: 1px solid var(--customer-border);
+  border-radius: var(--customer-radius);
+  background: var(--customer-surface);
+  box-shadow: var(--customer-shadow);
+}
+
+.app-dashboard.customer-dashboard .customer-profile-settings > div {
+  min-height: 0;
+  padding: 0;
+  background: transparent !important;
+}
+
+.app-dashboard.customer-dashboard .customer-profile-settings > div > div {
+  max-width: 1120px;
+  gap: 20px;
+}
+
+.app-dashboard.customer-dashboard .loading-container,
+.app-dashboard.customer-dashboard .error-state,
+.app-dashboard.customer-dashboard .empty-state,
+.app-dashboard.customer-dashboard .customer-payments-error,
+.app-dashboard.customer-dashboard .notifications-error,
+.app-dashboard.customer-dashboard .medical-empty,
+.app-dashboard.customer-dashboard .customer-status-empty,
+.app-dashboard.customer-dashboard .ht-empty {
+  border: 1px solid var(--customer-border);
+  border-radius: var(--customer-radius);
+  background: var(--customer-surface);
+  box-shadow: var(--customer-shadow);
+}
+
+.app-dashboard.customer-dashboard .customer-status-table thead,
+.app-dashboard.customer-dashboard .customer-payments-table thead,
+.app-dashboard.customer-dashboard .cr-table thead {
+  background: #f4f2ec;
+}
+
+.app-dashboard.customer-dashboard .customer-status-table th,
+.app-dashboard.customer-dashboard .customer-payments-table th,
+.app-dashboard.customer-dashboard .cr-table th {
+  color: #606b65;
+  font-size: 0.74rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.app-dashboard.customer-dashboard .customer-status-table tbody tr:hover,
+.app-dashboard.customer-dashboard .customer-payments-table tbody tr:hover,
+.app-dashboard.customer-dashboard .cr-table tbody tr:hover {
+  background: #faf9f5;
+}
+
+.app-dashboard.customer-dashboard .app-main :focus-visible {
+  outline: 3px solid color-mix(in srgb, var(--color-primary) 60%, white);
+  outline-offset: 2px;
+}
+
+@media (max-width: 1180px) {
+  .app-dashboard.customer-dashboard .overview-cards {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .app-dashboard.customer-dashboard .dashboard-bottom {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .app-dashboard.customer-dashboard .reminders-panel {
+    grid-column: 1 / -1;
+  }
+}
+
+@media (max-width: 1024px) {
+  .app-dashboard.customer-dashboard .app-sidebar.customer-sidebar {
+    position: fixed;
+    inset: 0 auto 0 0;
+    transform: translateX(-100%);
+    transition: transform 0.25s ease;
+    z-index: 1400;
+  }
+
+  .app-dashboard.customer-dashboard .app-sidebar.customer-sidebar.mobile-open {
+    transform: translateX(0);
+  }
+
+  .app-dashboard.customer-dashboard .mobile-menu-toggle {
+    display: grid !important;
+    place-items: center;
+  }
+
+  .app-dashboard.customer-dashboard .app-main {
+    width: 100%;
+    margin-left: 0;
+  }
+
+  .app-dashboard.customer-dashboard .mobile-backdrop {
+    display: none;
+  }
+
+  .app-dashboard.customer-dashboard .mobile-backdrop.active {
+    display: block;
+    position: fixed;
+    inset: 0;
+    z-index: 1350;
+    background: rgba(23, 25, 23, 0.42);
+  }
+
+  .app-dashboard.customer-dashboard .overview-cards {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .app-dashboard.customer-dashboard .quick-actions-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  }
+}
+
+@media (max-width: 767px) {
+  .app-dashboard.customer-dashboard .app-topbar {
+    min-height: 64px;
+    height: auto;
+    padding: 8px 12px;
+    gap: 8px;
+  }
+
+  .app-dashboard.customer-dashboard .app-topbar h1 {
+    font-size: clamp(0.95rem, 4vw, 1.15rem);
+  }
+
+  .app-dashboard.customer-dashboard .app-topbar p {
+    display: none;
+  }
+
+  .app-dashboard.customer-dashboard .navbar-actions {
+    gap: 6px;
+  }
+
+  .app-dashboard.customer-dashboard .app-content {
+    padding: 14px;
+  }
+
+  .app-dashboard.customer-dashboard .customer-overview-page {
+    gap: 14px;
+  }
+
+  .app-dashboard.customer-dashboard .dashboard-grid,
+  .app-dashboard.customer-dashboard .dashboard-bottom {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .app-dashboard.customer-dashboard .reminders-panel {
+    grid-column: auto;
+  }
+
+  .app-dashboard.customer-dashboard .customer-hero-panel {
+    align-items: flex-start;
+    flex-direction: column;
+    padding: 18px;
+  }
+
+  .app-dashboard.customer-dashboard .customer-payments-page,
+  .app-dashboard.customer-dashboard .customer-services-page,
+  .app-dashboard.customer-dashboard .customer-pets,
+  .app-dashboard.customer-dashboard .customer-notifications,
+  .app-dashboard.customer-dashboard .customer-medical-confinements,
+  .app-dashboard.customer-dashboard .customer-status-page,
+  .app-dashboard.customer-dashboard .customer-hotel-reservation,
+  .app-dashboard.customer-dashboard .grooming-container,
+  .app-dashboard.customer-dashboard .vet-container,
+  .app-dashboard.customer-dashboard .customer-chatbot-page,
+  .app-dashboard.customer-dashboard .userinfo-section,
+  .app-dashboard.customer-dashboard .ht-root,
+  .app-dashboard.customer-dashboard .reports-container {
+    padding: 12px;
+  }
+
+  .app-dashboard.customer-dashboard .booking-info,
+  .app-dashboard.customer-dashboard .customer-payments-summary-grid,
+  .app-dashboard.customer-dashboard .pets-stats-grid,
+  .app-dashboard.customer-dashboard .cr-summary-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .app-dashboard.customer-dashboard .customer-payments-header,
+  .app-dashboard.customer-dashboard .cs-header,
+  .app-dashboard.customer-dashboard .hotel-header,
+  .app-dashboard.customer-dashboard .grooming-header,
+  .app-dashboard.customer-dashboard .vet-header,
+  .app-dashboard.customer-dashboard .notifications-page-header,
+  .app-dashboard.customer-dashboard .medical-page-header,
+  .app-dashboard.customer-dashboard .customer-status-hero,
+  .app-dashboard.customer-dashboard .ht-header {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .app-dashboard.customer-dashboard .cs-panel-header,
+  .app-dashboard.customer-dashboard .panel-header {
+    align-items: flex-start;
+    flex-wrap: wrap;
+  }
+
+  .app-dashboard.customer-dashboard .cs-tabs,
+  .app-dashboard.customer-dashboard .hotel-tabs,
+  .app-dashboard.customer-dashboard .grooming-tabs,
+  .app-dashboard.customer-dashboard .vet-tabs {
+    max-width: 100%;
+    overflow-x: auto;
+  }
+
+  .app-dashboard.customer-dashboard .customer-payments-main-btn,
+  .app-dashboard.customer-dashboard .cs-card-action,
+  .app-dashboard.customer-dashboard .primary-btn,
+  .app-dashboard.customer-dashboard .secondary-btn {
+    width: 100%;
+  }
+}
+
+@media (max-width: 420px) {
+  .app-dashboard.customer-dashboard .overview-cards,
+  .app-dashboard.customer-dashboard .customer-payments-summary-grid,
+  .app-dashboard.customer-dashboard .pets-stats-grid,
+  .app-dashboard.customer-dashboard .cr-summary-grid,
+  .app-dashboard.customer-dashboard .quick-actions-grid {
+    grid-template-columns: minmax(0, 1fr) !important;
+  }
+
+  .app-dashboard.customer-dashboard .app-content {
+    padding: 10px;
+  }
+}
+
+.app-dashboard.customer-dashboard .rewards-panel {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-areas: "points status" "progress progress";
+  align-content: start;
+  gap: 10px;
+  padding: 14px;
+}
+
+.app-dashboard.customer-dashboard .rewards-panel > .metric-card:first-child {
+  grid-area: points;
+}
+
+.app-dashboard.customer-dashboard .rewards-panel > .loyalty-progress-card {
+  grid-area: progress;
+  min-width: 0;
+  padding: 14px;
+}
+
+.app-dashboard.customer-dashboard .rewards-panel > .metric-card:last-child {
+  grid-area: status;
+}
+
+.app-dashboard.customer-dashboard .rewards-panel > .metric-card {
+  min-width: 0;
+  min-height: 102px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: center;
+  gap: 3px;
+  margin: 0;
+  padding: 14px;
+  border-radius: 14px;
+  text-align: left;
+}
+
+.app-dashboard.customer-dashboard .rewards-panel > .metric-card svg {
+  margin-bottom: 2px;
+  font-size: 1rem;
+}
+
+.app-dashboard.customer-dashboard .rewards-panel > .metric-card h3 {
+  font-size: clamp(1.2rem, 1.8vw, 1.55rem);
+}
+
+.app-dashboard.customer-dashboard .rewards-panel > .metric-card p {
+  font-size: 0.78rem;
+  line-height: 1.3;
+}
+
+.app-dashboard.customer-dashboard .rewards-panel > .metric-card small {
+  font-size: 0.7rem;
+  line-height: 1.3;
+}
+
+.app-dashboard.customer-dashboard .overview-panel .pets-list {
+  gap: 8px;
+  padding: 14px;
+}
+
+.app-dashboard.customer-dashboard .overview-panel .pet-card {
+  align-items: center;
+  flex-direction: row;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 12px;
+  border-radius: 14px;
+  background: var(--customer-surface-muted);
+  box-shadow: none;
+}
+
+.app-dashboard.customer-dashboard .overview-panel .pet-card-body {
+  align-items: flex-end;
+  flex-direction: row;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.app-dashboard.customer-dashboard .overview-panel .pet-last-visit {
+  font-size: 0.73rem;
+}
+
+.app-dashboard.customer-dashboard .bookings-panel .booking-list {
+  gap: 10px;
+  padding: 14px;
+}
+
+.app-dashboard.customer-dashboard .bookings-panel .booking-card {
+  padding: 14px;
+  border-radius: 14px;
+  box-shadow: none;
+}
+
+.app-dashboard.customer-dashboard .bookings-panel .booking-info {
+  gap: 6px;
+  margin: 0.65rem 0;
+}
+
+.app-dashboard.customer-dashboard .bookings-panel .booking-info > div {
+  padding: 8px;
+  border-radius: 10px;
+}
+
+.app-dashboard.customer-dashboard .bookings-panel .booking-info p {
+  overflow-wrap: anywhere;
+  font-size: 0.8rem;
+}
+
+.app-dashboard.customer-dashboard .bookings-panel .booking-timeline {
+  display: none;
+}
+
+.app-dashboard.customer-dashboard .bookings-panel .booking-footer {
+  gap: 8px;
+  font-size: 0.8rem;
+}
+
+@media (max-width: 767px) {
+  .app-dashboard.customer-dashboard .overview-panel .pet-card {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .app-dashboard.customer-dashboard .overview-panel .pet-card-body {
+    align-items: flex-start;
+    justify-content: flex-start;
+  }
+
+  .app-dashboard.customer-dashboard .bookings-panel .booking-card {
+    padding: 12px;
+  }
+}
+

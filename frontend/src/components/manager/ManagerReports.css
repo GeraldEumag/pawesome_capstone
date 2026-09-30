@@ -341,7 +341,7 @@
   gap: 0.5rem;
 }
 
-.export-btn-sm {
+.manager-reports .export-btn-sm {
   min-height: 38px;
   padding: 0 0.85rem;
   border: 1px solid var(--color-border);
@@ -356,19 +356,19 @@
   transition: 0.2s ease;
 }
 
-.export-btn-sm:hover {
+.manager-reports .export-btn-sm:hover {
   transform: translateY(-2px);
 }
 
-.export-btn-sm.excel { color: #047857; }
-.export-btn-sm.csv { color: #1d4ed8; }
-.export-btn-sm.pdf { color: #b91c1c; }
-.export-btn-sm.print { color: var(--color-heading); }
+.manager-reports .export-btn-sm.excel { color: #047857; }
+.manager-reports .export-btn-sm.csv { color: #1d4ed8; }
+.manager-reports .export-btn-sm.pdf { color: #b91c1c; }
+.manager-reports .export-btn-sm.print { color: var(--color-heading); }
 
-.export-btn-sm.excel:hover { background: rgba(16, 185, 129, 0.1); border-color: rgba(16, 185, 129, 0.4); }
-.export-btn-sm.csv:hover { background: rgba(59, 130, 246, 0.1); border-color: rgba(59, 130, 246, 0.4); }
-.export-btn-sm.pdf:hover { background: rgba(239, 68, 68, 0.1); border-color: rgba(239, 68, 68, 0.4); }
-.export-btn-sm.print:hover { background: rgba(15, 23, 42, 0.06); }
+.manager-reports .export-btn-sm.excel:hover { background: rgba(16, 185, 129, 0.1); border-color: rgba(16, 185, 129, 0.4); }
+.manager-reports .export-btn-sm.csv:hover { background: rgba(59, 130, 246, 0.1); border-color: rgba(59, 130, 246, 0.4); }
+.manager-reports .export-btn-sm.pdf:hover { background: rgba(239, 68, 68, 0.1); border-color: rgba(239, 68, 68, 0.4); }
+.manager-reports .export-btn-sm.print:hover { background: rgba(15, 23, 42, 0.06); }
 
 /* ── Charts ───────────────────────────────────────────── */
 

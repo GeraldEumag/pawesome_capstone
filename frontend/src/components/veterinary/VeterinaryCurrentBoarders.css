@@ -22,7 +22,7 @@
 
 /* ── Page Header ───────────────────────────────────────────── */
 
-.page-header {
+.veterinary-boarders-page .page-header {
   position: relative;
   display: flex;
   align-items: center;
@@ -35,7 +35,7 @@
   box-shadow: var(--veterinary-glass-shadow);
 }
 
-.page-header::after {
+.veterinary-boarders-page .page-header::after {
   content: "";
   position: absolute;
   top: -90px;
@@ -47,13 +47,13 @@
   pointer-events: none;
 }
 
-.header-content,
-.header-actions {
+.veterinary-boarders-page .header-content,
+.veterinary-boarders-page .header-actions {
   position: relative;
   z-index: 1;
 }
 
-.header-content h1 {
+.veterinary-boarders-page .header-content h1 {
   margin: 0 0 6px;
   color: #ffffff;
   font-size: clamp(1.4rem, 2.5vw, 1.9rem);
@@ -65,7 +65,7 @@
   line-height: 1.15;
 }
 
-.header-content p {
+.veterinary-boarders-page .header-content p {
   margin: 0;
   color: rgba(255, 255, 255, 0.88);
   font-size: 0.95rem;
@@ -73,14 +73,14 @@
   line-height: 1.5;
 }
 
-.header-actions {
+.veterinary-boarders-page .header-actions {
   display: flex;
   gap: 12px;
 }
 
 /* ── Primary Button (Refresh) ──────────────────────────────── */
 
-.btn-primary {
+.veterinary-boarders-page .btn-primary {
   display: inline-flex;
   align-items: center;
   gap: 8px;
@@ -97,20 +97,20 @@
   white-space: nowrap;
 }
 
-.btn-primary:hover {
+.veterinary-boarders-page .btn-primary:hover {
   background: rgba(255, 255, 255, 0.32);
   transform: translateY(-1px);
 }
 
 /* ── Stats Row ─────────────────────────────────────────────── */
 
-.boarders-stats {
+.veterinary-boarders-page .boarders-stats {
   display: grid;
   grid-template-columns: repeat(3, minmax(160px, 1fr));
   gap: 16px;
 }
 
-.stat-card {
+.veterinary-boarders-page .stat-card {
   display: flex;
   align-items: center;
   gap: 16px;
@@ -123,12 +123,12 @@
   transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
 
-.stat-card:hover {
+.veterinary-boarders-page .stat-card:hover {
   transform: translateY(-3px);
   box-shadow: var(--veterinary-shadow-md);
 }
 
-.stat-icon {
+.veterinary-boarders-page .stat-icon {
   width: var(--vet-icon-md, 48px);
   height: var(--vet-icon-md, 48px);
   min-width: var(--vet-icon-md, 48px);
@@ -143,7 +143,7 @@
   flex-shrink: 0;
 }
 
-.stat-content h3 {
+.veterinary-boarders-page .stat-content h3 {
   margin: 0;
   font-size: 1.75rem;
   font-weight: 800;
@@ -151,7 +151,7 @@
   line-height: 1;
 }
 
-.stat-content p {
+.veterinary-boarders-page .stat-content p {
   margin: 4px 0 0;
   color: var(--veterinary-text-muted);
   font-size: 0.82rem;
@@ -160,14 +160,14 @@
 
 /* ── Filters Row ───────────────────────────────────────────── */
 
-.boarders-filters {
+.veterinary-boarders-page .boarders-filters {
   display: flex;
   gap: 14px;
   align-items: center;
   flex-wrap: wrap;
 }
 
-.boarders-search {
+.veterinary-boarders-page .boarders-search {
   position: relative;
   display: flex;
   align-items: center;
@@ -184,12 +184,12 @@
   transition: border-color 0.2s ease, box-shadow 0.2s ease;
 }
 
-.boarders-search:focus-within {
+.veterinary-boarders-page .boarders-search:focus-within {
   border-color: var(--veterinary-primary);
   box-shadow: 0 0 0 4px var(--vet-input-focus-ring);
 }
 
-.boarders-search input {
+.veterinary-boarders-page .boarders-search input {
   border: none;
   background: none;
   outline: none;
@@ -200,11 +200,11 @@
   font-family: inherit;
 }
 
-.boarders-search input::placeholder {
+.veterinary-boarders-page .boarders-search input::placeholder {
   color: var(--veterinary-text-muted);
 }
 
-.boarders-species-filter {
+.veterinary-boarders-page .boarders-species-filter {
   display: flex;
   align-items: center;
   gap: 10px;
@@ -218,11 +218,11 @@
   transition: border-color 0.2s ease;
 }
 
-.boarders-species-filter:focus-within {
+.veterinary-boarders-page .boarders-species-filter:focus-within {
   border-color: var(--veterinary-primary);
 }
 
-.boarders-species-filter select {
+.veterinary-boarders-page .boarders-species-filter select {
   border: none;
   background: none;
   outline: none;
@@ -236,13 +236,13 @@
 
 /* ── Boarders List Container ───────────────────────────────── */
 
-.boarders-list {
+.veterinary-boarders-page .boarders-list {
   min-height: 400px;
 }
 
 /* ── Loading State ─────────────────────────────────────────── */
 
-.loading-state {
+.veterinary-boarders-page .loading-state {
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -258,7 +258,7 @@
   font-weight: 600;
 }
 
-.loading-spinner {
+.veterinary-boarders-page .loading-spinner {
   width: 36px;
   height: 36px;
   border: 3px solid var(--veterinary-glass-border);
@@ -273,7 +273,7 @@
 
 /* ── Empty State ───────────────────────────────────────────── */
 
-.empty-state {
+.veterinary-boarders-page .empty-state {
   display: grid;
   place-items: center;
   align-content: center;
@@ -288,20 +288,20 @@
   color: var(--veterinary-text-muted);
 }
 
-.empty-icon {
+.veterinary-boarders-page .empty-icon {
   font-size: 3.5rem;
   color: var(--veterinary-primary);
   opacity: 0.42;
 }
 
-.empty-state h3 {
+.veterinary-boarders-page .empty-state h3 {
   margin: 0;
   font-size: 1.15rem;
   font-weight: 800;
   color: var(--veterinary-text-primary);
 }
 
-.empty-state p {
+.veterinary-boarders-page .empty-state p {
   margin: 0;
   font-weight: 500;
   max-width: 360px;
@@ -309,7 +309,7 @@
 
 /* ── Boarders Grid ─────────────────────────────────────────── */
 
-.boarders-grid {
+.veterinary-boarders-page .boarders-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(min(100%, 400px), 1fr));
   gap: 22px;
@@ -317,7 +317,7 @@
 
 /* ── Boarder Card ──────────────────────────────────────────── */
 
-.boarder-card {
+.veterinary-boarders-page .boarder-card {
   position: relative;
   border-radius: var(--veterinary-radius-2xl);
   background: var(--veterinary-glass-bg);
@@ -328,7 +328,7 @@
   transition: transform 0.25s ease, box-shadow 0.25s ease;
 }
 
-.boarder-card::before {
+.veterinary-boarders-page .boarder-card::before {
   content: "";
   position: absolute;
   inset: 0 auto 0 0;
@@ -338,18 +338,18 @@
   transition: opacity 0.25s ease;
 }
 
-.boarder-card:hover {
+.veterinary-boarders-page .boarder-card:hover {
   transform: translateY(-4px);
   box-shadow: var(--veterinary-shadow-md);
 }
 
-.boarder-card:hover::before {
+.veterinary-boarders-page .boarder-card:hover::before {
   opacity: 1;
 }
 
 /* ── Card Header ───────────────────────────────────────────── */
 
-.boarder-header {
+.veterinary-boarders-page .boarder-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -358,14 +358,14 @@
   border-bottom: 1px solid var(--vet-divider);
 }
 
-.pet-info {
+.veterinary-boarders-page .pet-info {
   display: flex;
   align-items: center;
   gap: 14px;
   min-width: 0;
 }
 
-.pet-avatar {
+.veterinary-boarders-page .pet-avatar {
   width: 48px;
   height: 48px;
   min-width: 48px;
@@ -380,7 +380,7 @@
   flex-shrink: 0;
 }
 
-.pet-info h3 {
+.veterinary-boarders-page .pet-info h3 {
   margin: 0 0 3px;
   color: var(--veterinary-text-primary);
   font-size: 1.05rem;
@@ -390,7 +390,7 @@
   text-overflow: ellipsis;
 }
 
-.pet-details {
+.veterinary-boarders-page .pet-details {
   margin: 0;
   color: var(--veterinary-text-muted);
   font-size: 0.85rem;
@@ -399,7 +399,7 @@
 
 /* ── Status Badges ─────────────────────────────────────────── */
 
-.status-badge {
+.veterinary-boarders-page .status-badge {
   display: inline-flex;
   align-items: center;
   gap: 5px;
@@ -414,25 +414,25 @@
   flex-shrink: 0;
 }
 
-.badge-success {
+.veterinary-boarders-page .badge-success {
   background: var(--vet-badge-completed-bg);
   color: var(--vet-badge-completed-color);
   border-color: var(--vet-badge-completed-border);
 }
 
-.badge-info {
+.veterinary-boarders-page .badge-info {
   background: var(--vet-badge-approved-bg);
   color: var(--vet-badge-approved-color);
   border-color: var(--vet-badge-approved-border);
 }
 
-.badge-warning {
+.veterinary-boarders-page .badge-warning {
   background: var(--vet-badge-pending-bg);
   color: var(--vet-badge-pending-color);
   border-color: var(--vet-badge-pending-border);
 }
 
-.badge-secondary {
+.veterinary-boarders-page .badge-secondary {
   background: rgba(100, 116, 139, 0.1);
   color: #475569;
   border-color: rgba(100, 116, 139, 0.2);
@@ -440,19 +440,19 @@
 
 /* ── Card Body ─────────────────────────────────────────────── */
 
-.boarder-body {
+.veterinary-boarders-page .boarder-body {
   padding: 18px 22px;
   display: grid;
   gap: 12px;
 }
 
-.info-row {
+.veterinary-boarders-page .info-row {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 12px;
 }
 
-.info-item {
+.veterinary-boarders-page .info-item {
   display: flex;
   align-items: flex-start;
   gap: 12px;
@@ -462,18 +462,18 @@
   border: 1px solid var(--vet-form-border);
 }
 
-.info-item svg {
+.veterinary-boarders-page .info-item svg {
   color: var(--veterinary-primary);
   margin-top: 2px;
   flex-shrink: 0;
   width: 14px;
 }
 
-.info-item > div {
+.veterinary-boarders-page .info-item > div {
   min-width: 0;
 }
 
-.info-item strong {
+.veterinary-boarders-page .info-item strong {
   display: block;
   color: var(--veterinary-text-muted);
   font-size: 0.73rem;
@@ -483,7 +483,7 @@
   margin-bottom: 3px;
 }
 
-.info-item p {
+.veterinary-boarders-page .info-item p {
   margin: 0;
   color: var(--veterinary-text-primary);
   font-size: 0.9rem;
@@ -493,8 +493,8 @@
 
 /* ── Special Requests & Medication Notes ───────────────────── */
 
-.special-requests,
-.medication-notes {
+.veterinary-boarders-page .special-requests,
+.veterinary-boarders-page .medication-notes {
   display: flex;
   align-items: flex-start;
   gap: 10px;
@@ -504,15 +504,15 @@
   border: 1px solid var(--vet-badge-pending-border);
 }
 
-.special-requests svg,
-.medication-notes svg {
+.veterinary-boarders-page .special-requests svg,
+.veterinary-boarders-page .medication-notes svg {
   color: var(--vet-badge-pending-color);
   margin-top: 2px;
   flex-shrink: 0;
 }
 
-.special-requests span,
-.medication-notes p {
+.veterinary-boarders-page .special-requests span,
+.veterinary-boarders-page .medication-notes p {
   color: var(--vet-badge-pending-color);
   font-size: 0.875rem;
   font-weight: 600;
@@ -520,11 +520,11 @@
   line-height: 1.45;
 }
 
-.medication-notes > div {
+.veterinary-boarders-page .medication-notes > div {
   min-width: 0;
 }
 
-.medication-notes strong {
+.veterinary-boarders-page .medication-notes strong {
   display: block;
   margin-bottom: 4px;
   font-size: 0.75rem;
@@ -536,7 +536,7 @@
 
 /* ── Page Footer ───────────────────────────────────────────── */
 
-.page-footer {
+.veterinary-boarders-page .page-footer {
   text-align: center;
   padding: 20px;
   border-top: 1px solid var(--vet-divider);
@@ -547,34 +547,34 @@
 
 /* ── Dark Mode ─────────────────────────────────────────────── */
 
-[data-theme="dark"] .page-header {
+[data-theme="dark"] .veterinary-boarders-page .page-header {
   background: linear-gradient(135deg, #8b2252 0%, #ff5f93 100%);
 }
 
-[data-theme="dark"] .special-requests,
-[data-theme="dark"] .medication-notes {
+[data-theme="dark"] .veterinary-boarders-page .special-requests,
+[data-theme="dark"] .veterinary-boarders-page .medication-notes {
   background: rgba(245, 158, 11, 0.08);
 }
 
 /* ── Responsive ────────────────────────────────────────────── */
 
 @media (max-width: 1100px) {
-  .boarders-stats {
+  .veterinary-boarders-page .boarders-stats {
     grid-template-columns: repeat(3, 1fr);
   }
 }
 
 @media (max-width: 900px) {
-  .page-header {
+  .veterinary-boarders-page .page-header {
     flex-direction: column;
     align-items: stretch;
   }
 
-  .header-actions {
+  .veterinary-boarders-page .header-actions {
     justify-content: flex-start;
   }
 
-  .btn-primary {
+  .veterinary-boarders-page .btn-primary {
     width: 100%;
     justify-content: center;
   }
@@ -585,29 +585,29 @@
     padding: 20px;
   }
 
-  .boarders-stats {
+  .veterinary-boarders-page .boarders-stats {
     grid-template-columns: 1fr;
   }
 
-  .boarders-filters {
+  .veterinary-boarders-page .boarders-filters {
     flex-direction: column;
     align-items: stretch;
   }
 
-  .boarders-search,
-  .boarders-species-filter {
+  .veterinary-boarders-page .boarders-search,
+  .veterinary-boarders-page .boarders-species-filter {
     width: 100%;
   }
 
-  .boarders-grid {
+  .veterinary-boarders-page .boarders-grid {
     grid-template-columns: 1fr;
   }
 
-  .info-row {
+  .veterinary-boarders-page .info-row {
     grid-template-columns: 1fr;
   }
 
-  .boarder-header {
+  .veterinary-boarders-page .boarder-header {
     flex-direction: column;
     align-items: flex-start;
     gap: 12px;
@@ -619,12 +619,12 @@
     padding: 14px;
   }
 
-  .page-header {
+  .veterinary-boarders-page .page-header {
     padding: 1.25rem;
   }
 
-  .boarder-header,
-  .boarder-body {
+  .veterinary-boarders-page .boarder-header,
+  .veterinary-boarders-page .boarder-body {
     padding: 14px 16px;
   }
 }

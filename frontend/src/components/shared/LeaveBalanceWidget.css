@@ -1,0 +1,8 @@
+.lbw-row { display: flex; flex-wrap: wrap; gap: 8px; }
+.lbw-chip { background: rgba(255,255,255,.55); backdrop-filter: blur(8px); border: 1px solid rgba(124,58,237,.15); border-radius: 8px; padding: 8px 12px; min-width: 100px; }
+.lbw-label { display: block; font-size: 0.68rem; font-weight: 600; color: #7c3aed; margin-bottom: 4px; white-space: nowrap; }
+.lbw-bar-track { height: 4px; background: rgba(0,0,0,.08); border-radius: 4px; margin-bottom: 4px; }
+.lbw-bar-fill { height: 4px; border-radius: 4px; transition: width .3s; }
+.lbw-count { font-size: 0.88rem; font-weight: 700; }
+.lbw-count small { font-size: 0.65rem; font-weight: 400; color: #94a3b8; }
+.lbw-loading { font-size: 0.78rem; color: #94a3b8; }

@@ -1,0 +1,19 @@
+.css-container { padding: 24px; max-width: 700px; }
+.css-title { font-size: 1.2rem; font-weight: 700; color: #7c3aed; margin-bottom: 4px; }
+.css-subtitle { font-size: 0.85rem; color: #64748b; margin-bottom: 20px; }
+.css-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 20px; }
+.css-field { display: flex; flex-direction: column; gap: 4px; }
+.css-field span { font-size: 0.8rem; font-weight: 600; color: #475569; }
+.css-field input { padding: 8px 10px; border: 1px solid rgba(124,58,237,0.25); border-radius: 8px; background: rgba(255,255,255,0.6); font-size: 0.9rem; }
+.css-field small { font-size: 0.72rem; color: #94a3b8; }
+.css-days-group { margin-bottom: 20px; }
+.css-days-label { font-size: 0.8rem; font-weight: 600; color: #475569; display: block; margin-bottom: 8px; }
+.css-days-row { display: flex; gap: 8px; flex-wrap: wrap; }
+.css-day-btn { padding: 6px 14px; border-radius: 20px; border: 1px solid rgba(124,58,237,0.3); background: rgba(255,255,255,0.6); font-size: 0.8rem; cursor: pointer; transition: all .15s; }
+.css-day-btn.active { background: #7c3aed; color: #fff; border-color: #7c3aed; }
+.css-save-btn { padding: 10px 24px; background: #7c3aed; color: #fff; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; }
+.css-save-btn:disabled { opacity: .6; cursor: not-allowed; }
+.css-msg { font-size: 0.85rem; color: #059669; margin-bottom: 12px; }
+.css-msg.error { color: #ef4444; }
+.css-loading { padding: 24px; color: #94a3b8; }
+@media (max-width: 560px) { .css-grid { grid-template-columns: 1fr; } }

@@ -3,7 +3,9 @@
 namespace App\Http\Controllers;
 
 use App\Models\Attendance;
+use App\Models\Employee;
 use App\Models\User;
+use App\Support\CompanySchedule;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
@@ -147,23 +149,49 @@ class AttendanceController extends Controller
             ], 404);
         }
 
+        // Payroll period lock: block edits when payroll is approved/paid for this period
+        if ($attendance->date && $attendance->user_id) {
+            $date   = Carbon::parse($attendance->date);
+            $start  = $date->day <= 15
+                ? $date->format('Y-m') . '-01'
+                : $date->format('Y-m') . '-16';
+            $end    = $date->day <= 15
+                ? $date->format('Y-m') . '-15'
+                : $date->copy()->endOfMonth()->toDateString();
+
+            $locked = DB::table('payrolls')
+                ->where('user_id', $attendance->user_id)
+                ->whereDate('pay_period_start', $start)
+                ->whereDate('pay_period_end', $end)
+                ->whereIn('status', ['approved', 'paid'])
+                ->exists();
+
+            if ($locked) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'This payroll period is locked. The employee must file an attendance correction request instead.',
+                    'error'   => 'period_locked',
+                ], 403);
+            }
+        }
+
         $validator = Validator::make($request->all(), [
-            'check_in' => 'nullable|date_format:H:i',
-            'check_out' => 'nullable|date_format:H:i',
-            'break_time' => 'nullable|date_format:H:i',
-            'status' => 'nullable|in:present,absent,late,early_leave,on_leave',
-            'location' => 'nullable|string',
-            'notes' => 'nullable|string',
-            'remarks' => 'nullable|string',
+            'check_in'     => 'nullable|date_format:H:i',
+            'check_out'    => 'nullable|date_format:H:i',
+            'break_time'   => 'nullable|date_format:H:i',
+            'status'       => 'nullable|in:present,absent,late,early_leave,on_leave',
+            'location'     => 'nullable|string',
+            'notes'        => 'nullable|string',
+            'remarks'      => 'nullable|string',
             'review_status' => 'nullable|in:pending,reviewed,rejected',
-            'salary_rate' => 'nullable|numeric',
-            'source' => 'nullable|string',
+            'salary_rate'  => 'nullable|numeric',
+            'source'       => 'nullable|string',
         ]);
 
         if ($validator->fails()) {
             return response()->json([
                 'success' => false,
-                'errors' => $validator->errors(),
+                'errors'  => $validator->errors(),
             ], 422);
         }
 
@@ -172,7 +200,7 @@ class AttendanceController extends Controller
         return response()->json([
             'success' => true,
             'message' => 'Attendance record updated successfully.',
-            'data' => $attendance->fresh()->load(['user', 'approver']),
+            'data'    => $attendance->fresh()->load(['user', 'approver']),
         ]);
     }
 
@@ -388,6 +416,149 @@ class AttendanceController extends Controller
         return response()->json([
             'success' => true,
             'data' => $data,
+        ]);
+    }
+
+    /**
+     * GET /manager/attendance/today-status
+     *
+     * Real-time "who's in today" board for all active staff.
+     * Status values: checked_in | late | checked_out | on_leave | absent | not_yet
+     */
+    public function todayStatus(): JsonResponse
+    {
+        $today = Carbon::today()->toDateString();
+
+        // Load today's attendance keyed by user_id and employee_id
+        $byUser = Attendance::where('date', $today)
+            ->whereNotNull('user_id')
+            ->get()
+            ->keyBy('user_id');
+
+        $byEmployee = Attendance::where('date', $today)
+            ->whereNotNull('employee_id')
+            ->get()
+            ->keyBy('employee_id');
+
+        // Approved leaves covering today
+        $leaveUsers = DB::table('leave_requests')
+            ->where('status', 'approved')
+            ->whereDate('start_date', '<=', $today)
+            ->whereDate('end_date', '>=', $today)
+            ->whereNotNull('user_id')
+            ->pluck('user_id')
+            ->flip();
+
+        $staff = User::whereIn('role', [
+            'manager', 'cashier', 'receptionist', 'veterinary',
+            'inventory', 'payroll', 'staff', 'groomer',
+            'super_receptionist', 'super_admin', 'admin',
+        ])->where('is_active', true)->get();
+
+        $result = $staff->map(function (User $user) use ($byUser, $leaveUsers, $today) {
+            $rec = $byUser->get($user->id);
+            if ($leaveUsers->has($user->id) && !$rec) {
+                $status = 'on_leave';
+            } elseif (!$rec) {
+                // If past shift end, mark absent; otherwise not yet
+                $shiftEnd = CompanySchedule::shiftEnd();
+                $status   = Carbon::now()->format('H:i') > $shiftEnd ? 'absent' : 'not_yet';
+            } elseif ($rec->status === 'on_leave') {
+                $status = 'on_leave';
+            } elseif ($rec->check_out) {
+                $status = 'checked_out';
+            } elseif ($rec->is_late || $rec->status === 'late') {
+                $status = 'late';
+            } else {
+                $status = 'checked_in';
+            }
+
+            return [
+                'id'           => $user->id,
+                'name'         => $user->name,
+                'employee_no'  => $user->employee_no,
+                'role'         => $user->role,
+                'department'   => $user->department,
+                'status'       => $status,
+                'check_in'     => $rec?->check_in ? substr((string) $rec->check_in, 0, 5) : null,
+                'check_out'    => $rec?->check_out ? substr((string) $rec->check_out, 0, 5) : null,
+                'total_hours'  => $rec?->total_hours,
+                'is_late'      => (bool) ($rec?->is_late ?? false),
+            ];
+        });
+
+        return response()->json([
+            'success'    => true,
+            'date'       => $today,
+            'shift_start' => CompanySchedule::shiftStart(),
+            'shift_end'  => CompanySchedule::shiftEnd(),
+            'data'       => $result->values(),
+            'summary'    => [
+                'checked_in'  => $result->where('status', 'checked_in')->count(),
+                'late'        => $result->where('status', 'late')->count(),
+                'checked_out' => $result->where('status', 'checked_out')->count(),
+                'on_leave'    => $result->where('status', 'on_leave')->count(),
+                'absent'      => $result->where('status', 'absent')->count(),
+                'not_yet'     => $result->where('status', 'not_yet')->count(),
+                'total'       => $result->count(),
+            ],
+        ]);
+    }
+
+    /**
+     * GET /manager/reports/dtr?user_id=5&start_date=2026-09-01&end_date=2026-09-30
+     *
+     * Per-employee Daily Time Record (DOLE requirement).
+     */
+    public function dtrReport(Request $request): JsonResponse
+    {
+        $request->validate([
+            'user_id'     => 'nullable|exists:users,id',
+            'employee_id' => 'nullable|exists:employees,id',
+            'start_date'  => 'required|date',
+            'end_date'    => 'required|date|after_or_equal:start_date',
+        ]);
+
+        $query = Attendance::with(['user:id,name,employee_no,department,position', 'employee:id,first_name,last_name,employee_no,department,position'])
+            ->whereBetween('date', [$request->start_date, $request->end_date])
+            ->orderBy('date');
+
+        if ($request->user_id) {
+            $query->where('user_id', $request->user_id);
+        } elseif ($request->employee_id) {
+            $query->where('employee_id', $request->employee_id);
+        }
+
+        $records = $query->get()->map(function ($a) {
+            $person = $a->user ?? $a->employee;
+
+            // check_in / check_out are cast as datetime:H:i — use ->format() not (string) cast
+            // to avoid getting the full Carbon datetime string (e.g. "2026-09-29 08:30:00").
+            $checkIn  = $a->check_in  ? $a->check_in->format('H:i')  : null;
+            $checkOut = $a->check_out ? $a->check_out->format('H:i') : null;
+
+            return [
+                'date'           => $a->date instanceof \Carbon\Carbon ? $a->date->toDateString() : $a->date,
+                'day_of_week'    => Carbon::parse($a->date)->format('D'),
+                'name'           => $person?->name ?? ($a->employee ? $a->employee->first_name . ' ' . $a->employee->last_name : 'Unknown'),
+                'employee_no'    => $person?->employee_no,
+                'department'     => $person?->department,
+                'position'       => $person?->position,
+                'check_in'       => $checkIn,
+                'check_out'      => $checkOut,
+                'total_hours'    => $a->total_hours,
+                'overtime_hours' => $a->overtime_hours,
+                'status'         => $a->status,
+                'is_late'        => (bool) $a->is_late,
+                'late_minutes'   => $checkIn ? CompanySchedule::lateMinutes($checkIn) : 0,
+            ];
+        });
+
+        return response()->json([
+            'success'    => true,
+            'start_date' => $request->start_date,
+            'end_date'   => $request->end_date,
+            'data'       => $records,
         ]);
     }
 }

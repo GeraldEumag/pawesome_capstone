@@ -4,11 +4,22 @@ import { apiRequest, normalizeList } from "../../api/client";
 import { useAuth } from "../../context/AuthContext";
 import { getDraft, clearDraft } from "../../utils/preBookingDraft";
 import DatePickerInput from "../../components/shared/DatePickerInput";
+import { formatDateOnly, parseDateOnly } from "../../utils/date";
 import {
   validateServiceCompatibility,
   getUnavailableServiceMessage,
 } from "../../config/petServiceRules";
 import { showAlert, showSuccess, showError, showConfirm } from "../../utils/alert.jsx";
+
+const GROOMING_TIME_SLOTS = Array.from({ length: 10 }, (_, index) => {
+  const hour = index + 9;
+  const value = `${String(hour).padStart(2, "0")}:00`;
+  const displayHour = hour % 12 || 12;
+  return {
+    value,
+    label: `${displayHour}:00 ${hour < 12 ? "AM" : "PM"}`,
+  };
+});
 
 const GroomingForm = () => {
   const { user } = useAuth();
@@ -96,7 +107,9 @@ const GroomingForm = () => {
     }
     if (draft.form_data?.grooming_service_type) updates.service_name = draft.form_data.grooming_service_type;
     if (draft.form_data?.preferred_date) updates.request_date = draft.form_data.preferred_date;
-    if (draft.form_data?.preferred_time) updates.request_time = draft.form_data.preferred_time;
+    if (GROOMING_TIME_SLOTS.some((slot) => slot.value === draft.form_data?.preferred_time)) {
+      updates.request_time = draft.form_data.preferred_time;
+    }
     if (draft.form_data?.special_grooming_instructions) updates.notes = draft.form_data.special_grooming_instructions;
 
     setFormData((prev) => ({ ...prev, ...updates }));
@@ -373,12 +386,12 @@ const GroomingForm = () => {
             )}
 
             <DatePickerInput
-              selected={formData.request_date ? new Date(formData.request_date) : null}
+              selected={parseDateOnly(formData.request_date)}
               onChange={(date) =>
                 handleChange({
                   target: {
                     name: "request_date",
-                    value: date ? date.toISOString().split("T")[0] : "",
+                    value: formatDateOnly(date),
                   },
                 })
               }
@@ -415,13 +428,21 @@ const GroomingForm = () => {
               </div>
             )}
 
-            <input
-              type="time"
+            <label htmlFor="grooming-request-time">Appointment Time *</label>
+            <select
+              id="grooming-request-time"
               name="request_time"
               value={formData.request_time}
               onChange={handleChange}
               required
-            />
+            >
+              <option value="">Select a time</option>
+              {GROOMING_TIME_SLOTS.map((slot) => (
+                <option key={slot.value} value={slot.value}>
+                  {slot.label}
+                </option>
+              ))}
+            </select>
 
             <textarea
               name="notes"

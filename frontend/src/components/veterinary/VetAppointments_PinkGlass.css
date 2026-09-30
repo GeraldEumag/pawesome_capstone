@@ -7,7 +7,7 @@
 /* ─────────────────────────────────────────────────────────────
    Global Styles & Reset
 ───────────────────────────────────────────────────────────── */
-* {
+.vet-appointments * {
   box-sizing: border-box;
 }
 
@@ -29,7 +29,7 @@
 /* ─────────────────────────────────────────────────────────────
    Hero Header - Glass Morphism
 ───────────────────────────────────────────────────────────── */
-.appointments-hero {
+.vet-appointments .appointments-hero {
   position: relative;
   display: flex;
   align-items: center;
@@ -45,7 +45,7 @@
   animation: fadeInUp 0.8s ease;
 }
 
-.appointments-hero::before {
+.vet-appointments .appointments-hero::before {
   content: "";
   position: absolute;
   top: 0;
@@ -57,7 +57,7 @@
   pointer-events: none;
 }
 
-.appointments-hero::after {
+.vet-appointments .appointments-hero::after {
   content: "";
   position: absolute;
   top: -110px;
@@ -69,13 +69,13 @@
   pointer-events: none;
 }
 
-.header-content,
-.appointments-header-actions {
+.vet-appointments .header-content,
+.vet-appointments .appointments-header-actions {
   position: relative;
   z-index: 1;
 }
 
-.appointments-eyebrow {
+.vet-appointments .appointments-eyebrow {
   display: inline-flex;
   align-items: center;
   gap: 8px;
@@ -90,7 +90,7 @@
   letter-spacing: 0.5px;
 }
 
-.header-content h2 {
+.vet-appointments .header-content h2 {
   margin: 0;
   display: flex;
   align-items: center;
@@ -102,7 +102,7 @@
   line-height: 1.2;
 }
 
-.header-content p {
+.vet-appointments .header-content p {
   max-width: 720px;
   margin: 8px 0 0;
   color: rgba(255, 255, 255, 0.9);
@@ -111,7 +111,7 @@
   line-height: 1.5;
 }
 
-.appointments-header-actions {
+.vet-appointments .appointments-header-actions {
   display: flex;
   align-items: center;
   justify-content: flex-end;
@@ -119,8 +119,8 @@
   flex-wrap: wrap;
 }
 
-.add-appointment-btn,
-.refresh-appointments-btn {
+.vet-appointments .add-appointment-btn,
+.vet-appointments .refresh-appointments-btn {
   min-height: 44px;
   border: none;
   padding: 12px 20px;
@@ -138,29 +138,29 @@
   outline: none;
 }
 
-.add-appointment-btn {
+.vet-appointments .add-appointment-btn {
   background: var(--color-surface-solid, white);
   color: var(--veterinary-primary);
   box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
 }
 
-.add-appointment-btn:hover {
+.vet-appointments .add-appointment-btn:hover {
   transform: translateY(-2px);
   box-shadow: 0 12px 30px rgba(0, 0, 0, 0.15);
 }
 
-.refresh-appointments-btn {
+.vet-appointments .refresh-appointments-btn {
   background: rgba(255, 255, 255, 0.2);
   color: white;
   border: 2px solid rgba(255, 255, 255, 0.3);
 }
 
-.refresh-appointments-btn:hover {
+.vet-appointments .refresh-appointments-btn:hover {
   background: rgba(255, 255, 255, 0.3);
   transform: translateY(-2px);
 }
 
-.refresh-appointments-btn.refreshing svg {
+.vet-appointments .refresh-appointments-btn.refreshing svg {
   animation: vetAppointmentSpin 0.9s linear infinite;
 }
 
@@ -173,7 +173,7 @@
 /* ─────────────────────────────────────────────────────────────
    Error Message - Glass Style
 ───────────────────────────────────────────────────────────── */
-.error-message {
+.vet-appointments .error-message {
   display: flex;
   align-items: center;
   gap: 12px;
@@ -190,14 +190,14 @@
 /* ─────────────────────────────────────────────────────────────
    Summary Cards - Glass Morphism
 ───────────────────────────────────────────────────────────── */
-.appointments-summary {
+.vet-appointments .appointments-summary {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
   gap: 20px;
   animation: fadeInUp 1s ease 0.2s both;
 }
 
-.summary-card {
+.vet-appointments .summary-card {
   display: flex;
   align-items: center;
   gap: 16px;
@@ -212,12 +212,12 @@
   animation: scaleIn 0.6s ease;
 }
 
-.summary-card:hover {
+.vet-appointments .summary-card:hover {
   transform: translateY(-4px);
   box-shadow: var(--veterinary-shadow-xl);
 }
 
-.summary-icon {
+.vet-appointments .summary-icon {
   width: 56px;
   height: 56px;
   min-width: 56px;
@@ -229,32 +229,32 @@
   box-shadow: var(--veterinary-shadow-md);
 }
 
-.summary-icon.today {
+.vet-appointments .summary-icon.today {
   background: linear-gradient(135deg, var(--veterinary-primary), var(--veterinary-primary-dark));
 }
 
-.summary-icon.pending {
+.vet-appointments .summary-icon.pending {
   background: linear-gradient(135deg, var(--veterinary-warning), #dd6b20);
 }
 
-.summary-icon.approved {
+.vet-appointments .summary-icon.approved {
   background: linear-gradient(135deg, var(--veterinary-info), #3182ce);
 }
 
-.summary-icon.completed {
+.vet-appointments .summary-icon.completed {
   background: linear-gradient(135deg, var(--veterinary-success), #38a169);
 }
 
-.summary-card h3 {
+.vet-appointments .summary-card h3 {
   margin: 0 0 4px;
   color: var(--veterinary-text-secondary);
   font-size: 14px;
   font-weight: 600;
 }
 
-.today-count,
-.week-count,
-.completion-rate {
+.vet-appointments .today-count,
+.vet-appointments .week-count,
+.vet-appointments .completion-rate {
   color: var(--veterinary-text-primary);
   font-size: 24px;
   font-weight: 700;
@@ -264,7 +264,7 @@
 /* ─────────────────────────────────────────────────────────────
    Controls Section - Glass Panel
 ───────────────────────────────────────────────────────────── */
-.appointments-controls {
+.vet-appointments .appointments-controls {
   display: grid;
   gap: 20px;
   padding: 32px;
@@ -276,19 +276,19 @@
   animation: fadeInUp 1.2s ease 0.4s both;
 }
 
-.search-filter {
+.vet-appointments .search-filter {
   display: grid;
   grid-template-columns: minmax(260px, 420px) auto 1fr;
   align-items: center;
   gap: 20px;
 }
 
-.search-box {
+.vet-appointments .search-box {
   position: relative;
   min-width: 0;
 }
 
-.search-box input {
+.vet-appointments .search-box input {
   width: 100%;
   min-height: 48px;
   padding: 14px 50px 14px 16px;
@@ -303,17 +303,17 @@
   outline: none;
 }
 
-.search-box input:focus {
+.vet-appointments .search-box input:focus {
   border-color: var(--veterinary-primary);
   box-shadow: 0 0 0 4px rgba(255, 95, 147, 0.15), var(--veterinary-shadow-md);
   transform: translateY(-1px);
 }
 
-.search-box input::placeholder {
+.vet-appointments .search-box input::placeholder {
   color: var(--veterinary-text-muted);
 }
 
-.clear-search-btn {
+.vet-appointments .clear-search-btn {
   position: absolute;
   right: 12px;
   top: 50%;
@@ -330,12 +330,12 @@
   transition: all 0.3s ease;
 }
 
-.clear-search-btn:hover {
+.vet-appointments .clear-search-btn:hover {
   background: var(--veterinary-error);
   transform: translateY(-1px);
 }
 
-.filter-panel-label {
+.vet-appointments .filter-panel-label {
   display: inline-flex;
   align-items: center;
   gap: 8px;
@@ -347,7 +347,7 @@
   white-space: nowrap;
 }
 
-.filter-buttons {
+.vet-appointments .filter-buttons {
   display: flex;
   align-items: center;
   gap: 12px;
@@ -355,7 +355,7 @@
   min-width: 0;
 }
 
-.filter-btn {
+.vet-appointments .filter-btn {
   border: 2px solid var(--veterinary-glass-border);
   background: var(--veterinary-glass-bg);
   color: var(--veterinary-text-secondary);
@@ -370,26 +370,26 @@
   outline: none;
 }
 
-.filter-btn:hover {
+.vet-appointments .filter-btn:hover {
   transform: translateY(-1px);
   box-shadow: var(--veterinary-shadow-md);
   border-color: var(--veterinary-primary);
   color: var(--veterinary-primary);
 }
 
-.filter-btn.active {
+.vet-appointments .filter-btn.active {
   background: linear-gradient(135deg, var(--veterinary-primary), var(--veterinary-primary-dark));
   color: white;
   border-color: var(--veterinary-primary);
   box-shadow: var(--veterinary-shadow-md);
 }
 
-.filter-btn.active:hover {
+.vet-appointments .filter-btn.active:hover {
   transform: translateY(-2px);
   box-shadow: var(--veterinary-shadow-lg);
 }
 
-.appointments-last-updated {
+.vet-appointments .appointments-last-updated {
   display: inline-flex;
   align-items: center;
   gap: 8px;
@@ -406,7 +406,7 @@
 /* ─────────────────────────────────────────────────────────────
    Appointments Grid
 ───────────────────────────────────────────────────────────── */
-.appointments-grid {
+.vet-appointments .appointments-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(min(100%, 400px), 1fr));
   gap: 24px;
@@ -417,7 +417,7 @@
 /* ─────────────────────────────────────────────────────────────
    Appointment Cards - Glass Morphism
 ───────────────────────────────────────────────────────────── */
-.appointment-card {
+.vet-appointments .appointment-card {
   min-width: 0;
   position: relative;
   padding: 24px;
@@ -431,7 +431,7 @@
   animation: fadeInUp 0.8s ease;
 }
 
-.appointment-card::before {
+.vet-appointments .appointment-card::before {
   content: "";
   position: absolute;
   inset: 0 auto 0 0;
@@ -441,16 +441,16 @@
   transition: 0.3s ease;
 }
 
-.appointment-card:hover {
+.vet-appointments .appointment-card:hover {
   transform: translateY(-4px);
   box-shadow: var(--veterinary-shadow-xl);
 }
 
-.appointment-card:hover::before {
+.vet-appointments .appointment-card:hover::before {
   opacity: 1;
 }
 
-.appointment-header {
+.vet-appointments .appointment-header {
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
@@ -460,11 +460,11 @@
   border-bottom: 2px solid var(--veterinary-glass-border);
 }
 
-.appointment-info {
+.vet-appointments .appointment-info {
   min-width: 0;
 }
 
-.appointment-info h3 {
+.vet-appointments .appointment-info h3 {
   margin: 0 0 8px;
   display: flex;
   align-items: center;
@@ -477,11 +477,11 @@
   text-overflow: ellipsis;
 }
 
-.appointment-info h3 svg {
+.vet-appointments .appointment-info h3 svg {
   color: var(--veterinary-primary);
 }
 
-.appointment-info p {
+.vet-appointments .appointment-info p {
   margin: 0;
   display: flex;
   align-items: center;
@@ -494,7 +494,7 @@
 /* ─────────────────────────────────────────────────────────────
    Status Badges - Glass Style
 ───────────────────────────────────────────────────────────── */
-.appointment-status {
+.vet-appointments .appointment-status {
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -509,42 +509,42 @@
   backdrop-filter: blur(10px);
 }
 
-.appointment-status.pending {
+.vet-appointments .appointment-status.pending {
   background: rgba(237, 137, 54, 0.1);
   color: var(--veterinary-warning);
   border-color: rgba(237, 137, 54, 0.2);
 }
 
-.appointment-status.approved {
+.vet-appointments .appointment-status.approved {
   background: rgba(66, 153, 225, 0.1);
   color: var(--veterinary-info);
   border-color: rgba(66, 153, 225, 0.2);
 }
 
-.appointment-status.in_progress,
-.appointment-status.ongoing {
+.vet-appointments .appointment-status.in_progress,
+.vet-appointments .appointment-status.ongoing {
   background: rgba(255, 95, 147, 0.12);
   color: var(--veterinary-primary);
   border-color: rgba(255, 95, 147, 0.18);
 }
 
-.appointment-status.completed {
+.vet-appointments .appointment-status.completed {
   background: rgba(72, 187, 120, 0.1);
   color: var(--veterinary-success);
   border-color: rgba(72, 187, 120, 0.2);
 }
 
-.appointment-status.awaiting_payment {
+.vet-appointments .appointment-status.awaiting_payment {
   background: rgba(139, 92, 246, 0.1);
   color: #7c3aed;
   border-color: rgba(139, 92, 246, 0.2);
 }
 
-.appointment-status.cancelled,
-.appointment-status.canceled,
-.appointment-status.rejected,
-.appointment-status.no_show,
-.appointment-status.no-show {
+.vet-appointments .appointment-status.cancelled,
+.vet-appointments .appointment-status.canceled,
+.vet-appointments .appointment-status.rejected,
+.vet-appointments .appointment-status.no_show,
+.vet-appointments .appointment-status.no-show {
   background: rgba(245, 101, 101, 0.1);
   color: var(--veterinary-error);
   border-color: rgba(245, 101, 101, 0.2);
@@ -553,13 +553,13 @@
 /* ─────────────────────────────────────────────────────────────
    Details Section - Glass Items
 ───────────────────────────────────────────────────────────── */
-.appointment-details {
+.vet-appointments .appointment-details {
   display: grid;
   gap: 16px;
   margin-bottom: 20px;
 }
 
-.detail-item {
+.vet-appointments .detail-item {
   min-width: 0;
   display: flex;
   align-items: flex-start;
@@ -571,12 +571,12 @@
   transition: all 0.3s ease;
 }
 
-.detail-item:hover {
+.vet-appointments .detail-item:hover {
   background: rgba(255, 241, 247, 0.5);
   transform: translateY(-1px);
 }
 
-.detail-item > svg {
+.vet-appointments .detail-item > svg {
   width: 40px;
   height: 40px;
   min-width: 40px;
@@ -586,11 +586,11 @@
   background: rgba(255, 95, 147, 0.11);
 }
 
-.detail-item div {
+.vet-appointments .detail-item div {
   min-width: 0;
 }
 
-.detail-item strong {
+.vet-appointments .detail-item strong {
   display: block;
   margin-bottom: 4px;
   color: var(--veterinary-text-muted);
@@ -600,7 +600,7 @@
   letter-spacing: 0.5px;
 }
 
-.detail-item p {
+.vet-appointments .detail-item p {
   margin: 0;
   color: var(--veterinary-text-primary);
   font-size: 14px;
@@ -609,14 +609,14 @@
   word-break: break-word;
 }
 
-.detail-item.notes {
+.vet-appointments .detail-item.notes {
   align-items: flex-start;
 }
 
 /* ─────────────────────────────────────────────────────────────
    Action Buttons - Glass Style
 ───────────────────────────────────────────────────────────── */
-.appointment-actions {
+.vet-appointments .appointment-actions {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
   gap: 8px;
@@ -624,7 +624,7 @@
   border-top: 2px solid var(--veterinary-glass-border);
 }
 
-.action-btn {
+.vet-appointments .action-btn {
   min-height: 40px;
   min-width: 0;
   padding: 8px 12px;
@@ -643,73 +643,73 @@
   outline: none;
 }
 
-.action-btn:hover {
+.vet-appointments .action-btn:hover {
   transform: translateY(-2px);
 }
 
-.action-btn:disabled {
+.vet-appointments .action-btn:disabled {
   cursor: not-allowed;
   opacity: 0.6;
   transform: none !important;
 }
 
-.view-btn {
+.vet-appointments .view-btn {
   background: var(--veterinary-glass-bg);
   color: var(--veterinary-text-secondary);
   border: 2px solid var(--veterinary-glass-border);
   backdrop-filter: blur(10px);
 }
 
-.view-btn:hover {
+.vet-appointments .view-btn:hover {
   border-color: var(--veterinary-primary);
   color: var(--veterinary-primary);
   box-shadow: var(--veterinary-shadow-sm);
 }
 
-.start-btn {
+.vet-appointments .start-btn {
   background: rgba(66, 153, 225, 0.1);
   color: var(--veterinary-info);
   border: 2px solid rgba(66, 153, 225, 0.2);
 }
 
-.start-btn:hover {
+.vet-appointments .start-btn:hover {
   background: var(--veterinary-info);
   color: white;
   transform: translateY(-2px);
   box-shadow: var(--veterinary-shadow-md);
 }
 
-.complete-btn {
+.vet-appointments .complete-btn {
   background: rgba(72, 187, 120, 0.1);
   color: var(--veterinary-success);
   border: 2px solid rgba(72, 187, 120, 0.2);
 }
 
-.complete-btn:hover {
+.vet-appointments .complete-btn:hover {
   background: var(--veterinary-success);
   color: white;
   transform: translateY(-2px);
   box-shadow: var(--veterinary-shadow-md);
 }
 
-.edit-btn {
+.vet-appointments .edit-btn {
   background: linear-gradient(135deg, var(--veterinary-primary), var(--veterinary-primary-dark));
   color: white;
   box-shadow: var(--veterinary-shadow-sm);
 }
 
-.edit-btn:hover {
+.vet-appointments .edit-btn:hover {
   transform: translateY(-2px);
   box-shadow: var(--veterinary-shadow-md);
 }
 
-.delete-btn {
+.vet-appointments .delete-btn {
   background: rgba(245, 101, 101, 0.1);
   color: var(--veterinary-error);
   border: 2px solid rgba(245, 101, 101, 0.2);
 }
 
-.delete-btn:hover {
+.vet-appointments .delete-btn:hover {
   background: var(--veterinary-error);
   color: white;
   transform: translateY(-2px);
@@ -719,7 +719,7 @@
 /* ─────────────────────────────────────────────────────────────
    Empty State - Glass Style
 ───────────────────────────────────────────────────────────── */
-.no-appointments {
+.vet-appointments .no-appointments {
   text-align: center;
   padding: 80px 20px;
   background: var(--veterinary-glass-bg);
@@ -730,21 +730,21 @@
   animation: fadeIn 0.8s ease;
 }
 
-.no-appointments svg {
+.vet-appointments .no-appointments svg {
   font-size: 64px;
   color: var(--veterinary-text-muted);
   margin-bottom: 24px;
   opacity: 0.5;
 }
 
-.no-appointments h3 {
+.vet-appointments .no-appointments h3 {
   margin: 0 0 12px;
   color: var(--veterinary-text-secondary);
   font-size: 20px;
   font-weight: 700;
 }
 
-.no-appointments p {
+.vet-appointments .no-appointments p {
   margin: 0;
   color: var(--veterinary-text-muted);
   font-weight: 500;
@@ -754,7 +754,7 @@
 /* ─────────────────────────────────────────────────────────────
    Loading State - Minimal
 ───────────────────────────────────────────────────────────── */
-.vet-loading {
+.vet-appointments .vet-loading {
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -771,7 +771,7 @@
   animation: fadeIn 0.6s ease;
 }
 
-.vet-loader {
+.vet-appointments .vet-loader {
   width: 36px;
   height: 36px;
   border: 3px solid var(--veterinary-glass-border);
@@ -780,8 +780,8 @@
   animation: vetAppointmentSpin 0.8s linear infinite;
 }
 
-.spinner-icon,
-.spin-animation {
+.vet-appointments .spinner-icon,
+.vet-appointments .spin-animation {
   display: none;
 }
 
@@ -789,30 +789,30 @@
    Modal - Glass Style
 ───────────────────────────────────────────────────────────── */
 /* Detail modal shell comes from shared hbk-* (styles/bookingModal.css) */
-.hbk-modal {
+.vet-appointments .hbk-modal {
   width: min(720px, 100%);
 }
 
-.hbk-head h3 {
+.vet-appointments .hbk-head h3 {
   margin: 0;
   color: var(--veterinary-text-primary);
   font-size: 24px;
   font-weight: 700;
 }
 
-.hbk-head p {
+.vet-appointments .hbk-head p {
   margin: 4px 0 0;
   color: var(--veterinary-text-secondary);
   font-weight: 500;
   font-size: 16px;
 }
 
-.hbk-body {
+.vet-appointments .hbk-body {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
 }
 
-.modal-detail {
+.vet-appointments .modal-detail {
   min-width: 0;
   padding: 16px;
   border-radius: var(--veterinary-radius-lg);
@@ -821,15 +821,15 @@
   transition: all 0.3s ease;
 }
 
-.modal-detail:hover {
+.vet-appointments .modal-detail:hover {
   background: rgba(255, 241, 247, 0.5);
 }
 
-.modal-detail.full {
+.vet-appointments .modal-detail.full {
   grid-column: 1 / -1;
 }
 
-.modal-detail strong {
+.vet-appointments .modal-detail strong {
   display: block;
   margin-bottom: 8px;
   color: var(--veterinary-text-muted);
@@ -839,7 +839,7 @@
   letter-spacing: 0.5px;
 }
 
-.modal-detail p {
+.vet-appointments .modal-detail p {
   margin: 0;
   color: var(--veterinary-text-primary);
   font-weight: 600;
@@ -902,21 +902,21 @@
   background: var(--veterinary-page-bg);
 }
 
-[data-theme="dark"] .appointment-card {
+[data-theme="dark"] .vet-appointments .appointment-card {
   background: rgba(30, 18, 38, 0.82);
   border-color: rgba(255, 95, 147, 0.14);
 }
 
-[data-theme="dark"] .appointment-card:hover {
+[data-theme="dark"] .vet-appointments .appointment-card:hover {
   box-shadow: 0 20px 40px rgba(0, 0, 0, 0.35);
 }
 
-[data-theme="dark"] .summary-card {
+[data-theme="dark"] .vet-appointments .summary-card {
   background: rgba(30, 18, 38, 0.7);
   border-color: rgba(255, 95, 147, 0.14);
 }
 
-[data-theme="dark"] .appointments-controls {
+[data-theme="dark"] .vet-appointments .appointments-controls {
   background: rgba(30, 18, 38, 0.7);
   border-color: rgba(255, 95, 147, 0.14);
 }
@@ -940,12 +940,12 @@
   background: rgba(0, 0, 0, 0.72);
 }
 
-[data-theme="dark"] .hbk-modal {
+[data-theme="dark"] .vet-appointments .hbk-modal {
   background: rgba(25, 14, 35, 0.96);
   border-color: rgba(255, 95, 147, 0.18);
 }
 
-[data-theme="dark"] .modal-detail-value {
+[data-theme="dark"] .vet-appointments .modal-detail-value {
   color: var(--veterinary-text-primary);
 }
 
@@ -958,36 +958,36 @@
    Responsive Design
 ───────────────────────────────────────────────────────────── */
 @media (max-width: 1200px) {
-  .appointments-summary {
+  .vet-appointments .appointments-summary {
     grid-template-columns: repeat(2, 1fr);
   }
 
-  .search-filter {
+  .vet-appointments .search-filter {
     grid-template-columns: 1fr;
     align-items: stretch;
   }
 
-  .filter-panel-label {
+  .vet-appointments .filter-panel-label {
     display: none;
   }
 }
 
 @media (max-width: 900px) {
-  .appointments-hero {
+  .vet-appointments .appointments-hero {
     flex-direction: column;
     align-items: stretch;
     gap: 20px;
   }
 
-  .appointments-header-actions {
+  .vet-appointments .appointments-header-actions {
     justify-content: flex-start;
   }
 
-  .appointment-actions {
+  .vet-appointments .appointment-actions {
     grid-template-columns: repeat(2, 1fr);
   }
 
-  .appointment-actions .delete-btn {
+  .vet-appointments .appointment-actions .delete-btn {
     grid-column: 1 / -1;
   }
 }
@@ -998,41 +998,41 @@
     padding: 20px;
   }
 
-  .appointments-hero,
-  .appointments-controls,
-  .appointment-card,
-  .summary-card,
-  .hbk-modal {
+  .vet-appointments .appointments-hero,
+  .vet-appointments .appointments-controls,
+  .vet-appointments .appointment-card,
+  .vet-appointments .summary-card,
+  .vet-appointments .hbk-modal {
     border-radius: var(--veterinary-radius-xl);
   }
 
-  .appointments-summary {
+  .vet-appointments .appointments-summary {
     grid-template-columns: 1fr;
   }
 
-  .summary-card {
+  .vet-appointments .summary-card {
     padding: 20px;
   }
 
-  .filter-buttons {
+  .vet-appointments .filter-buttons {
     display: grid;
     grid-template-columns: repeat(2, 1fr);
   }
 
-  .filter-btn {
+  .vet-appointments .filter-btn {
     width: 100%;
   }
 
-  .appointment-header {
+  .vet-appointments .appointment-header {
     flex-direction: column;
     align-items: flex-start;
   }
 
-  .appointment-status {
+  .vet-appointments .appointment-status {
     width: fit-content;
   }
 
-  .hbk-body {
+  .vet-appointments .hbk-body {
     grid-template-columns: 1fr;
   }
 }
@@ -1042,49 +1042,49 @@
     padding: 16px;
   }
 
-  .appointments-hero {
+  .vet-appointments .appointments-hero {
     padding: 24px;
   }
 
-  .appointments-header-actions {
+  .vet-appointments .appointments-header-actions {
     display: grid;
     grid-template-columns: 1fr;
   }
 
-  .add-appointment-btn,
-  .refresh-appointments-btn {
+  .vet-appointments .add-appointment-btn,
+  .vet-appointments .refresh-appointments-btn {
     width: 100%;
   }
 
-  .filter-buttons {
+  .vet-appointments .filter-buttons {
     grid-template-columns: 1fr;
   }
 
-  .appointment-card {
+  .vet-appointments .appointment-card {
     padding: 20px;
   }
 
-  .detail-item {
+  .vet-appointments .detail-item {
     padding: 12px;
   }
 
-  .appointment-actions {
+  .vet-appointments .appointment-actions {
     grid-template-columns: 1fr;
   }
 
-  .appointment-actions .delete-btn {
+  .vet-appointments .appointment-actions .delete-btn {
     grid-column: auto;
   }
 
-  .action-btn {
+  .vet-appointments .action-btn {
     width: 100%;
   }
 
-  .header-content h2 {
+  .vet-appointments .header-content h2 {
     font-size: 24px;
   }
 
-  .appointments-controls {
+  .vet-appointments .appointments-controls {
     padding: 24px;
   }
 }

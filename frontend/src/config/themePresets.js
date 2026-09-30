@@ -6,6 +6,21 @@
 
 export const THEME_PRESETS = [
   {
+    key: "cream-white",
+    label: "Cream White",
+    emoji: "🐾",
+    description: "Warm cream surfaces with Pawesome pink accents",
+    primary: "#c83e69",
+    primaryLight: "#e6688d",
+    primarySoft: "#f8cbd8",
+    primaryHover: "#ad3158",
+    bg: "#f7f5ee",
+    bgGradient: "linear-gradient(135deg, #f3f0e6, #faf9f5, #ffffff)",
+    border: "rgba(107, 91, 63, 0.14)",
+    shadowCard: "0 10px 28px rgba(48, 43, 31, 0.07)",
+    shadowPrimary: "0 10px 24px rgba(200, 62, 105, 0.24)",
+  },
+  {
     key: "blush-pink",
     label: "Blush Pink",
     emoji: "🌸",

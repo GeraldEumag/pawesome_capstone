@@ -34,6 +34,7 @@ import {
 import { apiRequest } from "../../api/client";
 import { resolveAvatarUrl } from "../../utils/avatar";
 import { formatCurrency } from "../../utils/currency";
+import RowActionPopover from "../shared/RowActionPopover";
 import { exportToCSV, exportToPDF, exportToExcel } from "../../utils/reportExport";
 import FingerprintEnrollment from "./FingerprintEnrollment";
 import "./ManagerStaff.css";
@@ -177,7 +178,8 @@ const normalizeStaff = (record, index) => {
     role: getRole(record),
     status,
     address: record.address || record.employee?.address || "N/A",
-    hireDate: record.hire_date || record.date_hired || record.created_at || "",
+    hireDate: record.hire_date || record.date_hired || record.employment_date || record.created_at || "",
+    employmentStatus: record.employment_status || record.status || "active",
     schedule: record.schedule || record.shift || "N/A",
     attendanceRecords: safeNumber(
       record.attendance_records ||
@@ -975,6 +977,18 @@ const ManagerStaff = () => {
                           <div>
                             <strong>{person.name}</strong>
                             <small>{person.employeeCode}</small>
+                            {(() => {
+                              if (person.employmentStatus !== "probationary" || !person.hireDate) return null;
+                              const hireMs = new Date(person.hireDate).getTime();
+                              const endMs  = hireMs + 180 * 86400000;
+                              const daysLeft = Math.ceil((endMs - Date.now()) / 86400000);
+                              if (daysLeft > 14 || daysLeft < 0) return null;
+                              return (
+                                <span style={{ display: "inline-block", marginTop: 2, background: "#fef9c3", color: "#b45309", fontSize: "0.7rem", fontWeight: 700, borderRadius: 4, padding: "1px 6px" }}>
+                                  ⚠ Probationary ends {daysLeft <= 0 ? "today" : `in ${daysLeft}d`}
+                                </span>
+                              );
+                            })()}
                           </div>
                         </div>
                       </td>
@@ -1017,7 +1031,8 @@ const ManagerStaff = () => {
                       </td>
 
                       <td>
-                        <div className="staff-actions">
+                        <RowActionPopover rowLabel={person.name}>
+                          <div className="staff-actions">
                           <button type="button" onClick={() => openProfile(person)}>
                             <FontAwesomeIcon icon={faEye} />
                             Profile
@@ -1046,7 +1061,8 @@ const ManagerStaff = () => {
                             <FontAwesomeIcon icon={faFingerprint} />
                             Fingerprint
                           </button>
-                        </div>
+                          </div>
+                        </RowActionPopover>
                       </td>
                     </tr>
                   ))}

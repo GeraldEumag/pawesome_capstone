@@ -37,6 +37,10 @@ import {
   faGear,
   faFileLines,
   faSpinner,
+  faUserTie,
+  faCashRegister,
+  faBoxes,
+  faPaw,
 } from "@fortawesome/free-solid-svg-icons";
 
 import AdminSidebar from "./AdminSidebar";
@@ -55,8 +59,9 @@ const cardVariants = {
 const chartColors = ["#ff5f93", "#ff8db5", "#ffc8dd", "#f472b6", "#fb7185", "#f59e0b"];
 
 const AdminDashboard = () => {
-  const { user, updateUser } = useAuth();
-  const name = user?.name || "Admin";
+  const { user, role: authRole, updateUser } = useAuth();
+  const isSuperAdmin = authRole === "super_admin" || user?.role === "super_admin";
+  const name = user?.name || (isSuperAdmin ? "Super Admin" : "Admin");
   const profilePhoto = user?.profile_photo || "";
 
   const [dashboardData, setDashboardData] = useState(null);
@@ -344,6 +349,39 @@ const AdminDashboard = () => {
     },
   ];
 
+  const operationsModules = [
+    {
+      label: "Front Desk",
+      description: "Reception workspace",
+      to: "/receptionist",
+      icon: faUserTie,
+    },
+    {
+      label: "POS / Cashier",
+      description: "Sales and payments",
+      to: "/cashier/pos",
+      icon: faCashRegister,
+    },
+    {
+      label: "Inventory",
+      description: "Stock operations",
+      to: "/inventory",
+      icon: faBoxes,
+    },
+    {
+      label: "HR / Manager",
+      description: "People and payroll",
+      to: "/manager",
+      icon: faUsers,
+    },
+    {
+      label: "Veterinary",
+      description: "Clinical workspace",
+      to: "/veterinary",
+      icon: faPaw,
+    },
+  ];
+
   const ROUTE_META = [
     { path: "/admin", title: "Admin Command Center", subtitle: "Monitor users, appointments, revenue, inventory alerts, and system health in one professional workspace." },
     { path: "/admin/profile", title: "Profile Settings", subtitle: "Manage your account details and preferences." },
@@ -370,8 +408,17 @@ const AdminDashboard = () => {
     const exact = ROUTE_META.find((r) => r.path === normalizedPath);
     if (exact) return exact;
     const prefix = ROUTE_META.filter((r) => normalizedPath.startsWith(r.path + "/")).sort((a, b) => b.path.length - a.path.length)[0];
-    return prefix || { title: "Admin Workspace", subtitle: "Manage platform operations with role-based access and live system context." };
-  }, [normalizedPath]);
+    const meta = prefix || { title: "Admin Workspace", subtitle: "Manage platform operations with role-based access and live system context." };
+
+    if (isSuperAdmin && normalizedPath === "/admin") {
+      return {
+        title: "Super Admin Command Center",
+        subtitle: "Coordinate every staff workspace, monitor platform health, and manage system-wide access from one place.",
+      };
+    }
+
+    return meta;
+  }, [normalizedPath, isSuperAdmin]);
 
   const AdminTooltip = ({ active, payload, label }) => {
     if (!active || !payload || payload.length === 0) return null;
@@ -412,13 +459,14 @@ const AdminDashboard = () => {
       title={pageMeta.title}
       subtitle={pageMeta.subtitle}
       role="admin"
+      profileRole={isSuperAdmin ? "super_admin" : "admin"}
       name={name}
       profilePhoto={profilePhoto}
       extraActions={extraActions}
       showChatbot
-      chatbotTitle="Admin Assistant"
+      chatbotTitle={isSuperAdmin ? "Super Admin Assistant" : "Admin Assistant"}
       chatbotSubtitle="Logs, navigation, and RBAC guidance"
-      className="admin-dashboard"
+      className={isSuperAdmin ? "admin-dashboard super-admin-dashboard" : "admin-dashboard"}
     >
       {showOverview ? (
         <>
@@ -452,12 +500,13 @@ const AdminDashboard = () => {
                   <div className="admin-hero-copy">
                     <span className="admin-eyebrow">
                       <FontAwesomeIcon icon={faUserShield} />
-                      Administrator Overview
+                      {isSuperAdmin ? "Super Admin Overview" : "Administrator Overview"}
                     </span>
                     <h2>Welcome back, {name}</h2>
                     <p>
-                      Track live operations, user activity, revenue, inventory alerts,
-                      and system health from your admin command center.
+                      {isSuperAdmin
+                        ? "Track every staff workspace, platform health signal, and system-wide activity from your super admin command center."
+                        : "Track live operations, user activity, revenue, inventory alerts, and system health from your admin command center."}
                     </p>
                   </div>
 
@@ -514,6 +563,35 @@ const AdminDashboard = () => {
                   ))}
                 </section>
 
+                {isSuperAdmin && (
+                  <section className="super-admin-operations" aria-label="Operations Hub">
+                    <div className="super-admin-operations-heading">
+                      <span>Operations Hub</span>
+                      <h2>Staff workspaces</h2>
+                      <p>Open each operational dashboard without losing system context.</p>
+                    </div>
+
+                    <div className="super-admin-module-grid">
+                      {operationsModules.map((item) => (
+                        <NavLink
+                          key={item.label}
+                          to={item.to}
+                          className="super-admin-module-card"
+                        >
+                          <span className="super-admin-module-icon">
+                            <FontAwesomeIcon icon={item.icon} />
+                          </span>
+                          <span className="super-admin-module-copy">
+                            <strong>{item.label}</strong>
+                            <small>{item.description}</small>
+                          </span>
+                          <FontAwesomeIcon icon={faArrowRight} />
+                        </NavLink>
+                      ))}
+                    </div>
+                  </section>
+                )}
+
                 <section className="dashboard-grid">
                   <motion.article className="panel" variants={cardVariants}>
                     <div className="panel-header">
@@ -533,13 +611,18 @@ const AdminDashboard = () => {
                           <p>No appointment status data available.</p>
                         </div>
                       ) : (
-                        <ResponsiveContainer width="100%" height={280}>
+                        <ResponsiveContainer width="100%" height={220}>
                           <BarChart data={appointmentStatusData}>
                             <CartesianGrid strokeDasharray="3 3" />
-                            <XAxis dataKey="status" />
-                            <YAxis allowDecimals={false} />
+                            <XAxis
+                              dataKey="status"
+                              interval={0}
+                              tick={{ fontSize: 12 }}
+                              tickFormatter={(status) => String(status).replace(/[_-]/g, " ").replace(/\b\w/g, (letter) => letter.toUpperCase())}
+                            />
+                            <YAxis allowDecimals={false} domain={[0, "dataMax + 1"]} />
                             <Tooltip content={<AdminTooltip />} />
-                            <Bar dataKey="count" name="Appointments" radius={[10, 10, 0, 0]}>
+                            <Bar dataKey="count" name="Appointments" barCategoryGap="45%" radius={[10, 10, 0, 0]}>
                               {appointmentStatusData.map((entry, index) => (
                                 <Cell
                                   key={entry.status}
@@ -589,21 +672,21 @@ const AdminDashboard = () => {
                       </div>
                     </div>
 
-                    <div className="chart-box">
+                    <div className="chart-box user-role-chart-box">
                       {userRoleData.length === 0 ? (
                         <div className="admin-empty-chart">
                           <FontAwesomeIcon icon={faChartPie} />
                           <p>No role distribution data available.</p>
                         </div>
                       ) : (
-                        <ResponsiveContainer width="100%" height={280}>
+                        <ResponsiveContainer width="100%" height={320}>
                           <PieChart>
                             <Pie
                               data={userRoleData}
                               dataKey="count"
                               nameKey="role"
-                              outerRadius={95}
-                              innerRadius={55}
+                              outerRadius={66}
+                              innerRadius={38}
                               paddingAngle={4}
                             >
                               {userRoleData.map((entry, index) => (
@@ -614,7 +697,11 @@ const AdminDashboard = () => {
                               ))}
                             </Pie>
                             <Tooltip />
-                            <Legend />
+                            <Legend
+                              height={90}
+                              iconSize={8}
+                              wrapperStyle={{ fontSize: "0.72rem", lineHeight: 1.2 }}
+                            />
                           </PieChart>
                         </ResponsiveContainer>
                       )}

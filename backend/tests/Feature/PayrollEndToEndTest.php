@@ -60,6 +60,27 @@ class PayrollEndToEndTest extends TestCase
         $periodEnd = '2024-06-15';
 
         // === STEP 1: Create attendance records ===
+        // All Mon–Sat working days in June 1–15 must have records so the
+        // auto-absent logic (which marks past workdays without records as absent)
+        // does not drive gross_pay below the withholding tax threshold.
+        $regularDays = [
+            '2024-06-01', // Saturday
+            '2024-06-06', '2024-06-07', '2024-06-08', // Thu–Sat
+            '2024-06-10', '2024-06-11', '2024-06-12',
+            '2024-06-13', '2024-06-14', '2024-06-15',
+        ];
+        foreach ($regularDays as $day) {
+            Attendance::create([
+                'user_id'        => $this->employee->id,
+                'date'           => $day,
+                'check_in'       => '08:00',
+                'check_out'      => '17:00',
+                'total_hours'    => 8,
+                'overtime_hours' => 0,
+                'status'         => 'present',
+                'is_late'        => false,
+            ]);
+        }
         Attendance::create([
             'user_id' => $this->employee->id,
             'date' => '2024-06-03',

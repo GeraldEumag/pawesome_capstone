@@ -253,7 +253,7 @@ const VetDashboard = () => {
     >
 
         {showOverview ? (
-          <section className="app-content vet-content">
+          <section className="vet-content">
             {/* Quick Actions */}
             <section className="vet-quick-actions-section">
               <div className="vet-qa-grid">
@@ -598,9 +598,7 @@ const VetDashboard = () => {
             </section>
           </section>
         ) : (
-          <section className="app-content dashboard-content">
-            <Outlet />
-          </section>
+          <Outlet />
         )}
     </DashboardLayout>
   );

@@ -2,13 +2,13 @@
   margin-bottom: 1.25rem;
 }
 
-.cards-grid {
+.standard-summary-cards .cards-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
   gap: 1rem;
 }
 
-.summary-card {
+.standard-summary-cards .summary-card {
   background: rgba(255, 255, 255, 0.96);
   border: 1px solid var(--report-border, rgba(255, 95, 147, 0.14));
   border-radius: 8px;
@@ -19,7 +19,7 @@
   overflow: hidden;
 }
 
-.summary-card::before {
+.standard-summary-cards .summary-card::before {
   content: "";
   position: absolute;
   inset: 0;
@@ -27,20 +27,20 @@
   pointer-events: none;
 }
 
-.summary-card:hover {
+.standard-summary-cards .summary-card:hover {
   transform: translateY(-2px);
   border-color: rgba(255, 95, 147, 0.28);
   box-shadow: 0 16px 38px rgba(255, 95, 147, 0.16);
 }
 
-.card-content {
+.standard-summary-cards .card-content {
   display: flex;
   align-items: center;
   gap: 0.85rem;
   position: relative;
 }
 
-.card-icon {
+.standard-summary-cards .card-icon {
   width: 42px;
   height: 42px;
   border-radius: 8px;
@@ -54,11 +54,11 @@
   flex: 0 0 auto;
 }
 
-.card-info {
+.standard-summary-cards .card-info {
   min-width: 0;
 }
 
-.card-value {
+.standard-summary-cards .card-value {
   color: #111827;
   font-size: 1.45rem;
   font-weight: 900;
@@ -67,14 +67,14 @@
   overflow-wrap: anywhere;
 }
 
-.card-label {
+.standard-summary-cards .card-label {
   color: #475569;
   font-size: 0.8rem;
   font-weight: 650;
   line-height: 1.25;
 }
 
-.card-trend {
+.standard-summary-cards .card-trend {
   display: inline-flex;
   align-items: center;
   gap: 0.4rem;
@@ -88,30 +88,30 @@
   position: relative;
 }
 
-.summary-card.success .card-icon,
-.summary-card.warning .card-icon,
-.summary-card.danger .card-icon,
-.summary-card.secondary .card-icon,
-.summary-card.info .card-icon {
+.standard-summary-cards .summary-card.success .card-icon,
+.standard-summary-cards .summary-card.warning .card-icon,
+.standard-summary-cards .summary-card.danger .card-icon,
+.standard-summary-cards .summary-card.secondary .card-icon,
+.standard-summary-cards .summary-card.info .card-icon {
   background: linear-gradient(135deg, var(--report-primary, #ff5f93), var(--report-primary-light, #ff8db5));
 }
 
 @media (max-width: 768px) {
-  .cards-grid {
+  .standard-summary-cards .cards-grid {
     grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
   }
 
-  .summary-card {
+  .standard-summary-cards .summary-card {
     padding: 0.9rem;
   }
 
-  .card-value {
+  .standard-summary-cards .card-value {
     font-size: 1.2rem;
   }
 }
 
 @media (max-width: 480px) {
-  .cards-grid {
+  .standard-summary-cards .cards-grid {
     grid-template-columns: 1fr;
   }
 }

@@ -30,7 +30,7 @@
   box-sizing: border-box;
 }
 
-.premium-card {
+.vet-customer-profiles .premium-card {
   border-radius: var(--veterinary-radius-xl);
   background: var(--veterinary-glass-bg);
   border: 1px solid var(--veterinary-glass-border);
@@ -80,7 +80,7 @@
   letter-spacing: 0.08em;
 }
 
-.premium-title,
+.vet-customer-profiles .premium-title,
 .vet-profiles-hero h2 {
   margin: 0 0 0.45rem;
   display: flex;
@@ -93,7 +93,7 @@
   line-height: 1.1;
 }
 
-.premium-muted,
+.vet-customer-profiles .premium-muted,
 .vet-profiles-hero p {
   max-width: 820px;
   margin: 0;
@@ -341,7 +341,7 @@
   font-size: 1.14rem;
 }
 
-.pet-line {
+.vet-customer-profiles .pet-line {
   color: var(--veterinary-primary) !important;
   font-weight: 900 !important;
 }
@@ -460,7 +460,7 @@
   color: #92400e;
 }
 
-.spin-animation {
+.vet-customer-profiles .spin-animation {
   animation: vetCustomerSpin 1s linear infinite;
 }
 
@@ -539,7 +539,7 @@
   gap: 1rem;
 }
 
-.modal-profile-summary {
+.vet-customer-profiles .modal-profile-summary {
   display: flex;
   align-items: center;
   gap: 1rem;
@@ -549,7 +549,7 @@
   border: 1px solid rgba(255, 95, 147, 0.14);
 }
 
-.modal-profile-avatar {
+.vet-customer-profiles .modal-profile-avatar {
   width: 96px;
   height: 96px;
   min-width: 96px;
@@ -563,20 +563,20 @@
   box-shadow: 0 12px 24px rgba(255, 95, 147, 0.18);
 }
 
-.modal-profile-summary h4 {
+.vet-customer-profiles .modal-profile-summary h4 {
   margin: 0;
   color: var(--veterinary-text-primary);
   font-size: 1.35rem;
   font-weight: 950;
 }
 
-.modal-profile-summary p {
+.vet-customer-profiles .modal-profile-summary p {
   margin: 0.25rem 0 0;
   color: var(--veterinary-text-muted);
   font-weight: 800;
 }
 
-.modal-profile-grid,
+.vet-customer-profiles .modal-profile-grid,
 .vet-pet-info-grid,
 .vet-history-grid {
   display: grid;
@@ -584,7 +584,7 @@
   gap: 0.85rem;
 }
 
-.modal-profile-grid div,
+.vet-customer-profiles .modal-profile-grid div,
 .vet-pet-info-grid div,
 .vet-history-grid div {
   min-width: 0;
@@ -594,7 +594,7 @@
   border: 1px solid rgba(255, 95, 147, 0.08);
 }
 
-.modal-profile-grid small,
+.vet-customer-profiles .modal-profile-grid small,
 .vet-pet-info-grid small,
 .vet-history-grid small {
   display: block;
@@ -606,7 +606,7 @@
   letter-spacing: 0.04em;
 }
 
-.modal-profile-grid strong,
+.vet-customer-profiles .modal-profile-grid strong,
 .vet-pet-info-grid strong,
 .vet-history-grid strong {
   color: var(--veterinary-text-primary);
@@ -855,7 +855,7 @@
   }
 
   .vet-profile-stats,
-  .modal-profile-grid,
+  .vet-customer-profiles .modal-profile-grid,
   .vet-pet-info-grid,
   .vet-history-grid {
     grid-template-columns: 1fr;
@@ -878,12 +878,12 @@
     align-items: flex-start;
   }
 
-  .modal-profile-summary {
+  .vet-customer-profiles .modal-profile-summary {
     flex-direction: column;
     align-items: flex-start;
   }
 
-  .modal-profile-avatar {
+  .vet-customer-profiles .modal-profile-avatar {
     width: 82px;
     height: 82px;
     min-width: 82px;
@@ -906,7 +906,7 @@
     padding: 16px;
   }
 
-  .premium-card {
+  .vet-customer-profiles .premium-card {
     padding: 1rem;
     border-radius: 20px;
   }

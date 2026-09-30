@@ -2,7 +2,7 @@
 /* Professional Manager Payroll Management UI */
 
 /* Payroll tab bar (Records / Computation) */
-.payroll-tab-bar {
+.manager-payroll .payroll-tab-bar {
   display: flex;
   gap: 0.5rem;
   padding: 0.75rem 1rem;
@@ -14,7 +14,7 @@
   z-index: 10;
 }
 
-.payroll-tab-btn {
+.manager-payroll .payroll-tab-btn {
   display: inline-flex;
   align-items: center;
   gap: 0.5rem;
@@ -29,20 +29,20 @@
   transition: all 0.18s ease;
 }
 
-.payroll-tab-btn:hover {
+.manager-payroll .payroll-tab-btn:hover {
   background: rgba(255, 95, 147, 0.06);
   color: #ff5f93;
   border-color: rgba(255, 95, 147, 0.4);
 }
 
-.payroll-tab-btn.active {
+.manager-payroll .payroll-tab-btn.active {
   background: #ff5f93;
   color: #fff;
   border-color: #ff5f93;
   font-weight: 600;
 }
 
-.readonly-badge {
+.manager-payroll .readonly-badge {
   display: inline-flex;
   align-items: center;
   margin-left: 0.5rem;

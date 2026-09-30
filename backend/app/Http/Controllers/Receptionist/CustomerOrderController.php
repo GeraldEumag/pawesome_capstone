@@ -15,6 +15,14 @@ use Illuminate\Support\Facades\Schema;
 
 class CustomerOrderController extends Controller
 {
+    public function workflowDisabled(Request $request, $id = null)
+    {
+        return response()->json([
+            'success' => false,
+            'message' => 'Customer store order processing is disabled.',
+        ], 410);
+    }
+
     public function index(Request $request)
     {
         $user = Auth::user();

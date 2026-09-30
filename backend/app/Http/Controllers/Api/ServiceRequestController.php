@@ -15,6 +15,7 @@ use App\Services\FileStorageService;
 use App\Services\WorkflowNotifier;
 use App\Services\BookingAvailabilityService;
 use App\Services\PetServiceCompatibilityService;
+use App\Services\ServiceDurationService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Auth;
@@ -143,6 +144,16 @@ class ServiceRequestController extends Controller
         if (!$isHotel && ($time < '09:00' || $time > '18:00')) {
             return response()->json([
                 'message' => 'Selected time is outside shop opening hours. Please choose between 9:00 AM and 6:00 PM.',
+            ], 422);
+        }
+
+        if (ServiceDurationService::isSameDayBookingClosed($validated['requested_date'])) {
+            $message = 'Same-day bookings are closed after 7:00 PM. Please choose a future date.';
+
+            return response()->json([
+                'success' => false,
+                'message' => $message,
+                'errors' => ['requested_date' => [$message]],
             ], 422);
         }
 

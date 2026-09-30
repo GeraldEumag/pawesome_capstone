@@ -20,6 +20,7 @@ import {
 } from "@fortawesome/free-solid-svg-icons";
 import { apiRequest } from "../../api/client";
 import { formatCurrency } from "../../utils/currency";
+import RowActionPopover from "../shared/RowActionPopover";
 import "./PayrollComputation.css";
 
 const formatNum = (v) => (v == null ? "0.00" : Number(v).toFixed(2));
@@ -356,11 +357,27 @@ const PayrollComputation = () => {
                           <div className="payroll-comp-breakdown">
                             <div><small>SSS</small><span>{formatCurrency(r.sss_contribution)}</span></div>
                             <div><small>PhilHealth</small><span>{formatCurrency(r.philhealth_contribution)}</span></div>
-                            <div><small>Pag-IBIG</small><span>{formatCurrency(r.pagibig_contribution)}</span></div>
-                            <div><small>Late</small><span>{formatCurrency(r.late_deductions)}</span></div>
-                            <div><small>Absent</small><span>{formatCurrency(r.absent_deductions)}</span></div>
+                            <div><small>Pag-IBIG (≤₱100)</small><span>{formatCurrency(r.pagibig_contribution)}</span></div>
+                            <div><small>Tax</small><span>{formatCurrency(r.tax_deduction)}</span></div>
+                            <div><small>Late ({r.total_late_minutes || 0} min)</small><span>{formatCurrency(r.late_deductions)}</span></div>
+                            <div><small>Absent ({r.absent_days || 0} day{r.absent_days !== 1 ? "s" : ""})</small><span>{formatCurrency(r.absent_deductions)}</span></div>
+                            {Number(r.salary_loan) > 0 && (
+                              <div><small>Salary Loan</small><span>{formatCurrency(r.salary_loan)}</span></div>
+                            )}
+                            {Number(r.cash_advance) > 0 && (
+                              <div><small>Cash Advance</small><span>{formatCurrency(r.cash_advance)}</span></div>
+                            )}
                             {r.paid_leave_days > 0 && (
                               <div><small>Paid Leave</small><span>{r.paid_leave_days} day(s), not deducted</span></div>
+                            )}
+                            {Number(r.night_differential) > 0 && (
+                              <div style={{ color: "#059669" }}><small>Night Diff (+)</small><span>+{formatCurrency(r.night_differential)}</span></div>
+                            )}
+                            {Number(r.rest_day_pay) > 0 && (
+                              <div style={{ color: "#059669" }}><small>Rest Day Pay (+)</small><span>+{formatCurrency(r.rest_day_pay)}</span></div>
+                            )}
+                            {Number(r.regular_holiday_pay) > 0 && (
+                              <div style={{ color: "#059669" }}><small>Holiday Pay (+)</small><span>+{formatCurrency(r.regular_holiday_pay)}</span></div>
                             )}
                             <div><small>Other</small>
                               <input
@@ -375,9 +392,11 @@ const PayrollComputation = () => {
                       </td>
                       <td><strong className="net">{formatCurrency(r._net)}</strong></td>
                       <td>
-                        <button type="button" className="payroll-comp-btn-icon" onClick={() => setShowBreakdown(showBreakdown === rowKey(r) ? null : rowKey(r))}>
-                          <FontAwesomeIcon icon={faEye} />
-                        </button>
+                        <RowActionPopover rowLabel={r.employee_name}>
+                          <button type="button" title="View deduction breakdown" className="payroll-comp-btn-icon" onClick={() => setShowBreakdown(showBreakdown === rowKey(r) ? null : rowKey(r))}>
+                            <FontAwesomeIcon icon={faEye} />
+                          </button>
+                        </RowActionPopover>
                       </td>
                     </tr>
                   ))}

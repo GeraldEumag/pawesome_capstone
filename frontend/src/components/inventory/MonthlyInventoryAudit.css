@@ -30,29 +30,29 @@
    2. AUDIT HEADER
    ============================================================ */
 
-.audit-header {
+.monthly-audit-page .audit-header{
   display: flex;
   justify-content: space-between;
   align-items: center;
   margin-bottom: 1.5rem;
 }
 
-.audit-header h1,
-.audit-header h2 {
+.monthly-audit-page .audit-header h1,
+.monthly-audit-page .audit-header h2{
   font-size: 1.5rem;
   font-weight: 700;
   color: #1e293b;
   margin: 0;
 }
 
-.audit-header p {
+.monthly-audit-page .audit-header p{
   font-size: 0.875rem;
   color: #64748b;
   margin: 0.25rem 0 0;
 }
 
 /* Hero card (legacy) */
-.monthly-audit-hero {
+.monthly-audit-page .monthly-audit-hero{
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -65,23 +65,23 @@
   margin-bottom: 1.5rem;
 }
 
-.monthly-audit-hero h2 {
+.monthly-audit-page .monthly-audit-hero h2{
   margin: 0;
   font-size: 1.5rem;
   font-weight: 700;
   color: #1e293b;
 }
 
-.monthly-audit-hero p {
+.monthly-audit-page .monthly-audit-hero p{
   margin: 0.25rem 0 0;
   font-size: 0.875rem;
   color: #64748b;
 }
 
 /* Month control inside hero */
-.audit-month-control { min-width: 220px; }
+.monthly-audit-page .audit-month-control{ min-width: 220px; }
 
-.audit-month-control label {
+.monthly-audit-page .audit-month-control label{
   display: block;
   margin-bottom: 0.4rem;
   font-size: 0.82rem;
@@ -89,7 +89,7 @@
   color: #64748b;
 }
 
-.audit-month-control input {
+.monthly-audit-page .audit-month-control input{
   width: 100%;
   padding: 0.5rem 0.875rem;
   border: 1.5px solid #e2e8f0;
@@ -100,7 +100,7 @@
   transition: border-color 0.2s, box-shadow 0.2s;
 }
 
-.audit-month-control input:focus {
+.monthly-audit-page .audit-month-control input:focus{
   outline: none;
   border-color: #ff5f93;
   box-shadow: 0 0 0 3px rgba(255, 95, 147, 0.12);
@@ -110,7 +110,7 @@
    3. MATCH RATE PROGRESS BAR
    ============================================================ */
 
-.match-rate-bar {
+.monthly-audit-page .match-rate-bar{
   background: #f1f5f9;
   border-radius: 20px;
   height: 10px;
@@ -118,7 +118,7 @@
   margin: 0.75rem 0;
 }
 
-.match-rate-fill {
+.monthly-audit-page .match-rate-fill{
   height: 100%;
   background: linear-gradient(90deg, #10b981, #34d399);
   border-radius: 20px;
@@ -126,7 +126,7 @@
 }
 
 /* Legacy progress section */
-.audit-progress-section {
+.monthly-audit-page .audit-progress-section{
   background: #fff;
   border-radius: 14px;
   padding: 1.25rem;
@@ -134,17 +134,17 @@
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.06);
 }
 
-.progress-header {
+.monthly-audit-page .progress-header{
   display: flex;
   justify-content: space-between;
   align-items: center;
   margin-bottom: 0.75rem;
 }
 
-.progress-label { font-size: 0.9rem; font-weight: 600; color: #334155; }
-.progress-value { font-size: 0.9rem; font-weight: 700; color: #ff5f93; }
+.monthly-audit-page .progress-label{ font-size: 0.9rem; font-weight: 600; color: #334155; }
+.monthly-audit-page .progress-value{ font-size: 0.9rem; font-weight: 700; color: #ff5f93; }
 
-.progress-bar-bg {
+.monthly-audit-page .progress-bar-bg{
   width: 100%;
   height: 10px;
   background: #f1f5f9;
@@ -153,16 +153,16 @@
   margin-bottom: 0.75rem;
 }
 
-.progress-bar-fill {
+.monthly-audit-page .progress-bar-fill{
   height: 100%;
   background: linear-gradient(90deg, #ff5f93, #ff8db5);
   border-radius: 20px;
   transition: width 0.4s ease;
 }
 
-.progress-legend { display: flex; gap: 1.25rem; font-size: 0.8rem; color: #64748b; }
+.monthly-audit-page .progress-legend{ display: flex; gap: 1.25rem; font-size: 0.8rem; color: #64748b; }
 
-.progress-legend .dot {
+.monthly-audit-page .progress-legend .dot{
   display: inline-block;
   width: 8px;
   height: 8px;
@@ -170,22 +170,22 @@
   margin-right: 4px;
 }
 
-.progress-legend .dot.green { background: #10b981; }
-.progress-legend .dot.red   { background: #ef4444; }
-.progress-legend .dot.gray  { background: #94a3b8; }
+.monthly-audit-page .progress-legend .dot.green{ background: #10b981; }
+.monthly-audit-page .progress-legend .dot.red{ background: #ef4444; }
+.monthly-audit-page .progress-legend .dot.gray{ background: #94a3b8; }
 
 /* ============================================================
    4. SUMMARY CARDS
    ============================================================ */
 
-.audit-summary {
+.monthly-audit-page .audit-summary{
   display: grid;
   grid-template-columns: repeat(4, 1fr);
   gap: 1rem;
   margin-bottom: 1.5rem;
 }
 
-.audit-summary-card {
+.monthly-audit-page .audit-summary-card{
   background: #fff;
   border-radius: 14px;
   padding: 1.25rem;
@@ -193,20 +193,20 @@
   text-align: center;
 }
 
-.audit-summary-card.matched     { border-top: 3px solid #10b981; }
-.audit-summary-card.discrepancy { border-top: 3px solid #ef4444; }
-.audit-summary-card.pending     { border-top: 3px solid #f59e0b; }
-.audit-summary-card.total       { border-top: 3px solid #ff5f93; }
+.monthly-audit-page .audit-summary-card.matched{ border-top: 3px solid #10b981; }
+.monthly-audit-page .audit-summary-card.discrepancy{ border-top: 3px solid #ef4444; }
+.monthly-audit-page .audit-summary-card.pending{ border-top: 3px solid #f59e0b; }
+.monthly-audit-page .audit-summary-card.total{ border-top: 3px solid #ff5f93; }
 
 /* Legacy stat grid */
-.audit-stats-grid {
+.monthly-audit-page .audit-stats-grid{
   display: grid;
   grid-template-columns: repeat(4, 1fr);
   gap: 1rem;
   margin-bottom: 1.5rem;
 }
 
-.audit-stat-card {
+.monthly-audit-page .audit-stat-card{
   background: #fff;
   border-radius: 14px;
   padding: 1.25rem;
@@ -215,7 +215,7 @@
   border-top: 3px solid #ff5f93;
 }
 
-.audit-stat-card span {
+.monthly-audit-page .audit-stat-card span{
   display: block;
   font-size: 0.8rem;
   color: #64748b;
@@ -224,7 +224,7 @@
   letter-spacing: 0.05em;
 }
 
-.audit-stat-card strong {
+.monthly-audit-page .audit-stat-card strong{
   display: block;
   font-size: 1.75rem;
   font-weight: 800;
@@ -232,10 +232,10 @@
   margin-top: 0.4rem;
 }
 
-.audit-stat-card.good    strong { color: #10b981; }
-.audit-stat-card.warning strong { color: #f59e0b; }
+.monthly-audit-page .audit-stat-card.good    strong{ color: #10b981; }
+.monthly-audit-page .audit-stat-card.warning strong{ color: #f59e0b; }
 
-.audit-stat-card small {
+.monthly-audit-page .audit-stat-card small{
   display: block;
   font-size: 0.75rem;
   color: #94a3b8;
@@ -243,12 +243,12 @@
 }
 
 /* Trend variants */
-.trend-improving { background: #f0fdf4 !important; border-color: #10b981 !important; }
-.trend-declining { background: #fef2f2 !important; border-color: #ef4444 !important; }
-.trend-stable    { background: #fffbeb !important; border-color: #f59e0b !important; }
+.monthly-audit-page .trend-improving{ background: #f0fdf4 !important; border-color: #10b981 !important; }
+.monthly-audit-page .trend-declining{ background: #fef2f2 !important; border-color: #ef4444 !important; }
+.monthly-audit-page .trend-stable{ background: #fffbeb !important; border-color: #f59e0b !important; }
 
 /* Legacy audit summary stats strip */
-.audit-summary-stats {
+.monthly-audit-page .audit-summary-stats{
   display: flex;
   gap: 1rem;
   margin-bottom: 1.25rem;
@@ -259,7 +259,7 @@
   flex-wrap: wrap;
 }
 
-.summary-stat {
+.monthly-audit-page .summary-stat{
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -271,11 +271,11 @@
   transition: transform 0.2s;
 }
 
-.summary-stat:hover { transform: translateY(-2px); }
-.summary-stat.good    { background: #f0fdf4; border-color: #10b981; }
-.summary-stat.warning { background: #fffbeb; border-color: #f59e0b; }
+.monthly-audit-page .summary-stat:hover{ transform: translateY(-2px); }
+.monthly-audit-page .summary-stat.good{ background: #f0fdf4; border-color: #10b981; }
+.monthly-audit-page .summary-stat.warning{ background: #fffbeb; border-color: #f59e0b; }
 
-.stat-label {
+.monthly-audit-page .stat-label{
   font-size: 0.75rem;
   font-weight: 600;
   color: #64748b;
@@ -284,15 +284,15 @@
   margin-bottom: 0.25rem;
 }
 
-.stat-value { font-size: 1.5rem; font-weight: 700; color: #1e293b; }
-.summary-stat.good    .stat-value { color: #10b981; }
-.summary-stat.warning .stat-value { color: #f59e0b; }
+.monthly-audit-page .stat-value{ font-size: 1.5rem; font-weight: 700; color: #1e293b; }
+.monthly-audit-page .summary-stat.good    .stat-value{ color: #10b981; }
+.monthly-audit-page .summary-stat.warning .stat-value{ color: #f59e0b; }
 
 /* ============================================================
    5. AUDIT CONTROLS (month picker, filters)
    ============================================================ */
 
-.audit-controls {
+.monthly-audit-page .audit-controls{
   display: flex;
   flex-direction: row;
   gap: 0.75rem;
@@ -301,10 +301,10 @@
   align-items: center;
 }
 
-.audit-controls input[type="month"],
-.audit-controls input[type="text"],
-.audit-controls input[type="search"],
-.audit-controls select {
+.monthly-audit-page .audit-controls input[type="month"],
+.monthly-audit-page .audit-controls input[type="text"],
+.monthly-audit-page .audit-controls input[type="search"],
+.monthly-audit-page .audit-controls select{
   padding: 0.5rem 0.875rem;
   border: 1.5px solid #e2e8f0;
   border-radius: 8px;
@@ -314,25 +314,25 @@
   transition: border-color 0.2s, box-shadow 0.2s;
 }
 
-.audit-controls input[type="month"]:focus,
-.audit-controls input[type="text"]:focus,
-.audit-controls input[type="search"]:focus,
-.audit-controls select:focus {
+.monthly-audit-page .audit-controls input[type="month"]:focus,
+.monthly-audit-page .audit-controls input[type="text"]:focus,
+.monthly-audit-page .audit-controls input[type="search"]:focus,
+.monthly-audit-page .audit-controls select:focus{
   outline: none;
   border-color: #ff5f93;
   box-shadow: 0 0 0 3px rgba(255, 95, 147, 0.12);
 }
 
 /* Month selector (legacy) */
-.month-selector { display: flex; flex-direction: column; gap: 0.5rem; }
+.monthly-audit-page .month-selector{ display: flex; flex-direction: column; gap: 0.5rem; }
 
-.month-selector label {
+.monthly-audit-page .month-selector label{
   font-size: 0.875rem;
   font-weight: 600;
   color: #334155;
 }
 
-.month-selector select {
+.monthly-audit-page .month-selector select{
   padding: 0.5rem 0.875rem;
   border: 1.5px solid #e2e8f0;
   border-radius: 8px;
@@ -342,7 +342,7 @@
   transition: border-color 0.2s, box-shadow 0.2s;
 }
 
-.month-selector select:focus {
+.monthly-audit-page .month-selector select:focus{
   outline: none;
   border-color: #ff5f93;
   box-shadow: 0 0 0 3px rgba(255, 95, 147, 0.12);
@@ -352,7 +352,7 @@
    6. FILTER ROW
    ============================================================ */
 
-.filter-row {
+.monthly-audit-page .filter-row{
   display: flex;
   gap: 0.75rem;
   flex-wrap: wrap;
@@ -360,8 +360,8 @@
   margin-bottom: 1rem;
 }
 
-.filter-row input,
-.filter-row select {
+.monthly-audit-page .filter-row input,
+.monthly-audit-page .filter-row select{
   padding: 0.5rem 0.875rem;
   border: 1.5px solid #e2e8f0;
   border-radius: 8px;
@@ -370,8 +370,8 @@
   transition: border-color 0.2s, box-shadow 0.2s;
 }
 
-.filter-row input:focus,
-.filter-row select:focus {
+.monthly-audit-page .filter-row input:focus,
+.monthly-audit-page .filter-row select:focus{
   outline: none;
   border-color: #ff5f93;
   box-shadow: 0 0 0 3px rgba(255, 95, 147, 0.12);
@@ -381,12 +381,12 @@
    7. AUDIT TOOLBAR & FILTERS
    ============================================================ */
 
-.audit-toolbar {
+.monthly-audit-page .audit-toolbar{
   padding: 1rem 1.5rem;
   border-bottom: 1px solid #f1f5f9;
 }
 
-.audit-filters {
+.monthly-audit-page .audit-filters{
   display: flex;
   flex-wrap: wrap;
   align-items: center;
@@ -394,8 +394,8 @@
   margin-bottom: 0.75rem;
 }
 
-.audit-filters select,
-.audit-filters input {
+.monthly-audit-page .audit-filters select,
+.monthly-audit-page .audit-filters input{
   padding: 0.5rem 0.875rem;
   border: 1.5px solid #e2e8f0;
   border-radius: 8px;
@@ -404,25 +404,25 @@
   transition: border-color 0.2s, box-shadow 0.2s;
 }
 
-.audit-filters select:focus,
-.audit-filters input:focus {
+.monthly-audit-page .audit-filters select:focus,
+.monthly-audit-page .audit-filters input:focus{
   outline: none;
   border-color: #ff5f93;
   box-shadow: 0 0 0 3px rgba(255, 95, 147, 0.12);
 }
 
-.filter-right {
+.monthly-audit-page .filter-right{
   display: flex;
   align-items: center;
   gap: 0.75rem;
   margin-left: auto;
 }
 
-.search-group input { width: 220px; max-width: 100%; }
+.monthly-audit-page .search-group input{ width: 220px; max-width: 100%; }
 
-.status-pills { display: flex; gap: 0.5rem; }
+.monthly-audit-page .status-pills{ display: flex; gap: 0.5rem; }
 
-.status-pill {
+.monthly-audit-page .status-pill{
   padding: 0.4rem 1rem;
   border: 1.5px solid #e2e8f0;
   border-radius: 20px;
@@ -434,13 +434,13 @@
   color: #334155;
 }
 
-.status-pill.active {
+.monthly-audit-page .status-pill.active{
   background: #ff5f93;
   color: #fff;
   border-color: #ff5f93;
 }
 
-.btn-clear {
+.monthly-audit-page .btn-clear{
   padding: 0.4rem 0.875rem;
   border: 1.5px solid #e2e8f0;
   border-radius: 6px;
@@ -451,14 +451,14 @@
   transition: all 0.2s;
 }
 
-.btn-clear:hover {
+.monthly-audit-page .btn-clear:hover{
   border-color: #ff5f93;
   color: #ff5f93;
 }
 
-.audit-bulk-actions { display: flex; flex-wrap: wrap; gap: 0.75rem; }
+.monthly-audit-page .audit-bulk-actions{ display: flex; flex-wrap: wrap; gap: 0.75rem; }
 
-.btn-bulk {
+.monthly-audit-page .btn-bulk{
   padding: 0.4rem 0.875rem;
   border: 1.5px solid #e2e8f0;
   border-radius: 6px;
@@ -470,29 +470,29 @@
   transition: all 0.15s;
 }
 
-.btn-bulk:hover { background: #e2e8f0; }
+.monthly-audit-page .btn-bulk:hover{ background: #e2e8f0; }
 
-.btn-bulk-clear {
+.monthly-audit-page .btn-bulk-clear{
   border-color: #fecaca;
   background: #fee2e2;
   color: #991b1b;
 }
 
-.btn-bulk-clear:hover { background: #fecaca; }
+.monthly-audit-page .btn-bulk-clear:hover{ background: #fecaca; }
 
-.btn-bulk-warn {
+.monthly-audit-page .btn-bulk-warn{
   border-color: #fde68a;
   background: #fef9c3;
   color: #854d0e;
 }
 
-.btn-bulk-warn:hover { background: #fde68a; }
+.monthly-audit-page .btn-bulk-warn:hover{ background: #fde68a; }
 
 /* ============================================================
    8. AUDIT TABLE CONTAINER
    ============================================================ */
 
-.audit-table-container {
+.monthly-audit-page .audit-table-container{
   background: #fff;
   border-radius: 16px;
   box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
@@ -500,9 +500,9 @@
 }
 
 /* Sticky first column */
-.audit-table-container .sticky-col,
-.audit-table td:first-child.sticky-col,
-.audit-table th:first-child.sticky-col {
+.monthly-audit-page .audit-table-container .sticky-col,
+.monthly-audit-page .audit-table td:first-child.sticky-col,
+.monthly-audit-page .audit-table th:first-child.sticky-col{
   position: sticky;
   left: 0;
   background: #fff;
@@ -511,7 +511,7 @@
 }
 
 /* Legacy table card wrappers */
-.audit-table-card {
+.monthly-audit-page .audit-table-card{
   background: #fff;
   border-radius: 16px;
   box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
@@ -519,10 +519,10 @@
   margin-bottom: 1.5rem;
 }
 
-.audit-table-scroll { width: 100%; overflow-x: auto; }
+.monthly-audit-page .audit-table-scroll{ width: 100%; overflow-x: auto; }
 
 /* Table card header */
-.audit-table-header {
+.monthly-audit-page .audit-table-header{
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
@@ -530,18 +530,18 @@
   border-bottom: 1px solid #f1f5f9;
 }
 
-.audit-table-header h3 {
+.monthly-audit-page .audit-table-header h3{
   margin: 0 0 0.25rem;
   font-size: 1.1rem;
   font-weight: 700;
   color: #1e293b;
 }
 
-.audit-table-header p { margin: 0; font-size: 0.875rem; color: #64748b; }
+.monthly-audit-page .audit-table-header p{ margin: 0; font-size: 0.875rem; color: #64748b; }
 
-.audit-header-actions { display: flex; gap: 0.625rem; align-items: center; }
+.monthly-audit-page .audit-header-actions{ display: flex; gap: 0.625rem; align-items: center; }
 
-.audit-header-actions button {
+.monthly-audit-page .audit-header-actions button{
   padding: 0.5rem 1rem;
   border: none;
   border-radius: 8px;
@@ -555,7 +555,7 @@
    9. AUDIT TABLE
    ============================================================ */
 
-.audit-table {
+.monthly-audit-page .audit-table{
   width: 100%;
   min-width: 900px;
   border-collapse: collapse;
@@ -563,11 +563,11 @@
 }
 
 /* Pink gradient header */
-.audit-table thead tr {
+.monthly-audit-page .audit-table thead tr{
   background: linear-gradient(135deg, #ff5f93, #ff8db5);
 }
 
-.audit-table th {
+.monthly-audit-page .audit-table th{
   position: sticky;
   top: 0;
   padding: 1rem 1.25rem;
@@ -582,7 +582,7 @@
   white-space: nowrap;
 }
 
-.audit-table td {
+.monthly-audit-page .audit-table td{
   padding: 0.875rem 1.25rem;
   font-size: 0.875rem;
   border-bottom: 1px solid #f1f5f9;
@@ -590,22 +590,22 @@
   vertical-align: middle;
 }
 
-.audit-table td strong { display: block; color: #1e293b; }
-.audit-table td small  { display: block; margin-top: 3px; color: #94a3b8; font-size: 0.78rem; }
+.monthly-audit-page .audit-table td strong{ display: block; color: #1e293b; }
+.monthly-audit-page .audit-table td small{ display: block; margin-top: 3px; color: #94a3b8; font-size: 0.78rem; }
 
-.audit-table tbody tr { transition: background 0.15s; }
+.monthly-audit-page .audit-table tbody tr{ transition: background 0.15s; }
 
-.audit-table tbody tr:hover { background: rgba(255, 95, 147, 0.03); }
+.monthly-audit-page .audit-table tbody tr:hover{ background: rgba(255, 95, 147, 0.03); }
 
 /* Compact modifier */
-.audit-table.compact { font-size: 0.85rem; }
+.monthly-audit-page .audit-table.compact{ font-size: 0.85rem; }
 
-.audit-table.compact th,
-.audit-table.compact td { padding: 0.625rem 0.75rem; }
+.monthly-audit-page .audit-table.compact th,
+.monthly-audit-page .audit-table.compact td{ padding: 0.625rem 0.75rem; }
 
-.audit-table.compact td.numeric { text-align: right; }
+.monthly-audit-page .audit-table.compact td.numeric{ text-align: right; }
 
-.audit-table.compact .sticky-col {
+.monthly-audit-page .audit-table.compact .sticky-col{
   position: sticky;
   left: 0;
   background: #fff;
@@ -613,24 +613,24 @@
   min-width: 180px;
 }
 
-.audit-table.compact thead .sticky-col {
+.monthly-audit-page .audit-table.compact thead .sticky-col{
   background: linear-gradient(135deg, #ff5f93, #ff8db5);
   z-index: 3;
 }
 
 /* Discrepancy row highlight */
-.row-discrepancy { background: #fef9c3 !important; }
+.monthly-audit-page .row-discrepancy{ background: #fef9c3 !important; }
 
 /* ============================================================
    10. VARIANCE CELLS
    ============================================================ */
 
-.variance-cell {
+.monthly-audit-page .variance-cell{
   font-weight: 600;
   text-align: center;
 }
 
-.variance-zero {
+.monthly-audit-page .variance-zero{
   color: #10b981;
   font-weight: 600;
   background: rgba(16, 185, 129, 0.08);
@@ -639,7 +639,7 @@
   display: inline-block;
 }
 
-.variance-positive {
+.monthly-audit-page .variance-positive{
   color: #f59e0b;
   font-weight: 600;
   background: rgba(245, 158, 11, 0.08);
@@ -648,7 +648,7 @@
   display: inline-block;
 }
 
-.variance-negative {
+.monthly-audit-page .variance-negative{
   color: #ef4444;
   font-weight: 600;
   background: rgba(239, 68, 68, 0.08);
@@ -658,24 +658,24 @@
 }
 
 /* Legacy variance-cell modifiers */
-.variance-cell.positive {
+.monthly-audit-page .variance-cell.positive{
   color: #10b981;
   background: rgba(16, 185, 129, 0.08);
   border-radius: 6px;
   padding: 0.2rem 0.5rem;
 }
 
-.variance-cell.negative {
+.monthly-audit-page .variance-cell.negative{
   color: #ef4444;
   background: rgba(239, 68, 68, 0.08);
   border-radius: 6px;
   padding: 0.2rem 0.5rem;
 }
 
-.variance-cell:not(.positive):not(.negative) { color: #94a3b8; }
+.monthly-audit-page .variance-cell:not(.positive):not(.negative){ color: #94a3b8; }
 
 /* Variance badge chips */
-.variance-badge {
+.monthly-audit-page .variance-badge{
   display: inline-flex;
   align-items: center;
   padding: 0.125rem 0.5rem;
@@ -684,14 +684,14 @@
   font-size: 0.8rem;
 }
 
-.variance-badge.up   { background: #dcfce7; color: #166534; }
-.variance-badge.down { background: #fee2e2; color: #991b1b; }
+.monthly-audit-page .variance-badge.up{ background: #dcfce7; color: #166534; }
+.monthly-audit-page .variance-badge.down{ background: #fee2e2; color: #991b1b; }
 
 /* ============================================================
    11. STATUS BADGES
    ============================================================ */
 
-.status-badge {
+.monthly-audit-page .status-badge{
   display: inline-flex;
   align-items: center;
   padding: 0.25rem 0.75rem;
@@ -700,12 +700,12 @@
   font-weight: 600;
 }
 
-.status-badge.matched     { background: #dcfce7; color: #166534; }
-.status-badge.discrepancy { background: #fee2e2; color: #991b1b; }
-.status-badge.pending     { background: #f1f5f9; color: #64748b; }
+.monthly-audit-page .status-badge.matched{ background: #dcfce7; color: #166534; }
+.monthly-audit-page .status-badge.discrepancy{ background: #fee2e2; color: #991b1b; }
+.monthly-audit-page .status-badge.pending{ background: #f1f5f9; color: #64748b; }
 
 /* Legacy .audit-status */
-.audit-status {
+.monthly-audit-page .audit-status{
   display: inline-flex;
   align-items: center;
   padding: 0.25rem 0.75rem;
@@ -716,15 +716,15 @@
   letter-spacing: 0.04em;
 }
 
-.audit-status.pending     { background: #f1f5f9; color: #64748b; }
-.audit-status.matched     { background: #dcfce7; color: #166534; }
-.audit-status.discrepancy { background: #fee2e2; color: #991b1b; }
+.monthly-audit-page .audit-status.pending{ background: #f1f5f9; color: #64748b; }
+.monthly-audit-page .audit-status.matched{ background: #dcfce7; color: #166534; }
+.monthly-audit-page .audit-status.discrepancy{ background: #fee2e2; color: #991b1b; }
 
 /* ============================================================
    12. ACTUAL STOCK INPUT
    ============================================================ */
 
-.actual-input {
+.monthly-audit-page .actual-input{
   width: 80px;
   padding: 0.4rem 0.6rem;
   border: 1.5px solid #e2e8f0;
@@ -735,14 +735,14 @@
   background: #fff;
 }
 
-.actual-input:focus {
+.monthly-audit-page .actual-input:focus{
   outline: none;
   border-color: #ff5f93;
   box-shadow: 0 0 0 3px rgba(255, 95, 147, 0.12);
 }
 
 /* Legacy audit-input (full-width variant) */
-.audit-input {
+.monthly-audit-page .audit-input{
   width: 100%;
   padding: 0.5rem 0.75rem;
   border: 1.5px solid #e2e8f0;
@@ -752,30 +752,30 @@
   background: #fff;
 }
 
-.audit-input:focus {
+.monthly-audit-page .audit-input:focus{
   outline: none;
   border-color: #ff5f93;
   box-shadow: 0 0 0 3px rgba(255, 95, 147, 0.12);
 }
 
-.audit-input:hover { border-color: #cbd5e1; }
+.monthly-audit-page .audit-input:hover{ border-color: #cbd5e1; }
 
 /* Small audit input */
-.audit-input-sm {
+.monthly-audit-page .audit-input-sm{
   max-width: 90px;
   padding: 0.375rem 0.5rem !important;
   font-size: 0.85rem !important;
 }
 
 /* Required highlight */
-.input-required {
+.monthly-audit-page .input-required{
   border-color: #ef4444 !important;
   background: #fef2f2 !important;
 }
 
 /* Table native inputs */
-.audit-table input[type="number"],
-.audit-table input[type="text"] {
+.monthly-audit-page .audit-table input[type="number"],
+.monthly-audit-page .audit-table input[type="text"]{
   width: 100%;
   padding: 0.5rem 0.75rem;
   border: 1.5px solid #e2e8f0;
@@ -785,8 +785,8 @@
   background: #fff;
 }
 
-.audit-table input[type="number"]:focus,
-.audit-table input[type="text"]:focus {
+.monthly-audit-page .audit-table input[type="number"]:focus,
+.monthly-audit-page .audit-table input[type="text"]:focus{
   outline: none;
   border-color: #ff5f93;
   box-shadow: 0 0 0 3px rgba(255, 95, 147, 0.12);
@@ -796,7 +796,7 @@
    13. AUDIT ACTIONS (bottom bar)
    ============================================================ */
 
-.audit-actions {
+.monthly-audit-page .audit-actions{
   display: flex;
   justify-content: flex-end;
   gap: 0.75rem;
@@ -805,7 +805,7 @@
 }
 
 /* ---- Save button ---- */
-.btn-save {
+.monthly-audit-page .btn-save{
   background: linear-gradient(135deg, #ff5f93, #ff8db5);
   color: #fff;
   padding: 0.75rem 2rem;
@@ -817,12 +817,12 @@
   transition: transform 0.2s, box-shadow 0.2s;
 }
 
-.btn-save:hover:not(:disabled) {
+.monthly-audit-page .btn-save:hover:not(:disabled){
   transform: translateY(-1px);
   box-shadow: 0 4px 16px rgba(255, 95, 147, 0.32);
 }
 
-.btn-save:disabled {
+.monthly-audit-page .btn-save:disabled{
   background: #94a3b8;
   cursor: not-allowed;
   transform: none;
@@ -830,7 +830,7 @@
 }
 
 /* Alias used in older JSX */
-.btn-save-audit {
+.monthly-audit-page .btn-save-audit{
   background: linear-gradient(135deg, #ff5f93, #ff8db5);
   color: #fff;
   padding: 0.75rem 2rem;
@@ -842,19 +842,19 @@
   transition: transform 0.2s, box-shadow 0.2s;
 }
 
-.btn-save-audit:hover:not(:disabled) {
+.monthly-audit-page .btn-save-audit:hover:not(:disabled){
   transform: translateY(-1px);
   box-shadow: 0 4px 16px rgba(255, 95, 147, 0.32);
 }
 
-.btn-save-audit:disabled {
+.monthly-audit-page .btn-save-audit:disabled{
   background: #94a3b8;
   cursor: not-allowed;
   transform: none;
 }
 
 /* ---- Export button (outline pink) ---- */
-.btn-export {
+.monthly-audit-page .btn-export{
   padding: 0.75rem 2rem;
   border: 1.5px solid #ff5f93;
   color: #ff5f93;
@@ -866,14 +866,14 @@
   transition: background 0.2s, color 0.2s, transform 0.2s;
 }
 
-.btn-export:hover {
+.monthly-audit-page .btn-export:hover{
   background: #ff5f93;
   color: #fff;
   transform: translateY(-1px);
 }
 
 /* ---- CSV export ---- */
-.btn-export-csv {
+.monthly-audit-page .btn-export-csv{
   padding: 0.75rem 1.5rem;
   border: 1.5px solid #ff5f93;
   color: #ff5f93;
@@ -885,14 +885,14 @@
   transition: background 0.2s, color 0.2s, transform 0.2s;
 }
 
-.btn-export-csv:hover {
+.monthly-audit-page .btn-export-csv:hover{
   background: #ff5f93;
   color: #fff;
   transform: translateY(-1px);
 }
 
 /* ---- PDF export ---- */
-.btn-export-pdf {
+.monthly-audit-page .btn-export-pdf{
   padding: 0.75rem 1.5rem;
   border: 1.5px solid #e2e8f0;
   color: #334155;
@@ -904,14 +904,14 @@
   transition: all 0.2s;
 }
 
-.btn-export-pdf:hover {
+.monthly-audit-page .btn-export-pdf:hover{
   border-color: #ff5f93;
   color: #ff5f93;
   transform: translateY(-1px);
 }
 
 /* ---- Excel export ---- */
-.btn-export-excel {
+.monthly-audit-page .btn-export-excel{
   background: linear-gradient(135deg, #10b981, #34d399);
   color: #fff;
   padding: 0.75rem 1.5rem;
@@ -923,7 +923,7 @@
   transition: transform 0.2s, box-shadow 0.2s;
 }
 
-.btn-export-excel:hover {
+.monthly-audit-page .btn-export-excel:hover{
   transform: translateY(-1px);
   box-shadow: 0 4px 14px rgba(16, 185, 129, 0.3);
 }
@@ -932,14 +932,14 @@
    14. LOADING & EMPTY STATES
    ============================================================ */
 
-.loading {
+.monthly-audit-page .loading{
   text-align: center;
   padding: 3rem;
   color: #94a3b8;
   font-size: 0.95rem;
 }
 
-.empty-state {
+.monthly-audit-page .empty-state{
   text-align: center;
   padding: 3rem;
   color: #94a3b8;
@@ -948,7 +948,7 @@
 }
 
 /* Legacy loading card */
-.audit-loading-card {
+.monthly-audit-page .audit-loading-card{
   background: #fff;
   border-radius: 16px;
   box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
@@ -961,9 +961,9 @@
   margin-bottom: 1.5rem;
 }
 
-.audit-loading-card p { color: #94a3b8; }
+.monthly-audit-page .audit-loading-card p{ color: #94a3b8; }
 
-.audit-loading-card .spinner {
+.monthly-audit-page .audit-loading-card .spinner{
   width: 42px;
   height: 42px;
   margin: 0 auto 1rem;
@@ -974,7 +974,7 @@
 }
 
 /* Legacy empty state */
-.audit-empty {
+.monthly-audit-page .audit-empty{
   text-align: center;
   padding: 3rem;
   color: #94a3b8;
@@ -985,7 +985,7 @@
    15. PAGINATION
    ============================================================ */
 
-.pagination {
+.monthly-audit-page .pagination{
   display: flex;
   justify-content: center;
   align-items: center;
@@ -993,7 +993,7 @@
   padding: 1.25rem;
 }
 
-.page-btn {
+.monthly-audit-page .page-btn{
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -1010,25 +1010,25 @@
   transition: all 0.2s;
 }
 
-.page-btn:hover {
+.monthly-audit-page .page-btn:hover{
   border-color: #ff5f93;
   color: #ff5f93;
 }
 
-.page-btn.active {
+.monthly-audit-page .page-btn.active{
   background: #ff5f93;
   border-color: #ff5f93;
   color: #fff;
   font-weight: 700;
 }
 
-.page-btn:disabled {
+.monthly-audit-page .page-btn:disabled{
   opacity: 0.4;
   cursor: not-allowed;
 }
 
 /* Legacy pagination elements */
-.audit-pagination {
+.monthly-audit-page .audit-pagination{
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -1038,11 +1038,11 @@
   gap: 0.75rem;
 }
 
-.pagination-info { font-size: 0.85rem; color: #64748b; }
+.monthly-audit-page .pagination-info{ font-size: 0.85rem; color: #64748b; }
 
-.pagination-controls { display: flex; gap: 0.25rem; }
+.monthly-audit-page .pagination-controls{ display: flex; gap: 0.25rem; }
 
-.btn-page {
+.monthly-audit-page .btn-page{
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -1059,21 +1059,21 @@
   transition: all 0.15s;
 }
 
-.btn-page:hover:not(:disabled) {
+.monthly-audit-page .btn-page:hover:not(:disabled){
   border-color: #ff5f93;
   color: #ff5f93;
 }
 
-.btn-page.active {
+.monthly-audit-page .btn-page.active{
   background: #ff5f93;
   color: #fff;
   border-color: #ff5f93;
   font-weight: 700;
 }
 
-.btn-page:disabled { opacity: 0.4; cursor: not-allowed; }
+.monthly-audit-page .btn-page:disabled{ opacity: 0.4; cursor: not-allowed; }
 
-.page-ellipsis {
+.monthly-audit-page .page-ellipsis{
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -1083,7 +1083,7 @@
   user-select: none;
 }
 
-.per-page-select select {
+.monthly-audit-page .per-page-select select{
   padding: 0.375rem 0.625rem;
   border: 1.5px solid #e2e8f0;
   border-radius: 6px;
@@ -1096,7 +1096,7 @@
    16. CHART SECTION
    ============================================================ */
 
-.chart-container {
+.monthly-audit-page .chart-container{
   width: 100%;
   height: 400px;
   margin: 1.25rem 0;
@@ -1109,13 +1109,13 @@
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.06);
 }
 
-.chart-container canvas {
+.monthly-audit-page .chart-container canvas{
   max-width: 100%;
   max-height: 350px;
   margin: auto;
 }
 
-.chart-controls {
+.monthly-audit-page .chart-controls{
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -1126,7 +1126,7 @@
   border: 1px solid #e2e8f0;
 }
 
-.period-selector {
+.monthly-audit-page .period-selector{
   padding: 0.5rem 0.875rem;
   border: 1.5px solid #e2e8f0;
   border-radius: 8px;
@@ -1136,15 +1136,15 @@
   transition: border-color 0.2s, box-shadow 0.2s;
 }
 
-.period-selector:focus {
+.monthly-audit-page .period-selector:focus{
   outline: none;
   border-color: #ff5f93;
   box-shadow: 0 0 0 3px rgba(255, 95, 147, 0.12);
 }
 
-.chart-type-selector { display: flex; gap: 0.5rem; }
+.monthly-audit-page .chart-type-selector{ display: flex; gap: 0.5rem; }
 
-.chart-type-selector button {
+.monthly-audit-page .chart-type-selector button{
   padding: 0.5rem 0.875rem;
   border: 1.5px solid #e2e8f0;
   border-radius: 8px;
@@ -1155,12 +1155,12 @@
   color: #334155;
 }
 
-.chart-type-selector button:hover {
+.monthly-audit-page .chart-type-selector button:hover{
   border-color: #ff5f93;
   color: #ff5f93;
 }
 
-.chart-type-selector button.active {
+.monthly-audit-page .chart-type-selector button.active{
   background: linear-gradient(135deg, #ff5f93, #ff8db5);
   color: #fff;
   border-color: #ff5f93;
@@ -1179,80 +1179,80 @@
    ============================================================ */
 
 @media (max-width: 1100px) {
-  .audit-stats-grid { grid-template-columns: repeat(2, 1fr); }
-  .audit-summary    { grid-template-columns: repeat(2, 1fr); }
-  .monthly-audit-hero { flex-direction: column; align-items: stretch; }
+  .monthly-audit-page .audit-stats-grid{ grid-template-columns: repeat(2, 1fr); }
+  .monthly-audit-page .audit-summary{ grid-template-columns: repeat(2, 1fr); }
+  .monthly-audit-page .monthly-audit-hero{ flex-direction: column; align-items: stretch; }
 }
 
 @media (max-width: 768px) {
   .monthly-audit-page { padding: 1rem; }
 
-  .audit-stats-grid { grid-template-columns: repeat(2, 1fr); }
-  .audit-summary    { grid-template-columns: repeat(2, 1fr); }
+  .monthly-audit-page .audit-stats-grid{ grid-template-columns: repeat(2, 1fr); }
+  .monthly-audit-page .audit-summary{ grid-template-columns: repeat(2, 1fr); }
 
-  .audit-table-container { overflow-x: auto; }
+  .monthly-audit-page .audit-table-container{ overflow-x: auto; }
 
-  .audit-table-header {
+  .monthly-audit-page .audit-table-header{
     flex-direction: column;
     align-items: stretch;
     gap: 0.75rem;
   }
 
-  .audit-controls { flex-direction: column; align-items: stretch; }
-  .filter-row     { flex-direction: column; align-items: stretch; }
+  .monthly-audit-page .audit-controls{ flex-direction: column; align-items: stretch; }
+  .monthly-audit-page .filter-row{ flex-direction: column; align-items: stretch; }
 
-  .chart-controls {
+  .monthly-audit-page .chart-controls{
     flex-direction: column;
     gap: 0.75rem;
     align-items: stretch;
   }
 
-  .chart-container { height: 300px; }
-  .chart-type-selector { justify-content: center; }
+  .monthly-audit-page .chart-container{ height: 300px; }
+  .monthly-audit-page .chart-type-selector{ justify-content: center; }
 
-  .audit-summary-stats { flex-direction: column; }
+  .monthly-audit-page .audit-summary-stats{ flex-direction: column; }
 
-  .summary-stat {
+  .monthly-audit-page .summary-stat{
     flex-direction: row;
     justify-content: space-between;
     min-width: auto;
   }
 
-  .stat-label { margin-bottom: 0; font-size: 0.875rem; }
-  .stat-value { font-size: 1.25rem; }
+  .monthly-audit-page .stat-label{ margin-bottom: 0; font-size: 0.875rem; }
+  .monthly-audit-page .stat-value{ font-size: 1.25rem; }
 
-  .audit-filters {
+  .monthly-audit-page .audit-filters{
     flex-direction: column;
     align-items: stretch;
   }
 
-  .filter-right {
+  .monthly-audit-page .filter-right{
     margin-left: 0;
     width: 100%;
     justify-content: flex-end;
   }
 
-  .search-group input { width: 100%; }
+  .monthly-audit-page .search-group input{ width: 100%; }
 
-  .audit-bulk-actions { justify-content: stretch; }
+  .monthly-audit-page .audit-bulk-actions{ justify-content: stretch; }
 
-  .audit-pagination {
+  .monthly-audit-page .audit-pagination{
     flex-direction: column;
     align-items: center;
   }
 
-  .audit-table.compact .sticky-col { position: static; }
+  .monthly-audit-page .audit-table.compact .sticky-col{ position: static; }
 
-  .audit-actions {
+  .monthly-audit-page .audit-actions{
     flex-direction: column;
     align-items: stretch;
   }
 
-  .btn-save,
-  .btn-export,
-  .btn-export-csv,
-  .btn-export-pdf,
-  .btn-save-audit {
+  .monthly-audit-page .btn-save,
+  .monthly-audit-page .btn-export,
+  .monthly-audit-page .btn-export-csv,
+  .monthly-audit-page .btn-export-pdf,
+  .monthly-audit-page .btn-save-audit{
     width: 100%;
     text-align: center;
     justify-content: center;
@@ -1264,17 +1264,17 @@
    ============================================================ */
 
 @media print {
-  .audit-controls,
-  .audit-actions,
-  .filter-row,
-  .pagination,
-  .audit-toolbar,
-  .audit-bulk-actions,
-  .chart-controls,
-  .chart-type-selector {
+  .monthly-audit-page .audit-controls,
+  .monthly-audit-page .audit-actions,
+  .monthly-audit-page .filter-row,
+  .monthly-audit-page .pagination,
+  .monthly-audit-page .audit-toolbar,
+  .monthly-audit-page .audit-bulk-actions,
+  .monthly-audit-page .chart-controls,
+  .monthly-audit-page .chart-type-selector{
     display: none;
   }
 
-  .audit-table-container { overflow: visible; }
-  .audit-table { min-width: 0; }
+  .monthly-audit-page .audit-table-container{ overflow: visible; }
+  .monthly-audit-page .audit-table{ min-width: 0; }
 }

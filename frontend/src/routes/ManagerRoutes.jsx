@@ -7,11 +7,19 @@ import EmployeeDirectory from "../components/shared/EmployeeDirectory";
 import PayrollManagement from "../components/manager/PayrollManagement";
 import ManagerAttendance from "../components/manager/ManagerAttendance";
 import ManagerLeave from "../components/manager/ManagerLeave";
-import ManagerSchedule from "../components/manager/ManagerSchedule";
 import ManagerReports from "../components/manager/ManagerReports";
 import ManagerHistory from "../components/manager/ManagerHistory";
 import ProfileSettings from "../components/shared/ProfileSettings";
 import EmployeeIdPrinter from "../components/manager/EmployeeIdPrinter";
+// HR automation pages
+import HolidayManagement from "../components/manager/HolidayManagement";
+import SalaryLoanManagement from "../components/manager/SalaryLoanManagement";
+import ThirteenthMonthPanel from "../components/manager/ThirteenthMonthPanel";
+import GovernmentRemittanceReports from "../components/manager/GovernmentRemittanceReports";
+import DTRReport from "../components/manager/DTRReport";
+// Employee self-service
+import MyLeave from "../components/shared/MyLeave";
+import MyAttendanceCorrection from "../components/shared/MyAttendanceCorrection";
 
 const ManagerRoutes = () => (
   <Routes>
@@ -47,7 +55,8 @@ const ManagerRoutes = () => (
       <Route path="leave" element={<ManagerLeave />} />
       {/* Redirect old /leaves alias */}
       <Route path="leaves" element={<Navigate to="/manager/leave" replace />} />
-      <Route path="schedule" element={<ManagerSchedule />} />
+      {/* Schedule removed — company uses fixed schedule; redirect to attendance */}
+      <Route path="schedule" element={<Navigate to="/manager/attendance" replace />} />
       <Route path="history" element={<ManagerHistory />} />
       <Route path="reports" element={<ManagerReports />} />
       {/* Redirect old monitoring aliases to unified Reports page */}
@@ -58,6 +67,15 @@ const ManagerRoutes = () => (
       <Route path="customers" element={<Navigate to="/manager/reports" replace />} />
       <Route path="id-cards" element={<EmployeeIdPrinter />} />
       <Route path="profile" element={<ProfileSettings />} />
+      {/* HR automation — new pages */}
+      <Route path="holidays" element={<HolidayManagement />} />
+      <Route path="salary-loans" element={<SalaryLoanManagement />} />
+      <Route path="thirteenth-month" element={<ThirteenthMonthPanel />} />
+      <Route path="remittance-reports" element={<GovernmentRemittanceReports />} />
+      <Route path="dtr-report" element={<DTRReport />} />
+      {/* Employee self-service (accessible to all logged-in staff under /manager/ scope) */}
+      <Route path="my-leave" element={<MyLeave />} />
+      <Route path="my-attendance" element={<MyAttendanceCorrection />} />
     </Route>
   </Routes>
 );

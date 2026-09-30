@@ -73,7 +73,14 @@ const AdminRoutes = () => (
         <Route index element={<AdminReports />} />
 
         {/* Core admin routes */}
-        <Route path="profile" element={<ProfileSettings />} />
+        <Route
+          path="profile"
+          element={
+            <div className="admin-profile-settings">
+              <ProfileSettings />
+            </div>
+          }
+        />
         <Route path="users" element={<ManageUsers />} />
         <Route path="users/create" element={<CreateUser />} />
         <Route

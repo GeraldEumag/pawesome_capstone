@@ -38,7 +38,7 @@
 }
 
 /* ─── Success toast ──────────────────────────────────────────────────────────── */
-.walkins-toast {
+.walkins-page .walkins-toast {
   position: fixed;
   top: 20px;
   right: 20px;
@@ -62,7 +62,7 @@
 }
 
 /* ─── Hero Banner ────────────────────────────────────────────────────────────── */
-.walkins-hero {
+.walkins-page .walkins-hero {
   position: relative;
   overflow: hidden;
   display: flex;
@@ -78,7 +78,7 @@
 }
 
 /* decorative circle glow */
-.walkins-hero::after {
+.walkins-page .walkins-hero::after {
   content: "";
   position: absolute;
   top: -100px;
@@ -90,12 +90,12 @@
   pointer-events: none;
 }
 
-.walkins-hero > * {
+.walkins-page .walkins-hero > * {
   position: relative;
   z-index: 1;
 }
 
-.walkins-hero-left {
+.walkins-page .walkins-hero-left {
   flex: 1;
   display: flex;
   flex-direction: column;
@@ -103,7 +103,7 @@
   gap: 12px;
 }
 
-.walkins-hero-badge {
+.walkins-page .walkins-hero-badge {
   display: inline-flex;
   align-items: center;
   gap: 8px;
@@ -118,7 +118,7 @@
   width: fit-content;
 }
 
-.walkins-hero-title {
+.walkins-page .walkins-hero-title {
   margin: 0;
   font-size: clamp(1.8rem, 3.5vw, 2.5rem);
   font-weight: 900;
@@ -127,7 +127,7 @@
   line-height: 1.15;
 }
 
-.walkins-hero-sub {
+.walkins-page .walkins-hero-sub {
   margin: 0;
   font-size: 0.975rem;
   color: #4a5568;
@@ -136,14 +136,14 @@
   max-width: 480px;
 }
 
-.walkins-hero-stats {
+.walkins-page .walkins-hero-stats {
   display: flex;
   gap: 10px;
   flex-wrap: wrap;
   margin-top: 4px;
 }
 
-.hero-stat-chip {
+.walkins-page .hero-stat-chip {
   display: inline-flex;
   align-items: center;
   gap: 6px;
@@ -157,18 +157,18 @@
   backdrop-filter: blur(4px);
 }
 
-.hero-stat-chip svg {
+.walkins-page .hero-stat-chip svg {
   color: var(--wi-primary);
   font-size: 0.85rem;
 }
 
 /* ─── Notes card (hero right side) ──────────────────────────────────────────── */
-.walkins-hero-right {
+.walkins-page .walkins-hero-right {
   width: 320px;
   flex-shrink: 0;
 }
 
-.walkins-notes-card {
+.walkins-page .walkins-notes-card {
   height: 100%;
   padding: 20px;
   background: rgba(255, 255, 255, 0.82);
@@ -181,7 +181,7 @@
   box-shadow: 0 4px 16px rgba(255, 95, 147, 0.10);
 }
 
-.notes-card-header {
+.walkins-page .notes-card-header {
   display: flex;
   align-items: center;
   gap: 8px;
@@ -194,7 +194,7 @@
   border-bottom: 1px solid rgba(255, 95, 147, 0.15);
 }
 
-.notes-list {
+.walkins-page .notes-list {
   list-style: none;
   margin: 0;
   padding: 0;
@@ -203,13 +203,13 @@
   gap: 12px;
 }
 
-.note-item {
+.walkins-page .note-item {
   display: flex;
   align-items: flex-start;
   gap: 10px;
 }
 
-.note-icon-wrap {
+.walkins-page .note-icon-wrap {
   flex-shrink: 0;
   width: 30px;
   height: 30px;
@@ -223,39 +223,39 @@
   margin-top: 1px;
 }
 
-.note-text {
+.walkins-page .note-text {
   display: flex;
   flex-direction: column;
   gap: 2px;
 }
 
-.note-text strong {
+.walkins-page .note-text strong {
   font-size: 0.82rem;
   font-weight: 700;
   color: var(--wi-heading);
   line-height: 1.3;
 }
 
-.note-text span {
+.walkins-page .note-text span {
   font-size: 0.78rem;
   color: var(--wi-muted);
   line-height: 1.45;
 }
 
 /* ─── Services Section ───────────────────────────────────────────────────────── */
-.walkins-services {
+.walkins-page .walkins-services {
   display: flex;
   flex-direction: column;
   gap: 20px;
 }
 
-.services-section-header {
+.walkins-page .services-section-header {
   display: flex;
   flex-direction: column;
   gap: 4px;
 }
 
-.services-eyebrow {
+.walkins-page .services-eyebrow {
   display: inline-block;
   color: var(--wi-primary);
   font-size: 0.72rem;
@@ -264,7 +264,7 @@
   letter-spacing: 0.10em;
 }
 
-.services-title {
+.walkins-page .services-title {
   margin: 0;
   font-size: 1.25rem;
   font-weight: 800;
@@ -272,21 +272,21 @@
   letter-spacing: -0.02em;
 }
 
-.services-sub {
+.walkins-page .services-sub {
   margin: 0;
   font-size: 0.875rem;
   color: var(--wi-muted);
 }
 
 /* ─── Service Cards Grid ─────────────────────────────────────────────────────── */
-.service-cards-grid {
+.walkins-page .service-cards-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   gap: 20px;
 }
 
 /* Individual card */
-.service-card {
+.walkins-page .service-card {
   position: relative;
   display: flex;
   flex-direction: column;
@@ -300,15 +300,15 @@
   outline: none;
 }
 
-.service-card:hover,
-.service-card:focus-visible {
+.walkins-page .service-card:hover,
+.walkins-page .service-card:focus-visible {
   transform: translateY(-6px);
   box-shadow: var(--wi-shadow-hover);
   border-color: var(--svc-color, var(--wi-primary));
 }
 
 /* Gradient top accent */
-.svc-card-top {
+.walkins-page .svc-card-top {
   position: relative;
   padding: 36px 24px 28px;
   background: var(--svc-gradient, var(--wi-primary));
@@ -319,7 +319,7 @@
 }
 
 /* subtle shine overlay */
-.svc-card-top::before {
+.walkins-page .svc-card-top::before {
   content: "";
   position: absolute;
   inset: 0;
@@ -327,7 +327,7 @@
   pointer-events: none;
 }
 
-.svc-icon-ring {
+.walkins-page .svc-icon-ring {
   position: relative;
   z-index: 1;
   width: 72px;
@@ -344,11 +344,11 @@
   transition: transform 0.2s ease;
 }
 
-.service-card:hover .svc-icon-ring {
+.walkins-page .service-card:hover .svc-icon-ring {
   transform: scale(1.1);
 }
 
-.svc-badge {
+.walkins-page .svc-badge {
   position: relative;
   z-index: 1;
   padding: 4px 14px;
@@ -363,7 +363,7 @@
 }
 
 /* Card body */
-.svc-card-body {
+.walkins-page .svc-card-body {
   flex: 1;
   padding: 22px 22px 16px;
   display: flex;
@@ -371,7 +371,7 @@
   gap: 8px;
 }
 
-.svc-label {
+.walkins-page .svc-label {
   margin: 0;
   font-size: 1.1rem;
   font-weight: 800;
@@ -379,7 +379,7 @@
   letter-spacing: -0.01em;
 }
 
-.svc-desc {
+.walkins-page .svc-desc {
   margin: 0;
   font-size: 0.845rem;
   color: var(--wi-muted);
@@ -387,7 +387,7 @@
 }
 
 /* CTA button */
-.svc-cta-btn {
+.walkins-page .svc-cta-btn {
   display: flex;
   align-items: center;
   justify-content: center;
@@ -405,26 +405,26 @@
   letter-spacing: 0.01em;
 }
 
-.svc-cta-btn:hover {
+.walkins-page .svc-cta-btn:hover {
   filter: brightness(1.1);
   transform: translateY(-1px);
   box-shadow: 0 6px 18px rgba(0, 0, 0, 0.18);
 }
 
-.cta-arrow {
+.walkins-page .cta-arrow {
   opacity: 0;
   transform: translateX(-6px);
   transition: opacity 0.18s ease, transform 0.18s ease;
   font-size: 0.75rem;
 }
 
-.service-card:hover .cta-arrow {
+.walkins-page .service-card:hover .cta-arrow {
   opacity: 1;
   transform: translateX(0);
 }
 
 /* ─── Recent Walk-ins ────────────────────────────────────────────────────────── */
-.walkins-recent {
+.walkins-page .walkins-recent {
   background: var(--wi-surface);
   border: 1px solid var(--wi-border-light);
   border-radius: var(--wi-radius-lg);
@@ -432,7 +432,7 @@
   box-shadow: 0 2px 8px rgba(15, 23, 42, 0.05);
 }
 
-.recent-header {
+.walkins-page .recent-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -441,32 +441,32 @@
   background: #fafbfd;
 }
 
-.recent-header-left {
+.walkins-page .recent-header-left {
   display: flex;
   align-items: center;
   gap: 14px;
 }
 
-.recent-icon {
+.walkins-page .recent-icon {
   font-size: 1.2rem;
   color: var(--wi-muted);
 }
 
-.recent-title {
+.walkins-page .recent-title {
   margin: 0;
   font-size: 1rem;
   font-weight: 700;
   color: var(--wi-heading);
 }
 
-.recent-sub {
+.walkins-page .recent-sub {
   margin: 0;
   font-size: 0.8rem;
   color: var(--wi-muted);
 }
 
 /* Empty state */
-.recent-empty {
+.walkins-page .recent-empty {
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -476,7 +476,7 @@
   text-align: center;
 }
 
-.empty-icon-wrap {
+.walkins-page .empty-icon-wrap {
   width: 72px;
   height: 72px;
   border-radius: 50%;
@@ -491,14 +491,14 @@
   margin-bottom: 4px;
 }
 
-.empty-heading {
+.walkins-page .empty-heading {
   margin: 0;
   font-size: 1rem;
   font-weight: 700;
   color: var(--wi-heading);
 }
 
-.empty-hint {
+.walkins-page .empty-hint {
   font-size: 0.84rem;
   color: var(--wi-muted);
   max-width: 340px;
@@ -507,27 +507,27 @@
 
 /* ─── Responsive ─────────────────────────────────────────────────────────────── */
 @media (max-width: 1024px) {
-  .walkins-hero {
+  .walkins-page .walkins-hero {
     flex-direction: column;
   }
 
-  .walkins-hero-right {
+  .walkins-page .walkins-hero-right {
     width: 100%;
   }
 
-  .walkins-notes-card {
+  .walkins-page .walkins-notes-card {
     flex-direction: row;
     flex-wrap: wrap;
     gap: 10px;
   }
 
-  .notes-card-header {
+  .walkins-page .notes-card-header {
     width: 100%;
     border-bottom: 1px solid rgba(255, 95, 147, 0.15);
     padding-bottom: 8px;
   }
 
-  .note-item {
+  .walkins-page .note-item {
     flex: 1 1 calc(33% - 10px);
     min-width: 180px;
   }
@@ -539,29 +539,29 @@
     gap: 16px;
   }
 
-  .walkins-hero {
+  .walkins-page .walkins-hero {
     padding: 24px 20px;
   }
 
-  .service-cards-grid {
+  .walkins-page .service-cards-grid {
     grid-template-columns: 1fr;
   }
 
-  .svc-card-top {
+  .walkins-page .svc-card-top {
     padding: 28px 20px 22px;
   }
 
-  .note-item {
+  .walkins-page .note-item {
     flex: 1 1 100%;
   }
 }
 
 @media (max-width: 480px) {
-  .walkins-hero-stats {
+  .walkins-page .walkins-hero-stats {
     gap: 6px;
   }
 
-  .hero-stat-chip {
+  .walkins-page .hero-stat-chip {
     font-size: 0.72rem;
     padding: 4px 10px;
   }

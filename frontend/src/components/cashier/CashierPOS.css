@@ -32,10 +32,10 @@
   height: 100vh;
 }
 
-/* Right column: permanently docked order + payment panel */
+/* Right column: unified two-step order panel */
 .pos-order-panel {
-  width: 400px;
-  max-width: 42vw;
+  width: 360px;
+  max-width: 38vw;
   flex-shrink: 0;
   display: flex;
   flex-direction: column;
@@ -44,6 +44,133 @@
   border-left: 1px solid var(--color-border, rgba(255,95,147,.18));
   box-shadow: -8px 0 40px rgba(0,0,0,.06);
   z-index: 30;
+  overflow: hidden;
+}
+
+/* Step body — animates in when step changes */
+@keyframes pos-step-in {
+  from { opacity: 0; transform: translateX(14px); }
+  to   { opacity: 1; transform: none; }
+}
+
+.pos-step-body {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+  animation: pos-step-in 0.22s ease;
+}
+
+/* Step indicator breadcrumb */
+.pos-step-indicator {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 16px 6px;
+  flex-shrink: 0;
+}
+
+.pos-step-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  height: 26px;
+  padding: 0 12px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 700;
+  transition: all 0.2s;
+}
+
+.pos-step-chip--active  { background: var(--color-primary, #ff5f93); color: #fff; }
+.pos-step-chip--done    { background: #10b981; color: #fff; }
+.pos-step-chip--pending { background: #f1f5f9; color: #94a3b8; }
+
+.pos-step-connector {
+  flex: 1;
+  height: 2px;
+  background: #e2e8f0;
+  border-radius: 1px;
+  transition: background 0.25s;
+}
+
+.pos-step-connector--active { background: #10b981; }
+
+/* Proceed to payment CTA */
+.pos-drawer-foot {
+  flex-shrink: 0;
+  padding: 10px 14px 14px;
+  background: var(--color-surface-solid, #fff);
+}
+
+.pos-proceed-btn {
+  width: 100%;
+  height: 56px;
+  border-radius: 14px;
+  border: none;
+  background: linear-gradient(135deg, var(--color-primary, #ff5f93), var(--color-primary-light, #ff8db5));
+  color: #fff;
+  font-size: 14px;
+  font-weight: 800;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  box-shadow: 0 8px 24px rgba(255,95,147,.30);
+  transition: all 0.15s;
+}
+
+.pos-proceed-btn:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 32px rgba(255,95,147,.40);
+}
+
+.pos-proceed-btn:disabled {
+  background: #e5e7eb;
+  color: #9ca3af;
+  box-shadow: none;
+  cursor: not-allowed;
+}
+
+/* Back button + compact payment header */
+.pos-back-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  height: 32px;
+  padding: 0 12px;
+  border-radius: 8px;
+  border: 1px solid var(--color-border, rgba(255,95,147,.18));
+  background: transparent;
+  color: var(--color-muted, #64748b);
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.12s;
+  flex-shrink: 0;
+}
+
+.pos-back-btn:hover { background: #fee2e2; color: #dc2626; border-color: #fca5a5; }
+
+.pos-pay-summary-compact {
+  flex: 1;
+  display: flex;
+  align-items: baseline;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.pos-pay-item-count {
+  font-size: 12px;
+  color: var(--color-muted, #64748b);
+  font-weight: 500;
+}
+
+.pos-pay-total-label {
+  font-size: 22px;
+  font-weight: 900;
+  color: var(--color-primary, #ff5f93);
 }
 
 .pos-order-panel .pos-cart-items {
@@ -65,114 +192,61 @@
   justify-content: center;
 }
 
-/* Payment block — shrinks and scrolls internally on short screens so the
-   confirm button below never gets pushed off the panel */
-.pos-order-pay {
-  flex: 0 1 auto;
-  min-height: 0;
-  overflow-y: auto;
-  border-top: 1px solid var(--color-border, rgba(255,95,147,.18));
-  padding: 10px 14px;
-  background: var(--color-surface, #fdf7fa);
-}
-
 /* Confirm button pinned to the very bottom of the order panel */
 .pos-order-foot {
   flex-shrink: 0;
   padding: 10px 14px 14px;
-  background: var(--color-surface, #fdf7fa);
+  background: var(--color-surface-solid, #fff);
+  border-top: 1px solid var(--color-border, rgba(255,95,147,.18));
 }
 
-.pos-order-pay-head {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 10px;
-}
+.pos-order-foot .pos-confirm-btn { width: 100%; }
 
-.pos-order-pay-title {
-  font-size: 13px;
-  font-weight: 800;
-  color: var(--color-heading, #191919);
-  display: flex;
-  align-items: center;
-  gap: 7px;
-}
+.pos-numpad-change--short { color: #dc2626; }
 
-.pos-order-pay-due {
-  display: flex;
-  align-items: baseline;
-  gap: 8px;
-}
+/* Payment method tabs — compact inside the docked panel */
+.pos-order-panel .pos-payment-methods { padding: 8px 14px; }
+.pos-order-panel .pos-pm-btn { height: 44px; flex-direction: row; gap: 6px; font-size: 12px; }
+.pos-order-panel .pos-pm-icon { font-size: 15px; }
 
-.pos-order-pay-due .pos-payment-amount-label {
-  font-size: 10px;
-}
-
-.pos-order-pay-due strong {
-  font-size: 22px;
-  font-weight: 900;
-  color: var(--color-primary, #ff5f93);
-}
-
-.pos-order-foot .pos-confirm-btn {
-  width: 100%;
-}
-
-.pos-order-pay-hint {
-  margin-top: 8px;
-  text-align: center;
-  font-size: 11px;
-  color: var(--color-muted, #64748b);
-}
-
-.pos-numpad-change--short {
-  color: #dc2626;
-}
-
-/* Compact overrides — payment block lives inside the docked panel */
-.pos-order-pay .pos-payment-methods {
-  padding: 0;
-}
-
-.pos-order-pay .pos-pm-btn {
-  height: 44px;
-  flex-direction: row;
-  gap: 6px;
-  font-size: 12px;
-}
-
-.pos-order-pay .pos-pm-icon { font-size: 15px; }
-
-.pos-order-pay .pos-numpad-section {
-  flex: none;
+/* Numpad section fills remaining space in the payment step */
+.pos-order-panel .pos-numpad-section {
+  flex: 1;
+  min-height: 0;
   overflow: visible;
-  padding: 0;
-  gap: 8px;
-  margin-top: 10px;
+  padding: 0 14px 8px;
+  gap: 10px;
 }
 
-.pos-order-pay .pos-numpad-display { padding: 10px 14px; }
-.pos-order-pay .pos-numpad-received-value { font-size: 30px; }
-.pos-order-pay .pos-numpad-change { font-size: 15px; margin-top: 6px; }
-.pos-order-pay .pos-numpad-change strong { font-size: 17px; }
+.pos-order-panel .pos-numpad-display { padding: 10px 14px; flex-shrink: 0; }
+.pos-order-panel .pos-numpad-received-value { font-size: 30px; }
+.pos-order-panel .pos-numpad-change { font-size: 14px; margin-top: 4px; }
+.pos-order-panel .pos-numpad-change strong { font-size: 16px; }
 
-.pos-order-pay .pos-numpad { gap: 6px; }
-.pos-order-pay .pos-numpad-key { height: 40px; font-size: 16px; border-radius: 8px; }
-.pos-order-pay .pos-bill-btn { height: 30px; font-size: 11px; padding: 0 10px; }
-.pos-order-pay .pos-numpad-clear { height: 30px; }
+/* Numpad grid stretches to fill remaining height — no scrolling */
+.pos-order-panel .pos-numpad {
+  flex: 1;
+  min-height: 0;
+  gap: 6px;
+  grid-template-rows: repeat(4, 1fr);
+}
 
-.pos-order-pay .pos-digital-section {
-  flex: none;
-  padding: 0;
-  margin-top: 10px;
-  gap: 10px;
-  align-items: stretch;
+.pos-order-panel .pos-numpad-key { height: auto; min-height: 44px; font-size: 18px; border-radius: 8px; }
+.pos-order-panel .pos-bill-btn   { height: 30px; font-size: 11px; padding: 0 10px; }
+.pos-order-panel .pos-numpad-clear { height: 30px; flex-shrink: 0; }
+.pos-order-panel .pos-bill-presets { flex-shrink: 0; }
+
+.pos-order-panel .pos-digital-section {
+  flex: 1;
+  padding: 0 14px;
+  gap: 14px;
+  align-items: center;
+  justify-content: center;
   text-align: center;
 }
 
-.pos-order-pay .pos-digital-ref-input { height: 42px; font-size: 14px; }
-.pos-order-pay .pos-digital-amount { justify-content: center; }
+.pos-order-panel .pos-digital-ref-input { height: 44px; font-size: 14px; }
+.pos-order-panel .pos-digital-amount { justify-content: center; }
 
 /* ═══════════════════════════════════
    TOP BAR
@@ -1110,8 +1184,10 @@
 }
 
 .pos-stepper-input {
-  width: 34px;
-  height: 26px;
+  width: 38px;
+  height: 28px;
+  padding: 0;
+  line-height: 1;
   border: 1px solid var(--color-border, rgba(255,95,147,.18));
   border-radius: 6px;
   text-align: center;
@@ -1189,7 +1265,7 @@
 .pos-totals-grand span:last-child {
   font-size: 26px;
   font-weight: 900;
-  color: var(--color-heading, #191919);
+  color: var(--color-primary, #ff5f93);
 }
 
 /* ═══════════════════════════════════
@@ -1584,79 +1660,83 @@
 .pos-btn-primary:hover { opacity: 0.9; }
 
 /* ═══════════════════════════════════
-   RECEIPT PAPER
+   RECEIPT PAPER — B&W Thermal Design
    ═══════════════════════════════════ */
 .pos-receipt-paper {
   background: #fff;
-  font-family: 'Courier New', monospace;
-  padding: 20px;
-  border: 1px dashed #d1d5db;
-  border-radius: 10px;
-  color: #111827;
-  font-size: 12px;
+  font-family: 'OCR-B 10 BT', 'OCR B', 'Courier New', Courier, monospace;
+  overflow: hidden;
+  color: #000;
+  font-size: 13px;
+  border: 1px solid #999;
 }
 
-.pos-receipt-store {
-  text-align: center;
-  margin-bottom: 12px;
+/* Store header — left-aligned */
+.pos-receipt-hd {
+  padding: 10px 10px 4px;
 }
 
-.pos-receipt-store h3 {
+.pos-receipt-name {
   font-size: 15px;
   font-weight: 900;
-  color: #111827;
-  margin: 0 0 3px;
+  color: #000;
+  margin-bottom: 2px;
 }
 
-.pos-receipt-store p {
-  font-size: 11px;
-  color: #6b7280;
-  margin: 0;
+.pos-receipt-addr {
+  font-size: 10px;
+  color: #000;
+  line-height: 1.4;
 }
 
-.pos-receipt-divider {
-  border-top: 1px dashed #d1d5db;
-  margin: 10px 0;
+.pos-receipt-sub {
+  font-size: 12px;
+  font-weight: 700;
+  color: #000;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  margin-top: 6px;
 }
 
+/* Label/value rows */
 .pos-receipt-row {
   display: flex;
   justify-content: space-between;
-  padding: 2px 0;
-  color: #374151;
+  padding: 3px 10px;
+  font-size: 13px;
+  color: #000;
 }
 
-.pos-receipt-row--bold { font-weight: 700; color: #111827; }
+.pos-receipt-row span:first-child { color: #000; }
+.pos-receipt-row span:last-child  { font-weight: 600; }
 
-.pos-receipt-item-row {
-  padding: 3px 0;
+/* Items */
+.pos-receipt-item {
+  padding: 2px 10px 4px;
+  font-size: 13px;
 }
 
-.pos-receipt-item-row .item-name { font-weight: 600; color: #111827; }
+.pos-receipt-item-name  { font-weight: 700; color: #000; }
+.pos-receipt-item-qty   { font-size: 10px; color: #000; padding-left: 12px; }
+.pos-receipt-item-price { text-align: right; font-weight: 700; color: #000; margin-top: -14px; }
 
-.pos-receipt-item-row .item-meta {
-  display: flex;
-  justify-content: space-between;
-  color: #6b7280;
-}
-
+/* TOTAL row */
 .pos-receipt-total {
   display: flex;
   justify-content: space-between;
-  padding: 8px 0 4px;
-  border-top: 1px dashed #d1d5db;
-  font-size: 15px;
+  padding: 6px 10px;
+  font-size: 18px;
   font-weight: 900;
-  color: #111827;
-  margin-top: 4px;
+  color: #000;
 }
 
+/* Footer */
 .pos-receipt-footer {
   text-align: center;
-  font-size: 11px;
-  color: #9ca3af;
-  line-height: 1.6;
-  margin-top: 8px;
+  font-size: 10.5px;
+  color: #000;
+  line-height: 1.5;
+  padding: 8px 10px 12px;
 }
 
 /* ═══════════════════════════════════
@@ -1824,32 +1904,111 @@
   }
   .pos-modal-footer { display: none !important; }
   .pos-modal-close  { display: none !important; }
-  .pos-receipt-paper { border: none !important; }
 }
 
 /* ═══════════════════════════════════
    RESPONSIVE
    ═══════════════════════════════════ */
-@media (max-width: 1080px) {
-  /* Stack the docked order panel under the products on narrow screens */
-  .pos-kiosk { flex-direction: column; overflow-y: auto; height: auto; min-height: 100vh; }
 
-  .pos-main { height: auto; min-height: 60vh; }
+/* Very short laptop windows: let the numpad section scroll as a last resort */
+@media (min-width: 1081px) and (max-height: 620px) {
+  .pos-order-panel .pos-numpad-section { overflow-y: auto; }
+  .pos-order-panel .pos-numpad { flex: none; grid-template-rows: none; }
+  .pos-order-panel .pos-numpad-key { height: 40px; }
+}
+
+@media (max-width: 1080px) {
+  /* Tablet / narrow laptop: products on top, single order panel below.
+     Page scrolls as one unit — numpad is never trapped in a scroll strip. */
+  .pos-kiosk {
+    flex-wrap: wrap;
+    overflow-y: auto;
+    height: auto;
+    min-height: 100vh;
+    min-height: 100dvh;
+  }
+
+  .pos-main { flex: 1 1 100%; height: auto; min-height: 55vh; }
 
   .pos-order-panel {
     width: 100%;
-    max-width: 100%;
+    max-width: none;
     height: auto;
-    min-height: 50vh;
     border-left: none;
     border-top: 1px solid var(--color-border, rgba(255,95,147,.18));
+    box-shadow: none;
   }
 
+  .pos-step-body { min-height: auto; }
   .pos-order-panel .pos-cart-items { min-height: 160px; }
+
+  /* Payment step on tablet: flat layout, comfortable touch keys */
+  .pos-order-panel .pos-numpad-section { flex: none; }
+  .pos-order-panel .pos-numpad { flex: none; grid-template-rows: none; }
+  .pos-order-panel .pos-numpad-key { height: 52px; }
+}
+
+@media (max-width: 700px) {
+  .pos-order-panel .pos-numpad-key { height: 54px; }
 }
 
 @media (max-width: 768px) {
   .pos-brand-name { display: none; }
+
+  /* Stock alert chips + the desktop-only shortcut button crowd the
+     topbar on narrow screens; the nav menu keeps every link reachable. */
+  .pos-alert-badge { display: none; }
+  .pos-topbar-btn--optional { display: none; }
+
+  .pos-topbar { gap: 8px; padding: 0 10px; }
+
+  /* Full-width scanner panel instead of a drop-down under a tiny search field */
+  .pos-webcam-panel {
+    position: fixed;
+    top: 66px;
+    left: 12px;
+    right: 12px;
+  }
+
+  .pos-category-tabs { padding: 0 8px; gap: 3px; }
+  .pos-cat-tab { padding: 0 10px; gap: 5px; }
+
+  .pos-info-bar { padding: 8px 12px 4px; }
+  .pos-approvals-wrap { padding: 10px; }
+
+  .pos-step-indicator { padding: 8px 14px 4px; }
+  .pos-drawer-header { padding: 10px 14px; }
+  .pos-drawer-section { padding: 10px 14px; }
+  .pos-cart-items { padding: 8px 10px; }
+  .pos-drawer-totals { padding: 10px 14px; }
+
+  /* Touch-friendly payment controls */
+  .pos-back-btn { height: 36px; }
+  .pos-drawer-clear { width: 36px; height: 36px; }
+  .pos-order-panel .pos-bill-btn { height: 36px; }
+  .pos-order-panel .pos-pm-btn { height: 48px; }
+
+  /* Modals use more of the small viewport */
+  .pos-overlay { padding: 12px; }
+  .pos-modal { border-radius: 16px; max-height: calc(100dvh - 24px); }
+  .pos-modal-header { padding: 14px 18px 12px; }
+  .pos-modal-body { padding: 14px 18px; }
+  .pos-modal-footer { padding: 12px 18px 14px; flex-wrap: wrap; }
+  .pos-modal-footer .pos-btn-secondary,
+  .pos-modal-footer .pos-btn-primary { flex: 1; }
+
+  /* Photo viewer close button must stay inside the viewport */
+  .pos-photo-overlay { padding: 12px; }
+  .pos-photo-close { top: 6px; right: 6px; }
+
+  /* Toasts span the phone width */
+  .pos-toast-wrap {
+    left: 12px;
+    right: 12px;
+    bottom: 12px;
+    transform: none;
+  }
+  .pos-toast { width: 100%; max-width: none; }
 
   .pos-product-grid {
     grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
@@ -1864,4 +2023,24 @@
   .pos-product-grid {
     grid-template-columns: repeat(2, 1fr);
   }
+
+  .pos-brand-mark { width: 32px; height: 32px; font-size: 13px; }
+  .pos-search-wrap { height: 36px; padding: 0 10px; }
+  .pos-search-input { font-size: 12px; }
+
+  .pos-step-chip { padding: 0 10px; font-size: 10px; }
+
+  .pos-cart-row { padding: 8px; gap: 6px; }
+  .pos-stepper-input { width: 32px; }
+
+  .pos-tile-img { height: 96px; }
+  .pos-order-panel .pos-numpad-received-value { font-size: 26px; }
+}
+
+/* Short landscape phones: keep the order panel within reach */
+@media (max-width: 1080px) and (max-height: 540px) {
+  .pos-main { min-height: 45vh; }
+  .pos-order-panel .pos-cart-items { min-height: 100px; }
+  .pos-topbar { height: 52px; }
+  .pos-category-tabs { height: 46px; }
 }

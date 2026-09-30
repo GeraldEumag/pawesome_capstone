@@ -20,7 +20,9 @@ import {
   faTimes,
 } from "@fortawesome/free-solid-svg-icons";
 import { apiRequest } from "../../api/client";
+import { getDateTimeTimestamp } from "../../utils/apiNormalize";
 import PetAvatar from "../shared/PetAvatar";
+import RowActionPopover from "../shared/RowActionPopover";
 import "../../styles/bookingModal.css";
 import "./ReceptionistVeterinaryBookings.css";
 
@@ -88,8 +90,8 @@ const ReceptionistVeterinaryBookings = () => {
         owner: item.customer,
         ownerPhone: "N/A",
         doctor: "Unassigned",
-        appointmentDate: item.date,
-        appointmentTime: item.time,
+        appointmentDate: item.appointment_date || item.scheduled_at || item.date || item.booking_date || "",
+        appointmentTime: item.appointment_time || item.scheduled_time || item.time || "",
         duration: "30 mins",
         service: item.service,
         status: item.status,
@@ -274,7 +276,9 @@ const ReceptionistVeterinaryBookings = () => {
     const matchesDoctor = filterDoctor === "all" || appointment.doctor === filterDoctor;
     
     return matchesSearch && matchesStatus && matchesDoctor;
-  });
+  }).sort((a, b) =>
+    getDateTimeTimestamp(a.appointmentDate, a.appointmentTime) - getDateTimeTimestamp(b.appointmentDate, b.appointmentTime)
+  );
 
   const getStatusColor = (status) => {
     switch (status) {
@@ -457,22 +461,13 @@ const ReceptionistVeterinaryBookings = () => {
               <th>Date & Time</th>
               <th>Service</th>
               <th>Status</th>
-              <th>Assign Vet</th>
               <th>Actions</th>
             </tr>
           </thead>
           <tbody>
             {filteredAppointments.map((appointment) => (
               <tr key={appointment.id}>
-                <td>
-                  {appointment.status === "pending" && (
-                    <input
-                      type="checkbox"
-                      checked={selectedIds.has(appointment.rawId)}
-                      onChange={() => toggleSelect(appointment.rawId)}
-                    />
-                  )}
-                </td>
+                <td className="row-selection-spacer" />
                 <td>
                   <span className="id-badge">{appointment.id}</span>
                 </td>
@@ -514,31 +509,41 @@ const ReceptionistVeterinaryBookings = () => {
                   </div>
                 </td>
                 <td>
-                  {appointment.status === 'pending' ? (
-                    <select
-                      value={vetAssignments[appointment.rawId] || ""}
-                      onChange={(event) =>
-                        setVetAssignments((current) => ({
-                          ...current,
-                          [appointment.rawId]: event.target.value,
-                        }))
-                      }
-                    >
-                      <option value="">
-                        {veterinarians.length ? "Choose vet" : "No active vets"}
-                      </option>
-                      {veterinarians.map((vet) => (
-                        <option key={vet.id} value={vet.id}>
-                          {vet.name}
-                        </option>
-                      ))}
-                    </select>
-                  ) : (
-                    <span>{appointment.doctor}</span>
-                  )}
-                </td>
-                <td>
-                  <div className="actions-cell">
+                  <RowActionPopover rowLabel={appointment.petName}>
+                    {appointment.status === "pending" && (
+                      <label className="row-action-popover-checkbox">
+                        <input
+                          type="checkbox"
+                          aria-label={`Select ${appointment.petName} for bulk actions`}
+                          checked={selectedIds.has(appointment.rawId)}
+                          onChange={() => toggleSelect(appointment.rawId)}
+                        />
+                        <span>Select for bulk actions</span>
+                      </label>
+                    )}
+                    {appointment.status === "pending" ? (
+                      <label className="row-action-popover-control">
+                        <span>Assign veterinarian</span>
+                        <select
+                          aria-label={`Assign veterinarian to ${appointment.petName}`}
+                          value={vetAssignments[appointment.rawId] || ""}
+                          onChange={(event) =>
+                            setVetAssignments((current) => ({
+                              ...current,
+                              [appointment.rawId]: event.target.value,
+                            }))
+                          }
+                        >
+                          <option value="">{veterinarians.length ? "Choose vet" : "No active vets"}</option>
+                          {veterinarians.map((vet) => (
+                            <option key={vet.id} value={vet.id}>{vet.name}</option>
+                          ))}
+                        </select>
+                      </label>
+                    ) : (
+                      <div className="row-action-popover-control"><span>Assigned veterinarian: {appointment.doctor}</span></div>
+                    )}
+                    <div className="actions-cell">
                     {appointment.status === 'pending' && (
                     <button 
                       className="action-btn approve-btn" 
@@ -566,7 +571,8 @@ const ReceptionistVeterinaryBookings = () => {
                       <FontAwesomeIcon icon={faTimesCircle} />
                     </button>
                   )}
-                  </div>
+                    </div>
+                  </RowActionPopover>
                 </td>
               </tr>
             ))}

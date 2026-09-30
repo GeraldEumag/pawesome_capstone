@@ -16,8 +16,18 @@ use App\Models\ActivityLog;
 
 class CustomerStoreController extends Controller
 {
+    private function orderWorkflowsDisabled()
+    {
+        return response()->json([
+            'success' => false,
+            'message' => 'Customer store order workflows are disabled.',
+        ], 410);
+    }
+
     public function checkout(Request $request)
     {
+        return $this->orderWorkflowsDisabled();
+
         $user = Auth::user();
 
         Log::info('Customer store checkout attempt', [
@@ -392,6 +402,8 @@ class CustomerStoreController extends Controller
 
     public function uploadPaymentProof(Request $request, $id)
     {
+        return $this->orderWorkflowsDisabled();
+
         $user = Auth::user();
 
         if (!$user) {
@@ -548,6 +560,8 @@ class CustomerStoreController extends Controller
 
     public function cancel(Request $request, $id)
     {
+        return $this->orderWorkflowsDisabled();
+
         $user = Auth::user();
 
         if (!$user) {
