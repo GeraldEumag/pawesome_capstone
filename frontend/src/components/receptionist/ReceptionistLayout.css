@@ -3,11 +3,11 @@
   background: var(--color-bg-gradient);
 }
 
-.receptionist-main {
+.app-dashboard.receptionist-layout .receptionist-main {
   min-height: 100vh;
 }
 
-.receptionist-topbar {
+.app-dashboard.receptionist-layout .receptionist-topbar {
   min-height: 120px;
   padding: 1.7rem 2rem;
   display: flex;
@@ -19,7 +19,7 @@
   border-bottom: 1px solid rgba(255, 95, 147, 0.1);
 }
 
-.receptionist-topbar .topbar-title h1 {
+.app-dashboard.receptionist-layout .receptionist-topbar .topbar-title h1 {
   margin: 0;
   font-size: 2rem;
   font-weight: 950;
@@ -27,19 +27,19 @@
   letter-spacing: -0.04em;
 }
 
-.receptionist-topbar .topbar-title p {
+.app-dashboard.receptionist-layout .receptionist-topbar .topbar-title p {
   margin: 0.3rem 0 0;
   color: var(--color-muted);
   font-weight: 700;
 }
 
-.topbar-actions {
+.app-dashboard.receptionist-layout .topbar-actions {
   display: flex;
   align-items: center;
   gap: 0.8rem;
 }
 
-.topbar-user {
+.app-dashboard.receptionist-layout .topbar-user {
   border: none;
   min-height: 58px;
   padding: 0.55rem 1rem;
@@ -52,7 +52,7 @@
   box-shadow: var(--shadow-soft);
 }
 
-.topbar-avatar {
+.app-dashboard.receptionist-layout .topbar-avatar {
   width: 42px;
   height: 42px;
   border-radius: 50%;
@@ -62,17 +62,17 @@
   place-items: center;
 }
 
-.topbar-user strong,
-.topbar-user small {
+.app-dashboard.receptionist-layout .topbar-user strong,
+.app-dashboard.receptionist-layout .topbar-user small {
   display: block;
   text-align: left;
 }
 
-.topbar-user small {
+.app-dashboard.receptionist-layout .topbar-user small {
   color: var(--color-muted);
 }
 
-.topbar-icon {
+.app-dashboard.receptionist-layout .topbar-icon {
   width: 54px;
   height: 54px;
   border-radius: 18px;
@@ -84,52 +84,52 @@
   transition: all 0.2s ease;
 }
 
-.receptionist-content {
+.app-dashboard.receptionist-layout .receptionist-content {
   padding: 28px;
 }
 
-.topbar-icon,
-.topbar-user {
+.app-dashboard.receptionist-layout .topbar-icon,
+.app-dashboard.receptionist-layout .topbar-user {
   outline: none !important;
 }
 
-.topbar-icon:hover {
+.app-dashboard.receptionist-layout .topbar-icon:hover {
   background: rgba(255, 95, 147, 0.1);
   border-color: rgba(255, 95, 147, 0.3);
   box-shadow: 0 4px 14px rgba(255, 95, 147, 0.14);
 }
 
-.topbar-user:hover {
+.app-dashboard.receptionist-layout .topbar-user:hover {
   box-shadow: 0 8px 24px rgba(255, 95, 147, 0.16);
   transform: translateY(-1px);
 }
 
-.topbar-icon:focus,
-.topbar-icon:focus-visible,
-.topbar-user:focus,
-.topbar-user:focus-visible {
+.app-dashboard.receptionist-layout .topbar-icon:focus,
+.app-dashboard.receptionist-layout .topbar-icon:focus-visible,
+.app-dashboard.receptionist-layout .topbar-user:focus,
+.app-dashboard.receptionist-layout .topbar-user:focus-visible {
   outline: none !important;
   box-shadow: 0 12px 28px rgba(255, 95, 147, 0.12) !important;
 }
 
-.topbar-icon {
+.app-dashboard.receptionist-layout .topbar-icon {
   color: #191919 !important;
   font-size: 1rem !important;
 }
 
-.topbar-icon svg {
+.app-dashboard.receptionist-layout .topbar-icon svg {
   color: #191919 !important;
 }
 
-.topbar-avatar svg {
+.app-dashboard.receptionist-layout .topbar-avatar svg {
   color: white !important;
 }
 
-.notification-wrapper {
+.app-dashboard.receptionist-layout .notification-wrapper {
   position: relative;
 }
 
-.notif-dot {
+.app-dashboard.receptionist-layout .notif-dot {
   position: absolute;
   top: -6px;
   right: -6px;
@@ -146,7 +146,7 @@
   border: 2px solid #ffffff;
 }
 
-.notification-dropdown {
+.app-dashboard.receptionist-layout .notification-dropdown {
   position: absolute;
   top: calc(100% + 12px);
   right: 0;
@@ -161,24 +161,24 @@
   backdrop-filter: blur(18px);
 }
 
-.notif-header {
+.app-dashboard.receptionist-layout .notif-header {
   padding: 0.55rem 0.65rem 0.8rem;
   border-bottom: 1px solid rgba(255, 95, 147, 0.14);
   margin-bottom: 0.5rem;
 }
 
-.notif-header strong {
+.app-dashboard.receptionist-layout .notif-header strong {
   display: block;
   color: #191919;
   font-weight: 950;
 }
 
-.notif-header small {
+.app-dashboard.receptionist-layout .notif-header small {
   color: #64748b;
   font-weight: 700;
 }
 
-.notification-dropdown button {
+.app-dashboard.receptionist-layout .notification-dropdown button {
   width: 100%;
   border: none;
   background: transparent;
@@ -192,11 +192,11 @@
   transition: 0.2s ease;
 }
 
-.notification-dropdown button:hover {
+.app-dashboard.receptionist-layout .notification-dropdown button:hover {
   background: rgba(255, 95, 147, 0.1);
 }
 
-.notification-dropdown button > span {
+.app-dashboard.receptionist-layout .notification-dropdown button > span {
   width: 38px;
   height: 38px;
   border-radius: 14px;
@@ -208,13 +208,13 @@
   flex-shrink: 0;
 }
 
-.notification-dropdown strong {
+.app-dashboard.receptionist-layout .notification-dropdown strong {
   display: block;
   color: #191919;
   font-weight: 900;
 }
 
-.notification-dropdown small {
+.app-dashboard.receptionist-layout .notification-dropdown small {
   display: block;
   margin-top: 0.15rem;
   color: #64748b;
@@ -223,38 +223,38 @@
 
 /* ===== FIX NOTIFICATION DROPDOWN POSITION ===== */
 
-.receptionist-topbar {
+.app-dashboard.receptionist-layout .receptionist-topbar {
   position: relative !important;
   height: 110px !important;
   min-height: 110px !important;
   overflow: visible !important;
 }
 
-.topbar-actions {
+.app-dashboard.receptionist-layout .topbar-actions {
   position: relative !important;
   display: flex !important;
   align-items: center !important;
   gap: 0.8rem !important;
 }
 
-.notification-wrapper {
+.app-dashboard.receptionist-layout .notification-wrapper {
   position: relative !important;
   display: inline-flex !important;
   align-items: center !important;
 }
 
-.notification-wrapper .topbar-icon {
+.app-dashboard.receptionist-layout .notification-wrapper .topbar-icon {
   position: relative !important;
 }
 
-.notif-dot {
+.app-dashboard.receptionist-layout .notif-dot {
   position: absolute !important;
   top: -6px !important;
   right: -6px !important;
   z-index: 3 !important;
 }
 
-.notification-dropdown {
+.app-dashboard.receptionist-layout .notification-dropdown {
   position: absolute !important;
   top: calc(100% + 12px) !important;
   right: 0 !important;
@@ -270,7 +270,413 @@
 }
 
 /* stop dropdown from making header tall */
-.receptionist-topbar .notification-dropdown {
+.app-dashboard.receptionist-layout .receptionist-topbar .notification-dropdown {
   transform: translateY(0) !important;
+}
+
+.app-dashboard.receptionist-layout {
+  --receptionist-canvas: var(--color-bg, #f7f5ee);
+  --receptionist-surface: #ffffff;
+  --receptionist-surface-muted: #fbfaf7;
+  --receptionist-border: var(--color-border, #e9e6de);
+  --receptionist-ink: #282c2a;
+  --receptionist-muted: #68716d;
+  --receptionist-shadow: 0 8px 26px rgba(39, 43, 37, 0.07);
+  --receptionist-shadow-raised: 0 16px 36px rgba(39, 43, 37, 0.11);
+  --color-bg-gradient: var(--receptionist-canvas);
+  --color-surface: var(--receptionist-surface);
+  --color-surface-solid: var(--receptionist-surface);
+  --color-text: var(--receptionist-ink);
+  --color-heading: #252a27;
+  --color-muted: var(--receptionist-muted);
+  --shadow-card: var(--receptionist-shadow);
+  --shadow-soft: 0 4px 14px rgba(39, 43, 37, 0.06);
+  min-height: 100vh;
+  color: var(--receptionist-ink);
+  background: var(--receptionist-canvas) !important;
+}
+
+.app-dashboard.receptionist-layout .app-main {
+  width: calc(100% - 260px);
+  min-width: 0;
+  margin-left: 260px;
+  overflow-x: clip;
+  background: transparent !important;
+}
+
+.app-dashboard.receptionist-layout .app-topbar {
+  position: sticky;
+  top: 0;
+  z-index: 1100;
+  min-height: 80px;
+  padding: 12px clamp(18px, 2.5vw, 36px);
+  border-bottom: 1px solid var(--receptionist-border);
+  background: #ffffff;
+  box-shadow: 0 4px 16px rgba(39, 43, 37, 0.045);
+  backdrop-filter: blur(16px);
+}
+
+.app-dashboard.receptionist-layout .navbar-left h1 {
+  margin: 0;
+  color: var(--receptionist-ink);
+  font-size: clamp(1.1rem, 1.6vw, 1.5rem);
+  font-weight: 750;
+  letter-spacing: -0.035em;
+}
+
+.app-dashboard.receptionist-layout .navbar-left p {
+  margin: 4px 0 0;
+  color: var(--receptionist-muted);
+  font-size: 0.84rem;
+  font-weight: 450;
+}
+
+.app-dashboard.receptionist-layout .navbar-actions {
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.app-dashboard.receptionist-layout .app-content {
+  width: 100%;
+  max-width: 1680px;
+  margin: 0 auto;
+  padding: clamp(18px, 2.4vw, 34px);
+  color: var(--receptionist-ink);
+}
+
+.app-dashboard.receptionist-layout .receptionist-bookings,
+.app-dashboard.receptionist-layout .hotel-bookings,
+.app-dashboard.receptionist-layout .vet-bookings,
+.app-dashboard.receptionist-layout .grooming-bookings,
+.app-dashboard.receptionist-layout .walkins-page,
+.app-dashboard.receptionist-layout .manage-services-page,
+.app-dashboard.receptionist-layout .customer-management,
+.app-dashboard.receptionist-layout .customer-orders,
+.app-dashboard.receptionist-layout .customers-profile,
+.app-dashboard.receptionist-layout .receptionist-chatbot-page,
+.app-dashboard.receptionist-layout .ht-root,
+.app-dashboard.receptionist-layout .reports-container,
+.app-dashboard.receptionist-layout .standard-report-layout,
+.app-dashboard.receptionist-layout .lci-root {
+  width: 100%;
+  min-width: 0;
+  min-height: 0;
+  padding: 0;
+  color: var(--receptionist-ink);
+  background: transparent !important;
+}
+
+.app-dashboard.receptionist-layout .hotel-bookings {
+  --hotel-surface: var(--receptionist-surface);
+  --hotel-surface-alt: var(--receptionist-surface-muted);
+  --hotel-border: var(--receptionist-border);
+  --hotel-heading: var(--receptionist-ink);
+  --hotel-text: var(--receptionist-ink);
+  --hotel-muted: var(--receptionist-muted);
+}
+
+.app-dashboard.receptionist-layout .booking-hero,
+.app-dashboard.receptionist-layout .hotel-hero,
+.app-dashboard.receptionist-layout .vet-hero,
+.app-dashboard.receptionist-layout .grooming-header,
+.app-dashboard.receptionist-layout .walkins-hero,
+.app-dashboard.receptionist-layout .customers-header,
+.app-dashboard.receptionist-layout .orders-hero,
+.app-dashboard.receptionist-layout .customer-profile-hero,
+.app-dashboard.receptionist-layout .services-header,
+.app-dashboard.receptionist-layout .ht-header,
+.app-dashboard.receptionist-layout .receptionist-chatbot-hero,
+.app-dashboard.receptionist-layout .lci-pane-header {
+  min-width: 0;
+  padding: clamp(18px, 2.3vw, 28px);
+  border: 1px solid var(--receptionist-border);
+  border-radius: 18px;
+  background: var(--receptionist-surface) !important;
+  box-shadow: var(--receptionist-shadow);
+  backdrop-filter: none;
+}
+
+.app-dashboard.receptionist-layout .hotel-table-card,
+.app-dashboard.receptionist-layout .vet-table-card,
+.app-dashboard.receptionist-layout .grooming-table-container,
+.app-dashboard.receptionist-layout .orders-table-card,
+.app-dashboard.receptionist-layout .customers-table-card,
+.app-dashboard.receptionist-layout .customers-table-container,
+.app-dashboard.receptionist-layout .services-table-container,
+.app-dashboard.receptionist-layout .hotel-summary-card,
+.app-dashboard.receptionist-layout .vet-summary-card,
+.app-dashboard.receptionist-layout .grooming-stats .stat-card,
+.app-dashboard.receptionist-layout .customer-management .summary-card,
+.app-dashboard.receptionist-layout .walkins-notes-card,
+.app-dashboard.receptionist-layout .walkins-recent,
+.app-dashboard.receptionist-layout .room-card,
+.app-dashboard.receptionist-layout .ht-content,
+.app-dashboard.receptionist-layout .ht-stat-card,
+.app-dashboard.receptionist-layout .lci-sidebar,
+.app-dashboard.receptionist-layout .lci-pane,
+.app-dashboard.receptionist-layout .chatbot-guide-panel,
+.app-dashboard.receptionist-layout .chatbot-scope-panel,
+.app-dashboard.receptionist-layout .services-stats .stat-card {
+  min-width: 0;
+  border: 1px solid var(--receptionist-border);
+  border-radius: 16px;
+  background: var(--receptionist-surface);
+  box-shadow: var(--receptionist-shadow);
+  backdrop-filter: none;
+}
+
+.app-dashboard.receptionist-layout .hotel-summary-card,
+.app-dashboard.receptionist-layout .vet-summary-card,
+.app-dashboard.receptionist-layout .grooming-stats .stat-card,
+.app-dashboard.receptionist-layout .customer-management .summary-card,
+.app-dashboard.receptionist-layout .services-stats .stat-card {
+  padding: 16px;
+}
+
+.app-dashboard.receptionist-layout .booking-hero h1,
+.app-dashboard.receptionist-layout .hotel-hero h1,
+.app-dashboard.receptionist-layout .vet-hero h1,
+.app-dashboard.receptionist-layout .grooming-header h1,
+.app-dashboard.receptionist-layout .walkins-hero-title,
+.app-dashboard.receptionist-layout .customers-header h1,
+.app-dashboard.receptionist-layout .orders-hero h1,
+.app-dashboard.receptionist-layout .customer-profile-hero h1,
+.app-dashboard.receptionist-layout .services-header h1,
+.app-dashboard.receptionist-layout .ht-title {
+  color: var(--receptionist-ink);
+  letter-spacing: -0.035em;
+}
+
+.app-dashboard.receptionist-layout .booking-hero p,
+.app-dashboard.receptionist-layout .hotel-hero p,
+.app-dashboard.receptionist-layout .vet-hero p,
+.app-dashboard.receptionist-layout .grooming-header p,
+.app-dashboard.receptionist-layout .walkins-hero-sub,
+.app-dashboard.receptionist-layout .customers-header p,
+.app-dashboard.receptionist-layout .orders-hero p,
+.app-dashboard.receptionist-layout .customer-profile-hero p,
+.app-dashboard.receptionist-layout .ht-subtitle {
+  color: var(--receptionist-muted);
+  font-weight: 450;
+}
+
+.app-dashboard.receptionist-layout .hotel-table-scroll,
+.app-dashboard.receptionist-layout .vet-table-scroll,
+.app-dashboard.receptionist-layout .grooming-table-container,
+.app-dashboard.receptionist-layout .orders-table-scroll,
+.app-dashboard.receptionist-layout .customers-table-scroll,
+.app-dashboard.receptionist-layout .services-table-container,
+.app-dashboard.receptionist-layout .ht-content {
+  max-width: 100%;
+  overflow-x: auto;
+  overscroll-behavior-inline: contain;
+  -webkit-overflow-scrolling: touch;
+}
+
+.app-dashboard.receptionist-layout .app-main input:not([type="checkbox"]):not([type="radio"]):not([type="file"]),
+.app-dashboard.receptionist-layout .app-main select,
+.app-dashboard.receptionist-layout .app-main textarea {
+  min-height: 42px;
+  border-color: var(--receptionist-border);
+  border-radius: 10px;
+  background: #ffffff;
+  color: var(--receptionist-ink);
+  box-shadow: none;
+}
+
+.app-dashboard.receptionist-layout .app-main textarea {
+  min-height: 96px;
+}
+
+.app-dashboard.receptionist-layout .app-main input:focus,
+.app-dashboard.receptionist-layout .app-main select:focus,
+.app-dashboard.receptionist-layout .app-main textarea:focus {
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-primary) 18%, transparent);
+  outline: none;
+}
+
+.app-dashboard.receptionist-layout .primary-btn,
+.app-dashboard.receptionist-layout .secondary-btn,
+.app-dashboard.receptionist-layout .clear-btn,
+.app-dashboard.receptionist-layout .submit-btn,
+.app-dashboard.receptionist-layout .action-btn,
+.app-dashboard.receptionist-layout .ht-btn,
+.app-dashboard.receptionist-layout .lci-btn {
+  min-height: 42px;
+  border-radius: 10px;
+}
+
+.app-dashboard.receptionist-layout .hotel-state,
+.app-dashboard.receptionist-layout .vet-error-banner,
+.app-dashboard.receptionist-layout .loading-state,
+.app-dashboard.receptionist-layout .empty-state,
+.app-dashboard.receptionist-layout .hotel-empty-state,
+.app-dashboard.receptionist-layout .orders-state,
+.app-dashboard.receptionist-layout .customer-empty-state,
+.app-dashboard.receptionist-layout .ht-empty {
+  border: 1px solid var(--receptionist-border);
+  border-radius: 16px;
+  background: var(--receptionist-surface);
+  box-shadow: var(--receptionist-shadow);
+}
+
+.app-dashboard.receptionist-layout .hotel-table-card th,
+.app-dashboard.receptionist-layout .vet-table th,
+.app-dashboard.receptionist-layout .grooming-table th,
+.app-dashboard.receptionist-layout .orders-table th,
+.app-dashboard.receptionist-layout .customers-table th,
+.app-dashboard.receptionist-layout .services-table th {
+  background: #f4f2ec;
+  color: #606b65;
+  font-size: 0.74rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.app-dashboard.receptionist-layout .hotel-table-card tbody tr:hover,
+.app-dashboard.receptionist-layout .vet-table tbody tr:hover,
+.app-dashboard.receptionist-layout .grooming-table tbody tr:hover,
+.app-dashboard.receptionist-layout .orders-table tbody tr:hover,
+.app-dashboard.receptionist-layout .customers-table tbody tr:hover,
+.app-dashboard.receptionist-layout .services-table tbody tr:hover {
+  background: #faf9f5;
+}
+
+.app-dashboard.receptionist-layout .app-main :focus-visible {
+  outline: 3px solid color-mix(in srgb, var(--color-primary) 60%, white);
+  outline-offset: 2px;
+}
+
+@media (max-width: 1024px) {
+  .app-dashboard.receptionist-layout .app-sidebar.receptionist-sidebar {
+    position: fixed;
+    inset: 0 auto 0 0;
+    transform: translateX(-100%);
+    transition: transform 0.25s ease;
+    z-index: 1400;
+  }
+
+  .app-dashboard.receptionist-layout .app-sidebar.receptionist-sidebar.mobile-open {
+    transform: translateX(0);
+  }
+
+  .app-dashboard.receptionist-layout .mobile-menu-toggle {
+    display: grid !important;
+    place-items: center;
+  }
+
+  .app-dashboard.receptionist-layout .app-main {
+    width: 100%;
+    margin-left: 0;
+  }
+
+  .app-dashboard.receptionist-layout .mobile-backdrop {
+    display: none;
+  }
+
+  .app-dashboard.receptionist-layout .mobile-backdrop.active {
+    display: block;
+    position: fixed;
+    inset: 0;
+    z-index: 1350;
+    background: rgba(23, 25, 23, 0.42);
+  }
+}
+
+@media (max-width: 767px) {
+  .app-dashboard.receptionist-layout .app-topbar {
+    min-height: 64px;
+    height: auto;
+    padding: 8px 12px;
+    gap: 8px;
+  }
+
+  .app-dashboard.receptionist-layout .app-topbar h1 {
+    font-size: clamp(0.95rem, 4vw, 1.15rem);
+  }
+
+  .app-dashboard.receptionist-layout .app-topbar p {
+    display: none;
+  }
+
+  .app-dashboard.receptionist-layout .app-content {
+    padding: 14px;
+  }
+
+  .app-dashboard.receptionist-layout .booking-hero,
+  .app-dashboard.receptionist-layout .hotel-hero,
+  .app-dashboard.receptionist-layout .vet-hero,
+  .app-dashboard.receptionist-layout .grooming-header,
+  .app-dashboard.receptionist-layout .walkins-hero,
+  .app-dashboard.receptionist-layout .customers-header,
+  .app-dashboard.receptionist-layout .orders-hero,
+  .app-dashboard.receptionist-layout .customer-profile-hero,
+  .app-dashboard.receptionist-layout .services-header,
+  .app-dashboard.receptionist-layout .ht-header {
+    align-items: flex-start;
+    flex-direction: column;
+    padding: 16px;
+  }
+
+  .app-dashboard.receptionist-layout .hotel-hero-actions,
+  .app-dashboard.receptionist-layout .booking-hero-actions,
+  .app-dashboard.receptionist-layout .header-actions {
+    width: 100%;
+    min-width: 0;
+    flex-wrap: wrap;
+  }
+
+  .app-dashboard.receptionist-layout .hotel-summary-grid,
+  .app-dashboard.receptionist-layout .vet-summary-grid,
+  .app-dashboard.receptionist-layout .grooming-stats,
+  .app-dashboard.receptionist-layout .orders-summary-grid,
+  .app-dashboard.receptionist-layout .summary-cards,
+  .app-dashboard.receptionist-layout .services-stats {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+  }
+
+  .app-dashboard.receptionist-layout .hotel-controls,
+  .app-dashboard.receptionist-layout .vet-controls,
+  .app-dashboard.receptionist-layout .grooming-filters,
+  .app-dashboard.receptionist-layout .orders-controls,
+  .app-dashboard.receptionist-layout .customers-controls,
+  .app-dashboard.receptionist-layout .services-toolbar {
+    align-items: stretch;
+    flex-wrap: wrap;
+  }
+
+  .app-dashboard.receptionist-layout .hotel-search-box,
+  .app-dashboard.receptionist-layout .vet-search-box,
+  .app-dashboard.receptionist-layout .grooming-search-box,
+  .app-dashboard.receptionist-layout .orders-search-box,
+  .app-dashboard.receptionist-layout .cm-search-box,
+  .app-dashboard.receptionist-layout .services-search-box {
+    width: 100%;
+    max-width: none;
+  }
+}
+
+@media (max-width: 420px) {
+  .app-dashboard.receptionist-layout .app-content {
+    padding: 10px;
+  }
+
+  .app-dashboard.receptionist-layout .hotel-summary-grid,
+  .app-dashboard.receptionist-layout .vet-summary-grid,
+  .app-dashboard.receptionist-layout .grooming-stats,
+  .app-dashboard.receptionist-layout .orders-summary-grid,
+  .app-dashboard.receptionist-layout .summary-cards,
+  .app-dashboard.receptionist-layout .services-stats {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .app-dashboard.receptionist-layout .primary-btn,
+  .app-dashboard.receptionist-layout .secondary-btn,
+  .app-dashboard.receptionist-layout .clear-btn,
+  .app-dashboard.receptionist-layout .submit-btn {
+    min-height: 44px;
+  }
 }
 

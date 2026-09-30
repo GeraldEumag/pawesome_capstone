@@ -183,24 +183,26 @@ const VetReports = () => {
   );
 
   return (
-    <UnifiedReportEngine
-      title="Veterinary Reports"
-      subtitle="Service revenue, appointments, and veterinary analytics"
-      icon={faStethoscope}
-      fetchData={fetchReportData}
-      data={records}
-      columns={tableColumns}
-      summaryCards={summaryCards}
-      charts={renderCharts()}
-      statusOptions={["completed", "scheduled", "pending", "cancelled", "no_show"]}
-      customFilters={customFilters}
-      exportFilename="veterinary-reports"
-      exportTitle="Veterinary Reports"
-      tablePageSize={12}
-      tableEmptyMessage="No veterinary records found"
-      enableSavedFilters={true}
-      refreshInterval={30000}
-    />
+    <div className="vet-reports">
+      <UnifiedReportEngine
+        title="Veterinary Reports"
+        subtitle="Service revenue, appointments, and veterinary analytics"
+        icon={faStethoscope}
+        fetchData={fetchReportData}
+        data={records}
+        columns={tableColumns}
+        summaryCards={summaryCards}
+        charts={renderCharts()}
+        statusOptions={["completed", "scheduled", "pending", "cancelled", "no_show"]}
+        customFilters={customFilters}
+        exportFilename="veterinary-reports"
+        exportTitle="Veterinary Reports"
+        tablePageSize={12}
+        tableEmptyMessage="No veterinary records found"
+        enableSavedFilters={true}
+        refreshInterval={30000}
+      />
+    </div>
   );
 };
 

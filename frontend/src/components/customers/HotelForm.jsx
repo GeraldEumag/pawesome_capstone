@@ -20,6 +20,7 @@ import "./HotelForm.css";
 import { apiRequest } from "../../api/client";
 import { getDraft, clearDraft } from "../../utils/preBookingDraft";
 import DatePickerInput from "../../components/shared/DatePickerInput";
+import { formatDateOnly, parseDateOnly } from "../../utils/date";
 
 const CATEGORY_CONFIG = {
   dog_hotel: { img: dogHotelImg, label: "Dog Hotel",  badge: "#f97316" },
@@ -73,8 +74,6 @@ const HotelForm = () => {
     pet_type: "",
     pet_breed: "",
     check_in_date: "",
-    check_in_time: "09:00",
-    check_out_time: "18:00",
     boarding_type: "standard",
     notes: "",
   });
@@ -123,7 +122,6 @@ const HotelForm = () => {
     if (draft.form_data?.pet_name) updates.pet_name = draft.form_data.pet_name;
     if (draft.form_data?.pet_type) updates.pet_type = draft.form_data.pet_type;
     if (draft.form_data?.check_in_date) updates.check_in_date = draft.form_data.check_in_date;
-    if (draft.form_data?.preferred_time) updates.check_in_time = draft.form_data.preferred_time;
     if (draft.form_data?.room_type) updates.boarding_type = draft.form_data.room_type;
     if (draft.form_data?.special_care_instructions) updates.notes = draft.form_data.special_care_instructions;
 
@@ -204,8 +202,6 @@ const HotelForm = () => {
       formData.append("pet_breed", selectedPet?.breed || bookingForm.pet_breed || "");
       formData.append("check_in_date", bookingForm.check_in_date);
       formData.append("number_of_days", "1");
-      formData.append("check_in_time", bookingForm.check_in_time);
-      formData.append("check_out_time", bookingForm.check_out_time);
       if (bookingForm.room_id) {
         formData.append("room_id", bookingForm.room_id);
       }
@@ -230,8 +226,6 @@ const HotelForm = () => {
         pet_type: "",
         pet_breed: "",
         check_in_date: "",
-        check_in_time: "09:00",
-        check_out_time: "18:00",
         boarding_type: "standard",
         notes: "",
       });
@@ -457,12 +451,12 @@ const HotelForm = () => {
                 <div className="form-group">
                   <label>Stay Date *</label>
                   <DatePickerInput
-                    selected={bookingForm.check_in_date ? new Date(bookingForm.check_in_date) : null}
+                    selected={parseDateOnly(bookingForm.check_in_date)}
                     onChange={(date) =>
                       handleChange({
                         target: {
                           name: "check_in_date",
-                          value: date ? date.toISOString().split("T")[0] : "",
+                          value: formatDateOnly(date),
                         },
                       })
                     }
@@ -571,31 +565,6 @@ const HotelForm = () => {
                   </div>
                 </div>
               )}
-
-              <div className="form-row">
-                <div className="form-group">
-                  <label>Check-in Time</label>
-                  <select name="check_in_time" value={bookingForm.check_in_time} onChange={handleChange}>
-                    {Array.from({ length: 11 }, (_, i) => {
-                      const hour = 9 + i;
-                      const val = String(hour).padStart(2, "0") + ":00";
-                      const label = hour <= 12 ? `${val} AM` : `${val} PM`;
-                      return <option key={val} value={val}>{label}</option>;
-                    })}
-                  </select>
-                </div>
-                <div className="form-group">
-                  <label>Check-out Time</label>
-                  <select name="check_out_time" value={bookingForm.check_out_time} onChange={handleChange}>
-                    {Array.from({ length: 11 }, (_, i) => {
-                      const hour = 9 + i;
-                      const val = String(hour).padStart(2, "0") + ":00";
-                      const label = hour <= 12 ? `${val} AM` : `${val} PM`;
-                      return <option key={val} value={val}>{label}</option>;
-                    })}
-                  </select>
-                </div>
-              </div>
 
               <div className="form-group">
                 <label>Notes</label>

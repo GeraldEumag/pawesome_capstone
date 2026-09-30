@@ -452,7 +452,7 @@ const CustomerDashboard = () => {
 
                     <div className="booking-list">
                       {filteredRecentBookings.length > 0 ? (
-                        filteredRecentBookings.map((booking, index) => (
+                        filteredRecentBookings.slice(0, 3).map((booking, index) => (
                           <div key={`booking-${booking.id || booking.petName || "no-id"}-${index}`} className="booking-card">
                             <div className="booking-card-top">
                               <div>

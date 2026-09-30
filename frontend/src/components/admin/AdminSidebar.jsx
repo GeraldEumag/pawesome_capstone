@@ -98,7 +98,7 @@ const AdminSidebar = ({ mobileOpen, onMobileMenuToggle }) => {
   };
 
   const handleNavClick = () => {
-    if (window.innerWidth <= 768 && onMobileMenuToggle) {
+    if (window.innerWidth <= 1024 && onMobileMenuToggle) {
       onMobileMenuToggle();
     }
   };
@@ -107,7 +107,7 @@ const AdminSidebar = ({ mobileOpen, onMobileMenuToggle }) => {
     <aside className={`app-sidebar admin-sidebar ${mobileOpen ? "mobile-open" : ""}`}>
       <div className="sidebar-header">
         <div className="sidebar-logo">
-          <span>Admin Portal</span>
+          <span>{role === "super_admin" ? "Super Admin Portal" : "Admin Portal"}</span>
         </div>
         <button className="mobile-close-btn" onClick={onMobileMenuToggle} type="button" aria-label="Close menu">
           <FontAwesomeIcon icon={faTimes} />

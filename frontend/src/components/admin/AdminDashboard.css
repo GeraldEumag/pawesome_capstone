@@ -1063,3 +1063,1107 @@
     grid-template-columns: 1fr !important;
   }
 }
+
+.app-dashboard.admin-dashboard {
+  --admin-canvas: var(--color-bg, #f7f5ee);
+  --admin-surface: #ffffff;
+  --admin-surface-muted: #fbfaf7;
+  --admin-border: var(--color-border, #e9e6de);
+  --admin-text: #282c2a;
+  --admin-muted: #68716d;
+  --admin-shadow: 0 8px 28px rgba(39, 43, 37, 0.07);
+  --admin-shadow-raised: 0 16px 38px rgba(39, 43, 37, 0.11);
+  --admin-radius: 18px;
+  --color-surface: var(--admin-surface);
+  --color-surface-solid: #ffffff;
+  --color-surface-muted: var(--admin-surface-muted);
+  --color-text: var(--admin-text);
+  --color-heading: #252a27;
+  --color-muted: var(--admin-muted);
+  --shadow-card: var(--admin-shadow);
+  --shadow-soft: 0 4px 14px rgba(39, 43, 37, 0.06);
+  --radius-card: var(--admin-radius);
+  --radius-lg: 16px;
+  min-height: 100vh;
+  background: var(--admin-canvas) !important;
+  color: var(--admin-text);
+}
+
+.app-dashboard.admin-dashboard .app-main {
+  min-width: 0;
+  width: calc(100% - 260px);
+  margin-left: 260px;
+  background: transparent;
+  overflow-x: clip;
+}
+
+.app-dashboard.admin-dashboard .app-topbar {
+  position: sticky;
+  top: 0;
+  z-index: 1100;
+  min-height: 82px;
+  padding: 14px clamp(20px, 2.5vw, 38px);
+  background: #ffffff !important;
+  border-bottom: 1px solid var(--admin-border) !important;
+  box-shadow: 0 4px 16px rgba(39, 43, 37, 0.045) !important;
+  backdrop-filter: blur(16px);
+}
+
+.app-dashboard.admin-dashboard .navbar-left {
+  min-width: 0;
+  display: block;
+}
+
+.app-dashboard.admin-dashboard .navbar-left h1 {
+  margin: 0;
+  color: var(--admin-text) !important;
+  -webkit-text-fill-color: var(--admin-text) !important;
+  background: none !important;
+  font-size: clamp(1.15rem, 1.65vw, 1.55rem);
+  font-weight: 750 !important;
+  letter-spacing: -0.035em;
+}
+
+.app-dashboard.admin-dashboard .navbar-left p {
+  margin: 4px 0 0;
+  color: var(--admin-muted) !important;
+  font-size: 0.84rem;
+  font-weight: 450;
+}
+
+.app-dashboard.admin-dashboard .navbar-actions {
+  gap: 10px;
+}
+
+.app-dashboard.admin-dashboard .app-content {
+  width: 100%;
+  max-width: 1680px;
+  margin: 0 auto;
+  padding: clamp(18px, 2.5vw, 36px);
+}
+
+.app-dashboard.admin-dashboard .dashboard-content {
+  min-height: 0;
+  color: var(--admin-text);
+}
+
+.app-dashboard.admin-dashboard .dashboard-content > .dashboard-content {
+  min-height: 0;
+  padding: 0;
+}
+
+.app-dashboard.admin-dashboard .dashboard-motion-wrap {
+  gap: 22px;
+}
+
+.app-dashboard.admin-dashboard .admin-hero,
+.app-dashboard.admin-dashboard .overview-card,
+.app-dashboard.admin-dashboard .admin-quick-action-card,
+.app-dashboard.admin-dashboard .panel,
+.app-dashboard.admin-dashboard .admin-loading-state,
+.app-dashboard.admin-dashboard .admin-error-state,
+.app-dashboard.admin-dashboard .users-table-container,
+.app-dashboard.admin-dashboard .mu-stat-card,
+.app-dashboard.admin-dashboard .lh-table-container,
+.app-dashboard.admin-dashboard .lh-stat-card,
+.app-dashboard.admin-dashboard .payroll-panel,
+.app-dashboard.admin-dashboard .pr-stat-card,
+.app-dashboard.admin-dashboard .chatbot-panel,
+.app-dashboard.admin-dashboard .chatbot-stat-card,
+.app-dashboard.admin-dashboard .settings-content,
+.app-dashboard.admin-dashboard .settings-tabs,
+.app-dashboard.admin-dashboard .create-user-form,
+.app-dashboard.admin-dashboard .attendance,
+.app-dashboard.admin-dashboard .history-table-container,
+.app-dashboard.admin-dashboard .customer-report-container .filter-card,
+.app-dashboard.admin-dashboard .customer-report-container .summary-card,
+.app-dashboard.admin-dashboard .customer-report-container .table-container,
+.app-dashboard.admin-dashboard .admin-landing-editor-main,
+.app-dashboard.admin-dashboard .ed-stat-card,
+.app-dashboard.admin-dashboard .ed-table-wrap,
+.app-dashboard.admin-dashboard .advanced-report-content,
+.app-dashboard.admin-dashboard .adv-section,
+.app-dashboard.admin-dashboard .sp-staff-detail,
+.app-dashboard.admin-dashboard .staff-card,
+.app-dashboard.admin-dashboard .exec-kpi-card,
+.app-dashboard.admin-dashboard .exec-anomalies-section,
+.app-dashboard.admin-dashboard .exec-comparison-card,
+.app-dashboard.admin-dashboard .sp-metric-card,
+.app-dashboard.admin-dashboard .sp-top-performer,
+.app-dashboard.admin-dashboard .sp-staff-list,
+.app-dashboard.admin-dashboard .segment-card,
+.app-dashboard.admin-dashboard .adv-kpi-card,
+.app-dashboard.admin-dashboard .adv-rec-item,
+.app-dashboard.admin-dashboard .cs-recommendations,
+.app-dashboard.admin-dashboard .management-panel,
+.app-dashboard.admin-dashboard .form-panel,
+.app-dashboard.admin-dashboard .management-card,
+.app-dashboard.admin-dashboard .role-card,
+.app-dashboard.admin-dashboard .info-card,
+.app-dashboard.admin-dashboard .ure-chart-container,
+.app-dashboard.admin-dashboard .ure-summary-card,
+.app-dashboard.admin-dashboard .summary-card,
+.app-dashboard.admin-dashboard .exec-section,
+.app-dashboard.admin-dashboard .lci-root {
+  border: 1px solid var(--admin-border);
+  border-radius: var(--admin-radius);
+  background: var(--admin-surface);
+  box-shadow: var(--admin-shadow);
+  backdrop-filter: none;
+}
+
+.app-dashboard.admin-dashboard .admin-hero {
+  min-height: 190px;
+  padding: clamp(22px, 3vw, 36px);
+  background: var(--admin-surface);
+}
+
+.app-dashboard.admin-dashboard .admin-hero::after {
+  width: 240px;
+  height: 240px;
+  background: radial-gradient(circle, rgba(200, 62, 105, 0.08), transparent 68%);
+}
+
+.app-dashboard.admin-dashboard .admin-eyebrow,
+.app-dashboard.admin-dashboard .admin-reports-wrapper .admin-nav-tab:not(.active),
+.app-dashboard.admin-dashboard .theme-preset-card.active .theme-name {
+  color: var(--color-primary);
+}
+
+.app-dashboard.admin-dashboard .admin-hero h2 {
+  color: var(--admin-text);
+  font-size: clamp(1.75rem, 3vw, 2.45rem);
+  letter-spacing: -0.045em;
+}
+
+.app-dashboard.admin-dashboard .admin-hero p,
+.app-dashboard.admin-dashboard .admin-last-updated {
+  color: var(--admin-muted);
+  font-weight: 450;
+}
+
+.app-dashboard.admin-dashboard .overview-cards,
+.app-dashboard.admin-dashboard .mu-stats-grid,
+.app-dashboard.admin-dashboard .lh-stats-grid,
+.app-dashboard.admin-dashboard .payroll-stat-grid,
+.app-dashboard.admin-dashboard .chatbot-stat-grid,
+.app-dashboard.admin-dashboard .attendance-summary,
+.app-dashboard.admin-dashboard .history-stats-grid,
+.app-dashboard.admin-dashboard .ed-stats,
+.app-dashboard.admin-dashboard .exec-kpi-grid,
+.app-dashboard.admin-dashboard .sp-overview {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.app-dashboard.admin-dashboard .overview-card,
+.app-dashboard.admin-dashboard .mu-stat-card,
+.app-dashboard.admin-dashboard .lh-stat-card,
+.app-dashboard.admin-dashboard .pr-stat-card,
+.app-dashboard.admin-dashboard .chatbot-stat-card,
+.app-dashboard.admin-dashboard .ed-stat-card {
+  min-width: 0;
+  padding: 20px;
+  border-radius: var(--admin-radius);
+  background: var(--admin-surface);
+  box-shadow: var(--admin-shadow);
+  backdrop-filter: none;
+}
+
+.app-dashboard.admin-dashboard .overview-card:hover,
+.app-dashboard.admin-dashboard .admin-quick-action-card:hover,
+.app-dashboard.admin-dashboard .mu-stat-card:hover,
+.app-dashboard.admin-dashboard .lh-stat-card:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--admin-shadow-raised);
+}
+
+.app-dashboard.admin-dashboard .overview-card h3,
+.app-dashboard.admin-dashboard .mu-stat-value,
+.app-dashboard.admin-dashboard .lh-stat-value,
+.app-dashboard.admin-dashboard .pr-stat-value,
+.app-dashboard.admin-dashboard .chatbot-stat-value {
+  color: var(--admin-text);
+}
+
+.app-dashboard.admin-dashboard .overview-card p,
+.app-dashboard.admin-dashboard .overview-card small,
+.app-dashboard.admin-dashboard .panel-header p,
+.app-dashboard.admin-dashboard .mu-stat-label,
+.app-dashboard.admin-dashboard .lh-stat-label,
+.app-dashboard.admin-dashboard .pr-stat-label,
+.app-dashboard.admin-dashboard .chatbot-stat-label {
+  color: var(--admin-muted);
+}
+
+.app-dashboard.admin-dashboard .admin-quick-actions {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.app-dashboard.admin-dashboard .admin-quick-action-card {
+  grid-template-columns: 46px minmax(0, 1fr) auto;
+  gap: 12px;
+  padding: 16px;
+  color: var(--admin-text);
+  text-decoration: none;
+}
+
+.app-dashboard.admin-dashboard .quick-action-icon,
+.app-dashboard.admin-dashboard .overview-card-icon,
+.app-dashboard.admin-dashboard .system-status-icon {
+  border-radius: 14px;
+  box-shadow: none;
+}
+
+.app-dashboard.admin-dashboard .admin-profile-settings,
+.app-dashboard.admin-dashboard .dashboard-grid,
+.app-dashboard.admin-dashboard .dashboard-bottom,
+.app-dashboard.admin-dashboard .admin-reports-wrapper,
+.app-dashboard.admin-dashboard .admin-reports-page,
+.app-dashboard.admin-dashboard .manage-users,
+.app-dashboard.admin-dashboard .login-history,
+.app-dashboard.admin-dashboard .payroll-reports,
+.app-dashboard.admin-dashboard .chatbot-logs,
+.app-dashboard.admin-dashboard .admin-settings,
+.app-dashboard.admin-dashboard .create-user-container,
+.app-dashboard.admin-dashboard .attendance,
+.app-dashboard.admin-dashboard .customer-report-container,
+.app-dashboard.admin-dashboard .admin-landing-editor,
+.app-dashboard.admin-dashboard .admin-history,
+.app-dashboard.admin-dashboard .history-page,
+.app-dashboard.admin-dashboard .ed-root,
+.app-dashboard.admin-dashboard .executive-dashboard,
+.app-dashboard.admin-dashboard .staff-performance,
+.app-dashboard.admin-dashboard .customer-segmentation,
+.app-dashboard.admin-dashboard .adv-report {
+  min-width: 0;
+  color: var(--admin-text);
+  background: transparent;
+}
+
+.app-dashboard.admin-dashboard .admin-profile-settings > div {
+  min-height: 0;
+  padding: 0;
+  background: transparent !important;
+}
+
+.app-dashboard.admin-dashboard .admin-profile-settings > div > div {
+  max-width: 1120px;
+  gap: 20px;
+}
+
+.app-dashboard.admin-dashboard .dashboard-grid {
+  grid-template-columns: minmax(0, 1.4fr) minmax(280px, 0.8fr);
+  gap: 18px;
+}
+
+.app-dashboard.admin-dashboard .dashboard-grid.three-column {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.app-dashboard.admin-dashboard .panel,
+.app-dashboard.admin-dashboard .advanced-report-content,
+.app-dashboard.admin-dashboard .payroll-panel,
+.app-dashboard.admin-dashboard .users-table-container,
+.app-dashboard.admin-dashboard .lh-table-container,
+.app-dashboard.admin-dashboard .history-table-container,
+.app-dashboard.admin-dashboard .attendance-chart,
+.app-dashboard.admin-dashboard .customer-report-container .filter-card,
+.app-dashboard.admin-dashboard .customer-report-container .summary-card,
+.app-dashboard.admin-dashboard .customer-report-container .table-container,
+.app-dashboard.admin-dashboard .admin-landing-editor-main,
+.app-dashboard.admin-dashboard .ed-table-wrap,
+.app-dashboard.admin-dashboard .lci-root {
+  overflow: hidden;
+  border: 1px solid var(--admin-border);
+  border-radius: var(--admin-radius);
+  background: var(--admin-surface);
+  box-shadow: var(--admin-shadow);
+}
+
+.app-dashboard.admin-dashboard .panel {
+  min-width: 0;
+  padding: 20px;
+}
+
+.app-dashboard.admin-dashboard .panel-header,
+.app-dashboard.admin-dashboard .mu-table-header,
+.app-dashboard.admin-dashboard .lh-table-header,
+.app-dashboard.admin-dashboard .payroll-panel-heading {
+  gap: 12px;
+  border-color: var(--admin-border);
+}
+
+.app-dashboard.admin-dashboard .panel-header h2,
+.app-dashboard.admin-dashboard .mu-table-header h2,
+.app-dashboard.admin-dashboard .lh-table-header h2,
+.app-dashboard.admin-dashboard .payroll-panel-heading h3,
+.app-dashboard.admin-dashboard .section-header h2,
+.app-dashboard.admin-dashboard .settings-section h3 {
+  color: var(--admin-text);
+  letter-spacing: -0.025em;
+}
+
+.app-dashboard.admin-dashboard .request-card,
+.app-dashboard.admin-dashboard .system-status-item,
+.app-dashboard.admin-dashboard .metric-card,
+.app-dashboard.admin-dashboard .status-card,
+.app-dashboard.admin-dashboard .mu-user-detail-top,
+.app-dashboard.admin-dashboard .mu-detail-grid > div,
+.app-dashboard.admin-dashboard .pr-modal-section,
+.app-dashboard.admin-dashboard .ed-form-section,
+.app-dashboard.admin-dashboard .admin-report-filter-card,
+.app-dashboard.admin-dashboard .reports-kpi-card,
+.app-dashboard.admin-dashboard .reports-summary-card,
+.app-dashboard.admin-dashboard .lci-session-item {
+  border: 1px solid var(--admin-border);
+  border-radius: 14px;
+  background: var(--admin-surface-muted);
+  box-shadow: none;
+}
+
+.app-dashboard.admin-dashboard .chart-box,
+.app-dashboard.admin-dashboard .payroll-chart-box,
+.app-dashboard.admin-dashboard .department-charts,
+.app-dashboard.admin-dashboard .adv-charts-grid {
+  min-width: 0;
+  max-width: 100%;
+}
+
+.app-dashboard.admin-dashboard .chart-box {
+  height: 220px;
+  min-height: 220px;
+}
+
+.app-dashboard.admin-dashboard .quick-stat-panel {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  align-content: start;
+  gap: 12px;
+}
+
+.app-dashboard.admin-dashboard .quick-stat-panel .metric-card {
+  min-width: 0;
+  min-height: 104px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  margin: 0;
+  padding: 14px;
+  text-align: left;
+}
+
+.app-dashboard.admin-dashboard .quick-stat-panel .metric-kicker {
+  margin-bottom: 6px;
+  font-size: 0.67rem;
+}
+
+.app-dashboard.admin-dashboard .quick-stat-panel .metric-card h3 {
+  font-size: clamp(1.15rem, 1.7vw, 1.55rem);
+}
+
+.app-dashboard.admin-dashboard .quick-stat-panel .metric-card p {
+  margin-top: 4px;
+  font-size: 0.76rem;
+  line-height: 1.35;
+}
+
+.app-dashboard.admin-dashboard .user-role-chart-box {
+  height: 340px;
+  min-height: 340px;
+}
+
+.app-dashboard.admin-dashboard .user-role-chart-box .recharts-default-legend {
+  display: grid !important;
+  grid-template-columns: repeat(auto-fit, minmax(112px, 1fr));
+  gap: 6px 10px;
+  padding: 0;
+}
+
+.app-dashboard.admin-dashboard .user-role-chart-box .recharts-legend-item {
+  display: flex !important;
+  align-items: flex-start;
+  gap: 5px;
+  min-width: 0;
+  margin: 0 !important;
+}
+
+.app-dashboard.admin-dashboard .user-role-chart-box .recharts-legend-item-text {
+  color: var(--admin-muted) !important;
+  line-height: 1.25;
+  overflow-wrap: anywhere;
+}
+
+.app-dashboard.admin-dashboard .admin-empty-chart,
+.app-dashboard.admin-dashboard .empty-panel-state,
+.app-dashboard.admin-dashboard .admin-loading-state,
+.app-dashboard.admin-dashboard .admin-error-state {
+  border-color: var(--admin-border);
+  border-radius: 14px;
+  background: var(--admin-surface-muted);
+  box-shadow: none;
+}
+
+.app-dashboard.admin-dashboard .admin-loading-state,
+.app-dashboard.admin-dashboard .admin-error-state {
+  min-height: 300px;
+}
+
+.app-dashboard.admin-dashboard .admin-reports-nav,
+.app-dashboard.admin-dashboard .settings-tabs,
+.app-dashboard.admin-dashboard .chatbot-tabs {
+  border: 1px solid var(--admin-border);
+  border-radius: 14px;
+  background: var(--admin-surface);
+  box-shadow: var(--admin-shadow);
+}
+
+.app-dashboard.admin-dashboard .admin-nav-tab,
+.app-dashboard.admin-dashboard .tab-btn {
+  min-height: 42px;
+  border-radius: 11px;
+  box-shadow: none;
+}
+
+.app-dashboard.admin-dashboard .admin-nav-tab.active,
+.app-dashboard.admin-dashboard .tab-btn.active {
+  background: var(--color-primary);
+  color: #ffffff;
+  box-shadow: none;
+}
+
+.app-dashboard.admin-dashboard .settings-content,
+.app-dashboard.admin-dashboard .create-user-form {
+  border-radius: var(--admin-radius);
+  background: var(--admin-surface);
+  box-shadow: var(--admin-shadow);
+  backdrop-filter: none;
+}
+
+.app-dashboard.admin-dashboard .settings-section,
+.app-dashboard.admin-dashboard .form-section,
+.app-dashboard.admin-dashboard .admin-landing-editor-main {
+  border-color: var(--admin-border);
+  border-radius: 14px;
+  background: var(--admin-surface-muted);
+}
+
+.app-dashboard.admin-dashboard .theme-presets-grid {
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 12px;
+}
+
+.app-dashboard.admin-dashboard .theme-preset-card {
+  min-height: 136px;
+  border: 1px solid var(--admin-border);
+  border-radius: 14px;
+  background: var(--admin-surface);
+  box-shadow: none;
+}
+
+.app-dashboard.admin-dashboard .theme-preset-card.active {
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--color-primary) 18%, transparent);
+}
+
+.app-dashboard.admin-dashboard .admin-settings,
+.app-dashboard.admin-dashboard .manage-users,
+.app-dashboard.admin-dashboard .login-history,
+.app-dashboard.admin-dashboard .payroll-reports,
+.app-dashboard.admin-dashboard .chatbot-logs,
+.app-dashboard.admin-dashboard .admin-reports-wrapper,
+.app-dashboard.admin-dashboard .admin-reports-page,
+.app-dashboard.admin-dashboard .customer-report-container {
+  padding: clamp(12px, 1.8vw, 22px);
+}
+
+.app-dashboard.admin-dashboard .manage-users-header,
+.app-dashboard.admin-dashboard .lh-header,
+.app-dashboard.admin-dashboard .payroll-reports-hero,
+.app-dashboard.admin-dashboard .chatbot-hero,
+.app-dashboard.admin-dashboard .reports-hero,
+.app-dashboard.admin-dashboard .customer-report-container .report-header,
+.app-dashboard.admin-dashboard .admin-landing-editor-header,
+.app-dashboard.admin-dashboard .exec-header,
+.app-dashboard.admin-dashboard .cs-header,
+.app-dashboard.admin-dashboard .adv-report-header,
+.app-dashboard.admin-dashboard .sp-header,
+.app-dashboard.admin-dashboard .create-user-header {
+  border: 1px solid var(--admin-border);
+  border-radius: var(--admin-radius);
+  background: var(--admin-surface);
+  box-shadow: var(--admin-shadow);
+}
+
+.app-dashboard.admin-dashboard .manage-users-header::after,
+.app-dashboard.admin-dashboard .payroll-reports-hero::after,
+.app-dashboard.admin-dashboard .chatbot-hero::after {
+  opacity: 0.35;
+}
+
+.app-dashboard.admin-dashboard .create-user-container {
+  min-height: 0;
+  padding: clamp(12px, 1.8vw, 22px);
+}
+
+.app-dashboard.admin-dashboard .create-user-background {
+  max-width: 1120px;
+  margin: 0 auto;
+  border: 1px solid var(--admin-border);
+  border-radius: var(--admin-radius);
+  background: var(--admin-surface);
+  box-shadow: var(--admin-shadow);
+  backdrop-filter: none;
+}
+
+.app-dashboard.admin-dashboard .create-user-content {
+  padding: clamp(18px, 2.5vw, 32px);
+}
+
+.app-dashboard.admin-dashboard .admin-landing-editor-body {
+  grid-template-columns: minmax(180px, 230px) minmax(0, 1fr);
+  gap: 16px;
+}
+
+.app-dashboard.admin-dashboard .admin-landing-editor-sidebar,
+.app-dashboard.admin-dashboard .ed-header,
+.app-dashboard.admin-dashboard .reports-hero,
+.app-dashboard.admin-dashboard .payroll-controls,
+.app-dashboard.admin-dashboard .chatbot-toolbar,
+.app-dashboard.admin-dashboard .users-filter-bar,
+.app-dashboard.admin-dashboard .lh-filter-bar {
+  min-width: 0;
+}
+
+.app-dashboard.admin-dashboard .users-filter-bar,
+.app-dashboard.admin-dashboard .lh-filter-bar,
+.app-dashboard.admin-dashboard .payroll-controls,
+.app-dashboard.admin-dashboard .chatbot-toolbar {
+  grid-template-columns: minmax(200px, 1fr) repeat(auto-fit, minmax(140px, max-content));
+  gap: 10px;
+}
+
+.app-dashboard.admin-dashboard .mu-table-scroll,
+.app-dashboard.admin-dashboard .lh-table-scroll,
+.app-dashboard.admin-dashboard .history-table-scroll,
+.app-dashboard.admin-dashboard .attendance-table-wrap,
+.app-dashboard.admin-dashboard .table-container,
+.app-dashboard.admin-dashboard .endpoints-table-wrapper,
+.app-dashboard.admin-dashboard .adv-table-wrapper,
+.app-dashboard.admin-dashboard .sp-table-wrapper,
+.app-dashboard.admin-dashboard .ed-table-wrap {
+  max-width: 100%;
+  overflow-x: auto;
+  overscroll-behavior-inline: contain;
+  -webkit-overflow-scrolling: touch;
+}
+
+.app-dashboard.admin-dashboard table {
+  width: 100%;
+  border-collapse: collapse;
+  color: var(--admin-text);
+}
+
+.app-dashboard.admin-dashboard thead {
+  background: #f4f2ec;
+}
+
+.app-dashboard.admin-dashboard th {
+  color: #5f6863;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.035em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.app-dashboard.admin-dashboard td {
+  color: var(--admin-text);
+}
+
+.app-dashboard.admin-dashboard tbody tr:hover {
+  background: #faf9f5;
+}
+
+.app-dashboard.admin-dashboard .users-table,
+.app-dashboard.admin-dashboard .lh-table,
+.app-dashboard.admin-dashboard .history-table,
+.app-dashboard.admin-dashboard .attendance-table,
+.app-dashboard.admin-dashboard .adv-table,
+.app-dashboard.admin-dashboard .sp-table {
+  min-width: 680px;
+}
+
+.app-dashboard.admin-dashboard .search-box,
+.app-dashboard.admin-dashboard .filter-box,
+.app-dashboard.admin-dashboard .lh-search-box,
+.app-dashboard.admin-dashboard .lh-date-box,
+.app-dashboard.admin-dashboard .payroll-search-box,
+.app-dashboard.admin-dashboard .payroll-select,
+.app-dashboard.admin-dashboard .chatbot-search-box,
+.app-dashboard.admin-dashboard .chatbot-filter-box,
+.app-dashboard.admin-dashboard .ed-search,
+.app-dashboard.admin-dashboard .ed-select {
+  border-color: var(--admin-border);
+  border-radius: 12px;
+  background: var(--admin-surface);
+  box-shadow: none;
+}
+
+.app-dashboard.admin-dashboard .app-main input:not([type="checkbox"]),
+.app-dashboard.admin-dashboard .app-main select,
+.app-dashboard.admin-dashboard .app-main textarea {
+  min-height: 42px;
+  border: 1px solid var(--admin-border) !important;
+  border-radius: 10px !important;
+  background: #ffffff !important;
+  color: var(--admin-text) !important;
+  box-shadow: none;
+}
+
+.app-dashboard.admin-dashboard .app-main textarea {
+  min-height: 96px;
+}
+
+.app-dashboard.admin-dashboard .app-main input:focus,
+.app-dashboard.admin-dashboard .app-main select:focus,
+.app-dashboard.admin-dashboard .app-main textarea:focus {
+  border-color: var(--color-primary) !important;
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-primary) 18%, transparent) !important;
+  outline: none;
+}
+
+.app-dashboard.admin-dashboard .app-main button,
+.app-dashboard.admin-dashboard .app-main a {
+  -webkit-tap-highlight-color: transparent;
+}
+
+.app-dashboard.admin-dashboard .admin-primary-action,
+.app-dashboard.admin-dashboard .add-user-btn,
+.app-dashboard.admin-dashboard .payroll-primary-btn,
+.app-dashboard.admin-dashboard .save-btn,
+.app-dashboard.admin-dashboard .create-user-btn,
+.app-dashboard.admin-dashboard .editor-save-btn,
+.app-dashboard.admin-dashboard .ed-btn-primary {
+  min-height: 42px;
+  border-radius: 11px;
+  box-shadow: none;
+}
+
+.app-dashboard.admin-dashboard .admin-secondary-action,
+.app-dashboard.admin-dashboard .mu-secondary-btn,
+.app-dashboard.admin-dashboard .lh-secondary-btn,
+.app-dashboard.admin-dashboard .payroll-secondary-btn,
+.app-dashboard.admin-dashboard .tab-btn,
+.app-dashboard.admin-dashboard .ed-btn-secondary {
+  min-height: 42px;
+  border-radius: 11px;
+}
+
+.app-dashboard.admin-dashboard .badge,
+.app-dashboard.admin-dashboard .status-badge,
+.app-dashboard.admin-dashboard .role-badge,
+.app-dashboard.admin-dashboard .lh-role-badge,
+.app-dashboard.admin-dashboard .pr-status-pill,
+.app-dashboard.admin-dashboard .ed-chip {
+  border-radius: 999px;
+  font-weight: 650;
+}
+
+.app-dashboard.admin-dashboard .recharts-cartesian-axis-tick-value,
+.app-dashboard.admin-dashboard .recharts-legend-item-text,
+.app-dashboard.admin-dashboard .recharts-label,
+.app-dashboard.admin-dashboard .recharts-text {
+  fill: var(--admin-muted);
+  color: var(--admin-muted);
+}
+
+.app-dashboard.admin-dashboard .recharts-cartesian-grid line {
+  stroke: #e9e6de;
+}
+
+.app-dashboard.admin-dashboard .recharts-tooltip-wrapper .recharts-default-tooltip {
+  border: 1px solid var(--admin-border) !important;
+  border-radius: 12px;
+  background: #ffffff !important;
+  box-shadow: var(--admin-shadow);
+}
+
+.app-dashboard.admin-dashboard .mu-modal,
+.app-dashboard.admin-dashboard .lh-modal,
+.app-dashboard.admin-dashboard .payroll-modal,
+.app-dashboard.admin-dashboard .customer-report-container .modal-content,
+.app-dashboard.admin-dashboard .ed-modal {
+  border: 1px solid var(--admin-border);
+  border-radius: var(--admin-radius);
+  background: var(--admin-surface);
+  box-shadow: var(--admin-shadow-raised);
+}
+
+.app-dashboard.admin-dashboard .mu-modal-header,
+.app-dashboard.admin-dashboard .lh-modal-header,
+.app-dashboard.admin-dashboard .payroll-modal-header,
+.app-dashboard.admin-dashboard .ed-modal-header {
+  border-color: var(--admin-border);
+  background: #ffffff;
+}
+
+.app-dashboard.admin-dashboard .app-main :focus-visible {
+  outline: 3px solid color-mix(in srgb, var(--color-primary) 60%, white);
+  outline-offset: 2px;
+}
+
+.app-dashboard.admin-dashboard .unified-report-engine {
+  --ure-primary: var(--color-primary);
+  --ure-primary-light: var(--color-primary-light);
+  --ure-primary-soft: var(--color-primary-soft);
+  --ure-bg: var(--admin-surface-muted);
+  --ure-surface: var(--admin-surface);
+  --ure-surface-hover: var(--admin-surface-muted);
+  --ure-border: var(--admin-border);
+  --ure-border-strong: var(--admin-border);
+  --ure-text: var(--admin-text);
+  --ure-text-muted: var(--admin-muted);
+  --ure-heading: var(--admin-text);
+  --ure-shadow: var(--admin-shadow);
+  --ure-shadow-lg: var(--admin-shadow-raised);
+  --ure-radius: 14px;
+  --ure-radius-lg: var(--admin-radius);
+}
+
+.app-dashboard.admin-dashboard .ure-filter-panel,
+.app-dashboard.admin-dashboard .ure-chart-container,
+.app-dashboard.admin-dashboard .ure-table-section,
+.app-dashboard.admin-dashboard .ure-summary-card {
+  border-color: var(--admin-border);
+  border-radius: var(--admin-radius);
+  background: var(--admin-surface);
+  box-shadow: var(--admin-shadow);
+}
+
+/* Super Admin operations hub — scoped to the composite role only */
+.app-dashboard.admin-dashboard.super-admin-dashboard .super-admin-operations {
+  display: grid;
+  grid-template-columns: minmax(180px, 0.75fr) minmax(0, 4.25fr);
+  gap: 18px;
+  align-items: stretch;
+  margin: 0;
+  padding: 20px;
+  border: 1px solid var(--admin-border);
+  border-radius: var(--admin-radius);
+  background: var(--admin-surface);
+  box-shadow: var(--admin-shadow);
+}
+
+.app-dashboard.admin-dashboard.super-admin-dashboard .super-admin-operations-heading {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.app-dashboard.admin-dashboard.super-admin-dashboard .super-admin-operations-heading > span {
+  width: max-content;
+  max-width: 100%;
+  padding: 5px 10px;
+  border: 1px solid color-mix(in srgb, var(--color-primary) 24%, white);
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--color-primary) 9%, white);
+  color: var(--color-primary);
+  font-size: 0.68rem;
+  font-weight: 850;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.app-dashboard.admin-dashboard.super-admin-dashboard .super-admin-operations-heading h2 {
+  margin: 12px 0 5px;
+  color: var(--admin-text);
+  font-size: clamp(1.2rem, 1.8vw, 1.55rem);
+  letter-spacing: -0.03em;
+}
+
+.app-dashboard.admin-dashboard.super-admin-dashboard .super-admin-operations-heading p {
+  margin: 0;
+  color: var(--admin-muted);
+  font-size: 0.84rem;
+  line-height: 1.45;
+}
+
+.app-dashboard.admin-dashboard.super-admin-dashboard .super-admin-module-grid {
+  min-width: 0;
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.app-dashboard.admin-dashboard.super-admin-dashboard .super-admin-module-card {
+  min-width: 0;
+  display: grid;
+  grid-template-columns: 40px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 10px;
+  padding: 13px;
+  border: 1px solid var(--admin-border);
+  border-radius: 15px;
+  background: var(--admin-surface-muted);
+  color: var(--admin-text);
+  text-decoration: none;
+  transition: transform 0.18s ease, border-color 0.18s ease, box-shadow 0.18s ease;
+}
+
+.app-dashboard.admin-dashboard.super-admin-dashboard .super-admin-module-card:hover {
+  transform: translateY(-2px);
+  border-color: color-mix(in srgb, var(--color-primary) 32%, var(--admin-border));
+  box-shadow: var(--admin-shadow);
+}
+
+.app-dashboard.admin-dashboard.super-admin-dashboard .super-admin-module-icon {
+  width: 40px;
+  height: 40px;
+  display: grid;
+  place-items: center;
+  border-radius: 13px;
+  background: color-mix(in srgb, var(--color-primary) 10%, white);
+  color: var(--color-primary);
+}
+
+.app-dashboard.admin-dashboard.super-admin-dashboard .super-admin-module-copy {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.app-dashboard.admin-dashboard.super-admin-dashboard .super-admin-module-copy strong,
+.app-dashboard.admin-dashboard.super-admin-dashboard .super-admin-module-copy small {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.app-dashboard.admin-dashboard.super-admin-dashboard .super-admin-module-copy small {
+  color: var(--admin-muted);
+  font-size: 0.72rem;
+}
+
+@media (max-width: 1180px) {
+  .app-dashboard.admin-dashboard .overview-cards,
+  .app-dashboard.admin-dashboard .quick-stat-panel,
+  .app-dashboard.admin-dashboard .mu-stats-grid,
+  .app-dashboard.admin-dashboard .lh-stats-grid,
+  .app-dashboard.admin-dashboard .payroll-stat-grid,
+  .app-dashboard.admin-dashboard .chatbot-stat-grid,
+  .app-dashboard.admin-dashboard .attendance-summary,
+  .app-dashboard.admin-dashboard .history-stats-grid,
+  .app-dashboard.admin-dashboard .ed-stats,
+  .app-dashboard.admin-dashboard .exec-kpi-grid,
+  .app-dashboard.admin-dashboard .sp-overview {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .app-dashboard.admin-dashboard .dashboard-grid,
+  .app-dashboard.admin-dashboard .dashboard-grid.three-column {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .app-dashboard.admin-dashboard .admin-quick-actions {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .app-dashboard.admin-dashboard.super-admin-dashboard .super-admin-operations {
+    grid-template-columns: 1fr;
+  }
+
+  .app-dashboard.admin-dashboard.super-admin-dashboard .super-admin-module-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 1024px) {
+  .app-dashboard.admin-dashboard .app-sidebar.admin-sidebar {
+    position: fixed;
+    inset: 0 auto 0 0;
+    transform: translateX(-100%);
+    transition: transform 0.25s ease;
+    z-index: 1400;
+  }
+
+  .app-dashboard.admin-dashboard .app-sidebar.admin-sidebar.mobile-open {
+    transform: translateX(0);
+  }
+
+  .app-dashboard.admin-dashboard .mobile-menu-toggle {
+    display: grid !important;
+    place-items: center;
+  }
+
+  .app-dashboard.admin-dashboard .app-main {
+    width: 100%;
+    margin-left: 0;
+  }
+
+  .app-dashboard.admin-dashboard .mobile-backdrop {
+    display: none;
+  }
+
+  .app-dashboard.admin-dashboard .mobile-backdrop.active {
+    display: block;
+    position: fixed;
+    inset: 0;
+    z-index: 1350;
+    background: rgba(23, 25, 23, 0.42);
+  }
+
+  .app-dashboard.admin-dashboard .dashboard-grid,
+  .app-dashboard.admin-dashboard .dashboard-grid.three-column {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+@media (max-width: 767px) {
+  .app-dashboard.admin-dashboard .app-topbar {
+    min-height: 64px;
+    height: auto;
+    padding: 8px 12px;
+    gap: 8px;
+  }
+
+  .app-dashboard.admin-dashboard .app-topbar h1 {
+    font-size: clamp(0.95rem, 4vw, 1.15rem);
+  }
+
+  .app-dashboard.admin-dashboard .app-topbar p {
+    display: none;
+  }
+
+  .app-dashboard.admin-dashboard .navbar-actions {
+    gap: 6px;
+  }
+
+  .app-dashboard.admin-dashboard .app-content {
+    padding: 14px;
+  }
+
+  .app-dashboard.admin-dashboard .overview-cards,
+  .app-dashboard.admin-dashboard .quick-stat-panel,
+  .app-dashboard.admin-dashboard .mu-stats-grid,
+  .app-dashboard.admin-dashboard .lh-stats-grid,
+  .app-dashboard.admin-dashboard .payroll-stat-grid,
+  .app-dashboard.admin-dashboard .chatbot-stat-grid,
+  .app-dashboard.admin-dashboard .attendance-summary,
+  .app-dashboard.admin-dashboard .history-stats-grid,
+  .app-dashboard.admin-dashboard .ed-stats,
+  .app-dashboard.admin-dashboard .exec-kpi-grid,
+  .app-dashboard.admin-dashboard .sp-overview,
+  .app-dashboard.admin-dashboard .admin-quick-actions {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+  }
+
+  .app-dashboard.admin-dashboard .overview-card,
+  .app-dashboard.admin-dashboard .mu-stat-card,
+  .app-dashboard.admin-dashboard .lh-stat-card,
+  .app-dashboard.admin-dashboard .pr-stat-card,
+  .app-dashboard.admin-dashboard .chatbot-stat-card,
+  .app-dashboard.admin-dashboard .ed-stat-card,
+  .app-dashboard.admin-dashboard .panel {
+    padding: 14px;
+  }
+
+  .app-dashboard.admin-dashboard.super-admin-dashboard .super-admin-module-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .app-dashboard.admin-dashboard .admin-hero,
+  .app-dashboard.admin-dashboard .manage-users-header,
+  .app-dashboard.admin-dashboard .lh-header,
+  .app-dashboard.admin-dashboard .payroll-reports-hero,
+  .app-dashboard.admin-dashboard .chatbot-hero,
+  .app-dashboard.admin-dashboard .reports-hero {
+    align-items: flex-start;
+    flex-direction: column;
+    padding: 20px;
+  }
+
+  .app-dashboard.admin-dashboard .header-actions,
+  .app-dashboard.admin-dashboard .payroll-header-actions,
+  .app-dashboard.admin-dashboard .lh-header-actions,
+  .app-dashboard.admin-dashboard .chatbot-hero-actions {
+    width: 100%;
+    flex-wrap: wrap;
+  }
+
+  .app-dashboard.admin-dashboard .users-filter-bar,
+  .app-dashboard.admin-dashboard .lh-filter-bar,
+  .app-dashboard.admin-dashboard .payroll-controls,
+  .app-dashboard.admin-dashboard .chatbot-toolbar,
+  .app-dashboard.admin-dashboard .admin-landing-editor-body {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .app-dashboard.admin-dashboard .admin-landing-editor-sidebar {
+    position: static;
+    display: flex;
+    overflow-x: auto;
+  }
+
+  .app-dashboard.admin-dashboard .admin-landing-editor-sidebar button {
+    flex: 0 0 auto;
+  }
+
+  .app-dashboard.admin-dashboard .quick-stat-panel {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .app-dashboard.admin-dashboard .request-info,
+  .app-dashboard.admin-dashboard .mu-detail-grid,
+  .app-dashboard.admin-dashboard .lh-detail-grid,
+  .app-dashboard.admin-dashboard .ed-detail-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .app-dashboard.admin-dashboard .panel-header,
+  .app-dashboard.admin-dashboard .mu-table-header,
+  .app-dashboard.admin-dashboard .lh-table-header,
+  .app-dashboard.admin-dashboard .payroll-panel-heading {
+    align-items: flex-start;
+    flex-wrap: wrap;
+  }
+}
+
+@media (max-width: 420px) {
+  .app-dashboard.admin-dashboard .overview-cards,
+  .app-dashboard.admin-dashboard .quick-stat-panel,
+  .app-dashboard.admin-dashboard .mu-stats-grid,
+  .app-dashboard.admin-dashboard .lh-stats-grid,
+  .app-dashboard.admin-dashboard .payroll-stat-grid,
+  .app-dashboard.admin-dashboard .chatbot-stat-grid,
+  .app-dashboard.admin-dashboard .attendance-summary,
+  .app-dashboard.admin-dashboard .history-stats-grid,
+  .app-dashboard.admin-dashboard .ed-stats,
+  .app-dashboard.admin-dashboard .exec-kpi-grid,
+  .app-dashboard.admin-dashboard .sp-overview,
+  .app-dashboard.admin-dashboard .admin-quick-actions {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .app-dashboard.admin-dashboard.super-admin-dashboard .super-admin-module-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .app-dashboard.admin-dashboard .app-content {
+    padding: 10px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .app-dashboard.admin-dashboard *,
+  .app-dashboard.admin-dashboard *::before,
+  .app-dashboard.admin-dashboard *::after {
+    scroll-behavior: auto !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}

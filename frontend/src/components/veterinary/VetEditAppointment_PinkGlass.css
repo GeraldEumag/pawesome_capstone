@@ -22,7 +22,7 @@
 
 /* ── Hero Header ───────────────────────────────────────────── */
 
-.new-appointment-header {
+.new-appointment-container .new-appointment-header {
   position: relative;
   display: flex;
   align-items: center;
@@ -34,7 +34,7 @@
   box-shadow: var(--veterinary-glass-shadow);
 }
 
-.new-appointment-header::after {
+.new-appointment-container .new-appointment-header::after {
   content: "";
   position: absolute;
   top: -100px;
@@ -46,7 +46,7 @@
   pointer-events: none;
 }
 
-.back-button {
+.new-appointment-container .back-button {
   position: relative;
   z-index: 1;
   display: inline-flex;
@@ -66,12 +66,12 @@
   transition: background 0.2s ease, transform 0.2s ease;
 }
 
-.back-button:hover {
+.new-appointment-container .back-button:hover {
   background: rgba(255, 255, 255, 0.32);
   transform: translateX(-2px);
 }
 
-.new-appointment-header h1 {
+.new-appointment-container .new-appointment-header h1 {
   position: relative;
   z-index: 1;
   margin: 0 0 4px;
@@ -82,7 +82,7 @@
   line-height: 1.15;
 }
 
-.new-appointment-header p {
+.new-appointment-container .new-appointment-header p {
   position: relative;
   z-index: 1;
   margin: 0;
@@ -91,7 +91,7 @@
   font-weight: 500;
 }
 
-.new-appointment-header > div {
+.new-appointment-container .new-appointment-header > div {
   position: relative;
   z-index: 1;
   flex: 1;
@@ -100,7 +100,7 @@
 
 /* ── Alert Banners ─────────────────────────────────────────── */
 
-.new-appointment-alert {
+.new-appointment-container .new-appointment-alert {
   display: flex;
   align-items: center;
   gap: 12px;
@@ -115,7 +115,7 @@
 
 /* ── Form Layout (3-column grid stacked vertically) ────────── */
 
-.new-appointment-layout {
+.new-appointment-container .new-appointment-layout {
   display: grid;
   grid-template-columns: minmax(0, 1fr) 340px;
   gap: 22px;
@@ -124,7 +124,7 @@
 
 /* ── Form Section Cards ────────────────────────────────────── */
 
-.new-appointment-form-card {
+.new-appointment-container .new-appointment-form-card {
   border-radius: var(--veterinary-radius-2xl);
   background: var(--veterinary-glass-bg);
   border: 1.5px solid var(--veterinary-glass-border);
@@ -134,19 +134,19 @@
   margin-bottom: 20px;
 }
 
-.new-appointment-form-card:last-child {
+.new-appointment-container .new-appointment-form-card:last-child {
   margin-bottom: 0;
 }
 
 /* ── Card Header ───────────────────────────────────────────── */
 
-.form-card-header {
+.new-appointment-container .form-card-header {
   padding: 18px 22px;
   background: linear-gradient(135deg, var(--veterinary-primary-light) 0%, var(--veterinary-primary) 100%);
   border-bottom: none;
 }
 
-.form-card-header h2 {
+.new-appointment-container .form-card-header h2 {
   margin: 0 0 3px;
   color: #ffffff;
   font-size: 1.05rem;
@@ -157,7 +157,7 @@
   letter-spacing: -0.01em;
 }
 
-.form-card-header p {
+.new-appointment-container .form-card-header p {
   margin: 0;
   color: rgba(255, 255, 255, 0.85);
   font-size: 0.83rem;
@@ -166,7 +166,7 @@
 
 /* ── Form Rows & Groups ────────────────────────────────────── */
 
-.form-row {
+.new-appointment-container .form-row {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 16px;
@@ -174,18 +174,18 @@
   border-bottom: 1px solid var(--vet-divider);
 }
 
-.form-group {
+.new-appointment-container .form-group {
   padding: 16px 22px;
   display: grid;
   gap: 8px;
   border-bottom: 1px solid var(--vet-divider);
 }
 
-.form-group:last-child {
+.new-appointment-container .form-group:last-child {
   border-bottom: none;
 }
 
-.form-group label {
+.new-appointment-container .form-group label {
   font-size: 0.8rem;
   font-weight: 750;
   color: var(--veterinary-text-muted);
@@ -193,9 +193,9 @@
   letter-spacing: 0.04em;
 }
 
-.form-group input,
-.form-group select,
-.form-group textarea {
+.new-appointment-container .form-group input,
+.new-appointment-container .form-group select,
+.new-appointment-container .form-group textarea {
   width: 100%;
   min-height: var(--vet-input-height, 48px);
   border-radius: var(--vet-input-radius, 14px);
@@ -210,21 +210,21 @@
   transition: border-color 0.2s ease, box-shadow 0.2s ease;
 }
 
-.form-group input:focus,
-.form-group select:focus,
-.form-group textarea:focus {
+.new-appointment-container .form-group input:focus,
+.new-appointment-container .form-group select:focus,
+.new-appointment-container .form-group textarea:focus {
   border-color: var(--veterinary-primary);
   box-shadow: 0 0 0 4px var(--vet-input-focus-ring);
 }
 
-.form-group textarea {
+.new-appointment-container .form-group textarea {
   min-height: 110px;
   resize: vertical;
   line-height: 1.55;
 }
 
 /* Service count helper text */
-.service-count-helper {
+.new-appointment-container .service-count-helper {
   color: var(--veterinary-text-muted);
   font-size: 0.78rem;
   font-weight: 600;
@@ -234,13 +234,13 @@
 
 /* ── Customer Search ───────────────────────────────────────── */
 
-.search-container {
+.new-appointment-container .search-container {
   position: relative;
   display: flex;
   align-items: center;
 }
 
-.search-container input {
+.new-appointment-container .search-container input {
   width: 100%;
   min-height: var(--vet-input-height, 48px);
   padding: 11px 40px 11px 16px;
@@ -255,12 +255,12 @@
   transition: border-color 0.2s ease, box-shadow 0.2s ease;
 }
 
-.search-container input:focus {
+.new-appointment-container .search-container input:focus {
   border-color: var(--veterinary-primary);
   box-shadow: 0 0 0 4px var(--vet-input-focus-ring);
 }
 
-.search-icon {
+.new-appointment-container .search-icon {
   position: absolute;
   right: 14px;
   color: var(--veterinary-primary);
@@ -270,7 +270,7 @@
 
 /* ── Customer Search Results Dropdown ──────────────────────── */
 
-.customer-search-results {
+.new-appointment-container .customer-search-results {
   position: absolute;
   top: calc(100% + 6px);
   left: 0;
@@ -286,7 +286,7 @@
   backdrop-filter: blur(24px);
 }
 
-.customer-result-item {
+.new-appointment-container .customer-result-item {
   width: 100%;
   display: flex;
   align-items: center;
@@ -300,17 +300,17 @@
   text-align: left;
 }
 
-.customer-result-item:hover {
+.new-appointment-container .customer-result-item:hover {
   background: rgba(255, 95, 147, 0.08);
 }
 
-.customer-result-item span {
+.new-appointment-container .customer-result-item span {
   display: grid;
   gap: 2px;
   min-width: 0;
 }
 
-.customer-result-item strong {
+.new-appointment-container .customer-result-item strong {
   display: block;
   color: var(--veterinary-text-primary);
   font-size: 0.9rem;
@@ -320,7 +320,7 @@
   text-overflow: ellipsis;
 }
 
-.customer-result-item small {
+.new-appointment-container .customer-result-item small {
   display: block;
   color: var(--veterinary-text-muted);
   font-size: 0.78rem;
@@ -329,7 +329,7 @@
 
 /* ── Selected Customer Display ─────────────────────────────── */
 
-.selected-customer-display {
+.new-appointment-container .selected-customer-display {
   margin-top: 12px;
   padding: 14px;
   border-radius: var(--veterinary-radius-lg);
@@ -337,13 +337,13 @@
   border: 1.5px solid rgba(255, 95, 147, 0.2);
 }
 
-.selected-customer-info {
+.new-appointment-container .selected-customer-info {
   display: flex;
   align-items: center;
   gap: 12px;
 }
 
-.selected-customer-info svg {
+.new-appointment-container .selected-customer-info svg {
   width: 36px;
   height: 36px;
   min-width: 36px;
@@ -354,13 +354,13 @@
   flex-shrink: 0;
 }
 
-.selected-customer-info span {
+.new-appointment-container .selected-customer-info span {
   display: grid;
   gap: 2px;
   min-width: 0;
 }
 
-.selected-customer-info strong {
+.new-appointment-container .selected-customer-info strong {
   display: block;
   color: var(--veterinary-text-primary);
   font-weight: 750;
@@ -370,7 +370,7 @@
   text-overflow: ellipsis;
 }
 
-.selected-customer-info small {
+.new-appointment-container .selected-customer-info small {
   display: block;
   color: var(--veterinary-text-muted);
   font-size: 0.8rem;
@@ -379,7 +379,7 @@
 
 /* ── Helper Empty Boxes ────────────────────────────────────── */
 
-.helper-empty-box {
+.new-appointment-container .helper-empty-box {
   display: grid;
   place-items: center;
   align-content: center;
@@ -391,24 +391,24 @@
   background: var(--vet-form-card-bg);
 }
 
-.helper-empty-box svg {
+.new-appointment-container .helper-empty-box svg {
   color: var(--veterinary-primary);
   font-size: 2rem;
   opacity: 0.55;
 }
 
-.helper-empty-box.warning svg {
+.new-appointment-container .helper-empty-box.warning svg {
   color: var(--vet-badge-pending-color);
 }
 
-.helper-empty-box h4 {
+.new-appointment-container .helper-empty-box h4 {
   margin: 0;
   color: var(--veterinary-text-primary);
   font-size: 0.95rem;
   font-weight: 750;
 }
 
-.helper-empty-box p {
+.new-appointment-container .helper-empty-box p {
   margin: 0;
   color: var(--veterinary-text-muted);
   font-size: 0.85rem;
@@ -418,13 +418,13 @@
 
 /* ── Pet Selection Grid ────────────────────────────────────── */
 
-.pet-selection-grid {
+.new-appointment-container .pet-selection-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(min(100%, 200px), 1fr));
   gap: 10px;
 }
 
-.pet-option {
+.new-appointment-container .pet-option {
   width: 100%;
   display: flex;
   align-items: center;
@@ -439,25 +439,25 @@
   box-shadow: var(--veterinary-shadow-sm);
 }
 
-.pet-option:hover {
+.new-appointment-container .pet-option:hover {
   transform: translateY(-2px);
   border-color: var(--veterinary-primary);
   box-shadow: var(--veterinary-shadow-md);
 }
 
-.pet-option.selected {
+.new-appointment-container .pet-option.selected {
   border-color: var(--veterinary-primary);
   background: rgba(255, 95, 147, 0.08);
   box-shadow: 0 0 0 3px rgba(255, 95, 147, 0.15);
 }
 
-.pet-option span {
+.new-appointment-container .pet-option span {
   display: grid;
   gap: 2px;
   min-width: 0;
 }
 
-.pet-option strong {
+.new-appointment-container .pet-option strong {
   display: block;
   color: var(--veterinary-text-primary);
   font-size: 0.875rem;
@@ -467,7 +467,7 @@
   text-overflow: ellipsis;
 }
 
-.pet-option small {
+.new-appointment-container .pet-option small {
   display: block;
   color: var(--veterinary-text-muted);
   font-size: 0.78rem;
@@ -476,7 +476,7 @@
 
 /* ── Service Preview ───────────────────────────────────────── */
 
-.selected-service-preview {
+.new-appointment-container .selected-service-preview {
   display: flex;
   align-items: center;
   gap: 14px;
@@ -487,7 +487,7 @@
   margin-top: 4px;
 }
 
-.selected-service-preview strong {
+.new-appointment-container .selected-service-preview strong {
   display: block;
   color: var(--veterinary-text-primary);
   font-size: 0.925rem;
@@ -495,7 +495,7 @@
   margin-bottom: 3px;
 }
 
-.selected-service-preview p {
+.new-appointment-container .selected-service-preview p {
   margin: 0;
   color: var(--veterinary-text-muted);
   font-size: 0.85rem;
@@ -504,13 +504,13 @@
 
 /* ── Appointment Summary ───────────────────────────────────── */
 
-.appointment-summary {
+.new-appointment-container .appointment-summary {
   display: grid;
   gap: 10px;
   padding: 0;
 }
 
-.summary-row {
+.new-appointment-container .summary-row {
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -521,7 +521,7 @@
   border: 1px solid var(--vet-form-border);
 }
 
-.summary-row small {
+.new-appointment-container .summary-row small {
   font-size: 0.75rem;
   font-weight: 750;
   text-transform: uppercase;
@@ -530,7 +530,7 @@
   white-space: nowrap;
 }
 
-.summary-row strong {
+.new-appointment-container .summary-row strong {
   font-size: 0.9rem;
   font-weight: 700;
   color: var(--veterinary-text-primary);
@@ -538,23 +538,23 @@
   word-break: break-word;
 }
 
-.summary-row.price {
+.new-appointment-container .summary-row.price {
   background: linear-gradient(135deg, var(--veterinary-primary-light), var(--veterinary-primary));
   border-color: transparent;
 }
 
-.summary-row.price small {
+.new-appointment-container .summary-row.price small {
   color: rgba(255, 255, 255, 0.85);
 }
 
-.summary-row.price strong {
+.new-appointment-container .summary-row.price strong {
   color: #ffffff;
   font-size: 1.1rem;
 }
 
 /* ── Form Actions ──────────────────────────────────────────── */
 
-.form-actions {
+.new-appointment-container .form-actions {
   grid-column: 1 / -1;
   display: flex;
   justify-content: flex-end;
@@ -568,7 +568,7 @@
   box-shadow: var(--veterinary-shadow-sm);
 }
 
-.cancel-btn {
+.new-appointment-container .cancel-btn {
   display: inline-flex;
   align-items: center;
   gap: 8px;
@@ -584,12 +584,12 @@
   transition: background 0.2s ease, transform 0.2s ease;
 }
 
-.cancel-btn:hover {
+.new-appointment-container .cancel-btn:hover {
   background: rgba(255, 95, 147, 0.08);
   transform: translateY(-1px);
 }
 
-.save-appointment-btn {
+.new-appointment-container .save-appointment-btn {
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -607,19 +607,19 @@
   transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
 
-.save-appointment-btn:hover:not(:disabled) {
+.new-appointment-container .save-appointment-btn:hover:not(:disabled) {
   transform: translateY(-2px);
   box-shadow: 0 10px 26px rgba(255, 95, 147, 0.42);
 }
 
-.save-appointment-btn:disabled {
+.new-appointment-container .save-appointment-btn:disabled {
   opacity: 0.6;
   cursor: not-allowed;
 }
 
 /* ── Loading State ─────────────────────────────────────────── */
 
-.loading-container {
+.new-appointment-container .loading-container {
   display: grid;
   place-items: center;
   align-content: center;
@@ -633,14 +633,14 @@
   color: var(--veterinary-text-muted);
 }
 
-.loading-container strong {
+.new-appointment-container .loading-container strong {
   display: block;
   color: var(--veterinary-text-primary);
   font-weight: 750;
   font-size: 1rem;
 }
 
-.loading-container p {
+.new-appointment-container .loading-container p {
   margin: 0;
   font-weight: 500;
   font-size: 0.875rem;
@@ -652,7 +652,7 @@
   to { transform: rotate(360deg); }
 }
 
-.spin {
+.new-appointment-container .spin {
   animation: edit-spin 0.9s linear infinite;
   font-size: 2rem;
   color: var(--veterinary-primary);
@@ -660,40 +660,40 @@
 
 /* ── Dark Mode ─────────────────────────────────────────────── */
 
-[data-theme="dark"] .new-appointment-header {
+[data-theme="dark"] .new-appointment-container .new-appointment-header {
   background: linear-gradient(135deg, #8b2252 0%, #ff5f93 100%);
 }
 
 /* ── Responsive ────────────────────────────────────────────── */
 
 @media (max-width: 1100px) {
-  .new-appointment-layout {
+  .new-appointment-container .new-appointment-layout {
     grid-template-columns: 1fr;
   }
 }
 
 @media (max-width: 900px) {
-  .new-appointment-header {
+  .new-appointment-container .new-appointment-header {
     flex-direction: column;
     align-items: flex-start;
     gap: 16px;
     padding: 1.5rem;
   }
 
-  .back-button {
+  .new-appointment-container .back-button {
     align-self: flex-start;
   }
 
-  .form-row {
+  .new-appointment-container .form-row {
     grid-template-columns: 1fr;
   }
 
-  .form-actions {
+  .new-appointment-container .form-actions {
     justify-content: stretch;
   }
 
-  .cancel-btn,
-  .save-appointment-btn {
+  .new-appointment-container .cancel-btn,
+  .new-appointment-container .save-appointment-btn {
     flex: 1;
     justify-content: center;
   }
@@ -704,20 +704,20 @@
     padding: 16px;
   }
 
-  .new-appointment-header {
+  .new-appointment-container .new-appointment-header {
     padding: 1.25rem;
   }
 
-  .pet-selection-grid {
+  .new-appointment-container .pet-selection-grid {
     grid-template-columns: 1fr;
   }
 
-  .form-actions {
+  .new-appointment-container .form-actions {
     flex-direction: column;
   }
 
-  .cancel-btn,
-  .save-appointment-btn {
+  .new-appointment-container .cancel-btn,
+  .new-appointment-container .save-appointment-btn {
     width: 100%;
   }
 }

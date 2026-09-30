@@ -189,7 +189,7 @@
   transform: translateY(-2px);
 }
 
-.export-btn-sm {
+.vet-reports .export-btn-sm {
   display: inline-flex;
   align-items: center;
   gap: 0.4rem;
@@ -203,50 +203,50 @@
   white-space: nowrap;
 }
 
-.export-btn-sm:hover {
+.vet-reports .export-btn-sm:hover {
   transform: translateY(-1px);
 }
 
-.export-btn-sm.excel {
+.vet-reports .export-btn-sm.excel {
   background: rgba(16, 185, 129, 0.1);
   color: #059669;
   border-color: rgba(16, 185, 129, 0.2);
 }
 
-.export-btn-sm.excel:hover {
+.vet-reports .export-btn-sm.excel:hover {
   background: rgba(16, 185, 129, 0.18);
   box-shadow: 0 4px 10px rgba(16, 185, 129, 0.14);
 }
 
-.export-btn-sm.csv {
+.vet-reports .export-btn-sm.csv {
   background: rgba(59, 130, 246, 0.1);
   color: #2563eb;
   border-color: rgba(59, 130, 246, 0.2);
 }
 
-.export-btn-sm.csv:hover {
+.vet-reports .export-btn-sm.csv:hover {
   background: rgba(59, 130, 246, 0.18);
   box-shadow: 0 4px 10px rgba(59, 130, 246, 0.14);
 }
 
-.export-btn-sm.pdf {
+.vet-reports .export-btn-sm.pdf {
   background: rgba(239, 68, 68, 0.1);
   color: #dc2626;
   border-color: rgba(239, 68, 68, 0.2);
 }
 
-.export-btn-sm.pdf:hover {
+.vet-reports .export-btn-sm.pdf:hover {
   background: rgba(239, 68, 68, 0.18);
   box-shadow: 0 4px 10px rgba(239, 68, 68, 0.14);
 }
 
-.export-btn-sm.print {
+.vet-reports .export-btn-sm.print {
   background: rgba(100, 116, 139, 0.1);
   color: #475569;
   border-color: rgba(100, 116, 139, 0.2);
 }
 
-.export-btn-sm.print:hover {
+.vet-reports .export-btn-sm.print:hover {
   background: rgba(100, 116, 139, 0.18);
   box-shadow: 0 4px 10px rgba(100, 116, 139, 0.14);
 }
@@ -315,7 +315,7 @@
   font-size: 1rem;
 }
 
-.spin-animation {
+.vet-reports .spin-animation {
   animation: vetReportsSpin 1s linear infinite;
 }
 
@@ -1066,7 +1066,7 @@
     grid-template-columns: repeat(2, 1fr);
   }
 
-  .vet-export-actions .export-btn-sm,
+  .vet-reports .vet-export-actions .export-btn-sm,
   .vet-filter-actions button {
     width: 100%;
   }

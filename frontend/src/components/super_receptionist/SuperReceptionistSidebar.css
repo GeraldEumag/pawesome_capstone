@@ -1,76 +1,72 @@
-/* Super Receptionist Sidebar - Purple accent for composite role */
+/* Super Receptionist Sidebar - shared pink-glass treatment */
 
 .super-receptionist-sidebar {
-  --sidebar-accent: #7c3aed;
+  --sidebar-accent: var(--color-primary, #ff5f93);
 }
 
-/* Header */
 .super-receptionist-sidebar .sidebar-header {
+  min-height: 76px;
   border-bottom: 1px solid rgba(255, 255, 255, 0.2);
 }
 
 .super-receptionist-sidebar .sidebar-logo {
   color: #ffffff;
-  font-weight: 700;
+  font-weight: 800;
   font-size: 1rem;
+  letter-spacing: -0.02em;
 }
 
-/* Back to Home button */
+.super-receptionist-sidebar .sidebar-nav {
+  padding: 0.85rem 0.7rem;
+}
+
+/* Back to Home */
 .super-receptionist-sidebar .super-back-btn {
-  display: flex;
-  align-items: center;
-  gap: 0.6rem;
-  width: calc(100% - 1.5rem);
-  margin: 0.75rem 0.75rem 0.25rem;
-  padding: 0.55rem 0.85rem;
-  background: rgba(255, 255, 255, 0.1);
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  border-radius: 8px;
-  color: rgba(255, 255, 255, 0.9);
-  font-size: 0.82rem;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.2s ease;
+  min-height: 42px;
+  border-radius: 12px;
 }
 
-.super-receptionist-sidebar .super-back-btn:hover {
-  background: rgba(255, 255, 255, 0.2);
-  color: #ffffff;
-  border-color: rgba(255, 255, 255, 0.4);
+/* Collapsible module sections */
+.super-receptionist-sidebar .nav-section {
+  margin-bottom: 0.55rem;
 }
 
-.super-receptionist-sidebar .super-back-btn svg {
-  font-size: 0.8rem;
-}
-
-/* Collapsible section toggle */
 .super-receptionist-sidebar .nav-section-toggle {
   width: 100%;
+  min-height: 42px;
   display: flex;
   align-items: center;
-  gap: 0.6rem;
-  padding: 0.625rem 1rem;
+  gap: 0.65rem;
+  padding: 0.55rem 0.8rem;
   background: transparent;
   border: none;
   border-left: 3px solid transparent;
-  color: rgba(255, 255, 255, 0.85);
-  font-size: 0.78rem;
-  font-weight: 700;
+  border-radius: 10px;
+  color: rgba(255, 255, 255, 0.86);
+  font-size: 0.72rem;
+  font-weight: 800;
   text-transform: uppercase;
-  letter-spacing: 0.05em;
+  letter-spacing: 0.055em;
   cursor: pointer;
   transition: all 0.2s ease;
 }
 
 .super-receptionist-sidebar .nav-section-toggle:hover {
-  background: rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.14);
   color: #ffffff;
-  border-left-color: var(--sidebar-accent);
+  border-left-color: rgba(255, 255, 255, 0.48);
+}
+
+.super-receptionist-sidebar .nav-section-toggle:focus-visible {
+  outline: 2px solid rgba(255, 255, 255, 0.5);
+  outline-offset: 2px;
 }
 
 .super-receptionist-sidebar .nav-section-icon {
-  font-size: 0.85rem;
-  opacity: 0.8;
+  width: 18px;
+  font-size: 0.82rem;
+  opacity: 0.85;
+  text-align: center;
 }
 
 .super-receptionist-sidebar .nav-section-label {
@@ -79,8 +75,8 @@
 }
 
 .super-receptionist-sidebar .nav-section-chevron {
-  font-size: 0.7rem;
-  opacity: 0.6;
+  font-size: 0.68rem;
+  opacity: 0.65;
   transition: transform 0.2s ease;
 }
 
@@ -88,81 +84,116 @@
   transform: rotate(180deg);
 }
 
-/* Nav list items */
+/* Nav items */
 .super-receptionist-sidebar .nav-list {
   list-style: none;
-  padding: 0.25rem 0;
+  padding: 0.15rem 0 0.35rem;
   margin: 0;
 }
 
 .super-receptionist-sidebar .nav-item {
-  margin: 0;
+  margin: 0.1rem 0;
 }
 
 .super-receptionist-sidebar .nav-item a {
+  position: relative;
   display: flex;
   align-items: center;
-  gap: 0.75rem;
-  padding: 0.55rem 1rem 0.55rem 2.2rem;
-  color: rgba(255, 255, 255, 0.75);
-  text-decoration: none;
-  font-size: 0.85rem;
-  font-weight: 500;
+  gap: 0.7rem;
+  min-height: 42px;
+  padding: 0.55rem 0.75rem 0.55rem 2.15rem;
   border-left: 3px solid transparent;
+  border-radius: 10px;
+  color: rgba(255, 255, 255, 0.78);
+  text-decoration: none;
+  font-size: 0.84rem;
+  font-weight: 600;
   transition: all 0.18s ease;
 }
 
 .super-receptionist-sidebar .nav-item a:hover {
-  background: rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.14);
   color: #ffffff;
-  border-left-color: var(--sidebar-accent);
+  border-left-color: rgba(255, 255, 255, 0.48);
+  transform: translateX(2px);
 }
 
 .super-receptionist-sidebar .nav-item a.active {
-  background: rgba(124, 58, 237, 0.25);
-  color: #ffffff;
+  background: rgba(255, 255, 255, 0.96);
+  color: var(--sidebar-accent);
   border-left-color: var(--sidebar-accent);
-  font-weight: 600;
+  font-weight: 750;
+  box-shadow: 0 10px 24px rgba(75, 34, 50, 0.16);
+}
+
+.super-receptionist-sidebar .nav-item a.active::before {
+  content: "";
+  position: absolute;
+  left: 0.35rem;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 4px;
+  height: 24px;
+  border-radius: 999px;
+  background: var(--sidebar-accent);
 }
 
 .super-receptionist-sidebar .nav-icon {
-  font-size: 0.85rem;
+  flex: 0 0 18px;
   width: 18px;
+  font-size: 0.85rem;
   text-align: center;
-  opacity: 0.85;
+  opacity: 0.9;
+}
+
+.super-receptionist-sidebar .nav-item a.active .nav-icon,
+.super-receptionist-sidebar .nav-item a.active .external-icon {
+  color: var(--sidebar-accent);
+  opacity: 1;
 }
 
 .super-receptionist-sidebar .external-icon {
   margin-left: auto;
-  font-size: 0.65rem;
-  opacity: 0.5;
+  font-size: 0.64rem;
+  opacity: 0.55;
 }
 
 /* Footer */
 .super-receptionist-sidebar .sidebar-footer {
   border-top: 1px solid rgba(255, 255, 255, 0.15);
-  padding: 1rem;
+  padding: 0.85rem 0.7rem 1rem;
 }
 
 .super-receptionist-sidebar .logout-btn {
   width: 100%;
+  min-height: 44px;
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 0.5rem;
-  padding: 0.6rem 1rem;
-  background: rgba(255, 255, 255, 0.08);
-  border: 1px solid rgba(255, 255, 255, 0.15);
-  border-radius: 8px;
-  color: rgba(255, 255, 255, 0.9);
+  gap: 0.55rem;
+  padding: 0.6rem 0.9rem;
+  background: rgba(255, 255, 255, 0.12);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 12px;
+  color: rgba(255, 255, 255, 0.92);
   font-size: 0.85rem;
-  font-weight: 500;
+  font-weight: 650;
   cursor: pointer;
   transition: all 0.2s ease;
 }
 
 .super-receptionist-sidebar .logout-btn:hover {
   background: rgba(220, 38, 38, 0.3);
-  border-color: rgba(220, 38, 38, 0.5);
+  border-color: rgba(220, 38, 38, 0.48);
   color: #ffffff;
+}
+
+@media (max-width: 1024px) {
+  .super-receptionist-sidebar {
+    width: 280px;
+  }
+
+  .super-receptionist-sidebar .mobile-close-btn {
+    display: grid;
+  }
 }

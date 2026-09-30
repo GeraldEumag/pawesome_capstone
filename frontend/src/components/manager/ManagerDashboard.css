@@ -1078,3 +1078,468 @@
     grid-template-columns: repeat(2, 1fr) !important;
   }
 }
+
+/* ROLE WORKSPACE REFRESH */
+.app-dashboard.manager-dashboard {
+  --manager-canvas: var(--color-bg, #f7f5ee);
+  --manager-surface-muted: #fbfaf7;
+  --manager-ink: #282c2a;
+  --manager-muted-ink: #68716d;
+  --manager-shadow: 0 8px 26px rgba(39, 43, 37, 0.07);
+  --manager-shadow-raised: 0 16px 36px rgba(39, 43, 37, 0.11);
+  --manager-bg-gradient: var(--manager-canvas);
+  --manager-surface: #ffffff;
+  --manager-surface-solid: #ffffff;
+  --manager-border: var(--color-border, #e9e6de);
+  --manager-heading: var(--manager-ink);
+  --manager-text: var(--manager-ink);
+  --manager-muted: var(--manager-muted-ink);
+  --color-bg-gradient: var(--manager-canvas);
+  --color-surface: var(--manager-surface);
+  --color-surface-solid: var(--manager-surface);
+  --color-heading: var(--manager-ink);
+  --color-text: var(--manager-ink);
+  --color-muted: var(--manager-muted-ink);
+  --color-border: var(--manager-border);
+  --shadow-card: var(--manager-shadow);
+  --shadow-soft: 0 4px 14px rgba(39, 43, 37, 0.06);
+  min-height: 100vh;
+  color: var(--manager-ink);
+  background: var(--manager-canvas) !important;
+}
+
+.app-dashboard.manager-dashboard .app-main {
+  width: calc(100% - 260px);
+  min-width: 0;
+  margin-left: 260px;
+  overflow-x: clip;
+  background: transparent !important;
+}
+
+.app-dashboard.manager-dashboard .app-topbar {
+  position: sticky;
+  top: 0;
+  z-index: 1100;
+  min-height: 80px;
+  padding: 16px clamp(18px, 2.4vw, 32px);
+  border-bottom: 1px solid var(--manager-border);
+  background: color-mix(in srgb, var(--manager-surface) 92%, var(--manager-canvas));
+  box-shadow: 0 4px 16px rgba(39, 43, 37, 0.045);
+  backdrop-filter: blur(16px);
+}
+
+.app-dashboard.manager-dashboard .app-topbar .navbar-left h1 {
+  margin: 0;
+  color: var(--manager-ink) !important;
+  -webkit-text-fill-color: var(--manager-ink) !important;
+  background: none !important;
+  font-size: clamp(1.1rem, 1.6vw, 1.5rem);
+  font-weight: 750;
+  letter-spacing: -0.035em;
+}
+
+.app-dashboard.manager-dashboard .app-topbar .navbar-left p {
+  margin: 4px 0 0;
+  color: var(--manager-muted-ink) !important;
+  font-size: 0.84rem;
+  font-weight: 450;
+}
+
+.app-dashboard.manager-dashboard .app-main > .app-content.dashboard-content {
+  width: 100%;
+  max-width: 1680px;
+  min-height: 0;
+  margin: 0 auto;
+  padding: clamp(18px, 2.4vw, 34px);
+  overflow: visible;
+  color: var(--manager-ink);
+  background: transparent !important;
+}
+
+.app-dashboard.manager-dashboard .app-main > .app-content.dashboard-content > .manager-dashboard-content,
+.app-dashboard.manager-dashboard .app-main > .app-content.dashboard-content > .manager-staff,
+.app-dashboard.manager-dashboard .app-main > .app-content.dashboard-content > .ed-root,
+.app-dashboard.manager-dashboard .app-main > .app-content.dashboard-content > .manager-payroll,
+.app-dashboard.manager-dashboard .app-main > .app-content.dashboard-content > .manager-attendance,
+.app-dashboard.manager-dashboard .app-main > .app-content.dashboard-content > .manager-leave,
+.app-dashboard.manager-dashboard .app-main > .app-content.dashboard-content > .manager-reports,
+.app-dashboard.manager-dashboard .app-main > .app-content.dashboard-content > .ht-root,
+.app-dashboard.manager-dashboard .app-main > .app-content.dashboard-content > .eip-page,
+.app-dashboard.manager-dashboard .app-main > .app-content.dashboard-content > .hm-page,
+.app-dashboard.manager-dashboard .app-main > .app-content.dashboard-content > .slm-page,
+.app-dashboard.manager-dashboard .app-main > .app-content.dashboard-content > .tmp-page,
+.app-dashboard.manager-dashboard .app-main > .app-content.dashboard-content > .grr-page,
+.app-dashboard.manager-dashboard .app-main > .app-content.dashboard-content > .dtr-page,
+.app-dashboard.manager-dashboard .app-main > .app-content.dashboard-content > .ml-container,
+.app-dashboard.manager-dashboard .app-main > .app-content.dashboard-content > .mac-container {
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  min-height: 0;
+  margin: 0;
+  padding: 0;
+  color: var(--manager-ink);
+  background: transparent !important;
+}
+
+.app-dashboard.manager-dashboard .app-main > .app-content.dashboard-content > .manager-dashboard-content {
+  display: block;
+}
+
+.app-dashboard.manager-dashboard .manager-hero,
+.app-dashboard.manager-dashboard .manager-stat-card,
+.app-dashboard.manager-dashboard .manager-action-card,
+.app-dashboard.manager-dashboard .manager-panel,
+.app-dashboard.manager-dashboard .manager-state-card,
+.app-dashboard.manager-dashboard .manager-staff-hero,
+.app-dashboard.manager-dashboard .staff-summary-card,
+.app-dashboard.manager-dashboard .staff-controls-card,
+.app-dashboard.manager-dashboard .staff-table-card,
+.app-dashboard.manager-dashboard .staff-loading-state,
+.app-dashboard.manager-dashboard .staff-empty-state,
+.app-dashboard.manager-dashboard .ed-header,
+.app-dashboard.manager-dashboard .ed-stat-card,
+.app-dashboard.manager-dashboard .ed-filters,
+.app-dashboard.manager-dashboard .ed-loading,
+.app-dashboard.manager-dashboard .ed-modal,
+.app-dashboard.manager-dashboard .standard-table-container,
+.app-dashboard.manager-dashboard .manager-payroll .payroll-tab-bar,
+.app-dashboard.manager-dashboard .manager-payroll-hero,
+.app-dashboard.manager-dashboard .payroll-generate-card,
+.app-dashboard.manager-dashboard .payroll-summary-card,
+.app-dashboard.manager-dashboard .payroll-chart-card,
+.app-dashboard.manager-dashboard .payroll-controls-card,
+.app-dashboard.manager-dashboard .payroll-table-card,
+.app-dashboard.manager-dashboard .payroll-comp-hero,
+.app-dashboard.manager-dashboard .payroll-comp-controls,
+.app-dashboard.manager-dashboard .payroll-comp-table-card,
+.app-dashboard.manager-dashboard .manager-attendance-hero,
+.app-dashboard.manager-dashboard .attendance-payroll-panel,
+.app-dashboard.manager-dashboard .attendance-summary-card,
+.app-dashboard.manager-dashboard .attendance-controls-card,
+.app-dashboard.manager-dashboard .attendance-table-card,
+.app-dashboard.manager-dashboard .attendance-calendar,
+.app-dashboard.manager-dashboard .manager-leave-hero,
+.app-dashboard.manager-dashboard .leave-summary-card,
+.app-dashboard.manager-dashboard .leave-controls-card,
+.app-dashboard.manager-dashboard .leave-table-card,
+.app-dashboard.manager-dashboard .leave-calendar,
+.app-dashboard.manager-dashboard .reports-summary-card,
+.app-dashboard.manager-dashboard .reports-filters,
+.app-dashboard.manager-dashboard .reports-content-card,
+.app-dashboard.manager-dashboard .reports-chart-card,
+.app-dashboard.manager-dashboard .reports-loading-state,
+.app-dashboard.manager-dashboard .ht-header,
+.app-dashboard.manager-dashboard .ht-stat-card,
+.app-dashboard.manager-dashboard .ht-content,
+.app-dashboard.manager-dashboard .eip-hero,
+.app-dashboard.manager-dashboard .eip-controls,
+.app-dashboard.manager-dashboard .eip-card,
+.app-dashboard.manager-dashboard .hm-hero,
+.app-dashboard.manager-dashboard .hm-stat-card,
+.app-dashboard.manager-dashboard .hm-table-card,
+.app-dashboard.manager-dashboard .slm-hero,
+.app-dashboard.manager-dashboard .slm-stat-card,
+.app-dashboard.manager-dashboard .slm-filter-bar,
+.app-dashboard.manager-dashboard .slm-table-card,
+.app-dashboard.manager-dashboard .tmp-hero,
+.app-dashboard.manager-dashboard .tmp-stat-card,
+.app-dashboard.manager-dashboard .tmp-table-card,
+.app-dashboard.manager-dashboard .grr-hero,
+.app-dashboard.manager-dashboard .grr-controls-card,
+.app-dashboard.manager-dashboard .grr-total-card,
+.app-dashboard.manager-dashboard .grr-table-card,
+.app-dashboard.manager-dashboard .dtr-hero,
+.app-dashboard.manager-dashboard .dtr-controls-card,
+.app-dashboard.manager-dashboard .dtr-info-card,
+.app-dashboard.manager-dashboard .dtr-table-card,
+.app-dashboard.manager-dashboard .app-main .glass-card,
+.app-dashboard.manager-dashboard .staff-modal,
+.app-dashboard.manager-dashboard .attendance-modal,
+.app-dashboard.manager-dashboard .leave-modal,
+.app-dashboard.manager-dashboard .payroll-modal,
+.app-dashboard.manager-dashboard .hm-modal,
+.app-dashboard.manager-dashboard .slm-modal,
+.app-dashboard.manager-dashboard .reports-modal {
+  min-width: 0;
+  border: 1px solid var(--manager-border);
+  border-radius: 18px;
+  background: var(--manager-surface);
+  box-shadow: var(--manager-shadow);
+  backdrop-filter: none;
+}
+
+.app-dashboard.manager-dashboard .manager-hero,
+.app-dashboard.manager-dashboard .manager-panel-header,
+.app-dashboard.manager-dashboard .manager-staff-hero,
+.app-dashboard.manager-dashboard .ed-header,
+.app-dashboard.manager-dashboard .manager-payroll-hero,
+.app-dashboard.manager-dashboard .payroll-comp-hero,
+.app-dashboard.manager-dashboard .manager-attendance-hero,
+.app-dashboard.manager-dashboard .manager-leave-hero,
+.app-dashboard.manager-dashboard .ht-header,
+.app-dashboard.manager-dashboard .eip-hero,
+.app-dashboard.manager-dashboard .hm-hero,
+.app-dashboard.manager-dashboard .slm-hero,
+.app-dashboard.manager-dashboard .tmp-hero,
+.app-dashboard.manager-dashboard .grr-hero,
+.app-dashboard.manager-dashboard .dtr-hero {
+  padding: clamp(18px, 2.3vw, 28px);
+}
+
+.app-dashboard.manager-dashboard .manager-hero-copy h2,
+.app-dashboard.manager-dashboard .manager-panel-header h3,
+.app-dashboard.manager-dashboard .manager-staff-hero h1,
+.app-dashboard.manager-dashboard .ed-title,
+.app-dashboard.manager-dashboard .manager-payroll-hero h1,
+.app-dashboard.manager-dashboard .payroll-comp-hero h1,
+.app-dashboard.manager-dashboard .manager-attendance-hero h1,
+.app-dashboard.manager-dashboard .manager-leave-hero h1,
+.app-dashboard.manager-dashboard .ht-title,
+.app-dashboard.manager-dashboard .eip-hero-left h1,
+.app-dashboard.manager-dashboard .hm-hero-left h1,
+.app-dashboard.manager-dashboard .slm-hero-left h1,
+.app-dashboard.manager-dashboard .tmp-hero-left h1,
+.app-dashboard.manager-dashboard .grr-hero-left h1,
+.app-dashboard.manager-dashboard .dtr-hero-left h1 {
+  color: var(--manager-ink);
+  letter-spacing: -0.035em;
+}
+
+.app-dashboard.manager-dashboard .manager-hero-copy p,
+.app-dashboard.manager-dashboard .manager-staff-hero p,
+.app-dashboard.manager-dashboard .ed-subtitle,
+.app-dashboard.manager-dashboard .manager-payroll-hero p,
+.app-dashboard.manager-dashboard .manager-attendance-hero p,
+.app-dashboard.manager-dashboard .manager-leave-hero p,
+.app-dashboard.manager-dashboard .ht-subtitle,
+.app-dashboard.manager-dashboard .eip-hero-left p,
+.app-dashboard.manager-dashboard .hm-hero-left p,
+.app-dashboard.manager-dashboard .slm-hero-left p,
+.app-dashboard.manager-dashboard .tmp-hero-left p,
+.app-dashboard.manager-dashboard .grr-hero-left p,
+.app-dashboard.manager-dashboard .dtr-hero-left p {
+  color: var(--manager-muted-ink);
+  font-weight: 450;
+}
+
+.app-dashboard.manager-dashboard .manager-record-item,
+.app-dashboard.manager-dashboard .manager-compact-item,
+.app-dashboard.manager-dashboard .manager-activity-item,
+.app-dashboard.manager-dashboard .manager-payroll-summary div,
+.app-dashboard.manager-dashboard .reports-chart-empty,
+.app-dashboard.manager-dashboard .payroll-chart-empty {
+  background: var(--manager-surface-muted);
+  border-color: var(--manager-border);
+}
+
+.app-dashboard.manager-dashboard .staff-table-scroll,
+.app-dashboard.manager-dashboard .attendance-table-scroll,
+.app-dashboard.manager-dashboard .leave-table-scroll,
+.app-dashboard.manager-dashboard .payroll-table-scroll,
+.app-dashboard.manager-dashboard .payroll-comp-table-scroll,
+.app-dashboard.manager-dashboard .staff-modal-table-wrap,
+.app-dashboard.manager-dashboard .standard-table-container,
+.app-dashboard.manager-dashboard .hm-table-card,
+.app-dashboard.manager-dashboard .slm-table-card,
+.app-dashboard.manager-dashboard .tmp-table-card,
+.app-dashboard.manager-dashboard .grr-table-card,
+.app-dashboard.manager-dashboard .dtr-table-card {
+  max-width: 100%;
+  overflow-x: auto;
+  overscroll-behavior-inline: contain;
+  -webkit-overflow-scrolling: touch;
+}
+
+.app-dashboard.manager-dashboard .app-main input:not([type="checkbox"]):not([type="radio"]):not([type="file"]),
+.app-dashboard.manager-dashboard .app-main select,
+.app-dashboard.manager-dashboard .app-main textarea {
+  min-height: 42px;
+  border-color: var(--manager-border);
+  border-radius: 10px;
+  background: var(--manager-surface);
+  color: var(--manager-ink);
+  box-shadow: none;
+}
+
+.app-dashboard.manager-dashboard .app-main textarea {
+  min-height: 96px;
+}
+
+.app-dashboard.manager-dashboard .app-main input:focus,
+.app-dashboard.manager-dashboard .app-main select:focus,
+.app-dashboard.manager-dashboard .app-main textarea:focus {
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-primary) 18%, transparent);
+  outline: none;
+}
+
+.app-dashboard.manager-dashboard .app-main button,
+.app-dashboard.manager-dashboard .app-main .staff-btn,
+.app-dashboard.manager-dashboard .app-main .attendance-btn,
+.app-dashboard.manager-dashboard .app-main .leave-btn,
+.app-dashboard.manager-dashboard .app-main .payroll-btn,
+.app-dashboard.manager-dashboard .app-main .ed-btn,
+.app-dashboard.manager-dashboard .app-main .ht-btn,
+.app-dashboard.manager-dashboard .app-main .hm-btn,
+.app-dashboard.manager-dashboard .app-main .slm-btn,
+.app-dashboard.manager-dashboard .app-main .tmp-btn,
+.app-dashboard.manager-dashboard .app-main .grr-btn,
+.app-dashboard.manager-dashboard .app-main .dtr-btn,
+.app-dashboard.manager-dashboard .app-main .eip-btn,
+.app-dashboard.manager-dashboard .app-main .ml-btn,
+.app-dashboard.manager-dashboard .app-main .mac-btn {
+  min-height: 42px;
+  border-radius: 10px;
+}
+
+.app-dashboard.manager-dashboard .app-main :focus-visible {
+  outline: 3px solid color-mix(in srgb, var(--color-primary) 60%, white);
+  outline-offset: 2px;
+}
+
+@media (max-width: 1200px) {
+  .app-dashboard.manager-dashboard .manager-summary-grid,
+  .app-dashboard.manager-dashboard .manager-quick-actions,
+  .app-dashboard.manager-dashboard .staff-summary-grid,
+  .app-dashboard.manager-dashboard .ed-stats,
+  .app-dashboard.manager-dashboard .payroll-summary-grid,
+  .app-dashboard.manager-dashboard .payroll-chart-grid,
+  .app-dashboard.manager-dashboard .attendance-summary-grid,
+  .app-dashboard.manager-dashboard .leave-summary-grid,
+  .app-dashboard.manager-dashboard .reports-summary-grid,
+  .app-dashboard.manager-dashboard .manager-report-chart-grid,
+  .app-dashboard.manager-dashboard .ht-stats,
+  .app-dashboard.manager-dashboard .eip-grid,
+  .app-dashboard.manager-dashboard .hm-stats,
+  .app-dashboard.manager-dashboard .slm-stats,
+  .app-dashboard.manager-dashboard .tmp-stats,
+  .app-dashboard.manager-dashboard .grr-totals,
+  .app-dashboard.manager-dashboard .dtr-chips {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 1024px) {
+  .app-dashboard.manager-dashboard .app-sidebar.manager-sidebar {
+    position: fixed;
+    inset: 0 auto 0 0;
+    transform: translateX(-100%);
+    transition: transform 0.25s ease;
+    z-index: 1400;
+  }
+
+  .app-dashboard.manager-dashboard .app-sidebar.manager-sidebar.mobile-open {
+    transform: translateX(0);
+  }
+
+  .app-dashboard.manager-dashboard .mobile-menu-toggle {
+    display: grid !important;
+    place-items: center;
+  }
+
+  .app-dashboard.manager-dashboard .app-main {
+    width: 100%;
+    margin-left: 0;
+  }
+
+  .app-dashboard.manager-dashboard .mobile-backdrop {
+    display: none;
+  }
+
+  .app-dashboard.manager-dashboard .mobile-backdrop.active {
+    display: block;
+    position: fixed;
+    inset: 0;
+    z-index: 1350;
+    background: rgba(23, 25, 23, 0.42);
+  }
+}
+
+@media (max-width: 767px) {
+  .app-dashboard.manager-dashboard .app-topbar {
+    min-height: 64px;
+    height: auto;
+    padding: 8px 12px;
+    gap: 8px;
+  }
+
+  .app-dashboard.manager-dashboard .app-topbar .navbar-left p {
+    display: none;
+  }
+
+  .app-dashboard.manager-dashboard .app-main > .app-content.dashboard-content {
+    padding: 14px;
+  }
+
+  .app-dashboard.manager-dashboard .manager-summary-grid,
+  .app-dashboard.manager-dashboard .manager-quick-actions,
+  .app-dashboard.manager-dashboard .staff-summary-grid,
+  .app-dashboard.manager-dashboard .ed-stats,
+  .app-dashboard.manager-dashboard .payroll-summary-grid,
+  .app-dashboard.manager-dashboard .payroll-chart-grid,
+  .app-dashboard.manager-dashboard .attendance-summary-grid,
+  .app-dashboard.manager-dashboard .leave-summary-grid,
+  .app-dashboard.manager-dashboard .reports-summary-grid,
+  .app-dashboard.manager-dashboard .manager-report-chart-grid,
+  .app-dashboard.manager-dashboard .ht-stats,
+  .app-dashboard.manager-dashboard .eip-grid,
+  .app-dashboard.manager-dashboard .hm-stats,
+  .app-dashboard.manager-dashboard .slm-stats,
+  .app-dashboard.manager-dashboard .tmp-stats,
+  .app-dashboard.manager-dashboard .grr-totals,
+  .app-dashboard.manager-dashboard .dtr-chips {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+  }
+
+  .app-dashboard.manager-dashboard .mac-columns {
+    grid-template-columns: 1fr;
+  }
+
+  .app-dashboard.manager-dashboard .manager-hero,
+  .app-dashboard.manager-dashboard .manager-staff-hero,
+  .app-dashboard.manager-dashboard .ed-header,
+  .app-dashboard.manager-dashboard .manager-payroll-hero,
+  .app-dashboard.manager-dashboard .payroll-comp-hero,
+  .app-dashboard.manager-dashboard .manager-attendance-hero,
+  .app-dashboard.manager-dashboard .manager-leave-hero,
+  .app-dashboard.manager-dashboard .ht-header,
+  .app-dashboard.manager-dashboard .eip-hero,
+  .app-dashboard.manager-dashboard .hm-hero,
+  .app-dashboard.manager-dashboard .slm-hero,
+  .app-dashboard.manager-dashboard .tmp-hero,
+  .app-dashboard.manager-dashboard .grr-hero,
+  .app-dashboard.manager-dashboard .dtr-hero {
+    padding: 16px;
+    border-radius: 16px;
+  }
+}
+
+@media (max-width: 420px) {
+  .app-dashboard.manager-dashboard .app-main > .app-content.dashboard-content {
+    padding: 10px;
+  }
+
+  .app-dashboard.manager-dashboard .manager-summary-grid,
+  .app-dashboard.manager-dashboard .manager-quick-actions,
+  .app-dashboard.manager-dashboard .manager-overview-grid,
+  .app-dashboard.manager-dashboard .manager-payroll-summary,
+  .app-dashboard.manager-dashboard .staff-summary-grid,
+  .app-dashboard.manager-dashboard .ed-stats,
+  .app-dashboard.manager-dashboard .payroll-summary-grid,
+  .app-dashboard.manager-dashboard .payroll-chart-grid,
+  .app-dashboard.manager-dashboard .attendance-summary-grid,
+  .app-dashboard.manager-dashboard .leave-summary-grid,
+  .app-dashboard.manager-dashboard .reports-summary-grid,
+  .app-dashboard.manager-dashboard .manager-report-chart-grid,
+  .app-dashboard.manager-dashboard .ht-stats,
+  .app-dashboard.manager-dashboard .eip-grid,
+  .app-dashboard.manager-dashboard .hm-stats,
+  .app-dashboard.manager-dashboard .slm-stats,
+  .app-dashboard.manager-dashboard .tmp-stats,
+  .app-dashboard.manager-dashboard .grr-totals,
+  .app-dashboard.manager-dashboard .dtr-chips {
+    grid-template-columns: 1fr;
+  }
+}

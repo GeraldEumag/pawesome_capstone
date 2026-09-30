@@ -8,7 +8,7 @@
 }
 
 /* Header Section */
-.transactions-header {
+.cashier-transactions .transactions-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -18,25 +18,25 @@
   box-shadow: var(--shadow-soft);
 }
 
-.transactions-header .header-left h1 {
+.cashier-transactions .transactions-header .header-left h1 {
   font-size: 28px;
   font-weight: 700;
   color: var(--color-heading);
   margin: 0 0 8px 0;
 }
 
-.transactions-header .header-left p {
+.cashier-transactions .transactions-header .header-left p {
   color: var(--color-muted);
   margin: 0;
   font-size: 14px;
 }
 
-.header-actions {
+.cashier-transactions .header-actions {
   display: flex;
   gap: 12px;
 }
 
-.primary-btn {
+.cashier-transactions .primary-btn {
   background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary-light) 100%);
   color: white;
   border: none;
@@ -52,33 +52,33 @@
   box-shadow: var(--shadow-soft);
 }
 
-.primary-btn:hover {
+.cashier-transactions .primary-btn:hover {
   transform: translateY(-2px);
   box-shadow: var(--shadow-card);
 }
 
 /* Controls Section */
-.transactions-controls {
+.cashier-transactions .transactions-controls {
   background: var(--color-surface);
   padding: 16px 32px;
   border-bottom: 1px solid var(--color-border);
   box-shadow: var(--shadow-soft);
 }
 
-.search-filter-group {
+.cashier-transactions .search-filter-group {
   display: flex;
   gap: 16px;
   align-items: center;
   flex-wrap: wrap;
 }
 
-.search-box {
+.cashier-transactions .search-box {
   position: relative;
   flex: 1;
   max-width: 400px;
 }
 
-.search-box svg {
+.cashier-transactions .search-box svg {
   position: absolute;
   left: 16px;
   top: 50%;
@@ -87,7 +87,7 @@
   font-size: 16px;
 }
 
-.search-box input {
+.cashier-transactions .search-box input {
   width: 100%;
   padding: 12px 16px 12px 44px;
   border: 2px solid var(--color-border);
@@ -98,19 +98,19 @@
   transition: all 0.2s ease;
 }
 
-.search-box input:focus {
+.cashier-transactions .search-box input:focus {
   outline: none;
   border-color: var(--color-primary);
   box-shadow: 0 0 0 3px rgba(255, 95, 147, 0.1);
 }
 
-.filter-dropdown {
+.cashier-transactions .filter-dropdown {
   position: relative;
   display: flex;
   align-items: center;
 }
 
-.filter-dropdown svg {
+.cashier-transactions .filter-dropdown svg {
   position: absolute;
   left: 16px;
   color: var(--color-muted);
@@ -118,7 +118,7 @@
   z-index: 1;
 }
 
-.filter-dropdown select {
+.cashier-transactions .filter-dropdown select {
   padding: 12px 16px 12px 44px;
   border: 2px solid var(--color-border);
   border-radius: var(--radius-md);
@@ -130,43 +130,43 @@
   transition: all 0.2s ease;
 }
 
-.filter-dropdown select:focus {
+.cashier-transactions .filter-dropdown select:focus {
   outline: none;
   border-color: var(--color-primary);
   box-shadow: 0 0 0 3px rgba(255, 95, 147, 0.1);
 }
 
 /* Content Area */
-.transactions-content {
+.cashier-transactions .transactions-content {
   flex: 1;
   padding: 24px 32px 32px 32px;
   overflow-y: auto;
 }
 
 /* Table Container */
-.transactions-table-container {
+.cashier-transactions .transactions-table-container {
   background: var(--color-surface);
   border-radius: var(--radius-lg);
   box-shadow: var(--shadow-soft);
   overflow: hidden;
 }
 
-.transactions-table-wrapper {
+.cashier-transactions .transactions-table-wrapper {
   overflow-x: auto;
 }
 
 /* Table Styles */
-.transactions-table {
+.cashier-transactions .transactions-table {
   width: 100%;
   border-collapse: collapse;
   min-width: 800px;
 }
 
-.transactions-table thead {
+.cashier-transactions .transactions-table thead {
   background: linear-gradient(135deg, var(--bg-muted) 0%, var(--color-surface-alt, #f1f5f9) 100%);
 }
 
-.transactions-table th {
+.cashier-transactions .transactions-table th {
   padding: 16px 20px;
   text-align: left;
   font-size: 13px;
@@ -177,7 +177,7 @@
   border-bottom: 2px solid var(--border-subtle);
 }
 
-.transactions-table td {
+.cashier-transactions .transactions-table td {
   padding: 16px 20px;
   text-align: left;
   font-size: 14px;
@@ -185,16 +185,16 @@
   border-bottom: 1px solid var(--border-subtle);
 }
 
-.transactions-table tbody tr:hover {
+.cashier-transactions .transactions-table tbody tr:hover {
   background: var(--bg-muted);
 }
 
-.transactions-table tbody tr:last-child td {
+.cashier-transactions .transactions-table tbody tr:last-child td {
   border-bottom: none;
 }
 
 /* Status Badge */
-.status-badge {
+.cashier-transactions .status-badge {
   display: inline-flex;
   align-items: center;
   gap: 6px;
@@ -204,30 +204,30 @@
   font-weight: 500;
 }
 
-.status-badge.completed {
+.cashier-transactions .status-badge.completed {
   background: rgba(34, 197, 94, 0.15);
   color: var(--color-success-text, #166534);
 }
 
-.status-badge.pending {
+.cashier-transactions .status-badge.pending {
   background: rgba(234, 179, 8, 0.15);
   color: var(--color-warning-text, #92400e);
 }
 
-.status-badge.cancelled {
+.cashier-transactions .status-badge.cancelled {
   background: rgba(239, 68, 68, 0.15);
   color: var(--color-danger-text, #991b1b);
 }
 
 /* Payment Method */
-.payment-method {
+.cashier-transactions .payment-method {
   display: inline-flex;
   align-items: center;
   gap: 8px;
 }
 
 /* Action Buttons */
-.action-btn {
+.cashier-transactions .action-btn {
   padding: 8px 12px;
   border: none;
   border-radius: 8px;
@@ -240,40 +240,40 @@
   gap: 6px;
 }
 
-.action-btn.view {
+.cashier-transactions .action-btn.view {
   background: rgba(59, 130, 246, 0.15);
   color: var(--color-info-text, #1e40af);
 }
 
-.action-btn.view:hover {
+.cashier-transactions .action-btn.view:hover {
   background: rgba(59, 130, 246, 0.25);
 }
 
-.action-btn.edit {
+.cashier-transactions .action-btn.edit {
   background: rgba(234, 179, 8, 0.15);
   color: var(--color-warning-text, #92400e);
 }
 
-.action-btn.edit:hover {
+.cashier-transactions .action-btn.edit:hover {
   background: rgba(234, 179, 8, 0.25);
 }
 
-.action-btn.delete {
+.cashier-transactions .action-btn.delete {
   background: rgba(239, 68, 68, 0.15);
   color: var(--color-danger-text, #991b1b);
 }
 
-.action-btn.delete:hover {
+.cashier-transactions .action-btn.delete:hover {
   background: rgba(239, 68, 68, 0.25);
 }
 
-.action-btn:disabled {
+.cashier-transactions .action-btn:disabled {
   opacity: 0.5;
   cursor: not-allowed;
 }
 
 /* Loading State */
-.loading-overlay {
+.cashier-transactions .loading-overlay {
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -282,13 +282,13 @@
   gap: 16px;
 }
 
-.loading-overlay svg {
+.cashier-transactions .loading-overlay svg {
   font-size: 32px;
   color: var(--info-blue);
 }
 
 /* Error Banner */
-.error-banner {
+.cashier-transactions .error-banner {
   margin: 24px 32px;
   padding: 16px 20px;
   background: rgba(239, 68, 68, 0.15);
@@ -302,7 +302,7 @@
 }
 
 /* Empty State */
-.transactions-empty {
+.cashier-transactions .transactions-empty {
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -315,7 +315,7 @@
 }
 
 /* Pagination */
-.pagination {
+.cashier-transactions .pagination {
   display: flex;
   justify-content: center;
   align-items: center;
@@ -325,7 +325,7 @@
   border-top: 1px solid var(--border-subtle);
 }
 
-.page-btn {
+.cashier-transactions .page-btn {
   padding: 8px 12px;
   border: 1px solid var(--color-border);
   background: var(--color-surface);
@@ -335,17 +335,17 @@
   transition: all 0.2s ease;
 }
 
-.page-btn:hover:not(:disabled) {
+.cashier-transactions .page-btn:hover:not(:disabled) {
   background: var(--bg-muted);
   border-color: var(--border-subtle);
 }
 
-.page-btn:disabled {
+.cashier-transactions .page-btn:disabled {
   opacity: 0.5;
   cursor: not-allowed;
 }
 
-.page-btn.active {
+.cashier-transactions .page-btn.active {
   background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary-light) 100%);
   color: white;
   border-color: var(--color-primary);
@@ -353,49 +353,49 @@
 
 /* Responsive */
 @media (max-width: 768px) {
-  .transactions-header {
+  .cashier-transactions .transactions-header {
     flex-direction: column;
     align-items: flex-start;
     gap: 16px;
   }
   
-  .transactions-controls {
+  .cashier-transactions .transactions-controls {
     padding: 16px;
   }
   
-  .search-filter-group {
+  .cashier-transactions .search-filter-group {
     flex-direction: column;
     width: 100%;
   }
   
-  .search-box {
+  .cashier-transactions .search-box {
     max-width: 100%;
     width: 100%;
   }
   
-  .transactions-content {
+  .cashier-transactions .transactions-content {
     padding: 16px;
   }
 }
 
 /* ── Dark Mode ── */
-[data-theme="dark"] .status-badge.completed { color: var(--color-success-text, #86efac); }
-[data-theme="dark"] .status-badge.pending   { color: var(--color-warning-text, #fde68a); }
-[data-theme="dark"] .status-badge.cancelled { color: var(--color-danger-text,  #fca5a5); }
-[data-theme="dark"] .action-btn.view        { color: var(--color-info-text,    #93c5fd); }
-[data-theme="dark"] .action-btn.edit        { color: var(--color-warning-text, #fde68a); }
-[data-theme="dark"] .action-btn.delete      { color: var(--color-danger-text,  #fca5a5); }
-[data-theme="dark"] .error-banner           { color: var(--color-danger-text,  #fca5a5); }
-[data-theme="dark"] .transactions-table thead {
+[data-theme="dark"] .cashier-transactions .status-badge.completed { color: var(--color-success-text, #86efac); }
+[data-theme="dark"] .cashier-transactions .status-badge.pending   { color: var(--color-warning-text, #fde68a); }
+[data-theme="dark"] .cashier-transactions .status-badge.cancelled { color: var(--color-danger-text,  #fca5a5); }
+[data-theme="dark"] .cashier-transactions .action-btn.view        { color: var(--color-info-text,    #93c5fd); }
+[data-theme="dark"] .cashier-transactions .action-btn.edit        { color: var(--color-warning-text, #fde68a); }
+[data-theme="dark"] .cashier-transactions .action-btn.delete      { color: var(--color-danger-text,  #fca5a5); }
+[data-theme="dark"] .cashier-transactions .error-banner           { color: var(--color-danger-text,  #fca5a5); }
+[data-theme="dark"] .cashier-transactions .transactions-table thead {
   background: linear-gradient(135deg, var(--bg-muted) 0%, var(--color-surface) 100%);
 }
 
 @media (prefers-color-scheme: dark) {
-  .status-badge.completed { color: var(--color-success-text, #86efac); }
-  .status-badge.pending   { color: var(--color-warning-text, #fde68a); }
-  .status-badge.cancelled { color: var(--color-danger-text,  #fca5a5); }
-  .action-btn.view        { color: var(--color-info-text,    #93c5fd); }
-  .action-btn.edit        { color: var(--color-warning-text, #fde68a); }
-  .action-btn.delete      { color: var(--color-danger-text,  #fca5a5); }
-  .error-banner           { color: var(--color-danger-text,  #fca5a5); }
+  .cashier-transactions .status-badge.completed { color: var(--color-success-text, #86efac); }
+  .cashier-transactions .status-badge.pending   { color: var(--color-warning-text, #fde68a); }
+  .cashier-transactions .status-badge.cancelled { color: var(--color-danger-text,  #fca5a5); }
+  .cashier-transactions .action-btn.view        { color: var(--color-info-text,    #93c5fd); }
+  .cashier-transactions .action-btn.edit        { color: var(--color-warning-text, #fde68a); }
+  .cashier-transactions .action-btn.delete      { color: var(--color-danger-text,  #fca5a5); }
+  .cashier-transactions .error-banner           { color: var(--color-danger-text,  #fca5a5); }
 }

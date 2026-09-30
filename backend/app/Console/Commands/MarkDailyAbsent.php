@@ -71,12 +71,13 @@ class MarkDailyAbsent extends Command
                     ->whereDate('date', $dateStr)
                     ->exists();
 
-                $onLeave = DB::table('leave_requests')
-                    ->where('employee_id', $emp->id)
-                    ->where('status', 'approved')
-                    ->whereDate('start_date', '<=', $dateStr)
-                    ->whereDate('end_date', '>=', $dateStr)
-                    ->exists();
+                $onLeave = $emp->user_id !== null
+                    && DB::table('leave_requests')
+                        ->where('user_id', $emp->user_id)
+                        ->where('status', 'approved')
+                        ->whereDate('start_date', '<=', $dateStr)
+                        ->whereDate('end_date', '>=', $dateStr)
+                        ->exists();
 
                 if (!$hasRecord && !$onLeave) {
                     Attendance::create([

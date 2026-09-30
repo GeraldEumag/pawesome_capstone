@@ -151,7 +151,7 @@ class P1SecurityIntegrityTest extends TestCase
         $this->assertEquals(48, $product->fresh()->stock);
     }
 
-    public function test_customer_checkout_ignores_manipulated_price_and_total(): void
+    public function test_customer_store_checkout_is_disabled_without_creating_orders(): void
     {
         $customer = User::factory()->create([
             'role' => 'customer',
@@ -173,22 +173,11 @@ class P1SecurityIntegrityTest extends TestCase
             'payment_method' => 'GCash',
         ], $this->bearer($customer));
 
-        $response->assertStatus(201)->assertJsonPath('success', true);
+        $response->assertStatus(410)
+            ->assertJsonPath('message', 'Customer store order workflows are disabled.');
 
-        $orderId = $response->json('id');
-
-        // Authoritative values stored: 500 * 2 = 1000
-        $this->assertDatabaseHas('customer_orders', [
-            'id' => $orderId,
-            'total_amount' => 1000,
-        ]);
-        $this->assertDatabaseHas('customer_order_items', [
-            'customer_order_id' => $orderId,
-            'price' => 500,
-            'subtotal' => 1000,
-        ]);
-
-        // Checkout must not deduct stock (deduction happens at approval)
+        $this->assertDatabaseCount('customer_orders', 0);
+        $this->assertDatabaseCount('customer_order_items', 0);
         $this->assertEquals(50, $product->fresh()->stock);
     }
 

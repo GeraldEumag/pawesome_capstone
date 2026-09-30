@@ -43,7 +43,14 @@ const CustomerRoutes = () => (
       <Route path="medical-confinements" element={<CustomerMedicalConfinements />} />
             <Route path="chatbot" element={<CustomerChatbot />} />
       <Route path="userinfo" element={<CustomerUserInfo />} />
-      <Route path="profile" element={<ProfileSettings />} />
+      <Route
+        path="profile"
+        element={
+          <div className="customer-profile-settings">
+            <ProfileSettings />
+          </div>
+        }
+      />
       <Route path="history" element={<CustomerHistory />} />
       <Route path="notifications" element={<CustomerNotifications />} />
 

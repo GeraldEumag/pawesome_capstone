@@ -18,11 +18,11 @@
 
 /* ── Shared Card Base ──────────────────────────────────────── */
 
-.consult-header,
-.consult-section-card,
-.consult-start-panel,
-.consult-loading,
-.consult-empty {
+.vet-consultation .consult-header,
+.vet-consultation .consult-section-card,
+.vet-consultation .consult-start-panel,
+.vet-consultation .consult-loading,
+.vet-consultation .consult-empty {
   background: var(--veterinary-glass-bg);
   border: 1.5px solid var(--veterinary-glass-border);
   border-radius: var(--veterinary-radius-2xl);
@@ -33,18 +33,18 @@
 
 /* ── Header Card ───────────────────────────────────────────── */
 
-.consult-header {
+.vet-consultation .consult-header {
   display: flex;
   align-items: center;
   gap: 20px;
   padding: 20px 24px;
 }
 
-.consult-header-copy {
+.vet-consultation .consult-header-copy {
   min-width: 0;
 }
 
-.consult-eyebrow {
+.vet-consultation .consult-eyebrow {
   display: inline-flex;
   align-items: center;
   gap: 7px;
@@ -56,7 +56,7 @@
   margin-bottom: 4px;
 }
 
-.consult-header h2 {
+.vet-consultation .consult-header h2 {
   margin: 0 0 3px;
   font-size: 1.4rem;
   font-weight: 800;
@@ -64,14 +64,14 @@
   letter-spacing: -0.02em;
 }
 
-.consult-header p {
+.vet-consultation .consult-header p {
   margin: 0;
   color: var(--veterinary-text-muted);
   font-size: 0.9rem;
   font-weight: 500;
 }
 
-.consult-back {
+.vet-consultation .consult-back {
   display: inline-flex;
   align-items: center;
   gap: 8px;
@@ -89,14 +89,14 @@
   transition: background 0.18s ease, transform 0.18s ease;
 }
 
-.consult-back:hover {
+.vet-consultation .consult-back:hover {
   background: rgba(255, 95, 147, 0.15);
   transform: translateX(-2px);
 }
 
 /* ── Section Card ──────────────────────────────────────────── */
 
-.consult-section-header {
+.vet-consultation .consult-section-header {
   display: flex;
   align-items: center;
   gap: 16px;
@@ -104,7 +104,7 @@
   border-bottom: 1px solid var(--vet-divider);
 }
 
-.consult-section-icon {
+.vet-consultation .consult-section-icon {
   width: var(--vet-icon-md, 48px);
   height: var(--vet-icon-md, 48px);
   min-width: var(--vet-icon-md, 48px);
@@ -118,17 +118,17 @@
   flex-shrink: 0;
 }
 
-.consult-section-icon--warning {
+.vet-consultation .consult-section-icon--warning {
   background: linear-gradient(135deg, #f59e0b, #d97706);
   box-shadow: 0 6px 16px rgba(245, 158, 11, 0.28);
 }
 
-.consult-section-title-group {
+.vet-consultation .consult-section-title-group {
   flex: 1;
   min-width: 0;
 }
 
-.consult-section-title-group h3 {
+.vet-consultation .consult-section-title-group h3 {
   margin: 0 0 3px;
   font-size: 1.05rem;
   font-weight: 800;
@@ -136,7 +136,7 @@
   letter-spacing: -0.01em;
 }
 
-.consult-section-title-group p {
+.vet-consultation .consult-section-title-group p {
   margin: 0;
   font-size: 0.83rem;
   font-weight: 500;
@@ -145,7 +145,7 @@
 
 /* ── Appointment Status Badge ──────────────────────────────── */
 
-.consult-apt-badge {
+.vet-consultation .consult-apt-badge {
   display: inline-flex;
   align-items: center;
   padding: 6px 13px;
@@ -158,47 +158,47 @@
   flex-shrink: 0;
 }
 
-.consult-apt-badge--pending        { background: var(--vet-badge-pending-bg); color: var(--vet-badge-pending-color); border-color: var(--vet-badge-pending-border); }
-.consult-apt-badge--approved       { background: var(--vet-badge-approved-bg); color: var(--vet-badge-approved-color); border-color: var(--vet-badge-approved-border); }
-.consult-apt-badge--in-progress,
-.consult-apt-badge--in-consultation { background: var(--vet-badge-in-progress-bg); color: var(--vet-badge-in-progress-color); border-color: var(--vet-badge-in-progress-border); }
-.consult-apt-badge--awaiting-payment { background: var(--vet-badge-pending-bg); color: var(--vet-badge-pending-color); border-color: var(--vet-badge-pending-border); }
-.consult-apt-badge--completed      { background: var(--vet-badge-completed-bg); color: var(--vet-badge-completed-color); border-color: var(--vet-badge-completed-border); }
-.consult-apt-badge--submitted      { background: var(--vet-badge-admitted-bg); color: var(--vet-badge-admitted-color); border-color: var(--vet-badge-admitted-border); }
+.vet-consultation .consult-apt-badge--pending        { background: var(--vet-badge-pending-bg); color: var(--vet-badge-pending-color); border-color: var(--vet-badge-pending-border); }
+.vet-consultation .consult-apt-badge--approved       { background: var(--vet-badge-approved-bg); color: var(--vet-badge-approved-color); border-color: var(--vet-badge-approved-border); }
+.vet-consultation .consult-apt-badge--in-progress,
+.vet-consultation .consult-apt-badge--in-consultation { background: var(--vet-badge-in-progress-bg); color: var(--vet-badge-in-progress-color); border-color: var(--vet-badge-in-progress-border); }
+.vet-consultation .consult-apt-badge--awaiting-payment { background: var(--vet-badge-pending-bg); color: var(--vet-badge-pending-color); border-color: var(--vet-badge-pending-border); }
+.vet-consultation .consult-apt-badge--completed      { background: var(--vet-badge-completed-bg); color: var(--vet-badge-completed-color); border-color: var(--vet-badge-completed-border); }
+.vet-consultation .consult-apt-badge--submitted      { background: var(--vet-badge-admitted-bg); color: var(--vet-badge-admitted-color); border-color: var(--vet-badge-admitted-border); }
 
 /* ── Appointment Status Badge in header ────────────────────── */
 
-.consult-header .consult-apt-badge {
+.vet-consultation .consult-header .consult-apt-badge {
   margin-left: auto;
   flex-shrink: 0;
 }
 
 /* ── Patient Summary Grid ──────────────────────────────────── */
 
-.consult-summary {
+.vet-consultation .consult-summary {
   display: grid;
   grid-template-columns: repeat(5, minmax(0, 1fr));
   gap: 0;
 }
 
-.consult-summary article {
+.vet-consultation .consult-summary article {
   display: grid;
   gap: 4px;
   padding: 18px 20px;
   border-right: 1px solid var(--vet-divider);
 }
 
-.consult-summary article:last-child {
+.vet-consultation .consult-summary article:last-child {
   border-right: none;
 }
 
-.consult-summary svg {
+.vet-consultation .consult-summary svg {
   color: var(--veterinary-primary);
   font-size: 1.1rem;
   margin-bottom: 4px;
 }
 
-.consult-summary span {
+.vet-consultation .consult-summary span {
   font-size: 0.72rem;
   font-weight: 700;
   text-transform: uppercase;
@@ -206,7 +206,7 @@
   color: var(--veterinary-text-muted);
 }
 
-.consult-summary strong {
+.vet-consultation .consult-summary strong {
   font-size: 0.95rem;
   font-weight: 750;
   color: var(--veterinary-text-primary);
@@ -215,7 +215,7 @@
   text-overflow: ellipsis;
 }
 
-.consult-summary small {
+.vet-consultation .consult-summary small {
   font-size: 0.8rem;
   font-weight: 500;
   color: var(--veterinary-text-muted);
@@ -226,7 +226,7 @@
 
 /* ── Start Panels ──────────────────────────────────────────── */
 
-.consult-start-panel {
+.vet-consultation .consult-start-panel {
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -235,13 +235,13 @@
   border-left: 4px solid var(--veterinary-primary);
 }
 
-.consult-start-panel--payment,
-.consult-start-panel--complete {
+.vet-consultation .consult-start-panel--payment,
+.vet-consultation .consult-start-panel--complete {
   border-left-color: #10b981;
   background: rgba(16, 185, 129, 0.04);
 }
 
-.consult-start-panel-copy {
+.vet-consultation .consult-start-panel-copy {
   display: flex;
   align-items: center;
   gap: 16px;
@@ -249,7 +249,7 @@
   min-width: 0;
 }
 
-.consult-start-icon-wrap {
+.vet-consultation .consult-start-icon-wrap {
   width: 46px;
   height: 46px;
   min-width: 46px;
@@ -262,13 +262,13 @@
   flex-shrink: 0;
 }
 
-.consult-start-icon-wrap--payment,
-.consult-start-icon-wrap--complete {
+.vet-consultation .consult-start-icon-wrap--payment,
+.vet-consultation .consult-start-icon-wrap--complete {
   background: rgba(16, 185, 129, 0.12);
   color: #10b981;
 }
 
-.consult-start-panel-copy strong {
+.vet-consultation .consult-start-panel-copy strong {
   display: block;
   font-size: 1rem;
   font-weight: 750;
@@ -276,14 +276,14 @@
   margin-bottom: 3px;
 }
 
-.consult-start-panel-copy p {
+.vet-consultation .consult-start-panel-copy p {
   margin: 0;
   font-size: 0.875rem;
   font-weight: 500;
   color: var(--veterinary-text-muted);
 }
 
-.consult-start-btn {
+.vet-consultation .consult-start-btn {
   display: inline-flex;
   align-items: center;
   gap: 9px;
@@ -302,26 +302,26 @@
   box-shadow: 0 6px 18px rgba(255, 95, 147, 0.3);
 }
 
-.consult-start-btn:hover:not(:disabled) {
+.vet-consultation .consult-start-btn:hover:not(:disabled) {
   transform: translateY(-2px);
   box-shadow: 0 10px 26px rgba(255, 95, 147, 0.4);
 }
 
-.consult-start-btn:disabled {
+.vet-consultation .consult-start-btn:disabled {
   opacity: 0.6;
   cursor: not-allowed;
 }
 
 /* ── Clinical Notes Form ───────────────────────────────────── */
 
-.consult-form {
+.vet-consultation .consult-form {
   padding: 20px 24px;
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: var(--vet-form-gap, 16px);
 }
 
-.consult-label {
+.vet-consultation .consult-label {
   display: grid;
   gap: 7px;
   font-size: 0.8rem;
@@ -331,9 +331,9 @@
   letter-spacing: 0.04em;
 }
 
-.consult-form textarea,
-.consult-form input,
-.consult-form select {
+.vet-consultation .consult-form textarea,
+.vet-consultation .consult-form input,
+.vet-consultation .consult-form select {
   width: 100%;
   border: 1.5px solid var(--vet-input-border);
   border-radius: var(--vet-input-radius, 14px);
@@ -347,21 +347,21 @@
   transition: border-color 0.2s ease, box-shadow 0.2s ease;
 }
 
-.consult-form textarea {
+.vet-consultation .consult-form textarea {
   min-height: 100px;
   resize: vertical;
 }
 
-.consult-form textarea:focus,
-.consult-form input:focus,
-.consult-form select:focus {
+.vet-consultation .consult-form textarea:focus,
+.vet-consultation .consult-form input:focus,
+.vet-consultation .consult-form select:focus {
   border-color: var(--veterinary-primary);
   box-shadow: 0 0 0 4px var(--vet-input-focus-ring);
 }
 
-.consult-form textarea:disabled,
-.consult-form input:disabled,
-.consult-form select:disabled {
+.vet-consultation .consult-form textarea:disabled,
+.vet-consultation .consult-form input:disabled,
+.vet-consultation .consult-form select:disabled {
   opacity: 0.6;
   cursor: not-allowed;
   background: rgba(100, 116, 139, 0.06);
@@ -369,15 +369,15 @@
 
 /* ── Clinical Assessment full-width label ──────────────────── */
 
-.consult-label--full {
+.vet-consultation .consult-label--full {
   grid-column: 1 / -1;
 }
 
-.consult-label--secondary {
+.vet-consultation .consult-label--secondary {
   opacity: 0.8;
 }
 
-.consult-optional {
+.vet-consultation .consult-optional {
   font-size: 0.72rem;
   font-weight: 500;
   color: var(--veterinary-text-muted);
@@ -386,29 +386,29 @@
   margin-left: 4px;
 }
 
-.consult-textarea--secondary {
+.vet-consultation .consult-textarea--secondary {
   min-height: 72px !important;
   font-size: 0.85rem !important;
 }
 
 /* ── Vitals Grid ───────────────────────────────────────────── */
 
-.consult-vitals-grid {
+.vet-consultation .consult-vitals-grid {
   display: grid;
   grid-template-columns: repeat(5, 1fr);
   gap: 14px;
   padding: 20px 24px;
 }
 
-.consult-vitals-grid--3 {
+.vet-consultation .consult-vitals-grid--3 {
   grid-template-columns: repeat(3, 1fr);
 }
 
-.consult-vitals-grid--4 {
+.vet-consultation .consult-vitals-grid--4 {
   grid-template-columns: repeat(4, 1fr);
 }
 
-.consult-vital-field {
+.vet-consultation .consult-vital-field {
   display: grid;
   gap: 8px;
   padding: 16px;
@@ -417,7 +417,7 @@
   border: 1px solid var(--vet-form-border);
 }
 
-.consult-vital-icon-wrap {
+.vet-consultation .consult-vital-icon-wrap {
   width: 36px;
   height: 36px;
   border-radius: 12px;
@@ -428,12 +428,12 @@
   font-size: 0.9rem;
 }
 
-.consult-vital-icon-wrap--warning {
+.vet-consultation .consult-vital-icon-wrap--warning {
   background: rgba(245, 158, 11, 0.1);
   color: #d97706;
 }
 
-.consult-vital-label {
+.vet-consultation .consult-vital-label {
   font-size: 0.73rem;
   font-weight: 750;
   text-transform: uppercase;
@@ -441,7 +441,7 @@
   color: var(--veterinary-text-muted);
 }
 
-.consult-vital-input-wrap {
+.vet-consultation .consult-vital-input-wrap {
   display: flex;
   align-items: center;
   gap: 6px;
@@ -452,13 +452,13 @@
   transition: border-color 0.2s ease, box-shadow 0.2s ease;
 }
 
-.consult-vital-input-wrap:focus-within {
+.vet-consultation .consult-vital-input-wrap:focus-within {
   border-color: var(--veterinary-primary);
   box-shadow: 0 0 0 3px var(--vet-input-focus-ring);
 }
 
-.consult-vital-input-wrap input,
-.consult-vital-input-wrap select {
+.vet-consultation .consult-vital-input-wrap input,
+.vet-consultation .consult-vital-input-wrap select {
   flex: 1;
   border: none !important;
   box-shadow: none !important;
@@ -473,8 +473,8 @@
   font-family: inherit;
 }
 
-.consult-vital-unit,
-.consult-vital-prefix {
+.vet-consultation .consult-vital-unit,
+.vet-consultation .consult-vital-prefix {
   padding: 0 10px;
   font-size: 0.78rem;
   font-weight: 700;
@@ -483,40 +483,40 @@
   flex-shrink: 0;
 }
 
-.consult-vital-prefix {
+.vet-consultation .consult-vital-prefix {
   border-right: 1px solid var(--vet-divider);
   color: var(--veterinary-primary);
 }
 
-.consult-vital-unit {
+.vet-consultation .consult-vital-unit {
   border-left: 1px solid var(--vet-divider);
 }
 
 /* ── Payment Grid ──────────────────────────────────────────── */
 
-.consult-payment-grid {
+.vet-consultation .consult-payment-grid {
   display: grid;
   grid-template-columns: repeat(5, 1fr);
   gap: 0;
   border-top: none;
 }
 
-.consult-payment-item {
+.vet-consultation .consult-payment-item {
   padding: 18px 20px;
   display: grid;
   gap: 5px;
   border-right: 1px solid var(--vet-divider);
 }
 
-.consult-payment-item:last-child {
+.vet-consultation .consult-payment-item:last-child {
   border-right: none;
 }
 
-.consult-payment-item--highlight {
+.vet-consultation .consult-payment-item--highlight {
   background: rgba(255, 95, 147, 0.05);
 }
 
-.consult-payment-label {
+.vet-consultation .consult-payment-label {
   font-size: 0.73rem;
   font-weight: 750;
   text-transform: uppercase;
@@ -524,17 +524,17 @@
   color: var(--veterinary-text-muted);
 }
 
-.consult-payment-value {
+.vet-consultation .consult-payment-value {
   font-size: 1.05rem;
   font-weight: 800;
   color: var(--veterinary-text-primary);
 }
 
-.consult-payment-item--highlight .consult-payment-value {
+.vet-consultation .consult-payment-item--highlight .consult-payment-value {
   color: var(--veterinary-primary);
 }
 
-.consult-payment-warning {
+.vet-consultation .consult-payment-warning {
   display: flex;
   align-items: center;
   gap: 10px;
@@ -550,18 +550,18 @@
 
 /* ── Prescription Table ────────────────────────────────────── */
 
-.consult-rx-table-wrap {
+.vet-consultation .consult-rx-table-wrap {
   padding: 20px 24px;
   overflow-x: auto;
 }
 
-.consult-rx-table {
+.vet-consultation .consult-rx-table {
   width: 100%;
   border-collapse: collapse;
   font-size: 0.875rem;
 }
 
-.consult-rx-table th {
+.vet-consultation .consult-rx-table th {
   text-align: left;
   padding: 8px 12px;
   font-size: 0.72rem;
@@ -573,17 +573,17 @@
   white-space: nowrap;
 }
 
-.consult-rx-table td {
+.vet-consultation .consult-rx-table td {
   padding: 6px 8px;
   border-bottom: 1px solid var(--vet-divider);
   vertical-align: middle;
 }
 
-.consult-rx-table tbody tr:last-child td {
+.vet-consultation .consult-rx-table tbody tr:last-child td {
   border-bottom: none;
 }
 
-.consult-rx-table input {
+.vet-consultation .consult-rx-table input {
   width: 100%;
   border: 1.5px solid var(--vet-input-border);
   border-radius: 10px;
@@ -598,18 +598,18 @@
   min-width: 80px;
 }
 
-.consult-rx-table input:focus {
+.vet-consultation .consult-rx-table input:focus {
   border-color: var(--veterinary-primary);
   box-shadow: 0 0 0 3px var(--vet-input-focus-ring);
 }
 
-.consult-rx-table input:disabled {
+.vet-consultation .consult-rx-table input:disabled {
   opacity: 0.6;
   cursor: not-allowed;
   background: rgba(100, 116, 139, 0.06);
 }
 
-.consult-rx-remove {
+.vet-consultation .consult-rx-remove {
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -624,15 +624,15 @@
   transition: background 0.18s ease;
 }
 
-.consult-rx-remove:hover {
+.vet-consultation .consult-rx-remove:hover {
   background: rgba(239, 68, 68, 0.15);
 }
 
-.consult-rx-add {
+.vet-consultation .consult-rx-add {
   margin-top: 14px;
 }
 
-.consult-rx-empty {
+.vet-consultation .consult-rx-empty {
   padding: 28px 24px;
   text-align: center;
   color: var(--veterinary-text-muted);
@@ -642,7 +642,7 @@
 
 /* ── Button size variants ──────────────────────────────────── */
 
-.consult-btn--sm {
+.vet-consultation .consult-btn--sm {
   padding: 9px 16px !important;
   min-height: 38px !important;
   font-size: 0.82rem !important;
@@ -650,21 +650,21 @@
 
 /* ── Billing button (teal) ─────────────────────────────────── */
 
-.consult-btn--billing {
+.vet-consultation .consult-btn--billing {
   background: linear-gradient(135deg, #34d399, #10b981);
   color: #ffffff;
   border: none;
   box-shadow: 0 6px 18px rgba(16, 185, 129, 0.3);
 }
 
-.consult-btn--billing:hover:not(:disabled) {
+.vet-consultation .consult-btn--billing:hover:not(:disabled) {
   transform: translateY(-2px);
   box-shadow: 0 10px 26px rgba(16, 185, 129, 0.42);
 }
 
 /* ── Awaiting-payment badge override (show as success/green)── */
 
-.consult-apt-badge--awaiting-payment {
+.vet-consultation .consult-apt-badge--awaiting-payment {
   background: rgba(16, 185, 129, 0.12) !important;
   color: #059669 !important;
   border-color: rgba(16, 185, 129, 0.3) !important;
@@ -672,8 +672,8 @@
 
 /* ── Loading / Empty ───────────────────────────────────────── */
 
-.consult-loading,
-.consult-empty {
+.vet-consultation .consult-loading,
+.vet-consultation .consult-empty {
   padding: 48px 28px;
   display: flex;
   align-items: center;
@@ -687,7 +687,7 @@
 
 /* ── Sticky Actions Bar ────────────────────────────────────── */
 
-.consult-actions {
+.vet-consultation .consult-actions {
   position: sticky;
   bottom: 0;
   z-index: 10;
@@ -705,7 +705,7 @@
   box-shadow: 0 -4px 24px rgba(255, 95, 147, 0.1), var(--veterinary-shadow-sm);
 }
 
-.consult-btn {
+.vet-consultation .consult-btn {
   display: inline-flex;
   align-items: center;
   gap: 8px;
@@ -719,30 +719,30 @@
   white-space: nowrap;
 }
 
-.consult-btn--primary {
+.vet-consultation .consult-btn--primary {
   background: linear-gradient(135deg, var(--veterinary-primary-light), var(--veterinary-primary));
   color: #ffffff;
   border: none;
   box-shadow: 0 6px 18px rgba(255, 95, 147, 0.3);
 }
 
-.consult-btn--primary:hover:not(:disabled) {
+.vet-consultation .consult-btn--primary:hover:not(:disabled) {
   transform: translateY(-2px);
   box-shadow: 0 10px 26px rgba(255, 95, 147, 0.42);
 }
 
-.consult-btn--secondary {
+.vet-consultation .consult-btn--secondary {
   background: var(--veterinary-glass-bg);
   color: var(--veterinary-primary);
   border: 1.5px solid rgba(255, 95, 147, 0.25);
 }
 
-.consult-btn--secondary:hover:not(:disabled) {
+.vet-consultation .consult-btn--secondary:hover:not(:disabled) {
   background: rgba(255, 95, 147, 0.08);
   transform: translateY(-1px);
 }
 
-.consult-btn:disabled {
+.vet-consultation .consult-btn:disabled {
   opacity: 0.5;
   cursor: not-allowed;
   transform: none !important;
@@ -750,32 +750,32 @@
 
 /* ── Dark Mode ─────────────────────────────────────────────── */
 
-[data-theme="dark"] .consult-actions {
+[data-theme="dark"] .vet-consultation .consult-actions {
   background: rgba(30, 20, 40, 0.88);
 }
 
-[data-theme="dark"] .consult-btn--secondary {
+[data-theme="dark"] .vet-consultation .consult-btn--secondary {
   background: rgba(255, 95, 147, 0.08);
 }
 
 /* ── Responsive ────────────────────────────────────────────── */
 
 @media (max-width: 1100px) {
-  .consult-summary {
+  .vet-consultation .consult-summary {
     grid-template-columns: repeat(3, 1fr);
   }
 
-  .consult-summary article {
+  .vet-consultation .consult-summary article {
     border-bottom: 1px solid var(--vet-divider);
     border-right: 1px solid var(--vet-divider);
   }
 
-  .consult-summary article:nth-child(3n) {
+  .vet-consultation .consult-summary article:nth-child(3n) {
     border-right: none;
   }
 
-  .consult-vitals-grid,
-  .consult-vitals-grid--4 {
+  .vet-consultation .consult-vitals-grid,
+  .vet-consultation .consult-vitals-grid--4 {
     grid-template-columns: repeat(2, 1fr);
   }
 }
@@ -786,32 +786,32 @@
     padding-bottom: 100px;
   }
 
-  .consult-header {
+  .vet-consultation .consult-header {
     flex-direction: column;
     align-items: flex-start;
   }
 
-  .consult-start-panel {
+  .vet-consultation .consult-start-panel {
     flex-direction: column;
     align-items: flex-start;
   }
 
-  .consult-start-btn {
+  .vet-consultation .consult-start-btn {
     width: 100%;
     justify-content: center;
   }
 
-  .consult-form {
+  .vet-consultation .consult-form {
     grid-template-columns: 1fr;
   }
 
-  .consult-vitals-grid,
-  .consult-vitals-grid--3,
-  .consult-vitals-grid--4 {
+  .vet-consultation .consult-vitals-grid,
+  .vet-consultation .consult-vitals-grid--3,
+  .vet-consultation .consult-vitals-grid--4 {
     grid-template-columns: repeat(2, 1fr);
   }
 
-  .consult-section-header {
+  .vet-consultation .consult-section-header {
     flex-wrap: wrap;
   }
 }
@@ -822,21 +822,21 @@
     padding-bottom: 90px;
   }
 
-  .consult-summary {
+  .vet-consultation .consult-summary {
     grid-template-columns: 1fr 1fr;
   }
 
-  .consult-vitals-grid,
-  .consult-vitals-grid--3,
-  .consult-vitals-grid--4 {
+  .vet-consultation .consult-vitals-grid,
+  .vet-consultation .consult-vitals-grid--3,
+  .vet-consultation .consult-vitals-grid--4 {
     grid-template-columns: 1fr;
   }
 
-  .consult-actions {
+  .vet-consultation .consult-actions {
     flex-direction: column;
   }
 
-  .consult-btn {
+  .vet-consultation .consult-btn {
     width: 100%;
     justify-content: center;
   }

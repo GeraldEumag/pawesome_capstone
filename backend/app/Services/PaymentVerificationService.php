@@ -10,12 +10,32 @@ use App\Services\WorkflowNotifier;
 
 class PaymentVerificationService
 {
+    private function blockedPaymentTypeResult(string $type): ?array
+    {
+        $normalized = strtolower(str_replace(['-', ' '], '_', trim($type)));
+        if (in_array($normalized, ['customer_order', 'customer_orders', 'order', 'store_order', 'online_order'], true)) {
+            return ['success' => false, 'message' => 'Customer store order workflows are disabled.', 'status' => 410];
+        }
+
+        if (!in_array($normalized, ['boarding', 'appointment', 'veterinary', 'grooming', 'medical_confinement', 'confinement', 'service_request', 'service'], true)) {
+            return ['success' => false, 'message' => 'Unsupported payment type.', 'status' => 422];
+        }
+
+        return null;
+    }
+
     /**
-     * Verify a payment (service_request or customer_order)
+     * Verify a payment
      * Returns array with standardized keys: success, message, payment_status, receipt_number
      */
     public function verify(string $type, int $id, $request)
     {
+        $normalizedType = strtolower(str_replace(['-', ' '], '_', trim($type)));
+        if ($blocked = $this->blockedPaymentTypeResult($normalizedType)) {
+            return $blocked;
+        }
+        $type = $normalizedType;
+
         $before = $this->paymentStatusOf($type, $id);
         $result = $this->performVerify($type, $id, $request);
 
@@ -128,6 +148,12 @@ class PaymentVerificationService
 
     public function reject(string $type, int $id, $request)
     {
+        $normalizedType = strtolower(str_replace(['-', ' '], '_', trim($type)));
+        if ($blocked = $this->blockedPaymentTypeResult($normalizedType)) {
+            return $blocked;
+        }
+        $type = $normalizedType;
+
         $before = $this->paymentStatusOf($type, $id);
         $result = $this->performReject($type, $id, $request);
 

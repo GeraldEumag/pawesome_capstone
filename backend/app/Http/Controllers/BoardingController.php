@@ -254,6 +254,19 @@ class BoardingController extends Controller
             return response()->json(['errors' => $validator->errors()], 422);
         }
 
+        if (
+            $request->user()?->role === 'customer'
+            && ServiceDurationService::isSameDayBookingClosed($request->check_in_date)
+        ) {
+            $message = 'Same-day hotel bookings are closed after 7:00 PM. Please choose a future date.';
+
+            return response()->json([
+                'success' => false,
+                'message' => $message,
+                'errors' => ['check_in_date' => [$message]],
+            ], 422);
+        }
+
         if (!$request->room_id && !$request->hotel_room_id) {
             return response()->json(['errors' => ['room_id' => ['A room must be selected.']]], 422);
         }

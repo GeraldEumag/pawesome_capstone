@@ -11,6 +11,7 @@ const DashboardLayout = ({
   title,
   subtitle,
   role,
+  profileRole,
   profilePhoto = "",
   name = "",
   extraActions,
@@ -85,7 +86,7 @@ const DashboardLayout = ({
 
             <DashboardProfile
               name={name}
-              role={role}
+              role={profileRole || role}
               image={profilePhoto}
             />
 

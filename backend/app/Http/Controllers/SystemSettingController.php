@@ -8,6 +8,7 @@ use Illuminate\Http\Request;
 class SystemSettingController extends Controller
 {
     private const VALID_PRESETS = [
+        'cream-white',
         'blush-pink',
         'peach',
         'sage-green',

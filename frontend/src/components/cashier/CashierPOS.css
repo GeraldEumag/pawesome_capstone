@@ -1925,6 +1925,7 @@
     overflow-y: auto;
     height: auto;
     min-height: 100vh;
+    min-height: 100dvh;
   }
 
   .pos-main { flex: 1 1 100%; height: auto; min-height: 55vh; }
@@ -1954,6 +1955,61 @@
 @media (max-width: 768px) {
   .pos-brand-name { display: none; }
 
+  /* Stock alert chips + the desktop-only shortcut button crowd the
+     topbar on narrow screens; the nav menu keeps every link reachable. */
+  .pos-alert-badge { display: none; }
+  .pos-topbar-btn--optional { display: none; }
+
+  .pos-topbar { gap: 8px; padding: 0 10px; }
+
+  /* Full-width scanner panel instead of a drop-down under a tiny search field */
+  .pos-webcam-panel {
+    position: fixed;
+    top: 66px;
+    left: 12px;
+    right: 12px;
+  }
+
+  .pos-category-tabs { padding: 0 8px; gap: 3px; }
+  .pos-cat-tab { padding: 0 10px; gap: 5px; }
+
+  .pos-info-bar { padding: 8px 12px 4px; }
+  .pos-approvals-wrap { padding: 10px; }
+
+  .pos-step-indicator { padding: 8px 14px 4px; }
+  .pos-drawer-header { padding: 10px 14px; }
+  .pos-drawer-section { padding: 10px 14px; }
+  .pos-cart-items { padding: 8px 10px; }
+  .pos-drawer-totals { padding: 10px 14px; }
+
+  /* Touch-friendly payment controls */
+  .pos-back-btn { height: 36px; }
+  .pos-drawer-clear { width: 36px; height: 36px; }
+  .pos-order-panel .pos-bill-btn { height: 36px; }
+  .pos-order-panel .pos-pm-btn { height: 48px; }
+
+  /* Modals use more of the small viewport */
+  .pos-overlay { padding: 12px; }
+  .pos-modal { border-radius: 16px; max-height: calc(100dvh - 24px); }
+  .pos-modal-header { padding: 14px 18px 12px; }
+  .pos-modal-body { padding: 14px 18px; }
+  .pos-modal-footer { padding: 12px 18px 14px; flex-wrap: wrap; }
+  .pos-modal-footer .pos-btn-secondary,
+  .pos-modal-footer .pos-btn-primary { flex: 1; }
+
+  /* Photo viewer close button must stay inside the viewport */
+  .pos-photo-overlay { padding: 12px; }
+  .pos-photo-close { top: 6px; right: 6px; }
+
+  /* Toasts span the phone width */
+  .pos-toast-wrap {
+    left: 12px;
+    right: 12px;
+    bottom: 12px;
+    transform: none;
+  }
+  .pos-toast { width: 100%; max-width: none; }
+
   .pos-product-grid {
     grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
     gap: 10px;
@@ -1967,4 +2023,24 @@
   .pos-product-grid {
     grid-template-columns: repeat(2, 1fr);
   }
+
+  .pos-brand-mark { width: 32px; height: 32px; font-size: 13px; }
+  .pos-search-wrap { height: 36px; padding: 0 10px; }
+  .pos-search-input { font-size: 12px; }
+
+  .pos-step-chip { padding: 0 10px; font-size: 10px; }
+
+  .pos-cart-row { padding: 8px; gap: 6px; }
+  .pos-stepper-input { width: 32px; }
+
+  .pos-tile-img { height: 96px; }
+  .pos-order-panel .pos-numpad-received-value { font-size: 26px; }
+}
+
+/* Short landscape phones: keep the order panel within reach */
+@media (max-width: 1080px) and (max-height: 540px) {
+  .pos-main { min-height: 45vh; }
+  .pos-order-panel .pos-cart-items { min-height: 100px; }
+  .pos-topbar { height: 52px; }
+  .pos-category-tabs { height: 46px; }
 }

@@ -130,8 +130,7 @@
   --vet-sidebar-icon-size: 18px;
 }
 
-/* Body styles applied globally */
-body {
+.app-dashboard.vet-dashboard {
   background: var(--veterinary-page-bg);
   color: var(--veterinary-text-primary);
   transition: background var(--veterinary-transition-normal), color var(--veterinary-transition-normal);

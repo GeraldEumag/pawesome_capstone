@@ -32,7 +32,7 @@
 .grooming-bookings * { box-sizing: border-box; }
 
 /* Header */
-.grooming-header {
+.grooming-bookings .grooming-header {
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
@@ -44,7 +44,7 @@
   box-shadow: 0 2px 8px rgba(255, 95, 147, 0.06);
 }
 
-.header-title h1 {
+.grooming-bookings .header-title h1 {
   margin: 0 0 6px;
   color: var(--grooming-heading);
   font-size: 1.5rem;
@@ -54,30 +54,30 @@
   gap: 10px;
 }
 
-.header-title h1 svg {
+.grooming-bookings .header-title h1 svg {
   color: var(--grooming-primary);
 }
 
-.header-title p {
+.grooming-bookings .header-title p {
   margin: 0 0 8px;
   color: var(--grooming-muted);
   font-size: 0.95rem;
 }
 
-.header-title small {
+.grooming-bookings .header-title small {
   color: var(--grooming-muted);
   font-size: 0.75rem;
 }
 
-.header-actions {
+.grooming-bookings .header-actions {
   display: flex;
   gap: 10px;
 }
 
 /* Buttons */
-.primary-btn,
-.secondary-btn,
-.action-btn {
+.grooming-bookings .primary-btn,
+.grooming-bookings .secondary-btn,
+.grooming-bookings .action-btn {
   min-height: 40px;
   padding: 0 16px;
   border: none;
@@ -93,29 +93,29 @@
   white-space: nowrap;
 }
 
-.primary-btn {
+.grooming-bookings .primary-btn {
   color: #fff;
   background: var(--grooming-primary);
 }
 
-.primary-btn:hover {
+.grooming-bookings .primary-btn:hover {
   background: #ff4f85;
   transform: translateY(-1px);
   box-shadow: 0 6px 18px rgba(255, 95, 147, 0.3);
 }
 
-.secondary-btn {
+.grooming-bookings .secondary-btn {
   color: var(--grooming-text);
   background: var(--grooming-surface);
   border: 1px solid var(--grooming-border);
 }
 
-.secondary-btn:hover {
+.grooming-bookings .secondary-btn:hover {
   background: var(--grooming-surface-alt);
   border-color: #cbd5e1;
 }
 
-.secondary-btn.loading svg {
+.grooming-bookings .secondary-btn.loading svg {
   animation: spin 0.9s linear infinite;
 }
 
@@ -124,7 +124,7 @@
 }
 
 /* Alerts */
-.alert {
+.grooming-bookings .alert {
   display: flex;
   align-items: center;
   gap: 10px;
@@ -133,24 +133,24 @@
   font-size: 0.9rem;
 }
 
-.alert-error {
+.grooming-bookings .alert-error {
   background: var(--grooming-danger-bg);
   color: #991b1b;
 }
 
-.alert-success {
+.grooming-bookings .alert-success {
   background: var(--grooming-success-bg);
   color: #065f46;
 }
 
 /* Stats */
-.grooming-stats {
+.grooming-bookings .grooming-stats {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
   gap: 12px;
 }
 
-.stat-card {
+.grooming-bookings .stat-card {
   display: flex;
   align-items: center;
   gap: 12px;
@@ -162,13 +162,13 @@
   transition: all 0.15s ease;
 }
 
-.stat-card:hover {
+.grooming-bookings .stat-card:hover {
   border-color: var(--grooming-primary);
   box-shadow: 0 4px 16px rgba(255, 95, 147, 0.14);
   transform: translateY(-2px);
 }
 
-.stat-card svg {
+.grooming-bookings .stat-card svg {
   width: 40px;
   height: 40px;
   min-width: 40px;
@@ -181,7 +181,7 @@
   padding: 10px;
 }
 
-.stat-card strong {
+.grooming-bookings .stat-card strong {
   display: block;
   color: var(--grooming-heading);
   font-size: 1.25rem;
@@ -189,21 +189,21 @@
   line-height: 1;
 }
 
-.stat-card span {
+.grooming-bookings .stat-card span {
   color: var(--grooming-muted);
   font-size: 0.8rem;
 }
 
 /* Filters */
-.grooming-filters {
+.grooming-bookings .grooming-filters {
   display: grid;
   grid-template-columns: 1fr 180px;
   gap: 12px;
   align-items: center;
 }
 
-.gb-search-box,
-.gb-filter-select {
+.grooming-bookings .gb-search-box,
+.grooming-bookings .gb-filter-select {
   position: relative;
   display: flex;
   align-items: center;
@@ -214,8 +214,8 @@
   overflow: hidden;
 }
 
-.gb-search-box input,
-.gb-filter-select select {
+.grooming-bookings .gb-search-box input,
+.grooming-bookings .gb-filter-select select {
   width: 100%;
   height: 100%;
   border: none !important;
@@ -228,19 +228,19 @@
   font-size: 0.85rem;
 }
 
-.gb-filter-select select {
+.grooming-bookings .gb-filter-select select {
   appearance: none;
   padding-right: 28px;
   cursor: pointer;
 }
 
-.gb-search-box:focus-within,
-.gb-filter-select:focus-within {
+.grooming-bookings .gb-search-box:focus-within,
+.grooming-bookings .gb-filter-select:focus-within {
   border-color: var(--grooming-primary);
 }
 
 /* Table */
-.grooming-table-container {
+.grooming-bookings .grooming-table-container {
   background: var(--grooming-surface);
   border: 1px solid var(--grooming-border);
   border-radius: 10px;
@@ -248,14 +248,14 @@
   box-shadow: 0 1px 3px rgba(0,0,0,0.05);
 }
 
-.grooming-table {
+.grooming-bookings .grooming-table {
   width: 100%;
   min-width: 900px;
   border-collapse: collapse;
   font-size: 0.88rem;
 }
 
-.grooming-table th {
+.grooming-bookings .grooming-table th {
   padding: 12px 16px;
   text-align: left;
   color: var(--grooming-muted);
@@ -268,44 +268,44 @@
   white-space: nowrap;
 }
 
-.grooming-table td {
+.grooming-bookings .grooming-table td {
   padding: 14px 16px;
   border-bottom: 1px solid var(--grooming-border);
   color: var(--grooming-text);
   vertical-align: middle;
 }
 
-.grooming-table tbody tr { transition: background 0.12s ease; }
-.grooming-table tbody tr:hover { background: #f8fafc; }
-.grooming-table tbody tr:last-child td { border-bottom: none; }
+.grooming-bookings .grooming-table tbody tr { transition: background 0.12s ease; }
+.grooming-bookings .grooming-table tbody tr:hover { background: #f8fafc; }
+.grooming-bookings .grooming-table tbody tr:last-child td { border-bottom: none; }
 
 /* Cell Styles - horizontal layout */
-.pet-cell,
-.customer-cell,
-.service-cell,
-.date-cell,
-.time-cell,
-.status-cell,
-.actions-cell {
+.grooming-bookings .pet-cell,
+.grooming-bookings .customer-cell,
+.grooming-bookings .service-cell,
+.grooming-bookings .date-cell,
+.grooming-bookings .time-cell,
+.grooming-bookings .status-cell,
+.grooming-bookings .actions-cell {
   display: flex;
   flex-direction: row;
   align-items: center;
   gap: 10px;
 }
 
-.pet-cell svg,
-.customer-cell svg,
-.service-cell svg,
-.date-cell svg,
-.time-cell svg,
-.status-cell svg,
-.actions-cell svg {
+.grooming-bookings .pet-cell svg,
+.grooming-bookings .customer-cell svg,
+.grooming-bookings .service-cell svg,
+.grooming-bookings .date-cell svg,
+.grooming-bookings .time-cell svg,
+.grooming-bookings .status-cell svg,
+.grooming-bookings .actions-cell svg {
   color: var(--grooming-primary);
   font-size: 0.9rem;
 }
 
 /* Status Badges */
-.status-badge {
+.grooming-bookings .status-badge {
   display: inline-flex;
   align-items: center;
   gap: 5px;
@@ -317,40 +317,40 @@
   white-space: nowrap;
 }
 
-.status-pending {
+.grooming-bookings .status-pending {
   background: var(--grooming-warning-bg);
   color: #92400e;
 }
 
-.status-approved {
+.grooming-bookings .status-approved {
   background: var(--grooming-info-bg);
   color: #1e40af;
 }
 
-.status-in_progress {
+.grooming-bookings .status-in_progress {
   background: var(--grooming-primary-soft);
   color: var(--grooming-primary);
 }
 
-.status-completed {
+.grooming-bookings .status-completed {
   background: var(--grooming-success-bg);
   color: #065f46;
 }
 
-.status-rejected,
-.status-cancelled {
+.grooming-bookings .status-rejected,
+.grooming-bookings .status-cancelled {
   background: var(--grooming-danger-bg);
   color: #991b1b;
 }
 
 /* Action Buttons */
-.action-buttons {
+.grooming-bookings .action-buttons {
   display: flex;
   align-items: center;
   gap: 6px;
 }
 
-.action-btn {
+.grooming-bookings .action-btn {
   width: 34px;
   height: 34px;
   min-width: 34px;
@@ -366,20 +366,20 @@
   transition: all 0.15s ease;
 }
 
-.action-btn:hover {
+.grooming-bookings .action-btn:hover {
   background: var(--grooming-surface-alt);
   border-color: #cbd5e1;
 }
 
-.view-btn:hover { color: var(--grooming-info); }
-.approve-btn:hover { color: var(--grooming-success); }
-.reject-btn:hover { color: var(--grooming-danger); }
-.start-btn:hover { color: var(--grooming-primary); }
-.complete-btn:hover { color: var(--grooming-success); }
+.grooming-bookings .view-btn:hover { color: var(--grooming-info); }
+.grooming-bookings .approve-btn:hover { color: var(--grooming-success); }
+.grooming-bookings .reject-btn:hover { color: var(--grooming-danger); }
+.grooming-bookings .start-btn:hover { color: var(--grooming-primary); }
+.grooming-bookings .complete-btn:hover { color: var(--grooming-success); }
 
 /* Loading & Empty States */
-.loading-state,
-.empty-state {
+.grooming-bookings .loading-state,
+.grooming-bookings .empty-state {
   min-height: 240px;
   display: flex;
   flex-direction: column;
@@ -391,14 +391,14 @@
   color: var(--grooming-muted);
 }
 
-.loading-state svg,
-.empty-state svg {
+.grooming-bookings .loading-state svg,
+.grooming-bookings .empty-state svg {
   color: var(--grooming-primary);
   font-size: 2.2rem;
   opacity: 0.5;
 }
 
-.empty-state h3 {
+.grooming-bookings .empty-state h3 {
   margin: 0;
   color: var(--grooming-heading);
   font-size: 1.1rem;
@@ -406,38 +406,38 @@
 }
 
 /* Detail modal shell comes from shared hbk-* (styles/bookingModal.css) */
-.hbk-modal {
+.grooming-bookings .hbk-modal {
   width: min(600px, 100%);
 }
 
-.hbk-head h2 {
+.grooming-bookings .hbk-head h2 {
   display: flex;
   align-items: center;
   gap: 10px;
 }
 
-.hbk-head h2 svg {
+.grooming-bookings .hbk-head h2 svg {
   color: var(--grooming-primary);
 }
 
-.detail-grid {
+.grooming-bookings .detail-grid {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
   gap: 16px;
 }
 
-.detail-item {
+.grooming-bookings .detail-item {
   padding: 14px;
   border-radius: 8px;
   background: var(--grooming-surface-alt);
   border: 1px solid var(--grooming-border);
 }
 
-.detail-item.full-width {
+.grooming-bookings .detail-item.full-width {
   grid-column: 1 / -1;
 }
 
-.detail-item label {
+.grooming-bookings .detail-item label {
   display: block;
   margin-bottom: 4px;
   color: var(--grooming-muted);
@@ -447,7 +447,7 @@
   letter-spacing: 0.04em;
 }
 
-.detail-item span {
+.grooming-bookings .detail-item span {
   color: var(--grooming-heading);
   font-weight: 500;
   font-size: 0.95rem;
@@ -458,19 +458,19 @@
 
 /* Responsive */
 @media (max-width: 1180px) {
-  .grooming-stats { grid-template-columns: repeat(3, 1fr); }
-  .grooming-filters { grid-template-columns: 1fr; }
-  .grooming-header { flex-direction: column; }
-  .header-actions { width: 100%; justify-content: flex-end; }
+  .grooming-bookings .grooming-stats { grid-template-columns: repeat(3, 1fr); }
+  .grooming-bookings .grooming-filters { grid-template-columns: 1fr; }
+  .grooming-bookings .grooming-header { flex-direction: column; }
+  .grooming-bookings .header-actions { width: 100%; justify-content: flex-end; }
 }
 
 @media (max-width: 768px) {
   .grooming-bookings { padding: 16px; gap: 16px; }
-  .grooming-stats { grid-template-columns: repeat(2, 1fr); }
-  .detail-grid { grid-template-columns: 1fr; }
-  .stat-card { width: 100%; }
+  .grooming-bookings .grooming-stats { grid-template-columns: repeat(2, 1fr); }
+  .grooming-bookings .detail-grid { grid-template-columns: 1fr; }
+  .grooming-bookings .stat-card { width: 100%; }
 }
 
 @media (max-width: 480px) {
-  .grooming-stats { grid-template-columns: 1fr; }
+  .grooming-bookings .grooming-stats { grid-template-columns: 1fr; }
 }

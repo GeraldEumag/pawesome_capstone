@@ -21,7 +21,7 @@
 
 /* ── Hero ──────────────────────────────────────────────────── */
 
-.conf-hero {
+.vet-confinements .conf-hero {
   position: relative;
   display: flex;
   align-items: center;
@@ -34,7 +34,7 @@
   box-shadow: var(--veterinary-glass-shadow);
 }
 
-.conf-hero::after {
+.vet-confinements .conf-hero::after {
   content: "";
   position: absolute;
   top: -100px;
@@ -46,13 +46,13 @@
   pointer-events: none;
 }
 
-.conf-hero-copy,
-.conf-refresh-btn {
+.vet-confinements .conf-hero-copy,
+.vet-confinements .conf-refresh-btn {
   position: relative;
   z-index: 1;
 }
 
-.conf-eyebrow {
+.vet-confinements .conf-eyebrow {
   display: inline-flex;
   align-items: center;
   gap: 0.5rem;
@@ -67,7 +67,7 @@
   letter-spacing: 0.08em;
 }
 
-.conf-title {
+.vet-confinements .conf-title {
   margin: 0 0 0.5rem;
   display: flex;
   align-items: center;
@@ -79,7 +79,7 @@
   line-height: 1.15;
 }
 
-.conf-subtitle {
+.vet-confinements .conf-subtitle {
   margin: 0;
   color: rgba(255, 255, 255, 0.88);
   font-size: 0.95rem;
@@ -90,7 +90,7 @@
 
 /* ── Refresh Button ────────────────────────────────────────── */
 
-.conf-refresh-btn {
+.vet-confinements .conf-refresh-btn {
   display: inline-flex;
   align-items: center;
   gap: 8px;
@@ -107,23 +107,23 @@
   white-space: nowrap;
 }
 
-.conf-refresh-btn:hover:not(:disabled) {
+.vet-confinements .conf-refresh-btn:hover:not(:disabled) {
   background: rgba(255, 255, 255, 0.32);
   transform: translateY(-1px);
 }
 
-.conf-refresh-btn:disabled {
+.vet-confinements .conf-refresh-btn:disabled {
   opacity: 0.7;
   cursor: not-allowed;
 }
 
-.conf-refresh-btn.refreshing svg:first-child {
+.vet-confinements .conf-refresh-btn.refreshing svg:first-child {
   animation: conf-spin 0.9s linear infinite;
 }
 
 /* ── Error Banner ──────────────────────────────────────────── */
 
-.conf-error-banner {
+.vet-confinements .conf-error-banner {
   display: flex;
   align-items: center;
   gap: 12px;
@@ -136,11 +136,11 @@
   font-size: 0.9rem;
 }
 
-.conf-error-banner span {
+.vet-confinements .conf-error-banner span {
   flex: 1;
 }
 
-.conf-dismiss-btn {
+.vet-confinements .conf-dismiss-btn {
   width: 28px;
   height: 28px;
   border-radius: 8px;
@@ -153,19 +153,19 @@
   transition: background 0.15s ease;
 }
 
-.conf-dismiss-btn:hover {
+.vet-confinements .conf-dismiss-btn:hover {
   background: rgba(239, 68, 68, 0.22);
 }
 
 /* ── Stats Row ─────────────────────────────────────────────── */
 
-.conf-stats {
+.vet-confinements .conf-stats {
   display: grid;
   grid-template-columns: repeat(5, minmax(140px, 1fr));
   gap: 14px;
 }
 
-.conf-stat-card {
+.vet-confinements .conf-stat-card {
   display: flex;
   align-items: center;
   gap: 14px;
@@ -178,12 +178,12 @@
   transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
 
-.conf-stat-card:hover {
+.vet-confinements .conf-stat-card:hover {
   transform: translateY(-3px);
   box-shadow: var(--veterinary-shadow-md);
 }
 
-.conf-stat-icon {
+.vet-confinements .conf-stat-icon {
   width: var(--vet-icon-md, 48px);
   height: var(--vet-icon-md, 48px);
   min-width: var(--vet-icon-md, 48px);
@@ -194,13 +194,13 @@
   color: #ffffff;
 }
 
-.conf-stat--total .conf-stat-icon  { background: var(--vet-icon-gradient); }
-.conf-stat--admitted .conf-stat-icon { background: linear-gradient(135deg, var(--vet-badge-admitted-color), #7c3aed); }
-.conf-stat--observation .conf-stat-icon { background: linear-gradient(135deg, var(--vet-badge-observation-color), #0891b2); }
-.conf-stat--treatment .conf-stat-icon { background: linear-gradient(135deg, var(--veterinary-info), #2563eb); }
-.conf-stat--discharged .conf-stat-icon { background: linear-gradient(135deg, var(--veterinary-success), #059669); }
+.vet-confinements .conf-stat--total .conf-stat-icon  { background: var(--vet-icon-gradient); }
+.vet-confinements .conf-stat--admitted .conf-stat-icon { background: linear-gradient(135deg, var(--vet-badge-admitted-color), #7c3aed); }
+.vet-confinements .conf-stat--observation .conf-stat-icon { background: linear-gradient(135deg, var(--vet-badge-observation-color), #0891b2); }
+.vet-confinements .conf-stat--treatment .conf-stat-icon { background: linear-gradient(135deg, var(--veterinary-info), #2563eb); }
+.vet-confinements .conf-stat--discharged .conf-stat-icon { background: linear-gradient(135deg, var(--veterinary-success), #059669); }
 
-.conf-stat-body strong {
+.vet-confinements .conf-stat-body strong {
   display: block;
   font-size: 1.75rem;
   font-weight: 800;
@@ -208,7 +208,7 @@
   color: var(--veterinary-text-primary);
 }
 
-.conf-stat-body p {
+.vet-confinements .conf-stat-body p {
   margin: 4px 0 0;
   font-size: 0.8rem;
   font-weight: 650;
@@ -217,7 +217,7 @@
 
 /* ── Loading State ─────────────────────────────────────────── */
 
-.conf-loading-state {
+.vet-confinements .conf-loading-state {
   display: flex;
   align-items: center;
   justify-content: center;
@@ -234,7 +234,7 @@
 
 /* ── Empty State ───────────────────────────────────────────── */
 
-.conf-empty-state {
+.vet-confinements .conf-empty-state {
   display: grid;
   place-items: center;
   align-content: center;
@@ -248,20 +248,20 @@
   backdrop-filter: blur(20px);
 }
 
-.conf-empty-state svg {
+.vet-confinements .conf-empty-state svg {
   font-size: 3.5rem;
   color: var(--veterinary-primary);
   opacity: 0.45;
 }
 
-.conf-empty-state h3 {
+.vet-confinements .conf-empty-state h3 {
   margin: 0;
   font-size: 1.2rem;
   font-weight: 800;
   color: var(--veterinary-text-primary);
 }
 
-.conf-empty-state p {
+.vet-confinements .conf-empty-state p {
   margin: 0;
   color: var(--veterinary-text-muted);
   font-weight: 500;
@@ -270,14 +270,14 @@
 
 /* ── Records List ──────────────────────────────────────────── */
 
-.conf-records-list {
+.vet-confinements .conf-records-list {
   display: grid;
   gap: var(--vet-card-gap, 20px);
 }
 
 /* ── Record Card ───────────────────────────────────────────── */
 
-.conf-record-card {
+.vet-confinements .conf-record-card {
   border-radius: var(--veterinary-radius-2xl);
   background: var(--veterinary-glass-bg);
   border: 1.5px solid var(--veterinary-glass-border);
@@ -287,12 +287,12 @@
   transition: box-shadow 0.25s ease;
 }
 
-.conf-record-card--active {
+.vet-confinements .conf-record-card--active {
   border-color: rgba(255, 95, 147, 0.28);
   box-shadow: 0 0 0 1px rgba(255, 95, 147, 0.08), var(--veterinary-shadow-sm);
 }
 
-.conf-record-card--active::before {
+.vet-confinements .conf-record-card--active::before {
   content: "";
   display: block;
   height: 4px;
@@ -301,7 +301,7 @@
 
 /* ── Card Header ───────────────────────────────────────────── */
 
-.conf-record-header {
+.vet-confinements .conf-record-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -310,14 +310,14 @@
   border-bottom: 1px solid var(--vet-divider);
 }
 
-.conf-record-pet {
+.vet-confinements .conf-record-pet {
   display: flex;
   align-items: center;
   gap: 14px;
   min-width: 0;
 }
 
-.conf-pet-avatar {
+.vet-confinements .conf-pet-avatar {
   width: var(--vet-icon-lg, 60px);
   height: var(--vet-icon-lg, 60px);
   min-width: var(--vet-icon-lg, 60px);
@@ -331,11 +331,11 @@
   flex-shrink: 0;
 }
 
-.conf-pet-info {
+.vet-confinements .conf-pet-info {
   min-width: 0;
 }
 
-.conf-pet-info h3 {
+.vet-confinements .conf-pet-info h3 {
   margin: 0 0 4px;
   font-size: 1.15rem;
   font-weight: 800;
@@ -345,7 +345,7 @@
   text-overflow: ellipsis;
 }
 
-.conf-pet-info p {
+.vet-confinements .conf-pet-info p {
   margin: 0;
   font-size: 0.875rem;
   font-weight: 550;
@@ -354,7 +354,7 @@
 
 /* ── Status Badges ─────────────────────────────────────────── */
 
-.conf-badge {
+.vet-confinements .conf-badge {
   display: inline-flex;
   align-items: center;
   gap: 6px;
@@ -367,31 +367,31 @@
   flex-shrink: 0;
 }
 
-.conf-badge--admitted {
+.vet-confinements .conf-badge--admitted {
   background: var(--vet-badge-admitted-bg);
   color: var(--vet-badge-admitted-color);
   border-color: var(--vet-badge-admitted-border);
 }
 
-.conf-badge--observation {
+.vet-confinements .conf-badge--observation {
   background: var(--vet-badge-observation-bg);
   color: var(--vet-badge-observation-color);
   border-color: var(--vet-badge-observation-border);
 }
 
-.conf-badge--treatment {
+.vet-confinements .conf-badge--treatment {
   background: var(--vet-badge-in-progress-bg);
   color: var(--vet-badge-in-progress-color);
   border-color: var(--vet-badge-in-progress-border);
 }
 
-.conf-badge--discharged {
+.vet-confinements .conf-badge--discharged {
   background: var(--vet-badge-discharged-bg);
   color: var(--vet-badge-discharged-color);
   border-color: var(--vet-badge-discharged-border);
 }
 
-.conf-badge--default {
+.vet-confinements .conf-badge--default {
   background: rgba(100, 116, 139, 0.1);
   color: #475569;
   border-color: rgba(100, 116, 139, 0.2);
@@ -399,14 +399,14 @@
 
 /* ── Card Body (Clinical Info) ─────────────────────────────── */
 
-.conf-record-body {
+.vet-confinements .conf-record-body {
   padding: 18px 24px;
   display: grid;
   gap: 12px;
   border-bottom: 1px solid var(--vet-divider);
 }
 
-.conf-info-row {
+.vet-confinements .conf-info-row {
   display: flex;
   align-items: flex-start;
   gap: 14px;
@@ -416,7 +416,7 @@
   border: 1px solid var(--vet-form-border);
 }
 
-.conf-info-icon {
+.vet-confinements .conf-info-icon {
   width: var(--vet-icon-sm, 36px);
   height: var(--vet-icon-sm, 36px);
   min-width: var(--vet-icon-sm, 36px);
@@ -428,11 +428,11 @@
   font-size: 0.9rem;
 }
 
-.conf-info-row > div:last-child {
+.vet-confinements .conf-info-row > div:last-child {
   min-width: 0;
 }
 
-.conf-info-row strong {
+.vet-confinements .conf-info-row strong {
   display: block;
   margin-bottom: 4px;
   font-size: 0.73rem;
@@ -442,7 +442,7 @@
   color: var(--veterinary-text-muted);
 }
 
-.conf-info-row p {
+.vet-confinements .conf-info-row p {
   margin: 0;
   font-size: 0.925rem;
   font-weight: 550;
@@ -452,7 +452,7 @@
 
 /* ── Actions Section ───────────────────────────────────────── */
 
-.conf-record-actions-section {
+.vet-confinements .conf-record-actions-section {
   padding: 18px 24px;
   display: grid;
   gap: 14px;
@@ -460,13 +460,13 @@
 
 /* ── Status Action Buttons ─────────────────────────────────── */
 
-.conf-status-actions {
+.vet-confinements .conf-status-actions {
   display: flex;
   flex-wrap: wrap;
   gap: 10px;
 }
 
-.conf-action-btn {
+.vet-confinements .conf-action-btn {
   display: inline-flex;
   align-items: center;
   gap: 7px;
@@ -481,47 +481,47 @@
   white-space: nowrap;
 }
 
-.conf-action-btn:disabled {
+.vet-confinements .conf-action-btn:disabled {
   opacity: 0.5;
   cursor: not-allowed;
   transform: none !important;
 }
 
-.conf-action-btn:not(:disabled):hover {
+.vet-confinements .conf-action-btn:not(:disabled):hover {
   transform: translateY(-2px);
 }
 
-.conf-action-btn--observe {
+.vet-confinements .conf-action-btn--observe {
   background: var(--vet-badge-observation-bg);
   color: var(--vet-badge-observation-color);
   border-color: var(--vet-badge-observation-border);
 }
 
-.conf-action-btn--observe:not(:disabled):hover {
+.vet-confinements .conf-action-btn--observe:not(:disabled):hover {
   background: var(--vet-badge-observation-color);
   color: #ffffff;
   box-shadow: 0 6px 16px rgba(6, 182, 212, 0.3);
 }
 
-.conf-action-btn--treat {
+.vet-confinements .conf-action-btn--treat {
   background: var(--vet-badge-in-progress-bg);
   color: var(--vet-badge-in-progress-color);
   border-color: var(--vet-badge-in-progress-border);
 }
 
-.conf-action-btn--treat:not(:disabled):hover {
+.vet-confinements .conf-action-btn--treat:not(:disabled):hover {
   background: var(--veterinary-primary);
   color: #ffffff;
   box-shadow: 0 6px 16px rgba(255, 95, 147, 0.32);
 }
 
-.conf-action-btn--discharge {
+.vet-confinements .conf-action-btn--discharge {
   background: var(--vet-badge-discharged-bg);
   color: var(--vet-badge-discharged-color);
   border-color: var(--vet-badge-discharged-border);
 }
 
-.conf-action-btn--discharge:not(:disabled):hover {
+.vet-confinements .conf-action-btn--discharge:not(:disabled):hover {
   background: var(--veterinary-success);
   color: #ffffff;
   box-shadow: 0 6px 16px rgba(16, 185, 129, 0.3);
@@ -529,7 +529,7 @@
 
 /* ── Toggle Notes Button ───────────────────────────────────── */
 
-.conf-toggle-notes-btn {
+.vet-confinements .conf-toggle-notes-btn {
   display: flex;
   align-items: center;
   gap: 10px;
@@ -545,24 +545,24 @@
   transition: background 0.2s ease, border-color 0.2s ease;
 }
 
-.conf-toggle-notes-btn:hover {
+.vet-confinements .conf-toggle-notes-btn:hover {
   background: rgba(255, 95, 147, 0.1);
   border-color: var(--veterinary-primary);
 }
 
-.conf-toggle-notes-btn span {
+.vet-confinements .conf-toggle-notes-btn span {
   flex: 1;
   text-align: left;
 }
 
-.conf-chevron {
+.vet-confinements .conf-chevron {
   margin-left: auto;
   transition: transform 0.2s ease;
 }
 
 /* ── Progress Note Form ────────────────────────────────────── */
 
-.conf-note-form {
+.vet-confinements .conf-note-form {
   padding: 18px;
   border-radius: var(--veterinary-radius-lg);
   background: var(--vet-form-card-bg);
@@ -571,7 +571,7 @@
   gap: var(--vet-form-gap, 16px);
 }
 
-.conf-note-form-header {
+.vet-confinements .conf-note-form-header {
   display: flex;
   align-items: center;
   gap: 8px;
@@ -582,12 +582,12 @@
   border-bottom: 1px solid var(--vet-divider);
 }
 
-.conf-form-group {
+.vet-confinements .conf-form-group {
   display: grid;
   gap: 7px;
 }
 
-.conf-form-group label {
+.vet-confinements .conf-form-group label {
   font-size: 0.8rem;
   font-weight: 700;
   color: var(--veterinary-text-muted);
@@ -595,8 +595,8 @@
   letter-spacing: 0.04em;
 }
 
-.conf-form-group select,
-.conf-form-group textarea {
+.vet-confinements .conf-form-group select,
+.vet-confinements .conf-form-group textarea {
   width: 100%;
   padding: 11px 14px;
   border-radius: var(--vet-input-radius, 14px);
@@ -611,29 +611,29 @@
   resize: vertical;
 }
 
-.conf-form-group select {
+.vet-confinements .conf-form-group select {
   min-height: var(--vet-input-height, 48px);
   cursor: pointer;
 }
 
-.conf-form-group textarea {
+.vet-confinements .conf-form-group textarea {
   min-height: 88px;
 }
 
-.conf-form-group select:focus,
-.conf-form-group textarea:focus {
+.vet-confinements .conf-form-group select:focus,
+.vet-confinements .conf-form-group textarea:focus {
   border-color: var(--veterinary-primary);
   box-shadow: 0 0 0 4px var(--vet-input-focus-ring);
 }
 
-.conf-note-form-footer {
+.vet-confinements .conf-note-form-footer {
   display: flex;
   justify-content: flex-end;
   padding-top: 6px;
   border-top: 1px solid var(--vet-divider);
 }
 
-.conf-submit-note-btn {
+.vet-confinements .conf-submit-note-btn {
   display: inline-flex;
   align-items: center;
   gap: 8px;
@@ -650,19 +650,19 @@
   box-shadow: 0 6px 16px rgba(255, 95, 147, 0.3);
 }
 
-.conf-submit-note-btn:hover:not(:disabled) {
+.vet-confinements .conf-submit-note-btn:hover:not(:disabled) {
   transform: translateY(-2px);
   box-shadow: 0 10px 24px rgba(255, 95, 147, 0.4);
 }
 
-.conf-submit-note-btn:disabled {
+.vet-confinements .conf-submit-note-btn:disabled {
   opacity: 0.6;
   cursor: not-allowed;
 }
 
 /* ── Discharged Banner ─────────────────────────────────────── */
 
-.conf-discharged-banner {
+.vet-confinements .conf-discharged-banner {
   display: flex;
   align-items: center;
   gap: 12px;
@@ -682,40 +682,40 @@
   to { transform: rotate(360deg); }
 }
 
-.conf-spin {
+.vet-confinements .conf-spin {
   animation: conf-spin 0.9s linear infinite;
 }
 
 /* ── Dark Mode ─────────────────────────────────────────────── */
 
-[data-theme="dark"] .conf-hero {
+[data-theme="dark"] .vet-confinements .conf-hero {
   background: linear-gradient(135deg, #8b2252 0%, #ff5f93 100%);
 }
 
-[data-theme="dark"] .conf-note-form {
+[data-theme="dark"] .vet-confinements .conf-note-form {
   background: rgba(255, 95, 147, 0.05);
 }
 
 /* ── Responsive ────────────────────────────────────────────── */
 
 @media (max-width: 1100px) {
-  .conf-stats {
+  .vet-confinements .conf-stats {
     grid-template-columns: repeat(3, 1fr);
   }
 }
 
 @media (max-width: 900px) {
-  .conf-hero {
+  .vet-confinements .conf-hero {
     flex-direction: column;
     align-items: stretch;
   }
 
-  .conf-refresh-btn {
+  .vet-confinements .conf-refresh-btn {
     width: 100%;
     justify-content: center;
   }
 
-  .conf-stats {
+  .vet-confinements .conf-stats {
     grid-template-columns: repeat(2, 1fr);
   }
 }
@@ -725,28 +725,28 @@
     padding: 20px;
   }
 
-  .conf-record-header {
+  .vet-confinements .conf-record-header {
     flex-direction: column;
     align-items: flex-start;
     gap: 12px;
     padding: 16px;
   }
 
-  .conf-record-body,
-  .conf-record-actions-section {
+  .vet-confinements .conf-record-body,
+  .vet-confinements .conf-record-actions-section {
     padding: 14px 16px;
   }
 
-  .conf-status-actions {
+  .vet-confinements .conf-status-actions {
     flex-direction: column;
   }
 
-  .conf-action-btn {
+  .vet-confinements .conf-action-btn {
     width: 100%;
     justify-content: center;
   }
 
-  .conf-discharged-banner {
+  .vet-confinements .conf-discharged-banner {
     margin: 0 16px 16px;
   }
 }
@@ -756,11 +756,11 @@
     padding: 14px;
   }
 
-  .conf-stats {
+  .vet-confinements .conf-stats {
     grid-template-columns: 1fr;
   }
 
-  .conf-hero {
+  .vet-confinements .conf-hero {
     padding: 1.25rem;
   }
 }

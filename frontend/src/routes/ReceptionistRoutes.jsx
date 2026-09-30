@@ -11,7 +11,6 @@ const ReceptionistGroomingBookings = lazy(() => import("../components/receptioni
 const ReceptionistManageServices = lazy(() => import("../components/receptionist/ReceptionistManageServices"));
 const ReceptionistWalkIns = lazy(() => import("../components/receptionist/ReceptionistWalkIns"));
 const CustomerManagement = lazy(() => import("../components/receptionist/ReceptionistCustomerManagement"));
-const CustomerOrders = lazy(() => import("../components/receptionist/ReceptionistCustomerOrders"));
 const CustomersProfile = lazy(() => import("../components/receptionist/ReceptionistCustomersProfile"));
 const ProfileSettings = lazy(() => import("../components/shared/ProfileSettings"));
 const Reports = lazy(() => import("../components/receptionist/ReceptionistReports"));
@@ -61,7 +60,7 @@ const ReceptionistRoutes = () => (
         <Route path="live-chat" element={<LiveChatInbox />} />
         <Route path="medical-confinements" element={<Navigate to="/receptionist/bookings/hotel" replace />} />
         <Route path="customers" element={<CustomerManagement />} />
-        <Route path="orders" element={<CustomerOrders />} />
+        <Route path="orders" element={<Navigate to="/receptionist/bookings/hotel" replace />} />
         <Route path="history" element={<ReceptionistHistory />} />
         <Route path="payroll" element={<MyPayroll roleAccent="#d97706" roleLabel="Receptionist" />} />
         <Route path="profile" element={<ProfileSettings />} />

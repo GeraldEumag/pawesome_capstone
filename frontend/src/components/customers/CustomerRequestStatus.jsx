@@ -151,6 +151,7 @@ const CustomerRequestStatus = ({ embedded = false }) => {
   };
 
   const canPay = (item) => {
+    if (item?.source === "store_order") return false;
     const status = safeLower(item?.status || item?.order_status);
     const paymentStatus = safeLower(item?.payment_status || item?.payment || "unpaid");
     return ["approved", "scheduled"].includes(status) && ["unpaid", "rejected"].includes(paymentStatus);

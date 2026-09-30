@@ -633,7 +633,7 @@ const CashierPOS = ({ initialTab }) => {
               <FontAwesomeIcon icon={isFullscreen ? faCompress : faExpand} />
             </button>
 
-            <button className="pos-topbar-btn" onClick={() => setShowHelp(true)} title="Keyboard shortcuts">
+            <button className="pos-topbar-btn pos-topbar-btn--optional" onClick={() => setShowHelp(true)} title="Keyboard shortcuts">
               <FontAwesomeIcon icon={faKeyboard} />
             </button>
 

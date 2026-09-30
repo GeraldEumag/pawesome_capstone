@@ -9,7 +9,7 @@
 }
 
 /* Header */
-.customers-header {
+.customer-management .customers-header {
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
@@ -18,26 +18,26 @@
   border-bottom: 1px solid #e9ecef;
 }
 
-.header-left h1 {
+.customer-management .header-left h1 {
   margin: 0 0 0.5rem 0;
   font-size: 2rem;
   font-weight: 700;
   color: #0f172a;
 }
 
-.header-left p {
+.customer-management .header-left p {
   margin: 0;
   color: #64748b;
   font-size: 1rem;
 }
 
-.header-actions {
+.customer-management .header-actions {
   display: flex;
   gap: 1rem;
 }
 
-.primary-btn,
-.secondary-btn {
+.customer-management .primary-btn,
+.customer-management .secondary-btn {
   padding: 0.75rem 1.5rem;
   border: none;
   border-radius: 8px;
@@ -49,34 +49,34 @@
   gap: 0.5rem;
 }
 
-.primary-btn {
+.customer-management .primary-btn {
   background: linear-gradient(135deg, #ff5f93, #ff8db5);
   color: white;
 }
 
-.primary-btn:hover {
+.customer-management .primary-btn:hover {
   background: linear-gradient(135deg, #ff4d7f, #ff7aa5);
 }
 
-.secondary-btn {
+.customer-management .secondary-btn {
   background: #f1f5f9;
   color: #374151;
   border: 1px solid #d9e2ec;
 }
 
-.secondary-btn:hover {
+.customer-management .secondary-btn:hover {
   background: #e5e7eb;
 }
 
 /* Summary Cards */
-.summary-cards {
+.customer-management .summary-cards {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
   gap: 1.5rem;
   margin-bottom: 2rem;
 }
 
-.summary-card {
+.customer-management .summary-card {
   background: var(--color-surface-solid, white);
   padding: 1.5rem;
   border-radius: 16px;
@@ -88,13 +88,13 @@
   transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
 }
 
-.summary-card:hover {
+.customer-management .summary-card:hover {
   transform: translateY(-3px);
   box-shadow: 0 10px 30px rgba(255, 95, 147, 0.16);
   border-color: rgba(255, 95, 147, 0.2);
 }
 
-.card-icon {
+.customer-management .card-icon {
   width: 48px;
   height: 48px;
   border-radius: 12px;
@@ -106,37 +106,37 @@
   color: #ff5f93;
 }
 
-.card-content h3 {
+.customer-management .card-content h3 {
   margin: 0 0 0.25rem 0;
   font-size: 1.5rem;
   font-weight: 700;
   color: #ff5f93;
 }
 
-.card-content p {
+.customer-management .card-content p {
   margin: 0;
   color: #64748b;
   font-size: 0.95rem;
 }
 
 /* Controls */
-.customers-controls {
+.customer-management .customers-controls {
   margin-bottom: 2rem;
 }
 
-.cm-search-filter-group {
+.customer-management .cm-search-filter-group {
   display: flex;
   gap: 1rem;
   align-items: center;
 }
 
-.cm-search-box {
+.customer-management .cm-search-box {
   position: relative;
   flex: 1;
   max-width: 400px;
 }
 
-.cm-search-box input {
+.customer-management .cm-search-box input {
   width: 100%;
   padding: 0.75rem 1rem;
   border: 2px solid #e9ecef;
@@ -147,13 +147,13 @@
   transition: border-color 0.2s ease;
 }
 
-.cm-search-box input:focus {
+.customer-management .cm-search-box input:focus {
   outline: none;
   border-color: #ff5f93;
   box-shadow: 0 0 0 3px rgba(255, 95, 147, 0.1);
 }
 
-.cm-filter-dropdown {
+.customer-management .cm-filter-dropdown {
   position: relative;
   display: flex;
   align-items: center;
@@ -165,12 +165,12 @@
   transition: border-color 0.2s ease;
 }
 
-.cm-filter-dropdown:focus-within {
+.customer-management .cm-filter-dropdown:focus-within {
   border-color: #ff5f93;
   box-shadow: 0 0 0 3px rgba(255, 95, 147, 0.1);
 }
 
-.cm-filter-dropdown select {
+.customer-management .cm-filter-dropdown select {
   border: none !important;
   background: transparent !important;
   box-shadow: none !important;
@@ -182,24 +182,24 @@
 }
 
 /* Table Container */
-.customers-table-container {
+.customer-management .customers-table-container {
   background: var(--color-surface-solid, white);
   border-radius: 16px;
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
   overflow: hidden;
 }
 
-.customers-table {
+.customer-management .customers-table {
   width: 100%;
   border-collapse: collapse;
 }
 
-.customers-table thead {
+.customer-management .customers-table thead {
   background: var(--color-surface-muted, #f8fafc);
   border-bottom: 1px solid #e9ecef;
 }
 
-.customers-table th {
+.customer-management .customers-table th {
   padding: 1rem 1.5rem;
   text-align: left;
   font-weight: 600;
@@ -209,23 +209,23 @@
   letter-spacing: 0.05em;
 }
 
-.customers-table tbody tr {
+.customer-management .customers-table tbody tr {
   border-bottom: 1px solid #f1f5f9;
   transition: background-color 0.2s ease;
 }
 
-.customers-table tbody tr:hover {
+.customer-management .customers-table tbody tr:hover {
   background: var(--color-surface-muted, #f8fafc);
 }
 
-.customers-table td {
+.customer-management .customers-table td {
   padding: 1rem 1.5rem;
   color: #374151;
   font-size: 0.95rem;
 }
 
 /* Table Cells */
-.customer-id .id-badge {
+.customer-management .customer-id .id-badge {
   background: #ffeef4;
   color: #ff5f93;
   padding: 0.25rem 0.75rem;
@@ -234,30 +234,30 @@
   font-weight: 600;
 }
 
-.customer-name .name-info {
+.customer-management .customer-name .name-info {
   display: flex;
   flex-direction: column;
   gap: 0.25rem;
 }
 
-.name {
+.customer-management .name {
   font-weight: 600;
   color: #0f172a;
 }
 
-.join-date {
+.customer-management .join-date {
   font-size: 0.85rem;
   color: #64748b;
 }
 
-.contact .contact-info {
+.customer-management .contact .contact-info {
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
 }
 
-.email,
-.phone {
+.customer-management .email,
+.customer-management .phone {
   display: flex;
   align-items: center;
   gap: 0.5rem;
@@ -265,7 +265,7 @@
   color: #64748b;
 }
 
-.address .address-info {
+.customer-management .address .address-info {
   display: flex;
   align-items: flex-start;
   gap: 0.5rem;
@@ -275,24 +275,24 @@
   line-height: 1.4;
 }
 
-.pets .pets-info {
+.customer-management .pets .pets-info {
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
 }
 
-.pet-count {
+.customer-management .pet-count {
   font-weight: 600;
   color: #374151;
 }
 
-.pet-list {
+.customer-management .pet-list {
   display: flex;
   flex-wrap: wrap;
   gap: 0.25rem;
 }
 
-.pet-tag {
+.customer-management .pet-tag {
   display: flex;
   align-items: center;
   gap: 0.25rem;
@@ -304,7 +304,7 @@
   font-weight: 500;
 }
 
-.status-badge {
+.customer-management .status-badge {
   display: flex;
   align-items: center;
   gap: 0.5rem;
@@ -316,38 +316,38 @@
   letter-spacing: 0.05em;
 }
 
-.status-badge.success {
+.customer-management .status-badge.success {
   background: #d1fae5;
   color: #065f46;
 }
 
-.status-badge.secondary {
+.customer-management .status-badge.secondary {
   background: #f1f5f9;
   color: #374151;
 }
 
-.status-badge.danger {
+.customer-management .status-badge.danger {
   background: #fee2e2;
   color: #991b1b;
 }
 
-.bookings .booking-count {
+.customer-management .bookings .booking-count {
   font-weight: 600;
   color: #374151;
 }
 
-.amount {
+.customer-management .amount {
   font-weight: 600;
   color: #ff5f93;
   font-size: 1rem;
 }
 
-.actions {
+.customer-management .actions {
   display: flex;
   gap: 0.5rem;
 }
 
-.action-btn {
+.customer-management .action-btn {
   background: none;
   border: none;
   width: 32px;
@@ -361,90 +361,90 @@
   font-size: 0.9rem;
 }
 
-.action-btn:hover {
+.customer-management .action-btn:hover {
   transform: translateY(-1px);
 }
 
-.view-btn {
+.customer-management .view-btn {
   color: #ff5f93;
   background: #ffeef4;
 }
 
-.view-btn:hover {
+.customer-management .view-btn:hover {
   background: #ffd6e8;
 }
 
-.edit-btn {
+.customer-management .edit-btn {
   color: #f59e0b;
   background: #fef3c7;
 }
 
-.edit-btn:hover {
+.customer-management .edit-btn:hover {
   background: #fed7aa;
 }
 
-.delete-btn {
+.customer-management .delete-btn {
   color: #ef4444;
   background: #fee2e2;
 }
 
-.delete-btn:hover {
+.customer-management .delete-btn:hover {
   background: #fecaca;
 }
 
-.book-btn {
+.customer-management .book-btn {
   color: #ff5f93;
   background: #ffeef4;
 }
 
-.book-btn:hover {
+.customer-management .book-btn:hover {
   background: #ffd6e8;
 }
 
-.message-btn {
+.customer-management .message-btn {
   color: #8b5cf6;
   background: #f3e8ff;
 }
 
-.message-btn:hover {
+.customer-management .message-btn:hover {
   background: #e9d5ff;
 }
 
 /* Modal shell comes from shared hbk-* (styles/bookingModal.css) */
-.hbk-modal {
+.customer-management .hbk-modal {
   width: min(800px, 100%);
 }
 
-.customer-overview {
+.customer-management .customer-overview {
   display: flex;
   flex-direction: column;
   gap: 2rem;
 }
 
-.overview-section h3 {
+.customer-management .overview-section h3 {
   margin: 0 0 1rem 0;
   font-size: 1.25rem;
   font-weight: 600;
   color: #0f172a;
 }
 
-.info-grid {
+.customer-management .info-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
   gap: 1rem;
 }
 
-.info-item {
+.customer-management .info-item {
   display: flex;
   flex-direction: column;
   gap: 0.25rem;
 }
 
-.info-item.full-width {
+.customer-management .info-item.full-width {
   grid-column: 1 / -1;
 }
 
-.info-item label {
+.customer-management .info-item label {
   font-size: 0.875rem;
   font-weight: 600;
   color: #64748b;
@@ -452,19 +452,19 @@
   letter-spacing: 0.05em;
 }
 
-.info-item span {
+.customer-management .info-item span {
   font-size: 0.95rem;
   color: #0f172a;
   font-weight: 500;
 }
 
-.pets-detail {
+.customer-management .pets-detail {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
   gap: 1rem;
 }
 
-.pet-item {
+.customer-management .pet-item {
   display: flex;
   align-items: center;
   gap: 1rem;
@@ -473,7 +473,7 @@
   border-radius: 8px;
 }
 
-.pet-avatar {
+.customer-management .pet-avatar {
   width: 48px;
   height: 48px;
   border-radius: 50%;
@@ -485,31 +485,31 @@
   font-size: 1.25rem;
 }
 
-.pet-details h4 {
+.customer-management .pet-details h4 {
   margin: 0 0 0.25rem 0;
   font-size: 1.1rem;
   font-weight: 600;
   color: #0f172a;
 }
 
-.pet-details p {
+.customer-management .pet-details p {
   margin: 0 0 0.25rem 0;
   color: #64748b;
   font-size: 0.9rem;
 }
 
-.pet-details span {
+.customer-management .pet-details span {
   font-size: 0.85rem;
   color: #94a3b8;
 }
 
-.booking-stats {
+.customer-management .booking-stats {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
   gap: 1rem;
 }
 
-.stat-item {
+.customer-management .stat-item {
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -518,13 +518,13 @@
   border-radius: 8px;
 }
 
-.stat-item label {
+.customer-management .stat-item label {
   font-size: 0.875rem;
   font-weight: 600;
   color: #64748b;
 }
 
-.stat-item span {
+.customer-management .stat-item span {
   font-weight: 600;
   color: #ff5f93;
 }
@@ -533,26 +533,26 @@
 
 /* Responsive Design */
 @media (max-width: 1200px) {
-  .customers-header {
+  .customer-management .customers-header {
     flex-direction: column;
     gap: 1rem;
     align-items: stretch;
   }
   
-  .cm-search-filter-group {
+  .customer-management .cm-search-filter-group {
     flex-direction: column;
     align-items: stretch;
   }
   
-  .cm-search-box {
+  .customer-management .cm-search-box {
     max-width: none;
   }
   
-  .info-grid {
+  .customer-management .info-grid {
     grid-template-columns: 1fr;
   }
   
-  .pets-detail {
+  .customer-management .pets-detail {
     grid-template-columns: 1fr;
   }
 }
@@ -562,34 +562,34 @@
     padding: 1rem;
   }
   
-  .summary-cards {
+  .customer-management .summary-cards {
     grid-template-columns: 1fr;
     gap: 1rem;
   }
   
-  .header-actions {
+  .customer-management .header-actions {
     flex-direction: column;
   }
   
-  .customers-table-container {
+  .customer-management .customers-table-container {
     overflow-x: auto;
   }
   
-  .customers-table {
+  .customer-management .customers-table {
     min-width: 800px;
   }
   
-  .pet-list {
+  .customer-management .pet-list {
     flex-direction: column;
     gap: 0.5rem;
   }
   
-  .actions {
+  .customer-management .actions {
     flex-direction: column;
     gap: 0.25rem;
   }
   
-  .booking-stats {
+  .customer-management .booking-stats {
     grid-template-columns: 1fr;
   }
 }

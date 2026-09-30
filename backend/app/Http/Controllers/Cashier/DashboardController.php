@@ -542,36 +542,6 @@ class DashboardController extends Controller
     // Payment Verification Methods
     public function getPaymentRequests()
     {
-        // Get store order payments
-        $orders = DB::table('customer_orders')
-            ->where('status', 'approved')
-            ->where('payment_status', 'pending')
-            ->orderBy('updated_at', 'desc')
-            ->get()
-            ->map(function ($order) {
-                $items = DB::table('customer_order_items')
-                    ->where('customer_order_id', $order->id)
-                    ->get();
-
-                return [
-                    'id' => $order->id,
-                    'payable_type' => 'customer_order',
-                    'customer_name' => $order->customer_name ?? 'Customer #' . $order->customer_id,
-                    'customer_email' => $order->customer_email ?? null,
-                    'request_type' => 'Store Order',
-                    'service_name' => 'Order #' . $order->id,
-                    'items' => $items,
-                    'amount' => $order->total_amount,
-                    'payment_method' => $order->payment_method,
-                    'payment_reference' => $order->payment_reference ?? null,
-                    'payment_proof' => $order->payment_proof ?? null,
-                    'proof_url' => $order->payment_proof ? url('/api/files/payment-proofs/customer-order/' . $order->id . '/view') : null,
-                    'request_date' => $order->updated_at,
-                    'status' => $order->status,
-                    'payment_status' => $order->payment_status ?? 'pending',
-                ];
-            });
-
         // Get service request payments
         $serviceRequests = DB::table('service_requests')
             ->where('status', 'approved')
@@ -735,7 +705,7 @@ class DashboardController extends Controller
                 ];
             });
 
-        $allPayments = $orders->concat($serviceRequests)->concat($boardings)->concat($confinements)->concat($appointments)->concat($groomings);
+        $allPayments = $serviceRequests->concat($boardings)->concat($confinements)->concat($appointments)->concat($groomings);
 
         return response()->json(['payments' => $allPayments]);
     }

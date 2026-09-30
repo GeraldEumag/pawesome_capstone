@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useState } from "react";
 import { apiRequest } from "../../api/client";
+import { useAuth } from "../../context/AuthContext";
 import HistoryTimeline from "../shared/HistoryTimeline";
 
 const TYPE_OPTIONS = [
@@ -9,6 +10,8 @@ const TYPE_OPTIONS = [
 ];
 
 const ReceptionistHistory = () => {
+  const { user } = useAuth();
+  const isSuper = user?.role === "super_receptionist";
   const [entries, setEntries]       = useState([]);
   const [loading, setLoading]       = useState(true);
   const [error, setError]           = useState("");
@@ -110,7 +113,8 @@ const ReceptionistHistory = () => {
       exportColumns={exportColumns}
       exportFilename="receptionist-history"
       exportTitle="Receptionist Activity History"
-      roleAccent="#d97706" roleLabel="Receptionist"
+      roleAccent={isSuper ? "var(--color-primary)" : "#d97706"}
+      roleLabel={isSuper ? "Super Receptionist" : "Receptionist"}
       emptyMessage="No activity records found."
       searchTerm={searchTerm} onSearchChange={setSearchTerm}
       dateFilter={dateFilter} onDateFilterChange={setDateFilter}

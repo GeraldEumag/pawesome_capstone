@@ -141,9 +141,8 @@ class PayrollComputationService
 
             // Approved leave dates overlapping the period
             $approvedLeaveDates = [];
-            $leaveQuery = $isEmployee
-                ? DB::table('leave_requests')->where('employee_id', $employee->id)
-                : DB::table('leave_requests')->where('user_id', $employee->id);
+            $leaveUserId = $isEmployee ? $employee->user_id : $employee->id;
+            $leaveQuery = DB::table('leave_requests')->where('user_id', $leaveUserId);
 
             $leaveQuery
                 ->where('status', 'approved')

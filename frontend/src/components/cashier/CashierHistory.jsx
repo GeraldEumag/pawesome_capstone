@@ -113,7 +113,8 @@ const CashierHistory = () => {
   ];
 
   return (
-    <HistoryTimeline
+    <div className="cashier-history-page">
+      <HistoryTimeline
       entries={entries}
       loading={loading}
       error={error}
@@ -151,7 +152,8 @@ const CashierHistory = () => {
           🧾 Receipt
         </button>
       )}
-    />
+      />
+    </div>
   );
 };
 

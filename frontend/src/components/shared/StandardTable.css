@@ -6,7 +6,7 @@
   box-shadow: 0 4px 20px rgba(255, 95, 147, 0.08), 0 1px 3px rgba(0, 0, 0, 0.04);
 }
 
-.standard-table {
+.standard-table-container .standard-table {
   width: 100%;
   min-width: 640px;
   border-collapse: separate;
@@ -14,13 +14,13 @@
   font-size: 0.875rem;
 }
 
-.standard-table thead {
+.standard-table-container .standard-table thead {
   position: sticky;
   top: 0;
   z-index: 10;
 }
 
-.standard-table th {
+.standard-table-container .standard-table th {
   background: linear-gradient(180deg, #fdf2f7 0%, #f9f3f6 100%);
   padding: 1rem 1.25rem;
   text-align: left;
@@ -33,41 +33,41 @@
   letter-spacing: 0.05em;
 }
 
-.standard-table th.sortable {
+.standard-table-container .standard-table th.sortable {
   cursor: pointer;
   user-select: none;
   transition: background 0.15s ease;
 }
 
-.standard-table th.sortable:hover {
+.standard-table-container .standard-table th.sortable:hover {
   background: linear-gradient(180deg, #fce7f0 0%, #fad6e7 100%);
 }
 
-.header-content {
+.standard-table-container .header-content {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 0.5rem;
 }
 
-.sort-icon {
+.standard-table-container .sort-icon {
   font-size: 0.75rem;
   color: #94a3b8;
   opacity: 0.55;
   transition: all 0.2s ease;
 }
 
-.standard-table th.sortable:hover .sort-icon {
+.standard-table-container .standard-table th.sortable:hover .sort-icon {
   opacity: 0.9;
   color: #ff5f93;
 }
 
-.sort-icon.active {
+.standard-table-container .sort-icon.active {
   opacity: 1;
   color: var(--report-primary, #ff5f93);
 }
 
-.standard-table td {
+.standard-table-container .standard-table td {
   padding: 0.875rem 1.25rem;
   border-bottom: 1px solid rgba(226, 232, 240, 0.55);
   color: #334155;
@@ -76,32 +76,32 @@
   transition: background 0.15s ease;
 }
 
-.standard-table tbody tr:last-child td {
+.standard-table-container .standard-table tbody tr:last-child td {
   border-bottom: none;
 }
 
-.standard-table.striped tbody tr:nth-child(even) {
+.standard-table-container .standard-table.striped tbody tr:nth-child(even) {
   background: rgba(255, 241, 247, 0.4);
 }
 
-.standard-table.hoverable tbody tr {
+.standard-table-container .standard-table.hoverable tbody tr {
   transition: background 0.15s ease, box-shadow 0.15s ease;
 }
 
-.standard-table.hoverable tbody tr:hover {
+.standard-table-container .standard-table.hoverable tbody tr:hover {
   background: rgba(255, 200, 221, 0.12);
 }
 
-.standard-table.hoverable tbody tr:hover td {
+.standard-table-container .standard-table.hoverable tbody tr:hover td {
   color: #111827;
 }
 
-.table-row {
+.standard-table-container .table-row {
   transition: background 0.2s ease, transform 0.15s ease;
 }
 
-.table-loading-state,
-.table-empty-state {
+.standard-table-container .table-loading-state,
+.standard-table-container .table-empty-state {
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -111,7 +111,7 @@
   color: var(--report-muted, #64748b);
 }
 
-.table-loading-state .loading-spinner {
+.standard-table-container .table-loading-state .loading-spinner {
   width: 36px;
   height: 36px;
   border: 3px solid #e2e8f0;
@@ -121,19 +121,19 @@
   margin-bottom: 1.25rem;
 }
 
-.table-empty-state .empty-icon {
+.standard-table-container .table-empty-state .empty-icon {
   font-size: 2.5rem;
   margin-bottom: 1rem;
   opacity: 0.5;
 }
 
-.table-empty-state .empty-message {
+.standard-table-container .table-empty-state .empty-message {
   font-size: 1rem;
   font-weight: 600;
   color: #475569;
 }
 
-.standard-table-pagination {
+.standard-table-container .standard-table-pagination {
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -145,13 +145,13 @@
   background: rgba(248, 250, 252, 0.6);
 }
 
-.pagination-actions {
+.standard-table-container .pagination-actions {
   display: flex;
   align-items: center;
   gap: 0.5rem;
 }
 
-.pagination-actions button {
+.standard-table-container .pagination-actions button {
   border: 1px solid rgba(226, 232, 240, 0.9);
   background: #ffffff;
   color: #334155;
@@ -164,7 +164,7 @@
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
 }
 
-.pagination-actions button:hover:not(:disabled) {
+.standard-table-container .pagination-actions button:hover:not(:disabled) {
   background: #f1f5f9;
   border-color: #cbd5e1;
   color: #334155;
@@ -172,13 +172,13 @@
   box-shadow: 0 4px 10px rgba(0, 0, 0, 0.06);
 }
 
-.pagination-actions button:disabled {
+.standard-table-container .pagination-actions button:disabled {
   opacity: 0.45;
   cursor: not-allowed;
   box-shadow: none;
 }
 
-.pagination-actions strong {
+.standard-table-container .pagination-actions strong {
   color: #111827;
   font-weight: 700;
   padding: 0 0.5rem;
@@ -186,7 +186,7 @@
   text-align: center;
 }
 
-.status-badge {
+.standard-table-container .status-badge {
   display: inline-flex;
   align-items: center;
   padding: 0.3rem 0.75rem;
@@ -200,27 +200,27 @@
   white-space: nowrap;
 }
 
-.status-badge.success {
+.standard-table-container .status-badge.success {
   background: rgba(16, 185, 129, 0.12);
   color: #047857;
 }
 
-.status-badge.warning {
+.standard-table-container .status-badge.warning {
   background: rgba(245, 158, 11, 0.12);
   color: #b45309;
 }
 
-.status-badge.info {
+.standard-table-container .status-badge.info {
   background: rgba(59, 130, 246, 0.12);
   color: #1d4ed8;
 }
 
-.status-badge.danger {
+.standard-table-container .status-badge.danger {
   background: rgba(239, 68, 68, 0.12);
   color: #b91c1c;
 }
 
-.status-badge.secondary {
+.standard-table-container .status-badge.secondary {
   background: rgba(148, 163, 184, 0.15);
   color: #475569;
 }
@@ -244,13 +244,13 @@
     border-radius: 6px;
   }
 
-  .standard-table th {
+  .standard-table-container .standard-table th {
     background: #f9fafb !important;
     -webkit-print-color-adjust: exact;
     print-color-adjust: exact;
   }
 
-  .standard-table-pagination {
+  .standard-table-container .standard-table-pagination {
     display: none !important;
   }
 }
@@ -260,21 +260,21 @@
     border-radius: 8px;
   }
 
-  .standard-table {
+  .standard-table-container .standard-table {
     font-size: 0.8rem;
   }
 
-  .standard-table th,
-  .standard-table td {
+  .standard-table-container .standard-table th,
+  .standard-table-container .standard-table td {
     padding: 0.7rem;
   }
 
-  .standard-table-pagination {
+  .standard-table-container .standard-table-pagination {
     align-items: stretch;
     flex-direction: column;
   }
 
-  .pagination-actions {
+  .standard-table-container .pagination-actions {
     justify-content: space-between;
   }
 }

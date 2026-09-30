@@ -204,53 +204,55 @@ class TransactionAtomicityTest extends TestCase
         $this->assertNull($boarding->fresh()->receipt_number);
     }
 
-    public function test_order_double_approval_deducts_stock_once(): void
+    public function test_customer_order_approval_is_disabled_without_changing_stock_or_order_data(): void
     {
         $product = $this->product(10);
         $orderId = $this->createOrderWithItem($product, 3);
+        $logCount = InventoryLog::count();
 
-        $this->as('receptionist')->postJson("/api/receptionist/customer-orders/{$orderId}/approve")->assertOk();
-        $this->assertSame(7, $product->fresh()->stock);
-        $this->assertSame('approved', DB::table('customer_orders')->where('id', $orderId)->value('status'));
+        $this->as('receptionist')
+            ->postJson("/api/receptionist/customer-orders/{$orderId}/approve")
+            ->assertStatus(410);
 
-        $this->as('receptionist')->postJson("/api/receptionist/customer-orders/{$orderId}/approve")->assertStatus(422);
-        $this->assertSame(7, $product->fresh()->stock, 'second approval must not deduct again');
-        $this->assertSame(1, InventoryLog::where('reference_type', 'customer_order')->count());
+        $this->assertSame(10, $product->fresh()->stock);
+        $this->assertSame('pending', DB::table('customer_orders')->where('id', $orderId)->value('status'));
+        $this->assertSame($logCount, InventoryLog::count());
     }
 
-    public function test_order_approval_with_insufficient_stock_rolls_back(): void
+    public function test_customer_order_approval_is_disabled_without_partial_stock_deductions(): void
     {
         $enough = $this->product(10);
         $short = $this->product(1);
         $orderId = $this->createOrderWithItems([[$enough, 2], [$short, 5]]);
-
         $logCount = InventoryLog::count();
-        $response = $this->as('receptionist')->postJson("/api/receptionist/customer-orders/{$orderId}/approve");
 
-        $response->assertStatus(422);
-        $this->assertSame(10, $enough->fresh()->stock, 'first item must not be partially deducted');
+        $this->as('receptionist')
+            ->postJson("/api/receptionist/customer-orders/{$orderId}/approve")
+            ->assertStatus(410);
+
+        $this->assertSame(10, $enough->fresh()->stock);
         $this->assertSame(1, $short->fresh()->stock);
         $this->assertSame('pending', DB::table('customer_orders')->where('id', $orderId)->value('status'));
         $this->assertSame($logCount, InventoryLog::count());
     }
 
-    public function test_order_reject_after_approval_restores_stock_once(): void
+    public function test_customer_order_rejection_and_cancellation_are_disabled_without_mutating_data(): void
     {
         $product = $this->product(10);
         $orderId = $this->createOrderWithItem($product, 3);
-
-        $this->as('receptionist')->postJson("/api/receptionist/customer-orders/{$orderId}/approve")->assertOk();
-        $this->assertSame(7, $product->fresh()->stock);
+        $logCount = InventoryLog::count();
 
         $this->as('receptionist')->postJson("/api/receptionist/customer-orders/{$orderId}/reject", [
-            'rejection_reason' => 'Customer cancelled',
-        ])->assertOk();
+            'rejection_reason' => 'Not available',
+        ])->assertStatus(410);
+        $this->as('receptionist')->postJson("/api/receptionist/customer-orders/{$orderId}/cancel", [
+            'cancellation_reason' => 'Customer request',
+        ])->assertStatus(410);
+
         $this->assertSame(10, $product->fresh()->stock);
-
-        $this->as('receptionist')->postJson("/api/receptionist/customer-orders/{$orderId}/reject", [
-            'rejection_reason' => 'again',
-        ])->assertStatus(422);
-        $this->assertSame(10, $product->fresh()->stock, 'second rejection must not restore again');
+        $this->assertSame('pending', DB::table('customer_orders')->where('id', $orderId)->value('status'));
+        $this->assertSame('unpaid', DB::table('customer_orders')->where('id', $orderId)->value('payment_status'));
+        $this->assertSame($logCount, InventoryLog::count());
     }
 
     public function test_stock_adjustment_cannot_go_negative(): void

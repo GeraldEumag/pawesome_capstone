@@ -448,7 +448,7 @@ Route::middleware(['auth.api', 'throttle:api', 'role:receptionist'])->prefix('re
     // IMPORTANT: Static routes must come before dynamic routes
     Route::get('appointment/list', [AppointmentController::class, 'index']);
     Route::get('veterinarians/available', [AppointmentController::class, 'availableVeterinarians']);
-    Route::get('customer-orders/pending', [ReceptionistCustomerOrderController::class, 'pending']);
+    Route::get('customer-orders/pending', [ReceptionistCustomerOrderController::class, 'workflowDisabled']);
     Route::get('orders/approval-history', [ReceptionistCustomerOrderController::class, 'approvalHistory']);
     Route::get('requests/pending', [ReceptionistRequestController::class, 'pending']);
     Route::get('requests/approval-history', [ReceptionistRequestController::class, 'approvalHistory']);
@@ -472,9 +472,9 @@ Route::middleware(['auth.api', 'throttle:api', 'role:receptionist'])->prefix('re
     
     // Customer Order actions
     Route::get('customer-orders/{id}', [ReceptionistCustomerOrderController::class, 'show']);
-    Route::post('customer-orders/{id}/approve', [ReceptionistCustomerOrderController::class, 'approve']);
-    Route::post('customer-orders/{id}/reject', [ReceptionistCustomerOrderController::class, 'reject']);
-    Route::post('customer-orders/{id}/cancel', [ReceptionistCustomerOrderController::class, 'cancel']);
+    Route::post('customer-orders/{id}/approve', [ReceptionistCustomerOrderController::class, 'workflowDisabled']);
+    Route::post('customer-orders/{id}/reject', [ReceptionistCustomerOrderController::class, 'workflowDisabled']);
+    Route::post('customer-orders/{id}/cancel', [ReceptionistCustomerOrderController::class, 'workflowDisabled']);
     
     // Pet Management
     Route::get('pets', [\App\Http\Controllers\Api\ReceptionistPetController::class, 'index']);

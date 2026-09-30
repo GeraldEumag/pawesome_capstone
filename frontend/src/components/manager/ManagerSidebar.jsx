@@ -19,7 +19,7 @@ const ManagerSidebar = ({ mobileOpen, onMobileMenuToggle }) => {
   };
 
   const handleNavClick = () => {
-    if (window.innerWidth <= 768 && onMobileMenuToggle) {
+    if (window.innerWidth <= 1024 && onMobileMenuToggle) {
       onMobileMenuToggle();
     }
   };

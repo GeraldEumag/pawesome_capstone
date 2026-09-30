@@ -14,7 +14,7 @@
   font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
 }
 
-.report-content {
+.standard-report-layout .report-content {
   background: var(--report-surface);
   border: 1px solid var(--report-border);
   border-radius: 12px;
@@ -24,7 +24,7 @@
 }
 
 /* Standard Loading State */
-.standard-loading-state {
+.standard-report-layout .standard-loading-state {
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -33,7 +33,7 @@
   text-align: center;
 }
 
-.loading-spinner {
+.standard-report-layout .loading-spinner {
   width: 40px;
   height: 40px;
   border: 3px solid #e2e8f0;
@@ -43,20 +43,20 @@
   margin-bottom: 1.25rem;
 }
 
-.loading-text {
+.standard-report-layout .loading-text {
   font-size: 1.05rem;
   font-weight: 700;
   color: var(--report-heading);
   margin-bottom: 0.35rem;
 }
 
-.loading-subtext {
+.standard-report-layout .loading-subtext {
   font-size: 0.875rem;
   color: var(--report-muted);
 }
 
 /* Standard Error State */
-.standard-error-state {
+.standard-report-layout .standard-error-state {
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -65,7 +65,7 @@
   text-align: center;
 }
 
-.error-icon {
+.standard-report-layout .error-icon {
   width: 72px;
   height: 72px;
   display: flex;
@@ -78,7 +78,7 @@
   margin-bottom: 1.5rem;
 }
 
-.error-message {
+.standard-report-layout .error-message {
   font-size: 1rem;
   font-weight: 600;
   color: #334155;
@@ -87,7 +87,7 @@
   line-height: 1.5;
 }
 
-.retry-btn {
+.standard-report-layout .retry-btn {
   display: inline-flex;
   align-items: center;
   gap: 0.5rem;
@@ -103,13 +103,13 @@
   box-shadow: 0 4px 14px rgba(255, 95, 147, 0.3);
 }
 
-.retry-btn:hover {
+.standard-report-layout .retry-btn:hover {
   transform: translateY(-2px);
   box-shadow: 0 8px 24px rgba(255, 95, 147, 0.4);
 }
 
 /* Standard Empty State */
-.standard-empty-state {
+.standard-report-layout .standard-empty-state {
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -118,7 +118,7 @@
   text-align: center;
 }
 
-.empty-icon {
+.standard-report-layout .empty-icon {
   width: 80px;
   height: 80px;
   display: flex;
@@ -132,7 +132,7 @@
   opacity: 0.75;
 }
 
-.empty-message {
+.standard-report-layout .empty-message {
   font-size: 1rem;
   font-weight: 600;
   color: #475569;
@@ -140,7 +140,7 @@
   max-width: 400px;
 }
 
-.refresh-btn {
+.standard-report-layout .refresh-btn {
   display: inline-flex;
   align-items: center;
   gap: 0.5rem;
@@ -156,18 +156,18 @@
   box-shadow: 0 4px 14px rgba(255, 95, 147, 0.3);
 }
 
-.refresh-btn:hover {
+.standard-report-layout .refresh-btn:hover {
   transform: translateY(-2px);
   box-shadow: 0 8px 24px rgba(255, 95, 147, 0.4);
 }
 
-.data-table-section,
-.charts-section,
-.chart-section {
+.standard-report-layout .data-table-section,
+.standard-report-layout .charts-section,
+.standard-report-layout .chart-section {
   padding: 1.25rem;
 }
 
-.section-title {
+.standard-report-layout .section-title {
   color: var(--report-heading);
   font-size: 0.95rem;
   font-weight: 700;
@@ -177,7 +177,7 @@
   letter-spacing: 0.04em;
 }
 
-.modal-overlay {
+.standard-report-layout .modal-overlay {
   position: fixed;
   inset: 0;
   z-index: 1000;
@@ -189,7 +189,7 @@
   backdrop-filter: blur(10px);
 }
 
-.modal-content {
+.standard-report-layout .modal-content {
   width: min(860px, 100%);
   max-height: min(86vh, 760px);
   overflow: hidden;
@@ -201,8 +201,8 @@
   box-shadow: 0 22px 70px rgba(15, 23, 42, 0.18);
 }
 
-.modal-header,
-.modal-footer {
+.standard-report-layout .modal-header,
+.standard-report-layout .modal-footer {
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -211,20 +211,20 @@
   border-bottom: 1px solid rgba(226, 232, 240, 0.8);
 }
 
-.modal-footer {
+.standard-report-layout .modal-footer {
   justify-content: flex-end;
   border-top: 1px solid rgba(226, 232, 240, 0.8);
   border-bottom: 0;
 }
 
-.modal-header h2 {
+.standard-report-layout .modal-header h2 {
   color: var(--report-heading);
   font-size: 1.05rem;
   font-weight: 700;
   margin: 0;
 }
 
-.modal-close {
+.standard-report-layout .modal-close {
   width: 32px;
   height: 32px;
   border: 1px solid transparent;
@@ -239,23 +239,23 @@
   justify-content: center;
 }
 
-.modal-close:hover {
+.standard-report-layout .modal-close:hover {
   background: rgba(226, 232, 240, 0.8);
   transform: translateY(-1px);
 }
 
-.modal-body {
+.standard-report-layout .modal-body {
   overflow-y: auto;
   padding: 1.25rem;
 }
 
-.info-grid {
+.standard-report-layout .info-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
   gap: 0.85rem;
 }
 
-.info-item {
+.standard-report-layout .info-item {
   display: flex;
   flex-direction: column;
   gap: 0.3rem;
@@ -266,12 +266,12 @@
   transition: all 0.2s ease;
 }
 
-.info-item:hover {
+.standard-report-layout .info-item:hover {
   border-color: #cbd5e1;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
 }
 
-.info-item label {
+.standard-report-layout .info-item label {
   color: var(--report-muted);
   font-size: 0.7rem;
   font-weight: 700;
@@ -279,7 +279,7 @@
   letter-spacing: 0.05em;
 }
 
-.info-item span {
+.standard-report-layout .info-item span {
   color: var(--report-heading);
   font-size: 0.9rem;
   line-height: 1.4;
@@ -302,39 +302,39 @@
     padding: 0.75rem;
   }
 
-  .report-content {
+  .standard-report-layout .report-content {
     border-radius: 10px;
   }
 
-  .data-table-section,
-  .charts-section,
-  .chart-section {
+  .standard-report-layout .data-table-section,
+  .standard-report-layout .charts-section,
+  .standard-report-layout .chart-section {
     padding: 0.75rem;
   }
 
-  .standard-loading-state,
-  .standard-error-state,
-  .standard-empty-state {
+  .standard-report-layout .standard-loading-state,
+  .standard-report-layout .standard-error-state,
+  .standard-report-layout .standard-empty-state {
     padding: 3.5rem 1.25rem;
   }
 
-  .loading-text,
-  .error-message,
-  .empty-message {
+  .standard-report-layout .loading-text,
+  .standard-report-layout .error-message,
+  .standard-report-layout .empty-message {
     font-size: 0.95rem;
   }
 
-  .loading-subtext {
+  .standard-report-layout .loading-subtext {
     font-size: 0.8rem;
   }
 
-  .retry-btn,
-  .refresh-btn {
+  .standard-report-layout .retry-btn,
+  .standard-report-layout .refresh-btn {
     padding: 0.6rem 1.1rem;
     font-size: 0.82rem;
   }
 
-  .modal-content {
+  .standard-report-layout .modal-content {
     max-height: 92vh;
     border-radius: 10px;
   }
