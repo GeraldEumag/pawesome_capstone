@@ -328,7 +328,7 @@ const Register = () => {
                   key={step.id}
                   className={`register-step${currentStep >= step.id ? " active" : ""}${currentStep === step.id ? " current" : ""}`}
                 >
-                  <div className="step-circle">
+                  <div className="register-step-circle">
                     {currentStep > step.id
                       ? <FontAwesomeIcon icon={faCheck} />
                       : <FontAwesomeIcon icon={step.icon} />}
@@ -461,12 +461,12 @@ const Register = () => {
 
                     <div className="register-form-group">
                       <label htmlFor="password">Password *</label>
-                      <div className="password-input-group">
+                      <div className="register-password-group">
                         <input id="password" type={showPassword ? "text" : "password"}
                           name="password" value={formData.password} onChange={handleChange}
                           className={fieldErrors.password ? "has-error" : ""}
                           placeholder="At least 8 characters" autoComplete="new-password" />
-                        <button type="button" className="password-toggle"
+                        <button type="button" className="register-password-toggle"
                           onClick={() => setShowPassword((p) => !p)}
                           aria-label={showPassword ? "Hide password" : "Show password"}>
                           <FontAwesomeIcon icon={showPassword ? faEyeSlash : faEye} />
@@ -481,12 +481,12 @@ const Register = () => {
 
                     <div className="register-form-group">
                       <label htmlFor="confirmPassword">Confirm Password *</label>
-                      <div className="password-input-group">
+                      <div className="register-password-group">
                         <input id="confirmPassword" type={showConfirmPassword ? "text" : "password"}
                           name="confirmPassword" value={formData.confirmPassword} onChange={handleChange}
                           className={fieldErrors.confirmPassword ? "has-error" : ""}
                           placeholder="Re-enter password" autoComplete="new-password" />
-                        <button type="button" className="password-toggle"
+                        <button type="button" className="register-password-toggle"
                           onClick={() => setShowConfirmPassword((p) => !p)}
                           aria-label={showConfirmPassword ? "Hide confirm password" : "Show confirm password"}>
                           <FontAwesomeIcon icon={showConfirmPassword ? faEyeSlash : faEye} />
@@ -552,7 +552,7 @@ const Register = () => {
                   </div>
 
                   {/* Summary */}
-                  <div className="review-card">
+                  <div className="register-review-card">
                     <h4>Registration Summary</h4>
                     <div className="review-grid">
                       <div><small>Name</small><strong>{fullName || "Not provided"}</strong></div>
