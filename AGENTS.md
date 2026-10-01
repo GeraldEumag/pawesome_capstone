@@ -106,12 +106,12 @@ and customer notifications (`CustomerNotificationMail`).
 | --- | --- | --- |
 | Local dev | `MAIL_MAILER=log` | Emails (incl. links) written to `storage/logs/laravel.log` |
 | Tests | `MAIL_MAILER=array` | `phpunit.xml` / `.env.testing`; use `Mail::fake()` |
-| Demo/Prod | Brevo SMTP | `smtp-relay.brevo.com:587`, `MAIL_SCHEME=smtp` (STARTTLS) |
+| Demo/Prod | Brevo HTTPS API | `MAIL_MAILER=brevo`, `BREVO_API_KEY`; requests use HTTPS (port 443) |
 
-Brevo setup: app.brevo.com → **SMTP & API → SMTP** → use the **SMTP login**
-as `MAIL_USERNAME` and a generated **SMTP key** as `MAIL_PASSWORD` (not the
-REST API key). `MAIL_FROM_ADDRESS` must be a Brevo-verified sender
-(SMTP & API → Senders; single-sender verification works without a domain).
+Brevo setup: app.brevo.com → **SMTP & API → API Keys** → create a REST API key
+for `BREVO_API_KEY` (not the SMTP key). `MAIL_FROM_ADDRESS` must be a
+Brevo-verified sender (**Senders**; single-sender verification works without a
+domain). `BREVO_DOMAIN` is only needed if Brevo assigns a regional API endpoint.
 Never put mail credentials in frontend code or `VITE_*` vars.
 
 Dev alternative: Mailtrap (`sandbox.smtp.mailtrap.io:2525`) — see commented

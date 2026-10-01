@@ -9,6 +9,7 @@ use App\Models\Appointment;
 use App\Models\Customer;
 use App\Models\SystemSetting;
 use App\Mail\CustomerNotificationMail;
+use App\Mail\PaymentReceiptMail;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 
@@ -261,6 +262,27 @@ class NotificationService
         }
     }
 
+    public static function sendPaymentReceiptEmail(?string $email, string $receiptType, array $receipt): void
+    {
+        if (!(bool) SystemSetting::get('notif_email_notifications', true) || empty($email)) {
+            return;
+        }
+
+        $customer = Customer::where('email', $email)->first();
+        $preferences = $customer?->notification_preferences ?? [];
+        if (($preferences['email'] ?? true) === false) {
+            return;
+        }
+
+        try {
+            Mail::to($email)->queue((new PaymentReceiptMail($receiptType, $receipt))->afterCommit());
+        } catch (\Throwable $e) {
+            Log::error('Failed to queue customer payment receipt email', [
+                'exception' => get_class($e),
+            ]);
+        }
+    }
+
     /**
      * Dispatch the in-app + email notification to a customer.
      */
@@ -283,7 +305,7 @@ class NotificationService
         try {
             Mail::to($email)->queue(new CustomerNotificationMail($title, $message, $type));
         } catch (\Throwable $e) {
-            Log::error('Failed to queue customer notification email: ' . $e->getMessage());
+            Log::error('Failed to queue customer notification email', ['exception' => get_class($e)]);
         }
     }
 

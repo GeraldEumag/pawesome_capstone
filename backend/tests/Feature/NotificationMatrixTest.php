@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Mail\PaymentReceiptMail;
 use App\Models\Appointment;
 use App\Models\Boarding;
 use App\Models\Customer;
@@ -15,6 +16,8 @@ use App\Models\User;
 use App\Services\InventoryService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Storage;
 use Tests\TestCase;
 
@@ -166,6 +169,7 @@ class NotificationMatrixTest extends TestCase
     // ------------------------------------------------------------------
     public function test_payment_verify_and_reject_notify_customer_once(): void
     {
+        Mail::fake();
         $customerUser = $this->users['customer'];
         $sr = ServiceRequest::create([
             'customer_id' => $customerUser->id,
@@ -174,6 +178,9 @@ class NotificationMatrixTest extends TestCase
             'pet_name' => 'Bantay',
             'request_type' => 'grooming',
             'service_name' => 'Full Groom',
+            'price' => 850.50,
+            'total_amount' => 850.50,
+            'payment_method' => 'gcash',
             'request_date' => now()->addDays(2)->toDateString(),
             'request_time' => '10:00',
             'status' => 'approved',
@@ -188,6 +195,17 @@ class NotificationMatrixTest extends TestCase
 
         $verified = $this->notificationsFor($customerUser)->where('title', 'Payment Verified');
         $this->assertCount(1, $verified, 'customer gets exactly one payment-verified notification');
+        $serviceReceiptNumber = DB::table('service_requests')->where('id', $sr->id)->value('receipt_number');
+        Mail::assertQueued(PaymentReceiptMail::class, function (PaymentReceiptMail $mail) use ($serviceReceiptNumber) {
+            return $mail->receiptType === 'service_request'
+                && $mail->receipt['receipt_number'] === $serviceReceiptNumber
+                && (float) $mail->receipt['total_amount'] === 850.50
+                && $mail->receipt['payment_reference'] === 'REF123456';
+        });
+        $serviceReceiptResponse = $this->as('customer')->getJson("/api/customer/requests/{$sr->id}/receipt")
+            ->assertOk()
+            ->assertJsonPath('receipt.payment_reference', 'REF123456');
+        $this->assertEquals(850.5, (float) $serviceReceiptResponse->json('receipt.total_amount'));
 
         // Re-verification is blocked (payment_status no longer pending) and must
         // not produce a second notification.
@@ -196,6 +214,7 @@ class NotificationMatrixTest extends TestCase
             'reference_number' => 'REF123456',
         ])->assertStatus(422);
         $this->assertCount(1, $this->notificationsFor($customerUser)->where('title', 'Payment Verified'));
+        Mail::assertQueued(PaymentReceiptMail::class, 1);
 
         // Rejection path on a fresh pending request
         $sr2 = ServiceRequest::create([
@@ -218,6 +237,57 @@ class NotificationMatrixTest extends TestCase
         ])->assertOk();
 
         $this->assertCount(1, $this->notificationsFor($customerUser)->where('title', 'Payment Rejected'));
+        Mail::assertQueued(PaymentReceiptMail::class, 1);
+    }
+
+    public function test_customer_order_receipt_email_uses_persisted_order_and_items(): void
+    {
+        Mail::fake();
+        $customerUser = $this->users['customer'];
+        $item = InventoryItem::factory()->create();
+        $orderId = DB::table('customer_orders')->insertGetId([
+            'customer_id' => $customerUser->id,
+            'customer_email' => $customerUser->email,
+            'customer_name' => $customerUser->name,
+            'total_amount' => 120.00,
+            'order_type' => 'Pick-up',
+            'payment_method' => 'GCash',
+            'status' => 'approved',
+            'payment_status' => 'pending',
+            'payment_reference' => 'CUSTOMER-SUBMITTED-REF',
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+        DB::table('customer_order_items')->insert([
+            'customer_order_id' => $orderId,
+            'inventory_item_id' => $item->id,
+            'product_name' => 'Persisted Item Name',
+            'quantity' => 2,
+            'price' => 60.00,
+            'subtotal' => 120.00,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        $this->as('cashier')->postJson("/api/cashier/payment-requests/{$orderId}/verify", [
+            'type' => 'customer_order',
+            'reference_number' => 'VERIFIED-REF-123456',
+        ])->assertOk()->assertJsonPath('payment_status', 'paid');
+
+        $orderReceiptNumber = DB::table('customer_orders')->where('id', $orderId)->value('receipt_number');
+        Mail::assertQueued(PaymentReceiptMail::class, function (PaymentReceiptMail $mail) use ($orderReceiptNumber) {
+            return $mail->receiptType === 'customer_order'
+                && $mail->receipt['receipt_number'] === $orderReceiptNumber
+                && (float) $mail->receipt['total_amount'] === 120.00
+                && $mail->receipt['items'][0]['product_name'] === 'Persisted Item Name'
+                && $mail->receipt['items'][0]['quantity'] === 2
+                && $mail->receipt['payment_reference'] === 'VERIFIED-REF-123456';
+        });
+        Mail::assertQueued(PaymentReceiptMail::class, 1);
+
+        $this->as('customer')->getJson("/api/customer/store/orders/{$orderId}/receipt")
+            ->assertOk()
+            ->assertJsonPath('receipt.payment_reference', 'VERIFIED-REF-123456');
     }
 
     // ------------------------------------------------------------------

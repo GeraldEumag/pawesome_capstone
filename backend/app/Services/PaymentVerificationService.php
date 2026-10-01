@@ -40,6 +40,8 @@ class PaymentVerificationService
         $result = $this->performVerify($type, $id, $request);
 
         if (($result['success'] ?? false) === true) {
+            $this->queueCustomerReceiptEmail($type, $id);
+
             ActivityLog::log(Auth::id(), 'payment_verified', "Payment verified for {$type} #{$id}", [
                 'category' => 'payment',
                 'reference_type' => $type,
@@ -237,6 +239,71 @@ class PaymentVerificationService
         } catch (\Throwable $e) {
             Log::error('PaymentVerificationService::reject error - ' . $e->getMessage());
             return ['success' => false, 'message' => $e->getMessage(), 'status' => 500];
+        }
+    }
+
+    private function queueCustomerReceiptEmail(string $type, int $id): void
+    {
+        $receiptType = match ($type) {
+            'service_request', 'service' => 'service_request',
+            'customer_order' => 'customer_order',
+            default => null,
+        };
+
+        if (!$receiptType) {
+            return;
+        }
+
+        try {
+            $table = $receiptType === 'customer_order' ? 'customer_orders' : 'service_requests';
+            $record = DB::table($table)->where('id', $id)->first();
+            if (!$record || ($record->payment_status ?? null) !== 'paid') {
+                return;
+            }
+
+            $totalAmount = $record->total_amount ?? $record->price ?? null;
+            if (empty($record->customer_email) || empty($record->receipt_number) || !is_numeric($totalAmount)) {
+                Log::warning('Payment receipt email skipped because persisted receipt data is incomplete', [
+                    'type' => $receiptType,
+                    'record_id' => $id,
+                ]);
+                return;
+            }
+
+            $receipt = [
+                'receipt_number' => $record->receipt_number,
+                'customer_name' => $record->customer_name ?? 'Customer',
+                'customer_email' => $record->customer_email,
+                'total_amount' => $totalAmount,
+                'payment_method' => $record->payment_method ?? null,
+                'payment_reference' => $record->reference_number ?: ($record->payment_reference ?? null),
+                'paid_at' => $record->paid_at ?? null,
+            ];
+
+            if ($receiptType === 'customer_order') {
+                $receipt['items'] = DB::table('customer_order_items')
+                    ->where('customer_order_id', $id)
+                    ->get()
+                    ->map(fn ($item) => [
+                        'product_name' => $item->product_name,
+                        'quantity' => (int) $item->quantity,
+                        'price' => (float) $item->price,
+                        'subtotal' => (float) $item->subtotal,
+                    ])
+                    ->all();
+            } else {
+                $receipt['pet_name'] = $record->pet_name ?? null;
+                $receipt['service_name'] = $record->service_name;
+                $receipt['service_date'] = $record->request_date ?? null;
+            }
+
+            NotificationService::sendPaymentReceiptEmail($record->customer_email, $receiptType, $receipt);
+        } catch (\Throwable $e) {
+            Log::error('Failed to queue customer payment receipt email', [
+                'type' => $receiptType,
+                'record_id' => $id,
+                'exception' => get_class($e),
+            ]);
         }
     }
 

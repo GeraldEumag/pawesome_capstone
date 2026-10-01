@@ -306,7 +306,7 @@ class AuthController extends Controller
             try {
                 Mail::to($email)->queue(new PasswordResetMail($token, $email));
             } catch (\Throwable $e) {
-                Log::error('Failed to send password reset email: ' . $e->getMessage());
+                Log::error('Failed to queue password reset email', ['exception' => get_class($e)]);
             }
         }
 
@@ -472,7 +472,7 @@ class AuthController extends Controller
         try {
             Mail::to($email)->queue(new EmailVerificationMail($token, $email, $user->name));
         } catch (\Throwable $e) {
-            Log::error('Failed to queue verification email: ' . $e->getMessage());
+            Log::error('Failed to queue verification email', ['exception' => get_class($e)]);
         }
     }
 }

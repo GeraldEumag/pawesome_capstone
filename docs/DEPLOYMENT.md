@@ -10,7 +10,7 @@ Common target:
 - Backend: Railway Laravel service, project root `backend/`
 - Database: MySQL; do not migrate to PostgreSQL without a concrete compatibility reason
 - DNS/TLS: Cloudflare, when the production domain is available
-- Email: Brevo SMTP, credentials only in backend service secrets
+- Email: Brevo HTTPS API, credentials only in backend service secrets
 - Chatbot: optional Gemini API, key only in backend service secrets
 
 `backend/render.yaml` and `backend/.github/workflows/deploy.yml` are legacy files and are not the canonical deployment configuration. The latter is nested below `backend/`, so GitHub Actions does not discover it as a workflow. `.github/workflows/ci.yml` runs tests/build only and deliberately does not deploy.
@@ -24,7 +24,7 @@ Common target:
 1. Vercel frontend, rooted at `frontend/`.
 2. Railway Laravel API and a separate Railway MySQL service/database.
 3. Railway persistent volume mounted at Laravel `storage/app` for local public and private uploads. Confirm the resolved application path in the running service before mounting; do not use ephemeral deploy storage for uploads.
-4. Brevo SMTP. Gemini is optional; leave it disabled unless a backend-only key has been configured.
+4. Brevo HTTPS API. Gemini is optional; leave it disabled unless a backend-only key has been configured.
 5. Cloudflare DNS/TLS only after a domain is owned and verified.
 
 ### Environment
@@ -48,7 +48,7 @@ Set the following in provider environment settings, not committed files:
 | `FILESYSTEM_DISK` | `public` |
 | `PRIVATE_STORAGE_DRIVER` | `local` |
 | `PUBLIC_STORAGE_DRIVER` | `local` |
-| `MAIL_MAILER`, `MAIL_HOST`, `MAIL_PORT`, `MAIL_USERNAME`, `MAIL_PASSWORD`, `MAIL_FROM_ADDRESS` | Brevo values; username/password stored as provider secrets |
+| `MAIL_MAILER`, `BREVO_API_KEY`, `BREVO_DOMAIN`, `MAIL_FROM_ADDRESS`, `MAIL_FROM_NAME` | Use `MAIL_MAILER=brevo`; store the Brevo REST API key only in Railway backend secrets; `BREVO_DOMAIN` is optional |
 | `CHATBOT_AI_ENABLED` | `false` unless the server-side Gemini setup is verified |
 | `CHATBOT_AI_API_KEY` | Backend secret only when enabled |
 
@@ -73,7 +73,7 @@ Use the exact production origins in `CORS_ALLOWED_ORIGINS` and `SANCTUM_STATEFUL
 3. A Railway scheduler/cron process invoking `php artisan schedule:run` every minute, or a supervised `php artisan schedule:work` process. The application currently schedules daily reminders.
 4. Cloudflare R2/S3-compatible object storage, using separate private and public buckets. Payment proofs and pet photos remain in the private bucket and are served only through authenticated/authorized Laravel endpoints. Profile/landing-page assets use the public bucket and a verified custom domain.
 5. Automated database backups, retention, alerting, and at least one test restore. Monitor application exceptions, database availability, failed jobs, storage errors, and deployments.
-6. Vercel frontend, Cloudflare DNS/TLS, Brevo SMTP, and optional Gemini with separate staging/production credentials.
+6. Vercel frontend, Cloudflare DNS/TLS, Brevo HTTPS API, and optional Gemini with separate staging/production credentials.
 
 The S3 adapter is present in Composer dependencies and `private`/`public` disks are configurable. Both disks use `throw => true`, so a failed write surfaces as a `503` JSON response instead of persisting an empty path. On S3/R2 the disks never request a `public-read` object ACL (R2 does not implement ACLs); public read access for the public bucket must come from the bucket's public/custom-domain setting. R2 access, bucket policy, URL generation, uploads, deletes, and authorized downloads still require a provider-level integration test before production readiness.
 
@@ -96,7 +96,7 @@ Use distinct values and credentials for staging and production:
 | `AWS_PRIVATE_BUCKET`, `AWS_PUBLIC_BUCKET` | Separate buckets; never enable public access on the private bucket |
 | `AWS_PUBLIC_URL` | Verified public custom-domain URL for the public bucket |
 | `PRIVATE_STORAGE_ROOT`, `PUBLIC_STORAGE_ROOT` | Optional key prefix inside each bucket; leave empty for bucket root. Local filesystem paths are never used as S3 keys. |
-| `MAIL_*` | Production Brevo SMTP values and verified sender |
+| `MAIL_MAILER`, `BREVO_API_KEY`, `BREVO_DOMAIN`, `MAIL_FROM_ADDRESS`, `MAIL_FROM_NAME` | Use Brevo HTTPS API; keep the REST API key in backend service secrets and use a verified sender |
 | `CHATBOT_AI_ENABLED`, `CHATBOT_AI_API_KEY`, `CHATBOT_AI_MODEL`, `CHATBOT_AI_BASE_URL` | Optional, server-side only; use separate staging and production keys |
 
 Do not set `VITE_*` variables for server credentials. `VITE_API_BASE_URL` is public build-time configuration and belongs in Vercel only.

@@ -6,6 +6,7 @@ use App\Mail\AccountWelcomeMail;
 use App\Mail\EmailVerificationMail;
 use App\Mail\PasswordResetMail;
 use App\Models\User;
+use Illuminate\Contracts\Queue\ShouldBeEncrypted;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
@@ -200,7 +201,7 @@ class EmailAuthFlowTest extends TestCase
         $this->assertDatabaseHas('password_reset_tokens', ['email' => $user->email]);
     }
 
-    public function test_reset_password_with_valid_token_changes_password(): void
+    public function test_reset_password_with_valid_token_changes_password_and_rejects_reuse(): void
     {
         Mail::fake();
         $user = User::factory()->create(['role' => 'customer', 'email' => 'reset@example.com']);
@@ -213,15 +214,55 @@ class EmailAuthFlowTest extends TestCase
             return true;
         });
 
+        $payload = [
+            'email' => $user->email,
+            'token' => $token,
+            'new_password' => 'NewPassword456!',
+            'new_password_confirmation' => 'NewPassword456!',
+        ];
+        $this->postJson('/api/auth/password/reset', $payload)->assertOk();
+        $this->assertTrue(Hash::check('NewPassword456!', $user->fresh()->password));
+        $this->assertDatabaseMissing('password_reset_tokens', ['email' => $user->email]);
+
+        $this->postJson('/api/auth/password/reset', $payload)
+            ->assertStatus(422)
+            ->assertJsonPath('message', 'Invalid or expired reset token');
+    }
+
+    public function test_reset_password_rejects_expired_token(): void
+    {
+        Mail::fake();
+        $user = User::factory()->create(['role' => 'customer', 'email' => 'expired-reset@example.com']);
+
+        $this->postJson('/api/auth/password/forgot', ['email' => $user->email])->assertOk();
+
+        $token = null;
+        Mail::assertQueued(PasswordResetMail::class, function ($mail) use (&$token) {
+            $token = $mail->token;
+            return true;
+        });
+        DB::table('password_reset_tokens')
+            ->where('email', $user->email)
+            ->update(['created_at' => Carbon::now()->subMinutes(config('auth.passwords.users.expire') + 1)]);
+
         $this->postJson('/api/auth/password/reset', [
             'email' => $user->email,
             'token' => $token,
             'new_password' => 'NewPassword456!',
             'new_password_confirmation' => 'NewPassword456!',
-        ])->assertOk();
+        ])->assertStatus(422)->assertJsonPath('message', 'Reset token has expired');
 
-        $this->assertTrue(Hash::check('NewPassword456!', $user->fresh()->password));
         $this->assertDatabaseMissing('password_reset_tokens', ['email' => $user->email]);
+        $this->assertTrue(Hash::check('password', $user->fresh()->password));
+    }
+
+    public function test_auth_email_endpoints_are_rate_limited(): void
+    {
+        for ($attempt = 0; $attempt < 5; $attempt++) {
+            $this->postJson('/api/auth/password/forgot', ['email' => 'limit@example.com'])->assertOk();
+        }
+
+        $this->postJson('/api/auth/password/forgot', ['email' => 'limit@example.com'])->assertStatus(429);
     }
 
     public function test_reset_password_returns_generic_error_for_unknown_email(): void

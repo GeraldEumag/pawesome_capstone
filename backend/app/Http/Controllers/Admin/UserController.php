@@ -135,7 +135,7 @@ class UserController extends Controller
                 new AccountWelcomeMail($token, $user->email, $user->name, $user->username, $user->role)
             );
         } catch (\Throwable $e) {
-            Log::error('Failed to send welcome email: ' . $e->getMessage());
+            Log::error('Failed to queue welcome email', ['exception' => get_class($e)]);
         }
     }
 

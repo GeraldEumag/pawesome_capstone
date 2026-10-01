@@ -550,7 +550,7 @@ class CustomerStoreController extends Controller
                 'items' => $items,
                 'total_amount' => $order->total_amount,
                 'payment_method' => $order->payment_method,
-                'payment_reference' => $order->payment_reference ?? null,
+                'payment_reference' => $order->reference_number ?? $order->payment_reference ?? null,
                 'paid_at' => $order->paid_at,
                 'verified_by' => $verifiedBy,
                 'cashier_remarks' => $order->cashier_remarks,

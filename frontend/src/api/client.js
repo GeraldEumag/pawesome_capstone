@@ -118,6 +118,13 @@ export const apiRequest = async (endpoint, methodOrOptions = "GET", data = null,
     }
 
     if (response.status === 403) {
+      if (result?.email_unverified) {
+        const error = new Error(result.message || "Please verify your email address before continuing.");
+        error.status = response.status;
+        error.response = result;
+        error.url = url;
+        throw error;
+      }
       throw new Error("You are not allowed to access this page.");
     }
 
