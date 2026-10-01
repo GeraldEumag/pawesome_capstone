@@ -615,7 +615,6 @@ tr:hover td,
 .Toastify__toast,
 [data-sonner-toast],
 .go2072408551,
-.rbac-message-text,
 .rbac-chat-message.bot .rbac-chat-bubble {
   background: var(--color-surface-solid) !important;
   color: var(--color-text) !important;

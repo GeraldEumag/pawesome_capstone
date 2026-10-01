@@ -274,9 +274,6 @@ const RoleAwareChatbot = ({
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages, isLoading]);
 
-  const [typingMessage, setTypingMessage] = useState("");
-  const [isTyping, setIsTyping] = useState(false);
-
   // ── Live chat polling ────────────────────────────────────────────────────
   const pollLiveChat = useCallback(async (sessionId) => {
     try {
@@ -373,18 +370,6 @@ const RoleAwareChatbot = ({
         lastPaymentStatus: richContext.last_payment_status || prev.lastPaymentStatus,
       }));
 
-      // Typing animation
-      setIsTyping(true);
-      let currentText = "";
-      const words = replyText.split(" ");
-      for (let i = 0; i < words.length; i++) {
-        currentText += (i > 0 ? " " : "") + words[i];
-        setTypingMessage(currentText);
-        await new Promise((resolve) => setTimeout(resolve, 30));
-      }
-      setIsTyping(false);
-      setTypingMessage("");
-
       setMessages((prev) => [...prev, {
         sender: "bot",
         text: replyText,
@@ -397,7 +382,6 @@ const RoleAwareChatbot = ({
       setError(err.message || "Unable to reach the chatbot service.");
     } finally {
       setIsLoading(false);
-      setIsTyping(false);
     }
   };
 
@@ -899,8 +883,6 @@ const RoleAwareChatbot = ({
     setMessages([]);
     setInput("");
     setError("");
-    setTypingMessage("");
-    setIsTyping(false);
     setSessionContext({
       lastIntent: null,
       lastEntityType: null,
@@ -1306,17 +1288,16 @@ const RoleAwareChatbot = ({
                   </div>
                 )}
 
-                {isTyping && (
-                  <div className="rbac-message rbac-message-bot">
-                    <div className="rbac-message-avatar">
-                      <span className="rbac-typing-indicator"><span /><span /><span /></span>
+                {isLoading && (
+                  <div className="rbac-chat-message bot rbac-chat-message-pending">
+                    <div className="rbac-msg-avatar-wrap">
+                      <img src={botIcon} alt="bot" className="rbac-msg-bot-img" />
                     </div>
-                    <div className="rbac-message-content">
-                      <div className="rbac-message-text">{typingMessage}<span className="rbac-cursor">|</span></div>
+                    <div className="rbac-chat-bubble rbac-typing-bubble">
+                      <span className="rbac-typing-indicator"><span /><span /><span /></span>
                     </div>
                   </div>
                 )}
-                {isLoading && !isTyping && <div className="rbac-chatbot-state">Assistant is thinking...</div>}
                 {error && <div className="rbac-chatbot-error">{error}</div>}
               </>
             )}
