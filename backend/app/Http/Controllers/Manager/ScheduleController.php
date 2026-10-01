@@ -17,7 +17,7 @@ class ScheduleController extends Controller
     private const STAFF_ROLES = [
         'manager', 'cashier', 'receptionist', 'veterinary',
         'inventory', 'payroll', 'staff', 'groomer',
-        'super_receptionist', 'super_admin', 'admin',
+        'super_receptionist', 'admin',
     ];
 
     public function index(Request $request): JsonResponse

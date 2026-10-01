@@ -25,7 +25,6 @@ import {
 } from "@fortawesome/free-solid-svg-icons";
 import { showConfirm } from "../../utils/alert.jsx";
 import { apiRequest, clearAuthStorage } from "../../api/client";
-import { useAuth } from "../../context/AuthContext";
 import "./AdminSidebar.css";
 
 const NAV_SECTIONS = [
@@ -83,11 +82,8 @@ const OPERATIONS_HUB_SECTION = {
 const AdminSidebar = ({ mobileOpen, onMobileMenuToggle }) => {
   const navigate = useNavigate();
   const location = useLocation();
-  const { role } = useAuth();
   const onAdminHome = location.pathname === "/admin" || location.pathname === "/admin/";
-  const sections = role === "super_admin"
-    ? [...NAV_SECTIONS, OPERATIONS_HUB_SECTION]
-    : NAV_SECTIONS;
+  const sections = [...NAV_SECTIONS, OPERATIONS_HUB_SECTION];
 
   const handleLogout = async () => {
     const confirmed = await showConfirm("Are you sure you want to log out?", "", "Yes", "Cancel", "question", true);
@@ -107,14 +103,14 @@ const AdminSidebar = ({ mobileOpen, onMobileMenuToggle }) => {
     <aside className={`app-sidebar admin-sidebar ${mobileOpen ? "mobile-open" : ""}`}>
       <div className="sidebar-header">
         <div className="sidebar-logo">
-          <span>{role === "super_admin" ? "Super Admin Portal" : "Admin Portal"}</span>
+          <span>Admin Portal</span>
         </div>
         <button className="mobile-close-btn" onClick={onMobileMenuToggle} type="button" aria-label="Close menu">
           <FontAwesomeIcon icon={faTimes} />
         </button>
       </div>
 
-      {role === "super_admin" && !onAdminHome && (
+      {!onAdminHome && (
         <button
           className="super-back-btn"
           type="button"

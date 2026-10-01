@@ -37,7 +37,7 @@ class ResetLeaveBalances extends Command
         User::whereIn('role', [
             'manager', 'cashier', 'receptionist', 'veterinary',
             'inventory', 'payroll', 'staff', 'groomer',
-            'super_receptionist', 'super_admin', 'admin',
+            'super_receptionist', 'admin',
         ])->where('is_active', true)->each(function (User $user) use ($prevYear, $newYear, &$count) {
             $this->processSilCash($user->id, null, $prevYear, (float) $user->base_salary);
             LeaveBalance::seedForPerson($user->id, null, $newYear);

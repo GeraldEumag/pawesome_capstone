@@ -50,6 +50,7 @@ export const setToken = (token) => {
 const ROLE_NORMALIZATION_MAP = {
   vet: "veterinary",
   veterinarian: "veterinary",
+  super_admin: "admin",
 };
 
 export const normalizeRole = (role) => {

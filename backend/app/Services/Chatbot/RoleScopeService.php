@@ -12,7 +12,11 @@ class RoleScopeService
             return 'guest';
         }
 
-        return $role === 'vet' ? 'veterinary' : $role;
+        return match ($role) {
+            'vet', 'veterinarian' => 'veterinary',
+            'super_admin' => 'admin',
+            default => $role,
+        };
     }
 
     public function getRoleConfig(?User $user): array
@@ -88,16 +92,6 @@ class RoleScopeService
                     'Book an appointment',
                     'Show service prices',
                     'What are your hours?',
-                ],
-            ],
-            'super_admin' => [
-                'label' => 'Super Admin',
-                'welcome' => 'I can help you navigate any module across the entire system.',
-                'scope' => 'administration',
-                'suggestions' => [
-                    'Show system overview',
-                    'Navigate to front desk',
-                    'View all reports',
                 ],
             ],
             'super_receptionist' => [

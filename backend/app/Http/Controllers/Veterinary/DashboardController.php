@@ -19,7 +19,7 @@ class DashboardController extends Controller
         $user = Auth::user();
 
         // Regular veterinarians only see appointments assigned to them.
-        // Admin/super_admin see the full appointment board.
+        // Admin sees the full appointment board.
         if (!$user || !$user->hasRoleAccess('admin')) {
             $query->where('veterinarian_id', Auth::id());
         }
@@ -92,7 +92,7 @@ class DashboardController extends Controller
     {
         // Regular veterinarians only see appointments assigned to them
         // (i.e., ones that receptionist has approved and assigned);
-        // admin/super_admin see the full board.
+        // admin sees the full board.
         return response()->json(
             $this->assignedAppointments()
                 ->with(['customer', 'pet', 'service', 'veterinarian'])

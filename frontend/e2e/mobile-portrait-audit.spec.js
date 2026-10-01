@@ -10,7 +10,6 @@ const ROLE_ROUTES = {
   veterinary: ['/veterinary', '/veterinary/appointments', '/veterinary/reports'],
   admin: ['/admin', '/admin/users', '/admin/reports'],
   super_receptionist: ['/super-receptionist', '/super-receptionist/inventory'],
-  super_admin: ['/admin', '/admin/users', '/admin/reports'],
 };
 
 const PUBLIC_ROUTES = ['/', '/login', '/register', '/forgot-password'];

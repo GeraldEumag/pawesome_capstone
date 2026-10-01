@@ -41,9 +41,6 @@ class WorkflowNotifier
     {
         // Expand target role to include composite super roles that inherit it
         $targetRoles = [$role];
-        if ($role === 'admin') {
-            $targetRoles[] = 'super_admin';
-        }
         if (in_array($role, ['receptionist', 'cashier', 'inventory'], true)) {
             $targetRoles[] = 'super_receptionist';
         }

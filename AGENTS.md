@@ -5,9 +5,13 @@
 Pawesome is a pet care management system with role-based access for 7 roles:
 customer, receptionist, cashier, inventory, veterinary, manager, admin.
 
-Two composite "super" roles extend the base roles:
-- `super_admin` — all staff modules (admin + manager + receptionist + cashier + inventory + vet). Customer portal blocked.
-- `super_receptionist` — receptionist + cashier + inventory combined.
+- `admin` is the all-access staff role: it reaches every staff module
+  (admin + manager + receptionist + cashier + inventory + vet) but is
+  blocked from the customer portal.
+- `super_receptionist` is a composite role — receptionist + cashier +
+  inventory combined.
+- `super_admin` was merged into `admin` and no longer exists as a separate
+  role; stale rows/sessions normalize to `admin`.
 
 ## Architecture
 
@@ -60,7 +64,6 @@ php pawesome_report_reconciliation_audit.php   # Gate D: Report reconciliation
 | Role | Email | Password |
 | --- | --- | --- |
 | admin | admin@example.com | Password123! |
-| super admin | super_admin@example.com | Password123! |
 | manager | manager@example.com | password123 |
 | cashier | cashier@example.com | password123 |
 | receptionist | receptionist@example.com | Password123! |

@@ -16,6 +16,7 @@ class NotificationController extends Controller
      */
     private function effectiveRole(string $role): string
     {
+        // 'super_admin' kept as a defensive alias for stale rows/sessions.
         return match ($role) {
             'super_admin'        => 'admin',
             'super_receptionist' => 'receptionist',

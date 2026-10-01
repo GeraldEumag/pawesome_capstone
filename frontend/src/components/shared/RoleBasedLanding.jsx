@@ -4,7 +4,6 @@ import { useAuth } from "../../context/AuthContext";
 
 const roleRouteMap = {
   admin: "/admin",
-  super_admin: "/admin",
   customer: "/customer",
   receptionist: "/receptionist",
   super_receptionist: "/super-receptionist",

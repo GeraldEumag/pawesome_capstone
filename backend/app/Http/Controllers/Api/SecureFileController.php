@@ -68,7 +68,7 @@ class SecureFileController extends Controller
         
         if ($user->role === 'customer') {
             $canAccess = $this->recordBelongsToCustomer($record, $user);
-        } elseif (in_array($user->role, ['admin', 'super_admin', 'cashier', 'super_receptionist'], true)) {
+        } elseif (in_array($user->role, ['admin', 'cashier', 'super_receptionist'], true)) {
             // Admin and cashier can access all payment proofs
             $canAccess = true;
         } elseif (in_array($user->role, ['receptionist', 'manager'])) {
@@ -170,7 +170,7 @@ class SecureFileController extends Controller
         $canAccess = false;
         if ($user->role === 'customer') {
             $canAccess = $isOwner;
-        } elseif (in_array($user->role, ['admin', 'super_admin', 'receptionist', 'super_receptionist', 'manager', 'cashier', 'veterinary'])) {
+        } elseif (in_array($user->role, ['admin', 'receptionist', 'super_receptionist', 'manager', 'cashier', 'veterinary'])) {
             $canAccess = true;
         }
 
@@ -316,7 +316,7 @@ class SecureFileController extends Controller
                 ->first();
             $canAccess = $customer && (int) $pet->customer_id === (int) $customer->id;
         } else {
-            $canAccess = in_array($user->role, ['admin', 'super_admin', 'receptionist', 'super_receptionist', 'cashier', 'manager', 'veterinary', 'inventory'], true);
+            $canAccess = in_array($user->role, ['admin', 'receptionist', 'super_receptionist', 'cashier', 'manager', 'veterinary', 'inventory'], true);
         }
 
         if (!$canAccess) {
@@ -393,7 +393,7 @@ class SecureFileController extends Controller
             $canAccess = $record !== null && $this->recordBelongsToCustomer($record, $user);
         } else {
             $canAccess = in_array($user->role, [
-                'admin', 'super_admin', 'manager',
+                'admin', 'manager',
                 'receptionist', 'super_receptionist', 'veterinary',
             ], true);
         }

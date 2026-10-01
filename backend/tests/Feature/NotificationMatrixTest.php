@@ -37,7 +37,7 @@ class NotificationMatrixTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
-        foreach (['customer', 'receptionist', 'super_receptionist', 'cashier', 'inventory', 'veterinary', 'manager', 'admin', 'super_admin'] as $role) {
+        foreach (['customer', 'receptionist', 'super_receptionist', 'cashier', 'inventory', 'veterinary', 'manager', 'admin'] as $role) {
             $this->users[$role] = User::factory()->create([
                 'role' => $role,
                 'is_active' => true,
@@ -297,7 +297,7 @@ class NotificationMatrixTest extends TestCase
         $service = new InventoryService();
         $service->deductStock($item->id, 1, 'Test sale', 'sale', 1);
 
-        foreach (['inventory', 'manager', 'admin', 'super_admin', 'super_receptionist'] as $role) {
+        foreach (['inventory', 'manager', 'admin', 'super_receptionist'] as $role) {
             $this->assertTrue(
                 $this->notificationsFor($this->users[$role])->contains('title', 'Low Stock Alert'),
                 "{$role} must receive low stock alert"

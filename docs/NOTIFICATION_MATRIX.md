@@ -29,7 +29,7 @@ the `notif_email_notifications` system setting and per-customer preferences.
 |---|---|
 | `WorkflowNotifier::notifyUser($userId, ...)` | In-app notification to one user |
 | `WorkflowNotifier::notifyEmail($email, ...)` | Resolves email → user → in-app notification (name is historical; no email is sent) |
-| `WorkflowNotifier::notifyRole($role, ...)` | Per-user rows for all **active** users of the role, expanding composites (`admin`→+`super_admin`; `receptionist`/`cashier`/`inventory`→+`super_receptionist`) |
+| `WorkflowNotifier::notifyRole($role, ...)` | Per-user rows for all **active** users of the role, expanding composites (`receptionist`/`cashier`/`inventory`→+`super_receptionist`) |
 | `NotificationService` | Domain helpers (boarding/appointment create + status change, reminders, low stock) + queued customer email |
 
 ## Consumer layer
@@ -55,7 +55,7 @@ the `notif_email_notifications` system setting and per-customer preferences.
 | Payment proof uploaded (service request / order / boarding / confinement) | `ServiceRequestController::uploadPaymentProof`, `CustomerStoreController::uploadPaymentProof`, `BoardingController::uploadPaymentProof`, `MedicalConfinementController::uploadPaymentProof` | `cashier` (+super) via `notifyRole` | Upload only allowed when `payment_status` not pending/paid → re-upload after rejection re-notifies (intended) |
 | Payment verified | `PaymentVerificationService::verify` | Customer | Inside `DB::transaction`; `payment_status='pending'` gate blocks re-verify |
 | Payment rejected | `PaymentVerificationService::reject` | Customer | Same transaction + pending gate |
-| Low stock / out of stock | `InventoryService::checkAndCreateStockNotifications` (called from stock mutations) | `inventory`, `manager`, `admin`, `super_admin`, `super_receptionist` | Skips if user already has an **unread** alert for the same item at same severity; re-arms after read |
+| Low stock / out of stock | `InventoryService::checkAndCreateStockNotifications` (called from stock mutations) | `inventory`, `manager`, `admin`, `super_receptionist` | Skips if user already has an **unread** alert for the same item at same severity; re-arms after read |
 | Appointment scheduled | `Appointment::created` model hook → `notifyAppointmentCreated` | Customer + assigned veterinarian | `ReceptionistRequestController::approve` only sends its manual vet notification when the appointment was **not** newly created (hook already covers creation) |
 | Appointment status changed | `Appointment::updated` hook → `notifyAppointmentStatusChange` | Customer | Only fires when `status` is dirty |
 | Boarding created | `NotificationService::notifyBoardingCreated` | Customer + receptionist/super/manager/admin staff | Single call site (duplicate `notifyRole` removed) |

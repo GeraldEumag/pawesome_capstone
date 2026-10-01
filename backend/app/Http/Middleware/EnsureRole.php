@@ -20,8 +20,8 @@ class EnsureRole
         $normalizedRole = $this->normalizeRole($user->role);
         $allowedRoles = array_map([$this, 'normalizeRole'], $roles);
 
-        // super_admin bypasses all STAFF route checks — blocked from customer-only routes
-        if ($normalizedRole === 'super_admin') {
+        // admin bypasses all STAFF route checks — blocked from customer-only routes
+        if ($normalizedRole === 'admin') {
             if (count($allowedRoles) === 1 && $allowedRoles[0] === 'customer') {
                 return response()->json(['message' => 'Forbidden.'], 403);
             }
@@ -48,6 +48,11 @@ class EnsureRole
     {
         if (in_array($role, ['vet', 'veterinarian'], true)) {
             return 'veterinary';
+        }
+
+        // Legacy alias: super_admin was merged into admin
+        if ($role === 'super_admin') {
+            return 'admin';
         }
 
         return $role;

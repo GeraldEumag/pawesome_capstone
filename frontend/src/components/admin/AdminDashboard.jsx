@@ -59,9 +59,8 @@ const cardVariants = {
 const chartColors = ["#ff5f93", "#ff8db5", "#ffc8dd", "#f472b6", "#fb7185", "#f59e0b"];
 
 const AdminDashboard = () => {
-  const { user, role: authRole, updateUser } = useAuth();
-  const isSuperAdmin = authRole === "super_admin" || user?.role === "super_admin";
-  const name = user?.name || (isSuperAdmin ? "Super Admin" : "Admin");
+  const { user, updateUser } = useAuth();
+  const name = user?.name || "Admin";
   const profilePhoto = user?.profile_photo || "";
 
   const [dashboardData, setDashboardData] = useState(null);
@@ -410,15 +409,15 @@ const AdminDashboard = () => {
     const prefix = ROUTE_META.filter((r) => normalizedPath.startsWith(r.path + "/")).sort((a, b) => b.path.length - a.path.length)[0];
     const meta = prefix || { title: "Admin Workspace", subtitle: "Manage platform operations with role-based access and live system context." };
 
-    if (isSuperAdmin && normalizedPath === "/admin") {
+    if (normalizedPath === "/admin") {
       return {
-        title: "Super Admin Command Center",
+        title: "Admin Command Center",
         subtitle: "Coordinate every staff workspace, monitor platform health, and manage system-wide access from one place.",
       };
     }
 
     return meta;
-  }, [normalizedPath, isSuperAdmin]);
+  }, [normalizedPath]);
 
   const AdminTooltip = ({ active, payload, label }) => {
     if (!active || !payload || payload.length === 0) return null;
@@ -459,14 +458,14 @@ const AdminDashboard = () => {
       title={pageMeta.title}
       subtitle={pageMeta.subtitle}
       role="admin"
-      profileRole={isSuperAdmin ? "super_admin" : "admin"}
+      profileRole="admin"
       name={name}
       profilePhoto={profilePhoto}
       extraActions={extraActions}
       showChatbot
-      chatbotTitle={isSuperAdmin ? "Super Admin Assistant" : "Admin Assistant"}
+      chatbotTitle="Admin Assistant"
       chatbotSubtitle="Logs, navigation, and RBAC guidance"
-      className={isSuperAdmin ? "admin-dashboard super-admin-dashboard" : "admin-dashboard"}
+      className="admin-dashboard super-admin-dashboard"
     >
       {showOverview ? (
         <>
@@ -500,13 +499,12 @@ const AdminDashboard = () => {
                   <div className="admin-hero-copy">
                     <span className="admin-eyebrow">
                       <FontAwesomeIcon icon={faUserShield} />
-                      {isSuperAdmin ? "Super Admin Overview" : "Administrator Overview"}
+                      Administrator Overview
                     </span>
                     <h2>Welcome back, {name}</h2>
                     <p>
-                      {isSuperAdmin
-                        ? "Track every staff workspace, platform health signal, and system-wide activity from your super admin command center."
-                        : "Track live operations, user activity, revenue, inventory alerts, and system health from your admin command center."}
+                      Track every staff workspace, platform health signal, and system-wide
+                      activity from your admin command center.
                     </p>
                   </div>
 
@@ -563,8 +561,7 @@ const AdminDashboard = () => {
                   ))}
                 </section>
 
-                {isSuperAdmin && (
-                  <section className="super-admin-operations" aria-label="Operations Hub">
+                <section className="super-admin-operations" aria-label="Operations Hub">
                     <div className="super-admin-operations-heading">
                       <span>Operations Hub</span>
                       <h2>Staff workspaces</h2>
@@ -589,8 +586,7 @@ const AdminDashboard = () => {
                         </NavLink>
                       ))}
                     </div>
-                  </section>
-                )}
+                </section>
 
                 <section className="dashboard-grid">
                   <motion.article className="panel" variants={cardVariants}>

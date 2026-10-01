@@ -76,7 +76,6 @@ async function stubAdminApi(page) {
           { role: 'inventory', count: 1 },
           { role: 'manager', count: 1 },
           { role: 'receptionist', count: 1 },
-          { role: 'super_admin', count: 1 },
           { role: 'super_receptionist', count: 1 },
           { role: 'veterinary', count: 1 },
         ],
@@ -163,7 +162,7 @@ test('Admin workspace routes remain responsive across device widths', async ({ p
 });
 
 test('Admin CSS scope does not attach to the cashier POS workspace', async ({ page }) => {
-  await mockLoginAs(page, 'super_admin', 'POS Isolation Audit');
+  await mockLoginAs(page, 'admin', 'POS Isolation Audit');
   await stubAdminApi(page);
   await page.goto('/admin');
   await expect(page.locator('.app-dashboard.admin-dashboard')).toBeVisible();

@@ -27,7 +27,7 @@ class AuthorizationMatrixTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
-        foreach (['customer', 'receptionist', 'cashier', 'inventory', 'veterinary', 'manager', 'admin', 'super_admin', 'super_receptionist'] as $role) {
+        foreach (['customer', 'receptionist', 'cashier', 'inventory', 'veterinary', 'manager', 'admin', 'super_receptionist'] as $role) {
             $this->users[$role] = User::factory()->create(['role' => $role]);
         }
     }
@@ -233,14 +233,14 @@ class AuthorizationMatrixTest extends TestCase
         $this->assertSame('Public Item', $product['name']);
     }
 
-    public function test_super_admin_reaches_staff_routes_but_not_customer_routes(): void
+    public function test_admin_reaches_staff_routes_but_not_customer_routes(): void
     {
         // Staff route bypass
-        $this->as('super_admin')->getJson('/api/cashier/payment-requests')->assertOk();
-        $this->as('super_admin')->getJson('/api/admin/users')->assertOk();
+        $this->as('admin')->getJson('/api/cashier/payment-requests')->assertOk();
+        $this->as('admin')->getJson('/api/admin/users')->assertOk();
 
         // Customer-only routes are still blocked
-        $this->as('super_admin')->getJson('/api/customer/pets')->assertForbidden();
+        $this->as('admin')->getJson('/api/customer/pets')->assertForbidden();
     }
 
     public function test_super_receptionist_expands_to_receptionist_cashier_inventory_only(): void

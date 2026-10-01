@@ -66,7 +66,7 @@ class NotificationService
         }
 
         // Notify receptionists/managers
-        $staffUsers = User::whereIn('role', ['receptionist', 'super_receptionist', 'manager', 'admin', 'super_admin'])->get();
+        $staffUsers = User::whereIn('role', ['receptionist', 'super_receptionist', 'manager', 'admin'])->get();
         foreach ($staffUsers as $user) {
             self::createNotification(
                 $user->id,
@@ -244,7 +244,7 @@ class NotificationService
      */
     public static function sendLowStockAlert($inventoryItem): void
     {
-        $admins = User::whereIn('role', ['admin', 'super_admin', 'manager'])->get();
+        $admins = User::whereIn('role', ['admin', 'manager'])->get();
 
         $message = "Low Stock Alert: {$inventoryItem->name}\n" .
                    "Current Stock: {$inventoryItem->stock}\n" .

@@ -63,7 +63,7 @@ class CheckProbationaryPeriods extends Command
         $message = "⚠ Probationary period for {$name} ends on {$endDate->toFormattedDateString()} ({$alertDays} days notice). Please decide on regularization.";
 
         // Find all manager + admin users and create a notification for each
-        User::whereIn('role', ['manager', 'admin', 'super_admin'])->each(function (User $mgr) use ($message, $name, $type, $id, $endDate) {
+        User::whereIn('role', ['manager', 'admin'])->each(function (User $mgr) use ($message, $name, $type, $id, $endDate) {
             DB::table('notifications')->insert([
                 'id'             => \Illuminate\Support\Str::uuid(),
                 'type'           => 'App\Notifications\ProbationaryAlertNotification',

@@ -966,7 +966,7 @@ class InventoryService
         }
 
         // Inventory staff, managers and admins (including composite roles)
-        $users = User::whereIn('role', ['admin', 'super_admin', 'manager', 'inventory', 'super_receptionist'])
+        $users = User::whereIn('role', ['admin', 'manager', 'inventory', 'super_receptionist'])
             ->where('is_active', true)
             ->get();
 

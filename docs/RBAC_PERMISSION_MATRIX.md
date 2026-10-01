@@ -28,10 +28,12 @@ never a security boundary.
 
 | Role | Effective access |
 |---|---|
-| `super_admin` | All staff modules. Explicitly blocked from customer-only routes. |
+| `admin` | All staff modules (admin + manager + receptionist + cashier + inventory + vet). Explicitly blocked from customer-only routes. |
 | `super_receptionist` | receptionist + cashier + inventory. No manager/vet/admin/customer access. |
 
 - `vet` / `veterinarian` normalize to `veterinary`.
+- `super_admin` is a legacy alias that normalizes to `admin` — the role was
+  merged into `admin` and is no longer assignable.
 - Every request re-reads the role from the database-backed user record, so role
   changes take effect on the next request (no cached grants).
 

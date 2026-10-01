@@ -19,7 +19,6 @@ const ROLE_LABELS = {
   veterinary: "Veterinary",
   manager: "Manager",
   admin: "Administrator",
-  super_admin: "Super Admin",
   super_receptionist: "Super Receptionist",
 };
 const formatRole = (r) => ROLE_LABELS[r] || (r ? r.charAt(0).toUpperCase() + r.slice(1) : "Staff");

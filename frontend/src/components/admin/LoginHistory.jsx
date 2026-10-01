@@ -25,7 +25,6 @@ import "./LoginHistory.css";
 
 const STAFF_ROLE_OPTIONS = [
   { value: "admin", label: "Admin" },
-  { value: "super_admin", label: "Super Admin" },
   { value: "manager", label: "Manager" },
   { value: "receptionist", label: "Receptionist" },
   { value: "super_receptionist", label: "Super Receptionist" },

@@ -6,7 +6,6 @@ import "./DashboardProfile.css";
 
 const ROLE_PROFILE_PATHS = {
   admin: "/admin/profile",
-  super_admin: "/admin/profile",
   manager: "/manager/profile",
   cashier: "/cashier/profile",
   customer: "/customer/profile",

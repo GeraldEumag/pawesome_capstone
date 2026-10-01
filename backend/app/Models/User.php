@@ -157,21 +157,18 @@ class User extends Authenticatable
         });
     }
 
-    public function isSuperAdmin(): bool
-    {
-        return $this->role === 'super_admin';
-    }
-
     /**
-     * Centralized role access check that honors composite super roles.
+     * Centralized role access check that honors composite roles.
      *
-     * - super_admin has access to all STAFF roles, but never the customer role.
+     * - admin has access to all STAFF roles, but never the customer role.
      * - super_receptionist inherits receptionist + cashier + inventory.
      * - All other roles use a normal in_array check (existing behaviour unchanged).
      */
     public function hasRoleAccess(string ...$roles): bool
     {
-        if ($this->role === 'super_admin') {
+        $effectiveRole = $this->role === 'super_admin' ? 'admin' : $this->role;
+
+        if ($effectiveRole === 'admin') {
             if (count($roles) === 1 && $roles[0] === 'customer') {
                 return false;
             }

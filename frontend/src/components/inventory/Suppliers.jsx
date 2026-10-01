@@ -35,7 +35,7 @@ const emptyForm = {
 
 const Suppliers = () => {
   const { user } = useAuth();
-  const isAdmin = ["admin", "super_admin"].includes(user?.role);
+  const isAdmin = ["admin"].includes(user?.role);
 
   const [suppliers, setSuppliers] = useState([]);
   const [loading, setLoading] = useState(true);

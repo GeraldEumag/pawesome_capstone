@@ -169,7 +169,7 @@ test('Receptionist styles stay off Super Receptionist and the frozen POS', async
 });
 
 test('Receptionist styling does not alter the cashier POS', async ({ page }) => {
-  await mockLoginAs(page, 'super_admin', 'Receptionist POS Scope Audit');
+  await mockLoginAs(page, 'admin', 'Receptionist POS Scope Audit');
   await stubReceptionistApi(page);
   await page.goto('/cashier/pos');
   await expect(page.locator('.pos-kiosk')).toBeVisible();

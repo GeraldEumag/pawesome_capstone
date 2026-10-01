@@ -174,7 +174,7 @@ test('Manager tablet navigation opens and closes the dashboard drawer', async ({
 });
 
 test('Manager workspace styles do not leak into the Admin dashboard or Cashier POS', async ({ page }) => {
-  await mockLoginAs(page, 'super_admin', 'Manager Isolation Audit');
+  await mockLoginAs(page, 'admin', 'Manager Isolation Audit');
   await stubManagerApi(page);
   await page.setViewportSize({ width: 1366, height: 900 });
   await page.goto('/manager');

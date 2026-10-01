@@ -35,7 +35,7 @@ const ManagerSidebar = ({ mobileOpen, onMobileMenuToggle }) => {
         </button>
       </div>
 
-      {role === "super_admin" && (
+      {role === "admin" && (
         <button
           className="super-back-btn"
           type="button"

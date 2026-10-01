@@ -46,18 +46,18 @@ const CashierSidebar = ({ mobileOpen, onMobileMenuToggle }) => {
         </button>
       </div>
 
-      {(role === "super_admin" || role === "super_receptionist") && (
+      {(role === "admin" || role === "super_receptionist") && (
         <button
           className="super-back-btn"
           type="button"
           onClick={() => {
-            navigate(role === "super_admin" ? "/admin" : "/super-receptionist/bookings/hotel");
+            navigate(role === "admin" ? "/admin" : "/super-receptionist/bookings/hotel");
             handleNavClick();
           }}
-          title={role === "super_admin" ? "Back to Admin Home" : "Back to Home"}
+          title={role === "admin" ? "Back to Admin Home" : "Back to Home"}
         >
           <FontAwesomeIcon icon={faArrowLeft} />
-          <span>{role === "super_admin" ? "Back to Admin Home" : "Back to Home"}</span>
+          <span>{role === "admin" ? "Back to Admin Home" : "Back to Home"}</span>
         </button>
       )}
 

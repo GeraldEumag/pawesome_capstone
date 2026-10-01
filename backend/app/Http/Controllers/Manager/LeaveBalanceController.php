@@ -65,7 +65,7 @@ class LeaveBalanceController extends Controller
         User::whereIn('role', [
             'manager', 'cashier', 'receptionist', 'veterinary',
             'inventory', 'payroll', 'staff', 'groomer',
-            'super_receptionist', 'super_admin', 'admin',
+            'super_receptionist', 'admin',
         ])->where('is_active', true)->each(function (User $user) use ($year, &$count) {
             LeaveBalance::seedForPerson($user->id, null, $year);
             $count++;

@@ -40,7 +40,7 @@ class MarkDailyAbsent extends Command
             User::whereIn('role', [
                 'manager', 'cashier', 'receptionist', 'veterinary',
                 'inventory', 'payroll', 'staff', 'groomer',
-                'super_receptionist', 'super_admin', 'admin',
+                'super_receptionist', 'admin',
             ])->where('is_active', true)->each(function (User $user) use ($dateStr, &$marked) {
                 $hasRecord = Attendance::where('user_id', $user->id)
                     ->whereDate('date', $dateStr)

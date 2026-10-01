@@ -248,7 +248,7 @@ const createPayrollNotification = async (message, priority = "high") => {
 const PayrollManagement = () => {
   const navigate = useNavigate();
   const { role } = useAuth();
-  const canOperatePayroll = ["manager", "admin", "super_admin"].includes(role);
+  const canOperatePayroll = ["manager", "admin"].includes(role);
 
   // Tab switching: "records" (payroll list) or "computation" (PayrollComputation view)
   const [payrollTab, setPayrollTab] = useState("records");
