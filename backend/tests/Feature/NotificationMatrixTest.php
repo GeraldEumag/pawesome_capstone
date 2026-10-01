@@ -240,7 +240,9 @@ class NotificationMatrixTest extends TestCase
         Mail::assertQueued(PaymentReceiptMail::class, 1);
     }
 
-    public function test_customer_order_receipt_email_uses_persisted_order_and_items(): void
+    // Customer store order workflows are disabled: cashier verification is
+    // blocked with 410, the order stays pending, and no receipt email is sent.
+    public function test_disabled_customer_order_verification_sends_no_receipt_email(): void
     {
         Mail::fake();
         $customerUser = $this->users['customer'];
@@ -272,22 +274,14 @@ class NotificationMatrixTest extends TestCase
         $this->as('cashier')->postJson("/api/cashier/payment-requests/{$orderId}/verify", [
             'type' => 'customer_order',
             'reference_number' => 'VERIFIED-REF-123456',
-        ])->assertOk()->assertJsonPath('payment_status', 'paid');
+        ])->assertStatus(410);
 
-        $orderReceiptNumber = DB::table('customer_orders')->where('id', $orderId)->value('receipt_number');
-        Mail::assertQueued(PaymentReceiptMail::class, function (PaymentReceiptMail $mail) use ($orderReceiptNumber) {
-            return $mail->receiptType === 'customer_order'
-                && $mail->receipt['receipt_number'] === $orderReceiptNumber
-                && (float) $mail->receipt['total_amount'] === 120.00
-                && $mail->receipt['items'][0]['product_name'] === 'Persisted Item Name'
-                && $mail->receipt['items'][0]['quantity'] === 2
-                && $mail->receipt['payment_reference'] === 'VERIFIED-REF-123456';
-        });
-        Mail::assertQueued(PaymentReceiptMail::class, 1);
+        $this->assertSame('pending', DB::table('customer_orders')->where('id', $orderId)->value('payment_status'));
+        Mail::assertNotQueued(PaymentReceiptMail::class);
 
+        // Receipt stays unavailable while the order is unpaid.
         $this->as('customer')->getJson("/api/customer/store/orders/{$orderId}/receipt")
-            ->assertOk()
-            ->assertJsonPath('receipt.payment_reference', 'VERIFIED-REF-123456');
+            ->assertStatus(422);
     }
 
     // ------------------------------------------------------------------
