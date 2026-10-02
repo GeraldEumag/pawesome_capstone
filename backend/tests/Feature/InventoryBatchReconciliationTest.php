@@ -181,7 +181,7 @@ class InventoryBatchReconciliationTest extends TestCase
 
         $response = $this->posSell($item, 1);
 
-        $response->assertStatus(500);
+        $response->assertStatus(422);
         $this->assertStringContainsString('expired', $response->json('message'));
         $this->assertEquals(10, $item->fresh()->stock);
     }

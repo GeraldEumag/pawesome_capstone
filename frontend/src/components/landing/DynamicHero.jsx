@@ -61,7 +61,7 @@ const DynamicHero = ({ content, onBookService }) => {
                 alt="Pawesome pet hotel"
                 loading="eager"
                 decoding="async"
-                fetchPriority="high"
+                fetchpriority="high"
               />
               {/* Overlay label */}
               <div className="landing-collage-label">

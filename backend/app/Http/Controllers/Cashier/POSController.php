@@ -253,10 +253,23 @@ class POSController extends Controller
 
         } catch (\Exception $e) {
             DB::rollBack();
+            $msg = $e->getMessage();
+            // Domain rejections are client-facing 422s; anything else is a
+            // real server error and must be logged for diagnosis.
+            $isDomainError = str_contains($msg, 'Insufficient')
+                || str_contains($msg, 'Cannot sell')
+                || str_contains($msg, 'not available');
+            if (!$isDomainError) {
+                \Illuminate\Support\Facades\Log::error('POS transaction failed', [
+                    'error' => $msg,
+                    'user_id' => $request->user()?->id,
+                    'trace' => $e->getTraceAsString(),
+                ]);
+            }
             return response()->json([
                 'success' => false,
-                'message' => 'Transaction failed: ' . $e->getMessage(),
-            ], str_contains($e->getMessage(), 'Insufficient') ? 422 : 500);
+                'message' => 'Transaction failed: ' . $msg,
+            ], $isDomainError ? 422 : 500);
         }
     }
 
@@ -269,6 +282,21 @@ class POSController extends Controller
             ->where('status', 'active')
             ->whereNull('archived_at')
             ->where('is_sellable', true)
+            // Items with expired batches are blocked at checkout — don't
+            // offer them in POS at all (mirrors InventoryItem::hasExpiredBatches).
+            ->whereNotExists(function ($q) {
+                $q->select(DB::raw(1))
+                    ->from('inventory_batches')
+                    ->whereColumn('inventory_batches.inventory_item_id', 'inventory_items.id')
+                    ->where(function ($q2) {
+                        $q2->where('inventory_batches.status', 'expired')
+                            ->orWhere(function ($q3) {
+                                $q3->where('inventory_batches.status', 'active')
+                                    ->whereNotNull('inventory_batches.expiration_date')
+                                    ->where('inventory_batches.expiration_date', '<', now());
+                            });
+                    });
+            })
             ->select('id', 'sku', 'name', 'category', 'price', 'stock', 'description', 'status', 'photo')
             ->orderBy('name')
             ->get()
