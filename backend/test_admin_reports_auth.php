@@ -20,7 +20,6 @@ $endpoints = [
     'veterinary' => '/api/admin/reports/veterinary',
     'cashier' => '/api/admin/reports/cashier',
     'payroll' => '/api/admin/reports/payroll',
-    'system-health' => '/api/admin/reports/system-health',
 ];
 
 $results = [];

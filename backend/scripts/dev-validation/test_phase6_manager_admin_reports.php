@@ -376,21 +376,6 @@ if ($realReports['status'] === 200) {
     colorOutput("✗ Could not verify data authenticity", 'red');
 }
 
-// Test 15: Verify system health endpoint
-echo "\nTest 15: Verify system health endpoint\n";
-$systemHealth = makeRequest('/admin/system-health', 'GET', null, $adminToken);
-
-if ($systemHealth['status'] === 200) {
-    colorOutput("✓ System health endpoint loaded successfully", 'green');
-    $health = $systemHealth['body']['health'] ?? [];
-    echo "  Backend status: " . ($health['backend']['status'] ?? 'N/A') . "\n";
-    echo "  Database status: " . ($health['database']['status'] ?? 'N/A') . "\n";
-    echo "  Active modules: " . implode(', ', array_keys($health['active_modules'] ?? [])) . "\n";
-} else {
-    colorOutput("✗ System health endpoint failed", 'red');
-    echo "  Status: " . $systemHealth['status'] . "\n";
-}
-
 // Summary
 echo "\n========================================\n";
 echo "PHASE 6 TEST SUMMARY\n";

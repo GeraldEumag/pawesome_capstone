@@ -4,7 +4,6 @@ import {
   faCog,
   faShieldAlt,
   faUsers,
-  faDatabase,
   faBell,
   faSave,
   faSpinner,
@@ -125,17 +124,8 @@ const AdminSettings = () => {
     }
   }, [selectedTheme]);
 
-  // System Info
-  const [systemInfo, setSystemInfo] = useState({
-    lastBackup: null,
-    storageUsed: "0 MB",
-    totalUsers: 0,
-    activeSessions: 0,
-  });
-
   useEffect(() => {
     fetchSettings();
-    fetchSystemInfo();
   }, []);
 
   const fetchSettings = async () => {
@@ -146,18 +136,6 @@ const AdminSettings = () => {
       if (data?.notifications) setNotificationSettings(data.notifications);
     } catch (err) {
       console.error("Error fetching settings:", err);
-    }
-  };
-
-  const fetchSystemInfo = async () => {
-    try {
-      const users = await apiRequest("/admin/users");
-      setSystemInfo((prev) => ({
-        ...prev,
-        totalUsers: users?.data?.length || users?.length || 0,
-      }));
-    } catch (err) {
-      console.error("Error fetching system info:", err);
     }
   };
 
@@ -210,7 +188,6 @@ const AdminSettings = () => {
     { id: "security", label: "Security", icon: faShieldAlt },
     { id: "roles", label: "Roles & Permissions", icon: faUsers },
     { id: "notifications", label: "Notifications", icon: faBell },
-    { id: "system", label: "System Info", icon: faDatabase },
   ];
 
   return (
@@ -719,52 +696,6 @@ const AdminSettings = () => {
                   </>
                 )}
               </button>
-            </div>
-          </div>
-        )}
-
-        {/* System Info */}
-        {activeTab === "system" && (
-          <div className="settings-section">
-            <h3>
-              <FontAwesomeIcon icon={faDatabase} /> System Information
-            </h3>
-            <div className="system-info-grid">
-              <div className="info-card">
-                <h4>Users</h4>
-                <div className="info-value">{systemInfo.totalUsers}</div>
-                <small>Total registered users</small>
-              </div>
-              <div className="info-card">
-                <h4>Last Backup</h4>
-                <div className="info-value">
-                  {systemInfo.lastBackup || "Never"}
-                </div>
-                <small>Database backup status</small>
-              </div>
-              <div className="info-card">
-                <h4>Storage Used</h4>
-                <div className="info-value">{systemInfo.storageUsed}</div>
-                <small>Database storage</small>
-              </div>
-            </div>
-
-            <div className="system-actions">
-              <h4>Maintenance Actions</h4>
-              <div className="action-buttons">
-                <button className="action-btn secondary" disabled>
-                  <FontAwesomeIcon icon={faDatabase} /> Backup Database
-                </button>
-                <button className="action-btn secondary" disabled>
-                  <FontAwesomeIcon icon={faHistory} /> View Error Logs
-                </button>
-                <button className="action-btn secondary" disabled>
-                  <FontAwesomeIcon icon={faLock} /> Clear Cache
-                </button>
-              </div>
-              <p className="note">
-                <FontAwesomeIcon icon={faExclamationTriangle} /> Advanced maintenance features require server access.
-              </p>
             </div>
           </div>
         )}

@@ -82,8 +82,6 @@ async function stubAdminApi(page) {
         recent_appointments: [],
         recent_users: [],
       };
-    } else if (url.pathname === '/api/admin/system-health') {
-      body = { api: 'online', database: 'online', storage: 'online' };
     }
 
     await route.fulfill({

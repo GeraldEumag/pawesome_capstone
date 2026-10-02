@@ -608,16 +608,6 @@ if ($r['status'] === 200) {
     addFinding('warn', 'step8-admin', "Admin reports/summary returned {$r['status']}");
 }
 
-// Admin system health
-delay();
-$r = apiCall('GET', '/admin/system-health', $sessions['admin']['token']);
-if ($r['status'] === 200) {
-    addFinding('pass', 'step8-admin', "Admin system-health accessible");
-    recordStep(8, 'admin', "System health", 'PASS', "accessible");
-} else {
-    addFinding('warn', 'step8-admin', "Admin system-health returned {$r['status']}");
-}
-
 // ─────────────────────────────────────────────────────────────────────────
 // CROSS-ROLE VISIBILITY VERIFICATION
 // ─────────────────────────────────────────────────────────────────────────

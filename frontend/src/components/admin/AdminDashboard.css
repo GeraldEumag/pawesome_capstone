@@ -470,7 +470,7 @@
 
 .dashboard-grid {
   display: grid;
-  grid-template-columns: minmax(0, 1.25fr) minmax(300px, 0.75fr);
+  grid-template-columns: minmax(0, 1fr) minmax(300px, 1fr);
   gap: 1.5rem;
 }
 
@@ -664,55 +664,6 @@
   color: var(--color-muted);
   font-size: 0.86rem;
   font-weight: 750;
-}
-
-/* SYSTEM STATUS */
-
-.system-status-grid {
-  display: grid;
-  gap: 0.85rem;
-}
-
-.system-status-item {
-  display: flex;
-  align-items: center;
-  gap: 0.85rem;
-  padding: 0.95rem;
-  background: var(--color-surface-solid);
-  border-radius: 18px;
-  border: 1px solid var(--color-border);
-  transition: all 0.2s ease;
-}
-
-.system-status-item:hover {
-  transform: translateY(-2px);
-  box-shadow: var(--shadow-soft);
-}
-
-.system-status-icon {
-  width: 46px;
-  height: 46px;
-  min-width: 46px;
-  display: grid;
-  place-items: center;
-  border-radius: 16px;
-  background: linear-gradient(135deg, var(--color-primary), var(--color-primary-light));
-  color: #fff;
-}
-
-.system-status-item strong {
-  display: block;
-  color: var(--color-heading);
-  font-weight: 950;
-  margin-bottom: 0.15rem;
-}
-
-.system-status-item p {
-  margin: 0;
-  color: var(--color-muted);
-  font-size: 0.82rem;
-  font-weight: 800;
-  text-transform: capitalize;
 }
 
 .status-online {
@@ -924,10 +875,6 @@
   .completion-metrics {
     grid-template-columns: repeat(3, minmax(0, 1fr));
   }
-
-  .system-status-grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
 }
 
 @media (max-width: 1180px) {
@@ -994,8 +941,7 @@
 @media (max-width: 768px) {
   .overview-cards,
   .admin-quick-actions,
-  .completion-metrics,
-  .system-status-grid {
+  .completion-metrics {
     grid-template-columns: 1fr;
   }
 
@@ -1057,9 +1003,6 @@
     gap: 16px;
   }
   .completion-metrics {
-    grid-template-columns: 1fr !important;
-  }
-  .system-status-grid {
     grid-template-columns: 1fr !important;
   }
 }
@@ -1310,8 +1253,7 @@
 }
 
 .app-dashboard.admin-dashboard .quick-action-icon,
-.app-dashboard.admin-dashboard .overview-card-icon,
-.app-dashboard.admin-dashboard .system-status-icon {
+.app-dashboard.admin-dashboard .overview-card-icon {
   border-radius: 14px;
   box-shadow: none;
 }
@@ -1406,7 +1348,6 @@
 }
 
 .app-dashboard.admin-dashboard .request-card,
-.app-dashboard.admin-dashboard .system-status-item,
 .app-dashboard.admin-dashboard .metric-card,
 .app-dashboard.admin-dashboard .status-card,
 .app-dashboard.admin-dashboard .mu-user-detail-top,
@@ -1434,6 +1375,11 @@
 .app-dashboard.admin-dashboard .chart-box {
   height: 220px;
   min-height: 220px;
+}
+
+.app-dashboard.admin-dashboard .chart-box.appointment-status-chart {
+  height: auto;
+  min-height: 0;
 }
 
 .app-dashboard.admin-dashboard .quick-stat-panel {

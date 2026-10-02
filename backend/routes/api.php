@@ -142,7 +142,6 @@ Route::prefix('auth')->group(function () {
 
 Route::middleware(['auth.api', 'throttle:api', 'role:admin'])->prefix('admin')->group(function () {
     Route::get('dashboard', [DashboardController::class, 'overview']);
-    Route::get('system-health', [DashboardController::class, 'systemHealth']);
 
     Route::get('users', [UserController::class, 'index']);
     Route::post('users', [UserController::class, 'store']);
@@ -222,7 +221,6 @@ Route::middleware(['auth.api', 'throttle:api', 'role:admin'])->prefix('admin')->
     Route::get('reports/orders', [ReportsController::class, 'orders']);
     Route::get('reports/services', [ReportsController::class, 'serviceRequests']);
     Route::get('reports/service-requests', [ReportsController::class, 'serviceRequests']);
-    Route::get('reports/system-health', [ReportsController::class, 'systemHealth']);
     Route::get('reports/logistics', [ReportsController::class, 'logistics']);
     Route::get('reports/reception', [ReportsController::class, 'reception']);
 

@@ -12,7 +12,6 @@ import {
   PieChart,
   Pie,
   Cell,
-  CartesianGrid,
   Legend,
 } from "recharts";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
@@ -22,10 +21,6 @@ import {
   faCalendarCheck,
   faBoxOpen,
   faUserShield,
-  faServer,
-  faDatabase,
-  faSync,
-  faLayerGroup,
   faRotateRight,
   faExclamationTriangle,
   faChartLine,
@@ -64,7 +59,6 @@ const AdminDashboard = () => {
   const profilePhoto = user?.profile_photo || "";
 
   const [dashboardData, setDashboardData] = useState(null);
-  const [systemHealth, setSystemHealth] = useState(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState("");
@@ -85,19 +79,9 @@ const AdminDashboard = () => {
 
         setError("");
 
-        const [dashboardResult, healthResult] = await Promise.allSettled([
-          apiRequest("/admin/dashboard"),
-          apiRequest("/admin/system-health"),
-        ]);
+        const dashboardResult = await apiRequest("/admin/dashboard");
 
-        if (dashboardResult.status === "rejected") {
-          throw dashboardResult.reason;
-        }
-
-        setDashboardData(dashboardResult.value?.data || dashboardResult.value || {});
-        setSystemHealth(
-          healthResult.status === "fulfilled" ? healthResult.value || null : null
-        );
+        setDashboardData(dashboardResult?.data || dashboardResult || {});
         setLastUpdated(new Date().toLocaleString("en-PH"));
       } catch (err) {
         console.error("Admin dashboard fetch error:", err);
@@ -282,50 +266,6 @@ const AdminDashboard = () => {
 
     return [...appointments, ...users].slice(0, 8);
   }, [dashboardData, dashboard]);
-
-  const health = systemHealth?.health || systemHealth || {};
-  const backendStatus =
-    health?.backend?.status || systemHealth?.backend_status || "unknown";
-  const databaseStatus =
-    health?.database?.status || systemHealth?.database_status || "unknown";
-  const activeModules = health?.active_modules || systemHealth?.active_modules || {};
-
-  const activeModuleCount = Object.keys(activeModules).filter(
-    (key) => activeModules[key]
-  ).length;
-
-  const systemStatusItems = [
-    {
-      title: "Backend",
-      value: backendStatus,
-      icon: faServer,
-      online:
-        String(backendStatus).toLowerCase() === "operational" ||
-        String(backendStatus).toLowerCase() === "online",
-    },
-    {
-      title: "Database",
-      value: databaseStatus,
-      icon: faDatabase,
-      online:
-        String(databaseStatus).toLowerCase() === "connected" ||
-        String(databaseStatus).toLowerCase() === "online",
-    },
-    {
-      title: "Last Sync",
-      value: systemHealth?.timestamp
-        ? new Date(systemHealth.timestamp).toLocaleTimeString("en-PH")
-        : lastUpdated || "Not available",
-      icon: faSync,
-      online: Boolean(systemHealth?.timestamp || lastUpdated),
-    },
-    {
-      title: "Active Modules",
-      value: activeModuleCount || dashboard.active_modules || "N/A",
-      icon: faLayerGroup,
-      online: activeModuleCount > 0 || Boolean(dashboard.active_modules),
-    },
-  ];
 
   const quickActions = [
     {
@@ -600,32 +540,42 @@ const AdminDashboard = () => {
                       </span>
                     </div>
 
-                    <div className="chart-box">
+                    <div className="chart-box appointment-status-chart">
                       {appointmentStatusData.length === 0 ? (
                         <div className="admin-empty-chart">
                           <FontAwesomeIcon icon={faChartLine} />
                           <p>No appointment status data available.</p>
                         </div>
                       ) : (
-                        <ResponsiveContainer width="100%" height={220}>
-                          <BarChart data={appointmentStatusData}>
-                            <CartesianGrid strokeDasharray="3 3" />
+                        <ResponsiveContainer width="100%" height={160}>
+                          <BarChart
+                            data={appointmentStatusData}
+                            margin={{ top: 8, right: 8, left: -20, bottom: 0 }}
+                          >
                             <XAxis
                               dataKey="status"
                               interval={0}
-                              tick={{ fontSize: 12 }}
+                              axisLine={false}
+                              tickLine={false}
+                              tick={{ fontSize: 11, fill: "var(--color-muted)" }}
                               tickFormatter={(status) => String(status).replace(/[_-]/g, " ").replace(/\b\w/g, (letter) => letter.toUpperCase())}
                             />
-                            <YAxis allowDecimals={false} domain={[0, "dataMax + 1"]} />
-                            <Tooltip content={<AdminTooltip />} />
-                            <Bar dataKey="count" name="Appointments" barCategoryGap="45%" radius={[10, 10, 0, 0]}>
-                              {appointmentStatusData.map((entry, index) => (
-                                <Cell
-                                  key={entry.status}
-                                  fill={chartColors[index % chartColors.length]}
-                                />
-                              ))}
-                            </Bar>
+                            <YAxis
+                              allowDecimals={false}
+                              domain={[0, "dataMax + 1"]}
+                              axisLine={false}
+                              tickLine={false}
+                              tick={{ fontSize: 11, fill: "var(--color-muted)" }}
+                            />
+                            <Tooltip cursor={{ fill: "var(--color-surface-muted, rgba(0,0,0,0.04))" }} content={<AdminTooltip />} />
+                            <Bar
+                              dataKey="count"
+                              name="Appointments"
+                              fill="var(--color-primary)"
+                              barCategoryGap="45%"
+                              maxBarSize={42}
+                              radius={[8, 8, 0, 0]}
+                            />
                           </BarChart>
                         </ResponsiveContainer>
                       )}
@@ -649,12 +599,6 @@ const AdminDashboard = () => {
                       <span className="metric-kicker">Staff Readiness</span>
                       <h3>{formatNumber(dashboard.active_users || 0)}</h3>
                       <p>Active dashboard accounts</p>
-                    </div>
-
-                    <div className="metric-card">
-                      <span className="metric-kicker">System Status</span>
-                      <h3>{backendStatus !== "unknown" ? "ONLINE" : "CHECK"}</h3>
-                      <p>Backend and database monitoring</p>
                     </div>
                   </motion.article>
                 </section>
@@ -725,31 +669,6 @@ const AdminDashboard = () => {
                         <strong>{formatNumber(dashboard.low_stock_items || 0)}</strong>
                         <p>Low Stock Alerts</p>
                       </div>
-                    </div>
-                  </motion.article>
-
-                  <motion.article className="panel" variants={cardVariants}>
-                    <div className="panel-header">
-                      <div>
-                        <h2>System Status</h2>
-                        <p>Platform health monitoring.</p>
-                      </div>
-                    </div>
-
-                    <div className="system-status-grid">
-                      {systemStatusItems.map((item) => (
-                        <div className="system-status-item" key={item.title}>
-                          <span className="system-status-icon">
-                            <FontAwesomeIcon icon={item.icon} />
-                          </span>
-                          <div>
-                            <strong>{item.title}</strong>
-                            <p className={item.online ? "status-online" : "status-offline"}>
-                              {item.value}
-                            </p>
-                          </div>
-                        </div>
-                      ))}
                     </div>
                   </motion.article>
                 </section>
