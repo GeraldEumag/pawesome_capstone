@@ -9,7 +9,25 @@ import {
   validateServiceCompatibility,
   getSpecialCareWarning,
 } from "../../config/petServiceRules";
+import { BUSINESS_HOURS, TIME_SLOT_INTERVAL } from "../../config/serviceDurationRules";
 import { showAlert, showSuccess, showError, showConfirm } from "../../utils/alert.jsx";
+
+const VET_TIME_SLOTS = (() => {
+  const slots = [];
+  const [startHour, startMinute] = BUSINESS_HOURS.start.split(":").map(Number);
+  const [endHour, endMinute] = BUSINESS_HOURS.end.split(":").map(Number);
+  const cursor = new Date();
+  cursor.setHours(startHour, startMinute, 0, 0);
+  const end = new Date();
+  end.setHours(endHour, endMinute, 0, 0);
+  while (cursor < end) {
+    const value = cursor.toTimeString().slice(0, 5);
+    const label = cursor.toLocaleTimeString("en-PH", { hour: "numeric", minute: "2-digit", hour12: true });
+    slots.push({ value, label });
+    cursor.setMinutes(cursor.getMinutes() + TIME_SLOT_INTERVAL);
+  }
+  return slots;
+})();
 
 const VetForm = () => {
   const { user } = useAuth();
@@ -94,7 +112,9 @@ const VetForm = () => {
     }
     if (draft.form_data?.veterinary_service_type) updates.service_name = draft.form_data.veterinary_service_type;
     if (draft.form_data?.preferred_date) updates.request_date = draft.form_data.preferred_date;
-    if (draft.form_data?.preferred_time) updates.request_time = draft.form_data.preferred_time;
+    if (VET_TIME_SLOTS.some((slot) => slot.value === draft.form_data?.preferred_time)) {
+      updates.request_time = draft.form_data.preferred_time;
+    }
     if (draft.form_data?.main_reason_for_visit) updates.notes = draft.form_data.main_reason_for_visit;
 
     setFormData((prev) => ({ ...prev, ...updates }));
@@ -348,13 +368,19 @@ const VetForm = () => {
               required
             />
 
-            <input
-              type="time"
+            <select
               name="request_time"
               value={formData.request_time}
               onChange={handleChange}
               required
-            />
+            >
+              <option value="">Select a time</option>
+              {VET_TIME_SLOTS.map((slot) => (
+                <option key={slot.value} value={slot.value}>
+                  {slot.label}
+                </option>
+              ))}
+            </select>
 
             <textarea
               name="notes"
