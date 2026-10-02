@@ -259,11 +259,11 @@ const AdminLandingPageEditor = () => {
             {renderInput("Main button text", "hero.primary_cta")}
             {renderInput("Second button text", "hero.secondary_cta")}
             <p className="editor-helper-text">
-              The three images below appear as a photo mosaic on the right side of the hero banner. Each slot falls back to a default facility photo if left empty.
+              The three images below appear as a layered photo collage beside the hero banner. Each slot falls back to a default facility photo if left empty.
             </p>
-            {renderImageField("Hero mosaic photo — Slot 1 (main / left)", "hero.image")}
-            {renderImageField("Hero mosaic photo — Slot 2 (top-right)", "hero.image_2")}
-            {renderImageField("Hero mosaic photo — Slot 3 (bottom-right)", "hero.image_3")}
+            {renderImageField("Hero collage photo — Slot 1 (main photo)", "hero.image")}
+            {renderImageField("Hero collage photo — Slot 2 (bottom-left card)", "hero.image_2")}
+            {renderImageField("Hero collage photo — Slot 3 (top-right circle)", "hero.image_3")}
             <div className="editor-array">
               <div className="editor-array-header">
                 <strong>Topic labels (small badges under buttons)</strong>

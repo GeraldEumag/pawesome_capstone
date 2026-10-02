@@ -51,51 +51,42 @@ const DynamicHero = ({ content, onBookService }) => {
           </div>
         </div>
 
-        {/* 3-Photo Mosaic */}
+        {/* Layered photo collage */}
         <div className="landing-hero-visual">
-          <div className="landing-hero-mosaic">
-            {/* Floating star rating badge */}
-            <div className="landing-mosaic-badge" aria-label="4.9 star rating">
-              <span className="landing-mosaic-badge-stars">★★★★★</span>
-              <span className="landing-mosaic-badge-text">Trusted Pet Care</span>
-            </div>
-
-            <div className="landing-mosaic-grid">
-              {/* Left tall photo */}
-              <div className="landing-mosaic-left">
-                <img
-                  src={img1}
-                  alt="Pawesome pet hotel"
-                  loading="lazy"
-                />
-              </div>
-              {/* Right stacked photos */}
-              <div className="landing-mosaic-right">
-                <div className="landing-mosaic-top">
-                  <img
-                    src={img2}
-                    alt="Pet care facility"
-                    loading="lazy"
-                  />
-                </div>
-                <div className="landing-mosaic-bottom">
-                  <img
-                    src={img3}
-                    alt="Pet playground"
-                    loading="lazy"
-                  />
-                  {/* Overlay label */}
-                  <div className="landing-mosaic-overlay-label">
-                    <span>Pawesome Retreat Inc.</span>
-                  </div>
-                </div>
+          <div className="landing-hero-collage">
+            {/* Dominant photo */}
+            <div className="landing-collage-main">
+              <img
+                src={img1}
+                alt="Pawesome pet hotel"
+                loading="eager"
+                decoding="async"
+                fetchPriority="high"
+              />
+              {/* Overlay label */}
+              <div className="landing-collage-label">
+                <span>Pawesome Retreat Inc.</span>
               </div>
             </div>
 
-            {/* Floating trust chip */}
-            <div className="landing-mosaic-trust-chip">
-              <span className="landing-mosaic-trust-icon">🐾</span>
-              <span>200+ happy pet owners</span>
+            {/* Tilted card, bottom-left */}
+            <div className="landing-collage-card">
+              <img
+                src={img2}
+                alt="Pet care facility"
+                loading="lazy"
+                decoding="async"
+              />
+            </div>
+
+            {/* Circular badge, top-right */}
+            <div className="landing-collage-dot">
+              <img
+                src={img3}
+                alt="Pet playground"
+                loading="lazy"
+                decoding="async"
+              />
             </div>
           </div>
         </div>

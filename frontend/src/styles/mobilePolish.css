@@ -602,23 +602,23 @@ img:not([class*="logo-image"]):not([class*="sidebar-logo"]):not([class*="avatar"
    P. HERO / WELCOME SECTIONS — stack on phone
    ══════════════════════════════════════════════════════════════ */
 @media (max-width: 767px) {
-  [class*="-hero"],
-  [class*="-welcome-section"],
-  [class*="-hero-content"] {
+  [class*="-hero"]:not([class*="landing-"]),
+  [class*="-welcome-section"]:not([class*="landing-"]),
+  [class*="-hero-content"]:not([class*="landing-"]) {
     flex-direction: column !important;
     align-items: flex-start !important;
     gap: 12px !important;
     padding: 1rem !important;
   }
 
-  [class*="-hero"] h1,
-  [class*="-welcome-section"] h1,
-  [class*="-hero-content"] h1 {
+  [class*="-hero"]:not([class*="landing-"]) h1,
+  [class*="-welcome-section"]:not([class*="landing-"]) h1,
+  [class*="-hero-content"]:not([class*="landing-"]) h1 {
     font-size: clamp(1.1rem, 6vw, 1.5rem) !important;
   }
 
-  [class*="-hero-actions"],
-  [class*="-welcome-actions"] {
+  [class*="-hero-actions"]:not([class*="landing-"]),
+  [class*="-welcome-actions"]:not([class*="landing-"]) {
     flex-direction: row !important;
     flex-wrap: wrap !important;
     width: 100% !important;
