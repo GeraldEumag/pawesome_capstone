@@ -32,6 +32,22 @@ php artisan serve --host=127.0.0.1 --port=8000
 php artisan route:cache              # Production route caching
 php artisan view:cache               # Production view caching
 php artisan config:cache             # Production config caching
+php artisan test                     # Unit/feature tests (sqlite :memory: via .env.testing)
+php artisan inventory:reconcile-stock        # Dry-run stock vs batch drift report
+php artisan inventory:reconcile-stock --apply # Repair drift (creates RECON- batches)
+```
+
+### Pre-push backend verification (CI parity)
+
+`.env.testing` uses sqlite `:memory:`, but CI (`.github/workflows/ci.yml`)
+runs the FULL suite on MySQL 8 — the environments diverge enough that
+sqlite-green can still be CI-red (enum columns, strict SQL modes). Before
+pushing backend changes, run:
+
+```bash
+mysql -u root -e "CREATE DATABASE IF NOT EXISTS pawesome_test;"   # one-time
+cd backend
+DB_CONNECTION=mysql DB_DATABASE=pawesome_test DB_USERNAME=root DB_PASSWORD= php artisan test
 ```
 
 ### Frontend
