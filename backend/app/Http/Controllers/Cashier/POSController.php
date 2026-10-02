@@ -256,7 +256,7 @@ class POSController extends Controller
             return response()->json([
                 'success' => false,
                 'message' => 'Transaction failed: ' . $e->getMessage(),
-            ], str_contains($e->getMessage(), 'Insufficient stock') ? 422 : 500);
+            ], str_contains($e->getMessage(), 'Insufficient') ? 422 : 500);
         }
     }
 

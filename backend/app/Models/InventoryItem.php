@@ -160,6 +160,16 @@ class InventoryItem extends Model
     }
 
     /**
+     * Whether this item has real batch records (quantity > 0). Zero-quantity
+     * marker rows (e.g. legacy 'audit_adjusted' placeholders) do not count,
+     * so they can't force an untracked item onto the FEFO deduction path.
+     */
+    public function hasRealBatches(): bool
+    {
+        return $this->batches()->where('quantity', '>', 0)->exists();
+    }
+
+    /**
      * Check if item has expiring batches
      */
     public function hasExpiringBatches(): bool
@@ -306,6 +316,32 @@ class InventoryItem extends Model
         ]);
 
         return $deductions;
+    }
+
+    /**
+     * Reduce batch quantities in FEFO order without touching `stock` or
+     * throwing. Used by audit/adjustment flows where a physical count is
+     * authoritative — deducts up to $amount and returns how much was
+     * actually written off.
+     */
+    public function reduceBatchesFefo(int $amount): int
+    {
+        $remainingToDeduct = $amount;
+
+        foreach ($this->activeBatches()->get() as $batch) {
+            if ($remainingToDeduct <= 0) break;
+
+            $deductFromBatch = min($batch->remaining_quantity, $remainingToDeduct);
+            $batch->remaining_quantity -= $deductFromBatch;
+            if ($batch->remaining_quantity <= 0) {
+                $batch->status = 'depleted';
+            }
+            $batch->save();
+
+            $remainingToDeduct -= $deductFromBatch;
+        }
+
+        return $amount - $remainingToDeduct;
     }
 
     /**

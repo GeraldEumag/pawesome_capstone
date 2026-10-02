@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Receptionist;
 use App\Http\Controllers\Controller;
 use App\Models\InventoryItem;
 use App\Models\InventoryLog;
+use App\Services\InventoryService;
 use App\Services\WorkflowNotifier;
 use App\Models\ActivityLog;
 use Illuminate\Http\Request;
@@ -251,39 +252,25 @@ class CustomerOrderController extends Controller
                 ], 422);
             }
 
-            // Deduct stock and create inventory logs
-            foreach ($items as $item) {
-                $inventoryItem = DB::table('inventory_items')
-                    ->where('id', $item->inventory_item_id)
-                    ->first();
-
-                $previousStock = (int) $inventoryItem->stock;
-                $quantity = (int) $item->quantity;
-                $newStock = $previousStock - $quantity;
-
-                // Update inventory stock
-                DB::table('inventory_items')
-                    ->where('id', $item->inventory_item_id)
-                    ->update(['stock' => $newStock]);
-
-                // Create inventory log
-                InventoryLog::create([
-                    'inventory_item_id' => $item->inventory_item_id,
-                    'delta' => -$quantity,
-                    'quantity' => $quantity,
-                    'type' => 'sale',
-                    'movement_type' => 'customer_order',
-                    'reason' => "Customer order #{$order->id} approved",
-                    'reference_type' => 'customer_order',
-                    'reference_id' => $order->id,
-                    'previous_stock' => $previousStock,
-                    'new_stock' => $newStock,
-                    'stock_before' => $previousStock,
-                    'stock_after' => $newStock,
-                    'performed_by' => $user->name,
-                    'role' => $user->role,
-                    'user_id' => $user->id,
-                ]);
+            // Deduct stock via the centralized service so batch-tracked items
+            // consume batches (FEFO) instead of drifting from the flat counter.
+            $inventoryService = new InventoryService();
+            try {
+                foreach ($items as $item) {
+                    $inventoryService->deductStock(
+                        (int) $item->inventory_item_id,
+                        (int) $item->quantity,
+                        "Customer order #{$order->id} approved",
+                        'customer_order',
+                        $order->id
+                    );
+                }
+            } catch (\Exception $e) {
+                DB::rollBack();
+                return response()->json([
+                    'success' => false,
+                    'message' => $e->getMessage(),
+                ], 422);
             }
 
             // Update order status
@@ -395,40 +382,18 @@ class CustomerOrderController extends Controller
 
                 $items = $itemsQuery->get()->sortBy('inventory_item_id')->values();
 
+                // Restore via the centralized service so batch-tracked items
+                // regain a batch record instead of drifting from the counter.
+                $inventoryService = new InventoryService();
                 foreach ($items as $item) {
-                    $inventoryItem = DB::table('inventory_items')
-                        ->where('id', $item->inventory_item_id)
-                        ->lockForUpdate()
-                        ->first();
-
-                    if ($inventoryItem) {
-                        $previousStock = (int) $inventoryItem->stock;
-                        $quantity = (int) $item->quantity;
-                        $newStock = $previousStock + $quantity;
-
-                        // Restore inventory stock
-                        DB::table('inventory_items')
-                            ->where('id', $item->inventory_item_id)
-                            ->update(['stock' => $newStock]);
-
-                        // Create inventory log for stock restoration
-                        InventoryLog::create([
-                            'inventory_item_id' => $item->inventory_item_id,
-                            'delta' => $quantity,
-                            'quantity' => $quantity,
-                            'type' => 'restock',
-                            'movement_type' => 'customer_order_rejection',
-                            'reason' => "Customer order #{$order->id} rejected - stock restored",
-                            'reference_type' => 'customer_order',
-                            'reference_id' => $order->id,
-                            'previous_stock' => $previousStock,
-                            'new_stock' => $newStock,
-                            'stock_before' => $previousStock,
-                            'stock_after' => $newStock,
-                            'performed_by' => $user->name,
-                            'role' => $user->role,
-                            'user_id' => $user->id,
-                        ]);
+                    if (DB::table('inventory_items')->where('id', $item->inventory_item_id)->exists()) {
+                        $inventoryService->addStock(
+                            (int) $item->inventory_item_id,
+                            (int) $item->quantity,
+                            "Customer order #{$order->id} rejected - stock restored",
+                            'customer_order',
+                            $order->id
+                        );
                     }
                 }
             }
@@ -550,40 +515,18 @@ class CustomerOrderController extends Controller
 
                 $items = $itemsQuery->get()->sortBy('inventory_item_id')->values();
 
+                // Restore via the centralized service so batch-tracked items
+                // regain a batch record instead of drifting from the counter.
+                $inventoryService = new InventoryService();
                 foreach ($items as $item) {
-                    $inventoryItem = DB::table('inventory_items')
-                        ->where('id', $item->inventory_item_id)
-                        ->lockForUpdate()
-                        ->first();
-
-                    if ($inventoryItem) {
-                        $previousStock = (int) $inventoryItem->stock;
-                        $quantity = (int) $item->quantity;
-                        $newStock = $previousStock + $quantity;
-
-                        // Restore inventory stock
-                        DB::table('inventory_items')
-                            ->where('id', $item->inventory_item_id)
-                            ->update(['stock' => $newStock]);
-
-                        // Create inventory log for stock restoration
-                        InventoryLog::create([
-                            'inventory_item_id' => $item->inventory_item_id,
-                            'delta' => $quantity,
-                            'quantity' => $quantity,
-                            'type' => 'restock',
-                            'movement_type' => 'customer_order_cancellation',
-                            'reason' => "Customer order #{$order->id} cancelled - stock restored",
-                            'reference_type' => 'customer_order',
-                            'reference_id' => $order->id,
-                            'previous_stock' => $previousStock,
-                            'new_stock' => $newStock,
-                            'stock_before' => $previousStock,
-                            'stock_after' => $newStock,
-                            'performed_by' => $user->name,
-                            'role' => $user->role,
-                            'user_id' => $user->id,
-                        ]);
+                    if (DB::table('inventory_items')->where('id', $item->inventory_item_id)->exists()) {
+                        $inventoryService->addStock(
+                            (int) $item->inventory_item_id,
+                            (int) $item->quantity,
+                            "Customer order #{$order->id} cancelled - stock restored",
+                            'customer_order',
+                            $order->id
+                        );
                     }
                 }
             }

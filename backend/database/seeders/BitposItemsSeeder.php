@@ -2,6 +2,7 @@
 
 namespace Database\Seeders;
 
+use App\Models\InventoryItem;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
@@ -195,6 +196,25 @@ class BitposItemsSeeder extends Seeder
                     'created_at'   => $now,
                     'updated_at'   => $now,
                 ]);
+
+                // The raw insert above bypasses model hooks, so give imported
+                // stock a real batch record — otherwise the flat counter
+                // drifts from inventory_batches and POS can't sell the item.
+                if ($stock > 0) {
+                    $importedItem = InventoryItem::where('sku', $finalSku)->first();
+                    $importedItem?->addBatchStock(
+                        $stock,
+                        'IMPORT-' . strtoupper(Str::random(8)),
+                        $expiryDate,
+                        'Imported initial stock',
+                        false, // stock column already set by the insert
+                        null,
+                        trim($supplier ?? '') ?: null,
+                        $cost,
+                        null,
+                        $now
+                    );
+                }
 
                 $inserted++;
                 $skuIndex++;

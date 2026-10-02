@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Models\InventoryItem;
 use App\Models\InventoryBatch;
 use App\Models\InventoryLog;
+use App\Models\InventoryMonthlyAudit;
 use App\Models\Notification;
 use App\Models\ActivityLog;
 use App\Models\User;
@@ -132,6 +133,13 @@ class InventoryService
             // Remove fields that don't exist in database
             unset($validated['quantity'], $validated['stock_quantity'], $validated['add_stock']);
 
+            // Batch-tracked items must reconcile batches when stock changes —
+            // let reconcileToStock own the write instead of the flat update.
+            $reconcileBatches = $oldStock !== $newStock && $item->hasRealBatches();
+            if ($reconcileBatches) {
+                unset($validated['stock']);
+            }
+
             $item->update($validated);
 
             // Log stock adjustment if changed
@@ -139,7 +147,18 @@ class InventoryService
                 $delta = $newStock - $oldStock;
                 $reason = $this->getStockAdjustmentReason($item, $addStock, $delta);
                 $referenceType = $this->getStockReferenceType($item, $addStock);
-                $this->logStockChange($item->id, $delta, $reason, $referenceType);
+
+                if ($reconcileBatches) {
+                    $this->reconcileToStock(
+                        $item->fresh(),
+                        $newStock,
+                        $reason,
+                        'stock_adjustment_' . $referenceType,
+                        $referenceType
+                    );
+                } else {
+                    $this->logStockChange($item->id, $delta, $reason, $referenceType);
+                }
 
                 // Check for low/out of stock and create notifications
                 $this->checkAndCreateStockNotifications($item->fresh());
@@ -284,36 +303,52 @@ class InventoryService
             }
 
             $delta = $newStock - $previousStock;
-            $update = ['stock' => $newStock];
 
-            if (\Illuminate\Support\Facades\Schema::hasColumn($item->getTable(), 'quantity')) {
-                $update['quantity'] = $newStock;
-            }
+            // Batch-tracked items must keep batch totals in sync with the
+            // flat counter — reconcile instead of writing stock directly.
+            if ($delta !== 0 && $item->hasRealBatches()) {
+                $this->reconcileToStock(
+                    $item,
+                    $newStock,
+                    $reason,
+                    'stock_adjustment_' . $adjustmentType,
+                    'stock_adjustment',
+                    $auditData['reference_id'] ?? null,
+                    'ADJUST',
+                    ['adjustment_type' => $adjustmentType]
+                );
+            } else {
+                $update = ['stock' => $newStock];
 
-            $item->update($update);
+                if (\Illuminate\Support\Facades\Schema::hasColumn($item->getTable(), 'quantity')) {
+                    $update['quantity'] = $newStock;
+                }
 
-            // Log the adjustment with audit data
-            InventoryLog::create([
-                'inventory_item_id' => $item->id,
-                'delta' => $delta,
-                'quantity' => $quantity,
-                'type' => $adjustmentType,
-                'movement_type' => 'stock_adjustment_' . $adjustmentType,
-                'reason' => $reason,
-                'reference_type' => 'stock_adjustment',
-                'reference_id' => $auditData['reference_id'] ?? null,
-                'stock_before' => $previousStock,
-                'stock_after' => $newStock,
-                'previous_stock' => $previousStock,
-                'new_stock' => $newStock,
-                'performed_by' => $auditData['performed_by'] ?? auth()->user()?->name,
-                'role' => $auditData['role'] ?? auth()->user()?->role,
-                'user_id' => $auditData['user_id'] ?? auth()->id(),
-                'details' => json_encode([
-                    'adjustment_type' => $adjustmentType,
+                $item->update($update);
+
+                // Log the adjustment with audit data
+                InventoryLog::create([
+                    'inventory_item_id' => $item->id,
+                    'delta' => $delta,
+                    'quantity' => $quantity,
+                    'type' => $adjustmentType,
+                    'movement_type' => 'stock_adjustment_' . $adjustmentType,
                     'reason' => $reason,
-                ]),
-            ]);
+                    'reference_type' => 'stock_adjustment',
+                    'reference_id' => $auditData['reference_id'] ?? null,
+                    'stock_before' => $previousStock,
+                    'stock_after' => $newStock,
+                    'previous_stock' => $previousStock,
+                    'new_stock' => $newStock,
+                    'performed_by' => $auditData['performed_by'] ?? auth()->user()?->name,
+                    'role' => $auditData['role'] ?? auth()->user()?->role,
+                    'user_id' => $auditData['user_id'] ?? auth()->id(),
+                    'details' => json_encode([
+                        'adjustment_type' => $adjustmentType,
+                        'reason' => $reason,
+                    ]),
+                ]);
+            }
 
             ActivityLog::log($auditData['user_id'] ?? auth()->id(), 'inventory_adjusted', "Adjusted {$item->name} stock by {$delta}", [
                 'category' => 'inventory',
@@ -366,11 +401,47 @@ class InventoryService
 
         $stockBefore = $item->stock;
 
-        // Use FEFO batch deduction for items that need expiration tracking
-        // OR if item has active batches. Fall back to simple deduction when
-        // an item needs FEFO but has no batches yet (legacy items pre-batch-tracking).
-        $hasBatches = $item->batches()->exists();
-        if (($item->needsFefo() || $hasBatches) && $hasBatches) {
+        // Use FEFO batch deduction when the item has real batch records.
+        // Zero-quantity marker rows (e.g. legacy audit_adjusted placeholders)
+        // must not force an untracked item onto the batch path.
+        $hasBatches = $item->hasRealBatches();
+        if ($hasBatches) {
+            // Self-heal bookkeeping drift: if the flat counter covers the sale
+            // but usable batches don't, materialize the gap as a labelled
+            // reconciliation batch rather than blocking the cashier. The
+            // batch/log entries keep the repair auditable.
+            $batchStock = $item->getBatchStock();
+            if ($batchStock < $quantity && $item->stock >= $quantity) {
+                $shortfall = $quantity - $batchStock;
+                $reconBatch = $item->batches()->create([
+                    'batch_no' => 'RECON-' . strtoupper(uniqid()),
+                    'received_date' => now(),
+                    'quantity' => $shortfall,
+                    'remaining_quantity' => $shortfall,
+                    'status' => 'active',
+                    'notes' => 'Auto-reconciliation: untracked stock made sellable',
+                ]);
+
+                InventoryLog::create([
+                    'inventory_item_id' => $item->id,
+                    'delta' => 0,
+                    'quantity' => $shortfall,
+                    'type' => 'reconciliation',
+                    'movement_type' => 'stock_reconciliation',
+                    'reason' => "Auto-created RECON batch {$reconBatch->batch_no}: stock column held {$item->stock} but usable batches held {$batchStock}",
+                    'reference_type' => $referenceType,
+                    'reference_id' => $referenceId,
+                    'stock_before' => $item->stock,
+                    'stock_after' => $item->stock,
+                    'previous_stock' => $item->stock,
+                    'new_stock' => $item->stock,
+                    'performed_by' => auth()->user()?->name,
+                    'role' => auth()->user()?->role,
+                    'user_id' => auth()->id(),
+                    'details' => json_encode(['batch_id' => $reconBatch->id, 'reconciled_quantity' => $shortfall]),
+                ]);
+            }
+
             $movementType = in_array($referenceType, ['vet_usage', 'grooming_usage', 'boarding_food_usage'], true)
                 ? $referenceType
                 : ($referenceType === 'sale' ? 'pos_sale' : 'stock_deduction');
@@ -532,6 +603,145 @@ class InventoryService
             'stock_before' => $stockBefore,
             'stock_after' => $item->stock,
             'batch_tracking' => false,
+        ];
+    }
+
+    /**
+     * Set an item's stock to a target value while keeping batch records in
+     * sync. For batch-tracked items: a positive gap materializes as a new
+     * labelled batch, a negative gap is written off from batches in FEFO
+     * order. For items with no real batches the flat counter is updated
+     * directly. Always writes an InventoryLog entry.
+     */
+    public function reconcileToStock(
+        InventoryItem $item,
+        int $targetStock,
+        string $reason,
+        string $movementType,
+        string $referenceType,
+        ?int $referenceId = null,
+        string $batchPrefix = 'ADJUST',
+        array $logDetails = []
+    ): array {
+        $previousStock = (int) $item->stock;
+        $batch = null;
+        $writtenOff = 0;
+
+        if ($item->hasRealBatches()) {
+            $batchDiff = $targetStock - $item->getBatchStock();
+
+            if ($batchDiff > 0) {
+                $batch = $item->batches()->create([
+                    'batch_no' => $batchPrefix . '-' . strtoupper(uniqid()),
+                    'received_date' => now(),
+                    'quantity' => $batchDiff,
+                    'remaining_quantity' => $batchDiff,
+                    'status' => 'active',
+                    'notes' => $reason,
+                ]);
+            } elseif ($batchDiff < 0) {
+                $writtenOff = $item->reduceBatchesFefo(-$batchDiff);
+            }
+        }
+
+        $update = ['stock' => $targetStock];
+        if (Schema::hasColumn($item->getTable(), 'quantity')) {
+            $update['quantity'] = $targetStock;
+        }
+        $item->update($update);
+
+        $delta = $targetStock - $previousStock;
+        InventoryLog::create([
+            'inventory_item_id' => $item->id,
+            'delta' => $delta,
+            'quantity' => abs($delta),
+            'type' => $movementType,
+            'movement_type' => $movementType,
+            'reason' => $reason,
+            'reference_type' => $referenceType,
+            'reference_id' => $referenceId,
+            'stock_before' => $previousStock,
+            'stock_after' => $targetStock,
+            'previous_stock' => $previousStock,
+            'new_stock' => $targetStock,
+            'performed_by' => auth()->user()?->name,
+            'role' => auth()->user()?->role,
+            'user_id' => auth()->id(),
+            'details' => json_encode(array_merge([
+                'reconciled_batch_id' => $batch?->id,
+                'batch_written_off' => $writtenOff,
+            ], $logDetails)),
+        ]);
+
+        return [
+            'batch' => $batch,
+            'written_off' => $writtenOff,
+            'stock_before' => $previousStock,
+            'stock_after' => $targetStock,
+        ];
+    }
+
+    /**
+     * Apply a monthly physical-count audit to an item. The physical count is
+     * authoritative: batch records are reconciled to it (surplus becomes an
+     * AUDIT- batch, deficit is written off FEFO) and the flat counter is set
+     * to the counted value. Shared by the admin and inventory dashboards.
+     */
+    public function applyMonthlyAuditAdjustment(
+        InventoryItem $item,
+        int $actualStock,
+        ?string $reason,
+        string $auditMonth
+    ): array {
+        $systemStock = (int) ($item->stock ?? 0);
+        $variance = $actualStock - $systemStock;
+        $status = $variance === 0 ? 'matched' : 'discrepancy';
+
+        if ($status === 'discrepancy' && trim((string) $reason) === '') {
+            throw ValidationException::withMessages([
+                'items' => ["A reason is required for the discrepancy on \"{$item->name}\"."],
+            ]);
+        }
+
+        $audit = InventoryMonthlyAudit::updateOrCreate(
+            [
+                'inventory_item_id' => $item->id,
+                'audit_month' => $auditMonth,
+            ],
+            [
+                'system_stock' => $systemStock,
+                'actual_stock' => $actualStock,
+                'variance' => $variance,
+                'status' => $status,
+                'reason' => $reason,
+                'checked_by' => auth()->user()?->name ?? 'System',
+            ]
+        );
+
+        $reconciliation = null;
+        if ($variance !== 0) {
+            $reconciliation = $this->reconcileToStock(
+                $item->fresh(),
+                $actualStock,
+                $reason ?: 'Monthly inventory count correction',
+                'monthly_audit',
+                'monthly_audit',
+                null,
+                'AUDIT',
+                [
+                    'audit_month' => $auditMonth,
+                    'system_stock' => $systemStock,
+                    'actual_stock' => $actualStock,
+                    'variance' => $variance,
+                ]
+            );
+        }
+
+        return [
+            'audit' => $audit,
+            'variance' => $variance,
+            'system_stock' => $systemStock,
+            'reconciliation' => $reconciliation,
         ];
     }
 

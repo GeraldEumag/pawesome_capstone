@@ -353,89 +353,21 @@ class DashboardController extends Controller
         ]);
 
         return DB::transaction(function () use ($validated, $request) {
-            $checkedBy = $request->user()?->name ?? 'System';
-            $userId = $request->user()?->id;
-            $userRole = $request->user()?->role;
             $saved = [];
 
             foreach ($validated['items'] as $row) {
                 $item = InventoryItem::lockForUpdate()->findOrFail($row['inventory_item_id']);
 
-                $systemStock = (int) ($item->stock ?? 0);
-                $actualStock = (int) $row['actual_stock'];
-                $variance = $actualStock - $systemStock;
-                $status = $variance === 0 ? 'matched' : 'discrepancy';
-
-                if ($status === 'discrepancy' && trim((string) ($row['reason'] ?? '')) === '') {
-                    throw ValidationException::withMessages([
-                        'items' => ["A reason is required for the discrepancy on \"{$item->name}\"."],
-                    ]);
-                }
-
-                $audit = InventoryMonthlyAudit::updateOrCreate(
-                    [
-                        'inventory_item_id' => $item->id,
-                        'audit_month' => $validated['audit_month'],
-                    ],
-                    [
-                        'system_stock' => $systemStock,
-                        'actual_stock' => $actualStock,
-                        'variance' => $variance,
-                        'status' => $status,
-                        'reason' => $row['reason'] ?? null,
-                        'checked_by' => $checkedBy,
-                    ]
+                // Physical count is authoritative — the service keeps batch
+                // records in sync with the corrected stock.
+                $result = $this->inventoryService->applyMonthlyAuditAdjustment(
+                    $item,
+                    (int) $row['actual_stock'],
+                    $row['reason'] ?? null,
+                    $validated['audit_month']
                 );
 
-                if ($variance !== 0) {
-                    $before = $systemStock;
-                    $after = $actualStock;
-
-                    InventoryBatch::create([
-                        'inventory_item_id' => $item->id,
-                        'batch_no' => 'AUDIT-' . strtoupper(uniqid()),
-                        'received_date' => now(),
-                        'expiration_date' => null,
-                        'quantity' => $variance > 0 ? $variance : 0,
-                        'remaining_quantity' => $variance > 0 ? $variance : 0,
-                        'status' => $variance > 0 ? 'active' : 'audit_adjusted',
-                        'notes' => 'Monthly inventory audit adjustment',
-                    ]);
-
-                    $stockUpdate = ['stock' => $actualStock];
-                    if (Schema::hasColumn('inventory_items', 'quantity')) {
-                        $stockUpdate['quantity'] = $actualStock;
-                    }
-
-                    DB::table('inventory_items')
-                        ->where('id', $item->id)
-                        ->update($stockUpdate);
-
-                    InventoryLog::create([
-                        'inventory_item_id' => $item->id,
-                        'delta' => $variance,
-                        'quantity' => abs($variance),
-                        'type' => 'monthly_audit',
-                        'movement_type' => 'monthly_audit',
-                        'reason' => $row['reason'] ?? 'Monthly inventory count correction',
-                        'reference_type' => 'monthly_audit',
-                        'stock_before' => $before,
-                        'stock_after' => $after,
-                        'previous_stock' => $before,
-                        'new_stock' => $after,
-                        'performed_by' => $checkedBy,
-                        'user_id' => $userId,
-                        'role' => $userRole,
-                        'details' => json_encode([
-                            'audit_month' => $validated['audit_month'],
-                            'system_stock' => $systemStock,
-                            'actual_stock' => $actualStock,
-                            'variance' => $variance,
-                        ]),
-                    ]);
-                }
-
-                $saved[] = $audit;
+                $saved[] = $result['audit'];
             }
 
             return response()->json([
@@ -530,24 +462,36 @@ class DashboardController extends Controller
             default => $quantity,
         };
 
-        $item->update(['stock' => $newStock]);
+        if ($newStock !== $current && $item->hasRealBatches()) {
+            // Batch-tracked items: reconcile batches to the target so the flat
+            // counter never drifts from batch quantities.
+            $this->inventoryService->reconcileToStock(
+                $item,
+                $newStock,
+                $validated['reason'] ?? 'Manual stock adjustment',
+                'manual_adjustment',
+                $validated['type']
+            );
+        } else {
+            $item->update(['stock' => $newStock]);
 
-        InventoryLog::create([
-            'inventory_item_id' => $item->id,
-            'delta' => $newStock - $current,
-            'quantity' => abs($newStock - $current),
-            'type' => $validated['type'],
-            'movement_type' => 'manual_adjustment',
-            'reason' => $validated['reason'] ?? 'Manual stock adjustment',
-            'reference_type' => $validated['type'],
-            'stock_before' => $current,
-            'stock_after' => $newStock,
-            'previous_stock' => $current,
-            'new_stock' => $newStock,
-            'performed_by' => $request->user()?->name,
-            'role' => $request->user()?->role,
-            'user_id' => $request->user()?->id,
-        ]);
+            InventoryLog::create([
+                'inventory_item_id' => $item->id,
+                'delta' => $newStock - $current,
+                'quantity' => abs($newStock - $current),
+                'type' => $validated['type'],
+                'movement_type' => 'manual_adjustment',
+                'reason' => $validated['reason'] ?? 'Manual stock adjustment',
+                'reference_type' => $validated['type'],
+                'stock_before' => $current,
+                'stock_after' => $newStock,
+                'previous_stock' => $current,
+                'new_stock' => $newStock,
+                'performed_by' => $request->user()?->name,
+                'role' => $request->user()?->role,
+                'user_id' => $request->user()?->id,
+            ]);
+        }
 
         WorkflowNotifier::notifyRole('inventory', 'Stock Adjustment Made', "{$item->name}: {$current} -> {$newStock}", 'info', 'inventory_item', $item->id);
         ActivityLog::log($request->user()?->id, 'inventory_adjusted', "Inventory adjusted {$item->name}", [

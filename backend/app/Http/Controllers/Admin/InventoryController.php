@@ -310,68 +310,67 @@ class InventoryController extends Controller
         ]);
 
         try {
-            $item = InventoryItem::findOrFail($id);
-            $current = (int) ($item->quantity ?? $item->stock ?? 0);
-            $qty = (int) $validated['quantity'];
-            $expirationDate = $validated['expiration_date'] ?? null;
+            return DB::transaction(function () use ($validated, $id) {
+                $item = InventoryItem::lockForUpdate()->findOrFail($id);
+                $current = (int) ($item->quantity ?? $item->stock ?? 0);
+                $qty = (int) $validated['quantity'];
+                $expirationDate = $validated['expiration_date'] ?? null;
 
-            // Category-based expiry validation
-            $expiryRequiredCategories = [
-                'food',
-                'medicine',
-                'vitamins',
-                'health',
-                'grooming',
-                'shampoo',
-                'treats',
-            ];
+                // Category-based expiry validation
+                $expiryRequiredCategories = [
+                    'food',
+                    'medicine',
+                    'vitamins',
+                    'health',
+                    'grooming',
+                    'shampoo',
+                    'treats',
+                ];
 
-            $category = strtolower($item->category ?? '');
-            $requiresExpiry = collect($expiryRequiredCategories)->contains(function ($key) use ($category) {
-                return str_contains($category, $key);
-            });
+                $category = strtolower($item->category ?? '');
+                $requiresExpiry = collect($expiryRequiredCategories)->contains(function ($key) use ($category) {
+                    return str_contains($category, $key);
+                });
 
-            // Enforce expiry requirement for add operations
-            if ($validated['type'] === 'add' && $qty > 0 && $requiresExpiry && !$expirationDate) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Expiration date is required for this item category.',
-                ], 422);
-            }
+                // Enforce expiry requirement for add operations
+                if ($validated['type'] === 'add' && $qty > 0 && $requiresExpiry && !$expirationDate) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'Expiration date is required for this item category.',
+                    ], 422);
+                }
 
-            if ($validated['type'] === 'add') {
-                $newStock = $current + $qty;
+                if ($validated['type'] === 'add') {
+                    $newStock = $current + $qty;
 
-                // Create new batch if expiration date is provided or required
-                if (($expirationDate || $requiresExpiry) && $qty > 0) {
-                    // addBatchStock updates main stock by default; sync quantity column too
-                    $item->addBatchStock($qty, null, $expirationDate, 'Stock adjustment');
-                    if (Schema::hasColumn($item->getTable(), 'quantity')) {
-                        $item->quantity = $item->stock;
+                    if ($qty > 0 && ($expirationDate || $requiresExpiry || $item->hasRealBatches())) {
+                        // Batch-tracked items (or expiry-tracked adds) always
+                        // get a batch so stock stays in sync with batches.
+                        $item->addBatchStock($qty, null, $expirationDate, 'Stock adjustment');
+                        if (Schema::hasColumn($item->getTable(), 'quantity')) {
+                            $item->quantity = $item->stock;
+                            $item->save();
+                        }
+                    } else {
+                        // Simple stock addition without batch
+                        if (Schema::hasColumn($item->getTable(), 'stock')) {
+                            $item->stock = $newStock;
+                        }
+                        $item->quantity = $newStock;
                         $item->save();
                     }
-                } else {
-                    // Simple stock addition without batch
-                    if (Schema::hasColumn($item->getTable(), 'stock')) {
-                        $item->stock = $newStock;
-                    }
-                    $item->quantity = $newStock;
-                    $item->save();
-                }
-            } elseif ($validated['type'] === 'remove') {
-                $newStock = max(0, $current - $qty);
+                } elseif ($validated['type'] === 'remove') {
+                    $newStock = max(0, $current - $qty);
 
-                // Deduct from batches using FEFO (via model method, includes logging)
-                if ($qty > 0) {
-                    if ($item->needsFefo() || $item->batches()->exists()) {
-                        $item->deductStockFefo(
-                            $qty,
+                    if ($qty > 0 && $item->hasRealBatches()) {
+                        // Reconcile batches to the remaining count (FEFO write-off)
+                        $this->inventoryService->reconcileToStock(
+                            $item,
+                            $newStock,
                             $validated['reason'] ?? 'Manual stock removal',
                             'manual_removal',
-                            'adjustment',
-                            null
+                            'adjustment'
                         );
-                        // deductStockFefo already updates stock + creates log; skip duplicate log below
                         $item = $item->fresh();
                         $newStock = (int) $item->stock;
                         return response()->json([
@@ -382,46 +381,66 @@ class InventoryController extends Controller
                             'stock_after' => $newStock,
                         ]);
                     }
+
                     // Non-batch item: simple decrement
                     if (Schema::hasColumn($item->getTable(), 'stock')) {
                         $item->stock = $newStock;
                     }
                     $item->quantity = $newStock;
                     $item->save();
+                } else {
+                    $newStock = $qty;
+
+                    if ($item->hasRealBatches()) {
+                        $this->inventoryService->reconcileToStock(
+                            $item,
+                            $newStock,
+                            $validated['reason'] ?? 'Manual stock adjustment',
+                            'stock_adjustment_set',
+                            'set'
+                        );
+                        $item = $item->fresh();
+                        return response()->json([
+                            'success' => true,
+                            'message' => 'Stock adjusted successfully',
+                            'item' => $item,
+                            'stock_before' => $current,
+                            'stock_after' => (int) $item->stock,
+                        ]);
+                    }
+
+                    $item->quantity = $newStock;
+                    if (Schema::hasColumn($item->getTable(), 'stock')) {
+                        $item->stock = $newStock;
+                    }
+                    $item->save();
                 }
-            } else {
-                $newStock = $qty;
-                $item->quantity = $newStock;
-                if (Schema::hasColumn($item->getTable(), 'stock')) {
-                    $item->stock = $newStock;
-                }
-                $item->save();
-            }
 
-            // Refresh item to get updated stock
-            $item = $item->fresh();
+                // Refresh item to get updated stock
+                $item = $item->fresh();
 
-            // Log the adjustment
-            InventoryLog::create([
-                'inventory_item_id' => $item->id,
-                'delta' => $newStock - $current,
-                'reason' => $validated['reason'] ?? 'Manual stock adjustment',
-                'reference_type' => $validated['type'],
-                'previous_stock' => $current,
-                'new_stock' => $newStock,
-                'performed_by' => auth()->user()->name ?? 'System',
-                'role' => auth()->user()->role ?? 'Staff',
-                'user_id' => auth()->id(),
-            ]);
+                // Log the adjustment
+                InventoryLog::create([
+                    'inventory_item_id' => $item->id,
+                    'delta' => $newStock - $current,
+                    'reason' => $validated['reason'] ?? 'Manual stock adjustment',
+                    'reference_type' => $validated['type'],
+                    'previous_stock' => $current,
+                    'new_stock' => $newStock,
+                    'performed_by' => auth()->user()->name ?? 'System',
+                    'role' => auth()->user()->role ?? 'Staff',
+                    'user_id' => auth()->id(),
+                ]);
 
-            return response()->json([
-                'success' => true,
-                'message' => 'Stock adjusted successfully',
-                'item' => $item->fresh(),
-                'previous_stock' => $current,
-                'new_stock' => $newStock,
-                'adjustment' => $newStock - $current,
-            ]);
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Stock adjusted successfully',
+                    'item' => $item->fresh(),
+                    'previous_stock' => $current,
+                    'new_stock' => $newStock,
+                    'adjustment' => $newStock - $current,
+                ]);
+            });
         } catch (\Exception $e) {
             return response()->json(['errors' => [$e->getMessage()]], 422);
         }
@@ -878,90 +897,21 @@ class InventoryController extends Controller
         ]);
 
         return DB::transaction(function () use ($validated) {
-            $checkedBy = auth()->user()->name ?? 'Inventory Manager';
-            $userId = auth()->id();
-            $userRole = auth()->user()?->role;
             $saved = [];
 
             foreach ($validated['items'] as $row) {
                 $item = InventoryItem::lockForUpdate()->findOrFail($row['inventory_item_id']);
 
-                $systemStock = (int) ($item->stock ?? 0);
-                $actualStock = (int) $row['actual_stock'];
-                $variance = $actualStock - $systemStock;
-
-                $status = $variance === 0 ? 'matched' : 'discrepancy';
-
-                if ($status === 'discrepancy' && trim((string) ($row['reason'] ?? '')) === '') {
-                    throw ValidationException::withMessages([
-                        'items' => ["A reason is required for the discrepancy on \"{$item->name}\"."],
-                    ]);
-                }
-
-                $audit = InventoryMonthlyAudit::updateOrCreate(
-                    [
-                        'inventory_item_id' => $item->id,
-                        'audit_month' => $validated['audit_month'],
-                    ],
-                    [
-                        'system_stock' => $systemStock,
-                        'actual_stock' => $actualStock,
-                        'variance' => $variance,
-                        'status' => $status,
-                        'reason' => $row['reason'] ?? null,
-                        'checked_by' => $checkedBy,
-                    ]
+                // Physical count is authoritative — reconcileToStock inside
+                // keeps batch records in sync with the corrected stock.
+                $result = $this->inventoryService->applyMonthlyAuditAdjustment(
+                    $item,
+                    (int) $row['actual_stock'],
+                    $row['reason'] ?? null,
+                    $validated['audit_month']
                 );
 
-                if ($variance !== 0) {
-                    $before = $systemStock;
-                    $after = $actualStock;
-
-                    InventoryBatch::create([
-                        'inventory_item_id' => $item->id,
-                        'batch_no' => 'AUDIT-' . strtoupper(uniqid()),
-                        'received_date' => now(),
-                        'expiration_date' => null,
-                        'quantity' => $variance > 0 ? $variance : 0,
-                        'remaining_quantity' => $variance > 0 ? $variance : 0,
-                        'status' => $variance > 0 ? 'active' : 'audit_adjusted',
-                        'notes' => 'Monthly inventory audit adjustment',
-                    ]);
-
-                    $stockUpdate = ['stock' => $actualStock];
-                    if (Schema::hasColumn('inventory_items', 'quantity')) {
-                        $stockUpdate['quantity'] = $actualStock;
-                    }
-
-                    DB::table('inventory_items')
-                        ->where('id', $item->id)
-                        ->update($stockUpdate);
-
-                    InventoryLog::create([
-                        'inventory_item_id' => $item->id,
-                        'delta' => $variance,
-                        'quantity' => abs($variance),
-                        'type' => 'monthly_audit',
-                        'movement_type' => 'monthly_audit',
-                        'reason' => $row['reason'] ?? 'Monthly inventory count correction',
-                        'reference_type' => 'monthly_audit',
-                        'stock_before' => $before,
-                        'stock_after' => $after,
-                        'previous_stock' => $before,
-                        'new_stock' => $after,
-                        'performed_by' => $checkedBy,
-                        'user_id' => $userId,
-                        'role' => $userRole,
-                        'details' => json_encode([
-                            'audit_month' => $validated['audit_month'],
-                            'system_stock' => $systemStock,
-                            'actual_stock' => $actualStock,
-                            'variance' => $variance,
-                        ]),
-                    ]);
-                }
-
-                $saved[] = $audit;
+                $saved[] = $result['audit'];
             }
 
             return response()->json([

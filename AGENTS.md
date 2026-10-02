@@ -231,6 +231,18 @@ configuration; review `docs/DEPLOYMENT.md` before using any provider settings.
   residuals are Windows/dev-server load starvation — all pass at
   `--workers=2` or in isolation. Details and rerun guidance:
   `docs/E2E_RELIABILITY_AUDIT.md`.
+- **POS "Insufficient batch stock" false failures: FIXED** — the flat
+  `inventory_items.stock` counter and `inventory_batches` totals could drift:
+  the monthly audit wrote `stock` but only a 0-qty `audit_adjusted` marker
+  batch (which then forced the item onto the FEFO path with nothing to
+  deduct), and adjust/set, customer-order, and boarding add-on paths moved
+  `stock` with no batch at all. `InventoryService::reconcileToStock` +
+  `applyMonthlyAuditAdjustment` now keep both counters in sync on every path;
+  `deductStock` self-heals residual drift by materializing a labelled `RECON-`
+  batch instead of blocking the cashier; `hasRealBatches()` ignores marker
+  rows; `php artisan inventory:reconcile-stock [--apply]` reports/repairs
+  existing drift (dry-run default). Tests:
+  `php artisan test --filter=InventoryBatchReconciliationTest`.
 - **Cashier notification deep link: FIXED** — `/cashier/payment-verification`
   (used by `NotificationDropdown` and the chatbot) previously hit the `*` catch-all
   and opened POS on the Products tab. It is now a real route rendering

@@ -69,6 +69,7 @@ class BoardingAddOnInventoryService
             }
 
             // Process deductions
+            $inventoryService = new InventoryService();
             foreach ($bookingAddOns as $bookingAddOn) {
                 $requiredQuantity = $this->calculateRequiredQuantity($bookingAddOn, $boarding);
                 $inventoryItem = $bookingAddOn->inventoryItem;
@@ -82,39 +83,18 @@ class BoardingAddOnInventoryService
                     throw new \Exception("Stock changed during processing for {$bookingAddOn->name}");
                 }
 
-                // Update stock
-                $previousStock = $lockedItem->stock;
-                $newStock = $previousStock - $requiredQuantity;
-                $lockedItem->update(['stock' => $newStock]);
+                $previousStock = (int) $lockedItem->stock;
 
-                // Create inventory log
-                InventoryLog::create([
-                    'inventory_item_id' => $inventoryItem->id,
-                    'movement_type' => 'boarding_addon_usage',
-                    'type' => 'deduction',
-                    'quantity' => $requiredQuantity,
-                    'delta' => -$requiredQuantity,
-                    'previous_stock' => $previousStock,
-                    'new_stock' => $newStock,
-                    'reference_id' => $boarding->id,
-                    'reference_type' => 'boarding',
-                    'reference' => "Pet Hotel add-on usage for booking #{$boarding->id}",
-                    'performed_by' => Auth::user()?->name ?: 'System',
-                    'role' => $performedByRole,
-                    'user_id' => Auth::id(),
-                    'details' => json_encode([
-                        'booking_id' => $boarding->id,
-                        'add_on_id' => $bookingAddOn->add_on_id,
-                        'add_on_name' => $bookingAddOn->name,
-                        'charge_type' => $bookingAddOn->charge_type,
-                        'selected_quantity' => $bookingAddOn->quantity,
-                        'number_of_days' => $bookingAddOn->number_of_days,
-                        'quantity_per_unit' => $bookingAddOn->addOn->quantity_per_unit ?? 1,
-                        'calculated_quantity' => $requiredQuantity,
-                        'pet_name' => $boarding->pet_name,
-                        'customer_name' => $boarding->customer_name
-                    ])
-                ]);
+                // Deduct via the centralized service so batch-tracked items
+                // consume batches (FEFO) instead of drifting from the counter.
+                $inventoryService->deductStock(
+                    $lockedItem->id,
+                    $requiredQuantity,
+                    "Pet Hotel add-on usage for booking #{$boarding->id} ({$bookingAddOn->name})",
+                    'boarding',
+                    $boarding->id
+                );
+                $newStock = (int) $lockedItem->fresh()->stock;
 
                 // Update booking add-on with deduction info
                 $bookingAddOn->update([
@@ -178,39 +158,19 @@ class BoardingAddOnInventoryService
                     ->lockForUpdate()
                     ->first();
 
-                // Update stock (restore)
-                $previousStock = $lockedItem->stock;
-                $newStock = $previousStock + $deductedQuantity;
-                $lockedItem->update(['stock' => $newStock]);
+                $previousStock = (int) $lockedItem->stock;
 
-                // Create inventory log for restoration
-                InventoryLog::create([
-                    'inventory_item_id' => $inventoryItem->id,
-                    'movement_type' => 'boarding_addon_restore',
-                    'type' => 'restoration',
-                    'quantity' => $deductedQuantity,
-                    'delta' => $deductedQuantity,
-                    'previous_stock' => $previousStock,
-                    'new_stock' => $newStock,
-                    'reference_id' => $boarding->id,
-                    'reference_type' => 'boarding',
-                    'reference' => "Pet Hotel add-on restoration for cancelled booking #{$boarding->id}",
-                    'performed_by' => Auth::user()?->name ?: 'System',
-                    'role' => $performedByRole,
-                    'user_id' => Auth::id(),
-                    'details' => json_encode([
-                        'booking_id' => $boarding->id,
-                        'add_on_id' => $bookingAddOn->add_on_id,
-                        'add_on_name' => $bookingAddOn->name,
-                        'charge_type' => $bookingAddOn->charge_type,
-                        'selected_quantity' => $bookingAddOn->quantity,
-                        'number_of_days' => $bookingAddOn->number_of_days,
-                        'quantity_per_unit' => $bookingAddOn->addOn->quantity_per_unit ?? 1,
-                        'restored_quantity' => $deductedQuantity,
-                        'pet_name' => $boarding->pet_name,
-                        'customer_name' => $boarding->customer_name
-                    ])
-                ]);
+                // Restore via the centralized service so batch-tracked items
+                // regain a batch record instead of drifting from the counter.
+                $inventoryService = new InventoryService();
+                $inventoryService->addStock(
+                    $lockedItem->id,
+                    $deductedQuantity,
+                    "Pet Hotel add-on restoration for cancelled booking #{$boarding->id} ({$bookingAddOn->name})",
+                    'boarding',
+                    $boarding->id
+                );
+                $newStock = (int) $lockedItem->fresh()->stock;
 
                 // Update booking add-on with restoration info
                 $bookingAddOn->update([
