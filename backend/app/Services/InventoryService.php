@@ -444,7 +444,11 @@ class InventoryService
 
             $movementType = in_array($referenceType, ['vet_usage', 'grooming_usage', 'boarding_food_usage'], true)
                 ? $referenceType
-                : ($referenceType === 'sale' ? 'pos_sale' : 'stock_deduction');
+                : match ($referenceType) {
+                    'sale' => 'pos_sale',
+                    'boarding' => 'boarding_addon_usage',
+                    default => 'stock_deduction',
+                };
             $batchDeductions = $item->deductStockFefo($quantity, $reason, $movementType, $referenceType, $referenceId, $batchId);
 
             // Refresh item to get updated stock
@@ -471,7 +475,11 @@ class InventoryService
 
         $movementType = in_array($referenceType, ['vet_usage', 'grooming_usage', 'boarding_food_usage'], true)
             ? $referenceType
-            : ($referenceType === 'customer_order' ? 'customer_order_deduction' : 'pos_sale');
+            : match ($referenceType) {
+                'customer_order' => 'customer_order_deduction',
+                'boarding' => 'boarding_addon_usage',
+                default => 'pos_sale',
+            };
 
         // Log the stock deduction
         InventoryLog::create([
@@ -533,7 +541,11 @@ class InventoryService
                 'delta' => $quantity,
                 'quantity' => $quantity,
                 'type' => 'restock',
-                'movement_type' => $referenceType === 'cancellation' ? 'sale_void' : $referenceType,
+                'movement_type' => match ($referenceType) {
+                    'cancellation' => 'sale_void',
+                    'boarding' => 'boarding_addon_restore',
+                    default => $referenceType,
+                },
                 'reason' => $reason,
                 'reference_type' => $referenceType === 'cancellation' ? 'sale_void' : $referenceType,
                 'reference_id' => $referenceId,
@@ -573,7 +585,12 @@ class InventoryService
 
         $movementType = in_array($referenceType, ['vet_usage', 'grooming_usage', 'boarding_food_usage'], true)
             ? $referenceType
-            : ($referenceType === 'cancellation' ? 'sale_void' : ($referenceType === 'customer_order' ? 'customer_order_restore' : 'stock_in'));
+            : match ($referenceType) {
+                'cancellation' => 'sale_void',
+                'customer_order' => 'customer_order_restore',
+                'boarding' => 'boarding_addon_restore',
+                default => 'stock_in',
+            };
 
         // Log the stock addition
         InventoryLog::create([
