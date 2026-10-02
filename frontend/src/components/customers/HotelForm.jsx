@@ -294,8 +294,8 @@ const HotelForm = () => {
     ["approved", "scheduled"].includes(booking.status) &&
     ["unpaid", "rejected"].includes(booking.payment_status || "unpaid");
 
-  const fetchBoardingAvailability = async (roomType = null) => {
-    if (!bookingForm.pet_id || !bookingForm.check_in_date) {
+  const fetchBoardingAvailability = async (form = bookingForm) => {
+    if (!form?.pet_id || !form?.check_in_date) {
       setBoardingAvailability(null);
       return;
     }
@@ -306,13 +306,13 @@ const HotelForm = () => {
 
       // Same-day stay: check-out equals check-in
       const params = new URLSearchParams({
-        pet_id: bookingForm.pet_id,
-        check_in_date: bookingForm.check_in_date,
-        check_out_date: bookingForm.check_in_date,
+        pet_id: form.pet_id,
+        check_in_date: form.check_in_date,
+        check_out_date: form.check_in_date,
       });
 
-      if (roomType) {
-        params.append('room_type', roomType);
+      if (form.room_type) {
+        params.append('room_type', form.room_type);
       }
 
       const data = await apiRequest(`/boarding/rooms/available?${params}`);
@@ -335,10 +335,15 @@ const HotelForm = () => {
     const { name, value } = e.target;
     setBookingForm((prev) => ({ ...prev, [name]: value }));
 
-    if ((name === "pet_id" || name === "check_in_date") && value) {
+    if (name === "pet_id" || name === "check_in_date") {
       const updatedForm = { ...bookingForm, [name]: value };
-      if (updatedForm.pet_id && updatedForm.check_in_date) {
-        fetchBoardingAvailability(updatedForm.room_type);
+      // A previous selection is only valid for the exact pet+date pair
+      setSelectedRoom(null);
+      if (value && updatedForm.pet_id && updatedForm.check_in_date) {
+        // Pass updatedForm — bookingForm state here is still pre-change
+        fetchBoardingAvailability(updatedForm);
+      } else {
+        setBoardingAvailability(null);
       }
     }
   };

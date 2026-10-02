@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
   faPlus,
@@ -77,6 +77,7 @@ const NewWalkInBookingModal = ({ onClose, onSuccess }) => {
   const [pets, setPets] = useState([]);
   const [services, setServices] = useState([]);
   const [hotelRooms, setHotelRooms] = useState([]);
+  const roomsRequestRef = useRef(0);
   const [processing, setProcessing] = useState(false);
   const [error, setError] = useState("");
 
@@ -92,7 +93,11 @@ const NewWalkInBookingModal = ({ onClose, onSuccess }) => {
         setCustomers(safeArray(cData, "customers"));
         setPets(safeArray(pData, "pets"));
         setServices(safeArray(sData, "services"));
-        setHotelRooms(safeArray(hData, "rooms").filter((r) => !r.status || r.status === "available"));
+        // Don't overwrite a date-specific room list if the user already
+        // picked a date while this initial load was in flight.
+        if (roomsRequestRef.current === 0) {
+          setHotelRooms(safeArray(hData, "rooms").filter((r) => !r.status || r.status === "available"));
+        }
       } catch {
         setCustomers([]);
         setPets([]);
@@ -106,8 +111,13 @@ const NewWalkInBookingModal = ({ onClose, onSuccess }) => {
   // Refresh room availability when the booking date changes
   useEffect(() => {
     if (form.bookingType !== "hotel" || !form.appointmentDate) return;
+    const requestId = ++roomsRequestRef.current;
     apiRequest(`/receptionist/hotel-rooms?date=${encodeURIComponent(form.appointmentDate)}`)
-      .then((hData) => setHotelRooms(safeArray(hData, "rooms")))
+      .then((hData) => {
+        if (requestId === roomsRequestRef.current) {
+          setHotelRooms(safeArray(hData, "rooms"));
+        }
+      })
       .catch(() => {});
   }, [form.appointmentDate, form.bookingType]);
 

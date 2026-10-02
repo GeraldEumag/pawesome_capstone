@@ -115,7 +115,7 @@ const WalkInBookingModal = ({ serviceType, onClose, onSuccess }) => {
       fetchVeterinarians(signal);
     }
     if (serviceType === "hotel") {
-      fetchHotelRooms(signal);
+      fetchHotelRooms();
     }
     fetchServices(signal);
     fetchAllCustomers(signal);
@@ -143,11 +143,18 @@ const WalkInBookingModal = ({ serviceType, onClose, onSuccess }) => {
     }
   };
 
+  const roomsRequestRef = useRef(0);
+
   const fetchHotelRooms = async (date = null) => {
+    const requestId = ++roomsRequestRef.current;
     try {
       const query = date ? `?date=${encodeURIComponent(date)}` : "?status=available";
       const response = await apiRequest(`/receptionist/hotel-rooms${query}`);
-      setHotelRooms(response.rooms || []);
+      // Ignore stale responses — a slower mount fetch must not clobber
+      // the result for the date the user actually picked.
+      if (requestId === roomsRequestRef.current) {
+        setHotelRooms(response.rooms || []);
+      }
     } catch (err) {
       console.error("Failed to fetch hotel rooms:", err);
     }
