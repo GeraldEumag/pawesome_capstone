@@ -5,9 +5,16 @@ notification channel). All in-app notifications are synchronous `INSERT`s that
 live inside the surrounding business transaction where one exists — so a
 rolled-back state transition cannot leave orphaned notifications.
 
-Customer-facing emails are queued separately via `CustomerNotificationMail`
-(`ShouldQueue`) inside `NotificationService::sendEmailNotification()`, gated by
-the `notif_email_notifications` system setting and per-customer preferences.
+Customer-facing emails do **not** send inline. Every email producer creates a
+durable intent row in `email_deliveries` (inside the same DB transaction as the
+business state where one exists), then a dispatcher publishes the intent to the
+`emails` database queue where `App\Jobs\SendEmailDelivery` sends it via the
+configured mailer (`NotificationService::sendEmailNotification` →
+`EmailDeliveryService::lifecycle`; receipts via `::paymentReceipt`; auth mails
+via `::intent`). Optional lifecycle mail is gated by the
+`notif_email_notifications` system setting and per-customer preferences —
+both at intent time and re-checked at worker send time, so an opt-out between
+intent and pickup suppresses the delivery without sending.
 
 ## Schema
 
@@ -78,6 +85,37 @@ the `notif_email_notifications` system setting and per-customer preferences.
 5. **Transactional placement** — notifications are created inside (or after)
    the business transaction, so failed transitions produce none.
 
+## Email outbox (`email_deliveries`)
+
+All customer-facing email flows through the durable outbox, not direct
+`Mail::queue` calls:
+
+```
+business event → email_deliveries intent (in-transaction) → COMMIT
+  → email-deliveries:dispatch → jobs row on `emails` queue
+  → queue:work → SendEmailDelivery → Laravel Mail/Blade → provider
+```
+
+- **Dedup:** `occurrence_key` per event instance makes re-submitted producer
+  attempts idempotent.
+- **Recipient privacy:** addresses are stored encrypted
+  (`recipient_fingerprint` for lookups).
+- **Suppression at send time:** an encrypted `suppression` descriptor records
+  checks re-evaluated by the worker — consumed auth tokens
+  (`token_row`), deactivated users (`user_active`), changed recipient
+  (`recipient_unchanged`), preference opt-out (`customer_email_enabled`), and
+  stale business state (`model_field`).
+- **States:** dispatch state (`pending`/`processing`/`accepted`/`suppressed`/
+  failure classes) is tracked separately from provider outcome
+  (`provider_status`, `delivered_at`) — queued ≠ sent ≠ provider-accepted ≠
+  inbox-delivered.
+- **Operator commands:** `email-deliveries:dispatch` (every minute),
+  `email-deliveries:reconcile` (every ten minutes, crash recovery),
+  `email-deliveries:retry {id}` (manual).
+- **Email types:** auth (`verify`, `password-reset`, `password-changed`,
+  `account-welcome`), lifecycle (`notification`), receipts
+  (`payment-receipt`), HR payslips (separate theme).
+
 ## Read/unread
 
 `read` bool + `read_at` timestamp; `markAsRead`/`markAsUnread` on the model.
@@ -94,6 +132,10 @@ if table growth becomes an issue.
 
 ## Tests
 
-`tests/Feature/NotificationMatrixTest.php` — 10 tests covering every matrix
+`tests/Feature/NotificationMatrixTest.php` — 11 tests covering every matrix
 event, composite-role expansion, dedup, unauthorized-recipient exclusion,
 per-user payroll rows, read/unread, and cross-user mutation protection.
+Email-layer coverage lives in `EmailDeliveryOutboxTest`,
+`EmailAuthFlowTest`, `EmailServiceWorkflowTest`,
+`EmailPreferencesAndTemplatesTest`, `CustomerEmailResolverTest`,
+`PaymentReceiptOutboxTest`, and `PaymentSettlementTest`.

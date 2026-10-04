@@ -89,9 +89,9 @@ class ServiceBillingService
     /**
      * Mark billing items as paid
      */
-    public static function markItemsAsPaid(array $itemIds, int $verifiedBy): array
+    public static function markItemsAsPaid(array $itemIds, int $verifiedBy, ?string $paymentMethod = null, ?string $referenceNumber = null): array
     {
-        return DB::transaction(function () use ($itemIds, $verifiedBy) {
+        return DB::transaction(function () use ($itemIds, $verifiedBy, $paymentMethod, $referenceNumber) {
             $items = ServiceItemUsage::whereIn('id', $itemIds)
                 ->where('is_billable', true)
                 ->where('is_paid', false)
@@ -109,6 +109,26 @@ class ServiceBillingService
                     $summaries[] = self::syncServicePaymentState($first->service_type, (int) $first->service_id, [
                         'verified_by' => $verifiedBy,
                     ]);
+
+                    $itemKey = sha1($first->service_type . ':' . $first->service_id . ':' . implode(',', $groupedItems->pluck('id')->sort()->values()->all()));
+                    PaymentSettlementService::record([
+                        'settleable_type' => $first->service_type,
+                        'settleable_id' => (int) $first->service_id,
+                        'customer_id' => $first->customer_id ?? null,
+                        'amount' => (float) $groupedItems->sum('total_price'),
+                        'payment_method' => $paymentMethod,
+                        'reference_number' => $referenceNumber,
+                        'verified_by' => $verifiedBy,
+                        'verified_at' => now(),
+                        'paid_at' => now(),
+                        'idempotency_key' => "items-paid:{$itemKey}",
+                    ], $groupedItems->map(fn ($item) => [
+                        'service_item_usage_id' => $item->id,
+                        'description' => $item->description ?: ($item->service_name_snapshot ?: ($item->item_name_snapshot ?: 'Service item')),
+                        'quantity' => max(1, (int) ($item->quantity_used ?? 1)),
+                        'unit_price' => (float) $item->unit_price,
+                        'total_price' => (float) $item->total_price,
+                    ])->all());
                 }
             }
 
@@ -438,7 +458,10 @@ class ServiceBillingService
         }
 
         if ($balanceDue > 0 && $totalPaid > 0) {
-            return 'balance_due';
+            // 'partial' is the canonical value every payment_status column
+            // accepts — boardings/service_requests are enums without
+            // 'balance_due', so returning it there truncates and fails.
+            return 'partial';
         }
 
         if (in_array($currentStatus, ['pending', 'rejected'], true) && $totalPaid <= 0) {

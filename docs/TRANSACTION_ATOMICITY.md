@@ -64,7 +64,11 @@ below was traced end-to-end (controller → service → model).
   rolled-back operation is never recorded as completed.
 - `WorkflowNotifier` writes `notifications` table rows (no external dispatch),
   so notifications inside a transaction roll back correctly — no afterCommit
-  needed today. If real queued mail is added later, dispatch it after commit.
+  needed.
+- `email_deliveries` intents follow the same rule: the intent row is written
+  inside the business transaction, and actual queue publication/dispatch
+  happens only after commit (`email-deliveries:dispatch` / `SendEmailDelivery`),
+  so a rolled-back transition can never leave a sent email.
 
 ## Regression tests
 

@@ -6,6 +6,8 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use App\Models\ActivityLog;
+use App\Models\ServiceItemUsage;
+use App\Models\ServiceRequest;
 use App\Services\WorkflowNotifier;
 
 class PaymentVerificationService
@@ -114,6 +116,28 @@ class PaymentVerificationService
                     ]);
 
                     $this->markLinkedServiceAsPaidFromRequest($sr, $id, $receiptNumber);
+
+                    $srModel = ServiceRequest::find($id);
+                    $srCustomer = $srModel ? CustomerEmailResolver::forServiceRequest($srModel) : null;
+                    PaymentSettlementService::record([
+                        'settleable_type' => 'service_request',
+                        'settleable_id' => $id,
+                        'customer_id' => $srCustomer?->id,
+                        'user_id' => $sr->customer_id ?? null,
+                        'amount' => $this->settledAmount('service_requests', $sr),
+                        'payment_method' => $sr->payment_method ?? null,
+                        'reference_number' => $referenceNumber ?? $sr->payment_reference ?? null,
+                        'receipt_number' => $receiptNumber,
+                        'verified_by' => Auth::id(),
+                        'verified_at' => now(),
+                        'paid_at' => now(),
+                        'idempotency_key' => "verify:service_request:{$id}:{$receiptNumber}",
+                    ], [[
+                        'description' => $sr->service_name ?? 'Service request',
+                        'quantity' => 1,
+                        'unit_price' => $this->settledAmount('service_requests', $sr),
+                        'total_price' => $this->settledAmount('service_requests', $sr),
+                    ]]);
 
                     WorkflowNotifier::notifyEmail($sr->customer_email ?? null, 'Payment Verified', "Your payment for {$sr->service_name} has been verified. Receipt: {$receiptNumber}", 'success', 'service_request', $id);
 
@@ -244,27 +268,57 @@ class PaymentVerificationService
 
     private function queueCustomerReceiptEmail(string $type, int $id): void
     {
-        $receiptType = match ($type) {
-            'service_request', 'service' => 'service_request',
-            'customer_order' => 'customer_order',
+        $meta = match ($type) {
+            'service_request', 'service' => ['table' => 'service_requests', 'settleable' => 'service_request'],
+            'customer_order' => ['table' => 'customer_orders', 'settleable' => null],
+            'boarding' => ['table' => 'boardings', 'settleable' => 'boarding'],
+            'appointment', 'veterinary' => ['table' => 'appointments', 'settleable' => 'appointment'],
+            'grooming' => ['table' => 'groomings', 'settleable' => 'grooming'],
+            'medical_confinement', 'confinement' => ['table' => 'medical_confinements', 'settleable' => 'medical_confinement'],
             default => null,
         };
 
-        if (!$receiptType) {
+        if (!$meta) {
             return;
         }
 
         try {
-            $table = $receiptType === 'customer_order' ? 'customer_orders' : 'service_requests';
+            $table = $meta['table'];
             $record = DB::table($table)->where('id', $id)->first();
-            if (!$record || ($record->payment_status ?? null) !== 'paid') {
+            if (!$record || ($record->payment_status ?? null) !== 'paid' || empty($record->receipt_number)) {
                 return;
             }
 
-            $totalAmount = $record->total_amount ?? $record->price ?? null;
-            if (empty($record->customer_email) || empty($record->receipt_number) || !is_numeric($totalAmount)) {
+            // Authoritative settlement: the ledger row written inside the
+            // verify transaction. Legacy-paid records may lack one — fall
+            // back to the persisted record fields rather than skipping.
+            $settlement = $meta['settleable']
+                ? \App\Models\PaymentSettlement::where('settleable_type', $meta['settleable'])
+                    ->where('settleable_id', $id)
+                    ->where('receipt_number', $record->receipt_number)
+                    ->with('items')
+                    ->first()
+                : null;
+
+            $totalAmount = $settlement?->amount ?? $this->settledAmount($table, $record);
+
+            // Recipient: prefer the record's persisted email where present.
+            // Identity domains differ per table — service_requests.customer_id
+            // is a users.id (resolve via CustomerEmailResolver stable
+            // ownership); dedicated tables carry a real customers.id.
+            $customer = null;
+            if ($table === 'service_requests') {
+                $srModel = ServiceRequest::find($id);
+                $customer = $srModel ? CustomerEmailResolver::forServiceRequest($srModel) : null;
+            } elseif (!empty($record->customer_id)) {
+                $customer = \App\Models\Customer::find($record->customer_id);
+            }
+
+            $customerEmail = $record->customer_email ?? $customer?->email;
+
+            if (empty($customerEmail) || !is_numeric($totalAmount) || (float) $totalAmount <= 0) {
                 Log::warning('Payment receipt email skipped because persisted receipt data is incomplete', [
-                    'type' => $receiptType,
+                    'type' => $type,
                     'record_id' => $id,
                 ]);
                 return;
@@ -272,15 +326,15 @@ class PaymentVerificationService
 
             $receipt = [
                 'receipt_number' => $record->receipt_number,
-                'customer_name' => $record->customer_name ?? 'Customer',
-                'customer_email' => $record->customer_email,
-                'total_amount' => $totalAmount,
-                'payment_method' => $record->payment_method ?? null,
-                'payment_reference' => $record->reference_number ?: ($record->payment_reference ?? null),
-                'paid_at' => $record->paid_at ?? null,
+                'customer_name' => $record->customer_name ?? $customer?->name ?? 'Customer',
+                'customer_email' => $customerEmail,
+                'total_amount' => (float) $totalAmount,
+                'payment_method' => $record->payment_method ?? $settlement?->payment_method,
+                'payment_reference' => $record->reference_number ?: ($record->payment_reference ?? $settlement?->reference_number),
+                'paid_at' => $record->paid_at ?? $settlement?->paid_at,
             ];
 
-            if ($receiptType === 'customer_order') {
+            if ($table === 'customer_orders') {
                 $receipt['items'] = DB::table('customer_order_items')
                     ->where('customer_order_id', $id)
                     ->get()
@@ -292,19 +346,91 @@ class PaymentVerificationService
                     ])
                     ->all();
             } else {
-                $receipt['pet_name'] = $record->pet_name ?? null;
-                $receipt['service_name'] = $record->service_name;
-                $receipt['service_date'] = $record->request_date ?? null;
+                // Settlement items provide the authoritative itemization;
+                // normalized to the template's item shape.
+                if ($settlement && $settlement->items->isNotEmpty()) {
+                    $receipt['items'] = $settlement->items->map(fn ($item) => [
+                        'product_name' => $item->description,
+                        'quantity' => (int) $item->quantity,
+                        'price' => (float) $item->unit_price,
+                        'subtotal' => (float) $item->total_price,
+                    ])->all();
+                }
+
+                $receipt['pet_name'] = $record->pet_name
+                    ?? (!empty($record->pet_id) ? \App\Models\Pet::find($record->pet_id)?->name : null);
+                $receipt['service_name'] = match ($table) {
+                    'service_requests' => $record->service_name ?? 'Service',
+                    'boardings' => 'Boarding' . (($record->stay_type ?? $record->boarding_type ?? null) ? ' (' . ($record->stay_type ?? $record->boarding_type) . ')' : ''),
+                    'appointments' => \App\Models\Service::find($record->service_id ?? 0)?->name ?? 'Veterinary service',
+                    'groomings' => $record->service ?? 'Grooming',
+                    default => 'Medical confinement',
+                };
+                $receipt['service_date'] = $record->request_date
+                    ?? $record->appointment_date
+                    ?? $record->check_in
+                    ?? null;
             }
 
-            NotificationService::sendPaymentReceiptEmail($record->customer_email, $receiptType, $receipt);
+            $receiptKind = $meta['settleable'] ?? 'customer_order';
+            NotificationService::sendPaymentReceiptEmail($customerEmail, $table === 'customer_orders' ? 'customer_order' : 'service_request', $receipt, [
+                'event_key' => "payment.receipt.{$receiptKind}",
+                'occurrence_key' => "{$receiptKind}:{$id}:{$record->receipt_number}",
+                'source_type' => $meta['settleable'],
+                'source_id' => $id,
+                'customer_id' => $customer?->id ?? ($table === 'service_requests' ? null : ($record->customer_id ?? null)),
+                'user_id' => $table === 'service_requests' ? ($record->customer_id ?? null) : null,
+            ]);
         } catch (\Throwable $e) {
             Log::error('Failed to queue customer payment receipt email', [
-                'type' => $receiptType,
+                'type' => $type,
                 'record_id' => $id,
                 'exception' => get_class($e),
             ]);
         }
+    }
+
+    /**
+     * Resolve the authoritative settled amount from the persisted record —
+     * never from request input. Billing-synced totals take precedence.
+     */
+    private function settledAmount(string $table, object $record): float
+    {
+        $candidates = match ($table) {
+            'medical_confinements' => ['final_amount', 'total_amount', 'amount'],
+            'service_requests' => ['total_amount', 'price'],
+            default => ['total_amount', 'price', 'amount'],
+        };
+
+        foreach ($candidates as $column) {
+            $value = $record->{$column} ?? null;
+            if (is_numeric($value) && (float) $value > 0) {
+                return (float) $value;
+            }
+        }
+
+        return 0.0;
+    }
+
+    /**
+     * Snapshot the paid billable items for a settlement. Only items already
+     * marked paid are recorded — the settlement describes what was settled.
+     */
+    private function settlementItemsFor(string $serviceType, int $serviceId): array
+    {
+        return ServiceItemUsage::where('service_type', $serviceType)
+            ->where('service_id', $serviceId)
+            ->where('is_billable', true)
+            ->where('is_paid', true)
+            ->get()
+            ->map(fn ($item) => [
+                'service_item_usage_id' => $item->id,
+                'description' => $item->description ?: ($item->service_name_snapshot ?: ($item->item_name_snapshot ?: 'Service item')),
+                'quantity' => max(1, (int) ($item->quantity_used ?? 1)),
+                'unit_price' => (float) $item->unit_price,
+                'total_price' => (float) $item->total_price,
+            ])
+            ->all();
     }
 
     private function paymentStatusOf(string $type, int $id): ?string
@@ -355,6 +481,47 @@ class PaymentVerificationService
         DB::table($table)->where('id', $id)->update($updateData);
 
         $this->syncServiceBillingForVerifiedPayment($table, $id, Auth::id(), $receiptNumber);
+
+        // Re-read post-sync so the settlement records the authoritative total.
+        $settled = DB::table($table)->where('id', $id)->first() ?? $record;
+        $settleableType = match ($table) {
+            'boardings' => 'boarding',
+            'appointments' => 'appointment',
+            'groomings' => 'grooming',
+            default => 'medical_confinement',
+        };
+        $billingServiceType = match ($table) {
+            'appointments' => 'veterinary',
+            'groomings' => 'grooming',
+            'boardings' => 'boarding',
+            default => null,
+        };
+        $settlementItems = $billingServiceType
+            ? $this->settlementItemsFor($billingServiceType, $id)
+            : [];
+        $settledAmount = $this->settledAmount($table, $settled);
+        if (empty($settlementItems)) {
+            $settlementItems = [[
+                'description' => $settleableType . ' settlement',
+                'quantity' => 1,
+                'unit_price' => $settledAmount,
+                'total_price' => $settledAmount,
+            ]];
+        }
+
+        PaymentSettlementService::record([
+            'settleable_type' => $settleableType,
+            'settleable_id' => $id,
+            'customer_id' => $record->customer_id ?? null,
+            'amount' => $settledAmount,
+            'payment_method' => $record->payment_method ?? null,
+            'reference_number' => $referenceNumber ?? $record->reference_number ?? $record->payment_reference ?? null,
+            'receipt_number' => $receiptNumber,
+            'verified_by' => Auth::id(),
+            'verified_at' => now(),
+            'paid_at' => $settled->paid_at ?? now(),
+            'idempotency_key' => "verify:{$settleableType}:{$id}:{$receiptNumber}",
+        ], $settlementItems);
 
         WorkflowNotifier::notifyEmail($record->customer_email ?? null, 'Payment verified', 'Your payment proof was verified by cashier.', 'success', $table, $id);
 

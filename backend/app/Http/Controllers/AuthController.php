@@ -6,13 +6,14 @@ use App\Models\User;
 use App\Models\Customer;
 use App\Models\LoginLog;
 use App\Mail\EmailVerificationMail;
+use App\Mail\PasswordChangedMail;
 use App\Mail\PasswordResetMail;
+use App\Services\EmailDeliveryService;
 use App\Services\FileStorageService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Carbon;
@@ -198,12 +199,26 @@ class AuthController extends Controller
         $emailChanged = $request->filled('email')
             && $request->email !== $user->email;
 
-        $user->update($request->only($allowedFields));
+        $oldEmail = $user->email;
 
-        // A changed email must be re-verified before the customer can book again.
+        DB::transaction(function () use ($request, $user, $allowedFields, $emailChanged, $oldEmail) {
+            $user->update($request->only($allowedFields));
+
+            // A changed email must be re-verified before the customer can book again.
+            if ($emailChanged && $user->role === 'customer') {
+                $user->email_verified_at = null;
+                $user->save();
+
+                // Keep the linked customer record's authoritative email in sync.
+                Customer::where('user_id', $user->id)->update(['email' => $user->email]);
+
+                // Pending auth tokens issued to the old address are superseded.
+                DB::table('password_reset_tokens')->where('email', $oldEmail)->delete();
+                DB::table('email_verification_tokens')->where('email', $oldEmail)->delete();
+            }
+        });
+
         if ($emailChanged && $user->role === 'customer') {
-            $user->email_verified_at = null;
-            $user->save();
             $this->sendVerificationEmail($user);
         }
 
@@ -265,10 +280,25 @@ class AuthController extends Controller
             return response()->json(['message' => 'Current password is incorrect'], 422);
         }
 
-        // Update password
-        $user->update([
-            'password' => Hash::make($request->new_password)
-        ]);
+        // Update password and record the security notice atomically.
+        DB::transaction(function () use ($user, $request) {
+            $user->update([
+                'password' => Hash::make($request->new_password)
+            ]);
+
+            app(EmailDeliveryService::class)->intent(
+                new PasswordChangedMail($user->email, $user->name),
+                [
+                    'event_key' => 'auth.password_changed',
+                    'occurrence_key' => 'auth.pwchanged:' . $user->id . ':' . (string) Str::uuid(),
+                    'source_type' => 'user',
+                    'source_id' => $user->id,
+                    'user_id' => $user->id,
+                    'recipient' => $user->email,
+                    'expires_at' => now()->addDay(),
+                ]
+            );
+        });
 
         return response()->json([
             'message' => 'Password changed successfully'
@@ -291,23 +321,48 @@ class AuthController extends Controller
         // Always return the same generic message to avoid email enumeration.
         // Only generate and send a token if the user actually exists.
         if ($user) {
-            $token = Str::random(64);
-            $hashedToken = Hash::make($token);
-
             $table = config('auth.passwords.users.table');
-            DB::table($table)->where('email', $email)->delete();
-            DB::table($table)->insert([
-                'email' => $email,
-                'token' => $hashedToken,
-                'created_at' => now(),
-            ]);
+            $deliveries = app(EmailDeliveryService::class);
 
-            // Send the reset link via email — never expose it in the API response.
-            try {
-                Mail::to($email)->queue(new PasswordResetMail($token, $email));
-            } catch (\Throwable $e) {
-                Log::error('Failed to queue password reset email', ['exception' => get_class($e)]);
-            }
+            DB::transaction(function () use ($user, $email, $table, $deliveries) {
+                // Serialize issuance under the owning-user row lock so
+                // concurrent requests cannot mint competing tokens.
+                User::where('id', $user->id)->lockForUpdate()->first();
+
+                // Per-account cooldown, independent of IP/burst limits: a
+                // fresh token row means a link was already issued recently.
+                $existing = DB::table($table)->where('email', $email)->lockForUpdate()->first();
+                $throttle = (int) config('auth.passwords.users.throttle', 60);
+                if ($existing && Carbon::parse($existing->created_at)->addSeconds($throttle)->isFuture()) {
+                    return;
+                }
+
+                $token = Str::random(64);
+                DB::table($table)->where('email', $email)->delete();
+                DB::table($table)->insert([
+                    'email' => $email,
+                    'token' => Hash::make($token),
+                    'created_at' => now(),
+                ]);
+
+                // Delivery intent commits with the token — a rollback
+                // removes both; a consumed/superseded token suppresses
+                // the send even if the job runs late.
+                $deliveries->intent(new PasswordResetMail($token, $email), [
+                    'event_key' => 'auth.password_reset',
+                    'occurrence_key' => 'auth.reset:' . $user->id . ':' . sha1($token),
+                    'source_type' => 'user',
+                    'source_id' => $user->id,
+                    'user_id' => $user->id,
+                    'recipient' => $email,
+                    'expires_at' => now()->addMinutes((int) config('auth.passwords.users.expire', 60)),
+                    'suppression' => [
+                        ['type' => 'token_row', 'table' => $table, 'email' => $email, 'token' => $token],
+                        ['type' => 'recipient_unchanged', 'user_id' => $user->id, 'email' => $email],
+                        ['type' => 'user_active', 'user_id' => $user->id],
+                    ],
+                ]);
+            });
         }
 
         return response()->json([
@@ -328,35 +383,59 @@ class AuthController extends Controller
         }
 
         $table = config('auth.passwords.users.table');
-        $resetRecord = DB::table($table)->where('email', $request->email)->first();
 
-        // Generic message so the response cannot be used to enumerate accounts.
-        if (!$resetRecord || !Hash::check($request->token, $resetRecord->token)) {
-            return response()->json(['message' => 'Invalid or expired reset token'], 422);
-        }
+        // The whole consume-and-mutate operation runs under a lock on the
+        // token row (primary-keyed by email) so concurrent submissions of
+        // the same token are serialized — only one can consume it.
+        return DB::transaction(function () use ($request, $table) {
+            $resetRecord = DB::table($table)->where('email', $request->email)->lockForUpdate()->first();
 
-        $expiresAt = Carbon::parse($resetRecord->created_at)->addMinutes(config('auth.passwords.users.expire'));
-        if (now()->greaterThan($expiresAt)) {
+            // Generic message so the response cannot be used to enumerate accounts.
+            if (!$resetRecord || !Hash::check($request->token, $resetRecord->token)) {
+                return response()->json(['message' => 'Invalid or expired reset token'], 422);
+            }
+
+            $expiresAt = Carbon::parse($resetRecord->created_at)->addMinutes(config('auth.passwords.users.expire'));
+            if (now()->greaterThan($expiresAt)) {
+                DB::table($table)->where('email', $request->email)->delete();
+                return response()->json(['message' => 'Reset token has expired'], 422);
+            }
+
+            $user = User::where('email', $request->email)->lockForUpdate()->first();
+
+            if (!$user) {
+                return response()->json(['message' => 'Invalid or expired reset token'], 422);
+            }
+
+            $user->update([
+                'password' => Hash::make($request->new_password),
+                'api_token' => null,
+            ]);
+
+            // Revoke all existing Sanctum sessions — a reset means the old
+            // credentials may be compromised, so issued tokens must die too.
+            $user->tokens()->delete();
+
             DB::table($table)->where('email', $request->email)->delete();
-            return response()->json(['message' => 'Reset token has expired'], 422);
-        }
 
-        $user = User::where('email', $request->email)->first();
+            // Security notice travels in the same transaction as the reset.
+            app(EmailDeliveryService::class)->intent(
+                new PasswordChangedMail($user->email, $user->name),
+                [
+                    'event_key' => 'auth.password_changed',
+                    'occurrence_key' => 'auth.pwchanged:' . $user->id . ':' . sha1($request->token),
+                    'source_type' => 'user',
+                    'source_id' => $user->id,
+                    'user_id' => $user->id,
+                    'recipient' => $user->email,
+                    'expires_at' => now()->addDay(),
+                ]
+            );
 
-        if (!$user) {
-            return response()->json(['message' => 'Invalid or expired reset token'], 422);
-        }
-
-        $user->update([
-            'password' => Hash::make($request->new_password),
-            'api_token' => null,
-        ]);
-
-        DB::table($table)->where('email', $request->email)->delete();
-
-        return response()->json([
-            'message' => 'Password reset successfully',
-        ]);
+            return response()->json([
+                'message' => 'Password reset successfully',
+            ]);
+        });
     }
 
     public function logout(Request $request)
@@ -406,31 +485,37 @@ class AuthController extends Controller
             return response()->json(['errors' => $validator->errors()], 422);
         }
 
-        $user = User::where('email', $request->email)->first();
+        // Token consumption is serialized under the locked token row so a
+        // token can only be consumed once, even under concurrent submits.
+        return DB::transaction(function () use ($request) {
+            $user = User::where('email', $request->email)->lockForUpdate()->first();
+            $record = DB::table('email_verification_tokens')->where('email', $request->email)->lockForUpdate()->first();
 
-        // Idempotent: a previously verified link (repeat click, prefetch, or a
-        // duplicate request after the token row was consumed) is a success.
-        if ($user && $user->email_verified_at) {
-            return response()->json(['message' => 'Email already verified.']);
-        }
+            // A request without a currently valid token reveals nothing —
+            // including whether the account exists or is already verified.
+            if (!$user || !$record || !Hash::check($request->token, $record->token)) {
+                return response()->json(['message' => 'Invalid or expired verification token.'], 422);
+            }
 
-        $record = DB::table('email_verification_tokens')->where('email', $request->email)->first();
+            if (Carbon::parse($record->created_at)->addMinutes(60)->isPast()) {
+                DB::table('email_verification_tokens')->where('email', $request->email)->delete();
+                return response()->json(['message' => 'Verification token has expired.'], 422);
+            }
 
-        if (!$user || !$record || !Hash::check($request->token, $record->token)) {
-            return response()->json(['message' => 'Invalid or expired verification token.'], 422);
-        }
+            // Idempotent only for the holder of a still-valid token: the
+            // account was verified through another issued link meanwhile.
+            if ($user->email_verified_at) {
+                DB::table('email_verification_tokens')->where('email', $request->email)->delete();
+                return response()->json(['message' => 'Email already verified.']);
+            }
 
-        if (Carbon::parse($record->created_at)->addMinutes(60)->isPast()) {
+            $user->email_verified_at = now();
+            $user->save();
+
             DB::table('email_verification_tokens')->where('email', $request->email)->delete();
-            return response()->json(['message' => 'Verification token has expired.'], 422);
-        }
 
-        $user->email_verified_at = now();
-        $user->save();
-
-        DB::table('email_verification_tokens')->where('email', $request->email)->delete();
-
-        return response()->json(['message' => 'Email verified successfully.']);
+            return response()->json(['message' => 'Email verified successfully.']);
+        });
     }
 
     public function resendVerificationEmail(Request $request)
@@ -458,21 +543,44 @@ class AuthController extends Controller
     private function sendVerificationEmail(User $user): void
     {
         $email = $user->email;
+        $deliveries = app(EmailDeliveryService::class);
 
-        DB::table('email_verification_tokens')->where('email', $email)->delete();
+        DB::transaction(function () use ($user, $email, $deliveries) {
+            // Serialize issuance under the owning-user row lock.
+            User::where('id', $user->id)->lockForUpdate()->first();
 
-        $token = Str::random(64);
+            // Per-account cooldown: a fresh row means a valid link was
+            // already issued seconds ago — do not churn tokens or spam.
+            $existing = DB::table('email_verification_tokens')->where('email', $email)->lockForUpdate()->first();
+            if ($existing && Carbon::parse($existing->created_at)->addSeconds(60)->isFuture()) {
+                return;
+            }
 
-        DB::table('email_verification_tokens')->insert([
-            'email' => $email,
-            'token' => Hash::make($token),
-            'created_at' => now(),
-        ]);
+            $token = Str::random(64);
 
-        try {
-            Mail::to($email)->queue(new EmailVerificationMail($token, $email, $user->name));
-        } catch (\Throwable $e) {
-            Log::error('Failed to queue verification email', ['exception' => get_class($e)]);
-        }
+            DB::table('email_verification_tokens')->where('email', $email)->delete();
+            DB::table('email_verification_tokens')->insert([
+                'email' => $email,
+                'token' => Hash::make($token),
+                'created_at' => now(),
+            ]);
+
+            // Delivery intent commits atomically with the token row; a
+            // consumed/superseded token suppresses the send at send time.
+            $deliveries->intent(new EmailVerificationMail($token, $email, $user->name), [
+                'event_key' => 'auth.email_verification',
+                'occurrence_key' => 'auth.verify:' . $user->id . ':' . sha1($token),
+                'source_type' => 'user',
+                'source_id' => $user->id,
+                'user_id' => $user->id,
+                'recipient' => $email,
+                'expires_at' => now()->addMinutes(60),
+                'suppression' => [
+                    ['type' => 'token_row', 'table' => 'email_verification_tokens', 'email' => $email, 'token' => $token],
+                    ['type' => 'recipient_unchanged', 'user_id' => $user->id, 'email' => $email],
+                    ['type' => 'user_active', 'user_id' => $user->id],
+                ],
+            ]);
+        });
     }
 }

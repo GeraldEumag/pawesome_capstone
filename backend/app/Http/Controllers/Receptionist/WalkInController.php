@@ -11,13 +11,17 @@ use App\Models\Boarding;
 use App\Models\Appointment;
 use App\Models\Grooming;
 use App\Models\Service;
+use App\Mail\AccountWelcomeMail;
+use App\Services\EmailDeliveryService;
 use App\Services\WorkflowNotifier;
+use Illuminate\Http\Exceptions\HttpResponseException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Str;
 
 class WalkInController extends Controller
 {
@@ -55,27 +59,59 @@ class WalkInController extends Controller
         }
 
         try {
-            return DB::transaction(function () use ($request) {
+            $response = DB::transaction(function () use ($request) {
                 $customerMode = $request->input('customer_mode');
                 $bookingData = $request->input('booking');
                 $serviceType = $bookingData['service_type'];
 
                 // Step 1: Get or create customer
-                $tempPassword = null;
                 if ($customerMode === 'new') {
                     $customerData = $request->input('customer');
                     $petData = $request->input('pet');
 
-                    $tempPassword = \Illuminate\Support\Str::random(10) . rand(10, 99) . '!';
-
-                    // Create user account
+                    // Random unknown password — the customer sets their own via
+                    // the emailed set-password link (never hand out credentials).
                     $user = User::create([
                         'name' => $customerData['first_name'] . ' ' . $customerData['last_name'],
                         'email' => $customerData['email'],
-                        'password' => Hash::make($tempPassword),
+                        'password' => Hash::make(Str::random(40)),
                         'role' => 'customer',
                         'is_active' => true,
                     ]);
+
+                    // Set-password token and its delivery intent are issued
+                    // atomically with the account — a rolled-back booking
+                    // leaves neither a token nor a queued welcome email.
+                    $resetToken = Str::random(64);
+                    $resetTable = config('auth.passwords.users.table');
+                    DB::table($resetTable)->where('email', $customerData['email'])->delete();
+                    DB::table($resetTable)->insert([
+                        'email' => $customerData['email'],
+                        'token' => Hash::make($resetToken),
+                        'created_at' => now(),
+                    ]);
+                    app(EmailDeliveryService::class)->intent(
+                        new AccountWelcomeMail(
+                            $resetToken,
+                            $customerData['email'],
+                            $customerData['first_name'] . ' ' . $customerData['last_name'],
+                            '',
+                            'customer'
+                        ),
+                        [
+                            'event_key' => 'auth.account_welcome',
+                            'occurrence_key' => 'auth.walkin_welcome:' . $user->id . ':' . sha1($resetToken),
+                            'source_type' => 'user',
+                            'source_id' => $user->id,
+                            'user_id' => $user->id,
+                            'recipient' => $customerData['email'],
+                            'expires_at' => now()->addMinutes((int) config('auth.passwords.users.expire', 60)),
+                            'suppression' => [
+                                ['type' => 'token_row', 'table' => $resetTable, 'email' => $customerData['email'], 'token' => $resetToken],
+                                ['type' => 'user_active', 'user_id' => $user->id],
+                            ],
+                        ]
+                    );
 
                     // Create customer record
                     $customer = Customer::create([
@@ -109,10 +145,10 @@ class WalkInController extends Controller
                     // Verify customer exists
                     $customer = Customer::find($customerId);
                     if (!$customer) {
-                        return response()->json([
+                        throw new HttpResponseException(response()->json([
                             'success' => false,
                             'message' => 'Customer not found',
-                        ], 404);
+                        ], 404));
                     }
 
                     // Verify pet exists and belongs to customer
@@ -120,10 +156,10 @@ class WalkInController extends Controller
                         ->where('customer_id', $customerId)
                         ->first();
                     if (!$pet) {
-                        return response()->json([
+                        throw new HttpResponseException(response()->json([
                             'success' => false,
                             'message' => 'Pet not found or does not belong to this customer',
-                        ], 404);
+                        ], 404));
                     }
                 }
 
@@ -155,10 +191,10 @@ class WalkInController extends Controller
                     if ($hotelRoomId) {
                         $room = \App\Models\HotelRoom::lockForUpdate()->find($hotelRoomId);
                         if (!$room || $room->status !== 'available') {
-                            return response()->json([
+                            throw new HttpResponseException(response()->json([
                                 'success' => false,
                                 'message' => 'Selected room is not available.',
-                            ], 422);
+                            ], 422));
                         }
 
                         // Same-day boarding occupies the room for the whole date
@@ -169,10 +205,10 @@ class WalkInController extends Controller
                             ->where('check_out', '>=', $date)
                             ->exists();
                         if ($conflict) {
-                            return response()->json([
+                            throw new HttpResponseException(response()->json([
                                 'success' => false,
                                 'message' => 'Selected room is already booked for that date.',
-                            ], 422);
+                            ], 422));
                         }
 
                         if ($ratePerDay == 0) {
@@ -276,7 +312,7 @@ class WalkInController extends Controller
                     WorkflowNotifier::notifyEmail(
                         $customer->email,
                         'Welcome to Pawesome - Your Account Details',
-                        "Welcome! Your walk-in booking has been created. Your login email is: {$customer->email} and your temporary password is: {$tempPassword} Please change your password after your first login.",
+                        "Welcome! Your walk-in booking has been created. We emailed a secure link to {$customer->email} so you can set your password and access your account.",
                         'success',
                         'account_created',
                         $serviceRequest->id
@@ -305,6 +341,10 @@ class WalkInController extends Controller
                     ],
                 ], 201);
             });
+
+            return $response;
+        } catch (HttpResponseException $e) {
+            return $e->getResponse();
         } catch (\Exception $e) {
             Log::error('Walk-in booking creation failed: ' . $e->getMessage());
             return response()->json([

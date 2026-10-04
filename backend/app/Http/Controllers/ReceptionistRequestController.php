@@ -12,6 +12,8 @@ use App\Models\Service;
 use App\Models\User;
 use App\Models\ActivityLog;
 use App\Models\ServiceItemUsage;
+use App\Services\CustomerEmailResolver;
+use App\Services\EmailDeliveryService;
 use App\Services\WorkflowNotifier;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
@@ -41,51 +43,7 @@ class ReceptionistRequestController extends Controller
 
     private function resolveCustomer(ServiceRequest $serviceRequest): ?Customer
     {
-        if ($serviceRequest->pet_id) {
-            $customer = Pet::with('customer')->find($serviceRequest->pet_id)?->customer;
-
-            if ($customer) {
-                return $customer;
-            }
-        }
-
-        if ($serviceRequest->customer_email) {
-            $customer = Customer::where('email', $serviceRequest->customer_email)->first();
-
-            if ($customer) {
-                return $customer;
-            }
-        }
-
-        if ($serviceRequest->customer_id) {
-            $user = User::find($serviceRequest->customer_id);
-
-            if ($user) {
-                $customer = Customer::where('user_id', $user->id)
-                    ->orWhere('email', $user->email)
-                    ->first();
-
-                if ($customer) {
-                    return $customer;
-                }
-            }
-
-            $customer = Customer::find($serviceRequest->customer_id);
-
-            if ($customer) {
-                return $customer;
-            }
-        }
-
-        if ($serviceRequest->customer_name) {
-            $matches = Customer::whereRaw('LOWER(name) = ?', [strtolower($serviceRequest->customer_name)])->get();
-
-            if ($matches->count() === 1) {
-                return $matches->first();
-            }
-        }
-
-        return null;
+        return CustomerEmailResolver::forServiceRequest($serviceRequest);
     }
 
     private function resolvePet(ServiceRequest $serviceRequest, ?Customer $customer): ?Pet
@@ -588,6 +546,20 @@ class ReceptionistRequestController extends Controller
             $serviceRequest->id
         );
 
+        app(EmailDeliveryService::class)->lifecycle(
+            $serviceRequest->customer_email,
+            'Service Request Updated',
+            "Your {$serviceRequest->service_name} request is now {$validated['status']}.",
+            in_array($validated['status'], ['rejected', 'cancelled']) ? 'error' : 'success',
+            [
+                'event_key' => 'service_request.status',
+                'occurrence_key' => "service_request.status:{$serviceRequest->id}:{$validated['status']}:" . $serviceRequest->updated_at?->format('Uv'),
+                'source_type' => 'service_request',
+                'source_id' => $serviceRequest->id,
+                'user_id' => $serviceRequest->customer_id,
+            ]
+        );
+
         ActivityLog::log(Auth::id() ?? 0, 'service_request_' . $validated['status'], "Service request #{$serviceRequest->id} set to {$validated['status']}", [
             'category' => 'service_requests',
             'reference_type' => 'service_request',
@@ -838,6 +810,20 @@ class ReceptionistRequestController extends Controller
             $serviceRequest->id
         );
 
+        app(EmailDeliveryService::class)->lifecycle(
+            $serviceRequest->customer_email,
+            'Service Request Approved',
+            "Your {$serviceRequest->service_name} request was approved and is ready for payment.",
+            'success',
+            [
+                'event_key' => 'service_request.approved',
+                'occurrence_key' => "service_request.approved:{$serviceRequest->id}",
+                'source_type' => 'service_request',
+                'source_id' => $serviceRequest->id,
+                'user_id' => $serviceRequest->customer_id,
+            ]
+        );
+
         return response()->json([
             'success' => true,
             'message' => 'Request approved successfully.',
@@ -884,6 +870,20 @@ class ReceptionistRequestController extends Controller
             'error',
             'service_request',
             $serviceRequest->id
+        );
+
+        app(EmailDeliveryService::class)->lifecycle(
+            $serviceRequest->customer_email,
+            'Service Request Rejected',
+            "Your {$serviceRequest->service_name} request was rejected.",
+            'error',
+            [
+                'event_key' => 'service_request.rejected',
+                'occurrence_key' => "service_request.rejected:{$serviceRequest->id}",
+                'source_type' => 'service_request',
+                'source_id' => $serviceRequest->id,
+                'user_id' => $serviceRequest->customer_id,
+            ]
         );
 
         return response()->json([

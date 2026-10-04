@@ -196,7 +196,7 @@ class NotificationMatrixTest extends TestCase
         $verified = $this->notificationsFor($customerUser)->where('title', 'Payment Verified');
         $this->assertCount(1, $verified, 'customer gets exactly one payment-verified notification');
         $serviceReceiptNumber = DB::table('service_requests')->where('id', $sr->id)->value('receipt_number');
-        Mail::assertQueued(PaymentReceiptMail::class, function (PaymentReceiptMail $mail) use ($serviceReceiptNumber) {
+        Mail::assertSent(PaymentReceiptMail::class, function (PaymentReceiptMail $mail) use ($serviceReceiptNumber) {
             return $mail->receiptType === 'service_request'
                 && $mail->receipt['receipt_number'] === $serviceReceiptNumber
                 && (float) $mail->receipt['total_amount'] === 850.50
@@ -214,7 +214,7 @@ class NotificationMatrixTest extends TestCase
             'reference_number' => 'REF123456',
         ])->assertStatus(422);
         $this->assertCount(1, $this->notificationsFor($customerUser)->where('title', 'Payment Verified'));
-        Mail::assertQueued(PaymentReceiptMail::class, 1);
+        Mail::assertSent(PaymentReceiptMail::class, 1);
 
         // Rejection path on a fresh pending request
         $sr2 = ServiceRequest::create([
@@ -237,7 +237,7 @@ class NotificationMatrixTest extends TestCase
         ])->assertOk();
 
         $this->assertCount(1, $this->notificationsFor($customerUser)->where('title', 'Payment Rejected'));
-        Mail::assertQueued(PaymentReceiptMail::class, 1);
+        Mail::assertSent(PaymentReceiptMail::class, 1);
     }
 
     // Customer store order workflows are disabled: cashier verification is
@@ -277,7 +277,7 @@ class NotificationMatrixTest extends TestCase
         ])->assertStatus(410);
 
         $this->assertSame('pending', DB::table('customer_orders')->where('id', $orderId)->value('payment_status'));
-        Mail::assertNotQueued(PaymentReceiptMail::class);
+        Mail::assertNotSent(PaymentReceiptMail::class);
 
         // Receipt stays unavailable while the order is unpaid.
         $this->as('customer')->getJson("/api/customer/store/orders/{$orderId}/receipt")

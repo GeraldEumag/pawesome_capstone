@@ -70,7 +70,7 @@ Use the exact production origins in `CORS_ALLOWED_ORIGINS` and `SANCTUM_STATEFUL
 
 1. Separate Railway staging and production applications and MySQL databases; never share a database between environments.
 2. Railway Redis for cache/queue and a separately supervised `php artisan queue:work` service.
-3. A Railway scheduler/cron process invoking `php artisan schedule:run` every minute, or a supervised `php artisan schedule:work` process. The application currently schedules daily reminders.
+3. A Railway scheduler/cron process invoking `php artisan schedule:run` every minute, or a supervised `php artisan schedule:work` process. The application schedules `email-deliveries:dispatch` (every minute), `email-deliveries:reconcile` (every ten minutes), daily reminders, and payroll/attendance/leave/staff commands — the email outbox stalls entirely without the scheduler.
 4. Cloudflare R2/S3-compatible object storage, using separate private and public buckets. Payment proofs and pet photos remain in the private bucket and are served only through authenticated/authorized Laravel endpoints. Profile/landing-page assets use the public bucket and a verified custom domain.
 5. Automated database backups, retention, alerting, and at least one test restore. Monitor application exceptions, database availability, failed jobs, storage errors, and deployments.
 6. Vercel frontend, Cloudflare DNS/TLS, Brevo HTTPS API, and optional Gemini with separate staging/production credentials.

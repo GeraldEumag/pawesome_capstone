@@ -8,7 +8,6 @@ use App\Models\Boarding;
 use App\Models\Appointment;
 use App\Models\Customer;
 use App\Models\SystemSetting;
-use App\Mail\CustomerNotificationMail;
 use App\Mail\PaymentReceiptMail;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
@@ -78,7 +77,12 @@ class NotificationService
             );
         }
 
-        self::sendEmailNotification($customer, 'Hotel Reservation Created', $message, 'info');
+        self::sendEmailNotification($customer, 'Hotel Reservation Created', $message, 'info', [
+            'event_key' => 'boarding.created',
+            'occurrence_key' => "boarding.created:{$boarding->id}",
+            'source_type' => 'boarding',
+            'source_id' => $boarding->id,
+        ]);
     }
 
     /**
@@ -90,23 +94,26 @@ class NotificationService
         if (!$customer || !$customer->user_id) return;
 
         $messages = [
+            'approved' => "Your hotel reservation has been approved!\n" .
+                        "Check-in: {$boarding->check_in->format('M d, Y')}",
+            'scheduled' => "Your hotel reservation has been scheduled.\n" .
+                        "Check-in: {$boarding->check_in->format('M d, Y')}",
             'confirmed' => "Your hotel reservation has been confirmed!\n" .
                         "Check-in: {$boarding->check_in->format('M d, Y')}",
             'checked_in' => "Your pet has been checked in. Enjoy their stay!",
+            'in_care' => "Your pet is now in our care. We'll keep them comfortable!",
+            'ready_for_pickup' => "Your pet is ready for pickup. See you soon!",
             'checked_out' => "Your pet has been checked out. Thank you for choosing us!",
             'completed' => "Your pet's hotel stay has been completed. Thank you for choosing us!",
             'cancelled' => "Your hotel reservation has been cancelled.",
+            'rejected' => "Your hotel reservation request was not approved.",
         ];
 
         if (!isset($messages[$boarding->status])) return;
 
         $type = match($boarding->status) {
-            'confirmed' => 'success',
-            'checked_in' => 'success',
-            'checked_out' => 'success',
-            'completed' => 'success',
-            'cancelled' => 'error',
-            default => 'info',
+            'cancelled', 'rejected' => 'error',
+            default => 'success',
         };
 
         self::createNotification(
@@ -119,7 +126,12 @@ class NotificationService
             ['boarding_id' => $boarding->id, 'status' => $boarding->status]
         );
 
-        self::sendEmailNotification($customer, 'Reservation Update', $messages[$boarding->status], $type);
+        self::sendEmailNotification($customer, 'Reservation Update', $messages[$boarding->status], $type, [
+            'event_key' => 'boarding.status',
+            'occurrence_key' => "boarding.status:{$boarding->id}:{$oldStatus}>{$boarding->status}:" . $boarding->updated_at?->format('Uv'),
+            'source_type' => 'boarding',
+            'source_id' => $boarding->id,
+        ]);
     }
 
     /**
@@ -158,7 +170,12 @@ class NotificationService
             );
         }
 
-        self::sendEmailNotification($customer, 'Appointment Scheduled', $message, 'info');
+        self::sendEmailNotification($customer, 'Appointment Scheduled', $message, 'info', [
+            'event_key' => 'appointment.created',
+            'occurrence_key' => "appointment.created:{$appointment->id}",
+            'source_type' => 'appointment',
+            'source_id' => $appointment->id,
+        ]);
     }
 
     /**
@@ -169,37 +186,46 @@ class NotificationService
         $customer = Customer::find($appointment->customer_id);
         if (!$customer || !$customer->user_id) return;
 
+        // Routine in-progress states notify in-app only; lifecycle
+        // transitions customers need in their inbox also go to email.
         $messages = [
-            'approved' => "Your appointment has been confirmed!\n" .
-                       "Date: {$appointment->scheduled_at->format('M d, Y h:i A')}",
-            'in_progress' => "Your appointment is now in progress.",
-            'completed' => "Your appointment has been completed. Thank you!",
-            'cancelled' => "Your appointment has been cancelled.",
-            'rejected' => "Your appointment has been rejected.",
+            'approved' => ["Your appointment has been confirmed!\n" .
+                       "Date: {$appointment->scheduled_at->format('M d, Y h:i A')}", true],
+            'scheduled' => ["Your appointment has been scheduled.\n" .
+                       "Date: {$appointment->scheduled_at->format('M d, Y h:i A')}", true],
+            'in_progress' => ["Your appointment is now in progress.", false],
+            'completed' => ["Your appointment has been completed. Thank you!", true],
+            'cancelled' => ["Your appointment has been cancelled.", true],
+            'rejected' => ["Your appointment has been rejected.", true],
         ];
 
         if (!isset($messages[$appointment->status])) return;
+        [$text, $emailCustomer] = $messages[$appointment->status];
 
         $type = match($appointment->status) {
-            'approved' => 'success',
+            'cancelled', 'rejected' => 'error',
             'in_progress' => 'info',
-            'completed' => 'success',
-            'cancelled' => 'error',
-            'rejected' => 'error',
-            default => 'info',
+            default => 'success',
         };
 
         self::createNotification(
             $customer->user_id,
             'Appointment Update',
-            $messages[$appointment->status],
+            $text,
             $type,
             'appointment',
             $appointment->id,
             ['appointment_id' => $appointment->id, 'status' => $appointment->status]
         );
 
-        self::sendEmailNotification($customer, 'Appointment Update', $messages[$appointment->status], $type);
+        if ($emailCustomer) {
+            self::sendEmailNotification($customer, 'Appointment Update', $text, $type, [
+                'event_key' => 'appointment.status',
+                'occurrence_key' => "appointment.status:{$appointment->id}:{$oldStatus}>{$appointment->status}:" . $appointment->updated_at?->format('Uv'),
+                'source_type' => 'appointment',
+                'source_id' => $appointment->id,
+            ]);
+        }
     }
 
     /**
@@ -210,21 +236,27 @@ class NotificationService
         $customer = null;
         $message = '';
         $title = '';
+        $eventAt = null;
+        $allowedStatuses = [];
 
         if ($type === 'boarding' && $model instanceof Boarding) {
             $customer = Customer::find($model->customer_id);
             $title = 'Upcoming Check-in Reminder';
-            $message = "Reminder: Your pet's check-in is in {$hoursBefore} hours.\n" .
-                      "Check-in: {$model->check_in->format('M d, Y h:i A')}";
+            $eventAt = $model->check_in;
+            $allowedStatuses = ['pending', 'approved', 'scheduled', 'confirmed'];
+            $message = "Reminder: Your pet's hotel check-in is coming up.\n" .
+                      "Check-in: {$eventAt->format('M d, Y h:i A')}";
         } elseif ($type === 'appointment' && $model instanceof Appointment) {
             $customer = Customer::find($model->customer_id);
             $title = 'Appointment Reminder';
-            $message = "Reminder: Your appointment is in {$hoursBefore} hours.\n" .
+            $eventAt = $model->scheduled_at;
+            $allowedStatuses = ['approved'];
+            $message = "Reminder: Your appointment is coming up.\n" .
                       "Service: {$model->service?->name}\n" .
-                      "Time: {$model->scheduled_at->format('M d, Y h:i A')}";
+                      "Time: {$eventAt->format('M d, Y h:i A')}";
         }
 
-        if (!$customer || !$customer->user_id) return;
+        if (!$customer || !$customer->user_id || !$eventAt) return;
 
         self::createNotification(
             $customer->user_id,
@@ -236,7 +268,19 @@ class NotificationService
             ['reminder' => true, 'hours_before' => $hoursBefore]
         );
 
-        self::sendEmailNotification($customer, $title, $message, 'warning');
+        // A cancelled/rejected/re-purposed record suppresses the send even
+        // if the job runs late; the event datetime bounds usefulness.
+        self::sendEmailNotification($customer, $title, $message, 'warning', [
+            'event_key' => "reminder.{$type}",
+            'occurrence_key' => "reminder.{$type}:{$model->id}:" . $eventAt->format('YmdHis'),
+            'source_type' => $type,
+            'source_id' => $model->id,
+            'expires_at' => $eventAt,
+            'suppression' => [
+                ['type' => 'model_field', 'table' => $type === 'boarding' ? 'boardings' : 'appointments',
+                    'id' => $model->id, 'field' => 'status', 'allowed' => $allowedStatuses],
+            ],
+        ]);
     }
 
     /**
@@ -262,50 +306,43 @@ class NotificationService
         }
     }
 
-    public static function sendPaymentReceiptEmail(?string $email, string $receiptType, array $receipt): void
+    public static function sendPaymentReceiptEmail(?string $email, string $receiptType, array $receipt, array $context = []): void
     {
-        if (!(bool) SystemSetting::get('notif_email_notifications', true) || empty($email)) {
+        if (empty($email)) {
             return;
         }
 
-        $customer = Customer::where('email', $email)->first();
-        $preferences = $customer?->notification_preferences ?? [];
-        if (($preferences['email'] ?? true) === false) {
-            return;
-        }
-
-        try {
-            Mail::to($email)->queue((new PaymentReceiptMail($receiptType, $receipt))->afterCommit());
-        } catch (\Throwable $e) {
-            Log::error('Failed to queue customer payment receipt email', [
-                'exception' => get_class($e),
-            ]);
-        }
+        // The system-wide email switch and per-customer preference are
+        // enforced inside paymentReceipt() at intent time and re-checked
+        // by the worker at send time via suppression descriptors.
+        app(EmailDeliveryService::class)->paymentReceipt($email, $receiptType, $receipt, $context);
     }
 
     /**
-     * Dispatch the in-app + email notification to a customer.
+     * Record a customer-facing email through the durable outbox.
+     * The system-wide email switch and per-customer email preference are
+     * honored at intent time and re-checked by the worker at send time.
      */
-    private static function sendEmailNotification(Customer $customer, string $title, string $message, string $type = 'info'): void
+    private static function sendEmailNotification(Customer $customer, string $title, string $message, string $type = 'info', array $context = []): void
     {
-        if (!(bool) SystemSetting::get('notif_email_notifications', true)) {
-            return;
-        }
-
-        $preferences = $customer->notification_preferences ?? [];
-        if (($preferences['email'] ?? true) === false) {
-            return;
-        }
-
         $email = $customer->email ?? $customer->user?->email;
         if (empty($email)) {
             return;
         }
 
         try {
-            Mail::to($email)->queue(new CustomerNotificationMail($title, $message, $type));
+            app(EmailDeliveryService::class)->lifecycle($email, $title, $message, $type, [
+                'user_id' => $customer->user_id,
+                'customer_id' => $customer->id,
+                'event_key' => $context['event_key'] ?? 'customer.notification',
+                'occurrence_key' => $context['occurrence_key'] ?? ('customer.notification:' . $customer->id . ':' . sha1($title . $message)),
+                'source_type' => $context['source_type'] ?? null,
+                'source_id' => $context['source_id'] ?? null,
+                'expires_at' => $context['expires_at'] ?? null,
+                'suppression' => $context['suppression'] ?? [],
+            ]);
         } catch (\Throwable $e) {
-            Log::error('Failed to queue customer notification email', ['exception' => get_class($e)]);
+            Log::error('Failed to record customer notification email', ['exception' => get_class($e)]);
         }
     }
 

@@ -50,7 +50,6 @@ use App\Http\Controllers\GroomingController;
 use App\Http\Controllers\Api\AvailabilityController;
 use App\Http\Controllers\Api\GroomingController as ApiGroomingController;
 use App\Http\Controllers\PetController;
-use App\Http\Controllers\Api\PaymentController;
 use App\Http\Controllers\Api\CashierPaymentController;
 use App\Http\Controllers\Api\ServiceBillingController;
 use App\Http\Controllers\Api\ServiceRequestController;
@@ -318,6 +317,8 @@ Route::middleware(['auth.api', 'throttle:api', 'role:customer'])->prefix('custom
     Route::patch('requests/{id}/cancel', [ServiceRequestController::class, 'cancel']);
     Route::post('requests/{id}/payment-proof', [ServiceRequestController::class, 'uploadPaymentProof']);
     Route::get('requests/{id}/receipt', [ServiceRequestController::class, 'receipt']);
+    Route::get('notification-preferences', [PortalController::class, 'notificationPreferences']);
+    Route::put('notification-preferences', [PortalController::class, 'updateNotificationPreferences']);
     
     // Customer Store Checkout
     Route::post('store/checkout', [CustomerStoreController::class, 'checkout'])->middleware('verified');
@@ -972,7 +973,6 @@ Route::middleware(['auth.api', 'throttle:api', 'role:receptionist'])->prefix('bo
     Route::post('/{id}/complete', [BoardingController::class, 'complete']);
     Route::post('/{id}/finalize-bill', [BoardingController::class, 'finalizeBill']);
     Route::post('/{id}/cancel', [BoardingController::class, 'cancel']);
-    Route::post('/{boarding}/payment', [PaymentController::class, 'storeBoardingPayment']);
 });
 
 // Boarding payment confirmation — Cashier/Admin only (NOT receptionist).

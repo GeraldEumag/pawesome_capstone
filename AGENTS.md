@@ -32,17 +32,17 @@ php artisan serve --host=127.0.0.1 --port=8000
 php artisan route:cache              # Production route caching
 php artisan view:cache               # Production view caching
 php artisan config:cache             # Production config caching
-php artisan test                     # Unit/feature tests (sqlite :memory: via .env.testing)
+php artisan test                     # Unit/feature tests (phpunit.xml forces MySQL pawesome_test)
 php artisan inventory:reconcile-stock        # Dry-run stock vs batch drift report
 php artisan inventory:reconcile-stock --apply # Repair drift (creates RECON- batches)
 ```
 
 ### Pre-push backend verification (CI parity)
 
-`.env.testing` uses sqlite `:memory:`, but CI (`.github/workflows/ci.yml`)
-runs the FULL suite on MySQL 8 — the environments diverge enough that
-sqlite-green can still be CI-red (enum columns, strict SQL modes). Before
-pushing backend changes, run:
+`phpunit.xml` pins `DB_*` to MySQL `pawesome_test` (the legacy
+`.env.testing` sqlite values are overridden). CI
+(`.github/workflows/ci.yml`) runs the FULL suite on MySQL 8 as well.
+Before pushing backend changes, run:
 
 ```bash
 mysql -u root -e "CREATE DATABASE IF NOT EXISTS pawesome_test;"   # one-time
@@ -91,17 +91,25 @@ php pawesome_report_reconciliation_audit.php   # Gate D: Report reconciliation
 ## Email & Verification
 
 Transactional email covers: customer email verification, password reset links,
-and customer notifications (`CustomerNotificationMail`).
+password-changed and account-welcome notices, lifecycle notifications
+(`CustomerNotificationMail`), and authoritative payment receipts
+(`PaymentReceiptMail`). **Every** customer-facing email flows through the
+durable `email_deliveries` outbox — a producer creates an intent row inside
+the business transaction, `email-deliveries:dispatch` publishes it to the
+`emails` database queue, and `App\Jobs\SendEmailDelivery` renders and sends
+via the configured mailer. See `docs/NOTIFICATION_MATRIX.md` → "Email outbox"
+for dedup (`occurrence_key`), encrypted recipients, send-time suppression
+checks, and state semantics (queued ≠ sent ≠ provider-accepted ≠ delivered).
 
 ### Flow
 
 - `POST /api/auth/register` → creates customer (`email_verified_at = null`) →
-  hashed token in `email_verification_tokens` (60-min expiry) → queued
+  hashed token in `email_verification_tokens` (60-min expiry) → outbox intent
   `EmailVerificationMail` → link `{FRONTEND_URL}/verify-email?token=…&email=…`
 - `POST /api/auth/email/verify` → sets `email_verified_at`, deletes token
 - `POST /api/auth/email/resend` → generic response (no account enumeration)
 - `POST /api/auth/password/forgot` → hashed token in `password_reset_tokens`
-  (60-min expiry) → queued `PasswordResetMail` → link
+  (60-min expiry) → outbox intent `PasswordResetMail` → link
   `{FRONTEND_URL}/forgot-password?email=…&token=…`
 - `POST /api/auth/password/reset` → generic "invalid or expired" errors
   (no account enumeration)
@@ -110,10 +118,16 @@ and customer notifications (`CustomerNotificationMail`).
   React redirects unverified customers to `/verify-email`.
 - Changing email via `PUT /api/auth/profile` re-triggers verification
   (customers only).
-- `POST /api/admin/users` (admin-created accounts) → `AccountWelcomeMail` with
-  a set-your-own-password link (reuses `password_reset_tokens`) — plaintext
-  credentials are never emailed. Admin/seeded accounts are pre-verified
-  (`email_verified_at` set at creation); verification applies to customers only.
+- `POST /api/admin/users` (admin-created accounts) → outbox intent
+  `AccountWelcomeMail` with a set-your-own-password link (reuses
+  `password_reset_tokens`) — plaintext credentials are never emailed.
+  Admin/seeded accounts are pre-verified (`email_verified_at` set at
+  creation); verification applies to customers only.
+- Customer lifecycle emails honor `notification_preferences.email`
+  (`GET|PUT /api/customer/notification-preferences`) — checked at intent
+  creation AND re-checked by the worker at send time, so an opt-out between
+  intent and pickup suppresses the delivery. Required internal state and
+  payment success are never affected by email preferences.
 - `User::profile_photo` falls back to a locally generated initials avatar
   (data-URI SVG, deterministic color per name) when no photo is uploaded —
   every dashboard/navbar shows an identity avatar automatically with no
@@ -138,10 +152,12 @@ block in `backend/.env.example`.
 
 ### Queue
 
-Mailables implement `ShouldQueue`. The capstone demo may use
-`QUEUE_CONNECTION=sync` to avoid needing a worker. Business production should
-use Redis with a dedicated `php artisan queue:work` service and monitored
-failed jobs.
+Email sends run as `App\Jobs\SendEmailDelivery` on the `emails` database queue
+(mailables are rendered inside the job, not queued directly). The demo may use
+`QUEUE_CONNECTION=sync` to avoid a worker. Business production requires a
+supervised `php artisan queue:work --queue=emails,default` service (or Redis
+per DEPLOYMENT.md), a scheduler daemon for `email-deliveries:dispatch`/
+`:reconcile` and the other scheduled commands, and monitored failed jobs.
 
 ### Domain authentication (deployment requirement — not yet implemented)
 

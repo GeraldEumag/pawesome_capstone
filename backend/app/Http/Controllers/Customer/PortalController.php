@@ -337,6 +337,39 @@ class PortalController extends Controller
         return response()->json(Service::where('is_active', true)->orderBy('name')->get());
     }
 
+    public function notificationPreferences()
+    {
+        $customer = $this->currentCustomer();
+        if (!$customer) return response()->json(['message' => 'Customer profile not found'], 404);
+
+        $prefs = $customer->notification_preferences ?? [];
+
+        return response()->json([
+            'email' => ($prefs['email'] ?? true) !== false,
+        ]);
+    }
+
+    public function updateNotificationPreferences(Request $request)
+    {
+        $validated = $request->validate([
+            'email' => 'required|boolean',
+        ]);
+
+        $customer = $this->currentCustomer();
+        if (!$customer) return response()->json(['message' => 'Customer profile not found'], 404);
+
+        $customer->update([
+            'notification_preferences' => array_merge(
+                $customer->notification_preferences ?? [],
+                ['email' => (bool) $validated['email']]
+            ),
+        ]);
+
+        return response()->json([
+            'email' => (bool) $validated['email'],
+        ]);
+    }
+
     public function bookAppointment(Request $request)
     {
         $cust = $this->currentCustomer();

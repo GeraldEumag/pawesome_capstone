@@ -77,10 +77,17 @@ class ServiceBillingController extends Controller
         try {
             $validated = $request->validate([
                 'item_ids' => 'required|array',
-                'item_ids.*' => 'integer|exists:service_item_usages,id'
+                'item_ids.*' => 'integer|exists:service_item_usages,id',
+                'payment_method' => 'nullable|string|max:50',
+                'reference_number' => 'nullable|string|max:255',
             ]);
 
-            $result = ServiceBillingService::markItemsAsPaid($validated['item_ids'], Auth::id());
+            $result = ServiceBillingService::markItemsAsPaid(
+                $validated['item_ids'],
+                Auth::id(),
+                $validated['payment_method'] ?? null,
+                $validated['reference_number'] ?? null
+            );
 
             return response()->json($result);
         } catch (\Exception $e) {

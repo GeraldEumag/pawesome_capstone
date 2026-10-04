@@ -806,6 +806,23 @@ const ProfileSettings = () => {
     fetchUserProfile();
   }, []);
 
+  // Email notification preference is persisted server-side for customers —
+  // it controls whether transactional emails (receipts, booking updates)
+  // are delivered. Other roles have no customer preference record.
+  useEffect(() => {
+    if (userRole !== "customer") return;
+    apiRequest("/customer/notification-preferences")
+      .then((res) => {
+        if (res && typeof res.email === "boolean") {
+          setSettings(p => ({ ...p, emailNotifications: res.email }));
+        }
+      })
+      .catch(() => {
+        // Preference unavailable — keep the default; the toggle still
+        // reports failures when the user actively changes it.
+      });
+  }, [userRole]);
+
   const showSuccess = (msg) => {
     setMessage(msg);
     setMessageType("success");
@@ -856,6 +873,24 @@ const ProfileSettings = () => {
   };
 
   const handleSettingChange = (settingName, value) => {
+    // Customers' email preference is authoritative on the server: it gates
+    // transactional email delivery. Persist it and roll back on failure.
+    if (settingName === "emailNotifications" && userRole === "customer") {
+      const previous = settings.emailNotifications;
+      setSettings(p => ({ ...p, emailNotifications: value }));
+      apiRequest("/customer/notification-preferences", {
+        method: "PUT",
+        body: JSON.stringify({ email: value }),
+      })
+        .then(() => {
+          showSuccess(value ? "Email notifications enabled." : "Email notifications disabled.");
+        })
+        .catch((err) => {
+          setSettings(p => ({ ...p, emailNotifications: previous }));
+          showError(err.message || "Failed to update email notification preference.");
+        });
+      return;
+    }
     setSettings(p => ({ ...p, [settingName]: value }));
   };
 

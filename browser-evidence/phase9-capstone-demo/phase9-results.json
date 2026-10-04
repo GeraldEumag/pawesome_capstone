@@ -1,0 +1,101 @@
+{
+  "startedAt": "2026-10-04T15:40:18.005Z",
+  "stamp": "P9-18005",
+  "legs": [
+    {
+      "name": "P9 Demo Antiseptic P9-18005",
+      "at": "2026-10-04T15:40:23.307Z",
+      "itemId": 843,
+      "stock": 10
+    },
+    {
+      "name": "customer.submit",
+      "at": "2026-10-04T15:40:26.119Z",
+      "requestId": 163,
+      "uiShot": "01-customer-submitted.png"
+    },
+    {
+      "name": "receptionist.approve",
+      "at": "2026-10-04T15:40:29.483Z",
+      "requestId": 163,
+      "appointmentId": 47,
+      "vetId": 8,
+      "uiShot": "02-receptionist-approved.png"
+    },
+    {
+      "name": "customer.payment_proof",
+      "at": "2026-10-04T15:40:30.409Z",
+      "requestId": 163,
+      "reference": "GCASH-P9-18005"
+    },
+    {
+      "name": "cashier.verify_service_request",
+      "at": "2026-10-04T15:40:35.918Z",
+      "requestId": 163,
+      "receipt": "SR-REC-20261004154034-163",
+      "uiShot": "03-cashier-verified.png"
+    },
+    {
+      "name": "veterinary.start_and_usage",
+      "at": "2026-10-04T15:40:47.120Z",
+      "appointmentId": 47,
+      "medicalRecordId": 11,
+      "itemId": 843,
+      "itemName": "P9 Demo Antiseptic P9-18005",
+      "beforeStock": 10,
+      "uiShot": "04-vet-in-progress.png"
+    },
+    {
+      "name": "cashier.settle_items",
+      "at": "2026-10-04T15:40:49.623Z",
+      "appointmentId": 47,
+      "itemIds": [
+        123
+      ],
+      "reference": "COUNTER-P9-18005"
+    },
+    {
+      "name": "veterinary.complete",
+      "at": "2026-10-04T15:40:51.751Z",
+      "appointmentId": 47
+    },
+    {
+      "name": "inventory.stock_verified",
+      "at": "2026-10-04T15:40:55.518Z",
+      "itemId": 843,
+      "beforeStock": 10,
+      "afterStock": 9,
+      "hasUsageLog": false,
+      "uiShots": [
+        "05-inventory-after.png",
+        "06-inventory-log.png"
+      ]
+    },
+    {
+      "name": "customer.final_state",
+      "at": "2026-10-04T15:41:00.923Z",
+      "requestId": 163,
+      "status": "approved",
+      "paymentStatus": "paid",
+      "receipt": "SR-REC-20261004154034-163",
+      "uiShot": "07-customer-paid.png"
+    },
+    {
+      "name": "manager.reports",
+      "at": "2026-10-04T15:41:03.669Z",
+      "status": 200,
+      "uiShot": "08-manager-reports.png"
+    },
+    {
+      "name": "admin.audit",
+      "at": "2026-10-04T15:41:07.092Z",
+      "sawWorkflowEntries": true,
+      "uiShot": "09-admin-dashboard.png"
+    }
+  ],
+  "status": "PASSED",
+  "consumableItemId": 843,
+  "requestId": 163,
+  "appointmentId": 47,
+  "srReceipt": "SR-REC-20261004154034-163"
+}

@@ -11,6 +11,7 @@ use App\Models\ServiceRequest;
 use App\Models\ActivityLog;
 use App\Models\Pet;
 use App\Models\BoardingRoom;
+use App\Services\EmailDeliveryService;
 use App\Services\FileStorageService;
 use App\Services\WorkflowNotifier;
 use App\Services\BookingAvailabilityService;
@@ -95,10 +96,7 @@ class ServiceRequestController extends Controller
             'boarding_room_id' => 'nullable|integer|exists:boarding_rooms,id',
             'room_name' => 'nullable|string|max:255',
             'room_type' => 'nullable|string|max:255',
-            'daily_rate' => 'nullable|numeric|min:0',
             'total_days' => 'nullable|integer|min:1',
-            'total_amount' => 'nullable|numeric|min:0',
-            'price' => 'nullable|numeric|min:0',
         ]);
 
         $pet = null;
@@ -185,9 +183,9 @@ class ServiceRequestController extends Controller
             }
         }
 
-        // Resolve price from submitted data or service lookup
-        $price = $validated['price'] ?? null;
-        if (!$price && !empty($validated['service_name'])) {
+        // Price is always resolved server-side; client-supplied amounts are ignored.
+        $price = null;
+        if (!empty($validated['service_name'])) {
             $svc = Service::whereRaw('LOWER(name) = ?', [strtolower($validated['service_name'])])->first();
             if ($svc) {
                 $price = $svc->price;
@@ -214,7 +212,11 @@ class ServiceRequestController extends Controller
         }
 
         if (Schema::hasColumn('service_requests', 'customer_email')) {
-            $createData['customer_email'] = $validated['customer_email'] ?? null;
+            // Authenticated customers can only book as themselves — the account
+            // email is authoritative; a client-supplied email is never trusted.
+            $createData['customer_email'] = Auth::check()
+                ? Auth::user()->email
+                : ($validated['customer_email'] ?? null);
         }
 
         if (Schema::hasColumn('service_requests', 'pet_id') && !empty($validated['pet_id'])) {
@@ -227,6 +229,7 @@ class ServiceRequestController extends Controller
 
         // Add room data for hotel/boarding bookings
         if ($isHotel) {
+            $room = null;
             if (!empty($validated['boarding_room_id'])) {
                 // Get room details from boarding_rooms table
                 $room = \App\Models\BoardingRoom::find($validated['boarding_room_id']);
@@ -242,11 +245,25 @@ class ServiceRequestController extends Controller
             if (!empty($validated['check_out_date'])) {
                 $createData['check_out_date'] = $validated['check_out_date'];
             }
-            if (!empty($validated['total_days'])) {
-                $createData['total_days'] = $validated['total_days'];
+
+            // Nights derive from the stay dates; fall back to a supplied count.
+            $totalDays = null;
+            if (!empty($validated['check_out_date'])) {
+                $totalDays = max(1, (int) abs(
+                    Carbon::parse($validated['requested_date'])->startOfDay()
+                        ->diffInDays(Carbon::parse($validated['check_out_date'])->startOfDay())
+                ));
+            } elseif (!empty($validated['total_days'])) {
+                $totalDays = (int) $validated['total_days'];
             }
-            if (!empty($validated['total_amount'])) {
-                $createData['total_amount'] = $validated['total_amount'];
+            if ($totalDays) {
+                $createData['total_days'] = $totalDays;
+            }
+
+            // The payable amount is always computed from the authoritative
+            // room rate; client-supplied totals are never persisted.
+            if ($room && $totalDays) {
+                $createData['total_amount'] = (float) $room->daily_rate * $totalDays;
             }
         }
 
@@ -265,8 +282,8 @@ class ServiceRequestController extends Controller
                     $groomingPet = Pet::find($validated['pet_id']);
                 }
                 $groomingCustomer = $groomingPet?->customer;
-                if (!$groomingCustomer && !empty($validated['customer_email'])) {
-                    $groomingCustomer = Customer::where('email', $validated['customer_email'])->first();
+                if (!$groomingCustomer && !empty($serviceRequest->customer_email)) {
+                    $groomingCustomer = Customer::where('email', $serviceRequest->customer_email)->first();
                 }
 
                 if ($groomingCustomer && $groomingPet) {
@@ -315,6 +332,20 @@ class ServiceRequestController extends Controller
             'info',
             'service_request',
             $serviceRequest->id
+        );
+
+        app(EmailDeliveryService::class)->lifecycle(
+            $serviceRequest->customer_email,
+            'Service Request Submitted',
+            "Your {$serviceRequest->service_name} request is waiting for receptionist approval.",
+            'info',
+            [
+                'event_key' => 'service_request.submitted',
+                'occurrence_key' => "service_request.submitted:{$serviceRequest->id}",
+                'source_type' => 'service_request',
+                'source_id' => $serviceRequest->id,
+                'user_id' => $serviceRequest->customer_id,
+            ]
         );
 
         return response()->json([
@@ -534,6 +565,20 @@ class ServiceRequestController extends Controller
             $serviceRequest->id
         );
 
+        app(EmailDeliveryService::class)->lifecycle(
+            $serviceRequest->customer_email,
+            'Service Request Updated',
+            $statusMessage,
+            $validated['status'] === 'rejected' ? 'error' : 'success',
+            [
+                'event_key' => 'service_request.status',
+                'occurrence_key' => "service_request.status:{$serviceRequest->id}:{$validated['status']}:" . $serviceRequest->updated_at?->format('Uv'),
+                'source_type' => 'service_request',
+                'source_id' => $serviceRequest->id,
+                'user_id' => $serviceRequest->customer_id,
+            ]
+        );
+
         ActivityLog::log(Auth::id() ?? 0, 'service_request_' . $validated['status'], "Service request #{$serviceRequest->id} set to {$validated['status']}", [
             'category' => 'service_requests',
             'reference_type' => 'service_request',
@@ -618,15 +663,38 @@ class ServiceRequestController extends Controller
         );
 
         // Notify customer about payment pending verification
+        $paymentSubmittedMessage = $isCash
+            ? "Your cash payment for {$serviceRequest->service_name} is pending verification at the counter."
+            : "Your payment proof for {$serviceRequest->service_name} is pending verification.";
+
         WorkflowNotifier::notifyEmail(
             $serviceRequest->customer_email,
             'Payment Submitted',
-            $isCash
-                ? "Your cash payment for {$serviceRequest->service_name} is pending verification at the counter."
-                : "Your payment proof for {$serviceRequest->service_name} is pending verification.",
+            $paymentSubmittedMessage,
             'info',
             'service_request',
             $serviceRequest->id
+        );
+
+        app(EmailDeliveryService::class)->lifecycle(
+            $serviceRequest->customer_email,
+            'Payment Submitted',
+            $paymentSubmittedMessage,
+            'info',
+            [
+                'event_key' => 'payment.proof_submitted',
+                'occurrence_key' => "service_request:{$serviceRequest->id}:{$serviceRequest->fresh()->updated_at->getTimestamp()}",
+                'source_type' => 'service_request',
+                'source_id' => $serviceRequest->id,
+                'user_id' => $serviceRequest->customer_id,
+                'suppression' => [[
+                    'type' => 'model_field',
+                    'table' => 'service_requests',
+                    'id' => $serviceRequest->id,
+                    'field' => 'payment_status',
+                    'allowed' => ['pending', 'paid', 'partial'],
+                ]],
+            ]
         );
 
         ActivityLog::log($user->id, 'payment_proof_uploaded', "Customer uploaded proof for service request #{$serviceRequest->id}", [

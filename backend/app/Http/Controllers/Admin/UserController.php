@@ -7,11 +7,11 @@ use App\Mail\AccountWelcomeMail;
 use App\Models\ActivityLog;
 use App\Models\Customer;
 use App\Models\User;
+use App\Services\EmailDeliveryService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Str;
 
@@ -121,21 +121,40 @@ class UserController extends Controller
     private function sendWelcomeEmail(User $user): void
     {
         try {
-            $token = Str::random(64);
             $table = config('auth.passwords.users.table');
 
-            DB::table($table)->where('email', $user->email)->delete();
-            DB::table($table)->insert([
-                'email' => $user->email,
-                'token' => Hash::make($token),
-                'created_at' => now(),
-            ]);
+            DB::transaction(function () use ($user, $table) {
+                $token = Str::random(64);
 
-            Mail::to($user->email)->queue(
-                new AccountWelcomeMail($token, $user->email, $user->name, $user->username, $user->role)
-            );
+                DB::table($table)->where('email', $user->email)->delete();
+                DB::table($table)->insert([
+                    'email' => $user->email,
+                    'token' => Hash::make($token),
+                    'created_at' => now(),
+                ]);
+
+                // Delivery intent commits with the set-password token; a
+                // consumed/superseded token suppresses a late send.
+                app(EmailDeliveryService::class)->intent(
+                    new AccountWelcomeMail($token, $user->email, $user->name, $user->username, $user->role),
+                    [
+                        'event_key' => 'auth.account_welcome',
+                        'occurrence_key' => 'auth.welcome:' . $user->id . ':' . sha1($token),
+                        'source_type' => 'user',
+                        'source_id' => $user->id,
+                        'user_id' => $user->id,
+                        'recipient' => $user->email,
+                        'expires_at' => now()->addMinutes((int) config('auth.passwords.users.expire', 60)),
+                        'suppression' => [
+                            ['type' => 'token_row', 'table' => $table, 'email' => $user->email, 'token' => $token],
+                            ['type' => 'recipient_unchanged', 'user_id' => $user->id, 'email' => $user->email],
+                            ['type' => 'user_active', 'user_id' => $user->id],
+                        ],
+                    ]
+                );
+            });
         } catch (\Throwable $e) {
-            Log::error('Failed to queue welcome email', ['exception' => get_class($e)]);
+            Log::error('Failed to record welcome email delivery', ['exception' => get_class($e)]);
         }
     }
 

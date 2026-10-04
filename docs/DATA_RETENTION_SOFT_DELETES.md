@@ -50,6 +50,18 @@ a blanket `SoftDeletes` rollout. The governing distinction:
   `chatbot_faqs`, `report_alerts`, live-chat sessions) — ordinary hard deletes;
   low business value, explicit retention policy can be added later if needed.
 
+## Email outbox and settlement ledger (added later)
+
+- `email_deliveries` — durable outbox; recipients stored encrypted
+  (`recipient_fingerprint` is a hash, not the address). Retain for
+  reconciliation and provider-outcome auditing; treat as operational records
+  that may be pruned after an agreed retention window (e.g. delivered/bounced
+  rows older than 90 days) once a retention policy is approved. Never
+  hard-delete during incident investigation or rollback.
+- `payment_settlements` / `payment_settlement_items` — **immutable financial
+  ledger**. Never hard-delete or update; corrections are append-only void
+  records. Retain per financial-records requirements.
+
 ## Controller changes
 
 - `Admin\SalaryController::destroy` — this route deletes a **User**; now mirrors

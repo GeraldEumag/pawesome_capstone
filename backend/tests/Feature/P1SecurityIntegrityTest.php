@@ -2,14 +2,22 @@
 
 namespace Tests\Feature;
 
+use App\Mail\AccountWelcomeMail;
 use App\Models\AddOn;
+use App\Models\EmailDelivery;
 use App\Models\Boarding;
+use App\Models\BoardingRoom;
 use App\Models\BookingAddOn;
 use App\Models\Customer;
 use App\Models\InventoryItem;
+use App\Models\Notification;
 use App\Models\Pet;
+use App\Models\Service;
 use App\Models\User;
+use App\Services\EmailDeliveryService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Mail;
 use Tests\TestCase;
 
 /**
@@ -338,5 +346,155 @@ class P1SecurityIntegrityTest extends TestCase
 
         $this->assertEquals('rejected', $boarding->fresh()->status);
         $this->assertEquals(10, $item->fresh()->stock);
+    }
+
+    /* ---------------------------------------------------------------
+     | P1-4 — Service-request recipient/price integrity + walk-in
+     |        credential handling
+     * -------------------------------------------------------------- */
+
+    private function verifiedCustomer(array $overrides = []): array
+    {
+        $user = User::factory()->create(array_merge([
+            'role' => 'customer',
+            'is_active' => true,
+            'email_verified_at' => now(),
+        ], $overrides));
+
+        $customer = Customer::create([
+            'user_id' => $user->id,
+            'name' => $user->name,
+            'email' => $user->email,
+        ]);
+
+        return [$user, $customer];
+    }
+
+    public function test_service_request_binds_email_to_account_and_price_to_service(): void
+    {
+        [$user] = $this->verifiedCustomer(['email' => 'real-customer@example.com']);
+        Service::create([
+            'name' => 'Vet Consultation',
+            'category' => 'Consultation',
+            'price' => 500,
+            'is_active' => true,
+        ]);
+
+        $response = $this->postJson('/api/customer/requests', [
+            'customer_name' => $user->name,
+            'customer_email' => 'attacker@example.com', // must be ignored
+            'pet_name' => 'Buddy',
+            'request_type' => 'veterinary',
+            'service_name' => 'Vet Consultation',
+            'requested_date' => now()->addDay()->toDateString(),
+            'requested_time' => '10:00',
+            'price' => 1,            // must be ignored
+            'total_amount' => 1,     // must be ignored
+        ], $this->bearer($user));
+
+        $response->assertCreated();
+
+        $this->assertDatabaseHas('service_requests', [
+            'customer_id' => $user->id,
+            'customer_email' => 'real-customer@example.com',
+            'price' => 500,
+        ]);
+        $this->assertDatabaseMissing('service_requests', [
+            'customer_email' => 'attacker@example.com',
+        ]);
+    }
+
+    public function test_hotel_request_computes_total_from_room_rate_and_nights(): void
+    {
+        [$user] = $this->verifiedCustomer();
+        $room = BoardingRoom::create([
+            'room_code' => 'P1-ROOM',
+            'room_name' => 'Standard Dog Room',
+            'room_type' => 'dog_standard',
+            'hotel_category' => 'dog_hotel',
+            'allowed_species' => ['dog'],
+            'daily_rate' => 800,
+            'total_rooms' => 2,
+            'is_active' => true,
+            'customer_selectable' => true,
+        ]);
+
+        $response = $this->postJson('/api/customer/requests', [
+            'customer_name' => $user->name,
+            'pet_name' => 'Buddy',
+            'request_type' => 'hotel',
+            'requested_date' => now()->addDay()->toDateString(),
+            'check_out_date' => now()->addDays(3)->toDateString(),
+            'boarding_room_id' => $room->id,
+            'daily_rate' => 1,        // must be ignored
+            'total_amount' => 1,      // must be ignored
+            'price' => 1,             // must be ignored
+        ], $this->bearer($user));
+
+        $response->assertCreated();
+
+        $this->assertDatabaseHas('service_requests', [
+            'customer_id' => $user->id,
+            'boarding_room_id' => $room->id,
+            'daily_rate' => 800,
+            'total_days' => 2,
+            'total_amount' => 1600,
+        ]);
+    }
+
+    public function test_walk_in_new_customer_gets_set_password_link_not_plaintext_password(): void
+    {
+        Mail::fake();
+        $receptionist = User::factory()->create(['role' => 'receptionist', 'is_active' => true]);
+
+        $response = $this->postJson('/api/receptionist/walk-ins', [
+            'customer_mode' => 'new',
+            'customer' => [
+                'first_name' => 'Walkin',
+                'last_name' => 'Customer',
+                'email' => 'walkin@example.com',
+                'phone' => '09171234567',
+            ],
+            'pet' => ['name' => 'Buddy', 'species' => 'dog'],
+            'booking' => [
+                'service_type' => 'grooming',
+                'service_name' => 'Basic Bath',
+                'request_date' => now()->addDay()->toDateString(),
+                'request_time' => '10:00',
+            ],
+        ], $this->bearer($receptionist));
+
+        $response->assertCreated()->assertJsonPath('success', true);
+
+        $user = User::where('email', 'walkin@example.com')->firstOrFail();
+
+        // No persisted notification may contain a plaintext credential
+        $notification = Notification::where('user_id', $user->id)->firstOrFail();
+        $this->assertStringNotContainsString('temporary password', $notification->message);
+        $this->assertStringNotContainsString('password is', $notification->message);
+
+        // Credential delivery is recorded as a durable outbox intent — the
+        // token was minted in the same transaction, and a delayed worker
+        // still re-validates the token row at send time via suppression.
+        $delivery = EmailDelivery::where('event_key', 'auth.account_welcome')->firstOrFail();
+        $this->assertSame(EmailDelivery::fingerprint('walkin@example.com'), $delivery->recipient_fingerprint);
+        $this->assertNotNull($delivery->suppression);
+        $this->assertDatabaseHas('password_reset_tokens', ['email' => 'walkin@example.com']);
+
+        // Run the worker path — the welcome email must reach the customer.
+        if ($delivery->status === EmailDelivery::STATUS_PENDING) {
+            app(EmailDeliveryService::class)->send($delivery->id, 'test');
+        }
+        Mail::assertSent(AccountWelcomeMail::class, fn ($m) => $m->hasTo('walkin@example.com'));
+
+        // The customer can set their own password via the emailed token
+        $mailable = Mail::sent(AccountWelcomeMail::class)->first();
+        $this->postJson('/api/auth/password/reset', [
+            'email' => 'walkin@example.com',
+            'token' => $mailable->token,
+            'new_password' => 'ChosenByCustomer123!',
+            'new_password_confirmation' => 'ChosenByCustomer123!',
+        ])->assertOk();
+        $this->assertTrue(Hash::check('ChosenByCustomer123!', $user->fresh()->password));
     }
 }

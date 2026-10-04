@@ -220,6 +220,39 @@ class POSController extends Controller
                 'paid_at' => now(),
             ]);
 
+            // Durable receipt intent for known customers — inside the sale
+            // transaction, so it rolls back with the sale it describes.
+            if ($saleCustomerId) {
+                $posCustomer = Customer::find($saleCustomerId);
+                if ($posCustomer?->email) {
+                    \App\Services\NotificationService::sendPaymentReceiptEmail(
+                        $posCustomer->email,
+                        'pos_sale',
+                        [
+                            'receipt_number' => $invoice->invoice_number,
+                            'customer_name' => $posCustomer->name,
+                            'customer_email' => $posCustomer->email,
+                            'total_amount' => $totalAmount,
+                            'payment_method' => $payload['payment_method'],
+                            'payment_reference' => $payload['reference_number'] ?? null,
+                            'paid_at' => $payment->paid_at,
+                            'items' => array_map(fn ($item, $server) => [
+                                'product_name' => $item['item_name'],
+                                'quantity' => (int) $item['quantity'],
+                                'price' => (float) $server['unit_price'],
+                                'subtotal' => (float) $server['total_price'],
+                            ], $payload['items'], $serverItems),
+                        ],
+                        [
+                            'occurrence_key' => "sale:{$sale->id}:{$invoice->invoice_number}",
+                            'source_type' => 'sale',
+                            'source_id' => $sale->id,
+                            'customer_id' => $saleCustomerId,
+                        ]
+                    );
+                }
+            }
+
             DB::commit();
 
             ActivityLog::log(Auth::id(), 'pos_sale_completed', "POS sale {$sale->transaction_number} completed", [

@@ -10,6 +10,11 @@ Artisan::command('inspire', function () {
 
 Schedule::command('notifications:send-reminders')->dailyAt('08:00');
 
+// Email delivery outbox: republish missed pending intents and reconcile
+// stale processing rows (crash after possible provider acceptance).
+Schedule::command('email-deliveries:dispatch')->everyMinute();
+Schedule::command('email-deliveries:reconcile')->everyTenMinutes();
+
 // HR & Payroll automated commands
 // Mark absent for all staff who had no punch on the previous workday
 Schedule::command('attendance:mark-absent')->dailyAt('23:30');
