@@ -35,10 +35,12 @@ COPY --from=assets /app/public/build public/build
 
 # Run composer post-autoload-dump now that artisan/app code exists, and
 # create writable runtime dirs (storage/ is .dockerignore'd; /app/storage/app
-# is a Railway volume mount at runtime).
-RUN composer dump-autoload --optimize \
-    && mkdir -p storage/framework/{sessions,views,cache,testing} \
+# is a Railway volume mount at runtime). bootstrap/cache must exist BEFORE
+# dump-autoload — package:discover fails without it.
+ENV COMPOSER_ALLOW_SUPERUSER=1
+RUN mkdir -p storage/framework/{sessions,views,cache,testing} \
                storage/logs bootstrap/cache \
+    && composer dump-autoload --optimize \
     && chmod -R a+rw storage bootstrap/cache
 
 EXPOSE 8080
