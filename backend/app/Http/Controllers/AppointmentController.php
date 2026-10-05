@@ -14,6 +14,7 @@ use App\Models\ServiceItemUsage;
 use App\Services\WorkflowNotifier;
 use App\Services\BookingAvailabilityService;
 use App\Services\ServiceBillingService;
+use App\Services\PaymentVerificationService;
 use App\Models\ActivityLog;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -628,50 +629,37 @@ class AppointmentController extends Controller
         ]);
     }
 
+    /**
+     * Legacy cashier endpoint: counter payment for an appointment.
+     * Routed through the canonical verification service so the settlement
+     * ledger, billing sync, and receipt flow stay single-sourced. No `sales`
+     * row is created — appointment revenue is aggregated from the paid
+     * appointment itself.
+     */
     public function markAsPaid(Request $request, $id)
     {
-        return DB::transaction(function () use ($request, $id) {
-            $appointment = Appointment::with(['customer', 'service'])
-                ->lockForUpdate()
-                ->find($id);
+        $appointment = Appointment::with(['customer', 'service'])->find($id);
 
-            if (!$appointment) {
-                return response()->json(['message' => 'Appointment not found'], 404);
-            }
+        if (!$appointment) {
+            return response()->json(['message' => 'Appointment not found'], 404);
+        }
 
-            if ($appointment->payment_status === 'paid') {
-                return response()->json(['message' => 'Appointment payment is already verified'], 422);
-            }
+        if ($appointment->payment_status === 'paid') {
+            return response()->json(['message' => 'Appointment payment is already verified'], 422);
+        }
 
-            $amount = (float) ($appointment->total_amount > 0 ? $appointment->total_amount : ($appointment->price ?? 0));
-            $paymentMethod = $request->input('payment_type', 'cash');
-            $sale = Sale::create([
-                'customer_id' => $appointment->customer_id,
-                'cashier_id' => $request->user()?->id,
-                'type' => 'appointment',
-                'status' => 'completed',
-                'payment_type' => $paymentMethod,
-                'subtotal' => $amount,
-                'total_amount' => $amount,
-                'amount' => $amount,
-                'notes' => 'Payment for appointment #' . $appointment->id,
-            ]);
+        $result = app(PaymentVerificationService::class)->verify('appointment', (int) $id, $request);
 
-            $appointment->update([
-                'payment_status' => 'paid',
-                'amount_paid' => $amount,
-                'balance_due' => 0,
-                'paid_at' => now(),
-                'verified_by' => $request->user()?->id,
-            ]);
+        if (!($result['success'] ?? false)) {
+            return response()->json(['message' => $result['message'] ?? 'Payment verification failed'], $result['status'] ?? 422);
+        }
 
-            return response()->json([
-                'success' => true,
-                'message' => 'Appointment payment recorded',
-                'sale' => $sale,
-                'appointment' => $appointment->fresh(),
-            ]);
-        });
+        return response()->json([
+            'success' => true,
+            'message' => 'Appointment payment recorded',
+            'receipt_number' => $result['receipt_number'] ?? null,
+            'appointment' => $appointment->fresh(['customer', 'service']),
+        ]);
     }
 
     /**

@@ -198,8 +198,12 @@ class ServiceItemUsage extends Model
     public static function calculateBalanceDue($serviceType, $serviceId)
     {
         $totalBill = self::calculateTotalBill($serviceType, $serviceId);
+        $discounts = self::where('service_type', $serviceType)
+            ->where('service_id', $serviceId)
+            ->where('item_type', self::ITEM_DISCOUNT)
+            ->sum('total_price');
         $totalPaid = self::calculateTotalPaid($serviceType, $serviceId);
-        return $totalBill - $totalPaid;
+        return max(0, $totalBill - $discounts - $totalPaid);
     }
     
     /**

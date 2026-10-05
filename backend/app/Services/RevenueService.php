@@ -24,6 +24,13 @@ class RevenueService
     private const SALES_EXCLUDED_TYPES = ['refund', 'multi_payment'];
 
     /**
+     * 'appointment' sales were written by the legacy /appointments/{id}/pay
+     * endpoint. Appointment revenue is owned by the `appointments` paid
+     * source now, so those rows are excluded to prevent double counting.
+     */
+    private const SALES_SERVICE_TYPES = ['appointment'];
+
+    /**
      * Total revenue for an optional date range (null bounds = all time).
      */
     public function total(?Carbon $from = null, ?Carbon $to = null): float
@@ -35,6 +42,8 @@ class RevenueService
                 $total += (float) $this->paidQuery($source['table'], $source['amount'], $from, $to)->sum($source['amount']);
             }
         }
+
+        $total += $this->partialSettlementQuery($from, $to)->sum('payment_settlements.amount');
 
         return (float) $total;
     }
@@ -49,6 +58,8 @@ class RevenueService
         foreach ($this->paidSources() as $source) {
             $count += (int) $this->paidQuery($source['table'], $source['amount'], $from, $to)->count();
         }
+
+        $count += (int) $this->partialSettlementQuery($from, $to)->count();
 
         return $count;
     }
@@ -70,6 +81,11 @@ class RevenueService
 
         $merge($this->salesQuery($from, $to)
             ->selectRaw('DATE(sales.created_at) as d, SUM(sales.amount) as total, COUNT(*) as n')
+            ->groupBy('d')
+            ->get());
+
+        $merge($this->partialSettlementQuery($from, $to)
+            ->selectRaw('DATE(payment_settlements.created_at) as d, SUM(payment_settlements.amount) as total, COUNT(*) as n')
             ->groupBy('d')
             ->get());
 
@@ -105,6 +121,11 @@ class RevenueService
             ->groupBy('m')
             ->get());
 
+        $merge($this->partialSettlementQuery(Carbon::create($year, 1, 1)->startOfDay(), Carbon::create($year, 12, 31)->endOfDay())
+            ->selectRaw('MONTH(payment_settlements.created_at) as m, SUM(payment_settlements.amount) as total')
+            ->groupBy('m')
+            ->get());
+
         foreach ($this->paidSources() as $source) {
             if ($source['amount'] === null) {
                 continue;
@@ -132,13 +153,15 @@ class RevenueService
                 : (float) $this->paidQuery($source['table'], $source['amount'], $from, $to)->sum($source['amount']);
         }
 
+        $result['partial_settlements'] = (float) $this->partialSettlementQuery($from, $to)->sum('payment_settlements.amount');
+
         return $result;
     }
 
     private function salesQuery(?Carbon $from, ?Carbon $to)
     {
         $query = DB::table('sales')
-            ->whereNotIn('type', self::SALES_EXCLUDED_TYPES)
+            ->whereNotIn('type', array_merge(self::SALES_EXCLUDED_TYPES, self::SALES_SERVICE_TYPES))
             ->whereNotIn('status', ['voided', 'cancelled']);
 
         $this->applyRange($query, 'sales.created_at', $from, $to);
@@ -155,6 +178,8 @@ class RevenueService
             'services' => ['table' => 'service_requests', 'amount' => $this->firstColumn('service_requests', ['total_amount', 'price', 'service_price'])],
             'boarding' => ['table' => 'boardings', 'amount' => $this->firstColumn('boardings', ['total_amount', 'price', 'estimated_cost'])],
             'confinement' => ['table' => 'medical_confinements', 'amount' => $this->firstColumn('medical_confinements', ['final_amount', 'estimated_cost', 'total_amount'])],
+            'veterinary' => ['table' => 'appointments', 'amount' => $this->firstColumn('appointments', ['total_amount', 'price'])],
+            'grooming' => ['table' => 'groomings', 'amount' => $this->firstColumn('groomings', ['total_amount', 'amount'])],
         ];
     }
 
@@ -168,10 +193,11 @@ class RevenueService
         $query = DB::table($table)
             ->whereIn("$table.payment_status", self::PAID_STATUSES);
 
-        // A service request fulfilled through boarding/grooming is billed on the
-        // linked record; skip the request itself to avoid counting it twice.
+        // A service request fulfilled through a linked appointment, grooming,
+        // or boarding record is billed there; skip the request itself to
+        // avoid counting the same payment twice.
         if ($table === 'service_requests') {
-            foreach (['boardings', 'groomings'] as $linked) {
+            foreach (['boardings', 'groomings', 'appointments'] as $linked) {
                 if (Schema::hasTable($linked) && Schema::hasColumn($linked, 'service_request_id') && Schema::hasColumn($linked, 'payment_status')) {
                     $query->whereNotExists(function ($sub) use ($linked) {
                         $sub->select(DB::raw(1))
@@ -184,6 +210,44 @@ class RevenueService
         }
 
         $this->applyRange($query, "$table.created_at", $from, $to);
+        return $query;
+    }
+
+    /**
+     * Settlements for services whose record is not yet fully paid — à la
+     * carte item settlements that no service-table leg would otherwise
+     * surface. When the record reaches 'paid' the whole amount is counted
+     * by its own source leg, so these rows are deliberately excluded then.
+     */
+    private function partialSettlementQuery(?Carbon $from, ?Carbon $to)
+    {
+        $tableFor = [
+            'boarding' => 'boardings',
+            'appointment' => 'appointments',
+            'veterinary' => 'appointments',
+            'grooming' => 'groomings',
+            'medical_confinement' => 'medical_confinements',
+            'service_request' => 'service_requests',
+        ];
+
+        $query = DB::table('payment_settlements')
+            ->where('payment_settlements.status', 'paid')
+            ->whereIn('payment_settlements.settleable_type', array_keys($tableFor));
+
+        foreach ($tableFor as $settleableType => $table) {
+            if (!Schema::hasTable($table) || !Schema::hasColumn($table, 'payment_status')) {
+                continue;
+            }
+            $query->whereNotExists(function ($sub) use ($table, $settleableType) {
+                $sub->select(DB::raw(1))
+                    ->from($table)
+                    ->whereColumn("$table.id", 'payment_settlements.settleable_id')
+                    ->where('payment_settlements.settleable_type', $settleableType)
+                    ->whereIn("$table.payment_status", self::PAID_STATUSES);
+            });
+        }
+
+        $this->applyRange($query, 'payment_settlements.created_at', $from, $to);
         return $query;
     }
 

@@ -219,10 +219,54 @@ class DashboardController extends Controller
                 ];
             });
 
+        // Service payments settled through the payment ledger — boarding,
+        // veterinary, grooming, confinement, and à-la-carte item payments.
+        // 'service_request' settlements are skipped: that leg is already
+        // rendered above from the service_requests table.
+        $settlementRows = DB::table('payment_settlements')
+            ->where('status', 'paid')
+            ->where('settleable_type', '!=', 'service_request')
+            ->orderBy('paid_at', 'desc')
+            ->limit(100)
+            ->get();
+
+        $settlementCustomers = \App\Models\Customer::whereIn('id', $settlementRows->pluck('customer_id')->filter()->unique()->values())
+            ->pluck('name', 'id');
+
+        $settlements = $settlementRows->map(function ($settlement) use ($settlementCustomers) {
+                $typeLabel = match ($settlement->settleable_type) {
+                    'boarding' => 'boarding_payment',
+                    'appointment', 'veterinary' => 'veterinary_payment',
+                    'grooming' => 'grooming_payment',
+                    'medical_confinement' => 'confinement_payment',
+                    default => 'service_payment',
+                };
+                $customerName = $settlementCustomers[$settlement->customer_id] ?? 'Customer #' . ($settlement->customer_id ?? '?');
+                return [
+                    'id' => 'SETTLEMENT-' . $settlement->id,
+                    'transaction_id' => $settlement->id,
+                    'customer' => $customerName,
+                    'customer_name' => $customerName,
+                    'amount' => $settlement->amount,
+                    'method' => $settlement->payment_method ?? 'Service Payment',
+                    'payment_method' => $settlement->payment_method ?? 'Service Payment',
+                    'type' => $typeLabel,
+                    'source' => 'payment_settlement',
+                    'service_type' => $settlement->settleable_type,
+                    'service_id' => $settlement->settleable_id,
+                    'date' => $settlement->paid_at ?? $settlement->created_at,
+                    'created_at' => $settlement->paid_at ?? $settlement->created_at,
+                    'status' => $settlement->status,
+                    'payment_reference' => $settlement->reference_number,
+                    'receipt_number' => $settlement->receipt_number,
+                ];
+            });
+
         // Combine all transactions and sort by date (most recent first)
         $allTransactions = $sales
             ->concat($customerOrders)
             ->concat($serviceRequests)
+            ->concat($settlements)
             ->sortByDesc('date')
             ->values();
 

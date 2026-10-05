@@ -32,12 +32,82 @@ class ServiceBillingController extends Controller
 
             $result = ServiceBillingService::addBillingItem($validated);
 
+            // Post-commit customer notification for a newly persisted charge
+            // (duplicate retries do not re-notify).
+            if (($result['success'] ?? false) && empty($result['duplicate'])) {
+                $this->notifyCustomerOfBillingChange($validated, $result);
+            }
+
             return response()->json($result, 201);
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
                 'message' => $e->getMessage()
             ], 422);
+        }
+    }
+
+    /**
+     * Notify the customer that a charge/discount was added to their service,
+     * using persisted (post-transaction) totals only.
+     */
+    private function notifyCustomerOfBillingChange(array $validated, array $result): void
+    {
+        try {
+            $serviceType = $validated['service_type'];
+            $serviceId = (int) $validated['service_id'];
+
+            $record = match ($serviceType) {
+                'boarding' => \App\Models\Boarding::find($serviceId),
+                'grooming' => \App\Models\Grooming::find($serviceId),
+                'veterinary' => \App\Models\Appointment::find($serviceId),
+                default => null,
+            };
+
+            $email = $record?->customer_email
+                ?? $record?->customer?->email
+                ?? $record?->customer?->user?->email;
+
+            if (!$email) {
+                return;
+            }
+
+            $billing = $result['billing'] ?? [];
+            $item = $result['billing_item'] ?? null;
+            $isDiscount = ($validated['item_type'] ?? null) === 'discount';
+            $itemAmount = $item ? (float) $item->total_price : 0;
+            $balance = (float) ($billing['balance_due'] ?? 0);
+
+            $title = $isDiscount ? 'Discount applied to your service' : 'Additional charge on your service';
+            $message = sprintf(
+                '%s: %s (₱%s). New balance due: ₱%s.',
+                $isDiscount ? 'A discount was applied' : 'A charge was added',
+                $validated['description'] ?? 'Service item',
+                number_format($itemAmount, 2),
+                number_format($balance, 2)
+            );
+
+            \App\Services\WorkflowNotifier::notifyEmail($email, $title, $message, 'info', $serviceType, $serviceId);
+
+            $itemId = $item->id ?? 'x';
+            app(\App\Services\EmailDeliveryService::class)->lifecycle(
+                $email,
+                $title,
+                $message,
+                'info',
+                [
+                    'event_key' => 'billing.item_added',
+                    'occurrence_key' => "billing.item_added:{$serviceType}:{$serviceId}:{$itemId}",
+                    'source_type' => $serviceType,
+                    'source_id' => $serviceId,
+                ]
+            );
+        } catch (\Throwable $e) {
+            \Illuminate\Support\Facades\Log::warning('Billing-change customer notification failed', [
+                'error' => $e->getMessage(),
+                'service_type' => $validated['service_type'] ?? null,
+                'service_id' => $validated['service_id'] ?? null,
+            ]);
         }
     }
 

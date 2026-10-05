@@ -24,15 +24,23 @@ class ServiceBillingService
     {
         return DB::transaction(function () use ($data) {
             $serviceType = $data['service_type'];
-            $serviceId = $data['service_id'];
+            $serviceId = (int) $data['service_id'];
             $itemType = $data['item_type'];
             $description = $data['description'];
-            $quantity = $data['quantity'] ?? 1;
-            $unitPrice = $data['unit_price'];
-            $totalPrice = $data['total_price'] ?? ($quantity * $unitPrice);
-            $inventoryItemId = $data['inventory_item_id'] ?? null;
+            $quantity = max(1, (int) ($data['quantity'] ?? 1));
+            $unitPrice = (float) $data['unit_price'];
+            // Authoritative total is computed server-side; a client-supplied
+            // total_price is never trusted.
+            $totalPrice = round($quantity * $unitPrice, 2);
             $notes = $data['notes'] ?? '';
             $addedBy = Auth::id();
+
+            // Lock the service record so concurrent submissions serialize here
+            // instead of racing on duplicate row creation.
+            $serviceRecord = self::resolveServiceRecord($serviceType, $serviceId, true);
+            if (!$serviceRecord) {
+                throw new \Exception('Service record not found');
+            }
 
             // Validate service ownership and permissions
             if (!self::canAddBillingItem($serviceType, $serviceId)) {
@@ -43,17 +51,61 @@ class ServiceBillingService
                 throw new \Exception('Record inventory usage through the service inventory usage form. Billing items should not deduct stock directly.');
             }
 
-            // For all billing fee types (base_service, add_on_service, manual_charge, discount)
-            $inventoryItemId = null;
-            $batchId = null;
+            // The base charge must exist before additional charges are added,
+            // otherwise the derived total would collapse to the add-on only.
+            self::ensureBaseServiceItem($serviceType, $serviceId);
+
+            if ($itemType === ServiceItemUsage::ITEM_DISCOUNT) {
+                $gross = (float) ServiceItemUsage::where('service_type', $serviceType)
+                    ->where('service_id', $serviceId)
+                    ->billable()
+                    ->sum('total_price');
+                $existingDiscounts = (float) ServiceItemUsage::where('service_type', $serviceType)
+                    ->where('service_id', $serviceId)
+                    ->where('item_type', ServiceItemUsage::ITEM_DISCOUNT)
+                    ->sum('total_price');
+
+                if ($totalPrice <= 0) {
+                    throw new \Exception('Discount amount must be greater than zero');
+                }
+                if ($gross - $existingDiscounts - $totalPrice < 0) {
+                    throw new \Exception('Discount exceeds the remaining billable amount');
+                }
+            }
+
+            // Server-side duplicate protection: an identical unpaid charge
+            // created moments ago is treated as a retry, not a new charge.
+            $duplicate = ServiceItemUsage::where('service_type', $serviceType)
+                ->where('service_id', $serviceId)
+                ->where('item_type', $itemType)
+                ->where('description', $description)
+                ->where('quantity_used', $quantity)
+                ->where('unit_price', $unitPrice)
+                ->where('total_price', $totalPrice)
+                ->where('is_paid', false)
+                ->where('created_at', '>=', now()->subMinutes(2))
+                ->orderBy('id', 'desc')
+                ->first();
+
+            if ($duplicate) {
+                return [
+                    'success' => true,
+                    'billing_item' => $duplicate,
+                    'billing' => self::syncServicePaymentState($serviceType, $serviceId),
+                    'duplicate' => true,
+                    'message' => 'Identical billing item already recorded'
+                ];
+            }
 
             // Create service billing item
             $billingItem = ServiceItemUsage::create([
                 'service_type' => $serviceType,
                 'service_id' => $serviceId,
-                'pet_id' => $data['pet_id'] ?? null,
-                'inventory_item_id' => $inventoryItemId,
-                'batch_id' => $batchId,
+                'pet_id' => $data['pet_id'] ?? ($serviceRecord->pet_id ?? null),
+                'customer_id' => $serviceRecord->customer_id ?? null,
+                'customer_email' => $serviceRecord->customer_email ?? null,
+                'inventory_item_id' => null,
+                'batch_id' => null,
                 'quantity_used' => $quantity,
                 'unit' => $data['unit'] ?? 'pcs',
                 'used_by' => $addedBy,
@@ -155,20 +207,31 @@ class ServiceBillingService
 
     public static function syncServicePaymentState(string $serviceType, int $serviceId, array $metadata = []): array
     {
+        // A service with a persisted amount must never have its derived total
+        // collapse to zero just because the itemized base row is missing.
+        // Materializing it here makes every read/write path converge on the
+        // same state instead of erasing the recorded price.
+        self::ensureBaseServiceItem($serviceType, $serviceId);
+
         $items = ServiceItemUsage::where('service_type', $serviceType)
             ->where('service_id', $serviceId)
-            ->billable()
             ->with(['inventoryItem', 'user'])
             ->orderBy('created_at', 'asc')
             ->get();
 
-        $baseAmount = (float) $items
+        $billableItems = $items->where('is_billable', true);
+        $discountTotal = (float) $items
+            ->where('item_type', ServiceItemUsage::ITEM_DISCOUNT)
+            ->sum('total_price');
+
+        $baseAmount = (float) $billableItems
             ->where('item_type', ServiceItemUsage::ITEM_BASE_SERVICE)
             ->sum('total_price');
-        $totalBill = (float) $items->sum('total_price');
-        $totalPaid = (float) $items->where('is_paid', true)->sum('total_price');
+        $grossBill = (float) $billableItems->sum('total_price');
+        $totalBill = max(0, round($grossBill - $discountTotal, 2));
+        $totalPaid = (float) $billableItems->where('is_paid', true)->sum('total_price');
         $balanceDue = max(0, round($totalBill - $totalPaid, 2));
-        $additionalCharges = max(0, round($totalBill - $baseAmount, 2));
+        $additionalCharges = max(0, round($grossBill - $baseAmount - $discountTotal, 2));
 
         $serviceRecord = self::resolveServiceRecord($serviceType, $serviceId);
         $currentPaymentStatus = $serviceRecord?->payment_status;
@@ -213,6 +276,8 @@ class ServiceBillingService
         return [
             'items' => $items->values(),
             'total_bill' => $totalBill,
+            'gross_bill' => $grossBill,
+            'discount_total' => $discountTotal,
             'total_paid' => $totalPaid,
             'balance_due' => $balanceDue,
             'has_unpaid_balance' => $balanceDue > 0,
@@ -222,36 +287,137 @@ class ServiceBillingService
         ];
     }
 
+    /**
+     * Guarantee the itemized bill contains exactly one base_service row for
+     * the service, using the service record's own persisted amount as the
+     * authoritative price. Safe to call repeatedly and from any path —
+     * never creates duplicates and never fabricates an amount for a
+     * service that has none.
+     */
+    public static function ensureBaseServiceItem(string $serviceType, int $serviceId): ?ServiceItemUsage
+    {
+        $existing = ServiceItemUsage::where('service_type', $serviceType)
+            ->where('service_id', $serviceId)
+            ->where('item_type', ServiceItemUsage::ITEM_BASE_SERVICE)
+            ->orderBy('id')
+            ->first();
+
+        if ($existing) {
+            return $existing;
+        }
+
+        // Serialize concurrent creators on the service row itself: the loser
+        // waits for the winner's commit, re-checks, and returns the existing
+        // item instead of creating a duplicate (no unique index exists yet).
+        return DB::transaction(function () use ($serviceType, $serviceId) {
+            $record = self::resolveServiceRecord($serviceType, $serviceId, true);
+            if (!$record) {
+                return null;
+            }
+
+            $existing = ServiceItemUsage::where('service_type', $serviceType)
+                ->where('service_id', $serviceId)
+                ->where('item_type', ServiceItemUsage::ITEM_BASE_SERVICE)
+                ->orderBy('id')
+                ->first();
+
+            if ($existing) {
+                return $existing;
+            }
+
+            $amount = self::authoritativeServiceAmount($record, $serviceType);
+            if ($amount <= 0) {
+                return null;
+            }
+
+            return ServiceItemUsage::create([
+                'service_type' => $serviceType,
+                'service_id' => $serviceId,
+                'pet_id' => $record->pet_id ?? null,
+                'customer_id' => $record->customer_id ?? null,
+                'customer_email' => $record->customer_email ?? null,
+                'quantity_used' => 1,
+                'unit' => 'service',
+                'used_by' => Auth::id() ?? null,
+                'notes' => 'Base service charge',
+                'item_type' => ServiceItemUsage::ITEM_BASE_SERVICE,
+                'description' => self::baseServiceDescription($record, $serviceType),
+                'unit_price' => $amount,
+                'total_price' => $amount,
+                'is_billable' => true,
+                // A service already settled never owes its base charge again.
+                'is_paid' => ($record->payment_status ?? null) === 'paid',
+            ]);
+        });
+    }
+
+    /**
+     * Authoritative base price from the service record itself — never from
+     * derived billing totals.
+     */
+    private static function authoritativeServiceAmount($record, string $serviceType): float
+    {
+        $candidates = match ($serviceType) {
+            ServiceItemUsage::SERVICE_BOARDING => ['total_amount'],
+            ServiceItemUsage::SERVICE_GROOMING => ['total_amount', 'amount'],
+            ServiceItemUsage::SERVICE_VETERINARY => ['total_amount', 'price', 'consultation_fee'],
+            default => ['total_amount', 'price', 'amount'],
+        };
+
+        foreach ($candidates as $column) {
+            $value = $record->{$column} ?? null;
+            if (is_numeric($value) && (float) $value > 0) {
+                return (float) $value;
+            }
+        }
+
+        return 0.0;
+    }
+
+    private static function baseServiceDescription($record, string $serviceType): string
+    {
+        return match ($serviceType) {
+            ServiceItemUsage::SERVICE_BOARDING => trim(($record->hotelRoom->name ?? $record->room_name ?? 'Boarding') . ' stay'),
+            ServiceItemUsage::SERVICE_GROOMING => $record->service_name ?? $record->service ?? 'Grooming service',
+            ServiceItemUsage::SERVICE_VETERINARY => $record->service?->name ?? 'Veterinary consultation',
+            default => 'Base service charge',
+        };
+    }
+
     public static function markBaseServiceAsPaid(string $serviceType, int $serviceId, ?int $verifiedBy = null, ?string $receiptNumber = null): array
     {
         return DB::transaction(function () use ($serviceType, $serviceId, $verifiedBy, $receiptNumber) {
+            // Materialize the base item first: a verified payment must still
+            // mark the itemized bill paid so amount_paid/balance_due stay
+            // consistent instead of being silently skipped.
+            self::ensureBaseServiceItem($serviceType, $serviceId);
+
             $baseItems = ServiceItemUsage::where('service_type', $serviceType)
                 ->where('service_id', $serviceId)
                 ->where('item_type', ServiceItemUsage::ITEM_BASE_SERVICE)
-                ->where('is_billable', true);
+                ->where('is_billable', true)
+                ->where('is_paid', false);
 
-            if (!$baseItems->exists()) {
-                return [
-                    'items' => collect(),
-                    'total_bill' => null,
-                    'total_paid' => null,
-                    'balance_due' => null,
-                    'has_unpaid_balance' => null,
-                    'base_amount' => null,
-                    'additional_charges' => null,
-                    'payment_status' => null,
-                    'message' => 'No base service billing item exists; payment fields were verified without recalculating service totals.',
-                ];
+            $paidItemIds = $baseItems->pluck('id')->all();
+
+            if (empty($paidItemIds)) {
+                $summary = self::syncServicePaymentState($serviceType, $serviceId, [
+                    'verified_by' => $verifiedBy,
+                    'receipt_number' => $receiptNumber,
+                ]);
+                $summary['paid_item_ids'] = [];
+                $summary['message'] = 'No unpaid base service billing item; payment fields were verified without recalculating service totals.';
+                return $summary;
             }
 
-            $baseItems->update([
-                'is_paid' => true,
-            ]);
+            ServiceItemUsage::whereIn('id', $paidItemIds)->update(['is_paid' => true]);
 
-            return self::syncServicePaymentState($serviceType, $serviceId, [
+            $summary = self::syncServicePaymentState($serviceType, $serviceId, [
                 'verified_by' => $verifiedBy,
                 'receipt_number' => $receiptNumber,
             ]);
+            $summary['paid_item_ids'] = $paidItemIds;
+            return $summary;
         });
     }
 
@@ -271,9 +437,11 @@ class ServiceBillingService
             case ServiceItemUsage::SERVICE_VETERINARY:
                 return in_array($user->role, ['veterinary', 'admin']);
             case ServiceItemUsage::SERVICE_GROOMING:
-                return in_array($user->role, ['grooming', 'admin']);
+                // There is no 'grooming' staff role — receptionist runs
+                // grooming operations; super_receptionist is its composite.
+                return in_array($user->role, ['receptionist', 'super_receptionist', 'admin']);
             case ServiceItemUsage::SERVICE_BOARDING:
-                return in_array($user->role, ['receptionist', 'admin']);
+                return in_array($user->role, ['receptionist', 'super_receptionist', 'admin']);
             default:
                 return false;
         }
@@ -441,14 +609,24 @@ class ServiceBillingService
         ];
     }
 
-    private static function resolveServiceRecord(string $serviceType, int $serviceId): Appointment|Grooming|Boarding|null
+    private static function resolveServiceRecord(string $serviceType, int $serviceId, bool $lockForUpdate = false): Appointment|Grooming|Boarding|null
     {
-        return match ($serviceType) {
-            ServiceItemUsage::SERVICE_VETERINARY => Appointment::find($serviceId),
-            ServiceItemUsage::SERVICE_GROOMING => Grooming::find($serviceId),
-            ServiceItemUsage::SERVICE_BOARDING => Boarding::find($serviceId),
+        $query = match ($serviceType) {
+            ServiceItemUsage::SERVICE_VETERINARY => Appointment::query(),
+            ServiceItemUsage::SERVICE_GROOMING => Grooming::query(),
+            ServiceItemUsage::SERVICE_BOARDING => Boarding::query(),
             default => null,
         };
+
+        if (!$query) {
+            return null;
+        }
+
+        if ($lockForUpdate) {
+            $query->lockForUpdate();
+        }
+
+        return $query->find($serviceId);
     }
 
     private static function determinePaymentStatus(?string $currentStatus, float $totalBill, float $totalPaid, float $balanceDue): string

@@ -21,6 +21,7 @@ use App\Services\InventoryDeductionService;
 use App\Services\PetServiceCompatibilityService;
 use App\Services\ServiceDurationService;
 use App\Services\ServiceBillingService;
+use App\Services\PaymentVerificationService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -729,29 +730,10 @@ class BoardingController extends Controller
                 'payment_status' => $boarding->payment_status === 'paid' ? 'paid' : 'unpaid',
             ]);
 
-            // Create base service billing item when boarding is approved
-            if ($boarding->hotelRoom && $boarding->pet_id) {
-                $checkIn = \Carbon\Carbon::parse($boarding->check_in)->startOfDay();
-                $checkOut = \Carbon\Carbon::parse($boarding->check_out)->startOfDay();
-                $days = max(1, $checkIn->diffInDays($checkOut));
-                $totalAmount = $days * $boarding->hotelRoom->daily_rate;
-                
-                // Check if base service billing item already exists
-                $existingBaseItem = \App\Models\ServiceItemUsage::where('service_type', 'boarding')
-                    ->where('service_id', $boarding->id)
-                    ->where('item_type', 'base_service')
-                    ->first();
-                    
-                if (!$existingBaseItem) {
-                    ServiceBillingService::createBaseServiceItem(
-                        'boarding',
-                        $boarding->id,
-                        $boarding->hotelRoom->name . ' - ' . $days . ' day(s)',
-                        $totalAmount,
-                        $boarding->pet_id
-                    );
-                }
-            }
+            // Create base service billing item when boarding is approved.
+            // The authoritative amount is the persisted booking total
+            // (room rate × days + selected add-ons), not a recomputed rate.
+            ServiceBillingService::ensureBaseServiceItem('boarding', (int) $boarding->id);
 
             // Deduct inventory for add-ons
             $inventoryResult = $addOnInventoryService->deductAddOnInventory($boarding, 'receptionist');
@@ -895,22 +877,47 @@ class BoardingController extends Controller
         }
 
         $days = 1;
-        $boarding->update([
-            'hotel_room_id' => $room->id,
-            'check_in' => $checkIn,
-            'check_out' => $checkOut,
-            'check_in_time' => $request->input('check_in_time', $boarding->check_in_time),
-            'check_out_time' => $request->input('check_out_time', $boarding->check_out_time),
-            'boarding_type' => $request->input('boarding_type', $boarding->boarding_type),
-            'total_amount' => $request->input('total_amount', $days * $room->daily_rate),
-            'status' => 'scheduled',
-            'payment_status' => $boarding->payment_status === 'paid' ? 'paid' : 'unpaid',
-            'approved_by' => $boarding->approved_by ?: $request->user()?->id,
-            'approved_at' => $boarding->approved_at ?: now(),
-            'notes' => $request->input('notes', $boarding->notes),
-        ]);
+        $newTotal = (float) $request->input('total_amount', $days * $room->daily_rate);
 
-        $room->update(['status' => 'reserved']);
+        // A booking that has already received money may not be silently
+        // re-priced — extra charges must go through the itemized billing
+        // workflow instead.
+        if (in_array($boarding->payment_status, ['paid', 'partial'], true) && abs($newTotal - (float) $boarding->total_amount) > 0.01) {
+            return response()->json([
+                'error' => 'This reservation is already paid. Record extra charges as billing items instead of changing the total.',
+            ], 422);
+        }
+
+        DB::transaction(function () use ($boarding, $room, $request, $checkIn, $checkOut, $newTotal, $days) {
+            $boarding->update([
+                'hotel_room_id' => $room->id,
+                'check_in' => $checkIn,
+                'check_out' => $checkOut,
+                'check_in_time' => $request->input('check_in_time', $boarding->check_in_time),
+                'check_out_time' => $request->input('check_out_time', $boarding->check_out_time),
+                'boarding_type' => $request->input('boarding_type', $boarding->boarding_type),
+                'total_amount' => $newTotal,
+                'status' => 'scheduled',
+                'payment_status' => $boarding->payment_status === 'paid' ? 'paid' : 'unpaid',
+                'approved_by' => $boarding->approved_by ?: $request->user()?->id,
+                'approved_at' => $boarding->approved_at ?: now(),
+                'notes' => $request->input('notes', $boarding->notes),
+            ]);
+
+            $room->update(['status' => 'reserved']);
+
+            // Keep the itemized bill aligned with the re-priced total:
+            // re-write the unpaid base item rather than leaving a stale one.
+            $baseItem = ServiceBillingService::ensureBaseServiceItem('boarding', (int) $boarding->id);
+            if ($baseItem && !$baseItem->is_paid) {
+                $baseItem->update([
+                    'description' => $room->name . ' - ' . $days . ' day(s)',
+                    'unit_price' => $newTotal,
+                    'total_price' => $newTotal,
+                ]);
+                ServiceBillingService::syncServicePaymentState('boarding', (int) $boarding->id);
+            }
+        });
         WorkflowNotifier::notifyEmail($boarding->customer_email, 'Boarding scheduled', 'Your pet hotel stay has been scheduled.', 'success', 'boarding', $boarding->id);
 
         return response()->json([
@@ -1313,6 +1320,10 @@ class BoardingController extends Controller
 
     /**
      * Mark as paid (cashier/admin only — route gated by role:cashier,admin)
+     *
+     * Legacy endpoint preserved for contract compatibility; the payment now
+     * flows through the canonical PaymentVerificationService so the same
+     * settlement ledger, receipt, and notification path is used.
      */
     public function markAsPaid(Request $request, $id): JsonResponse
     {
@@ -1322,30 +1333,20 @@ class BoardingController extends Controller
             return response()->json(['error' => 'Payment already confirmed'], 422);
         }
 
-        if (!in_array($boarding->status, ['confirmed', 'checked_in'])) {
-            return response()->json(['error' => 'Can only confirm payment for confirmed or checked-in reservations'], 422);
+        if (!in_array($boarding->status, ['confirmed', 'checked_in', 'approved', 'scheduled', 'in_care', 'ready_for_pickup'], true)) {
+            return response()->json(['error' => 'Cannot confirm payment for a reservation in this status'], 422);
         }
 
-        $receiptNumber = $boarding->receipt_number ?: ('BD-REC-' . now()->format('YmdHis') . '-' . $boarding->id);
+        $result = app(PaymentVerificationService::class)->verify('boarding', (int) $id, $request);
 
-        $boarding->payment_status = 'paid';
-        $boarding->paid_at = now();
-        $boarding->verified_by = $request->user()?->id;
-        $boarding->receipt_number = $receiptNumber;
-
-        if ($request->has('reference_number')) {
-            $boarding->reference_number = $request->input('reference_number');
+        if (!($result['success'] ?? false)) {
+            return response()->json(['error' => $result['message'] ?? 'Payment verification failed'], $result['status'] ?? 422);
         }
-        if ($request->has('cashier_remarks')) {
-            $boarding->cashier_remarks = $request->input('cashier_remarks');
-        }
-
-        $boarding->save();
 
         return response()->json([
             'message' => 'Payment confirmed successfully',
             'boarding' => $boarding->fresh(['pet', 'customer', 'hotelRoom']),
-            'receipt_number' => $receiptNumber,
+            'receipt_number' => $result['receipt_number'] ?? null,
         ]);
     }
 

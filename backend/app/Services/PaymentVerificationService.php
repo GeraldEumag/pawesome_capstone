@@ -454,7 +454,11 @@ class PaymentVerificationService
             return ['success' => false, 'message' => 'Payment record not found', 'status' => 404];
         }
 
-        $allowedStatuses = $table === 'appointments' ? ['pending', 'unpaid'] : ['pending'];
+        // 'unpaid' is accepted for counter collections (cash at the desk —
+        // no uploaded proof), matching the established appointment flow.
+        $allowedStatuses = in_array($table, ['appointments', 'boardings', 'groomings'], true)
+            ? ['pending', 'unpaid']
+            : ['pending'];
         if (!in_array($record->payment_status ?? 'unpaid', $allowedStatuses)) {
             return ['success' => false, 'message' => 'Only pending payment proofs can be verified', 'status' => 422, 'payment_status' => $record->payment_status ?? 'unpaid'];
         }
@@ -480,7 +484,7 @@ class PaymentVerificationService
 
         DB::table($table)->where('id', $id)->update($updateData);
 
-        $this->syncServiceBillingForVerifiedPayment($table, $id, Auth::id(), $receiptNumber);
+        $billingResult = $this->syncServiceBillingForVerifiedPayment($table, $id, Auth::id(), $receiptNumber);
 
         // Re-read post-sync so the settlement records the authoritative total.
         $settled = DB::table($table)->where('id', $id)->first() ?? $record;
@@ -496,10 +500,25 @@ class PaymentVerificationService
             'boardings' => 'boarding',
             default => null,
         };
-        $settlementItems = $billingServiceType
-            ? $this->settlementItemsFor($billingServiceType, $id)
-            : [];
-        $settledAmount = $this->settledAmount($table, $settled);
+
+        // The settlement must describe what THIS verification settled: the
+        // items markBaseServiceAsPaid just flipped. Using the record's full
+        // total would overstate the payment when unpaid add-ons remain.
+        $paidItemIds = $billingResult['paid_item_ids'] ?? [];
+        $settlementItems = $billingServiceType && !empty($paidItemIds)
+            ? ServiceItemUsage::whereIn('id', $paidItemIds)->get()
+                ->map(fn ($item) => [
+                    'service_item_usage_id' => $item->id,
+                    'description' => $item->description ?: ($item->service_name_snapshot ?: ($item->item_name_snapshot ?: 'Service item')),
+                    'quantity' => max(1, (int) ($item->quantity_used ?? 1)),
+                    'unit_price' => (float) $item->unit_price,
+                    'total_price' => (float) $item->total_price,
+                ])->all()
+            : $this->settlementItemsFor($billingServiceType ?? '', $id);
+
+        $settledAmount = !empty($settlementItems)
+            ? (float) collect($settlementItems)->sum('total_price')
+            : $this->settledAmount($table, $settled);
         if (empty($settlementItems)) {
             $settlementItems = [[
                 'description' => $settleableType . ' settlement',
@@ -554,7 +573,7 @@ class PaymentVerificationService
         return ['success' => true, 'message' => $message, 'payment_status' => 'rejected'];
     }
 
-    private function syncServiceBillingForVerifiedPayment(string $table, int $id, ?int $verifiedBy, ?string $receiptNumber): void
+    private function syncServiceBillingForVerifiedPayment(string $table, int $id, ?int $verifiedBy, ?string $receiptNumber): array
     {
         $serviceType = match ($table) {
             'appointments' => 'veterinary',
@@ -564,10 +583,10 @@ class PaymentVerificationService
         };
 
         if (!$serviceType) {
-            return;
+            return [];
         }
 
-        ServiceBillingService::markBaseServiceAsPaid($serviceType, $id, $verifiedBy, $receiptNumber);
+        return ServiceBillingService::markBaseServiceAsPaid($serviceType, $id, $verifiedBy, $receiptNumber);
     }
 
     private function markLinkedServiceAsPaidFromRequest($serviceRequest, int $serviceRequestId, string $receiptNumber): void

@@ -117,4 +117,53 @@ Illuminate\Support\Facades\DB::table('boardings')->updateOrInsert(
     ]
 );
 
-echo "E2E payment fixtures ready (markers: " . implode(', ', $markers) . ", boarding: PW-E2E-APPROVAL)\n";
+// Billing fixture for the boarding itemized-billing E2E (boarding-billing
+// spec): an approved, unpaid ₱900 boarding with NO service_item_usages rows —
+// exercising lazy base-item materialization — and no settlements. Reset all
+// derived/payment state so reruns (including Playwright retries) start clean.
+$billing = Illuminate\Support\Facades\DB::table('boardings')->where('notes', 'PW-E2E-BILLING')->first();
+
+if ($billing) {
+    Illuminate\Support\Facades\DB::table('payment_settlement_items')
+        ->whereIn('payment_settlement_id',
+            Illuminate\Support\Facades\DB::table('payment_settlements')
+                ->where('settleable_type', 'boarding')->where('settleable_id', $billing->id)
+                ->pluck('id'))
+        ->delete();
+    Illuminate\Support\Facades\DB::table('payment_settlements')
+        ->where('settleable_type', 'boarding')->where('settleable_id', $billing->id)
+        ->delete();
+    Illuminate\Support\Facades\DB::table('service_item_usages')
+        ->where('service_type', 'boarding')->where('service_id', $billing->id)
+        ->delete();
+}
+
+Illuminate\Support\Facades\DB::table('boardings')->updateOrInsert(
+    ['notes' => 'PW-E2E-BILLING'],
+    [
+        'pet_id' => $pet->id,
+        'pet_name' => $pet->name,
+        'customer_id' => $customer->id,
+        'customer_email' => $customer->email ?? $user->email,
+        'customer_name' => $customer->name ?? $user->name,
+        'stay_type' => 'hotel_boarding',
+        'check_in' => now()->addDay()->toDateString(),
+        'check_out' => now()->addDays(3)->toDateString(),
+        'hotel_room_id' => $roomId,
+        'status' => 'approved',
+        'payment_status' => 'unpaid',
+        'total_amount' => 900,
+        'amount_paid' => 0,
+        'balance_due' => 900,
+        'paid_at' => null,
+        'verified_by' => null,
+        'verified_at' => null,
+        'receipt_number' => null,
+        'reference_number' => null,
+        'vaccination_card' => null,
+        'updated_at' => now(),
+        'created_at' => $billing->created_at ?? now(),
+    ]
+);
+
+echo "E2E payment fixtures ready (markers: " . implode(', ', $markers) . ", boardings: PW-E2E-APPROVAL, PW-E2E-BILLING)\n";

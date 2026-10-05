@@ -27,6 +27,7 @@ import { exportToCSV, exportToPDF, exportToExcel } from "../../utils/reportExpor
 import PetAvatar from "../shared/PetAvatar";
 import RowActionPopover from "../shared/RowActionPopover";
 import GroomingInventoryUsage from "../grooming/GroomingInventoryUsage";
+import ServiceBillingPanel from "../shared/ServiceBillingPanel";
 import ServiceManagerModal from "./ServiceManagerModal";
 
 const STATUS_OPTIONS = [
@@ -814,6 +815,18 @@ const Grooming = () => {
                 <GroomingInventoryUsage 
                   groomingId={selectedAppointment.id}
                   petId={selectedAppointment.pet_id || selectedAppointment.pet?.id}
+                />
+              </div>
+            )}
+
+            {/* Itemized billing: additional charges and discounts */}
+            {selectedAppointment?.id && selectedAppointment.status !== "pending" && selectedAppointment.status !== "rejected" && (
+              <div className="grooming-inventory-section">
+                <ServiceBillingPanel
+                  serviceType="grooming"
+                  serviceId={selectedAppointment.id}
+                  petId={selectedAppointment.pet_id || selectedAppointment.pet?.id}
+                  onBillingUpdate={() => fetchAppointments({ silent: true })}
                 />
               </div>
             )}

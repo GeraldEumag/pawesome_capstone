@@ -526,6 +526,14 @@ class ReceptionistRequestController extends Controller
                             'payment_status' => 'unpaid',
                         ]);
                     }
+
+                    // Keep the boarding's itemized bill anchored to its
+                    // authoritative total, like the grooming branch above.
+                    // Idempotent — safe when the boarding already exists.
+                    \App\Services\ServiceBillingService::ensureBaseServiceItem(
+                        ServiceItemUsage::SERVICE_BOARDING,
+                        (int) $boarding->id
+                    );
                 }
             }
 

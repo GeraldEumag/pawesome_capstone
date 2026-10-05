@@ -26,6 +26,7 @@ import { showError, showReasonPrompt } from "../../utils/alert.jsx";
 import DatePickerInput from "../../components/shared/DatePickerInput";
 import PetAvatar from "../shared/PetAvatar";
 import RowActionPopover from "../shared/RowActionPopover";
+import ServiceBillingPanel from "../shared/ServiceBillingPanel";
 import {
   normalizeList,
   normalizeStatus,
@@ -1115,6 +1116,21 @@ const ReceptionistHotelBookings = () => {
                         Add Care Log
                       </button>
                     </div>
+                  </div>
+                )}
+
+                {!["pending", "rejected", "cancelled", "completed"].includes(bookingStatus) && (
+                  <div className="hbk-panel">
+                    <div className="hbk-panel-head">
+                      <h3>Service Billing</h3>
+                      <p>Additional charges and discounts for this stay. Final settlement is handled by the cashier.</p>
+                    </div>
+                    <ServiceBillingPanel
+                      serviceType="boarding"
+                      serviceId={selectedBooking.id}
+                      petId={selectedBooking.pet_id}
+                      onBillingUpdate={() => fetchBookings({ silent: true })}
+                    />
                   </div>
                 )}
               </div>
