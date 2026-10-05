@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Services\ServiceBillingService;
+use App\Support\EmailContent;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Auth;
@@ -100,6 +101,23 @@ class ServiceBillingController extends Controller
                     'occurrence_key' => "billing.item_added:{$serviceType}:{$serviceId}:{$itemId}",
                     'source_type' => $serviceType,
                     'source_id' => $serviceId,
+                    'content' => [
+                        'subject' => "[Pawesome] Billing Update — {$serviceType} #{$serviceId}",
+                        'customer_name' => $record->customer_name ?? $record->customer?->name,
+                        'intro' => $isDiscount
+                            ? 'A discount has been applied to your service bill.'
+                            : 'An additional charge has been added to your service bill.',
+                        'details' => [
+                            ['label' => 'Service', 'value' => ucfirst((string) $serviceType) . " #{$serviceId}"],
+                            ['label' => $isDiscount ? 'Discount' : 'Item', 'value' => $validated['description'] ?? 'Service item'],
+                            ['label' => 'Amount', 'value' => EmailContent::money($itemAmount)],
+                            ['label' => 'Balance due', 'value' => EmailContent::money($balance)],
+                        ],
+                        'status' => $isDiscount ? 'Discount applied' : 'Charge added',
+                        'status_type' => 'info',
+                        'cta_url' => EmailContent::frontendUrl('/customer/payments'),
+                        'cta_label' => 'View Billing',
+                    ],
                 ]
             );
         } catch (\Throwable $e) {

@@ -231,7 +231,8 @@ class EmailDeliveryService
             $context['suppression'] ?? []
         );
 
-        return $this->intent(new CustomerNotificationMail($title, $message, $type), [
+        return $this->intent(
+            new CustomerNotificationMail($title, $message, $type, $context['content'] ?? null), [
             'event_key' => $context['event_key'],
             'occurrence_key' => $context['occurrence_key'],
             'source_type' => $context['source_type'] ?? null,
@@ -242,7 +243,7 @@ class EmailDeliveryService
             'expires_at' => $context['expires_at'] ?? now()->addDays(7),
             'suppression' => $suppression,
             'dispatch' => $context['dispatch'] ?? true,
-        ]);
+            ]);
     }
 
     /**

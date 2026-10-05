@@ -15,6 +15,7 @@ use App\Models\ServiceItemUsage;
 use App\Services\CustomerEmailResolver;
 use App\Services\EmailDeliveryService;
 use App\Services\WorkflowNotifier;
+use App\Support\EmailContent;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Auth;
@@ -554,17 +555,37 @@ class ReceptionistRequestController extends Controller
             $serviceRequest->id
         );
 
+        $isNegative = in_array($validated['status'], ['rejected', 'cancelled']);
         app(EmailDeliveryService::class)->lifecycle(
             $serviceRequest->customer_email,
             'Service Request Updated',
             "Your {$serviceRequest->service_name} request is now {$validated['status']}.",
-            in_array($validated['status'], ['rejected', 'cancelled']) ? 'error' : 'success',
+            $isNegative ? 'error' : 'success',
             [
                 'event_key' => 'service_request.status',
                 'occurrence_key' => "service_request.status:{$serviceRequest->id}:{$validated['status']}:" . $serviceRequest->updated_at?->format('Uv'),
                 'source_type' => 'service_request',
                 'source_id' => $serviceRequest->id,
                 'user_id' => $serviceRequest->customer_id,
+                'content' => [
+                    'subject' => "[Pawesome] Service Request " . EmailContent::status($validated['status']) . " — SR-{$serviceRequest->id}",
+                    'customer_name' => $serviceRequest->customer_name,
+                    'intro' => $isNegative
+                        ? "We are writing to inform you that your {$serviceRequest->service_name} request is now {$validated['status']}."
+                        : "Your {$serviceRequest->service_name} request has been updated. Please review the latest status below.",
+                    'details' => [
+                        ['label' => 'Reference', 'value' => "SR-{$serviceRequest->id}"],
+                        ['label' => 'Service', 'value' => $serviceRequest->service_name],
+                        ['label' => 'Pet', 'value' => $serviceRequest->pet_name],
+                        ['label' => 'Date', 'value' => EmailContent::date($serviceRequest->request_date)],
+                        ['label' => 'Time', 'value' => $serviceRequest->preferred_time ?? $serviceRequest->request_time],
+                        ['label' => 'Reason', 'value' => $validated['status'] === 'rejected' ? ($serviceRequest->rejection_reason ?? null) : null],
+                    ],
+                    'status' => EmailContent::status($validated['status']),
+                    'status_type' => $isNegative ? 'error' : 'success',
+                    'cta_url' => EmailContent::frontendUrl('/customer/my-requests'),
+                    'cta_label' => 'View Request',
+                ],
             ]
         );
 
@@ -829,6 +850,23 @@ class ReceptionistRequestController extends Controller
                 'source_type' => 'service_request',
                 'source_id' => $serviceRequest->id,
                 'user_id' => $serviceRequest->customer_id,
+                'content' => [
+                    'subject' => "[Pawesome] Booking Approved — SR-{$serviceRequest->id}",
+                    'customer_name' => $serviceRequest->customer_name,
+                    'intro' => "We are pleased to let you know that your {$serviceRequest->service_name} request has been approved by our reception team and is now ready for payment.",
+                    'details' => [
+                        ['label' => 'Reference', 'value' => "SR-{$serviceRequest->id}"],
+                        ['label' => 'Service', 'value' => $serviceRequest->service_name],
+                        ['label' => 'Pet', 'value' => $serviceRequest->pet_name],
+                        ['label' => 'Scheduled date', 'value' => EmailContent::date($serviceRequest->request_date)],
+                        ['label' => 'Scheduled time', 'value' => $serviceRequest->preferred_time ?? $serviceRequest->request_time],
+                        ['label' => 'Amount due', 'value' => EmailContent::money($serviceRequest->total_amount ?? $serviceRequest->price)],
+                    ],
+                    'status' => 'Approved',
+                    'status_type' => 'success',
+                    'cta_url' => EmailContent::frontendUrl('/customer/my-requests'),
+                    'cta_label' => 'View Request',
+                ],
             ]
         );
 
@@ -891,6 +929,23 @@ class ReceptionistRequestController extends Controller
                 'source_type' => 'service_request',
                 'source_id' => $serviceRequest->id,
                 'user_id' => $serviceRequest->customer_id,
+                'content' => [
+                    'subject' => "[Pawesome] Update Regarding Your Booking — SR-{$serviceRequest->id}",
+                    'customer_name' => $serviceRequest->customer_name,
+                    'intro' => "We are writing to inform you that your {$serviceRequest->service_name} request could not be approved at this time.",
+                    'details' => [
+                        ['label' => 'Reference', 'value' => "SR-{$serviceRequest->id}"],
+                        ['label' => 'Service', 'value' => $serviceRequest->service_name],
+                        ['label' => 'Pet', 'value' => $serviceRequest->pet_name],
+                        ['label' => 'Requested date', 'value' => EmailContent::date($serviceRequest->request_date)],
+                        ['label' => 'Reason', 'value' => $validated['rejection_reason'] ?? null],
+                    ],
+                    'status' => 'Rejected',
+                    'status_type' => 'error',
+                    'cta_url' => EmailContent::frontendUrl('/customer/my-requests'),
+                    'cta_label' => 'View Request',
+                    'closing' => 'If you have questions about this decision, please contact our reception team or submit a new request.',
+                ],
             ]
         );
 

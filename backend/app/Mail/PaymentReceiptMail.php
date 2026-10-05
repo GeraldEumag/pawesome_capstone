@@ -20,8 +20,9 @@ class PaymentReceiptMail extends Mailable implements ShouldBeEncrypted, ShouldQu
     public function build(): self
     {
         return $this
-            ->subject('Your Pawesome payment receipt '.$this->receipt['receipt_number'])
+            ->subject('[Pawesome] Payment Receipt — '.$this->receipt['receipt_number'])
             ->view('emails.payment-receipt')
+            ->text('emails.text.payment-receipt')
             ->with([
                 'receipt' => $this->receipt,
                 'receiptType' => $this->receiptType,

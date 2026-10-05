@@ -29,6 +29,7 @@ class PasswordResetMail extends Mailable implements ShouldBeEncrypted, ShouldQue
         return $this
             ->subject('Reset your Pawesome password')
             ->view('emails.password-reset')
+            ->text('emails.text.password-reset')
             ->with([
                 'url' => $url,
                 'expires' => $expires,

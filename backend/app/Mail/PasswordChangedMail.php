@@ -23,6 +23,7 @@ class PasswordChangedMail extends Mailable implements ShouldBeEncrypted, ShouldQ
         return $this
             ->subject('Your Pawesome password was changed')
             ->view('emails.password-changed')
+            ->text('emails.text.password-changed')
             ->with([
                 'name' => $this->name,
                 'email' => $this->email,

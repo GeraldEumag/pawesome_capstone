@@ -25,7 +25,7 @@ class PayslipReleasedMail extends Mailable implements ShouldQueue
     {
         return new Envelope(
             to: $this->email,
-            subject: "Your Payslip for {$this->payPeriod} is Ready",
+            subject: "[Pawesome] Payslip Ready — {$this->payPeriod}",
         );
     }
 
@@ -33,6 +33,7 @@ class PayslipReleasedMail extends Mailable implements ShouldQueue
     {
         return new Content(
             view: 'emails.payslip-released',
+            text: 'emails.text.payslip-released',
             with: [
                 'employeeName' => $this->employeeName,
                 'payPeriod'    => $this->payPeriod,

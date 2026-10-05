@@ -93,6 +93,13 @@ class DashboardController extends Controller
                 return response()->json(['message' => 'Order not found'], 404);
             }
 
+            // No-op transitions must not notify/email the customer again —
+            // occurrence keys include updated_at, so a repeated write would
+            // otherwise produce a duplicate delivery.
+            if ($order->status === $validated['status']) {
+                return response()->json(['message' => 'Order status updated']);
+            }
+
             $updateData = [
                 'status' => $validated['status'],
                 'updated_at' => now(),
@@ -170,6 +177,47 @@ class DashboardController extends Controller
                 'customer_order',
                 $id,
                 ['rejection_reason' => $validated['rejection_reason'] ?? null]
+            );
+
+            $orderRef = $freshOrder->reference_number ?? "ORD-{$id}";
+            $isNegative = in_array($status, ['rejected', 'cancelled'], true);
+            $introByStatus = [
+                'approved' => 'We are pleased to let you know that your order has been approved and is now ready for payment.',
+                'rejected' => 'We are writing to inform you that your order could not be approved at this time.',
+                'cancelled' => 'Your order has been cancelled.',
+                'completed' => 'Your order has been completed. Thank you for choosing Pawesome.',
+            ];
+            app(\App\Services\EmailDeliveryService::class)->lifecycle(
+                $freshOrder->customer_email ?? null,
+                $title,
+                "Order #{$id} is now {$status}.",
+                $isNegative ? 'error' : 'success',
+                [
+                    'event_key' => 'order.status',
+                    'occurrence_key' => "order.status:{$id}:{$status}:" . strtotime((string) $freshOrder->updated_at),
+                    'source_type' => 'customer_order',
+                    'source_id' => $id,
+                    'user_id' => $customerUserId,
+                    'content' => [
+                        'subject' => "[Pawesome] Order " . \App\Support\EmailContent::status($status) . " — {$orderRef}",
+                        'customer_name' => $freshOrder->customer_name ?? null,
+                        'intro' => $introByStatus[$status] ?? "Your order has been updated to {$status}.",
+                        'details' => [
+                            ['label' => 'Order', 'value' => $orderRef],
+                            ['label' => 'Items', 'value' => $orderItems->count() > 0 ? $orderItems->map(fn ($i) => trim(($i->product_name ?? $i->name ?? 'Item') . ' ×' . (int) ($i->quantity ?? $i->qty ?? 1)))->implode(', ') : null],
+                            ['label' => 'Total', 'value' => \App\Support\EmailContent::money($freshOrder->total_amount ?? $freshOrder->total ?? null)],
+                            ['label' => 'Payment method', 'value' => $freshOrder->payment_method ?? null],
+                            ['label' => 'Reason', 'value' => $status === 'rejected' ? ($freshOrder->rejection_reason ?? $validated['rejection_reason'] ?? null) : null],
+                        ],
+                        'status' => \App\Support\EmailContent::status($status),
+                        'status_type' => $isNegative ? 'error' : 'success',
+                        'cta_url' => \App\Support\EmailContent::frontendUrl('/customer/store/orders'),
+                        'cta_label' => 'View Order',
+                        'closing' => $status === 'approved'
+                            ? 'You may now submit your payment through your Pawesome account.'
+                            : null,
+                    ],
+                ]
             );
 
             ActivityLog::log($user?->id, 'order_' . $status, "Receptionist set order #{$id} to {$status}", [

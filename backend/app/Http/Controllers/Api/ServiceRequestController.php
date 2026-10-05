@@ -17,6 +17,7 @@ use App\Services\WorkflowNotifier;
 use App\Services\BookingAvailabilityService;
 use App\Services\PetServiceCompatibilityService;
 use App\Services\ServiceDurationService;
+use App\Support\EmailContent;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Auth;
@@ -345,6 +346,23 @@ class ServiceRequestController extends Controller
                 'source_type' => 'service_request',
                 'source_id' => $serviceRequest->id,
                 'user_id' => $serviceRequest->customer_id,
+                'content' => [
+                    'subject' => "[Pawesome] Booking Request Received — SR-{$serviceRequest->id}",
+                    'customer_name' => $serviceRequest->customer_name,
+                    'intro' => "We have received your {$serviceRequest->service_name} request. Our reception team will review it shortly and update you once a decision has been made.",
+                    'details' => [
+                        ['label' => 'Reference', 'value' => "SR-{$serviceRequest->id}"],
+                        ['label' => 'Service', 'value' => $serviceRequest->service_name],
+                        ['label' => 'Pet', 'value' => $serviceRequest->pet_name],
+                        ['label' => 'Preferred date', 'value' => EmailContent::date($serviceRequest->request_date)],
+                        ['label' => 'Preferred time', 'value' => $serviceRequest->preferred_time ?? $serviceRequest->request_time],
+                        ['label' => 'Estimated amount', 'value' => EmailContent::money($serviceRequest->total_amount ?? $serviceRequest->price)],
+                    ],
+                    'status' => 'Pending review',
+                    'status_type' => 'info',
+                    'cta_url' => EmailContent::frontendUrl('/customer/my-requests'),
+                    'cta_label' => 'View Request',
+                ],
             ]
         );
 
@@ -565,17 +583,37 @@ class ServiceRequestController extends Controller
             $serviceRequest->id
         );
 
+        $isRejected = $validated['status'] === 'rejected';
         app(EmailDeliveryService::class)->lifecycle(
             $serviceRequest->customer_email,
             'Service Request Updated',
             $statusMessage,
-            $validated['status'] === 'rejected' ? 'error' : 'success',
+            $isRejected ? 'error' : 'success',
             [
                 'event_key' => 'service_request.status',
                 'occurrence_key' => "service_request.status:{$serviceRequest->id}:{$validated['status']}:" . $serviceRequest->updated_at?->format('Uv'),
                 'source_type' => 'service_request',
                 'source_id' => $serviceRequest->id,
                 'user_id' => $serviceRequest->customer_id,
+                'content' => [
+                    'subject' => "[Pawesome] Service Request " . EmailContent::status($validated['status']) . " — SR-{$serviceRequest->id}",
+                    'customer_name' => $serviceRequest->customer_name,
+                    'intro' => $isRejected
+                        ? "We are writing to inform you that your {$serviceRequest->service_name} request could not be approved at this time."
+                        : "Your {$serviceRequest->service_name} request has been updated. Please review the latest status below.",
+                    'details' => [
+                        ['label' => 'Reference', 'value' => "SR-{$serviceRequest->id}"],
+                        ['label' => 'Service', 'value' => $serviceRequest->service_name],
+                        ['label' => 'Pet', 'value' => $serviceRequest->pet_name],
+                        ['label' => 'Date', 'value' => EmailContent::date($serviceRequest->request_date)],
+                        ['label' => 'Time', 'value' => $serviceRequest->preferred_time ?? $serviceRequest->request_time],
+                        ['label' => 'Reason', 'value' => $isRejected ? ($validated['rejection_reason'] ?? null) : null],
+                    ],
+                    'status' => EmailContent::status($validated['status']),
+                    'status_type' => $isRejected ? 'error' : 'success',
+                    'cta_url' => EmailContent::frontendUrl('/customer/my-requests'),
+                    'cta_label' => 'View Request',
+                ],
             ]
         );
 
@@ -694,6 +732,26 @@ class ServiceRequestController extends Controller
                     'field' => 'payment_status',
                     'allowed' => ['pending', 'paid', 'partial'],
                 ]],
+                'content' => [
+                    'subject' => "[Pawesome] Payment Received for Verification — SR-{$serviceRequest->id}",
+                    'customer_name' => $serviceRequest->customer_name,
+                    'intro' => $isCash
+                        ? "Your cash payment for {$serviceRequest->service_name} will be verified by our cashier at the counter."
+                        : "We have received your payment submission for {$serviceRequest->service_name}. Our cashier will verify it shortly.",
+                    'details' => [
+                        ['label' => 'Reference', 'value' => "SR-{$serviceRequest->id}"],
+                        ['label' => 'Service', 'value' => $serviceRequest->service_name],
+                        ['label' => 'Pet', 'value' => $serviceRequest->pet_name],
+                        ['label' => 'Amount due', 'value' => EmailContent::money($serviceRequest->total_amount ?? $serviceRequest->price)],
+                        ['label' => 'Payment method', 'value' => ucfirst((string) $validated['payment_method'])],
+                        ['label' => 'Payment reference', 'value' => $validated['payment_reference'] ?? null],
+                        ['label' => 'Submitted', 'value' => EmailContent::datetime(now())],
+                    ],
+                    'status' => 'Pending verification',
+                    'status_type' => 'warning',
+                    'cta_url' => EmailContent::frontendUrl('/customer/payments'),
+                    'cta_label' => 'View Payment',
+                ],
             ]
         );
 

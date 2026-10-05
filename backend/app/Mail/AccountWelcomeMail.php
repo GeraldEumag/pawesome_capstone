@@ -32,6 +32,7 @@ class AccountWelcomeMail extends Mailable implements ShouldBeEncrypted, ShouldQu
         return $this
             ->subject('Your Pawesome account is ready')
             ->view('emails.account-welcome')
+            ->text('emails.text.account-welcome')
             ->with([
                 'name' => $this->name,
                 'username' => $this->username,

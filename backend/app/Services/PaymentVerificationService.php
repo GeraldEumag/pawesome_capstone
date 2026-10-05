@@ -184,6 +184,8 @@ class PaymentVerificationService
         $result = $this->performReject($type, $id, $request);
 
         if (($result['success'] ?? false) === true) {
+            $this->queuePaymentRejectedEmail($type, $id, trim((string) $request->input('rejection_reason', '')));
+
             ActivityLog::log(Auth::id(), 'payment_rejected', "Payment rejected for {$type} #{$id}", [
                 'category' => 'payment',
                 'reference_type' => $type,
@@ -383,6 +385,99 @@ class PaymentVerificationService
             ]);
         } catch (\Throwable $e) {
             Log::error('Failed to queue customer payment receipt email', [
+                'type' => $type,
+                'record_id' => $id,
+                'exception' => get_class($e),
+            ]);
+        }
+    }
+
+    /**
+     * Notify the customer that a payment submission could not be verified.
+     * Called after the rejection transaction commits — mirrors the receipt
+     * path's recipient resolution and persisted-state guarantees.
+     */
+    private function queuePaymentRejectedEmail(string $type, int $id, string $rejectionReason): void
+    {
+        $meta = match ($type) {
+            'service_request', 'service' => ['table' => 'service_requests', 'ref' => 'SR', 'cta' => '/customer/my-requests'],
+            'boarding' => ['table' => 'boardings', 'ref' => 'BD', 'cta' => '/customer/payments'],
+            'appointment', 'veterinary' => ['table' => 'appointments', 'ref' => 'APT', 'cta' => '/customer/payments'],
+            'grooming' => ['table' => 'groomings', 'ref' => 'GR', 'cta' => '/customer/payments'],
+            'medical_confinement', 'confinement' => ['table' => 'medical_confinements', 'ref' => 'MC', 'cta' => '/customer/payments'],
+            default => null,
+        };
+
+        if (!$meta) {
+            return;
+        }
+
+        try {
+            $record = DB::table($meta['table'])->where('id', $id)->first();
+            if (!$record || ($record->payment_status ?? null) !== 'rejected') {
+                return;
+            }
+
+            $customer = null;
+            if ($meta['table'] === 'service_requests') {
+                $srModel = ServiceRequest::find($id);
+                $customer = $srModel ? CustomerEmailResolver::forServiceRequest($srModel) : null;
+            } elseif (!empty($record->customer_id)) {
+                $customer = \App\Models\Customer::find($record->customer_id);
+            }
+
+            $customerEmail = $record->customer_email ?? $customer?->email;
+            if (empty($customerEmail)) {
+                Log::warning('Payment rejection email skipped: no customer recipient', [
+                    'type' => $type, 'record_id' => $id,
+                ]);
+                return;
+            }
+
+            $serviceName = match ($meta['table']) {
+                'service_requests' => $record->service_name ?? 'Service request',
+                'boardings' => 'Boarding' . (($record->stay_type ?? $record->boarding_type ?? null) ? ' (' . ($record->stay_type ?? $record->boarding_type) . ')' : ''),
+                'appointments' => \App\Models\Service::find($record->service_id ?? 0)?->name ?? 'Veterinary service',
+                'groomings' => $record->service ?? 'Grooming',
+                default => 'Medical confinement',
+            };
+
+            $reference = "{$meta['ref']}-{$id}";
+            $rejectedAt = $record->rejected_at ?? $record->updated_at ?? now();
+
+            app(EmailDeliveryService::class)->lifecycle(
+                $customerEmail,
+                'Payment Verification Issue',
+                "Your payment for {$serviceName} could not be verified. Reason: {$rejectionReason}",
+                'error',
+                [
+                    'event_key' => 'payment.rejected',
+                    'occurrence_key' => "payment.rejected:{$meta['table']}:{$id}:" . strtotime((string) $rejectedAt),
+                    'source_type' => $meta['table'] === 'service_requests' ? 'service_request' : $meta['table'],
+                    'source_id' => $id,
+                    'user_id' => $meta['table'] === 'service_requests' ? ($record->customer_id ?? null) : null,
+                    'customer_id' => $customer?->id,
+                    'content' => [
+                        'subject' => "[Pawesome] Action Required: Payment Verification Issue — {$reference}",
+                        'customer_name' => $record->customer_name ?? $customer?->name,
+                        'intro' => "We were unable to verify the payment submitted for {$serviceName}. Please review the reason below and submit a new payment proof if applicable.",
+                        'details' => [
+                            ['label' => 'Reference', 'value' => $reference],
+                            ['label' => 'Service', 'value' => $serviceName],
+                            ['label' => 'Amount', 'value' => \App\Support\EmailContent::money($this->settledAmount($meta['table'], $record) ?: null)],
+                            ['label' => 'Payment method', 'value' => $record->payment_method ? match (strtolower((string) $record->payment_method)) { 'gcash' => 'GCash', 'maya' => 'Maya', 'cash' => 'Cash', default => ucfirst((string) $record->payment_method) } : null],
+                            ['label' => 'Reason', 'value' => $rejectionReason],
+                        ],
+                        'status' => 'Payment rejected',
+                        'status_type' => 'error',
+                        'cta_url' => \App\Support\EmailContent::frontendUrl($meta['cta']),
+                        'cta_label' => 'Resubmit Payment',
+                        'closing' => 'If you believe this decision was made in error, please contact our front desk for assistance.',
+                    ],
+                ]
+            );
+        } catch (\Throwable $e) {
+            Log::error('Failed to queue payment rejection email', [
                 'type' => $type,
                 'record_id' => $id,
                 'exception' => get_class($e),

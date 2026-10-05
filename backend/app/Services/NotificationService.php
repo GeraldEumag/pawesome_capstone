@@ -9,6 +9,7 @@ use App\Models\Appointment;
 use App\Models\Customer;
 use App\Models\SystemSetting;
 use App\Mail\PaymentReceiptMail;
+use App\Support\EmailContent;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 
@@ -82,6 +83,23 @@ class NotificationService
             'occurrence_key' => "boarding.created:{$boarding->id}",
             'source_type' => 'boarding',
             'source_id' => $boarding->id,
+            'content' => [
+                'subject' => "[Pawesome] Hotel Reservation Received — BD-{$boarding->id}",
+                'customer_name' => $customer->name,
+                'intro' => 'Thank you — we have received your pet hotel reservation. Our team will confirm it shortly.',
+                'details' => [
+                    ['label' => 'Reference', 'value' => "BD-{$boarding->id}"],
+                    ['label' => 'Pet', 'value' => $boarding->pet_name],
+                    ['label' => 'Room', 'value' => $boarding->room_name],
+                    ['label' => 'Check-in', 'value' => EmailContent::datetime($boarding->check_in)],
+                    ['label' => 'Check-out', 'value' => EmailContent::datetime($boarding->check_out)],
+                    ['label' => 'Estimated total', 'value' => EmailContent::money($boarding->total_amount)],
+                ],
+                'status' => 'Pending confirmation',
+                'status_type' => 'info',
+                'cta_url' => EmailContent::frontendUrl('/customer/boardings'),
+                'cta_label' => 'View Reservation',
+            ],
         ]);
     }
 
@@ -131,6 +149,22 @@ class NotificationService
             'occurrence_key' => "boarding.status:{$boarding->id}:{$oldStatus}>{$boarding->status}:" . $boarding->updated_at?->format('Uv'),
             'source_type' => 'boarding',
             'source_id' => $boarding->id,
+            'content' => [
+                'subject' => "[Pawesome] Boarding " . EmailContent::status($boarding->status) . " — BD-{$boarding->id}",
+                'customer_name' => $customer->name,
+                'intro' => $messages[$boarding->status],
+                'details' => [
+                    ['label' => 'Reference', 'value' => "BD-{$boarding->id}"],
+                    ['label' => 'Pet', 'value' => $boarding->pet_name],
+                    ['label' => 'Room', 'value' => $boarding->room_name],
+                    ['label' => 'Check-in', 'value' => EmailContent::datetime($boarding->check_in)],
+                    ['label' => 'Check-out', 'value' => EmailContent::datetime($boarding->check_out)],
+                ],
+                'status' => EmailContent::status($boarding->status),
+                'status_type' => $type === 'error' ? 'error' : 'success',
+                'cta_url' => EmailContent::frontendUrl('/customer/boardings'),
+                'cta_label' => 'View Reservation',
+            ],
         ]);
     }
 
@@ -175,6 +209,22 @@ class NotificationService
             'occurrence_key' => "appointment.created:{$appointment->id}",
             'source_type' => 'appointment',
             'source_id' => $appointment->id,
+            'content' => [
+                'subject' => "[Pawesome] Appointment Scheduled — APT-{$appointment->id}",
+                'customer_name' => $customer->name,
+                'intro' => 'Your veterinary appointment has been scheduled. Please review the details below.',
+                'details' => [
+                    ['label' => 'Reference', 'value' => "APT-{$appointment->id}"],
+                    ['label' => 'Pet', 'value' => $appointment->pet?->name],
+                    ['label' => 'Service', 'value' => $appointment->service?->name],
+                    ['label' => 'Veterinarian', 'value' => $appointment->veterinarian?->name],
+                    ['label' => 'Schedule', 'value' => EmailContent::datetime($appointment->scheduled_at)],
+                ],
+                'status' => 'Pending confirmation',
+                'status_type' => 'info',
+                'cta_url' => EmailContent::frontendUrl('/customer/appointments'),
+                'cta_label' => 'View Appointment',
+            ],
         ]);
     }
 
@@ -224,6 +274,22 @@ class NotificationService
                 'occurrence_key' => "appointment.status:{$appointment->id}:{$oldStatus}>{$appointment->status}:" . $appointment->updated_at?->format('Uv'),
                 'source_type' => 'appointment',
                 'source_id' => $appointment->id,
+                'content' => [
+                    'subject' => "[Pawesome] Appointment " . EmailContent::status($appointment->status) . " — APT-{$appointment->id}",
+                    'customer_name' => $customer->name,
+                    'intro' => $text,
+                    'details' => [
+                        ['label' => 'Reference', 'value' => "APT-{$appointment->id}"],
+                        ['label' => 'Pet', 'value' => $appointment->pet?->name],
+                        ['label' => 'Service', 'value' => $appointment->service?->name],
+                        ['label' => 'Veterinarian', 'value' => $appointment->veterinarian?->name],
+                        ['label' => 'Schedule', 'value' => EmailContent::datetime($appointment->scheduled_at)],
+                    ],
+                    'status' => EmailContent::status($appointment->status),
+                    'status_type' => $type === 'error' ? 'error' : ($type === 'info' ? 'info' : 'success'),
+                    'cta_url' => EmailContent::frontendUrl('/customer/appointments'),
+                    'cta_label' => 'View Appointment',
+                ],
             ]);
         }
     }
@@ -279,6 +345,19 @@ class NotificationService
             'suppression' => [
                 ['type' => 'model_field', 'table' => $type === 'boarding' ? 'boardings' : 'appointments',
                     'id' => $model->id, 'field' => 'status', 'allowed' => $allowedStatuses],
+            ],
+            'content' => [
+                'subject' => "[Pawesome] {$title}",
+                'customer_name' => $customer->name,
+                'intro' => $message,
+                'details' => [
+                    ['label' => 'Reference', 'value' => ($type === 'boarding' ? 'BD-' : 'APT-') . $model->id],
+                    ['label' => 'Scheduled', 'value' => EmailContent::datetime($eventAt)],
+                ],
+                'status' => 'Reminder',
+                'status_type' => 'warning',
+                'cta_url' => EmailContent::frontendUrl($type === 'boarding' ? '/customer/boardings' : '/customer/appointments'),
+                'cta_label' => 'View Details',
             ],
         ]);
     }
@@ -340,6 +419,7 @@ class NotificationService
                 'source_id' => $context['source_id'] ?? null,
                 'expires_at' => $context['expires_at'] ?? null,
                 'suppression' => $context['suppression'] ?? [],
+                'content' => $context['content'] ?? null,
             ]);
         } catch (\Throwable $e) {
             Log::error('Failed to record customer notification email', ['exception' => get_class($e)]);

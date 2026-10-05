@@ -28,6 +28,7 @@ class EmailVerificationMail extends Mailable implements ShouldBeEncrypted, Shoul
         return $this
             ->subject('Verify your Pawesome email address')
             ->view('emails.verify')
+            ->text('emails.text.verify')
             ->with([
                 'name' => $this->name,
                 'url' => $url,
