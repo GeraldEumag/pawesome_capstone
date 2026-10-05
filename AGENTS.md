@@ -282,6 +282,23 @@ configuration; review `docs/DEPLOYMENT.md` before using any provider settings.
   navigation without remounting (cart preserved). `CashierPaymentVerification.jsx`
   is unrouted legacy — the live approvals UI is `PaymentApprovals` inside POS.
   Browser: `E2E_BASE_URL=http://localhost:3000 npx playwright test e2e/cashier-payment-deep-link.spec.js --project=chromium`.
+- **Email system (Phase 2–5): VERIFIED** — all customer-facing mail now renders
+  through a shared table-based layout (`emails/layout.blade.php` + partials:
+  status chip, details table, CTA) with plain-text fallbacks for every
+  mailable. `CustomerNotificationMail` accepts a structured `content` payload
+  serialized inside the existing encrypted outbox payload — the
+  `email_deliveries` outbox, dedup, suppression, and retry semantics are
+  unchanged. New events: `payment.rejected` (cashier rejection, post-commit,
+  reason + resubmit CTA) and `order.status` (receptionist transitions, with
+  no-op guard). `order.submitted` intentionally absent: `checkout()` is
+  disabled (HTTP 410). `PayslipReleasedMail` normalized visually but still has
+  no producer. Subjects standardized as `[Pawesome] <Event> — <Ref>`.
+  Verified with real provider acceptance on Brevo SMTP locally (12 events:
+  auth verify/reset, service-request lifecycle, proof submit/reject/resubmit,
+  boarding create/status, order status, boarding receipt, opt-out suppression,
+  dedup) and on the Railway `brevo` HTTPS API transport (register + forgot —
+  Brevo events `sent`→`delivered`). Helper: `App\Support\EmailContent`.
+  Tests: `php artisan test --filter=EmailStructuredContentTest` (12/12).
 
 ## Reports
 
