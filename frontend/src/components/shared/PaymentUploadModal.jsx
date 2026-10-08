@@ -11,7 +11,7 @@ const PAYMENT_METHODS = [
   { value: "maya", label: "Maya", hint: "Send via Maya app" },
 ];
 
-const PaymentUploadModal = ({ open, onClose, onSuccess, endpoint, title }) => {
+const PaymentUploadModal = ({ open, onClose, onSuccess, endpoint, title, referenceNumber: previousReference = "", paymentStatus = "", rejectionReason = "", paymentMethod: previousPaymentMethod = "gcash" }) => {
   const [paymentMethod, setPaymentMethod] = useState("gcash");
   const [file, setFile] = useState(null);
   const [previewUrl, setPreviewUrl] = useState(null);
@@ -20,6 +20,17 @@ const PaymentUploadModal = ({ open, onClose, onSuccess, endpoint, title }) => {
   const [error, setError] = useState("");
 
   const isCash = paymentMethod === "cash";
+  const isRejected = String(paymentStatus).toLowerCase() === "rejected";
+
+  useEffect(() => {
+    if (!open) return;
+    setFile(null);
+    setPreviewUrl(null);
+    setReferenceNumber("");
+    const method = String(previousPaymentMethod || "").toLowerCase();
+    setPaymentMethod(PAYMENT_METHODS.some((option) => option.value === method) ? method : "gcash");
+    setError("");
+  }, [open, endpoint, previousPaymentMethod]);
 
   // Lock body scroll when modal opens
   useEffect(() => {
@@ -129,6 +140,14 @@ const PaymentUploadModal = ({ open, onClose, onSuccess, endpoint, title }) => {
         </div>
 
         <div className="pum-body">
+          {isRejected && (
+            <div className="pum-rejection-note" role="status">
+              <strong>Payment proof rejected</strong>
+              {rejectionReason && <p>Cashier reason: {rejectionReason}</p>}
+              {previousReference && <p>Previous reference: <span>{previousReference}</span></p>}
+              <p>Re-upload your proof and re-enter or correct the online payment reference number.</p>
+            </div>
+          )}
           <div className="pum-step">
             <p className="pum-step-label">
               <span className="pum-step-number">1</span>
@@ -216,12 +235,12 @@ const PaymentUploadModal = ({ open, onClose, onSuccess, endpoint, title }) => {
               <div className="pum-step">
                 <p className="pum-step-label">
                   <span className="pum-step-number">3</span>
-                  Enter your {paymentMethod === "gcash" ? "GCash" : "Maya"} reference number
+                  {isRejected ? "Re-enter or correct the payment reference number" : `Enter your ${paymentMethod === "gcash" ? "GCash" : "Maya"} reference number`}
                 </p>
                 <input
                   type="text"
                   className="pum-ref-input"
-                  placeholder="e.g. 1234567890"
+                  placeholder={isRejected ? "Re-enter the correct reference number" : "e.g. 1234567890"}
                   value={referenceNumber}
                   onChange={(e) => setReferenceNumber(e.target.value)}
                 />

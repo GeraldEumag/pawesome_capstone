@@ -6,6 +6,8 @@ import {
   faTimes,
 } from "@fortawesome/free-solid-svg-icons";
 import { apiRequest } from "../../../api/client";
+import DatePickerInput from "../../shared/DatePickerInput";
+import { formatDateOnly, parseDateOnly } from "../../../utils/date";
 import "../../../styles/bookingModal.css";
 import "./NewWalkInBookingModal.css";
 
@@ -80,6 +82,12 @@ const NewWalkInBookingModal = ({ onClose, onSuccess }) => {
   const roomsRequestRef = useRef(0);
   const [processing, setProcessing] = useState(false);
   const [error, setError] = useState("");
+
+  useEffect(() => {
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => { document.body.style.overflow = previousOverflow; };
+  }, []);
 
   useEffect(() => {
     const load = async () => {
@@ -409,12 +417,10 @@ const NewWalkInBookingModal = ({ onClose, onSuccess }) => {
               <div className="hub-form-grid">
                 <div className="hub-form-group">
                   <label>Appointment Date *</label>
-                  <input
-                    type="date"
-                    name="appointmentDate"
-                    value={form.appointmentDate}
-                    onChange={handleInputChange}
-                    min={new Date().toISOString().split("T")[0]}
+                  <DatePickerInput
+                    selected={parseDateOnly(form.appointmentDate)}
+                    onChange={(date) => setForm((prev) => ({ ...prev, appointmentDate: formatDateOnly(date) }))}
+                    minDate={new Date()}
                     required
                   />
                 </div>

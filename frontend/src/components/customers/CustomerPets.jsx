@@ -23,6 +23,7 @@ import {
 } from "react-icons/fa";
 import "./CustomerPets.css";
 import { apiRequest, getAuthenticatedFileUrl } from "../../api/client";
+import { formatDateOnly, parseDateOnly } from "../../utils/date";
 import PetAvatar, { resolveImageUrl } from "../shared/PetAvatar";
 import {
   getSpeciesOptions,
@@ -375,9 +376,9 @@ const CustomerPets = () => {
 
   const normalizeDateString = (value) => {
     if (!value) return "";
-    const d = new Date(value);
-    if (Number.isNaN(d.getTime())) return "";
-    return d.toISOString().split("T")[0];
+    const parsed = parseDateOnly(value) || new Date(value);
+    if (Number.isNaN(parsed.getTime())) return "";
+    return formatDateOnly(parsed);
   };
 
   const handleEditClick = async (pet) => {
@@ -748,9 +749,9 @@ const CustomerPets = () => {
               <label>
                 Birthdate
                 <DatePickerInput
-                  selected={formData.birthdate ? new Date(formData.birthdate) : null}
+                  selected={parseDateOnly(formData.birthdate)}
                   onChange={(date) =>
-                    handleChange({ target: { name: "birthdate", value: date ? date.toISOString().split("T")[0] : "" } })
+                    handleChange({ target: { name: "birthdate", value: formatDateOnly(date) } })
                   }
                   placeholderText="Select birthdate..."
                   maxDate={new Date()}
@@ -1078,9 +1079,9 @@ const CustomerPets = () => {
                     Birthdate
                     <div className={formErrors.birthdate ? "datepicker-error-wrap" : ""}>
                       <DatePickerInput
-                        selected={formData.birthdate ? new Date(formData.birthdate) : null}
+                        selected={parseDateOnly(formData.birthdate)}
                         onChange={(date) =>
-                          handleChange({ target: { name: "birthdate", value: date ? date.toISOString().split("T")[0] : "" } })
+                          handleChange({ target: { name: "birthdate", value: formatDateOnly(date) } })
                         }
                         placeholderText="Select birthdate..."
                         maxDate={new Date()}

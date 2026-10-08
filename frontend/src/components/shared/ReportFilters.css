@@ -46,7 +46,7 @@
 }
 
 .search-input,
-.date-input-group input[type="date"],
+.date-input-group .paws-datepicker input,
 .filter-dropdown select {
   width: 100%;
   min-height: 40px;
@@ -63,13 +63,13 @@
   padding: 0.65rem 2.4rem;
 }
 
-.date-input-group input[type="date"],
+.date-input-group .paws-datepicker input,
 .filter-dropdown select {
   padding: 0.55rem 0.75rem;
 }
 
 .search-input:focus,
-.date-input-group input[type="date"]:focus,
+.date-input-group .paws-datepicker input:focus,
 .filter-dropdown select:focus {
   outline: none;
   border-color: #94a3b8;

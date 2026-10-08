@@ -28,6 +28,7 @@ import {
 import "../../styles/bookingModal.css";
 import "./ReceptionistBookings.css";
 import { apiRequest } from "../../api/client";
+import { formatDateOnly, parseDateOnly } from "../../utils/date";
 import RowActionPopover from "../shared/RowActionPopover";
 import { exportToCSV, exportToPDF, exportToExcel } from "../../utils/reportExport";
 import ServiceManagerModal from "./ServiceManagerModal";
@@ -1561,9 +1562,9 @@ const ReceptionistBookings = () => {
                     <label>New Date</label>
                     <DatePickerInput
                       withPortal
-                      selected={newDate ? new Date(newDate) : null}
+                      selected={parseDateOnly(newDate)}
                       onChange={(date) => {
-                        const dateStr = date ? date.toISOString().split("T")[0] : "";
+                        const dateStr = formatDateOnly(date);
                         setNewDate(dateStr);
                         checkAvailability(selectedBooking, dateStr);
                       }}
@@ -1727,8 +1728,8 @@ const ReceptionistBookings = () => {
                     <label>Approved New Date</label>
                     <DatePickerInput
                       withPortal
-                      selected={rescheduleNewDate ? new Date(rescheduleNewDate) : null}
-                      onChange={(date) => setRescheduleNewDate(date ? date.toISOString().split("T")[0] : "")}
+                      selected={parseDateOnly(rescheduleNewDate)}
+                      onChange={(date) => setRescheduleNewDate(formatDateOnly(date))}
                       placeholderText="Pick a date..."
                       required
                     />
@@ -2002,8 +2003,8 @@ const ReceptionistBookings = () => {
                   <div className="form-group">
                     <label>Appointment Date *</label>
                     <DatePickerInput
-                      selected={bookingFormData.appointmentDate ? new Date(bookingFormData.appointmentDate) : null}
-                      onChange={(date) => handleBookingInputChange({ target: { name: "appointmentDate", value: date ? date.toISOString().split("T")[0] : "" } })}
+                      selected={parseDateOnly(bookingFormData.appointmentDate)}
+                      onChange={(date) => handleBookingInputChange({ target: { name: "appointmentDate", value: formatDateOnly(date) } })}
                       placeholderText="Pick a date..."
                       minDate={new Date()}
                       required

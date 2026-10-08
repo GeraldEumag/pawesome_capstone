@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import DatePickerInput from "../../components/shared/DatePickerInput";
+import { formatDateOnly, parseDateOnly } from "../../utils/date";
 import {
   faArrowLeft,
   faCalendarAlt,
@@ -69,7 +70,7 @@ const VetNewAppointment = () => {
   const getServiceDuration = (service) =>
     service?.duration_minutes || service?.duration || "";
 
-  const todayKey = new Date().toISOString().split("T")[0];
+  const todayKey = formatDateOnly(new Date());
 
   const timeOptions = useMemo(() => {
     const slots = [];
@@ -619,8 +620,8 @@ const VetNewAppointment = () => {
                 </label>
 
                 <DatePickerInput
-                  selected={formData.appointment_date ? new Date(formData.appointment_date) : null}
-                  onChange={(date) => updateField("appointment_date", date ? date.toISOString().split("T")[0] : "")}
+                  selected={parseDateOnly(formData.appointment_date)}
+                  onChange={(date) => updateField("appointment_date", formatDateOnly(date))}
                   placeholderText="Pick a date..."
                   minDate={new Date()}
                 />

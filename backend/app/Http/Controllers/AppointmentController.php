@@ -172,49 +172,57 @@ class AppointmentController extends Controller
             return response()->json(['message' => 'Pet not found for this customer'], 422);
         }
 
-        // Check availability before creating appointment
         $scheduledAt = Carbon::parse($request->scheduled_at);
         $date = $scheduledAt->format('Y-m-d');
         $time = $scheduledAt->format('H:i');
+        $service = Service::find($request->service_id);
 
-        // Check if the time slot is still available
-        if (!BookingAvailabilityService::isVeterinarySlotAvailable($date, $time, $request->veterinarian_id)) {
+        $appointment = DB::transaction(function () use ($request, $date, $time, $service) {
+            Service::query()->orderBy('id')->lockForUpdate()->first();
+            $lockedService = Service::find($request->service_id);
+            $serviceType = strtolower((string) $lockedService?->category) === 'grooming' ? 'grooming' : 'veterinary';
+            if (!BookingAvailabilityService::isServiceTimeAvailable($serviceType, $date, $time, $lockedService?->name, $request->veterinarian_id)) {
+                return null;
+            }
+
+            $appointment = Appointment::create([
+                'customer_id' => $request->customer_id,
+                'pet_id' => $request->pet_id,
+                'service_id' => $request->service_id,
+                'veterinarian_id' => $request->veterinarian_id,
+                'status' => $request->user()?->hasRoleAccess('veterinary', 'vet', 'veterinarian')
+                    ? 'approved'
+                    : ($request->user()?->hasRoleAccess('receptionist', 'admin')
+                        ? 'approved'
+                        : 'pending'),
+                'scheduled_at' => $request->scheduled_at,
+                'notes' => $request->notes,
+                'price' => $lockedService?->price ?? $service?->price ?? 0,
+            ]);
+
+            // Automatically create grooming record if service category is Grooming
+            if ($lockedService && $lockedService->category === 'Grooming') {
+                Grooming::create([
+                    'customer_id' => $request->customer_id,
+                    'pet_id' => $request->pet_id,
+                    'service' => $lockedService->name,
+                    'appointment_date' => Carbon::parse($request->scheduled_at)->toDateString(),
+                    'appointment_time' => Carbon::parse($request->scheduled_at)->toTimeString(),
+                    'notes' => $request->notes,
+                    'amount' => $lockedService->price ?? 0,
+                    'status' => 'pending',
+                ]);
+            }
+
+            return $appointment;
+        });
+
+        if (!$appointment) {
             return response()->json([
                 'success' => false,
                 'message' => 'This schedule is no longer available. Please choose another slot.',
-                'errors' => ['scheduled_at' => ['Time slot already booked']]
+                'errors' => ['scheduled_at' => ['Time slot overlaps an existing booking.']],
             ], 422);
-        }
-
-        $service = Service::find($request->service_id);
-
-        $appointment = Appointment::create([
-            'customer_id' => $request->customer_id,
-            'pet_id' => $request->pet_id,
-            'service_id' => $request->service_id,
-            'veterinarian_id' => $request->veterinarian_id,
-            'status' => $request->user()?->hasRoleAccess('veterinary', 'vet', 'veterinarian')
-                ? 'approved'
-                : ($request->user()?->hasRoleAccess('receptionist', 'admin')
-                    ? 'approved'
-                    : 'pending'),
-            'scheduled_at' => $request->scheduled_at,
-            'notes' => $request->notes,
-            'price' => $service->price ?? 0,
-        ]);
-
-        // Automatically create grooming record if service category is Grooming
-        if ($service && $service->category === 'Grooming') {
-            Grooming::create([
-                'customer_id' => $request->customer_id,
-                'pet_id' => $request->pet_id,
-                'service' => $service->name,
-                'appointment_date' => Carbon::parse($request->scheduled_at)->toDateString(),
-                'appointment_time' => Carbon::parse($request->scheduled_at)->toTimeString(),
-                'notes' => $request->notes,
-                'amount' => $service->price ?? 0,
-                'status' => 'pending',
-            ]);
         }
 
         return response()->json([

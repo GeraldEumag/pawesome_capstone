@@ -135,6 +135,32 @@ class EmailServiceWorkflowTest extends TestCase
         $this->assertSame(EmailDelivery::STATUS_ACCEPTED, $delivery->fresh()->status);
     }
 
+    public function test_service_request_completion_sends_booking_reference_and_is_idempotent(): void
+    {
+        Mail::fake();
+        Queue::fake();
+        [$user] = $this->verifiedCustomer(['email' => 'customer@example.com']);
+        $receptionist = User::factory()->create(['role' => 'receptionist', 'is_active' => true]);
+        $serviceRequest = $this->submitGroomingRequest($user);
+
+        $this->patchJson("/api/receptionist/requests/{$serviceRequest->id}/status", [
+            'status' => 'completed',
+        ], $this->bearer($receptionist))->assertOk();
+
+        $delivery = EmailDelivery::where('event_key', 'booking.completed')->firstOrFail();
+        $this->assertSame('service_request', $delivery->source_type);
+        $this->assertSame($serviceRequest->id, $delivery->source_id);
+        $this->deliverPending();
+        Mail::assertSent(CustomerNotificationMail::class, fn ($mail) => $mail->hasTo('customer@example.com')
+            && $mail->title === 'Booking Completed'
+            && str_contains($mail->content['subject'], "SR-{$serviceRequest->id}"));
+
+        $this->patchJson("/api/receptionist/requests/{$serviceRequest->id}/status", [
+            'status' => 'completed',
+        ], $this->bearer($receptionist))->assertOk();
+        $this->assertSame(1, EmailDelivery::where('event_key', 'booking.completed')->count());
+    }
+
     public function test_appointment_creation_records_lifecycle_intent_via_model_hook(): void
     {
         Mail::fake();
@@ -180,9 +206,15 @@ class EmailServiceWorkflowTest extends TestCase
         // Lifecycle state — email intent recorded.
         $appointment->update(['status' => 'approved']);
         $delivery = EmailDelivery::where('event_key', 'appointment.status')->firstOrFail();
+        $appointment->update(['status' => 'completed']);
+        $completion = EmailDelivery::where('event_key', 'booking.completed')->firstOrFail();
+        $this->assertSame($appointment->id, $completion->source_id);
 
         $this->deliverPending();
         Mail::assertSent(CustomerNotificationMail::class, fn ($m) => $m->hasTo('customer@example.com'));
+        Mail::assertSent(CustomerNotificationMail::class, fn ($m) => $m->hasTo('customer@example.com')
+            && $m->title === 'Booking Completed'
+            && str_contains($m->content['subject'], "APT-{$appointment->id}"));
     }
 
     public function test_boarding_lifecycle_statuses_record_email_intents(): void
@@ -205,14 +237,15 @@ class EmailServiceWorkflowTest extends TestCase
             'total_amount' => 1000,
         ]);
 
-        foreach (['in_care', 'ready_for_pickup', 'checked_out'] as $status) {
+        foreach (['in_care', 'ready_for_pickup', 'checked_out', 'completed'] as $status) {
             $boarding->update(['status' => $status]);
             NotificationService::notifyBoardingStatusChange($boarding, 'previous');
         }
 
         $this->assertSame(3, EmailDelivery::where('event_key', 'boarding.status')->count());
+        $this->assertSame(1, EmailDelivery::where('event_key', 'booking.completed')->count());
         $this->deliverPending();
-        Mail::assertSent(CustomerNotificationMail::class, 3);
+        Mail::assertSent(CustomerNotificationMail::class, 4);
     }
 
     public function test_reminder_command_records_intent_and_marks_reminder_sent(): void

@@ -16,6 +16,8 @@ use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Queue;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Http\UploadedFile;
 use Tests\TestCase;
 
 /**
@@ -119,9 +121,54 @@ class PaymentReceiptOutboxTest extends TestCase
         Mail::assertSent(PaymentReceiptMail::class, function ($mail) use ($sr) {
             return $mail->receipt['receipt_number'] === $sr->receipt_number
                 && (float) $mail->receipt['total_amount'] === 500.0
+                && (float) $mail->receipt['vat_amount'] === 53.57
+                && str_contains($mail->render(), '-₱53.57')
                 && $mail->receipt['service_name'] === 'Full Groom'
                 && $mail->receipt['customer_email'] === $this->users['customer']->email;
         });
+    }
+
+    public function test_rejected_reference_is_emailed_and_customer_can_resubmit_with_new_reference(): void
+    {
+        Storage::fake('private');
+        Storage::disk('private')->put('payment-proofs/old-proof.png', 'previous evidence');
+        $sr = $this->pendingServiceRequest([
+            'payment_status' => 'pending',
+            'payment_reference' => 'OLD-REF-100',
+            'payment_proof' => 'payment-proofs/old-proof.png',
+        ]);
+
+        $this->as('cashier')->postJson("/api/cashier/payment-requests/{$sr->id}/reject", [
+            'type' => 'service_request',
+            'rejection_reason' => 'Reference number does not match the transfer.',
+        ])->assertOk();
+
+        $delivery = EmailDelivery::where('event_key', 'payment.rejected')->firstOrFail();
+        $this->deliverPending();
+        Mail::assertSent(CustomerNotificationMail::class, function ($mail) {
+            $details = $mail->content['details'] ?? [];
+            return $mail->hasTo($this->users['customer']->email)
+                && collect($details)->contains(fn ($row) => ($row['label'] ?? '') === 'Payment reference to correct'
+                    && ($row['value'] ?? '') === 'OLD-REF-100');
+        });
+        $this->assertSame('accepted', $delivery->fresh()->status);
+
+        $customer = $this->users['customer'];
+        $customer->forceFill(['email_verified_at' => now()])->save();
+        $this->withHeaders(['Authorization' => 'Bearer ' . $customer->createToken('resubmit')->plainTextToken])->post(
+            "/api/customer/requests/{$sr->id}/payment-proof",
+            [
+                'payment_method' => 'gcash',
+                'payment_reference' => 'NEW-REF-200',
+                'payment_proof' => UploadedFile::fake()->create('replacement-proof.pdf', 20, 'application/pdf'),
+            ]
+        )->assertOk();
+
+        $sr->refresh();
+        $this->assertSame('pending', $sr->payment_status);
+        $this->assertSame('NEW-REF-200', $sr->payment_reference);
+        $this->assertTrue(Storage::disk('private')->exists('payment-proofs/old-proof.png'));
+        $this->assertTrue(Storage::disk('private')->exists($sr->payment_proof));
     }
 
     public function test_boarding_verify_delivers_receipt_with_settlement_items(): void

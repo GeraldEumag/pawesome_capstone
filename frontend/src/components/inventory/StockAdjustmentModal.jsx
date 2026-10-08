@@ -11,6 +11,8 @@ import {
   faTriangleExclamation,
 } from "@fortawesome/free-solid-svg-icons";
 import { inventoryApi } from "../../api/inventory.jsx";
+import DatePickerInput from "../shared/DatePickerInput";
+import { formatDateOnly, parseDateOnly } from "../../utils/date";
 import "./StockAdjustmentModal.css";
 import { showAlert, showError } from "../../utils/alert.jsx";
 
@@ -38,10 +40,20 @@ const StockAdjustmentModal = ({ isOpen, onClose, item, onSuccess, initialType, i
   const [quantity, setQuantity] = useState(initialQuantity ? String(initialQuantity) : "");
   const [reason, setReason] = useState("");
   const [customReason, setCustomReason] = useState("");
+  const [batchNo, setBatchNo] = useState("");
+  const [receivedDate, setReceivedDate] = useState(formatDateOnly(new Date()));
+  const [manufacturingDate, setManufacturingDate] = useState("");
+  const [expirationDate, setExpirationDate] = useState("");
+  const [supplier, setSupplier] = useState("");
+  const [unitCost, setUnitCost] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
   const currentStock = Number(item?.stock ?? item?.quantity ?? item?.stock_quantity ?? item?.current_stock ?? 0);
+  const expiryCategories = ["food", "medicine", "vitamin", "health", "grooming", "shampoo", "treat"];
+  const requiresExpiry = Boolean(item?.requires_expiry_tracking)
+    || item?.issue_method === "FEFO"
+    || expiryCategories.some((category) => String(item?.category || "").toLowerCase().includes(category));
   const qty = parseInt(quantity, 10);
   const hasQty = !isNaN(qty) && qty > 0;
   const newTotal = hasQty
@@ -56,6 +68,12 @@ const StockAdjustmentModal = ({ isOpen, onClose, item, onSuccess, initialType, i
     setQuantity(initialQuantity ? String(initialQuantity) : "");
     setReason("");
     setCustomReason("");
+    setBatchNo("");
+    setReceivedDate(formatDateOnly(new Date()));
+    setManufacturingDate("");
+    setExpirationDate("");
+    setSupplier("");
+    setUnitCost("");
     setError(null);
   };
 
@@ -82,6 +100,13 @@ const StockAdjustmentModal = ({ isOpen, onClose, item, onSuccess, initialType, i
     }
     if (!reason) return "Please provide a reason for this adjustment";
     if (reason === "Other" && !customReason.trim()) return "Please specify the reason";
+    if (adjustmentType === "add") {
+      if (!batchNo.trim()) return "Batch number is required for stock receiving";
+      if (!receivedDate) return "Received date is required";
+      if (requiresExpiry && !expirationDate) return "Expiration date is required for this item";
+      if (manufacturingDate && manufacturingDate > receivedDate) return "Manufacturing date cannot be after the received date";
+      if (expirationDate && expirationDate < receivedDate) return "Expiration date cannot be before the received date";
+    }
     return null;
   };
 
@@ -97,7 +122,20 @@ const StockAdjustmentModal = ({ isOpen, onClose, item, onSuccess, initialType, i
 
     try {
       const finalReason = reason === "Other" ? customReason.trim() : reason;
-      await inventoryApi.adjustStock(item.id, adjustmentType, qty, finalReason);
+      if (adjustmentType === "add") {
+        await inventoryApi.addBatch(item.id, {
+          batch_no: batchNo.trim(),
+          received_date: receivedDate,
+          manufacturing_date: manufacturingDate || null,
+          expiration_date: expirationDate || null,
+          quantity: qty,
+          supplier: supplier.trim() || null,
+          unit_cost: unitCost === "" ? null : Number(unitCost),
+          notes: finalReason,
+        });
+      } else {
+        await inventoryApi.adjustStock(item.id, adjustmentType, qty, finalReason);
+      }
       await onSuccess?.();
       onClose?.();
     } catch (err) {
@@ -198,6 +236,39 @@ const StockAdjustmentModal = ({ isOpen, onClose, item, onSuccess, initialType, i
               ))}
             </div>
           </div>
+
+          {adjustmentType === "add" && (
+            <div className="batch-intake-section">
+              <h4>New stock batch</h4>
+              <p>Each receipt is recorded as a separate lot for stock rotation and expiry tracking.</p>
+              <div className="batch-intake-grid">
+                <label>
+                  Batch number <span className="required">*</span>
+                  <input value={batchNo} onChange={(e) => setBatchNo(e.target.value)} maxLength={50} placeholder="Supplier lot or batch number" />
+                </label>
+                <label>
+                  Received date <span className="required">*</span>
+                  <DatePickerInput selected={parseDateOnly(receivedDate)} onChange={(date) => setReceivedDate(formatDateOnly(date))} maxDate={new Date()} />
+                </label>
+                <label>
+                  Manufacturing date
+                  <DatePickerInput selected={parseDateOnly(manufacturingDate)} onChange={(date) => setManufacturingDate(formatDateOnly(date))} maxDate={parseDateOnly(receivedDate) || new Date()} />
+                </label>
+                <label>
+                  Expiration date {requiresExpiry && <span className="required">*</span>}
+                  <DatePickerInput selected={parseDateOnly(expirationDate)} onChange={(date) => setExpirationDate(formatDateOnly(date))} minDate={parseDateOnly(receivedDate) || new Date()} />
+                </label>
+                <label>
+                  Supplier
+                  <input value={supplier} onChange={(e) => setSupplier(e.target.value)} maxLength={255} placeholder="Supplier name" />
+                </label>
+                <label>
+                  Unit cost
+                  <input type="number" min="0" step="0.01" value={unitCost} onChange={(e) => setUnitCost(e.target.value)} placeholder="0.00" />
+                </label>
+              </div>
+            </div>
+          )}
 
           {/* Result preview */}
           <div className={`stock-preview ${hasQty ? (delta >= 0 ? "up" : "down") : ""}`}>

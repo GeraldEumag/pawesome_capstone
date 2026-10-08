@@ -39,6 +39,8 @@ const VetForm = () => {
   const [pets, setPets] = useState([]);
   const [services, setServices] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [availabilityLoading, setAvailabilityLoading] = useState(false);
+  const [availableTimeSlots, setAvailableTimeSlots] = useState([]);
 
   const [formData, setFormData] = useState({
     customer_name: customerName,
@@ -161,6 +163,30 @@ const VetForm = () => {
     ? getSpecialCareWarning(selectedPet.species || selectedPet.type, "veterinary")
     : "";
 
+  const fetchVetAvailability = async (date, serviceName = formData.service_name) => {
+    if (!date) {
+      setAvailableTimeSlots([]);
+      return;
+    }
+
+    setAvailabilityLoading(true);
+    try {
+      const query = new URLSearchParams({ date });
+      if (serviceName) query.set("service_name", serviceName);
+      const data = await apiRequest(`/customer/availability/veterinary?${query}`);
+      const slots = data.slots || [];
+      setAvailableTimeSlots(slots);
+      setFormData((prev) => slots.some((slot) => slot.time === prev.request_time && slot.available)
+        ? prev
+        : { ...prev, request_time: "" });
+    } catch (error) {
+      setAvailableTimeSlots([]);
+      showError(error.message || "Failed to check appointment availability.");
+    } finally {
+      setAvailabilityLoading(false);
+    }
+  };
+
   const handleChange = (e) => {
     const { name, value } = e.target;
 
@@ -180,11 +206,13 @@ const VetForm = () => {
         ...prev,
         service_name: value,
         price: service?.price ?? "",
+        request_time: "",
       }));
+      if (formData.request_date) fetchVetAvailability(formData.request_date, value);
       return;
     }
 
-    setFormData((prev) => ({ ...prev, [name]: value }));
+    setFormData((prev) => ({ ...prev, [name]: value, ...(name === "request_date" ? { request_time: "" } : {}) }));
   };
 
   const handleSubmit = async (e) => {
@@ -198,6 +226,11 @@ const VetForm = () => {
 
       if (compatibility && !compatibility.isValid) {
         showAlert(compatibility.message || "This service is not available for this pet type.");
+        return;
+      }
+
+      if (!availableTimeSlots.some((slot) => slot.time === formData.request_time && slot.available)) {
+        showAlert("That appointment time is no longer available. Please choose another slot.");
         return;
       }
 
@@ -223,6 +256,7 @@ const VetForm = () => {
           request_time: "",
           notes: "",
         });
+        setAvailableTimeSlots([]);
 
         await fetchAppointments();
         setActiveTab("my");
@@ -357,27 +391,28 @@ const VetForm = () => {
 
             <DatePickerInput
               selected={parseDateOnly(formData.request_date)}
-              onChange={(date) =>
-                setFormData((prev) => ({
-                  ...prev,
-                  request_date: formatDateOnly(date),
-                }))
-              }
+              onChange={(date) => {
+                const value = formatDateOnly(date);
+                setFormData((prev) => ({ ...prev, request_date: value, request_time: "" }));
+                fetchVetAvailability(value);
+              }}
               placeholderText="Pick a date..."
               minDate={new Date()}
               required
             />
 
+            {availabilityLoading && <p role="status">Checking available times...</p>}
             <select
               name="request_time"
               value={formData.request_time}
               onChange={handleChange}
+              disabled={!formData.request_date || !formData.service_name || availabilityLoading}
               required
             >
-              <option value="">Select a time</option>
-              {VET_TIME_SLOTS.map((slot) => (
-                <option key={slot.value} value={slot.value}>
-                  {slot.label}
+              <option value="">Select an available time</option>
+              {availableTimeSlots.map((slot) => (
+                <option key={slot.time} value={slot.time} disabled={!slot.available}>
+                  {slot.label}{slot.available ? "" : " (Unavailable)"}
                 </option>
               ))}
             </select>

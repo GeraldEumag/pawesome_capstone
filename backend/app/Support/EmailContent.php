@@ -21,6 +21,15 @@ class EmailContent
         return '₱' . number_format((float) $amount, 2);
     }
 
+    public static function vatInclusivePortion($grossAmount): ?float
+    {
+        if ($grossAmount === null || $grossAmount === '' || !is_numeric($grossAmount)) {
+            return null;
+        }
+
+        return round(((float) $grossAmount * 0.12) / 1.12, 2);
+    }
+
     /** 'Oct 06, 2026' — null for missing/unparseable input. */
     public static function date($value): ?string
     {

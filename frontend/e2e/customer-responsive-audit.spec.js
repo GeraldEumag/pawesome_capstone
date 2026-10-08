@@ -151,12 +151,12 @@ test('Customer workspace routes remain responsive across supported widths', asyn
       ).toBeLessThanOrEqual(dimensions.viewportWidth + 1);
 
       if (route === '/customer') {
-        await expect(page.locator('.bookings-panel .booking-card')).toHaveCount(3);
-        await expect(page.locator('.bookings-panel .booking-timeline').first()).toBeHidden();
+        await expect(page).toHaveURL(/\/customer\/services$/);
+        await expect(page.locator('.customer-services-page')).toBeVisible();
       }
 
       if (route === '/customer' && ['phone-390', 'laptop-1366'].includes(viewport.name)) {
-        await test.info().attach(`customer-dashboard-${viewport.name}`, {
+        await test.info().attach(`customer-services-${viewport.name}`, {
           body: await page.screenshot({ fullPage: true }),
           contentType: 'image/png',
         });

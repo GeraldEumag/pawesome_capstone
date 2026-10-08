@@ -33,6 +33,7 @@ const GroomingForm = () => {
   const [loading, setLoading] = useState(false);
   const [availabilityLoading, setAvailabilityLoading] = useState(false);
   const [groomingAvailability, setGroomingAvailability] = useState(null);
+  const [availableTimeSlots, setAvailableTimeSlots] = useState([]);
   const [dateAvailable, setDateAvailable] = useState(true);
 
   const [formData, setFormData] = useState({
@@ -156,23 +157,30 @@ const GroomingForm = () => {
     ? compatibility.message || getUnavailableServiceMessage(selectedPet.species || selectedPet.type, "grooming")
     : "";
 
-  const fetchGroomingAvailability = async (date) => {
+  const fetchGroomingAvailability = async (date, serviceName = formData.service_name) => {
     try {
       setAvailabilityLoading(true);
-      
-      const data = await apiRequest(`/customer/availability/grooming?date=${date}`);
-      
+      const query = new URLSearchParams({ date });
+      if (serviceName) query.set("service_name", serviceName);
+      const data = await apiRequest(`/customer/availability/grooming?${query}`);
+
       if (data.success) {
+        const slots = data.slots || [];
         setGroomingAvailability(data);
+        setAvailableTimeSlots(slots);
         setDateAvailable(data.available);
+        setFormData((prev) => slots.some((slot) => slot.time === prev.request_time && slot.available)
+          ? prev
+          : { ...prev, request_time: "" });
       } else {
         setGroomingAvailability(null);
+        setAvailableTimeSlots([]);
         setDateAvailable(false);
-        showAlert(data.message || "This grooming date is already reserved. Please choose another date.");
       }
     } catch (error) {
       console.error("Error fetching grooming availability:", error);
       setGroomingAvailability(null);
+      setAvailableTimeSlots([]);
       setDateAvailable(false);
       showError("Failed to check availability. Please try again.");
     } finally {
@@ -199,13 +207,14 @@ const GroomingForm = () => {
         ...prev,
         service_name: value,
         price: service?.price ?? "",
+        request_time: "",
       }));
+      if (formData.request_date) fetchGroomingAvailability(formData.request_date, value);
       return;
     }
 
-    setFormData((prev) => ({ ...prev, [name]: value }));
+    setFormData((prev) => ({ ...prev, [name]: value, ...(name === "request_date" ? { request_time: "" } : {}) }));
 
-    // Check availability when date changes
     if (name === "request_date" && value) {
       fetchGroomingAvailability(value);
     }
@@ -226,8 +235,8 @@ const GroomingForm = () => {
     }
 
     // Check availability before submitting
-    if (!dateAvailable) {
-      showAlert("This grooming date is already reserved. Please choose another date.");
+    if (!dateAvailable || !availableTimeSlots.some((slot) => slot.time === formData.request_time && slot.available)) {
+      showAlert("That grooming time is no longer available. Please choose another available slot.");
       return;
     }
 
@@ -256,6 +265,7 @@ const GroomingForm = () => {
         });
 
         setGroomingAvailability(null);
+        setAvailableTimeSlots([]);
         setDateAvailable(true);
 
         await fetchAppointments();
@@ -434,12 +444,13 @@ const GroomingForm = () => {
               name="request_time"
               value={formData.request_time}
               onChange={handleChange}
+              disabled={!formData.request_date || availabilityLoading || !dateAvailable}
               required
             >
-              <option value="">Select a time</option>
-              {GROOMING_TIME_SLOTS.map((slot) => (
-                <option key={slot.value} value={slot.value}>
-                  {slot.label}
+              <option value="">Select an available time</option>
+              {availableTimeSlots.map((slot) => (
+                <option key={slot.time} value={slot.time} disabled={!slot.available}>
+                  {slot.label}{slot.available ? "" : " (Unavailable)"}
                 </option>
               ))}
             </select>

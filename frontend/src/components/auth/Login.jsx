@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { apiRequest } from "../../api/client";
 import { useAuth } from "../../context/AuthContext";
-import { getDraft } from "../../utils/preBookingDraft";
+import { clearServiceIntent, getDraft, getServiceIntent } from "../../utils/preBookingDraft";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
   faArrowLeft,
@@ -16,7 +16,7 @@ import { showSuccess, showError } from "../../utils/alert.jsx";
 
 const roleRouteMap = {
   admin: "/admin",
-  customer: "/customer",
+  customer: "/customer/services",
   receptionist: "/receptionist",
   super_receptionist: "/super-receptionist",
   veterinary: "/veterinary",
@@ -62,6 +62,7 @@ const Login = () => {
         name: response.user.name,
         username: response.user.username,
         email: response.user.email,
+        email_verified_at: response.user.email_verified_at,
         profile_photo: response.user.profile_photo
           ? (response.user.profile_photo.startsWith("data:") ||
              response.user.profile_photo.includes("?v=")
@@ -76,11 +77,19 @@ const Login = () => {
           navigate(`/verify-email?email=${encodeURIComponent(response.user.email)}`);
           return;
         }
-        const draft = getDraft();
-        if (draft?.service_type) {
-          const draftPaths = { hotel: "/customer/hotel", grooming: "/customer/grooming", vet: "/customer/vet" };
-          redirectPath = draftPaths[draft.service_type] || redirectPath;
+        const serviceIntent = getServiceIntent();
+        if (serviceIntent) {
+          clearServiceIntent();
+          redirectPath = `/?book=${encodeURIComponent(serviceIntent)}`;
+        } else {
+          const draft = getDraft();
+          if (draft?.service_type) {
+            const draftPaths = { hotel: "/customer/hotel", grooming: "/customer/grooming", vet: "/customer/vet" };
+            redirectPath = draftPaths[draft.service_type] || redirectPath;
+          }
         }
+      } else {
+        clearServiceIntent();
       }
 
       await showSuccess(`Welcome, ${response.user.name}!`);

@@ -86,6 +86,14 @@
   font-weight: 750;
 }
 
+.svc-availability-status {
+  color: var(--landing-muted, #64748b);
+  font-size: 0.78rem;
+  font-weight: 700;
+}
+
+.svc-availability-status[role="alert"] { color: #b91c1c; }
+
 .svc-auth-notice {
   padding: 0.85rem 1rem;
   border-radius: 14px;
@@ -99,6 +107,24 @@
   font-size: 0.85rem;
   font-weight: 750;
   line-height: 1.55;
+}
+
+.svc-auth-gate {
+  align-items: center;
+  justify-content: center;
+  min-height: 180px;
+}
+
+.svc-auth-link {
+  min-height: 44px;
+  padding: 0 1.25rem;
+  border: 1px solid var(--landing-border, rgba(255, 95, 147, 0.18));
+  border-radius: var(--landing-radius-pill, 999px);
+  background: #ffffff;
+  color: var(--landing-primary-dark, #c93662);
+  font: inherit;
+  font-weight: 850;
+  cursor: pointer;
 }
 
 .svc-submit-btn {

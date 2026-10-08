@@ -271,13 +271,14 @@ class GroomingController extends Controller
             $petName = $pet ? $pet->name : 'Unknown Pet';
             
             // Create notification for customer
+            $reference = $grooming->service_request_id
+                ? 'SR-' . $grooming->service_request_id
+                : 'GR-' . $grooming->id;
+            $message = "Booking {$reference} for {$petName}'s grooming service has been completed.";
             \App\Services\NotificationService::createNotification(
                 $customer->user_id,
                 'Grooming Service Completed',
-                "Your pet {$petName}'s grooming service has been completed!\n" .
-                "Service: {$grooming->service}\n" .
-                "Date: " . ($grooming->appointment_date ? $grooming->appointment_date->format('M d, Y') : 'Today') . "\n" .
-                "Thank you for choosing our grooming services!",
+                $message,
                 'success',
                 'grooming',
                 $grooming->id,
@@ -287,6 +288,36 @@ class GroomingController extends Controller
                     'service' => $grooming->service,
                     'amount' => $grooming->amount,
                     'status' => 'completed'
+                ]
+            );
+
+            app(\App\Services\EmailDeliveryService::class)->lifecycle(
+                $customer->email ?? $customer->user?->email,
+                'Booking Completed',
+                $message,
+                'success',
+                [
+                    'event_key' => 'booking.completed',
+                    'occurrence_key' => 'booking.completed:grooming:' . $grooming->id . ':' . ($grooming->completed_at?->format('Uv') ?? $grooming->updated_at?->format('Uv')),
+                    'source_type' => 'grooming',
+                    'source_id' => $grooming->id,
+                    'user_id' => $customer->user_id,
+                    'customer_id' => $customer->id,
+                    'content' => [
+                        'subject' => "[Pawesome] Booking Completed — {$reference}",
+                        'customer_name' => $customer->name,
+                        'intro' => $message . ' Keep this booking reference for your records.',
+                        'details' => [
+                            ['label' => 'Booking reference', 'value' => $reference],
+                            ['label' => 'Service', 'value' => $grooming->service],
+                            ['label' => 'Pet', 'value' => $petName],
+                            ['label' => 'Date', 'value' => \App\Support\EmailContent::date($grooming->appointment_date)],
+                        ],
+                        'status' => 'Booking Completed',
+                        'status_type' => 'success',
+                        'cta_url' => \App\Support\EmailContent::frontendUrl('/customer/bookings'),
+                        'cta_label' => 'View Booking',
+                    ],
                 ]
             );
             

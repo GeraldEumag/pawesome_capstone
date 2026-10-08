@@ -20,6 +20,8 @@ import { apiRequest } from "../../api/client";
 import { payrollApi } from "../../api/payroll";
 import { useAuth } from "../../context/AuthContext";
 import { formatCurrency } from "../../utils/currency";
+import DatePickerInput from "../shared/DatePickerInput";
+import { formatDateOnly, parseDateOnly } from "../../utils/date";
 import "./ManualPayrollModal.css";
 
 const toNum = (v) => (v === "" || v == null ? 0 : Number(v));
@@ -75,7 +77,7 @@ const SelectInput = ({ label, value, onChange, options, disabled = false }) => (
 const DateInput = ({ label, value, onChange, disabled = false }) => (
   <label className="mpm-field">
     <span>{label}</span>
-    <input type="date" value={value} onChange={(e) => onChange(e.target.value)} disabled={disabled} />
+    <DatePickerInput selected={parseDateOnly(value)} onChange={(date) => onChange(formatDateOnly(date))} disabled={disabled} />
   </label>
 );
 
@@ -644,7 +646,7 @@ const ManualPayrollModal = ({ onClose, onSaved, initialPayroll }) => {
                 <tbody>
                   {attendanceRows.map((row, index) => (
                     <tr key={index}>
-                      <td><input type="date" value={row.date} disabled={isReadonly} onChange={(e) => updateAttendanceRow(index, "date", e.target.value)} /></td>
+                      <td><DatePickerInput selected={parseDateOnly(row.date)} disabled={isReadonly} onChange={(date) => updateAttendanceRow(index, "date", formatDateOnly(date))} /></td>
                       <td><input type="time" value={row.time_in} disabled={isReadonly} onChange={(e) => updateAttendanceRow(index, "time_in", e.target.value)} /></td>
                       <td><input type="time" value={row.time_out} disabled={isReadonly} onChange={(e) => updateAttendanceRow(index, "time_out", e.target.value)} /></td>
                       <td><input type="number" step="0.01" min="0" value={row.regular_hours} disabled={isReadonly} onChange={(e) => updateAttendanceRow(index, "regular_hours", e.target.value)} /></td>

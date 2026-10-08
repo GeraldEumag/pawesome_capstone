@@ -324,7 +324,7 @@ class BoardingRoomController extends Controller
         
         try {
             // Get room details and re-check availability
-            $room = BoardingRoom::find($serviceRequest->boarding_room_id);
+            $room = BoardingRoom::whereKey($serviceRequest->boarding_room_id)->lockForUpdate()->first();
             if (!$room) {
                 DB::rollBack();
                 return response()->json([
@@ -334,10 +334,11 @@ class BoardingRoomController extends Controller
             }
 
             // Check availability one more time before approving
+            $checkInDate = $serviceRequest->check_in_date;
+            $checkOutDate = $serviceRequest->check_out_date ?? $checkInDate;
             $existingReservations = BoardingRoomReservation::where('room_id', $room->id)
-                ->where('check_in_date', '<', $serviceRequest->check_out_date ?? $serviceRequest->check_in_date)
-                ->where('check_out_date', '>', $serviceRequest->check_in_date ?? $serviceRequest->check_in_date)
-                ->whereIn('status', ['pending', 'approved', 'scheduled', 'checked_in'])
+                ->overlappingDates($checkInDate, $checkOutDate)
+                ->activeBlocking()
                 ->count();
             
             $availableRooms = $room->total_rooms - $existingReservations;

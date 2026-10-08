@@ -6,6 +6,7 @@ import { apiRequest } from "../../api/client";
 import "./CreateUser.css";
 import { showError } from "../../utils/alert.jsx";
 import DatePickerInput from "../../components/shared/DatePickerInput";
+import { formatDateOnly, parseDateOnly } from "../../utils/date";
 
 const CreateUser = () => {
   const navigate = useNavigate();
@@ -243,8 +244,8 @@ const CreateUser = () => {
                   <label htmlFor="dateOfBirth">Date of Birth *</label>
                   <DatePickerInput
                     id="dateOfBirth"
-                    selected={formData.dateOfBirth ? new Date(formData.dateOfBirth) : null}
-                    onChange={(date) => handleChange({ target: { name: "dateOfBirth", value: date ? date.toISOString().split("T")[0] : "" } })}
+                    selected={parseDateOnly(formData.dateOfBirth)}
+                    onChange={(date) => handleChange({ target: { name: "dateOfBirth", value: formatDateOnly(date) } })}
                     placeholderText="Select birthdate..."
                     maxDate={new Date()}
                     className={errors.dateOfBirth ? "error" : ""}

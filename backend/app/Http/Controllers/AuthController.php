@@ -31,7 +31,7 @@ class AuthController extends Controller
             'username' => 'required|string|max:255|unique:users,username',
             'email' => 'required|string|email|max:255|unique:users,email',
             'password' => 'required|string|min:8',
-            'phone' => 'sometimes|nullable|string|max:20',
+            'phone' => 'sometimes|nullable|regex:/^09[0-9]{9}$/',
             'address' => 'sometimes|nullable|string|max:255',
             'city' => 'sometimes|nullable|string|max:255',
             'state' => 'sometimes|nullable|string|max:255',
@@ -39,7 +39,7 @@ class AuthController extends Controller
             'date_of_birth' => 'sometimes|nullable|date',
             'gender' => 'sometimes|nullable|string|in:male,female,other',
             'emergency_contact_person' => 'sometimes|nullable|string|max:255',
-            'emergency_contact_number' => 'sometimes|nullable|string|max:20',
+            'emergency_contact_number' => 'sometimes|nullable|regex:/^09[0-9]{9}$/',
             'country' => 'sometimes|nullable|string|max:255',
         ]);
 
@@ -178,7 +178,7 @@ class AuthController extends Controller
             'last_name' => 'sometimes|string|max:255',
             'username' => 'sometimes|string|max:255|unique:users,username,' . $user->id,
             'email' => 'sometimes|string|email|max:255|unique:users,email,' . $user->id,
-            'phone' => 'sometimes|nullable|string|max:20',
+            'phone' => 'sometimes|nullable|regex:/^09[0-9]{9}$/',
             'address' => 'sometimes|nullable|string|max:255',
             'city' => 'sometimes|nullable|string|max:255',
             'state' => 'sometimes|nullable|string|max:255',

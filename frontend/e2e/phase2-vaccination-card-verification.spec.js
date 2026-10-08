@@ -20,15 +20,22 @@ test.describe('Phase 2 Vaccination Card Verification', () => {
     await petSelect.locator('option').nth(1).waitFor({ state: 'attached', timeout: 30000 });
     await petSelect.selectOption({ index: 1 });
 
-    // Check-in date is a react-datepicker text input ("MMMM d, yyyy"). Rooms
-    // can be fully booked on a given date in shared dev data, so try later
-    // windows until a room submits successfully.
+    // Select the date from the calendar because direct date text entry is disabled.
+    const checkInInput = page.locator('input[placeholder*="check-in" i]');
+    let displayedDate = new Date();
     let submitted = false;
     for (const offsetDays of [60, 120, 200]) {
       const checkIn = new Date(Date.now() + offsetDays * 86400000);
-      const checkInText = checkIn.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
-      await page.fill('input[placeholder*="check-in" i]', checkInText);
-      await page.keyboard.press('Enter');
+      await checkInInput.click();
+      const monthDelta = (checkIn.getFullYear() - displayedDate.getFullYear()) * 12 + checkIn.getMonth() - displayedDate.getMonth();
+      for (let month = 0; month < monthDelta; month += 1) {
+        await page.locator('.react-datepicker__navigation--next').click();
+      }
+      await page.locator('.react-datepicker__day:not(.react-datepicker__day--outside-month)')
+        .filter({ hasText: new RegExp(`^${checkIn.getDate()}$`) })
+        .first()
+        .click();
+      displayedDate = checkIn;
       await page.fill('input[name="number_of_days"]', '2');
 
       // Filling pet + dates auto-fetches room availability; pick the first open room.

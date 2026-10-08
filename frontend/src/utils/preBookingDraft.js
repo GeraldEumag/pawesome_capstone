@@ -1,4 +1,6 @@
 const STORAGE_KEY = "pawesome_pre_booking_draft";
+const SERVICE_INTENT_KEY = "pawesome_pending_service_intent";
+const SERVICE_TYPES = new Set(["hotel", "grooming", "vet"]);
 
 export const saveDraft = (serviceType, formData) => {
   try {
@@ -38,4 +40,37 @@ export const clearDraft = () => {
 
 export const hasDraft = () => {
   return !!getDraft();
+};
+
+export const saveServiceIntent = (serviceType) => {
+  if (!SERVICE_TYPES.has(serviceType)) return false;
+  try {
+    localStorage.setItem(SERVICE_INTENT_KEY, JSON.stringify({ service_type: serviceType, saved_at: Date.now() }));
+    return true;
+  } catch {
+    return false;
+  }
+};
+
+export const getServiceIntent = () => {
+  try {
+    const intent = JSON.parse(localStorage.getItem(SERVICE_INTENT_KEY) || "null");
+    if (!intent || !SERVICE_TYPES.has(intent.service_type)) return null;
+    if (Date.now() - Number(intent.saved_at) > 24 * 60 * 60 * 1000) {
+      clearServiceIntent();
+      return null;
+    }
+    return intent.service_type;
+  } catch {
+    return null;
+  }
+};
+
+export const clearServiceIntent = () => {
+  try {
+    localStorage.removeItem(SERVICE_INTENT_KEY);
+    return true;
+  } catch {
+    return false;
+  }
 };

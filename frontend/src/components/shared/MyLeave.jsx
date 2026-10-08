@@ -1,5 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { apiRequest } from "../../api/client";
+import DatePickerInput from "./DatePickerInput";
+import { formatDateOnly, parseDateOnly } from "../../utils/date";
 import "./MyLeave.css";
 
 const LEAVE_TYPES = [
@@ -98,8 +100,8 @@ const MyLeave = () => {
                 {LEAVE_TYPES.map((t) => <option key={t.value} value={t.value}>{t.label}</option>)}
               </select>
             </label>
-            <label>Start Date<input type="date" value={form.start_date} onChange={(e) => setForm((f) => ({ ...f, start_date: e.target.value }))} /></label>
-            <label>End Date<input type="date" value={form.end_date} onChange={(e) => setForm((f) => ({ ...f, end_date: e.target.value }))} /></label>
+            <label>Start Date<DatePickerInput selected={parseDateOnly(form.start_date)} onChange={(date) => setForm((f) => ({ ...f, start_date: formatDateOnly(date) }))} /></label>
+            <label>End Date<DatePickerInput selected={parseDateOnly(form.end_date)} onChange={(date) => setForm((f) => ({ ...f, end_date: formatDateOnly(date) }))} /></label>
           </div>
           <label className="ml-full">Reason / Notes
             <textarea rows={3} value={form.reason} onChange={(e) => setForm((f) => ({ ...f, reason: e.target.value }))} placeholder="Optional reason for leave…" />

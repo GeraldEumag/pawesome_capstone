@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import DatePickerInput from "../../components/shared/DatePickerInput";
+import { formatDateOnly, parseDateOnly } from "../../utils/date";
 import {
   faCalendarAlt,
   faCalendarDays,
@@ -34,7 +35,7 @@ import { exportToCSV, exportToPDF, exportToExcel } from "../../utils/reportExpor
 import RowActionPopover from "../shared/RowActionPopover";
 import "./ManagerAttendance.css";
 
-const TODAY = new Date().toISOString().split("T")[0];
+const TODAY = formatDateOnly(new Date());
 
 const isRequestCancelled = (error, signal) =>
   signal?.aborted ||
@@ -721,8 +722,8 @@ const ManagerAttendance = () => {
             <label htmlFor="manager-attendance-date">Attendance Date</label>
             <DatePickerInput
               id="manager-attendance-date"
-              selected={selectedDate ? new Date(selectedDate) : null}
-              onChange={(date) => setSelectedDate(date ? date.toISOString().split("T")[0] : "")}
+              selected={parseDateOnly(selectedDate)}
+              onChange={(date) => setSelectedDate(formatDateOnly(date))}
               placeholderText="Pick a date..."
               maxDate={new Date()}
             />

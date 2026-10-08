@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import DatePickerInput from "../../components/shared/DatePickerInput";
+import { formatDateOnly, parseDateOnly } from "../../utils/date";
 import {
   faArrowLeft,
   faSave,
@@ -150,7 +151,7 @@ const VetEditAppointment = () => {
           customer_id: appointmentData.customer_id || "",
           pet_id: appointmentData.pet_id || "",
           service_id: appointmentData.service_id || "",
-          appointment_date: appointmentData.appointment_date || (appointmentData.scheduled_at ? new Date(appointmentData.scheduled_at).toISOString().split("T")[0] : ""),
+          appointment_date: appointmentData.appointment_date || (appointmentData.scheduled_at ? formatDateOnly(new Date(appointmentData.scheduled_at)) : ""),
           appointment_time: appointmentData.appointment_time || (appointmentData.scheduled_at ? new Date(appointmentData.scheduled_at).toTimeString().slice(0, 5) : ""),
           notes: appointmentData.notes || "",
         });
@@ -330,8 +331,8 @@ const VetEditAppointment = () => {
               <label htmlFor="appointment_date">Appointment Date</label>
               <DatePickerInput
                 id="appointment_date"
-                selected={formData.appointment_date ? new Date(formData.appointment_date) : null}
-                onChange={(date) => handleInputChange({ target: { name: "appointment_date", value: date ? date.toISOString().split("T")[0] : "" } })}
+                selected={parseDateOnly(formData.appointment_date)}
+                onChange={(date) => handleInputChange({ target: { name: "appointment_date", value: formatDateOnly(date) } })}
                 placeholderText="Pick a date..."
                 minDate={new Date()}
                 required

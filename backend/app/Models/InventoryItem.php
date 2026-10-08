@@ -140,15 +140,17 @@ class InventoryItem extends Model
      */
     public function activeBatches()
     {
-        return $this->batches()
+        $batches = $this->batches()
             ->where('status', 'active')
             ->where('remaining_quantity', '>', 0)
             ->where(function ($q) {
                 $q->whereNull('expiration_date')
                   ->orWhere('expiration_date', '>', now());
-            })
-            ->orderByRaw('COALESCE(expiration_date, "9999-12-31") ASC')
-            ->orderBy('received_date', 'asc');
+            });
+
+        return $this->needsFefo()
+            ? $batches->orderByRaw('COALESCE(expiration_date, "9999-12-31") ASC')->orderBy('received_date', 'asc')
+            : $batches->orderBy('received_date', 'asc');
     }
 
     /**
@@ -359,6 +361,12 @@ class InventoryItem extends Model
         ?string $proofPhoto = null,
         ?string $receivedDate = null
     ): InventoryBatch {
+        if ($expirationDate) {
+            $this->requires_expiry_tracking = true;
+            $this->issue_method = 'FEFO';
+            $this->save();
+        }
+
         $batch = $this->batches()->create([
             'batch_no' => $batchNo ?: 'BATCH-' . strtoupper(uniqid()),
             'received_date' => $receivedDate ?: now(),
@@ -386,7 +394,7 @@ class InventoryItem extends Model
             'quantity' => $amount,
             'type' => 'restock',
             'movement_type' => 'batch_restock',
-            'reason' => 'Batch restock',
+            'reason' => $notes ?: 'Batch restock',
             'reference_type' => 'restock',
             'stock_before' => $this->stock - ($updateMainStock ? $amount : 0),
             'stock_after' => $this->stock,
@@ -414,23 +422,14 @@ class InventoryItem extends Model
      */
     public function needsFefo(): bool
     {
-        // Per-item override via issue_method column
-        $issueMethod = $this->issue_method ?? null;
-        if ($issueMethod === 'FEFO') {
-            return true;
-        }
-        if ($issueMethod === 'FIFO' || $issueMethod === 'Manual') {
-            return false;
-        }
+        $category = strtolower((string) $this->category);
+        $expiryCategories = ['food', 'medicine', 'vitamin', 'health', 'grooming', 'shampoo', 'treat'];
+        $categoryRequiresExpiry = collect($expiryCategories)->contains(fn ($key) => str_contains($category, $key));
 
-        // Per-item flag (only apply if explicitly set to true; default false is ambiguous)
-        if ($this->requires_expiry_tracking === true) {
-            return true;
-        }
-
-        // Fallback: category-based (backward compat)
-        $fefoCategories = ['Food', 'Health', 'Grooming'];
-        return in_array($this->category, $fefoCategories);
+        return (bool) $this->requires_expiry_tracking
+            || $categoryRequiresExpiry
+            || ($this->issue_method ?? null) === 'FEFO'
+            || $this->batches()->whereNotNull('expiration_date')->exists();
     }
 
     /**

@@ -16,6 +16,8 @@ import {
   faInfoCircle,
 } from "@fortawesome/free-solid-svg-icons";
 import { apiRequest } from "../../../api/client";
+import DatePickerInput from "../../shared/DatePickerInput";
+import { formatDateOnly, parseDateOnly } from "../../../utils/date";
 import { showConfirm } from "../../../utils/alert.jsx";
 import "../../../styles/bookingModal.css";
 import "./WalkInBookingModal.css";
@@ -97,6 +99,12 @@ const WalkInBookingModal = ({ serviceType, onClose, onSuccess }) => {
   };
 
   const config = serviceConfig[serviceType];
+
+  useEffect(() => {
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => { document.body.style.overflow = previousOverflow; };
+  }, []);
 
   // AbortController for cleanup
   const abortControllerRef = useRef(null);
@@ -808,21 +816,20 @@ const WalkInBookingModal = ({ serviceType, onClose, onSuccess }) => {
 
         <div className="form-group full-width">
           <label>Date *</label>
-          <input
-            type="date"
-            value={bookingForm.request_date}
-            onChange={(e) => {
-              const date = e.target.value;
-              setBookingForm({
-                ...bookingForm,
+          <DatePickerInput
+            selected={parseDateOnly(bookingForm.request_date)}
+            onChange={(selectedDate) => {
+              const date = formatDateOnly(selectedDate);
+              setBookingForm((prev) => ({
+                ...prev,
                 request_date: date,
-                check_out_date: serviceType === "hotel" ? date : bookingForm.check_out_date,
+                check_out_date: serviceType === "hotel" ? date : prev.check_out_date,
                 ...(serviceType === "hotel" && { room_id: "", room_type: "", rate_per_day: 0 }),
-              });
-              if (serviceType === "hotel" && date) {
-                fetchHotelRooms(date);
-              }
+              }));
+              if (serviceType === "hotel" && date) fetchHotelRooms(date);
             }}
+            minDate={new Date()}
+            required
           />
         </div>
 

@@ -275,6 +275,20 @@
   font-weight: 500;
 }
 
+.pum-rejection-note {
+  padding: 0.85rem 1rem;
+  border: 1px solid #fecaca;
+  border-radius: 10px;
+  background: #fef2f2;
+  color: #7f1d1d;
+  font-size: 0.82rem;
+  line-height: 1.45;
+}
+
+.pum-rejection-note strong { display: block; margin-bottom: 0.25rem; }
+.pum-rejection-note p { margin: 0.25rem 0 0; }
+.pum-rejection-note span { font-weight: 700; overflow-wrap: anywhere; }
+
 /* Reference number input */
 .pum-ref-input {
   width: 100%;

@@ -386,6 +386,16 @@
   transition: color 0.18s ease;
 }
 .login-register a:hover { color: #c93662; }
+.login-register .login-inline-link {
+  border: 0;
+  padding: 0;
+  background: transparent;
+  color: #ff5f93;
+  font: inherit;
+  font-weight: 900;
+  cursor: pointer;
+}
+.login-register .login-inline-link:hover { color: #c93662; }
 
 /* ── Trust footer ── */
 .login-trust-foot {

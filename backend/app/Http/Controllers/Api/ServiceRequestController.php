@@ -37,6 +37,27 @@ class ServiceRequestController extends Controller
         };
     }
 
+    private function hasAvailableHotelRoom(string $checkIn, ?string $checkOut, ?string $roomType): bool
+    {
+        $checkInDate = Carbon::parse($checkIn)->startOfDay();
+        $checkOutDate = $checkOut ? Carbon::parse($checkOut)->startOfDay() : $checkInDate->copy();
+        if ($checkOutDate->lessThanOrEqualTo($checkInDate)) {
+            $checkOutDate = $checkInDate->copy()->addDay();
+        }
+
+        $rooms = collect(BookingAvailabilityService::getBoardingAvailability(
+            $checkInDate->toDateString(),
+            $checkOutDate->toDateString()
+        )['rooms'] ?? [])->filter(fn ($room) => (bool) ($room['available'] ?? false));
+
+        if ($roomType) {
+            $requestedType = strtolower(trim($roomType));
+            $rooms = $rooms->filter(fn ($room) => str_contains(strtolower((string) ($room['type'] ?? '')), $requestedType));
+        }
+
+        return $rooms->isNotEmpty();
+    }
+
     private function formatRequest(object $item): array
     {
         return [
@@ -68,6 +89,7 @@ class ServiceRequestController extends Controller
             'payment_method' => $item->payment_method,
             'payment_reference' => $item->payment_reference,
             'payment_proof' => $item->payment_proof,
+            'rejection_reason' => $item->rejection_reason,
             'created_at' => $item->created_at,
         ];
     }
@@ -88,6 +110,7 @@ class ServiceRequestController extends Controller
             'customer_email' => 'nullable|email|max:150',
             'pet_id' => 'nullable|integer|exists:pets,id',
             'pet_name' => 'required|string|max:150',
+            'pet_type' => 'nullable|string|max:50',
             'request_type' => 'required|string|max:150',
             'service_name' => 'nullable|string|max:150',
             'requested_date' => 'required|date|after_or_equal:today',
@@ -100,6 +123,7 @@ class ServiceRequestController extends Controller
             'total_days' => 'nullable|integer|min:1',
         ]);
 
+        $availabilityType = $this->normalizeServiceType($validated['request_type']);
         $pet = null;
 
         if (Auth::check() && !empty($validated['pet_id'])) {
@@ -156,15 +180,36 @@ class ServiceRequestController extends Controller
             ], 422);
         }
 
-        // Check availability for grooming requests
-        if ($validated['request_type'] === 'grooming') {
-            if (!BookingAvailabilityService::isGroomingDateAvailable($validated['requested_date'])) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'This grooming date is already reserved. Please choose another date.',
-                    'errors' => ['requested_date' => ['Date already booked']]
-                ], 422);
-            }
+        if ($isHotel && !$this->hasAvailableHotelRoom(
+            $validated['requested_date'],
+            $validated['check_out_date'] ?? null,
+            $validated['room_type'] ?? null
+        )) {
+            $roomType = trim((string) ($validated['room_type'] ?? ''));
+            $message = $roomType
+                ? "No {$roomType} rooms are available for the selected stay date."
+                : 'No hotel rooms are available for the selected stay date.';
+            $errorField = $roomType ? 'room_type' : 'requested_date';
+
+            return response()->json([
+                'success' => false,
+                'message' => $message,
+                'errors' => [$errorField => [$message]],
+            ], 422);
+        }
+
+        if (in_array($availabilityType, ['grooming', 'veterinary'], true)
+            && !BookingAvailabilityService::isServiceTimeAvailable(
+                $availabilityType === 'grooming' ? 'grooming' : 'veterinary',
+                $validated['requested_date'],
+                $time,
+                $validated['service_name'] ?? null
+            )) {
+            return response()->json([
+                'success' => false,
+                'message' => 'This time is no longer available. Please choose another slot.',
+                'errors' => ['requested_time' => ['Time slot overlaps an existing booking.']],
+            ], 422);
         }
 
         if (!empty($validated['pet_id'])) {
@@ -224,12 +269,17 @@ class ServiceRequestController extends Controller
             $createData['pet_id'] = $validated['pet_id'];
         }
 
-        if (Schema::hasColumn('service_requests', 'pet_type') && $pet) {
-            $createData['pet_type'] = $pet->species ?? $pet->type;
+        if (Schema::hasColumn('service_requests', 'pet_type')) {
+            $createData['pet_type'] = $pet
+                ? ($pet->species ?? $pet->type)
+                : ($validated['pet_type'] ?? null);
         }
 
         // Add room data for hotel/boarding bookings
         if ($isHotel) {
+            if (Schema::hasColumn('service_requests', 'room_type')) {
+                $createData['room_type'] = $validated['room_type'] ?? null;
+            }
             $room = null;
             if (!empty($validated['boarding_room_id'])) {
                 // Get room details from boarding_rooms table
@@ -273,7 +323,52 @@ class ServiceRequestController extends Controller
             $createData['customer_id'] = Auth::id();
         }
 
-        $serviceRequest = ServiceRequest::create($createData);
+        $serviceRequest = DB::transaction(function () use ($isHotel, $availabilityType, $validated, $time, $createData) {
+            if ($isHotel && !$this->hasAvailableHotelRoom(
+                $validated['requested_date'],
+                $validated['check_out_date'] ?? null,
+                $validated['room_type'] ?? null
+            )) {
+                return null;
+            }
+
+            if (in_array($availabilityType, ['grooming', 'veterinary'], true)) {
+                Service::query()->orderBy('id')->lockForUpdate()->first();
+                $serviceType = $availabilityType === 'grooming' ? 'grooming' : 'veterinary';
+                if (!BookingAvailabilityService::isServiceTimeAvailable(
+                    $serviceType,
+                    $validated['requested_date'],
+                    $time,
+                    $validated['service_name'] ?? null
+                )) {
+                    return null;
+                }
+            }
+
+            return ServiceRequest::create($createData);
+        });
+
+        if (!$serviceRequest) {
+            if ($isHotel) {
+                $roomType = trim((string) ($validated['room_type'] ?? ''));
+                $message = $roomType
+                    ? "No {$roomType} rooms remain available for the selected stay date."
+                    : 'No hotel rooms remain available for the selected stay date.';
+                $errorField = $roomType ? 'room_type' : 'requested_date';
+
+                return response()->json([
+                    'success' => false,
+                    'message' => $message,
+                    'errors' => [$errorField => [$message]],
+                ], 422);
+            }
+
+            return response()->json([
+                'success' => false,
+                'message' => 'This time is no longer available. Please choose another slot.',
+                'errors' => ['requested_time' => ['Time slot overlaps an existing booking.']],
+            ], 422);
+        }
 
         // Auto-create a pending Grooming record so groomer dashboard can see customer bookings
         if ($this->normalizeServiceType($validated['request_type']) === 'grooming') {

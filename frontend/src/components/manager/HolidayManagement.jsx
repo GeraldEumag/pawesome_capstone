@@ -11,6 +11,8 @@ import {
   faCalendarCheck,
 } from "@fortawesome/free-solid-svg-icons";
 import { apiRequest } from "../../api/client";
+import DatePickerInput from "../shared/DatePickerInput";
+import { formatDateOnly, parseDateOnly } from "../../utils/date";
 import RowActionPopover from "../shared/RowActionPopover";
 import "./HolidayManagement.css";
 
@@ -215,10 +217,9 @@ const HolidayManagement = () => {
 
               <div className="hm-field">
                 <label>Date</label>
-                <input
-                  type="date"
-                  value={form.date}
-                  onChange={(e) => setForm((f) => ({ ...f, date: e.target.value }))}
+                <DatePickerInput
+                  selected={parseDateOnly(form.date)}
+                  onChange={(date) => setForm((f) => ({ ...f, date: formatDateOnly(date) }))}
                 />
               </div>
 

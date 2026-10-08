@@ -1,5 +1,6 @@
 import React, { useState, useMemo, useCallback, useEffect } from "react";
 import { apiRequest } from "../../api/client";
+import { formatDateOnly, parseDateOnly } from "../../utils/date";
 import { exportToCSV, exportToPDF } from "../../utils/reportExport";
 import { useRealTimeSync } from "../../hooks/useRealTimeSync";
 import { showError } from "../../utils/alert.jsx";
@@ -276,8 +277,9 @@ const CustomerReport = () => {
                 Start Date
               </label>
               <DatePickerInput
-                selected={filters.startDate ? new Date(filters.startDate) : null}
-                onChange={(date) => handleFilterChange("startDate", date ? date.toISOString().split("T")[0] : "")}
+                selected={parseDateOnly(filters.startDate)}
+                maxDate={parseDateOnly(filters.endDate)}
+                onChange={(date) => handleFilterChange("startDate", formatDateOnly(date))}
                 placeholderText="From..."
               />
             </div>
@@ -288,8 +290,9 @@ const CustomerReport = () => {
                 End Date
               </label>
               <DatePickerInput
-                selected={filters.endDate ? new Date(filters.endDate) : null}
-                onChange={(date) => handleFilterChange("endDate", date ? date.toISOString().split("T")[0] : "")}
+                selected={parseDateOnly(filters.endDate)}
+                minDate={parseDateOnly(filters.startDate)}
+                onChange={(date) => handleFilterChange("endDate", formatDateOnly(date))}
                 placeholderText="To..."
               />
             </div>

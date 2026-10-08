@@ -8,6 +8,7 @@ use App\Mail\PaymentReceiptMail;
 use App\Models\Customer;
 use App\Models\EmailDelivery;
 use App\Models\SystemSetting;
+use App\Support\EmailContent;
 use Illuminate\Contracts\Mail\Mailable;
 use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\DB;
@@ -292,6 +293,10 @@ class EmailDeliveryService
             $customerId ? [['type' => 'customer_email_enabled', 'customer_id' => $customerId]] : [],
             $context['suppression'] ?? []
         );
+
+        if (!isset($receipt['vat_amount'])) {
+            $receipt['vat_amount'] = EmailContent::vatInclusivePortion($receipt['total_amount'] ?? null);
+        }
 
         return $this->intent(new PaymentReceiptMail($receiptType, $receipt), [
             'event_key' => $context['event_key'] ?? "payment.receipt.{$receiptType}",

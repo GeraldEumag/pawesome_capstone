@@ -15,7 +15,7 @@ const LEGACY_TOKEN_KEYS = [
 
 const STANDARD_TOKEN_KEY = "pawesome_auth_token";
 const ROLE_KEY = "role";
-const USER_KEYS = ["name", "username", "email", "user", "adminUser", "profile_photo"];
+const USER_KEYS = ["name", "username", "email", "email_verified_at", "user", "adminUser", "profile_photo"];
 
 /* ─── Token ─── */
 

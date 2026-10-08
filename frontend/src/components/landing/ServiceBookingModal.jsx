@@ -7,8 +7,9 @@ import "./ServiceBookingModal.css";
 import DatePickerInput from "../shared/DatePickerInput";
 import { apiRequest } from "../../api/client";
 import { useAuth } from "../../context/AuthContext";
-import { saveDraft } from "../../utils/preBookingDraft";
-import { showSuccess, showError, showAlert } from "../../utils/alert.jsx";
+import { formatDateOnly, parseDateOnly } from "../../utils/date";
+import { saveDraft, saveServiceIntent } from "../../utils/preBookingDraft";
+import { showSuccess, showError } from "../../utils/alert.jsx";
 
 const SERVICE_CONFIG = {
   hotel: { title: "Book Pet Hotel", icon: faHotel, accent: "hotel-accent" },
@@ -37,6 +38,16 @@ const generateTimeSlots = () => {
 };
 
 const timeSlots = generateTimeSlots();
+const nextDateOnly = (value) => {
+  const date = parseDateOnly(value);
+  if (!date) return "";
+  date.setDate(date.getDate() + 1);
+  return formatDateOnly(date);
+};
+const getRoomTypeKey = (room) => {
+  const type = String(room?.type || "").toLowerCase();
+  return ROOM_TYPES.find((option) => option.value && type.includes(option.value))?.value || "";
+};
 
 const getInitialForm = (serviceType) => {
   const base = { customer_name: "", customer_email: "", pet_name: "", pet_type: "" };
@@ -49,9 +60,16 @@ const ServiceBookingModal = ({ serviceType, onClose }) => {
   const navigate = useNavigate();
   const { isAuthenticated, user, role } = useAuth();
   const isCustomer = role === "customer";
+  const canBook = isAuthenticated && isCustomer && Boolean(user?.email_verified_at);
+  const needsVerification = isAuthenticated && isCustomer && !user?.email_verified_at;
   const config = SERVICE_CONFIG[serviceType];
   const [formData, setFormData] = useState(() => getInitialForm(serviceType));
   const [loading, setLoading] = useState(false);
+  const [availabilityLoading, setAvailabilityLoading] = useState(false);
+  const [availableTimeSlots, setAvailableTimeSlots] = useState([]);
+  const [hotelAvailabilityLoading, setHotelAvailabilityLoading] = useState(false);
+  const [availableRoomTypes, setAvailableRoomTypes] = useState(null);
+  const [hotelAvailabilityError, setHotelAvailabilityError] = useState("");
   const [showHealthInfo, setShowHealthInfo] = useState(false);
   const [errors, setErrors] = useState({});
 
@@ -62,14 +80,96 @@ const ServiceBookingModal = ({ serviceType, onClose }) => {
   }, [isCustomer, user]);
 
   useEffect(() => {
+    if (!canBook || serviceType === "hotel") {
+      setAvailabilityLoading(false);
+      return;
+    }
+    const date = formData.preferred_date;
+    const selectedService = (serviceType === "grooming" ? GROOMING_TYPES : VET_TYPES)
+      .find((option) => option.value === (serviceType === "grooming" ? formData.grooming_service_type : formData.veterinary_service_type));
+    if (!date || !selectedService?.value) {
+      setAvailableTimeSlots([]);
+      setAvailabilityLoading(false);
+      return;
+    }
+
+    const controller = new AbortController();
+    const endpoint = serviceType === "grooming" ? "grooming" : "veterinary";
+    setAvailabilityLoading(true);
+    apiRequest(`/customer/availability/${endpoint}?date=${encodeURIComponent(date)}&service_name=${encodeURIComponent(selectedService.label)}`, { signal: controller.signal })
+      .then((data) => {
+        const slots = data.slots || [];
+        setAvailableTimeSlots(slots);
+        setFormData((prev) => slots.some((slot) => slot.time === prev.preferred_time && slot.available)
+          ? prev
+          : { ...prev, preferred_time: "" });
+        setAvailabilityLoading(false);
+      })
+      .catch(() => {
+        if (!controller.signal.aborted) {
+          setAvailableTimeSlots([]);
+          setAvailabilityLoading(false);
+        }
+      });
+    return () => controller.abort();
+  }, [canBook, serviceType, formData.preferred_date, formData.grooming_service_type, formData.veterinary_service_type]);
+
+  useEffect(() => {
+    if (!canBook || serviceType !== "hotel" || !formData.check_in_date) {
+      setHotelAvailabilityLoading(false);
+      setAvailableRoomTypes(null);
+      setHotelAvailabilityError("");
+      return undefined;
+    }
+
+    const checkOutDate = nextDateOnly(formData.check_in_date);
+    const controller = new AbortController();
+    setHotelAvailabilityLoading(true);
+    setAvailableRoomTypes(null);
+    setHotelAvailabilityError("");
+    apiRequest(`/availability/boarding?check_in=${encodeURIComponent(formData.check_in_date)}&check_out=${encodeURIComponent(checkOutDate)}`, { signal: controller.signal })
+      .then((data) => {
+        const rooms = Array.isArray(data.rooms) ? data.rooms : [];
+        const roomTypes = [...new Set(rooms.filter((room) => room.available).map(getRoomTypeKey).filter(Boolean))];
+        setAvailableRoomTypes(roomTypes);
+        setHotelAvailabilityError(roomTypes.length ? "" : "No rooms are available for this stay date.");
+        setFormData((prev) => prev.room_type && !roomTypes.includes(prev.room_type) ? { ...prev, room_type: "" } : prev);
+        setHotelAvailabilityLoading(false);
+      })
+      .catch((error) => {
+        if (!controller.signal.aborted) {
+          setAvailableRoomTypes([]);
+          setHotelAvailabilityError(error.message || "Could not confirm room availability.");
+          setHotelAvailabilityLoading(false);
+        }
+      });
+    return () => controller.abort();
+  }, [canBook, serviceType, formData.check_in_date]);
+
+  useEffect(() => {
     const handleEsc = (e) => { if (e.key === "Escape") onClose(); };
     document.addEventListener("keydown", handleEsc);
     document.body.style.overflow = "hidden";
     return () => { document.removeEventListener("keydown", handleEsc); document.body.style.overflow = ""; };
   }, [onClose]);
 
-  const handleChange = (e) => { const { name, value } = e.target; setFormData((prev) => ({ ...prev, [name]: value })); setErrors((prev) => ({ ...prev, [name]: "" })); };
-  const handleDateChange = (name, date) => { setFormData((prev) => ({ ...prev, [name]: date ? date.toISOString().split("T")[0] : "" })); setErrors((prev) => ({ ...prev, [name]: "" })); };
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setFormData((prev) => ({
+      ...prev,
+      [name]: value,
+      ...(name === "grooming_service_type" || name === "veterinary_service_type" ? { preferred_time: "" } : {}),
+    }));
+    setErrors((prev) => ({ ...prev, [name]: "" }));
+  };
+  const handleDateChange = (name, date) => {
+    setFormData((prev) => ({
+      ...prev,
+      [name]: formatDateOnly(date),
+      ...(name === "preferred_date" ? { preferred_time: "" } : name === "check_in_date" ? { room_type: "" } : {}),
+    }));
+    setErrors((prev) => ({ ...prev, [name]: "" }));
+  };
 
   const validate = () => {
     const ne = {};
@@ -79,10 +179,24 @@ const ServiceBookingModal = ({ serviceType, onClose }) => {
     if (!formData.pet_type.trim()) ne.pet_type = "Pet type is required.";
     if (serviceType === "hotel") {
       if (!formData.check_in_date) ne.check_in_date = "Stay date is required.";
+      else if (hotelAvailabilityLoading) ne.check_in_date = "Checking room availability...";
+      else if (!availableRoomTypes?.length) ne.check_in_date = hotelAvailabilityError || "No rooms are available for this stay date.";
+      if (formData.room_type && availableRoomTypes && !availableRoomTypes.includes(formData.room_type)) ne.room_type = "Choose an available room type.";
       if (!formData.preferred_time) ne.preferred_time = "Preferred time is required.";
     }
-    if (serviceType === "grooming") { if (!formData.grooming_service_type) ne.grooming_service_type = "Grooming service type is required."; if (!formData.preferred_date) ne.preferred_date = "Preferred date is required."; if (!formData.preferred_time) ne.preferred_time = "Preferred time is required."; }
-    if (serviceType === "vet") { if (!formData.veterinary_service_type) ne.veterinary_service_type = "Veterinary service type is required."; if (!formData.preferred_date) ne.preferred_date = "Preferred date is required."; if (!formData.preferred_time) ne.preferred_time = "Preferred time is required."; if (!formData.main_reason_for_visit.trim()) ne.main_reason_for_visit = "Reason for visit is required."; }
+    if (serviceType === "grooming") {
+      if (!formData.grooming_service_type) ne.grooming_service_type = "Grooming service type is required.";
+      if (!formData.preferred_date) ne.preferred_date = "Preferred date is required.";
+      if (!formData.preferred_time) ne.preferred_time = "Preferred time is required.";
+      else if (!availableTimeSlots.some((slot) => slot.time === formData.preferred_time && slot.available)) ne.preferred_time = "Choose an available time slot.";
+    }
+    if (serviceType === "vet") {
+      if (!formData.veterinary_service_type) ne.veterinary_service_type = "Veterinary service type is required.";
+      if (!formData.preferred_date) ne.preferred_date = "Preferred date is required.";
+      if (!formData.preferred_time) ne.preferred_time = "Preferred time is required.";
+      else if (!availableTimeSlots.some((slot) => slot.time === formData.preferred_time && slot.available)) ne.preferred_time = "Choose an available time slot.";
+      if (!formData.main_reason_for_visit.trim()) ne.main_reason_for_visit = "Reason for visit is required.";
+    }
     setErrors(ne);
     return Object.keys(ne).length === 0;
   };
@@ -107,26 +221,19 @@ const ServiceBookingModal = ({ serviceType, onClose }) => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!validate()) return;
+    if (!canBook || !validate()) return;
     saveDraft(serviceType, formData);
 
     if (serviceType === "hotel") {
-      if (!isCustomer) {
-        showAlert("Please create a customer account first so we can process your booking request.");
-        navigate("/register");
-        return;
-      }
       navigate("/customer/hotel");
       return;
     }
-
-    if (!isCustomer) { showAlert("Please create a customer account first so we can process your booking request."); navigate("/register"); return; }
 
     const payload = buildPayload();
     try {
       setLoading(true);
       const data = await apiRequest("/customer/requests", { method: "POST", body: JSON.stringify(payload) });
-      if (data.success) { showSuccess("Booking request submitted successfully. Please wait for receptionist approval."); onClose(); } else { showAlert(data.message || "Failed to submit request."); }
+      if (data.success) { showSuccess("Booking request submitted successfully. Please wait for receptionist approval."); onClose(); } else { showError(data.message || "Failed to submit request."); }
     } catch (error) {
       const message = error.response?.data?.message || error.response?.data?.error || error.message || "Server error while submitting booking request.";
       showError(message);
@@ -156,8 +263,12 @@ const ServiceBookingModal = ({ serviceType, onClose }) => {
           {fe("pet_name")}
         </label>
         <label className="svc-form-group">
-          <span><FontAwesomeIcon icon={faPaw} /> Pet Type / Species *</span>
-          <input type="text" name="pet_type" value={formData.pet_type} onChange={handleChange} placeholder="e.g., Dog, Cat, Rabbit" className={errors.pet_type ? "has-error" : ""} />
+          <span><FontAwesomeIcon icon={faPaw} /> Pet Type *</span>
+          <select name="pet_type" value={formData.pet_type} onChange={handleChange} className={errors.pet_type ? "has-error" : ""}>
+            <option value="">Select pet type</option>
+            <option value="Cat">Cat</option>
+            <option value="Dog">Dog</option>
+          </select>
           {fe("pet_type")}
         </label>
       </div>
@@ -169,7 +280,7 @@ const ServiceBookingModal = ({ serviceType, onClose }) => {
       <div className="svc-form-row">
         <label className="svc-form-group">
           <span><FontAwesomeIcon icon={faCalendarAlt} /> Stay Date *</span>
-          <DatePickerInput selected={formData.check_in_date ? new Date(formData.check_in_date) : null} onChange={(date) => handleDateChange("check_in_date", date)} placeholderText="Pick stay date..." minDate={new Date()} required className={errors.check_in_date ? "has-error" : ""} />
+          <DatePickerInput selected={parseDateOnly(formData.check_in_date)} onChange={(date) => handleDateChange("check_in_date", date)} placeholderText="Pick stay date..." minDate={new Date()} required className={errors.check_in_date ? "has-error" : ""} />
           {fe("check_in_date")}
         </label>
         <label className="svc-form-group">
@@ -188,7 +299,21 @@ const ServiceBookingModal = ({ serviceType, onClose }) => {
         </label>
         <label className="svc-form-group">
           <span><FontAwesomeIcon icon={faBed} /> Room Type</span>
-          <select name="room_type" value={formData.room_type} onChange={handleChange}>{ROOM_TYPES.map((opt) => <option key={opt.value} value={opt.value}>{opt.label}</option>)}</select>
+          <select
+            name="room_type"
+            value={formData.room_type}
+            onChange={handleChange}
+            disabled={!formData.check_in_date || hotelAvailabilityLoading || availableRoomTypes === null}
+            className={errors.room_type ? "has-error" : ""}
+          >
+            {ROOM_TYPES.map((option) => {
+              const available = !option.value || availableRoomTypes?.includes(option.value);
+              return <option key={option.value} value={option.value} disabled={!available}>{option.label}{option.value && !available ? " (Unavailable)" : ""}</option>;
+            })}
+          </select>
+          {hotelAvailabilityLoading && <span className="svc-availability-status" role="status">Checking room availability...</span>}
+          {!hotelAvailabilityLoading && hotelAvailabilityError && <span className="svc-availability-status" role="alert">{hotelAvailabilityError}</span>}
+          {fe("room_type")}
         </label>
       </div>
       <label className="svc-form-group full">
@@ -210,17 +335,18 @@ const ServiceBookingModal = ({ serviceType, onClose }) => {
         </label>
         <label className="svc-form-group">
           <span><FontAwesomeIcon icon={faCalendarAlt} /> Preferred Date *</span>
-          <DatePickerInput selected={formData.preferred_date ? new Date(formData.preferred_date) : null} onChange={(date) => handleDateChange("preferred_date", date)} placeholderText="Pick a date..." minDate={new Date()} required className={errors.preferred_date ? "has-error" : ""} />
+          <DatePickerInput selected={parseDateOnly(formData.preferred_date)} onChange={(date) => handleDateChange("preferred_date", date)} placeholderText="Pick a date..." minDate={new Date()} required className={errors.preferred_date ? "has-error" : ""} />
           {fe("preferred_date")}
         </label>
       </div>
       <div className="svc-form-row">
         <label className="svc-form-group">
           <span><FontAwesomeIcon icon={faClock} /> Preferred Time *</span>
-          <select name="preferred_time" value={formData.preferred_time} onChange={handleChange} className={errors.preferred_time ? "has-error" : ""}>
-            <option value="">Select time</option>
-            {timeSlots.map((slot) => <option key={slot.value} value={slot.value}>{slot.label}</option>)}
+          <select name="preferred_time" value={formData.preferred_time} onChange={handleChange} disabled={!formData.preferred_date || !formData.grooming_service_type || availabilityLoading} className={errors.preferred_time ? "has-error" : ""}>
+            <option value="">Select an available time</option>
+            {availableTimeSlots.map((slot) => <option key={slot.time} value={slot.time} disabled={!slot.available}>{slot.label}{slot.available ? "" : " (Unavailable)"}</option>)}
           </select>
+          {availabilityLoading && <span role="status">Checking available times...</span>}
           {fe("preferred_time")}
         </label>
       </div>
@@ -230,6 +356,12 @@ const ServiceBookingModal = ({ serviceType, onClose }) => {
       </label>
     </>
   );
+
+  const continueToAuth = (path) => {
+    saveServiceIntent(serviceType);
+    onClose();
+    navigate(path);
+  };
 
   const renderVetFields = () => (
     <>
@@ -243,17 +375,18 @@ const ServiceBookingModal = ({ serviceType, onClose }) => {
         </label>
         <label className="svc-form-group">
           <span><FontAwesomeIcon icon={faCalendarAlt} /> Preferred Date *</span>
-          <DatePickerInput selected={formData.preferred_date ? new Date(formData.preferred_date) : null} onChange={(date) => handleDateChange("preferred_date", date)} placeholderText="Pick a date..." minDate={new Date()} required className={errors.preferred_date ? "has-error" : ""} />
+          <DatePickerInput selected={parseDateOnly(formData.preferred_date)} onChange={(date) => handleDateChange("preferred_date", date)} placeholderText="Pick a date..." minDate={new Date()} required className={errors.preferred_date ? "has-error" : ""} />
           {fe("preferred_date")}
         </label>
       </div>
       <div className="svc-form-row">
         <label className="svc-form-group">
           <span><FontAwesomeIcon icon={faClock} /> Preferred Time *</span>
-          <select name="preferred_time" value={formData.preferred_time} onChange={handleChange} className={errors.preferred_time ? "has-error" : ""}>
-            <option value="">Select time</option>
-            {timeSlots.map((slot) => <option key={slot.value} value={slot.value}>{slot.label}</option>)}
+          <select name="preferred_time" value={formData.preferred_time} onChange={handleChange} disabled={!formData.preferred_date || !formData.veterinary_service_type || availabilityLoading} className={errors.preferred_time ? "has-error" : ""}>
+            <option value="">Select an available time</option>
+            {availableTimeSlots.map((slot) => <option key={slot.time} value={slot.time} disabled={!slot.available}>{slot.label}{slot.available ? "" : " (Unavailable)"}</option>)}
           </select>
+          {availabilityLoading && <span role="status">Checking available times...</span>}
           {fe("preferred_time")}
         </label>
       </div>
@@ -296,6 +429,37 @@ const ServiceBookingModal = ({ serviceType, onClose }) => {
     </>
   );
 
+  if (!canBook) {
+    return (
+      <div className="hbk-overlay" onClick={onClose}>
+        <div className={`hbk-modal ${config.accent}`} onClick={(e) => e.stopPropagation()} role="dialog" aria-modal="true" aria-labelledby="service-modal-title">
+          <div className="hbk-head">
+            <div>
+              <span className="hbk-eyebrow">Service Booking</span>
+              <h2 id="service-modal-title">{config.title}</h2>
+              <p className="svc-subtitle">{needsVerification ? "Verify your email to continue booking." : "Sign in or create a customer account before booking."}</p>
+            </div>
+            <button type="button" className="close-btn" onClick={onClose} aria-label="Close">
+              <FontAwesomeIcon icon={faTimes} />
+            </button>
+          </div>
+          <div className="hbk-body svc-auth-gate">
+            {needsVerification ? (
+              <button type="button" className="svc-submit-btn" onClick={() => continueToAuth(`/verify-email?email=${encodeURIComponent(user?.email || "")}`)}>
+                Verify email
+              </button>
+            ) : (
+              <>
+                <button type="button" className="svc-submit-btn" onClick={() => continueToAuth("/login")}>Log in</button>
+                <button type="button" className="svc-auth-link" onClick={() => continueToAuth("/register")}>Create an account</button>
+              </>
+            )}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="hbk-overlay" onClick={onClose}>
       <div className={`hbk-modal ${config.accent}`} onClick={(e) => e.stopPropagation()} role="dialog" aria-modal="true" aria-labelledby="service-modal-title">
@@ -317,13 +481,8 @@ const ServiceBookingModal = ({ serviceType, onClose }) => {
           {serviceType === "hotel" && renderHotelFields()}
           {serviceType === "grooming" && renderGroomingFields()}
           {serviceType === "vet" && renderVetFields()}
-          {!isAuthenticated && (
-            <div className="svc-auth-notice">
-              <p>A free customer account is required to process your booking. After submitting, you will be guided to create an account.</p>
-            </div>
-          )}
           <div className="hbk-foot">
-            <button type="submit" className="svc-submit-btn" disabled={loading}>
+            <button type="submit" className="svc-submit-btn" disabled={loading || availabilityLoading || hotelAvailabilityLoading}>
               <FontAwesomeIcon icon={faPaperPlane} /> {loading ? "Submitting..." : "Submit Booking Request"}
             </button>
           </div>

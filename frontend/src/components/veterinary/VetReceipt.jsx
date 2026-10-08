@@ -184,7 +184,7 @@ const VetReceipt = () => {
 
         {/* Totals */}
         <div className="vr-row"><span>Subtotal (incl. VAT)</span><span>{formatCurrency(receiptData.subtotal)}</span></div>
-        <div className="vr-row"><span>VAT 12%</span><span>{formatCurrency(receiptData.tax || computeVatBreakdown(receiptData.total).vatAmount)}</span></div>
+        <div className="vr-row"><span>VAT 12%</span><span>-{formatCurrency(Math.abs(Number(receiptData.tax || computeVatBreakdown(receiptData.total).vatAmount) || 0))}</span></div>
         <div className="vr-total">
           <span>TOTAL</span>
           <span>{formatCurrency(receiptData.total)}</span>

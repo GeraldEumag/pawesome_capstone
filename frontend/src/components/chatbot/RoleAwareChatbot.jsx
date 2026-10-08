@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import DatePickerInput from "../shared/DatePickerInput";
+import { formatDateOnly, parseDateOnly } from "../../utils/date";
 import { getMySession } from "../../services/liveChatService";
 import { showConfirm, showError, showSuccess } from "../../utils/alert";
 import {
@@ -998,7 +999,7 @@ const RoleAwareChatbot = ({
               selected={convFlow.data.scheduled_at ? new Date(convFlow.data.scheduled_at) : null}
               onChange={(date) => date && convSelectDate(date.toISOString())}
               showTimeSelect
-              dateFormat="MMMM d, yyyy h:mm aa"
+              dateFormat="dd/MM/yy"
               placeholderText="Pick date and time..."
               minDate={new Date()}
             />
@@ -1009,8 +1010,8 @@ const RoleAwareChatbot = ({
         {convFlow.step === "select_checkin" && (
           <div className="rbac-booking-datepicker">
             <DatePickerInput
-              selected={convFlow.data.check_in ? new Date(convFlow.data.check_in) : null}
-              onChange={(date) => date && convCheckIn(date.toISOString().split("T")[0])}
+              selected={parseDateOnly(convFlow.data.check_in)}
+              onChange={(date) => convCheckIn(formatDateOnly(date))}
               placeholderText="Pick check-in date..."
               minDate={new Date()}
             />
@@ -1021,8 +1022,8 @@ const RoleAwareChatbot = ({
         {convFlow.step === "select_checkout" && (
           <div className="rbac-booking-datepicker">
             <DatePickerInput
-              selected={convFlow.data.check_out ? new Date(convFlow.data.check_out) : null}
-              onChange={(date) => date && convCheckOut(date.toISOString().split("T")[0])}
+              selected={parseDateOnly(convFlow.data.check_out)}
+              onChange={(date) => convCheckOut(formatDateOnly(date))}
               placeholderText="Pick check-out date..."
               minDate={convFlow.data.check_in ? new Date(new Date(convFlow.data.check_in).getTime() + 86400000) : new Date()}
             />
@@ -1406,8 +1407,8 @@ const RoleAwareChatbot = ({
                 </label>
                 <label>Stay Date (same-day check-in/check-out)
                   <DatePickerInput
-                    selected={workflowState.form.check_in ? new Date(workflowState.form.check_in) : null}
-                    onChange={(date) => updateWorkflowForm("check_in", date ? date.toISOString().split("T")[0] : "")}
+                    selected={parseDateOnly(workflowState.form.check_in)}
+                    onChange={(date) => updateWorkflowForm("check_in", formatDateOnly(date))}
                     placeholderText="Pick stay date..."
                     required
                   />

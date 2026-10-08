@@ -400,11 +400,11 @@ class PaymentVerificationService
     private function queuePaymentRejectedEmail(string $type, int $id, string $rejectionReason): void
     {
         $meta = match ($type) {
-            'service_request', 'service' => ['table' => 'service_requests', 'ref' => 'SR', 'cta' => '/customer/my-requests'],
-            'boarding' => ['table' => 'boardings', 'ref' => 'BD', 'cta' => '/customer/payments'],
-            'appointment', 'veterinary' => ['table' => 'appointments', 'ref' => 'APT', 'cta' => '/customer/payments'],
-            'grooming' => ['table' => 'groomings', 'ref' => 'GR', 'cta' => '/customer/payments'],
-            'medical_confinement', 'confinement' => ['table' => 'medical_confinements', 'ref' => 'MC', 'cta' => '/customer/payments'],
+            'service_request', 'service' => ['table' => 'service_requests', 'ref' => 'SR', 'cta' => '/customer/bookings'],
+            'boarding' => ['table' => 'boardings', 'ref' => 'BD', 'cta' => '/customer/bookings'],
+            'appointment', 'veterinary' => ['table' => 'appointments', 'ref' => 'APT', 'cta' => '/customer/bookings'],
+            'grooming' => ['table' => 'groomings', 'ref' => 'GR', 'cta' => '/customer/bookings'],
+            'medical_confinement', 'confinement' => ['table' => 'medical_confinements', 'ref' => 'MC', 'cta' => '/customer/bookings'],
             default => null,
         };
 
@@ -443,6 +443,7 @@ class PaymentVerificationService
             };
 
             $reference = "{$meta['ref']}-{$id}";
+            $paymentReference = $record->reference_number ?: ($record->payment_reference ?? null);
             $rejectedAt = $record->rejected_at ?? $record->updated_at ?? now();
 
             app(EmailDeliveryService::class)->lifecycle(
@@ -460,9 +461,10 @@ class PaymentVerificationService
                     'content' => [
                         'subject' => "[Pawesome] Action Required: Payment Verification Issue — {$reference}",
                         'customer_name' => $record->customer_name ?? $customer?->name,
-                        'intro' => "We were unable to verify the payment submitted for {$serviceName}. Please review the reason below and submit a new payment proof if applicable.",
+                        'intro' => "We could not verify the payment submitted for {$serviceName}. Reason: {$rejectionReason}. Please upload a new proof and re-enter or correct the payment reference number.",
                         'details' => [
-                            ['label' => 'Reference', 'value' => $reference],
+                            ['label' => 'Booking reference', 'value' => $reference],
+                            ['label' => 'Payment reference to correct', 'value' => $paymentReference],
                             ['label' => 'Service', 'value' => $serviceName],
                             ['label' => 'Amount', 'value' => \App\Support\EmailContent::money($this->settledAmount($meta['table'], $record) ?: null)],
                             ['label' => 'Payment method', 'value' => $record->payment_method ? match (strtolower((string) $record->payment_method)) { 'gcash' => 'GCash', 'maya' => 'Maya', 'cash' => 'Cash', default => ucfirst((string) $record->payment_method) } : null],
@@ -471,7 +473,7 @@ class PaymentVerificationService
                         'status' => 'Payment rejected',
                         'status_type' => 'error',
                         'cta_url' => \App\Support\EmailContent::frontendUrl($meta['cta']),
-                        'cta_label' => 'Resubmit Payment',
+                        'cta_label' => 'Correct Reference & Resubmit',
                         'closing' => 'If you believe this decision was made in error, please contact our front desk for assistance.',
                     ],
                 ]

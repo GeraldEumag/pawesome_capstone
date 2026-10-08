@@ -23,8 +23,9 @@ import {
 } from "@fortawesome/free-solid-svg-icons";
 import { apiRequest, clearAuthStorage } from "../../api/client";
 import DatePickerInput from "../../components/shared/DatePickerInput";
+import { formatDateOnly, parseDateOnly } from "../../utils/date";
 import { showSuccess, showError } from "../../utils/alert.jsx";
-import { getDraft } from "../../utils/preBookingDraft";
+import { clearServiceIntent, getDraft, getServiceIntent } from "../../utils/preBookingDraft";
 import logo from "../../assets/pawesome.jpg";
 import facilityImg from "../../assets/facility 2.jpg";
 import { useLandingPageContent } from "../../hooks/useLandingPageContent";
@@ -109,7 +110,19 @@ const Register = () => {
   const handleChange = (e) => updateField(e.target.name, e.target.value);
 
   const handlePhoneChange = (name, value) => {
-    updateField(name, value.replace(/\D/g, "").slice(0, 11));
+    let digits = value.replace(/\D/g, "");
+    if (digits.startsWith("63")) {
+      digits = digits.slice(2);
+      if (digits.startsWith("9")) digits = digits.slice(1);
+    } else if (digits.startsWith("09")) {
+      digits = digits.slice(2);
+    } else if (digits.length > 9 && digits.startsWith("9")) {
+      digits = digits.slice(1);
+    } else if (digits.startsWith("0")) {
+      digits = digits.slice(1);
+    }
+    const nationalDigits = digits.slice(0, 9);
+    updateField(name, nationalDigits ? `09${nationalDigits}` : "");
   };
 
   const getStepErrors = (step = currentStep) => {
@@ -121,7 +134,7 @@ const Register = () => {
       else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.emailAddress))
                                          errors.emailAddress = "Enter a valid email address (e.g., name@example.com).";
       if (formData.contactNumber.trim() && !/^09\d{9}$/.test(formData.contactNumber.trim()))
-        errors.contactNumber = "Use a valid 11-digit PH number starting with 09 (e.g., 09123456789).";
+        errors.contactNumber = "Enter all nine digits after the fixed 09 prefix.";
     }
     if (step === 2) {
       if (!formData.username.trim())           errors.username = "Username is required.";
@@ -135,7 +148,7 @@ const Register = () => {
     }
     if (step === 3) {
       if (formData.emergencyContactNumber.trim() && !/^09\d{9}$/.test(formData.emergencyContactNumber.trim()))
-        errors.emergencyContactNumber = "Use a valid 11-digit PH number starting with 09 (e.g., 09123456789).";
+        errors.emergencyContactNumber = "Enter all nine digits after the fixed 09 prefix.";
       if (!formData.termsAccepted) errors.termsAccepted = "You must agree to the Terms of Service and Privacy Policy to continue.";
     }
     return errors;
@@ -203,16 +216,20 @@ const Register = () => {
       localStorage.setItem("middle_name", user.middle_name  || formData.middleName.trim());
       localStorage.setItem("suffix",      user.suffix       || formData.suffix.trim() || "");
 
+      const serviceIntent = getServiceIntent();
       const draft = getDraft();
-      let redirectPath = "/customer";
-      if (draft?.service_type) {
+      let redirectPath = "/customer/services";
+      if (serviceIntent && user.email_verified_at) {
+        clearServiceIntent();
+        redirectPath = `/?book=${encodeURIComponent(serviceIntent)}`;
+      } else if (draft?.service_type) {
         const draftPaths = { hotel: "/customer/hotel", grooming: "/customer/grooming", vet: "/customer/vet" };
-        redirectPath = draftPaths[draft.service_type] || "/customer";
+        redirectPath = draftPaths[draft.service_type] || "/customer/services";
       }
 
-      const msg = draft
-        ? "Registration successful. You have a pending booking request. Redirecting you to complete it..."
-        : "Registration successful. Redirecting to your customer dashboard...";
+      const msg = serviceIntent || draft
+        ? "Registration successful. Verify your email to continue your service request."
+        : "Registration successful. Redirecting to your customer services...";
       setSuccessMessage(msg);
       showSuccess(msg);
 
@@ -409,8 +426,8 @@ const Register = () => {
                       <label htmlFor="dateOfBirth">Date of Birth</label>
                       <DatePickerInput
                         id="dateOfBirth"
-                        selected={formData.dateOfBirth ? new Date(formData.dateOfBirth) : null}
-                        onChange={(date) => handleChange({ target: { name: "dateOfBirth", value: date ? date.toISOString().split("T")[0] : "" } })}
+                        selected={parseDateOnly(formData.dateOfBirth)}
+                        onChange={(date) => handleChange({ target: { name: "dateOfBirth", value: formatDateOnly(date) } })}
                         placeholderText="Select birthdate..."
                         maxDate={new Date()}
                       />
@@ -418,11 +435,14 @@ const Register = () => {
 
                     <div className="register-form-group">
                       <label htmlFor="contactNumber">Contact Number</label>
-                      <input id="contactNumber" name="contactNumber" type="tel"
-                        value={formData.contactNumber}
-                        onChange={(e) => handlePhoneChange("contactNumber", e.target.value)}
-                        className={fieldErrors.contactNumber ? "has-error" : ""}
-                        placeholder="09171234567" autoComplete="tel" />
+                      <div className={`register-phone-input${fieldErrors.contactNumber ? " has-error" : ""}`}>
+                        <span aria-hidden="true">09</span>
+                        <input id="contactNumber" name="contactNumber" type="tel"
+                          value={formData.contactNumber.slice(2)}
+                          onChange={(e) => handlePhoneChange("contactNumber", e.target.value)}
+                          className={fieldErrors.contactNumber ? "has-error" : ""}
+                          placeholder="171234567" inputMode="numeric" maxLength={12} autoComplete="tel-national" />
+                      </div>
                       {renderFieldError("contactNumber")}
                     </div>
 
@@ -524,11 +544,14 @@ const Register = () => {
 
                     <div className="register-form-group">
                       <label htmlFor="emergencyContactNumber">Contact Number</label>
-                      <input id="emergencyContactNumber" name="emergencyContactNumber" type="tel"
-                        value={formData.emergencyContactNumber}
-                        onChange={(e) => handlePhoneChange("emergencyContactNumber", e.target.value)}
-                        className={fieldErrors.emergencyContactNumber ? "has-error" : ""}
-                        placeholder="09171234567" />
+                      <div className={`register-phone-input${fieldErrors.emergencyContactNumber ? " has-error" : ""}`}>
+                        <span aria-hidden="true">09</span>
+                        <input id="emergencyContactNumber" name="emergencyContactNumber" type="tel"
+                          value={formData.emergencyContactNumber.slice(2)}
+                          onChange={(e) => handlePhoneChange("emergencyContactNumber", e.target.value)}
+                          className={fieldErrors.emergencyContactNumber ? "has-error" : ""}
+                          placeholder="171234567" inputMode="numeric" maxLength={12} autoComplete="tel-national" />
+                      </div>
                       {renderFieldError("emergencyContactNumber")}
                     </div>
                   </div>
@@ -541,10 +564,7 @@ const Register = () => {
                         disabled={loading} />
                       <span>
                         <FontAwesomeIcon icon={faFileContract} />
-                        I agree to Pawesome Retreat's{" "}
-                        <a href="#" onClick={(e) => e.preventDefault()}>Terms of Service</a>
-                        {" "}and{" "}
-                        <a href="#" onClick={(e) => e.preventDefault()}>Privacy Policy</a>.
+                        I agree to Pawesome Retreat's Terms of Service and Privacy Policy.
                         <span className="terms-required"> *</span>
                       </span>
                     </label>

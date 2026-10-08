@@ -128,6 +128,11 @@ class InventoryService
             // Determine new stock value
             $stockAction = $this->getStockAction($item, $inputStock, $addStock);
             $newStock = $this->calculateNewStock($item, $inputStock, $addStock);
+            if ($newStock > $oldStock) {
+                throw ValidationException::withMessages([
+                    'stock' => 'Stock increases must be recorded as a new batch. Use the stock receiving action.',
+                ]);
+            }
             $validated['stock'] = $newStock;
 
             // Remove fields that don't exist in database
@@ -286,6 +291,9 @@ class InventoryService
             if (!in_array($adjustmentType, ['increment', 'decrement', 'set'], true)) {
                 throw new \Exception('Invalid adjustment type.');
             }
+            if ($adjustmentType === 'increment') {
+                throw new \Exception('Stock increases must be recorded as a new batch. Use the stock receiving action.');
+            }
 
             if ($quantity <= 0) {
                 throw new \Exception('Quantity must be greater than zero.');
@@ -405,6 +413,7 @@ class InventoryService
         // Zero-quantity marker rows (e.g. legacy audit_adjusted placeholders)
         // must not force an untracked item onto the batch path.
         $hasBatches = $item->hasRealBatches();
+        $rotationMethod = $item->needsFefo() ? 'FEFO' : 'FIFO';
         if ($hasBatches) {
             // Self-heal bookkeeping drift: if the flat counter covers the sale
             // but usable batches don't, materialize the gap as a labelled
@@ -459,13 +468,14 @@ class InventoryService
             $this->notifyInventoryMovement($item, -$quantity, $reason, $referenceType, $referenceId, $stockBefore, $item->stock);
 
             return [
-                'message' => 'Stock deducted successfully (FEFO)',
+                'message' => "Stock deducted successfully ({$rotationMethod})",
                 'item' => $item,
                 'deducted' => $quantity,
                 'stock_before' => $stockBefore,
                 'stock_after' => $item->stock,
                 'batch_deductions' => $batchDeductions,
-                'fefo_applied' => true,
+                'fefo_applied' => $rotationMethod === 'FEFO',
+                'issue_method' => $rotationMethod,
             ];
         }
 
@@ -525,7 +535,7 @@ class InventoryService
         $stockBefore = $item->stock;
 
         // If item needs FEFO or batch data provided, create batch
-        if ($item->needsFefo() || $batchData) {
+        if ($item->needsFefo() || $item->hasRealBatches() || $batchData) {
             $batch = $item->addBatchStock(
                 $quantity,
                 $batchData['batch_no'] ?? null,

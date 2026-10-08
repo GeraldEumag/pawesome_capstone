@@ -113,7 +113,8 @@ class EmailStructuredContentTest extends TestCase
         $html = $mail->render();
 
         $this->assertStringContainsString('PAWESOME', $html);
-        $this->assertStringContainsString('Pet Care &amp; Veterinary Services', $html);
+        $this->assertStringContainsString('RETREAT INC.', $html);
+        $this->assertStringContainsString('VETERINARY SERVICES', $html);
         $this->assertStringContainsString('Hello, Juan Dela Cruz', $html);
         $this->assertStringContainsString('Your grooming request has been approved.', $html);
         $this->assertStringContainsString('SR-42', $html);
@@ -217,7 +218,7 @@ class EmailStructuredContentTest extends TestCase
         Queue::fake();
         [$user] = $this->verifiedCustomer(['email' => 'customer@example.com']);
         $sr = $this->submitRequest($user);
-        $sr->update(['payment_status' => 'pending', 'payment_method' => 'gcash']);
+        $sr->update(['payment_status' => 'pending', 'payment_method' => 'gcash', 'payment_reference' => 'OLD-REF-42']);
         $cashier = $this->staff('cashier');
 
         $this->postJson("/api/cashier/payment-requests/{$sr->id}/reject", [
@@ -238,6 +239,8 @@ class EmailStructuredContentTest extends TestCase
 
         $details = collect($mailable->content['details'])->pluck('value', 'label');
         $this->assertSame('Unclear payment screenshot.', $details->get('Reason'));
+        $this->assertSame('OLD-REF-42', $details->get('Payment reference to correct'));
+        $this->assertStringContainsString('re-enter or correct', $mailable->content['intro']);
         $this->assertSame('Full Groom', $details->get('Service'));
         $this->assertSame('GCash', $details->get('Payment method'));
 

@@ -44,6 +44,12 @@
     @endif
 
     <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:16px 0;">
+        @if (isset($receipt['vat_amount']))
+            <tr>
+                <td style="padding:6px 0;font-size:13px;color:#6b7280;">Less: VAT 12% (included)</td>
+                <td align="right" style="padding:6px 0;font-size:13px;color:#6b7280;">-₱{{ number_format((float) $receipt['vat_amount'], 2) }}</td>
+            </tr>
+        @endif
         <tr>
             <td style="font-size:16px;font-weight:bold;color:#111827;">Total paid</td>
             <td align="right" style="font-size:18px;font-weight:bold;color:#b02a67;">₱{{ number_format((float) $receipt['total_amount'], 2) }}</td>

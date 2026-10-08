@@ -4,6 +4,7 @@ import { normalizeList } from "../../api/client";
 import { generateInventoryAuditPdf } from "../../utils/inventoryAuditPdf.jsx";
 import "./StockLogsViewer.css";
 import DatePickerInput from "../shared/DatePickerInput";
+import { formatDateOnly, parseDateOnly } from "../../utils/date";
 
 const normalizeMovement = (log = {}) => ({
   id: log.id,
@@ -291,17 +292,18 @@ const getInitials = (name) =>
 
         <div className="filter-group date-range">
           <DatePickerInput
-            selected={dateRange.start ? new Date(dateRange.start) : null}
+            selected={parseDateOnly(dateRange.start)}
             onChange={(date) =>
-              setDateRange((prev) => ({ ...prev, start: date ? date.toISOString().split("T")[0] : "" }))
+              setDateRange((prev) => ({ ...prev, start: formatDateOnly(date) }))
             }
             placeholderText="From..."
           />
           <span>to</span>
           <DatePickerInput
-            selected={dateRange.end ? new Date(dateRange.end) : null}
+            selected={parseDateOnly(dateRange.end)}
+            minDate={parseDateOnly(dateRange.start)}
             onChange={(date) =>
-              setDateRange((prev) => ({ ...prev, end: date ? date.toISOString().split("T")[0] : "" }))
+              setDateRange((prev) => ({ ...prev, end: formatDateOnly(date) }))
             }
             placeholderText="To..."
           />

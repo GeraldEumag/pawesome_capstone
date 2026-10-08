@@ -612,3 +612,20 @@
     flex-direction: column-reverse;
   }
 }
+
+@media (min-width: 641px) and (max-height: 800px) {
+  .hbk-modal {
+    max-height: calc(100vh - 16px);
+    border-radius: 14px;
+  }
+
+  .hbk-modal .hbk-head { padding: 12px 18px 10px; }
+  .hbk-modal .hbk-body { padding: 12px 18px; gap: 10px; }
+  .hbk-modal .hbk-foot { padding: 10px 18px; }
+  .hbk-modal .step-description { margin-bottom: 12px; }
+  .hbk-modal .mode-card,
+  .hbk-modal .pet-card { padding: 12px; }
+  .hbk-modal .selected-customer-panel { margin-top: 12px; padding-top: 12px; }
+  .hbk-modal .selected-summary { margin-top: 12px; padding: 10px; gap: 8px; }
+  .hbk-modal .form-grid { gap: 12px; }
+}

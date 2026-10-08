@@ -58,6 +58,8 @@ npm run dev                          # Dev server on port 3000
 npm run build                        # Production build to build/
 ```
 
+Workspace note: the frontend checkout currently has no `yarn.lock`; Corepack Yarn 4.9.2 reports that `pawesome_frontend@workspace:.` is missing from the lockfile. Running `yarn install` would create/update dependency lock state and requires explicit user approval.
+
 ### E2E Tests
 ```bash
 cd frontend

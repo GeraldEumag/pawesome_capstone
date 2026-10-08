@@ -34,6 +34,7 @@
         @media only screen and (max-width: 620px) {
             .container { width: 100% !important; }
             .content-pad { padding: 20px 16px !important; }
+            .brand-tagline { display: none !important; }
         }
     </style>
 </head>
@@ -45,13 +46,23 @@
 
                     {{-- Brand header --}}
                     <tr>
-                        <td align="center" style="padding:24px 24px 16px 24px;">
-                            <div style="font-family:Arial,Helvetica,sans-serif;font-size:26px;font-weight:bold;letter-spacing:3px;color:#d63384;">
-                                PAWESOME
-                            </div>
-                            <div style="font-family:Arial,Helvetica,sans-serif;font-size:12px;letter-spacing:1px;color:#6b7280;margin-top:4px;">
-                                Pet Care &amp; Veterinary Services
-                            </div>
+                        <td style="padding:22px 24px 18px 24px;">
+                            <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
+                                <tr>
+                                    <td width="52" valign="middle" style="width:52px;padding-right:12px;">
+                                        <table role="presentation" width="44" height="44" cellpadding="0" cellspacing="0" bgcolor="#fff1f7" style="width:44px;height:44px;border:1px solid #f5c6da;border-radius:12px;">
+                                            <tr><td align="center" valign="middle" style="font-family:Arial,Helvetica,sans-serif;font-size:15px;font-weight:bold;color:#b02a67;">PR</td></tr>
+                                        </table>
+                                    </td>
+                                    <td valign="middle" style="font-family:Arial,Helvetica,sans-serif;">
+                                        <div style="font-size:22px;font-weight:bold;letter-spacing:2px;line-height:1.1;color:#b02a67;">PAWESOME</div>
+                                        <div style="margin-top:4px;font-size:11px;font-weight:bold;letter-spacing:1.4px;color:#6b7280;">RETREAT INC.</div>
+                                    </td>
+                                    <td class="brand-tagline" align="right" valign="middle" style="font-family:Arial,Helvetica,sans-serif;font-size:11px;line-height:1.5;color:#6b7280;">
+                                        PET CARE<br>VETERINARY SERVICES
+                                    </td>
+                                </tr>
+                            </table>
                         </td>
                     </tr>
                     <tr>

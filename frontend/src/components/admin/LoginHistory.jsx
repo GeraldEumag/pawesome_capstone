@@ -19,6 +19,8 @@ import {
   faUsers,
 } from "@fortawesome/free-solid-svg-icons";
 import { apiRequest } from "../../api/client";
+import DatePickerInput from "../shared/DatePickerInput";
+import { formatDateOnly, parseDateOnly } from "../../utils/date";
 import { exportToCSV, exportToPDF, exportToExcel } from "../../utils/reportExport";
 import RowActionPopover from "../shared/RowActionPopover";
 import "./LoginHistory.css";
@@ -476,26 +478,24 @@ const LoginHistory = () => {
         </div>
 
         <div className="lh-date-box">
-          <input
-            type="date"
-            value={dateFrom}
-            max={dateTo || undefined}
-            onChange={(e) => {
-              setDateFrom(e.target.value);
+          <DatePickerInput
+            selected={parseDateOnly(dateFrom)}
+            maxDate={parseDateOnly(dateTo)}
+            onChange={(date) => {
+              setDateFrom(formatDateOnly(date));
               setCurrentPage(1);
             }}
-            aria-label="From date"
+            ariaLabel="From date"
           />
           <span>→</span>
-          <input
-            type="date"
-            value={dateTo}
-            min={dateFrom || undefined}
-            onChange={(e) => {
-              setDateTo(e.target.value);
+          <DatePickerInput
+            selected={parseDateOnly(dateTo)}
+            minDate={parseDateOnly(dateFrom)}
+            onChange={(date) => {
+              setDateTo(formatDateOnly(date));
               setCurrentPage(1);
             }}
-            aria-label="To date"
+            ariaLabel="To date"
           />
         </div>
 

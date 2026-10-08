@@ -1,10 +1,8 @@
-import { Link } from "react-router-dom";
-
 const DEFAULT_CTA = {
   eyebrow: "Customer Portal",
   headline: "Ready to book your pet's care?",
-  description: "Create an account to manage your pets, book services, and track requests all in one place.",
-  primary_cta: "Get Started",
+  description: "Choose a service, then sign in or create a customer account to book and track requests.",
+  primary_cta: "Explore Services",
   secondary_cta: "Contact Us",
 };
 
@@ -23,9 +21,9 @@ const DynamicFinalCTA = ({ content }) => {
         <p>{data.description}</p>
         {/* Fixed: was landing-cta-buttons, CSS expects landing-cta-actions */}
         <div className="landing-cta-actions">
-          <Link to="/register" className="landing-btn landing-btn-light">
+          <a href="#featured-services-anchor" className="landing-btn landing-btn-light">
             {data.primary_cta}
-          </Link>
+          </a>
           <a href="#contact" className="landing-btn landing-btn-outline-light">
             {data.secondary_cta}
           </a>

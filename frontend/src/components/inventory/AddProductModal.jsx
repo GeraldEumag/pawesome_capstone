@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import ReactDOM from "react-dom";
 import { inventoryApi } from "../../api/inventory.jsx";
 import { formatCurrency } from "../../utils/currency";
+import { formatDateOnly, parseDateOnly } from "../../utils/date";
 import DatePickerInput from "../shared/DatePickerInput";
 import SupplierModal from "./SupplierModal";
 import QrScanner from "../shared/QrScanner";
@@ -22,6 +23,8 @@ import {
 import "./AddProductModal.css";
 
 const TOTAL_STEPS = 3;
+const EXPIRY_CATEGORIES = ["food", "medicine", "vitamin", "health", "grooming", "shampoo", "treat"];
+const categoryRequiresExpiry = (category) => EXPIRY_CATEGORIES.some((value) => String(category || "").toLowerCase().includes(value));
 
 const AddProductModal = ({ isOpen, onClose, onSuccess, editItem = null }) => {
   const [loading, setLoading] = useState(false);
@@ -44,7 +47,7 @@ const AddProductModal = ({ isOpen, onClose, onSuccess, editItem = null }) => {
     photo: null,
     photoFile: null,
     requires_expiry_tracking: false,
-    issue_method: "FEFO",
+    issue_method: "FIFO",
     // Batch fields
     batch_no: "",
     batch_quantity: "",
@@ -52,7 +55,7 @@ const AddProductModal = ({ isOpen, onClose, onSuccess, editItem = null }) => {
     expiration_date: "",
     batch_supplier: "",
     batch_unit_cost: "",
-    received_date: new Date().toISOString().split('T')[0],
+    received_date: formatDateOnly(new Date()),
     batch_proof: null,
     batch_proof_preview: null,
   });
@@ -68,8 +71,8 @@ const AddProductModal = ({ isOpen, onClose, onSuccess, editItem = null }) => {
 
   useEffect(() => {
     if (editItem) {
-      const requiresExpiry = editItem.requires_expiry_tracking ?? ["Food", "Health", "Grooming"].includes(editItem.category);
-      const issueMethod = editItem.issue_method ?? (requiresExpiry ? "FEFO" : "FIFO");
+      const requiresExpiry = Boolean(editItem.requires_expiry_tracking) || categoryRequiresExpiry(editItem.category);
+      const issueMethod = requiresExpiry ? "FEFO" : "FIFO";
       setFormData({
         name: editItem.name || "",
         sku: editItem.sku || "",
@@ -110,14 +113,14 @@ const AddProductModal = ({ isOpen, onClose, onSuccess, editItem = null }) => {
         photo: null,
         photoFile: null,
         requires_expiry_tracking: false,
-        issue_method: "FEFO",
+        issue_method: "FIFO",
         batch_no: "",
         batch_quantity: "",
         manufacturing_date: "",
         expiration_date: "",
         batch_supplier: "",
         batch_unit_cost: "",
-        received_date: new Date().toISOString().split('T')[0],
+        received_date: formatDateOnly(new Date()),
         batch_proof: null,
         batch_proof_preview: null,
       });
@@ -159,7 +162,16 @@ const AddProductModal = ({ isOpen, onClose, onSuccess, editItem = null }) => {
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: type === "checkbox" ? checked : value }));
+    if (name === "requires_expiry_tracking") {
+      const requiresExpiry = categoryRequiresExpiry(formData.category) || checked;
+      setFormData((prev) => ({
+        ...prev,
+        requires_expiry_tracking: requiresExpiry,
+        issue_method: requiresExpiry ? "FEFO" : "FIFO",
+      }));
+    } else {
+      setFormData((prev) => ({ ...prev, [name]: type === "checkbox" ? checked : value }));
+    }
     if (errors[name]) {
       setErrors((prev) => ({ ...prev, [name]: null }));
     }
@@ -199,13 +211,12 @@ const AddProductModal = ({ isOpen, onClose, onSuccess, editItem = null }) => {
   // Auto-set issue_method and requires_expiry_tracking when category changes
   const handleCategoryChange = (e) => {
     const category = e.target.value;
-    const fefoCategories = ["Food", "Health", "Grooming"];
-    const isFefo = fefoCategories.includes(category);
+    const requiresExpiry = categoryRequiresExpiry(category) || formData.requires_expiry_tracking;
     setFormData((prev) => ({
       ...prev,
       category,
-      requires_expiry_tracking: isFefo ? true : prev.requires_expiry_tracking,
-      issue_method: isFefo ? "FEFO" : prev.issue_method,
+      requires_expiry_tracking: requiresExpiry,
+      issue_method: requiresExpiry ? "FEFO" : "FIFO",
     }));
     if (errors.category) {
       setErrors((prev) => ({ ...prev, category: null }));
@@ -230,8 +241,8 @@ const AddProductModal = ({ isOpen, onClose, onSuccess, editItem = null }) => {
         if (!formData.batch_quantity || parseInt(formData.batch_quantity) <= 0) {
           newErrors.batch_quantity = "Valid batch quantity is required";
         }
-        if (formData.category === "Health" && !formData.expiration_date) {
-          newErrors.expiration_date = "Expiration date is required for medicine items";
+        if (formData.requires_expiry_tracking && !formData.expiration_date) {
+          newErrors.expiration_date = "Expiration date is required for expiry-tracked items";
         }
       }
     }
@@ -272,6 +283,11 @@ const AddProductModal = ({ isOpen, onClose, onSuccess, editItem = null }) => {
       data.photo = formData.photoFile;
     }
 
+    if (editItem) {
+      delete data.stock;
+      delete data.quantity;
+    }
+
     // Build batchData for new items
     if (!editItem) {
       data.batchData = {
@@ -281,7 +297,7 @@ const AddProductModal = ({ isOpen, onClose, onSuccess, editItem = null }) => {
         expiration_date: formData.expiration_date || null,
         supplier: formData.batch_supplier || null,
         unit_cost: formData.batch_unit_cost ? parseFloat(formData.batch_unit_cost) : null,
-        received_date: formData.received_date || new Date().toISOString().split('T')[0],
+        received_date: formData.received_date || formatDateOnly(new Date()),
         notes: 'Initial stock batch',
       };
       if (formData.batch_proof instanceof File) {
@@ -568,7 +584,7 @@ const AddProductModal = ({ isOpen, onClose, onSuccess, editItem = null }) => {
                   <div className="form-grid">
                     <div className="form-group">
                       <label>
-                        Initial Stock <span className="required">*</span>
+                        {editItem ? "Current Stock" : "Initial Stock"} {!editItem && <span className="required">*</span>}
                       </label>
                       <input
                         type="number"
@@ -577,8 +593,10 @@ const AddProductModal = ({ isOpen, onClose, onSuccess, editItem = null }) => {
                         onChange={handleChange}
                         placeholder="0"
                         min="0"
+                        disabled={Boolean(editItem)}
                         className={errors.quantity ? "error" : ""}
                       />
+                      {editItem && <small className="helper-text">Use Add Stock to receive a new batch.</small>}
                       {errors.quantity && <span className="error-text">{errors.quantity}</span>}
                     </div>
 
@@ -639,6 +657,7 @@ const AddProductModal = ({ isOpen, onClose, onSuccess, editItem = null }) => {
                           name="requires_expiry_tracking"
                           checked={formData.requires_expiry_tracking}
                           onChange={handleChange}
+                          disabled={categoryRequiresExpiry(formData.category)}
                         />
                         Requires Expiry Tracking
                       </label>
@@ -647,16 +666,12 @@ const AddProductModal = ({ isOpen, onClose, onSuccess, editItem = null }) => {
 
                     <div className="form-group">
                       <label>Issue Method</label>
-                      <select
-                        name="issue_method"
-                        value={formData.issue_method}
-                        onChange={handleChange}
-                      >
-                        <option value="FEFO">FEFO (First Expired, First Out)</option>
-                        <option value="FIFO">FIFO (First In, First Out)</option>
-                        <option value="Manual">Manual</option>
+                      <select name="issue_method" value={formData.requires_expiry_tracking ? "FEFO" : "FIFO"} disabled>
+                        {formData.requires_expiry_tracking
+                          ? <option value="FEFO">FEFO (First Expired, First Out)</option>
+                          : <option value="FIFO">FIFO (First In, First Out)</option>}
                       </select>
-                      <small className="helper-text">FEFO recommended for medicines and perishables.</small>
+                      <small className="helper-text">Expiry-tracked items use FEFO; non-expiring items use FIFO.</small>
                     </div>
                   </div>
                 </div>
@@ -699,19 +714,19 @@ const AddProductModal = ({ isOpen, onClose, onSuccess, editItem = null }) => {
                       <div className="form-group">
                         <label>Manufacturing Date</label>
                         <DatePickerInput
-                          selected={formData.manufacturing_date ? new Date(formData.manufacturing_date) : null}
-                          onChange={(date) => handleChange({ target: { name: "manufacturing_date", value: date ? date.toISOString().split("T")[0] : "" } })}
+                          selected={parseDateOnly(formData.manufacturing_date)}
+                          onChange={(date) => handleChange({ target: { name: "manufacturing_date", value: formatDateOnly(date) } })}
                           placeholderText="Select manufacturing date..."
                         />
                       </div>
 
                       <div className="form-group">
                         <label>
-                          Expiration Date {formData.category === "Health" && <span className="required">*</span>}
+                          Expiration Date {formData.requires_expiry_tracking && <span className="required">*</span>}
                         </label>
                         <DatePickerInput
-                          selected={formData.expiration_date ? new Date(formData.expiration_date) : null}
-                          onChange={(date) => handleChange({ target: { name: "expiration_date", value: date ? date.toISOString().split("T")[0] : "" } })}
+                          selected={parseDateOnly(formData.expiration_date)}
+                          onChange={(date) => handleChange({ target: { name: "expiration_date", value: formatDateOnly(date) } })}
                           placeholderText="Select expiration date..."
                           className={errors.expiration_date ? "error" : ""}
                         />
@@ -732,8 +747,8 @@ const AddProductModal = ({ isOpen, onClose, onSuccess, editItem = null }) => {
                       <div className="form-group">
                         <label>Received Date</label>
                         <DatePickerInput
-                          selected={formData.received_date ? new Date(formData.received_date) : null}
-                          onChange={(date) => handleChange({ target: { name: "received_date", value: date ? date.toISOString().split("T")[0] : "" } })}
+                          selected={parseDateOnly(formData.received_date)}
+                          onChange={(date) => handleChange({ target: { name: "received_date", value: formatDateOnly(date) } })}
                           placeholderText="Select received date..."
                         />
                       </div>

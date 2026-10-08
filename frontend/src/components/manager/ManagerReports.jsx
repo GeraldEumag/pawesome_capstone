@@ -34,6 +34,8 @@ import {
   YAxis,
 } from "recharts";
 import { apiRequest } from "../../api/client";
+import DatePickerInput from "../shared/DatePickerInput";
+import { formatDateOnly, parseDateOnly } from "../../utils/date";
 import { formatCurrency } from "../../utils/currency";
 import { exportToCSV, exportToPDF, exportToExcel } from "../../utils/reportExport";
 import StandardReportLayout from "../shared/StandardReportLayout";
@@ -48,8 +50,8 @@ const getDefaultDateRange = () => {
   const start = new Date(now.getFullYear(), now.getMonth(), 1);
 
   return {
-    startDate: start.toISOString().split("T")[0],
-    endDate: now.toISOString().split("T")[0],
+    startDate: formatDateOnly(start),
+    endDate: formatDateOnly(now),
   };
 };
 
@@ -1165,18 +1167,18 @@ const ManagerReports = ({ initialTab }) => {
         )}
 
         <div className="reports-date-range">
-          <input
-            type="date"
-            value={startDate}
-            onChange={(event) => setStartDate(event.target.value)}
-            aria-label="Start date"
+          <DatePickerInput
+            selected={parseDateOnly(startDate)}
+            maxDate={parseDateOnly(endDate)}
+            onChange={(date) => setStartDate(formatDateOnly(date))}
+            ariaLabel="Start date"
           />
           <span>–</span>
-          <input
-            type="date"
-            value={endDate}
-            onChange={(event) => setEndDate(event.target.value)}
-            aria-label="End date"
+          <DatePickerInput
+            selected={parseDateOnly(endDate)}
+            minDate={parseDateOnly(startDate)}
+            onChange={(date) => setEndDate(formatDateOnly(date))}
+            ariaLabel="End date"
           />
         </div>
 

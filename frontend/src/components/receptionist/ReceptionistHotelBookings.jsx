@@ -24,6 +24,7 @@ import { apiRequest, getAuthenticatedFileUrl } from "../../api/client";
 import { exportToCSV, exportToPDF, exportToExcel } from "../../utils/reportExport";
 import { showError, showReasonPrompt } from "../../utils/alert.jsx";
 import DatePickerInput from "../../components/shared/DatePickerInput";
+import { formatDateOnly, parseDateOnly } from "../../utils/date";
 import PetAvatar from "../shared/PetAvatar";
 import RowActionPopover from "../shared/RowActionPopover";
 import ServiceBillingPanel from "../shared/ServiceBillingPanel";
@@ -1001,10 +1002,10 @@ const ReceptionistHotelBookings = () => {
                           withPortal
                           selected={(() => {
                             const val = scheduleDraft[selectedBooking.id]?.check_in || stayDate;
-                            return val ? new Date(val) : null;
+                            return parseDateOnly(val);
                           })()}
                           onChange={(date) =>
-                            updateScheduleDraft(selectedBooking.id, "check_in", date ? date.toISOString().split("T")[0] : "")
+                            updateScheduleDraft(selectedBooking.id, "check_in", formatDateOnly(date))
                           }
                           placeholderText="Pick stay date..."
                         />

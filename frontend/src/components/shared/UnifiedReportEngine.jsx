@@ -15,6 +15,8 @@ import {
 } from '@fortawesome/free-solid-svg-icons';
 import StandardReportLayout from './StandardReportLayout';
 import StandardTable from './StandardTable';
+import DatePickerInput from './DatePickerInput';
+import { formatDateOnly, parseDateOnly } from '../../utils/date';
 import { exportToCSV, exportToPDF, exportToExcel, getDateRangePreset } from '../../utils/reportExport';
 import './UnifiedReportEngine.css';
 
@@ -175,18 +177,18 @@ const AdvancedFilterPanel = ({
           {/* Custom Date Range */}
           <div className="ure-field">
             <label>From</label>
-            <input
-              type="date"
-              value={dateRange.startDate || ''}
-              onChange={(e) => onDateRangeChange({ ...dateRange, startDate: e.target.value })}
+            <DatePickerInput
+              selected={parseDateOnly(dateRange.startDate)}
+              maxDate={parseDateOnly(dateRange.endDate)}
+              onChange={(date) => onDateRangeChange({ ...dateRange, startDate: formatDateOnly(date) })}
             />
           </div>
           <div className="ure-field">
             <label>To</label>
-            <input
-              type="date"
-              value={dateRange.endDate || ''}
-              onChange={(e) => onDateRangeChange({ ...dateRange, endDate: e.target.value })}
+            <DatePickerInput
+              selected={parseDateOnly(dateRange.endDate)}
+              minDate={parseDateOnly(dateRange.startDate)}
+              onChange={(date) => onDateRangeChange({ ...dateRange, endDate: formatDateOnly(date) })}
             />
           </div>
 

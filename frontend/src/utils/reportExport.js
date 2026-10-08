@@ -7,6 +7,7 @@ import * as XLSX from "xlsx";
 import { sanitizeCsvCell } from "./csvSanitize";
 import { exportFormalReportPDF } from "./formalReportPdf";
 import { getRole, getUserData } from "./auth";
+import { formatDateOnly, parseDateOnly } from "./date";
 
 export const getNestedValue = (row, key) => {
   if (!row || !key) return undefined;
@@ -220,7 +221,7 @@ const formatDateForExport = (value) => {
  * @returns {string} Formatted date string safe for filenames
  */
 const formatDateForFilename = (date) => {
-  return date.toISOString().split("T")[0];
+  return formatDateOnly(date);
 };
 
 /**
@@ -238,8 +239,9 @@ export const filterByDateRange = (data, dateKey, startDate, endDate) => {
     const rawDate = item[dateKey];
     if (!rawDate) return true;
 
-    const itemDateStr = new Date(rawDate).toISOString().split("T")[0];
-    if (itemDateStr === "Invalid Date") return true;
+    const parsedDate = parseDateOnly(rawDate) || new Date(rawDate);
+    if (Number.isNaN(parsedDate.getTime())) return true;
+    const itemDateStr = formatDateOnly(parsedDate);
 
     if (startDate && itemDateStr < startDate) return false;
     if (endDate && itemDateStr > endDate) return false;
@@ -308,15 +310,15 @@ export const getDateRangePreset = (preset) => {
   switch (preset) {
     case "today":
       return {
-        startDate: today.toISOString().split("T")[0],
-        endDate: today.toISOString().split("T")[0],
+        startDate: formatDateOnly(today),
+        endDate: formatDateOnly(today),
       };
     case "yesterday": {
       const yesterday = new Date(today);
       yesterday.setDate(yesterday.getDate() - 1);
       return {
-        startDate: yesterday.toISOString().split("T")[0],
-        endDate: yesterday.toISOString().split("T")[0],
+        startDate: formatDateOnly(yesterday),
+        endDate: formatDateOnly(yesterday),
       };
     }
     case "week": {
@@ -325,16 +327,16 @@ export const getDateRangePreset = (preset) => {
       const weekEnd = new Date(weekStart);
       weekEnd.setDate(weekEnd.getDate() + 6);
       return {
-        startDate: weekStart.toISOString().split("T")[0],
-        endDate: weekEnd.toISOString().split("T")[0],
+        startDate: formatDateOnly(weekStart),
+        endDate: formatDateOnly(weekEnd),
       };
     }
     case "month": {
       const monthStart = new Date(today.getFullYear(), today.getMonth(), 1);
       const monthEnd = new Date(today.getFullYear(), today.getMonth() + 1, 0);
       return {
-        startDate: monthStart.toISOString().split("T")[0],
-        endDate: monthEnd.toISOString().split("T")[0],
+        startDate: formatDateOnly(monthStart),
+        endDate: formatDateOnly(monthEnd),
       };
     }
     case "quarter": {
@@ -342,32 +344,32 @@ export const getDateRangePreset = (preset) => {
       const quarterStart = new Date(today.getFullYear(), quarter * 3, 1);
       const quarterEnd = new Date(today.getFullYear(), quarter * 3 + 3, 0);
       return {
-        startDate: quarterStart.toISOString().split("T")[0],
-        endDate: quarterEnd.toISOString().split("T")[0],
+        startDate: formatDateOnly(quarterStart),
+        endDate: formatDateOnly(quarterEnd),
       };
     }
     case "year": {
       const yearStart = new Date(today.getFullYear(), 0, 1);
       const yearEnd = new Date(today.getFullYear(), 11, 31);
       return {
-        startDate: yearStart.toISOString().split("T")[0],
-        endDate: yearEnd.toISOString().split("T")[0],
+        startDate: formatDateOnly(yearStart),
+        endDate: formatDateOnly(yearEnd),
       };
     }
     case "last7days": {
       const last7 = new Date(today);
       last7.setDate(last7.getDate() - 6);
       return {
-        startDate: last7.toISOString().split("T")[0],
-        endDate: today.toISOString().split("T")[0],
+        startDate: formatDateOnly(last7),
+        endDate: formatDateOnly(today),
       };
     }
     case "last30days": {
       const last30 = new Date(today);
       last30.setDate(last30.getDate() - 29);
       return {
-        startDate: last30.toISOString().split("T")[0],
-        endDate: today.toISOString().split("T")[0],
+        startDate: formatDateOnly(last30),
+        endDate: formatDateOnly(today),
       };
     }
     default:

@@ -9,6 +9,8 @@ import {
   faScaleBalanced,
 } from "@fortawesome/free-solid-svg-icons";
 import { apiRequest } from "../../api/client";
+import DatePickerInput from "../shared/DatePickerInput";
+import { formatDateOnly, parseDateOnly } from "../../utils/date";
 import RowActionPopover from "../shared/RowActionPopover";
 import "./SalaryLoanManagement.css";
 
@@ -278,18 +280,16 @@ const SalaryLoanManagement = () => {
               <div className="slm-form-row">
                 <div className="slm-field">
                   <label>Start Period</label>
-                  <input
-                    type="date"
-                    value={form.start_period}
-                    onChange={(e) => setForm((f) => ({ ...f, start_period: e.target.value }))}
+                  <DatePickerInput
+                    selected={parseDateOnly(form.start_period)}
+                    onChange={(date) => setForm((f) => ({ ...f, start_period: formatDateOnly(date) }))}
                   />
                 </div>
                 <div className="slm-field">
                   <label>End Period (optional)</label>
-                  <input
-                    type="date"
-                    value={form.end_period}
-                    onChange={(e) => setForm((f) => ({ ...f, end_period: e.target.value }))}
+                  <DatePickerInput
+                    selected={parseDateOnly(form.end_period)}
+                    onChange={(date) => setForm((f) => ({ ...f, end_period: formatDateOnly(date) }))}
                   />
                 </div>
               </div>

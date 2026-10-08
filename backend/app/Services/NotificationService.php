@@ -122,7 +122,7 @@ class NotificationService
             'in_care' => "Your pet is now in our care. We'll keep them comfortable!",
             'ready_for_pickup' => "Your pet is ready for pickup. See you soon!",
             'checked_out' => "Your pet has been checked out. Thank you for choosing us!",
-            'completed' => "Your pet's hotel stay has been completed. Thank you for choosing us!",
+            'completed' => "Booking BD-{$boarding->id} for {$boarding->pet_name} has been completed. Thank you for choosing us!",
             'cancelled' => "Your hotel reservation has been cancelled.",
             'rejected' => "Your hotel reservation request was not approved.",
         ];
@@ -133,6 +133,7 @@ class NotificationService
             'cancelled', 'rejected' => 'error',
             default => 'success',
         };
+        $completed = $boarding->status === 'completed' && $oldStatus !== 'completed';
 
         self::createNotification(
             $customer->user_id,
@@ -144,13 +145,15 @@ class NotificationService
             ['boarding_id' => $boarding->id, 'status' => $boarding->status]
         );
 
-        self::sendEmailNotification($customer, 'Reservation Update', $messages[$boarding->status], $type, [
-            'event_key' => 'boarding.status',
-            'occurrence_key' => "boarding.status:{$boarding->id}:{$oldStatus}>{$boarding->status}:" . $boarding->updated_at?->format('Uv'),
+        self::sendEmailNotification($customer, $completed ? 'Booking Completed' : 'Reservation Update', $messages[$boarding->status], $type, [
+            'event_key' => $completed ? 'booking.completed' : 'boarding.status',
+            'occurrence_key' => $completed
+                ? "booking.completed:boarding:{$boarding->id}:" . $boarding->updated_at?->format('Uv')
+                : "boarding.status:{$boarding->id}:{$oldStatus}>{$boarding->status}:" . $boarding->updated_at?->format('Uv'),
             'source_type' => 'boarding',
             'source_id' => $boarding->id,
             'content' => [
-                'subject' => "[Pawesome] Boarding " . EmailContent::status($boarding->status) . " — BD-{$boarding->id}",
+                'subject' => $completed ? "[Pawesome] Booking Completed — BD-{$boarding->id}" : "[Pawesome] Boarding " . EmailContent::status($boarding->status) . " — BD-{$boarding->id}",
                 'customer_name' => $customer->name,
                 'intro' => $messages[$boarding->status],
                 'details' => [
@@ -160,10 +163,10 @@ class NotificationService
                     ['label' => 'Check-in', 'value' => EmailContent::datetime($boarding->check_in)],
                     ['label' => 'Check-out', 'value' => EmailContent::datetime($boarding->check_out)],
                 ],
-                'status' => EmailContent::status($boarding->status),
+                'status' => $completed ? 'Booking Completed' : EmailContent::status($boarding->status),
                 'status_type' => $type === 'error' ? 'error' : 'success',
-                'cta_url' => EmailContent::frontendUrl('/customer/boardings'),
-                'cta_label' => 'View Reservation',
+                'cta_url' => EmailContent::frontendUrl('/customer/bookings'),
+                'cta_label' => $completed ? 'View Booking' : 'View Reservation',
             ],
         ]);
     }
@@ -244,7 +247,7 @@ class NotificationService
             'scheduled' => ["Your appointment has been scheduled.\n" .
                        "Date: {$appointment->scheduled_at->format('M d, Y h:i A')}", true],
             'in_progress' => ["Your appointment is now in progress.", false],
-            'completed' => ["Your appointment has been completed. Thank you!", true],
+            'completed' => ["Appointment APT-{$appointment->id} has been completed. Thank you!", true],
             'cancelled' => ["Your appointment has been cancelled.", true],
             'rejected' => ["Your appointment has been rejected.", true],
         ];
@@ -257,6 +260,7 @@ class NotificationService
             'in_progress' => 'info',
             default => 'success',
         };
+        $completed = $appointment->status === 'completed' && $oldStatus !== 'completed';
 
         self::createNotification(
             $customer->user_id,
@@ -269,13 +273,15 @@ class NotificationService
         );
 
         if ($emailCustomer) {
-            self::sendEmailNotification($customer, 'Appointment Update', $text, $type, [
-                'event_key' => 'appointment.status',
-                'occurrence_key' => "appointment.status:{$appointment->id}:{$oldStatus}>{$appointment->status}:" . $appointment->updated_at?->format('Uv'),
+            self::sendEmailNotification($customer, $completed ? 'Booking Completed' : 'Appointment Update', $text, $type, [
+                'event_key' => $completed ? 'booking.completed' : 'appointment.status',
+                'occurrence_key' => $completed
+                    ? "booking.completed:appointment:{$appointment->id}:" . $appointment->updated_at?->format('Uv')
+                    : "appointment.status:{$appointment->id}:{$oldStatus}>{$appointment->status}:" . $appointment->updated_at?->format('Uv'),
                 'source_type' => 'appointment',
                 'source_id' => $appointment->id,
                 'content' => [
-                    'subject' => "[Pawesome] Appointment " . EmailContent::status($appointment->status) . " — APT-{$appointment->id}",
+                    'subject' => $completed ? "[Pawesome] Booking Completed — APT-{$appointment->id}" : "[Pawesome] Appointment " . EmailContent::status($appointment->status) . " — APT-{$appointment->id}",
                     'customer_name' => $customer->name,
                     'intro' => $text,
                     'details' => [
@@ -285,10 +291,10 @@ class NotificationService
                         ['label' => 'Veterinarian', 'value' => $appointment->veterinarian?->name],
                         ['label' => 'Schedule', 'value' => EmailContent::datetime($appointment->scheduled_at)],
                     ],
-                    'status' => EmailContent::status($appointment->status),
+                    'status' => $completed ? 'Booking Completed' : EmailContent::status($appointment->status),
                     'status_type' => $type === 'error' ? 'error' : ($type === 'info' ? 'info' : 'success'),
-                    'cta_url' => EmailContent::frontendUrl('/customer/appointments'),
-                    'cta_label' => 'View Appointment',
+                    'cta_url' => EmailContent::frontendUrl($completed ? '/customer/bookings' : '/customer/appointments'),
+                    'cta_label' => $completed ? 'View Booking' : 'View Appointment',
                 ],
             ]);
         }

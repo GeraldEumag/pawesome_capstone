@@ -1,4 +1,3 @@
-import { Link } from "react-router-dom";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faHotel, faScissors, faStethoscope } from "@fortawesome/free-solid-svg-icons";
 
@@ -50,8 +49,8 @@ const DynamicFeaturedServices = ({ content, onBookService }) => {
       </div>
 
       <div className="landing-featured-grid">
-        {services.map((service) => (
-          <article className="landing-featured-card" key={service.key}>
+        {services.map((service, index) => (
+          <article className="landing-featured-card" key={service.key} style={{ animationDelay: `${index * 100}ms` }}>
             {service.image ? (
               <div className="featured-card-image">
                 <img src={service.image} alt={service.title} />
@@ -73,20 +72,6 @@ const DynamicFeaturedServices = ({ content, onBookService }) => {
         ))}
       </div>
 
-      <div className="landing-account-notice">
-        <p>
-          Bookings require a free customer account so we can securely process
-          your request and keep you updated. Create an account or log in to get started.
-        </p>
-        <div className="landing-account-actions">
-          <Link to="/register" className="landing-btn landing-btn-primary">
-            Create Account
-          </Link>
-          <Link to="/login" className="landing-btn landing-btn-secondary">
-            Log In
-          </Link>
-        </div>
-      </div>
     </section>
   );
 };

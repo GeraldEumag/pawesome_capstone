@@ -2,7 +2,9 @@
 
 namespace Tests\Feature;
 
+use App\Models\Boarding;
 use App\Models\Customer;
+use App\Models\HotelRoom;
 use App\Models\Pet;
 use App\Models\ServiceRequest;
 use App\Models\User;
@@ -28,6 +30,15 @@ class CustomerBookingRulesTest extends TestCase
     private function authHeaders(User $user): array
     {
         return ['Authorization' => 'Bearer ' . $user->createToken('customer-booking-test')->plainTextToken];
+    }
+
+    public function test_staff_cannot_submit_customer_service_requests(): void
+    {
+        $receptionist = User::factory()->receptionist()->create();
+
+        $this->withHeaders($this->authHeaders($receptionist))
+            ->postJson('/api/customer/requests', [])
+            ->assertForbidden();
     }
 
     public function test_customer_can_cancel_a_service_request_with_the_cancelled_status(): void
@@ -76,7 +87,7 @@ class CustomerBookingRulesTest extends TestCase
             'pet_name' => 'Milo',
             'request_type' => 'grooming',
             'service_name' => 'Bath and Brush',
-            'request_time' => '18:00',
+            'request_time' => '16:30',
         ];
 
         $this->withHeaders($headers)
@@ -92,6 +103,196 @@ class CustomerBookingRulesTest extends TestCase
                 ...$booking,
                 'requested_date' => Carbon::tomorrow()->toDateString(),
             ])
+            ->assertCreated();
+    }
+
+    public function test_veterinary_availability_filters_overlapping_slots_and_allows_adjacent_times(): void
+    {
+        Carbon::setTestNow(Carbon::parse('2026-09-29 12:00:00', 'Asia/Manila'));
+        $user = $this->customer();
+        $headers = $this->authHeaders($user);
+        $date = Carbon::tomorrow()->toDateString();
+        $booking = [
+            'customer_name' => $user->name,
+            'customer_email' => $user->email,
+            'pet_name' => 'Milo',
+            'pet_type' => 'Dog',
+            'request_type' => 'vet',
+            'service_name' => 'General Consultation',
+            'requested_date' => $date,
+        ];
+
+        $this->withHeaders($headers)
+            ->postJson('/api/customer/requests', [...$booking, 'request_time' => '10:00'])
+            ->assertCreated();
+
+        $availability = $this->withHeaders($headers)
+            ->getJson('/api/customer/availability/veterinary?date=' . $date . '&service_name=General%20Consultation')
+            ->assertOk();
+        $slots = collect($availability->json('slots'))->keyBy('time');
+        $this->assertFalse($slots['10:00']['available']);
+        $this->assertFalse($slots['10:30']['available']);
+        $this->assertTrue($slots['11:00']['available']);
+
+        $this->withHeaders($headers)
+            ->postJson('/api/customer/requests', [...$booking, 'request_time' => '10:30'])
+            ->assertUnprocessable();
+        $this->withHeaders($headers)
+            ->postJson('/api/customer/requests', [...$booking, 'request_time' => '11:00'])
+            ->assertCreated();
+    }
+
+    public function test_grooming_availability_filters_overlapping_slots_and_releases_cancelled_bookings(): void
+    {
+        Carbon::setTestNow(Carbon::parse('2026-09-29 12:00:00', 'Asia/Manila'));
+        $user = $this->customer();
+        $headers = $this->authHeaders($user);
+        $date = Carbon::tomorrow()->toDateString();
+        $booking = [
+            'customer_name' => $user->name,
+            'customer_email' => $user->email,
+            'pet_name' => 'Milo',
+            'pet_type' => 'Dog',
+            'request_type' => 'grooming',
+            'service_name' => 'Bath and Brush',
+            'requested_date' => $date,
+            'request_time' => '10:00',
+        ];
+
+        $created = $this->withHeaders($headers)
+            ->postJson('/api/customer/requests', $booking)
+            ->assertCreated();
+        $requestId = $created->json('request.id');
+        $this->assertDatabaseHas('service_requests', ['id' => $requestId, 'pet_type' => 'Dog']);
+
+        $availability = $this->withHeaders($headers)
+            ->getJson('/api/customer/availability/grooming?date=' . $date . '&service_name=Bath%20and%20Brush')
+            ->assertOk();
+
+        $slots = collect($availability->json('slots'))->keyBy('time');
+        $this->assertFalse($slots['10:00']['available']);
+        $this->assertFalse($slots['11:00']['available']);
+        $this->assertTrue($slots['11:30']['available']);
+
+        $this->withHeaders($headers)
+            ->postJson('/api/customer/requests', [...$booking, 'request_time' => '11:30'])
+            ->assertCreated();
+
+        $this->withHeaders($headers)
+            ->postJson('/api/customer/requests', [...$booking, 'request_time' => '11:00'])
+            ->assertUnprocessable()
+            ->assertJsonPath('errors.requested_time.0', 'Time slot overlaps an existing booking.');
+
+        $this->withHeaders($headers)
+            ->patchJson("/api/customer/requests/{$requestId}/cancel")
+            ->assertOk();
+
+        $releasedSlots = $this->withHeaders($headers)
+            ->getJson('/api/customer/availability/grooming?date=' . $date . '&service_name=Bath%20and%20Brush')
+            ->assertOk()
+            ->json('slots');
+
+        $releasedByCancellation = collect($releasedSlots)->keyBy('time');
+        $this->assertTrue($releasedByCancellation['10:00']['available']);
+        $this->assertFalse($releasedByCancellation['11:30']['available']);
+    }
+
+    public function test_completed_grooming_request_releases_its_availability_slot(): void
+    {
+        Carbon::setTestNow(Carbon::parse('2026-09-29 12:00:00', 'Asia/Manila'));
+        $user = $this->customer();
+        $date = Carbon::tomorrow()->toDateString();
+        ServiceRequest::create([
+            'customer_id' => $user->id,
+            'customer_name' => $user->name,
+            'customer_email' => $user->email,
+            'pet_name' => 'Milo',
+            'pet_type' => 'Dog',
+            'request_type' => 'grooming',
+            'service_name' => 'Bath and Brush',
+            'request_date' => $date,
+            'request_time' => '10:00',
+            'status' => 'completed',
+            'payment_status' => 'paid',
+        ]);
+
+        $slots = $this->withHeaders($this->authHeaders($user))
+            ->getJson('/api/customer/availability/grooming?date=' . $date . '&service_name=Bath%20and%20Brush')
+            ->assertOk()
+            ->json('slots');
+
+        $this->assertTrue(collect($slots)->firstWhere('time', '10:00')['available']);
+    }
+
+    public function test_overlapping_hotel_stays_are_rejected_for_the_same_room(): void
+    {
+        Carbon::setTestNow(Carbon::parse('2026-09-29 12:00:00', 'Asia/Manila'));
+        $user = $this->customer();
+        $customer = Customer::create([
+            'user_id' => $user->id,
+            'name' => $user->name,
+            'email' => $user->email,
+        ]);
+        $pet = Pet::factory()->create(['customer_id' => $customer->id]);
+        $room = HotelRoom::factory()->create(['status' => 'available']);
+        $booking = [
+            'pet_id' => $pet->id,
+            'hotel_room_id' => $room->id,
+            'check_in_date' => Carbon::tomorrow()->toDateString(),
+            'number_of_days' => 1,
+        ];
+
+        $this->withHeaders($this->authHeaders($user))
+            ->postJson('/api/customer/boarding-requests', $booking)
+            ->assertCreated();
+
+        $this->withHeaders($this->authHeaders($user))
+            ->postJson('/api/customer/boarding-requests', $booking)
+            ->assertUnprocessable();
+    }
+
+    public function test_landing_hotel_request_rejects_unavailable_room_type(): void
+    {
+        Carbon::setTestNow(Carbon::parse('2026-09-29 12:00:00', 'Asia/Manila'));
+        $user = $this->customer();
+        $customer = Customer::create([
+            'user_id' => $user->id,
+            'name' => $user->name,
+            'email' => $user->email,
+        ]);
+        $pet = Pet::factory()->create(['customer_id' => $customer->id, 'species' => 'Dog']);
+        $date = Carbon::tomorrow()->toDateString();
+        $occupiedRoom = HotelRoom::factory()->create(['status' => 'available', 'type' => 'suite']);
+        HotelRoom::factory()->create(['status' => 'available', 'type' => 'deluxe']);
+        Boarding::create([
+            'pet_id' => $pet->id,
+            'customer_id' => $customer->id,
+            'hotel_room_id' => $occupiedRoom->id,
+            'check_in' => $date,
+            'check_out' => $date,
+            'status' => 'approved',
+        ]);
+        $request = [
+            'customer_name' => $user->name,
+            'customer_email' => $user->email,
+            'pet_id' => $pet->id,
+            'pet_name' => $pet->name,
+            'pet_type' => 'Dog',
+            'request_type' => 'hotel',
+            'service_name' => 'Pet Hotel',
+            'requested_date' => $date,
+            'requested_time' => '10:00',
+            'check_in_date' => $date,
+            'check_out_date' => $date,
+        ];
+
+        $this->withHeaders($this->authHeaders($user))
+            ->postJson('/api/customer/requests', [...$request, 'room_type' => 'suite'])
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors(['room_type']);
+
+        $this->withHeaders($this->authHeaders($user))
+            ->postJson('/api/customer/requests', [...$request, 'room_type' => 'deluxe'])
             ->assertCreated();
     }
 

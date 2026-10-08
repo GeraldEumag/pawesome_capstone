@@ -141,7 +141,7 @@ export function buildEscPos(opts = {}) {
   // ── Totals ──
   out += "\n";
   out += row("Subtotal", php(subtotal)) + "\n";
-  out += row("VAT 12%", php(vatAmount)) + "\n";
+  out += row("VAT 12%", "-" + php(Math.abs(vatAmount))) + "\n";
   if (discount > 0) out += row("Discount", "-" + php(discount)) + "\n";
   out += "\n";
   out += DBL + row("TOTAL", php(total), COLS_DBL) + NORMAL + "\n";

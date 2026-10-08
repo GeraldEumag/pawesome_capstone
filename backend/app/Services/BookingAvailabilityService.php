@@ -6,7 +6,11 @@ use App\Models\Appointment;
 use App\Models\GroomingAppointment;
 use App\Models\Boarding;
 use App\Models\HotelRoom;
+use App\Models\Service;
+use App\Services\ServiceDurationService;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 
 class BookingAvailabilityService
 {
@@ -23,8 +27,10 @@ class BookingAvailabilityService
         'in_progress',
         'in_consultation',
         'checked_in',
+        'ready_for_pickup',
         'in_stay',
         'in_care',
+        'confined',
         'needs_confinement',
         'treated',
     ];
@@ -76,108 +82,190 @@ class BookingAvailabilityService
         return in_array($status, self::BLOCKING_PAYMENT_STATUSES);
     }
 
+    private static function blockingServiceBookings(string $serviceType, string $date, ?int $veterinarianId = null): array
+    {
+        $bookings = [];
+        $types = $serviceType === 'grooming'
+            ? ['grooming']
+            : ['vet', 'veterinary', 'appointment', 'vet appointment'];
+
+        if (Schema::hasTable('service_requests')) {
+            $query = DB::table('service_requests')
+                ->whereDate('request_date', $date)
+                ->whereIn('status', self::BLOCKING_BOOKING_STATUSES)
+                ->whereIn(DB::raw('LOWER(request_type)'), $types);
+            if (Schema::hasColumn('service_requests', 'request_time')) {
+                foreach ($query->get(['request_time', 'service_name']) as $booking) {
+                    $bookings[] = ['time' => $booking->request_time, 'service' => $booking->service_name];
+                }
+            }
+        }
+
+        if ($serviceType === 'veterinary' && Schema::hasTable('appointments')) {
+            $query = Appointment::with('service:id,name')
+                ->whereDate('scheduled_at', $date)
+                ->whereIn('status', self::BLOCKING_BOOKING_STATUSES);
+            if ($veterinarianId) {
+                $query->where('veterinarian_id', $veterinarianId);
+            }
+            foreach ($query->get() as $booking) {
+                $bookings[] = [
+                    'time' => Carbon::parse($booking->scheduled_at)->format('H:i'),
+                    'service' => $booking->service?->name,
+                ];
+            }
+        }
+
+        if ($serviceType === 'grooming' && Schema::hasTable('groomings')) {
+            $query = DB::table('groomings')
+                ->whereDate('appointment_date', $date)
+                ->whereIn('status', self::BLOCKING_BOOKING_STATUSES);
+            $columns = Schema::hasColumn('groomings', 'appointment_time')
+                ? ['appointment_time', 'service']
+                : ['service'];
+            foreach ($query->get($columns) as $booking) {
+                $bookings[] = ['time' => $booking->appointment_time ?? null, 'service' => $booking->service ?? null];
+            }
+        }
+
+        if ($serviceType === 'grooming' && Schema::hasTable('grooming_appointments')) {
+            $query = GroomingAppointment::whereDate('appointment_date', $date)
+                ->whereIn('status', self::BLOCKING_BOOKING_STATUSES);
+            foreach ($query->get() as $booking) {
+                $bookings[] = [
+                    'time' => $booking->appointment_time ?? null,
+                    'service' => $booking->service ?? null,
+                ];
+            }
+        }
+
+        return $bookings;
+    }
+
+    private static function serviceMinutes(string $serviceType, ?string $serviceName): int
+    {
+        if ($serviceName) {
+            $service = Service::whereRaw('LOWER(name) = ?', [strtolower(trim($serviceName))])->first();
+            if ($service && (int) $service->duration_minutes > 0) {
+                return (int) $service->duration_minutes + ServiceDurationService::getBufferTime($serviceType);
+            }
+        }
+
+        $normalizedName = $serviceName
+            ? ucwords(str_replace('_', ' ', trim($serviceName)))
+            : '';
+
+        return ServiceDurationService::getTotalTimeWithBuffer($serviceType, $normalizedName);
+    }
+
+    private static function serviceSlots(string $date, string $serviceType, ?string $serviceName = null): array
+    {
+        $bookings = self::blockingServiceBookings($serviceType, $date);
+        $slotMinutes = ServiceDurationService::getTimeSlotInterval();
+        $slotDuration = self::serviceMinutes($serviceType, $serviceName);
+        $slots = [];
+
+        for ($minutes = 9 * 60; $minutes < 18 * 60; $minutes += $slotMinutes) {
+            $time = sprintf('%02d:%02d', intdiv($minutes, 60), $minutes % 60);
+            $start = Carbon::parse("{$date} {$time}");
+            $end = $start->copy()->addMinutes($slotDuration);
+            if ($end->format('H:i') > '18:00') {
+                continue;
+            }
+
+            $available = true;
+            foreach ($bookings as $booking) {
+                if (empty($booking['time'])) {
+                    $available = false;
+                    break;
+                }
+                $existingStart = Carbon::parse("{$date} {$booking['time']}");
+                $existingEnd = $existingStart->copy()->addMinutes(self::serviceMinutes($serviceType, $booking['service']));
+                if ($start->lt($existingEnd) && $end->gt($existingStart)) {
+                    $available = false;
+                    break;
+                }
+            }
+
+            $slots[] = [
+                'time' => $time,
+                'label' => $start->format('g:i A'),
+                'available' => $available,
+                'status' => $available ? 'available' : 'blocked',
+                'reason' => $available ? 'Available' : 'Time slot overlaps an existing booking',
+            ];
+        }
+
+        return $slots;
+    }
+
+    public static function isServiceTimeAvailable(string $serviceType, string $date, string $time, ?string $serviceName = null, ?int $veterinarianId = null): bool
+    {
+        $normalizedType = $serviceType === 'grooming' ? 'grooming' : 'veterinary';
+        $start = Carbon::parse("{$date} {$time}");
+        $end = $start->copy()->addMinutes(self::serviceMinutes($normalizedType, $serviceName));
+        if ($start->minute % ServiceDurationService::getTimeSlotInterval() !== 0
+            || $start->format('H:i') < '09:00'
+            || $end->format('H:i') > '18:00') {
+            return false;
+        }
+
+        foreach (self::blockingServiceBookings($normalizedType, $date, $veterinarianId) as $booking) {
+            if (empty($booking['time'])) {
+                return false;
+            }
+            $existingStart = Carbon::parse("{$date} {$booking['time']}");
+            $existingEnd = $existingStart->copy()->addMinutes(self::serviceMinutes($normalizedType, $booking['service']));
+            if ($start->lt($existingEnd) && $end->gt($existingStart)) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
     /**
      * Get available veterinary time slots for a specific date
      */
-    public static function getVeterinaryAvailability(?string $date = null, ?int $serviceId = null): array
+    public static function getVeterinaryAvailability(?string $date = null, ?int $serviceId = null, ?string $serviceName = null): array
     {
         if (!$date) {
             $date = now()->format('Y-m-d');
         }
 
-        $query = Appointment::with(['veterinarian', 'service'])
-            ->whereDate('scheduled_at', $date)
-            ->whereIn('status', self::BLOCKING_BOOKING_STATUSES);
-
-        // Apply service filter if provided
-        if ($serviceId) {
-            $query->where('service_id', $serviceId);
-        }
-
-        $blockedSlots = $query->get()
-            ->groupBy(function ($appointment) {
-                // Group by veterinarian and time slot
-                return $appointment->veterinarian_id . '_' . 
-                       Carbon::parse($appointment->scheduled_at)->format('H:i');
-            })
-            ->map(function ($group) {
-                $first = $group->first();
-                return [
-                    'veterinarian_id' => $first->veterinarian_id,
-                    'veterinarian_name' => $first->veterinarian?->name ?? 'Assigned Veterinarian',
-                    'time' => Carbon::parse($first->scheduled_at)->format('H:i'),
-                    'status' => $first->status,
-                    'reason' => 'Already booked',
-                ];
-            })
-            ->values();
-
-        // Generate all possible time slots (9:00 AM - 6:00 PM, 30-minute intervals)
-        $allSlots = [];
-        $startHour = 9;
-        $endHour = 18;
-        $interval = 30;
-
-        for ($hour = $startHour; $hour < $endHour; $hour++) {
-            for ($minute = 0; $minute < 60; $minute += $interval) {
-                if ($minute >= 60) break;
-                
-                $time = sprintf('%02d:%02d', $hour, $minute);
-                $timeLabel = Carbon::createFromTime($hour, $minute)->format('g:i A');
-                
-                $isBlocked = $blockedSlots->contains(function ($blocked) use ($time) {
-                    return $blocked['time'] === $time;
-                });
-
-                $allSlots[] = [
-                    'time' => $time,
-                    'label' => $timeLabel,
-                    'available' => !$isBlocked,
-                    'veterinarian_id' => null,
-                    'veterinarian_name' => 'Available',
-                    'status' => $isBlocked ? 'blocked' : 'available',
-                    'reason' => $isBlocked ? 'Time slot already booked' : 'Available',
-                ];
-            }
-        }
+        $serviceName = $serviceName ?? ($serviceId ? Service::find($serviceId)?->name : null);
+        $allSlots = self::serviceSlots($date, 'veterinary', $serviceName);
+        $blockedSlots = collect($allSlots)->where('available', false)->values();
 
         return [
             'success' => true,
             'date' => $date,
             'slots' => $allSlots,
-            'blocked_slots' => $blockedSlots->toArray(),
+            'blocked_slots' => $blockedSlots->all(),
         ];
     }
 
     /**
      * Check grooming availability for a specific date
      */
-    public static function getGroomingAvailability(?string $date = null): array
+    public static function getGroomingAvailability(?string $date = null, ?string $serviceName = null): array
     {
         if (!$date) {
             $date = now()->format('Y-m-d');
         }
 
-        // Check if there's any existing grooming appointment on this date with blocking status
-        $existingAppointment = GroomingAppointment::whereDate('appointment_date', $date)
-            ->whereIn('status', self::BLOCKING_BOOKING_STATUSES)
-            ->first();
-
-        $isAvailable = !$existingAppointment;
+        $slots = self::serviceSlots($date, 'grooming', $serviceName);
+        $isAvailable = collect($slots)->contains(fn ($slot) => $slot['available']);
 
         return [
             'success' => true,
             'date' => $date,
             'available' => $isAvailable,
-            'message' => $isAvailable 
-                ? 'Grooming slot available for this date' 
-                : 'This grooming date is already reserved',
-            'existing_appointment' => $existingAppointment ? [
-                'id' => $existingAppointment->id,
-                'pet_name' => $existingAppointment->pet_name,
-                'service' => $existingAppointment->service,
-                'status' => $existingAppointment->status,
-            ] : null,
+            'message' => $isAvailable
+                ? 'Grooming time slots available for this date'
+                : 'No grooming time slots are available for this date',
+            'slots' => $slots,
+            'existing_appointment' => null,
         ];
     }
 
@@ -210,17 +298,11 @@ class BookingAvailabilityService
         $availableRooms = [];
 
         foreach ($allRooms as $room) {
-            // Check for overlapping boarding reservations with blocking statuses
-            $hasConflict = Boarding::where('hotel_room_id', $room->id)
-                ->whereIn('status', self::BLOCKING_BOOKING_STATUSES)
-                ->where(function ($query) use ($checkInDate, $checkOutDate) {
-                    $query->where(function ($q) use ($checkInDate, $checkOutDate) {
-                        // Overlap condition: existing check-in < new check-out AND existing check-out > new check-in
-                        $q->where('check_in', '<', $checkOutDate)
-                           ->where('check_out', '>', $checkInDate);
-                    });
-                })
-                ->exists();
+            $hasConflict = !self::isBoardingRoomAvailable(
+                $room->id,
+                $checkInDate->toDateString(),
+                $checkOutDate->toDateString()
+            );
 
             $availableRooms[] = [
                 'id' => $room->id,
@@ -246,28 +328,15 @@ class BookingAvailabilityService
     /**
      * Check if a specific veterinary slot is available
      */
-    public static function isVeterinarySlotAvailable(string $date, string $time, ?int $veterinarianId = null): bool
+    public static function isVeterinarySlotAvailable(string $date, string $time, ?int $veterinarianId = null, ?string $serviceName = null): bool
     {
-        $scheduledAt = Carbon::parse($date . ' ' . $time);
-
-        $query = Appointment::where('scheduled_at', $scheduledAt)
-            ->whereIn('status', self::BLOCKING_BOOKING_STATUSES);
-
-        if ($veterinarianId) {
-            $query->where('veterinarian_id', $veterinarianId);
-        }
-
-        return !$query->exists();
+        return self::isServiceTimeAvailable('veterinary', $date, $time, $serviceName, $veterinarianId);
     }
 
-    /**
-     * Check if a grooming date is available
-     */
-    public static function isGroomingDateAvailable(string $date): bool
+    public static function isGroomingDateAvailable(string $date, ?string $serviceName = null): bool
     {
-        return !GroomingAppointment::whereDate('appointment_date', $date)
-            ->whereIn('status', self::BLOCKING_BOOKING_STATUSES)
-            ->exists();
+        return collect(self::serviceSlots($date, 'grooming', $serviceName))
+            ->contains(fn ($slot) => $slot['available']);
     }
 
     /**
@@ -278,12 +347,22 @@ class BookingAvailabilityService
         $checkInDate = Carbon::parse($checkIn);
         $checkOutDate = Carbon::parse($checkOut);
 
-        return !Boarding::where('hotel_room_id', $roomId)
+        $hasBoardingConflict = Boarding::where('hotel_room_id', $roomId)
             ->whereIn('status', self::BLOCKING_BOOKING_STATUSES)
-            ->where(function ($query) use ($checkInDate, $checkOutDate) {
-                $query->where('check_in', '<', $checkOutDate)
-                   ->where('check_out', '>', $checkInDate);
-            })
+            ->whereDate('check_in', '<=', $checkOutDate)
+            ->whereDate('check_out', '>=', $checkInDate)
+            ->exists();
+
+        if ($hasBoardingConflict || !Schema::hasTable('boarding_room_reservations')) {
+            return !$hasBoardingConflict;
+        }
+
+        $roomColumn = Schema::hasColumn('boarding_room_reservations', 'room_id') ? 'room_id' : 'boarding_room_id';
+        return !DB::table('boarding_room_reservations')
+            ->where($roomColumn, $roomId)
+            ->whereIn('status', self::BLOCKING_BOOKING_STATUSES)
+            ->whereDate('check_in_date', '<=', $checkOutDate)
+            ->whereDate('check_out_date', '>=', $checkInDate)
             ->exists();
     }
 }

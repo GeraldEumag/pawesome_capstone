@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useState } from "react";
 import "./Attendance.css";
 import { attendanceApi } from "../../api/attendance";
 import DatePickerInput from "../../components/shared/DatePickerInput";
+import { formatDateOnly, parseDateOnly } from "../../utils/date";
 import { showError } from "../../utils/alert.jsx";
 
 const Attendance = () => {
@@ -9,9 +10,7 @@ const Attendance = () => {
   const [records, setRecords] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  const [selectedDate, setSelectedDate] = useState(
-    new Date().toISOString().split("T")[0]
-  );
+  const [selectedDate, setSelectedDate] = useState(formatDateOnly(new Date()));
 
   useEffect(() => {
     loadAttendance();
@@ -79,8 +78,8 @@ const Attendance = () => {
 
         <div className="actions">
           <DatePickerInput
-            selected={selectedDate ? new Date(selectedDate) : null}
-            onChange={(date) => setSelectedDate(date ? date.toISOString().split("T")[0] : "")}
+            selected={parseDateOnly(selectedDate)}
+            onChange={(date) => setSelectedDate(formatDateOnly(date))}
             placeholderText="Pick a date..."
           />
 

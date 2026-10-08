@@ -1,4 +1,4 @@
-import { Link } from "react-router-dom";
+import { useEffect, useState } from "react";
 import dogHotelImg from "../../assets/DOGHOTEL.jpg";
 import catHotelImg from "../../assets/CATHOTEL.jpg";
 import playgroundImg from "../../assets/play ground.jpg";
@@ -19,6 +19,27 @@ const DynamicHero = ({ content, onBookService }) => {
   const img1 = data.image || dogHotelImg;
   const img2 = data.image_2 || catHotelImg;
   const img3 = data.image_3 || playgroundImg;
+  const images = [img1, img2, img3];
+  const imageDescriptions = ["Pawesome pet hotel for dogs", "Comfortable cat boarding room", "Pet care play area"];
+  const [activeImageIndex, setActiveImageIndex] = useState(0);
+  const [paused, setPaused] = useState(false);
+  const [reducedMotion, setReducedMotion] = useState(false);
+
+  useEffect(() => {
+    const preference = window.matchMedia("(prefers-reduced-motion: reduce)");
+    const update = () => setReducedMotion(preference.matches);
+    update();
+    preference.addEventListener?.("change", update);
+    return () => preference.removeEventListener?.("change", update);
+  }, []);
+
+  useEffect(() => {
+    if (paused || reducedMotion) return undefined;
+    const timer = window.setInterval(() => {
+      setActiveImageIndex((current) => (current + 1) % images.length);
+    }, 6500);
+    return () => window.clearInterval(timer);
+  }, [paused, reducedMotion, images.length]);
 
   return (
     <section id="home" className="landing-hero">
@@ -39,9 +60,6 @@ const DynamicHero = ({ content, onBookService }) => {
             >
               {data.primary_cta}
             </button>
-            <Link to="/login" className="landing-btn landing-btn-secondary">
-              {data.secondary_cta}
-            </Link>
           </div>
           <div className="landing-hero-note">
             {(data.tags || DEFAULT_HERO.tags).map((tag, i) => {
@@ -55,10 +73,10 @@ const DynamicHero = ({ content, onBookService }) => {
         <div className="landing-hero-visual">
           <div className="landing-hero-collage">
             {/* Dominant photo */}
-            <div className="landing-collage-main">
+            <div className="landing-collage-main" key={activeImageIndex}>
               <img
-                src={img1}
-                alt="Pawesome pet hotel"
+                src={images[activeImageIndex]}
+                alt={imageDescriptions[activeImageIndex]}
                 loading="eager"
                 decoding="async"
                 fetchpriority="high"
@@ -88,6 +106,16 @@ const DynamicHero = ({ content, onBookService }) => {
                 decoding="async"
               />
             </div>
+          </div>
+          <div className="landing-carousel-controls" role="group" aria-label="Hero photo controls">
+            <span aria-live="off">{activeImageIndex + 1} / {images.length}</span>
+            {reducedMotion ? (
+              <span className="landing-motion-status">Motion minimized</span>
+            ) : (
+              <button type="button" onClick={() => setPaused((value) => !value)} aria-pressed={paused}>
+                {paused ? "Play photos" : "Pause photos"}
+              </button>
+            )}
           </div>
         </div>
       </div>

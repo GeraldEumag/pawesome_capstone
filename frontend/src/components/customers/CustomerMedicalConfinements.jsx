@@ -19,7 +19,7 @@ const CustomerMedicalConfinements = () => {
   const [records, setRecords] = useState([]);
   const [notes, setNotes] = useState({});
   const [logs, setLogs] = useState({});
-  const [uploadModal, setUploadModal] = useState({ open: false, endpoint: "", title: "" });
+  const [uploadModal, setUploadModal] = useState({ open: false, endpoint: "", title: "", referenceNumber: "", paymentStatus: "", rejectionReason: "", paymentMethod: "gcash" });
   const [error, setError] = useState("");
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(true);
@@ -44,6 +44,10 @@ const CustomerMedicalConfinements = () => {
       open: true,
       endpoint: `/customer/medical-confinements/${record.id}/payment-proof`,
       title: `Confinement #${record.id}`,
+      referenceNumber: record.payment_reference || "",
+      paymentStatus: String(record.payment_status || "").toLowerCase(),
+      rejectionReason: record.rejection_reason || "",
+      paymentMethod: record.payment_method || "gcash",
     });
   };
 
@@ -191,10 +195,14 @@ const CustomerMedicalConfinements = () => {
 
       <PaymentUploadModal
         open={uploadModal.open}
-        onClose={() => setUploadModal({ open: false, endpoint: "", title: "" })}
+        onClose={() => setUploadModal({ open: false, endpoint: "", title: "", referenceNumber: "", paymentStatus: "", rejectionReason: "", paymentMethod: "gcash" })}
         onSuccess={load}
         endpoint={uploadModal.endpoint}
         title={uploadModal.title}
+        referenceNumber={uploadModal.referenceNumber}
+        paymentStatus={uploadModal.paymentStatus}
+        rejectionReason={uploadModal.rejectionReason}
+        paymentMethod={uploadModal.paymentMethod}
       />
     </section>
   );

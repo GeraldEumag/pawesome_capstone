@@ -108,7 +108,7 @@ function buildReceiptHtml(opts = {}, { includePrintButton = false } = {}) {
   // ── Totals block: subtotal, VAT, discount, TOTAL, cash, change ──
   const totalsHtml = [
     rw("Subtotal", php(subtotal)),
-    rw("VAT 12%",  php(vatAmount)),
+    rw("VAT 12%",  `-${php(Math.abs(vatAmount))}`),
     discount > 0 ? rw("Discount", `-${php(discount)}`) : "",
   ].filter(Boolean).join("");
 

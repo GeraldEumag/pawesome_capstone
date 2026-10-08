@@ -19,6 +19,7 @@ import PetAvatar from "../shared/PetAvatar";
 import CustomerAvatar from "../shared/CustomerAvatar";
 import RowActionPopover from "../shared/RowActionPopover";
 import DatePickerInput from "../shared/DatePickerInput";
+import { formatDateOnly, parseDateOnly } from "../../utils/date";
 import "../../styles/bookingModal.css";
 import "./ReceptionistCustomerManagement.css";
 
@@ -495,12 +496,9 @@ const ReceptionistCustomerManagement = () => {
                 <div className="info-item">
                   <label>Date</label>
                   <DatePickerInput
-                    selected={bookingForm.appointment_date ? new Date(bookingForm.appointment_date) : null}
+                    selected={parseDateOnly(bookingForm.appointment_date)}
                     onChange={(date) =>
-                      setBookingForm((prev) => ({
-                        ...prev,
-                        appointment_date: date ? date.toISOString().split("T")[0] : "",
-                      }))
+                      setBookingForm((prev) => ({ ...prev, appointment_date: formatDateOnly(date) }))
                     }
                     placeholderText="Pick a date..."
                     required

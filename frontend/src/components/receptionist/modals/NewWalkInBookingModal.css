@@ -117,3 +117,16 @@
     justify-content: center;
   }
 }
+
+@media (min-width: 769px) and (max-height: 800px) {
+  .hbk-booking-modal {
+    max-height: calc(100vh - 16px);
+  }
+
+  .hbk-booking-modal .hbk-head { padding: 12px 18px 10px; }
+  .hbk-booking-modal .hbk-body { padding: 12px 18px; gap: 10px; }
+  .hbk-booking-modal .hub-form-section { margin-bottom: 12px; }
+  .hbk-booking-modal .hub-form-section h4 { margin-bottom: 8px; padding-bottom: 5px; }
+  .hbk-booking-modal .hub-form-grid { gap: 8px 12px; }
+  .hbk-booking-modal .hbk-foot { padding: 10px 18px; }
+}

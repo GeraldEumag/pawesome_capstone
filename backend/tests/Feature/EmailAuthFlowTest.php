@@ -87,6 +87,25 @@ class EmailAuthFlowTest extends TestCase
         $this->assertDatabaseHas('email_verification_tokens', ['email' => $user->email]);
     }
 
+    public function test_registration_preserves_ph_prefix_and_rejects_invalid_contact_numbers(): void
+    {
+        $user = $this->registerCustomer([
+            'phone' => '09171234567',
+            'emergency_contact_number' => '09987654321',
+        ]);
+
+        $this->assertSame('09171234567', $user->phone);
+        $this->assertSame('09987654321', $user->emergency_contact_number);
+
+        $this->postJson('/api/auth/register', $this->registerPayload([
+            'username' => 'invalidphone',
+            'email' => 'invalidphone@example.com',
+            'phone' => '0917letters',
+            'emergency_contact_number' => '0912345',
+            'date_of_birth' => 'not-a-date',
+        ]))->assertUnprocessable()->assertJsonValidationErrors(['phone', 'emergency_contact_number', 'date_of_birth']);
+    }
+
     public function test_email_verify_with_valid_token_marks_user_verified(): void
     {
         Mail::fake();

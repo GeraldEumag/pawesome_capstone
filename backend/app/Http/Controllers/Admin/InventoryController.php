@@ -309,6 +309,13 @@ class InventoryController extends Controller
             'expiration_date' => 'nullable|date',
         ]);
 
+        if ($validated['type'] === 'add') {
+            return response()->json([
+                'success' => false,
+                'message' => 'Stock increases must be recorded as a new batch through the batch receiving action.',
+            ], 422);
+        }
+
         try {
             return DB::transaction(function () use ($validated, $id) {
                 $item = InventoryItem::lockForUpdate()->findOrFail($id);
@@ -731,28 +738,45 @@ class InventoryController extends Controller
     public function addBatch(Request $request, $id)
     {
         try {
-            $validated = $request->validate([
-                'batch_no' => 'nullable|string|max:50',
-                'received_date' => 'required|date',
-                'expiration_date' => 'nullable|date|after_or_equal:received_date',
-                'quantity' => 'required|integer|min:1',
-                'notes' => 'nullable|string',
-            ]);
+            return DB::transaction(function () use ($request, $id) {
+                $item = InventoryItem::lockForUpdate()->findOrFail($id);
+                $requiresExpiry = $item->needsFefo();
+                $validated = $request->validate([
+                    'batch_no' => 'required|string|max:50',
+                    'received_date' => 'required|date|before_or_equal:today',
+                    'manufacturing_date' => 'nullable|date|before_or_equal:received_date',
+                    'expiration_date' => ($requiresExpiry ? 'required' : 'nullable') . '|date|after_or_equal:received_date',
+                    'quantity' => 'required|integer|min:1',
+                    'supplier' => 'nullable|string|max:255',
+                    'unit_cost' => 'nullable|numeric|min:0',
+                    'notes' => 'nullable|string|max:1000',
+                ]);
 
-            $item = InventoryItem::findOrFail($id);
-            $batch = $item->addBatchStock(
-                $validated['quantity'],
-                $validated['batch_no'] ?? null,
-                $validated['expiration_date'] ?? null,
-                $validated['notes'] ?? 'Batch restock'
-            );
+                $batch = $item->addBatchStock(
+                    (int) $validated['quantity'],
+                    $validated['batch_no'],
+                    $validated['expiration_date'] ?? null,
+                    $validated['notes'] ?? 'Stock received',
+                    true,
+                    $validated['manufacturing_date'] ?? null,
+                    $validated['supplier'] ?? null,
+                    isset($validated['unit_cost']) ? (float) $validated['unit_cost'] : null,
+                    null,
+                    $validated['received_date']
+                );
 
-            return response()->json([
-                'success' => true,
-                'message' => 'Batch added successfully',
-                'batch' => $batch,
-                'item' => $item->fresh(),
-            ]);
+                if (Schema::hasColumn($item->getTable(), 'quantity')) {
+                    $item->quantity = $item->stock;
+                    $item->save();
+                }
+
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Batch received successfully',
+                    'batch' => $batch,
+                    'item' => $item->fresh()->load('batches'),
+                ]);
+            });
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,

@@ -76,6 +76,6 @@ class BoardingRoomReservation extends Model
      */
     public function scopeActiveBlocking($query)
     {
-        return $query->whereIn('status', ['pending', 'approved', 'scheduled', 'checked_in', 'in_stay', 'confined']);
+        return $query->whereIn('status', ['pending', 'approved', 'scheduled', 'confirmed', 'checked_in', 'in_stay', 'in_care', 'ready_for_pickup', 'confined']);
     }
 }

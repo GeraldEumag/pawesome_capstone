@@ -45,7 +45,7 @@ const CustomerRequestStatus = ({ embedded = false }) => {
   const { user } = useAuth();
   const [requests, setRequests] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
-  const [uploadModal, setUploadModal] = useState({ open: false, endpoint: "", title: "" });
+  const [uploadModal, setUploadModal] = useState({ open: false, endpoint: "", title: "", referenceNumber: "", paymentStatus: "", rejectionReason: "", paymentMethod: "gcash" });
 
   useEffect(() => {
     fetchRequests();
@@ -168,7 +168,15 @@ const CustomerRequestStatus = ({ embedded = false }) => {
       endpoint = `/customer/boarding-requests/${item.id}/payment-proof`;
     else
       endpoint = `/customer/requests/${item.id}/payment-proof`;
-    setUploadModal({ open: true, endpoint, title: item.type_label || "Service" });
+    setUploadModal({
+      open: true,
+      endpoint,
+      title: item.type_label || "Service",
+      referenceNumber: item.payment_reference || item.reference_number || "",
+      paymentStatus: safeLower(item.payment_status || item.payment),
+      rejectionReason: item.rejection_reason || "",
+      paymentMethod: item.payment_method || "gcash",
+    });
   };
 
   const cancelBoarding = async (item) => {
@@ -266,6 +274,9 @@ const CustomerRequestStatus = ({ embedded = false }) => {
                         <FaCashRegister />
                         {paymentStatus}
                       </span>
+                      {safeLower(paymentStatus) === "rejected" && item.rejection_reason && (
+                        <small className="customer-payment-rejection">Reason: {item.rejection_reason}</small>
+                      )}
                     </td>
                     <td className="col-action">
                       {canPay(item) || canCancelBoarding(item) ? (
@@ -302,10 +313,14 @@ const CustomerRequestStatus = ({ embedded = false }) => {
 
       <PaymentUploadModal
         open={uploadModal.open}
-        onClose={() => setUploadModal({ open: false, endpoint: "", title: "" })}
+        onClose={() => setUploadModal({ open: false, endpoint: "", title: "", referenceNumber: "", paymentStatus: "", rejectionReason: "", paymentMethod: "gcash" })}
         onSuccess={fetchRequests}
         endpoint={uploadModal.endpoint}
         title={uploadModal.title}
+        referenceNumber={uploadModal.referenceNumber}
+        paymentStatus={uploadModal.paymentStatus}
+        rejectionReason={uploadModal.rejectionReason}
+        paymentMethod={uploadModal.paymentMethod}
       />
     </div>
   );

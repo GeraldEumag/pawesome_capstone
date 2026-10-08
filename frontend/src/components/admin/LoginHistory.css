@@ -335,6 +335,9 @@
   padding: 0 0.85rem;
 }
 
+.lh-date-box .paws-datepicker-wrap { flex: 1; min-width: 0; }
+.lh-date-box > span { flex: 0 0 auto; }
+
 .lh-date-box span {
   color: var(--color-muted);
   font-weight: 800;

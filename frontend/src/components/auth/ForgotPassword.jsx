@@ -284,15 +284,9 @@ const ForgotPassword = () => {
 
               <p className="login-register">
                 Wrong email?{" "}
-                <a
-                  href="#"
-                  onClick={(e) => {
-                    e.preventDefault();
-                    backToEmailStep();
-                  }}
-                >
+                <button type="button" className="login-inline-link" onClick={backToEmailStep}>
                   Use a different email
-                </a>
+                </button>
               </p>
             </form>
           )}

@@ -246,6 +246,16 @@
   text-transform: capitalize;
 }
 
+.customer-payment-rejection {
+  display: block;
+  max-width: 260px;
+  margin-top: 0.35rem;
+  color: #991b1b;
+  font-size: 0.72rem;
+  line-height: 1.4;
+  white-space: normal;
+}
+
 .customer-pay-btn {
   border: 0;
   cursor: pointer;

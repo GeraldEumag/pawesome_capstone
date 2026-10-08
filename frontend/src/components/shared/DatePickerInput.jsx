@@ -9,14 +9,17 @@ const DatePickerInput = ({
   placeholderText = "Select a date...",
   minDate,
   maxDate,
-  dateFormat = "MMMM d, yyyy",
+  dateFormat = "dd/MM/yy",
   disabled = false,
+  readOnly = true,
+  strictParsing = true,
   required = false,
   showTimeSelect = false,
   timeFormat = "h:mm aa",
   timeIntervals = 30,
   className = "",
   id,
+  ariaLabel,
   showYearDropdown = true,
   scrollableYearDropdown = true,
   yearDropdownItemNumber = 100,
@@ -26,6 +29,7 @@ const DatePickerInput = ({
     <div className={`paws-datepicker-wrap ${className}`}>
       <DatePicker
         id={id}
+        ariaLabel={ariaLabel}
         selected={selected}
         onChange={onChange}
         placeholderText={placeholderText}
@@ -33,6 +37,8 @@ const DatePickerInput = ({
         maxDate={maxDate}
         dateFormat={showTimeSelect ? `${dateFormat} ${timeFormat}` : dateFormat}
         disabled={disabled}
+        readOnly={readOnly}
+        strictParsing={strictParsing}
         required={required}
         showTimeSelect={showTimeSelect}
         timeFormat={timeFormat}

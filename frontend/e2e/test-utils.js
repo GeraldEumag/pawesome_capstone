@@ -20,7 +20,7 @@ const ROLE_DASHBOARDS = {
   cashier: '/cashier',
   inventory: '/inventory',
   receptionist: '/receptionist',
-  customer: '/customer',
+  customer: '/customer/services',
 };
 
 // One real login per role per worker. The backend throttles /auth/login to

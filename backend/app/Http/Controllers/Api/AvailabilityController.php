@@ -18,6 +18,7 @@ class AvailabilityController extends Controller
         $validator = Validator::make($request->all(), [
             'date' => 'required|date|after_or_equal:today',
             'service_id' => 'nullable|integer|exists:services,id',
+            'service_name' => 'nullable|string|max:150',
         ]);
 
         if ($validator->fails()) {
@@ -30,9 +31,10 @@ class AvailabilityController extends Controller
 
         $date = $request->input('date');
         $serviceId = $request->input('service_id');
+        $serviceName = $request->input('service_name');
 
         try {
-            $availability = BookingAvailabilityService::getVeterinaryAvailability($date, $serviceId);
+            $availability = BookingAvailabilityService::getVeterinaryAvailability($date, $serviceId, $serviceName);
             return response()->json($availability);
         } catch (\Exception $e) {
             return response()->json([
@@ -49,6 +51,7 @@ class AvailabilityController extends Controller
     {
         $validator = Validator::make($request->all(), [
             'date' => 'required|date|after_or_equal:today',
+            'service_name' => 'nullable|string|max:150',
         ]);
 
         if ($validator->fails()) {
@@ -60,9 +63,10 @@ class AvailabilityController extends Controller
         }
 
         $date = $request->input('date');
+        $serviceName = $request->input('service_name');
 
         try {
-            $availability = BookingAvailabilityService::getGroomingAvailability($date);
+            $availability = BookingAvailabilityService::getGroomingAvailability($date, $serviceName);
             return response()->json($availability);
         } catch (\Exception $e) {
             return response()->json([
@@ -113,6 +117,7 @@ class AvailabilityController extends Controller
             'date' => 'required|date|after_or_equal:today',
             'time' => 'required|date_format:H:i',
             'veterinarian_id' => 'nullable|integer|exists:users,id',
+            'service_name' => 'nullable|string|max:150',
         ]);
 
         if ($validator->fails()) {
@@ -128,7 +133,7 @@ class AvailabilityController extends Controller
         $veterinarianId = $request->input('veterinarian_id');
 
         try {
-            $isAvailable = BookingAvailabilityService::isVeterinarySlotAvailable($date, $time, $veterinarianId);
+            $isAvailable = BookingAvailabilityService::isVeterinarySlotAvailable($date, $time, $veterinarianId, $request->input('service_name'));
             
             return response()->json([
                 'success' => true,
@@ -155,6 +160,8 @@ class AvailabilityController extends Controller
     {
         $validator = Validator::make($request->all(), [
             'date' => 'required|date|after_or_equal:today',
+            'time' => 'nullable|date_format:H:i',
+            'service_name' => 'nullable|string|max:150',
         ]);
 
         if ($validator->fails()) {
@@ -168,7 +175,9 @@ class AvailabilityController extends Controller
         $date = $request->input('date');
 
         try {
-            $isAvailable = BookingAvailabilityService::isGroomingDateAvailable($date);
+            $isAvailable = $request->filled('time')
+                ? BookingAvailabilityService::isServiceTimeAvailable('grooming', $date, $request->input('time'), $request->input('service_name'))
+                : BookingAvailabilityService::isGroomingDateAvailable($date, $request->input('service_name'));
             
             return response()->json([
                 'success' => true,

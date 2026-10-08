@@ -376,6 +376,14 @@ class ReceptionistRequestController extends Controller
 
         /** @var ServiceRequest $serviceRequest */
         $serviceRequest = ServiceRequest::findOrFail($id);
+        $previousStatus = $serviceRequest->status;
+        if ($previousStatus === 'completed' && $validated['status'] === 'completed') {
+            return response()->json([
+                'success' => true,
+                'message' => 'Request is already completed.',
+                'request' => $this->formatRequest($serviceRequest),
+            ]);
+        }
         $serviceRequest->status = $validated['status'];
 
         if ($validated['status'] === 'rejected') {
@@ -546,11 +554,18 @@ class ReceptionistRequestController extends Controller
             }
         }
 
+        $bookingCompleted = $validated['status'] === 'completed' && $previousStatus !== 'completed';
+        $notificationTitle = $bookingCompleted ? 'Booking Completed' : 'Service Request Updated';
+        $notificationMessage = $bookingCompleted
+            ? "Booking SR-{$serviceRequest->id} for {$serviceRequest->service_name} has been completed."
+            : "Your {$serviceRequest->service_name} request is now {$validated['status']}.";
+        $notificationType = in_array($validated['status'], ['rejected', 'cancelled']) ? 'error' : 'success';
+
         WorkflowNotifier::notifyEmail(
             $serviceRequest->customer_email,
-            'Service Request Updated',
-            "Your {$serviceRequest->service_name} request is now {$validated['status']}.",
-            in_array($validated['status'], ['rejected', 'cancelled']) ? 'error' : 'success',
+            $notificationTitle,
+            $notificationMessage,
+            $notificationType,
             'service_request',
             $serviceRequest->id
         );
@@ -558,21 +573,27 @@ class ReceptionistRequestController extends Controller
         $isNegative = in_array($validated['status'], ['rejected', 'cancelled']);
         app(EmailDeliveryService::class)->lifecycle(
             $serviceRequest->customer_email,
-            'Service Request Updated',
-            "Your {$serviceRequest->service_name} request is now {$validated['status']}.",
-            $isNegative ? 'error' : 'success',
+            $notificationTitle,
+            $notificationMessage,
+            $notificationType,
             [
-                'event_key' => 'service_request.status',
-                'occurrence_key' => "service_request.status:{$serviceRequest->id}:{$validated['status']}:" . $serviceRequest->updated_at?->format('Uv'),
+                'event_key' => $bookingCompleted ? 'booking.completed' : 'service_request.status',
+                'occurrence_key' => $bookingCompleted
+                    ? "booking.completed:service_request:{$serviceRequest->id}:" . $serviceRequest->updated_at?->format('Uv')
+                    : "service_request.status:{$serviceRequest->id}:{$validated['status']}:" . $serviceRequest->updated_at?->format('Uv'),
                 'source_type' => 'service_request',
                 'source_id' => $serviceRequest->id,
                 'user_id' => $serviceRequest->customer_id,
                 'content' => [
-                    'subject' => "[Pawesome] Service Request " . EmailContent::status($validated['status']) . " — SR-{$serviceRequest->id}",
+                    'subject' => $bookingCompleted
+                        ? "[Pawesome] Booking Completed — SR-{$serviceRequest->id}"
+                        : "[Pawesome] Service Request " . EmailContent::status($validated['status']) . " — SR-{$serviceRequest->id}",
                     'customer_name' => $serviceRequest->customer_name,
-                    'intro' => $isNegative
-                        ? "We are writing to inform you that your {$serviceRequest->service_name} request is now {$validated['status']}."
-                        : "Your {$serviceRequest->service_name} request has been updated. Please review the latest status below.",
+                    'intro' => $bookingCompleted
+                        ? $notificationMessage . ' Keep booking reference SR-' . $serviceRequest->id . ' for your records.'
+                        : ($isNegative
+                            ? "We are writing to inform you that your {$serviceRequest->service_name} request is now {$validated['status']}."
+                            : "Your {$serviceRequest->service_name} request has been updated. Please review the latest status below."),
                     'details' => [
                         ['label' => 'Reference', 'value' => "SR-{$serviceRequest->id}"],
                         ['label' => 'Service', 'value' => $serviceRequest->service_name],
@@ -581,10 +602,10 @@ class ReceptionistRequestController extends Controller
                         ['label' => 'Time', 'value' => $serviceRequest->preferred_time ?? $serviceRequest->request_time],
                         ['label' => 'Reason', 'value' => $validated['status'] === 'rejected' ? ($serviceRequest->rejection_reason ?? null) : null],
                     ],
-                    'status' => EmailContent::status($validated['status']),
+                    'status' => $bookingCompleted ? 'Booking Completed' : EmailContent::status($validated['status']),
                     'status_type' => $isNegative ? 'error' : 'success',
-                    'cta_url' => EmailContent::frontendUrl('/customer/my-requests'),
-                    'cta_label' => 'View Request',
+                    'cta_url' => EmailContent::frontendUrl('/customer/bookings'),
+                    'cta_label' => $bookingCompleted ? 'View Booking' : 'View Request',
                 ],
             ]
         );

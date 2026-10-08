@@ -60,7 +60,7 @@ const HotelForm = () => {
   const [myBookings, setMyBookings] = useState([]);
   const [pets, setPets] = useState([]);
   const [careLogs, setCareLogs] = useState({});
-  const [uploadModal, setUploadModal] = useState({ open: false, endpoint: "", title: "" });
+  const [uploadModal, setUploadModal] = useState({ open: false, endpoint: "", title: "", referenceNumber: "", paymentStatus: "", rejectionReason: "", paymentMethod: "gcash" });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [successMessage, setSuccessMessage] = useState("");
@@ -263,6 +263,10 @@ const HotelForm = () => {
       open: true,
       endpoint: `/customer/boarding-requests/${booking.id}/payment-proof`,
       title: `Boarding — ${booking.pet_name || "Pet"}`,
+      referenceNumber: booking.payment_reference || "",
+      paymentStatus: String(booking.payment_status || "").toLowerCase(),
+      rejectionReason: booking.rejection_reason || "",
+      paymentMethod: booking.payment_method || "gcash",
     });
   };
 
@@ -701,10 +705,14 @@ const HotelForm = () => {
 
       <PaymentUploadModal
         open={uploadModal.open}
-        onClose={() => setUploadModal({ open: false, endpoint: "", title: "" })}
+        onClose={() => setUploadModal({ open: false, endpoint: "", title: "", referenceNumber: "", paymentStatus: "", rejectionReason: "", paymentMethod: "gcash" })}
         onSuccess={fetchMyBookings}
         endpoint={uploadModal.endpoint}
         title={uploadModal.title}
+        referenceNumber={uploadModal.referenceNumber}
+        paymentStatus={uploadModal.paymentStatus}
+        rejectionReason={uploadModal.rejectionReason}
+        paymentMethod={uploadModal.paymentMethod}
       />
     </div>
   );

@@ -282,6 +282,11 @@ body {
   padding: 9rem 2rem 4.25rem;
 }
 
+@keyframes landingFadeIn {
+  from { opacity: 0; transform: translateY(14px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
 .landing-hero::before {
   content: "";
   position: absolute;
@@ -304,6 +309,10 @@ body {
   grid-template-columns: minmax(0, 1.02fr) minmax(390px, 0.98fr);
   gap: clamp(2rem, 5vw, 5rem);
   align-items: center;
+}
+
+.landing-hero-copy {
+  animation: landingFadeIn 650ms ease-out both;
 }
 
 .landing-hero-copy h1 {
@@ -575,7 +584,13 @@ body {
   gap: 1.25rem;
 }
 
+@keyframes landingCardEnter {
+  from { opacity: 0; transform: translateY(16px) scale(0.985); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
 .landing-featured-card {
+  animation: landingCardEnter 550ms cubic-bezier(0.2, 0.75, 0.3, 1) both;
   min-height: 280px;
   display: grid;
   align-content: start;
@@ -603,7 +618,7 @@ body {
 }
 
 .landing-featured-card:hover {
-  transform: translateY(-10px);
+  transform: translateY(-8px) rotate(-0.6deg);
   border-color: var(--landing-primary);
   background: rgba(255, 245, 249, 1);
   box-shadow: 0 28px 64px rgba(255, 95, 147, 0.2), 0 6px 20px rgba(0, 0, 0, 0.06);
@@ -1714,7 +1729,7 @@ body {
 /* ===== HAMBURGER BUTTON ===== */
 
 .landing-hamburger {
-  display: none;
+  display: flex;
   flex-direction: column;
   justify-content: center;
   align-items: center;
@@ -1759,10 +1774,10 @@ body {
   transform: translateY(-7px) rotate(-45deg);
 }
 
-/* ===== MOBILE NAV OVERLAY ===== */
+/* ===== SITE NAV OVERLAY ===== */
 
 .landing-mobile-overlay {
-  display: none;
+  display: block;
   position: fixed;
   inset: 0;
   z-index: 1100;
@@ -1770,7 +1785,7 @@ body {
   backdrop-filter: blur(4px);
 }
 
-/* ===== MOBILE NAV DRAWER ===== */
+/* ===== SITE NAV DRAWER ===== */
 
 .landing-mobile-nav {
   position: fixed;
@@ -1785,13 +1800,16 @@ body {
   background: #ffffff;
   box-shadow: -8px 0 40px rgba(0, 0, 0, 0.14);
   transform: translateX(110%);
-  transition: transform 0.32s cubic-bezier(0.4, 0, 0.2, 1);
+  visibility: hidden;
+  transition: transform 0.32s cubic-bezier(0.4, 0, 0.2, 1), visibility 0s linear 0.32s;
   overflow-y: auto;
   overflow-x: hidden;
 }
 
 .landing-mobile-nav.open {
   transform: translateX(0);
+  visibility: visible;
+  transition: transform 0.32s cubic-bezier(0.4, 0, 0.2, 1), visibility 0s;
 }
 
 .landing-mobile-nav-header {
@@ -1861,6 +1879,24 @@ body {
   flex-shrink: 0;
 }
 
+.landing-mobile-nav-group {
+  display: grid;
+  gap: 0.65rem;
+}
+
+.landing-mobile-nav-group-title {
+  color: var(--landing-muted);
+  font-size: 0.72rem;
+  font-weight: 900;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.landing-mobile-nav-staff {
+  padding-top: 0.85rem;
+  border-top: 1px solid var(--landing-border);
+}
+
 .landing-mobile-nav-actions .landing-header-attendance,
 .landing-mobile-nav-actions .landing-header-login,
 .landing-mobile-nav-actions .landing-header-register {
@@ -1870,7 +1906,7 @@ body {
   font-size: 1rem;
 }
 
-/* Show hamburger and overlays on mobile */
+/* Preserve the navigation toggle on compact viewports */
 
 @media (max-width: 1024px) {
   .landing-hamburger {
@@ -1950,7 +1986,13 @@ body {
   animation: landingFloat 5.5s ease-in-out infinite;
 }
 
+@keyframes landingPhotoSwap {
+  from { opacity: 0.45; transform: translateX(18px) rotate(1deg) scale(0.985); }
+  to { opacity: 1; transform: translateX(0) rotate(0) scale(1); }
+}
+
 .landing-collage-main {
+  animation: landingPhotoSwap 520ms ease-out both;
   position: absolute;
   inset: 0 10% 12% 0;
   border-radius: 28px;
@@ -2021,6 +2063,47 @@ body {
   font-weight: 900;
   letter-spacing: 0.04em;
   text-transform: uppercase;
+}
+
+.landing-carousel-controls {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  z-index: 3;
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  padding: 0.4rem;
+  border: 1px solid var(--landing-border);
+  border-radius: var(--landing-radius-pill);
+  background: rgba(255, 255, 255, 0.94);
+  box-shadow: var(--landing-shadow-soft);
+}
+
+.landing-carousel-controls span {
+  padding-left: 0.45rem;
+  color: var(--landing-muted);
+  font-size: 0.75rem;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+}
+
+.landing-carousel-controls button {
+  min-height: 34px;
+  padding: 0 0.75rem;
+  border: 0;
+  border-radius: var(--landing-radius-pill);
+  background: var(--landing-primary-soft);
+  color: var(--landing-primary-dark);
+  font: inherit;
+  font-size: 0.75rem;
+  font-weight: 850;
+  cursor: pointer;
+}
+
+.landing-carousel-controls button:focus-visible {
+  outline: 3px solid var(--landing-primary-dark);
+  outline-offset: 2px;
 }
 
 /* Responsive: hero collage */
@@ -2121,5 +2204,17 @@ body {
 @media (max-width: 768px) {
   .landing-scroll-indicator {
     display: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  .landing-container *,
+  .landing-container *::before,
+  .landing-container *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
   }
 }

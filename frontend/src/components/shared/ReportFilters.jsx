@@ -12,6 +12,7 @@ import {
   faPrint,
 } from "@fortawesome/free-solid-svg-icons";
 import { getDateRangePreset } from "../../utils/reportExport";
+import { formatDateOnly, parseDateOnly } from "../../utils/date";
 import DatePickerInput from "./DatePickerInput";
 import "./ReportFilters.css";
 
@@ -148,8 +149,9 @@ const ReportFilters = ({
             <div className="date-input-group">
               <label>From</label>
               <DatePickerInput
-                selected={startDate ? new Date(startDate) : null}
-                onChange={(date) => onDateChange && onDateChange("startDate", date ? date.toISOString().split("T")[0] : "")}
+                selected={parseDateOnly(startDate)}
+                maxDate={parseDateOnly(endDate)}
+                onChange={(date) => onDateChange && onDateChange("startDate", formatDateOnly(date))}
                 placeholderText="From..."
                 disabled={loading}
               />
@@ -157,8 +159,9 @@ const ReportFilters = ({
             <div className="date-input-group">
               <label>To</label>
               <DatePickerInput
-                selected={endDate ? new Date(endDate) : null}
-                onChange={(date) => onDateChange && onDateChange("endDate", date ? date.toISOString().split("T")[0] : "")}
+                selected={parseDateOnly(endDate)}
+                minDate={parseDateOnly(startDate)}
+                onChange={(date) => onDateChange && onDateChange("endDate", formatDateOnly(date))}
                 placeholderText="To..."
                 disabled={loading}
               />

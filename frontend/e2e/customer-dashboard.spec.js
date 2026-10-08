@@ -1,10 +1,10 @@
 const { test, expect } = require('@playwright/test');
 const frontendUrl = process.env.E2E_BASE_URL || "http://127.0.0.1:3000";
 
-test.describe('Customer Dashboard end-to-end', () => {
+test.describe('Customer Services end-to-end', () => {
   const { loginAs, mockLoginAs, getDashboardPath } = require('./test-utils');
   const role = 'customer';
-  const dashboardPath = getDashboardPath(role);
+  const customerPath = getDashboardPath(role);
 
   test.beforeEach(async ({ page }) => {
     if (process.env.E2E_LIVE) {
@@ -14,37 +14,28 @@ test.describe('Customer Dashboard end-to-end', () => {
     }
   });
 
-  test('login redirects to correct dashboard', async ({ page }) => {
-    await page.goto(frontendUrl + dashboardPath);
-    await expect(page).toHaveURL(new RegExp(dashboardPath));
+  test('customer landing redirects to Services after login', async ({ page }) => {
+    await page.goto(frontendUrl + '/customer');
+    await expect(page).toHaveURL(/\/customer\/services$/);
+    await expect(page.locator('.customer-services-page')).toBeVisible();
   });
 
-  test('dashboard title is visible', async ({ page }) => {
-    await page.goto(frontendUrl + dashboardPath);
-    await expect(page.locator('h1, h2').filter({ hasText: /my account|dashboard|bookings/i }).first()).toBeVisible();
+  test('Services heading and request tabs are visible', async ({ page }) => {
+    await page.goto(frontendUrl + customerPath);
+    await expect(page.getByRole('heading', { name: 'Services' })).toBeVisible();
+    await expect(page.getByRole('button', { name: /New Request/ })).toBeVisible();
+    await expect(page.getByRole('button', { name: /My Requests/ })).toBeVisible();
   });
 
-  test('loads customer dashboard and shows bookings', async ({ page }) => {
-    const mock = { active_bookings: 2, total_pets: 3, recent_bookings: [] };
-    if (!process.env.E2E_LIVE) {
-      await page.route('**/api/customer/dashboard', route => route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(mock) }));
-    }
-    await page.goto(frontendUrl + dashboardPath);
-    await expect(page.locator('.overview-card, [class*="card"], [class*="booking"]').first()).toBeVisible();
-    await expect(page.locator('text=/booking|pet|appointment/i').first()).toBeVisible();
-  });
-
-  test('refresh button reloads data', async ({ page }) => {
-    await page.goto(frontendUrl + dashboardPath);
-    // No dedicated refresh button exists on the dashboard; data loads on mount.
-    // Keep a short click budget so a missing button doesn't consume the test timeout.
-    await page.locator('button:has-text("refresh"), button:has([data-icon="rotate"]), [title*="refresh" i]')
-      .first().click({ timeout: 3000 }).catch(() => {});
-    await expect(page.locator('.overview-card, [class*="card"]').first()).toBeVisible();
+  test('customer service choices remain available as booking entry points', async ({ page }) => {
+    await page.goto(frontendUrl + customerPath);
+    await expect(page.locator('.customer-services-page')).toBeVisible();
+    await expect(page.locator('.cs-card')).toHaveCount(3);
+    await expect(page.getByText('Book Now').first()).toBeVisible();
   });
 
   test('main navigation works', async ({ page }) => {
-    await page.goto(frontendUrl + dashboardPath);
+    await page.goto(frontendUrl + customerPath);
     const nav = page.locator('nav, aside, [role="navigation"], .sidebar, .sidenav').first();
     await expect(nav).toBeVisible();
     const links = nav.locator('a, button').filter({ hasText: /booking|pet|appointment|profile/i });
@@ -72,7 +63,7 @@ test.describe('Customer Dashboard end-to-end', () => {
       });
     }
 
-    await page.goto(frontendUrl + dashboardPath);
+    await page.goto(frontendUrl + customerPath);
     await page.waitForLoadState('domcontentloaded');
 
     // Look for book/request control — dashboard uses NavLink cards ("Book Services"),
@@ -110,9 +101,9 @@ test.describe('Customer Dashboard end-to-end', () => {
       await page.goto(frontendUrl + path);
       // ProtectedRoute performs a client-side redirect — wait for it to settle
       // before reading the URL.
-      await page.waitForURL(new RegExp(dashboardPath), { timeout: 8000 }).catch(() => {});
+      await page.waitForURL(new RegExp(customerPath), { timeout: 8000 }).catch(() => {});
       const currentUrl = page.url();
-      const blocked = currentUrl.includes('/unauthorized') || currentUrl.includes('/forbidden') || currentUrl.includes(dashboardPath) || await page.locator('text=/access denied|forbidden|unauthorized/i').first().isVisible().catch(() => false);
+      const blocked = currentUrl.includes('/unauthorized') || currentUrl.includes('/forbidden') || currentUrl.includes(customerPath) || await page.locator('text=/access denied|forbidden|unauthorized/i').first().isVisible().catch(() => false);
       expect(blocked).toBeTruthy();
     }
   });

@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import { Link } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 import "./Landing.css";
 import pawesomeLogo from "../../assets/pawesome.jpg";
 import LandingChatbot from "../LandingChatbot";
@@ -12,14 +12,24 @@ import DynamicAbout from "./DynamicAbout";
 import DynamicFinalCTA from "./DynamicFinalCTA";
 import DynamicFacilitiesGallery from "./DynamicFacilitiesGallery";
 import DynamicTrustStats from "./DynamicTrustStats";
+import { useAuth } from "../../context/AuthContext";
 
 const LandingPage = () => {
   const currentYear = new Date().getFullYear();
   const [activeModal, setActiveModal] = useState(null);
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
   const [headerScrolled, setHeaderScrolled] = useState(false);
+  const [searchParams, setSearchParams] = useSearchParams();
+  const { isAuthenticated, role } = useAuth();
   const { content, loading, error, getSection } = useLandingPageContent();
   const mobileNavRef = useRef(null);
+
+  useEffect(() => {
+    const serviceType = searchParams.get("book");
+    if (!isAuthenticated || role !== "customer" || !["hotel", "grooming", "vet"].includes(serviceType)) return;
+    setActiveModal(serviceType);
+    setSearchParams({}, { replace: true });
+  }, [isAuthenticated, role, searchParams, setSearchParams]);
 
   const scrollToServices = () => {
     const el = document.getElementById("featured-services-anchor");
@@ -48,10 +58,18 @@ const LandingPage = () => {
     return () => document.removeEventListener("mousedown", handleClick);
   }, [mobileNavOpen]);
 
-  // Lock scroll when mobile nav is open
+  // Lock scroll when the site menu is open.
   useEffect(() => {
-    document.body.style.overflow = mobileNavOpen ? "hidden" : "";
-    return () => { document.body.style.overflow = ""; };
+    if (!mobileNavOpen) return undefined;
+    const handleEscape = (event) => {
+      if (event.key === "Escape") setMobileNavOpen(false);
+    };
+    document.addEventListener("keydown", handleEscape);
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.removeEventListener("keydown", handleEscape);
+      document.body.style.overflow = "";
+    };
   }, [mobileNavOpen]);
 
   const navLinks = [
@@ -109,23 +127,12 @@ const LandingPage = () => {
             ))}
           </nav>
 
-          <div className="landing-header-actions">
-            <Link to="/attendance-kiosk" className="landing-header-attendance">
-              Attendance
-            </Link>
-            <Link to="/login" className="landing-header-login">
-              Login
-            </Link>
-            <Link to="/register" className="landing-header-register">
-              Register
-            </Link>
-          </div>
-
-          {/* Hamburger button — visible only on mobile */}
+          {/* Menu toggle provides the consolidated account and staff entry points. */}
           <button
             className={`landing-hamburger${mobileNavOpen ? " open" : ""}`}
-            aria-label={mobileNavOpen ? "Close menu" : "Open menu"}
+            aria-label={mobileNavOpen ? "Close site menu" : "Open site menu"}
             aria-expanded={mobileNavOpen}
+            aria-controls="landing-site-menu"
             onClick={() => setMobileNavOpen((v) => !v)}
           >
             <span />
@@ -135,14 +142,16 @@ const LandingPage = () => {
         </div>
       </header>
 
-      {/* Mobile navigation drawer */}
+      {/* Site navigation drawer */}
       {mobileNavOpen && (
         <div className="landing-mobile-overlay" aria-hidden="true" onClick={() => setMobileNavOpen(false)} />
       )}
       <nav
+        id="landing-site-menu"
         ref={mobileNavRef}
         className={`landing-mobile-nav${mobileNavOpen ? " open" : ""}`}
-        aria-label="Mobile navigation"
+        aria-label="Site navigation and account menu"
+        aria-hidden={!mobileNavOpen}
       >
         <div className="landing-mobile-nav-header">
           <a href="#home" className="landing-logo" onClick={() => setMobileNavOpen(false)}>
@@ -170,15 +179,36 @@ const LandingPage = () => {
         </div>
 
         <div className="landing-mobile-nav-actions">
-          <Link to="/attendance-kiosk" className="landing-header-attendance" onClick={() => setMobileNavOpen(false)}>
-            Employee Attendance
-          </Link>
-          <Link to="/login" className="landing-header-login" onClick={() => setMobileNavOpen(false)}>
-            Login
-          </Link>
-          <Link to="/register" className="landing-header-register" onClick={() => setMobileNavOpen(false)}>
-            Register
-          </Link>
+          <div className="landing-mobile-nav-group">
+            <span className="landing-mobile-nav-group-title">{isAuthenticated && role !== "customer" ? "Staff Workspace" : "Customer Account"}</span>
+            {isAuthenticated ? (
+              <>
+                <Link to={role === "customer" ? "/customer/services" : "/dashboard"} className="landing-header-register" onClick={() => setMobileNavOpen(false)}>
+                  {role === "customer" ? "My Services" : "Staff Dashboard"}
+                </Link>
+                <Link to="/logout" className="landing-header-login" onClick={() => setMobileNavOpen(false)}>
+                  Sign Out
+                </Link>
+              </>
+            ) : (
+              <>
+                <Link to="/login" className="landing-header-login" onClick={() => setMobileNavOpen(false)}>
+                  Log In
+                </Link>
+                <Link to="/register" className="landing-header-register" onClick={() => setMobileNavOpen(false)}>
+                  Create Account
+                </Link>
+              </>
+            )}
+          </div>
+          {(!isAuthenticated || role !== "customer") && (
+            <div className="landing-mobile-nav-group landing-mobile-nav-staff">
+              <span className="landing-mobile-nav-group-title">Staff Access</span>
+              <Link to="/attendance-kiosk" className="landing-header-attendance" onClick={() => setMobileNavOpen(false)}>
+                Employee Attendance
+              </Link>
+            </div>
+          )}
         </div>
       </nav>
 

@@ -452,6 +452,13 @@ class DashboardController extends Controller
             'reason' => 'nullable|string|max:255',
         ]);
 
+        if ($validated['type'] === 'add') {
+            return response()->json([
+                'success' => false,
+                'message' => 'Stock increases must be recorded as a new batch through the batch receiving action.',
+            ], 422);
+        }
+
         $item = InventoryItem::findOrFail($id);
         $current = (int) $item->stock;
         $quantity = (int) $validated['quantity'];

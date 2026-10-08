@@ -1103,7 +1103,7 @@ const CashierPOS = ({ initialTab }) => {
 
                 {/* ── Subtotal / VAT ── */}
                 <div className="pos-receipt-row"><span>Subtotal (incl. VAT)</span><span>{fmt(completedReceipt.total)}</span></div>
-                <div className="pos-receipt-row"><span>VAT 12%</span><span>{fmt(completedReceipt.vat_amount)}</span></div>
+                <div className="pos-receipt-row"><span>VAT 12%</span><span>-{fmt(Math.abs(Number(completedReceipt.vat_amount) || 0))}</span></div>
                 <div className="pos-receipt-total">
                   <span>TOTAL</span>
                   <span>{fmt(completedReceipt.total)}</span>
