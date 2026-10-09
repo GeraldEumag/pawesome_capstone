@@ -1,4 +1,4 @@
-import dogHotelImg from "../../assets/DOGHOTEL.jpg";
+import pawesomeLogo from "../../assets/pawesome.jpg";
 
 const DEFAULT_HERO = {
   eyebrow: "Pet hotel, grooming & veterinary care",
@@ -32,7 +32,7 @@ const DynamicHero = ({ content, onBookService }) => {
         <div className="landing-hero-visual">
           <img
             className="landing-hero-image"
-            src={data.image || dogHotelImg}
+            src={data.image || pawesomeLogo}
             alt="A comfortable pet care space at Pawesome Retreat"
             fetchpriority="high"
             decoding="async"
