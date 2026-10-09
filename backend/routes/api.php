@@ -298,6 +298,7 @@ Route::middleware(['auth.api', 'throttle:api', 'role:customer'])->prefix('custom
     Route::get('dashboard', [PortalController::class, 'overview']);
     Route::get('appointments', [PortalController::class, 'appointments']);
     Route::get('bookings', [PortalController::class, 'bookings']);
+    Route::get('tracking', [PortalController::class, 'tracking']);
     Route::get('transactions', [PortalController::class, 'transactions']);
     Route::get('purchases', [PortalController::class, 'purchases']);
     Route::post('appointments', [PortalController::class, 'bookAppointment'])->middleware('verified');
@@ -1101,6 +1102,13 @@ Route::middleware(['auth.api', 'throttle:api', 'role:receptionist,admin,manager,
 
     // Customer pets endpoint is scoped by CustomersController when role is customer
     Route::get('/customers/{id}/pets', [CustomersController::class, 'pets']);
+});
+
+// Public availability reads (landing-page pre-booking — no PII, aggregate only)
+Route::middleware(['throttle:api'])->prefix('availability')->group(function () {
+    Route::get('boarding', [AvailabilityController::class, 'boarding']);
+    Route::get('grooming', [AvailabilityController::class, 'grooming']);
+    Route::get('veterinary', [AvailabilityController::class, 'veterinary']);
 });
 
 // Boarding/Hotel Room Management Routes

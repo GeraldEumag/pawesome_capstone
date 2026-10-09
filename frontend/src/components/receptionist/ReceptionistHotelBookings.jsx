@@ -1007,7 +1007,7 @@ const ReceptionistHotelBookings = () => {
                           onChange={(date) =>
                             updateScheduleDraft(selectedBooking.id, "check_in", formatDateOnly(date))
                           }
-                          placeholderText="Pick stay date..."
+                          placeholderText="mm/dd/yyyy"
                         />
                       </div>
 

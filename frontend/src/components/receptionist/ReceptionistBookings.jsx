@@ -1730,7 +1730,7 @@ const ReceptionistBookings = () => {
                       withPortal
                       selected={parseDateOnly(rescheduleNewDate)}
                       onChange={(date) => setRescheduleNewDate(formatDateOnly(date))}
-                      placeholderText="Pick a date..."
+                      placeholderText="mm/dd/yyyy"
                       required
                     />
                   </div>
@@ -2005,7 +2005,7 @@ const ReceptionistBookings = () => {
                     <DatePickerInput
                       selected={parseDateOnly(bookingFormData.appointmentDate)}
                       onChange={(date) => handleBookingInputChange({ target: { name: "appointmentDate", value: formatDateOnly(date) } })}
-                      placeholderText="Pick a date..."
+                      placeholderText="mm/dd/yyyy"
                       minDate={new Date()}
                       required
                     />

@@ -753,7 +753,7 @@ const CustomerPets = () => {
                   onChange={(date) =>
                     handleChange({ target: { name: "birthdate", value: formatDateOnly(date) } })
                   }
-                  placeholderText="Select birthdate..."
+                  placeholderText="mm/dd/yyyy"
                   maxDate={new Date()}
                 />
               </label>
@@ -1083,7 +1083,7 @@ const CustomerPets = () => {
                         onChange={(date) =>
                           handleChange({ target: { name: "birthdate", value: formatDateOnly(date) } })
                         }
-                        placeholderText="Select birthdate..."
+                        placeholderText="mm/dd/yyyy"
                         maxDate={new Date()}
                       />
                     </div>

@@ -40,10 +40,10 @@ class BoardingRoomController extends Controller
                 $species = strtolower(trim((string) DB::table('pets')->where('id', $petId)->value('species')));
             }
 
-            if (!$petId || !$species || !$checkIn || !$checkOut) {
+            if (!$species || !$checkIn || !$checkOut) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'Pet, species, check-in date, and check-out date are required.',
+                    'message' => 'Pet species, check-in date, and check-out date are required.',
                     'rooms' => [],
                 ], 422);
             }

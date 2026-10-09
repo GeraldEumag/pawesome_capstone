@@ -999,8 +999,7 @@ const RoleAwareChatbot = ({
               selected={convFlow.data.scheduled_at ? new Date(convFlow.data.scheduled_at) : null}
               onChange={(date) => date && convSelectDate(date.toISOString())}
               showTimeSelect
-              dateFormat="dd/MM/yy"
-              placeholderText="Pick date and time..."
+              placeholderText="mm/dd/yyyy h:mm aa"
               minDate={new Date()}
             />
           </div>
@@ -1012,7 +1011,7 @@ const RoleAwareChatbot = ({
             <DatePickerInput
               selected={parseDateOnly(convFlow.data.check_in)}
               onChange={(date) => convCheckIn(formatDateOnly(date))}
-              placeholderText="Pick check-in date..."
+              placeholderText="mm/dd/yyyy"
               minDate={new Date()}
             />
           </div>
@@ -1024,7 +1023,7 @@ const RoleAwareChatbot = ({
             <DatePickerInput
               selected={parseDateOnly(convFlow.data.check_out)}
               onChange={(date) => convCheckOut(formatDateOnly(date))}
-              placeholderText="Pick check-out date..."
+              placeholderText="mm/dd/yyyy"
               minDate={convFlow.data.check_in ? new Date(new Date(convFlow.data.check_in).getTime() + 86400000) : new Date()}
             />
           </div>
@@ -1409,7 +1408,7 @@ const RoleAwareChatbot = ({
                   <DatePickerInput
                     selected={parseDateOnly(workflowState.form.check_in)}
                     onChange={(date) => updateWorkflowForm("check_in", formatDateOnly(date))}
-                    placeholderText="Pick stay date..."
+                    placeholderText="mm/dd/yyyy"
                     required
                   />
                 </label>

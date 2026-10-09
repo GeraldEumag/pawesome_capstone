@@ -20,6 +20,7 @@ import {
   } from "@fortawesome/free-solid-svg-icons";
 import CustomerSidebar from "./CustomerSidebar";
 import DashboardLayout from "../shared/DashboardLayout";
+import BookingTracker from "../shared/BookingTracker";
 import PetAvatar from "../shared/PetAvatar";
 import { apiRequest, clearAuthStorage } from "../../api/client";
 import { fetchAndApplySystemTheme } from "../../utils/theme";
@@ -241,6 +242,7 @@ const CustomerDashboard = () => {
   );
 
   return (
+    <>
     <DashboardLayout
       sidebar={sidebar}
       title={pageMeta.title}
@@ -586,6 +588,8 @@ const CustomerDashboard = () => {
           </section>
         )}
     </DashboardLayout>
+    <BookingTracker />
+    </>
   );
 };
 

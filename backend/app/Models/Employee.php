@@ -50,6 +50,41 @@ class Employee extends Model
     ];
 
     /**
+     * Person names are stored in ALL CAPS — business/email convention.
+     */
+    private static function upperName(?string $value): ?string
+    {
+        if ($value === null) return null;
+        $trimmed = trim($value);
+        return $trimmed === '' ? null : mb_strtoupper($trimmed);
+    }
+
+    public function setFirstNameAttribute($value): void
+    {
+        $this->attributes['first_name'] = self::upperName($value);
+    }
+
+    public function setMiddleNameAttribute($value): void
+    {
+        $this->attributes['middle_name'] = self::upperName($value);
+    }
+
+    public function setLastNameAttribute($value): void
+    {
+        $this->attributes['last_name'] = self::upperName($value);
+    }
+
+    public function setSuffixAttribute($value): void
+    {
+        $this->attributes['suffix'] = self::upperName($value);
+    }
+
+    public function setEmergencyContactNameAttribute($value): void
+    {
+        $this->attributes['emergency_contact_name'] = self::upperName($value);
+    }
+
+    /**
      * Full display name — mirrors the `name` attribute on User so payroll,
      * attendance, and kiosk code can treat both person types uniformly.
      */

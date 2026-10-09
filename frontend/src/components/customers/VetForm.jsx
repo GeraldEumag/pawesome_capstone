@@ -396,7 +396,7 @@ const VetForm = () => {
                 setFormData((prev) => ({ ...prev, request_date: value, request_time: "" }));
                 fetchVetAvailability(value);
               }}
-              placeholderText="Pick a date..."
+              placeholderText="mm/dd/yyyy"
               minDate={new Date()}
               required
             />

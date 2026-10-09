@@ -4,7 +4,6 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
   faArrowLeft,
   faArrowRight,
-  faCalendarAlt,
   faCheck,
   faCheckCircle,
   faEye,
@@ -13,10 +12,8 @@ import {
   faHeartPulse,
   faIdCard,
   faLock,
-  faPaw,
   faShieldAlt,
   faSpinner,
-  faStar,
   faTriangleExclamation,
   faUser,
   faUserPlus,
@@ -27,8 +24,6 @@ import { formatDateOnly, parseDateOnly } from "../../utils/date";
 import { showSuccess, showError } from "../../utils/alert.jsx";
 import { clearServiceIntent, getDraft, getServiceIntent } from "../../utils/preBookingDraft";
 import logo from "../../assets/pawesome.jpg";
-import facilityImg from "../../assets/facility 2.jpg";
-import { useLandingPageContent } from "../../hooks/useLandingPageContent";
 import "./Register.css";
 
 const INITIAL_FORM = {
@@ -70,8 +65,6 @@ const STEPS = [
 
 const Register = () => {
   const navigate = useNavigate();
-  const { getSection } = useLandingPageContent();
-  const registerBgImage = getSection("auth_pages")?.register_bg_image || facilityImg;
 
   const [formData, setFormData] = useState(INITIAL_FORM);
   const [currentStep, setCurrentStep] = useState(1);
@@ -255,73 +248,13 @@ const Register = () => {
       <div className="reg-blob reg-blob-2" aria-hidden="true" />
       <div className="reg-blob reg-blob-3" aria-hidden="true" />
 
+      {/* Back to home */}
+      <Link to="/" className="register-back-link">
+        <FontAwesomeIcon icon={faArrowLeft} />
+        <span>Back to Home</span>
+      </Link>
+
       <section className="register-shell">
-
-        {/* ── Brand panel ── */}
-        <aside
-          className="register-brand-panel"
-          style={{ backgroundImage: `url(${registerBgImage})` }}
-        >
-          {/* Paw watermarks */}
-          <div className="reg-paw-deco reg-paw-1" aria-hidden="true">🐾</div>
-          <div className="reg-paw-deco reg-paw-2" aria-hidden="true">🐾</div>
-
-          <div className="register-brand-top">
-            <div className="brand-pill">
-              <FontAwesomeIcon icon={faPaw} />
-              Pawesome Retreat Inc.
-            </div>
-            <Link to="/" className="register-back-link">
-              <FontAwesomeIcon icon={faArrowLeft} />
-              <span>Back to Home</span>
-            </Link>
-          </div>
-
-          {/* Logo */}
-          <div className="register-brand-logo-wrap">
-            <img src={logo} alt="Pawesome Retreat Inc." className="register-brand-logo" />
-          </div>
-
-          <div className="brand-copy">
-            <h1>Create your pet care account</h1>
-            <p>
-              Book veterinary services, grooming, hotel reservations, and manage
-              your pets from one secure customer portal.
-            </p>
-          </div>
-
-          <div className="brand-feature-list">
-            <div>
-              <span><FontAwesomeIcon icon={faCalendarAlt} /></span>
-              <div>
-                <strong>Book services online</strong>
-                <p>Request pet hotel, grooming, and veterinary services.</p>
-              </div>
-            </div>
-            <div>
-              <span><FontAwesomeIcon icon={faPaw} /></span>
-              <div>
-                <strong>Manage pet profiles</strong>
-                <p>Keep pet details connected to your customer account.</p>
-              </div>
-            </div>
-            <div>
-              <span><FontAwesomeIcon icon={faShieldAlt} /></span>
-              <div>
-                <strong>Secure account access</strong>
-                <p>Protect your account with login credentials.</p>
-              </div>
-            </div>
-          </div>
-
-          <div className="register-testimonial-card">
-            <div className="register-testimonial-stars">
-              {[1,2,3,4,5].map(i => <FontAwesomeIcon key={i} icon={faStar} />)}
-            </div>
-            <p>"Signing up was easy and my pet's care has been amazing since!"</p>
-            <span>— Happy pet owner · Pawesome Retreat</span>
-          </div>
-        </aside>
 
         {/* ── Form card ── */}
         <section className="register-card">
@@ -428,8 +361,9 @@ const Register = () => {
                         id="dateOfBirth"
                         selected={parseDateOnly(formData.dateOfBirth)}
                         onChange={(date) => handleChange({ target: { name: "dateOfBirth", value: formatDateOnly(date) } })}
-                        placeholderText="Select birthdate..."
+                        placeholderText="mm/dd/yyyy"
                         maxDate={new Date()}
+                        dateFormat="MM/dd/yyyy"
                       />
                     </div>
 

@@ -243,27 +243,27 @@ const StockAdjustmentModal = ({ isOpen, onClose, item, onSuccess, initialType, i
               <p>Each receipt is recorded as a separate lot for stock rotation and expiry tracking.</p>
               <div className="batch-intake-grid">
                 <label>
-                  Batch number <span className="required">*</span>
+                  <span>Batch number <span className="required">*</span></span>
                   <input value={batchNo} onChange={(e) => setBatchNo(e.target.value)} maxLength={50} placeholder="Supplier lot or batch number" />
                 </label>
                 <label>
-                  Received date <span className="required">*</span>
+                  <span>Received date <span className="required">*</span></span>
                   <DatePickerInput selected={parseDateOnly(receivedDate)} onChange={(date) => setReceivedDate(formatDateOnly(date))} maxDate={new Date()} />
                 </label>
                 <label>
-                  Manufacturing date
+                  <span>Manufacturing date</span>
                   <DatePickerInput selected={parseDateOnly(manufacturingDate)} onChange={(date) => setManufacturingDate(formatDateOnly(date))} maxDate={parseDateOnly(receivedDate) || new Date()} />
                 </label>
                 <label>
-                  Expiration date {requiresExpiry && <span className="required">*</span>}
+                  <span>Expiration date {requiresExpiry && <span className="required">*</span>}</span>
                   <DatePickerInput selected={parseDateOnly(expirationDate)} onChange={(date) => setExpirationDate(formatDateOnly(date))} minDate={parseDateOnly(receivedDate) || new Date()} />
                 </label>
                 <label>
-                  Supplier
+                  <span>Supplier</span>
                   <input value={supplier} onChange={(e) => setSupplier(e.target.value)} maxLength={255} placeholder="Supplier name" />
                 </label>
                 <label>
-                  Unit cost
+                  <span>Unit cost</span>
                   <input type="number" min="0" step="0.01" value={unitCost} onChange={(e) => setUnitCost(e.target.value)} placeholder="0.00" />
                 </label>
               </div>

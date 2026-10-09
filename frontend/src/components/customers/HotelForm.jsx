@@ -128,6 +128,11 @@ const HotelForm = () => {
     setBookingForm((prev) => ({ ...prev, ...updates }));
     clearDraft();
 
+    const merged = { ...bookingForm, ...updates };
+    if (merged.check_in_date && (merged.pet_id || merged.pet_type)) {
+      fetchBoardingAvailability(merged);
+    }
+
     if (Object.keys(updates).length > 0) {
       showSuccess("We have restored your booking details. Please select your registered pet or enter details manually to continue.");
     }
@@ -195,8 +200,21 @@ const HotelForm = () => {
       setLoading(true);
       setError("");
 
+      let petId = bookingForm.pet_id;
+      if (!petId) {
+        const petRes = await apiRequest("/customer/pets", {
+          method: "POST",
+          body: JSON.stringify({
+            name: bookingForm.pet_name.trim(),
+            species: bookingForm.pet_type.trim(),
+            breed: bookingForm.pet_breed.trim() || null,
+          }),
+        });
+        petId = petRes?.pet?.id;
+      }
+
       const formData = new FormData();
-      formData.append("pet_id", bookingForm.pet_id || "");
+      formData.append("pet_id", petId || "");
       formData.append("pet_name", selectedPet?.name || bookingForm.pet_name || "");
       formData.append("pet_type", selectedPet?.type || selectedPet?.species || bookingForm.pet_type || "");
       formData.append("pet_breed", selectedPet?.breed || bookingForm.pet_breed || "");
@@ -299,7 +317,9 @@ const HotelForm = () => {
     ["unpaid", "rejected"].includes(booking.payment_status || "unpaid");
 
   const fetchBoardingAvailability = async (form = bookingForm) => {
-    if (!form?.pet_id || !form?.check_in_date) {
+    const pet = pets.find((p) => String(p.id) === String(form.pet_id));
+    const species = (pet?.species || pet?.type || form.pet_type || "").toLowerCase().trim();
+    if (!form?.check_in_date || !species) {
       setBoardingAvailability(null);
       return;
     }
@@ -310,10 +330,14 @@ const HotelForm = () => {
 
       // Same-day stay: check-out equals check-in
       const params = new URLSearchParams({
-        pet_id: form.pet_id,
+        species,
         check_in_date: form.check_in_date,
         check_out_date: form.check_in_date,
       });
+
+      if (form.pet_id) {
+        params.append('pet_id', form.pet_id);
+      }
 
       if (form.room_type) {
         params.append('room_type', form.room_type);
@@ -339,11 +363,11 @@ const HotelForm = () => {
     const { name, value } = e.target;
     setBookingForm((prev) => ({ ...prev, [name]: value }));
 
-    if (name === "pet_id" || name === "check_in_date") {
+    if (name === "pet_id" || name === "check_in_date" || name === "pet_type") {
       const updatedForm = { ...bookingForm, [name]: value };
       // A previous selection is only valid for the exact pet+date pair
       setSelectedRoom(null);
-      if (value && updatedForm.pet_id && updatedForm.check_in_date) {
+      if (value && updatedForm.check_in_date && (updatedForm.pet_id || updatedForm.pet_type)) {
         // Pass updatedForm — bookingForm state here is still pre-change
         fetchBoardingAvailability(updatedForm);
       } else {
@@ -469,7 +493,7 @@ const HotelForm = () => {
                         },
                       })
                     }
-                    placeholderText="Pick stay date..."
+                    placeholderText="mm/dd/yyyy"
                     minDate={new Date()}
                     required
                   />
@@ -537,12 +561,6 @@ const HotelForm = () => {
               {availabilityLoading && (
                 <div className="availability-loading">
                   <span>Checking room availability...</span>
-                </div>
-              )}
-
-              {bookingForm.check_in_date && !boardingAvailability && !availabilityLoading && (
-                <div className="availability-prompt">
-                  <p>Click above to check available rooms.</p>
                 </div>
               )}
 

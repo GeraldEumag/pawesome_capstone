@@ -622,7 +622,7 @@ const VetNewAppointment = () => {
                 <DatePickerInput
                   selected={parseDateOnly(formData.appointment_date)}
                   onChange={(date) => updateField("appointment_date", formatDateOnly(date))}
-                  placeholderText="Pick a date..."
+                  placeholderText="mm/dd/yyyy"
                   minDate={new Date()}
                 />
               </div>

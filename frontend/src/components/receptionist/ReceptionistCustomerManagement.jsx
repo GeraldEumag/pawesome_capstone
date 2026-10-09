@@ -500,7 +500,7 @@ const ReceptionistCustomerManagement = () => {
                     onChange={(date) =>
                       setBookingForm((prev) => ({ ...prev, appointment_date: formatDateOnly(date) }))
                     }
-                    placeholderText="Pick a date..."
+                    placeholderText="mm/dd/yyyy"
                     required
                   />
                 </div>

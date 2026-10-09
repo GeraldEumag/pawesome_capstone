@@ -405,7 +405,7 @@ const GroomingForm = () => {
                   },
                 })
               }
-              placeholderText="Pick a date..."
+              placeholderText="mm/dd/yyyy"
               minDate={new Date()}
               required
             />

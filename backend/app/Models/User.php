@@ -85,6 +85,46 @@ class User extends Authenticatable
     }
 
     /**
+     * Person names are stored in ALL CAPS — business/email convention.
+     */
+    private static function upperName(?string $value): ?string
+    {
+        if ($value === null) return null;
+        $trimmed = trim($value);
+        return $trimmed === '' ? null : mb_strtoupper($trimmed);
+    }
+
+    public function setNameAttribute($value): void
+    {
+        $this->attributes['name'] = self::upperName($value);
+    }
+
+    public function setFirstNameAttribute($value): void
+    {
+        $this->attributes['first_name'] = self::upperName($value);
+    }
+
+    public function setMiddleNameAttribute($value): void
+    {
+        $this->attributes['middle_name'] = self::upperName($value);
+    }
+
+    public function setLastNameAttribute($value): void
+    {
+        $this->attributes['last_name'] = self::upperName($value);
+    }
+
+    public function setSuffixAttribute($value): void
+    {
+        $this->attributes['suffix'] = self::upperName($value);
+    }
+
+    public function setEmergencyContactPersonAttribute($value): void
+    {
+        $this->attributes['emergency_contact_person'] = self::upperName($value);
+    }
+
+    /**
      * Always return the API-accessible URL for the profile photo.
      * This ensures img tags can load it directly without auth headers.
      * When no photo is uploaded, falls back to a locally generated initials

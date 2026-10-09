@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Appointment;
 use App\Models\Boarding;
 use App\Models\Customer;
+use App\Models\Grooming;
 use App\Models\Pet;
 use App\Models\Service;
 use App\Models\ServiceRequest;
@@ -184,6 +185,177 @@ class PortalController extends Controller
                 ->latest('scheduled_at')
                 ->get()
         );
+    }
+
+    /**
+     * Unified active/upcoming booking feed for the floating tracker widget.
+     * Merges service requests, appointments, groomings, and boardings —
+     * deduplicated via service_request_id (the promoted record wins).
+     */
+    public function tracking()
+    {
+        $cust = $this->currentCustomer();
+        if (!$cust) {
+            return response()->json(['success' => true, 'items' => []]);
+        }
+
+        $petIds = Pet::where('customer_id', $cust->id)->pluck('id');
+        $items = collect();
+        $promotedRequestIds = collect();
+
+        $statusLabels = [
+            'pending' => 'Pending Approval', 'approved' => 'Approved', 'scheduled' => 'Scheduled',
+            'confirmed' => 'Confirmed', 'rescheduled' => 'Rescheduled', 'in_progress' => 'In Progress',
+            'checked_in' => 'Checked In', 'in_care' => 'In Care', 'ready_for_pickup' => 'Ready for Pickup',
+            'checked_out' => 'Picked Up', 'completed' => 'Completed', 'treated' => 'Treated',
+        ];
+
+        $boardingSteps = ['pending' => 0, 'approved' => 1, 'scheduled' => 1, 'confirmed' => 1,
+            'checked_in' => 2, 'in_care' => 3, 'ready_for_pickup' => 4, 'checked_out' => 5, 'completed' => 5];
+        $appointmentSteps = ['pending' => 0, 'approved' => 1, 'scheduled' => 2, 'confirmed' => 2,
+            'in_progress' => 3, 'checked_in' => 3, 'treated' => 4, 'completed' => 5];
+        $groomingSteps = ['pending' => 0, 'approved' => 1, 'scheduled' => 2, 'confirmed' => 2,
+            'in_progress' => 3, 'checked_in' => 3, 'completed' => 4];
+        $requestSteps = ['pending' => 0, 'approved' => 1, 'scheduled' => 2, 'confirmed' => 2,
+            'rescheduled' => 2, 'in_progress' => 3, 'checked_in' => 3];
+
+        $makeItem = function ($id, $kind, $serviceType, $serviceLabel, $petName, $date, $time, $status, $steps, $stepCount, $extra = []) use ($statusLabels) {
+            $status = strtolower((string) $status) ?: 'pending';
+            return [
+                'id' => $id,
+                'kind' => $kind,
+                'service_type' => $serviceType,
+                'service_label' => $serviceLabel,
+                'pet_name' => $petName,
+                'date' => $date,
+                'time' => $time,
+                'status' => $status,
+                'status_label' => $statusLabels[$status] ?? ucwords(str_replace('_', ' ', $status)),
+                'step_index' => $steps[$status] ?? 0,
+                'step_count' => $stepCount,
+                'payment_status' => $extra['payment_status'] ?? null,
+                'check_in' => $extra['check_in'] ?? null,
+                'check_out' => $extra['check_out'] ?? null,
+                'room_name' => $extra['room_name'] ?? null,
+                'updated_at' => $extra['updated_at'] ?? null,
+            ];
+        };
+
+        // Boardings — hotel stays carry the richest live statuses
+        Boarding::where(function ($q) use ($cust, $petIds) {
+                $q->where('customer_id', $cust->id);
+                if ($petIds->isNotEmpty()) {
+                    $q->orWhereIn('pet_id', $petIds);
+                }
+            })
+            ->whereIn('status', ['pending', 'approved', 'scheduled', 'confirmed', 'checked_in', 'in_care', 'ready_for_pickup'])
+            ->with(['pet', 'hotelRoom'])
+            ->get()
+            ->each(function ($b) use ($items, $promotedRequestIds, $makeItem, $boardingSteps) {
+                if ($b->service_request_id) {
+                    $promotedRequestIds->push((int) $b->service_request_id);
+                }
+                $items->push($makeItem(
+                    'boarding-' . $b->id, 'boarding', 'hotel', 'Pet Hotel',
+                    $b->pet?->name ?? $b->pet_name,
+                    optional($b->check_in)->toDateString(),
+                    $b->check_in_time,
+                    $b->status, $boardingSteps, 6,
+                    [
+                        'payment_status' => $b->payment_status,
+                        'check_in' => optional($b->check_in)->toDateString(),
+                        'check_out' => optional($b->check_out)->toDateString(),
+                        'room_name' => $b->hotelRoom?->name ?? $b->hotelRoom?->room_name ?? null,
+                        'updated_at' => $b->updated_at,
+                    ]
+                ));
+            });
+
+        // Groomings — promoted grooming requests with live status
+        if (Schema::hasTable('groomings')) {
+            Grooming::where('customer_id', $cust->id)
+                ->whereIn('status', ['pending', 'approved', 'scheduled', 'confirmed', 'in_progress', 'checked_in'])
+                ->with('pet')
+                ->get()
+                ->each(function ($g) use ($items, $promotedRequestIds, $makeItem, $groomingSteps) {
+                    if ($g->service_request_id) {
+                        $promotedRequestIds->push((int) $g->service_request_id);
+                    }
+                    $items->push($makeItem(
+                        'grooming-' . $g->id, 'grooming', 'grooming',
+                        $g->service ?? 'Grooming',
+                        $g->pet?->name,
+                        $g->appointment_date ? Carbon::parse($g->appointment_date)->toDateString() : null,
+                        $g->appointment_time,
+                        $g->status, $groomingSteps, 5,
+                        ['payment_status' => $g->payment_status, 'updated_at' => $g->updated_at]
+                    ));
+                });
+        }
+
+        // Appointments — vet visits
+        Appointment::where('customer_id', $cust->id)
+            ->whereIn('status', ['pending', 'approved', 'scheduled', 'confirmed', 'in_progress', 'checked_in', 'treated'])
+            ->with(['pet', 'service'])
+            ->get()
+            ->each(function ($a) use ($items, $promotedRequestIds, $makeItem, $appointmentSteps) {
+                if ($a->service_request_id) {
+                    $promotedRequestIds->push((int) $a->service_request_id);
+                }
+                $scheduledAt = $a->scheduled_at ? Carbon::parse($a->scheduled_at) : null;
+                $items->push($makeItem(
+                    'appointment-' . $a->id, 'appointment', 'vet',
+                    $a->service?->name ?? 'Vet Visit',
+                    $a->pet?->name,
+                    $scheduledAt?->toDateString(),
+                    $scheduledAt?->format('H:i'),
+                    $a->status, $appointmentSteps, 6,
+                    ['payment_status' => $a->payment_status ?? null, 'updated_at' => $a->updated_at]
+                ));
+            });
+
+        // Service requests still awaiting promotion (pending etc.)
+        // service_requests.customer_id stores users.id — match customerRequests() scoping
+        $user = auth()->user();
+        ServiceRequest::query()
+            ->where(function ($q) use ($user) {
+                if (Schema::hasColumn('service_requests', 'customer_id') && $user) {
+                    $q->where('customer_id', $user->id);
+                }
+                if (Schema::hasColumn('service_requests', 'customer_email') && $user?->email) {
+                    $q->orWhere('customer_email', $user->email);
+                }
+            })
+            ->whereIn('status', array_keys($requestSteps))
+            ->get()
+            ->reject(fn ($r) => $promotedRequestIds->contains((int) $r->id))
+            ->each(function ($r) use ($items, $makeItem, $requestSteps) {
+                $type = strtolower((string) ($r->request_type ?? ''));
+                $serviceType = str_contains($type, 'hotel') || str_contains($type, 'boarding') ? 'hotel'
+                    : (str_contains($type, 'groom') ? 'grooming' : 'vet');
+                $items->push($makeItem(
+                    'request-' . $r->id, 'request', $serviceType,
+                    $r->service_name ?? ucwords(str_replace(['_', '-'], ' ', $type ?: 'Booking')),
+                    $r->pet_name,
+                    $r->request_date ? Carbon::parse($r->request_date)->toDateString() : null,
+                    $r->request_time,
+                    $r->status, $requestSteps, 4,
+                    ['payment_status' => $r->payment_status, 'updated_at' => $r->updated_at]
+                ));
+            });
+
+        $activeStay = fn ($item) => in_array($item['status'], ['checked_in', 'in_care', 'ready_for_pickup']);
+
+        $sorted = $items->sortBy([
+            fn ($a, $b) => $activeStay($b) <=> $activeStay($a),
+            fn ($a, $b) => strcmp($a['date'] ?? '9999', $b['date'] ?? '9999'),
+        ])->values();
+
+        return response()->json([
+            'success' => true,
+            'items' => $sorted,
+            'count' => $sorted->count(),
+        ]);
     }
 
     public function bookings()

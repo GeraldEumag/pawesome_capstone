@@ -8,7 +8,7 @@ import DatePickerInput from "../shared/DatePickerInput";
 import { apiRequest } from "../../api/client";
 import { useAuth } from "../../context/AuthContext";
 import { formatDateOnly, parseDateOnly } from "../../utils/date";
-import { saveDraft, saveServiceIntent } from "../../utils/preBookingDraft";
+import { saveDraft, saveServiceIntent, getDraft, clearDraft } from "../../utils/preBookingDraft";
 import { showSuccess, showError } from "../../utils/alert.jsx";
 
 const SERVICE_CONFIG = {
@@ -74,13 +74,19 @@ const ServiceBookingModal = ({ serviceType, onClose }) => {
   const [errors, setErrors] = useState({});
 
   useEffect(() => {
+    const draft = getDraft();
+    if (draft?.service_type !== serviceType || !draft.form_data) return;
+    setFormData((prev) => ({ ...prev, ...draft.form_data }));
+  }, [serviceType]);
+
+  useEffect(() => {
     if (isCustomer && user?.name) {
       setFormData((prev) => ({ ...prev, customer_name: user.name || "", customer_email: user.email || "" }));
     }
   }, [isCustomer, user]);
 
   useEffect(() => {
-    if (!canBook || serviceType === "hotel") {
+    if (serviceType === "hotel") {
       setAvailabilityLoading(false);
       return;
     }
@@ -96,7 +102,7 @@ const ServiceBookingModal = ({ serviceType, onClose }) => {
     const controller = new AbortController();
     const endpoint = serviceType === "grooming" ? "grooming" : "veterinary";
     setAvailabilityLoading(true);
-    apiRequest(`/customer/availability/${endpoint}?date=${encodeURIComponent(date)}&service_name=${encodeURIComponent(selectedService.label)}`, { signal: controller.signal })
+    apiRequest(`/availability/${endpoint}?date=${encodeURIComponent(date)}&service_name=${encodeURIComponent(selectedService.label)}`, { signal: controller.signal })
       .then((data) => {
         const slots = data.slots || [];
         setAvailableTimeSlots(slots);
@@ -107,15 +113,16 @@ const ServiceBookingModal = ({ serviceType, onClose }) => {
       })
       .catch(() => {
         if (!controller.signal.aborted) {
-          setAvailableTimeSlots([]);
+          // Fall back to the full slot list — the backend still validates at submit
+          setAvailableTimeSlots(timeSlots.map((slot) => ({ time: slot.value, label: slot.label, available: true })));
           setAvailabilityLoading(false);
         }
       });
     return () => controller.abort();
-  }, [canBook, serviceType, formData.preferred_date, formData.grooming_service_type, formData.veterinary_service_type]);
+  }, [serviceType, formData.preferred_date, formData.grooming_service_type, formData.veterinary_service_type]);
 
   useEffect(() => {
-    if (!canBook || serviceType !== "hotel" || !formData.check_in_date) {
+    if (serviceType !== "hotel" || !formData.check_in_date) {
       setHotelAvailabilityLoading(false);
       setAvailableRoomTypes(null);
       setHotelAvailabilityError("");
@@ -144,7 +151,7 @@ const ServiceBookingModal = ({ serviceType, onClose }) => {
         }
       });
     return () => controller.abort();
-  }, [canBook, serviceType, formData.check_in_date]);
+  }, [serviceType, formData.check_in_date]);
 
   useEffect(() => {
     const handleEsc = (e) => { if (e.key === "Escape") onClose(); };
@@ -179,9 +186,11 @@ const ServiceBookingModal = ({ serviceType, onClose }) => {
     if (!formData.pet_type.trim()) ne.pet_type = "Pet type is required.";
     if (serviceType === "hotel") {
       if (!formData.check_in_date) ne.check_in_date = "Stay date is required.";
-      else if (hotelAvailabilityLoading) ne.check_in_date = "Checking room availability...";
-      else if (!availableRoomTypes?.length) ne.check_in_date = hotelAvailabilityError || "No rooms are available for this stay date.";
-      if (formData.room_type && availableRoomTypes && !availableRoomTypes.includes(formData.room_type)) ne.room_type = "Choose an available room type.";
+      else if (canBook) {
+        if (hotelAvailabilityLoading) ne.check_in_date = "Checking room availability...";
+        else if (!availableRoomTypes?.length) ne.check_in_date = hotelAvailabilityError || "No rooms are available for this stay date.";
+      }
+      if (canBook && formData.room_type && availableRoomTypes && !availableRoomTypes.includes(formData.room_type)) ne.room_type = "Choose an available room type.";
       if (!formData.preferred_time) ne.preferred_time = "Preferred time is required.";
     }
     if (serviceType === "grooming") {
@@ -221,8 +230,15 @@ const ServiceBookingModal = ({ serviceType, onClose }) => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!canBook || !validate()) return;
+    if (!validate()) return;
     saveDraft(serviceType, formData);
+
+    if (!canBook) {
+      saveServiceIntent(serviceType);
+      onClose();
+      navigate(needsVerification ? `/verify-email?email=${encodeURIComponent(user?.email || "")}` : "/login");
+      return;
+    }
 
     if (serviceType === "hotel") {
       navigate("/customer/hotel");
@@ -233,7 +249,7 @@ const ServiceBookingModal = ({ serviceType, onClose }) => {
     try {
       setLoading(true);
       const data = await apiRequest("/customer/requests", { method: "POST", body: JSON.stringify(payload) });
-      if (data.success) { showSuccess("Booking request submitted successfully. Please wait for receptionist approval."); onClose(); } else { showError(data.message || "Failed to submit request."); }
+      if (data.success) { clearDraft(); showSuccess("Booking request submitted successfully. Please wait for receptionist approval."); onClose(); } else { showError(data.message || "Failed to submit request."); }
     } catch (error) {
       const message = error.response?.data?.message || error.response?.data?.error || error.message || "Server error while submitting booking request.";
       showError(message);
@@ -280,7 +296,7 @@ const ServiceBookingModal = ({ serviceType, onClose }) => {
       <div className="svc-form-row">
         <label className="svc-form-group">
           <span><FontAwesomeIcon icon={faCalendarAlt} /> Stay Date *</span>
-          <DatePickerInput selected={parseDateOnly(formData.check_in_date)} onChange={(date) => handleDateChange("check_in_date", date)} placeholderText="Pick stay date..." minDate={new Date()} required className={errors.check_in_date ? "has-error" : ""} />
+          <DatePickerInput selected={parseDateOnly(formData.check_in_date)} onChange={(date) => handleDateChange("check_in_date", date)} placeholderText="mm/dd/yyyy" minDate={new Date()} required className={errors.check_in_date ? "has-error" : ""} />
           {fe("check_in_date")}
         </label>
         <label className="svc-form-group">
@@ -335,7 +351,7 @@ const ServiceBookingModal = ({ serviceType, onClose }) => {
         </label>
         <label className="svc-form-group">
           <span><FontAwesomeIcon icon={faCalendarAlt} /> Preferred Date *</span>
-          <DatePickerInput selected={parseDateOnly(formData.preferred_date)} onChange={(date) => handleDateChange("preferred_date", date)} placeholderText="Pick a date..." minDate={new Date()} required className={errors.preferred_date ? "has-error" : ""} />
+          <DatePickerInput selected={parseDateOnly(formData.preferred_date)} onChange={(date) => handleDateChange("preferred_date", date)} placeholderText="mm/dd/yyyy" minDate={new Date()} required className={errors.preferred_date ? "has-error" : ""} />
           {fe("preferred_date")}
         </label>
       </div>
@@ -357,12 +373,6 @@ const ServiceBookingModal = ({ serviceType, onClose }) => {
     </>
   );
 
-  const continueToAuth = (path) => {
-    saveServiceIntent(serviceType);
-    onClose();
-    navigate(path);
-  };
-
   const renderVetFields = () => (
     <>
       <div className="svc-form-row">
@@ -375,7 +385,7 @@ const ServiceBookingModal = ({ serviceType, onClose }) => {
         </label>
         <label className="svc-form-group">
           <span><FontAwesomeIcon icon={faCalendarAlt} /> Preferred Date *</span>
-          <DatePickerInput selected={parseDateOnly(formData.preferred_date)} onChange={(date) => handleDateChange("preferred_date", date)} placeholderText="Pick a date..." minDate={new Date()} required className={errors.preferred_date ? "has-error" : ""} />
+          <DatePickerInput selected={parseDateOnly(formData.preferred_date)} onChange={(date) => handleDateChange("preferred_date", date)} placeholderText="mm/dd/yyyy" minDate={new Date()} required className={errors.preferred_date ? "has-error" : ""} />
           {fe("preferred_date")}
         </label>
       </div>
@@ -428,37 +438,6 @@ const ServiceBookingModal = ({ serviceType, onClose }) => {
       )}
     </>
   );
-
-  if (!canBook) {
-    return (
-      <div className="hbk-overlay" onClick={onClose}>
-        <div className={`hbk-modal ${config.accent}`} onClick={(e) => e.stopPropagation()} role="dialog" aria-modal="true" aria-labelledby="service-modal-title">
-          <div className="hbk-head">
-            <div>
-              <span className="hbk-eyebrow">Service Booking</span>
-              <h2 id="service-modal-title">{config.title}</h2>
-              <p className="svc-subtitle">{needsVerification ? "Verify your email to continue booking." : "Sign in or create a customer account before booking."}</p>
-            </div>
-            <button type="button" className="close-btn" onClick={onClose} aria-label="Close">
-              <FontAwesomeIcon icon={faTimes} />
-            </button>
-          </div>
-          <div className="hbk-body svc-auth-gate">
-            {needsVerification ? (
-              <button type="button" className="svc-submit-btn" onClick={() => continueToAuth(`/verify-email?email=${encodeURIComponent(user?.email || "")}`)}>
-                Verify email
-              </button>
-            ) : (
-              <>
-                <button type="button" className="svc-submit-btn" onClick={() => continueToAuth("/login")}>Log in</button>
-                <button type="button" className="svc-auth-link" onClick={() => continueToAuth("/register")}>Create an account</button>
-              </>
-            )}
-          </div>
-        </div>
-      </div>
-    );
-  }
 
   return (
     <div className="hbk-overlay" onClick={onClose}>

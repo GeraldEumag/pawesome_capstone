@@ -1,21 +1,23 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faSave, faSpinner, faImage, faPlus, faTrash, faGlobe, faEye, faHome, faPaw, faListOl, faInfoCircle, faBullhorn, faChartBar, faImages, faRectangleAd, faExternalLinkAlt } from "@fortawesome/free-solid-svg-icons";
+import { faSave, faSpinner, faImage, faPlus, faTrash, faGlobe, faHome, faPaw, faInfoCircle, faRectangleAd, faExternalLinkAlt } from "@fortawesome/free-solid-svg-icons";
 import { fetchAdminLandingPageSections, updateLandingPageSection, uploadLandingPageImage } from "../../api/landingPage";
 import { clearLandingPageCache } from "../../hooks/useLandingPageContent";
 import { showSuccess, showError } from "../../utils/alert.jsx";
 import "./AdminLandingPageEditor.css";
 
 const SECTIONS = [
-  { key: "hero", label: "Top Banner", icon: faHome },
-  { key: "featured_services", label: "Service Cards", icon: faPaw },
-  { key: "how_it_works", label: "How It Works", icon: faListOl },
-  { key: "about", label: "About Us", icon: faInfoCircle },
-  { key: "final_cta", label: "Bottom Banner", icon: faBullhorn },
-  { key: "trust_stats", label: "Quick Stats", icon: faChartBar },
-  { key: "facilities_gallery", label: "Facilities Gallery", icon: faImages },
-  { key: "footer", label: "Footer", icon: faRectangleAd },
-  { key: "auth_pages", label: "Auth Page Photos", icon: faImage },
+  { key: "hero", label: "Hero", icon: faHome },
+  { key: "featured_services", label: "Services", icon: faPaw },
+  { key: "about", label: "Why Pawesome", icon: faInfoCircle },
+  { key: "footer", label: "Contact & Footer", icon: faRectangleAd },
+  { key: "auth_pages", label: "Account Page Images", icon: faImage },
+];
+
+const SERVICE_DEFAULTS = [
+  { key: "hotel", title: "Pet Hotel", description: "Comfortable boarding while you are away.", cta: "Book Hotel", icon: "hotel" },
+  { key: "grooming", title: "Grooming", description: "Professional grooming and hygiene care.", cta: "Book Grooming", icon: "grooming" },
+  { key: "vet", title: "Veterinary Services", description: "Veterinary consultations and preventive care.", cta: "Book Vet Visit", icon: "vet" },
 ];
 
 const deepClone = (obj) => JSON.parse(JSON.stringify(obj));
@@ -133,30 +135,6 @@ const AdminLandingPageEditor = () => {
     }
   };
 
-  const handleFacilityImageUpload = async (e, itemIdx) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    setUploading(true);
-    try {
-      const res = await uploadLandingPageImage(file, "facilities_gallery");
-      if (res.success && res.data?.url) {
-        setSections((prev) => {
-          const next = deepClone(prev);
-          const items = next.facilities_gallery?.items || [];
-          if (items[itemIdx]) items[itemIdx].image = res.data.url;
-          return next;
-        });
-        showSuccess("Photo uploaded.");
-      } else {
-        showError(res.message || "Upload failed.");
-      }
-    } catch (err) {
-      showError(err.message || "Upload error.");
-    } finally {
-      setUploading(false);
-    }
-  };
-
   const renderInput = (label, path, type = "text", placeholder = "") => {
     const currentValue = path.split(".").reduce((o, k) => o?.[k], sections) || "";
     const displayPlaceholder = placeholder || currentValue || "";
@@ -196,7 +174,7 @@ const AdminLandingPageEditor = () => {
     );
   };
 
-  const renderArrayField = (label, path, fields) => {
+  const renderArrayField = (label, path, fields, maxItems = Infinity) => {
     const items = path.split(".").reduce((o, k) => o?.[k], sections) || [];
     return (
       <div className="editor-array">
@@ -205,6 +183,7 @@ const AdminLandingPageEditor = () => {
           <button
             type="button"
             className="editor-btn-small"
+            disabled={items.length >= maxItems}
             onClick={() => {
               const newItem = {};
               fields.forEach((f) => (newItem[f.key] = f.default || ""));
@@ -248,293 +227,102 @@ const AdminLandingPageEditor = () => {
   const renderEditor = () => {
     const data = sections[activeSection];
     if (!data) return <p>Select a section to edit.</p>;
+    const serviceItems = SERVICE_DEFAULTS.map((defaults) => ({
+      ...defaults,
+      ...(data.services || []).find((service) => service.key === defaults.key),
+    }));
 
     switch (activeSection) {
       case "hero":
         return (
           <div className="editor-form">
-            {renderInput("Small top text (appears above the big title)", "hero.eyebrow")}
-            {renderInput("Big title / Main heading", "hero.headline")}
-            {renderInput("Description paragraph", "hero.description", "textarea")}
-            {renderInput("Main button text", "hero.primary_cta")}
-            {renderInput("Second button text", "hero.secondary_cta")}
-            <p className="editor-helper-text">
-              The three images below appear as a layered photo collage beside the hero banner. Each slot falls back to a default facility photo if left empty.
-            </p>
-            {renderImageField("Hero collage photo — Slot 1 (main photo)", "hero.image")}
-            {renderImageField("Hero collage photo — Slot 2 (bottom-left card)", "hero.image_2")}
-            {renderImageField("Hero collage photo — Slot 3 (top-right circle)", "hero.image_3")}
-            <div className="editor-array">
-              <div className="editor-array-header">
-                <strong>Topic labels (small badges under buttons)</strong>
-                <button
-                  type="button"
-                  className="editor-btn-small"
-                  onClick={() => handleChange("hero.tags", [...(sections.hero?.tags || []), ""])}
-                >
-                  <FontAwesomeIcon icon={faPlus} /> Add
-                </button>
-              </div>
-              {(sections.hero?.tags || []).map((tag, idx) => (
-                <div key={idx} className="editor-array-item">
-                  <input
-                    type="text"
-                    placeholder="Badge label (e.g., Pet Hotel)"
-                    value={typeof tag === "string" ? tag : tag?.value || ""}
-                    onChange={(e) => {
-                      const next = [...(sections.hero?.tags || [])];
-                      next[idx] = e.target.value;
-                      handleChange("hero.tags", next);
-                    }}
-                  />
-                  <button
-                    type="button"
-                    className="editor-btn-remove"
-                    onClick={() => {
-                      const next = (sections.hero?.tags || []).filter((_, i) => i !== idx);
-                      handleChange("hero.tags", next);
-                    }}
-                  >
-                    <FontAwesomeIcon icon={faTrash} />
-                  </button>
-                </div>
-              ))}
-            </div>
+            {renderInput("Eyebrow (optional)", "hero.eyebrow")}
+            {renderInput("Main heading", "hero.headline")}
+            {renderInput("Short description", "hero.description", "textarea")}
+            {renderInput("Primary button label", "hero.primary_cta")}
+            {renderImageField("Hero photo", "hero.image")}
+            <p className="editor-helper-text">Use one clear, high-quality photo. Leave it unchanged to use the default facility image.</p>
           </div>
         );
       case "featured_services":
         return (
           <div className="editor-form">
-            {renderInput("Small top text (above the section title)", "featured_services.eyebrow")}
-            {renderInput("Section title", "featured_services.headline")}
-            {renderInput("Section description", "featured_services.description", "textarea")}
+            {renderInput("Eyebrow (optional)", "featured_services.eyebrow")}
+            {renderInput("Section heading", "featured_services.headline")}
+            {renderInput("Short introduction", "featured_services.description", "textarea")}
             <div className="editor-array">
-              <strong>Service cards (max 3 recommended)</strong>
-              {(data.services || []).map((svc, idx) => (
-                <div key={idx} className="editor-service-card">
+              <strong>Core services</strong>
+              {serviceItems.map((svc, idx) => (
+                <div key={`${svc.key}-${idx}`} className="editor-service-card">
+                  <label className="editor-field">
+                    <span>Service</span>
+                    <select
+                      value={svc.key || ""}
+                      onChange={(e) => {
+                        const next = serviceItems.map((item, itemIndex) => itemIndex === idx ? { ...item, key: e.target.value } : item);
+                        handleChange("featured_services.services", next);
+                      }}
+                    >
+                      <option value="hotel" disabled={serviceItems.some((item, i) => i !== idx && item.key === "hotel")}>Pet Hotel</option>
+                      <option value="grooming" disabled={serviceItems.some((item, i) => i !== idx && item.key === "grooming")}>Grooming</option>
+                      <option value="vet" disabled={serviceItems.some((item, i) => i !== idx && item.key === "vet")}>Veterinary</option>
+                    </select>
+                  </label>
                   <input
-                    placeholder="Service type: hotel, grooming, or vet"
-                    value={svc.key || ""}
-                    onChange={(e) => {
-                      const next = [...data.services];
-                      next[idx] = { ...next[idx], key: e.target.value };
-                      handleChange("featured_services.services", next);
-                    }}
-                  />
-                  <input
-                    placeholder="Card title (e.g., Pet Hotel)"
+                    aria-label="Service card title"
+                    placeholder="Card title"
                     value={svc.title || ""}
                     onChange={(e) => {
-                      const next = [...data.services];
-                      next[idx] = { ...next[idx], title: e.target.value };
+                      const next = serviceItems.map((item, itemIndex) => itemIndex === idx ? { ...item, title: e.target.value } : item);
                       handleChange("featured_services.services", next);
                     }}
                   />
                   <textarea
-                    placeholder="Short description of this service"
+                    aria-label="Service card description"
+                    placeholder="Short service description"
                     value={svc.description || ""}
                     onChange={(e) => {
-                      const next = [...data.services];
-                      next[idx] = { ...next[idx], description: e.target.value };
+                      const next = serviceItems.map((item, itemIndex) => itemIndex === idx ? { ...item, description: e.target.value } : item);
                       handleChange("featured_services.services", next);
                     }}
                     rows={2}
                   />
                   <input
-                    placeholder="Button text (e.g., Book Hotel)"
+                    aria-label="Service button label"
+                    placeholder="Button label"
                     value={svc.cta || ""}
                     onChange={(e) => {
-                      const next = [...data.services];
-                      next[idx] = { ...next[idx], cta: e.target.value };
+                      const next = serviceItems.map((item, itemIndex) => itemIndex === idx ? { ...item, cta: e.target.value } : item);
                       handleChange("featured_services.services", next);
                     }}
                   />
-                  <button
-                    type="button"
-                    className="editor-btn-remove"
-                    onClick={() => {
-                      const next = data.services.filter((_, i) => i !== idx);
-                      handleChange("featured_services.services", next);
-                    }}
-                  >
-                    <FontAwesomeIcon icon={faTrash} />
-                  </button>
+                  <div className="editor-image-row">
+                    {svc.image && <img src={svc.image} alt="Service card preview" className="editor-image-preview" />}
+                    <label className="editor-facility-upload">
+                      <span>{svc.image ? "Change photo" : "Add photo"}</span>
+                      <input
+                        type="file"
+                        accept="image/*"
+                        onChange={(event) => handleImageUpload(event, `featured_services.services.${idx}.image`)}
+                      />
+                    </label>
+                  </div>
                 </div>
               ))}
-              <button
-                type="button"
-                className="editor-btn-small"
-                onClick={() =>
-                  handleChange("featured_services.services", [
-                    ...(data.services || []),
-                    { key: "", title: "", description: "", cta: "", icon: "" },
-                  ])
-                }
-              >
-                <FontAwesomeIcon icon={faPlus} /> Add Service
-              </button>
-            </div>
-          </div>
-        );
-      case "how_it_works":
-        return (
-          <div className="editor-form">
-            {renderInput("Small top text (above the section title)", "how_it_works.eyebrow")}
-            {renderInput("Section title", "how_it_works.headline")}
-            <div className="editor-array">
-              <strong>Process steps</strong>
-              {(data.steps || []).map((step, idx) => (
-                <div key={idx} className="editor-array-item">
-                  <input
-                    placeholder="Step number (e.g., 01)"
-                    value={step.number || ""}
-                    onChange={(e) => {
-                      const next = [...data.steps];
-                      next[idx] = { ...next[idx], number: e.target.value };
-                      handleChange("how_it_works.steps", next);
-                    }}
-                  />
-                  <input
-                    placeholder="Step title"
-                    value={step.title || ""}
-                    onChange={(e) => {
-                      const next = [...data.steps];
-                      next[idx] = { ...next[idx], title: e.target.value };
-                      handleChange("how_it_works.steps", next);
-                    }}
-                  />
-                  <textarea
-                    placeholder="Step description"
-                    value={step.description || ""}
-                    onChange={(e) => {
-                      const next = [...data.steps];
-                      next[idx] = { ...next[idx], description: e.target.value };
-                      handleChange("how_it_works.steps", next);
-                    }}
-                    rows={2}
-                  />
-                  <button
-                    type="button"
-                    className="editor-btn-remove"
-                    onClick={() => {
-                      const next = data.steps.filter((_, i) => i !== idx);
-                      handleChange("how_it_works.steps", next);
-                    }}
-                  >
-                    <FontAwesomeIcon icon={faTrash} />
-                  </button>
-                </div>
-              ))}
-              <button
-                type="button"
-                className="editor-btn-small"
-                onClick={() =>
-                  handleChange("how_it_works.steps", [
-                    ...(data.steps || []),
-                    { number: "", title: "", description: "" },
-                  ])
-                }
-              >
-                <FontAwesomeIcon icon={faPlus} /> Add Step
-              </button>
             </div>
           </div>
         );
       case "about":
         return (
           <div className="editor-form">
-            {renderInput("Small top text (above the section title)", "about.eyebrow")}
-            {renderInput("Section title", "about.headline")}
-            {renderInput("About us paragraph", "about.description", "textarea")}
-            {renderImageField("About section image", "about.image")}
-            {renderArrayField("Highlight points (reasons to choose us)", "about.points", [
-              { key: "title", label: "Point title", default: "" },
-              { key: "description", label: "Point description", default: "" },
-            ])}
-          </div>
-        );
-      case "final_cta":
-        return (
-          <div className="editor-form">
-            {renderInput("Small top text (above the section title)", "final_cta.eyebrow")}
-            {renderInput("Section title", "final_cta.headline")}
-            {renderInput("Description paragraph", "final_cta.description", "textarea")}
-            {renderInput("Main button text", "final_cta.primary_cta")}
-            {renderInput("Second button text", "final_cta.secondary_cta")}
-          </div>
-        );
-      case "trust_stats":
-        return (
-          <div className="editor-form">
-            {renderArrayField("Quick stats (numbers at a glance)", "trust_stats.stats", [
-              { key: "value", label: "Stat number (e.g., 9+)", default: "" },
-              { key: "label", label: "What it means (e.g., Core Services)", default: "" },
-            ])}
-          </div>
-        );
-      case "facilities_gallery":
-        return (
-          <div className="editor-form">
-            {renderInput("Small top text (above the section title)", "facilities_gallery.eyebrow")}
-            {renderInput("Section title", "facilities_gallery.headline")}
-            {renderInput("Description paragraph", "facilities_gallery.description", "textarea")}
-            <div className="editor-array">
-              <strong>Facility photos (each can have a caption and an uploaded image)</strong>
-              {(data.items || []).map((item, idx) => (
-                <div key={idx} className="editor-array-item editor-facility-item">
-                  <input
-                    placeholder="Caption (e.g., Reception Area)"
-                    value={item.caption || ""}
-                    onChange={(e) => {
-                      const next = [...data.items];
-                      next[idx] = { ...next[idx], caption: e.target.value };
-                      handleChange("facilities_gallery.items", next);
-                    }}
-                  />
-                  <label className="editor-facility-upload">
-                    <span>Upload photo</span>
-                    <input
-                      type="file"
-                      accept="image/*"
-                      onChange={(e) => handleFacilityImageUpload(e, idx)}
-                    />
-                    {uploading && <FontAwesomeIcon icon={faSpinner} spin />}
-                  </label>
-                  {item.image && (
-                    <img
-                      src={item.image}
-                      alt={item.caption}
-                      className="editor-facility-preview"
-                    />
-                  )}
-                  {!item.image && (
-                    <span className="editor-facility-default">Using default facility photo</span>
-                  )}
-                  <button
-                    type="button"
-                    className="editor-btn-remove"
-                    onClick={() => {
-                      const next = data.items.filter((_, i) => i !== idx);
-                      handleChange("facilities_gallery.items", next);
-                    }}
-                  >
-                    <FontAwesomeIcon icon={faTrash} />
-                  </button>
-                </div>
-              ))}
-              <button
-                type="button"
-                className="editor-btn-small"
-                onClick={() =>
-                  handleChange("facilities_gallery.items", [
-                    ...(data.items || []),
-                    { caption: "", image: null },
-                  ])
-                }
-              >
-                <FontAwesomeIcon icon={faPlus} /> Add Photo Slot
-              </button>
-            </div>
+            {renderInput("Eyebrow (optional)", "about.eyebrow")}
+            {renderInput("Section heading", "about.headline")}
+            {renderInput("Short description", "about.description", "textarea")}
+            {renderImageField("Facility photo", "about.image")}
+            {renderArrayField("Highlights (up to 3)", "about.points", [
+              { key: "title", label: "Highlight title", default: "" },
+              { key: "description", label: "Short explanation", default: "" },
+            ], 3)}
           </div>
         );
       case "footer":
@@ -552,7 +340,7 @@ const AdminLandingPageEditor = () => {
         return (
           <div className="editor-form">
             <p className="editor-helper-text">
-              Upload photos to use as full-bleed background images on the Login and Registration pages. If left empty, default facility photos are used automatically.
+              These photos are used on the sign-in and registration pages, not on the public landing page.
             </p>
             {renderImageField("Login page background photo", "auth_pages.login_bg_image")}
             {renderImageField("Registration page background photo", "auth_pages.register_bg_image")}
@@ -573,8 +361,9 @@ const AdminLandingPageEditor = () => {
           <p>Edit text, images, and buttons for the public landing page.</p>
         </div>
         <button
+          type="button"
           className="editor-preview-btn"
-          title="Open public landing page in a new tab"
+          title="Open the currently saved public landing page in a new tab"
           onClick={() => window.open("/", "_blank")}
         >
           <FontAwesomeIcon icon={faExternalLinkAlt} />

@@ -38,7 +38,15 @@ const DEFAULT_SERVICES = {
 
 const DynamicFeaturedServices = ({ content, onBookService }) => {
   const data = content ?? DEFAULT_SERVICES;
-  const services = data.services || DEFAULT_SERVICES.services;
+  const configuredServices = new Map(
+    (Array.isArray(data.services) ? data.services : [])
+      .filter((service) => Object.prototype.hasOwnProperty.call(ICON_MAP, service.key))
+      .map((service) => [service.key, service])
+  );
+  const services = DEFAULT_SERVICES.services.map((service) => ({
+    ...service,
+    ...configuredServices.get(service.key),
+  }));
 
   return (
     <section className="landing-section landing-featured-services">
@@ -49,20 +57,21 @@ const DynamicFeaturedServices = ({ content, onBookService }) => {
       </div>
 
       <div className="landing-featured-grid">
-        {services.map((service, index) => (
-          <article className="landing-featured-card" key={service.key} style={{ animationDelay: `${index * 100}ms` }}>
+        {services.map((service) => (
+          <article className="landing-featured-card" key={service.key}>
             {service.image ? (
               <div className="featured-card-image">
-                <img src={service.image} alt={service.title} />
+                <img src={service.image} alt="" loading="lazy" decoding="async" />
               </div>
             ) : (
-              <div className="featured-card-icon">
-                <FontAwesomeIcon icon={ICON_MAP[service.icon] || faHotel} />
+              <div className="featured-card-icon" aria-hidden="true">
+                <FontAwesomeIcon icon={ICON_MAP[service.key] || faHotel} />
               </div>
             )}
             <h3>{service.title}</h3>
             <p>{service.description}</p>
             <button
+              type="button"
               className="landing-btn landing-btn-primary"
               onClick={() => onBookService(service.key)}
             >

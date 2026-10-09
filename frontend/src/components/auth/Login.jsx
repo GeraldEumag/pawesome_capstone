@@ -215,11 +215,6 @@ const Login = () => {
         </div>
       </div>
 
-      {/* Trust footer */}
-      <div className="login-trust-foot" aria-label="Customer trust">
-        <span className="login-trust-stars">★★★★★</span>
-        <span>Trusted by 200+ happy pet owners · Las Piñas</span>
-      </div>
     </div>
   );
 };

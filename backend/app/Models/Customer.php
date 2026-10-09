@@ -34,6 +34,19 @@ class Customer extends Model
         'is_active' => 'boolean',
     ];
 
+    /**
+     * Person names are stored in ALL CAPS — business/email convention.
+     */
+    public function setNameAttribute($value): void
+    {
+        if ($value === null) {
+            $this->attributes['name'] = null;
+            return;
+        }
+        $trimmed = trim((string) $value);
+        $this->attributes['name'] = $trimmed === '' ? null : mb_strtoupper($trimmed);
+    }
+
     public function getProfilePhotoAttribute(): ?string
     {
         $userId = $this->user_id ?? $this->user?->id;

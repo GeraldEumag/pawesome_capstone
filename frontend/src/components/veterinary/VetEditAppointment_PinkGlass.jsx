@@ -333,7 +333,7 @@ const VetEditAppointment = () => {
                 id="appointment_date"
                 selected={parseDateOnly(formData.appointment_date)}
                 onChange={(date) => handleInputChange({ target: { name: "appointment_date", value: formatDateOnly(date) } })}
-                placeholderText="Pick a date..."
+                placeholderText="mm/dd/yyyy"
                 minDate={new Date()}
                 required
               />

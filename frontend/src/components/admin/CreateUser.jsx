@@ -246,7 +246,7 @@ const CreateUser = () => {
                     id="dateOfBirth"
                     selected={parseDateOnly(formData.dateOfBirth)}
                     onChange={(date) => handleChange({ target: { name: "dateOfBirth", value: formatDateOnly(date) } })}
-                    placeholderText="Select birthdate..."
+                    placeholderText="mm/dd/yyyy"
                     maxDate={new Date()}
                     className={errors.dateOfBirth ? "error" : ""}
                   />

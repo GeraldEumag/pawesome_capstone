@@ -25,6 +25,30 @@ class LandingPageContentController extends Controller
         'auth_pages',
     ];
 
+    private function publicImageUrl(string $path): string
+    {
+        $path = ltrim($path, '/');
+
+        if (config('filesystems.disks.public.driver') === 'local') {
+            return asset('storage/' . $path);
+        }
+
+        return Storage::disk('public')->url($path);
+    }
+
+    private function normalizeImagePaths(array $content): array
+    {
+        foreach ($content as $key => $value) {
+            if (is_array($value)) {
+                $content[$key] = $this->normalizeImagePaths($value);
+            } elseif (is_string($value) && preg_match('~^/?landing-page/~', $value)) {
+                $content[$key] = $this->publicImageUrl($value);
+            }
+        }
+
+        return $content;
+    }
+
     public function showPublic(): JsonResponse
     {
         $contents = Cache::remember('landing_page_contents', 300, function () {
@@ -34,6 +58,11 @@ class LandingPageContentController extends Controller
                 ->map(fn ($item) => $item->content_data)
                 ->toArray();
         });
+
+        $contents = array_map(
+            fn ($section) => is_array($section) ? $this->normalizeImagePaths($section) : $section,
+            $contents
+        );
 
         return response()->json([
             'success' => true,
@@ -47,7 +76,7 @@ class LandingPageContentController extends Controller
             ->map(fn ($item) => [
                 'section_key' => $item->section_key,
                 'content_type' => $item->content_type,
-                'content_data' => $item->content_data,
+                'content_data' => $this->normalizeImagePaths($item->content_data),
                 'is_active' => $item->is_active,
                 'updated_at' => $item->updated_at,
             ]);
@@ -81,7 +110,7 @@ class LandingPageContentController extends Controller
             'data' => [
                 'section_key' => $content->section_key,
                 'content_type' => $content->content_type,
-                'content_data' => $content->content_data,
+                'content_data' => $this->normalizeImagePaths($content->content_data),
                 'is_active' => $content->is_active,
                 'updated_at' => $content->updated_at,
             ],
@@ -133,7 +162,7 @@ class LandingPageContentController extends Controller
         return response()->json([
             'success' => true,
             'message' => 'Section updated successfully.',
-            'data' => $content->content_data,
+            'data' => $this->normalizeImagePaths($content->content_data),
         ]);
     }
 
@@ -154,7 +183,7 @@ class LandingPageContentController extends Controller
 
         $file = $request->file('image');
         $path = $file->store('landing-page', 'public');
-        $url = Storage::disk('public')->url($path);
+        $url = $this->publicImageUrl($path);
 
         return response()->json([
             'success' => true,
