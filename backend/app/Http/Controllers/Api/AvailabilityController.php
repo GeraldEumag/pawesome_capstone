@@ -219,7 +219,7 @@ class AvailabilityController extends Controller
         $checkOut = $request->input('check_out');
 
         try {
-            $isAvailable = BookingAvailabilityService::isBoardingRoomAvailable($roomId, $checkIn, $checkOut);
+            $isAvailable = BookingAvailabilityService::isBoardingRoomAvailable($roomId, $checkIn, $checkOut, 'hotel_rooms');
             
             return response()->json([
                 'success' => true,

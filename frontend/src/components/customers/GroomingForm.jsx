@@ -303,7 +303,6 @@ const GroomingForm = () => {
     <section className="grooming-container">
       <div className="grooming-header">
         <h1>Pet Grooming</h1>
-        <p>Book grooming services for your pet.</p>
       </div>
 
       <div className="grooming-tabs">

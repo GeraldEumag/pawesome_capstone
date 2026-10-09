@@ -51,6 +51,11 @@
   margin-bottom: 1.5rem;
 }
 
+.customer-payments-actions {
+  justify-content: flex-end;
+  margin-bottom: 1rem;
+}
+
 .customer-payments-kicker {
   display: inline-flex;
   margin-bottom: 0.45rem;

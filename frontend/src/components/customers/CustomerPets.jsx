@@ -581,20 +581,7 @@ const CustomerPets = () => {
         </div>
       )}
 
-      <div className="pets-hero">
-        <div>
-          <span className="pets-eyebrow">
-            <FaPaw />
-            Customer Pet Records
-          </span>
-
-          <h1>My Pets</h1>
-          <p>
-            Add and manage your registered pets. Veterinary medical history shown here
-            is synced with the records created by the veterinary role.
-          </p>
-        </div>
-
+      <div className="pets-toolbar pets-top-toolbar">
         <button
           className={`pets-refresh-btn ${refreshing ? "refreshing" : ""}`}
           type="button"

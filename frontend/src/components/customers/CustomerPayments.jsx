@@ -318,20 +318,11 @@ const CustomerPayments = () => {
 
   return (
     <section className="customer-payments-page">
-      <header className="customer-payments-header">
-        <div>
-          <span className="customer-payments-kicker">Customer Portal</span>
-          <h3>Payment History</h3>
-          <p>
-            Review payment records across orders and service requests. Cashier verification
-            is required before any payment is marked paid.
-          </p>
-        </div>
-
+      <div className="customer-payments-header customer-payments-actions">
         <button type="button" className="customer-payments-main-btn" onClick={fetchPayments}>
           Refresh
         </button>
-      </header>
+      </div>
 
       {error && (
         <div className="customer-payments-error">

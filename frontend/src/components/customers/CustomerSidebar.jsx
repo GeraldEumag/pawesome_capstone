@@ -1,7 +1,6 @@
 import React from "react";
 import { NavLink, useNavigate } from "react-router-dom";
 import {
-  FaTachometerAlt,
   FaPaw,
   FaConciergeBell,
   FaCreditCard,
@@ -34,9 +33,8 @@ const CustomerSidebar = ({ mobileOpen, onMobileMenuToggle }) => {
   };
 
   const navItems = [
-    { to: "/customer",                      label: "Dashboard",           icon: <FaTachometerAlt />, end: true },
-    { to: "/customer/pets",                 label: "My Pets",             icon: <FaPaw /> },
     { to: "/customer/services",             label: "Services",            icon: <FaConciergeBell /> },
+    { to: "/customer/pets",                 label: "My Pets",             icon: <FaPaw /> },
     { to: "/customer/payments",             label: "Payments",            icon: <FaCreditCard /> },
     { to: "/customer/notifications",        label: "Notifications",       icon: <FaBell /> },
     { to: "/customer/history",              label: "History",             icon: <FaHistory /> },

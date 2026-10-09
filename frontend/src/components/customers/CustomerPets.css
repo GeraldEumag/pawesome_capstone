@@ -843,6 +843,12 @@
   margin-bottom: 1rem;
 }
 
+.pets-top-toolbar {
+  display: flex;
+  justify-content: flex-end;
+  grid-template-columns: none;
+}
+
 .pets-search-box {
   position: relative;
   min-width: 0;

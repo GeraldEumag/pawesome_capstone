@@ -104,27 +104,33 @@ class InventoryTest extends TestCase
             'status' => 'active',
         ]);
 
+        // Non-stock fields update directly; stock increases go through
+        // batch receiving (stock 15 + 5 = 20).
         $response = $this->actingAs($this->admin)
             ->putJson("/api/admin/inventory/items/{$item->id}", [
                 'name' => 'Updated Name',
                 'price' => 450,
-                'stock' => 20,
+                'stock' => 15,
                 'category' => 'Food',
             ]);
 
         $response->assertStatus(200);
 
+        $batchResponse = $this->actingAs($this->admin)
+            ->postJson("/api/admin/inventory/items/{$item->id}/batches", [
+                'batch_no' => 'B-UPD-001',
+                'received_date' => now()->toDateString(),
+                'expiration_date' => now()->addMonths(6)->toDateString(),
+                'quantity' => 5,
+            ]);
+
+        $batchResponse->assertOk();
+
         $this->assertDatabaseHas('inventory_items', [
             'id' => $item->id,
             'name' => 'Updated Name',
             'price' => 450,
-        ]);
-
-        // Verify stock change was logged
-        $this->assertDatabaseHas('inventory_logs', [
-            'inventory_item_id' => $item->id,
-            'delta' => 5,
-            'reason' => 'Stock update',
+            'stock' => 20,
         ]);
     }
 
@@ -301,12 +307,29 @@ class InventoryTest extends TestCase
             'status' => 'active',
         ]);
 
+        // Quantity decreases can still be set directly; increases require
+        // the batch receiving action.
         $response = $this->actingAs($this->admin)
             ->putJson("/api/admin/inventory/items/{$item->id}", [
-                'quantity' => 35, // Using 'quantity' instead of 'stock'
+                'quantity' => 10, // Using 'quantity' instead of 'stock'
             ]);
 
         $response->assertStatus(200);
+
+        $this->assertDatabaseHas('inventory_items', [
+            'id' => $item->id,
+            'stock' => 10,
+        ]);
+
+        $batchResponse = $this->actingAs($this->admin)
+            ->postJson("/api/admin/inventory/items/{$item->id}/batches", [
+                'batch_no' => 'B-QTY-001',
+                'received_date' => now()->toDateString(),
+                'expiration_date' => now()->addMonths(6)->toDateString(),
+                'quantity' => 25,
+            ]);
+
+        $batchResponse->assertOk();
 
         $this->assertDatabaseHas('inventory_items', [
             'id' => $item->id,
@@ -330,29 +353,36 @@ class InventoryTest extends TestCase
             'status' => 'active',
         ]);
 
-        // Add 25 to existing 50 = 75
-        $response = $this->actingAs($this->admin)
+        // Direct updates can no longer raise stock — increases go through
+        // batch receiving. Add 25 to existing 50 = 75.
+        $this->actingAs($this->admin)
             ->putJson("/api/admin/inventory/items/{$item->id}", [
                 'stock' => 25,
-                'add_stock' => true, // This should ADD, not replace
+                'add_stock' => true,
+            ])
+            ->assertStatus(422);
+
+        $response = $this->actingAs($this->admin)
+            ->postJson("/api/admin/inventory/items/{$item->id}/batches", [
+                'batch_no' => 'B-ADD-001',
+                'received_date' => now()->toDateString(),
+                'expiration_date' => now()->addMonths(6)->toDateString(),
+                'quantity' => 25,
             ]);
 
-        $response->assertStatus(200)
-            ->assertJsonPath('stock_action', 'added')
-            ->assertJsonPath('previous_stock', 50)
-            ->assertJsonPath('new_stock', 75);
+        $response->assertOk();
 
         $this->assertDatabaseHas('inventory_items', [
             'id' => $item->id,
             'stock' => 75, // 50 + 25 = 75
         ]);
 
-        // Verify inventory log
+        // Verify inventory log — batch receiving records a restock entry
         $this->assertDatabaseHas('inventory_logs', [
             'inventory_item_id' => $item->id,
             'delta' => 25,
-            'reason' => 'Stock addition (+25)',
-            'reference_type' => 'addition',
+            'reason' => 'Stock received',
+            'reference_type' => 'restock',
         ]);
     }
 
@@ -439,18 +469,24 @@ class InventoryTest extends TestCase
             'expiry_date' => null, // NO expiry date
         ]);
 
-        // Even with add_stock=true, item without expiry should ADD (50 + 25 = 75)
-        // (Because replacement-only-if-expired only applies to items WITH expiry dates)
-        $response = $this->actingAs($this->admin)
+        // Item without expiry still receives stock through batch receiving
+        // (50 + 25 = 75); direct increases are rejected.
+        $this->actingAs($this->admin)
             ->putJson("/api/admin/inventory/items/{$item->id}", [
                 'stock' => 25,
                 'add_stock' => true,
+            ])
+            ->assertStatus(422);
+
+        $response = $this->actingAs($this->admin)
+            ->postJson("/api/admin/inventory/items/{$item->id}/batches", [
+                'batch_no' => 'B-NOEXP-001',
+                'received_date' => now()->toDateString(),
+                'expiration_date' => now()->addMonths(6)->toDateString(),
+                'quantity' => 25,
             ]);
 
-        $response->assertStatus(200)
-            ->assertJsonPath('stock_action', 'added')
-            ->assertJsonPath('previous_stock', 50)
-            ->assertJsonPath('new_stock', 75); // Added, not replaced
+        $response->assertOk();
 
         $this->assertDatabaseHas('inventory_items', [
             'id' => $item->id,

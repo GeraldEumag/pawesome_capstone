@@ -341,25 +341,37 @@ class FullSystemIntegrationTest extends TestCase
         // STEP 7: Inventory Manager - Smart Stock Update
         // ============================================
         
-        // Add stock to normal item (should ADD: 48 + 10 = 58)
-        $updateNormal = $this->putJson("/api/admin/inventory/items/{$dogFoodId}", [
-            'stock' => 10,
+        // Add stock to normal item through batch receiving (48 + 10 = 58)
+        $updateNormal = $this->postJson("/api/admin/inventory/items/{$dogFoodId}/batches", [
+            'batch_no' => 'B-DAY-001',
+            'received_date' => now()->toDateString(),
+            'expiration_date' => now()->addMonths(6)->toDateString(),
+            'quantity' => 10,
+        ], $this->withAuth($this->admin, $this->adminToken));
+
+        $updateNormal->assertOk();
+        $this->assertEquals(58, $updateNormal->json('item.stock'));
+
+        // Expired item: clear expired stock (replace with 0), then receive
+        // a fresh batch of 50 units.
+        $updateExpired = $this->putJson("/api/admin/inventory/items/{$expiredId}", [
+            'stock' => 0,
             'add_stock' => true,
         ], $this->withAuth($this->admin, $this->adminToken));
-        
-        $updateNormal->assertStatus(200);
-        $this->assertEquals(58, $updateNormal->json('item.stock'));
-        
-        // Replace stock on expired item (should REPLACE despite add_stock flag)
-        $updateExpired = $this->putJson("/api/admin/inventory/items/{$expiredId}", [
-            'stock' => 50,
-            'add_stock' => true, // This should be ignored for expired items
-        ], $this->withAuth($this->admin, $this->adminToken));
-        
+
         $updateExpired->assertStatus(200);
-        // Should replace instead of add because item is expired
-        $this->assertEquals(50, $updateExpired->json('item.stock'));
+        $this->assertEquals(0, $updateExpired->json('item.stock'));
         $this->assertEquals('replaced_expired', $updateExpired->json('stock_action'));
+
+        $restockExpired = $this->postJson("/api/admin/inventory/items/{$expiredId}/batches", [
+            'batch_no' => 'B-EXP-001',
+            'received_date' => now()->toDateString(),
+            'expiration_date' => now()->addMonths(6)->toDateString(),
+            'quantity' => 50,
+        ], $this->withAuth($this->admin, $this->adminToken));
+
+        $restockExpired->assertOk();
+        $this->assertEquals(50, $restockExpired->json('item.stock'));
         
         // ============================================
         // STEP 8: Admin - Review Reports
@@ -462,14 +474,15 @@ class FullSystemIntegrationTest extends TestCase
         ], $this->withAuth($this->cashier));
         $sale2->assertOk()->assertJsonPath('success', true);
         
-        // Inventory update: Add 20
-        $inventoryUpdate = $this->putJson("/api/inventory/items/{$item->id}", [
-            'stock' => 20,
-            'add_stock' => true,
+        // Inventory update: receive 20 units as a new batch
+        $inventoryUpdate = $this->postJson("/api/inventory/items/{$item->id}/batches", [
+            'batch_no' => 'B-CONC-001',
+            'received_date' => now()->toDateString(),
+            'expiration_date' => now()->addMonths(6)->toDateString(),
+            'quantity' => 20,
         ], $this->withAuth($this->inventory, $this->inventoryToken));
         $inventoryUpdate->assertOk()
-            ->assertJsonPath('stock_action', 'added')
-            ->assertJsonPath('new_stock', 95);
+            ->assertJsonPath('item.stock', 95);
 
         // Verify final stock after sales and restock: 100 - 10 - 15 + 20 = 95
         $item->refresh();

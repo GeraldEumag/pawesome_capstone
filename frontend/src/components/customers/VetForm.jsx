@@ -292,7 +292,6 @@ const VetForm = () => {
     <section className="vet-container">
       <div className="vet-header">
         <h1>Veterinary Appointment</h1>
-        <p>Book checkups, vaccinations, and veterinary services for your pet.</p>
       </div>
 
       <div className="vet-tabs">

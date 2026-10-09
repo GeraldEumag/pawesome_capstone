@@ -1,4 +1,4 @@
-/* ===== CUSTOMER DASHBOARD - PINK GLASS THEME ===== */
+/* ===== CUSTOMER DASHBOARD — SHELL + SHARED CUSTOMER STYLES ===== */
 
 .customer-dashboard {
   --color-surface: rgba(255, 255, 255, 0.86);
@@ -17,94 +17,19 @@
 /* ===== ANIMATIONS ===== */
 
 @keyframes fadeUp {
-  from {
-    opacity: 0;
-    transform: translateY(14px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+  from { opacity: 0; transform: translateY(14px); }
+  to   { opacity: 1; transform: translateY(0); }
 }
 
-.overview-card,
 .panel,
-.customer-hero-panel,
-.quick-action-card,
-.upcoming-appointment-card,
 .pet-card,
-.booking-card,
-.reminder-item {
+.booking-card {
   animation: fadeUp 0.45s ease both;
 }
 
-.overview-card:nth-child(1) {
-  animation-delay: 0.05s;
-}
+/* ===== TOPBAR PARTS ===== */
 
-.overview-card:nth-child(2) {
-  animation-delay: 0.1s;
-}
-
-.overview-card:nth-child(3) {
-  animation-delay: 0.15s;
-}
-
-.overview-card:nth-child(4) {
-  animation-delay: 0.2s;
-}
-
-.quick-action-card:nth-child(1) {
-  animation-delay: 0.25s;
-}
-
-.quick-action-card:nth-child(2) {
-  animation-delay: 0.3s;
-}
-
-.quick-action-card:nth-child(3) {
-  animation-delay: 0.35s;
-}
-
-.quick-action-card:nth-child(4) {
-  animation-delay: 0.4s;
-}
-
-
-.customer-main {
-  flex: 1;
-  margin-left: 240px;
-  min-width: 0;
-  display: flex;
-  flex-direction: column;
-  transition: margin-left 0.3s ease;
-}
-
-/* ===== TOP NAVBAR ===== */
-
-.customer-navbar {
-  position: sticky;
-  top: 0;
-  z-index: 100;
-  display: grid;
-  grid-template-columns: minmax(260px, 1fr) minmax(260px, 420px) auto;
-  align-items: center;
-  gap: 1.25rem;
-  padding: 1.15rem 1.6rem;
-  background: rgba(255, 255, 255, 0.74);
-  border-bottom: 1px solid var(--color-border);
-  backdrop-filter: blur(18px);
-  box-shadow: 0 14px 34px rgba(255, 95, 147, 0.1);
-  overflow: visible;
-}
-
-.customer-dashboard.dark .customer-navbar {
-  background: rgba(31, 15, 25, 0.82);
-}
-
-.navbar-left {
-  min-width: 0;
-}
+.navbar-left { min-width: 0; }
 
 .eyebrow {
   display: inline-flex;
@@ -132,33 +57,6 @@
   line-height: 1.45;
 }
 
-.search-group {
-  width: 100%;
-}
-
-.search-group input {
-  width: 100%;
-  min-height: 48px;
-  padding: 0 1rem;
-  border: 1px solid var(--color-border);
-  border-radius: 999px;
-  outline: none;
-  background: rgba(255, 255, 255, 0.76);
-  color: var(--color-text);
-  font-size: 0.92rem;
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.55);
-  transition: 0.2s ease;
-}
-
-.search-group input:focus {
-  border-color: rgba(255, 95, 147, 0.55);
-  box-shadow: 0 0 0 4px rgba(255, 95, 147, 0.12);
-}
-
-.customer-dashboard.dark .search-group input {
-  background: rgba(255, 255, 255, 0.08);
-}
-
 .navbar-actions {
   display: flex;
   align-items: center;
@@ -167,56 +65,6 @@
   overflow: visible;
 }
 
-.customer-profile-btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.7rem;
-  min-height: 50px;
-  padding: 0.45rem 0.8rem 0.45rem 0.55rem;
-  border: 1px solid var(--color-border);
-  border-radius: 999px;
-  background: rgba(255, 255, 255, 0.76);
-  color: var(--color-text);
-  text-decoration: none;
-  box-shadow: var(--shadow-soft);
-  transition: 0.22s ease;
-}
-
-.customer-profile-btn:hover {
-  transform: translateY(-2px);
-  box-shadow: var(--shadow-card);
-}
-
-.profile-avatar-icon {
-  width: 38px;
-  height: 38px;
-  display: grid;
-  place-items: center;
-  border-radius: 50%;
-  color: #ffffff;
-  background: linear-gradient(135deg, var(--color-primary), var(--color-primary-light));
-  box-shadow: 0 8px 18px rgba(255, 95, 147, 0.3);
-}
-
-.profile-info {
-  display: flex;
-  flex-direction: column;
-  line-height: 1.15;
-}
-
-.profile-action-name {
-  color: var(--color-heading);
-  font-size: 0.88rem;
-  font-weight: 800;
-}
-
-.profile-action-role {
-  color: var(--color-muted);
-  font-size: 0.74rem;
-  font-weight: 600;
-}
-
-.theme-toggle-btn,
 .icon-btn {
   width: 48px;
   height: 48px;
@@ -231,408 +79,13 @@
   transition: 0.22s ease;
 }
 
-.theme-toggle-btn:hover,
 .icon-btn:hover {
   transform: translateY(-2px);
   background: linear-gradient(135deg, var(--color-primary), var(--color-primary-light));
   color: #ffffff;
 }
 
-/* ===== OVERVIEW PAGE ===== */
-
-.customer-overview-page {
-  padding: 1.5rem;
-}
-
-.customer-hero-panel {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 1.25rem;
-  padding: 1.6rem;
-  margin-bottom: 1.35rem;
-  border: 1px solid var(--color-border);
-  border-radius: 28px;
-  background:
-    radial-gradient(circle at top left, rgba(255, 95, 147, 0.18), transparent 32%),
-    var(--color-surface);
-  box-shadow: var(--shadow-card);
-  backdrop-filter: blur(16px);
-}
-
-.customer-hero-panel h2 {
-  margin: 0;
-  color: var(--color-heading);
-  font-size: clamp(1.65rem, 3vw, 2.35rem);
-  font-weight: 900;
-  letter-spacing: -0.05em;
-}
-
-.customer-hero-panel p {
-  max-width: 680px;
-  margin: 0.5rem 0 0;
-  color: var(--color-muted);
-  line-height: 1.6;
-}
-
-.hero-status-card {
-  min-width: 220px;
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-  padding: 1rem;
-  border-radius: 22px;
-  background: linear-gradient(135deg, var(--color-primary), var(--color-primary-light));
-  color: #ffffff;
-  box-shadow: 0 18px 36px rgba(255, 95, 147, 0.28);
-}
-
-.hero-status-card svg {
-  font-size: 1.65rem;
-}
-
-.hero-status-card strong,
-.hero-status-card span {
-  display: block;
-}
-
-.hero-status-card strong {
-  font-size: 1.15rem;
-  font-weight: 900;
-}
-
-.hero-status-card span {
-  opacity: 0.9;
-  font-size: 0.85rem;
-}
-
-/* ===== SUMMARY CARDS ===== */
-
-.overview-cards {
-  display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 1rem;
-  margin-bottom: 1.35rem;
-}
-
-.overview-card {
-  position: relative;
-  overflow: hidden;
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-  min-height: 132px;
-  padding: 1.25rem;
-  border: 1px solid var(--color-border);
-  border-radius: 24px;
-  background: var(--color-surface);
-  box-shadow: var(--shadow-card);
-  backdrop-filter: blur(16px);
-  transition: 0.22s ease;
-}
-
-.overview-card::after {
-  content: "";
-  position: absolute;
-  right: -35px;
-  top: -35px;
-  width: 95px;
-  height: 95px;
-  border-radius: 50%;
-  background: rgba(255, 95, 147, 0.12);
-}
-
-.overview-card:hover {
-  transform: translateY(-4px);
-}
-
-.card-icon {
-  width: 52px;
-  height: 52px;
-  flex: 0 0 52px;
-  display: grid;
-  place-items: center;
-  border-radius: 18px;
-  color: #ffffff;
-  background: linear-gradient(135deg, var(--color-primary), var(--color-primary-light));
-  box-shadow: 0 12px 25px rgba(255, 95, 147, 0.24);
-}
-
-.overview-card h3 {
-  margin: 0;
-  color: var(--color-heading);
-  font-size: 2rem;
-  font-weight: 900;
-  letter-spacing: -0.05em;
-}
-
-.overview-card p {
-  margin: 0.1rem 0;
-  color: var(--color-heading);
-  font-size: 0.95rem;
-  font-weight: 800;
-}
-
-.overview-card small {
-  color: var(--color-muted);
-  font-size: 0.82rem;
-  font-weight: 600;
-}
-
-.overview-card.success .card-icon {
-  background: linear-gradient(135deg, #22c55e, #86efac);
-}
-
-.overview-card.gold .card-icon {
-  background: linear-gradient(135deg, #f59e0b, #facc15);
-}
-
-.overview-card.soft .card-icon {
-  background: linear-gradient(135deg, #fb7185, #f9a8d4);
-}
-
-/* ===== QUICK ACTIONS ===== */
-
-.quick-actions-section {
-  margin-bottom: 1.35rem;
-}
-
-.quick-actions-section .panel-header {
-  border-bottom: none;
-  padding-bottom: 0;
-  margin-bottom: 1rem;
-}
-
-.quick-actions-grid {
-  display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 1rem;
-}
-
-.quick-action-card {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 0.85rem;
-  padding: 1.5rem 1rem;
-  border: 1px solid var(--color-border);
-  border-radius: 22px;
-  background: var(--color-surface);
-  text-decoration: none;
-  color: var(--color-text);
-  box-shadow: var(--shadow-card);
-  backdrop-filter: blur(16px);
-  transition: 0.22s ease;
-  position: relative;
-  overflow: hidden;
-}
-
-.quick-action-card::after {
-  content: "";
-  position: absolute;
-  right: -20px;
-  bottom: -20px;
-  width: 70px;
-  height: 70px;
-  border-radius: 50%;
-  background: rgba(255, 95, 147, 0.08);
-}
-
-.quick-action-card:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 22px 50px rgba(255, 95, 147, 0.18);
-}
-
-.quick-action-icon {
-  width: 52px;
-  height: 52px;
-  display: grid;
-  place-items: center;
-  border-radius: 18px;
-  color: #ffffff;
-  background: linear-gradient(135deg, var(--color-primary), var(--color-primary-light));
-  box-shadow: 0 12px 25px rgba(255, 95, 147, 0.24);
-  font-size: 1.25rem;
-}
-
-.quick-action-card.soft .quick-action-icon {
-  background: linear-gradient(135deg, #fb7185, #f9a8d4);
-}
-
-.quick-action-card.success .quick-action-icon {
-  background: linear-gradient(135deg, #22c55e, #86efac);
-}
-
-.quick-action-card.gold .quick-action-icon {
-  background: linear-gradient(135deg, #f59e0b, #facc15);
-}
-
-.quick-action-card span {
-  font-size: 0.88rem;
-  font-weight: 800;
-  color: var(--color-heading);
-  text-align: center;
-}
-
-.action-arrow {
-  margin-top: auto;
-  color: var(--color-primary);
-  font-size: 0.85rem;
-  opacity: 0;
-  transform: translateX(-8px);
-  transition: 0.22s ease;
-}
-
-.quick-action-card:hover .action-arrow {
-  opacity: 1;
-  transform: translateX(0);
-}
-
-/* ===== UPCOMING APPOINTMENT ===== */
-
-.upcoming-appointment-section {
-  margin-bottom: 1.35rem;
-}
-
-.upcoming-appointment-section .panel-header {
-  border-bottom: none;
-  padding-bottom: 0;
-  margin-bottom: 1rem;
-}
-
-.upcoming-appointment-card {
-  display: flex;
-  align-items: center;
-  gap: 1.5rem;
-  padding: 1.5rem;
-  border: 1px solid var(--color-border);
-  border-radius: 26px;
-  background:
-    radial-gradient(circle at top right, rgba(255, 95, 147, 0.12), transparent 40%),
-    var(--color-surface);
-  box-shadow: var(--shadow-card);
-  backdrop-filter: blur(16px);
-  transition: 0.22s ease;
-}
-
-.upcoming-appointment-card:hover {
-  transform: translateY(-3px);
-  box-shadow: 0 22px 50px rgba(255, 95, 147, 0.18);
-}
-
-.appointment-visual {
-  position: relative;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  min-width: 80px;
-  height: 80px;
-}
-
-.appointment-icon {
-  position: absolute;
-  font-size: 3rem;
-  color: rgba(255, 95, 147, 0.15);
-}
-
-.appointment-date-badge {
-  position: relative;
-  z-index: 1;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  width: 64px;
-  height: 64px;
-  border-radius: 18px;
-  background: linear-gradient(135deg, var(--color-primary), var(--color-primary-light));
-  color: #ffffff;
-  box-shadow: 0 12px 25px rgba(255, 95, 147, 0.3);
-}
-
-.date-day {
-  font-size: 1.45rem;
-  font-weight: 900;
-  line-height: 1;
-}
-
-.date-month {
-  font-size: 0.72rem;
-  font-weight: 800;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-}
-
-.appointment-details {
-  flex: 1;
-  min-width: 0;
-}
-
-.appointment-details h3 {
-  margin: 0;
-  color: var(--color-heading);
-  font-size: 1.25rem;
-  font-weight: 900;
-  letter-spacing: -0.03em;
-}
-
-.appointment-details p {
-  margin: 0.25rem 0 0.75rem;
-  color: var(--color-muted);
-  font-size: 0.92rem;
-}
-
-.appointment-meta {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-  flex-wrap: wrap;
-}
-
-.appointment-meta span {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.35rem;
-  color: var(--color-muted);
-  font-size: 0.85rem;
-  font-weight: 700;
-}
-
-.appointment-action-btn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-height: 44px;
-  padding: 0 1.25rem;
-  border: none;
-  border-radius: 999px;
-  background: linear-gradient(135deg, var(--color-primary), var(--color-primary-light));
-  color: #ffffff;
-  text-decoration: none;
-  font-size: 0.88rem;
-  font-weight: 900;
-  box-shadow: 0 12px 24px rgba(255, 95, 147, 0.22);
-  transition: 0.22s ease;
-  white-space: nowrap;
-}
-
-.appointment-action-btn:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 16px 32px rgba(255, 95, 147, 0.28);
-}
-
 /* ===== PANELS ===== */
-
-.dashboard-grid,
-.dashboard-bottom {
-  display: grid;
-  grid-template-columns: minmax(0, 1.55fr) minmax(320px, 0.75fr);
-  gap: 1.35rem;
-}
-
-.dashboard-grid {
-  margin-bottom: 1.35rem;
-}
 
 .panel {
   overflow: hidden;
@@ -691,241 +144,7 @@
   padding: 1.35rem;
 }
 
-.pet-card {
-  display: flex;
-  flex-direction: column;
-  gap: 0.85rem;
-  padding: 1rem;
-  border: 1px solid var(--color-border);
-  border-radius: 20px;
-  background: rgba(255, 255, 255, 0.58);
-  transition: 0.22s ease;
-}
-
-.customer-dashboard.dark .pet-card {
-  background: rgba(255, 255, 255, 0.08);
-}
-
-.pet-card:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 12px 28px rgba(255, 95, 147, 0.12);
-}
-
-.pet-card-header {
-  display: flex;
-  align-items: center;
-  gap: 0.85rem;
-}
-
-.pet-avatar {
-  width: 48px;
-  height: 48px;
-  display: grid;
-  place-items: center;
-  border-radius: 16px;
-  background: linear-gradient(135deg, var(--color-primary), var(--color-primary-light));
-  color: #ffffff;
-  font-size: 1.25rem;
-  box-shadow: 0 8px 18px rgba(255, 95, 147, 0.24);
-}
-
-.pet-card-header strong {
-  display: block;
-  color: var(--color-heading);
-  font-size: 1rem;
-  font-weight: 900;
-}
-
-.pet-type {
-  color: var(--color-muted);
-  font-size: 0.82rem;
-  font-weight: 700;
-}
-
-.pet-card-body {
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-}
-
-.pet-service-tag {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.35rem;
-  padding: 0.35rem 0.7rem;
-  border-radius: 999px;
-  background: rgba(255, 95, 147, 0.1);
-  color: var(--color-primary);
-  font-size: 0.78rem;
-  font-weight: 800;
-  width: fit-content;
-}
-
-.pet-last-visit {
-  margin: 0;
-  color: var(--color-muted);
-  font-size: 0.8rem;
-  font-weight: 600;
-}
-
-/* ===== REWARDS PANEL ===== */
-
-.rewards-panel {
-  display: grid;
-  gap: 1rem;
-  padding: 1rem;
-}
-
-.metric-card {
-  display: grid;
-  gap: 0.35rem;
-  min-height: 150px;
-  align-content: center;
-  justify-items: center;
-  padding: 1.2rem;
-  border: 1px solid var(--color-border);
-  border-radius: 22px;
-  background: rgba(255, 255, 255, 0.58);
-  text-align: center;
-}
-
-.customer-dashboard.dark .metric-card {
-  background: rgba(255, 255, 255, 0.08);
-}
-
-.metric-card.accent {
-  background: linear-gradient(135deg, var(--color-primary), var(--color-primary-light));
-  color: #ffffff;
-}
-
-.metric-card svg {
-  font-size: 1.4rem;
-}
-
-.metric-card h3 {
-  margin: 0;
-  color: inherit;
-  font-size: 2rem;
-  font-weight: 900;
-  letter-spacing: -0.05em;
-}
-
-.metric-card p {
-  margin: 0;
-  font-weight: 900;
-}
-
-.metric-card small {
-  color: inherit;
-  opacity: 0.85;
-}
-
-.loyalty-progress-card {
-  display: grid;
-  gap: 0.85rem;
-  padding: 1.2rem;
-  border: 1px solid var(--color-border);
-  border-radius: 22px;
-  background: rgba(255, 255, 255, 0.58);
-}
-
-.customer-dashboard.dark .loyalty-progress-card {
-  background: rgba(255, 255, 255, 0.08);
-}
-
-.loyalty-progress-header {
-  display: flex;
-  align-items: center;
-  gap: 0.85rem;
-}
-
-.loyalty-progress-header svg {
-  width: 36px;
-  height: 36px;
-  color: var(--color-primary);
-  font-size: 1.4rem;
-}
-
-.loyalty-progress-header strong {
-  display: block;
-  color: var(--color-heading);
-  font-size: 1.1rem;
-  font-weight: 900;
-}
-
-.loyalty-progress-header span {
-  color: var(--color-muted);
-  font-size: 0.82rem;
-  font-weight: 700;
-}
-
-.loyalty-progress-bar {
-  position: relative;
-  height: 8px;
-  border-radius: 999px;
-  background: rgba(255, 95, 147, 0.12);
-  overflow: hidden;
-}
-
-.loyalty-progress-fill {
-  height: 100%;
-  border-radius: 999px;
-  background: linear-gradient(90deg, var(--color-primary), var(--color-primary-light));
-  transition: width 0.6s ease;
-}
-
-.loyalty-progress-text {
-  margin: 0;
-  color: var(--color-muted);
-  font-size: 0.8rem;
-  font-weight: 700;
-  line-height: 1.4;
-}
-
-/* ===== BOOKINGS ===== */
-
-.booking-list {
-  display: grid;
-  gap: 1rem;
-  padding: 1.35rem;
-}
-
-.booking-card {
-  padding: 1.15rem;
-  border: 1px solid var(--color-border);
-  border-radius: 22px;
-  background: rgba(255, 255, 255, 0.62);
-  transition: 0.22s ease;
-}
-
-.customer-dashboard.dark .booking-card {
-  background: rgba(255, 255, 255, 0.08);
-}
-
-.booking-card:hover {
-  transform: translateY(-3px);
-  box-shadow: 0 16px 34px rgba(255, 95, 147, 0.13);
-}
-
-.booking-card-top {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 1rem;
-}
-
-.booking-card-top h3 {
-  margin: 0;
-  color: var(--color-heading);
-  font-size: 1rem;
-  font-weight: 900;
-}
-
-.booking-card-top p {
-  margin: 0.25rem 0 0;
-  color: var(--color-muted);
-  font-size: 0.88rem;
-}
+/* ===== STATUS BADGE ===== */
 
 .status-badge {
   display: inline-flex;
@@ -958,132 +177,7 @@
   color: #b91c1c;
 }
 
-.booking-info {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 0.8rem;
-  margin: 1rem 0;
-}
-
-.booking-info div {
-  padding: 0.75rem;
-  border-radius: 16px;
-  background: rgba(255, 95, 147, 0.07);
-}
-
-.booking-info strong {
-  display: block;
-  color: var(--color-muted);
-  font-size: 0.72rem;
-  font-weight: 900;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-}
-
-.booking-info p {
-  margin: 0.25rem 0 0;
-  color: var(--color-heading);
-  font-size: 0.88rem;
-  font-weight: 800;
-}
-
-.booking-footer {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 0.85rem;
-  color: var(--color-muted);
-  font-size: 0.86rem;
-  font-weight: 700;
-}
-
-.booking-footer span {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.35rem;
-}
-
-/* ===== BOOKING TIMELINE ===== */
-
-.booking-timeline {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  margin: 1rem 0;
-  padding: 0.85rem;
-  border-radius: 16px;
-  background: rgba(255, 95, 147, 0.05);
-}
-
-.timeline-step {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 0.35rem;
-  flex: 1;
-  position: relative;
-}
-
-.timeline-step:not(:last-child)::after {
-  content: "";
-  position: absolute;
-  top: 8px;
-  right: -50%;
-  width: 100%;
-  height: 2px;
-  background: rgba(255, 95, 147, 0.2);
-  z-index: 0;
-}
-
-.timeline-step.active:not(:last-child)::after {
-  background: linear-gradient(90deg, var(--color-primary), var(--color-primary-light));
-}
-
-.timeline-dot {
-  width: 16px;
-  height: 16px;
-  border-radius: 50%;
-  background: rgba(255, 95, 147, 0.2);
-  border: 2px solid rgba(255, 95, 147, 0.3);
-  z-index: 1;
-  transition: 0.3s ease;
-}
-
-.timeline-step.active .timeline-dot {
-  background: linear-gradient(135deg, var(--color-primary), var(--color-primary-light));
-  border-color: var(--color-primary);
-  box-shadow: 0 0 0 4px rgba(255, 95, 147, 0.15);
-}
-
-.timeline-step.current .timeline-dot {
-  animation: pulse 2s ease-in-out infinite;
-}
-
-@keyframes pulse {
-  0%, 100% {
-    box-shadow: 0 0 0 4px rgba(255, 95, 147, 0.15);
-  }
-  50% {
-    box-shadow: 0 0 0 8px rgba(255, 95, 147, 0.25);
-  }
-}
-
-.timeline-label {
-  font-size: 0.68rem;
-  font-weight: 700;
-  color: var(--color-muted);
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  text-align: center;
-}
-
-.timeline-step.active .timeline-label {
-  color: var(--color-primary);
-}
-
-.timeline-step.current .timeline-label {
-  color: var(--color-heading);
-}
+/* ===== BUTTONS ===== */
 
 .secondary-btn,
 .primary-btn {
@@ -1107,104 +201,6 @@
 .secondary-btn:hover,
 .primary-btn:hover {
   transform: translateY(-2px);
-}
-
-/* ===== ACTIVITY ===== */
-
-.activity-metrics {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 0.85rem;
-  padding: 1.35rem 1.35rem 0;
-}
-
-.status-card {
-  display: grid;
-  gap: 0.3rem;
-  justify-items: center;
-  padding: 1rem;
-  border-radius: 20px;
-  text-align: center;
-}
-
-.status-card.success {
-  background: rgba(34, 197, 94, 0.12);
-  color: #15803d;
-}
-
-.status-card.info {
-  background: rgba(59, 130, 246, 0.12);
-  color: #1d4ed8;
-}
-
-.status-card strong {
-  font-size: 1.8rem;
-  font-weight: 900;
-  letter-spacing: -0.05em;
-}
-
-.status-card p {
-  margin: 0;
-  font-size: 0.82rem;
-  font-weight: 900;
-}
-
-.activity-summary {
-  padding: 1rem 1.35rem 1.35rem;
-}
-
-.activity-summary p {
-  margin: 0;
-  padding: 1rem;
-  border-radius: 18px;
-  background: rgba(255, 95, 147, 0.08);
-  color: var(--color-muted);
-  line-height: 1.55;
-}
-
-.activity-summary strong {
-  color: var(--color-heading);
-}
-
-/* ===== REMINDERS PANEL ===== */
-
-.reminders-panel {
-  margin-top: 1.35rem;
-}
-
-.reminders-list {
-  display: grid;
-  gap: 0.75rem;
-  padding: 1.35rem;
-}
-
-.reminder-item {
-  display: flex;
-  align-items: center;
-  gap: 0.85rem;
-  padding: 0.85rem;
-  border-radius: 16px;
-  background: rgba(255, 95, 147, 0.05);
-  transition: 0.22s ease;
-}
-
-.reminder-item:hover {
-  background: rgba(255, 95, 147, 0.1);
-  transform: translateX(4px);
-}
-
-.reminder-item svg {
-  width: 20px;
-  height: 20px;
-  color: var(--color-primary);
-  font-size: 0.9rem;
-}
-
-.reminder-item span {
-  color: var(--color-text);
-  font-size: 0.88rem;
-  font-weight: 700;
-  line-height: 1.4;
 }
 
 /* ===== STATES ===== */
@@ -1278,136 +274,18 @@
   overflow-y: auto;
 }
 
-
-.notif-item:last-child {
-  border-bottom: none;
-}
-
 /* ===== RESPONSIVE ===== */
 
 @media (max-width: 1180px) {
-  .customer-navbar {
-    grid-template-columns: 1fr;
-    align-items: stretch;
-  }
-
   .navbar-actions {
     justify-content: flex-start;
     flex-wrap: wrap;
   }
-
-  .dashboard-grid,
-  .dashboard-bottom {
-    grid-template-columns: 1fr;
-  }
-
-  .overview-cards {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-
-  .quick-actions-grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-
-  .hero-status-card {
-    min-width: 0;
-  }
 }
 
-/* Consolidated mobile rules (max-width: 768px) — merged from previous duplicate blocks */
 @media (max-width: 768px) {
-  .customer-main,
-  .customer-dashboard.collapsed .customer-main {
-    margin-left: 0 !important;
-    width: 100% !important;
-    max-width: 100% !important;
-    padding: 1rem !important;
-    padding-top: 125px !important;
-    min-width: 0 !important;
-  }
-
-  .customer-overview-page,
-  .dashboard-content {
-    padding: 1rem;
-  }
-
-  .customer-navbar,
-  .customer-topbar {
-    position: relative !important;
-    left: auto !important;
-    right: auto !important;
-    top: auto !important;
-    width: 100% !important;
-    max-width: 100% !important;
-    min-height: auto !important;
-    padding: 0.95rem !important;
-    margin: 0 0 1rem !important;
-    display: grid !important;
-    grid-template-columns: minmax(0, 1fr) !important;
-    align-items: stretch !important;
-    gap: 0.75rem !important;
-  }
-
-  .customer-navbar .navbar-left,
-  .customer-topbar .navbar-left {
-    width: 100% !important;
-    min-width: 0 !important;
-  }
-
-  .customer-navbar h1,
-  .customer-topbar h1 {
-    font-size: 1.3rem !important;
-    line-height: 1.15 !important;
-    max-width: 100% !important;
-    white-space: normal !important;
-    word-break: normal !important;
-    overflow-wrap: anywhere !important;
-    letter-spacing: 0 !important;
-  }
-
-  .customer-navbar p,
-  .customer-topbar p {
-    font-size: 0.84rem !important;
-    line-height: 1.35 !important;
-  }
-
-  .customer-navbar .search-group,
-  .customer-topbar .search-group {
-    width: 100% !important;
-    max-width: none !important;
-    margin: 0 !important;
-  }
-
-  .customer-navbar .navbar-actions,
-  .customer-topbar .navbar-actions {
-    width: 100% !important;
-    display: grid !important;
-    grid-template-columns: minmax(0, 1fr) 48px !important;
-    gap: 0.6rem !important;
-    justify-content: stretch !important;
-  }
-
-  .customer-hero-panel {
-    flex-direction: column;
-    align-items: stretch;
-    border-radius: 22px;
-  }
-
-  .overview-cards {
-    grid-template-columns: 1fr;
-  }
-
   .space-between {
     align-items: flex-start;
-    flex-direction: column;
-  }
-
-  .booking-info {
-    grid-template-columns: 1fr;
-  }
-
-  .booking-footer {
-    align-items: stretch;
     flex-direction: column;
   }
 
@@ -1415,148 +293,11 @@
   .primary-btn {
     width: 100%;
   }
-
-  .activity-metrics {
-    grid-template-columns: 1fr;
-  }
-
-  .customer-profile-btn {
-    min-width: 0 !important;
-    width: 100% !important;
-    justify-content: flex-start !important;
-  }
 }
 
-@media (max-width: 480px) {
-  .navbar-actions {
-    display: grid;
-    grid-template-columns: 1fr 48px;
-    width: 100%;
-  }
-
-  .customer-profile-btn {
-    grid-column: 1 / -1;
-  }
-
-  .theme-toggle-btn {
-    width: 48px;
-  }
-
-  .overview-card {
-    min-height: auto;
-  }
-
-  .customer-hero-panel h2 {
-    font-size: 1.55rem;
-  }
-}
-
-/* FORCE CUSTOMER MAIN CONTENT SAME AS ADMIN DASHBOARD */
-
-.customer-layout,
-.customer-main,
-.customer-content,
-.customer-dashboard {
-  background: linear-gradient(135deg, #ffc8dd, #ffd6e8, #fff1f7) !important;
-}
-
-.customer-topbar,
-.customer-dashboard-header,
-.dashboard-hero,
-.stat-card,
-.quick-action-card {
-  background: rgba(255, 255, 255, 0.86) !important;
-  border: 1px solid rgba(255, 95, 147, 0.18) !important;
-  box-shadow: 0 18px 45px rgba(255, 95, 147, 0.14) !important;
-  backdrop-filter: blur(16px) !important;
-}
-
-/* CUSTOMER ADMIN-EQUIVALENT STRUCTURE */
-
-.customer-dashboard {
-  display: flex;
-  min-height: 100vh;
-  font-family: "Inter", sans-serif;
-  background: linear-gradient(135deg, #ffc8dd, #ffd6e8, #fff1f7);
-  color: #1f2937;
-}
-
-.customer-main {
-  flex: 1;
-  margin-left: 268px;
-  width: calc(100% - 268px);
-  padding: 2rem;
-  padding-top: 130px;
-  min-height: 100vh;
-}
-
-.customer-navbar,
-.customer-topbar {
-  position: fixed;
-  left: 268px;
-  right: 0;
-  top: 0;
-  z-index: 999;
-  width: calc(100% - 268px);
-  min-height: 105px;
-  padding: 1rem 2rem;
-
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 1rem;
-
-  background: rgba(255, 255, 255, 0.82);
-  backdrop-filter: blur(20px);
-  border-bottom: 1px solid rgba(255, 95, 147, 0.15);
-  box-shadow: 0 14px 35px rgba(75, 34, 50, 0.08);
-}
-
-.customer-card,
-.stat-card,
-.quick-action-card,
-.panel,
-.pets-header,
-.pets-hero,
-.empty-state {
-  background: rgba(255, 255, 255, 0.8) !important;
-  backdrop-filter: blur(20px) !important;
-  border-radius: 20px !important;
-  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1) !important;
-}
-
-.customer-title,
-.customer-navbar h1,
-.customer-topbar h1 {
-  background: linear-gradient(135deg, #ff5f93, #ff8db5);
-  -webkit-background-clip: text;
-  background-clip: text;
-  -webkit-text-fill-color: transparent;
-  font-weight: 900;
-}
-
-@media (max-width: 420px) {
-  .customer-navbar h1,
-  .customer-topbar h1 {
-    font-size: 1.15rem !important;
-  }
-}
-
-/* Final theme verification fixes: keep this file aligned with the centralized theme variables. */
-
-/* Quick actions grid - collapse to 1 column on mobile */
-@media (max-width: 767px) {
-  .quick-actions-grid {
-    grid-template-columns: 1fr !important;
-  }
-}
-
-/* Quick actions grid - 2 columns on tablet */
-@media (max-width: 991px) {
-  .quick-actions-grid {
-    grid-template-columns: repeat(2, 1fr) !important;
-  }
-}
+/* ══════════════════════════════════════════════════════════════
+   NEUTRAL CANVAS — active customer theme
+══════════════════════════════════════════════════════════════ */
 
 .app-dashboard.customer-dashboard {
   --customer-canvas: var(--color-bg, #f7f5ee);
@@ -1642,26 +383,13 @@
   color: var(--customer-ink);
 }
 
-.app-dashboard.customer-dashboard .customer-overview-page {
-  display: grid;
-  gap: 20px;
-  min-width: 0;
-  padding: 0;
-}
-
-.app-dashboard.customer-dashboard .customer-hero-panel,
-.app-dashboard.customer-dashboard .overview-card,
-.app-dashboard.customer-dashboard .quick-action-card,
-.app-dashboard.customer-dashboard .upcoming-appointment-card,
 .app-dashboard.customer-dashboard .panel,
 .app-dashboard.customer-dashboard .customer-payment-summary-card,
 .app-dashboard.customer-dashboard .customer-payments-panel,
 .app-dashboard.customer-dashboard .cs-panel,
 .app-dashboard.customer-dashboard .cs-card,
-.app-dashboard.customer-dashboard .customer-status-hero,
 .app-dashboard.customer-dashboard .customer-status-table-wrap,
 .app-dashboard.customer-dashboard .customer-notifications .notifications-panel,
-.app-dashboard.customer-dashboard .userinfo-panel,
 .app-dashboard.customer-dashboard .medical-panel,
 .app-dashboard.customer-dashboard .confinement-card,
 .app-dashboard.customer-dashboard .hotel-header,
@@ -1671,10 +399,6 @@
 .app-dashboard.customer-dashboard .grooming-card,
 .app-dashboard.customer-dashboard .vet-header,
 .app-dashboard.customer-dashboard .vet-card,
-.app-dashboard.customer-dashboard .customer-chatbot-shell,
-.app-dashboard.customer-dashboard .chatbot-hero-card,
-.app-dashboard.customer-dashboard .chatbot-feature-card,
-.app-dashboard.customer-dashboard .chatbot-reminder-card,
 .app-dashboard.customer-dashboard .ht-header,
 .app-dashboard.customer-dashboard .ht-content,
 .app-dashboard.customer-dashboard .ht-stat-card,
@@ -1691,7 +415,6 @@
   backdrop-filter: none;
 }
 
-.app-dashboard.customer-dashboard .customer-overview-page,
 .app-dashboard.customer-dashboard .customer-services-page,
 .app-dashboard.customer-dashboard .customer-pets,
 .app-dashboard.customer-dashboard .customer-payments-page,
@@ -1702,8 +425,6 @@
 .app-dashboard.customer-dashboard .customer-hotel-reservation,
 .app-dashboard.customer-dashboard .grooming-container,
 .app-dashboard.customer-dashboard .vet-container,
-.app-dashboard.customer-dashboard .customer-chatbot-page,
-.app-dashboard.customer-dashboard .userinfo-section,
 .app-dashboard.customer-dashboard .customer-history,
 .app-dashboard.customer-dashboard .ht-root,
 .app-dashboard.customer-dashboard .reports-container,
@@ -1714,7 +435,6 @@
   background: transparent !important;
 }
 
-.app-dashboard.customer-dashboard .customer-overview-page > section,
 .app-dashboard.customer-dashboard .customer-services-page,
 .app-dashboard.customer-dashboard .customer-pets,
 .app-dashboard.customer-dashboard .customer-payments-page,
@@ -1724,28 +444,18 @@
 .app-dashboard.customer-dashboard .customer-hotel-reservation,
 .app-dashboard.customer-dashboard .grooming-container,
 .app-dashboard.customer-dashboard .vet-container,
-.app-dashboard.customer-dashboard .customer-chatbot-page,
-.app-dashboard.customer-dashboard .userinfo-section,
 .app-dashboard.customer-dashboard .ht-root,
+.app-dashboard.customer-dashboard .customer-history,
 .app-dashboard.customer-dashboard .customer-reports-content,
 .app-dashboard.customer-dashboard .reports-container {
-  padding: clamp(12px, 1.8vw, 22px);
+  padding: 0;
 }
 
-.app-dashboard.customer-dashboard .customer-hero-panel {
-  align-items: center;
-  padding: clamp(20px, 2.8vw, 32px);
-  margin: 0;
-  background: var(--customer-surface);
-}
-
-.app-dashboard.customer-dashboard .customer-hero-panel h2,
 .app-dashboard.customer-dashboard .customer-payments-header h3,
 .app-dashboard.customer-dashboard .cs-header h3,
 .app-dashboard.customer-dashboard .hotel-header h2,
 .app-dashboard.customer-dashboard .grooming-header h2,
 .app-dashboard.customer-dashboard .vet-header h2,
-.app-dashboard.customer-dashboard .userinfo-header h2,
 .app-dashboard.customer-dashboard .notifications-page-header h2,
 .app-dashboard.customer-dashboard .medical-page-header h2,
 .app-dashboard.customer-dashboard .customer-status-hero h2 {
@@ -1753,24 +463,14 @@
   letter-spacing: -0.035em;
 }
 
-.app-dashboard.customer-dashboard .customer-hero-panel > div:first-child p,
 .app-dashboard.customer-dashboard .customer-payments-header p,
 .app-dashboard.customer-dashboard .cs-header p,
 .app-dashboard.customer-dashboard .notifications-page-header p,
-.app-dashboard.customer-dashboard .customer-status-hero p,
-.app-dashboard.customer-dashboard .userinfo-header p {
+.app-dashboard.customer-dashboard .customer-status-hero p {
   color: var(--customer-muted);
   font-weight: 450;
 }
 
-.app-dashboard.customer-dashboard .overview-cards {
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 14px;
-  margin: 0;
-}
-
-.app-dashboard.customer-dashboard .overview-card,
-.app-dashboard.customer-dashboard .quick-action-card,
 .app-dashboard.customer-dashboard .customer-payment-summary-card,
 .app-dashboard.customer-dashboard .pets-stat-card,
 .app-dashboard.customer-dashboard .customer-reports-content .cr-summary-card {
@@ -1782,20 +482,6 @@
   backdrop-filter: none;
 }
 
-.app-dashboard.customer-dashboard .overview-card {
-  min-height: 118px;
-  padding: 18px;
-}
-
-.app-dashboard.customer-dashboard .overview-card:hover,
-.app-dashboard.customer-dashboard .quick-action-card:hover,
-.app-dashboard.customer-dashboard .pet-card:hover,
-.app-dashboard.customer-dashboard .booking-card:hover {
-  transform: translateY(-2px);
-  box-shadow: var(--customer-shadow-raised);
-}
-
-.app-dashboard.customer-dashboard .overview-card h3,
 .app-dashboard.customer-dashboard .customer-payment-summary-card h4,
 .app-dashboard.customer-dashboard .pets-stat-card strong,
 .app-dashboard.customer-dashboard .ht-stat-value,
@@ -1803,31 +489,11 @@
   color: var(--customer-ink);
 }
 
-.app-dashboard.customer-dashboard .overview-card p,
-.app-dashboard.customer-dashboard .overview-card small,
 .app-dashboard.customer-dashboard .pets-stat-card p,
 .app-dashboard.customer-dashboard .cr-summary-label {
   color: var(--customer-muted);
 }
 
-.app-dashboard.customer-dashboard .quick-actions-grid {
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 12px;
-}
-
-.app-dashboard.customer-dashboard .quick-actions-section,
-.app-dashboard.customer-dashboard .upcoming-appointment-section {
-  margin: 0;
-}
-
-.app-dashboard.customer-dashboard .quick-actions-section .panel-header,
-.app-dashboard.customer-dashboard .upcoming-appointment-section .panel-header {
-  margin-bottom: 12px;
-  padding: 0;
-}
-
-.app-dashboard.customer-dashboard .quick-actions-section .panel-header h2,
-.app-dashboard.customer-dashboard .upcoming-appointment-section .panel-header h2,
 .app-dashboard.customer-dashboard .panel-header h2,
 .app-dashboard.customer-dashboard .cs-panel-header h4,
 .app-dashboard.customer-dashboard .medical-panel-header h3,
@@ -1835,13 +501,6 @@
 .app-dashboard.customer-dashboard .cr-section-head h3 {
   color: var(--customer-ink);
   letter-spacing: -0.025em;
-}
-
-.app-dashboard.customer-dashboard .dashboard-grid,
-.app-dashboard.customer-dashboard .dashboard-bottom {
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 16px;
-  margin: 0;
 }
 
 .app-dashboard.customer-dashboard .panel {
@@ -1857,24 +516,17 @@
 .app-dashboard.customer-dashboard .panel-header,
 .app-dashboard.customer-dashboard .customer-payments-panel-header,
 .app-dashboard.customer-dashboard .cs-panel-header,
-.app-dashboard.customer-dashboard .medical-panel-header,
-.app-dashboard.customer-dashboard .userinfo-header {
+.app-dashboard.customer-dashboard .medical-panel-header {
   border-color: var(--customer-border);
 }
 
 .app-dashboard.customer-dashboard .pets-list,
-.app-dashboard.customer-dashboard .booking-list,
-.app-dashboard.customer-dashboard .reminders-list,
 .app-dashboard.customer-dashboard .customer-payments-panel-body {
   gap: 10px;
   padding: 16px;
 }
 
 .app-dashboard.customer-dashboard .pet-card,
-.app-dashboard.customer-dashboard .booking-card,
-.app-dashboard.customer-dashboard .reminder-item,
-.app-dashboard.customer-dashboard .loyalty-progress-card,
-.app-dashboard.customer-dashboard .customer-status-table-wrap,
 .app-dashboard.customer-dashboard .confinement-card,
 .app-dashboard.customer-dashboard .care-log-item,
 .app-dashboard.customer-dashboard .cr-service-item,
@@ -1904,6 +556,16 @@
 
 .app-dashboard.customer-dashboard .customer-payments-bg-orb {
   display: none;
+}
+
+/* Topbar already names the page — hide the shared history header text,
+   keep its Refresh/Export actions */
+.app-dashboard.customer-dashboard .ht-header-text {
+  display: none;
+}
+
+.app-dashboard.customer-dashboard .ht-header {
+  justify-content: flex-end;
 }
 
 .app-dashboard.customer-dashboard .customer-payments-table-wrapper,
@@ -1946,444 +608,95 @@
   outline: none;
 }
 
-.app-dashboard.customer-dashboard .primary-btn,
-.app-dashboard.customer-dashboard .customer-payments-main-btn,
-.app-dashboard.customer-dashboard .cs-card-action,
-.app-dashboard.customer-dashboard .customer-pay-btn,
-.app-dashboard.customer-dashboard .customer-cancel-btn,
-.app-dashboard.customer-dashboard .confinement-action-btn,
-.app-dashboard.customer-dashboard .hotel-tab.active,
-.app-dashboard.customer-dashboard .grooming-tab.active,
-.app-dashboard.customer-dashboard .vet-tab.active,
-.app-dashboard.customer-dashboard .ht-btn-primary {
-  min-height: 42px;
-  border-radius: 11px;
-  box-shadow: none;
-}
+/* ══════════════════════════════════════════════════════════════
+   EDGE-TO-EDGE MOBILE — content fills the screen on phones
+   ══════════════════════════════════════════════════════════════ */
 
-.app-dashboard.customer-dashboard .secondary-btn,
-.app-dashboard.customer-dashboard .cs-tab,
-.app-dashboard.customer-dashboard .hotel-tab,
-.app-dashboard.customer-dashboard .grooming-tab,
-.app-dashboard.customer-dashboard .vet-tab,
-.app-dashboard.customer-dashboard .ht-btn-secondary {
-  min-height: 42px;
-  border-radius: 11px;
-}
-
-.app-dashboard.customer-dashboard .customer-payments-page .customer-payments-header,
-.app-dashboard.customer-dashboard .cs-header,
-.app-dashboard.customer-dashboard .hotel-header,
-.app-dashboard.customer-dashboard .grooming-header,
-.app-dashboard.customer-dashboard .vet-header,
-.app-dashboard.customer-dashboard .customer-chatbot-page .chatbot-hero-card,
-.app-dashboard.customer-dashboard .userinfo-header,
-.app-dashboard.customer-dashboard .notifications-page-header,
-.app-dashboard.customer-dashboard .medical-page-header,
-.app-dashboard.customer-dashboard .customer-status-hero,
-.app-dashboard.customer-dashboard .pets-hero,
-.app-dashboard.customer-dashboard .ht-header {
-  border: 1px solid var(--customer-border);
-  border-radius: var(--customer-radius);
-  background: var(--customer-surface);
-  box-shadow: var(--customer-shadow);
-}
-
-.app-dashboard.customer-dashboard .customer-reports-content {
-  color: var(--customer-ink);
-}
-
-.app-dashboard.customer-dashboard .customer-reports-content .cr-chart-card,
-.app-dashboard.customer-dashboard .customer-reports-content .cr-service-card,
-.app-dashboard.customer-dashboard .customer-reports-content .cr-table-card,
-.app-dashboard.customer-dashboard .customer-reports-content .cr-insight-bar {
-  border: 1px solid var(--customer-border);
-  border-radius: var(--customer-radius);
-  background: var(--customer-surface);
-  box-shadow: var(--customer-shadow);
-  backdrop-filter: none;
-}
-
-.app-dashboard.customer-dashboard .reports-container:has(.customer-reports-content) {
-  min-height: 0;
-  padding: 0;
-  background: transparent !important;
-}
-
-.app-dashboard.customer-dashboard .reports-container:has(.customer-reports-content) .reports-header {
-  border: 1px solid var(--customer-border);
-  border-radius: var(--customer-radius);
-  background: var(--customer-surface);
-  box-shadow: var(--customer-shadow);
-  backdrop-filter: none;
-}
-
-.app-dashboard.customer-dashboard .notifications-panel,
-.app-dashboard.customer-dashboard .customer-medical-confinements .medical-panel,
-.app-dashboard.customer-dashboard .ht-content,
-.app-dashboard.customer-dashboard .userinfo-panel,
-.app-dashboard.customer-dashboard .customer-chatbot-shell {
-  border: 1px solid var(--customer-border);
-  border-radius: var(--customer-radius);
-  background: var(--customer-surface);
-  box-shadow: var(--customer-shadow);
-}
-
-.app-dashboard.customer-dashboard .customer-profile-settings > div {
-  min-height: 0;
-  padding: 0;
-  background: transparent !important;
-}
-
-.app-dashboard.customer-dashboard .customer-profile-settings > div > div {
-  max-width: 1120px;
-  gap: 20px;
-}
-
-.app-dashboard.customer-dashboard .loading-container,
-.app-dashboard.customer-dashboard .error-state,
-.app-dashboard.customer-dashboard .empty-state,
-.app-dashboard.customer-dashboard .customer-payments-error,
-.app-dashboard.customer-dashboard .notifications-error,
-.app-dashboard.customer-dashboard .medical-empty,
-.app-dashboard.customer-dashboard .customer-status-empty,
-.app-dashboard.customer-dashboard .ht-empty {
-  border: 1px solid var(--customer-border);
-  border-radius: var(--customer-radius);
-  background: var(--customer-surface);
-  box-shadow: var(--customer-shadow);
-}
-
-.app-dashboard.customer-dashboard .customer-status-table thead,
-.app-dashboard.customer-dashboard .customer-payments-table thead,
-.app-dashboard.customer-dashboard .cr-table thead {
-  background: #f4f2ec;
-}
-
-.app-dashboard.customer-dashboard .customer-status-table th,
-.app-dashboard.customer-dashboard .customer-payments-table th,
-.app-dashboard.customer-dashboard .cr-table th {
-  color: #606b65;
-  font-size: 0.74rem;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-}
-
-.app-dashboard.customer-dashboard .customer-status-table tbody tr:hover,
-.app-dashboard.customer-dashboard .customer-payments-table tbody tr:hover,
-.app-dashboard.customer-dashboard .cr-table tbody tr:hover {
-  background: #faf9f5;
-}
-
-.app-dashboard.customer-dashboard .app-main :focus-visible {
-  outline: 3px solid color-mix(in srgb, var(--color-primary) 60%, white);
-  outline-offset: 2px;
-}
-
-@media (max-width: 1180px) {
-  .app-dashboard.customer-dashboard .overview-cards {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
+@media (max-width: 991px) {
+  /* Single slim padding layer on tablets — kill inner frames */
+  .app-dashboard.customer-dashboard .app-content {
+    max-width: none;
+    padding: 14px;
   }
 
-  .app-dashboard.customer-dashboard .dashboard-bottom {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-
-  .app-dashboard.customer-dashboard .reminders-panel {
-    grid-column: 1 / -1;
-  }
-}
-
-@media (max-width: 1024px) {
-  .app-dashboard.customer-dashboard .app-sidebar.customer-sidebar {
-    position: fixed;
-    inset: 0 auto 0 0;
-    transform: translateX(-100%);
-    transition: transform 0.25s ease;
-    z-index: 1400;
-  }
-
-  .app-dashboard.customer-dashboard .app-sidebar.customer-sidebar.mobile-open {
-    transform: translateX(0);
-  }
-
-  .app-dashboard.customer-dashboard .mobile-menu-toggle {
-    display: grid !important;
-    place-items: center;
-  }
-
-  .app-dashboard.customer-dashboard .app-main {
-    width: 100%;
-    margin-left: 0;
-  }
-
-  .app-dashboard.customer-dashboard .mobile-backdrop {
-    display: none;
-  }
-
-  .app-dashboard.customer-dashboard .mobile-backdrop.active {
-    display: block;
-    position: fixed;
-    inset: 0;
-    z-index: 1350;
-    background: rgba(23, 25, 23, 0.42);
-  }
-
-  .app-dashboard.customer-dashboard .overview-cards {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-
-  .app-dashboard.customer-dashboard .quick-actions-grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  .app-dashboard.customer-dashboard .customer-history {
+    max-width: none;
+    margin: 0;
   }
 }
 
 @media (max-width: 767px) {
-  .app-dashboard.customer-dashboard .app-topbar {
-    min-height: 64px;
-    height: auto;
-    padding: 8px 12px;
-    gap: 8px;
-  }
-
-  .app-dashboard.customer-dashboard .app-topbar h1 {
-    font-size: clamp(0.95rem, 4vw, 1.15rem);
-  }
-
-  .app-dashboard.customer-dashboard .app-topbar p {
-    display: none;
-  }
-
-  .app-dashboard.customer-dashboard .navbar-actions {
-    gap: 6px;
-  }
-
+  /* The shell stops padding; page roots stop padding — one layer only */
   .app-dashboard.customer-dashboard .app-content {
-    padding: 14px;
+    padding: 0;
   }
 
-  .app-dashboard.customer-dashboard .customer-overview-page {
-    gap: 14px;
+  .app-dashboard.customer-dashboard .dashboard-content {
+    padding: 0;
   }
 
-  .app-dashboard.customer-dashboard .dashboard-grid,
-  .app-dashboard.customer-dashboard .dashboard-bottom {
-    grid-template-columns: minmax(0, 1fr);
-  }
-
-  .app-dashboard.customer-dashboard .reminders-panel {
-    grid-column: auto;
-  }
-
-  .app-dashboard.customer-dashboard .customer-hero-panel {
-    align-items: flex-start;
-    flex-direction: column;
-    padding: 18px;
-  }
-
-  .app-dashboard.customer-dashboard .customer-payments-page,
   .app-dashboard.customer-dashboard .customer-services-page,
   .app-dashboard.customer-dashboard .customer-pets,
+  .app-dashboard.customer-dashboard .customer-payments-page,
   .app-dashboard.customer-dashboard .customer-notifications,
   .app-dashboard.customer-dashboard .customer-medical-confinements,
   .app-dashboard.customer-dashboard .customer-status-page,
   .app-dashboard.customer-dashboard .customer-hotel-reservation,
   .app-dashboard.customer-dashboard .grooming-container,
   .app-dashboard.customer-dashboard .vet-container,
-  .app-dashboard.customer-dashboard .customer-chatbot-page,
-  .app-dashboard.customer-dashboard .userinfo-section,
-  .app-dashboard.customer-dashboard .ht-root,
-  .app-dashboard.customer-dashboard .reports-container {
-    padding: 12px;
+  .app-dashboard.customer-dashboard .customer-history,
+  .app-dashboard.customer-dashboard .customer-reports-content,
+  .app-dashboard.customer-dashboard .reports-container,
+  .app-dashboard.customer-dashboard .standard-report-layout,
+  .app-dashboard.customer-dashboard .customer-profile-settings {
+    padding: 0 !important;
+    min-height: 0 !important;
+    margin: 0 !important;
+    max-width: none !important;
   }
 
-  .app-dashboard.customer-dashboard .booking-info,
-  .app-dashboard.customer-dashboard .customer-payments-summary-grid,
-  .app-dashboard.customer-dashboard .pets-stats-grid,
-  .app-dashboard.customer-dashboard .cr-summary-grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-
-  .app-dashboard.customer-dashboard .customer-payments-header,
-  .app-dashboard.customer-dashboard .cs-header,
+  /* Page-level panels/cards go full-bleed — flat edges like a native app */
+  .app-dashboard.customer-dashboard .panel,
+  .app-dashboard.customer-dashboard .cs-panel,
+  .app-dashboard.customer-dashboard .customer-payments-panel,
+  .app-dashboard.customer-dashboard .notifications-panel,
+  .app-dashboard.customer-dashboard .medical-panel,
+  .app-dashboard.customer-dashboard .customer-status-table-wrap,
+  .app-dashboard.customer-dashboard .customer-status-toolbar,
   .app-dashboard.customer-dashboard .hotel-header,
   .app-dashboard.customer-dashboard .grooming-header,
   .app-dashboard.customer-dashboard .vet-header,
-  .app-dashboard.customer-dashboard .notifications-page-header,
-  .app-dashboard.customer-dashboard .medical-page-header,
-  .app-dashboard.customer-dashboard .customer-status-hero,
-  .app-dashboard.customer-dashboard .ht-header {
-    align-items: flex-start;
-    flex-direction: column;
+  .app-dashboard.customer-dashboard .booking-form-section,
+  .app-dashboard.customer-dashboard .pets-stat-card,
+  .app-dashboard.customer-dashboard .customer-payment-summary-card,
+  .app-dashboard.customer-dashboard .pets-toolbar,
+  .app-dashboard.customer-dashboard .notifications-toolbar,
+  .app-dashboard.customer-dashboard .history-toolbar,
+  .app-dashboard.customer-dashboard .ht-header,
+  .app-dashboard.customer-dashboard .ht-content,
+  .app-dashboard.customer-dashboard .ht-stat-card,
+  .app-dashboard.customer-dashboard .cr-insight-bar,
+  .app-dashboard.customer-dashboard .cr-summary-card,
+  .app-dashboard.customer-dashboard .cr-chart-card,
+  .app-dashboard.customer-dashboard .cr-service-card,
+  .app-dashboard.customer-dashboard .cr-table-card,
+  .app-dashboard.customer-dashboard .customer-profile-settings > div > div > div {
+    border-radius: 0 !important;
+    border-left: none !important;
+    border-right: none !important;
   }
 
-  .app-dashboard.customer-dashboard .cs-panel-header,
-  .app-dashboard.customer-dashboard .panel-header {
-    align-items: flex-start;
-    flex-wrap: wrap;
+  /* First card touches the topbar; small vertical rhythm between cards */
+  .app-dashboard.customer-dashboard .dashboard-content > * {
+    margin-top: 0;
   }
 
-  .app-dashboard.customer-dashboard .cs-tabs,
-  .app-dashboard.customer-dashboard .hotel-tabs,
-  .app-dashboard.customer-dashboard .grooming-tabs,
-  .app-dashboard.customer-dashboard .vet-tabs {
-    max-width: 100%;
-    overflow-x: auto;
+  .app-dashboard.customer-dashboard .cs-cards {
+    grid-template-columns: 1fr !important;
   }
 
-  .app-dashboard.customer-dashboard .customer-payments-main-btn,
-  .app-dashboard.customer-dashboard .cs-card-action,
-  .app-dashboard.customer-dashboard .primary-btn,
-  .app-dashboard.customer-dashboard .secondary-btn {
-    width: 100%;
-  }
-}
-
-@media (max-width: 420px) {
-  .app-dashboard.customer-dashboard .overview-cards,
-  .app-dashboard.customer-dashboard .customer-payments-summary-grid,
   .app-dashboard.customer-dashboard .pets-stats-grid,
-  .app-dashboard.customer-dashboard .cr-summary-grid,
-  .app-dashboard.customer-dashboard .quick-actions-grid {
-    grid-template-columns: minmax(0, 1fr) !important;
-  }
-
-  .app-dashboard.customer-dashboard .app-content {
-    padding: 10px;
+  .app-dashboard.customer-dashboard .customer-payments-summary-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
   }
 }
-
-.app-dashboard.customer-dashboard .rewards-panel {
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  grid-template-areas: "points status" "progress progress";
-  align-content: start;
-  gap: 10px;
-  padding: 14px;
-}
-
-.app-dashboard.customer-dashboard .rewards-panel > .metric-card:first-child {
-  grid-area: points;
-}
-
-.app-dashboard.customer-dashboard .rewards-panel > .loyalty-progress-card {
-  grid-area: progress;
-  min-width: 0;
-  padding: 14px;
-}
-
-.app-dashboard.customer-dashboard .rewards-panel > .metric-card:last-child {
-  grid-area: status;
-}
-
-.app-dashboard.customer-dashboard .rewards-panel > .metric-card {
-  min-width: 0;
-  min-height: 102px;
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  justify-content: center;
-  gap: 3px;
-  margin: 0;
-  padding: 14px;
-  border-radius: 14px;
-  text-align: left;
-}
-
-.app-dashboard.customer-dashboard .rewards-panel > .metric-card svg {
-  margin-bottom: 2px;
-  font-size: 1rem;
-}
-
-.app-dashboard.customer-dashboard .rewards-panel > .metric-card h3 {
-  font-size: clamp(1.2rem, 1.8vw, 1.55rem);
-}
-
-.app-dashboard.customer-dashboard .rewards-panel > .metric-card p {
-  font-size: 0.78rem;
-  line-height: 1.3;
-}
-
-.app-dashboard.customer-dashboard .rewards-panel > .metric-card small {
-  font-size: 0.7rem;
-  line-height: 1.3;
-}
-
-.app-dashboard.customer-dashboard .overview-panel .pets-list {
-  gap: 8px;
-  padding: 14px;
-}
-
-.app-dashboard.customer-dashboard .overview-panel .pet-card {
-  align-items: center;
-  flex-direction: row;
-  justify-content: space-between;
-  gap: 10px;
-  padding: 12px;
-  border-radius: 14px;
-  background: var(--customer-surface-muted);
-  box-shadow: none;
-}
-
-.app-dashboard.customer-dashboard .overview-panel .pet-card-body {
-  align-items: flex-end;
-  flex-direction: row;
-  flex-wrap: wrap;
-  justify-content: flex-end;
-  gap: 8px;
-}
-
-.app-dashboard.customer-dashboard .overview-panel .pet-last-visit {
-  font-size: 0.73rem;
-}
-
-.app-dashboard.customer-dashboard .bookings-panel .booking-list {
-  gap: 10px;
-  padding: 14px;
-}
-
-.app-dashboard.customer-dashboard .bookings-panel .booking-card {
-  padding: 14px;
-  border-radius: 14px;
-  box-shadow: none;
-}
-
-.app-dashboard.customer-dashboard .bookings-panel .booking-info {
-  gap: 6px;
-  margin: 0.65rem 0;
-}
-
-.app-dashboard.customer-dashboard .bookings-panel .booking-info > div {
-  padding: 8px;
-  border-radius: 10px;
-}
-
-.app-dashboard.customer-dashboard .bookings-panel .booking-info p {
-  overflow-wrap: anywhere;
-  font-size: 0.8rem;
-}
-
-.app-dashboard.customer-dashboard .bookings-panel .booking-timeline {
-  display: none;
-}
-
-.app-dashboard.customer-dashboard .bookings-panel .booking-footer {
-  gap: 8px;
-  font-size: 0.8rem;
-}
-
-@media (max-width: 767px) {
-  .app-dashboard.customer-dashboard .overview-panel .pet-card {
-    align-items: flex-start;
-    flex-direction: column;
-  }
-
-  .app-dashboard.customer-dashboard .overview-panel .pet-card-body {
-    align-items: flex-start;
-    justify-content: flex-start;
-  }
-
-  .app-dashboard.customer-dashboard .bookings-panel .booking-card {
-    padding: 12px;
-  }
-}
-

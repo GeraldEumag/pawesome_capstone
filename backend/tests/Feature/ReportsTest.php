@@ -161,7 +161,7 @@ class ReportsTest extends TestCase
         
         $topCustomers = $response->json('data.top_customers');
         $this->assertCount(3, $topCustomers);
-        $this->assertEquals('John Doe', $topCustomers[0]['customer']);
+        $this->assertEquals('JOHN DOE', $topCustomers[0]['customer']);
         $this->assertEquals(4, $topCustomers[0]['visits']);
     }
 

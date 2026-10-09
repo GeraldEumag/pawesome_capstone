@@ -185,14 +185,6 @@ const CustomerNotifications = () => {
 
   return (
     <div className="customer-notifications">
-      <header className="notifications-page-header">
-        <div className="notifications-page-header-left">
-          <span className="notifications-eyebrow">Customer Portal</span>
-          <h2>Notifications</h2>
-          <p>Stay updated with your orders, service requests, and payment status.</p>
-        </div>
-      </header>
-
       <div className="notifications-panel">
         <div className="notifications-panel-header">
           <h3>All Notifications</h3>

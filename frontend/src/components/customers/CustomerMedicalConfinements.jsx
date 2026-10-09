@@ -68,14 +68,6 @@ const CustomerMedicalConfinements = () => {
 
   return (
     <section className="customer-medical-confinements">
-      <header className="medical-page-header">
-        <div>
-          <span className="medical-eyebrow">Customer Portal</span>
-          <h2>Medical Confinements</h2>
-          <p>Track veterinary observation stays, discharge status, and care notes.</p>
-        </div>
-      </header>
-
       {message && (
         <div className="medical-feedback success" role="status">
           {message}

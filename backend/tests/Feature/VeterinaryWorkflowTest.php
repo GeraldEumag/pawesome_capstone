@@ -83,7 +83,7 @@ class VeterinaryWorkflowTest extends TestCase
                 'customer_id' => $customer->id,
                 'pet_id' => $pet->id,
                 'service_id' => $service->id,
-                'scheduled_at' => now()->addDay()->toISOString(),
+                'scheduled_at' => now()->addDay()->setTime(10, 0)->format('Y-m-d H:i:s'),
                 'notes' => 'Initial consult',
             ])
             ->assertCreated()
@@ -114,7 +114,11 @@ class VeterinaryWorkflowTest extends TestCase
             ->postJson("/api/appointments/{$appointmentId}/pay")
             ->assertStatus(422);
 
-        $this->assertDatabaseCount('sales', 1);
+        // Payment verification now records a settlement, not a POS sale row
+        $this->assertDatabaseHas('payment_settlements', [
+            'settleable_type' => 'appointment',
+            'settleable_id' => $appointmentId,
+        ]);
 
         $this->withHeaders($this->authHeader($vet))
             ->postJson("/api/veterinary/appointments/{$appointmentId}/complete")

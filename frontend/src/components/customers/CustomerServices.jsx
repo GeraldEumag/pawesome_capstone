@@ -47,14 +47,6 @@ const CustomerServices = ({ initialTab = "new" }) => {
 
   return (
     <section className="customer-services-page">
-      <header className="cs-header">
-        <div>
-          <span className="cs-kicker">Customer Portal</span>
-          <h3>Services</h3>
-          <p>Request new services or track your existing bookings.</p>
-        </div>
-      </header>
-
       <div className="cs-panel">
         <div className="cs-panel-header">
           <div>

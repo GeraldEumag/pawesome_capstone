@@ -37,12 +37,22 @@ class ServiceRequestController extends Controller
         };
     }
 
-    private function hasAvailableHotelRoom(string $checkIn, ?string $checkOut, ?string $roomType): bool
+    private function hasAvailableHotelRoom(string $checkIn, ?string $checkOut, ?string $roomType, ?int $boardingRoomId = null): bool
     {
         $checkInDate = Carbon::parse($checkIn)->startOfDay();
         $checkOutDate = $checkOut ? Carbon::parse($checkOut)->startOfDay() : $checkInDate->copy();
         if ($checkOutDate->lessThanOrEqualTo($checkInDate)) {
             $checkOutDate = $checkInDate->copy()->addDay();
+        }
+
+        // A specific boarding room was requested — check its remaining capacity.
+        if ($boardingRoomId) {
+            return BookingAvailabilityService::isBoardingRoomAvailable(
+                $boardingRoomId,
+                $checkInDate->toDateString(),
+                $checkOutDate->toDateString(),
+                'boarding_rooms'
+            );
         }
 
         $rooms = collect(BookingAvailabilityService::getBoardingAvailability(
@@ -183,7 +193,8 @@ class ServiceRequestController extends Controller
         if ($isHotel && !$this->hasAvailableHotelRoom(
             $validated['requested_date'],
             $validated['check_out_date'] ?? null,
-            $validated['room_type'] ?? null
+            $validated['room_type'] ?? null,
+            $validated['boarding_room_id'] ?? null
         )) {
             $roomType = trim((string) ($validated['room_type'] ?? ''));
             $message = $roomType
@@ -327,7 +338,8 @@ class ServiceRequestController extends Controller
             if ($isHotel && !$this->hasAvailableHotelRoom(
                 $validated['requested_date'],
                 $validated['check_out_date'] ?? null,
-                $validated['room_type'] ?? null
+                $validated['room_type'] ?? null,
+                $validated['boarding_room_id'] ?? null
             )) {
                 return null;
             }

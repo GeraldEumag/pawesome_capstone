@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Models\Appointment;
 use App\Models\GroomingAppointment;
 use App\Models\Boarding;
+use App\Models\BoardingRoom;
 use App\Models\HotelRoom;
 use App\Models\Service;
 use App\Services\ServiceDurationService;
@@ -298,11 +299,14 @@ class BookingAvailabilityService
         $availableRooms = [];
 
         foreach ($allRooms as $room) {
-            $hasConflict = !self::isBoardingRoomAvailable(
+            // Legacy hotel_rooms are single units (capacity = pets per room),
+            // so any blocking stay makes the whole room unavailable.
+            $hasConflict = self::blockingBoardingRoomUnits(
                 $room->id,
-                $checkInDate->toDateString(),
-                $checkOutDate->toDateString()
-            );
+                $checkInDate,
+                $checkOutDate,
+                'hotel_rooms'
+            ) > 0;
 
             $availableRooms[] = [
                 'id' => $room->id,
@@ -315,6 +319,35 @@ class BookingAvailabilityService
                 'status' => $hasConflict ? 'unavailable' : 'available',
                 'reason' => $hasConflict ? 'Room already booked for selected dates' : 'Available',
             ];
+        }
+
+        // Modern boarding_rooms pool — each row represents total_rooms
+        // identical units, so availability is capacity-based, not boolean.
+        if (Schema::hasTable('boarding_rooms')) {
+            $boardingQuery = BoardingRoom::where('is_active', true);
+            if (Schema::hasColumn('boarding_rooms', 'customer_selectable')) {
+                $boardingQuery->where('customer_selectable', true);
+            }
+
+            foreach ($boardingQuery->get() as $room) {
+                $capacity = max(1, (int) ($room->total_rooms ?? 1));
+                $blocking = self::blockingBoardingRoomUnits($room->id, $checkInDate, $checkOutDate, 'boarding_rooms');
+                $remaining = max(0, $capacity - $blocking);
+                $isFree = $remaining > 0;
+
+                $availableRooms[] = [
+                    'id' => $room->id,
+                    'name' => $room->room_name,
+                    'type' => $room->room_type,
+                    'size' => null,
+                    'capacity' => $capacity,
+                    'daily_rate' => $room->daily_rate,
+                    'available' => $isFree,
+                    'available_rooms' => $remaining,
+                    'status' => $isFree ? 'available' : 'unavailable',
+                    'reason' => $isFree ? 'Available' : 'Room fully booked for selected dates',
+                ];
+            }
         }
 
         return [
@@ -340,29 +373,49 @@ class BookingAvailabilityService
     }
 
     /**
-     * Check if a boarding room is available for date range
+     * Count overlapping bookings/reservations occupying units of a room.
+     * The two room tables are separate pools with their own id namespace:
+     * hotel_rooms are blocked by boardings.hotel_room_id, while
+     * boarding_rooms are blocked by boarding_room_reservations.room_id.
      */
-    public static function isBoardingRoomAvailable(int $roomId, string $checkIn, string $checkOut): bool
+    private static function blockingBoardingRoomUnits(int $roomId, Carbon $checkInDate, Carbon $checkOutDate, string $pool = 'boarding_rooms'): int
     {
-        $checkInDate = Carbon::parse($checkIn);
-        $checkOutDate = Carbon::parse($checkOut);
+        if ($pool === 'hotel_rooms') {
+            return Boarding::where('hotel_room_id', $roomId)
+                ->whereIn('status', self::BLOCKING_BOOKING_STATUSES)
+                ->whereDate('check_in', '<=', $checkOutDate)
+                ->whereDate('check_out', '>=', $checkInDate)
+                ->count();
+        }
 
-        $hasBoardingConflict = Boarding::where('hotel_room_id', $roomId)
-            ->whereIn('status', self::BLOCKING_BOOKING_STATUSES)
-            ->whereDate('check_in', '<=', $checkOutDate)
-            ->whereDate('check_out', '>=', $checkInDate)
-            ->exists();
-
-        if ($hasBoardingConflict || !Schema::hasTable('boarding_room_reservations')) {
-            return !$hasBoardingConflict;
+        if (!Schema::hasTable('boarding_room_reservations')) {
+            return 0;
         }
 
         $roomColumn = Schema::hasColumn('boarding_room_reservations', 'room_id') ? 'room_id' : 'boarding_room_id';
-        return !DB::table('boarding_room_reservations')
+        return DB::table('boarding_room_reservations')
             ->where($roomColumn, $roomId)
             ->whereIn('status', self::BLOCKING_BOOKING_STATUSES)
             ->whereDate('check_in_date', '<=', $checkOutDate)
             ->whereDate('check_out_date', '>=', $checkInDate)
-            ->exists();
+            ->count();
+    }
+
+    /**
+     * Check if a boarding room is available for date range.
+     * Capacity-aware: boarding_rooms with total_rooms > 1 stay available
+     * until every unit is booked; hotel_rooms rows are single units.
+     */
+    public static function isBoardingRoomAvailable(int $roomId, string $checkIn, string $checkOut, string $pool = 'boarding_rooms'): bool
+    {
+        $checkInDate = Carbon::parse($checkIn);
+        $checkOutDate = Carbon::parse($checkOut);
+
+        $blocking = self::blockingBoardingRoomUnits($roomId, $checkInDate, $checkOutDate, $pool);
+        $capacity = $pool === 'hotel_rooms'
+            ? 1
+            : (int) (BoardingRoom::find($roomId)?->total_rooms ?? 1);
+
+        return $blocking < max(1, $capacity);
     }
 }

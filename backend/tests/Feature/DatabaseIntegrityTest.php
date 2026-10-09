@@ -268,15 +268,22 @@ class DatabaseIntegrityTest extends TestCase
             'status' => 'active',
         ]);
         
-        // Update via API
+        // Update non-stock fields via API; stock increases go through
+        // batch receiving (50 + 25 = 75).
         $response = $this->putJson("/api/admin/inventory/items/{$item->id}", [
             'name' => 'Updated Name',
             'price' => 750,
-            'stock' => 75,
         ], $this->withAuth($this->admin, $this->adminToken));
-        
+
         $response->assertStatus(200);
-        
+
+        $this->postJson("/api/admin/inventory/items/{$item->id}/batches", [
+            'batch_no' => 'B-INT-001',
+            'received_date' => now()->toDateString(),
+            'expiration_date' => now()->addMonths(6)->toDateString(),
+            'quantity' => 25,
+        ], $this->withAuth($this->admin, $this->adminToken))->assertOk();
+
         // Verify changes in database
         $this->assertDatabaseHas('inventory_items', [
             'id' => $item->id,
@@ -400,7 +407,7 @@ class DatabaseIntegrityTest extends TestCase
             'pet_id' => $this->pet->id,
             'service_id' => $service->id,
             'veterinarian_id' => $this->veterinary->id,
-            'scheduled_at' => now()->addDays(2)->format('Y-m-d H:i:s'),
+            'scheduled_at' => now()->addDays(2)->setTime(10, 0)->format('Y-m-d H:i:s'),
             'notes' => 'Regular checkup',
         ], $this->withAuth($this->receptionist, $this->receptionistToken));
 
@@ -590,13 +597,15 @@ class DatabaseIntegrityTest extends TestCase
             'status' => 'active',
         ]);
         
-        // Adjust stock via API
-        $response = $this->putJson("/api/admin/inventory/items/{$item->id}", [
-            'stock' => 25,
-            'add_stock' => true,
+        // Stock increases go through batch receiving: 50 + 25 = 75
+        $response = $this->postJson("/api/admin/inventory/items/{$item->id}/batches", [
+            'batch_no' => 'B-ADJ-001',
+            'received_date' => now()->toDateString(),
+            'expiration_date' => now()->addMonths(6)->toDateString(),
+            'quantity' => 25,
         ], $this->withAuth($this->admin, $this->adminToken));
-        
-        $response->assertStatus(200);
+
+        $response->assertOk();
         
         // Verify stock updated in database
         $this->assertDatabaseHas('inventory_items', [

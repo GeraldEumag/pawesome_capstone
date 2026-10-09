@@ -400,9 +400,7 @@ const HotelForm = () => {
     <div className="customer-hotel-reservation">
       <header className="hotel-header">
         <div>
-          <span className="hotel-kicker">Customer Portal</span>
           <h3><FontAwesomeIcon icon={faHotel} /> Pet Hotel</h3>
-          <p>Book and track a live pet boarding stay</p>
         </div>
       </header>
 
