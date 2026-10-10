@@ -174,14 +174,14 @@ class ServiceRequestController extends Controller
 
         // Validate business hours (skip for hotel bookings which don't use time slots)
         $time = $validated['requested_time'] ?? '00:00';
-        if (!$isHotel && ($time < '09:00' || $time > '18:00')) {
+        if (!$isHotel && ($time < '10:00' || $time > '18:00')) {
             return response()->json([
-                'message' => 'Selected time is outside shop opening hours. Please choose between 9:00 AM and 6:00 PM.',
+                'message' => 'Selected time is outside shop opening hours. Please choose between 10:00 AM and 6:00 PM.',
             ], 422);
         }
 
         if (ServiceDurationService::isSameDayBookingClosed($validated['requested_date'])) {
-            $message = 'Same-day bookings are closed after 7:00 PM. Please choose a future date.';
+            $message = 'Same-day bookings are closed after 6:00 PM. Please choose a future date.';
 
             return response()->json([
                 'success' => false,
@@ -402,7 +402,7 @@ class ServiceRequestController extends Controller
                         'pet_id' => $groomingPet->id,
                         'service' => $validated['service_name'] ?? 'Grooming',
                         'appointment_date' => $validated['requested_date'],
-                        'appointment_time' => $validated['requested_time'] ?? '09:00',
+                        'appointment_time' => $validated['requested_time'] ?? '10:00',
                         'notes' => $validated['notes'] ?? null,
                         'amount' => $price,
                         'base_amount' => $price,

@@ -21,6 +21,11 @@ import { apiRequest } from "../../api/client";
 import { getDraft, clearDraft } from "../../utils/preBookingDraft";
 import DatePickerInput from "../../components/shared/DatePickerInput";
 import { formatDateOnly, parseDateOnly } from "../../utils/date";
+import {
+  SPECIES_OPTIONS,
+  getBreedOptions,
+  isManualBreedRequired,
+} from "../../config/petSpeciesConfig";
 
 const CATEGORY_CONFIG = {
   dog_hotel: { img: dogHotelImg, label: "Dog Hotel",  badge: "#f97316" },
@@ -73,6 +78,7 @@ const HotelForm = () => {
     pet_name: "",
     pet_type: "",
     pet_breed: "",
+    pet_breed_manual: "",
     check_in_date: "",
     boarding_type: "standard",
     notes: "",
@@ -200,6 +206,10 @@ const HotelForm = () => {
       setLoading(true);
       setError("");
 
+      const finalBreed = isManualBreedRequired(bookingForm.pet_breed)
+        ? bookingForm.pet_breed_manual.trim()
+        : bookingForm.pet_breed.trim();
+
       let petId = bookingForm.pet_id;
       if (!petId) {
         const petRes = await apiRequest("/customer/pets", {
@@ -207,7 +217,7 @@ const HotelForm = () => {
           body: JSON.stringify({
             name: bookingForm.pet_name.trim(),
             species: bookingForm.pet_type.trim(),
-            breed: bookingForm.pet_breed.trim() || null,
+            breed: finalBreed || null,
           }),
         });
         petId = petRes?.pet?.id;
@@ -217,7 +227,7 @@ const HotelForm = () => {
       formData.append("pet_id", petId || "");
       formData.append("pet_name", selectedPet?.name || bookingForm.pet_name || "");
       formData.append("pet_type", selectedPet?.type || selectedPet?.species || bookingForm.pet_type || "");
-      formData.append("pet_breed", selectedPet?.breed || bookingForm.pet_breed || "");
+      formData.append("pet_breed", selectedPet?.breed || finalBreed || "");
       formData.append("check_in_date", bookingForm.check_in_date);
       formData.append("number_of_days", "1");
       if (bookingForm.room_id) {
@@ -243,6 +253,7 @@ const HotelForm = () => {
         pet_name: "",
         pet_type: "",
         pet_breed: "",
+        pet_breed_manual: "",
         check_in_date: "",
         boarding_type: "standard",
         notes: "",
@@ -361,7 +372,16 @@ const HotelForm = () => {
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setBookingForm((prev) => ({ ...prev, [name]: value }));
+    setBookingForm((prev) => ({
+      ...prev,
+      [name]: value,
+      // Breed list depends on the species — clear stale breed on change
+      ...(name === "pet_type" ? { pet_breed: "", pet_breed_manual: "" } : {}),
+      // Leaving a manual-breed option clears the typed breed
+      ...(name === "pet_breed" && !isManualBreedRequired(value)
+        ? { pet_breed_manual: "" }
+        : {}),
+    }));
 
     if (name === "pet_id" || name === "check_in_date" || name === "pet_type") {
       const updatedForm = { ...bookingForm, [name]: value };
@@ -468,11 +488,39 @@ const HotelForm = () => {
                   <div className="form-row">
                     <div className="form-group">
                       <label>Type of Pet *</label>
-                      <input type="text" name="pet_type" value={bookingForm.pet_type} onChange={handleChange} required placeholder="Dog, cat, etc." />
+                      <select name="pet_type" value={bookingForm.pet_type} onChange={handleChange} required>
+                        <option value="">Select type</option>
+                        {SPECIES_OPTIONS.map((species) => (
+                          <option key={species} value={species}>{species}</option>
+                        ))}
+                      </select>
                     </div>
                     <div className="form-group">
                       <label>Breed</label>
-                      <input type="text" name="pet_breed" value={bookingForm.pet_breed} onChange={handleChange} />
+                      <select
+                        name="pet_breed"
+                        value={bookingForm.pet_breed}
+                        onChange={handleChange}
+                        disabled={!bookingForm.pet_type}
+                      >
+                        <option value="">
+                          {bookingForm.pet_type ? "Select breed" : "Select pet type first"}
+                        </option>
+                        {getBreedOptions(bookingForm.pet_type).map((breed) => (
+                          <option key={breed} value={breed}>{breed}</option>
+                        ))}
+                      </select>
+                      {isManualBreedRequired(bookingForm.pet_breed) && (
+                        <input
+                          type="text"
+                          name="pet_breed_manual"
+                          value={bookingForm.pet_breed_manual}
+                          onChange={handleChange}
+                          required
+                          placeholder="Please specify the breed"
+                          style={{ marginTop: "0.5rem" }}
+                        />
+                      )}
                     </div>
                   </div>
                 </>
@@ -498,7 +546,7 @@ const HotelForm = () => {
                 </div>
                 <div className="form-group">
                   <label>Stay Duration</label>
-                  <input type="text" value="Same-day stay — check-out by 7:00 PM" disabled readOnly />
+                  <input type="text" value="Same-day stay — check-out by 6:00 PM" disabled readOnly />
                 </div>
               </div>
 

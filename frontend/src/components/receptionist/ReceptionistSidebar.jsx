@@ -1,7 +1,6 @@
 import React, { useState } from "react";
 import { NavLink, useNavigate, useLocation } from "react-router-dom";
 import { showConfirm } from "../../utils/alert.jsx";
-import { apiRequest, clearAuthStorage } from "../../api/client";
 import { useAuth } from "../../context/AuthContext";
 import {
   FaHotel,
@@ -33,9 +32,7 @@ const ReceptionistSidebar = ({ mobileOpen, onMobileMenuToggle }) => {
   const handleLogout = async () => {
     const confirmed = await showConfirm("Are you sure you want to log out?", "", "Yes", "Cancel", "question", true);
     if (!confirmed) return;
-    try { await apiRequest("/auth/logout", { method: "POST" }); } catch {}
-    clearAuthStorage();
-    navigate("/");
+    navigate("/logout");
   };
 
   const handleNavClick = () => {

@@ -35,7 +35,7 @@ class TestChatbotFaqCategories extends Command
             // Test creating FAQs with valid categories
             $faq1 = \App\Models\ChatbotFaq::create([
                 'question' => 'What are your operating hours?',
-                'answer' => 'We are open Monday to Saturday from 9:00 AM to 6:00 PM.',
+                'answer' => 'We are open Monday to Saturday from 10:00 AM to 6:00 PM.',
                 'category' => 'general',
                 'is_active' => true,
             ]);

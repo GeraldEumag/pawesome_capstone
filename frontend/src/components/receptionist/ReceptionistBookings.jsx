@@ -2018,7 +2018,6 @@ const ReceptionistBookings = () => {
                       value={bookingFormData.appointmentTime}
                       onChange={handleBookingInputChange}
                     >
-                      <option value="09:00">9:00 AM</option>
                       <option value="10:00">10:00 AM</option>
                       <option value="11:00">11:00 AM</option>
                       <option value="14:00">2:00 PM</option>

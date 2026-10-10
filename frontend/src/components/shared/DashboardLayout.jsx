@@ -84,13 +84,13 @@ const DashboardLayout = ({
           <div className="navbar-actions">
             {extraActions}
 
+            <NotificationDropdown role={role} />
+
             <DashboardProfile
               name={name}
               role={profileRole || role}
               image={profilePhoto}
             />
-
-            <NotificationDropdown role={role} />
           </div>
         </header>
 

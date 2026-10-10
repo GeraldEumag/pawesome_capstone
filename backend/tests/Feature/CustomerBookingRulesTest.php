@@ -96,7 +96,7 @@ class CustomerBookingRulesTest extends TestCase
                 'requested_date' => Carbon::today()->toDateString(),
             ])
             ->assertUnprocessable()
-            ->assertJsonPath('errors.requested_date.0', 'Same-day bookings are closed after 7:00 PM. Please choose a future date.');
+            ->assertJsonPath('errors.requested_date.0', 'Same-day bookings are closed after 6:00 PM. Please choose a future date.');
 
         $this->withHeaders($headers)
             ->postJson('/api/customer/requests', [
@@ -313,7 +313,7 @@ class CustomerBookingRulesTest extends TestCase
                 'number_of_days' => 1,
             ])
             ->assertUnprocessable()
-            ->assertJsonPath('errors.check_in_date.0', 'Same-day hotel bookings are closed after 7:00 PM. Please choose a future date.');
+            ->assertJsonPath('errors.check_in_date.0', 'Same-day hotel bookings are closed after 6:00 PM. Please choose a future date.');
 
         $this->assertDatabaseMissing('boardings', [
             'pet_id' => $pet->id,

@@ -408,6 +408,26 @@ const ReceptionistAppointmentsBoarding = () => {
     setSelectedRequest(null);
   };
 
+  // Check-in is only allowed for paid bookings scheduled for today.
+  const canCheckInItem = (item) => {
+    if ((item.paymentStatus || "").toLowerCase() !== "paid") {
+      return { ok: false, reason: "Booking must be paid before check-in." };
+    }
+    const scheduled = item.checkIn || item.appointmentDate || item.requestDate;
+    if (scheduled) {
+      const d = new Date(scheduled);
+      const today = new Date();
+      if (
+        d.getFullYear() !== today.getFullYear() ||
+        d.getMonth() !== today.getMonth() ||
+        d.getDate() !== today.getDate()
+      ) {
+        return { ok: false, reason: "Check-in is only allowed on the scheduled date." };
+      }
+    }
+    return { ok: true, reason: "Check In" };
+  };
+
   const getQuickActions = (item) => {
     const actions = [];
     const busy = (action) => isBusy(item.id, action);
@@ -451,14 +471,15 @@ const ReceptionistAppointmentsBoarding = () => {
     }
 
     if (item.type === "hotel" && item.status === "approved") {
+      const gate = canCheckInItem(item);
       actions.push(
         <button
           key="checkin"
           type="button"
           className="hub-action-btn checkin"
           onClick={() => handleAction(item, "check_in")}
-          disabled={busy("check_in")}
-          title="Check In"
+          disabled={busy("check_in") || !gate.ok}
+          title={gate.reason}
         >
           <FontAwesomeIcon icon={busy("check_in") ? faSpinner : faSignOutAlt} spin={busy("check_in")} />
           Check In
@@ -981,19 +1002,23 @@ const ReceptionistAppointmentsBoarding = () => {
                 </>
               )}
 
-              {selectedRequest.type === "hotel" && selectedRequest.status === "approved" && (
-                <button
-                  type="button"
-                  className="hbk-btn checkin"
-                  onClick={() => {
-                    handleAction(selectedRequest, "check_in");
-                    closeDetail();
-                  }}
-                  disabled={isBusy(selectedRequest.id, "check_in")}
-                >
-                  <FontAwesomeIcon icon={faSignOutAlt} /> Check In
-                </button>
-              )}
+              {selectedRequest.type === "hotel" && selectedRequest.status === "approved" && (() => {
+                const gate = canCheckInItem(selectedRequest);
+                return (
+                  <button
+                    type="button"
+                    className="hbk-btn checkin"
+                    onClick={() => {
+                      handleAction(selectedRequest, "check_in");
+                      closeDetail();
+                    }}
+                    disabled={isBusy(selectedRequest.id, "check_in") || !gate.ok}
+                    title={gate.reason}
+                  >
+                    <FontAwesomeIcon icon={faSignOutAlt} /> Check In
+                  </button>
+                );
+              })()}
 
               {selectedRequest.type === "hotel" && selectedRequest.status === "checked_in" && (
                 <button

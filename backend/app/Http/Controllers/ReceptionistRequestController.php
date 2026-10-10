@@ -377,6 +377,21 @@ class ReceptionistRequestController extends Controller
         /** @var ServiceRequest $serviceRequest */
         $serviceRequest = ServiceRequest::findOrFail($id);
         $previousStatus = $serviceRequest->status;
+
+        // Check-in gates: booking must be paid and scheduled for today.
+        if ($validated['status'] === 'checked_in') {
+            if (!in_array(strtolower((string) $serviceRequest->payment_status), ['paid', 'verified', 'completed'], true)) {
+                return response()->json([
+                    'message' => 'Booking must be paid before check-in.',
+                ], 422);
+            }
+            if ($serviceRequest->request_date && !Carbon::parse($serviceRequest->request_date)->isToday()) {
+                return response()->json([
+                    'message' => 'Check-in is only allowed on the scheduled date.',
+                ], 422);
+            }
+        }
+
         if ($previousStatus === 'completed' && $validated['status'] === 'completed') {
             return response()->json([
                 'success' => true,
@@ -679,7 +694,7 @@ class ReceptionistRequestController extends Controller
             }
 
             $scheduledAt = $serviceRequest->request_date
-                ? Carbon::parse($serviceRequest->request_date . ' ' . ($serviceRequest->request_time ?: '09:00'))
+                ? Carbon::parse($serviceRequest->request_date . ' ' . ($serviceRequest->request_time ?: '10:00'))
                 : now()->addHour();
 
             $appointment = Appointment::firstOrCreate(

@@ -270,7 +270,7 @@ class WalkInController extends Controller
                         'customer_id' => $customerId,
                         'pet_id' => $petId,
                         'service_id' => $serviceId,
-                        'scheduled_at' => $bookingData['request_date'] . ' ' . ($bookingData['request_time'] ?? '09:00'),
+                        'scheduled_at' => $bookingData['request_date'] . ' ' . ($bookingData['request_time'] ?? '10:00'),
                         'veterinarian_id' => $bookingData['veterinarian_id'] ?? null,
                         'status' => 'pending',
                         'notes' => $bookingData['reason'] ?? null,

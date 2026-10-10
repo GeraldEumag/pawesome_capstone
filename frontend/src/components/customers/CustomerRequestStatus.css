@@ -95,19 +95,10 @@
   position: relative;
 }
 
-.customer-status-search svg {
-  position: absolute;
-  left: 1rem;
-  top: 50%;
-  transform: translateY(-50%);
-  color: var(--cr-muted);
-  font-size: 0.9rem;
-}
-
 .customer-status-search input {
   width: 100%;
   min-height: 44px;
-  padding: 0 1rem 0 2.6rem;
+  padding: 0 1rem;
   border-radius: var(--cr-radius-pill) !important;
   border: 1px solid var(--cr-border) !important;
   background: var(--cr-surface);

@@ -301,7 +301,7 @@ const ServiceBookingModal = ({ serviceType, onClose }) => {
         </label>
         <label className="svc-form-group">
           <span><FontAwesomeIcon icon={faCalendarAlt} /> Duration</span>
-          <input type="text" value="Same-day stay — 9:00 AM to 7:00 PM" disabled readOnly />
+          <input type="text" value="Same-day stay — 10:00 AM to 6:00 PM" disabled readOnly />
         </label>
       </div>
       <div className="svc-form-row">

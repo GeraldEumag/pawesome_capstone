@@ -415,6 +415,18 @@
   backdrop-filter: none;
 }
 
+/* ProfileSettings is a standalone page (min-height:100vh + own padding);
+   inside the customer shell it must not double-pad or overlap the topbar */
+.app-dashboard.customer-dashboard .customer-profile-settings > div {
+  min-height: 0 !important;
+  padding: 0 0 1rem !important;
+  background: transparent !important;
+}
+
+.app-dashboard.customer-dashboard .customer-profile-settings > div > div {
+  max-width: none !important;
+}
+
 .app-dashboard.customer-dashboard .customer-services-page,
 .app-dashboard.customer-dashboard .customer-pets,
 .app-dashboard.customer-dashboard .customer-payments-page,

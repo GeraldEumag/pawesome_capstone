@@ -153,6 +153,26 @@ const ReceptionistBoardingManager = () => {
     };
   }, [bookings]);
 
+  // Check-in is only allowed for paid bookings scheduled for today.
+  const canCheckInBooking = (booking) => {
+    if (String(booking?.payment_status || "").toLowerCase() !== "paid") {
+      return { ok: false, reason: "Booking must be paid before check-in." };
+    }
+    const scheduled = booking?.check_in || booking?.request_date || booking?.appointment_date;
+    if (scheduled) {
+      const d = new Date(scheduled);
+      const today = new Date();
+      if (
+        d.getFullYear() !== today.getFullYear() ||
+        d.getMonth() !== today.getMonth() ||
+        d.getDate() !== today.getDate()
+      ) {
+        return { ok: false, reason: "Check-in is only allowed on the scheduled date." };
+      }
+    }
+    return { ok: true, reason: "Check In" };
+  };
+
   const tryCheckInEndpoint = async (id) => {
     try {
       await apiRequest(`/receptionist/boarding-requests/${id}/check-in`, { method: "POST" });
@@ -351,17 +371,21 @@ const ReceptionistBoardingManager = () => {
                   </span>
                 </div>
                 <div className="checkin-card-actions">
-                  {activeTab === "queue" && (
-                    <button
-                      type="button"
-                      className="checkin-primary-btn"
-                      onClick={() => handleCheckIn(booking)}
-                      disabled={actionId === booking.id}
-                    >
-                      <FontAwesomeIcon icon={actionId === booking.id ? faSpinner : faDoorOpen} spin={actionId === booking.id} />
-                      {actionId === booking.id ? "Checking In…" : "Check In"}
-                    </button>
-                  )}
+                  {activeTab === "queue" && (() => {
+                    const gate = canCheckInBooking(booking);
+                    return (
+                      <button
+                        type="button"
+                        className="checkin-primary-btn"
+                        onClick={() => handleCheckIn(booking)}
+                        disabled={actionId === booking.id || !gate.ok}
+                        title={gate.reason}
+                      >
+                        <FontAwesomeIcon icon={actionId === booking.id ? faSpinner : faDoorOpen} spin={actionId === booking.id} />
+                        {actionId === booking.id ? "Checking In…" : "Check In"}
+                      </button>
+                    );
+                  })()}
                   {activeTab === "inhouse" && (
                     <button
                       type="button"

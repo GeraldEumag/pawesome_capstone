@@ -6,16 +6,15 @@
 
 .pawesome-notification-btn {
   position: relative;
-  width: 48px;
-  height: 48px;
-  border: 1px solid var(--color-border, rgba(255, 95, 147, 0.18));
-  border-radius: 16px;
+  width: 44px;
+  height: 44px;
+  border: none;
+  border-radius: 12px;
   cursor: pointer;
-  background: rgba(255, 255, 255, 0.76);
+  background: transparent;
   color: var(--color-primary, #ff5f93);
   display: grid;
   place-items: center;
-  box-shadow: var(--shadow-soft, 0 12px 28px rgba(255, 95, 147, 0.12));
   transition: 0.22s ease;
 }
 

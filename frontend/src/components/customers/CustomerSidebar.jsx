@@ -12,7 +12,6 @@ import {
   FaSignOutAlt,
 } from "react-icons/fa";
 import { showConfirm } from "../../utils/alert.jsx";
-import { apiRequest, clearAuthStorage } from "../../api/client";
 import "./CustomerSidebar.css";
 
 const CustomerSidebar = ({ mobileOpen, onMobileMenuToggle }) => {
@@ -21,9 +20,7 @@ const CustomerSidebar = ({ mobileOpen, onMobileMenuToggle }) => {
   const handleLogout = async () => {
     const confirmed = await showConfirm("Are you sure you want to log out?", "", "Yes", "Cancel", "question", true);
     if (!confirmed) return;
-    try { await apiRequest("/auth/logout", { method: "POST" }); } catch {}
-    clearAuthStorage();
-    navigate("/");
+    navigate("/logout");
   };
 
   const handleNavClick = () => {

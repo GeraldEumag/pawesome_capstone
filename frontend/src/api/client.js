@@ -1,4 +1,4 @@
-import { getToken, clearAuth } from "../utils/auth";
+import { getToken, clearAuth, notifyAuthChange } from "../utils/auth";
 
 const getEnv = (key) => {
   if (typeof import.meta !== "undefined" && import.meta.env?.[key]) {
@@ -110,6 +110,7 @@ export const apiRequest = async (endpoint, methodOrOptions = "GET", data = null,
         clearAuth();
         if (typeof window !== "undefined") {
           window.dispatchEvent(new Event("pawesome:auth-expired"));
+          notifyAuthChange();
         }
         throw new Error("Your session expired or you are not logged in. Please log in again.");
       } else {

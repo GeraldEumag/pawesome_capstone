@@ -152,6 +152,26 @@ const ReceptionistCheckInForm = () => {
     [bookings]
   );
 
+  // Check-in is only allowed for paid bookings scheduled for today.
+  const canCheckInBooking = (booking) => {
+    if (String(booking?.payment_status || booking?.paymentStatus || "").toLowerCase() !== "paid") {
+      return { ok: false, reason: "Booking must be paid before check-in." };
+    }
+    const scheduled = getCheckInDate(booking) || booking?.request_date;
+    if (scheduled) {
+      const d = new Date(scheduled);
+      const today = new Date();
+      if (
+        d.getFullYear() !== today.getFullYear() ||
+        d.getMonth() !== today.getMonth() ||
+        d.getDate() !== today.getDate()
+      ) {
+        return { ok: false, reason: "Check-in is only allowed on the scheduled date." };
+      }
+    }
+    return { ok: true, reason: "Confirm Check-In" };
+  };
+
   const tryCheckInEndpoint = async (id) => {
     try {
       await apiRequest(`/receptionist/boarding-requests/${id}/check-in`, {
@@ -352,6 +372,7 @@ const ReceptionistCheckInForm = () => {
           <div className="boarding-list">
             {filteredBookings.map((booking) => {
               const busy = checkingInId === booking.id;
+              const gate = canCheckInBooking(booking);
 
               return (
                 <article key={booking.id} className="boarding-card">
@@ -433,7 +454,8 @@ const ReceptionistCheckInForm = () => {
                       type="button"
                       className="checkin-primary-btn"
                       onClick={() => handleCheckIn(booking)}
-                      disabled={busy}
+                      disabled={busy || !gate.ok}
+                      title={gate.reason}
                     >
                       <FontAwesomeIcon icon={busy ? faSpinner : faCheckCircle} spin={busy} />
                       {busy ? "Checking In..." : "Confirm Check-In"}
@@ -494,7 +516,8 @@ const ReceptionistCheckInForm = () => {
                 type="button"
                 className="checkin-primary-btn"
                 onClick={() => handleCheckIn(selectedBooking)}
-                disabled={checkingInId === selectedBooking.id}
+                disabled={checkingInId === selectedBooking.id || !canCheckInBooking(selectedBooking).ok}
+                title={canCheckInBooking(selectedBooking).reason}
               >
                 <FontAwesomeIcon
                   icon={checkingInId === selectedBooking.id ? faSpinner : faCheckCircle}

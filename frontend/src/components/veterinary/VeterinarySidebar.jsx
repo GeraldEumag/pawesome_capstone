@@ -16,7 +16,6 @@ import {
   faArrowLeft,
 } from "@fortawesome/free-solid-svg-icons";
 import { showConfirm } from "../../utils/alert.jsx";
-import { apiRequest, clearAuthStorage } from "../../api/client";
 import { useAuth } from "../../context/AuthContext";
 import "./VeterinarySidebar.css";
 
@@ -26,9 +25,7 @@ const VeterinarySidebar = ({ mobileOpen, onMobileMenuToggle }) => {
   const handleLogout = async () => {
     const confirmed = await showConfirm("Are you sure you want to log out?", "", "Yes", "Cancel", "question", true);
     if (!confirmed) return;
-    try { await apiRequest("/auth/logout", { method: "POST" }); } catch {}
-    clearAuthStorage();
-    window.location.href = "/login";
+    navigate("/logout");
   };
 
   const handleNavClick = () => {

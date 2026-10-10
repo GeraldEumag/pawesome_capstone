@@ -448,4 +448,84 @@ class VeterinaryWorkflowTest extends TestCase
             'cashier_remarks' => 'Payment proof accepted',
         ]);
     }
+
+    public function test_consultation_proceeds_to_payment_then_completes_after_cashier_verification(): void
+    {
+        $vet = $this->userWithToken('veterinary');
+        $cashier = $this->userWithToken('cashier');
+        $customer = Customer::factory()->create();
+        $pet = Pet::factory()->create(['customer_id' => $customer->id]);
+        $service = Service::factory()->create([
+            'name' => 'Wellness Consultation',
+            'category' => 'Consultation',
+            'price' => 500,
+        ]);
+
+        $createResponse = $this->withHeaders($this->authHeader($vet))
+            ->postJson('/api/veterinary/appointments', [
+                'customer_id' => $customer->id,
+                'pet_id' => $pet->id,
+                'service_id' => $service->id,
+                'scheduled_at' => now()->setTime(10, 0)->format('Y-m-d H:i:s'),
+                'notes' => 'Scheduled consult',
+            ])
+            ->assertCreated();
+
+        $appointmentId = $createResponse->json('appointment.id');
+
+        // 1. Vet starts the consultation
+        $this->withHeaders($this->authHeader($vet))
+            ->postJson("/api/veterinary/consultations/{$appointmentId}/start")
+            ->assertOk()
+            ->assertJsonPath('consultation.status', 'in_consultation');
+
+        // 2. Vet finalizes the medical record
+        $record = MedicalRecord::where('appointment_id', $appointmentId)->firstOrFail();
+        $record->update([
+            'diagnosis' => 'Healthy pet',
+            'treatment_plan' => 'Routine care',
+            'status' => MedicalRecord::STATUS_FINALIZED,
+        ]);
+
+        // 3. Vet marks consultation done -> proceed to pay
+        $this->withHeaders($this->authHeader($vet))
+            ->postJson("/api/veterinary/consultations/{$appointmentId}/complete", [
+                'diagnosis' => 'Healthy pet',
+                'treatment_notes' => 'Routine care',
+            ])
+            ->assertOk()
+            ->assertJsonPath('consultation.status', 'awaiting_payment');
+
+        // 4. Vet cannot complete before the cashier verifies payment
+        $this->withHeaders($this->authHeader($vet))
+            ->postJson("/api/veterinary/appointments/{$appointmentId}/complete")
+            ->assertStatus(422)
+            ->assertJsonPath('message', 'Appointment cannot be completed until payment is fully verified.');
+
+        // 5. The appointment shows in the cashier payment queue
+        $this->withHeaders($this->authHeader($cashier))
+            ->getJson('/api/cashier/payment-requests')
+            ->assertOk()
+            ->assertJsonFragment([
+                'id' => $appointmentId,
+                'type' => 'appointment',
+            ]);
+
+        // 6. Cashier verifies the payment
+        $this->withHeaders($this->authHeader($cashier))
+            ->postJson("/api/appointments/{$appointmentId}/pay")
+            ->assertOk()
+            ->assertJsonPath('appointment.payment_status', 'paid');
+
+        $this->assertDatabaseHas('payment_settlements', [
+            'settleable_type' => 'appointment',
+            'settleable_id' => $appointmentId,
+        ]);
+
+        // 7. Vet completes the transaction after payment
+        $this->withHeaders($this->authHeader($vet))
+            ->postJson("/api/veterinary/appointments/{$appointmentId}/complete")
+            ->assertOk()
+            ->assertJsonPath('appointment.status', 'completed');
+    }
 }

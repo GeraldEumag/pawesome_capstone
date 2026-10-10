@@ -21,7 +21,11 @@ const DatePickerInput = ({
   showYearDropdown = true,
   scrollableYearDropdown = true,
   yearDropdownItemNumber = 100,
-  withPortal = false,
+  // Portal mode keeps the calendar in a full-screen overlay above modals,
+  // so it is never clipped by `overflow: hidden` containers or hidden
+  // behind modal overlays — the previous anchored popper became
+  // unclickable inside booking modals after a date was selected.
+  withPortal = true,
 }) => {
   const typingFormat = showTimeSelect ? `MM/dd/yyyy ${timeFormat}` : "MM/dd/yyyy";
   const displayFormat = showTimeSelect ? `${dateFormat} ${timeFormat}` : dateFormat;

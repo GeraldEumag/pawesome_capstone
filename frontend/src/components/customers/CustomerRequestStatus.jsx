@@ -1,7 +1,6 @@
 import { useEffect, useState } from "react";
 import {
   FaClipboardList,
-  FaSearch,
   FaClock,
   FaCheckCircle,
   FaTimesCircle,
@@ -209,7 +208,6 @@ const CustomerRequestStatus = ({ embedded = false }) => {
     <div className={`customer-status-page${embedded ? " embedded" : ""}`}>
       <section className="customer-status-toolbar">
         <div className="customer-status-search">
-          <FaSearch />
           <input
             type="text"
             placeholder="Search request, pet, or service..."

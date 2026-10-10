@@ -61,12 +61,12 @@ class ServiceDurationService
      * Business hours
      */
     private const BUSINESS_HOURS = [
-        'start' => '09:00', // 9:00 AM
+        'start' => '10:00', // 10:00 AM
         'end' => '18:00',   // 6:00 PM
     ];
 
     private const STORE_TIMEZONE = 'Asia/Manila';
-    private const STORE_CLOSING_TIME = '19:00';
+    private const STORE_CLOSING_TIME = '18:00';
 
     public static function isSameDayBookingClosed(string $requestedDate): bool
     {

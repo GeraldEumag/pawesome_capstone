@@ -463,6 +463,11 @@ const PaymentApprovals = () => {
                       </button>
                     )}
                   </div>
+                  {payment.payment_reference && (
+                    <div className="pa-card-reference">
+                      Customer ref: <code>{payment.payment_reference}</code>
+                    </div>
+                  )}
                 </div>
 
                 <div className="pa-card-actions">
@@ -620,6 +625,25 @@ const PaymentApprovals = () => {
 
                   {/* Reference input */}
                   <div className="pa-reference-section">
+                    {proofModal.payment?.payment_reference && (
+                      <div className="pa-submitted-reference">
+                        <span className="pa-submitted-reference-label">Customer-submitted reference</span>
+                        <strong className="pa-submitted-reference-value">{proofModal.payment.payment_reference}</strong>
+                        {referenceNumber.trim() && (
+                          <span
+                            className={`pa-reference-match ${
+                              referenceNumber.trim() === String(proofModal.payment.payment_reference).trim()
+                                ? "match"
+                                : "mismatch"
+                            }`}
+                          >
+                            {referenceNumber.trim() === String(proofModal.payment.payment_reference).trim()
+                              ? "Matches"
+                              : "Mismatch — verify carefully before approving"}
+                          </span>
+                        )}
+                      </div>
+                    )}
                     <label htmlFor="paRefNum" className="pa-reference-label">
                       <strong>{getMethodConfig(proofModal.payment?.payment_method).label} Reference Number</strong>
                       <span className="pa-reference-hint">Required — enter from the payment screenshot</span>

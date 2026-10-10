@@ -51,7 +51,7 @@ export const BUFFER_TIMES = {
 export const TIME_SLOT_INTERVAL = 30; // minutes
 
 export const BUSINESS_HOURS = {
-  start: '09:00', // 9:00 AM
+  start: '10:00', // 10:00 AM
   end: '18:00',   // 6:00 PM
 };
 

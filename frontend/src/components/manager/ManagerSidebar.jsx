@@ -1,7 +1,6 @@
 import React from "react";
 import { NavLink, useNavigate } from "react-router-dom";
 import { showConfirm } from "../../utils/alert.jsx";
-import { apiRequest, clearAuthStorage } from "../../api/client";
 import { useAuth } from "../../context/AuthContext";
 import { FaArrowLeft } from "react-icons/fa";
 import "./ManagerSidebar.css";
@@ -13,9 +12,7 @@ const ManagerSidebar = ({ mobileOpen, onMobileMenuToggle }) => {
   const handleLogout = async () => {
     const confirmed = await showConfirm("Are you sure you want to log out?", "", "Yes", "Cancel", "question", true);
     if (!confirmed) return;
-    try { await apiRequest("/auth/logout", { method: "POST" }); } catch {}
-    clearAuthStorage();
-    navigate("/");
+    navigate("/logout");
   };
 
   const handleNavClick = () => {

@@ -619,7 +619,18 @@ class DashboardController extends Controller
                 ];
             });
 
+        // Records created from a listed service_request are paid through the
+        // service_request leg — listing them again would duplicate the booking.
+        $listedServiceRequestIds = $serviceRequests->pluck('id')->all();
+        $excludeLinked = function ($query) use ($listedServiceRequestIds) {
+            $query->where(function ($q) use ($listedServiceRequestIds) {
+                $q->whereNull('service_request_id')
+                  ->orWhereNotIn('service_request_id', $listedServiceRequestIds);
+            });
+        };
+
         $boardings = DB::table('boardings')
+            ->where($excludeLinked)
             ->whereIn('status', ['pending', 'approved', 'scheduled', 'checked_in', 'in_care', 'ready_for_pickup'])
             ->where('payment_status', 'pending')
             ->where(function ($q) {
@@ -689,6 +700,7 @@ class DashboardController extends Controller
         // Include pending/approved so walk-in bookings created by receptionist are visible;
         // cashier can see the booking and will collect payment when status reaches awaiting_payment.
         $appointments = Appointment::with(['customer', 'pet', 'service'])
+            ->where($excludeLinked)
             ->whereIn('status', ['pending', 'approved', 'in_consultation', 'needs_confinement', 'awaiting_payment', 'treated'])
             ->whereIn('payment_status', ['unpaid', 'pending'])
             ->orderBy('updated_at', 'desc')
@@ -718,6 +730,7 @@ class DashboardController extends Controller
 
         // Get grooming appointments pending payment (walk-in and online)
         $groomings = DB::table('groomings')
+            ->where($excludeLinked)
             ->whereNotIn('status', ['completed', 'cancelled', 'rejected'])
             ->whereIn('payment_status', ['pending', 'unpaid'])
             ->orderBy('updated_at', 'desc')

@@ -428,7 +428,6 @@ const NewWalkInBookingModal = ({ onClose, onSuccess }) => {
                 <div className="hub-form-group">
                   <label>Appointment Time</label>
                   <select name="appointmentTime" value={form.appointmentTime} onChange={handleInputChange}>
-                    <option value="09:00">9:00 AM</option>
                     <option value="10:00">10:00 AM</option>
                     <option value="11:00">11:00 AM</option>
                     <option value="14:00">2:00 PM</option>
@@ -467,7 +466,7 @@ const NewWalkInBookingModal = ({ onClose, onSuccess }) => {
                     </div>
                     <div className="hub-form-group">
                       <label>Duration</label>
-                      <input value="Same-day stay (9:00 AM – 7:00 PM)" disabled />
+                      <input value="Same-day stay (10:00 AM – 6:00 PM)" disabled />
                     </div>
                     <div className="hub-form-group">
                       <label>Service *</label>

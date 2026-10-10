@@ -326,7 +326,7 @@ const ReceptionistHotelBookings = () => {
         hotel_room_id: draft.hotel_room_id,
         check_in: draft.check_in || getDateValue(booking.check_in),
         check_out: draft.check_in || getDateValue(booking.check_in),
-        check_in_time: draft.check_in_time || booking.check_in_time || "09:00",
+        check_in_time: draft.check_in_time || booking.check_in_time || "10:00",
         check_out_time: draft.check_out_time || booking.check_out_time || "18:00",
         total_amount: draft.total_amount || booking.total_amount || booking.amount || 0,
       }
@@ -809,7 +809,7 @@ const ReceptionistHotelBookings = () => {
         const bookingStatus = normalizeStatus(selectedBooking.status);
         const payStatus = normalizePaymentStatus(selectedBooking.payment_status);
         const stayDate = getDateValue(selectedBooking.check_in);
-        const stayHours = `${formatTime12(selectedBooking.check_in_time || "09:00")} – ${formatTime12(selectedBooking.check_out_time || "19:00")}`;
+        const stayHours = `${formatTime12(selectedBooking.check_in_time || "10:00")} – ${formatTime12(selectedBooking.check_out_time || "18:00")}`;
 
         return (
           <div className="hbk-overlay" onClick={() => setSelectedBooking(null)}>
@@ -1015,9 +1015,9 @@ const ReceptionistHotelBookings = () => {
                         <label>Check In Time</label>
                         <input
                           type="time"
-                          min="09:00"
-                          max="19:00"
-                          value={scheduleDraft[selectedBooking.id]?.check_in_time || selectedBooking.check_in_time || "09:00"}
+                          min="10:00"
+                          max="18:00"
+                          value={scheduleDraft[selectedBooking.id]?.check_in_time || selectedBooking.check_in_time || "10:00"}
                           onChange={(event) =>
                             updateScheduleDraft(selectedBooking.id, "check_in_time", event.target.value)
                           }
@@ -1030,15 +1030,15 @@ const ReceptionistHotelBookings = () => {
                         <label>Check Out Time</label>
                         <input
                           type="time"
-                          min="09:00"
-                          max="19:00"
+                          min="10:00"
+                          max="18:00"
                           value={scheduleDraft[selectedBooking.id]?.check_out_time || selectedBooking.check_out_time || "18:00"}
                           onChange={(event) =>
                             updateScheduleDraft(selectedBooking.id, "check_out_time", event.target.value)
                           }
                         />
                         <small className="hbk-hint">
-                          Store hours 9:00 AM – 7:00 PM · same-day checkout
+                          Store hours 10:00 AM – 6:00 PM · same-day checkout
                         </small>
                       </div>
                     </div>

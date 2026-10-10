@@ -18,6 +18,10 @@ import {
 import { apiRequest } from "../../../api/client";
 import DatePickerInput from "../../shared/DatePickerInput";
 import { formatDateOnly, parseDateOnly } from "../../../utils/date";
+import {
+  getBreedOptions,
+  isManualBreedRequired,
+} from "../../../config/petSpeciesConfig";
 import { showConfirm } from "../../../utils/alert.jsx";
 import "../../../styles/bookingModal.css";
 import "./WalkInBookingModal.css";
@@ -54,6 +58,7 @@ const WalkInBookingModal = ({ serviceType, onClose, onSuccess }) => {
     name: "",
     species: "",
     breed: "",
+    breed_manual: "",
     age: "",
     sex: "",
     weight: "",
@@ -337,7 +342,14 @@ const WalkInBookingModal = ({ serviceType, onClose, onSuccess }) => {
       const payload = {
         customer_mode: customerMode,
         customer: customerMode === "new" ? customerForm : undefined,
-        pet: customerMode === "new" ? petForm : undefined,
+        pet: customerMode === "new"
+          ? {
+              ...petForm,
+              breed: isManualBreedRequired(petForm.breed)
+                ? petForm.breed_manual.trim()
+                : petForm.breed.trim(),
+            }
+          : undefined,
         customer_id: customerMode === "existing" ? selectedCustomer.id : undefined,
         pet_id: customerMode === "existing" ? selectedPet.id : undefined,
         booking: {
@@ -698,7 +710,14 @@ const WalkInBookingModal = ({ serviceType, onClose, onSuccess }) => {
           <label>Species / Type *</label>
           <select
             value={petForm.species}
-            onChange={(e) => setPetForm({ ...petForm, species: e.target.value })}
+            onChange={(e) =>
+              setPetForm({
+                ...petForm,
+                species: e.target.value,
+                breed: "",
+                breed_manual: "",
+              })
+            }
           >
             <option value="">Select species</option>
             <option value="Dog">Dog</option>
@@ -711,12 +730,45 @@ const WalkInBookingModal = ({ serviceType, onClose, onSuccess }) => {
 
         <div className="form-group">
           <label>Breed</label>
-          <input
-            type="text"
-            value={petForm.breed}
-            onChange={(e) => setPetForm({ ...petForm, breed: e.target.value })}
-            placeholder="e.g., Shih Tzu (Optional)"
-          />
+          {getBreedOptions(petForm.species).length > 0 ? (
+            <>
+              <select
+                value={petForm.breed}
+                onChange={(e) =>
+                  setPetForm({
+                    ...petForm,
+                    breed: e.target.value,
+                    breed_manual: isManualBreedRequired(e.target.value)
+                      ? petForm.breed_manual
+                      : "",
+                  })
+                }
+              >
+                <option value="">Select breed</option>
+                {getBreedOptions(petForm.species).map((breed) => (
+                  <option key={breed} value={breed}>{breed}</option>
+                ))}
+              </select>
+              {isManualBreedRequired(petForm.breed) && (
+                <input
+                  type="text"
+                  value={petForm.breed_manual}
+                  onChange={(e) =>
+                    setPetForm({ ...petForm, breed_manual: e.target.value })
+                  }
+                  placeholder="Please specify the breed (Optional)"
+                  style={{ marginTop: "0.5rem" }}
+                />
+              )}
+            </>
+          ) : (
+            <input
+              type="text"
+              value={petForm.breed}
+              onChange={(e) => setPetForm({ ...petForm, breed: e.target.value })}
+              placeholder="e.g., Shih Tzu (Optional)"
+            />
+          )}
         </div>
 
         <div className="form-group">
@@ -847,7 +899,7 @@ const WalkInBookingModal = ({ serviceType, onClose, onSuccess }) => {
         }}>
           <span style={{ fontSize: "1.25rem" }}>🕘</span>
           <div>
-            <strong>Open 9:00 AM – 7:00 PM</strong> · {serviceType === "hotel" ? "Same-day check-in and check-out." : "Walk-in anytime on selected date."}
+            <strong>Open 10:00 AM – 6:00 PM</strong> · {serviceType === "hotel" ? "Same-day check-in and check-out." : "Walk-in anytime on selected date."}
             <br />
             <span style={{ fontSize: "0.75rem", color: "#4f46e5" }}>{serviceType === "hotel" ? "Charged one day rate per stay." : "Charged per day or per package, not by the hour."}</span>
           </div>

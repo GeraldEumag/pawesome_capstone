@@ -11,8 +11,8 @@ import {
 } from "../../config/petServiceRules";
 import { showAlert, showSuccess, showError, showConfirm } from "../../utils/alert.jsx";
 
-const GROOMING_TIME_SLOTS = Array.from({ length: 10 }, (_, index) => {
-  const hour = index + 9;
+const GROOMING_TIME_SLOTS = Array.from({ length: 8 }, (_, index) => {
+  const hour = index + 10;
   const value = `${String(hour).padStart(2, "0")}:00`;
   const displayHour = hour % 12 || 12;
   return {

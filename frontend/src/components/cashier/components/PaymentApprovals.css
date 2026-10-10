@@ -802,6 +802,50 @@
 .pa-reference-input:focus { border-color: #10b981; box-shadow: 0 0 0 3px rgba(16,185,129,.1); }
 .pa-reference-input::placeholder { color: var(--color-muted, #64748b); }
 
+.pa-card-reference {
+  font-size: 0.78rem;
+  color: var(--color-muted, #64748b);
+  margin-top: 6px;
+}
+.pa-card-reference code {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  color: var(--color-text, #1f2937);
+  background: rgba(59, 130, 246, 0.08);
+  padding: 1px 6px;
+  border-radius: 6px;
+}
+
+/* Customer-submitted reference comparison */
+.pa-submitted-reference {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  padding: 9px 12px;
+  border-radius: 10px;
+  background: rgba(59, 130, 246, 0.07);
+  border: 1px dashed rgba(59, 130, 246, 0.35);
+  margin-bottom: 4px;
+}
+.pa-submitted-reference-label {
+  font-size: 0.72rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--color-muted, #64748b);
+}
+.pa-submitted-reference-value {
+  font-size: 0.98rem;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  color: var(--color-text, #1f2937);
+  word-break: break-all;
+}
+.pa-reference-match {
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+.pa-reference-match.match { color: #059669; }
+.pa-reference-match.mismatch { color: #dc2626; }
+
 /* Modal footer */
 .pa-modal-footer {
   display: flex;

@@ -1280,7 +1280,7 @@ class PremiumChatbotService
         return [
             'message' => "🕐 **Operating Hours**\n\n" .
                 "**Monday - Friday:** 8:00 AM - 8:00 PM\n" .
-                "**Saturday:** 9:00 AM - 6:00 PM\n" .
+                "**Saturday:** 10:00 AM - 6:00 PM\n" .
                 "**Sunday:** 10:00 AM - 4:00 PM\n\n" .
                 "🏥 **Emergency Services:** 24/7 Available\n\n" .
                 "💡 _We recommend booking appointments in advance for non-emergency services._",

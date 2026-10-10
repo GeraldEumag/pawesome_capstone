@@ -127,7 +127,6 @@ test('Customer workspace routes remain responsive across supported widths', asyn
         );
         expect(options).toEqual([
           { value: '', label: 'Select a time' },
-          { value: '09:00', label: '9:00 AM' },
           { value: '10:00', label: '10:00 AM' },
           { value: '11:00', label: '11:00 AM' },
           { value: '12:00', label: '12:00 PM' },
@@ -136,7 +135,6 @@ test('Customer workspace routes remain responsive across supported widths', asyn
           { value: '15:00', label: '3:00 PM' },
           { value: '16:00', label: '4:00 PM' },
           { value: '17:00', label: '5:00 PM' },
-          { value: '18:00', label: '6:00 PM' },
         ]);
       }
 

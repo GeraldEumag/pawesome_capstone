@@ -166,7 +166,7 @@ class BookingAvailabilityService
         $slotDuration = self::serviceMinutes($serviceType, $serviceName);
         $slots = [];
 
-        for ($minutes = 9 * 60; $minutes < 18 * 60; $minutes += $slotMinutes) {
+        for ($minutes = 10 * 60; $minutes < 18 * 60; $minutes += $slotMinutes) {
             $time = sprintf('%02d:%02d', intdiv($minutes, 60), $minutes % 60);
             $start = Carbon::parse("{$date} {$time}");
             $end = $start->copy()->addMinutes($slotDuration);
@@ -206,7 +206,7 @@ class BookingAvailabilityService
         $start = Carbon::parse("{$date} {$time}");
         $end = $start->copy()->addMinutes(self::serviceMinutes($normalizedType, $serviceName));
         if ($start->minute % ServiceDurationService::getTimeSlotInterval() !== 0
-            || $start->format('H:i') < '09:00'
+            || $start->format('H:i') < '10:00'
             || $end->format('H:i') > '18:00') {
             return false;
         }

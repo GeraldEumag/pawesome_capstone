@@ -259,7 +259,7 @@ class BoardingController extends Controller
             $request->user()?->role === 'customer'
             && ServiceDurationService::isSameDayBookingClosed($request->check_in_date)
         ) {
-            $message = 'Same-day hotel bookings are closed after 7:00 PM. Please choose a future date.';
+            $message = 'Same-day hotel bookings are closed after 6:00 PM. Please choose a future date.';
 
             return response()->json([
                 'success' => false,
@@ -272,14 +272,14 @@ class BoardingController extends Controller
             return response()->json(['errors' => ['room_id' => ['A room must be selected.']]], 422);
         }
 
-        // Store operates 9:00 AM - 7:00 PM; boarding stays are same-day only.
+        // Store operates 10:00 AM - 6:00 PM; boarding stays are same-day only.
         $withinHours = function (?string $time): bool {
             if (!$time) return true;
-            return $time >= '09:00' && $time <= '19:00';
+            return $time >= '10:00' && $time <= '18:00';
         };
         if (!$withinHours($request->check_in_time) || !$withinHours($request->check_out_time)) {
             return response()->json([
-                'errors' => ['check_in_time' => ['Bookings are only accepted within store hours (9:00 AM - 7:00 PM).']],
+                'errors' => ['check_in_time' => ['Bookings are only accepted within store hours (10:00 AM - 6:00 PM).']],
             ], 422);
         }
 
@@ -935,6 +935,17 @@ class BoardingController extends Controller
 
         if (!in_array($boarding->status, ['approved', 'scheduled', 'confirmed'], true)) {
             return response()->json(['error' => 'Invalid status for check-in'], 422);
+        }
+
+        // Anti human-error gates: payment must be verified and the stay must
+        // be scheduled for today before a pet can be checked in.
+        if (strtolower((string) $boarding->payment_status) !== 'paid') {
+            return response()->json(['error' => 'Booking must be paid before check-in.'], 422);
+        }
+
+        $scheduledDate = $boarding->check_in ?? $boarding->check_in_date ?? null;
+        if ($scheduledDate && !Carbon::parse($scheduledDate)->isToday()) {
+            return response()->json(['error' => 'Check-in is only allowed on the scheduled date.'], 422);
         }
 
         $oldStatus = $boarding->status;

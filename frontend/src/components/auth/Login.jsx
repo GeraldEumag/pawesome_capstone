@@ -140,7 +140,7 @@ const Login = () => {
         {/* Form body */}
         <div className="login-card-body">
           <div className="login-heading">
-            <h2>Welcome back 👋</h2>
+            <h2>Log In</h2>
             <p>Sign in to your account to continue</p>
           </div>
 
