@@ -63,14 +63,14 @@
   transition: all 0.3s ease;
 }
 
-.navbar-left {
+.vet-dashboard .navbar-left {
   min-width: 0;
   display: flex;
   flex-direction: column;
   gap: 8px;
 }
 
-.navbar-left h1 {
+.vet-dashboard .navbar-left h1 {
   margin: 0;
   line-height: 1.1;
   font-size: 28px;
@@ -78,7 +78,7 @@
   color: var(--veterinary-text-primary);
 }
 
-.navbar-left p {
+.vet-dashboard .navbar-left p {
   margin: 0;
   color: var(--veterinary-text-secondary);
   font-size: 14px;
@@ -103,7 +103,7 @@
 /* ─────────────────────────────────────────────────────────────
    Search Input - Glass Style
 ───────────────────────────────────────────────────────────── */
-.search-group {
+.vet-dashboard .search-group {
   flex: 1;
   max-width: 400px;
   min-width: 260px;
@@ -111,7 +111,7 @@
   margin: 0 32px;
 }
 
-.search-group svg {
+.vet-dashboard .search-group svg {
   position: absolute;
   left: 16px;
   top: 50%;
@@ -121,7 +121,7 @@
   z-index: 2;
 }
 
-.search-group input {
+.vet-dashboard .search-group input {
   width: 100%;
   height: 44px;
   padding: 0 16px 0 44px;
@@ -137,20 +137,20 @@
   backdrop-filter: blur(10px);
 }
 
-.search-group input:focus {
+.vet-dashboard .search-group input:focus {
   border-color: var(--veterinary-primary);
   box-shadow: 0 0 0 4px rgba(255, 95, 147, 0.15), var(--veterinary-shadow-md);
   transform: translateY(-1px);
 }
 
-.search-group input::placeholder {
+.vet-dashboard .search-group input::placeholder {
   color: var(--veterinary-text-muted);
 }
 
 /* ─────────────────────────────────────────────────────────────
    Theme Toggle & Actions
 ───────────────────────────────────────────────────────────── */
-.navbar-actions {
+.vet-dashboard .navbar-actions {
   display: flex;
   align-items: center;
   justify-content: flex-end;
@@ -159,7 +159,7 @@
   min-width: fit-content;
 }
 
-.theme-toggle-btn {
+.vet-dashboard .theme-toggle-btn {
   width: 44px;
   height: 44px;
   min-width: 44px;
@@ -177,19 +177,19 @@
   outline: none;
 }
 
-.theme-toggle-btn:hover {
+.vet-dashboard .theme-toggle-btn:hover {
   transform: translateY(-2px);
   box-shadow: var(--veterinary-shadow-lg);
   border-color: var(--veterinary-primary);
   color: var(--veterinary-primary);
 }
 
-.theme-toggle-btn:focus {
+.vet-dashboard .theme-toggle-btn:focus {
   border-color: var(--veterinary-primary);
   box-shadow: 0 0 0 4px rgba(255, 95, 147, 0.15);
 }
 
-.theme-toggle-btn.spinning svg {
+.vet-dashboard .theme-toggle-btn.spinning svg {
   animation: vetSpin 0.9s linear infinite;
 }
 
@@ -1359,7 +1359,7 @@ button:disabled {
     justify-content: flex-start;
   }
 
-  .search-group {
+  .vet-dashboard .search-group {
     max-width: 360px;
   }
 }
@@ -1371,13 +1371,13 @@ button:disabled {
     gap: 16px;
   }
 
-  .search-group {
+  .vet-dashboard .search-group {
     max-width: none;
     min-width: 0;
     margin: 0;
   }
 
-  .navbar-actions {
+  .vet-dashboard .navbar-actions {
     justify-content: flex-start;
     flex-wrap: wrap;
   }
@@ -1478,13 +1478,13 @@ button:disabled {
     margin: 12px;
   }
 
-  .navbar-actions {
+  .vet-dashboard .navbar-actions {
     display: grid;
     grid-template-columns: repeat(2, 1fr);
     justify-content: flex-start;
   }
 
-  .theme-toggle-btn {
+  .vet-dashboard .theme-toggle-btn {
     width: 40px;
     height: 40px;
     min-width: 40px;

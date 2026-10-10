@@ -229,7 +229,7 @@ const NotificationDropdown = ({ role }) => {
   return (
     <div className="pawesome-notification-dropdown" ref={dropdownRef}>
       <button
-        className="icon-btn pawesome-notification-btn"
+        className="pawesome-notification-btn"
         type="button"
         aria-label="Notifications"
         aria-expanded={isOpen}

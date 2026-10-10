@@ -265,7 +265,7 @@ const LandingPage = () => {
         />
       )}
 
-      <LandingChatbot />
+      <LandingChatbot hidden={mobileNavOpen} />
     </div>
   );
 };

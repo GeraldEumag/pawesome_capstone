@@ -8,13 +8,17 @@
   position: relative;
   width: 44px;
   height: 44px;
-  border: none;
-  border-radius: 12px;
+  min-width: 44px;
+  padding: 0;
+  border: 1px solid var(--color-border, rgba(255, 95, 147, 0.16));
+  border-radius: 50%;
   cursor: pointer;
-  background: transparent;
+  background: var(--color-surface-solid, #ffffff);
+  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.08);
   color: var(--color-primary, #ff5f93);
   display: grid;
   place-items: center;
+  flex-shrink: 0;
   transition: 0.22s ease;
 }
 
@@ -215,7 +219,7 @@
   .pawesome-notification-btn {
     width: 44px;
     height: 44px;
-    border-radius: 12px;
+    min-width: 44px;
   }
 }
 

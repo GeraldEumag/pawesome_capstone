@@ -44,7 +44,7 @@ const FALLBACK_WELCOME = {
   suggestions: ["What services do you offer?", "How do I register?", "What are your hours?"],
 };
 
-export default function LandingChatbot() {
+export default function LandingChatbot({ hidden = false }) {
   const [open, setOpen] = useState(false);
   const [input, setInput] = useState("");
   const [messages, setMessages] = useState([]);
@@ -149,6 +149,8 @@ export default function LandingChatbot() {
     setInput("");
     loadWelcome();
   };
+
+  if (hidden) return null;
 
   return (
     <>

@@ -29,9 +29,9 @@
 
 /* ===== TOPBAR PARTS ===== */
 
-.navbar-left { min-width: 0; }
+.customer-dashboard .navbar-left { min-width: 0; }
 
-.eyebrow {
+.customer-dashboard .eyebrow {
   display: inline-flex;
   align-items: center;
   margin-bottom: 0.35rem;
@@ -42,7 +42,7 @@
   color: var(--color-primary);
 }
 
-.navbar-left h1 {
+.customer-dashboard .navbar-left h1 {
   margin: 0;
   color: var(--color-heading);
   font-size: clamp(1.35rem, 2vw, 1.85rem);
@@ -50,14 +50,14 @@
   letter-spacing: -0.04em;
 }
 
-.navbar-left p {
+.customer-dashboard .navbar-left p {
   margin: 0.25rem 0 0;
   color: var(--color-muted);
   font-size: 0.92rem;
   line-height: 1.45;
 }
 
-.navbar-actions {
+.customer-dashboard .navbar-actions {
   display: flex;
   align-items: center;
   justify-content: flex-end;
@@ -65,7 +65,7 @@
   overflow: visible;
 }
 
-.icon-btn {
+.customer-dashboard .icon-btn {
   width: 48px;
   height: 48px;
   display: grid;
@@ -79,7 +79,7 @@
   transition: 0.22s ease;
 }
 
-.icon-btn:hover {
+.customer-dashboard .icon-btn:hover {
   transform: translateY(-2px);
   background: linear-gradient(135deg, var(--color-primary), var(--color-primary-light));
   color: #ffffff;
@@ -277,7 +277,7 @@
 /* ===== RESPONSIVE ===== */
 
 @media (max-width: 1180px) {
-  .navbar-actions {
+  .customer-dashboard .navbar-actions {
     justify-content: flex-start;
     flex-wrap: wrap;
   }
@@ -423,8 +423,25 @@
   background: transparent !important;
 }
 
+/* Keep the page's own centered column instead of stretching edge-to-edge */
 .app-dashboard.customer-dashboard .customer-profile-settings > div > div {
-  max-width: none !important;
+  max-width: 900px !important;
+}
+
+/* The profile page header renders as a card inside the shell — give it
+   card padding so the title and Edit button are not flush to the edges,
+   and drop its standalone bottom rule line */
+.app-dashboard.customer-dashboard .customer-profile-settings > div > div > div:first-child {
+  padding: 1.25rem 1.5rem;
+  border-bottom: none;
+  align-items: center;
+}
+
+@media (max-width: 640px) {
+  .app-dashboard.customer-dashboard .customer-profile-settings > div > div > div:first-child {
+    padding: 1rem;
+    gap: 0.75rem;
+  }
 }
 
 .app-dashboard.customer-dashboard .customer-services-page,

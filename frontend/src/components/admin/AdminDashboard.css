@@ -48,14 +48,14 @@
   box-shadow: var(--shadow-card);
 }
 
-.navbar-left {
+.admin-dashboard .navbar-left {
   display: flex;
   align-items: center;
   gap: 1rem;
   min-width: 0;
 }
 
-.navbar-left h1 {
+.admin-dashboard .navbar-left h1 {
   margin: 0;
   font-size: clamp(1.35rem, 2vw, 2rem);
   font-weight: 950;
@@ -65,7 +65,7 @@
   -webkit-text-fill-color: transparent;
 }
 
-.navbar-left p {
+.admin-dashboard .navbar-left p {
   margin: 0.35rem 0 0;
   color: var(--color-muted);
   font-size: 0.9rem;
@@ -111,7 +111,7 @@
 
 /* NAVBAR ACTIONS */
 
-.navbar-actions {
+.admin-dashboard .navbar-actions {
   display: flex;
   align-items: center;
   justify-content: flex-end;
@@ -120,7 +120,7 @@
 }
 
 .admin-icon-btn,
-.theme-toggle-btn {
+.admin-dashboard .theme-toggle-btn {
   width: 46px;
   height: 46px;
   min-width: 46px;
@@ -134,7 +134,7 @@
 }
 
 .admin-icon-btn:hover,
-.theme-toggle-btn:hover {
+.admin-dashboard .theme-toggle-btn:hover {
   transform: translateY(-2px);
   box-shadow: var(--shadow-primary);
 }
@@ -915,7 +915,7 @@
 
   /* .mobile-menu-toggle { display: grid; place-items: center; } — removed: duplicates DashboardLayout hamburger */
 
-  .navbar-actions {
+  .admin-dashboard .navbar-actions {
     gap: 0.5rem;
   }
 
@@ -956,16 +956,16 @@
     grid-template-columns: 1fr;
   }
 
-  .navbar-left h1 {
+  .admin-dashboard .navbar-left h1 {
     font-size: 1.25rem;
   }
 
-  .navbar-left p {
+  .admin-dashboard .navbar-left p {
     display: none;
   }
 
   .admin-icon-btn,
-  .theme-toggle-btn {
+  .admin-dashboard .theme-toggle-btn {
     width: 42px;
     height: 42px;
     min-width: 42px;
@@ -979,7 +979,7 @@
     align-items: stretch;
   }
 
-  .navbar-actions {
+  .admin-dashboard .navbar-actions {
     justify-content: flex-start;
   }
 
