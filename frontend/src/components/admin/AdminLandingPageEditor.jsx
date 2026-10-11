@@ -163,14 +163,26 @@ const AdminLandingPageEditor = () => {
   const renderImageField = (label, path) => {
     const value = path.split(".").reduce((o, k) => o?.[k], sections) || "";
     return (
-      <label className="editor-field">
+      <div className="editor-field">
         <span>{label}</span>
         <div className="editor-image-row">
-          {value && <img src={value} alt="Preview" className="editor-image-preview" />}
-          <input type="file" accept="image/*" onChange={(e) => handleImageUpload(e, path)} />
+          {value ? (
+            <img src={value} alt="Preview" className="editor-image-preview" />
+          ) : (
+            <span className="editor-facility-default">Default image in use</span>
+          )}
+          <label className="editor-facility-upload">
+            <span>{value ? "Change photo" : "Add photo"}</span>
+            <input
+              type="file"
+              accept="image/*"
+              onChange={(e) => handleImageUpload(e, path)}
+              disabled={uploading}
+            />
+          </label>
           {uploading && <FontAwesomeIcon icon={faSpinner} spin />}
         </div>
-      </label>
+      </div>
     );
   };
 

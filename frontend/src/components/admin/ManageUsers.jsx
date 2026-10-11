@@ -47,6 +47,16 @@ const initialFormData = {
   is_active: true,
 };
 
+// Keep in sync with UserController::DELETION_REASONS on the backend.
+const DELETION_REASONS = [
+  { value: "duplicate_account", label: "Duplicate account" },
+  { value: "user_requested", label: "User requested account deletion" },
+  { value: "inactive_account", label: "Inactive or abandoned account" },
+  { value: "policy_violation", label: "Policy violation" },
+  { value: "test_account", label: "Test or invalid account" },
+  { value: "other", label: "Other" },
+];
+
 const ManageUsers = () => {
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -69,6 +79,8 @@ const ManageUsers = () => {
   const [modalType, setModalType] = useState("");
   const [selectedUser, setSelectedUser] = useState(null);
   const [formData, setFormData] = useState(initialFormData);
+  const [deletionReason, setDeletionReason] = useState("");
+  const [deletionReasonDetail, setDeletionReasonDetail] = useState("");
   const [processing, setProcessing] = useState(false);
 
   const showSuccess = (message) => {
@@ -231,6 +243,8 @@ const ManageUsers = () => {
   const openModal = (type, user = null) => {
     setModalType(type);
     setSelectedUser(user);
+    setDeletionReason("");
+    setDeletionReasonDetail("");
 
     if (user) {
       setFormData({
@@ -252,6 +266,8 @@ const ManageUsers = () => {
     setSelectedUser(null);
     setModalType("");
     setFormData(initialFormData);
+    setDeletionReason("");
+    setDeletionReasonDetail("");
   };
 
   const handleChange = (event) => {
@@ -319,12 +335,27 @@ const ManageUsers = () => {
   const handleDeleteUser = async () => {
     if (!selectedUser) return;
 
+    if (!deletionReason) {
+      showError("Please select a reason for deleting this account.");
+      return;
+    }
+
+    if (deletionReason === "other" && deletionReasonDetail.trim().length < 3) {
+      showError("Please provide a short explanation for deleting this account.");
+      return;
+    }
+
     try {
       setProcessing(true);
       setError("");
 
       await apiRequest(`/admin/users/${selectedUser.id}`, {
         method: "DELETE",
+        body: JSON.stringify({
+          reason: deletionReason,
+          reason_details:
+            deletionReason === "other" ? deletionReasonDetail.trim() : null,
+        }),
       });
 
       setUsers((prev) => prev.filter((user) => user.id !== selectedUser.id));
@@ -843,6 +874,50 @@ const ManageUsers = () => {
                     Are you sure you want to delete{" "}
                     <strong>{selectedUser?.name}</strong>?
                   </p>
+
+                  <div className="delete-reason">
+                    <label htmlFor="mu-delete-reason">Reason for deletion</label>
+                    <select
+                      id="mu-delete-reason"
+                      value={deletionReason}
+                      onChange={(event) => {
+                        setDeletionReason(event.target.value);
+                        if (event.target.value !== "other") {
+                          setDeletionReasonDetail("");
+                        }
+                      }}
+                      disabled={processing}
+                    >
+                      <option value="" disabled>
+                        Select a reason...
+                      </option>
+                      {DELETION_REASONS.map((reason) => (
+                        <option key={reason.value} value={reason.value}>
+                          {reason.label}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  {deletionReason === "other" && (
+                    <div className="delete-reason">
+                      <label htmlFor="mu-delete-reason-detail">
+                        Explain the reason
+                      </label>
+                      <textarea
+                        id="mu-delete-reason-detail"
+                        rows={3}
+                        maxLength={500}
+                        placeholder="Briefly describe why this account is being deleted."
+                        value={deletionReasonDetail}
+                        onChange={(event) =>
+                          setDeletionReasonDetail(event.target.value)
+                        }
+                        disabled={processing}
+                      />
+                    </div>
+                  )}
+
                   <p className="warning-text">This action cannot be undone.</p>
                 </div>
               )}

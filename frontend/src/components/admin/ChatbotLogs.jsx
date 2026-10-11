@@ -93,6 +93,7 @@ const ChatbotLogs = () => {
 
   const [loading, setLoading] = useState(true);
   const [detailsLoading, setDetailsLoading] = useState(false);
+  const [expandedBubbles, setExpandedBubbles] = useState(() => new Set());
   const [saving, setSaving] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
   const [showExportDropdown, setShowExportDropdown] = useState(false);
@@ -906,15 +907,41 @@ const ChatbotLogs = () => {
                           {formatDateTime(chat.created_at)}
                         </span>
 
-                        <div className="bubble user-bubble">
-                          <strong>User</strong>
-                          <p>{chat.user_message || "No user message"}</p>
-                        </div>
-
-                        <div className="bubble bot-bubble">
-                          <strong>Bot</strong>
-                          <p>{chat.bot_response || "No bot response"}</p>
-                        </div>
+                        {[
+                          { key: "user", label: "User", text: chat.user_message || "No user message", cls: "user-bubble" },
+                          { key: "bot", label: "Bot", text: chat.bot_response || "No bot response", cls: "bot-bubble" },
+                        ].map((bubble) => {
+                          const bubbleId = `${chat.id}-${bubble.key}`;
+                          const isLong = (bubble.text || "").length > 280;
+                          const isExpanded = expandedBubbles.has(bubbleId);
+                          return (
+                            <div key={bubble.key} className={`bubble ${bubble.cls}`}>
+                              <strong>{bubble.label}</strong>
+                              <p className={isLong && !isExpanded ? "clamped" : ""}>
+                                {bubble.text}
+                              </p>
+                              {isLong && (
+                                <button
+                                  type="button"
+                                  className="bubble-toggle"
+                                  onClick={() =>
+                                    setExpandedBubbles((prev) => {
+                                      const next = new Set(prev);
+                                      if (next.has(bubbleId)) {
+                                        next.delete(bubbleId);
+                                      } else {
+                                        next.add(bubbleId);
+                                      }
+                                      return next;
+                                    })
+                                  }
+                                >
+                                  {isExpanded ? "Show less" : "View full message"}
+                                </button>
+                              )}
+                            </div>
+                          );
+                        })}
                       </article>
                     ))}
 

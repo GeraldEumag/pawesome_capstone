@@ -149,20 +149,19 @@
 /* CHECKBOX */
 .checkbox-group {
   display: block;
-  margin-top: 1rem;
-  margin-bottom: 1rem;
+  margin-top: 0.4rem;
+  margin-bottom: 0.4rem;
 }
 
 .checkbox-label {
   display: flex;
   align-items: center;
   gap: 0.75rem;
-  min-height: 42px;
+  min-height: 38px;
   cursor: pointer;
   color: var(--color-text);
-  font-weight: 850;
-  text-transform: uppercase;
-  letter-spacing: 0.03em;
+  font-size: 0.9rem;
+  font-weight: 800;
 }
 
 .checkbox-label input[type="checkbox"] {
