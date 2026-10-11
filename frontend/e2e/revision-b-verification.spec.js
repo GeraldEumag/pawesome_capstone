@@ -4,8 +4,8 @@ const { loginAs, apiLogin } = require("./test-utils");
 // Revision B — browser verification of the corrected workflows against the
 // live dev stack (backend :8000 + frontend :3000 + dev DB).
 // Seeded fixtures (created via artisan tinker in the dev DB):
-//   SR 189 -> Boarding 47 : hotel, paid, check-in TODAY ("Pet Hotel E2E" / E2EHotelPetZulu)
-//   Appt 55 -> SR 187     : vet, scheduled tomorrow, assigned to vet@example.com
+//   SR 195 -> Boarding 49 : hotel, paid, check-in TODAY ("Pet Hotel E2E" / E2EHotelPetRomeo)
+//   Appt 58 -> SR 196     : vet, scheduled tomorrow, assigned to vet@example.com
 //                         (also the approved+unpaid SR for the payment test)
 const apiUrl = process.env.E2E_API_URL || "http://127.0.0.1:8000/api";
 
@@ -16,12 +16,30 @@ const auth = (token, extra = {}) => ({
 });
 
 test.describe("Revision B — browser verification", () => {
-  test("guest booking modal offers free-text pet fields, not a pet selector", async ({ page }) => {
+  test("guest booking modal requires sign-in — no free-text pet fields or pet selector", async ({ page, request }) => {
     await page.goto("/");
     await page.locator(".landing-featured-card", { hasText: /groom/i })
       .getByRole("button", { name: /book/i }).first().click();
-    await expect(page.locator('input[name="pet_name"]')).toBeVisible();
+    // Hardened contract: pet identity is authoritative (pet_id required
+    // server-side), so guests get no free-text pet fields and no selector —
+    // only a sign-in prompt.
+    await expect(page.locator('input[name="pet_name"]')).toHaveCount(0);
     await expect(page.locator('select[name="pet_id"]')).toHaveCount(0);
+    await expect(page.locator('input[disabled]')).toHaveValue(/sign in to select your registered pet/i);
+    // Backend enforcement: a request without a pet_id is never created.
+    const res = await request.post(`${apiUrl}/customer/requests`, {
+      headers: { Accept: "application/json", "Content-Type": "application/json" },
+      data: {
+        customer_name: "Guest",
+        customer_email: "guest@example.com",
+        pet_name: "Free Text",
+        request_type: "grooming",
+        service_name: "Full Groom",
+        requested_date: "2099-01-01",
+        requested_time: "10:00",
+      },
+    });
+    expect(res.ok()).toBeFalsy();
   });
 
   test("authenticated booking modal requires a registered pet from the selector", async ({ page }) => {
@@ -29,7 +47,8 @@ test.describe("Revision B — browser verification", () => {
     await page.goto("/?book=grooming");
     const select = page.locator('select[name="pet_id"]');
     await expect(select).toBeVisible();
-    expect(await select.locator("option").count()).toBeGreaterThan(1);
+    // Options populate asynchronously once the customer's pets load.
+    await expect.poll(async () => select.locator("option").count()).toBeGreaterThan(1);
     // No free-text pet name field for authenticated customers.
     await expect(page.locator('input[name="pet_name"]')).toHaveCount(0);
   });
@@ -74,7 +93,7 @@ test.describe("Revision B — browser verification", () => {
     await loginAs(page, "customer");
     await page.goto("/customer/bookings");
     // SR 179 is approved + unpaid → its row opens the actions popover with Pay.
-    const row = page.locator("tr", { hasText: "#187" });
+    const row = page.locator("tr", { hasText: "#196" });
     await expect(row).toBeVisible({ timeout: 20000 });
     await row.getByRole("button", { name: /actions for/i }).click();
     const payBtn = page.locator(".customer-pay-btn", { hasText: "Pay" });
@@ -88,7 +107,7 @@ test.describe("Revision B — browser verification", () => {
 
     // Cash must be rejected by the customer endpoint even if forced via API.
     const { token } = await apiLogin(request, "customer");
-    const res = await request.post(`${apiUrl}/customer/requests/187/payment-proof`, {
+    const res = await request.post(`${apiUrl}/customer/requests/196/payment-proof`, {
       headers: auth(token, { "Content-Type": "application/json" }),
       data: { payment_method: "cash" },
     });
@@ -102,7 +121,7 @@ test.describe("Revision B — browser verification", () => {
     // Fixture: an approved+paid hotel SR whose pet name is unique for this
     // seed ("E2EHotelPet*"). Resolve the linked boarding id dynamically so
     // reseeds don't require spec edits.
-    const HOTEL_PET = "E2EHotelPetKilo";
+    const HOTEL_PET = "E2EHotelPetRomeo";
     const sr = await request.get(`${apiUrl}/receptionist/requests`, { headers });
     const srList = await sr.json();
     const target = (srList.requests || srList.data || srList || []).find(
@@ -169,7 +188,7 @@ test.describe("Revision B — browser verification", () => {
     await loginAs(page, "veterinary");
     await page.goto("/veterinary/appointments");
 
-    const card = page.locator(".appointment-card", { hasText: "E2E_CANCEL_MARKER_5" });
+    const card = page.locator(".appointment-card", { hasText: "E2E_CANCEL_MARKER_6" });
     await expect(card).toBeVisible({ timeout: 20000 });
     await card.getByRole("button", { name: /^cancel$/i }).click();
 
@@ -200,7 +219,7 @@ test.describe("Revision B — browser verification", () => {
 
     // Appointment cancelled and the linked SR must be consistent.
     const { token } = await apiLogin(request, "veterinary");
-    const detail = await request.get(`${apiUrl}/veterinary/appointments/55`, { headers: auth(token) });
+    const detail = await request.get(`${apiUrl}/veterinary/appointments/58`, { headers: auth(token) });
     expect(detail.ok()).toBeTruthy();
     expect((await detail.json()).appointment?.status).toBe("cancelled");
 
@@ -211,8 +230,8 @@ test.describe("Revision B — browser verification", () => {
     );
     const custBody = await custList.json();
     const rows = custBody.requests || custBody.data || custBody || [];
-    const sr187 = (Array.isArray(rows) ? rows : []).find((r) => r.id === 187);
-    expect(sr187?.status).toBe("cancelled");
+    const sr196 = (Array.isArray(rows) ? rows : []).find((r) => r.id === 196);
+    expect(sr196?.status).toBe("cancelled");
   });
 
   test("booking tracker shows cancelled requests instead of hiding them", async ({ page, request }) => {
@@ -221,23 +240,32 @@ test.describe("Revision B — browser verification", () => {
     const headers = auth(token, { "Content-Type": "application/json" });
     const petsRes = await request.get(`${apiUrl}/customer/pets`, { headers });
     const petsBody = petsRes.ok() ? await petsRes.json() : {};
-    const pet = (petsBody.pets || petsBody.data || petsBody || [])[0];
+    const petList = petsBody.pets || petsBody.data || petsBody || [];
+    const pet = petList.find((p) => /dog|cat/i.test(p.species || p.type || "")) || petList[0];
     expect(pet, "customer must own at least one pet").toBeTruthy();
 
-    const created = await request.post(`${apiUrl}/customer/requests`, {
-      headers,
-      data: {
-        customer_name: "Customer",
-        customer_email: "customer@example.com",
-        pet_id: pet.id,
-        request_type: "grooming",
-        service_name: "Full Groom",
-        requested_date: new Date(Date.now() + 86400000 * 3).toISOString().slice(0, 10),
-        requested_time: "10:00",
-      },
-    });
-    const createdBody = await created.json();
-    const newId = createdBody.request?.id;
+    // Grooming slots are shared across customers — earlier runs may hold one,
+    // so probe a small set of candidate slots until one is accepted.
+    let createdBody;
+    for (const [days, time] of [[3, "10:00"], [3, "14:00"], [4, "10:00"], [4, "14:00"], [5, "10:00"], [5, "14:00"], [6, "10:00"], [6, "14:00"]]) {
+      const created = await request.post(`${apiUrl}/customer/requests`, {
+        headers,
+        data: {
+          customer_name: "Customer",
+          customer_email: "customer@example.com",
+          pet_id: pet.id,
+          request_type: "grooming",
+          service_name: "Full Groom",
+          requested_date: new Date(Date.now() + 86400000 * days).toISOString().slice(0, 10),
+          requested_time: time,
+        },
+      });
+      if (created.ok()) {
+        createdBody = await created.json();
+        break;
+      }
+    }
+    const newId = createdBody?.request?.id;
     expect(newId, `request must be created: ${JSON.stringify(createdBody)}`).toBeTruthy();
 
     const cancelled = await request.patch(`${apiUrl}/customer/requests/${newId}/cancel`, { headers });
