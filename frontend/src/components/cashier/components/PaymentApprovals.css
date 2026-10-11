@@ -839,12 +839,7 @@
   color: var(--color-text, #1f2937);
   word-break: break-all;
 }
-.pa-reference-match {
-  font-size: 0.75rem;
-  font-weight: 700;
-}
-.pa-reference-match.match { color: #059669; }
-.pa-reference-match.mismatch { color: #dc2626; }
+.pa-reference-section > * + * { margin-top: 10px; }
 
 /* Modal footer */
 .pa-modal-footer {

@@ -38,7 +38,6 @@ import {
   getCheckOutDate,
   getRoomName,
   getNotes,
-  isHotelRequest,
 } from "../../utils/apiNormalize";
 
 const STATUS_READY_FOR_CHECKIN = ["approved", "scheduled", "confirmed"];
@@ -85,14 +84,14 @@ const ReceptionistCheckInForm = () => {
 
       setError("");
 
-      const data = await apiRequest("/receptionist/requests");
+      // Load boarding records directly — the check-in endpoint requires real
+      // boarding IDs. Pulling service requests here would post cross-table IDs
+      // and could check in an unrelated boarding that shares the same number.
+      const data = await apiRequest("/receptionist/boarding-requests");
       const list = normalizeList(data);
 
       const readyForCheckIn = list
-        .filter((item) => {
-          const status = normalizeStatus(item.status);
-          return isHotelRequest(item) && STATUS_READY_FOR_CHECKIN.includes(status);
-        })
+        .filter((item) => STATUS_READY_FOR_CHECKIN.includes(normalizeStatus(item.status)))
         .map((item) => ({
           ...item,
           status: normalizeStatus(item.status),
@@ -173,17 +172,9 @@ const ReceptionistCheckInForm = () => {
   };
 
   const tryCheckInEndpoint = async (id) => {
-    try {
-      await apiRequest(`/receptionist/boarding-requests/${id}/check-in`, {
-        method: "POST",
-      });
-      return;
-    } catch (boardingError) {
-      await apiRequest(`/receptionist/requests/${id}/status`, {
-        method: "PATCH",
-        body: JSON.stringify({ status: "checked_in" }),
-      });
-    }
+    await apiRequest(`/receptionist/boarding-requests/${id}/check-in`, {
+      method: "POST",
+    });
   };
 
   const handleCheckIn = async (booking) => {
@@ -427,7 +418,7 @@ const ReceptionistCheckInForm = () => {
                   </div>
 
                   {/* Boarding Food / Supply Usage Section */}
-                  {selectedBooking?.id && (
+                  {selectedBooking?.id === booking.id && (
                     <div className="boarding-inventory-section">
                       <h4>
                         <FontAwesomeIcon icon={faClipboardList} />

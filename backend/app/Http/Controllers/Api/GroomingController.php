@@ -3,7 +3,10 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Models\Customer;
 use App\Models\Grooming;
+use App\Models\Pet;
+use App\Models\Service;
 use App\Models\ServiceItemUsage;
 use App\Services\GroomingInventoryService;
 use App\Services\ServiceBillingService;
@@ -24,6 +27,18 @@ class GroomingController extends Controller
 
     public function store(Request $request)
     {
+        if ($request->user()?->role === 'customer') {
+            $customer = Customer::where('user_id', $request->user()->id)
+                ->orWhere('email', $request->user()->email)
+                ->first();
+
+            if (!$customer) {
+                return response()->json(['message' => 'Customer not found'], 404);
+            }
+
+            $request->merge(['customer_id' => $customer->id]);
+        }
+
         $validated = $request->validate([
             'customer_id' => 'required|exists:customers,id',
             'pet_id' => 'required|exists:pets,id',
@@ -34,12 +49,27 @@ class GroomingController extends Controller
             'amount' => 'nullable|numeric',
         ]);
 
+        if (!Pet::where('id', $validated['pet_id'])->where('customer_id', $validated['customer_id'])->exists()) {
+            return response()->json(['message' => 'Pet not found for this customer'], 422);
+        }
+
+        // Price is resolved server-side from the services catalog; any
+        // client-supplied amount is never trusted for catalog services.
+        $service = Service::whereRaw('LOWER(name) = ?', [strtolower($validated['service'])])->first();
+        if (!$service && $request->user()?->role === 'customer') {
+            return response()->json([
+                'message' => 'Unknown grooming service. Please select a service from the list.',
+                'errors' => ['service' => ['Please select a service from the list.']],
+            ], 422);
+        }
+        $amount = $service ? (float) $service->price : (float) ($validated['amount'] ?? 0);
+
         $validated['status'] = 'pending';
         $validated['payment_status'] = 'unpaid';
-        $validated['base_amount'] = $validated['amount'] ?? 0;
-        $validated['total_amount'] = $validated['amount'] ?? 0;
+        $validated['base_amount'] = $amount;
+        $validated['total_amount'] = $amount;
         $validated['amount_paid'] = 0;
-        $validated['balance_due'] = $validated['amount'] ?? 0;
+        $validated['balance_due'] = $amount;
 
         $grooming = Grooming::create($validated);
 

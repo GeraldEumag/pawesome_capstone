@@ -9,6 +9,7 @@ use App\Models\BoardingRoom;
 use App\Models\HotelRoom;
 use App\Models\Pet;
 use App\Models\Customer;
+use App\Models\ServiceRequest;
 use App\Models\ServiceItemUsage;
 use App\Services\FileStorageService;
 use App\Services\NotificationService;
@@ -22,6 +23,7 @@ use App\Services\PetServiceCompatibilityService;
 use App\Services\ServiceDurationService;
 use App\Services\ServiceBillingService;
 use App\Services\PaymentVerificationService;
+use Illuminate\Http\Exceptions\HttpResponseException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -937,24 +939,34 @@ class BoardingController extends Controller
             return response()->json(['error' => 'Invalid status for check-in'], 422);
         }
 
-        // Anti human-error gates: payment must be verified and the stay must
-        // be scheduled for today before a pet can be checked in.
-        if (strtolower((string) $boarding->payment_status) !== 'paid') {
-            return response()->json(['error' => 'Booking must be paid before check-in.'], 422);
-        }
-
-        $scheduledDate = $boarding->check_in ?? $boarding->check_in_date ?? null;
-        if ($scheduledDate && !Carbon::parse($scheduledDate)->isToday()) {
-            return response()->json(['error' => 'Check-in is only allowed on the scheduled date.'], 422);
-        }
-
-        $oldStatus = $boarding->status;
-
         // Initialize inventory service
         $addOnInventoryService = new BoardingAddOnInventoryService();
 
         // Process check-in and inventory deduction in transaction
-        $result = DB::transaction(function () use ($boarding, $oldStatus, $addOnInventoryService, $request) {
+        $result = DB::transaction(function () use ($id, $addOnInventoryService, $request) {
+            // Lock the row so concurrent check-in attempts cannot both pass
+            // the status gate and double-create operational records.
+            $boarding = Boarding::lockForUpdate()->findOrFail($id);
+
+            if (!in_array($boarding->status, ['approved', 'scheduled', 'confirmed'], true)) {
+                throw new HttpResponseException(response()->json([
+                    'error' => 'This booking has already been checked in or is no longer eligible.',
+                ], 422));
+            }
+
+            // Anti human-error gates: payment must be verified and the stay must
+            // be scheduled for today before a pet can be checked in.
+            if (strtolower((string) $boarding->payment_status) !== 'paid') {
+                throw new HttpResponseException(response()->json(['error' => 'Booking must be paid before check-in.'], 422));
+            }
+
+            $scheduledDate = $boarding->check_in ?? $boarding->check_in_date ?? null;
+            if ($scheduledDate && !Carbon::parse($scheduledDate)->isToday()) {
+                throw new HttpResponseException(response()->json(['error' => 'Check-in is only allowed on the scheduled date.'], 422));
+            }
+
+            $oldStatus = $boarding->status;
+
             $boarding->update([
                 'status' => 'in_care',
                 'actual_check_in' => now(),
@@ -962,6 +974,14 @@ class BoardingController extends Controller
                 'checked_in_by' => $request->user()?->id,
             ]);
             $boarding->hotelRoom?->update(['status' => 'occupied']);
+
+            // Keep the originating service request in sync so receptionist
+            // queues and customer tracking read the same state.
+            if ($boarding->service_request_id) {
+                ServiceRequest::where('id', $boarding->service_request_id)
+                    ->whereNotIn('status', ['cancelled', 'rejected', 'completed'])
+                    ->update(['status' => 'checked_in']);
+            }
 
             BoardingCareLog::create([
                 'boarding_id' => $boarding->id,
@@ -976,12 +996,13 @@ class BoardingController extends Controller
 
             return [
                 'boarding' => $boarding,
+                'old_status' => $oldStatus,
                 'inventory_result' => $inventoryResult
             ];
         });
 
         // Send notification
-        NotificationService::notifyBoardingStatusChange($result['boarding'], $oldStatus);
+        NotificationService::notifyBoardingStatusChange($result['boarding'], $result['old_status']);
 
         return response()->json([
             'message' => 'Guest checked in successfully',
@@ -1378,9 +1399,9 @@ class BoardingController extends Controller
         }
 
         $validator = Validator::make($request->all(), [
-            'payment_method' => 'required|in:cash,gcash,maya',
-            'payment_reference' => 'required_unless:payment_method,cash|nullable|string|max:255',
-            'payment_proof' => 'required_unless:payment_method,cash|nullable|file|mimes:jpg,jpeg,png,pdf|max:5120',
+            'payment_method' => 'required|in:gcash,maya',
+            'payment_reference' => 'required|string|max:255',
+            'payment_proof' => 'required|file|mimes:jpg,jpeg,png,pdf|max:5120',
         ]);
 
         if ($validator->fails()) {
@@ -1393,20 +1414,15 @@ class BoardingController extends Controller
             'payment_status' => 'pending',
         ];
 
-        if ($request->hasFile('payment_proof')) {
-            // Replaced proofs are retained as payment evidence (deleteOld: false).
-            FileStorageService::storeAndPersist(
-                $request->file('payment_proof'), 'payment-proofs/boardings', 'private',
-                fn (string $path) => $boarding->update($paymentData + [
-                    'payment_proof' => $path,
-                ]),
-                deleteOld: false,
-                prefix: 'boarding_proof',
-            );
-        } else {
-            // Cash payments are verified by the cashier at the counter — no proof file.
-            $boarding->update($paymentData);
-        }
+        // Replaced proofs are retained as payment evidence (deleteOld: false).
+        FileStorageService::storeAndPersist(
+            $request->file('payment_proof'), 'payment-proofs/boardings', 'private',
+            fn (string $path) => $boarding->update($paymentData + [
+                'payment_proof' => $path,
+            ]),
+            deleteOld: false,
+            prefix: 'boarding_proof',
+        );
 
         WorkflowNotifier::notifyRole('cashier', 'Boarding payment proof submitted', "{$boarding->pet_name} has a pending boarding payment proof.", 'info', 'boarding', $boarding->id);
 

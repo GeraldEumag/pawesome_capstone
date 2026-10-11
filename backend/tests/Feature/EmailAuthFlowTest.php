@@ -106,6 +106,40 @@ class EmailAuthFlowTest extends TestCase
         ]))->assertUnprocessable()->assertJsonValidationErrors(['phone', 'emergency_contact_number', 'date_of_birth']);
     }
 
+    public function test_registration_rejects_an_email_that_is_already_registered(): void
+    {
+        User::factory()->create(['role' => 'customer', 'email' => 'customer@example.com']);
+
+        $this->postJson('/api/auth/register', $this->registerPayload())
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors('email');
+
+        $this->assertSame(1, User::where('email', 'customer@example.com')->count());
+    }
+
+    public function test_registration_rolls_back_account_when_verification_setup_fails(): void
+    {
+        Mail::fake();
+        $failed = false;
+        DB::listen(function ($query) use (&$failed) {
+            if (!$failed && str_starts_with($query->sql, 'insert into `email_verification_tokens`')) {
+                $failed = true;
+                throw new \RuntimeException('Simulated verification token failure');
+            }
+        });
+
+        $this->postJson('/api/auth/register', $this->registerPayload())
+            ->assertStatus(500);
+
+        $this->assertTrue($failed);
+        $this->assertDatabaseMissing('users', ['email' => 'customer@example.com']);
+        $this->assertDatabaseMissing('customers', ['email' => 'customer@example.com']);
+        $this->assertDatabaseMissing('email_verification_tokens', ['email' => 'customer@example.com']);
+        $this->assertDatabaseMissing('email_deliveries', ['event_key' => 'auth.email_verification']);
+        $this->assertDatabaseCount('personal_access_tokens', 0);
+        Mail::assertNothingSent();
+    }
+
     public function test_email_verify_with_valid_token_marks_user_verified(): void
     {
         Mail::fake();

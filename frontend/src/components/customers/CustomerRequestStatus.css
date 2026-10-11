@@ -273,7 +273,8 @@
   color: #15803d;
 }
 
-.customer-status-pill.rejected {
+.customer-status-pill.rejected,
+.customer-status-pill.cancelled {
   background: rgba(239, 68, 68, 0.12);
   color: #b91c1c;
 }

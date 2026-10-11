@@ -1,11 +1,11 @@
 import { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faTimes, faHotel, faScissors, faStethoscope, faCalendarAlt, faClock, faPaw, faPaperPlane, faPlusCircle, faTimesCircle, faUser, faEnvelope, faBed, faHeartbeat } from "@fortawesome/free-solid-svg-icons";
+import { faTimes, faHotel, faScissors, faStethoscope, faCalendarAlt, faClock, faPaw, faPaperPlane, faPlusCircle, faTimesCircle, faUser, faEnvelope, faBed, faHeartbeat, faDog } from "@fortawesome/free-solid-svg-icons";
 import "../../styles/bookingModal.css";
 import "./ServiceBookingModal.css";
 import DatePickerInput from "../shared/DatePickerInput";
-import { apiRequest } from "../../api/client";
+import { apiRequest, normalizeList } from "../../api/client";
 import { useAuth } from "../../context/AuthContext";
 import { formatDateOnly, parseDateOnly } from "../../utils/date";
 import { saveDraft, saveServiceIntent, getDraft, clearDraft } from "../../utils/preBookingDraft";
@@ -50,7 +50,7 @@ const getRoomTypeKey = (room) => {
 };
 
 const getInitialForm = (serviceType) => {
-  const base = { customer_name: "", customer_email: "", pet_name: "", pet_type: "" };
+  const base = { customer_name: "", customer_email: "", pet_id: "", pet_name: "", pet_type: "" };
   if (serviceType === "hotel") return { ...base, check_in_date: "", preferred_time: "", room_type: "", special_care_instructions: "" };
   if (serviceType === "grooming") return { ...base, grooming_service_type: "", preferred_date: "", preferred_time: "", special_grooming_instructions: "" };
   return { ...base, veterinary_service_type: "", preferred_date: "", preferred_time: "", main_reason_for_visit: "", flu_symptoms: "", observed_issues: "", appetite_condition: "", energy_level: "", symptom_duration: "", medications_taken: "", recent_exposure: "", urgency_level: "" };
@@ -72,6 +72,7 @@ const ServiceBookingModal = ({ serviceType, onClose }) => {
   const [hotelAvailabilityError, setHotelAvailabilityError] = useState("");
   const [showHealthInfo, setShowHealthInfo] = useState(false);
   const [errors, setErrors] = useState({});
+  const [pets, setPets] = useState([]);
 
   useEffect(() => {
     const draft = getDraft();
@@ -84,6 +85,17 @@ const ServiceBookingModal = ({ serviceType, onClose }) => {
       setFormData((prev) => ({ ...prev, customer_name: user.name || "", customer_email: user.email || "" }));
     }
   }, [isCustomer, user]);
+
+  useEffect(() => {
+    if (!isCustomer) return;
+    apiRequest("/customer/pets")
+      .then((data) => {
+        setPets(normalizeList(data, ["pets", "data"]).filter(
+          (pet) => pet.status !== "archived" && !pet.archived_at
+        ));
+      })
+      .catch(() => setPets([]));
+  }, [isCustomer]);
 
   useEffect(() => {
     if (serviceType === "hotel") {
@@ -162,11 +174,19 @@ const ServiceBookingModal = ({ serviceType, onClose }) => {
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setFormData((prev) => ({
-      ...prev,
-      [name]: value,
-      ...(name === "grooming_service_type" || name === "veterinary_service_type" ? { preferred_time: "" } : {}),
-    }));
+    setFormData((prev) => {
+      const next = {
+        ...prev,
+        [name]: value,
+        ...(name === "grooming_service_type" || name === "veterinary_service_type" ? { preferred_time: "" } : {}),
+      };
+      if (name === "pet_id") {
+        const pet = pets.find((item) => String(item.id) === String(value));
+        next.pet_name = pet?.name || "";
+        next.pet_type = pet?.species || pet?.type || "";
+      }
+      return next;
+    });
     setErrors((prev) => ({ ...prev, [name]: "" }));
   };
   const handleDateChange = (name, date) => {
@@ -182,8 +202,12 @@ const ServiceBookingModal = ({ serviceType, onClose }) => {
     const ne = {};
     if (!formData.customer_name.trim()) ne.customer_name = "Customer name is required.";
     if (!formData.customer_email.trim()) { ne.customer_email = "Email is required."; } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.customer_email)) { ne.customer_email = "Enter a valid email address."; }
-    if (!formData.pet_name.trim()) ne.pet_name = "Pet name is required.";
-    if (!formData.pet_type.trim()) ne.pet_type = "Pet type is required.";
+    if (isCustomer) {
+      if (!formData.pet_id) ne.pet_id = "Please select one of your registered pets.";
+    } else {
+      if (!formData.pet_name.trim()) ne.pet_name = "Pet name is required.";
+      if (!formData.pet_type.trim()) ne.pet_type = "Pet type is required.";
+    }
     if (serviceType === "hotel") {
       if (!formData.check_in_date) ne.check_in_date = "Stay date is required.";
       else if (canBook) {
@@ -212,6 +236,7 @@ const ServiceBookingModal = ({ serviceType, onClose }) => {
 
   const buildPayload = useCallback(() => {
     const base = { customer_name: formData.customer_name.trim(), customer_email: formData.customer_email.trim(), pet_name: formData.pet_name.trim(), pet_type: formData.pet_type.trim() };
+    if (formData.pet_id) base.pet_id = formData.pet_id;
     if (serviceType === "hotel") return { ...base, request_type: "hotel", service_name: "Pet Hotel", requested_date: formData.check_in_date, requested_time: formData.preferred_time, check_in_date: formData.check_in_date, check_out_date: formData.check_in_date, room_type: formData.room_type, notes: formData.special_care_instructions || "", special_request: formData.special_care_instructions || "" };
     if (serviceType === "grooming") return { ...base, request_type: "grooming", service_name: formData.grooming_service_type, requested_date: formData.preferred_date, requested_time: formData.preferred_time, notes: formData.special_grooming_instructions || "", special_request: formData.special_grooming_instructions || "" };
     const healthParts = [];
@@ -272,22 +297,52 @@ const ServiceBookingModal = ({ serviceType, onClose }) => {
           {fe("customer_email")}
         </label>
       </div>
-      <div className="svc-form-row">
-        <label className="svc-form-group">
-          <span><FontAwesomeIcon icon={faPaw} /> Pet Name *</span>
-          <input type="text" name="pet_name" value={formData.pet_name} onChange={handleChange} placeholder="e.g., Buddy" className={errors.pet_name ? "has-error" : ""} />
-          {fe("pet_name")}
-        </label>
-        <label className="svc-form-group">
-          <span><FontAwesomeIcon icon={faPaw} /> Pet Type *</span>
-          <select name="pet_type" value={formData.pet_type} onChange={handleChange} className={errors.pet_type ? "has-error" : ""}>
-            <option value="">Select pet type</option>
-            <option value="Cat">Cat</option>
-            <option value="Dog">Dog</option>
-          </select>
-          {fe("pet_type")}
-        </label>
-      </div>
+      {isCustomer ? (
+        <div className="svc-form-row">
+          <label className="svc-form-group full">
+            <span><FontAwesomeIcon icon={faPaw} /> Select Your Pet *</span>
+            {pets.length > 0 ? (
+              <select name="pet_id" value={formData.pet_id} onChange={handleChange} className={errors.pet_id ? "has-error" : ""}>
+                <option value="">Choose a registered pet</option>
+                {pets.map((pet) => (
+                  <option key={pet.id} value={pet.id}>
+                    {pet.name} — {pet.species || pet.type || "Pet"}
+                  </option>
+                ))}
+              </select>
+            ) : (
+              <div className="svc-no-pets">
+                <p>You have no registered pets yet.</p>
+                <button
+                  type="button"
+                  className="svc-link-btn"
+                  onClick={() => { saveDraft(serviceType, formData); saveServiceIntent(serviceType); navigate("/customer/pets"); }}
+                >
+                  Register a pet first
+                </button>
+              </div>
+            )}
+            {fe("pet_id")}
+          </label>
+        </div>
+      ) : (
+        <div className="svc-form-row">
+          <label className="svc-form-group">
+            <span><FontAwesomeIcon icon={faPaw} /> Pet Name *</span>
+            <input type="text" name="pet_name" value={formData.pet_name} onChange={handleChange} placeholder="e.g., Buddy" className={errors.pet_name ? "has-error" : ""} />
+            {fe("pet_name")}
+          </label>
+          <label className="svc-form-group">
+            <span><FontAwesomeIcon icon={faDog} /> Pet Type *</span>
+            <select name="pet_type" value={formData.pet_type} onChange={handleChange} className={errors.pet_type ? "has-error" : ""}>
+              <option value="">Select pet type</option>
+              <option value="Cat">Cat</option>
+              <option value="Dog">Dog</option>
+            </select>
+            {fe("pet_type")}
+          </label>
+        </div>
+      )}
     </>
   );
 

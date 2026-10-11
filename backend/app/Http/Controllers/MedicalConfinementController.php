@@ -177,9 +177,9 @@ class MedicalConfinementController extends Controller
         }
 
         $validator = Validator::make($request->all(), [
-            'payment_method' => 'required|in:cash,gcash,maya',
-            'payment_reference' => 'required_unless:payment_method,cash|nullable|string|max:255',
-            'payment_proof' => 'required_unless:payment_method,cash|nullable|file|mimes:jpg,jpeg,png,pdf|max:5120',
+            'payment_method' => 'required|in:gcash,maya',
+            'payment_reference' => 'required|string|max:255',
+            'payment_proof' => 'required|file|mimes:jpg,jpeg,png,pdf|max:5120',
         ]);
 
         if ($validator->fails()) {
@@ -192,19 +192,14 @@ class MedicalConfinementController extends Controller
             'payment_status' => 'pending',
         ];
 
-        if ($request->hasFile('payment_proof')) {
-            // Replaced proofs are retained as payment evidence (deleteOld: false).
-            FileStorageService::storeAndPersist(
-                $request->file('payment_proof'), 'payment-proofs/confinements', 'private',
-                fn (string $path) => $confinement->update($paymentData + [
-                    'payment_proof' => $path,
-                ]),
-                deleteOld: false,
-            );
-        } else {
-            // Cash payments are verified by the cashier at the counter — no proof file.
-            $confinement->update($paymentData);
-        }
+        // Replaced proofs are retained as payment evidence (deleteOld: false).
+        FileStorageService::storeAndPersist(
+            $request->file('payment_proof'), 'payment-proofs/confinements', 'private',
+            fn (string $path) => $confinement->update($paymentData + [
+                'payment_proof' => $path,
+            ]),
+            deleteOld: false,
+        );
 
         WorkflowNotifier::notifyRole('cashier', 'Confinement payment proof submitted', "{$confinement->pet_name} has a pending confinement payment proof.", 'info', 'medical_confinement', $confinement->id);
 

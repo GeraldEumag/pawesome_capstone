@@ -12,7 +12,7 @@
  * All emitted bytes are < 0x80 (text is ASCII-sanitized), so output is
  * encoding-safe regardless of the transport charset.
  */
-import { STORE_INFO, computeVatBreakdown } from "./storeInfo";
+import { STORE_INFO } from "./storeInfo";
 
 // ── ESC/POS commands ─────────────────────────────────────────────────────────
 const INIT     = "\x1B@";        // initialize printer
@@ -101,8 +101,8 @@ export function buildEscPos(opts = {}) {
     footerText      = "Thank you for choosing Pawesome Retreat Inc.!",
   } = opts;
 
-  const vatBreakdown = computeVatBreakdown(total);
-  const vatAmount    = vat != null ? Number(vat) : vatBreakdown.vatAmount;
+  // VAT comes from the backend receipt payload — never recompute it here.
+  const vatAmount    = vat != null ? Number(vat) : null;
 
   let out = INIT;
 
@@ -141,7 +141,7 @@ export function buildEscPos(opts = {}) {
   // ── Totals ──
   out += "\n";
   out += row("Subtotal", php(subtotal)) + "\n";
-  out += row("VAT 12%", "-" + php(Math.abs(vatAmount))) + "\n";
+  if (vatAmount != null) out += row("VAT 12%", "-" + php(Math.abs(vatAmount))) + "\n";
   if (discount > 0) out += row("Discount", "-" + php(discount)) + "\n";
   out += "\n";
   out += DBL + row("TOTAL", php(total), COLS_DBL) + NORMAL + "\n";

@@ -9,6 +9,7 @@ use App\Models\InventoryItem;
 use App\Models\ActivityLog;
 use App\Models\User;
 use App\Services\WorkflowNotifier;
+use App\Support\ReceiptBreakdown;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
@@ -442,16 +443,35 @@ class DashboardController extends Controller
 
     public function generateReceipt($id)
     {
-        $transaction = Sale::with(['customer', 'items'])->find($id);
+        $transaction = Sale::with(['customer', 'items', 'payments'])->find($id);
 
         if (!$transaction) {
             return response()->json(['error' => 'Transaction not found'], 404);
         }
 
+        $total = (float) ($transaction->total_amount ?? $transaction->amount ?? 0);
+        $payments = ($transaction->payments ?? collect())
+            ->map(fn ($p) => [
+                'method' => $p->payment_method ?? $p->method,
+                'amount' => (float) $p->amount,
+                'reference_number' => $p->reference_number,
+                'change' => (float) ($p->change_amount ?? 0),
+                'status' => $p->status,
+                'paid_at' => $p->paid_at,
+            ])
+            ->values();
+        $amountPaid = round((float) $payments->sum('amount'), 2);
+
         return response()->json([
             'transaction_id' => $transaction->id,
             'items' => $transaction->items ?? [],
-            'total' => $transaction->amount,
+            'subtotal' => (float) ($transaction->subtotal ?? 0),
+            'vat_amount' => (float) ($transaction->tax_amount ?? 0),
+            'discount' => (float) ($transaction->discount_amount ?? 0),
+            'total' => $transaction->total_amount ?? $transaction->amount,
+            'amount_paid' => $amountPaid,
+            'payments' => $payments,
+            'balance_due' => round(max(0, $total - $amountPaid), 2),
             'date' => $transaction->created_at->format('Y-m-d H:i:s'),
             'customer' => $transaction->customer ? $transaction->customer->name : 'Guest',
             'payment_type' => $transaction->payment_type ?? 'cash',
@@ -992,6 +1012,8 @@ class DashboardController extends Controller
             ? DB::table('users')->where('id', $order->verified_by)->value('name')
             : null;
 
+        $orderTotal = (float) ($order->total_amount ?? 0);
+
         return response()->json([
             'receipt' => [
                 'order_id' => $order->id,
@@ -1005,6 +1027,19 @@ class DashboardController extends Controller
                 'paid_at' => $order->paid_at,
                 'verified_by' => $verifiedBy,
                 'cashier_remarks' => $order->cashier_remarks,
+                'breakdown' => ReceiptBreakdown::forSettleable(
+                    'customer_order',
+                    (int) $order->id,
+                    $orderTotal,
+                    0,
+                    [
+                        'method' => $order->payment_method,
+                        'amount' => $orderTotal,
+                        'reference_number' => $order->payment_reference ?? null,
+                        'receipt_number' => $order->receipt_number,
+                        'paid_at' => $order->paid_at,
+                    ]
+                ),
             ],
         ]);
     }

@@ -18,6 +18,7 @@ use App\Services\BookingAvailabilityService;
 use App\Services\PetServiceCompatibilityService;
 use App\Services\ServiceDurationService;
 use App\Support\EmailContent;
+use App\Support\ReceiptBreakdown;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Auth;
@@ -119,7 +120,7 @@ class ServiceRequestController extends Controller
             'customer_name' => 'required|string|max:150',
             'customer_email' => 'nullable|email|max:150',
             'pet_id' => 'nullable|integer|exists:pets,id',
-            'pet_name' => 'required|string|max:150',
+            'pet_name' => 'nullable|string|max:150',
             'pet_type' => 'nullable|string|max:50',
             'request_type' => 'required|string|max:150',
             'service_name' => 'nullable|string|max:150',
@@ -136,7 +137,15 @@ class ServiceRequestController extends Controller
         $availabilityType = $this->normalizeServiceType($validated['request_type']);
         $pet = null;
 
-        if (Auth::check() && !empty($validated['pet_id'])) {
+        if (Auth::check()) {
+            if (empty($validated['pet_id'])) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Please select one of your registered pets.',
+                    'errors' => ['pet_id' => ['Please select one of your registered pets.']],
+                ], 422);
+            }
+
             $pet = Pet::with('customer')->find($validated['pet_id']);
             $customer = $pet?->customer;
             $user = Auth::user();
@@ -170,6 +179,12 @@ class ServiceRequestController extends Controller
                     'error_code' => $compatibility['error_code'] ?? 'service_not_allowed',
                 ], 422);
             }
+        } elseif (empty($validated['pet_name'])) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Pet name is required.',
+                'errors' => ['pet_name' => ['Pet name is required.']],
+            ], 422);
         }
 
         // Validate business hours (skip for hotel bookings which don't use time slots)
@@ -252,7 +267,7 @@ class ServiceRequestController extends Controller
         $createData = [
             'request_type' => $validated['request_type'],
             'customer_name' => $validated['customer_name'],
-            'pet_name' => $validated['pet_name'],
+            'pet_name' => $pet ? $pet->name : ($validated['pet_name'] ?? null),
             'service_name' => $validated['service_name'] ?? $validated['request_type'], // Use request_type as service_name fallback
             // Use requested_date/time as primary, fallback to preferred_date/time
             'request_date' => $validated['requested_date'],
@@ -276,7 +291,7 @@ class ServiceRequestController extends Controller
                 : ($validated['customer_email'] ?? null);
         }
 
-        if (Schema::hasColumn('service_requests', 'pet_id') && !empty($validated['pet_id'])) {
+        if (Schema::hasColumn('service_requests', 'pet_id') && Auth::check() && !empty($validated['pet_id'])) {
             $createData['pet_id'] = $validated['pet_id'];
         }
 
@@ -566,6 +581,19 @@ class ServiceRequestController extends Controller
             }
         }
 
+        // Release slots held by linked dedicated records (e.g. the auto-created
+        // pending grooming) so the cancelled request frees its availability slot.
+        if (Schema::hasColumn('groomings', 'service_request_id')) {
+            Grooming::where('service_request_id', $serviceRequest->id)
+                ->whereNotIn('status', ['cancelled', 'completed', 'rejected'])
+                ->update(['status' => 'cancelled']);
+        }
+        if (Schema::hasColumn('appointments', 'service_request_id')) {
+            Appointment::where('service_request_id', $serviceRequest->id)
+                ->whereNotIn('status', ['cancelled', 'completed', 'rejected'])
+                ->update(['status' => 'cancelled']);
+        }
+
         WorkflowNotifier::notifyRole(
             'receptionist',
             'Service Request Cancelled',
@@ -746,9 +774,9 @@ class ServiceRequestController extends Controller
         }
 
         $validated = $request->validate([
-            'payment_method' => 'required|in:cash,gcash,maya',
-            'payment_reference' => 'required_unless:payment_method,cash|nullable|string|max:255',
-            'payment_proof' => 'required_unless:payment_method,cash|nullable|file|mimes:jpg,jpeg,png,pdf|max:5120',
+            'payment_method' => 'required|in:gcash,maya',
+            'payment_reference' => 'required|string|max:255',
+            'payment_proof' => 'required|file|mimes:jpg,jpeg,png,pdf|max:5120',
         ]);
 
         $serviceRequest = ServiceRequest::findOrFail($id);
@@ -777,40 +805,28 @@ class ServiceRequestController extends Controller
             'payment_status' => 'pending',
         ];
 
-        if ($request->hasFile('payment_proof')) {
-            // Replaced (rejected) proofs are retained as payment evidence (deleteOld: false).
-            FileStorageService::storeAndPersist(
-                $request->file('payment_proof'), 'payment-proofs', 'private',
-                fn (string $path) => $serviceRequest->update($paymentData + [
-                    'payment_proof' => $path,
-                ]),
-                deleteOld: false,
-                prefix: 'proof',
-            );
-        } else {
-            // Cash payments are verified by the cashier at the counter — no proof file.
-            $serviceRequest->update($paymentData);
-        }
-
-        $isCash = $validated['payment_method'] === 'cash';
+        // Replaced (rejected) proofs are retained as payment evidence (deleteOld: false).
+        FileStorageService::storeAndPersist(
+            $request->file('payment_proof'), 'payment-proofs', 'private',
+            fn (string $path) => $serviceRequest->update($paymentData + [
+                'payment_proof' => $path,
+            ]),
+            deleteOld: false,
+            prefix: 'proof',
+        );
 
         // Notify cashier role
         $this->notifyRole(
             'cashier',
-            $isCash ? 'New Cash Payment' : 'New Payment Proof Uploaded',
-            ($isCash
-                ? 'A customer will pay in cash at the counter for service request #'
-                : 'A customer uploaded payment proof for service request #')
-                . $serviceRequest->id,
+            'New Payment Proof Uploaded',
+            'A customer uploaded payment proof for service request #' . $serviceRequest->id,
             'info',
             'service_request',
             $serviceRequest->id
         );
 
         // Notify customer about payment pending verification
-        $paymentSubmittedMessage = $isCash
-            ? "Your cash payment for {$serviceRequest->service_name} is pending verification at the counter."
-            : "Your payment proof for {$serviceRequest->service_name} is pending verification.";
+        $paymentSubmittedMessage = "Your payment proof for {$serviceRequest->service_name} is pending verification.";
 
         WorkflowNotifier::notifyEmail(
             $serviceRequest->customer_email,
@@ -842,9 +858,7 @@ class ServiceRequestController extends Controller
                 'content' => [
                     'subject' => "[Pawesome] Payment Received for Verification — SR-{$serviceRequest->id}",
                     'customer_name' => $serviceRequest->customer_name,
-                    'intro' => $isCash
-                        ? "Your cash payment for {$serviceRequest->service_name} will be verified by our cashier at the counter."
-                        : "We have received your payment submission for {$serviceRequest->service_name}. Our cashier will verify it shortly.",
+                    'intro' => "We have received your payment submission for {$serviceRequest->service_name}. Our cashier will verify it shortly.",
                     'details' => [
                         ['label' => 'Reference', 'value' => "SR-{$serviceRequest->id}"],
                         ['label' => 'Service', 'value' => $serviceRequest->service_name],
@@ -904,6 +918,8 @@ class ServiceRequestController extends Controller
             ], 422);
         }
 
+        $total = (float) ($serviceRequest->total_amount ?? $serviceRequest->price ?? 0);
+
         return response()->json([
             'receipt' => [
                 'receipt_number' => $serviceRequest->receipt_number,
@@ -922,6 +938,21 @@ class ServiceRequestController extends Controller
                 'verified_by' => $serviceRequest->verified_by,
                 'cashier_remarks' => $serviceRequest->cashier_remarks,
                 'created_at' => $serviceRequest->created_at,
+                // Authoritative VAT + payment breakdown — frontends render
+                // this as-is instead of recomputing totals.
+                'breakdown' => ReceiptBreakdown::forSettleable(
+                    'service_request',
+                    (int) $serviceRequest->id,
+                    $total,
+                    0,
+                    [
+                        'method' => $serviceRequest->payment_method,
+                        'amount' => $total,
+                        'reference_number' => $serviceRequest->reference_number ?? $serviceRequest->payment_reference,
+                        'receipt_number' => $serviceRequest->receipt_number,
+                        'paid_at' => $serviceRequest->paid_at,
+                    ]
+                ),
             ],
         ]);
     }
