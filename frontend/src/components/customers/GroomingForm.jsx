@@ -147,10 +147,12 @@ const GroomingForm = () => {
     const typeOfPet = pet.species || pet.type || "Pet";
     const birthdate = pet.birthdate || pet.birth_date || pet.date_of_birth;
     const age = calculateAge(birthdate);
+    const breed = pet.breed || pet.pet_breed || null;
     return {
       typeOfPet,
       birthdate,
       age,
+      breed,
     };
   };
 
@@ -359,6 +361,7 @@ const GroomingForm = () => {
                 return (
                   <option key={pet.id} value={pet.id}>
                     {pet.name} — {info?.typeOfPet || "Pet"}
+                    {info?.breed ? ` · ${info.breed}` : ""}
                     {info?.age ? ` (${info.age})` : ""}
                   </option>
                 );
@@ -368,6 +371,9 @@ const GroomingForm = () => {
             {selectedPet && petDisplayInfo && (
               <div className="grooming-selected-pet-info">
                 <p><strong>Type of Pet:</strong> {petDisplayInfo.typeOfPet}</p>
+                {petDisplayInfo.breed && (
+                  <p><strong>Breed:</strong> {petDisplayInfo.breed}</p>
+                )}
                 {petDisplayInfo.birthdate && (
                   <p><strong>Birthdate:</strong> {new Date(petDisplayInfo.birthdate).toLocaleDateString()}</p>
                 )}

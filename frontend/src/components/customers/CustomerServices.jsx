@@ -81,7 +81,13 @@ const CustomerServices = ({ initialTab = "new" }) => {
           {activeTab === "new" && (
             <div className="cs-cards">
               {SERVICE_CARDS.map((svc) => (
-                <div key={svc.key} className="cs-card">
+                <button
+                  key={svc.key}
+                  type="button"
+                  className="cs-card"
+                  onClick={() => navigate(svc.route)}
+                  aria-label={`Book now — ${svc.title}`}
+                >
                   <div
                     className="cs-card-icon"
                     style={{
@@ -93,16 +99,14 @@ const CustomerServices = ({ initialTab = "new" }) => {
                   </div>
                   <h3>{svc.title}</h3>
                   <p>{svc.description}</p>
-                  <button
-                    type="button"
+                  <span
                     className="cs-card-action"
                     style={{ background: svc.color }}
-                    onClick={() => navigate(svc.route)}
                   >
                     Book Now
                     <FaArrowRight />
-                  </button>
-                </div>
+                  </span>
+                </button>
               ))}
             </div>
           )}

@@ -138,6 +138,7 @@
   flex-direction: column;
   gap: 0.85rem;
   overflow-y: auto;
+  overscroll-behavior: contain;
   padding: 1rem;
 }
 
@@ -195,6 +196,7 @@
   max-width: 86%;
   padding: 0.85rem 1rem;
   box-shadow: 0 10px 24px rgba(31, 41, 55, 0.08);
+  overflow-wrap: anywhere;
 }
 
 .rbac-chat-message.bot .rbac-chat-bubble {
@@ -296,6 +298,19 @@
   cursor: not-allowed;
   opacity: 0.5;
   box-shadow: none;
+}
+
+/* Keyboard focus visibility */
+
+.rbac-chatbot-form input:focus-visible,
+.rbac-chatbot-form button:focus-visible,
+.rbac-quick-action:focus-visible,
+.rbac-chatbot-icon-btn:focus-visible,
+.rbac-chatbot-toggle:focus-visible,
+.rbac-chip:focus-visible,
+.rbac-link-action:focus-visible {
+  outline: 2px solid rgba(255, 95, 147, 0.6);
+  outline-offset: 2px;
 }
 
 /* State / Error */
@@ -526,7 +541,7 @@
 
   .rbac-chatbot.widget .rbac-chatbot-panel {
     height: min(640px, calc(100vh - 32px));
-    width: min(360px, calc(100vw - 110px));
+    width: min(420px, calc(100vw - 32px));
   }
 
   .rbac-chatbot-toggle {
@@ -535,14 +550,6 @@
     width: auto;
     max-width: calc(100vw - 120px);
     padding-inline: 0.9rem;
-  }
-
-  .rbac-chatbot-form {
-    flex-direction: column;
-  }
-
-  .rbac-chatbot-form button {
-    width: 100%;
   }
 }
 
@@ -553,7 +560,7 @@
   }
 
   .rbac-chatbot.widget .rbac-chatbot-panel {
-    width: calc(100vw - 106px);
+    width: calc(100vw - 24px);
   }
 
   .rbac-chatbot-toggle-text {
