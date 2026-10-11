@@ -146,7 +146,15 @@ class PaymentVerificationService
 
                     WorkflowNotifier::notifyEmail($sr->customer_email ?? null, 'Payment Verified', "Your payment for {$sr->service_name} has been verified. Receipt: {$receiptNumber}", 'success', 'service_request', $id);
 
-                    return ['success' => true, 'message' => 'Service request payment verified successfully.', 'payment_status' => 'paid', 'receipt_number' => $receiptNumber];
+                    return [
+                        'success' => true,
+                        'message' => 'Service request payment verified successfully.',
+                        'payment_status' => 'paid',
+                        'receipt_number' => $receiptNumber,
+                        'breakdown' => \App\Support\ReceiptBreakdown::forSettleable(
+                            'service_request', $id, $this->settledAmount('service_requests', $sr)
+                        ),
+                    ];
                 }
 
                 // default: customer_order
@@ -205,7 +213,15 @@ class PaymentVerificationService
                     'idempotency_key' => "verify:customer_order:{$id}:{$receiptNumber}",
                 ], $orderItems);
 
-                return ['success' => true, 'message' => 'Payment verified successfully', 'payment_status' => 'paid', 'receipt_number' => $receiptNumber];
+                return [
+                    'success' => true,
+                    'message' => 'Payment verified successfully',
+                    'payment_status' => 'paid',
+                    'receipt_number' => $receiptNumber,
+                    'breakdown' => \App\Support\ReceiptBreakdown::forSettleable(
+                        'customer_order', $id, $orderTotal
+                    ),
+                ];
             });
         } catch (\Throwable $e) {
             Log::error('PaymentVerificationService::verify error - ' . $e->getMessage());
@@ -696,7 +712,15 @@ class PaymentVerificationService
 
         WorkflowNotifier::notifyEmail($record->customer_email ?? null, 'Payment verified', 'Your payment proof was verified by cashier.', 'success', $table, $id);
 
-        return ['success' => true, 'message' => $message, 'payment_status' => 'paid', 'receipt_number' => $receiptNumber];
+        return [
+            'success' => true,
+            'message' => $message,
+            'payment_status' => 'paid',
+            'receipt_number' => $receiptNumber,
+            'breakdown' => \App\Support\ReceiptBreakdown::forSettleable(
+                $settleableType, $id, $settledAmount
+            ),
+        ];
     }
 
     private function rejectTablePayment(string $table, int $id, $request, string $message, string $rejectionReason): array

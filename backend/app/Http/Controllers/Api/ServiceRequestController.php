@@ -1015,11 +1015,11 @@ class ServiceRequestController extends Controller
                 'breakdown' => ReceiptBreakdown::forSettleable(
                     'service_request',
                     (int) $serviceRequest->id,
-                    $total,
+                    $totalAmount,
                     0,
                     [
                         'method' => $serviceRequest->payment_method,
-                        'amount' => $total,
+                        'amount' => $totalAmount,
                         'reference_number' => $serviceRequest->reference_number ?? $serviceRequest->payment_reference,
                         'receipt_number' => $serviceRequest->receipt_number,
                         'paid_at' => $serviceRequest->paid_at,

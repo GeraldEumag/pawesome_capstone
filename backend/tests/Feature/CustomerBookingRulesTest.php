@@ -263,7 +263,9 @@ class CustomerBookingRulesTest extends TestCase
             'name' => $user->name,
             'email' => $user->email,
         ]);
-        $pet = Pet::factory()->create(['customer_id' => $customer->id]);
+        // Pin a boarding-compatible species — a randomized Fish pet would be
+        // rejected by pet compatibility before the overlap gate under test.
+        $pet = Pet::factory()->create(['customer_id' => $customer->id, 'species' => 'Dog']);
         $room = HotelRoom::factory()->create(['status' => 'available']);
         $booking = [
             'pet_id' => $pet->id,
@@ -334,7 +336,9 @@ class CustomerBookingRulesTest extends TestCase
             'user_id' => $user->id,
             'email' => $user->email,
         ]);
-        $pet = Pet::factory()->create(['customer_id' => $customer->id]);
+        // Pin a boarding-compatible species — a randomized Fish pet would be
+        // rejected by pet compatibility before the same-day gate under test.
+        $pet = Pet::factory()->create(['customer_id' => $customer->id, 'species' => 'Dog']);
 
         $this->withHeaders($this->authHeaders($user))
             ->postJson('/api/customer/boardings', [

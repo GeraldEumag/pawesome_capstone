@@ -21,7 +21,6 @@ import "./CashierTransactions_Polished.css";
 import { formatCurrency } from "../../utils/currency";
 import { posApi } from "../../api/pos";
 import { printReceipt } from "../../utils/receiptPrinter";
-import { computeVatBreakdown } from "../../utils/storeInfo";
 import { useNavigate } from "react-router-dom";
 import RowActionPopover from "../shared/RowActionPopover";
 
@@ -439,11 +438,11 @@ const CashierTransactions = () => {
                   <tfoot>
                     <tr>
                       <td colSpan="2">Net Amount (ex-VAT):</td>
-                      <td>{formatCurrency(computeVatBreakdown(selectedTransaction.amount).subtotalExVat)}</td>
+                      <td>{formatCurrency(Number(selectedTransaction.raw_data?.breakdown?.net_amount ?? selectedTransaction.amount))}</td>
                     </tr>
                     <tr>
                       <td colSpan="2">VAT (12%):</td>
-                      <td>{formatCurrency(Number(selectedTransaction.raw_data?.tax_amount ?? computeVatBreakdown(selectedTransaction.amount).vatAmount))}</td>
+                      <td>{formatCurrency(Number(selectedTransaction.raw_data?.breakdown?.vat_amount ?? selectedTransaction.raw_data?.tax_amount ?? 0))}</td>
                     </tr>
                     <tr className="total-row">
                       <td colSpan="2">Total:</td>

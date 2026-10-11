@@ -67,7 +67,10 @@ class NotificationMatrixTest extends TestCase
     public function test_service_request_submitted_notifies_receptionist_roles(): void
     {
         $customer = Customer::factory()->create(['user_id' => $this->users['customer']->id]);
-        $pet = Pet::factory()->create(['customer_id' => $customer->id]);
+        // Pin a grooming-compatible species — Pet::factory() randomizes over
+        // species that PetServiceCompatibilityService rejects for grooming,
+        // which would 422 before any notification is sent.
+        $pet = Pet::factory()->create(['customer_id' => $customer->id, 'name' => 'Bantay', 'species' => 'Dog']);
 
         $this->as('customer')->postJson('/api/customer/requests', [
             'customer_name' => 'Test Customer',
@@ -360,7 +363,9 @@ class NotificationMatrixTest extends TestCase
             'user_id' => $customerUser->id,
             'email' => $customerUser->email,
         ]);
-        $pet = Pet::factory()->create(['customer_id' => $customer->id]);
+        // Pin a boarding-compatible species — Pet::factory() can produce a
+        // Fish, which PetServiceCompatibilityService rejects for petHotel.
+        $pet = Pet::factory()->create(['customer_id' => $customer->id, 'species' => 'Dog']);
         $room = HotelRoom::factory()->create(['status' => 'available']);
 
         $response = $this->as('customer')->postJson('/api/customer/boarding-requests', [
