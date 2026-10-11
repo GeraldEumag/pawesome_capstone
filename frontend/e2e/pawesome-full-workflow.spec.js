@@ -281,7 +281,7 @@ test.describe.serial("Pawesome full workflow", () => {
 
     await api(request, customer, "POST", `/customer/requests/${serviceRequest.id}/payment-proof`, {
       multipart: {
-        payment_method: "GCash",
+        payment_method: "gcash",
         payment_reference: `PW-E2E-${stamp}`,
         payment_proof: { name: "payment-proof.png", mimeType: "image/png", buffer: fs.readFileSync(proofPath) },
       },

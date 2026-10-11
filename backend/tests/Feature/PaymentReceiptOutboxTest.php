@@ -262,8 +262,12 @@ class PaymentReceiptOutboxTest extends TestCase
             'payment_proof' => null,
         ]);
 
+        // Customer online payments are e-wallet only — cash is a staff-counter
+        // workflow and must include a reference + proof file.
         $this->as('customer')->postJson("/api/customer/requests/{$sr->id}/payment-proof", [
-            'payment_method' => 'cash',
+            'payment_method' => 'gcash',
+            'payment_reference' => 'GC-OUTBOX-1',
+            'payment_proof' => UploadedFile::fake()->create('proof.png', 20, 'image/png'),
         ])->assertOk();
 
         $delivery = EmailDelivery::where('event_key', 'payment.proof_submitted')->firstOrFail();

@@ -54,6 +54,7 @@ const formatTime = (value) => {
 };
 
 const countdownText = (item) => {
+  if (item.terminal || ["cancelled", "rejected", "no_show"].includes(item.status)) return "";
   const liveStatuses = ["checked_in", "in_care", "ready_for_pickup", "in_progress"];
   if (item.status === "ready_for_pickup") return "Ready for pickup now";
   if (liveStatuses.includes(item.status) && item.check_out) {
@@ -164,7 +165,7 @@ const BookingTracker = () => {
               <div>
                 <h3>Your Bookings</h3>
                 <p>
-                  {items.length} active {items.length === 1 ? "booking" : "bookings"}
+                  {items.length} {items.length === 1 ? "booking" : "bookings"}
                 </p>
               </div>
             </div>
@@ -226,17 +227,23 @@ const BookingTracker = () => {
 
                   {countdown && <div className="bt-countdown">{countdown}</div>}
 
-                  <div className="bt-steps" aria-label={`Progress: ${item.status_label}`}>
-                    {steps.slice(0, item.step_count).map((label, idx) => (
-                      <div
-                        key={label}
-                        className={`bt-step ${idx < item.step_index ? "done" : ""} ${idx === item.step_index ? "current" : ""}`}
-                      >
-                        <span className="bt-step-dot" />
-                        <span className="bt-step-label">{label}</span>
-                      </div>
-                    ))}
-                  </div>
+                  {item.terminal ? (
+                    <div className={`bt-terminal bt-terminal-${item.status}`} aria-label={`Status: ${item.status_label}`}>
+                      {item.status_label}
+                    </div>
+                  ) : (
+                    <div className="bt-steps" aria-label={`Progress: ${item.status_label}`}>
+                      {steps.slice(0, item.step_count).map((label, idx) => (
+                        <div
+                          key={label}
+                          className={`bt-step ${idx < item.step_index ? "done" : ""} ${idx === item.step_index ? "current" : ""}`}
+                        >
+                          <span className="bt-step-dot" />
+                          <span className="bt-step-label">{label}</span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </article>
               );
             })}

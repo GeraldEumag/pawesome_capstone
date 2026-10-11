@@ -12,6 +12,7 @@ use App\Models\InventoryItem;
 use App\Models\Customer;
 use App\Models\Service;
 use App\Services\InventoryService;
+use App\Support\ReceiptBreakdown;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -582,6 +583,7 @@ class POSController extends Controller
             'items' => $items,
             'subtotal' => $sale->subtotal,
             'tax' => $sale->tax_amount,
+            'vat_amount' => $sale->tax_amount,
             'discount' => $sale->discount_amount,
             'total' => $sale->total_amount,
             'payment' => [
@@ -590,6 +592,29 @@ class POSController extends Controller
                 'change' => $payment?->change_amount ?? 0,
                 'reference' => $payment?->reference_number,
             ],
+            // Authoritative payment breakdown: every recorded payment for
+            // the sale, so multiple/partial payments are represented exactly.
+            'payments' => $sale->payments->map(fn ($p) => [
+                'method' => $p->payment_method ?? $p->method,
+                'amount' => (float) $p->amount,
+                'reference_number' => $p->reference_number,
+                'change' => (float) ($p->change_amount ?? 0),
+                'status' => $p->status,
+                'paid_at' => $p->paid_at,
+            ])->values(),
+            'breakdown' => array_merge(
+                ReceiptBreakdown::build(
+                    (float) $sale->total_amount,
+                    $sale->payments->where('status', '!=', 'voided')->values(),
+                    (float) $sale->discount_amount
+                ),
+                [
+                    // Persisted columns are authoritative for POS sales:
+                    // subtotal is VAT-inclusive, so net = subtotal - tax.
+                    'vat_amount' => (float) $sale->tax_amount,
+                    'net_amount' => round((float) $sale->subtotal - (float) $sale->tax_amount, 2),
+                ]
+            ),
             'notes' => $sale->notes,
         ];
     }

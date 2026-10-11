@@ -151,7 +151,6 @@
 
 .cs-card {
   padding: 1.5rem;
-  cursor: pointer;
   border-radius: 24px;
   background: var(--color-surface, rgba(255, 255, 255, 0.86));
   border: 1px solid var(--color-border, rgba(255, 95, 147, 0.18));
@@ -161,12 +160,10 @@
     border-color 0.22s ease;
 }
 
-.cs-card:hover,
-.cs-card:focus-visible {
+.cs-card:hover {
   transform: translateY(-4px);
   border-color: rgba(255, 95, 147, 0.4);
   box-shadow: 0 24px 55px rgba(255, 95, 147, 0.2);
-  outline: none;
 }
 
 .cs-card-icon {
@@ -200,15 +197,24 @@
   align-items: center;
   gap: 0.45rem;
   padding: 0.55rem 1.1rem;
+  border: none;
   border-radius: 999px;
   color: #fff;
+  font-family: inherit;
   font-size: 0.82rem;
   font-weight: 900;
-  transition: transform 0.2s ease;
+  cursor: pointer;
+  transition: transform 0.2s ease, filter 0.2s ease;
 }
 
-.cs-card:hover .cs-card-action {
+.cs-card-action:hover {
   transform: translateX(2px);
+  filter: brightness(1.06);
+}
+
+.cs-card-action:focus-visible {
+  outline: 2px solid rgba(255, 95, 147, 0.6);
+  outline-offset: 2px;
 }
 
 /* Tablet */

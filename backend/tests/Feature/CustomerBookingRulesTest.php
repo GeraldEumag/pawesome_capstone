@@ -32,6 +32,21 @@ class CustomerBookingRulesTest extends TestCase
         return ['Authorization' => 'Bearer ' . $user->createToken('customer-booking-test')->plainTextToken];
     }
 
+    private function registeredPet(User $user, ?string $species = null): Pet
+    {
+        $customer = Customer::create([
+            'user_id' => $user->id,
+            'name' => $user->name,
+            'email' => $user->email,
+        ]);
+
+        return Pet::factory()->create([
+            'customer_id' => $customer->id,
+            'name' => 'Milo',
+            'species' => $species ?? 'Dog',
+        ]);
+    }
+
     public function test_staff_cannot_submit_customer_service_requests(): void
     {
         $receptionist = User::factory()->receptionist()->create();
@@ -80,11 +95,12 @@ class CustomerBookingRulesTest extends TestCase
     {
         Carbon::setTestNow(Carbon::parse('2026-09-29 23:00:00', 'Asia/Manila'));
         $user = $this->customer();
+        $pet = $this->registeredPet($user);
         $headers = $this->authHeaders($user);
         $booking = [
             'customer_name' => $user->name,
             'customer_email' => $user->email,
-            'pet_name' => 'Milo',
+            'pet_id' => $pet->id,
             'request_type' => 'grooming',
             'service_name' => 'Bath and Brush',
             'request_time' => '16:30',
@@ -110,13 +126,13 @@ class CustomerBookingRulesTest extends TestCase
     {
         Carbon::setTestNow(Carbon::parse('2026-09-29 12:00:00', 'Asia/Manila'));
         $user = $this->customer();
+        $pet = $this->registeredPet($user);
         $headers = $this->authHeaders($user);
         $date = Carbon::tomorrow()->toDateString();
         $booking = [
             'customer_name' => $user->name,
             'customer_email' => $user->email,
-            'pet_name' => 'Milo',
-            'pet_type' => 'Dog',
+            'pet_id' => $pet->id,
             'request_type' => 'vet',
             'service_name' => 'General Consultation',
             'requested_date' => $date,
@@ -146,13 +162,13 @@ class CustomerBookingRulesTest extends TestCase
     {
         Carbon::setTestNow(Carbon::parse('2026-09-29 12:00:00', 'Asia/Manila'));
         $user = $this->customer();
+        $pet = $this->registeredPet($user, 'Dog');
         $headers = $this->authHeaders($user);
         $date = Carbon::tomorrow()->toDateString();
         $booking = [
             'customer_name' => $user->name,
             'customer_email' => $user->email,
-            'pet_name' => 'Milo',
-            'pet_type' => 'Dog',
+            'pet_id' => $pet->id,
             'request_type' => 'grooming',
             'service_name' => 'Bath and Brush',
             'requested_date' => $date,

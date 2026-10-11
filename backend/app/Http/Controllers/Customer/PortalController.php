@@ -208,7 +208,24 @@ class PortalController extends Controller
             'confirmed' => 'Confirmed', 'rescheduled' => 'Rescheduled', 'in_progress' => 'In Progress',
             'checked_in' => 'Checked In', 'in_care' => 'In Care', 'ready_for_pickup' => 'Ready for Pickup',
             'checked_out' => 'Picked Up', 'completed' => 'Completed', 'treated' => 'Treated',
+            'cancelled' => 'Cancelled', 'rejected' => 'Rejected', 'no_show' => 'No Show',
         ];
+
+        // Terminal outcomes stay visible for a short window so a cancelled or
+        // rejected booking does not silently disappear from the tracker.
+        $terminalStatuses = ['cancelled', 'rejected', 'no_show'];
+        $closedStatuses = ['completed', 'checked_out'];
+        $historyCutoff = now()->subDays(7);
+
+        $liveOrRecent = function ($query, array $active) use ($terminalStatuses, $closedStatuses, $historyCutoff) {
+            return $query->where(function ($q) use ($active, $terminalStatuses, $closedStatuses, $historyCutoff) {
+                $q->whereIn('status', $active)
+                    ->orWhere(function ($q2) use ($terminalStatuses, $closedStatuses, $historyCutoff) {
+                        $q2->whereIn('status', array_merge($terminalStatuses, $closedStatuses))
+                            ->where('updated_at', '>=', $historyCutoff);
+                    });
+            });
+        };
 
         $boardingSteps = ['pending' => 0, 'approved' => 1, 'scheduled' => 1, 'confirmed' => 1,
             'checked_in' => 2, 'in_care' => 3, 'ready_for_pickup' => 4, 'checked_out' => 5, 'completed' => 5];
@@ -217,10 +234,12 @@ class PortalController extends Controller
         $groomingSteps = ['pending' => 0, 'approved' => 1, 'scheduled' => 2, 'confirmed' => 2,
             'in_progress' => 3, 'checked_in' => 3, 'completed' => 4];
         $requestSteps = ['pending' => 0, 'approved' => 1, 'scheduled' => 2, 'confirmed' => 2,
-            'rescheduled' => 2, 'in_progress' => 3, 'checked_in' => 3];
+            'rescheduled' => 2, 'in_progress' => 3, 'checked_in' => 3,
+            'completed' => 3, 'checked_out' => 3];
 
-        $makeItem = function ($id, $kind, $serviceType, $serviceLabel, $petName, $date, $time, $status, $steps, $stepCount, $extra = []) use ($statusLabels) {
+        $makeItem = function ($id, $kind, $serviceType, $serviceLabel, $petName, $date, $time, $status, $steps, $stepCount, $extra = []) use ($statusLabels, $terminalStatuses) {
             $status = strtolower((string) $status) ?: 'pending';
+            $terminal = in_array($status, $terminalStatuses, true);
             return [
                 'id' => $id,
                 'kind' => $kind,
@@ -231,7 +250,8 @@ class PortalController extends Controller
                 'time' => $time,
                 'status' => $status,
                 'status_label' => $statusLabels[$status] ?? ucwords(str_replace('_', ' ', $status)),
-                'step_index' => $steps[$status] ?? 0,
+                'terminal' => $terminal,
+                'step_index' => $terminal ? -1 : ($steps[$status] ?? 0),
                 'step_count' => $stepCount,
                 'payment_status' => $extra['payment_status'] ?? null,
                 'check_in' => $extra['check_in'] ?? null,
@@ -242,13 +262,12 @@ class PortalController extends Controller
         };
 
         // Boardings — hotel stays carry the richest live statuses
-        Boarding::where(function ($q) use ($cust, $petIds) {
+        $liveOrRecent(Boarding::where(function ($q) use ($cust, $petIds) {
                 $q->where('customer_id', $cust->id);
                 if ($petIds->isNotEmpty()) {
                     $q->orWhereIn('pet_id', $petIds);
                 }
-            })
-            ->whereIn('status', ['pending', 'approved', 'scheduled', 'confirmed', 'checked_in', 'in_care', 'ready_for_pickup'])
+            }), ['pending', 'approved', 'scheduled', 'confirmed', 'checked_in', 'in_care', 'ready_for_pickup'])
             ->with(['pet', 'hotelRoom'])
             ->get()
             ->each(function ($b) use ($items, $promotedRequestIds, $makeItem, $boardingSteps) {
@@ -273,8 +292,7 @@ class PortalController extends Controller
 
         // Groomings — promoted grooming requests with live status
         if (Schema::hasTable('groomings')) {
-            Grooming::where('customer_id', $cust->id)
-                ->whereIn('status', ['pending', 'approved', 'scheduled', 'confirmed', 'in_progress', 'checked_in'])
+            $liveOrRecent(Grooming::where('customer_id', $cust->id), ['pending', 'approved', 'scheduled', 'confirmed', 'in_progress', 'checked_in'])
                 ->with('pet')
                 ->get()
                 ->each(function ($g) use ($items, $promotedRequestIds, $makeItem, $groomingSteps) {
@@ -294,8 +312,7 @@ class PortalController extends Controller
         }
 
         // Appointments — vet visits
-        Appointment::where('customer_id', $cust->id)
-            ->whereIn('status', ['pending', 'approved', 'scheduled', 'confirmed', 'in_progress', 'checked_in', 'treated'])
+        $liveOrRecent(Appointment::where('customer_id', $cust->id), ['pending', 'approved', 'scheduled', 'confirmed', 'in_progress', 'checked_in', 'treated'])
             ->with(['pet', 'service'])
             ->get()
             ->each(function ($a) use ($items, $promotedRequestIds, $makeItem, $appointmentSteps) {
@@ -317,7 +334,7 @@ class PortalController extends Controller
         // Service requests still awaiting promotion (pending etc.)
         // service_requests.customer_id stores users.id — match customerRequests() scoping
         $user = auth()->user();
-        ServiceRequest::query()
+        $liveOrRecent(ServiceRequest::query()
             ->where(function ($q) use ($user) {
                 if (Schema::hasColumn('service_requests', 'customer_id') && $user) {
                     $q->where('customer_id', $user->id);
@@ -325,8 +342,7 @@ class PortalController extends Controller
                 if (Schema::hasColumn('service_requests', 'customer_email') && $user?->email) {
                     $q->orWhere('customer_email', $user->email);
                 }
-            })
-            ->whereIn('status', array_keys($requestSteps))
+            }), array_keys($requestSteps))
             ->get()
             ->reject(fn ($r) => $promotedRequestIds->contains((int) $r->id))
             ->each(function ($r) use ($items, $makeItem, $requestSteps) {

@@ -629,19 +629,6 @@ const PaymentApprovals = () => {
                       <div className="pa-submitted-reference">
                         <span className="pa-submitted-reference-label">Customer-submitted reference</span>
                         <strong className="pa-submitted-reference-value">{proofModal.payment.payment_reference}</strong>
-                        {referenceNumber.trim() && (
-                          <span
-                            className={`pa-reference-match ${
-                              referenceNumber.trim() === String(proofModal.payment.payment_reference).trim()
-                                ? "match"
-                                : "mismatch"
-                            }`}
-                          >
-                            {referenceNumber.trim() === String(proofModal.payment.payment_reference).trim()
-                              ? "Matches"
-                              : "Mismatch — verify carefully before approving"}
-                          </span>
-                        )}
                       </div>
                     )}
                     <label htmlFor="paRefNum" className="pa-reference-label">

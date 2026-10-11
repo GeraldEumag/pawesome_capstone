@@ -164,6 +164,42 @@ class PaymentVerificationService
                     'updated_at' => now(),
                 ]);
 
+                // Record the settlement so order receipts can render an
+                // authoritative payment breakdown from the ledger.
+                $orderItems = DB::table('customer_order_items')
+                    ->where('customer_order_id', $id)
+                    ->get()
+                    ->map(fn ($item) => [
+                        'description' => $item->product_name ?? $item->item_name ?? 'Order item',
+                        'quantity' => max(1, (int) ($item->quantity ?? 1)),
+                        'unit_price' => (float) ($item->unit_price ?? $item->price ?? 0),
+                        'total_price' => (float) ($item->total_price ?? $item->subtotal ?? 0),
+                    ])->all();
+
+                $orderTotal = (float) ($order->total_amount ?? 0);
+                if (empty($orderItems)) {
+                    $orderItems = [[
+                        'description' => 'Customer order settlement',
+                        'quantity' => 1,
+                        'unit_price' => $orderTotal,
+                        'total_price' => $orderTotal,
+                    ]];
+                }
+
+                PaymentSettlementService::record([
+                    'settleable_type' => 'customer_order',
+                    'settleable_id' => $id,
+                    'customer_id' => $order->customer_id ?? null,
+                    'amount' => $orderTotal,
+                    'payment_method' => $order->payment_method ?? null,
+                    'reference_number' => $referenceNumber ?? $order->payment_reference ?? null,
+                    'receipt_number' => $receiptNumber,
+                    'verified_by' => Auth::id(),
+                    'verified_at' => now(),
+                    'paid_at' => now(),
+                    'idempotency_key' => "verify:customer_order:{$id}:{$receiptNumber}",
+                ], $orderItems);
+
                 return ['success' => true, 'message' => 'Payment verified successfully', 'payment_status' => 'paid', 'receipt_number' => $receiptNumber];
             });
         } catch (\Throwable $e) {
@@ -272,7 +308,7 @@ class PaymentVerificationService
     {
         $meta = match ($type) {
             'service_request', 'service' => ['table' => 'service_requests', 'settleable' => 'service_request'],
-            'customer_order' => ['table' => 'customer_orders', 'settleable' => null],
+            'customer_order' => ['table' => 'customer_orders', 'settleable' => 'customer_order'],
             'boarding' => ['table' => 'boardings', 'settleable' => 'boarding'],
             'appointment', 'veterinary' => ['table' => 'appointments', 'settleable' => 'appointment'],
             'grooming' => ['table' => 'groomings', 'settleable' => 'grooming'],
@@ -690,10 +726,10 @@ class PaymentVerificationService
     {
         $requestType = $serviceRequest->request_type ?? $serviceRequest->type ?? null;
 
-        $linked = match ($requestType) {
+        $linked = match (strtolower((string) $requestType)) {
             'vet', 'veterinary' => ['appointments', 'veterinary'],
             'grooming' => ['groomings', 'grooming'],
-            'boarding' => ['boardings', 'boarding'],
+            'boarding', 'hotel', 'pet hotel', 'pet_hotel' => ['boardings', 'boarding'],
             default => null,
         };
 

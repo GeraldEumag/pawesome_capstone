@@ -525,11 +525,13 @@ img:not([class*="logo-image"]):not([class*="sidebar-logo"]):not([class*="avatar"
     justify-content: center !important;
   }
 
-  /* Backdrop covers full screen */
+  /* Backdrop covers full screen — must sit above the sticky topbar
+     (z-index 1100) so taps anywhere dismiss the sidebar, but below the
+     sidebar overlay itself (1400). */
   .mobile-backdrop {
     position: fixed !important;
     inset: 0 !important;
-    z-index: 999 !important;
+    z-index: 1390 !important;
     background: rgba(0, 0, 0, 0.45) !important;
   }
 }

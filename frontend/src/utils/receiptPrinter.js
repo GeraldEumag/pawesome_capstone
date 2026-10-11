@@ -12,7 +12,7 @@
  *
  * Used by all cashier, customer, and payment-verification receipt flows.
  */
-import { STORE_INFO, computeVatBreakdown } from "./storeInfo";
+import { STORE_INFO } from "./storeInfo";
 import { printRawViaQZ } from "./qzPrinter";
 import { buildEscPos, buildTestReceipt } from "./escpos";
 
@@ -77,8 +77,10 @@ function buildReceiptHtml(opts = {}, { includePrintButton = false } = {}) {
     footerText = "Thank you for choosing Pawesome Retreat Inc.!",
   } = opts;
 
-  const vatBreakdown = computeVatBreakdown(total);
-  const vatAmount    = vat != null ? Number(vat) : vatBreakdown.vatAmount;
+  // VAT comes from the backend receipt payload — never recompute it here.
+  // When the payload does not include a VAT amount, the line is omitted
+  // rather than fabricating one.
+  const vatAmount    = vat != null ? Number(vat) : null;
 
   const EQ = `<div class="dv">&nbsp;</div>`;
 
@@ -108,7 +110,7 @@ function buildReceiptHtml(opts = {}, { includePrintButton = false } = {}) {
   // ── Totals block: subtotal, VAT, discount, TOTAL, cash, change ──
   const totalsHtml = [
     rw("Subtotal", php(subtotal)),
-    rw("VAT 12%",  `-${php(Math.abs(vatAmount))}`),
+    vatAmount != null ? rw("VAT 12%", `-${php(Math.abs(vatAmount))}`) : "",
     discount > 0 ? rw("Discount", `-${php(discount)}`) : "",
   ].filter(Boolean).join("");
 

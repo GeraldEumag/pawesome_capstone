@@ -372,7 +372,8 @@ class P1SecurityIntegrityTest extends TestCase
 
     public function test_service_request_binds_email_to_account_and_price_to_service(): void
     {
-        [$user] = $this->verifiedCustomer(['email' => 'real-customer@example.com']);
+        [$user, $customer] = $this->verifiedCustomer(['email' => 'real-customer@example.com']);
+        $pet = Pet::factory()->create(['customer_id' => $customer->id, 'name' => 'Buddy', 'species' => 'Dog']);
         Service::create([
             'name' => 'Vet Consultation',
             'category' => 'Consultation',
@@ -383,7 +384,7 @@ class P1SecurityIntegrityTest extends TestCase
         $response = $this->postJson('/api/customer/requests', [
             'customer_name' => $user->name,
             'customer_email' => 'attacker@example.com', // must be ignored
-            'pet_name' => 'Buddy',
+            'pet_id' => $pet->id,
             'request_type' => 'veterinary',
             'service_name' => 'Vet Consultation',
             'requested_date' => now()->addDay()->toDateString(),
@@ -406,7 +407,8 @@ class P1SecurityIntegrityTest extends TestCase
 
     public function test_hotel_request_computes_total_from_room_rate_and_nights(): void
     {
-        [$user] = $this->verifiedCustomer();
+        [$user, $customer] = $this->verifiedCustomer();
+        $pet = Pet::factory()->create(['customer_id' => $customer->id, 'name' => 'Buddy', 'species' => 'Dog']);
         $room = BoardingRoom::create([
             'room_code' => 'P1-ROOM',
             'room_name' => 'Standard Dog Room',
@@ -421,7 +423,7 @@ class P1SecurityIntegrityTest extends TestCase
 
         $response = $this->postJson('/api/customer/requests', [
             'customer_name' => $user->name,
-            'pet_name' => 'Buddy',
+            'pet_id' => $pet->id,
             'request_type' => 'hotel',
             'requested_date' => now()->addDay()->toDateString(),
             'check_out_date' => now()->addDays(3)->toDateString(),
@@ -446,6 +448,12 @@ class P1SecurityIntegrityTest extends TestCase
     {
         Mail::fake();
         $receptionist = User::factory()->create(['role' => 'receptionist', 'is_active' => true]);
+        Service::create([
+            'name' => 'Basic Bath',
+            'category' => 'Grooming',
+            'price' => 350,
+            'is_active' => true,
+        ]);
 
         $response = $this->postJson('/api/receptionist/walk-ins', [
             'customer_mode' => 'new',

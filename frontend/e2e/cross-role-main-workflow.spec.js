@@ -253,7 +253,9 @@ async function ensureBuddyPet(request, customerSession) {
 
 async function createVetRequest(request, customerSession, pet) {
   const offset = 10 + (runSeed % 20);
-  const hour = 9 + (runSeed % 7);
+  // Shop hours are 10:00–18:00 — keep the seeded time inside the window
+  // (previously 9 + seed%7 could pick 09:30 and fail validation ~1/7 runs).
+  const hour = 10 + (runSeed % 7);
   const created = await api(request, customerSession, "POST", "/customer/requests", {
     data: {
       customer_name: customerSession.user.name || "Demo Customer",

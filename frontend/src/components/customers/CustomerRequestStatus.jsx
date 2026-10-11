@@ -145,7 +145,7 @@ const CustomerRequestStatus = ({ embedded = false }) => {
   const getStatusIcon = (status) => {
     const normalizedStatus = safeLower(status);
     if (normalizedStatus === "approved") return <FaCheckCircle />;
-    if (normalizedStatus === "rejected") return <FaTimesCircle />;
+    if (normalizedStatus === "rejected" || normalizedStatus === "cancelled") return <FaTimesCircle />;
     return <FaClock />;
   };
 

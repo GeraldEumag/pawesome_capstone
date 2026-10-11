@@ -185,36 +185,39 @@ class WalkInController extends Controller
                 $bookingType = null;
 
                 if ($serviceType === 'hotel') {
-                    $ratePerDay = (float)($bookingData['rate_per_day'] ?? 0);
                     $hotelRoomId = $bookingData['hotel_room_id'] ?? $bookingData['room_id'] ?? null;
 
-                    if ($hotelRoomId) {
-                        $room = \App\Models\HotelRoom::lockForUpdate()->find($hotelRoomId);
-                        if (!$room || $room->status !== 'available') {
-                            throw new HttpResponseException(response()->json([
-                                'success' => false,
-                                'message' => 'Selected room is not available.',
-                            ], 422));
-                        }
-
-                        // Same-day boarding occupies the room for the whole date
-                        $date = $bookingData['request_date'];
-                        $conflict = Boarding::where('hotel_room_id', $room->id)
-                            ->whereNotIn('status', ['rejected', 'cancelled', 'checked_out', 'completed'])
-                            ->where('check_in', '<=', $date)
-                            ->where('check_out', '>=', $date)
-                            ->exists();
-                        if ($conflict) {
-                            throw new HttpResponseException(response()->json([
-                                'success' => false,
-                                'message' => 'Selected room is already booked for that date.',
-                            ], 422));
-                        }
-
-                        if ($ratePerDay == 0) {
-                            $ratePerDay = (float)$room->daily_rate;
-                        }
+                    if (!$hotelRoomId) {
+                        throw new HttpResponseException(response()->json([
+                            'success' => false,
+                            'message' => 'A room must be selected for hotel bookings.',
+                        ], 422));
                     }
+
+                    $room = \App\Models\HotelRoom::lockForUpdate()->find($hotelRoomId);
+                    if (!$room || $room->status !== 'available') {
+                        throw new HttpResponseException(response()->json([
+                            'success' => false,
+                            'message' => 'Selected room is not available.',
+                        ], 422));
+                    }
+
+                    // Same-day boarding occupies the room for the whole date
+                    $date = $bookingData['request_date'];
+                    $conflict = Boarding::where('hotel_room_id', $room->id)
+                        ->whereNotIn('status', ['rejected', 'cancelled', 'checked_out', 'completed'])
+                        ->where('check_in', '<=', $date)
+                        ->where('check_out', '>=', $date)
+                        ->exists();
+                    if ($conflict) {
+                        throw new HttpResponseException(response()->json([
+                            'success' => false,
+                            'message' => 'Selected room is already booked for that date.',
+                        ], 422));
+                    }
+
+                    // Rate always comes from the room record — never the client.
+                    $ratePerDay = (float) $room->daily_rate;
 
                     // Store operates 9 AM - 7 PM: boarding stays are same-day
                     $numberOfDays = 1;
@@ -251,15 +254,16 @@ class WalkInController extends Controller
                     if (!$service) {
                         $service = Service::whereIn('category', ['Consultation', 'Vaccination', 'Treatment', 'Emergency', 'Surgery', 'Dental', 'Diagnostics'])->first();
                     }
-                    
-                    $serviceId = $service ? $service->id : null;
-                    $servicePrice = $service ? (float)$service->price : 0.0;
 
-                    if (!$serviceId) {
-                        $firstService = Service::first();
-                        $serviceId = $firstService ? $firstService->id : 1;
-                        $servicePrice = $firstService ? (float)$firstService->price : 0.0;
+                    if (!$service) {
+                        throw new HttpResponseException(response()->json([
+                            'success' => false,
+                            'message' => 'Unknown veterinary service. Please select a service from the list.',
+                        ], 422));
                     }
+
+                    $serviceId = $service->id;
+                    $servicePrice = (float) $service->price;
 
                     // Update service request price
                     $serviceRequest->price = $servicePrice;
@@ -278,6 +282,18 @@ class WalkInController extends Controller
                     ]);
                     $bookingType = 'appointment';
                 } elseif ($serviceType === 'grooming') {
+                    $groomingService = Service::where('name', $bookingData['service_name'])->first();
+                    if (!$groomingService) {
+                        throw new HttpResponseException(response()->json([
+                            'success' => false,
+                            'message' => 'Unknown grooming service. Please select a service from the list.',
+                        ], 422));
+                    }
+
+                    $groomingPrice = (float) $groomingService->price;
+                    $serviceRequest->price = $groomingPrice;
+                    $serviceRequest->save();
+
                     $bookingRecord = Grooming::create([
                         'service_request_id' => $serviceRequest->id,
                         'customer_id' => $customerId,
@@ -285,10 +301,10 @@ class WalkInController extends Controller
                         'service' => $bookingData['service_name'],
                         'appointment_date' => $bookingData['request_date'],
                         'appointment_time' => $bookingData['request_time'] ?? null,
-                        'amount' => 0,
-                        'base_amount' => 0,
-                        'total_amount' => 0,
-                        'balance_due' => 0,
+                        'amount' => $groomingPrice,
+                        'base_amount' => $groomingPrice,
+                        'total_amount' => $groomingPrice,
+                        'balance_due' => $groomingPrice,
                         'status' => 'pending',
                         'payment_status' => 'pending',
                         'notes' => $bookingData['grooming_instructions'] ?? null,
