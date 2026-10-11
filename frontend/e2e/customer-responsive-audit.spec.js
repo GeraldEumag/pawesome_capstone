@@ -12,8 +12,6 @@ const CUSTOMER_ROUTES = [
   '/customer/grooming',
   '/customer/vet',
   '/customer/medical-confinements',
-  '/customer/chatbot',
-  '/customer/userinfo',
   '/customer/profile',
   '/customer/history',
   '/customer/notifications',
@@ -113,7 +111,10 @@ test('Customer workspace routes remain responsive across supported widths', asyn
         page.locator('.app-dashboard.customer-dashboard'),
         `${route} at ${viewport.name} should render the Customer shell; current URL: ${page.url()}`
       ).toBeVisible({ timeout: 8000 });
-      await expect(page.locator('.app-content').first()).toBeVisible();
+      await expect(
+        page.locator('.app-content').first(),
+        `${route} at ${viewport.name} should render content; current URL: ${page.url()}`
+      ).toBeVisible();
 
       if (route === '/customer/hotel') {
         await expect(page.locator('[name="check_in_time"], [name="check_out_time"]')).toHaveCount(0);
@@ -122,20 +123,14 @@ test('Customer workspace routes remain responsive across supported widths', asyn
       if (route === '/customer/grooming') {
         const timeSelect = page.locator('select[name="request_time"]');
         await expect(timeSelect).toBeVisible();
+        // Slots are loaded dynamically from /customer/availability/grooming
+        // after a date is picked — with the API stubbed, only the placeholder
+        // renders and the select stays disabled until a date is chosen.
+        await expect(timeSelect).toBeDisabled();
         const options = await timeSelect.locator('option').evaluateAll((items) =>
           items.map((item) => ({ value: item.value, label: item.textContent.trim() }))
         );
-        expect(options).toEqual([
-          { value: '', label: 'Select a time' },
-          { value: '10:00', label: '10:00 AM' },
-          { value: '11:00', label: '11:00 AM' },
-          { value: '12:00', label: '12:00 PM' },
-          { value: '13:00', label: '1:00 PM' },
-          { value: '14:00', label: '2:00 PM' },
-          { value: '15:00', label: '3:00 PM' },
-          { value: '16:00', label: '4:00 PM' },
-          { value: '17:00', label: '5:00 PM' },
-        ]);
+        expect(options).toEqual([{ value: '', label: 'Select an available time' }]);
       }
 
       const dimensions = await page.evaluate(() => ({

@@ -47,7 +47,7 @@ class AuthController extends Controller
             return response()->json(['errors' => $validator->errors()], 422);
         }
 
-        [$user, $token] = DB::transaction(function () use ($request) {
+        $user = DB::transaction(function () use ($request) {
             $user = User::create([
                 'name' => $request->name,
                 'first_name' => $request->first_name,
@@ -81,11 +81,12 @@ class AuthController extends Controller
                 ]
             );
 
-            $this->sendVerificationEmail($user);
-            $token = $user->createToken('pawesome-token')->plainTextToken;
-
-            return [$user, $token];
+            return $user;
         });
+
+        $this->sendVerificationEmail($user);
+
+        $token = $user->createToken('pawesome-token')->plainTextToken;
 
         return response()->json([
             'message' => 'User registered successfully. Please check your email to verify your account.',

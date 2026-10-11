@@ -147,7 +147,7 @@ test.describe('Phase 4 Payment Workflow E2E', () => {
         multipart: {
           payment_proof: { name: 'e2e-proof.png', mimeType: 'image/png', buffer: PROOF_PNG },
           payment_reference: 'E2E-REF-200002',
-          payment_method: 'GCash',
+          payment_method: 'gcash',
         },
       }
     );
@@ -200,9 +200,10 @@ test.describe('Phase 4 Payment Workflow E2E', () => {
     await expect(row.locator('.status-badge')).toContainText(/pending/i);
 
     // Approve is available and enabled despite the missing vaccination card.
-    // ReceptionistHotelBookings approves directly via runAction — no modal —
-    // and renders .hotel-toast.success / .hotel-toast.error for the outcome.
-    const approveBtn = row.locator('button[title="Approve"]');
+    // Actions live inside the RowActionPopover — open it first (the panel is
+    // portaled to document.body, so the button is scoped to the page, not row).
+    await row.getByRole('button', { name: /actions for/i }).click();
+    const approveBtn = page.locator('button[title="Approve"]');
     await expect(approveBtn).toBeVisible();
     await expect(approveBtn).toBeEnabled();
     await approveBtn.click();

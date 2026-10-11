@@ -5,7 +5,8 @@ const { loginAs, apiLogin } = require("./test-utils");
 // live dev stack (backend :8000 + frontend :3000 + dev DB).
 // Seeded fixtures (created via artisan tinker in the dev DB):
 //   SR 178 -> Boarding 45 : hotel, paid, check-in TODAY ("Pet Hotel E2E" / Whity)
-//   Appt 52 -> SR 176     : vet, scheduled tomorrow, assigned to vet@example.com
+//   Appt 53 -> SR 179     : vet, scheduled tomorrow, assigned to vet@example.com
+//                         (also the approved+unpaid SR for the payment test)
 const apiUrl = process.env.E2E_API_URL || "http://127.0.0.1:8000/api";
 
 const auth = (token, extra = {}) => ({
@@ -72,8 +73,8 @@ test.describe("Revision B — browser verification", () => {
   test("customer payment modal offers e-wallets only and cash is rejected", async ({ page, request }) => {
     await loginAs(page, "customer");
     await page.goto("/customer/bookings");
-    // SR 176 is approved + unpaid → its row opens the actions popover with Pay.
-    const row = page.locator("tr", { hasText: "#176" });
+    // SR 179 is approved + unpaid → its row opens the actions popover with Pay.
+    const row = page.locator("tr", { hasText: "#179" });
     await expect(row).toBeVisible({ timeout: 20000 });
     await row.getByRole("button", { name: /actions for/i }).click();
     const payBtn = page.locator(".customer-pay-btn", { hasText: "Pay" });
@@ -87,7 +88,7 @@ test.describe("Revision B — browser verification", () => {
 
     // Cash must be rejected by the customer endpoint even if forced via API.
     const { token } = await apiLogin(request, "customer");
-    const res = await request.post(`${apiUrl}/customer/requests/176/payment-proof`, {
+    const res = await request.post(`${apiUrl}/customer/requests/179/payment-proof`, {
       headers: auth(token, { "Content-Type": "application/json" }),
       data: { payment_method: "cash" },
     });
@@ -104,8 +105,8 @@ test.describe("Revision B — browser verification", () => {
     const target = (srList.requests || srList.data || srList || []).find((r) => r.id === 178);
     expect(target, "seeded service request 178 must be visible to receptionist").toBeTruthy();
 
-    // Intercept the check-in call — it must target the boarding id (43),
-    // never the service-request id (170).
+    // Intercept the check-in call — it must target the boarding id (45),
+    // never the service-request id (178).
     const checkInCalls = [];
     let checkInStatus = null;
     await loginAs(page, "receptionist");
@@ -119,7 +120,10 @@ test.describe("Revision B — browser verification", () => {
     await page.goto("/receptionist/bookings/hotel");
 
     // Seeded boarding: check-in Oct 11 → check-out Oct 13, Paid, Approved.
-    const row = page.locator("tr", { hasText: "Oct 11, 2026 - Oct 13, 2026" });
+    // Multiple boardings share this date range — disambiguate by pet name.
+    const row = page
+      .locator("tr", { hasText: "Oct 11, 2026 - Oct 13, 2026" })
+      .filter({ hasText: "Whity" });
     await expect(row).toBeVisible({ timeout: 20000 });
     await row.getByRole("button", { name: /actions for/i }).click();
 
@@ -158,7 +162,7 @@ test.describe("Revision B — browser verification", () => {
     await loginAs(page, "veterinary");
     await page.goto("/veterinary/appointments");
 
-    const card = page.locator(".appointment-card", { hasText: "E2E_CANCEL_MARKER_3" });
+    const card = page.locator(".appointment-card", { hasText: "E2E_CANCEL_MARKER_4" });
     await expect(card).toBeVisible({ timeout: 20000 });
     await card.getByRole("button", { name: /^cancel$/i }).click();
 
@@ -189,7 +193,7 @@ test.describe("Revision B — browser verification", () => {
 
     // Appointment cancelled and the linked SR must be consistent.
     const { token } = await apiLogin(request, "veterinary");
-    const detail = await request.get(`${apiUrl}/veterinary/appointments/52`, { headers: auth(token) });
+    const detail = await request.get(`${apiUrl}/veterinary/appointments/53`, { headers: auth(token) });
     expect(detail.ok()).toBeTruthy();
     expect((await detail.json()).appointment?.status).toBe("cancelled");
 
@@ -200,8 +204,8 @@ test.describe("Revision B — browser verification", () => {
     );
     const custBody = await custList.json();
     const rows = custBody.requests || custBody.data || custBody || [];
-    const sr176 = (Array.isArray(rows) ? rows : []).find((r) => r.id === 176);
-    expect(sr176?.status).toBe("cancelled");
+    const sr179 = (Array.isArray(rows) ? rows : []).find((r) => r.id === 179);
+    expect(sr179?.status).toBe("cancelled");
   });
 
   test("booking tracker shows cancelled requests instead of hiding them", async ({ page, request }) => {
@@ -209,7 +213,8 @@ test.describe("Revision B — browser verification", () => {
     const { token } = await apiLogin(request, "customer");
     const headers = auth(token, { "Content-Type": "application/json" });
     const petsRes = await request.get(`${apiUrl}/customer/pets`, { headers });
-    const pet = (petsRes.ok() ? (await petsRes.json()).pets || [] : [])[0];
+    const petsBody = petsRes.ok() ? await petsRes.json() : {};
+    const pet = (petsBody.pets || petsBody.data || petsBody || [])[0];
     expect(pet, "customer must own at least one pet").toBeTruthy();
 
     const created = await request.post(`${apiUrl}/customer/requests`, {
