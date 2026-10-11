@@ -83,6 +83,27 @@ const isCashMethod = (method) => {
   return !m || m === "cash" || m === "counter";
 };
 
+const isWalkIn = (payment) => (payment?.booking_channel || "").toLowerCase() === "walk_in";
+
+/*
+ * Counter cash is collectible for walk-in bookings, or for any booking whose
+ * submitted e-wallet proof was rejected (the counter-fallback rule). The
+ * backend enforces the same — this only shapes the displayed action.
+ */
+const isCounterCollection = (payment) => {
+  const ps = (payment?.payment_status || "").toLowerCase();
+  if (ps === "rejected") return true;
+  return isWalkIn(payment) && ["unpaid", "pending"].includes(ps);
+};
+
+/* The row has an actionable payment step: counter collection, or a
+ * submitted proof awaiting verification. */
+const isActionable = (payment) => {
+  const ps = (payment?.payment_status || "").toLowerCase();
+  if (isCounterCollection(payment)) return true;
+  return ps === "pending" && !!payment?.payment_proof;
+};
+
 const fmt = (n) =>
   Number(n || 0).toLocaleString("en-PH", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
@@ -474,15 +495,21 @@ const PaymentApprovals = () => {
                 </div>
 
                 <div className="pa-card-actions">
-                  <button
-                    className="pa-btn-verify"
-                    onClick={() => openProof(payment.proof_url || null, payment)}
-                    disabled={isVerifyLoading || isRejectLoading}
-                  >
-                    {isVerifyLoading
-                      ? <><FontAwesomeIcon icon={faSpinner} spin /> Verifying…</>
-                      : <><FontAwesomeIcon icon={faCheck} /> {isCashMethod(payment.payment_method) ? "Collect Cash" : "Verify"}</>}
-                  </button>
+                  {isActionable(payment) ? (
+                    <button
+                      className="pa-btn-verify"
+                      onClick={() => openProof(payment.proof_url || null, payment)}
+                      disabled={isVerifyLoading || isRejectLoading}
+                    >
+                      {isVerifyLoading
+                        ? <><FontAwesomeIcon icon={faSpinner} spin /> Verifying…</>
+                        : <><FontAwesomeIcon icon={faCheck} /> {isCounterCollection(payment) ? "Collect Cash" : "Verify"}</>}
+                    </button>
+                  ) : (
+                    <span className="pa-awaiting-online" title="This booking was made online — the customer must submit an e-wallet payment proof first.">
+                      Awaiting Online Payment
+                    </span>
+                  )}
                   {/* Only a pending submitted proof can be rejected — an
                       'unpaid' record is awaiting payment, not approval. */}
                   {(payment.payment_status || "").toLowerCase() === "pending" && (

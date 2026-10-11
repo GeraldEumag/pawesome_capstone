@@ -1,11 +1,10 @@
 import React, { useState, useEffect, useRef } from "react";
-import { showAlert, showPrompt, showError } from "../../utils/alert.jsx";
+import { showAlert, showError, showReasonPrompt, VOID_REASONS } from "../../utils/alert.jsx";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
   faSearch,
   faFilter,
   faPlus,
-  faEdit,
   faTrash,
   faReceipt,
   faCreditCard,
@@ -152,6 +151,31 @@ const CashierTransactions = () => {
       amountReceived: amountReceived || undefined,
       change: change || undefined,
     });
+  };
+
+  const [transactionDetail, setTransactionDetail] = useState(null);
+  const [detailLoading, setDetailLoading] = useState(false);
+
+  const handleViewDetails = async (transaction) => {
+    setSelectedTransaction(transaction);
+    setTransactionDetail(null);
+    try {
+      setDetailLoading(true);
+      const detail = await posApi.getTransaction(transaction.sale_id);
+      setTransactionDetail(detail);
+    } catch (err) {
+      showError("Failed to load transaction details");
+      if (!isGenericFetchFailure(err)) {
+        console.error("Load transaction detail error:", err);
+      }
+    } finally {
+      setDetailLoading(false);
+    }
+  };
+
+  const closeDetails = () => {
+    setSelectedTransaction(null);
+    setTransactionDetail(null);
   };
 
   const handleVoidTransaction = async (id, reason) => {
@@ -304,23 +328,21 @@ const CashierTransactions = () => {
                   <RowActionPopover rowLabel={transaction.customer || transaction.id}>
                   <button
                     className="action-btn view"
-                    onClick={() => setSelectedTransaction(transaction)}
+                    onClick={() => handleViewDetails(transaction)}
                     title="View Details"
                   >
                     <FontAwesomeIcon icon={faEye} />
                   </button>
                   <button 
-                    className="action-btn edit" 
-                    title="Edit"
-                    onClick={() => showAlert('Edit feature coming soon!')}
-                  >
-                    <FontAwesomeIcon icon={faEdit} />
-                  </button>
-                  <button 
                     className="action-btn delete" 
                     title="Void"
                     onClick={async () => {
-                      const reason = await showPrompt("Enter reason for voiding:");
+                      const reason = await showReasonPrompt(
+                        `Void transaction ${transaction.id}? Stock is restored and payments are refunded.`,
+                        "Void Transaction",
+                        "Void",
+                        VOID_REASONS
+                      );
                       if (reason) handleVoidTransaction(transaction.sale_id, reason);
                     }}
                     disabled={transaction.status === 'cancelled'}
@@ -364,8 +386,31 @@ const CashierTransactions = () => {
         </div>
       )}
 
-      {selectedTransaction && (
-        <div className="transaction-modal-overlay" onClick={() => setSelectedTransaction(null)}>
+      {selectedTransaction && (() => {
+        // The detail endpoint returns the same payload the receipt uses —
+        // never recompute totals here; fall back to the row only while it loads.
+        const receipt = transactionDetail?.receipt;
+        const sale = transactionDetail?.transaction;
+        const breakdown = receipt?.breakdown || {};
+        const items = receipt?.items?.length
+          ? receipt.items
+          : (selectedTransaction.products || []);
+        const payments = receipt?.payments?.length
+          ? receipt.payments
+          : (selectedTransaction.raw_data?.payments || []);
+        const total = Number(receipt?.total ?? selectedTransaction.amount ?? 0);
+        const netAmount = Number(breakdown.net_amount ?? sale?.subtotal ?? total);
+        const vatAmount = Number(breakdown.vat_amount ?? sale?.tax_amount ?? 0);
+        const discount = Number(receipt?.discount ?? sale?.discount_amount ?? 0);
+        const amountPaid = Number(breakdown.amount_paid ?? receipt?.payment?.amount ?? total);
+        const balanceDue = Number(breakdown.balance_due ?? Math.max(0, total - amountPaid));
+        const changeDue = payments.reduce((sum, p) => sum + Number(p.change ?? p.change_amount ?? 0), 0);
+        const isCancelled = selectedTransaction.status === 'cancelled';
+        const voidReason = sale?.void_reason ?? selectedTransaction.raw_data?.void_reason;
+        const voidedAt = sale?.voided_at ?? selectedTransaction.raw_data?.voided_at;
+
+        return (
+        <div className="transaction-modal-overlay" onClick={closeDetails}>
           <div className="transaction-modal" onClick={(e) => e.stopPropagation()}>
             <div className="modal-header">
               <h2>Transaction Details</h2>
@@ -378,35 +423,35 @@ const CashierTransactions = () => {
                 >
                   <FontAwesomeIcon icon={faReceipt} /> Print Receipt
                 </button>
-                <button
-                  className="close-btn"
-                  onClick={() => setSelectedTransaction(null)}
-                >
+                <button className="close-btn" onClick={closeDetails}>
                   ×
                 </button>
               </div>
             </div>
             <div className="modal-content">
+              {detailLoading && (
+                <div className="loading-overlay" style={{ position: "static" }}>
+                  <FontAwesomeIcon icon={faSpinner} spin />
+                  <span>Loading details...</span>
+                </div>
+              )}
+
               <div className="transaction-overview">
                 <div className="overview-item">
                   <label>Transaction ID:</label>
                   <span>{selectedTransaction.id}</span>
                 </div>
                 <div className="overview-item">
-                  <label>Customer:</label>
-                  <span>{selectedTransaction.customer}</span>
-                </div>
-                <div className="overview-item">
-                  <label>Email:</label>
-                  <span>{selectedTransaction.email}</span>
-                </div>
-                <div className="overview-item">
                   <label>Date:</label>
                   <span>{selectedTransaction.date} at {selectedTransaction.time}</span>
                 </div>
                 <div className="overview-item">
-                  <label>Payment Method:</label>
-                  <span>{selectedTransaction.payment}</span>
+                  <label>Cashier:</label>
+                  <span>{receipt?.cashier || selectedTransaction.raw_data?.cashier?.name || "—"}</span>
+                </div>
+                <div className="overview-item">
+                  <label>Invoice #:</label>
+                  <span>{receipt?.invoice_number || "—"}</span>
                 </div>
                 <div className="overview-item">
                   <label>Status:</label>
@@ -415,46 +460,125 @@ const CashierTransactions = () => {
                   </span>
                 </div>
               </div>
-              
+
+              <div className="transaction-overview">
+                <div className="overview-item">
+                  <label>Customer:</label>
+                  <span>{receipt?.customer?.name || selectedTransaction.customer}</span>
+                </div>
+                <div className="overview-item">
+                  <label>Email:</label>
+                  <span>{receipt?.customer?.email || selectedTransaction.email || "—"}</span>
+                </div>
+                <div className="overview-item">
+                  <label>Phone:</label>
+                  <span>{receipt?.customer?.phone || "—"}</span>
+                </div>
+              </div>
+
               <div className="transaction-products">
-                <h3>Products</h3>
+                <h3>Items</h3>
                 <table className="products-table">
                   <thead>
                     <tr>
-                      <th>Product Name</th>
-                      <th>Quantity</th>
-                      <th>Price</th>
+                      <th>Item</th>
+                      <th>Qty</th>
+                      <th>Unit Price</th>
+                      <th>Total</th>
                     </tr>
                   </thead>
                   <tbody>
-                    {selectedTransaction.products.map((product, index) => (
+                    {items.map((item, index) => (
                       <tr key={index}>
-                        <td>{product.name}</td>
-                        <td>{product.quantity}</td>
-                        <td>{formatCurrency(product.price)}</td>
+                        <td>{item.name}</td>
+                        <td>{item.quantity}</td>
+                        <td>{formatCurrency(Number(item.unit_price ?? item.price ?? item.total ?? 0))}</td>
+                        <td>{formatCurrency(Number(item.total ?? item.total_price ?? item.price ?? 0))}</td>
                       </tr>
                     ))}
                   </tbody>
                   <tfoot>
                     <tr>
-                      <td colSpan="2">Net Amount (ex-VAT):</td>
-                      <td>{formatCurrency(Number(selectedTransaction.raw_data?.breakdown?.net_amount ?? selectedTransaction.amount))}</td>
+                      <td colSpan="3">Net Amount (ex-VAT):</td>
+                      <td>{formatCurrency(netAmount)}</td>
                     </tr>
                     <tr>
-                      <td colSpan="2">VAT (12%):</td>
-                      <td>{formatCurrency(Number(selectedTransaction.raw_data?.breakdown?.vat_amount ?? selectedTransaction.raw_data?.tax_amount ?? 0))}</td>
+                      <td colSpan="3">VAT (12%, included):</td>
+                      <td>{formatCurrency(vatAmount)}</td>
                     </tr>
+                    {discount > 0 && (
+                      <tr>
+                        <td colSpan="3">Discount:</td>
+                        <td>-{formatCurrency(discount)}</td>
+                      </tr>
+                    )}
                     <tr className="total-row">
-                      <td colSpan="2">Total:</td>
-                      <td className="total-amount">{formatCurrency(selectedTransaction.amount)}</td>
+                      <td colSpan="3">Total:</td>
+                      <td className="total-amount">{formatCurrency(total)}</td>
                     </tr>
+                    <tr>
+                      <td colSpan="3">Amount Paid:</td>
+                      <td>{formatCurrency(amountPaid)}</td>
+                    </tr>
+                    {balanceDue > 0 && (
+                      <tr>
+                        <td colSpan="3">Balance Due:</td>
+                        <td>{formatCurrency(balanceDue)}</td>
+                      </tr>
+                    )}
+                    {changeDue > 0 && (
+                      <tr>
+                        <td colSpan="3">Change:</td>
+                        <td>{formatCurrency(changeDue)}</td>
+                      </tr>
+                    )}
                   </tfoot>
                 </table>
               </div>
+
+              {payments.length > 0 && (
+                <div className="transaction-products">
+                  <h3>Payments</h3>
+                  <table className="products-table">
+                    <thead>
+                      <tr>
+                        <th>Method</th>
+                        <th>Amount</th>
+                        <th>Reference</th>
+                        <th>Status</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {payments.map((p, index) => (
+                        <tr key={index}>
+                          <td>{p.method || p.payment_method || "cash"}</td>
+                          <td>{formatCurrency(Number(p.amount ?? 0))}</td>
+                          <td>{p.reference_number || p.reference || "—"}</td>
+                          <td>{p.status || "paid"}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+
+              {isCancelled && (
+                <div className="transaction-overview">
+                  <div className="overview-item">
+                    <label>Void Reason:</label>
+                    <span>{voidReason || "—"}</span>
+                  </div>
+                  <div className="overview-item">
+                    <label>Voided At:</label>
+                    <span>{voidedAt ? new Date(voidedAt).toLocaleString("en-PH") : "—"}</span>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         </div>
-      )}
+        );
+      })()}
     </div>
   );
 };

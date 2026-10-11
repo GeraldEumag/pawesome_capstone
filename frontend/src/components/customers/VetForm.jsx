@@ -13,6 +13,7 @@ import {
 import { BUSINESS_HOURS, TIME_SLOT_INTERVAL } from "../../config/serviceDurationRules";
 import { showAlert, showSuccess, showError, showConfirm, showReasonPrompt, CUSTOMER_CANCEL_REASONS } from "../../utils/alert.jsx";
 import BookingReviewModal from "../shared/BookingReviewModal";
+import PaymentUploadModal from "../shared/PaymentUploadModal";
 
 const VET_TIME_SLOTS = (() => {
   const slots = [];
@@ -43,6 +44,7 @@ const VetForm = () => {
   const [loading, setLoading] = useState(false);
   const [availabilityLoading, setAvailabilityLoading] = useState(false);
   const [availableTimeSlots, setAvailableTimeSlots] = useState([]);
+  const [uploadModal, setUploadModal] = useState({ open: false, endpoint: "", title: "", referenceNumber: "", paymentStatus: "", rejectionReason: "", paymentMethod: "gcash" });
 
   const [formData, setFormData] = useState({
     customer_name: customerName,
@@ -277,6 +279,24 @@ const VetForm = () => {
     }
   };
 
+  const canPay = (item) => {
+    const status = String(item?.status || "").toLowerCase();
+    const paymentStatus = String(item?.payment_status || item?.payment || "unpaid").toLowerCase();
+    return ["approved", "scheduled"].includes(status) && ["unpaid", "rejected"].includes(paymentStatus);
+  };
+
+  const openUploadModal = (item) => {
+    setUploadModal({
+      open: true,
+      endpoint: `/customer/requests/${item.id}/payment-proof`,
+      title: item.service_name || item.service || "Veterinary",
+      referenceNumber: item.payment_reference || "",
+      paymentStatus: String(item.payment_status || item.payment || ""),
+      rejectionReason: item.rejection_reason || "",
+      paymentMethod: item.payment_method || "gcash",
+    });
+  };
+
   return (
     <section className="vet-container">
       <div className="vet-header">
@@ -442,6 +462,16 @@ const VetForm = () => {
                   {item.status}
                 </span>
 
+                {canPay(item) && (
+                  <button
+                    className="vet-pay-btn"
+                    onClick={() => openUploadModal(item)}
+                    style={{ marginTop: "0.5rem", background: "#10b981", color: "#fff", border: "none", borderRadius: "6px", padding: "0.4rem 0.8rem", cursor: "pointer", fontSize: "0.85rem", fontWeight: 600, marginRight: "0.5rem" }}
+                  >
+                    {String(item.payment_status || item.payment || "").toLowerCase() === "rejected" ? "Resubmit Payment Proof" : "Pay Now (GCash / Maya)"}
+                  </button>
+                )}
+
                 {(item.status === "pending" || item.status === "submitted") && (
                   <button
                     className="vet-cancel-btn"
@@ -479,6 +509,18 @@ const VetForm = () => {
           total: `₱${Number(formData.price).toFixed(2)}`,
         } : null}
         notes={formData.notes}
+      />
+
+      <PaymentUploadModal
+        open={uploadModal.open}
+        onClose={() => setUploadModal((prev) => ({ ...prev, open: false }))}
+        endpoint={uploadModal.endpoint}
+        title={uploadModal.title}
+        referenceNumber={uploadModal.referenceNumber}
+        paymentStatus={uploadModal.paymentStatus}
+        rejectionReason={uploadModal.rejectionReason}
+        paymentMethod={uploadModal.paymentMethod}
+        onSuccess={fetchAppointments}
       />
     </section>
   );

@@ -633,6 +633,21 @@
 .pa-btn-reject:hover:not(:disabled) { background: #b91c1c; }
 .pa-btn-verify:disabled, .pa-btn-reject:disabled { opacity: 0.5; cursor: not-allowed; }
 
+.pa-awaiting-online {
+  flex: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 10px 16px;
+  border-radius: 9px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #64748b;
+  background: rgba(148, 163, 184, 0.12);
+  border: 1px dashed rgba(148, 163, 184, 0.45);
+  cursor: default;
+}
+
 /* ── Modal ── */
 .pa-modal-overlay {
   position: fixed;

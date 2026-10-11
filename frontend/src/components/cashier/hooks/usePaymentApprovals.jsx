@@ -306,9 +306,16 @@ export const usePaymentApprovals = (user) => {
     for (const id of selectedIds) {
       try {
         const payment = requests.find(r => paymentKey(r) === id);
-        // 'pending' (proof submitted) and 'unpaid' (counter collection) are
-        // the only actionable states — skip stale/already-processed rows.
-        if (!payment || !["pending", "unpaid"].includes((payment.payment_status || "").toLowerCase())) continue;
+        // Actionable states only: a submitted proof ('pending' + proof), a
+        // rejected proof (counter fallback), or a walk-in counter collection.
+        // Online bookings with no proof are never bulk-collectible.
+        if (!payment) continue;
+        const ps = (payment.payment_status || "").toLowerCase();
+        const ch = (payment.booking_channel || "").toLowerCase();
+        const actionable = ps === "rejected"
+          || (ps === "pending" && !!payment.payment_proof)
+          || (ch === "walk_in" && ["pending", "unpaid"].includes(ps));
+        if (!actionable) continue;
 
         const data = await apiRequest(`/cashier/payment-requests/${payment.id}/verify`, "POST", {
           type: payment.payable_type || payment.type || payment.payment_source || "service_request",

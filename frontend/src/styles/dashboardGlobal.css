@@ -52,7 +52,10 @@ select,
 textarea {
   border: 1px solid rgba(255, 95, 147, 0.3) !important;
   border-radius: 12px !important;
-  padding: 12px 14px !important;
+  /* No !important on padding: component-level rules (e.g. icon search
+     boxes that pad for an absolutely-positioned icon) must win. Inputs
+     without their own padding still inherit these same values. */
+  padding: 12px 14px;
   background: var(--color-surface-solid, #ffffff);
   color: var(--color-text, #1f2937);
   transition: all 0.2s ease;

@@ -12,6 +12,7 @@ import {
 } from "../../config/petServiceRules";
 import { showAlert, showSuccess, showError, showConfirm, showReasonPrompt, CUSTOMER_CANCEL_REASONS } from "../../utils/alert.jsx";
 import BookingReviewModal from "../shared/BookingReviewModal";
+import PaymentUploadModal from "../shared/PaymentUploadModal";
 
 const GROOMING_TIME_SLOTS = Array.from({ length: 8 }, (_, index) => {
   const hour = index + 10;
@@ -37,6 +38,7 @@ const GroomingForm = () => {
   const [groomingAvailability, setGroomingAvailability] = useState(null);
   const [availableTimeSlots, setAvailableTimeSlots] = useState([]);
   const [dateAvailable, setDateAvailable] = useState(true);
+  const [uploadModal, setUploadModal] = useState({ open: false, endpoint: "", title: "", referenceNumber: "", paymentStatus: "", rejectionReason: "", paymentMethod: "gcash" });
 
   const [formData, setFormData] = useState({
     customer_name: customerName,
@@ -286,6 +288,24 @@ const GroomingForm = () => {
     }
   };
 
+  const canPay = (item) => {
+    const status = String(item?.status || "").toLowerCase();
+    const paymentStatus = String(item?.payment_status || item?.payment || "unpaid").toLowerCase();
+    return ["approved", "scheduled"].includes(status) && ["unpaid", "rejected"].includes(paymentStatus);
+  };
+
+  const openUploadModal = (item) => {
+    setUploadModal({
+      open: true,
+      endpoint: `/customer/requests/${item.id}/payment-proof`,
+      title: item.service_name || item.service || "Grooming",
+      referenceNumber: item.payment_reference || "",
+      paymentStatus: String(item.payment_status || item.payment || ""),
+      rejectionReason: item.rejection_reason || "",
+      paymentMethod: item.payment_method || "gcash",
+    });
+  };
+
   return (
     <section className="grooming-container">
       <div className="grooming-header">
@@ -477,6 +497,16 @@ const GroomingForm = () => {
                   {item.status}
                 </span>
 
+                {canPay(item) && (
+                  <button
+                    className="grooming-pay-btn"
+                    onClick={() => openUploadModal(item)}
+                    style={{ marginTop: "0.5rem", background: "#10b981", color: "#fff", border: "none", borderRadius: "6px", padding: "0.4rem 0.8rem", cursor: "pointer", fontSize: "0.85rem", fontWeight: 600, marginRight: "0.5rem" }}
+                  >
+                    {String(item.payment_status || item.payment || "").toLowerCase() === "rejected" ? "Resubmit Payment Proof" : "Pay Now (GCash / Maya)"}
+                  </button>
+                )}
+
                 {(item.status === "pending" || item.status === "submitted") && (
                   <button
                     className="grooming-cancel-btn"
@@ -514,6 +544,18 @@ const GroomingForm = () => {
           total: `₱${Number(formData.price).toFixed(2)}`,
         } : null}
         notes={formData.notes}
+      />
+
+      <PaymentUploadModal
+        open={uploadModal.open}
+        onClose={() => setUploadModal((prev) => ({ ...prev, open: false }))}
+        endpoint={uploadModal.endpoint}
+        title={uploadModal.title}
+        referenceNumber={uploadModal.referenceNumber}
+        paymentStatus={uploadModal.paymentStatus}
+        rejectionReason={uploadModal.rejectionReason}
+        paymentMethod={uploadModal.paymentMethod}
+        onSuccess={fetchAppointments}
       />
     </section>
   );

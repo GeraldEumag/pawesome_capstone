@@ -117,7 +117,7 @@
   flex-wrap: wrap;
 }
 
-.search-box {
+.cashier-history-page .search-box {
   display: flex;
   align-items: center;
   gap: 8px;
@@ -130,7 +130,7 @@
   background: var(--color-surface);
 }
 
-.search-box input {
+.cashier-history-page .search-box input {
   flex: 1;
   border: none;
   background: transparent;
@@ -139,7 +139,7 @@
   outline: none;
 }
 
-.search-box input::placeholder {
+.cashier-history-page .search-box input::placeholder {
   color: var(--color-text-muted);
 }
 
@@ -526,7 +526,7 @@
     align-items: stretch;
   }
 
-  .search-box {
+  .cashier-history-page .search-box {
     max-width: none;
   }
 

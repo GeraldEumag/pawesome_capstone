@@ -196,6 +196,14 @@ export const PAYMENT_REJECT_REASONS = [
   "Payment not received / cannot be verified",
 ];
 
+export const VOID_REASONS = [
+  "Entered in error / wrong items or amounts",
+  "Duplicate charge",
+  "Customer requested cancellation",
+  "Payment issue / failed or reversed payment",
+  "Pricing or discount applied incorrectly",
+];
+
 export const ORDER_REASONS = [
   "Item out of stock",
   "Requested by customer",
