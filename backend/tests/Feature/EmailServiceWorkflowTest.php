@@ -69,10 +69,10 @@ class EmailServiceWorkflowTest extends TestCase
             'is_active' => true,
         ]);
 
-        $pet = Pet::factory()->create([
+        $pet = Pet::create([
             'customer_id' => Customer::where('user_id', $user->id)->firstOrFail()->id,
             'name' => 'Buddy',
-            'species' => 'Dog',
+            'species' => 'dog',
         ]);
 
         $this->postJson('/api/customer/requests', [

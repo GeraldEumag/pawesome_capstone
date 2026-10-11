@@ -13,6 +13,7 @@ use App\Models\Grooming;
 use App\Models\Service;
 use App\Mail\AccountWelcomeMail;
 use App\Services\EmailDeliveryService;
+use App\Services\ServiceCatalog;
 use App\Services\WorkflowNotifier;
 use Illuminate\Http\Exceptions\HttpResponseException;
 use Illuminate\Http\JsonResponse;
@@ -282,17 +283,15 @@ class WalkInController extends Controller
                     ]);
                     $bookingType = 'appointment';
                 } elseif ($serviceType === 'grooming') {
-                    $groomingService = Service::where('name', $bookingData['service_name'])->first();
-                    if (!$groomingService) {
-                        throw new HttpResponseException(response()->json([
-                            'success' => false,
-                            'message' => 'Unknown grooming service. Please select a service from the list.',
-                        ], 422));
-                    }
+                    $groomingPrice = ServiceCatalog::priceFor(
+                        $bookingData['service_name'] ?? null,
+                        'grooming'
+                    );
 
-                    $groomingPrice = (float) $groomingService->price;
-                    $serviceRequest->price = $groomingPrice;
-                    $serviceRequest->save();
+                    if ($groomingPrice > 0) {
+                        $serviceRequest->price = $groomingPrice;
+                        $serviceRequest->save();
+                    }
 
                     $bookingRecord = Grooming::create([
                         'service_request_id' => $serviceRequest->id,
@@ -306,7 +305,7 @@ class WalkInController extends Controller
                         'total_amount' => $groomingPrice,
                         'balance_due' => $groomingPrice,
                         'status' => 'pending',
-                        'payment_status' => 'pending',
+                        'payment_status' => 'unpaid',
                         'notes' => $bookingData['grooming_instructions'] ?? null,
                     ]);
                     $bookingType = 'grooming';

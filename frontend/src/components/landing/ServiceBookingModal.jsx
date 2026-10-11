@@ -10,6 +10,7 @@ import { useAuth } from "../../context/AuthContext";
 import { formatDateOnly, parseDateOnly } from "../../utils/date";
 import { saveDraft, saveServiceIntent, getDraft, clearDraft } from "../../utils/preBookingDraft";
 import { showSuccess, showError } from "../../utils/alert.jsx";
+import BookingReviewModal from "../shared/BookingReviewModal";
 
 const SERVICE_CONFIG = {
   hotel: { title: "Book Pet Hotel", icon: faHotel, accent: "hotel-accent" },
@@ -65,6 +66,7 @@ const ServiceBookingModal = ({ serviceType, onClose }) => {
   const config = SERVICE_CONFIG[serviceType];
   const [formData, setFormData] = useState(() => getInitialForm(serviceType));
   const [loading, setLoading] = useState(false);
+  const [reviewOpen, setReviewOpen] = useState(false);
   const [availabilityLoading, setAvailabilityLoading] = useState(false);
   const [availableTimeSlots, setAvailableTimeSlots] = useState([]);
   const [hotelAvailabilityLoading, setHotelAvailabilityLoading] = useState(false);
@@ -79,6 +81,42 @@ const ServiceBookingModal = ({ serviceType, onClose }) => {
     if (draft?.service_type !== serviceType || !draft.form_data) return;
     setFormData((prev) => ({ ...prev, ...draft.form_data }));
   }, [serviceType]);
+
+  // Logged-in customers book against their registered pets — no typed names.
+  useEffect(() => {
+    if (!canBook) return;
+    let cancelled = false;
+    apiRequest("/customer/pets")
+      .then((data) => {
+        if (cancelled) return;
+        const list = Array.isArray(data) ? data : data?.pets || data?.data || [];
+        setPets(Array.isArray(list) ? list : []);
+      })
+      .catch(() => { if (!cancelled) setPets([]); });
+    return () => { cancelled = true; };
+  }, [canBook]);
+
+  // Once pets load, resolve a draft's pet hint (name/species) to a real pet.
+  useEffect(() => {
+    if (pets.length === 0 || formData.pet_id) return;
+    if (!formData.pet_name && !formData.pet_type) return;
+
+    const name = (formData.pet_name || "").toLowerCase();
+    const species = (formData.pet_type || "").toLowerCase();
+    const byName = name ? pets.filter((p) => (p.name || "").toLowerCase() === name) : [];
+    const bySpecies = species
+      ? pets.filter((p) => (p.species || p.type || "").toLowerCase() === species)
+      : [];
+    const pet = byName.length === 1 ? byName[0] : bySpecies.length === 1 ? bySpecies[0] : null;
+    if (!pet) return;
+
+    setFormData((prev) => ({
+      ...prev,
+      pet_id: pet.id,
+      pet_name: pet.name,
+      pet_type: pet.species || pet.type || "",
+    }));
+  }, [pets, formData.pet_id, formData.pet_name, formData.pet_type]);
 
   useEffect(() => {
     if (isCustomer && user?.name) {
@@ -174,19 +212,22 @@ const ServiceBookingModal = ({ serviceType, onClose }) => {
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setFormData((prev) => {
-      const next = {
+    if (name === "pet_id") {
+      const pet = pets.find((item) => String(item.id) === String(value));
+      setFormData((prev) => ({
         ...prev,
-        [name]: value,
-        ...(name === "grooming_service_type" || name === "veterinary_service_type" ? { preferred_time: "" } : {}),
-      };
-      if (name === "pet_id") {
-        const pet = pets.find((item) => String(item.id) === String(value));
-        next.pet_name = pet?.name || "";
-        next.pet_type = pet?.species || pet?.type || "";
-      }
-      return next;
-    });
+        pet_id: value,
+        pet_name: pet?.name || "",
+        pet_type: pet?.species || pet?.type || "",
+      }));
+      setErrors((prev) => ({ ...prev, pet_id: "" }));
+      return;
+    }
+    setFormData((prev) => ({
+      ...prev,
+      [name]: value,
+      ...(name === "grooming_service_type" || name === "veterinary_service_type" ? { preferred_time: "" } : {}),
+    }));
     setErrors((prev) => ({ ...prev, [name]: "" }));
   };
   const handleDateChange = (name, date) => {
@@ -202,11 +243,10 @@ const ServiceBookingModal = ({ serviceType, onClose }) => {
     const ne = {};
     if (!formData.customer_name.trim()) ne.customer_name = "Customer name is required.";
     if (!formData.customer_email.trim()) { ne.customer_email = "Email is required."; } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.customer_email)) { ne.customer_email = "Enter a valid email address."; }
-    if (isCustomer) {
-      if (!formData.pet_id) ne.pet_id = "Please select one of your registered pets.";
-    } else {
-      if (!formData.pet_name.trim()) ne.pet_name = "Pet name is required.";
-      if (!formData.pet_type.trim()) ne.pet_type = "Pet type is required.";
+    if (canBook) {
+      if (!formData.pet_id) ne.pet_id = "Select one of your registered pets.";
+    } else if (!formData.pet_type.trim()) {
+      ne.pet_type = "Pet type is required.";
     }
     if (serviceType === "hotel") {
       if (!formData.check_in_date) ne.check_in_date = "Stay date is required.";
@@ -235,8 +275,8 @@ const ServiceBookingModal = ({ serviceType, onClose }) => {
   };
 
   const buildPayload = useCallback(() => {
-    const base = { customer_name: formData.customer_name.trim(), customer_email: formData.customer_email.trim(), pet_name: formData.pet_name.trim(), pet_type: formData.pet_type.trim() };
-    if (formData.pet_id) base.pet_id = formData.pet_id;
+    const selectedPet = pets.find((p) => String(p.id) === String(formData.pet_id));
+    const base = { customer_name: formData.customer_name.trim(), customer_email: formData.customer_email.trim(), pet_id: selectedPet?.id || formData.pet_id, pet_name: selectedPet?.name || "", pet_type: selectedPet?.species || selectedPet?.type || formData.pet_type.trim() };
     if (serviceType === "hotel") return { ...base, request_type: "hotel", service_name: "Pet Hotel", requested_date: formData.check_in_date, requested_time: formData.preferred_time, check_in_date: formData.check_in_date, check_out_date: formData.check_in_date, room_type: formData.room_type, notes: formData.special_care_instructions || "", special_request: formData.special_care_instructions || "" };
     if (serviceType === "grooming") return { ...base, request_type: "grooming", service_name: formData.grooming_service_type, requested_date: formData.preferred_date, requested_time: formData.preferred_time, notes: formData.special_grooming_instructions || "", special_request: formData.special_grooming_instructions || "" };
     const healthParts = [];
@@ -270,11 +310,15 @@ const ServiceBookingModal = ({ serviceType, onClose }) => {
       return;
     }
 
+    setReviewOpen(true);
+  };
+
+  const confirmBooking = async () => {
     const payload = buildPayload();
     try {
       setLoading(true);
       const data = await apiRequest("/customer/requests", { method: "POST", body: JSON.stringify(payload) });
-      if (data.success) { clearDraft(); showSuccess("Booking request submitted successfully. Please wait for receptionist approval."); onClose(); } else { showError(data.message || "Failed to submit request."); }
+      if (data.success) { clearDraft(); setReviewOpen(false); showSuccess("Booking request submitted successfully. Please wait for receptionist approval."); onClose(); } else { showError(data.message || "Failed to submit request."); }
     } catch (error) {
       const message = error.response?.data?.message || error.response?.data?.error || error.message || "Server error while submitting booking request.";
       showError(message);
@@ -297,52 +341,41 @@ const ServiceBookingModal = ({ serviceType, onClose }) => {
           {fe("customer_email")}
         </label>
       </div>
-      {isCustomer ? (
-        <div className="svc-form-row">
-          <label className="svc-form-group full">
-            <span><FontAwesomeIcon icon={faPaw} /> Select Your Pet *</span>
-            {pets.length > 0 ? (
-              <select name="pet_id" value={formData.pet_id} onChange={handleChange} className={errors.pet_id ? "has-error" : ""}>
-                <option value="">Choose a registered pet</option>
-                {pets.map((pet) => (
-                  <option key={pet.id} value={pet.id}>
-                    {pet.name} — {pet.species || pet.type || "Pet"}
-                  </option>
-                ))}
-              </select>
-            ) : (
-              <div className="svc-no-pets">
-                <p>You have no registered pets yet.</p>
-                <button
-                  type="button"
-                  className="svc-link-btn"
-                  onClick={() => { saveDraft(serviceType, formData); saveServiceIntent(serviceType); navigate("/customer/pets"); }}
-                >
-                  Register a pet first
-                </button>
-              </div>
-            )}
-            {fe("pet_id")}
-          </label>
-        </div>
-      ) : (
-        <div className="svc-form-row">
+      <div className="svc-form-row">
+        {canBook ? (
           <label className="svc-form-group">
-            <span><FontAwesomeIcon icon={faPaw} /> Pet Name *</span>
-            <input type="text" name="pet_name" value={formData.pet_name} onChange={handleChange} placeholder="e.g., Buddy" className={errors.pet_name ? "has-error" : ""} />
-            {fe("pet_name")}
-          </label>
-          <label className="svc-form-group">
-            <span><FontAwesomeIcon icon={faDog} /> Pet Type *</span>
-            <select name="pet_type" value={formData.pet_type} onChange={handleChange} className={errors.pet_type ? "has-error" : ""}>
-              <option value="">Select pet type</option>
-              <option value="Cat">Cat</option>
-              <option value="Dog">Dog</option>
+            <span><FontAwesomeIcon icon={faPaw} /> Pet *</span>
+            <select name="pet_id" value={formData.pet_id} onChange={handleChange} className={errors.pet_id ? "has-error" : ""}>
+              <option value="">Select your pet</option>
+              {pets.map((pet) => (
+                <option key={pet.id} value={pet.id}>
+                  {pet.name} — {pet.species || pet.type || "Pet"}{pet.breed ? ` (${pet.breed})` : ""}
+                </option>
+              ))}
             </select>
-            {fe("pet_type")}
+            {fe("pet_id")}
+            {pets.length === 0 && (
+              <span className="svc-field-hint">No registered pets yet — add one under My Pets before booking.</span>
+            )}
           </label>
-        </div>
-      )}
+        ) : (
+          <>
+            <label className="svc-form-group">
+              <span><FontAwesomeIcon icon={faPaw} /> Pet Type *</span>
+              <select name="pet_type" value={formData.pet_type} onChange={handleChange} className={errors.pet_type ? "has-error" : ""}>
+                <option value="">Select pet type</option>
+                <option value="Cat">Cat</option>
+                <option value="Dog">Dog</option>
+              </select>
+              {fe("pet_type")}
+            </label>
+            <label className="svc-form-group">
+              <span><FontAwesomeIcon icon={faPaw} /> Pet</span>
+              <input type="text" value="Sign in to select your registered pet" disabled readOnly />
+            </label>
+          </>
+        )}
+      </div>
     </>
   );
 
@@ -522,6 +555,38 @@ const ServiceBookingModal = ({ serviceType, onClose }) => {
           </div>
         </form>
       </div>
+
+      <BookingReviewModal
+        open={reviewOpen}
+        onClose={() => setReviewOpen(false)}
+        onConfirm={confirmBooking}
+        loading={loading}
+        badge={config.title}
+        pet={(() => {
+          const p = pets.find((pet) => String(pet.id) === String(formData.pet_id));
+          return p ? { name: p.name, species: p.species || p.type, breed: p.breed } : null;
+        })()}
+        details={[
+          { label: "Service", value: serviceType === "grooming" ? formData.grooming_service_type : formData.veterinary_service_type },
+          { label: "Date", value: formData.preferred_date && new Date(`${formData.preferred_date}T00:00:00`).toLocaleDateString("en-PH", { weekday: "short", month: "short", day: "numeric", year: "numeric" }) },
+          { label: "Time", value: formData.preferred_time },
+        ]}
+        notes={
+          serviceType === "grooming"
+            ? formData.special_grooming_instructions
+            : [
+                formData.main_reason_for_visit,
+                formData.flu_symptoms && `Flu-like symptoms: ${formData.flu_symptoms}`,
+                formData.observed_issues && `Observed issues: ${formData.observed_issues}`,
+                formData.appetite_condition && `Appetite: ${formData.appetite_condition}`,
+                formData.energy_level && `Energy: ${formData.energy_level}`,
+                formData.symptom_duration && `Duration: ${formData.symptom_duration}`,
+                formData.medications_taken && `Medications: ${formData.medications_taken}`,
+                formData.recent_exposure && `Recent exposure: ${formData.recent_exposure}`,
+                formData.urgency_level && `Urgency: ${formData.urgency_level}`,
+              ].filter(Boolean).join("\n")
+        }
+      />
     </div>
   );
 };

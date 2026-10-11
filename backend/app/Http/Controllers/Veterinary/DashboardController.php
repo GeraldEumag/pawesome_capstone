@@ -7,7 +7,7 @@ use App\Models\Appointment;
 use App\Models\Pet;
 use App\Models\User;
 use App\Services\ServiceBillingService;
-use App\Support\ReceiptBreakdown;
+use App\Support\EmailContent;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Auth;
@@ -306,20 +306,9 @@ class DashboardController extends Controller
             })
             ->values()
             ->all();
-        
-        $billTotal = (float) ($billing['total_bill'] ?? $appointment->price ?? 0);
-        $breakdown = ReceiptBreakdown::forSettleable(
-            'appointment',
-            (int) $appointment->id,
-            $billTotal,
-            0,
-            ($appointment->payment_status ?? null) === 'paid' ? [
-                'method' => $appointment->payment_method ?? 'cash',
-                'amount' => $billTotal - (float) ($billing['balance_due'] ?? 0),
-                'receipt_number' => $appointment->receipt_number,
-                'paid_at' => $appointment->paid_at,
-            ] : null
-        );
+
+        $totalAmount = (float) ($billing['total_bill'] ?? $appointment->price ?? 0);
+        $vatAmount = EmailContent::vatInclusivePortion($totalAmount);
 
         return response()->json([
             'receipt' => [
@@ -331,8 +320,11 @@ class DashboardController extends Controller
                 'service_category' => $appointment->service?->category,
                 'vet_name' => $appointment->veterinarian?->name ?? 'Unassigned',
                 'amount' => $baseAmount,
-                'subtotal' => (float) ($billing['total_bill'] ?? $appointment->price ?? 0),
-                'total' => (float) ($billing['total_bill'] ?? $appointment->price ?? 0),
+                'net_amount' => $vatAmount !== null ? round($totalAmount - $vatAmount, 2) : null,
+                'vat_amount' => $vatAmount,
+                'vat_rate' => 0.12,
+                'subtotal' => $totalAmount,
+                'total' => $totalAmount,
                 'additional_services' => $additionalServices,
                 'receipt_number' => $appointment->receipt_number,
                 'paid_date' => $appointment->paid_at,

@@ -10,6 +10,7 @@ use App\Models\Service;
 use App\Models\ServiceItemUsage;
 use App\Services\GroomingInventoryService;
 use App\Services\ServiceBillingService;
+use App\Services\ServiceCatalog;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Validator;
@@ -49,27 +50,17 @@ class GroomingController extends Controller
             'amount' => 'nullable|numeric',
         ]);
 
-        if (!Pet::where('id', $validated['pet_id'])->where('customer_id', $validated['customer_id'])->exists()) {
-            return response()->json(['message' => 'Pet not found for this customer'], 422);
-        }
-
-        // Price is resolved server-side from the services catalog; any
-        // client-supplied amount is never trusted for catalog services.
-        $service = Service::whereRaw('LOWER(name) = ?', [strtolower($validated['service'])])->first();
-        if (!$service && $request->user()?->role === 'customer') {
-            return response()->json([
-                'message' => 'Unknown grooming service. Please select a service from the list.',
-                'errors' => ['service' => ['Please select a service from the list.']],
-            ], 422);
-        }
-        $amount = $service ? (float) $service->price : (float) ($validated['amount'] ?? 0);
+        $resolvedAmount = isset($validated['amount']) && is_numeric($validated['amount'])
+            ? (float) $validated['amount']
+            : ServiceCatalog::priceFor($validated['service'], 'grooming');
 
         $validated['status'] = 'pending';
         $validated['payment_status'] = 'unpaid';
-        $validated['base_amount'] = $amount;
-        $validated['total_amount'] = $amount;
+        $validated['amount'] = $resolvedAmount;
+        $validated['base_amount'] = $resolvedAmount;
+        $validated['total_amount'] = $resolvedAmount;
         $validated['amount_paid'] = 0;
-        $validated['balance_due'] = $amount;
+        $validated['balance_due'] = $resolvedAmount;
 
         $grooming = Grooming::create($validated);
 

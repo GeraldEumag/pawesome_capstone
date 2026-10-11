@@ -27,6 +27,17 @@ class CustomerBookingRulesTest extends TestCase
         return User::factory()->customer()->create();
     }
 
+    private function petFor(User $user, string $species = 'Dog'): Pet
+    {
+        $customer = Customer::create([
+            'user_id' => $user->id,
+            'name' => $user->name,
+            'email' => $user->email,
+        ]);
+
+        return Pet::factory()->create(['customer_id' => $customer->id, 'species' => $species]);
+    }
+
     private function authHeaders(User $user): array
     {
         return ['Authorization' => 'Bearer ' . $user->createToken('customer-booking-test')->plainTextToken];
@@ -74,13 +85,16 @@ class CustomerBookingRulesTest extends TestCase
         ]);
 
         $this->withHeaders($this->authHeaders($user))
-            ->patchJson("/api/customer/requests/{$serviceRequest->id}/cancel")
+            ->patchJson("/api/customer/requests/{$serviceRequest->id}/cancel", [
+                'reason' => 'Pet is sick or unavailable',
+            ])
             ->assertOk()
             ->assertJsonPath('request.status', 'cancelled');
 
         $this->assertDatabaseHas('service_requests', [
             'id' => $serviceRequest->id,
             'status' => 'cancelled',
+            'cancellation_reason' => 'Pet is sick or unavailable',
         ]);
         $this->assertDatabaseHas('notifications', [
             'user_id' => $receptionist->id,
@@ -95,7 +109,7 @@ class CustomerBookingRulesTest extends TestCase
     {
         Carbon::setTestNow(Carbon::parse('2026-09-29 23:00:00', 'Asia/Manila'));
         $user = $this->customer();
-        $pet = $this->registeredPet($user);
+        $pet = $this->petFor($user);
         $headers = $this->authHeaders($user);
         $booking = [
             'customer_name' => $user->name,
@@ -126,7 +140,7 @@ class CustomerBookingRulesTest extends TestCase
     {
         Carbon::setTestNow(Carbon::parse('2026-09-29 12:00:00', 'Asia/Manila'));
         $user = $this->customer();
-        $pet = $this->registeredPet($user);
+        $pet = $this->petFor($user);
         $headers = $this->authHeaders($user);
         $date = Carbon::tomorrow()->toDateString();
         $booking = [
@@ -162,7 +176,7 @@ class CustomerBookingRulesTest extends TestCase
     {
         Carbon::setTestNow(Carbon::parse('2026-09-29 12:00:00', 'Asia/Manila'));
         $user = $this->customer();
-        $pet = $this->registeredPet($user, 'Dog');
+        $pet = $this->petFor($user);
         $headers = $this->authHeaders($user);
         $date = Carbon::tomorrow()->toDateString();
         $booking = [
@@ -335,5 +349,74 @@ class CustomerBookingRulesTest extends TestCase
             'pet_id' => $pet->id,
             'check_in' => Carbon::today()->toDateString(),
         ]);
+    }
+
+    public function test_service_request_requires_a_registered_pet(): void
+    {
+        Carbon::setTestNow(Carbon::parse('2026-09-29 12:00:00', 'Asia/Manila'));
+        $user = $this->customer();
+
+        $this->withHeaders($this->authHeaders($user))
+            ->postJson('/api/customer/requests', [
+                'customer_name' => $user->name,
+                'customer_email' => $user->email,
+                'pet_name' => 'Milo',
+                'request_type' => 'grooming',
+                'service_name' => 'Bath and Brush',
+                'requested_date' => Carbon::tomorrow()->toDateString(),
+                'requested_time' => '10:00',
+            ])
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors(['pet_id']);
+
+        $this->assertDatabaseMissing('service_requests', ['pet_name' => 'Milo']);
+    }
+
+    public function test_customer_cannot_book_using_another_customers_pet(): void
+    {
+        Carbon::setTestNow(Carbon::parse('2026-09-29 12:00:00', 'Asia/Manila'));
+        $user = $this->customer();
+        $other = $this->customer();
+        $foreignPet = $this->petFor($other);
+
+        $this->withHeaders($this->authHeaders($user))
+            ->postJson('/api/customer/requests', [
+                'customer_name' => $user->name,
+                'customer_email' => $user->email,
+                'pet_id' => $foreignPet->id,
+                'request_type' => 'grooming',
+                'service_name' => 'Bath and Brush',
+                'requested_date' => Carbon::tomorrow()->toDateString(),
+                'requested_time' => '10:00',
+            ])
+            ->assertForbidden();
+
+        $this->assertDatabaseMissing('service_requests', ['pet_id' => $foreignPet->id]);
+    }
+
+    public function test_service_request_ignores_spoofed_pet_name_and_links_the_selected_pet(): void
+    {
+        Carbon::setTestNow(Carbon::parse('2026-09-29 12:00:00', 'Asia/Manila'));
+        $user = $this->customer();
+        $pet = $this->petFor($user);
+
+        $this->withHeaders($this->authHeaders($user))
+            ->postJson('/api/customer/requests', [
+                'customer_name' => $user->name,
+                'customer_email' => $user->email,
+                'pet_id' => $pet->id,
+                'pet_name' => 'Forged Name',
+                'request_type' => 'grooming',
+                'service_name' => 'Bath and Brush',
+                'requested_date' => Carbon::tomorrow()->toDateString(),
+                'requested_time' => '10:00',
+            ])
+            ->assertCreated();
+
+        $this->assertDatabaseHas('service_requests', [
+            'pet_id' => $pet->id,
+            'pet_name' => $pet->name,
+        ]);
+        $this->assertDatabaseMissing('service_requests', ['pet_name' => 'Forged Name']);
     }
 }
