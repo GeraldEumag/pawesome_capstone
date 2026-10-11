@@ -20,7 +20,7 @@ import {
   faExclamationTriangle,
 } from "@fortawesome/free-solid-svg-icons";
 import { apiRequest } from "../../api/client";
-import { showConfirm } from "../../utils/alert.jsx";
+import { showConfirm, showReasonPrompt, SERVICE_DISABLE_REASONS, SERVICE_DELETE_REASONS } from "../../utils/alert.jsx";
 import RowActionPopover from "../shared/RowActionPopover";
 import "../../styles/bookingModal.css";
 import "./ReceptionistManageServices.css";
@@ -158,10 +158,19 @@ const ReceptionistManageServices = () => {
     }
   };
 
-  const handleDeleteService = async (id) => {
-    if (!(await showConfirm("Are you sure you want to delete this service?"))) return;
+  const handleDeleteService = async (service) => {
+    const reason = await showReasonPrompt(
+      `Delete "${service.name}"? It will no longer be bookable. Services with existing appointments cannot be deleted. This action is recorded — please state why.`,
+      "Delete Service",
+      "Delete Service",
+      SERVICE_DELETE_REASONS
+    );
+    if (reason === null) return;
     try {
-      await apiRequest(`/receptionist/services/${id}`, { method: "DELETE" });
+      await apiRequest(`/receptionist/services/${service.id}`, {
+        method: "DELETE",
+        body: JSON.stringify({ reason }),
+      });
       showMessage("success", "Service deleted successfully");
       await fetchServices();
     } catch (err) {
@@ -170,10 +179,24 @@ const ReceptionistManageServices = () => {
   };
 
   const handleToggleServiceStatus = async (service) => {
+    const disabling = service.is_active;
+    let reason = null;
+    if (disabling) {
+      reason = await showReasonPrompt(
+        `Disable "${service.name}"? It will be unavailable for new bookings but kept on record. This action is logged — please state why.`,
+        "Disable Service",
+        "Disable Service",
+        SERVICE_DISABLE_REASONS
+      );
+      if (reason === null) return;
+    }
     try {
       await apiRequest(`/receptionist/services/${service.id}`, {
         method: "PUT",
-        body: JSON.stringify({ is_active: !service.is_active }),
+        body: JSON.stringify({
+          is_active: !service.is_active,
+          ...(reason ? { reason } : {}),
+        }),
       });
       showMessage("success", `Service ${service.is_active ? "disabled" : "enabled"}`);
       await fetchServices();
@@ -491,7 +514,7 @@ const ReceptionistManageServices = () => {
                           <button
                             type="button"
                             className="action-btn delete-btn"
-                            onClick={() => handleDeleteService(service.id)}
+                            onClick={() => handleDeleteService(service)}
                             title="Delete"
                           >
                             <FontAwesomeIcon icon={faTrash} />

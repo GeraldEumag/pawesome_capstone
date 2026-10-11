@@ -514,12 +514,12 @@ const WalkInBookingModal = ({ serviceType, onClose, onSuccess }) => {
 
       {/* Customer Results (Closed at first, opens automatically when there is a search term) */}
       {customerSearch.trim() && (
-        <div className="customer-results-container" style={{ marginTop: '24px' }}>
+        <div className="customer-results-container" style={{ marginTop: '12px' }}>
           <label className="form-label" style={{ fontWeight: '600', display: 'block', marginBottom: '8px', color: '#475569' }}>
             Search Matches *
           </label>
           
-          <div className="customer-results-list" style={{ maxHeight: '200px', overflowY: 'auto', paddingRight: '4px' }}>
+          <div className="customer-results-list" style={{ maxHeight: '140px', overflowY: 'auto', paddingRight: '4px' }}>
             {filteredCustomers.length > 0 ? (
               filteredCustomers.map((customer) => (
                 <button
@@ -551,7 +551,7 @@ const WalkInBookingModal = ({ serviceType, onClose, onSuccess }) => {
 
       {/* Active Customer Selection Summary */}
       {selectedCustomer && (
-        <div className="selected-summary" style={{ marginTop: '20px', padding: '12px 16px', borderRadius: '8px', background: '#f8fafc', border: '1px solid #e2e8f0' }}>
+        <div className="selected-summary" style={{ marginTop: '12px', padding: '8px 12px', borderRadius: '8px', background: '#f8fafc', border: '1px solid #e2e8f0' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#334155', fontSize: '0.9rem' }}>
             <FontAwesomeIcon icon={faUser} style={{ color: '#ff5f93' }} />
             <span>Selected Customer: <strong>{selectedCustomer.name}</strong></span>
@@ -896,8 +896,8 @@ const WalkInBookingModal = ({ serviceType, onClose, onSuccess }) => {
           backgroundColor: "#eef2ff",
           border: "1px solid #c7d2fe",
           borderRadius: "0.375rem",
-          padding: "0.75rem 1rem",
-          marginBottom: "1rem",
+          padding: "0.5rem 0.75rem",
+          marginBottom: "0.75rem",
           display: "flex",
           alignItems: "center",
           gap: "0.5rem",

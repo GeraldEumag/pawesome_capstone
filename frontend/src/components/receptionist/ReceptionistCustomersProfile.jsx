@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react";
-import { showReasonPrompt } from "../../utils/alert.jsx";
+import { showReasonPrompt, CUSTOMER_DELETION_REASONS } from "../../utils/alert.jsx";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
   faBirthdayCake,
@@ -481,7 +481,8 @@ const CustomersProfile = () => {
     const reason = await showReasonPrompt(
       `Delete ${getCustomerName(customer)}'s account? This action is recorded — please state why this account must be deleted.`,
       "Delete Customer Account",
-      "Delete Account"
+      "Delete Account",
+      CUSTOMER_DELETION_REASONS
     );
 
     if (reason === null) return;

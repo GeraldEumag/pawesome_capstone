@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Receptionist;
 
 use App\Http\Controllers\Controller;
+use App\Models\ActivityLog;
 use App\Models\Service;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -92,10 +93,39 @@ class ServiceController extends Controller
                 'description' => 'sometimes|nullable|string',
                 'duration_minutes' => 'sometimes|nullable|integer|min:0',
                 'is_active' => 'sometimes|boolean',
+                'reason' => 'sometimes|nullable|string|min:3|max:500',
             ]);
 
             $service = Service::findOrFail($id);
+
+            $disabling = $request->has('is_active')
+                && !$request->boolean('is_active')
+                && $service->is_active;
+
+            if ($disabling && empty($data['reason'])) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'A reason is required to disable a service.',
+                ], 422);
+            }
+
+            $reason = $data['reason'] ?? null;
+            unset($data['reason']);
             $service->update($data);
+
+            if ($disabling) {
+                ActivityLog::log($request->user()?->id, 'service_disabled',
+                    "Service #{$service->id} ({$service->name}) disabled by receptionist", [
+                        'category'       => 'service',
+                        'reference_type' => Service::class,
+                        'reference_id'   => $service->id,
+                        'metadata'       => [
+                            'service_id'   => $service->id,
+                            'service_name' => $service->name,
+                            'reason'       => $reason,
+                        ],
+                    ]);
+            }
 
             return response()->json([
                 'success' => true,
@@ -115,9 +145,13 @@ class ServiceController extends Controller
     /**
      * Delete a service
      */
-    public function destroy(int $id): JsonResponse
+    public function destroy(Request $request, int $id): JsonResponse
     {
         try {
+            $validated = $request->validate([
+                'reason' => 'required|string|min:3|max:500',
+            ]);
+
             $service = Service::findOrFail($id);
 
             $hasAppointments = \App\Models\Appointment::where('service_id', $id)->exists();
@@ -127,6 +161,18 @@ class ServiceController extends Controller
                     'message' => 'Cannot delete service with active appointments',
                 ], 422);
             }
+
+            ActivityLog::log($request->user()?->id, 'service_deleted',
+                "Service #{$service->id} ({$service->name}) deleted by receptionist", [
+                    'category'       => 'service',
+                    'reference_type' => Service::class,
+                    'reference_id'   => $service->id,
+                    'metadata'       => [
+                        'service_id'   => $service->id,
+                        'service_name' => $service->name,
+                        'reason'       => $validated['reason'],
+                    ],
+                ]);
 
             $service->delete();
 

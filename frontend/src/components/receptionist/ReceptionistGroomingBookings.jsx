@@ -180,6 +180,7 @@ const ReceptionistGroomingBookings = () => {
     dateValue: getAppointmentDate(item),
     timeValue: getAppointmentTime(item),
     status: normalizeStatus(item.status),
+    reason: item.rejection_reason || item.cancellation_reason || null,
     notes:
       item.notes ||
       item.remarks ||
@@ -661,6 +662,18 @@ const ReceptionistGroomingBookings = () => {
                   </span>
                 </div>
               </div>
+
+              {(selectedAppointment.status === "rejected" ||
+                selectedAppointment.status === "cancelled") && (
+                <div className="detail-section">
+                  <label>
+                    {selectedAppointment.status === "cancelled"
+                      ? "Cancellation Reason"
+                      : "Rejection Reason"}
+                  </label>
+                  <p>{selectedAppointment.reason || "No reason recorded"}</p>
+                </div>
+              )}
 
               <div className="detail-section">
                 <label>Notes</label>

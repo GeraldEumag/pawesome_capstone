@@ -159,6 +159,29 @@ export const BOOKING_REJECT_REASONS = [
   "Requested date is outside operating hours",
 ];
 
+export const SERVICE_DISABLE_REASONS = [
+  "Temporarily unavailable",
+  "Maintenance or facility issue",
+  "Staff unavailable",
+  "Service under review",
+  "Operational restriction",
+];
+
+export const SERVICE_DELETE_REASONS = [
+  "Duplicate or erroneous entry",
+  "Service permanently discontinued",
+  "Replaced by an updated service",
+  "Policy or compliance change",
+];
+
+export const CUSTOMER_DELETION_REASONS = [
+  "Account created by mistake",
+  "Duplicate account",
+  "Customer requested account closure",
+  "Policy violation",
+  "Inactive or abandoned account",
+];
+
 export const CANCEL_REJECT_REASONS = [
   "Cancellation deadline has passed",
   "Service already in progress",

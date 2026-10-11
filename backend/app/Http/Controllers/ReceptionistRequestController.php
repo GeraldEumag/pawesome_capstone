@@ -116,6 +116,8 @@ class ReceptionistRequestController extends Controller
             'request_time' => $item->request_time,
             'time' => $item->request_time,
             'status' => $item->status,
+            'rejection_reason' => $item->rejection_reason ?? null,
+            'cancellation_reason' => $item->cancellation_reason ?? null,
             'payment_status' => $item->payment_status,
             'payment' => $item->payment_status,
             'notes' => $item->notes,

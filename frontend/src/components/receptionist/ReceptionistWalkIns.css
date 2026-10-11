@@ -294,17 +294,8 @@
   border: 1px solid var(--wi-border-light);
   border-radius: var(--wi-radius-lg);
   overflow: hidden;
-  cursor: pointer;
-  transition: transform 0.22s ease, box-shadow 0.22s ease, border-color 0.22s ease;
+  transition: box-shadow 0.22s ease;
   box-shadow: 0 2px 8px rgba(15, 23, 42, 0.06);
-  outline: none;
-}
-
-.walkins-page .service-card:hover,
-.walkins-page .service-card:focus-visible {
-  transform: translateY(-6px);
-  box-shadow: var(--wi-shadow-hover);
-  border-color: var(--svc-color, var(--wi-primary));
 }
 
 /* Gradient top accent */
@@ -345,7 +336,7 @@
 }
 
 .walkins-page .service-card:hover .svc-icon-ring {
-  transform: scale(1.1);
+  transform: scale(1.05);
 }
 
 .walkins-page .svc-badge {
@@ -418,7 +409,8 @@
   font-size: 0.75rem;
 }
 
-.walkins-page .service-card:hover .cta-arrow {
+.walkins-page .svc-cta-btn:hover .cta-arrow,
+.walkins-page .svc-cta-btn:focus-visible .cta-arrow {
   opacity: 1;
   transform: translateX(0);
 }

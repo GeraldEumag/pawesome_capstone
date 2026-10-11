@@ -158,10 +158,6 @@ const ReceptionistWalkIns = () => {
               key={service.key}
               className="service-card"
               style={{ "--svc-color": service.color, "--svc-gradient": service.gradient }}
-              onClick={() => handleNewWalkIn(service.key)}
-              role="button"
-              tabIndex={0}
-              onKeyDown={(e) => e.key === "Enter" && handleNewWalkIn(service.key)}
             >
               {/* Card accent top */}
               <div className="svc-card-top">
@@ -181,8 +177,7 @@ const ReceptionistWalkIns = () => {
               <button
                 type="button"
                 className="svc-cta-btn"
-                onClick={(e) => { e.stopPropagation(); handleNewWalkIn(service.key); }}
-                tabIndex={-1}
+                onClick={() => handleNewWalkIn(service.key)}
               >
                 <FontAwesomeIcon icon={faPlus} />
                 New Booking

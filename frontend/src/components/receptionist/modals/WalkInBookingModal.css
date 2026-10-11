@@ -53,9 +53,13 @@
   flex-shrink: 0;
 }
 
-/* Body */
+/* Body — fixed-height frame so every step renders at the same modal size;
+   taller content scrolls internally instead of pushing the footer down. */
 .hbk-modal .hbk-body {
   padding: 24px;
+  min-height: 380px;
+  max-height: min(60vh, 560px);
+  overflow-y: auto;
 }
 
 .hbk-modal .step-content {
