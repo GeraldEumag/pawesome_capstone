@@ -4,8 +4,8 @@ const { loginAs, apiLogin } = require("./test-utils");
 // Revision B — browser verification of the corrected workflows against the
 // live dev stack (backend :8000 + frontend :3000 + dev DB).
 // Seeded fixtures (created via artisan tinker in the dev DB):
-//   SR 178 -> Boarding 45 : hotel, paid, check-in TODAY ("Pet Hotel E2E" / Whity)
-//   Appt 53 -> SR 179     : vet, scheduled tomorrow, assigned to vet@example.com
+//   SR 189 -> Boarding 47 : hotel, paid, check-in TODAY ("Pet Hotel E2E" / E2EHotelPetZulu)
+//   Appt 55 -> SR 187     : vet, scheduled tomorrow, assigned to vet@example.com
 //                         (also the approved+unpaid SR for the payment test)
 const apiUrl = process.env.E2E_API_URL || "http://127.0.0.1:8000/api";
 
@@ -74,7 +74,7 @@ test.describe("Revision B — browser verification", () => {
     await loginAs(page, "customer");
     await page.goto("/customer/bookings");
     // SR 179 is approved + unpaid → its row opens the actions popover with Pay.
-    const row = page.locator("tr", { hasText: "#179" });
+    const row = page.locator("tr", { hasText: "#187" });
     await expect(row).toBeVisible({ timeout: 20000 });
     await row.getByRole("button", { name: /actions for/i }).click();
     const payBtn = page.locator(".customer-pay-btn", { hasText: "Pay" });
@@ -88,7 +88,7 @@ test.describe("Revision B — browser verification", () => {
 
     // Cash must be rejected by the customer endpoint even if forced via API.
     const { token } = await apiLogin(request, "customer");
-    const res = await request.post(`${apiUrl}/customer/requests/179/payment-proof`, {
+    const res = await request.post(`${apiUrl}/customer/requests/187/payment-proof`, {
       headers: auth(token, { "Content-Type": "application/json" }),
       data: { payment_method: "cash" },
     });
@@ -99,14 +99,24 @@ test.describe("Revision B — browser verification", () => {
     const { token } = await apiLogin(request, "receptionist");
     const headers = auth(token);
 
-    // Fixture sanity: SR 178 must resolve to Boarding 45.
+    // Fixture: an approved+paid hotel SR whose pet name is unique for this
+    // seed ("E2EHotelPet*"). Resolve the linked boarding id dynamically so
+    // reseeds don't require spec edits.
+    const HOTEL_PET = "E2EHotelPetKilo";
     const sr = await request.get(`${apiUrl}/receptionist/requests`, { headers });
-    const srList = (await sr.json());
-    const target = (srList.requests || srList.data || srList || []).find((r) => r.id === 178);
-    expect(target, "seeded service request 178 must be visible to receptionist").toBeTruthy();
+    const srList = await sr.json();
+    const target = (srList.requests || srList.data || srList || []).find(
+      (r) => r.pet_name === HOTEL_PET && r.status === "approved"
+    );
+    expect(target, `seeded ${HOTEL_PET} service request must be visible to receptionist`).toBeTruthy();
+    const boardingList = await request.get(`${apiUrl}/boardings`, { headers });
+    const boardingId = ((await boardingList.json()).boardings || []).find(
+      (b) => b.service_request_id === target.id
+    )?.id;
+    expect(boardingId, "linked boarding must exist for the seeded SR").toBeTruthy();
 
-    // Intercept the check-in call — it must target the boarding id (45),
-    // never the service-request id (178).
+    // Intercept the check-in call — it must target the boarding id,
+    // never the service-request id.
     const checkInCalls = [];
     let checkInStatus = null;
     await loginAs(page, "receptionist");
@@ -119,11 +129,8 @@ test.describe("Revision B — browser verification", () => {
     });
     await page.goto("/receptionist/bookings/hotel");
 
-    // Seeded boarding: check-in Oct 11 → check-out Oct 13, Paid, Approved.
-    // Multiple boardings share this date range — disambiguate by pet name.
-    const row = page
-      .locator("tr", { hasText: "Oct 11, 2026 - Oct 13, 2026" })
-      .filter({ hasText: "Whity" });
+    // Unique pet name disambiguates from consumed fixtures.
+    const row = page.locator("tr", { hasText: HOTEL_PET });
     await expect(row).toBeVisible({ timeout: 20000 });
     await row.getByRole("button", { name: /actions for/i }).click();
 
@@ -140,21 +147,21 @@ test.describe("Revision B — browser verification", () => {
     await page.waitForTimeout(2500);
     expect(checkInStatus, "check-in POST must succeed").toBe(200);
     expect(
-      checkInCalls.some((u) => /boarding-requests\/45\/check-in/.test(u)),
-      `check-in must post boarding id 45, got: ${checkInCalls.join(",")}`
+      checkInCalls.some((u) => new RegExp(`boarding-requests/${boardingId}/check-in`).test(u)),
+      `check-in must post boarding id ${boardingId}, got: ${checkInCalls.join(",")}`
     ).toBeTruthy();
     expect(
-      checkInCalls.every((u) => !/boarding-requests\/178\/check-in/.test(u)),
+      checkInCalls.every((u) => !new RegExp(`boarding-requests/${target.id}/check-in`).test(u)),
       "check-in must never post the service-request id to the boarding endpoint"
     ).toBeTruthy();
 
-    // Boarding 45 must now be in_care; SR 178 stays consistent.
+    // The linked boarding must now be in_care; the SR stays consistent.
     const boarding = await request.get(`${apiUrl}/boardings`, { headers });
-    const b45 = ((await boarding.json()).boardings || []).find((b) => b.id === 45);
-    expect(["in_care", "checked_in"]).toContain(b45?.status);
+    const checkedIn = ((await boarding.json()).boardings || []).find((b) => b.id === boardingId);
+    expect(["in_care", "checked_in"]).toContain(checkedIn?.status);
 
     // Duplicate check-in via API must be rejected.
-    const dup = await request.post(`${apiUrl}/receptionist/boarding-requests/45/check-in`, { headers });
+    const dup = await request.post(`${apiUrl}/receptionist/boarding-requests/${boardingId}/check-in`, { headers });
     expect([409, 422]).toContain(dup.status());
   });
 
@@ -162,7 +169,7 @@ test.describe("Revision B — browser verification", () => {
     await loginAs(page, "veterinary");
     await page.goto("/veterinary/appointments");
 
-    const card = page.locator(".appointment-card", { hasText: "E2E_CANCEL_MARKER_4" });
+    const card = page.locator(".appointment-card", { hasText: "E2E_CANCEL_MARKER_5" });
     await expect(card).toBeVisible({ timeout: 20000 });
     await card.getByRole("button", { name: /^cancel$/i }).click();
 
@@ -193,7 +200,7 @@ test.describe("Revision B — browser verification", () => {
 
     // Appointment cancelled and the linked SR must be consistent.
     const { token } = await apiLogin(request, "veterinary");
-    const detail = await request.get(`${apiUrl}/veterinary/appointments/53`, { headers: auth(token) });
+    const detail = await request.get(`${apiUrl}/veterinary/appointments/55`, { headers: auth(token) });
     expect(detail.ok()).toBeTruthy();
     expect((await detail.json()).appointment?.status).toBe("cancelled");
 
@@ -204,8 +211,8 @@ test.describe("Revision B — browser verification", () => {
     );
     const custBody = await custList.json();
     const rows = custBody.requests || custBody.data || custBody || [];
-    const sr179 = (Array.isArray(rows) ? rows : []).find((r) => r.id === 179);
-    expect(sr179?.status).toBe("cancelled");
+    const sr187 = (Array.isArray(rows) ? rows : []).find((r) => r.id === 187);
+    expect(sr187?.status).toBe("cancelled");
   });
 
   test("booking tracker shows cancelled requests instead of hiding them", async ({ page, request }) => {
