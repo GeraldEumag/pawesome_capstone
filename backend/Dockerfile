@@ -47,4 +47,4 @@ EXPOSE 8080
 
 # Same startup semantics as the previous deployment. Migrations are NOT run
 # here — they run in the Railway pre-deploy step (php artisan migrate --force).
-CMD ["sh", "-c", "php artisan config:cache && php artisan storage:link --force && php artisan serve --host=0.0.0.0 --port=${PORT:-8080}"]
+CMD ["sh", "-c", "php artisan config:cache && php artisan storage:link --force && (while true; do php artisan schedule:work; sleep 5; done &) && exec php artisan serve --host=0.0.0.0 --port=${PORT:-8080}"]

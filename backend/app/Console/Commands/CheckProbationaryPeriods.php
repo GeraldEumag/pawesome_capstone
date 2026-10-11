@@ -3,6 +3,7 @@
 namespace App\Console\Commands;
 
 use App\Models\Employee;
+use App\Models\Notification;
 use App\Models\User;
 use Carbon\Carbon;
 use Illuminate\Console\Command;
@@ -62,23 +63,36 @@ class CheckProbationaryPeriods extends Command
     {
         $message = "⚠ Probationary period for {$name} ends on {$endDate->toFormattedDateString()} ({$alertDays} days notice). Please decide on regularization.";
 
-        // Find all manager + admin users and create a notification for each
+        // Find all manager + admin users and create a notification for each.
+        // Dedup key: (recipient, person_type, person_id, probation_end) — a daily
+        // re-run inside the same alert window must not re-notify, while a distinct
+        // alert event (different person or changed probation end date) still does.
         User::whereIn('role', ['manager', 'admin'])->each(function (User $mgr) use ($message, $name, $type, $id, $endDate) {
-            DB::table('notifications')->insert([
-                'id'             => \Illuminate\Support\Str::uuid(),
-                'type'           => 'App\Notifications\ProbationaryAlertNotification',
-                'notifiable_type' => User::class,
-                'notifiable_id'  => $mgr->id,
-                'data'           => json_encode([
-                    'message'          => $message,
-                    'person_name'      => $name,
-                    'person_type'      => $type,
-                    'person_id'        => $id,
-                    'probation_end'    => $endDate->toDateString(),
-                    'type'             => 'probationary_alert',
-                ]),
-                'created_at'     => now(),
-                'updated_at'     => now(),
+            $alreadySent = Notification::where('user_id', $mgr->id)
+                ->where('related_type', 'probationary_alert')
+                ->where('related_id', $id)
+                ->where('data->person_type', $type)
+                ->where('data->probation_end', $endDate->toDateString())
+                ->exists();
+
+            if ($alreadySent) {
+                return;
+            }
+
+            Notification::create([
+                'user_id'      => $mgr->id,
+                'title'        => 'Probationary Period Ending',
+                'message'      => $message,
+                'type'         => 'warning',
+                'related_type' => 'probationary_alert',
+                'related_id'   => $id,
+                'data'         => [
+                    'person_name'   => $name,
+                    'person_type'   => $type,
+                    'person_id'     => $id,
+                    'probation_end' => $endDate->toDateString(),
+                    'type'          => 'probationary_alert',
+                ],
             ]);
         });
 
