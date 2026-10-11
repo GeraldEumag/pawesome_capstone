@@ -8,7 +8,7 @@ use Illuminate\Database\Eloquent\Model;
 
 class Appointment extends Model
 {
-    use HasFactory;
+    use HasFactory, \App\Models\Concerns\InheritsBookingChannel;
 
     /**
      * Holds the original status before an update so status-change
@@ -23,7 +23,7 @@ class Appointment extends Model
         'amount_paid', 'balance_due', 'receipt_number', 'paid_at', 'verified_by',
         'notes', 'diagnosis', 'treatment_notes', 'prescription',
         'vet_remarks', 'cashier_remarks', 'cancellation_reason', 'service_request_id',
-        'reminder_sent_at'
+        'reminder_sent_at', 'booking_channel'
     ];
 
     protected $casts = [
@@ -88,6 +88,8 @@ class Appointment extends Model
         parent::boot();
 
         static::saving(function ($appointment) {
+            $appointment->inheritBookingChannelFromRequest();
+
             // Validate status
             if (!in_array($appointment->status, self::VALID_STATUSES)) {
                 $appointment->status = self::STATUS_PENDING;

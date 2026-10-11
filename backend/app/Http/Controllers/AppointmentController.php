@@ -199,6 +199,7 @@ class AppointmentController extends Controller
                 'scheduled_at' => $request->scheduled_at,
                 'notes' => $request->notes,
                 'price' => $lockedService?->price ?? $service?->price ?? 0,
+                'booking_channel' => \App\Support\BookingChannel::forUser($request->user()),
             ]);
 
             // Automatically create grooming record if service category is Grooming
@@ -218,6 +219,7 @@ class AppointmentController extends Controller
                     'balance_due' => $groomingPrice,
                     'payment_status' => 'unpaid',
                     'status' => 'pending',
+                    'booking_channel' => \App\Support\BookingChannel::forUser($request->user()),
                 ]);
             }
 

@@ -179,6 +179,7 @@ class WalkInController extends Controller
                     'status' => 'pending',
                     'payment_status' => 'pending',
                     'price' => 0, // Will be updated below for hotel, or on approval
+                    'booking_channel' => \App\Support\BookingChannel::WALK_IN,
                 ]);
 
                 // Step 3: Create specific booking record based on service type
@@ -247,6 +248,7 @@ class WalkInController extends Controller
                         'payment_status' => 'pending',
                         'notes' => $bookingData['special_requests'] ?? null,
                         'stay_type' => 'hotel_boarding',
+                        'booking_channel' => \App\Support\BookingChannel::WALK_IN,
                     ]);
                     $bookingType = 'boarding';
                 } elseif ($serviceType === 'veterinary') {
@@ -280,6 +282,7 @@ class WalkInController extends Controller
                         'status' => 'pending',
                         'notes' => $bookingData['reason'] ?? null,
                         'price' => $servicePrice,
+                        'booking_channel' => \App\Support\BookingChannel::WALK_IN,
                     ]);
                     $bookingType = 'appointment';
                 } elseif ($serviceType === 'grooming') {
@@ -307,6 +310,7 @@ class WalkInController extends Controller
                         'status' => 'pending',
                         'payment_status' => 'unpaid',
                         'notes' => $bookingData['grooming_instructions'] ?? null,
+                        'booking_channel' => \App\Support\BookingChannel::WALK_IN,
                     ]);
                     $bookingType = 'grooming';
                 }

@@ -583,6 +583,7 @@ class PortalController extends Controller
             'status' => 'pending',
             'scheduled_at' => $data['scheduled_at'],
             'price' => Service::find($data['service_id'])->price ?? 0,
+            'booking_channel' => \App\Support\BookingChannel::ONLINE,
         ]);
 
         return response()->json($appt, 201);
@@ -608,6 +609,7 @@ class PortalController extends Controller
             'check_in' => $data['check_in'],
             'check_out' => $data['check_out'] ?? null,
             'status' => 'checked_in',
+            'booking_channel' => \App\Support\BookingChannel::ONLINE,
         ]);
 
         return response()->json($boarding, 201);

@@ -606,12 +606,26 @@ class DashboardController extends Controller
             ->where('status', 'approved')
             ->whereIn('payment_status', ['pending', 'unpaid', 'rejected'])
             ->where(function ($q) {
-                // 'unpaid'/'rejected' rows are counter collections — always
-                // listed. 'pending' rows need a submitted proof or a
-                // declared cash intent.
-                $q->whereIn('payment_status', ['unpaid', 'rejected'])
-                  ->orWhereNotNull('payment_proof')
-                  ->orWhere('payment_method', 'cash');
+                // 'rejected' rows are counter collections after a rejected
+                // e-wallet proof — listed for any channel. 'pending' rows
+                // need a submitted proof. 'unpaid' rows are collectible only
+                // for walk-in bookings; an online booking with no proof must
+                // be paid online (or have its proof rejected) first.
+                $q->where('payment_status', 'rejected')
+                  ->orWhere(function ($q2) {
+                      $q2->where('payment_status', 'pending')
+                          ->whereNotNull('payment_proof');
+                  })
+                  ->orWhere(function ($q2) {
+                      $q2->where('booking_channel', 'walk_in')
+                          ->where(function ($q3) {
+                              $q3->where('payment_status', 'unpaid')
+                                  ->orWhere(function ($q4) {
+                                      $q4->where('payment_status', 'pending')
+                                          ->where('payment_method', 'cash');
+                                  });
+                          });
+                  });
             })
             ->orderBy('updated_at', 'desc')
             ->get()
@@ -637,6 +651,7 @@ class DashboardController extends Controller
                     'request_date' => $request->updated_at,
                     'status' => $request->status,
                     'payment_status' => $request->payment_status,
+                    'booking_channel' => $request->booking_channel ?? null,
                 ];
             });
 
@@ -651,20 +666,35 @@ class DashboardController extends Controller
         };
 
         $boardings = DB::table('boardings')
+            ->leftJoin('service_requests as bsr', 'bsr.id', '=', 'boardings.service_request_id')
+            ->select('boardings.*', DB::raw('COALESCE(boardings.booking_channel, bsr.booking_channel) AS resolved_channel'))
             ->where($excludeLinked)
-            ->whereIn('status', ['pending', 'approved', 'scheduled', 'checked_in', 'in_care', 'ready_for_pickup'])
-            ->whereIn('payment_status', ['pending', 'unpaid', 'rejected'])
+            // Pending-status boardings have not passed approval and cannot
+            // be paid, so they do not belong in the cashier payment queue.
+            ->whereIn('boardings.status', ['approved', 'scheduled', 'checked_in', 'in_care', 'ready_for_pickup'])
+            ->whereIn('boardings.payment_status', ['pending', 'unpaid', 'rejected'])
             ->where(function ($q) {
-                // 'unpaid'/'rejected' rows are counter collections (cash at the
-                // desk) — always listed. Walk-in bookings (pending status)
-                // likewise have no proof yet. Other rows: only show if the
-                // customer uploaded proof or indicated cash.
-                $q->whereIn('payment_status', ['unpaid', 'rejected'])
-                  ->orWhere('status', 'pending')
-                  ->orWhereNotNull('payment_proof')
-                  ->orWhere('payment_method', 'cash');
+                // 'rejected' rows are counter collections after a rejected
+                // e-wallet proof — listed for any channel. 'pending' rows
+                // need a submitted proof. 'unpaid' rows are collectible only
+                // when the (resolved) booking channel is walk-in.
+                $q->where('boardings.payment_status', 'rejected')
+                  ->orWhere(function ($q2) {
+                      $q2->where('boardings.payment_status', 'pending')
+                          ->whereNotNull('boardings.payment_proof');
+                  })
+                  ->orWhere(function ($q2) {
+                      $q2->whereRaw("COALESCE(boardings.booking_channel, bsr.booking_channel) = 'walk_in'")
+                          ->where(function ($q3) {
+                              $q3->where('boardings.payment_status', 'unpaid')
+                                  ->orWhere(function ($q4) {
+                                      $q4->where('boardings.payment_status', 'pending')
+                                          ->where('boardings.payment_method', 'cash');
+                                  });
+                          });
+                  });
             })
-            ->orderBy('updated_at', 'desc')
+            ->orderBy('boardings.updated_at', 'desc')
             ->get()
             ->map(function ($boarding) {
                 $fallback = (float) ($boarding->total_amount ?? 0);
@@ -691,16 +721,32 @@ class DashboardController extends Controller
                     'request_date' => $boarding->updated_at,
                     'status' => $boarding->status,
                     'payment_status' => $boarding->payment_status,
+                    'booking_channel' => $boarding->resolved_channel ?? null,
                 ];
             });
 
         $confinements = DB::table('medical_confinements')
+            // 'recommended' confinements have not been approved for admission;
+            // they cannot accept payment yet.
+            ->whereNotIn('status', ['recommended', 'cancelled'])
             ->whereIn('payment_status', ['pending', 'unpaid', 'rejected'])
             ->where(function ($q) {
-                // 'unpaid'/'rejected' = counter collection — no valid proof.
-                $q->whereIn('payment_status', ['unpaid', 'rejected'])
-                  ->orWhereNotNull('payment_proof')
-                  ->orWhere('payment_method', 'cash');
+                // Same channel rule as the other payable tables.
+                $q->where('payment_status', 'rejected')
+                  ->orWhere(function ($q2) {
+                      $q2->where('payment_status', 'pending')
+                          ->whereNotNull('payment_proof');
+                  })
+                  ->orWhere(function ($q2) {
+                      $q2->where('booking_channel', 'walk_in')
+                          ->where(function ($q3) {
+                              $q3->where('payment_status', 'unpaid')
+                                  ->orWhere(function ($q4) {
+                                      $q4->where('payment_status', 'pending')
+                                          ->where('payment_method', 'cash');
+                                  });
+                          });
+                  });
             })
             ->orderBy('updated_at', 'desc')
             ->get()
@@ -724,17 +770,49 @@ class DashboardController extends Controller
                     'request_date' => $confinement->updated_at,
                     'status' => $confinement->status,
                     'payment_status' => $confinement->payment_status,
+                    'booking_channel' => $confinement->booking_channel ?? null,
                 ];
             });
 
-        // Get veterinary consultations awaiting payment (walk-in or online)
-        // Include pending/approved so walk-in bookings created by receptionist are visible;
-        // cashier can see the booking and will collect payment when status reaches awaiting_payment.
+        // Get veterinary consultations awaiting payment (walk-in or online).
+        // Pending-status appointments have not passed approval and cannot be
+        // paid, so they stay out of the cashier payment queue.
         $appointments = Appointment::with(['customer', 'pet', 'service'])
+            ->leftJoin('service_requests as asr', 'asr.id', '=', 'appointments.service_request_id')
+            // Appointments have no payment_proof/method/reference columns —
+            // submitted proof lives on the linked service_request.
+            ->select(
+                'appointments.*',
+                DB::raw('COALESCE(appointments.booking_channel, asr.booking_channel) AS resolved_channel'),
+                'asr.id as linked_sr_id',
+                'asr.payment_proof as linked_proof',
+                'asr.payment_method as linked_method',
+                'asr.payment_reference as linked_reference'
+            )
             ->where($excludeLinked)
-            ->whereIn('status', ['pending', 'approved', 'in_consultation', 'needs_confinement', 'awaiting_payment', 'treated'])
-            ->whereIn('payment_status', ['unpaid', 'pending', 'rejected'])
-            ->orderBy('updated_at', 'desc')
+            ->whereIn('appointments.status', ['approved', 'scheduled', 'in_consultation', 'needs_confinement', 'awaiting_payment', 'treated'])
+            ->whereIn('appointments.payment_status', ['unpaid', 'pending', 'rejected'])
+            ->where(function ($q) {
+                // Same channel rule: rejected → counter fallback; pending →
+                // proof required (stored on the linked request); unpaid →
+                // walk-in counter collection only.
+                $q->where('appointments.payment_status', 'rejected')
+                  ->orWhere(function ($q2) {
+                      $q2->where('appointments.payment_status', 'pending')
+                          ->whereNotNull('asr.payment_proof');
+                  })
+                  ->orWhere(function ($q2) {
+                      $q2->whereRaw("COALESCE(appointments.booking_channel, asr.booking_channel) = 'walk_in'")
+                          ->where(function ($q3) {
+                              $q3->where('appointments.payment_status', 'unpaid')
+                                  ->orWhere(function ($q4) {
+                                      $q4->where('appointments.payment_status', 'pending')
+                                          ->where('asr.payment_method', 'cash');
+                                  });
+                          });
+                  });
+            })
+            ->orderBy('appointments.updated_at', 'desc')
             ->get()
             ->map(function ($appointment) {
                 return [
@@ -749,22 +827,47 @@ class DashboardController extends Controller
                     'request_type' => 'appointment',
                     'service_name' => $appointment->service?->name ?? 'Veterinary Consultation',
                     'amount' => $this->queueAmount('veterinary', (int) $appointment->id, $appointment->service?->name, 'vet', (float) ($appointment->total_amount ?? $appointment->balance_due ?? $appointment->price ?? $appointment->service?->price ?? 0)),
-                    'payment_method' => $appointment->payment_method,
-                    'payment_reference' => $appointment->payment_reference,
-                    'payment_proof' => $appointment->payment_proof,
-                    'proof_url' => $appointment->payment_proof ? url('/api/files/payment-proofs/appointment/' . $appointment->id . '/view') : null,
+                    'payment_method' => $appointment->linked_method ?? null,
+                    'payment_reference' => $appointment->linked_reference ?? null,
+                    'payment_proof' => $appointment->linked_proof ?? null,
+                    'proof_url' => $appointment->linked_proof
+                        ? url('/api/files/payment-proofs/service-request/' . $appointment->linked_sr_id . '/view')
+                        : null,
                     'request_date' => $appointment->updated_at,
                     'status' => $appointment->status,
                     'payment_status' => $appointment->payment_status,
+                    'booking_channel' => $appointment->resolved_channel ?? null,
                 ];
             });
 
-        // Get grooming appointments pending payment (walk-in and online)
+        // Get grooming appointments pending payment (walk-in and online).
+        // Pending-status groomings have not passed approval and cannot be paid.
         $groomings = DB::table('groomings')
+            ->leftJoin('service_requests as gsr', 'gsr.id', '=', 'groomings.service_request_id')
+            ->select('groomings.*', DB::raw('COALESCE(groomings.booking_channel, gsr.booking_channel) AS resolved_channel'))
             ->where($excludeLinked)
-            ->whereNotIn('status', ['completed', 'cancelled', 'rejected'])
-            ->whereIn('payment_status', ['pending', 'unpaid', 'rejected'])
-            ->orderBy('updated_at', 'desc')
+            ->whereNotIn('groomings.status', ['pending', 'completed', 'cancelled', 'rejected'])
+            ->whereIn('groomings.payment_status', ['pending', 'unpaid', 'rejected'])
+            ->where(function ($q) {
+                // Same channel rule: rejected → counter fallback; pending →
+                // proof required; unpaid → walk-in counter collection only.
+                $q->where('groomings.payment_status', 'rejected')
+                  ->orWhere(function ($q2) {
+                      $q2->where('groomings.payment_status', 'pending')
+                          ->whereNotNull('groomings.payment_proof');
+                  })
+                  ->orWhere(function ($q2) {
+                      $q2->whereRaw("COALESCE(groomings.booking_channel, gsr.booking_channel) = 'walk_in'")
+                          ->where(function ($q3) {
+                              $q3->where('groomings.payment_status', 'unpaid')
+                                  ->orWhere(function ($q4) {
+                                      $q4->where('groomings.payment_status', 'pending')
+                                          ->where('groomings.payment_method', 'cash');
+                                  });
+                          });
+                  });
+            })
+            ->orderBy('groomings.updated_at', 'desc')
             ->get()
             ->map(function ($grooming) {
                 $customer = DB::table('customers')->where('id', $grooming->customer_id)->first();
@@ -790,6 +893,7 @@ class DashboardController extends Controller
                     'request_date'     => $grooming->updated_at,
                     'status'           => $grooming->status,
                     'payment_status'   => $grooming->payment_status,
+                    'booking_channel'  => $grooming->resolved_channel ?? null,
                 ];
             });
 

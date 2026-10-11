@@ -46,5 +46,6 @@ class ServiceRequest extends Model
         'verified_by',
         'cashier_remarks',
         'receipt_number',
+        'booking_channel',
     ];
 }

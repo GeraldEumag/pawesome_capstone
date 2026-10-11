@@ -7,7 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 
 class MedicalConfinement extends Model
 {
-    use HasFactory;
+    use HasFactory, \App\Models\Concerns\InheritsBookingChannel;
 
     protected $fillable = [
         'consultation_id',
@@ -46,6 +46,7 @@ class MedicalConfinement extends Model
         'discharge_cleared_at',
         'discharged_by',
         'discharged_at',
+        'booking_channel',
     ];
 
     protected $casts = [
@@ -84,6 +85,8 @@ class MedicalConfinement extends Model
         parent::boot();
 
         static::saving(function ($confinement) {
+            $confinement->inheritBookingChannelFromRequest();
+
             if (!in_array($confinement->status, self::VALID_STATUSES, true)) {
                 $confinement->status = 'recommended';
             }

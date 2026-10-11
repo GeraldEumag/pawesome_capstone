@@ -56,6 +56,7 @@ class GroomingController extends Controller
 
         $validated['status'] = 'pending';
         $validated['payment_status'] = 'unpaid';
+        $validated['booking_channel'] = \App\Support\BookingChannel::forUser($request->user());
         $validated['amount'] = $resolvedAmount;
         $validated['base_amount'] = $resolvedAmount;
         $validated['total_amount'] = $resolvedAmount;

@@ -284,6 +284,10 @@ class ServiceRequestController extends Controller
             'payment_status' => 'unpaid',
         ];
 
+        if (Schema::hasColumn('service_requests', 'booking_channel')) {
+            $createData['booking_channel'] = \App\Support\BookingChannel::ONLINE;
+        }
+
         if (Schema::hasColumn('service_requests', 'price')) {
             $createData['price'] = $price;
         }

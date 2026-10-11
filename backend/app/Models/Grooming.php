@@ -7,7 +7,8 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Grooming extends Model
 {
-    use SoftDeletes;
+    use SoftDeletes, \App\Models\Concerns\InheritsBookingChannel;
+
     protected $fillable = [
         'customer_id',
         'pet_id',
@@ -33,7 +34,17 @@ class Grooming extends Model
         'status',
         'service_request_id',
         'cancellation_reason',
+        'booking_channel',
     ];
+
+    protected static function boot()
+    {
+        parent::boot();
+
+        static::saving(function ($grooming) {
+            $grooming->inheritBookingChannelFromRequest();
+        });
+    }
 
     protected $casts = [
         'appointment_date' => 'date',

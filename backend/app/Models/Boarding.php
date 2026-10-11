@@ -11,7 +11,7 @@ use Illuminate\Support\Facades\Schema;
 
 class Boarding extends Model
 {
-    use HasFactory;
+    use HasFactory, \App\Models\Concerns\InheritsBookingChannel;
 
     protected $fillable = [
         'pet_id',
@@ -71,6 +71,7 @@ class Boarding extends Model
         'checked_out_by',
         'checked_out_at',
         'service_request_id',
+        'booking_channel',
     ];
 
     protected $appends = [
@@ -128,6 +129,8 @@ class Boarding extends Model
         parent::boot();
 
         static::saving(function ($boarding) {
+            $boarding->inheritBookingChannelFromRequest();
+
             // Validate status
             if (!in_array($boarding->status, self::VALID_STATUSES)) {
                 $boarding->status = 'pending';

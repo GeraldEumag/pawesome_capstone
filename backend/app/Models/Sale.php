@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
+use Illuminate\Support\Facades\Auth;
 
 class Sale extends Model
 {
@@ -163,6 +164,9 @@ class Sale extends Model
         $this->update([
             'status' => 'cancelled',
             'notes' => $reason ? $this->notes . ' [Cancelled: ' . $reason . ']' : $this->notes,
+            'void_reason' => $reason,
+            'voided_by' => Auth::id(),
+            'voided_at' => now(),
         ]);
     }
 }

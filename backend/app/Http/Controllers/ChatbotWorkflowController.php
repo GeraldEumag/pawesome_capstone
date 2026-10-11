@@ -76,6 +76,7 @@ class ChatbotWorkflowController extends Controller
             'scheduled_at' => $data['scheduled_at'],
             'price' => $service->price ?? 0,
             'notes' => $data['notes'] ?? null,
+            'booking_channel' => \App\Support\BookingChannel::ONLINE,
         ]);
 
         return response()->json([
@@ -292,6 +293,7 @@ class ChatbotWorkflowController extends Controller
             'special_requests' => $data['special_requests'] ?? null,
             'total_amount' => $totalAmount,
             'payment_status' => 'unpaid',
+            'booking_channel' => \App\Support\BookingChannel::ONLINE,
         ]);
 
         return response()->json([

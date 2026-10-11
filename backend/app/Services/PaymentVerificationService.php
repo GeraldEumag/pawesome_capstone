@@ -10,6 +10,7 @@ use App\Models\ActivityLog;
 use App\Models\ServiceItemUsage;
 use App\Models\ServiceRequest;
 use App\Services\WorkflowNotifier;
+use App\Support\BookingChannel;
 
 class PaymentVerificationService
 {
@@ -67,6 +68,11 @@ class PaymentVerificationService
         $paymentMethod = $request->input('payment_method');
         $isCounterPayment = !$referenceNumber && in_array(strtolower((string) $paymentMethod), ['cash', 'counter', 'walk_in', 'walk-in', '']);
 
+        // Counter collection is a cash settlement at the desk, not a proof
+        // verification — it must be recorded as 'cash' so the settled record
+        // stays distinguishable from any earlier e-wallet attempt.
+        $counterMessage = 'This booking was made online and cannot be settled with counter cash unless its submitted e-wallet proof was rejected. Verify the customer\'s payment proof, or reject the proof first.';
+
         if (!$isCounterPayment) {
             if (!$referenceNumber || trim($referenceNumber) === '') {
                 return ['success' => false, 'message' => 'Reference number is required to verify payment', 'status' => 422];
@@ -80,31 +86,50 @@ class PaymentVerificationService
             // All payment-state writes + linked service/billing syncs must commit
             // together or not at all. In-app notifications are DB rows and roll
             // back with the transaction — they are intentionally inside it.
-            return DB::transaction(function () use ($type, $id, $request, $referenceNumber) {
+            return DB::transaction(function () use ($type, $id, $request, $referenceNumber, $isCounterPayment, $counterMessage) {
                 if ($type === 'boarding') {
-                    return $this->verifyTablePayment('boardings', 'BD-REC-', $id, $request, 'Boarding payment verified successfully.', $referenceNumber);
+                    return $this->verifyTablePayment('boardings', 'BD-REC-', $id, $request, 'Boarding payment verified successfully.', $referenceNumber, $isCounterPayment, $counterMessage);
                 }
 
                 if ($type === 'appointment' || $type === 'veterinary') {
-                    return $this->verifyTablePayment('appointments', 'VT-REC-', $id, $request, 'Veterinary payment verified successfully.', $referenceNumber);
+                    return $this->verifyTablePayment('appointments', 'VT-REC-', $id, $request, 'Veterinary payment verified successfully.', $referenceNumber, $isCounterPayment, $counterMessage);
                 }
 
                 if ($type === 'grooming') {
-                    return $this->verifyTablePayment('groomings', 'GR-REC-', $id, $request, 'Grooming payment verified successfully.', $referenceNumber);
+                    return $this->verifyTablePayment('groomings', 'GR-REC-', $id, $request, 'Grooming payment verified successfully.', $referenceNumber, $isCounterPayment, $counterMessage);
                 }
 
                 if ($type === 'medical_confinement' || $type === 'confinement') {
-                    return $this->verifyTablePayment('medical_confinements', 'MC-REC-', $id, $request, 'Medical confinement payment verified successfully.', $referenceNumber);
+                    return $this->verifyTablePayment('medical_confinements', 'MC-REC-', $id, $request, 'Medical confinement payment verified successfully.', $referenceNumber, $isCounterPayment, $counterMessage);
                 }
 
                 if ($type === 'service_request' || $type === 'service') {
                     $sr = DB::table('service_requests')->where('id', $id)->lockForUpdate()->first();
                     if (!$sr) return ['success' => false, 'message' => 'Service request not found', 'status' => 404];
+
+                    // Only an approved booking may be paid — a pending request
+                    // has not passed receptionist approval.
+                    if (!in_array($sr->status ?? 'pending', ['approved', 'scheduled'], true)) {
+                        return ['success' => false, 'message' => 'This booking has not been approved yet and cannot be paid.', 'status' => 422];
+                    }
+
                     // 'unpaid'/'rejected' are accepted for counter collections —
-                    // a rejected online proof or a never-submitted booking can
-                    // still be settled with cash at the desk.
+                    // a rejected online proof or a walk-in booking can still be
+                    // settled with cash at the desk.
                     if (!in_array($sr->payment_status ?? 'unpaid', ['pending', 'unpaid', 'rejected'], true)) {
                         return ['success' => false, 'message' => 'Only pending payment proofs can be verified', 'status' => 422, 'payment_status' => $sr->payment_status];
+                    }
+
+                    // A pending row carrying digital proof is a proof
+                    // verification, not a counter collection — the cashier's
+                    // omitted payment_method must not downgrade it to cash.
+                    if ($isCounterPayment && ($sr->payment_status ?? null) === 'pending'
+                        && $this->hasDigitalProof('service_requests', $sr)) {
+                        $isCounterPayment = false;
+                    }
+
+                    if ($isCounterPayment && !$this->counterCollectionAllowed('service_requests', $sr)) {
+                        return ['success' => false, 'message' => $counterMessage, 'status' => 422];
                     }
 
                     $receiptNumber = 'SR-REC-' . now()->format('YmdHis') . '-' . $id;
@@ -117,7 +142,12 @@ class PaymentVerificationService
                         'cashier_remarks' => $request->input('cashier_remarks', 'Payment verified by cashier'),
                         'receipt_number' => $receiptNumber,
                         'reference_number' => $referenceNumber,
-                        'payment_method' => $request->input('payment_method') ?? $sr->payment_method,
+                        // Proof verification persists the proof's own method —
+                        // a request-supplied 'cash'/'counter' must not relabel
+                        // a verified e-wallet settlement.
+                        'payment_method' => $isCounterPayment
+                            ? 'cash'
+                            : ($sr->payment_method ?? $request->input('payment_method')),
                     ]);
 
                     $this->markLinkedServiceAsPaidFromRequest($sr, $id, $receiptNumber);
@@ -130,7 +160,7 @@ class PaymentVerificationService
                         'customer_id' => $srCustomer?->id,
                         'user_id' => $sr->customer_id ?? null,
                         'amount' => $this->settledAmount('service_requests', $sr),
-                        'payment_method' => $sr->payment_method ?? null,
+                        'payment_method' => $isCounterPayment ? 'cash' : ($sr->payment_method ?? null),
                         'reference_number' => $referenceNumber ?? $sr->payment_reference ?? null,
                         'receipt_number' => $receiptNumber,
                         'verified_by' => Auth::id(),
@@ -603,11 +633,93 @@ class PaymentVerificationService
         return DB::table($table)->where('id', $id)->value('payment_status');
     }
 
-    private function verifyTablePayment(string $table, string $prefix, int $id, $request, string $message, ?string $referenceNumber = null): array
+    /**
+     * Booking statuses in which a row must NOT accept payment — the booking
+     * has not passed staff approval (or is already dead). Keyed by table.
+     */
+    private const UNVERIFIABLE_STATUSES = [
+        'boardings' => ['pending', 'cancelled', 'rejected', 'archived'],
+        'appointments' => ['pending', 'cancelled', 'rejected', 'no_show'],
+        'groomings' => ['pending', 'cancelled', 'rejected'],
+        'medical_confinements' => ['recommended', 'cancelled'],
+    ];
+
+    /**
+     * Authoritative channel for a payable row: its own booking_channel,
+     * falling back to the originating service_request's channel.
+     */
+    private function resolveBookingChannel(string $table, object $record): ?string
+    {
+        $channel = Schema::hasColumn($table, 'booking_channel')
+            ? ($record->booking_channel ?? null)
+            : null;
+
+        if (!$channel && ($record->service_request_id ?? null)
+            && Schema::hasColumn('service_requests', 'booking_channel')) {
+            $channel = DB::table('service_requests')
+                ->where('id', $record->service_request_id)
+                ->value('booking_channel');
+        }
+
+        return $channel;
+    }
+
+    /**
+     * Counter cash may only be collected for walk-in bookings, or for an
+     * online booking whose submitted e-wallet proof was rejected (the
+     * established counter-fallback rule). Unclassifiable legacy rows
+     * (NULL channel) are treated as online — the strictest interpretation.
+     */
+    private function counterCollectionAllowed(string $table, object $record): bool
+    {
+        if ($this->resolveBookingChannel($table, $record) === BookingChannel::WALK_IN) {
+            return true;
+        }
+
+        return ($record->payment_status ?? 'unpaid') === 'rejected';
+    }
+
+    /**
+     * Whether a payable row carries submitted digital payment evidence —
+     * its own proof file/e-wallet method, or its originating service
+     * request's (appointments store neither column).
+     */
+    private function hasDigitalProof(string $table, object $record): bool
+    {
+        if (Schema::hasColumn($table, 'payment_proof') && !empty($record->payment_proof)) {
+            return true;
+        }
+
+        $method = Schema::hasColumn($table, 'payment_method')
+            ? strtolower((string) ($record->payment_method ?? ''))
+            : '';
+        if (in_array($method, ['gcash', 'maya', 'paymaya', 'card', 'online', 'bank_transfer'], true)) {
+            return true;
+        }
+
+        if (($record->service_request_id ?? null) && $table !== 'service_requests') {
+            $sr = DB::table('service_requests')->where('id', $record->service_request_id)->first();
+            if ($sr && (!empty($sr->payment_proof)
+                || in_array(strtolower((string) ($sr->payment_method ?? '')), ['gcash', 'maya', 'paymaya', 'card', 'online', 'bank_transfer'], true))) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private function verifyTablePayment(string $table, string $prefix, int $id, $request, string $message, ?string $referenceNumber = null, bool $isCounterPayment = false, string $counterMessage = ''): array
     {
         $record = DB::table($table)->where('id', $id)->lockForUpdate()->first();
         if (!$record) {
             return ['success' => false, 'message' => 'Payment record not found', 'status' => 404];
+        }
+
+        // An unapproved booking cannot be paid — e.g. a pending appointment
+        // that has not passed receptionist/vet approval yet.
+        $blockedStatuses = self::UNVERIFIABLE_STATUSES[$table] ?? [];
+        if (in_array($record->status ?? null, $blockedStatuses, true)) {
+            return ['success' => false, 'message' => 'This booking has not been approved yet and cannot be paid.', 'status' => 422];
         }
 
         // 'unpaid'/'rejected' are accepted for counter collections (cash at
@@ -618,6 +730,17 @@ class PaymentVerificationService
             : ['pending'];
         if (!in_array($record->payment_status ?? 'unpaid', $allowedStatuses)) {
             return ['success' => false, 'message' => 'Only pending payment proofs can be verified', 'status' => 422, 'payment_status' => $record->payment_status ?? 'unpaid'];
+        }
+
+        // Same re-classification as the service_request branch: a pending row
+        // carrying digital proof is verified as proof, never collected as cash.
+        if ($isCounterPayment && ($record->payment_status ?? null) === 'pending'
+            && $this->hasDigitalProof($table, $record)) {
+            $isCounterPayment = false;
+        }
+
+        if ($isCounterPayment && !$this->counterCollectionAllowed($table, $record)) {
+            return ['success' => false, 'message' => $counterMessage, 'status' => 422];
         }
 
         $receiptNumber = $record->receipt_number ?? ($prefix . now()->format('YmdHis') . '-' . $id);
@@ -633,9 +756,14 @@ class PaymentVerificationService
         ];
 
         // Persist the method the cashier actually collected with — a counter
-        // collection may supersede a stale online method on the record.
-        if (Schema::hasColumn($table, 'payment_method') && $request->input('payment_method')) {
-            $updateData['payment_method'] = $request->input('payment_method');
+        // collection is always recorded as 'cash' so it stays distinguishable
+        // from any earlier rejected e-wallet attempt.
+        if (Schema::hasColumn($table, 'payment_method')) {
+            if ($isCounterPayment) {
+                $updateData['payment_method'] = 'cash';
+            } elseif (!$record->payment_method && $request->input('payment_method')) {
+                $updateData['payment_method'] = $request->input('payment_method');
+            }
         }
 
         // Note: status is not set to 'completed' here; the service provider

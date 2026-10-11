@@ -403,6 +403,7 @@ class BoardingController extends Controller
             'payment_status' => $initialPaymentStatus,
             'vaccination_card' => null,
             'notes' => $request->notes,
+            'booking_channel' => \App\Support\BookingChannel::forUser($request->user()),
         ];
 
         if (Schema::hasColumn('boardings', 'room_id') && $request->room_id) {

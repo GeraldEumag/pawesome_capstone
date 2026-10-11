@@ -20,6 +20,7 @@ use App\Support\EmailContent;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 
 class ReceptionistRequestController extends Controller
@@ -244,6 +245,12 @@ class ReceptionistRequestController extends Controller
             'status' => $status,
             'payment_status' => 'pending',
         ];
+
+        // Customers booking through this endpoint are online requests;
+        // receptionist/admin-created requests are counter (walk-in) entries.
+        if (Schema::hasColumn('service_requests', 'booking_channel')) {
+            $createData['booking_channel'] = \App\Support\BookingChannel::forUser($user);
+        }
 
         if (Schema::hasColumn('service_requests', 'price')) {
             $createData['price'] = ServiceCatalog::priceFor(
@@ -620,7 +627,30 @@ class ReceptionistRequestController extends Controller
             'receptionist_remarks' => 'nullable|string|max:1000',
         ]);
 
+        // Promotion is atomic: the room reservation, promoted booking row,
+        // and request status update commit together or roll back together.
+        return DB::transaction(fn () => $this->performApprove($request, $validated, $id));
+    }
+
+    private function performApprove(Request $request, array $validated, $id)
+    {
         $serviceRequest = ServiceRequest::findOrFail($id);
+
+        // Idempotent approval: re-approving an already-approved request must
+        // not re-run the promotion — a second pass would create a duplicate
+        // boarding-room reservation and re-send notifications. Return the
+        // existing linked records in the same response shape instead.
+        if (($serviceRequest->status ?? 'pending') === 'approved') {
+            return response()->json([
+                'success' => true,
+                'message' => 'Request is already approved.',
+                'request' => $this->formatRequest($serviceRequest),
+                'appointment' => Appointment::where('service_request_id', $serviceRequest->id)->latest('id')->first(),
+                'grooming' => Grooming::where('service_request_id', $serviceRequest->id)->latest('id')->first(),
+                'boarding' => Boarding::where('service_request_id', $serviceRequest->id)->latest('id')->first(),
+            ]);
+        }
+
         $appointment = null;
         $grooming = null;
         $boarding = null;
@@ -820,6 +850,59 @@ class ReceptionistRequestController extends Controller
                     $checkOut = Carbon::parse($checkIn)->addDay()->toDateString();
                 }
 
+                // A hotel booking may not be approved without a persistent
+                // room reservation — the customer's selected room, or an
+                // auto-assigned compatible room when only a room type was
+                // requested. A full/conflicting room is a controlled 422,
+                // not a silently unassigned approval.
+                $roomService = app(\App\Services\BoardingRoomService::class);
+                $roomId = (int) ($serviceRequest->boarding_room_id ?? 0);
+
+                if (!$roomId && $checkIn) {
+                    $available = $roomService->getAvailableRooms(
+                        $pet->id,
+                        $checkIn,
+                        $checkOut,
+                        $serviceRequest->room_type ?: null
+                    );
+                    if (($available['success'] ?? false) && !empty($available['rooms'][0]['id'])) {
+                        $roomId = (int) $available['rooms'][0]['id'];
+                    }
+                }
+
+                if (!$roomId) {
+                    return response()->json([
+                        'message' => 'No compatible boarding room is available for this booking\'s stay dates. Reject the request or ask the customer to choose different dates.',
+                    ], 422);
+                }
+
+                $reservationResult = $roomService->createRoomReservation(
+                    $roomId,
+                    'service_request',
+                    $serviceRequest->id,
+                    $pet->id,
+                    $checkIn,
+                    $checkOut,
+                    $customer->id
+                );
+
+                if (!($reservationResult['success'] ?? false)) {
+                    return response()->json([
+                        'message' => 'The selected boarding room is no longer available: ' . ($reservationResult['message'] ?? 'room unavailable'),
+                    ], 422);
+                }
+
+                // Mirror the authoritative room details onto the request so
+                // the promoted boarding carries the assigned room.
+                $assignedRoom = $reservationResult['room'] ?? \App\Models\BoardingRoom::find($roomId);
+                if ($assignedRoom && (int) ($serviceRequest->boarding_room_id ?? 0) !== (int) $assignedRoom->id) {
+                    $serviceRequest->boarding_room_id = $assignedRoom->id;
+                    $serviceRequest->room_name = $assignedRoom->room_name;
+                    $serviceRequest->room_type = $assignedRoom->room_type;
+                    $serviceRequest->daily_rate = $assignedRoom->daily_rate;
+                    $serviceRequest->save();
+                }
+
                 // Resolve the payable total: persisted request total →
                 // room rate × nights → catalog default. Never leaves ₱0.
                 $boardingTotal = (float) ($serviceRequest->total_amount ?? 0);
@@ -974,6 +1057,15 @@ class ReceptionistRequestController extends Controller
         }
         if (Schema::hasColumn('boardings', 'service_request_id')) {
             Boarding::where('service_request_id', $serviceRequest->id)->update(['status' => $linkedStatus, 'payment_status' => 'unpaid']);
+        }
+
+        // Release any room reservation created at approval so the room
+        // becomes available again.
+        if (Schema::hasTable('boarding_room_reservations')) {
+            \App\Models\BoardingRoomReservation::where('source_type', 'service_request')
+                ->where('source_id', $serviceRequest->id)
+                ->whereNotIn('status', ['cancelled', 'checked_out'])
+                ->update(['status' => 'cancelled']);
         }
 
         WorkflowNotifier::notifyEmail(
