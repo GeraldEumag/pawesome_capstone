@@ -140,6 +140,41 @@ class TransactionAtomicityTest extends TestCase
         $this->assertSame(1, InventoryLog::where('movement_type', 'sale_void')->count());
     }
 
+    public function test_pos_void_persists_reason_actor_and_timestamp(): void
+    {
+        $cashier = $this->as('cashier');
+        $product = $this->product(10);
+        $saleId = $cashier->postJson('/api/cashier/pos/transaction', $this->posPayload([
+            ['item_id' => $product->id, 'item_type' => 'product', 'item_name' => 'P', 'quantity' => 1, 'unit_price' => 100],
+        ]))->assertOk()->json('transaction.id');
+
+        $cashier->postJson("/api/cashier/pos/transaction/{$saleId}/void", [
+            'reason' => 'Duplicate charge',
+        ])->assertOk();
+
+        $sale = Sale::findOrFail($saleId);
+        $this->assertSame('cancelled', $sale->status);
+        $this->assertSame('Duplicate charge', $sale->void_reason);
+        $this->assertNotNull($sale->voided_by);
+        $this->assertNotNull($sale->voided_at);
+    }
+
+    public function test_pos_void_requires_reason(): void
+    {
+        $cashier = $this->as('cashier');
+        $product = $this->product(10);
+        $saleId = $cashier->postJson('/api/cashier/pos/transaction', $this->posPayload([
+            ['item_id' => $product->id, 'item_type' => 'product', 'item_name' => 'P', 'quantity' => 1, 'unit_price' => 100],
+        ]))->assertOk()->json('transaction.id');
+
+        $cashier->postJson("/api/cashier/pos/transaction/{$saleId}/void", [])
+            ->assertStatus(422);
+
+        $sale = Sale::findOrFail($saleId);
+        $this->assertNotSame('cancelled', $sale->status);
+        $this->assertNull($sale->void_reason);
+    }
+
     public function test_payment_verify_commits_linked_service_state(): void
     {
         $boarding = $this->pendingBoarding();

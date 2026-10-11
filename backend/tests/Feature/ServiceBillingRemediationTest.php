@@ -427,6 +427,7 @@ class ServiceBillingRemediationTest extends TestCase
             'total_amount' => 800,
             'status' => 'confirmed',
             'payment_status' => 'unpaid',
+            'booking_channel' => 'walk_in',
         ]);
 
         $this->as('cashier')->postJson("/api/boardings/{$boarding->id}/pay", [
@@ -445,7 +446,10 @@ class ServiceBillingRemediationTest extends TestCase
 
     public function test_legacy_appointment_pay_creates_no_sale_row(): void
     {
-        $appointment = $this->appointment(['payment_status' => 'unpaid']);
+        $appointment = $this->appointment([
+            'payment_status' => 'unpaid',
+            'booking_channel' => 'walk_in',
+        ]);
 
         $this->as('cashier')->postJson("/api/appointments/{$appointment->id}/pay", [
             'payment_method' => 'cash',

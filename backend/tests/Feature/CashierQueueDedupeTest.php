@@ -94,6 +94,7 @@ class CashierQueueDedupeTest extends TestCase
             'status' => 'approved',
             'payment_status' => 'pending',
             'payment_method' => 'cash',
+            'booking_channel' => 'walk_in',
         ]);
 
         $this->withHeaders($this->authHeaders($cashier))
