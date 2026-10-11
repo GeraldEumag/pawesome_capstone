@@ -206,18 +206,21 @@ class PortalController extends Controller
         $statusLabels = [
             'pending' => 'Pending Approval', 'approved' => 'Approved', 'scheduled' => 'Scheduled',
             'confirmed' => 'Confirmed', 'rescheduled' => 'Rescheduled', 'in_progress' => 'In Progress',
-            'checked_in' => 'Checked In', 'in_care' => 'In Care', 'ready_for_pickup' => 'Ready for Pickup',
-            'checked_out' => 'Picked Up', 'completed' => 'Completed', 'treated' => 'Treated',
+            'in_consultation' => 'In Consultation', 'needs_confinement' => 'Needs Confinement',
+            'awaiting_payment' => 'Awaiting Payment', 'checked_in' => 'Checked In', 'in_care' => 'In Care',
+            'ready_for_pickup' => 'Ready for Pickup', 'checked_out' => 'Picked Up',
+            'completed' => 'Completed', 'treated' => 'Treated',
         ];
 
         $boardingSteps = ['pending' => 0, 'approved' => 1, 'scheduled' => 1, 'confirmed' => 1,
             'checked_in' => 2, 'in_care' => 3, 'ready_for_pickup' => 4, 'checked_out' => 5, 'completed' => 5];
         $appointmentSteps = ['pending' => 0, 'approved' => 1, 'scheduled' => 2, 'confirmed' => 2,
-            'in_progress' => 3, 'checked_in' => 3, 'treated' => 4, 'completed' => 5];
+            'in_progress' => 3, 'checked_in' => 3, 'in_consultation' => 3, 'needs_confinement' => 4,
+            'treated' => 4, 'awaiting_payment' => 4, 'completed' => 5];
         $groomingSteps = ['pending' => 0, 'approved' => 1, 'scheduled' => 2, 'confirmed' => 2,
             'in_progress' => 3, 'checked_in' => 3, 'completed' => 4];
         $requestSteps = ['pending' => 0, 'approved' => 1, 'scheduled' => 2, 'confirmed' => 2,
-            'rescheduled' => 2, 'in_progress' => 3, 'checked_in' => 3];
+            'rescheduled' => 2, 'in_progress' => 3, 'checked_in' => 3, 'completed' => 4];
 
         $makeItem = function ($id, $kind, $serviceType, $serviceLabel, $petName, $date, $time, $status, $steps, $stepCount, $extra = []) use ($statusLabels) {
             $status = strtolower((string) $status) ?: 'pending';
@@ -248,7 +251,7 @@ class PortalController extends Controller
                     $q->orWhereIn('pet_id', $petIds);
                 }
             })
-            ->whereIn('status', ['pending', 'approved', 'scheduled', 'confirmed', 'checked_in', 'in_care', 'ready_for_pickup'])
+            ->whereIn('status', ['pending', 'approved', 'scheduled', 'confirmed', 'checked_in', 'in_care', 'ready_for_pickup', 'checked_out', 'completed'])
             ->with(['pet', 'hotelRoom'])
             ->get()
             ->each(function ($b) use ($items, $promotedRequestIds, $makeItem, $boardingSteps) {
@@ -274,7 +277,7 @@ class PortalController extends Controller
         // Groomings — promoted grooming requests with live status
         if (Schema::hasTable('groomings')) {
             Grooming::where('customer_id', $cust->id)
-                ->whereIn('status', ['pending', 'approved', 'scheduled', 'confirmed', 'in_progress', 'checked_in'])
+                ->whereIn('status', ['pending', 'approved', 'scheduled', 'confirmed', 'in_progress', 'checked_in', 'completed'])
                 ->with('pet')
                 ->get()
                 ->each(function ($g) use ($items, $promotedRequestIds, $makeItem, $groomingSteps) {
@@ -295,7 +298,7 @@ class PortalController extends Controller
 
         // Appointments — vet visits
         Appointment::where('customer_id', $cust->id)
-            ->whereIn('status', ['pending', 'approved', 'scheduled', 'confirmed', 'in_progress', 'checked_in', 'treated'])
+            ->whereIn('status', ['pending', 'approved', 'scheduled', 'confirmed', 'in_progress', 'checked_in', 'in_consultation', 'needs_confinement', 'treated', 'awaiting_payment', 'completed'])
             ->with(['pet', 'service'])
             ->get()
             ->each(function ($a) use ($items, $promotedRequestIds, $makeItem, $appointmentSteps) {
@@ -339,7 +342,7 @@ class PortalController extends Controller
                     $r->pet_name,
                     $r->request_date ? Carbon::parse($r->request_date)->toDateString() : null,
                     $r->request_time,
-                    $r->status, $requestSteps, 4,
+                    $r->status, $requestSteps, 5,
                     ['payment_status' => $r->payment_status, 'updated_at' => $r->updated_at]
                 ));
             });

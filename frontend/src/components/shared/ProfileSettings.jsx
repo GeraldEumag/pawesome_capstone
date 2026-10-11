@@ -716,7 +716,6 @@ const ProfileSettings = () => {
   const [settings, setSettings] = useState({
     emailNotifications: true,
     pushNotifications: false,
-    language: "en",
     autoSave: true,
     twoFactorAuth: false,
   });
@@ -1435,9 +1434,8 @@ const ProfileSettings = () => {
                         <FontAwesomeIcon icon={faLanguage} />
                         Language
                       </SettingLabel>
-                      <select
-                        value={settings.language}
-                        onChange={(e) => handleSettingChange("language", e.target.value)}
+                      <span
+                        aria-label="Language set to English"
                         style={{
                           padding: "8px 12px",
                           borderRadius: "8px",
@@ -1445,13 +1443,11 @@ const ProfileSettings = () => {
                           background: THEME.glassBg,
                           color: THEME.textPrimary,
                           fontSize: "14px",
+                          fontWeight: 700,
                         }}
                       >
-                        <option value="en">English</option>
-                        <option value="es">Español</option>
-                        <option value="fr">Français</option>
-                        <option value="de">Deutsch</option>
-                      </select>
+                        English
+                      </span>
                     </SettingItem>
                     {roleConfig.showAdvancedSettings && (
                       <>

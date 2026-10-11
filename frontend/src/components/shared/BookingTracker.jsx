@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
@@ -27,7 +27,36 @@ const STEPS = {
   boarding: ["Booked", "Approved", "Checked In", "In Care", "Ready for Pickup", "Picked Up"],
   appointment: ["Requested", "Approved", "Scheduled", "In Progress", "Treated", "Done"],
   grooming: ["Requested", "Approved", "Scheduled", "In Progress", "Done"],
-  request: ["Requested", "Approved", "Scheduled", "Confirmed"],
+  request: ["Requested", "Approved", "Scheduled", "Confirmed", "Completed"],
+};
+
+const TRACKER_TABS = [
+  { key: "all", label: "All", empty: "New or upcoming bookings will appear here." },
+  { key: "to-pay", label: "To Pay", empty: "You have no unpaid or rejected payments." },
+  { key: "ongoing", label: "On Going", empty: "No services are currently in progress." },
+  { key: "ready", label: "Ready for Pickup", empty: "No pets are currently ready for pickup." },
+  { key: "completed", label: "Completed", empty: "Completed bookings will appear here." },
+];
+
+const ONGOING_STATUSES = new Set([
+  "checked_in",
+  "in_care",
+  "in_progress",
+  "in_consultation",
+  "needs_confinement",
+  "treated",
+  "awaiting_payment",
+]);
+
+const getBookingTab = (item) => {
+  const status = String(item.status || "").toLowerCase();
+  const paymentStatus = String(item.payment_status || "").toLowerCase();
+
+  if (status === "completed" || (item.kind === "boarding" && status === "checked_out")) return "completed";
+  if (status === "ready_for_pickup") return "ready";
+  if (["unpaid", "rejected"].includes(paymentStatus)) return "to-pay";
+  if (ONGOING_STATUSES.has(status)) return "ongoing";
+  return "all";
 };
 
 const loadSeen = () => {
@@ -84,6 +113,14 @@ const BookingTracker = () => {
   const [open, setOpen] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
   const [hasUpdate, setHasUpdate] = useState(false);
+  const [selectedTab, setSelectedTab] = useState("all");
+
+  const groupedItems = useMemo(() => {
+    const groups = Object.fromEntries(TRACKER_TABS.map(({ key }) => [key, []]));
+    items.forEach((item) => groups[getBookingTab(item)].push(item));
+    return groups;
+  }, [items]);
+  const visibleItems = groupedItems[selectedTab] || [];
 
   const fetchItems = useCallback(async (silent = true) => {
     if (!silent) setRefreshing(true);
@@ -144,6 +181,20 @@ const BookingTracker = () => {
     });
   };
 
+  const handleTabKeyDown = (event, index) => {
+    let nextIndex = index;
+    if (event.key === "ArrowRight") nextIndex = (index + 1) % TRACKER_TABS.length;
+    else if (event.key === "ArrowLeft") nextIndex = (index - 1 + TRACKER_TABS.length) % TRACKER_TABS.length;
+    else if (event.key === "Home") nextIndex = 0;
+    else if (event.key === "End") nextIndex = TRACKER_TABS.length - 1;
+    else return;
+
+    event.preventDefault();
+    const nextTab = TRACKER_TABS[nextIndex];
+    setSelectedTab(nextTab.key);
+    document.getElementById(`bt-tab-${nextTab.key}`)?.focus();
+  };
+
   const primary = items[0];
   const urgent = items.some((item) => item.status === "ready_for_pickup");
   const pillText =
@@ -164,7 +215,7 @@ const BookingTracker = () => {
               <div>
                 <h3>Your Bookings</h3>
                 <p>
-                  {items.length} active {items.length === 1 ? "booking" : "bookings"}
+                  {items.length} total {items.length === 1 ? "booking" : "bookings"}
                 </p>
               </div>
             </div>
@@ -189,8 +240,42 @@ const BookingTracker = () => {
             </div>
           </header>
 
-          <div className="bt-list">
-            {items.map((item) => {
+          <div className="bt-tabs" role="tablist" aria-label="Filter bookings by status">
+            {TRACKER_TABS.map((tab, index) => {
+              const selected = selectedTab === tab.key;
+              return (
+                <button
+                  key={tab.key}
+                  id={`bt-tab-${tab.key}`}
+                  type="button"
+                  className={`bt-tab ${selected ? "active" : ""}`}
+                  role="tab"
+                  aria-selected={selected}
+                  aria-controls="bt-tab-panel"
+                  tabIndex={selected ? 0 : -1}
+                  onClick={() => setSelectedTab(tab.key)}
+                  onKeyDown={(event) => handleTabKeyDown(event, index)}
+                >
+                  <span className="bt-tab-label">{tab.label}</span>
+                  <span className="bt-tab-count">{groupedItems[tab.key].length}</span>
+                </button>
+              );
+            })}
+          </div>
+
+          <div
+            className="bt-list"
+            id="bt-tab-panel"
+            role="tabpanel"
+            aria-labelledby={`bt-tab-${selectedTab}`}
+            tabIndex={0}
+          >
+            {visibleItems.length === 0 ? (
+              <div className="bt-empty" role="status">
+                <strong>No bookings here yet</strong>
+                <span>{TRACKER_TABS.find((tab) => tab.key === selectedTab)?.empty}</span>
+              </div>
+            ) : visibleItems.map((item) => {
               const meta = TYPE_META[item.service_type] || TYPE_META.vet;
               const steps = STEPS[item.kind] || STEPS.request;
               const countdown = countdownText(item);

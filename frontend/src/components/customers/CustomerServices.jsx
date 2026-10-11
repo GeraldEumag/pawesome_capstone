@@ -81,14 +81,7 @@ const CustomerServices = ({ initialTab = "new" }) => {
           {activeTab === "new" && (
             <div className="cs-cards">
               {SERVICE_CARDS.map((svc) => (
-                <div
-                  key={svc.key}
-                  className="cs-card"
-                  onClick={() => navigate(svc.route)}
-                  role="button"
-                  tabIndex={0}
-                  onKeyDown={(e) => e.key === "Enter" && navigate(svc.route)}
-                >
+                <div key={svc.key} className="cs-card">
                   <div
                     className="cs-card-icon"
                     style={{
@@ -100,13 +93,15 @@ const CustomerServices = ({ initialTab = "new" }) => {
                   </div>
                   <h3>{svc.title}</h3>
                   <p>{svc.description}</p>
-                  <span
+                  <button
+                    type="button"
                     className="cs-card-action"
                     style={{ background: svc.color }}
+                    onClick={() => navigate(svc.route)}
                   >
                     Book Now
                     <FaArrowRight />
-                  </span>
+                  </button>
                 </div>
               ))}
             </div>

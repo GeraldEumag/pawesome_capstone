@@ -169,25 +169,6 @@
   transform: none;
 }
 
-/* Selected pet info */
-.vet-selected-pet-info {
-  padding: 0.6rem 0.85rem;
-  border-radius: 10px;
-  background: var(--color-primary-soft);
-  border: 1px solid var(--color-border);
-}
-
-.vet-selected-pet-info p {
-  margin: 0.15rem 0;
-  font-size: 0.82rem;
-  color: var(--color-text);
-}
-
-.vet-selected-pet-info strong {
-  color: var(--color-heading);
-  font-weight: 700;
-}
-
 /* Service note / warnings */
 .vet-service-note {
   padding: 0.6rem 0.85rem;

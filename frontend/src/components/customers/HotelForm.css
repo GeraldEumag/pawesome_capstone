@@ -226,26 +226,6 @@
   gap: 0.65rem;
 }
 
-/* Selected pet info */
-.hotel-selected-pet-info {
-  padding: 0.85rem 1rem;
-  margin-bottom: 1rem;
-  border-radius: var(--hf-radius-sm);
-  background: var(--color-surface-solid);
-  border: 1px solid var(--hf-border);
-}
-
-.hotel-selected-pet-info p {
-  margin: 0.25rem 0;
-  font-size: 0.88rem;
-  color: var(--hf-text);
-}
-
-.hotel-selected-pet-info strong {
-  color: var(--hf-heading);
-  font-weight: 600;
-}
-
 /* Availability */
 .hotel-availability {
   padding: 1.25rem;

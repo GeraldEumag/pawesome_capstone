@@ -4,6 +4,7 @@ import { apiRequest, normalizeList } from "../../api/client";
 import { useAuth } from "../../context/AuthContext";
 import { getDraft, clearDraft } from "../../utils/preBookingDraft";
 import DatePickerInput from "../../components/shared/DatePickerInput";
+import CustomerPetDetails, { getPetDisplayInfo } from "../shared/CustomerPetDetails";
 import { formatDateOnly, parseDateOnly } from "../../utils/date";
 import {
   validateServiceCompatibility,
@@ -134,31 +135,6 @@ const VetForm = () => {
   }, [pets]);
 
   const selectedPet = pets.find((pet) => String(pet.id) === String(formData.pet_id));
-
-  const calculateAge = (birthdate) => {
-    if (!birthdate) return null;
-    const today = new Date();
-    const birth = new Date(birthdate);
-    let age = today.getFullYear() - birth.getFullYear();
-    const monthDiff = today.getMonth() - birth.getMonth();
-    if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birth.getDate())) {
-      age--;
-    }
-    if (age <= 0) return "Less than 1 year";
-    return `${age} year${age > 1 ? "s" : ""}`;
-  };
-
-  const getPetDisplayInfo = (pet) => {
-    if (!pet) return null;
-    const typeOfPet = pet.species || pet.type || "Pet";
-    const birthdate = pet.birthdate || pet.birth_date || pet.date_of_birth;
-    const age = calculateAge(birthdate);
-    return {
-      typeOfPet,
-      birthdate,
-      age,
-    };
-  };
 
   const petDisplayInfo = getPetDisplayInfo(selectedPet);
 
@@ -339,23 +315,14 @@ const VetForm = () => {
                 return (
                   <option key={pet.id} value={pet.id}>
                     {pet.name} — {info?.typeOfPet || "Pet"}
+                    {info?.breed && info.breed !== "Not provided" ? ` · ${info.breed}` : ""}
                     {info?.age ? ` (${info.age})` : ""}
                   </option>
                 );
               })}
             </select>
 
-            {selectedPet && petDisplayInfo && (
-              <div className="vet-selected-pet-info">
-                <p><strong>Type of Pet:</strong> {petDisplayInfo.typeOfPet}</p>
-                {petDisplayInfo.birthdate && (
-                  <p><strong>Birthdate:</strong> {new Date(petDisplayInfo.birthdate).toLocaleDateString()}</p>
-                )}
-                {petDisplayInfo.age && (
-                  <p><strong>Age:</strong> {petDisplayInfo.age}</p>
-                )}
-              </div>
-            )}
+            {selectedPet && <CustomerPetDetails pet={selectedPet} />}
 
             {selectedPet && serviceMessage && (
               <div className="vet-service-note">{serviceMessage}</div>
