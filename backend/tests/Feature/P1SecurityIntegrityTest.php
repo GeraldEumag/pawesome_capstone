@@ -450,6 +450,12 @@ class P1SecurityIntegrityTest extends TestCase
     {
         Mail::fake();
         $receptionist = User::factory()->create(['role' => 'receptionist', 'is_active' => true]);
+        Service::create([
+            'name' => 'Basic Bath',
+            'category' => 'Grooming',
+            'price' => 350,
+            'is_active' => true,
+        ]);
 
         $response = $this->postJson('/api/receptionist/walk-ins', [
             'customer_mode' => 'new',

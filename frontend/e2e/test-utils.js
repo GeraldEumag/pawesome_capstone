@@ -65,6 +65,9 @@ async function loginAs(page, role = 'admin') {
     window.localStorage.setItem('name', user.name);
     window.localStorage.setItem('username', user.username || user.email);
     window.localStorage.setItem('email', user.email);
+    if (user.email_verified_at) {
+      window.localStorage.setItem('email_verified_at', user.email_verified_at);
+    }
   }, { token: data.token, user: data.user });
   
   await page.goto(frontendUrl + expectedPath);

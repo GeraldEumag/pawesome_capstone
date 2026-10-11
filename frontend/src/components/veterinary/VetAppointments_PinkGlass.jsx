@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { showReasonPrompt, STAFF_CANCEL_REASONS } from "../../utils/alert.jsx";
+import { showCancellationReasonPrompt } from "../../utils/alert.jsx";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
   faCalendarAlt,
@@ -337,7 +337,7 @@ const VetAppointments = () => {
     }
   };
 
-  const updateAppointmentStatus = async (appointmentId, nextStatus, reason = null) => {
+  const updateAppointmentStatus = async (appointmentId, nextStatus, extras = {}) => {
     if (!appointmentId) {
       toast.error("Appointment ID not found.");
       return;
@@ -356,7 +356,7 @@ const VetAppointments = () => {
           method: "PATCH",
           body: JSON.stringify({
             status: nextStatus,
-            ...(reason ? { reason } : {}),
+            ...extras,
           }),
         });
       }
@@ -385,16 +385,17 @@ const VetAppointments = () => {
       return;
     }
 
-    const reason = await showReasonPrompt(
-      "Cancel this appointment? Please select a reason — it will be recorded.",
-      "Cancellation reason",
-      "Cancel Appointment",
-      STAFF_CANCEL_REASONS
+    const selection = await showCancellationReasonPrompt(
+      "Select a reason for cancelling this appointment — it will be recorded.",
+      "Cancel Appointment"
     );
 
-    if (reason === null) return;
+    if (!selection) return;
 
-    await updateAppointmentStatus(appointmentId, "cancelled", reason);
+    await updateAppointmentStatus(appointmentId, "cancelled", {
+      cancellation_reason_code: selection.code,
+      cancellation_note: selection.note,
+    });
   };
 
   const completeAppointment = async (appointmentId) => {

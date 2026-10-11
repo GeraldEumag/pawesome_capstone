@@ -6,6 +6,7 @@ use App\Models\Appointment;
 use App\Models\Customer;
 use App\Models\Pet;
 use App\Models\Sale;
+use App\Models\ServiceRequest;
 use App\Models\User;
 use App\Models\Grooming;
 use App\Models\Service;
@@ -373,30 +374,78 @@ class AppointmentController extends Controller
 
         $validator = Validator::make($request->all(), [
             'reason' => 'nullable|string|max:500',
+            'cancellation_reason_code' => 'nullable|in:' . implode(',', array_keys(Appointment::CANCELLATION_REASONS)),
+            'cancellation_note' => 'nullable|string|max:500',
         ]);
 
         if ($validator->fails()) {
             return response()->json(['errors' => $validator->errors()], 422);
         }
 
-        if (in_array($appointment->status, self::ACTIVE_APPOINTMENT_STATUSES, true)
-            && trim((string) $request->input('reason')) === '') {
+        // A reason is mandatory for every cancellation: a predefined dropdown
+        // code ('other' requires an explanation) or a free-text reason.
+        $reasonResult = $this->resolveCancellationReason($request);
+        if ($reasonResult['error']) {
             return response()->json([
-                'message' => 'A cancellation reason is required once the appointment is underway.',
-                'errors' => ['reason' => ['A cancellation reason is required.']],
+                'message' => $reasonResult['error'],
+                'errors' => ['reason' => [$reasonResult['error']]],
             ], 422);
         }
 
         $oldStatus = $appointment->status;
         $appointment->status = 'cancelled';
-        $appointment->cancellation_reason = $request->reason;
+        $appointment->cancellation_reason = $reasonResult['reason'];
         $appointment->save();
 
+        if ($appointment->service_request_id) {
+            ServiceRequest::where('id', $appointment->service_request_id)
+                ->whereNotIn('status', ['completed'])
+                ->update([
+                    'status' => 'cancelled',
+                    'rejection_reason' => $appointment->cancellation_reason,
+                ]);
+        }
 
         return response()->json([
             'message' => 'Appointment cancelled successfully',
             'appointment' => $appointment->load(['customer', 'pet', 'service', 'veterinarian']),
         ]);
+    }
+
+    /**
+     * Resolve the stored cancellation reason from the request. Accepts a
+     * predefined cancellation_reason_code (dropdown) — 'other' requires a
+     * non-empty explanation — or a legacy free-text reason.
+     */
+    private function resolveCancellationReason(Request $request): array
+    {
+        $code = $request->input('cancellation_reason_code');
+        $note = trim((string) ($request->input('cancellation_note') ?? ''));
+        $freeText = trim((string) ($request->input('reason') ?? ''));
+
+        if ($code !== null && $code !== '') {
+            if ($code === 'other') {
+                $explanation = $note !== '' ? $note : $freeText;
+                if ($explanation === '') {
+                    return ['error' => 'Please provide an explanation when cancelling for another reason.', 'reason' => null];
+                }
+                return ['error' => null, 'reason' => 'Other: ' . $explanation];
+            }
+
+            $label = Appointment::CANCELLATION_REASONS[$code] ?? null;
+            if (!$label) {
+                return ['error' => 'Invalid cancellation reason.', 'reason' => null];
+            }
+
+            $detail = $note !== '' ? $note : $freeText;
+            return ['error' => null, 'reason' => $label . ($detail !== '' ? ' — ' . $detail : '')];
+        }
+
+        if ($freeText === '' && $note === '') {
+            return ['error' => 'A cancellation reason is required.', 'reason' => null];
+        }
+
+        return ['error' => null, 'reason' => $freeText !== '' ? $freeText : $note];
     }
 
     /**
@@ -694,6 +743,8 @@ class AppointmentController extends Controller
         $validator = Validator::make($request->all(), [
             'status' => 'required|in:' . implode(',', Appointment::VALID_STATUSES),
             'reason' => 'required_if:status,rejected|string|max:500',
+            'cancellation_reason_code' => 'nullable|in:' . implode(',', array_keys(Appointment::CANCELLATION_REASONS)),
+            'cancellation_note' => 'nullable|string|max:500',
         ]);
 
         if ($validator->fails()) {
@@ -715,14 +766,16 @@ class AppointmentController extends Controller
             ], 422);
         }
 
-        // Cancelling an appointment that is already underway requires a reason.
-        if ($newStatus === Appointment::STATUS_CANCELLED
-            && in_array($oldStatus, self::ACTIVE_APPOINTMENT_STATUSES, true)
-            && trim((string) $request->input('reason')) === '') {
-            return response()->json([
-                'message' => 'A cancellation reason is required once the appointment is underway.',
-                'errors' => ['reason' => ['A cancellation reason is required.']],
-            ], 422);
+        // Cancelling always requires a reason. Predefined reason codes come
+        // from the dropdown; 'other' additionally requires an explanation.
+        if ($newStatus === Appointment::STATUS_CANCELLED) {
+            $reasonResult = $this->resolveCancellationReason($request);
+            if ($reasonResult['error']) {
+                return response()->json([
+                    'message' => $reasonResult['error'],
+                    'errors' => ['reason' => [$reasonResult['error']]],
+                ], 422);
+            }
         }
 
         if ($newStatus === 'completed') {
@@ -755,8 +808,11 @@ class AppointmentController extends Controller
 
         $appointment->status = $newStatus;
 
-        if (in_array($newStatus, ['rejected', 'cancelled'], true)) {
+        if ($newStatus === 'rejected') {
             $appointment->cancellation_reason = $request->input('reason');
+        }
+        if ($newStatus === Appointment::STATUS_CANCELLED) {
+            $appointment->cancellation_reason = $reasonResult['reason'];
         }
 
         // Set completion timestamp if completing
@@ -766,6 +822,16 @@ class AppointmentController extends Controller
 
         $appointment->save();
 
+        // Keep the originating service request in sync so receptionist queues
+        // and customer tracking reflect the cancellation/rejection.
+        if (in_array($newStatus, ['rejected', 'cancelled'], true) && $appointment->service_request_id) {
+            ServiceRequest::where('id', $appointment->service_request_id)
+                ->whereNotIn('status', ['completed'])
+                ->update([
+                    'status' => $newStatus,
+                    'rejection_reason' => $appointment->cancellation_reason,
+                ]);
+        }
 
         if (in_array($newStatus, ['approved', 'scheduled'], true) && $appointment->veterinarian_id) {
             WorkflowNotifier::notifyUser(

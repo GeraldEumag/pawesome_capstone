@@ -1,11 +1,11 @@
 import { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faTimes, faHotel, faScissors, faStethoscope, faCalendarAlt, faClock, faPaw, faPaperPlane, faPlusCircle, faTimesCircle, faUser, faEnvelope, faBed, faHeartbeat } from "@fortawesome/free-solid-svg-icons";
+import { faTimes, faHotel, faScissors, faStethoscope, faCalendarAlt, faClock, faPaw, faPaperPlane, faPlusCircle, faTimesCircle, faUser, faEnvelope, faBed, faHeartbeat, faDog } from "@fortawesome/free-solid-svg-icons";
 import "../../styles/bookingModal.css";
 import "./ServiceBookingModal.css";
 import DatePickerInput from "../shared/DatePickerInput";
-import { apiRequest } from "../../api/client";
+import { apiRequest, normalizeList } from "../../api/client";
 import { useAuth } from "../../context/AuthContext";
 import { formatDateOnly, parseDateOnly } from "../../utils/date";
 import { saveDraft, saveServiceIntent, getDraft, clearDraft } from "../../utils/preBookingDraft";
@@ -123,6 +123,17 @@ const ServiceBookingModal = ({ serviceType, onClose }) => {
       setFormData((prev) => ({ ...prev, customer_name: user.name || "", customer_email: user.email || "" }));
     }
   }, [isCustomer, user]);
+
+  useEffect(() => {
+    if (!isCustomer) return;
+    apiRequest("/customer/pets")
+      .then((data) => {
+        setPets(normalizeList(data, ["pets", "data"]).filter(
+          (pet) => pet.status !== "archived" && !pet.archived_at
+        ));
+      })
+      .catch(() => setPets([]));
+  }, [isCustomer]);
 
   useEffect(() => {
     if (serviceType === "hotel") {

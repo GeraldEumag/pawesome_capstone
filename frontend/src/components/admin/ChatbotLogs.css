@@ -779,6 +779,7 @@
   display: grid;
   gap: 0.6rem;
   padding: 0.2rem 0;
+  min-width: 0;
 }
 
 .chat-intent {
@@ -814,6 +815,7 @@
 
 .bubble {
   max-width: 88%;
+  min-width: 0;
   padding: 0.9rem 1rem;
   border-radius: var(--radius-lg);
   box-shadow: var(--shadow-soft);
@@ -830,6 +832,33 @@
   margin: 0;
   line-height: 1.5;
   font-weight: 700;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
+.bubble p.clamped {
+  display: -webkit-box;
+  -webkit-line-clamp: 6;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.bubble-toggle {
+  margin-top: 0.45rem;
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: inherit;
+  font-size: 0.78rem;
+  font-weight: 900;
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  opacity: 0.85;
+}
+
+.bubble-toggle:hover {
+  opacity: 1;
 }
 
 .user-bubble {

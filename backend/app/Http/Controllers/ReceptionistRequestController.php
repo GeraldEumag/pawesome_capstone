@@ -286,15 +286,31 @@ class ReceptionistRequestController extends Controller
 
         // Check-in gates: booking must be paid and scheduled for today.
         if ($validated['status'] === 'checked_in') {
-            if (!in_array(strtolower((string) $serviceRequest->payment_status), ['paid', 'verified', 'completed'], true)) {
-                return response()->json([
-                    'message' => 'Booking must be paid before check-in.',
-                ], 422);
-            }
-            if ($serviceRequest->request_date && !Carbon::parse($serviceRequest->request_date)->isToday()) {
-                return response()->json([
-                    'message' => 'Check-in is only allowed on the scheduled date.',
-                ], 422);
+            // When a boarding record is linked to this request, run the real
+            // boarding check-in (room occupancy, care log, add-on inventory)
+            // instead of just flipping this request's status. The boarding
+            // check-in enforces its own paid/scheduled-date gates and
+            // propagates 'checked_in' back to this request.
+            $linkedBoarding = Schema::hasColumn('boardings', 'service_request_id')
+                ? Boarding::where('service_request_id', $serviceRequest->id)->first()
+                : null;
+
+            if ($linkedBoarding) {
+                $checkInResponse = app(BoardingController::class)->checkIn($request, $linkedBoarding->id);
+                if ($checkInResponse->getStatusCode() >= 400) {
+                    return $checkInResponse;
+                }
+            } else {
+                if (!in_array(strtolower((string) $serviceRequest->payment_status), ['paid', 'verified', 'completed'], true)) {
+                    return response()->json([
+                        'message' => 'Booking must be paid before check-in.',
+                    ], 422);
+                }
+                if ($serviceRequest->request_date && !Carbon::parse($serviceRequest->request_date)->isToday()) {
+                    return response()->json([
+                        'message' => 'Check-in is only allowed on the scheduled date.',
+                    ], 422);
+                }
             }
         }
 

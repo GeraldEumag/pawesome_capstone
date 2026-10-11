@@ -185,6 +185,7 @@ const HotelForm = () => {
 
   const selectedPet = pets.find((pet) => String(pet.id) === String(bookingForm.pet_id));
 
+
   const petDisplayInfo = getPetDisplayInfo(selectedPet);
 
   const handleRoomSelect = (room) => {

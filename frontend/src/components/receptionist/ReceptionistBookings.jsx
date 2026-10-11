@@ -44,15 +44,11 @@ const initialBookingForm = {
   appointmentDate: "",
   appointmentTime: "10:00",
   service: "",
-  duration: "1 day",
-  roomType: "Standard Room",
+  roomId: "",
   symptoms: "",
   medicalNotes: "",
   specialRequests: "",
   bookingType: "hotel",
-  paymentMethod: "cash",
-  paymentStatus: "pending",
-  paidAmount: "0",
 };
 
 const STATUS_TABS = [
@@ -79,12 +75,6 @@ const PAYMENT_OPTIONS = [
   { value: "pending", label: "Pending" },
   { value: "unpaid", label: "Unpaid" },
 ];
-
-const roomRates = {
-  "Standard Room": 50,
-  "Deluxe Suite": 80,
-  "Presidential Suite": 120,
-};
 
 const safeArray = (data, key) => {
   if (Array.isArray(data)) return data;
@@ -189,14 +179,6 @@ const getTimeFromDateTime = (value) => {
   return value;
 };
 
-const parseDurationDays = (duration) => {
-  if (!duration) return 1;
-  if (duration === "1 week") return 7;
-
-  const number = parseInt(duration, 10);
-  return Number.isNaN(number) ? 1 : number;
-};
-
 const normalizeStatus = (status) => {
   const value = String(status || "pending").toLowerCase();
 
@@ -251,6 +233,8 @@ const ReceptionistBookings = () => {
   const [services, setServices] = useState([]);
   const [customers, setCustomers] = useState([]);
   const [pets, setPets] = useState([]);
+  const [hotelRooms, setHotelRooms] = useState([]);
+  const roomsRequestRef = useRef(0);
 
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -298,7 +282,7 @@ const ReceptionistBookings = () => {
   const fetchCustomersAndPets = async () => {
     try {
       const [customersData, petsData] = await Promise.all([
-        apiRequest("/customers"),
+        apiRequest("/receptionist/customers"),
         apiRequest("/pets"),
       ]);
 
@@ -439,11 +423,31 @@ const ReceptionistBookings = () => {
     fetchBookings();
     fetchServices();
     fetchCustomersAndPets();
+    apiRequest("/receptionist/hotel-rooms?status=available")
+      .then((data) => {
+        if (roomsRequestRef.current === 0) {
+          setHotelRooms(safeArray(data, "rooms").filter((r) => !r.status || r.status === "available"));
+        }
+      })
+      .catch(() => setHotelRooms([]));
 
     const intervalId = setInterval(() => fetchBookings({ silent: true }), 30000);
 
     return () => clearInterval(intervalId);
   }, []);
+
+  // Refresh room availability when the booking date changes
+  useEffect(() => {
+    if (bookingFormData.bookingType !== "hotel" || !bookingFormData.appointmentDate) return;
+    const requestId = ++roomsRequestRef.current;
+    apiRequest(`/receptionist/hotel-rooms?date=${encodeURIComponent(bookingFormData.appointmentDate)}`)
+      .then((data) => {
+        if (requestId === roomsRequestRef.current) {
+          setHotelRooms(safeArray(data, "rooms"));
+        }
+      })
+      .catch(() => {});
+  }, [bookingFormData.appointmentDate, bookingFormData.bookingType]);
 
   const handleCustomerChange = (customerId) => {
     const customer = customers.find((item) => String(item.id) === String(customerId));
@@ -528,10 +532,13 @@ const ReceptionistBookings = () => {
     );
   }, [services, bookingFormData.service]);
 
+  const selectedRoom = useMemo(() => {
+    return hotelRooms.find((room) => String(room.id) === String(bookingFormData.roomId)) || null;
+  }, [hotelRooms, bookingFormData.roomId]);
+
   const calculatedAmount = useMemo(() => {
     if (bookingFormData.bookingType === "hotel") {
-      const dailyRate = roomRates[bookingFormData.roomType] || roomRates["Standard Room"];
-      return dailyRate * parseDurationDays(bookingFormData.duration);
+      return selectedRoom ? Number(selectedRoom.daily_rate || 0) : 0;
     }
 
     if (selectedService) {
@@ -541,18 +548,16 @@ const ReceptionistBookings = () => {
     return 0;
   }, [
     bookingFormData.bookingType,
-    bookingFormData.roomType,
-    bookingFormData.duration,
+    selectedRoom,
     selectedService,
   ]);
 
-  const getPaymentStatusFromAmount = (amount, paidAmount) => {
-    const paid = Number(paidAmount || 0);
-
-    if (paid >= Number(amount || 0) && Number(amount || 0) > 0) return "paid";
-    if (paid > 0) return "partial";
-
-    return "pending";
+  const buildBookingNotes = () => {
+    const parts = [];
+    if (bookingFormData.specialRequests) parts.push(`Special Requests: ${bookingFormData.specialRequests}`);
+    if (bookingFormData.symptoms) parts.push(`Symptoms: ${bookingFormData.symptoms}`);
+    if (bookingFormData.medicalNotes) parts.push(`Medical Notes: ${bookingFormData.medicalNotes}`);
+    return parts.join("\n");
   };
 
   const handleBookingSubmit = async (event) => {
@@ -568,12 +573,13 @@ const ReceptionistBookings = () => {
       return;
     }
 
+    if (bookingFormData.bookingType === "hotel" && !bookingFormData.roomId) {
+      notify("error", "Please select an available room for the stay date.");
+      return;
+    }
+
     try {
       setProcessing(true);
-
-      const amount = calculatedAmount;
-      const paidAmount = Number(bookingFormData.paidAmount || 0);
-      const paymentStatus = getPaymentStatusFromAmount(amount, paidAmount);
 
       let endpoint = "";
       let payload = {};
@@ -583,15 +589,10 @@ const ReceptionistBookings = () => {
         payload = {
           pet_id: bookingFormData.petId,
           customer_id: bookingFormData.customerId,
-          hotel_room_id: bookingFormData.roomType,
-          room_type: bookingFormData.roomType,
-          check_in: bookingFormData.appointmentDate,
-          check_out: bookingFormData.appointmentDate,
-          total_amount: amount,
-          payment_status: paymentStatus,
-          paid_amount: paidAmount,
-          payment_method: bookingFormData.paymentMethod,
-          notes: bookingFormData.specialRequests,
+          hotel_room_id: bookingFormData.roomId,
+          check_in_date: bookingFormData.appointmentDate,
+          number_of_days: 1,
+          notes: buildBookingNotes(),
         };
       }
 
@@ -605,31 +606,20 @@ const ReceptionistBookings = () => {
             bookingFormData.appointmentDate,
             bookingFormData.appointmentTime
           ),
-          price: amount,
-          payment_status: paymentStatus,
-          paid_amount: paidAmount,
-          payment_method: bookingFormData.paymentMethod,
-          symptoms: bookingFormData.symptoms,
-          medical_notes: bookingFormData.medicalNotes,
-          notes: bookingFormData.specialRequests,
+          notes: buildBookingNotes(),
         };
       }
 
       if (bookingFormData.bookingType === "grooming") {
         endpoint = "/grooming";
+        const serviceName = selectedService?.name || bookingFormData.service;
         payload = {
           pet_id: bookingFormData.petId,
           customer_id: bookingFormData.customerId,
-          service_id: bookingFormData.service,
-          scheduled_at: combineDateTime(
-            bookingFormData.appointmentDate,
-            bookingFormData.appointmentTime
-          ),
-          price: amount,
-          payment_status: paymentStatus,
-          paid_amount: paidAmount,
-          payment_method: bookingFormData.paymentMethod,
-          special_requests: bookingFormData.specialRequests,
+          service: serviceName,
+          appointment_date: bookingFormData.appointmentDate,
+          appointment_time: bookingFormData.appointmentTime,
+          notes: bookingFormData.specialRequests,
         };
       }
 
@@ -2071,46 +2061,33 @@ const ReceptionistBookings = () => {
                   {bookingFormData.bookingType === "hotel" && (
                     <>
                       <div className="form-group">
-                        <label>Room Type *</label>
+                        <label>Room *</label>
                         <select
-                          name="roomType"
-                          value={bookingFormData.roomType}
+                          name="roomId"
+                          value={bookingFormData.roomId}
                           onChange={handleBookingInputChange}
                           required
                         >
-                          <option value="Standard Room">Standard Room</option>
-                          <option value="Deluxe Suite">Deluxe Suite</option>
-                          <option value="Presidential Suite">Presidential Suite</option>
+                          <option value="">
+                            {hotelRooms.length > 0 ? "Select an available room..." : "No rooms available for this date"}
+                          </option>
+                          {hotelRooms.map((room) => (
+                            <option key={room.id} value={room.id}>
+                              {room.name || room.room_number || `Room ${room.id}`} ({room.type || room.room_type || "Room"}) - {formatCurrency(room.daily_rate || 0)}/day
+                              {room.status && room.status !== "available" ? ` — ${room.status}` : ""}
+                            </option>
+                          ))}
                         </select>
+                        {bookingFormData.appointmentDate && hotelRooms.length === 0 && (
+                          <small style={{ color: "#d97706", fontSize: "12px" }}>
+                            No rooms are available for the selected stay date. Pick another date.
+                          </small>
+                        )}
                       </div>
 
                       <div className="form-group">
-                        <label>Duration *</label>
-                        <select
-                          name="duration"
-                          value={bookingFormData.duration}
-                          onChange={handleBookingInputChange}
-                          required
-                        >
-                          <option value="1 day">1 day</option>
-                          <option value="2 days">2 days</option>
-                          <option value="3 days">3 days</option>
-                          <option value="1 week">1 week</option>
-                        </select>
-                      </div>
-
-                      <div className="form-group">
-                        <label>Service *</label>
-                        <select
-                          name="service"
-                          value={bookingFormData.service || "Pet Hotel Stay"}
-                          onChange={handleBookingInputChange}
-                          required
-                        >
-                          <option value="Pet Hotel Stay">Pet Hotel Stay</option>
-                          <option value="Day Care">Day Care</option>
-                          <option value="Pet Training">Pet Training</option>
-                        </select>
+                        <label>Duration</label>
+                        <input value="Same-day stay (10:00 AM – 6:00 PM)" disabled />
                       </div>
                     </>
                   )}
@@ -2195,51 +2172,6 @@ const ReceptionistBookings = () => {
                   <div>
                     <span>Estimated Amount</span>
                     <strong>{formatCurrency(calculatedAmount)}</strong>
-                  </div>
-
-                  <div>
-                    <span>Paid Amount</span>
-                    <strong>{formatCurrency(bookingFormData.paidAmount)}</strong>
-                  </div>
-
-                  <div>
-                    <span>Payment Status</span>
-                    <strong>
-                      {getPaymentStatusFromAmount(
-                        calculatedAmount,
-                        bookingFormData.paidAmount
-                      )}
-                    </strong>
-                  </div>
-                </div>
-
-                <div className="form-grid">
-                  <div className="form-group">
-                    <label>Payment Method *</label>
-                    <select
-                      name="paymentMethod"
-                      value={bookingFormData.paymentMethod}
-                      onChange={handleBookingInputChange}
-                      required
-                    >
-                      <option value="cash">Cash</option>
-                      <option value="card">Credit Card</option>
-                      <option value="gcash">GCash</option>
-                      <option value="bank">Bank Transfer</option>
-                    </select>
-                  </div>
-
-                  <div className="form-group">
-                    <label>Paid Amount</label>
-                    <input
-                      type="number"
-                      name="paidAmount"
-                      value={bookingFormData.paidAmount}
-                      onChange={handleBookingInputChange}
-                      placeholder="0.00"
-                      min="0"
-                      step="0.01"
-                    />
                   </div>
                 </div>
 

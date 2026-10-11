@@ -163,4 +163,135 @@ class ReceptionistCheckInGateTest extends TestCase
             ->assertOk()
             ->assertJsonPath('request.status', 'checked_in');
     }
+
+    public function test_service_request_check_in_targets_the_linked_boarding_not_a_numeric_collision(): void
+    {
+        $receptionist = $this->receptionist();
+        $customerUser = User::factory()->customer()->create();
+        $customer = Customer::factory()->create(['user_id' => $customerUser->id]);
+        $pet = Pet::factory()->create(['customer_id' => $customer->id]);
+
+        $serviceRequest = ServiceRequest::create([
+            'customer_id' => $customerUser->id,
+            'customer_name' => 'Collision Customer',
+            'customer_email' => 'collision@example.test',
+            'pet_id' => $pet->id,
+            'pet_name' => $pet->name,
+            'request_type' => 'hotel',
+            'service_name' => 'Pet Hotel',
+            'request_date' => Carbon::today()->toDateString(),
+            'status' => 'approved',
+            'payment_status' => 'paid',
+        ]);
+
+        // An unrelated boarding whose numeric ID equals the service request ID.
+        // The old frontend posted service request IDs into the boarding
+        // check-in endpoint, so this collision must never be followed.
+        $unrelatedBoarding = new Boarding();
+        $unrelatedBoarding->forceFill([
+            'id' => $serviceRequest->id,
+            'pet_id' => $pet->id,
+            'customer_id' => $customer->id,
+            'check_in' => Carbon::today()->toDateString(),
+            'check_out' => Carbon::today()->toDateString(),
+            'status' => 'approved',
+            'payment_status' => 'paid',
+        ]);
+        $unrelatedBoarding->save();
+
+        $linkedBoarding = Boarding::create([
+            'service_request_id' => $serviceRequest->id,
+            'pet_id' => $pet->id,
+            'customer_id' => $customer->id,
+            'check_in' => Carbon::today()->toDateString(),
+            'check_out' => Carbon::today()->toDateString(),
+            'status' => 'approved',
+            'payment_status' => 'paid',
+        ]);
+
+        $this->assertNotSame($linkedBoarding->id, $serviceRequest->id);
+        $this->assertSame($unrelatedBoarding->id, $serviceRequest->id);
+
+        $this->withHeaders($this->authHeaders($receptionist))
+            ->patchJson("/api/receptionist/requests/{$serviceRequest->id}/status", [
+                'status' => 'checked_in',
+            ])
+            ->assertOk();
+
+        $this->assertDatabaseHas('boardings', [
+            'id' => $linkedBoarding->id,
+            'status' => 'in_care',
+        ]);
+        $this->assertDatabaseHas('boardings', [
+            'id' => $unrelatedBoarding->id,
+            'status' => 'approved',
+        ]);
+        $this->assertDatabaseHas('service_requests', [
+            'id' => $serviceRequest->id,
+            'status' => 'checked_in',
+        ]);
+    }
+
+    public function test_boarding_check_in_syncs_the_linked_service_request(): void
+    {
+        $receptionist = $this->receptionist();
+        $customerUser = User::factory()->customer()->create();
+        $customer = Customer::factory()->create(['user_id' => $customerUser->id]);
+        $pet = Pet::factory()->create(['customer_id' => $customer->id]);
+
+        $serviceRequest = ServiceRequest::create([
+            'customer_id' => $customerUser->id,
+            'customer_name' => 'Sync Customer',
+            'customer_email' => 'sync@example.test',
+            'pet_id' => $pet->id,
+            'pet_name' => $pet->name,
+            'request_type' => 'hotel',
+            'service_name' => 'Pet Hotel',
+            'request_date' => Carbon::today()->toDateString(),
+            'status' => 'approved',
+            'payment_status' => 'paid',
+        ]);
+
+        $boarding = Boarding::create([
+            'service_request_id' => $serviceRequest->id,
+            'pet_id' => $pet->id,
+            'customer_id' => $customer->id,
+            'check_in' => Carbon::today()->toDateString(),
+            'check_out' => Carbon::today()->toDateString(),
+            'status' => 'approved',
+            'payment_status' => 'paid',
+        ]);
+
+        $this->withHeaders($this->authHeaders($receptionist))
+            ->postJson("/api/receptionist/boarding-requests/{$boarding->id}/check-in")
+            ->assertOk();
+
+        $this->assertDatabaseHas('boardings', [
+            'id' => $boarding->id,
+            'status' => 'in_care',
+        ]);
+        $this->assertDatabaseHas('service_requests', [
+            'id' => $serviceRequest->id,
+            'status' => 'checked_in',
+        ]);
+    }
+
+    public function test_second_check_in_is_rejected(): void
+    {
+        $receptionist = $this->receptionist();
+        $boarding = $this->boarding();
+
+        $this->withHeaders($this->authHeaders($receptionist))
+            ->postJson("/api/receptionist/boarding-requests/{$boarding->id}/check-in")
+            ->assertOk();
+
+        $this->withHeaders($this->authHeaders($receptionist))
+            ->postJson("/api/receptionist/boarding-requests/{$boarding->id}/check-in")
+            ->assertStatus(422);
+
+        $this->assertDatabaseHas('boardings', [
+            'id' => $boarding->id,
+            'status' => 'in_care',
+        ]);
+    }
 }

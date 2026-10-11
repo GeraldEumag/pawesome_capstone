@@ -51,19 +51,29 @@ test("cashier payment notification opens Payment Approvals", async ({ browser, r
 
   // Customer -> Receptionist -> Customer uploads proof (creates the cashier notification).
   const pet = (await api(request, customer, "post", "/pets", { data: { name: `DEEPLINK_TEST Pet ${Date.now()}`, species: "Dog" } })).pet;
-  const date = new Date(Date.now() + 10 * 86400000).toISOString().slice(0, 10);
-  const requestId = (await api(request, customer, "post", "/customer/requests", {
-    data: {
-      customer_name: customer.user.name, customer_email: customer.user.email, pet_id: pet.id, pet_name: pet.name,
-      request_type: "grooming", service_type: "grooming", service_name: "Standard Grooming",
-      request_date: date, request_time: "10:00", requested_date: date, requested_time: "10:00",
-      price: uniquePrice, notes: "DEEPLINK_TEST",
-    },
-  })).request.id;
+  // Vary date+time per attempt so a retry after a mid-flow failure — or a
+  // slot already held by an unrelated booking — doesn't collide.
+  let requestId;
+  for (let attempt = 0; attempt < 6 && !requestId; attempt++) {
+    const date = new Date(Date.now() + (10 + attempt + (Date.now() % 4)) * 86400000).toISOString().slice(0, 10);
+    const time = ["10:00", "11:00", "13:00", "14:00", "15:00", "16:00"][(Date.now() % 6 + attempt) % 6];
+    try {
+      requestId = (await api(request, customer, "post", "/customer/requests", {
+        data: {
+          customer_name: customer.user.name, customer_email: customer.user.email, pet_id: pet.id, pet_name: pet.name,
+          request_type: "grooming", service_type: "grooming", service_name: "Standard Grooming",
+          request_date: date, request_time: time, requested_date: date, requested_time: time,
+          price: uniquePrice, notes: "DEEPLINK_TEST",
+        },
+      })).request.id;
+    } catch (e) {
+      if (attempt === 5) throw e;
+    }
+  }
   await api(request, receptionist, "post", `/receptionist/requests/${requestId}/approve`, { data: { receptionist_remarks: "DEEPLINK_TEST" } });
   await api(request, customer, "post", `/customer/requests/${requestId}/payment-proof`, {
     multipart: {
-      payment_method: "GCash", payment_reference: `DEEPLINK-${requestId}`,
+      payment_method: "gcash", payment_reference: `DEEPLINK-${requestId}`,
       payment_proof: { name: "proof.png", mimeType: "image/png", buffer: PNG },
     },
   });
@@ -77,7 +87,9 @@ test("cashier payment notification opens Payment Approvals", async ({ browser, r
 
   await expect(page).toHaveURL(/\/cashier\/payment-verification$/);
   await expect(approvalsTab(page)).toHaveClass(/active/);
-  const card = page.locator(".pa-card", { hasText: `₱${uniquePrice.toLocaleString("en-PH")}` }).filter({ hasText: "Standard Grooming" });
+  // The card shows the server-authoritative service price, not the
+  // client-supplied amount — locate it via the unique payment reference.
+  const card = page.locator(".pa-card", { hasText: `DEEPLINK-${requestId}` });
   await expect(card.first()).toBeVisible({ timeout: 20000 });
   await page.screenshot({ path: path.join(evidenceDir, "1-notification-lands-on-approvals.png") });
 

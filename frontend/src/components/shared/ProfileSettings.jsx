@@ -1429,6 +1429,7 @@ const ProfileSettings = () => {
                         <span className="slider"></span>
                       </ToggleSwitch>
                     </SettingItem>
+                    {userRole !== "customer" && (
                     <SettingItem>
                       <SettingLabel>
                         <FontAwesomeIcon icon={faLanguage} />
@@ -1449,6 +1450,7 @@ const ProfileSettings = () => {
                         English
                       </span>
                     </SettingItem>
+                    )}
                     {roleConfig.showAdvancedSettings && (
                       <>
                         <SettingItem>

@@ -9,6 +9,7 @@ use App\Models\InventoryItem;
 use App\Models\ActivityLog;
 use App\Models\User;
 use App\Services\WorkflowNotifier;
+use App\Support\ReceiptBreakdown;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
@@ -445,7 +446,7 @@ class DashboardController extends Controller
 
     public function generateReceipt($id)
     {
-        $transaction = Sale::with(['customer', 'items'])->find($id);
+        $transaction = Sale::with(['customer', 'items', 'payments'])->find($id);
 
         if (!$transaction) {
             return response()->json(['error' => 'Transaction not found'], 404);
@@ -1113,6 +1114,19 @@ class DashboardController extends Controller
                 'paid_at' => $order->paid_at,
                 'verified_by' => $verifiedBy,
                 'cashier_remarks' => $order->cashier_remarks,
+                'breakdown' => ReceiptBreakdown::forSettleable(
+                    'customer_order',
+                    (int) $order->id,
+                    $orderTotal,
+                    0,
+                    [
+                        'method' => $order->payment_method,
+                        'amount' => $orderTotal,
+                        'reference_number' => $order->payment_reference ?? null,
+                        'receipt_number' => $order->receipt_number,
+                        'paid_at' => $order->paid_at,
+                    ]
+                ),
             ],
         ]);
     }

@@ -14,6 +14,7 @@ use App\Services\FileStorageService;
 use App\Services\WorkflowNotifier;
 use App\Support\EmailContent;
 use App\Models\ActivityLog;
+use App\Support\ReceiptBreakdown;
 
 class CustomerStoreController extends Controller
 {
@@ -412,9 +413,9 @@ class CustomerStoreController extends Controller
         }
 
         $validated = $request->validate([
-            'payment_method' => 'required|in:cash,gcash,maya',
-            'payment_reference' => 'required_unless:payment_method,cash|nullable|string|max:255',
-            'payment_proof' => 'required_unless:payment_method,cash|nullable|file|mimes:jpg,jpeg,png,pdf|max:5120',
+            'payment_method' => 'required|in:gcash,maya',
+            'payment_reference' => 'required|string|max:255',
+            'payment_proof' => 'required|file|mimes:jpg,jpeg,png,pdf|max:5120',
         ]);
 
         // Ownership check with fallback for customer_id / user_id / customer_email
@@ -455,31 +456,20 @@ class CustomerStoreController extends Controller
             $update['payment_reference'] = $validated['payment_reference'] ?? null;
         }
 
-        $path = null;
-        if ($request->hasFile('payment_proof')) {
-            // Replaced proofs are retained as payment evidence (deleteOld: false).
-            $path = FileStorageService::storeAndPersist(
-                $request->file('payment_proof'), 'payment-proofs/orders', 'private',
-                function (string $path) use ($order, $update) {
-                    DB::table('customer_orders')->where('id', $order->id)->update($update + ['payment_proof' => $path]);
-                    return $path;
-                },
-                deleteOld: false,
-                prefix: 'order_proof',
-            );
-        } else {
-            // Cash payments are verified by the cashier at the counter — no proof file.
-            DB::table('customer_orders')->where('id', $order->id)->update($update);
-        }
-
-        $isCash = $validated['payment_method'] === 'cash';
+        $path = FileStorageService::storeAndPersist(
+            $request->file('payment_proof'), 'payment-proofs/orders', 'private',
+            function (string $path) use ($order, $update) {
+                DB::table('customer_orders')->where('id', $order->id)->update($update + ['payment_proof' => $path]);
+                return $path;
+            },
+            deleteOld: false,
+            prefix: 'order_proof',
+        );
 
         WorkflowNotifier::notifyUser(
             $user->id,
             'Payment Submitted',
-            $isCash
-                ? "Your cash payment for order #{$order->id} is pending verification at the counter."
-                : "Payment proof for order #{$order->id} is under cashier verification.",
+            "Payment proof for order #{$order->id} is under cashier verification.",
             'info',
             'customer_order',
             $order->id,
@@ -489,9 +479,7 @@ class CustomerStoreController extends Controller
         WorkflowNotifier::notifyRole(
             'cashier',
             'Payment Needs Verification',
-            $isCash
-                ? "{$user->name} will pay in cash at the counter for order #{$order->id}."
-                : "{$user->name} uploaded payment proof for order #{$order->id}.",
+            "{$user->name} uploaded payment proof for order #{$order->id}.",
             'warning',
             'customer_order',
             $order->id,
@@ -561,6 +549,19 @@ class CustomerStoreController extends Controller
                 'paid_at' => $order->paid_at,
                 'verified_by' => $verifiedBy,
                 'cashier_remarks' => $order->cashier_remarks,
+                'breakdown' => ReceiptBreakdown::forSettleable(
+                    'customer_order',
+                    (int) $order->id,
+                    $orderTotal,
+                    0,
+                    [
+                        'method' => $order->payment_method,
+                        'amount' => $orderTotal,
+                        'reference_number' => $order->reference_number ?? $order->payment_reference ?? null,
+                        'receipt_number' => $order->receipt_number,
+                        'paid_at' => $order->paid_at,
+                    ]
+                ),
             ],
         ]);
     }

@@ -150,12 +150,18 @@
 }
 
 .cs-card {
-  padding: 1.5rem;
-  border-radius: 24px;
+  align-items: stretch;
+  backdrop-filter: blur(12px);
   background: var(--color-surface, rgba(255, 255, 255, 0.86));
   border: 1px solid var(--color-border, rgba(255, 95, 147, 0.18));
+  border-radius: 24px;
   box-shadow: var(--shadow-soft, 0 12px 28px rgba(15, 23, 42, 0.08));
-  backdrop-filter: blur(12px);
+  color: inherit;
+  display: flex;
+  flex-direction: column;
+  font: inherit;
+  padding: 1.5rem;
+  text-align: left;
 }
 
 .cs-card-icon {
@@ -185,17 +191,20 @@
 }
 
 .cs-card-action {
-  display: inline-flex;
   align-items: center;
-  gap: 0.45rem;
-  padding: 0.55rem 1.1rem;
+  align-self: flex-start;
+  background: none;
   border: 0;
   border-radius: 999px;
   color: #fff;
+  cursor: pointer;
+  display: inline-flex;
   font-family: inherit;
   font-size: 0.82rem;
   font-weight: 900;
-  cursor: pointer;
+  gap: 0.45rem;
+  margin-top: auto;
+  padding: 0.55rem 1.1rem;
   transition: transform 0.2s ease, filter 0.2s ease;
 }
 
@@ -205,7 +214,7 @@
 }
 
 .cs-card-action:focus-visible {
-  outline: 3px solid rgba(79, 70, 229, 0.35);
+  outline: 3px solid rgba(79, 70, 229, 0.45);
   outline-offset: 3px;
 }
 

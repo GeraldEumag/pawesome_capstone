@@ -41,7 +41,7 @@ class SoftDeleteRetentionTest extends TestCase
     {
         $target = User::factory()->create(['role' => 'customer']);
 
-        $this->as('admin')->deleteJson("/api/admin/users/{$target->id}")->assertOk();
+        $this->as('admin')->deleteJson("/api/admin/users/{$target->id}", ['reason' => 'test_account'])->assertOk();
 
         $this->assertSoftDeleted('users', ['id' => $target->id]);
         $this->assertNull(User::find($target->id));
@@ -55,7 +55,7 @@ class SoftDeleteRetentionTest extends TestCase
         $target = User::factory()->create(['role' => 'cashier']);
         $token = $target->createToken('t')->plainTextToken;
 
-        $this->as('admin')->deleteJson("/api/admin/users/{$target->id}")->assertOk();
+        $this->as('admin')->deleteJson("/api/admin/users/{$target->id}", ['reason' => 'test_account'])->assertOk();
 
         $this->withHeaders(['Authorization' => 'Bearer ' . $token])
             ->getJson('/api/auth/me')
@@ -66,15 +66,15 @@ class SoftDeleteRetentionTest extends TestCase
     {
         $target = User::factory()->create(['role' => 'customer']);
 
-        $this->as('admin')->deleteJson("/api/admin/users/{$target->id}")->assertOk();
+        $this->as('admin')->deleteJson("/api/admin/users/{$target->id}", ['reason' => 'test_account'])->assertOk();
         $this->as('admin')->postJson("/api/admin/users/{$target->id}/restore")->assertOk();
 
         $this->assertNull($target->fresh()->deleted_at);
 
         // Repeated restore is a no-op 404, repeated delete still works
         $this->as('admin')->postJson("/api/admin/users/{$target->id}/restore")->assertNotFound();
-        $this->as('admin')->deleteJson("/api/admin/users/{$target->id}")->assertOk();
-        $this->as('admin')->deleteJson("/api/admin/users/{$target->id}")->assertNotFound();
+        $this->as('admin')->deleteJson("/api/admin/users/{$target->id}", ['reason' => 'test_account'])->assertOk();
+        $this->as('admin')->deleteJson("/api/admin/users/{$target->id}", ['reason' => 'test_account'])->assertNotFound();
     }
 
     public function test_non_admin_cannot_delete_or_restore_users(): void
@@ -100,7 +100,7 @@ class SoftDeleteRetentionTest extends TestCase
         Pet::factory()->create(['customer_id' => $customer->id]);
 
         $this->as('admin')->deleteJson("/api/admin/salaries/{$owner->id}")->assertStatus(422);
-        $this->as('admin')->deleteJson("/api/admin/users/{$owner->id}")->assertStatus(422);
+        $this->as('admin')->deleteJson("/api/admin/users/{$owner->id}", ['reason' => 'policy_violation'])->assertStatus(422);
         $this->assertNull($owner->fresh()->deleted_at);
     }
 
@@ -116,8 +116,32 @@ class SoftDeleteRetentionTest extends TestCase
             'status' => 'approved',
         ]);
 
-        $this->as('admin')->deleteJson("/api/admin/users/{$owner->id}")->assertStatus(422);
+        $this->as('admin')->deleteJson("/api/admin/users/{$owner->id}", ['reason' => 'policy_violation'])->assertStatus(422);
         $this->assertNull($owner->fresh()->deleted_at);
+    }
+
+    public function test_delete_requires_a_valid_reason_and_other_requires_details(): void
+    {
+        $target = User::factory()->create(['role' => 'customer']);
+
+        // Missing reason → 422, no deletion
+        $this->as('admin')->deleteJson("/api/admin/users/{$target->id}")->assertStatus(422);
+        // Unknown reason → 422, no deletion
+        $this->as('admin')->deleteJson("/api/admin/users/{$target->id}", ['reason' => 'because_i_said_so'])->assertStatus(422);
+        // "other" without details → 422, no deletion
+        $this->as('admin')->deleteJson("/api/admin/users/{$target->id}", ['reason' => 'other'])->assertStatus(422);
+        $this->assertNull($target->fresh()->deleted_at);
+
+        // Valid reason → soft delete + audit metadata
+        $this->as('admin')->deleteJson("/api/admin/users/{$target->id}", [
+            'reason' => 'other',
+            'reason_details' => 'Duplicate signup created during testing',
+        ])->assertOk();
+        $this->assertSoftDeleted('users', ['id' => $target->id]);
+
+        $log = ActivityLog::where('action', 'user_deleted')->latest('id')->first();
+        $this->assertSame('other', $log->metadata['reason']);
+        $this->assertSame('Duplicate signup created during testing', $log->metadata['reason_details']);
     }
 
     public function test_deleted_customer_disappears_and_can_be_restored(): void

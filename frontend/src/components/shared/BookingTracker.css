@@ -348,6 +348,26 @@
   color: #15803d;
   animation: bt-badge-pulse 1.6s ease-out infinite;
 }
+.bt-status-checked_out,
+.bt-status-completed { background: #dcfce7; color: #15803d; }
+.bt-status-cancelled,
+.bt-status-rejected { background: #fee2e2; color: #b91c1c; }
+.bt-status-no_show { background: #e2e8f0; color: #475569; }
+
+/* Terminal outcome line (replaces the progress rail) */
+
+.bt-terminal {
+  border-radius: 0.6rem;
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+  margin-top: 0.65rem;
+  padding: 0.45rem 0.75rem;
+  text-transform: uppercase;
+}
+.bt-terminal-cancelled,
+.bt-terminal-rejected { background: #fef2f2; color: #b91c1c; }
+.bt-terminal-no_show { background: #f1f5f9; color: #475569; }
 
 /* Meta row */
 

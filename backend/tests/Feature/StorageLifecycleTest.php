@@ -110,22 +110,29 @@ class StorageLifecycleTest extends TestCase
         Storage::disk('private')->assertExists($firstPath);
     }
 
-    public function test_cash_payment_needs_no_proof_and_appears_in_cashier_queue(): void
+    public function test_cash_is_rejected_and_valid_proof_appears_in_cashier_queue(): void
     {
         $customer = User::factory()->create(['role' => 'customer']);
         $cashier = User::factory()->create(['role' => 'cashier']);
         $request = $this->approvedServiceRequest($customer);
 
-        // Cash: no proof file or reference required — cashier verifies at the counter.
+        // Cash is a staff-counter workflow — customers must submit an
+        // e-wallet method with reference and proof.
         $this->actingWithToken($customer)
             ->postJson("/api/customer/requests/{$request->id}/payment-proof", [
                 'payment_method' => 'cash',
+            ])->assertStatus(422);
+
+        $this->actingWithToken($customer)
+            ->postJson("/api/customer/requests/{$request->id}/payment-proof", [
+                'payment_method' => 'gcash',
+                'payment_reference' => 'REF-CASH-Q',
+                'payment_proof' => $this->png('cashqueue.png'),
             ])->assertOk()->assertJsonPath('payment_status', 'pending');
 
         $fresh = $request->fresh();
-        $this->assertSame('cash', $fresh->payment_method);
+        $this->assertSame('gcash', $fresh->payment_method);
         $this->assertSame('pending', $fresh->payment_status);
-        $this->assertNull($fresh->payment_proof);
 
         $queue = $this->actingWithToken($cashier)
             ->getJson('/api/cashier/payment-requests')

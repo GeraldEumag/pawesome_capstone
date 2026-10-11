@@ -13,6 +13,23 @@
   display: grid;
   gap: 1.5rem;
   padding: 1.5rem;
+  color: var(--report-text, var(--ar-text));
+}
+
+/* Consistent section chrome — each report component renders its own header,
+   so the wrapper normalizes the outer root only: same width, no extra page
+   padding, no centering. Switching categories must not change the page layout. */
+.advanced-report-content .executive-dashboard,
+.advanced-report-content .staff-performance,
+.advanced-report-content .customer-segmentation,
+.advanced-report-content .adv-report,
+.advanced-report-content .api-health-check {
+  width: 100%;
+  max-width: none;
+  min-height: auto;
+  margin: 0;
+  padding: 0;
+  background: transparent;
 }
 
 /* Section Navigation — horizontally scrollable on narrow screens */
@@ -180,7 +197,6 @@
   --report-radius-pill: var(--radius-pill, 999px);
 }
 
-.admin-reports-wrapper,
 .admin-reports-page {
   min-height: 100vh;
   display: grid;

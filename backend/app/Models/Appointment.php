@@ -67,6 +67,20 @@ class Appointment extends Model
     ];
 
     /**
+     * Predefined cancellation reason codes. 'other' requires a free-text
+     * explanation provided by the caller.
+     */
+    public const CANCELLATION_REASONS = [
+        'client_request' => 'Client requested cancellation',
+        'client_no_show' => 'Client did not show up',
+        'veterinarian_unavailable' => 'Veterinarian unavailable',
+        'schedule_conflict' => 'Scheduling conflict',
+        'pet_not_fit' => 'Pet not fit for the appointment',
+        'duplicate_booking' => 'Duplicate or mistaken booking',
+        'other' => 'Other',
+    ];
+
+    /**
      * Boot method for model-level validation and notification hooks.
      */
     protected static function boot()

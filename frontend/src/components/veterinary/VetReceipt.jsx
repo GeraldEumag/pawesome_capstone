@@ -9,7 +9,7 @@ import {
 } from "@fortawesome/free-solid-svg-icons";
 import { apiRequest } from "../../api/client";
 import { formatCurrency } from "../../utils/currency";
-import { STORE_INFO, computeVatBreakdown } from "../../utils/storeInfo";
+import { STORE_INFO } from "../../utils/storeInfo";
 import jsPDF from "jspdf";
 import html2canvas from "html2canvas";
 import { showError } from "../../utils/alert.jsx";
@@ -186,7 +186,7 @@ const VetReceipt = () => {
 
         {/* Totals */}
         <div className="vr-row"><span>Subtotal (incl. VAT)</span><span>{formatCurrency(receiptData.subtotal)}</span></div>
-        <div className="vr-row"><span>VAT 12%</span><span>-{formatCurrency(Math.abs(Number(receiptData.tax || computeVatBreakdown(receiptData.total).vatAmount) || 0))}</span></div>
+        <div className="vr-row"><span>VAT 12%</span><span>-{formatCurrency(Math.abs(Number(receiptData.breakdown?.vat_amount ?? receiptData.tax ?? 0) || 0))}</span></div>
         <div className="vr-total">
           <span>TOTAL</span>
           <span>{formatCurrency(receiptData.total)}</span>

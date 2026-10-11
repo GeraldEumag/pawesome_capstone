@@ -3,7 +3,10 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Models\Customer;
 use App\Models\Grooming;
+use App\Models\Pet;
+use App\Models\Service;
 use App\Models\ServiceItemUsage;
 use App\Services\GroomingInventoryService;
 use App\Services\ServiceBillingService;
@@ -25,6 +28,18 @@ class GroomingController extends Controller
 
     public function store(Request $request)
     {
+        if ($request->user()?->role === 'customer') {
+            $customer = Customer::where('user_id', $request->user()->id)
+                ->orWhere('email', $request->user()->email)
+                ->first();
+
+            if (!$customer) {
+                return response()->json(['message' => 'Customer not found'], 404);
+            }
+
+            $request->merge(['customer_id' => $customer->id]);
+        }
+
         $validated = $request->validate([
             'customer_id' => 'required|exists:customers,id',
             'pet_id' => 'required|exists:pets,id',

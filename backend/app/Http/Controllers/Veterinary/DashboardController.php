@@ -332,6 +332,8 @@ class DashboardController extends Controller
                 'status' => $appointment->payment_status ?? 'pending',
                 'balance_due' => (float) ($billing['balance_due'] ?? 0),
                 'notes' => $appointment->notes,
+                'tax' => $breakdown['vat_amount'],
+                'breakdown' => $breakdown,
             ],
         ]);
     }

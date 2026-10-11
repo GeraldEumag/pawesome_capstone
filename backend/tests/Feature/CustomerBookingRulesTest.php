@@ -43,6 +43,21 @@ class CustomerBookingRulesTest extends TestCase
         return ['Authorization' => 'Bearer ' . $user->createToken('customer-booking-test')->plainTextToken];
     }
 
+    private function registeredPet(User $user, ?string $species = null): Pet
+    {
+        $customer = Customer::create([
+            'user_id' => $user->id,
+            'name' => $user->name,
+            'email' => $user->email,
+        ]);
+
+        return Pet::factory()->create([
+            'customer_id' => $customer->id,
+            'name' => 'Milo',
+            'species' => $species ?? 'Dog',
+        ]);
+    }
+
     public function test_staff_cannot_submit_customer_service_requests(): void
     {
         $receptionist = User::factory()->receptionist()->create();
@@ -248,7 +263,9 @@ class CustomerBookingRulesTest extends TestCase
             'name' => $user->name,
             'email' => $user->email,
         ]);
-        $pet = Pet::factory()->create(['customer_id' => $customer->id]);
+        // Pin a boarding-compatible species — a randomized Fish pet would be
+        // rejected by pet compatibility before the overlap gate under test.
+        $pet = Pet::factory()->create(['customer_id' => $customer->id, 'species' => 'Dog']);
         $room = HotelRoom::factory()->create(['status' => 'available']);
         $booking = [
             'pet_id' => $pet->id,
@@ -319,7 +336,9 @@ class CustomerBookingRulesTest extends TestCase
             'user_id' => $user->id,
             'email' => $user->email,
         ]);
-        $pet = Pet::factory()->create(['customer_id' => $customer->id]);
+        // Pin a boarding-compatible species — a randomized Fish pet would be
+        // rejected by pet compatibility before the same-day gate under test.
+        $pet = Pet::factory()->create(['customer_id' => $customer->id, 'species' => 'Dog']);
 
         $this->withHeaders($this->authHeaders($user))
             ->postJson('/api/customer/boardings', [

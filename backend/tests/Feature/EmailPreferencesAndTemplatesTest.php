@@ -13,6 +13,7 @@ use App\Models\EmailDelivery;
 use App\Models\ServiceRequest;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Mail;
 use Tests\TestCase;
 
@@ -95,7 +96,9 @@ class EmailPreferencesAndTemplatesTest extends TestCase
         ]);
 
         $this->as('customer')->postJson("/api/customer/requests/{$sr->id}/payment-proof", [
-            'payment_method' => 'cash',
+            'payment_method' => 'gcash',
+            'payment_reference' => 'PREF-REF-1',
+            'payment_proof' => UploadedFile::fake()->create('proof.png', 20, 'image/png'),
         ])->assertOk();
 
         // The preference flows through the customer record — no intent.

@@ -7,21 +7,20 @@ test.describe('Customer UI polish', () => {
   });
 
   test('profile settings display English as a fixed language', async ({ page }) => {
+    await mockLoginAs(page, 'receptionist', 'Profile Language Test');
     await page.route('**/api/auth/me', (route) =>
       route.fulfill({
         status: 200,
         contentType: 'application/json',
-        body: JSON.stringify({ id: 1, name: 'Customer UI Test', email: 'customer@example.com', role: 'customer' }),
+        body: JSON.stringify({ id: 1, name: 'Profile Language Test', email: 'receptionist@example.com', role: 'receptionist' }),
       })
     );
-    await page.goto('/customer/profile');
+    await page.goto('/receptionist/profile');
 
-    const profile = page.locator('.customer-profile-settings');
-    await expect(profile).toBeVisible();
-    await expect(profile.getByText('English', { exact: true })).toBeVisible();
-    await expect(profile.locator('select option[value="es"]')).toHaveCount(0);
-    await expect(profile.locator('select option[value="fr"]')).toHaveCount(0);
-    await expect(profile.locator('select option[value="de"]')).toHaveCount(0);
+    await expect(page.locator('[aria-label="Language set to English"]')).toBeVisible();
+    await expect(page.locator('select option[value="es"]')).toHaveCount(0);
+    await expect(page.locator('select option[value="fr"]')).toHaveCount(0);
+    await expect(page.locator('select option[value="de"]')).toHaveCount(0);
   });
 
   test('hotel booking shows full selected-pet details', async ({ page }) => {

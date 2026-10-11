@@ -146,7 +146,15 @@ class PaymentVerificationService
 
                     WorkflowNotifier::notifyEmail($sr->customer_email ?? null, 'Payment Verified', "Your payment for {$sr->service_name} has been verified. Receipt: {$receiptNumber}", 'success', 'service_request', $id);
 
-                    return ['success' => true, 'message' => 'Service request payment verified successfully.', 'payment_status' => 'paid', 'receipt_number' => $receiptNumber];
+                    return [
+                        'success' => true,
+                        'message' => 'Service request payment verified successfully.',
+                        'payment_status' => 'paid',
+                        'receipt_number' => $receiptNumber,
+                        'breakdown' => \App\Support\ReceiptBreakdown::forSettleable(
+                            'service_request', $id, $this->settledAmount('service_requests', $sr)
+                        ),
+                    ];
                 }
 
                 // default: customer_order
@@ -169,7 +177,51 @@ class PaymentVerificationService
                     'updated_at' => now(),
                 ]);
 
-                return ['success' => true, 'message' => 'Payment verified successfully', 'payment_status' => 'paid', 'receipt_number' => $receiptNumber];
+                // Record the settlement so order receipts can render an
+                // authoritative payment breakdown from the ledger.
+                $orderItems = DB::table('customer_order_items')
+                    ->where('customer_order_id', $id)
+                    ->get()
+                    ->map(fn ($item) => [
+                        'description' => $item->product_name ?? $item->item_name ?? 'Order item',
+                        'quantity' => max(1, (int) ($item->quantity ?? 1)),
+                        'unit_price' => (float) ($item->unit_price ?? $item->price ?? 0),
+                        'total_price' => (float) ($item->total_price ?? $item->subtotal ?? 0),
+                    ])->all();
+
+                $orderTotal = (float) ($order->total_amount ?? 0);
+                if (empty($orderItems)) {
+                    $orderItems = [[
+                        'description' => 'Customer order settlement',
+                        'quantity' => 1,
+                        'unit_price' => $orderTotal,
+                        'total_price' => $orderTotal,
+                    ]];
+                }
+
+                PaymentSettlementService::record([
+                    'settleable_type' => 'customer_order',
+                    'settleable_id' => $id,
+                    'customer_id' => $order->customer_id ?? null,
+                    'amount' => $orderTotal,
+                    'payment_method' => $order->payment_method ?? null,
+                    'reference_number' => $referenceNumber ?? $order->payment_reference ?? null,
+                    'receipt_number' => $receiptNumber,
+                    'verified_by' => Auth::id(),
+                    'verified_at' => now(),
+                    'paid_at' => now(),
+                    'idempotency_key' => "verify:customer_order:{$id}:{$receiptNumber}",
+                ], $orderItems);
+
+                return [
+                    'success' => true,
+                    'message' => 'Payment verified successfully',
+                    'payment_status' => 'paid',
+                    'receipt_number' => $receiptNumber,
+                    'breakdown' => \App\Support\ReceiptBreakdown::forSettleable(
+                        'customer_order', $id, $orderTotal
+                    ),
+                ];
             });
         } catch (\Throwable $e) {
             Log::error('PaymentVerificationService::verify error - ' . $e->getMessage());
@@ -279,7 +331,7 @@ class PaymentVerificationService
     {
         $meta = match ($type) {
             'service_request', 'service' => ['table' => 'service_requests', 'settleable' => 'service_request'],
-            'customer_order' => ['table' => 'customer_orders', 'settleable' => null],
+            'customer_order' => ['table' => 'customer_orders', 'settleable' => 'customer_order'],
             'boarding' => ['table' => 'boardings', 'settleable' => 'boarding'],
             'appointment', 'veterinary' => ['table' => 'appointments', 'settleable' => 'appointment'],
             'grooming' => ['table' => 'groomings', 'settleable' => 'grooming'],
@@ -660,7 +712,15 @@ class PaymentVerificationService
 
         WorkflowNotifier::notifyEmail($record->customer_email ?? null, 'Payment verified', 'Your payment proof was verified by cashier.', 'success', $table, $id);
 
-        return ['success' => true, 'message' => $message, 'payment_status' => 'paid', 'receipt_number' => $receiptNumber];
+        return [
+            'success' => true,
+            'message' => $message,
+            'payment_status' => 'paid',
+            'receipt_number' => $receiptNumber,
+            'breakdown' => \App\Support\ReceiptBreakdown::forSettleable(
+                $settleableType, $id, $settledAmount
+            ),
+        ];
     }
 
     private function rejectTablePayment(string $table, int $id, $request, string $message, string $rejectionReason): array

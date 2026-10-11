@@ -466,7 +466,7 @@ class VeterinaryWorkflowTest extends TestCase
                 'customer_id' => $customer->id,
                 'pet_id' => $pet->id,
                 'service_id' => $service->id,
-                'scheduled_at' => now()->setTime(10, 0)->format('Y-m-d H:i:s'),
+                'scheduled_at' => now()->addDay()->setTime(10, 0)->format('Y-m-d H:i:s'),
                 'notes' => 'Scheduled consult',
             ])
             ->assertCreated();

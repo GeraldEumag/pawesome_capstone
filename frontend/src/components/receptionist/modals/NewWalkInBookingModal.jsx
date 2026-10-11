@@ -22,22 +22,15 @@ const initialForm = {
   appointmentDate: "",
   appointmentTime: "10:00",
   service: "",
-  duration: "1 day",
-  roomType: "Standard Room",
+  roomId: "",
   symptoms: "",
   medicalNotes: "",
   specialRequests: "",
   bookingType: "hotel",
-  paymentMethod: "cash",
-  paidAmount: "0",
   vaccinationCard: null,
 };
 
-const roomRates = {
-  "Standard Room": 50,
-  "Deluxe Suite": 80,
-  "Presidential Suite": 120,
-};
+const WALK_IN_TIME_SLOTS = ["10:00", "11:00", "12:00", "13:00", "14:00", "15:00", "16:00", "17:00"];
 
 const safeArray = (data, key) => {
   if (Array.isArray(data)) return data;
@@ -58,20 +51,10 @@ const formatCurrency = (value) => {
   }).format(amount);
 };
 
-const getPaymentStatusFromAmount = (amount, paid) => {
-  const total = Number(amount || 0);
-  const paidAmt = Number(paid || 0);
-  if (paidAmt >= total && total > 0) return "paid";
-  if (paidAmt > 0 && paidAmt < total) return "partial";
-  return "pending";
-};
-
 const combineDateTime = (date, time) => {
   if (!date || !time) return date;
-  const d = new Date(date);
   const [h, m] = String(time).split(":");
-  d.setHours(Number(h || 0), Number(m || 0), 0, 0);
-  return d.toISOString();
+  return `${date} ${String(h || "0").padStart(2, "0")}:${String(m || "0").padStart(2, "0")}:00`;
 };
 
 const NewWalkInBookingModal = ({ onClose, onSuccess }) => {
@@ -95,7 +78,7 @@ const NewWalkInBookingModal = ({ onClose, onSuccess }) => {
     const load = async () => {
       try {
         const [cData, pData, sData, hData] = await Promise.all([
-          apiRequest("/customers").catch(() => null),
+          apiRequest("/receptionist/customers").catch(() => null),
           apiRequest("/pets").catch(() => null),
           apiRequest("/services").catch(() => null),
           apiRequest("/receptionist/hotel-rooms?status=available").catch(() => null),
@@ -152,16 +135,19 @@ const NewWalkInBookingModal = ({ onClose, onSuccess }) => {
     );
   }, [services, form.service]);
 
+  const selectedRoom = useMemo(() => {
+    return hotelRooms.find((room) => String(room.id) === String(form.roomId)) || null;
+  }, [hotelRooms, form.roomId]);
+
   const calculatedAmount = useMemo(() => {
     if (form.bookingType === "hotel") {
-      const dailyRate = roomRates[form.roomType] || roomRates["Standard Room"];
-      return dailyRate; // same-day stay: one day rate
+      return selectedRoom ? Number(selectedRoom.daily_rate || 0) : 0;
     }
     if (selectedService) {
       return Number(selectedService.price || selectedService.amount || 0);
     }
     return 0;
-  }, [form.bookingType, form.roomType, form.duration, selectedService]);
+  }, [form.bookingType, selectedRoom, selectedService]);
 
   const vaccinationPreview = useMemo(() => {
     const f = form.vaccinationCard;
@@ -220,16 +206,6 @@ const NewWalkInBookingModal = ({ onClose, onSuccess }) => {
     );
   };
 
-  // Helper to resolve room type to actual hotel_room_id
-  const resolveHotelRoomId = (roomTypeName) => {
-    // Try to find a room that matches the type
-    const room = hotelRooms.find((r) =>
-      String(r.type || r.room_type || "").toLowerCase() === String(roomTypeName).toLowerCase() ||
-      String(r.name || "").toLowerCase().includes(String(roomTypeName).toLowerCase())
-    );
-    return room?.id || roomTypeName; // Fallback to name if no match
-  };
-
   // Helper to build notes from various fields
   const buildNotes = () => {
     const parts = [];
@@ -257,8 +233,6 @@ const NewWalkInBookingModal = ({ onClose, onSuccess }) => {
     try {
       setProcessing(true);
       setError("");
-      const amount = calculatedAmount;
-      const paidAmount = Number(form.paidAmount || 0);
 
       let endpoint = "";
       let payload = {};
@@ -266,24 +240,18 @@ const NewWalkInBookingModal = ({ onClose, onSuccess }) => {
 
       if (form.bookingType === "hotel") {
         endpoint = "/boardings";
-        const hotelRoomId = resolveHotelRoomId(form.roomType);
 
         // Use FormData for file upload
         useFormData = true;
         payload = new FormData();
         payload.append("pet_id", form.petId);
         payload.append("customer_id", form.customerId);
-        payload.append("hotel_room_id", hotelRoomId);
+        payload.append("hotel_room_id", form.roomId);
         payload.append("check_in_date", form.appointmentDate);
         payload.append("number_of_days", "1"); // same-day stay (9 AM - 7 PM)
         payload.append("notes", buildNotes());
         if (form.vaccinationCard) {
           payload.append("vaccination_card", form.vaccinationCard);
-        }
-        // Optional fields
-        if (paidAmount > 0) {
-          payload.append("paid_amount", paidAmount);
-          payload.append("payment_method", form.paymentMethod);
         }
       }
 
@@ -311,7 +279,6 @@ const NewWalkInBookingModal = ({ onClose, onSuccess }) => {
           service: serviceName, // Backend expects service NAME, not ID
           appointment_date: form.appointmentDate,
           appointment_time: form.appointmentTime,
-          amount: amount, // Backend expects amount, not price
           notes: form.specialRequests, // Backend expects notes, not special_requests
         };
       }
@@ -442,53 +409,38 @@ const NewWalkInBookingModal = ({ onClose, onSuccess }) => {
                 <div className="hub-form-group">
                   <label>Appointment Time</label>
                   <select name="appointmentTime" value={form.appointmentTime} onChange={handleInputChange}>
-                    <option value="10:00">10:00 AM</option>
-                    <option value="11:00">11:00 AM</option>
-                    <option value="14:00">2:00 PM</option>
-                    <option value="15:00">3:00 PM</option>
-                    <option value="16:00">4:00 PM</option>
-                    <option value="17:00">5:00 PM</option>
+                    {WALK_IN_TIME_SLOTS.map((slot) => {
+                      const hour = Number(slot.split(":")[0]);
+                      const label = `${hour % 12 || 12}:00 ${hour < 12 ? "AM" : "PM"}`;
+                      return <option key={slot} value={slot}>{label}</option>;
+                    })}
                   </select>
                 </div>
 
                 {form.bookingType === "hotel" && (
                   <>
                     <div className="hub-form-group">
-                      <label>Room Type *</label>
-                      <select name="roomType" value={form.roomType} onChange={handleInputChange} required>
-                        <option value="">Select an available room...</option>
-                        {hotelRooms.length > 0 ? (
-                          hotelRooms.map((room) => (
-                            <option key={room.id} value={room.type || room.room_type || room.name || `Room ${room.id}`}>
-                              {room.type || room.room_type || room.name || `Room ${room.id}`} - ₱{room.daily_rate || 0}/day
-                              {room.status && room.status !== "available" ? ` (${room.status})` : ""}
-                            </option>
-                          ))
-                        ) : (
-                          <>
-                            <option value="Standard Room">Standard Room - ₱50/day</option>
-                            <option value="Deluxe Suite">Deluxe Suite - ₱80/day</option>
-                            <option value="Presidential Suite">Presidential Suite - ₱120/day</option>
-                          </>
-                        )}
+                      <label>Room *</label>
+                      <select name="roomId" value={form.roomId} onChange={handleInputChange} required>
+                        <option value="">
+                          {hotelRooms.length > 0 ? "Select an available room..." : "No rooms available for this date"}
+                        </option>
+                        {hotelRooms.map((room) => (
+                          <option key={room.id} value={room.id}>
+                            {room.name || room.room_number || `Room ${room.id}`} ({room.type || room.room_type || "Room"}) - {formatCurrency(room.daily_rate || 0)}/day
+                            {room.status && room.status !== "available" ? ` — ${room.status}` : ""}
+                          </option>
+                        ))}
                       </select>
-                      {hotelRooms.length === 0 && (
+                      {form.appointmentDate && hotelRooms.length === 0 && (
                         <small style={{ color: "var(--color-warning, #d97706)", fontSize: "12px" }}>
-                          Using default room options (hotel rooms data unavailable)
+                          No rooms are available for the selected stay date. Pick another date.
                         </small>
                       )}
                     </div>
                     <div className="hub-form-group">
                       <label>Duration</label>
                       <input value="Same-day stay (10:00 AM – 6:00 PM)" disabled />
-                    </div>
-                    <div className="hub-form-group">
-                      <label>Service *</label>
-                      <select name="service" value={form.service || "Pet Hotel Stay"} onChange={handleInputChange} required>
-                        <option value="Pet Hotel Stay">Pet Hotel Stay</option>
-                        <option value="Day Care">Day Care</option>
-                        <option value="Pet Training">Pet Training</option>
-                      </select>
                     </div>
                     <div className="hub-form-group full">
                       <label>Vaccination Card (Optional)</label>
@@ -554,32 +506,10 @@ const NewWalkInBookingModal = ({ onClose, onSuccess }) => {
               <h4>Payment Information</h4>
               <div className="hub-payment-preview">
                 <div><span>Estimated Amount</span><strong>{formatCurrency(calculatedAmount)}</strong></div>
-                <div><span>Paid Amount</span><strong>{formatCurrency(form.paidAmount)}</strong></div>
-                <div><span>Payment Status</span><strong>{getPaymentStatusFromAmount(calculatedAmount, form.paidAmount)}</strong></div>
               </div>
-              <div className="hub-form-grid">
-                <div className="hub-form-group">
-                  <label>Payment Method *</label>
-                  <select name="paymentMethod" value={form.paymentMethod} onChange={handleInputChange} required>
-                    <option value="cash">Cash</option>
-                    <option value="card">Credit Card</option>
-                    <option value="gcash">GCash</option>
-                    <option value="bank">Bank Transfer</option>
-                  </select>
-                </div>
-                <div className="hub-form-group">
-                  <label>Paid Amount</label>
-                  <input
-                    type="number"
-                    name="paidAmount"
-                    value={form.paidAmount}
-                    onChange={handleInputChange}
-                    placeholder="0.00"
-                    min="0"
-                    step="0.01"
-                  />
-                </div>
-              </div>
+              <small style={{ color: "var(--color-muted, #6b7280)", fontSize: "12px" }}>
+                Payment is collected and verified at the cashier counter after the booking is created.
+              </small>
             </div>
 
             <div className="hbk-foot">

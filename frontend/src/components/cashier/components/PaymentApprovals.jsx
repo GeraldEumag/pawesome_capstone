@@ -26,7 +26,7 @@ import {
 } from "@fortawesome/free-solid-svg-icons";
 import { showSuccess, showError, showWarning } from "../../../utils/alert.jsx";
 import { printReceipt } from "../../../utils/receiptPrinter";
-import { STORE_INFO, computeVatBreakdown } from "../../../utils/storeInfo";
+import { STORE_INFO } from "../../../utils/storeInfo";
 import { usePaymentApprovals, paymentKey } from "../hooks/usePaymentApprovals.jsx";
 import { useAuth } from "../../../context/AuthContext";
 import "./PaymentApprovals.css";
@@ -213,6 +213,7 @@ const PaymentApprovals = () => {
         change:           isCashMethod(payment.payment_method) ? changeAmt : null,
         paid_at:          new Date().toISOString(),
         verified_by:      user?.name || "Cashier",
+        breakdown:        result.breakdown || null,
       });
       closeProof();
       setShowReceipt(true);
@@ -635,19 +636,6 @@ const PaymentApprovals = () => {
                       <div className="pa-submitted-reference">
                         <span className="pa-submitted-reference-label">Customer-submitted reference</span>
                         <strong className="pa-submitted-reference-value">{proofModal.payment.payment_reference}</strong>
-                        {referenceNumber.trim() && (
-                          <span
-                            className={`pa-reference-match ${
-                              referenceNumber.trim() === String(proofModal.payment.payment_reference).trim()
-                                ? "match"
-                                : "mismatch"
-                            }`}
-                          >
-                            {referenceNumber.trim() === String(proofModal.payment.payment_reference).trim()
-                              ? "Matches"
-                              : "Mismatch — verify carefully before approving"}
-                          </span>
-                        )}
                       </div>
                     )}
                     <label htmlFor="paRefNum" className="pa-reference-label">
@@ -727,9 +715,9 @@ const PaymentApprovals = () => {
               )}
               <div className="pa-receipt-row"><span>Verified by</span><span>{receiptData.verified_by || "Cashier"}</span></div>
 
-              {/* VAT-inclusive breakdown */}
-              <div className="pa-receipt-row"><span>Net Amount (ex-VAT)</span><span>₱{fmt(computeVatBreakdown(receiptData.amount).subtotalExVat)}</span></div>
-              <div className="pa-receipt-row"><span>VAT (12%)</span><span>₱{fmt(computeVatBreakdown(receiptData.amount).vatAmount)}</span></div>
+              {/* VAT-inclusive breakdown — authoritative values from the backend */}
+              <div className="pa-receipt-row"><span>Net Amount (ex-VAT)</span><span>₱{fmt(receiptData.breakdown?.net_amount ?? receiptData.net_amount ?? receiptData.amount)}</span></div>
+              <div className="pa-receipt-row"><span>VAT (12%)</span><span>₱{fmt(receiptData.breakdown?.vat_amount ?? receiptData.vat_amount ?? 0)}</span></div>
               <div className="pa-receipt-total">
                 <span>TOTAL</span>
                 <span>₱{fmt(receiptData.amount)}</span>
@@ -768,7 +756,8 @@ const PaymentApprovals = () => {
                     amountReceived: r.cash_received ?? undefined,
                     change: r.change ?? undefined,
                     items: [{ name: r.service_name || "Service", quantity: 1, unitPrice: Number(r.amount || 0), total: Number(r.amount || 0) }],
-                    subtotal: Number(r.amount || 0),
+                    subtotal: Number(r.breakdown?.net_amount ?? r.amount ?? 0),
+                    vat: r.breakdown?.vat_amount ?? r.vat_amount ?? undefined,
                     total: Number(r.amount || 0),
                   });
                 }}

@@ -136,6 +136,7 @@ const VetForm = () => {
 
   const selectedPet = pets.find((pet) => String(pet.id) === String(formData.pet_id));
 
+
   const petDisplayInfo = getPetDisplayInfo(selectedPet);
 
   const compatibility = selectedPet

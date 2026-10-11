@@ -228,8 +228,22 @@ class UserController extends Controller
         ]);
     }
 
+    public const DELETION_REASONS = [
+        'duplicate_account' => 'Duplicate account',
+        'user_requested' => 'User requested account deletion',
+        'inactive_account' => 'Inactive or abandoned account',
+        'policy_violation' => 'Policy violation',
+        'test_account' => 'Test or invalid account',
+        'other' => 'Other',
+    ];
+
     public function destroy($id)
     {
+        $validated = request()->validate([
+            'reason' => 'required|string|in:' . implode(',', array_keys(self::DELETION_REASONS)),
+            'reason_details' => 'required_if:reason,other|nullable|string|min:3|max:500',
+        ]);
+
         $user = User::find($id);
         if (!$user) {
             return response()->json(['message' => 'User not found'], 404);
@@ -254,11 +268,29 @@ class UserController extends Controller
             ], 422);
         }
 
+        $reasonLabel = self::DELETION_REASONS[$validated['reason']];
+        $reasonDetails = $validated['reason_details'] ?? null;
+
+        if ($user->customer) {
+            $user->customer->deletion_reason = mb_substr(
+                $reasonDetails ? "{$reasonLabel}: {$reasonDetails}" : $reasonLabel,
+                0,
+                500
+            );
+            $user->customer->save();
+        }
+
         ActivityLog::log(auth()->id(), 'user_deleted', "User #{$user->id} ({$user->email}) deleted", [
             'category' => 'user_management',
             'reference_type' => 'user',
             'reference_id' => $user->id,
-            'metadata' => ['email' => $user->email, 'role' => $user->role],
+            'metadata' => [
+                'email' => $user->email,
+                'role' => $user->role,
+                'reason' => $validated['reason'],
+                'reason_label' => $reasonLabel,
+                'reason_details' => $reasonDetails,
+            ],
         ]);
 
         $user->delete();

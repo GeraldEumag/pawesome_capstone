@@ -246,3 +246,64 @@ export const showReasonPrompt = async (
   }
   return null;
 };
+
+// Predefined cancellation reasons — keep in sync with
+// Appointment::CANCELLATION_REASONS on the backend.
+export const CANCELLATION_REASONS = {
+  client_request: "Client requested cancellation",
+  client_no_show: "Client did not show up",
+  veterinarian_unavailable: "Veterinarian unavailable",
+  schedule_conflict: "Scheduling conflict",
+  pet_not_fit: "Pet not fit for the appointment",
+  duplicate_booking: "Duplicate or mistaken booking",
+  other: "Other",
+};
+
+export const showCancellationReasonPrompt = async (
+  message,
+  title = "Cancellation Reason"
+) => {
+  const reasonStep = await Swal.fire({
+    ...lightTheme,
+    title,
+    text: message,
+    input: "select",
+    inputOptions: CANCELLATION_REASONS,
+    inputPlaceholder: "Select a reason...",
+    inputValidator: (value) =>
+      !value ? "Please select a cancellation reason." : undefined,
+    showCancelButton: true,
+    confirmButtonText: "Continue",
+    cancelButtonText: "Cancel",
+    reverseButtons: true,
+  });
+
+  if (!reasonStep.isConfirmed) {
+    return null;
+  }
+
+  const code = reasonStep.value;
+  if (code !== "other") {
+    return { code, note: "" };
+  }
+
+  const explanationStep = await Swal.fire({
+    ...lightTheme,
+    title,
+    text: "Please explain the reason for this cancellation.",
+    input: "textarea",
+    inputPlaceholder: "Enter explanation...",
+    inputValidator: (value) =>
+      !value || !value.trim() ? "An explanation is required." : undefined,
+    showCancelButton: true,
+    confirmButtonText: "Cancel Appointment",
+    cancelButtonText: "Back",
+    reverseButtons: true,
+  });
+
+  if (!explanationStep.isConfirmed) {
+    return null;
+  }
+
+  return { code, note: explanationStep.value.trim() };
+};

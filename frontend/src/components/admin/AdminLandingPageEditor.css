@@ -211,14 +211,22 @@
 }
 
 .editor-array-item {
-  display: grid;
-  grid-template-columns: 1fr 1fr 2fr auto;
+  display: flex;
   gap: 0.5rem;
   align-items: center;
   padding: 0.7rem;
   border: 1px solid rgba(255, 95, 147, 0.1);
   border-radius: 12px;
   background: rgba(255, 95, 147, 0.02);
+}
+
+.editor-array-item input {
+  flex: 1;
+  min-width: 0;
+}
+
+.editor-array-item .editor-btn-remove {
+  flex-shrink: 0;
 }
 
 .editor-service-card {
@@ -408,7 +416,8 @@
   }
 
   .editor-array-item {
-    grid-template-columns: 1fr;
+    flex-direction: column;
+    align-items: stretch;
   }
 }
 

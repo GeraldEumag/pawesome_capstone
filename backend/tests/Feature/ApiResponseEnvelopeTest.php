@@ -32,7 +32,7 @@ class ApiResponseEnvelopeTest extends TestCase
         $target = User::factory()->create(['role' => 'customer']);
 
         $res = $this->withHeaders(['Authorization' => "Bearer $admin"])
-            ->deleteJson("/api/admin/users/{$target->id}");
+            ->deleteJson("/api/admin/users/{$target->id}", ['reason' => 'test_account']);
 
         $res->assertOk();
         $res->assertJsonPath('success', true);

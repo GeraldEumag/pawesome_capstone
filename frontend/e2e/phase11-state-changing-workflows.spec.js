@@ -267,7 +267,7 @@ async function approveServiceRequest(request, receptionistSession, id, extra = {
 async function uploadProof(request, customerSession, id, reference) {
   return api(request, customerSession, "POST", `/customer/requests/${id}/payment-proof`, {
     multipart: {
-      payment_method: "GCash",
+      payment_method: "gcash",
       payment_reference: reference,
       payment_proof: {
         name: "phase11-proof.png",
