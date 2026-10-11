@@ -1,4 +1,4 @@
-import { apiRequest } from "../api/client";
+import { apiRequest, API_URL } from "../api/client";
 
 // ─── In-memory TTL cache (per page session) ────────────────────────────────
 
@@ -93,7 +93,10 @@ export async function createChatbotHotelBooking(payload) {
 
 // ─── Public chatbot (landing page — no auth) ────────────────────────────────
 
-const API_BASE = import.meta.env.VITE_API_BASE_URL || "http://127.0.0.1:8000/api";
+// Same resolved base as the authenticated client — never falls back to a
+// hardcoded origin; with no env configured it stays relative ("/api"),
+// which the Vite dev proxy maps to the local Laravel server.
+const API_BASE = API_URL.replace(/\/+$/, "");
 
 export async function fetchPublicChatbotWelcome() {
   const res = await fetch(`${API_BASE}/chatbot/public/welcome`);
