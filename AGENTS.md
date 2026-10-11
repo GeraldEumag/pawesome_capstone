@@ -248,6 +248,25 @@ configuration; review `docs/DEPLOYMENT.md` before using any provider settings.
   Tests: `php artisan test --filter="StorageLifecycleTest|PrivatePetPhotoTest|PrivateConfinementPaymentProofTest"`;
   browser: `E2E_BASE_URL=http://localhost:3000 npx playwright test e2e/storage-hardening.spec.js --project=chromium`
   (evidence in `browser-evidence/storage-hardening/`).
+- **Payment/booking channel integrity: FIXED** — every payable row carries
+  `booking_channel` (`online`/`walk_in`) on `service_requests`, `boardings`,
+  `groomings`, `appointments`, `medical_confinements`
+  (`App\Support\BookingChannel`, `App\Models\Concerns\InheritsBookingChannel`
+  inherits it from the originating service_request; confinements resolve
+  through `consultation_id`). NULL = legacy, enforced as `online` — the
+  strictest reading: `PaymentVerificationService` allows counter cash only
+  for `walk_in` rows or `online` rows with a *rejected* proof (recorded as
+  `payment_method='cash'`); a `pending` row carrying digital proof/method is
+  always verified as proof, never downgraded to cash. The cashier queue
+  (`Cashier\DashboardController::getPaymentRequests`) only lists rows a
+  cashier can act on and exposes `booking_channel`; appointments read proof
+  via the linked SR (`asr.*`, `linked_*` aliases) since the table has no
+  `payment_proof`/`payment_method` columns. Hotel SR approval transactionally
+  requires `boarding_room_id`, rechecks availability, and creates a
+  `boarding_room_reservations` row (`source_type='service_request'`) — full/
+  missing rooms 422; `reject()`/`cancel()` release SR-sourced reservations.
+  Tests: `php artisan test --filter="PaymentBookingChannelTest|CashierQueueDedupeTest"`.
+  Do NOT bulk-backfill NULL channels — report anomalies instead.
 - **Known unrelated test failures: OPEN — requires separate investigation** —
   8 full-suite failures observed during storage hardening (DatabaseIntegrityTest ×2,
   EndToEndBusinessFlowTest, FullSystemIntegrationTest, PayrollEndToEndTest ×2,

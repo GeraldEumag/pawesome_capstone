@@ -1,29 +1,22 @@
 {
   "setup": {
     "backendUrl": "http://127.0.0.1:8000",
-    "frontendUrl": "http://localhost:3000",
+    "frontendUrl": "http://127.0.0.1:3000",
     "browserPreview": "http://127.0.0.1:64422",
-    "testDate": "2026-10-04T15:14:28.510Z",
+    "testDate": "2026-10-11T17:08:10.888Z",
     "tester": "Codex automated Playwright"
   },
   "workflows": [
     {
       "workflow": "Customer to Receptionist Booking Flow",
-      "browserSubmitted": true,
-      "dbStatusUpdated": true,
-      "nextRoleSawResult": true,
+      "browserSubmitted": false,
+      "dbStatusUpdated": false,
+      "nextRoleSawResult": false,
       "consoleNetworkClean": true,
-      "status": "PASS",
-      "notes": "",
-      "records": {
-        "serviceRequestId": 151,
-        "finalStatus": "approved"
-      },
-      "screenshots": [
-        "documentation/screenshots/phase11/customer-request-submitted.png",
-        "documentation/screenshots/phase11/receptionist-request-approval-scheduling.png",
-        "documentation/screenshots/phase11/customer-updated-status.png"
-      ]
+      "status": "FAIL",
+      "notes": "POST /customer/requests failed: 422 This time is no longer available. Please choose another slot.",
+      "records": {},
+      "screenshots": []
     },
     {
       "workflow": "Boarding Tracking Flow",
@@ -34,7 +27,7 @@
       "status": "PASS",
       "notes": "Service-request hotel/boarding approval persisted. Dedicated boarding status progression was not available through stable UI selectors in this automated pass.",
       "records": {
-        "serviceRequestId": 152,
+        "serviceRequestId": 214,
         "finalStatus": "approved"
       },
       "screenshots": [
@@ -49,7 +42,7 @@
       "nextRoleSawResult": false,
       "consoleNetworkClean": true,
       "status": "FAIL",
-      "notes": "POST /customer/requests/153/payment-proof failed: 422 The selected payment method is invalid.",
+      "notes": "POST /cashier/payment-requests/215/reject failed: 429 Too Many Attempts.",
       "records": {},
       "screenshots": []
     },
@@ -60,32 +53,20 @@
       "nextRoleSawResult": false,
       "consoleNetworkClean": true,
       "status": "FAIL",
-      "notes": "POST /customer/requests/154/payment-proof failed: 422 The selected payment method is invalid.",
+      "notes": "POST /customer/requests failed: 429 Too Many Attempts.",
       "records": {},
       "screenshots": []
     },
     {
       "workflow": "POS and Inventory Stock Deduction Flow",
-      "browserSubmitted": true,
-      "dbStatusUpdated": true,
-      "nextRoleSawResult": true,
+      "browserSubmitted": false,
+      "dbStatusUpdated": false,
+      "nextRoleSawResult": false,
       "consoleNetworkClean": true,
-      "status": "PASS",
-      "notes": "",
-      "records": {
-        "itemId": 274,
-        "itemName": "4IN1 VACCINE",
-        "beforeStock": 60,
-        "afterStock": 59,
-        "transactionId": 60
-      },
-      "screenshots": [
-        "documentation/screenshots/phase11/inventory-stock-before.png",
-        "documentation/screenshots/phase11/cashier-pos-success.png",
-        "documentation/screenshots/phase11/inventory-stock-after.png",
-        "documentation/screenshots/phase11/inventory-log.png",
-        "documentation/screenshots/phase11/manager-report-after-pos.png"
-      ]
+      "status": "FAIL",
+      "notes": "GET /inventory/items failed: 429 Too Many Attempts.",
+      "records": {},
+      "screenshots": []
     },
     {
       "workflow": "Veterinary Consultation Flow",
@@ -94,7 +75,7 @@
       "nextRoleSawResult": false,
       "consoleNetworkClean": true,
       "status": "FAIL",
-      "notes": "POST /veterinary/consultations/39/complete failed: 422 Save and finalize the medical record before completing this consultation",
+      "notes": "GET /receptionist/veterinarians/available failed: 429 Too Many Attempts.",
       "records": {},
       "screenshots": []
     },
@@ -105,7 +86,7 @@
       "nextRoleSawResult": false,
       "consoleNetworkClean": true,
       "status": "FAIL",
-      "notes": "POST /inventory/items failed: 422 Unprocessable Content",
+      "notes": "POST /inventory/items failed: 429 Too Many Attempts.",
       "records": {},
       "screenshots": []
     },
@@ -138,31 +119,31 @@
           {
             "role": "customer",
             "endpoint": "/receptionist/dashboard",
-            "status": 429,
-            "blocked": false
+            "status": 403,
+            "blocked": true
           },
           {
             "role": "customer",
             "endpoint": "/cashier/dashboard",
-            "status": 429,
-            "blocked": false
+            "status": 403,
+            "blocked": true
           },
           {
             "role": "receptionist",
             "endpoint": "/cashier/payment-requests",
-            "status": 429,
-            "blocked": false
+            "status": 403,
+            "blocked": true
           },
           {
             "role": "cashier",
             "endpoint": "/receptionist/requests",
-            "status": 429,
-            "blocked": false
+            "status": 403,
+            "blocked": true
           },
           {
             "role": "vet",
             "endpoint": "/cashier/payment-requests",
-            "status": 429,
+            "status": 200,
             "blocked": false
           }
         ]
@@ -173,9 +154,9 @@
   "issues": [
     {
       "severity": "High",
-      "module": "Payments",
-      "page": "/cashier/payment-verification",
-      "error": "POST /customer/requests/153/payment-proof failed: 422 The selected payment method is invalid.",
+      "module": "Booking",
+      "page": "/customer/services",
+      "error": "POST /customer/requests failed: 422 This time is no longer available. Please choose another slot.",
       "routeFile": "frontend/e2e/phase11-state-changing-workflows.spec.js",
       "fixApplied": "No code fix applied by Phase 11 audit",
       "status": "Open"
@@ -184,7 +165,25 @@
       "severity": "High",
       "module": "Payments",
       "page": "/cashier/payment-verification",
-      "error": "POST /customer/requests/154/payment-proof failed: 422 The selected payment method is invalid.",
+      "error": "POST /cashier/payment-requests/215/reject failed: 429 Too Many Attempts.",
+      "routeFile": "frontend/e2e/phase11-state-changing-workflows.spec.js",
+      "fixApplied": "No code fix applied by Phase 11 audit",
+      "status": "Open"
+    },
+    {
+      "severity": "High",
+      "module": "Payments",
+      "page": "/cashier/payment-verification",
+      "error": "POST /customer/requests failed: 429 Too Many Attempts.",
+      "routeFile": "frontend/e2e/phase11-state-changing-workflows.spec.js",
+      "fixApplied": "No code fix applied by Phase 11 audit",
+      "status": "Open"
+    },
+    {
+      "severity": "High",
+      "module": "POS/Inventory",
+      "page": "/cashier/pos",
+      "error": "GET /inventory/items failed: 429 Too Many Attempts.",
       "routeFile": "frontend/e2e/phase11-state-changing-workflows.spec.js",
       "fixApplied": "No code fix applied by Phase 11 audit",
       "status": "Open"
@@ -193,7 +192,7 @@
       "severity": "High",
       "module": "Veterinary",
       "page": "/veterinary/appointments",
-      "error": "POST /veterinary/consultations/39/complete failed: 422 Save and finalize the medical record before completing this consultation",
+      "error": "GET /receptionist/veterinarians/available failed: 429 Too Many Attempts.",
       "routeFile": "frontend/e2e/phase11-state-changing-workflows.spec.js",
       "fixApplied": "No code fix applied by Phase 11 audit",
       "status": "Open"
@@ -202,7 +201,7 @@
       "severity": "Medium",
       "module": "Inventory",
       "page": "/inventory/products",
-      "error": "POST /inventory/items failed: 422 Unprocessable Content",
+      "error": "POST /inventory/items failed: 429 Too Many Attempts.",
       "routeFile": "frontend/e2e/phase11-state-changing-workflows.spec.js",
       "fixApplied": "No code fix applied by Phase 11 audit",
       "status": "Open"
@@ -210,60 +209,17 @@
     {
       "severity": "High",
       "module": "Access Control",
-      "page": "/receptionist/dashboard",
-      "error": "Unexpected status 429",
-      "routeFile": "backend/routes/api.php",
-      "fixApplied": "No code fix applied by Phase 11 audit",
-      "status": "Open"
-    },
-    {
-      "severity": "High",
-      "module": "Access Control",
-      "page": "/cashier/dashboard",
-      "error": "Unexpected status 429",
-      "routeFile": "backend/routes/api.php",
-      "fixApplied": "No code fix applied by Phase 11 audit",
-      "status": "Open"
-    },
-    {
-      "severity": "High",
-      "module": "Access Control",
       "page": "/cashier/payment-requests",
-      "error": "Unexpected status 429",
-      "routeFile": "backend/routes/api.php",
-      "fixApplied": "No code fix applied by Phase 11 audit",
-      "status": "Open"
-    },
-    {
-      "severity": "High",
-      "module": "Access Control",
-      "page": "/receptionist/requests",
-      "error": "Unexpected status 429",
-      "routeFile": "backend/routes/api.php",
-      "fixApplied": "No code fix applied by Phase 11 audit",
-      "status": "Open"
-    },
-    {
-      "severity": "High",
-      "module": "Access Control",
-      "page": "/cashier/payment-requests",
-      "error": "Unexpected status 429",
+      "error": "Unexpected status 200",
       "routeFile": "backend/routes/api.php",
       "fixApplied": "No code fix applied by Phase 11 audit",
       "status": "Open"
     }
   ],
   "screenshots": [
-    "documentation/screenshots/phase11/customer-request-submitted.png",
-    "documentation/screenshots/phase11/receptionist-request-approval-scheduling.png",
-    "documentation/screenshots/phase11/customer-updated-status.png",
     "documentation/screenshots/phase11/boarding-tracking-receptionist.png",
     "documentation/screenshots/phase11/boarding-tracking-customer.png",
-    "documentation/screenshots/phase11/inventory-stock-before.png",
-    "documentation/screenshots/phase11/cashier-pos-success.png",
-    "documentation/screenshots/phase11/inventory-stock-after.png",
-    "documentation/screenshots/phase11/inventory-log.png",
-    "documentation/screenshots/phase11/manager-report-after-pos.png",
+    "documentation/screenshots/phase11/customer-payment-proof-upload.png",
     "documentation/screenshots/phase11/notifications-customer.png",
     "documentation/screenshots/phase11/notifications-receptionist.png",
     "documentation/screenshots/phase11/notifications-cashier.png",
@@ -273,306 +229,132 @@
     {
       "status": 429,
       "method": "GET",
-      "url": "http://localhost:8000/api/notifications?role=receptionist",
-      "page": "http://localhost:3000/receptionist/bookings/hotel"
+      "url": "http://localhost:8000/api/notifications?role=customer",
+      "page": "http://127.0.0.1:3000/customer/notifications"
+    },
+    {
+      "status": 429,
+      "method": "GET",
+      "url": "http://localhost:8000/api/notifications",
+      "page": "http://127.0.0.1:3000/customer/notifications"
+    },
+    {
+      "status": 429,
+      "method": "GET",
+      "url": "http://localhost:8000/api/chatbot/welcome",
+      "page": "http://127.0.0.1:3000/customer/notifications"
+    },
+    {
+      "status": 429,
+      "method": "GET",
+      "url": "http://localhost:8000/api/customer/tracking",
+      "page": "http://127.0.0.1:3000/customer/notifications"
+    },
+    {
+      "status": 429,
+      "method": "GET",
+      "url": "http://localhost:8000/api/notifications?role=customer",
+      "page": "http://127.0.0.1:3000/customer/notifications"
+    },
+    {
+      "status": 429,
+      "method": "GET",
+      "url": "http://localhost:8000/api/notifications",
+      "page": "http://127.0.0.1:3000/customer/notifications"
+    },
+    {
+      "status": 429,
+      "method": "GET",
+      "url": "http://localhost:8000/api/chatbot/welcome",
+      "page": "http://127.0.0.1:3000/customer/notifications"
+    },
+    {
+      "status": 429,
+      "method": "GET",
+      "url": "http://localhost:8000/api/customer/tracking",
+      "page": "http://127.0.0.1:3000/customer/notifications"
     },
     {
       "status": 429,
       "method": "GET",
       "url": "http://localhost:8000/api/notifications?role=receptionist",
-      "page": "http://localhost:3000/receptionist/bookings/hotel"
-    },
-    {
-      "status": 429,
-      "method": "GET",
-      "url": "http://localhost:8000/api/receptionist/boarding-requests",
-      "page": "http://localhost:3000/receptionist/bookings/hotel"
-    },
-    {
-      "status": 429,
-      "method": "GET",
-      "url": "http://localhost:8000/api/receptionist/boarding-rooms",
-      "page": "http://localhost:3000/receptionist/bookings/hotel"
-    },
-    {
-      "status": 429,
-      "method": "GET",
-      "url": "http://localhost:8000/api/receptionist/boarding-requests",
-      "page": "http://localhost:3000/receptionist/bookings/hotel"
-    },
-    {
-      "status": 429,
-      "method": "GET",
-      "url": "http://localhost:8000/api/receptionist/boarding-rooms",
-      "page": "http://localhost:3000/receptionist/bookings/hotel"
-    },
-    {
-      "status": 429,
-      "method": "GET",
-      "url": "http://localhost:8000/api/cashier/payment-requests",
-      "page": "http://localhost:3000/cashier/payment-verification"
-    },
-    {
-      "status": 429,
-      "method": "GET",
-      "url": "http://localhost:8000/api/cashier/inventory/sellable",
-      "page": "http://localhost:3000/cashier/payment-verification"
-    },
-    {
-      "status": 429,
-      "method": "GET",
-      "url": "http://localhost:8000/api/cashier/pos/services",
-      "page": "http://localhost:3000/cashier/payment-verification"
-    },
-    {
-      "status": 429,
-      "method": "GET",
-      "url": "http://localhost:8000/api/cashier/customers",
-      "page": "http://localhost:3000/cashier/payment-verification"
-    },
-    {
-      "status": 429,
-      "method": "GET",
-      "url": "http://localhost:8000/api/cashier/payment-requests",
-      "page": "http://localhost:3000/cashier/payment-verification"
-    },
-    {
-      "status": 429,
-      "method": "GET",
-      "url": "http://localhost:8000/api/cashier/payment-requests",
-      "page": "http://localhost:3000/cashier/payment-verification"
-    },
-    {
-      "status": 429,
-      "method": "GET",
-      "url": "http://localhost:8000/api/cashier/inventory/sellable",
-      "page": "http://localhost:3000/cashier/payment-verification"
-    },
-    {
-      "status": 429,
-      "method": "GET",
-      "url": "http://localhost:8000/api/cashier/pos/services",
-      "page": "http://localhost:3000/cashier/payment-verification"
-    },
-    {
-      "status": 429,
-      "method": "GET",
-      "url": "http://localhost:8000/api/cashier/customers",
-      "page": "http://localhost:3000/cashier/payment-verification"
-    },
-    {
-      "status": 429,
-      "method": "GET",
-      "url": "http://localhost:8000/api/cashier/payment-requests",
-      "page": "http://localhost:3000/cashier/payment-verification"
-    },
-    {
-      "status": 429,
-      "method": "GET",
-      "url": "http://localhost:8000/api/customers",
-      "page": "http://localhost:3000/cashier/payment-verification"
-    },
-    {
-      "status": 429,
-      "method": "GET",
-      "url": "http://localhost:8000/api/customers",
-      "page": "http://localhost:3000/cashier/payment-verification"
+      "page": "http://127.0.0.1:3000/receptionist/bookings/hotel"
     },
     {
       "status": "REQUEST_FAILED",
       "method": "GET",
       "url": "http://localhost:8000/api/veterinary/appointments",
-      "page": "http://localhost:3000/veterinary/appointments",
+      "page": "http://127.0.0.1:3000/veterinary/appointments",
       "failure": "net::ERR_ABORTED"
-    },
-    {
-      "status": 429,
-      "method": "GET",
-      "url": "http://localhost:8000/api/notifications?role=veterinary",
-      "page": "http://localhost:3000/veterinary/appointments"
-    },
-    {
-      "status": 429,
-      "method": "GET",
-      "url": "http://localhost:8000/api/chatbot/welcome",
-      "page": "http://localhost:3000/veterinary/appointments"
-    },
-    {
-      "status": 429,
-      "method": "GET",
-      "url": "http://localhost:8000/api/notifications?role=veterinary",
-      "page": "http://localhost:3000/veterinary/appointments"
-    },
-    {
-      "status": 429,
-      "method": "GET",
-      "url": "http://localhost:8000/api/veterinary/appointments",
-      "page": "http://localhost:3000/veterinary/appointments"
-    },
-    {
-      "status": 429,
-      "method": "GET",
-      "url": "http://localhost:8000/api/chatbot/welcome",
-      "page": "http://localhost:3000/veterinary/appointments"
     }
   ],
   "console": [
     {
       "type": "error",
       "text": "Failed to load resource: the server responded with a status of 429 (Too Many Requests)",
-      "url": "http://localhost:3000/receptionist/bookings/hotel"
+      "url": "http://127.0.0.1:3000/customer/notifications"
     },
     {
       "type": "error",
       "text": "Failed to load resource: the server responded with a status of 429 (Too Many Requests)",
-      "url": "http://localhost:3000/receptionist/bookings/hotel"
+      "url": "http://127.0.0.1:3000/customer/notifications"
+    },
+    {
+      "type": "error",
+      "text": "Customer notifications fetch error: Error: Too Many Attempts.\n    at apiRequest (http://127.0.0.1:3000/src/api/client.js:143:21)\n    at async fetchNotifications (http://127.0.0.1:3000/src/components/customers/CustomerNotifications.jsx?t=1791736938432:47:20)",
+      "url": "http://127.0.0.1:3000/customer/notifications"
     },
     {
       "type": "error",
       "text": "Failed to load resource: the server responded with a status of 429 (Too Many Requests)",
-      "url": "http://localhost:3000/receptionist/bookings/hotel"
+      "url": "http://127.0.0.1:3000/customer/notifications"
     },
     {
       "type": "error",
       "text": "Failed to load resource: the server responded with a status of 429 (Too Many Requests)",
-      "url": "http://localhost:3000/receptionist/bookings/hotel"
+      "url": "http://127.0.0.1:3000/customer/notifications"
     },
     {
       "type": "error",
       "text": "Failed to load resource: the server responded with a status of 429 (Too Many Requests)",
-      "url": "http://localhost:3000/receptionist/bookings/hotel"
+      "url": "http://127.0.0.1:3000/customer/notifications"
     },
     {
       "type": "error",
       "text": "Failed to load resource: the server responded with a status of 429 (Too Many Requests)",
-      "url": "http://localhost:3000/receptionist/bookings/hotel"
+      "url": "http://127.0.0.1:3000/customer/notifications"
+    },
+    {
+      "type": "error",
+      "text": "Customer notifications fetch error: Error: Too Many Attempts.\n    at apiRequest (http://127.0.0.1:3000/src/api/client.js:143:21)\n    at async fetchNotifications (http://127.0.0.1:3000/src/components/customers/CustomerNotifications.jsx?t=1791736938432:47:20)",
+      "url": "http://127.0.0.1:3000/customer/notifications"
     },
     {
       "type": "error",
       "text": "Failed to load resource: the server responded with a status of 429 (Too Many Requests)",
-      "url": "http://localhost:3000/cashier/payment-verification"
-    },
-    {
-      "type": "warning",
-      "text": "Payment requests rate limited — pausing polling for 5 minutes.",
-      "url": "http://localhost:3000/cashier/payment-verification"
+      "url": "http://127.0.0.1:3000/customer/notifications"
     },
     {
       "type": "error",
       "text": "Failed to load resource: the server responded with a status of 429 (Too Many Requests)",
-      "url": "http://localhost:3000/cashier/payment-verification"
+      "url": "http://127.0.0.1:3000/customer/notifications"
     },
     {
       "type": "error",
       "text": "Failed to load resource: the server responded with a status of 429 (Too Many Requests)",
-      "url": "http://localhost:3000/cashier/payment-verification"
-    },
-    {
-      "type": "error",
-      "text": "Failed to load resource: the server responded with a status of 429 (Too Many Requests)",
-      "url": "http://localhost:3000/cashier/payment-verification"
-    },
-    {
-      "type": "error",
-      "text": "Failed to load resource: the server responded with a status of 429 (Too Many Requests)",
-      "url": "http://localhost:3000/cashier/payment-verification"
-    },
-    {
-      "type": "error",
-      "text": "Failed to load resource: the server responded with a status of 429 (Too Many Requests)",
-      "url": "http://localhost:3000/cashier/payment-verification"
-    },
-    {
-      "type": "warning",
-      "text": "Payment requests rate limited — pausing polling for 5 minutes.",
-      "url": "http://localhost:3000/cashier/payment-verification"
-    },
-    {
-      "type": "error",
-      "text": "Failed to load resource: the server responded with a status of 429 (Too Many Requests)",
-      "url": "http://localhost:3000/cashier/payment-verification"
-    },
-    {
-      "type": "error",
-      "text": "Failed to load resource: the server responded with a status of 429 (Too Many Requests)",
-      "url": "http://localhost:3000/cashier/payment-verification"
-    },
-    {
-      "type": "error",
-      "text": "Failed to load resource: the server responded with a status of 429 (Too Many Requests)",
-      "url": "http://localhost:3000/cashier/payment-verification"
-    },
-    {
-      "type": "error",
-      "text": "Failed to load resource: the server responded with a status of 429 (Too Many Requests)",
-      "url": "http://localhost:3000/cashier/payment-verification"
-    },
-    {
-      "type": "error",
-      "text": "Failed to load resource: the server responded with a status of 429 (Too Many Requests)",
-      "url": "http://localhost:3000/cashier/payment-verification"
-    },
-    {
-      "type": "error",
-      "text": "Failed to load resource: the server responded with a status of 429 (Too Many Requests)",
-      "url": "http://localhost:3000/cashier/payment-verification"
-    },
-    {
-      "type": "error",
-      "text": "Failed to load resource: the server responded with a status of 429 (Too Many Requests)",
-      "url": "http://localhost:3000/veterinary/appointments"
-    },
-    {
-      "type": "error",
-      "text": "Failed to load resource: the server responded with a status of 429 (Too Many Requests)",
-      "url": "http://localhost:3000/veterinary/appointments"
-    },
-    {
-      "type": "error",
-      "text": "Failed to load resource: the server responded with a status of 429 (Too Many Requests)",
-      "url": "http://localhost:3000/veterinary/appointments"
-    },
-    {
-      "type": "error",
-      "text": "Failed to load resource: the server responded with a status of 429 (Too Many Requests)",
-      "url": "http://localhost:3000/veterinary/appointments"
-    },
-    {
-      "type": "error",
-      "text": "Failed to fetch appointments: Error: Too Many Attempts.\n    at apiRequest (http://localhost:3000/src/api/client.js:142:21)\n    at async http://localhost:3000/src/components/veterinary/VetAppointments_PinkGlass.jsx:138:20",
-      "url": "http://localhost:3000/veterinary/appointments"
-    },
-    {
-      "type": "error",
-      "text": "Failed to load resource: the server responded with a status of 429 (Too Many Requests)",
-      "url": "http://localhost:3000/veterinary/appointments"
+      "url": "http://127.0.0.1:3000/receptionist/bookings/hotel"
     }
   ],
   "createdRecords": [
     {
       "type": "service_request",
-      "id": 151,
-      "label": "grooming/service request"
-    },
-    {
-      "type": "service_request",
-      "id": 152,
+      "id": 214,
       "label": "boarding request"
     },
     {
       "type": "service_request",
-      "id": 153,
+      "id": 215,
       "label": "payment reject request"
-    },
-    {
-      "type": "service_request",
-      "id": 154,
-      "label": "payment verify request"
-    },
-    {
-      "type": "service_request",
-      "id": 155,
-      "label": "veterinary request"
     }
   ],
   "finalVerdict": "Not Ready -- Critical browser issues remain"
