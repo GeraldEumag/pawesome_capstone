@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Cashier;
 use App\Http\Controllers\Controller;
 use App\Models\Sale;
 use App\Models\Appointment;
+use App\Models\ServiceBillingPaymentRequest;
 use App\Models\InventoryItem;
 use App\Models\ActivityLog;
 use App\Models\User;
@@ -605,6 +606,17 @@ class DashboardController extends Controller
         $serviceRequests = DB::table('service_requests')
             ->where('status', 'approved')
             ->whereIn('payment_status', ['pending', 'unpaid', 'rejected'])
+            ->where(function ($query) {
+                $query->whereNotExists(function ($subquery) {
+                    $subquery->select(DB::raw(1))
+                        ->from('appointments')
+                        ->whereColumn('appointments.service_request_id', 'service_requests.id')
+                        ->where('appointments.additional_charges', '>', 0);
+                })->orWhere(function ($pendingProof) {
+                    $pendingProof->where('service_requests.payment_status', 'pending')
+                        ->whereNotNull('service_requests.payment_proof');
+                });
+            })
             ->where(function ($q) {
                 // 'rejected' rows are counter collections after a rejected
                 // e-wallet proof — listed for any channel. 'pending' rows
@@ -793,6 +805,9 @@ class DashboardController extends Controller
             ->whereIn('appointments.status', ['approved', 'scheduled', 'in_consultation', 'needs_confinement', 'awaiting_payment', 'treated'])
             ->whereIn('appointments.payment_status', ['unpaid', 'pending', 'rejected'])
             ->where(function ($q) {
+                $q->whereNull('appointments.additional_charges')->orWhere('appointments.additional_charges', '<=', 0);
+            })
+            ->where(function ($q) {
                 // Same channel rule: rejected → counter fallback; pending →
                 // proof required (stored on the linked request); unpaid →
                 // walk-in counter collection only.
@@ -897,7 +912,53 @@ class DashboardController extends Controller
                 ];
             });
 
-        $allPayments = $serviceRequests->concat($boardings)->concat($confinements)->concat($appointments)->concat($groomings);
+        $serviceBillingPayments = ServiceBillingPaymentRequest::with(['appointment.customer', 'appointment.pet', 'appointment.service', 'items'])
+            ->whereIn('status', ServiceBillingPaymentRequest::OPEN_STATUSES)
+            ->orderByDesc('created_at')
+            ->get()
+            ->map(function (ServiceBillingPaymentRequest $paymentRequest) {
+                $appointment = $paymentRequest->appointment;
+                return [
+                    'id' => $paymentRequest->id,
+                    'payable_type' => 'service_billing_payment',
+                    'type' => 'service_billing_payment',
+                    'source' => 'service_billing_payment',
+                    'payment_source' => 'service_billing_payment',
+                    'payment_channel' => $paymentRequest->payment_channel,
+                    'customer_name' => $paymentRequest->customer_name ?? $appointment?->customer?->name ?? 'Customer',
+                    'customer_email' => $paymentRequest->customer_email ?? $appointment?->customer?->email,
+                    'pet_name' => $paymentRequest->pet_name ?? $appointment?->pet?->name,
+                    'request_type' => 'Veterinary Billing',
+                    'service_name' => $paymentRequest->service_name ?? $appointment?->service?->name ?? 'Veterinary Service',
+                    'amount' => (float) $paymentRequest->amount_due,
+                    'payment_method' => $paymentRequest->payment_method ?? 'counter',
+                    'payment_reference' => $paymentRequest->payment_reference,
+                    'payment_proof' => $paymentRequest->payment_proof,
+                    'proof_url' => $paymentRequest->payment_proof
+                        ? url('/api/files/payment-proofs/service-billing-payment/' . $paymentRequest->id . '/view')
+                        : null,
+                    'request_date' => $paymentRequest->submitted_at ?? $paymentRequest->created_at,
+                    'status' => $appointment?->status ?? 'approved',
+                    'payment_status' => $paymentRequest->status === ServiceBillingPaymentRequest::STATUS_PENDING_VERIFICATION ? 'pending' : 'unpaid',
+                    'booking_channel' => $appointment?->booking_channel ?? 'online',
+                    'items' => $paymentRequest->items->map(fn ($item) => [
+                        'id' => $item->service_item_usage_id,
+                        'description' => $item->description,
+                        'quantity' => (int) $item->quantity,
+                        'unit' => $item->unit,
+                        'unit_price' => (float) $item->unit_price,
+                        'total_price' => (float) $item->total_price,
+                        'is_discount' => (bool) $item->is_discount,
+                    ])->values()->all(),
+                ];
+            });
+
+        $allPayments = $serviceRequests
+            ->concat($boardings)
+            ->concat($confinements)
+            ->concat($appointments)
+            ->concat($groomings)
+            ->concat($serviceBillingPayments);
 
         return response()->json(['payments' => $allPayments]);
     }

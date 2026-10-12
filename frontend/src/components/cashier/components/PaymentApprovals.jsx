@@ -51,6 +51,7 @@ const getTypeIcon = (type) => {
     case "boarding":    return faHotel;
     case "appointment": return faStethoscope;
     case "grooming":    return faScissors;
+    case "service_billing_payment": return faStethoscope;
     case "service":     return faShoppingBag;
     case "order":       return faBoxOpen;
     default:            return faBoxOpen;
@@ -84,6 +85,8 @@ const isCashMethod = (method) => {
 };
 
 const isWalkIn = (payment) => (payment?.booking_channel || "").toLowerCase() === "walk_in";
+const isServiceBillingCashier = (payment) =>
+  payment?.payable_type === "service_billing_payment" && payment?.payment_channel === "cashier";
 
 /*
  * Counter cash is collectible for walk-in bookings, or for any booking whose
@@ -92,6 +95,7 @@ const isWalkIn = (payment) => (payment?.booking_channel || "").toLowerCase() ===
  */
 const isCounterCollection = (payment) => {
   const ps = (payment?.payment_status || "").toLowerCase();
+  if (payment?.payable_type === "service_billing_payment" && payment?.payment_channel === "cashier") return true;
   if (ps === "rejected") return true;
   return isWalkIn(payment) && ["unpaid", "pending"].includes(ps);
 };
@@ -143,6 +147,7 @@ const PaymentApprovals = () => {
   /* ── Modal local state ── */
   const [referenceNumber, setReferenceNumber] = useState("");
   const [cashReceived, setCashReceived]       = useState("");   // string, e.g. "500"
+  const [cashierMethod, setCashierMethod] = useState("cash");
   const [showReceipt, setShowReceipt]         = useState(false);
   const [receiptData, setReceiptData]         = useState(null);
 
@@ -156,11 +161,22 @@ const PaymentApprovals = () => {
     if (!proofModal) {
       setReferenceNumber("");
       setCashReceived("");
+      setCashierMethod("cash");
+      return;
+    }
+
+    const payment = proofModal.payment;
+    setCashierMethod(isServiceBillingCashier(payment) ? "cash" : (payment?.payment_method || "cash"));
+    if (!isServiceBillingCashier(payment) && payment?.payment_reference) {
+      setReferenceNumber(payment.payment_reference);
     }
   }, [proofModal]);
 
   /* Derived cash values */
   const amountDue  = Number(proofModal?.payment?.amount || proofModal?.payment?.total_amount || 0);
+  const billingCounterPayment = isServiceBillingCashier(proofModal?.payment);
+  const modalPaymentMethod = billingCounterPayment ? cashierMethod : proofModal?.payment?.payment_method;
+  const isCashModal = billingCounterPayment ? cashierMethod === "cash" : isCashMethod(modalPaymentMethod);
   const cashNum    = Number(cashReceived) || 0;
   const changeAmt  = useMemo(() => Math.max(cashNum - amountDue, 0), [cashNum, amountDue]);
   const cashShort  = useMemo(() => (cashNum > 0 && cashNum < amountDue ? amountDue - cashNum : 0), [cashNum, amountDue]);
@@ -192,9 +208,10 @@ const PaymentApprovals = () => {
   const handleVerifyFromModal = async () => {
     if (!proofModal?.payment) { showError("Payment data not available"); return; }
     const payment = proofModal.payment;
+    const paymentToVerify = { ...payment, payment_method: modalPaymentMethod };
     const refNum  = referenceNumberRef.current.trim();
 
-    if (isCashMethod(payment.payment_method)) {
+    if (isCashModal) {
       // Cash: require amount entered AND sufficient
       if (!cashReceivedRef.current || cashNum <= 0) {
         showWarning("Please enter the cash amount received.");
@@ -207,7 +224,7 @@ const PaymentApprovals = () => {
     } else {
       // Digital: require reference number
       if (!refNum) {
-        showWarning(`Please enter the ${getMethodConfig(payment.payment_method).label} reference number to verify.`);
+        showWarning(`Please enter the ${getMethodConfig(modalPaymentMethod).label} reference number to verify.`);
         return;
       }
       if (refNum.length < 6) {
@@ -216,22 +233,23 @@ const PaymentApprovals = () => {
       }
     }
 
-    const cashParams = isCashMethod(payment.payment_method)
-      ? { cashReceived: cashNum, change: changeAmt }
-      : {};
+    const cashParams = {
+      paymentMethod: modalPaymentMethod,
+      ...(isCashModal ? { cashReceived: cashNum, change: changeAmt } : {}),
+    };
 
-    const result = await verifyPayment(payment, refNum, cashParams);
+    const result = await verifyPayment(paymentToVerify, refNum, cashParams);
     if (result?.success) {
       setReceiptData({
         id:               payment.id,
         customer_name:    payment.customer_name,
         service_name:     payment.service_name || payment.request_type || "Service",
         amount:           amountDue,
-        payment_method:   payment.payment_method || "Cash",
+        payment_method:   modalPaymentMethod || "Cash",
         receipt_number:   result.receipt_number,
         reference_number: refNum || null,
-        cash_received:    isCashMethod(payment.payment_method) ? cashNum : null,
-        change:           isCashMethod(payment.payment_method) ? changeAmt : null,
+        cash_received:    isCashModal ? cashNum : null,
+        change:           isCashModal ? changeAmt : null,
         paid_at:          new Date().toISOString(),
         verified_by:      user?.name || "Cashier",
         breakdown:        result.breakdown || null,
@@ -438,14 +456,16 @@ const PaymentApprovals = () => {
                 <div className="pa-card-accent" style={{ background: methodCfg.color }} />
 
                 <div className="pa-card-header">
-                  <label className="pa-checkbox">
-                    <input
-                      type="checkbox"
-                      checked={selectedIds.includes(pKey)}
-                      onChange={() => toggleSelection(pKey)}
-                    />
-                    <span className="pa-checkmark" />
-                  </label>
+                  {payment.payable_type !== "service_billing_payment" && (
+                    <label className="pa-checkbox">
+                      <input
+                        type="checkbox"
+                        checked={selectedIds.includes(pKey)}
+                        onChange={() => toggleSelection(pKey)}
+                      />
+                      <span className="pa-checkmark" />
+                    </label>
+                  )}
 
                   <CustomerAvatar name={customerName} />
 
@@ -459,7 +479,7 @@ const PaymentApprovals = () => {
                       className="pa-method-badge"
                       style={{ color: methodCfg.color, background: methodCfg.bg }}
                     >
-                      <FontAwesomeIcon icon={methodCfg.icon} /> {methodCfg.label}
+                      <FontAwesomeIcon icon={methodCfg.icon} /> {isServiceBillingCashier(payment) ? "At Cashier" : methodCfg.label}
                     </span>
                     {payDate && (
                       <span className="pa-time">
@@ -503,7 +523,7 @@ const PaymentApprovals = () => {
                     >
                       {isVerifyLoading
                         ? <><FontAwesomeIcon icon={faSpinner} spin /> Verifying…</>
-                        : <><FontAwesomeIcon icon={faCheck} /> {isCounterCollection(payment) ? "Collect Cash" : "Verify"}</>}
+                        : <><FontAwesomeIcon icon={faCheck} /> {isServiceBillingCashier(payment) ? "Collect Payment" : isCounterCollection(payment) ? "Collect Cash" : "Verify"}</>}
                     </button>
                   ) : (
                     <span className="pa-awaiting-online" title="This booking was made online — the customer must submit an e-wallet payment proof first.">
@@ -532,7 +552,7 @@ const PaymentApprovals = () => {
 
       {/* ── Proof / Verify Modal ── */}
       {proofModal && (() => {
-        const isCash = isCashMethod(proofModal.payment?.payment_method);
+        const isCash = isCashModal;
         return (
           <div className="pa-modal-overlay" onClick={closeProof}>
             <div
@@ -544,7 +564,7 @@ const PaymentApprovals = () => {
                   <h3>
                     {isCash
                       ? "Collect Cash Payment"
-                      : `Verify ${getMethodConfig(proofModal.payment?.payment_method).label} Payment`}
+                      : `Verify ${getMethodConfig(modalPaymentMethod).label} Payment`}
                   </h3>
                   <p className="pa-modal-sub">
                     {proofModal.payment?.customer_name || "Customer"} —{" "}
@@ -555,6 +575,41 @@ const PaymentApprovals = () => {
                   <FontAwesomeIcon icon={faXmark} />
                 </button>
               </div>
+
+              {proofModal.payment?.payable_type === "service_billing_payment" && (
+                <div className="pa-reference-section">
+                  <strong>Bill items</strong>
+                  {(proofModal.payment.items || []).map((item, index) => (
+                    <div key={`${item.id || item.description}-${index}`} className="pa-modal-sub">
+                      <span>{item.is_discount ? `Discount: ${item.description}` : item.description}</span>
+                      <span>₱{fmt(item.is_discount ? -Math.abs(Number(item.total_price || 0)) : item.total_price)}</span>
+                    </div>
+                  ))}
+                  <strong>Full balance due: ₱{fmt(amountDue)}</strong>
+                </div>
+              )}
+
+              {billingCounterPayment && (
+                <div className="pa-reference-section">
+                  <label htmlFor="paCashierMethod" className="pa-reference-label">
+                    <strong>Payment Method Collected</strong>
+                  </label>
+                  <select
+                    id="paCashierMethod"
+                    value={cashierMethod}
+                    onChange={(event) => {
+                      setCashierMethod(event.target.value);
+                      setCashReceived("");
+                      setReferenceNumber("");
+                    }}
+                    className="pa-reference-input"
+                  >
+                    <option value="cash">Cash</option>
+                    <option value="gcash">GCash</option>
+                    <option value="maya">Maya</option>
+                  </select>
+                </div>
+              )}
 
               {/* ── Cash collection layout ── */}
               {isCash ? (
@@ -652,7 +707,7 @@ const PaymentApprovals = () => {
                       <img src={proofModal.blobUrl} alt="Payment proof" className="pa-proof-image" />
                     ) : (
                       <div className="pa-proof-loading">
-                        <p>No payment proof available.</p>
+                        <p>{billingCounterPayment ? "Record the reference for the payment received at the cashier." : "No payment proof available."}</p>
                       </div>
                     )}
                   </div>
@@ -666,15 +721,15 @@ const PaymentApprovals = () => {
                       </div>
                     )}
                     <label htmlFor="paRefNum" className="pa-reference-label">
-                      <strong>{getMethodConfig(proofModal.payment?.payment_method).label} Reference Number</strong>
-                      <span className="pa-reference-hint">Required — enter from the payment screenshot</span>
+                      <strong>{getMethodConfig(modalPaymentMethod).label} Reference Number</strong>
+                      <span className="pa-reference-hint">{billingCounterPayment ? "Required for counter e-wallet collection" : "Required — enter from the payment screenshot"}</span>
                     </label>
                     <input
                       type="text"
                       id="paRefNum"
                       value={referenceNumber}
                       onChange={(e) => setReferenceNumber(e.target.value)}
-                      placeholder={`Enter ${getMethodConfig(proofModal.payment?.payment_method).label} reference number`}
+                      placeholder={`Enter ${getMethodConfig(modalPaymentMethod).label} reference number`}
                       className="pa-reference-input"
                       autoFocus
                     />

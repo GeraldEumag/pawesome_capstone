@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Services\BookingAvailabilityService;
+use App\Services\ServiceDurationService;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Validator;
@@ -15,10 +16,12 @@ class AvailabilityController extends Controller
      */
     public function veterinary(Request $request): JsonResponse
     {
+        $today = now(ServiceDurationService::STORE_TIMEZONE)->toDateString();
         $validator = Validator::make($request->all(), [
-            'date' => 'required|date|after_or_equal:today',
+            'date' => 'required|date|after_or_equal:' . $today,
             'service_id' => 'nullable|integer|exists:services,id',
             'service_name' => 'nullable|string|max:150',
+            'veterinarian_id' => 'nullable|integer|exists:users,id',
         ]);
 
         if ($validator->fails()) {
@@ -32,9 +35,10 @@ class AvailabilityController extends Controller
         $date = $request->input('date');
         $serviceId = $request->input('service_id');
         $serviceName = $request->input('service_name');
+        $veterinarianId = $request->input('veterinarian_id');
 
         try {
-            $availability = BookingAvailabilityService::getVeterinaryAvailability($date, $serviceId, $serviceName);
+            $availability = BookingAvailabilityService::getVeterinaryAvailability($date, $serviceId, $serviceName, $veterinarianId ? (int) $veterinarianId : null);
             return response()->json($availability);
         } catch (\Exception $e) {
             return response()->json([
@@ -50,7 +54,7 @@ class AvailabilityController extends Controller
     public function grooming(Request $request): JsonResponse
     {
         $validator = Validator::make($request->all(), [
-            'date' => 'required|date|after_or_equal:today',
+            'date' => 'required|date|after_or_equal:' . now(ServiceDurationService::STORE_TIMEZONE)->toDateString(),
             'service_name' => 'nullable|string|max:150',
         ]);
 
@@ -82,8 +86,8 @@ class AvailabilityController extends Controller
     public function boarding(Request $request): JsonResponse
     {
         $validator = Validator::make($request->all(), [
-            'check_in' => 'required|date|after_or_equal:today',
-            'check_out' => 'required|date|after:check_in',
+            'check_in' => 'required|date|after_or_equal:' . now(ServiceDurationService::STORE_TIMEZONE)->toDateString(),
+            'check_out' => 'required|date|after_or_equal:check_in',
         ]);
 
         if ($validator->fails()) {
@@ -114,7 +118,7 @@ class AvailabilityController extends Controller
     public function checkVeterinarySlot(Request $request): JsonResponse
     {
         $validator = Validator::make($request->all(), [
-            'date' => 'required|date|after_or_equal:today',
+            'date' => 'required|date|after_or_equal:' . now(ServiceDurationService::STORE_TIMEZONE)->toDateString(),
             'time' => 'required|date_format:H:i',
             'veterinarian_id' => 'nullable|integer|exists:users,id',
             'service_name' => 'nullable|string|max:150',
@@ -159,7 +163,7 @@ class AvailabilityController extends Controller
     public function checkGroomingDate(Request $request): JsonResponse
     {
         $validator = Validator::make($request->all(), [
-            'date' => 'required|date|after_or_equal:today',
+            'date' => 'required|date|after_or_equal:' . now(ServiceDurationService::STORE_TIMEZONE)->toDateString(),
             'time' => 'nullable|date_format:H:i',
             'service_name' => 'nullable|string|max:150',
         ]);
@@ -202,8 +206,8 @@ class AvailabilityController extends Controller
     {
         $validator = Validator::make($request->all(), [
             'room_id' => 'required|integer|exists:hotel_rooms,id',
-            'check_in' => 'required|date|after_or_equal:today',
-            'check_out' => 'required|date|after:check_in',
+            'check_in' => 'required|date|after_or_equal:' . now(ServiceDurationService::STORE_TIMEZONE)->toDateString(),
+            'check_out' => 'required|date|after_or_equal:check_in',
         ]);
 
         if ($validator->fails()) {

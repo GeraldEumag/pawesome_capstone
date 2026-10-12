@@ -248,7 +248,7 @@ const NewWalkInBookingModal = ({ onClose, onSuccess }) => {
         payload.append("customer_id", form.customerId);
         payload.append("hotel_room_id", form.roomId);
         payload.append("check_in_date", form.appointmentDate);
-        payload.append("number_of_days", "1"); // same-day stay (9 AM - 7 PM)
+        payload.append("number_of_days", "1"); // same-day stay (10 AM - 6 PM)
         payload.append("notes", buildNotes());
         if (form.vaccinationCard) {
           payload.append("vaccination_card", form.vaccinationCard);

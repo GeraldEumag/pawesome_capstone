@@ -514,7 +514,7 @@ const RoleAwareChatbot = ({
       });
       setMessages((prev) => [...prev, {
         sender: "bot",
-        text: `Hotel booking request submitted for ${data.boarding?.pet?.name || "your pet"} on ${workflowState.form.check_in} (same-day stay, 9 AM - 7 PM). Waiting for receptionist approval.`,
+        text: `Hotel booking request submitted for ${data.boarding?.pet?.name || "your pet"} on ${workflowState.form.check_in} (same-day stay, 10 AM - 6 PM). Waiting for receptionist approval.`,
         suggestions: ["Check my booking status"],
       }]);
       closeWorkflow();
@@ -641,7 +641,7 @@ const RoleAwareChatbot = ({
       text: `📅 Stay date: ${dateStr}`,
       timestamp: new Date().toISOString(),
     }]);
-    // Same-day stay (store open 9 AM - 7 PM): skip check-out, go to room select
+    // Same-day stay (store open 10 AM - 6 PM): skip check-out, go to room select
     convCheckOut(dateStr, dateStr);
   };
 
@@ -756,7 +756,7 @@ const RoleAwareChatbot = ({
         });
         setMessages((prev) => [...prev, {
           sender: "bot",
-          text: `✅ Hotel stay request submitted!\n\nBooking ID: #${data.boarding?.id || "—"}\nPet: ${convFlow.data.pet_name}\nDate: ${convFlow.data.check_in} (same-day stay, 9 AM - 7 PM)\n\n${CUSTOMER_APPROVAL_NOTICE}`,
+          text: `✅ Hotel stay request submitted!\n\nBooking ID: #${data.boarding?.id || "—"}\nPet: ${convFlow.data.pet_name}\nDate: ${convFlow.data.check_in} (same-day stay, 10 AM - 6 PM)\n\n${CUSTOMER_APPROVAL_NOTICE}`,
           timestamp: new Date().toISOString(),
           isBookingSuccess: true,
           suggestions: ["Check my booking status"],
@@ -1085,7 +1085,7 @@ const RoleAwareChatbot = ({
               <>
                 <div className="rbac-booking-confirm-row"><span>Pet</span><strong>{convFlow.data.pet_name}</strong></div>
                 <div className="rbac-booking-confirm-row"><span>Stay Date</span><strong>{convFlow.data.check_in}</strong></div>
-                <div className="rbac-booking-confirm-row"><span>Duration</span><strong>Same-day (9 AM - 7 PM)</strong></div>
+                <div className="rbac-booking-confirm-row"><span>Duration</span><strong>Same-day (10 AM - 6 PM)</strong></div>
                 <div className="rbac-booking-confirm-row"><span>Room</span><strong>{convFlow.data.room_label}</strong></div>
                 {convFlow.data.notes && <div className="rbac-booking-confirm-row"><span>Notes</span><strong>{convFlow.data.notes}</strong></div>}
               </>

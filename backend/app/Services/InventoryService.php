@@ -32,6 +32,15 @@ class InventoryService
         self::STATUS_DISCONTINUED,
     ];
 
+    public const PERMANENT_DELETE_REASONS = [
+        'expired' => 'Expired medicine or product',
+        'damaged' => 'Damaged or contaminated',
+        'discontinued' => 'Withdrawn or discontinued',
+        'duplicate' => 'Duplicate inventory record',
+        'entered_in_error' => 'Entered in error',
+        'other' => 'Other',
+    ];
+
     /**
      * Valid category values
      */
@@ -245,32 +254,77 @@ class InventoryService
     /**
      * Delete an inventory item (admin only for items with no history)
      */
-    public function deleteItem(int $id, bool $forceDelete = false): array
+    public function deleteItem(int $id, string $reason, ?string $reasonDetails = null): array
     {
-        return DB::transaction(function () use ($id, $forceDelete) {
+        if (!array_key_exists($reason, self::PERMANENT_DELETE_REASONS)) {
+            throw ValidationException::withMessages(['reason' => ['Select a valid reason for permanent deletion.']]);
+        }
+        if ($reason === 'other' && mb_strlen(trim((string) $reasonDetails)) < 3) {
+            throw ValidationException::withMessages(['reason_details' => ['Provide details for the selected reason.']]);
+        }
+
+        return DB::transaction(function () use ($id, $reason, $reasonDetails) {
             $item = InventoryItem::lockForUpdate()->findOrFail($id);
-
-            // Only allow hard delete for items with no history
-            $saleItemsCount = DB::table('sale_items')
-                ->where('product_id', $id)
-                ->count();
-
-            $logsCount = DB::table('inventory_logs')
-                ->where('inventory_item_id', $id)
-                ->count();
-
-            $batchesCount = $item->batches()->count();
-
-            if (!$forceDelete && ($saleItemsCount > 0 || $logsCount > 0 || $batchesCount > 0)) {
-                throw new \Exception("Item has transaction history and cannot be permanently deleted. Use archive instead.");
+            if ($item->status !== 'archived') {
+                throw new \Exception('Archive this inventory item before permanently deleting it.');
+            }
+            if ((int) $item->stock > 0) {
+                throw new \Exception('Inventory items with remaining stock cannot be permanently deleted.');
             }
 
-            // Log the deletion
-            $this->logStockChange($item->id, -$item->stock, 'Item permanently deleted', 'permanent_deletion');
+            $saleItemsCount = DB::table('sale_items')->where('product_id', $id)->count();
+            $customerOrderItemsCount = Schema::hasTable('customer_order_items')
+                ? DB::table('customer_order_items')->where('inventory_item_id', $id)->count()
+                : 0;
+            $serviceUsageCount = Schema::hasTable('service_item_usages')
+                ? DB::table('service_item_usages')->where('inventory_item_id', $id)->count()
+                : 0;
+            $batchesCount = $item->batches()->count();
+            $transactionLogsCount = DB::table('inventory_logs')
+                ->where('inventory_item_id', $id)
+                ->where(function ($query) {
+                    $query->whereNull('type')->orWhereNotIn('type', ['archive', 'restore']);
+                })
+                ->where(function ($query) {
+                    $query->whereNull('movement_type')->orWhereNotIn('movement_type', ['archive', 'restore']);
+                })
+                ->count();
+
+            if ($saleItemsCount > 0 || $customerOrderItemsCount > 0 || $serviceUsageCount > 0 || $batchesCount > 0 || $transactionLogsCount > 0) {
+                throw new \Exception('This archived item has sales, usage, batches, or transaction history and must remain archived.');
+            }
+
+            $reasonLabel = self::PERMANENT_DELETE_REASONS[$reason];
+            $details = trim((string) $reasonDetails);
+            $reasonText = $reason === 'other' ? $reasonLabel . ': ' . $details : $reasonLabel;
+            $photoPath = $item->photo;
+
+            ActivityLog::log(auth()->id(), 'inventory_item_permanently_deleted', "Permanently deleted archived inventory item {$item->name} ({$item->sku}). Reason: {$reasonText}", [
+                'category' => 'inventory',
+                'reference_type' => 'inventory_item',
+                'reference_id' => $item->id,
+                'metadata' => [
+                    'reason' => $reason,
+                    'reason_label' => $reasonLabel,
+                    'reason_details' => $reason === 'other' ? $details : null,
+                    'item_name' => $item->name,
+                    'sku' => $item->sku,
+                    'archive_reason' => $item->archive_reason,
+                    'archived_at' => $item->archived_at,
+                ],
+            ]);
 
             $item->delete();
+            if ($photoPath) {
+                DB::afterCommit(fn () => FileStorageService::deleteQuietly('public', $photoPath));
+            }
 
-            return ['message' => 'Item permanently deleted successfully'];
+            return [
+                'message' => 'Archived inventory item permanently deleted.',
+                'item_id' => $id,
+                'reason' => $reasonLabel,
+                'reason_details' => $reason === 'other' ? $details : null,
+            ];
         });
     }
 

@@ -19,6 +19,7 @@ use App\Services\PaymentVerificationService;
 use App\Models\ActivityLog;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Carbon;
 
@@ -139,6 +140,81 @@ class AppointmentController extends Controller
         return response()->json($appointment);
     }
 
+    private function updateWithScheduleValidation(Appointment $appointment, array $updateData): ?Appointment
+    {
+        if (!array_key_exists('scheduled_at', $updateData) && !array_key_exists('service_id', $updateData)) {
+            $appointment->update($updateData);
+            return $appointment->fresh(['customer', 'pet', 'service', 'veterinarian']);
+        }
+
+        return DB::transaction(function () use ($appointment, $updateData) {
+            BookingAvailabilityService::lockServiceSchedule();
+            $lockedAppointment = Appointment::whereKey($appointment->id)->lockForUpdate()->first();
+            if (!$lockedAppointment) {
+                return null;
+            }
+
+            $service = Service::find($updateData['service_id'] ?? $lockedAppointment->service_id);
+            if (!$service) {
+                return null;
+            }
+
+            $scheduledValue = $updateData['scheduled_at'] ?? $lockedAppointment->scheduled_at->toIso8601String();
+            [$scheduledAtUtc, $scheduledAtLocal] = BookingAvailabilityService::appointmentTimes($scheduledValue);
+            if (!$scheduledAtUtc->isFuture()) {
+                return null;
+            }
+
+            $serviceType = strtolower((string) $service->category) === 'grooming' ? 'grooming' : 'veterinary';
+            if (!BookingAvailabilityService::isServiceTimeAvailable(
+                $serviceType,
+                $scheduledAtLocal->toDateString(),
+                $scheduledAtLocal->format('H:i'),
+                $service->name,
+                $lockedAppointment->veterinarian_id,
+                $lockedAppointment->id,
+                $lockedAppointment->service_request_id
+            )) {
+                return null;
+            }
+
+            $updateData['scheduled_at'] = $scheduledAtUtc;
+            if (array_key_exists('service_id', $updateData)) {
+                $updateData['price'] = $service->price ?? $lockedAppointment->price;
+            }
+            $lockedAppointment->update($updateData);
+
+            if ($lockedAppointment->service_request_id) {
+                $serviceRequest = ServiceRequest::find($lockedAppointment->service_request_id);
+                if ($serviceRequest) {
+                    $serviceRequest->request_date = $scheduledAtLocal->toDateString();
+                    $serviceRequest->request_time = $scheduledAtLocal->format('H:i');
+                    $serviceRequest->service_name = $service->name;
+                    $serviceRequest->save();
+                    Grooming::where('service_request_id', $serviceRequest->id)->update([
+                        'appointment_date' => $scheduledAtLocal->toDateString(),
+                        'appointment_time' => $scheduledAtLocal->format('H:i'),
+                        'service' => $service->name,
+                    ]);
+                }
+            }
+            if (Schema::hasColumn('groomings', 'appointment_id')) {
+                $grooming = Grooming::where('appointment_id', $lockedAppointment->id);
+                if ($serviceType === 'grooming') {
+                    $grooming->update([
+                        'appointment_date' => $scheduledAtLocal->toDateString(),
+                        'appointment_time' => $scheduledAtLocal->format('H:i'),
+                        'service' => $service->name,
+                    ]);
+                } else {
+                    $grooming->update(['status' => 'cancelled']);
+                }
+            }
+
+            return $lockedAppointment->fresh(['customer', 'pet', 'service', 'veterinarian']);
+        });
+    }
+
     /**
      * Create new appointment
      */
@@ -161,7 +237,7 @@ class AppointmentController extends Controller
             'pet_id' => 'required|integer|exists:pets,id',
             'service_id' => 'required|integer|exists:services,id',
             'veterinarian_id' => 'nullable|integer|exists:users,id',
-            'scheduled_at' => 'required|date|after:now',
+            'scheduled_at' => 'required|date',
             'notes' => 'nullable|string',
         ]);
 
@@ -173,16 +249,28 @@ class AppointmentController extends Controller
             return response()->json(['message' => 'Pet not found for this customer'], 422);
         }
 
-        $scheduledAt = Carbon::parse($request->scheduled_at);
-        $date = $scheduledAt->format('Y-m-d');
-        $time = $scheduledAt->format('H:i');
+        [$scheduledAtUtc, $scheduledAtLocal] = BookingAvailabilityService::appointmentTimes($request->scheduled_at);
+        if (!$scheduledAtUtc->isFuture()) {
+            return response()->json(['errors' => ['scheduled_at' => ['The scheduled time must be in the future.']]], 422);
+        }
+        $date = $scheduledAtLocal->toDateString();
+        $time = $scheduledAtLocal->format('H:i');
         $service = Service::find($request->service_id);
 
-        $appointment = DB::transaction(function () use ($request, $date, $time, $service) {
-            Service::query()->orderBy('id')->lockForUpdate()->first();
+        $appointment = DB::transaction(function () use ($request, $date, $time, $service, $scheduledAtUtc) {
+            BookingAvailabilityService::lockServiceSchedule();
             $lockedService = Service::find($request->service_id);
             $serviceType = strtolower((string) $lockedService?->category) === 'grooming' ? 'grooming' : 'veterinary';
-            if (!BookingAvailabilityService::isServiceTimeAvailable($serviceType, $date, $time, $lockedService?->name, $request->veterinarian_id)) {
+            if (!BookingAvailabilityService::isServiceTimeAvailable(
+                $serviceType,
+                $date,
+                $time,
+                $lockedService?->name,
+                $request->veterinarian_id,
+                null,
+                null,
+                $request->user()?->role !== 'customer'
+            )) {
                 return null;
             }
 
@@ -196,21 +284,20 @@ class AppointmentController extends Controller
                     : ($request->user()?->hasRoleAccess('receptionist', 'admin')
                         ? 'approved'
                         : 'pending'),
-                'scheduled_at' => $request->scheduled_at,
+                'scheduled_at' => $scheduledAtUtc,
                 'notes' => $request->notes,
                 'price' => $lockedService?->price ?? $service?->price ?? 0,
                 'booking_channel' => \App\Support\BookingChannel::forUser($request->user()),
             ]);
 
-            // Automatically create grooming record if service category is Grooming
-            if ($lockedService && $lockedService->category === 'Grooming') {
+            if (strtolower((string) $lockedService?->category) === 'grooming') {
                 $groomingPrice = (float) ($lockedService->price ?? 0);
-                Grooming::create([
+                $groomingData = [
                     'customer_id' => $request->customer_id,
                     'pet_id' => $request->pet_id,
                     'service' => $lockedService->name,
-                    'appointment_date' => Carbon::parse($request->scheduled_at)->toDateString(),
-                    'appointment_time' => Carbon::parse($request->scheduled_at)->toTimeString(),
+                    'appointment_date' => $date,
+                    'appointment_time' => $time,
                     'notes' => $request->notes,
                     'amount' => $groomingPrice,
                     'base_amount' => $groomingPrice,
@@ -220,7 +307,11 @@ class AppointmentController extends Controller
                     'payment_status' => 'unpaid',
                     'status' => 'pending',
                     'booking_channel' => \App\Support\BookingChannel::forUser($request->user()),
-                ]);
+                ];
+                if (Schema::hasColumn('groomings', 'appointment_id')) {
+                    $groomingData['appointment_id'] = $appointment->id;
+                }
+                Grooming::create($groomingData);
             }
 
             return $appointment;
@@ -251,9 +342,9 @@ class AppointmentController extends Controller
             return response()->json(['message' => 'Appointment not found'], 404);
         }
 
-        if ($appointment->status !== 'pending') {
+        if (!in_array($appointment->status, ['pending', 'approved', 'scheduled'], true)) {
             return response()->json([
-                'message' => 'Only pending appointments can be approved',
+                'message' => 'Only pending or not-yet-started appointments can be assigned or reassigned',
                 'current_status' => $appointment->status
             ], 422);
         }
@@ -272,26 +363,42 @@ class AppointmentController extends Controller
             return response()->json(['message' => 'Assigned user must be a veterinarian'], 422);
         }
 
-        // Check for double booking conflicts
-        $conflictingAppointment = Appointment::where('veterinarian_id', $request->veterinarian_id)
-            ->where('scheduled_at', $appointment->scheduled_at)
-            ->whereIn('status', ['approved', 'scheduled', 'in_progress', 'in_consultation'])
-            ->where('id', '!=', $appointment->id)
-            ->first();
+        $appointment = DB::transaction(function () use ($appointment, $request) {
+            BookingAvailabilityService::lockServiceSchedule();
+            $lockedAppointment = Appointment::whereKey($appointment->id)->lockForUpdate()->first();
+            if (!$lockedAppointment) {
+                return null;
+            }
 
-        if ($conflictingAppointment) {
+            $service = $lockedAppointment->service;
+            $scheduledAtLocal = $lockedAppointment->scheduled_at->copy()->setTimezone(\App\Services\ServiceDurationService::STORE_TIMEZONE);
+            $serviceType = strtolower((string) $service?->category) === 'grooming' ? 'grooming' : 'veterinary';
+            if (!$service || !BookingAvailabilityService::isServiceTimeAvailable(
+                $serviceType,
+                $scheduledAtLocal->toDateString(),
+                $scheduledAtLocal->format('H:i'),
+                $service->name,
+                (int) $request->veterinarian_id,
+                $lockedAppointment->id,
+                $lockedAppointment->service_request_id
+            )) {
+                return null;
+            }
+
+            $lockedAppointment->update([
+                'status' => 'approved',
+                'veterinarian_id' => $request->veterinarian_id,
+                'payment_status' => $lockedAppointment->payment_status === 'paid' ? 'paid' : 'unpaid',
+            ]);
+
+            return $lockedAppointment->fresh(['customer', 'pet', 'service', 'veterinarian']);
+        });
+
+        if (!$appointment) {
             return response()->json([
-                'message' => 'This veterinarian already has an appointment at the selected date and time.',
-                'conflict_with' => $conflictingAppointment->id,
-                'conflict_time' => $conflictingAppointment->scheduled_at
+                'message' => 'This veterinarian already has a conflicting appointment at the selected date and time.',
             ], 422);
         }
-
-        $appointment->update([
-            'status' => 'approved',
-            'veterinarian_id' => $request->veterinarian_id,
-            'payment_status' => $appointment->payment_status === 'paid' ? 'paid' : 'unpaid',
-        ]);
 
         $this->ensureBaseBillingItem($appointment);
 
@@ -335,7 +442,7 @@ class AppointmentController extends Controller
         }
 
         $validator = Validator::make($request->all(), [
-            'scheduled_at' => 'required|date|after:now',
+            'scheduled_at' => 'required|date',
             'reason' => 'nullable|string|max:500',
         ]);
 
@@ -344,15 +451,21 @@ class AppointmentController extends Controller
         }
 
         $oldDate = $appointment->scheduled_at;
-        
-        $appointment->update([
+        $updatedAppointment = $this->updateWithScheduleValidation($appointment, [
             'scheduled_at' => $request->scheduled_at,
             'notes' => $appointment->notes . "\n[Rescheduled from {$oldDate}]: " . ($request->reason ?: 'No reason provided'),
         ]);
 
+        if (!$updatedAppointment) {
+            return response()->json([
+                'message' => 'This schedule is no longer available. Please choose another slot.',
+                'errors' => ['scheduled_at' => ['Time slot overlaps an existing booking.']],
+            ], 422);
+        }
+
         return response()->json([
             'message' => 'Appointment rescheduled successfully',
-            'appointment' => $appointment->load(['customer', 'pet', 'service', 'veterinarian'])
+            'appointment' => $updatedAppointment,
         ]);
     }
 
@@ -913,7 +1026,7 @@ class AppointmentController extends Controller
 
         $validator = Validator::make($request->all(), [
             'service_id' => 'sometimes|integer|exists:services,id',
-            'scheduled_at' => 'sometimes|date|after:now',
+            'scheduled_at' => 'sometimes|date',
             'notes' => 'sometimes|string|max:1000',
         ]);
 
@@ -949,7 +1062,15 @@ class AppointmentController extends Controller
         }
 
         if (!empty($updateData)) {
-            $appointment->update($updateData);
+            $updatedAppointment = $this->updateWithScheduleValidation($appointment, $updateData);
+            if (!$updatedAppointment) {
+                return response()->json([
+                    'message' => 'This schedule is no longer available. Please choose another slot.',
+                    'errors' => ['scheduled_at' => ['Time slot overlaps an existing booking.']],
+                ], 422);
+            }
+
+            return response()->json($updatedAppointment);
         }
 
         return response()->json($appointment->fresh(['customer', 'pet', 'service', 'veterinarian']));

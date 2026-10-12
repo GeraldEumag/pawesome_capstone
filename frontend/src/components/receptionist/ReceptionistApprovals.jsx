@@ -441,7 +441,7 @@ const ReceptionistApprovals = () => {
     setSelectedRequest(item);
     setActionType(type);
     setActionForm({
-      veterinarianId: vetAssignments[requestId] || "",
+      veterinarianId: String(vetAssignments[requestId] || item.veterinarian_id || item.appointment?.veterinarian_id || ""),
       remarks: "",
       rejectionReason: "",
     });

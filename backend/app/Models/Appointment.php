@@ -5,6 +5,8 @@ namespace App\Models;
 use App\Services\NotificationService;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Appointment extends Model
 {
@@ -144,6 +146,16 @@ class Appointment extends Model
     public function veterinarian()
     {
         return $this->belongsTo(User::class, 'veterinarian_id');
+    }
+
+    public function serviceRequest(): BelongsTo
+    {
+        return $this->belongsTo(ServiceRequest::class, 'service_request_id');
+    }
+
+    public function billingPaymentRequests(): HasMany
+    {
+        return $this->hasMany(ServiceBillingPaymentRequest::class);
     }
 
     public function medicalRecords()

@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Services\BoardingRoomService;
+use App\Services\ServiceDurationService;
 use App\Services\WorkflowNotifier;
 use App\Models\BoardingRoom;
 use App\Models\BoardingRoomReservation;
@@ -126,15 +127,6 @@ class BoardingRoomController extends Controller
                         ->whereNotIn('status', ['rejected', 'cancelled', 'checked_out', 'completed'])
                         ->where('check_in_date', '<=', $checkOut)
                         ->where('check_out_date', '>=', $checkIn)
-                        ->count();
-                }
-
-                if (Schema::hasTable('boardings') && Schema::hasColumn('boardings', 'hotel_room_id')) {
-                    $blockingReservationCount += DB::table('boardings')
-                        ->where('hotel_room_id', $room->id)
-                        ->whereNotIn('status', ['rejected', 'cancelled', 'checked_out', 'completed'])
-                        ->where('check_in', '<=', $checkOut)
-                        ->where('check_out', '>=', $checkIn)
                         ->count();
                 }
 
@@ -272,8 +264,8 @@ class BoardingRoomController extends Controller
     {
         $validator = \Illuminate\Support\Facades\Validator::make($request->all(), [
             'room_id' => 'required|exists:boarding_rooms,id',
-            'check_in_date' => 'required|date|after_or_equal:today',
-            'check_out_date' => 'required|date|after:check_in_date',
+            'check_in_date' => 'required|date|after_or_equal:' . now(ServiceDurationService::STORE_TIMEZONE)->toDateString(),
+            'check_out_date' => 'required|date|after_or_equal:check_in_date',
         ]);
 
         if ($validator->fails()) {

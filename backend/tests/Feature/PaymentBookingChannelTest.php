@@ -8,6 +8,7 @@ use App\Models\BoardingRoom;
 use App\Models\BoardingRoomReservation;
 use App\Models\Customer;
 use App\Models\Grooming;
+use App\Models\HotelRoom;
 use App\Models\Pet;
 use App\Models\Service;
 use App\Models\ServiceRequest;
@@ -27,6 +28,12 @@ use Tests\TestCase;
 class PaymentBookingChannelTest extends TestCase
 {
     use RefreshDatabase;
+
+    protected function tearDown(): void
+    {
+        Carbon::setTestNow();
+        parent::tearDown();
+    }
 
     private function staff(string $role): User
     {
@@ -101,6 +108,7 @@ class PaymentBookingChannelTest extends TestCase
 
     public function test_walk_in_request_is_marked_walk_in(): void
     {
+        Carbon::setTestNow(Carbon::parse('2026-10-12 08:00:00', 'Asia/Manila'));
         $receptionist = $this->staff('receptionist');
         [, $customer, $pet] = $this->customerWithPet();
 
@@ -686,5 +694,83 @@ class PaymentBookingChannelTest extends TestCase
             'source_id' => $sr->id,
             'room_id' => $room->id,
         ]);
+    }
+
+    public function test_same_day_approval_keeps_boarding_and_reservation_dates_aligned(): void
+    {
+        Carbon::setTestNow(Carbon::parse('2026-10-12 12:00:00', 'Asia/Manila'));
+        $receptionist = $this->staff('receptionist');
+        [, $customer, $pet] = $this->customerWithPet();
+        $room = $this->boardingRoom();
+        $date = Carbon::tomorrow('Asia/Manila')->toDateString();
+        $sr = $this->serviceRequest([
+            'customer_id' => $customer->user_id,
+            'customer_name' => $customer->name,
+            'customer_email' => $customer->email,
+            'pet_id' => $pet->id,
+            'pet_name' => $pet->name,
+            'request_type' => 'hotel',
+            'service_name' => 'Pet Hotel',
+            'request_date' => $date,
+            'check_out_date' => $date,
+            'status' => 'pending',
+            'boarding_room_id' => $room->id,
+            'room_type' => $room->room_type,
+            'room_name' => $room->room_name,
+            'daily_rate' => $room->daily_rate,
+            'total_days' => 1,
+            'total_amount' => 800,
+        ]);
+
+        $this->withHeaders($this->headers($receptionist))
+            ->postJson("/api/receptionist/requests/{$sr->id}/approve")
+            ->assertOk();
+
+        $boarding = Boarding::where('service_request_id', $sr->id)->firstOrFail();
+        $reservation = BoardingRoomReservation::where('source_type', 'service_request')
+            ->where('source_id', $sr->id)
+            ->firstOrFail();
+        $this->assertSame($date, $boarding->check_in->toDateString());
+        $this->assertSame($date, $boarding->check_out->toDateString());
+        $this->assertSame($date, $reservation->check_in_date->toDateString());
+        $this->assertSame($date, $reservation->check_out_date->toDateString());
+    }
+
+    public function test_legacy_hotel_booking_does_not_consume_a_modern_room_with_the_same_id(): void
+    {
+        [, $customer, $pet] = $this->customerWithPet();
+        $legacyRoom = HotelRoom::factory()->create(['status' => 'available']);
+        $modernRoom = BoardingRoom::forceCreate([
+            'id' => $legacyRoom->id,
+            'room_code' => 'POOL-' . $legacyRoom->id,
+            'room_name' => 'Modern Dog Kennel',
+            'room_type' => 'dog_standard',
+            'hotel_category' => 'dog_hotel',
+            'allowed_species' => ['dog'],
+            'max_capacity' => 1,
+            'total_rooms' => 1,
+            'daily_rate' => 800,
+            'is_active' => true,
+            'customer_selectable' => true,
+        ]);
+        $date = Carbon::tomorrow()->toDateString();
+
+        Boarding::create([
+            'pet_id' => $pet->id,
+            'customer_id' => $customer->id,
+            'hotel_room_id' => $legacyRoom->id,
+            'check_in' => $date,
+            'check_out' => Carbon::parse($date)->addDay()->toDateString(),
+            'status' => 'approved',
+        ]);
+
+        $rooms = $this->getJson('/api/boarding/rooms/available?species=dog&check_in_date=' . $date . '&check_out_date=' . $date)
+            ->assertOk()
+            ->json('rooms');
+
+        $modern = collect($rooms)->firstWhere('id', $modernRoom->id);
+        $this->assertNotNull($modern);
+        $this->assertTrue((bool) $modern['available']);
+        $this->assertSame(1, (int) $modern['available_rooms']);
     }
 }

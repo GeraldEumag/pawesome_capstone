@@ -72,13 +72,13 @@ const ReceptionistWalkIns = () => {
   const importantNotes = [
     {
       icon: faKey,
-      title: "Default Password",
-      desc: "New accounts are created with Password123! — remind customers to change it.",
+      title: "Account Setup",
+      desc: "New customers receive a secure email link to choose their password.",
     },
     {
       icon: faShieldAlt,
       title: "Inform Customers",
-      desc: "Always notify customers to update their password after first login.",
+      desc: "Let customers know to follow the password setup link in their email.",
     },
     {
       icon: faClipboardCheck,

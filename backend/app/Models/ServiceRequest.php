@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 
 class ServiceRequest extends Model
 {
@@ -48,4 +49,9 @@ class ServiceRequest extends Model
         'receipt_number',
         'booking_channel',
     ];
+
+    public function appointment(): HasOne
+    {
+        return $this->hasOne(Appointment::class)->latestOfMany();
+    }
 }

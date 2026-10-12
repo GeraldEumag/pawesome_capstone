@@ -89,6 +89,16 @@ class ServiceBillingController extends Controller
             );
 
             \App\Services\WorkflowNotifier::notifyEmail($email, $title, $message, 'info', $serviceType, $serviceId);
+            if ($record?->customer?->user_id) {
+                \App\Services\WorkflowNotifier::notifyUser(
+                    $record->customer->user_id,
+                    $title,
+                    $message,
+                    'info',
+                    'payment',
+                    $serviceId
+                );
+            }
 
             $itemId = $item->id ?? 'x';
             app(\App\Services\EmailDeliveryService::class)->lifecycle(

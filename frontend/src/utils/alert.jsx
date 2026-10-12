@@ -174,6 +174,23 @@ export const SERVICE_DELETE_REASONS = [
   "Policy or compliance change",
 ];
 
+export const INVENTORY_ARCHIVE_REASONS = [
+  { value: "discontinued", label: "Medicine or item discontinued" },
+  { value: "expired", label: "Expired or unsafe to use" },
+  { value: "replaced", label: "Replaced by another product" },
+  { value: "duplicate", label: "Duplicate inventory record" },
+  { value: "other", label: "Other" },
+];
+
+export const INVENTORY_DELETE_REASONS = [
+  { value: "expired", label: "Expired medicine or product" },
+  { value: "damaged", label: "Damaged or contaminated" },
+  { value: "discontinued", label: "Withdrawn or discontinued" },
+  { value: "duplicate", label: "Duplicate inventory record" },
+  { value: "entered_in_error", label: "Entered in error" },
+  { value: "other", label: "Other" },
+];
+
 export const CUSTOMER_DELETION_REASONS = [
   "Account created by mistake",
   "Duplicate account",

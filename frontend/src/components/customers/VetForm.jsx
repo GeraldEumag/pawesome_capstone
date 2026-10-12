@@ -282,7 +282,9 @@ const VetForm = () => {
   const canPay = (item) => {
     const status = String(item?.status || "").toLowerCase();
     const paymentStatus = String(item?.payment_status || item?.payment || "unpaid").toLowerCase();
-    return ["approved", "scheduled"].includes(status) && ["unpaid", "rejected"].includes(paymentStatus);
+    return Number(item?.additional_charges || 0) <= 0
+      && ["approved", "scheduled"].includes(status)
+      && ["unpaid", "rejected"].includes(paymentStatus);
   };
 
   const openUploadModal = (item) => {
@@ -449,6 +451,7 @@ const VetForm = () => {
               <div key={item.id} className="vet-item">
                 <h3>{item.pet_name}</h3>
                 <p>Service: {item.service_name}</p>
+                <p>Veterinarian: {item.veterinarian?.name || (item.veterinarian_id ? `Vet #${item.veterinarian_id}` : "Not yet assigned")}</p>
                 <p>Date: {item.request_date}</p>
                 <p>Time: {item.request_time}</p>
                 <p>Concern: {item.notes || "None"}</p>
@@ -461,6 +464,16 @@ const VetForm = () => {
                 <span className={`vet-status ${item.status}`}>
                   {item.status}
                 </span>
+
+                {Number(item.additional_charges || 0) > 0 && (
+                  <a
+                    href="/customer/payments"
+                    className="vet-pay-btn"
+                    style={{ marginTop: "0.5rem", display: "inline-block", background: "#0f766e", color: "#fff", border: "none", borderRadius: "6px", padding: "0.4rem 0.8rem", textDecoration: "none", fontSize: "0.85rem", fontWeight: 600, marginRight: "0.5rem" }}
+                  >
+                    View additional bill and payment options
+                  </a>
+                )}
 
                 {canPay(item) && (
                   <button

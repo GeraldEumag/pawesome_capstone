@@ -242,7 +242,7 @@ class BoardingController extends Controller
             'customer_id' => 'required|exists:customers,id',
             'room_id' => 'nullable|exists:boarding_rooms,id',
             'hotel_room_id' => 'nullable|exists:hotel_rooms,id',
-            'check_in_date' => 'required|date|after_or_equal:today',
+            'check_in_date' => 'required|date|after_or_equal:' . now(ServiceDurationService::STORE_TIMEZONE)->toDateString(),
             'number_of_days' => 'nullable|integer|min:1|max:1',
             'check_in_time' => 'nullable|date_format:H:i',
             'check_out_time' => 'nullable|date_format:H:i',
@@ -284,6 +284,11 @@ class BoardingController extends Controller
                 'errors' => ['check_in_time' => ['Bookings are only accepted within store hours (10:00 AM - 6:00 PM).']],
             ], 422);
         }
+        if ($request->check_in_time && $request->check_out_time && $request->check_out_time <= $request->check_in_time) {
+            return response()->json([
+                'errors' => ['check_out_time' => ['Check-out time must be after check-in time.']],
+            ], 422);
+        }
 
         if ($request->pet_id && $request->user()?->role === 'customer') {
             if (!Pet::where('id', $request->pet_id)->where('customer_id', $request->customer_id)->exists()) {
@@ -297,7 +302,7 @@ class BoardingController extends Controller
         }
 
         // Same-day boarding: check-out is always the same date as check-in
-        $checkIn = Carbon::parse($request->check_in_date);
+        $checkIn = Carbon::parse($request->check_in_date, ServiceDurationService::STORE_TIMEZONE);
         $checkOutDate = $checkIn->toDateString();
 
         // Calculate total amount using room-based pricing (one day only)
@@ -844,7 +849,7 @@ class BoardingController extends Controller
         }
 
         $checkIn = $request->input('check_in', optional($boarding->check_in)->toDateString() ?? $boarding->check_in);
-        // Same-day boarding: check-out always equals check-in (9 AM - 7 PM)
+        // Same-day boarding: check-out always equals check-in (10 AM - 6 PM)
         $checkOut = $checkIn;
         $room = HotelRoom::findOrFail($request->hotel_room_id);
 
@@ -1152,9 +1157,9 @@ class BoardingController extends Controller
     public function availableRooms(Request $request): JsonResponse
     {
         $validator = Validator::make($request->all(), [
-            'check_in' => 'nullable|date|after_or_equal:today',
+            'check_in' => 'nullable|date|after_or_equal:' . now(ServiceDurationService::STORE_TIMEZONE)->toDateString(),
             'check_out' => 'nullable|date|after_or_equal:check_in',
-            'check_in_date' => 'nullable|date|after_or_equal:today',
+            'check_in_date' => 'nullable|date|after_or_equal:' . now(ServiceDurationService::STORE_TIMEZONE)->toDateString(),
             'check_out_date' => 'nullable|date|after_or_equal:check_in_date',
             'pet_id' => 'nullable|exists:pets,id',
             'species' => 'nullable|string|max:100',

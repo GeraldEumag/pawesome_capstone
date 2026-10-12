@@ -14,6 +14,7 @@ class GroomingAppointment extends Model
         'pet_name',
         'service',
         'appointment_date',
+        'appointment_time',
         'notes',
         'status',
     ];

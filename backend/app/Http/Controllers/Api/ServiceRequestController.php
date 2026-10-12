@@ -42,10 +42,12 @@ class ServiceRequestController extends Controller
 
     private function hasAvailableHotelRoom(string $checkIn, ?string $checkOut, ?string $roomType, ?int $boardingRoomId = null): bool
     {
-        $checkInDate = Carbon::parse($checkIn)->startOfDay();
-        $checkOutDate = $checkOut ? Carbon::parse($checkOut)->startOfDay() : $checkInDate->copy();
-        if ($checkOutDate->lessThanOrEqualTo($checkInDate)) {
-            $checkOutDate = $checkInDate->copy()->addDay();
+        $checkInDate = Carbon::parse($checkIn, ServiceDurationService::STORE_TIMEZONE)->startOfDay();
+        $checkOutDate = $checkOut
+            ? Carbon::parse($checkOut, ServiceDurationService::STORE_TIMEZONE)->startOfDay()
+            : $checkInDate->copy();
+        if ($checkOutDate->lessThan($checkInDate)) {
+            return false;
         }
 
         // A specific boarding room was requested — check its remaining capacity.
@@ -73,6 +75,8 @@ class ServiceRequestController extends Controller
 
     private function formatRequest(object $item): array
     {
+        $appointment = $item->appointment ?? null;
+
         return [
             'id' => $item->id,
             'customer_id' => $item->customer_id,
@@ -93,6 +97,16 @@ class ServiceRequestController extends Controller
             'requested_date' => $item->request_date,
             'time' => $item->request_time,
             'request_time' => $item->request_time,
+            'appointment_id' => $appointment?->id,
+            'appointment_status' => $appointment?->status,
+            'veterinarian_id' => $appointment?->veterinarian_id,
+            'veterinarian' => $appointment?->veterinarian ? [
+                'id' => $appointment->veterinarian->id,
+                'name' => $appointment->veterinarian->name,
+            ] : null,
+            'additional_charges' => (float) ($appointment?->additional_charges ?? 0),
+            'billing_balance_due' => (float) ($appointment?->balance_due ?? 0),
+            'appointment_payment_status' => $appointment?->payment_status,
             'notes' => $item->notes,
             'status' => $item->status,
             'price' => $item->price,
@@ -126,7 +140,7 @@ class ServiceRequestController extends Controller
             'pet_type' => 'nullable|string|max:50',
             'request_type' => 'required|string|max:150',
             'service_name' => 'nullable|string|max:150',
-            'requested_date' => 'required|date|after_or_equal:today',
+            'requested_date' => 'required|date|after_or_equal:' . now(ServiceDurationService::STORE_TIMEZONE)->toDateString(),
             'requested_time' => $isHotel ? 'nullable|date_format:H:i' : 'required|date_format:H:i',
             'notes' => 'nullable|string',
             'check_out_date' => 'nullable|date|after_or_equal:requested_date',
@@ -356,7 +370,7 @@ class ServiceRequestController extends Controller
             $createData['customer_id'] = Auth::id();
         }
 
-        $serviceRequest = DB::transaction(function () use ($isHotel, $availabilityType, $validated, $time, $createData) {
+        $serviceRequest = DB::transaction(function () use ($isHotel, $availabilityType, $validated, $time, $createData, $pet) {
             if ($isHotel && !$this->hasAvailableHotelRoom(
                 $validated['requested_date'],
                 $validated['check_out_date'] ?? null,
@@ -367,7 +381,7 @@ class ServiceRequestController extends Controller
             }
 
             if (in_array($availabilityType, ['grooming', 'veterinary'], true)) {
-                Service::query()->orderBy('id')->lockForUpdate()->first();
+                BookingAvailabilityService::lockServiceSchedule();
                 $serviceType = $availabilityType === 'grooming' ? 'grooming' : 'veterinary';
                 if (!BookingAvailabilityService::isServiceTimeAvailable(
                     $serviceType,
@@ -379,7 +393,42 @@ class ServiceRequestController extends Controller
                 }
             }
 
-            return ServiceRequest::create($createData);
+            $serviceRequest = ServiceRequest::create($createData);
+
+            if ($availabilityType === 'grooming') {
+                $groomingCustomer = $pet?->customer;
+                if (!$groomingCustomer) {
+                    throw new \RuntimeException('Could not resolve customer for grooming request.');
+                }
+
+                $price = (float) ($serviceRequest->price ?? 0);
+                if ($price <= 0) {
+                    $price = ServiceCatalog::priceFor($validated['service_name'] ?? null, 'grooming');
+                }
+
+                $groomingData = [
+                    'customer_id' => $groomingCustomer->id,
+                    'pet_id' => $pet->id,
+                    'service' => $validated['service_name'] ?? 'Grooming',
+                    'appointment_date' => $validated['requested_date'],
+                    'appointment_time' => $validated['requested_time'],
+                    'notes' => $validated['notes'] ?? null,
+                    'amount' => $price,
+                    'base_amount' => $price,
+                    'total_amount' => $price,
+                    'balance_due' => $price,
+                    'status' => 'pending',
+                    'payment_status' => 'unpaid',
+                ];
+
+                if (Schema::hasColumn('groomings', 'service_request_id')) {
+                    $groomingData['service_request_id'] = $serviceRequest->id;
+                }
+
+                Grooming::create($groomingData);
+            }
+
+            return $serviceRequest;
         });
 
         if (!$serviceRequest) {
@@ -402,50 +451,6 @@ class ServiceRequestController extends Controller
                 'message' => 'This time is no longer available. Please choose another slot.',
                 'errors' => ['requested_time' => ['Time slot overlaps an existing booking.']],
             ], 422);
-        }
-
-        // Auto-create a pending Grooming record so groomer dashboard can see customer bookings
-        if ($this->normalizeServiceType($validated['request_type']) === 'grooming') {
-            try {
-                $groomingPet = null;
-                if (!empty($validated['pet_id'])) {
-                    $groomingPet = Pet::find($validated['pet_id']);
-                }
-                $groomingCustomer = $groomingPet?->customer;
-                if (!$groomingCustomer && !empty($serviceRequest->customer_email)) {
-                    $groomingCustomer = Customer::where('email', $serviceRequest->customer_email)->first();
-                }
-
-                if ($groomingCustomer && $groomingPet) {
-                    $price = (float) ($serviceRequest->price ?? 0);
-                    if ($price <= 0) {
-                        $price = ServiceCatalog::priceFor($validated['service_name'] ?? null, 'grooming');
-                    }
-
-                    $groomingData = [
-                        'customer_id' => $groomingCustomer->id,
-                        'pet_id' => $groomingPet->id,
-                        'service' => $validated['service_name'] ?? 'Grooming',
-                        'appointment_date' => $validated['requested_date'],
-                        'appointment_time' => $validated['requested_time'] ?? '10:00',
-                        'notes' => $validated['notes'] ?? null,
-                        'amount' => $price,
-                        'base_amount' => $price,
-                        'total_amount' => $price,
-                        'balance_due' => $price,
-                        'status' => 'pending',
-                        'payment_status' => 'unpaid',
-                    ];
-
-                    if (Schema::hasColumn('groomings', 'service_request_id')) {
-                        $groomingData['service_request_id'] = $serviceRequest->id;
-                    }
-
-                    Grooming::create($groomingData);
-                }
-            } catch (\Throwable $e) {
-                Log::warning('Auto-create grooming failed for service request #' . $serviceRequest->id . ': ' . $e->getMessage());
-            }
         }
 
         WorkflowNotifier::notifyRole(
@@ -507,7 +512,7 @@ class ServiceRequestController extends Controller
 
     public function receptionistRequests()
     {
-        $requests = ServiceRequest::latest()
+        $requests = ServiceRequest::with('appointment.veterinarian')->latest()
             ->get()
             ->map(fn ($item) => $this->formatRequest($item));
 
@@ -528,7 +533,7 @@ class ServiceRequestController extends Controller
             ], 401);
         }
 
-        $query = ServiceRequest::query();
+        $query = ServiceRequest::with('appointment.veterinarian');
 
         $query->where(function ($scopedQuery) use ($user) {
             // Use AND logic to ensure we only get the current customer's requests
@@ -826,6 +831,14 @@ class ServiceRequestController extends Controller
             return response()->json([
                 'message' => 'Payment proof can only be uploaded for approved requests.',
             ], 403);
+        }
+
+        $linkedAppointment = Appointment::where('service_request_id', $serviceRequest->id)->latest('id')->first();
+        if ((float) ($linkedAppointment?->additional_charges ?? 0) > 0) {
+            return response()->json([
+                'message' => 'This veterinary request has an itemized bill. Submit the full outstanding balance from Customer Payments.',
+                'billing_url' => '/customer/payments',
+            ], 409);
         }
 
         // Reject upload if payment is already pending or paid

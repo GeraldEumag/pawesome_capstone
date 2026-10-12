@@ -13,6 +13,7 @@ use App\Models\ServiceRequest;
 use App\Models\Sale;
 use App\Models\ChatbotLog;
 use App\Models\Notification;
+use App\Services\BookingAvailabilityService;
 use App\Services\FileStorageService;
 use Illuminate\Support\Carbon;
 use Illuminate\Http\Request;
@@ -576,17 +577,43 @@ class PortalController extends Controller
             return response()->json(['message' => 'Pet not found'], 404);
         }
 
-        $appt = Appointment::create([
-            'customer_id' => $cust->id,
-            'pet_id' => $data['pet_id'],
-            'service_id' => $data['service_id'],
-            'status' => 'pending',
-            'scheduled_at' => $data['scheduled_at'],
-            'price' => Service::find($data['service_id'])->price ?? 0,
-            'booking_channel' => \App\Support\BookingChannel::ONLINE,
-        ]);
+        [$scheduledAtUtc, $scheduledAtLocal] = BookingAvailabilityService::appointmentTimes($data['scheduled_at']);
+        if (!$scheduledAtUtc->isFuture()) {
+            return response()->json(['errors' => ['scheduled_at' => ['The scheduled time must be in the future.']]], 422);
+        }
 
-        return response()->json($appt, 201);
+        $appointment = DB::transaction(function () use ($data, $cust, $scheduledAtUtc, $scheduledAtLocal) {
+            BookingAvailabilityService::lockServiceSchedule();
+            $service = Service::find($data['service_id']);
+            $serviceType = strtolower((string) $service?->category) === 'grooming' ? 'grooming' : 'veterinary';
+            if (!$service || !BookingAvailabilityService::isServiceTimeAvailable(
+                $serviceType,
+                $scheduledAtLocal->toDateString(),
+                $scheduledAtLocal->format('H:i'),
+                $service->name
+            )) {
+                return null;
+            }
+
+            return Appointment::create([
+                'customer_id' => $cust->id,
+                'pet_id' => $data['pet_id'],
+                'service_id' => $service->id,
+                'status' => 'pending',
+                'scheduled_at' => $scheduledAtUtc,
+                'price' => $service->price ?? 0,
+                'booking_channel' => \App\Support\BookingChannel::ONLINE,
+            ]);
+        });
+
+        if (!$appointment) {
+            return response()->json([
+                'message' => 'This schedule is no longer available. Please choose another slot.',
+                'errors' => ['scheduled_at' => ['Time slot overlaps an existing booking.']],
+            ], 422);
+        }
+
+        return response()->json($appointment, 201);
     }
 
     public function bookBoarding(Request $request)

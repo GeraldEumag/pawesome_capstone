@@ -12,9 +12,11 @@ use App\Models\Service;
 use App\Models\User;
 use App\Models\ActivityLog;
 use App\Models\ServiceItemUsage;
+use App\Services\BookingAvailabilityService;
 use App\Services\CustomerEmailResolver;
 use App\Services\EmailDeliveryService;
 use App\Services\ServiceCatalog;
+use App\Services\ServiceDurationService;
 use App\Services\WorkflowNotifier;
 use App\Support\EmailContent;
 use Illuminate\Http\Request;
@@ -97,6 +99,8 @@ class ReceptionistRequestController extends Controller
 
     private function formatRequest(object $item): array
     {
+        $appointment = $item->appointment ?? null;
+
         return [
             'id' => $item->id,
             'request_type' => $item->request_type,
@@ -116,6 +120,13 @@ class ReceptionistRequestController extends Controller
             'date' => $item->request_date,
             'request_time' => $item->request_time,
             'time' => $item->request_time,
+            'appointment_id' => $appointment?->id,
+            'appointment_status' => $appointment?->status,
+            'veterinarian_id' => $appointment?->veterinarian_id,
+            'veterinarian' => $appointment?->veterinarian ? [
+                'id' => $appointment->veterinarian->id,
+                'name' => $appointment->veterinarian->name,
+            ] : null,
             'status' => $item->status,
             'rejection_reason' => $item->rejection_reason ?? null,
             'cancellation_reason' => $item->cancellation_reason ?? null,
@@ -138,7 +149,7 @@ class ReceptionistRequestController extends Controller
 
     public function index()
     {
-        $requests = ServiceRequest::latest()->get()->map(fn ($item) => $this->formatRequest($item));
+        $requests = ServiceRequest::with('appointment.veterinarian')->latest()->get()->map(fn ($item) => $this->formatRequest($item));
 
         return response()->json([
             'success' => true,
@@ -148,7 +159,8 @@ class ReceptionistRequestController extends Controller
 
     public function pending()
     {
-        $requests = ServiceRequest::where('status', 'pending')
+        $requests = ServiceRequest::with('appointment.veterinarian')
+            ->where('status', 'pending')
             ->latest()
             ->get()
             ->map(fn ($item) => $this->formatRequest($item));
@@ -161,7 +173,8 @@ class ReceptionistRequestController extends Controller
 
     public function approvalHistory()
     {
-        $requests = ServiceRequest::whereIn('status', ['approved', 'scheduled', 'completed', 'paid'])
+        $requests = ServiceRequest::with('appointment.veterinarian')
+            ->whereIn('status', ['approved', 'scheduled', 'completed', 'paid'])
             ->latest()
             ->get()
             ->map(fn ($item) => $this->formatRequest($item));
@@ -174,7 +187,8 @@ class ReceptionistRequestController extends Controller
 
     public function schedulingHistory()
     {
-        $requests = ServiceRequest::whereIn('status', ['scheduled', 'confirmed', 'rescheduled', 'approved'])
+        $requests = ServiceRequest::with('appointment.veterinarian')
+            ->whereIn('status', ['scheduled', 'confirmed', 'rescheduled', 'approved'])
             ->where(function ($query) {
                 $query->whereNotNull('preferred_date')->orWhereNotNull('request_date');
             })
@@ -190,7 +204,8 @@ class ReceptionistRequestController extends Controller
 
     public function rejectedHistory()
     {
-        $requests = ServiceRequest::whereIn('status', ['rejected', 'cancelled', 'canceled'])
+        $requests = ServiceRequest::with('appointment.veterinarian')
+            ->whereIn('status', ['rejected', 'cancelled', 'canceled'])
             ->latest()
             ->get()
             ->map(fn ($item) => $this->formatRequest($item));
@@ -292,6 +307,16 @@ class ReceptionistRequestController extends Controller
         /** @var ServiceRequest $serviceRequest */
         $serviceRequest = ServiceRequest::findOrFail($id);
         $previousStatus = $serviceRequest->status;
+
+        if ($validated['status'] === 'approved'
+            && $this->requestIsVet($serviceRequest)
+            && !$this->requestIsHotel($serviceRequest)
+            && !$this->requestIsGrooming($serviceRequest)) {
+            return response()->json([
+                'message' => 'Vet requests must be approved through veterinarian assignment.',
+                'errors' => ['veterinarian_id' => ['Choose a veterinarian before approving this request.']],
+            ], 422);
+        }
 
         // Check-in gates: booking must be paid and scheduled for today.
         if ($validated['status'] === 'checked_in') {
@@ -468,7 +493,7 @@ class ReceptionistRequestController extends Controller
                     $checkIn = $serviceRequest->request_date;
                     $checkOut = $serviceRequest->check_out_date;
                     if (!$checkOut && $checkIn) {
-                        $checkOut = Carbon::parse($checkIn)->addDay()->toDateString();
+                        $checkOut = Carbon::parse($checkIn, ServiceDurationService::STORE_TIMEZONE)->toDateString();
                     }
 
                     // Resolve the payable total: persisted request total →
@@ -629,18 +654,27 @@ class ReceptionistRequestController extends Controller
 
         // Promotion is atomic: the room reservation, promoted booking row,
         // and request status update commit together or roll back together.
-        return DB::transaction(fn () => $this->performApprove($request, $validated, $id));
+        return DB::transaction(function () use ($request, $validated, $id) {
+            BookingAvailabilityService::lockServiceSchedule();
+            return $this->performApprove($request, $validated, $id);
+        });
     }
 
     private function performApprove(Request $request, array $validated, $id)
     {
-        $serviceRequest = ServiceRequest::findOrFail($id);
+        $serviceRequest = ServiceRequest::whereKey($id)->lockForUpdate()->firstOrFail();
+        $isHotelRequest = $this->requestIsHotel($serviceRequest);
+        $isGroomingRequest = $this->requestIsGrooming($serviceRequest);
+        $isVetRequest = $this->requestIsVet($serviceRequest) && !$isHotelRequest && !$isGroomingRequest;
+        $existingVetAppointment = $isVetRequest && Schema::hasColumn('appointments', 'service_request_id')
+            ? Appointment::where('service_request_id', $serviceRequest->id)->latest('id')->lockForUpdate()->first()
+            : null;
 
         // Idempotent approval: re-approving an already-approved request must
         // not re-run the promotion — a second pass would create a duplicate
         // boarding-room reservation and re-send notifications. Return the
         // existing linked records in the same response shape instead.
-        if (($serviceRequest->status ?? 'pending') === 'approved') {
+        if (($serviceRequest->status ?? 'pending') === 'approved' && !$isVetRequest) {
             return response()->json([
                 'success' => true,
                 'message' => 'Request is already approved.',
@@ -649,6 +683,28 @@ class ReceptionistRequestController extends Controller
                 'grooming' => Grooming::where('service_request_id', $serviceRequest->id)->latest('id')->first(),
                 'boarding' => Boarding::where('service_request_id', $serviceRequest->id)->latest('id')->first(),
             ]);
+        }
+
+        if (($serviceRequest->status ?? 'pending') === 'approved'
+            && $isVetRequest
+            && $existingVetAppointment?->veterinarian_id) {
+            $requestedVetId = (int) ($validated['veterinarian_id'] ?? $existingVetAppointment->veterinarian_id);
+            if ($requestedVetId === (int) $existingVetAppointment->veterinarian_id) {
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Request is already approved and assigned.',
+                    'request' => $this->formatRequest($serviceRequest),
+                    'appointment' => $existingVetAppointment->load(['customer', 'pet', 'service', 'veterinarian']),
+                    'grooming' => null,
+                    'boarding' => null,
+                ]);
+            }
+
+            if (!in_array($existingVetAppointment->status, ['pending', 'approved', 'scheduled'], true)) {
+                return response()->json([
+                    'message' => 'A veterinarian cannot be reassigned after the appointment has started.',
+                ], 422);
+            }
         }
 
         $appointment = null;
@@ -675,12 +731,9 @@ class ReceptionistRequestController extends Controller
         }
 
         // --- Vet requests: create/update Appointment ---
-        // Extra safety: never treat hotel/boarding as vet regardless of request_type value
-        $isHotelRequest = $this->requestIsHotel($serviceRequest);
-        $isGroomingRequest = $this->requestIsGrooming($serviceRequest);
-
-        if ($this->requestIsVet($serviceRequest) && !$isHotelRequest && !$isGroomingRequest) {
-            $vet = User::find($validated['veterinarian_id'] ?? null);
+        if ($isVetRequest) {
+            $vetId = $validated['veterinarian_id'] ?? $existingVetAppointment?->veterinarian_id;
+            $vet = $vetId ? User::find($vetId) : null;
 
             if (!$vet || !in_array($vet->role, ['veterinary', 'vet', 'veterinarian'], true)) {
                 return response()->json(['message' => 'Choose a valid veterinarian before approving this vet request.'], 422);
@@ -698,41 +751,59 @@ class ReceptionistRequestController extends Controller
                 return response()->json(['message' => 'The selected pet does not belong to this customer.'], 422);
             }
 
-            $scheduledAt = $serviceRequest->request_date
-                ? Carbon::parse($serviceRequest->request_date . ' ' . ($serviceRequest->request_time ?: '10:00'))
-                : now()->addHour();
-
-            $appointment = Appointment::firstOrCreate(
-                [
-                    'customer_id' => $customer->id,
-                    'pet_id' => $pet->id,
-                    'service_id' => $service->id,
-                    'scheduled_at' => $scheduledAt,
-                ],
-                [
-                    'veterinarian_id' => $vet->id,
-                    'status' => 'approved',
-                    'notes' => $serviceRequest->notes,
-                    'price' => $service->price ?? 0,
-                    'service_request_id' => $serviceRequest->id,
-                ]
+            $scheduledAtLocal = Carbon::parse(
+                ($serviceRequest->request_date ?: now(ServiceDurationService::STORE_TIMEZONE)->toDateString()) . ' ' . ($serviceRequest->request_time ?: '10:00'),
+                ServiceDurationService::STORE_TIMEZONE
             );
+            $scheduledAtUtc = $scheduledAtLocal->copy()->setTimezone('UTC');
+            $serviceRequest->request_date = $scheduledAtLocal->toDateString();
+            $serviceRequest->request_time = $scheduledAtLocal->format('H:i');
+            if (!$scheduledAtLocal->isFuture() || !BookingAvailabilityService::isServiceTimeAvailable(
+                'veterinary',
+                $scheduledAtLocal->toDateString(),
+                $scheduledAtLocal->format('H:i'),
+                $service->name,
+                $vet->id,
+                $existingVetAppointment?->id,
+                $serviceRequest->id
+            )) {
+                return response()->json([
+                    'message' => 'The requested schedule conflicts with this veterinarian or is no longer a future bookable time.',
+                    'errors' => ['veterinarian_id' => ['Choose another available appointment time or veterinarian.']],
+                ], 422);
+            }
 
-            if (!$appointment->wasRecentlyCreated) {
-                $appointment->update([
-                    'veterinarian_id' => $vet->id,
-                    'status' => 'approved',
-                    'notes' => $serviceRequest->notes,
-                    'price' => $service->price ?? $appointment->price,
-                    'service_request_id' => $serviceRequest->id,
-                ]);
+            if ($existingVetAppointment && !in_array($existingVetAppointment->status, ['pending', 'approved', 'scheduled'], true)) {
+                return response()->json([
+                    'message' => 'A veterinarian cannot be assigned after the appointment has started.',
+                ], 422);
+            }
+
+            $appointmentCreated = !$existingVetAppointment;
+            $appointmentData = [
+                'customer_id' => $customer->id,
+                'pet_id' => $pet->id,
+                'service_id' => $service->id,
+                'scheduled_at' => $scheduledAtUtc,
+                'veterinarian_id' => $vet->id,
+                'status' => 'approved',
+                'notes' => $serviceRequest->notes,
+                'price' => $service->price ?? $existingVetAppointment?->price ?? 0,
+                'service_request_id' => $serviceRequest->id,
+            ];
+
+            if ($existingVetAppointment) {
+                $existingVetAppointment->update($appointmentData);
+                $appointment = $existingVetAppointment->fresh(['customer', 'pet', 'service', 'veterinarian']);
+            } else {
+                $appointment = Appointment::create($appointmentData);
             }
 
             // Notify assigned veterinarian about the new scheduled appointment.
             // On the create path the Appointment::created model hook already
             // notifies the veterinarian via notifyAppointmentCreated().
-            if (!$appointment->wasRecentlyCreated) {
-                WorkflowNotifier::notifyUser($vet->id, 'New Scheduled Appointment', "You have a new veterinary appointment for {$pet->name} scheduled at {$scheduledAt->format('Y-m-d H:i')}.", 'info', 'appointment', $appointment->id);
+            if (!$appointmentCreated) {
+                WorkflowNotifier::notifyUser($vet->id, 'New Scheduled Appointment', "You have a new veterinary appointment for {$pet->name} scheduled at {$scheduledAtLocal->format('Y-m-d H:i')}.", 'info', 'appointment', $appointment->id);
             }
 
             // Auto-create base service billing item so vet sees the consultation fee

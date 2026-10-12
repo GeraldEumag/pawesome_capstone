@@ -2,10 +2,12 @@
 
 namespace Tests\Feature;
 
+use App\Models\Appointment;
 use App\Models\Boarding;
 use App\Models\Customer;
 use App\Models\HotelRoom;
 use App\Models\Pet;
+use App\Models\Service;
 use App\Models\ServiceRequest;
 use App\Models\User;
 use Carbon\Carbon;
@@ -422,5 +424,85 @@ class CustomerBookingRulesTest extends TestCase
             'pet_name' => $pet->name,
         ]);
         $this->assertDatabaseMissing('service_requests', ['pet_name' => 'Forged Name']);
+    }
+
+    public function test_same_day_availability_omits_elapsed_times_and_server_rejects_them(): void
+    {
+        Carbon::setTestNow(Carbon::parse('2026-10-12 14:00:00', 'Asia/Manila'));
+        $user = $this->customer();
+        $pet = $this->petFor($user);
+        $date = Carbon::now('Asia/Manila')->toDateString();
+        $headers = $this->authHeaders($user);
+
+        $slots = $this->withHeaders($headers)
+            ->getJson('/api/customer/availability/veterinary?date=' . $date . '&service_name=General%20Consultation')
+            ->assertOk()
+            ->json('slots');
+
+        $times = array_column($slots, 'time');
+        $this->assertNotContains('10:00', $times);
+        $this->assertNotContains('14:00', $times);
+        $this->assertContains('14:30', $times);
+
+        $this->withHeaders($headers)
+            ->postJson('/api/customer/requests', [
+                'customer_name' => $user->name,
+                'pet_id' => $pet->id,
+                'request_type' => 'vet',
+                'service_name' => 'General Consultation',
+                'requested_date' => $date,
+                'requested_time' => '10:00',
+            ])
+            ->assertUnprocessable();
+    }
+
+    public function test_legacy_customer_appointment_route_checks_availability_and_uses_manila_time(): void
+    {
+        Carbon::setTestNow(Carbon::parse('2026-10-12 12:00:00', 'Asia/Manila'));
+        $user = $this->customer();
+        $user->forceFill(['email_verified_at' => now()])->save();
+        $pet = $this->petFor($user);
+        $service = Service::factory()->create([
+            'name' => 'General Consultation',
+            'category' => 'Consultation',
+            'duration_minutes' => 30,
+        ]);
+        $date = Carbon::tomorrow('Asia/Manila')->toDateString();
+        ServiceRequest::create([
+            'customer_id' => $user->id,
+            'pet_id' => $pet->id,
+            'customer_name' => $user->name,
+            'customer_email' => $user->email,
+            'pet_name' => $pet->name,
+            'request_type' => 'vet',
+            'service_name' => $service->name,
+            'request_date' => $date,
+            'request_time' => '10:00',
+            'status' => 'pending',
+            'payment_status' => 'unpaid',
+        ]);
+
+        $headers = $this->authHeaders($user);
+        $overlap = Carbon::parse($date . ' 10:00', 'Asia/Manila')->toISOString();
+        $this->withHeaders($headers)
+            ->postJson('/api/customer/appointments', [
+                'pet_id' => $pet->id,
+                'service_id' => $service->id,
+                'scheduled_at' => $overlap,
+            ])
+            ->assertUnprocessable();
+
+        $localSlot = Carbon::parse($date . ' 11:00', 'Asia/Manila');
+        $this->withHeaders($headers)
+            ->postJson('/api/customer/appointments', [
+                'pet_id' => $pet->id,
+                'service_id' => $service->id,
+                'scheduled_at' => $localSlot->toISOString(),
+            ])
+            ->assertCreated();
+
+        $appointment = Appointment::latest('id')->firstOrFail();
+        $this->assertSame('03:00', $appointment->scheduled_at->copy()->setTimezone('UTC')->format('H:i'));
+        $this->assertSame('11:00', $appointment->scheduled_at->copy()->setTimezone('Asia/Manila')->format('H:i'));
     }
 }

@@ -85,25 +85,43 @@ const VetAppointments = () => {
       const requestData = Array.isArray(data) ? data : (data.requests || []);
       const vetOnly = requestData.filter(isVetRequest);
       
-      const transformedAppointments = vetOnly.map(item => ({
-        id: `APT-${String(item.id).padStart(3, '0')}`,
-        rawId: item.id,
-        appointmentId: item.appointment_id || item.appointment?.id || null,
-        petName: item.pet,
-        petType: "Pet",
-        breed: "Unknown",
-        owner: item.customer,
-        ownerPhone: "N/A",
-        doctor: "Unassigned",
-        appointmentDate: item.date,
-        appointmentTime: item.time,
-        duration: "30 mins",
-        service: item.service,
-        status: item.status,
-        notes: item.notes || "",
-        urgency: "medium",
-      }));
-      
+      const transformedAppointments = vetOnly.map((item) => {
+        const veterinarianId = item.veterinarian_id || item.appointment?.veterinarian_id || null;
+        const veterinarian = item.veterinarian || item.appointment?.veterinarian;
+        const doctor = veterinarian?.name
+          || (veterinarianId ? veterinarians.find((vet) => Number(vet.id) === Number(veterinarianId))?.name : null)
+          || (veterinarianId ? `Vet #${veterinarianId}` : "Unassigned");
+
+        return {
+          id: `APT-${String(item.id).padStart(3, '0')}`,
+          rawId: item.id,
+          appointmentId: item.appointment_id || item.appointment?.id || null,
+          veterinarianId,
+          appointmentStatus: item.appointment_status || item.appointment?.status || null,
+          canAssign: ['pending', 'approved', 'scheduled'].includes(item.status) && (!item.appointment_status || ['pending', 'approved', 'scheduled'].includes(item.appointment_status)),
+          petName: item.pet_name || item.pet,
+          petType: item.pet_type || "Pet",
+          breed: item.breed || "Unknown",
+          owner: item.customer,
+          ownerPhone: item.customer_phone || "N/A",
+          doctor,
+          appointmentDate: item.date,
+          appointmentTime: item.time,
+          duration: "30 mins",
+          service: item.service,
+          status: item.status,
+          notes: item.notes || "",
+          urgency: "medium",
+        };
+      });
+      setVetAssignments((current) => {
+        const next = { ...current };
+        vetOnly.forEach((item) => {
+          const veterinarianId = item.veterinarian_id || item.appointment?.veterinarian_id;
+          if (veterinarianId) next[item.id] = String(veterinarianId);
+        });
+        return next;
+      });
       setAppointments(transformedAppointments);
       setError("");
     } catch (err) {
@@ -135,7 +153,8 @@ const VetAppointments = () => {
 
   // Approve appointment
   const handleApprove = async (appointmentId) => {
-    const veterinarianId = vetAssignments[appointmentId] || selectedVet;
+    const appointment = appointments.find((item) => item.rawId === appointmentId);
+    const veterinarianId = vetAssignments[appointmentId] || selectedVet || appointment?.veterinarianId;
 
     if (!veterinarianId) {
       setError("Please choose a veterinarian before approving this appointment.");
@@ -604,12 +623,12 @@ const VetAppointments = () => {
                         <span>Select for bulk actions</span>
                       </label>
                     )}
-                    {appointment.status === "pending" ? (
+                    {appointment.canAssign ? (
                       <label className="row-action-popover-control">
-                        <span>Assign veterinarian</span>
+                        <span>{appointment.veterinarianId ? `Assigned: ${appointment.doctor}` : "Assign veterinarian"}</span>
                         <select
                           aria-label={`Assign veterinarian to ${appointment.petName}`}
-                          value={vetAssignments[appointment.rawId] || ""}
+                          value={vetAssignments[appointment.rawId] || appointment.veterinarianId || ""}
                           onChange={(event) => setVetAssignments((current) => ({
                             ...current,
                             [appointment.rawId]: event.target.value,
@@ -622,10 +641,10 @@ const VetAppointments = () => {
                     ) : (
                       <div className="row-action-popover-control"><span>Assigned veterinarian: {appointment.doctor}</span></div>
                     )}
-                    {appointment.status === 'pending' && (
-                    <button 
-                      className="action-btn approve-btn" 
-                      title="Approve"
+                    {appointment.canAssign && (
+                    <button
+                      className="action-btn approve-btn"
+                      title={appointment.status === 'pending' ? "Assign and approve" : "Reassign veterinarian"}
                       onClick={() => handleApprove(appointment.rawId)}
                       disabled={actionLoading || veterinarians.length === 0}
                     >

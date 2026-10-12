@@ -185,12 +185,17 @@ export const usePaymentApprovals = (user) => {
     let items;
     const rawItems = data.receipt?.items || payment.items || [];
     if (rawItems.length > 0) {
-      items = rawItems.map((item) => ({
-        name: item.item_name || item.name || item.description || "Item",
-        quantity: Number(item.quantity || 1),
-        unitPrice: Number(item.unit_price || item.price || item.amount || 0),
-        total: Number(item.total_price || item.total || item.amount || 0),
-      }));
+      items = rawItems.map((item) => {
+        const isDiscount = Boolean(item.is_discount) || item.item_type === "discount";
+        const unitPrice = Number(item.unit_price || item.price || item.amount || 0);
+        const total = Number(item.total_price || item.total || item.amount || 0);
+        return {
+          name: isDiscount ? `Discount: ${item.item_name || item.name || item.description || "Item"}` : (item.item_name || item.name || item.description || "Item"),
+          quantity: Number(item.quantity || 1),
+          unitPrice: isDiscount ? -Math.abs(unitPrice) : unitPrice,
+          total: isDiscount ? -Math.abs(total) : total,
+        };
+      });
     } else {
       items = [{ name: service, quantity: 1, unitPrice: amount, total: amount }];
     }
@@ -227,7 +232,7 @@ export const usePaymentApprovals = (user) => {
         type: payment.payable_type || payment.type || payment.payment_source || "service_request",
         cashier_remarks: "Payment verified by cashier",
         reference_number: referenceNumber.trim(),
-        payment_method: payment.payment_method || "counter",
+        payment_method: cashParams.paymentMethod || payment.payment_method || "counter",
         ...(cashParams.cashReceived != null ? { cash_received: cashParams.cashReceived } : {}),
         ...(cashParams.change       != null ? { change:         cashParams.change       } : {}),
       });
@@ -309,7 +314,7 @@ export const usePaymentApprovals = (user) => {
         // Actionable states only: a submitted proof ('pending' + proof), a
         // rejected proof (counter fallback), or a walk-in counter collection.
         // Online bookings with no proof are never bulk-collectible.
-        if (!payment) continue;
+        if (!payment || payment.payable_type === "service_billing_payment") continue;
         const ps = (payment.payment_status || "").toLowerCase();
         const ch = (payment.booking_channel || "").toLowerCase();
         const actionable = ps === "rejected"

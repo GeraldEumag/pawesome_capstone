@@ -72,6 +72,8 @@ const ReceptionistDashboard = () => {
   const [selectedRequest, setSelectedRequest] = useState(null);
   const [showServiceManager, setShowServiceManager] = useState(false);
   const [busyAction, setBusyAction] = useState("");
+  const [veterinarians, setVeterinarians] = useState([]);
+  const [vetAssignments, setVetAssignments] = useState({});
   const [showExportDropdown, setShowExportDropdown] = useState(false);
   const [sortConfig, setSortConfig] = useState({
     key: "created_at",
@@ -178,6 +180,11 @@ const ReceptionistDashboard = () => {
           "",
         status,
         payment,
+        veterinarianId: item.veterinarian_id || item.appointment?.veterinarian_id || null,
+        veterinarian: item.veterinarian || item.appointment?.veterinarian || null,
+        appointmentStatus: item.appointment_status || item.appointment?.status || null,
+        canAssign: type === "vet" && ["pending", "approved"].includes(status)
+          && (!item.appointment_status || ["pending", "approved", "scheduled"].includes(item.appointment_status)),
         notes:
           item.notes ||
           item.remarks ||
@@ -208,7 +215,15 @@ const ReceptionistDashboard = () => {
         method: "GET",
       });
 
-      setRequests(normalizeRequests(data));
+      const normalized = normalizeRequests(data);
+      setRequests(normalized);
+      setVetAssignments((current) => {
+        const next = { ...current };
+        normalized.forEach((item) => {
+          if (item.veterinarianId) next[item.rawId] = String(item.veterinarianId);
+        });
+        return next;
+      });
       setLastUpdated(new Date().toLocaleString("en-PH"));
     } catch (err) {
       console.error("Fetch requests error:", err);
@@ -219,8 +234,19 @@ const ReceptionistDashboard = () => {
     }
   };
 
+  const fetchVeterinarians = async () => {
+    try {
+      const response = await apiRequest("/receptionist/veterinarians/available");
+      const list = response.veterinarians || response.data || response;
+      setVeterinarians(Array.isArray(list) ? list : []);
+    } catch (err) {
+      setVeterinarians([]);
+    }
+  };
+
   useEffect(() => {
     fetchRequests();
+    fetchVeterinarians();
   }, []);
 
   const stats = useMemo(() => {
@@ -304,30 +330,33 @@ const ReceptionistDashboard = () => {
     }
 
     const actionKey = `${request.rawId}-${newStatus}`;
+    const veterinarianId = vetAssignments[request.rawId] || request.veterinarianId;
+    if (newStatus === "approved" && request.type === "vet" && !veterinarianId) {
+      setSelectedRequest(request);
+      notify("error", "Choose a veterinarian before approving this request.");
+      return;
+    }
 
     try {
       setBusyAction(actionKey);
 
-      await apiRequest(`/receptionist/requests/${request.rawId}/status`, {
-        method: "PATCH",
-        body: JSON.stringify({
-          status: newStatus,
-          ...(rejectionReason ? { rejection_reason: rejectionReason } : {}),
-        }),
-      });
-
-      setRequests((prev) =>
-        prev.map((item) =>
-          item.rawId === request.rawId ? { ...item, status: newStatus } : item
-        )
-      );
-
-      setSelectedRequest((prev) =>
-        prev?.rawId === request.rawId ? { ...prev, status: newStatus } : prev
-      );
+      if (newStatus === "approved" && request.type === "vet") {
+        await apiRequest(`/receptionist/requests/${request.rawId}/approve`, {
+          method: "POST",
+          body: JSON.stringify({ veterinarian_id: Number(veterinarianId) }),
+        });
+      } else {
+        await apiRequest(`/receptionist/requests/${request.rawId}/status`, {
+          method: "PATCH",
+          body: JSON.stringify({
+            status: newStatus,
+            ...(rejectionReason ? { rejection_reason: rejectionReason } : {}),
+          }),
+        });
+      }
 
       notify("success", `${request.id} marked as ${newStatus}.`);
-      fetchRequests({ silent: true });
+      await fetchRequests({ silent: true });
     } catch (err) {
       console.error("Update status error:", err);
       notify("error", err.message || "Failed to update request status.");
@@ -778,12 +807,31 @@ const ReceptionistDashboard = () => {
                           <FaEye />
                         </button>
 
+                        {item.canAssign && (
+                          <label className="row-action-popover-control">
+                            <span>{item.veterinarian?.name || (item.veterinarianId ? `Assigned: Vet #${item.veterinarianId}` : "Assign veterinarian")}</span>
+                            <select
+                              aria-label={`Assign veterinarian to ${item.pet}`}
+                              value={vetAssignments[item.rawId] || item.veterinarianId || ""}
+                              onChange={(event) => setVetAssignments((current) => ({
+                                ...current,
+                                [item.rawId]: event.target.value,
+                              }))}
+                            >
+                              <option value="">Choose veterinarian...</option>
+                              {veterinarians.map((vet) => (
+                                <option key={vet.id} value={vet.id}>{vet.name}</option>
+                              ))}
+                            </select>
+                          </label>
+                        )}
+
                         <button
                           className="approve"
                           type="button"
                           onClick={() => updateStatus(item, "approved")}
-                          title="Approve"
-                          disabled={item.status === "approved" || Boolean(busyAction)}
+                          title={item.type === "vet" && item.status === "approved" ? "Reassign veterinarian" : "Approve"}
+                          disabled={(item.status === "approved" && !item.canAssign) || Boolean(busyAction)}
                         >
                           {isBusy(item, "approved") ? <FaSpinner /> : <FaCheckCircle />}
                         </button>
@@ -898,6 +946,27 @@ const ReceptionistDashboard = () => {
                 </div>
               </div>
 
+              {selectedRequest.type === "vet" && (
+                <div className="request-notes-card">
+                  <small>Assigned veterinarian</small>
+                  {selectedRequest.canAssign ? (
+                    <select
+                      aria-label={`Assign veterinarian to ${selectedRequest.pet}`}
+                      value={vetAssignments[selectedRequest.rawId] || selectedRequest.veterinarianId || ""}
+                      onChange={(event) => setVetAssignments((current) => ({
+                        ...current,
+                        [selectedRequest.rawId]: event.target.value,
+                      }))}
+                    >
+                      <option value="">Choose veterinarian...</option>
+                      {veterinarians.map((vet) => <option key={vet.id} value={vet.id}>{vet.name}</option>)}
+                    </select>
+                  ) : (
+                    <strong>{selectedRequest.veterinarian?.name || (selectedRequest.veterinarianId ? `Vet #${selectedRequest.veterinarianId}` : "Unassigned")}</strong>
+                  )}
+                </div>
+              )}
+
               <div className="request-notes-card">
                 <small>Notes</small>
                 <p>{selectedRequest.notes || "No notes provided."}</p>
@@ -941,10 +1010,10 @@ const ReceptionistDashboard = () => {
                 type="button"
                 className="approve-action"
                 onClick={() => updateStatus(selectedRequest, "approved")}
-                disabled={selectedRequest.status === "approved" || Boolean(busyAction)}
+                disabled={(selectedRequest.status === "approved" && !selectedRequest.canAssign) || Boolean(busyAction)}
               >
                 <FaCheckCircle />
-                Approve
+                {selectedRequest.type === "vet" && selectedRequest.status === "approved" ? "Reassign Veterinarian" : "Approve"}
               </button>
 
               <button

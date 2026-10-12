@@ -18,6 +18,7 @@ use App\Http\Controllers\ChatbotWorkflowController;
 use App\Http\Controllers\LiveChatController;
 use App\Http\Controllers\Customer\PortalController;
 use App\Http\Controllers\Customer\CustomerStoreController;
+use App\Http\Controllers\Customer\VeterinaryBillingController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\Cashier\DashboardController as CashierDashboardController;
 use App\Http\Controllers\Cashier\POSController;
@@ -311,6 +312,10 @@ Route::middleware(['auth.api', 'throttle:api', 'role:customer'])->prefix('custom
     Route::get('orders/history', [PortalController::class, 'transactions']);
     Route::get('requests/history', [ServiceRequestController::class, 'customerRequests']);
     Route::get('payments/history', [PortalController::class, 'transactions']);
+    Route::get('billing', [VeterinaryBillingController::class, 'index']);
+    Route::get('billing/payment-requests/{id}/receipt', [VeterinaryBillingController::class, 'receipt']);
+    Route::post('billing/veterinary/{id}/cashier-payment', [VeterinaryBillingController::class, 'requestCashierPayment'])->middleware('verified');
+    Route::post('billing/veterinary/{id}/online-payment', [VeterinaryBillingController::class, 'submitOnlinePayment'])->middleware('verified');
     
     // Customer Service Requests
     Route::post('requests', [ServiceRequestController::class, 'store'])->middleware('verified');

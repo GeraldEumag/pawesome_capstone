@@ -128,7 +128,7 @@ class BoardingRoomService
             return ['success' => false, 'message' => 'Invalid date range'];
         }
 
-        // Same-day boarding (9 AM - 7 PM): a stay is billed as one day.
+        // Same-day boarding (10 AM - 6 PM): a stay is billed as one day.
         $numberOfDays = max(1, (int) $checkIn->diffInDays($checkOut));
 
         $totalAmount = $room->daily_rate * $numberOfDays;

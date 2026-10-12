@@ -152,7 +152,9 @@ const CustomerRequestStatus = ({ embedded = false }) => {
     if (item?.source === "store_order") return false;
     const status = safeLower(item?.status || item?.order_status);
     const paymentStatus = safeLower(item?.payment_status || item?.payment || "unpaid");
-    return ["approved", "scheduled"].includes(status) && ["unpaid", "rejected"].includes(paymentStatus);
+    return Number(item?.additional_charges || 0) <= 0
+      && ["approved", "scheduled"].includes(status)
+      && ["unpaid", "rejected"].includes(paymentStatus);
   };
 
   const canCancelBoarding = (item) =>
@@ -235,11 +237,17 @@ const CustomerRequestStatus = ({ embedded = false }) => {
               {filteredRequests.map((item) => {
                 const status = safeText(item.status || item.order_status, "pending");
                 const paymentStatus = safeText(item.payment_status || item.payment, "unpaid");
+                const hasAdditionalBill = item.source === "service_request" && Number(item.additional_charges || 0) > 0;
 
                 return (
                   <tr key={`${item.source || "request"}-${item.id}`}>
                     <td className="col-id">#{item.id}</td>
-                    <td className="col-service">{safeText(item.service || item.service_name || item.type_label, "Service Request")}</td>
+                    <td className="col-service">
+                      {safeText(item.service || item.service_name || item.type_label, "Service Request")}
+                      {["vet", "veterinary"].includes(safeLower(item.request_type || item.type)) && (
+                        <small>Veterinarian: {item.veterinarian?.name || "Not yet assigned"}</small>
+                      )}
+                    </td>
                     <td className="col-pet">{getPetName(item)}</td>
                     <td className="col-date">
                       {(item.date || item.request_date) ? new Date(item.date || item.request_date).toLocaleDateString() : "N/A"}
@@ -260,9 +268,14 @@ const CustomerRequestStatus = ({ embedded = false }) => {
                       )}
                     </td>
                     <td className="col-action">
-                      {canPay(item) || canCancelBoarding(item) ? (
+                      {canPay(item) || canCancelBoarding(item) || hasAdditionalBill ? (
                         <RowActionPopover rowLabel={`${getCustomerName(item)} ${getPetName(item)}`}>
                           <div className="col-action-buttons">
+                            {hasAdditionalBill && (
+                              <a className="customer-pay-btn" href="/customer/payments">
+                                View Bill
+                              </a>
+                            )}
                             {canPay(item) && (
                               <button
                                 className="customer-pay-btn"

@@ -8,11 +8,14 @@ use App\Models\Grooming;
 use App\Models\Pet;
 use App\Models\Service;
 use App\Models\ServiceItemUsage;
+use App\Services\BookingAvailabilityService;
 use App\Services\GroomingInventoryService;
 use App\Services\ServiceBillingService;
+use App\Services\ServiceDurationService;
 use App\Services\ServiceCatalog;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
 
 class GroomingController extends Controller
@@ -44,8 +47,8 @@ class GroomingController extends Controller
             'customer_id' => 'required|exists:customers,id',
             'pet_id' => 'required|exists:pets,id',
             'service' => 'required|string|max:255',
-            'appointment_date' => 'required|date',
-            'appointment_time' => 'nullable|string|max:50',
+            'appointment_date' => 'required|date|after_or_equal:' . now(ServiceDurationService::STORE_TIMEZONE)->toDateString(),
+            'appointment_time' => 'required|date_format:H:i',
             'notes' => 'nullable|string',
             'amount' => 'nullable|numeric',
         ]);
@@ -63,7 +66,31 @@ class GroomingController extends Controller
         $validated['amount_paid'] = 0;
         $validated['balance_due'] = $resolvedAmount;
 
-        $grooming = Grooming::create($validated);
+        $grooming = DB::transaction(function () use ($validated) {
+            BookingAvailabilityService::lockServiceSchedule();
+            if (!BookingAvailabilityService::isServiceTimeAvailable(
+                'grooming',
+                $validated['appointment_date'],
+                $validated['appointment_time'],
+                $validated['service'],
+                null,
+                null,
+                null,
+                true
+            )) {
+                return null;
+            }
+
+            return Grooming::create($validated);
+        });
+
+        if (!$grooming) {
+            return response()->json([
+                'success' => false,
+                'message' => 'This grooming time is no longer available. Please choose another slot.',
+                'errors' => ['appointment_time' => ['Time slot overlaps an existing booking or is outside business hours.']],
+            ], 422);
+        }
 
         return response()->json([
             'message' => 'Grooming appointment created',

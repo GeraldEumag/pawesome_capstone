@@ -21,7 +21,7 @@ class PaymentVerificationService
             return ['success' => false, 'message' => 'Customer store order workflows are disabled.', 'status' => 410];
         }
 
-        if (!in_array($normalized, ['boarding', 'appointment', 'veterinary', 'grooming', 'medical_confinement', 'confinement', 'service_request', 'service'], true)) {
+        if (!in_array($normalized, ['boarding', 'appointment', 'veterinary', 'grooming', 'medical_confinement', 'confinement', 'service_request', 'service', 'service_billing_payment'], true)) {
             return ['success' => false, 'message' => 'Unsupported payment type.', 'status' => 422];
         }
 
@@ -87,6 +87,10 @@ class PaymentVerificationService
             // together or not at all. In-app notifications are DB rows and roll
             // back with the transaction — they are intentionally inside it.
             return DB::transaction(function () use ($type, $id, $request, $referenceNumber, $isCounterPayment, $counterMessage) {
+                if ($type === 'service_billing_payment') {
+                    return ServiceBillingPaymentService::verify($id, $request);
+                }
+
                 if ($type === 'boarding') {
                     return $this->verifyTablePayment('boardings', 'BD-REC-', $id, $request, 'Boarding payment verified successfully.', $referenceNumber, $isCounterPayment, $counterMessage);
                 }
@@ -299,6 +303,10 @@ class PaymentVerificationService
 
         try {
             return DB::transaction(function () use ($type, $id, $request, $rejectionReason) {
+                if ($type === 'service_billing_payment') {
+                    return ServiceBillingPaymentService::reject($id, $rejectionReason);
+                }
+
                 if ($type === 'boarding') {
                     return $this->rejectTablePayment('boardings', $id, $request, 'Boarding payment rejected', $rejectionReason);
                 }
@@ -366,6 +374,7 @@ class PaymentVerificationService
             'appointment', 'veterinary' => ['table' => 'appointments', 'settleable' => 'appointment'],
             'grooming' => ['table' => 'groomings', 'settleable' => 'grooming'],
             'medical_confinement', 'confinement' => ['table' => 'medical_confinements', 'settleable' => 'medical_confinement'],
+            'service_billing_payment' => ['table' => 'service_billing_payment_requests', 'settleable' => 'service_billing_payment'],
             default => null,
         };
 
@@ -376,7 +385,13 @@ class PaymentVerificationService
         try {
             $table = $meta['table'];
             $record = DB::table($table)->where('id', $id)->first();
-            if (!$record || ($record->payment_status ?? null) !== 'paid' || empty($record->receipt_number)) {
+            if (!$record) {
+                return;
+            }
+            $recordPaymentStatus = $table === 'service_billing_payment_requests'
+                ? ($record->status ?? null)
+                : ($record->payment_status ?? null);
+            if ($recordPaymentStatus !== 'paid' || empty($record->receipt_number)) {
                 return;
             }
 
@@ -421,7 +436,7 @@ class PaymentVerificationService
                 'customer_email' => $customerEmail,
                 'total_amount' => (float) $totalAmount,
                 'payment_method' => $record->payment_method ?? $settlement?->payment_method,
-                'payment_reference' => $record->reference_number ?: ($record->payment_reference ?? $settlement?->reference_number),
+                'payment_reference' => ($record->reference_number ?? null) ?: ($record->payment_reference ?? $settlement?->reference_number),
                 'paid_at' => $record->paid_at ?? $settlement?->paid_at,
             ];
 
@@ -454,13 +469,13 @@ class PaymentVerificationService
                     'service_requests' => $record->service_name ?? 'Service',
                     'boardings' => 'Boarding' . (($record->stay_type ?? $record->boarding_type ?? null) ? ' (' . ($record->stay_type ?? $record->boarding_type) . ')' : ''),
                     'appointments' => \App\Models\Service::find($record->service_id ?? 0)?->name ?? 'Veterinary service',
+                    'service_billing_payment_requests' => $record->service_name ?? 'Veterinary service billing',
                     'groomings' => $record->service ?? 'Grooming',
                     default => 'Medical confinement',
                 };
-                $receipt['service_date'] = $record->request_date
-                    ?? $record->appointment_date
-                    ?? $record->check_in
-                    ?? null;
+                $receipt['service_date'] = $table === 'service_billing_payment_requests'
+                    ? \App\Models\Appointment::find($record->appointment_id ?? 0)?->scheduled_at
+                    : ($record->request_date ?? $record->appointment_date ?? $record->check_in ?? null);
             }
 
             $receiptKind = $meta['settleable'] ?? 'customer_order';
@@ -494,6 +509,7 @@ class PaymentVerificationService
             'appointment', 'veterinary' => ['table' => 'appointments', 'ref' => 'APT', 'cta' => '/customer/bookings'],
             'grooming' => ['table' => 'groomings', 'ref' => 'GR', 'cta' => '/customer/bookings'],
             'medical_confinement', 'confinement' => ['table' => 'medical_confinements', 'ref' => 'MC', 'cta' => '/customer/bookings'],
+            'service_billing_payment' => ['table' => 'service_billing_payment_requests', 'ref' => 'VET-BILL', 'cta' => '/customer/payments'],
             default => null,
         };
 
@@ -503,7 +519,13 @@ class PaymentVerificationService
 
         try {
             $record = DB::table($meta['table'])->where('id', $id)->first();
-            if (!$record || ($record->payment_status ?? null) !== 'rejected') {
+            if (!$record) {
+                return;
+            }
+            $recordPaymentStatus = $meta['table'] === 'service_billing_payment_requests'
+                ? ($record->status ?? null)
+                : ($record->payment_status ?? null);
+            if ($recordPaymentStatus !== 'rejected') {
                 return;
             }
 
@@ -527,12 +549,13 @@ class PaymentVerificationService
                 'service_requests' => $record->service_name ?? 'Service request',
                 'boardings' => 'Boarding' . (($record->stay_type ?? $record->boarding_type ?? null) ? ' (' . ($record->stay_type ?? $record->boarding_type) . ')' : ''),
                 'appointments' => \App\Models\Service::find($record->service_id ?? 0)?->name ?? 'Veterinary service',
+                'service_billing_payment_requests' => $record->service_name ?? 'Veterinary service billing',
                 'groomings' => $record->service ?? 'Grooming',
                 default => 'Medical confinement',
             };
 
             $reference = "{$meta['ref']}-{$id}";
-            $paymentReference = $record->reference_number ?: ($record->payment_reference ?? null);
+            $paymentReference = ($record->reference_number ?? null) ?: ($record->payment_reference ?? null);
             $rejectedAt = $record->rejected_at ?? $record->updated_at ?? now();
 
             app(EmailDeliveryService::class)->lifecycle(
@@ -584,6 +607,7 @@ class PaymentVerificationService
     {
         $candidates = match ($table) {
             'medical_confinements' => ['final_amount', 'total_amount', 'amount'],
+            'service_billing_payment_requests' => ['amount_due'],
             'service_requests' => ['total_amount', 'price'],
             default => ['total_amount', 'price', 'amount'],
         };
@@ -621,6 +645,10 @@ class PaymentVerificationService
 
     private function paymentStatusOf(string $type, int $id): ?string
     {
+        if ($type === 'service_billing_payment') {
+            return DB::table('service_billing_payment_requests')->where('id', $id)->value('status');
+        }
+
         $table = match ($type) {
             'boarding' => 'boardings',
             'appointment', 'veterinary' => 'appointments',
