@@ -10,8 +10,7 @@ import {
 import { apiRequest } from "../../api/client";
 import { formatCurrency } from "../../utils/currency";
 import { STORE_INFO } from "../../utils/storeInfo";
-import jsPDF from "jspdf";
-import html2canvas from "html2canvas";
+import { downloadReceiptPdf } from "../../utils/receiptPdf";
 import { showError } from "../../utils/alert.jsx";
 import "./theme.css";
 import "./VetReceipt.css";
@@ -52,16 +51,22 @@ const VetReceipt = () => {
         service_name: receipt.service_name || 'Service',
         service_cost: receipt.amount || 0,
         description: receipt.notes || 'No description',
-        subtotal: receipt.subtotal || receipt.amount || 0,
-        tax: receipt.tax || receipt.vat_amount || 0,
+        subtotal: receipt.subtotal ?? receipt.amount ?? 0,
+        net_amount: receipt.breakdown?.net_amount ?? receipt.net_amount ?? null,
+        tax: receipt.tax ?? receipt.breakdown?.vat_amount ?? receipt.vat_amount ?? 0,
         total: receipt.total || receipt.amount || 0,
         payment_method: receipt.payment_method || 'cash',
         payment_status: receipt.status || 'pending',
         receipt_number: receipt.receipt_number || null,
         paid_date: receipt.paid_date || null,
+        verified_by: receipt.verified_by || null,
+        reference_number: receipt.reference_number || null,
+        cash_received: receipt.cash_received ?? null,
+        change: receipt.change ?? null,
+        breakdown: receipt.breakdown || null,
         pet_breed: receipt.pet_breed || null,
         pet_age: receipt.pet_age || null,
-        additional_services: receipt.additional_services || [],
+        additional_services: Array.isArray(receipt.additional_services) ? receipt.additional_services : [],
       });
       setError("");
     } catch (err) {
@@ -77,19 +82,42 @@ const VetReceipt = () => {
     window.print();
   };
 
-  const handleDownloadPDF = async () => {
+  const handleDownloadPDF = () => {
     try {
       if (!receiptData) return;
-      const element = document.getElementById("receipt-content");
-      const canvas = await html2canvas(element, { scale: 2 });
-      const imgData = canvas.toDataURL("image/png");
-      const pdf = new jsPDF("p", "mm", "a4");
-      const width = pdf.internal.pageSize.getWidth();
-      pdf.addImage(imgData, "PNG", 10, 10, width - 20, 0);
-      pdf.save(`receipt-${receiptData.id}.pdf`);
+      downloadReceiptPdf({
+        title: "Service Invoice",
+        receiptNumber: receiptData.receipt_number || receiptData.id,
+        date: receiptData.paid_date || receiptData.date,
+        customer: receiptData.owner_name,
+        paymentMethod: receiptData.payment_method,
+        paymentStatus: receiptData.payment_status,
+        referenceNumber: receiptData.reference_number,
+        verifiedBy: receiptData.verified_by,
+        amountReceived: receiptData.cash_received,
+        change: receiptData.change,
+        items: [
+          {
+            name: `${receiptData.service_name} — ${receiptData.description}`,
+            quantity: 1,
+            unitPrice: receiptData.service_cost,
+            total: receiptData.service_cost,
+          },
+          ...receiptData.additional_services.map((service) => ({
+            name: service.name || "Additional service",
+            quantity: 1,
+            unitPrice: service.cost,
+            total: service.cost,
+          })),
+        ],
+        subtotal: receiptData.subtotal,
+        netAmount: receiptData.net_amount,
+        vat: receiptData.breakdown?.vat_amount ?? receiptData.tax,
+        total: receiptData.total,
+        footerText: `Thank you for trusting ${STORE_INFO.name} with your pet's health!`,
+      });
     } catch (err) {
-      setError("Failed to download PDF");
-      showError("Failed to download PDF");
+      showError(err.message || "Failed to download PDF");
       console.error(err);
     }
   };
@@ -135,7 +163,7 @@ const VetReceipt = () => {
   return (
     <section className="app-content vet-receipt">
 
-      {/* ── Captured area for PDF ── */}
+      {/* ── Receipt content ── */}
       <div className="vr-paper" id="receipt-content">
 
         {/* Store header */}
@@ -149,7 +177,7 @@ const VetReceipt = () => {
         </div>
 
         {/* Transaction info */}
-        <div className="vr-row"><span>Receipt #</span><span>{receiptData.id}</span></div>
+        <div className="vr-row"><span>Receipt #</span><span>{receiptData.receipt_number || receiptData.id}</span></div>
         <div className="vr-row"><span>Date</span><span>{new Date(receiptData.date).toLocaleDateString()}</span></div>
         <div className="vr-row"><span>Time</span><span>{receiptData.time}</span></div>
         <div className="vr-row"><span>Type</span><span>{receiptData.service_type?.toUpperCase()}</span></div>
@@ -206,7 +234,7 @@ const VetReceipt = () => {
         </div>
 
       </div>
-      {/* ── End captured area ── */}
+      {/* ── End receipt content ── */}
 
       {/* Action buttons — screen only, excluded from PDF/print */}
       <div className="vr-actions">

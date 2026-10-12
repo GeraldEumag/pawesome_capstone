@@ -269,6 +269,12 @@
   color: #d97706;
 }
 
+.customer-receipt-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+
 .receipt-btn {
   border: 1px solid rgba(255, 95, 147, 0.22);
   border-radius: 999px;

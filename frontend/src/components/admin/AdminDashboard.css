@@ -533,6 +533,7 @@
 
 .chart-box {
   width: 100%;
+  min-width: 0;
   height: 280px;
 }
 

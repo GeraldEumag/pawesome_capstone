@@ -9,6 +9,7 @@ import {
 } from '@fortawesome/free-solid-svg-icons';
 import { apiRequest } from '../../../api/client';
 import { showAlert } from '../../../utils/alert';
+import ReportSkeleton from '../../shared/ReportSkeleton';
 import './AdvancedReports.css';
 
 const TYPE_LABELS = {
@@ -89,7 +90,7 @@ const AutomatedAlerts = () => {
   };
 
   if (loading) {
-    return <div className="adv-loading"><p>Loading alerts...</p></div>;
+    return <ReportSkeleton label="Loading admin alerts" />;
   }
 
   if (error) {

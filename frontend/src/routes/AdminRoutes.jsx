@@ -1,6 +1,7 @@
 import { Suspense, lazy } from "react";
 import { Routes, Route } from "react-router-dom";
 import ProtectedRoute from "../components/ProtectedRoute";
+import ReportSkeleton from "../components/shared/ReportSkeleton";
 
 // Core admin modules - lazy loaded
 const AdminDashboard = lazy(() => import("../components/admin/AdminDashboard"));
@@ -58,6 +59,12 @@ const RouteLoading = () => (
   </div>
 );
 
+const ReportRoute = ({ children }) => (
+  <Suspense fallback={<ReportSkeleton label="Loading admin report" />}>
+    {children}
+  </Suspense>
+);
+
 const AdminRoutes = () => (
   <Suspense fallback={<RouteLoading />}>
     <Routes>
@@ -70,7 +77,7 @@ const AdminRoutes = () => (
         }
       >
         {/* Default index route → dashboard overview */}
-        <Route index element={<AdminReports />} />
+        <Route index element={<ReportRoute><AdminReports /></ReportRoute>} />
 
         {/* Core admin routes */}
         <Route
@@ -92,25 +99,25 @@ const AdminRoutes = () => (
             />
           }
         />
-        <Route path="reports" element={<AdminReports />} />
-        <Route path="reports/cashier" element={<CashierReports />} />
-        <Route path="reports/inventory" element={<InventoryReports />} />
-        <Route path="reports/manager" element={<ManagerReports />} />
-        <Route path="reports/veterinary" element={<VetReports />} />
-        <Route path="reports/customers" element={<CustomerReport />} />
-        <Route path="reports/payments" element={<PaymentReports />} />
-        <Route path="reports/orders" element={<OrderReports />} />
-        <Route path="reports/services" element={<ServiceRequestReports />} />
-        <Route path="reports/logistics" element={<LogisticsReports />} />
-        <Route path="reports/reception" element={<ReceptionistReports />} />
-        <Route path="reports/attendance" element={<Attendance />} />
+        <Route path="reports" element={<ReportRoute><AdminReports /></ReportRoute>} />
+        <Route path="reports/cashier" element={<ReportRoute><CashierReports /></ReportRoute>} />
+        <Route path="reports/inventory" element={<ReportRoute><InventoryReports /></ReportRoute>} />
+        <Route path="reports/manager" element={<ReportRoute><ManagerReports /></ReportRoute>} />
+        <Route path="reports/veterinary" element={<ReportRoute><VetReports /></ReportRoute>} />
+        <Route path="reports/customers" element={<ReportRoute><CustomerReport /></ReportRoute>} />
+        <Route path="reports/payments" element={<ReportRoute><PaymentReports /></ReportRoute>} />
+        <Route path="reports/orders" element={<ReportRoute><OrderReports /></ReportRoute>} />
+        <Route path="reports/services" element={<ReportRoute><ServiceRequestReports /></ReportRoute>} />
+        <Route path="reports/logistics" element={<ReportRoute><LogisticsReports /></ReportRoute>} />
+        <Route path="reports/reception" element={<ReportRoute><ReceptionistReports /></ReportRoute>} />
+        <Route path="reports/attendance" element={<ReportRoute><Attendance /></ReportRoute>} />
         <Route path="history" element={<History />} />
         <Route path="chatbot" element={<ChatbotLogs />} />
         <Route path="live-chat" element={<LiveChatInbox />} />
         <Route path="landing-page" element={<AdminLandingPageEditor />} />
         <Route path="settings" element={<AdminSettings />} />
         <Route path="history/logins" element={<LoginHistory />} />
-        <Route path="reports/payroll" element={<PayrollReports />} />
+        <Route path="reports/payroll" element={<ReportRoute><PayrollReports /></ReportRoute>} />
 
       </Route>
     </Routes>

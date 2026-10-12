@@ -625,8 +625,8 @@ const AdminDashboard = () => {
                               data={userRoleData}
                               dataKey="count"
                               nameKey="role"
-                              outerRadius={66}
-                              innerRadius={38}
+                              outerRadius="42%"
+                              innerRadius="24%"
                               paddingAngle={4}
                             >
                               {userRoleData.map((entry, index) => (

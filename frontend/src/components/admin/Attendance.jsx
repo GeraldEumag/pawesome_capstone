@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useState } from "react";
 import "./Attendance.css";
 import { attendanceApi } from "../../api/attendance";
 import DatePickerInput from "../../components/shared/DatePickerInput";
+import ReportSkeleton from "../../components/shared/ReportSkeleton";
 import { formatDateOnly, parseDateOnly } from "../../utils/date";
 import { showError } from "../../utils/alert.jsx";
 
@@ -164,7 +165,7 @@ const Attendance = () => {
       </div>
 
       {loading ? (
-        <div className="loading">Loading attendance data...</div>
+        <ReportSkeleton label="Loading attendance report" />
       ) : (
         <div className="attendance-table-wrap">
           <table className="attendance-table">

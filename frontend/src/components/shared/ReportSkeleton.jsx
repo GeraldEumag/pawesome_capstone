@@ -23,12 +23,8 @@ const SkeletonChart = () => (
     </div>
     <div className="skeleton-chart-body">
       <div className="skeleton-bars">
-        {[...Array(7)].map((_, i) => (
-          <div 
-            key={i} 
-            className="skeleton-bar" 
-            style={{ height: `${Math.random() * 60 + 20}%` }}
-          />
+        {[48, 72, 56, 88, 64, 78, 52].map((height, index) => (
+          <div key={index} className="skeleton-bar" style={{ height: `${height}%` }} />
         ))}
       </div>
     </div>
@@ -52,9 +48,9 @@ const SkeletonTable = () => (
   </div>
 );
 
-const ReportSkeleton = ({ type = 'full' }) => {
+const ReportSkeleton = ({ type = 'full', label = 'Loading report data' }) => {
   return (
-    <div className="report-skeleton">
+    <div className="report-skeleton" role="status" aria-live="polite" aria-label={label} aria-busy="true">
       {/* Header Skeleton */}
       <div className="skeleton-section">
         <div className="skeleton-header">

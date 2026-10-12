@@ -508,7 +508,12 @@
 
 .payroll-chart-box {
   width: 100%;
+  min-width: 0;
   overflow: hidden;
+}
+
+.payroll-dashboard-grid > * {
+  min-width: 0;
 }
 
 .earners-list {

@@ -42,6 +42,7 @@ import { formatCurrency } from "../../utils/currency";
 import { showSuccess, showError } from "../../utils/alert.jsx";
 import { exportToCSV, exportToPDF, exportToExcel } from "../../utils/reportExport";
 import StandardTable from "../../components/shared/StandardTable";
+import ReportSkeleton from "../../components/shared/ReportSkeleton";
 import "./PayrollReports.css";
 
 const CHART_COLORS = [
@@ -561,13 +562,7 @@ const PayrollReports = () => {
         </button>
       </section>
 
-      {loading && (
-        <div className="payroll-loading-state">
-          <FontAwesomeIcon icon={faSpinner} spin />
-          <h3>Loading payroll data...</h3>
-          <p>Computing payroll from attendance records.</p>
-        </div>
-      )}
+      {loading && <ReportSkeleton label="Loading payroll report" />}
 
       {error && !loading && (
         <div className="payroll-error-state">
@@ -633,7 +628,7 @@ const PayrollReports = () => {
                   <ResponsiveContainer width="100%" height={300}>
                     <BarChart data={report.departmentBreakdown}>
                       <CartesianGrid strokeDasharray="3 3" vertical={false} />
-                      <XAxis dataKey="department" />
+                      <XAxis dataKey="department" tick={{ fontSize: 10 }} angle={-25} textAnchor="end" height={55} interval="preserveStartEnd" />
                       <YAxis tickFormatter={(value) => `₱${value / 1000}k`} />
                       <Tooltip formatter={(value) => formatCurrency(value)} />
                       <Bar dataKey="total_salary" name="Net Payroll" radius={[12, 12, 0, 0]}>
@@ -671,7 +666,7 @@ const PayrollReports = () => {
                   <ResponsiveContainer width="100%" height={300}>
                     <LineChart data={report.monthlyTrend}>
                       <CartesianGrid strokeDasharray="3 3" vertical={false} />
-                      <XAxis dataKey="month" />
+                      <XAxis dataKey="month" tick={{ fontSize: 10 }} interval="preserveStartEnd" />
                       <YAxis tickFormatter={(value) => `₱${value / 1000}k`} />
                       <Tooltip formatter={(value) => formatCurrency(value)} />
                       <Legend />

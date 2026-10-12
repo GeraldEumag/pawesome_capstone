@@ -35,7 +35,7 @@ import { apiRequest } from "../../api/client";
 import { formatCurrency } from "../../utils/currency";
 import { useAuth } from "../../context/AuthContext";
 import { showAlert, showSuccess, showError } from "../../utils/alert.jsx";
-import { STORE_INFO } from "../../utils/storeInfo";
+import { downloadReceiptPdf } from "../../utils/receiptPdf";
 import { exportToCSV, exportToPDF, exportToExcel } from "../../utils/reportExport";
 
 const toNumber = (value) => {
@@ -583,34 +583,33 @@ const CashierDashboard = () => {
     try {
       const data = await apiRequest(`/cashier/receipt/${receiptTransactionId}`);
       
-      const receiptContent = `
-${STORE_INFO.name}
-SALES INVOICE
-=====================
-Receipt #${receiptTransactionId}
-Date: ${new Date().toLocaleString()}
-Cashier: ${name}
----------------------
-${data.items?.map(item => `${item.name} x${item.qty} - ${formatCurrency(item.price)}`).join('\n') || 'Items: N/A'}
----------------------
-Subtotal (incl. VAT): ${formatCurrency(data.subtotal ?? data.total ?? 0)}
-Net Amount (ex-VAT): ${formatCurrency(data.net_amount ?? 0)}
-VAT (12%): ${formatCurrency(data.vat_amount ?? 0)}
-Discount: ${formatCurrency(data.discount || 0)}
-Total: ${formatCurrency(data.total || 0)}
----------------------
-Thank you for choosing Pawesome!
-      `.trim();
+      const items = (Array.isArray(data.items) ? data.items : []).map((item) => {
+        const quantity = Number(item.quantity ?? item.qty ?? 1);
+        const unitPrice = Number(item.unit_price ?? item.price ?? 0);
+        return {
+          name: item.item_name || item.name || item.product?.name || "Item",
+          quantity,
+          unitPrice,
+          total: Number(item.total_price ?? item.total ?? unitPrice * quantity),
+        };
+      });
 
-      const blob = new Blob([receiptContent], { type: 'text/plain' });
-      const url = URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.href = url;
-      link.download = `receipt_${receiptTransactionId}.txt`;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      URL.revokeObjectURL(url);
+      downloadReceiptPdf({
+        title: "Sales Invoice",
+        receiptNumber: data.receipt_number || data.transaction_id || receiptTransactionId,
+        date: data.date || new Date().toLocaleString("en-PH"),
+        cashier: data.cashier_name || name || "Cashier",
+        customer: data.customer || data.customer_name || "Walk-in",
+        paymentMethod: data.payment_type || data.payment_method || "cash",
+        paymentStatus: data.status || "paid",
+        items,
+        subtotal: data.subtotal ?? data.total ?? 0,
+        netAmount: data.net_amount,
+        vat: data.vat_amount,
+        discount: data.discount || 0,
+        total: data.total ?? 0,
+        footerText: "Thank you for choosing Pawesome!",
+      });
 
       setShowReceiptModal(false);
       setReceiptTransactionId("");

@@ -2,6 +2,8 @@
 /* Loading skeleton animation for better UX */
 
 .report-skeleton {
+  box-sizing: border-box;
+  min-width: 0;
   padding: 1.5rem;
   position: relative;
   overflow: hidden;
@@ -40,7 +42,7 @@
 /* Grid Layout */
 .skeleton-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 200px), 1fr));
   gap: 1rem;
 }
 
@@ -92,7 +94,7 @@
 /* Charts Grid */
 .skeleton-charts-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 400px), 1fr));
   gap: 1.5rem;
 }
 
@@ -240,6 +242,10 @@
 
 /* Responsive */
 @media (max-width: 768px) {
+  .report-skeleton {
+    padding: 1rem;
+  }
+
   .skeleton-grid {
     grid-template-columns: repeat(2, 1fr);
   }
@@ -260,6 +266,15 @@
 @media (max-width: 480px) {
   .skeleton-grid {
     grid-template-columns: 1fr;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .report-skeleton *,
+  .report-skeleton::before,
+  .report-skeleton::after {
+    animation-duration: 0.01ms;
+    animation-iteration-count: 1;
   }
 }
 

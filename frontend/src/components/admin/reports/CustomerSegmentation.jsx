@@ -24,7 +24,8 @@ import {
   CartesianGrid,
 } from 'recharts';
 import { formatCurrency } from '../../../utils/currency';
-import { ChartContainer, CHART_COLORS } from '../../shared/UnifiedReportEngine';
+import { ChartContainer, CHART_COLORS, getInitialChartDimension } from '../../shared/UnifiedReportEngine';
+import ReportSkeleton from '../../shared/ReportSkeleton';
 import { apiRequest } from '../../../api/client';
 import { showError } from '../../../utils/alert.jsx';
 import './CustomerSegmentation.css';
@@ -86,7 +87,10 @@ const CustomerSegmentation = ({ data: initialData = {} }) => {
     fetchData();
   }, [fetchData]);
 
-  const { customers = [], segments = {}, rfmData = [] } = data;
+  const customers = Array.isArray(data.customers) ? data.customers : [];
+  const segments = data.segments && typeof data.segments === 'object' && !Array.isArray(data.segments)
+    ? data.segments
+    : {};
 
   // Use backend-computed segment aggregates; fall back to client computation
   // with snake_case field mapping only when the aggregate payload is absent.
@@ -181,17 +185,12 @@ const CustomerSegmentation = ({ data: initialData = {} }) => {
     { segment: 'New', revenue: segmentAnalysis.new.revenue },
     { segment: 'Lost', revenue: segmentAnalysis.lost.revenue },
   ], [segmentAnalysis]);
+  const hasCustomerSegments = pieData.some((entry) => Number(entry.value) > 0);
+  const hasSegmentRevenue = revenueData.some((entry) => Number(entry.revenue) > 0);
 
   // Loading state
   if (loading) {
-    return (
-      <div className="customer-segmentation">
-        <div style={{ textAlign: 'center', padding: '3rem' }}>
-          <FontAwesomeIcon icon={faChartPie} spin style={{ fontSize: '3rem', color: '#ff5f93' }} />
-          <p style={{ marginTop: '1rem', color: '#64748b' }}>Loading customer segments...</p>
-        </div>
-      </div>
-    );
+    return <ReportSkeleton label="Loading customer segments" />;
   }
 
   // Error state
@@ -291,14 +290,15 @@ const CustomerSegmentation = ({ data: initialData = {} }) => {
       {/* Charts */}
       <section className="cs-charts-grid">
         <ChartContainer title="Customer Distribution" subtitle="By segment" height={300}>
-          <ResponsiveContainer width="100%" height="100%">
+          {hasCustomerSegments ? (
+          <ResponsiveContainer width="100%" height={getInitialChartDimension(300).height} initialDimension={getInitialChartDimension(300)}>
             <PieChart>
               <Pie
                 data={pieData}
                 cx="50%"
                 cy="50%"
-                innerRadius={60}
-                outerRadius={100}
+                innerRadius="42%"
+                outerRadius="72%"
                 paddingAngle={4}
                 dataKey="value"
               >
@@ -310,10 +310,12 @@ const CustomerSegmentation = ({ data: initialData = {} }) => {
               <Legend />
             </PieChart>
           </ResponsiveContainer>
+          ) : <div className="cs-chart-empty"><p>No customer segment counts available</p></div>}
         </ChartContainer>
 
         <ChartContainer title="Revenue by Segment" subtitle="Total revenue contribution" height={300}>
-          <ResponsiveContainer width="100%" height="100%">
+          {hasSegmentRevenue ? (
+          <ResponsiveContainer width="100%" height={getInitialChartDimension(300).height} initialDimension={getInitialChartDimension(300)}>
             <BarChart data={revenueData}>
               <CartesianGrid strokeDasharray="3 3" vertical={false} />
               <XAxis dataKey="segment" tick={{ fontSize: 12 }} />
@@ -326,6 +328,7 @@ const CustomerSegmentation = ({ data: initialData = {} }) => {
               </Bar>
             </BarChart>
           </ResponsiveContainer>
+          ) : <div className="cs-chart-empty"><p>No segment revenue data available</p></div>}
         </ChartContainer>
       </section>
 

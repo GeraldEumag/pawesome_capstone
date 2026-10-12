@@ -20,7 +20,8 @@ import {
   ReferenceLine,
 } from 'recharts';
 import { apiRequest } from '../../../api/client';
-import { ChartContainer } from '../../shared/UnifiedReportEngine';
+import { ChartContainer, getInitialChartDimension } from '../../shared/UnifiedReportEngine';
+import ReportSkeleton from '../../shared/ReportSkeleton';
 import './AdvancedReports.css';
 
 const formatCurrency = (amount) => {
@@ -58,31 +59,35 @@ const PredictiveAnalytics = () => {
   const formatValue = (v) => (isCurrency ? formatCurrency(v) : Number(v).toLocaleString());
 
   // Merge historical + forecast into one series for the composed chart
+  const historicalData = Array.isArray(data?.historical_data) ? data.historical_data : [];
+  const forecastData = Array.isArray(data?.forecast_data) ? data.forecast_data : [];
   const chartData = useMemo(() => {
-    const historical = (data?.historical_data || []).map((d) => ({
-      date: d.date,
-      actual: d.actual,
+    const toChartNumber = (value) => Number.isFinite(Number(value)) ? Number(value) : 0;
+    const historical = historicalData.filter((point) => point?.date).map((point) => ({
+      date: point.date,
+      actual: toChartNumber(point.actual),
     }));
-    const forecast = (data?.forecast_data || []).map((d) => ({
-      date: d.date,
-      predicted: d.predicted,
-      upper: d.upper_bound,
-      lower: d.lower_bound,
+    const forecast = forecastData.filter((point) => point?.date).map((point) => ({
+      date: point.date,
+      predicted: toChartNumber(point.predicted),
+      upper: toChartNumber(point.upper_bound),
+      lower: toChartNumber(point.lower_bound),
     }));
     // Bridge the gap so the forecast line connects to the last actual point
     if (historical.length && forecast.length) {
       forecast[0] = { ...forecast[0], actual: historical[historical.length - 1].actual };
     }
     return [...historical, ...forecast];
-  }, [data]);
+  }, [historicalData, forecastData]);
 
-  const recommendations = data?.recommendations || [];
-  const forecastBoundary = data?.historical_data?.length
-    ? data.historical_data[data.historical_data.length - 1].date
+  const hasForecastData = chartData.some((point) => point.actual > 0 || point.predicted > 0);
+  const recommendations = Array.isArray(data?.recommendations) ? data.recommendations : [];
+  const forecastBoundary = historicalData.length
+    ? historicalData[historicalData.length - 1].date
     : null;
 
   if (loading) {
-    return <div className="adv-loading"><p>Loading predictive analytics...</p></div>;
+    return <ReportSkeleton label="Loading predictive analytics" />;
   }
 
   if (error) {
@@ -158,10 +163,10 @@ const PredictiveAnalytics = () => {
         subtitle="Solid: historical actuals · Dashed: projected with confidence band"
         height={380}
       >
-        {chartData.length === 0 ? (
+        {!hasForecastData ? (
           <div className="adv-empty"><p>No data available for forecasting</p></div>
         ) : (
-          <ResponsiveContainer width="100%" height="100%">
+          <ResponsiveContainer width="100%" height={getInitialChartDimension(380).height} initialDimension={getInitialChartDimension(380)}>
             <ComposedChart data={chartData}>
               <CartesianGrid strokeDasharray="3 3" vertical={false} />
               <XAxis dataKey="date" tick={{ fontSize: 10 }} interval="preserveStartEnd" />

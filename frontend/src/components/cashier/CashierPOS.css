@@ -1620,6 +1620,7 @@
   padding: 14px 24px 18px;
   border-top: 1px solid var(--color-border, rgba(255,95,147,.18));
   display: flex;
+  flex-wrap: wrap;
   gap: 10px;
   justify-content: flex-end;
   flex-shrink: 0;

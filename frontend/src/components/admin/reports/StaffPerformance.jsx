@@ -20,7 +20,8 @@ import {
   ResponsiveContainer,
 } from 'recharts';
 import { formatCurrency } from '../../../utils/currency';
-import { ChartContainer, CHART_COLORS } from '../../shared/UnifiedReportEngine';
+import { ChartContainer, CHART_COLORS, getInitialChartDimension } from '../../shared/UnifiedReportEngine';
+import ReportSkeleton from '../../shared/ReportSkeleton';
 import { apiRequest } from '../../../api/client';
 import { showError } from '../../../utils/alert.jsx';
 import './StaffPerformance.css';
@@ -54,27 +55,20 @@ const StaffPerformance = ({ data: initialData = {} }) => {
     fetchData();
   }, [fetchData]);
 
-  const staff = useMemo(() => data.staffData || [], [data]);
+  const staff = useMemo(() => Array.isArray(data.staffData) ? data.staffData : [], [data]);
 
   // Prepare chart data from real API values
-  const chartData = useMemo(() => {
-    return staff.map((s) => ({
-      name: s.name,
-      revenue: s.revenue || 0,
-      appointments: s.appointments || 0,
-      attendance: s.attendanceRate || 0,
-    }));
-  }, [staff]);
+  const chartData = useMemo(() => staff.map((member) => ({
+    name: member.name || 'Unknown',
+    revenue: Number.isFinite(Number(member.revenue)) ? Number(member.revenue) : 0,
+    appointments: Number.isFinite(Number(member.appointments)) ? Number(member.appointments) : 0,
+    attendance: Number.isFinite(Number(member.attendanceRate)) ? Number(member.attendanceRate) : 0,
+  })), [staff]);
+  const hasRevenueData = chartData.some((member) => member.revenue > 0);
+  const hasAttendanceData = chartData.some((member) => member.attendance > 0);
 
   if (loading) {
-    return (
-      <div className="staff-performance">
-        <div style={{ textAlign: 'center', padding: '3rem' }}>
-          <FontAwesomeIcon icon={faUsers} spin style={{ fontSize: '3rem', color: '#ff5f93' }} />
-          <p style={{ marginTop: '1rem', color: '#64748b' }}>Loading staff data...</p>
-        </div>
-      </div>
-    );
+    return <ReportSkeleton label="Loading staff performance" />;
   }
 
   if (error) {
@@ -145,27 +139,31 @@ const StaffPerformance = ({ data: initialData = {} }) => {
       {chartData.length > 0 && (
         <section className="sp-charts-grid">
           <ChartContainer title="Revenue by Staff" subtitle="Last 30 days" height={300}>
-            <ResponsiveContainer width="100%" height="100%">
+            {hasRevenueData ? (
+            <ResponsiveContainer width="100%" height={getInitialChartDimension(300).height} initialDimension={getInitialChartDimension(300)}>
               <BarChart data={chartData}>
                 <CartesianGrid strokeDasharray="3 3" vertical={false} />
-                <XAxis dataKey="name" tick={{ fontSize: 11 }} />
+                <XAxis dataKey="name" tick={{ fontSize: 10 }} angle={-25} textAnchor="end" height={55} interval="preserveStartEnd" />
                 <YAxis tickFormatter={(val) => `₱${val / 1000}k`} />
                 <Tooltip formatter={(value) => formatCurrency(value)} />
                 <Bar dataKey="revenue" fill={CHART_COLORS[0]} radius={[8, 8, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
+            ) : <div className="sp-chart-empty"><p>No staff revenue data available</p></div>}
           </ChartContainer>
 
           <ChartContainer title="Attendance Rate" subtitle="Present % (last 30 days)" height={300}>
-            <ResponsiveContainer width="100%" height="100%">
+            {hasAttendanceData ? (
+            <ResponsiveContainer width="100%" height={getInitialChartDimension(300).height} initialDimension={getInitialChartDimension(300)}>
               <BarChart data={chartData}>
                 <CartesianGrid strokeDasharray="3 3" vertical={false} />
-                <XAxis dataKey="name" tick={{ fontSize: 11 }} />
+                <XAxis dataKey="name" tick={{ fontSize: 10 }} angle={-25} textAnchor="end" height={55} interval="preserveStartEnd" />
                 <YAxis tickFormatter={(val) => `${val}%`} domain={[0, 100]} />
                 <Tooltip formatter={(value) => `${value}%`} />
                 <Bar dataKey="attendance" fill={CHART_COLORS[2]} radius={[8, 8, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
+            ) : <div className="sp-chart-empty"><p>No attendance data available</p></div>}
           </ChartContainer>
         </section>
       )}

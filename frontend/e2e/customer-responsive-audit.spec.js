@@ -133,6 +133,26 @@ test('Customer workspace routes remain responsive across supported widths', asyn
         expect(options).toEqual([{ value: '', label: 'Select an available time' }]);
       }
 
+      if (route === '/customer/pets') {
+        const addButton = page.getByRole('button', { name: 'Add New Pet', exact: true });
+        await expect(addButton).toBeVisible();
+        await expect(page.getByRole('dialog')).toHaveCount(0);
+        await addButton.click();
+        const dialog = page.getByRole('dialog', { name: 'Add a new pet' });
+        await expect(dialog).toBeVisible();
+        await expect.poll(() => dialog.evaluate((element) => element.getAnimations().every((animation) => animation.playState === 'finished'))).toBe(true);
+        const dialogBounds = await dialog.boundingBox();
+        expect(dialogBounds).not.toBeNull();
+        expect(dialogBounds.x).toBeGreaterThanOrEqual(0);
+        expect(dialogBounds.x + dialogBounds.width).toBeLessThanOrEqual(viewport.width + 1);
+        await expect.poll(() => page.evaluate(() => document.documentElement.scrollWidth))
+          .toBeLessThanOrEqual(viewport.width + 1);
+        await expect.poll(() => page.evaluate(() => document.body.style.overflow)).toBe('hidden');
+        await page.getByRole('button', { name: 'Cancel', exact: true }).click();
+        await expect(dialog).toHaveCount(0);
+        await expect(addButton).toBeFocused();
+      }
+
       const dimensions = await page.evaluate(() => ({
         viewportWidth: window.innerWidth,
         documentWidth: document.documentElement.scrollWidth,

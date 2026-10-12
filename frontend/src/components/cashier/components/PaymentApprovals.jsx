@@ -11,6 +11,7 @@ import {
   faXmark,
   faPaperclip,
   faPrint,
+  faFilePdf,
   faMoneyBillWave,
   faMobileScreen,
   faWallet,
@@ -26,6 +27,7 @@ import {
 } from "@fortawesome/free-solid-svg-icons";
 import { showSuccess, showError, showWarning } from "../../../utils/alert.jsx";
 import { printReceipt } from "../../../utils/receiptPrinter";
+import { downloadReceiptPdf } from "../../../utils/receiptPdf";
 import { STORE_INFO } from "../../../utils/storeInfo";
 import { usePaymentApprovals, paymentKey } from "../hooks/usePaymentApprovals.jsx";
 import { useAuth } from "../../../context/AuthContext";
@@ -267,6 +269,30 @@ const PaymentApprovals = () => {
     closeProof();
     setReferenceNumber("");
     setCashReceived("");
+  };
+
+  const getReceiptOptions = () => {
+    const receipt = receiptData;
+    if (!receipt) return null;
+    const amount = Number(receipt.amount || 0);
+    return {
+      title: "Invoice",
+      receiptNumber: receipt.receipt_number || "N/A",
+      date: receipt.paid_at ? new Date(receipt.paid_at).toLocaleString("en-PH") : new Date().toLocaleString("en-PH"),
+      cashier: user?.name || "Cashier",
+      customer: receipt.customer_name || "Customer",
+      paymentMethod: receipt.payment_method || "Cash",
+      paymentStatus: "paid",
+      referenceNumber: receipt.reference_number || "",
+      verifiedBy: receipt.verified_by || user?.name || "Cashier",
+      amountReceived: receipt.cash_received ?? undefined,
+      change: receipt.change ?? undefined,
+      items: [{ name: receipt.service_name || "Service", quantity: 1, unitPrice: amount, total: amount }],
+      subtotal: amount,
+      netAmount: receipt.breakdown?.net_amount ?? receipt.net_amount,
+      vat: receipt.breakdown?.vat_amount ?? receipt.vat_amount,
+      total: amount,
+    };
   };
 
   return (
@@ -822,26 +848,24 @@ const PaymentApprovals = () => {
             <div className="pa-modal-footer">
               <button className="pa-btn-secondary" onClick={() => setShowReceipt(false)}>Close</button>
               <button
+                className="pa-btn-secondary"
+                onClick={() => {
+                  const options = getReceiptOptions();
+                  if (!options) return;
+                  try {
+                    downloadReceiptPdf(options);
+                  } catch (err) {
+                    showError(err.message || "Failed to download receipt PDF.");
+                  }
+                }}
+              >
+                <FontAwesomeIcon icon={faFilePdf} /> Download PDF
+              </button>
+              <button
                 className="pa-btn-primary"
                 onClick={() => {
-                  const r = receiptData;
-                  printReceipt({
-                    title: "Invoice",
-                    receiptNumber: r.receipt_number || "N/A",
-                    date: r.paid_at ? new Date(r.paid_at).toLocaleString("en-PH") : new Date().toLocaleString("en-PH"),
-                    cashier: user?.name || "Cashier",
-                    customer: r.customer_name || "Customer",
-                    paymentMethod: r.payment_method || "Cash",
-                    paymentStatus: "paid",
-                    referenceNumber: r.reference_number || "",
-                    verifiedBy: r.verified_by || user?.name || "Cashier",
-                    amountReceived: r.cash_received ?? undefined,
-                    change: r.change ?? undefined,
-                    items: [{ name: r.service_name || "Service", quantity: 1, unitPrice: Number(r.amount || 0), total: Number(r.amount || 0) }],
-                    subtotal: Number(r.breakdown?.net_amount ?? r.amount ?? 0),
-                    vat: r.breakdown?.vat_amount ?? r.vat_amount ?? undefined,
-                    total: Number(r.amount || 0),
-                  });
+                  const options = getReceiptOptions();
+                  if (options) printReceipt({ ...options, subtotal: options.netAmount ?? options.subtotal });
                 }}
               >
                 <FontAwesomeIcon icon={faPrint} /> Print Receipt

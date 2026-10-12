@@ -6,6 +6,7 @@ import { useAuth } from "../../context/AuthContext";
 import "./CustomerPayments.css";
 import { showAlert, showError, showSuccess } from "../../utils/alert.jsx";
 import { printReceipt } from "../../utils/receiptPrinter";
+import { downloadReceiptPdf } from "../../utils/receiptPdf";
 import PaymentUploadModal from "../shared/PaymentUploadModal";
 
 const formatCurrency = (value) =>
@@ -314,14 +315,18 @@ const CustomerPayments = () => {
     }
   };
 
-  const viewReceipt = async (payment) => {
+  const viewReceipt = async (payment, output = "print") => {
+    const outputReceipt = (options) => {
+      if (output === "pdf") return downloadReceiptPdf(options);
+      return printReceipt({ ...options, vat: undefined });
+    };
     try {
       if (payment.payment_source === "service_billing_payment") {
         const data = await apiRequest(`/customer/billing/payment-requests/${payment.payment_request_id}/receipt`, "GET");
         const receipt = data?.receipt;
         if (!receipt) throw new Error("Billing receipt is not available yet.");
         const amount = Number(receipt.total_amount || payment.total_amount || 0);
-        printReceipt({
+        outputReceipt({
           title: "Veterinary Bill Receipt",
           receiptNumber: receipt.receipt_number || `VET-BILL-${payment.appointment_id}`,
           date: receipt.paid_at || new Date().toLocaleString("en-PH"),
@@ -329,13 +334,19 @@ const CustomerPayments = () => {
           paymentMethod: receipt.payment_method || "Payment",
           paymentStatus: "paid",
           verifiedBy: receipt.verified_by || "Cashier",
-          items: (receipt.items || []).map((item) => ({
-            name: item.product_name || "Veterinary service item",
-            quantity: Number(item.quantity || 1),
-            unitPrice: Number(item.price || 0),
-            total: Number(item.subtotal || 0),
-          })),
+          items: (Array.isArray(receipt.items) ? receipt.items : []).map((item) => {
+            const quantity = Number(item.quantity || 1);
+            const unitPrice = Number(item.price || 0);
+            return {
+              name: item.product_name || "Veterinary service item",
+              quantity,
+              unitPrice,
+              total: Number(item.subtotal ?? item.total ?? unitPrice * quantity),
+            };
+          }),
           subtotal: amount,
+          netAmount: receipt.breakdown?.net_amount ?? receipt.net_amount,
+          vat: receipt.breakdown?.vat_amount ?? receipt.vat_amount,
           total: amount,
           footerText: "Thank you for choosing Pawesome Retreat Inc.!",
         });
@@ -350,7 +361,7 @@ const CustomerPayments = () => {
         const amount = Number(receipt.total_amount || payment.total_amount || 0);
         const serviceName = receipt.service_type || receipt.request_type || receipt.service_name || "Service";
 
-        printReceipt({
+        outputReceipt({
           title: "Service Invoice",
           receiptNumber: receipt.receipt_number || payment.receipt_number || `SR-${payment.id}`,
           date: receipt.paid_at || payment.paid_at || new Date().toLocaleString("en-PH"),
@@ -360,6 +371,8 @@ const CustomerPayments = () => {
           verifiedBy: receipt.verified_by || "Cashier",
           items: [{ name: `${serviceName} — Pet: ${receipt.pet_name || payment.pet_name || "N/A"}`, quantity: 1, unitPrice: amount, total: amount }],
           subtotal: amount,
+          netAmount: receipt.breakdown?.net_amount ?? receipt.net_amount,
+          vat: receipt.breakdown?.vat_amount ?? receipt.vat_amount,
           total: amount,
           footerText: "Thank you for choosing Pawesome Retreat Inc.!",
         });
@@ -370,7 +383,7 @@ const CustomerPayments = () => {
         if (!payment.receipt_number) throw new Error("Boarding receipt is not available yet.");
 
         const amount = Number(payment.total_amount || 0);
-        printReceipt({
+        outputReceipt({
           title: "Boarding Invoice",
           receiptNumber: payment.receipt_number || `BRD-${payment.id}`,
           date: payment.paid_at || new Date().toLocaleString("en-PH"),
@@ -380,6 +393,8 @@ const CustomerPayments = () => {
           verifiedBy: payment.verified_by || "Cashier",
           items: [{ name: `Pet Boarding — Pet: ${payment.pet_name || "N/A"}`, quantity: 1, unitPrice: amount, total: amount }],
           subtotal: amount,
+          netAmount: payment.breakdown?.net_amount ?? payment.net_amount,
+          vat: payment.breakdown?.vat_amount ?? payment.vat_amount,
           total: amount,
           footerText: "Thank you for choosing Pawesome Retreat Inc.!",
         });
@@ -392,14 +407,18 @@ const CustomerPayments = () => {
       if (!receipt) throw new Error("Receipt details not found.");
 
       const amount = Number(receipt.total_amount || 0);
-      const items = (receipt.items || []).map((item) => ({
-        name: item.item_name || item.name || item.product_name || "Item",
-        quantity: Number(item.quantity || 1),
-        unitPrice: Number(item.unit_price || item.price || 0),
-        total: Number(item.total_price || item.total || 0),
-      }));
+      const items = (Array.isArray(receipt.items) ? receipt.items : []).map((item) => {
+        const quantity = Number(item.quantity || 1);
+        const unitPrice = Number(item.unit_price || item.price || 0);
+        return {
+          name: item.item_name || item.name || item.product_name || "Item",
+          quantity,
+          unitPrice,
+          total: Number(item.total_price ?? item.total ?? unitPrice * quantity),
+        };
+      });
 
-      printReceipt({
+      outputReceipt({
         title: "Sales Invoice",
         receiptNumber: receipt.receipt_number || `ORD-${payment.id}`,
         date: receipt.paid_at || new Date().toLocaleString("en-PH"),
@@ -409,6 +428,9 @@ const CustomerPayments = () => {
         verifiedBy: receipt.verified_by || "Cashier",
         items: items.length > 0 ? items : [{ name: "Store Order", quantity: 1, unitPrice: amount, total: amount }],
         subtotal: amount,
+        netAmount: receipt.breakdown?.net_amount ?? receipt.net_amount,
+        vat: receipt.breakdown?.vat_amount ?? receipt.vat_amount,
+        discount: receipt.discount ?? 0,
         total: amount,
         footerText: "Thank you for shopping at Pawesome Retreat Inc.!",
       });
@@ -549,13 +571,23 @@ const CustomerPayments = () => {
 
                       <td>
                         {paymentStatus === "paid" ? (
-                          <button
-                            type="button"
-                            className="receipt-btn"
-                            onClick={() => viewReceipt(payment)}
-                          >
-                            {payment.receipt_number ? `Print ${payment.receipt_number}` : "Print Receipt"}
-                          </button>
+                          <div className="customer-receipt-actions">
+                            <button
+                              type="button"
+                              className="receipt-btn"
+                              onClick={() => viewReceipt(payment, "print")}
+                            >
+                              {payment.receipt_number ? `Print ${payment.receipt_number}` : "Print Receipt"}
+                            </button>
+                            <button
+                              type="button"
+                              className="receipt-btn"
+                              onClick={() => viewReceipt(payment, "pdf")}
+                              title="Download 58mm receipt PDF"
+                            >
+                              PDF
+                            </button>
+                          </div>
                         ) : proofUrl ? (
                           <a className="receipt-btn" href={proofUrl} target="_blank" rel="noreferrer">
                             View Proof
