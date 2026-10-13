@@ -114,6 +114,7 @@ class AuditLogTest extends TestCase
             'check_out' => now()->addDays(3)->toDateString(),
             'status' => 'pending',
             'payment_status' => 'unpaid',
+            'booking_channel' => 'walk_in',
         ]);
 
         $this->actingWithToken($receptionist)

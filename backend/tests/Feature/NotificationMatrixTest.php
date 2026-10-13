@@ -368,11 +368,13 @@ class NotificationMatrixTest extends TestCase
         $pet = Pet::factory()->create(['customer_id' => $customer->id, 'species' => 'Dog']);
         $room = HotelRoom::factory()->create(['status' => 'available']);
 
-        $response = $this->as('customer')->postJson('/api/customer/boarding-requests', [
+        Storage::fake('private');
+        $response = $this->as('customer')->post('/api/customer/boarding-requests', [
             'pet_id' => $pet->id,
             'hotel_room_id' => $room->id,
             'check_in_date' => now()->addDays(3)->toDateString(),
             'number_of_days' => 1,
+            'vaccination_card' => UploadedFile::fake()->create('milo-card.png', 100, 'image/png'),
         ]);
         $response->assertStatus(201);
 

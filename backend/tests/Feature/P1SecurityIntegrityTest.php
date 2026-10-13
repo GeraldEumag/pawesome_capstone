@@ -16,8 +16,10 @@ use App\Models\Service;
 use App\Models\User;
 use App\Services\EmailDeliveryService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Storage;
 use Tests\TestCase;
 
 /**
@@ -219,6 +221,7 @@ class P1SecurityIntegrityTest extends TestCase
             'pet_type' => 'dog',
             'status' => 'pending',
             'payment_status' => 'unpaid',
+            'booking_channel' => 'walk_in',
             'check_in' => now()->addDay()->toDateString(),
             'check_out' => now()->addDays(3)->toDateString(),
             'total_amount' => 1000,
@@ -406,8 +409,9 @@ class P1SecurityIntegrityTest extends TestCase
         ]);
     }
 
-    public function test_hotel_request_computes_total_from_room_rate_and_nights(): void
+    public function test_dedicated_hotel_booking_computes_total_from_server_room_rate(): void
     {
+        Storage::fake('private');
         [$user, $customer] = $this->verifiedCustomer();
         $pet = Pet::create(['customer_id' => $customer->id, 'name' => 'Buddy', 'species' => 'dog']);
         $room = BoardingRoom::create([
@@ -422,27 +426,29 @@ class P1SecurityIntegrityTest extends TestCase
             'customer_selectable' => true,
         ]);
 
-        $response = $this->postJson('/api/customer/requests', [
-            'customer_name' => $user->name,
+        $response = $this->post('/api/customer/boardings', [
             'pet_id' => $pet->id,
-            'pet_name' => 'Buddy',
-            'request_type' => 'hotel',
-            'requested_date' => now()->addDay()->toDateString(),
-            'check_out_date' => now()->addDays(3)->toDateString(),
-            'boarding_room_id' => $room->id,
-            'daily_rate' => 1,        // must be ignored
-            'total_amount' => 1,      // must be ignored
-            'price' => 1,             // must be ignored
+            'room_id' => $room->id,
+            'check_in_date' => now()->addDays(3)->toDateString(),
+            'number_of_days' => 1,
+            'vaccination_card' => UploadedFile::fake()->create('buddy-card.png', 100, 'image/png'),
+            'daily_rate' => 1,
+            'total_amount' => 1,
+            'price' => 1,
         ], $this->bearer($user));
 
         $response->assertCreated();
-
-        $this->assertDatabaseHas('service_requests', [
-            'customer_id' => $user->id,
-            'boarding_room_id' => $room->id,
-            'daily_rate' => 800,
-            'total_days' => 2,
-            'total_amount' => 1600,
+        $boarding = $response->json('boarding');
+        $this->assertEquals(800, (float) $boarding['total_amount']);
+        $this->assertDatabaseHas('boardings', [
+            'id' => $boarding['id'],
+            'customer_id' => $customer->id,
+            'total_amount' => 800,
+        ]);
+        $this->assertDatabaseHas('boarding_room_reservations', [
+            'source_type' => 'pet_hotel',
+            'source_id' => $boarding['id'],
+            'room_id' => $room->id,
         ]);
     }
 
