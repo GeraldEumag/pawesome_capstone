@@ -192,6 +192,42 @@
   white-space: pre-line;
 }
 
+.brm-pay-now {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 12px 14px;
+  border: 1px solid #fbcfe8;
+  border-radius: 10px;
+  background: #fff5f8;
+  color: #334155;
+  cursor: pointer;
+}
+
+.brm-pay-now input {
+  width: 18px;
+  height: 18px;
+  margin: 2px 0 0;
+  accent-color: #db2777;
+  flex: 0 0 auto;
+}
+
+.brm-pay-now span {
+  display: grid;
+  gap: 4px;
+}
+
+.brm-pay-now strong {
+  color: #831843;
+  font-size: 0.9rem;
+}
+
+.brm-pay-now small {
+  color: #64748b;
+  font-size: 0.78rem;
+  line-height: 1.4;
+}
+
 .brm-footer {
   display: flex;
   justify-content: flex-end;

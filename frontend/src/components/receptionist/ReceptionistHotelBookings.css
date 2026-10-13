@@ -666,6 +666,27 @@
   background: rgba(59, 130, 246, 0.14);
 }
 
+.hotel-bookings .hbk-vax-required {
+  border-color: rgba(220, 38, 38, 0.25);
+  background: #fff7ed;
+}
+
+.hotel-bookings .hbk-vax-required .hbk-vax-icon {
+  color: #dc2626;
+}
+
+.hotel-bookings .hbk-vax-gate-note {
+  margin: 0.25rem 0 0.75rem;
+  color: #9a3412;
+  font-size: 0.82rem;
+  font-weight: 700;
+  line-height: 1.45;
+}
+
+.hotel-bookings .hbk-approve-modal-btn {
+  min-width: 180px;
+}
+
 .hotel-bookings .vaccination-verify-btn {
   display: inline-flex;
   align-items: center;

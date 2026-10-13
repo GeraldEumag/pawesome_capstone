@@ -38,7 +38,7 @@ const GroomingForm = () => {
   const [groomingAvailability, setGroomingAvailability] = useState(null);
   const [availableTimeSlots, setAvailableTimeSlots] = useState([]);
   const [dateAvailable, setDateAvailable] = useState(true);
-  const [uploadModal, setUploadModal] = useState({ open: false, endpoint: "", title: "", referenceNumber: "", paymentStatus: "", rejectionReason: "", paymentMethod: "gcash" });
+  const [uploadModal, setUploadModal] = useState({ open: false, endpoint: "", title: "", referenceNumber: "", paymentStatus: "", rejectionReason: "", paymentMethod: "gcash", amount: null, awaitingBookingApproval: false });
 
   const [formData, setFormData] = useState({
     customer_name: customerName,
@@ -228,7 +228,7 @@ const GroomingForm = () => {
     setReviewOpen(true);
   };
 
-  const confirmBooking = async () => {
+  const confirmBooking = async ({ payNow = false } = {}) => {
     try {
       setLoading(true);
 
@@ -238,8 +238,23 @@ const GroomingForm = () => {
       });
 
       if (data.success) {
+        const request = data.request;
         setReviewOpen(false);
-        showSuccess("Grooming appointment submitted! Waiting for receptionist approval.");
+        if (!payNow) showSuccess("Grooming appointment submitted! Waiting for receptionist approval.");
+
+        if (payNow && request?.id) {
+          setUploadModal({
+            open: true,
+            endpoint: `/customer/requests/${request.id}/payment-proof`,
+            title: request.service_name || formData.service_name || "Grooming",
+            referenceNumber: request.payment_reference || "",
+            paymentStatus: request.payment_status || "unpaid",
+            rejectionReason: request.rejection_reason || "",
+            paymentMethod: request.payment_method || "gcash",
+            amount: request.total_amount ?? request.price ?? request.amount ?? formData.price,
+            awaitingBookingApproval: true,
+          });
+        }
 
         setFormData({
           customer_name: customerName,
@@ -303,6 +318,8 @@ const GroomingForm = () => {
       paymentStatus: String(item.payment_status || item.payment || ""),
       rejectionReason: item.rejection_reason || "",
       paymentMethod: item.payment_method || "gcash",
+      amount: item.total_amount ?? item.price ?? item.amount ?? null,
+      awaitingBookingApproval: false,
     });
   };
 
@@ -543,6 +560,7 @@ const GroomingForm = () => {
           rows: [{ label: formData.service_name || "Grooming service", value: `₱${Number(formData.price).toFixed(2)}` }],
           total: `₱${Number(formData.price).toFixed(2)}`,
         } : null}
+        allowPayNow
         notes={formData.notes}
       />
 
@@ -556,6 +574,8 @@ const GroomingForm = () => {
         rejectionReason={uploadModal.rejectionReason}
         paymentMethod={uploadModal.paymentMethod}
         onSuccess={fetchAppointments}
+        amount={uploadModal.amount}
+        awaitingBookingApproval={uploadModal.awaitingBookingApproval}
       />
     </section>
   );

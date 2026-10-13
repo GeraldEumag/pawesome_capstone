@@ -35,7 +35,7 @@ class ServiceRequestController extends Controller
     {
         return match (strtolower(trim($requestType))) {
             'vet', 'veterinary', 'appointment', 'vet appointment' => 'veterinary',
-            'hotel', 'boarding', 'pet hotel', 'pet_hotel' => 'petHotel',
+            'hotel', 'boarding', 'pet hotel', 'pet_hotel', 'pet hotel/boarding', 'pet hotel / boarding' => 'petHotel',
             default => strtolower(trim($requestType)),
         };
     }
@@ -130,7 +130,15 @@ class ServiceRequestController extends Controller
             'requested_time' => $request->requested_time ?? $request->request_time ?? $request->preferred_time,
         ]);
 
-        $isHotel = in_array(strtolower($request->request_type ?? ''), ['hotel', 'boarding']);
+        $isHotel = $this->normalizeServiceType((string) ($request->request_type ?? '')) === 'petHotel';
+
+        if ($isHotel) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Pet hotel bookings must use the Pet Hotel reservation form so a vaccination card can be attached.',
+                'errors' => ['request_type' => ['Use the Pet Hotel reservation form.']],
+            ], 422);
+        }
 
         $validated = $request->validate([
             'customer_name' => 'required|string|max:150',
@@ -582,12 +590,13 @@ class ServiceRequestController extends Controller
         }
 
         $cancelReason = trim((string) ($request->input('reason') ?: $request->input('cancellation_reason') ?: ''));
+        $hasPendingProof = $serviceRequest->payment_status === 'pending' && (bool) $serviceRequest->payment_proof;
 
-        $serviceRequest->update([
+        $serviceRequest->update(array_filter([
             'status' => 'cancelled',
-            'payment_status' => 'unpaid',
+            'payment_status' => $hasPendingProof ? null : 'unpaid',
             'cancellation_reason' => $cancelReason !== '' ? $cancelReason : null,
-        ]);
+        ], fn ($value) => $value !== null));
 
         // Release linked dedicated records so their slots/rooms free up — the
         // auto-created pending Grooming would otherwise block the time slot
@@ -602,9 +611,11 @@ class ServiceRequestController extends Controller
                 ->update($linkedCancel);
         }
         if (Schema::hasColumn('groomings', 'service_request_id')) {
+            $groomingCancel = $linkedCancel;
+            if (!$hasPendingProof) $groomingCancel['payment_status'] = 'unpaid';
             Grooming::where('service_request_id', $serviceRequest->id)
                 ->whereNotIn('status', ['completed'])
-                ->update($linkedCancel + ['payment_status' => 'unpaid']);
+                ->update($groomingCancel);
         }
         if (Schema::hasColumn('boardings', 'service_request_id')) {
             Boarding::where('service_request_id', $serviceRequest->id)
@@ -620,6 +631,10 @@ class ServiceRequestController extends Controller
             if ($reservation) {
                 $reservation->update(['status' => 'cancelled']);
             }
+        }
+
+        if ($hasPendingProof) {
+            WorkflowNotifier::notifyRole('cashier', 'Payment proof requires refund review', "Service request #{$serviceRequest->id} was cancelled after proof submission; review the payment before any counter settlement.", 'warning', 'service_request', $serviceRequest->id);
         }
 
         // Release slots held by linked dedicated records (e.g. the auto-created
@@ -826,11 +841,17 @@ class ServiceRequestController extends Controller
             return response()->json(['message' => 'Forbidden: You can only upload proof for your own requests'], 403);
         }
 
-        // Only allow payment proof upload for approved or scheduled requests
-        if (!in_array($serviceRequest->status, ['approved', 'scheduled'])) {
+        $isPendingBooking = $serviceRequest->status === 'pending';
+        if (!in_array($serviceRequest->status, ['pending', 'approved', 'scheduled'], true)) {
             return response()->json([
-                'message' => 'Payment proof can only be uploaded for approved requests.',
+                'message' => 'Payment proof can only be uploaded for pending, approved, or scheduled requests.',
             ], 403);
+        }
+
+        if ($isPendingBooking && ($serviceRequest->booking_channel ?? \App\Support\BookingChannel::ONLINE) !== \App\Support\BookingChannel::ONLINE) {
+            return response()->json([
+                'message' => 'Payment proof can only be submitted before approval for online bookings.',
+            ], 422);
         }
 
         $linkedAppointment = Appointment::where('service_request_id', $serviceRequest->id)->latest('id')->first();
@@ -841,8 +862,8 @@ class ServiceRequestController extends Controller
             ], 409);
         }
 
-        // Reject upload if payment is already pending or paid
-        if (in_array($serviceRequest->payment_status, ['pending', 'paid'])) {
+        if ($serviceRequest->payment_status === 'paid'
+            || ($serviceRequest->payment_status === 'pending' && $serviceRequest->payment_proof)) {
             return response()->json([
                 'message' => 'Payment proof has already been uploaded or payment is verified.',
             ], 422);
@@ -898,20 +919,20 @@ class ServiceRequestController extends Controller
                 ->update($linkedUpdates);
         }
 
-        $isCash = $validated['payment_method'] === 'cash';
+        if (!$isPendingBooking) {
+            $this->notifyRole(
+                'cashier',
+                'New Payment Proof Uploaded',
+                'A customer uploaded payment proof for service request #' . $serviceRequest->id,
+                'info',
+                'service_request',
+                $serviceRequest->id
+            );
+        }
 
-        // Notify cashier role
-        $this->notifyRole(
-            'cashier',
-            'New Payment Proof Uploaded',
-            'A customer uploaded payment proof for service request #' . $serviceRequest->id,
-            'info',
-            'service_request',
-            $serviceRequest->id
-        );
-
-        // Notify customer about payment pending verification
-        $paymentSubmittedMessage = "Your payment proof for {$serviceRequest->service_name} is pending verification.";
+        $paymentSubmittedMessage = $isPendingBooking
+            ? "Your payment proof for {$serviceRequest->service_name} was received. Cashier verification will begin after the booking is approved."
+            : "Your payment proof for {$serviceRequest->service_name} is pending verification.";
 
         WorkflowNotifier::notifyEmail(
             $serviceRequest->customer_email,
@@ -941,9 +962,13 @@ class ServiceRequestController extends Controller
                     'allowed' => ['pending', 'paid', 'partial'],
                 ]],
                 'content' => [
-                    'subject' => "[Pawesome] Payment Received for Verification — SR-{$serviceRequest->id}",
+                    'subject' => $isPendingBooking
+                        ? "[Pawesome] Payment Proof Received — SR-{$serviceRequest->id}"
+                        : "[Pawesome] Payment Received for Verification — SR-{$serviceRequest->id}",
                     'customer_name' => $serviceRequest->customer_name,
-                    'intro' => "We have received your payment submission for {$serviceRequest->service_name}. Our cashier will verify it shortly.",
+                    'intro' => $isPendingBooking
+                        ? "We have received your payment proof for {$serviceRequest->service_name}. Cashier verification will begin after reception approves the booking."
+                        : "We have received your payment submission for {$serviceRequest->service_name}. Our cashier will verify it shortly.",
                     'details' => [
                         ['label' => 'Reference', 'value' => "SR-{$serviceRequest->id}"],
                         ['label' => 'Service', 'value' => $serviceRequest->service_name],
@@ -953,7 +978,7 @@ class ServiceRequestController extends Controller
                         ['label' => 'Payment reference', 'value' => $validated['payment_reference'] ?? null],
                         ['label' => 'Submitted', 'value' => EmailContent::datetime(now())],
                     ],
-                    'status' => 'Pending verification',
+                    'status' => $isPendingBooking ? 'Pending booking approval' : 'Pending verification',
                     'status_type' => 'warning',
                     'cta_url' => EmailContent::frontendUrl('/customer/payments'),
                     'cta_label' => 'View Payment',
@@ -969,7 +994,9 @@ class ServiceRequestController extends Controller
 
         return response()->json([
             'success' => true,
-            'message' => 'Payment submitted successfully. Waiting for cashier verification.',
+            'message' => $isPendingBooking
+                ? 'Payment proof received. Cashier verification will begin after the booking is approved.'
+                : 'Payment submitted successfully. Waiting for cashier verification.',
             'request' => $this->formatRequest($serviceRequest),
             'payment_status' => 'pending',
             'proof_url' => "/api/files/payment-proofs/service-request/{$serviceRequest->id}/view",

@@ -44,7 +44,7 @@ const VetForm = () => {
   const [loading, setLoading] = useState(false);
   const [availabilityLoading, setAvailabilityLoading] = useState(false);
   const [availableTimeSlots, setAvailableTimeSlots] = useState([]);
-  const [uploadModal, setUploadModal] = useState({ open: false, endpoint: "", title: "", referenceNumber: "", paymentStatus: "", rejectionReason: "", paymentMethod: "gcash" });
+  const [uploadModal, setUploadModal] = useState({ open: false, endpoint: "", title: "", referenceNumber: "", paymentStatus: "", rejectionReason: "", paymentMethod: "gcash", amount: null, awaitingBookingApproval: false });
 
   const [formData, setFormData] = useState({
     customer_name: customerName,
@@ -223,7 +223,7 @@ const VetForm = () => {
     setReviewOpen(true);
   };
 
-  const confirmBooking = async () => {
+  const confirmBooking = async ({ payNow = false } = {}) => {
     try {
       setLoading(true);
 
@@ -233,8 +233,23 @@ const VetForm = () => {
       });
 
       if (data.success) {
+        const request = data.request;
         setReviewOpen(false);
-        showSuccess("Vet appointment submitted! Waiting for receptionist approval.");
+        if (!payNow) showSuccess("Vet appointment submitted! Waiting for receptionist approval.");
+
+        if (payNow && request?.id) {
+          setUploadModal({
+            open: true,
+            endpoint: `/customer/requests/${request.id}/payment-proof`,
+            title: request.service_name || formData.service_name || "Veterinary",
+            referenceNumber: request.payment_reference || "",
+            paymentStatus: request.payment_status || "unpaid",
+            rejectionReason: request.rejection_reason || "",
+            paymentMethod: request.payment_method || "gcash",
+            amount: request.total_amount ?? request.price ?? request.amount ?? formData.price,
+            awaitingBookingApproval: true,
+          });
+        }
 
         setFormData({
           customer_name: customerName,
@@ -296,6 +311,8 @@ const VetForm = () => {
       paymentStatus: String(item.payment_status || item.payment || ""),
       rejectionReason: item.rejection_reason || "",
       paymentMethod: item.payment_method || "gcash",
+      amount: item.total_amount ?? item.price ?? item.amount ?? null,
+      awaitingBookingApproval: false,
     });
   };
 
@@ -521,6 +538,7 @@ const VetForm = () => {
           rows: [{ label: formData.service_name || "Veterinary service", value: `₱${Number(formData.price).toFixed(2)}` }],
           total: `₱${Number(formData.price).toFixed(2)}`,
         } : null}
+        allowPayNow
         notes={formData.notes}
       />
 
@@ -534,6 +552,8 @@ const VetForm = () => {
         rejectionReason={uploadModal.rejectionReason}
         paymentMethod={uploadModal.paymentMethod}
         onSuccess={fetchAppointments}
+        amount={uploadModal.amount}
+        awaitingBookingApproval={uploadModal.awaitingBookingApproval}
       />
     </section>
   );

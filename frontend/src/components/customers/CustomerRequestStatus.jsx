@@ -14,7 +14,6 @@ import { normalizeList } from "../../utils/normalizeList";
 import { showSuccess, showError, showReasonPrompt, CUSTOMER_CANCEL_REASONS } from "../../utils/alert.jsx";
 import { useAuth } from "../../context/AuthContext";
 import PaymentUploadModal from "../shared/PaymentUploadModal";
-import RowActionPopover from "../shared/RowActionPopover"
 
 const safeLower = (value) => {
   if (value === null || value === undefined) return "";
@@ -241,24 +240,24 @@ const CustomerRequestStatus = ({ embedded = false }) => {
 
                 return (
                   <tr key={`${item.source || "request"}-${item.id}`}>
-                    <td className="col-id">#{item.id}</td>
-                    <td className="col-service">
+                    <td className="col-id" data-label="Request">#{item.id}</td>
+                    <td className="col-service" data-label="Service">
                       {safeText(item.service || item.service_name || item.type_label, "Service Request")}
                       {["vet", "veterinary"].includes(safeLower(item.request_type || item.type)) && (
                         <small>Veterinarian: {item.veterinarian?.name || "Not yet assigned"}</small>
                       )}
                     </td>
-                    <td className="col-pet">{getPetName(item)}</td>
-                    <td className="col-date">
+                    <td className="col-pet" data-label="Pet">{getPetName(item)}</td>
+                    <td className="col-date" data-label="Date">
                       {(item.date || item.request_date) ? new Date(item.date || item.request_date).toLocaleDateString() : "N/A"}
                     </td>
-                    <td className="col-status">
+                    <td className="col-status" data-label="Status">
                       <span className={`customer-status-pill ${safeLower(status)}`}>
                         {getStatusIcon(status)}
                         {status}
                       </span>
                     </td>
-                    <td className="col-payment">
+                    <td className="col-payment" data-label="Payment">
                       <span className={`customer-payment-pill ${safeLower(paymentStatus)}`}>
                         <FaCashRegister />
                         {paymentStatus}
@@ -267,34 +266,32 @@ const CustomerRequestStatus = ({ embedded = false }) => {
                         <small className="customer-payment-rejection">Reason: {item.rejection_reason}</small>
                       )}
                     </td>
-                    <td className="col-action">
+                    <td className="col-action" data-label="Action">
                       {canPay(item) || canCancelBoarding(item) || hasAdditionalBill ? (
-                        <RowActionPopover rowLabel={`${getCustomerName(item)} ${getPetName(item)}`}>
-                          <div className="col-action-buttons">
-                            {hasAdditionalBill && (
-                              <a className="customer-pay-btn" href="/customer/payments">
-                                View Bill
-                              </a>
-                            )}
-                            {canPay(item) && (
-                              <button
-                                className="customer-pay-btn"
-                                onClick={() => openUploadModal(item)}
-                              >
-                                Pay
-                              </button>
-                            )}
-                            {canCancelBoarding(item) && (
-                              <button
-                                className="customer-cancel-btn"
-                                onClick={() => cancelBoarding(item)}
-                                title="Cancel boarding request"
-                              >
-                                <FaBan /> Cancel
-                              </button>
-                            )}
-                          </div>
-                        </RowActionPopover>
+                        <div className="col-action-buttons">
+                          {hasAdditionalBill && (
+                            <a className="customer-pay-btn" href="/customer/payments">
+                              View Bill
+                            </a>
+                          )}
+                          {canPay(item) && (
+                            <button
+                              className="customer-pay-btn"
+                              onClick={() => openUploadModal(item)}
+                            >
+                              Pay
+                            </button>
+                          )}
+                          {canCancelBoarding(item) && (
+                            <button
+                              className="customer-cancel-btn"
+                              onClick={() => cancelBoarding(item)}
+                              title="Cancel boarding request"
+                            >
+                              <FaBan /> Cancel
+                            </button>
+                          )}
+                        </div>
                       ) : <span className="no-action">—</span>}
                     </td>
                   </tr>

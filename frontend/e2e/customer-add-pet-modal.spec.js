@@ -29,6 +29,7 @@ async function mockCustomerPetApi(page, { initialPets = [], failCreate = false, 
           breed: field('breed'),
           birthdate: field('birthdate'),
           birth_date: field('birth_date'),
+          gender: field('gender'),
           notes: field('notes'),
           customer_email: field('customer_email'),
         };
@@ -51,6 +52,7 @@ async function mockCustomerPetApi(page, { initialPets = [], failCreate = false, 
         species: payload.species,
         breed: payload.breed,
         birthdate: payload.birthdate || payload.birth_date || null,
+        gender: payload.gender || null,
         notes: payload.notes || '',
       };
       pets = [...pets, pet];
@@ -158,14 +160,17 @@ test.describe('Customer Add Pet modal', () => {
     await expect(page.locator('input[name="name"]')).toHaveAttribute('aria-invalid', 'true');
 
     await fillRequiredPetFields(page, 'Mochi');
+    await dialog.getByLabel('Gender').selectOption('Female');
     await page.getByRole('button', { name: 'Add Pet', exact: true }).click();
 
     await expect(dialog).toHaveCount(0);
     await expect(page.locator('.pets-toast.success')).toContainText('Pet added successfully');
-    await expect(page.locator('.pet-item').filter({ hasText: 'Mochi' })).toBeVisible();
+    const createdPet = page.locator('.pet-item').filter({ hasText: 'Mochi' });
+    await expect(createdPet).toBeVisible();
+    await expect(createdPet).toContainText('Gender: Female');
     expect(createRequests).toHaveLength(1);
     expect(createRequests[0].contentType).toContain('application/json');
-    expect(createRequests[0].payload).toMatchObject({ name: 'Mochi', species: 'Dog' });
+    expect(createRequests[0].payload).toMatchObject({ name: 'Mochi', species: 'Dog', gender: 'Female' });
     expect(createRequests[0].payload.breed).toBeTruthy();
   });
 

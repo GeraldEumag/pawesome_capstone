@@ -11,6 +11,7 @@ import { formatDateOnly, parseDateOnly } from "../../utils/date";
 import { saveDraft, saveServiceIntent, getDraft, clearDraft } from "../../utils/preBookingDraft";
 import { showSuccess, showError } from "../../utils/alert.jsx";
 import BookingReviewModal from "../shared/BookingReviewModal";
+import PaymentUploadModal from "../shared/PaymentUploadModal";
 
 const SERVICE_CONFIG = {
   hotel: { title: "Book Pet Hotel", icon: faHotel, accent: "hotel-accent" },
@@ -75,6 +76,7 @@ const ServiceBookingModal = ({ serviceType, onClose }) => {
   const [showHealthInfo, setShowHealthInfo] = useState(false);
   const [errors, setErrors] = useState({});
   const [pets, setPets] = useState([]);
+  const [paymentUpload, setPaymentUpload] = useState({ open: false, endpoint: "", title: "", amount: null });
 
   useEffect(() => {
     const draft = getDraft();
@@ -313,16 +315,37 @@ const ServiceBookingModal = ({ serviceType, onClose }) => {
     setReviewOpen(true);
   };
 
-  const confirmBooking = async () => {
+  const confirmBooking = async ({ payNow = false } = {}) => {
     const payload = buildPayload();
     try {
       setLoading(true);
       const data = await apiRequest("/customer/requests", { method: "POST", body: JSON.stringify(payload) });
-      if (data.success) { clearDraft(); setReviewOpen(false); showSuccess("Booking request submitted successfully. Please wait for receptionist approval."); onClose(); } else { showError(data.message || "Failed to submit request."); }
+      if (data.success) {
+        clearDraft();
+        setReviewOpen(false);
+        if (!payNow) showSuccess("Booking request submitted successfully. Please wait for receptionist approval.");
+        if (payNow && data.request?.id) {
+          setPaymentUpload({
+            open: true,
+            endpoint: `/customer/requests/${data.request.id}/payment-proof`,
+            title: data.request.service_name || config.title,
+            amount: data.request.total_amount ?? data.request.price ?? data.request.amount ?? null,
+          });
+        } else {
+          onClose();
+        }
+      } else {
+        showError(data.message || "Failed to submit request.");
+      }
     } catch (error) {
       const message = error.response?.data?.message || error.response?.data?.error || error.message || "Server error while submitting booking request.";
       showError(message);
     } finally { setLoading(false); }
+  };
+
+  const closePaymentUpload = () => {
+    setPaymentUpload({ open: false, endpoint: "", title: "", amount: null });
+    onClose();
   };
 
   const fe = (name) => errors[name] ? <span className="svc-field-error">{errors[name]}</span> : null;
@@ -571,6 +594,7 @@ const ServiceBookingModal = ({ serviceType, onClose }) => {
           { label: "Date", value: formData.preferred_date && new Date(`${formData.preferred_date}T00:00:00`).toLocaleDateString("en-PH", { weekday: "short", month: "short", day: "numeric", year: "numeric" }) },
           { label: "Time", value: formData.preferred_time },
         ]}
+        allowPayNow={canBook && serviceType !== "hotel"}
         notes={
           serviceType === "grooming"
             ? formData.special_grooming_instructions
@@ -586,6 +610,14 @@ const ServiceBookingModal = ({ serviceType, onClose }) => {
                 formData.urgency_level && `Urgency: ${formData.urgency_level}`,
               ].filter(Boolean).join("\n")
         }
+      />
+      <PaymentUploadModal
+        open={paymentUpload.open}
+        onClose={closePaymentUpload}
+        endpoint={paymentUpload.endpoint}
+        title={paymentUpload.title}
+        amount={paymentUpload.amount}
+        awaitingBookingApproval
       />
     </div>
   );

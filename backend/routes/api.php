@@ -352,6 +352,7 @@ Route::middleware(['auth.api', 'throttle:api', 'role:customer'])->prefix('custom
     Route::post('boardings/{id}/cancel', [BoardingController::class, 'cancel']);
     Route::get('boarding-requests/{id}', [BoardingController::class, 'show']);
     Route::post('boarding-requests/{id}/cancel', [BoardingController::class, 'cancel']);
+    Route::post('boarding-requests/{id}/vaccination-card', [BoardingController::class, 'uploadVaccinationCard']);
     Route::post('boarding-requests/{id}/payment-proof', [BoardingController::class, 'uploadPaymentProof']);
     Route::get('boarding-requests/{id}/care-logs', [BoardingController::class, 'careLogs']);
 

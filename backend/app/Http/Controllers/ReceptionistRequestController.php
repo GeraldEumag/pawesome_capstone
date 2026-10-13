@@ -307,6 +307,20 @@ class ReceptionistRequestController extends Controller
         /** @var ServiceRequest $serviceRequest */
         $serviceRequest = ServiceRequest::findOrFail($id);
         $previousStatus = $serviceRequest->status;
+        $hasPendingProof = $serviceRequest->payment_status === 'pending' && (bool) $serviceRequest->payment_proof;
+        $linkedPaymentStatus = $hasPendingProof
+            ? 'pending'
+            : (in_array($serviceRequest->payment_status, ['paid', 'partial', 'rejected'], true) ? $serviceRequest->payment_status : 'unpaid');
+
+        if ($validated['status'] === 'approved'
+            && $previousStatus === 'pending'
+            && $this->requestIsHotel($serviceRequest)
+            && ($serviceRequest->booking_channel ?? \App\Support\BookingChannel::ONLINE) !== \App\Support\BookingChannel::WALK_IN) {
+            $boarding = Boarding::where('service_request_id', $serviceRequest->id)->first();
+            if (!$boarding?->vaccination_card || !$boarding->vaccination_card_verified_at) {
+                return response()->json(['message' => 'Online hotel requests must use the Pet Hotel reservation flow and have a verified vaccination card before approval.'], 422);
+            }
+        }
 
         if ($validated['status'] === 'approved'
             && $this->requestIsVet($serviceRequest)
@@ -367,25 +381,32 @@ class ReceptionistRequestController extends Controller
             }
         }
 
-        if (in_array($validated['status'], ['rejected', 'cancelled'])) {
+        if (in_array($validated['status'], ['rejected', 'cancelled']) && !$hasPendingProof) {
             $serviceRequest->payment_status = 'unpaid';
-        } elseif ($validated['status'] === 'approved' && !in_array($serviceRequest->payment_status, ['paid', 'verified', 'completed'])) {
+        } elseif ($validated['status'] === 'approved' && !$hasPendingProof && $serviceRequest->payment_status === 'pending') {
             $serviceRequest->payment_status = 'unpaid';
         }
 
         $serviceRequest->save();
+        if ($validated['status'] === 'approved' && $hasPendingProof) {
+            WorkflowNotifier::notifyRole('cashier', 'Service payment proof ready for verification', "Approved service request #{$serviceRequest->id} has a customer-submitted payment proof.", 'info', 'service_request', $serviceRequest->id);
+        } elseif (in_array($validated['status'], ['rejected', 'cancelled'], true) && $hasPendingProof) {
+            WorkflowNotifier::notifyRole('cashier', 'Payment proof requires refund review', "Service request #{$serviceRequest->id} was {$validated['status']} after proof submission; review the payment before any counter settlement.", 'warning', 'service_request', $serviceRequest->id);
+        }
 
         // Propagate status change to linked dedicated records
         $newStatus = $validated['status'];
         if (in_array($newStatus, ['rejected', 'cancelled'])) {
+            $linkedUpdates = ['status' => $newStatus];
+            if (!$hasPendingProof) $linkedUpdates['payment_status'] = 'unpaid';
             if (Schema::hasColumn('appointments', 'service_request_id')) {
-                Appointment::where('service_request_id', $serviceRequest->id)->update(['status' => $newStatus]);
+                Appointment::where('service_request_id', $serviceRequest->id)->update($linkedUpdates);
             }
             if (Schema::hasColumn('groomings', 'service_request_id')) {
-                Grooming::where('service_request_id', $serviceRequest->id)->update(['status' => $newStatus, 'payment_status' => 'unpaid']);
+                Grooming::where('service_request_id', $serviceRequest->id)->update($linkedUpdates);
             }
             if (Schema::hasColumn('boardings', 'service_request_id')) {
-                Boarding::where('service_request_id', $serviceRequest->id)->update(['status' => $newStatus, 'payment_status' => 'unpaid']);
+                Boarding::where('service_request_id', $serviceRequest->id)->update($linkedUpdates);
             }
         }
 
@@ -430,14 +451,14 @@ class ReceptionistRequestController extends Controller
                             'total_amount' => $price,
                             'balance_due' => $price,
                             'status' => 'approved',
-                            'payment_status' => 'unpaid',
+                            'payment_status' => $linkedPaymentStatus,
                         ]
                     );
 
                     if (!$grooming->wasRecentlyCreated) {
                         $groomingUpdates = ['status' => 'approved'];
 
-                        if (($grooming->payment_status ?? 'unpaid') !== 'paid') {
+                        if (!$hasPendingProof && ($grooming->payment_status ?? 'unpaid') !== 'paid') {
                             $groomingUpdates['payment_status'] = 'unpaid';
                         }
 
@@ -523,7 +544,10 @@ class ReceptionistRequestController extends Controller
                             'number_of_days' => $serviceRequest->total_days ?? 1,
                             'total_amount' => $boardingTotal,
                             'status' => 'approved',
-                            'payment_status' => 'unpaid',
+                            'payment_status' => $linkedPaymentStatus,
+                            'payment_method' => $serviceRequest->payment_method,
+                            'payment_reference' => $serviceRequest->payment_reference,
+                            'payment_proof' => $serviceRequest->payment_proof,
                             'notes' => $serviceRequest->notes,
                             'stay_type' => 'hotel_boarding',
                         ])
@@ -532,7 +556,7 @@ class ReceptionistRequestController extends Controller
                     if (!$boarding->wasRecentlyCreated) {
                         $boardingUpdates = ['status' => 'approved'];
 
-                        if (($boarding->payment_status ?? 'unpaid') !== 'paid') {
+                        if (!$hasPendingProof && ($boarding->payment_status ?? 'unpaid') !== 'paid') {
                             $boardingUpdates['payment_status'] = 'unpaid';
                         }
 
@@ -571,7 +595,9 @@ class ReceptionistRequestController extends Controller
             // Vet: only update existing appointment if one exists (can't create without vet assignment)
             if ($this->requestIsVet($serviceRequest)) {
                 if (Schema::hasColumn('appointments', 'service_request_id')) {
-                    Appointment::where('service_request_id', $serviceRequest->id)->update(['status' => 'approved']);
+                    $appointmentUpdates = ['status' => 'approved'];
+                    if ($hasPendingProof) $appointmentUpdates['payment_status'] = 'pending';
+                    Appointment::where('service_request_id', $serviceRequest->id)->update($appointmentUpdates);
                 }
             }
         }
@@ -663,7 +689,19 @@ class ReceptionistRequestController extends Controller
     private function performApprove(Request $request, array $validated, $id)
     {
         $serviceRequest = ServiceRequest::whereKey($id)->lockForUpdate()->firstOrFail();
+        $hasPendingProof = $serviceRequest->payment_status === 'pending' && (bool) $serviceRequest->payment_proof;
+        $linkedPaymentStatus = $hasPendingProof
+            ? 'pending'
+            : (in_array($serviceRequest->payment_status, ['paid', 'partial', 'rejected'], true) ? $serviceRequest->payment_status : 'unpaid');
         $isHotelRequest = $this->requestIsHotel($serviceRequest);
+        if (($serviceRequest->status ?? 'pending') === 'pending'
+            && $isHotelRequest
+            && ($serviceRequest->booking_channel ?? \App\Support\BookingChannel::ONLINE) !== \App\Support\BookingChannel::WALK_IN) {
+            $boarding = Boarding::where('service_request_id', $serviceRequest->id)->first();
+            if (!$boarding?->vaccination_card || !$boarding->vaccination_card_verified_at) {
+                return response()->json(['message' => 'Online hotel requests must use the Pet Hotel reservation flow and have a verified vaccination card before approval.'], 422);
+            }
+        }
         $isGroomingRequest = $this->requestIsGrooming($serviceRequest);
         $isVetRequest = $this->requestIsVet($serviceRequest) && !$isHotelRequest && !$isGroomingRequest;
         $existingVetAppointment = $isVetRequest && Schema::hasColumn('appointments', 'service_request_id')
@@ -787,6 +825,7 @@ class ReceptionistRequestController extends Controller
                 'scheduled_at' => $scheduledAtUtc,
                 'veterinarian_id' => $vet->id,
                 'status' => 'approved',
+                'payment_status' => $linkedPaymentStatus,
                 'notes' => $serviceRequest->notes,
                 'price' => $service->price ?? $existingVetAppointment?->price ?? 0,
                 'service_request_id' => $serviceRequest->id,
@@ -855,14 +894,14 @@ class ReceptionistRequestController extends Controller
                         'total_amount' => $price,
                         'balance_due' => $price,
                         'status' => 'approved',
-                        'payment_status' => 'unpaid',
+                        'payment_status' => $linkedPaymentStatus,
                     ]
                 );
 
                 if (!$grooming->wasRecentlyCreated) {
                     $groomingUpdates = ['status' => 'approved'];
 
-                    if (($grooming->payment_status ?? 'unpaid') !== 'paid') {
+                    if (!$hasPendingProof && ($grooming->payment_status ?? 'unpaid') !== 'paid') {
                         $groomingUpdates['payment_status'] = 'unpaid';
                     }
 
@@ -1001,7 +1040,10 @@ class ReceptionistRequestController extends Controller
                         'number_of_days' => $serviceRequest->total_days ?? 1,
                         'total_amount' => $boardingTotal,
                         'status' => 'approved',
-                        'payment_status' => 'unpaid',
+                        'payment_status' => $linkedPaymentStatus,
+                        'payment_method' => $serviceRequest->payment_method,
+                        'payment_reference' => $serviceRequest->payment_reference,
+                        'payment_proof' => $serviceRequest->payment_proof,
                         'notes' => $serviceRequest->notes,
                         'stay_type' => 'hotel_boarding',
                     ])
@@ -1010,7 +1052,7 @@ class ReceptionistRequestController extends Controller
                 if (!$boarding->wasRecentlyCreated) {
                     $boardingUpdates = ['status' => 'approved'];
 
-                    if (($boarding->payment_status ?? 'unpaid') !== 'paid') {
+                    if (!$hasPendingProof && ($boarding->payment_status ?? 'unpaid') !== 'paid') {
                         $boardingUpdates['payment_status'] = 'unpaid';
                     }
 
@@ -1043,18 +1085,28 @@ class ReceptionistRequestController extends Controller
             }
         }
 
+        if (!$hasPendingProof && $serviceRequest->payment_status === 'pending') {
+            $serviceRequest->payment_status = 'unpaid';
+        }
         $serviceRequest->update([
             'status' => 'approved',
-            'payment_status' => 'unpaid',
             'approved_by' => $request->user()->id,
             'approved_at' => now(),
             'receptionist_remarks' => $validated['receptionist_remarks'] ?? 'Approved by receptionist',
         ]);
 
+        if ($hasPendingProof) {
+            WorkflowNotifier::notifyRole('cashier', 'Service payment proof ready for verification', "Approved service request #{$serviceRequest->id} has a customer-submitted payment proof.", 'info', 'service_request', $serviceRequest->id);
+        }
+
+        $approvalMessage = $hasPendingProof
+            ? "Your {$serviceRequest->service_name} request was approved. Cashier verification of your submitted payment proof will begin."
+            : "Your {$serviceRequest->service_name} request was approved and is ready for payment.";
+
         WorkflowNotifier::notifyEmail(
             $serviceRequest->customer_email,
             'Service Request Approved',
-            "Your {$serviceRequest->service_name} request was approved and is ready for payment.",
+            $approvalMessage,
             'success',
             'service_request',
             $serviceRequest->id
@@ -1063,7 +1115,7 @@ class ReceptionistRequestController extends Controller
         app(EmailDeliveryService::class)->lifecycle(
             $serviceRequest->customer_email,
             'Service Request Approved',
-            "Your {$serviceRequest->service_name} request was approved and is ready for payment.",
+            $approvalMessage,
             'success',
             [
                 'event_key' => 'service_request.approved',
@@ -1074,7 +1126,9 @@ class ReceptionistRequestController extends Controller
                 'content' => [
                     'subject' => "[Pawesome] Booking Approved — SR-{$serviceRequest->id}",
                     'customer_name' => $serviceRequest->customer_name,
-                    'intro' => "We are pleased to let you know that your {$serviceRequest->service_name} request has been approved by our reception team and is now ready for payment.",
+                    'intro' => $hasPendingProof
+                        ? "Your {$serviceRequest->service_name} request has been approved. Our cashier will verify the payment proof you submitted."
+                        : "We are pleased to let you know that your {$serviceRequest->service_name} request has been approved by our reception team and is now ready for payment.",
                     'details' => [
                         ['label' => 'Reference', 'value' => "SR-{$serviceRequest->id}"],
                         ['label' => 'Service', 'value' => $serviceRequest->service_name],
@@ -1109,6 +1163,7 @@ class ReceptionistRequestController extends Controller
         ]);
 
         $serviceRequest = ServiceRequest::findOrFail($id);
+        $hasPendingProof = $serviceRequest->payment_status === 'pending' && (bool) $serviceRequest->payment_proof;
 
         $serviceRequest->update([
             'status' => 'rejected',
@@ -1123,11 +1178,16 @@ class ReceptionistRequestController extends Controller
         if (Schema::hasColumn('appointments', 'service_request_id')) {
             Appointment::where('service_request_id', $serviceRequest->id)->update(['status' => $linkedStatus]);
         }
+        $linkedUpdates = ['status' => $linkedStatus];
+        if (!$hasPendingProof) $linkedUpdates['payment_status'] = 'unpaid';
         if (Schema::hasColumn('groomings', 'service_request_id')) {
-            Grooming::where('service_request_id', $serviceRequest->id)->update(['status' => $linkedStatus, 'payment_status' => 'unpaid']);
+            Grooming::where('service_request_id', $serviceRequest->id)->update($linkedUpdates);
         }
         if (Schema::hasColumn('boardings', 'service_request_id')) {
-            Boarding::where('service_request_id', $serviceRequest->id)->update(['status' => $linkedStatus, 'payment_status' => 'unpaid']);
+            Boarding::where('service_request_id', $serviceRequest->id)->update($linkedUpdates);
+        }
+        if ($hasPendingProof) {
+            WorkflowNotifier::notifyRole('cashier', 'Payment proof requires refund review', "Service request #{$serviceRequest->id} was rejected after proof submission; review the payment before any counter settlement.", 'warning', 'service_request', $serviceRequest->id);
         }
 
         // Release any room reservation created at approval so the room

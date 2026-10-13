@@ -472,3 +472,113 @@
     font-size: 0.82rem;
   }
 }
+
+@media (max-width: 640px) {
+  .customer-status-page.embedded {
+    width: 100%;
+    min-width: 0;
+  }
+
+  .customer-status-table-wrap {
+    overflow: visible;
+    border: 0;
+    background: transparent;
+    box-shadow: none;
+    backdrop-filter: none;
+  }
+
+  .app-dashboard.customer-dashboard .customer-status-page .customer-status-table {
+    display: block;
+    width: 100%;
+    min-width: 0;
+    border-collapse: separate;
+  }
+
+  .customer-status-table thead {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    clip-path: inset(50%);
+  }
+
+  .customer-status-table tbody {
+    display: grid;
+    gap: 0.75rem;
+  }
+
+  .customer-status-table tbody tr {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.25rem 0.75rem;
+    padding: 0.65rem 0.85rem;
+    border: 1px solid var(--cr-border);
+    border-radius: var(--cr-radius-sm);
+    background: var(--cr-surface);
+    box-shadow: var(--cr-shadow);
+  }
+
+  .customer-status-table tbody tr:hover {
+    background: var(--cr-surface);
+  }
+
+  .customer-status-table tbody tr td {
+    display: flex;
+    min-width: 0;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.25rem;
+    padding: 0.45rem 0.1rem;
+    border-bottom: 0;
+    white-space: normal;
+    font-size: 0.84rem;
+  }
+
+  .customer-status-table tbody tr td::before {
+    content: attr(data-label);
+    color: var(--cr-muted);
+    font-size: 0.68rem;
+    font-weight: 800;
+    line-height: 1.2;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+  }
+
+  .customer-status-table .col-id,
+  .customer-status-table .col-service,
+  .customer-status-table .col-action {
+    grid-column: 1 / -1;
+  }
+
+  .customer-status-table tbody tr td.col-id {
+    flex-direction: row;
+    align-items: center;
+    gap: 0.35rem;
+    padding-top: 0.2rem;
+  }
+
+  .customer-status-table .col-service small {
+    display: block;
+    color: var(--cr-muted);
+    font-size: 0.75rem;
+  }
+
+  .customer-status-table .col-status,
+  .customer-status-table .col-payment {
+    align-items: flex-start;
+  }
+
+  .customer-status-table .col-action-buttons {
+    width: 100%;
+    gap: 0.5rem;
+  }
+
+  .customer-status-table .col-action-buttons > * {
+    min-height: 42px;
+    flex: 1 1 120px;
+    justify-content: center;
+  }
+}

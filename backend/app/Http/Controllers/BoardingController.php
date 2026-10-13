@@ -23,6 +23,7 @@ use App\Services\PetServiceCompatibilityService;
 use App\Services\ServiceDurationService;
 use App\Services\ServiceBillingService;
 use App\Services\PaymentVerificationService;
+use App\Support\BookingChannel;
 use Illuminate\Http\Exceptions\HttpResponseException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -82,6 +83,33 @@ class BoardingController extends Controller
         return Schema::hasColumn('boardings', 'customer_email')
             && $request->user()?->email
             && $boarding->customer_email === $request->user()->email;
+    }
+
+    private function resolvedBookingChannel(Boarding $boarding): string
+    {
+        $channel = $boarding->booking_channel;
+        if (!$channel && $boarding->service_request_id) {
+            $channel = ServiceRequest::whereKey($boarding->service_request_id)->value('booking_channel');
+        }
+
+        return $channel ?: BookingChannel::ONLINE;
+    }
+
+    private function vaccinationVerificationError(Boarding $boarding): ?JsonResponse
+    {
+        if ($this->resolvedBookingChannel($boarding) === BookingChannel::WALK_IN) {
+            return null;
+        }
+
+        if (!$boarding->vaccination_card) {
+            return response()->json(['error' => 'Upload a vaccination card before approving this online boarding.'], 422);
+        }
+
+        if (!$boarding->vaccination_card_verified_at) {
+            return response()->json(['error' => 'The vaccination card must be verified before approving this online boarding.'], 422);
+        }
+
+        return null;
     }
 
     /**
@@ -246,7 +274,9 @@ class BoardingController extends Controller
             'number_of_days' => 'nullable|integer|min:1|max:1',
             'check_in_time' => 'nullable|date_format:H:i',
             'check_out_time' => 'nullable|date_format:H:i',
-            'vaccination_card' => 'nullable|file|mimes:jpg,jpeg,png,pdf|max:5120',
+            'vaccination_card' => $request->user()?->role === 'customer'
+                ? 'required|file|mimes:jpg,jpeg,png,pdf|max:5120'
+                : 'nullable|file|mimes:jpg,jpeg,png,pdf|max:5120',
             'notes' => 'nullable|string',
             'add_ons' => 'nullable|array',
             'add_ons.*.id' => 'required|exists:add_ons,id',
@@ -697,8 +727,10 @@ class BoardingController extends Controller
             return response()->json(['error' => 'Only pending boarding requests can be confirmed'], 422);
         }
 
-        // Vaccination card verification is now optional
-        // Removed blocking requirement to allow approval without vaccination card
+        $vaccinationError = $this->vaccinationVerificationError($boarding);
+        if ($vaccinationError) {
+            return $vaccinationError;
+        }
 
         $oldStatus = $boarding->status;
         
@@ -735,7 +767,9 @@ class BoardingController extends Controller
                 'status' => 'approved',
                 'approved_by' => $request->user()?->id,
                 'approved_at' => now(),
-                'payment_status' => $boarding->payment_status === 'paid' ? 'paid' : 'unpaid',
+                'payment_status' => $boarding->payment_status === 'pending' && !$boarding->payment_proof
+                    ? 'unpaid'
+                    : ($boarding->payment_status ?: 'unpaid'),
             ]);
 
             // Create base service billing item when boarding is approved.
@@ -758,6 +792,9 @@ class BoardingController extends Controller
 
         // Send notification
         NotificationService::notifyBoardingStatusChange($result['boarding'], $oldStatus);
+        if ($result['boarding']->payment_status === 'pending' && $result['boarding']->payment_proof) {
+            WorkflowNotifier::notifyRole('cashier', 'Boarding payment proof ready for verification', "Approved boarding #{$result['boarding']->id} has a customer-submitted payment proof.", 'info', 'boarding', $result['boarding']->id);
+        }
 
         ActivityLog::log($request->user()?->id, 'boarding_approved', "Boarding reservation #{$boarding->id} approved", [
             'category' => 'booking',
@@ -833,6 +870,14 @@ class BoardingController extends Controller
             return response()->json(['error' => 'Only pending or approved boarding requests can be scheduled'], 422);
         }
 
+        if ($boarding->status === 'pending') {
+            $vaccinationError = $this->vaccinationVerificationError($boarding);
+            if ($vaccinationError) {
+                return $vaccinationError;
+            }
+        }
+
+        $wasPending = $boarding->status === 'pending';
         $validator = Validator::make($request->all(), [
             'hotel_room_id' => 'required|exists:hotel_rooms,id',
             'check_in' => 'nullable|date|after_or_equal:today',
@@ -906,7 +951,9 @@ class BoardingController extends Controller
                 'boarding_type' => $request->input('boarding_type', $boarding->boarding_type),
                 'total_amount' => $newTotal,
                 'status' => 'scheduled',
-                'payment_status' => $boarding->payment_status === 'paid' ? 'paid' : 'unpaid',
+                'payment_status' => $boarding->payment_status === 'pending' && !$boarding->payment_proof
+                    ? 'unpaid'
+                    : ($boarding->payment_status ?: 'unpaid'),
                 'approved_by' => $boarding->approved_by ?: $request->user()?->id,
                 'approved_at' => $boarding->approved_at ?: now(),
                 'notes' => $request->input('notes', $boarding->notes),
@@ -927,6 +974,9 @@ class BoardingController extends Controller
             }
         });
         WorkflowNotifier::notifyEmail($boarding->customer_email, 'Boarding scheduled', 'Your pet hotel stay has been scheduled.', 'success', 'boarding', $boarding->id);
+        if ($wasPending && $boarding->payment_status === 'pending' && $boarding->payment_proof) {
+            WorkflowNotifier::notifyRole('cashier', 'Boarding payment proof ready for verification', "Approved boarding #{$boarding->id} has a customer-submitted payment proof.", 'info', 'boarding', $boarding->id);
+        }
 
         return response()->json([
             'message' => 'Boarding request scheduled',
@@ -1132,6 +1182,13 @@ class BoardingController extends Controller
             if ($boarding->hotelRoom && in_array($boarding->hotelRoom->status, ['reserved', 'occupied'], true)) {
                 $boarding->hotelRoom->update(['status' => 'available']);
             }
+            if (Schema::hasTable('boarding_room_reservations')) {
+                DB::table('boarding_room_reservations')
+                    ->where('source_type', 'pet_hotel')
+                    ->where('source_id', $boarding->id)
+                    ->whereNotIn('status', ['cancelled', 'checked_out', 'completed'])
+                    ->update(['status' => 'cancelled']);
+            }
 
             // Restore inventory for add-ons that were deducted
             $inventoryResult = $addOnInventoryService->restoreAddOnInventory($boarding, 'receptionist');
@@ -1144,6 +1201,9 @@ class BoardingController extends Controller
 
         // Send notification
         NotificationService::notifyBoardingStatusChange($result['boarding'], $oldStatus);
+        if ($result['boarding']->payment_status === 'pending' && $result['boarding']->payment_proof) {
+            WorkflowNotifier::notifyRole('cashier', 'Payment proof requires refund review', "Boarding #{$boarding->id} was cancelled after proof submission; review the payment before any counter settlement.", 'warning', 'boarding', $boarding->id);
+        }
 
         return response()->json([
             'message' => 'Reservation cancelled',
@@ -1340,12 +1400,23 @@ class BoardingController extends Controller
             if ($boarding->hotelRoom && in_array($boarding->hotelRoom->status, ['reserved'], true)) {
                 $boarding->hotelRoom->update(['status' => 'available']);
             }
+            if (Schema::hasTable('boarding_room_reservations')) {
+                DB::table('boarding_room_reservations')
+                    ->where('source_type', 'pet_hotel')
+                    ->where('source_id', $boarding->id)
+                    ->whereNotIn('status', ['cancelled', 'checked_out', 'completed'])
+                    ->update(['status' => 'cancelled']);
+            }
 
             $addOnInventoryService->restoreAddOnInventory($boarding, 'receptionist');
         });
 
         // Send notification
         NotificationService::notifyBoardingStatusChange($boarding, $oldStatus);
+
+        if ($boarding->payment_status === 'pending' && $boarding->payment_proof) {
+            WorkflowNotifier::notifyRole('cashier', 'Payment proof requires refund review', "Boarding #{$boarding->id} was rejected after proof submission; review the payment before any counter settlement.", 'warning', 'boarding', $boarding->id);
+        }
 
         ActivityLog::log($request->user()?->id, 'boarding_rejected', "Boarding reservation #{$boarding->id} rejected", [
             'category' => 'booking',
@@ -1393,6 +1464,50 @@ class BoardingController extends Controller
         ]);
     }
 
+    public function uploadVaccinationCard(Request $request, $id): JsonResponse
+    {
+        $boarding = Boarding::findOrFail($id);
+
+        if ($request->user()?->role !== 'customer' || !$this->customerCanAccess($request, $boarding)) {
+            return response()->json(['message' => 'Reservation not found'], 404);
+        }
+
+        if ($this->resolvedBookingChannel($boarding) === BookingChannel::WALK_IN) {
+            return response()->json(['message' => 'Vaccination cards for walk-in bookings are managed by reception.'], 422);
+        }
+
+        if ($boarding->status !== 'pending') {
+            return response()->json(['error' => 'Vaccination cards can only be uploaded while the booking is pending.'], 422);
+        }
+
+        $validated = $request->validate([
+            'vaccination_card' => 'required|file|mimes:jpg,jpeg,png,pdf|max:5120',
+        ]);
+
+        $oldPath = $boarding->vaccination_card;
+        $oldDisk = $oldPath && !Storage::disk('private')->exists($oldPath) ? 'public' : 'private';
+        FileStorageService::storeAndPersist(
+            $validated['vaccination_card'],
+            'vaccination_cards',
+            'private',
+            fn (string $path) => $boarding->update([
+                'vaccination_card' => $path,
+                'vaccination_card_verified_at' => null,
+            ]),
+            oldPath: $oldPath,
+            oldDisk: $oldDisk,
+            prefix: 'vaccination_card',
+        );
+
+        $boarding = $boarding->fresh(['pet', 'customer', 'hotelRoom']);
+        $boarding->vaccination_card_url = url('/api/files/vaccination-cards/' . $boarding->id . '/view');
+
+        return response()->json([
+            'message' => 'Vaccination card uploaded. Reception will verify it before approving the booking.',
+            'boarding' => $boarding,
+        ]);
+    }
+
     public function uploadPaymentProof(Request $request, $id): JsonResponse
     {
         $boarding = Boarding::findOrFail($id);
@@ -1401,12 +1516,18 @@ class BoardingController extends Controller
             return response()->json(['message' => 'Reservation not found'], 404);
         }
 
-        if (!in_array($boarding->status, ['approved', 'scheduled'], true)) {
-            return response()->json(['error' => 'Payment proof can only be uploaded after approval or scheduling'], 422);
+        $isPendingOnlineBooking = $boarding->status === 'pending'
+            && $this->resolvedBookingChannel($boarding) === BookingChannel::ONLINE;
+        if (!in_array($boarding->status, ['approved', 'scheduled'], true) && !$isPendingOnlineBooking) {
+            return response()->json(['error' => 'Payment proof can only be uploaded for online bookings or approved reservations.'], 422);
         }
 
+        if ($boarding->payment_status === 'paid'
+            || ($boarding->payment_status === 'pending' && $boarding->payment_proof)) {
+            return response()->json(['error' => 'Payment proof has already been uploaded or payment is verified.'], 422);
+        }
         if (!in_array($boarding->payment_status, ['unpaid', 'pending', 'rejected'], true)) {
-            return response()->json(['error' => 'Only unpaid or rejected payments can be resubmitted'], 422);
+            return response()->json(['error' => 'Only unpaid or rejected payments can be submitted'], 422);
         }
 
         $validator = Validator::make($request->all(), [
@@ -1454,10 +1575,14 @@ class BoardingController extends Controller
                 ->update($srUpdates);
         }
 
-        WorkflowNotifier::notifyRole('cashier', 'Boarding payment proof submitted', "{$boarding->pet_name} has a pending boarding payment proof.", 'info', 'boarding', $boarding->id);
+        if (!$isPendingOnlineBooking) {
+            WorkflowNotifier::notifyRole('cashier', 'Boarding payment proof submitted', "{$boarding->pet_name} has a pending boarding payment proof.", 'info', 'boarding', $boarding->id);
+        }
 
         return response()->json([
-            'message' => 'Payment proof submitted for cashier verification',
+            'message' => $isPendingOnlineBooking
+                ? 'Payment proof received. Cashier verification will begin after the booking is approved.'
+                : 'Payment proof submitted for cashier verification',
             'boarding' => $boarding->fresh(['pet', 'customer', 'hotelRoom']),
         ]);
     }

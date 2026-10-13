@@ -170,23 +170,20 @@ test.describe('Phase 4 Payment Workflow E2E', () => {
     await context.close();
   });
 
-  test('Vaccination card optional - Customer booking without card', async ({ request, browser }) => {
+  test('Customer hotel booking requires a vaccination card upload', async ({ request, browser }) => {
     const session = await apiSession(request, 'customer');
     const { page, context } = await openAs(browser, session, '/customer/hotel');
 
     await expect(page.locator('.customer-hotel-reservation')).toBeVisible({ timeout: 20000 });
 
-    // Vaccination card input is optional (no required attribute)
     const vaccinationInput = page.locator('.customer-hotel-reservation input[type="file"]');
     await expect(vaccinationInput).toBeVisible();
-    expect(await vaccinationInput.getAttribute('required')).toBeNull();
-
-    // Label shows "(Optional)"
-    await expect(page.locator('label:has-text("Vaccination Card")')).toContainText('Optional');
+    await expect(vaccinationInput).toHaveAttribute('required', '');
+    await expect(page.locator('.vaccination-required-note')).toContainText('verify this card before approving');
     await context.close();
   });
 
-  test('Receptionist can approve a pending boarding without a vaccination card', async ({ request, browser }) => {
+  test('Receptionist cannot approve a pending online boarding without a verified vaccination card', async ({ request, browser }) => {
     const session = await apiSession(request, 'receptionist');
     const { page, context } = await openAs(browser, session, '/receptionist/bookings/hotel');
 
@@ -199,15 +196,13 @@ test.describe('Phase 4 Payment Workflow E2E', () => {
     await expect(row).toBeVisible({ timeout: 20000 });
     await expect(row.locator('.status-badge')).toContainText(/pending/i);
 
-    // Approve is available and enabled despite the missing vaccination card.
-    // Actions live inside the RowActionPopover — open it first (the panel is
-    // portaled to document.body, so the button is scoped to the page, not row).
     await row.getByRole('button', { name: /actions for/i }).click();
-    const approveBtn = page.locator('button[title="Approve"]');
+    const approveBtn = page.locator('button[title="View details and verify the vaccination card first"]');
     await expect(approveBtn).toBeVisible();
-    await expect(approveBtn).toBeEnabled();
-    await approveBtn.click();
-    await expect(page.locator('.hotel-toast.success')).toBeVisible({ timeout: 15000 });
+    await expect(approveBtn).toBeDisabled();
+    await page.getByRole('button', { name: 'View / Manage' }).click();
+    await expect(page.locator('.hbk-vax-required')).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Approve Boarding' })).toBeDisabled();
 
     await context.close();
   });

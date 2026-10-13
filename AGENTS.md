@@ -219,6 +219,10 @@ configuration; review `docs/DEPLOYMENT.md` before using any provider settings.
   `ERR_ADDRESS_IN_USE`, and `Failed to fetch` errors in Playwright tests.
 - These are Windows TCP/IP stack issues, not application defects.
 - Mitigation: reboot, or run tests on Linux/Docker.
+- The local PHP CLI may lack GD; use `UploadedFile::fake()->create()` or
+  `createWithContent()` for upload fixtures instead of `fake()->image()`.
+- If MySQL tests report connection refused, confirm the XAMPP MySQL service is
+  running and that `pawesome_test` is available before diagnosing application code.
 
 ## Issue Tracking
 

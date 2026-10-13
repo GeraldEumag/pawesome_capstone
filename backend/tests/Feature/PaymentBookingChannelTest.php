@@ -460,6 +460,244 @@ class PaymentBookingChannelTest extends TestCase
         $this->assertSame('pending', $appointment->fresh()->payment_status);
     }
 
+    public function test_pending_walk_in_service_request_cannot_submit_preapproval_proof(): void
+    {
+        Storage::fake('private');
+        [$user, , $pet] = $this->customerWithPet();
+        $sr = $this->serviceRequest([
+            'customer_id' => $user->id,
+            'customer_email' => $user->email,
+            'pet_id' => $pet->id,
+            'status' => 'pending',
+            'payment_status' => 'unpaid',
+            'booking_channel' => 'walk_in',
+        ]);
+
+        $this->withHeaders($this->headers($user))
+            ->post("/api/customer/requests/{$sr->id}/payment-proof", [
+                'payment_method' => 'gcash',
+                'payment_reference' => 'GC-WALKIN-001',
+                'payment_proof' => UploadedFile::fake()->create('walk-in-proof.jpg', 100, 'image/jpeg'),
+            ])
+            ->assertUnprocessable();
+
+        $this->assertSame('unpaid', $sr->fresh()->payment_status);
+        $this->assertNull($sr->fresh()->payment_proof);
+    }
+
+    public function test_pending_online_service_request_can_submit_proof_before_approval(): void
+    {
+        Storage::fake('private');
+        Carbon::setTestNow(Carbon::parse('2026-09-29 12:00:00', 'Asia/Manila'));
+        [$user, $customer, $pet] = $this->customerWithPet();
+        $receptionist = $this->staff('receptionist');
+        $cashier = $this->staff('cashier');
+        Service::firstOrCreate(['name' => 'Bath and Brush'], ['category' => 'Grooming', 'price' => 500, 'is_active' => true]);
+        $sr = $this->serviceRequest([
+            'customer_id' => $user->id,
+            'customer_email' => $user->email,
+            'pet_id' => $pet->id,
+            'status' => 'pending',
+            'payment_status' => 'unpaid',
+            'booking_channel' => 'online',
+        ]);
+        $grooming = Grooming::create([
+            'customer_id' => $customer->id,
+            'pet_id' => $pet->id,
+            'service' => 'Bath and Brush',
+            'appointment_date' => Carbon::tomorrow()->toDateString(),
+            'appointment_time' => '10:00',
+            'amount' => 500,
+            'total_amount' => 500,
+            'status' => 'pending',
+            'payment_status' => 'unpaid',
+            'service_request_id' => $sr->id,
+        ]);
+
+        $this->withHeaders($this->headers($user))
+            ->post("/api/customer/requests/{$sr->id}/payment-proof", [
+                'payment_method' => 'gcash',
+                'payment_reference' => 'GC-PREAPPROVAL-1',
+                'payment_proof' => UploadedFile::fake()->create('booking-proof.jpg', 100, 'image/jpeg'),
+            ])
+            ->assertOk()
+            ->assertJsonPath('payment_status', 'pending');
+
+        $sr->refresh();
+        $this->assertSame('pending', $sr->status);
+        $this->assertSame('pending', $sr->payment_status);
+        $this->assertNotNull($sr->payment_proof);
+        $this->assertSame('pending', $grooming->fresh()->payment_status);
+
+        $queue = $this->withHeaders($this->headers($cashier))
+            ->getJson('/api/cashier/payment-requests')
+            ->assertOk()
+            ->json('payments');
+        $this->assertFalse(collect($queue)->contains(fn ($row) => (int) $row['id'] === $sr->id && $row['payable_type'] === 'service_request'));
+
+        $this->withHeaders($this->headers($cashier))
+            ->postJson("/api/cashier/payment-requests/{$sr->id}/verify", $this->verifyPayload(['type' => 'service_request']))
+            ->assertStatus(422);
+
+        $this->withHeaders($this->headers($receptionist))
+            ->postJson("/api/receptionist/requests/{$sr->id}/approve")
+            ->assertOk();
+
+        $this->assertSame('approved', $sr->fresh()->status);
+        $this->assertSame('pending', $sr->fresh()->payment_status);
+        $this->assertSame('approved', $grooming->fresh()->status);
+        $this->assertSame('pending', $grooming->fresh()->payment_status);
+        $queue = $this->withHeaders($this->headers($cashier))
+            ->getJson('/api/cashier/payment-requests')
+            ->assertOk()
+            ->json('payments');
+        $this->assertTrue(collect($queue)->contains(fn ($row) => (int) $row['id'] === $sr->id && $row['payable_type'] === 'service_request'));
+    }
+
+    public function test_customer_boarding_requires_card_and_verification_before_approval_or_schedule(): void
+    {
+        Storage::fake('private');
+        Carbon::setTestNow(Carbon::parse('2026-09-29 12:00:00', 'Asia/Manila'));
+        [$user, $customer, $pet] = $this->customerWithPet();
+        $receptionist = $this->staff('receptionist');
+        $cashier = $this->staff('cashier');
+        $room = HotelRoom::factory()->create(['status' => 'available', 'daily_rate' => 850]);
+        $bookingData = [
+            'pet_id' => $pet->id,
+            'hotel_room_id' => $room->id,
+            'check_in_date' => Carbon::tomorrow()->toDateString(),
+            'number_of_days' => 1,
+        ];
+
+        $this->withHeaders($this->headers($user))
+            ->postJson('/api/customer/boardings', $bookingData)
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors(['vaccination_card']);
+        $this->assertDatabaseCount('boardings', 0);
+
+        $created = $this->withHeaders($this->headers($user))
+            ->post('/api/customer/boardings', $bookingData + [
+                'vaccination_card' => UploadedFile::fake()->create('vaccine-card.png', 100, 'image/png'),
+            ])
+            ->assertCreated()
+            ->json('boarding');
+        $boarding = Boarding::findOrFail($created['id']);
+        $this->assertSame('pending', $boarding->status);
+        $this->assertSame('online', $boarding->booking_channel);
+        $this->assertNotNull($boarding->vaccination_card);
+
+        $this->withHeaders($this->headers($user))
+            ->post("/api/customer/boarding-requests/{$boarding->id}/payment-proof", [
+                'payment_method' => 'maya',
+                'payment_reference' => 'MY-PREAPPROVAL-1',
+                'payment_proof' => UploadedFile::fake()->create('boarding-proof.pdf', 100, 'application/pdf'),
+            ])
+            ->assertOk();
+
+        $cashierQueue = $this->withHeaders($this->headers($cashier))
+            ->getJson('/api/cashier/payment-requests')
+            ->assertOk()
+            ->json('payments');
+        $this->assertFalse(collect($cashierQueue)->contains(fn ($row) => (int) $row['id'] === $boarding->id && $row['payable_type'] === 'boarding'));
+
+        $this->withHeaders($this->headers($receptionist))
+            ->postJson("/api/receptionist/boarding-requests/{$boarding->id}/approve")
+            ->assertUnprocessable()
+            ->assertJsonPath('error', 'The vaccination card must be verified before approving this online boarding.');
+
+        $this->withHeaders($this->headers($receptionist))
+            ->postJson("/api/receptionist/boarding-requests/{$boarding->id}/schedule", [
+                'hotel_room_id' => $room->id,
+                'check_in' => Carbon::tomorrow()->toDateString(),
+                'check_out' => Carbon::tomorrow()->toDateString(),
+            ])
+            ->assertUnprocessable()
+            ->assertJsonPath('error', 'The vaccination card must be verified before approving this online boarding.');
+
+        $this->withHeaders($this->headers($receptionist))
+            ->postJson("/api/receptionist/boarding-requests/{$boarding->id}/verify-vaccination")
+            ->assertOk();
+        $verifiedAt = $boarding->fresh()->vaccination_card_verified_at;
+        $this->assertNotNull($verifiedAt);
+
+        $this->withHeaders($this->headers($user))
+            ->post("/api/customer/boarding-requests/{$boarding->id}/vaccination-card", [
+                'vaccination_card' => UploadedFile::fake()->create('replacement-card.png', 100, 'image/png'),
+            ])
+            ->assertOk();
+        $this->assertNull($boarding->fresh()->vaccination_card_verified_at);
+
+        $this->withHeaders($this->headers($receptionist))
+            ->postJson("/api/receptionist/boarding-requests/{$boarding->id}/approve")
+            ->assertUnprocessable();
+
+        $this->withHeaders($this->headers($receptionist))
+            ->postJson("/api/receptionist/boarding-requests/{$boarding->id}/verify-vaccination")
+            ->assertOk();
+        $this->withHeaders($this->headers($receptionist))
+            ->postJson("/api/receptionist/boarding-requests/{$boarding->id}/approve")
+            ->assertOk();
+
+        $boarding->refresh();
+        $this->assertSame('approved', $boarding->status);
+        $this->assertSame('pending', $boarding->payment_status);
+        $this->assertNotNull($boarding->payment_proof);
+        $cashierQueue = $this->withHeaders($this->headers($cashier))
+            ->getJson('/api/cashier/payment-requests')
+            ->assertOk()
+            ->json('payments');
+        $this->assertTrue(collect($cashierQueue)->contains(fn ($row) => (int) $row['id'] === $boarding->id && $row['payable_type'] === 'boarding'));
+    }
+
+    public function test_receptionist_walk_in_boarding_is_not_blocked_by_customer_card_requirement(): void
+    {
+        [, $customer, $pet] = $this->customerWithPet();
+        $receptionist = $this->staff('receptionist');
+        $boarding = Boarding::create([
+            'pet_id' => $pet->id,
+            'customer_id' => $customer->id,
+            'customer_name' => $customer->name,
+            'customer_email' => $customer->email,
+            'check_in' => Carbon::tomorrow()->toDateString(),
+            'check_out' => Carbon::tomorrow()->toDateString(),
+            'status' => 'pending',
+            'payment_status' => 'unpaid',
+            'total_amount' => 850,
+            'booking_channel' => 'walk_in',
+        ]);
+
+        $this->withHeaders($this->headers($receptionist))
+            ->postJson("/api/receptionist/boarding-requests/{$boarding->id}/approve")
+            ->assertOk();
+        $this->assertSame('approved', $boarding->fresh()->status);
+    }
+
+    public function test_legacy_online_hotel_request_cannot_be_approved_without_verified_boarding_card(): void
+    {
+        $receptionist = $this->staff('receptionist');
+        [, $customer, $pet] = $this->customerWithPet();
+        $request = $this->serviceRequest([
+            'customer_id' => $customer->user_id,
+            'customer_name' => $customer->name,
+            'customer_email' => $customer->email,
+            'pet_id' => $pet->id,
+            'pet_name' => $pet->name,
+            'request_type' => 'hotel',
+            'service_name' => 'Pet Hotel',
+            'status' => 'pending',
+            'payment_status' => 'unpaid',
+            'booking_channel' => 'online',
+        ]);
+
+        $this->withHeaders($this->headers($receptionist))
+            ->postJson("/api/receptionist/requests/{$request->id}/approve")
+            ->assertUnprocessable()
+            ->assertJsonPath('message', 'Online hotel requests must use the Pet Hotel reservation flow and have a verified vaccination card before approval.');
+
+        $this->assertSame('pending', $request->fresh()->status);
+        $this->assertDatabaseMissing('boardings', ['service_request_id' => $request->id]);
+    }
+
     /* ── D4: boarding-room reservation ────────────────────────────── */
 
     private function boardingRoom(array $overrides = []): BoardingRoom
@@ -494,7 +732,7 @@ class PaymentBookingChannelTest extends TestCase
             'service_name' => 'Pet Hotel',
             'status' => 'pending',
             'payment_status' => 'unpaid',
-            'booking_channel' => 'online',
+            'booking_channel' => 'walk_in',
             'boarding_room_id' => $room->id,
             'room_name' => $room->room_name,
             'room_type' => $room->room_type,
@@ -554,7 +792,7 @@ class PaymentBookingChannelTest extends TestCase
             'service_name' => 'Pet Hotel',
             'status' => 'pending',
             'payment_status' => 'unpaid',
-            'booking_channel' => 'online',
+            'booking_channel' => 'walk_in',
             'boarding_room_id' => $room->id,
             'check_out_date' => $checkOut,
             'total_days' => 1,
@@ -595,7 +833,7 @@ class PaymentBookingChannelTest extends TestCase
             'service_name' => 'Pet Hotel',
             'status' => 'pending',
             'payment_status' => 'unpaid',
-            'booking_channel' => 'online',
+            'booking_channel' => 'walk_in',
             'boarding_room_id' => $room->id,
             'room_name' => $room->room_name,
             'room_type' => $room->room_type,
@@ -642,7 +880,7 @@ class PaymentBookingChannelTest extends TestCase
             'service_name' => 'Pet Hotel',
             'status' => 'pending',
             'payment_status' => 'unpaid',
-            'booking_channel' => 'online',
+            'booking_channel' => 'walk_in',
             'boarding_room_id' => null,
             'room_type' => 'dog_standard',
             'check_out_date' => Carbon::tomorrow()->addDay()->toDateString(),
@@ -675,7 +913,7 @@ class PaymentBookingChannelTest extends TestCase
             'service_name' => 'Pet Hotel',
             'status' => 'pending',
             'payment_status' => 'unpaid',
-            'booking_channel' => 'online',
+            'booking_channel' => 'walk_in',
             'boarding_room_id' => null,
             'room_type' => 'dog_standard',
             'check_out_date' => Carbon::tomorrow()->addDay()->toDateString(),
@@ -713,6 +951,7 @@ class PaymentBookingChannelTest extends TestCase
             'service_name' => 'Pet Hotel',
             'request_date' => $date,
             'check_out_date' => $date,
+            'booking_channel' => 'walk_in',
             'status' => 'pending',
             'boarding_room_id' => $room->id,
             'room_type' => $room->room_type,

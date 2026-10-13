@@ -21,6 +21,7 @@ import {
   FaSyncAlt,
   FaTimes,
   FaUserAlt,
+  FaVenusMars,
 } from "react-icons/fa";
 import "./CustomerPets.css";
 import { apiRequest, getAuthenticatedFileUrl } from "../../api/client";
@@ -38,6 +39,7 @@ const initialForm = (customerEmail) => ({
   breed: "",
   manualBreed: "",
   birthdate: "",
+  gender: "",
   notes: "",
   customer_email: customerEmail || "",
   image: null,
@@ -49,6 +51,13 @@ const getPetName = (pet) => pet?.name || pet?.pet_name || "Unnamed Pet";
 const getPetSpecies = (pet) => pet?.species || pet?.type || pet?.pet_species || "Pet";
 const getPetBreed = (pet) => pet?.breed || pet?.pet_breed || "No breed";
 const getPetBirthdate = (pet) => pet?.birthdate || pet?.birth_date || pet?.date_of_birth || "";
+const normalizePetGender = (value) => {
+  const normalized = String(value || "").trim().toLowerCase();
+  if (normalized === "male") return "Male";
+  if (normalized === "female") return "Female";
+  return "";
+};
+const getPetGender = (pet) => normalizePetGender(pet?.gender || pet?.sex || pet?.pet_gender) || "N/A";
 const getPetAge = (pet) => {
   const birthdate = getPetBirthdate(pet);
   if (!birthdate) return "N/A";
@@ -185,6 +194,20 @@ const PetFormFields = ({ formData, formErrors, previewImage, handleChange, speci
           />
         </div>
         {formErrors.birthdate && <span className="field-error" id={`${idPrefix}-birthdate-error`}>{formErrors.birthdate}</span>}
+      </label>
+
+      <label htmlFor={`${idPrefix}-gender`}>
+        Gender
+        <select
+          id={`${idPrefix}-gender`}
+          name="gender"
+          value={formData.gender}
+          onChange={handleChange}
+        >
+          <option value="">Select gender</option>
+          <option value="Male">Male</option>
+          <option value="Female">Female</option>
+        </select>
       </label>
     </div>
 
@@ -370,6 +393,7 @@ const CustomerPets = () => {
         getPetSpecies(pet),
         getPetBreed(pet),
         getPetAge(pet),
+        getPetGender(pet),
         getPetNotes(pet),
         pet.archived_at ? formatDate(pet.archived_at) : "",
         pet.archived_reason || "",
@@ -525,6 +549,7 @@ const CustomerPets = () => {
       : data.breed,
     birthdate: normalizeDateString(data.birthdate) || null,
     birth_date: normalizeDateString(data.birthdate) || null,
+    gender: data.gender || null,
     notes: data.notes?.trim() || null,
     customer_email: customerEmail,
   });
@@ -600,6 +625,7 @@ const CustomerPets = () => {
       breed: pet?.breed || "",
       manualBreed: "",
       birthdate: normalizeDateString(getPetBirthdate(pet)),
+      gender: normalizePetGender(pet?.gender || pet?.sex || pet?.pet_gender),
       notes: pet?.notes || "",
       customer_email: customerEmail,
       image: null,
@@ -961,6 +987,11 @@ const CustomerPets = () => {
                       <span>
                         <FaCalendarAlt />
                         Birthdate: {getPetBirthdate(pet) ? formatDate(getPetBirthdate(pet)) : "N/A"}
+                      </span>
+
+                      <span>
+                        <FaVenusMars />
+                        Gender: {getPetGender(pet)}
                       </span>
 
                       {activeTab === "archived" && pet.archived_at && (

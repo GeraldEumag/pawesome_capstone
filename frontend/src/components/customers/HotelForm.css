@@ -751,6 +751,60 @@
   border-radius: var(--hf-radius-sm);
 }
 
+.vaccination-required-note {
+  display: block;
+  margin: -0.1rem 0 0.45rem;
+  color: var(--hf-muted);
+  font-size: 0.78rem;
+  line-height: 1.4;
+}
+
+.vaccination-preview-file {
+  margin-top: 0.5rem;
+  padding: 0.65rem 0.8rem;
+  border: 1px dashed var(--hf-border);
+  border-radius: var(--hf-radius-sm);
+  color: var(--hf-text);
+  font-size: 0.84rem;
+  overflow-wrap: anywhere;
+}
+
+.booking-vaccination-status {
+  display: grid;
+  gap: 0.35rem;
+  margin-top: 0.85rem;
+  padding: 0.8rem 0.9rem;
+  border: 1px solid rgba(245, 158, 11, 0.25);
+  border-radius: var(--hf-radius-sm);
+  background: #fffbeb;
+  color: #92400e;
+  font-size: 0.82rem;
+}
+
+.booking-vaccination-status.verified {
+  border-color: rgba(5, 150, 105, 0.25);
+  background: #ecfdf5;
+  color: #065f46;
+}
+
+.booking-vaccination-status strong {
+  font-size: 0.86rem;
+}
+
+.booking-vaccination-status label {
+  display: inline-flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin-top: 0.25rem;
+  font-weight: 800;
+}
+
+.booking-vaccination-status input[type="file"] {
+  max-width: 100%;
+  font: inherit;
+}
+
 .care-log-item p {
   margin: 0;
   font-size: 0.85rem;
