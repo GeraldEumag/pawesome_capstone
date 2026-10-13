@@ -11,6 +11,7 @@ import {
   faCalendarCheck,
 } from "@fortawesome/free-solid-svg-icons";
 import { apiRequest } from "../../api/client";
+import { showReasonPrompt } from "../../utils/alert.jsx";
 import DatePickerInput from "../shared/DatePickerInput";
 import { formatDateOnly, parseDateOnly } from "../../utils/date";
 import RowActionPopover from "../shared/RowActionPopover";
@@ -27,12 +28,25 @@ const HolidayManagement = () => {
   const [editing, setEditing]   = useState(null);
   const [showForm, setShowForm] = useState(false);
   const [saving, setSaving]     = useState(false);
+  const [loading, setLoading]   = useState(true);
+  const [deletingId, setDeletingId] = useState(null);
+  const [loadError, setLoadError] = useState("");
+  const [actionError, setActionError] = useState("");
+  const [success, setSuccess]  = useState("");
   const [msg, setMsg]           = useState("");
 
-  const load = () => {
-    apiRequest(`/manager/holidays?year=${year}`)
-      .then((res) => setHolidays(res?.data || []))
-      .catch(() => {});
+  const load = async () => {
+    setLoading(true);
+    setLoadError("");
+    try {
+      const response = await apiRequest(`/manager/holidays?year=${year}`);
+      setHolidays(Array.isArray(response?.data) ? response.data : []);
+    } catch (e) {
+      setHolidays([]);
+      setLoadError(e.message || "Failed to load holidays.");
+    } finally {
+      setLoading(false);
+    }
   };
 
   useEffect(() => { load(); }, [year]);
@@ -60,10 +74,29 @@ const HolidayManagement = () => {
     finally { setSaving(false); }
   };
 
-  const remove = async (id) => {
-    if (!window.confirm("Delete this holiday?")) return;
-    await apiRequest(`/manager/holidays/${id}`, { method: "DELETE" }).catch(() => {});
-    load();
+  const remove = async (holiday) => {
+    const reason = await showReasonPrompt(
+      `Archive "${holiday.name}" on ${holiday.date}? Historical payroll calculations will retain the holiday when it occurred before archival. Please state why.`,
+      "Archive Holiday",
+      "Archive"
+    );
+    if (reason === null || deletingId !== null) return;
+
+    setDeletingId(holiday.id);
+    setActionError("");
+    setSuccess("");
+    try {
+      await apiRequest(`/manager/holidays/${holiday.id}`, {
+        method: "DELETE",
+        body: JSON.stringify({ reason }),
+      });
+      setSuccess("Holiday archived and audit record saved.");
+      await load();
+    } catch (e) {
+      setActionError(e.message || "Failed to archive holiday.");
+    } finally {
+      setDeletingId(null);
+    }
   };
 
   // Computed stats
@@ -107,6 +140,16 @@ const HolidayManagement = () => {
         </div>
       </div>
 
+      {loadError && (
+        <div className="hm-modal-error" role="alert">
+          <FontAwesomeIcon icon={faXmark} />
+          {loadError}
+          <button type="button" onClick={load} disabled={loading}>Retry</button>
+        </div>
+      )}
+      {actionError && <div className="hm-modal-error" role="alert"><FontAwesomeIcon icon={faXmark} />{actionError}</div>}
+      {success && <p role="status">{success}</p>}
+
       {/* Stat Cards */}
       <div className="hm-stats">
         <div className="hm-stat-card total">
@@ -145,7 +188,11 @@ const HolidayManagement = () => {
             </tr>
           </thead>
           <tbody>
-            {holidays.length === 0 ? (
+            {loading ? (
+              <tr><td colSpan={5}><div className="hm-empty">Loading holidays…</div></td></tr>
+            ) : loadError ? (
+              <tr><td colSpan={5}><div className="hm-empty">Holiday list could not be loaded.</div></td></tr>
+            ) : holidays.length === 0 ? (
               <tr>
                 <td colSpan={5}>
                   <div className="hm-empty">
@@ -181,7 +228,7 @@ const HolidayManagement = () => {
                           <button className="hm-icon-btn edit" title="Edit" onClick={() => openEdit(h)}>
                             <FontAwesomeIcon icon={faPencil} />
                           </button>
-                          <button className="hm-icon-btn delete" title="Delete" onClick={() => remove(h.id)}>
+                          <button className="hm-icon-btn delete" title="Archive" onClick={() => remove(h)} disabled={deletingId !== null}>
                             <FontAwesomeIcon icon={faTrash} />
                           </button>
                           </div>

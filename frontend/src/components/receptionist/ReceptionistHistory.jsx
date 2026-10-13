@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useState } from "react";
 import { apiRequest } from "../../api/client";
+import { getRoomName } from "../../utils/apiNormalize";
 import { useAuth } from "../../context/AuthContext";
 import HistoryTimeline from "../shared/HistoryTimeline";
 
@@ -49,7 +50,7 @@ const ReceptionistHistory = () => {
         items.forEach((b) => mapped.push({
           id: `BRD-${b.id}`, reference_id: `BRD-${b.id}`,
           action: `Boarding ${b.status || "scheduled"}`,
-          description: `${b.pet?.name || b.pet_name || "Pet"} — Room ${b.room?.room_number || b.room_id || "N/A"}`,
+          description: `${b.pet?.name || b.pet_name || "Pet"} — Room ${getRoomName(b) === "Unassigned" ? "N/A" : getRoomName(b)}`,
           status: b.status || "scheduled", category: "boarding",
           actor: b.customer?.name || b.customer_name || "Client", actor_role: "customer",
           amount: Number(b.total_amount || 0),

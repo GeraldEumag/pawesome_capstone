@@ -25,19 +25,49 @@ const STATUS_COLORS = {
   cancelled:{ color: "#94a3b8", bg: "rgba(148,163,184,.1)" },
 };
 
-const EMPTY_FORM = { leave_type: "sick_leave", start_date: "", end_date: "", reason: "" };
+const EMPTY_FORM = { type: "sick_leave", start_date: "", end_date: "", reason: "" };
+
+const listFromResponse = (response) => {
+  if (Array.isArray(response)) return response;
+  if (Array.isArray(response?.data)) return response.data;
+  if (Array.isArray(response?.data?.data)) return response.data.data;
+  return [];
+};
 
 const MyLeave = () => {
   const [leaves, setLeaves]       = useState([]);
   const [balances, setBalances]   = useState([]);
+  const [loading, setLoading]     = useState(true);
+  const [loadError, setLoadError] = useState("");
   const [showForm, setShowForm]   = useState(false);
   const [form, setForm]           = useState(EMPTY_FORM);
   const [saving, setSaving]       = useState(false);
+  const [cancellingId, setCancellingId] = useState(null);
   const [msg, setMsg]             = useState({ text: "", type: "" });
 
-  const load = () => {
-    apiRequest("/my-leaves").then((r) => setLeaves(r?.data || r || [])).catch(() => {});
-    apiRequest("/my-leaves/balance").then((r) => setBalances(r?.data || r || [])).catch(() => {});
+  const load = async () => {
+    setLoading(true);
+    setLoadError("");
+    const [leaveResult, balanceResult] = await Promise.allSettled([
+      apiRequest("/my-leaves"),
+      apiRequest("/my-leaves/balance"),
+    ]);
+
+    if (leaveResult.status === "fulfilled") {
+      setLeaves(listFromResponse(leaveResult.value));
+    } else {
+      setLeaves([]);
+      setLoadError(leaveResult.reason?.message || "Failed to load leave requests.");
+    }
+
+    if (balanceResult.status === "fulfilled") {
+      setBalances(listFromResponse(balanceResult.value));
+    } else {
+      setBalances([]);
+      setLoadError((current) => current || balanceResult.reason?.message || "Failed to load leave balances.");
+    }
+
+    setLoading(false);
   };
 
   useEffect(() => { load(); }, []);
@@ -46,12 +76,18 @@ const MyLeave = () => {
     if (!form.start_date || !form.end_date) {
       setMsg({ text: "Please fill in start and end dates.", type: "error" }); return;
     }
+    if (!form.reason.trim()) {
+      setMsg({ text: "Please provide a reason for your leave request.", type: "error" }); return;
+    }
     setSaving(true); setMsg({ text: "", type: "" });
     try {
-      await apiRequest("/my-leaves", { method: "POST", body: JSON.stringify(form) });
+      await apiRequest("/my-leaves", {
+        method: "POST",
+        body: JSON.stringify({ ...form, reason: form.reason.trim() }),
+      });
       setShowForm(false); setForm(EMPTY_FORM);
       setMsg({ text: "Leave request submitted successfully.", type: "success" });
-      load();
+      await load();
     } catch (e) {
       setMsg({ text: e.message || "Failed to submit leave.", type: "error" });
     } finally {
@@ -61,8 +97,17 @@ const MyLeave = () => {
 
   const cancel = async (id) => {
     if (!window.confirm("Cancel this leave request?")) return;
-    await apiRequest(`/my-leaves/${id}`, { method: "DELETE" }).catch(() => {});
-    load();
+    setCancellingId(id);
+    setMsg({ text: "", type: "" });
+    try {
+      await apiRequest(`/my-leaves/${id}`, { method: "DELETE" });
+      setMsg({ text: "Leave request cancelled.", type: "success" });
+      await load();
+    } catch (e) {
+      setMsg({ text: e.message || "Failed to cancel leave request.", type: "error" });
+    } finally {
+      setCancellingId(null);
+    }
   };
 
   const typeMeta = (v) => LEAVE_TYPES.find((t) => t.value === v) || { label: v };
@@ -71,10 +116,16 @@ const MyLeave = () => {
     <div className="ml-container">
       <div className="ml-header">
         <h2 className="ml-title">My Leave</h2>
-        <button className="ml-btn primary" onClick={() => { setShowForm(!showForm); setMsg({ text: "", type: "" }); }}>
+        <button className="ml-btn primary" onClick={() => { setShowForm(!showForm); setMsg({ text: "", type: "" }); }} disabled={saving || cancellingId !== null}>
           {showForm ? "Cancel" : "+ File Leave"}
         </button>
       </div>
+
+      {loadError && (
+        <p className="ml-msg error" role="alert">
+          {loadError} <button type="button" onClick={load} disabled={loading}>Retry</button>
+        </p>
+      )}
 
       {/* Leave balance chips */}
       {balances.length > 0 && (
@@ -96,15 +147,15 @@ const MyLeave = () => {
           {msg.text && <p className={`ml-msg ${msg.type}`}>{msg.text}</p>}
           <div className="ml-form-grid">
             <label>Leave Type
-              <select value={form.leave_type} onChange={(e) => setForm((f) => ({ ...f, leave_type: e.target.value }))}>
+              <select value={form.type} onChange={(e) => setForm((f) => ({ ...f, type: e.target.value }))} disabled={saving}>
                 {LEAVE_TYPES.map((t) => <option key={t.value} value={t.value}>{t.label}</option>)}
               </select>
             </label>
-            <label>Start Date<DatePickerInput selected={parseDateOnly(form.start_date)} onChange={(date) => setForm((f) => ({ ...f, start_date: formatDateOnly(date) }))} /></label>
-            <label>End Date<DatePickerInput selected={parseDateOnly(form.end_date)} onChange={(date) => setForm((f) => ({ ...f, end_date: formatDateOnly(date) }))} /></label>
+            <label>Start Date<DatePickerInput selected={parseDateOnly(form.start_date)} onChange={(date) => setForm((f) => ({ ...f, start_date: formatDateOnly(date) }))} disabled={saving} required /></label>
+            <label>End Date<DatePickerInput selected={parseDateOnly(form.end_date)} onChange={(date) => setForm((f) => ({ ...f, end_date: formatDateOnly(date) }))} disabled={saving} required /></label>
           </div>
-          <label className="ml-full">Reason / Notes
-            <textarea rows={3} value={form.reason} onChange={(e) => setForm((f) => ({ ...f, reason: e.target.value }))} placeholder="Optional reason for leave…" />
+          <label className="ml-full">Reason *
+            <textarea rows={3} value={form.reason} onChange={(e) => setForm((f) => ({ ...f, reason: e.target.value }))} placeholder="Enter reason for leave…" disabled={saving} required />
           </label>
           <button className="ml-btn primary" onClick={submit} disabled={saving}>{saving ? "Submitting…" : "Submit Request"}</button>
         </div>
@@ -115,7 +166,11 @@ const MyLeave = () => {
       {/* Leave history */}
       <div className="ml-history">
         <h4 className="ml-section-title">Leave Requests</h4>
-        {leaves.length === 0 ? (
+        {loading ? (
+          <p className="ml-empty">Loading leave requests…</p>
+        ) : leaves.length === 0 && loadError ? (
+          <p className="ml-empty">Unable to load leave requests.</p>
+        ) : leaves.length === 0 ? (
           <p className="ml-empty">No leave requests yet.</p>
         ) : (
           <div className="ml-list">
@@ -136,7 +191,9 @@ const MyLeave = () => {
                     <p className="ml-item-remarks"><strong>Manager:</strong> {l.manager_remarks}</p>
                   )}
                   {l.status === "pending" && (
-                    <button className="ml-cancel-btn" onClick={() => cancel(l.id)}>Cancel Request</button>
+                    <button className="ml-cancel-btn" onClick={() => cancel(l.id)} disabled={cancellingId === l.id || saving || loading}>
+                      {cancellingId === l.id ? "Cancelling…" : "Cancel Request"}
+                    </button>
                   )}
                 </div>
               );

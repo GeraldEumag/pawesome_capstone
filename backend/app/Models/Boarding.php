@@ -175,7 +175,12 @@ class Boarding extends Model
      */
     public function hotelRoom(): BelongsTo
     {
-        return $this->belongsTo(HotelRoom::class, 'hotel_room_id');
+        return $this->belongsTo(HotelRoom::class, 'hotel_room_id')->withTrashed();
+    }
+
+    public function serviceRequest(): BelongsTo
+    {
+        return $this->belongsTo(ServiceRequest::class, 'service_request_id');
     }
 
     /**

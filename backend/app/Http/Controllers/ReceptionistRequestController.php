@@ -16,6 +16,7 @@ use App\Services\CustomerEmailResolver;
 use App\Services\EmailDeliveryService;
 use App\Services\ServiceCatalog;
 use App\Services\WorkflowNotifier;
+use App\Services\ServiceDurationService;
 use App\Support\EmailContent;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
@@ -699,15 +700,16 @@ class ReceptionistRequestController extends Controller
             }
 
             $scheduledAt = $serviceRequest->request_date
-                ? Carbon::parse($serviceRequest->request_date . ' ' . ($serviceRequest->request_time ?: '10:00'))
-                : now()->addHour();
+                ? ServiceDurationService::inStoreTimezone($serviceRequest->request_date . ' ' . ($serviceRequest->request_time ?: '10:00'))
+                : ServiceDurationService::inStoreTimezone(now()->addHour());
+            $scheduledAtUtc = $scheduledAt->copy()->utc();
 
             $appointment = Appointment::firstOrCreate(
                 [
                     'customer_id' => $customer->id,
                     'pet_id' => $pet->id,
                     'service_id' => $service->id,
-                    'scheduled_at' => $scheduledAt,
+                    'scheduled_at' => $scheduledAtUtc,
                 ],
                 [
                     'veterinarian_id' => $vet->id,

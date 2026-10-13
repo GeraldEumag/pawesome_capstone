@@ -2,10 +2,13 @@
 
 namespace Tests\Feature;
 
+use App\Models\Appointment;
 use App\Models\Boarding;
+use App\Models\BoardingRoom;
 use App\Models\Customer;
 use App\Models\HotelRoom;
 use App\Models\Pet;
+use App\Models\Service;
 use App\Models\ServiceRequest;
 use App\Models\User;
 use Carbon\Carbon;
@@ -422,5 +425,102 @@ class CustomerBookingRulesTest extends TestCase
             'pet_name' => $pet->name,
         ]);
         $this->assertDatabaseMissing('service_requests', ['pet_name' => 'Forged Name']);
+    }
+
+    public function test_legacy_customer_appointment_endpoint_rejects_an_overlapping_service_time(): void
+    {
+        Carbon::setTestNow(Carbon::parse('2026-09-29 12:00:00', 'Asia/Manila'));
+        $user = $this->customer();
+        $pet = $this->petFor($user);
+        $service = Service::factory()->create([
+            'name' => 'General Check-up',
+            'category' => 'Consultation',
+            'duration_minutes' => 30,
+        ]);
+        $date = Carbon::tomorrow()->toDateString();
+
+        Appointment::create([
+            'customer_id' => $pet->customer_id,
+            'pet_id' => $pet->id,
+            'service_id' => $service->id,
+            'status' => 'approved',
+            'scheduled_at' => Carbon::parse("{$date} 10:00:00", 'Asia/Manila')->utc(),
+            'price' => $service->price,
+        ]);
+
+        $this->withHeaders($this->authHeaders($user))
+            ->postJson('/api/customer/appointments', [
+                'pet_id' => $pet->id,
+                'service_id' => $service->id,
+                'scheduled_at' => Carbon::parse("{$date} 10:30:00", 'Asia/Manila')->utc()->toISOString(),
+            ])
+            ->assertUnprocessable()
+            ->assertJsonPath('errors.scheduled_at.0', 'Time slot overlaps an existing booking.');
+    }
+
+    public function test_legacy_customer_grooming_accepts_date_only_input_and_preserves_date_cast(): void
+    {
+        Carbon::setTestNow(Carbon::parse('2026-09-29 12:00:00', 'Asia/Manila'));
+        $user = $this->customer();
+        $pet = $this->petFor($user);
+        $date = Carbon::tomorrow()->toDateString();
+
+        $this->withHeaders($this->authHeaders($user))
+            ->postJson('/api/customer/grooming', [
+                'petId' => $pet->id,
+                'petName' => $pet->name,
+                'service' => 'bath',
+                'date' => $date,
+            ])
+            ->assertCreated()
+            ->assertJsonPath('appointment.pet_id', $pet->id)
+            ->assertJsonPath('appointment.appointment_date', Carbon::parse($date, 'UTC')->toISOString());
+    }
+
+    public function test_modern_room_availability_ignores_legacy_hotel_room_with_same_numeric_id(): void
+    {
+        Carbon::setTestNow(Carbon::parse('2026-09-29 12:00:00', 'Asia/Manila'));
+        $user = $this->customer();
+        $pet = $this->petFor($user);
+        $date = Carbon::tomorrow()->toDateString();
+        $legacyRoom = HotelRoom::factory()->create(['status' => 'available']);
+        $modernRoom = BoardingRoom::forceCreate([
+            'id' => $legacyRoom->id,
+            'room_code' => 'POOL-ROOM-1',
+            'room_name' => 'Modern Dog Room',
+            'room_type' => 'dog_standard',
+            'hotel_category' => 'dog_hotel',
+            'allowed_species' => ['dog'],
+            'max_capacity' => 1,
+            'total_rooms' => 1,
+            'daily_rate' => 800,
+            'is_active' => true,
+            'customer_selectable' => true,
+        ]);
+
+        $this->assertSame($legacyRoom->id, $modernRoom->id);
+
+        Boarding::create([
+            'pet_id' => $pet->id,
+            'customer_id' => $pet->customer_id,
+            'hotel_room_id' => $legacyRoom->id,
+            'check_in' => $date,
+            'check_out' => $date,
+            'status' => 'approved',
+            'payment_status' => 'unpaid',
+        ]);
+
+        $response = $this->getJson('/api/boarding/rooms/available?' . http_build_query([
+            'species' => 'dog',
+            'check_in_date' => $date,
+            'check_out_date' => $date,
+        ]))->assertOk();
+
+        $availableModernRoom = collect($response->json('rooms'))
+            ->firstWhere('id', $modernRoom->id);
+
+        $this->assertNotNull($availableModernRoom);
+        $this->assertTrue($availableModernRoom['available']);
+        $this->assertSame(1, $availableModernRoom['available_rooms']);
     }
 }

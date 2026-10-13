@@ -68,6 +68,11 @@ class ServiceDurationService
     private const STORE_TIMEZONE = 'Asia/Manila';
     private const STORE_CLOSING_TIME = '18:00';
 
+    public static function inStoreTimezone(string|\DateTimeInterface $dateTime): Carbon
+    {
+        return Carbon::parse($dateTime, self::STORE_TIMEZONE)->setTimezone(self::STORE_TIMEZONE);
+    }
+
     public static function isSameDayBookingClosed(string $requestedDate): bool
     {
         $now = Carbon::now(self::STORE_TIMEZONE);

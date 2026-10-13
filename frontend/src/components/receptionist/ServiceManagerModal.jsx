@@ -17,7 +17,7 @@ import {
   FaToggleOff,
 } from "react-icons/fa";
 import { apiRequest, normalizeList } from "../../api/client";
-import { showConfirm } from "../../utils/alert.jsx";
+import { showReasonPrompt } from "../../utils/alert.jsx";
 import RowActionPopover from "../shared/RowActionPopover";
 import "./ServiceManagerModal.css";
 
@@ -123,6 +123,7 @@ const ServiceManagerModal = ({ onClose }) => {
   const [formData, setFormData] = useState({});
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
+  const [deletingId, setDeletingId] = useState(null);
 
   const showNotify = (type, message) => {
     if (type === "success") {
@@ -260,20 +261,29 @@ const ServiceManagerModal = ({ onClose }) => {
   };
 
   const handleDelete = async (item) => {
-    const confirmed = await showConfirm(`Delete ${item.name || item.room_name || item.room_code}?`);
-    if (!confirmed) return;
+    const itemName = item.name || item.room_name || item.room_code || `#${item.id}`;
+    const itemType = activeTab === "services" ? "service" : activeTab === "hotel-rooms" ? "hotel room" : "boarding room";
+    const reason = await showReasonPrompt(
+      `Delete ${itemType} "${itemName}"? Existing booking history will be retained. Please state why.`,
+      `Delete ${itemType}`,
+      "Delete"
+    );
+    if (reason === null || deletingId !== null) return;
 
     let endpoint = "";
     if (activeTab === "services") endpoint = `/receptionist/services/${item.id}`;
     else if (activeTab === "hotel-rooms") endpoint = `/receptionist/hotel-rooms/${item.id}`;
     else endpoint = `/receptionist/boarding-rooms/${item.id}`;
 
+    setDeletingId(item.id);
     try {
-      await apiRequest(endpoint, "DELETE");
+      await apiRequest(endpoint, { method: "DELETE", body: JSON.stringify({ reason }) });
       showNotify("success", "Deleted successfully.");
-      fetchItems({ silent: true });
+      await fetchItems({ silent: true });
     } catch (err) {
       showNotify("error", err.message || "Delete failed.");
+    } finally {
+      setDeletingId(null);
     }
   };
 
@@ -834,7 +844,7 @@ const ServiceManagerModal = ({ onClose }) => {
                         <button className="smm-icon-btn" onClick={() => startEdit(item)} title="Edit">
                           <FaEdit />
                         </button>
-                        <button className="smm-icon-btn danger" onClick={() => handleDelete(item)} title="Delete">
+                        <button className="smm-icon-btn danger" onClick={() => handleDelete(item)} title="Delete" disabled={deletingId === item.id}>
                           <FaTrash />
                         </button>
                         {(activeTab === "services" || activeTab === "boarding-rooms") && (

@@ -23,6 +23,7 @@ import { apiRequest } from "../../api/client";
 import { getDraft, clearDraft } from "../../utils/preBookingDraft";
 import DatePickerInput from "../../components/shared/DatePickerInput";
 import { formatDateOnly, parseDateOnly } from "../../utils/date";
+import { getRoomName } from "../../utils/apiNormalize";
 
 
 const CATEGORY_CONFIG = {
@@ -690,7 +691,7 @@ const HotelForm = () => {
                       <div className="booking-card-grid">
                         <div>
                           <span className="bcg-label"><FontAwesomeIcon icon={faBed} /> Room</span>
-                          <span className="bcg-value">{booking.hotel_room?.name || booking.hotel_room?.room_number || booking.boarding_type || "Pending"}</span>
+                          <span className="bcg-value">{getRoomName(booking) === "Unassigned" ? "Pending" : getRoomName(booking)}</span>
                         </div>
                         <div>
                           <span className="bcg-label"><FontAwesomeIcon icon={faCalendarAlt} /> Stay</span>

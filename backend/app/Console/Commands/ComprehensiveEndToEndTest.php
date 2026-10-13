@@ -354,7 +354,7 @@ class ComprehensiveEndToEndTest extends Command
         $this->testEndpoint('/api/customer/appointments', 'POST', null, 'Customer - Book Appointment', [
             'pet_id' => $this->testData['pet']->id,
             'service_id' => $this->testData['services']->first()->id,
-            'appointment_date' => now()->addDay()->format('Y-m-d H:i:s'),
+            'scheduled_at' => now()->addDay()->setTime(10, 0)->format('Y-m-d H:i:s'),
             'notes' => 'Test appointment',
         ]);
         
@@ -547,7 +547,7 @@ class ComprehensiveEndToEndTest extends Command
             'customer_id' => $this->testData['customer']->id,
             'service_id' => $this->testData['services']->first()->id,
             'veterinarian_id' => $this->testUsers['veterinary']->id,
-            'appointment_date' => now()->addDay()->format('Y-m-d H:i:s'),
+            'scheduled_at' => now()->addDay()->setTime(10, 0)->format('Y-m-d H:i:s'),
             'notes' => 'Test appointment',
         ]);
         

@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Models\Boarding;
 use App\Models\BoardingRoom;
 use App\Models\BoardingRoomReservation;
 use App\Models\Pet;
@@ -151,8 +152,8 @@ class BoardingRoomService
         return DB::transaction(function () use ($roomId, $sourceType, $sourceId, $petId, $checkInDate, $checkOutDate, $customerId) {
             // Lock the room row
             $room = BoardingRoom::where('id', $roomId)->lockForUpdate()->first();
-            if (!$room) {
-                return ['success' => false, 'message' => 'Room not found'];
+            if (!$room || !$room->is_active) {
+                return ['success' => false, 'message' => 'Room is not available for booking'];
             }
 
             // Re-check availability inside transaction
@@ -198,6 +199,73 @@ class BoardingRoomService
                 'room' => $room,
             ];
         });
+    }
+
+    public function assignRoomForBoarding(Boarding $boarding, int $roomId, string $checkInDate, string $checkOutDate): array
+    {
+        $room = BoardingRoom::whereKey($roomId)->lockForUpdate()->first();
+        if (!$room || !$room->is_active) {
+            return ['success' => false, 'message' => 'Selected boarding room is not active.'];
+        }
+
+        if (Carbon::parse($checkOutDate)->lt(Carbon::parse($checkInDate))) {
+            return ['success' => false, 'message' => 'The check-out date must be on or after check-in.'];
+        }
+
+        $pet = Pet::find($boarding->pet_id);
+        if (!$pet) {
+            return ['success' => false, 'message' => 'Pet not found'];
+        }
+
+        $species = strtolower(trim((string) ($pet->species ?? $pet->type)));
+        $allowedSpecies = array_map('strtolower', $room->allowed_species ?? []);
+        if (!in_array($species, $allowedSpecies, true)) {
+            return ['success' => false, 'message' => 'Pet species is not compatible with this room'];
+        }
+
+        $sourceType = $boarding->service_request_id ? 'service_request' : 'pet_hotel';
+        $sourceId = $boarding->service_request_id ?: $boarding->id;
+        $existingReservations = BoardingRoomReservation::query()
+            ->where('source_type', $sourceType)
+            ->where('source_id', $sourceId)
+            ->whereNotIn('status', ['cancelled', 'checked_out'])
+            ->lockForUpdate()
+            ->get();
+
+        if ($existingReservations->count() > 1) {
+            return ['success' => false, 'message' => 'This booking has multiple active room reservations and needs review.'];
+        }
+
+        $reservation = $existingReservations->first();
+        $conflicts = BoardingRoomReservation::query()
+            ->where('room_id', $room->id)
+            ->activeBlocking()
+            ->overlappingDates($checkInDate, $checkOutDate)
+            ->when($reservation, fn ($query) => $query->where('id', '!=', $reservation->id))
+            ->count();
+
+        if ($conflicts >= (int) ($room->total_rooms ?? 1)) {
+            return ['success' => false, 'message' => 'Selected boarding room is no longer available for the selected dates.'];
+        }
+
+        $reservationData = [
+            'room_id' => $room->id,
+            'source_type' => $sourceType,
+            'source_id' => $sourceId,
+            'pet_id' => $pet->id,
+            'customer_id' => $boarding->customer_id,
+            'check_in_date' => $checkInDate,
+            'check_out_date' => $checkOutDate,
+            'status' => 'scheduled',
+        ];
+
+        if ($reservation) {
+            $reservation->update($reservationData);
+        } else {
+            $reservation = BoardingRoomReservation::create($reservationData);
+        }
+
+        return ['success' => true, 'reservation' => $reservation->fresh('room'), 'room' => $room];
     }
 
     /**

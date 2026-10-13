@@ -6,6 +6,7 @@ use App\Models\ActivityLog;
 use App\Models\Boarding;
 use App\Models\BoardingCareLog;
 use App\Models\BoardingRoom;
+use App\Models\BoardingRoomReservation;
 use App\Models\HotelRoom;
 use App\Models\Pet;
 use App\Models\Customer;
@@ -82,6 +83,49 @@ class BoardingController extends Controller
         return Schema::hasColumn('boardings', 'customer_email')
             && $request->user()?->email
             && $boarding->customer_email === $request->user()->email;
+    }
+
+    private function syncRoomReservationStatus(Boarding $boarding, string $status): void
+    {
+        if (!Schema::hasTable('boarding_room_reservations')) {
+            return;
+        }
+
+        $query = BoardingRoomReservation::query();
+        if ($boarding->service_request_id) {
+            $query->where('source_type', 'service_request')
+                ->where('source_id', $boarding->service_request_id);
+        } else {
+            $query->whereIn('source_type', ['pet_hotel', 'vet_boarding'])
+                ->where('source_id', $boarding->id);
+        }
+
+        $query->whereNotIn('status', ['cancelled', 'checked_out'])->update(['status' => $status]);
+    }
+
+    private function releaseLegacyHotelRoom(?int $roomId, int $excludingBoardingId): void
+    {
+        if (!$roomId) {
+            return;
+        }
+
+        $room = HotelRoom::whereKey($roomId)->lockForUpdate()->first();
+        if (!$room || !in_array($room->status, ['reserved', 'occupied'], true)) {
+            return;
+        }
+
+        $hasActiveBoarding = Boarding::where('hotel_room_id', $roomId)
+            ->where('id', '!=', $excludingBoardingId)
+            ->whereIn('status', ['pending', 'approved', 'scheduled', 'confirmed', 'checked_in', 'in_care', 'in_stay', 'ready_for_pickup'])
+            ->exists();
+        $hasActiveConfinement = Schema::hasTable('medical_confinements')
+            && $room->medicalConfinements()
+                ->whereIn('status', ['approved_for_admission', 'admitted', 'under_observation', 'under_treatment', 'ready_for_discharge'])
+                ->exists();
+
+        if (!$hasActiveBoarding && !$hasActiveConfinement) {
+            $room->update(['status' => 'available']);
+        }
     }
 
     /**
@@ -181,6 +225,10 @@ class BoardingController extends Controller
 
             if (method_exists(Boarding::class, 'roomReservations')) {
                 $with[] = 'roomReservations.room';
+            }
+
+            if (method_exists(Boarding::class, 'serviceRequest')) {
+                $with[] = 'serviceRequest.roomReservation.room';
             }
 
             if (method_exists(Boarding::class, 'bookingAddOns')) {
@@ -732,6 +780,7 @@ class BoardingController extends Controller
                 'approved_at' => now(),
                 'payment_status' => $boarding->payment_status === 'paid' ? 'paid' : 'unpaid',
             ]);
+            $this->syncRoomReservationStatus($boarding, 'approved');
 
             // Create base service billing item when boarding is approved.
             // The authoritative amount is the persisted booking total
@@ -800,7 +849,13 @@ class BoardingController extends Controller
 
     public function pending(): JsonResponse
     {
-        $boardings = Boarding::with(['pet', 'customer', 'hotelRoom'])
+        $boardings = Boarding::with([
+                'pet',
+                'customer',
+                'hotelRoom',
+                'roomReservation.room',
+                'serviceRequest.roomReservation.room',
+            ])
             ->where('status', 'pending')
             ->where(function ($query) {
                 $query->where('stay_type', 'hotel_boarding')
@@ -829,7 +884,8 @@ class BoardingController extends Controller
         }
 
         $validator = Validator::make($request->all(), [
-            'hotel_room_id' => 'required|exists:hotel_rooms,id',
+            'hotel_room_id' => 'nullable|integer|required_without:room_id|exists:hotel_rooms,id',
+            'room_id' => 'nullable|integer|required_without:hotel_room_id|exists:boarding_rooms,id',
             'check_in' => 'nullable|date|after_or_equal:today',
             'check_out' => 'nullable|date|after_or_equal:check_in',
             'check_in_time' => 'nullable|date_format:H:i',
@@ -842,56 +898,95 @@ class BoardingController extends Controller
         if ($validator->fails()) {
             return response()->json(['errors' => $validator->errors()], 422);
         }
+        if ($request->filled('room_id') && $request->filled('hotel_room_id')) {
+            return response()->json([
+                'errors' => ['room_id' => ['Choose a room from only one room system.']],
+            ], 422);
+        }
 
+        if ($request->filled('room_id')) {
+            return $this->scheduleBoardingRoom($request, (int) $id);
+        }
+
+        return $this->scheduleLegacyHotelRoom($request, (int) $id);
+    }
+
+    private function scheduleLegacyHotelRoom(Request $request, int $id): JsonResponse
+    {
+        $boarding = Boarding::findOrFail($id);
         $checkIn = $request->input('check_in', optional($boarding->check_in)->toDateString() ?? $boarding->check_in);
+        if (!$checkIn) {
+            return response()->json(['errors' => ['check_in' => ['A check-in date is required.']]], 422);
+        }
         // Same-day boarding: check-out always equals check-in (9 AM - 7 PM)
         $checkOut = $checkIn;
-        $room = HotelRoom::findOrFail($request->hotel_room_id);
-
-        if ($room->status !== 'available' && $room->id !== $boarding->hotel_room_id) {
-            return response()->json(['error' => 'Selected room is not available.'], 422);
-        }
-
-        // Enhanced double booking prevention - explicit database conflict check
-        // Inclusive overlap: a stay occupies every date check_in..check_out
-        $conflictingBoarding = Boarding::where('hotel_room_id', $request->hotel_room_id)
-            ->whereIn('status', ['pending', 'approved', 'scheduled', 'confirmed', 'checked_in', 'in_care', 'in_stay', 'ready_for_pickup'])
-            ->where('id', '!=', $boarding->id)
-            ->where('check_in', '<=', $checkOut)
-            ->where('check_out', '>=', $checkIn)
-            ->first();
-
-        if ($conflictingBoarding) {
-            return response()->json([
-                'error' => 'This room/kennel is already booked for the selected date range.',
-                'conflict_with' => $conflictingBoarding->id,
-                'conflict_dates' => [
-                    'existing_check_in' => $conflictingBoarding->check_in,
-                    'existing_check_out' => $conflictingBoarding->check_out,
-                    'requested_check_in' => $checkIn,
-                    'requested_check_out' => $checkOut
-                ]
-            ], 422);
-        }
-
-        // Additional check using existing room availability method
-        if (!$room->isAvailableForDates($checkIn, $checkOut)) {
-            return response()->json(['error' => 'Room is not available for selected dates'], 422);
-        }
-
         $days = 1;
-        $newTotal = (float) $request->input('total_amount', $days * $room->daily_rate);
 
-        // A booking that has already received money may not be silently
-        // re-priced — extra charges must go through the itemized billing
-        // workflow instead.
-        if (in_array($boarding->payment_status, ['paid', 'partial'], true) && abs($newTotal - (float) $boarding->total_amount) > 0.01) {
-            return response()->json([
-                'error' => 'This reservation is already paid. Record extra charges as billing items instead of changing the total.',
-            ], 422);
-        }
+        $result = DB::transaction(function () use ($request, $id, $checkIn, $checkOut, $days) {
+            $boarding = Boarding::lockForUpdate()->findOrFail($id);
+            if (!in_array($boarding->status, ['approved', 'pending', 'confirmed'], true)) {
+                return ['error' => 'This booking can no longer be scheduled.', 'status' => 422];
+            }
 
-        DB::transaction(function () use ($boarding, $room, $request, $checkIn, $checkOut, $newTotal, $days) {
+            $room = HotelRoom::whereKey($request->hotel_room_id)->lockForUpdate()->first();
+            if (!$room) {
+                return ['error' => 'Selected hotel room was not found.', 'status' => 422];
+            }
+            if ($room->status !== 'available'
+                && !((int) $room->id === (int) $boarding->hotel_room_id && $room->status === 'reserved')) {
+                return ['error' => 'Selected room is not available.', 'status' => 422];
+            }
+
+            // Enhanced double booking prevention - explicit database conflict check
+            // Inclusive overlap: a stay occupies every date check_in..check_out
+            $conflictingBoarding = Boarding::where('hotel_room_id', $room->id)
+                ->whereIn('status', ['pending', 'approved', 'scheduled', 'confirmed', 'checked_in', 'in_care', 'in_stay', 'ready_for_pickup'])
+                ->where('id', '!=', $boarding->id)
+                ->where('check_in', '<=', $checkOut)
+                ->where('check_out', '>=', $checkIn)
+                ->lockForUpdate()
+                ->first();
+
+            if ($conflictingBoarding) {
+                return [
+                    'error' => 'This room/kennel is already booked for the selected date range.',
+                    'status' => 422,
+                    'conflict_with' => $conflictingBoarding->id,
+                ];
+            }
+
+            // Additional check using existing room availability method
+            if ((int) $room->id !== (int) $boarding->hotel_room_id
+                && !$room->isAvailableForDates($checkIn, $checkOut)) {
+                return ['error' => 'Room is not available for selected dates', 'status' => 422];
+            }
+
+            $newTotal = (float) $request->input('total_amount', $days * $room->daily_rate);
+            if (in_array($boarding->payment_status, ['paid', 'partial'], true)
+                && abs($newTotal - (float) $boarding->total_amount) > 0.01) {
+                return [
+                    'error' => 'This reservation is already paid. Record extra charges as billing items instead of changing the total.',
+                    'status' => 422,
+                ];
+            }
+
+            $oldHotelRoomId = $boarding->hotel_room_id ? (int) $boarding->hotel_room_id : null;
+            $oldStatus = $boarding->status;
+            $this->syncRoomReservationStatus($boarding, 'cancelled');
+            if ($boarding->service_request_id) {
+                ServiceRequest::whereKey($boarding->service_request_id)->update([
+                    'request_date' => $checkIn,
+                    'check_out_date' => $checkOut,
+                    'boarding_room_id' => null,
+                    'room_name' => $room->name,
+                    'room_type' => $room->type,
+                    'daily_rate' => $room->daily_rate,
+                ]);
+            }
+            if ($oldHotelRoomId && $oldHotelRoomId !== (int) $room->id) {
+                $this->releaseLegacyHotelRoom($oldHotelRoomId, (int) $boarding->id);
+            }
+
             $boarding->update([
                 'hotel_room_id' => $room->id,
                 'check_in' => $checkIn,
@@ -920,12 +1015,135 @@ class BoardingController extends Controller
                 ]);
                 ServiceBillingService::syncServicePaymentState('boarding', (int) $boarding->id);
             }
+
+            return [
+                'boarding' => $boarding->fresh(['pet', 'customer', 'hotelRoom', 'serviceRequest.roomReservation.room']),
+                'old_status' => $oldStatus,
+            ];
         });
-        WorkflowNotifier::notifyEmail($boarding->customer_email, 'Boarding scheduled', 'Your pet hotel stay has been scheduled.', 'success', 'boarding', $boarding->id);
+
+        if (isset($result['error'])) {
+            return response()->json(['error' => $result['error']], $result['status'] ?? 422);
+        }
+
+        WorkflowNotifier::notifyEmail($result['boarding']->customer_email, 'Boarding scheduled', 'Your pet hotel stay has been scheduled.', 'success', 'boarding', $result['boarding']->id);
 
         return response()->json([
             'message' => 'Boarding request scheduled',
-            'boarding' => $boarding->fresh(['pet', 'customer', 'hotelRoom']),
+            'boarding' => $result['boarding'],
+        ]);
+    }
+
+    private function scheduleBoardingRoom(Request $request, int $id): JsonResponse
+    {
+        $boarding = Boarding::findOrFail($id);
+        $checkIn = $request->input('check_in') ?: optional($boarding->check_in)->toDateString();
+        if (!$checkIn) {
+            return response()->json(['errors' => ['check_in' => ['A check-in date is required.']]], 422);
+        }
+        $checkOut = $checkIn;
+
+        $result = DB::transaction(function () use ($request, $id, $checkIn, $checkOut) {
+            $boarding = Boarding::lockForUpdate()->findOrFail($id);
+            if (!in_array($boarding->status, ['approved', 'pending', 'confirmed'], true)) {
+                return ['error' => 'This booking can no longer be scheduled.', 'status' => 422];
+            }
+
+            $room = BoardingRoom::find((int) $request->room_id);
+            if (!$room) {
+                return ['error' => 'Selected boarding room was not found.', 'status' => 422];
+            }
+
+            $requestedTotal = (float) $request->input('total_amount', 0);
+            $newTotal = $requestedTotal > 0 ? $requestedTotal : (float) $room->daily_rate;
+            if (in_array($boarding->payment_status, ['paid', 'partial'], true)
+                && abs($newTotal - (float) $boarding->total_amount) > 0.01) {
+                return [
+                    'error' => 'This reservation is already paid. Record extra charges as billing items instead of changing the total.',
+                    'status' => 422,
+                ];
+            }
+
+            $assignment = $this->boardingRoomService->assignRoomForBoarding(
+                $boarding,
+                (int) $request->room_id,
+                $checkIn,
+                $checkOut
+            );
+            if (!($assignment['success'] ?? false)) {
+                return ['error' => $assignment['message'] ?? 'The selected boarding room is unavailable.', 'status' => 422];
+            }
+            $room = $assignment['room'];
+
+            $oldStatus = $boarding->status;
+            $this->releaseLegacyHotelRoom(
+                $boarding->hotel_room_id ? (int) $boarding->hotel_room_id : null,
+                (int) $boarding->id
+            );
+            $boarding->update([
+                'hotel_room_id' => null,
+                'check_in' => $checkIn,
+                'check_out' => $checkOut,
+                'check_in_time' => $request->input('check_in_time', $boarding->check_in_time),
+                'check_out_time' => $request->input('check_out_time', $boarding->check_out_time),
+                'boarding_type' => $request->input('boarding_type', $room->room_type),
+                'total_amount' => $newTotal,
+                'status' => 'scheduled',
+                'payment_status' => $boarding->payment_status === 'paid' ? 'paid' : 'unpaid',
+                'approved_by' => $boarding->approved_by ?: $request->user()?->id,
+                'approved_at' => $boarding->approved_at ?: now(),
+                'notes' => $request->input('notes', $boarding->notes),
+            ]);
+
+            if ($boarding->service_request_id) {
+                ServiceRequest::whereKey($boarding->service_request_id)->update([
+                    'request_date' => $checkIn,
+                    'check_out_date' => $checkOut,
+                    'boarding_room_id' => $room->id,
+                    'room_name' => $room->room_name,
+                    'room_type' => $room->room_type,
+                    'daily_rate' => $room->daily_rate,
+                ]);
+            }
+
+            $baseItem = ServiceBillingService::ensureBaseServiceItem('boarding', (int) $boarding->id);
+            if ($baseItem && !$baseItem->is_paid) {
+                $baseItem->update([
+                    'description' => $room->room_name . ' - 1 day',
+                    'unit_price' => $newTotal,
+                    'total_price' => $newTotal,
+                ]);
+                ServiceBillingService::syncServicePaymentState('boarding', (int) $boarding->id);
+            }
+
+            return [
+                'boarding' => $boarding->fresh([
+                    'pet',
+                    'customer',
+                    'hotelRoom',
+                    'roomReservation.room',
+                    'serviceRequest.roomReservation.room',
+                ]),
+                'old_status' => $oldStatus,
+            ];
+        });
+
+        if (isset($result['error'])) {
+            return response()->json(['error' => $result['error']], $result['status'] ?? 422);
+        }
+
+        WorkflowNotifier::notifyEmail(
+            $result['boarding']->customer_email,
+            'Boarding scheduled',
+            'Your pet hotel stay has been scheduled.',
+            'success',
+            'boarding',
+            $result['boarding']->id
+        );
+
+        return response()->json([
+            'message' => 'Boarding request scheduled',
+            'boarding' => $result['boarding'],
         ]);
     }
 
@@ -974,6 +1192,7 @@ class BoardingController extends Controller
                 'checked_in_at' => now(),
                 'checked_in_by' => $request->user()?->id,
             ]);
+            $this->syncRoomReservationStatus($boarding, 'checked_in');
             $boarding->hotelRoom?->update(['status' => 'occupied']);
 
             // Keep the originating service request in sync so receptionist
@@ -1036,21 +1255,36 @@ class BoardingController extends Controller
         }
 
         $oldStatus = $boarding->status;
-        $boarding->update([
-            'status' => 'completed',
-            'actual_check_out' => now(),
-            'checked_out_at' => now(),
-            'checked_out_by' => $request->user()?->id,
-            'balance_due' => 0,
-        ]);
-        $boarding->hotelRoom?->update(['status' => 'available']);
+        $boarding = DB::transaction(function () use ($id, $request) {
+            $boarding = Boarding::lockForUpdate()->findOrFail($id);
+            if (!in_array($boarding->status, ['ready_for_pickup', 'in_care', 'checked_in'], true)) {
+                throw new HttpResponseException(response()->json(['error' => 'Pet is not ready for checkout'], 422));
+            }
+
+            $boarding->update([
+                'status' => 'completed',
+                'actual_check_out' => now(),
+                'checked_out_at' => now(),
+                'checked_out_by' => $request->user()?->id,
+                'balance_due' => 0,
+            ]);
+            $this->syncRoomReservationStatus($boarding, 'checked_out');
+            if ($boarding->service_request_id) {
+                ServiceRequest::whereKey($boarding->service_request_id)
+                    ->whereNotIn('status', ['cancelled', 'rejected', 'completed'])
+                    ->update(['status' => 'completed']);
+            }
+            $boarding->hotelRoom?->update(['status' => 'available']);
+
+            return $boarding->fresh(['pet', 'customer', 'hotelRoom', 'roomReservation.room', 'serviceRequest.roomReservation.room']);
+        });
 
         // Send notification
         NotificationService::notifyBoardingStatusChange($boarding, $oldStatus);
 
         return response()->json([
             'message' => 'Guest checked out successfully',
-            'boarding' => $boarding->fresh(['pet', 'customer', 'hotelRoom']),
+            'boarding' => $boarding,
         ]);
     }
 
@@ -1124,6 +1358,15 @@ class BoardingController extends Controller
                 'status' => 'cancelled',
                 'cancellation_reason' => $cancelReason !== '' ? $cancelReason : null,
             ]));
+            $this->syncRoomReservationStatus($boarding, 'cancelled');
+            if ($boarding->service_request_id) {
+                ServiceRequest::whereKey($boarding->service_request_id)
+                    ->whereNotIn('status', ['cancelled', 'rejected', 'completed'])
+                    ->update([
+                        'status' => 'cancelled',
+                        'cancellation_reason' => $cancelReason !== '' ? $cancelReason : null,
+                    ]);
+            }
             if ($boarding->hotelRoom && in_array($boarding->hotelRoom->status, ['reserved', 'occupied'], true)) {
                 $boarding->hotelRoom->update(['status' => 'available']);
             }
@@ -1259,7 +1502,14 @@ class BoardingController extends Controller
      */
     public function currentBoarders(): JsonResponse
     {
-        $boarders = Boarding::with(['pet', 'customer', 'hotelRoom', 'roomReservation.room', 'bookingAddOns.addOn'])
+        $boarders = Boarding::with([
+                'pet',
+                'customer',
+                'hotelRoom',
+                'roomReservation.room',
+                'serviceRequest.roomReservation.room',
+                'bookingAddOns.addOn',
+            ])
             ->whereIn('status', ['approved', 'scheduled', 'confirmed', 'checked_in', 'in_care'])
             ->whereDate('check_out', '>=', now()->toDateString())
             ->orderBy('check_out', 'asc')
@@ -1332,6 +1582,17 @@ class BoardingController extends Controller
                 'rejected_at' => now(),
                 'rejection_reason' => $request->input('rejection_reason'),
             ]);
+            $this->syncRoomReservationStatus($boarding, 'cancelled');
+            if ($boarding->service_request_id) {
+                ServiceRequest::whereKey($boarding->service_request_id)
+                    ->whereNotIn('status', ['cancelled', 'rejected', 'completed'])
+                    ->update([
+                        'status' => 'rejected',
+                        'rejected_by' => $request->user()?->id,
+                        'rejected_at' => now(),
+                        'rejection_reason' => $request->input('rejection_reason'),
+                    ]);
+            }
             if ($boarding->hotelRoom && in_array($boarding->hotelRoom->status, ['reserved'], true)) {
                 $boarding->hotelRoom->update(['status' => 'available']);
             }

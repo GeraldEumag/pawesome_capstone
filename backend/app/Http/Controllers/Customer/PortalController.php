@@ -13,7 +13,9 @@ use App\Models\ServiceRequest;
 use App\Models\Sale;
 use App\Models\ChatbotLog;
 use App\Models\Notification;
+use App\Services\BookingAvailabilityService;
 use App\Services\FileStorageService;
+use App\Services\ServiceDurationService;
 use Illuminate\Support\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -569,24 +571,53 @@ class PortalController extends Controller
         $data = $request->validate([
             'pet_id' => 'required|integer|exists:pets,id',
             'service_id' => 'required|integer|exists:services,id',
-            'scheduled_at' => 'required|date',
+            'scheduled_at' => 'required|date|after:now',
         ]);
 
         if (!Pet::where('id', $data['pet_id'])->where('customer_id', $cust->id)->exists()) {
             return response()->json(['message' => 'Pet not found'], 404);
         }
 
-        $appt = Appointment::create([
-            'customer_id' => $cust->id,
-            'pet_id' => $data['pet_id'],
-            'service_id' => $data['service_id'],
-            'status' => 'pending',
-            'scheduled_at' => $data['scheduled_at'],
-            'price' => Service::find($data['service_id'])->price ?? 0,
-            'booking_channel' => \App\Support\BookingChannel::ONLINE,
-        ]);
+        $scheduledAt = ServiceDurationService::inStoreTimezone($data['scheduled_at']);
+        $scheduledAtUtc = $scheduledAt->copy()->utc();
+        $date = $scheduledAt->format('Y-m-d');
+        $time = $scheduledAt->format('H:i');
+        $service = Service::findOrFail($data['service_id']);
+        $serviceType = strtolower((string) $service->category) === 'grooming' ? 'grooming' : 'veterinary';
 
-        return response()->json($appt, 201);
+        $appointment = DB::transaction(function () use ($data, $cust, $date, $time, $serviceType, $service, $scheduledAtUtc) {
+            Service::query()->orderBy('id')->lockForUpdate()->first();
+            $lockedService = Service::find($data['service_id']);
+
+            if (!$lockedService || !BookingAvailabilityService::isServiceTimeAvailable(
+                $serviceType,
+                $date,
+                $time,
+                $lockedService->name
+            )) {
+                return null;
+            }
+
+            return Appointment::create([
+                'customer_id' => $cust->id,
+                'pet_id' => $data['pet_id'],
+                'service_id' => $lockedService->id,
+                'status' => 'pending',
+                'scheduled_at' => $scheduledAtUtc,
+                'price' => $lockedService->price ?? $service->price ?? 0,
+                'booking_channel' => \App\Support\BookingChannel::ONLINE,
+            ]);
+        });
+
+        if (!$appointment) {
+            return response()->json([
+                'success' => false,
+                'message' => 'This schedule is no longer available. Please choose another slot.',
+                'errors' => ['scheduled_at' => ['Time slot overlaps an existing booking.']],
+            ], 422);
+        }
+
+        return response()->json($appointment, 201);
     }
 
     public function bookBoarding(Request $request)

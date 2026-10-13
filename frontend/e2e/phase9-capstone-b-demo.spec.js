@@ -17,7 +17,7 @@ const { execSync } = require("node:child_process");
 const { apiLogin: sharedApiLogin } = require("./test-utils");
 
 const rootDir = path.resolve(__dirname, "../..");
-const evidenceDir = path.join(rootDir, "browser-evidence", "phase9-capstone-b-demo");
+const evidenceDir = process.env.E2E_EVIDENCE_DIR || path.join(rootDir, "browser-evidence", "phase9-capstone-b-demo");
 const resultPath = path.join(evidenceDir, "phase9-capstone-b-demo-results.json");
 const backendDir = path.join(rootDir, "backend");
 const frontendUrl = process.env.E2E_BASE_URL || "http://127.0.0.1:3000";
@@ -57,7 +57,7 @@ async function shot(page, label) {
   fs.mkdirSync(evidenceDir, { recursive: true });
   const file = path.join(evidenceDir, `${label}.png`);
   await page.screenshot({ path: file, fullPage: false });
-  run.screenshots.push(`browser-evidence/phase9-capstone-b-demo/${label}.png`);
+  run.screenshots.push(path.relative(rootDir, file).replace(/\\/g, "/"));
   writeResults();
 }
 
@@ -602,8 +602,18 @@ test("J4 walk-in counter payment, POS transaction, void", async ({ request, brow
 /* ═══ J5 — Journey E: boarding room lifecycle ═══ */
 test("J5 boarding approval reserves room; conflict and release", async ({ request, browser }) => {
   const { customer, receptionist } = state.sessions;
-  // Room 6 = Dog Daycare, total_rooms=1 → deterministic conflict surface.
-  const roomId = 6;
+  if (!state.buddy?.id) {
+    const petsResponse = await api(request, customer, "GET", "/customer/pets");
+    state.buddy = listify(petsResponse.body, ["pets"]).find((pet) => /buddy/i.test(pet.name || ""));
+  }
+  expect(state.buddy?.id, "seeded customer pet exists").toBeTruthy();
+
+  // Use the seeded single-capacity dog daycare room as a deterministic conflict surface.
+  const roomResponse = await api(request, receptionist, "GET", "/receptionist/boarding-rooms");
+  const dogDaycare = listify(roomResponse.body, ["rooms", "boarding_rooms"])
+    .find((room) => room.room_type === "daycare_dog" && Number(room.total_rooms) === 1 && room.is_active);
+  expect(dogDaycare, "seeded one-capacity dog room exists").toBeTruthy();
+  const roomId = dogDaycare.id;
   // Probe dates until the room accepts a booking — seeded stays may occupy it.
   let date = null, srA = null;
   for (let off = 9; off <= 30 && !srA; off++) {
@@ -653,6 +663,68 @@ test("J5 boarding approval reserves room; conflict and release", async ({ reques
     roomA: `DB::table('boarding_room_reservations')->where('source_type','service_request')->where('source_id',${srA})->where('status','<>','cancelled')->value('room_id')`,
   });
   const resvAfterA = j5a.resvAfterA, roomA = j5a.roomA;
+
+  const receptionistView = await openAs(browser, receptionist, "/receptionist/bookings/hotel");
+  const assignedRoomRow = receptionistView.page.locator(".booking-row")
+    .filter({ hasText: state.buddy.name })
+    .filter({ hasText: dogDaycare.room_name })
+    .first();
+  await expect(assignedRoomRow).toBeVisible({ timeout: 20000 });
+  await shot(receptionistView.page, "e1-room-assigned-receptionist");
+  await receptionistView.page.reload();
+  await expect(assignedRoomRow.locator(".room-cell")).toContainText(dogDaycare.room_name);
+  await assignedRoomRow.locator(".row-action-popover-trigger").click();
+  await receptionistView.page.getByRole("button", { name: "View / Manage" }).click();
+  await expect(receptionistView.page.locator(".hbk-grid")).toContainText(dogDaycare.room_name);
+  await expect(receptionistView.page.locator(".hbk-panel select")).toHaveValue(`boarding:${roomId}`);
+
+  const scheduleRequestPromise = receptionistView.page.waitForRequest(
+    (request) => request.url().includes(`/api/receptionist/boarding-requests/${boardingA}/schedule`) && request.method() === "POST",
+    { timeout: 25000 }
+  );
+  const scheduleResponsePromise = receptionistView.page.waitForResponse(
+    (response) => response.url().includes(`/api/receptionist/boarding-requests/${boardingA}/schedule`) && response.request().method() === "POST",
+    { timeout: 25000 }
+  );
+  await receptionistView.page.getByRole("button", { name: /schedule boarding/i }).click();
+  const [scheduleRequest, scheduleResponse] = await Promise.all([scheduleRequestPromise, scheduleResponsePromise]);
+  const schedulePayload = scheduleRequest.postDataJSON();
+  const scheduleBody = await scheduleResponse.json().catch(() => ({}));
+  expect(scheduleResponse.ok(), JSON.stringify(scheduleBody)).toBeTruthy();
+  expect(schedulePayload).toHaveProperty("room_id", roomId);
+  expect(schedulePayload).not.toHaveProperty("hotel_room_id");
+
+  const scheduledDb = dbMulti({
+    boardingStatus: `DB::table('boardings')->where('id', ${boardingA})->value('status')`,
+    reservationStatus: `DB::table('boarding_room_reservations')->where('source_type','service_request')->where('source_id',${srA})->where('status','<>','cancelled')->value('status')`,
+    roomId: `DB::table('boarding_room_reservations')->where('source_type','service_request')->where('source_id',${srA})->where('status','<>','cancelled')->value('room_id')`,
+  });
+  const browserSchedulePassed = scheduledDb.boardingStatus === "scheduled"
+    && scheduledDb.reservationStatus === "scheduled"
+    && String(scheduledDb.roomId) === String(roomId);
+  correlate({
+    scenario: "J5-receptionist-browser-room-assignment",
+    record: `boarding#${boardingA}`,
+    initial: "approved with a persisted modern-room reservation",
+    expected: "browser reload keeps the modern room and schedules with room_id only",
+    actual: `HTTP ${scheduleResponse.status()}; status=${scheduledDb.boardingStatus}; reservation=${scheduledDb.reservationStatus}; room_id=${scheduledDb.roomId}`,
+    db: "boardings.status + boarding_room_reservations(room_id,status)",
+    downstream: "customer hotel bookings view",
+    evidence: "e1-room-assigned-receptionist.png",
+    result: browserSchedulePassed ? "PASS" : "FAIL",
+  });
+  expect(browserSchedulePassed).toBeTruthy();
+
+  const customerRoomView = await openAs(browser, customer, "/customer/hotel");
+  await customerRoomView.page.getByRole("button", { name: /my bookings/i }).click();
+  const customerRoomCard = customerRoomView.page.locator(".booking-card")
+    .filter({ hasText: state.buddy.name })
+    .filter({ hasText: dogDaycare.room_name })
+    .first();
+  await expect(customerRoomCard).toBeVisible({ timeout: 20000 });
+  await shot(customerRoomView.page, "e1-room-visible-customer");
+  await customerRoomView.context.close();
+  await receptionistView.context.close();
 
   // Conflicting booking same room+date: rejected OR auto-assigned elsewhere —
   // never double-books room 6 on that date.

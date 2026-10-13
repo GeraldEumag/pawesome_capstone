@@ -83,7 +83,13 @@ class BookingAvailabilityService
         return in_array($status, self::BLOCKING_PAYMENT_STATUSES);
     }
 
-    private static function blockingServiceBookings(string $serviceType, string $date, ?int $veterinarianId = null): array
+    private static function blockingServiceBookings(
+        string $serviceType,
+        string $date,
+        ?int $veterinarianId = null,
+        ?int $excludeAppointmentId = null,
+        ?int $excludeServiceRequestId = null
+    ): array
     {
         $bookings = [];
         $types = $serviceType === 'grooming'
@@ -95,6 +101,9 @@ class BookingAvailabilityService
                 ->whereDate('request_date', $date)
                 ->whereIn('status', self::BLOCKING_BOOKING_STATUSES)
                 ->whereIn(DB::raw('LOWER(request_type)'), $types);
+            if ($excludeServiceRequestId !== null) {
+                $query->where('id', '!=', $excludeServiceRequestId);
+            }
             if (Schema::hasColumn('service_requests', 'request_time')) {
                 foreach ($query->get(['request_time', 'service_name']) as $booking) {
                     $bookings[] = ['time' => $booking->request_time, 'service' => $booking->service_name];
@@ -106,12 +115,30 @@ class BookingAvailabilityService
             $query = Appointment::with('service:id,name')
                 ->whereDate('scheduled_at', $date)
                 ->whereIn('status', self::BLOCKING_BOOKING_STATUSES);
+            if ($excludeAppointmentId !== null) {
+                $query->where('id', '!=', $excludeAppointmentId);
+            }
             if ($veterinarianId) {
                 $query->where('veterinarian_id', $veterinarianId);
             }
             foreach ($query->get() as $booking) {
                 $bookings[] = [
-                    'time' => Carbon::parse($booking->scheduled_at)->format('H:i'),
+                    'time' => ServiceDurationService::inStoreTimezone($booking->scheduled_at)->format('H:i'),
+                    'service' => $booking->service?->name,
+                ];
+            }
+        }
+
+        if ($serviceType === 'grooming' && Schema::hasTable('appointments')) {
+            $query = Appointment::with('service:id,name')
+                ->whereDate('scheduled_at', $date)
+                ->whereIn('status', self::BLOCKING_BOOKING_STATUSES)
+                ->whereHas('service', fn ($serviceQuery) => $serviceQuery
+                    ->whereRaw('LOWER(category) = ?', ['grooming']));
+
+            foreach ($query->get() as $booking) {
+                $bookings[] = [
+                    'time' => ServiceDurationService::inStoreTimezone($booking->scheduled_at)->format('H:i'),
                     'service' => $booking->service?->name,
                 ];
             }
@@ -200,7 +227,15 @@ class BookingAvailabilityService
         return $slots;
     }
 
-    public static function isServiceTimeAvailable(string $serviceType, string $date, string $time, ?string $serviceName = null, ?int $veterinarianId = null): bool
+    public static function isServiceTimeAvailable(
+        string $serviceType,
+        string $date,
+        string $time,
+        ?string $serviceName = null,
+        ?int $veterinarianId = null,
+        ?int $excludeAppointmentId = null,
+        ?int $excludeServiceRequestId = null
+    ): bool
     {
         $normalizedType = $serviceType === 'grooming' ? 'grooming' : 'veterinary';
         $start = Carbon::parse("{$date} {$time}");
@@ -211,7 +246,13 @@ class BookingAvailabilityService
             return false;
         }
 
-        foreach (self::blockingServiceBookings($normalizedType, $date, $veterinarianId) as $booking) {
+        foreach (self::blockingServiceBookings(
+            $normalizedType,
+            $date,
+            $veterinarianId,
+            $excludeAppointmentId,
+            $excludeServiceRequestId
+        ) as $booking) {
             if (empty($booking['time'])) {
                 return false;
             }

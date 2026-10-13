@@ -10,6 +10,7 @@ import {
 } from "react-icons/fa";
 import "./CustomerRequestStatus.css";
 import { apiRequest } from "../../api/client";
+import { getRoomName } from "../../utils/apiNormalize";
 import { normalizeList } from "../../utils/normalizeList";
 import { showSuccess, showError, showReasonPrompt, CUSTOMER_CANCEL_REASONS } from "../../utils/alert.jsx";
 import { useAuth } from "../../context/AuthContext";
@@ -79,8 +80,8 @@ const CustomerRequestStatus = ({ embedded = false }) => {
       const boardings = normalizeList(boardingsData, ["boarding_requests", "boardings", "data"]).map((item) => ({
         ...item,
         source: "boarding",
-        type_label: item.room?.name || item.hotel_room?.name || "Pet Hotel / Boarding",
-        service_name: item.room?.name || item.hotel_room?.name || "Pet Hotel / Boarding",
+        type_label: getRoomName(item) === "Unassigned" ? "Pet Hotel / Boarding" : getRoomName(item),
+        service_name: getRoomName(item) === "Unassigned" ? "Pet Hotel / Boarding" : getRoomName(item),
       }));
 
       setRequests(normalizeList([...serviceRequests, ...orders, ...boardings]));

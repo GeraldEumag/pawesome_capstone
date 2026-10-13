@@ -20,7 +20,7 @@ import {
   faExclamationTriangle,
 } from "@fortawesome/free-solid-svg-icons";
 import { apiRequest } from "../../api/client";
-import { showConfirm, showReasonPrompt, SERVICE_DISABLE_REASONS, SERVICE_DELETE_REASONS } from "../../utils/alert.jsx";
+import { showReasonPrompt, SERVICE_DISABLE_REASONS, SERVICE_DELETE_REASONS } from "../../utils/alert.jsx";
 import RowActionPopover from "../shared/RowActionPopover";
 import "../../styles/bookingModal.css";
 import "./ReceptionistManageServices.css";
@@ -63,6 +63,7 @@ const ReceptionistManageServices = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
+  const [deletingKey, setDeletingKey] = useState("");
 
   // Services state
   const [services, setServices] = useState([]);
@@ -166,6 +167,7 @@ const ReceptionistManageServices = () => {
       SERVICE_DELETE_REASONS
     );
     if (reason === null) return;
+    setDeletingKey(`service:${service.id}`);
     try {
       await apiRequest(`/receptionist/services/${service.id}`, {
         method: "DELETE",
@@ -175,6 +177,8 @@ const ReceptionistManageServices = () => {
       await fetchServices();
     } catch (err) {
       showMessage("error", err.message || "Failed to delete service");
+    } finally {
+      setDeletingKey("");
     }
   };
 
@@ -228,14 +232,26 @@ const ReceptionistManageServices = () => {
     }
   };
 
-  const handleDeleteRoom = async (id) => {
-    if (!(await showConfirm("Are you sure you want to delete this room?"))) return;
+  const handleDeleteRoom = async (room) => {
+    const roomName = room.name || room.room_number || `Room #${room.id}`;
+    const reason = await showReasonPrompt(
+      `Delete hotel room "${roomName}"? The room will be archived and historical bookings will be retained. Please state why.`,
+      "Delete Hotel Room",
+      "Delete Room"
+    );
+    if (reason === null) return;
+    setDeletingKey(`room:${room.id}`);
     try {
-      await apiRequest(`/receptionist/hotel-rooms/${id}`, { method: "DELETE" });
+      await apiRequest(`/receptionist/hotel-rooms/${room.id}`, {
+        method: "DELETE",
+        body: JSON.stringify({ reason }),
+      });
       showMessage("success", "Room deleted successfully");
       await fetchRooms();
     } catch (err) {
       showMessage("error", err.message || "Failed to delete room");
+    } finally {
+      setDeletingKey("");
     }
   };
 
@@ -515,6 +531,7 @@ const ReceptionistManageServices = () => {
                             type="button"
                             className="action-btn delete-btn"
                             onClick={() => handleDeleteService(service)}
+                            disabled={deletingKey === `service:${service.id}`}
                             title="Delete"
                           >
                             <FontAwesomeIcon icon={faTrash} />
@@ -644,7 +661,8 @@ const ReceptionistManageServices = () => {
                     <button
                       type="button"
                       className="action-btn delete-btn"
-                      onClick={() => handleDeleteRoom(room.id)}
+                      onClick={() => handleDeleteRoom(room)}
+                      disabled={deletingKey === `room:${room.id}`}
                       title="Delete"
                     >
                       <FontAwesomeIcon icon={faTrash} />

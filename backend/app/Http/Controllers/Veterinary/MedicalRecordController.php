@@ -242,14 +242,16 @@ class MedicalRecordController extends Controller
             return response()->json(['errors' => $validator->errors()], 422);
         }
 
+        $validated = $validator->validated();
+        foreach (['weight_kg', 'temperature_celsius', 'heart_rate', 'respiratory_rate'] as $field) {
+            if (array_key_exists($field, $validated) && $validated[$field] === '') {
+                $validated[$field] = null;
+            }
+        }
+
         DB::beginTransaction();
         try {
-            $record->update($request->only([
-                'visit_date', 'chief_complaint', 'symptoms', 'physical_examination',
-                'diagnosis', 'secondary_diagnosis', 'treatment_plan', 'procedure_notes',
-                'follow_up_instructions', 'weight_kg', 'temperature_celsius', 'heart_rate',
-                'respiratory_rate', 'body_condition_score', 'notes', 'status'
-            ]));
+            $record->update($validated);
 
             // Sync prescriptions: replace the full set on every save
             if ($request->has('prescriptions')) {

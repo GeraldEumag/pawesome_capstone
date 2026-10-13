@@ -209,7 +209,7 @@ class FullSystemIntegrationTest extends TestCase
         $appointment = $this->postJson('/api/customer/appointments', [
             'pet_id' => Pet::where('customer_id', $this->customer->id)->first()->id,
             'service_id' => Service::where('name', 'Pet Grooming')->first()->id,
-            'scheduled_at' => now()->addDays(2)->format('Y-m-d H:i:s'),
+            'scheduled_at' => now()->addDays(2)->setTime(10, 0)->format('Y-m-d H:i:s'),
             'notes' => 'First time grooming',
         ], $this->withAuth($this->customerUser, $this->customerToken));
         

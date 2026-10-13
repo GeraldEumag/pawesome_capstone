@@ -559,6 +559,8 @@ class DatabaseIntegrityTest extends TestCase
         // Create a service
         $service = Service::factory()->create([
             'name' => 'Grooming',
+            'category' => 'Grooming',
+            'duration_minutes' => 30,
             'price' => 500,
             'is_active' => true,
         ]);
@@ -567,7 +569,7 @@ class DatabaseIntegrityTest extends TestCase
         $response = $this->postJson('/api/customer/appointments', [
             'pet_id' => $petId,
             'service_id' => $service->id,
-            'scheduled_at' => now()->addDay()->format('Y-m-d H:i:s'),
+            'scheduled_at' => now()->addDay()->setTime(10, 0)->format('Y-m-d H:i:s'),
         ], ['Authorization' => 'Bearer ' . $customerToken]);
 
         $response->assertStatus(201);
@@ -769,7 +771,7 @@ class DatabaseIntegrityTest extends TestCase
         $appointment = $this->postJson('/api/customer/appointments', [
             'pet_id' => $pet1->id,
             'service_id' => $service->id,
-            'scheduled_at' => now()->addDays(2)->format('Y-m-d H:i:s'),
+            'scheduled_at' => now()->addDays(2)->setTime(10, 0)->format('Y-m-d H:i:s'),
         ], ['Authorization' => 'Bearer ' . $customerToken]);
         
         $appointment->assertStatus(201);

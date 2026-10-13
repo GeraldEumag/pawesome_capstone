@@ -13,6 +13,7 @@ import {
 } from "@fortawesome/free-solid-svg-icons";
 
 import { apiRequest } from "../../api/client";
+import { getRoomName } from "../../utils/apiNormalize";
 import PetAvatar from "../shared/PetAvatar";
 import toast from "react-hot-toast";
 import "./theme.css";
@@ -29,7 +30,7 @@ const VeterinaryCurrentBoarders = () => {
     try {
       setLoading(true);
       const data = await apiRequest("/veterinary/boardings/current-boarders");
-      setBoarders(Array.isArray(data) ? data : []);
+      setBoarders(Array.isArray(data) ? data : Array.isArray(data?.boarders) ? data.boarders : Array.isArray(data?.data) ? data.data : []);
       setLastUpdated(new Date());
     } catch (err) {
       console.error("Failed to fetch boarders:", err);
@@ -50,7 +51,7 @@ const VeterinaryCurrentBoarders = () => {
     const matchesSearch = 
       (boarder.pet?.name || "").toLowerCase().includes(searchTerm.toLowerCase()) ||
       (boarder.customer?.name || "").toLowerCase().includes(searchTerm.toLowerCase()) ||
-      (boarder.hotel_room?.room_number || "").toLowerCase().includes(searchTerm.toLowerCase());
+      getRoomName(boarder).toLowerCase().includes(searchTerm.toLowerCase());
     
     const matchesSpecies = filterSpecies === "all" || 
       (boarder.pet?.species || "").toLowerCase() === filterSpecies.toLowerCase();
@@ -214,7 +215,7 @@ const VeterinaryCurrentBoarders = () => {
                       <FontAwesomeIcon icon={faBed} />
                       <div>
                         <strong>Room</strong>
-                        <p>{boarder.hotel_room?.room_number || boarder.roomReservation?.room?.room_name || "N/A"}</p>
+                        <p>{getRoomName(boarder) === "Unassigned" ? "N/A" : getRoomName(boarder)}</p>
                       </div>
                     </div>
                     <div className="info-item">

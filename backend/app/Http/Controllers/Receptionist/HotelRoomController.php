@@ -3,9 +3,11 @@
 namespace App\Http\Controllers\Receptionist;
 
 use App\Http\Controllers\Controller;
+use App\Models\ActivityLog;
 use App\Models\HotelRoom;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Validator;
@@ -168,19 +170,46 @@ class HotelRoomController extends Controller
     /**
      * Delete hotel room
      */
-    public function destroy($id): JsonResponse
+    public function destroy(Request $request, int $id): JsonResponse
     {
-        try {
-            $room = HotelRoom::findOrFail($id);
+        $request->merge(['reason' => trim((string) $request->input('reason'))]);
+        $validated = $request->validate([
+            'reason' => 'required|string|min:3|max:500',
+        ]);
 
-            if ($room->boardings()->whereIn('status', ['approved', 'scheduled', 'confirmed', 'checked_in', 'in_care'])->exists()) {
+        try {
+            $result = DB::transaction(function () use ($request, $id, $validated) {
+                $room = HotelRoom::whereKey($id)->lockForUpdate()->firstOrFail();
+
+                if ($room->boardings()->whereIn('status', [
+                    'pending', 'approved', 'scheduled', 'confirmed', 'checked_in', 'in_care', 'in_stay', 'ready_for_pickup',
+                ])->exists()) {
+                    return ['blocked' => true];
+                }
+
+                ActivityLog::log($request->user()?->id, 'hotel_room_deleted',
+                    "Hotel room #{$room->id} ({$room->name}) deleted by receptionist", [
+                        'category' => 'rooms',
+                        'reference_type' => HotelRoom::class,
+                        'reference_id' => $room->id,
+                        'metadata' => [
+                            'room_id' => $room->id,
+                            'room_name' => $room->name,
+                            'reason' => $validated['reason'],
+                        ],
+                    ]);
+
+                $room->delete();
+
+                return ['blocked' => false];
+            });
+
+            if ($result['blocked']) {
                 return response()->json([
                     'success' => false,
                     'message' => 'Cannot delete room with active reservations',
                 ], 422);
             }
-
-            $room->delete();
 
             return response()->json([
                 'success' => true,

@@ -81,6 +81,17 @@ const CARE_LOG_TYPES = [
 const getRoomOptionName = (room) =>
   room.name || room.room_number || room.room_name || `Room #${room.id}`;
 
+const getRoomSelectionKey = (room) => `${room.room_system}:${room.id}`;
+
+const getAssignedRoomSelectionKey = (booking) => {
+  const reservationRoom =
+    booking.service_request?.room_reservation?.room || booking.room_reservation?.room;
+  if (reservationRoom?.id) return `boarding:${reservationRoom.id}`;
+  if (booking.service_request?.boarding_room_id) return `boarding:${booking.service_request.boarding_room_id}`;
+  if (booking.hotel_room_id) return `hotel:${booking.hotel_room_id}`;
+  return "";
+};
+
 const formatTime12 = (value) => {
   if (!value) return "";
   const [h = 0, m = 0] = String(value).split(":");
@@ -160,8 +171,17 @@ const ReceptionistHotelBookings = () => {
 
   const fetchRooms = useCallback(async () => {
     try {
-      const data = await apiRequest("/receptionist/boarding-rooms");
-      setRooms(normalizeList(data, ["rooms", "hotel_rooms", "available_rooms"]));
+      const [boardingData, hotelData] = await Promise.all([
+        apiRequest("/receptionist/boarding-rooms"),
+        apiRequest("/receptionist/hotel-rooms?status=available"),
+      ]);
+      const boardingRooms = normalizeList(boardingData, ["rooms", "available_rooms"])
+        .filter((room) => room.is_active !== false)
+        .map((room) => ({ ...room, room_system: "boarding" }));
+      const hotelRooms = normalizeList(hotelData, ["rooms"])
+        .filter((room) => !room.status || room.status === "available")
+        .map((room) => ({ ...room, room_system: "hotel" }));
+      setRooms([...boardingRooms, ...hotelRooms]);
     } catch (err) {
       setRooms([]);
     }
@@ -319,8 +339,10 @@ const ReceptionistHotelBookings = () => {
 
   const scheduleBooking = async (booking) => {
     const draft = scheduleDraft[booking.id] || {};
+    const roomKey = draft.room_key || getAssignedRoomSelectionKey(booking);
+    const [roomSystem, roomId] = roomKey.split(":");
 
-    if (!draft.hotel_room_id) {
+    if (!roomId || !["boarding", "hotel"].includes(roomSystem)) {
       showMessage("error", "Select a room before scheduling.");
       return;
     }
@@ -330,7 +352,7 @@ const ReceptionistHotelBookings = () => {
       `/receptionist/boarding-requests/${booking.id}/schedule`,
       "Boarding scheduled successfully.",
       {
-        hotel_room_id: draft.hotel_room_id,
+        [roomSystem === "boarding" ? "room_id" : "hotel_room_id"]: Number(roomId),
         check_in: draft.check_in || getDateValue(booking.check_in),
         check_out: draft.check_in || getDateValue(booking.check_in),
         check_in_time: draft.check_in_time || booking.check_in_time || "10:00",
@@ -965,19 +987,19 @@ const ReceptionistHotelBookings = () => {
                       <div className="form-group">
                         <label>Room / Kennel</label>
                         <select
-                          value={scheduleDraft[selectedBooking.id]?.hotel_room_id || ""}
+                          value={scheduleDraft[selectedBooking.id]?.room_key || getAssignedRoomSelectionKey(selectedBooking)}
                           onChange={(event) =>
                             updateScheduleDraft(
                               selectedBooking.id,
-                              "hotel_room_id",
+                              "room_key",
                               event.target.value
                             )
                           }
                         >
                           <option value="">Select room</option>
                           {rooms.map((room) => (
-                            <option key={room.id} value={room.id}>
-                              {getRoomOptionName(room)} ({room.status || "available"})
+                            <option key={getRoomSelectionKey(room)} value={getRoomSelectionKey(room)}>
+                              {getRoomOptionName(room)} ({room.room_system === "boarding" ? `${room.available_rooms ?? room.total_rooms} boarding slots` : room.status})
                             </option>
                           ))}
                         </select>

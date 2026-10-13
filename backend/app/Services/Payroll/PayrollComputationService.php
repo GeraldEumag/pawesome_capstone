@@ -160,6 +160,10 @@ class PayrollComputationService
             // Load holidays for this period
             $holidays = DB::table('holidays')
                 ->whereBetween('date', [$startDate, $endDate])
+                ->where(function ($query) {
+                    $query->whereNull('deleted_at')
+                        ->orWhereRaw('DATE(date) <= DATE(deleted_at)');
+                })
                 ->get()
                 ->keyBy(fn ($h) => Carbon::parse($h->date)->toDateString());
 

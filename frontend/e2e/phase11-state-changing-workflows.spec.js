@@ -3,14 +3,16 @@ const fs = require("node:fs");
 const path = require("node:path");
 
 const rootDir = path.resolve(__dirname, "../..");
-const screenshotDir = path.join(rootDir, "documentation", "screenshots", "phase11");
-const reportDir = path.join(rootDir, "documentation", "reports", "phase11");
+const evidenceRoot = process.env.PHASE11_EVIDENCE_ROOT || path.join(rootDir, "documentation");
+const screenshotDir = path.join(evidenceRoot, "screenshots", "phase11");
+const reportDir = path.join(evidenceRoot, "reports", "phase11");
 const resultPath = path.join(reportDir, "phase11-state-changing-results.json");
 const proofPath = path.join(reportDir, "phase11-proof.png");
 
 const frontendUrl = process.env.E2E_BASE_URL || "http://127.0.0.1:3000";
 const backendUrl = "http://127.0.0.1:8000";
 const apiUrl = `${backendUrl}/api`;
+const workflowDateOffset = 420;
 
 const credentials = {
   customer: { email: "customer@example.com", password: "Password123!", dashboard: "/customer" },
@@ -26,9 +28,9 @@ const run = {
   setup: {
     backendUrl,
     frontendUrl,
-    browserPreview: "http://127.0.0.1:64422",
+    browserBaseUrl: frontendUrl,
     testDate: new Date().toISOString(),
-    tester: "Codex automated Playwright",
+    testRunner: "Playwright automation",
   },
   workflows: [],
   issues: [],
@@ -87,6 +89,7 @@ function addWorkflow(name, data) {
   run.workflows.push({
     workflow: name,
     browserSubmitted: !!data.browserSubmitted,
+    browserObserved: (data.screenshots || []).length > 0,
     dbStatusUpdated: !!data.dbStatusUpdated,
     nextRoleSawResult: !!data.nextRoleSawResult,
     consoleNetworkClean: data.consoleNetworkClean !== false,
@@ -113,20 +116,26 @@ function attachAudit(page) {
     }
   });
   page.on("response", (response) => {
-    const url = response.url();
-    const status = response.status();
-    if (url.includes("/api/") && status >= 400) {
-      run.network.push({ status, method: response.request().method(), url, page: page.url() });
+    const url = new URL(response.url());
+    if (url.pathname.startsWith("/api/")) {
+      run.network.push({
+        source: "browser",
+        status: response.status(),
+        method: response.request().method(),
+        path: url.pathname,
+        page: new URL(page.url()).pathname,
+      });
     }
   });
   page.on("requestfailed", (request) => {
-    const url = request.url();
-    if (url.includes("/api/")) {
+    const url = new URL(request.url());
+    if (url.pathname.startsWith("/api/")) {
       run.network.push({
+        source: "browser",
         status: "REQUEST_FAILED",
         method: request.method(),
-        url,
-        page: page.url(),
+        path: url.pathname,
+        page: new URL(page.url()).pathname,
         failure: request.failure()?.errorText,
       });
     }
@@ -136,7 +145,7 @@ function attachAudit(page) {
 const { apiLogin: sharedApiLogin } = require("./test-utils");
 
 async function apiLogin(request, role) {
-  const session = await sharedApiLogin(request, role);
+  const session = await sharedApiLogin(request, role === "vet" ? "veterinary" : role);
   if (!session.token) throw new Error(`API login for ${role} did not return a token`);
   return { token: session.token, user: session.user || {} };
 }
@@ -151,6 +160,7 @@ async function api(request, session, method, endpoint, options = {}) {
     data: options.data,
     multipart: options.multipart,
   });
+  run.network.push({ source: "api", status: response.status(), method, path: new URL(`${apiUrl}${endpoint}`).pathname });
   const text = await response.text();
   let body = null;
   try {
@@ -205,6 +215,31 @@ async function openRolePage(browser, role, route, label) {
   await context.unrouteAll({ behavior: "ignoreErrors" }).catch(() => {});
   await context.close();
   return screenshot;
+}
+
+async function openLiveRolePage(browser, session, route, label) {
+  const context = await browser.newContext({ baseURL: frontendUrl });
+  await context.route("**/api/**", async (route) => {
+    try {
+      const response = await context.request.fetch(route.request());
+      await route.fulfill({ response });
+    } catch {
+      await route.abort().catch(() => {});
+    }
+  });
+  await context.addInitScript(({ token, user }) => {
+    window.localStorage.setItem("token", token);
+    window.localStorage.setItem("role", user.role);
+    window.localStorage.setItem("name", user.name || user.email);
+    window.localStorage.setItem("username", user.username || user.email);
+    window.localStorage.setItem("email", user.email);
+  }, { token: session.token, user: session.user });
+  const page = await context.newPage();
+  attachAudit(page);
+  await page.goto(`${frontendUrl}${route}`);
+  await page.waitForLoadState("networkidle", { timeout: 15000 }).catch(() => {});
+  const screenshot = await capture(page, label);
+  return { page, context, screenshot };
 }
 
 function futureDate(days) {
@@ -287,6 +322,7 @@ async function pickSellableItem(request, inventorySession) {
     data: {
       name: `PHASE11_TEST POS Item ${Date.now()}`,
       sku: `P11-${Date.now()}`,
+      barcode: `P11B${Date.now().toString().slice(-12)}`,
       category: "Accessories",
       brand: "PHASE11_TEST Brand",
       generic_name: "PHASE11_TEST Generic",
@@ -337,7 +373,7 @@ test("Phase 11 full state-changing workflow validation", async ({ browser, reque
   const pet = await ensurePet(request, sessions.customer);
 
   try {
-    const booking = await createServiceRequest(request, sessions.customer, "grooming", pet, "grooming/service request", 7);
+    const booking = await createServiceRequest(request, sessions.customer, "grooming", pet, "grooming/service request", workflowDateOffset);
     const customerSubmittedShot = await openRolePage(browser, "customer", "/customer/services", "customer-request-submitted");
     const receptionistBefore = await api(request, sessions.receptionist, "GET", "/receptionist/requests");
     const receptionistSaw = normalizeList(receptionistBefore, ["requests"]).some((item) => Number(item.id) === Number(booking.id));
@@ -346,7 +382,7 @@ test("Phase 11 full state-changing workflow validation", async ({ browser, reque
     const updated = await getCustomerRequest(request, sessions.customer, booking.id);
     const customerUpdatedShot = await openRolePage(browser, "customer", "/customer/services", "customer-updated-status");
     addWorkflow("Customer to Receptionist Booking Flow", {
-      browserSubmitted: true,
+      browserSubmitted: false,
       dbStatusUpdated: updated?.status === "approved",
       nextRoleSawResult: receptionistSaw,
       status: updated?.status === "approved" && receptionistSaw ? "PASS" : "FAIL",
@@ -359,13 +395,13 @@ test("Phase 11 full state-changing workflow validation", async ({ browser, reque
   }
 
   try {
-    const boarding = await createServiceRequest(request, sessions.customer, "hotel", pet, "boarding request", 9);
+    const boarding = await createServiceRequest(request, sessions.customer, "hotel", pet, "boarding request", workflowDateOffset + 2);
     await approveServiceRequest(request, sessions.receptionist, boarding.id);
     const approved = await getCustomerRequest(request, sessions.customer, boarding.id);
     const receptionistBoardingShot = await openRolePage(browser, "receptionist", "/receptionist/appointments-boarding", "boarding-tracking-receptionist");
     const customerBoardingShot = await openRolePage(browser, "customer", "/customer/services", "boarding-tracking-customer");
     addWorkflow("Boarding Tracking Flow", {
-      browserSubmitted: true,
+      browserSubmitted: false,
       dbStatusUpdated: approved?.status === "approved",
       nextRoleSawResult: true,
       status: approved?.status === "approved" ? "PASS" : "FAIL",
@@ -379,7 +415,7 @@ test("Phase 11 full state-changing workflow validation", async ({ browser, reque
   }
 
   try {
-    const paymentReject = await createServiceRequest(request, sessions.customer, "grooming", pet, "payment reject request", 11);
+    const paymentReject = await createServiceRequest(request, sessions.customer, "grooming", pet, "payment reject request", workflowDateOffset + 4);
     await approveServiceRequest(request, sessions.receptionist, paymentReject.id);
     await uploadProof(request, sessions.customer, paymentReject.id, "PHASE11-REJECT-001");
     const uploadShot = await openRolePage(browser, "customer", "/customer/payments", "customer-payment-proof-upload");
@@ -396,7 +432,7 @@ test("Phase 11 full state-changing workflow validation", async ({ browser, reque
     const rejected = await getCustomerRequest(request, sessions.customer, paymentReject.id);
     const customerReasonShot = await openRolePage(browser, "customer", "/customer/payments", "customer-rejection-reason");
     addWorkflow("Payment Reject with Reason Flow", {
-      browserSubmitted: true,
+      browserSubmitted: false,
       dbStatusUpdated: rejected?.payment_status === "rejected",
       nextRoleSawResult: cashierSaw,
       status: rejected?.payment_status === "rejected" && cashierSaw && withoutReason.status() === 200 ? "PASS_WITH_VALIDATION_GAP" : "PASS",
@@ -415,7 +451,7 @@ test("Phase 11 full state-changing workflow validation", async ({ browser, reque
   }
 
   try {
-    const paymentVerify = await createServiceRequest(request, sessions.customer, "grooming", pet, "payment verify request", 13);
+    const paymentVerify = await createServiceRequest(request, sessions.customer, "grooming", pet, "payment verify request", workflowDateOffset + 6);
     await approveServiceRequest(request, sessions.receptionist, paymentVerify.id);
     await uploadProof(request, sessions.customer, paymentVerify.id, "PHASE11-VERIFY-001");
     const pendingPayments = await api(request, sessions.cashier, "GET", "/cashier/payment-requests");
@@ -428,7 +464,7 @@ test("Phase 11 full state-changing workflow validation", async ({ browser, reque
     const customerPaidShot = await openRolePage(browser, "customer", "/customer/payments", "customer-paid-receipt");
     const managerShot = await openRolePage(browser, "manager", "/manager/reports", "manager-report-after-transaction");
     addWorkflow("Payment Verify and Receipt Flow", {
-      browserSubmitted: true,
+      browserSubmitted: false,
       dbStatusUpdated: customerPaid?.payment_status === "paid",
       nextRoleSawResult: cashierSaw,
       status: customerPaid?.payment_status === "paid" && verified.receipt_number ? "PASS" : "FAIL",
@@ -475,7 +511,7 @@ test("Phase 11 full state-changing workflow validation", async ({ browser, reque
     const logShot = await openRolePage(browser, "inventory", "/inventory/history", "inventory-log");
     const managerShot = await openRolePage(browser, "manager", "/manager/reports", "manager-report-after-pos");
     addWorkflow("POS and Inventory Stock Deduction Flow", {
-      browserSubmitted: true,
+      browserSubmitted: false,
       dbStatusUpdated: afterStock === beforeStock - 1,
       nextRoleSawResult: hasDeductionLog,
       status: afterStock === beforeStock - 1 && hasDeductionLog ? "PASS" : "FAIL",
@@ -491,29 +527,83 @@ test("Phase 11 full state-changing workflow validation", async ({ browser, reque
     const vets = await api(request, sessions.receptionist, "GET", "/receptionist/veterinarians/available");
     const vetList = normalizeList(vets, ["veterinarians", "data"]);
     const assignedVet = vetList[0] || sessions.vet.user;
-    const vetRequest = await createServiceRequest(request, sessions.customer, "vet", pet, "veterinary request", 15);
+    const vetRequest = await createServiceRequest(request, sessions.customer, "vet", pet, "veterinary request", workflowDateOffset + 8);
     const approved = await approveServiceRequest(request, sessions.receptionist, vetRequest.id, { veterinarian_id: assignedVet.id });
     const appointment = approved.appointment;
     if (!appointment?.id) throw new Error("Vet approval did not create an appointment");
-    await api(request, sessions.vet, "POST", `/veterinary/consultations/${appointment.id}/start`, {});
-    const completed = await api(request, sessions.vet, "POST", `/veterinary/consultations/${appointment.id}/complete`, {
-      data: {
-        diagnosis: "PHASE11_TEST diagnosis",
-        treatment_notes: "PHASE11_TEST treatment notes",
-        prescription: "PHASE11_TEST prescription",
-        remarks: "PHASE11_TEST remarks",
-      },
+    const vetView = await openLiveRolePage(browser, sessions.vet, `/veterinary/appointments/${appointment.id}/consult`, "vet-consultation-started");
+    const startResponsePromise = vetView.page.waitForResponse((response) => {
+      const url = new URL(response.url());
+      return url.pathname.endsWith(`/api/veterinary/consultations/${appointment.id}/start`) && response.request().method() === "POST";
     });
-    const completedConsultation = completed.consultation || completed.appointment || {};
-    const completionPersisted = ["awaiting_payment", "treated", "completed"].includes(completedConsultation.status);
-    const vetShot = await openRolePage(browser, "vet", `/veterinary/appointments/${appointment.id}/consult`, "vet-consultation-form-saved");
+    await vetView.page.getByRole("button", { name: "Start Consultation" }).click();
+    const startResponse = await startResponsePromise;
+    const startBody = await startResponse.json();
+    const medicalRecord = startBody.medical_record;
+    if (!startResponse.ok() || !medicalRecord?.id) throw new Error("Consultation start did not create a medical record");
+
+    const recordSaveResponsePromise = vetView.page.waitForResponse((response) => {
+      const url = new URL(response.url());
+      return url.pathname.endsWith(`/api/veterinary/medical-records/${medicalRecord.id}`) && response.request().method() === "PUT";
+    });
+    const consultationCompleteResponsePromise = vetView.page.waitForResponse((response) => {
+      const url = new URL(response.url());
+      return url.pathname.endsWith(`/api/veterinary/consultations/${appointment.id}/complete`) && response.request().method() === "POST";
+    });
+    const clinicalFields = vetView.page.locator(".consult-form textarea");
+    await clinicalFields.nth(2).fill("PHASE11_TEST diagnosis");
+    await clinicalFields.nth(3).fill("PHASE11_TEST treatment notes");
+    await clinicalFields.nth(4).fill("PHASE11_TEST remarks");
+    await vetView.page.getByRole("button", { name: "Complete Consultation" }).click();
+    const [recordSaveResponse, consultationCompleteResponse] = await Promise.all([
+      recordSaveResponsePromise,
+      consultationCompleteResponsePromise,
+    ]);
+    expect(recordSaveResponse.ok()).toBeTruthy();
+    const consultationCompleteBody = await consultationCompleteResponse.json();
+    expect(consultationCompleteResponse.ok(), JSON.stringify(consultationCompleteBody)).toBeTruthy();
+    const consultationResult = consultationCompleteBody.consultation || consultationCompleteBody.appointment || {};
+    if (!medicalRecord?.id) throw new Error("Finalized medical record is unavailable");
+    const savedRecord = await api(request, sessions.vet, "GET", `/veterinary/medical-records/${medicalRecord.id}`);
+    const recordResult = savedRecord.record || savedRecord.data || savedRecord;
+    if (recordResult.status !== "finalized") throw new Error("Veterinary medical record was not finalized");
+
+    const paymentReference = `P11-VET-${Date.now()}`;
+    await uploadProof(request, sessions.customer, vetRequest.id, paymentReference);
+    await api(request, sessions.cashier, "POST", `/cashier/payment-requests/${vetRequest.id}/verify`, {
+      data: { type: "service_request", reference_number: paymentReference, cashier_remarks: "PHASE11_TEST veterinary payment verified" },
+    });
+    await vetView.page.reload();
+    await vetView.page.getByRole("button", { name: "Complete Appointment" }).waitFor({ state: "visible", timeout: 20000 });
+    const appointmentCompleteResponsePromise = vetView.page.waitForResponse((response) => {
+      const url = new URL(response.url());
+      return url.pathname.endsWith(`/api/veterinary/appointments/${appointment.id}/complete`) && response.request().method() === "POST";
+    });
+    await vetView.page.getByRole("button", { name: "Complete Appointment" }).click();
+    const appointmentCompleteResponse = await appointmentCompleteResponsePromise;
+    const appointmentCompleteBody = await appointmentCompleteResponse.json().catch(() => ({}));
+    expect(appointmentCompleteResponse.ok(), JSON.stringify(appointmentCompleteBody)).toBeTruthy();
+    const completedAppointment = appointmentCompleteBody.appointment || appointmentCompleteBody.data || {};
+    const customerPaid = await getCustomerRequest(request, sessions.customer, vetRequest.id);
+    const completedStatus = completedAppointment.status || appointmentCompleteBody.status || consultationResult.status;
+    const completionPersisted = completedStatus === "completed" && customerPaid?.payment_status === "paid" && recordResult.status === "finalized";
+    const vetShot = await capture(vetView.page, "vet-appointment-completed");
     const customerShot = await openRolePage(browser, "customer", "/customer/services", "customer-vet-status");
+    await vetView.context.close();
     addWorkflow("Veterinary Consultation Flow", {
       browserSubmitted: true,
       dbStatusUpdated: completionPersisted,
       nextRoleSawResult: true,
       status: completionPersisted ? "PASS" : "FAIL",
-      records: { serviceRequestId: vetRequest.id, appointmentId: appointment.id, status: completedConsultation.status },
+      records: {
+        serviceRequestId: vetRequest.id,
+        appointmentId: appointment.id,
+        medicalRecordId: medicalRecord.id,
+        consultationStatus: consultationResult.status,
+        appointmentStatus: completedStatus,
+        paymentStatus: customerPaid?.payment_status,
+        medicalRecordStatus: recordResult.status,
+      },
       screenshots: [vetShot, customerShot],
     });
   } catch (error) {
@@ -527,7 +617,8 @@ test("Phase 11 full state-changing workflow validation", async ({ browser, reque
       data: {
         name: itemName,
         sku: `P11-MED-${Date.now()}`,
-        category: "Medicine",
+        barcode: `P11B${Date.now().toString().slice(-12)}`,
+        category: "Health",
         generic_name: "PHASE11_TEST Generic",
         brand: "PHASE11_TEST Brand",
         stock: 5,
@@ -544,7 +635,7 @@ test("Phase 11 full state-changing workflow validation", async ({ browser, reque
     const saved = refreshed.item || refreshed.data || refreshed;
     const shot = await openRolePage(browser, "inventory", "/inventory/products", "inventory-generic-brand");
     addWorkflow("Generic/Brand Inventory Flow", {
-      browserSubmitted: true,
+      browserSubmitted: false,
       dbStatusUpdated: saved.generic_name === "PHASE11_TEST Generic" && saved.brand === "PHASE11_TEST Brand",
       nextRoleSawResult: true,
       status: saved.generic_name === "PHASE11_TEST Generic" && saved.brand === "PHASE11_TEST Brand" ? "PASS" : "FAIL",
@@ -564,7 +655,7 @@ test("Phase 11 full state-changing workflow validation", async ({ browser, reque
       await openRolePage(browser, "vet", "/veterinary/appointments", "notifications-vet"),
     ];
     addWorkflow("Notifications Flow", {
-      browserSubmitted: true,
+      browserSubmitted: false,
       dbStatusUpdated: true,
       nextRoleSawResult: true,
       status: "PARTIAL",
@@ -585,7 +676,7 @@ test("Phase 11 full state-changing workflow validation", async ({ browser, reque
       }
     }
     addWorkflow("Role Access Negative Tests", {
-      browserSubmitted: true,
+      browserSubmitted: false,
       dbStatusUpdated: true,
       nextRoleSawResult: allBlocked,
       status: allBlocked ? "PASS" : "FAIL",
@@ -609,11 +700,11 @@ test("Phase 11 full state-changing workflow validation", async ({ browser, reque
   });
 
   run.finalVerdict = requiredPassed && criticalIssues.length === 0
-    ? "Demo Ready"
-    : criticalIssues.length > 0
-      ? "Not Ready -- Critical browser issues remain"
-      : "Conditionally Ready -- Minor issues only";
+    ? "Critical API/DB workflow checks passed; release readiness remains open"
+    : "Critical API/DB workflow checks have unresolved failures";
 
   writeResults();
   expect(run.workflows.length).toBeGreaterThanOrEqual(9);
+  expect(requiredPassed, JSON.stringify(run.workflows.filter((workflow) => required.includes(workflow.workflow)))).toBeTruthy();
+  expect(criticalIssues, JSON.stringify(criticalIssues)).toHaveLength(0);
 });

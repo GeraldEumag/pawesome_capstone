@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 
 class ServiceRequest extends Model
 {
@@ -21,6 +22,7 @@ class ServiceRequest extends Model
         'price',
         'request_date',
         'request_time',
+        'preferred_date',
         'preferred_time',
         'check_out_date',
         'boarding_room_id',
@@ -48,4 +50,12 @@ class ServiceRequest extends Model
         'receipt_number',
         'booking_channel',
     ];
+
+    public function roomReservation(): HasOne
+    {
+        return $this->hasOne(BoardingRoomReservation::class, 'source_id')
+            ->where('source_type', 'service_request')
+            ->whereNotIn('status', ['cancelled', 'checked_out'])
+            ->latestOfMany();
+    }
 }

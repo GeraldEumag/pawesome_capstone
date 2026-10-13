@@ -3,9 +3,11 @@
 namespace App\Http\Controllers\Receptionist;
 
 use App\Http\Controllers\Controller;
+use App\Models\ActivityLog;
 use App\Models\BoardingRoom;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
 
@@ -28,9 +30,7 @@ class BoardingRoomController extends Controller
             return response()->json([
                 'success' => true,
                 'rooms' => $rooms->map(function ($room) {
-                    $occupiedCount = $room->reservations()
-                        ->whereIn('status', ['pending', 'approved', 'scheduled', 'checked_in'])
-                        ->count();
+                    $occupiedCount = $room->reservations()->activeBlocking()->count();
 
                     return [
                         'id' => $room->id,
@@ -182,19 +182,44 @@ class BoardingRoomController extends Controller
     /**
      * Delete boarding/daycare room
      */
-    public function destroy($id): JsonResponse
+    public function destroy(Request $request, int $id): JsonResponse
     {
-        try {
-            $room = BoardingRoom::findOrFail($id);
+        $request->merge(['reason' => trim((string) $request->input('reason'))]);
+        $validated = $request->validate([
+            'reason' => 'required|string|min:3|max:500',
+        ]);
 
-            if ($room->reservations()->whereIn('status', ['pending', 'approved', 'scheduled', 'checked_in'])->exists()) {
+        try {
+            $result = DB::transaction(function () use ($request, $id, $validated) {
+                $room = BoardingRoom::whereKey($id)->lockForUpdate()->firstOrFail();
+
+                if ($room->reservations()->activeBlocking()->exists()) {
+                    return ['blocked' => true];
+                }
+
+                ActivityLog::log($request->user()?->id, 'boarding_room_deleted',
+                    "Boarding room #{$room->id} ({$room->room_name}) deleted by receptionist", [
+                        'category' => 'rooms',
+                        'reference_type' => BoardingRoom::class,
+                        'reference_id' => $room->id,
+                        'metadata' => [
+                            'room_id' => $room->id,
+                            'room_name' => $room->room_name,
+                            'reason' => $validated['reason'],
+                        ],
+                    ]);
+
+                $room->delete();
+
+                return ['blocked' => false];
+            });
+
+            if ($result['blocked']) {
                 return response()->json([
                     'success' => false,
                     'message' => 'Cannot delete room with active reservations',
                 ], 422);
             }
-
-            $room->delete();
 
             return response()->json([
                 'success' => true,

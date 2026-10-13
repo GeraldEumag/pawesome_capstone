@@ -34,6 +34,8 @@ const VetServices = () => {
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [selectedService, setSelectedService] = useState(null);
   const [serviceToDelete, setServiceToDelete] = useState(null);
+  const [deleteReason, setDeleteReason] = useState("");
+  const [deleting, setDeleting] = useState(false);
   const [formData, setFormData] = useState({
     name: "",
     category: "Consultation",
@@ -132,30 +134,38 @@ const VetServices = () => {
 
   const handleDeleteService = (serviceId) => {
     setServiceToDelete(serviceId);
+    setDeleteReason("");
     setShowDeleteModal(true);
   };
 
   const confirmDeleteService = async () => {
-    if (!serviceToDelete) return;
+    if (!serviceToDelete || !deleteReason.trim() || deleting) return;
+    setDeleting(true);
 
     try {
       await apiRequest(`/admin/services/${serviceToDelete}`, {
         method: "DELETE",
+        body: JSON.stringify({ reason: deleteReason.trim() }),
       });
 
       setServices(services.filter(service => service.id !== serviceToDelete));
       setShowDeleteModal(false);
       setServiceToDelete(null);
+      setDeleteReason("");
       toast.success("Service deleted successfully!");
     } catch (err) {
       console.error("Failed to delete service:", err);
-      toast.error("Failed to delete service. Please try again.");
+      toast.error(err.message || "Failed to delete service.");
+    } finally {
+      setDeleting(false);
     }
   };
 
   const cancelDeleteService = () => {
+    if (deleting) return;
     setShowDeleteModal(false);
     setServiceToDelete(null);
+    setDeleteReason("");
   };
 
   const handleToggleService = async (serviceId, currentStatus) => {
@@ -444,12 +454,23 @@ const VetServices = () => {
               <button className="vs-modal-close" onClick={cancelDeleteService}><FontAwesomeIcon icon={faTimes} /></button>
             </div>
             <div className="vs-modal-body">
-              <p>Are you sure you want to delete this service? This action cannot be undone.</p>
+              <p>Delete "{services.find((service) => service.id === serviceToDelete)?.name || "this service"}"? Existing booking records will be retained.</p>
+              <label className="vs-field">
+                <span>Reason for deletion *</span>
+                <textarea
+                  rows={3}
+                  value={deleteReason}
+                  onChange={(event) => setDeleteReason(event.target.value)}
+                  maxLength={500}
+                  disabled={deleting}
+                  placeholder="Explain why this service is being deleted"
+                />
+              </label>
             </div>
             <div className="vs-modal-actions">
-              <button className="vs-btn vs-btn--secondary" onClick={cancelDeleteService}>Cancel</button>
-              <button className="vs-btn vs-btn--danger" onClick={confirmDeleteService}>
-                <FontAwesomeIcon icon={faTrash} /> Delete Service
+              <button className="vs-btn vs-btn--secondary" onClick={cancelDeleteService} disabled={deleting}>Cancel</button>
+              <button className="vs-btn vs-btn--danger" onClick={confirmDeleteService} disabled={deleting || !deleteReason.trim()}>
+                <FontAwesomeIcon icon={deleting ? faSpinner : faTrash} spin={deleting} /> {deleting ? "Deleting…" : "Delete Service"}
               </button>
             </div>
           </div>

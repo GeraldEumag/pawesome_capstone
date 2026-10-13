@@ -7,6 +7,7 @@ use App\Models\ActivityLog;
 use App\Models\Service;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
 class ServiceController extends Controller
@@ -147,34 +148,43 @@ class ServiceController extends Controller
      */
     public function destroy(Request $request, int $id): JsonResponse
     {
+        $request->merge(['reason' => trim((string) $request->input('reason'))]);
+        $validated = $request->validate([
+            'reason' => 'required|string|min:3|max:500',
+        ]);
+
         try {
-            $validated = $request->validate([
-                'reason' => 'required|string|min:3|max:500',
-            ]);
+            $result = DB::transaction(function () use ($request, $id, $validated) {
+                $service = Service::whereKey($id)->lockForUpdate()->firstOrFail();
 
-            $service = Service::findOrFail($id);
+                $hasAppointments = \App\Models\Appointment::where('service_id', $id)->exists();
+                if ($hasAppointments) {
+                    return ['blocked' => true];
+                }
 
-            $hasAppointments = \App\Models\Appointment::where('service_id', $id)->exists();
-            if ($hasAppointments) {
+                ActivityLog::log($request->user()?->id, 'service_deleted',
+                    "Service #{$service->id} ({$service->name}) deleted by receptionist", [
+                        'category'       => 'service',
+                        'reference_type' => Service::class,
+                        'reference_id'   => $service->id,
+                        'metadata'       => [
+                            'service_id'   => $service->id,
+                            'service_name' => $service->name,
+                            'reason'       => $validated['reason'],
+                        ],
+                    ]);
+
+                $service->delete();
+
+                return ['blocked' => false];
+            });
+
+            if ($result['blocked']) {
                 return response()->json([
                     'success' => false,
                     'message' => 'Cannot delete service with active appointments',
                 ], 422);
             }
-
-            ActivityLog::log($request->user()?->id, 'service_deleted',
-                "Service #{$service->id} ({$service->name}) deleted by receptionist", [
-                    'category'       => 'service',
-                    'reference_type' => Service::class,
-                    'reference_id'   => $service->id,
-                    'metadata'       => [
-                        'service_id'   => $service->id,
-                        'service_name' => $service->name,
-                        'reason'       => $validated['reason'],
-                    ],
-                ]);
-
-            $service->delete();
 
             return response()->json([
                 'success' => true,

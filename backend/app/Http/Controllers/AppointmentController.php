@@ -15,6 +15,7 @@ use App\Models\ServiceItemUsage;
 use App\Services\WorkflowNotifier;
 use App\Services\BookingAvailabilityService;
 use App\Services\ServiceBillingService;
+use App\Services\ServiceDurationService;
 use App\Services\PaymentVerificationService;
 use App\Models\ActivityLog;
 use Illuminate\Http\Request;
@@ -173,12 +174,12 @@ class AppointmentController extends Controller
             return response()->json(['message' => 'Pet not found for this customer'], 422);
         }
 
-        $scheduledAt = Carbon::parse($request->scheduled_at);
+        $scheduledAt = ServiceDurationService::inStoreTimezone($request->scheduled_at);
         $date = $scheduledAt->format('Y-m-d');
         $time = $scheduledAt->format('H:i');
         $service = Service::find($request->service_id);
 
-        $appointment = DB::transaction(function () use ($request, $date, $time, $service) {
+        $appointment = DB::transaction(function () use ($request, $date, $time, $service, $scheduledAt) {
             Service::query()->orderBy('id')->lockForUpdate()->first();
             $lockedService = Service::find($request->service_id);
             $serviceType = strtolower((string) $lockedService?->category) === 'grooming' ? 'grooming' : 'veterinary';
@@ -196,7 +197,7 @@ class AppointmentController extends Controller
                     : ($request->user()?->hasRoleAccess('receptionist', 'admin')
                         ? 'approved'
                         : 'pending'),
-                'scheduled_at' => $request->scheduled_at,
+                'scheduled_at' => $scheduledAt->copy()->utc(),
                 'notes' => $request->notes,
                 'price' => $lockedService?->price ?? $service?->price ?? 0,
                 'booking_channel' => \App\Support\BookingChannel::forUser($request->user()),
@@ -209,8 +210,8 @@ class AppointmentController extends Controller
                     'customer_id' => $request->customer_id,
                     'pet_id' => $request->pet_id,
                     'service' => $lockedService->name,
-                    'appointment_date' => Carbon::parse($request->scheduled_at)->toDateString(),
-                    'appointment_time' => Carbon::parse($request->scheduled_at)->toTimeString(),
+                    'appointment_date' => $scheduledAt->toDateString(),
+                    'appointment_time' => $scheduledAt->toTimeString(),
                     'notes' => $request->notes,
                     'amount' => $groomingPrice,
                     'base_amount' => $groomingPrice,
@@ -316,6 +317,76 @@ class AppointmentController extends Controller
         ]);
     }
 
+    private function persistVeterinaryScheduleChange(Request $request, int $id, array $changes, array $allowedStatuses): array
+    {
+        return DB::transaction(function () use ($request, $id, $changes, $allowedStatuses) {
+            Service::query()->orderBy('id')->lockForUpdate()->first();
+            $appointment = Appointment::with('service')->whereKey($id)->lockForUpdate()->first();
+
+            if (!$appointment || !$this->canAccessAppointment($request, $appointment)) {
+                return ['http_status' => 404, 'body' => ['message' => 'Appointment not found']];
+            }
+
+            if (!in_array($appointment->status, $allowedStatuses, true)) {
+                return ['http_status' => 422, 'body' => [
+                    'message' => 'Cannot update appointment with status: ' . $appointment->status,
+                    'allowed_statuses' => $allowedStatuses,
+                ]];
+            }
+
+            $service = Service::find($changes['service_id'] ?? $appointment->service_id);
+            if (!$service) {
+                return ['http_status' => 422, 'body' => ['errors' => ['service_id' => ['The selected service is invalid.']]]];
+            }
+
+            $scheduledAt = ServiceDurationService::inStoreTimezone($changes['scheduled_at'] ?? $appointment->scheduled_at);
+            if (!BookingAvailabilityService::isServiceTimeAvailable(
+                'veterinary',
+                $scheduledAt->format('Y-m-d'),
+                $scheduledAt->format('H:i'),
+                $service->name,
+                $appointment->veterinarian_id,
+                $appointment->id,
+                $appointment->service_request_id
+            )) {
+                return ['http_status' => 422, 'body' => [
+                    'success' => false,
+                    'message' => 'This schedule is no longer available. Please choose another slot.',
+                    'errors' => ['scheduled_at' => ['Time slot overlaps an existing booking.']],
+                ]];
+            }
+
+            if (array_key_exists('_reschedule_reason', $changes)) {
+                $reason = $changes['_reschedule_reason'];
+                unset($changes['_reschedule_reason']);
+                $changes['notes'] = $appointment->notes . "\n[Rescheduled from {$appointment->scheduled_at}]: {$reason}";
+            }
+
+            if (array_key_exists('scheduled_at', $changes)) {
+                $changes['scheduled_at'] = $scheduledAt->copy()->utc();
+            }
+            $appointment->update($changes);
+
+            if (array_key_exists('scheduled_at', $changes) && $appointment->service_request_id) {
+                $serviceRequest = ServiceRequest::whereKey($appointment->service_request_id)
+                    ->lockForUpdate()
+                    ->first();
+                if ($serviceRequest) {
+                    $date = $scheduledAt->toDateString();
+                    $time = $scheduledAt->format('H:i');
+                    $serviceRequest->update([
+                        'request_date' => $date,
+                        'request_time' => $time,
+                        'preferred_date' => $date,
+                        'preferred_time' => $time,
+                    ]);
+                }
+            }
+
+            return ['appointment' => $appointment->fresh(['customer', 'pet', 'service', 'veterinarian'])];
+        });
+    }
+
     /**
      * Reschedule appointment
      */
@@ -343,12 +414,24 @@ class AppointmentController extends Controller
             return response()->json(['errors' => $validator->errors()], 422);
         }
 
-        $oldDate = $appointment->scheduled_at;
-        
-        $appointment->update([
+        $changes = [
             'scheduled_at' => $request->scheduled_at,
-            'notes' => $appointment->notes . "\n[Rescheduled from {$oldDate}]: " . ($request->reason ?: 'No reason provided'),
-        ]);
+            '_reschedule_reason' => $request->reason ?: 'No reason provided',
+        ];
+
+        if (strtolower((string) $appointment->service?->category) === 'grooming') {
+            $oldDate = $appointment->scheduled_at;
+            $changes['scheduled_at'] = ServiceDurationService::inStoreTimezone($request->scheduled_at)->copy()->utc();
+            unset($changes['_reschedule_reason']);
+            $changes['notes'] = $appointment->notes . "\n[Rescheduled from {$oldDate}]: " . ($request->reason ?: 'No reason provided');
+            $appointment->update($changes);
+        } else {
+            $result = $this->persistVeterinaryScheduleChange($request, (int) $appointment->id, $changes, ['pending', 'approved']);
+            if (isset($result['http_status'])) {
+                return response()->json($result['body'], $result['http_status']);
+            }
+            $appointment = $result['appointment'];
+        }
 
         return response()->json([
             'message' => 'Appointment rescheduled successfully',
@@ -948,7 +1031,31 @@ class AppointmentController extends Controller
             $updateData['customer_id'] = $request->customer_id;
         }
 
-        if (!empty($updateData)) {
+        if (array_key_exists('scheduled_at', $updateData)) {
+            $updateData['scheduled_at'] = ServiceDurationService::inStoreTimezone($updateData['scheduled_at'])->copy()->utc();
+        }
+
+        if (array_key_exists('scheduled_at', $updateData) || array_key_exists('service_id', $updateData)) {
+            $currentService = Service::find($appointment->service_id);
+            $targetService = Service::find($updateData['service_id'] ?? $appointment->service_id);
+            $currentIsGrooming = strtolower((string) $currentService?->category) === 'grooming';
+            $targetIsGrooming = strtolower((string) $targetService?->category) === 'grooming';
+
+            if (!$currentIsGrooming && !$targetIsGrooming) {
+                $result = $this->persistVeterinaryScheduleChange(
+                    $request,
+                    (int) $appointment->id,
+                    $updateData,
+                    ['pending', 'approved', 'scheduled']
+                );
+                if (isset($result['http_status'])) {
+                    return response()->json($result['body'], $result['http_status']);
+                }
+                $appointment = $result['appointment'];
+            } elseif (!empty($updateData)) {
+                $appointment->update($updateData);
+            }
+        } elseif (!empty($updateData)) {
             $appointment->update($updateData);
         }
 

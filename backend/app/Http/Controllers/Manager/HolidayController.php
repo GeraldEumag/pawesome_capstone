@@ -3,9 +3,11 @@
 namespace App\Http\Controllers\Manager;
 
 use App\Http\Controllers\Controller;
+use App\Models\ActivityLog;
 use App\Models\Holiday;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class HolidayController extends Controller
 {
@@ -57,10 +59,31 @@ class HolidayController extends Controller
     }
 
     /** DELETE /manager/holidays/{holiday} */
-    public function destroy(Holiday $holiday): JsonResponse
+    public function destroy(Request $request, Holiday $holiday): JsonResponse
     {
-        $holiday->delete();
-        return response()->json(['success' => true, 'message' => 'Holiday deleted.']);
+        $request->merge(['reason' => trim((string) $request->input('reason'))]);
+        $validated = $request->validate([
+            'reason' => 'required|string|min:3|max:500',
+        ]);
+
+        return DB::transaction(function () use ($request, $holiday, $validated) {
+            $holiday = Holiday::whereKey($holiday->id)->lockForUpdate()->firstOrFail();
+            ActivityLog::log($request->user()?->id, 'holiday_deleted',
+                "Holiday #{$holiday->id} ({$holiday->name}) archived", [
+                    'category' => 'holidays',
+                    'reference_type' => Holiday::class,
+                    'reference_id' => $holiday->id,
+                    'metadata' => [
+                        'holiday_id' => $holiday->id,
+                        'holiday_name' => $holiday->name,
+                        'holiday_date' => $holiday->date->toDateString(),
+                        'reason' => $validated['reason'],
+                    ],
+                ]);
+            $holiday->delete();
+
+            return response()->json(['success' => true, 'message' => 'Holiday archived.']);
+        });
     }
 
     /**

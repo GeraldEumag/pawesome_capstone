@@ -3,9 +3,11 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Models\ActivityLog;
 use App\Models\Service;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
 class ServiceController extends Controller
@@ -110,24 +112,49 @@ class ServiceController extends Controller
     }
 
     // Delete a service
-    public function destroy(int $id): JsonResponse
+    public function destroy(Request $request, int $id): JsonResponse
     {
+        $request->merge(['reason' => trim((string) $request->input('reason'))]);
+        $validated = $request->validate([
+            'reason' => 'required|string|min:3|max:500',
+        ]);
+
         try {
             // Find the service to delete
-            $service = Service::findOrFail($id);
+            $result = DB::transaction(function () use ($request, $id, $validated) {
+                $service = Service::whereKey($id)->lockForUpdate()->firstOrFail();
 
-            // Prevent deletion if service has active appointments
-            $hasAppointments = \App\Models\Appointment::where('service_id', $id)->exists();
-            if ($hasAppointments) {
+                // Prevent deletion if service has active appointments
+                $hasAppointments = \App\Models\Appointment::where('service_id', $id)->exists();
+                if ($hasAppointments) {
+                    return ['blocked' => true];
+                }
+
+                ActivityLog::log($request->user()?->id, 'service_deleted',
+                    "Service #{$service->id} ({$service->name}) deleted", [
+                        'category' => 'service',
+                        'reference_type' => Service::class,
+                        'reference_id' => $service->id,
+                        'metadata' => [
+                            'service_id' => $service->id,
+                            'service_name' => $service->name,
+                            'reason' => $validated['reason'],
+                        ],
+                    ]);
+
+                $service->delete();
+
+                return ['blocked' => false];
+            });
+
+            if ($result['blocked']) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'Cannot delete service with active appointments'
+                    'message' => 'Cannot delete service with active appointments',
                 ], 422);
             }
 
-            $service->delete();
-
-            return response()->json(['message' => 'Service deleted successfully']);
+            return response()->json(['success' => true, 'message' => 'Service deleted successfully']);
         } catch (\Exception $e) {
             Log::error('Service deletion error: ' . $e->getMessage(), ['service_id' => $id, 'trace' => $e->getTraceAsString()]);
             return response()->json([

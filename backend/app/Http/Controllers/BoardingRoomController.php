@@ -129,15 +129,6 @@ class BoardingRoomController extends Controller
                         ->count();
                 }
 
-                if (Schema::hasTable('boardings') && Schema::hasColumn('boardings', 'hotel_room_id')) {
-                    $blockingReservationCount += DB::table('boardings')
-                        ->where('hotel_room_id', $room->id)
-                        ->whereNotIn('status', ['rejected', 'cancelled', 'checked_out', 'completed'])
-                        ->where('check_in', '<=', $checkOut)
-                        ->where('check_out', '>=', $checkIn)
-                        ->count();
-                }
-
                 $room->available = $blockingReservationCount < (int) ($room->total_rooms ?? 1);
                 $room->available_rooms = max(0, (int) ($room->total_rooms ?? 1) - $blockingReservationCount);
 

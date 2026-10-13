@@ -9,6 +9,7 @@ use App\Models\HotelRoom;
 use App\Models\InventoryItem;
 use App\Models\Pet;
 use App\Models\Service;
+use App\Services\ServiceDurationService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -67,13 +68,14 @@ class ChatbotWorkflowController extends Controller
         }
 
         $service = Service::findOrFail($data['service_id']);
+        $scheduledAt = ServiceDurationService::inStoreTimezone($data['scheduled_at']);
 
         $appointment = Appointment::create([
             'customer_id' => $customer->id,
             'pet_id' => $pet->id,
             'service_id' => $service->id,
             'status' => 'pending',
-            'scheduled_at' => $data['scheduled_at'],
+            'scheduled_at' => $scheduledAt->copy()->utc(),
             'price' => $service->price ?? 0,
             'notes' => $data['notes'] ?? null,
             'booking_channel' => \App\Support\BookingChannel::ONLINE,

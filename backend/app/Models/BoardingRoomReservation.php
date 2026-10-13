@@ -39,7 +39,7 @@ class BoardingRoomReservation extends Model
             ? 'room_id'
             : 'boarding_room_id';
 
-        return $this->belongsTo(BoardingRoom::class, $foreignKey);
+        return $this->belongsTo(BoardingRoom::class, $foreignKey)->withTrashed();
     }
 
     /**

@@ -9,6 +9,7 @@ use App\Models\Pet;
 use App\Models\Service;
 use App\Models\ServiceRequest;
 use App\Models\User;
+use Carbon\Carbon;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
@@ -125,23 +126,30 @@ class VeterinaryWorkflowTest extends TestCase
             ->assertOk()
             ->assertJsonPath('appointment.status', 'completed');
 
+        $initialSchedule = Carbon::now('Asia/Manila')->addDay()->setTime(10, 0);
+        $updatedSchedule = Carbon::now('Asia/Manila')->addDays(2)->setTime(10, 0);
         $editableAppointment = Appointment::factory()->create([
             'customer_id' => $customer->id,
             'pet_id' => $pet->id,
             'service_id' => $service->id,
             'veterinarian_id' => $vet->id,
             'status' => 'approved',
-            'scheduled_at' => now()->addDay(),
+            'scheduled_at' => $initialSchedule->copy()->utc(),
         ]);
 
         $this->withHeaders($this->authHeader($vet))
             ->putJson("/api/veterinary/appointments/{$editableAppointment->id}", [
                 'service_id' => $service->id,
-                'scheduled_at' => now()->addDays(2)->toISOString(),
+                'scheduled_at' => $updatedSchedule->copy()->utc()->toISOString(),
                 'notes' => 'Updated consult',
             ])
             ->assertOk()
             ->assertJsonPath('notes', 'Updated consult');
+
+        $this->assertDatabaseHas('appointments', [
+            'id' => $editableAppointment->id,
+            'scheduled_at' => $updatedSchedule->copy()->utc()->format('Y-m-d H:i:s'),
+        ]);
     }
 
     public function test_completed_appointment_leaves_active_board_stays_in_history_and_pet_records(): void
@@ -527,5 +535,133 @@ class VeterinaryWorkflowTest extends TestCase
             ->postJson("/api/veterinary/appointments/{$appointmentId}/complete")
             ->assertOk()
             ->assertJsonPath('appointment.status', 'completed');
+    }
+
+    public function test_receptionist_reschedule_rejects_overlap_and_syncs_linked_request(): void
+    {
+        $receptionist = $this->userWithToken('receptionist');
+        $vet = $this->userWithToken('veterinary');
+        $customerUser = $this->userWithToken('customer');
+        $customer = Customer::create([
+            'user_id' => $customerUser->id,
+            'name' => $customerUser->name,
+            'email' => $customerUser->email,
+        ]);
+        $pet = Pet::factory()->create(['customer_id' => $customer->id]);
+        $service = Service::factory()->create([
+            'name' => 'General Check-up',
+            'category' => 'Consultation',
+            'duration_minutes' => 30,
+            'price' => 500,
+        ]);
+        $date = Carbon::now('Asia/Manila')->addDay()->toDateString();
+        $serviceRequest = ServiceRequest::create([
+            'customer_id' => $customerUser->id,
+            'customer_name' => $customer->name,
+            'customer_email' => $customer->email,
+            'pet_id' => $pet->id,
+            'pet_name' => $pet->name,
+            'request_type' => 'vet',
+            'service_name' => $service->name,
+            'request_date' => $date,
+            'request_time' => '10:00',
+            'preferred_date' => $date,
+            'preferred_time' => '10:00',
+            'status' => 'approved',
+            'payment_status' => 'unpaid',
+        ]);
+        $movingAppointment = Appointment::factory()->create([
+            'customer_id' => $customer->id,
+            'pet_id' => $pet->id,
+            'service_id' => $service->id,
+            'service_request_id' => $serviceRequest->id,
+            'veterinarian_id' => $vet->id,
+            'status' => 'approved',
+            'scheduled_at' => Carbon::parse("{$date} 10:00:00", 'Asia/Manila')->utc(),
+        ]);
+        Appointment::factory()->create([
+            'customer_id' => $customer->id,
+            'pet_id' => $pet->id,
+            'service_id' => $service->id,
+            'veterinarian_id' => $vet->id,
+            'status' => 'approved',
+            'scheduled_at' => Carbon::parse("{$date} 11:00:00", 'Asia/Manila')->utc(),
+        ]);
+
+        $headers = $this->authHeader($receptionist);
+        $this->withHeaders($headers)
+            ->postJson("/api/receptionist/appointments/{$movingAppointment->id}/reschedule", [
+                'scheduled_at' => "{$date} 11:30:00",
+            ])
+            ->assertUnprocessable();
+
+        $this->assertDatabaseHas('appointments', [
+            'id' => $movingAppointment->id,
+            'scheduled_at' => Carbon::parse("{$date} 10:00:00", 'Asia/Manila')->utc()->format('Y-m-d H:i:s'),
+        ]);
+        $this->assertDatabaseHas('service_requests', [
+            'id' => $serviceRequest->id,
+            'request_time' => '10:00',
+            'preferred_time' => '10:00',
+        ]);
+
+        $this->withHeaders($headers)
+            ->postJson("/api/receptionist/appointments/{$movingAppointment->id}/reschedule", [
+                'scheduled_at' => "{$date} 12:00:00",
+            ])
+            ->assertOk();
+
+        $this->assertDatabaseHas('appointments', [
+            'id' => $movingAppointment->id,
+            'scheduled_at' => Carbon::parse("{$date} 12:00:00", 'Asia/Manila')->utc()->format('Y-m-d H:i:s'),
+        ]);
+        $this->assertDatabaseHas('service_requests', [
+            'id' => $serviceRequest->id,
+            'request_date' => $date,
+            'request_time' => '12:00',
+            'preferred_date' => $date,
+            'preferred_time' => '12:00',
+        ]);
+    }
+
+    public function test_veterinary_appointment_update_rejects_an_overlapping_time(): void
+    {
+        $vet = $this->userWithToken('veterinary');
+        $customer = Customer::factory()->create();
+        $pet = Pet::factory()->create(['customer_id' => $customer->id]);
+        $service = Service::factory()->create([
+            'name' => 'General Check-up',
+            'category' => 'Consultation',
+            'duration_minutes' => 30,
+        ]);
+        $date = now()->addDay()->toDateString();
+        $appointment = Appointment::factory()->create([
+            'customer_id' => $customer->id,
+            'pet_id' => $pet->id,
+            'service_id' => $service->id,
+            'veterinarian_id' => $vet->id,
+            'status' => 'approved',
+            'scheduled_at' => Carbon::parse("{$date} 10:00:00", 'Asia/Manila')->utc(),
+        ]);
+        Appointment::factory()->create([
+            'customer_id' => $customer->id,
+            'pet_id' => $pet->id,
+            'service_id' => $service->id,
+            'veterinarian_id' => $vet->id,
+            'status' => 'approved',
+            'scheduled_at' => Carbon::parse("{$date} 11:00:00", 'Asia/Manila')->utc(),
+        ]);
+
+        $this->withHeaders($this->authHeader($vet))
+            ->putJson("/api/veterinary/appointments/{$appointment->id}", [
+                'service_id' => $service->id,
+                'scheduled_at' => "{$date} 11:30:00",
+            ])
+            ->assertUnprocessable();
+
+        $this->assertDatabaseHas('appointments', [
+            'id' => $appointment->id,
+            'scheduled_at' => Carbon::parse("{$date} 10:00:00", 'Asia/Manila')->utc()->format('Y-m-d H:i:s'),
+        ]);
     }
 }

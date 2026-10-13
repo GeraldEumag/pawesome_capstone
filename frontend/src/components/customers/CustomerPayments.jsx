@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { apiRequest } from "../../api/client";
 import { clearAuth } from "../../utils/auth";
+import { getRoomName } from "../../utils/apiNormalize";
 import { useAuth } from "../../context/AuthContext";
 import "./CustomerPayments.css";
 import { showAlert, showError } from "../../utils/alert.jsx";
@@ -156,12 +157,9 @@ const CustomerPayments = () => {
           display_id: `BOARD-${boarding.id}`,
           display_type: "Pet Hotel / Boarding",
           display_name:
-            boarding.service_name ||
-            boarding.room?.name ||
-            boarding.hotel_room?.name ||
-            boarding.room_type ||
-            boarding.boarding_type ||
-            "Pet Hotel / Boarding",
+            getRoomName(boarding) !== "Unassigned"
+              ? getRoomName(boarding)
+              : boarding.service_name || "Pet Hotel / Boarding",
           total_amount: boarding.total_amount || boarding.amount || 0,
           order_status: boarding.status || "approved",
           payment_status: boarding.payment_status || "unpaid",

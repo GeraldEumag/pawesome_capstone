@@ -72,8 +72,28 @@ export const getServiceName = (item) =>
 export const getServicePrice = (item) =>
   Number(item?.price || item?.service_price || item?.cost || item?.amount || 0);
 
-export const getRoomName = (item) =>
-  item?.hotel_room?.name || item?.hotel_room?.room_number || item?.room?.name || item?.room_number || item?.room_type || "Unassigned";
+export const getRoomName = (item) => {
+  const serviceRequest = item?.service_request || item?.serviceRequest;
+  const room =
+    item?.room_reservation?.room ||
+    item?.roomReservation?.room ||
+    serviceRequest?.room_reservation?.room ||
+    serviceRequest?.roomReservation?.room ||
+    item?.room;
+
+  return room?.room_name ||
+    room?.name ||
+    item?.hotel_room?.name ||
+    item?.hotel_room?.room_number ||
+    item?.hotelRoom?.name ||
+    item?.hotelRoom?.room_number ||
+    serviceRequest?.room_name ||
+    item?.room_name ||
+    item?.room_number ||
+    item?.room_type ||
+    item?.boarding_type ||
+    "Unassigned";
+};
 
 /* ── Date / Time helpers ────────────────────────────────────── */
 
