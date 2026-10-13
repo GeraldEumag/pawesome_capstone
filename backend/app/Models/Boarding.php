@@ -144,17 +144,18 @@ class Boarding extends Model
             // Ensure non-negative amount
             $boarding->total_amount = max(0, (float) $boarding->total_amount);
 
-            // Ensure check_out is after check_in
             if ($boarding->check_in && $boarding->check_out) {
-                $checkIn = $boarding->check_in instanceof \Carbon\Carbon 
-                    ? $boarding->check_in 
+                $checkIn = $boarding->check_in instanceof \Carbon\Carbon
+                    ? $boarding->check_in
                     : \Carbon\Carbon::parse($boarding->check_in);
-                $checkOut = $boarding->check_out instanceof \Carbon\Carbon 
-                    ? $boarding->check_out 
+                $checkOut = $boarding->check_out instanceof \Carbon\Carbon
+                    ? $boarding->check_out
                     : \Carbon\Carbon::parse($boarding->check_out);
-                
-                if ($checkOut->lessThanOrEqualTo($checkIn)) {
-                    $boarding->check_out = $checkIn->copy()->addDay();
+
+                if ($checkOut->toDateString() < $checkIn->toDateString()) {
+                    throw \Illuminate\Validation\ValidationException::withMessages([
+                        'check_out' => ['Check-out date cannot be before check-in date.'],
+                    ]);
                 }
             }
         });
@@ -238,7 +239,7 @@ class Boarding extends Model
     public function scopeCurrent($query)
     {
         return $query->whereIn('status', ['approved', 'scheduled', 'confirmed', 'checked_in', 'in_care'])
-            ->where('check_out', '>=', now());
+            ->whereDate('check_out', '>=', now(\App\Services\ServiceDurationService::STORE_TIMEZONE)->toDateString());
     }
 
     public function scopeCheckedIn($query)

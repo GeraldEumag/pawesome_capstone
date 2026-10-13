@@ -529,18 +529,19 @@
 /* Charts Section */
 .ure-charts-section {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 400px), 1fr));
   gap: 1.25rem;
+  min-width: 0;
   min-height: 340px;
 }
 
 .ure-chart-container {
+  min-width: 0;
   background: var(--ure-surface);
   border: 1px solid var(--ure-border);
   border-radius: var(--ure-radius-lg);
   padding: 1.25rem;
   box-shadow: 0 1px 3px rgba(15, 23, 42, 0.05);
-  min-width: 0;
   min-height: 340px;
   display: flex;
   flex-direction: column;
@@ -573,7 +574,8 @@
   flex: 1;
   width: 100%;
   min-width: 0;
-  min-height: 280px;
+  min-height: 220px;
+  height: var(--ure-chart-height, 300px);
 }
 
 .ure-chart-actions {
@@ -601,7 +603,6 @@
 .ure-chart-body {
   width: 100%;
   min-width: 0;
-  min-height: 200px;
 }
 
 /* Table Section */
@@ -768,7 +769,43 @@
   }
 
   .ure-charts-section {
-    grid-template-columns: 1fr;
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .ure-chart-container {
+    min-height: 0;
+    padding: 1rem;
+  }
+
+  .ure-chart-body {
+    height: clamp(210px, 70vw, 280px);
+    min-height: 210px;
+  }
+
+  .ure-chart-body .recharts-wrapper {
+    max-width: none !important;
+  }
+
+  .ure-chart-body .recharts-surface,
+  .ure-chart-body .recharts-legend-wrapper {
+    max-width: 100%;
+  }
+
+  .ure-chart-body .recharts-default-legend {
+    display: flex !important;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 4px 10px;
+    width: 100%;
+  }
+
+  .ure-chart-body .recharts-legend-item {
+    margin: 0 !important;
+  }
+
+  .ure-chart-body .recharts-legend-item-text {
+    white-space: normal;
+    overflow-wrap: anywhere;
   }
 
   .ure-chart-header,

@@ -238,8 +238,25 @@
 /* Charts Grid */
 .cs-charts-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 400px), 1fr));
   gap: 1.5rem;
+  min-width: 0;
+}
+
+.cs-charts-grid > * {
+  min-width: 0;
+}
+
+.cs-chart-empty {
+  min-height: 220px;
+  display: grid;
+  place-items: center;
+  padding: 1rem;
+  color: #64748b;
+  text-align: center;
+  border: 1px dashed rgba(255, 95, 147, 0.25);
+  border-radius: 12px;
+  background: rgba(255, 241, 247, 0.45);
 }
 
 /* Recommendations */

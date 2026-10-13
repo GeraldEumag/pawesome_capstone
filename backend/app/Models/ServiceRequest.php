@@ -58,4 +58,9 @@ class ServiceRequest extends Model
             ->whereNotIn('status', ['cancelled', 'checked_out'])
             ->latestOfMany();
     }
+
+    public function appointment(): HasOne
+    {
+        return $this->hasOne(Appointment::class)->latestOfMany();
+    }
 }

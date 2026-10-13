@@ -7,6 +7,7 @@ import { showError } from "../../utils/alert.jsx";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import DatePickerInput from "../../components/shared/DatePickerInput";
 import StandardTable from "../../components/shared/StandardTable";
+import ReportSkeleton from "../../components/shared/ReportSkeleton";
 import {
   faUsers,
   faChartBar,
@@ -25,7 +26,6 @@ import {
   faClock,
   faCheckCircle,
   faExclamationTriangle,
-  faSpinner,
   faSync,
 } from "@fortawesome/free-solid-svg-icons";
 import "./CustomerReport.css";
@@ -375,10 +375,7 @@ const CustomerReport = () => {
         </div>
 
         {loading ? (
-          <div className="loading-container">
-            <FontAwesomeIcon icon={faSpinner} spin />
-            <p>Loading customer reports...</p>
-          </div>
+          <ReportSkeleton label="Loading customer report" />
         ) : error ? (
           <div className="error-container">
             <FontAwesomeIcon icon={faExclamationTriangle} />

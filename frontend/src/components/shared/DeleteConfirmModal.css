@@ -123,3 +123,27 @@
     opacity: 1;
   }
 }
+
+.delete-reason-input {
+  display: grid;
+  gap: 0.45rem;
+  margin-top: 1rem;
+  text-align: left;
+}
+
+.delete-reason-input label {
+  color: #374151;
+  font-size: 0.85rem;
+  font-weight: 800;
+}
+
+.delete-reason-input select,
+.delete-reason-input textarea {
+  width: 100%;
+  padding: 0.7rem 0.8rem;
+  border: 1px solid #cbd5e1;
+  border-radius: 12px;
+  color: #111827;
+  font: inherit;
+  background: #fff;
+}

@@ -44,7 +44,7 @@ const VetForm = () => {
   const [loading, setLoading] = useState(false);
   const [availabilityLoading, setAvailabilityLoading] = useState(false);
   const [availableTimeSlots, setAvailableTimeSlots] = useState([]);
-  const [uploadModal, setUploadModal] = useState({ open: false, endpoint: "", title: "", referenceNumber: "", paymentStatus: "", rejectionReason: "", paymentMethod: "gcash" });
+  const [uploadModal, setUploadModal] = useState({ open: false, endpoint: "", title: "", referenceNumber: "", paymentStatus: "", rejectionReason: "", paymentMethod: "gcash", amount: null, awaitingBookingApproval: false });
 
   const [formData, setFormData] = useState({
     customer_name: customerName,
@@ -223,7 +223,7 @@ const VetForm = () => {
     setReviewOpen(true);
   };
 
-  const confirmBooking = async () => {
+  const confirmBooking = async ({ payNow = false } = {}) => {
     try {
       setLoading(true);
 
@@ -233,8 +233,23 @@ const VetForm = () => {
       });
 
       if (data.success) {
+        const request = data.request;
         setReviewOpen(false);
-        showSuccess("Vet appointment submitted! Waiting for receptionist approval.");
+        if (!payNow) showSuccess("Vet appointment submitted! Waiting for receptionist approval.");
+
+        if (payNow && request?.id) {
+          setUploadModal({
+            open: true,
+            endpoint: `/customer/requests/${request.id}/payment-proof`,
+            title: request.service_name || formData.service_name || "Veterinary",
+            referenceNumber: request.payment_reference || "",
+            paymentStatus: request.payment_status || "unpaid",
+            rejectionReason: request.rejection_reason || "",
+            paymentMethod: request.payment_method || "gcash",
+            amount: request.total_amount ?? request.price ?? request.amount ?? formData.price,
+            awaitingBookingApproval: true,
+          });
+        }
 
         setFormData({
           customer_name: customerName,
@@ -282,7 +297,9 @@ const VetForm = () => {
   const canPay = (item) => {
     const status = String(item?.status || "").toLowerCase();
     const paymentStatus = String(item?.payment_status || item?.payment || "unpaid").toLowerCase();
-    return ["approved", "scheduled"].includes(status) && ["unpaid", "rejected"].includes(paymentStatus);
+    return Number(item?.additional_charges || 0) <= 0
+      && ["approved", "scheduled"].includes(status)
+      && ["unpaid", "rejected"].includes(paymentStatus);
   };
 
   const openUploadModal = (item) => {
@@ -294,6 +311,8 @@ const VetForm = () => {
       paymentStatus: String(item.payment_status || item.payment || ""),
       rejectionReason: item.rejection_reason || "",
       paymentMethod: item.payment_method || "gcash",
+      amount: item.total_amount ?? item.price ?? item.amount ?? null,
+      awaitingBookingApproval: false,
     });
   };
 
@@ -449,6 +468,7 @@ const VetForm = () => {
               <div key={item.id} className="vet-item">
                 <h3>{item.pet_name}</h3>
                 <p>Service: {item.service_name}</p>
+                <p>Veterinarian: {item.veterinarian?.name || (item.veterinarian_id ? `Vet #${item.veterinarian_id}` : "Not yet assigned")}</p>
                 <p>Date: {item.request_date}</p>
                 <p>Time: {item.request_time}</p>
                 <p>Concern: {item.notes || "None"}</p>
@@ -461,6 +481,16 @@ const VetForm = () => {
                 <span className={`vet-status ${item.status}`}>
                   {item.status}
                 </span>
+
+                {Number(item.additional_charges || 0) > 0 && (
+                  <a
+                    href="/customer/payments"
+                    className="vet-pay-btn"
+                    style={{ marginTop: "0.5rem", display: "inline-block", background: "#0f766e", color: "#fff", border: "none", borderRadius: "6px", padding: "0.4rem 0.8rem", textDecoration: "none", fontSize: "0.85rem", fontWeight: 600, marginRight: "0.5rem" }}
+                  >
+                    View additional bill and payment options
+                  </a>
+                )}
 
                 {canPay(item) && (
                   <button
@@ -508,6 +538,7 @@ const VetForm = () => {
           rows: [{ label: formData.service_name || "Veterinary service", value: `₱${Number(formData.price).toFixed(2)}` }],
           total: `₱${Number(formData.price).toFixed(2)}`,
         } : null}
+        allowPayNow
         notes={formData.notes}
       />
 
@@ -521,6 +552,8 @@ const VetForm = () => {
         rejectionReason={uploadModal.rejectionReason}
         paymentMethod={uploadModal.paymentMethod}
         onSuccess={fetchAppointments}
+        amount={uploadModal.amount}
+        awaitingBookingApproval={uploadModal.awaitingBookingApproval}
       />
     </section>
   );

@@ -1,76 +1,20 @@
 const { test, expect } = require('@playwright/test');
-const { loginAs } = require('./test-utils');
+const { loginAs, mockLoginAs } = require('./test-utils');
 
 test.describe('Phase 2 Vaccination Card Verification', () => {
-  test('Customer hotel booking without vaccination card should succeed', async ({ page }) => {
-    test.setTimeout(90000); // real booking flow: pets fetch + availability + submit on slow XAMPP
-    // Login as customer (cached token — /auth/login is throttled to 5/min per account)
-    await loginAs(page, 'customer');
-
-    // Navigate to hotel booking
+  test('Customer hotel booking requires a vaccination card upload', async ({ page }) => {
+    await mockLoginAs(page, 'customer', 'Vaccination Requirement Customer');
     await page.goto('/customer/hotel');
 
-    // Wait for page to load
-    await page.waitForSelector('.customer-hotel-reservation', { timeout: 10000 });
-
-    // Room availability requires a saved pet (pet_id), so wait for the pet
-    // list to load and pick the first real pet. Manual entry cannot reach
-    // the availability step.
-    const petSelect = page.locator('select[name="pet_id"]');
-    await petSelect.locator('option').nth(1).waitFor({ state: 'attached', timeout: 30000 });
-    await petSelect.selectOption({ index: 1 });
-
-    // Select the date from the calendar because direct date text entry is disabled.
-    const checkInInput = page.locator('input[placeholder*="check-in" i]');
-    let displayedDate = new Date();
-    let submitted = false;
-    for (const offsetDays of [60, 120, 200]) {
-      const checkIn = new Date(Date.now() + offsetDays * 86400000);
-      await checkInInput.click();
-      const monthDelta = (checkIn.getFullYear() - displayedDate.getFullYear()) * 12 + checkIn.getMonth() - displayedDate.getMonth();
-      for (let month = 0; month < monthDelta; month += 1) {
-        await page.locator('.react-datepicker__navigation--next').click();
-      }
-      await page.locator('.react-datepicker__day:not(.react-datepicker__day--outside-month)')
-        .filter({ hasText: new RegExp(`^${checkIn.getDate()}$`) })
-        .first()
-        .click();
-      displayedDate = checkIn;
-      await page.fill('input[name="number_of_days"]', '2');
-
-      // Filling pet + dates auto-fetches room availability; pick the first open room.
-      // If this window has no available room, skip to the next date window.
-      const roomCard = page.locator('.rooms-grid .room-card:not(.unavailable)').first();
-      const hasRoom = await roomCard.waitFor({ state: 'visible', timeout: 15000 }).then(() => true).catch(() => false);
-      if (!hasRoom) continue;
-      await roomCard.click();
-
-      await page.click('button[type="submit"]');
-
-      const successMsg = page.locator('text=/submitted successfully/i').first();
-      const unavailableMsg = page.locator('text=/no longer available/i').first();
-      const outcome = await Promise.race([
-        successMsg.waitFor({ state: 'visible', timeout: 15000 }).then(() => 'success'),
-        unavailableMsg.waitFor({ state: 'visible', timeout: 15000 }).then(() => 'unavailable'),
-      ]).catch(() => 'timeout');
-
-      if (outcome === 'success') {
-        submitted = true;
-        break;
-      }
-      // Dismiss the error dialog before retrying the next date window.
-      await page.locator('button:has-text("OK"), .dialog button, [role="dialog"] button').first().click().catch(() => {});
-    }
-
-    // Should succeed — success banner renders and the view switches to My Bookings.
-    expect(submitted).toBeTruthy();
-    const currentUrl = page.url();
-    expect(currentUrl).toContain('customer');
+    await expect(page.locator('.customer-hotel-reservation')).toBeVisible({ timeout: 10000 });
+    const vaccinationInput = page.locator('.customer-hotel-reservation input[type="file"]');
+    await expect(vaccinationInput).toBeVisible();
+    await expect(vaccinationInput).toHaveAttribute('required', '');
+    await expect(page.locator('.vaccination-required-note')).toContainText('verify this card before approving');
   });
 
-  test('Database vaccination_card should be NULL when omitted', async ({ request }) => {
-    // This would require direct database access - skip for now
-    // In production, this would be verified via DB query
+  test('Database vaccination-card omission is covered by backend request validation', async () => {
+    // Database-backed validation runs in the backend CustomerBookingRulesTest suite.
     test.skip();
   });
 
@@ -89,20 +33,40 @@ test.describe('Phase 2 Vaccination Card Verification', () => {
     expect(bookings).toBeGreaterThanOrEqual(0);
   });
 
-  test('Receptionist approval should succeed without vaccination card verification', async ({ page }) => {
-    // Login as receptionist
-    await loginAs(page, 'receptionist');
+  test('Receptionist cannot approve an online boarding before card verification', async ({ page }) => {
+    await mockLoginAs(page, 'receptionist', 'E2E Vaccination Reviewer');
+    const booking = {
+      id: 25,
+      pet_name: 'E2E Online Boarding Pet',
+      pet: { name: 'E2E Online Boarding Pet', species: 'Dog' },
+      customer_name: 'E2E Owner',
+      booking_channel: 'online',
+      check_in: '2026-09-28',
+      check_out: '2026-09-28',
+      room_type: 'Standard',
+      status: 'pending',
+      payment_status: 'unpaid',
+    };
+    await page.route('**/api/receptionist/boarding-requests*', (route) => route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({ boarding_requests: [booking] }),
+    }));
+    await page.route('**/api/receptionist/boarding-rooms*', (route) => route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({ rooms: [] }),
+    }));
 
-    // Approvals live on the hotel bookings board (/receptionist/approvals redirects here)
     await page.goto('/receptionist/bookings/hotel');
-
-    // Wait for bookings table to load (renders once the loading state clears)
-    await page.waitForSelector('.bookings-table', { timeout: 20000 });
-
-    // Check that vaccination verification is not blocking approval
-    // The approve button should be visible regardless of vaccination card status
-    const approveButtons = await page.locator('.approve-btn, button:has-text("Approve")').count();
-    expect(approveButtons).toBeGreaterThanOrEqual(0);
+    const row = page.locator('tr.booking-row', { hasText: 'E2E Online Boarding Pet' });
+    await expect(row).toBeVisible();
+    await row.getByRole('button', { name: /actions for/i }).click();
+    const menuApprove = page.locator('.row-action-popover-panel button[title="View details and verify the vaccination card first"]');
+    await expect(menuApprove).toBeDisabled();
+    await page.getByRole('button', { name: 'View / Manage' }).click();
+    await expect(page.locator('.hbk-vax-required')).toContainText('must upload a card');
+    await expect(page.getByRole('button', { name: 'Approve Boarding' })).toBeDisabled();
   });
 
   test('Walk-in hotel booking without vaccination card should succeed', async ({ page }) => {

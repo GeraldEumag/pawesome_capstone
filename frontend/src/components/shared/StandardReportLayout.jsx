@@ -2,6 +2,7 @@ import React from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faExclamationTriangle, faChartBar, faRotateRight } from "@fortawesome/free-solid-svg-icons";
 import StandardReportHeader from "./StandardReportHeader";
+import ReportSkeleton from "./ReportSkeleton";
 import "./StandardReportLayout.css";
 
 /**
@@ -34,14 +35,6 @@ const StandardReportLayout = ({
   lastUpdated,
   children,
 }) => {
-  const renderLoadingState = () => (
-    <div className="standard-loading-state">
-      <div className="loading-spinner"></div>
-      <div className="loading-text">Loading report data...</div>
-      <div className="loading-subtext">Please wait while we fetch the latest information</div>
-    </div>
-  );
-
   const renderErrorState = () => (
     <div className="standard-error-state">
       <div className="error-icon">
@@ -72,22 +65,28 @@ const StandardReportLayout = ({
     </div>
   );
 
+  if (loading) {
+    return (
+      <div className="standard-report-layout">
+        <ReportSkeleton label={`Loading ${title || "report"}`} />
+      </div>
+    );
+  }
+
   return (
     <div className="standard-report-layout">
       <StandardReportHeader
         title={title}
         subtitle={subtitle}
         icon={icon}
-        loading={loading}
+        loading={false}
         onRefresh={onRefresh}
         onExport={onExport}
         lastUpdated={lastUpdated}
       />
 
       <div className="report-content">
-        {loading ? (
-          renderLoadingState()
-        ) : error ? (
+        {error ? (
           renderErrorState()
         ) : empty ? (
           renderEmptyState()

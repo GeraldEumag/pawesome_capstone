@@ -578,22 +578,20 @@ class PortalController extends Controller
             return response()->json(['message' => 'Pet not found'], 404);
         }
 
-        $scheduledAt = ServiceDurationService::inStoreTimezone($data['scheduled_at']);
-        $scheduledAtUtc = $scheduledAt->copy()->utc();
-        $date = $scheduledAt->format('Y-m-d');
-        $time = $scheduledAt->format('H:i');
-        $service = Service::findOrFail($data['service_id']);
-        $serviceType = strtolower((string) $service->category) === 'grooming' ? 'grooming' : 'veterinary';
+        [$scheduledAtUtc, $scheduledAtLocal] = BookingAvailabilityService::appointmentTimes($data['scheduled_at']);
+        if (!$scheduledAtUtc->isFuture()) {
+            return response()->json(['errors' => ['scheduled_at' => ['The scheduled time must be in the future.']]], 422);
+        }
 
-        $appointment = DB::transaction(function () use ($data, $cust, $date, $time, $serviceType, $service, $scheduledAtUtc) {
-            Service::query()->orderBy('id')->lockForUpdate()->first();
-            $lockedService = Service::find($data['service_id']);
-
-            if (!$lockedService || !BookingAvailabilityService::isServiceTimeAvailable(
+        $appointment = DB::transaction(function () use ($data, $cust, $scheduledAtUtc, $scheduledAtLocal) {
+            BookingAvailabilityService::lockServiceSchedule();
+            $service = Service::find($data['service_id']);
+            $serviceType = strtolower((string) $service?->category) === 'grooming' ? 'grooming' : 'veterinary';
+            if (!$service || !BookingAvailabilityService::isServiceTimeAvailable(
                 $serviceType,
-                $date,
-                $time,
-                $lockedService->name
+                $scheduledAtLocal->toDateString(),
+                $scheduledAtLocal->format('H:i'),
+                $service->name
             )) {
                 return null;
             }
@@ -601,17 +599,16 @@ class PortalController extends Controller
             return Appointment::create([
                 'customer_id' => $cust->id,
                 'pet_id' => $data['pet_id'],
-                'service_id' => $lockedService->id,
+                'service_id' => $service->id,
                 'status' => 'pending',
                 'scheduled_at' => $scheduledAtUtc,
-                'price' => $lockedService->price ?? $service->price ?? 0,
+                'price' => $service->price ?? 0,
                 'booking_channel' => \App\Support\BookingChannel::ONLINE,
             ]);
         });
 
         if (!$appointment) {
             return response()->json([
-                'success' => false,
                 'message' => 'This schedule is no longer available. Please choose another slot.',
                 'errors' => ['scheduled_at' => ['Time slot overlaps an existing booking.']],
             ], 422);

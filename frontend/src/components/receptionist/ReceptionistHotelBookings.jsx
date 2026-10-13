@@ -101,6 +101,17 @@ const formatTime12 = (value) => {
   return `${hour12}:${String(m).padStart(2, "0")} ${meridiem}`;
 };
 
+const requiresVaccinationVerification = (booking) =>
+  (booking?.booking_channel || booking?.service_request?.booking_channel || "online") !== "walk_in";
+
+const hasVerifiedVaccinationCard = (booking) =>
+  Boolean(booking?.vaccination_card && booking?.vaccination_card_verified_at);
+
+const requiresCardBeforeApproval = (booking) =>
+  String(booking?.status || "").toLowerCase() === "pending"
+  && requiresVaccinationVerification(booking)
+  && !hasVerifiedVaccinationCard(booking);
+
 const ReceptionistHotelBookings = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [filterStatus, setFilterStatus] = useState("all");
@@ -291,6 +302,7 @@ const ReceptionistHotelBookings = () => {
       showMessage("success", message);
       await fetchBookings({ silent: true });
       await fetchRooms();
+      return true;
     } catch (err) {
       // Handle specific double booking conflict errors
       if (err.message?.includes('already booked for selected date range')) {
@@ -298,19 +310,37 @@ const ReceptionistHotelBookings = () => {
       } else {
         showMessage("error", err.message || "Action failed.");
       }
+      return false;
     } finally {
       setProcessingId(null);
     }
+  };
+
+  const approveBooking = async (booking) => {
+    if (requiresCardBeforeApproval(booking)) {
+      showMessage("error", booking.vaccination_card
+        ? "Verify the vaccination card before approving this online boarding."
+        : "A vaccination card is required before approving this online boarding.");
+      return false;
+    }
+
+    const approved = await runAction(
+      booking,
+      `/receptionist/boarding-requests/${booking.id}/approve`,
+      "Boarding approved."
+    );
+    if (approved) setSelectedBooking((current) => current?.id === booking.id ? null : current);
+    return approved;
   };
 
   const verifyVaccination = async (booking) => {
     try {
       setProcessingId(booking.id);
       setError("");
-      await apiRequest(`/receptionist/boarding-requests/${booking.id}/verify-vaccination`, {
+      const result = await apiRequest(`/receptionist/boarding-requests/${booking.id}/verify-vaccination`, {
         method: "POST",
       });
-      const verifiedAt = new Date().toISOString();
+      const verifiedAt = result.boarding?.vaccination_card_verified_at || new Date().toISOString();
       setSelectedBooking((prev) =>
         prev ? { ...prev, vaccination_card_verified_at: verifiedAt } : prev
       );
@@ -341,6 +371,13 @@ const ReceptionistHotelBookings = () => {
     const draft = scheduleDraft[booking.id] || {};
     const roomKey = draft.room_key || getAssignedRoomSelectionKey(booking);
     const [roomSystem, roomId] = roomKey.split(":");
+
+    if (requiresCardBeforeApproval(booking)) {
+      showMessage("error", booking.vaccination_card
+        ? "Verify the vaccination card before scheduling this online boarding."
+        : "A vaccination card is required before scheduling this online boarding.");
+      return;
+    }
 
     if (!roomId || !["boarding", "hotel"].includes(roomSystem)) {
       showMessage("error", "Select a room before scheduling.");
@@ -741,15 +778,9 @@ const ReceptionistHotelBookings = () => {
                             <button
                               type="button"
                               className="action-btn approve-btn"
-                              onClick={() =>
-                                runAction(
-                                  booking,
-                                  `/receptionist/boarding-requests/${booking.id}/approve`,
-                                  "Boarding approved."
-                                )
-                              }
-                              disabled={isProcessing(booking)}
-                              title="Approve"
+                              onClick={() => approveBooking(booking)}
+                              disabled={isProcessing(booking) || (requiresCardBeforeApproval(booking))}
+                              title={requiresCardBeforeApproval(booking) ? "View details and verify the vaccination card first" : "Approve"}
                             >
                               <FontAwesomeIcon
                                 icon={isProcessing(booking) ? faSpinner : faCheckCircle}
@@ -923,6 +954,18 @@ const ReceptionistHotelBookings = () => {
                   </div>
                 </div>
 
+                {String(bookingStatus).toLowerCase() === "pending" && requiresVaccinationVerification(selectedBooking) && !selectedBooking.vaccination_card && (
+                  <div className="hbk-vax hbk-vax-required">
+                    <div className="hbk-vax-info">
+                      <FontAwesomeIcon icon={faTimesCircle} className="hbk-vax-icon" />
+                      <div>
+                        <strong>Vaccination Card Required</strong>
+                        <span>The customer must upload a card before this online boarding can be approved.</span>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
                 {/* Vaccination card */}
                 {selectedBooking.vaccination_card && (
                   <div className="hbk-vax">
@@ -1072,12 +1115,19 @@ const ReceptionistHotelBookings = () => {
                       </div>
                     </div>
 
+                    {requiresCardBeforeApproval(selectedBooking) && (
+                      <p className="hbk-vax-gate-note">
+                        {selectedBooking.vaccination_card
+                          ? "Verify the vaccination card before approving or scheduling this booking."
+                          : "A vaccination card must be uploaded and verified before approving or scheduling this booking."}
+                      </p>
+                    )}
                     <div className="form-actions">
                       <button
                         type="button"
                         className="submit-btn"
                         onClick={() => scheduleBooking(selectedBooking)}
-                        disabled={isProcessing(selectedBooking)}
+                        disabled={isProcessing(selectedBooking) || (requiresCardBeforeApproval(selectedBooking))}
                       >
                         {isProcessing(selectedBooking) && (
                           <FontAwesomeIcon icon={faSpinner} spin />
@@ -1166,6 +1216,17 @@ const ReceptionistHotelBookings = () => {
               </div>
 
               <div className="hbk-foot">
+                {bookingStatus === "pending" && (
+                  <button
+                    type="button"
+                    className="submit-btn hbk-approve-modal-btn"
+                    onClick={() => approveBooking(selectedBooking)}
+                    disabled={isProcessing(selectedBooking) || (requiresCardBeforeApproval(selectedBooking))}
+                  >
+                    {isProcessing(selectedBooking) ? <FontAwesomeIcon icon={faSpinner} spin /> : <FontAwesomeIcon icon={faCheckCircle} />}
+                    {isProcessing(selectedBooking) ? "Approving..." : "Approve Boarding"}
+                  </button>
+                )}
                 <button
                   type="button"
                   className="secondary-btn"

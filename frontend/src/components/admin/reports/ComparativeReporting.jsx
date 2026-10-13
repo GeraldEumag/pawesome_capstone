@@ -21,7 +21,8 @@ import {
   ResponsiveContainer,
 } from 'recharts';
 import { apiRequest } from '../../../api/client';
-import { ChartContainer } from '../../shared/UnifiedReportEngine';
+import { ChartContainer, getInitialChartDimension } from '../../shared/UnifiedReportEngine';
+import ReportSkeleton from '../../shared/ReportSkeleton';
 import './AdvancedReports.css';
 
 const CHART_COLORS = ['#ff5f93', '#94a3b8', '#10b981', '#3b82f6', '#f59e0b'];
@@ -83,11 +84,13 @@ const ComparativeReporting = () => {
   }, [fetchData]);
 
   const comparisonData = data?.comparisonData || {};
-  const dailyTrend = useMemo(() => data?.dailyTrend || [], [data]);
-  const categoryBreakdown = useMemo(() => data?.categoryBreakdown || [], [data]);
+  const dailyTrend = useMemo(() => Array.isArray(data?.dailyTrend) ? data.dailyTrend : [], [data]);
+  const categoryBreakdown = useMemo(() => Array.isArray(data?.categoryBreakdown) ? data.categoryBreakdown : [], [data]);
+  const hasDailyComparison = dailyTrend.some((row) => Number(row.current) > 0 || Number(row.previous) > 0);
+  const hasCategoryComparison = categoryBreakdown.some((row) => Number(row.current) > 0 || Number(row.previous) > 0);
 
   if (loading) {
-    return <div className="adv-loading"><p>Loading comparative report...</p></div>;
+    return <ReportSkeleton label="Loading comparative report" />;
   }
 
   if (error) {
@@ -145,10 +148,10 @@ const ComparativeReporting = () => {
 
       <div className="adv-charts-grid">
         <ChartContainer title="Daily Revenue Comparison" subtitle="Current vs previous period" height={340}>
-          {dailyTrend.length === 0 ? (
+          {!hasDailyComparison ? (
             <div className="adv-empty"><p>No comparison data available</p></div>
           ) : (
-            <ResponsiveContainer width="100%" height="100%">
+            <ResponsiveContainer width="100%" height={getInitialChartDimension(340).height} initialDimension={getInitialChartDimension(340)}>
               <LineChart data={dailyTrend}>
                 <CartesianGrid strokeDasharray="3 3" vertical={false} />
                 <XAxis dataKey="day" tick={{ fontSize: 11 }} interval={4} />
@@ -163,13 +166,13 @@ const ComparativeReporting = () => {
         </ChartContainer>
 
         <ChartContainer title="Category Performance" subtitle="Revenue by category, both periods" height={340}>
-          {categoryBreakdown.length === 0 ? (
+          {!hasCategoryComparison ? (
             <div className="adv-empty"><p>No category data available</p></div>
           ) : (
-            <ResponsiveContainer width="100%" height="100%">
+            <ResponsiveContainer width="100%" height={getInitialChartDimension(340).height} initialDimension={getInitialChartDimension(340)}>
               <BarChart data={categoryBreakdown}>
                 <CartesianGrid strokeDasharray="3 3" vertical={false} />
-                <XAxis dataKey="category" tick={{ fontSize: 11 }} />
+                <XAxis dataKey="category" tick={{ fontSize: 10 }} angle={-25} textAnchor="end" height={55} interval="preserveStartEnd" />
                 <YAxis tick={{ fontSize: 12 }} tickFormatter={(v) => `₱${v / 1000}k`} />
                 <Tooltip formatter={(v) => formatCurrency(v)} />
                 <Legend />

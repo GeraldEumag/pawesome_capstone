@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Services\BoardingRoomService;
+use App\Services\ServiceDurationService;
 use App\Services\WorkflowNotifier;
 use App\Models\BoardingRoom;
 use App\Models\BoardingRoomReservation;
@@ -263,8 +264,8 @@ class BoardingRoomController extends Controller
     {
         $validator = \Illuminate\Support\Facades\Validator::make($request->all(), [
             'room_id' => 'required|exists:boarding_rooms,id',
-            'check_in_date' => 'required|date|after_or_equal:today',
-            'check_out_date' => 'required|date|after:check_in_date',
+            'check_in_date' => 'required|date|after_or_equal:' . now(ServiceDurationService::STORE_TIMEZONE)->toDateString(),
+            'check_out_date' => 'required|date|after_or_equal:check_in_date',
         ]);
 
         if ($validator->fails()) {

@@ -12,6 +12,7 @@ import {
 } from "../../utils/apiNormalize";
 import { showError } from "../../utils/alert.jsx";
 import { printReceipt } from "../../utils/receiptPrinter";
+import { downloadReceiptPdf } from "../../utils/receiptPdf";
 import { STORE_INFO } from "../../utils/storeInfo";
 import PaymentApprovals from "./components/PaymentApprovals";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
@@ -19,7 +20,7 @@ import {
   faPaw, faRotateRight, faTrash, faBoxOpen,
   faShoppingCart, faCreditCard, faMoneyBillWave, faMobileScreen,
   faTriangleExclamation, faPlus,
-  faMinus, faXmark, faPrint, faClock, faBox, faCheckCircle,
+  faMinus, faXmark, faPrint, faFilePdf, faClock, faBox, faCheckCircle,
   faBarcode, faKeyboard, faCamera,
   faBolt, faUser, faList,
   faStore, faHistory, faBan, faExpand, faCompress,
@@ -494,21 +495,37 @@ const CashierPOS = ({ initialTab }) => {
         method: "POST",
         body: JSON.stringify(payload),
       });
-      const txId = res?.transaction?.transaction_number
+      const receiptData = res?.receipt || {};
+      const txId = receiptData.transaction_number
+        || res?.transaction?.transaction_number
         || res?.transaction?.id
         || res?.transaction_id
         || res?.id
         || `TRX-${Date.now()}`;
+      const sourceItems = Array.isArray(receiptData.items) && receiptData.items.length > 0
+        ? receiptData.items
+        : payload.items;
+      const receiptTotal = Number(receiptData.total ?? receiptData.total_amount ?? res?.transaction?.total_amount ?? total);
       const receipt = {
-        transaction_id:  String(txId).startsWith("TRX-") ? String(txId) : `TRX-${String(txId).padStart(4, "0")}`,
-        customer_name:   payload.customer_name,
-        payment_method:  paymentMethod,
-        amount_received: Number(amountReceived) || total,
-        subtotal, net_amount: netAmount, vat_amount: vatAmount, total,
-        change: Math.max((Number(amountReceived) || total) - total, 0),
-        items: payload.items,
-        reference_number: (paymentMethod === "GCash" || paymentMethod === "Maya") ? referenceNumber : null,
-        date: new Date().toLocaleString("en-PH", { month: "short", day: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit" }),
+        transaction_id: String(txId).startsWith("TRX-") ? String(txId) : `TRX-${String(txId).padStart(4, "0")}`,
+        receipt_number: receiptData.receipt_number || receiptData.invoice_number || null,
+        cashier_name: receiptData.cashier || user?.name || "Cashier",
+        customer_name: receiptData.customer?.name || payload.customer_name,
+        payment_method: receiptData.payment?.method || paymentMethod,
+        amount_received: Number(amountReceived) || receiptTotal,
+        subtotal: Number(receiptData.subtotal ?? subtotal),
+        net_amount: receiptData.breakdown?.net_amount ?? receiptData.net_amount ?? netAmount,
+        vat_amount: receiptData.breakdown?.vat_amount ?? receiptData.vat_amount ?? receiptData.tax ?? vatAmount,
+        total: receiptTotal,
+        change: Number(receiptData.payment?.change ?? Math.max((Number(amountReceived) || receiptTotal) - receiptTotal, 0)),
+        items: sourceItems.map((item) => ({
+          item_name: item.item_name || item.name || "Item",
+          quantity: Number(item.quantity || 1),
+          unit_price: Number(item.unit_price ?? item.price ?? 0),
+          total_price: Number(item.total_price ?? item.total ?? (item.unit_price || item.price || 0) * (item.quantity || 1)),
+        })),
+        reference_number: receiptData.payment?.reference || receiptData.payment?.reference_number || ((paymentMethod === "GCash" || paymentMethod === "Maya") ? referenceNumber : null),
+        date: receiptData.date || new Date().toLocaleString("en-PH", { month: "short", day: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit" }),
       };
       addToast("Payment successful!", "success");
       clearOrder();
@@ -524,32 +541,48 @@ const CashierPOS = ({ initialTab }) => {
   }, [canCheckout, orderType, customerId, customerName, paymentMethod, amountReceived, total, subtotal, vatAmount, netAmount, referenceNumber, cart, addToast, clearOrder, fetchProducts, fetchServices]);
 
   /* ── Print ──────────────────────────────────────────── */
-  const handlePrint = useCallback(() => {
-    const r = completedReceipt;
-    if (!r || !Array.isArray(r.items)) return;
-    printReceipt({
+  const getReceiptOptions = useCallback(() => {
+    const receipt = completedReceipt;
+    if (!receipt || !Array.isArray(receipt.items)) return null;
+    return {
       title: "Sales Invoice",
-      receiptNumber: r.receipt_number || r.transaction_id,
-      date: r.date,
-      cashier: r.cashier_name || user?.name || "Cashier",
-      customer: r.customer_name || "Walk-in",
-      paymentMethod: r.payment_method,
-      paymentStatus: r.payment_status || "paid",
-      referenceNumber: r.reference_number,
-      items: r.items.map(i => ({
-        name:      i.item_name,
-        quantity:  i.quantity,
-        unitPrice: i.unit_price,
-        total:     (i.unit_price || 0) * i.quantity,
+      receiptNumber: receipt.receipt_number || receipt.transaction_id,
+      date: receipt.date,
+      cashier: receipt.cashier_name || user?.name || "Cashier",
+      customer: receipt.customer_name || "Walk-in",
+      paymentMethod: receipt.payment_method,
+      paymentStatus: receipt.payment_status || "paid",
+      referenceNumber: receipt.reference_number,
+      items: receipt.items.map((item) => ({
+        name: item.item_name || item.name,
+        quantity: item.quantity,
+        unitPrice: item.unit_price,
+        total: item.total_price ?? item.total ?? (item.unit_price || 0) * item.quantity,
       })),
-      subtotal: r.subtotal,
-      vat: r.vat_amount,
+      subtotal: receipt.subtotal,
+      netAmount: receipt.net_amount,
+      vat: receipt.vat_amount,
       discount: 0,
-      total: r.total,
-      amountReceived: r.amount_received,
-      change: r.change,
-    });
+      total: receipt.total,
+      amountReceived: receipt.amount_received,
+      change: receipt.change,
+    };
   }, [completedReceipt, user]);
+
+  const handlePrint = useCallback(() => {
+    const receiptOptions = getReceiptOptions();
+    if (receiptOptions) printReceipt(receiptOptions);
+  }, [getReceiptOptions]);
+
+  const handleDownloadReceiptPdf = useCallback(() => {
+    const receiptOptions = getReceiptOptions();
+    if (!receiptOptions) return;
+    try {
+      downloadReceiptPdf(receiptOptions);
+    } catch (err) {
+      addToast(err.message || "Failed to download receipt PDF.", "error");
+    }
+  }, [getReceiptOptions, addToast]);
 
   /* ─────────────────────── RENDER ─────────────────────── */
   return (
@@ -1097,7 +1130,7 @@ const CashierPOS = ({ initialTab }) => {
                 {/* ── Items ── */}
                 {completedReceipt.items.map((item, idx) => {
                   const unitPrice = item.unit_price || 0;
-                  const lineTotal = unitPrice * item.quantity;
+                  const lineTotal = Number(item.total_price ?? item.total ?? unitPrice * item.quantity);
                   return (
                     <div className="pos-receipt-item" key={idx}>
                       <div className="pos-receipt-item-name">{item.item_name}</div>
@@ -1130,6 +1163,9 @@ const CashierPOS = ({ initialTab }) => {
             </div>
             <div className="pos-modal-footer">
               <button className="pos-btn-secondary" onClick={() => setCompletedReceipt(null)}>Close</button>
+              <button className="pos-btn-secondary" onClick={handleDownloadReceiptPdf}>
+                <FontAwesomeIcon icon={faFilePdf} /> Download PDF
+              </button>
               <button className="pos-btn-primary" onClick={handlePrint}>
                 <FontAwesomeIcon icon={faPrint} /> Print Receipt
               </button>

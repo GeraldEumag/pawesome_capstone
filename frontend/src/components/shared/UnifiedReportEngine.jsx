@@ -27,6 +27,14 @@ import './UnifiedReportEngine.css';
 
 const CHART_COLORS = ['#ff5f93', '#ff8db5', '#ffc8dd', '#f59e0b', '#10b981', '#3b82f6', '#8b5cf6', '#ef4444', '#06b6d4', '#84cc16'];
 
+export const getInitialChartDimension = (chartHeight = 300) => {
+  const viewportWidth = typeof window === "undefined" ? 1024 : window.innerWidth;
+  return {
+    width: Math.max(180, Math.min(viewportWidth - 132, 460)),
+    height: viewportWidth <= 480 ? 210 : viewportWidth <= 768 ? 280 : chartHeight,
+  };
+};
+
 const DATE_PRESETS = [
   { key: 'today', label: 'Today', icon: faClock },
   { key: 'yesterday', label: 'Yesterday', icon: faClock },
@@ -334,7 +342,7 @@ const ChartContainer = ({ title, subtitle, children, height = 300, actions = nul
       </div>
       {actions && <div className="ure-chart-actions">{actions}</div>}
     </div>
-    <div className="ure-chart-body" style={{ height }}>
+    <div className="ure-chart-body" style={{ "--ure-chart-height": `${height}px` }}>
       {children}
     </div>
   </article>

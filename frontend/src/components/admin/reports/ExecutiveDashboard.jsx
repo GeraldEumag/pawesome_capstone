@@ -33,7 +33,8 @@ import {
   ReferenceLine,
 } from 'recharts';
 import { formatCurrency } from '../../../utils/currency';
-import { ChartContainer, CHART_COLORS } from '../../shared/UnifiedReportEngine';
+import { ChartContainer, CHART_COLORS, getInitialChartDimension } from '../../shared/UnifiedReportEngine';
+import ReportSkeleton from '../../shared/ReportSkeleton';
 import { apiRequest } from '../../../api/client';
 import { showError } from '../../../utils/alert.jsx';
 import ExportButton from '../../shared/ExportButton';
@@ -155,8 +156,12 @@ const ExecutiveDashboard = ({ data: initialData = {} }) => {
     comparisons = {},
   } = data;
 
-  const revenueTrend = data.revenueTrend || data.revenue_trend || [];
-  const statusBreakdown = data.status_breakdown || data.statusBreakdown || {};
+  const revenueTrendSource = data.revenueTrend ?? data.revenue_trend;
+  const revenueTrend = Array.isArray(revenueTrendSource) ? revenueTrendSource : [];
+  const statusBreakdownSource = data.status_breakdown ?? data.statusBreakdown;
+  const statusBreakdown = statusBreakdownSource && typeof statusBreakdownSource === 'object' && !Array.isArray(statusBreakdownSource)
+    ? statusBreakdownSource
+    : {};
 
   // Calculate derived metrics from real API data only
   const metrics = useMemo(() => {
@@ -188,28 +193,29 @@ const ExecutiveDashboard = ({ data: initialData = {} }) => {
   }, [summary, comparisons, predictions]);
 
   // Prepare chart data from API
-  const chartData = useMemo(() => {
-    if (revenueTrend.length > 0) return revenueTrend;
-    return [];
-  }, [revenueTrend]);
+  const chartData = useMemo(() => revenueTrend
+    .filter((point) => point && typeof point === 'object' && point.date)
+    .map((point) => ({
+      ...point,
+      revenue: Number.isFinite(Number(point.revenue)) ? Number(point.revenue) : 0,
+      orders: Number.isFinite(Number(point.orders)) ? Number(point.orders) : 0,
+    })), [revenueTrend]);
+  const hasRevenueTrend = chartData.some((point) => point.revenue > 0);
+  const hasOrderTrend = chartData.some((point) => point.orders > 0);
 
   // Status breakdown pie data from API
   const statusBreakdownData = useMemo(() => {
     return Object.entries(statusBreakdown)
-      .filter(([, v]) => (v?.count || 0) > 0)
-      .map(([name, v]) => ({ name: name.charAt(0).toUpperCase() + name.slice(1), value: v.count || 0 }));
+      .map(([name, value]) => ({
+        name: name.charAt(0).toUpperCase() + name.slice(1),
+        value: Number.isFinite(Number(value?.count)) ? Number(value.count) : 0,
+      }))
+      .filter((entry) => entry.value > 0);
   }, [statusBreakdown]);
 
   // Loading state
   if (loading) {
-    return (
-      <div className="executive-dashboard">
-        <div className="exec-loading">
-          <FontAwesomeIcon icon={faChartLine} spin />
-          <p>Loading executive dashboard...</p>
-        </div>
-      </div>
-    );
+    return <ReportSkeleton label="Loading executive dashboard" />;
   }
 
   // Error state
@@ -342,12 +348,12 @@ const ExecutiveDashboard = ({ data: initialData = {} }) => {
       {/* Revenue Trend Chart */}
       <section className="exec-charts-grid">
         <ChartContainer title="Revenue Trend" subtitle="30-day performance" height={350}>
-          {chartData.length === 0 ? (
+          {!hasRevenueTrend ? (
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', color: '#94a3b8' }}>
               <p>No trend data available for this period</p>
             </div>
           ) : (
-            <ResponsiveContainer width="100%" height="100%">
+            <ResponsiveContainer width="100%" height={getInitialChartDimension(350).height} initialDimension={getInitialChartDimension(350)}>
               <AreaChart data={chartData}>
                 <defs>
                   <linearGradient id="revenueGradient" x1="0" y1="0" x2="0" y2="1">
@@ -375,12 +381,12 @@ const ExecutiveDashboard = ({ data: initialData = {} }) => {
         </ChartContainer>
 
         <ChartContainer title="Orders Trend" subtitle="Daily order volume" height={350}>
-          {chartData.length === 0 ? (
+          {!hasOrderTrend ? (
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', color: '#94a3b8' }}>
               <p>No order data available for this period</p>
             </div>
           ) : (
-            <ResponsiveContainer width="100%" height="100%">
+            <ResponsiveContainer width="100%" height={getInitialChartDimension(350).height} initialDimension={getInitialChartDimension(350)}>
               <BarChart data={chartData}>
                 <CartesianGrid strokeDasharray="3 3" vertical={false} />
                 <XAxis dataKey="date" tick={{ fontSize: 11 }} interval={4} />
@@ -394,14 +400,14 @@ const ExecutiveDashboard = ({ data: initialData = {} }) => {
 
         {statusBreakdownData.length > 0 && (
           <ChartContainer title="Order Status" subtitle="Distribution by status" height={350}>
-            <ResponsiveContainer width="100%" height="100%">
+            <ResponsiveContainer width="100%" height={getInitialChartDimension(350).height} initialDimension={getInitialChartDimension(350)}>
               <PieChart>
                 <Pie
                   data={statusBreakdownData}
                   cx="50%"
                   cy="50%"
-                  innerRadius={60}
-                  outerRadius={100}
+                  innerRadius="42%"
+                  outerRadius="72%"
                   paddingAngle={4}
                   dataKey="value"
                 >

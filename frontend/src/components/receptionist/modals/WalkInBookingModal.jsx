@@ -35,6 +35,8 @@ const WalkInBookingModal = ({ serviceType, onClose, onSuccess }) => {
   const [veterinarians, setVeterinarians] = useState([]);
   const [hotelRooms, setHotelRooms] = useState([]);
   const [services, setServices] = useState([]);
+  const [availableTimeSlots, setAvailableTimeSlots] = useState([]);
+  const [availabilityLoading, setAvailabilityLoading] = useState(false);
 
   // Customer search
   const [customerSearch, setCustomerSearch] = useState("");
@@ -145,6 +147,42 @@ const WalkInBookingModal = ({ serviceType, onClose, onSuccess }) => {
       }
     };
   }, [serviceType]);
+
+  useEffect(() => {
+    if (serviceType === "hotel" || !bookingForm.request_date || !bookingForm.service_name) {
+      setAvailableTimeSlots([]);
+      setAvailabilityLoading(false);
+      return;
+    }
+
+    let active = true;
+    setAvailabilityLoading(true);
+    const query = new URLSearchParams({
+      date: bookingForm.request_date,
+      service_name: bookingForm.service_name,
+    });
+    if (serviceType === "veterinary" && bookingForm.veterinarian_id) {
+      query.set("veterinarian_id", bookingForm.veterinarian_id);
+    }
+
+    apiRequest(`/availability/${serviceType}?${query}`)
+      .then((response) => {
+        if (!active) return;
+        const slots = response.slots || [];
+        setAvailableTimeSlots(slots.filter((slot) => slot.available));
+        setBookingForm((previous) => slots.some((slot) => slot.available && slot.time === previous.request_time)
+          ? previous
+          : { ...previous, request_time: "" });
+      })
+      .catch(() => {
+        if (active) setAvailableTimeSlots([]);
+      })
+      .finally(() => {
+        if (active) setAvailabilityLoading(false);
+      });
+
+    return () => { active = false; };
+  }, [serviceType, bookingForm.request_date, bookingForm.service_name, bookingForm.veterinarian_id]);
 
   const fetchVeterinarians = async (signal) => {
     try {
@@ -299,7 +337,10 @@ const WalkInBookingModal = ({ serviceType, onClose, onSuccess }) => {
   const validateBookingForm = () => {
     if (serviceType !== "hotel" && !bookingForm.service_name) return "Please select a service";
     if (!bookingForm.request_date) return "Please select a date";
-    
+    if (serviceType !== "hotel" && !availableTimeSlots.some((slot) => slot.time === bookingForm.request_time)) {
+      return "Please select an available appointment time";
+    }
+
     if (serviceType === "hotel") {
       if (!bookingForm.room_id) {
         return "Please select a Room";
@@ -362,7 +403,7 @@ const WalkInBookingModal = ({ serviceType, onClose, onSuccess }) => {
           service_type: serviceType,
           service_name: serviceType === "hotel" ? (bookingForm.room_type ? `Hotel Boarding (${bookingForm.room_type})` : "Hotel Boarding") : bookingForm.service_name,
           request_date: bookingForm.request_date,
-          request_time: null,
+          request_time: bookingForm.request_time || null,
           notes: bookingForm.notes || "",
           ...(serviceType === "hotel" && {
             check_out_date: bookingForm.request_date,
@@ -395,7 +436,7 @@ const WalkInBookingModal = ({ serviceType, onClose, onSuccess }) => {
       });
 
       const message = customerMode === "new"
-        ? `Walk-in booking created successfully. New account created with email: ${customerForm.email} and default password: Password123!`
+        ? `Walk-in booking created successfully. A secure password setup link was sent to ${customerForm.email}.`
         : "Walk-in booking created successfully.";
 
       setReviewOpen(false);
@@ -474,9 +515,9 @@ const WalkInBookingModal = ({ serviceType, onClose, onSuccess }) => {
         <div className="info-box warning">
           <FontAwesomeIcon icon={faInfoCircle} />
           <p>
-            A new account will be created with default password: <strong>Password123!</strong>
+            A secure password setup link will be sent to the new customer's email address.
             <br />
-            Please inform the customer to change their password after first login.
+            The customer can choose their own password before signing in.
           </p>
         </div>
       )}
@@ -860,7 +901,7 @@ const WalkInBookingModal = ({ serviceType, onClose, onSuccess }) => {
             <select
               value={bookingForm.service_name}
               onChange={(e) =>
-                setBookingForm({ ...bookingForm, service_name: e.target.value })
+                setBookingForm({ ...bookingForm, service_name: e.target.value, request_time: "" })
               }
             >
               <option value="">Select a service</option>
@@ -882,6 +923,7 @@ const WalkInBookingModal = ({ serviceType, onClose, onSuccess }) => {
               setBookingForm((prev) => ({
                 ...prev,
                 request_date: date,
+                request_time: "",
                 check_out_date: serviceType === "hotel" ? date : prev.check_out_date,
                 ...(serviceType === "hotel" && { room_id: "", room_type: "", rate_per_day: 0 }),
               }));
@@ -891,6 +933,27 @@ const WalkInBookingModal = ({ serviceType, onClose, onSuccess }) => {
             required
           />
         </div>
+
+        {serviceType !== "hotel" && (
+          <div className="form-group full-width">
+            <label>Appointment Time *</label>
+            <select
+              value={bookingForm.request_time}
+              disabled={!bookingForm.request_date || !bookingForm.service_name || availabilityLoading}
+              onChange={(event) => setBookingForm({ ...bookingForm, request_time: event.target.value })}
+            >
+              <option value="">
+                {availabilityLoading ? "Checking available times..." : "Select an available time"}
+              </option>
+              {availableTimeSlots.map((slot) => (
+                <option key={slot.time} value={slot.time}>{slot.label}</option>
+              ))}
+            </select>
+            {!availabilityLoading && bookingForm.request_date && bookingForm.service_name && availableTimeSlots.length === 0 && (
+              <small className="error-text">No future appointment times are available for this date.</small>
+            )}
+          </div>
+        )}
 
         <div className="time-policy-note form-group full-width" style={{
           backgroundColor: "#eef2ff",
@@ -906,7 +969,7 @@ const WalkInBookingModal = ({ serviceType, onClose, onSuccess }) => {
         }}>
           <span style={{ fontSize: "1.25rem" }}>🕘</span>
           <div>
-            <strong>Open 10:00 AM – 6:00 PM</strong> · {serviceType === "hotel" ? "Same-day check-in and check-out." : "Walk-in anytime on selected date."}
+            <strong>Open 10:00 AM – 6:00 PM</strong> · {serviceType === "hotel" ? "Same-day check-in and check-out." : "Same-day cutoff is bypassed; the selected time must still be available."}
             <br />
             <span style={{ fontSize: "0.75rem", color: "#4f46e5" }}>{serviceType === "hotel" ? "Charged one day rate per stay." : "Charged per day or per package, not by the hour."}</span>
           </div>
@@ -965,7 +1028,7 @@ const WalkInBookingModal = ({ serviceType, onClose, onSuccess }) => {
               <select
                 value={bookingForm.veterinarian_id}
                 onChange={(e) =>
-                  setBookingForm({ ...bookingForm, veterinarian_id: e.target.value })
+                  setBookingForm({ ...bookingForm, veterinarian_id: e.target.value, request_time: "" })
                 }
               >
                 <option value="">Auto-assign (optional)</option>

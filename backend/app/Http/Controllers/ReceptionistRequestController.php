@@ -12,11 +12,12 @@ use App\Models\Service;
 use App\Models\User;
 use App\Models\ActivityLog;
 use App\Models\ServiceItemUsage;
+use App\Services\BookingAvailabilityService;
 use App\Services\CustomerEmailResolver;
 use App\Services\EmailDeliveryService;
 use App\Services\ServiceCatalog;
-use App\Services\WorkflowNotifier;
 use App\Services\ServiceDurationService;
+use App\Services\WorkflowNotifier;
 use App\Support\EmailContent;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
@@ -98,6 +99,8 @@ class ReceptionistRequestController extends Controller
 
     private function formatRequest(object $item): array
     {
+        $appointment = $item->appointment ?? null;
+
         return [
             'id' => $item->id,
             'request_type' => $item->request_type,
@@ -117,6 +120,13 @@ class ReceptionistRequestController extends Controller
             'date' => $item->request_date,
             'request_time' => $item->request_time,
             'time' => $item->request_time,
+            'appointment_id' => $appointment?->id,
+            'appointment_status' => $appointment?->status,
+            'veterinarian_id' => $appointment?->veterinarian_id,
+            'veterinarian' => $appointment?->veterinarian ? [
+                'id' => $appointment->veterinarian->id,
+                'name' => $appointment->veterinarian->name,
+            ] : null,
             'status' => $item->status,
             'rejection_reason' => $item->rejection_reason ?? null,
             'cancellation_reason' => $item->cancellation_reason ?? null,
@@ -139,7 +149,7 @@ class ReceptionistRequestController extends Controller
 
     public function index()
     {
-        $requests = ServiceRequest::latest()->get()->map(fn ($item) => $this->formatRequest($item));
+        $requests = ServiceRequest::with('appointment.veterinarian')->latest()->get()->map(fn ($item) => $this->formatRequest($item));
 
         return response()->json([
             'success' => true,
@@ -149,7 +159,8 @@ class ReceptionistRequestController extends Controller
 
     public function pending()
     {
-        $requests = ServiceRequest::where('status', 'pending')
+        $requests = ServiceRequest::with('appointment.veterinarian')
+            ->where('status', 'pending')
             ->latest()
             ->get()
             ->map(fn ($item) => $this->formatRequest($item));
@@ -162,7 +173,8 @@ class ReceptionistRequestController extends Controller
 
     public function approvalHistory()
     {
-        $requests = ServiceRequest::whereIn('status', ['approved', 'scheduled', 'completed', 'paid'])
+        $requests = ServiceRequest::with('appointment.veterinarian')
+            ->whereIn('status', ['approved', 'scheduled', 'completed', 'paid'])
             ->latest()
             ->get()
             ->map(fn ($item) => $this->formatRequest($item));
@@ -175,7 +187,8 @@ class ReceptionistRequestController extends Controller
 
     public function schedulingHistory()
     {
-        $requests = ServiceRequest::whereIn('status', ['scheduled', 'confirmed', 'rescheduled', 'approved'])
+        $requests = ServiceRequest::with('appointment.veterinarian')
+            ->whereIn('status', ['scheduled', 'confirmed', 'rescheduled', 'approved'])
             ->where(function ($query) {
                 $query->whereNotNull('preferred_date')->orWhereNotNull('request_date');
             })
@@ -191,7 +204,8 @@ class ReceptionistRequestController extends Controller
 
     public function rejectedHistory()
     {
-        $requests = ServiceRequest::whereIn('status', ['rejected', 'cancelled', 'canceled'])
+        $requests = ServiceRequest::with('appointment.veterinarian')
+            ->whereIn('status', ['rejected', 'cancelled', 'canceled'])
             ->latest()
             ->get()
             ->map(fn ($item) => $this->formatRequest($item));
@@ -293,6 +307,30 @@ class ReceptionistRequestController extends Controller
         /** @var ServiceRequest $serviceRequest */
         $serviceRequest = ServiceRequest::findOrFail($id);
         $previousStatus = $serviceRequest->status;
+        $hasPendingProof = $serviceRequest->payment_status === 'pending' && (bool) $serviceRequest->payment_proof;
+        $linkedPaymentStatus = $hasPendingProof
+            ? 'pending'
+            : (in_array($serviceRequest->payment_status, ['paid', 'partial', 'rejected'], true) ? $serviceRequest->payment_status : 'unpaid');
+
+        if ($validated['status'] === 'approved'
+            && $previousStatus === 'pending'
+            && $this->requestIsHotel($serviceRequest)
+            && ($serviceRequest->booking_channel ?? \App\Support\BookingChannel::ONLINE) !== \App\Support\BookingChannel::WALK_IN) {
+            $boarding = Boarding::where('service_request_id', $serviceRequest->id)->first();
+            if (!$boarding?->vaccination_card || !$boarding->vaccination_card_verified_at) {
+                return response()->json(['message' => 'Online hotel requests must use the Pet Hotel reservation flow and have a verified vaccination card before approval.'], 422);
+            }
+        }
+
+        if ($validated['status'] === 'approved'
+            && $this->requestIsVet($serviceRequest)
+            && !$this->requestIsHotel($serviceRequest)
+            && !$this->requestIsGrooming($serviceRequest)) {
+            return response()->json([
+                'message' => 'Vet requests must be approved through veterinarian assignment.',
+                'errors' => ['veterinarian_id' => ['Choose a veterinarian before approving this request.']],
+            ], 422);
+        }
 
         // Check-in gates: booking must be paid and scheduled for today.
         if ($validated['status'] === 'checked_in') {
@@ -343,25 +381,32 @@ class ReceptionistRequestController extends Controller
             }
         }
 
-        if (in_array($validated['status'], ['rejected', 'cancelled'])) {
+        if (in_array($validated['status'], ['rejected', 'cancelled']) && !$hasPendingProof) {
             $serviceRequest->payment_status = 'unpaid';
-        } elseif ($validated['status'] === 'approved' && !in_array($serviceRequest->payment_status, ['paid', 'verified', 'completed'])) {
+        } elseif ($validated['status'] === 'approved' && !$hasPendingProof && $serviceRequest->payment_status === 'pending') {
             $serviceRequest->payment_status = 'unpaid';
         }
 
         $serviceRequest->save();
+        if ($validated['status'] === 'approved' && $hasPendingProof) {
+            WorkflowNotifier::notifyRole('cashier', 'Service payment proof ready for verification', "Approved service request #{$serviceRequest->id} has a customer-submitted payment proof.", 'info', 'service_request', $serviceRequest->id);
+        } elseif (in_array($validated['status'], ['rejected', 'cancelled'], true) && $hasPendingProof) {
+            WorkflowNotifier::notifyRole('cashier', 'Payment proof requires refund review', "Service request #{$serviceRequest->id} was {$validated['status']} after proof submission; review the payment before any counter settlement.", 'warning', 'service_request', $serviceRequest->id);
+        }
 
         // Propagate status change to linked dedicated records
         $newStatus = $validated['status'];
         if (in_array($newStatus, ['rejected', 'cancelled'])) {
+            $linkedUpdates = ['status' => $newStatus];
+            if (!$hasPendingProof) $linkedUpdates['payment_status'] = 'unpaid';
             if (Schema::hasColumn('appointments', 'service_request_id')) {
-                Appointment::where('service_request_id', $serviceRequest->id)->update(['status' => $newStatus]);
+                Appointment::where('service_request_id', $serviceRequest->id)->update($linkedUpdates);
             }
             if (Schema::hasColumn('groomings', 'service_request_id')) {
-                Grooming::where('service_request_id', $serviceRequest->id)->update(['status' => $newStatus, 'payment_status' => 'unpaid']);
+                Grooming::where('service_request_id', $serviceRequest->id)->update($linkedUpdates);
             }
             if (Schema::hasColumn('boardings', 'service_request_id')) {
-                Boarding::where('service_request_id', $serviceRequest->id)->update(['status' => $newStatus, 'payment_status' => 'unpaid']);
+                Boarding::where('service_request_id', $serviceRequest->id)->update($linkedUpdates);
             }
         }
 
@@ -406,14 +451,14 @@ class ReceptionistRequestController extends Controller
                             'total_amount' => $price,
                             'balance_due' => $price,
                             'status' => 'approved',
-                            'payment_status' => 'unpaid',
+                            'payment_status' => $linkedPaymentStatus,
                         ]
                     );
 
                     if (!$grooming->wasRecentlyCreated) {
                         $groomingUpdates = ['status' => 'approved'];
 
-                        if (($grooming->payment_status ?? 'unpaid') !== 'paid') {
+                        if (!$hasPendingProof && ($grooming->payment_status ?? 'unpaid') !== 'paid') {
                             $groomingUpdates['payment_status'] = 'unpaid';
                         }
 
@@ -469,7 +514,7 @@ class ReceptionistRequestController extends Controller
                     $checkIn = $serviceRequest->request_date;
                     $checkOut = $serviceRequest->check_out_date;
                     if (!$checkOut && $checkIn) {
-                        $checkOut = Carbon::parse($checkIn)->addDay()->toDateString();
+                        $checkOut = Carbon::parse($checkIn, ServiceDurationService::STORE_TIMEZONE)->toDateString();
                     }
 
                     // Resolve the payable total: persisted request total →
@@ -499,7 +544,10 @@ class ReceptionistRequestController extends Controller
                             'number_of_days' => $serviceRequest->total_days ?? 1,
                             'total_amount' => $boardingTotal,
                             'status' => 'approved',
-                            'payment_status' => 'unpaid',
+                            'payment_status' => $linkedPaymentStatus,
+                            'payment_method' => $serviceRequest->payment_method,
+                            'payment_reference' => $serviceRequest->payment_reference,
+                            'payment_proof' => $serviceRequest->payment_proof,
                             'notes' => $serviceRequest->notes,
                             'stay_type' => 'hotel_boarding',
                         ])
@@ -508,7 +556,7 @@ class ReceptionistRequestController extends Controller
                     if (!$boarding->wasRecentlyCreated) {
                         $boardingUpdates = ['status' => 'approved'];
 
-                        if (($boarding->payment_status ?? 'unpaid') !== 'paid') {
+                        if (!$hasPendingProof && ($boarding->payment_status ?? 'unpaid') !== 'paid') {
                             $boardingUpdates['payment_status'] = 'unpaid';
                         }
 
@@ -547,7 +595,9 @@ class ReceptionistRequestController extends Controller
             // Vet: only update existing appointment if one exists (can't create without vet assignment)
             if ($this->requestIsVet($serviceRequest)) {
                 if (Schema::hasColumn('appointments', 'service_request_id')) {
-                    Appointment::where('service_request_id', $serviceRequest->id)->update(['status' => 'approved']);
+                    $appointmentUpdates = ['status' => 'approved'];
+                    if ($hasPendingProof) $appointmentUpdates['payment_status'] = 'pending';
+                    Appointment::where('service_request_id', $serviceRequest->id)->update($appointmentUpdates);
                 }
             }
         }
@@ -630,18 +680,39 @@ class ReceptionistRequestController extends Controller
 
         // Promotion is atomic: the room reservation, promoted booking row,
         // and request status update commit together or roll back together.
-        return DB::transaction(fn () => $this->performApprove($request, $validated, $id));
+        return DB::transaction(function () use ($request, $validated, $id) {
+            BookingAvailabilityService::lockServiceSchedule();
+            return $this->performApprove($request, $validated, $id);
+        });
     }
 
     private function performApprove(Request $request, array $validated, $id)
     {
-        $serviceRequest = ServiceRequest::findOrFail($id);
+        $serviceRequest = ServiceRequest::whereKey($id)->lockForUpdate()->firstOrFail();
+        $hasPendingProof = $serviceRequest->payment_status === 'pending' && (bool) $serviceRequest->payment_proof;
+        $linkedPaymentStatus = $hasPendingProof
+            ? 'pending'
+            : (in_array($serviceRequest->payment_status, ['paid', 'partial', 'rejected'], true) ? $serviceRequest->payment_status : 'unpaid');
+        $isHotelRequest = $this->requestIsHotel($serviceRequest);
+        if (($serviceRequest->status ?? 'pending') === 'pending'
+            && $isHotelRequest
+            && ($serviceRequest->booking_channel ?? \App\Support\BookingChannel::ONLINE) !== \App\Support\BookingChannel::WALK_IN) {
+            $boarding = Boarding::where('service_request_id', $serviceRequest->id)->first();
+            if (!$boarding?->vaccination_card || !$boarding->vaccination_card_verified_at) {
+                return response()->json(['message' => 'Online hotel requests must use the Pet Hotel reservation flow and have a verified vaccination card before approval.'], 422);
+            }
+        }
+        $isGroomingRequest = $this->requestIsGrooming($serviceRequest);
+        $isVetRequest = $this->requestIsVet($serviceRequest) && !$isHotelRequest && !$isGroomingRequest;
+        $existingVetAppointment = $isVetRequest && Schema::hasColumn('appointments', 'service_request_id')
+            ? Appointment::where('service_request_id', $serviceRequest->id)->latest('id')->lockForUpdate()->first()
+            : null;
 
         // Idempotent approval: re-approving an already-approved request must
         // not re-run the promotion — a second pass would create a duplicate
         // boarding-room reservation and re-send notifications. Return the
         // existing linked records in the same response shape instead.
-        if (($serviceRequest->status ?? 'pending') === 'approved') {
+        if (($serviceRequest->status ?? 'pending') === 'approved' && !$isVetRequest) {
             return response()->json([
                 'success' => true,
                 'message' => 'Request is already approved.',
@@ -650,6 +721,28 @@ class ReceptionistRequestController extends Controller
                 'grooming' => Grooming::where('service_request_id', $serviceRequest->id)->latest('id')->first(),
                 'boarding' => Boarding::where('service_request_id', $serviceRequest->id)->latest('id')->first(),
             ]);
+        }
+
+        if (($serviceRequest->status ?? 'pending') === 'approved'
+            && $isVetRequest
+            && $existingVetAppointment?->veterinarian_id) {
+            $requestedVetId = (int) ($validated['veterinarian_id'] ?? $existingVetAppointment->veterinarian_id);
+            if ($requestedVetId === (int) $existingVetAppointment->veterinarian_id) {
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Request is already approved and assigned.',
+                    'request' => $this->formatRequest($serviceRequest),
+                    'appointment' => $existingVetAppointment->load(['customer', 'pet', 'service', 'veterinarian']),
+                    'grooming' => null,
+                    'boarding' => null,
+                ]);
+            }
+
+            if (!in_array($existingVetAppointment->status, ['pending', 'approved', 'scheduled'], true)) {
+                return response()->json([
+                    'message' => 'A veterinarian cannot be reassigned after the appointment has started.',
+                ], 422);
+            }
         }
 
         $appointment = null;
@@ -676,12 +769,9 @@ class ReceptionistRequestController extends Controller
         }
 
         // --- Vet requests: create/update Appointment ---
-        // Extra safety: never treat hotel/boarding as vet regardless of request_type value
-        $isHotelRequest = $this->requestIsHotel($serviceRequest);
-        $isGroomingRequest = $this->requestIsGrooming($serviceRequest);
-
-        if ($this->requestIsVet($serviceRequest) && !$isHotelRequest && !$isGroomingRequest) {
-            $vet = User::find($validated['veterinarian_id'] ?? null);
+        if ($isVetRequest) {
+            $vetId = $validated['veterinarian_id'] ?? $existingVetAppointment?->veterinarian_id;
+            $vet = $vetId ? User::find($vetId) : null;
 
             if (!$vet || !in_array($vet->role, ['veterinary', 'vet', 'veterinarian'], true)) {
                 return response()->json(['message' => 'Choose a valid veterinarian before approving this vet request.'], 422);
@@ -699,42 +789,60 @@ class ReceptionistRequestController extends Controller
                 return response()->json(['message' => 'The selected pet does not belong to this customer.'], 422);
             }
 
-            $scheduledAt = $serviceRequest->request_date
-                ? ServiceDurationService::inStoreTimezone($serviceRequest->request_date . ' ' . ($serviceRequest->request_time ?: '10:00'))
-                : ServiceDurationService::inStoreTimezone(now()->addHour());
-            $scheduledAtUtc = $scheduledAt->copy()->utc();
-
-            $appointment = Appointment::firstOrCreate(
-                [
-                    'customer_id' => $customer->id,
-                    'pet_id' => $pet->id,
-                    'service_id' => $service->id,
-                    'scheduled_at' => $scheduledAtUtc,
-                ],
-                [
-                    'veterinarian_id' => $vet->id,
-                    'status' => 'approved',
-                    'notes' => $serviceRequest->notes,
-                    'price' => $service->price ?? 0,
-                    'service_request_id' => $serviceRequest->id,
-                ]
+            $scheduledAtLocal = Carbon::parse(
+                ($serviceRequest->request_date ?: now(ServiceDurationService::STORE_TIMEZONE)->toDateString()) . ' ' . ($serviceRequest->request_time ?: '10:00'),
+                ServiceDurationService::STORE_TIMEZONE
             );
+            $scheduledAtUtc = $scheduledAtLocal->copy()->setTimezone('UTC');
+            $serviceRequest->request_date = $scheduledAtLocal->toDateString();
+            $serviceRequest->request_time = $scheduledAtLocal->format('H:i');
+            if (!$scheduledAtLocal->isFuture() || !BookingAvailabilityService::isServiceTimeAvailable(
+                'veterinary',
+                $scheduledAtLocal->toDateString(),
+                $scheduledAtLocal->format('H:i'),
+                $service->name,
+                $vet->id,
+                $existingVetAppointment?->id,
+                $serviceRequest->id
+            )) {
+                return response()->json([
+                    'message' => 'The requested schedule conflicts with this veterinarian or is no longer a future bookable time.',
+                    'errors' => ['veterinarian_id' => ['Choose another available appointment time or veterinarian.']],
+                ], 422);
+            }
 
-            if (!$appointment->wasRecentlyCreated) {
-                $appointment->update([
-                    'veterinarian_id' => $vet->id,
-                    'status' => 'approved',
-                    'notes' => $serviceRequest->notes,
-                    'price' => $service->price ?? $appointment->price,
-                    'service_request_id' => $serviceRequest->id,
-                ]);
+            if ($existingVetAppointment && !in_array($existingVetAppointment->status, ['pending', 'approved', 'scheduled'], true)) {
+                return response()->json([
+                    'message' => 'A veterinarian cannot be assigned after the appointment has started.',
+                ], 422);
+            }
+
+            $appointmentCreated = !$existingVetAppointment;
+            $appointmentData = [
+                'customer_id' => $customer->id,
+                'pet_id' => $pet->id,
+                'service_id' => $service->id,
+                'scheduled_at' => $scheduledAtUtc,
+                'veterinarian_id' => $vet->id,
+                'status' => 'approved',
+                'payment_status' => $linkedPaymentStatus,
+                'notes' => $serviceRequest->notes,
+                'price' => $service->price ?? $existingVetAppointment?->price ?? 0,
+                'service_request_id' => $serviceRequest->id,
+            ];
+
+            if ($existingVetAppointment) {
+                $existingVetAppointment->update($appointmentData);
+                $appointment = $existingVetAppointment->fresh(['customer', 'pet', 'service', 'veterinarian']);
+            } else {
+                $appointment = Appointment::create($appointmentData);
             }
 
             // Notify assigned veterinarian about the new scheduled appointment.
             // On the create path the Appointment::created model hook already
             // notifies the veterinarian via notifyAppointmentCreated().
-            if (!$appointment->wasRecentlyCreated) {
-                WorkflowNotifier::notifyUser($vet->id, 'New Scheduled Appointment', "You have a new veterinary appointment for {$pet->name} scheduled at {$scheduledAt->format('Y-m-d H:i')}.", 'info', 'appointment', $appointment->id);
+            if (!$appointmentCreated) {
+                WorkflowNotifier::notifyUser($vet->id, 'New Scheduled Appointment', "You have a new veterinary appointment for {$pet->name} scheduled at {$scheduledAtLocal->format('Y-m-d H:i')}.", 'info', 'appointment', $appointment->id);
             }
 
             // Auto-create base service billing item so vet sees the consultation fee
@@ -786,14 +894,14 @@ class ReceptionistRequestController extends Controller
                         'total_amount' => $price,
                         'balance_due' => $price,
                         'status' => 'approved',
-                        'payment_status' => 'unpaid',
+                        'payment_status' => $linkedPaymentStatus,
                     ]
                 );
 
                 if (!$grooming->wasRecentlyCreated) {
                     $groomingUpdates = ['status' => 'approved'];
 
-                    if (($grooming->payment_status ?? 'unpaid') !== 'paid') {
+                    if (!$hasPendingProof && ($grooming->payment_status ?? 'unpaid') !== 'paid') {
                         $groomingUpdates['payment_status'] = 'unpaid';
                     }
 
@@ -932,7 +1040,10 @@ class ReceptionistRequestController extends Controller
                         'number_of_days' => $serviceRequest->total_days ?? 1,
                         'total_amount' => $boardingTotal,
                         'status' => 'approved',
-                        'payment_status' => 'unpaid',
+                        'payment_status' => $linkedPaymentStatus,
+                        'payment_method' => $serviceRequest->payment_method,
+                        'payment_reference' => $serviceRequest->payment_reference,
+                        'payment_proof' => $serviceRequest->payment_proof,
                         'notes' => $serviceRequest->notes,
                         'stay_type' => 'hotel_boarding',
                     ])
@@ -941,7 +1052,7 @@ class ReceptionistRequestController extends Controller
                 if (!$boarding->wasRecentlyCreated) {
                     $boardingUpdates = ['status' => 'approved'];
 
-                    if (($boarding->payment_status ?? 'unpaid') !== 'paid') {
+                    if (!$hasPendingProof && ($boarding->payment_status ?? 'unpaid') !== 'paid') {
                         $boardingUpdates['payment_status'] = 'unpaid';
                     }
 
@@ -974,18 +1085,28 @@ class ReceptionistRequestController extends Controller
             }
         }
 
+        if (!$hasPendingProof && $serviceRequest->payment_status === 'pending') {
+            $serviceRequest->payment_status = 'unpaid';
+        }
         $serviceRequest->update([
             'status' => 'approved',
-            'payment_status' => 'unpaid',
             'approved_by' => $request->user()->id,
             'approved_at' => now(),
             'receptionist_remarks' => $validated['receptionist_remarks'] ?? 'Approved by receptionist',
         ]);
 
+        if ($hasPendingProof) {
+            WorkflowNotifier::notifyRole('cashier', 'Service payment proof ready for verification', "Approved service request #{$serviceRequest->id} has a customer-submitted payment proof.", 'info', 'service_request', $serviceRequest->id);
+        }
+
+        $approvalMessage = $hasPendingProof
+            ? "Your {$serviceRequest->service_name} request was approved. Cashier verification of your submitted payment proof will begin."
+            : "Your {$serviceRequest->service_name} request was approved and is ready for payment.";
+
         WorkflowNotifier::notifyEmail(
             $serviceRequest->customer_email,
             'Service Request Approved',
-            "Your {$serviceRequest->service_name} request was approved and is ready for payment.",
+            $approvalMessage,
             'success',
             'service_request',
             $serviceRequest->id
@@ -994,7 +1115,7 @@ class ReceptionistRequestController extends Controller
         app(EmailDeliveryService::class)->lifecycle(
             $serviceRequest->customer_email,
             'Service Request Approved',
-            "Your {$serviceRequest->service_name} request was approved and is ready for payment.",
+            $approvalMessage,
             'success',
             [
                 'event_key' => 'service_request.approved',
@@ -1005,7 +1126,9 @@ class ReceptionistRequestController extends Controller
                 'content' => [
                     'subject' => "[Pawesome] Booking Approved — SR-{$serviceRequest->id}",
                     'customer_name' => $serviceRequest->customer_name,
-                    'intro' => "We are pleased to let you know that your {$serviceRequest->service_name} request has been approved by our reception team and is now ready for payment.",
+                    'intro' => $hasPendingProof
+                        ? "Your {$serviceRequest->service_name} request has been approved. Our cashier will verify the payment proof you submitted."
+                        : "We are pleased to let you know that your {$serviceRequest->service_name} request has been approved by our reception team and is now ready for payment.",
                     'details' => [
                         ['label' => 'Reference', 'value' => "SR-{$serviceRequest->id}"],
                         ['label' => 'Service', 'value' => $serviceRequest->service_name],
@@ -1040,6 +1163,7 @@ class ReceptionistRequestController extends Controller
         ]);
 
         $serviceRequest = ServiceRequest::findOrFail($id);
+        $hasPendingProof = $serviceRequest->payment_status === 'pending' && (bool) $serviceRequest->payment_proof;
 
         $serviceRequest->update([
             'status' => 'rejected',
@@ -1054,11 +1178,16 @@ class ReceptionistRequestController extends Controller
         if (Schema::hasColumn('appointments', 'service_request_id')) {
             Appointment::where('service_request_id', $serviceRequest->id)->update(['status' => $linkedStatus]);
         }
+        $linkedUpdates = ['status' => $linkedStatus];
+        if (!$hasPendingProof) $linkedUpdates['payment_status'] = 'unpaid';
         if (Schema::hasColumn('groomings', 'service_request_id')) {
-            Grooming::where('service_request_id', $serviceRequest->id)->update(['status' => $linkedStatus, 'payment_status' => 'unpaid']);
+            Grooming::where('service_request_id', $serviceRequest->id)->update($linkedUpdates);
         }
         if (Schema::hasColumn('boardings', 'service_request_id')) {
-            Boarding::where('service_request_id', $serviceRequest->id)->update(['status' => $linkedStatus, 'payment_status' => 'unpaid']);
+            Boarding::where('service_request_id', $serviceRequest->id)->update($linkedUpdates);
+        }
+        if ($hasPendingProof) {
+            WorkflowNotifier::notifyRole('cashier', 'Payment proof requires refund review', "Service request #{$serviceRequest->id} was rejected after proof submission; review the payment before any counter settlement.", 'warning', 'service_request', $serviceRequest->id);
         }
 
         // Release any room reservation created at approval so the room

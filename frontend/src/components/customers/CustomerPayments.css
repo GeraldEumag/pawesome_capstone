@@ -269,6 +269,12 @@
   color: #d97706;
 }
 
+.customer-receipt-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+
 .receipt-btn {
   border: 1px solid rgba(255, 95, 147, 0.22);
   border-radius: 999px;
@@ -374,4 +380,25 @@
     width: clamp(120px, 35vw, 180px) !important;
     height: clamp(120px, 35vw, 180px) !important;
   }
+}
+
+.customer-billing-line {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-top: 0.25rem;
+  color: #475569;
+  font-size: 0.78rem;
+  font-weight: 600;
+}
+
+.customer-billing-actions {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.4rem;
+}
+
+.customer-billing-actions .receipt-btn {
+  white-space: nowrap;
 }

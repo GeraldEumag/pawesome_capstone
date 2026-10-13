@@ -1,3 +1,4 @@
+import { useEffect, useState } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
   faXmark,
@@ -41,7 +42,14 @@ export default function BookingReviewModal({
   pricing,
   notes,
   attachment,
+  allowPayNow = false,
 }) {
+  const [payNow, setPayNow] = useState(false);
+
+  useEffect(() => {
+    if (open) setPayNow(false);
+  }, [open]);
+
   if (!open) return null;
 
   const detailRows = details.filter((d) => d.value != null && d.value !== "");
@@ -110,6 +118,22 @@ export default function BookingReviewModal({
             </section>
           )}
 
+          {allowPayNow && (
+            <label className="brm-pay-now">
+              <input
+                type="checkbox"
+                checked={payNow}
+                onChange={(event) => setPayNow(event.target.checked)}
+              />
+              <span>
+                <strong>Pay the full booking total now (optional)</strong>
+                <small>{pricing?.total
+                  ? `After the booking is submitted, you can upload GCash or Maya proof for ${pricing.total}.`
+                  : "After the booking is submitted, the server-calculated full total will be shown before you upload proof."}</small>
+              </span>
+            </label>
+          )}
+
           {attachment && (
             <section className="brm-section">
               <h4 className="brm-section-title">
@@ -140,7 +164,7 @@ export default function BookingReviewModal({
           <button type="button" className="brm-btn brm-ghost" onClick={onClose} disabled={loading}>
             Go back
           </button>
-          <button type="button" className="brm-btn brm-primary" onClick={onConfirm} disabled={loading}>
+          <button type="button" className="brm-btn brm-primary" onClick={() => onConfirm?.({ payNow })} disabled={loading}>
             {loading && <FontAwesomeIcon icon={faSpinner} spin />}
             {loading ? "Submitting..." : "Confirm booking"}
           </button>

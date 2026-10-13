@@ -637,11 +637,22 @@ class DashboardController extends Controller
         }
     }
 
-    public function destroyItem($id)
+    public function destroyItem(Request $request, $id)
     {
+        $validated = $request->validate([
+            'reason' => 'required|string|in:' . implode(',', array_keys(InventoryService::PERMANENT_DELETE_REASONS)),
+            'reason_details' => 'required_if:reason,other|nullable|string|min:3|max:500',
+        ]);
+
         try {
-            $result = $this->inventoryService->deleteItem($id);
+            $result = $this->inventoryService->deleteItem(
+                (int) $id,
+                $validated['reason'],
+                $validated['reason_details'] ?? null
+            );
             return response()->json($result);
+        } catch (ValidationException $e) {
+            return response()->json(['errors' => $e->errors()], 422);
         } catch (\Exception $e) {
             return response()->json(['errors' => [$e->getMessage()]], 422);
         }

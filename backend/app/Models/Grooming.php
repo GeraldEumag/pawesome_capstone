@@ -33,6 +33,7 @@ class Grooming extends Model
         'completed_at',
         'status',
         'service_request_id',
+        'appointment_id',
         'cancellation_reason',
         'booking_channel',
     ];

@@ -2,6 +2,7 @@ import React, { useCallback, useEffect, useState } from "react";
 import { apiRequest } from "../../api/client";
 import { showError } from "../../utils/alert.jsx";
 import { printReceipt } from "../../utils/receiptPrinter";
+import { downloadReceiptPdf } from "../../utils/receiptPdf";
 import HistoryTimeline from "../shared/HistoryTimeline";
 import { formatCurrency } from "../../utils/currency";
 import "./CashierHistory_Polished.css";
@@ -66,25 +67,25 @@ const CashierHistory = () => {
 
   const handlePageChange = (p) => { setPage(p); fetchHistory(p); };
 
-  const handlePrintReceipt = (entry) => {
+  const getReceiptOptions = (entry) => {
     const raw = entry.raw_data || {};
     const saleId = raw.transaction_id || raw.id;
-    if (!saleId) return;
-
-    const items = (raw.items || raw.products || []).map((item) => ({
-      name: item.item_name || item.name || "Item",
-      quantity: item.quantity || 1,
-      unitPrice: Number(item.unit_price || item.price || item.total_price || 0),
-      total: Number(item.total_price || (item.unit_price || item.price || 0) * (item.quantity || 1)),
-    }));
-
+    if (!saleId) return null;
+    const rawItems = Array.isArray(raw.items) ? raw.items : Array.isArray(raw.products) ? raw.products : [];
+    const items = rawItems.map((item) => {
+      const quantity = Number(item.quantity || 1);
+      const unitPrice = Number(item.unit_price || item.price || item.total_price || 0);
+      return {
+        name: item.item_name || item.name || "Item",
+        quantity,
+        unitPrice,
+        total: Number(item.total_price ?? item.total ?? unitPrice * quantity),
+      };
+    });
     const total = Number(entry.amount || raw.total || raw.total_amount || 0);
-    const subtotal = Number(raw.subtotal || total);
-    const discount = Number(raw.discount || raw.discount_amount || 0);
     const amountReceived = Number(raw.amount_received || raw.cash_received || 0);
-    const change = Number(raw.change || raw.change_amount || 0);
 
-    printReceipt({
+    return {
       title: "Sales Invoice",
       receiptNumber: entry.reference_id || String(saleId),
       date: entry.created_at ? new Date(entry.created_at).toLocaleString("en-PH") : new Date().toLocaleString("en-PH"),
@@ -94,13 +95,29 @@ const CashierHistory = () => {
       paymentStatus: entry.status || raw.payment_status || "paid",
       referenceNumber: raw.reference_number || "",
       items,
-      subtotal,
-      vat: raw.tax || raw.vat_amount,
-      discount,
+      subtotal: Number(raw.subtotal ?? total),
+      netAmount: raw.breakdown?.net_amount ?? raw.net_amount,
+      vat: raw.breakdown?.vat_amount ?? raw.tax ?? raw.vat_amount,
+      discount: Number(raw.discount ?? raw.discount_amount ?? 0),
       total,
       amountReceived: amountReceived || undefined,
-      change: change || undefined,
-    });
+      change: Number(raw.change ?? raw.change_amount ?? 0) || undefined,
+    };
+  };
+
+  const handlePrintReceipt = (entry) => {
+    const options = getReceiptOptions(entry);
+    if (options) printReceipt(options);
+  };
+
+  const handleDownloadReceiptPdf = (entry) => {
+    const options = getReceiptOptions(entry);
+    if (!options) return;
+    try {
+      downloadReceiptPdf(options);
+    } catch (err) {
+      showError(err.message || "Failed to download receipt PDF.");
+    }
   };
 
   const exportColumns = [
@@ -135,22 +152,26 @@ const CashierHistory = () => {
       meta={meta}
       onPageChange={handlePageChange}
       renderEntryMeta={(entry) => (
-        <button
-          type="button"
-          className="ht-receipt-btn"
-          onClick={(e) => { e.stopPropagation(); handlePrintReceipt(entry); }}
-          title="Print Receipt"
-          style={{
-            marginLeft: 8,
-            background: "transparent",
-            border: "none",
-            cursor: "pointer",
-            color: "var(--ht-accent, #0891b2)",
-            fontSize: 12,
-          }}
-        >
-          🧾 Receipt
-        </button>
+        <span style={{ display: "inline-flex", gap: 8, marginLeft: 8 }}>
+          <button
+            type="button"
+            className="ht-receipt-btn"
+            onClick={(e) => { e.stopPropagation(); handlePrintReceipt(entry); }}
+            title="Print Receipt"
+            style={{ background: "transparent", border: "none", cursor: "pointer", color: "var(--ht-accent, #0891b2)", fontSize: 12 }}
+          >
+            Receipt
+          </button>
+          <button
+            type="button"
+            className="ht-receipt-btn"
+            onClick={(e) => { e.stopPropagation(); handleDownloadReceiptPdf(entry); }}
+            title="Download receipt PDF"
+            style={{ background: "transparent", border: "none", cursor: "pointer", color: "var(--ht-accent, #0891b2)", fontSize: 12 }}
+          >
+            PDF
+          </button>
+        </span>
       )}
       />
     </div>

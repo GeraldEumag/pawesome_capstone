@@ -394,11 +394,12 @@ export const inventoryApi = {
    * @returns {Promise<Object>} Deletion confirmation
    * @throws {Error} When item not found or request fails
    */
-  deleteItem: async (id) => {
+  deleteItem: async (id, reason, reasonDetails = "") => {
     validateId(id, "Item ID");
     try {
       return await apiRequest(`/inventory/items/${id}`, {
         method: "DELETE",
+        body: JSON.stringify({ reason, reason_details: reasonDetails }),
       });
     } catch (error) {
       throw error;

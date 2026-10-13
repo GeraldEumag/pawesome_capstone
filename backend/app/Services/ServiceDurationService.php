@@ -37,8 +37,8 @@ class ServiceDurationService
             'De-matting / Special Coat Care' => 120,
         ],
         'boarding' => [
-            'default_check_in_time' => '14:00', // 2:00 PM
-            'default_check_out_time' => '12:00', // 12:00 PM
+            'default_check_in_time' => '10:00', // 10:00 AM
+            'default_check_out_time' => '18:00', // 6:00 PM
             'cleaning_buffer_minutes' => 60, // Room cleaning between stays
         ]
     ];
@@ -65,7 +65,7 @@ class ServiceDurationService
         'end' => '18:00',   // 6:00 PM
     ];
 
-    private const STORE_TIMEZONE = 'Asia/Manila';
+    public const STORE_TIMEZONE = 'Asia/Manila';
     private const STORE_CLOSING_TIME = '18:00';
 
     public static function inStoreTimezone(string|\DateTimeInterface $dateTime): Carbon

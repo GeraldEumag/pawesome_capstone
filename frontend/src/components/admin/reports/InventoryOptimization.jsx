@@ -20,7 +20,8 @@ import {
   ResponsiveContainer,
 } from 'recharts';
 import { apiRequest } from '../../../api/client';
-import { ChartContainer } from '../../shared/UnifiedReportEngine';
+import { ChartContainer, getInitialChartDimension } from '../../shared/UnifiedReportEngine';
+import ReportSkeleton from '../../shared/ReportSkeleton';
 import './AdvancedReports.css';
 
 const formatCurrency = (amount) => {
@@ -50,13 +51,15 @@ const InventoryOptimization = () => {
     fetchData();
   }, [fetchData]);
 
-  const abcData = useMemo(() => data?.abcData || [], [data]);
-  const stockData = useMemo(() => data?.stockData || [], [data]);
-  const reorderRecommendations = useMemo(() => data?.reorderRecommendations || [], [data]);
+  const abcData = useMemo(() => Array.isArray(data?.abcData) ? data.abcData : [], [data]);
+  const stockData = useMemo(() => Array.isArray(data?.stockData) ? data.stockData : [], [data]);
+  const reorderRecommendations = useMemo(() => Array.isArray(data?.reorderRecommendations) ? data.reorderRecommendations : [], [data]);
   const lowStockCount = data?.lowStockCount || 0;
+  const hasAbcValue = abcData.some((row) => Number(row.value) > 0);
+  const hasStockValue = stockData.some((row) => Number(row.value) > 0 || Number(row.units) > 0);
 
   if (loading) {
-    return <div className="adv-loading"><p>Loading inventory optimization...</p></div>;
+    return <ReportSkeleton label="Loading inventory optimization" />;
   }
 
   if (error) {
@@ -113,12 +116,12 @@ const InventoryOptimization = () => {
 
       <div className="adv-charts-grid">
         <ChartContainer title="ABC Analysis" subtitle="Inventory value by class (A = top 70% of value)" height={340}>
-          {abcData.length === 0 ? (
-            <div className="adv-empty"><p>No inventory data available</p></div>
+          {!hasAbcValue ? (
+            <div className="adv-empty"><p>No inventory value available for ABC analysis</p></div>
           ) : (
-            <ResponsiveContainer width="100%" height="100%">
+            <ResponsiveContainer width="100%" height={getInitialChartDimension(340).height} initialDimension={getInitialChartDimension(340)}>
               <PieChart>
-                <Pie data={abcData} dataKey="value" nameKey="category" cx="50%" cy="50%" innerRadius={55} outerRadius={95} paddingAngle={3}>
+                <Pie data={abcData} dataKey="value" nameKey="category" cx="50%" cy="50%" innerRadius="42%" outerRadius="72%" paddingAngle={3}>
                   {abcData.map((entry) => (
                     <Cell key={entry.category} fill={entry.color || '#94a3b8'} />
                   ))}
@@ -131,15 +134,15 @@ const InventoryOptimization = () => {
         </ChartContainer>
 
         <ChartContainer title="Stock Value by Category" subtitle="Units and value per category" height={340}>
-          {stockData.length === 0 ? (
+          {!hasStockValue ? (
             <div className="adv-empty"><p>No category stock data available</p></div>
           ) : (
-            <ResponsiveContainer width="100%" height="100%">
+            <ResponsiveContainer width="100%" height={getInitialChartDimension(340).height} initialDimension={getInitialChartDimension(340)}>
               <BarChart data={stockData}>
                 <CartesianGrid strokeDasharray="3 3" vertical={false} />
-                <XAxis dataKey="category" tick={{ fontSize: 10 }} />
+                <XAxis dataKey="category" tick={{ fontSize: 10 }} angle={-25} textAnchor="end" height={55} interval="preserveStartEnd" />
                 <YAxis tick={{ fontSize: 12 }} tickFormatter={(v) => `₱${v / 1000}k`} />
-                <Tooltip formatter={(v, name) => (name === 'value' ? formatCurrency(v) : v)} />
+                <Tooltip formatter={(v, name) => (name === 'Value' ? formatCurrency(v) : v)} />
                 <Legend />
                 <Bar dataKey="value" name="Value" fill="#ff5f93" radius={[4, 4, 0, 0]} />
                 <Bar dataKey="units" name="Units" fill="#3b82f6" radius={[4, 4, 0, 0]} />

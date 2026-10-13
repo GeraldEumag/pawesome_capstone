@@ -5,8 +5,10 @@ import { clearAuth } from "../../utils/auth";
 import { getRoomName } from "../../utils/apiNormalize";
 import { useAuth } from "../../context/AuthContext";
 import "./CustomerPayments.css";
-import { showAlert, showError } from "../../utils/alert.jsx";
+import { showAlert, showError, showSuccess } from "../../utils/alert.jsx";
 import { printReceipt } from "../../utils/receiptPrinter";
+import { downloadReceiptPdf } from "../../utils/receiptPdf";
+import PaymentUploadModal from "../shared/PaymentUploadModal";
 
 const formatCurrency = (value) =>
   `₱${Number(value || 0).toLocaleString("en-PH", {
@@ -31,6 +33,8 @@ const CustomerPayments = () => {
   const [payments, setPayments] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [onlineBillingPayment, setOnlineBillingPayment] = useState({ open: false, endpoint: "", title: "" });
+  const [billingSubmitting, setBillingSubmitting] = useState(null);
   const highlightId = searchParams.get("order_id") || searchParams.get("boarding_id");
   const highlightRef = useRef(null);
 
@@ -57,6 +61,7 @@ const CustomerPayments = () => {
         "/customer/boarding-requests",
         "GET"
       );
+      const billingResult = await apiRequest("/customer/billing", "GET").catch(() => ({ invoices: [] }));
 
       const requests = Array.isArray(requestsResult)
         ? requestsResult
@@ -67,6 +72,9 @@ const CustomerPayments = () => {
       const boardings = Array.isArray(boardingsResult)
         ? boardingsResult
         : boardingsResult.data || boardingsResult.payments || boardingsResult.orders || boardingsResult.requests || boardingsResult.boarding_requests || boardingsResult.boardings || [];
+      const invoices = Array.isArray(billingResult)
+        ? billingResult
+        : billingResult.invoices || billingResult.data || [];
 
       // Process service requests
       const payableRequests = requests
@@ -78,6 +86,7 @@ const CustomerPayments = () => {
 
           return (
             status === "approved" &&
+            Number(request.additional_charges || 0) <= 0 &&
             ["unpaid", "pending", "rejected"].includes(paymentStatus)
           );
         })
@@ -175,6 +184,48 @@ const CustomerPayments = () => {
           ],
         }));
 
+      const payableBillingInvoices = invoices
+        .map((invoice) => {
+          const requestStatus = String(invoice.payment_request_status || "").toLowerCase();
+          const balanceDue = Number(invoice.balance_due || 0);
+          const paymentStatus = requestStatus === "pending_verification" || requestStatus === "awaiting_cashier"
+            ? "pending"
+            : requestStatus === "rejected"
+              ? "rejected"
+              : balanceDue > 0
+                ? (String(invoice.payment_status || "").toLowerCase() === "pending" ? "pending" : "unpaid")
+                : "paid";
+          const totalAmount = balanceDue > 0 ? balanceDue : Number(invoice.payment_request_amount || 0);
+          if (totalAmount <= 0) return null;
+
+          return {
+            ...invoice,
+            payment_source: "service_billing_payment",
+            payable_type: "service_billing_payment",
+            display_id: `VET-BILL-${invoice.appointment_id}`,
+            display_type: "Veterinary Bill",
+            display_name: invoice.service_name || "Veterinary service billing",
+            total_amount: totalAmount,
+            order_status: invoice.appointment_status || "approved",
+            payment_status: paymentStatus,
+            payment_available: Boolean(invoice.payment_available),
+            payment_block_reason: invoice.payment_block_reason,
+            payment_request_status: invoice.payment_request_status,
+            payment_channel: invoice.payment_channel,
+            payment_method: invoice.payment_method,
+            payment_request_id: invoice.payment_request_id,
+            receipt_number: invoice.payment_request_receipt_number,
+            created_at: invoice.created_at || invoice.scheduled_at,
+            verified_at: invoice.payment_request_verified_at,
+            paid_at: invoice.payment_request_paid_at,
+            payment_reference: invoice.payment_reference,
+            payment_proof: invoice.proof_url,
+            rejection_reason: invoice.rejection_reason,
+            items: invoice.items || [],
+          };
+        })
+        .filter(Boolean);
+
       const historyResult = await apiRequest("/customer/payments/history", "GET");
       const historyList = Array.isArray(historyResult)
         ? historyResult
@@ -193,7 +244,7 @@ const CustomerPayments = () => {
         verified_at: payment.verified_at || payment.paid_at || payment.date_verified,
       }));
 
-      const allPayments = [...payableRequests, ...payableOrders, ...payableBoardings, ...historyPayments];
+      const allPayments = [...payableRequests, ...payableOrders, ...payableBoardings, ...payableBillingInvoices, ...historyPayments];
       setPayments(allPayments);
     } catch (err) {
       console.error("LOAD CUSTOMER PAYMENTS ERROR:", err);
@@ -237,8 +288,69 @@ const CustomerPayments = () => {
     };
   }, [payments]);
 
-  const viewReceipt = async (payment) => {
+  const payBillingOnline = (payment) => {
+    setOnlineBillingPayment({
+      open: true,
+      endpoint: `/customer/billing/veterinary/${payment.appointment_id}/online-payment`,
+      title: payment.display_name || "Veterinary bill",
+      referenceNumber: payment.payment_reference || "",
+      paymentStatus: payment.payment_status || "",
+      rejectionReason: payment.rejection_reason || "",
+      paymentMethod: payment.payment_method || "gcash",
+    });
+  };
+
+  const requestCashierPayment = async (payment) => {
     try {
+      setBillingSubmitting(payment.appointment_id);
+      await apiRequest(`/customer/billing/veterinary/${payment.appointment_id}/cashier-payment`, "POST", {});
+      showSuccess("Your bill is now waiting at the cashier. Pay the full balance at the front desk.");
+      await fetchPayments();
+    } catch (err) {
+      showError(err.message || "Unable to send this bill to the cashier.");
+    } finally {
+      setBillingSubmitting(null);
+    }
+  };
+
+  const viewReceipt = async (payment, output = "print") => {
+    const outputReceipt = (options) => {
+      if (output === "pdf") return downloadReceiptPdf(options);
+      return printReceipt({ ...options, vat: undefined });
+    };
+    try {
+      if (payment.payment_source === "service_billing_payment") {
+        const data = await apiRequest(`/customer/billing/payment-requests/${payment.payment_request_id}/receipt`, "GET");
+        const receipt = data?.receipt;
+        if (!receipt) throw new Error("Billing receipt is not available yet.");
+        const amount = Number(receipt.total_amount || payment.total_amount || 0);
+        outputReceipt({
+          title: "Veterinary Bill Receipt",
+          receiptNumber: receipt.receipt_number || `VET-BILL-${payment.appointment_id}`,
+          date: receipt.paid_at || new Date().toLocaleString("en-PH"),
+          customer: receipt.customer_name || user?.name || "Customer",
+          paymentMethod: receipt.payment_method || "Payment",
+          paymentStatus: "paid",
+          verifiedBy: receipt.verified_by || "Cashier",
+          items: (Array.isArray(receipt.items) ? receipt.items : []).map((item) => {
+            const quantity = Number(item.quantity || 1);
+            const unitPrice = Number(item.price || 0);
+            return {
+              name: item.product_name || "Veterinary service item",
+              quantity,
+              unitPrice,
+              total: Number(item.subtotal ?? item.total ?? unitPrice * quantity),
+            };
+          }),
+          subtotal: amount,
+          netAmount: receipt.breakdown?.net_amount ?? receipt.net_amount,
+          vat: receipt.breakdown?.vat_amount ?? receipt.vat_amount,
+          total: amount,
+          footerText: "Thank you for choosing Pawesome Retreat Inc.!",
+        });
+        return;
+      }
+
       if (payment.payment_source === "service_request" || payment.type === "service_request" || payment.payable_type === "service_request") {
         const data = await apiRequest(`/customer/requests/${payment.id}/receipt`, "GET");
         const receipt = data?.receipt || data?.data || data;
@@ -247,7 +359,7 @@ const CustomerPayments = () => {
         const amount = Number(receipt.total_amount || payment.total_amount || 0);
         const serviceName = receipt.service_type || receipt.request_type || receipt.service_name || "Service";
 
-        printReceipt({
+        outputReceipt({
           title: "Service Invoice",
           receiptNumber: receipt.receipt_number || payment.receipt_number || `SR-${payment.id}`,
           date: receipt.paid_at || payment.paid_at || new Date().toLocaleString("en-PH"),
@@ -257,6 +369,8 @@ const CustomerPayments = () => {
           verifiedBy: receipt.verified_by || "Cashier",
           items: [{ name: `${serviceName} — Pet: ${receipt.pet_name || payment.pet_name || "N/A"}`, quantity: 1, unitPrice: amount, total: amount }],
           subtotal: amount,
+          netAmount: receipt.breakdown?.net_amount ?? receipt.net_amount,
+          vat: receipt.breakdown?.vat_amount ?? receipt.vat_amount,
           total: amount,
           footerText: "Thank you for choosing Pawesome Retreat Inc.!",
         });
@@ -267,7 +381,7 @@ const CustomerPayments = () => {
         if (!payment.receipt_number) throw new Error("Boarding receipt is not available yet.");
 
         const amount = Number(payment.total_amount || 0);
-        printReceipt({
+        outputReceipt({
           title: "Boarding Invoice",
           receiptNumber: payment.receipt_number || `BRD-${payment.id}`,
           date: payment.paid_at || new Date().toLocaleString("en-PH"),
@@ -277,6 +391,8 @@ const CustomerPayments = () => {
           verifiedBy: payment.verified_by || "Cashier",
           items: [{ name: `Pet Boarding — Pet: ${payment.pet_name || "N/A"}`, quantity: 1, unitPrice: amount, total: amount }],
           subtotal: amount,
+          netAmount: payment.breakdown?.net_amount ?? payment.net_amount,
+          vat: payment.breakdown?.vat_amount ?? payment.vat_amount,
           total: amount,
           footerText: "Thank you for choosing Pawesome Retreat Inc.!",
         });
@@ -289,14 +405,18 @@ const CustomerPayments = () => {
       if (!receipt) throw new Error("Receipt details not found.");
 
       const amount = Number(receipt.total_amount || 0);
-      const items = (receipt.items || []).map((item) => ({
-        name: item.item_name || item.name || item.product_name || "Item",
-        quantity: Number(item.quantity || 1),
-        unitPrice: Number(item.unit_price || item.price || 0),
-        total: Number(item.total_price || item.total || 0),
-      }));
+      const items = (Array.isArray(receipt.items) ? receipt.items : []).map((item) => {
+        const quantity = Number(item.quantity || 1);
+        const unitPrice = Number(item.unit_price || item.price || 0);
+        return {
+          name: item.item_name || item.name || item.product_name || "Item",
+          quantity,
+          unitPrice,
+          total: Number(item.total_price ?? item.total ?? unitPrice * quantity),
+        };
+      });
 
-      printReceipt({
+      outputReceipt({
         title: "Sales Invoice",
         receiptNumber: receipt.receipt_number || `ORD-${payment.id}`,
         date: receipt.paid_at || new Date().toLocaleString("en-PH"),
@@ -306,6 +426,9 @@ const CustomerPayments = () => {
         verifiedBy: receipt.verified_by || "Cashier",
         items: items.length > 0 ? items : [{ name: "Store Order", quantity: 1, unitPrice: amount, total: amount }],
         subtotal: amount,
+        netAmount: receipt.breakdown?.net_amount ?? receipt.net_amount,
+        vat: receipt.breakdown?.vat_amount ?? receipt.vat_amount,
+        discount: receipt.discount ?? 0,
         total: amount,
         footerText: "Thank you for shopping at Pawesome Retreat Inc.!",
       });
@@ -375,17 +498,18 @@ const CustomerPayments = () => {
                 <th>Payment</th>
                 <th>Date Verified</th>
                 <th>Receipt / Proof</th>
+                <th>Action</th>
               </tr>
             </thead>
 
             <tbody>
               {loading ? (
                 <tr>
-                  <td colSpan="8">Loading payments...</td>
+                  <td colSpan="9">Loading payments...</td>
                 </tr>
               ) : payments.length === 0 ? (
                 <tr>
-                  <td colSpan="8">
+                  <td colSpan="9">
                     No approved orders or service requests ready for payment yet.
                   </td>
                 </tr>
@@ -419,6 +543,12 @@ const CustomerPayments = () => {
                         <strong>{payment.display_name}</strong>
                         {payment.pet_name && <div>Pet: {payment.pet_name}</div>}
                         {payment.customer_name && <div>Customer: {payment.customer_name}</div>}
+                        {payment.payment_source === "service_billing_payment" && (payment.items || []).map((item) => (
+                          <div className="customer-billing-line" key={`${item.id || item.description}-${item.item_type}`}>
+                            <span>{item.description || "Veterinary service item"}</span>
+                            <span>{item.item_type === "discount" ? "−" : ""}{formatCurrency(item.total_price)}{item.is_paid ? " · Paid" : ""}</span>
+                          </div>
+                        ))}
                       </td>
 
                       <td className="payment-amount">
@@ -429,7 +559,7 @@ const CustomerPayments = () => {
 
                       <td>
                         <span className={`payment-status ${paymentStatus}`}>
-                          {paymentLabels[paymentStatus] || paymentStatus}
+                          {payment.payment_request_status === "awaiting_cashier" ? "Waiting at cashier" : (paymentLabels[paymentStatus] || paymentStatus)}
                         </span>
                       </td>
 
@@ -439,13 +569,23 @@ const CustomerPayments = () => {
 
                       <td>
                         {paymentStatus === "paid" ? (
-                          <button
-                            type="button"
-                            className="receipt-btn"
-                            onClick={() => viewReceipt(payment)}
-                          >
-                            {payment.receipt_number ? `Print ${payment.receipt_number}` : "Print Receipt"}
-                          </button>
+                          <div className="customer-receipt-actions">
+                            <button
+                              type="button"
+                              className="receipt-btn"
+                              onClick={() => viewReceipt(payment, "print")}
+                            >
+                              {payment.receipt_number ? `Print ${payment.receipt_number}` : "Print Receipt"}
+                            </button>
+                            <button
+                              type="button"
+                              className="receipt-btn"
+                              onClick={() => viewReceipt(payment, "pdf")}
+                              title="Download 58mm receipt PDF"
+                            >
+                              PDF
+                            </button>
+                          </div>
                         ) : proofUrl ? (
                           <a className="receipt-btn" href={proofUrl} target="_blank" rel="noreferrer">
                             View Proof
@@ -470,6 +610,30 @@ const CustomerPayments = () => {
                           </>
                         )}
                       </td>
+
+                      <td>
+                        {payment.payment_source === "service_billing_payment" && payment.payment_available ? (
+                          <div className="customer-billing-actions">
+                            <button
+                              type="button"
+                              className="receipt-btn"
+                              onClick={() => payBillingOnline(payment)}
+                            >
+                              Pay Online
+                            </button>
+                            <button
+                              type="button"
+                              className="receipt-btn"
+                              onClick={() => requestCashierPayment(payment)}
+                              disabled={billingSubmitting === payment.appointment_id}
+                            >
+                              {billingSubmitting === payment.appointment_id ? "Sending..." : "Pay at Cashier"}
+                            </button>
+                          </div>
+                        ) : payment.payment_source === "service_billing_payment" ? (
+                          <span>{payment.payment_block_reason || (payment.payment_request_status === "pending_verification" ? "Online proof is awaiting verification." : payment.payment_request_status === "awaiting_cashier" ? "Pay the full balance at the cashier." : "No balance due.")}</span>
+                        ) : "—"}
+                      </td>
                     </tr>
                   );
                 })
@@ -478,6 +642,21 @@ const CustomerPayments = () => {
           </table>
         </div>
       </div>
+
+      <PaymentUploadModal
+        open={onlineBillingPayment.open}
+        onClose={() => setOnlineBillingPayment({ open: false, endpoint: "", title: "" })}
+        onSuccess={() => {
+          setOnlineBillingPayment({ open: false, endpoint: "", title: "" });
+          fetchPayments();
+        }}
+        endpoint={onlineBillingPayment.endpoint}
+        title={onlineBillingPayment.title}
+        referenceNumber={onlineBillingPayment.referenceNumber}
+        paymentStatus={onlineBillingPayment.paymentStatus}
+        rejectionReason={onlineBillingPayment.rejectionReason}
+        paymentMethod={onlineBillingPayment.paymentMethod}
+      />
     </section>
   );
 };

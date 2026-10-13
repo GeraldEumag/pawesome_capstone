@@ -10,7 +10,7 @@ const PAYMENT_METHODS = [
   { value: "maya", label: "Maya", hint: "Send via Maya app" },
 ];
 
-const PaymentUploadModal = ({ open, onClose, onSuccess, endpoint, title, referenceNumber: previousReference = "", paymentStatus = "", rejectionReason = "", paymentMethod: previousPaymentMethod = "gcash" }) => {
+const PaymentUploadModal = ({ open, onClose, onSuccess, endpoint, title, referenceNumber: previousReference = "", paymentStatus = "", rejectionReason = "", paymentMethod: previousPaymentMethod = "gcash", amount = null, awaitingBookingApproval = false }) => {
   const [paymentMethod, setPaymentMethod] = useState("gcash");
   const [file, setFile] = useState(null);
   const [previewUrl, setPreviewUrl] = useState(null);
@@ -100,7 +100,9 @@ const PaymentUploadModal = ({ open, onClose, onSuccess, endpoint, title, referen
 
     try {
       await apiRequest(endpoint, "POST", formData);
-      showSuccess("Payment proof uploaded. Awaiting cashier verification.");
+      showSuccess(awaitingBookingApproval
+        ? "Payment proof received. Cashier verification will begin after the booking is approved."
+        : "Payment proof uploaded. Awaiting cashier verification.");
       handleClose();
       onSuccess?.();
     } catch (err) {
@@ -130,6 +132,17 @@ const PaymentUploadModal = ({ open, onClose, onSuccess, endpoint, title, referen
         </div>
 
         <div className="pum-body">
+          {amount !== null && Number.isFinite(Number(amount)) && (
+            <div className="pum-amount">
+              <span>Full booking total</span>
+              <strong>₱{Number(amount).toLocaleString("en-PH", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</strong>
+            </div>
+          )}
+          {awaitingBookingApproval && (
+            <p className="pum-booking-pending-note">
+              Payment proof is optional. This booking remains pending receptionist approval, and the cashier can verify the proof after approval.
+            </p>
+          )}
           {isRejected && (
             <div className="pum-rejection-note" role="status">
               <strong>Payment proof rejected</strong>

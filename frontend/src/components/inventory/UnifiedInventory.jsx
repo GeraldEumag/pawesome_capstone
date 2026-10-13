@@ -7,10 +7,11 @@ import {
   faSync, faArchive,
   faWarehouse, faBoxes, faBell, faSort, faSortUp, faSortDown,
   faChevronDown, faDownload, faHistory, faInfoCircle,
-  faSlidersH, faAdjust, faCamera, faXmark,
+  faSlidersH, faAdjust, faCamera, faXmark, faTrash,
 } from "@fortawesome/free-solid-svg-icons";
 import { inventoryApi } from "../../api/inventory.jsx";
 import { normalizeList } from "../../api/client";
+import { INVENTORY_ARCHIVE_REASONS, INVENTORY_DELETE_REASONS } from "../../utils/alert.jsx";
 import AddProductModal from "./AddProductModal";
 import RowActionPopover from "../shared/RowActionPopover";
 import StockAdjustmentModal from "./StockAdjustmentModal";
@@ -76,6 +77,7 @@ const UnifiedInventory = () => {
   const [adjustItem, setAdjustItem] = useState(null);
   const [showAdjustModal, setShowAdjustModal] = useState(false);
   const [deleteModal, setDeleteModal] = useState({ open: false, item: null, loading: false });
+  const [permanentDeleteModal, setPermanentDeleteModal] = useState({ open: false, item: null, loading: false });
   const [historyItem, setHistoryItem] = useState(null);
   const [showHistoryModal, setShowHistoryModal] = useState(false);
   const [historyLogs, setHistoryLogs] = useState([]);
@@ -314,17 +316,40 @@ const UnifiedInventory = () => {
     setDeleteModal({ open: true, item, loading: false });
   };
 
-  const confirmArchive = async (reason) => {
+  const confirmArchive = async (reason, reasonDetails) => {
     setDeleteModal((prev) => ({ ...prev, loading: true }));
+    const selectedReason = INVENTORY_ARCHIVE_REASONS.find((option) => option.value === reason);
+    const reasonLabel = selectedReason?.label || reason;
+    const reasonText = reason === "other" ? `${reasonLabel}: ${reasonDetails}` : reasonLabel;
     try {
-      await inventoryApi.archiveItem(deleteModal.item.id, reason);
+      await inventoryApi.archiveItem(deleteModal.item.id, reasonText);
       await fetchInventory(true);
       setDeleteModal({ open: false, item: null, loading: false });
       showToast("success", "Archived", "Item archived successfully.");
-      addActivityLog("archive", `Archived "${deleteModal.item.name}". Reason: ${reason}`);
+      addActivityLog("archive", `Archived "${deleteModal.item.name}". Reason: ${reasonText}`);
     } catch (err) {
       setDeleteModal((prev) => ({ ...prev, loading: false }));
       showToast("error", "Archive Failed", err.message);
+    }
+  };
+
+  const handlePermanentDelete = (item) => {
+    setPermanentDeleteModal({ open: true, item, loading: false });
+  };
+
+  const confirmPermanentDelete = async (reason, reasonDetails) => {
+    setPermanentDeleteModal((prev) => ({ ...prev, loading: true }));
+    const item = permanentDeleteModal.item;
+    try {
+      await inventoryApi.deleteItem(item.id, reason, reasonDetails);
+      await fetchInventory(true);
+      setPermanentDeleteModal({ open: false, item: null, loading: false });
+      setSelectedItems((current) => current.filter((id) => id !== item.id));
+      showToast("success", "Deleted", `"${item.name}" was permanently deleted.`);
+      addActivityLog("delete", `Permanently deleted "${item.name}". Reason: ${reason}${reason === "other" ? ` — ${reasonDetails}` : ""}`);
+    } catch (err) {
+      setPermanentDeleteModal((prev) => ({ ...prev, loading: false }));
+      showToast("error", "Delete Failed", err.message);
     }
   };
 
@@ -726,9 +751,14 @@ const UnifiedInventory = () => {
                     <td className="actions-col">
                       <RowActionPopover rowLabel={item.name || item.sku || item.id}>
                         {activeTab === "archived" ? (
-                          <button className="btn-icon unarchive" onClick={() => handleUnarchive(item.id)} title="Unarchive">
-                            <FontAwesomeIcon icon={faPlus} />
-                          </button>
+                          <div className="action-group">
+                            <button className="btn-icon unarchive" onClick={() => handleUnarchive(item.id)} title="Unarchive">
+                              <FontAwesomeIcon icon={faPlus} />
+                            </button>
+                            <button className="btn-icon permanent-delete" onClick={() => handlePermanentDelete(item)} title="Permanently Delete">
+                              <FontAwesomeIcon icon={faTrash} />
+                            </button>
+                          </div>
                         ) : (
                           <>
                             <label className="row-action-popover-checkbox">
@@ -1024,9 +1054,34 @@ const UnifiedInventory = () => {
         loading={deleteModal.loading}
         onClose={() => setDeleteModal({ open: false, item: null, loading: false })}
         onConfirm={confirmArchive}
-        title="Archive Item"
-        message="This item will be hidden from POS and service usage, but previous records will remain available."
+        title="Archive Inventory Item"
+        message={`Archive "${deleteModal.item?.name || "this item"}"? It will be hidden from POS and service usage, while historical records remain available.`}
+        warningText="You can restore the item later from the Archived tab."
         confirmText="Archive"
+        loadingText="Archiving..."
+        requireReason
+        reasonOptions={INVENTORY_ARCHIVE_REASONS}
+        reasonLabel="Archive reason *"
+        reasonDetailsLabel="Additional details *"
+        reasonDetailsPlaceholder="Add details for this archive reason..."
+      />
+
+      <DeleteConfirmModal
+        isOpen={permanentDeleteModal.open}
+        itemName={permanentDeleteModal.item?.name || "this item"}
+        loading={permanentDeleteModal.loading}
+        onClose={() => setPermanentDeleteModal({ open: false, item: null, loading: false })}
+        onConfirm={confirmPermanentDelete}
+        title="Permanently Delete Archived Item"
+        message={`Permanently delete "${permanentDeleteModal.item?.name || "this item"}"?`}
+        warningText="This cannot be undone. Items with sales, usage, batches, or inventory history must remain archived."
+        confirmText="Delete Permanently"
+        loadingText="Deleting..."
+        requireReason
+        reasonOptions={INVENTORY_DELETE_REASONS}
+        reasonLabel="Deletion reason *"
+        reasonDetailsLabel="Additional details *"
+        reasonDetailsPlaceholder="Explain why this archived item must be deleted..."
       />
 
       {/* Toast */}

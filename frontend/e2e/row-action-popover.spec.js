@@ -90,6 +90,7 @@ test.describe('Shared table row-action popover', () => {
         room_type: 'Standard',
         status: 'pending',
         payment_status: 'unpaid',
+        booking_channel: 'walk_in',
       }] }),
     }));
     await page.route('**/api/receptionist/boarding-rooms*', (route) => route.fulfill({
@@ -117,6 +118,77 @@ test.describe('Shared table row-action popover', () => {
 
     await panel.getByRole('button', { name: 'View / Manage' }).click();
     await expect(page.getByText('Boarding Details')).toBeVisible();
+  });
+
+  test('Online boarding can be approved from its detail modal after card verification', async ({ page }) => {
+    await mockLoginAs(page, 'receptionist', 'E2E Receptionist');
+    await page.setViewportSize({ width: 390, height: 844 });
+    const booking = {
+      id: 26,
+      pet_name: 'E2E Card Boarding',
+      pet: { name: 'E2E Card Boarding', species: 'Dog' },
+      customer_name: 'E2E Card Owner',
+      booking_channel: 'online',
+      check_in: '2026-10-20',
+      check_out: '2026-10-20',
+      room_type: 'Standard',
+      status: 'pending',
+      payment_status: 'unpaid',
+      vaccination_card: 'vaccination_cards/e2e-card.png',
+      vaccination_card_url: '/api/files/vaccination-cards/26/view',
+    };
+    const actions = [];
+    await page.route('**/api/receptionist/boarding-requests**', async (route) => {
+      const pathname = new URL(route.request().url()).pathname;
+      if (pathname.endsWith('/verify-vaccination')) {
+        booking.vaccination_card_verified_at = '2026-10-13T10:00:00.000000Z';
+        actions.push('verify');
+        await route.fulfill({
+          status: 200,
+          contentType: 'application/json',
+          body: JSON.stringify({ boarding: booking }),
+        });
+        return;
+      }
+      if (pathname.endsWith('/approve')) {
+        booking.status = 'approved';
+        actions.push('approve');
+        await route.fulfill({
+          status: 200,
+          contentType: 'application/json',
+          body: JSON.stringify({ boarding: booking, message: 'Boarding approved.' }),
+        });
+        return;
+      }
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({ boarding_requests: [booking] }),
+      });
+    });
+    await page.route('**/api/receptionist/boarding-rooms*', (route) => route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({ rooms: [] }),
+    }));
+
+    await page.goto(`${frontendUrl}/receptionist/bookings/hotel`);
+    const row = page.locator('.bookings-table tbody tr.booking-row', { hasText: 'E2E Card Boarding' });
+    await expect(row).toBeVisible();
+    await row.getByRole('button', { name: /actions for/i }).click();
+    await expect(page.locator('.row-action-popover-panel button[title*="verify the vaccination card"]')).toBeDisabled();
+    await page.getByRole('button', { name: 'View / Manage' }).click();
+
+    const modal = page.locator('.hbk-modal');
+    await expect(modal).toContainText('Uploaded — pending verification');
+    const approveButton = modal.getByRole('button', { name: 'Approve Boarding' });
+    await expect(approveButton).toBeDisabled();
+    await modal.getByRole('button', { name: 'Verify' }).click();
+    await expect(approveButton).toBeEnabled();
+    await approveButton.click();
+
+    await expect(modal).toHaveCount(0);
+    expect(actions).toEqual(['verify', 'approve']);
   });
 
   test('Veterinary row selection and vet assignment are available inside the popover', async ({ page }) => {

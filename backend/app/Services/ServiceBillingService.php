@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Models\ServiceItemUsage;
+use App\Models\ServiceBillingPaymentRequest;
 use App\Models\InventoryItem;
 use App\Models\InventoryLog;
 use App\Models\InventoryBatch;
@@ -120,6 +121,15 @@ class ServiceBillingService
             ]);
 
             $summary = self::syncServicePaymentState($serviceType, $serviceId);
+            if ($serviceType === ServiceItemUsage::SERVICE_VETERINARY
+                && Schema::hasTable('service_billing_payment_requests')) {
+                ServiceBillingPaymentRequest::where('appointment_id', $serviceId)
+                    ->whereIn('status', ServiceBillingPaymentRequest::OPEN_STATUSES)
+                    ->update([
+                        'status' => ServiceBillingPaymentRequest::STATUS_STALE,
+                        'rejection_reason' => 'The bill changed after the payment request was created. Please review and resubmit the current balance.',
+                    ]);
+            }
 
             return [
                 'success' => true,

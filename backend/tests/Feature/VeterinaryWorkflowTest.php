@@ -19,6 +19,12 @@ class VeterinaryWorkflowTest extends TestCase
 {
     use RefreshDatabase;
 
+    protected function tearDown(): void
+    {
+        Carbon::setTestNow();
+        parent::tearDown();
+    }
+
     private function userWithToken(string $role): User
     {
         $user = User::factory()->create([
@@ -294,6 +300,90 @@ class VeterinaryWorkflowTest extends TestCase
         ]);
     }
 
+    public function test_approved_legacy_vet_request_can_be_repaired_and_assignment_is_returned(): void
+    {
+        $receptionist = $this->userWithToken('receptionist');
+        $vet = $this->userWithToken('veterinary');
+        $otherVet = $this->userWithToken('veterinary');
+        $customer = Customer::factory()->create(['email' => 'repair-client@example.test']);
+        $pet = Pet::factory()->create(['customer_id' => $customer->id]);
+        $service = Service::factory()->create([
+            'name' => 'Repair Consultation',
+            'category' => 'Consultation',
+            'price' => 500,
+            'duration_minutes' => 30,
+        ]);
+        $scheduled = Carbon::now('Asia/Manila')->addDay()->setTime(10, 0);
+        $request = ServiceRequest::create([
+            'request_type' => 'vet',
+            'customer_name' => $customer->name,
+            'customer_email' => $customer->email,
+            'pet_id' => $pet->id,
+            'pet_name' => $pet->name,
+            'service_name' => $service->name,
+            'request_date' => $scheduled->toDateString(),
+            'request_time' => '10:00',
+            'status' => 'approved',
+            'payment_status' => 'unpaid',
+        ]);
+
+        $this->withHeaders($this->authHeader($receptionist))
+            ->postJson("/api/receptionist/requests/{$request->id}/approve", [
+                'veterinarian_id' => $vet->id,
+            ])
+            ->assertOk()
+            ->assertJsonPath('appointment.veterinarian_id', $vet->id);
+
+        $this->withHeaders($this->authHeader($receptionist))
+            ->getJson('/api/receptionist/requests')
+            ->assertOk()
+            ->assertJsonPath('requests.0.veterinarian_id', $vet->id)
+            ->assertJsonPath('requests.0.veterinarian.name', $vet->name);
+
+        $appointment = Appointment::where('service_request_id', $request->id)->firstOrFail();
+        $this->withHeaders($this->authHeader($receptionist))
+            ->postJson("/api/receptionist/requests/{$request->id}/approve", [
+                'veterinarian_id' => $otherVet->id,
+            ])
+            ->assertOk()
+            ->assertJsonPath('appointment.veterinarian_id', $otherVet->id);
+
+        $appointment->refresh();
+        $appointment->update(['status' => 'in_progress']);
+        $this->withHeaders($this->authHeader($receptionist))
+            ->postJson("/api/receptionist/requests/{$request->id}/approve", [
+                'veterinarian_id' => $vet->id,
+            ])
+            ->assertUnprocessable();
+        $this->assertSame($otherVet->id, (int) $appointment->fresh()->veterinarian_id);
+    }
+
+    public function test_generic_status_endpoint_cannot_approve_a_vet_request_without_assignment(): void
+    {
+        $receptionist = $this->userWithToken('receptionist');
+        $customer = Customer::factory()->create();
+        $pet = Pet::factory()->create(['customer_id' => $customer->id]);
+        $request = ServiceRequest::create([
+            'request_type' => 'vet',
+            'customer_name' => $customer->name,
+            'customer_email' => $customer->email,
+            'pet_id' => $pet->id,
+            'pet_name' => $pet->name,
+            'service_name' => 'General Consultation',
+            'request_date' => Carbon::now('Asia/Manila')->addDay()->toDateString(),
+            'request_time' => '10:00',
+            'status' => 'pending',
+            'payment_status' => 'unpaid',
+        ]);
+
+        $this->withHeaders($this->authHeader($receptionist))
+            ->patchJson("/api/receptionist/requests/{$request->id}/status", ['status' => 'approved'])
+            ->assertUnprocessable();
+
+        $this->assertSame('pending', $request->fresh()->status);
+        $this->assertDatabaseMissing('appointments', ['service_request_id' => $request->id]);
+    }
+
     public function test_receptionist_can_assign_legacy_name_only_vet_request_when_pet_match_is_unique(): void
     {
         $receptionist = $this->userWithToken('receptionist');
@@ -402,6 +492,12 @@ class VeterinaryWorkflowTest extends TestCase
             ->assertOk()
             ->assertJsonPath('request.status', 'approved')
             ->assertJsonPath('appointment.veterinarian_id', $assignedVet->id);
+
+        $this->withHeaders($this->authHeader($customerUser))
+            ->getJson('/api/customer/my-requests')
+            ->assertOk()
+            ->assertJsonPath('requests.0.veterinarian_id', $assignedVet->id)
+            ->assertJsonPath('requests.0.veterinarian.name', $assignedVet->name);
 
         $this->assertDatabaseHas('appointments', [
             'customer_id' => $customer->id,
@@ -663,5 +759,158 @@ class VeterinaryWorkflowTest extends TestCase
             'id' => $appointment->id,
             'scheduled_at' => Carbon::parse("{$date} 10:00:00", 'Asia/Manila')->utc()->format('Y-m-d H:i:s'),
         ]);
+    }
+
+    public function test_approved_vet_request_without_an_appointment_can_be_repaired_and_reassigned_before_start(): void
+    {
+        Carbon::setTestNow(Carbon::parse('2026-10-12 08:00:00', 'Asia/Manila'));
+        $receptionist = $this->userWithToken('receptionist');
+        $firstVet = $this->userWithToken('veterinary');
+        $secondVet = $this->userWithToken('veterinary');
+        $customer = Customer::factory()->create();
+        $pet = Pet::factory()->create(['customer_id' => $customer->id]);
+        $service = Service::factory()->create([
+            'name' => 'Assignment Repair Consultation',
+            'category' => 'Consultation',
+            'price' => 500,
+            'duration_minutes' => 30,
+        ]);
+        $date = Carbon::tomorrow('Asia/Manila')->toDateString();
+        $request = ServiceRequest::create([
+            'request_type' => 'vet',
+            'customer_name' => $customer->name,
+            'customer_email' => $customer->email,
+            'pet_id' => $pet->id,
+            'pet_name' => $pet->name,
+            'service_name' => $service->name,
+            'request_date' => $date,
+            'request_time' => '10:00',
+            'status' => 'approved',
+            'payment_status' => 'unpaid',
+        ]);
+
+        $headers = $this->authHeader($receptionist);
+        $created = $this->withHeaders($headers)
+            ->postJson("/api/receptionist/requests/{$request->id}/approve", [
+                'veterinarian_id' => $firstVet->id,
+            ])
+            ->assertOk()
+            ->assertJsonPath('appointment.veterinarian_id', $firstVet->id);
+
+        $appointmentId = $created->json('appointment.id');
+        $this->withHeaders($headers)
+            ->getJson('/api/receptionist/requests')
+            ->assertOk()
+            ->assertJsonPath('requests.0.veterinarian_id', $firstVet->id)
+            ->assertJsonPath('requests.0.veterinarian.name', $firstVet->name);
+
+        $this->withHeaders($headers)
+            ->postJson("/api/receptionist/requests/{$request->id}/approve", [
+                'veterinarian_id' => $secondVet->id,
+            ])
+            ->assertOk()
+            ->assertJsonPath('appointment.veterinarian_id', $secondVet->id);
+
+        $appointment = Appointment::findOrFail($appointmentId);
+        $this->assertSame($secondVet->id, (int) $appointment->veterinarian_id);
+        $appointment->update(['status' => 'in_progress']);
+
+        $this->withHeaders($headers)
+            ->postJson("/api/receptionist/requests/{$request->id}/approve", [
+                'veterinarian_id' => $firstVet->id,
+            ])
+            ->assertUnprocessable();
+        $this->assertSame($secondVet->id, (int) $appointment->fresh()->veterinarian_id);
+    }
+
+    public function test_direct_appointment_assignment_can_be_repaired_and_reassigned_before_start(): void
+    {
+        Carbon::setTestNow(Carbon::parse('2026-10-12 08:00:00', 'Asia/Manila'));
+        $receptionist = $this->userWithToken('receptionist');
+        $firstVet = $this->userWithToken('veterinary');
+        $secondVet = $this->userWithToken('veterinary');
+        $customer = Customer::factory()->create();
+        $pet = Pet::factory()->create(['customer_id' => $customer->id]);
+        $service = Service::factory()->create([
+            'name' => 'General Consultation',
+            'category' => 'Consultation',
+            'duration_minutes' => 30,
+        ]);
+        $scheduledAt = Carbon::tomorrow('Asia/Manila')->setTime(10, 0)->utc();
+        $appointment = Appointment::factory()->create([
+            'customer_id' => $customer->id,
+            'pet_id' => $pet->id,
+            'service_id' => $service->id,
+            'veterinarian_id' => $firstVet->id,
+            'status' => 'approved',
+            'scheduled_at' => $scheduledAt,
+        ]);
+        $headers = $this->authHeader($receptionist);
+
+        $this->withHeaders($headers)
+            ->postJson("/api/receptionist/appointments/{$appointment->id}/approve", [
+                'veterinarian_id' => $secondVet->id,
+            ])
+            ->assertOk()
+            ->assertJsonPath('appointment.veterinarian_id', $secondVet->id);
+
+        $appointment->update(['status' => 'in_progress']);
+        $this->withHeaders($headers)
+            ->postJson("/api/receptionist/appointments/{$appointment->id}/approve", [
+                'veterinarian_id' => $firstVet->id,
+            ])
+            ->assertUnprocessable();
+        $this->assertSame($secondVet->id, (int) $appointment->fresh()->veterinarian_id);
+    }
+
+    public function test_reschedule_and_general_update_reject_overlapping_intervals(): void
+    {
+        Carbon::setTestNow(Carbon::parse('2026-10-12 08:00:00', 'Asia/Manila'));
+        $receptionist = $this->userWithToken('receptionist');
+        $vet = $this->userWithToken('veterinary');
+        $customer = Customer::factory()->create();
+        $pet = Pet::factory()->create(['customer_id' => $customer->id]);
+        $service = Service::factory()->create([
+            'name' => 'General Consultation',
+            'category' => 'Consultation',
+            'duration_minutes' => 30,
+        ]);
+        $date = Carbon::tomorrow('Asia/Manila')->toDateString();
+        $firstTime = Carbon::parse($date . ' 10:00', 'Asia/Manila')->utc();
+        $secondTime = Carbon::parse($date . ' 11:00', 'Asia/Manila')->utc();
+        $first = Appointment::factory()->create([
+            'customer_id' => $customer->id,
+            'pet_id' => $pet->id,
+            'service_id' => $service->id,
+            'veterinarian_id' => $vet->id,
+            'status' => 'approved',
+            'scheduled_at' => $firstTime,
+        ]);
+        Appointment::factory()->create([
+            'customer_id' => $customer->id,
+            'pet_id' => $pet->id,
+            'service_id' => $service->id,
+            'veterinarian_id' => $vet->id,
+            'status' => 'approved',
+            'scheduled_at' => $secondTime,
+        ]);
+        $headers = $this->authHeader($receptionist);
+        $overlap = Carbon::parse($date . ' 10:30', 'Asia/Manila')->toISOString();
+
+        $this->withHeaders($headers)
+            ->postJson("/api/receptionist/appointments/{$first->id}/reschedule", ['scheduled_at' => $overlap])
+            ->assertUnprocessable();
+        $this->assertSame($firstTime->format('Y-m-d H:i:s'), $first->fresh()->scheduled_at->utc()->format('Y-m-d H:i:s'));
+
+        $this->withHeaders($headers)
+            ->putJson("/api/receptionist/appointments/{$first->id}", ['scheduled_at' => $overlap])
+            ->assertUnprocessable();
+        $this->assertSame($firstTime->format('Y-m-d H:i:s'), $first->fresh()->scheduled_at->utc()->format('Y-m-d H:i:s'));
+
+        $adjacent = Carbon::parse($date . ' 12:00', 'Asia/Manila')->toISOString();
+        $this->withHeaders($headers)
+            ->postJson("/api/receptionist/appointments/{$first->id}/reschedule", ['scheduled_at' => $adjacent])
+            ->assertOk();
+        $this->assertSame('12:00', $first->fresh()->scheduled_at->setTimezone('Asia/Manila')->format('H:i'));
     }
 }

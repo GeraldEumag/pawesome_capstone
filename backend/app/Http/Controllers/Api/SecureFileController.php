@@ -55,6 +55,10 @@ class SecureFileController extends Controller
                 $record = DB::table('appointments')->where('id', $id)->first();
                 break;
 
+            case 'service-billing-payment':
+                $record = DB::table('service_billing_payment_requests')->where('id', $id)->first();
+                break;
+
             default:
                 return response()->json(['message' => 'Invalid file type'], 400);
         }

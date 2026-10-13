@@ -7,8 +7,9 @@ import { normalizeList } from "../../utils/normalizeList";
 import "./CashierPaymentVerification.css";
 import { showAlert, showSuccess, showError, showReasonPrompt, showConfirm, PAYMENT_REJECT_REASONS } from "../../utils/alert.jsx";
 import { printReceipt as printReceiptUtil } from "../../utils/receiptPrinter";
+import { downloadReceiptPdf } from "../../utils/receiptPdf";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faRotateRight, faInbox, faXmark } from "@fortawesome/free-solid-svg-icons";
+import { faRotateRight, faInbox, faXmark, faFilePdf } from "@fortawesome/free-solid-svg-icons";
 
 const formatDate = (dateStr) => {
   if (!dateStr) return "N/A";
@@ -35,6 +36,7 @@ const CashierPaymentVerification = () => {
   const proofModalRef = useRef(null);
   const [typeFilter, setTypeFilter] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
+  const [lastReceiptOptions, setLastReceiptOptions] = useState(null);
 
   const openProof = useCallback(async (proofUrl) => {
     abortControllerRef.current?.abort();
@@ -184,7 +186,7 @@ const CashierPaymentVerification = () => {
 
     // Build items list — use actual items if available, otherwise single service line
     let items;
-    const rawItems = data.receipt?.items || payment.items || [];
+    const rawItems = Array.isArray(data.receipt?.items) ? data.receipt.items : Array.isArray(payment.items) ? payment.items : [];
     if (rawItems.length > 0) {
       items = rawItems.map((item) => ({
         name: item.item_name || item.name || item.description || "Item",
@@ -196,7 +198,7 @@ const CashierPaymentVerification = () => {
       items = [{ name: service, quantity: 1, unitPrice: amount, total: amount }];
     }
 
-    printReceiptUtil({
+    const receiptOptions = {
       title: "Invoice",
       receiptNumber,
       date,
@@ -208,8 +210,12 @@ const CashierPaymentVerification = () => {
       verifiedBy: cashier,
       items,
       subtotal: amount,
+      netAmount: data.receipt?.breakdown?.net_amount ?? data.net_amount,
+      vat: data.receipt?.breakdown?.vat_amount ?? data.vat_amount,
       total: amount,
-    });
+    };
+    setLastReceiptOptions(receiptOptions);
+    printReceiptUtil({ ...receiptOptions, vat: undefined });
   };
 
   const rejectPayment = async (payment) => {
@@ -308,12 +314,26 @@ const CashierPaymentVerification = () => {
     };
   }, [requests]);
 
+  const handleDownloadLastReceipt = () => {
+    if (!lastReceiptOptions) return;
+    try {
+      downloadReceiptPdf(lastReceiptOptions);
+    } catch (err) {
+      showError(err.message || "Failed to download receipt PDF.");
+    }
+  };
+
   return (
     <div className="cashier-payment-verification">
             <div className="payment-hero premium-card fade-up">
               <h1>Approved Requests</h1>
               <p>Process payments for customer-approved bookings and orders</p>
               <div className="badge badge-info">Payment Control Panel</div>
+              {lastReceiptOptions && (
+                <button type="button" className="refresh-btn" onClick={handleDownloadLastReceipt}>
+                  <FontAwesomeIcon icon={faFilePdf} /> Download latest receipt PDF
+                </button>
+              )}
             </div>
 
             {/* Stats Summary */}

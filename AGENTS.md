@@ -219,6 +219,10 @@ configuration; review `docs/DEPLOYMENT.md` before using any provider settings.
   `ERR_ADDRESS_IN_USE`, and `Failed to fetch` errors in Playwright tests.
 - These are Windows TCP/IP stack issues, not application defects.
 - Mitigation: reboot, or run tests on Linux/Docker.
+- The local PHP CLI may lack GD; use `UploadedFile::fake()->create()` or
+  `createWithContent()` for upload fixtures instead of `fake()->image()`.
+- If MySQL tests report connection refused, confirm the XAMPP MySQL service is
+  running and that `pawesome_test` is available before diagnosing application code.
 
 ## Issue Tracking
 
@@ -267,11 +271,11 @@ configuration; review `docs/DEPLOYMENT.md` before using any provider settings.
   missing rooms 422; `reject()`/`cancel()` release SR-sourced reservations.
   Tests: `php artisan test --filter="PaymentBookingChannelTest|CashierQueueDedupeTest"`.
   Do NOT bulk-backfill NULL channels — report anomalies instead.
-- **Known unrelated test failures: OPEN — requires separate investigation** —
-  8 full-suite failures observed during storage hardening (DatabaseIntegrityTest ×2,
-  EndToEndBusinessFlowTest, FullSystemIntegrationTest, PayrollEndToEndTest ×2,
-  ReportsTest inventory count, VeterinaryWorkflowTest). None exercise upload code,
-  but they have NOT been confirmed against a clean-checkout baseline yet.
+- **Backend full-suite verification** — the MySQL `pawesome_test` suite passed
+  570 tests / 2,799 assertions after updating stale fixtures for required online
+  boarding cards and the deprecated generic hotel-request route. The prior
+  storage-hardening failure list was not reproduced in this run; confirm the
+  follow-up GitHub Actions run before treating the remote gate as green.
 - **E2E hygiene & reliability: FIXED** — suite defaults to live mode
   (`E2E_LIVE=true`; opt out with `0`/`false`), port drift `:3002`→`:3000` and
   the `localhost`/`127.0.0.1` origin split are resolved, login throttling is

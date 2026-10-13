@@ -410,8 +410,40 @@ test("Phase 11 full state-changing workflow validation", async ({ browser, reque
       screenshots: [receptionistBoardingShot, customerBoardingShot],
     });
   } catch (error) {
-    recordIssue("Medium", "Boarding", "/receptionist/appointments-boarding", error.message, "frontend/e2e/phase11-state-changing-workflows.spec.js");
-    addWorkflow("Boarding Tracking Flow", { status: "PARTIAL", notes: error.message });
+    recordIssue("Medium", "Boarding", "/customer/requests", error.message, "frontend/e2e/phase11-state-changing-workflows.spec.js");
+    addWorkflow("Boarding Tracking Flow", { status: "FAIL", notes: error.message });
+  }
+
+  try {
+    const legacyHotelResponse = await request.post(`${apiUrl}/customer/requests`, {
+      headers: {
+        Accept: "application/json",
+        Authorization: `Bearer ${sessions.customer.token}`,
+      },
+      data: {
+        customer_name: sessions.customer.user.name || "PHASE11_TEST Customer",
+        customer_email: sessions.customer.user.email || credentials.customer.email,
+        pet_id: pet.id,
+        request_type: "hotel",
+        service_name: "Pet Hotel",
+        requested_date: futureDate(9),
+        requested_time: "10:00",
+        check_out_date: futureDate(9),
+      },
+    });
+    const legacyHotelBody = await legacyHotelResponse.json();
+    expect(legacyHotelResponse.status()).toBe(422);
+    expect(legacyHotelBody.message).toContain("Pet Hotel reservation form");
+    addWorkflow("Legacy Hotel Request Fails Closed", {
+      browserSubmitted: false,
+      dbStatusUpdated: false,
+      nextRoleSawResult: false,
+      status: "PASS",
+      notes: "The alternate hotel service-request route is rejected so customer hotel bookings must use the vaccination-card-gated boarding flow.",
+    });
+  } catch (error) {
+    recordIssue("Medium", "Boarding", "/customer/requests", error.message, "frontend/e2e/phase11-state-changing-workflows.spec.js");
+    addWorkflow("Legacy Hotel Request Fails Closed", { status: "FAIL", notes: error.message });
   }
 
   try {

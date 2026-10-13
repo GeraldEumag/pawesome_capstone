@@ -7,6 +7,7 @@ import {
   faPlus,
   faTrash,
   faReceipt,
+  faFilePdf,
   faCreditCard,
   faMoneyBillWave,
   faMobileScreen,
@@ -20,6 +21,7 @@ import "./CashierTransactions_Polished.css";
 import { formatCurrency } from "../../utils/currency";
 import { posApi } from "../../api/pos";
 import { printReceipt } from "../../utils/receiptPrinter";
+import { downloadReceiptPdf } from "../../utils/receiptPdf";
 import { useNavigate } from "react-router-dom";
 import RowActionPopover from "../shared/RowActionPopover";
 
@@ -117,40 +119,56 @@ const CashierTransactions = () => {
     return map[method] || 'cash';
   };
 
-  const handlePrintReceipt = (transaction) => {
+  const getReceiptOptions = (transaction) => {
     // Fix: API returns "items" not "products" — check both for safety
-    const rawItems = transaction.items || transaction.products || [];
-    const items = rawItems.map((item) => ({
-      name: item.item_name || item.name || "Item",
-      quantity: item.quantity || 1,
-      unitPrice: Number(item.unit_price || item.price || 0),
-      total: Number(item.total_price || (item.unit_price || item.price || 0) * (item.quantity || 1)),
-    }));
+    const receipt = transactionDetail?.receipt || transaction.receipt || {};
+    const sale = transactionDetail?.transaction || transaction.raw_data || transaction;
+    const rawItems = Array.isArray(receipt.items)
+      ? receipt.items
+      : Array.isArray(sale.items)
+        ? sale.items
+        : Array.isArray(transaction.products) ? transaction.products : [];
+    const items = rawItems.map((item) => {
+      const quantity = Number(item.quantity || 1);
+      const unitPrice = Number(item.unit_price ?? item.price ?? 0);
+      return {
+        name: item.item_name || item.name || "Item",
+        quantity,
+        unitPrice,
+        total: Number(item.total_price ?? item.total ?? unitPrice * quantity),
+      };
+    });
+    const breakdown = receipt.breakdown || sale.breakdown || {};
+    const total = Number(receipt.total ?? receipt.total_amount ?? sale.total_amount ?? transaction.amount ?? 0);
+    const amountReceived = Number(receipt.payment?.amount ?? sale.amount_received ?? sale.cash_received ?? 0);
 
-    const total = Number(transaction.amount || transaction.total_amount || 0);
-    const subtotal = Number(transaction.subtotal || total);
-    const discount = Number(transaction.discount || transaction.discount_amount || 0);
-    const vat = Number(transaction.tax || transaction.tax_amount || 0);
-    const amountReceived = Number(transaction.amount_received || transaction.cash_received || 0);
-    const change = Number(transaction.change || transaction.change_amount || 0);
-
-    printReceipt({
+    return {
       title: "Sales Invoice",
-      receiptNumber: transaction.transaction_number || String(transaction.id),
-      date: `${transaction.date || ""} ${transaction.time || ""}`.trim() || new Date().toLocaleString("en-PH"),
-      cashier: transaction.cashier_name || transaction.cashier || "Cashier",
-      customer: transaction.customer || transaction.customer_name || "Walk-in",
-      paymentMethod: transaction.payment || transaction.payment_method || "cash",
-      paymentStatus: transaction.status || "paid",
-      referenceNumber: transaction.reference_number || "",
+      receiptNumber: receipt.receipt_number || receipt.invoice_number || sale.transaction_number || String(transaction.id),
+      date: receipt.date || sale.created_at || (`${transaction.date || ""} ${transaction.time || ""}`.trim() || new Date().toLocaleString("en-PH")),
+      cashier: receipt.cashier || sale.cashier?.name || sale.cashier_name || transaction.cashier || "Cashier",
+      customer: receipt.customer?.name || sale.customer?.name || transaction.customer || transaction.customer_name || "Walk-in",
+      paymentMethod: receipt.payment?.method || sale.payments?.[0]?.payment_method || transaction.payment || transaction.payment_method || "cash",
+      paymentStatus: sale.status || transaction.status || "paid",
+      referenceNumber: receipt.payment?.reference_number || sale.payments?.[0]?.reference_number || transaction.reference_number || "",
       items,
-      subtotal,
-      vat: vat || undefined,
-      discount,
+      subtotal: Number(receipt.subtotal ?? sale.subtotal ?? total),
+      netAmount: breakdown.net_amount ?? receipt.net_amount ?? sale.net_amount,
+      vat: breakdown.vat_amount ?? receipt.tax ?? sale.tax_amount ?? transaction.tax_amount,
+      discount: Number(receipt.discount ?? sale.discount_amount ?? transaction.discount_amount ?? 0),
       total,
       amountReceived: amountReceived || undefined,
-      change: change || undefined,
-    });
+      change: Number(receipt.payment?.change ?? sale.payments?.reduce((sum, payment) => sum + Number(payment.change ?? payment.change_amount ?? 0), 0) ?? transaction.change ?? 0) || undefined,
+    };
+  };
+
+  const handlePrintReceipt = (transaction) => printReceipt(getReceiptOptions(transaction));
+  const handleDownloadReceiptPdf = (transaction) => {
+    try {
+      downloadReceiptPdf(getReceiptOptions(transaction));
+    } catch (err) {
+      showError(err.message || "Failed to download receipt PDF.");
+    }
   };
 
   const [transactionDetail, setTransactionDetail] = useState(null);
@@ -415,6 +433,14 @@ const CashierTransactions = () => {
             <div className="modal-header">
               <h2>Transaction Details</h2>
               <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+                <button
+                  className="btn-secondary"
+                  type="button"
+                  onClick={() => handleDownloadReceiptPdf(selectedTransaction)}
+                  style={{ fontSize: 13, padding: "6px 12px" }}
+                >
+                  <FontAwesomeIcon icon={faFilePdf} /> Download PDF
+                </button>
                 <button
                   className="btn-secondary"
                   type="button"

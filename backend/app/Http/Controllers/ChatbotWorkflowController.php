@@ -9,8 +9,9 @@ use App\Models\HotelRoom;
 use App\Models\InventoryItem;
 use App\Models\Pet;
 use App\Models\Service;
-use App\Services\ServiceDurationService;
+use App\Services\BookingAvailabilityService;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Http\Request;
 
 class ChatbotWorkflowController extends Controller
@@ -68,18 +69,41 @@ class ChatbotWorkflowController extends Controller
         }
 
         $service = Service::findOrFail($data['service_id']);
-        $scheduledAt = ServiceDurationService::inStoreTimezone($data['scheduled_at']);
+        [$scheduledAtUtc, $scheduledAtLocal] = BookingAvailabilityService::appointmentTimes($data['scheduled_at']);
+        if (!$scheduledAtUtc->isFuture()) {
+            return response()->json(['errors' => ['scheduled_at' => ['The scheduled time must be in the future.']]], 422);
+        }
 
-        $appointment = Appointment::create([
-            'customer_id' => $customer->id,
-            'pet_id' => $pet->id,
-            'service_id' => $service->id,
-            'status' => 'pending',
-            'scheduled_at' => $scheduledAt->copy()->utc(),
-            'price' => $service->price ?? 0,
-            'notes' => $data['notes'] ?? null,
-            'booking_channel' => \App\Support\BookingChannel::ONLINE,
-        ]);
+        $appointment = DB::transaction(function () use ($customer, $pet, $service, $data, $scheduledAtUtc, $scheduledAtLocal) {
+            BookingAvailabilityService::lockServiceSchedule();
+            $serviceType = strtolower((string) $service->category) === 'grooming' ? 'grooming' : 'veterinary';
+            if (!BookingAvailabilityService::isServiceTimeAvailable(
+                $serviceType,
+                $scheduledAtLocal->toDateString(),
+                $scheduledAtLocal->format('H:i'),
+                $service->name
+            )) {
+                return null;
+            }
+
+            return Appointment::create([
+                'customer_id' => $customer->id,
+                'pet_id' => $pet->id,
+                'service_id' => $service->id,
+                'status' => 'pending',
+                'scheduled_at' => $scheduledAtUtc,
+                'price' => $service->price ?? 0,
+                'notes' => $data['notes'] ?? null,
+                'booking_channel' => \App\Support\BookingChannel::ONLINE,
+            ]);
+        });
+
+        if (!$appointment) {
+            return response()->json([
+                'message' => 'This schedule is no longer available. Please choose another slot.',
+                'errors' => ['scheduled_at' => ['Time slot overlaps an existing booking.']],
+            ], 422);
+        }
 
         return response()->json([
             'message' => 'Booking created successfully.',
@@ -188,7 +212,7 @@ class ChatbotWorkflowController extends Controller
             'room_type' => 'nullable|string|in:standard,deluxe,suite',
         ]);
 
-        // Same-day boarding: check-out equals check-in (store open 9 AM - 7 PM)
+        // Same-day boarding: check-out equals check-in (store open 10 AM - 6 PM)
         $data['check_out'] = $data['check_in'];
 
         // Get available rooms for the date
@@ -225,7 +249,7 @@ class ChatbotWorkflowController extends Controller
             'special_requests' => 'nullable|string|max:1000',
         ]);
 
-        // Same-day boarding: check-out equals check-in (store open 9 AM - 7 PM)
+        // Same-day boarding: check-out equals check-in (store open 10 AM - 6 PM)
         $data['check_out'] = $data['check_in'];
 
         // Get customer

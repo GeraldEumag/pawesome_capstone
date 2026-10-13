@@ -125,6 +125,7 @@
 
 /* Advanced Report Content Container */
 .advanced-report-content {
+  min-width: 0;
   background: var(--ar-surface);
   border: 1px solid var(--ar-border);
   border-radius: 24px;
@@ -595,6 +596,7 @@
 
 .admin-chart-box {
   width: 100%;
+  min-width: 0;
   min-height: 320px;
 }
 
@@ -884,6 +886,15 @@
 }
 
 @media (max-width: 768px) {
+  .advanced-report-content {
+    padding: 0.75rem;
+  }
+
+  .admin-report-grid,
+  .live-report-insights {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
   .admin-reports-page {
     padding: 0.75rem;
   }

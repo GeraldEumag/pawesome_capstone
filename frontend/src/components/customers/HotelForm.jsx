@@ -64,13 +64,14 @@ const HotelForm = () => {
   const [myBookings, setMyBookings] = useState([]);
   const [pets, setPets] = useState([]);
   const [careLogs, setCareLogs] = useState({});
-  const [uploadModal, setUploadModal] = useState({ open: false, endpoint: "", title: "", referenceNumber: "", paymentStatus: "", rejectionReason: "", paymentMethod: "gcash" });
+  const [uploadModal, setUploadModal] = useState({ open: false, endpoint: "", title: "", referenceNumber: "", paymentStatus: "", rejectionReason: "", paymentMethod: "gcash", amount: null, awaitingBookingApproval: false });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [successMessage, setSuccessMessage] = useState("");
   const [availabilityLoading, setAvailabilityLoading] = useState(false);
   const [boardingAvailability, setBoardingAvailability] = useState(null);
   const [selectedRoom, setSelectedRoom] = useState(null);
+  const [vaccinationUploadId, setVaccinationUploadId] = useState(null);
 
   const [bookingForm, setBookingForm] = useState({
     pet_id: "",
@@ -223,11 +224,16 @@ const HotelForm = () => {
       return;
     }
 
+    if (!vaccinationCard) {
+      setError("Upload your pet's vaccination card before submitting a hotel booking.");
+      showWarning("Upload your pet's vaccination card before submitting a hotel booking.");
+      return;
+    }
+
     setReviewOpen(true);
   };
 
-  // Vaccination card is optional
-  const confirmBooking = async () => {
+  const confirmBooking = async ({ payNow = false } = {}) => {
     try {
       setLoading(true);
       setError("");
@@ -250,14 +256,15 @@ const HotelForm = () => {
         formData.append("vaccination_card", vaccinationCard);
       }
 
-      await apiRequest("/customer/boardings", {
+      const data = await apiRequest("/customer/boardings", {
         method: "POST",
         body: formData,
       });
 
+      const booking = data.boarding;
       setReviewOpen(false);
       setSuccessMessage("Pet boarding request submitted successfully.");
-      showSuccess("Pet boarding request submitted successfully.");
+      if (!payNow) showSuccess("Pet boarding request submitted successfully.");
       setBookingForm({
         pet_id: "",
         pet_name: "",
@@ -268,6 +275,19 @@ const HotelForm = () => {
       });
       setVaccinationCard(null);
       setVaccinationPreview(null);
+      if (payNow && booking?.id) {
+        setUploadModal({
+          open: true,
+          endpoint: `/customer/boarding-requests/${booking.id}/payment-proof`,
+          title: `Boarding — ${booking.pet_name || selectedPet.name || "Pet"}`,
+          referenceNumber: booking.payment_reference || "",
+          paymentStatus: booking.payment_status || "unpaid",
+          rejectionReason: booking.rejection_reason || "",
+          paymentMethod: booking.payment_method || "gcash",
+          amount: booking.total_amount ?? pricing.total,
+          awaitingBookingApproval: true,
+        });
+      }
       await fetchMyBookings();
       setActiveTab("my-bookings");
     } catch (err) {
@@ -310,7 +330,31 @@ const HotelForm = () => {
       paymentStatus: String(booking.payment_status || "").toLowerCase(),
       rejectionReason: booking.rejection_reason || "",
       paymentMethod: booking.payment_method || "gcash",
+      amount: booking.total_amount || booking.amount || null,
+      awaitingBookingApproval: false,
     });
+  };
+
+  const uploadVaccinationCard = async (booking, file) => {
+    if (!file || vaccinationUploadId) return;
+    const body = new FormData();
+    body.append("vaccination_card", file);
+
+    try {
+      setVaccinationUploadId(booking.id);
+      const result = await apiRequest(`/customer/boarding-requests/${booking.id}/vaccination-card`, {
+        method: "POST",
+        body,
+      });
+      setMyBookings((current) => current.map((item) =>
+        item.id === booking.id ? { ...item, ...result.boarding } : item
+      ));
+      showSuccess(result.message || "Vaccination card uploaded for receptionist verification.");
+    } catch (err) {
+      showError(err.message || "Failed to upload vaccination card.");
+    } finally {
+      setVaccinationUploadId(null);
+    }
   };
 
   const fetchCareLogs = async (bookingId) => {
@@ -627,10 +671,12 @@ const HotelForm = () => {
               </div>
 
               <div className="form-group">
-                <label>Vaccination Card (Optional)</label>
+                <label>Vaccination Card <span className="required">*</span></label>
+                <small className="vaccination-required-note">Reception must verify this card before approving your booking.</small>
                 <input
                   type="file"
-                  accept="image/*,.pdf"
+                  accept="image/jpeg,image/png,application/pdf"
+                  required
                   onChange={(e) => {
                     const file = e.target.files?.[0] || null;
                     setVaccinationCard(file);
@@ -643,10 +689,13 @@ const HotelForm = () => {
                     }
                   }}
                 />
-                {vaccinationPreview && (
+                {vaccinationPreview && vaccinationCard?.type?.startsWith("image/") && (
                   <div className="vaccination-preview">
                     <img src={vaccinationPreview} alt="Vaccination card preview" />
                   </div>
+                )}
+                {vaccinationCard && !vaccinationCard.type?.startsWith("image/") && (
+                  <div className="vaccination-preview-file">{vaccinationCard.name}</div>
                 )}
               </div>
 
@@ -706,6 +755,34 @@ const HotelForm = () => {
                           <span className="bcg-value">₱{Number(booking.total_amount || 0).toLocaleString("en-PH", { minimumFractionDigits: 2 })}</span>
                         </div>
                       </div>
+                      {booking.status === "pending" && (
+                        <div className={`booking-vaccination-status ${booking.vaccination_card_verified_at ? "verified" : "pending"}`}>
+                          <strong>Vaccination Card</strong>
+                          <span>
+                            {booking.vaccination_card_verified_at
+                              ? "Verified by reception"
+                              : booking.vaccination_card
+                                ? "Uploaded — waiting for reception verification"
+                                : "Required before reception can approve this booking"}
+                          </span>
+                          {!booking.vaccination_card_verified_at && (
+                            <label>
+                              {booking.vaccination_card ? "Replace unverified card" : "Upload vaccination card"}
+                              <input
+                                type="file"
+                                accept="image/jpeg,image/png,application/pdf"
+                                aria-label={`${booking.vaccination_card ? "Replace" : "Upload"} vaccination card for boarding ${booking.id}`}
+                                disabled={vaccinationUploadId === booking.id}
+                                onChange={(event) => {
+                                  const file = event.target.files?.[0];
+                                  event.target.value = "";
+                                  uploadVaccinationCard(booking, file);
+                                }}
+                              />
+                            </label>
+                          )}
+                        </div>
+                      )}
                       {booking.rejection_reason && (
                         <div className="booking-rejection">{booking.rejection_reason}</div>
                       )}
@@ -759,6 +836,8 @@ const HotelForm = () => {
         paymentStatus={uploadModal.paymentStatus}
         rejectionReason={uploadModal.rejectionReason}
         paymentMethod={uploadModal.paymentMethod}
+        amount={uploadModal.amount}
+        awaitingBookingApproval={uploadModal.awaitingBookingApproval}
       />
 
       <BookingReviewModal
@@ -789,6 +868,7 @@ const HotelForm = () => {
           ],
           total: `₱${Number(pricing.total).toLocaleString("en-PH", { minimumFractionDigits: 2 })}`,
         } : null}
+        allowPayNow
         notes={bookingForm.notes}
         attachment={vaccinationCard ? {
           name: vaccinationCard.name,

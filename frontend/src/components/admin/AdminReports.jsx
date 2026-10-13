@@ -26,7 +26,7 @@ const PredictiveAnalytics = lazy(() => import("./reports/PredictiveAnalytics"));
 const AutomatedAlerts = lazy(() => import("./reports/AutomatedAlerts"));
 const InventoryOptimization = lazy(() => import("./reports/InventoryOptimization"));
 
-const AdvancedReportLoading = () => <ReportSkeleton type="minimal" />;
+const AdvancedReportLoading = () => <ReportSkeleton label="Loading admin report" />;
 
 // Advanced Analytics tabs — each component fetches its own endpoint.
 // Detailed per-role monitoring lives on the sidebar report pages.

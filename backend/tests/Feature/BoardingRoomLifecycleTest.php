@@ -74,6 +74,7 @@ class BoardingRoomLifecycleTest extends TestCase
             'pet_type' => $pet->species,
             'status' => 'pending',
             'payment_status' => 'paid',
+            'booking_channel' => 'walk_in',
             'check_in' => Carbon::tomorrow()->toDateString(),
             'check_out' => Carbon::tomorrow()->toDateString(),
             'total_amount' => 800,

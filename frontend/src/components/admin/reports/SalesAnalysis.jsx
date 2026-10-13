@@ -23,7 +23,8 @@ import {
   ResponsiveContainer,
 } from 'recharts';
 import { apiRequest } from '../../../api/client';
-import { ChartContainer } from '../../shared/UnifiedReportEngine';
+import { ChartContainer, getInitialChartDimension } from '../../shared/UnifiedReportEngine';
+import ReportSkeleton from '../../shared/ReportSkeleton';
 import './AdvancedReports.css';
 
 const CHART_COLORS = ['#ff5f93', '#3b82f6', '#10b981', '#f59e0b', '#8b5cf6', '#94a3b8'];
@@ -57,12 +58,15 @@ const SalesAnalysis = () => {
   }, [fetchData]);
 
   const summary = data?.summary || {};
-  const dailyData = useMemo(() => data?.dailyData || [], [data]);
-  const categoryData = useMemo(() => data?.categoryData || [], [data]);
-  const hourlyData = useMemo(() => data?.hourlyData || [], [data]);
+  const dailyData = useMemo(() => Array.isArray(data?.dailyData) ? data.dailyData : [], [data]);
+  const categoryData = useMemo(() => Array.isArray(data?.categoryData) ? data.categoryData : [], [data]);
+  const hourlyData = useMemo(() => Array.isArray(data?.hourlyData) ? data.hourlyData : [], [data]);
+  const hasDailyRevenue = dailyData.some((row) => Number(row.revenue) > 0);
+  const hasCategoryRevenue = categoryData.some((row) => Number(row.value) > 0);
+  const hasHourlySales = hourlyData.some((row) => Number(row.sales) > 0);
 
   if (loading) {
-    return <div className="adv-loading"><p>Loading sales analysis...</p></div>;
+    return <ReportSkeleton label="Loading sales analysis" />;
   }
 
   if (error) {
@@ -131,11 +135,11 @@ const SalesAnalysis = () => {
       </div>
 
       <div className="adv-charts-grid">
-        <ChartContainer title="Daily Revenue" subtitle="Revenue and order count per day" height={340}>
-          {dailyData.length === 0 ? (
+        <ChartContainer title="Daily Revenue" subtitle="Revenue per day" height={340}>
+          {!hasDailyRevenue ? (
             <div className="adv-empty"><p>No sales data for this range</p></div>
           ) : (
-            <ResponsiveContainer width="100%" height="100%">
+            <ResponsiveContainer width="100%" height={getInitialChartDimension(340).height} initialDimension={getInitialChartDimension(340)}>
               <AreaChart data={dailyData}>
                 <defs>
                   <linearGradient id="salesGradient" x1="0" y1="0" x2="0" y2="1">
@@ -146,7 +150,7 @@ const SalesAnalysis = () => {
                 <CartesianGrid strokeDasharray="3 3" vertical={false} />
                 <XAxis dataKey="date" tick={{ fontSize: 11 }} interval="preserveStartEnd" />
                 <YAxis tick={{ fontSize: 12 }} tickFormatter={(v) => `₱${v / 1000}k`} />
-                <Tooltip formatter={(v, name) => (name === 'revenue' ? formatCurrency(v) : v)} />
+                <Tooltip formatter={(v) => formatCurrency(v)} />
                 <Legend />
                 <Area type="monotone" dataKey="revenue" name="Revenue" stroke={CHART_COLORS[0]} fill="url(#salesGradient)" strokeWidth={2} />
               </AreaChart>
@@ -155,12 +159,12 @@ const SalesAnalysis = () => {
         </ChartContainer>
 
         <ChartContainer title="Category Breakdown" subtitle="Revenue by sales type" height={340}>
-          {categoryData.length === 0 ? (
+          {!hasCategoryRevenue ? (
             <div className="adv-empty"><p>No category data for this range</p></div>
           ) : (
-            <ResponsiveContainer width="100%" height="100%">
+            <ResponsiveContainer width="100%" height={getInitialChartDimension(340).height} initialDimension={getInitialChartDimension(340)}>
               <PieChart>
-                <Pie data={categoryData} dataKey="value" nameKey="name" cx="50%" cy="50%" innerRadius={55} outerRadius={95} paddingAngle={3}>
+                <Pie data={categoryData} dataKey="value" nameKey="name" cx="50%" cy="50%" innerRadius="42%" outerRadius="72%" paddingAngle={3}>
                   {categoryData.map((entry, index) => (
                     <Cell key={entry.name} fill={CHART_COLORS[index % CHART_COLORS.length]} />
                   ))}
@@ -173,15 +177,15 @@ const SalesAnalysis = () => {
         </ChartContainer>
 
         <ChartContainer title="Hourly Pattern" subtitle="Sales by time of day" height={300}>
-          {hourlyData.length === 0 ? (
+          {!hasHourlySales ? (
             <div className="adv-empty"><p>No hourly data for this range</p></div>
           ) : (
-            <ResponsiveContainer width="100%" height="100%">
+            <ResponsiveContainer width="100%" height={getInitialChartDimension(300).height} initialDimension={getInitialChartDimension(300)}>
               <BarChart data={hourlyData}>
                 <CartesianGrid strokeDasharray="3 3" vertical={false} />
-                <XAxis dataKey="hour" tick={{ fontSize: 11 }} />
+                <XAxis dataKey="hour" tick={{ fontSize: 11 }} interval={2} />
                 <YAxis tick={{ fontSize: 12 }} tickFormatter={(v) => `₱${v / 1000}k`} />
-                <Tooltip formatter={(v, name) => (name === 'sales' ? formatCurrency(v) : v)} />
+                <Tooltip formatter={(v) => formatCurrency(v)} />
                 <Bar dataKey="sales" name="Sales" fill={CHART_COLORS[1]} radius={[4, 4, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>

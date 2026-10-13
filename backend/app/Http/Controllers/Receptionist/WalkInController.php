@@ -12,6 +12,7 @@ use App\Models\Appointment;
 use App\Models\Grooming;
 use App\Models\Service;
 use App\Mail\AccountWelcomeMail;
+use App\Services\BookingAvailabilityService;
 use App\Services\EmailDeliveryService;
 use App\Services\ServiceCatalog;
 use App\Services\WorkflowNotifier;
@@ -31,6 +32,8 @@ class WalkInController extends Controller
      */
     public function store(Request $request): JsonResponse
     {
+        $requiresScheduledTime = in_array($request->input('booking.service_type'), ['veterinary', 'grooming'], true);
+        $timeRule = $requiresScheduledTime ? 'required|date_format:H:i' : 'nullable|date_format:H:i';
         $validator = Validator::make($request->all(), [
             'customer_mode' => 'required|in:existing,new',
             'customer_id' => 'required_if:customer_mode,existing|integer',
@@ -46,8 +49,9 @@ class WalkInController extends Controller
             'booking' => 'required|array',
             'booking.service_type' => 'required|in:hotel,veterinary,grooming',
             'booking.service_name' => 'required|string|max:255',
-            'booking.request_date' => 'required|date',
-            'booking.request_time' => 'nullable|string|max:10',
+            'booking.request_date' => 'required|date|after_or_equal:' . now(\App\Services\ServiceDurationService::STORE_TIMEZONE)->toDateString(),
+            'booking.request_time' => $timeRule,
+            'booking.veterinarian_id' => 'nullable|integer|exists:users,id',
             'booking.notes' => 'nullable|string',
         ]);
 
@@ -64,6 +68,9 @@ class WalkInController extends Controller
                 $customerMode = $request->input('customer_mode');
                 $bookingData = $request->input('booking');
                 $serviceType = $bookingData['service_type'];
+                if (in_array($serviceType, ['veterinary', 'grooming'], true)) {
+                    BookingAvailabilityService::lockServiceSchedule();
+                }
 
                 // Step 1: Get or create customer
                 if ($customerMode === 'new') {
@@ -164,6 +171,39 @@ class WalkInController extends Controller
                     }
                 }
 
+                if (in_array($serviceType, ['veterinary', 'grooming'], true)) {
+                    $serviceName = $bookingData['service_name'];
+                    $veterinarianId = !empty($bookingData['veterinarian_id']) ? (int) $bookingData['veterinarian_id'] : null;
+
+                    if ($serviceType === 'veterinary' && $veterinarianId) {
+                        $vet = User::find($veterinarianId);
+                        if (!$vet || !in_array($vet->role, ['veterinary', 'vet', 'veterinarian'], true)) {
+                            throw new HttpResponseException(response()->json([
+                                'success' => false,
+                                'message' => 'Choose a valid veterinarian for this walk-in.',
+                                'errors' => ['booking.veterinarian_id' => ['The selected user is not a veterinarian.']],
+                            ], 422));
+                        }
+                    }
+
+                    if (!BookingAvailabilityService::isServiceTimeAvailable(
+                        $serviceType,
+                        $bookingData['request_date'],
+                        $bookingData['request_time'],
+                        $serviceName,
+                        $veterinarianId,
+                        null,
+                        null,
+                        true
+                    )) {
+                        throw new HttpResponseException(response()->json([
+                            'success' => false,
+                            'message' => 'This walk-in time is unavailable. Choose a future time within business hours with no schedule conflict.',
+                            'errors' => ['booking.request_time' => ['Time slot conflicts or is outside bookable hours.']],
+                        ], 422));
+                    }
+                }
+
                 // Step 2: Create service request
                 $serviceRequest = ServiceRequest::create([
                     'request_type' => $serviceType,
@@ -221,7 +261,7 @@ class WalkInController extends Controller
                     // Rate always comes from the room record — never the client.
                     $ratePerDay = (float) $room->daily_rate;
 
-                    // Store operates 9 AM - 7 PM: boarding stays are same-day
+                    // Boarding stays occupy the selected date from 10 AM to 6 PM
                     $numberOfDays = 1;
                     $checkOutDate = $bookingData['request_date'];
 
@@ -272,12 +312,15 @@ class WalkInController extends Controller
                     $serviceRequest->price = $servicePrice;
                     $serviceRequest->save();
 
+                    [$scheduledAtUtc] = BookingAvailabilityService::appointmentTimes(
+                        $bookingData['request_date'] . ' ' . $bookingData['request_time']
+                    );
                     $bookingRecord = Appointment::create([
                         'service_request_id' => $serviceRequest->id,
                         'customer_id' => $customerId,
                         'pet_id' => $petId,
                         'service_id' => $serviceId,
-                        'scheduled_at' => $bookingData['request_date'] . ' ' . ($bookingData['request_time'] ?? '10:00'),
+                        'scheduled_at' => $scheduledAtUtc,
                         'veterinarian_id' => $bookingData['veterinarian_id'] ?? null,
                         'status' => 'pending',
                         'notes' => $bookingData['reason'] ?? null,
@@ -302,7 +345,7 @@ class WalkInController extends Controller
                         'pet_id' => $petId,
                         'service' => $bookingData['service_name'],
                         'appointment_date' => $bookingData['request_date'],
-                        'appointment_time' => $bookingData['request_time'] ?? null,
+                        'appointment_time' => $bookingData['request_time'],
                         'amount' => $groomingPrice,
                         'base_amount' => $groomingPrice,
                         'total_amount' => $groomingPrice,

@@ -306,6 +306,8 @@ const ReceptionistAppointmentsBoarding = () => {
           endpoint = `/grooming/${item.id}/status`;
           method = "PUT";
           payload = { status: "approved" };
+        } else if (isAppointment) {
+          endpoint = `/receptionist/appointments/${item.id}/approve`;
         } else {
           endpoint = `/receptionist/requests/${requestId}/approve`;
         }
@@ -451,9 +453,9 @@ const ReceptionistAppointmentsBoarding = () => {
           key="approve"
           type="button"
           className="hub-action-btn approve"
-          onClick={() => handleAction(item, "approve")}
+          onClick={() => item.type === "vet" ? openDetail(item) : handleAction(item, "approve")}
           disabled={busy("approve")}
-          title="Approve"
+          title={item.type === "vet" ? "Assign veterinarian" : "Approve"}
         >
           <FontAwesomeIcon icon={busy("approve") ? faSpinner : faCheckCircle} spin={busy("approve")} />
         </button>,
@@ -951,12 +953,12 @@ const ReceptionistAppointmentsBoarding = () => {
                   ) : (
                     <select
                       className="hub-vet-select"
-                      value={vetAssignments[selectedRequest.id] || ""}
+                      value={vetAssignments[selectedRequest.id] || selectedRequest.raw?.veterinarian_id || selectedRequest.veterinarianId || ""}
                       onChange={(e) =>
                         setVetAssignments((prev) => ({ ...prev, [selectedRequest.id]: e.target.value }))
                       }
                     >
-                      <option value="">{selectedRequest.raw?.veterinarian ? `Assigned: ${selectedRequest.raw.veterinarian.name || selectedRequest.raw.veterinarian_id}` : "Select veterinarian..."}</option>
+                      <option value="">{selectedRequest.raw?.veterinarian ? `Assigned: ${selectedRequest.raw.veterinarian.name || selectedRequest.raw.veterinarian_id}` : selectedRequest.veterinarian_id ? `Assigned: ${selectedRequest.veterinarian_id}` : "Select veterinarian..."}</option>
                       {veterinarians.map((vet) => (
                         <option key={vet.id} value={vet.id}>
                           {vet.name || vet.full_name || `Vet #${vet.id}`}
@@ -980,7 +982,7 @@ const ReceptionistAppointmentsBoarding = () => {
                     className="hbk-btn approve"
                     onClick={() => {
                       handleAction(selectedRequest, "approve", {
-                        veterinarianId: vetAssignments[selectedRequest.id],
+                        veterinarianId: vetAssignments[selectedRequest.id] || selectedRequest.raw?.veterinarian_id || selectedRequest.raw?.appointment?.veterinarian_id || selectedRequest.veterinarianId,
                       });
                       closeDetail();
                     }}

@@ -600,183 +600,104 @@ test("J4 walk-in counter payment, POS transaction, void", async ({ request, brow
 });
 
 /* ═══ J5 — Journey E: boarding room lifecycle ═══ */
-test("J5 boarding approval reserves room; conflict and release", async ({ request, browser }) => {
+test("J5 online boarding reserves room; card verification, conflict, and release", async ({ request, browser }) => {
   const { customer, receptionist } = state.sessions;
-  if (!state.buddy?.id) {
-    const petsResponse = await api(request, customer, "GET", "/customer/pets");
-    state.buddy = listify(petsResponse.body, ["pets"]).find((pet) => /buddy/i.test(pet.name || ""));
-  }
-  expect(state.buddy?.id, "seeded customer pet exists").toBeTruthy();
+  const roomId = 6;
+  const proofBuffer = PROOF_PNG;
+  const resvBefore = dbMulti({
+    n: `DB::table('boarding_room_reservations')->where('status','<>','cancelled')->count()`,
+  }).n;
 
-  // Use the seeded single-capacity dog daycare room as a deterministic conflict surface.
-  const roomResponse = await api(request, receptionist, "GET", "/receptionist/boarding-rooms");
-  const dogDaycare = listify(roomResponse.body, ["rooms", "boarding_rooms"])
-    .find((room) => room.room_type === "daycare_dog" && Number(room.total_rooms) === 1 && room.is_active);
-  expect(dogDaycare, "seeded one-capacity dog room exists").toBeTruthy();
-  const roomId = dogDaycare.id;
-  // Probe dates until the room accepts a booking — seeded stays may occupy it.
-  let date = null, srA = null;
-  for (let off = 9; off <= 30 && !srA; off++) {
+  const createBoarding = (petId, date, suffix) => request.post(`${apiUrl}/customer/boardings`, {
+    headers: { Accept: "application/json", Authorization: `Bearer ${customer.token}` },
+    multipart: {
+      pet_id: String(petId),
+      room_id: String(roomId),
+      check_in_date: date,
+      number_of_days: "1",
+      notes: `Phase9 boarding ${suffix} ${RUN}`,
+      vaccination_card: { name: `phase9-${suffix}.png`, mimeType: "image/png", buffer: proofBuffer },
+    },
+  });
+
+  let date = null;
+  let boardingA = null;
+  for (let off = 9; off <= 30 && !boardingA; off++) {
     const candidate = futureDate(off);
-    const res = await api(request, customer, "POST", "/customer/requests", {
-      customer_name: customer.user.name,
-      pet_id: state.buddy.id,
-      request_type: "hotel",
-      service_name: "P9 Boarding A",
-      boarding_room_id: roomId,
-      requested_date: candidate,
-      check_out_date: candidate,
-      notes: `Phase9 boarding A ${RUN}`,
-    });
-    if (res.ok) { date = candidate; srA = res.body.request?.id || res.body.id; }
+    const response = await createBoarding(state.buddy.id, candidate, "A");
+    const body = await response.json();
+    if (response.status() === 201) {
+      date = candidate;
+      boardingA = body.boarding?.id;
+    } else if (response.status() !== 422) {
+      throw new Error(`Online boarding creation failed: ${response.status()} ${JSON.stringify(body)}`);
+    }
   }
-  expect(srA, "room-6 boarding request created").toBeTruthy();
+  expect(boardingA, "room-6 boarding request created").toBeTruthy();
+  run.createdRecords.push({ type: "boarding", id: boardingA, label: "Phase9 boarding A" });
 
-  // The same pet cannot hold two overlapping stays — a second pet is required
-  // to even *create* the conflicting request.
   const petBRes = await api(request, customer, "POST", "/customer/pets", {
     name: `P9PetB${RUN.replace(/\D/g, "")}`, species: "Dog", breed: "Beagle", age: 3,
   });
   const petB = petBRes.body.pet || petBRes.body.data || {};
   expect(petB.id, "second pet for conflict booking").toBeTruthy();
-  const resB = await api(request, customer, "POST", "/customer/requests", {
-    customer_name: customer.user.name,
-    pet_id: petB.id,
-    request_type: "hotel",
-    service_name: "P9 Boarding B",
-    boarding_room_id: roomId,
-    requested_date: date,
-    check_out_date: date,
-    notes: `Phase9 boarding B ${RUN}`,
-  });
-  const srB = resB.body.request?.id || resB.body.id;
-  expect(srB).toBeTruthy();
+  const conflictResponse = await createBoarding(petB.id, date, "B");
+  expect(conflictResponse.status()).toBe(422);
+  const conflictBody = await conflictResponse.json();
 
-  const resvBefore = dbMulti({
-    n: `DB::table('boarding_room_reservations')->where('status','<>','cancelled')->count()`,
-  }).n;
-  const appA = await api(request, receptionist, "POST", `/receptionist/requests/${srA}/approve`, {});
-  expect(appA.ok, JSON.stringify(appA.body)).toBeTruthy();
-  const boardingA = appA.body.boarding?.id;
   const j5a = dbMulti({
-    resvAfterA: `DB::table('boarding_room_reservations')->where('status','<>','cancelled')->count()`,
-    roomA: `DB::table('boarding_room_reservations')->where('source_type','service_request')->where('source_id',${srA})->where('status','<>','cancelled')->value('room_id')`,
+    activeCount: `DB::table('boarding_room_reservations')->where('status','<>','cancelled')->count()`,
+    reservationRoom: `DB::table('boarding_room_reservations')->where('source_type','pet_hotel')->where('source_id',${boardingA})->where('status','<>','cancelled')->value('room_id')`,
+    duplicateBoardings: `DB::table('boardings')->where('pet_id',${petB.id})->where('check_in','${date}')->count()`,
   });
-  const resvAfterA = j5a.resvAfterA, roomA = j5a.roomA;
+  const reservationRoom = j5a.reservationRoom;
 
-  const receptionistView = await openAs(browser, receptionist, "/receptionist/bookings/hotel");
-  const assignedRoomRow = receptionistView.page.locator(".booking-row")
-    .filter({ hasText: state.buddy.name })
-    .filter({ hasText: dogDaycare.room_name })
-    .first();
-  await expect(assignedRoomRow).toBeVisible({ timeout: 20000 });
-  await shot(receptionistView.page, "e1-room-assigned-receptionist");
-  await receptionistView.page.reload();
-  await expect(assignedRoomRow.locator(".room-cell")).toContainText(dogDaycare.room_name);
-  await assignedRoomRow.locator(".row-action-popover-trigger").click();
-  await receptionistView.page.getByRole("button", { name: "View / Manage" }).click();
-  await expect(receptionistView.page.locator(".hbk-grid")).toContainText(dogDaycare.room_name);
-  await expect(receptionistView.page.locator(".hbk-panel select")).toHaveValue(`boarding:${roomId}`);
-
-  const scheduleRequestPromise = receptionistView.page.waitForRequest(
-    (request) => request.url().includes(`/api/receptionist/boarding-requests/${boardingA}/schedule`) && request.method() === "POST",
-    { timeout: 25000 }
-  );
-  const scheduleResponsePromise = receptionistView.page.waitForResponse(
-    (response) => response.url().includes(`/api/receptionist/boarding-requests/${boardingA}/schedule`) && response.request().method() === "POST",
-    { timeout: 25000 }
-  );
-  await receptionistView.page.getByRole("button", { name: /schedule boarding/i }).click();
-  const [scheduleRequest, scheduleResponse] = await Promise.all([scheduleRequestPromise, scheduleResponsePromise]);
-  const schedulePayload = scheduleRequest.postDataJSON();
-  const scheduleBody = await scheduleResponse.json().catch(() => ({}));
-  expect(scheduleResponse.ok(), JSON.stringify(scheduleBody)).toBeTruthy();
-  expect(schedulePayload).toHaveProperty("room_id", roomId);
-  expect(schedulePayload).not.toHaveProperty("hotel_room_id");
-
-  const scheduledDb = dbMulti({
-    boardingStatus: `DB::table('boardings')->where('id', ${boardingA})->value('status')`,
-    reservationStatus: `DB::table('boarding_room_reservations')->where('source_type','service_request')->where('source_id',${srA})->where('status','<>','cancelled')->value('status')`,
-    roomId: `DB::table('boarding_room_reservations')->where('source_type','service_request')->where('source_id',${srA})->where('status','<>','cancelled')->value('room_id')`,
-  });
-  const browserSchedulePassed = scheduledDb.boardingStatus === "scheduled"
-    && scheduledDb.reservationStatus === "scheduled"
-    && String(scheduledDb.roomId) === String(roomId);
-  correlate({
-    scenario: "J5-receptionist-browser-room-assignment",
-    record: `boarding#${boardingA}`,
-    initial: "approved with a persisted modern-room reservation",
-    expected: "browser reload keeps the modern room and schedules with room_id only",
-    actual: `HTTP ${scheduleResponse.status()}; status=${scheduledDb.boardingStatus}; reservation=${scheduledDb.reservationStatus}; room_id=${scheduledDb.roomId}`,
-    db: "boardings.status + boarding_room_reservations(room_id,status)",
-    downstream: "customer hotel bookings view",
-    evidence: "e1-room-assigned-receptionist.png",
-    result: browserSchedulePassed ? "PASS" : "FAIL",
-  });
-  expect(browserSchedulePassed).toBeTruthy();
-
-  const customerRoomView = await openAs(browser, customer, "/customer/hotel");
-  await customerRoomView.page.getByRole("button", { name: /my bookings/i }).click();
-  const customerRoomCard = customerRoomView.page.locator(".booking-card")
-    .filter({ hasText: state.buddy.name })
-    .filter({ hasText: dogDaycare.room_name })
-    .first();
-  await expect(customerRoomCard).toBeVisible({ timeout: 20000 });
-  await shot(customerRoomView.page, "e1-room-visible-customer");
-  await customerRoomView.context.close();
-  await receptionistView.context.close();
-
-  // Conflicting booking same room+date: rejected OR auto-assigned elsewhere —
-  // never double-books room 6 on that date.
-  const appB = await api(request, receptionist, "POST", `/receptionist/requests/${srB}/approve`, {});
-  const j5b = dbMulti({
-    roomB: `DB::table('boarding_room_reservations')->where('source_type','service_request')->where('source_id',${srB})->where('status','<>','cancelled')->value('room_id')`,
-  });
-  const roomB = j5b.roomB;
-  const conflictGuard = !appB.ok || String(roomB) !== String(roomId) || String(roomA) !== String(roomId);
+  const verification = await api(request, receptionist, "POST", `/receptionist/boarding-requests/${boardingA}/verify-vaccination`);
+  expect(verification.ok, JSON.stringify(verification.body)).toBeTruthy();
+  const approved = await api(request, receptionist, "POST", `/receptionist/boarding-requests/${boardingA}/approve`);
+  expect(approved.ok, JSON.stringify(approved.body)).toBeTruthy();
+  const statusAfterApproval = approved.body.boarding?.status;
 
   correlate({
-    scenario: "J5-boarding-room-reservation-conflict",
-    record: `SR#${srA}→boarding#${boardingA} (room ${roomA}), SR#${srB}→room ${roomB}`,
-    initial: `reservations=${resvBefore}`,
-    expected: "first approval reserves room; second cannot double-book it",
-    actual: `approveA ok, reservations ${resvBefore}→${resvAfterA}; approveB ok=${appB.ok} roomB=${roomB}`,
-    db: "boarding_room_reservations (source_type=service_request)",
-    downstream: "boarding module, room availability",
+    scenario: "J5-boarding-reservation-and-verification-gates",
+    record: `boarding#${boardingA} (room ${reservationRoom})`,
+    initial: `active reservations=${resvBefore}`,
+    expected: "online booking reserves one room; overlapping booking is rejected; vaccination card is verified before approval",
+    actual: `active reservations=${j5a.activeCount}; room=${reservationRoom}; duplicateStatus=${conflictResponse.status()} duplicateRows=${j5a.duplicateBoardings}; approved=${statusAfterApproval}`,
+    db: "boarding_room_reservations (source_type=pet_hotel), boardings.vaccination_card_verified_at",
+    downstream: "receptionist boarding approval and room availability",
     evidence: "e1-boarding-requests.png",
-    result: resvAfterA > resvBefore && conflictGuard ? "PASS" : "FAIL",
+    result: Number(j5a.activeCount) > Number(resvBefore)
+      && String(reservationRoom) === String(roomId)
+      && conflictResponse.status() === 422
+      && Number(j5a.duplicateBoardings) === 0
+      && statusAfterApproval === "approved"
+      ? "PASS"
+      : "FAIL",
   });
 
-  // Rejecting A releases only A's reservation — rows are status-flipped to
-  // 'cancelled' (audit trail preserved), not deleted.
   const beforeReject = dbMulti({
-    n: `DB::table('boarding_room_reservations')->where('source_type','service_request')->where('source_id',${srA})->where('status','<>','cancelled')->count()`,
+    n: `DB::table('boarding_room_reservations')->where('source_type','pet_hotel')->where('source_id',${boardingA})->where('status','<>','cancelled')->count()`,
   }).n;
-  const rej = await api(request, receptionist, "POST", `/receptionist/requests/${srA}/reject`, {
+  const rejected = await api(request, receptionist, "POST", `/receptionist/boarding-requests/${boardingA}/reject`, {
     rejection_reason: `Phase9 release test ${RUN}`,
   });
-  const j5c = dbMulti({
-    afterReject: `DB::table('boarding_room_reservations')->where('source_type','service_request')->where('source_id',${srA})->where('status','<>','cancelled')->count()`,
-    resvStatus: `DB::table('boarding_room_reservations')->where('source_type','service_request')->where('source_id',${srA})->value('status')`,
-    bStatus: `DB::table('boardings')->where('service_request_id', ${srA})->value('status')`,
+  const j5b = dbMulti({
+    afterReject: `DB::table('boarding_room_reservations')->where('source_type','pet_hotel')->where('source_id',${boardingA})->where('status','<>','cancelled')->count()`,
+    reservationStatus: `DB::table('boarding_room_reservations')->where('source_type','pet_hotel')->where('source_id',${boardingA})->value('status')`,
+    boardingStatus: `DB::table('boardings')->where('id',${boardingA})->value('status')`,
   });
-  const afterReject = String(j5c.afterReject), bStatus = j5c.bStatus;
   correlate({
     scenario: "J5-reservation-release-on-reject",
-    record: `SR#${srA}`,
+    record: `boarding#${boardingA}`,
     initial: `active reservations=${beforeReject}`,
-    expected: "reject releases this request's reservation only (status→cancelled)",
-    actual: `reject ok=${rej.ok} active=${afterReject} resvStatus=${j5c.resvStatus} boarding=${bStatus}`,
+    expected: "reject releases the online boarding reservation (status→cancelled)",
+    actual: `reject ok=${rejected.ok} active=${j5b.afterReject} reservation=${j5b.reservationStatus} boarding=${j5b.boardingStatus}; conflict=${conflictBody.message || conflictBody.error || conflictResponse.status()}`,
     db: "boarding_room_reservations",
     downstream: "room capacity freed",
     evidence: "e1-boarding-requests.png",
-    result: beforeReject > 0 && afterReject === "0" ? "PASS" : "FAIL",
+    result: rejected.ok && Number(beforeReject) > 0 && String(j5b.afterReject) === "0" ? "PASS" : "FAIL",
   });
-
-  // Cleanup B (rejected or cancelled fixture).
-  await api(request, receptionist, "POST", `/receptionist/requests/${srB}/reject`, {
-    rejection_reason: `Phase9 cleanup ${RUN}`,
-  }).catch(() => {});
 
   const { page, context } = await openAs(browser, receptionist, "/receptionist/bookings/hotel");
   await page.waitForLoadState("domcontentloaded");

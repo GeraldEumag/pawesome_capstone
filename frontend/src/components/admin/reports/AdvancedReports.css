@@ -3,6 +3,7 @@
   display: flex;
   flex-direction: column;
   gap: 1.5rem;
+  min-width: 0;
 }
 
 .adv-report-header {
@@ -131,8 +132,14 @@
 
 .adv-charts-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 340px), 1fr));
   gap: 1.25rem;
+  min-width: 0;
+}
+
+.adv-charts-grid > *,
+.adv-report > * {
+  min-width: 0;
 }
 
 .adv-section {
@@ -271,4 +278,18 @@
 
 .adv-error .adv-btn {
   margin-top: 1rem;
+}
+
+@media (max-width: 768px) {
+  .adv-charts-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .adv-report-header {
+    align-items: flex-start;
+  }
+
+  .adv-report-controls {
+    width: 100%;
+  }
 }

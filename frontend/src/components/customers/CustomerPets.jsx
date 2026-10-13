@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { showConfirm } from "../../utils/alert.jsx";
 import { useAuth } from "../../context/AuthContext";
 import DatePickerInput from "../shared/DatePickerInput";
@@ -20,6 +21,7 @@ import {
   FaSyncAlt,
   FaTimes,
   FaUserAlt,
+  FaVenusMars,
 } from "react-icons/fa";
 import "./CustomerPets.css";
 import { apiRequest, getAuthenticatedFileUrl } from "../../api/client";
@@ -37,6 +39,7 @@ const initialForm = (customerEmail) => ({
   breed: "",
   manualBreed: "",
   birthdate: "",
+  gender: "",
   notes: "",
   customer_email: customerEmail || "",
   image: null,
@@ -48,6 +51,13 @@ const getPetName = (pet) => pet?.name || pet?.pet_name || "Unnamed Pet";
 const getPetSpecies = (pet) => pet?.species || pet?.type || pet?.pet_species || "Pet";
 const getPetBreed = (pet) => pet?.breed || pet?.pet_breed || "No breed";
 const getPetBirthdate = (pet) => pet?.birthdate || pet?.birth_date || pet?.date_of_birth || "";
+const normalizePetGender = (value) => {
+  const normalized = String(value || "").trim().toLowerCase();
+  if (normalized === "male") return "Male";
+  if (normalized === "female") return "Female";
+  return "";
+};
+const getPetGender = (pet) => normalizePetGender(pet?.gender || pet?.sex || pet?.pet_gender) || "N/A";
 const getPetAge = (pet) => {
   const birthdate = getPetBirthdate(pet);
   if (!birthdate) return "N/A";
@@ -76,6 +86,144 @@ const normalizeMedicalRecord = (record, index) => ({
   treatment: record?.treatment || record?.procedure || record?.medical_notes || "No treatment stated.",
 });
 
+const PetFormFields = ({ formData, formErrors, previewImage, handleChange, speciesOptions, breedOptions, nameInputRef, idPrefix }) => (
+  <>
+    <label className="pet-image-upload-label">
+      Pet Photo
+      <div className="pet-image-preview-wrapper">
+        {previewImage ? (
+          <img src={previewImage} alt="Pet preview" className="pet-image-preview" />
+        ) : (
+          <span className="pet-image-placeholder"><FaCamera /></span>
+        )}
+        <input
+          type="file"
+          name="image"
+          accept="image/jpeg,image/png,image/webp"
+          onChange={handleChange}
+          className="pet-image-input"
+          aria-label="Pet Photo"
+        />
+      </div>
+    </label>
+
+    <label htmlFor={`${idPrefix}-name`}>
+      Pet Name <small>*</small>
+      <input
+        ref={nameInputRef}
+        id={`${idPrefix}-name`}
+        name="name"
+        placeholder="Example: Max"
+        value={formData.name}
+        onChange={handleChange}
+        required
+        aria-invalid={Boolean(formErrors.name)}
+        aria-describedby={formErrors.name ? `${idPrefix}-name-error` : undefined}
+        className={formErrors.name ? "input-error" : ""}
+      />
+      {formErrors.name && <span className="field-error" id={`${idPrefix}-name-error`}>{formErrors.name}</span>}
+    </label>
+
+    <label htmlFor={`${idPrefix}-species`}>
+      Type of Pet <small>*</small>
+      <select
+        id={`${idPrefix}-species`}
+        name="species"
+        value={formData.species}
+        onChange={handleChange}
+        required
+        aria-invalid={Boolean(formErrors.species)}
+        aria-describedby={formErrors.species ? `${idPrefix}-species-error` : undefined}
+        className={formErrors.species ? "input-error" : ""}
+      >
+        <option value="">Select type of pet</option>
+        {speciesOptions.map((species) => <option key={species} value={species}>{species}</option>)}
+      </select>
+      {formErrors.species && <span className="field-error" id={`${idPrefix}-species-error`}>{formErrors.species}</span>}
+    </label>
+
+    {formData.species && (
+      <label htmlFor={`${idPrefix}-breed`}>
+        Breed <small>*</small>
+        <select
+          id={`${idPrefix}-breed`}
+          name="breed"
+          value={formData.breed}
+          onChange={handleChange}
+          required
+          aria-invalid={Boolean(formErrors.breed)}
+          aria-describedby={formErrors.breed ? `${idPrefix}-breed-error` : undefined}
+          className={formErrors.breed ? "input-error" : ""}
+        >
+          <option value="">Select breed</option>
+          {breedOptions.map((breed) => <option key={breed} value={breed}>{breed}</option>)}
+        </select>
+        {formErrors.breed && <span className="field-error" id={`${idPrefix}-breed-error`}>{formErrors.breed}</span>}
+      </label>
+    )}
+
+    {isManualBreedRequired(formData.breed) && (
+      <label htmlFor={`${idPrefix}-manual-breed`}>
+        Breed Details <small>*</small>
+        <input
+          id={`${idPrefix}-manual-breed`}
+          name="manualBreed"
+          placeholder="Enter breed (e.g., mixed local, etc.)"
+          value={formData.manualBreed}
+          onChange={handleChange}
+          required
+          aria-invalid={Boolean(formErrors.manualBreed)}
+          aria-describedby={formErrors.manualBreed ? `${idPrefix}-manual-breed-error` : undefined}
+          className={formErrors.manualBreed ? "input-error" : ""}
+        />
+        {formErrors.manualBreed && <span className="field-error" id={`${idPrefix}-manual-breed-error`}>{formErrors.manualBreed}</span>}
+      </label>
+    )}
+
+    <div className="pets-form-row">
+      <label htmlFor={`${idPrefix}-birthdate`}>
+        Birthdate
+        <div className={formErrors.birthdate ? "datepicker-error-wrap" : ""}>
+          <DatePickerInput
+            id={`${idPrefix}-birthdate`}
+            ariaLabel="Birthdate"
+            selected={parseDateOnly(formData.birthdate)}
+            onChange={(date) => handleChange({ target: { name: "birthdate", value: formatDateOnly(date) } })}
+            placeholderText="mm/dd/yyyy"
+            maxDate={new Date()}
+          />
+        </div>
+        {formErrors.birthdate && <span className="field-error" id={`${idPrefix}-birthdate-error`}>{formErrors.birthdate}</span>}
+      </label>
+
+      <label htmlFor={`${idPrefix}-gender`}>
+        Gender
+        <select
+          id={`${idPrefix}-gender`}
+          name="gender"
+          value={formData.gender}
+          onChange={handleChange}
+        >
+          <option value="">Select gender</option>
+          <option value="Male">Male</option>
+          <option value="Female">Female</option>
+        </select>
+      </label>
+    </div>
+
+    <label htmlFor={`${idPrefix}-notes`}>
+      Medical Notes / Special Needs
+      <textarea
+        id={`${idPrefix}-notes`}
+        name="notes"
+        placeholder="Example: Allergies, medications, behavior notes..."
+        value={formData.notes}
+        onChange={handleChange}
+      />
+    </label>
+  </>
+);
+
 const CustomerPets = () => {
   const { user } = useAuth();
   const customerEmail = user?.email || "";
@@ -84,8 +232,11 @@ const CustomerPets = () => {
   const [archivedPets, setArchivedPets] = useState([]);
   const [formData, setFormData] = useState(() => initialForm(customerEmail));
   const [formErrors, setFormErrors] = useState({});
+  const [addFormError, setAddFormError] = useState("");
 
   const [loading, setLoading] = useState(false);
+  const loadingRef = useRef(loading);
+  loadingRef.current = loading;
   const [pageLoading, setPageLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [deletingId, setDeletingId] = useState(null);
@@ -103,6 +254,11 @@ const CustomerPets = () => {
 
   const [previewImage, setPreviewImage] = useState(null);
   const previewImageRequest = useRef(0);
+  const [addPetModalOpen, setAddPetModalOpen] = useState(false);
+  const addPetTriggerRef = useRef(null);
+  const addPetReturnFocusRef = useRef(null);
+  const addPetDialogRef = useRef(null);
+  const addPetNameInputRef = useRef(null);
   const [editingPet, setEditingPet] = useState(null);
   const [editLoading, setEditLoading] = useState(false);
 
@@ -237,6 +393,7 @@ const CustomerPets = () => {
         getPetSpecies(pet),
         getPetBreed(pet),
         getPetAge(pet),
+        getPetGender(pet),
         getPetNotes(pet),
         pet.archived_at ? formatDate(pet.archived_at) : "",
         pet.archived_reason || "",
@@ -282,6 +439,7 @@ const CustomerPets = () => {
       setFormData((prev) => ({ ...prev, image: file }));
       setPreviewImage(URL.createObjectURL(file));
       if (message.text) setMessage({ type: "", text: "" });
+      setAddFormError("");
       return;
     }
 
@@ -301,16 +459,87 @@ const CustomerPets = () => {
     }
 
     if (message.text) setMessage({ type: "", text: "" });
+    setAddFormError("");
     if (formErrors[name]) {
       setFormErrors((prev) => ({ ...prev, [name]: undefined }));
     }
   };
 
-  const resetForm = () => {
+  const resetForm = useCallback(() => {
     previewImageRequest.current += 1;
     setFormData(initialForm(customerEmail));
+    setFormErrors({});
+    setAddFormError("");
     setPreviewImage(null);
-  };
+  }, [customerEmail]);
+
+  const openAddPetModal = useCallback((event) => {
+    if (loading) return;
+    addPetReturnFocusRef.current = event?.currentTarget || addPetTriggerRef.current;
+    resetForm();
+    setMessage({ type: "", text: "" });
+    setAddPetModalOpen(true);
+  }, [loading, resetForm]);
+
+  const closeAddPetModal = useCallback(() => {
+    setAddPetModalOpen(false);
+    resetForm();
+    setMessage({ type: "", text: "" });
+    const returnFocusElement = addPetReturnFocusRef.current || addPetTriggerRef.current;
+    window.requestAnimationFrame(() => returnFocusElement?.focus());
+  }, [resetForm]);
+
+  useEffect(() => {
+    if (!addPetModalOpen) return undefined;
+
+    const previousOverflow = document.body.style.overflow;
+    const previousPaddingRight = document.body.style.paddingRight;
+    const scrollbarWidth = window.innerWidth - document.documentElement.clientWidth;
+    document.body.style.overflow = "hidden";
+    if (scrollbarWidth > 0) {
+      const currentPadding = parseFloat(window.getComputedStyle(document.body).paddingRight) || 0;
+      document.body.style.paddingRight = `${currentPadding + scrollbarWidth}px`;
+    }
+
+    const focusFrame = window.requestAnimationFrame(() => addPetNameInputRef.current?.focus());
+    const handleDialogKeyDown = (event) => {
+      const targetIsDatePicker = event.target?.closest?.(".react-datepicker__portal");
+      if (event.key === "Escape") {
+        if (targetIsDatePicker || document.querySelector(".react-datepicker__portal") || loadingRef.current) return;
+        event.preventDefault();
+        closeAddPetModal();
+        return;
+      }
+
+      if (event.key !== "Tab" || targetIsDatePicker) return;
+      const focusable = Array.from(addPetDialogRef.current?.querySelectorAll(
+        'button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])'
+      ) || []).filter((element) => !element.hasAttribute("hidden"));
+      if (!focusable.length) {
+        event.preventDefault();
+        addPetDialogRef.current?.focus();
+        return;
+      }
+
+      const first = focusable[0];
+      const last = focusable[focusable.length - 1];
+      if (event.shiftKey && (document.activeElement === first || !addPetDialogRef.current?.contains(document.activeElement))) {
+        event.preventDefault();
+        last.focus();
+      } else if (!event.shiftKey && (document.activeElement === last || !addPetDialogRef.current?.contains(document.activeElement))) {
+        event.preventDefault();
+        first.focus();
+      }
+    };
+
+    document.addEventListener("keydown", handleDialogKeyDown, true);
+    return () => {
+      window.cancelAnimationFrame(focusFrame);
+      document.removeEventListener("keydown", handleDialogKeyDown, true);
+      document.body.style.overflow = previousOverflow;
+      document.body.style.paddingRight = previousPaddingRight;
+    };
+  }, [addPetModalOpen, closeAddPetModal]);
 
   const buildPetPayload = (data) => ({
     name: data.name?.trim(),
@@ -320,21 +549,25 @@ const CustomerPets = () => {
       : data.breed,
     birthdate: normalizeDateString(data.birthdate) || null,
     birth_date: normalizeDateString(data.birthdate) || null,
+    gender: data.gender || null,
     notes: data.notes?.trim() || null,
     customer_email: customerEmail,
   });
 
   const handleSubmit = async (event) => {
     event.preventDefault();
+    if (loading) return;
 
     const validationError = validateForm();
 
     if (validationError) {
+      setAddFormError(validationError);
       showMessage("error", validationError);
       return;
     }
 
     try {
+      setAddFormError("");
       setLoading(true);
 
       let body;
@@ -358,7 +591,8 @@ const CustomerPets = () => {
         body,
       });
 
-      resetForm();
+      addPetReturnFocusRef.current = addPetTriggerRef.current;
+      closeAddPetModal();
       await fetchPets({ silent: true });
       showMessage("success", data?.message || "Pet added successfully.");
     } catch (error) {
@@ -368,6 +602,7 @@ const CustomerPets = () => {
         error?.message ||
         "Failed to add pet. Please try again.";
 
+      setAddFormError(errorMessage);
       showMessage("error", errorMessage);
     } finally {
       setLoading(false);
@@ -390,6 +625,7 @@ const CustomerPets = () => {
       breed: pet?.breed || "",
       manualBreed: "",
       birthdate: normalizeDateString(getPetBirthdate(pet)),
+      gender: normalizePetGender(pet?.gender || pet?.sex || pet?.pet_gender),
       notes: pet?.notes || "",
       customer_email: customerEmail,
       image: null,
@@ -574,7 +810,7 @@ const CustomerPets = () => {
 
   return (
     <section className="customer-pets">
-      {message.text && (
+      {message.text && !addPetModalOpen && (
         <div className={`pets-toast ${message.type}`}>
           {message.type === "success" ? <FaPaw /> : <FaExclamationTriangle />}
           <span>{message.text}</span>
@@ -582,6 +818,16 @@ const CustomerPets = () => {
       )}
 
       <div className="pets-toolbar pets-top-toolbar">
+        <button
+          ref={addPetTriggerRef}
+          className="pets-add-trigger"
+          type="button"
+          onClick={openAddPetModal}
+          disabled={loading}
+        >
+          <FaPlus />
+          Add New Pet
+        </button>
         <button
           className={`pets-refresh-btn ${refreshing ? "refreshing" : ""}`}
           type="button"
@@ -636,138 +882,6 @@ const CustomerPets = () => {
       </div>
 
       <div className="pets-layout">
-        <div className="pets-card pets-form-card">
-          <div className="pets-card-header">
-            <div>
-              <h2>Add New Pet</h2>
-              <p>Register a pet so it can be selected in bookings.</p>
-            </div>
-            <span>
-              <FaPlus />
-            </span>
-          </div>
-
-          <form className="pets-form" onSubmit={handleSubmit}>
-            <label className="pet-image-upload-label">
-              Pet Photo
-              <div className="pet-image-preview-wrapper">
-                {previewImage ? (
-                  <img
-                    src={previewImage}
-                    alt="Pet preview"
-                    className="pet-image-preview"
-                  />
-                ) : (
-                  <span className="pet-image-placeholder">
-                    <FaCamera />
-                  </span>
-                )}
-                <input
-                  type="file"
-                  name="image"
-                  accept="image/jpeg,image/png,image/webp"
-                  onChange={handleChange}
-                  className="pet-image-input"
-                />
-              </div>
-            </label>
-
-            <label>
-              Pet Name <small>*</small>
-              <input
-                name="name"
-                placeholder="Example: Max"
-                value={formData.name}
-                onChange={handleChange}
-                required
-              />
-            </label>
-
-            <label>
-              Type of Pet <small>*</small>
-              <select
-                name="species"
-                value={formData.species}
-                onChange={handleChange}
-                required
-              >
-                <option value="">Select type of pet</option>
-                {speciesOptions.map((species) => (
-                  <option key={species} value={species}>
-                    {species}
-                  </option>
-                ))}
-              </select>
-            </label>
-
-            {formData.species && (
-              <label>
-                Breed <small>*</small>
-                <select
-                  name="breed"
-                  value={formData.breed}
-                  onChange={handleChange}
-                  required
-                >
-                  <option value="">Select breed</option>
-                  {breedOptions.map((breed) => (
-                    <option key={breed} value={breed}>
-                      {breed}
-                    </option>
-                  ))}
-                </select>
-              </label>
-            )}
-
-            {isManualBreedRequired(formData.breed) && (
-              <label>
-                Breed Details <small>*</small>
-                <input
-                  name="manualBreed"
-                  placeholder="Enter breed (e.g., mixed local, etc.)"
-                  value={formData.manualBreed}
-                  onChange={handleChange}
-                  required
-                />
-              </label>
-            )}
-
-            <div className="pets-form-row">
-              <label>
-                Birthdate
-                <DatePickerInput
-                  selected={parseDateOnly(formData.birthdate)}
-                  onChange={(date) =>
-                    handleChange({ target: { name: "birthdate", value: formatDateOnly(date) } })
-                  }
-                  placeholderText="mm/dd/yyyy"
-                  maxDate={new Date()}
-                />
-              </label>
-            </div>
-
-            <label>
-              Medical Notes / Special Needs
-              <textarea
-                name="notes"
-                placeholder="Example: Allergies, medications, behavior notes..."
-                value={formData.notes}
-                onChange={handleChange}
-              />
-            </label>
-
-            <div className="pets-form-actions">
-              <button type="button" className="pets-reset-btn" onClick={resetForm}>
-                Clear
-              </button>
-
-              <button type="submit" className="pets-submit-btn" disabled={loading}>
-                {loading ? "Saving..." : "Add Pet"}
-              </button>
-            </div>
-          </form>
-        </div>
-
         <div className="pets-card pets-list-card">
           <div className="pets-card-header">
             <div>
@@ -829,8 +943,13 @@ const CustomerPets = () => {
               <p>
                 {searchTerm || speciesFilter !== "all"
                   ? "Try adjusting your search or filter to find what you're looking for."
-                  : "Your furry friends will appear here. Register your first pet using the form on the left!"}
+                  : "Your furry friends will appear here. Add your first pet to get started."}
               </p>
+              {activeTab === "active" && pets.length === 0 && !searchTerm && speciesFilter === "all" && (
+                <button className="pets-add-empty-btn" type="button" onClick={openAddPetModal}>
+                  <FaPlus /> Add your first pet
+                </button>
+              )}
             </div>
           ) : (
             <div className="pets-list">
@@ -868,6 +987,11 @@ const CustomerPets = () => {
                       <span>
                         <FaCalendarAlt />
                         Birthdate: {getPetBirthdate(pet) ? formatDate(getPetBirthdate(pet)) : "N/A"}
+                      </span>
+
+                      <span>
+                        <FaVenusMars />
+                        Gender: {getPetGender(pet)}
                       </span>
 
                       {activeTab === "archived" && pet.archived_at && (
@@ -939,6 +1063,80 @@ const CustomerPets = () => {
         </div>
       </div>
 
+      {addPetModalOpen && createPortal(
+        <div
+          className="pets-add-modal-overlay"
+          onClick={(event) => {
+            if (event.target === event.currentTarget && !loading) closeAddPetModal();
+          }}
+        >
+          <section
+            className="pets-add-modal"
+            ref={addPetDialogRef}
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="pets-add-modal-title"
+            aria-describedby="pets-add-modal-description"
+            tabIndex={-1}
+          >
+            <header className="pets-add-modal-header">
+              <div className="pets-add-modal-heading">
+                <span className="pets-add-modal-icon"><FaPaw /></span>
+                <div>
+                  <span className="pets-eyebrow">Pet Profile</span>
+                  <h2 id="pets-add-modal-title">Add a new pet</h2>
+                  <p id="pets-add-modal-description">Register a pet so you can select them in bookings and keep their care details together.</p>
+                </div>
+              </div>
+              <button
+                className="pets-add-modal-close"
+                type="button"
+                onClick={closeAddPetModal}
+                disabled={loading}
+                aria-label="Close Add New Pet dialog"
+              >
+                <FaTimes />
+              </button>
+            </header>
+
+            <form className="pets-form pets-add-modal-form" onSubmit={handleSubmit} noValidate>
+              <div className="pets-add-modal-body">
+                {addFormError && (
+                  <div className="pets-add-modal-error" role="alert">
+                    <FaExclamationTriangle />
+                    <span>{addFormError}</span>
+                  </div>
+                )}
+                <PetFormFields
+                  formData={formData}
+                  formErrors={formErrors}
+                  previewImage={previewImage}
+                  handleChange={handleChange}
+                  speciesOptions={speciesOptions}
+                  breedOptions={breedOptions}
+                  nameInputRef={addPetNameInputRef}
+                  idPrefix="add-pet"
+                />
+              </div>
+              <footer className="pets-add-modal-footer">
+                <button
+                  className="pets-reset-btn"
+                  type="button"
+                  onClick={closeAddPetModal}
+                  disabled={loading}
+                >
+                  Cancel
+                </button>
+                <button className="pets-submit-btn" type="submit" disabled={loading}>
+                  {loading ? <><FaSyncAlt className="spin" /> Saving...</> : <><FaPlus /> Add Pet</>}
+                </button>
+              </footer>
+            </form>
+          </section>
+        </div>,
+        document.body
+      )}
+
       {editingPet && (
         <div className="pet-history-overlay" onClick={closeEditModal}>
           <div
@@ -969,124 +1167,15 @@ const CustomerPets = () => {
 
             <div className="pet-history-body">
               <form className="pets-form" onSubmit={handleUpdatePet}>
-                <label className="pet-image-upload-label">
-                  Pet Photo
-                  <div className="pet-image-preview-wrapper">
-                    {previewImage ? (
-                      <img
-                        src={previewImage}
-                        alt="Pet preview"
-                        className="pet-image-preview"
-                      />
-                    ) : (
-                      <span className="pet-image-placeholder">
-                        <FaCamera />
-                      </span>
-                    )}
-                    <input
-                      type="file"
-                      name="image"
-                      accept="image/jpeg,image/png,image/webp"
-                      onChange={handleChange}
-                      className="pet-image-input"
-                    />
-                  </div>
-                </label>
-
-                <label>
-                  Pet Name <small>*</small>
-                  <input
-                    name="name"
-                    placeholder="Example: Max"
-                    value={formData.name}
-                    onChange={handleChange}
-                    required
-                    className={formErrors.name ? "input-error" : ""}
-                  />
-                  {formErrors.name && <span className="field-error">{formErrors.name}</span>}
-                </label>
-
-                <label>
-                  Type of Pet <small>*</small>
-                  <select
-                    name="species"
-                    value={formData.species}
-                    onChange={handleChange}
-                    required
-                    className={formErrors.species ? "input-error" : ""}
-                  >
-                    <option value="">Select type of pet</option>
-                    {speciesOptions.map((species) => (
-                      <option key={species} value={species}>
-                        {species}
-                      </option>
-                    ))}
-                  </select>
-                  {formErrors.species && <span className="field-error">{formErrors.species}</span>}
-                </label>
-
-                {formData.species && (
-                  <label>
-                    Breed <small>*</small>
-                    <select
-                      name="breed"
-                      value={formData.breed}
-                      onChange={handleChange}
-                      required
-                      className={formErrors.breed ? "input-error" : ""}
-                    >
-                      <option value="">Select breed</option>
-                      {breedOptions.map((breed) => (
-                        <option key={breed} value={breed}>
-                          {breed}
-                        </option>
-                      ))}
-                    </select>
-                    {formErrors.breed && <span className="field-error">{formErrors.breed}</span>}
-                  </label>
-                )}
-
-                {isManualBreedRequired(formData.breed) && (
-                  <label>
-                    Breed Details <small>*</small>
-                    <input
-                      name="manualBreed"
-                      placeholder="Enter breed (e.g., mixed local, etc.)"
-                      value={formData.manualBreed}
-                      onChange={handleChange}
-                      required
-                      className={formErrors.manualBreed ? "input-error" : ""}
-                    />
-                    {formErrors.manualBreed && <span className="field-error">{formErrors.manualBreed}</span>}
-                  </label>
-                )}
-
-                <div className="pets-form-row">
-                  <label>
-                    Birthdate
-                    <div className={formErrors.birthdate ? "datepicker-error-wrap" : ""}>
-                      <DatePickerInput
-                        selected={parseDateOnly(formData.birthdate)}
-                        onChange={(date) =>
-                          handleChange({ target: { name: "birthdate", value: formatDateOnly(date) } })
-                        }
-                        placeholderText="mm/dd/yyyy"
-                        maxDate={new Date()}
-                      />
-                    </div>
-                    {formErrors.birthdate && <span className="field-error">{formErrors.birthdate}</span>}
-                  </label>
-                </div>
-
-                <label>
-                  Medical Notes / Special Needs
-                  <textarea
-                    name="notes"
-                    placeholder="Example: Allergies, medications, behavior notes..."
-                    value={formData.notes}
-                    onChange={handleChange}
-                  />
-                </label>
+                <PetFormFields
+                  formData={formData}
+                  formErrors={formErrors}
+                  previewImage={previewImage}
+                  handleChange={handleChange}
+                  speciesOptions={speciesOptions}
+                  breedOptions={breedOptions}
+                  idPrefix="edit-pet"
+                />
 
                 <div className="pets-form-actions">
                   <button
