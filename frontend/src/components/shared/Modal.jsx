@@ -30,6 +30,13 @@ const Modal = ({
   headerless = false,
 }) => {
   const modalRef = useRef(null);
+  // onClose is typically a fresh inline function each parent render. Keep it in
+  // a ref so this effect only re-runs when isOpen toggles — otherwise every
+  // keystroke inside the modal re-fires el.focus() and steals input focus.
+  const onCloseRef = useRef(onClose);
+  useEffect(() => {
+    onCloseRef.current = onClose;
+  }, [onClose]);
 
   useEffect(() => {
     if (!isOpen) return;
@@ -50,7 +57,7 @@ const Modal = ({
         // Let an open react-datepicker consume Escape first — closing the
         // modal while picking a date inside it is a data-loss trap.
         if (document.querySelector(".react-datepicker__portal")) return;
-        onClose?.();
+        onCloseRef.current?.();
         return;
       }
       if (e.key !== "Tab" || !el) return;
@@ -74,7 +81,7 @@ const Modal = ({
       document.body.style.overflow = previousOverflow;
       document.body.style.paddingRight = previousPaddingRight;
     };
-  }, [isOpen, onClose]);
+  }, [isOpen]);
 
   if (!isOpen) return null;
 
