@@ -116,14 +116,14 @@
 }
 
 .vs-btn--danger {
-  background: linear-gradient(135deg, #f56565, #e53e3e);
+  background: linear-gradient(135deg, var(--color-danger), #b91c1c);
   color: #ffffff;
-  box-shadow: 0 4px 14px rgba(229, 62, 62, 0.3);
+  box-shadow: 0 4px 14px rgba(239, 68, 68, 0.3);
 }
 
 .vs-btn--danger:hover:not(:disabled) {
   transform: translateY(-2px);
-  box-shadow: 0 8px 24px rgba(229, 62, 62, 0.4);
+  box-shadow: 0 8px 24px rgba(239, 68, 68, 0.4);
 }
 
 .vs-btn:disabled {
@@ -353,39 +353,39 @@
 }
 
 .vs-action-btn--edit {
-  background: linear-gradient(135deg, #63b3ed, #3182ce);
+  background: linear-gradient(135deg, var(--color-info), #2563eb);
 }
 
 .vs-action-btn--edit:hover {
   transform: scale(1.12);
-  box-shadow: 0 4px 14px rgba(49, 130, 206, 0.4);
+  box-shadow: 0 4px 14px rgba(59, 130, 246, 0.4);
 }
 
 .vs-action-btn--delete {
-  background: linear-gradient(135deg, #fc8181, #e53e3e);
+  background: linear-gradient(135deg, var(--color-danger), #b91c1c);
 }
 
 .vs-action-btn--delete:hover {
   transform: scale(1.12);
-  box-shadow: 0 4px 14px rgba(229, 62, 62, 0.4);
+  box-shadow: 0 4px 14px rgba(239, 68, 68, 0.4);
 }
 
 .vs-action-btn--toggle-on {
-  background: linear-gradient(135deg, #68d391, #38a169);
+  background: linear-gradient(135deg, var(--color-success), #047857);
 }
 
 .vs-action-btn--toggle-on:hover {
   transform: scale(1.12);
-  box-shadow: 0 4px 14px rgba(56, 161, 105, 0.4);
+  box-shadow: 0 4px 14px rgba(16, 185, 129, 0.4);
 }
 
 .vs-action-btn--toggle-off {
-  background: linear-gradient(135deg, #f6ad55, #dd6b20);
+  background: linear-gradient(135deg, var(--color-warning), #b45309);
 }
 
 .vs-action-btn--toggle-off:hover {
   transform: scale(1.12);
-  box-shadow: 0 4px 14px rgba(221, 107, 32, 0.4);
+  box-shadow: 0 4px 14px rgba(245, 158, 11, 0.4);
 }
 
 /* ── Service Status Badge ──────────────────────────────────── */
@@ -460,71 +460,6 @@
 
 /* ── Modal ─────────────────────────────────────────────────── */
 
-.vs-modal-overlay {
-  position: fixed;
-  inset: 0;
-  background: rgba(0, 0, 0, 0.55);
-  display: grid;
-  place-items: center;
-  z-index: 1000;
-  backdrop-filter: blur(6px);
-  padding: 16px;
-}
-
-.vs-modal {
-  background: var(--veterinary-glass-bg);
-  border: 1.5px solid var(--veterinary-glass-border);
-  border-radius: var(--veterinary-radius-2xl);
-  max-width: 500px;
-  width: 100%;
-  max-height: 90vh;
-  overflow-y: auto;
-  box-shadow: var(--veterinary-shadow-md);
-  animation: vs-slideUp 0.28s ease;
-}
-
-@keyframes vs-slideUp {
-  from { opacity: 0; transform: translateY(20px) scale(0.97); }
-  to   { opacity: 1; transform: translateY(0) scale(1); }
-}
-
-.vs-modal-header {
-  padding: 20px 24px;
-  background: linear-gradient(135deg, var(--veterinary-primary-light), var(--veterinary-primary));
-  border-radius: calc(var(--veterinary-radius-2xl) - 2px) calc(var(--veterinary-radius-2xl) - 2px) 0 0;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-}
-
-.vs-modal-title {
-  margin: 0;
-  color: #ffffff;
-  font-size: 1.25rem;
-  font-weight: 800;
-  letter-spacing: -0.01em;
-}
-
-.vs-modal-close {
-  width: 32px;
-  height: 32px;
-  min-width: 32px;
-  border: none;
-  border-radius: 10px;
-  background: rgba(255, 255, 255, 0.2);
-  color: #ffffff;
-  cursor: pointer;
-  display: grid;
-  place-items: center;
-  font-size: 0.9rem;
-  transition: background 0.18s ease;
-}
-
-.vs-modal-close:hover {
-  background: rgba(255, 255, 255, 0.35);
-}
-
 .vs-modal-body {
   padding: 22px 24px;
   display: grid;
@@ -536,14 +471,6 @@
   color: var(--veterinary-text-muted);
   font-size: 0.925rem;
   line-height: 1.6;
-}
-
-.vs-modal-actions {
-  padding: 18px 24px;
-  border-top: 1px solid var(--vet-divider);
-  display: flex;
-  gap: 10px;
-  justify-content: flex-end;
 }
 
 /* ── Form Controls Inside Modal ────────────────────────────── */
@@ -620,14 +547,6 @@
   .vs-filter-select {
     width: 100%;
   }
-
-  .vs-modal-actions {
-    flex-direction: column;
-  }
-
-  .vs-modal-actions .vs-btn {
-    width: 100%;
-  }
 }
 
 /* ── Dark Mode ─────────────────────────────────────────────── */
@@ -673,15 +592,6 @@
 [data-theme="dark"] .vs-filter-select {
   background: rgba(30, 18, 38, 0.8);
   color: var(--veterinary-text-primary);
-  border-color: rgba(255, 95, 147, 0.18);
-}
-
-[data-theme="dark"] .vs-modal-overlay {
-  background: rgba(0, 0, 0, 0.72);
-}
-
-[data-theme="dark"] .vs-modal {
-  background: rgba(25, 14, 35, 0.97);
   border-color: rgba(255, 95, 147, 0.18);
 }
 

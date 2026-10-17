@@ -8,6 +8,7 @@ import {
   faSpinner,
   faCalendarDays,
   faMoneyBillWave,
+  faFileInvoiceDollar,
   faCircleCheck,
   faCircle,
   faClock,
@@ -19,6 +20,7 @@ import { formatCurrency } from "../../utils/currency";
 import { STORE_INFO } from "../../utils/storeInfo";
 import { showAlert, showSuccess } from "../../utils/alert.jsx";
 import RowActionPopover from "./RowActionPopover";
+import Modal from "./Modal";
 import "./MyPayroll.css";
 
 const formatLabel = (s) => (s ? s.charAt(0).toUpperCase() + s.slice(1) : "N/A");
@@ -57,7 +59,7 @@ const periodBaseSalary = (payroll, slip) =>
 const paidLeaveDaysOf = (payroll, slip) =>
   Number(slip?.attendance?.paid_leave_days ?? payroll?.paid_leave_days ?? 0);
 
-const MyPayroll = ({ roleAccent = "#0891b2", roleLabel = "Employee" }) => {
+const MyPayroll = ({ roleAccent = "var(--color-primary)", roleLabel = "Employee" }) => {
   const [payrolls, setPayrolls] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -330,18 +332,14 @@ const MyPayroll = ({ roleAccent = "#0891b2", roleLabel = "Employee" }) => {
 
       {/* Payslip modal */}
       {selectedPayroll && (
-        <div className="mp-modal-overlay" onClick={closePayslip}>
-          <div className="mp-modal" onClick={(e) => e.stopPropagation()}>
-            <div className="mp-modal-header">
-              <h2>Payslip Details</h2>
-              <button className="mp-modal-close" onClick={closePayslip}>&times;</button>
-            </div>
-            {payslipLoading ? (
-              <div className="mp-loading"><FontAwesomeIcon icon={faSpinner} spin /> Loading payslip...</div>
-            ) : (
-              <PayslipDetail payroll={selectedPayroll} slip={payslipData} roleAccent={roleAccent} />
-            )}
-            <div className="mp-modal-footer">
+        <Modal
+          onClose={closePayslip}
+          title="Payslip Details"
+          icon={faFileInvoiceDollar}
+          size="lg"
+          className="mp-modal"
+          footer={
+            <>
               <button className="mp-btn" onClick={closePayslip}>Close</button>
               <button className="mp-btn primary" onClick={() => downloadPayslipPDF(selectedPayroll, payslipData)}>
                 <FontAwesomeIcon icon={faDownload} /> Download PDF
@@ -349,9 +347,15 @@ const MyPayroll = ({ roleAccent = "#0891b2", roleLabel = "Employee" }) => {
               <button className="mp-btn" onClick={() => printPayslip(selectedPayroll)}>
                 <FontAwesomeIcon icon={faPrint} /> Print
               </button>
-            </div>
-          </div>
-        </div>
+            </>
+          }
+        >
+            {payslipLoading ? (
+              <div className="mp-loading"><FontAwesomeIcon icon={faSpinner} spin /> Loading payslip...</div>
+            ) : (
+              <PayslipDetail payroll={selectedPayroll} slip={payslipData} roleAccent={roleAccent} />
+            )}
+        </Modal>
       )}
 
       {/* Print area */}

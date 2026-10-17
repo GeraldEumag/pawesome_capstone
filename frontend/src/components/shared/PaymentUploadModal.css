@@ -1,66 +1,11 @@
-/* PaymentUploadModal.css */
-
-.pum-overlay {
-  position: fixed;
-  inset: 0;
-  width: 100vw;
-  height: 100vh;
-  background: rgba(0, 0, 0, 0.5);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 100000;
-  padding: 1rem;
-}
+/* PaymentUploadModal.css — shell provided by shared Modal (pw-modal-*) */
 
 .pum-modal {
-  background: #fff;
-  border-radius: 16px;
-  width: 100%;
   max-width: 480px;
-  max-height: 90vh;
-  overflow-y: auto;
-  display: flex;
-  flex-direction: column;
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.25);
 }
-
-/* Header */
-.pum-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 1.25rem 1.5rem;
-  border-bottom: 1px solid #f3f4f6;
-  position: sticky;
-  top: 0;
-  background: #fff;
-  z-index: 1;
-}
-
-.pum-title {
-  font-size: 1.05rem;
-  font-weight: 700;
-  color: #1e293b;
-  margin: 0;
-}
-
-.pum-close {
-  background: none;
-  border: none;
-  font-size: 1.6rem;
-  line-height: 1;
-  cursor: pointer;
-  color: #6b7280;
-  padding: 0 0.25rem;
-  transition: color 0.15s;
-}
-
-.pum-close:hover { color: #111; }
 
 /* Body */
 .pum-body {
-  padding: 1.25rem 1.5rem;
   display: flex;
   flex-direction: column;
   gap: 1.25rem;
@@ -328,11 +273,9 @@
 }
 
 /* Footer */
-.pum-footer {
+.pum-modal .pw-modal-footer {
   display: flex;
   gap: 0.75rem;
-  padding: 1rem 1.5rem 1.25rem;
-  border-top: 1px solid #f3f4f6;
 }
 
 .pum-cancel-btn {

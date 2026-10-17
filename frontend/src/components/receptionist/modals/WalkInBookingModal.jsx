@@ -27,7 +27,10 @@ import { showConfirm } from "../../../utils/alert.jsx";
 import "../../../styles/bookingModal.css";
 import "./WalkInBookingModal.css";
 
-const WalkInBookingModal = ({ serviceType, onClose, onSuccess }) => {
+const WalkInBookingModal = ({ serviceType: serviceTypeProp, onClose, onSuccess }) => {
+  // When the caller doesn't pin a service type (e.g. the boarding page's
+  // generic "New Booking" button), the modal opens on a type picker first.
+  const [serviceType, setServiceType] = useState(serviceTypeProp || null);
   const [step, setStep] = useState(1);
   const [customerMode, setCustomerMode] = useState(null); // 'existing' or 'new'
   const [loading, setLoading] = useState(false);
@@ -93,21 +96,25 @@ const WalkInBookingModal = ({ serviceType, onClose, onSuccess }) => {
     hotel: {
       icon: faHotel,
       title: "Hotel Walk-in Booking",
-      color: "#8b5cf6",
+      color: "var(--color-primary)",
     },
     veterinary: {
       icon: faStethoscope,
       title: "Veterinary Walk-in Booking",
-      color: "#ef4444",
+      color: "var(--color-primary)",
     },
     grooming: {
       icon: faCut,
       title: "Grooming Walk-in Booking",
-      color: "#10b981",
+      color: "var(--color-primary)",
     },
   };
 
-  const config = serviceConfig[serviceType];
+  const config = serviceConfig[serviceType] || {
+    icon: faPaw,
+    title: "Walk-in Booking",
+    color: "var(--color-primary)",
+  };
 
   useEffect(() => {
     const previousOverflow = document.body.style.overflow;
@@ -480,6 +487,45 @@ const WalkInBookingModal = ({ serviceType, onClose, onSuccess }) => {
       setSelectedPet(null);
     }
   };
+
+  const renderTypePicker = () => (
+    <div className="step-content">
+      <h3 className="step-title">Select Booking Type</h3>
+      <p className="step-description">What service is the walk-in customer here for?</p>
+
+      <div className="mode-selection">
+        <button
+          type="button"
+          className={`mode-card ${serviceType === "hotel" ? "selected" : ""}`}
+          onClick={() => setServiceType("hotel")}
+        >
+          <FontAwesomeIcon icon={faHotel} />
+          <h4>Pet Hotel</h4>
+          <p>Same-day boarding stay</p>
+        </button>
+
+        <button
+          type="button"
+          className={`mode-card ${serviceType === "veterinary" ? "selected" : ""}`}
+          onClick={() => setServiceType("veterinary")}
+        >
+          <FontAwesomeIcon icon={faStethoscope} />
+          <h4>Veterinary</h4>
+          <p>Consultation or treatment</p>
+        </button>
+
+        <button
+          type="button"
+          className={`mode-card ${serviceType === "grooming" ? "selected" : ""}`}
+          onClick={() => setServiceType("grooming")}
+        >
+          <FontAwesomeIcon icon={faCut} />
+          <h4>Grooming</h4>
+          <p>Grooming service</p>
+        </button>
+      </div>
+    </div>
+  );
 
   // Render steps
   const renderStep1 = () => (
@@ -1137,11 +1183,15 @@ const WalkInBookingModal = ({ serviceType, onClose, onSuccess }) => {
             <div>
               <h2>{config.title}</h2>
               <div className="step-indicator">
-                Step {step} of {customerMode === "existing" ? 3 : 4}: {" "}
-                {step === 1 && "Customer Type"}
-                {step === 2 && (customerMode === "existing" ? "Select Customer & Pet" : "Customer Info")}
-                {step === 3 && (customerMode === "existing" ? "Booking Details" : "Pet Info")}
-                {step === 4 && "Booking Details"}
+                {!serviceType ? "Service Type" : (
+                  <>
+                    Step {step} of {customerMode === "existing" ? 3 : 4}:{" "}
+                    {step === 1 && "Customer Type"}
+                    {step === 2 && (customerMode === "existing" ? "Select Customer & Pet" : "Customer Info")}
+                    {step === 3 && (customerMode === "existing" ? "Booking Details" : "Pet Info")}
+                    {step === 4 && "Booking Details"}
+                  </>
+                )}
               </div>
             </div>
           </div>
@@ -1159,17 +1209,27 @@ const WalkInBookingModal = ({ serviceType, onClose, onSuccess }) => {
         )}
 
         {/* Content */}
-        <div className="hbk-body">{renderStepContent()}</div>
+        <div className="hbk-body">{!serviceType ? renderTypePicker() : renderStepContent()}</div>
 
         {/* Footer */}
         <div className="hbk-foot">
-          {step > 1 && (
+          {!serviceTypeProp && serviceType && step === 1 && (
+            <button
+              type="button"
+              className="secondary-btn"
+              onClick={() => { setServiceType(null); setCustomerMode(null); setError(""); }}
+            >
+              <FontAwesomeIcon icon={faArrowLeft} /> Change Service
+            </button>
+          )}
+
+          {serviceType && step > 1 && (
             <button type="button" className="secondary-btn" onClick={prevStep}>
               <FontAwesomeIcon icon={faArrowLeft} /> Back
             </button>
           )}
 
-          {step < (customerMode === "new" ? 4 : 3) ? (
+          {!serviceType ? null : step < (customerMode === "new" ? 4 : 3) ? (
             <button
               type="button"
               className="primary-btn"

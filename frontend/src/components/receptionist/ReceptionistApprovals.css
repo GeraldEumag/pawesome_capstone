@@ -288,7 +288,7 @@
 }
 
 .approval-summary-card.hotel span {
-  background: linear-gradient(135deg, #8b5cf6, #a78bfa);
+  background: linear-gradient(135deg, var(--color-primary-light), var(--color-primary-soft));
 }
 
 .approval-summary-card.warning span {

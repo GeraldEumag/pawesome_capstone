@@ -560,19 +560,6 @@
   font-weight: 950;
 }
 
-/* Modal */
-
-.leave-modal-overlay {
-  position: fixed;
-  inset: 0;
-  z-index: 9000;
-  display: grid;
-  place-items: center;
-  padding: 1.25rem;
-  background: rgba(15, 23, 42, 0.55);
-  backdrop-filter: blur(6px);
-}
-
 .leave-modal {
   width: min(520px, 100%);
   max-height: 92vh;
@@ -581,35 +568,6 @@
   background: var(--leave-surface-solid);
   border: 1px solid var(--leave-border);
   box-shadow: var(--leave-shadow-card);
-}
-
-.leave-modal-header,
-.leave-modal-footer {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 1rem;
-  padding: 1rem 1.25rem;
-}
-
-.leave-modal-header {
-  border-bottom: 1px solid var(--leave-border);
-}
-
-.leave-modal-header h2 {
-  margin: 0.4rem 0 0;
-  color: var(--leave-heading);
-  font-weight: 950;
-}
-
-.leave-modal-header > button {
-  width: 42px;
-  height: 42px;
-  border: none;
-  border-radius: 12px;
-  background: rgba(255, 95, 147, 0.1);
-  color: var(--leave-primary);
-  cursor: pointer;
 }
 
 .leave-modal-body {
@@ -647,11 +605,6 @@
   font-size: 0.95rem;
   outline: none;
   resize: vertical;
-}
-
-.leave-modal-footer {
-  border-top: 1px solid var(--leave-border);
-  justify-content: flex-end;
 }
 
 /* Calendar */

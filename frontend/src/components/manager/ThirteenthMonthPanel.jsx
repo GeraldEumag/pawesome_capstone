@@ -11,6 +11,7 @@ import {
   faTriangleExclamation,
 } from "@fortawesome/free-solid-svg-icons";
 import { apiRequest } from "../../api/client";
+import { showConfirm } from "../../utils/alert.jsx";
 import RowActionPopover from "../shared/RowActionPopover";
 import "./ThirteenthMonthPanel.css";
 
@@ -54,7 +55,7 @@ const ThirteenthMonthPanel = () => {
   };
 
   const pay = async (id) => {
-    if (!window.confirm("Mark this 13th month as paid?")) return;
+    if (!(await showConfirm("Mark this 13th month as paid?", "Mark as Paid", "Yes, Mark Paid", "Cancel"))) return;
     await apiRequest(`/manager/payroll/thirteenth-month/${id}/pay`, { method: "POST" }).catch(() => {});
     load();
   };

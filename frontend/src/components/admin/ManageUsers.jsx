@@ -26,6 +26,7 @@ import { normalizeList } from "../../utils/normalizeList";
 import { showSuccess as showSwalSuccess, showError as showSwalError, showWarning } from "../../utils/alert.jsx";
 import { exportToCSV, exportToPDF, exportToExcel } from "../../utils/reportExport";
 import RowActionPopover from "../shared/RowActionPopover";
+import Modal from "../shared/Modal";
 import "./ManageUsers.css";
 
 const ROLE_OPTIONS = [
@@ -740,33 +741,59 @@ const ManageUsers = () => {
       </section>
 
       {showModal && (
-        <div className="mu-modal-overlay" onClick={closeModal}>
-          <div className="mu-modal" onClick={(event) => event.stopPropagation()}>
-            <div className="mu-modal-header">
-              <div>
-                <span className="mu-eyebrow">
-                  <FontAwesomeIcon
-                    icon={
-                      modalType === "delete"
-                        ? faTriangleExclamation
-                        : modalType === "view"
-                        ? faEye
-                        : faEdit
-                    }
-                  />
-                  {modalType === "edit" && "Edit User"}
-                  {modalType === "delete" && "Delete User"}
-                  {modalType === "view" && "User Details"}
-                </span>
-
-                <h3>{selectedUser?.name || "Selected User"}</h3>
-              </div>
-
-              <button className="close-btn" type="button" onClick={closeModal}>
-                <FontAwesomeIcon icon={faTimes} />
+        <Modal
+          onClose={closeModal}
+          title={
+            modalType === "edit"
+              ? "Edit User"
+              : modalType === "delete"
+              ? "Delete User"
+              : "User Details"
+          }
+          subtitle={selectedUser?.name || "Selected User"}
+          icon={
+            modalType === "delete"
+              ? faTriangleExclamation
+              : modalType === "view"
+              ? faEye
+              : faEdit
+          }
+          size="md"
+          footer={
+            <>
+              <button
+                className="cancel-btn"
+                type="button"
+                onClick={closeModal}
+                disabled={processing}
+              >
+                {modalType === "view" ? "Close" : "Cancel"}
               </button>
-            </div>
 
+              {modalType !== "view" && (
+                <button
+                  className={`confirm-btn ${
+                    modalType === "delete" ? "danger" : "primary"
+                  }`}
+                  type="button"
+                  onClick={handleConfirm}
+                  disabled={processing}
+                >
+                  {processing ? (
+                    <>
+                      <FontAwesomeIcon icon={faSpinner} className="mu-spin" />
+                      Processing...
+                    </>
+                  ) : modalType === "edit" ? (
+                    "Update User"
+                  ) : (
+                    "Delete User"
+                  )}
+                </button>
+              )}
+            </>
+          }
+        >
             <div className="mu-modal-body">
               {modalType === "view" && (
                 <div className="mu-user-detail">
@@ -922,41 +949,7 @@ const ManageUsers = () => {
                 </div>
               )}
             </div>
-
-            <div className="mu-modal-actions">
-              <button
-                className="cancel-btn"
-                type="button"
-                onClick={closeModal}
-                disabled={processing}
-              >
-                {modalType === "view" ? "Close" : "Cancel"}
-              </button>
-
-              {modalType !== "view" && (
-                <button
-                  className={`confirm-btn ${
-                    modalType === "delete" ? "danger" : "primary"
-                  }`}
-                  type="button"
-                  onClick={handleConfirm}
-                  disabled={processing}
-                >
-                  {processing ? (
-                    <>
-                      <FontAwesomeIcon icon={faSpinner} className="mu-spin" />
-                      Processing...
-                    </>
-                  ) : modalType === "edit" ? (
-                    "Update User"
-                  ) : (
-                    "Delete User"
-                  )}
-                </button>
-              )}
-            </div>
-          </div>
-        </div>
+        </Modal>
       )}
     </div>
   );

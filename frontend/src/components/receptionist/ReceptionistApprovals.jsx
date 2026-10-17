@@ -20,6 +20,7 @@ import {
 import { apiRequest, getAuthenticatedFileUrl } from "../../api/client";
 import { exportToCSV, exportToPDF, exportToExcel } from "../../utils/reportExport";
 import "../../styles/bookingModal.css";
+import Modal from "../shared/Modal";
 import "./ReceptionistApprovals.css";
 
 const TYPE_FILTERS = [
@@ -1141,22 +1142,45 @@ const ReceptionistApprovals = () => {
       </section>
 
       {detailsOpen && selectedRequest && (
-        <div className="hbk-overlay" onClick={closeDetails}>
-          <div className="hbk-modal" onClick={(event) => event.stopPropagation()}>
-            <div className="hbk-head">
-              <div>
-                <span className="approval-eyebrow">
-                  <FaEye />
-                  Request Details
-                </span>
-                <h2>Request #{getRequestId(selectedRequest)}</h2>
-              </div>
-
-              <button type="button" className="close-modal-btn" onClick={closeDetails}>
-                <FaTimes />
+        <Modal
+          onClose={closeDetails}
+          title={`Request #${getRequestId(selectedRequest)}`}
+          subtitle="Request Details"
+          icon={<FaEye />}
+          size="lg"
+          className="hbk-modal"
+          footer={
+            <>
+              <button type="button" className="secondary-btn" onClick={closeDetails}>
+                Close
               </button>
-            </div>
 
+              <button
+                type="button"
+                className="primary-btn"
+                onClick={() => {
+                  setDetailsOpen(false);
+                  openActionModal(selectedRequest, "approve");
+                }}
+              >
+                <FaCheckCircle />
+                Approve
+              </button>
+
+              <button
+                type="button"
+                className="danger-btn"
+                onClick={() => {
+                  setDetailsOpen(false);
+                  openActionModal(selectedRequest, "reject");
+                }}
+              >
+                <FaTimesCircle />
+                Reject
+              </button>
+            </>
+          }
+        >
             <div className="hbk-body">
               <div className="approval-detail-grid">
                 <DetailItem label="Request Type" value={getTypeLabel(getRequestType(selectedRequest))} />
@@ -1222,59 +1246,47 @@ const ReceptionistApprovals = () => {
                 )}
               </div>
             </div>
-
-            <div className="hbk-foot">
-              <button type="button" className="secondary-btn" onClick={closeDetails}>
-                Close
-              </button>
-
-              <button
-                type="button"
-                className="primary-btn"
-                onClick={() => {
-                  setDetailsOpen(false);
-                  openActionModal(selectedRequest, "approve");
-                }}
-              >
-                <FaCheckCircle />
-                Approve
-              </button>
-
-              <button
-                type="button"
-                className="danger-btn"
-                onClick={() => {
-                  setDetailsOpen(false);
-                  openActionModal(selectedRequest, "reject");
-                }}
-              >
-                <FaTimesCircle />
-                Reject
-              </button>
-            </div>
-          </div>
-        </div>
+        </Modal>
       )}
 
       {actionOpen && selectedRequest && (
-        <div className="hbk-overlay" onClick={closeActionModal}>
-          <div className="hbk-modal" onClick={(event) => event.stopPropagation()}>
-            <div className="hbk-head">
-              <div>
-                <span className="approval-eyebrow">
-                  {actionType === "approve" ? <FaCheckCircle /> : <FaTimesCircle />}
-                  {actionType === "approve" ? "Approve Request" : "Reject Request"}
-                </span>
+        <Modal
+          onClose={closeActionModal}
+          title={`Request #${getRequestId(selectedRequest)}`}
+          subtitle={actionType === "approve" ? "Approve Request" : "Reject Request"}
+          icon={actionType === "approve" ? <FaCheckCircle /> : <FaTimesCircle />}
+          size="lg"
+          className="hbk-modal"
+          footer={
+            <div className="hbk-foot">
+              <button type="button" className="secondary-btn" onClick={closeActionModal}>
+                Cancel
+              </button>
 
-                <h2>Request #{getRequestId(selectedRequest)}</h2>
-              </div>
-
-              <button type="button" className="close-modal-btn" onClick={closeActionModal}>
-                <FaTimes />
+              <button
+                type="submit"
+                form="hbk-action-form"
+                className={actionType === "approve" ? "primary-btn" : "danger-btn"}
+                disabled={
+                  processingId === getRequestId(selectedRequest) ||
+                  (actionType === "approve" &&
+                    selectedRequest.vaccination_card &&
+                    !selectedRequest.vaccination_card_verified_at)
+                }
+              >
+                {processingId === getRequestId(selectedRequest) ? (
+                  <FaSpinner className="spin" />
+                ) : actionType === "approve" ? (
+                  <FaCheckCircle />
+                ) : (
+                  <FaTimesCircle />
+                )}
+                {actionType === "approve" ? "Approve Request" : "Reject Request"}
               </button>
             </div>
-
-            <form className="hbk-body" onSubmit={handleActionSubmit}>
+          }
+        >
+            <form id="hbk-action-form" className="hbk-body" onSubmit={handleActionSubmit}>
               <div className="approval-action-summary">
                 <strong>{getServiceName(selectedRequest)}</strong>
                 <span>{getCustomerName(selectedRequest)} | {getPetName(selectedRequest)}</span>
@@ -1379,54 +1391,35 @@ const ReceptionistApprovals = () => {
                   placeholder="Optional remarks for this action."
                 />
               </div>
-
-              <div className="hbk-foot">
-                <button type="button" className="secondary-btn" onClick={closeActionModal}>
-                  Cancel
-                </button>
-
-                <button
-                  type="submit"
-                  className={actionType === "approve" ? "primary-btn" : "danger-btn"}
-                  disabled={
-                    processingId === getRequestId(selectedRequest) ||
-                    (actionType === "approve" &&
-                      selectedRequest.vaccination_card &&
-                      !selectedRequest.vaccination_card_verified_at)
-                  }
-                >
-                  {processingId === getRequestId(selectedRequest) ? (
-                    <FaSpinner className="spin" />
-                  ) : actionType === "approve" ? (
-                    <FaCheckCircle />
-                  ) : (
-                    <FaTimesCircle />
-                  )}
-                  {actionType === "approve" ? "Approve Request" : "Reject Request"}
-                </button>
-              </div>
             </form>
-          </div>
-        </div>
+        </Modal>
       )}
 
       {bulkActionOpen && (
-        <div className="hbk-overlay" onClick={closeBulkAction}>
-          <div className="hbk-modal" onClick={(event) => event.stopPropagation()}>
-            <div className="hbk-head">
-              <div>
-                <span className="approval-eyebrow">
-                  {bulkActionType === "approve" ? <FaCheckCircle /> : <FaTimesCircle />}
-                  {bulkActionType === "approve" ? "Bulk Approve" : "Bulk Reject"}
-                </span>
-                <h2>{selectedIds.size} Request(s) Selected</h2>
-              </div>
-              <button type="button" className="close-modal-btn" onClick={closeBulkAction}>
-                <FaTimes />
+        <Modal
+          onClose={closeBulkAction}
+          title={`${selectedIds.size} Request(s) Selected`}
+          subtitle={bulkActionType === "approve" ? "Bulk Approve" : "Bulk Reject"}
+          icon={bulkActionType === "approve" ? <FaCheckCircle /> : <FaTimesCircle />}
+          size="lg"
+          className="hbk-modal"
+          footer={
+            <div className="hbk-foot">
+              <button type="button" className="secondary-btn" onClick={closeBulkAction}>
+                Cancel
+              </button>
+              <button
+                type="submit"
+                form="hbk-bulk-form"
+                className={bulkActionType === "approve" ? "primary-btn" : "danger-btn"}
+              >
+                {bulkActionType === "approve" ? <FaCheckCircle /> : <FaTimesCircle />}
+                {bulkActionType === "approve" ? "Bulk Approve" : "Bulk Reject"}
               </button>
             </div>
-
-            <form className="hbk-body" onSubmit={(e) => { e.preventDefault(); bulkActionType === "approve" ? runBulkApprove() : runBulkReject(); }}>
+          }
+        >
+            <form id="hbk-bulk-form" className="hbk-body" onSubmit={(e) => { e.preventDefault(); bulkActionType === "approve" ? runBulkApprove() : runBulkReject(); }}>
               {bulkActionType === "approve" && (
                 <div className="form-group">
                   <label>Default Veterinarian (for vet requests)</label>
@@ -1480,22 +1473,8 @@ const ReceptionistApprovals = () => {
                   placeholder="Optional remarks for this action."
                 />
               </div>
-
-              <div className="hbk-foot">
-                <button type="button" className="secondary-btn" onClick={closeBulkAction}>
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  className={bulkActionType === "approve" ? "primary-btn" : "danger-btn"}
-                >
-                  {bulkActionType === "approve" ? <FaCheckCircle /> : <FaTimesCircle />}
-                  {bulkActionType === "approve" ? "Bulk Approve" : "Bulk Reject"}
-                </button>
-              </div>
             </form>
-          </div>
-        </div>
+        </Modal>
       )}
     </div>
   );

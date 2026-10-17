@@ -399,3 +399,110 @@
   .cashier-transactions .action-btn.delete      { color: var(--color-danger-text,  #fca5a5); }
   .cashier-transactions .error-banner           { color: var(--color-danger-text,  #fca5a5); }
 }
+
+/* ============================================================
+   Transaction detail modal (shell via shared Modal;
+   .transaction-modal sits on the .pw-modal box)
+   ============================================================ */
+.transaction-modal {
+  max-width: 720px;
+}
+
+.transaction-modal .ctx-modal-body {
+  display: flex;
+  flex-direction: column;
+  gap: 1.1rem;
+}
+
+.transaction-modal .transaction-overview {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+  gap: 0.75rem;
+  padding: 1rem;
+  border: 1px solid var(--color-border, rgba(255, 95, 147, 0.18));
+  border-radius: 12px;
+  background: var(--color-surface-solid, #fff);
+}
+
+.transaction-modal .overview-item {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  min-width: 0;
+}
+
+.transaction-modal .overview-item label {
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--color-muted, #64748b);
+}
+
+.transaction-modal .overview-item span {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--color-text, #1f2937);
+  word-break: break-word;
+}
+
+.transaction-modal .transaction-products {
+  border: 1px solid var(--color-border, rgba(255, 95, 147, 0.18));
+  border-radius: 12px;
+  background: var(--color-surface-solid, #fff);
+  overflow: hidden;
+}
+
+.transaction-modal .transaction-products h3 {
+  margin: 0;
+  padding: 0.8rem 1rem;
+  font-size: 0.85rem;
+  font-weight: 800;
+  color: var(--color-heading, #191919);
+  border-bottom: 1px solid var(--color-border, rgba(255, 95, 147, 0.18));
+  background: var(--color-surface-muted, #fff7fb);
+}
+
+.transaction-modal .products-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.85rem;
+}
+
+.transaction-modal .products-table th {
+  padding: 0.55rem 1rem;
+  text-align: left;
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--color-muted, #64748b);
+  background: #fafbfc;
+}
+
+.transaction-modal .products-table td {
+  padding: 0.55rem 1rem;
+  border-top: 1px solid #f1f5f9;
+  color: var(--color-text, #1f2937);
+}
+
+.transaction-modal .products-table tfoot td {
+  font-weight: 600;
+  color: var(--color-heading, #191919);
+}
+
+.transaction-modal .products-table .total-row td {
+  color: var(--color-primary, #ff5f93);
+  font-weight: 800;
+  font-size: 0.95rem;
+}
+
+.transaction-modal .loading-overlay {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.6rem;
+  padding: 1.5rem;
+  color: var(--color-muted, #64748b);
+  font-weight: 600;
+}

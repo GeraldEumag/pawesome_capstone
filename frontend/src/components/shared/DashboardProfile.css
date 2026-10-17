@@ -25,7 +25,7 @@
   border-radius: 50%;
   display: grid;
   place-items: center;
-  background: linear-gradient(135deg, var(--color-primary, #6366f1), var(--color-primary-light, #818cf8));
+  background: linear-gradient(135deg, var(--color-primary, #ff5f93), var(--color-primary-light, #ff8db5));
   color: white;
   overflow: hidden;
   flex-shrink: 0;

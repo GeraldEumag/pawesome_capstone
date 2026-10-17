@@ -35,20 +35,21 @@ import { apiRequest } from "../../api/client";
 import { resolveAvatarUrl } from "../../utils/avatar";
 import { formatCurrency } from "../../utils/currency";
 import RowActionPopover from "../shared/RowActionPopover";
+import Modal from "../shared/Modal";
 import { exportToCSV, exportToPDF, exportToExcel } from "../../utils/reportExport";
 import FingerprintEnrollment from "./FingerprintEnrollment";
 import "./ManagerStaff.css";
 
 const ROLE_COLORS = {
-  manager: "#7c3aed",
-  cashier: "#0891b2",
-  receptionist: "#d97706",
-  veterinary: "#059669",
-  inventory: "#ea580c",
-  payroll: "#7c3aed",
-  staff: "#3b82f6",
-  groomer: "#ec4899",
-  default: "#64748b",
+  manager: "var(--color-primary)",
+  cashier: "var(--color-primary)",
+  receptionist: "var(--color-primary)",
+  veterinary: "var(--color-primary)",
+  inventory: "var(--color-primary)",
+  payroll: "var(--color-primary)",
+  staff: "var(--color-primary)",
+  groomer: "var(--color-primary)",
+  default: "var(--color-primary)",
 };
 
 const getRoleColor = (role) => ROLE_COLORS[(role || "").toLowerCase().replace(/\s+/g, "_")] || ROLE_COLORS.default;
@@ -1121,18 +1122,24 @@ const ManagerStaff = () => {
       )}
 
       {activeModal === "edit" && selectedStaff && (
-        <div className="staff-modal-overlay">
-          <div className="staff-modal">
-            <div className="staff-modal-header">
-              <div>
-                <span className="staff-eyebrow">Edit Staff</span>
-                <h2>{selectedStaff.name}</h2>
-              </div>
-              <button type="button" onClick={closeModal}>
-                <FontAwesomeIcon icon={faXmark} />
+        <Modal
+          onClose={closeModal}
+          title={selectedStaff.name}
+          subtitle="Edit Staff"
+          icon={faPenToSquare}
+          className="staff-modal"
+          footer={
+            <>
+              <button type="button" className="staff-btn secondary" onClick={closeModal}>
+                Cancel
               </button>
-            </div>
-
+              <button type="button" className="staff-btn primary" onClick={saveEdit}>
+                <FontAwesomeIcon icon={faSave} />
+                Save Changes
+              </button>
+            </>
+          }
+        >
             <div className="staff-modal-body">
               <div className="staff-edit-form">
                 <label>
@@ -1164,18 +1171,7 @@ const ManagerStaff = () => {
                 </label>
               </div>
             </div>
-
-            <div className="staff-modal-footer">
-              <button type="button" className="staff-btn secondary" onClick={closeModal}>
-                Cancel
-              </button>
-              <button type="button" className="staff-btn primary" onClick={saveEdit}>
-                <FontAwesomeIcon icon={faSave} />
-                Save Changes
-              </button>
-            </div>
-          </div>
-        </div>
+        </Modal>
       )}
 
       {showEnrollModal && enrollUser && (
@@ -1266,19 +1262,19 @@ const ProfileModal = ({ staff, activeTab, onTabChange, onClose }) => {
       : 0;
 
   return (
-    <div className="staff-modal-overlay">
-      <div className="staff-modal large">
-        <div className="staff-modal-header">
-          <div>
-            <span className="staff-eyebrow">Employee Profile</span>
-            <h2>{staff.name}</h2>
-          </div>
-
-          <button type="button" onClick={onClose}>
-            <FontAwesomeIcon icon={faXmark} />
-          </button>
-        </div>
-
+    <Modal
+      onClose={onClose}
+      title={staff.name}
+      subtitle="Employee Profile"
+      icon={faIdCard}
+      size="lg"
+      className="staff-modal"
+      footer={
+        <button type="button" className="staff-btn secondary" onClick={onClose}>
+          Close
+        </button>
+      }
+    >
         <div className="staff-modal-tabs">
           <button
             type="button"
@@ -1439,14 +1435,7 @@ const ProfileModal = ({ staff, activeTab, onTabChange, onClose }) => {
             </div>
           )}
         </div>
-
-        <div className="staff-modal-footer">
-          <button type="button" className="staff-btn secondary" onClick={onClose}>
-            Close
-          </button>
-        </div>
-      </div>
-    </div>
+    </Modal>
   );
 };
 
@@ -1454,21 +1443,19 @@ const RecordsModal = ({ type, staff, records, loading, error, onClose }) => {
   const isAttendance = type === "attendance";
 
   return (
-    <div className="staff-modal-overlay">
-      <div className="staff-modal large">
-        <div className="staff-modal-header">
-          <div>
-            <span className="staff-eyebrow">
-              {isAttendance ? "Attendance Records" : "Payroll Records"}
-            </span>
-            <h2>{staff.name}</h2>
-          </div>
-
-          <button type="button" onClick={onClose}>
-            <FontAwesomeIcon icon={faXmark} />
-          </button>
-        </div>
-
+    <Modal
+      onClose={onClose}
+      title={staff.name}
+      subtitle={isAttendance ? "Attendance Records" : "Payroll Records"}
+      icon={isAttendance ? faClock : faMoneyBillWave}
+      size="lg"
+      className="staff-modal"
+      footer={
+        <button type="button" className="staff-btn secondary" onClick={onClose}>
+          Close
+        </button>
+      }
+    >
         <div className="staff-modal-body">
           {loading ? (
             <div className="staff-modal-state">
@@ -1555,14 +1542,7 @@ const RecordsModal = ({ type, staff, records, loading, error, onClose }) => {
             </>
           )}
         </div>
-
-        <div className="staff-modal-footer">
-          <button type="button" className="staff-btn secondary" onClick={onClose}>
-            Close
-          </button>
-        </div>
-      </div>
-    </div>
+    </Modal>
   );
 };
 

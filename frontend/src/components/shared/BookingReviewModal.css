@@ -1,15 +1,4 @@
-/* BookingReviewModal — clean, minimal review card shared by all booking forms */
 
-.brm-overlay {
-  position: fixed;
-  inset: 0;
-  background: rgba(15, 23, 42, 0.45);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 20px;
-  z-index: 11000;
-}
 
 .brm-modal {
   background: #fff;
@@ -21,47 +10,6 @@
   flex-direction: column;
   box-shadow: 0 24px 60px rgba(15, 23, 42, 0.22);
   overflow: hidden;
-}
-
-.brm-header {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  padding: 20px 22px 14px;
-  border-bottom: 1px solid #f1f5f9;
-}
-
-.brm-badge {
-  display: inline-block;
-  font-size: 11px;
-  font-weight: 700;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  color: #7c3aed;
-  background: #f3e8ff;
-  padding: 4px 10px;
-  border-radius: 999px;
-  margin-bottom: 6px;
-}
-
-.brm-title {
-  margin: 0;
-  font-size: 19px;
-  font-weight: 700;
-  color: #0f172a;
-}
-
-.brm-close {
-  background: none;
-  border: none;
-  font-size: 18px;
-  color: #94a3b8;
-  cursor: pointer;
-  padding: 4px;
-  line-height: 1;
-}
-.brm-close:hover {
-  color: #0f172a;
 }
 
 .brm-body {
@@ -152,7 +100,7 @@
   color: #0f172a;
 }
 .brm-total span:last-child {
-  color: #7c3aed;
+  color: var(--color-primary);
 }
 
 .brm-attachment-img {
@@ -177,7 +125,7 @@
   color: #334155;
 }
 .brm-attachment-file svg {
-  color: #7c3aed;
+  color: var(--color-primary);
   font-size: 18px;
 }
 
@@ -261,11 +209,11 @@
 }
 
 .brm-primary {
-  background: #7c3aed;
+  background: var(--color-primary);
   color: #fff;
 }
 .brm-primary:hover:not(:disabled) {
-  background: #6d28d9;
+  background: #be185d;
 }
 
 @media (max-width: 480px) {

@@ -18,6 +18,7 @@ import {
 } from "react-icons/fa";
 import { apiRequest, normalizeList } from "../../api/client";
 import { showReasonPrompt } from "../../utils/alert.jsx";
+import Modal from "../shared/Modal";
 import RowActionPopover from "../shared/RowActionPopover";
 import "./ServiceManagerModal.css";
 
@@ -754,18 +755,14 @@ const ServiceManagerModal = ({ onClose }) => {
   };
 
   return (
-    <div className="smm-overlay" onClick={(e) => e.target === e.currentTarget && onClose()}>
-      <div className="smm-modal">
-        <div className="smm-header">
-          <h2>
-            <FaWrench />
-            Service & Room Manager
-          </h2>
-          <button className="smm-close" onClick={onClose} aria-label="Close">
-            <FaTimes />
-          </button>
-        </div>
-
+    <Modal
+      isOpen
+      onClose={onClose}
+      title="Service & Room Manager"
+      icon={<FaWrench />}
+      size="xl"
+      className="smm-modal"
+    >
         {success && <div className="smm-toast success">{success}</div>}
         {error && <div className="smm-toast error">{error}</div>}
 
@@ -874,8 +871,7 @@ const ServiceManagerModal = ({ onClose }) => {
             </table>
           )}
         </div>
-      </div>
-    </div>
+    </Modal>
   );
 };
 

@@ -40,6 +40,7 @@ import { formatCurrency } from "../../utils/currency";
 import { exportToCSV, exportToPDF, exportToExcel } from "../../utils/reportExport";
 import StandardReportLayout from "../shared/StandardReportLayout";
 import StandardTable from "../shared/StandardTable";
+import Modal from "../shared/Modal";
 import "./ManagerReports.css";
 
 // CHART_COLORS for charts
@@ -1326,21 +1327,19 @@ const ReportDetailsModal = ({ selectedRecord, onClose }) => {
   const { type, record } = selectedRecord;
 
   return (
-    <div className="reports-modal-overlay">
-      <div className="reports-modal">
-        <div className="reports-modal-header">
-          <div>
-            <span className="reports-eyebrow">{formatLabel(type)} Details</span>
-            <h2>
-              {record.employeeName || record.name || record.period || "Report Record"}
-            </h2>
-          </div>
-
-          <button type="button" onClick={onClose}>
-            <FontAwesomeIcon icon={faXmark} />
-          </button>
-        </div>
-
+    <Modal
+      onClose={onClose}
+      title={record.employeeName || record.name || record.period || "Report Record"}
+      subtitle={`${formatLabel(type)} Details`}
+      icon={faChartLine}
+      size="lg"
+      className="reports-modal"
+      footer={
+        <button type="button" className="reports-btn secondary" onClick={onClose}>
+          Close
+        </button>
+      }
+    >
         <div className="reports-modal-body">
           <div className="reports-detail-grid">
             {Object.entries(record).map(([key, value]) => (
@@ -1355,14 +1354,7 @@ const ReportDetailsModal = ({ selectedRecord, onClose }) => {
             ))}
           </div>
         </div>
-
-        <div className="reports-modal-footer">
-          <button type="button" className="reports-btn secondary" onClick={onClose}>
-            Close
-          </button>
-        </div>
-      </div>
-    </div>
+    </Modal>
   );
 };
 

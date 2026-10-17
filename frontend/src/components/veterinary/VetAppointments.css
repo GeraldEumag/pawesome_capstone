@@ -179,9 +179,9 @@
   gap: 12px;
   padding: 16px 20px;
   border-radius: var(--veterinary-radius-lg);
-  background: rgba(245, 101, 101, 0.1);
+  background: rgba(239, 68, 68, 0.1);
   color: var(--veterinary-error);
-  border: 2px solid rgba(245, 101, 101, 0.2);
+  border: 2px solid rgba(239, 68, 68, 0.2);
   font-weight: 600;
   backdrop-filter: blur(20px);
   animation: slideInUp 0.6s ease;
@@ -529,15 +529,15 @@
 }
 
 .vet-appointments .appointment-status.completed {
-  background: rgba(72, 187, 120, 0.1);
+  background: rgba(16, 185, 129, 0.1);
   color: var(--veterinary-success);
-  border-color: rgba(72, 187, 120, 0.2);
+  border-color: rgba(16, 185, 129, 0.2);
 }
 
 .vet-appointments .appointment-status.awaiting_payment {
-  background: rgba(139, 92, 246, 0.1);
-  color: #7c3aed;
-  border-color: rgba(139, 92, 246, 0.2);
+  background: rgba(245, 158, 11, 0.1);
+  color: var(--color-warning-text);
+  border-color: rgba(245, 158, 11, 0.2);
 }
 
 .vet-appointments .appointment-status.cancelled,
@@ -545,9 +545,9 @@
 .vet-appointments .appointment-status.rejected,
 .vet-appointments .appointment-status.no_show,
 .vet-appointments .appointment-status.no-show {
-  background: rgba(245, 101, 101, 0.1);
+  background: rgba(239, 68, 68, 0.1);
   color: var(--veterinary-error);
-  border-color: rgba(245, 101, 101, 0.2);
+  border-color: rgba(239, 68, 68, 0.2);
 }
 
 /* ─────────────────────────────────────────────────────────────
@@ -680,9 +680,9 @@
 }
 
 .vet-appointments .complete-btn {
-  background: rgba(72, 187, 120, 0.1);
+  background: rgba(16, 185, 129, 0.1);
   color: var(--veterinary-success);
-  border: 2px solid rgba(72, 187, 120, 0.2);
+  border: 2px solid rgba(16, 185, 129, 0.2);
 }
 
 .vet-appointments .complete-btn:hover {
@@ -704,9 +704,9 @@
 }
 
 .vet-appointments .delete-btn {
-  background: rgba(245, 101, 101, 0.1);
+  background: rgba(239, 68, 68, 0.1);
   color: var(--veterinary-error);
-  border: 2px solid rgba(245, 101, 101, 0.2);
+  border: 2px solid rgba(239, 68, 68, 0.2);
 }
 
 .vet-appointments .delete-btn:hover {

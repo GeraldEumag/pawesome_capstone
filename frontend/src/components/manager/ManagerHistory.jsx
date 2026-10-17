@@ -77,7 +77,7 @@ const ManagerHistory = () => {
       exportColumns={exportColumns}
       exportFilename="manager-history"
       exportTitle="Manager Business Activity History"
-      roleAccent="#7c3aed"
+      roleAccent="var(--color-primary)"
       roleLabel="Manager — Business Activity"
       emptyMessage="No business activity records found."
       searchTerm={searchTerm}

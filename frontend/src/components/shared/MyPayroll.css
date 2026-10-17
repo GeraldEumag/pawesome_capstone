@@ -379,23 +379,6 @@
   border-color: var(--mp-accent, #0891b2);
 }
 
-/* ============================================================
-   PAYSLIP MODAL
-   ============================================================ */
-
-.mp-modal-overlay {
-  position: fixed;
-  inset: 0;
-  background: rgba(0, 0, 0, 0.55);
-  backdrop-filter: blur(4px);
-  display: flex;
-  align-items: flex-start;
-  justify-content: center;
-  z-index: 1000;
-  padding: 2rem 1rem;
-  overflow-y: auto;
-}
-
 .mp-modal {
   background: #fff;
   border-radius: 20px;
@@ -405,60 +388,6 @@
   display: flex;
   flex-direction: column;
   margin: auto;
-}
-
-/* Gradient header — same treatment as AddProductModal */
-.mp-modal-header {
-  background: linear-gradient(
-    135deg,
-    var(--mp-accent, #0891b2) 0%,
-    color-mix(in srgb, var(--mp-accent, #0891b2) 70%, white) 100%
-  );
-  padding: 1.25rem 1.5rem;
-  border-radius: 20px 20px 0 0;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  flex-shrink: 0;
-}
-
-.mp-modal-header h2 {
-  font-size: 1.1rem;
-  font-weight: 700;
-  color: #fff;
-  margin: 0;
-}
-
-.mp-modal-close {
-  background: rgba(255, 255, 255, 0.25);
-  border: none;
-  color: #fff;
-  font-size: 1.25rem;
-  width: 32px;
-  height: 32px;
-  border-radius: 8px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  transition: 0.18s;
-  line-height: 1;
-  padding: 0;
-}
-
-.mp-modal-close:hover {
-  background: rgba(255, 255, 255, 0.4);
-}
-
-.mp-modal-footer {
-  display: flex;
-  justify-content: flex-end;
-  gap: 0.6rem;
-  padding: 1rem 1.5rem;
-  border-top: 1px solid #f1f5f9;
-  background: #fafafa;
-  border-radius: 0 0 20px 20px;
-  flex-shrink: 0;
 }
 
 /* ============================================================
@@ -776,10 +705,6 @@
     min-width: 640px;
   }
 
-  .mp-modal-overlay {
-    padding: 1rem;
-  }
-
   .mp-payslip-info-grid {
     grid-template-columns: 1fr;
   }
@@ -792,14 +717,5 @@
 
   .mp-summary-value {
     font-size: 1.4rem;
-  }
-
-  .mp-modal-footer {
-    flex-direction: column;
-    align-items: stretch;
-  }
-
-  .mp-modal-footer .mp-btn {
-    justify-content: center;
   }
 }

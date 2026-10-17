@@ -330,13 +330,13 @@
 
 /* OVERVIEW CARDS */
 
-.overview-cards {
+.admin-dashboard .overview-cards {
   display: grid;
   grid-template-columns: repeat(3, minmax(180px, 1fr));
   gap: 1rem;
 }
 
-.overview-card {
+.admin-dashboard .overview-card {
   min-width: 0;
   padding: 1.3rem;
   border: 1px solid var(--color-border);
@@ -347,14 +347,14 @@
   transition: 0.3s ease;
 }
 
-.overview-card-top {
+.admin-dashboard .overview-card-top {
   display: flex;
   justify-content: space-between;
   gap: 1rem;
   margin-bottom: 1rem;
 }
 
-.overview-card-icon {
+.admin-dashboard .overview-card-icon {
   width: 54px;
   height: 54px;
   min-width: 54px;
@@ -366,7 +366,7 @@
   box-shadow: var(--shadow-primary);
 }
 
-.overview-card-dot {
+.admin-dashboard .overview-card-dot {
   width: 12px;
   height: 12px;
   border-radius: 999px;
@@ -374,7 +374,7 @@
   box-shadow: 0 0 0 5px rgba(255, 95, 147, 0.12);
 }
 
-.overview-card h3 {
+.admin-dashboard .overview-card h3 {
   margin: 0;
   color: var(--color-primary);
   font-size: clamp(1.35rem, 2vw, 2rem);
@@ -382,36 +382,36 @@
   line-height: 1.1;
 }
 
-.overview-card p {
+.admin-dashboard .overview-card p {
   margin: 0.4rem 0 0;
   color: var(--color-heading);
   font-weight: 900;
 }
 
-.overview-card small {
+.admin-dashboard .overview-card small {
   display: block;
   margin-top: 0.35rem;
   color: var(--color-muted);
   font-weight: 750;
 }
 
-.overview-card.danger .overview-card-icon,
-.overview-card.danger .overview-card-dot {
+.admin-dashboard .overview-card.danger .overview-card-icon,
+.admin-dashboard .overview-card.danger .overview-card-dot {
   background: linear-gradient(135deg, #ef4444, #f97316);
 }
 
-.overview-card.success .overview-card-icon,
-.overview-card.success .overview-card-dot {
+.admin-dashboard .overview-card.success .overview-card-icon,
+.admin-dashboard .overview-card.success .overview-card-dot {
   background: linear-gradient(135deg, #10b981, #34d399);
 }
 
-.overview-card.info .overview-card-icon,
-.overview-card.info .overview-card-dot {
+.admin-dashboard .overview-card.info .overview-card-icon,
+.admin-dashboard .overview-card.info .overview-card-dot {
   background: linear-gradient(135deg, #3b82f6, #60a5fa);
 }
 
-.overview-card.warning .overview-card-icon,
-.overview-card.warning .overview-card-dot {
+.admin-dashboard .overview-card.warning .overview-card-icon,
+.admin-dashboard .overview-card.warning .overview-card-dot {
   background: linear-gradient(135deg, #f59e0b, #fbbf24);
 }
 
@@ -888,7 +888,7 @@
     display: none;
   }
 
-  .overview-cards,
+  .admin-dashboard .overview-cards,
   .admin-quick-actions {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
@@ -940,7 +940,7 @@
 }
 
 @media (max-width: 768px) {
-  .overview-cards,
+  .admin-dashboard .overview-cards,
   .admin-quick-actions,
   .completion-metrics {
     grid-template-columns: 1fr;
@@ -990,7 +990,7 @@
 
   .admin-hero,
   .panel,
-  .overview-card,
+  .admin-dashboard .overview-card,
   .admin-quick-action-card {
     border-radius: 22px;
   }
@@ -998,7 +998,7 @@
 
 /* ── TABLET (768–991px): 2-column KPI cards ── */
 @media (max-width: 991px) {
-  .overview-cards,
+  .admin-dashboard .overview-cards,
   .admin-quick-actions {
     grid-template-columns: repeat(2, 1fr) !important;
     gap: 16px;
@@ -1734,25 +1734,6 @@
   border-radius: 12px;
   background: #ffffff !important;
   box-shadow: var(--admin-shadow);
-}
-
-.app-dashboard.admin-dashboard .mu-modal,
-.app-dashboard.admin-dashboard .lh-modal,
-.app-dashboard.admin-dashboard .payroll-modal,
-.app-dashboard.admin-dashboard .customer-report-container .modal-content,
-.app-dashboard.admin-dashboard .ed-modal {
-  border: 1px solid var(--admin-border);
-  border-radius: var(--admin-radius);
-  background: var(--admin-surface);
-  box-shadow: var(--admin-shadow-raised);
-}
-
-.app-dashboard.admin-dashboard .mu-modal-header,
-.app-dashboard.admin-dashboard .lh-modal-header,
-.app-dashboard.admin-dashboard .payroll-modal-header,
-.app-dashboard.admin-dashboard .ed-modal-header {
-  border-color: var(--admin-border);
-  background: #ffffff;
 }
 
 .app-dashboard.admin-dashboard .app-main :focus-visible {

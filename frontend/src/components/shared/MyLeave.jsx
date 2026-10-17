@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { apiRequest } from "../../api/client";
+import { showConfirm } from "../../utils/alert.jsx";
 import DatePickerInput from "./DatePickerInput";
 import { formatDateOnly, parseDateOnly } from "../../utils/date";
 import "./MyLeave.css";
@@ -96,7 +97,7 @@ const MyLeave = () => {
   };
 
   const cancel = async (id) => {
-    if (!window.confirm("Cancel this leave request?")) return;
+    if (!(await showConfirm("Cancel this leave request?", "Cancel Leave", "Yes, Cancel", "Keep", "warning", true))) return;
     setCancellingId(id);
     setMsg({ text: "", type: "" });
     try {

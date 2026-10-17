@@ -13,6 +13,7 @@ import {
 import { apiRequest } from "../../api/client";
 import { showReasonPrompt } from "../../utils/alert.jsx";
 import DatePickerInput from "../shared/DatePickerInput";
+import Modal from "../shared/Modal";
 import { formatDateOnly, parseDateOnly } from "../../utils/date";
 import RowActionPopover from "../shared/RowActionPopover";
 import "./HolidayManagement.css";
@@ -245,15 +246,21 @@ const HolidayManagement = () => {
 
       {/* Modal */}
       {showForm && (
-        <div className="hm-overlay" onClick={(e) => e.target === e.currentTarget && closeForm()}>
-          <div className="hm-modal">
-            <div className="hm-modal-header">
-              <h4>{editing ? "Edit Holiday" : "Add Holiday"}</h4>
-              <button className="hm-modal-close" onClick={closeForm}>
-                <FontAwesomeIcon icon={faXmark} />
+        <Modal
+          onClose={closeForm}
+          title={editing ? "Edit Holiday" : "Add Holiday"}
+          subtitle="Holiday Management"
+          icon={faCalendarDays}
+          className="hm-modal"
+          footer={
+            <>
+              <button className="hm-btn secondary" onClick={closeForm}>Cancel</button>
+              <button className="hm-btn primary" onClick={save} disabled={saving}>
+                {saving ? "Saving…" : editing ? "Save Changes" : "Add Holiday"}
               </button>
-            </div>
-
+            </>
+          }
+        >
             <div className="hm-modal-body">
               {msg && (
                 <div className="hm-modal-error">
@@ -297,15 +304,7 @@ const HolidayManagement = () => {
                 <span>Repeat annually (recurring holiday)</span>
               </label>
             </div>
-
-            <div className="hm-modal-footer">
-              <button className="hm-btn secondary" onClick={closeForm}>Cancel</button>
-              <button className="hm-btn primary" onClick={save} disabled={saving}>
-                {saving ? "Saving…" : editing ? "Save Changes" : "Add Holiday"}
-              </button>
-            </div>
-          </div>
-        </div>
+        </Modal>
       )}
     </div>
   );

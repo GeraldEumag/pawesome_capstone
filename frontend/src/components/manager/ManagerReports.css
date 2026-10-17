@@ -514,19 +514,6 @@
   font-weight: 750;
 }
 
-/* ── Modal ────────────────────────────────────────────── */
-
-.reports-modal-overlay {
-  position: fixed;
-  inset: 0;
-  z-index: 1000;
-  display: grid;
-  place-items: center;
-  padding: 1rem;
-  background: rgba(15, 23, 42, 0.45);
-  backdrop-filter: blur(4px);
-}
-
 .reports-modal {
   width: min(680px, 100%);
   max-height: 85vh;
@@ -535,33 +522,6 @@
   background: var(--color-surface-solid);
   border: 1px solid var(--color-border);
   box-shadow: 0 24px 64px rgba(15, 23, 42, 0.28);
-}
-
-.reports-modal-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  gap: 1rem;
-  padding: 1.4rem 1.4rem 1rem;
-  border-bottom: 1px solid var(--color-border);
-}
-
-.reports-modal-header h2 {
-  margin: 0.3rem 0 0;
-  color: var(--color-heading);
-  font-size: 1.3rem;
-  font-weight: 950;
-  letter-spacing: -0.03em;
-}
-
-.reports-modal-header > button {
-  width: 36px;
-  height: 36px;
-  border: none;
-  border-radius: 999px;
-  background: rgba(255, 95, 147, 0.1);
-  color: var(--color-primary);
-  cursor: pointer;
 }
 
 .reports-modal-body {
@@ -597,12 +557,6 @@
   font-size: 0.92rem;
   font-weight: 850;
   word-break: break-word;
-}
-
-.reports-modal-footer {
-  display: flex;
-  justify-content: flex-end;
-  padding: 1rem 1.4rem 1.4rem;
 }
 
 .reports-btn {
@@ -703,8 +657,7 @@
   .reports-filters,
   .reports-content-card,
   .reports-alert,
-  .reports-toast,
-  .reports-modal-overlay {
+  .reports-toast {
     display: none !important;
   }
 

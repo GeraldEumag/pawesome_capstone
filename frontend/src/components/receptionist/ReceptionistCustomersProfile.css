@@ -168,7 +168,7 @@
 .close-details-btn,
 .close-registration-btn,
 .close-btn,
-.modal-actions button {
+.pet-modal .rcp-modal-actions button {
   min-height: 44px;
   border: none;
   border-radius: var(--cp-radius-pill);
@@ -211,7 +211,7 @@
 .close-details-btn:hover,
 .close-registration-btn:hover,
 .close-btn:hover,
-.modal-actions button:hover {
+.pet-modal .rcp-modal-actions button:hover {
   transform: translateY(-2px);
 }
 
@@ -219,7 +219,7 @@
 .secondary-btn:disabled,
 .btn-primary:disabled,
 .btn-secondary:disabled,
-.modal-actions button:disabled {
+.pet-modal .rcp-modal-actions button:disabled {
   opacity: 0.65;
   cursor: not-allowed;
   transform: none;
@@ -822,21 +822,6 @@
   font-weight: 750;
 }
 
-/* Modals */
-
-.registration-modal-overlay,
-.pet-modal-overlay {
-  position: fixed;
-  inset: 0;
-  z-index: 12000;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 1rem;
-  background: rgba(15, 23, 42, 0.52);
-  backdrop-filter: blur(10px);
-}
-
 .registration-modal,
 .pet-modal {
   width: min(900px, 100%);
@@ -850,48 +835,6 @@
 
 .pet-modal {
   width: min(560px, 100%);
-}
-
-.registration-header,
-.modal-header {
-  display: flex;
-  justify-content: space-between;
-  gap: 1rem;
-  padding: 1.35rem;
-  border-bottom: 1px solid var(--cp-border);
-}
-
-.registration-title {
-  display: flex;
-  align-items: center;
-  gap: 0.85rem;
-}
-
-.registration-icon {
-  width: 56px;
-  height: 56px;
-  min-width: 56px;
-  display: grid;
-  place-items: center;
-  border-radius: 18px;
-  color: #ffffff;
-  background: linear-gradient(135deg, var(--cp-primary), var(--cp-primary-light));
-  box-shadow: var(--cp-shadow-primary);
-}
-
-.registration-title h2,
-.modal-header h3 {
-  margin: 0;
-  color: var(--cp-heading);
-  font-size: 1.35rem;
-  font-weight: 950;
-}
-
-.registration-title p,
-.modal-header p {
-  margin: 0.25rem 0 0;
-  color: var(--cp-muted);
-  font-weight: 750;
 }
 
 .close-registration-btn,
@@ -914,7 +857,7 @@
 }
 
 .registration-form,
-.modal-body {
+.rcp-modal-body {
   display: grid;
   gap: 1rem;
   padding: 1.35rem;
@@ -982,7 +925,7 @@
 }
 
 .registration-actions,
-.modal-actions {
+.rcp-modal-actions {
   display: flex;
   justify-content: flex-end;
   flex-wrap: wrap;
@@ -992,9 +935,6 @@
 }
 
 /* Dark mode */
-
-
-
 
 /* Responsive */
 
@@ -1040,10 +980,8 @@
   .customer-controls,
   .customers-table-header,
   .selected-customer-details,
-  .registration-header,
-  .modal-header,
   .registration-form,
-  .modal-body {
+  .rcp-modal-body {
     padding: 1.15rem;
   }
 
@@ -1058,20 +996,18 @@
   .customer-stat-card,
   .clear-btn,
   .registration-actions button,
-  .modal-actions button,
+  .pet-modal .rcp-modal-actions button,
   .add-pet-btn {
     width: 100%;
   }
 
   .details-header,
-  .pets-header,
-  .registration-header,
-  .modal-header {
+  .pets-header {
     flex-direction: column;
   }
 
   .registration-actions,
-  .modal-actions {
+  .rcp-modal-actions {
     flex-direction: column;
   }
 }

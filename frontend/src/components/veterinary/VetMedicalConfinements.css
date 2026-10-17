@@ -195,7 +195,7 @@
 }
 
 .vet-confinements .conf-stat--total .conf-stat-icon  { background: var(--vet-icon-gradient); }
-.vet-confinements .conf-stat--admitted .conf-stat-icon { background: linear-gradient(135deg, var(--vet-badge-admitted-color), #7c3aed); }
+.vet-confinements .conf-stat--admitted .conf-stat-icon { background: linear-gradient(135deg, var(--vet-badge-admitted-color), #2563eb); }
 .vet-confinements .conf-stat--observation .conf-stat-icon { background: linear-gradient(135deg, var(--vet-badge-observation-color), #0891b2); }
 .vet-confinements .conf-stat--treatment .conf-stat-icon { background: linear-gradient(135deg, var(--veterinary-info), #2563eb); }
 .vet-confinements .conf-stat--discharged .conf-stat-icon { background: linear-gradient(135deg, var(--veterinary-success), #059669); }

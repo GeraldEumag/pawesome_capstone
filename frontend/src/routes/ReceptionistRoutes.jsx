@@ -62,7 +62,7 @@ const ReceptionistRoutes = () => (
         <Route path="customers" element={<CustomerManagement />} />
         <Route path="orders" element={<Navigate to="/receptionist/bookings/hotel" replace />} />
         <Route path="history" element={<ReceptionistHistory />} />
-        <Route path="payroll" element={<MyPayroll roleAccent="#d97706" roleLabel="Receptionist" />} />
+        <Route path="payroll" element={<MyPayroll roleAccent="var(--color-primary)" roleLabel="Receptionist" />} />
         <Route path="profile" element={<ProfileSettings />} />
         <Route path="reports" element={<Reports />} />
       </Route>
@@ -84,7 +84,7 @@ const ReceptionistRoutes = () => (
           </ProtectedRoute>
         }
       >
-        <Route index element={<MyPayroll roleAccent="#d97706" roleLabel="Receptionist" />} />
+        <Route index element={<MyPayroll roleAccent="var(--color-primary)" roleLabel="Receptionist" />} />
       </Route>
     </Routes>
   </Suspense>

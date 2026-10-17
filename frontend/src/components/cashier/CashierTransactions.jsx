@@ -24,6 +24,7 @@ import { printReceipt } from "../../utils/receiptPrinter";
 import { downloadReceiptPdf } from "../../utils/receiptPdf";
 import { useNavigate } from "react-router-dom";
 import RowActionPopover from "../shared/RowActionPopover";
+import Modal from "../shared/Modal";
 
 const isGenericFetchFailure = (error) =>
   error?.name === "TypeError" && error?.message === "Failed to fetch";
@@ -428,33 +429,34 @@ const CashierTransactions = () => {
         const voidedAt = sale?.voided_at ?? selectedTransaction.raw_data?.voided_at;
 
         return (
-        <div className="transaction-modal-overlay" onClick={closeDetails}>
-          <div className="transaction-modal" onClick={(e) => e.stopPropagation()}>
-            <div className="modal-header">
-              <h2>Transaction Details</h2>
-              <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
-                <button
-                  className="btn-secondary"
-                  type="button"
-                  onClick={() => handleDownloadReceiptPdf(selectedTransaction)}
-                  style={{ fontSize: 13, padding: "6px 12px" }}
-                >
-                  <FontAwesomeIcon icon={faFilePdf} /> Download PDF
-                </button>
-                <button
-                  className="btn-secondary"
-                  type="button"
-                  onClick={() => handlePrintReceipt(selectedTransaction)}
-                  style={{ fontSize: 13, padding: "6px 12px" }}
-                >
-                  <FontAwesomeIcon icon={faReceipt} /> Print Receipt
-                </button>
-                <button className="close-btn" onClick={closeDetails}>
-                  ×
-                </button>
-              </div>
-            </div>
-            <div className="modal-content">
+        <Modal
+          onClose={closeDetails}
+          title="Transaction Details"
+          icon={faReceipt}
+          size="lg"
+          className="transaction-modal"
+          headerActions={
+            <>
+              <button
+                className="btn-secondary"
+                type="button"
+                onClick={() => handleDownloadReceiptPdf(selectedTransaction)}
+                style={{ fontSize: 13, padding: "6px 12px" }}
+              >
+                <FontAwesomeIcon icon={faFilePdf} /> Download PDF
+              </button>
+              <button
+                className="btn-secondary"
+                type="button"
+                onClick={() => handlePrintReceipt(selectedTransaction)}
+                style={{ fontSize: 13, padding: "6px 12px" }}
+              >
+                <FontAwesomeIcon icon={faReceipt} /> Print Receipt
+              </button>
+            </>
+          }
+        >
+            <div className="ctx-modal-body">
               {detailLoading && (
                 <div className="loading-overlay" style={{ position: "static" }}>
                   <FontAwesomeIcon icon={faSpinner} spin />
@@ -601,8 +603,7 @@ const CashierTransactions = () => {
                 </div>
               )}
             </div>
-          </div>
-        </div>
+        </Modal>
         );
       })()}
     </div>

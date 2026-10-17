@@ -16,6 +16,7 @@ import {
 import StandardReportLayout from './StandardReportLayout';
 import StandardTable from './StandardTable';
 import DatePickerInput from './DatePickerInput';
+import Modal from './Modal';
 import { formatDateOnly, parseDateOnly } from '../../utils/date';
 import { exportToCSV, exportToPDF, exportToExcel, getDateRangePreset } from '../../utils/reportExport';
 import './UnifiedReportEngine.css';
@@ -692,11 +693,9 @@ const UnifiedReportEngineBase = ({
         
         {/* Detail Modal */}
         {selectedRecord && renderDetailModal && (
-          <div className="ure-modal-overlay" onClick={() => setSelectedRecord(null)}>
-            <div className="ure-modal" onClick={(e) => e.stopPropagation()}>
-              {renderDetailModal(selectedRecord, () => setSelectedRecord(null))}
-            </div>
-          </div>
+          <Modal onClose={() => setSelectedRecord(null)} headerless className="ure-modal" size="lg">
+            {renderDetailModal(selectedRecord, () => setSelectedRecord(null))}
+          </Modal>
         )}
       </div>
     </StandardReportLayout>

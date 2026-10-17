@@ -1,7 +1,7 @@
 import { Routes, Route } from "react-router-dom";
 import ProtectedRoute from "../components/ProtectedRoute";
 import CashierDashboard from "../components/cashier/CashierDashboard";
-import CashierPOS from "../components/cashier/CashierPOS_New";
+import CashierPOS from "../components/cashier/CashierPOS";
 import CashierTransactions from "../components/cashier/CashierTransactions";
 import CashierHistory from "../components/cashier/CashierHistory";
 import CashierReports from "../components/cashier/CashierReports";
@@ -55,7 +55,7 @@ const CashierRoutes = () => (
       <Route path="analytics" element={<CashierReports />} />
       <Route path="history" element={<CashierHistory />} />
       <Route path="reports" element={<CashierReports />} />
-      <Route path="payroll" element={<MyPayroll roleAccent="#0891b2" roleLabel="Cashier" />} />
+      <Route path="payroll" element={<MyPayroll roleAccent="var(--color-primary)" roleLabel="Cashier" />} />
       <Route path="profile" element={<ProfileSettings />} />
     </Route>
 
@@ -128,7 +128,7 @@ const CashierRoutes = () => (
         </ProtectedRoute>
       }
     >
-      <Route index element={<MyPayroll roleAccent="#0891b2" roleLabel="Cashier" />} />
+      <Route index element={<MyPayroll roleAccent="var(--color-primary)" roleLabel="Cashier" />} />
     </Route>
 
     {/* Catch-all redirect to full-screen POS */}

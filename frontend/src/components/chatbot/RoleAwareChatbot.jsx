@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import DatePickerInput from "../shared/DatePickerInput";
+import Modal from "../shared/Modal";
 import { formatDateOnly, parseDateOnly } from "../../utils/date";
 import { getMySession } from "../../services/liveChatService";
 import { showConfirm, showError, showSuccess } from "../../utils/alert";
@@ -1332,18 +1333,18 @@ const RoleAwareChatbot = ({
 
       {/* ── Old modal workflows (non-customer roles) ─────────────────────── */}
       {workflow && (
-        <div className="rbac-workflow-overlay" onClick={closeWorkflow}>
-          <div className="rbac-workflow-modal" onClick={(e) => e.stopPropagation()}>
-            <div className="rbac-workflow-header">
-              <h4>
-                {workflow === "create_booking" && "Create Booking"}
-                {workflow === "appointment_lookup" && "Appointment Lookup"}
-                {workflow === "inventory_search" && "Inventory Search"}
-                {workflow === "hotel_booking" && "Book Pet Hotel Stay"}
-                {workflow === "transaction_lookup" && "Transaction Lookup"}
-              </h4>
-              <button type="button" onClick={closeWorkflow}>Close</button>
-            </div>
+        <Modal
+          onClose={closeWorkflow}
+          title={
+            workflow === "create_booking" ? "Create Booking" :
+            workflow === "appointment_lookup" ? "Appointment Lookup" :
+            workflow === "inventory_search" ? "Inventory Search" :
+            workflow === "hotel_booking" ? "Book Pet Hotel Stay" :
+            workflow === "transaction_lookup" ? "Transaction Lookup" : "Workflow"
+          }
+          icon={faComments}
+          className="rbac-workflow-modal"
+        >
 
             {workflow === "create_booking" && (
               <form className="rbac-workflow-form" onSubmit={submitBookingWorkflow}>
@@ -1362,7 +1363,14 @@ const RoleAwareChatbot = ({
                   </select>
                 </label>
                 <label>Schedule
-                  <input type="datetime-local" value={workflowState.form.scheduled_at} onChange={(e) => updateWorkflowForm("scheduled_at", e.target.value)} required />
+                  <DatePickerInput
+                    selected={workflowState.form.scheduled_at ? new Date(workflowState.form.scheduled_at) : null}
+                    onChange={(date) => updateWorkflowForm("scheduled_at", date ? date.toISOString() : "")}
+                    showTimeSelect
+                    placeholderText="mm/dd/yyyy h:mm aa"
+                    minDate={new Date()}
+                    required
+                  />
                 </label>
                 <button type="submit" disabled={workflowState.loading}>{workflowState.loading ? "Submitting..." : "Submit Booking Request"}</button>
               </form>
@@ -1463,8 +1471,7 @@ const RoleAwareChatbot = ({
             {!workflowState.loading && workflowState.results.length === 0 && workflowState.form.query && workflow !== "create_booking" && !workflowState.error && (
               <div className="rbac-chatbot-state">No results found.</div>
             )}
-          </div>
-        </div>
+        </Modal>
       )}
     </div>
   );

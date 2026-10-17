@@ -10,6 +10,7 @@ import {
   faXmark,
 } from "@fortawesome/free-solid-svg-icons";
 import { apiRequest } from "../../api/client";
+import Modal from "../shared/Modal";
 import "./FingerprintEnrollment.css";
 
 const base64UrlToBase64 = (str) => {
@@ -153,18 +154,14 @@ const FingerprintEnrollment = ({ userId, userName, onClose, onEnrolled }) => {
   const isWebAuthnSupported = typeof window !== "undefined" && window.PublicKeyCredential;
 
   return (
-    <div className="fpe-overlay" onClick={(e) => e.target === e.currentTarget && onClose?.()}>
-      <div className="fpe-dialog">
-        <div className="fpe-header">
-          <div>
-            <span className="fpe-eyebrow">Biometric Enrollment</span>
-            <h2>Manage Fingerprints</h2>
-          </div>
-          <button type="button" className="fpe-close" onClick={onClose}>
-            <FontAwesomeIcon icon={faXmark} />
-          </button>
-        </div>
-
+    <>
+    <Modal
+      onClose={onClose}
+      title="Manage Fingerprints"
+      subtitle="Biometric Enrollment"
+      icon={faFingerprint}
+      className="fpe-dialog"
+    >
         <div className="fpe-body">
           <div className="fpe-user">
             <FontAwesomeIcon icon={faUser} />
@@ -237,7 +234,7 @@ const FingerprintEnrollment = ({ userId, userName, onClose, onEnrolled }) => {
             </div>
           )}
         </div>
-      </div>
+    </Modal>
 
       {toast && (
         <div className={`fpe-toast ${toast.type}`}>
@@ -245,7 +242,7 @@ const FingerprintEnrollment = ({ userId, userName, onClose, onEnrolled }) => {
           <span>{toast.message}</span>
         </div>
       )}
-    </div>
+    </>
   );
 };
 

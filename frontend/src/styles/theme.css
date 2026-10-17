@@ -118,6 +118,15 @@
   --radius-lg: 22px;
   --radius-card: 26px;
   --radius-pill: 999px;
+
+  /* Focus */
+  --focus-ring: 0 0 0 3px rgba(255, 95, 147, 0.14);
+
+  /* Z-index scale — overlay layers, ascending */
+  --z-dropdown: 1000;
+  --z-modal: 12000;
+  --z-portal: 13000;   /* react-datepicker portal, floating pickers */
+  --z-toast: 14000;
 }
 
 /* ===== GLOBAL BASE STYLES ===== */

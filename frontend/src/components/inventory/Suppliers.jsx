@@ -18,9 +18,10 @@ import {
   faUser,
 } from "@fortawesome/free-solid-svg-icons";
 import { inventoryApi } from "../../api/inventory.jsx";
-import { showError, showSuccess } from "../../utils/alert.jsx";
+import { showError, showSuccess, showConfirm } from "../../utils/alert.jsx";
 import { useAuth } from "../../context/AuthContext";
 import RowActionPopover from "../shared/RowActionPopover"
+import Modal from "../shared/Modal"
 import "./Suppliers.css";
 
 const emptyForm = {
@@ -156,7 +157,7 @@ const Suppliers = () => {
   };
 
   const handleDelete = async (supplier) => {
-    if (!window.confirm(`Delete supplier "${supplier.name}"? Suppliers with linked products are marked inactive instead.`)) return;
+    if (!(await showConfirm(`Delete supplier "${supplier.name}"? Suppliers with linked products are marked inactive instead.`, "Delete Supplier", "Delete", "Cancel", "warning", true))) return;
     setBusyId(supplier.id);
     try {
       await inventoryApi.deleteSupplier(supplier.id);
@@ -296,21 +297,25 @@ const Suppliers = () => {
       )}
 
       {formOpen && (
-        <div className="sup-modal-overlay" onClick={() => !saving && setFormOpen(false)}>
-          <div className="sup-modal" onClick={(e) => e.stopPropagation()}>
-            <div className="sup-modal-header">
-              <div>
-                <span className="suppliers-eyebrow">
-                  <FontAwesomeIcon icon={faBuilding} /> Supplier Profile
-                </span>
-                <h2>{editing ? `Edit — ${editing.name}` : "New Supplier"}</h2>
-              </div>
-              <button type="button" className="sup-modal-close" onClick={() => setFormOpen(false)} disabled={saving}>
-                <FontAwesomeIcon icon={faTimes} />
+        <Modal
+          onClose={() => !saving && setFormOpen(false)}
+          title={editing ? `Edit — ${editing.name}` : "New Supplier"}
+          subtitle="Supplier Profile"
+          icon={faBuilding}
+          className="sup-modal"
+          footer={
+            <>
+              <button type="button" className="sup-btn secondary" onClick={() => setFormOpen(false)} disabled={saving}>
+                Cancel
               </button>
-            </div>
-
-            <form onSubmit={handleSubmit} className="sup-form">
+              <button type="submit" form="sup-form" className="sup-btn primary" disabled={saving}>
+                <FontAwesomeIcon icon={saving ? faSpinner : faSave} spin={saving} />
+                {saving ? "Saving..." : editing ? "Update Supplier" : "Create Supplier"}
+              </button>
+            </>
+          }
+        >
+            <form id="sup-form" onSubmit={handleSubmit} className="sup-form">
               {formErrors.submit && <div className="suppliers-error">{formErrors.submit}</div>}
 
               <div className="sup-form-grid">
@@ -350,19 +355,8 @@ const Suppliers = () => {
                   <span>Active supplier</span>
                 </label>
               </div>
-
-              <div className="sup-modal-actions">
-                <button type="button" className="sup-btn secondary" onClick={() => setFormOpen(false)} disabled={saving}>
-                  Cancel
-                </button>
-                <button type="submit" className="sup-btn primary" disabled={saving}>
-                  <FontAwesomeIcon icon={saving ? faSpinner : faSave} spin={saving} />
-                  {saving ? "Saving..." : editing ? "Update Supplier" : "Create Supplier"}
-                </button>
-              </div>
             </form>
-          </div>
-        </div>
+        </Modal>
       )}
     </div>
   );

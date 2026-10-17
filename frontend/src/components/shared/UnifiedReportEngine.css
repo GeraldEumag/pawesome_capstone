@@ -702,18 +702,6 @@
   color: var(--ure-info);
 }
 
-/* Modal */
-.ure-modal-overlay {
-  position: fixed;
-  inset: 0;
-  background: rgba(0, 0, 0, 0.5);
-  backdrop-filter: blur(4px);
-  display: grid;
-  place-items: center;
-  z-index: 1000;
-  padding: 1rem;
-}
-
 .ure-modal {
   background: var(--ure-surface);
   border-radius: var(--ure-radius-lg);

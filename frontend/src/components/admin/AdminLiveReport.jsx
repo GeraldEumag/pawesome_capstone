@@ -13,7 +13,6 @@ import {
   faRotateRight,
   faShoppingCart,
   faSpinner,
-  faTimes,
   faTruck,
   faUserTie,
   faStethoscope,
@@ -23,6 +22,7 @@ import { formatCurrency } from "../../utils/currency";
 import StandardReportLayout from "../shared/StandardReportLayout";
 import StandardSummaryCards from "../shared/StandardSummaryCards";
 import StandardTable from "../shared/StandardTable";
+import Modal from "../shared/Modal";
 import {
   exportToCSV,
   exportToPDF,
@@ -325,48 +325,31 @@ const AdminLiveReport = ({
         </section>
 
         {selectedRow && (
-          <div className="modal-overlay report-modal-overlay" onClick={() => setSelectedRow(null)}>
-            <div className="modal-content report-detail-modal" onClick={(event) => event.stopPropagation()}>
-              <div className="modal-header">
-                <div>
-                  <span className="reports-eyebrow">
-                    <FontAwesomeIcon icon={faClipboardList} />
-                    Record Details
-                  </span>
-                  <h2>{title} Detail</h2>
+          <Modal
+            onClose={() => setSelectedRow(null)}
+            title={`${title} Detail`}
+            subtitle="Record Details"
+            icon={faClipboardList}
+            size="lg"
+            footer={
+              <button
+                className="refresh-report-btn"
+                type="button"
+                onClick={() => setSelectedRow(null)}
+              >
+                Close
+              </button>
+            }
+          >
+            <div className="info-grid">
+              {Object.entries(selectedRow).map(([key, value]) => (
+                <div className="info-item" key={key}>
+                  <label>{key.replace(/_/g, " ")}</label>
+                  <span>{formatCellValue(key, value)}</span>
                 </div>
-
-                <button
-                  className="modal-close"
-                  type="button"
-                  onClick={() => setSelectedRow(null)}
-                >
-                  <FontAwesomeIcon icon={faTimes} />
-                </button>
-              </div>
-
-              <div className="modal-body">
-                <div className="info-grid">
-                  {Object.entries(selectedRow).map(([key, value]) => (
-                    <div className="info-item" key={key}>
-                      <label>{key.replace(/_/g, " ")}</label>
-                      <span>{formatCellValue(key, value)}</span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              <div className="modal-footer">
-                <button
-                  className="refresh-report-btn"
-                  type="button"
-                  onClick={() => setSelectedRow(null)}
-                >
-                  Close
-                </button>
-              </div>
+              ))}
             </div>
-          </div>
+          </Modal>
         )}
       </div>
     </StandardReportLayout>

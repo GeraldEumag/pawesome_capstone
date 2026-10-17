@@ -207,7 +207,7 @@
 
 .hotel-bookings .hotel-summary-card.warning span { background: var(--hotel-warning-bg); color: #92400e; }
 .hotel-bookings .hotel-summary-card.info    span { background: var(--hotel-info-bg);    color: #1e40af; }
-.hotel-bookings .hotel-summary-card.active  span { background: #ede9fe;                 color: #6d28d9; }
+.hotel-bookings .hotel-summary-card.active  span { background: var(--color-primary-soft);   color: var(--color-primary); }
 .hotel-bookings .hotel-summary-card.success span { background: var(--hotel-success-bg); color: #065f46; }
 
 .hotel-bookings .hotel-summary-card strong {

@@ -16,6 +16,7 @@ import {
 import { apiRequest } from "../../api/client";
 import { formatCurrency } from "../../utils/currency";
 import StandardTable from "../shared/StandardTable";
+import Modal from "./Modal";
 import "./EmployeeDirectory.css";
 
 /* ── Code 39 barcode (pure SVG, no dependency) ──────────────────────────── */
@@ -172,7 +173,7 @@ const FORM_SECTIONS = [
 /* ── Component ──────────────────────────────────────────────────────────── */
 
 const EmployeeDirectory = ({
-  roleAccent = "#7c3aed",
+  roleAccent = "var(--color-primary)",
   roleLabel = "Manager — Staff Records",
   endpoint = "/manager/employees",
 }) => {
@@ -502,18 +503,25 @@ const EmployeeDirectory = ({
 
       {/* Add / Edit modal */}
       {showForm && (
-        <div className="ed-modal-overlay" onClick={() => setShowForm(false)}>
-          <div className="ed-modal" onClick={(e) => e.stopPropagation()}>
-            <div className="ed-modal-header">
-              <div>
-                <span className="ed-kicker">{editing ? editing.employee_no : "New Record"}</span>
-                <h3>{editing ? `Edit ${editing.name}` : "Add Employee"}</h3>
-              </div>
-              <button type="button" className="ed-modal-close" onClick={() => setShowForm(false)}>
-                <FontAwesomeIcon icon={faXmark} />
+        <Modal
+          onClose={() => setShowForm(false)}
+          title={editing ? `Edit ${editing.name}` : "Add Employee"}
+          subtitle={editing ? editing.employee_no : "New Record"}
+          icon={editing ? faPen : faPlus}
+          size="lg"
+          className="ed-modal"
+          footer={
+            <>
+              <button type="button" className="ed-btn ed-btn-secondary" onClick={() => setShowForm(false)}>
+                Cancel
               </button>
-            </div>
-
+              <button type="button" className="ed-btn ed-btn-primary" onClick={submitForm} disabled={saving}>
+                <FontAwesomeIcon icon={saving ? faSpinner : faCheckCircle} spin={saving} />
+                {editing ? "Save Changes" : "Create Employee"}
+              </button>
+            </>
+          }
+        >
             <div className="ed-modal-body">
               {formError && (
                 <div className="ed-alert error"><span>{formError}</span></div>
@@ -553,10 +561,10 @@ const EmployeeDirectory = ({
                               value={form[key] ?? ""}
                               onChange={(e) => setField(key, e.target.value)}
                               readOnly={key === "hourly_rate" && !!form.base_salary}
-                              style={key === "hourly_rate" && form.base_salary ? { background: "rgba(124,58,237,0.07)" } : undefined}
+                              style={key === "hourly_rate" && form.base_salary ? { background: "rgba(255,95,147,0.07)" } : undefined}
                             />
                             {key === "hourly_rate" && form.base_salary && (
-                              <small style={{ color: "#7c3aed", fontSize: "0.75rem" }}>
+                              <small style={{ color: "var(--color-primary)", fontSize: "0.75rem" }}>
                                 Auto-calculated from salary (÷ 208)
                               </small>
                             )}
@@ -568,33 +576,29 @@ const EmployeeDirectory = ({
                 </fieldset>
               ))}
             </div>
-
-            <div className="ed-modal-footer">
-              <button type="button" className="ed-btn ed-btn-secondary" onClick={() => setShowForm(false)}>
-                Cancel
-              </button>
-              <button type="button" className="ed-btn ed-btn-primary" onClick={submitForm} disabled={saving}>
-                <FontAwesomeIcon icon={saving ? faSpinner : faCheckCircle} spin={saving} />
-                {editing ? "Save Changes" : "Create Employee"}
-              </button>
-            </div>
-          </div>
-        </div>
+        </Modal>
       )}
 
       {/* Detail / barcode modal */}
       {detail && (
-        <div className="ed-modal-overlay" onClick={() => setDetail(null)}>
-          <div className="ed-modal ed-detail-modal" onClick={(e) => e.stopPropagation()}>
-            <div className="ed-modal-header">
-              <div>
-                <span className="ed-kicker">{detail.employee_no}</span>
-                <h3>{detail.name}</h3>
-              </div>
-              <button type="button" className="ed-modal-close" onClick={() => setDetail(null)}>
-                <FontAwesomeIcon icon={faXmark} />
+        <Modal
+          onClose={() => setDetail(null)}
+          title={detail.name}
+          subtitle={detail.employee_no}
+          icon={faIdBadge}
+          size="lg"
+          className="ed-modal ed-detail-modal"
+          footer={
+            <>
+              <button type="button" className="ed-btn ed-btn-secondary" onClick={() => { setDetail(null); openEdit(detail); }}>
+                <FontAwesomeIcon icon={faPen} /> Edit
               </button>
-            </div>
+              <button type="button" className="ed-btn ed-btn-primary" onClick={() => setDetail(null)}>
+                Close
+              </button>
+            </>
+          }
+        >
             <div className="ed-modal-body">
               <div className="ed-id-card">
                 <Code39Barcode value={detail.employee_no} />
@@ -629,16 +633,7 @@ const EmployeeDirectory = ({
                   ))}
               </div>
             </div>
-            <div className="ed-modal-footer">
-              <button type="button" className="ed-btn ed-btn-secondary" onClick={() => { setDetail(null); openEdit(detail); }}>
-                <FontAwesomeIcon icon={faPen} /> Edit
-              </button>
-              <button type="button" className="ed-btn ed-btn-primary" onClick={() => setDetail(null)}>
-                Close
-              </button>
-            </div>
-          </div>
-        </div>
+        </Modal>
       )}
 
       {toast && (

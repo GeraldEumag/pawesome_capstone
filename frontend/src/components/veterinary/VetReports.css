@@ -256,7 +256,7 @@
 }
 
 .vet-data-source-badge.live {
-  background: rgba(72, 187, 120, 0.14);
+  background: rgba(16, 185, 129, 0.14);
   color: #065f46;
 }
 
@@ -683,7 +683,6 @@
   background: linear-gradient(135deg, var(--veterinary-primary), var(--veterinary-primary-light));
 }
 
-
 /* ACTIVITY */
 
 .vet-activity-list {
@@ -736,7 +735,7 @@
   display: inline-flex;
   align-items: center;
   border-radius: 999px;
-  background: rgba(72, 187, 120, 0.14);
+  background: rgba(16, 185, 129, 0.14);
   color: #047857;
   font-size: 0.76rem;
   font-weight: 950;
@@ -751,7 +750,7 @@
 
 .vet-status-pill.cancelled,
 .vet-status-pill.rejected {
-  background: rgba(245, 101, 101, 0.12);
+  background: rgba(239, 68, 68, 0.12);
   color: #b91c1c;
 }
 
@@ -798,20 +797,6 @@
   flex-wrap: wrap;
 }
 
-/* MODAL */
-
-.vet-report-modal-overlay {
-  position: fixed;
-  inset: 0;
-  z-index: 12000;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 1rem;
-  background: rgba(15, 23, 42, 0.5);
-  backdrop-filter: blur(10px);
-}
-
 .vet-report-modal {
   width: min(760px, 100%);
   max-height: 92vh;
@@ -820,44 +805,6 @@
   border-radius: var(--veterinary-radius-2xl);
   background: var(--veterinary-card-bg);
   box-shadow: 0 30px 90px rgba(15, 23, 42, 0.26);
-}
-
-.vet-report-modal-header {
-  display: flex;
-  justify-content: space-between;
-  gap: 1rem;
-  padding: 1.35rem;
-  border-bottom: 1px solid var(--veterinary-glass-border);
-}
-
-.vet-report-modal-header h3 {
-  margin: 0;
-  color: var(--veterinary-text-primary);
-  font-size: 1.45rem;
-  font-weight: 950;
-}
-
-.vet-report-modal-header p {
-  margin: 0.3rem 0 0;
-  color: var(--veterinary-text-muted);
-  font-weight: 800;
-}
-
-.vet-report-modal-header button {
-  width: 42px;
-  height: 42px;
-  min-width: 42px;
-  border: 1px solid var(--veterinary-glass-border);
-  border-radius: 14px;
-  background: var(--veterinary-glass-bg);
-  color: var(--veterinary-text-primary);
-  cursor: pointer;
-  transition: 0.2s ease;
-}
-
-.vet-report-modal-header button:hover {
-  background: var(--veterinary-primary);
-  color: #ffffff;
 }
 
 .vet-report-modal-body {

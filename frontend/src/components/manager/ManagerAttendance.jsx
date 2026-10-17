@@ -11,6 +11,7 @@ import {
   faChevronRight,
   faChevronUp,
   faClock,
+  faClipboardList,
   faDownload,
   faEye,
   faFilter,
@@ -33,6 +34,7 @@ import { apiRequest } from "../../api/client";
 import { formatCurrency } from "../../utils/currency";
 import { exportToCSV, exportToPDF, exportToExcel } from "../../utils/reportExport";
 import RowActionPopover from "../shared/RowActionPopover";
+import Modal from "../shared/Modal";
 import "./ManagerAttendance.css";
 
 const TODAY = formatDateOnly(new Date());
@@ -1227,19 +1229,25 @@ const SortableHeader = ({ label, field, sortBy, sortOrder, onSort }) => (
 );
 
 const DetailsModal = ({ record, onClose, onEdit }) => (
-  <div className="attendance-modal-overlay">
-    <div className="attendance-modal large">
-      <div className="attendance-modal-header">
-        <div>
-          <span className="attendance-eyebrow">Attendance Details</span>
-          <h2>{record.name}</h2>
-        </div>
-
-        <button type="button" onClick={onClose}>
-          <FontAwesomeIcon icon={faXmark} />
+  <Modal
+    onClose={onClose}
+    title={record.name}
+    subtitle="Attendance Details"
+    icon={faClipboardList}
+    size="lg"
+    className="attendance-modal large"
+    footer={
+      <>
+        <button type="button" className="attendance-btn secondary" onClick={onClose}>
+          Close
         </button>
-      </div>
-
+        <button type="button" className="attendance-btn primary" onClick={onEdit}>
+          <FontAwesomeIcon icon={faPenToSquare} />
+          Edit Remarks
+        </button>
+      </>
+    }
+  >
       <div className="attendance-modal-body">
         <DetailSection
           title="Employee Information"
@@ -1281,34 +1289,33 @@ const DetailsModal = ({ record, onClose, onEdit }) => (
           </p>
         </div>
       </div>
-
-      <div className="attendance-modal-footer">
-        <button type="button" className="attendance-btn secondary" onClick={onClose}>
-          Close
-        </button>
-        <button type="button" className="attendance-btn primary" onClick={onEdit}>
-          <FontAwesomeIcon icon={faPenToSquare} />
-          Edit Remarks
-        </button>
-      </div>
-    </div>
-  </div>
+  </Modal>
 );
 
 const RemarksModal = ({ record, form, setForm, saving, onClose, onSave }) => (
-  <div className="attendance-modal-overlay">
-    <div className="attendance-modal">
-      <div className="attendance-modal-header">
-        <div>
-          <span className="attendance-eyebrow">Update Remarks</span>
-          <h2>{record.name}</h2>
-        </div>
-
-        <button type="button" onClick={onClose}>
-          <FontAwesomeIcon icon={faXmark} />
+  <Modal
+    onClose={onClose}
+    title={record.name}
+    subtitle="Update Remarks"
+    icon={faPenToSquare}
+    className="attendance-modal"
+    footer={
+      <>
+        <button type="button" className="attendance-btn secondary" onClick={onClose}>
+          Cancel
         </button>
-      </div>
-
+        <button
+          type="button"
+          className="attendance-btn primary"
+          onClick={onSave}
+          disabled={saving}
+        >
+          <FontAwesomeIcon icon={saving ? faSpinner : faCheckCircle} spin={saving} />
+          {saving ? "Saving..." : "Save Remarks"}
+        </button>
+      </>
+    }
+  >
       <div className="attendance-modal-body">
         <label className="attendance-textarea-field">
           <span>Manager Remarks</span>
@@ -1325,24 +1332,7 @@ const RemarksModal = ({ record, form, setForm, saving, onClose, onSave }) => (
           />
         </label>
       </div>
-
-      <div className="attendance-modal-footer">
-        <button type="button" className="attendance-btn secondary" onClick={onClose}>
-          Cancel
-        </button>
-
-        <button
-          type="button"
-          className="attendance-btn primary"
-          onClick={onSave}
-          disabled={saving}
-        >
-          <FontAwesomeIcon icon={saving ? faSpinner : faCheckCircle} spin={saving} />
-          {saving ? "Saving..." : "Save Remarks"}
-        </button>
-      </div>
-    </div>
-  </div>
+  </Modal>
 );
 
 const DetailSection = ({ title, items }) => (

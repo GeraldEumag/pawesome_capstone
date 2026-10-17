@@ -40,7 +40,7 @@ const ManagerRoutes = () => (
         path="employees"
         element={
           <EmployeeDirectory
-            roleAccent="#7c3aed"
+            roleAccent="var(--color-primary)"
             roleLabel="Manager — Staff Records"
           />
         }

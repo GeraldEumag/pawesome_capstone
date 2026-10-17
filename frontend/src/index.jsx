@@ -13,6 +13,7 @@ import './styles/unifiedDashboard.css';
 import './styles/unifiedSidebar.css';
 import './styles/unifiedReports.css';
 import './styles/theme.css';
+import './styles/forms.css';
 import './styles/sweetalert-theme.css';
 import './styles/mobilePolish.css';
 import './styles/customerMobilePolish.css';

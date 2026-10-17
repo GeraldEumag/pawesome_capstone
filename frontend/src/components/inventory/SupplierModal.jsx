@@ -1,13 +1,13 @@
 import React, { useState, useEffect } from "react";
 import { inventoryApi } from "../../api/inventory.jsx";
-import { showError } from "../../utils/alert.jsx";
+import { showError, showConfirm } from "../../utils/alert.jsx";
+import Modal from "../shared/Modal";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
   faPlus,
   faEdit,
   faTrash,
   faSearch,
-  faTimes,
   faSave,
   faBuilding,
   faCheck,
@@ -130,7 +130,7 @@ const SupplierModal = ({
   };
 
   const handleDelete = async (id) => {
-    if (!window.confirm("Are you sure you want to delete this supplier?")) return;
+    if (!(await showConfirm("Are you sure you want to delete this supplier?", "Delete Supplier", "Delete", "Cancel", "warning", true))) return;
     setLoading(true);
     try {
       await inventoryApi.deleteSupplier(id);
@@ -155,26 +155,15 @@ const SupplierModal = ({
   if (!isOpen) return null;
 
   return (
-    <div className="modal-overlay" onClick={onClose}>
-      <div className="modal-content supplier-modal" onClick={(e) => e.stopPropagation()}>
-        <div className="modal-header">
-          <div className="modal-title">
-            <FontAwesomeIcon icon={faBuilding} size="lg" />
-            <div>
-              <h3>{mode === "select" ? "Select Supplier" : "Manage Suppliers"}</h3>
-              <p>
-                {mode === "select"
-                  ? "Choose a supplier for this product"
-                  : "Add or edit supplier profiles"}
-              </p>
-            </div>
-          </div>
-          <button className="btn-close" onClick={onClose}>
-            <FontAwesomeIcon icon={faTimes} />
-          </button>
-        </div>
-
-        <div className="modal-body">
+    <Modal
+      onClose={onClose}
+      title={mode === "select" ? "Select Supplier" : "Manage Suppliers"}
+      subtitle={mode === "select" ? "Choose a supplier for this product" : "Add or edit supplier profiles"}
+      icon={faBuilding}
+      size="lg"
+      className="supplier-modal"
+    >
+        <div className="supplier-modal-body">
           {errors.submit && <div className="error-banner">{errors.submit}</div>}
 
           {!showForm && (
@@ -367,8 +356,7 @@ const SupplierModal = ({
             </form>
           )}
         </div>
-      </div>
-    </div>
+    </Modal>
   );
 };
 

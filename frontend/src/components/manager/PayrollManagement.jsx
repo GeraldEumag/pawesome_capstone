@@ -2,6 +2,7 @@ import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { payrollApi } from "../../api/payroll";
 import { apiRequest } from "../../api/client";
+import { showConfirm } from "../../utils/alert.jsx";
 import { formatCurrency } from "../../utils/currency";
 import { useAuth } from "../../context/AuthContext";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
@@ -53,6 +54,7 @@ import {
 import "./PayrollManagement.css";
 import { exportToCSV as exportCSVUtil, exportToPDF as exportPDFUtil, exportToExcel } from "../../utils/reportExport";
 import RowActionPopover from "../shared/RowActionPopover";
+import Modal from "../shared/Modal";
 
 const CHART_COLORS = ["#ff5f93", "#ff8db5", "#ffc8dd", "#f59e0b", "#10b981", "#3b82f6"];
 
@@ -548,8 +550,11 @@ const PayrollManagement = () => {
   };
 
   const handleRelease = async (payroll) => {
-    const confirmed = window.confirm(
-      `Release payroll ${payroll.payrollId} for ${payroll.employeeName}?\n\nNet Pay: ${new Intl.NumberFormat("en-PH", { style: "currency", currency: "PHP" }).format(payroll.netPay)}\n\nThis will mark the period as LOCKED and queue a payslip email to the employee.`
+    const confirmed = await showConfirm(
+      `Release payroll ${payroll.payrollId} for ${payroll.employeeName}?\n\nNet Pay: ${new Intl.NumberFormat("en-PH", { style: "currency", currency: "PHP" }).format(payroll.netPay)}\n\nThis will mark the period as LOCKED and queue a payslip email to the employee.`,
+      "Release Payroll",
+      "Release",
+      "Cancel"
     );
     if (!confirmed) return;
 
@@ -1365,19 +1370,29 @@ const StatusPipeline = ({ status }) => {
 };
 
 const PayrollDetailsModal = ({ payroll, onClose, onPrint, onDownload }) => (
-  <div className="payroll-modal-overlay">
-    <div className="payroll-modal large">
-      <div className="payroll-modal-header">
-        <div>
-          <span className="payroll-eyebrow">Payroll Details</span>
-          <h2>{payroll.employeeName}</h2>
-        </div>
-
-        <button type="button" onClick={onClose}>
-          <FontAwesomeIcon icon={faXmark} />
+  <Modal
+    onClose={onClose}
+    title={payroll.employeeName}
+    subtitle="Payroll Details"
+    icon={faMoneyBillWave}
+    size="lg"
+    className="payroll-modal"
+    footer={
+      <>
+        <button type="button" className="payroll-btn secondary" onClick={onClose}>
+          Close
         </button>
-      </div>
-
+        <button type="button" className="payroll-btn secondary" onClick={onPrint}>
+          <FontAwesomeIcon icon={faPrint} />
+          Print Payslip
+        </button>
+        <button type="button" className="payroll-btn primary" onClick={onDownload}>
+          <FontAwesomeIcon icon={faDownload} />
+          Download PDF
+        </button>
+      </>
+    }
+  >
       <div className="payroll-modal-body">
         <StatusPipeline status={payroll.status} />
 
@@ -1407,24 +1422,7 @@ const PayrollDetailsModal = ({ payroll, onClose, onPrint, onDownload }) => (
           <DetailItem label="Remarks" value={payroll.remarks || "No remarks"} />
         </div>
       </div>
-
-      <div className="payroll-modal-footer">
-        <button type="button" className="payroll-btn secondary" onClick={onClose}>
-          Close
-        </button>
-
-        <button type="button" className="payroll-btn secondary" onClick={onPrint}>
-          <FontAwesomeIcon icon={faPrint} />
-          Print Payslip
-        </button>
-
-        <button type="button" className="payroll-btn primary" onClick={onDownload}>
-          <FontAwesomeIcon icon={faDownload} />
-          Download PDF
-        </button>
-      </div>
-    </div>
-  </div>
+  </Modal>
 );
 
 const PayslipPrint = ({ payroll }) => {

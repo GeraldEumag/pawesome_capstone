@@ -26,6 +26,7 @@ import toast from "react-hot-toast";
 import { apiRequest } from "../../api/client";
 import PetAvatar from "../shared/PetAvatar";
 import CustomerAvatar from "../shared/CustomerAvatar";
+import Modal from "../shared/Modal";
 import "./theme.css";
 import "./VetCustomerProfiles.css";
 
@@ -534,36 +535,23 @@ const VetCustomerProfiles = () => {
       )}
 
       {selectedProfile && (
-        <div
-          className="vet-profile-modal-overlay"
-          onClick={() => setSelectedProfile(null)}
+        <Modal
+          onClose={() => setSelectedProfile(null)}
+          title={selectedProfile.name}
+          subtitle={`Customer Profile · ${selectedProfile.pets.length} registered pet${selectedProfile.pets.length === 1 ? "" : "s"}`}
+          icon={faIdCard}
+          size="lg"
+          className="vet-profile-modal"
+          footer={
+            <button
+              className="vet-refresh-btn"
+              type="button"
+              onClick={() => setSelectedProfile(null)}
+            >
+              Close
+            </button>
+          }
         >
-          <div
-            className="vet-profile-modal"
-            onClick={(event) => event.stopPropagation()}
-          >
-            <div className="vet-profile-modal-header">
-              <div>
-                <span className="vet-profiles-eyebrow">
-                  <FontAwesomeIcon icon={faIdCard} />
-                  Customer Profile
-                </span>
-                <h3>{selectedProfile.name}</h3>
-                <p>
-                  {selectedProfile.pets.length} registered pet
-                  {selectedProfile.pets.length === 1 ? "" : "s"}
-                </p>
-              </div>
-
-              <button
-                className="vet-modal-close"
-                type="button"
-                onClick={() => setSelectedProfile(null)}
-              >
-                <FontAwesomeIcon icon={faXmark} />
-              </button>
-            </div>
-
             <div className="vet-profile-modal-body">
               <div className="modal-profile-summary">
                 <CustomerAvatar customer={selectedProfile} size={72} className="modal-profile-avatar" />
@@ -677,50 +665,18 @@ const VetCustomerProfiles = () => {
                 </div>
               </div>
             </div>
-
-            <div className="vet-profile-modal-actions">
-              <button
-                className="vet-refresh-btn"
-                type="button"
-                onClick={() => setSelectedProfile(null)}
-              >
-                Close
-              </button>
-            </div>
-          </div>
-        </div>
+        </Modal>
       )}
 
       {selectedPetHistory && (
-        <div
-          className="vet-history-modal-overlay"
-          onClick={() => setSelectedPetHistory(null)}
+        <Modal
+          onClose={() => setSelectedPetHistory(null)}
+          title={selectedPetHistory.name}
+          subtitle={`Medical History · ${selectedPetHistory.species || ""} • ${selectedPetHistory.breed || ""}`}
+          icon={faHeartPulse}
+          size="lg"
+          className="vet-history-modal"
         >
-          <div
-            className="vet-history-modal"
-            onClick={(event) => event.stopPropagation()}
-          >
-            <div className="vet-profile-modal-header">
-              <div>
-                <span className="vet-profiles-eyebrow">
-                  <FontAwesomeIcon icon={faHeartPulse} />
-                  Medical History
-                </span>
-                <h3>{selectedPetHistory.name}</h3>
-                <p>
-                  {selectedPetHistory.species} • {selectedPetHistory.breed}
-                </p>
-              </div>
-
-              <button
-                className="vet-modal-close"
-                type="button"
-                onClick={() => setSelectedPetHistory(null)}
-              >
-                <FontAwesomeIcon icon={faXmark} />
-              </button>
-            </div>
-
             <div className="vet-history-modal-body">
               <button
                 type="button"
@@ -784,8 +740,7 @@ const VetCustomerProfiles = () => {
                 </div>
               )}
             </div>
-          </div>
-        </div>
+        </Modal>
       )}
     </section>
   );

@@ -58,7 +58,7 @@ const InventoryRoutes = () => (
       />
       <Route path="suppliers" element={<Suppliers />} />
       <Route path="barcodes" element={<BarcodeGenerator />} />
-      <Route path="payroll" element={<MyPayroll roleAccent="#ff5f93" roleLabel="Inventory" />} />
+      <Route path="payroll" element={<MyPayroll roleAccent="var(--color-primary)" roleLabel="Inventory" />} />
       <Route path="profile" element={<ProfileSettings />} />
     </Route>
   </Routes>

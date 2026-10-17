@@ -402,8 +402,8 @@
 }
 
 .customer-management .message-btn {
-  color: #8b5cf6;
-  background: #f3e8ff;
+  color: var(--color-primary);
+  background: #fdf2f8;
 }
 
 .customer-management .message-btn:hover {

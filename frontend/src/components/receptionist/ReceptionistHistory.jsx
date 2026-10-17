@@ -114,7 +114,7 @@ const ReceptionistHistory = () => {
       exportColumns={exportColumns}
       exportFilename="receptionist-history"
       exportTitle="Receptionist Activity History"
-      roleAccent={isSuper ? "var(--color-primary)" : "#d97706"}
+      roleAccent="var(--color-primary)"
       roleLabel={isSuper ? "Super Receptionist" : "Receptionist"}
       emptyMessage="No activity records found."
       searchTerm={searchTerm} onSearchChange={setSearchTerm}

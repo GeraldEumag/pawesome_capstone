@@ -294,7 +294,7 @@
 .dtr-chip.present { background: rgba(16, 185, 129, 0.12); color: #059669; }
 .dtr-chip.late    { background: rgba(245, 158, 11, 0.12);  color: #b45309; }
 .dtr-chip.absent  { background: rgba(239, 68, 68, 0.12);   color: #dc2626; }
-.dtr-chip.leave   { background: rgba(139, 92, 246, 0.12);  color: #7c3aed; }
+.dtr-chip.leave   { background: rgba(59, 130, 246, 0.12);  color: #1d4ed8; }
 
 /* ── Table ── */
 .dtr-table-card {
@@ -363,7 +363,7 @@
 .dtr-status-pill.late      { background: rgba(245, 158, 11, 0.12);  color: #b45309; }
 .dtr-status-pill.early_leave { background: rgba(245, 158, 11, 0.12); color: #b45309; }
 .dtr-status-pill.absent    { background: rgba(239, 68, 68, 0.12);   color: #dc2626; }
-.dtr-status-pill.on_leave  { background: rgba(139, 92, 246, 0.12);  color: #7c3aed; }
+.dtr-status-pill.on_leave  { background: rgba(59, 130, 246, 0.12);  color: #1d4ed8; }
 .dtr-status-pill.rest_day  { background: rgba(100, 116, 139, 0.1);  color: var(--dtr-muted); }
 
 /* Footer */

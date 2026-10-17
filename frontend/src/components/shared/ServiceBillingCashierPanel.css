@@ -299,71 +299,7 @@
   color: var(--color-danger, #dc2626);
 }
 
-/* ── Payment Modal ── */
-.payment-modal {
-  position: fixed;
-  inset: 0;
-  z-index: 1100;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.modal-overlay {
-  position: absolute;
-  inset: 0;
-  background: rgba(0, 0, 0, 0.55);
-  backdrop-filter: blur(4px);
-}
-
-.modal-content {
-  background: var(--color-surface);
-  border: 1px solid var(--color-border);
-  border-radius: 22px;
-  box-shadow: 0 32px 72px rgba(0, 0, 0, 0.22);
-  max-width: 820px;
-  width: 90%;
-  max-height: 90vh;
-  overflow-y: auto;
-  position: relative;
-  z-index: 1;
-}
-
-.modal-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 22px 24px;
-  border-bottom: 1px solid var(--color-border);
-}
-
-.modal-header h3 {
-  margin: 0;
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  font-size: 1.05rem;
-  font-weight: 800;
-  color: var(--color-heading);
-}
-
-.close-btn {
-  background: none;
-  border: none;
-  font-size: 1.4rem;
-  color: var(--color-muted);
-  cursor: pointer;
-  padding: 4px 8px;
-  line-height: 1;
-  border-radius: 8px;
-  transition: background 0.15s ease, color 0.15s ease;
-}
-
-.close-btn:hover {
-  background: var(--color-border);
-  color: var(--color-text);
-}
-
+/* ── Payment Modal (shell lives in shared/Modal — pw-modal-*) ── */
 .service-summary {
   padding: 22px 24px;
   border-bottom: 1px solid var(--color-border);
@@ -644,11 +580,6 @@
   .billing-summary {
     flex-direction: column;
     gap: 8px;
-  }
-
-  .modal-content {
-    width: 95%;
-    margin: 16px;
   }
 
   .form-row {

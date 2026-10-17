@@ -1,6 +1,8 @@
 import React, { useEffect, useState } from "react";
+import { faTrash } from "@fortawesome/free-solid-svg-icons";
 import "./DeleteConfirmModal.css";
 import { showAlert } from "../../utils/alert.jsx";
+import Modal from "./Modal";
 
 const DeleteConfirmModal = ({
   isOpen,
@@ -29,8 +31,6 @@ const DeleteConfirmModal = ({
     }
   }, [isOpen, itemName]);
 
-  if (!isOpen) return null;
-
   const needsDetails = reason === "other";
   const hasReasonOptions = reasonOptions.length > 0;
 
@@ -47,64 +47,15 @@ const DeleteConfirmModal = ({
   };
 
   return (
-    <div className="delete-modal-overlay" onClick={onClose}>
-      <div
-        className="delete-modal"
-        onClick={(e) => e.stopPropagation()}
-      >
-        <div className="delete-modal-header">
-          <div className="delete-icon">🗑</div>
-          <h3>{title}</h3>
-        </div>
-
-        <div className="delete-modal-body">
-          <p>{message || <>Are you sure you want to delete <strong>{itemName}</strong>?</>}</p>
-          {warningText && <span>{warningText}</span>}
-
-          {requireReason && (
-            <div className="delete-reason-input">
-              <label htmlFor="inventory-action-reason">{reasonLabel}</label>
-              {hasReasonOptions ? (
-                <select
-                  id="inventory-action-reason"
-                  value={reason}
-                  onChange={(event) => {
-                    setReason(event.target.value);
-                    if (event.target.value !== "other") setReasonDetails("");
-                  }}
-                >
-                  <option value="">Select a reason...</option>
-                  {reasonOptions.map((option) => {
-                    const value = typeof option === "string" ? option : option.value;
-                    const label = typeof option === "string" ? option : option.label;
-                    return <option key={value} value={value}>{label}</option>;
-                  })}
-                </select>
-              ) : (
-                <textarea
-                  value={reason}
-                  onChange={(e) => setReason(e.target.value)}
-                  placeholder={reasonDetailsPlaceholder}
-                  rows="3"
-                />
-              )}
-              {needsDetails && (
-                <>
-                  <label htmlFor="inventory-action-reason-details">{reasonDetailsLabel}</label>
-                  <textarea
-                    id="inventory-action-reason-details"
-                    value={reasonDetails}
-                    onChange={(e) => setReasonDetails(e.target.value)}
-                    placeholder={reasonDetailsPlaceholder}
-                    rows="3"
-                  />
-                </>
-              )}
-            </div>
-          )}
-        </div>
-
-        <div className="delete-modal-footer">
+    <Modal
+      isOpen={isOpen}
+      onClose={onClose}
+      title={title}
+      icon={faTrash}
+      size="sm"
+      className="delete-modal"
+      footer={
+        <>
           <button
             className="btn-cancel"
             onClick={() => {
@@ -131,9 +82,56 @@ const DeleteConfirmModal = ({
               confirmText
             )}
           </button>
-        </div>
+        </>
+      }
+    >
+      <div className="delete-modal-body">
+        <p>{message || <>Are you sure you want to delete <strong>{itemName}</strong>?</>}</p>
+        {warningText && <span className="delete-warning">{warningText}</span>}
+
+        {requireReason && (
+          <div className="delete-reason-input">
+            <label htmlFor="inventory-action-reason">{reasonLabel}</label>
+            {hasReasonOptions ? (
+              <select
+                id="inventory-action-reason"
+                value={reason}
+                onChange={(event) => {
+                  setReason(event.target.value);
+                  if (event.target.value !== "other") setReasonDetails("");
+                }}
+              >
+                <option value="">Select a reason...</option>
+                {reasonOptions.map((option) => {
+                  const value = typeof option === "string" ? option : option.value;
+                  const label = typeof option === "string" ? option : option.label;
+                  return <option key={value} value={value}>{label}</option>;
+                })}
+              </select>
+            ) : (
+              <textarea
+                value={reason}
+                onChange={(e) => setReason(e.target.value)}
+                placeholder={reasonDetailsPlaceholder}
+                rows="3"
+              />
+            )}
+            {needsDetails && (
+              <>
+                <label htmlFor="inventory-action-reason-details">{reasonDetailsLabel}</label>
+                <textarea
+                  id="inventory-action-reason-details"
+                  value={reasonDetails}
+                  onChange={(e) => setReasonDetails(e.target.value)}
+                  placeholder={reasonDetailsPlaceholder}
+                  rows="3"
+                />
+              </>
+            )}
+          </div>
+        )}
       </div>
-    </div>
+    </Modal>
   );
 };
 

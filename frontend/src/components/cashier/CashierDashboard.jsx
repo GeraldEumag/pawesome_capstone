@@ -27,9 +27,11 @@ import {
   faList,
   faUserPlus,
   faUser,
+  faCashRegister,
 } from "@fortawesome/free-solid-svg-icons";
 import CashierSidebar from "./CashierSidebar";
 import DashboardLayout from "../shared/DashboardLayout";
+import Modal from "../shared/Modal";
 import "./CashierDashboard.css";
 import { apiRequest } from "../../api/client";
 import { formatCurrency } from "../../utils/currency";
@@ -1110,19 +1112,30 @@ const CashierDashboard = () => {
         </section>
 
         {showEndShiftModal && (
-          <div className="app-modal-overlay">
-            <div className="app-modal">
-              <div className="app-modal-header">
-                <h2 className="premium-title">Cashier Shift Report</h2>
+          <Modal
+            onClose={() => setShowEndShiftModal(false)}
+            title="Cashier Shift Report"
+            icon={faCashRegister}
+            size="md"
+            footer={
+              <>
                 <button
                   type="button"
-                  className="app-modal-close"
+                  className="btn-secondary"
                   onClick={() => setShowEndShiftModal(false)}
                 >
-                  &times;
+                  Cancel
                 </button>
-              </div>
-
+                <button
+                  type="button"
+                  className="btn-primary"
+                  onClick={handleEndShift}
+                >
+                  Submit Shift Report
+                </button>
+              </>
+            }
+          >
               <div className="app-grid-2">
                 <div className="app-stat-card">
                   <p className="premium-muted">Total Sales</p>
@@ -1192,46 +1205,20 @@ const CashierDashboard = () => {
                   <p className="premium-muted">{shiftMessage}</p>
                 </div>
               )}
-
-              <div className="app-modal-actions">
-                <button
-                  type="button"
-                  className="btn-secondary"
-                  onClick={() => setShowEndShiftModal(false)}
-                >
-                  Cancel
-                </button>
-
-                <button
-                  type="button"
-                  className="btn-primary"
-                  onClick={handleEndShift}
-                >
-                  Submit Shift Report
-                </button>
-              </div>
-            </div>
-          </div>
+          </Modal>
         )}
 
         {showProductSearch && (
-          <div className="app-modal-overlay">
-            <div className="app-modal">
-              <div className="app-modal-header">
-                <h2 className="premium-title">Product Lookup</h2>
-                <button
-                  type="button"
-                  className="app-modal-close"
-                  onClick={() => {
-                    setShowProductSearch(false);
-                    setProductSearchQuery("");
-                    setProductSearchResults([]);
-                  }}
-                >
-                  ×
-                </button>
-              </div>
-
+          <Modal
+            onClose={() => {
+              setShowProductSearch(false);
+              setProductSearchQuery("");
+              setProductSearchResults([]);
+            }}
+            title="Product Lookup"
+            icon={faSearch}
+            size="md"
+          >
               <div style={{ position: 'relative', marginBottom: '22px' }}>
                 <FontAwesomeIcon icon={faSearch} style={{ position: 'absolute', left: '14px', top: '50%', transform: 'translateY(-50%)', color: 'var(--color-muted)' }} />
                 <input
@@ -1279,28 +1266,20 @@ const CashierDashboard = () => {
                   </div>
                 )}
               </div>
-            </div>
-          </div>
+          </Modal>
         )}
 
         {showCustomerSearch && (
-          <div className="app-modal-overlay">
-            <div className="app-modal">
-              <div className="app-modal-header">
-                <h2 className="premium-title">Customer Lookup</h2>
-                <button
-                  type="button"
-                  className="app-modal-close"
-                  onClick={() => {
-                    setShowCustomerSearch(false);
-                    setCustomerSearchQuery("");
-                    setCustomerSearchResults([]);
-                  }}
-                >
-                  ×
-                </button>
-              </div>
-
+          <Modal
+            onClose={() => {
+              setShowCustomerSearch(false);
+              setCustomerSearchQuery("");
+              setCustomerSearchResults([]);
+            }}
+            title="Customer Lookup"
+            icon={faUser}
+            size="md"
+          >
               <div style={{ position: 'relative', marginBottom: '22px' }}>
                 <FontAwesomeIcon icon={faSearch} style={{ position: 'absolute', left: '14px', top: '50%', transform: 'translateY(-50%)', color: 'var(--color-muted)' }} />
                 <input
@@ -1344,8 +1323,7 @@ const CashierDashboard = () => {
                   </div>
                 )}
               </div>
-            </div>
-          </div>
+          </Modal>
         )}
     </DashboardLayout>
   );

@@ -9,6 +9,7 @@ import {
 import JsBarcode from "jsbarcode";
 import { QRCodeSVG } from "qrcode.react";
 import { apiRequest } from "../../api/client";
+import { showWarning } from "../../utils/alert.jsx";
 import "./EmployeeIdPrinter.css";
 
 /* ── Role display formatting ── */
@@ -193,7 +194,7 @@ const EmployeeIdPrinter = () => {
 
       const win = window.open("", "_blank", "toolbar=0,location=0,menubar=0");
       if (!win) {
-        alert("Popup blocked — please allow pop-ups for this page to enable printing.");
+        showWarning("Popup blocked — please allow pop-ups for this page to enable printing.", "Popup Blocked");
         setPrintItems([]);
         return;
       }

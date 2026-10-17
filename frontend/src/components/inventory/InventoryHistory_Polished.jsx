@@ -90,7 +90,7 @@ const InventoryHistory_Polished = () => {
       exportColumns={exportColumns}
       exportFilename="inventory-history"
       exportTitle="Inventory Stock Movement History"
-      roleAccent="#ff5f93" roleLabel="Inventory"
+      roleAccent="var(--color-primary)" roleLabel="Inventory"
       emptyMessage="No stock log records found."
       searchTerm={searchTerm} onSearchChange={setSearchTerm}
       dateFilter={dateFilter} onDateFilterChange={setDateFilter}

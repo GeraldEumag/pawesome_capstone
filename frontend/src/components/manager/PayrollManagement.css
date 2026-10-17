@@ -736,19 +736,6 @@
   font-weight: 950;
 }
 
-/* Modal */
-
-.payroll-modal-overlay {
-  position: fixed;
-  inset: 0;
-  z-index: 9000;
-  display: grid;
-  place-items: center;
-  padding: 1rem;
-  background: rgba(15, 23, 42, 0.48);
-  backdrop-filter: blur(6px);
-}
-
 .payroll-modal {
   width: min(720px, 100%);
   max-height: 92vh;
@@ -778,43 +765,9 @@
   }
 }
 
-.payroll-modal-header,
-.payroll-modal-footer {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 1rem;
-  padding: 1.25rem;
-  border-bottom: 1px solid var(--payroll-border);
-}
-
-.payroll-modal-header h2 {
-  margin: 0.4rem 0 0;
-  color: var(--payroll-heading);
-  font-weight: 950;
-  letter-spacing: -0.035em;
-}
-
-.payroll-modal-header > button {
-  width: 42px;
-  height: 42px;
-  border: none;
-  border-radius: 15px;
-  color: var(--payroll-muted);
-  background: rgba(100, 116, 139, 0.1);
-  cursor: pointer;
-}
-
 .payroll-modal-body {
   overflow-y: auto;
   padding: 1.25rem;
-}
-
-.payroll-modal-footer {
-  border-top: 1px solid var(--payroll-border);
-  border-bottom: none;
-  justify-content: flex-end;
-  flex-wrap: wrap;
 }
 
 .payroll-detail-grid {
@@ -902,9 +855,6 @@
 
 /* Dark mode */
 
-
-
-
 /* Responsive */
 
 @media (max-width: 1280px) {
@@ -969,10 +919,6 @@
   .payroll-pagination > div {
     justify-content: space-between;
     flex-wrap: wrap;
-  }
-
-  .payroll-modal-footer .payroll-btn {
-    width: 100%;
   }
 }
 

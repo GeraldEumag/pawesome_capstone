@@ -33,6 +33,7 @@ import { formatCurrency } from "../../utils/currency";
 import { showError } from "../../utils/alert.jsx";
 import StandardReportLayout from "../shared/StandardReportLayout";
 import StandardTable from "../shared/StandardTable";
+import Modal from "../shared/Modal";
 import {
   exportToCSV,
   exportToPDF,
@@ -777,30 +778,23 @@ const CustomerReports = () => {
         </section>
 
         {selectedBooking && (
-          <div
-            className="cr-modal-overlay"
-            onClick={() => setSelectedBooking(null)}
+          <Modal
+            onClose={() => setSelectedBooking(null)}
+            title={selectedBooking.displayId}
+            subtitle="Booking Details"
+            icon={faEye}
+            size="lg"
+            className="cr-modal"
+            footer={
+              <button
+                type="button"
+                className="cr-secondary-btn"
+                onClick={() => setSelectedBooking(null)}
+              >
+                Close
+              </button>
+            }
           >
-            <div className="cr-modal" onClick={(event) => event.stopPropagation()}>
-              <div className="cr-modal-header">
-                <div>
-                  <span className="cr-eyebrow">
-                    <FontAwesomeIcon icon={faEye} />
-                    Booking Details
-                  </span>
-
-                  <h2>{selectedBooking.displayId}</h2>
-                </div>
-
-                <button
-                  type="button"
-                  className="cr-close-btn"
-                  onClick={() => setSelectedBooking(null)}
-                >
-                  <FontAwesomeIcon icon={faTimes} />
-                </button>
-              </div>
-
               <div className="cr-modal-body">
                 <div className="cr-detail-grid">
                   <DetailItem label="Customer" value={selectedBooking.customer_name} />
@@ -831,18 +825,7 @@ const CustomerReports = () => {
                   <pre>{JSON.stringify(selectedBooking.raw, null, 2)}</pre>
                 </details>
               </div>
-
-              <div className="cr-modal-actions">
-                <button
-                  type="button"
-                  className="cr-secondary-btn"
-                  onClick={() => setSelectedBooking(null)}
-                >
-                  Close
-                </button>
-              </div>
-            </div>
-          </div>
+          </Modal>
         )}
       </div>
     </StandardReportLayout>

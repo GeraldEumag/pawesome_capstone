@@ -1,8 +1,8 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { createPortal } from "react-dom";
 import { showConfirm } from "../../utils/alert.jsx";
 import { useAuth } from "../../context/AuthContext";
 import DatePickerInput from "../shared/DatePickerInput";
+import Modal from "../shared/Modal";
 import {
   FaArchive,
   FaCalendarAlt,
@@ -257,7 +257,6 @@ const CustomerPets = () => {
   const [addPetModalOpen, setAddPetModalOpen] = useState(false);
   const addPetTriggerRef = useRef(null);
   const addPetReturnFocusRef = useRef(null);
-  const addPetDialogRef = useRef(null);
   const addPetNameInputRef = useRef(null);
   const [editingPet, setEditingPet] = useState(null);
   const [editLoading, setEditLoading] = useState(false);
@@ -491,55 +490,9 @@ const CustomerPets = () => {
 
   useEffect(() => {
     if (!addPetModalOpen) return undefined;
-
-    const previousOverflow = document.body.style.overflow;
-    const previousPaddingRight = document.body.style.paddingRight;
-    const scrollbarWidth = window.innerWidth - document.documentElement.clientWidth;
-    document.body.style.overflow = "hidden";
-    if (scrollbarWidth > 0) {
-      const currentPadding = parseFloat(window.getComputedStyle(document.body).paddingRight) || 0;
-      document.body.style.paddingRight = `${currentPadding + scrollbarWidth}px`;
-    }
-
     const focusFrame = window.requestAnimationFrame(() => addPetNameInputRef.current?.focus());
-    const handleDialogKeyDown = (event) => {
-      const targetIsDatePicker = event.target?.closest?.(".react-datepicker__portal");
-      if (event.key === "Escape") {
-        if (targetIsDatePicker || document.querySelector(".react-datepicker__portal") || loadingRef.current) return;
-        event.preventDefault();
-        closeAddPetModal();
-        return;
-      }
-
-      if (event.key !== "Tab" || targetIsDatePicker) return;
-      const focusable = Array.from(addPetDialogRef.current?.querySelectorAll(
-        'button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])'
-      ) || []).filter((element) => !element.hasAttribute("hidden"));
-      if (!focusable.length) {
-        event.preventDefault();
-        addPetDialogRef.current?.focus();
-        return;
-      }
-
-      const first = focusable[0];
-      const last = focusable[focusable.length - 1];
-      if (event.shiftKey && (document.activeElement === first || !addPetDialogRef.current?.contains(document.activeElement))) {
-        event.preventDefault();
-        last.focus();
-      } else if (!event.shiftKey && (document.activeElement === last || !addPetDialogRef.current?.contains(document.activeElement))) {
-        event.preventDefault();
-        first.focus();
-      }
-    };
-
-    document.addEventListener("keydown", handleDialogKeyDown, true);
-    return () => {
-      window.cancelAnimationFrame(focusFrame);
-      document.removeEventListener("keydown", handleDialogKeyDown, true);
-      document.body.style.overflow = previousOverflow;
-      document.body.style.paddingRight = previousPaddingRight;
-    };
-  }, [addPetModalOpen, closeAddPetModal]);
+    return () => window.cancelAnimationFrame(focusFrame);
+  }, [addPetModalOpen]);
 
   const buildPetPayload = (data) => ({
     name: data.name?.trim(),
@@ -1063,43 +1016,32 @@ const CustomerPets = () => {
         </div>
       </div>
 
-      {addPetModalOpen && createPortal(
-        <div
-          className="pets-add-modal-overlay"
-          onClick={(event) => {
-            if (event.target === event.currentTarget && !loading) closeAddPetModal();
-          }}
-        >
-          <section
-            className="pets-add-modal"
-            ref={addPetDialogRef}
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby="pets-add-modal-title"
-            aria-describedby="pets-add-modal-description"
-            tabIndex={-1}
-          >
-            <header className="pets-add-modal-header">
-              <div className="pets-add-modal-heading">
-                <span className="pets-add-modal-icon"><FaPaw /></span>
-                <div>
-                  <span className="pets-eyebrow">Pet Profile</span>
-                  <h2 id="pets-add-modal-title">Add a new pet</h2>
-                  <p id="pets-add-modal-description">Register a pet so you can select them in bookings and keep their care details together.</p>
-                </div>
-              </div>
+      {addPetModalOpen && (
+        <Modal
+          onClose={closeAddPetModal}
+          closeOnBackdrop={!loading}
+          title="Add a new pet"
+          subtitle="Register a pet so you can select them in bookings and keep their care details together."
+          icon={<FaPaw />}
+          size="lg"
+          className="pets-add-modal"
+          footer={
+            <>
               <button
-                className="pets-add-modal-close"
+                className="pets-reset-btn"
                 type="button"
                 onClick={closeAddPetModal}
                 disabled={loading}
-                aria-label="Close Add New Pet dialog"
               >
-                <FaTimes />
+                Cancel
               </button>
-            </header>
-
-            <form className="pets-form pets-add-modal-form" onSubmit={handleSubmit} noValidate>
+              <button className="pets-submit-btn" type="submit" form="add-pet-form" disabled={loading}>
+                {loading ? <><FaSyncAlt className="spin" /> Saving...</> : <><FaPlus /> Add Pet</>}
+              </button>
+            </>
+          }
+        >
+            <form id="add-pet-form" className="pets-form pets-add-modal-form" onSubmit={handleSubmit} noValidate>
               <div className="pets-add-modal-body">
                 {addFormError && (
                   <div className="pets-add-modal-error" role="alert">
@@ -1118,55 +1060,41 @@ const CustomerPets = () => {
                   idPrefix="add-pet"
                 />
               </div>
-              <footer className="pets-add-modal-footer">
-                <button
-                  className="pets-reset-btn"
-                  type="button"
-                  onClick={closeAddPetModal}
-                  disabled={loading}
-                >
-                  Cancel
-                </button>
-                <button className="pets-submit-btn" type="submit" disabled={loading}>
-                  {loading ? <><FaSyncAlt className="spin" /> Saving...</> : <><FaPlus /> Add Pet</>}
-                </button>
-              </footer>
             </form>
-          </section>
-        </div>,
-        document.body
+        </Modal>
       )}
 
       {editingPet && (
-        <div className="pet-history-overlay" onClick={closeEditModal}>
-          <div
-            className="pet-history-modal"
-            onClick={(event) => event.stopPropagation()}
-          >
-            <div className="pet-history-header">
-              <div>
-                <span className="pets-eyebrow">
-                  <FaEdit />
-                  Edit Pet
-                </span>
-                <h2>{getPetName(editingPet)}</h2>
-                <p>
-                  {getPetSpecies(editingPet)} • {getPetBreed(editingPet)}
-                </p>
-              </div>
+        <Modal
+          onClose={closeEditModal}
+          title={getPetName(editingPet)}
+          subtitle={`Edit Pet — ${getPetSpecies(editingPet)} • ${getPetBreed(editingPet)}`}
+          icon={<FaEdit />}
+          size="lg"
+          className="pet-history-modal"
+          footer={
+            <>
+              <button
+                type="button"
+                className="pets-reset-btn"
+                onClick={closeEditModal}
+              >
+                Cancel
+              </button>
 
               <button
-                className="pet-history-close"
-                type="button"
-                onClick={closeEditModal}
-                aria-label="Close edit modal"
+                type="submit"
+                form="edit-pet-form"
+                className="pets-submit-btn"
+                disabled={editLoading}
               >
-                <FaTimes />
+                {editLoading ? "Saving..." : "Update Pet"}
               </button>
-            </div>
-
+            </>
+          }
+        >
             <div className="pet-history-body">
-              <form className="pets-form" onSubmit={handleUpdatePet}>
+              <form id="edit-pet-form" className="pets-form" onSubmit={handleUpdatePet}>
                 <PetFormFields
                   formData={formData}
                   formErrors={formErrors}
@@ -1176,57 +1104,20 @@ const CustomerPets = () => {
                   breedOptions={breedOptions}
                   idPrefix="edit-pet"
                 />
-
-                <div className="pets-form-actions">
-                  <button
-                    type="button"
-                    className="pets-reset-btn"
-                    onClick={closeEditModal}
-                  >
-                    Cancel
-                  </button>
-
-                  <button
-                    type="submit"
-                    className="pets-submit-btn"
-                    disabled={editLoading}
-                  >
-                    {editLoading ? "Saving..." : "Update Pet"}
-                  </button>
-                </div>
               </form>
             </div>
-          </div>
-        </div>
+        </Modal>
       )}
 
       {selectedPet && (
-        <div className="pet-history-overlay" onClick={closeMedicalHistory}>
-          <div
-            className="pet-history-modal"
-            onClick={(event) => event.stopPropagation()}
-          >
-            <div className="pet-history-header">
-              <div>
-                <span className="pets-eyebrow">
-                  <FaHeartbeat />
-                  Synced Veterinary Record
-                </span>
-                <h2>{getPetName(selectedPet)} Medical History</h2>
-                <p>
-                  {getPetSpecies(selectedPet)} • {getPetBreed(selectedPet)}
-                </p>
-              </div>
-
-              <button
-                className="pet-history-close"
-                type="button"
-                onClick={closeMedicalHistory}
-              >
-                <FaTimes />
-              </button>
-            </div>
-
+        <Modal
+          onClose={closeMedicalHistory}
+          title={`${getPetName(selectedPet)} Medical History`}
+          subtitle={`Synced Veterinary Record — ${getPetSpecies(selectedPet)} • ${getPetBreed(selectedPet)}`}
+          icon={<FaHeartbeat />}
+          size="lg"
+          className="pet-history-modal"
+        >
             <div className="pet-history-body">
               {historyLoading ? (
                 <div className="pet-history-state">
@@ -1320,18 +1211,7 @@ const CustomerPets = () => {
                 </div>
               )}
             </div>
-
-            <div className="pet-history-footer">
-              <button
-                className="pets-reset-btn"
-                type="button"
-                onClick={closeMedicalHistory}
-              >
-                Close
-              </button>
-            </div>
-          </div>
-        </div>
+        </Modal>
       )}
     </section>
   );

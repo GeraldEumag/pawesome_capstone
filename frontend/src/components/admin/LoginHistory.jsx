@@ -23,6 +23,7 @@ import DatePickerInput from "../shared/DatePickerInput";
 import { formatDateOnly, parseDateOnly } from "../../utils/date";
 import { exportToCSV, exportToPDF, exportToExcel } from "../../utils/reportExport";
 import RowActionPopover from "../shared/RowActionPopover";
+import Modal from "../shared/Modal";
 import "./LoginHistory.css";
 
 const STAFF_ROLE_OPTIONS = [
@@ -653,26 +654,23 @@ const LoginHistory = () => {
       </section>
 
       {selectedLog && (
-        <div className="lh-modal-overlay" onClick={() => setSelectedLog(null)}>
-          <div className="lh-modal" onClick={(e) => e.stopPropagation()}>
-            <div className="lh-modal-header">
-              <div>
-                <span className="lh-eyebrow">
-                  <FontAwesomeIcon icon={faCircleInfo} />
-                  Session Details
-                </span>
-                <h3>{selectedLog.user?.name || "Unknown User"}</h3>
-              </div>
-              <button
-                type="button"
-                className="lh-close-btn"
-                onClick={() => setSelectedLog(null)}
-              >
-                <FontAwesomeIcon icon={faTimes} />
-              </button>
-            </div>
-
-            <div className="lh-modal-body">
+        <Modal
+          onClose={() => setSelectedLog(null)}
+          title={selectedLog.user?.name || "Unknown User"}
+          subtitle="Session Details"
+          icon={faCircleInfo}
+          size="lg"
+          footer={
+            <button
+              type="button"
+              className="lh-secondary-btn"
+              onClick={() => setSelectedLog(null)}
+            >
+              Close
+            </button>
+          }
+        >
+          <div className="lh-modal-body">
               <div className="lh-detail-top">
                 <span className="lh-detail-avatar">
                   {getUserInitials(selectedLog.user?.name)}
@@ -734,19 +732,8 @@ const LoginHistory = () => {
                 <small>User Agent</small>
                 <code>{selectedLog.user_agent || "N/A"}</code>
               </div>
-            </div>
-
-            <div className="lh-modal-actions">
-              <button
-                type="button"
-                className="lh-secondary-btn"
-                onClick={() => setSelectedLog(null)}
-              >
-                Close
-              </button>
-            </div>
           </div>
-        </div>
+        </Modal>
       )}
     </div>
   );

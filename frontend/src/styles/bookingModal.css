@@ -365,7 +365,7 @@
 .hbk-btn.reject { background: #ef4444; color: #fff; }
 .hbk-btn.checkin { background: #f97316; color: #fff; }
 .hbk-btn.checkout { background: #ef4444; color: #fff; }
-.hbk-btn.start { background: #8b5cf6; color: #fff; }
+.hbk-btn.start { background: var(--color-primary); color: #fff; }
 .hbk-btn.complete { background: #10b981; color: #fff; }
 
 .hbk-btn:hover:not(:disabled) {

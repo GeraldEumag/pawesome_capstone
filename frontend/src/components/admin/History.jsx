@@ -266,7 +266,7 @@ const History = () => {
       exportColumns={exportColumns}
       exportFilename="admin-audit-history"
       exportTitle="Admin Audit Trail History"
-      roleAccent="#ff5f93"
+      roleAccent="var(--color-primary)"
       roleLabel="Audit Trail Center"
       emptyMessage="No history data found. Adjust filters or refresh records."
       searchTerm={searchTerm}

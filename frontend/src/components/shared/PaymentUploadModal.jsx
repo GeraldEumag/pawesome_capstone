@@ -1,8 +1,8 @@
 import { useState, useEffect } from "react";
-import { createPortal } from "react-dom";
 import gcashQr from "../../assets/PAWESOME TEST GCASH.png";
 import { apiRequest } from "../../api/client";
 import { showSuccess, showError } from "../../utils/alert.jsx";
+import Modal from "./Modal";
 import "./PaymentUploadModal.css";
 
 const PAYMENT_METHODS = [
@@ -29,28 +29,6 @@ const PaymentUploadModal = ({ open, onClose, onSuccess, endpoint, title, referen
     setPaymentMethod(PAYMENT_METHODS.some((option) => option.value === method) ? method : "gcash");
     setError("");
   }, [open, endpoint, previousPaymentMethod]);
-
-  // Lock body scroll when modal opens
-  useEffect(() => {
-    if (open) {
-      document.body.style.overflow = "hidden";
-      document.body.style.position = "fixed";
-      document.body.style.width = "100%";
-      document.body.style.top = "0";
-    } else {
-      document.body.style.overflow = "";
-      document.body.style.position = "";
-      document.body.style.width = "";
-      document.body.style.top = "";
-    }
-
-    return () => {
-      document.body.style.overflow = "";
-      document.body.style.position = "";
-      document.body.style.width = "";
-      document.body.style.top = "";
-    };
-  }, [open]);
 
   if (!open) return null;
 
@@ -116,22 +94,34 @@ const PaymentUploadModal = ({ open, onClose, onSuccess, endpoint, title, referen
 
   const canConfirm = !!file && referenceNumber.trim().length > 0 && !uploading;
 
-  return createPortal(
-    <div className="pum-overlay" onClick={handleClose}>
-      <div className="pum-modal" onClick={(e) => e.stopPropagation()}>
-        <div className="pum-header">
-          <h3 className="pum-title">Payment — {title}</h3>
+  return (
+    <Modal
+      isOpen={open}
+      onClose={handleClose}
+      title={`Payment — ${title}`}
+      size="md"
+      className="pum-modal"
+      footer={(
+        <>
           <button
             type="button"
-            className="pum-close"
+            className="pum-cancel-btn"
             onClick={handleClose}
-            aria-label="Close"
           >
-            ×
+            Cancel
           </button>
-        </div>
-
-        <div className="pum-body">
+          <button
+            type="button"
+            className="pum-confirm-btn"
+            disabled={!canConfirm}
+            onClick={handleConfirm}
+          >
+            {uploading ? "Submitting…" : "Confirm & Upload"}
+          </button>
+        </>
+      )}
+    >
+      <div className="pum-body">
           {amount !== null && Number.isFinite(Number(amount)) && (
             <div className="pum-amount">
               <span>Full booking total</span>
@@ -238,28 +228,8 @@ const PaymentUploadModal = ({ open, onClose, onSuccess, endpoint, title, referen
           </div>
 
           {error && <p className="pum-error">{error}</p>}
-        </div>
-
-        <div className="pum-footer">
-          <button
-            type="button"
-            className="pum-cancel-btn"
-            onClick={handleClose}
-          >
-            Cancel
-          </button>
-          <button
-            type="button"
-            className="pum-confirm-btn"
-            disabled={!canConfirm}
-            onClick={handleConfirm}
-          >
-            {uploading ? "Submitting…" : "Confirm & Upload"}
-          </button>
-        </div>
       </div>
-    </div>,
-    document.body
+    </Modal>
   );
 };
 

@@ -1,5 +1,8 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faClockRotateLeft } from "@fortawesome/free-solid-svg-icons";
 import { exportToCSV, exportToPDF, exportToExcel } from "../../utils/reportExport";
+import Modal from "./Modal";
 import "./HistoryTimeline.css";
 
 const fmt = (v) =>
@@ -43,7 +46,7 @@ const HistoryTimeline = ({
   exportColumns,
   exportFilename = "history",
   exportTitle = "Activity History",
-  roleAccent = "#6366f1",
+  roleAccent = "var(--color-primary)",
   roleLabel = "History",
   emptyMessage = "No history records found.",
   searchTerm,
@@ -384,14 +387,18 @@ const HistoryTimeline = ({
 
       {/* Detail Modal */}
       {selectedEntry && (
-        <div className="ht-modal-overlay" onClick={closeDetail}>
-          <div className="ht-modal" onClick={(e) => e.stopPropagation()}>
-            <div className="ht-modal-header">
-              <h3>{fmt(selectedEntry.action || selectedEntry.type || "Activity Detail")}</h3>
-              <button className="ht-modal-close" onClick={closeDetail} type="button">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-              </button>
-            </div>
+        <Modal
+          onClose={closeDetail}
+          title={fmt(selectedEntry.action || selectedEntry.type || "Activity Detail")}
+          icon={faClockRotateLeft}
+          size="lg"
+          className="ht-modal"
+          footer={
+            <button className="ht-btn ht-btn-secondary" onClick={closeDetail} type="button">
+              Close
+            </button>
+          }
+        >
             <div className="ht-modal-body">
               <div className="ht-detail-grid">
                 {[
@@ -435,13 +442,7 @@ const HistoryTimeline = ({
                 )}
               </div>
             </div>
-            <div className="ht-modal-footer">
-              <button className="ht-btn ht-btn-secondary" onClick={closeDetail} type="button">
-                Close
-              </button>
-            </div>
-          </div>
-        </div>
+        </Modal>
       )}
     </div>
   );

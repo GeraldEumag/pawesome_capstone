@@ -6,6 +6,7 @@ import { useRealTimeSync } from "../../hooks/useRealTimeSync";
 import { showError } from "../../utils/alert.jsx";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import DatePickerInput from "../../components/shared/DatePickerInput";
+import Modal from "../../components/shared/Modal";
 import StandardTable from "../../components/shared/StandardTable";
 import ReportSkeleton from "../../components/shared/ReportSkeleton";
 import {
@@ -440,22 +441,23 @@ const CustomerReport = () => {
 
       {/* Customer Detail Modal */}
       {showDetailModal && selectedCustomer && (
-        <div className="modal-overlay" onClick={() => setShowDetailModal(false)}>
-          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-            <div className="modal-header">
-              <h2>
-                <FontAwesomeIcon icon={faUser} />
-                Customer Details
-              </h2>
-              <button
-                className="modal-close"
-                onClick={() => setShowDetailModal(false)}
-              >
-                ×
-              </button>
-            </div>
-            
-            <div className="modal-body">
+        <Modal
+          onClose={() => setShowDetailModal(false)}
+          title="Customer Details"
+          subtitle="Profile, orders, and service requests"
+          icon={faUser}
+          size="lg"
+          footer={
+            <button
+              className="btn btn-secondary"
+              type="button"
+              onClick={() => setShowDetailModal(false)}
+            >
+              Close
+            </button>
+          }
+        >
+            <div className="crp-modal-body">
               <div className="customer-info-section">
                 <h3>Customer Information</h3>
                 <div className="info-grid">
@@ -549,17 +551,7 @@ const CustomerReport = () => {
                 </div>
               </div>
             </div>
-            <div className="modal-footer">
-              <button
-                className="btn btn-secondary"
-                type="button"
-                onClick={() => setShowDetailModal(false)}
-              >
-                Close
-              </button>
-            </div>
-          </div>
-        </div>
+        </Modal>
       )}
     </div>
   );

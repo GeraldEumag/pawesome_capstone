@@ -1,17 +1,4 @@
-/* ManualPayrollModal.css */
 
-.mpm-overlay {
-  position: fixed;
-  inset: 0;
-  z-index: 9000;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 1rem;
-  background: rgba(0, 0, 0, 0.45);
-  backdrop-filter: blur(6px);
-  overflow-y: auto;
-}
 
 .mpm-dialog {
   width: 100%;
@@ -30,56 +17,6 @@
 @keyframes mpmFadeIn {
   from { opacity: 0; transform: translateY(14px) scale(0.985); }
   to   { opacity: 1; transform: translateY(0) scale(1); }
-}
-
-/* Header */
-
-.mpm-header {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 1rem;
-  padding: 1.15rem 1.5rem 0.6rem;
-  border-bottom: 1px solid rgba(255, 95, 147, 0.14);
-}
-
-.mpm-eyebrow {
-  display: inline-flex;
-  align-items: center;
-  padding: 0.25rem 0.65rem;
-  border-radius: 999px;
-  background: rgba(255, 95, 147, 0.1);
-  color: #ff5f93;
-  font-size: 0.68rem;
-  font-weight: 950;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-}
-
-.mpm-header h2 {
-  margin: 0.35rem 0 0;
-  color: #191919;
-  font-size: 1.35rem;
-  font-weight: 950;
-}
-
-.mpm-close {
-  width: 36px;
-  height: 36px;
-  display: grid;
-  place-items: center;
-  border: none;
-  border-radius: 10px;
-  background: #f1f5f9;
-  color: #64748b;
-  cursor: pointer;
-  transition: 0.15s ease;
-  flex-shrink: 0;
-}
-
-.mpm-close:hover {
-  background: #fee2e2;
-  color: #ef4444;
 }
 
 /* Alert */
@@ -342,18 +279,6 @@
 
 .mpm-total-card.net strong { color: #047857; }
 
-/* Footer */
-
-.mpm-footer {
-  display: flex;
-  align-items: center;
-  justify-content: flex-end;
-  gap: 0.65rem;
-  padding: 0.85rem 1.5rem;
-  border-top: 1px solid rgba(255, 95, 147, 0.14);
-  background: rgba(255, 255, 255, 0.7);
-}
-
 .mpm-btn {
   min-height: 42px;
   display: inline-flex;
@@ -409,23 +334,6 @@
   .mpm-row-inner {
     grid-template-columns: 1fr;
   }
-}
-
-/* ===== New sections (v2) ===== */
-
-/* Header right (status badge + close) */
-.mpm-header-right {
-  display: flex;
-  align-items: center;
-  gap: 0.65rem;
-}
-
-.mpm-payroll-id {
-  display: block;
-  margin-top: 0.2rem;
-  font-size: 0.72rem;
-  font-weight: 700;
-  color: #94a3b8;
 }
 
 /* Status badge */
@@ -766,8 +674,5 @@
   }
   .mpm-section {
     padding: 0.65rem 0.75rem;
-  }
-  .mpm-footer {
-    flex-wrap: wrap;
   }
 }

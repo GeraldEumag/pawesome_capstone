@@ -9,7 +9,9 @@ import {
   faScaleBalanced,
 } from "@fortawesome/free-solid-svg-icons";
 import { apiRequest } from "../../api/client";
+import { showConfirm } from "../../utils/alert.jsx";
 import DatePickerInput from "../shared/DatePickerInput";
+import Modal from "../shared/Modal";
 import { formatDateOnly, parseDateOnly } from "../../utils/date";
 import RowActionPopover from "../shared/RowActionPopover";
 import "./SalaryLoanManagement.css";
@@ -70,7 +72,7 @@ const SalaryLoanManagement = () => {
   };
 
   const cancel = async (id) => {
-    if (!window.confirm("Cancel this loan?")) return;
+    if (!(await showConfirm("Cancel this loan?", "Cancel Loan", "Yes, Cancel", "Keep", "warning", true))) return;
     await apiRequest(`/manager/salary-loans/${id}`, { method: "DELETE" }).catch(() => {});
     load();
   };
@@ -218,15 +220,21 @@ const SalaryLoanManagement = () => {
 
       {/* Modal */}
       {showForm && (
-        <div className="slm-overlay" onClick={(e) => e.target === e.currentTarget && closeForm()}>
-          <div className="slm-modal">
-            <div className="slm-modal-header">
-              <h4>New Loan / Cash Advance</h4>
-              <button className="slm-modal-close" onClick={closeForm}>
-                <FontAwesomeIcon icon={faXmark} />
+        <Modal
+          onClose={closeForm}
+          title="New Loan / Cash Advance"
+          subtitle="Salary Loan Management"
+          icon={faHandHoldingDollar}
+          className="slm-modal"
+          footer={
+            <>
+              <button className="slm-btn secondary" onClick={closeForm}>Cancel</button>
+              <button className="slm-btn primary" onClick={save} disabled={saving}>
+                {saving ? "Saving…" : "Create Loan"}
               </button>
-            </div>
-
+            </>
+          }
+        >
             <div className="slm-modal-body">
               {msg && (
                 <div className="slm-modal-error">
@@ -304,15 +312,7 @@ const SalaryLoanManagement = () => {
                 />
               </div>
             </div>
-
-            <div className="slm-modal-footer">
-              <button className="slm-btn secondary" onClick={closeForm}>Cancel</button>
-              <button className="slm-btn primary" onClick={save} disabled={saving}>
-                {saving ? "Saving…" : "Create Loan"}
-              </button>
-            </div>
-          </div>
-        </div>
+        </Modal>
       )}
     </div>
   );

@@ -618,61 +618,7 @@
   font-weight: 750;
 }
 
-/* MODAL */
-
-.mu-modal-overlay {
-  position: fixed;
-  inset: 0;
-  z-index: 12000;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 1rem;
-  background: rgba(15, 23, 42, 0.5);
-  backdrop-filter: blur(10px);
-}
-
-.mu-modal {
-  width: min(680px, 100%);
-  max-height: 92vh;
-  overflow-y: auto;
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-card);
-  background: var(--color-surface-solid);
-  box-shadow: 0 30px 90px rgba(15, 23, 42, 0.26);
-}
-
-.mu-modal-header {
-  display: flex;
-  justify-content: space-between;
-  gap: 1rem;
-  padding: 1.35rem;
-  border-bottom: 1px solid var(--color-border);
-}
-
-.mu-modal-header h3 {
-  margin: 0;
-  color: var(--color-heading);
-  font-size: 1.45rem;
-  font-weight: 950;
-}
-
-.close-btn {
-  width: 42px;
-  height: 42px;
-  min-width: 42px;
-  border: 1px solid var(--color-border);
-  border-radius: 14px;
-  background: var(--color-surface);
-  color: var(--color-heading);
-  cursor: pointer;
-  transition: 0.2s ease;
-}
-
-.close-btn:hover {
-  background: var(--color-primary);
-  color: #ffffff;
-}
+/* MODAL (shell now provided by shared Modal) */
 
 .mu-modal-body {
   padding: 1.35rem;
@@ -875,19 +821,6 @@
   box-shadow: 0 0 0 3px rgba(255, 95, 147, 0.14);
 }
 
-.mu-modal-actions {
-  display: flex;
-  justify-content: flex-end;
-  gap: 0.75rem;
-  padding: 1rem 1.35rem;
-  border-top: 1px solid var(--color-border);
-}
-
-.mu-modal-actions button:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
-  transform: none;
-}
 
 /* DARK MODE */
 
@@ -954,19 +887,9 @@
     align-items: flex-start;
   }
 
-  .mu-modal-actions {
-    flex-direction: column;
-  }
-
-  .mu-modal-actions button {
-    width: 100%;
-  }
 }
 
 @media (max-width: 480px) {
-  .mu-modal {
-    border-radius: 22px;
-  }
 
   .mu-user-detail-top {
     flex-direction: column;

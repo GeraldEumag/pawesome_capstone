@@ -24,6 +24,7 @@ import {
 import { apiRequest } from "../../api/client";
 import { exportToCSV, exportToPDF, exportToExcel } from "../../utils/reportExport";
 import RowActionPopover from "../shared/RowActionPopover";
+import Modal from "../shared/Modal";
 import "./ManagerLeave.css";
 
 const LEAVE_TYPES = [
@@ -430,19 +431,26 @@ const ManagerLeave = () => {
       )}
 
       {actionModal && selectedRecord && (
-        <div className="leave-modal-overlay">
-          <div className="leave-modal">
-            <div className="leave-modal-header">
-              <div>
-                <span className="leave-eyebrow">{actionModal === "approve" ? "Approve Leave" : "Reject Leave"}</span>
-                <h2>{selectedRecord.employee_name}</h2>
-              </div>
-              <button type="button" onClick={() => { setActionModal(null); setSelectedRecord(null); setRemarks(""); }}><FontAwesomeIcon icon={faXmark} /></button>
-            </div>
+        <Modal
+          onClose={() => { setActionModal(null); setSelectedRecord(null); setRemarks(""); }}
+          title={selectedRecord.employee_name}
+          subtitle={actionModal === "approve" ? "Approve Leave" : "Reject Leave"}
+          icon={actionModal === "approve" ? faThumbsUp : faThumbsDown}
+          className="leave-modal"
+          footer={
+            <>
+              <button type="button" className="leave-btn secondary" onClick={() => { setActionModal(null); setSelectedRecord(null); setRemarks(""); }}>Cancel</button>
+              <button type="button" className={`leave-btn ${actionModal === "approve" ? "success" : "danger"}`} onClick={handleAction} disabled={actionLoading}>
+                <FontAwesomeIcon icon={actionLoading ? faSpinner : actionModal === "approve" ? faThumbsUp : faThumbsDown} spin={actionLoading} />
+                {actionLoading ? "Processing..." : actionModal === "approve" ? "Approve" : "Reject"}
+              </button>
+            </>
+          }
+        >
             <div className="leave-modal-body">
               <p>{getLeaveTypeMeta(selectedRecord.type).label} — {formatDate(selectedRecord.start_date)} to {formatDate(selectedRecord.end_date)}</p>
               {selectedRecord.days_counted != null && (
-                <p style={{ fontSize: "0.85rem", color: "#7c3aed", marginBottom: 4 }}>
+                <p style={{ fontSize: "0.85rem", color: "var(--color-primary)", marginBottom: 4 }}>
                   Days counted: <strong>{selectedRecord.days_counted}</strong>
                 </p>
               )}
@@ -459,15 +467,7 @@ const ManagerLeave = () => {
                 <textarea rows={4} value={remarks} onChange={(e) => setRemarks(e.target.value)} placeholder={actionModal === "reject" ? "Enter reason for rejection..." : "Add remarks..."} />
               </label>
             </div>
-            <div className="leave-modal-footer">
-              <button type="button" className="leave-btn secondary" onClick={() => { setActionModal(null); setSelectedRecord(null); setRemarks(""); }}>Cancel</button>
-              <button type="button" className={`leave-btn ${actionModal === "approve" ? "success" : "danger"}`} onClick={handleAction} disabled={actionLoading}>
-                <FontAwesomeIcon icon={actionLoading ? faSpinner : actionModal === "approve" ? faThumbsUp : faThumbsDown} spin={actionLoading} />
-                {actionLoading ? "Processing..." : actionModal === "approve" ? "Approve" : "Reject"}
-              </button>
-            </div>
-          </div>
-        </div>
+        </Modal>
       )}
 
       {toast && (

@@ -1,0 +1,34 @@
+# Pawesome local MySQL — Docker fallback for XAMPP MySQL.
+#
+# When XAMPP MySQL fails: stop it in the XAMPP control panel (frees port 3306),
+# then run `docker compose up -d`. Credentials match backend/.env exactly
+# (127.0.0.1:3306, database=pawesome, user=root, empty password), so no
+# .env changes are needed.
+#
+# First run on a fresh volume: cd backend && php artisan migrate --seed
+# Data persists in the `pawesome-mysql-data` volume across restarts.
+# Note: this database is SEPARATE from XAMPP's — it does not see XAMPP data.
+
+services:
+  mysql:
+    image: mysql:8.0
+    container_name: pawesome-mysql
+    # No restart policy: this is an on-demand fallback. It must not auto-start
+    # with Docker Desktop, or it would claim port 3306 and block XAMPP MySQL.
+    ports:
+      - "127.0.0.1:3306:3306"
+    environment:
+      MYSQL_ALLOW_EMPTY_PASSWORD: "yes"
+      MYSQL_DATABASE: pawesome
+    volumes:
+      - pawesome-mysql-data:/var/lib/mysql
+      - ./docker/mysql/init:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "127.0.0.1", "-u", "root", "--silent"]
+      interval: 5s
+      timeout: 5s
+      retries: 30
+      start_period: 20s
+
+volumes:
+  pawesome-mysql-data:

@@ -31,7 +31,7 @@ import { showConfirm, showReasonPrompt, BOOKING_REJECT_REASONS } from "../../uti
 import { exportToCSV, exportToPDF, exportToExcel } from "../../utils/reportExport";
 import { useUnifiedRequests } from "./hooks/useUnifiedRequests";
 import RowActionPopover from "../shared/RowActionPopover";
-import NewWalkInBookingModal from "./modals/NewWalkInBookingModal";
+import WalkInBookingModal from "./modals/WalkInBookingModal";
 import ServiceManagerModal from "./ServiceManagerModal";
 import {
   formatDate,
@@ -854,7 +854,7 @@ const ReceptionistAppointmentsBoarding = () => {
 
       {/* Detail Modal */}
       {showBookingModal && (
-        <NewWalkInBookingModal
+        <WalkInBookingModal
           onClose={() => setShowBookingModal(false)}
           onSuccess={() => {
             setShowBookingModal(false);

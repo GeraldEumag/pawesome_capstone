@@ -742,52 +742,6 @@
   font-size: 0.82rem;
 }
 
-.report-modal-overlay {
-  backdrop-filter: blur(10px);
-}
-
-.report-detail-modal {
-  width: min(820px, 94vw);
-  border-radius: var(--report-radius-card);
-  border: 1px solid var(--report-border);
-  background: var(--report-surface-solid);
-  box-shadow: 0 30px 90px rgba(15, 23, 42, 0.26);
-}
-
-.report-detail-modal .modal-header {
-  display: flex;
-  justify-content: space-between;
-  padding: 1.25rem;
-  border-bottom: 1px solid var(--report-border);
-}
-
-.report-detail-modal .modal-header h2 {
-  margin: 0;
-  color: var(--report-heading);
-}
-
-.report-detail-modal .modal-close {
-  width: 42px;
-  height: 42px;
-  border: 1px solid var(--report-border);
-  border-radius: 14px;
-  background: var(--report-surface);
-  color: var(--report-heading);
-  cursor: pointer;
-}
-
-.report-detail-modal .modal-body {
-  padding: 1.25rem;
-  max-height: 65vh;
-  overflow-y: auto;
-}
-
-.report-detail-modal .modal-footer {
-  display: flex;
-  justify-content: flex-end;
-  padding: 1rem 1.25rem;
-  border-top: 1px solid var(--report-border);
-}
 
 .info-grid {
   display: grid;

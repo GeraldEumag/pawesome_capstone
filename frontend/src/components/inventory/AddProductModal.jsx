@@ -4,6 +4,7 @@ import { inventoryApi } from "../../api/inventory.jsx";
 import { formatCurrency } from "../../utils/currency";
 import { formatDateOnly, parseDateOnly } from "../../utils/date";
 import DatePickerInput from "../shared/DatePickerInput";
+import Modal from "../shared/Modal";
 import QrScanner from "../shared/QrScanner";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
@@ -364,24 +365,47 @@ const AddProductModal = ({ isOpen, onClose, onSuccess, editItem = null }) => {
     { num: 3, label: "Supplier & Review", icon: faClipboardCheck },
   ];
 
-  return (
-    <div className="modal-overlay" onClick={onClose}>
-      <div className="modal-content product-modal" onClick={(e) => e.stopPropagation()}>
-        <div className="modal-header">
-          <div className="modal-title">
-            <span className="modal-icon">
-              <FontAwesomeIcon icon={editItem ? faEdit : faBoxOpen} />
-            </span>
-            <div>
-              <h3>{editItem ? "Edit Product" : "Add New Product"}</h3>
-              <p>{editItem ? "Update product details" : "Create a new inventory item"}</p>
-            </div>
-          </div>
-          <button className="btn-close" onClick={onClose} aria-label="Close">
-            ×
-          </button>
-        </div>
+  const footer = (
+    <>
+      <button type="button" className="btn-cancel" onClick={onClose} disabled={loading}>
+        Cancel
+      </button>
+      {currentStep > 1 && (
+        <button type="button" className="btn-cancel" onClick={prevStep} disabled={loading}>
+          <FontAwesomeIcon icon={faChevronLeft} /> Back
+        </button>
+      )}
+      {currentStep < TOTAL_STEPS ? (
+        <button type="button" className="btn-submit" onClick={nextStep}>
+          Next <FontAwesomeIcon icon={faChevronRight} />
+        </button>
+      ) : (
+        <button type="submit" form="apm-form" className="btn-submit" disabled={loading}>
+          {loading ? (
+            <>
+              <span className="spinner"></span>
+              {editItem ? "Saving..." : "Creating..."}
+            </>
+          ) : editItem ? (
+            "Save Changes"
+          ) : (
+            "Create Product"
+          )}
+        </button>
+      )}
+    </>
+  );
 
+  return (
+    <Modal
+      onClose={onClose}
+      title={editItem ? "Edit Product" : "Add New Product"}
+      subtitle={editItem ? "Update product details" : "Create a new inventory item"}
+      icon={editItem ? faEdit : faBoxOpen}
+      size="lg"
+      className="product-modal"
+      footer={footer}
+    >
         {/* Step Indicator */}
         <div className="step-indicator">
           {steps.map((step, idx) => (
@@ -405,13 +429,13 @@ const AddProductModal = ({ isOpen, onClose, onSuccess, editItem = null }) => {
           ))}
         </div>
 
-        <form onSubmit={handleSubmit} onKeyDown={(e) => {
+        <form id="apm-form" onSubmit={handleSubmit} onKeyDown={(e) => {
           if (e.key === 'Enter' && currentStep < TOTAL_STEPS) {
             e.preventDefault();
             nextStep();
           }
         }}>
-          <div className="modal-body">
+          <div className="apm-modal-body">
             {errors.submit && <div className="error-banner">{errors.submit}</div>}
 
             {/* STEP 1: Basic Information */}
@@ -973,38 +997,8 @@ const AddProductModal = ({ isOpen, onClose, onSuccess, editItem = null }) => {
               </div>
             )}
           </div>
-
-          <div className="modal-footer step-footer">
-            <button type="button" className="btn-cancel" onClick={onClose} disabled={loading}>
-              Cancel
-            </button>
-            {currentStep > 1 && (
-              <button type="button" className="btn-cancel" onClick={prevStep} disabled={loading}>
-                <FontAwesomeIcon icon={faChevronLeft} /> Back
-              </button>
-            )}
-            {currentStep < TOTAL_STEPS ? (
-              <button type="button" className="btn-submit" onClick={nextStep}>
-                Next <FontAwesomeIcon icon={faChevronRight} />
-              </button>
-            ) : (
-              <button type="submit" className="btn-submit" disabled={loading}>
-                {loading ? (
-                  <>
-                    <span className="spinner"></span>
-                    {editItem ? "Saving..." : "Creating..."}
-                  </>
-                ) : editItem ? (
-                  "Save Changes"
-                ) : (
-                  "Create Product"
-                )}
-              </button>
-            )}
-          </div>
         </form>
-      </div>
-    </div>
+    </Modal>
   );
 };
 

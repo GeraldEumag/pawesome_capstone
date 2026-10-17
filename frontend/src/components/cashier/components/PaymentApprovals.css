@@ -648,75 +648,19 @@
   cursor: default;
 }
 
-/* ── Modal ── */
-.pa-modal-overlay {
-  position: fixed;
-  inset: 0;
-  background: rgba(15,23,42,.55);
-  backdrop-filter: blur(4px);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 1000;
-  padding: 20px;
-  animation: pa-fade-in 0.18s ease;
-}
-
-.pa-modal {
-  background: #fff;
-  border-radius: 18px;
-  max-width: 640px;
-  width: 100%;
-  max-height: 90vh;
-  overflow: hidden;
-  box-shadow: 0 24px 60px rgba(0,0,0,.22);
-  display: flex;
-  flex-direction: column;
-  animation: pa-pop-in 0.2s ease;
-}
-
+/* ── Modal (shell via shared Modal; .pa-modal sits on .pw-modal) ── */
+.pa-modal { max-width: 640px; }
 .pa-proof-modal  { max-width: 640px; }
 .pa-receipt-modal { max-width: 480px; }
 
-.pa-modal-header {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  padding: 18px 22px 14px;
-  border-bottom: 1px solid rgba(255,95,147,.12);
-  flex-shrink: 0;
-}
-
-.pa-modal-header h3 {
-  margin: 0 0 2px;
-  font-size: 1.05rem;
-  font-weight: 800;
-  color: var(--color-heading, #191919);
-}
+/* avoid double padding: pw-modal-body wraps .pa-modal-body */
+.pa-modal .pw-modal-body { padding: 0; }
 
 .pa-modal-sub {
   font-size: 0.82rem;
   color: var(--color-muted, #64748b);
   margin: 0;
 }
-
-.pa-modal-close {
-  width: 28px;
-  height: 28px;
-  border-radius: 7px;
-  border: none;
-  background: #f1f5f9;
-  color: var(--color-muted, #64748b);
-  font-size: 14px;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: all 0.12s;
-  flex-shrink: 0;
-}
-
-.pa-modal-close:hover { background: #fee2e2; color: #dc2626; }
 
 .pa-modal-body {
   padding: 18px 22px;
@@ -876,22 +820,22 @@
 }
 .pa-reference-section > * + * { margin-top: 10px; }
 
-/* Modal footer */
-.pa-modal-footer {
+/* Modal footer (provided by shared Modal) */
+.pa-modal .pw-modal-footer {
   display: flex;
   flex-wrap: wrap;
   gap: 10px;
-  padding: 14px 22px 18px;
-  border-top: 1px solid rgba(255,95,147,.1);
   background: #fafbfc;
-  flex-shrink: 0;
 }
 
 /* Flex the verify/reject to fill available space in footer */
-.pa-modal-footer .pa-btn-reject,
-.pa-modal-footer .pa-btn-verify { flex: 1; }
-.pa-modal-footer .pa-btn-secondary,
-.pa-modal-footer .pa-btn-primary { flex: 1; }
+.pa-modal .pw-modal-footer .pa-btn-reject,
+.pa-modal .pw-modal-footer .pa-btn-verify { flex: 1; }
+.pa-modal .pw-modal-footer .pa-btn-secondary,
+.pa-modal .pw-modal-footer .pa-btn-primary { flex: 1; }
+
+/* Receipt modal body: receipt sits directly in pw-modal-body */
+.pa-receipt-modal .pw-modal-body { padding: 1rem 1.25rem; background: #fff; }
 
 /* ── Receipt — B&W Thermal Design ── */
 .pa-receipt {
@@ -976,8 +920,8 @@
   max-height: calc(100dvh - 24px);
 }
 
-.pa-proof-modal--cash .pa-modal-header { padding: 14px 18px 10px; }
-.pa-proof-modal--cash .pa-modal-footer { padding: 10px 18px 14px; }
+.pa-proof-modal--cash .pw-modal-header { padding: 14px 18px 10px; }
+.pa-proof-modal--cash .pw-modal-footer { padding: 10px 18px 14px; }
 
 .pa-cash-collect {
   display: flex;
@@ -1109,8 +1053,8 @@
 
 /* Short laptop screens — keep the whole cash pad visible */
 @media (max-height: 720px) {
-  .pa-proof-modal--cash .pa-modal-header { padding: 10px 18px 8px; }
-  .pa-proof-modal--cash .pa-modal-footer { padding: 8px 18px 10px; }
+  .pa-proof-modal--cash .pw-modal-header { padding: 10px 18px 8px; }
+  .pa-proof-modal--cash .pw-modal-footer { padding: 8px 18px 10px; }
   .pa-cash-collect { gap: 8px; padding: 8px 18px 6px; }
   .pa-numpad-key { height: 38px; font-size: 1.05rem; }
   .pa-bill-btn { height: 28px; }
@@ -1140,9 +1084,9 @@
   .pa-stat-card { padding: 12px 14px; gap: 10px; }
   .pa-stat-icon { width: 38px; height: 38px; }
 
-  .pa-modal-overlay { padding: 12px; }
+  
   .pa-modal { max-height: calc(100dvh - 24px); }
-  .pa-modal-footer { flex-wrap: wrap; }
+  .pa-modal .pw-modal-footer { flex-wrap: wrap; }
 
   /* Verify / reject stay comfortably tappable */
   .pa-card-actions { flex-wrap: wrap; }
@@ -1150,8 +1094,8 @@
 }
 
 @media print {
-  .pa-modal-overlay { background: #fff !important; position: static !important; padding: 0 !important; display: block !important; }
+  .pw-modal-overlay { background: #fff !important; position: static !important; padding: 0 !important; display: block !important; }
   .pa-modal { box-shadow: none !important; max-height: none !important; border: none !important; border-radius: 0 !important; width: 100% !important; max-width: 100% !important; }
-  .pa-modal-footer, .pa-modal-header, .pa-modal-close { display: none !important; }
+  .pa-modal .pw-modal-footer, .pa-modal .pw-modal-header { display: none !important; }
   .pa-receipt { padding: 20px !important; }
 }

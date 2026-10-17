@@ -1,16 +1,4 @@
-/* FingerprintEnrollment.css */
 
-.fpe-overlay {
-  position: fixed;
-  inset: 0;
-  z-index: 9000;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 1rem;
-  background: rgba(0, 0, 0, 0.45);
-  backdrop-filter: blur(6px);
-}
 
 .fpe-dialog {
   width: 100%;
@@ -30,49 +18,6 @@
   from { opacity: 0; transform: translateY(14px) scale(0.985); }
   to   { opacity: 1; transform: translateY(0) scale(1); }
 }
-
-.fpe-header {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 1rem;
-  padding: 1.15rem 1.5rem 0.6rem;
-  border-bottom: 1px solid rgba(255, 95, 147, 0.14);
-}
-
-.fpe-eyebrow {
-  display: inline-flex;
-  align-items: center;
-  padding: 0.25rem 0.65rem;
-  border-radius: 999px;
-  background: rgba(255, 95, 147, 0.1);
-  color: #ff5f93;
-  font-size: 0.68rem;
-  font-weight: 950;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-}
-
-.fpe-header h2 {
-  margin: 0.35rem 0 0;
-  color: #191919;
-  font-size: 1.25rem;
-  font-weight: 950;
-}
-
-.fpe-close {
-  width: 36px;
-  height: 36px;
-  display: grid;
-  place-items: center;
-  border: none;
-  border-radius: 10px;
-  background: #f1f5f9;
-  color: #64748b;
-  cursor: pointer;
-}
-
-.fpe-close:hover { background: #fee2e2; color: #ef4444; }
 
 .fpe-body {
   flex: 1;

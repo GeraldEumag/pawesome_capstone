@@ -1,8 +1,8 @@
 .tsb-container { padding: 20px; }
 .tsb-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 16px; }
-.tsb-title { font-size: 1.1rem; font-weight: 700; color: #7c3aed; margin: 0; }
+.tsb-title { font-size: 1.1rem; font-weight: 700; color: var(--color-primary); margin: 0; }
 .tsb-subtitle { font-size: 0.78rem; color: #94a3b8; }
-.tsb-refresh { padding: 6px 14px; border: 1px solid #7c3aed; color: #7c3aed; background: transparent; border-radius: 8px; cursor: pointer; font-size: 0.85rem; }
+.tsb-refresh { padding: 6px 14px; border: 1px solid var(--color-primary); color: var(--color-primary); background: transparent; border-radius: 8px; cursor: pointer; font-size: 0.85rem; }
 .tsb-summary { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 20px; }
 .tsb-chip { padding: 4px 12px; border-radius: 20px; border: 1px solid; cursor: pointer; font-size: 0.78rem; font-weight: 600; transition: all .15s; }
 .tsb-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 12px; }

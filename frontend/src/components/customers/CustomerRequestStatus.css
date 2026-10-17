@@ -319,19 +319,6 @@
   font-size: 0.9rem;
 }
 
-/* Pay Modal */
-.pay-modal-overlay {
-  position: fixed;
-  inset: 0;
-  z-index: 2000;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: rgba(0, 0, 0, 0.45);
-  backdrop-filter: blur(4px);
-  padding: 1rem;
-}
-
 .pay-modal {
   width: 100%;
   max-width: 380px;
@@ -353,40 +340,6 @@
     opacity: 1;
     transform: translateY(0) scale(1);
   }
-}
-
-.pay-modal-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 1.1rem 1.25rem;
-  border-bottom: 1px solid var(--cr-border);
-}
-
-.pay-modal-header h3 {
-  margin: 0;
-  font-size: 1.05rem;
-  font-weight: 700;
-  color: var(--cr-heading);
-}
-
-.pay-modal-close {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 32px;
-  height: 32px;
-  border: 0;
-  border-radius: var(--cr-radius-sm);
-  background: transparent;
-  color: var(--cr-muted);
-  cursor: pointer;
-  transition: 0.18s ease;
-}
-
-.pay-modal-close:hover {
-  background: rgba(255, 95, 147, 0.08);
-  color: var(--cr-heading);
 }
 
 .pay-modal-body {
@@ -421,12 +374,6 @@
   font-size: 1rem;
   color: var(--cr-heading);
   letter-spacing: 0.02em;
-}
-
-.pay-modal-footer {
-  padding: 0 1.25rem 1.25rem;
-  display: flex;
-  justify-content: center;
 }
 
 .pay-modal-upload {

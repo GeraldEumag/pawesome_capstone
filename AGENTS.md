@@ -224,6 +224,58 @@ configuration; review `docs/DEPLOYMENT.md` before using any provider settings.
 - If MySQL tests report connection refused, confirm the XAMPP MySQL service is
   running and that `pawesome_test` is available before diagnosing application code.
 
+## Docker MySQL Fallback
+
+The root `docker-compose.yml` runs `mysql:8.0` (same major version as CI) as a
+drop-in replacement for XAMPP MySQL — same host/port/credentials as
+`backend/.env` (`127.0.0.1:3306`, `pawesome`, `root`, empty password), so no
+`.env` changes are needed.
+
+```bash
+docker compose up -d                       # start fallback (stop XAMPP MySQL first — same port)
+cd backend && php artisan migrate --seed   # first run only, on a fresh volume
+docker compose down                        # stop (data persists in the named volume)
+docker compose down -v                     # stop AND wipe all data
+```
+
+- `docker/mysql/init/01-databases.sql` auto-creates `pawesome_test` on first
+  init, so `php artisan test` works against the container too.
+- The Docker database is **separate** from XAMPP's data — it starts empty.
+  Seed it or import a XAMPP SQL dump if real data is needed.
+- Only one of XAMPP MySQL / this container can bind 3306 at a time.
+- The port is bound to `127.0.0.1` only; root has an empty password (local
+  dev parity with XAMPP) — do not expose this container.
+
+## Frontend Styling Conventions
+
+One unified pink design system — no per-role palettes. Role differentiation
+comes from labels/badges/navigation, never from separate accent colors.
+
+- **Tokens:** all colors/spacing/radii come from `frontend/src/styles/theme.css`
+  (`--color-primary`, `--color-surface-*`, `--color-*-bg/text`, `--radius-*`,
+  `--shadow-*`). Do not introduce new brand hex literals; use the tokens.
+- **Class naming:** shared primitives use `pw-*` prefixes; module-local styles
+  use a module prefix (`ui-*`, `apm-*`, `vet-*`, …). Never add new bare generic
+  classes (`.card`, `.form-group`, `.status-badge`, `.modal-*`, `.info-grid`,
+  `.data-table`) — all CSS is global, and those names already collide across
+  ~20 files.
+- **Shared primitives** (in `frontend/src/components/shared/`):
+  - `Modal.jsx` — portals to `document.body`; handles ESC/backdrop close,
+    scroll lock, sizes, `footer` prop. Use it for every modal instead of
+    hand-rolled `.modal-overlay` markup.
+  - `StatusBadge.jsx` — `variant="success|warning|danger|info|neutral"`.
+  - `DatePickerInput.jsx` — all date and datetime inputs. Keep `type="time"`
+    for time-only fields.
+  - `StandardTable`, `StandardReportLayout`, `StandardSummaryCards`,
+    `ReportFilters`, `DeleteConfirmModal`, `RowActionPopover`.
+- **Forms:** `styles/forms.css` provides `.pw-form` / `.pw-field` / `.pw-label`
+  / `.pw-input` / `.pw-helper` / `.pw-error` / `.pw-toggle` conventions; opt in
+  via the wrapper class.
+- **Dialogs:** use `utils/alert.jsx` (`showAlert`/`showConfirm`/
+  `showDeleteConfirm`/…) — never raw `alert()`/`confirm()`.
+- **Semantic colors are allowed** for statuses, payment methods, service types,
+  and chart palettes — they carry data meaning, not theme.
+
 ## Issue Tracking
 
 - **Profile Photo Fallback: FIXED** — 12/12 browser/API/database checks passed.

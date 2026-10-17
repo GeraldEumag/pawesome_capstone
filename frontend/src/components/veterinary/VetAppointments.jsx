@@ -29,7 +29,7 @@ import toast from "react-hot-toast";
 import { apiRequest } from "../../api/client";
 import "./theme.css";
 import "../../styles/bookingModal.css";
-import "./VetAppointments_PinkGlass.css";
+import "./VetAppointments.css";
 
 const isRequestCancelled = (error, signal) =>
   signal?.aborted ||

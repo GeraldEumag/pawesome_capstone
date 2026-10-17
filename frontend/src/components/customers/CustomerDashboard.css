@@ -300,28 +300,20 @@
 ══════════════════════════════════════════════════════════════ */
 
 .app-dashboard.customer-dashboard {
-  --customer-canvas: var(--color-bg, #f7f5ee);
-  --customer-surface: #ffffff;
-  --customer-surface-muted: #fbfaf7;
-  --customer-border: var(--color-border, #e9e6de);
-  --customer-ink: #282c2a;
-  --customer-muted: #68716d;
-  --customer-shadow: 0 8px 26px rgba(39, 43, 37, 0.07);
-  --customer-shadow-raised: 0 16px 36px rgba(39, 43, 37, 0.11);
-  --customer-radius: 18px;
-  --color-bg-gradient: var(--customer-canvas);
-  --color-surface: var(--customer-surface);
-  --color-surface-solid: #ffffff;
-  --color-text: var(--customer-ink);
-  --color-heading: #252a27;
-  --color-muted: var(--customer-muted);
-  --shadow-card: var(--customer-shadow);
-  --shadow-soft: 0 4px 14px rgba(39, 43, 37, 0.06);
-  --radius-card: var(--customer-radius);
-  --radius-lg: 16px;
+  /* Unified theme: local aliases map onto the global pink tokens so the
+     customer portal shares the same palette as every other role. */
+  --customer-canvas: var(--color-bg);
+  --customer-surface: var(--color-surface-solid);
+  --customer-surface-muted: var(--color-surface-muted);
+  --customer-border: var(--color-border);
+  --customer-ink: var(--color-text);
+  --customer-muted: var(--color-muted);
+  --customer-shadow: var(--shadow-soft);
+  --customer-shadow-raised: var(--shadow-card);
+  --customer-radius: var(--radius-card);
   min-height: 100vh;
-  color: var(--customer-ink);
-  background: var(--customer-canvas) !important;
+  color: var(--color-text);
+  background: var(--color-bg-gradient) !important;
 }
 
 .app-dashboard.customer-dashboard .app-main {
@@ -340,7 +332,7 @@
   padding: 14px clamp(18px, 2.5vw, 36px);
   border-bottom: 1px solid var(--customer-border) !important;
   background: #ffffff !important;
-  box-shadow: 0 4px 16px rgba(39, 43, 37, 0.045) !important;
+  box-shadow: var(--shadow-soft) !important;
   backdrop-filter: blur(16px);
 }
 

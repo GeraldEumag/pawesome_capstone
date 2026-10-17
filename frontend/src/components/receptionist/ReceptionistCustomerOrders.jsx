@@ -25,6 +25,7 @@ import {
 import "./ReceptionistCustomerOrders.css";
 import { apiRequest } from "../../api/client";
 import RowActionPopover from "../shared/RowActionPopover";
+import Modal from "../shared/Modal";
 import { exportToCSV, exportToPDF, exportToExcel } from "../../utils/reportExport";
 
 const STATUS_OPTIONS = [
@@ -884,31 +885,66 @@ export default function ReceptionistCustomerOrders() {
       </section>
 
       {detailsModalOpen && (
-        <div className="order-modal-overlay" onClick={() => setDetailsModalOpen(false)}>
-          <div className="order-modal" onClick={(event) => event.stopPropagation()}>
-            <div className="order-modal-header">
-              <div>
-                <span className="orders-eyebrow">
-                  <FontAwesomeIcon icon={faEye} />
-                  Order Details
-                </span>
+        <Modal
+          onClose={() => setDetailsModalOpen(false)}
+          title={detailsLoading || !selectedOrder ? "Loading Order" : `Order #${getOrderNumber(selectedOrder)}`}
+          subtitle="Order Details"
+          icon={faEye}
+          size="lg"
+          className="order-modal"
+          footer={
+            !(detailsLoading || !selectedOrder) && (
+              <div className="order-modal-actions">
+                <button
+                  type="button"
+                  className="secondary-btn"
+                  onClick={() => setDetailsModalOpen(false)}
+                >
+                  Close
+                </button>
 
-                <h2>
-                  {detailsLoading || !selectedOrder
-                    ? "Loading Order"
-                    : `Order #${getOrderNumber(selectedOrder)}`}
-                </h2>
+                {canApprove(selectedOrder) && (
+                  <button
+                    type="button"
+                    className="primary-btn"
+                    onClick={() => approveOrder(selectedOrder.id)}
+                    disabled={updatingId === selectedOrder.id}
+                  >
+                    <FontAwesomeIcon
+                      icon={updatingId === selectedOrder.id ? faSpinner : faCheckCircle}
+                      spin={updatingId === selectedOrder.id}
+                    />
+                    Approve
+                  </button>
+                )}
+
+                {canReject(selectedOrder) && (
+                  <button
+                    type="button"
+                    className="danger-btn"
+                    onClick={() => rejectOrder(selectedOrder.id)}
+                    disabled={updatingId === selectedOrder.id}
+                  >
+                    <FontAwesomeIcon icon={faTimesCircle} />
+                    Reject
+                  </button>
+                )}
+
+                {canCancel(selectedOrder) && (
+                  <button
+                    type="button"
+                    className="warning-btn"
+                    onClick={() => cancelOrder(selectedOrder.id)}
+                    disabled={updatingId === selectedOrder.id}
+                  >
+                    <FontAwesomeIcon icon={faBan} />
+                    Cancel
+                  </button>
+                )}
               </div>
-
-              <button
-                type="button"
-                className="close-modal-btn"
-                onClick={() => setDetailsModalOpen(false)}
-              >
-                <FontAwesomeIcon icon={faTimes} />
-              </button>
-            </div>
-
+            )
+          }
+        >
             {detailsLoading || !selectedOrder ? (
               <div className="orders-state modal-state">
                 <FontAwesomeIcon icon={faSpinner} spin />
@@ -997,59 +1033,9 @@ export default function ReceptionistCustomerOrders() {
                     </div>
                   )}
                 </div>
-
-                <div className="order-modal-actions">
-                  <button
-                    type="button"
-                    className="secondary-btn"
-                    onClick={() => setDetailsModalOpen(false)}
-                  >
-                    Close
-                  </button>
-
-                  {canApprove(selectedOrder) && (
-                    <button
-                      type="button"
-                      className="primary-btn"
-                      onClick={() => approveOrder(selectedOrder.id)}
-                      disabled={updatingId === selectedOrder.id}
-                    >
-                      <FontAwesomeIcon
-                        icon={updatingId === selectedOrder.id ? faSpinner : faCheckCircle}
-                        spin={updatingId === selectedOrder.id}
-                      />
-                      Approve
-                    </button>
-                  )}
-
-                  {canReject(selectedOrder) && (
-                    <button
-                      type="button"
-                      className="danger-btn"
-                      onClick={() => rejectOrder(selectedOrder.id)}
-                      disabled={updatingId === selectedOrder.id}
-                    >
-                      <FontAwesomeIcon icon={faTimesCircle} />
-                      Reject
-                    </button>
-                  )}
-
-                  {canCancel(selectedOrder) && (
-                    <button
-                      type="button"
-                      className="warning-btn"
-                      onClick={() => cancelOrder(selectedOrder.id)}
-                      disabled={updatingId === selectedOrder.id}
-                    >
-                      <FontAwesomeIcon icon={faBan} />
-                      Cancel
-                    </button>
-                  )}
-                </div>
               </>
             )}
-          </div>
-        </div>
+        </Modal>
       )}
     </div>
   );

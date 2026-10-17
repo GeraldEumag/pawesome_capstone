@@ -139,7 +139,7 @@ const CashierHistory = () => {
       exportColumns={exportColumns}
       exportFilename="cashier-history"
       exportTitle="Cashier Transaction History"
-      roleAccent="#0891b2"
+      roleAccent="var(--color-primary)"
       roleLabel="Cashier"
       emptyMessage="No transactions found. Adjust filters or refresh."
       searchTerm={searchTerm}

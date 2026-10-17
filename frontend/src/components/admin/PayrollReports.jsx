@@ -43,6 +43,7 @@ import { showSuccess, showError } from "../../utils/alert.jsx";
 import { exportToCSV, exportToPDF, exportToExcel } from "../../utils/reportExport";
 import StandardTable from "../../components/shared/StandardTable";
 import ReportSkeleton from "../../components/shared/ReportSkeleton";
+import Modal from "../../components/shared/Modal";
 import "./PayrollReports.css";
 
 const CHART_COLORS = [
@@ -755,24 +756,13 @@ const PayrollReports = () => {
       )}
 
       {selectedRecord && (
-        <div className="payroll-modal-overlay" onClick={() => setSelectedRecord(null)}>
-          <div className="payroll-modal" onClick={(event) => event.stopPropagation()}>
-            <div className="payroll-modal-header">
-              <div>
-                <span className="payroll-eyebrow">
-                  <FontAwesomeIcon icon={faUserTie} />
-                  Payroll Record {selectedRecord.is_preview ? "· Preview" : ""}
-                </span>
-                <h2>{selectedRecord.employee_name}</h2>
-                <small>
-                  {selectedRecord.department} · {selectedRecord.position || selectedRecord.role}
-                </small>
-              </div>
-              <button type="button" onClick={() => setSelectedRecord(null)}>
-                <FontAwesomeIcon icon={faTimes} />
-              </button>
-            </div>
-
+        <Modal
+          onClose={() => setSelectedRecord(null)}
+          title={selectedRecord.employee_name}
+          subtitle={`${selectedRecord.department || ""} · ${selectedRecord.position || selectedRecord.role || ""}${selectedRecord.is_preview ? " · Preview" : ""}`}
+          icon={faUserTie}
+          size="lg"
+        >
             <div className="payroll-modal-body">
               <div className="pr-modal-grid">
                 <div className="pr-modal-section">
@@ -877,30 +867,38 @@ const PayrollReports = () => {
                 </small>
               </div>
             </div>
-          </div>
-        </div>
+        </Modal>
       )}
 
       {showGenerate && (
-        <div className="payroll-modal-overlay" onClick={() => !generating && setShowGenerate(false)}>
-          <div className="payroll-modal pr-generate-modal" onClick={(e) => e.stopPropagation()}>
-            <div className="payroll-modal-header">
-              <div>
-                <span className="payroll-eyebrow">
-                  <FontAwesomeIcon icon={faPlay} />
-                  Generate Payroll
-                </span>
-                <h2>Create payroll from attendance</h2>
-              </div>
+        <Modal
+          onClose={() => !generating && setShowGenerate(false)}
+          title="Create payroll from attendance"
+          subtitle="Generate Payroll"
+          icon={faPlay}
+          size="md"
+          footer={
+            <>
               <button
                 type="button"
+                className="payroll-secondary-btn"
                 onClick={() => setShowGenerate(false)}
                 disabled={generating}
               >
-                <FontAwesomeIcon icon={faTimes} />
+                Cancel
               </button>
-            </div>
-
+              <button
+                type="button"
+                className="payroll-primary-btn"
+                onClick={handleGenerate}
+                disabled={generating}
+              >
+                <FontAwesomeIcon icon={generating ? faSpinner : faPlay} spin={generating} />
+                {generating ? "Generating..." : "Generate"}
+              </button>
+            </>
+          }
+        >
             <div className="payroll-modal-body">
               <div className="pr-date-row">
                 <label>
@@ -930,28 +928,8 @@ const PayrollReports = () => {
                 Existing records for the same period are skipped.
               </p>
 
-              <div className="management-actions pr-generate-actions">
-                <button
-                  type="button"
-                  className="payroll-primary-btn"
-                  onClick={handleGenerate}
-                  disabled={generating}
-                >
-                  <FontAwesomeIcon icon={generating ? faSpinner : faPlay} spin={generating} />
-                  {generating ? "Generating..." : "Generate"}
-                </button>
-                <button
-                  type="button"
-                  className="payroll-secondary-btn"
-                  onClick={() => setShowGenerate(false)}
-                  disabled={generating}
-                >
-                  Cancel
-                </button>
-              </div>
             </div>
-          </div>
-        </div>
+        </Modal>
       )}
     </div>
   );

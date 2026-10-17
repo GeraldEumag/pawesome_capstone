@@ -6,12 +6,13 @@ import {
   faBox,
   faMinus,
   faPlus,
+  faSlidersH,
   faSpinner,
-  faTimes,
   faTriangleExclamation,
 } from "@fortawesome/free-solid-svg-icons";
 import { inventoryApi } from "../../api/inventory.jsx";
 import DatePickerInput from "../shared/DatePickerInput";
+import Modal from "../shared/Modal";
 import { formatDateOnly, parseDateOnly } from "../../utils/date";
 import "./StockAdjustmentModal.css";
 import { showAlert, showError } from "../../utils/alert.jsx";
@@ -149,20 +150,39 @@ const StockAdjustmentModal = ({ isOpen, onClose, item, onSuccess, initialType, i
 
   if (!isOpen || !item) return null;
 
-  return (
-    <div className="modal-overlay" onClick={handleClose}>
-      <div className="modal-content adjustment-modal" onClick={(e) => e.stopPropagation()}>
-        <div className="modal-header">
-          <div>
-            <h3>Adjust Stock</h3>
-            <p>Update inventory quantity with reason tracking</p>
-          </div>
-          <button type="button" className="modal-close-btn" onClick={handleClose} aria-label="Close">
-            <FontAwesomeIcon icon={faTimes} />
-          </button>
-        </div>
+  const footer = (
+    <>
+      <button type="button" className="btn-cancel" onClick={handleClose} disabled={loading}>
+        Cancel
+      </button>
+      <button
+        type="button"
+        className={`btn-confirm ${adjustmentType}`}
+        onClick={handleSubmit}
+        disabled={loading || !hasQty || !reason}
+      >
+        {loading ? (
+          <>
+            <FontAwesomeIcon icon={faSpinner} spin /> Processing...
+          </>
+        ) : (
+          <>{adjustmentType === "add" ? "Add Stock" : "Remove Stock"}</>
+        )}
+      </button>
+    </>
+  );
 
-        <div className="modal-body">
+  return (
+    <Modal
+      onClose={handleClose}
+      title="Adjust Stock"
+      subtitle="Update inventory quantity with reason tracking"
+      icon={faSlidersH}
+      size="md"
+      className="adjustment-modal"
+      footer={footer}
+    >
+        <div className="sa-modal-body">
           {/* Product info */}
           <div className="item-info">
             <p className="item-name">
@@ -322,28 +342,7 @@ const StockAdjustmentModal = ({ isOpen, onClose, item, onSuccess, initialType, i
             )}
           </div>
         </div>
-
-        <div className="modal-footer">
-          <button type="button" className="btn-cancel" onClick={handleClose} disabled={loading}>
-            Cancel
-          </button>
-          <button
-            type="button"
-            className={`btn-confirm ${adjustmentType}`}
-            onClick={handleSubmit}
-            disabled={loading || !hasQty || !reason}
-          >
-            {loading ? (
-              <>
-                <FontAwesomeIcon icon={faSpinner} spin /> Processing...
-              </>
-            ) : (
-              <>{adjustmentType === "add" ? "Add Stock" : "Remove Stock"}</>
-            )}
-          </button>
-        </div>
-      </div>
-    </div>
+    </Modal>
   );
 };
 

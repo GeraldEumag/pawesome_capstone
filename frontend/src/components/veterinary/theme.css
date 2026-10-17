@@ -106,9 +106,9 @@
   --vet-badge-cancelled-color: #991b1b;
   --vet-badge-cancelled-border: rgba(239, 68, 68, 0.2);
 
-  --vet-badge-admitted-bg: rgba(139, 92, 246, 0.1);
-  --vet-badge-admitted-color: #5b21b6;
-  --vet-badge-admitted-border: rgba(139, 92, 246, 0.22);
+  --vet-badge-admitted-bg: rgba(59, 130, 246, 0.1);
+  --vet-badge-admitted-color: #1e3a8a;
+  --vet-badge-admitted-border: rgba(59, 130, 246, 0.22);
 
   --vet-badge-observation-bg: rgba(6, 182, 212, 0.1);
   --vet-badge-observation-color: #0e7490;
@@ -287,9 +287,9 @@
 }
 
 .veterinary-badge-success {
-  background: rgba(72, 187, 120, 0.1);
+  background: rgba(16, 185, 129, 0.1);
   color: var(--veterinary-success);
-  border: 2px solid rgba(72, 187, 120, 0.2);
+  border: 2px solid rgba(16, 185, 129, 0.2);
 }
 
 .veterinary-badge-warning {
@@ -299,9 +299,9 @@
 }
 
 .veterinary-badge-error {
-  background: rgba(245, 101, 101, 0.1);
+  background: rgba(239, 68, 68, 0.1);
   color: var(--veterinary-error);
-  border: 2px solid rgba(245, 101, 101, 0.2);
+  border: 2px solid rgba(239, 68, 68, 0.2);
 }
 
 .veterinary-badge-info {
@@ -322,9 +322,9 @@
 }
 
 .veterinary-alert-success {
-  background: rgba(72, 187, 120, 0.1);
+  background: rgba(16, 185, 129, 0.1);
   color: var(--veterinary-success);
-  border: 2px solid rgba(72, 187, 120, 0.2);
+  border: 2px solid rgba(16, 185, 129, 0.2);
 }
 
 .veterinary-alert-warning {
@@ -334,9 +334,9 @@
 }
 
 .veterinary-alert-error {
-  background: rgba(245, 101, 101, 0.1);
+  background: rgba(239, 68, 68, 0.1);
   color: var(--veterinary-error);
-  border: 2px solid rgba(245, 101, 101, 0.2);
+  border: 2px solid rgba(239, 68, 68, 0.2);
 }
 
 .veterinary-alert-info {
@@ -468,3 +468,10 @@
   background: var(--veterinary-primary);
 }
 
+
+/* Font Awesome icons inside page headings: scale with text cap height, not line box */
+.vet-dashboard h1 > .svg-inline--fa,
+.vet-dashboard h2 > .svg-inline--fa {
+  font-size: 0.82em;
+  flex-shrink: 0;
+}

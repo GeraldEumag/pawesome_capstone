@@ -15,6 +15,7 @@ import {
 } from "@fortawesome/free-solid-svg-icons";
 import toast from "react-hot-toast";
 import { apiRequest } from "../../api/client";
+import Modal from "./Modal";
 import "./ServiceBillingCashierPanel.css";
 
 const ServiceBillingCashierPanel = () => {
@@ -259,22 +260,12 @@ const ServiceBillingCashierPanel = () => {
       </div>
 
       {showPaymentModal && selectedService && (
-        <div className="payment-modal">
-          <div className="modal-overlay" onClick={() => setShowPaymentModal(false)} />
-          <div className="modal-content">
-            <div className="modal-header">
-              <h3>
-                <FontAwesomeIcon icon={faMoneyBillWave} />
-                Process Payment
-              </h3>
-              <button
-                className="close-btn"
-                onClick={() => setShowPaymentModal(false)}
-              >
-                ×
-              </button>
-            </div>
-
+        <Modal
+          onClose={() => setShowPaymentModal(false)}
+          title="Process Payment"
+          icon={faMoneyBillWave}
+          size="lg"
+        >
             <div className="service-summary">
               <h4>{getServiceTypeLabel(selectedService.service_type)} Service</h4>
               <div className="service-details">
@@ -402,8 +393,7 @@ const ServiceBillingCashierPanel = () => {
                 Process Payment
               </button>
             </div>
-          </div>
-        </div>
+        </Modal>
       )}
     </div>
   );

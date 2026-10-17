@@ -81,7 +81,7 @@ const VetHistory = () => {
       exportColumns={exportColumns}
       exportFilename="vet-history"
       exportTitle="Veterinary History"
-      roleAccent="#059669"
+      roleAccent="var(--color-primary)"
       roleLabel="Veterinary"
       emptyMessage="No appointment history found."
       searchTerm={searchTerm}

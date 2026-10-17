@@ -112,7 +112,7 @@ const CustomerHistory = () => {
       exportColumns={exportColumns}
       exportFilename="customer-history"
       exportTitle="My Activity History"
-      roleAccent="#0284c7" roleLabel="My Activity"
+      roleAccent="var(--color-primary)" roleLabel="My Activity"
       emptyMessage="No activity history found."
       searchTerm={searchTerm} onSearchChange={setSearchTerm}
       dateFilter={dateFilter} onDateFilterChange={setDateFilter}

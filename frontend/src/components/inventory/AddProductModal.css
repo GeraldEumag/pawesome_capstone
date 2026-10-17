@@ -1,4 +1,4 @@
-﻿/* ============================================================
+/* ============================================================
    Add Product Modal — Modern Pink Theme
    Brand: #ff5f93
    ============================================================ */
@@ -17,7 +17,7 @@
 
 .btn-scan-barcode-inline {
   padding: 0 14px;
-  background: #7c3aed;
+  background: var(--color-primary);
   color: white;
   border: none;
   border-radius: 8px;
@@ -31,11 +31,11 @@
 }
 
 .btn-scan-barcode-inline:hover:not(:disabled) {
-  background: #6d28d9;
+  background: var(--color-primary-hover);
 }
 
 .btn-scan-barcode-inline.active {
-  background: #5b21b6;
+  background: var(--color-primary-hover);
 }
 
 .btn-scan-barcode-inline:disabled {
@@ -96,150 +96,40 @@
   margin: 0;
 }
 
-/* ---- Overlay ---- */
-.modal-overlay {
-  position: fixed;
-  inset: 0;
-  background: rgba(15, 23, 42, 0.45);
-  backdrop-filter: blur(6px);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 1000;
-  padding: 1rem;
-  overflow-y: auto;
-  animation: modalFadeIn 0.2s ease;
-}
 
-@keyframes modalFadeIn {
-  from { opacity: 0; }
-  to   { opacity: 1; }
-}
 
-/* ---- Modal Content ---- */
-.modal-content {
-  background: #fff;
-  border-radius: 18px;
-  box-shadow: 0 24px 70px rgba(15, 23, 42, 0.28);
-  width: 100%;
-  max-width: 760px;
-  max-height: 90vh;
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
-  animation: modalSlideUp 0.25s cubic-bezier(0.16, 1, 0.3, 1);
-}
-
-@keyframes modalSlideUp {
-  from { opacity: 0; transform: translateY(16px) scale(0.98); }
-  to   { opacity: 1; transform: translateY(0) scale(1); }
-}
-
-/* Form must be a flex child so modal-body can scroll independently */
-.modal-content > form {
-  display: flex;
-  flex-direction: column;
-  flex: 1;
-  min-height: 0;
-  overflow: hidden;
-}
 
 /* ---- Product Modal ---- */
 .product-modal {
   max-width: 720px;
 }
 
-/* ---- Modal Header ---- */
-.modal-header {
-  padding: 1.15rem 1.6rem;
-  background: #fff;
-  border-bottom: 1px solid #f1f4f8;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  flex-shrink: 0;
-}
 
-/* ---- Modal Title ---- */
-.modal-title {
-  display: flex;
-  align-items: center;
-  gap: 0.8rem;
-}
 
-.modal-title h3 {
-  margin: 0;
-  font-size: 1.15rem;
-  font-weight: 800;
-  letter-spacing: -0.01em;
-  color: #0f172a;
-}
 
-.modal-title p {
-  margin: 0.15rem 0 0;
-  font-size: 0.8rem;
-  color: #94a3b8;
-}
-
-/* ---- Modal Icon ---- */
-.modal-icon {
-  width: 42px;
-  height: 42px;
-  background: linear-gradient(135deg, #ff5f93, #ff8db5);
-  color: #fff;
-  border-radius: 12px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 1rem;
-  flex-shrink: 0;
-  box-shadow: 0 4px 12px rgba(255, 95, 147, 0.3);
-}
-
-/* ---- Close Button ---- */
-.btn-close {
-  width: 34px;
-  height: 34px;
-  background: #f4f6fa;
-  border: none;
-  border-radius: 10px;
-  color: #94a3b8;
-  font-size: 1.2rem;
-  line-height: 1;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: all 0.18s ease;
-}
-
-.btn-close:hover {
-  background: #fee2e8;
-  color: #dc2626;
-}
 
 /* ---- Modal Body ---- */
-.modal-body {
+.apm-modal-body {
   padding: 1.4rem 1.6rem;
   overflow-y: auto;
   flex: 1;
   min-height: 0;
 }
 
-.modal-body::-webkit-scrollbar {
+.apm-modal-body::-webkit-scrollbar {
   width: 8px;
 }
 
-.modal-body::-webkit-scrollbar-track {
+.apm-modal-body::-webkit-scrollbar-track {
   background: transparent;
 }
 
-.modal-body::-webkit-scrollbar-thumb {
+.apm-modal-body::-webkit-scrollbar-thumb {
   background: #e2e8f0;
   border-radius: 8px;
 }
 
-.modal-body::-webkit-scrollbar-thumb:hover {
+.apm-modal-body::-webkit-scrollbar-thumb:hover {
   background: #cbd5e1;
 }
 
@@ -560,7 +450,7 @@
   letter-spacing: 0.08em;
   margin: 0 0 0.7rem;
   padding-left: 0.65rem;
-  border-left: 3px solid #a78bfa;
+  border-left: 3px solid var(--color-primary-light);
 }
 
 .preview-card {
@@ -723,19 +613,6 @@
 /* ============================================================
    Footer / Buttons
    ============================================================ */
-.modal-footer {
-  padding: 1.05rem 1.6rem;
-  border-top: 1px solid #f1f4f8;
-  display: flex;
-  justify-content: flex-end;
-  gap: 0.7rem;
-  flex-shrink: 0;
-  background: #fbfcfe;
-}
-
-.step-footer {
-  justify-content: flex-end;
-}
 
 .btn-cancel {
   display: inline-flex;
@@ -842,19 +719,8 @@
     grid-template-columns: 1fr;
   }
 
-  .modal-content {
-    max-width: 100%;
-    border-radius: 16px 16px 0 0;
-  }
 
-  .modal-overlay {
-    align-items: flex-end;
-    padding: 0;
-  }
-
-  .modal-header,
-  .modal-body,
-  .modal-footer {
+  .apm-modal-body {
     padding-left: 1rem;
     padding-right: 1rem;
   }

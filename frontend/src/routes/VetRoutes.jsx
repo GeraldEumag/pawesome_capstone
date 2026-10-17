@@ -4,9 +4,9 @@ import ProtectedRoute from "../components/ProtectedRoute";
 import { VetDashboardSkeleton } from "../components/veterinary/VetSkeleton";
 
 const VetDashboard = lazy(() => import("../components/veterinary/VetDashboard"));
-const VetAppointments = lazy(() => import("../components/veterinary/VetAppointments_PinkGlass"));
-const VetServices = lazy(() => import("../components/veterinary/VetServices_PinkGlass"));
-const VetEditAppointment = lazy(() => import("../components/veterinary/VetEditAppointment_PinkGlass"));
+const VetAppointments = lazy(() => import("../components/veterinary/VetAppointments"));
+const VetServices = lazy(() => import("../components/veterinary/VetServices"));
+const VetEditAppointment = lazy(() => import("../components/veterinary/VetEditAppointment"));
 const VetConsultation = lazy(() => import("../components/veterinary/VetConsultation"));
 const VetAppointmentBilling = lazy(() => import("../components/veterinary/VetAppointmentBilling"));
 const VetHistory = lazy(() => import("../components/veterinary/VetHistory"));
@@ -44,7 +44,7 @@ const VetRoutes = () => (
         <Route path="receipt" element={<VetReceipt />} />
         <Route path="current-boarders" element={<VetCurrentBoarders />} />
         <Route path="medical-confinements" element={<VetMedicalConfinements />} />
-        <Route path="payroll" element={<MyPayroll roleAccent="#059669" roleLabel="Veterinary" />} />
+        <Route path="payroll" element={<MyPayroll roleAccent="var(--color-primary)" roleLabel="Veterinary" />} />
         <Route path="profile" element={<ProfileSettings />} />
       </Route>
     </Routes>

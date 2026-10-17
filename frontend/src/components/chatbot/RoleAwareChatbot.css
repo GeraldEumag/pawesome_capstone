@@ -331,20 +331,6 @@
   color: #dc2626;
 }
 
-/* Workflow Modal */
-
-.rbac-workflow-overlay {
-  align-items: center;
-  background: rgba(15, 23, 42, 0.48);
-  display: flex;
-  inset: 0;
-  justify-content: center;
-  position: fixed;
-  z-index: 3200;
-  padding: 1rem;
-  backdrop-filter: blur(12px);
-}
-
 .rbac-workflow-modal {
   background: rgba(255, 255, 255, 0.96);
   border: 1px solid rgba(255, 95, 147, 0.2);
@@ -355,32 +341,6 @@
   padding: 1.2rem;
   width: min(560px, calc(100vw - 32px));
   backdrop-filter: blur(18px);
-}
-
-.rbac-workflow-header {
-  align-items: center;
-  display: flex;
-  justify-content: space-between;
-  gap: 1rem;
-  margin-bottom: 1rem;
-}
-
-.rbac-workflow-header h4 {
-  margin: 0;
-  color: #191919;
-  font-size: 1.25rem;
-  font-weight: 950;
-  letter-spacing: -0.035em;
-}
-
-.rbac-workflow-header button {
-  background: rgba(239, 68, 68, 0.1);
-  border: none;
-  border-radius: 999px;
-  color: #dc2626;
-  cursor: pointer;
-  padding: 0.55rem 0.8rem;
-  font-weight: 900;
 }
 
 .rbac-workflow-form {
@@ -522,14 +482,6 @@
 
 /* Dark Mode */
 
-
-
-
-
-
-
-
-
 /* Mobile */
 
 @media (max-width: 768px) {
@@ -573,15 +525,6 @@
   }
 
   .rbac-chatbot-close {
-    width: 100%;
-  }
-
-  .rbac-workflow-header {
-    align-items: flex-start;
-    flex-direction: column;
-  }
-
-  .rbac-workflow-header button {
     width: 100%;
   }
 }
@@ -674,8 +617,6 @@
 }
 
 /* Dark mode */
-
-
 
 /* Mobile */
 @media (max-width: 480px) {
@@ -907,7 +848,7 @@
 
 /* Live chat customer messages */
 .rbac-chat-message.livechat.user .rbac-chat-bubble {
-  background: linear-gradient(135deg, #7c3aed, #9f67e8);
+  background: linear-gradient(135deg, var(--color-primary), var(--color-primary-light));
 }
 
 /* Live chat bot (staff) messages */

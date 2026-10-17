@@ -1,7 +1,6 @@
 import { useEffect, useState } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
-  faXmark,
   faPaw,
   faCalendarCheck,
   faFileInvoice,
@@ -10,6 +9,7 @@ import {
   faFileLines,
   faSpinner,
 } from "@fortawesome/free-solid-svg-icons";
+import Modal from "./Modal";
 import "./BookingReviewModal.css";
 
 /**
@@ -50,23 +50,30 @@ export default function BookingReviewModal({
     if (open) setPayNow(false);
   }, [open]);
 
-  if (!open) return null;
-
   const detailRows = details.filter((d) => d.value != null && d.value !== "");
 
   return (
-    <div className="brm-overlay" onClick={loading ? undefined : onClose}>
-      <div className="brm-modal" onClick={(e) => e.stopPropagation()}>
-        <div className="brm-header">
-          <div>
-            {badge && <span className="brm-badge">{badge}</span>}
-            <h3 className="brm-title">{title}</h3>
-          </div>
-          <button type="button" className="brm-close" onClick={onClose} disabled={loading}>
-            <FontAwesomeIcon icon={faXmark} />
+    <Modal
+      isOpen={open}
+      onClose={onClose}
+      closeOnBackdrop={!loading}
+      title={title}
+      subtitle={badge}
+      icon={faCalendarCheck}
+      size="lg"
+      className="brm-modal"
+      footer={
+        <>
+          <button type="button" className="brm-btn brm-ghost" onClick={onClose} disabled={loading}>
+            Go back
           </button>
-        </div>
-
+          <button type="button" className="brm-btn brm-primary" onClick={() => onConfirm?.({ payNow })} disabled={loading}>
+            {loading && <FontAwesomeIcon icon={faSpinner} spin />}
+            {loading ? "Submitting..." : "Confirm booking"}
+          </button>
+        </>
+      }
+    >
         <div className="brm-body">
           {pet && (
             <section className="brm-section">
@@ -159,17 +166,6 @@ export default function BookingReviewModal({
             </section>
           ) : null}
         </div>
-
-        <div className="brm-footer">
-          <button type="button" className="brm-btn brm-ghost" onClick={onClose} disabled={loading}>
-            Go back
-          </button>
-          <button type="button" className="brm-btn brm-primary" onClick={() => onConfirm?.({ payNow })} disabled={loading}>
-            {loading && <FontAwesomeIcon icon={faSpinner} spin />}
-            {loading ? "Submitting..." : "Confirm booking"}
-          </button>
-        </div>
-      </div>
-    </div>
+    </Modal>
   );
 }

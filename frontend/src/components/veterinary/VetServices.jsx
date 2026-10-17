@@ -9,7 +9,6 @@ import {
   faSpinner,
   faExclamationTriangle,
   faRotateRight,
-  faTimes,
   faSave,
   faTag,
   faCheckCircle,
@@ -18,8 +17,10 @@ import {
 import toast from "react-hot-toast";
 import { apiRequest } from "../../api/client";
 import RowActionPopover from "../shared/RowActionPopover"
+import Modal from "../shared/Modal";
+import DeleteConfirmModal from "../shared/DeleteConfirmModal";
 import "./theme.css";
-import "./VetServices_PinkGlass.css";
+import "./VetServices.css";
 
 
 const VetServices = () => {
@@ -34,7 +35,6 @@ const VetServices = () => {
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [selectedService, setSelectedService] = useState(null);
   const [serviceToDelete, setServiceToDelete] = useState(null);
-  const [deleteReason, setDeleteReason] = useState("");
   const [deleting, setDeleting] = useState(false);
   const [formData, setFormData] = useState({
     name: "",
@@ -134,24 +134,22 @@ const VetServices = () => {
 
   const handleDeleteService = (serviceId) => {
     setServiceToDelete(serviceId);
-    setDeleteReason("");
     setShowDeleteModal(true);
   };
 
-  const confirmDeleteService = async () => {
-    if (!serviceToDelete || !deleteReason.trim() || deleting) return;
+  const confirmDeleteService = async (reason) => {
+    if (!serviceToDelete || !String(reason || "").trim() || deleting) return;
     setDeleting(true);
 
     try {
       await apiRequest(`/admin/services/${serviceToDelete}`, {
         method: "DELETE",
-        body: JSON.stringify({ reason: deleteReason.trim() }),
+        body: JSON.stringify({ reason: String(reason).trim() }),
       });
 
       setServices(services.filter(service => service.id !== serviceToDelete));
       setShowDeleteModal(false);
       setServiceToDelete(null);
-      setDeleteReason("");
       toast.success("Service deleted successfully!");
     } catch (err) {
       console.error("Failed to delete service:", err);
@@ -165,7 +163,6 @@ const VetServices = () => {
     if (deleting) return;
     setShowDeleteModal(false);
     setServiceToDelete(null);
-    setDeleteReason("");
   };
 
   const handleToggleService = async (serviceId, currentStatus) => {
@@ -409,73 +406,59 @@ const VetServices = () => {
 
       {/* Create Service Modal */}
       {showCreateModal && (
-        <div className="vs-modal-overlay" onClick={() => setShowCreateModal(false)}>
-          <div className="vs-modal" onClick={(e) => e.stopPropagation()}>
-            <div className="vs-modal-header">
-              <h2 className="vs-modal-title">Create New Service</h2>
-              <button className="vs-modal-close" onClick={() => setShowCreateModal(false)}><FontAwesomeIcon icon={faTimes} /></button>
-            </div>
-            {renderModalBody()}
-            <div className="vs-modal-actions">
+        <Modal
+          onClose={() => setShowCreateModal(false)}
+          title="Create New Service"
+          icon={faPlus}
+          size="md"
+          footer={
+            <>
               <button className="vs-btn vs-btn--secondary" onClick={() => setShowCreateModal(false)}>Cancel</button>
               <button className="vs-btn vs-btn--primary" onClick={handleCreateService}>
                 <FontAwesomeIcon icon={faSave} /> Create Service
               </button>
-            </div>
-          </div>
-        </div>
+            </>
+          }
+        >
+          {renderModalBody()}
+        </Modal>
       )}
 
       {/* Edit Service Modal */}
       {showEditModal && (
-        <div className="vs-modal-overlay" onClick={() => setShowEditModal(false)}>
-          <div className="vs-modal" onClick={(e) => e.stopPropagation()}>
-            <div className="vs-modal-header">
-              <h2 className="vs-modal-title">Edit Service</h2>
-              <button className="vs-modal-close" onClick={() => setShowEditModal(false)}><FontAwesomeIcon icon={faTimes} /></button>
-            </div>
-            {renderModalBody()}
-            <div className="vs-modal-actions">
+        <Modal
+          onClose={() => setShowEditModal(false)}
+          title="Edit Service"
+          icon={faEdit}
+          size="md"
+          footer={
+            <>
               <button className="vs-btn vs-btn--secondary" onClick={() => setShowEditModal(false)}>Cancel</button>
               <button className="vs-btn vs-btn--primary" onClick={handleUpdateService}>
                 <FontAwesomeIcon icon={faSave} /> Update Service
               </button>
-            </div>
-          </div>
-        </div>
+            </>
+          }
+        >
+          {renderModalBody()}
+        </Modal>
       )}
 
       {/* Delete Confirmation Modal */}
-      {showDeleteModal && (
-        <div className="vs-modal-overlay" onClick={cancelDeleteService}>
-          <div className="vs-modal" onClick={(e) => e.stopPropagation()}>
-            <div className="vs-modal-header">
-              <h2 className="vs-modal-title">Delete Service</h2>
-              <button className="vs-modal-close" onClick={cancelDeleteService}><FontAwesomeIcon icon={faTimes} /></button>
-            </div>
-            <div className="vs-modal-body">
-              <p>Delete "{services.find((service) => service.id === serviceToDelete)?.name || "this service"}"? Existing booking records will be retained.</p>
-              <label className="vs-field">
-                <span>Reason for deletion *</span>
-                <textarea
-                  rows={3}
-                  value={deleteReason}
-                  onChange={(event) => setDeleteReason(event.target.value)}
-                  maxLength={500}
-                  disabled={deleting}
-                  placeholder="Explain why this service is being deleted"
-                />
-              </label>
-            </div>
-            <div className="vs-modal-actions">
-              <button className="vs-btn vs-btn--secondary" onClick={cancelDeleteService} disabled={deleting}>Cancel</button>
-              <button className="vs-btn vs-btn--danger" onClick={confirmDeleteService} disabled={deleting || !deleteReason.trim()}>
-                <FontAwesomeIcon icon={deleting ? faSpinner : faTrash} spin={deleting} /> {deleting ? "Deleting…" : "Delete Service"}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      <DeleteConfirmModal
+        isOpen={showDeleteModal}
+        onClose={cancelDeleteService}
+        onConfirm={confirmDeleteService}
+        loading={deleting}
+        itemName={services.find((service) => service.id === serviceToDelete)?.name || "this service"}
+        title="Delete Service"
+        warningText="Existing booking records will be retained."
+        confirmText="Delete Service"
+        loadingText="Deleting…"
+        requireReason
+        reasonLabel="Reason for deletion *"
+        reasonDetailsPlaceholder="Explain why this service is being deleted"
+      />
     </div>
   );
 };

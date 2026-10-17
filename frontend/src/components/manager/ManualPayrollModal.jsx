@@ -21,6 +21,7 @@ import { payrollApi } from "../../api/payroll";
 import { useAuth } from "../../context/AuthContext";
 import { formatCurrency } from "../../utils/currency";
 import DatePickerInput from "../shared/DatePickerInput";
+import Modal from "../shared/Modal";
 import { formatDateOnly, parseDateOnly } from "../../utils/date";
 import "./ManualPayrollModal.css";
 
@@ -459,27 +460,50 @@ const ManualPayrollModal = ({ onClose, onSaved, initialPayroll }) => {
   const canMarkPaid = canEdit && (currentStatus === "approved" || currentStatus === "pending");
 
   return (
-    <div className="mpm-overlay" onClick={(e) => e.target === e.currentTarget && onClose()}>
-      <div className="mpm-dialog">
-        {/* Header */}
-        <div className="mpm-header">
-          <div>
-            <span className="mpm-eyebrow">Manual Payroll</span>
-            <h2>{isEditMode ? "Edit Payroll" : "Compute Payroll Manually"}</h2>
-            {payrollRecord?.payroll_id && (
-              <small className="mpm-payroll-id">ID: {payrollRecord.payroll_id}</small>
-            )}
-          </div>
-          <div className="mpm-header-right">
-            <span className={`mpm-status-badge mpm-status-${currentStatus}`}>
-              {STATUS_LABELS[currentStatus] || "Draft"}
-            </span>
-            <button type="button" className="mpm-close" onClick={onClose}>
-              <FontAwesomeIcon icon={faXmark} />
-            </button>
-          </div>
-        </div>
-
+    <Modal
+      onClose={onClose}
+      title={isEditMode ? "Edit Payroll" : "Compute Payroll Manually"}
+      subtitle={payrollRecord?.payroll_id ? `Manual Payroll · ID: ${payrollRecord.payroll_id}` : "Manual Payroll"}
+      icon={faFileInvoiceDollar}
+      size="xl"
+      className="mpm-dialog"
+      headerActions={
+        <span className={`mpm-status-badge mpm-status-${currentStatus}`}>
+          {STATUS_LABELS[currentStatus] || "Draft"}
+        </span>
+      }
+      footer={
+        <>
+          <button type="button" className="mpm-btn secondary" onClick={onClose}>
+            Cancel
+          </button>
+          {canEdit && (
+            <>
+              <button type="button" className="mpm-btn primary" onClick={handleSaveDraft} disabled={saving}>
+                <FontAwesomeIcon icon={saving ? faSpinner : faSave} spin={saving} />
+                {saving ? "Saving..." : "Save as Draft"}
+              </button>
+              <button type="button" className="mpm-btn submit" onClick={handleSubmitForApproval} disabled={saving || currentStatus !== "draft"}>
+                <FontAwesomeIcon icon={faPen} />
+                Submit for Approval
+              </button>
+              {canApprove && (
+                <button type="button" className="mpm-btn approve" onClick={handleApprove} disabled={saving}>
+                  <FontAwesomeIcon icon={faCheckCircle} />
+                  Approve
+                </button>
+              )}
+              {canMarkPaid && (
+                <button type="button" className="mpm-btn paid" onClick={handleMarkAsPaid} disabled={saving}>
+                  <FontAwesomeIcon icon={faFileInvoiceDollar} />
+                  Mark as Paid
+                </button>
+              )}
+            </>
+          )}
+        </>
+      }
+    >
         {error && (
           <div className="mpm-alert error">
             <FontAwesomeIcon icon={faExclamationTriangle} />
@@ -880,39 +904,7 @@ const ManualPayrollModal = ({ onClose, onSaved, initialPayroll }) => {
             <textarea rows={2} value={remarks} onChange={(e) => setRemarks(e.target.value)} placeholder="Optional notes..." disabled={isReadonly} />
           </label>
         </div>
-
-        {/* Section 10 — Workflow Buttons */}
-        <div className="mpm-footer">
-          <button type="button" className="mpm-btn secondary" onClick={onClose}>
-            Cancel
-          </button>
-          {canEdit && (
-            <>
-              <button type="button" className="mpm-btn primary" onClick={handleSaveDraft} disabled={saving}>
-                <FontAwesomeIcon icon={saving ? faSpinner : faSave} spin={saving} />
-                {saving ? "Saving..." : "Save as Draft"}
-              </button>
-              <button type="button" className="mpm-btn submit" onClick={handleSubmitForApproval} disabled={saving || currentStatus !== "draft"}>
-                <FontAwesomeIcon icon={faPen} />
-                Submit for Approval
-              </button>
-              {canApprove && (
-                <button type="button" className="mpm-btn approve" onClick={handleApprove} disabled={saving}>
-                  <FontAwesomeIcon icon={faCheckCircle} />
-                  Approve
-                </button>
-              )}
-              {canMarkPaid && (
-                <button type="button" className="mpm-btn paid" onClick={handleMarkAsPaid} disabled={saving}>
-                  <FontAwesomeIcon icon={faFileInvoiceDollar} />
-                  Mark as Paid
-                </button>
-              )}
-            </>
-          )}
-        </div>
-      </div>
-    </div>
+    </Modal>
   );
 };
 

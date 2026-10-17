@@ -13,6 +13,7 @@
  * Used by all cashier, customer, and payment-verification receipt flows.
  */
 import { STORE_INFO } from "./storeInfo";
+import { showWarning } from "./alert.jsx";
 import { printRawViaQZ } from "./qzPrinter";
 import { buildEscPos, buildTestReceipt } from "./escpos";
 
@@ -212,7 +213,7 @@ function buildReceiptHtml(opts = {}, { includePrintButton = false } = {}) {
 function openPrintPopup(html) {
   const w = window.open("", "_blank", "width=360,height=640,scrollbars=yes");
   if (!w) {
-    alert("Please allow pop-ups to print the receipt.");
+    showWarning("Please allow pop-ups to print the receipt.", "Popup Blocked");
     return;
   }
   w.document.write(html);

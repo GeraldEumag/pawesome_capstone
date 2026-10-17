@@ -30,6 +30,7 @@ import { printReceipt } from "../../../utils/receiptPrinter";
 import { downloadReceiptPdf } from "../../../utils/receiptPdf";
 import { STORE_INFO } from "../../../utils/storeInfo";
 import { usePaymentApprovals, paymentKey } from "../hooks/usePaymentApprovals.jsx";
+import Modal from "../../shared/Modal";
 import { useAuth } from "../../../context/AuthContext";
 import "./PaymentApprovals.css";
 
@@ -580,28 +581,39 @@ const PaymentApprovals = () => {
       {proofModal && (() => {
         const isCash = isCashModal;
         return (
-          <div className="pa-modal-overlay" onClick={closeProof}>
-            <div
-              className={`pa-modal pa-proof-modal${isCash ? " pa-proof-modal--cash" : ""}`}
-              onClick={(e) => e.stopPropagation()}
-            >
-              <div className="pa-modal-header">
-                <div>
-                  <h3>
-                    {isCash
-                      ? "Collect Cash Payment"
-                      : `Verify ${getMethodConfig(modalPaymentMethod).label} Payment`}
-                  </h3>
-                  <p className="pa-modal-sub">
-                    {proofModal.payment?.customer_name || "Customer"} —{" "}
-                    {proofModal.payment?.service_name || proofModal.payment?.request_type || "Service"}
-                  </p>
-                </div>
-                <button className="pa-modal-close" onClick={closeProof}>
-                  <FontAwesomeIcon icon={faXmark} />
+          <Modal
+            onClose={closeProof}
+            title={isCash
+              ? "Collect Cash Payment"
+              : `Verify ${getMethodConfig(modalPaymentMethod).label} Payment`}
+            subtitle={`${proofModal.payment?.customer_name || "Customer"} — ${proofModal.payment?.service_name || proofModal.payment?.request_type || "Service"}`}
+            icon={isCash ? faMoneyBillWave : faCheck}
+            size="lg"
+            className={`pa-modal pa-proof-modal${isCash ? " pa-proof-modal--cash" : ""}`}
+            footer={
+              <>
+                {(proofModal.payment?.payment_status || "").toLowerCase() === "pending" && (
+                  <button className="pa-btn-reject" onClick={handleRejectFromModal} disabled={!!actionLoading}>
+                    {actionLoading === `${proofModal?.payment?.id}-reject`
+                      ? <><FontAwesomeIcon icon={faSpinner} spin /> Rejecting…</>
+                      : <><FontAwesomeIcon icon={faXmark} /> Reject</>}
+                  </button>
+                )}
+                <button
+                  className="pa-btn-verify"
+                  onClick={handleVerifyFromModal}
+                  disabled={!!actionLoading || (isCash && !cashReady)}
+                  title={isCash && !cashReady ? "Enter cash amount first" : ""}
+                >
+                  {actionLoading === `${proofModal?.payment?.id}-verify`
+                    ? <><FontAwesomeIcon icon={faSpinner} spin /> Processing…</>
+                    : isCash
+                      ? <><FontAwesomeIcon icon={faCheck} /> Collect &amp; Print Receipt</>
+                      : <><FontAwesomeIcon icon={faCheck} /> Verify Payment</>}
                 </button>
-              </div>
-
+              </>
+            }
+          >
               {proofModal.payment?.payable_type === "service_billing_payment" && (
                 <div className="pa-reference-section">
                   <strong>Bill items</strong>
@@ -762,43 +774,47 @@ const PaymentApprovals = () => {
                   </div>
                 </div>
               )}
-
-              <div className="pa-modal-footer">
-                {(proofModal.payment?.payment_status || "").toLowerCase() === "pending" && (
-                  <button className="pa-btn-reject" onClick={handleRejectFromModal} disabled={!!actionLoading}>
-                    {actionLoading === `${proofModal?.payment?.id}-reject`
-                      ? <><FontAwesomeIcon icon={faSpinner} spin /> Rejecting…</>
-                      : <><FontAwesomeIcon icon={faXmark} /> Reject</>}
-                  </button>
-                )}
-                <button
-                  className="pa-btn-verify"
-                  onClick={handleVerifyFromModal}
-                  disabled={!!actionLoading || (isCash && !cashReady)}
-                  title={isCash && !cashReady ? "Enter cash amount first" : ""}
-                >
-                  {actionLoading === `${proofModal?.payment?.id}-verify`
-                    ? <><FontAwesomeIcon icon={faSpinner} spin /> Processing…</>
-                    : isCash
-                      ? <><FontAwesomeIcon icon={faCheck} /> Collect &amp; Print Receipt</>
-                      : <><FontAwesomeIcon icon={faCheck} /> Verify Payment</>}
-                </button>
-              </div>
-            </div>
-          </div>
+          </Modal>
         );
       })()}
 
       {/* ── Receipt Modal ── */}
       {showReceipt && receiptData && (
-        <div className="pa-modal-overlay" onClick={() => setShowReceipt(false)}>
-          <div className="pa-modal pa-receipt-modal" onClick={(e) => e.stopPropagation()}>
-            <div className="pa-modal-header">
-              <h3>Payment Verified</h3>
-              <button className="pa-modal-close" onClick={() => setShowReceipt(false)}>
-                <FontAwesomeIcon icon={faXmark} />
+        <Modal
+          onClose={() => setShowReceipt(false)}
+          title="Payment Verified"
+          icon={faCheck}
+          size="sm"
+          className="pa-modal pa-receipt-modal"
+          footer={
+            <>
+              <button className="pa-btn-secondary" onClick={() => setShowReceipt(false)}>Close</button>
+              <button
+                className="pa-btn-secondary"
+                onClick={() => {
+                  const options = getReceiptOptions();
+                  if (!options) return;
+                  try {
+                    downloadReceiptPdf(options);
+                  } catch (err) {
+                    showError(err.message || "Failed to download receipt PDF.");
+                  }
+                }}
+              >
+                <FontAwesomeIcon icon={faFilePdf} /> Download PDF
               </button>
-            </div>
+              <button
+                className="pa-btn-primary"
+                onClick={() => {
+                  const options = getReceiptOptions();
+                  if (options) printReceipt({ ...options, subtotal: options.netAmount ?? options.subtotal });
+                }}
+              >
+                <FontAwesomeIcon icon={faPrint} /> Print Receipt
+              </button>
+            </>
+          }
+        >
             <div className="pa-receipt">
 
               {/* Store header */}
@@ -845,34 +861,7 @@ const PaymentApprovals = () => {
                 <p>Thank you for choosing Pawesome Retreat Inc.!<br />Please keep this receipt.</p>
               </div>
             </div>
-            <div className="pa-modal-footer">
-              <button className="pa-btn-secondary" onClick={() => setShowReceipt(false)}>Close</button>
-              <button
-                className="pa-btn-secondary"
-                onClick={() => {
-                  const options = getReceiptOptions();
-                  if (!options) return;
-                  try {
-                    downloadReceiptPdf(options);
-                  } catch (err) {
-                    showError(err.message || "Failed to download receipt PDF.");
-                  }
-                }}
-              >
-                <FontAwesomeIcon icon={faFilePdf} /> Download PDF
-              </button>
-              <button
-                className="pa-btn-primary"
-                onClick={() => {
-                  const options = getReceiptOptions();
-                  if (options) printReceipt({ ...options, subtotal: options.netAmount ?? options.subtotal });
-                }}
-              >
-                <FontAwesomeIcon icon={faPrint} /> Print Receipt
-              </button>
-            </div>
-          </div>
-        </div>
+        </Modal>
       )}
     </div>
   );

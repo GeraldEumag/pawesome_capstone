@@ -13,6 +13,7 @@ import { inventoryApi } from "../../api/inventory.jsx";
 import { normalizeList } from "../../api/client";
 import { INVENTORY_ARCHIVE_REASONS, INVENTORY_DELETE_REASONS } from "../../utils/alert.jsx";
 import AddProductModal from "./AddProductModal";
+import Modal from "../shared/Modal";
 import RowActionPopover from "../shared/RowActionPopover";
 import StockAdjustmentModal from "./StockAdjustmentModal";
 import PremiumToast from "../shared/PremiumToast";
@@ -929,26 +930,14 @@ const UnifiedInventory = () => {
 
       {/* View Info Modal */}
       {showInfoModal && infoItem && (
-        <div className="modal-overlay" onClick={() => setShowInfoModal(false)}>
-          <div className="modal-content ui-info-modal" onClick={(e) => e.stopPropagation()}>
-            <div className="ui-info-header">
-              <div className="ui-info-header-icon">
-                <FontAwesomeIcon icon={faInfoCircle} />
-              </div>
-              <div className="ui-info-header-text">
-                <h2>Item Details</h2>
-                <p>Complete product information</p>
-              </div>
-              <button
-                className="ui-info-close"
-                onClick={() => setShowInfoModal(false)}
-                aria-label="Close item details"
-              >
-                <FontAwesomeIcon icon={faXmark} />
-              </button>
-            </div>
-
-            <div className="ui-info-body">
+        <Modal
+          onClose={() => setShowInfoModal(false)}
+          title="Item Details"
+          subtitle="Complete product information"
+          icon={faInfoCircle}
+          size="lg"
+        >
+          <div className="ui-info-body">
               <div className="ui-info-hero">
                 {(infoItem.photo_url || infoItem.photo || infoItem.image) ? (
                   <img
@@ -1023,22 +1012,18 @@ const UnifiedInventory = () => {
                 <label>Description</label>
                 <p>{infoItem.description || "No description provided."}</p>
               </div>
-            </div>
           </div>
-        </div>
+        </Modal>
       )}
 
       {/* History Modal */}
       {showHistoryModal && historyItem && (
-        <div className="modal-overlay" onClick={() => setShowHistoryModal(false)}>
-          <div className="modal-content history-modal" onClick={(e) => e.stopPropagation()}>
-            <div className="modal-header">
-              <h2><FontAwesomeIcon icon={faHistory} /> Stock History</h2>
-              <button className="btn-close" onClick={() => setShowHistoryModal(false)}>
-                &times;
-              </button>
-            </div>
-            <div className="modal-body">
+        <Modal
+          onClose={() => setShowHistoryModal(false)}
+          title="Stock History"
+          icon={faHistory}
+          size="lg"
+        >
               <div className="history-item-header">
                 <div className="history-item-name">{historyItem.name}</div>
                 <div className="history-item-meta">
@@ -1089,34 +1074,20 @@ const UnifiedInventory = () => {
                   </tbody>
                 </table>
               )}
-            </div>
-          </div>
-        </div>
+        </Modal>
       )}
 
       {/* ── Barcode Scan Modal ── */}
       {showScanModal && (
-        <div className="inv-scan-overlay" onClick={() => setShowScanModal(false)}>
-          <div className="inv-scan-modal" onClick={(e) => e.stopPropagation()}>
-            <div className="inv-scan-modal-header">
-              <span className="inv-scan-modal-title">
-                <FontAwesomeIcon icon={faCamera} /> Scan Barcode
-              </span>
-              <button
-                type="button"
-                className="inv-scan-modal-close"
-                onClick={() => setShowScanModal(false)}
-                aria-label="Close scanner"
-              >
-                <FontAwesomeIcon icon={faXmark} />
-              </button>
-            </div>
-            <p className="inv-scan-modal-hint">
-              Point your webcam at an item&apos;s barcode to find it in the inventory.
-            </p>
-            <QrScanner onScan={handleBarcodeScan} stopOnScan={true} />
-          </div>
-        </div>
+        <Modal
+          onClose={() => setShowScanModal(false)}
+          title="Scan Barcode"
+          subtitle="Point your webcam at an item's barcode"
+          icon={faCamera}
+          size="md"
+        >
+          <QrScanner onScan={handleBarcodeScan} stopOnScan={true} />
+        </Modal>
       )}
 
       {/* Archive Confirmation */}

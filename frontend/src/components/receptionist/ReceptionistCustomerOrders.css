@@ -648,20 +648,6 @@
   font-weight: 750;
 }
 
-/* Modal */
-
-.order-modal-overlay {
-  position: fixed;
-  inset: 0;
-  z-index: 12000;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 1rem;
-  background: rgba(15, 23, 42, 0.52);
-  backdrop-filter: blur(10px);
-}
-
 .order-modal {
   width: min(860px, 100%);
   max-height: 92vh;
@@ -670,38 +656,6 @@
   border-radius: var(--orders-radius-card);
   background: var(--orders-surface-solid);
   box-shadow: 0 30px 90px rgba(15, 23, 42, 0.26);
-}
-
-.order-modal-header {
-  display: flex;
-  justify-content: space-between;
-  gap: 1rem;
-  padding: 1.35rem;
-  border-bottom: 1px solid var(--orders-border);
-}
-
-.order-modal-header h2 {
-  margin: 0.4rem 0 0;
-  color: var(--orders-heading);
-  font-size: 1.45rem;
-  font-weight: 950;
-}
-
-.close-modal-btn {
-  width: 42px;
-  height: 42px;
-  min-width: 42px;
-  min-height: 42px;
-  padding: 0;
-  border: 1px solid var(--orders-border);
-  background: var(--orders-surface);
-  color: var(--orders-heading);
-  border-radius: 14px;
-}
-
-.close-modal-btn:hover {
-  color: #ffffff;
-  background: var(--orders-primary);
 }
 
 .order-modal-body {
@@ -826,9 +780,6 @@
 
 /* Dark mode */
 
-
-
-
 /* Responsive */
 
 @media (max-width: 1180px) {
@@ -869,7 +820,6 @@
   .orders-hero,
   .orders-controls,
   .orders-table-header,
-  .order-modal-header,
   .order-modal-body {
     padding: 1.15rem;
   }

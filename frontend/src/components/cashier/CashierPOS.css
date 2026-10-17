@@ -1539,21 +1539,6 @@
   box-shadow: none;
 }
 
-/* ═══════════════════════════════════
-   GENERIC MODAL OVERLAY
-   ═══════════════════════════════════ */
-.pos-overlay {
-  position: fixed;
-  inset: 0;
-  background: rgba(15,23,42,.55);
-  z-index: 150;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 20px;
-  animation: pos-fade-in 0.18s ease;
-}
-
 .pos-modal {
   background: var(--color-surface-solid, #fff);
   border-radius: 18px;
@@ -1569,44 +1554,6 @@
 
 .pos-modal--sm { max-width: 380px; }
 
-.pos-modal-header {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  padding: 20px 24px 14px;
-  border-bottom: 1px solid var(--color-border, rgba(255,95,147,.18));
-  flex-shrink: 0;
-}
-
-.pos-modal-title {
-  font-size: 16px;
-  font-weight: 800;
-  color: var(--color-heading, #191919);
-}
-
-.pos-modal-sub {
-  font-size: 12px;
-  color: var(--color-muted, #64748b);
-  margin-top: 2px;
-}
-
-.pos-modal-close {
-  width: 28px;
-  height: 28px;
-  border-radius: 7px;
-  border: none;
-  background: var(--color-surface, rgba(255,255,255,.9));
-  color: var(--color-muted, #64748b);
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 14px;
-  transition: all 0.1s;
-}
-
-.pos-modal-close:hover { background: #fee2e2; color: #dc2626; }
-
 .pos-modal-body {
   flex: 1;
   overflow-y: auto;
@@ -1615,16 +1562,6 @@
 
 .pos-modal-body::-webkit-scrollbar { width: 4px; }
 .pos-modal-body::-webkit-scrollbar-thumb { background: var(--color-border, rgba(255,95,147,.18)); border-radius: 4px; }
-
-.pos-modal-footer {
-  padding: 14px 24px 18px;
-  border-top: 1px solid var(--color-border, rgba(255,95,147,.18));
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10px;
-  justify-content: flex-end;
-  flex-shrink: 0;
-}
 
 /* ── Shared buttons ── */
 .pos-btn-secondary {
@@ -1740,31 +1677,6 @@
   padding: 8px 10px 12px;
 }
 
-/* ═══════════════════════════════════
-   PHOTO MODAL
-   ═══════════════════════════════════ */
-.pos-photo-overlay {
-  position: fixed;
-  inset: 0;
-  z-index: 200;
-  background: rgba(0,0,0,.78);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 24px;
-  animation: pos-fade-in 0.2s ease;
-}
-
-.pos-photo-box {
-  position: relative;
-  background: var(--color-surface-solid, #fff);
-  border-radius: 16px;
-  padding: 12px;
-  max-width: 640px;
-  width: 100%;
-  box-shadow: 0 24px 64px rgba(0,0,0,.3);
-}
-
 .pos-photo-img {
   width: 100%;
   max-height: 70vh;
@@ -1772,26 +1684,6 @@
   border-radius: 10px;
   display: block;
 }
-
-.pos-photo-close {
-  position: absolute;
-  top: -12px;
-  right: -12px;
-  width: 34px;
-  height: 34px;
-  border-radius: 50%;
-  border: none;
-  background: #111827;
-  color: #fff;
-  font-size: 16px;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: background 0.12s;
-}
-
-.pos-photo-close:hover { background: var(--color-primary, #ff5f93); }
 
 /* ═══════════════════════════════════
    HELP MODAL
@@ -1885,8 +1777,8 @@
    ═══════════════════════════════════ */
 @media print {
   body * { visibility: hidden !important; }
-  .pos-overlay, .pos-overlay * { visibility: visible !important; }
-  .pos-overlay {
+  .pw-modal-overlay, .pw-modal-overlay * { visibility: visible !important; }
+  .pw-modal-overlay {
     position: absolute !important;
     inset: 0;
     background: #fff !important;
@@ -1903,8 +1795,8 @@
     margin: 0 auto !important;
     max-height: none !important;
   }
-  .pos-modal-footer { display: none !important; }
-  .pos-modal-close  { display: none !important; }
+  .pos-modal .pw-modal-footer { display: none !important; }
+  .pos-modal .pw-modal-close  { display: none !important; }
 }
 
 /* ═══════════════════════════════════
@@ -1990,17 +1882,12 @@
   .pos-order-panel .pos-pm-btn { height: 48px; }
 
   /* Modals use more of the small viewport */
-  .pos-overlay { padding: 12px; }
   .pos-modal { border-radius: 16px; max-height: calc(100dvh - 24px); }
-  .pos-modal-header { padding: 14px 18px 12px; }
-  .pos-modal-body { padding: 14px 18px; }
-  .pos-modal-footer { padding: 12px 18px 14px; flex-wrap: wrap; }
-  .pos-modal-footer .pos-btn-secondary,
-  .pos-modal-footer .pos-btn-primary { flex: 1; }
-
-  /* Photo viewer close button must stay inside the viewport */
-  .pos-photo-overlay { padding: 12px; }
-  .pos-photo-close { top: 6px; right: 6px; }
+  .pos-modal .pw-modal-header { padding: 14px 18px 12px; }
+  .pos-modal .pw-modal-body { padding: 14px 18px; }
+  .pos-modal .pw-modal-footer { padding: 12px 18px 14px; flex-wrap: wrap; }
+  .pos-modal .pw-modal-footer .pos-btn-secondary,
+  .pos-modal .pw-modal-footer .pos-btn-primary { flex: 1; }
 
   /* Toasts span the phone width */
   .pos-toast-wrap {

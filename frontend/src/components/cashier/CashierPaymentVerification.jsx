@@ -9,7 +9,8 @@ import { showAlert, showSuccess, showError, showReasonPrompt, showConfirm, PAYME
 import { printReceipt as printReceiptUtil } from "../../utils/receiptPrinter";
 import { downloadReceiptPdf } from "../../utils/receiptPdf";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faRotateRight, faInbox, faXmark, faFilePdf } from "@fortawesome/free-solid-svg-icons";
+import { faRotateRight, faInbox, faXmark, faFilePdf, faFileInvoice } from "@fortawesome/free-solid-svg-icons";
+import Modal from "../shared/Modal";
 
 const formatDate = (dateStr) => {
   if (!dateStr) return "N/A";
@@ -504,14 +505,13 @@ const CashierPaymentVerification = () => {
               </div>
             )}
       {proofModal && (
-        <div className="proof-modal-overlay" onClick={closeProof}>
-          <div className="proof-modal" onClick={(e) => e.stopPropagation()}>
-            <div className="proof-modal-header">
-              <span>Payment Proof</span>
-              <button type="button" className="proof-modal-close" onClick={closeProof}>
-                <FontAwesomeIcon icon={faXmark} />
-              </button>
-            </div>
+        <Modal
+          onClose={closeProof}
+          title="Payment Proof"
+          icon={faFileInvoice}
+          size="lg"
+          className="proof-modal"
+        >
             <div className="proof-modal-body">
               {proofModal.loading && (
                 <div className="proof-modal-state">Loading proof…</div>
@@ -536,8 +536,7 @@ const CashierPaymentVerification = () => {
                 />
               )}
             </div>
-          </div>
-        </div>
+        </Modal>
       )}
     </div>
   );

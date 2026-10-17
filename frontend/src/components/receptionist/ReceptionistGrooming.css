@@ -277,7 +277,7 @@
 }
 
 .grooming-summary-card.active span {
-  background: linear-gradient(135deg, #8b5cf6, #a78bfa);
+  background: linear-gradient(135deg, var(--color-primary-light), var(--color-primary-soft));
 }
 
 .grooming-summary-card.success span {

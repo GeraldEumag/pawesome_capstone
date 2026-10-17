@@ -388,7 +388,6 @@
 }
 
 .cr-view-btn,
-.cr-close-btn,
 .cr-secondary-btn {
   min-height: 42px;
   border: none;
@@ -416,7 +415,6 @@
 }
 
 .cr-view-btn:hover,
-.cr-close-btn:hover,
 .cr-secondary-btn:hover {
   transform: translateY(-2px);
 }
@@ -427,20 +425,6 @@
   box-shadow: var(--cr-shadow-primary);
 }
 
-/* Modal */
-
-.cr-modal-overlay {
-  position: fixed;
-  inset: 0;
-  z-index: 12000;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 1rem;
-  background: rgba(15, 23, 42, 0.52);
-  backdrop-filter: blur(10px);
-}
-
 .cr-modal {
   width: min(860px, 100%);
   max-height: 92vh;
@@ -449,38 +433,6 @@
   border-radius: var(--cr-radius-card);
   background: var(--cr-surface-solid);
   box-shadow: 0 30px 90px rgba(15, 23, 42, 0.26);
-}
-
-.cr-modal-header {
-  display: flex;
-  justify-content: space-between;
-  gap: 1rem;
-  padding: 1.35rem;
-  border-bottom: 1px solid var(--cr-border);
-}
-
-.cr-modal-header h2 {
-  margin: 0.4rem 0 0;
-  color: var(--cr-heading);
-  font-size: 1.45rem;
-  font-weight: 950;
-}
-
-.cr-close-btn {
-  width: 42px;
-  height: 42px;
-  min-width: 42px;
-  min-height: 42px;
-  padding: 0;
-  border: 1px solid var(--cr-border);
-  background: var(--cr-surface);
-  color: var(--cr-heading);
-  border-radius: 14px;
-}
-
-.cr-close-btn:hover {
-  color: #ffffff;
-  background: var(--cr-primary);
 }
 
 .cr-modal-body {
@@ -548,14 +500,6 @@
   line-height: 1.45;
 }
 
-.cr-modal-actions {
-  display: flex;
-  justify-content: flex-end;
-  gap: 0.75rem;
-  padding: 1rem 1.35rem;
-  border-top: 1px solid var(--cr-border);
-}
-
 .cr-secondary-btn {
   color: var(--cr-primary);
   background: var(--cr-surface-solid);
@@ -565,16 +509,11 @@
 
 /* Dark mode */
 
-
-
-
-
 /* Print */
 
 @media print {
   .filters-section,
   .cr-view-btn,
-  .cr-modal-overlay,
   .cr-insight-bar {
     display: none !important;
   }
@@ -629,22 +568,12 @@
   }
 
   .cr-table-card .cr-section-head,
-  .cr-modal-header,
   .cr-modal-body {
     padding: 1.15rem;
   }
 
   .cr-summary-card {
     align-items: flex-start;
-    flex-direction: column;
-  }
-
-  .cr-modal-actions,
-  .cr-modal-actions button {
-    width: 100%;
-  }
-
-  .cr-modal-actions {
     flex-direction: column;
   }
 }

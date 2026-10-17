@@ -10,6 +10,7 @@ import {
 import JsBarcode from "jsbarcode";
 import { inventoryApi } from "../../api/inventory.jsx";
 import { normalizeList } from "../../api/client";
+import { showWarning } from "../../utils/alert.jsx";
 import "./BarcodeGenerator.css";
 
 /* ── Formats currency in Philippine Peso ── */
@@ -201,7 +202,7 @@ const BarcodeGenerator = () => {
 
       const win = window.open("", "_blank", "toolbar=0,location=0,menubar=0");
       if (!win) {
-        alert("Popup blocked — please allow pop-ups for this page to enable printing.");
+        showWarning("Popup blocked — please allow pop-ups for this page to enable printing.", "Popup Blocked");
         setPrintItems([]);
         return;
       }

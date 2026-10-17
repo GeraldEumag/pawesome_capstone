@@ -158,18 +158,6 @@
   z-index: 1;
 }
 
-.pets-eyebrow {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.45rem;
-  margin-bottom: 0.55rem;
-  color: var(--color-primary);
-  font-size: 0.78rem;
-  font-weight: 950;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-}
-
 .pets-hero h1 {
   margin: 0;
   color: var(--color-heading);
@@ -381,19 +369,6 @@
   transform: translateY(0);
 }
 
-/* Medical History Modal Overlay */
-.pet-history-overlay {
-  position: fixed;
-  inset: 0;
-  background: rgba(0, 0, 0, 0.5);
-  backdrop-filter: blur(4px);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 1000;
-  padding: 1rem;
-}
-
 .pet-history-modal {
   background: white;
   border-radius: 16px;
@@ -415,59 +390,6 @@
     opacity: 1;
     transform: translateY(0);
   }
-}
-
-.pet-history-header {
-  padding: 1.5rem;
-  border-bottom: 1px solid #f3f4f6;
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  gap: 1rem;
-}
-
-.pet-history-header .pets-eyebrow {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.5rem;
-  font-size: 0.75rem;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  color: #ec4899;
-  margin-bottom: 0.5rem;
-}
-
-.pet-history-header h2 {
-  margin: 0;
-  color: #111827;
-  font-size: 1.5rem;
-  font-weight: 700;
-}
-
-.pet-history-header p {
-  margin: 0.25rem 0 0;
-  color: #6b7280;
-  font-size: 0.875rem;
-}
-
-.pet-history-close {
-  width: 36px;
-  height: 36px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: #f3f4f6;
-  border: none;
-  border-radius: 8px;
-  color: #6b7280;
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-
-.pet-history-close:hover {
-  background: #e5e7eb;
-  color: #111827;
 }
 
 .pet-history-body {
@@ -619,13 +541,6 @@
   height: 16px;
   color: #ec4899;
   margin-top: 2px;
-}
-
-.pet-history-footer {
-  padding: 1rem 1.5rem;
-  border-top: 1px solid #f3f4f6;
-  display: flex;
-  justify-content: flex-end;
 }
 
 /* Pet Image Upload */
@@ -1185,20 +1100,6 @@
   color: #92400e;
 }
 
-.pets-add-modal-overlay {
-  position: fixed;
-  inset: 0;
-  z-index: 12000;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 1rem;
-  background: rgba(15, 23, 42, 0.54);
-  backdrop-filter: blur(10px);
-  overscroll-behavior: contain;
-  animation: petsModalBackdropIn 0.2s ease both;
-}
-
 .pets-add-modal {
   --color-surface: rgba(255, 255, 255, 0.9);
   --color-surface-solid: #ffffff;
@@ -1232,90 +1133,6 @@
 
 .pets-add-modal:focus {
   outline: none;
-}
-
-.pets-add-modal-header {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 1rem;
-  padding: 1.35rem 1.5rem;
-  border-bottom: 1px solid var(--color-border);
-  background:
-    radial-gradient(circle at top left, rgba(255, 95, 147, 0.14), transparent 34%),
-    var(--color-surface-solid);
-}
-
-.pets-add-modal-heading {
-  display: flex;
-  align-items: flex-start;
-  gap: 0.9rem;
-  min-width: 0;
-}
-
-.pets-add-modal-icon {
-  width: 48px;
-  height: 48px;
-  min-width: 48px;
-  display: grid;
-  place-items: center;
-  border-radius: 16px;
-  background: linear-gradient(135deg, var(--color-primary), var(--color-primary-light));
-  color: #ffffff;
-  font-size: 1.15rem;
-  box-shadow: var(--shadow-primary);
-}
-
-.pets-add-modal-heading .pets-eyebrow {
-  margin: 0 0 0.2rem;
-}
-
-.pets-add-modal-heading h2 {
-  margin: 0;
-  color: var(--color-heading);
-  font-size: clamp(1.2rem, 4vw, 1.55rem);
-  font-weight: 950;
-  letter-spacing: -0.04em;
-}
-
-.pets-add-modal-heading p {
-  margin: 0.35rem 0 0;
-  color: var(--color-muted);
-  font-size: 0.9rem;
-  font-weight: 700;
-  line-height: 1.45;
-}
-
-.pets-add-modal-close {
-  width: 42px;
-  height: 42px;
-  min-width: 42px;
-  display: grid;
-  place-items: center;
-  border: 1px solid var(--color-border);
-  border-radius: 14px;
-  background: var(--color-surface);
-  color: var(--color-heading);
-  font-size: 1rem;
-  cursor: pointer;
-  transition: 0.2s ease;
-}
-
-.pets-add-modal-close:hover:not(:disabled) {
-  border-color: var(--color-primary);
-  background: var(--color-primary);
-  color: #ffffff;
-}
-
-.pets-add-modal-close:disabled {
-  opacity: 0.55;
-  cursor: not-allowed;
-}
-
-.pets-add-modal-close:focus-visible,
-.pets-add-modal-footer button:focus-visible {
-  outline: 3px solid rgba(255, 95, 147, 0.38);
-  outline-offset: 3px;
 }
 
 .pets-add-modal-form {
@@ -1363,25 +1180,6 @@
   margin-top: 0.1rem;
 }
 
-.pets-add-modal-footer {
-  display: flex;
-  justify-content: flex-end;
-  gap: 0.75rem;
-  padding: 1rem 1.5rem;
-  border-top: 1px solid var(--color-border);
-  background: var(--color-surface-solid);
-}
-
-.pets-add-modal-footer button {
-  min-width: 140px;
-}
-
-.pets-add-modal-footer button:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
-  transform: none;
-}
-
 @keyframes petsModalBackdropIn {
   from { opacity: 0; }
   to { opacity: 1; }
@@ -1405,10 +1203,6 @@
 }
 
 @media (max-width: 640px) {
-  .pets-add-modal-overlay {
-    align-items: flex-end;
-    padding: 0;
-  }
 
   .pets-add-modal {
     width: 100%;
@@ -1421,44 +1215,12 @@
     animation-name: petsModalSheetIn;
   }
 
-  .pets-add-modal-header {
-    padding: 1rem;
-  }
-
-  .pets-add-modal-heading {
-    gap: 0.7rem;
-  }
-
-  .pets-add-modal-icon {
-    width: 42px;
-    height: 42px;
-    min-width: 42px;
-    border-radius: 14px;
-  }
-
-  .pets-add-modal-heading p {
-    font-size: 0.82rem;
-  }
-
   .pets-add-modal-body {
     padding: 1rem;
-  }
-
-  .pets-add-modal-footer {
-    padding: 0.85rem 1rem calc(0.85rem + env(safe-area-inset-bottom));
-  }
-
-  .pets-add-modal-footer button {
-    min-width: 0;
-    flex: 1;
   }
 }
 
 @media (max-height: 640px) and (min-width: 641px) {
-  .pets-add-modal-overlay {
-    align-items: flex-start;
-    overflow-y: auto;
-  }
 
   .pets-add-modal {
     max-height: calc(100dvh - 2rem);
@@ -1471,30 +1233,14 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .pets-add-modal-overlay,
   .pets-add-modal {
     animation: none;
   }
 
   .pets-add-trigger,
-  .pets-add-empty-btn,
-  .pets-add-modal-close {
+  .pets-add-empty-btn {
     transition: none;
   }
-}
-
-/* MEDICAL HISTORY MODAL */
-
-.pet-history-overlay {
-  position: fixed;
-  inset: 0;
-  z-index: 12000;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 1rem;
-  background: rgba(15, 23, 42, 0.5);
-  backdrop-filter: blur(10px);
 }
 
 .pet-history-modal {
@@ -1509,58 +1255,9 @@
   box-shadow: 0 30px 90px rgba(15, 23, 42, 0.26);
 }
 
-.pet-history-header {
-  display: flex;
-  justify-content: space-between;
-  gap: 1rem;
-  padding: 1.35rem;
-  border-bottom: 1px solid var(--color-border);
-  background:
-    radial-gradient(circle at top left, rgba(255, 95, 147, 0.14), transparent 34%),
-    var(--color-surface-solid);
-}
-
-.pet-history-header h2 {
-  margin: 0;
-  color: var(--color-heading);
-  font-size: 1.5rem;
-  font-weight: 950;
-}
-
-.pet-history-header p {
-  margin: 0.35rem 0 0;
-  color: var(--color-muted);
-  font-weight: 800;
-}
-
-.pet-history-close {
-  width: 42px;
-  height: 42px;
-  min-width: 42px;
-  border: 1px solid var(--color-border);
-  border-radius: 14px;
-  background: var(--color-surface);
-  color: var(--color-heading);
-  cursor: pointer;
-  transition: 0.2s ease;
-}
-
-.pet-history-close:hover {
-  background: var(--color-primary);
-  color: #ffffff;
-}
-
 .pet-history-body {
   padding: 1.25rem;
   overflow-y: auto;
-}
-
-.pet-history-footer {
-  display: flex;
-  justify-content: flex-end;
-  gap: 0.75rem;
-  padding: 1rem 1.25rem;
-  border-top: 1px solid var(--color-border);
 }
 
 .pet-history-timeline {
@@ -1674,10 +1371,6 @@
 }
 
 /* DARK MODE */
-
-
-
-
 
 /* RESPONSIVE */
 

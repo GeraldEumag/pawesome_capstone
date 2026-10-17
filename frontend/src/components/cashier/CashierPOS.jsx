@@ -26,9 +26,10 @@ import {
   faStore, faHistory, faBan, faExpand, faCompress,
   faBars, faChartBar, faUserCircle, faClipboardList, faWallet,
   faBone, faScissors, faBasketball, faPills, faBriefcaseMedical,
-  faDeleteLeft,
+  faDeleteLeft, faReceipt, faImage,
 } from "@fortawesome/free-solid-svg-icons";
 import QrScanner from "../shared/QrScanner";
+import Modal from "../shared/Modal";
 
 /* ---------- Constants -------------------------------------------- */
 const PRODUCT_ENDPOINT  = "/cashier/inventory/sellable";
@@ -1094,17 +1095,25 @@ const CashierPOS = ({ initialTab }) => {
 
       {/* ── Receipt Modal ─────────────────────────────────── */}
       {completedReceipt && (
-        <div className="pos-overlay" onClick={() => setCompletedReceipt(null)}>
-          <div className="pos-modal" onClick={e => e.stopPropagation()}>
-            <div className="pos-modal-header">
-              <div>
-                <div className="pos-modal-title">Payment Successful!</div>
-                <div className="pos-modal-sub">{completedReceipt.transaction_id} · {completedReceipt.date}</div>
-              </div>
-              <button className="pos-modal-close" onClick={() => setCompletedReceipt(null)}>
-                <FontAwesomeIcon icon={faXmark} />
+        <Modal
+          onClose={() => setCompletedReceipt(null)}
+          title="Payment Successful!"
+          subtitle={`${completedReceipt.transaction_id} · ${completedReceipt.date}`}
+          icon={faReceipt}
+          size="sm"
+          className="pos-modal"
+          footer={
+            <>
+              <button className="pos-btn-secondary" onClick={() => setCompletedReceipt(null)}>Close</button>
+              <button className="pos-btn-secondary" onClick={handleDownloadReceiptPdf}>
+                <FontAwesomeIcon icon={faFilePdf} /> Download PDF
               </button>
-            </div>
+              <button className="pos-btn-primary" onClick={handlePrint}>
+                <FontAwesomeIcon icon={faPrint} /> Print Receipt
+              </button>
+            </>
+          }
+        >
             <div className="pos-modal-body">
               <div className="pos-receipt-paper">
 
@@ -1161,39 +1170,31 @@ const CashierPOS = ({ initialTab }) => {
                 </div>
               </div>
             </div>
-            <div className="pos-modal-footer">
-              <button className="pos-btn-secondary" onClick={() => setCompletedReceipt(null)}>Close</button>
-              <button className="pos-btn-secondary" onClick={handleDownloadReceiptPdf}>
-                <FontAwesomeIcon icon={faFilePdf} /> Download PDF
-              </button>
-              <button className="pos-btn-primary" onClick={handlePrint}>
-                <FontAwesomeIcon icon={faPrint} /> Print Receipt
-              </button>
-            </div>
-          </div>
-        </div>
+        </Modal>
       )}
 
       {/* ── Photo Modal ───────────────────────────────────── */}
       {viewPhotoUrl && (
-        <div className="pos-photo-overlay" onClick={() => setViewPhotoUrl(null)}>
-          <div className="pos-photo-box" onClick={e => e.stopPropagation()}>
-            <button className="pos-photo-close" onClick={() => setViewPhotoUrl(null)}>
-              <FontAwesomeIcon icon={faXmark} />
-            </button>
-            <img className="pos-photo-img" src={viewPhotoUrl} alt="Product" />
-          </div>
-        </div>
+        <Modal
+          onClose={() => setViewPhotoUrl(null)}
+          title="Product Photo"
+          icon={faImage}
+          size="sm"
+          className="pos-photo-modal"
+        >
+          <img className="pos-photo-img" src={viewPhotoUrl} alt="Product" />
+        </Modal>
       )}
 
       {/* ── Help Modal ────────────────────────────────────── */}
       {showHelp && (
-        <div className="pos-overlay" onClick={() => setShowHelp(false)}>
-          <div className="pos-modal pos-modal--sm" onClick={e => e.stopPropagation()}>
-            <div className="pos-modal-header">
-              <div className="pos-modal-title"><FontAwesomeIcon icon={faKeyboard} style={{ marginRight: 8 }} />Keyboard Shortcuts</div>
-              <button className="pos-modal-close" onClick={() => setShowHelp(false)}><FontAwesomeIcon icon={faXmark} /></button>
-            </div>
+        <Modal
+          onClose={() => setShowHelp(false)}
+          title="Keyboard Shortcuts"
+          icon={faKeyboard}
+          size="sm"
+          className="pos-modal pos-modal--sm"
+        >
             <div className="pos-modal-body">
               <div className="pos-help-grid">
                 {[
@@ -1211,8 +1212,7 @@ const CashierPOS = ({ initialTab }) => {
                 ))}
               </div>
             </div>
-          </div>
-        </div>
+        </Modal>
       )}
 
       {/* ── Toasts ────────────────────────────────────────── */}

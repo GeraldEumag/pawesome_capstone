@@ -26,6 +26,7 @@ import { receptionistProfileApi } from "../../api/receptionistProfileApi";
 import PetAvatar from "../shared/PetAvatar";
 import CustomerAvatar from "../shared/CustomerAvatar";
 import RowActionPopover from "../shared/RowActionPopover";
+import Modal from "../shared/Modal";
 
 const EMPTY_CUSTOMER_FORM = {
   firstName: "",
@@ -1073,37 +1074,33 @@ const CustomersProfile = () => {
       )}
 
       {showCustomerModal && (
-        <div className="registration-modal-overlay" onClick={handleCloseCustomerModal}>
-          <div className="registration-modal" onClick={(event) => event.stopPropagation()}>
-            <div className="registration-header">
-              <div className="registration-title">
-                <div className="registration-icon">
-                  <FontAwesomeIcon icon={faUser} />
-                </div>
-                <div>
-                  <h2>
-                    {customerMode === "edit"
-                      ? "Edit Customer Profile"
-                      : "Customer Registration"}
-                  </h2>
-                  <p>
-                    {customerMode === "edit"
-                      ? "Update the selected customer information."
-                      : "Fill in the customer information below."}
-                  </p>
-                </div>
-              </div>
-
+        <Modal
+          onClose={handleCloseCustomerModal}
+          title={customerMode === "edit" ? "Edit Customer Profile" : "Customer Registration"}
+          subtitle={customerMode === "edit" ? "Update the selected customer information." : "Fill in the customer information below."}
+          icon={faUser}
+          size="lg"
+          className="registration-modal"
+          footer={
+            <div className="registration-actions">
               <button
                 type="button"
-                className="close-registration-btn"
+                className="btn-secondary"
                 onClick={handleCloseCustomerModal}
+                disabled={saving}
               >
                 <FontAwesomeIcon icon={faTimes} />
+                Cancel
+              </button>
+
+              <button type="submit" form="customer-registration-form" className="btn-primary" disabled={saving}>
+                <FontAwesomeIcon icon={saving ? faSpinner : faPlus} spin={saving} />
+                {customerMode === "edit" ? "Save Changes" : "Register Customer"}
               </button>
             </div>
-
-            <form onSubmit={handleCustomerSubmit} className="registration-form">
+          }
+        >
+            <form id="customer-registration-form" onSubmit={handleCustomerSubmit} className="registration-form">
               <div className="form-section">
                 <h3>Personal Information</h3>
 
@@ -1255,46 +1252,36 @@ const CustomersProfile = () => {
                 </div>
               </div>
 
-              <div className="registration-actions">
-                <button
-                  type="button"
-                  className="btn-secondary"
-                  onClick={handleCloseCustomerModal}
-                  disabled={saving}
-                >
-                  <FontAwesomeIcon icon={faTimes} />
-                  Cancel
-                </button>
-
-                <button type="submit" className="btn-primary" disabled={saving}>
-                  <FontAwesomeIcon icon={saving ? faSpinner : faPlus} spin={saving} />
-                  {customerMode === "edit" ? "Save Changes" : "Register Customer"}
-                </button>
-              </div>
             </form>
-          </div>
-        </div>
+        </Modal>
       )}
 
       {showPetModal && selectedCustomer && (
-        <div className="pet-modal-overlay" onClick={handleClosePetModal}>
-          <div className="pet-modal" onClick={(event) => event.stopPropagation()}>
-            <div className="modal-header">
-              <div>
-                <span className="customer-eyebrow">
-                  <FontAwesomeIcon icon={faPaw} />
-                  Pet Profile
-                </span>
-                <h3>{petMode === "edit" ? "Edit Pet" : "Add New Pet"}</h3>
-                <p>Owner: {getCustomerName(selectedCustomer)}</p>
-              </div>
+        <Modal
+          onClose={handleClosePetModal}
+          title={petMode === "edit" ? "Edit Pet" : "Add New Pet"}
+          subtitle={`Owner: ${getCustomerName(selectedCustomer)}`}
+          icon={faPaw}
+          className="pet-modal"
+          footer={
+            <div className="rcp-modal-actions">
+              <button
+                type="button"
+                className="secondary-btn"
+                onClick={handleClosePetModal}
+                disabled={saving}
+              >
+                Cancel
+              </button>
 
-              <button type="button" className="close-btn" onClick={handleClosePetModal}>
-                <FontAwesomeIcon icon={faTimes} />
+              <button type="submit" form="pet-form" className="primary-btn" disabled={saving}>
+                <FontAwesomeIcon icon={saving ? faSpinner : faPlus} spin={saving} />
+                {petMode === "edit" ? "Save Pet" : "Add Pet"}
               </button>
             </div>
-
-            <form onSubmit={handlePetSubmit} className="modal-body">
+          }
+        >
+            <form id="pet-form" onSubmit={handlePetSubmit} className="rcp-modal-body">
               <div className="form-group">
                 <label>Pet Name *</label>
                 <input
@@ -1345,25 +1332,8 @@ const CustomersProfile = () => {
                   placeholder="Example: 2 years"
                 />
               </div>
-
-              <div className="modal-actions">
-                <button
-                  type="button"
-                  className="secondary-btn"
-                  onClick={handleClosePetModal}
-                  disabled={saving}
-                >
-                  Cancel
-                </button>
-
-                <button type="submit" className="primary-btn" disabled={saving}>
-                  <FontAwesomeIcon icon={saving ? faSpinner : faPlus} spin={saving} />
-                  {petMode === "edit" ? "Save Pet" : "Add Pet"}
-                </button>
-              </div>
             </form>
-          </div>
-        </div>
+        </Modal>
       )}
     </div>
   );
