@@ -26,6 +26,13 @@ const DatePickerInput = ({
   // behind modal overlays — the previous anchored popper became
   // unclickable inside booking modals after a date was selected.
   withPortal = true,
+  // `portalId` makes react-datepicker mount the overlay through a real
+  // React portal into a shared div appended to document.body. Without it
+  // the overlay is rendered inline and `position: fixed` breaks whenever
+  // an ancestor keeps a `transform` (e.g. the register card's entrance
+  // animation with `animation-fill-mode: both`), leaving the calendar
+  // offset and clipped.
+  portalId = "paws-datepicker-portal",
 }) => {
   const typingFormat = showTimeSelect ? `MM/dd/yyyy ${timeFormat}` : "MM/dd/yyyy";
   const displayFormat = showTimeSelect ? `${dateFormat} ${timeFormat}` : dateFormat;
@@ -56,6 +63,8 @@ const DatePickerInput = ({
         popperClassName="paws-datepicker-popper"
         popperPlacement="bottom-start"
         withPortal={withPortal}
+        portalId={portalId}
+        showDisabledMonthNavigation
       />
     </div>
   );

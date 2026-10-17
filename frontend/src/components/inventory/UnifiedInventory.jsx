@@ -930,26 +930,98 @@ const UnifiedInventory = () => {
       {/* View Info Modal */}
       {showInfoModal && infoItem && (
         <div className="modal-overlay" onClick={() => setShowInfoModal(false)}>
-          <div className="modal-content info-modal" onClick={(e) => e.stopPropagation()}>
-            <div className="modal-header">
-              <h2><FontAwesomeIcon icon={faInfoCircle} /> Item Details</h2>
-              <button className="btn-close" onClick={() => setShowInfoModal(false)}>
-                &times;
+          <div className="modal-content ui-info-modal" onClick={(e) => e.stopPropagation()}>
+            <div className="ui-info-header">
+              <div className="ui-info-header-icon">
+                <FontAwesomeIcon icon={faInfoCircle} />
+              </div>
+              <div className="ui-info-header-text">
+                <h2>Item Details</h2>
+                <p>Complete product information</p>
+              </div>
+              <button
+                className="ui-info-close"
+                onClick={() => setShowInfoModal(false)}
+                aria-label="Close item details"
+              >
+                <FontAwesomeIcon icon={faXmark} />
               </button>
             </div>
-            <div className="modal-body">
-              <div className="info-grid">
-                <div><label>Name</label><p>{infoItem.name}</p></div>
-                <div><label>SKU</label><p>{infoItem.sku || "—"}</p></div>
-                <div><label>Barcode</label><p>{infoItem.barcode || "—"}</p></div>
-                <div><label>Category</label><p>{infoItem.category}</p></div>
-                <div><label>Brand</label><p>{infoItem.brand || "—"}</p></div>
-                <div><label>Generic Name</label><p>{infoItem.generic_name || "—"}</p></div>
-                <div><label>Supplier</label><p>{infoItem.supplier || "—"}</p></div>
-                <div><label>Stock</label><p>{getStock(infoItem)} / {getMinStock(infoItem)} min</p></div>
-                <div><label>Price</label><p>₱{(infoItem.price || 0).toLocaleString()}</p></div>
-                <div><label>Cost</label><p>{infoItem.cost ? `₱${infoItem.cost.toLocaleString()}` : "—"}</p></div>
-                <div className="full-width"><label>Description</label><p>{infoItem.description || "No description"}</p></div>
+
+            <div className="ui-info-body">
+              <div className="ui-info-hero">
+                {(infoItem.photo_url || infoItem.photo || infoItem.image) ? (
+                  <img
+                    className="ui-info-avatar ui-info-avatar-img"
+                    src={infoItem.photo_url || infoItem.photo || infoItem.image}
+                    alt={infoItem.name}
+                  />
+                ) : (
+                  <div className="ui-info-avatar">
+                    {(infoItem.name || "?").charAt(0).toUpperCase()}
+                  </div>
+                )}
+                <div className="ui-info-hero-text">
+                  <h3>{infoItem.name}</h3>
+                  <div className="ui-info-chips">
+                    {infoItem.category && (
+                      <span className="ui-info-chip category">{infoItem.category}</span>
+                    )}
+                    <span className={`ui-info-chip status ${getStatusBadgeClass(infoItem)}`}>
+                      {getStatus(infoItem)}
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              <div className="ui-info-stats">
+                <div className="ui-info-stat">
+                  <span className="ui-info-stat-label">Current Stock</span>
+                  <span className={`ui-info-stat-value ${getStatusBadgeClass(infoItem)}`}>
+                    {getStock(infoItem)}
+                  </span>
+                  <span className="ui-info-stat-sub">min {getMinStock(infoItem)}</span>
+                </div>
+                <div className="ui-info-stat">
+                  <span className="ui-info-stat-label">Price</span>
+                  <span className="ui-info-stat-value">₱{(infoItem.price || 0).toLocaleString()}</span>
+                  <span className="ui-info-stat-sub">selling price</span>
+                </div>
+                <div className="ui-info-stat">
+                  <span className="ui-info-stat-label">Cost</span>
+                  <span className="ui-info-stat-value">
+                    {infoItem.cost ? `₱${Number(infoItem.cost).toLocaleString()}` : "—"}
+                  </span>
+                  <span className="ui-info-stat-sub">unit cost</span>
+                </div>
+              </div>
+
+              <div className="ui-info-grid">
+                <div className="ui-info-field">
+                  <label>SKU</label>
+                  <p>{infoItem.sku || "—"}</p>
+                </div>
+                <div className="ui-info-field">
+                  <label>Barcode</label>
+                  <p>{infoItem.barcode || "—"}</p>
+                </div>
+                <div className="ui-info-field">
+                  <label>Brand</label>
+                  <p>{infoItem.brand || "—"}</p>
+                </div>
+                <div className="ui-info-field">
+                  <label>Generic Name</label>
+                  <p>{infoItem.generic_name || "—"}</p>
+                </div>
+                <div className="ui-info-field full">
+                  <label>Supplier</label>
+                  <p>{infoItem.supplier || "—"}</p>
+                </div>
+              </div>
+
+              <div className="ui-info-desc">
+                <label>Description</label>
+                <p>{infoItem.description || "No description provided."}</p>
               </div>
             </div>
           </div>

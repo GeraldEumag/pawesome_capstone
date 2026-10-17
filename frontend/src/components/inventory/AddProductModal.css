@@ -350,19 +350,53 @@
   min-height: 84px;
 }
 
-/* ---- Checkbox label row ---- */
+/* ---- Toggle row (replaces the native checkbox, which the generic
+   .form-group input !important rules kept mangling) ---- */
 .checkbox-label {
+  position: relative;
   display: flex;
   flex-direction: row !important;
   align-items: center;
   gap: 0.55rem;
   cursor: pointer;
-  padding: 0.6rem 0.9rem;
+  padding: 0.6rem 0.75rem 0.6rem 2.75rem; /* room for the toggle pill */
   border: 1.5px solid #e6eaf0;
   border-radius: 10px;
   background: #fff;
-  transition: border-color 0.18s, background 0.18s;
-  font-size: 0.85rem;
+  transition: border-color 0.18s, background 0.18s, color 0.18s;
+  font-size: 0.82rem;
+  font-weight: 600;
+  white-space: nowrap;
+  user-select: none;
+}
+
+/* Toggle track */
+.checkbox-label::before {
+  content: "";
+  position: absolute;
+  left: 0.8rem;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 30px;
+  height: 18px;
+  border-radius: 999px;
+  background: #cbd5e1;
+  transition: background 0.18s;
+}
+
+/* Toggle knob */
+.checkbox-label::after {
+  content: "";
+  position: absolute;
+  left: calc(0.8rem + 3px);
+  top: 50%;
+  transform: translateY(-50%);
+  width: 12px;
+  height: 12px;
+  border-radius: 999px;
+  background: #fff;
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.25);
+  transition: left 0.18s;
 }
 
 .checkbox-label:hover {
@@ -370,11 +404,36 @@
   background: rgba(255, 95, 147, 0.03);
 }
 
+/* Hidden input still receives the click via the wrapping <label> */
 .checkbox-label input[type="checkbox"] {
-  width: auto !important;
-  accent-color: #ff5f93;
-  margin: 0;
-  flex-shrink: 0;
+  position: absolute;
+  width: 0 !important;
+  height: 0;
+  padding: 0 !important;
+  border: none !important;
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* Checked — green card, pill slides right */
+.checkbox-label:has(input[type="checkbox"]:checked) {
+  background: #16a34a;
+  border-color: #16a34a;
+  color: #fff;
+}
+
+.checkbox-label:has(input[type="checkbox"]:checked)::before {
+  background: rgba(255, 255, 255, 0.35);
+}
+
+.checkbox-label:has(input[type="checkbox"]:checked)::after {
+  left: calc(0.8rem + 15px);
+}
+
+/* Disabled (category forces expiry tracking) — stays green but locked */
+.checkbox-label:has(input[type="checkbox"]:disabled) {
+  opacity: 0.72;
+  cursor: not-allowed;
 }
 
 /* ---- Helper / Error Text ---- */
@@ -559,47 +618,6 @@
   border: 1.5px dashed rgba(255, 95, 147, 0.28);
   border-radius: 14px;
   padding: 1.15rem 1.25rem 0.35rem;
-}
-
-/* ---- Supplier Select Row ---- */
-.supplier-select-row {
-  display: flex;
-  gap: 0.5rem;
-  align-items: center;
-}
-
-.supplier-select-row input {
-  flex: 1;
-  min-width: 0;
-}
-
-.supplier-btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.45rem;
-  padding: 0.55rem 1rem;
-  background: rgba(255, 95, 147, 0.08);
-  color: #ff5f93;
-  border: 1.5px solid rgba(255, 95, 147, 0.35);
-  border-radius: 10px;
-  font-size: 0.82rem;
-  font-weight: 700;
-  cursor: pointer;
-  white-space: nowrap;
-  transition: all 0.18s;
-}
-
-.supplier-btn:hover {
-  background: #ff5f93;
-  color: #fff;
-  border-color: #ff5f93;
-  box-shadow: 0 3px 10px rgba(255, 95, 147, 0.3);
-}
-
-.supplier-hint {
-  font-size: 0.75rem;
-  color: #059669;
-  font-weight: 600;
 }
 
 /* ============================================================

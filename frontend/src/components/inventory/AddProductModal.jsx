@@ -4,7 +4,6 @@ import { inventoryApi } from "../../api/inventory.jsx";
 import { formatCurrency } from "../../utils/currency";
 import { formatDateOnly, parseDateOnly } from "../../utils/date";
 import DatePickerInput from "../shared/DatePickerInput";
-import SupplierModal from "./SupplierModal";
 import QrScanner from "../shared/QrScanner";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
@@ -14,7 +13,6 @@ import {
   faCheck,
   faChevronLeft,
   faChevronRight,
-  faBuilding,
   faEdit,
   faCloudArrowUp,
   faImage,
@@ -62,7 +60,7 @@ const AddProductModal = ({ isOpen, onClose, onSuccess, editItem = null }) => {
 
   const [errors, setErrors] = useState({});
   const [photoPreview, setPhotoPreview] = useState(null);
-  const [showSupplierModal, setShowSupplierModal] = useState(false);
+  const [suppliers, setSuppliers] = useState([]);
 
   // Barcode webcam scanner
   const [showBarcodeScanner, setShowBarcodeScanner] = useState(false);
@@ -130,6 +128,25 @@ const AddProductModal = ({ isOpen, onClose, onSuccess, editItem = null }) => {
     setCurrentStep(1);
   }, [editItem, isOpen]);
 
+  // Load active suppliers for the supplier dropdowns
+  useEffect(() => {
+    if (!isOpen) return;
+    let cancelled = false;
+    inventoryApi
+      .getSuppliers({ active_only: true })
+      .then((res) => {
+        if (cancelled) return;
+        const list = res?.suppliers || res?.data || (Array.isArray(res) ? res : []);
+        setSuppliers(Array.isArray(list) ? list : []);
+      })
+      .catch(() => {
+        if (!cancelled) setSuppliers([]);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [isOpen]);
+
   /* ── Barcode webcam scan handler ── */
   const handleBarcodeScan = async (code) => {
     setShowBarcodeScanner(false);
@@ -175,6 +192,16 @@ const AddProductModal = ({ isOpen, onClose, onSuccess, editItem = null }) => {
     if (errors[name]) {
       setErrors((prev) => ({ ...prev, [name]: null }));
     }
+  };
+
+  const handleSupplierSelect = (e) => {
+    const id = e.target.value;
+    const found = suppliers.find((s) => String(s.id) === String(id));
+    setFormData((prev) => ({
+      ...prev,
+      supplier_id: found ? found.id : id === "" ? null : prev.supplier_id,
+      supplier: found ? found.name : id === "" ? "" : prev.supplier,
+    }));
   };
 
   const handlePhotoChange = (e) => {
@@ -651,6 +678,7 @@ const AddProductModal = ({ isOpen, onClose, onSuccess, editItem = null }) => {
                   <h4>Expiry & Issue Method</h4>
                   <div className="form-grid">
                     <div className="form-group">
+                      <label>Expiry Tracking</label>
                       <label className="checkbox-label">
                         <input
                           type="checkbox"
@@ -735,13 +763,26 @@ const AddProductModal = ({ isOpen, onClose, onSuccess, editItem = null }) => {
 
                       <div className="form-group">
                         <label>Supplier</label>
-                        <input
-                          type="text"
+                        <select
                           name="batch_supplier"
                           value={formData.batch_supplier}
                           onChange={handleChange}
-                          placeholder="e.g., ABC Pharmaceuticals"
-                        />
+                        >
+                          <option value="">Select supplier</option>
+                          {suppliers.map((s) => (
+                            <option key={s.id} value={s.name}>
+                              {s.name}
+                            </option>
+                          ))}
+                          {formData.batch_supplier &&
+                            !suppliers.some(
+                              (s) => s.name === formData.batch_supplier
+                            ) && (
+                              <option value={formData.batch_supplier}>
+                                {formData.batch_supplier}
+                              </option>
+                            )}
+                        </select>
                       </div>
 
                       <div className="form-group">
@@ -813,29 +854,29 @@ const AddProductModal = ({ isOpen, onClose, onSuccess, editItem = null }) => {
                   <div className="form-grid">
                     <div className="form-group">
                       <label>Supplier</label>
-                      <div className="supplier-select-row">
-                        <input
-                          type="text"
-                          name="supplier"
-                          value={formData.supplier}
-                          onChange={handleChange}
-                          placeholder="Select or type supplier..."
-                          readOnly
-                        />
-                        <button
-                          type="button"
-                          className="supplier-btn"
-                          onClick={() => setShowSupplierModal(true)}
-                          title="Select Supplier"
-                        >
-                          <FontAwesomeIcon icon={faBuilding} /> Select
-                        </button>
-                      </div>
-                      {formData.supplier && (
-                        <small className="supplier-hint">
-                          Selected: {formData.supplier}
-                        </small>
-                      )}
+                      <select
+                        name="supplier_id"
+                        value={formData.supplier_id ?? ""}
+                        onChange={handleSupplierSelect}
+                      >
+                        <option value="">Select supplier</option>
+                        {suppliers.map((s) => (
+                          <option key={s.id} value={s.id}>
+                            {s.name}
+                          </option>
+                        ))}
+                        {formData.supplier &&
+                          !suppliers.some(
+                            (s) => String(s.id) === String(formData.supplier_id)
+                          ) && (
+                            <option value={formData.supplier_id ?? formData.supplier}>
+                              {formData.supplier}
+                            </option>
+                          )}
+                      </select>
+                      <small className="helper-text">
+                        Manage the supplier list in the Suppliers tab.
+                      </small>
                     </div>
 
                     <div className="form-group">
@@ -962,20 +1003,6 @@ const AddProductModal = ({ isOpen, onClose, onSuccess, editItem = null }) => {
             )}
           </div>
         </form>
-
-        <SupplierModal
-          isOpen={showSupplierModal}
-          onClose={() => setShowSupplierModal(false)}
-          mode="select"
-          initialSupplierId={formData.supplier_id}
-          onSelectSupplier={(supplier) => {
-            setFormData((prev) => ({
-              ...prev,
-              supplier: supplier.name,
-              supplier_id: supplier.id,
-            }));
-          }}
-        />
       </div>
     </div>
   );

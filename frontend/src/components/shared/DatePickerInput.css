@@ -6,7 +6,10 @@
   width: 100%;
 }
 
-.paws-datepicker input {
+/* `.paws-datepicker-wrap` is our own wrapper — in react-datepicker v9 the
+   `.react-datepicker-wrapper` element (target of `wrapperClassName`) is not
+   rendered in `withPortal` mode, so `.paws-datepicker input` never matched. */
+.paws-datepicker-wrap input {
   width: 100%;
   min-height: 44px;
   padding: 0.55rem 1rem;
@@ -21,11 +24,11 @@
   cursor: pointer;
 }
 
-.paws-datepicker input::placeholder {
+.paws-datepicker-wrap input::placeholder {
   color: #9ca3af;
 }
 
-.paws-datepicker input:focus {
+.paws-datepicker-wrap input:focus {
   border-color: rgba(236, 72, 153, 0.4);
   box-shadow: 0 0 0 3px rgba(236, 72, 153, 0.08);
   background: #ffffff;
