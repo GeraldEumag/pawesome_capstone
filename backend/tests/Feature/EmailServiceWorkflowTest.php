@@ -148,6 +148,8 @@ class EmailServiceWorkflowTest extends TestCase
         [$user] = $this->verifiedCustomer(['email' => 'customer@example.com']);
         $receptionist = User::factory()->create(['role' => 'receptionist', 'is_active' => true]);
         $serviceRequest = $this->submitGroomingRequest($user);
+        // Grooming can only be completed once payment is fully verified.
+        $serviceRequest->update(['payment_status' => 'paid']);
 
         $this->patchJson("/api/receptionist/requests/{$serviceRequest->id}/status", [
             'status' => 'completed',
