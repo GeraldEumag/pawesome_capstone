@@ -1304,8 +1304,8 @@ const ReceptionistBookings = () => {
         ))}
       </section>
 
-      <section className="bookings-table-container">
-        <div className="bookings-table-header">
+      <section className="rb-table-container">
+        <div className="rb-table-header">
           <div>
             <span className="rb-eyebrow">
               <FontAwesomeIcon icon={faCalendarAlt} />
@@ -1328,8 +1328,8 @@ const ReceptionistBookings = () => {
             <p>Please wait while receptionist bookings are loaded.</p>
           </div>
         ) : (
-          <div className="table-scroll">
-            <table className="bookings-table">
+          <div className="rb-table-scroll">
+            <table className="rb-table">
               <thead>
                 <tr>
                   <th>Type</th>

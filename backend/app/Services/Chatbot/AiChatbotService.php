@@ -229,7 +229,7 @@ class AiChatbotService
                 $s = $context['system'];
                 $prompt .= "\n⏰ SYSTEM:\n";
                 $prompt .= "- Current time: " . ($s['current_datetime'] ?? now()->format('l, F j, Y g:i A')) . "\n";
-                $prompt .= "- Business hours: " . ($s['business_hours'] ?? 'Mon-Sat 9AM-6PM, Sun 10AM-4PM') . "\n";
+                $prompt .= "- Business hours: " . ($s['business_hours'] ?? \App\Support\StoreHours::label() . ' every day') . "\n";
             }
         }
 

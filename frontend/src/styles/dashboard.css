@@ -167,3 +167,43 @@
   .app-section { margin-bottom: 14px; }
 }
 
+
+/* Customer dashboard: the sidebar becomes an overlay from 992px down,
+   matching the phone behaviour, so content reclaims the 260px column.
+   Below 768px the global rules in responsive.css already do this. */
+@media (min-width: 768px) and (max-width: 991px) {
+  .app-dashboard.customer-dashboard .customer-sidebar {
+    position: fixed;
+    inset: 0 auto 0 0;
+    width: 260px !important;
+    transform: translateX(-100%);
+    transition: transform 0.28s ease;
+    z-index: 1400;
+  }
+
+  .app-dashboard.customer-dashboard.mobile-open .customer-sidebar {
+    transform: translateX(0);
+  }
+
+  .app-dashboard.customer-dashboard .app-main {
+    margin-left: 0 !important;
+    width: 100% !important;
+  }
+
+  .app-dashboard.customer-dashboard .mobile-menu-toggle {
+    display: grid !important;
+    place-items: center;
+  }
+
+  .app-dashboard.customer-dashboard .mobile-backdrop {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.45);
+    z-index: 1390;
+  }
+
+  .app-dashboard.customer-dashboard .mobile-backdrop.active {
+    display: block;
+  }
+}

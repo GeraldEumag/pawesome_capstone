@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { apiRequest } from "../../api/client";
 import RowActionPopover from "../shared/RowActionPopover";
+import "./ReceptionistHotelBookings.css";
 
 const normalizeList = (result, keys = []) => {
   if (Array.isArray(result)) return result;
@@ -52,7 +53,8 @@ const ReceptionistConfinements = () => {
         </div>
       </div>
 
-      <div className="bookings-table-container">
+      <div className="hotel-table-card">
+        <div className="hotel-table-scroll">
         <table className="bookings-table">
           <thead>
             <tr>
@@ -102,6 +104,7 @@ const ReceptionistConfinements = () => {
             {records.length === 0 && <tr><td colSpan="7">No medical confinement admissions yet.</td></tr>}
           </tbody>
         </table>
+        </div>
       </div>
     </section>
   );

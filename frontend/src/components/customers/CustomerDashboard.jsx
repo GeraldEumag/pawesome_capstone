@@ -11,7 +11,7 @@ import "./CustomerDashboard.css";
 const ROUTE_META = [
   { path: "/customer", title: "Services", subtitle: "Browse and book grooming, hotel, and veterinary services." },
   { path: "/customer/services", title: "Services", subtitle: "Browse and book grooming, hotel, and veterinary services." },
-  { path: "/customer/bookings", title: "My Bookings", subtitle: "Track the status of your submitted service requests." },
+  { path: "/customer/bookings", title: "My Requests", subtitle: "Track, pay for, and cancel your bookings." },
   { path: "/customer/pets", title: "My Pets", subtitle: "View and manage your registered pets and their profiles." },
   { path: "/customer/hotel", title: "Hotel Booking", subtitle: "Book a comfortable stay for your pet at our hotel." },
   { path: "/customer/grooming", title: "Grooming Booking", subtitle: "Schedule grooming sessions for your pet." },

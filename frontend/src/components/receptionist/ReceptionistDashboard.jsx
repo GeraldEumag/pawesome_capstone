@@ -660,7 +660,7 @@ const ReceptionistDashboard = () => {
       </section>
 
       <section className="request-table-card fade-up">
-        <div className="table-header">
+        <div className="rd-table-header">
           <div>
             <span className="section-eyebrow">
               <FaCalendarAlt />
@@ -675,7 +675,7 @@ const ReceptionistDashboard = () => {
             </p>
           </div>
 
-          <div className="table-header-actions">
+          <div className="rd-table-header-actions">
             <button type="button" onClick={() => fetchRequests({ silent: true })}>
               <FaSyncAlt />
               Refresh
@@ -707,7 +707,7 @@ const ReceptionistDashboard = () => {
             <p>Please wait while receptionist service requests are loaded.</p>
           </div>
         ) : (
-          <div className="table-scroll">
+          <div className="rd-table-scroll">
             <table className="request-table">
               <thead>
                 <tr>
@@ -797,7 +797,7 @@ const ReceptionistDashboard = () => {
 
                     <td>
                       <RowActionPopover rowLabel={item.pet || item.customer || item.id}>
-                        <div className="table-actions">
+                        <div className="rd-table-actions">
                         <button
                           className="view"
                           type="button"

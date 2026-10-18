@@ -605,8 +605,8 @@ const Grooming = () => {
         </button>
       </section>
 
-      <section className="grooming-table-card">
-        <div className="grooming-table-header">
+      <section className="rg-table-card">
+        <div className="rg-table-header">
           <div>
             <span className="grooming-eyebrow">
               <FontAwesomeIcon icon={faPaw} />
@@ -629,8 +629,8 @@ const Grooming = () => {
             <p>Please wait while the system loads live grooming requests.</p>
           </div>
         ) : (
-          <div className="grooming-table-scroll">
-            <table className="grooming-table">
+          <div className="rg-table-scroll">
+            <table className="rg-table">
               <thead>
                 <tr>
                   <th>ID</th>

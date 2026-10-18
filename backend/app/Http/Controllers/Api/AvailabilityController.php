@@ -38,7 +38,7 @@ class AvailabilityController extends Controller
         $veterinarianId = $request->input('veterinarian_id');
 
         try {
-            $availability = BookingAvailabilityService::getVeterinaryAvailability($date, $serviceId, $serviceName, $veterinarianId ? (int) $veterinarianId : null);
+            $availability = BookingAvailabilityService::getVeterinaryAvailability($date, $serviceId, $serviceName, $veterinarianId ? (int) $veterinarianId : null, $this->holidayOverride($request));
             return response()->json($availability);
         } catch (\Exception $e) {
             return response()->json([
@@ -70,7 +70,7 @@ class AvailabilityController extends Controller
         $serviceName = $request->input('service_name');
 
         try {
-            $availability = BookingAvailabilityService::getGroomingAvailability($date, $serviceName);
+            $availability = BookingAvailabilityService::getGroomingAvailability($date, $serviceName, $this->holidayOverride($request));
             return response()->json($availability);
         } catch (\Exception $e) {
             return response()->json([
@@ -241,5 +241,11 @@ class AvailabilityController extends Controller
                 'message' => 'Failed to check room availability: ' . $e->getMessage()
             ], 500);
         }
+    }
+
+    /** Staff may view slots on a public holiday (confirmed in the UI); customers may not. */
+    private function holidayOverride(Request $request): bool
+    {
+        return $request->boolean('holiday_override') && $request->user() !== null && $request->user()->role !== 'customer';
     }
 }

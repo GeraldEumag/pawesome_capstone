@@ -256,7 +256,7 @@
   border-radius: 16px;
   box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
   padding: 1.5rem;
-  overflow: hidden;
+  overflow-x: auto;
 }
 
 .mp-table-wrapper h2 {

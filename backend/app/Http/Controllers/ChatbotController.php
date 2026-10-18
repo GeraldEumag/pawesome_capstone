@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Support\StoreHours;
 use App\Models\Service;
 use App\Services\Chatbot\PremiumChatbotService;
 use App\Services\Chatbot\RoleScopeService;
@@ -140,7 +141,7 @@ class ChatbotController extends Controller
         // Hours
         if (collect(['hour', 'open', 'close', 'time', 'when'])->some(fn ($kw) => str_contains($message, $kw))) {
             return response()->json([
-                'reply'       => "Pawesome is open Monday to Saturday, 8:00 AM – 6:00 PM. We are closed on Sundays and public holidays.",
+                'reply'       => "Pawesome is open every day, " . StoreHours::label() . ". We are closed on public holidays.",
                 'intent'      => 'hours_guest',
                 'suggestions' => ['Where are you located?', 'How do I book?', 'What services do you offer?'],
                 'source'      => 'public_rule',

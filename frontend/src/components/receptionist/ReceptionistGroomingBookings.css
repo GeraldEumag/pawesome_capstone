@@ -244,7 +244,8 @@
   background: var(--grooming-surface);
   border: 1px solid var(--grooming-border);
   border-radius: 10px;
-  overflow: hidden;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
   box-shadow: 0 1px 3px rgba(0,0,0,0.05);
 }
 

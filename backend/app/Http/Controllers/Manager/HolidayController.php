@@ -35,6 +35,7 @@ class HolidayController extends Controller
         $data['created_by'] = auth()->id();
 
         $holiday = Holiday::create($data);
+        Holiday::clearCache($holiday->year);
 
         return response()->json(['success' => true, 'data' => $holiday], 201);
     }
@@ -53,7 +54,9 @@ class HolidayController extends Controller
             $data['year'] = \Carbon\Carbon::parse($data['date'])->year;
         }
 
+        $previousYear = $holiday->year;
         $holiday->update($data);
+        Holiday::clearCache($previousYear, $holiday->year);
 
         return response()->json(['success' => true, 'data' => $holiday->fresh()]);
     }
@@ -81,6 +84,7 @@ class HolidayController extends Controller
                     ],
                 ]);
             $holiday->delete();
+            Holiday::clearCache($holiday->year);
 
             return response()->json(['success' => true, 'message' => 'Holiday archived.']);
         });
@@ -119,9 +123,26 @@ class HolidayController extends Controller
             }
         }
 
+        Holiday::clearCache($year);
+
         return response()->json([
             'success' => true,
             'message' => "{$created} recurring holidays generated for {$year}.",
         ]);
+    }
+
+    /** GET /holidays/blocked?from=YYYY-MM-DD&to=YYYY-MM-DD — public, customer-safe. */
+    public function blocked(Request $request): JsonResponse
+    {
+        $data = $request->validate([
+            'from' => 'required|date',
+            'to' => 'required|date|after_or_equal:from',
+        ]);
+
+        if (\Carbon\Carbon::parse($data['from'])->diffInDays(\Carbon\Carbon::parse($data['to'])) > 366) {
+            return response()->json(['success' => false, 'message' => 'Date range cannot exceed one year.'], 422);
+        }
+
+        return response()->json(['success' => true, 'data' => Holiday::blockedBetween($data['from'], $data['to'])]);
     }
 }

@@ -24,6 +24,10 @@ import { apiRequest, getAuthenticatedFileUrl } from "../../api/client";
 import { exportToCSV, exportToPDF, exportToExcel } from "../../utils/reportExport";
 import { showError, showReasonPrompt, BOOKING_REJECT_REASONS } from "../../utils/alert.jsx";
 import DatePickerInput from "../../components/shared/DatePickerInput";
+import BookingStatusTabs from "../shared/BookingStatusTabs";
+import BookingDateFilter from "../shared/BookingDateFilter";
+import { BOOKING_TABS, DATE_PRESETS, getDateRange, matchesDatePreset, countByTab, countOlderPending, countLater } from "../../utils/bookingTabs";
+import { useBookingViewParams } from "../../hooks/useBookingViewParams";
 import { formatDateOnly, parseDateOnly } from "../../utils/date";
 import PetAvatar from "../shared/PetAvatar";
 import RowActionPopover from "../shared/RowActionPopover";
@@ -43,19 +47,6 @@ import {
   getCustomerPhone,
   getRoomName,
 } from "../../utils/apiNormalize";
-
-const STATUS_OPTIONS = [
-  { value: "all", label: "All Status" },
-  { value: "pending", label: "Pending" },
-  { value: "approved", label: "Approved" },
-  { value: "scheduled", label: "Scheduled" },
-  { value: "checked_in", label: "Checked In" },
-  { value: "in_care", label: "In Care" },
-  { value: "ready_for_pickup", label: "Ready for Pickup" },
-  { value: "completed", label: "Completed" },
-  { value: "rejected", label: "Rejected" },
-  { value: "cancelled", label: "Cancelled" },
-];
 
 const PAYMENT_OPTIONS = [
   { value: "all", label: "All Payments" },
@@ -114,7 +105,8 @@ const requiresCardBeforeApproval = (booking) =>
 
 const ReceptionistHotelBookings = () => {
   const [searchTerm, setSearchTerm] = useState("");
-  const [filterStatus, setFilterStatus] = useState("all");
+  const { tab: activeTab, range: datePreset, setTab, setRange: setDatePreset } = useBookingViewParams();
+  const [storeToday, setStoreToday] = useState(() => formatDateOnly(new Date()));
   const [filterPayment, setFilterPayment] = useState("all");
 
   const [selectedBooking, setSelectedBooking] = useState(null);
@@ -171,6 +163,7 @@ const ReceptionistHotelBookings = () => {
         }))
       );
 
+      if (data?.store_today) setStoreToday(data.store_today);
       setLastUpdated(new Date().toLocaleString("en-PH"));
     } catch (err) {
       showMessage("error", err.message || "Failed to load boarding requests.");
@@ -233,10 +226,21 @@ const ReceptionistHotelBookings = () => {
     [bookings]
   );
 
+  const dateRange = useMemo(() => getDateRange(datePreset, storeToday), [datePreset, storeToday]);
+
+  const dateFilteredBookings = useMemo(
+    () => bookings.filter((booking) => matchesDatePreset(booking, datePreset, dateRange, storeToday, { carryLiveStays: true })),
+    [bookings, datePreset, dateRange, storeToday]
+  );
+
+  const stageCounts = useMemo(() => countByTab(dateFilteredBookings), [dateFilteredBookings]);
+  const olderPending = useMemo(() => countOlderPending(bookings, dateRange), [bookings, dateRange]);
+  const laterCount = useMemo(() => countLater(bookings, dateRange), [bookings, dateRange]);
+
   const filteredBookings = useMemo(() => {
     const keyword = searchTerm.trim().toLowerCase();
 
-    return bookings.filter((booking) => {
+    return dateFilteredBookings.filter((booking) => {
       const status = normalizeStatus(booking.status);
       const paymentStatus = normalizePaymentStatus(booking.payment_status);
 
@@ -258,10 +262,10 @@ const ReceptionistHotelBookings = () => {
         .toLowerCase();
 
       const matchesSearch = !keyword || haystack.includes(keyword);
-      const matchesStatus = filterStatus === "all" || status === filterStatus;
+      const matchesStage = activeTab === "all" || booking.workflow_stage === activeTab;
       const matchesPayment = filterPayment === "all" || paymentStatus === filterPayment;
 
-      return matchesSearch && matchesStatus && matchesPayment;
+      return matchesSearch && matchesStage && matchesPayment;
     }).sort((a, b) =>
       getDateTimeTimestamp(
         a.check_in || a.check_in_date || a.booking_date || a.start_date || a.date,
@@ -271,7 +275,7 @@ const ReceptionistHotelBookings = () => {
         b.check_in_time || b.booking_time || b.time
       )
     );
-  }, [bookings, searchTerm, filterStatus, filterPayment]);
+  }, [dateFilteredBookings, searchTerm, activeTab, filterPayment]);
 
   const rejectBooking = async (booking) => {
     const reason = await showReasonPrompt(
@@ -417,7 +421,6 @@ const ReceptionistHotelBookings = () => {
 
   const clearFilters = () => {
     setSearchTerm("");
-    setFilterStatus("all");
     setFilterPayment("all");
   };
 
@@ -564,7 +567,7 @@ const ReceptionistHotelBookings = () => {
       </section>
 
       <section className="hotel-summary-grid">
-        <button type="button" className="hotel-summary-card" onClick={() => setFilterStatus("all")}>
+        <button type="button" className="hotel-summary-card" onClick={() => setTab("all")}>
           <span>
             <FontAwesomeIcon icon={faHotel} />
           </span>
@@ -574,7 +577,7 @@ const ReceptionistHotelBookings = () => {
           </div>
         </button>
 
-        <button type="button" className="hotel-summary-card warning" onClick={() => setFilterStatus("pending")}>
+        <button type="button" className="hotel-summary-card warning" onClick={() => setTab("to_approve")}>
           <span>
             <FontAwesomeIcon icon={faClock} />
           </span>
@@ -584,7 +587,7 @@ const ReceptionistHotelBookings = () => {
           </div>
         </button>
 
-        <button type="button" className="hotel-summary-card info" onClick={() => setFilterStatus("scheduled")}>
+        <button type="button" className="hotel-summary-card info" onClick={() => setTab("to_pay")}>
           <span>
             <FontAwesomeIcon icon={faCalendarAlt} />
           </span>
@@ -594,7 +597,7 @@ const ReceptionistHotelBookings = () => {
           </div>
         </button>
 
-        <button type="button" className="hotel-summary-card active" onClick={() => setFilterStatus("in_care")}>
+        <button type="button" className="hotel-summary-card active" onClick={() => setTab("on_going")}>
           <span>
             <FontAwesomeIcon icon={faDoorOpen} />
           </span>
@@ -604,7 +607,7 @@ const ReceptionistHotelBookings = () => {
           </div>
         </button>
 
-        <button type="button" className="hotel-summary-card success" onClick={() => setFilterStatus("completed")}>
+        <button type="button" className="hotel-summary-card success" onClick={() => setTab("complete")}>
           <span>
             <FontAwesomeIcon icon={faCheckCircle} />
           </span>
@@ -613,6 +616,48 @@ const ReceptionistHotelBookings = () => {
             <p>Completed</p>
           </div>
         </button>
+      </section>
+
+      <section className="bst-stage-bar">
+        <BookingStatusTabs
+          tabs={BOOKING_TABS}
+          active={activeTab}
+          counts={stageCounts}
+          onChange={setTab}
+          ariaLabel="Hotel booking stages"
+        />
+        <div className="bst-stage-meta">
+          <BookingDateFilter
+            presets={DATE_PRESETS}
+            value={datePreset}
+            range={dateRange}
+            onChange={setDatePreset}
+          />
+          {laterCount > 0 && (
+            <button
+              type="button"
+              className="bst-later"
+              onClick={() => {
+                setTab("all");
+                setDatePreset("upcoming");
+              }}
+            >
+              {laterCount} on later dates
+            </button>
+          )}
+          {olderPending > 0 && (
+            <button
+              type="button"
+              className="bst-older-pending"
+              onClick={() => {
+                setTab("to_approve");
+                setDatePreset("7d");
+              }}
+            >
+              {olderPending} older pending
+            </button>
+          )}
+        </div>
       </section>
 
       <section className="hotel-controls">
@@ -630,19 +675,6 @@ const ReceptionistHotelBookings = () => {
             </button>
           )}
         </div>
-
-        <label className="hotel-filter-box">
-          <select
-            value={filterStatus}
-            onChange={(event) => setFilterStatus(event.target.value)}
-          >
-            {STATUS_OPTIONS.map((option) => (
-              <option value={option.value} key={option.value}>
-                {option.label}
-              </option>
-            ))}
-          </select>
-        </label>
 
         <label className="hotel-filter-box">
           <select

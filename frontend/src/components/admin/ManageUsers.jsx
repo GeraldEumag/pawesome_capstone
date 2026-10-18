@@ -2,8 +2,6 @@ import React, { useEffect, useMemo, useState } from "react";
 import { NavLink } from "react-router-dom";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
-  faArrowDown,
-  faArrowUp,
   faCircleCheck,
   faCircleInfo,
   faDownload,
@@ -25,7 +23,7 @@ import { apiRequest } from "../../api/client";
 import { normalizeList } from "../../utils/normalizeList";
 import { showSuccess as showSwalSuccess, showError as showSwalError, showWarning } from "../../utils/alert.jsx";
 import { exportToCSV, exportToPDF, exportToExcel } from "../../utils/reportExport";
-import RowActionPopover from "../shared/RowActionPopover";
+import StandardTable from "../shared/StandardTable";
 import Modal from "../shared/Modal";
 import "./ManageUsers.css";
 
@@ -376,23 +374,6 @@ const ManageUsers = () => {
     if (modalType === "delete") handleDeleteUser();
   };
 
-  const handleSort = (key) => {
-    setSortConfig((prev) => ({
-      key,
-      direction: prev.key === key && prev.direction === "asc" ? "desc" : "asc",
-    }));
-  };
-
-  const SortIcon = ({ columnKey }) => {
-    if (sortConfig.key !== columnKey) return null;
-
-    return (
-      <FontAwesomeIcon
-        icon={sortConfig.direction === "asc" ? faArrowUp : faArrowDown}
-      />
-    );
-  };
-
   const clearFilters = () => {
     setSearchTerm("");
     setFilterRole("all");
@@ -614,129 +595,89 @@ const ManageUsers = () => {
             <p>Try adjusting your filters or add a new user.</p>
           </div>
         ) : (
-          <div className="mu-table-scroll">
-            <table className="users-table">
-              <thead>
-                <tr>
-                  <th>
-                    <button type="button" onClick={() => handleSort("id")}>
-                      ID <SortIcon columnKey="id" />
-                    </button>
-                  </th>
-                  <th>
-                    <button type="button" onClick={() => handleSort("name")}>
-                      Name <SortIcon columnKey="name" />
-                    </button>
-                  </th>
-                  <th>
-                    <button type="button" onClick={() => handleSort("username")}>
-                      Username <SortIcon columnKey="username" />
-                    </button>
-                  </th>
-                  <th>
-                    <button type="button" onClick={() => handleSort("email")}>
-                      Email <SortIcon columnKey="email" />
-                    </button>
-                  </th>
-                  <th>
-                    <button type="button" onClick={() => handleSort("role")}>
-                      Role <SortIcon columnKey="role" />
-                    </button>
-                  </th>
-                  <th>
-                    <button type="button" onClick={() => handleSort("is_active")}>
-                      Status <SortIcon columnKey="is_active" />
-                    </button>
-                  </th>
-                  <th>
-                    <button type="button" onClick={() => handleSort("created_at")}>
-                      Join Date <SortIcon columnKey="created_at" />
-                    </button>
-                  </th>
-                  <th>Actions</th>
-                </tr>
-              </thead>
-
-              <tbody>
-                {sortedUsers.map((user) => {
+          <StandardTable
+            nested
+            data={sortedUsers}
+            pageSize={25}
+            sortKey={sortConfig.key}
+            sortDirection={sortConfig.direction}
+            onSort={(key, direction) => setSortConfig({ key, direction })}
+            rowClassName={() => "user-row"}
+            columns={[
+              { key: "id", label: "ID", sortable: true, className: "user-id", render: (value) => `#${value}` },
+              {
+                key: "name", label: "Name", sortable: true, className: "user-name",
+                render: (value, user) => (
+                  <div className="user-profile">
+                    <span className="user-avatar">
+                      {getUserInitials(user.name)}
+                    </span>
+                    <div>
+                      <strong>{user.name || "Unnamed User"}</strong>
+                      <small>{user.role || "No role"}</small>
+                    </div>
+                  </div>
+                ),
+              },
+              { key: "username", label: "Username", sortable: true, className: "user-username" },
+              { key: "email", label: "Email", sortable: true, className: "user-email" },
+              {
+                key: "role", label: "Role", sortable: true, className: "user-role",
+                render: (value, user) => (
+                  <span className={`role-badge role-${user.role || "default"}`}>
+                    {user.role || "No Role"}
+                  </span>
+                ),
+              },
+              {
+                key: "is_active", label: "Status", sortable: true, className: "user-status",
+                render: (value, user) => {
                   const active = isActiveUser(user);
-
                   return (
-                    <tr key={user.id} className="user-row">
-                      <td className="user-id">#{user.id}</td>
-
-                      <td className="user-name">
-                        <div className="user-profile">
-                          <span className="user-avatar">
-                            {getUserInitials(user.name)}
-                          </span>
-
-                          <div>
-                            <strong>{user.name || "Unnamed User"}</strong>
-                            <small>{user.role || "No role"}</small>
-                          </div>
-                        </div>
-                      </td>
-
-                      <td className="user-username">{user.username || "N/A"}</td>
-
-                      <td className="user-email">
-                        <span>{user.email || "No email"}</span>
-                      </td>
-
-                      <td className="user-role">
-                        <span className={`role-badge role-${user.role || "default"}`}>
-                          {user.role || "No Role"}
-                        </span>
-                      </td>
-
-                      <td className="user-status">
-                        <span className={`status-toggle status-readonly ${active ? "active" : "inactive"}`}>
-                          <span className="status-dot" />
-                          {active ? "Active" : "Inactive"}
-                        </span>
-                      </td>
-
-                      <td className="user-date">{formatDate(user.created_at)}</td>
-
-                      <td>
-                        <RowActionPopover rowLabel={user.name || user.email}>
-                          <div className="user-actions">
-                          <button
-                            className="action-btn view-btn"
-                            type="button"
-                            onClick={() => openModal("view", user)}
-                            title="View User"
-                          >
-                            <FontAwesomeIcon icon={faEye} />
-                          </button>
-
-                          <button
-                            className="action-btn edit-btn"
-                            type="button"
-                            onClick={() => openModal("edit", user)}
-                            title="Edit User"
-                          >
-                            <FontAwesomeIcon icon={faEdit} />
-                          </button>
-
-                          <button
-                            className="action-btn delete-btn"
-                            type="button"
-                            onClick={() => openModal("delete", user)}
-                            title="Delete User"
-                          >
-                            <FontAwesomeIcon icon={faTrash} />
-                          </button>
-                          </div>
-                        </RowActionPopover>
-                      </td>
-                    </tr>
+                    <span className={`status-toggle status-readonly ${active ? "active" : "inactive"}`}>
+                      <span className="status-dot" />
+                      {active ? "Active" : "Inactive"}
+                    </span>
                   );
-                })}
-              </tbody>
-            </table>
-          </div>
+                },
+              },
+              {
+                key: "created_at", label: "Join Date", sortable: true, className: "user-date",
+                render: (value, user) => formatDate(user.created_at),
+              },
+              {
+                key: "actions", label: "Actions",
+                render: (value, user) => (
+                  <div className="user-actions">
+                    <button
+                      className="action-btn view-btn"
+                      type="button"
+                      onClick={() => openModal("view", user)}
+                      title="View User"
+                    >
+                      <FontAwesomeIcon icon={faEye} />
+                    </button>
+                    <button
+                      className="action-btn edit-btn"
+                      type="button"
+                      onClick={() => openModal("edit", user)}
+                      title="Edit User"
+                    >
+                      <FontAwesomeIcon icon={faEdit} />
+                    </button>
+                    <button
+                      className="action-btn delete-btn"
+                      type="button"
+                      onClick={() => openModal("delete", user)}
+                      title="Delete User"
+                    >
+                      <FontAwesomeIcon icon={faTrash} />
+                    </button>
+                  </div>
+                ),
+              },
+            ]}
+          />
         )}
       </section>
 

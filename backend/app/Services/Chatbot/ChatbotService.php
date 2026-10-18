@@ -870,7 +870,7 @@ class ChatbotService
             // ========== SYSTEM HEALTH ==========
             $context['system'] = [
                 'current_datetime' => now()->format('l, F j, Y g:i A'),
-                'business_hours' => 'Mon-Sat 9AM-6PM, Sun 10AM-4PM',
+                'business_hours' => \App\Support\StoreHours::label() . ' every day (closed on public holidays)',
                 'next_holiday' => $this->getNextHoliday(),
             ];
 

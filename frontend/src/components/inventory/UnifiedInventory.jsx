@@ -1023,6 +1023,7 @@ const UnifiedInventory = () => {
           title="Stock History"
           icon={faHistory}
           size="lg"
+          className="ui-history-modal"
         >
               <div className="history-item-header">
                 <div className="history-item-name">{historyItem.name}</div>
@@ -1037,6 +1038,7 @@ const UnifiedInventory = () => {
               ) : historyLogs.length === 0 ? (
                 <p className="history-empty">No stock movements recorded for this item.</p>
               ) : (
+                <div className="history-table-scroll">
                 <table className="history-table">
                   <thead>
                     <tr>
@@ -1073,6 +1075,7 @@ const UnifiedInventory = () => {
                     })}
                   </tbody>
                 </table>
+                </div>
               )}
         </Modal>
       )}

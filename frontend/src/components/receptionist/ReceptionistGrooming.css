@@ -363,7 +363,7 @@
 
 /* Table */
 
-.grooming-table-card {
+.rg-table-card {
   overflow: hidden;
   border: 1px solid var(--groom-border);
   border-radius: var(--groom-radius-card);
@@ -372,12 +372,12 @@
   backdrop-filter: blur(18px);
 }
 
-.grooming-table-header {
+.rg-table-header {
   padding: 1.35rem;
   border-bottom: 1px solid var(--groom-border);
 }
 
-.grooming-table-header h2 {
+.rg-table-header h2 {
   margin: 0.35rem 0 0;
   color: var(--groom-heading);
   font-size: 1.35rem;
@@ -385,29 +385,29 @@
   letter-spacing: -0.04em;
 }
 
-.grooming-table-header p {
+.rg-table-header p {
   margin: 0.3rem 0 0;
   color: var(--groom-muted);
   font-weight: 750;
 }
 
-.grooming-table-header strong {
+.rg-table-header strong {
   color: var(--groom-primary);
 }
 
-.grooming-table-scroll {
+.rg-table-scroll {
   width: 100%;
   overflow-x: auto;
 }
 
-.grooming-table {
+.rg-table {
   width: 100%;
   min-width: 1120px;
   border-collapse: collapse;
   background: transparent;
 }
 
-.grooming-table th {
+.rg-table th {
   padding: 1rem;
   text-align: left;
   color: var(--groom-heading);
@@ -419,7 +419,7 @@
   border-bottom: 1px solid var(--groom-border);
 }
 
-.grooming-table td {
+.rg-table td {
   padding: 1rem;
   border-top: 1px solid var(--groom-border);
   color: var(--groom-text);
@@ -429,11 +429,11 @@
   white-space: nowrap;
 }
 
-.grooming-table tbody tr {
+.rg-table tbody tr {
   transition: 0.2s ease;
 }
 
-.grooming-table tbody tr:hover {
+.rg-table tbody tr:hover {
   background: rgba(255, 95, 147, 0.06);
 }
 
@@ -704,7 +704,7 @@
 
   .grooming-hero,
   .grooming-controls,
-  .grooming-table-card {
+  .rg-table-card {
     border-radius: 22px;
   }
 

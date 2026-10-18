@@ -167,8 +167,8 @@ const Attendance = () => {
       {loading ? (
         <ReportSkeleton label="Loading attendance report" />
       ) : (
-        <div className="attendance-table-wrap">
-          <table className="attendance-table">
+        <div className="adm-att-table-wrap">
+          <table className="adm-att-table">
             <thead>
               <tr>
                 <th>Employee</th>

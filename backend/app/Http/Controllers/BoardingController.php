@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Holiday;
+use App\Support\StoreHours;
 use App\Models\ActivityLog;
 use App\Models\Boarding;
 use App\Models\BoardingCareLog;
@@ -22,6 +24,7 @@ use App\Services\BoardingAddOnInventoryService;
 use App\Services\InventoryDeductionService;
 use App\Services\PetServiceCompatibilityService;
 use App\Services\ServiceDurationService;
+use App\Services\BookingWorkflowStage;
 use App\Services\ServiceBillingService;
 use App\Services\PaymentVerificationService;
 use App\Support\BookingChannel;
@@ -275,10 +278,16 @@ class BoardingController extends Controller
                 ->orderByDesc('created_at')
                 ->get();
 
+            $boardings->each(fn ($boarding) => $boarding->setAttribute(
+                'workflow_stage',
+                BookingWorkflowStage::forBoarding($boarding->status, $boarding->payment_status)
+            ));
+
             return response()->json([
                 'success' => true,
                 'data' => $boardings,
                 'boardings' => $boardings,
+                'store_today' => now(ServiceDurationService::STORE_TIMEZONE)->toDateString(),
             ]);
         } catch (\Throwable $e) {
             Log::error('Failed to load customer boardings', [
@@ -348,18 +357,28 @@ class BoardingController extends Controller
             ], 422);
         }
 
+        $stayDays = Holiday::blockedBetween($request->check_in_date, $request->check_out_date ?: $request->check_in_date);
+        if ($stayDays) {
+            $message = "Hotel stays cannot include a public holiday ({$stayDays[0]['name']}, {$stayDays[0]['date']}).";
+            return response()->json([
+                'success' => false,
+                'message' => $message,
+                'errors' => ['check_in_date' => [$message]],
+            ], 422);
+        }
+
         if (!$request->room_id && !$request->hotel_room_id) {
             return response()->json(['errors' => ['room_id' => ['A room must be selected.']]], 422);
         }
 
-        // Store operates 10:00 AM - 6:00 PM; boarding stays are same-day only.
+        // Boarding stays are same-day only, within store hours.
         $withinHours = function (?string $time): bool {
             if (!$time) return true;
-            return $time >= '10:00' && $time <= '18:00';
+            return $time >= StoreHours::opensAt() && $time <= StoreHours::closesAt();
         };
         if (!$withinHours($request->check_in_time) || !$withinHours($request->check_out_time)) {
             return response()->json([
-                'errors' => ['check_in_time' => ['Bookings are only accepted within store hours (10:00 AM - 6:00 PM).']],
+                'errors' => ['check_in_time' => ['Bookings are only accepted within store hours (' . StoreHours::label() . ').']],
             ], 422);
         }
         if ($request->check_in_time && $request->check_out_time && $request->check_out_time <= $request->check_in_time) {

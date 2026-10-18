@@ -450,7 +450,7 @@
   border: 1px solid var(--color-border, rgba(255, 95, 147, 0.18));
   border-radius: 12px;
   background: var(--color-surface-solid, #fff);
-  overflow: hidden;
+  overflow-x: auto;
 }
 
 .transaction-modal .transaction-products h3 {

@@ -76,3 +76,132 @@
   box-shadow: var(--shadow-soft);
 }
 
+
+/* ================================================================
+   CANONICAL TABLE PRIMITIVE — use for all data tables
+   Markup contract:
+     <div class="pw-table-card">
+       <div class="pw-table-scroll">
+         <table class="pw-table">…</table>
+       </div>
+     </div>
+   Optional: add .pw-table--cards + data-label on each <td> to get the
+   stacked card view under 640px. td.pw-cell-full spans both columns.
+   ================================================================ */
+
+.pw-table-card {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-card);
+  box-shadow: var(--shadow-card);
+  overflow: hidden;
+}
+
+.pw-table-scroll {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.pw-table {
+  width: 100%;
+  min-width: 640px;
+  border-collapse: separate;
+  border-spacing: 0;
+  font-size: 0.875rem;
+}
+
+.pw-table thead {
+  position: sticky;
+  top: 0;
+  z-index: 5;
+}
+
+.pw-table th {
+  background: linear-gradient(180deg, var(--color-surface-muted) 0%, #f9f3f6 100%);
+  padding: 1rem 1.25rem;
+  text-align: left;
+  font-weight: 800;
+  color: var(--color-heading);
+  border-bottom: 2px solid var(--color-border);
+  white-space: nowrap;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.pw-table td {
+  padding: 0.875rem 1.25rem;
+  border-bottom: 1px solid rgba(226, 232, 240, 0.55);
+  color: var(--color-text);
+  vertical-align: middle;
+  line-height: 1.45;
+}
+
+.pw-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.pw-table tbody tr:hover td {
+  background: rgba(255, 200, 221, 0.12);
+}
+
+/* ── Mobile card view (opt-in via .pw-table--cards + data-label) ── */
+@media (max-width: 640px) {
+  .pw-table--cards {
+    min-width: 0;
+  }
+
+  .pw-table--cards thead {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    clip-path: inset(50%);
+  }
+
+  .pw-table--cards tbody {
+    display: grid;
+    gap: 0.75rem;
+    padding: 0.75rem;
+  }
+
+  .pw-table--cards tbody tr {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.25rem 0.75rem;
+    padding: 0.65rem 0.85rem;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-sm, 12px);
+    background: var(--color-surface-solid);
+    box-shadow: var(--shadow-soft, 0 2px 8px rgba(0, 0, 0, 0.05));
+  }
+
+  .pw-table--cards tbody tr td {
+    display: flex;
+    min-width: 0;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.25rem;
+    padding: 0.45rem 0.1rem;
+    border-bottom: 0;
+    white-space: normal;
+    font-size: 0.84rem;
+  }
+
+  .pw-table--cards tbody tr td::before {
+    content: attr(data-label);
+    color: var(--color-muted);
+    font-size: 0.68rem;
+    font-weight: 800;
+    line-height: 1.2;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+  }
+
+  .pw-table--cards tbody td.pw-cell-full {
+    grid-column: 1 / -1;
+  }
+}

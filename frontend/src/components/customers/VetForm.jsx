@@ -1,6 +1,9 @@
 import { useEffect, useState, useCallback } from "react";
 import "./VetForm.css";
 import { apiRequest, normalizeList } from "../../api/client";
+import CustomerBookingsBoard from "./CustomerBookingsBoard";
+import BackToServices from "./BackToServices";
+import { useBlockedHolidays } from "../../hooks/useBlockedHolidays";
 import { useAuth } from "../../context/AuthContext";
 import { getDraft, clearDraft } from "../../utils/preBookingDraft";
 import DatePickerInput from "../../components/shared/DatePickerInput";
@@ -11,7 +14,7 @@ import {
   getSpecialCareWarning,
 } from "../../config/petServiceRules";
 import { BUSINESS_HOURS, TIME_SLOT_INTERVAL } from "../../config/serviceDurationRules";
-import { showAlert, showSuccess, showError, showConfirm, showReasonPrompt, CUSTOMER_CANCEL_REASONS } from "../../utils/alert.jsx";
+import { showAlert, showSuccess, showError, showConfirm } from "../../utils/alert.jsx";
 import BookingReviewModal from "../shared/BookingReviewModal";
 import PaymentUploadModal from "../shared/PaymentUploadModal";
 
@@ -33,12 +36,12 @@ const VET_TIME_SLOTS = (() => {
 })();
 
 const VetForm = () => {
+  const { excludeDates: blockedDates, hint: holidayHint } = useBlockedHolidays();
   const { user } = useAuth();
   const customerEmail = user?.email;
   const customerName = user?.name || "Customer";
 
   const [activeTab, setActiveTab] = useState("book");
-  const [appointments, setAppointments] = useState([]);
   const [pets, setPets] = useState([]);
   const [services, setServices] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -58,23 +61,6 @@ const VetForm = () => {
     request_time: "",
     notes: "",
   });
-
-  const fetchAppointments = useCallback(async () => {
-    try {
-      const data = await apiRequest("/customer/my-requests");
-      const requests = normalizeList(data, ["requests", "data"]);
-      const vetOnly = requests.filter(
-        (item) =>
-          item.type === "vet" ||
-          item.request_type === "vet" ||
-          (item.service_name && String(item.service_name).toLowerCase().includes("vet"))
-      );
-      setAppointments(vetOnly);
-    } catch (error) {
-      console.error("Failed to load vet appointments:", error);
-      setAppointments([]);
-    }
-  }, []);
 
   const fetchPets = useCallback(async () => {
     try {
@@ -101,10 +87,9 @@ const VetForm = () => {
   }, []);
 
   useEffect(() => {
-    fetchAppointments();
     fetchPets();
     fetchServices();
-  }, [fetchAppointments, fetchPets, fetchServices]);
+  }, [fetchPets, fetchServices]);
 
   useEffect(() => {
     const draft = getDraft();
@@ -265,7 +250,6 @@ const VetForm = () => {
         });
         setAvailableTimeSlots([]);
 
-        await fetchAppointments();
         setActiveTab("my");
       } else {
         showAlert(data.message || "Failed to submit vet appointment");
@@ -277,47 +261,9 @@ const VetForm = () => {
     }
   };
 
-  const cancelRequest = async (item) => {
-    const reason = await showReasonPrompt(
-      "Cancel this appointment? Please select a reason — it will be recorded.",
-      "Cancel Appointment",
-      "Yes, Cancel",
-      CUSTOMER_CANCEL_REASONS
-    );
-    if (reason === null) return;
-    try {
-      await apiRequest(`/customer/requests/${item.id}/cancel`, "PATCH", { reason });
-      showSuccess("Appointment cancelled.");
-      fetchAppointments();
-    } catch (err) {
-      showError(err.message || "Failed to cancel appointment.");
-    }
-  };
-
-  const canPay = (item) => {
-    const status = String(item?.status || "").toLowerCase();
-    const paymentStatus = String(item?.payment_status || item?.payment || "unpaid").toLowerCase();
-    return Number(item?.additional_charges || 0) <= 0
-      && ["approved", "scheduled"].includes(status)
-      && ["unpaid", "rejected"].includes(paymentStatus);
-  };
-
-  const openUploadModal = (item) => {
-    setUploadModal({
-      open: true,
-      endpoint: `/customer/requests/${item.id}/payment-proof`,
-      title: item.service_name || item.service || "Veterinary",
-      referenceNumber: item.payment_reference || "",
-      paymentStatus: String(item.payment_status || item.payment || ""),
-      rejectionReason: item.rejection_reason || "",
-      paymentMethod: item.payment_method || "gcash",
-      amount: item.total_amount ?? item.price ?? item.amount ?? null,
-      awaitingBookingApproval: false,
-    });
-  };
-
   return (
     <section className="vet-container">
+      <BackToServices />
       <div className="vet-header">
         <h1>Veterinary Appointment</h1>
       </div>
@@ -334,7 +280,7 @@ const VetForm = () => {
           className={activeTab === "my" ? "active" : ""}
           onClick={() => setActiveTab("my")}
         >
-          My Appointments ({appointments.length})
+          My Appointments
         </button>
       </div>
 
@@ -416,6 +362,8 @@ const VetForm = () => {
               }}
               placeholderText="mm/dd/yyyy"
               minDate={new Date()}
+              excludeDates={blockedDates}
+              helperText={holidayHint}
               required
             />
 
@@ -461,59 +409,7 @@ const VetForm = () => {
 
       {activeTab === "my" && (
         <div className="vet-card">
-          {appointments.length === 0 ? (
-            <p>No vet appointments yet.</p>
-          ) : (
-            appointments.map((item) => (
-              <div key={item.id} className="vet-item">
-                <h3>{item.pet_name}</h3>
-                <p>Service: {item.service_name}</p>
-                <p>Veterinarian: {item.veterinarian?.name || (item.veterinarian_id ? `Vet #${item.veterinarian_id}` : "Not yet assigned")}</p>
-                <p>Date: {item.request_date}</p>
-                <p>Time: {item.request_time}</p>
-                <p>Concern: {item.notes || "None"}</p>
-                {(item.price || item.amount) && (
-                  <p className="vet-price">
-                    Price: ₱{Number(item.price || item.amount).toFixed(2)}
-                  </p>
-                )}
-
-                <span className={`vet-status ${item.status}`}>
-                  {item.status}
-                </span>
-
-                {Number(item.additional_charges || 0) > 0 && (
-                  <a
-                    href="/customer/payments"
-                    className="vet-pay-btn"
-                    style={{ marginTop: "0.5rem", display: "inline-block", background: "#0f766e", color: "#fff", border: "none", borderRadius: "6px", padding: "0.4rem 0.8rem", textDecoration: "none", fontSize: "0.85rem", fontWeight: 600, marginRight: "0.5rem" }}
-                  >
-                    View additional bill and payment options
-                  </a>
-                )}
-
-                {canPay(item) && (
-                  <button
-                    className="vet-pay-btn"
-                    onClick={() => openUploadModal(item)}
-                    style={{ marginTop: "0.5rem", background: "#10b981", color: "#fff", border: "none", borderRadius: "6px", padding: "0.4rem 0.8rem", cursor: "pointer", fontSize: "0.85rem", fontWeight: 600, marginRight: "0.5rem" }}
-                  >
-                    {String(item.payment_status || item.payment || "").toLowerCase() === "rejected" ? "Resubmit Payment Proof" : "Pay Now (GCash / Maya)"}
-                  </button>
-                )}
-
-                {(item.status === "pending" || item.status === "submitted") && (
-                  <button
-                    className="vet-cancel-btn"
-                    onClick={() => cancelRequest(item)}
-                    style={{ marginTop: "0.5rem", background: "#ef4444", color: "#fff", border: "none", borderRadius: "6px", padding: "0.4rem 0.8rem", cursor: "pointer", fontSize: "0.85rem", fontWeight: 600 }}
-                  >
-                    Cancel
-                  </button>
-                )}
-              </div>
-            ))
-          )}
+          <CustomerBookingsBoard serviceFilter="vet" embedded />
         </div>
       )}
 
@@ -551,7 +447,6 @@ const VetForm = () => {
         paymentStatus={uploadModal.paymentStatus}
         rejectionReason={uploadModal.rejectionReason}
         paymentMethod={uploadModal.paymentMethod}
-        onSuccess={fetchAppointments}
         amount={uploadModal.amount}
         awaitingBookingApproval={uploadModal.awaitingBookingApproval}
       />

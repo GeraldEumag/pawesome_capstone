@@ -303,11 +303,13 @@
   background: var(--dtr-surface);
   box-shadow: var(--dtr-shadow-soft);
   backdrop-filter: blur(14px);
-  overflow: hidden;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
 }
 
 .dtr-table {
   width: 100%;
+  min-width: 840px;
   border-collapse: collapse;
   font-size: 0.87rem;
 }

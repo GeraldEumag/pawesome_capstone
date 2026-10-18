@@ -359,11 +359,13 @@
   background: var(--grr-surface);
   box-shadow: var(--grr-shadow-soft);
   backdrop-filter: blur(14px);
-  overflow: hidden;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
 }
 
 .grr-table {
   width: 100%;
+  min-width: 720px;
   border-collapse: collapse;
   font-size: 0.88rem;
 }

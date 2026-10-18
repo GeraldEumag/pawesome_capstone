@@ -158,25 +158,25 @@
   color: var(--color-muted);
 }
 
-.attendance-table-wrap {
+.adm-att-table-wrap {
   width: 100%;
   overflow-x: auto;
 }
 
-.attendance-table {
+.adm-att-table {
   width: 100%;
   border-collapse: collapse;
   min-width: 700px;
 }
 
-.attendance-table th,
-.attendance-table td {
+.adm-att-table th,
+.adm-att-table td {
   padding: 0.8rem;
   border-bottom: 1px solid var(--color-border);
   text-align: left;
 }
 
-.attendance-table th {
+.adm-att-table th {
   background: rgba(255, 95, 147, 0.06);
   font-weight: 700;
   color: var(--color-primary);
@@ -367,7 +367,7 @@
   background: rgba(255, 95, 147, 0.09) !important;
 }
 
-.attendance-table-wrap {
+.adm-att-table-wrap {
   margin-top: 1rem;
   border-radius: 24px;
   overflow-x: auto;
@@ -376,7 +376,7 @@
   box-shadow: 0 18px 42px rgba(255, 95, 147, 0.1);
 }
 
-.attendance-table th {
+.adm-att-table th {
   background: rgba(255, 95, 147, 0.075) !important;
   color: #ff5f93 !important;
   font-size: 0.78rem;
@@ -385,12 +385,12 @@
   letter-spacing: 0.06em;
 }
 
-.attendance-table td {
+.adm-att-table td {
   color: #1f2937 !important;
   font-weight: 700;
 }
 
-.attendance-table tr:hover td {
+.adm-att-table tr:hover td {
   background: rgba(255, 95, 147, 0.04);
 }
 

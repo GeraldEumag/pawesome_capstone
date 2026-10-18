@@ -364,13 +364,13 @@ const CustomerReport = () => {
         </div>
       )}
 
-      <div className="table-container">
-        <div className="table-header">
+      <div className="cur-table-card">
+        <div className="cur-table-header">
           <h2>
             <FontAwesomeIcon icon={faUsers} />
             Customer List
           </h2>
-          <div className="table-info">
+          <div className="cur-table-info">
             Showing {filteredCustomers.length} of {customers.length} customers
           </div>
         </div>

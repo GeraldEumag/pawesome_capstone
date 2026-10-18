@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useSearchParams } from "react-router-dom";
-import { apiRequest } from "../../api/client";
+import { apiRequest, API_URL } from "../../api/client";
 import { clearAuth } from "../../utils/auth";
+import { getPaymentProofUrl } from "../../utils/secureFileAccess";
 import { getRoomName } from "../../utils/apiNormalize";
 import { useAuth } from "../../context/AuthContext";
 import "./CustomerPayments.css";
@@ -18,6 +19,41 @@ const formatCurrency = (value) =>
 
 const getPaymentStatus = (item) =>
   String(item.payment_status || "unpaid").toLowerCase();
+
+// Maps each payment source to the SecureFileController {type} segment.
+const PROOF_ROUTE_TYPES = {
+  service_request: "service-request",
+  store_order: "customer-order",
+  boarding: "boarding",
+  medical_confinement: "medical_confinement",
+  grooming: "grooming",
+  appointment: "appointment",
+  service_billing_payment: "service-billing-payment",
+};
+
+const resolveApiUrl = (url) => {
+  if (!url) return null;
+  if (url.startsWith("http")) return url;
+  const base = API_URL.replace(/\/+$/, "");
+  const path = url.startsWith("/api/") ? url.slice(4) : url.startsWith("/") ? url : `/${url}`;
+  return `${base}${path}`;
+};
+
+// proof_url (when the API sends it) is an auth-gated /api/files/... route —
+// a bare <a target="_blank"> never sends the Bearer token, so it 401s.
+// When only a raw payment_proof storage path exists, derive the view route
+// from the payment source instead.
+const getProofViewUrl = (payment) => {
+  const direct = payment.proof_url || payment.payment_proof_url || payment.receipt_url;
+  if (direct) return resolveApiUrl(direct);
+  if (!payment.payment_proof) return null;
+  const type = PROOF_ROUTE_TYPES[payment.payment_source];
+  if (!type) return null;
+  const id = payment.payment_source === "service_billing_payment"
+    ? (payment.payment_request_id || payment.id)
+    : payment.id;
+  return id ? `${API_URL.replace(/\/+$/, "")}/files/payment-proofs/${type}/${id}/view` : null;
+};
 
 const paymentLabels = {
   unpaid: "Not yet paid",
@@ -313,6 +349,21 @@ const CustomerPayments = () => {
     }
   };
 
+  const viewProof = async (payment) => {
+    const proofUrl = getProofViewUrl(payment);
+    if (!proofUrl) {
+      showError("Proof file is not available yet.");
+      return;
+    }
+    try {
+      const blobUrl = await getPaymentProofUrl(proofUrl);
+      if (!blobUrl) throw new Error("Proof file is not available.");
+      window.open(blobUrl, "_blank", "noopener,noreferrer");
+    } catch {
+      showError("Unable to load the payment proof. Please try again.");
+    }
+  };
+
   const viewReceipt = async (payment, output = "print") => {
     const outputReceipt = (options) => {
       if (output === "pdf") return downloadReceiptPdf(options);
@@ -517,7 +568,7 @@ const CustomerPayments = () => {
                 payments.map((payment) => {
                   const rowKey = `${payment.payment_source}-${payment.id}`;
                   const paymentStatus = getPaymentStatus(payment);
-                  const proofUrl = payment.proof_url || payment.payment_proof_url || payment.receipt_url;
+                  const proofUrl = getProofViewUrl(payment);
                   const isHighlighted = highlightId && String(payment.id) === String(highlightId);
 
                   return (
@@ -587,9 +638,13 @@ const CustomerPayments = () => {
                             </button>
                           </div>
                         ) : proofUrl ? (
-                          <a className="receipt-btn" href={proofUrl} target="_blank" rel="noreferrer">
+                          <button
+                            type="button"
+                            className="receipt-btn"
+                            onClick={() => viewProof(payment)}
+                          >
                             View Proof
-                          </a>
+                          </button>
                         ) : payment.payment_proof ? (
                           <span style={{ color: '#16a34a', fontSize: '0.85rem' }}>
                             Proof uploaded

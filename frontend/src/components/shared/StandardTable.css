@@ -278,3 +278,72 @@
     justify-content: space-between;
   }
 }
+
+/* ── Mobile card view (default; opt out via cardView={false}) ── */
+@media (max-width: 640px) {
+  .standard-table-container .standard-table.standard-table-cards {
+    min-width: 0;
+  }
+
+  .standard-table-container .standard-table.standard-table-cards thead {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    clip-path: inset(50%);
+  }
+
+  .standard-table-container .standard-table.standard-table-cards tbody {
+    display: grid;
+    gap: 0.75rem;
+    padding: 0.75rem;
+  }
+
+  .standard-table-container .standard-table.standard-table-cards tbody tr {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.25rem 0.75rem;
+    padding: 0.65rem 0.85rem;
+    border: 1px solid rgba(255, 95, 147, 0.15);
+    border-radius: 12px;
+    background: #fff;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  }
+
+  .standard-table-container .standard-table.standard-table-cards tbody tr td {
+    display: flex;
+    min-width: 0;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.25rem;
+    padding: 0.45rem 0.1rem;
+    border-bottom: 0;
+    white-space: normal;
+    font-size: 0.84rem;
+  }
+
+  .standard-table-container .standard-table.standard-table-cards tbody tr td::before {
+    content: attr(data-label);
+    color: #64748b;
+    font-size: 0.68rem;
+    font-weight: 800;
+    line-height: 1.2;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+  }
+
+  .standard-table-container .standard-table.standard-table-cards tbody td.st-card-full {
+    grid-column: 1 / -1;
+  }
+}
+
+/* Nested inside an existing card — drop own chrome so it doesn't double-card */
+.standard-table-container.standard-table-nested {
+  border: none;
+  box-shadow: none;
+  border-radius: 0;
+  background: transparent;
+}

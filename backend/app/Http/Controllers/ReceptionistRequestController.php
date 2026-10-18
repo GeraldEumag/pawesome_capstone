@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Holiday;
+use App\Support\StoreHours;
 use App\Models\ServiceRequest;
 use App\Models\Appointment;
 use App\Models\Boarding;
@@ -17,6 +19,7 @@ use App\Services\CustomerEmailResolver;
 use App\Services\EmailDeliveryService;
 use App\Services\ServiceCatalog;
 use App\Services\ServiceDurationService;
+use App\Services\BookingWorkflowStage;
 use App\Services\WorkflowNotifier;
 use App\Support\EmailContent;
 use Illuminate\Http\Request;
@@ -122,6 +125,7 @@ class ReceptionistRequestController extends Controller
             'time' => $item->request_time,
             'appointment_id' => $appointment?->id,
             'appointment_status' => $appointment?->status,
+            'workflow_stage' => BookingWorkflowStage::forServiceRequest($item->request_type, $item->status, $item->payment_status, $appointment?->status),
             'veterinarian_id' => $appointment?->veterinarian_id,
             'veterinarian' => $appointment?->veterinarian ? [
                 'id' => $appointment->veterinarian->id,
@@ -153,7 +157,8 @@ class ReceptionistRequestController extends Controller
 
         return response()->json([
             'success' => true,
-            'requests' => $requests
+            'requests' => $requests,
+            'store_today' => now(ServiceDurationService::STORE_TIMEZONE)->toDateString(),
         ]);
     }
 
@@ -300,7 +305,7 @@ class ReceptionistRequestController extends Controller
     public function updateStatus(Request $request, $id)
     {
         $validated = $request->validate([
-            'status' => 'required|in:pending,approved,rejected,cancelled,completed,in_progress,checked_in',
+            'status' => 'required|in:pending,approved,rejected,cancelled,completed,in_progress,ready_for_pickup,checked_in',
             'rejection_reason' => 'required_if:status,rejected|string|max:1000',
         ]);
 
@@ -369,7 +374,21 @@ class ReceptionistRequestController extends Controller
                 'request' => $this->formatRequest($serviceRequest),
             ]);
         }
+        if ($validated['status'] === 'completed' && $this->requestIsGrooming($serviceRequest)) {
+            $paid = in_array(strtolower((string) $serviceRequest->payment_status), ['paid', 'verified', 'completed'], true);
+            if (!$paid) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Grooming cannot be completed until payment is fully verified.',
+                    'payment_status' => $serviceRequest->payment_status,
+                ], 422);
+            }
+        }
+
         $serviceRequest->status = $validated['status'];
+        if ($validated['status'] === 'ready_for_pickup' && Schema::hasColumn('service_requests', 'ready_for_pickup_at')) {
+            $serviceRequest->ready_for_pickup_at = now();
+        }
 
         if ($validated['status'] === 'rejected') {
             $serviceRequest->rejection_reason = $validated['rejection_reason'];
@@ -676,6 +695,7 @@ class ReceptionistRequestController extends Controller
         $validated = $request->validate([
             'veterinarian_id' => 'nullable|integer|exists:users,id',
             'receptionist_remarks' => 'nullable|string|max:1000',
+            'holiday_override' => 'sometimes|boolean',
         ]);
 
         // Promotion is atomic: the room reservation, promoted booking row,
@@ -790,12 +810,22 @@ class ReceptionistRequestController extends Controller
             }
 
             $scheduledAtLocal = Carbon::parse(
-                ($serviceRequest->request_date ?: now(ServiceDurationService::STORE_TIMEZONE)->toDateString()) . ' ' . ($serviceRequest->request_time ?: '10:00'),
+                ($serviceRequest->request_date ?: now(ServiceDurationService::STORE_TIMEZONE)->toDateString()) . ' ' . ($serviceRequest->request_time ?: StoreHours::opensAt()),
                 ServiceDurationService::STORE_TIMEZONE
             );
             $scheduledAtUtc = $scheduledAtLocal->copy()->setTimezone('UTC');
             $serviceRequest->request_date = $scheduledAtLocal->toDateString();
             $serviceRequest->request_time = $scheduledAtLocal->format('H:i');
+            $allowHoliday = (bool) ($validated['holiday_override'] ?? false);
+            if (!$allowHoliday && ($holiday = Holiday::blockedNameOn($scheduledAtLocal->toDateString()))) {
+                $date = $scheduledAtLocal->toDateString();
+                return response()->json([
+                    'message' => "{$date} is a public holiday ({$holiday}). Confirm to approve this appointment anyway.",
+                    'error_code' => 'holiday_requires_override',
+                    'holiday' => $holiday,
+                ], 422);
+            }
+
             if (!$scheduledAtLocal->isFuture() || !BookingAvailabilityService::isServiceTimeAvailable(
                 'veterinary',
                 $scheduledAtLocal->toDateString(),
@@ -803,7 +833,9 @@ class ReceptionistRequestController extends Controller
                 $service->name,
                 $vet->id,
                 $existingVetAppointment?->id,
-                $serviceRequest->id
+                $serviceRequest->id,
+                false,
+                $allowHoliday
             )) {
                 return response()->json([
                     'message' => 'The requested schedule conflicts with this veterinarian or is no longer a future bookable time.',

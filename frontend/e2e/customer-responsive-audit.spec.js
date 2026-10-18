@@ -57,6 +57,11 @@ async function stubCustomerApi(page, { includeStoredOrder = false, includePayabl
           ? [{ id: 81, service_name: 'Grooming', request_type: 'grooming', pet_name: 'Milo', status: 'approved', payment_status: 'unpaid', request_date: '2026-10-28' }]
           : [],
       };
+    } else if (url.pathname === '/api/customer/bookings') {
+      const items = includePayableRequest
+        ? [{ key: 'service_request-81', source: 'service_request', kind: 'grooming', id: 81, pet_name: 'Milo', title: 'Grooming', date: '2026-10-28', time: '10:00', check_in: null, check_out: null, workflow_stage: 'to_pay', status: 'approved', payment_status: 'unpaid', amount_due: 450, veterinarian: null, rejection_reason: null, actions: ['pay'], updated_at: null }]
+        : [];
+      body = { success: true, store_today: '2026-10-18', counts: { all: items.length, to_approve: 0, to_pay: items.length, on_going: 0, ready_to_pickup: 0, complete: 0, canceled: 0 }, items };
     } else if (url.pathname === '/api/customer/dashboard') {
       body = {
         total_pets: 2,
@@ -378,16 +383,17 @@ test.describe('Customer booking date-only timezone handling', () => {
   });
 });
 
-test('historical customer store orders remain visible without payment actions', async ({ page }) => {
+test('historical customer store orders stay off the bookings board', async ({ page }) => {
   await mockLoginAs(page, 'customer', 'Read-only Order History Audit');
   await page.addInitScript(() => window.localStorage.setItem('email', 'orders-audit@example.com'));
   await stubCustomerApi(page, { includeStoredOrder: true });
   await page.goto('/customer/bookings');
 
   await expect(page.locator('.app-dashboard.customer-dashboard')).toBeVisible();
-  await expect(page.locator('.customer-status-table tbody tr')).toHaveCount(1);
-  await expect(page.locator('.customer-status-table tbody tr').first()).toContainText('Store Order');
-  await expect(page.locator('.customer-status-table .customer-pay-btn')).toHaveCount(0);
+  await expect(page.locator('.cbb-row')).toHaveCount(0);
+  await expect(page.locator('.cbb-card')).toHaveCount(0);
+  await expect(page.locator('.cbb-empty-state')).toBeVisible();
+  await expect(page.locator('.cbb-btn--primary')).toHaveCount(0);
 });
 
 test('customer requests render as mobile cards with direct payment action', async ({ page }) => {
@@ -397,12 +403,9 @@ test('customer requests render as mobile cards with direct payment action', asyn
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto('/customer/bookings');
 
-  const table = page.locator('.customer-status-table');
-  const row = table.locator('tbody tr').filter({ hasText: 'Grooming' });
+  const row = page.locator('.cbb-card').filter({ hasText: 'Grooming' });
   await expect(row).toBeVisible();
-  await expect(row.locator('.customer-pay-btn')).toHaveText('Pay');
-  await expect.poll(() => row.evaluate((element) => getComputedStyle(element).display)).toBe('grid');
-  await expect.poll(() => table.evaluate((element) => getComputedStyle(element).minWidth)).toBe('0px');
+  await expect(row.locator('.cbb-btn--primary')).toHaveText('Pay now');
   await expect.poll(() => page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(391);
 
   await row.getByRole('button', { name: 'Pay' }).click();

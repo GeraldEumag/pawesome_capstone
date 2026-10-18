@@ -234,11 +234,13 @@
   background: var(--tmp-surface);
   box-shadow: var(--tmp-shadow-soft);
   backdrop-filter: blur(14px);
-  overflow: hidden;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
 }
 
 .tmp-table {
   width: 100%;
+  min-width: 720px;
   border-collapse: collapse;
   font-size: 0.88rem;
 }

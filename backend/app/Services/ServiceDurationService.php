@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Support\StoreHours;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Log;
 
@@ -37,8 +38,6 @@ class ServiceDurationService
             'De-matting / Special Coat Care' => 120,
         ],
         'boarding' => [
-            'default_check_in_time' => '10:00', // 10:00 AM
-            'default_check_out_time' => '18:00', // 6:00 PM
             'cleaning_buffer_minutes' => 60, // Room cleaning between stays
         ]
     ];
@@ -57,16 +56,7 @@ class ServiceDurationService
      */
     private const TIME_SLOT_INTERVAL = 30;
 
-    /**
-     * Business hours
-     */
-    private const BUSINESS_HOURS = [
-        'start' => '10:00', // 10:00 AM
-        'end' => '18:00',   // 6:00 PM
-    ];
-
     public const STORE_TIMEZONE = 'Asia/Manila';
-    private const STORE_CLOSING_TIME = '18:00';
 
     public static function inStoreTimezone(string|\DateTimeInterface $dateTime): Carbon
     {
@@ -80,7 +70,7 @@ class ServiceDurationService
 
         return Carbon::parse($requestedDate, self::STORE_TIMEZONE)->toDateString() === $today->toDateString()
             && $now->greaterThanOrEqualTo(
-                $today->copy()->setTimeFromTimeString(self::STORE_CLOSING_TIME)
+                $today->copy()->setTimeFromTimeString(StoreHours::closesAt())
             );
     }
 
@@ -139,8 +129,8 @@ class ServiceDurationService
         $totalTime = $duration + $buffer;
 
         $slots = [];
-        [$startHour, $startMinute] = explode(':', self::BUSINESS_HOURS['start']);
-        [$endHour, $endMinute] = explode(':', self::BUSINESS_HOURS['end']);
+        [$startHour, $startMinute] = explode(':', StoreHours::opensAt());
+        [$endHour, $endMinute] = explode(':', StoreHours::closesAt());
 
         // Generate all possible slots
         for ($hour = (int)$startHour; $hour < (int)$endHour; $hour++) {
@@ -222,7 +212,7 @@ class ServiceDurationService
         $slotStart = Carbon::parse('2000-01-01 ' . $startTime);
         $slotEnd = $slotStart->copy()->addMinutes($totalTime);
 
-        [$endHour, $endMinute] = explode(':', self::BUSINESS_HOURS['end']);
+        [$endHour, $endMinute] = explode(':', StoreHours::closesAt());
 
         return $slotEnd->hour < (int)$endHour || 
                ($slotEnd->hour === (int)$endHour && $slotEnd->minute <= (int)$endMinute);
@@ -233,7 +223,7 @@ class ServiceDurationService
      */
     public static function getDefaultBoardingCheckInTime(): string
     {
-        return self::SERVICE_DURATIONS['boarding']['default_check_in_time'];
+        return StoreHours::opensAt();
     }
 
     /**
@@ -241,7 +231,7 @@ class ServiceDurationService
      */
     public static function getDefaultBoardingCheckOutTime(): string
     {
-        return self::SERVICE_DURATIONS['boarding']['default_check_out_time'];
+        return StoreHours::closesAt();
     }
 
     /**
@@ -265,7 +255,7 @@ class ServiceDurationService
      */
     public static function getBusinessHours(): array
     {
-        return self::BUSINESS_HOURS;
+        return ['start' => StoreHours::opensAt(), 'end' => StoreHours::closesAt()];
     }
 
     /**

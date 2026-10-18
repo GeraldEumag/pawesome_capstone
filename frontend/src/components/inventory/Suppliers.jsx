@@ -20,8 +20,8 @@ import {
 import { inventoryApi } from "../../api/inventory.jsx";
 import { showError, showSuccess, showConfirm } from "../../utils/alert.jsx";
 import { useAuth } from "../../context/AuthContext";
-import RowActionPopover from "../shared/RowActionPopover"
 import Modal from "../shared/Modal"
+import StandardTable from "../shared/StandardTable";
 import "./Suppliers.css";
 
 const emptyForm = {
@@ -44,6 +44,8 @@ const Suppliers = () => {
   const [error, setError] = useState("");
   const [search, setSearch] = useState("");
   const [showInactive, setShowInactive] = useState(true);
+  const [sortKey, setSortKey] = useState("name");
+  const [sortDirection, setSortDirection] = useState("asc");
 
   const [formOpen, setFormOpen] = useState(false);
   const [editing, setEditing] = useState(null);
@@ -83,6 +85,21 @@ const Suppliers = () => {
         .includes(term);
     });
   }, [suppliers, search, showInactive]);
+
+  const sorted = useMemo(() => {
+    const arr = [...filtered];
+    arr.sort((a, b) => {
+      const va = (a[sortKey] ?? "").toString().toLowerCase();
+      const vb = (b[sortKey] ?? "").toString().toLowerCase();
+      return sortDirection === "asc" ? va.localeCompare(vb) : vb.localeCompare(va);
+    });
+    return arr;
+  }, [filtered, sortKey, sortDirection]);
+
+  const handleSort = (key, direction) => {
+    setSortKey(key);
+    setSortDirection(direction);
+  };
 
   const stats = useMemo(() => ({
     total: suppliers.length,
@@ -218,83 +235,68 @@ const Suppliers = () => {
 
       {error && <div className="suppliers-error">{error}</div>}
 
-      {loading ? (
-        <div className="suppliers-loading">
-          <FontAwesomeIcon icon={faSpinner} spin /> Loading suppliers...
-        </div>
-      ) : (
-        <div className="suppliers-table-card">
-          <table className="suppliers-table">
-            <thead>
-              <tr>
-                <th>Supplier</th>
-                <th>Contact Person</th>
-                <th>Phone</th>
-                <th>Email</th>
-                <th>Address</th>
-                <th>Status</th>
-                <th className="actions-col">Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {filtered.map((s) => (
-                <tr key={s.id} className={s.is_active ? "" : "inactive-row"}>
-                  <td>
-                    <strong>{s.name}</strong>
-                    {s.notes && <small className="sup-notes">{s.notes}</small>}
-                  </td>
-                  <td>{s.contact_person || "—"}</td>
-                  <td>{s.phone || "—"}</td>
-                  <td>{s.email || "—"}</td>
-                  <td className="sup-address">{s.address || "—"}</td>
-                  <td>
-                    <span className={`sup-status ${s.is_active ? "active" : "inactive"}`}>
-                      {s.is_active ? "Active" : "Inactive"}
-                    </span>
-                  </td>
-                  <td className="actions-col">
-                    <RowActionPopover rowLabel={s.name}>
-                      <div className="sup-actions">
-                      <button type="button" className="sup-icon-btn" onClick={() => openEdit(s)} title="Edit">
-                        <FontAwesomeIcon icon={faEdit} />
-                      </button>
-                      <button
-                        type="button"
-                        className="sup-icon-btn"
-                        onClick={() => handleToggleActive(s)}
-                        disabled={busyId === s.id}
-                        title={s.is_active ? "Deactivate" : "Activate"}
-                      >
-                        <FontAwesomeIcon icon={s.is_active ? faToggleOn : faToggleOff} />
-                      </button>
-                      {isAdmin && (
-                        <button
-                          type="button"
-                          className="sup-icon-btn danger"
-                          onClick={() => handleDelete(s)}
-                          disabled={busyId === s.id}
-                          title="Delete"
-                        >
-                          <FontAwesomeIcon icon={faTrash} />
-                        </button>
-                      )}
-                      </div>
-                    </RowActionPopover>
-                  </td>
-                </tr>
-              ))}
-              {filtered.length === 0 && (
-                <tr>
-                  <td colSpan={7} className="suppliers-empty">
-                    <FontAwesomeIcon icon={faBuilding} />
-                    <p>No suppliers found.</p>
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
-        </div>
-      )}
+      <StandardTable
+        data={sorted}
+        loading={loading}
+        emptyMessage="No suppliers found."
+        sortKey={sortKey}
+        sortDirection={sortDirection}
+        onSort={handleSort}
+        rowClassName={(s) => (s.is_active ? "" : "inactive-row")}
+        columns={[
+          {
+            key: "name", label: "Supplier", sortable: true,
+            render: (value, s) => (
+              <>
+                <strong>{s.name}</strong>
+                {s.notes && <small className="sup-notes">{s.notes}</small>}
+              </>
+            ),
+          },
+          { key: "contact_person", label: "Contact Person", sortable: true },
+          { key: "phone", label: "Phone" },
+          { key: "email", label: "Email", sortable: true },
+          { key: "address", label: "Address", className: "sup-address" },
+          {
+            key: "is_active", label: "Status",
+            render: (value, s) => (
+              <span className={`sup-status ${s.is_active ? "active" : "inactive"}`}>
+                {s.is_active ? "Active" : "Inactive"}
+              </span>
+            ),
+          },
+          {
+            key: "actions", label: "Actions", className: "actions-col",
+            render: (value, s) => (
+              <div className="sup-actions">
+                <button type="button" className="sup-icon-btn" onClick={() => openEdit(s)} title="Edit">
+                  <FontAwesomeIcon icon={faEdit} />
+                </button>
+                <button
+                  type="button"
+                  className="sup-icon-btn"
+                  onClick={() => handleToggleActive(s)}
+                  disabled={busyId === s.id}
+                  title={s.is_active ? "Deactivate" : "Activate"}
+                >
+                  <FontAwesomeIcon icon={s.is_active ? faToggleOn : faToggleOff} />
+                </button>
+                {isAdmin && (
+                  <button
+                    type="button"
+                    className="sup-icon-btn danger"
+                    onClick={() => handleDelete(s)}
+                    disabled={busyId === s.id}
+                    title="Delete"
+                  >
+                    <FontAwesomeIcon icon={faTrash} />
+                  </button>
+                )}
+              </div>
+            ),
+          },
+        ]}
+      />
 
       {formOpen && (
         <Modal

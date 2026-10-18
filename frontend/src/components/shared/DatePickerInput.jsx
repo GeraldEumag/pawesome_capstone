@@ -9,6 +9,8 @@ const DatePickerInput = ({
   placeholderText,
   minDate,
   maxDate,
+  excludeDates,
+  helperText,
   dateFormat = "MMMM d, yyyy",
   disabled = false,
   required = false,
@@ -49,6 +51,7 @@ const DatePickerInput = ({
         placeholderText={hint}
         minDate={minDate}
         maxDate={maxDate}
+        excludeDates={excludeDates}
         dateFormat={formats}
         disabled={disabled}
         required={required}
@@ -66,6 +69,7 @@ const DatePickerInput = ({
         portalId={portalId}
         showDisabledMonthNavigation
       />
+      {helperText && <small className="paws-datepicker-hint">{helperText}</small>}
     </div>
   );
 };

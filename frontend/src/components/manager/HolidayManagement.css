@@ -237,11 +237,13 @@
   background: var(--hm-surface);
   box-shadow: var(--hm-shadow-soft);
   backdrop-filter: blur(14px);
-  overflow: hidden;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
 }
 
 .hm-table {
   width: 100%;
+  min-width: 680px;
   border-collapse: collapse;
   font-size: 0.88rem;
 }

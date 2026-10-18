@@ -7,8 +7,10 @@ use App\Models\GroomingAppointment;
 use App\Models\Boarding;
 use App\Models\BoardingRoom;
 use App\Models\HotelRoom;
+use App\Models\Holiday;
 use App\Models\Service;
 use App\Services\ServiceDurationService;
+use App\Support\StoreHours;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
@@ -224,10 +226,17 @@ class BookingAvailabilityService
         return ServiceDurationService::getTotalTimeWithBuffer($serviceType, $normalizedName);
     }
 
-    private static function serviceSlots(string $date, string $serviceType, ?string $serviceName = null, ?int $veterinarianId = null): array
+    /** A date accepts bookings when the store is open that weekday and the date is not a holiday. */
+    public static function isBookableDate(string $date, bool $allowHoliday = false): bool
+    {
+        $day = Carbon::parse($date, ServiceDurationService::STORE_TIMEZONE);
+        return StoreHours::isOpenDay($day) && ($allowHoliday || !Holiday::isBlockedForBooking($day->toDateString()));
+    }
+
+    private static function serviceSlots(string $date, string $serviceType, ?string $serviceName = null, ?int $veterinarianId = null, bool $allowHoliday = false): array
     {
         $date = Carbon::parse($date, ServiceDurationService::STORE_TIMEZONE)->toDateString();
-        if (ServiceDurationService::isSameDayBookingClosed($date)) {
+        if (ServiceDurationService::isSameDayBookingClosed($date) || !self::isBookableDate($date, $allowHoliday)) {
             return [];
         }
 
@@ -237,14 +246,14 @@ class BookingAvailabilityService
         $now = Carbon::now(ServiceDurationService::STORE_TIMEZONE);
         $slots = [];
 
-        for ($minutes = 10 * 60; $minutes < 18 * 60; $minutes += $slotMinutes) {
+        for ($minutes = StoreHours::openMinutes(); $minutes < StoreHours::closeMinutes(); $minutes += $slotMinutes) {
             $time = sprintf('%02d:%02d', intdiv($minutes, 60), $minutes % 60);
             $start = Carbon::parse("{$date} {$time}", ServiceDurationService::STORE_TIMEZONE);
             if ($start->lessThanOrEqualTo($now)) {
                 continue;
             }
             $end = $start->copy()->addMinutes($slotDuration);
-            if ($end->format('H:i') > '18:00') {
+            if ($end->format('H:i') > StoreHours::closesAt()) {
                 continue;
             }
 
@@ -282,11 +291,15 @@ class BookingAvailabilityService
         ?int $veterinarianId = null,
         ?int $ignoreAppointmentId = null,
         ?int $ignoreServiceRequestId = null,
-        bool $allowSameDayCutoff = false
+        bool $allowSameDayCutoff = false,
+        bool $allowHoliday = false
     ): bool {
         $normalizedType = $serviceType === 'grooming' ? 'grooming' : 'veterinary';
         $date = Carbon::parse($date, ServiceDurationService::STORE_TIMEZONE)->toDateString();
         if (!$allowSameDayCutoff && ServiceDurationService::isSameDayBookingClosed($date)) {
+            return false;
+        }
+        if (!self::isBookableDate($date, $allowHoliday)) {
             return false;
         }
 
@@ -294,8 +307,8 @@ class BookingAvailabilityService
         $end = $start->copy()->addMinutes(self::serviceMinutes($normalizedType, $serviceName));
         if ($start->lessThanOrEqualTo(Carbon::now(ServiceDurationService::STORE_TIMEZONE))
             || $start->minute % ServiceDurationService::getTimeSlotInterval() !== 0
-            || $start->format('H:i') < '10:00'
-            || $end->format('H:i') > '18:00') {
+            || $start->format('H:i') < StoreHours::opensAt()
+            || $end->format('H:i') > StoreHours::closesAt()) {
             return false;
         }
 
@@ -322,14 +335,14 @@ class BookingAvailabilityService
     /**
      * Get available veterinary time slots for a specific date
      */
-    public static function getVeterinaryAvailability(?string $date = null, ?int $serviceId = null, ?string $serviceName = null, ?int $veterinarianId = null): array
+    public static function getVeterinaryAvailability(?string $date = null, ?int $serviceId = null, ?string $serviceName = null, ?int $veterinarianId = null, bool $allowHoliday = false): array
     {
         if (!$date) {
             $date = Carbon::now(ServiceDurationService::STORE_TIMEZONE)->toDateString();
         }
 
         $serviceName = $serviceName ?? ($serviceId ? Service::find($serviceId)?->name : null);
-        $allSlots = self::serviceSlots($date, 'veterinary', $serviceName, $veterinarianId);
+        $allSlots = self::serviceSlots($date, 'veterinary', $serviceName, $veterinarianId, $allowHoliday);
         $blockedSlots = collect($allSlots)->where('available', false)->values();
 
         return [
@@ -337,25 +350,27 @@ class BookingAvailabilityService
             'date' => Carbon::parse($date, ServiceDurationService::STORE_TIMEZONE)->toDateString(),
             'slots' => $allSlots,
             'blocked_slots' => $blockedSlots->all(),
+            'holiday' => Holiday::blockedNameOn($date),
         ];
     }
 
     /**
      * Check grooming availability for a specific date
      */
-    public static function getGroomingAvailability(?string $date = null, ?string $serviceName = null): array
+    public static function getGroomingAvailability(?string $date = null, ?string $serviceName = null, bool $allowHoliday = false): array
     {
         if (!$date) {
             $date = Carbon::now(ServiceDurationService::STORE_TIMEZONE)->toDateString();
         }
 
-        $slots = self::serviceSlots($date, 'grooming', $serviceName);
+        $slots = self::serviceSlots($date, 'grooming', $serviceName, null, $allowHoliday);
         $isAvailable = collect($slots)->contains(fn ($slot) => $slot['available']);
 
         return [
             'success' => true,
             'date' => Carbon::parse($date, ServiceDurationService::STORE_TIMEZONE)->toDateString(),
             'available' => $isAvailable,
+            'holiday' => Holiday::blockedNameOn($date),
             'message' => $isAvailable
                 ? 'Grooming time slots available for this date'
                 : 'No grooming time slots are available for this date',
@@ -383,6 +398,18 @@ class BookingAvailabilityService
             return [
                 'success' => false,
                 'message' => 'Check-out date cannot be before check-in date',
+            ];
+        }
+
+        $blockedDays = Holiday::blockedBetween($checkInDate, $checkOutDate);
+        if ($blockedDays) {
+            return [
+                'success' => true,
+                'check_in' => $checkIn,
+                'check_out' => $checkOut,
+                'rooms' => [],
+                'holidays' => $blockedDays,
+                'message' => 'Hotel stays cannot start or end on, or include, a public holiday.',
             ];
         }
 

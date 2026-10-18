@@ -320,6 +320,7 @@ Route::middleware(['auth.api', 'throttle:api', 'role:customer'])->prefix('custom
     // Customer Service Requests
     Route::post('requests', [ServiceRequestController::class, 'store'])->middleware('verified');
     Route::get('my-requests', [ServiceRequestController::class, 'customerRequests']);
+    Route::get('bookings', [\App\Http\Controllers\Customer\BookingBoardController::class, 'index']);
     Route::patch('requests/{id}/cancel', [ServiceRequestController::class, 'cancel']);
     Route::post('requests/{id}/payment-proof', [ServiceRequestController::class, 'uploadPaymentProof']);
     Route::get('requests/{id}/receipt', [ServiceRequestController::class, 'receipt']);
@@ -1109,6 +1110,9 @@ Route::middleware(['auth.api', 'throttle:api', 'role:receptionist,admin,manager,
     // Customer pets endpoint is scoped by CustomersController when role is customer
     Route::get('/customers/{id}/pets', [CustomersController::class, 'pets']);
 });
+
+// Public blocked holiday dates (customer calendars and chatbot)
+Route::middleware(['throttle:api'])->get('holidays/blocked', [\App\Http\Controllers\Manager\HolidayController::class, 'blocked']);
 
 // Public availability reads (landing-page pre-booking — no PII, aggregate only)
 Route::middleware(['throttle:api'])->prefix('availability')->group(function () {

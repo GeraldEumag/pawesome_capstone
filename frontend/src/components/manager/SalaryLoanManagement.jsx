@@ -14,6 +14,7 @@ import DatePickerInput from "../shared/DatePickerInput";
 import Modal from "../shared/Modal";
 import { formatDateOnly, parseDateOnly } from "../../utils/date";
 import RowActionPopover from "../shared/RowActionPopover";
+import StandardTable from "../shared/StandardTable";
 import "./SalaryLoanManagement.css";
 
 const fmt = (v) => new Intl.NumberFormat("en-PH", { style: "currency", currency: "PHP" }).format(v || 0);
@@ -153,69 +154,64 @@ const SalaryLoanManagement = () => {
 
       {/* Table */}
       <div className="slm-table-card">
-        <table className="slm-table">
-          <thead>
-            <tr>
-              <th>Employee</th>
-              <th>Type</th>
-              <th>Principal</th>
-              <th>Balance</th>
-              <th>Repayment</th>
-              <th>Installment</th>
-              <th>Start</th>
-              <th>Status</th>
-              <th></th>
-            </tr>
-          </thead>
-          <tbody>
-            {loans.length === 0 ? (
-              <tr>
-                <td colSpan={9}>
-                  <div className="slm-empty">No loans found for this status.</div>
-                </td>
-              </tr>
-            ) : (
-              loans.map((l) => {
+        <StandardTable
+          nested
+          data={loans}
+          emptyMessage="No loans found for this status."
+          columns={[
+            {
+              key: "employee", label: "Employee",
+              render: (value, l) => <span style={{ fontWeight: 750 }}>{empName(l)}</span>,
+            },
+            {
+              key: "loan_type", label: "Type",
+              render: (value, l) => (
+                <span className={`slm-type-badge ${l.loan_type}`}>
+                  {l.loan_type === "salary_loan" ? "Salary Loan" : "Cash Advance"}
+                </span>
+              ),
+            },
+            { key: "principal", label: "Principal", render: (value, l) => fmt(l.principal) },
+            {
+              key: "balance", label: "Balance",
+              render: (value, l) => (
+                <span className={parseFloat(l.balance) <= 0 ? "slm-balance-paid" : ""}>{fmt(l.balance)}</span>
+              ),
+            },
+            {
+              key: "repayment", label: "Repayment",
+              render: (value, l) => {
                 const pct = repayPct(l);
-                const paid = parseFloat(l.balance) <= 0;
                 return (
-                  <tr key={l.id}>
-                    <td style={{ fontWeight: 750 }}>{empName(l)}</td>
-                    <td>
-                      <span className={`slm-type-badge ${l.loan_type}`}>
-                        {l.loan_type === "salary_loan" ? "Salary Loan" : "Cash Advance"}
-                      </span>
-                    </td>
-                    <td>{fmt(l.principal)}</td>
-                    <td className={paid ? "slm-balance-paid" : ""}>{fmt(l.balance)}</td>
-                    <td>
-                      <div className="slm-progress-wrap">
-                        <div className="slm-progress-track">
-                          <div className="slm-progress-fill" style={{ width: `${pct}%` }} />
-                        </div>
-                        <span className="slm-progress-label">{pct.toFixed(0)}% paid</span>
-                      </div>
-                    </td>
-                    <td>{fmt(l.installment_amount)}/cutoff</td>
-                    <td>{l.start_period}</td>
-                    <td>
-                      <span className={`slm-status-badge ${l.status}`}>{l.status}</span>
-                    </td>
-                    <td>
-                      <RowActionPopover rowLabel={l.user?.name || l.employee?.name || `Loan ${l.id}`}>
-                        {l.status === "active" && (
-                          <button className="slm-icon-btn" title="Cancel loan" onClick={() => cancel(l.id)}>
-                            <FontAwesomeIcon icon={faXmark} />
-                          </button>
-                        )}
-                      </RowActionPopover>
-                    </td>
-                  </tr>
+                  <div className="slm-progress-wrap">
+                    <div className="slm-progress-track">
+                      <div className="slm-progress-fill" style={{ width: `${pct}%` }} />
+                    </div>
+                    <span className="slm-progress-label">{pct.toFixed(0)}% paid</span>
+                  </div>
                 );
-              })
-            )}
-          </tbody>
-        </table>
+              },
+            },
+            { key: "installment_amount", label: "Installment", render: (value, l) => `${fmt(l.installment_amount)}/cutoff` },
+            { key: "start_period", label: "Start" },
+            {
+              key: "status", label: "Status",
+              render: (value, l) => <span className={`slm-status-badge ${l.status}`}>{l.status}</span>,
+            },
+            {
+              key: "loan_actions", label: "",
+              render: (value, l) => (
+                <RowActionPopover rowLabel={l.user?.name || l.employee?.name || `Loan ${l.id}`}>
+                  {l.status === "active" && (
+                    <button className="slm-icon-btn" title="Cancel loan" onClick={() => cancel(l.id)}>
+                      <FontAwesomeIcon icon={faXmark} />
+                    </button>
+                  )}
+                </RowActionPopover>
+              ),
+            },
+          ]}
+        />
       </div>
 
       {/* Modal */}

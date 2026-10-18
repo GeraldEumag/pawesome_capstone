@@ -185,7 +185,7 @@
 }
 
 .suppliers-table tr:last-child td { border-bottom: none; }
-.suppliers-table tr.inactive-row td { opacity: 0.55; }
+.suppliers-page tr.inactive-row td { opacity: 0.55; }
 
 .sup-notes {
   display: block;

@@ -38,6 +38,9 @@ const StandardTable = ({
   hoverable = true,
   compact = false,
   pageSize = 10,
+  cardView = true,
+  rowClassName,
+  nested = false,
 }) => {
   const [currentPage, setCurrentPage] = useState(1);
 
@@ -115,7 +118,8 @@ const StandardTable = ({
     'standard-table',
     striped && 'striped',
     hoverable && 'hoverable',
-    compact && 'compact'
+    compact && 'compact',
+    cardView && 'standard-table-cards'
   ].filter(Boolean).join(' ');
 
   if (loading) {
@@ -137,7 +141,7 @@ const StandardTable = ({
   }
 
   return (
-    <div className="standard-table-container">
+    <div className={`standard-table-container${nested ? ' standard-table-nested' : ''}`}>
       <table className={tableClasses}>
         <thead>
           <tr>
@@ -157,9 +161,16 @@ const StandardTable = ({
         </thead>
         <tbody>
           {paginatedData.map((item, index) => (
-            <tr key={getRowKey(item, index)} className="table-row">
+            <tr
+              key={getRowKey(item, index)}
+              className={`table-row ${rowClassName ? rowClassName(item, index) : ''}`.trim()}
+            >
               {columns.map((column) => (
-                <td key={column.key} className={column.className || ''}>
+                <td
+                  key={column.key}
+                  className={column.className || ''}
+                  data-label={column.label}
+                >
                   {renderCell(column, item, index)}
                 </td>
               ))}

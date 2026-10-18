@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from "react";
+import React, { useEffect, useId, useRef } from "react";
 import ReactDOM from "react-dom";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faXmark } from "@fortawesome/free-solid-svg-icons";
@@ -29,6 +29,7 @@ const Modal = ({
   showClose = true,
   headerless = false,
 }) => {
+  const titleId = useId();
   const modalRef = useRef(null);
   // onClose is typically a fresh inline function each parent render. Keep it in
   // a ref so this effect only re-runs when isOpen toggles — otherwise every
@@ -97,6 +98,7 @@ const Modal = ({
         className={`pw-modal pw-modal--${size} ${className}`.trim()}
         role="dialog"
         aria-modal="true"
+        aria-labelledby={title && !headerless ? titleId : undefined}
         tabIndex={-1}
       >
         {!headerless && (
@@ -107,7 +109,7 @@ const Modal = ({
               </span>
             )}
             <div className="pw-modal-titles">
-              {title && <h2 className="pw-modal-title">{title}</h2>}
+              {title && <h2 id={titleId} className="pw-modal-title">{title}</h2>}
               {subtitle && <p className="pw-modal-subtitle">{subtitle}</p>}
             </div>
             {headerActions}

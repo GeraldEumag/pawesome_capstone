@@ -22,13 +22,19 @@ import {
 import { apiRequest } from "../../api/client";
 import { getDateTimeTimestamp } from "../../utils/apiNormalize";
 import PetAvatar from "../shared/PetAvatar";
+import BookingStatusTabs from "../shared/BookingStatusTabs";
+import BookingDateFilter from "../shared/BookingDateFilter";
+import { BOOKING_TABS, DATE_PRESETS, getDateRange, matchesDatePreset, countByTab, countOlderPending, countLater } from "../../utils/bookingTabs";
+import { useBookingViewParams } from "../../hooks/useBookingViewParams";
+import { formatDateOnly } from "../../utils/date";
 import RowActionPopover from "../shared/RowActionPopover";
 import "../../styles/bookingModal.css";
 import "./ReceptionistVeterinaryBookings.css";
 
 const ReceptionistVeterinaryBookings = () => {
   const [searchTerm, setSearchTerm] = useState("");
-  const [filterStatus, setFilterStatus] = useState("all");
+  const { tab: activeTab, range: datePreset, setTab, setRange: setDatePreset } = useBookingViewParams();
+  const [storeToday, setStoreToday] = useState(() => formatDateOnly(new Date()));
   const [filterDoctor, setFilterDoctor] = useState("all");
   const [selectedAppointment, setSelectedAppointment] = useState(null);
   const [appointments, setAppointments] = useState([]);
@@ -78,6 +84,7 @@ const ReceptionistVeterinaryBookings = () => {
       
       // Filter only vet requests using robust type detection
       const requestData = Array.isArray(data) ? data : (data.requests || []);
+      if (data?.store_today) setStoreToday(data.store_today);
       const vetOnly = requestData.filter(isVetRequest);
       
       const transformedAppointments = vetOnly.map((item) => {
@@ -107,6 +114,8 @@ const ReceptionistVeterinaryBookings = () => {
           status: item.status,
           notes: item.notes || "",
           urgency: "medium",
+          workflow_stage: item.workflow_stage,
+          payment_status: item.payment_status,
         };
       });
       setVetAssignments((current) => {
@@ -146,6 +155,21 @@ const ReceptionistVeterinaryBookings = () => {
     }
   };
 
+  // Approve a vet request; a public-holiday date needs explicit staff confirmation.
+  const approveRequest = async (requestId, veterinarianId) => {
+    const send = (holidayOverride) => apiRequest(`/receptionist/requests/${requestId}/approve`, {
+      method: "POST",
+      body: JSON.stringify({ veterinarian_id: Number(veterinarianId), holiday_override: holidayOverride }),
+    });
+    try {
+      return await send(false);
+    } catch (err) {
+      if (err.response?.error_code !== "holiday_requires_override") throw err;
+      if (!(await showConfirm(`${err.message} Approve it anyway?`))) return null;
+      return send(true);
+    }
+  };
+
   // Approve appointment
   const handleApprove = async (appointmentId) => {
     const appointment = appointments.find((item) => item.rawId === appointmentId);
@@ -159,11 +183,8 @@ const ReceptionistVeterinaryBookings = () => {
 
     try {
       setActionLoading(true);
-      await apiRequest(`/receptionist/requests/${appointmentId}/approve`, {
-        method: "POST",
-        body: JSON.stringify({ veterinarian_id: Number(veterinarianId) }),
-      });
-      
+      if (!(await approveRequest(appointmentId, veterinarianId))) return;
+
       await fetchAppointments();
       setSelectedAppointment(null);
       setSelectedVet("");
@@ -227,7 +248,8 @@ const ReceptionistVeterinaryBookings = () => {
   };
 
   const handleBulkApprove = async () => {
-    const ids = Array.from(selectedIds);
+    const visibleIds = new Set(filteredAppointments.map((a) => a.rawId));
+    const ids = Array.from(selectedIds).filter((id) => visibleIds.has(id));
     const withoutVet = ids.filter((id) => !vetAssignments[id]);
     if (withoutVet.length > 0) { 
       setError("Please assign a veterinarian to every selected appointment."); 
@@ -257,7 +279,8 @@ const ReceptionistVeterinaryBookings = () => {
   };
 
   const handleBulkCancel = async () => {
-    const ids = Array.from(selectedIds);
+    const visibleIds = new Set(filteredAppointments.map((a) => a.rawId));
+    const ids = Array.from(selectedIds).filter((id) => visibleIds.has(id));
     const reason = await showReasonPrompt(
       `Cancel ${ids.length} selected appointment${ids.length > 1 ? "s" : ""}? Please select a reason.`,
       "Cancel Appointments",
@@ -289,16 +312,22 @@ const ReceptionistVeterinaryBookings = () => {
   const vetAppointments = appointments;
   const doctors = ["all", ...veterinarians.map(v => v.name)];
 
-  const filteredAppointments = vetAppointments.filter(appointment => {
+  const dateRange = getDateRange(datePreset, storeToday);
+  const dateFilteredAppointments = vetAppointments.filter((appointment) => matchesDatePreset(appointment, datePreset, dateRange, storeToday));
+  const stageCounts = countByTab(dateFilteredAppointments);
+  const olderPending = countOlderPending(vetAppointments, dateRange);
+  const laterCount = countLater(vetAppointments, dateRange);
+
+  const filteredAppointments = dateFilteredAppointments.filter(appointment => {
     const matchesSearch = 
       (appointment.petName || "").toLowerCase().includes(searchTerm.toLowerCase()) ||
       (appointment.owner || "").toLowerCase().includes(searchTerm.toLowerCase()) ||
       (appointment.doctor || "").toLowerCase().includes(searchTerm.toLowerCase());
     
-    const matchesStatus = filterStatus === "all" || appointment.status === filterStatus;
+    const matchesStage = activeTab === "all" || appointment.workflow_stage === activeTab;
     const matchesDoctor = filterDoctor === "all" || appointment.doctor === filterDoctor;
     
-    return matchesSearch && matchesStatus && matchesDoctor;
+    return matchesSearch && matchesStage && matchesDoctor;
   }).sort((a, b) =>
     getDateTimeTimestamp(a.appointmentDate, a.appointmentTime) - getDateTimeTimestamp(b.appointmentDate, b.appointmentTime)
   );
@@ -436,19 +465,6 @@ const ReceptionistVeterinaryBookings = () => {
         </div>
         <div className="vet-filter-box">
           <select
-            value={filterStatus}
-            onChange={(e) => setFilterStatus(e.target.value)}
-          >
-            <option value="all">All Status</option>
-            <option value="pending">Pending</option>
-            <option value="approved">Approved</option>
-            <option value="completed">Completed</option>
-            <option value="cancelled">Cancelled</option>
-            <option value="rejected">Rejected</option>
-          </select>
-        </div>
-        <div className="vet-filter-box">
-          <select
             value={filterDoctor}
             onChange={(e) => setFilterDoctor(e.target.value)}
           >
@@ -459,6 +475,48 @@ const ReceptionistVeterinaryBookings = () => {
           </select>
         </div>
       </div>
+
+      <section className="bst-stage-bar">
+        <BookingStatusTabs
+          tabs={BOOKING_TABS}
+          active={activeTab}
+          counts={stageCounts}
+          onChange={setTab}
+          ariaLabel="Veterinary booking stages"
+        />
+        <div className="bst-stage-meta">
+          <BookingDateFilter
+            presets={DATE_PRESETS}
+            value={datePreset}
+            range={dateRange}
+            onChange={setDatePreset}
+          />
+          {laterCount > 0 && (
+            <button
+              type="button"
+              className="bst-later"
+              onClick={() => {
+                setTab("all");
+                setDatePreset("upcoming");
+              }}
+            >
+              {laterCount} on later dates
+            </button>
+          )}
+          {olderPending > 0 && (
+            <button
+              type="button"
+              className="bst-older-pending"
+              onClick={() => {
+                setTab("to_approve");
+                setDatePreset("7d");
+              }}
+            >
+              {olderPending} older pending
+            </button>
+          )}
+        </div>
+      </section>
 
       {/* Appointments Table */}
       <div className="vet-table-card">
@@ -529,6 +587,9 @@ const ReceptionistVeterinaryBookings = () => {
                     <span className={`status-badge ${getStatusColor(appointment.status)}`}>
                       {appointment.status}
                     </span>
+                    {appointment.workflow_stage === "ready_to_pickup" && String(appointment.payment_status || "unpaid").toLowerCase() !== "paid" && (
+                      <small className="bst-bill-open">Bill open</small>
+                    )}
                   </div>
                 </td>
                 <td>

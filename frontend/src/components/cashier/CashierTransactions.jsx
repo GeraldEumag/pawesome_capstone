@@ -296,6 +296,7 @@ const CashierTransactions = () => {
       {error && <div className="error-banner">{error}</div>}
 
       <div className="transactions-table-container">
+        <div className="transactions-table-wrapper">
         <table className="transactions-table">
           <thead>
             <tr>
@@ -374,6 +375,7 @@ const CashierTransactions = () => {
             ))}
           </tbody>
         </table>
+        </div>
       </div>
 
       {/* Pagination */}

@@ -815,8 +815,8 @@ const ManagerAttendance = () => {
         )}
       </section>
 
-      <section className="attendance-table-card">
-        <div className="attendance-table-header">
+      <section className="ma-att-table-card">
+        <div className="ma-att-table-header">
           <div>
             <span className="attendance-eyebrow">Attendance Records</span>
             <h2>{viewMode === "list" ? "Daily Attendance List" : "Calendar View"}</h2>
@@ -875,8 +875,8 @@ const ManagerAttendance = () => {
           />
         ) : (
           <>
-            <div className="attendance-table-scroll">
-              <table className="attendance-table">
+            <div className="ma-att-table-scroll">
+              <table className="ma-att-table">
                 <thead>
                   <tr>
                     <SortableHeader label="Employee" field="name" sortBy={sortBy} sortOrder={sortOrder} onSort={handleSort} />

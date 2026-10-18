@@ -27,14 +27,17 @@ async function ensureCustomerRequest(request, session) {
   const petBody = await petRes.json();
   const pet = petBody.pet || petBody;
 
-  const date = new Date(Date.now() + 10 * 86400000).toISOString().slice(0, 10);
+  // Random future day and hour so repeated runs never collide on the same slot.
+  const pick = Math.floor(Math.random() * 300);
+  const date = new Date(Date.now() + (5 + (pick % 40)) * 86400000).toISOString().slice(0, 10); // inside the UPCOMING window
+  const slot = `${String(10 + (pick % 7)).padStart(2, "0")}:00`;
   const reqRes = await request.post(`${apiUrl}/customer/requests`, {
     headers: authH,
     data: {
       customer_name: session.user.name, customer_email: session.user.email,
       pet_id: pet.id, pet_name: pet.name, request_type: "grooming", service_type: "grooming",
-      service_name: "Standard Grooming", request_date: date, request_time: "10:00",
-      requested_date: date, requested_time: "10:00", notes: "E2E my-requests",
+      service_name: "Standard Grooming", request_date: date, request_time: slot,
+      requested_date: date, requested_time: slot, notes: "E2E my-requests",
     },
   });
   expect(reqRes.ok(), "create service request").toBeTruthy();
@@ -63,10 +66,9 @@ async function clickChatbotMyRequests(page) {
 }
 
 async function expectMyRequestsTab(page) {
-  await expect(page.locator(".cs-tab.active")).toHaveText(/My Requests/);
-  await expect(page.locator(".cs-panel-header h4")).toHaveText("My Requests");
+  await expect(page.locator(".cbb-board")).toBeVisible();
   // The customer's submitted requests (with live status) load, not just an empty shell.
-  await expect(page.locator(".customer-status-table tbody tr").first()).toBeVisible({ timeout: 30000 });
+  await expect(page.locator(".cbb-row").first()).toBeVisible({ timeout: 30000 });
 }
 
 for (const [label, startRoute] of [["dashboard", "/customer"], ["services-book-tab", "/customer/services"]]) {
@@ -77,7 +79,7 @@ for (const [label, startRoute] of [["dashboard", "/customer"], ["services-book-t
     await ensureCustomerRequest(request, session);
     const { page, context } = await openAs(browser, session, startRoute);
     if (startRoute === "/customer/services") {
-      await expect(page.locator(".cs-tab.active")).toHaveText(/New Request/);
+      await expect(page.locator(".cs-panel-header h4")).toHaveText("Book a Service");
     }
 
     await clickChatbotMyRequests(page);

@@ -1,14 +1,11 @@
-import React, { useState } from "react";
+import React from "react";
 import { useNavigate } from "react-router-dom";
 import {
-  FaPlus,
-  FaClipboardList,
   FaHotel,
   FaCut,
   FaStethoscope,
   FaArrowRight,
 } from "react-icons/fa";
-import CustomerRequestStatus from "./CustomerRequestStatus";
 import "./CustomerServices.css";
 
 const SERVICE_CARDS = [
@@ -41,8 +38,7 @@ const SERVICE_CARDS = [
   },
 ];
 
-const CustomerServices = ({ initialTab = "new" }) => {
-  const [activeTab, setActiveTab] = useState(initialTab);
+const CustomerServices = () => {
   const navigate = useNavigate();
 
   return (
@@ -51,35 +47,14 @@ const CustomerServices = ({ initialTab = "new" }) => {
         <div className="cs-panel-header">
           <div>
             <span className="cs-kicker">Services</span>
-            <h4>{activeTab === "new" ? "Book a Service" : "My Requests"}</h4>
-            <p>
-              {activeTab === "new"
-                ? "Choose a service below to start a new booking."
-                : "Track the status of your submitted service requests."}
-            </p>
+            <h4>Book a Service</h4>
+            <p>Choose a service below to start a new booking.</p>
           </div>
 
-          <div className="cs-tabs">
-            <button
-              className={`cs-tab ${activeTab === "new" ? "active" : ""}`}
-              onClick={() => setActiveTab("new")}
-            >
-              <FaPlus />
-              New Request
-            </button>
-            <button
-              className={`cs-tab ${activeTab === "my" ? "active" : ""}`}
-              onClick={() => setActiveTab("my")}
-            >
-              <FaClipboardList />
-              My Requests
-            </button>
-          </div>
         </div>
 
         <div className="cs-panel-body">
-          {activeTab === "new" && (
-            <div className="cs-cards">
+          <div className="cs-cards">
               {SERVICE_CARDS.map((svc) => (
                 <div key={svc.key} className="cs-card">
                   <div
@@ -104,10 +79,7 @@ const CustomerServices = ({ initialTab = "new" }) => {
                   </button>
                 </div>
               ))}
-            </div>
-          )}
-
-          {activeTab === "my" && <CustomerRequestStatus embedded />}
+          </div>
         </div>
       </div>
     </section>

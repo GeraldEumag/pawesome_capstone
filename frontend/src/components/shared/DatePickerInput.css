@@ -229,3 +229,10 @@
     line-height: 1.9rem;
   }
 }
+
+.paws-datepicker-hint {
+  display: block;
+  margin-top: 0.35rem;
+  color: var(--color-muted, #64748b);
+  font-size: 0.78rem;
+}

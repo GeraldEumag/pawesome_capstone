@@ -20,8 +20,11 @@ import {
 } from "@fortawesome/free-solid-svg-icons";
 import "./HotelForm.css";
 import { apiRequest } from "../../api/client";
+import { useBlockedHolidays } from "../../hooks/useBlockedHolidays";
 import { getDraft, clearDraft } from "../../utils/preBookingDraft";
 import DatePickerInput from "../../components/shared/DatePickerInput";
+import CustomerBookingsBoard from "./CustomerBookingsBoard";
+import BackToServices from "./BackToServices";
 import { formatDateOnly, parseDateOnly } from "../../utils/date";
 import { getRoomName } from "../../utils/apiNormalize";
 
@@ -60,8 +63,9 @@ const normalizeList = (result, keys = []) => {
 };
 
 const HotelForm = () => {
+  const { excludeDates: blockedDates, hint: holidayHint } = useBlockedHolidays();
   const [activeTab, setActiveTab] = useState("book");
-  const [myBookings, setMyBookings] = useState([]);
+  const [boardKey, setBoardKey] = useState(0);
   const [pets, setPets] = useState([]);
   const [careLogs, setCareLogs] = useState({});
   const [uploadModal, setUploadModal] = useState({ open: false, endpoint: "", title: "", referenceNumber: "", paymentStatus: "", rejectionReason: "", paymentMethod: "gcash", amount: null, awaitingBookingApproval: false });
@@ -93,30 +97,9 @@ const HotelForm = () => {
     }
   }, []);
 
-  const fetchMyBookings = useCallback(async () => {
-    try {
-      setLoading(true);
-      setError("");
-      const data = await apiRequest("/customer/boardings");
-      setMyBookings(normalizeList(data, ["boarding_requests", "boardings"]));
-    } catch (err) {
-      console.error("Failed to load customer boardings:", {
-        message: err?.message,
-        status: err?.status,
-        response: err?.response,
-        url: err?.url,
-      });
-      setError(err.message || "Failed to load boarding requests.");
-      setMyBookings([]);
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
   useEffect(() => {
     fetchPets();
-    fetchMyBookings();
-  }, [fetchPets, fetchMyBookings]);
+  }, [fetchPets]);
 
   useEffect(() => {
     const draft = getDraft();
@@ -288,7 +271,7 @@ const HotelForm = () => {
           awaitingBookingApproval: true,
         });
       }
-      await fetchMyBookings();
+      setBoardKey((key) => key + 1);
       setActiveTab("my-bookings");
     } catch (err) {
       setError(err.message || "Failed to create boarding request.");
@@ -298,41 +281,55 @@ const HotelForm = () => {
     }
   };
 
-  const handleCancelBooking = async (bookingId) => {
-    const reason = await showReasonPrompt(
-      "Cancel this pending boarding request? Please select a reason — it will be recorded.",
-      "Cancel Boarding Request",
-      "Yes, Cancel",
-      CUSTOMER_CANCEL_REASONS
+  const renderHotelExtras = (item) => {
+    const logs = careLogs[item.id] || [];
+    const awaitingCard = item.actions.includes("vaccination");
+    if (!awaitingCard && !item.actions.includes("care_logs") && logs.length === 0) return null;
+    return (
+      <>
+        {awaitingCard && (
+          <div className={`booking-vaccination-status ${item.vaccination_verified ? "verified" : "pending"}`}>
+            <strong>Vaccination Card</strong>
+            <span>
+              {item.vaccination_verified
+                ? "Verified by reception"
+                : item.has_vaccination_card
+                  ? "Uploaded — waiting for reception verification"
+                  : "Required before reception can approve this booking"}
+            </span>
+            <label>
+              {item.has_vaccination_card ? "Replace unverified card" : "Upload vaccination card"}
+              <input
+                type="file"
+                accept="image/jpeg,image/png,application/pdf"
+                aria-label={`${item.has_vaccination_card ? "Replace" : "Upload"} vaccination card for boarding ${item.id}`}
+                disabled={vaccinationUploadId === item.id}
+                onChange={(event) => {
+                  const file = event.target.files?.[0];
+                  event.target.value = "";
+                  uploadVaccinationCard({ id: item.id, vaccination_card: item.has_vaccination_card }, file);
+                }}
+              />
+            </label>
+          </div>
+        )}
+        {item.actions.includes("care_logs") && (
+          <button type="button" className="bc-action primary" onClick={() => fetchCareLogs(item.id)}>
+            <FontAwesomeIcon icon={faClipboardList} /> Care Logs
+          </button>
+        )}
+        {logs.length > 0 && (
+          <div className="care-log-list">
+            {logs.map((log) => (
+              <div key={log.id} className="care-log-item">
+                <strong>{log.title || log.log_type}</strong>
+                <p>{log.notes}</p>
+              </div>
+            ))}
+          </div>
+        )}
+      </>
     );
-    if (reason === null) return;
-
-    try {
-      setLoading(true);
-      await apiRequest(`/customer/boarding-requests/${bookingId}/cancel`, { method: "POST", body: JSON.stringify({ reason }) });
-      setSuccessMessage("Boarding request cancelled.");
-      showSuccess("Boarding request cancelled.");
-      await fetchMyBookings();
-    } catch (err) {
-      setError(err.message || "Failed to cancel reservation.");
-      showError(err.message || "Failed to cancel reservation.");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const openPaymentModal = (booking) => {
-    setUploadModal({
-      open: true,
-      endpoint: `/customer/boarding-requests/${booking.id}/payment-proof`,
-      title: `Boarding — ${booking.pet_name || "Pet"}`,
-      referenceNumber: booking.payment_reference || "",
-      paymentStatus: String(booking.payment_status || "").toLowerCase(),
-      rejectionReason: booking.rejection_reason || "",
-      paymentMethod: booking.payment_method || "gcash",
-      amount: booking.total_amount || booking.amount || null,
-      awaitingBookingApproval: false,
-    });
   };
 
   const uploadVaccinationCard = async (booking, file) => {
@@ -346,9 +343,7 @@ const HotelForm = () => {
         method: "POST",
         body,
       });
-      setMyBookings((current) => current.map((item) =>
-        item.id === booking.id ? { ...item, ...result.boarding } : item
-      ));
+      setBoardKey((key) => key + 1);
       showSuccess(result.message || "Vaccination card uploaded for receptionist verification.");
     } catch (err) {
       showError(err.message || "Failed to upload vaccination card.");
@@ -380,10 +375,6 @@ const HotelForm = () => {
     };
     return styles[status] || styles.pending;
   };
-
-  const canUploadPayment = (booking) =>
-    ["approved", "scheduled"].includes(booking.status) &&
-    ["unpaid", "rejected"].includes(booking.payment_status || "unpaid");
 
   const fetchBoardingAvailability = async (form = bookingForm) => {
     const pet = pets.find((p) => String(p.id) === String(form.pet_id));
@@ -493,6 +484,7 @@ const HotelForm = () => {
 
   return (
     <div className="customer-hotel-reservation">
+      <BackToServices />
       <header className="hotel-header">
         <div>
           <h3><FontAwesomeIcon icon={faHotel} /> Pet Hotel</h3>
@@ -516,7 +508,7 @@ const HotelForm = () => {
           <FontAwesomeIcon icon={faPlus} /> New Reservation
         </button>
         <button className={`hotel-tab ${activeTab === "my-bookings" ? "active" : ""}`} onClick={() => setActiveTab("my-bookings")}>
-          <FontAwesomeIcon icon={faBed} /> My Bookings ({myBookings.length})
+          <FontAwesomeIcon icon={faBed} /> My Bookings
         </button>
       </div>
 
@@ -567,6 +559,8 @@ const HotelForm = () => {
                     }
                     placeholderText="mm/dd/yyyy"
                     minDate={new Date()}
+                    excludeDates={blockedDates}
+                    helperText={holidayHint}
                     required
                   />
                 </div>
@@ -709,127 +703,14 @@ const HotelForm = () => {
 
       {activeTab === "my-bookings" && (
         <div className="my-bookings-tab">
-          {myBookings.length === 0 ? (
-            <div className="no-bookings">
-              <FontAwesomeIcon icon={faBed} />
-              <p>No boarding requests yet.</p>
-              <button onClick={() => setActiveTab("book")}><FontAwesomeIcon icon={faPlus} /> Make Reservation</button>
-            </div>
-          ) : (
-            <div className="bookings-list">
-              {myBookings.map((booking) => {
-                const statusStyle = getStatusBadge(booking.status);
-                const logs = careLogs[booking.id] || [];
-
-                return (
-                  <div key={booking.id} className="booking-card">
-                    <div className="booking-card-top">
-                      <div className="booking-card-avatar">
-                        <FontAwesomeIcon icon={faPaw} />
-                      </div>
-                      <div className="booking-card-meta">
-                        <h4>{booking.pet?.name || booking.pet_name || "Pet"}</h4>
-                        <p>Boarding #{booking.id}</p>
-                      </div>
-                      <span className="status-badge" style={{ backgroundColor: statusStyle.bg, color: statusStyle.color }}>
-                        {booking.status}
-                      </span>
-                    </div>
-
-                    <div className="booking-card-body">
-                      <div className="booking-card-grid">
-                        <div>
-                          <span className="bcg-label"><FontAwesomeIcon icon={faBed} /> Room</span>
-                          <span className="bcg-value">{getRoomName(booking) === "Unassigned" ? "Pending" : getRoomName(booking)}</span>
-                        </div>
-                        <div>
-                          <span className="bcg-label"><FontAwesomeIcon icon={faCalendarAlt} /> Stay</span>
-                          <span className="bcg-value">{booking.check_in?.slice(0, 10)} — {booking.check_out?.slice(0, 10)}</span>
-                        </div>
-                        <div>
-                          <span className="bcg-label"><FontAwesomeIcon icon={faReceipt} /> Payment</span>
-                          <span className={`bcg-payment ${String(booking.payment_status || "unpaid").toLowerCase()}`}>{booking.payment_status || "unpaid"}</span>
-                        </div>
-                        <div>
-                          <span className="bcg-label">Total</span>
-                          <span className="bcg-value">₱{Number(booking.total_amount || 0).toLocaleString("en-PH", { minimumFractionDigits: 2 })}</span>
-                        </div>
-                      </div>
-                      {booking.status === "pending" && (
-                        <div className={`booking-vaccination-status ${booking.vaccination_card_verified_at ? "verified" : "pending"}`}>
-                          <strong>Vaccination Card</strong>
-                          <span>
-                            {booking.vaccination_card_verified_at
-                              ? "Verified by reception"
-                              : booking.vaccination_card
-                                ? "Uploaded — waiting for reception verification"
-                                : "Required before reception can approve this booking"}
-                          </span>
-                          {!booking.vaccination_card_verified_at && (
-                            <label>
-                              {booking.vaccination_card ? "Replace unverified card" : "Upload vaccination card"}
-                              <input
-                                type="file"
-                                accept="image/jpeg,image/png,application/pdf"
-                                aria-label={`${booking.vaccination_card ? "Replace" : "Upload"} vaccination card for boarding ${booking.id}`}
-                                disabled={vaccinationUploadId === booking.id}
-                                onChange={(event) => {
-                                  const file = event.target.files?.[0];
-                                  event.target.value = "";
-                                  uploadVaccinationCard(booking, file);
-                                }}
-                              />
-                            </label>
-                          )}
-                        </div>
-                      )}
-                      {booking.rejection_reason && (
-                        <div className="booking-rejection">{booking.rejection_reason}</div>
-                      )}
-                    </div>
-
-                    <div className="booking-card-actions">
-                      {booking.status === "pending" && (
-                        <button className="bc-action cancel" onClick={() => handleCancelBooking(booking.id)} disabled={loading}>
-                          <FontAwesomeIcon icon={faTimesCircle} /> Cancel
-                        </button>
-                      )}
-
-                      {canUploadPayment(booking) && (
-                        <button className="bc-action primary" type="button" onClick={() => openPaymentModal(booking)}>
-                          <FontAwesomeIcon icon={faReceipt} /> Upload Payment
-                        </button>
-                      )}
-
-                      {["checked_in", "in_care", "ready_for_pickup", "completed"].includes(booking.status) && (
-                        <button className="bc-action primary" type="button" onClick={() => fetchCareLogs(booking.id)}>
-                          <FontAwesomeIcon icon={faClipboardList} /> Care Logs
-                        </button>
-                      )}
-                    </div>
-
-                    {logs.length > 0 && (
-                      <div className="care-log-list">
-                        {logs.map((log) => (
-                          <div key={log.id} className="care-log-item">
-                            <strong>{log.title || log.log_type}</strong>
-                            <p>{log.notes}</p>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                );
-              })}
-            </div>
-          )}
+          <CustomerBookingsBoard key={boardKey} serviceFilter="hotel" embedded renderExtra={renderHotelExtras} />
         </div>
       )}
 
       <PaymentUploadModal
         open={uploadModal.open}
         onClose={() => setUploadModal({ open: false, endpoint: "", title: "", referenceNumber: "", paymentStatus: "", rejectionReason: "", paymentMethod: "gcash" })}
-        onSuccess={fetchMyBookings}
+        onSuccess={() => setBoardKey((key) => key + 1)}
         endpoint={uploadModal.endpoint}
         title={uploadModal.title}
         referenceNumber={uploadModal.referenceNumber}

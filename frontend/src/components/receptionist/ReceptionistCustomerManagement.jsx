@@ -18,6 +18,7 @@ import { formatCurrency } from "../../utils/currency";
 import PetAvatar from "../shared/PetAvatar";
 import CustomerAvatar from "../shared/CustomerAvatar";
 import RowActionPopover from "../shared/RowActionPopover";
+import StandardTable from "../shared/StandardTable";
 import DatePickerInput from "../shared/DatePickerInput";
 import { formatDateOnly, parseDateOnly } from "../../utils/date";
 import "../../styles/bookingModal.css";
@@ -242,126 +243,117 @@ const ReceptionistCustomerManagement = () => {
       </div>
 
       <div className="customers-table-container">
-        <table className="customers-table">
-          <thead>
-            <tr>
-              <th>Customer</th>
-              <th>Contact</th>
-              <th>Address</th>
-              <th>Pets</th>
-              <th>Status</th>
-              <th>Total Bookings</th>
-              <th>Total Spent</th>
-              <th>Actions</th>
-            </tr>
-          </thead>
-
-          <tbody>
-            {loading ? (
-              <tr>
-                <td colSpan="8" style={{ textAlign: "center", padding: "24px" }}>
-                  Loading customers...
-                </td>
-              </tr>
-            ) : filteredCustomers.length === 0 ? (
-              <tr>
-                <td colSpan="8" style={{ textAlign: "center", padding: "24px" }}>
-                  No customers found.
-                </td>
-              </tr>
-            ) : (
-              filteredCustomers.map((customer) => {
+        <StandardTable
+          nested
+          data={filteredCustomers}
+          loading={loading}
+          emptyMessage="No customers found."
+          columns={[
+            {
+              key: "name", label: "Customer", className: "customer-name",
+              render: (value, customer) => (
+                <div className="name-info" style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                  <CustomerAvatar customer={customer} size={36} />
+                  <div>
+                    <span className="name">{getCustomerName(customer)}</span>
+                    <span className="join-date" style={{ display: "block" }}>
+                      Since {customer.created_at || customer.joinDate || "N/A"}
+                    </span>
+                  </div>
+                </div>
+              ),
+            },
+            {
+              key: "email", label: "Contact", className: "contact",
+              render: (value, customer) => (
+                <div className="contact-info">
+                  <div className="email">
+                    <FontAwesomeIcon icon={faEnvelope} />
+                    {customer.email || "No email"}
+                  </div>
+                  <div className="phone">
+                    <FontAwesomeIcon icon={faPhone} />
+                    {customer.phone || "No phone"}
+                  </div>
+                </div>
+              ),
+            },
+            {
+              key: "address", label: "Address", className: "address",
+              render: (value, customer) => (
+                <div className="address-info">
+                  <FontAwesomeIcon icon={faMapMarkerAlt} />
+                  {customer.address || "No address"}
+                </div>
+              ),
+            },
+            {
+              key: "pets", label: "Pets", className: "pets",
+              render: (value, customer) => {
                 const pets = getPets(customer);
-                const status = getStatus(customer);
-
                 return (
-                  <tr key={customer.id}>
-                    <td className="customer-name">
-                      <div className="name-info" style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                        <CustomerAvatar customer={customer} size={36} />
-                        <div>
-                          <span className="name">{getCustomerName(customer)}</span>
-                          <span className="join-date" style={{ display: "block" }}>
-                            Since {customer.created_at || customer.joinDate || "N/A"}
-                          </span>
-                        </div>
-                      </div>
-                    </td>
-
-                    <td className="contact">
-                      <div className="contact-info">
-                        <div className="email">
-                          <FontAwesomeIcon icon={faEnvelope} />
-                          {customer.email || "No email"}
-                        </div>
-                        <div className="phone">
-                          <FontAwesomeIcon icon={faPhone} />
-                          {customer.phone || "No phone"}
-                        </div>
-                      </div>
-                    </td>
-
-                    <td className="address">
-                      <div className="address-info">
-                        <FontAwesomeIcon icon={faMapMarkerAlt} />
-                        {customer.address || "No address"}
-                      </div>
-                    </td>
-
-                    <td className="pets">
-                      <div className="pets-info">
-                        <span className="pet-count">{pets.length} pets</span>
-                        <div className="pet-list">
-                          {pets.slice(0, 3).map((pet) => (
-                            <span key={pet.id || pet.name} className="pet-tag">
-                              <FontAwesomeIcon icon={faPaw} />
-                              {pet.name} ({pet.type || pet.species || "Pet"})
-                            </span>
-                          ))}
-                        </div>
-                      </div>
-                    </td>
-
-                    <td>
-                      <span className={`status-badge ${getStatusColor(status)}`}>
-                        <FontAwesomeIcon icon={getStatusIcon(status)} />
-                        {status}
-                      </span>
-                    </td>
-
-                    <td>{customer.totalBookings || customer.total_bookings || 0}</td>
-
-                    <td>
-                      <span className="amount">
-                        {formatCurrency(Number(customer.totalSpent || customer.total_spent || 0))}
-                      </span>
-                    </td>
-
-                    <td className="actions">
-                      <RowActionPopover rowLabel={getCustomerName(customer)}>
-                      <button
-                        className="action-btn view-btn"
-                        onClick={() => openCustomerDetails(customer)}
-                        title="View Details"
-                      >
-                        <FontAwesomeIcon icon={faEye} />
-                      </button>
-
-                      <button
-                        className="action-btn edit-btn"
-                        onClick={() => openBookingModal(customer)}
-                        title="Create Booking"
-                      >
-                        <FontAwesomeIcon icon={faPlus} />
-                      </button>
-                      </RowActionPopover>
-                    </td>
-                  </tr>
+                  <div className="pets-info">
+                    <span className="pet-count">{pets.length} pets</span>
+                    <div className="pet-list">
+                      {pets.slice(0, 3).map((pet) => (
+                        <span key={pet.id || pet.name} className="pet-tag">
+                          <FontAwesomeIcon icon={faPaw} />
+                          {pet.name} ({pet.type || pet.species || "Pet"})
+                        </span>
+                      ))}
+                    </div>
+                  </div>
                 );
-              })
-            )}
-          </tbody>
-        </table>
+              },
+            },
+            {
+              key: "status", label: "Status",
+              render: (value, customer) => {
+                const status = getStatus(customer);
+                return (
+                  <span className={`status-badge ${getStatusColor(status)}`}>
+                    <FontAwesomeIcon icon={getStatusIcon(status)} />
+                    {status}
+                  </span>
+                );
+              },
+            },
+            {
+              key: "total_bookings", label: "Total Bookings",
+              render: (value, customer) => customer.totalBookings || customer.total_bookings || 0,
+            },
+            {
+              key: "total_spent", label: "Total Spent",
+              render: (value, customer) => (
+                <span className="amount">
+                  {formatCurrency(Number(customer.totalSpent || customer.total_spent || 0))}
+                </span>
+              ),
+            },
+            {
+              key: "cust_actions", label: "Actions", className: "actions",
+              render: (value, customer) => (
+                <RowActionPopover rowLabel={getCustomerName(customer)}>
+                <button
+                  className="action-btn view-btn"
+                  onClick={() => openCustomerDetails(customer)}
+                  title="View Details"
+                >
+                  <FontAwesomeIcon icon={faEye} />
+                </button>
+
+                <button
+                  className="action-btn edit-btn"
+                  onClick={() => openBookingModal(customer)}
+                  title="Create Booking"
+                >
+                  <FontAwesomeIcon icon={faPlus} />
+                </button>
+                </RowActionPopover>
+              ),
+            },
+          ]}
+        />
       </div>
 
       {selectedCustomer && !showBookingModal && (

@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Holiday;
 use App\Models\Appointment;
 use App\Models\Boarding;
 use App\Models\Customer;
@@ -215,6 +216,17 @@ class ChatbotWorkflowController extends Controller
         // Same-day boarding: check-out equals check-in (store open 10 AM - 6 PM)
         $data['check_out'] = $data['check_in'];
 
+        if ($holiday = Holiday::blockedNameOn($data['check_in'])) {
+            return response()->json([
+                'check_in' => $data['check_in'],
+                'check_out' => $data['check_out'],
+                'available_rooms' => [],
+                'count' => 0,
+                'holiday' => $holiday,
+                'message' => "Pawesome is closed on this public holiday ({$holiday}).",
+            ]);
+        }
+
         // Get available rooms for the date
         $query = HotelRoom::where('status', 'available')
             ->whereDoesntHave('boardings', function ($q) use ($data) {
@@ -251,6 +263,10 @@ class ChatbotWorkflowController extends Controller
 
         // Same-day boarding: check-out equals check-in (store open 10 AM - 6 PM)
         $data['check_out'] = $data['check_in'];
+
+        if ($holiday = Holiday::blockedNameOn($data['check_in'])) {
+            return response()->json(['message' => "Pawesome is closed on this public holiday ({$holiday})."], 422);
+        }
 
         // Get customer
         if ($user?->role === 'customer') {

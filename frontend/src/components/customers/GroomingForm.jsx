@@ -1,6 +1,9 @@
 import { useEffect, useState, useCallback } from "react";
 import "./GroomingForm.css";
 import { apiRequest, normalizeList } from "../../api/client";
+import CustomerBookingsBoard from "./CustomerBookingsBoard";
+import BackToServices from "./BackToServices";
+import { useBlockedHolidays } from "../../hooks/useBlockedHolidays";
 import { useAuth } from "../../context/AuthContext";
 import { getDraft, clearDraft } from "../../utils/preBookingDraft";
 import DatePickerInput from "../../components/shared/DatePickerInput";
@@ -10,7 +13,7 @@ import {
   validateServiceCompatibility,
   getUnavailableServiceMessage,
 } from "../../config/petServiceRules";
-import { showAlert, showSuccess, showError, showConfirm, showReasonPrompt, CUSTOMER_CANCEL_REASONS } from "../../utils/alert.jsx";
+import { showAlert, showSuccess, showError, showConfirm } from "../../utils/alert.jsx";
 import BookingReviewModal from "../shared/BookingReviewModal";
 import PaymentUploadModal from "../shared/PaymentUploadModal";
 
@@ -25,12 +28,12 @@ const GROOMING_TIME_SLOTS = Array.from({ length: 8 }, (_, index) => {
 });
 
 const GroomingForm = () => {
+  const { excludeDates: blockedDates, hint: holidayHint } = useBlockedHolidays();
   const { user } = useAuth();
   const customerEmail = user?.email;
   const customerName = user?.name || "Customer";
 
   const [activeTab, setActiveTab] = useState("book");
-  const [appointments, setAppointments] = useState([]);
   const [pets, setPets] = useState([]);
   const [services, setServices] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -52,23 +55,6 @@ const GroomingForm = () => {
     request_time: "",
     notes: "",
   });
-
-  const fetchAppointments = useCallback(async () => {
-    try {
-      const data = await apiRequest("/customer/my-requests");
-      const requests = normalizeList(data, ["requests", "data"]);
-      const groomingOnly = requests.filter(
-        (item) =>
-          item.type === "grooming" ||
-          item.request_type === "grooming" ||
-          (item.service_name && String(item.service_name).toLowerCase().includes("groom"))
-      );
-      setAppointments(groomingOnly);
-    } catch (error) {
-      console.error("Failed to load grooming appointments:", error);
-      setAppointments([]);
-    }
-  }, []);
 
   const fetchPets = useCallback(async () => {
     try {
@@ -95,10 +81,9 @@ const GroomingForm = () => {
   }, []);
 
   useEffect(() => {
-    fetchAppointments();
     fetchPets();
     fetchServices();
-  }, [fetchAppointments, fetchPets, fetchServices]);
+  }, [fetchPets, fetchServices]);
 
   useEffect(() => {
     const draft = getDraft();
@@ -273,7 +258,6 @@ const GroomingForm = () => {
         setAvailableTimeSlots([]);
         setDateAvailable(true);
 
-        await fetchAppointments();
         setActiveTab("my");
       } else {
         showAlert(data.message || "Failed to submit grooming appointment");
@@ -286,45 +270,9 @@ const GroomingForm = () => {
     }
   };
 
-  const cancelRequest = async (item) => {
-    const reason = await showReasonPrompt(
-      "Cancel this appointment? Please select a reason — it will be recorded.",
-      "Cancel Appointment",
-      "Yes, Cancel",
-      CUSTOMER_CANCEL_REASONS
-    );
-    if (reason === null) return;
-    try {
-      await apiRequest(`/customer/requests/${item.id}/cancel`, "PATCH", { reason });
-      showSuccess("Appointment cancelled.");
-      fetchAppointments();
-    } catch (err) {
-      showError(err.message || "Failed to cancel appointment.");
-    }
-  };
-
-  const canPay = (item) => {
-    const status = String(item?.status || "").toLowerCase();
-    const paymentStatus = String(item?.payment_status || item?.payment || "unpaid").toLowerCase();
-    return ["approved", "scheduled"].includes(status) && ["unpaid", "rejected"].includes(paymentStatus);
-  };
-
-  const openUploadModal = (item) => {
-    setUploadModal({
-      open: true,
-      endpoint: `/customer/requests/${item.id}/payment-proof`,
-      title: item.service_name || item.service || "Grooming",
-      referenceNumber: item.payment_reference || "",
-      paymentStatus: String(item.payment_status || item.payment || ""),
-      rejectionReason: item.rejection_reason || "",
-      paymentMethod: item.payment_method || "gcash",
-      amount: item.total_amount ?? item.price ?? item.amount ?? null,
-      awaitingBookingApproval: false,
-    });
-  };
-
   return (
     <section className="grooming-container">
+      <BackToServices />
       <div className="grooming-header">
         <h1>Pet Grooming</h1>
       </div>
@@ -341,7 +289,7 @@ const GroomingForm = () => {
           className={activeTab === "my" ? "active" : ""}
           onClick={() => setActiveTab("my")}
         >
-          My Appointments ({appointments.length})
+          My Appointments
         </button>
       </div>
 
@@ -421,6 +369,8 @@ const GroomingForm = () => {
               }
               placeholderText="mm/dd/yyyy"
               minDate={new Date()}
+              excludeDates={blockedDates}
+              helperText={holidayHint}
               required
             />
 
@@ -494,48 +444,7 @@ const GroomingForm = () => {
 
       {activeTab === "my" && (
         <div className="grooming-card">
-          {appointments.length === 0 ? (
-            <p>No grooming appointments yet.</p>
-          ) : (
-            appointments.map((item) => (
-              <div key={item.id} className="grooming-item">
-                <h3>{item.pet}</h3>
-                <p>Service: {item.service}</p>
-                <p>Date: {item.date}</p>
-                <p>Time: {item.time}</p>
-                <p>Notes: {item.notes || "None"}</p>
-                {(item.price || item.amount) && (
-                  <p className="grooming-price">
-                    Price: ₱{Number(item.price || item.amount).toFixed(2)}
-                  </p>
-                )}
-
-                <span className={`status ${item.status}`}>
-                  {item.status}
-                </span>
-
-                {canPay(item) && (
-                  <button
-                    className="grooming-pay-btn"
-                    onClick={() => openUploadModal(item)}
-                    style={{ marginTop: "0.5rem", background: "#10b981", color: "#fff", border: "none", borderRadius: "6px", padding: "0.4rem 0.8rem", cursor: "pointer", fontSize: "0.85rem", fontWeight: 600, marginRight: "0.5rem" }}
-                  >
-                    {String(item.payment_status || item.payment || "").toLowerCase() === "rejected" ? "Resubmit Payment Proof" : "Pay Now (GCash / Maya)"}
-                  </button>
-                )}
-
-                {(item.status === "pending" || item.status === "submitted") && (
-                  <button
-                    className="grooming-cancel-btn"
-                    onClick={() => cancelRequest(item)}
-                    style={{ marginTop: "0.5rem", background: "#ef4444", color: "#fff", border: "none", borderRadius: "6px", padding: "0.4rem 0.8rem", cursor: "pointer", fontSize: "0.85rem", fontWeight: 600 }}
-                  >
-                    Cancel
-                  </button>
-                )}
-              </div>
-            ))
-          )}
+          <CustomerBookingsBoard serviceFilter="grooming" embedded />
         </div>
       )}
 
@@ -573,7 +482,6 @@ const GroomingForm = () => {
         paymentStatus={uploadModal.paymentStatus}
         rejectionReason={uploadModal.rejectionReason}
         paymentMethod={uploadModal.paymentMethod}
-        onSuccess={fetchAppointments}
         amount={uploadModal.amount}
         awaitingBookingApproval={uploadModal.awaitingBookingApproval}
       />

@@ -186,6 +186,13 @@
   color: var(--cr-muted);
 }
 
+.col-date .col-date-time {
+  display: block;
+  margin-top: 0.15rem;
+  font-size: 0.75rem;
+  color: var(--cr-muted);
+}
+
 .col-status,
 .col-payment,
 .col-action {
@@ -268,9 +275,18 @@
   color: #b45309;
 }
 
-.customer-status-pill.approved {
+.customer-status-pill.approved,
+.customer-status-pill.completed,
+.customer-status-pill.scheduled {
   background: rgba(34, 197, 94, 0.12);
   color: #15803d;
+}
+
+.customer-status-pill.checked_in,
+.customer-status-pill.in_care,
+.customer-status-pill.ready_for_pickup {
+  background: rgba(59, 130, 246, 0.12);
+  color: #1d4ed8;
 }
 
 .customer-status-pill.rejected,
@@ -289,9 +305,15 @@
   color: #1d4ed8;
 }
 
-.customer-payment-pill.paid {
+.customer-payment-pill.paid,
+.customer-payment-pill.verified {
   background: rgba(34, 197, 94, 0.12);
   color: #15803d;
+}
+
+.customer-payment-pill.rejected {
+  background: rgba(239, 68, 68, 0.12);
+  color: #b91c1c;
 }
 
 /* Empty state */
@@ -434,7 +456,8 @@
     backdrop-filter: none;
   }
 
-  .app-dashboard.customer-dashboard .customer-status-page .customer-status-table {
+  .customer-status-page .customer-status-table,
+  .app-dashboard.customer-dashboard .customer-status-table {
     display: block;
     width: 100%;
     min-width: 0;

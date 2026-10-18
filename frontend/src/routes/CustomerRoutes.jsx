@@ -15,6 +15,7 @@ import VetForm from "../components/customers/VetForm";
 import CustomerMedicalConfinements from "../components/customers/CustomerMedicalConfinements";
 import CustomerHistory from "../components/customers/CustomerHistory";
 import CustomerServices from "../components/customers/CustomerServices";
+import CustomerRequestStatus from "../components/customers/CustomerRequestStatus";
 
 const CustomerRoutes = () => (
   <Routes>
@@ -31,7 +32,7 @@ const CustomerRoutes = () => (
 
       {/* Core customer routes */}
       <Route path="services" element={<CustomerServices />} />
-      <Route path="bookings" element={<CustomerServices initialTab="my" />} />
+      <Route path="bookings" element={<CustomerRequestStatus />} />
       <Route path="booking" element={<Navigate to="/customer/services" replace />} />
       <Route path="requests" element={<Navigate to="/customer/bookings" replace />} />
       <Route path="pets" element={<CustomerPets />} />

@@ -46,6 +46,7 @@ class SystemSettingController extends Controller
     {
         return response()->json([
             'theme_color' => SystemSetting::get('theme_color', 'blush-pink'),
+            'store_hours' => \App\Support\StoreHours::publicPayload(),
         ]);
     }
 

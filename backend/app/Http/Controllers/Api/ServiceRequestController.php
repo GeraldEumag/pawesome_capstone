@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Models\Holiday;
+use App\Support\StoreHours;
 use App\Http\Controllers\Controller;
 use App\Models\Appointment;
 use App\Models\Boarding;
@@ -16,6 +18,7 @@ use App\Services\EmailDeliveryService;
 use App\Services\FileStorageService;
 use App\Services\WorkflowNotifier;
 use App\Services\BookingAvailabilityService;
+use App\Services\BookingWorkflowStage;
 use App\Services\PetServiceCompatibilityService;
 use App\Services\ServiceCatalog;
 use App\Services\ServiceDurationService;
@@ -118,6 +121,8 @@ class ServiceRequestController extends Controller
             'payment_proof' => $item->payment_proof,
             'rejection_reason' => $item->rejection_reason,
             'created_at' => $item->created_at,
+            'ready_for_pickup_at' => $item->ready_for_pickup_at ?? null,
+            'workflow_stage' => BookingWorkflowStage::forServiceRequest($item->request_type, $item->status, $item->payment_status, $appointment?->status),
         ];
     }
 
@@ -207,9 +212,23 @@ class ServiceRequestController extends Controller
 
         // Validate business hours (skip for hotel bookings which don't use time slots)
         $time = $validated['requested_time'] ?? '00:00';
-        if (!$isHotel && ($time < '10:00' || $time > '18:00')) {
+        if (!$isHotel && ($time < StoreHours::opensAt() || $time > StoreHours::closesAt())) {
             return response()->json([
-                'message' => 'Selected time is outside shop opening hours. Please choose between 10:00 AM and 6:00 PM.',
+                'message' => 'Selected time is outside shop opening hours. Please choose between ' . StoreHours::label() . '.',
+            ], 422);
+        }
+        if (!$isHotel && !StoreHours::isOpenDay(Carbon::parse($validated['requested_date']))) {
+            return response()->json([
+                'message' => 'The store is closed on the selected day. Please choose another date.',
+                'errors' => ['requested_date' => ['The store is closed on this day.']],
+            ], 422);
+        }
+        if (!$isHotel && ($holiday = Holiday::blockedNameOn($validated['requested_date']))) {
+            $message = "This date is a public holiday ({$holiday}); the store is closed.";
+            return response()->json([
+                'success' => false,
+                'message' => $message,
+                'errors' => ['requested_date' => [$message]],
             ], 422);
         }
 

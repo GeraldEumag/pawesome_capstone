@@ -3,6 +3,7 @@ import { showConfirm, showReasonPrompt, BOOKING_REJECT_REASONS } from "../../uti
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
   faCalendarAlt,
+  faBoxOpen,
   faCheckCircle,
   faClipboardList,
   faClock,
@@ -22,19 +23,14 @@ import "../../styles/bookingModal.css";
 import "./ReceptionistGroomingBookings.css";
 import { apiRequest } from "../../api/client";
 import { getDateTimeTimestamp } from "../../utils/apiNormalize";
+import { formatDateOnly } from "../../utils/date";
 import { exportToCSV, exportToPDF, exportToExcel } from "../../utils/reportExport";
 import PetAvatar from "../shared/PetAvatar";
+import BookingStatusTabs from "../shared/BookingStatusTabs";
+import BookingDateFilter from "../shared/BookingDateFilter";
+import { BOOKING_TABS, DATE_PRESETS, getDateRange, matchesDatePreset, countByTab, countOlderPending, countLater } from "../../utils/bookingTabs";
+import { useBookingViewParams } from "../../hooks/useBookingViewParams";
 import RowActionPopover from "../shared/RowActionPopover";
-
-const STATUS_OPTIONS = [
-  { value: "all", label: "All Status" },
-  { value: "pending", label: "Pending" },
-  { value: "approved", label: "Approved" },
-  { value: "in_progress", label: "In Progress" },
-  { value: "completed", label: "Completed" },
-  { value: "rejected", label: "Rejected" },
-  { value: "cancelled", label: "Cancelled" },
-];
 
 const normalizeList = (payload) => {
   if (Array.isArray(payload)) return payload;
@@ -142,7 +138,8 @@ const getAppointmentTime = (item) =>
 
 const ReceptionistGroomingBookings = () => {
   const [searchTerm, setSearchTerm] = useState("");
-  const [filterStatus, setFilterStatus] = useState("all");
+  const { tab: activeTab, range: datePreset, setTab, setRange: setDatePreset } = useBookingViewParams();
+  const [storeToday, setStoreToday] = useState(() => formatDateOnly(new Date()));
   const [filterService, setFilterService] = useState("all");
 
   const [groomingAppointments, setGroomingAppointments] = useState([]);
@@ -202,6 +199,7 @@ const ReceptionistGroomingBookings = () => {
 
       const data = await apiRequest("/receptionist/requests");
       const normalizedData = normalizeList(data);
+      if (data?.store_today) setStoreToday(data.store_today);
 
       // Filter grooming requests only
       const groomingOnly = normalizedData.filter((item) => {
@@ -225,17 +223,27 @@ const ReceptionistGroomingBookings = () => {
     fetchAppointments();
   }, [fetchAppointments]);
 
+  const dateRange = useMemo(() => getDateRange(datePreset, storeToday), [datePreset, storeToday]);
+
+  const dateFilteredAppointments = useMemo(
+    () => groomingAppointments.filter((item) => matchesDatePreset(item, datePreset, dateRange, storeToday)),
+    [groomingAppointments, datePreset, dateRange, storeToday]
+  );
+
+  const stageCounts = useMemo(() => countByTab(dateFilteredAppointments), [dateFilteredAppointments]);
+  const olderPending = useMemo(() => countOlderPending(groomingAppointments, dateRange), [groomingAppointments, dateRange]);
+  const laterCount = useMemo(() => countLater(groomingAppointments, dateRange), [groomingAppointments, dateRange]);
+
   const filteredAppointments = useMemo(() => {
     const keyword = String(searchTerm || "").toLowerCase();
-    return groomingAppointments.filter((item) => {
+    return dateFilteredAppointments.filter((item) => {
       const matchesSearch =
         !keyword ||
         String(item.petName || "").toLowerCase().includes(keyword) ||
         String(item.customerName || "").toLowerCase().includes(keyword) ||
         String(item.serviceName || "").toLowerCase().includes(keyword);
 
-      const matchesStatus =
-        filterStatus === "all" || item.status === filterStatus;
+      const matchesStage = activeTab === "all" || item.workflow_stage === activeTab;
 
       const matchesService =
         filterService === "all" ||
@@ -243,11 +251,11 @@ const ReceptionistGroomingBookings = () => {
           .toLowerCase()
           .includes(filterService.toLowerCase());
 
-      return matchesSearch && matchesStatus && matchesService;
+      return matchesSearch && matchesStage && matchesService;
     }).sort((a, b) =>
       getDateTimeTimestamp(a.dateValue, a.timeValue) - getDateTimeTimestamp(b.dateValue, b.timeValue)
     );
-  }, [groomingAppointments, searchTerm, filterStatus, filterService]);
+  }, [dateFilteredAppointments, searchTerm, activeTab, filterService]);
 
   const stats = useMemo(() => {
     const pending = groomingAppointments.filter(
@@ -314,6 +322,10 @@ const ReceptionistGroomingBookings = () => {
 
   const handleStart = async (id) => {
     await handleStatusChange(id, "in_progress");
+  };
+
+  const handleReady = async (id) => {
+    await handleStatusChange(id, "ready_for_pickup");
   };
 
   const handleComplete = async (id) => {
@@ -466,19 +478,49 @@ const ReceptionistGroomingBookings = () => {
           />
         </div>
 
-        <div className="gb-filter-select">
-          <select
-            value={filterStatus}
-            onChange={(e) => setFilterStatus(e.target.value)}
-          >
-            {STATUS_OPTIONS.map((opt) => (
-              <option key={opt.value} value={opt.value}>
-                {opt.label}
-              </option>
-            ))}
-          </select>
-        </div>
       </div>
+
+      <section className="bst-stage-bar">
+        <BookingStatusTabs
+          tabs={BOOKING_TABS}
+          active={activeTab}
+          counts={stageCounts}
+          onChange={setTab}
+          ariaLabel="Grooming booking stages"
+        />
+        <div className="bst-stage-meta">
+          <BookingDateFilter
+            presets={DATE_PRESETS}
+            value={datePreset}
+            range={dateRange}
+            onChange={setDatePreset}
+          />
+          {laterCount > 0 && (
+            <button
+              type="button"
+              className="bst-later"
+              onClick={() => {
+                setTab("all");
+                setDatePreset("upcoming");
+              }}
+            >
+              {laterCount} on later dates
+            </button>
+          )}
+          {olderPending > 0 && (
+            <button
+              type="button"
+              className="bst-older-pending"
+              onClick={() => {
+                setTab("to_approve");
+                setDatePreset("7d");
+              }}
+            >
+              {olderPending} older pending
+            </button>
+          )}
+        </div>
+      </section>
 
       {/* Table */}
       {loading ? (
@@ -527,6 +569,9 @@ const ReceptionistGroomingBookings = () => {
                     <span className={`status-badge status-${item.status}`}>
                       {formatStatus(item.status)}
                     </span>
+                    {item.workflow_stage === "ready_to_pickup" && String(item.payment_status || "unpaid").toLowerCase() !== "paid" && (
+                      <small className="bst-bill-open">Bill open</small>
+                    )}
                   </td>
                   <td>
                     <RowActionPopover rowLabel={item.petName}>
@@ -585,6 +630,21 @@ const ReceptionistGroomingBookings = () => {
                       )}
 
                       {item.status === "in_progress" && (
+                        <button
+                          type="button"
+                          className="action-btn start-btn"
+                          onClick={() => handleReady(item.id)}
+                          disabled={isProcessing(item.id)}
+                          title="Mark Ready for Pickup"
+                        >
+                          <FontAwesomeIcon
+                            icon={isProcessing(item.id) ? faSpinner : faBoxOpen}
+                            spin={isProcessing(item.id)}
+                          />
+                        </button>
+                      )}
+
+                      {(item.status === "in_progress" || item.status === "ready_for_pickup") && (
                         <button
                           type="button"
                           className="action-btn complete-btn"

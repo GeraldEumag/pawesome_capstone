@@ -245,11 +245,13 @@
   background: var(--slm-surface);
   box-shadow: var(--slm-shadow-soft);
   backdrop-filter: blur(14px);
-  overflow: hidden;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
 }
 
 .slm-table {
   width: 100%;
+  min-width: 780px;
   border-collapse: collapse;
   font-size: 0.88rem;
 }

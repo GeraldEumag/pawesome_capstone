@@ -24,6 +24,7 @@ import {
 import { apiRequest } from "../../api/client";
 import { exportToCSV, exportToPDF, exportToExcel } from "../../utils/reportExport";
 import RowActionPopover from "../shared/RowActionPopover";
+import StandardTable from "../shared/StandardTable";
 import Modal from "../shared/Modal";
 import "./ManagerLeave.css";
 
@@ -85,9 +86,6 @@ const ManagerLeave = () => {
   const [selectedType, setSelectedType] = useState("all");
   const [showFilters, setShowFilters] = useState(false);
   const [showExportDropdown, setShowExportDropdown] = useState(false);
-
-  const [currentPage, setCurrentPage] = useState(1);
-  const [itemsPerPage] = useState(10);
 
   const [selectedRecord, setSelectedRecord] = useState(null);
   const [actionModal, setActionModal] = useState(null); // 'approve' | 'reject' | null
@@ -151,19 +149,9 @@ const ManagerLeave = () => {
     if (viewMode === "calendar") loadCalendar();
   }, [viewMode, loadCalendar]);
 
-  useEffect(() => {
-    setCurrentPage(1);
-  }, [searchTerm, selectedStatus, selectedType]);
-
   const filteredRecords = useMemo(() => {
     return records;
   }, [records]);
-
-  const totalPages = Math.max(1, Math.ceil(filteredRecords.length / itemsPerPage));
-  const paginated = useMemo(() => {
-    const start = (currentPage - 1) * itemsPerPage;
-    return filteredRecords.slice(start, start + itemsPerPage);
-  }, [currentPage, filteredRecords, itemsPerPage]);
 
   const handleAction = async () => {
     if (!selectedRecord || !actionModal) return;
@@ -248,9 +236,6 @@ const ManagerLeave = () => {
       showToast("Leave PDF exported successfully.", "success");
     }
   };
-
-  const pageStart = filteredRecords.length ? (currentPage - 1) * itemsPerPage + 1 : 0;
-  const pageEnd = Math.min(currentPage * itemsPerPage, filteredRecords.length);
 
   return (
     <div className="manager-leave">
@@ -348,85 +333,65 @@ const ManagerLeave = () => {
               <h2>Employee Leave List</h2>
             </div>
           </div>
-          {loading ? (
-            <div className="leave-loading-state">
-              <FontAwesomeIcon icon={faSpinner} spin />
-              <h3>Loading leave requests</h3>
-            </div>
-          ) : (
-            <>
-              <div className="leave-table-scroll">
-                <table className="leave-table">
-                  <thead>
-                    <tr>
-                      <th>Employee</th>
-                      <th>Type</th>
-                      <th>Duration</th>
-                      <th>Status</th>
-                      <th>Reason</th>
-                      <th>Actions</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {paginated.map((r) => {
-                      const meta = getLeaveTypeMeta(r.type);
-                      return (
-                        <tr key={r.id}>
-                          <td>
-                            <div className="leave-employee-cell">
-                              <strong>{r.employee_name}</strong>
-                              <small>{r.employee_role}</small>
-                            </div>
-                          </td>
-                          <td>
-                            <span className="leave-type-badge" style={{ backgroundColor: meta.color + "20", color: meta.color, borderColor: meta.color + "40" }}>
-                              {meta.label}
-                            </span>
-                          </td>
-                          <td>
-                            <div className="leave-duration-cell">
-                              <span>{formatDate(r.start_date)}</span>
-                              <small>to {formatDate(r.end_date)}</small>
-                            </div>
-                          </td>
-                          <td><StatusBadge status={r.status} /></td>
-                          <td className="leave-reason">{r.reason || "—"}</td>
-                          <td>
-                            {r.status === "pending" && (
-                              <RowActionPopover rowLabel={r.employee_name}>
-                                <div className="leave-actions">
-                                  <button type="button" className="approve" onClick={() => openAction(r, "approve")}>
-                                    <FontAwesomeIcon icon={faThumbsUp} /> Approve
-                                  </button>
-                                  <button type="button" className="reject" onClick={() => openAction(r, "reject")}>
-                                    <FontAwesomeIcon icon={faThumbsDown} /> Reject
-                                  </button>
-                                </div>
-                              </RowActionPopover>
-                            )}
-                          </td>
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
-              </div>
-              {paginated.length === 0 && (
-                <div className="leave-empty-state">
-                  <FontAwesomeIcon icon={faCalendarAlt} />
-                  <h3>No leave requests found</h3>
-                </div>
-              )}
-              <div className="leave-pagination">
-                <p>Showing {pageStart} to {pageEnd} of {filteredRecords.length} records</p>
-                <div>
-                  <button type="button" disabled={currentPage === 1} onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}><FontAwesomeIcon icon={faChevronLeft} /> Previous</button>
-                  <span>Page {currentPage} of {totalPages}</span>
-                  <button type="button" disabled={currentPage === totalPages} onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}>Next <FontAwesomeIcon icon={faChevronRight} /></button>
-                </div>
-              </div>
-            </>
-          )}
+          <StandardTable
+            nested
+            data={filteredRecords}
+            loading={loading}
+            emptyMessage="No leave requests found"
+            columns={[
+              {
+                key: "employee_name", label: "Employee",
+                render: (value, r) => (
+                  <div className="leave-employee-cell">
+                    <strong>{r.employee_name}</strong>
+                    <small>{r.employee_role}</small>
+                  </div>
+                ),
+              },
+              {
+                key: "type", label: "Type",
+                render: (value, r) => {
+                  const meta = getLeaveTypeMeta(r.type);
+                  return (
+                    <span className="leave-type-badge" style={{ backgroundColor: meta.color + "20", color: meta.color, borderColor: meta.color + "40" }}>
+                      {meta.label}
+                    </span>
+                  );
+                },
+              },
+              {
+                key: "start_date", label: "Duration",
+                render: (value, r) => (
+                  <div className="leave-duration-cell">
+                    <span>{formatDate(r.start_date)}</span>
+                    <small>to {formatDate(r.end_date)}</small>
+                  </div>
+                ),
+              },
+              {
+                key: "status", label: "Status",
+                render: (value, r) => <StatusBadge status={r.status} />,
+              },
+              { key: "reason", label: "Reason", className: "leave-reason" },
+              {
+                key: "leave_actions", label: "Actions",
+                render: (value, r) => (
+                  r.status === "pending" ? (
+                    <RowActionPopover rowLabel={r.employee_name}>
+                      <div className="leave-actions">
+                        <button type="button" className="approve" onClick={() => openAction(r, "approve")}>
+                          <FontAwesomeIcon icon={faThumbsUp} /> Approve
+                        </button>
+                        <button type="button" className="reject" onClick={() => openAction(r, "reject")}>
+                          <FontAwesomeIcon icon={faThumbsDown} /> Reject
+                        </button>
+                      </div>
+                    </RowActionPopover>
+                  ) : "—"
+                ),
+              },
+            ]}
+          />
         </section>
       )}
 

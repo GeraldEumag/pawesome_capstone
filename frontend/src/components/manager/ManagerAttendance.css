@@ -201,7 +201,7 @@
 
 .attendance-payroll-panel,
 .attendance-controls-card,
-.attendance-table-card {
+.ma-att-table-card {
   margin-bottom: 1.25rem;
   padding: 1.25rem;
   border: 1px solid var(--attendance-border);
@@ -235,7 +235,7 @@
 }
 
 .attendance-panel-heading h2,
-.attendance-table-header h2 {
+.ma-att-table-header h2 {
   margin: 0;
   color: var(--attendance-heading);
   font-size: 1.2rem;
@@ -495,7 +495,7 @@
 
 /* Table */
 
-.attendance-table-header {
+.ma-att-table-header {
   display: flex;
   justify-content: space-between;
   gap: 1rem;
@@ -503,20 +503,20 @@
   margin-bottom: 1rem;
 }
 
-.attendance-table-scroll {
+.ma-att-table-scroll {
   overflow-x: auto;
   border: 1px solid var(--attendance-border);
   border-radius: 22px;
   background: var(--attendance-surface-solid);
 }
 
-.attendance-table {
+.ma-att-table {
   width: 100%;
   min-width: 1180px;
   border-collapse: collapse;
 }
 
-.attendance-table th {
+.ma-att-table th {
   padding: 1rem;
   background: rgba(255, 95, 147, 0.08);
   color: var(--attendance-heading);
@@ -528,7 +528,7 @@
   white-space: nowrap;
 }
 
-.attendance-table th button {
+.ma-att-table th button {
   display: inline-flex;
   align-items: center;
   gap: 0.45rem;
@@ -540,7 +540,7 @@
   padding: 0;
 }
 
-.attendance-table td {
+.ma-att-table td {
   padding: 1rem;
   border-top: 1px solid rgba(255, 95, 147, 0.1);
   color: var(--attendance-text);
@@ -548,7 +548,7 @@
   vertical-align: middle;
 }
 
-.attendance-table tbody tr:hover {
+.ma-att-table tbody tr:hover {
   background: rgba(255, 95, 147, 0.04);
 }
 
@@ -962,7 +962,7 @@
 
   .attendance-date-row,
   .attendance-search-row,
-  .attendance-table-header,
+  .ma-att-table-header,
   .attendance-pagination {
     flex-direction: column;
     display: flex;
@@ -1175,7 +1175,7 @@
   background: rgba(255, 95, 147, 0.1);
 }
 
-.attendance-table tbody tr.selected {
+.ma-att-table tbody tr.selected {
   background: rgba(255, 95, 147, 0.06);
 }
 

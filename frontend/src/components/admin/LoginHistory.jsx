@@ -23,6 +23,7 @@ import DatePickerInput from "../shared/DatePickerInput";
 import { formatDateOnly, parseDateOnly } from "../../utils/date";
 import { exportToCSV, exportToPDF, exportToExcel } from "../../utils/reportExport";
 import RowActionPopover from "../shared/RowActionPopover";
+import StandardTable from "../shared/StandardTable";
 import Modal from "../shared/Modal";
 import "./LoginHistory.css";
 
@@ -531,84 +532,91 @@ const LoginHistory = () => {
           </div>
         ) : (
           <>
-            <div className="lh-table-scroll">
-              <table className="lh-table">
-                <thead>
-                  <tr>
-                    <th>Employee</th>
-                    <th>Role</th>
-                    <th>Action</th>
-                    <th>IP Address</th>
-                    <th>Device</th>
-                    <th>Time</th>
-                    <th>Session</th>
-                    <th>Details</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {logs.map((log) => {
+            <StandardTable
+              nested
+              data={logs}
+              pageSize={perPage}
+              rowClassName={(log) => (isActiveSession(log) ? "lh-online-row" : "")}
+              columns={[
+                {
+                  key: "user.name", label: "Employee",
+                  render: (value, log) => (
+                    <div className="lh-employee">
+                      <span className="lh-avatar">
+                        {getUserInitials(log.user?.name)}
+                      </span>
+                      <div>
+                        <strong>{log.user?.name || "Unknown"}</strong>
+                        <small>{log.email}</small>
+                      </div>
+                    </div>
+                  ),
+                },
+                {
+                  key: "user.role", label: "Role",
+                  render: (value, log) => (
+                    <span className={`lh-role-badge role-${log.user?.role || "default"}`}>
+                      {log.user?.role || "—"}
+                    </span>
+                  ),
+                },
+                {
+                  key: "action", label: "Action",
+                  render: (value, log) => (
+                    <span className={`lh-action ${log.action}`}>
+                      {log.action === "login" ? "Login" : "Logout"}
+                    </span>
+                  ),
+                },
+                { key: "ip_address", label: "IP Address", className: "lh-mono" },
+                {
+                  key: "user_agent", label: "Device",
+                  render: (value, log) => (
+                    <span className="lh-device">
+                      <FontAwesomeIcon icon={faDesktop} />
+                      <span>{parseDevice(log.user_agent)}</span>
+                    </span>
+                  ),
+                },
+                {
+                  key: "created_at", label: "Time",
+                  render: (value, log) => <span className="lh-time">{formatDateTime(log.created_at)}</span>,
+                },
+                {
+                  key: "session", label: "Session",
+                  render: (value, log) => {
                     const online = isActiveSession(log);
-                    return (
-                      <tr key={log.id} className={online ? "lh-online-row" : ""}>
-                        <td>
-                          <div className="lh-employee">
-                            <span className="lh-avatar">
-                              {getUserInitials(log.user?.name)}
-                            </span>
-                            <div>
-                              <strong>{log.user?.name || "Unknown"}</strong>
-                              <small>{log.email}</small>
-                            </div>
-                          </div>
-                        </td>
-                        <td>
-                          <span className={`lh-role-badge role-${log.user?.role || "default"}`}>
-                            {log.user?.role || "—"}
-                          </span>
-                        </td>
-                        <td>
-                          <span className={`lh-action ${log.action}`}>
-                            {log.action === "login" ? "Login" : "Logout"}
-                          </span>
-                        </td>
-                        <td className="lh-mono">{log.ip_address || "N/A"}</td>
-                        <td className="lh-device">
-                          <FontAwesomeIcon icon={faDesktop} />
-                          <span>{parseDevice(log.user_agent)}</span>
-                        </td>
-                        <td className="lh-time">{formatDateTime(log.created_at)}</td>
-                        <td>
-                          {log.action === "logout" ? (
-                            <span className="lh-session-none">—</span>
-                          ) : online ? (
-                            <span className="lh-online">
-                              <span className="lh-pulse" />
-                              Online now
-                            </span>
-                          ) : (
-                            <span className="lh-duration">
-                              {formatDuration(log.created_at, log.logged_out_at)}
-                            </span>
-                          )}
-                        </td>
-                        <td>
-                          <RowActionPopover rowLabel={log.user?.name || log.email}>
-                          <button
-                            type="button"
-                            className="lh-view-btn"
-                            title="View details"
-                            onClick={() => setSelectedLog(log)}
-                          >
-                            <FontAwesomeIcon icon={faEye} />
-                          </button>
-                          </RowActionPopover>
-                        </td>
-                      </tr>
+                    return log.action === "logout" ? (
+                      <span className="lh-session-none">—</span>
+                    ) : online ? (
+                      <span className="lh-online">
+                        <span className="lh-pulse" />
+                        Online now
+                      </span>
+                    ) : (
+                      <span className="lh-duration">
+                        {formatDuration(log.created_at, log.logged_out_at)}
+                      </span>
                     );
-                  })}
-                </tbody>
-              </table>
-            </div>
+                  },
+                },
+                {
+                  key: "log_details", label: "Details",
+                  render: (value, log) => (
+                    <RowActionPopover rowLabel={log.user?.name || log.email}>
+                    <button
+                      type="button"
+                      className="lh-view-btn"
+                      title="View details"
+                      onClick={() => setSelectedLog(log)}
+                    >
+                      <FontAwesomeIcon icon={faEye} />
+                    </button>
+                    </RowActionPopover>
+                  ),
+                },
+              ]}
+            />
 
             <div className="lh-pagination">
               <div className="lh-per-page">
