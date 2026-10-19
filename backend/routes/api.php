@@ -623,6 +623,7 @@ Route::middleware(['auth.api', 'throttle:api'])->prefix('manager')->group(functi
     Route::middleware('role:manager,admin')->group(function () {
     Route::get('dashboard', [ManagerDashboardController::class, 'overview']);
     Route::get('staff', [ManagerDashboardController::class, 'staff']);
+    Route::get('people', [ManagerDashboardController::class, 'people']);
     Route::put('staff/{id}', [ManagerDashboardController::class, 'updateStaff']);
     Route::get('executive-summary', [ManagerDashboardController::class, 'executiveSummary']);
     

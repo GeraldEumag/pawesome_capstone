@@ -21,6 +21,10 @@ const ROLE_LABELS = {
   manager: "Manager",
   admin: "Administrator",
   super_receptionist: "Super Receptionist",
+  employee: "Employee",
+  staff: "Staff",
+  groomer: "Groomer",
+  payroll: "Payroll",
 };
 const formatRole = (r) => ROLE_LABELS[r] || (r ? r.charAt(0).toUpperCase() + r.slice(1) : "Staff");
 
@@ -160,11 +164,11 @@ const EmployeeIdPrinter = () => {
     setLoading(true);
     setError("");
     try {
-      const res = await apiRequest("/manager/staff");
-      const list = Array.isArray(res?.staff)
-        ? res.staff
-        : Array.isArray(res?.data)
+      const res = await apiRequest("/manager/people");
+      const list = Array.isArray(res?.data)
         ? res.data
+        : Array.isArray(res?.staff)
+        ? res.staff
         : Array.isArray(res)
         ? res
         : [];

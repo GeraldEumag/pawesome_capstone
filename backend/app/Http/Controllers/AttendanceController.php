@@ -28,6 +28,11 @@ class AttendanceController extends Controller
             $query->forUser($request->user_id);
         }
 
+        // Filter by non-account employee
+        if ($request->has('employee_id')) {
+            $query->forEmployee($request->employee_id);
+        }
+
         // Filter by date range
         if ($request->has('start_date') && $request->has('end_date')) {
             $query->forPeriod($request->start_date, $request->end_date);

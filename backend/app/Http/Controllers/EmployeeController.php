@@ -91,6 +91,13 @@ class EmployeeController extends Controller
 
     public function update(Request $request, Employee $employee): JsonResponse
     {
+        // Allow partial updates (e.g. Staff Management sends only
+        // phone/department/address) — fall back to stored names.
+        $request->merge([
+            'first_name' => $request->input('first_name', $employee->first_name),
+            'last_name' => $request->input('last_name', $employee->last_name),
+        ]);
+
         $validated = $this->validateData($request, $employee->id);
 
         // Re-compute hourly_rate when base_salary changed and no override was sent

@@ -618,6 +618,7 @@ class PayrollComputationService
             ->groupBy('employee_id');
 
         return Employee::where('is_active', true)
+            ->whereNull('user_id') // account-linked records are paid via the user
             ->get()
             ->map(fn (Employee $emp) => $this->computeFromAttendance(
                 $emp,
@@ -655,7 +656,7 @@ class PayrollComputationService
     /** All active non-account employees. */
     public function activeEmployees()
     {
-        return Employee::where('is_active', true)->get();
+        return Employee::where('is_active', true)->whereNull('user_id')->get();
     }
 
     // -------------------------------------------------------------------------

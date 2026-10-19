@@ -328,6 +328,11 @@ const EmployeeDirectory = ({
             <div>
               <strong>{value}</strong>
               <small>{record.email || record.phone || "No contact"}</small>
+              {record.linked_account && (
+                <small style={{ color: "var(--color-primary)", fontWeight: 600 }}>
+                  Linked account: {record.linked_account.name}
+                </small>
+              )}
             </div>
           </div>
         ),

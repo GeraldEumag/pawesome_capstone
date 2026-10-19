@@ -53,6 +53,11 @@ class PayrollController extends Controller
             $query->forUser($request->user_id);
         }
 
+        // Filter by non-account employee
+        if ($request->has('employee_id')) {
+            $query->forEmployee($request->employee_id);
+        }
+
         // Filter by status
         if ($request->has('status')) {
             $query->byStatus($request->status);

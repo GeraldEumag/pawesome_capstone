@@ -319,6 +319,11 @@ class Payroll extends Model
         return $query->where('user_id', $userId);
     }
 
+    public function scopeForEmployee($query, $employeeId)
+    {
+        return $query->where('employee_id', $employeeId);
+    }
+
     public function scopeByStatus($query, $status)
     {
         return $query->where('status', $status);

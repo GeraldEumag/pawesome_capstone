@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Manager;
 
 use App\Http\Controllers\Controller;
+use App\Models\Employee;
 use App\Models\User;
 use App\Models\Appointment;
 use App\Models\Sale;
@@ -92,6 +93,70 @@ class DashboardController extends Controller
             'staff' => User::whereIn('role', ['receptionist', 'veterinary', 'inventory', 'cashier'])->get(),
             'attendance_today' => User::whereIn('role', ['receptionist', 'veterinary', 'inventory', 'cashier'])
                 ->where('is_active', true)->count(),
+        ]);
+    }
+
+    /**
+     * GET /manager/people — unified staff directory.
+     *
+     * Merges staff user accounts and non-account employee records into one
+     * list so Staff Management and Employee ID Cards share the same source
+     * as the attendance kiosk and payroll.
+     *
+     * Employees linked to a user account (employees.user_id) are represented
+     * by the account row to avoid listing the same person twice.
+     */
+    public function people()
+    {
+        $staffRoles = [
+            'manager', 'cashier', 'receptionist', 'veterinary', 'inventory',
+            'payroll', 'staff', 'groomer', 'super_receptionist', 'admin',
+        ];
+
+        $users = User::whereIn('role', $staffRoles)
+            ->orderBy('name')
+            ->get()
+            ->map(fn (User $u) => [
+                'id' => 'user-' . $u->id,
+                'person_type' => 'account',
+                'user_id' => $u->id,
+                'employee_id' => null,
+                'employee_no' => $u->employee_no,
+                'name' => $u->name,
+                'role' => $u->role,
+                'department' => $u->department,
+                'position' => $u->position,
+                'is_active' => (bool) $u->is_active,
+                'email' => $u->email,
+                'phone' => $u->phone,
+                'address' => $u->address,
+                'hire_date' => $u->employment_date ? Carbon::parse($u->employment_date)->toDateString() : null,
+            ]);
+
+        $employees = Employee::whereNull('user_id')
+            ->orderBy('last_name')
+            ->orderBy('first_name')
+            ->get()
+            ->map(fn (Employee $e) => [
+                'id' => 'employee-' . $e->id,
+                'person_type' => 'employee',
+                'user_id' => null,
+                'employee_id' => $e->id,
+                'employee_no' => $e->employee_no,
+                'name' => $e->name,
+                'role' => $e->position ?? 'employee',
+                'department' => $e->department,
+                'position' => $e->position,
+                'is_active' => (bool) $e->is_active,
+                'email' => $e->email,
+                'phone' => $e->phone,
+                'address' => $e->address,
+                'hire_date' => $e->hire_date?->toDateString(),
+            ]);
+
+        return response()->json([
+            'success' => true,
+            'data' => $users->merge($employees)->values(),
         ]);
     }
 

@@ -157,7 +157,13 @@ const getPhone = (record) =>
   "N/A";
 
 const normalizeStaff = (record, index) => {
-  const id = record.id || record.user_id || record.employee_id || record.staff_id || index + 1;
+  const personType = record.person_type === "employee" ? "employee" : "account";
+  const id =
+    record.id ||
+    `${personType === "employee" ? "employee" : "user"}-${
+      record.user_id || record.employee_id || record.staff_id || index + 1
+    }`;
+  const rawId = record.user_id || record.employee_id || record.staff_id || record.id || index + 1;
   const status = normalizeStatus(
     record.status ||
     record.employment_status ||
@@ -166,7 +172,8 @@ const normalizeStaff = (record, index) => {
 
   return {
     id,
-    rawId: id,
+    rawId,
+    personType,
     employeeCode:
       record.employee_code ||
       record.employee_no ||
@@ -333,8 +340,8 @@ const ManagerStaff = () => {
 
         setError("");
 
-        const response = await apiRequest("/manager/staff", { signal });
-        const list = normalizeList(response, ["staff", "users", "employees", "data"]);
+        const response = await apiRequest("/manager/people", { signal });
+        const list = normalizeList(response, ["data", "staff", "users", "employees"]);
         setStaff(list.map(normalizeStaff));
       } catch (err) {
         if (isRequestCancelled(err, signal)) {
@@ -559,7 +566,8 @@ const ManagerStaff = () => {
     setModalLoading(true);
 
     try {
-      const response = await apiRequest(`/manager/staff/${person.rawId}/attendance?user_id=${person.rawId}`);
+      const param = person.personType === "employee" ? "employee_id" : "user_id";
+      const response = await apiRequest(`/manager/staff/${person.rawId}/attendance?${param}=${person.rawId}`);
       const records = normalizeList(response, ["attendance", "records", "items"]);
       setModalRecords(records.map(normalizeAttendance));
     } catch (primaryError) {
@@ -603,7 +611,8 @@ const ManagerStaff = () => {
     setModalLoading(true);
 
     try {
-      const response = await apiRequest(`/manager/staff/${person.rawId}/payroll?user_id=${person.rawId}`);
+      const param = person.personType === "employee" ? "employee_id" : "user_id";
+      const response = await apiRequest(`/manager/staff/${person.rawId}/payroll?${param}=${person.rawId}`);
       const records = normalizeList(response, ["payroll", "records", "items"]);
       setModalRecords(records.map(normalizePayroll));
     } catch (primaryError) {
@@ -666,7 +675,11 @@ const ManagerStaff = () => {
   const saveEdit = async () => {
     if (!selectedStaff) return;
     try {
-      await apiRequest(`/manager/staff/${selectedStaff.rawId}`, {
+      const endpoint =
+        selectedStaff.personType === "employee"
+          ? `/manager/employees/${selectedStaff.rawId}`
+          : `/manager/staff/${selectedStaff.rawId}`;
+      await apiRequest(endpoint, {
         method: "PUT",
         body: JSON.stringify(editForm),
       });
@@ -978,6 +991,11 @@ const ManagerStaff = () => {
                           <div>
                             <strong>{person.name}</strong>
                             <small>{person.employeeCode}</small>
+                            {person.personType === "employee" && (
+                              <span style={{ display: "inline-block", marginTop: 2, background: "#e0e7ff", color: "#4338ca", fontSize: "0.7rem", fontWeight: 700, borderRadius: 4, padding: "1px 6px" }}>
+                                No account
+                              </span>
+                            )}
                             {(() => {
                               if (person.employmentStatus !== "probationary" || !person.hireDate) return null;
                               const hireMs = new Date(person.hireDate).getTime();
@@ -1054,14 +1072,16 @@ const ManagerStaff = () => {
                             Edit
                           </button>
 
+                          {person.personType === "account" && (
                           <button
                             type="button"
                             className="staff-fingerprint-btn"
-                            onClick={() => { setEnrollUser({ id: person.id, name: person.name }); setShowEnrollModal(true); }}
+                            onClick={() => { setEnrollUser({ id: person.rawId, name: person.name }); setShowEnrollModal(true); }}
                           >
                             <FontAwesomeIcon icon={faFingerprint} />
                             Fingerprint
                           </button>
+                          )}
                           </div>
                         </RowActionPopover>
                       </td>
