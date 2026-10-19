@@ -109,9 +109,10 @@ class Attendance extends Model
     public function calculateEarnings(): void
     {
         if ($this->salary_rate && $this->total_hours) {
-            $regularPay = $this->total_hours * $this->salary_rate;
-            $overtimePay = $this->overtime_hours * ($this->salary_rate * 1.5); // 1.5x for overtime
-            $this->daily_earnings = (float) round($regularPay + $overtimePay, 2);
+            // OT hours are part of total_hours — pay them once at base rate
+            // plus the 0.5 premium, not at 1.5x on top of the full total.
+            $overtimePay = $this->overtime_hours * ($this->salary_rate * 0.5);
+            $this->daily_earnings = (float) round(($this->total_hours * $this->salary_rate) + $overtimePay, 2);
         }
     }
 

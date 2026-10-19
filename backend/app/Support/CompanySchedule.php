@@ -115,6 +115,20 @@ class CompanySchedule
     }
 
     /**
+     * How many minutes a check-out is earlier than the standard shift end
+     * (undertime). 0 when on time, missing, or past shift end.
+     *
+     * @param  string  $checkOutHHMM  e.g. '16:12'
+     */
+    public static function undertimeMinutes(string $checkOutHHMM): int
+    {
+        $shiftEnd = Carbon::today()->setTimeFromTimeString(static::shiftEnd());
+        $actual   = Carbon::today()->setTimeFromTimeString(substr($checkOutHHMM, 0, 5));
+
+        return $actual->lt($shiftEnd) ? (int) $actual->diffInMinutes($shiftEnd) : 0;
+    }
+
+    /**
      * Number of minutes the employee worked within the night differential window
      * (10 PM to 6 AM next day) for a given attendance record.
      *

@@ -173,8 +173,11 @@ const ManualPayrollModal = ({ onClose, onSaved, initialPayroll }) => {
   const [nightDifferential, setNightDifferential] = useState(initialPayroll?.night_differential || 0);
   const [regularHolidayOtPay, setRegularHolidayOtPay] = useState(initialPayroll?.regular_holiday_ot_pay || 0);
   const [specialHolidayOtPay, setSpecialHolidayOtPay] = useState(initialPayroll?.special_holiday_ot_pay || 0);
+  const [restDayPay, setRestDayPay] = useState(initialPayroll?.rest_day_pay || 0);
+  const [restDayOtPay, setRestDayOtPay] = useState(initialPayroll?.rest_day_ot_pay || 0);
   const [bonus, setBonus] = useState(initialPayroll?.bonus || 0);
   const [allowances, setAllowances] = useState(initialPayroll?.allowances || 0);
+  const [nonTaxableAllowances, setNonTaxableAllowances] = useState(initialPayroll?.non_taxable_allowances || 0);
   const [commission, setCommission] = useState(initialPayroll?.commission || 0);
   const [otherEarnings, setOtherEarnings] = useState(initialPayroll?.other_earnings || 0);
 
@@ -185,6 +188,7 @@ const ManualPayrollModal = ({ onClose, onSaved, initialPayroll }) => {
   const [tax, setTax] = useState(initialPayroll?.tax_deduction || 0);
   const [lateDeductions, setLateDeductions] = useState(initialPayroll?.late_deductions || 0);
   const [absentDeductions, setAbsentDeductions] = useState(initialPayroll?.absent_deductions || 0);
+  const [undertimeDeductions, setUndertimeDeductions] = useState(initialPayroll?.undertime_deductions || 0);
   const [otherDeductions, setOtherDeductions] = useState(initialPayroll?.deductions || 0);
   const [salaryLoan, setSalaryLoan] = useState(initialPayroll?.salary_loan || 0);
   const [cashAdvance, setCashAdvance] = useState(initialPayroll?.cash_advance || 0);
@@ -295,6 +299,9 @@ const ManualPayrollModal = ({ onClose, onSaved, initialPayroll }) => {
     const nd = toNum(nightDifferential);
     const rhOt = toNum(regularHolidayOtPay);
     const shOt = toNum(specialHolidayOtPay);
+    const rdPay = toNum(restDayPay);
+    const rdOt = toNum(restDayOtPay);
+    const nta = toNum(nonTaxableAllowances);
 
     const sssVal = toNum(sss);
     const phil = toNum(philhealth);
@@ -302,21 +309,23 @@ const ManualPayrollModal = ({ onClose, onSaved, initialPayroll }) => {
     const tx = toNum(tax);
     const late = toNum(lateDeductions);
     const absent = toNum(absentDeductions);
+    const undertime = toNum(undertimeDeductions);
     const other = toNum(otherDeductions);
     const loan = toNum(salaryLoan);
     const advance = toNum(cashAdvance);
 
     const derivedOtPay = otPay || (otHrs * hr * 1.5);
-    const gross = bs + derivedOtPay + rhPay + shPay + nd + rhOt + shOt + bon + allw + comm + otherEarn;
-    const totalDed = sssVal + phil + pag + tx + late + absent + other + loan + advance;
+    const gross = bs + derivedOtPay + rhPay + shPay + nd + rhOt + shOt + rdPay + rdOt + bon + allw + nta + comm + otherEarn;
+    const totalDed = sssVal + phil + pag + tx + late + absent + undertime + other + loan + advance;
     const net = Math.max(0, gross - totalDed);
 
     return { gross, totalDed, net, derivedOtPay };
   }, [
     baseSalary, hourlyRate, overtimeHours, overtimePay, regularHolidayPay, specialHolidayPay,
-    nightDifferential, regularHolidayOtPay, specialHolidayOtPay, bonus, allowances, commission,
-    otherEarnings, sss, philhealth, pagibig, tax, lateDeductions, absentDeductions, otherDeductions,
-    salaryLoan, cashAdvance,
+    nightDifferential, regularHolidayOtPay, specialHolidayOtPay, restDayPay, restDayOtPay,
+    nonTaxableAllowances, bonus, allowances, commission,
+    otherEarnings, sss, philhealth, pagibig, tax, lateDeductions, absentDeductions,
+    undertimeDeductions, otherDeductions, salaryLoan, cashAdvance,
   ]);
 
   // Build payload
@@ -343,8 +352,11 @@ const ManualPayrollModal = ({ onClose, onSaved, initialPayroll }) => {
         night_differential: toNum(nightDifferential),
         regular_holiday_ot_pay: toNum(regularHolidayOtPay),
         special_holiday_ot_pay: toNum(specialHolidayOtPay),
+        rest_day_pay: toNum(restDayPay),
+        rest_day_ot_pay: toNum(restDayOtPay),
         bonus: toNum(bonus),
         allowances: toNum(allowances),
+        non_taxable_allowances: toNum(nonTaxableAllowances),
         commission: toNum(commission),
         other_earnings: toNum(otherEarnings),
         deductions: toNum(otherDeductions),
@@ -354,6 +366,7 @@ const ManualPayrollModal = ({ onClose, onSaved, initialPayroll }) => {
         pagibig_contribution: toNum(pagibig),
         late_deductions: toNum(lateDeductions),
         absent_deductions: toNum(absentDeductions),
+        undertime_deductions: toNum(undertimeDeductions),
         salary_loan: toNum(salaryLoan),
         cash_advance: toNum(cashAdvance),
         gross_pay: computed.gross,
@@ -368,7 +381,8 @@ const ManualPayrollModal = ({ onClose, onSaved, initialPayroll }) => {
     },
     [userId, periodStart, periodEnd, employmentType, rateType, baseSalary, hourlyRate, workingDays,
       presentDays, absentDays, regularHours, overtimeHours, computed, regularHolidayPay,
-      specialHolidayPay, nightDifferential, regularHolidayOtPay, specialHolidayOtPay, bonus,
+      specialHolidayPay, nightDifferential, regularHolidayOtPay, specialHolidayOtPay,
+      restDayPay, restDayOtPay, nonTaxableAllowances, undertimeDeductions, bonus,
       allowances, commission, otherEarnings, otherDeductions, tax, sss, philhealth, pagibig,
       lateDeductions, absentDeductions, salaryLoan, cashAdvance, paymentDate, paymentMethod,
       paymentReference, remarks, attendanceRows, currentStatus, useManualName, employeeName,
@@ -728,8 +742,11 @@ const ManualPayrollModal = ({ onClose, onSaved, initialPayroll }) => {
                 <NumberInput label="Night Differential" value={nightDifferential} onChange={setNightDifferential} prefix="₱" disabled={isReadonly} />
                 <NumberInput label="Reg. Holiday OT Pay" value={regularHolidayOtPay} onChange={setRegularHolidayOtPay} prefix="₱" disabled={isReadonly} />
                 <NumberInput label="Spl. Holiday OT Pay" value={specialHolidayOtPay} onChange={setSpecialHolidayOtPay} prefix="₱" disabled={isReadonly} />
+                <NumberInput label="Rest Day Pay" value={restDayPay} onChange={setRestDayPay} prefix="₱" disabled={isReadonly} />
+                <NumberInput label="Rest-Day OT Pay" value={restDayOtPay} onChange={setRestDayOtPay} prefix="₱" disabled={isReadonly} />
                 <NumberInput label="Bonus" value={bonus} onChange={setBonus} prefix="₱" disabled={isReadonly} />
                 <NumberInput label="Allowances" value={allowances} onChange={setAllowances} prefix="₱" disabled={isReadonly} />
+                <NumberInput label="Non-Taxable Allowances" value={nonTaxableAllowances} onChange={setNonTaxableAllowances} prefix="₱" disabled={isReadonly} />
                 <NumberInput label="Commission / Incentive" value={commission} onChange={setCommission} prefix="₱" disabled={isReadonly} />
                 <NumberInput label="Other Earnings" value={otherEarnings} onChange={setOtherEarnings} prefix="₱" disabled={isReadonly} />
               </div>
@@ -750,6 +767,7 @@ const ManualPayrollModal = ({ onClose, onSaved, initialPayroll }) => {
                 <NumberInput label="Cash Advance" value={cashAdvance} onChange={setCashAdvance} prefix="₱" disabled={isReadonly} />
                 <NumberInput label="Late Deductions" value={lateDeductions} onChange={setLateDeductions} prefix="₱" disabled={isReadonly} />
                 <NumberInput label="Absent Deductions" value={absentDeductions} onChange={setAbsentDeductions} prefix="₱" disabled={isReadonly} />
+                <NumberInput label="Undertime Deductions" value={undertimeDeductions} onChange={setUndertimeDeductions} prefix="₱" disabled={isReadonly} />
                 <NumberInput label="Other Deductions" value={otherDeductions} onChange={setOtherDeductions} prefix="₱" disabled={isReadonly} />
               </div>
             </div>

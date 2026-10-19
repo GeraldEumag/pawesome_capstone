@@ -21,6 +21,13 @@ use Illuminate\Support\Facades\DB;
  *  - Night differential = 10% of hourly rate × night hours (10PM–6AM)
  *  - Rest day (off-day) = 130% (regular off-day) or 200% (holiday off-day)
  *  - Holiday premium = 200% regular worked / 130% special non-working worked
+ *  - OT by day type: workday 1.5x · rest day 1.69x · regular holiday 2.6x · special 1.69x
+ *  - Undertime = minutes early vs shift end x hourly/60
+ *  - Mid-period hires prorate: daily rate x payable workdays
+ *  - Half-day leave: 0.5 paid + 0.5 absent when unpunched
+ *  - Employer shares computed for remittance (SSS ER 10% + P10 EC)
+ *  - Non-taxable allowances are excluded from the taxable income base
+ *  - Check-in without check-out is flagged in warnings, never deducted
  *  - Regular holiday NOT worked = 100% pay (DOLE Art. 94)
  *  - Pag-IBIG = min(salary × 2%, ₱100) employee share
  *  - Gross = periodBase + OT + nightDiff + restDay + holiday + bonus + allowances
@@ -114,14 +121,20 @@ class PayrollComputationService
             fn ($a) => Carbon::parse($a->date)->toDateString()
         );
 
-        $presentDays        = 0;
-        $lateDays           = 0;
-        $earlyLeaveDays     = 0;
-        $absentDays         = 0;
-        $paidLeaveDays      = 0;
-        $totalLateMinutes   = 0;
-        $nightDiffMinutes   = 0;
-        $restDayDays        = 0;
+        $presentDays          = 0;
+        $lateDays             = 0;
+        $earlyLeaveDays       = 0;
+        $absentDays           = 0;
+        $paidLeaveDays        = 0;
+        $totalLateMinutes     = 0;
+        $totalUndertimeMinutes = 0;
+        $nightDiffMinutes     = 0;
+        $restDayDays          = 0;
+        $incompletePunchDays  = 0;
+        $otWorkdayHours       = 0.0;
+        $otRestDayHours       = 0.0;
+        $otRegHolidayHours    = 0.0;
+        $otSpecialHolidayHours = 0.0;
 
         $regularHours  = (float) $attendanceRecords->sum('total_hours');
         $overtimeHours = (float) $attendanceRecords->sum('overtime_hours');
@@ -148,12 +161,15 @@ class PayrollComputationService
                 ->where('status', 'approved')
                 ->whereDate('start_date', '<=', $endDate)
                 ->whereDate('end_date', '>=', $startDate)
-                ->get(['start_date', 'end_date', 'type', 'days_counted'])
+                ->get(['start_date', 'end_date', 'type', 'days_counted', 'half_day'])
                 ->each(function ($leave) use (&$approvedLeaveDates, $start, $end) {
                     $from = Carbon::parse($leave->start_date)->max($start);
                     $to   = Carbon::parse($leave->end_date)->min($end);
                     for ($d = $from->copy(); $d->lte($to); $d->addDay()) {
-                        $approvedLeaveDates[$d->toDateString()] = $leave->type;
+                        $approvedLeaveDates[$d->toDateString()] = [
+                            'type'     => $leave->type,
+                            'half_day' => (bool) ($leave->half_day ?? false),
+                        ];
                     }
                 });
 
@@ -172,7 +188,19 @@ class PayrollComputationService
             $shiftEnd         = CompanySchedule::shiftEnd();
             $graceMinutes     = CompanySchedule::graceMinutes();
 
+            // Mid-period hires are only payable for workdays on/after their
+            // hire date (User.employment_date / Employee.hire_date).
+            $hireDateRaw = $isEmployee
+                ? ($employee->hire_date ?? null)
+                : ($employee->employment_date ?? null);
+            $hireDate = $hireDateRaw ? Carbon::parse($hireDateRaw)->startOfDay() : null;
+
             for ($day = $start->copy(); $day->lte($end); $day->addDay()) {
+                // Days before the hire date are not payable at all
+                if ($hireDate && $day->lt($hireDate)) {
+                    continue;
+                }
+
                 $dateKey  = $day->toDateString();
                 $isWorkday = CompanySchedule::isWorkday($day);
                 $holiday   = $holidays->get($dateKey);
@@ -194,6 +222,22 @@ class PayrollComputationService
                             $regularHolidayWorkedDays++;
                         } elseif ($holiday && $holiday->type === 'special_non_working') {
                             $specialHolidayWorkedDays++;
+                        }
+
+                        // Split the punched OT into the correct premium tier
+                        $recOt = (float) ($record->overtime_hours ?? 0);
+                        if ($recOt > 0) {
+                            if ($holiday && $holiday->type === 'regular') {
+                                $otRegHolidayHours += $recOt;
+                            } elseif ($holiday && $holiday->type === 'special_non_working') {
+                                $otSpecialHolidayHours += $recOt;
+                            } else {
+                                $otRestDayHours += $recOt;
+                            }
+                        }
+
+                        if (!$record->check_out) {
+                            $incompletePunchDays++;
                         }
 
                         // Night diff for rest-day punches too
@@ -238,9 +282,15 @@ class PayrollComputationService
                             $totalLateMinutes += $lateMin;
                         }
 
-                        // Early leave check
+                        // Early leave = undertime minutes before shift end
                         if ($checkOut && $checkOut < $shiftEnd) {
                             $earlyLeaveDays++;
+                            $totalUndertimeMinutes += CompanySchedule::undertimeMinutes($checkOut);
+                        }
+
+                        // Check-in without check-out: flagged, never deducted
+                        if (!$checkOut) {
+                            $incompletePunchDays++;
                         }
 
                         // Night differential
@@ -248,6 +298,18 @@ class PayrollComputationService
                             $nightDiffMinutes += CompanySchedule::nightDiffMinutes(
                                 $dateKey, $checkIn, $checkOut
                             );
+                        }
+                    }
+
+                    // Split workday OT by holiday type
+                    $recOt = (float) ($record->overtime_hours ?? 0);
+                    if ($recOt > 0) {
+                        if ($holiday && $holiday->type === 'regular') {
+                            $otRegHolidayHours += $recOt;
+                        } elseif ($holiday && $holiday->type === 'special_non_working') {
+                            $otSpecialHolidayHours += $recOt;
+                        } else {
+                            $otWorkdayHours += $recOt;
                         }
                     }
 
@@ -267,11 +329,19 @@ class PayrollComputationService
 
                 // No attendance record — check approved leave
                 if (isset($approvedLeaveDates[$dateKey]) && !isset($leaveDates[$dateKey])) {
-                    $leaveType = $approvedLeaveDates[$dateKey];
-                    if ($leaveType === 'unpaid_leave') {
-                        $absentDays++;
+                    $leave = $approvedLeaveDates[$dateKey];
+                    $halfDay = (bool) ($leave['half_day'] ?? false);
+
+                    if ($leave['type'] === 'unpaid_leave') {
+                        // Unpaid leave is never paid; a half-day still counts
+                        // the worked-half expectation as absent when unpunched.
+                        $absentDays += 1;
+                    } elseif ($halfDay) {
+                        // Half-day paid leave: half paid, other half due to work
+                        $paidLeaveDays += 0.5;
+                        $absentDays += 0.5;
                     } else {
-                        $paidLeaveDays++;
+                        $paidLeaveDays += 1;
                     }
                     $leaveDates[$dateKey] = true;
                     continue;
@@ -283,7 +353,11 @@ class PayrollComputationService
                 }
             }
         } else {
-            // No period context — read stored flags only
+            // No period context — read stored flags only. OT hours can't be
+            // classified by day type without dates, so they all count as
+            // regular workday OT.
+            $otWorkdayHours = $overtimeHours;
+
             foreach ($attendanceRecords as $record) {
                 $status = $record->status ?? 'present';
                 if (in_array($status, ['present', 'late', 'early_leave'], true)) {
@@ -298,11 +372,20 @@ class PayrollComputationService
                 $checkIn = $record->check_in
                     ? ($record->check_in instanceof \Carbon\Carbon ? $record->check_in->format('H:i') : substr((string) $record->check_in, 0, 5))
                     : null;
+                $checkOut = $record->check_out
+                    ? ($record->check_out instanceof \Carbon\Carbon ? $record->check_out->format('H:i') : substr((string) $record->check_out, 0, 5))
+                    : null;
                 if ($checkIn) {
                     $lateMin = CompanySchedule::lateMinutes($checkIn);
                     if ($lateMin > 0) {
                         $lateDays++;
                         $totalLateMinutes += $lateMin;
+                    }
+
+                    if ($checkOut) {
+                        $totalUndertimeMinutes += CompanySchedule::undertimeMinutes($checkOut);
+                    } else {
+                        $incompletePunchDays++;
                     }
                 }
             }
@@ -311,12 +394,19 @@ class PayrollComputationService
         return [
             'is_employee'                    => $isEmployee,
             'working_days'                   => $workingDays,
+            'payable_days'                   => $workingDays,
+            // Hired after the period start (mid-period or post-period):
+            // payable_days × daily rate replaces the base × factor base.
+            'is_prorated'                    => isset($hireDate) && $hireDate->gt($start),
+            'hire_date'                      => isset($hireDate) ? $hireDate->toDateString() : null,
             'present_days'                   => $presentDays,
             'late_days'                      => $lateDays,
             'early_leave_days'               => $earlyLeaveDays,
             'absent_days'                    => $absentDays,
             'paid_leave_days'                => $paidLeaveDays,
             'total_late_minutes'             => $totalLateMinutes,
+            'total_undertime_minutes'        => $totalUndertimeMinutes,
+            'incomplete_punch_days'          => $incompletePunchDays,
             'night_diff_minutes'             => $nightDiffMinutes,
             'rest_day_days'                  => $restDayDays,
             'regular_holiday_worked_days'    => $regularHolidayWorkedDays,
@@ -324,11 +414,24 @@ class PayrollComputationService
             'special_holiday_worked_days'    => $specialHolidayWorkedDays,
             'regular_hours'                  => $regularHours,
             'overtime_hours'                 => $overtimeHours,
+            'ot_workday_hours'               => round($otWorkdayHours, 2),
+            'ot_rest_day_hours'              => round($otRestDayHours, 2),
+            'ot_regular_holiday_hours'       => round($otRegHolidayHours, 2),
+            'ot_special_holiday_hours'       => round($otSpecialHolidayHours, 2),
         ];
     }
 
     /**
      * Full payroll computation from an attendance collection.
+     *
+     * $extras lets callers (Payroll::calculatePayroll, previews with edits)
+     * feed row-level values into the same math:
+     *   base_salary / hourly_rate — override the person's stored rates
+     *   bonus / allowances / commission / other_earnings — added to gross
+     *   non_taxable_allowances — added to gross, excluded from taxable income
+     *   deductions — added to total deductions
+     *   salary_loan / cash_advance — floor values; never below the computed
+     *     installment from the salary_loans / cash_advances ledgers
      *
      * @param  \Illuminate\Support\Collection<int, Attendance>  $attendanceRecords
      */
@@ -336,22 +439,50 @@ class PayrollComputationService
         User|Employee $employee,
         $attendanceRecords,
         ?string $startDate = null,
-        ?string $endDate   = null
+        ?string $endDate   = null,
+        array $extras      = [],
+        bool $respectAttendance = true
     ): array {
-        $stats  = $this->attendanceStats($employee, $attendanceRecords, $startDate, $endDate);
+        // The payroll period always determines the factor (semi-monthly =
+        // 0.5). $respectAttendance only controls whether the stats loop walks
+        // the period day-by-day (auto-absences, leave, holidays, undertime)
+        // or reads stored record flags — used by unit/formula paths.
+        $stats  = $this->attendanceStats(
+            $employee,
+            $attendanceRecords,
+            $respectAttendance ? $startDate : null,
+            $respectAttendance ? $endDate : null
+        );
         $factor = $this->periodFactor($startDate, $endDate);
 
-        $baseSalary = (float) ($employee->base_salary ?? 15000);
+        $baseSalary = isset($extras['base_salary']) && $extras['base_salary'] !== null
+            ? (float) $extras['base_salary']
+            : (float) ($employee->base_salary ?? 15000);
         // Stored hourly_rate is authoritative; fallback = base_salary ÷ 208
-        $hourlyRate = $employee->hourly_rate
-            ? (float) $employee->hourly_rate
-            : round($baseSalary / 208, 4);
+        $hourlyRate = isset($extras['hourly_rate']) && $extras['hourly_rate'] !== null
+            ? (float) $extras['hourly_rate']
+            : ($employee->hourly_rate
+                ? (float) $employee->hourly_rate
+                : round($baseSalary / 208, 4));
 
         $divisor   = CompanySchedule::dailyRateDivisor(); // 26
         $dailyRate = $baseSalary / $divisor;
 
+        // --- Row-level extras ---
+        $bonus               = (float) ($extras['bonus'] ?? 0);
+        $allowances          = (float) ($extras['allowances'] ?? 0);
+        $commission          = (float) ($extras['commission'] ?? 0);
+        $otherEarnings       = (float) ($extras['other_earnings'] ?? 0);
+        $nonTaxableAllowances = (float) ($extras['non_taxable_allowances'] ?? 0);
+        $otherDeductions     = (float) ($extras['deductions'] ?? 0);
+
         // --- Earnings ---
-        $overtimePay = $stats['overtime_hours'] * ($hourlyRate * 1.5);
+        // Overtime tiers by day type (DOLE):
+        //   workday 1.5× · rest day 1.69× · regular holiday 2.6× · special 1.69×
+        $overtimePay          = $stats['ot_workday_hours'] * ($hourlyRate * 1.5);
+        $restDayOtPay         = $stats['ot_rest_day_hours'] * ($hourlyRate * 1.69);
+        $regularHolidayOtPay  = $stats['ot_regular_holiday_hours'] * ($hourlyRate * 2.6);
+        $specialHolidayOtPay  = $stats['ot_special_holiday_hours'] * ($hourlyRate * 1.69);
 
         // Night differential: 10% of hourly rate × night hours
         $nightDiff = ($stats['night_diff_minutes'] / 60) * ($hourlyRate * 0.10);
@@ -368,37 +499,59 @@ class PayrollComputationService
 
         // --- Deductions ---
         // Late: per-minute deduction using hourly rate (after 15-min grace, tracked in stats)
-        $lateDeductions   = $stats['total_late_minutes'] * ($hourlyRate / 60);
-        $absentDeductions = $stats['absent_days'] * $dailyRate;
+        $lateDeductions      = $stats['total_late_minutes'] * ($hourlyRate / 60);
+        $absentDeductions    = $stats['absent_days'] * $dailyRate;
+        $undertimeDeductions = ($stats['total_undertime_minutes'] / 60) * $hourlyRate;
 
         // --- Semi-monthly period base ---
-        $periodBase = $baseSalary * $factor;
+        // Mid-period hires earn only their payable workdays × daily rate;
+        // everyone else earns the period factor of the monthly base.
+        $isProrated = (bool) ($stats['is_prorated'] ?? false);
+        $periodBase = $isProrated
+            ? $dailyRate * (float) ($stats['payable_days'] ?? 0)
+            : $baseSalary * $factor;
 
-        // --- Gross pay (corrected formula) ---
+        // --- Gross pay ---
         $grossPay = $periodBase
             + $overtimePay
+            + $restDayOtPay
+            + $regularHolidayOtPay
+            + $specialHolidayOtPay
             + $nightDiff
             + $restDayPay
             + $regularHolidayPay
             + $regularHolidayUnworkedPay
             + $specialHolidayPay
+            + $bonus
+            + $allowances
+            + $commission
+            + $otherEarnings
+            + $nonTaxableAllowances
             - $absentDeductions
-            - $lateDeductions;
+            - $lateDeductions
+            - $undertimeDeductions;
 
         $grossPay = max(0, $grossPay);
 
         // --- Statutory contributions (half per semi-monthly cutoff) ---
-        $sss       = $this->calculateSss($baseSalary) * $factor;
+        $sss        = $this->calculateSss($baseSalary) * $factor;
         $philhealth = $this->calculatePhilHealth($baseSalary) * $factor;
         $pagibig    = $this->calculatePagibig($baseSalary) * $factor;
 
+        // Employer shares for remittance/reporting (not employee deductions)
+        $sssEr        = $this->calculateSssEmployer($baseSalary) * $factor;
+        $philhealthEr = $this->calculatePhilHealth($baseSalary) * $factor;
+        $pagibigEr    = $this->calculatePagibig($baseSalary) * $factor;
+
         // --- Withholding tax (monthly bracket, halved for semi-monthly) ---
+        // De-minimis / non-taxable allowances are excluded from taxable income.
+        $taxableGross = $grossPay - $nonTaxableAllowances;
         if ($factor >= 1.0) {
-            $tax = $this->calculateWithholdingTax($grossPay, $sss, $philhealth, $pagibig);
+            $tax = $this->calculateWithholdingTax($taxableGross, $sss, $philhealth, $pagibig);
         } else {
             // Annualise/de-annualise to get correct bracket
             $tax = $factor * $this->calculateWithholdingTax(
-                $grossPay / $factor,
+                $taxableGross / $factor,
                 $sss / $factor,
                 $philhealth / $factor,
                 $pagibig / $factor
@@ -409,12 +562,28 @@ class PayrollComputationService
         [$loanDeduction, $cashAdvanceDeduction] = $this->computeLoanDeductions(
             $employee, $startDate
         );
+        // Manual loan amounts can only raise, never silently cancel, the
+        // computed ledger installment.
+        $loanDeduction         = max($loanDeduction, (float) ($extras['salary_loan'] ?? 0));
+        $cashAdvanceDeduction  = max($cashAdvanceDeduction, (float) ($extras['cash_advance'] ?? 0));
 
         $totalDeductions = $sss + $philhealth + $pagibig + $tax
-            + $lateDeductions + $absentDeductions
+            + $lateDeductions + $absentDeductions + $undertimeDeductions
+            + $otherDeductions
             + $loanDeduction + $cashAdvanceDeduction;
 
         $netPay = max(0, $grossPay - $totalDeductions);
+
+        // --- Review warnings (never auto-deductions) ---
+        $warnings = [];
+        if ($stats['incomplete_punch_days'] > 0) {
+            $warnings[] = $stats['incomplete_punch_days']
+                . ' day(s) missing check-out — verify before paying';
+        }
+        if ($isProrated) {
+            $warnings[] = 'Prorated: hired ' . $stats['hire_date']
+                . ', paid for ' . ($stats['payable_days'] ?? 0) . ' workday(s)';
+        }
 
         return [
             'user_id'                     => $stats['is_employee'] ? null : $employee->id,
@@ -435,27 +604,45 @@ class PayrollComputationService
             'daily_rate'                  => round($dailyRate, 4),
             'daily_rate_divisor'          => $divisor,
             'working_days'                => $stats['working_days'],
+            'payable_days'                => $stats['payable_days'],
+            'is_prorated'                 => $isProrated,
+            'hire_date'                   => $stats['hire_date'],
             'present_days'                => $stats['present_days'],
             'late_days'                   => $stats['late_days'],
             'total_late_minutes'          => $stats['total_late_minutes'],
             'early_leave_days'            => $stats['early_leave_days'],
+            'total_undertime_minutes'     => $stats['total_undertime_minutes'],
+            'incomplete_punch_days'       => $stats['incomplete_punch_days'],
             'absent_days'                 => $stats['absent_days'],
             'paid_leave_days'             => $stats['paid_leave_days'],
             'regular_hours'               => round($stats['regular_hours'], 2),
             'overtime_hours'              => round($stats['overtime_hours'], 2),
             'overtime_pay'                => round($overtimePay, 2),
+            'rest_day_ot_pay'             => round($restDayOtPay, 2),
+            'regular_holiday_ot_pay'      => round($regularHolidayOtPay, 2),
+            'special_holiday_ot_pay'      => round($specialHolidayOtPay, 2),
+            'ot_workday_hours'            => $stats['ot_workday_hours'],
+            'ot_rest_day_hours'           => $stats['ot_rest_day_hours'],
+            'ot_regular_holiday_hours'    => $stats['ot_regular_holiday_hours'],
+            'ot_special_holiday_hours'    => $stats['ot_special_holiday_hours'],
             'night_differential'          => round($nightDiff, 2),
             'rest_day_pay'                => round($restDayPay, 2),
             'regular_holiday_pay'         => round($regularHolidayPay + $regularHolidayUnworkedPay, 2),
             'special_holiday_pay'         => round($specialHolidayPay, 2),
+            'undertime_deductions'        => round($undertimeDeductions, 2),
             'late_deductions'             => round($lateDeductions, 2),
             'absent_deductions'           => round($absentDeductions, 2),
             'sss_contribution'            => round($sss, 2),
             'philhealth_contribution'     => round($philhealth, 2),
             'pagibig_contribution'        => round($pagibig, 2),
+            'sss_er_share'                => round($sssEr, 2),
+            'philhealth_er_share'         => round($philhealthEr, 2),
+            'pagibig_er_share'            => round($pagibigEr, 2),
             'tax_deduction'               => round($tax, 2),
             'salary_loan'                 => round($loanDeduction, 2),
             'cash_advance'                => round($cashAdvanceDeduction, 2),
+            'non_taxable_allowances'      => round($nonTaxableAllowances, 2),
+            'warnings'                    => $warnings,
             'gross_pay'                   => round($grossPay, 2),
             'total_deductions'            => round($totalDeductions, 2),
             'net_pay'                     => round($netPay, 2),
@@ -663,20 +850,40 @@ class PayrollComputationService
     // Philippine statutory contribution calculators
     // -------------------------------------------------------------------------
 
+    /** SSS 2025 Monthly Salary Credit: ₱5,000–₱35,000, ₱500 steps. */
+    private function sssMsc(float $baseSalary): float
+    {
+        if ($baseSalary <= 5250) {
+            return 5000.0;
+        }
+        if ($baseSalary >= 34750) {
+            return 35000.0;
+        }
+
+        return (float) ((int) ceil($baseSalary / 500) * 500);
+    }
+
     /** SSS 2025: employee share 5.0% of Monthly Salary Credit (5,000–35,000). */
     public function calculateSss(float $baseSalary): float
     {
         if ($baseSalary <= 0) {
             return 0.0;
         }
-        if ($baseSalary <= 5250) {
-            return 250.0;
-        }
-        if ($baseSalary >= 34750) {
-            return 1750.0;
+
+        return round($this->sssMsc($baseSalary) * 0.05, 2);
+    }
+
+    /**
+     * SSS 2025: employer share 10.0% of MSC plus the ₱10 Employees'
+     * Compensation premium (employer-paid, never deducted from the employee).
+     */
+    public function calculateSssEmployer(float $baseSalary): float
+    {
+        if ($baseSalary <= 0) {
+            return 0.0;
         }
 
-        return round(((int) ceil($baseSalary / 500) * 500) * 0.05, 2);
+        return round($this->sssMsc($baseSalary) * 0.10 + 10, 2);
     }
 
     /** PhilHealth 2025: 5% premium (₱500–₱5,000), employee share 50%. */

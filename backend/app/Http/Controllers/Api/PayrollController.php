@@ -214,7 +214,9 @@ class PayrollController extends Controller
                 );
 
                 // Create or update payroll record — keyed on whichever person
-                // type this row belongs to.
+                // type this row belongs to. Only identity + NOT NULL columns
+                // are written here; every computed field is filled by the
+                // service below so generated payrolls match the preview.
                 $payroll = Payroll::updateOrCreate(
                     array_merge(
                         $isEmployee
@@ -232,26 +234,15 @@ class PayrollController extends Controller
                         'position' => $computed['position'],
                         'base_salary' => $computed['base_salary'],
                         'hourly_rate' => $computed['hourly_rate'],
-                        'working_days' => $computed['working_days'] ?? 22,
-                        'present_days' => $computed['present_days'],
-                        'absent_days' => $computed['absent_days'],
-                        'paid_leave_days' => $computed['paid_leave_days'],
-                        'regular_hours' => $computed['regular_hours'],
-                        'overtime_hours' => $computed['overtime_hours'],
-                        'overtime_pay' => $computed['overtime_pay'],
-                        'bonus' => 0,
-                        'allowances' => 0,
-                        'deductions' => 0,
-                        'late_deductions' => $computed['late_deductions'],
-                        'absent_deductions' => $computed['absent_deductions'],
                         'status' => 'draft',
                         'processed_by' => Auth::id(),
                         'processed_at' => now(),
                     ]
                 );
 
-                // Auto-calculate the payroll
-                $payroll->calculatePayroll();
+                // Single source of truth: full attendance-driven recomputation
+                // (premiums, statutory, loans, undertime, auto-absences).
+                $payroll->calculatePayroll(true);
                 $payroll->save();
 
                 $generated[] = $payroll->load(['user', 'employee']);
@@ -369,26 +360,45 @@ class PayrollController extends Controller
             'processed_at' => now(),
         ]);
 
-        $payroll->load('user');
+        // Settle loan/cash-advance installments exactly once — the
+        // loans_settled guard prevents balances being reduced twice.
+        if (!$payroll->loans_settled) {
+            $person = $payroll->user ?? $payroll->employee;
+            if ($person && ((float) $payroll->salary_loan > 0 || (float) $payroll->cash_advance > 0)) {
+                $this->payrollComputation->settleLoanDeductions(
+                    $person,
+                    $payroll->pay_period_start?->toDateString()
+                );
+            }
+            $payroll->loans_settled = true;
+            $payroll->save();
+        }
+
+        $payroll->load(['user', 'employee']);
+        $payeeName = $payroll->user?->name ?? $payroll->employee?->name ?? $payroll->employee_name ?? 'employee';
 
         // Send notifications
         WorkflowNotifier::notifyRole(
             'manager',
             'Payroll Paid',
-            'Payroll for ' . ($payroll->user->name ?? 'employee') . ' has been marked as paid.',
+            "Payroll for {$payeeName} has been marked as paid.",
             'success',
             'payroll',
             $payroll->id
         );
 
-        Notification::create([
-            'user_id' => $payroll->user_id,
-            'title' => 'Payslip Available',
-            'message' => 'Your payroll has been marked as paid. You may now download your payslip.',
-            'type' => 'info',
-            'related_type' => 'payroll',
-            'related_id' => $payroll->id,
-        ]);
+        // Payslip notification only exists for account users — non-account
+        // employee records have no inbox.
+        if ($payroll->user_id) {
+            Notification::create([
+                'user_id' => $payroll->user_id,
+                'title' => 'Payslip Available',
+                'message' => 'Your payroll has been marked as paid. You may now download your payslip.',
+                'type' => 'info',
+                'related_type' => 'payroll',
+                'related_id' => $payroll->id,
+            ]);
+        }
 
         return response()->json([
             'success' => true,
@@ -443,10 +453,10 @@ class PayrollController extends Controller
             'rate_type' => 'nullable|in:daily,hourly,monthly',
             'base_salary' => 'required|numeric|min:0',
             'hourly_rate' => 'nullable|numeric|min:0',
-            'working_days' => 'nullable|integer|min:0',
-            'present_days' => 'nullable|integer|min:0',
-            'absent_days' => 'nullable|integer|min:0',
-            'paid_leave_days' => 'nullable|integer|min:0',
+            'working_days' => 'nullable|numeric|min:0',
+            'present_days' => 'nullable|numeric|min:0',
+            'absent_days' => 'nullable|numeric|min:0',
+            'paid_leave_days' => 'nullable|numeric|min:0',
             'regular_hours' => 'nullable|numeric|min:0',
             'overtime_hours' => 'nullable|numeric|min:0',
             'overtime_pay' => 'nullable|numeric|min:0',
@@ -455,8 +465,11 @@ class PayrollController extends Controller
             'night_differential' => 'nullable|numeric|min:0',
             'regular_holiday_ot_pay' => 'nullable|numeric|min:0',
             'special_holiday_ot_pay' => 'nullable|numeric|min:0',
+            'rest_day_pay' => 'nullable|numeric|min:0',
+            'rest_day_ot_pay' => 'nullable|numeric|min:0',
             'bonus' => 'nullable|numeric|min:0',
             'allowances' => 'nullable|numeric|min:0',
+            'non_taxable_allowances' => 'nullable|numeric|min:0',
             'commission' => 'nullable|numeric|min:0',
             'other_earnings' => 'nullable|numeric|min:0',
             'deductions' => 'nullable|numeric|min:0',
@@ -466,6 +479,7 @@ class PayrollController extends Controller
             'pagibig_contribution' => 'nullable|numeric|min:0',
             'late_deductions' => 'nullable|numeric|min:0',
             'absent_deductions' => 'nullable|numeric|min:0',
+            'undertime_deductions' => 'nullable|numeric|min:0',
             'salary_loan' => 'nullable|numeric|min:0',
             'cash_advance' => 'nullable|numeric|min:0',
             'gross_pay' => 'required|numeric|min:0',
@@ -550,10 +564,10 @@ class PayrollController extends Controller
             'rate_type' => 'nullable|in:daily,hourly,monthly',
             'base_salary' => 'nullable|numeric|min:0',
             'hourly_rate' => 'nullable|numeric|min:0',
-            'working_days' => 'nullable|integer|min:0',
-            'present_days' => 'nullable|integer|min:0',
-            'absent_days' => 'nullable|integer|min:0',
-            'paid_leave_days' => 'nullable|integer|min:0',
+            'working_days' => 'nullable|numeric|min:0',
+            'present_days' => 'nullable|numeric|min:0',
+            'absent_days' => 'nullable|numeric|min:0',
+            'paid_leave_days' => 'nullable|numeric|min:0',
             'regular_hours' => 'nullable|numeric|min:0',
             'overtime_hours' => 'nullable|numeric|min:0',
             'overtime_pay' => 'nullable|numeric|min:0',
@@ -562,8 +576,11 @@ class PayrollController extends Controller
             'night_differential' => 'nullable|numeric|min:0',
             'regular_holiday_ot_pay' => 'nullable|numeric|min:0',
             'special_holiday_ot_pay' => 'nullable|numeric|min:0',
+            'rest_day_pay' => 'nullable|numeric|min:0',
+            'rest_day_ot_pay' => 'nullable|numeric|min:0',
             'bonus' => 'nullable|numeric|min:0',
             'allowances' => 'nullable|numeric|min:0',
+            'non_taxable_allowances' => 'nullable|numeric|min:0',
             'commission' => 'nullable|numeric|min:0',
             'other_earnings' => 'nullable|numeric|min:0',
             'deductions' => 'nullable|numeric|min:0',
@@ -573,6 +590,7 @@ class PayrollController extends Controller
             'pagibig_contribution' => 'nullable|numeric|min:0',
             'late_deductions' => 'nullable|numeric|min:0',
             'absent_deductions' => 'nullable|numeric|min:0',
+            'undertime_deductions' => 'nullable|numeric|min:0',
             'salary_loan' => 'nullable|numeric|min:0',
             'cash_advance' => 'nullable|numeric|min:0',
             'gross_pay' => 'nullable|numeric|min:0',
@@ -608,8 +626,14 @@ class PayrollController extends Controller
 
         $payroll->update($validated);
 
-        if ($request->hasAny(['base_salary', 'bonus', 'allowances', 'deductions', 'overtime_hours', 'overtime_pay'])) {
-            $payroll->calculatePayroll();
+        // Any money/attendance input change triggers a full service recompute
+        // so the row stays consistent with attendance + statutory rules.
+        if ($request->hasAny([
+            'base_salary', 'hourly_rate', 'bonus', 'allowances', 'non_taxable_allowances',
+            'commission', 'other_earnings', 'deductions', 'salary_loan', 'cash_advance',
+            'overtime_hours', 'overtime_pay', 'manual_attendance',
+        ])) {
+            $payroll->calculatePayroll(true);
             $payroll->save();
         }
 

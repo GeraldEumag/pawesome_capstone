@@ -111,19 +111,22 @@ const PayrollComputation = () => {
 
   const computedRows = useMemo(() => {
     return previewData.map((r) => {
-      // Semi-monthly cutoffs pay the period share of the monthly base salary.
-      const base = (Number(r.base_salary) || 0) * (Number(r.period_factor) || 1);
-      const otPay = Number(r.overtime_pay) || 0;
+      // Backend totals are authoritative (night diff, rest-day/holiday
+      // premiums, tax, loans, undertime are already inside gross_pay /
+      // total_deductions). Only the locally-editable fields — base salary,
+      // bonus, allowances, other deductions — adjust the preview.
+      const factor = Number(r.period_factor) || 1;
+      const divisor = Number(r.daily_rate_divisor) || 26;
+      const newBase = Number(r.base_salary) || 0;
+      const newPeriodBase = r.is_prorated
+        ? (newBase / divisor) * (Number(r.payable_days) || 0)
+        : newBase * factor;
       const bonus = Number(r._bonus) || 0;
       const allowances = Number(r._allowances) || 0;
-      const sss = Number(r.sss_contribution) || 0;
-      const philhealth = Number(r.philhealth_contribution) || 0;
-      const pagibig = Number(r.pagibig_contribution) || 0;
-      const lateDed = Number(r.late_deductions) || 0;
-      const absentDed = Number(r.absent_deductions) || 0;
       const otherDed = Number(r._otherDeductions) || 0;
-      const gross = base + otPay + bonus + allowances;
-      const totalDed = sss + philhealth + pagibig + lateDed + absentDed + otherDed;
+      const gross =
+        (Number(r.gross_pay) || 0) - (Number(r.period_base_salary) || 0) + newPeriodBase + bonus + allowances;
+      const totalDed = (Number(r.total_deductions) || 0) + otherDed;
       const net = Math.max(0, gross - totalDed);
       return { ...r, _gross: gross, _totalDed: totalDed, _net: net };
     });
@@ -181,7 +184,10 @@ const PayrollComputation = () => {
         const edited = editedMap.get(gen.user_id ?? `emp-${gen.employee_id}`);
         if (!edited) continue;
 
+        const baseChanged =
+          Math.abs(Number(edited.base_salary) - Number(gen.base_salary)) > 0.004;
         const hasEdits =
+          baseChanged ||
           Number(edited._bonus) !== 0 ||
           Number(edited._allowances) !== 0 ||
           Number(edited._otherDeductions) !== 0;
@@ -192,6 +198,7 @@ const PayrollComputation = () => {
           await apiRequest(`/manager/payroll/${gen.id}`, {
             method: "PUT",
             body: JSON.stringify({
+              ...(baseChanged ? { base_salary: Number(edited.base_salary) || 0 } : {}),
               bonus: Number(edited._bonus) || 0,
               allowances: Number(edited._allowances) || 0,
               deductions: Number(edited._otherDeductions) || 0,
@@ -305,6 +312,9 @@ const PayrollComputation = () => {
                         <div className="payroll-comp-employee">
                           <strong>{r.employee_name}</strong>
                           <small>{r.role} · {r.department}</small>
+                          {(r.warnings || []).length > 0 && (
+                            <small className="payroll-comp-warning">{r.warnings.join(" · ")}</small>
+                          )}
                         </div>
                       </td>
                       <td>
@@ -313,6 +323,12 @@ const PayrollComputation = () => {
                           {r.late_days > 0 && <span className="tag late">{r.late_days} Late</span>}
                           {r.absent_days > 0 && <span className="tag absent">{r.absent_days} Absent</span>}
                           {r.paid_leave_days > 0 && <span className="tag leave">{r.paid_leave_days} Paid Leave</span>}
+                          {Number(r.total_undertime_minutes) > 0 && (
+                            <span className="tag late">{Math.round(r.total_undertime_minutes)}m UT</span>
+                          )}
+                          {Number(r.incomplete_punch_days) > 0 && (
+                            <span className="tag absent">{r.incomplete_punch_days} No out</span>
+                          )}
                           <small>
                             {r.working_days != null ? `${r.working_days} workdays · ` : ""}
                             {formatNum(r.regular_hours)} hrs · {formatNum(r.overtime_hours)} OT
@@ -361,6 +377,9 @@ const PayrollComputation = () => {
                             <div><small>Tax</small><span>{formatCurrency(r.tax_deduction)}</span></div>
                             <div><small>Late ({r.total_late_minutes || 0} min)</small><span>{formatCurrency(r.late_deductions)}</span></div>
                             <div><small>Absent ({r.absent_days || 0} day{r.absent_days !== 1 ? "s" : ""})</small><span>{formatCurrency(r.absent_deductions)}</span></div>
+                            {Number(r.undertime_deductions) > 0 && (
+                              <div><small>Undertime ({r.total_undertime_minutes || 0} min)</small><span>{formatCurrency(r.undertime_deductions)}</span></div>
+                            )}
                             {Number(r.salary_loan) > 0 && (
                               <div><small>Salary Loan</small><span>{formatCurrency(r.salary_loan)}</span></div>
                             )}
@@ -378,6 +397,18 @@ const PayrollComputation = () => {
                             )}
                             {Number(r.regular_holiday_pay) > 0 && (
                               <div style={{ color: "#059669" }}><small>Holiday Pay (+)</small><span>+{formatCurrency(r.regular_holiday_pay)}</span></div>
+                            )}
+                            {Number(r.special_holiday_pay) > 0 && (
+                              <div style={{ color: "#059669" }}><small>Special Holiday (+)</small><span>+{formatCurrency(r.special_holiday_pay)}</span></div>
+                            )}
+                            {Number(r.rest_day_ot_pay) > 0 && (
+                              <div style={{ color: "#059669" }}><small>Rest-Day OT ×1.69 (+)</small><span>+{formatCurrency(r.rest_day_ot_pay)}</span></div>
+                            )}
+                            {(Number(r.regular_holiday_ot_pay) + Number(r.special_holiday_ot_pay)) > 0 && (
+                              <div style={{ color: "#059669" }}><small>Holiday OT (+)</small><span>+{formatCurrency(Number(r.regular_holiday_ot_pay) + Number(r.special_holiday_ot_pay))}</span></div>
+                            )}
+                            {r.is_prorated && (
+                              <div><small>Prorated hire</small><span>{r.payable_days} payable days</span></div>
                             )}
                             <div><small>Other</small>
                               <input

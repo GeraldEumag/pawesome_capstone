@@ -347,7 +347,7 @@ class PayrollController extends Controller
 
     public function payslip($id): JsonResponse
     {
-        $payroll = Payroll::with(['user', 'processor'])->find($id);
+        $payroll = Payroll::with(['user', 'employee', 'processor'])->find($id);
 
         if (!$payroll) {
             return response()->json([
@@ -367,6 +367,26 @@ class PayrollController extends Controller
         $periodFactor = app(\App\Services\Payroll\PayrollComputationService::class)
             ->periodFactor($payroll->pay_period_start?->toDateString(), $payroll->pay_period_end?->toDateString());
 
+        // Prorated hires: base on the payslip must be payable days × daily
+        // rate, not base × factor, or the earnings lines won't add to gross.
+        $periodBase = (float) $payroll->base_salary * $periodFactor;
+        $person = $payroll->user ?? $payroll->employee;
+        $hireDateRaw = $person?->employment_date ?? $person?->hire_date;
+        if ($hireDateRaw && $payroll->pay_period_start && $payroll->pay_period_end) {
+            $hire = \Carbon\Carbon::parse($hireDateRaw);
+            $start = \Carbon\Carbon::parse($payroll->pay_period_start);
+            $end = \Carbon\Carbon::parse($payroll->pay_period_end);
+            if ($hire->gt($start) && $hire->lte($end)) {
+                $payable = 0;
+                for ($d = $start->copy(); $d->lte($end); $d->addDay()) {
+                    if (!$d->lt($hire) && \App\Support\CompanySchedule::isWorkday($d)) {
+                        $payable++;
+                    }
+                }
+                $periodBase = ((float) $payroll->base_salary / \App\Support\CompanySchedule::dailyRateDivisor()) * $payable;
+            }
+        }
+
         $payslipData = [
             'company_name' => 'Pawesome Retreat Inc.',
             'payslip_date' => now()->toDateString(),
@@ -374,17 +394,27 @@ class PayrollController extends Controller
             'pay_period' => $payroll->pay_period_label,
             'period_factor' => $periodFactor,
             'employee' => [
-                'name' => $payroll->user->name,
-                'id' => $payroll->user->id,
+                'name' => $payroll->user?->name ?? $payroll->employee?->name ?? $payroll->employee_name,
+                'id' => $payroll->user_id ?? $payroll->employee_id,
                 'department' => $payroll->department,
                 'position' => $payroll->position,
             ],
             'earnings' => [
-                'base_salary' => round($payroll->base_salary * $periodFactor, 2),
+                'base_salary' => round($periodBase, 2),
                 'monthly_base_salary' => $payroll->base_salary,
                 'overtime_pay' => $payroll->overtime_pay,
+                'rest_day_pay' => $payroll->rest_day_pay ?? 0,
+                'rest_day_ot_pay' => $payroll->rest_day_ot_pay ?? 0,
+                'regular_holiday_pay' => $payroll->regular_holiday_pay ?? 0,
+                'special_holiday_pay' => $payroll->special_holiday_pay ?? 0,
+                'regular_holiday_ot_pay' => $payroll->regular_holiday_ot_pay ?? 0,
+                'special_holiday_ot_pay' => $payroll->special_holiday_ot_pay ?? 0,
+                'night_differential' => $payroll->night_differential ?? 0,
                 'bonus' => $payroll->bonus,
                 'allowances' => $payroll->allowances,
+                'non_taxable_allowances' => $payroll->non_taxable_allowances ?? 0,
+                'commission' => $payroll->commission ?? 0,
+                'other_earnings' => $payroll->other_earnings ?? 0,
                 'gross_pay' => $payroll->gross_pay,
             ],
             'deductions' => [
@@ -394,11 +424,21 @@ class PayrollController extends Controller
                 'tax' => $payroll->tax_deduction,
                 'late_deductions' => $payroll->late_deductions,
                 'absent_deductions' => $payroll->absent_deductions,
+                'undertime_deductions' => $payroll->undertime_deductions ?? 0,
+                'salary_loan' => $payroll->salary_loan ?? 0,
+                'cash_advance' => $payroll->cash_advance ?? 0,
                 'other_deductions' => $payroll->deductions,
-                'total_deductions' => $payroll->sss_contribution + $payroll->philhealth_contribution + 
-                                     $payroll->pagibig_contribution + $payroll->tax_deduction + 
-                                     $payroll->late_deductions + $payroll->absent_deductions + 
+                'total_deductions' => $payroll->sss_contribution + $payroll->philhealth_contribution +
+                                     $payroll->pagibig_contribution + $payroll->tax_deduction +
+                                     $payroll->late_deductions + $payroll->absent_deductions +
+                                     ($payroll->undertime_deductions ?? 0) +
+                                     ($payroll->salary_loan ?? 0) + ($payroll->cash_advance ?? 0) +
                                      $payroll->deductions,
+            ],
+            'employer_shares' => [
+                'sss_er' => $payroll->sss_er_share ?? 0,
+                'philhealth_er' => $payroll->philhealth_er_share ?? 0,
+                'pagibig_er' => $payroll->pagibig_er_share ?? 0,
             ],
             'attendance' => [
                 'working_days' => $payroll->working_days,
@@ -407,6 +447,8 @@ class PayrollController extends Controller
                 'paid_leave_days' => $payroll->paid_leave_days ?? 0,
                 'regular_hours' => $payroll->regular_hours,
                 'overtime_hours' => $payroll->overtime_hours,
+                'undertime_minutes' => $payroll->undertime_minutes ?? 0,
+                'incomplete_punch_days' => $payroll->incomplete_punch_days ?? 0,
             ],
             'net_pay' => $payroll->net_pay,
             'payment_date' => $payroll->payment_date,
