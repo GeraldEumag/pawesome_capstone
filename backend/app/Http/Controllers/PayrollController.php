@@ -379,7 +379,7 @@ class PayrollController extends Controller
             if ($hire->gt($start) && $hire->lte($end)) {
                 $payable = 0;
                 for ($d = $start->copy(); $d->lte($end); $d->addDay()) {
-                    if (!$d->lt($hire) && \App\Support\CompanySchedule::isWorkday($d)) {
+                    if (!$d->lt($hire) && \App\Support\CompanySchedule::isWorkday($d, $person)) {
                         $payable++;
                     }
                 }

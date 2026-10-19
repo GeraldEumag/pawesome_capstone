@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Manager;
 use App\Http\Controllers\Controller;
 use App\Models\Attendance;
 use App\Models\LeaveBalance;
+use App\Models\User;
 use App\Support\CompanySchedule;
 use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
@@ -116,11 +117,12 @@ class LeaveController extends Controller
             ], 422);
         }
 
-        // Count working days
+        // Count working days (against the requester's own schedule)
         $daysCounted = $this->countWorkingDays(
             $request->start_date,
             $request->end_date,
-            (int) ($request->half_day ?? 0)
+            (int) ($request->half_day ?? 0),
+            User::find($request->user_id)
         );
 
         $id = DB::table('leave_requests')->insertGetId([
@@ -155,7 +157,7 @@ class LeaveController extends Controller
             return response()->json(['success' => false, 'message' => 'Leave is not pending.'], 422);
         }
 
-        $daysCounted = (float) ($record->days_counted ?? $this->countWorkingDays($record->start_date, $record->end_date));
+        $daysCounted = (float) ($record->days_counted ?? $this->countWorkingDays($record->start_date, $record->end_date, 0, $record->user_id ? User::find($record->user_id) : null));
         $start = Carbon::parse($record->start_date);
 
         // Deduct from leave balance (skip for unpaid_leave)
@@ -288,13 +290,13 @@ class LeaveController extends Controller
     // Helpers
     // -------------------------------------------------------------------------
 
-    private function countWorkingDays(string $startDate, string $endDate, int $halfDay = 0): float
+    private function countWorkingDays(string $startDate, string $endDate, int $halfDay = 0, $person = null): float
     {
         $start = Carbon::parse($startDate);
         $end   = Carbon::parse($endDate);
         $days  = 0.0;
         for ($d = $start->copy(); $d->lte($end); $d->addDay()) {
-            if (CompanySchedule::isWorkday($d)) {
+            if (CompanySchedule::isWorkday($d, $person)) {
                 $days += 1.0;
             }
         }
@@ -309,8 +311,9 @@ class LeaveController extends Controller
     {
         $start = Carbon::parse($startDate);
         $end   = Carbon::parse($endDate);
+        $user  = User::find($userId);
         for ($d = $start->copy(); $d->lte($end); $d->addDay()) {
-            if (!CompanySchedule::isWorkday($d)) {
+            if (!CompanySchedule::isWorkday($d, $user)) {
                 continue;
             }
             $dateStr = $d->toDateString();

@@ -76,7 +76,7 @@ class MyLeaveController extends Controller
         $end       = Carbon::parse($data['end_date']);
         $daysCounted = 0.0;
         for ($d = $start->copy(); $d->lte($end); $d->addDay()) {
-            if (CompanySchedule::isWorkday($d)) {
+            if (CompanySchedule::isWorkday($d, $user)) {
                 $daysCounted += 1.0;
             }
         }

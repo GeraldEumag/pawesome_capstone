@@ -6,6 +6,7 @@ import ManagerStaff from "../components/manager/ManagerStaff";
 import EmployeeDirectory from "../components/shared/EmployeeDirectory";
 import PayrollManagement from "../components/manager/PayrollManagement";
 import ManagerAttendance from "../components/manager/ManagerAttendance";
+import DayOffSchedule from "../components/manager/DayOffSchedule";
 import ManagerLeave from "../components/manager/ManagerLeave";
 import ManagerReports from "../components/manager/ManagerReports";
 import ManagerHistory from "../components/manager/ManagerHistory";
@@ -50,6 +51,7 @@ const ManagerRoutes = () => (
       <Route path="payroll/computation" element={<Navigate to="/manager/payroll" replace />} />
       <Route path="payroll/compute" element={<Navigate to="/manager/payroll" replace />} />
       <Route path="attendance" element={<ManagerAttendance />} />
+      <Route path="day-offs" element={<DayOffSchedule />} />
       {/* The barcode kiosk now lives at the public /attendance-kiosk URL */}
       <Route path="attendance/kiosk" element={<Navigate to="/attendance-kiosk" replace />} />
       <Route path="leave" element={<ManagerLeave />} />

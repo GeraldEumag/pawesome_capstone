@@ -72,6 +72,11 @@ const ManagerSidebar = ({ mobileOpen, onMobileMenuToggle }) => {
             </NavLink>
           </li>
           <li className="nav-item nav-item-sub">
+            <NavLink to="/manager/day-offs" onClick={handleNavClick}>
+              Day-Off Schedule
+            </NavLink>
+          </li>
+          <li className="nav-item nav-item-sub">
             <NavLink to="/manager/id-cards" onClick={handleNavClick}>
               Employee ID Cards
             </NavLink>

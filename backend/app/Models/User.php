@@ -179,6 +179,11 @@ class User extends Authenticatable
         return $this->hasOne(Employee::class);
     }
 
+    public function dayOffs()
+    {
+        return $this->hasMany(EmployeeDayOff::class, 'user_id');
+    }
+
     public function isAdmin(): bool
     {
         return in_array($this->role, ['admin', 'super_admin'], true);

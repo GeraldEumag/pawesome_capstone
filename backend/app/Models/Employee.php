@@ -121,6 +121,11 @@ class Employee extends Model
         return $this->hasMany(Payroll::class, 'employee_id');
     }
 
+    public function dayOffs(): HasMany
+    {
+        return $this->hasMany(EmployeeDayOff::class, 'employee_id');
+    }
+
     /**
      * Next unified employee number across users + employees (PAW-0007 style).
      */

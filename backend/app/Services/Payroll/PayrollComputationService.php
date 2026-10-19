@@ -195,6 +195,9 @@ class PayrollComputationService
                 : ($employee->employment_date ?? null);
             $hireDate = $hireDateRaw ? Carbon::parse($hireDateRaw)->startOfDay() : null;
 
+            // Pre-fetch once — per-person day-offs (empty = company default)
+            $personOffs = CompanySchedule::dayOffWeekdays($employee);
+
             for ($day = $start->copy(); $day->lte($end); $day->addDay()) {
                 // Days before the hire date are not payable at all
                 if ($hireDate && $day->lt($hireDate)) {
@@ -202,7 +205,7 @@ class PayrollComputationService
                 }
 
                 $dateKey  = $day->toDateString();
-                $isWorkday = CompanySchedule::isWorkday($day);
+                $isWorkday = CompanySchedule::isWorkdayWithOffs($day, $personOffs);
                 $holiday   = $holidays->get($dateKey);
 
                 // Count regular holiday unworked days (even off-schedule)
@@ -487,8 +490,9 @@ class PayrollComputationService
         // Night differential: 10% of hourly rate × night hours
         $nightDiff = ($stats['night_diff_minutes'] / 60) * ($hourlyRate * 0.10);
 
-        // Rest day premium: 30% of daily rate per day (total 130%)
-        $restDayPay = $stats['rest_day_days'] * ($dailyRate * 0.30);
+        // Rest-day work pays 130% of the daily rate (DOLE): the day itself
+        // is not covered by the 26-divisor base, so 100% + 30% premium.
+        $restDayPay = $stats['rest_day_days'] * ($dailyRate * 1.30);
 
         // Regular holiday worked: +100% of daily rate (total 200%)
         $regularHolidayPay = $stats['regular_holiday_worked_days'] * $dailyRate;
@@ -626,6 +630,7 @@ class PayrollComputationService
             'ot_regular_holiday_hours'    => $stats['ot_regular_holiday_hours'],
             'ot_special_holiday_hours'    => $stats['ot_special_holiday_hours'],
             'night_differential'          => round($nightDiff, 2),
+            'rest_day_days'               => $stats['rest_day_days'],
             'rest_day_pay'                => round($restDayPay, 2),
             'regular_holiday_pay'         => round($regularHolidayPay + $regularHolidayUnworkedPay, 2),
             'special_holiday_pay'         => round($specialHolidayPay, 2),

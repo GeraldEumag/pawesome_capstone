@@ -29,19 +29,20 @@ class MarkDailyAbsent extends Command
 
         for ($i = 1; $i <= $days; $i++) {
             $checkDate = $today->copy()->subDays($i);
-
-            if (!CompanySchedule::isWorkday($checkDate)) {
-                continue; // Skip off-days (Sunday, etc.)
-            }
-
             $dateStr = $checkDate->toDateString();
 
-            // Account users (staff roles)
+            // Account users (staff roles) — workday check is per-person so
+            // configured day-offs are honored (staff with offs on $checkDate
+            // are skipped even if the company is open that weekday).
             User::whereIn('role', [
                 'manager', 'cashier', 'receptionist', 'veterinary',
                 'inventory', 'payroll', 'staff', 'groomer',
                 'super_receptionist', 'admin',
-            ])->where('is_active', true)->each(function (User $user) use ($dateStr, &$marked) {
+            ])->where('is_active', true)->each(function (User $user) use ($checkDate, $dateStr, &$marked) {
+                if (!CompanySchedule::isWorkday($checkDate, $user)) {
+                    return;
+                }
+
                 $hasRecord = Attendance::where('user_id', $user->id)
                     ->whereDate('date', $dateStr)
                     ->exists();
@@ -65,8 +66,12 @@ class MarkDailyAbsent extends Command
                 }
             });
 
-            // Non-account employees
-            Employee::where('is_active', true)->each(function (Employee $emp) use ($dateStr, &$marked) {
+            // Non-account employees — same per-person day-off check
+            Employee::where('is_active', true)->each(function (Employee $emp) use ($checkDate, $dateStr, &$marked) {
+                if (!CompanySchedule::isWorkday($checkDate, $emp)) {
+                    return;
+                }
+
                 $hasRecord = Attendance::where('employee_id', $emp->id)
                     ->whereDate('date', $dateStr)
                     ->exists();

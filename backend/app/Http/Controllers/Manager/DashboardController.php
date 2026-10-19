@@ -114,6 +114,7 @@ class DashboardController extends Controller
         ];
 
         $users = User::whereIn('role', $staffRoles)
+            ->with('dayOffs')
             ->orderBy('name')
             ->get()
             ->map(fn (User $u) => [
@@ -131,9 +132,11 @@ class DashboardController extends Controller
                 'phone' => $u->phone,
                 'address' => $u->address,
                 'hire_date' => $u->employment_date ? Carbon::parse($u->employment_date)->toDateString() : null,
+                'day_offs' => $u->dayOffs->pluck('weekday')->map(fn ($d) => (int) $d)->sort()->values()->all(),
             ]);
 
         $employees = Employee::whereNull('user_id')
+            ->with('dayOffs')
             ->orderBy('last_name')
             ->orderBy('first_name')
             ->get()
@@ -152,11 +155,53 @@ class DashboardController extends Controller
                 'phone' => $e->phone,
                 'address' => $e->address,
                 'hire_date' => $e->hire_date?->toDateString(),
+                'day_offs' => $e->dayOffs->pluck('weekday')->map(fn ($d) => (int) $d)->sort()->values()->all(),
             ]);
 
         return response()->json([
             'success' => true,
             'data' => $users->merge($employees)->values(),
+        ]);
+    }
+
+    /**
+     * PUT /manager/people/{kind}/{id}/day-offs — set a person's weekly
+     * day-offs. kind is 'account' (users) or 'employee' (employees).
+     * Body: { days: [0-6] } — every listed weekday becomes a rest day;
+     * all other weekdays are scheduled workdays for that person.
+     * Saving an empty list is rejected (use at least one workday); omit
+     * instead to inherit the company-wide Mon–Sat default.
+     */
+    public function updateDayOffs(Request $request, string $kind, int $id)
+    {
+        $data = $request->validate([
+            'days'   => 'required|array|max:6',
+            'days.*' => 'integer|min:0|max:6|distinct',
+        ]);
+
+        $person = match ($kind) {
+            'account'  => User::findOrFail($id),
+            'employee' => Employee::findOrFail($id),
+            default    => null,
+        };
+        if (!$person) {
+            return response()->json(['success' => false, 'message' => 'Unknown person type.'], 404);
+        }
+
+        $days    = collect($data['days'])->map(fn ($d) => (int) $d)->unique()->values();
+        $keyCol  = $person instanceof User ? 'user_id' : 'employee_id';
+        $current = $person->dayOffs()->pluck('weekday')->map(fn ($d) => (int) $d);
+
+        // Remove de-selected days, insert newly selected ones
+        $person->dayOffs()->whereNotIn('weekday', $days)->delete();
+        foreach ($days->diff($current) as $weekday) {
+            $person->dayOffs()->create(['weekday' => $weekday]);
+        }
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Day-off schedule updated.',
+            'data'    => ['day_offs' => $days->sort()->values()->all()],
         ]);
     }
 

@@ -164,11 +164,12 @@ class PayrollIndustryTest extends TestCase
         $row = $this->generateRow($user);
         $daily = 25000 / 26;
 
-        $this->assertEqualsWithDelta($daily * 0.30, (float) $row['rest_day_pay'], 0.01);
+        // DOLE rest-day rate: 130% of the daily rate (base doesn't cover rest days)
+        $this->assertEqualsWithDelta($daily * 1.30, (float) $row['rest_day_pay'], 0.01);
         $this->assertEqualsWithDelta($daily, (float) $row['regular_holiday_pay'], 0.01);
 
         $payroll = Payroll::findOrFail($row['id']);
-        $this->assertEqualsWithDelta($daily * 0.30, (float) $payroll->rest_day_pay, 0.01);
+        $this->assertEqualsWithDelta($daily * 1.30, (float) $payroll->rest_day_pay, 0.01);
         $this->assertEqualsWithDelta($daily, (float) $payroll->regular_holiday_pay, 0.01);
     }
 

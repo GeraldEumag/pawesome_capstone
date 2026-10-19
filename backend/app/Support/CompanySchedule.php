@@ -2,6 +2,9 @@
 
 namespace App\Support;
 
+use App\Models\Employee;
+use App\Models\EmployeeDayOff;
+use App\Models\User;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
@@ -93,9 +96,65 @@ class CompanySchedule
         return (int) static::setting('overtime_threshold_hours', 8);
     }
 
-    /** Whether a given date is a company working day. */
-    public static function isWorkday(Carbon $date): bool
+    /**
+     * Weekday integers (0 = Sun … 6 = Sat) this person has OFF every week,
+     * from the employee_day_offs table. Returns [] when nothing is
+     * configured — callers then fall back to the company work_days set.
+     *
+     * For employees linked to a user account, offs stored on either record
+     * are merged so the manager only has to configure one side.
+     */
+    public static function dayOffWeekdays(mixed $person): array
     {
+        if (!$person) {
+            return [];
+        }
+
+        $query = EmployeeDayOff::query();
+        if ($person instanceof User) {
+            $query->where('user_id', $person->id);
+        } elseif ($person instanceof Employee) {
+            $query->where('employee_id', $person->id);
+            if ($person->user_id) {
+                $query->orWhere('user_id', $person->user_id);
+            }
+        } else {
+            return [];
+        }
+
+        return $query->pluck('weekday')
+            ->map(fn ($d) => (int) $d)
+            ->unique()
+            ->values()
+            ->all();
+    }
+
+    /**
+     * Whether a given date is a scheduled workday.
+     *
+     * With $person: once a person has configured day-offs the business is
+     * treated as operating 7 days a week and only their listed weekdays are
+     * rest days. With no configured offs (or no person) the company-wide
+     * work_days set applies (default Mon–Sat, Sunday rest).
+     */
+    public static function isWorkday(Carbon $date, mixed $person = null): bool
+    {
+        return static::isWorkdayWithOffs(
+            $date,
+            $person ? static::dayOffWeekdays($person) : []
+        );
+    }
+
+    /**
+     * Same check as isWorkday() but takes pre-fetched offs — for loops that
+     * walk many dates and can't afford a query per iteration.
+     */
+    public static function isWorkdayWithOffs(Carbon $date, array $offs): bool
+    {
+        if (!empty($offs)) {
+            return !in_array($date->dayOfWeek, $offs, true);
+        }
+
         return in_array($date->dayOfWeek, static::workDays(), true);
     }
 

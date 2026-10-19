@@ -624,6 +624,8 @@ Route::middleware(['auth.api', 'throttle:api'])->prefix('manager')->group(functi
     Route::get('dashboard', [ManagerDashboardController::class, 'overview']);
     Route::get('staff', [ManagerDashboardController::class, 'staff']);
     Route::get('people', [ManagerDashboardController::class, 'people']);
+    Route::put('people/{kind}/{id}/day-offs', [ManagerDashboardController::class, 'updateDayOffs'])
+        ->whereIn('kind', ['account', 'employee']);
     Route::put('staff/{id}', [ManagerDashboardController::class, 'updateStaff']);
     Route::get('executive-summary', [ManagerDashboardController::class, 'executiveSummary']);
     
