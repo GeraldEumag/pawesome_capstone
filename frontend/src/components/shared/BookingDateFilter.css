@@ -24,6 +24,7 @@
   color: var(--color-muted, #64748b);
   font-size: 0.75rem;
   font-weight: 700;
+  line-height: 1.2;
   letter-spacing: 0.03em;
   cursor: pointer;
   white-space: nowrap;

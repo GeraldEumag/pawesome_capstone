@@ -121,7 +121,7 @@ img:not([class*="logo-image"]):not([class*="sidebar-logo"]):not([class*="avatar"
    D. TOUCH TARGETS — 44px minimum on tablet + phone
    ══════════════════════════════════════════════════════════════ */
 @media (max-width: 991px) {
-  button:not([class*="close"]):not([class*="icon-btn"]):not(.mobile-close-btn):not([class*="react-"]):not(.dashboard-profile-upload):not([class*="-upload"]):not([class*="icon-only"]),
+  button:not([class*="close"]):not([class*="icon-btn"]):not(.mobile-close-btn):not([class*="react-"]):not(.dashboard-profile-upload):not([class*="-upload"]):not([class*="icon-only"]):not(.bst-tab):not(.bdf-option):not(.bst-later):not(.bst-older-pending),
   a[class*="-btn"],
   a[class*="btn-"],
   .btn,
