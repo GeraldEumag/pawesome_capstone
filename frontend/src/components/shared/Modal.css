@@ -125,3 +125,18 @@
   border-top: 1px solid #eef2f7;
   flex-shrink: 0;
 }
+
+/* Shield: styles/mobilePolish.css applies blanket !important rules to
+   [class*="modal-body"]/[class*="-modal-*"] at <=991px, intended for legacy
+   .modal-content markup. On .pw-modal internals they turn the body grid
+   item into an oversized card (max-height: 88vh, width: 95vw, margin: auto)
+   that overflows its track and paints over the footer. Restore the
+   canonical layout for anything inside .pw-modal. */
+.pw-modal .pw-modal-body,
+.pw-modal [class*="modal-body"] {
+  width: auto !important;
+  max-width: none !important;
+  max-height: none !important;
+  margin: 0 !important;
+  border-radius: 0 !important;
+}
