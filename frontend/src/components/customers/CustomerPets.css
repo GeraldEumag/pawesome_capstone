@@ -1120,8 +1120,11 @@
      unbounded and pushed the footer off-screen). */
   width: 100%;
   max-width: 740px;
+  /* svh (small viewport height) = worst-case visible area with mobile
+     browser chrome expanded — dvh/vh can both exceed it and push the
+     footer under Safari's toolbar. */
   height: 92vh;
-  height: 92dvh;
+  height: 92svh;
   max-height: 860px;
   min-height: 0;
   display: grid;
@@ -1226,7 +1229,7 @@
     width: 100%;
     max-width: none;
     height: 94vh;
-    height: 94dvh;
+    height: 94svh;
     max-height: 900px;
     border-radius: 24px 24px 0 0;
     animation-name: petsModalSheetIn;
@@ -1241,7 +1244,7 @@
 
   .pets-add-modal {
     max-height: calc(100vh - 2rem);
-    max-height: calc(100dvh - 2rem);
+    max-height: calc(100svh - 2rem);
   }
 }
 

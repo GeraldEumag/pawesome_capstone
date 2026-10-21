@@ -25,7 +25,10 @@
      don't drop the width entirely and blow the modal out to full width. */
   width: 96vw;
   max-width: 560px;
+  /* svh caps against the worst-case visible area on mobile browsers —
+     vh/dvh can extend under expanded toolbars and hide modal footers. */
   max-height: 90vh;
+  max-height: 90svh;
   display: flex;
   flex-direction: column;
   background: var(--color-surface-solid, #fff);
