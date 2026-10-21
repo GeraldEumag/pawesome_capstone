@@ -121,6 +121,10 @@
   justify-content: flex-end;
   gap: 0.6rem;
   padding: 0.9rem 1.4rem;
+  /* Lift buttons above the iPhone home indicator / Safari bottom toolbar —
+     footer actions sitting flush at the screen bottom are untappable on
+     notched devices (viewport-fit=cover makes env() non-zero there). */
+  padding-bottom: calc(0.9rem + env(safe-area-inset-bottom, 0px));
   background: var(--color-surface-solid, #fff);
   border-top: 1px solid #eef2f7;
   flex-shrink: 0;
