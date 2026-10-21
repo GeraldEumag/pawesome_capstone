@@ -836,6 +836,44 @@ body {
   display: block;
 }
 
+.landing-about-image .landing-about-arrow {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 44px;
+  height: 44px;
+  display: grid;
+  place-items: center;
+  padding: 0;
+  border: none;
+  border-radius: 50% !important;
+  background: rgba(255, 255, 255, 0.9);
+  color: #ff5f93;
+  font-size: 1rem;
+  cursor: pointer;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.15);
+  transition: background 0.2s ease, color 0.2s ease, transform 0.2s ease;
+}
+
+.landing-about-image .landing-about-arrow-prev { left: 1rem; }
+.landing-about-image .landing-about-arrow-next { right: 1rem; }
+
+.landing-about-image .landing-about-arrow:hover {
+  background: #ff5f93;
+  color: #ffffff;
+}
+
+.landing-about-image .landing-about-arrow:focus-visible {
+  outline: 3px solid rgba(255, 95, 147, 0.45);
+  outline-offset: 2px;
+}
+
+@media (max-width: 640px) {
+  .landing-about-image .landing-about-arrow { width: 36px; height: 36px; font-size: 0.85rem; }
+  .landing-about-image .landing-about-arrow-prev { left: 0.6rem; }
+  .landing-about-image .landing-about-arrow-next { right: 0.6rem; }
+}
+
 .landing-about-est-badge {
   position: absolute;
   bottom: 1.25rem;

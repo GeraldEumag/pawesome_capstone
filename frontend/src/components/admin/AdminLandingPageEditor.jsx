@@ -3,6 +3,7 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faSave, faSpinner, faImage, faPlus, faTrash, faGlobe, faHome, faPaw, faInfoCircle, faRectangleAd, faExternalLinkAlt } from "@fortawesome/free-solid-svg-icons";
 import { fetchAdminLandingPageSections, updateLandingPageSection, uploadLandingPageImage } from "../../api/landingPage";
 import { clearLandingPageCache } from "../../hooks/useLandingPageContent";
+import { DEFAULT_ABOUT_PHOTOS } from "../landing/aboutPhotos";
 import { showSuccess, showError } from "../../utils/alert.jsx";
 import "./AdminLandingPageEditor.css";
 
@@ -186,6 +187,75 @@ const AdminLandingPageEditor = () => {
     );
   };
 
+  const renderPhotosField = (path, maxItems = 6) => {
+    const items = path.split(".").reduce((o, k) => o?.[k], sections) || [];
+    return (
+      <div className="editor-array">
+        <div className="editor-array-header">
+          <strong>Facility photos (up to {maxItems})</strong>
+          <button
+            type="button"
+            className="editor-btn-small"
+            disabled={items.length >= maxItems}
+            onClick={() => handleChange(path, [...items, { image: "", caption: "" }])}
+          >
+            <FontAwesomeIcon icon={faPlus} /> Add photo
+          </button>
+        </div>
+        {items.length === 0 && (
+          <>
+            <p className="editor-helper-text">
+              No custom photos saved. The public page is showing these default photos. Add a photo to replace them.
+            </p>
+            <div className="editor-default-photos">
+              {DEFAULT_ABOUT_PHOTOS.map((photo) => (
+                <figure key={photo.caption} className="editor-default-photo">
+                  <img src={photo.image} alt={photo.caption} />
+                  <figcaption>{photo.caption} (default)</figcaption>
+                </figure>
+              ))}
+            </div>
+          </>
+        )}
+        {items.map((item, idx) => (
+          <div key={idx} className="editor-service-card">
+            <div className="editor-image-row">
+              {item.image ? (
+                <img src={item.image} alt={item.caption || "Facility photo"} className="editor-image-preview editor-photo-preview" />
+              ) : (
+                <span className="editor-facility-default">No photo selected</span>
+              )}
+              <label className="editor-facility-upload">
+                <span>{item.image ? "Change photo" : "Add photo"}</span>
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={(e) => handleImageUpload(e, `${path}.${idx}.image`)}
+                  disabled={uploading}
+                />
+              </label>
+              <button
+                type="button"
+                className="editor-btn-remove"
+                aria-label="Remove photo"
+                onClick={() => handleChange(path, items.filter((_, i) => i !== idx))}
+              >
+                <FontAwesomeIcon icon={faTrash} />
+              </button>
+            </div>
+            <input
+              aria-label="Photo caption"
+              placeholder="Caption (e.g. Cat rooms)"
+              value={item.caption || ""}
+              onChange={(e) => handleChange(`${path}.${idx}.caption`, e.target.value)}
+            />
+          </div>
+        ))}
+        {uploading && <FontAwesomeIcon icon={faSpinner} spin />}
+      </div>
+    );
+  };
+
   const renderArrayField = (label, path, fields, maxItems = Infinity) => {
     const items = path.split(".").reduce((o, k) => o?.[k], sections) || [];
     return (
@@ -330,7 +400,7 @@ const AdminLandingPageEditor = () => {
             {renderInput("Eyebrow (optional)", "about.eyebrow")}
             {renderInput("Section heading", "about.headline")}
             {renderInput("Short description", "about.description", "textarea")}
-            {renderImageField("Facility photo", "about.image")}
+            {renderPhotosField("about.photos", 6)}
             {renderArrayField("Highlights (up to 3)", "about.points", [
               { key: "title", label: "Highlight title", default: "" },
               { key: "description", label: "Short explanation", default: "" },
