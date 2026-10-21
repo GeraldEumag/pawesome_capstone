@@ -1,7 +1,10 @@
 import { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faTimes, faHotel, faScissors, faStethoscope, faCalendarAlt, faClock, faPaw, faPaperPlane, faPlusCircle, faTimesCircle, faUser, faEnvelope, faBed, faHeartbeat, faDog } from "@fortawesome/free-solid-svg-icons";
+import { faTimes, faHotel, faScissors, faStethoscope, faCalendarAlt, faClock, faPaw, faPaperPlane, faPlusCircle, faTimesCircle, faUser, faEnvelope, faBed, faHeartbeat, faDog, faCheckCircle } from "@fortawesome/free-solid-svg-icons";
+import catHotelImg from "../../assets/CATHOTEL.jpg";
+import dogHotelImg from "../../assets/DOGHOTEL.jpg";
+import daycareImg from "../../assets/PETDAYCARE.jpg";
 import "../../styles/bookingModal.css";
 import "./ServiceBookingModal.css";
 import DatePickerInput from "../shared/DatePickerInput";
@@ -19,7 +22,13 @@ const SERVICE_CONFIG = {
   vet: { title: "Book Vet Visit", icon: faStethoscope, accent: "vet-accent" },
 };
 
-const ROOM_TYPES = [{ value: "", label: "Select room type" }, { value: "standard", label: "Standard Room" }, { value: "deluxe", label: "Deluxe Room" }, { value: "suite", label: "Suite" }, { value: "kennel", label: "Kennel" }, { value: "cattery", label: "Cattery" }];
+const ROOM_CATEGORY = {
+  dog_hotel: { img: dogHotelImg, label: "Dog Hotel", badge: "#f97316" },
+  cat_hotel: { img: catHotelImg, label: "Cat Hotel", badge: "#8b5cf6" },
+  daycare: { img: daycareImg, label: "Daycare", badge: "#10b981" },
+  other: { img: null, label: "Other", badge: "#64748b" },
+};
+const getRoomCategory = (room) => ROOM_CATEGORY[room.hotel_category] || ROOM_CATEGORY.other;
 const GROOMING_TYPES = [{ value: "", label: "Select grooming service" }, { value: "full_grooming", label: "Full Grooming" }, { value: "bath_and_brush", label: "Bath and Brush" }, { value: "nail_trim", label: "Nail Trim" }, { value: "ear_cleaning", label: "Ear Cleaning" }, { value: "teeth_cleaning", label: "Teeth Cleaning" }, { value: "spa_treatment", label: "Spa Treatment" }];
 const VET_TYPES = [{ value: "", label: "Select veterinary service" }, { value: "consultation", label: "General Consultation" }, { value: "vaccination", label: "Vaccination" }, { value: "checkup", label: "Routine Checkup" }, { value: "dental", label: "Dental Care" }, { value: "surgery", label: "Surgery" }, { value: "emergency", label: "Emergency Care" }, { value: "diagnostics", label: "Diagnostics / Lab Tests" }];
 const ENERGY_LEVELS = [{ value: "", label: "Select energy level" }, { value: "normal", label: "Normal" }, { value: "lethargic", label: "Lethargic" }, { value: "hyperactive", label: "Hyperactive" }, { value: "fluctuating", label: "Fluctuating" }];
@@ -40,20 +49,9 @@ const generateTimeSlots = () => {
 };
 
 const timeSlots = generateTimeSlots();
-const nextDateOnly = (value) => {
-  const date = parseDateOnly(value);
-  if (!date) return "";
-  date.setDate(date.getDate() + 1);
-  return formatDateOnly(date);
-};
-const getRoomTypeKey = (room) => {
-  const type = String(room?.type || "").toLowerCase();
-  return ROOM_TYPES.find((option) => option.value && type.includes(option.value))?.value || "";
-};
-
 const getInitialForm = (serviceType) => {
   const base = { customer_name: "", customer_email: "", pet_id: "", pet_name: "", pet_type: "" };
-  if (serviceType === "hotel") return { ...base, check_in_date: "", preferred_time: "", room_type: "", special_care_instructions: "" };
+  if (serviceType === "hotel") return { ...base, check_in_date: "", preferred_time: "", room_id: "", special_care_instructions: "" };
   if (serviceType === "grooming") return { ...base, grooming_service_type: "", preferred_date: "", preferred_time: "", special_grooming_instructions: "" };
   return { ...base, veterinary_service_type: "", preferred_date: "", preferred_time: "", main_reason_for_visit: "", flu_symptoms: "", observed_issues: "", appetite_condition: "", energy_level: "", symptom_duration: "", medications_taken: "", recent_exposure: "", urgency_level: "" };
 };
@@ -70,9 +68,9 @@ const ServiceBookingModal = ({ serviceType, onClose }) => {
   const [reviewOpen, setReviewOpen] = useState(false);
   const [availabilityLoading, setAvailabilityLoading] = useState(false);
   const [availableTimeSlots, setAvailableTimeSlots] = useState([]);
-  const [hotelAvailabilityLoading, setHotelAvailabilityLoading] = useState(false);
-  const [availableRoomTypes, setAvailableRoomTypes] = useState(null);
-  const [hotelAvailabilityError, setHotelAvailabilityError] = useState("");
+  const [hotelRoomsLoading, setHotelRoomsLoading] = useState(false);
+  const [hotelRooms, setHotelRooms] = useState(null);
+  const [hotelRoomsError, setHotelRoomsError] = useState("");
   const [showHealthInfo, setShowHealthInfo] = useState(false);
   const [errors, setErrors] = useState({});
   const [pets, setPets] = useState([]);
@@ -174,36 +172,35 @@ const ServiceBookingModal = ({ serviceType, onClose }) => {
   }, [serviceType, formData.preferred_date, formData.grooming_service_type, formData.veterinary_service_type]);
 
   useEffect(() => {
-    if (serviceType !== "hotel" || !formData.check_in_date) {
-      setHotelAvailabilityLoading(false);
-      setAvailableRoomTypes(null);
-      setHotelAvailabilityError("");
+    if (serviceType !== "hotel" || !formData.check_in_date || !formData.pet_type) {
+      setHotelRoomsLoading(false);
+      setHotelRooms(null);
+      setHotelRoomsError("");
       return undefined;
     }
 
-    const checkOutDate = nextDateOnly(formData.check_in_date);
     const controller = new AbortController();
-    setHotelAvailabilityLoading(true);
-    setAvailableRoomTypes(null);
-    setHotelAvailabilityError("");
-    apiRequest(`/availability/boarding?check_in=${encodeURIComponent(formData.check_in_date)}&check_out=${encodeURIComponent(checkOutDate)}`, { signal: controller.signal })
+    const params = new URLSearchParams({ species: formData.pet_type.toLowerCase(), check_in_date: formData.check_in_date, check_out_date: formData.check_in_date });
+    setHotelRoomsLoading(true);
+    setHotelRooms(null);
+    setHotelRoomsError("");
+    apiRequest(`/boarding/rooms/available?${params}`, { signal: controller.signal })
       .then((data) => {
         const rooms = Array.isArray(data.rooms) ? data.rooms : [];
-        const roomTypes = [...new Set(rooms.filter((room) => room.available).map(getRoomTypeKey).filter(Boolean))];
-        setAvailableRoomTypes(roomTypes);
-        setHotelAvailabilityError(roomTypes.length ? "" : "No rooms are available for this stay date.");
-        setFormData((prev) => prev.room_type && !roomTypes.includes(prev.room_type) ? { ...prev, room_type: "" } : prev);
-        setHotelAvailabilityLoading(false);
+        setHotelRooms(rooms);
+        setHotelRoomsError(rooms.length ? "" : data.message || "No rooms are listed for this pet type.");
+        setFormData((prev) => rooms.some((room) => String(room.id) === String(prev.room_id) && room.available) ? prev : { ...prev, room_id: "" });
+        setHotelRoomsLoading(false);
       })
       .catch((error) => {
         if (!controller.signal.aborted) {
-          setAvailableRoomTypes([]);
-          setHotelAvailabilityError(error.message || "Could not confirm room availability.");
-          setHotelAvailabilityLoading(false);
+          setHotelRooms([]);
+          setHotelRoomsError(error.message || "Could not load rooms.");
+          setHotelRoomsLoading(false);
         }
       });
     return () => controller.abort();
-  }, [serviceType, formData.check_in_date]);
+  }, [serviceType, formData.check_in_date, formData.pet_type]);
 
   useEffect(() => {
     const handleEsc = (e) => { if (e.key === "Escape") onClose(); };
@@ -221,6 +218,7 @@ const ServiceBookingModal = ({ serviceType, onClose }) => {
         pet_id: value,
         pet_name: pet?.name || "",
         pet_type: pet?.species || pet?.type || "",
+        room_id: "",
       }));
       setErrors((prev) => ({ ...prev, pet_id: "" }));
       return;
@@ -229,6 +227,7 @@ const ServiceBookingModal = ({ serviceType, onClose }) => {
       ...prev,
       [name]: value,
       ...(name === "grooming_service_type" || name === "veterinary_service_type" ? { preferred_time: "" } : {}),
+      ...(name === "pet_type" ? { room_id: "" } : {}),
     }));
     setErrors((prev) => ({ ...prev, [name]: "" }));
   };
@@ -236,7 +235,7 @@ const ServiceBookingModal = ({ serviceType, onClose }) => {
     setFormData((prev) => ({
       ...prev,
       [name]: formatDateOnly(date),
-      ...(name === "preferred_date" ? { preferred_time: "" } : name === "check_in_date" ? { room_type: "" } : {}),
+      ...(name === "preferred_date" ? { preferred_time: "" } : name === "check_in_date" ? { room_id: "" } : {}),
     }));
     setErrors((prev) => ({ ...prev, [name]: "" }));
   };
@@ -253,10 +252,10 @@ const ServiceBookingModal = ({ serviceType, onClose }) => {
     if (serviceType === "hotel") {
       if (!formData.check_in_date) ne.check_in_date = "Stay date is required.";
       else if (canBook) {
-        if (hotelAvailabilityLoading) ne.check_in_date = "Checking room availability...";
-        else if (!availableRoomTypes?.length) ne.check_in_date = hotelAvailabilityError || "No rooms are available for this stay date.";
+        if (hotelRoomsLoading) ne.check_in_date = "Checking room availability...";
+        else if (!hotelRooms?.some((room) => room.available)) ne.check_in_date = hotelRoomsError || "No rooms are available for this stay date.";
       }
-      if (canBook && formData.room_type && availableRoomTypes && !availableRoomTypes.includes(formData.room_type)) ne.room_type = "Choose an available room type.";
+      if (formData.room_id && !hotelRooms?.some((room) => String(room.id) === String(formData.room_id) && room.available)) ne.room_id = "Choose an available room.";
       if (!formData.preferred_time) ne.preferred_time = "Preferred time is required.";
     }
     if (serviceType === "grooming") {
@@ -279,7 +278,7 @@ const ServiceBookingModal = ({ serviceType, onClose }) => {
   const buildPayload = useCallback(() => {
     const selectedPet = pets.find((p) => String(p.id) === String(formData.pet_id));
     const base = { customer_name: formData.customer_name.trim(), customer_email: formData.customer_email.trim(), pet_id: selectedPet?.id || formData.pet_id, pet_name: selectedPet?.name || "", pet_type: selectedPet?.species || selectedPet?.type || formData.pet_type.trim() };
-    if (serviceType === "hotel") return { ...base, request_type: "hotel", service_name: "Pet Hotel", requested_date: formData.check_in_date, requested_time: formData.preferred_time, check_in_date: formData.check_in_date, check_out_date: formData.check_in_date, room_type: formData.room_type, notes: formData.special_care_instructions || "", special_request: formData.special_care_instructions || "" };
+    if (serviceType === "hotel") return { ...base, request_type: "hotel", service_name: "Pet Hotel", requested_date: formData.check_in_date, requested_time: formData.preferred_time, check_in_date: formData.check_in_date, check_out_date: formData.check_in_date, room_id: formData.room_id, notes: formData.special_care_instructions || "", special_request: formData.special_care_instructions || "" };
     if (serviceType === "grooming") return { ...base, request_type: "grooming", service_name: formData.grooming_service_type, requested_date: formData.preferred_date, requested_time: formData.preferred_time, notes: formData.special_grooming_instructions || "", special_request: formData.special_grooming_instructions || "" };
     const healthParts = [];
     if (formData.flu_symptoms) healthParts.push(`Flu-like symptoms: ${formData.flu_symptoms}`);
@@ -402,6 +401,54 @@ const ServiceBookingModal = ({ serviceType, onClose }) => {
     </>
   );
 
+  const renderRoomPicker = () => {
+    if (!formData.check_in_date) return <span className="svc-field-hint">Pick a stay date to see the rooms available.</span>;
+    if (!formData.pet_type) return <span className="svc-field-hint">Select your pet to see rooms for its type.</span>;
+    if (hotelRoomsLoading) return <span className="svc-availability-status" role="status">Checking room availability...</span>;
+    if (!hotelRooms?.length) return <span className="svc-availability-status" role="alert">{hotelRoomsError || "No rooms are listed for this pet type."}</span>;
+
+    return (
+      <div className="svc-room-options">
+        {hotelRooms.map((room) => {
+          const category = getRoomCategory(room);
+          const isSelected = String(formData.room_id) === String(room.id);
+          const capacity = room.capacity ?? room.max_capacity;
+          return (
+            <button
+              key={room.id}
+              type="button"
+              className={`svc-room-option${room.available ? "" : " unavailable"}${isSelected ? " selected" : ""}`}
+              disabled={!room.available}
+              aria-pressed={isSelected}
+              onClick={() => setFormData((prev) => ({ ...prev, room_id: String(room.id) }))}
+            >
+              <span className="svc-room-option-img">
+                {category.img
+                  ? <img src={category.img} alt={category.label} loading="lazy" />
+                  : <span className="svc-room-option-placeholder"><FontAwesomeIcon icon={faBed} /></span>}
+                <span className="svc-room-option-badge" style={{ background: category.badge }}>{category.label}</span>
+                {!room.available && <span className="svc-room-option-overlay">{room.reason || "Unavailable"}</span>}
+              </span>
+              <span className="svc-room-option-body">
+                <span className="svc-room-option-name">{room.room_name}</span>
+                <span className="svc-room-option-meta">
+                  {capacity ? <span>Capacity {capacity}</span> : null}
+                  {room.available_rooms != null && <span>{room.available_rooms} slot{room.available_rooms !== 1 ? "s" : ""} left</span>}
+                </span>
+                <span className="svc-room-option-foot">
+                  <strong>₱{Number(room.daily_rate).toLocaleString("en-PH")}<small>/day</small></strong>
+                  <span className={`svc-room-option-status${room.available ? " avail" : " unavail"}${isSelected ? " sel" : ""}`}>
+                    {isSelected ? <><FontAwesomeIcon icon={faCheckCircle} /> Selected</> : room.available ? "Available" : room.reason || "Unavailable"}
+                  </span>
+                </span>
+              </span>
+            </button>
+          );
+        })}
+      </div>
+    );
+  };
+
   const renderHotelFields = () => (
     <>
       <div className="svc-form-row">
@@ -424,24 +471,11 @@ const ServiceBookingModal = ({ serviceType, onClose }) => {
           </select>
           {fe("preferred_time")}
         </label>
-        <label className="svc-form-group">
-          <span><FontAwesomeIcon icon={faBed} /> Room Type</span>
-          <select
-            name="room_type"
-            value={formData.room_type}
-            onChange={handleChange}
-            disabled={!formData.check_in_date || hotelAvailabilityLoading || availableRoomTypes === null}
-            className={errors.room_type ? "has-error" : ""}
-          >
-            {ROOM_TYPES.map((option) => {
-              const available = !option.value || availableRoomTypes?.includes(option.value);
-              return <option key={option.value} value={option.value} disabled={!available}>{option.label}{option.value && !available ? " (Unavailable)" : ""}</option>;
-            })}
-          </select>
-          {hotelAvailabilityLoading && <span className="svc-availability-status" role="status">Checking room availability...</span>}
-          {!hotelAvailabilityLoading && hotelAvailabilityError && <span className="svc-availability-status" role="alert">{hotelAvailabilityError}</span>}
-          {fe("room_type")}
-        </label>
+      </div>
+      <div className="svc-form-group full">
+        <span><FontAwesomeIcon icon={faBed} /> Choose a Room</span>
+        {renderRoomPicker()}
+        {fe("room_id")}
       </div>
       <label className="svc-form-group full">
         <span>Special Care Instructions</span>
@@ -572,7 +606,7 @@ const ServiceBookingModal = ({ serviceType, onClose }) => {
           {serviceType === "grooming" && renderGroomingFields()}
           {serviceType === "vet" && renderVetFields()}
           <div className="hbk-foot">
-            <button type="submit" className="svc-submit-btn" disabled={loading || availabilityLoading || hotelAvailabilityLoading}>
+            <button type="submit" className="svc-submit-btn" disabled={loading || availabilityLoading || hotelRoomsLoading}>
               <FontAwesomeIcon icon={faPaperPlane} /> {loading ? "Submitting..." : "Submit Booking Request"}
             </button>
           </div>

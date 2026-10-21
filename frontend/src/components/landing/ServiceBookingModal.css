@@ -210,3 +210,215 @@
     font-size: 1.15rem;
   }
 }
+
+/* Hotel room picker — matches the customer Hotel booking room cards.
+   Class names avoid the "-card"/"-grid" fragments that mobilePolish.css
+   restyles globally; the button rules are shielded from the global pill
+   radius in unifiedReports.css. */
+.svc-room-options {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
+  gap: 0.75rem;
+}
+
+.svc-room-options .svc-room-option {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  min-width: 0;
+  padding: 0;
+  margin: 0;
+  overflow: hidden;
+  text-align: left;
+  font: inherit;
+  color: var(--landing-text, #1f2937);
+  background: #ffffff;
+  border: 2px solid rgba(255, 95, 147, 0.16);
+  border-radius: 16px !important;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.06);
+  cursor: pointer;
+  transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+}
+
+.svc-room-options .svc-room-option:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 26px rgba(255, 95, 147, 0.16);
+}
+
+.svc-room-options .svc-room-option:focus-visible {
+  outline: 3px solid rgba(255, 95, 147, 0.45);
+  outline-offset: 2px;
+}
+
+.svc-room-options .svc-room-option.selected {
+  border-color: #ff5f93;
+  background: #fff1f6;
+  box-shadow: 0 0 0 3px rgba(255, 95, 147, 0.25), 0 12px 26px rgba(255, 95, 147, 0.18);
+}
+
+.svc-room-options .svc-room-option.unavailable {
+  cursor: not-allowed;
+  opacity: 0.7;
+}
+
+.svc-room-option-img {
+  position: relative;
+  display: block;
+  height: 110px;
+  background: linear-gradient(135deg, #fdf2f8, #eef2f7);
+  overflow: hidden;
+}
+
+.svc-room-option-img > img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.svc-room-options .svc-room-option.unavailable .svc-room-option-img > img {
+  filter: grayscale(0.85);
+}
+
+/* Explicit selectors: `.svc-form-group span:first-child` would otherwise
+   restyle the first-child wrapper and placeholder icon. */
+.svc-room-options .svc-room-option > .svc-room-option-img {
+  display: block;
+  gap: 0;
+  color: inherit;
+  font-size: inherit;
+  font-weight: inherit;
+}
+
+.svc-room-options .svc-room-option > .svc-room-option-img > .svc-room-option-placeholder {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  gap: 0;
+  color: #94a3b8;
+  font-size: inherit;
+  font-weight: inherit;
+}
+
+.svc-room-options .svc-room-option > .svc-room-option-img > .svc-room-option-placeholder > svg {
+  color: #94a3b8;
+  font-size: 2rem;
+}
+
+.svc-room-option-badge {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  padding: 0.22rem 0.6rem;
+  border-radius: 999px;
+  color: #ffffff;
+  font-size: 0.68rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.svc-room-option-overlay {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  padding: 0.5rem;
+  background: rgba(15, 23, 42, 0.45);
+  color: #ffffff;
+  font-size: 0.8rem;
+  font-weight: 800;
+  text-align: center;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.svc-room-option-body {
+  display: grid;
+  gap: 0.35rem;
+  padding: 0.75rem 0.85rem 0.85rem;
+  min-width: 0;
+}
+
+.svc-room-option-name,
+.svc-room-options .svc-room-option > .svc-room-option-body > .svc-room-option-name {
+  display: block;
+  gap: 0;
+  font-size: 0.98rem;
+  font-weight: 800;
+  color: #111827;
+  overflow-wrap: anywhere;
+}
+
+.svc-room-option-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  font-size: 0.74rem;
+  font-weight: 700;
+  color: #475569;
+}
+
+.svc-room-option-meta > span {
+  padding: 0.18rem 0.5rem;
+  border-radius: 999px;
+  background: #f1f5f9;
+}
+
+.svc-room-option-foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  margin-top: 0.25rem;
+  padding-top: 0.55rem;
+  border-top: 1px dashed rgba(148, 163, 184, 0.45);
+}
+
+.svc-room-option-foot strong {
+  font-size: 1.05rem;
+  font-weight: 900;
+  color: #ec4899;
+  white-space: nowrap;
+}
+
+.svc-room-option-foot small {
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: #64748b;
+}
+
+.svc-room-option-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.25rem 0.6rem;
+  border-radius: 999px;
+  font-size: 0.72rem;
+  font-weight: 800;
+  white-space: nowrap;
+  background: #f1f5f9;
+  color: #475569;
+}
+
+.svc-room-option-status.avail {
+  background: #dcfce7;
+  color: #15803d;
+}
+
+.svc-room-option-status.unavail {
+  background: #fee2e2;
+  color: #b91c1c;
+}
+
+.svc-room-option-status.sel {
+  background: linear-gradient(135deg, #ff5f93, #ec4899);
+  color: #ffffff;
+}
+
+@media (max-width: 480px) {
+  .svc-room-options { grid-template-columns: 1fr 1fr; gap: 0.5rem; }
+  .svc-room-option-img { height: 88px; }
+  .svc-room-option-body { padding: 0.55rem 0.6rem 0.65rem; }
+}
