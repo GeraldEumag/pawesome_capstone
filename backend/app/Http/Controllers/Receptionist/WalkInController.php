@@ -279,12 +279,12 @@ class WalkInController extends Controller
 
                     // Same-day boarding occupies the room for the whole date
                     $date = $bookingData['request_date'];
-                    $conflict = Boarding::where('hotel_room_id', $room->id)
+                    $blockingCount = Boarding::where('hotel_room_id', $room->id)
                         ->whereNotIn('status', ['rejected', 'cancelled', 'checked_out', 'completed'])
                         ->where('check_in', '<=', $date)
                         ->where('check_out', '>=', $date)
-                        ->exists();
-                    if ($conflict) {
+                        ->count();
+                    if ($blockingCount >= (int) ($room->capacity ?? 1)) {
                         throw new HttpResponseException(response()->json([
                             'success' => false,
                             'message' => 'Selected room is already booked for that date.',

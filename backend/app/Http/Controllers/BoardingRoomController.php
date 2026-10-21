@@ -118,6 +118,8 @@ class BoardingRoomController extends Controller
             $allRooms = collect();
 
             // ── Process boarding_rooms ────────────────────────────────
+            // Unavailable rooms stay in the list (flagged) so customers can
+            // see every room; the frontend renders them as non-clickable.
             foreach ($boardingRooms as $room) {
                 $blockingReservationCount = 0;
 
@@ -132,6 +134,7 @@ class BoardingRoomController extends Controller
 
                 $room->available = $blockingReservationCount < (int) ($room->total_rooms ?? 1);
                 $room->available_rooms = max(0, (int) ($room->total_rooms ?? 1) - $blockingReservationCount);
+                $room->reason = $room->available ? null : 'Fully booked';
 
                 if (empty($room->hotel_category)) {
                     $rt = $room->room_type ?? '';
@@ -144,11 +147,6 @@ class BoardingRoomController extends Controller
                     } else {
                         $room->hotel_category = 'other';
                     }
-                }
-
-                // Do not list rooms that are already booked or occupied
-                if (!$room->available) {
-                    continue;
                 }
 
                 $allRooms->push($room);
@@ -169,18 +167,19 @@ class BoardingRoomController extends Controller
                     'suite'    => 'other',
                 ];
 
-                $hotelQuery = DB::table('hotel_rooms')
-                    ->where('status', 'available');
+                $confinedStatuses = ['approved_for_admission', 'admitted', 'under_observation', 'under_treatment', 'ready_for_discharge'];
 
-                // Exclude rooms with an active medical confinement
+                $hotelQuery = DB::table('hotel_rooms');
+
+                // Flag (don't exclude) rooms with an active medical confinement
                 if (Schema::hasTable('medical_confinements')) {
-                    $confinedStatuses = ['approved_for_admission', 'admitted', 'under_observation', 'under_treatment', 'ready_for_discharge'];
-                    $hotelQuery->whereNotExists(function ($q) use ($confinedStatuses) {
-                        $q->select(DB::raw(1))
-                            ->from('medical_confinements')
-                            ->whereColumn('medical_confinements.room_id', 'hotel_rooms.id')
-                            ->whereIn('medical_confinements.status', $confinedStatuses);
-                    });
+                    $hotelQuery->addSelect('hotel_rooms.*')->selectRaw(
+                        'EXISTS (SELECT 1 FROM medical_confinements mc
+                            WHERE mc.room_id = hotel_rooms.id AND mc.status IN (' .
+                            implode(',', array_fill(0, count($confinedStatuses), '?')) . ')
+                        ) AS is_confined',
+                        $confinedStatuses
+                    );
                 }
 
                 // Only include hotel rooms compatible with this species
@@ -196,6 +195,14 @@ class BoardingRoomController extends Controller
 
                 $hotelRooms = $hotelQuery->orderBy('daily_rate')->get();
 
+                $roomStatusLabels = [
+                    'occupied'    => 'Occupied',
+                    'maintenance' => 'Under maintenance',
+                    'cleaning'    => 'Being cleaned',
+                    'reserved'    => 'Reserved',
+                    'inactive'    => 'Unavailable',
+                ];
+
                 foreach ($hotelRooms as $hr) {
                     $blocking = 0;
                     if (Schema::hasTable('boardings') && Schema::hasColumn('boardings', 'hotel_room_id')) {
@@ -208,11 +215,15 @@ class BoardingRoomController extends Controller
                     }
 
                     $capacity = (int) ($hr->capacity ?? 1);
-                    $available = $blocking < $capacity;
+                    $confined = !empty($hr->is_confined);
+                    $statusOk = $hr->status === 'available';
+                    $available = $statusOk && !$confined && $blocking < $capacity;
 
-                    // Do not list rooms that are already booked or occupied
+                    $reason = null;
                     if (!$available) {
-                        continue;
+                        $reason = !$statusOk
+                            ? ($roomStatusLabels[$hr->status] ?? 'Unavailable')
+                            : ($confined ? 'In medical care' : 'Fully booked');
                     }
 
                     $mapped = (object) [
@@ -224,12 +235,13 @@ class BoardingRoomController extends Controller
                         'allowed_species'   => $hotelRoomSpeciesMap[$hr->type] ?? ['dog', 'cat', 'bird', 'other'],
                         'max_capacity'      => $capacity,
                         'total_rooms'       => $capacity,
-                        'available_rooms'   => max(0, $capacity - $blocking),
+                        'available_rooms'   => $statusOk && !$confined ? max(0, $capacity - $blocking) : 0,
                         'daily_rate'        => (float) $hr->daily_rate,
                         'is_active'         => true,
                         'customer_selectable'=> true,
                         'notes'             => $hr->notes,
                         'available'         => $available,
+                        'reason'            => $reason,
                         '_source'           => 'hotel_rooms',
                     ];
 
@@ -239,7 +251,11 @@ class BoardingRoomController extends Controller
 
             return response()->json([
                 'success' => true,
-                'rooms'   => $allRooms->values(),
+                // Available rooms first (bookable choices up front), then
+                // unavailable rooms so customers still see the full catalog.
+                // PHP sorts are stable — the daily-rate order is preserved
+                // inside each group.
+                'rooms'   => $allRooms->sortBy(fn ($room) => $room->available ? 0 : 1)->values(),
             ]);
         } catch (\Throwable $e) {
             Log::error('Boarding room availability error', [

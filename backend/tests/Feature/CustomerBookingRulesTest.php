@@ -272,7 +272,7 @@ class CustomerBookingRulesTest extends TestCase
         // Pin a boarding-compatible species — a randomized Fish pet would be
         // rejected by pet compatibility before the overlap gate under test.
         $pet = Pet::factory()->create(['customer_id' => $customer->id, 'species' => 'Dog']);
-        $room = HotelRoom::factory()->create(['status' => 'available']);
+        $room = HotelRoom::factory()->create(['status' => 'available', 'capacity' => 1]);
         $booking = [
             'pet_id' => $pet->id,
             'hotel_room_id' => $room->id,
