@@ -7,9 +7,12 @@
   inset: 0;
   z-index: var(--z-modal, 12000);
   display: flex;
-  align-items: center;
-  justify-content: center;
   padding: 1rem;
+  /* The overlay is the scroll container: if a modal ever ends up taller
+     than the visible area (unsupported units, clipped emulation), the
+     whole dialog can be scrolled into view instead of trapping its
+     footer off-screen. */
+  overflow-y: auto;
   background: rgba(15, 23, 42, 0.52);
   backdrop-filter: blur(5px);
   animation: pwModalFadeIn 0.18s ease;
@@ -29,6 +32,11 @@
      vh/dvh can extend under expanded toolbars and hide modal footers. */
   max-height: 90vh;
   max-height: 90svh;
+  /* margin:auto centers the dialog in the flex overlay when it fits and
+     lets it top-align + scroll when it overflows — unlike align-items:
+     center, which clips an overflowing dialog symmetrically and can hide
+     the footer permanently. */
+  margin: auto;
   display: flex;
   flex-direction: column;
   background: var(--color-surface-solid, #fff);
