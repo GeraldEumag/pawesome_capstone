@@ -14,8 +14,9 @@
 - `audit/workflow-map.md` — updated 2026-10-22 with verified chain outcomes
 - `audit/documentation-gaps.md` — updated 2026-10-22
 - `audit/documentation-qa-report.md` — updated 2026-10-22
-- `audit/screenshot-register.md` — updated 2026-10-22 (all 18 captures recorded)
-- `audit/runtime-verification.json`, `audit/runtime-verification-chain.json`, `audit/runtime-verification-chain2.json`, `audit/runtime-verification-chain3.json` — spec results
+- `audit/first-time-user-checklist.md` — human acceptance walkthrough (PENDING — requires a real unfamiliar tester)
+- `audit/screenshot-register.md` — updated 2026-10-22 (all 18 captures recorded; UM-012 recaptured after D-10 spec fix)
+- `audit/runtime-verification.json`, `audit/runtime-verification-chain.json`, `audit/runtime-verification-chain2.json`, `audit/runtime-verification-chain3.json`, `audit/runtime-verification-chain4.json` — spec results
 - `screenshots/` — 18 genuine captures, privacy-reviewed
 
 ## Runtime verification evidence
@@ -25,6 +26,7 @@
 - `e2e/manual-e2e-chain.spec.js` — 3/3 PASS
 - `e2e/manual-e2e-chain2.spec.js` — 6/6 PASS (walk-in→cash, POS sale+void, rejection, consult cycle, create-user, hotel). Reruns reuse prior fixtures; the hotel test falls back to verifying boarding 60's recorded state when room 1 is occupied by it.
 - `e2e/manual-e2e-chain3.spec.js` — 8/8 PASS (auth lifecycle, gates, kiosk, leave/correction rejects, day-offs, supplier/batch, payroll)
+- `e2e/manual-e2e-chain4.spec.js` — 4/4 PASS (seeded-balance leave self-file→approve→deduct, correction approve, day-off full contract incl. clear-all, kiosk PIN→actual barcode punch)
 - Code fixes applied in v0.2: `CreateUser.jsx` (Payroll option removed), `CashierSidebar.jsx` (Dashboard → `/cashier/dashboard`)
 
 ## Maintenance workflow

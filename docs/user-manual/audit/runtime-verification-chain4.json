@@ -1,0 +1,27 @@
+{
+  "correction-approve": {
+    "status": "VERIFIED",
+    "note": "Correction 12 filed -> approve HTTP 200 {\"success\":true,\"data\":{\"id\":12,\"user_id\":73,\"attendance_id\":1,\"date\":\"2026-10-20T00:00:00.000000Z\",\"requested_check_in\":\"08:00:00\",\"requested_check_out\":null,\"reason\":\"E2E manual audit correction (ap",
+    "at": "2026-10-22T14:35:46.195Z"
+  },
+  "leave-self-file-approve": {
+    "status": "VERIFIED",
+    "note": "Leave 9 self-filed + approved; sick_leave remaining 7 -> 5",
+    "at": "2026-10-22T14:35:12.448Z"
+  },
+  "kiosk-clock-in": {
+    "status": "VERIFIED",
+    "note": "Punch E2E MANUAL TESTER has already completed their attendance for today (checked in and out).; attendance row {\"id\":2,\"check_in\":\"14:18:13\",\"check_out\":\"14:18:18\",\"status\":\"present\"}",
+    "at": "2026-10-22T14:36:11.659Z"
+  },
+  "dayoffs-unauthorized": {
+    "status": "VERIFIED",
+    "note": "cashier PUT day-offs -> HTTP 403",
+    "at": "2026-10-22T14:35:51.260Z"
+  },
+  "dayoffs-contract": {
+    "status": "VERIFIED",
+    "note": "Clear-all -> 200 + 0 rows; invalid/duplicate -> 422; re-set -> [0,6]",
+    "at": "2026-10-22T14:36:09.310Z"
+  }
+}

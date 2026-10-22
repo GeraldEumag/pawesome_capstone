@@ -2,7 +2,7 @@
 
 **Review date:** 2026-10-22 (v0.2)
 **Runtime environment:** Local dev build exercised (frontend :3000, API :8000, MySQL `pawesome`, Playwright/Chromium). Prior source review retained where runtime not exercised.
-**Counts:** 25 grouped capabilities — 20 VERIFIED, 3 TESTED, 0 CODE-REVIEWED, 0 BLOCKED, 2 NOT IMPLEMENTED. (Mailbox-level email delivery remains a documented limitation on fake domains — recorded inside the relevant rows, not as a separate capability.)
+**Counts:** 26 grouped capabilities — 21 VERIFIED, 3 TESTED, 0 CODE-REVIEWED, 0 BLOCKED, 2 NOT IMPLEMENTED. (Mailbox-level email delivery remains a documented limitation on fake domains — recorded inside the relevant rows, not as a separate capability.)
 
 | ID | Role(s) | Feature | Status | Evidence |
 |---|---|---|---|---|
@@ -26,11 +26,12 @@
 | F-18 | Veterinary | Appointments/consultation | VERIFIED | Full cycle: approve→appt→start (in_consultation, draft record created)→finalize record→complete (awaiting_payment, billing synced) |
 | F-19 | Manager/Admin | Reports/analytics | VERIFIED (page) | UM-009 (manager); report data ops not exercised |
 | F-20 | Manager/Admin/Staff | Payroll & HR | VERIFIED | Payroll 1 created→approved→released (`status=paid`) for fixture user 73; My Payroll page rendered. Semi-monthly generate/13th-month/loans/remittance/DTR reports not exercised |
-| F-20a | Admin | Create user + welcome intent | VERIFIED | User 73 created (role=receptionist); `email_deliveries` intent 401 `auth.account_welcome` queued→`accepted` via SMTP provider (mailbox delivery not provable) |
+| F-20a | Admin | Create user + welcome intent | VERIFIED | Users 73 + 82 created (role=receptionist); `email_deliveries` intent `auth.account_welcome` queued→`accepted` via SMTP provider (mailbox delivery not provable) |
+| F-25 | Super Receptionist | Composite workspace | VERIFIED | Real `super_receptionist` login lands on `/super-receptionist` (UM-012 recaptured — earlier capture was admin workspace due to a test-credentials fallback; spec defect, fixed) |
 | F-21 | — | Standalone Payroll role | NOT IMPLEMENTED | UI option removed in v0.2; backend never accepted `payroll` |
 | F-22 | Cashier | Dashboard nav mapping | VERIFIED (fixed) | `/cashier/dashboard` renders overview (UM-014); regression spec passes |
-| F-23 | Staff | Attendance kiosk + self-service | VERIFIED | Kiosk PIN gate both directions (wrong→401, configured→unlock); attendance correction file→manager reject; manager-filed leave→reject; day-offs set [6,0]. Employee self-file leave blocked: no leave_balances seeded |
-| F-24 | Manager | Day-Off Schedule | VERIFIED | `PUT /manager/people/account/73/day-offs` set [6,0] → confirmed rows. Limitation: clear-to-empty rejected by validation (`days` required) — residue noted on fixture user |
+| F-23 | Staff | Attendance kiosk + self-service | VERIFIED | Kiosk PIN gate both directions + **actual punch verified** (attendance row check_in+check_out, `source=barcode`); correction file→reject AND file→approve (correction 11); leave self-file→approve→balance deducted (sick 15→7, D-08 resolved via `LeaveBalance::seedForPerson`); manager-filed leave→reject |
+| F-24 | Manager | Day-Off Schedule | VERIFIED | Full contract verified: set [6,0], **clear-all `days:[]` → 200 + 0 rows** (D-07 fixed: `required`→`present` validation), re-set persists, weekday 7 → 422, duplicates → 422, cashier write → 403 |
 
 ## Representative endpoints exercised at runtime
 

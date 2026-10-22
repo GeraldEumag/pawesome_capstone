@@ -1,7 +1,47 @@
 {
+  "chain-target": {
+    "status": "TESTED",
+    "note": "Target service request SR-277 (Basic Bath and Blow Dry Medium Breed, status=pending, payment=unpaid)",
+    "at": "2026-10-22T14:34:30.749Z"
+  },
+  "customer-payment-proof": {
+    "status": "VERIFIED",
+    "note": "Proof uploaded for SR-277 (ref E2E-MANUAL-1792679670750)",
+    "at": "2026-10-22T14:34:41.636Z"
+  },
+  "receptionist-approve": {
+    "status": "VERIFIED",
+    "note": "Receptionist approved SR-277",
+    "at": "2026-10-22T14:34:50.500Z"
+  },
+  "cashier-queue-entry": {
+    "status": "VERIFIED",
+    "note": "Queue entry payable_type=service_request id=277 amount=500",
+    "at": "2026-10-22T14:35:11.724Z"
+  },
+  "cashier-verify": {
+    "status": "VERIFIED",
+    "note": "Cashier verified SR-277; receipt=SR-REC-20261022143513-277",
+    "at": "2026-10-22T14:35:15.879Z"
+  },
+  "customer-paid-state": {
+    "status": "VERIFIED",
+    "note": "SR-277 after verify: payment_status=paid receipt=undefined",
+    "at": "2026-10-22T14:35:17.694Z"
+  },
+  "edge-to-edge-chain": {
+    "status": "VERIFIED",
+    "note": "SR-277: book -> proof -> approve -> queue -> verify -> paid",
+    "at": "2026-10-22T14:35:46.128Z"
+  },
+  "inventory-adjust": {
+    "status": "VERIFIED",
+    "note": "Item 147 stock 50 -> 49 -> 50; two manual_adjustment log entries created",
+    "at": "2026-10-22T14:36:02.455Z"
+  },
   "vet-appointment-chain": {
     "status": "VERIFIED",
-    "note": "Vet SR-275 approved w/ veterinarian 8; appointments page shows the record",
-    "at": "2026-10-22T13:34:58.393Z"
+    "note": "Vet SR-278 approved w/ veterinarian 8; appointments page shows the record",
+    "at": "2026-10-22T14:36:51.403Z"
   }
 }

@@ -9,6 +9,7 @@ const DEFAULT_CREDENTIALS = {
   cashier:      { email: 'cashier@example.com',    password: 'password123' },
   inventory:    { email: 'inventory@example.com',  password: 'Password123!' },
   receptionist: { email: 'receptionist@example.com', password: 'Password123!' },
+  super_receptionist: { email: 'super_receptionist@example.com', password: 'Password123!' },
   customer:     { email: 'customer@example.com',   password: 'Password123!' },
 };
 
@@ -20,6 +21,7 @@ const ROLE_DASHBOARDS = {
   cashier: '/cashier',
   inventory: '/inventory',
   receptionist: '/receptionist',
+  super_receptionist: '/super-receptionist',
   customer: '/customer/services',
 };
 
@@ -36,8 +38,11 @@ const tokenCache = new Map();
  */
 async function loginAs(page, role = 'admin') {
   const roleUpper = role.toUpperCase();
-  const defaults = DEFAULT_CREDENTIALS[role] || DEFAULT_CREDENTIALS.admin;
-  
+  const defaults = DEFAULT_CREDENTIALS[role];
+  if (!defaults) {
+    throw new Error(`No E2E credentials configured for role "${role}" — refusing to fall back to another account`);
+  }
+
   const email = process.env[`E2E_${roleUpper}_EMAIL`] || defaults.email;
   const password = process.env[`E2E_${roleUpper}_PASSWORD`] || defaults.password;
   const apiBase = process.env.VITE_API_BASE_URL || process.env.REACT_APP_API_URL || 'http://127.0.0.1:8000/api';
@@ -80,7 +85,10 @@ async function loginAs(page, role = 'admin') {
  */
 async function apiLogin(request, role = 'admin', { refresh = false } = {}) {
   const roleUpper = role.toUpperCase();
-  const defaults = DEFAULT_CREDENTIALS[role] || DEFAULT_CREDENTIALS.admin;
+  const defaults = DEFAULT_CREDENTIALS[role];
+  if (!defaults) {
+    throw new Error(`No E2E credentials configured for role "${role}" — refusing to fall back to another account`);
+  }
   const email = process.env[`E2E_${roleUpper}_EMAIL`] || defaults.email;
   const password = process.env[`E2E_${roleUpper}_PASSWORD`] || defaults.password;
   const apiBase = process.env.E2E_API_URL || 'http://127.0.0.1:8000/api';
@@ -103,6 +111,9 @@ async function apiLogin(request, role = 'admin', { refresh = false } = {}) {
       throw new Error(`Login failed for ${role}: ${response.status()} ${await response.text()}`);
     }
     data = await response.json();
+    if (data.user && data.user.role !== role) {
+      throw new Error(`E2E role mismatch: requested "${role}" but account ${email} has role "${data.user.role}"`);
+    }
     tokenCache.set(cacheKey, data);
   }
 

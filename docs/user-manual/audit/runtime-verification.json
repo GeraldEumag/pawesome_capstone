@@ -1,10 +1,116 @@
 {
+  "UM-001-login": {
+    "status": "VERIFIED",
+    "note": "Login form rendered at /login",
+    "at": "2026-10-22T14:35:43.146Z"
+  },
+  "UM-013-attendance-kiosk": {
+    "status": "VERIFIED",
+    "note": "Kiosk gate page at /attendance-kiosk",
+    "at": "2026-10-22T14:35:48.392Z"
+  },
+  "customer-sidebar-labels": {
+    "status": "VERIFIED",
+    "note": "sidebar labels: [\"Services\",\"My Pets\",\"My Requests\",\"Notifications\",\"History\",\"Medical\",\"Reports\",\"Profile\"]",
+    "at": "2026-10-22T14:35:49.897Z"
+  },
+  "UM-002-customer-services": {
+    "status": "VERIFIED",
+    "note": "Services workspace rendered",
+    "at": "2026-10-22T14:35:50.036Z"
+  },
+  "UM-003-customer-pets": {
+    "status": "VERIFIED",
+    "note": "My Pets page rendered",
+    "at": "2026-10-22T14:36:09.101Z"
+  },
+  "UM-011-customer-medical": {
+    "status": "TESTED",
+    "note": "Medical (confinements) page rendered; content depends on data",
+    "at": "2026-10-22T14:36:13.055Z"
+  },
+  "customer-my-requests": {
+    "status": "TESTED",
+    "note": "My Requests page loaded",
+    "at": "2026-10-22T14:36:13.733Z"
+  },
   "customer-grooming-booking-e2e": {
     "status": "VERIFIED",
     "note": "Grooming request submitted for pet \"P9PetB944173 — Dog · Beagle (Not provided)\", service \"Basic Bath and Blow Dry Medium Breed — ₱500.00\", date 10/29/2026; review modal confirmed, landed on My Appointments",
-    "at": "2026-10-22T12:40:56.073Z"
+    "at": "2026-10-22T14:36:54.815Z"
+  },
+  "UM-005-receptionist-queue": {
+    "status": "VERIFIED",
+    "note": "Receptionist grooming queue rendered",
+    "at": "2026-10-22T14:37:02.708Z"
+  },
+  "cashier-dashboard-link-fixed": {
+    "status": "VERIFIED",
+    "note": "/cashier/dashboard renders the dashboard overview inside the shell",
+    "at": "2026-10-22T14:37:09.322Z"
+  },
+  "UM-006-payment-approvals": {
+    "status": "VERIFIED",
+    "note": "Payment Approvals tab opened via /cashier/payment-verification",
+    "at": "2026-10-22T14:37:20.374Z"
+  },
+  "cashier-transactions": {
+    "status": "TESTED",
+    "note": "Transactions page loaded",
+    "at": "2026-10-22T14:37:27.827Z"
+  },
+  "UM-007-inventory-stock": {
+    "status": "VERIFIED",
+    "note": "Stock Management rendered",
+    "at": "2026-10-22T14:37:37.264Z"
+  },
+  "UM-008-vet-appointments": {
+    "status": "TESTED",
+    "note": "Appointments list rendered; full consultation flow not exercised in this pass",
+    "at": "2026-10-22T14:37:43.852Z"
+  },
+  "UM-009-manager-reports": {
+    "status": "VERIFIED",
+    "note": "Manager reports page rendered",
+    "at": "2026-10-22T14:38:04.248Z"
+  },
+  "UM-010-admin-manage-users": {
+    "status": "VERIFIED",
+    "note": "Manage Users rendered",
+    "at": "2026-10-22T14:38:11.157Z"
+  },
+  "UM-012-super-receptionist": {
+    "status": "VERIFIED",
+    "note": "Landed at http://127.0.0.1:3000/super-receptionist/bookings/hotel",
+    "at": "2026-10-22T14:38:21.374Z"
   },
   "_console_errors": {
-    "customer-grooming": []
+    "login": [],
+    "kiosk": [],
+    "customer": [],
+    "customer-grooming": [],
+    "receptionist": [],
+    "cashier": [
+      "Cashier dashboard fetch error: Error: Cannot reach the server right now. Please check your connection and try again.\n    at apiRequest (http://127.0.0.1:3000/src/api/client.js:161:13)\n    at async http://127.0.0.1:3000/src/components/cashier/CashierDashboard.jsx:182:22",
+      "Failed to load last cashier info: Error: Cannot reach the server right now. Please check your connection and try again.\n    at apiRequest (http://127.0.0.1:3000/src/api/client.js:161:13)\n    at async Promise.all (index 1)\n    at async http://127.0.0.1:3000/src/components/cashier/CashierDashboard.jsx",
+      "Failed to load last cashier info: Error: Cannot reach the server right now. Please check your connection and try again.\n    at apiRequest (http://127.0.0.1:3000/src/api/client.js:161:13)\n    at async Promise.all (index 0)\n    at async http://127.0.0.1:3000/src/components/cashier/CashierDashboard.jsx",
+      "Failed to load resource: the server responded with a status of 429 (Too Many Requests)",
+      "Failed to load resource: the server responded with a status of 429 (Too Many Requests)",
+      "Load transactions error: Error: Too Many Attempts.\n    at apiRequest (http://127.0.0.1:3000/src/api/client.js:143:21)\n    at async Object.getTransactions (http://127.0.0.1:3000/src/api/pos.js:57:20)\n    at async loadTransactions (http://127.0.0.1:3000/src/components/cashier/CashierTransactions.jsx:8",
+      "Failed to load resource: the server responded with a status of 429 (Too Many Requests)",
+      "Failed to load last cashier info: Error: Too Many Attempts.\n    at apiRequest (http://127.0.0.1:3000/src/api/client.js:143:21)\n    at async Promise.all (index 0)\n    at async http://127.0.0.1:3000/src/components/cashier/CashierDashboard.jsx:205:39",
+      "Failed to load resource: the server responded with a status of 429 (Too Many Requests)",
+      "Failed to load resource: the server responded with a status of 429 (Too Many Requests)",
+      "Failed to load resource: the server responded with a status of 429 (Too Many Requests)",
+      "Load transactions error: Error: Too Many Attempts.\n    at apiRequest (http://127.0.0.1:3000/src/api/client.js:143:21)\n    at async Object.getTransactions (http://127.0.0.1:3000/src/api/pos.js:57:20)\n    at async loadTransactions (http://127.0.0.1:3000/src/components/cashier/CashierTransactions.jsx:8",
+      "Failed to load resource: the server responded with a status of 429 (Too Many Requests)",
+      "Failed to load last cashier info: Error: Too Many Attempts.\n    at apiRequest (http://127.0.0.1:3000/src/api/client.js:143:21)\n    at async Promise.all (index 0)\n    at async http://127.0.0.1:3000/src/components/cashier/CashierDashboard.jsx:205:39",
+      "Failed to load resource: the server responded with a status of 429 (Too Many Requests)"
+    ],
+    "inventory": [],
+    "veterinary": [],
+    "manager": [],
+    "admin": [],
+    "super_receptionist": []
   }
 }

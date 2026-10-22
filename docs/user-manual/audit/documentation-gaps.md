@@ -12,7 +12,8 @@
 | G-06 | Payroll role option inconsistent | **RESOLVED (code fix)** | `CreateUser.jsx` Payroll option removed; backend never accepted it; regression-tested |
 | G-07 | Email/notification delivery unexercised | PARTIAL | Intent→dispatch verified: `email_deliveries` rows reach `provider_status=accepted` via SMTP (`MAIL_MAILER=smtp`, not `log` as previously assumed). Recipient mailbox delivery unprovable (fake domains). Verify/reset completion verified via planted hashed tokens |
 | G-08 | Payment workflow unexercised | **RESOLVED** | Full chain verified: proof→approve→queue→verify→receipt (`SR-REC-20261022124801-271`) |
-| G-09 | Booking/status/inventory/vet source-only | RESOLVED | Chain2 spec verified walk-in→counter cash, POS sale+void, proof rejection, full consult cycle, hotel booking+approve, admin create-user; payroll/leave/day-off edits remain CODE-REVIEWED |
+| G-09 | Booking/status/inventory/vet source-only | RESOLVED | Chain2/3/4 verified walk-in→counter cash, POS sale+void, proof rejection, consult cycle, hotel booking+approve, admin create-user, self-file leave→approve, correction approve, day-off clear-all, kiosk punch; bulk payroll/13th-month/exports/barcode/audit-submission remain unexercised |
+| G-10 | Real mailbox delivery unproven | **BLOCKED** | `MAIL_MAILER=smtp`; intents reach `provider_status=accepted` but test domains are non-routable. Requires a Mailtrap (see `backend/.env.example` commented block) or real-domain inbox owned by an authorized account holder; no credentials available in this environment |
 | G-10 | No DOCX/PDF tooling | OPEN | pandoc/soffice absent; Markdown remains the deliverable |
 | G-11 | Create User Payroll submits rejected role | **RESOLVED** | Same fix as G-06 |
 | G-12 | App/browser/device matrix unestablished | PARTIAL | Desktop Chromium verified; mobile viewports not exercised this pass |

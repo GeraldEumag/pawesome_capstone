@@ -91,18 +91,19 @@ Admin: POST /admin/users -> user 73 (receptionist)
      (SMTP provider accepted; mailbox delivery not provable)           [VERIFIED]
 ```
 
-Payroll runs, leave approve/reject, day-off edits, and remaining HR ops stay CODE-REVIEWED (not exercised).
+Individual payroll lifecycle (create→approve→release), manager leave reject, employee self-file→approve→balance deduct, correction approve/reject, and day-off set/clear-all are VERIFIED via chains 3–4. Still not exercised: bulk semi-monthly payroll, 13th-month, loans, remittance/DTR/report exports, monthly audit submission.
 
 ## G. Customer store checkout — NOT IMPLEMENTED
 
 `CustomerStoreController::checkout()` and order write paths return HTTP 410 (source-confirmed; unchanged).
 
-## H. Attendance kiosk — VERIFIED (gate)
+## H. Attendance kiosk — VERIFIED
 
-`/attendance-kiosk` gate rendered (UM-013). `POST /kiosk/verify` rejects wrong PIN (401) and unlocks with the configured PIN (200). Post-unlock clock-in remains CODE-REVIEWED.
+`/attendance-kiosk` gate rendered (UM-013). `POST /kiosk/verify` rejects wrong PIN (401) and unlocks with the configured PIN (200). Post-unlock punch verified: `POST /kiosk/punch` (`X-Kiosk-Pin` + employee barcode) recorded check_in and check_out for fixture user 73 (`source=barcode`); second-day punches correctly report "already completed".
 
 ## Verification summary
 
-- Executed: 30 Playwright tests across 5 specs — all passing on final runs (`manual-verification-pass`, `manual-e2e-chain`, `manual-e2e-chain2`, `manual-e2e-chain3`, `manual-audit-regressions`).
+- Executed: 34 Playwright tests across 6 specs (`manual-verification-pass`, `manual-e2e-chain`, `manual-e2e-chain2`, `manual-e2e-chain3`, `manual-e2e-chain4`, `manual-audit-regressions`). Latest complete run (2026-10-22): 32 passed + 2 flaky (both passed on retry — a 30 s timeout under parallel load and a transient 401; neither is an app defect), 0 failed.
+- Chain4 (final pass) additionally verified: seeded-balance leave self-file→approve→deduct, correction approve, day-off full contract (incl. clear-all — D-07 fixed `required`→`present`), and kiosk PIN→actual barcode punch (check_in+check_out, `source=barcode`).
 - Screenshots: 18 genuine captures (privacy-reviewed) in `../screenshots/`.
-- Database writes performed: service requests SR-270 (grooming UI), SR-271 (vet), SR-272 (walk-in), SR-273 (reject fixture), SR-274 (consult fixture); payment proofs (2), approvals (5), verifications+receipts (2), rejection (1), inventory logs (2, net-zero), POS sales #68/#69/#73/#74 (all `cancelled` — the API reports "voided"; includes 2 strays from a failed run and 1 rerun sale), boarding 60 (+vax card +vax verify +approve), vet consultation complete on appointment 66 (+finalized record 12), admin-created users 73 and 82 (e2e-manual fixtures), registered e2e users 69–86 (e2e-reg/unverified fixtures, 18 rows across reruns), welcome/boarding/auth outbox intents, manager-filed leave 1–2 (rejected), attendance corrections 3–4 (rejected), day-off rows on user 73 ([6,0] residue — clear-to-empty rejected), supplier 4–5 (deleted), batch 24–25 (disposed), payroll 1 for user 73 (paid). Migrations applied with approval. All on the local dev DB.
+- Database writes performed: service requests SR-270 (grooming UI), SR-271 (vet), SR-272 (walk-in), SR-273 (reject fixture), SR-274 (consult fixture); payment proofs (2), approvals (5), verifications+receipts (2), rejection (1), inventory logs (2, net-zero), POS sales #68/#69/#73/#74 (all `cancelled` — the API reports "voided"; includes 2 strays from a failed run and 1 rerun sale), boarding 60 (+vax card +vax verify +approve), vet consultation complete on appointment 66 (+finalized record 12), admin-created users 73 and 82 (e2e-manual fixtures), registered e2e users 69–86 (e2e-reg/unverified fixtures, 18 rows across reruns), welcome/boarding/auth outbox intents, manager-filed leaves (rejected) + self-filed leaves 6–9 (approved across reruns, balance deducted each time — cumulative used=8 remaining=5), attendance corrections (3–4 rejected, 11–12 approved), day-off rows on user 73 (clear-all verified → re-set [6,0]), leave_balance rows for user 73 (seeded fixture), attendance punch row for user 73 (kiosk barcode), supplier 4–5 (deleted), batch 24–25 (disposed), payroll 1 for user 73 (paid). Migrations applied with approval. All on the local dev DB.

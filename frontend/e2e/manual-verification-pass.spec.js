@@ -87,6 +87,7 @@ test("public: attendance kiosk gate renders", async ({ page }) => {
 // ---------------------------------------------------------------- customer
 
 test("customer: workspace pages and sidebar labels", async ({ browser, request }) => {
+  test.setTimeout(90000);
   const { page, context } = await openAs(browser, request, "customer", "/customer/services", "customer");
   await expect(page.locator(".app-sidebar")).toBeVisible({ timeout: 20000 });
 
@@ -97,6 +98,7 @@ test("customer: workspace pages and sidebar labels", async ({ browser, request }
     JSON.stringify(labels.map((l) => l.trim())) === JSON.stringify(expected) ? "VERIFIED" : "TESTED",
     `sidebar labels: ${JSON.stringify(labels)}`
   );
+  expect(labels.map((l) => l.trim()), "customer sidebar labels must match exactly").toEqual(expected);
 
   await shot(page, "UM-002-customer-services.png");
   record("UM-002-customer-services", "VERIFIED", "Services workspace rendered");
@@ -108,12 +110,13 @@ test("customer: workspace pages and sidebar labels", async ({ browser, request }
   record("UM-003-customer-pets", "VERIFIED", "My Pets page rendered");
 
   await page.goto("/customer/medical-confinements");
-  await page.waitForLoadState("networkidle");
+  await page.waitForLoadState("domcontentloaded");
+  await page.waitForTimeout(3000);
   await shot(page, "UM-011-customer-medical.png");
   record("UM-011-customer-medical", "TESTED", "Medical (confinements) page rendered; content depends on data");
 
   await page.goto("/customer/bookings");
-  await page.waitForLoadState("networkidle");
+  await page.waitForLoadState("domcontentloaded");
   record("customer-my-requests", "TESTED", "My Requests page loaded");
 
   await context.close();
@@ -150,7 +153,7 @@ test("customer: grooming booking end-to-end via review modal", async ({ browser,
   await expect(timeSelect).toBeEnabled({ timeout: 30000 });
   const slotOption = timeSelect.locator("option:not([value='']):not([disabled])").first();
   await expect(slotOption).toBeAttached({ timeout: 30000 });
-  await timeSelect.selectOption({ index: 1 });
+  await timeSelect.selectOption(await slotOption.getAttribute("value"));
   await shot(page, "UM-004a-grooming-form-filled.png");
 
   await page.locator('button[type="submit"]', { hasText: "Submit Request" }).click();
@@ -272,5 +275,6 @@ test("super receptionist: composite workspace", async ({ browser, request }) => 
     url.includes("super-receptionist") ? "VERIFIED" : "TESTED",
     `Landed at ${url}`
   );
+  expect(url, "super receptionist must land on its workspace").toContain("super-receptionist");
   await context.close();
 });

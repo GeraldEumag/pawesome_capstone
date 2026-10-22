@@ -385,8 +385,8 @@ Sidebar (verified): **Dashboard**, **Reports**, **Staff Management**, **Employee
 ### 9.2 Attendance, day-offs, leave — VERIFIED (review paths)
 
 - **Attendance** — staff attendance review; pairs with the employee kiosk (§12.2) and My Attendance self-service.
-- **Day-Off Schedule** — per-employee recurring day-off calendar (`employee_day_offs`); feeds attendance expectations, leave validation, and payroll day counting. Runtime-verified: setting weekday off-days via the endpoint persisted rows (note: clearing all days is rejected by validation — at least one field change per save).
-- **Leave** — review/approve staff leave requests; employees file via **My Leave** (requires a leave balance row). Runtime-verified: a manager-filed leave for a fixture employee was rejected with remarks. Employee self-filing needs a seeded `leave_balances` row — filing without one returns "Insufficient leave balance".
+- **Day-Off Schedule** — per-employee recurring day-off calendar (`employee_day_offs`); feeds attendance expectations, leave validation, and payroll day counting. Runtime-verified: set, clear-all (`days:[]`), and re-set all persist correctly; invalid weekdays and duplicates return 422; non-manager roles get 403.
+- **Leave** — review/approve staff leave requests; employees file via **My Leave** (requires a leave balance row — managers seed balances via `POST /manager/leave-balances/seed` at onboarding). Runtime-verified: employee self-file → manager approve deducts the balance (15→7 on the fixture), and manager-file → reject also works. Filing with no balance row returns "Insufficient leave balance".
 
 ### 9.3 Payroll and HR — VERIFIED (single-employee lifecycle)
 
@@ -428,11 +428,11 @@ Procedures mirror §5 (front desk), §6 (cashier), and §7 (inventory) with the 
 
 ### 12.1 Self-service pages — VERIFIED (exercised)
 
-Staff roles expose **My Payroll** (own payroll records/payslip view; `GET /api/my-payroll` is authenticated and caller-scoped), plus role-appropriate **My Attendance** (with attendance-correction requests) and **My Leave**. Review only your own records; do not publish payslip details. Runtime-verified 2026-10-22: a fixture employee filed an attendance correction (manager rejected it — the submission→review chain works), and a manager filed + rejected a leave for a fixture employee. Employee self-filing leave requires a seeded leave balance.
+Staff roles expose **My Payroll** (own payroll records/payslip view; `GET /api/my-payroll` is authenticated and caller-scoped), plus role-appropriate **My Attendance** (with attendance-correction requests) and **My Leave**. Review only your own records; do not publish payslip details. Runtime-verified 2026-10-22: a fixture employee filed an attendance correction and the manager reviewed it (both reject and approve paths work), and leave self-file → manager approve deducted the seeded balance.
 
-### 12.2 Attendance kiosk — VERIFIED (gate both directions) / post-unlock clock-in CODE-REVIEWED
+### 12.2 Attendance kiosk — VERIFIED (gate + actual punch)
 
-`/attendance-kiosk` is a PIN-gated employee attendance kiosk (Figure UM-013). Barcode and fingerprint kiosk variants exist under manager components. Runtime-verified 2026-10-22: the verify endpoint rejects an incorrect PIN (HTTP 401) and unlocks on the configured PIN (HTTP 200). A post-unlock clock-in was not exercised — **CODE-REVIEWED** beyond the gate.
+`/attendance-kiosk` is a PIN-gated employee attendance kiosk (Figure UM-013). Barcode and fingerprint kiosk variants exist under manager components. Runtime-verified 2026-10-22: the verify endpoint rejects an incorrect PIN (HTTP 401) and unlocks on the configured PIN (HTTP 200); a post-unlock barcode punch (`POST /api/kiosk/punch`, `X-Kiosk-Pin` header + employee number) wrote a real attendance row for a fixture employee (`check_in`/`check_out`, `source=barcode`), and a completed day correctly rejects further punches.
 
 ## 13. Payroll role scope
 
@@ -471,11 +471,11 @@ Also verified on the same date via `e2e/manual-e2e-chain3.spec.js` (results: `au
 - **Auth lifecycle:** register → unverified login works but protected booking POST returns 403 → email-verify → forgot/reset → login with new password (verify/reset completion via planted hashed tokens; intents reached SMTP `accepted` — mailbox delivery unprovable).
 - **Gates:** inactive fixture user login → 403; customer→`/admin/users` → 403; cashier→`/manager/payroll` → 403.
 - **Kiosk:** wrong PIN → 401; configured PIN → unlock.
-- **HR:** manager-filed leave → reject; attendance correction file → manager reject; day-offs set [6,0] for a fixture user.
+- **HR:** leave self-file → approve → balance deducted (needs a seeded `leave_balances` row — `LeaveBalance::seedForPerson`); correction file → approve *and* → reject; day-offs set/clear/re-set; kiosk PIN → actual barcode punch.
 - **Inventory ops:** supplier create→delete; batch receive→dispose on test item (stock restored).
 - **Payroll:** fixture-employee payroll created → approved → released (`status=paid`).
 
-**Documented but not executed:** bulk semi-monthly payroll generation, 13th-month accrual, salary loans, remittance/DTR/payroll report exports, leave *approval* (reject path verified), attendance-correction *approval*, kiosk post-unlock clock-in, barcode generation, monthly audit submission, employee self-filing of leave (needs a seeded `leave_balances` row). These remain implementation maps — see `audit/feature-verification-matrix.md` for per-feature status.
+**Documented but not executed:** bulk semi-monthly payroll generation, 13th-month accrual, salary loans, remittance/DTR/payroll report exports, barcode generation, monthly audit submission, settings changes. These remain implementation maps — see `audit/feature-verification-matrix.md` for per-feature status.
 
 ## 15. Troubleshooting
 
@@ -544,8 +544,8 @@ All captures are genuine, taken 2026-10-22 from the running local build (`docs/u
 **Known limitations (v0.2):**
 
 - Verification ran against the **local dev build** with seeded/test data — production behavior, data volumes, and performance are unverified.
-- State-changing flows verified: POS sale+void, walk-in→counter cash, hotel booking (vax card + approve), full consultation cycle, proof rejection, single-employee payroll lifecycle, admin user creation, register/verify/reset, kiosk PIN gate, leave/correction rejects, day-offs set, supplier/batch roundtrips.
-- Still not exercised: bulk semi-monthly payroll generation, 13th-month accrual, salary loans, remittance/DTR/payroll report exports, leave *approval*, correction *approval*, kiosk post-unlock clock-in, barcode generation, monthly audit submission, employee self-filed leave (needs seeded `leave_balances`), settings changes.
+- State-changing flows verified: POS sale+void, walk-in→counter cash, hotel booking (vax card + approve), full consultation cycle, proof rejection, single-employee payroll lifecycle, admin user creation, register/verify/reset, kiosk PIN gate + actual barcode punch, leave self-file→approve→deduct + reject, correction approve + reject, day-offs set/clear/re-set, supplier/batch roundtrips.
+- Still not exercised: bulk semi-monthly payroll generation, 13th-month accrual, salary loans, remittance/DTR/payroll report exports, barcode generation, monthly audit submission, settings changes.
 - Email recipient delivery is not provable in this environment (intents dispatched to SMTP with `provider_status=accepted`; mailbox delivery unverified — test addresses use non-routable `example.test` domains).
 - The dev DB was behind on migrations during the pass (resolved with an approved `php artisan migrate`); keep environments migrated.
 - Institutional template, supported browser matrix (desktop Chromium only), and support contact remain unconfirmed.

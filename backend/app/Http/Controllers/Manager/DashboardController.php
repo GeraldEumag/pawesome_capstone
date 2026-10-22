@@ -175,7 +175,7 @@ class DashboardController extends Controller
     public function updateDayOffs(Request $request, string $kind, int $id)
     {
         $data = $request->validate([
-            'days'   => 'required|array|max:6',
+            'days'   => 'present|array|max:6',
             'days.*' => 'integer|min:0|max:6|distinct',
         ]);
 

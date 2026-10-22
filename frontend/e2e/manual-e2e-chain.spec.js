@@ -144,6 +144,10 @@ test("edge-to-edge: grooming request -> proof -> approve -> verify -> receipt", 
     srAfter && (srAfter.payment_status === "paid" || srAfter.receipt_number) ? "VERIFIED" : "TESTED",
     `SR-${sr.id} after verify: payment_status=${srAfter?.payment_status} receipt=${srAfter?.receipt_number}`
   );
+  expect(
+    srAfter && (srAfter.payment_status === "paid" || srAfter.receipt_number),
+    "verified payment must settle the request"
+  ).toBeTruthy();
 
   const { page: custPage, context: custCtx } = await openAs(browser, customer, "/customer/bookings");
   await custPage.waitForLoadState("networkidle");
@@ -183,6 +187,7 @@ test("inventory: reversible stock adjustment logged in history", async ({ reques
     after === before ? "VERIFIED" : "TESTED",
     `Item ${itemId} stock ${before} -> ${before - 1} -> ${after}; two manual_adjustment log entries created`
   );
+  expect(after === before, "inventory adjust pair must restore stock").toBeTruthy();
 });
 
 test("veterinary: request -> receptionist approve -> appointment visible", async ({ browser, request }) => {

@@ -17,7 +17,7 @@
 | UM-009 | `UM-009-manager-reports.png` | Manager | Reports | 2026-10-22 | OK — aggregate UI |
 | UM-010 | `UM-010-admin-manage-users.png` | Admin | Manage Users | 2026-10-22 | OK — directory stats/headers; no PII rows in frame |
 | UM-011 | `UM-011-customer-medical.png` | Customer | Medical (confinements) | 2026-10-22 | OK — test data |
-| UM-012 | `UM-012-super-receptionist.png` | Super Recep | Workspace landing | 2026-10-22 | OK — test data |
+| UM-012 | `UM-012-super-receptionist.png` | Super Recep | Workspace landing (recaptured — earlier version showed the admin workspace due to a credential-fallback spec defect, D-10) | 2026-10-22 | OK — test data |
 | UM-013 | `UM-013-attendance-kiosk.png` | Public | Attendance kiosk gate | 2026-10-22 | OK — no data |
 | UM-014 | `UM-014-cashier-dashboard.png` | Cashier | Dashboard overview (post-fix) | 2026-10-22 | OK — test data |
 | UM-015 | `UM-015-customer-request-paid.png` | Customer | Requests list | 2026-10-22 | OK — test data |
