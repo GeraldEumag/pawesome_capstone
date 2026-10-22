@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
   faInfoCircle,
@@ -14,14 +14,64 @@ import {
   faClipboardCheck,
   faArrowRight,
   faPaw,
+  faSpinner,
 } from "@fortawesome/free-solid-svg-icons";
 import WalkInBookingModal from "./modals/WalkInBookingModal";
+import { apiRequest } from "../../api/client";
 import "./ReceptionistWalkIns.css";
+
+const TYPE_META = {
+  hotel: { icon: faHotel, label: "Hotel" },
+  veterinary: { icon: faStethoscope, label: "Vet" },
+  grooming: { icon: faCut, label: "Grooming" },
+};
+
+const formatStatus = (s) => String(s || "pending").replace(/_/g, " ");
+
+const formatPeso = (v) =>
+  new Intl.NumberFormat("en-PH", { style: "currency", currency: "PHP" }).format(Number(v || 0));
+
+const formatDate = (value) => {
+  if (!value) return "—";
+  const d = new Date(String(value).slice(0, 10) + "T00:00:00");
+  return Number.isNaN(d.getTime())
+    ? value
+    : d.toLocaleDateString("en-PH", { month: "short", day: "numeric", year: "numeric" });
+};
+
+const formatTime = (value) => {
+  if (!value) return "";
+  const [h, m] = String(value).split(":");
+  if (h == null || m == null) return value;
+  const hour = Number(h);
+  const ampm = hour >= 12 ? "PM" : "AM";
+  return `${hour % 12 || 12}:${m.slice(0, 2)} ${ampm}`;
+};
 
 const ReceptionistWalkIns = () => {
   const [showModal, setShowModal] = useState(false);
   const [selectedServiceType, setSelectedServiceType] = useState(null);
   const [successMessage, setSuccessMessage] = useState("");
+  const [recentWalkIns, setRecentWalkIns] = useState([]);
+  const [recentLoading, setRecentLoading] = useState(true);
+  const [recentError, setRecentError] = useState("");
+
+  const fetchRecent = useCallback(async () => {
+    try {
+      setRecentError("");
+      const res = await apiRequest("/receptionist/walk-ins");
+      setRecentWalkIns(Array.isArray(res?.data) ? res.data : []);
+    } catch (e) {
+      setRecentWalkIns([]);
+      setRecentError(e.message || "Failed to load recent walk-ins.");
+    } finally {
+      setRecentLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchRecent();
+  }, [fetchRecent]);
 
   const handleNewWalkIn = (serviceType) => {
     setSelectedServiceType(serviceType);
@@ -32,6 +82,7 @@ const ReceptionistWalkIns = () => {
     setSuccessMessage(message);
     setShowModal(false);
     setSelectedServiceType(null);
+    fetchRecent();
 
     // Clear success message after 5 seconds
     setTimeout(() => {
@@ -195,18 +246,65 @@ const ReceptionistWalkIns = () => {
             <FontAwesomeIcon icon={faHistory} className="recent-icon" />
             <div>
               <h2 className="recent-title">Recent Walk-in Bookings</h2>
-              <p className="recent-sub">Bookings created today will appear here</p>
+              <p className="recent-sub">Latest walk-in bookings across all services</p>
             </div>
           </div>
         </div>
 
-        <div className="recent-empty">
-          <div className="empty-icon-wrap">
-            <FontAwesomeIcon icon={faPaw} />
+        {recentLoading ? (
+          <div className="recent-empty">
+            <FontAwesomeIcon icon={faSpinner} spin className="recent-loading-icon" />
+            <p className="empty-heading">Loading walk-ins…</p>
           </div>
-          <p className="empty-heading">No walk-ins yet today</p>
-          <span className="empty-hint">Use the service cards above to create a new walk-in booking.</span>
-        </div>
+        ) : recentError ? (
+          <div className="recent-empty">
+            <div className="empty-icon-wrap">
+              <FontAwesomeIcon icon={faInfoCircle} />
+            </div>
+            <p className="empty-heading">Couldn't load walk-ins</p>
+            <span className="empty-hint">{recentError}</span>
+          </div>
+        ) : recentWalkIns.length === 0 ? (
+          <div className="recent-empty">
+            <div className="empty-icon-wrap">
+              <FontAwesomeIcon icon={faPaw} />
+            </div>
+            <p className="empty-heading">No walk-ins yet</p>
+            <span className="empty-hint">Use the service cards above to create a new walk-in booking.</span>
+          </div>
+        ) : (
+          <ul className="recent-list">
+            {recentWalkIns.map((item) => {
+              const meta = TYPE_META[item.request_type] || TYPE_META.grooming;
+              return (
+                <li key={item.id} className="recent-item">
+                  <div className={`recent-type-icon type-${item.request_type}`}>
+                    <FontAwesomeIcon icon={meta.icon} />
+                  </div>
+                  <div className="recent-item-main">
+                    <div className="recent-item-top">
+                      <strong>{item.pet_name || "Pet"}</strong>
+                      <span className="recent-owner">— {item.customer_name || "Walk-in"}</span>
+                    </div>
+                    <span className="recent-service">
+                      {meta.label} · {item.service_name || "Service"}
+                    </span>
+                  </div>
+                  <div className="recent-item-when">
+                    <span className="recent-date">{formatDate(item.request_date)}</span>
+                    {item.request_time && <span className="recent-time">{formatTime(item.request_time)}</span>}
+                  </div>
+                  <div className="recent-item-side">
+                    <span className={`recent-badge status-${String(item.status || "pending").toLowerCase()}`}>
+                      {formatStatus(item.status)}
+                    </span>
+                    {item.price > 0 && <span className="recent-price">{formatPeso(item.price)}</span>}
+                  </div>
+                </li>
+              );
+            })}
+          </ul>
+        )}
       </div>
 
       {/* Walk-in Booking Modal */}

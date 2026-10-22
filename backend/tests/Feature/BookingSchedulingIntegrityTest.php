@@ -232,4 +232,47 @@ class BookingSchedulingIntegrityTest extends TestCase
             'appointment_time' => '10:00',
         ]);
     }
+
+    public function test_walk_in_index_returns_recent_walk_in_requests_only(): void
+    {
+        $receptionist = $this->userWithToken('receptionist');
+        [$user, $customer, $pet] = $this->customerAndPet();
+        $date = Carbon::today('Asia/Manila')->toDateString();
+
+        ServiceRequest::create([
+            'customer_id' => $user->id,
+            'pet_id' => $pet->id,
+            'customer_name' => $customer->name,
+            'customer_email' => $customer->email,
+            'pet_name' => $pet->name,
+            'request_type' => 'grooming',
+            'service_name' => 'Bath and Brush',
+            'request_date' => $date,
+            'status' => 'pending',
+            'payment_status' => 'pending',
+            'booking_channel' => 'walk_in',
+        ]);
+        ServiceRequest::create([
+            'customer_id' => $user->id,
+            'pet_id' => $pet->id,
+            'customer_name' => $customer->name,
+            'customer_email' => $customer->email,
+            'pet_name' => $pet->name,
+            'request_type' => 'grooming',
+            'service_name' => 'Nail Trim',
+            'request_date' => $date,
+            'status' => 'pending',
+            'payment_status' => 'pending',
+            'booking_channel' => 'online',
+        ]);
+
+        $rows = $this->withHeaders($this->authHeader($receptionist))
+            ->getJson('/api/receptionist/walk-ins')
+            ->assertOk()
+            ->json('data');
+
+        $this->assertCount(1, $rows);
+        $this->assertSame('Bath and Brush', $rows[0]['service_name']);
+        $this->assertSame($pet->name, $rows[0]['pet_name']);
+    }
 }

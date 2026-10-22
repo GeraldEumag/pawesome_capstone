@@ -28,6 +28,39 @@ use Illuminate\Support\Str;
 class WalkInController extends Controller
 {
     /**
+     * Recent walk-in bookings (latest first) for the Walk-in Desk list.
+     * Optional ?days=N looks back N days from today (default 14).
+     */
+    public function index(Request $request): JsonResponse
+    {
+        $days = max(1, min(90, (int) $request->query('days', 14)));
+
+        $rows = ServiceRequest::where('booking_channel', \App\Support\BookingChannel::WALK_IN)
+            ->whereDate('created_at', '>=', now()->subDays($days)->toDateString())
+            ->orderByDesc('created_at')
+            ->limit(50)
+            ->get()
+            ->map(fn (ServiceRequest $sr) => [
+                'id' => $sr->id,
+                'request_type' => $sr->request_type,
+                'customer_name' => $sr->customer_name,
+                'pet_name' => $sr->pet_name,
+                'service_name' => $sr->service_name,
+                'request_date' => $sr->request_date,
+                'request_time' => $sr->request_time,
+                'status' => $sr->status,
+                'payment_status' => $sr->payment_status,
+                'price' => $sr->price,
+                'created_at' => $sr->created_at,
+            ]);
+
+        return response()->json([
+            'success' => true,
+            'data' => $rows->values(),
+        ]);
+    }
+
+    /**
      * Create a walk-in booking for existing or new customers
      */
     public function store(Request $request): JsonResponse
@@ -246,12 +279,12 @@ class WalkInController extends Controller
 
                     // Same-day boarding occupies the room for the whole date
                     $date = $bookingData['request_date'];
-                    $conflict = Boarding::where('hotel_room_id', $room->id)
+                    $blockingCount = Boarding::where('hotel_room_id', $room->id)
                         ->whereNotIn('status', ['rejected', 'cancelled', 'checked_out', 'completed'])
                         ->where('check_in', '<=', $date)
                         ->where('check_out', '>=', $date)
-                        ->exists();
-                    if ($conflict) {
+                        ->count();
+                    if ($blockingCount >= (int) ($room->capacity ?? 1)) {
                         throw new HttpResponseException(response()->json([
                             'success' => false,
                             'message' => 'Selected room is already booked for that date.',

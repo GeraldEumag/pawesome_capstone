@@ -567,13 +567,13 @@ class BoardingController extends Controller
                     throw new \Exception('Selected room is no longer available.');
                 }
 
-                $conflict = Boarding::where('hotel_room_id', $lockedRoom->id)
+                $blockingCount = Boarding::where('hotel_room_id', $lockedRoom->id)
                     ->whereNotIn('status', ['rejected', 'cancelled', 'checked_out', 'completed'])
                     ->where('check_in', '<=', $checkOutDate)
                     ->where('check_out', '>=', $request->check_in_date)
-                    ->exists();
+                    ->count();
 
-                if ($conflict) {
+                if ($blockingCount >= (int) ($lockedRoom->capacity ?? 1)) {
                     throw new \Exception('Selected room is already booked for the selected date.');
                 }
 
@@ -1008,19 +1008,20 @@ class BoardingController extends Controller
 
             // Enhanced double booking prevention - explicit database conflict check
             // Inclusive overlap: a stay occupies every date check_in..check_out
-            $conflictingBoarding = Boarding::where('hotel_room_id', $room->id)
+            // Rooms may have capacity > 1, so only full occupancy conflicts.
+            $conflictQuery = Boarding::where('hotel_room_id', $room->id)
                 ->whereIn('status', ['pending', 'approved', 'scheduled', 'confirmed', 'checked_in', 'in_care', 'in_stay', 'ready_for_pickup'])
                 ->where('id', '!=', $boarding->id)
                 ->where('check_in', '<=', $checkOut)
                 ->where('check_out', '>=', $checkIn)
-                ->lockForUpdate()
-                ->first();
+                ->lockForUpdate();
 
-            if ($conflictingBoarding) {
+            if ($conflictQuery->count() >= (int) ($room->capacity ?? 1)) {
+                $conflictingBoarding = (clone $conflictQuery)->first();
                 return [
                     'error' => 'This room/kennel is already booked for the selected date range.',
                     'status' => 422,
-                    'conflict_with' => $conflictingBoarding->id,
+                    'conflict_with' => $conflictingBoarding?->id,
                 ];
             }
 

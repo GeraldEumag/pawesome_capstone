@@ -82,7 +82,7 @@ class PetController extends Controller
             'age' => 'nullable|integer|min:0',
             'gender' => 'nullable|string|max:50',
             'notes' => 'nullable|string',
-            'image' => 'nullable|image|mimes:jpg,jpeg,png,webp|max:5120',
+            'image' => 'nullable|image|mimes:jpg,jpeg,png,webp|max:10240',
         ]);
 
         $user = $request->user();
@@ -147,7 +147,7 @@ class PetController extends Controller
             'age' => 'nullable|integer|min:0',
             'gender' => 'nullable|string|max:50',
             'notes' => 'nullable|string',
-            'image' => 'nullable|image|mimes:jpg,jpeg,png,webp|max:5120',
+            'image' => 'nullable|image|mimes:jpg,jpeg,png,webp|max:10240',
         ]);
 
         $pet = Pet::findOrFail($id);

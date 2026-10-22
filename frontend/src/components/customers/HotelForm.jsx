@@ -573,18 +573,20 @@ const HotelForm = () => {
               {/* Availability Display */}
               {boardingAvailability && (
                 <div className="hotel-availability">
-                  <h4>Available Rooms for Your Stay</h4>
+                  <h4>Rooms for Your Stay</h4>
                   {boardingAvailability.rooms && boardingAvailability.rooms.length > 0 ? (
                     <div className="rooms-grid">
                       {boardingAvailability.rooms.map((room) => {
                         const cfg = getRoomConfig(room);
+                        const isSelected = selectedRoom?.id === room.id;
                         return (
                           <button
                             key={room.id}
                             type="button"
-                            className={`room-card ${!room.available ? 'unavailable' : ''} ${selectedRoom?.id === room.id ? 'selected' : ''}`}
+                            className={`room-card ${!room.available ? 'unavailable' : ''} ${isSelected ? 'selected' : ''}`}
                             onClick={() => room.available && handleRoomSelect(room)}
                             disabled={!room.available}
+                            aria-pressed={isSelected}
                           >
                             <div className="room-card-img-wrap">
                               {cfg.img
@@ -603,14 +605,20 @@ const HotelForm = () => {
                                 {room.capacity || room.max_capacity ? (
                                   <span className="room-capacity">👥 Capacity: {room.capacity ?? room.max_capacity}</span>
                                 ) : null}
-                                <span className="room-rate">₱{Number(room.daily_rate).toLocaleString('en-PH')}/day</span>
                                 {room.available_rooms != null && (
-                                  <span className="room-slots">{room.available_rooms} slot{room.available_rooms !== 1 ? 's' : ''} left</span>
+                                  <span className={`room-slots ${room.available_rooms <= 1 ? 'low' : ''}`}>
+                                    {room.available_rooms} slot{room.available_rooms !== 1 ? 's' : ''} left
+                                  </span>
                                 )}
                               </div>
-                              <span className={`room-status ${room.available ? 'avail' : 'unavail'}`}>
-                                {room.available ? '✓ Available' : room.reason || 'Not Available'}
-                              </span>
+                              <div className="room-card-foot">
+                                <span className="room-rate">₱{Number(room.daily_rate).toLocaleString('en-PH')}<small>/day</small></span>
+                                <span className={`room-status ${room.available ? 'avail' : 'unavail'} ${isSelected ? 'sel' : ''}`}>
+                                  {isSelected
+                                    ? <><FontAwesomeIcon icon={faCheckCircle} /> Selected</>
+                                    : room.available ? 'Available' : room.reason || 'Not Available'}
+                                </span>
+                              </div>
                             </div>
                           </button>
                         );

@@ -554,6 +554,7 @@ Route::middleware(['auth.api', 'throttle:api', 'role:receptionist'])->prefix('re
     Route::post('medical-confinements/{id}/release', [MedicalConfinementController::class, 'release']);
     
     // Walk-in Booking Routes
+    Route::get('walk-ins', [ReceptionistWalkInController::class, 'index']);
     Route::post('walk-ins', [ReceptionistWalkInController::class, 'store']);
     Route::get('customers/search', [ReceptionistWalkInController::class, 'searchCustomers']);
 });

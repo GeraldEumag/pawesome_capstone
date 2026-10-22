@@ -198,6 +198,38 @@
   background: #ffffff;
 }
 
+/* mobilePolish.css sets a global img { height: auto } with high specificity */
+.editor-photo-preview {
+  width: 140px;
+  height: 92px !important;
+  object-fit: cover;
+}
+
+.editor-default-photos {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  gap: 0.6rem;
+}
+
+.editor-default-photo {
+  margin: 0;
+  display: grid;
+  gap: 0.35rem;
+}
+
+.editor-default-photo img {
+  width: 100%;
+  height: 92px !important;
+  object-fit: cover;
+  border-radius: 10px;
+  border: 1px solid rgba(255, 95, 147, 0.15);
+}
+
+.editor-default-photo figcaption {
+  font-size: 0.78rem;
+  color: #6b7280;
+}
+
 .editor-array {
   display: grid;
   gap: 0.6rem;

@@ -19,7 +19,15 @@ export const useBookingViewParams = ({ defaultRange = "today" } = {}) => {
       setSearchParams(
         (current) => {
           const next = new URLSearchParams(current);
-          Object.entries({ ...DEFAULTS, ...patch }).forEach(([key, value]) => {
+          // Merge with the CURRENT values — patching one key must not
+          // reset the other (previously a date change wiped the stage tab
+          // and a tab change reset the date to today).
+          const merged = {
+            tab: current.get("tab") || DEFAULTS.tab,
+            range: current.get("range") || DEFAULTS.range,
+            ...patch,
+          };
+          Object.entries(merged).forEach(([key, value]) => {
             if (value === DEFAULTS[key]) next.delete(key);
             else next.set(key, value);
           });

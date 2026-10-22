@@ -32,10 +32,18 @@
   background: transparent;
 }
 
-/* Section Navigation — horizontally scrollable on narrow screens */
+/* AdminDashboard.css forces .exec-kpi-grid into repeat(4, minmax(0,1fr))
+   across the whole admin layout — at laptop content widths that produces
+   ~200px cards whose currency values clip. Inside the reports page let the
+   KPI grid auto-fit instead so cards keep room for their values. */
+.admin-reports-wrapper .advanced-report-content .executive-dashboard .exec-kpi-grid {
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 240px), 1fr));
+}
+
+/* Section Navigation — wraps on laptop widths, scrolls on phones */
 .admin-reports-nav {
   display: flex;
-  flex-wrap: nowrap;
+  flex-wrap: wrap;
   gap: 0.5rem;
   padding: 0.625rem;
   background: rgba(255, 255, 255, 0.97);
@@ -144,6 +152,8 @@
   .admin-reports-nav {
     padding: 0.5rem;
     border-radius: 16px;
+    flex-wrap: nowrap;
+    overflow-x: auto;
   }
 
   .admin-nav-tab {
