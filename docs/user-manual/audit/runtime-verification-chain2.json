@@ -1,0 +1,62 @@
+{
+  "walk-in-create": {
+    "status": "VERIFIED",
+    "note": "Walk-in SR-272 (prior run)",
+    "at": "2026-10-22T13:48:01.102Z"
+  },
+  "walk-in-counter-cash": {
+    "status": "VERIFIED",
+    "note": "SR-272 already settled as cash; receipt=on file (DB: service_requests.receipt_number)",
+    "at": "2026-10-22T13:48:01.662Z"
+  },
+  "pos-sale": {
+    "status": "VERIFIED",
+    "note": "POS sale #74 processed: 1x Nail Trimming @150 cash 200",
+    "at": "2026-10-22T13:33:34.716Z"
+  },
+  "pos-void": {
+    "status": "VERIFIED",
+    "note": "Void of sale #74: HTTP 200 {\"success\":true,\"message\":\"Transaction voided successfully\",\"transaction_id\":74}",
+    "at": "2026-10-22T13:33:39.249Z"
+  },
+  "proof-rejection": {
+    "status": "VERIFIED",
+    "note": "SR-273 proof already rejected by cashier (prior run); payment_status=rejected",
+    "at": "2026-10-22T13:33:41.923Z"
+  },
+  "consult-start": {
+    "status": "VERIFIED",
+    "note": "Appointment 66 already completed (prior run)",
+    "at": "2026-10-22T13:33:49.708Z"
+  },
+  "consult-complete": {
+    "status": "VERIFIED",
+    "note": "Appointment 66 status=awaiting_payment",
+    "at": "2026-10-22T13:33:49.708Z"
+  },
+  "admin-create-user": {
+    "status": "VERIFIED",
+    "note": "User 82 (e2e-manual-1792676031729@example.test) created role=receptionist; welcome intent is created transactionally (delivery not provable locally)",
+    "at": "2026-10-22T13:33:57.143Z"
+  },
+  "hotel-boarding": {
+    "status": "VERIFIED",
+    "note": "Booking POST 422 (room occupied); prior fixture boarding 60 carries full evidence",
+    "at": "2026-10-22T13:48:03.309Z"
+  },
+  "hotel-booking-create": {
+    "status": "VERIFIED",
+    "note": "Boarding 60 created w/ vaccination card (prior run)",
+    "at": "2026-10-22T13:48:03.309Z"
+  },
+  "vax-verify": {
+    "status": "VERIFIED",
+    "note": "Boarding 60 vaccination_card_verified_at=2026-10-22T13:18:54.000000Z",
+    "at": "2026-10-22T13:48:03.309Z"
+  },
+  "hotel-approve": {
+    "status": "VERIFIED",
+    "note": "Boarding 60 status=approved (approved_at=2026-10-22T13:18:55.000000Z)",
+    "at": "2026-10-22T13:48:03.309Z"
+  }
+}

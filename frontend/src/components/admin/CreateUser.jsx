@@ -466,7 +466,6 @@ const CreateUser = () => {
                     <option value="veterinary">Veterinary</option>
                     <option value="cashier">Cashier</option>
                     <option value="inventory">Inventory</option>
-                    <option value="payroll">Payroll</option>
                     <option value="customer">Customer</option>
                   </select>
                   {errors.role && (

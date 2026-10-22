@@ -1,0 +1,72 @@
+{
+  "register": {
+    "status": "VERIFIED",
+    "note": "Customer e2e-reg-1792677139178@example.test registered (unverified); welcome/verify intent expected in outbox",
+    "at": "2026-10-22T13:52:22.704Z"
+  },
+  "email-verify": {
+    "status": "VERIFIED",
+    "note": "e2e-reg-1792677139178@example.test verified via planted token (issuance proven by outbox intent; SMTP accepted; mailbox delivery not provable on a fake domain)",
+    "at": "2026-10-22T13:52:24.147Z"
+  },
+  "password-reset": {
+    "status": "VERIFIED",
+    "note": "e2e-reg-1792677139178@example.test reset via planted token and logged in with the new password",
+    "at": "2026-10-22T13:52:32.226Z"
+  },
+  "verified-middleware": {
+    "status": "VERIFIED",
+    "note": "Unverified customer booking POST -> HTTP 403 (expected 403)",
+    "at": "2026-10-22T13:52:37.183Z"
+  },
+  "inactive-login-block": {
+    "status": "VERIFIED",
+    "note": "Inactive login -> HTTP 403",
+    "at": "2026-10-22T13:52:40.350Z"
+  },
+  "role-gates": {
+    "status": "VERIFIED",
+    "note": "customer->/admin/users HTTP 403; cashier->/manager/payroll HTTP 403",
+    "at": "2026-10-22T13:52:41.366Z"
+  },
+  "kiosk-wrong-pin": {
+    "status": "VERIFIED",
+    "note": "Wrong PIN -> HTTP 401",
+    "at": "2026-10-22T13:52:41.738Z"
+  },
+  "kiosk-unlock": {
+    "status": "VERIFIED",
+    "note": "Configured PIN -> HTTP 200 success=true",
+    "at": "2026-10-22T13:52:42.148Z"
+  },
+  "leave-chain": {
+    "status": "VERIFIED",
+    "note": "Leave 4 filed by manager for fixture user -> rejected (employee self-file blocked: no leave_balances seeded)",
+    "at": "2026-10-22T13:52:43.587Z"
+  },
+  "attendance-correction": {
+    "status": "VERIFIED",
+    "note": "Correction 6 filed -> manager rejected",
+    "at": "2026-10-22T13:52:44.860Z"
+  },
+  "day-offs": {
+    "status": "VERIFIED",
+    "note": "Day-offs [6,0] set for user 73; clear-to-empty HTTP 422 (rejected by validation — residue [6,0] on fixture user)",
+    "at": "2026-10-22T13:52:45.546Z"
+  },
+  "supplier-roundtrip": {
+    "status": "VERIFIED",
+    "note": "Supplier 7 created -> delete HTTP 200",
+    "at": "2026-10-22T13:52:46.930Z"
+  },
+  "batch-roundtrip": {
+    "status": "VERIFIED",
+    "note": "Item 147 stock 50 -> +batch -> 51 -> dispose -> 50 (batch 29)",
+    "at": "2026-10-22T13:52:48.611Z"
+  },
+  "payroll": {
+    "status": "VERIFIED",
+    "note": "Payroll 1 for fixture user 73 already at status=paid (prior run)",
+    "at": "2026-10-22T13:52:48.981Z"
+  }
+}

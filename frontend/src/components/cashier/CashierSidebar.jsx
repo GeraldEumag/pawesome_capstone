@@ -61,7 +61,7 @@ const CashierSidebar = ({ mobileOpen, onMobileMenuToggle }) => {
       <nav className="sidebar-nav">
         <ul className="nav-list">
           <li className="nav-item">
-            <NavLink to="/cashier" end onClick={handleNavClick} className={({ isActive }) => isActive ? "active" : ""}>
+            <NavLink to="/cashier/dashboard" onClick={handleNavClick} className={({ isActive }) => isActive ? "active" : ""}>
               <FontAwesomeIcon icon={faGaugeHigh} className="nav-icon" />
               <span>Dashboard</span>
             </NavLink>

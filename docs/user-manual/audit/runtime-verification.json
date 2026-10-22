@@ -1,0 +1,10 @@
+{
+  "customer-grooming-booking-e2e": {
+    "status": "VERIFIED",
+    "note": "Grooming request submitted for pet \"P9PetB944173 — Dog · Beagle (Not provided)\", service \"Basic Bath and Blow Dry Medium Breed — ₱500.00\", date 10/29/2026; review modal confirmed, landed on My Appointments",
+    "at": "2026-10-22T12:40:56.073Z"
+  },
+  "_console_errors": {
+    "customer-grooming": []
+  }
+}
