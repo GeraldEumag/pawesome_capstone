@@ -170,7 +170,7 @@ class CompanySchedule
         $grace      = $shiftStart->copy()->addMinutes(static::graceMinutes());
         $actual     = Carbon::today()->setTimeFromTimeString(substr($checkInHHMM, 0, 5));
 
-        return $actual->gt($grace) ? (int) $actual->diffInMinutes($shiftStart) : 0;
+        return $actual->gt($grace) ? (int) $shiftStart->diffInMinutes($actual) : 0;
     }
 
     /**

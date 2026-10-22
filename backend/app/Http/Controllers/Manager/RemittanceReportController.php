@@ -17,8 +17,13 @@ class RemittanceReportController extends Controller
     /** GET /manager/reports/remittance?period=2026-09&type=sss|philhealth|pagibig */
     public function index(Request $request): JsonResponse
     {
-        $period = $request->query('period', now()->format('Y-m'));
-        $type   = $request->query('type', 'sss');
+        $validated = $request->validate([
+            'period' => 'sometimes|date_format:Y-m',
+            'type'   => 'sometimes|in:sss,philhealth,pagibig',
+        ]);
+
+        $period = $validated['period'] ?? now()->format('Y-m');
+        $type   = $validated['type'] ?? 'sss';
 
         [$year, $month] = explode('-', $period);
         $startDate = "{$year}-{$month}-01";

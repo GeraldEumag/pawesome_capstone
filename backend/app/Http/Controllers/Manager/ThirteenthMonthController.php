@@ -80,10 +80,15 @@ class ThirteenthMonthController extends Controller
             return response()->json(['message' => 'Already marked as paid.'], 422);
         }
 
+        $data = $request->validate([
+            'paid_amount' => 'sometimes|numeric|min:0.01',
+            'paid_date'   => 'sometimes|date',
+        ]);
+
         $remaining = max(0, (float) $accrual->total_accrued - (float) $accrual->paid_amount);
 
-        $paidAmount = $request->input('paid_amount', $remaining);
-        $paidDate   = $request->input('paid_date', now()->toDateString());
+        $paidAmount = $data['paid_amount'] ?? $remaining;
+        $paidDate   = $data['paid_date'] ?? now()->toDateString();
 
         $newPaid = (float) $accrual->paid_amount + (float) $paidAmount;
 
