@@ -351,6 +351,16 @@ class PayrollController extends Controller
             ], 422);
         }
 
+        // Payment must follow approval — releasing a draft/processing row
+        // would skip the approve() transition and its audit stamping, and a
+        // cancelled row must never become payable.
+        if ($payroll->status !== 'pending') {
+            return response()->json([
+                'success' => false,
+                'message' => 'Payroll must be approved before payment can be released.',
+            ], 422);
+        }
+
         $paymentMethod = $request->input('payment_method', 'Bank Transfer');
 
         // Status change, loan settlement, and notifications must commit
@@ -358,6 +368,20 @@ class PayrollController extends Controller
         // 'paid' row with partially-settled loans and no retry path (the
         // already-paid guard would 422 every subsequent attempt).
         return DB::transaction(function () use ($request, $payroll, $paymentMethod) {
+            // Re-read under a row lock: the route-model-bound instance is
+            // stale by now, and a concurrent release could otherwise pass
+            // the outer guards on the same 'pending' snapshot and settle
+            // loans twice. The loser waits on the lock then sees 'paid'.
+            $payroll = Payroll::lockForUpdate()->findOrFail($payroll->id);
+            if ($payroll->status !== 'pending') {
+                return response()->json([
+                    'success' => false,
+                    'message' => $payroll->status === 'paid'
+                        ? 'Payroll is already marked as paid.'
+                        : 'Payroll must be approved before payment can be released.',
+                ], 422);
+            }
+
             $payroll->update([
                 'status' => 'paid',
                 'payment_date' => $request->input('payment_date', now()),

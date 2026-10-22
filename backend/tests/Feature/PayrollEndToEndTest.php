@@ -430,6 +430,71 @@ class PayrollEndToEndTest extends TestCase
     }
 
     /**
+     * D-20: release requires the approved ('pending') state — a draft payroll
+     * must not skip approve(), and a cancelled payroll must never be paid.
+     */
+    public function test_release_requires_pending_status(): void
+    {
+        foreach (['draft' => '06', 'processing' => '07', 'cancelled' => '08'] as $status => $month) {
+            $payroll = Payroll::create([
+                'payroll_id' => 'PAY-2024-' . $month . '90',
+                'user_id' => $this->employee->id,
+                'department' => 'Operations',
+                'position' => 'Cashier',
+                'base_salary' => 25000,
+                'pay_period_start' => "2024-{$month}-01",
+                'pay_period_end' => "2024-{$month}-15",
+                'pay_period_label' => "Period {$month}",
+                'status' => $status,
+                'gross_pay' => 25000,
+                'net_pay' => 22000,
+            ]);
+
+            $this->postJson(
+                "/api/manager/payroll/{$payroll->id}/release",
+                ['payment_method' => 'Cash'],
+                $this->managerAuth()
+            )->assertStatus(422);
+
+            $fresh = $payroll->fresh();
+            $this->assertSame($status, $fresh->status);
+            $this->assertNull($fresh->payment_date);
+            $this->assertNull($fresh->payment_method);
+        }
+    }
+
+    /**
+     * D-20: the intended path still works — approve moves draft→pending,
+     * then release pays it exactly once; a second release 422s.
+     */
+    public function test_approve_then_release_is_the_only_pay_path(): void
+    {
+        $payroll = Payroll::create([
+            'payroll_id' => 'PAY-2024-0213',
+            'user_id' => $this->employee->id,
+            'department' => 'Operations',
+            'position' => 'Cashier',
+            'base_salary' => 25000,
+            'pay_period_start' => '2024-06-01',
+            'pay_period_end' => '2024-06-15',
+            'pay_period_label' => 'Jun 01 - Jun 15, 2024',
+            'status' => 'draft',
+            'gross_pay' => 25000,
+            'net_pay' => 22000,
+        ]);
+
+        $this->postJson("/api/manager/payroll/{$payroll->id}/approve", [], $this->managerAuth())
+            ->assertOk()->assertJsonPath('data.status', 'pending');
+
+        $this->postJson("/api/manager/payroll/{$payroll->id}/release", [
+            'payment_method' => 'Cash', 'payment_date' => '2024-06-18',
+        ], $this->managerAuth())->assertOk()->assertJsonPath('data.status', 'paid');
+
+        $this->postJson("/api/manager/payroll/{$payroll->id}/release", [], $this->managerAuth())
+            ->assertStatus(422);
+    }
+
+    /**
      * Verify status transitions are enforced
      */
     public function test_cannot_approve_already_paid_payroll(): void

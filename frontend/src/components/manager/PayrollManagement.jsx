@@ -1189,7 +1189,7 @@ const PayrollManagement = () => {
                               <button
                                 type="button"
                                 onClick={() => handleRelease(payroll)}
-                                disabled={actionLoadingId === payroll.id || ["released", "paid"].includes(payroll.status)}
+                                disabled={actionLoadingId === payroll.id || payroll.status !== "pending"}
                               >
                                 <FontAwesomeIcon
                                   icon={actionLoadingId === payroll.id ? faSpinner : faMoneyBillWave}

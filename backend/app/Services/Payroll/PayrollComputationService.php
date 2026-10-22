@@ -161,6 +161,10 @@ class PayrollComputationService
                 ->where('status', 'approved')
                 ->whereDate('start_date', '<=', $endDate)
                 ->whereDate('end_date', '>=', $startDate)
+                // Overlapping approved leaves: unpaid_leave sorts last so it
+                // wins the per-date map — never pay a day covered by unpaid
+                // leave regardless of request ordering.
+                ->orderByRaw("type = 'unpaid_leave'")
                 ->get(['start_date', 'end_date', 'type', 'days_counted', 'half_day'])
                 ->each(function ($leave) use (&$approvedLeaveDates, $start, $end) {
                     $from = Carbon::parse($leave->start_date)->max($start);
@@ -266,7 +270,16 @@ class PayrollComputationService
                     } elseif ($status === 'absent') {
                         $absentDays++;
                     } elseif ($status === 'on_leave') {
-                        $paidLeaveDays++;
+                        // An on_leave attendance row alone can't distinguish
+                        // paid from unpaid leave — consult the approved leave
+                        // request covering this date. Unpaid leave deducts
+                        // like an absence, matching the no-record path below.
+                        $leave = $approvedLeaveDates[$dateKey] ?? null;
+                        if ($leave && $leave['type'] === 'unpaid_leave') {
+                            $absentDays += 1;
+                        } else {
+                            $paidLeaveDays++;
+                        }
                         $leaveDates[$dateKey] = true;
                     }
 

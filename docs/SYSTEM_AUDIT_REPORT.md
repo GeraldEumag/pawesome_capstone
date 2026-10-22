@@ -346,3 +346,92 @@ Three checkpoint items re-verified; one new defect found and fixed:
 
 **Review 3 — `on_leave` + check_in payroll semantics (documented, unchanged):**
 In `PayrollComputationService` (~L259-285 and the monthly-path twin), a record whose `status === 'on_leave'` increments `paidLeaveDays` — and if it carries a `check_in`, the unconditional late block *also* accrues `late_minutes`. Net effect: a paid leave day **plus** a late deduction. Whether "present-but-late during approved leave" should deduct is a business decision — the correction workflow can now produce such rows legitimately (employee worked during leave). **Owner decision required:** should `check_in` on an `on_leave` row (a) keep paid-leave + late deduction (current), (b) convert to a worked day, or (c) keep paid-leave and ignore the punch. Financial implication per occurrence: up to `late_minutes × hourly/60` over-deduction from the employee.
+
+### Payroll policy audit — 2026-10-22 (three decision records)
+
+Evidence: `tests/Feature/PayrollLeavePolicyAuditTest.php` (3 tests, 14 assertions — all PASS against `pawesome_test`; tests document CURRENT behavior, not desired behavior).
+
+#### Decision A — Leave vs. payroll (VERIFIED DEFECTS FOUND)
+
+**Verified finding A1 — unpaid leave is paid.** `LeaveController::approve` runs `markAttendanceOnLeave` for *every* leave type including `unpaid_leave` (L177-179; balance deduction is correctly skipped at L163-164, but attendance marking is not). Payroll then counts `status='on_leave'` rows as `paidLeaveDays++` unconditionally (`PayrollComputationService` L268-270) — the `unpaid_leave` check at L338 is unreachable for approved unpaid leave because the approval always created an attendance row. **Verified live:** approved 1-day `unpaid_leave` → `paid_leave_days=1, absent_days=0, absent_deductions=0`. Cost: `daily_rate` per unpaid-leave day paid to the employee.
+
+**Verified finding A2 — on_leave + punch double-counts.** An `on_leave` row carrying `check_in` gets `paidLeaveDays++` AND `totalLateMinutes`/`undertime`/`nightDiff`/OT (`PayrollComputationService` L281-304). Such rows arise only via correction approval or manual status edit — the kiosk check-in overwrites `on_leave`→`present`/`late` (`BarcodeAttendanceController` L106-118). **Verified live:** late punch on `on_leave` row → `paid_leave_days=1` + `late_deductions>0`.
+
+**Verified finding A3 — baseline correct:** paid leave with no punch → `paid_leave_days=1`, no deductions.
+
+**Owner decision required:**
+1. Fix `markAttendanceOnLeave` to skip `unpaid_leave` (attendance rows would then hit the L338 `unpaid_leave`→`absent` path and deduct correctly) — OR keep rows but make payroll consult `leave_requests.type` for `on_leave` rows. Recommended: skip marking for `unpaid_leave` (minimal change, uses existing correct path).
+2. Punch on an `on_leave` row: (a) convert to worked day (lose the paid-leave credit — recommended; the employee physically worked), (b) keep paid leave + deduct lateness (current — penalizes twice: leave balance spent AND late deduction), (c) keep paid leave, ignore punch.
+
+#### Decision B — Payroll period closing (lifecycle gaps found)
+
+**Verified finding B1 — approval is skippable.** `markAsPaid` (`Api\PayrollController` L345-414) blocks only `status='paid'`; a `draft` payroll can be released directly, skipping `approve()`'s `pending` transition AND its notification. `cancelled` rows can also be paid via `markAsPaid`. Enforced sequence `draft→pending→paid` does not exist.
+
+**Verified finding B2 — no period-close gate anywhere.** `generate` validates only the semi-monthly shape (L162); `approve`/`markAsPaid` never inspect `pay_period_end`. Mid-period generation, approval, and payment are all possible.
+
+**Verified finding B3 — reconciliation path exists.** `update()` L636-643 recomputes via `calculatePayroll(true)` on money/attendance input changes; `generate` skips existing rows (L194-206). Late attendance therefore only reaches a draft/pending payroll through a manual `update()` call — there is no "re-generate" or automatic staleness refresh.
+
+**Verified finding B4 — 13th-month accrual is not automatic.** Despite the doc comment "called after each payroll run," `accrue13thMonth` is invoked only by `php artisan payroll:accrue-13th` (`AccrueThirteenthMonth` command) and `POST manager/payroll/thirteenth-month/accrue` (`ThirteenthMonthController` L53-61). `markAsPaid` never calls it — if the command is not scheduled, accruals silently never happen. Also confirmed: it accrues the *configured* `base_salary`, not earned basic (`PayrollComputationService` L737-772 — `total_accrued = Σ month_basic / 12`).
+
+**Owner decision required:** (a) enforce `markAsPaid` requires `status='pending'` (recommended — closes the approval skip; blocks cancelled→paid too); (b) choose period-close policy — recommend block `approve`/`markAsPaid` until `pay_period_end < today`, keep generation open as "preliminary"; (c) whether `generate` should offer an explicit recompute for stale drafts vs. manual `update()`.
+
+#### Decision C — Post-payment corrections (design proposal, unimplemented)
+
+Current: `update()` and `destroy()` both 422 on `paid` rows; the status enum excludes `paid`/`approved` from user input. Paid payrolls are fully immutable — there is **no mechanism at all** to correct a paid payroll.
+
+Recommended (if approved): `payroll_adjustments` table — `payroll_id`, `type` (earning/deduction), `amount` (signed), `reason`, `requested_by`, `approved_by`, `status` (pending/approved/rejected/applied), applied into a *later* payroll run as a line item. Preserves the paid record and audit trail; no negative payments; requester ≠ approver enforced. Alternatives evaluated: direct edit of paid row (rejected — breaks immutability/audit), reversal+reissue (rejected for capstone scope — requires voiding disbursement records).
+
+**Owner decision required:** approve the adjustment model + who may request/approve, or defer.
+
+#### New defects register additions
+
+| ID | Finding | Severity | Status |
+|---|---|---|---|
+| D-19 | `unpaid_leave` paid as if paid leave (verified live) | HIGH — direct overpayment | Awaiting owner decision A1 |
+| D-20 | `markAsPaid` bypasses `approve()` (draft/cancelled → paid) | HIGH — lifecycle bypass | Awaiting owner decision B1 |
+| D-21 | `on_leave`+punch double-counts (verified live) | MED — edge-case, correction/manual only | Awaiting owner decision A2 |
+| D-22 | 13th-month accrual never fires post-payroll; formula uses rated not earned basic | MED | Documented; needs scheduling decision + formula ruling |
+
+### Payroll hardening increment — 2026-10-22 (D-19/D-20 implemented, D-21/D-22 documented)
+
+#### D-19 — FIXED: unpaid leave paid as paid leave
+Payroll-side fix in `PayrollComputationService` `on_leave` attendance branch (~L268-279): the row's covering approved `leave_requests.type` is consulted — `unpaid_leave` counts `absentDays += 1` (mirroring the no-record path at ~L345) instead of `paidLeaveDays++`. Leave approval and attendance marking are **unchanged** — `on_leave` rows still render for display; only the money path is type-aware. Covers new approvals, pre-existing rows, and manual markings wherever a real `unpaid_leave` request exists. Rows marked `on_leave` with NO covering approved leave keep paid-leave treatment (conservative fallback — a manager-marked leave row without a request is treated as paid).
+Tests: `PayrollLeavePolicyAuditTest` — approved unpaid → absent+deduction; leftover `on_leave` row over unpaid date → absent+deduction; pending/rejected leave → ordinary absence; paid leave → paid, no deduction.
+
+#### D-20 — FIXED: release bypasses approval
+`markAsPaid` (`Api\PayrollController` ~L354-360) now requires `status === 'pending'` after the already-paid guard — `draft`/`processing`/`cancelled` → 422, so `approve()` (pending + processed_by/at + notifications) can no longer be skipped. Frontend `PayrollManagement.jsx` Release button now disabled unless `status === 'pending'` (previously enabled for draft — API rejected silently-possible path; 422 toast remains as fallback). Existing tests that released generated drafts were updated to call `/approve` first — they were exercising the bypass.
+Tests: `release requires pending status` (draft/processing/cancelled → 422, no payment fields written), `approve then release is the only pay path` (full transition + second-release 422), plus updated loan-settlement/rollback/payslip flows.
+
+#### D-21 — Scenario matrix (behavior UNCHANGED, owner decision pending)
+
+| Scenario | Current outcome (verified) | Recommended rule | Needs owner? |
+|---|---|---|---|
+| Paid leave, no punch | Paid day, no deduction | Keep — correct | No |
+| Unpaid leave, no punch | Absence deduction (post-D-19) | Keep — correct | No |
+| Pending/rejected leave, no punch | Ordinary absence | Keep — correct | No |
+| Half-day paid leave, no punch | 0.5 paid + 0.5 absent | Keep — correct | No |
+| `on_leave` row + real punch (correction/manual) | Paid leave day + late + undertime + OT | **Convert to worked day** (employee physically worked; refund leave balance) — or (b) keep paid + ignore punch | YES |
+| `on_leave` + punch via kiosk | Kiosk overwrites to present/late — punch wins | Keep — already a worked day | No |
+| Unpaid leave + punch | Status stays present/late → worked day, paid | Keep — correct (they worked) | No |
+| Correction sets check_in on `on_leave` row | `is_late` recomputed, `on_leave` preserved → double-count | Follows chosen A2 rule | YES |
+| `on_leave` row, no covering leave request | Paid day (fallback) | Keep — manual manager marking is authoritative | No |
+
+Blocked: rule for "employee punched on an approved paid-leave day" — affects late/undertime/OT accrual AND whether leave balance deduction should be refunded.
+
+#### D-22 — 13th-month report (formula UNCHANGED)
+
+- **Formula** (`PayrollComputationService::accrue13thMonth` L737-772): writes the employee's *configured* `base_salary` into `thirteenth_month_accruals.{mon}_basic` (max on repeat calls); `total_accrued = Σ 12 month columns ÷ 12`.
+- **PH-law deviation:** statutory formula is Σ *earned* basic ÷ 12 — rated base overstates accrual for months with unpaid absences/undertime and ignores mid-month proration nuance.
+- **Call sites:** `php artisan` command `AccrueThirteenthMonth` (all staff+employees, passes `base_salary`) and `POST /manager/payroll/thirteenth-month/accrue` (`ThirteenthMonthController` L53-61). **Never invoked from `markAsPaid` or any payroll lifecycle hook** — despite the doc comment claiming "called after each payroll run." If the command is unscheduled, accruals silently never happen.
+- **Effect of triggering post-payment:** accrual would capture the rated base at payment time (idempotent via `max()`), making accruals automatic but binding them to payment events — a month paid twice still writes once. Correctness still requires the earned-basic formula change first; scheduling alone perpetuates the rated-base deviation.
+- **Proposal (blocked):** (1) change accrual input to earned basic for the paid period (`period_base` or computed basic component); (2) hook into `markAsPaid` inside the existing transaction OR schedule the artisan command — hook is more reliable; (3) backfill strategy for months already accrued under rated-base. Owner must confirm formula source and whether accrued rows may be recomputed.
+
+#### Final review pass — 2026-10-22 (post-implementation audit)
+
+**D-19 deep review — one additional defect found and fixed.** The per-date leave map (`approvedLeaveDates`) was populated by an unordered `->get()` — overlapping approved leaves of *different types* on the same date resolved nondeterministically (paid vs. unpaid depended on MySQL row order). Added `->orderByRaw("type = 'unpaid_leave'")` so `unpaid_leave` sorts last and deterministically wins the date — never pays a day covered by unpaid leave. All other D-19 edges verified correct: approval-status filter (only `approved` reaches the map), period-boundary clipping (`max($start)`/`min($end)`), Employee→`user_id` identity resolution (null user_id → no leave, correct), no double-counting (`$leaveDates` guard), rest days/holidays unaffected (leave marking is workday-gated), compute is stateless (leave changes reflected on next compute/update).
+
+**D-20 concurrency gap found and fixed.** Pre-fix `markAsPaid` validated `status`/`loans_settled` on the route-bound (stale) model *outside* the transaction — two concurrent releases on a `pending` payroll would both pass the guards and settle loans twice. The transaction now re-fetches with `Payroll::lockForUpdate()` and re-validates status under the lock — the concurrent loser waits, then sees `paid` → 422. (Release is an internal state transition + loan-balance writes + notifications; no external disbursement integration exists to duplicate.) True simultaneous-request coverage isn't reproducible in PHPUnit; the guarantee rests on InnoDB row-lock semantics plus sequential re-release tests.
+
+**New regression coverage (PayrollLeavePolicyAuditTest → 8 cases):** overlapping paid+unpaid leave → unpaid wins; leave spanning a period boundary counts only in-period days; leave outside the period ignored; pending/rejected leave → ordinary absence; unpaid → absent deduction on both approval-created and pre-existing `on_leave` rows; paid leave unaffected; `on_leave`+punch documented unchanged.
+
+**Results:** focused 61/61 + leave-policy 8/8; full suite **704/704, 3,364 assertions**; frontend build passes.

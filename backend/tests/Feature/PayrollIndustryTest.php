@@ -328,6 +328,8 @@ class PayrollIndustryTest extends TestCase
         // Balance unchanged until released
         $this->assertEquals(3000, (float) DB::table('salary_loans')->where('id', $loanId)->value('balance'));
 
+        $this->postJson("/api/manager/payroll/{$row['id']}/approve", [], $this->managerAuth())
+            ->assertStatus(200);
         $this->postJson("/api/manager/payroll/{$row['id']}/release", [
             'payment_method' => 'Cash',
         ], $this->managerAuth())->assertStatus(200);
@@ -362,6 +364,8 @@ class PayrollIndustryTest extends TestCase
         ]);
 
         $row = $this->generateRow($user);
+        $this->postJson("/api/manager/payroll/{$row['id']}/approve", [], $this->managerAuth())
+            ->assertStatus(200);
 
         // Force the notification insert inside the release transaction to fail.
         $shouldFail = true;
@@ -399,6 +403,8 @@ class PayrollIndustryTest extends TestCase
         $this->punch($user, '2024-06-05', '08:00', '15:00', ['total_hours' => 6]); // undertime
 
         $row = $this->generateRow($user);
+        $this->postJson("/api/manager/payroll/{$row['id']}/approve", [], $this->managerAuth())
+            ->assertStatus(200);
         $this->postJson("/api/manager/payroll/{$row['id']}/release", [
             'payment_method' => 'Cash',
         ], $this->managerAuth())->assertStatus(200);
