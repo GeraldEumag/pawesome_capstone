@@ -225,6 +225,9 @@ const PaymentUploadModal = ({ open, onClose, onSuccess, endpoint, title, referen
               value={referenceNumber}
               onChange={(e) => setReferenceNumber(e.target.value)}
             />
+            <p className="pum-ref-note">
+              Enter the reference manually. Receipt images are not automatically read, and the cashier must verify the payment.
+            </p>
           </div>
 
           {error && <p className="pum-error">{error}</p>}

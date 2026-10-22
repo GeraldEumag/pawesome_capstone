@@ -157,7 +157,7 @@
   height: 22px;
   border-radius: 50%;
   background: #ff5f93;
-  color: #fff;
+  color: #1f2937;
   font-size: 0.75rem;
   font-weight: 700;
   flex-shrink: 0;
@@ -257,8 +257,15 @@
 }
 
 .pum-ref-input:focus {
-  border-color: #ff5f93;
-  box-shadow: 0 0 0 3px rgba(255, 95, 147, 0.12);
+  border-color: #9d174d;
+  box-shadow: 0 0 0 3px rgba(157, 23, 77, 0.28);
+}
+
+.pum-ref-note {
+  margin: 0.4rem 0 0;
+  color: #475569;
+  font-size: 0.8rem;
+  line-height: 1.45;
 }
 
 /* Error */
@@ -301,14 +308,17 @@
   border-radius: 8px;
   font-size: 0.9rem;
   font-weight: 700;
-  color: #fff;
+  color: #1f2937;
   cursor: pointer;
   transition: background 0.15s, opacity 0.15s;
 }
 
-.pum-confirm-btn:hover:not(:disabled) { background: #e84f7f; }
+.pum-confirm-btn:hover:not(:disabled) { background: #ff8db5; }
 
 .pum-confirm-btn:disabled {
-  opacity: 0.45;
+  border: 1px solid #94a3b8;
+  background: #e2e8f0;
+  color: #475569;
+  opacity: 1;
   cursor: not-allowed;
 }

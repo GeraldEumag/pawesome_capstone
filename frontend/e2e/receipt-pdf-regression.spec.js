@@ -7,7 +7,7 @@ test('shared receipt PDF keeps thermal width and paginates long item lists', asy
   await page.goto(frontendUrl);
   const pdf = await page.evaluate(async () => {
     const { createReceiptPdf } = await import('/src/utils/receiptPdf.js');
-    const { doc, filename } = createReceiptPdf({
+    const { doc, filename } = await createReceiptPdf({
       title: 'Sales Invoice',
       receiptNumber: 'ORDER/42',
       date: 'Oct 12, 2026 10:30 AM',
@@ -28,7 +28,7 @@ test('shared receipt PDF keeps thermal width and paginates long item lists', asy
       change: 500,
     });
     const content = doc.internal.pages.slice(1).flat().join(' ');
-    const minimum = createReceiptPdf({ receiptNumber: 'MIN-1', total: 0 });
+    const minimum = await createReceiptPdf({ receiptNumber: 'MIN-1', total: 0 });
     return {
       minimumPages: minimum.doc.internal.getNumberOfPages(),
       minimumWidth: minimum.doc.internal.pageSize.getWidth(),
@@ -43,6 +43,7 @@ test('shared receipt PDF keeps thermal width and paginates long item lists', asy
       hasNetAmount: content.includes('Net') && content.includes('ex-VAT'),
       hasVat: content.includes('VAT 12%'),
       hasChange: content.includes('Change'),
+      hasLogo: content.includes('/I0 Do') || content.includes('/I1 Do'),
     };
   });
 
@@ -59,6 +60,7 @@ test('shared receipt PDF keeps thermal width and paginates long item lists', asy
   expect(pdf.hasNetAmount).toBe(true);
   expect(pdf.hasVat).toBe(true);
   expect(pdf.hasChange).toBe(true);
+  expect(pdf.hasLogo).toBe(true);
 });
 
 test('veterinary receipt downloads a valid 58mm PDF', async ({ page }) => {
@@ -94,6 +96,7 @@ test('veterinary receipt downloads a valid 58mm PDF', async ({ page }) => {
 
   await page.goto(`${frontendUrl}/veterinary/receipt?id=42`);
   await expect(page.locator('.vr-paper')).toBeVisible();
+  await expect(page.locator('.vr-logo')).toHaveAttribute('src', /pawesome\.jpg$/);
   const downloadPromise = page.waitForEvent('download');
   await page.getByRole('button', { name: 'Download PDF' }).click();
   const download = await downloadPromise;

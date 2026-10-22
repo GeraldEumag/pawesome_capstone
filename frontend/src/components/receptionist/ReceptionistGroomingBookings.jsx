@@ -138,7 +138,7 @@ const getAppointmentTime = (item) =>
 
 const ReceptionistGroomingBookings = () => {
   const [searchTerm, setSearchTerm] = useState("");
-  const { tab: activeTab, range: datePreset, setTab, setRange: setDatePreset } = useBookingViewParams();
+  const { tab: activeTab, range: datePreset, setTab, setRange: setDatePreset, setView } = useBookingViewParams();
   const [storeToday, setStoreToday] = useState(() => formatDateOnly(new Date()));
   const [filterService, setFilterService] = useState("all");
 
@@ -305,7 +305,13 @@ const ReceptionistGroomingBookings = () => {
   };
 
   const handleApprove = async (id) => {
-    if (!(await showConfirm("Approve this grooming booking?"))) return;
+    if (processingId === id) return;
+    const appointment = groomingAppointments.find((item) => item.id === id);
+    if (!(await showConfirm(
+      "Are you sure you want to approve this request?",
+      `${appointment?.petName || "Pet"} · ${appointment?.serviceName || "Grooming"}`,
+      "Confirm Approval"
+    ))) return;
     await handleStatusChange(id, "approved");
   };
 
@@ -500,8 +506,7 @@ const ReceptionistGroomingBookings = () => {
               type="button"
               className="bst-later"
               onClick={() => {
-                setTab("all");
-                setDatePreset("upcoming");
+                setView({ tab: "all", range: "upcoming" });
               }}
             >
               {laterCount} on later dates
@@ -512,8 +517,7 @@ const ReceptionistGroomingBookings = () => {
               type="button"
               className="bst-older-pending"
               onClick={() => {
-                setTab("to_approve");
-                setDatePreset("7d");
+                setView({ tab: "to_approve", range: "7d" });
               }}
             >
               {olderPending} older pending

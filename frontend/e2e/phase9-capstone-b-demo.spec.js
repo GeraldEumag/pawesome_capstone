@@ -34,6 +34,7 @@ const run = {
   completedAt: null,
   status: "NOT_RUN",
   correlation: [],
+  createdRecords: [],
   screenshots: [],
   limitations: [],
   consoleErrors: [],
@@ -118,7 +119,7 @@ function dbMulti(exprs) {
 }
 
 async function openAs(browser, session, route) {
-  const context = await browser.newContext({ baseURL: frontendUrl });
+  const context = await browser.newContext({ baseURL: frontendUrl, timezoneId: "Asia/Manila" });
   await context.addInitScript(({ token, user }) => {
     localStorage.setItem("token", token);
     localStorage.setItem("role", user.role);
@@ -324,13 +325,11 @@ test("J3 online payment-proof workflow end to end", async ({ request, browser })
   const { customer, cashier } = state.sessions;
   const srId = state.onlineSrId;
 
-  // Customer UI upload on the My Grooming Appointments tab.
+  // Customer UI upload on the shared grooming bookings board.
   const { page, context } = await openAs(browser, customer, "/customer/grooming");
   await page.waitForLoadState("domcontentloaded");
   await page.getByRole("button", { name: /my grooming|appointments/i }).first().click();
-  // The unique per-run notes marker is the reliable locator — service names and
-  // dates collide across demo runs (option text also carries " — ₱price").
-  const card = page.locator(".grooming-item", { hasText: `Phase9 demo booking ${RUN}` }).first();
+  const card = page.locator(".cbb-row, .cbb-card").filter({ hasText: `Booking #${srId}` }).first();
   await expect(card).toBeVisible({ timeout: 20000 });
   const payBtn = card.getByRole("button", { name: /pay now|resubmit payment proof/i });
   await expect(payBtn).toBeVisible({ timeout: 20000 });
@@ -340,11 +339,22 @@ test("J3 online payment-proof workflow end to end", async ({ request, browser })
     name: "p9-proof.png", mimeType: "image/png", buffer: PROOF_PNG,
   });
   const proofRef = `P9REF${RUN.replace(/\D/g, "").padEnd(6, "0")}`;
+  state.proofReference = proofRef;
   await page.locator(".pum-ref-input").fill(proofRef);
   await shot(page, "c1-proof-upload-modal");
   await page.locator(".pum-confirm-btn").click();
   await expect(page.locator(".pum-modal")).toBeHidden({ timeout: 20000 });
   await context.close();
+
+  const duplicateProof = await request.post(`${apiUrl}/customer/requests/${srId}/payment-proof`, {
+    headers: auth(customer.token),
+    multipart: {
+      payment_method: "gcash",
+      payment_reference: proofRef,
+      payment_proof: { name: "p9-duplicate-proof.png", mimeType: "image/png", buffer: PROOF_PNG },
+    },
+  });
+  expect(duplicateProof.status()).toBe(422);
 
   const j3a = dbMulti({
     pendingPs: `DB::table('service_requests')->where('id', ${srId})->value('payment_status')`,
@@ -352,6 +362,17 @@ test("J3 online payment-proof workflow end to end", async ({ request, browser })
     hasProof: `DB::table('service_requests')->where('id', ${srId})->value('payment_proof') ? 'yes' : 'no'`,
   });
   const pendingPs = j3a.pendingPs, pendingPm = j3a.pendingPm, hasProof = j3a.hasProof;
+  correlate({
+    scenario: "J3-duplicate-proof-submission",
+    record: `service_request#${srId}`,
+    initial: "pending proof already stored",
+    expected: "duplicate submission rejected without changing pending payment state",
+    actual: `status=${duplicateProof.status()} payment_status=${pendingPs} proof=${hasProof}`,
+    db: `service_requests.id=${srId}`,
+    downstream: "cashier review remains available once",
+    evidence: "c1-proof-upload-modal.png",
+    result: duplicateProof.status() === 422 && pendingPs === "pending" && hasProof === "yes" ? "PASS" : "FAIL",
+  });
   correlate({
     scenario: "J3-proof-uploaded",
     record: `service_request#${srId}`,
@@ -384,7 +405,7 @@ test("J3 online payment-proof workflow end to end", async ({ request, browser })
     (r) => r.url().includes("/payment-requests/") && r.url().includes("/verify") && r.request().method() === "POST",
     { timeout: 25000 }
   );
-  await cashierView.page.locator(".pa-modal-footer button.pa-btn-verify").click();
+  await cashierView.page.locator(".pw-modal-footer button.pa-btn-verify").click();
   // verifyPayment() gates on a SweetAlert confirm before the real POST.
   await cashierView.page.locator("button.swal2-confirm").click();
   const verifyResp = await verifyRespP;
@@ -451,6 +472,24 @@ test("J3 online payment-proof workflow end to end", async ({ request, browser })
 test("J4 walk-in counter payment, POS transaction, void", async ({ request, browser }) => {
   const { receptionist, cashier } = state.sessions;
   const uniq = RUN.replace(/\D/g, "");
+  const groomingService = state.groomingServiceName || "Full Grooming";
+  let walkInDate = null;
+  let walkInTime = null;
+  for (let offset = 1; offset <= 30 && !walkInTime; offset++) {
+    const date = futureDate(offset);
+    const availability = await api(
+      request,
+      receptionist,
+      "GET",
+      `/availability/grooming?date=${date}&service_name=${encodeURIComponent(groomingService)}`
+    );
+    const freeSlot = (availability.body.slots || []).find((slot) => slot.available);
+    if (freeSlot) {
+      walkInDate = date;
+      walkInTime = freeSlot.time;
+    }
+  }
+  expect(walkInTime, "free grooming slot for walk-in fixture").toBeTruthy();
 
   const walkin = await api(request, receptionist, "POST", "/receptionist/walk-ins", {
     customer_mode: "new",
@@ -460,8 +499,8 @@ test("J4 walk-in counter payment, POS transaction, void", async ({ request, brow
     },
     pet: { name: `P9Pet${uniq}`, species: "Dog" },
     booking: {
-      service_type: "grooming", service_name: state.groomingServiceName || "Full Grooming",
-      request_date: futureDate(1), request_time: "11:00",
+      service_type: "grooming", service_name: groomingService,
+      request_date: walkInDate, request_time: walkInTime,
       notes: `Phase9 walk-in ${RUN}`,
     },
   });
@@ -475,6 +514,14 @@ test("J4 walk-in counter payment, POS transaction, void", async ({ request, brow
   });
   const wCh = j4a.wCh, wPs0 = j4a.wPs0;
   expect(wCh).toBe("walk_in");
+
+  const walkInListView = await openAs(browser, receptionist, "/receptionist/walk-ins");
+  const recentWalkInCard = walkInListView.page.locator(".walkins-recent-card", { hasText: `P9Pet${uniq}` });
+  await expect(recentWalkInCard).toBeVisible({ timeout: 20000 });
+  await expect(recentWalkInCard).toContainText(new RegExp(`P9Demo Walkin${uniq}`, "i"));
+  await expect(recentWalkInCard).toContainText("Status: pending");
+  await shot(walkInListView.page, "d0-receptionist-walkin-persisted-list");
+  await walkInListView.context.close();
 
   // Phase-8 observation check: pre-approval the walk-in is pending/NULL-method
   // and absent from the cashier queue; approval flips it to unpaid and it
@@ -602,7 +649,26 @@ test("J4 walk-in counter payment, POS transaction, void", async ({ request, brow
 /* ═══ J5 — Journey E: boarding room lifecycle ═══ */
 test("J5 online boarding reserves room; card verification, conflict, and release", async ({ request, browser }) => {
   const { customer, receptionist } = state.sessions;
-  const roomId = 6;
+  const receptionistRooms = await api(request, receptionist, "GET", "/receptionist/boarding-rooms");
+  const roomTemplate = listify(receptionistRooms.body, ["rooms"])
+    .find((room) => room.room_type === "dog_standard" && room.is_active && room.customer_selectable);
+  expect(roomTemplate, "active dog-room test template").toBeTruthy();
+
+  const roomFixture = await api(request, receptionist, "POST", "/receptionist/boarding-rooms", {
+    room_code: `P9-TEST-${RUN.replace(/\D/g, "")}`,
+    room_name: `Phase9 Test Room ${RUN}`,
+    room_type: roomTemplate.room_type,
+    hotel_category: roomTemplate.hotel_category,
+    allowed_species: roomTemplate.allowed_species,
+    max_capacity: roomTemplate.max_capacity,
+    total_rooms: 1,
+    daily_rate: roomTemplate.daily_rate,
+    is_active: true,
+    customer_selectable: true,
+    notes: "Phase 9 test fixture in pawesome_test",
+  });
+  expect(roomFixture.ok, JSON.stringify(roomFixture.body)).toBeTruthy();
+  const roomId = roomFixture.body.room.id;
   const proofBuffer = PROOF_PNG;
   const resvBefore = dbMulti({
     n: `DB::table('boarding_room_reservations')->where('status','<>','cancelled')->count()`,
@@ -620,21 +686,45 @@ test("J5 online boarding reserves room; card verification, conflict, and release
     },
   });
 
-  let date = null;
-  let boardingA = null;
-  for (let off = 9; off <= 30 && !boardingA; off++) {
-    const candidate = futureDate(off);
-    const response = await createBoarding(state.buddy.id, candidate, "A");
-    const body = await response.json();
-    if (response.status() === 201) {
-      date = candidate;
-      boardingA = body.boarding?.id;
-    } else if (response.status() !== 422) {
-      throw new Error(`Online boarding creation failed: ${response.status()} ${JSON.stringify(body)}`);
-    }
-  }
-  expect(boardingA, "room-6 boarding request created").toBeTruthy();
+  const date = futureDate(9);
+  const boardingResponse = await createBoarding(state.buddy.id, date, "A");
+  const boardingBody = await boardingResponse.json();
+  expect(boardingResponse.status(), JSON.stringify(boardingBody)).toBe(201);
+  const boardingA = boardingBody.boarding?.id;
+  expect(boardingA, "online boarding request created").toBeTruthy();
   run.createdRecords.push({ type: "boarding", id: boardingA, label: "Phase9 boarding A" });
+
+  const duplicateBoardingProof = await request.post(
+    `${apiUrl}/customer/boarding-requests/${boardingA}/payment-proof`,
+    {
+      headers: auth(customer.token),
+      multipart: {
+        payment_method: "gcash",
+        payment_reference: state.proofReference,
+        payment_proof: { name: "p9-duplicate-boarding-proof.png", mimeType: "image/png", buffer: PROOF_PNG },
+      },
+    }
+  );
+  expect(duplicateBoardingProof.status()).toBe(422);
+  const duplicateBoardingState = dbMulti({
+    paymentStatus: `DB::table('boardings')->where('id', ${boardingA})->value('payment_status')`,
+    hasProof: `DB::table('boardings')->where('id', ${boardingA})->value('payment_proof') ? 'yes' : 'no'`,
+  });
+  correlate({
+    scenario: "J5-cross-flow-duplicate-reference",
+    record: `boarding#${boardingA}`,
+    initial: "reference already used by the paid service request",
+    expected: "boarding proof rejected without persisting payment proof or changing unpaid status",
+    actual: `status=${duplicateBoardingProof.status()} payment_status=${duplicateBoardingState.paymentStatus} proof=${duplicateBoardingState.hasProof}`,
+    db: `boardings.id=${boardingA}`,
+    downstream: "cashier queue remains unchanged",
+    evidence: "API plus read-only database probe",
+    result: duplicateBoardingProof.status() === 422
+      && duplicateBoardingState.paymentStatus === "unpaid"
+      && duplicateBoardingState.hasProof === "no"
+      ? "PASS"
+      : "FAIL",
+  });
 
   const petBRes = await api(request, customer, "POST", "/customer/pets", {
     name: `P9PetB${RUN.replace(/\D/g, "")}`, species: "Dog", breed: "Beagle", age: 3,
@@ -654,8 +744,14 @@ test("J5 online boarding reserves room; card verification, conflict, and release
 
   const verification = await api(request, receptionist, "POST", `/receptionist/boarding-requests/${boardingA}/verify-vaccination`);
   expect(verification.ok, JSON.stringify(verification.body)).toBeTruthy();
-  const approved = await api(request, receptionist, "POST", `/receptionist/boarding-requests/${boardingA}/approve`);
-  expect(approved.ok, JSON.stringify(approved.body)).toBeTruthy();
+  const approvalAttempts = await Promise.all([
+    api(request, receptionist, "POST", `/receptionist/boarding-requests/${boardingA}/approve`),
+    api(request, receptionist, "POST", `/receptionist/boarding-requests/${boardingA}/approve`),
+  ]);
+  const approved = approvalAttempts.find((result) => result.ok);
+  const duplicateApproval = approvalAttempts.find((result) => !result.ok);
+  expect(approved, JSON.stringify(approvalAttempts.map((result) => result.status))).toBeTruthy();
+  expect(duplicateApproval?.status).toBe(422);
   const statusAfterApproval = approved.body.boarding?.status;
 
   correlate({
@@ -851,6 +947,143 @@ test("J8 security and failure battery", async ({ request }) => {
     downstream: "all protected surfaces",
     evidence: "API battery",
     result: cases.every((c) => c.result === "PASS") ? "PASS" : "FAIL",
+  });
+});
+
+test("J9 duplicate references are rejected for confinement and veterinary billing", async ({ request }) => {
+  const { customer, receptionist, veterinary } = state.sessions;
+  const serviceName = "General Check-up";
+  let appointmentDate = null;
+  let appointmentTime = null;
+
+  for (let offset = 2; offset <= 30 && !appointmentTime; offset++) {
+    const date = futureDate(offset);
+    const availability = await api(
+      request,
+      customer,
+      "GET",
+      `/availability/veterinary?date=${date}&service_name=${encodeURIComponent(serviceName)}`
+    );
+    const slot = (availability.body.slots || []).find((item) => item.available);
+    if (slot) {
+      appointmentDate = date;
+      appointmentTime = slot.time;
+    }
+  }
+  expect(appointmentTime, "available veterinary test slot").toBeTruthy();
+
+  const notes = `Phase9 duplicate-reference appointment ${RUN}`;
+  const createdRequest = await api(request, customer, "POST", "/customer/requests", {
+    customer_name: customer.user.name,
+    pet_id: state.buddy.id,
+    request_type: "vet",
+    service_name: serviceName,
+    requested_date: appointmentDate,
+    requested_time: appointmentTime,
+    notes,
+  });
+  expect(createdRequest.ok, JSON.stringify(createdRequest.body)).toBeTruthy();
+  const customerRequests = await api(request, customer, "GET", "/customer/my-requests");
+  const serviceRequest = listify(customerRequests.body, ["requests"])
+    .find((item) => item.notes === notes);
+  expect(serviceRequest?.id, "veterinary service request persisted").toBeTruthy();
+
+  const assigned = await api(request, receptionist, "POST", `/receptionist/requests/${serviceRequest.id}/approve`, {
+    veterinarian_id: veterinary.user.id,
+  });
+  expect(assigned.ok, JSON.stringify(assigned.body)).toBeTruthy();
+  const appointmentId = assigned.body.appointment?.id;
+  expect(appointmentId, "approved consultation linked").toBeTruthy();
+
+  const started = await api(request, veterinary, "POST", `/veterinary/consultations/${appointmentId}/start`, {});
+  expect(started.ok, JSON.stringify(started.body)).toBeTruthy();
+
+  const billingItem = await api(request, veterinary, "POST", "/billing/items", {
+    service_type: "veterinary",
+    service_id: appointmentId,
+    pet_id: state.buddy.id,
+    item_type: "manual_charge",
+    description: `Phase9 test charge ${RUN}`,
+    quantity: 1,
+    unit_price: 275,
+  });
+  expect(billingItem.ok, JSON.stringify(billingItem.body)).toBeTruthy();
+
+  const confinement = await api(
+    request,
+    veterinary,
+    "POST",
+    `/veterinary/consultations/${appointmentId}/recommend-confinement`,
+    {
+      diagnosis: "Phase 9 test diagnosis",
+      reason_for_confinement: "Controlled duplicate-reference integration fixture",
+      urgency_level: "normal",
+      expected_stay_days: 1,
+      estimated_cost: 1200,
+    }
+  );
+  expect(confinement.ok, JSON.stringify(confinement.body)).toBeTruthy();
+  const confinementId = confinement.body.medical_confinement?.id;
+  expect(confinementId, "confinement recommendation persisted").toBeTruthy();
+
+  const confinementDuplicate = await request.post(
+    `${apiUrl}/customer/medical-confinements/${confinementId}/payment-proof`,
+    {
+      headers: auth(customer.token),
+      multipart: {
+        payment_method: "gcash",
+        payment_reference: state.proofReference,
+        payment_proof: { name: "p9-duplicate-confinement-proof.png", mimeType: "image/png", buffer: PROOF_PNG },
+      },
+    }
+  );
+  expect(confinementDuplicate.status()).toBe(422);
+
+  const billingDuplicate = await request.post(
+    `${apiUrl}/customer/billing/veterinary/${appointmentId}/online-payment`,
+    {
+      headers: auth(customer.token),
+      multipart: {
+        payment_method: "gcash",
+        payment_reference: state.proofReference,
+        payment_proof: { name: "p9-duplicate-veterinary-billing-proof.png", mimeType: "image/png", buffer: PROOF_PNG },
+      },
+    }
+  );
+  expect(billingDuplicate.status()).toBe(422);
+
+  const proofState = dbMulti({
+    confinementStatus: `DB::table('medical_confinements')->where('id', ${confinementId})->value('payment_status')`,
+    confinementProof: `DB::table('medical_confinements')->where('id', ${confinementId})->value('payment_proof') ? 'yes' : 'no'`,
+    billingRequests: `DB::table('service_billing_payment_requests')->where('appointment_id', ${appointmentId})->count()`,
+  });
+  correlate({
+    scenario: "J9-confinement-duplicate-reference",
+    record: `medical_confinement#${confinementId}`,
+    initial: "reference already submitted for service request",
+    expected: "duplicate rejected; confinement remains unpaid without proof",
+    actual: `status=${confinementDuplicate.status()} payment_status=${proofState.confinementStatus} proof=${proofState.confinementProof}`,
+    db: `medical_confinements.id=${confinementId}`,
+    downstream: "cashier queue unchanged",
+    evidence: "API and read-only database probe",
+    result: confinementDuplicate.status() === 422
+      && proofState.confinementStatus === "unpaid"
+      && proofState.confinementProof === "no"
+      ? "PASS"
+      : "FAIL",
+  });
+  correlate({
+    scenario: "J9-veterinary-billing-duplicate-reference",
+    record: `appointment#${appointmentId}`,
+    initial: "reference already submitted for service request",
+    expected: "duplicate rejected without creating invoice payment request",
+    actual: `status=${billingDuplicate.status()} payment_requests=${proofState.billingRequests}`,
+    db: `service_billing_payment_requests.appointment_id=${appointmentId}`,
+    downstream: "cashier queue unchanged",
+    evidence: "API and read-only database probe",
+    result: billingDuplicate.status() === 422 && Number(proofState.billingRequests) === 0
+      ? "PASS"
+      : "FAIL",
   });
 });
 

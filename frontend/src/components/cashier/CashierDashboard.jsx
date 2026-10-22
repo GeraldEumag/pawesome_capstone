@@ -596,7 +596,7 @@ const CashierDashboard = () => {
         };
       });
 
-      downloadReceiptPdf({
+      await downloadReceiptPdf({
         title: "Sales Invoice",
         receiptNumber: data.receipt_number || data.transaction_id || receiptTransactionId,
         date: data.date || new Date().toLocaleString("en-PH"),

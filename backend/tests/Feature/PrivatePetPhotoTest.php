@@ -12,6 +12,34 @@ class PrivatePetPhotoTest extends TestCase
 {
     use RefreshDatabase;
 
+    public function test_customer_pet_photo_rejects_unsupported_and_oversized_files(): void
+    {
+        $owner = User::factory()->create(['role' => 'customer']);
+        $headers = [
+            'Authorization' => 'Bearer ' . $owner->createToken('test-token')->plainTextToken,
+        ];
+
+        $this->withHeaders($headers)
+            ->postJson('/api/customer/pets', [
+                'name' => 'Buddy',
+                'species' => 'Dog',
+                'image' => UploadedFile::fake()->create('pet.gif', 10, 'image/gif'),
+            ])
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors('image');
+
+        $this->withHeaders($headers)
+            ->postJson('/api/customer/pets', [
+                'name' => 'Buddy',
+                'species' => 'Dog',
+                'image' => UploadedFile::fake()->create('pet.png', 10241, 'image/png'),
+            ])
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors('image');
+
+        $this->assertDatabaseCount('pets', 0);
+    }
+
     public function test_customer_pet_photo_is_private_and_owner_authorized(): void
     {
         Storage::fake('private');

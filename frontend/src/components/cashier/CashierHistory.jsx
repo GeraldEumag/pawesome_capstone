@@ -110,11 +110,11 @@ const CashierHistory = () => {
     if (options) printReceipt(options);
   };
 
-  const handleDownloadReceiptPdf = (entry) => {
+  const handleDownloadReceiptPdf = async (entry) => {
     const options = getReceiptOptions(entry);
     if (!options) return;
     try {
-      downloadReceiptPdf(options);
+      await downloadReceiptPdf(options);
     } catch (err) {
       showError(err.message || "Failed to download receipt PDF.");
     }
@@ -179,4 +179,3 @@ const CashierHistory = () => {
 };
 
 export default CashierHistory;
-

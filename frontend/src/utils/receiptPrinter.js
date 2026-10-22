@@ -16,6 +16,7 @@ import { STORE_INFO } from "./storeInfo";
 import { showWarning } from "./alert.jsx";
 import { printRawViaQZ } from "./qzPrinter";
 import { buildEscPos, buildTestReceipt } from "./escpos";
+import brandLogo from "../assets/pawesome.jpg";
 
 /**
  * Print a receipt.
@@ -138,8 +139,9 @@ function buildReceiptHtml(opts = {}, { includePrintButton = false } = {}) {
     /* Section spacer */
     .dv{height:6px}
 
-    /* Header — left-aligned, no letter-spacing */
+    /* Header - left-aligned, no letter-spacing */
     .hd{padding:10px 10px 4px}
+    .hd .logo{display:block;width:auto;height:auto;max-width:38px;max-height:38px;object-fit:contain;margin:0 auto 6px}
     .hd .n{font-size:15px;font-weight:900;color:#000;margin-bottom:2px}
     .hd .a,.hd .m{font-size:10px;color:#000;line-height:1.4}
     .hd .t{font-size:12px;font-weight:700;color:#000;text-transform:uppercase;margin-top:6px}
@@ -178,6 +180,7 @@ function buildReceiptHtml(opts = {}, { includePrintButton = false } = {}) {
 
     <!-- Header -->
     <div class="hd">
+      <img class="logo" src="${brandLogo}" alt="Pawesome logo">
       <div class="n">${e(STORE_INFO.name)}</div>
       <div class="a">${e(STORE_INFO.address).replace(/\n/g, "<br>")}</div>
       <div class="m">${e(STORE_INFO.email)}</div>
@@ -219,9 +222,16 @@ function openPrintPopup(html) {
   w.document.write(html);
   w.document.close();
   w.focus();
-  setTimeout(() => {
-    try { w.print(); } catch { /* user can click Print button */ }
-  }, 350);
+  Promise.all(Array.from(w.document.images, (image) =>
+    image.complete ? Promise.resolve() : new Promise((resolve) => {
+      image.addEventListener("load", resolve, { once: true });
+      image.addEventListener("error", resolve, { once: true });
+    })
+  )).then(() => {
+    setTimeout(() => {
+      try { w.print(); } catch { /* user can click Print button */ }
+    }, 100);
+  });
 }
 
 // ── Helpers ───────────────────────────────────────────────────────────────────

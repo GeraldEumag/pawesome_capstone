@@ -136,6 +136,7 @@ class ReceptionistRequestController extends Controller
             'cancellation_reason' => $item->cancellation_reason ?? null,
             'payment_status' => $item->payment_status,
             'payment' => $item->payment_status,
+            'booking_channel' => $item->booking_channel ?? \App\Support\BookingChannel::ONLINE,
             'notes' => $item->notes,
             'price' => $item->price ?? null,
             'amount' => $item->price ?? null,
@@ -151,9 +152,13 @@ class ReceptionistRequestController extends Controller
             ->all();
     }
 
-    public function index()
+    public function index(Request $request)
     {
-        $requests = ServiceRequest::with('appointment.veterinarian')->latest()->get()->map(fn ($item) => $this->formatRequest($item));
+        $query = ServiceRequest::with('appointment.veterinarian');
+        if ($request->query('booking_channel') === \App\Support\BookingChannel::WALK_IN) {
+            $query->where('booking_channel', \App\Support\BookingChannel::WALK_IN)->limit(20);
+        }
+        $requests = $query->latest()->get()->map(fn ($item) => $this->formatRequest($item));
 
         return response()->json([
             'success' => true,

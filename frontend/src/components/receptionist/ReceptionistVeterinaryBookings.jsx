@@ -33,7 +33,7 @@ import "./ReceptionistVeterinaryBookings.css";
 
 const ReceptionistVeterinaryBookings = () => {
   const [searchTerm, setSearchTerm] = useState("");
-  const { tab: activeTab, range: datePreset, setTab, setRange: setDatePreset } = useBookingViewParams();
+  const { tab: activeTab, range: datePreset, setTab, setRange: setDatePreset, setView } = useBookingViewParams();
   const [storeToday, setStoreToday] = useState(() => formatDateOnly(new Date()));
   const [filterDoctor, setFilterDoctor] = useState("all");
   const [selectedAppointment, setSelectedAppointment] = useState(null);
@@ -172,6 +172,7 @@ const ReceptionistVeterinaryBookings = () => {
 
   // Approve appointment
   const handleApprove = async (appointmentId) => {
+    if (actionLoading) return;
     const appointment = appointments.find((item) => item.rawId === appointmentId);
     const veterinarianId = vetAssignments[appointmentId] || selectedVet || appointment?.veterinarianId;
 
@@ -180,6 +181,13 @@ const ReceptionistVeterinaryBookings = () => {
       showWarning("Please choose a veterinarian before approving this appointment.");
       return;
     }
+
+    const confirmed = await showConfirm(
+      "Are you sure you want to approve this request?",
+      `${appointment?.petName || "Appointment"} · ${appointment?.appointmentDate || "Date not set"}`,
+      "Confirm Approval"
+    );
+    if (!confirmed) return;
 
     try {
       setActionLoading(true);
@@ -256,7 +264,11 @@ const ReceptionistVeterinaryBookings = () => {
       showWarning("Please assign a veterinarian to every selected appointment."); 
       return; 
     }
-    if (!(await showConfirm(`Approve ${ids.length} selected appointments?`))) return;
+    if (!(await showConfirm(
+      "Are you sure you want to approve this request?",
+      `${ids.length} appointments selected`,
+      "Confirm Approval"
+    ))) return;
     setActionLoading(true);
     setError("");
     try {
@@ -496,8 +508,7 @@ const ReceptionistVeterinaryBookings = () => {
               type="button"
               className="bst-later"
               onClick={() => {
-                setTab("all");
-                setDatePreset("upcoming");
+                setView({ tab: "all", range: "upcoming" });
               }}
             >
               {laterCount} on later dates
@@ -508,8 +519,7 @@ const ReceptionistVeterinaryBookings = () => {
               type="button"
               className="bst-older-pending"
               onClick={() => {
-                setTab("to_approve");
-                setDatePreset("7d");
+                setView({ tab: "to_approve", range: "7d" });
               }}
             >
               {olderPending} older pending

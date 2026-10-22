@@ -14,6 +14,7 @@ import { showError } from "../../utils/alert.jsx";
 import { printReceipt } from "../../utils/receiptPrinter";
 import { downloadReceiptPdf } from "../../utils/receiptPdf";
 import { STORE_INFO } from "../../utils/storeInfo";
+import brandLogo from "../../assets/pawesome.jpg";
 import PaymentApprovals from "./components/PaymentApprovals";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
@@ -575,11 +576,11 @@ const CashierPOS = ({ initialTab }) => {
     if (receiptOptions) printReceipt(receiptOptions);
   }, [getReceiptOptions]);
 
-  const handleDownloadReceiptPdf = useCallback(() => {
+  const handleDownloadReceiptPdf = useCallback(async () => {
     const receiptOptions = getReceiptOptions();
     if (!receiptOptions) return;
     try {
-      downloadReceiptPdf(receiptOptions);
+      await downloadReceiptPdf(receiptOptions);
     } catch (err) {
       addToast(err.message || "Failed to download receipt PDF.", "error");
     }
@@ -1119,6 +1120,7 @@ const CashierPOS = ({ initialTab }) => {
 
                 {/* ── Store header ── */}
                 <div className="pos-receipt-hd">
+                  <img src={brandLogo} alt="Pawesome logo" className="pos-receipt-logo" />
                   <div className="pos-receipt-name">PAWESOME RETREAT INC.</div>
                   {STORE_INFO.address.split("\n").map((line) => (
                     <div className="pos-receipt-addr" key={line}>{line}</div>

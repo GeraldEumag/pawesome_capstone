@@ -48,6 +48,16 @@
   text-align: center;
 }
 
+.vr-logo {
+  display: block;
+  width: auto;
+  height: auto;
+  max-width: 44px;
+  max-height: 44px;
+  object-fit: contain;
+  margin: 0 auto 6px;
+}
+
 .vr-name {
   font-size: 15px;
   font-weight: 900;

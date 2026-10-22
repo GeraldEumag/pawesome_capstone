@@ -110,7 +110,7 @@ test.describe('Customer Add Pet modal', () => {
     await expect(page.locator('input[name="name"]')).toBeFocused();
     await expect(page.locator('body')).toHaveCSS('overflow', 'hidden');
 
-    const closeButton = page.getByRole('button', { name: 'Close Add New Pet dialog' });
+    const closeButton = page.getByRole('button', { name: 'Close Add a new pet dialog' });
     const submitButton = page.getByRole('button', { name: 'Add Pet', exact: true });
     await closeButton.focus();
     await page.keyboard.press('Shift+Tab');
@@ -129,8 +129,14 @@ test.describe('Customer Add Pet modal', () => {
       expect(bounds.y).toBeGreaterThanOrEqual(0);
       expect(bounds.y + bounds.height).toBeLessThanOrEqual(901);
       await expect.poll(() => page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(width + 1);
-      await expect(page.locator('.pets-add-modal-footer')).toBeVisible();
+      await expect(dialog.locator('.pw-modal-footer')).toBeVisible();
     }
+
+    await page.setViewportSize({ width: 320, height: 520 });
+    const notesField = dialog.locator('textarea[name="notes"]');
+    await notesField.scrollIntoViewIfNeeded();
+    await expect(notesField).toBeVisible();
+    await expect(dialog.locator('.pw-modal-footer')).toBeVisible();
 
     await page.getByLabel('Birthdate').click();
     const calendar = page.locator('.react-datepicker__portal');
@@ -209,6 +215,30 @@ test.describe('Customer Add Pet modal', () => {
     expect(await page.evaluate((url) => window.__revokedPetPreviewUrls.includes(url), previewUrl)).toBe(true);
   });
 
+  test('rejects unsupported and oversized pet photos before submission', async ({ page }) => {
+    const createRequests = await mockCustomerPetApi(page);
+    await page.goto('/customer/pets', { waitUntil: 'domcontentloaded' });
+    const dialog = await openAddPetDialog(page);
+    const imageInput = dialog.locator('input[name="image"]');
+
+    await imageInput.setInputFiles({
+      name: 'pet.txt',
+      mimeType: 'text/plain',
+      buffer: Buffer.from('not an image'),
+    });
+    await expect(dialog.getByRole('alert')).toContainText('Choose a JPG, PNG, or WebP image.');
+    await expect(imageInput).toHaveValue('');
+
+    await imageInput.setInputFiles({
+      name: 'large-pet.png',
+      mimeType: 'image/png',
+      buffer: Buffer.alloc(5 * 1024 * 1024 + 1),
+    });
+    await expect(dialog.getByRole('alert')).toContainText('Pet photos must be 5 MB or smaller.');
+    await expect(imageInput).toHaveValue('');
+    expect(createRequests).toHaveLength(0);
+  });
+
   test('keeps a failed create open with the entered draft and clears it on cancel', async ({ page }) => {
     await mockCustomerPetApi(page, { failCreate: true });
     await page.goto('/customer/pets', { waitUntil: 'domcontentloaded' });
@@ -226,14 +256,17 @@ test.describe('Customer Add Pet modal', () => {
   });
 
   test('disables create while the request is pending to prevent duplicate submissions', async ({ page }) => {
-    const createRequests = await mockCustomerPetApi(page, { postDelay: 500 });
+    const createRequests = await mockCustomerPetApi(page, { postDelay: 1500 });
     await page.goto('/customer/pets', { waitUntil: 'domcontentloaded' });
     const dialog = await openAddPetDialog(page);
     await fillRequiredPetFields(page, 'Mochi');
 
-    const submitButton = page.locator('.pets-add-modal-footer button[type="submit"]');
-    await submitButton.click();
-    await expect(submitButton).toBeDisabled();
+    const submitButton = dialog.getByRole('button', { name: 'Add Pet', exact: true });
+    await page.evaluate(() => {
+      const button = document.querySelector('.pets-add-modal button[type="submit"]');
+      button.click();
+      button.click();
+    });
     await expect.poll(() => createRequests.length).toBe(1);
     await expect(dialog).toHaveCount(0);
     expect(createRequests).toHaveLength(1);

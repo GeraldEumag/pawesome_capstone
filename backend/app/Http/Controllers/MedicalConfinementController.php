@@ -9,6 +9,7 @@ use App\Models\HotelRoom;
 use App\Models\MedicalConfinement;
 use App\Models\MedicalProgressNote;
 use App\Services\FileStorageService;
+use App\Services\PaymentReferenceGuard;
 use App\Services\WorkflowNotifier;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -192,14 +193,27 @@ class MedicalConfinementController extends Controller
             'payment_status' => 'pending',
         ];
 
-        // Replaced proofs are retained as payment evidence (deleteOld: false).
-        FileStorageService::storeAndPersist(
-            $request->file('payment_proof'), 'payment-proofs/confinements', 'private',
-            fn (string $path) => $confinement->update($paymentData + [
-                'payment_proof' => $path,
-            ]),
-            deleteOld: false,
+        $guardResult = PaymentReferenceGuard::withUniqueReference(
+            $request->payment_reference,
+            [
+                'ids' => ['medical_confinements' => [$confinement->id]],
+                'settlements' => [['type' => 'medical_confinement', 'id' => $confinement->id]],
+            ],
+            fn () => response()->json(['message' => 'This payment reference has already been submitted. Check the number or contact the cashier.'], 422),
+            function () use ($request, $paymentData, $confinement) {
+                // Replaced proofs are retained as payment evidence (deleteOld: false).
+                return FileStorageService::storeAndPersist(
+                    $request->file('payment_proof'), 'payment-proofs/confinements', 'private',
+                    fn (string $path) => $confinement->update($paymentData + [
+                        'payment_proof' => $path,
+                    ]),
+                    deleteOld: false,
+                );
+            }
         );
+        if ($guardResult instanceof JsonResponse) {
+            return $guardResult;
+        }
 
         WorkflowNotifier::notifyRole('cashier', 'Confinement payment proof submitted', "{$confinement->pet_name} has a pending confinement payment proof.", 'info', 'medical_confinement', $confinement->id);
 

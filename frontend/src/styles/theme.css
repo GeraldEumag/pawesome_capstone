@@ -20,8 +20,9 @@
   /* Text Colors */
   --color-text: #1f2937;
   --color-heading: #191919;
-  --color-muted: #64748b;
-  --color-subtle: #94a3b8;
+  --color-muted: #475569;
+  --color-subtle: #64748b;
+  --color-link: #9d174d;
 
   /* Table Colors */
   --color-table-header: rgba(255, 241, 247, 0.95);
@@ -31,7 +32,7 @@
   /* Input Colors */
   --color-input-bg: #ffffff;
   --color-input-text: #1f2937;
-  --color-input-placeholder: #94a3b8;
+  --color-input-placeholder: #64748b;
 
   /* Modal & Dropdown Colors */
   --color-modal-bg: rgba(255, 255, 255, 0.96);
@@ -120,7 +121,7 @@
   --radius-pill: 999px;
 
   /* Focus */
-  --focus-ring: 0 0 0 3px rgba(255, 95, 147, 0.14);
+  --focus-ring: 0 0 0 3px rgba(157, 23, 77, 0.35);
 
   /* Z-index scale — overlay layers, ascending */
   --z-dropdown: 1000;
@@ -169,7 +170,7 @@ li {
 }
 
 a {
-  color: var(--color-primary);
+  color: var(--color-link);
 }
 
 .glass-card,
@@ -223,7 +224,7 @@ a {
 
 .btn-primary {
   background: linear-gradient(135deg, var(--color-primary), var(--color-primary-light));
-  color: white;
+  color: #1f2937;
   box-shadow: var(--shadow-primary);
 }
 
@@ -253,8 +254,14 @@ select:focus,
 textarea:focus,
 .input:focus {
   outline: none;
-  border-color: var(--color-primary);
-  box-shadow: 0 0 0 4px rgba(255, 95, 147, 0.18);
+  border-color: var(--color-link);
+  box-shadow: 0 0 0 4px rgba(157, 23, 77, 0.24);
+}
+
+button:focus-visible,
+a:focus-visible {
+  outline: 3px solid var(--color-link);
+  outline-offset: 2px;
 }
 
 input::placeholder,
@@ -634,6 +641,3 @@ tr:hover td,
 .receipt-paper * {
   color: var(--color-text);
 }
-
-
-

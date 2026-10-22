@@ -306,6 +306,27 @@ class BoardingRoomController extends Controller
         return response()->json(['room_types' => $roomTypes]);
     }
 
+    public function publicRooms(): JsonResponse
+    {
+        $rooms = BoardingRoom::query()
+            ->where('is_active', true)
+            ->where('customer_selectable', true)
+            ->orderBy('daily_rate')
+            ->get()
+            ->map(fn (BoardingRoom $room) => [
+                'id' => $room->id,
+                'room_name' => $room->room_name,
+                'room_type' => $room->room_type,
+                'allowed_species' => $room->allowed_species ?? [],
+                'max_capacity' => $room->max_capacity,
+                'daily_rate' => (float) $room->daily_rate,
+                'description' => $room->notes,
+                'photo_url' => null,
+            ]);
+
+        return response()->json(['rooms' => $rooms]);
+    }
+
     /**
      * Approve hotel boarding request
      */

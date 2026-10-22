@@ -499,6 +499,10 @@ test('customer may pay the full hotel booking total during booking after choosin
   const room = page.locator('.rooms-grid .room-card:not(.unavailable)').first();
   await expect(room).toBeVisible();
   await room.click();
+  await expect(room).toHaveAttribute('aria-pressed', 'true');
+  await expect(room).toContainText('Selected for this booking');
+  await page.locator('textarea[name="notes"]').fill('Please keep the pet comfortable.');
+  await expect(room).toHaveAttribute('aria-pressed', 'true');
   const card = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8/5+hHgAHggJ/PchI7wAAAABJRU5ErkJggg==', 'base64');
   await page.locator('.book-tab input[type="file"]').setInputFiles({ name: 'milo-vaccine.png', mimeType: 'image/png', buffer: card });
   await page.getByRole('button', { name: 'Submit Boarding Request' }).click();

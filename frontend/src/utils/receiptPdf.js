@@ -1,5 +1,6 @@
 import jsPDF from "jspdf";
 import { STORE_INFO } from "./storeInfo";
+import brandLogoUrl from "../assets/pawesome.jpg";
 
 const PAGE_WIDTH = 58;
 const PAGE_HEIGHT = 200;
@@ -28,7 +29,23 @@ const safeFilename = (value) => cleanText(value, "receipt")
   .replace(/\s+/g, "-")
   .slice(0, 90);
 
-export const createReceiptPdf = (opts = {}) => {
+const loadBrandLogo = async () => {
+  try {
+    const response = await fetch(brandLogoUrl);
+    if (!response.ok) return null;
+    const blob = await response.blob();
+    return await new Promise((resolve) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(reader.result);
+      reader.onerror = () => resolve(null);
+      reader.readAsDataURL(blob);
+    });
+  } catch {
+    return null;
+  }
+};
+
+export const createReceiptPdf = async (opts = {}) => {
   const {
     title = "Invoice",
     receiptNumber = opts.id || "",
@@ -50,6 +67,7 @@ export const createReceiptPdf = (opts = {}) => {
     footerText = "Thank you for choosing Pawesome Retreat Inc.!",
   } = opts;
 
+  const brandLogo = await loadBrandLogo();
   const doc = new jsPDF({ orientation: "p", unit: "mm", format: [PAGE_WIDTH, PAGE_HEIGHT], compress: true });
   const receiptLabel = cleanText(receiptNumber, "N/A");
   const pdfTitle = cleanText(title, "Invoice");
@@ -63,7 +81,15 @@ export const createReceiptPdf = (opts = {}) => {
 
   const addContinuationHeader = () => {
     doc.addPage([PAGE_WIDTH, PAGE_HEIGHT], "p");
-    y = 6;
+    let logoHeight = 0;
+    if (brandLogo) {
+      const image = doc.getImageProperties(brandLogo);
+      const scale = Math.min(10 / image.width, 8 / image.height);
+      const logoWidth = image.width * scale;
+      logoHeight = image.height * scale;
+      doc.addImage(brandLogo, "JPEG", (PAGE_WIDTH - logoWidth) / 2, 5, logoWidth, logoHeight);
+    }
+    y = 6 + logoHeight;
     doc.setFont("helvetica", "bold");
     doc.setFontSize(8);
     doc.setTextColor(31, 41, 55);
@@ -120,6 +146,14 @@ export const createReceiptPdf = (opts = {}) => {
     y += rowHeight + 0.6;
   };
 
+  if (brandLogo) {
+    const logoProperties = doc.getImageProperties(brandLogo);
+    const logoScale = Math.min(18 / logoProperties.width, 14 / logoProperties.height);
+    const logoWidth = logoProperties.width * logoScale;
+    const logoHeight = logoProperties.height * logoScale;
+    doc.addImage(brandLogo, "JPEG", (PAGE_WIDTH - logoWidth) / 2, y, logoWidth, logoHeight);
+    y += logoHeight + 1.5;
+  }
   centerText(STORE_INFO.name.toUpperCase(), 10, "bold", 4.5);
   centerText(STORE_INFO.address.replace(/\n/g, ", "), 7, "normal", 3.3);
   centerText(`${STORE_INFO.email} | ${STORE_INFO.phone}`, 6.5, "normal", 3.2);
@@ -184,8 +218,8 @@ export const createReceiptPdf = (opts = {}) => {
   return { doc, filename: `${filenameBase}.pdf` };
 };
 
-export const downloadReceiptPdf = (opts = {}) => {
-  const { doc, filename } = createReceiptPdf(opts);
+export const downloadReceiptPdf = async (opts = {}) => {
+  const { doc, filename } = await createReceiptPdf(opts);
   doc.save(filename);
   return doc;
 };

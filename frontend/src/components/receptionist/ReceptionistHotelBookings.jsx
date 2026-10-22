@@ -22,7 +22,7 @@ import "../../styles/bookingModal.css";
 import "./ReceptionistHotelBookings.css";
 import { apiRequest, getAuthenticatedFileUrl } from "../../api/client";
 import { exportToCSV, exportToPDF, exportToExcel } from "../../utils/reportExport";
-import { showError, showReasonPrompt, BOOKING_REJECT_REASONS } from "../../utils/alert.jsx";
+import { showConfirm, showError, showReasonPrompt, BOOKING_REJECT_REASONS } from "../../utils/alert.jsx";
 import DatePickerInput from "../../components/shared/DatePickerInput";
 import BookingStatusTabs from "../shared/BookingStatusTabs";
 import BookingDateFilter from "../shared/BookingDateFilter";
@@ -105,7 +105,7 @@ const requiresCardBeforeApproval = (booking) =>
 
 const ReceptionistHotelBookings = () => {
   const [searchTerm, setSearchTerm] = useState("");
-  const { tab: activeTab, range: datePreset, setTab, setRange: setDatePreset } = useBookingViewParams();
+  const { tab: activeTab, range: datePreset, setTab, setRange: setDatePreset, setView } = useBookingViewParams();
   const [storeToday, setStoreToday] = useState(() => formatDateOnly(new Date()));
   const [filterPayment, setFilterPayment] = useState("all");
 
@@ -321,12 +321,20 @@ const ReceptionistHotelBookings = () => {
   };
 
   const approveBooking = async (booking) => {
+    if (isProcessing(booking)) return false;
     if (requiresCardBeforeApproval(booking)) {
       showMessage("error", booking.vaccination_card
         ? "Verify the vaccination card before approving this online boarding."
         : "A vaccination card is required before approving this online boarding.");
       return false;
     }
+
+    const confirmed = await showConfirm(
+      "Are you sure you want to approve this request?",
+      `Boarding #${booking.id} · ${getPetName(booking)}`,
+      "Confirm Approval"
+    );
+    if (!confirmed) return false;
 
     const approved = await runAction(
       booking,
@@ -638,8 +646,7 @@ const ReceptionistHotelBookings = () => {
               type="button"
               className="bst-later"
               onClick={() => {
-                setTab("all");
-                setDatePreset("upcoming");
+                setView({ tab: "all", range: "upcoming" });
               }}
             >
               {laterCount} on later dates
@@ -650,8 +657,7 @@ const ReceptionistHotelBookings = () => {
               type="button"
               className="bst-older-pending"
               onClick={() => {
-                setTab("to_approve");
-                setDatePreset("7d");
+                setView({ tab: "to_approve", range: "7d" });
               }}
             >
               {olderPending} older pending

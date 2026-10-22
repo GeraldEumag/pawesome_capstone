@@ -9,6 +9,7 @@ use App\Models\PaymentSettlement;
 use App\Models\ServiceBillingPaymentRequest;
 use App\Services\EmailDeliveryService;
 use App\Services\FileStorageService;
+use App\Services\PaymentReferenceGuard;
 use App\Services\ServiceBillingPaymentService;
 use App\Services\WorkflowNotifier;
 use Illuminate\Http\JsonResponse;
@@ -86,20 +87,40 @@ class VeterinaryBillingController extends Controller
             return response()->json(['success' => false, 'message' => 'Invoice not found.'], 404);
         }
 
-        $paymentRequest = FileStorageService::storeAndPersist(
-            $request->file('payment_proof'),
-            'payment-proofs/service-billing',
-            'private',
-            fn (string $path) => ServiceBillingPaymentService::createOnlineRequest(
-                $appointment,
-                $customer,
-                $request->user(),
-                $validated['payment_method'],
-                $validated['payment_reference'],
-                $path
-            ),
-            prefix: 'billing-proof'
+        $invoiceVersion = ServiceBillingPaymentService::currentInvoiceVersion($appointment);
+        $paymentRequestIds = ServiceBillingPaymentRequest::where('appointment_id', $appointment->id)
+            ->where('invoice_version', $invoiceVersion)
+            ->pluck('id')
+            ->all();
+        $guardResult = PaymentReferenceGuard::withUniqueReference(
+            $validated['payment_reference'],
+            [
+                'ids' => ['service_billing_payment_requests' => $paymentRequestIds],
+                'settlements' => array_map(
+                    fn ($id) => ['type' => 'service_billing_payment', 'id' => $id],
+                    $paymentRequestIds
+                ),
+            ],
+            fn () => response()->json(['message' => 'This payment reference has already been submitted. Check the number or contact the cashier.'], 422),
+            fn () => FileStorageService::storeAndPersist(
+                $request->file('payment_proof'),
+                'payment-proofs/service-billing',
+                'private',
+                fn (string $path) => ServiceBillingPaymentService::createOnlineRequest(
+                    $appointment,
+                    $customer,
+                    $request->user(),
+                    $validated['payment_method'],
+                    $validated['payment_reference'],
+                    $path
+                ),
+                prefix: 'billing-proof'
+            )
         );
+        if ($guardResult instanceof JsonResponse) {
+            return $guardResult;
+        }
+        $paymentRequest = $guardResult;
         $this->notifyPaymentRequest($paymentRequest, $customer);
 
         return response()->json([

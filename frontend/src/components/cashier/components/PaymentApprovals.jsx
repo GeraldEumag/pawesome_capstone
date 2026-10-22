@@ -29,6 +29,7 @@ import { showSuccess, showError, showWarning } from "../../../utils/alert.jsx";
 import { printReceipt } from "../../../utils/receiptPrinter";
 import { downloadReceiptPdf } from "../../../utils/receiptPdf";
 import { STORE_INFO } from "../../../utils/storeInfo";
+import brandLogo from "../../../assets/pawesome.jpg";
 import { usePaymentApprovals, paymentKey } from "../hooks/usePaymentApprovals.jsx";
 import Modal from "../../shared/Modal";
 import { useAuth } from "../../../context/AuthContext";
@@ -791,11 +792,11 @@ const PaymentApprovals = () => {
               <button className="pa-btn-secondary" onClick={() => setShowReceipt(false)}>Close</button>
               <button
                 className="pa-btn-secondary"
-                onClick={() => {
+                onClick={async () => {
                   const options = getReceiptOptions();
                   if (!options) return;
                   try {
-                    downloadReceiptPdf(options);
+                    await downloadReceiptPdf(options);
                   } catch (err) {
                     showError(err.message || "Failed to download receipt PDF.");
                   }
@@ -819,6 +820,7 @@ const PaymentApprovals = () => {
 
               {/* Store header */}
               <div className="pa-receipt-hd">
+                <img src={brandLogo} alt="Pawesome logo" className="pa-receipt-logo" />
                 <div className="pa-receipt-name">PAWESOME RETREAT INC.</div>
                 {STORE_INFO.address.split("\n").map((line) => (
                   <div className="pa-receipt-addr" key={line}>{line}</div>

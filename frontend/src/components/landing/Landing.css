@@ -23,7 +23,7 @@ body {
   --landing-primary: var(--color-primary, #ff5f93);
   --landing-primary-light: var(--color-primary-light, #ff8db5);
   --landing-primary-soft: var(--color-primary-soft, #ffc8dd);
-  --landing-primary-dark: var(--color-primary-hover, #c93662);
+  --landing-primary-dark: var(--color-link, #9d174d);
   --landing-ink: #191919;
   --landing-text: #1f2937;
   --landing-muted: #64748b;
@@ -231,7 +231,7 @@ body {
 }
 
 .landing-btn-primary {
-  color: #ffffff;
+  color: #1f2937;
   background: linear-gradient(135deg, var(--landing-primary), var(--landing-primary-light));
   box-shadow: var(--landing-shadow-primary);
   position: relative;
@@ -2313,7 +2313,7 @@ body {
 .landing-nav-links a:hover {
   background: linear-gradient(135deg, var(--landing-primary), var(--landing-primary-light));
   box-shadow: var(--landing-shadow-primary);
-  color: #ffffff;
+  color: #1f2937;
 }
 .landing-header-actions { gap: 0.5rem; }
 .landing-header-attendance,
@@ -2338,7 +2338,7 @@ body {
 .landing-header-login { color: var(--landing-text); }
 .landing-header-register {
   background: linear-gradient(135deg, var(--landing-primary), var(--landing-primary-light));
-  color: #ffffff;
+  color: #1f2937;
   box-shadow: var(--landing-shadow-primary);
 }
 .landing-hamburger,
@@ -2437,6 +2437,85 @@ body {
   width: min(1160px, 100%);
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 1.1rem;
+}
+
+.landing-hotel-rooms {
+  padding: 4rem 1.5rem;
+}
+
+.landing-hotel-rooms .landing-section-header {
+  width: min(1160px, 100%);
+  margin-inline: auto;
+}
+
+.landing-hotel-rooms-grid {
+  width: min(1160px, 100%);
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 270px), 1fr));
+  gap: 1rem;
+  margin: 0 auto;
+}
+
+.landing-hotel-room-card {
+  overflow: hidden;
+  border: 1px solid var(--landing-border);
+  border-radius: 18px;
+  background: #fff;
+  box-shadow: var(--landing-shadow-soft);
+}
+
+.landing-hotel-room-photo,
+.landing-hotel-room-photo-empty {
+  width: 100%;
+  height: 180px;
+  display: grid;
+  place-items: center;
+  object-fit: cover;
+  background: #fff7fb;
+  color: #475569;
+}
+
+.landing-hotel-room-photo-empty {
+  border-bottom: 1px dashed var(--landing-border);
+  font-size: 0.9rem;
+  font-weight: 650;
+}
+
+.landing-hotel-room-copy {
+  display: grid;
+  align-content: start;
+  gap: 0.55rem;
+  padding: 1.15rem;
+  color: var(--landing-ink);
+}
+
+.landing-hotel-room-copy h3,
+.landing-hotel-room-copy p {
+  margin: 0;
+  color: var(--landing-ink);
+}
+
+.landing-hotel-room-copy p {
+  line-height: 1.5;
+}
+
+.landing-hotel-room-copy .landing-hotel-room-type {
+  color: #475569;
+  text-transform: capitalize;
+}
+
+.landing-hotel-room-copy .landing-btn {
+  margin-top: 0.45rem;
+}
+
+.landing-hotel-rooms-state {
+  width: min(1160px, 100%);
+  margin: 0 auto;
+  padding: 1.25rem;
+  border: 1px solid var(--landing-border);
+  border-radius: 14px;
+  background: #fff;
+  color: var(--landing-ink);
 }
 .landing-featured-card {
   min-height: 0;
@@ -2640,7 +2719,8 @@ body {
   .landing-hero-buttons .landing-btn { width: auto; }
   .landing-hero-image { aspect-ratio: 16 / 11; border-radius: 18px; }
   .landing-featured-services,
-  .landing-about { padding: 3.5rem 1.1rem; }
+  .landing-about,
+  .landing-hotel-rooms { padding: 3.5rem 1.1rem; }
   .landing-about-card { grid-template-columns: 1fr; gap: 1.5rem; }
   .landing-about-image { min-height: 0; }
   .landing-footer { padding-inline: 1.1rem; }

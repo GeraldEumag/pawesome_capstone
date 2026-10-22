@@ -578,7 +578,7 @@ const HotelForm = () => {
                     <div className="rooms-grid">
                       {boardingAvailability.rooms.map((room) => {
                         const cfg = getRoomConfig(room);
-                        const isSelected = selectedRoom?.id === room.id;
+                        const isSelected = String(selectedRoom?.id) === String(room.id);
                         return (
                           <button
                             key={room.id}
@@ -593,7 +593,7 @@ const HotelForm = () => {
                                 ? <img src={cfg.img} alt={cfg.label} className="room-card-img" />
                                 : <div className="room-card-img-placeholder"><FontAwesomeIcon icon={faBed} /></div>
                               }
-                              <span className="room-card-badge" style={{ background: cfg.badge }}>{cfg.label}</span>
+                              <span className="room-card-badge" style={{ "--room-accent": cfg.badge }}>{cfg.label}</span>
                               {!room.available && <div className="room-card-unavailable-overlay">Unavailable</div>}
                             </div>
                             <div className="room-card-body">
@@ -601,6 +601,9 @@ const HotelForm = () => {
                                 <span className="room-name">{room.room_name}</span>
                                 <span className="room-type">{room.room_type?.replace(/_/g, ' ')}</span>
                               </div>
+                              {String(selectedRoom?.id) === String(room.id) && (
+                                <span className="room-selected-label">Selected for this booking</span>
+                              )}
                               <div className="room-details">
                                 {room.capacity || room.max_capacity ? (
                                   <span className="room-capacity">👥 Capacity: {room.capacity ?? room.max_capacity}</span>

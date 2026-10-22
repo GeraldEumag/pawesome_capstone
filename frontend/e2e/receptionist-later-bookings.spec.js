@@ -49,6 +49,14 @@ test("a grooming booking on a later date is reachable from receptionist grooming
 
   await expect(page.locator(".bdf-option.is-active")).toHaveText("UPCOMING");
   await expect(page.locator(".grooming-table tbody tr", { hasText: pet.name })).toHaveCount(1, { timeout: 30000 });
+  await page.locator(".bdf-option").filter({ hasText: "7 DAYS" }).click();
+  await page.locator(".bst-tab").filter({ hasText: "TO APPROVE" }).click();
+  await expect.poll(() =>
+    page.evaluate(() => {
+      const params = new URLSearchParams(window.location.search);
+      return [params.get("tab"), params.get("range")];
+    })
+  ).toEqual(["to_approve", "7d"]);
   await context.close();
   expect(created.id).toBeTruthy();
 });

@@ -1127,6 +1127,7 @@ Route::middleware(['throttle:api'])->prefix('availability')->group(function () {
 
 // Boarding/Hotel Room Management Routes
 Route::middleware(['throttle:api'])->group(function () {
+    Route::get('/public/boarding-rooms', [BoardingRoomController::class, 'publicRooms']);
     Route::get('/boarding/rooms/available', [BoardingRoomController::class, 'getAvailableRooms']);
     Route::get('/boarding/rooms/calculate-total', [BoardingRoomController::class, 'calculateTotal']);
     Route::get('/boarding/rooms/types', [BoardingRoomController::class, 'getRoomTypes']);

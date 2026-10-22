@@ -315,10 +315,10 @@ const CashierPaymentVerification = () => {
     };
   }, [requests]);
 
-  const handleDownloadLastReceipt = () => {
+  const handleDownloadLastReceipt = async () => {
     if (!lastReceiptOptions) return;
     try {
-      downloadReceiptPdf(lastReceiptOptions);
+      await downloadReceiptPdf(lastReceiptOptions);
     } catch (err) {
       showError(err.message || "Failed to download receipt PDF.");
     }

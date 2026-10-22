@@ -81,6 +81,72 @@ class BoardingRoomLifecycleTest extends TestCase
         ], $overrides));
     }
 
+    public function test_public_landing_room_list_includes_only_selectable_room_details(): void
+    {
+        $publicRoom = $this->room(['notes' => 'Standard accommodation for dogs.']);
+        $this->room(['customer_selectable' => false, 'room_code' => 'PRIVATE-' . uniqid()]);
+        $this->room(['is_active' => false, 'room_code' => 'INACTIVE-' . uniqid()]);
+
+        $response = $this->getJson('/api/public/boarding-rooms')->assertOk();
+        $rooms = $response->json('rooms');
+
+        $this->assertCount(1, $rooms);
+        $this->assertSame($publicRoom->id, $rooms[0]['id']);
+        $this->assertSame('Standard accommodation for dogs.', $rooms[0]['description']);
+        $this->assertNull($rooms[0]['photo_url']);
+        $this->assertArrayNotHasKey('available_rooms', $rooms[0]);
+    }
+
+    public function test_receptionist_can_retrieve_and_open_an_ongoing_boarding(): void
+    {
+        $receptionist = $this->user('receptionist');
+        [, $customer, $pet] = $this->customerPet();
+        $boarding = $this->boarding($customer, $pet, [
+            'status' => 'in_care',
+            'payment_status' => 'paid',
+        ]);
+        $headers = $this->headers($receptionist);
+
+        $this->withHeaders($headers)
+            ->getJson('/api/receptionist/boarding-requests')
+            ->assertOk()
+            ->assertJsonFragment([
+                'id' => $boarding->id,
+                'status' => 'in_care',
+                'pet_name' => $pet->name,
+            ]);
+
+        $this->withHeaders($headers)
+            ->getJson("/api/boardings/{$boarding->id}")
+            ->assertOk()
+            ->assertJsonPath('boarding.id', $boarding->id)
+            ->assertJsonPath('boarding.status', 'in_care')
+            ->assertJsonPath('boarding.pet.id', $pet->id);
+    }
+
+    public function test_duplicate_boarding_approval_is_rejected_after_the_first_transition(): void
+    {
+        $receptionist = $this->user('receptionist');
+        [, $customer, $pet] = $this->customerPet();
+        $boarding = $this->boarding($customer, $pet, [
+            'status' => 'pending',
+            'payment_status' => 'unpaid',
+        ]);
+        $headers = $this->headers($receptionist);
+
+        $this->withHeaders($headers)
+            ->postJson("/api/receptionist/boarding-requests/{$boarding->id}/approve")
+            ->assertOk();
+        $updatedAt = $boarding->fresh()->updated_at;
+
+        $this->withHeaders($headers)
+            ->postJson("/api/receptionist/boarding-requests/{$boarding->id}/approve")
+            ->assertUnprocessable();
+
+        $this->assertSame('approved', $boarding->fresh()->status);
+        $this->assertSame($updatedAt->toISOString(), $boarding->fresh()->updated_at->toISOString());
+    }
+
     public function test_receptionist_schedule_persists_a_boarding_room_id_and_reservation(): void
     {
         $receptionist = $this->user('receptionist');

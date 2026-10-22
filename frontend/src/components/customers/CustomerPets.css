@@ -181,7 +181,7 @@
   border: 1px solid transparent;
   border-radius: var(--radius-pill);
   background: linear-gradient(135deg, var(--color-primary), var(--color-primary-light));
-  color: #ffffff;
+  color: #1f2937;
   font-weight: 950;
   cursor: pointer;
   display: inline-flex;
@@ -201,7 +201,7 @@
 
 .pets-add-trigger:focus-visible,
 .pets-add-empty-btn:focus-visible {
-  outline: 3px solid rgba(255, 95, 147, 0.34);
+  outline: 3px solid rgba(157, 23, 77, 0.75);
   outline-offset: 3px;
 }
 
@@ -677,6 +677,12 @@
   text-align: center;
 }
 
+.pets-form .pet-image-upload-label .field-error {
+  color: #b91c1c;
+  font-size: 0.82rem;
+  font-weight: 700;
+}
+
 .pets-form label {
   display: grid;
   gap: 0.45rem;
@@ -762,7 +768,7 @@
 .pets-submit-btn,
 .pet-history-btn {
   background: linear-gradient(135deg, var(--color-primary), var(--color-primary-light));
-  color: #ffffff;
+  color: #1f2937;
   box-shadow: var(--shadow-primary);
 }
 
@@ -1030,7 +1036,7 @@
   border: 0;
   border-radius: var(--radius-pill);
   background: linear-gradient(135deg, var(--color-primary), var(--color-primary-light));
-  color: #ffffff;
+  color: #1f2937;
   font-weight: 900;
   cursor: pointer;
   box-shadow: var(--shadow-primary);

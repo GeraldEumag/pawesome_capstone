@@ -64,6 +64,26 @@ test.describe("customer bookings board", () => {
     await context.close();
   });
 
+  test("changing the date preset then status keeps both filters", async ({ browser, request }) => {
+    const session = await apiLogin(request, "customer");
+    const { page, context } = await openBoard(browser, session, "/customer/bookings?range=all");
+
+    await page.locator(".bdf-option").filter({ hasText: "LAST 7 DAYS" }).click();
+    await page.locator(".bst-tab").filter({ hasText: "Pending" }).click();
+    await expect.poll(() =>
+      page.evaluate(() => {
+        const params = new URLSearchParams(window.location.search);
+        return [params.get("tab"), params.get("range")];
+      })
+    ).toEqual(["to_approve", "7d"]);
+
+    await page.reload();
+    await waitForLoaded(page);
+    await expect(page.locator(".bst-tab[aria-selected='true']")).toContainText("Pending");
+    await expect(page.locator(".bdf-option.is-active")).toHaveText("LAST 7 DAYS");
+    await context.close();
+  });
+
   test("phone width stacks each booking into a card without horizontal overflow", async ({ browser, request }) => {
     const session = await apiLogin(request, "customer");
     const { page, context } = await openBoard(browser, session, "/customer/bookings?range=all");
@@ -88,6 +108,54 @@ test.describe("customer bookings board", () => {
 
   test("tablet width keeps the table inside its wrapper and hotel rows stay clean", async ({ browser, request }) => {
     const session = await apiLogin(request, "customer");
+    const receptionist = await apiLogin(request, "receptionist");
+    const headers = authHeaders(session);
+    const petRes = await request.post(`${apiUrl}/pets`, {
+      headers,
+      data: { name: `E2E Board Hotel Pet ${Date.now()}`, species: "Dog" },
+    });
+    expect(petRes.ok(), "create hotel-board pet").toBeTruthy();
+    const petBody = await petRes.json();
+    const pet = petBody.pet || petBody;
+    const date = new Date(Date.now() + 90 * 86400000).toISOString().slice(0, 10);
+    const roomsRes = await request.get(
+      `${apiUrl}/boarding/rooms/available?species=dog&check_in_date=${date}&check_out_date=${date}`,
+      { headers }
+    );
+    expect(roomsRes.ok(), "load selectable dog rooms").toBeTruthy();
+    const rooms = await roomsRes.json();
+    const room = (rooms.rooms || []).find((item) => item.available);
+    expect(room, "seeded data should provide a selectable dog room").toBeTruthy();
+
+    const boardingRes = await request.post(`${apiUrl}/customer/boardings`, {
+      headers,
+      multipart: {
+        pet_id: String(pet.id),
+        room_id: String(room.id),
+        check_in_date: date,
+        number_of_days: "1",
+        notes: "Customer booking board responsive fixture",
+        vaccination_card: {
+          name: "hotel-board-vaccination.png",
+          mimeType: "image/png",
+          buffer: Buffer.from("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==", "base64"),
+        },
+      },
+    });
+    expect(boardingRes.status(), await boardingRes.text()).toBe(201);
+    const boardingBody = await boardingRes.json();
+    const boardingId = boardingBody.boarding?.id;
+    expect(boardingId).toBeTruthy();
+
+    const verifyRes = await request.post(`${apiUrl}/receptionist/boarding-requests/${boardingId}/verify-vaccination`, {
+      headers: authHeaders(receptionist),
+    });
+    expect(verifyRes.ok(), await verifyRes.text()).toBeTruthy();
+    const approveRes = await request.post(`${apiUrl}/receptionist/boarding-requests/${boardingId}/approve`, {
+      headers: authHeaders(receptionist),
+    });
+    expect(approveRes.ok(), await approveRes.text()).toBeTruthy();
+
     const context = await browser.newContext({ baseURL: frontendUrl, viewport: { width: 768, height: 900 } });
     await context.addInitScript(({ token, user }) => {
       localStorage.setItem("token", token);

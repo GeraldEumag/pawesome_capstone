@@ -152,7 +152,16 @@ class BookingSchedulingIntegrityTest extends TestCase
         $this->assertDatabaseHas('service_requests', [
             'id' => $response->json('data.service_request_id'),
             'request_time' => '17:00',
+            'booking_channel' => 'walk_in',
         ]);
+
+        $this->withHeaders($headers)
+            ->getJson('/api/receptionist/requests?booking_channel=walk_in')
+            ->assertOk()
+            ->assertJsonFragment([
+                'id' => $response->json('data.service_request_id'),
+                'booking_channel' => 'walk_in',
+            ]);
     }
 
     public function test_receptionist_grooming_creation_persists_time_after_availability_check(): void

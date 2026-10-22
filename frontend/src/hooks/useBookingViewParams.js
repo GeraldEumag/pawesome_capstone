@@ -44,6 +44,7 @@ export const useBookingViewParams = ({ defaultRange = "today" } = {}) => {
     range,
     setTab: (value) => update({ tab: value }),
     setRange: (value) => update({ range: value }),
+    setView: update,
   };
 };
 

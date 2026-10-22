@@ -630,6 +630,26 @@
   color: var(--wi-heading);
 }
 
+.walkins-page .recent-open-link {
+  color: #9d174d;
+  font-weight: 750;
+  font-size: 0.78rem;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.walkins-page .walkins-retry-btn {
+  min-height: 40px;
+  margin-top: 0.75rem;
+  padding: 0.5rem 1rem;
+  border: 1px solid var(--wi-border-light);
+  border-radius: 10px;
+  background: #fff;
+  color: #1f2937;
+  font-weight: 700;
+  cursor: pointer;
+}
+
 /* ─── Responsive ─────────────────────────────────────────────────────────────── */
 @media (max-width: 1024px) {
   .walkins-page .walkins-hero {
@@ -689,5 +709,12 @@
   .walkins-page .hero-stat-chip {
     font-size: 0.72rem;
     padding: 4px 10px;
+  }
+}
+
+@media (max-width: 560px) {
+  .walkins-page .walkins-recent-card {
+    align-items: flex-start;
+    flex-direction: column;
   }
 }

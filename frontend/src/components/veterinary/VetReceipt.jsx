@@ -12,6 +12,7 @@ import { formatCurrency } from "../../utils/currency";
 import { STORE_INFO } from "../../utils/storeInfo";
 import { downloadReceiptPdf } from "../../utils/receiptPdf";
 import { showError } from "../../utils/alert.jsx";
+import brandLogo from "../../assets/pawesome.jpg";
 import "./theme.css";
 import "./VetReceipt.css";
 
@@ -82,10 +83,10 @@ const VetReceipt = () => {
     window.print();
   };
 
-  const handleDownloadPDF = () => {
+  const handleDownloadPDF = async () => {
     try {
       if (!receiptData) return;
-      downloadReceiptPdf({
+      await downloadReceiptPdf({
         title: "Service Invoice",
         receiptNumber: receiptData.receipt_number || receiptData.id,
         date: receiptData.paid_date || receiptData.date,
@@ -168,6 +169,7 @@ const VetReceipt = () => {
 
         {/* Store header */}
         <div className="vr-hd">
+          <img src={brandLogo} alt="Pawesome logo" className="vr-logo" />
           <div className="vr-name">{STORE_INFO.name.toUpperCase()}</div>
           {STORE_INFO.address.split("\n").map((line) => (
             <div className="vr-addr" key={line}>{line}</div>

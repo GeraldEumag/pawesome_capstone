@@ -472,6 +472,13 @@ class ServiceBillingPaymentService
         ], JSON_THROW_ON_ERROR));
     }
 
+    public static function currentInvoiceVersion(Appointment $appointment): string
+    {
+        return self::invoiceVersion(
+            ServiceBillingService::getItemizedBilling('veterinary', (int) $appointment->id)
+        );
+    }
+
     private static function displayPaymentStatus(?ServiceBillingPaymentRequest $request, Appointment $appointment, array $billing): string
     {
         $balanceDue = (float) ($billing['balance_due'] ?? 0);

@@ -365,8 +365,8 @@ const CustomerPayments = () => {
   };
 
   const viewReceipt = async (payment, output = "print") => {
-    const outputReceipt = (options) => {
-      if (output === "pdf") return downloadReceiptPdf(options);
+    const outputReceipt = async (options) => {
+      if (output === "pdf") return await downloadReceiptPdf(options);
       return printReceipt({ ...options, vat: undefined });
     };
     try {
@@ -375,7 +375,7 @@ const CustomerPayments = () => {
         const receipt = data?.receipt;
         if (!receipt) throw new Error("Billing receipt is not available yet.");
         const amount = Number(receipt.total_amount || payment.total_amount || 0);
-        outputReceipt({
+        await outputReceipt({
           title: "Veterinary Bill Receipt",
           receiptNumber: receipt.receipt_number || `VET-BILL-${payment.appointment_id}`,
           date: receipt.paid_at || new Date().toLocaleString("en-PH"),
@@ -410,7 +410,7 @@ const CustomerPayments = () => {
         const amount = Number(receipt.total_amount || payment.total_amount || 0);
         const serviceName = receipt.service_type || receipt.request_type || receipt.service_name || "Service";
 
-        outputReceipt({
+        await outputReceipt({
           title: "Service Invoice",
           receiptNumber: receipt.receipt_number || payment.receipt_number || `SR-${payment.id}`,
           date: receipt.paid_at || payment.paid_at || new Date().toLocaleString("en-PH"),
@@ -432,7 +432,7 @@ const CustomerPayments = () => {
         if (!payment.receipt_number) throw new Error("Boarding receipt is not available yet.");
 
         const amount = Number(payment.total_amount || 0);
-        outputReceipt({
+        await outputReceipt({
           title: "Boarding Invoice",
           receiptNumber: payment.receipt_number || `BRD-${payment.id}`,
           date: payment.paid_at || new Date().toLocaleString("en-PH"),
@@ -467,7 +467,7 @@ const CustomerPayments = () => {
         };
       });
 
-      outputReceipt({
+      await outputReceipt({
         title: "Sales Invoice",
         receiptNumber: receipt.receipt_number || `ORD-${payment.id}`,
         date: receipt.paid_at || new Date().toLocaleString("en-PH"),

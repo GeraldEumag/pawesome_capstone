@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useState } from "react";
+import { Link } from "react-router-dom";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
   faInfoCircle,
@@ -58,6 +59,7 @@ const ReceptionistWalkIns = () => {
 
   const fetchRecent = useCallback(async () => {
     try {
+      setRecentLoading(true);
       setRecentError("");
       const res = await apiRequest("/receptionist/walk-ins");
       setRecentWalkIns(Array.isArray(res?.data) ? res.data : []);
@@ -252,17 +254,18 @@ const ReceptionistWalkIns = () => {
         </div>
 
         {recentLoading ? (
-          <div className="recent-empty">
+          <div className="recent-empty" role="status">
             <FontAwesomeIcon icon={faSpinner} spin className="recent-loading-icon" />
             <p className="empty-heading">Loading walk-ins…</p>
           </div>
         ) : recentError ? (
-          <div className="recent-empty">
+          <div className="recent-empty" role="alert">
             <div className="empty-icon-wrap">
               <FontAwesomeIcon icon={faInfoCircle} />
             </div>
             <p className="empty-heading">Couldn't load walk-ins</p>
             <span className="empty-hint">{recentError}</span>
+            <button type="button" className="walkins-retry-btn" onClick={fetchRecent}>Retry</button>
           </div>
         ) : recentWalkIns.length === 0 ? (
           <div className="recent-empty">
@@ -276,6 +279,12 @@ const ReceptionistWalkIns = () => {
           <ul className="recent-list">
             {recentWalkIns.map((item) => {
               const meta = TYPE_META[item.request_type] || TYPE_META.grooming;
+              const serviceType = String(item.request_type || "").toLowerCase();
+              const path = serviceType === "hotel"
+                ? "/receptionist/bookings/hotel"
+                : serviceType === "veterinary"
+                  ? "/receptionist/bookings/veterinary"
+                  : "/receptionist/bookings/grooming";
               return (
                 <li key={item.id} className="recent-item">
                   <div className={`recent-type-icon type-${item.request_type}`}>
@@ -299,6 +308,7 @@ const ReceptionistWalkIns = () => {
                       {formatStatus(item.status)}
                     </span>
                     {item.price > 0 && <span className="recent-price">{formatPeso(item.price)}</span>}
+                    <Link className="recent-open-link" to={path}>Open list</Link>
                   </div>
                 </li>
               );

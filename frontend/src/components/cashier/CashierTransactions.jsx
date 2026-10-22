@@ -164,9 +164,9 @@ const CashierTransactions = () => {
   };
 
   const handlePrintReceipt = (transaction) => printReceipt(getReceiptOptions(transaction));
-  const handleDownloadReceiptPdf = (transaction) => {
+  const handleDownloadReceiptPdf = async (transaction) => {
     try {
-      downloadReceiptPdf(getReceiptOptions(transaction));
+      await downloadReceiptPdf(getReceiptOptions(transaction));
     } catch (err) {
       showError(err.message || "Failed to download receipt PDF.");
     }

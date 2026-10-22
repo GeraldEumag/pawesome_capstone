@@ -414,6 +414,46 @@ class PaymentBookingChannelTest extends TestCase
         $this->assertSame('gcash', $grooming->payment_method);
     }
 
+    public function test_payment_reference_cannot_be_reused_for_a_different_booking(): void
+    {
+        Storage::fake('private');
+        [$user, , $pet] = $this->customerWithPet();
+        $first = $this->serviceRequest([
+            'customer_id' => $user->id,
+            'customer_email' => $user->email,
+            'pet_id' => $pet->id,
+            'payment_status' => 'unpaid',
+        ]);
+        $second = $this->serviceRequest([
+            'customer_id' => $user->id,
+            'customer_email' => $user->email,
+            'pet_id' => $pet->id,
+            'payment_status' => 'unpaid',
+            'service_name' => 'Nail Trim',
+        ]);
+        $headers = $this->headers($user);
+
+        $this->withHeaders($headers)
+            ->post("/api/customer/requests/{$first->id}/payment-proof", [
+                'payment_method' => 'gcash',
+                'payment_reference' => 'GC-DUPLICATE-01',
+                'payment_proof' => UploadedFile::fake()->create('first-proof.jpg', 100, 'image/jpeg'),
+            ])
+            ->assertOk();
+
+        $this->withHeaders($headers)
+            ->post("/api/customer/requests/{$second->id}/payment-proof", [
+                'payment_method' => 'gcash',
+                'payment_reference' => ' gc-duplicate-01 ',
+                'payment_proof' => UploadedFile::fake()->create('second-proof.jpg', 100, 'image/jpeg'),
+            ])
+            ->assertUnprocessable()
+            ->assertJsonPath('message', 'This payment reference has already been submitted. Check the number or contact the cashier.');
+
+        $this->assertNull($second->fresh()->payment_proof);
+        $this->assertSame('unpaid', $second->fresh()->payment_status);
+    }
+
     public function test_veterinary_proof_upload_persists_and_stays_unpaid(): void
     {
         Storage::fake('private');

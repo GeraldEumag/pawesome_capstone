@@ -107,9 +107,11 @@ const PetFormFields = ({ formData, formErrors, previewImage, handleChange, speci
           onChange={handleChange}
           className="pet-image-input"
           aria-label="Pet Photo"
+          aria-invalid={Boolean(formErrors.image)}
+          aria-describedby={formErrors.image ? `${idPrefix}-image-error` : undefined}
         />
       </div>
-      {formErrors.image && <span className="field-error">{formErrors.image}</span>}
+      {formErrors.image && <span className="field-error" id={`${idPrefix}-image-error`}>{formErrors.image}</span>}
     </label>
 
     <label htmlFor={`${idPrefix}-name`}>
@@ -445,22 +447,24 @@ const CustomerPets = () => {
         (!file.type && PET_IMAGE_EXTENSIONS.includes(extension));
 
       if (!looksLikeImage) {
-        setFormErrors((prev) => ({
-          ...prev,
-          image: "Photo must be a JPG, PNG, or WebP image. iPhone HEIC photos can't be uploaded — take a screenshot or share the photo as JPEG instead.",
-        }));
+        const error = "Photo must be a JPG, PNG, or WebP image. iPhone HEIC photos can't be uploaded — take a screenshot or share the photo as JPEG instead.";
+        event.target.value = "";
+        previewImageRequest.current += 1;
         setFormData((prev) => ({ ...prev, image: null }));
         setPreviewImage(null);
+        setFormErrors((prev) => ({ ...prev, image: error }));
+        setAddFormError(error);
         return;
       }
 
       if (file.size > PET_IMAGE_MAX_BYTES) {
-        setFormErrors((prev) => ({
-          ...prev,
-          image: "Photo is too large — please choose an image under 10 MB.",
-        }));
+        const error = "Photo is too large — please choose an image under 10 MB.";
+        event.target.value = "";
+        previewImageRequest.current += 1;
         setFormData((prev) => ({ ...prev, image: null }));
         setPreviewImage(null);
+        setFormErrors((prev) => ({ ...prev, image: error }));
+        setAddFormError(error);
         return;
       }
 
@@ -540,7 +544,7 @@ const CustomerPets = () => {
 
   const handleSubmit = async (event) => {
     event.preventDefault();
-    if (loading) return;
+    if (loadingRef.current) return;
 
     const validationError = validateForm();
 
@@ -552,6 +556,7 @@ const CustomerPets = () => {
 
     try {
       setAddFormError("");
+      loadingRef.current = true;
       setLoading(true);
 
       let body;
@@ -589,6 +594,7 @@ const CustomerPets = () => {
       setAddFormError(errorMessage);
       showMessage("error", errorMessage);
     } finally {
+      loadingRef.current = false;
       setLoading(false);
     }
   };

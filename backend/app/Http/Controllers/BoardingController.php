@@ -27,6 +27,7 @@ use App\Services\ServiceDurationService;
 use App\Services\BookingWorkflowStage;
 use App\Services\ServiceBillingService;
 use App\Services\PaymentVerificationService;
+use App\Services\PaymentReferenceGuard;
 use App\Support\BookingChannel;
 use Illuminate\Http\Exceptions\HttpResponseException;
 use Illuminate\Http\JsonResponse;
@@ -799,8 +800,6 @@ class BoardingController extends Controller
             return $vaccinationError;
         }
 
-        $oldStatus = $boarding->status;
-        
         // Initialize inventory service
         $addOnInventoryService = new BoardingAddOnInventoryService();
         
@@ -828,35 +827,57 @@ class BoardingController extends Controller
         }
 
         // Process approval and inventory deduction in transaction
-        $result = DB::transaction(function () use ($boarding, $oldStatus, $addOnInventoryService, $request) {
+        $result = DB::transaction(function () use ($boarding, $addOnInventoryService, $request) {
+            $lockedBoarding = Boarding::whereKey($boarding->id)->lockForUpdate()->firstOrFail();
+            if ($lockedBoarding->status !== 'pending') {
+                return ['conflict' => true];
+            }
+
+            $vaccinationError = $this->vaccinationVerificationError($lockedBoarding);
+            if ($vaccinationError) {
+                return ['response' => $vaccinationError];
+            }
+            $oldStatus = $lockedBoarding->status;
+
             // Update boarding status
-            $boarding->update([
+            $lockedBoarding->update([
                 'status' => 'approved',
                 'approved_by' => $request->user()?->id,
                 'approved_at' => now(),
-                'payment_status' => $boarding->payment_status === 'pending' && !$boarding->payment_proof
+                'payment_status' => $lockedBoarding->payment_status === 'pending' && !$lockedBoarding->payment_proof
                     ? 'unpaid'
-                    : ($boarding->payment_status ?: 'unpaid'),
+                    : ($lockedBoarding->payment_status ?: 'unpaid'),
             ]);
-            $this->syncRoomReservationStatus($boarding, 'approved');
+            $this->syncRoomReservationStatus($lockedBoarding, 'approved');
 
             // Create base service billing item when boarding is approved.
             // The authoritative amount is the persisted booking total
             // (room rate × days + selected add-ons), not a recomputed rate.
-            ServiceBillingService::ensureBaseServiceItem('boarding', (int) $boarding->id);
+            ServiceBillingService::ensureBaseServiceItem('boarding', (int) $lockedBoarding->id);
 
             // Deduct inventory for add-ons
-            $inventoryResult = $addOnInventoryService->deductAddOnInventory($boarding, 'receptionist');
+            $inventoryResult = $addOnInventoryService->deductAddOnInventory($lockedBoarding, 'receptionist');
             
             if (!$inventoryResult['success']) {
                 throw new \Exception($inventoryResult['message'] ?? 'Inventory deduction failed');
             }
 
             return [
-                'boarding' => $boarding,
-                'inventory_result' => $inventoryResult
+                'boarding' => $lockedBoarding,
+                'inventory_result' => $inventoryResult,
+                'old_status' => $oldStatus,
             ];
         });
+
+        if (isset($result['response'])) {
+            return $result['response'];
+        }
+        if (!empty($result['conflict'])) {
+            return response()->json(['error' => 'Only pending boarding requests can be confirmed'], 422);
+        }
+
+        $boarding = $result['boarding'];
+        $oldStatus = $result['old_status'];
 
         // Send notification
         NotificationService::notifyBoardingStatusChange($result['boarding'], $oldStatus);
@@ -1828,33 +1849,56 @@ class BoardingController extends Controller
             'payment_status' => 'pending',
         ];
 
-        // Replaced proofs are retained as payment evidence (deleteOld: false).
-        FileStorageService::storeAndPersist(
-            $request->file('payment_proof'), 'payment-proofs/boardings', 'private',
-            fn (string $path) => $boarding->update($paymentData + [
-                'payment_proof' => $path,
-            ]),
-            deleteOld: false,
-            prefix: 'boarding_proof',
-        );
+        $serviceRequestId = $boarding->service_request_id;
+        $guardResult = PaymentReferenceGuard::withUniqueReference(
+            $request->payment_reference,
+            [
+                'ids' => [
+                    'boardings' => [$boarding->id],
+                    'service_requests' => array_filter([$serviceRequestId]),
+                ],
+                'service_request_id' => $serviceRequestId,
+                'settlements' => array_values(array_filter([
+                    $serviceRequestId ? ['type' => 'service_request', 'id' => $serviceRequestId] : null,
+                    ['type' => 'boarding', 'id' => $boarding->id],
+                ])),
+            ],
+            fn () => response()->json(['message' => 'This payment reference has already been submitted. Check the number or contact the cashier.'], 422),
+            function () use ($request, $paymentData, $boarding, $serviceRequestId) {
+                // Replaced proofs are retained as payment evidence (deleteOld: false).
+                FileStorageService::storeAndPersist(
+                    $request->file('payment_proof'), 'payment-proofs/boardings', 'private',
+                    fn (string $path) => $boarding->update($paymentData + [
+                        'payment_proof' => $path,
+                    ]),
+                    deleteOld: false,
+                    prefix: 'boarding_proof',
+                );
 
-        // Mirror the resubmission onto the originating service request so the
-        // booking re-enters cashier verification as one consistent row.
-        if (!empty($boarding->service_request_id)) {
-            $srUpdates = [
-                'payment_status' => 'pending',
-                'payment_method' => $request->payment_method,
-                'payment_reference' => $request->payment_reference,
-                'updated_at' => now(),
-            ];
-            $freshBoarding = $boarding->fresh();
-            if (Schema::hasColumn('service_requests', 'payment_proof')) {
-                $srUpdates['payment_proof'] = $freshBoarding->payment_proof;
+                // Mirror the resubmission onto the originating service request so the
+                // booking re-enters cashier verification as one consistent row.
+                if ($serviceRequestId) {
+                    $srUpdates = [
+                        'payment_status' => 'pending',
+                        'payment_method' => $request->payment_method,
+                        'payment_reference' => $request->payment_reference,
+                        'updated_at' => now(),
+                    ];
+                    $freshBoarding = $boarding->fresh();
+                    if (Schema::hasColumn('service_requests', 'payment_proof')) {
+                        $srUpdates['payment_proof'] = $freshBoarding->payment_proof;
+                    }
+                    DB::table('service_requests')
+                        ->where('id', $serviceRequestId)
+                        ->where('payment_status', '!=', 'paid')
+                        ->update($srUpdates);
+                }
+
+                return null;
             }
-            DB::table('service_requests')
-                ->where('id', $boarding->service_request_id)
-                ->where('payment_status', '!=', 'paid')
-                ->update($srUpdates);
+        );
+        if ($guardResult instanceof JsonResponse) {
+            return $guardResult;
         }
 
         if (!$isPendingOnlineBooking) {

@@ -29,8 +29,8 @@ const Modal = ({
   showClose = true,
   headerless = false,
 }) => {
-  const titleId = useId();
   const modalRef = useRef(null);
+  const titleId = useId();
   // onClose is typically a fresh inline function each parent render. Keep it in
   // a ref so this effect only re-runs when isOpen toggles — otherwise every
   // keystroke inside the modal re-fires el.focus() and steals input focus.
@@ -76,9 +76,9 @@ const Modal = ({
         e.preventDefault();
       }
     };
-    document.addEventListener("keydown", onKey);
+    document.addEventListener("keydown", onKey, true);
     return () => {
-      document.removeEventListener("keydown", onKey);
+      document.removeEventListener("keydown", onKey, true);
       document.body.style.overflow = previousOverflow;
       document.body.style.paddingRight = previousPaddingRight;
     };
@@ -118,7 +118,7 @@ const Modal = ({
                 type="button"
                 className="pw-modal-close"
                 onClick={onClose}
-                aria-label="Close"
+                aria-label={title ? `Close ${title} dialog` : "Close dialog"}
               >
                 <FontAwesomeIcon icon={faXmark} />
               </button>

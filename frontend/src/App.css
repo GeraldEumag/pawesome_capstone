@@ -115,7 +115,7 @@
 }
 
 .App-link:hover {
-  color: var(--color-primary-hover, #ff4757);
+  color: var(--color-link, #9d174d);
   text-decoration: underline;
 }
 
@@ -164,8 +164,8 @@
 }
 
 .cta-btn-primary {
-  background: linear-gradient(135deg, var(--color-primary, #ff6b9d), var(--color-primary-hover, #ff4757));
-  color: white;
+  background: linear-gradient(135deg, var(--color-primary, #ff6b9d), var(--color-primary-light, #ff8db5));
+  color: #1f2937;
   box-shadow: 0 10px 30px rgba(255, 107, 157, 0.3);
   width: 100%;
   max-width: 300px;
