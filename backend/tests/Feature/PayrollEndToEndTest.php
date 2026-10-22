@@ -389,6 +389,47 @@ class PayrollEndToEndTest extends TestCase
     }
 
     /**
+     * update() must not allow direct transitions to 'paid' or 'approved' —
+     * those belong to the dedicated /approve and /release endpoints which
+     * perform loan settlement, processed_by stamping, and notifications.
+     */
+    public function test_update_cannot_set_paid_or_approved_status(): void
+    {
+        $payroll = Payroll::create([
+            'payroll_id' => 'PAY-2024-0099',
+            'user_id' => $this->employee->id,
+            'department' => 'Operations',
+            'position' => 'Cashier',
+            'base_salary' => 25000,
+            'pay_period_start' => '2024-06-01',
+            'pay_period_end' => '2024-06-15',
+            'pay_period_label' => 'Jun 01 - Jun 15, 2024',
+            'status' => 'draft',
+            'gross_pay' => 25000,
+            'net_pay' => 22000,
+            'salary_loan' => 1000,
+            'loans_settled' => false,
+        ]);
+
+        foreach (['paid', 'approved'] as $status) {
+            $this->putJson("/api/manager/payroll/{$payroll->id}", [
+                'status' => $status,
+            ], $this->managerAuth())->assertStatus(422);
+
+            $this->assertSame('draft', $payroll->fresh()->status);
+        }
+
+        // Non-terminal statuses still allowed (update() is the cancel path —
+        // there is no dedicated cancel endpoint).
+        $this->putJson("/api/manager/payroll/{$payroll->id}", [
+            'status' => 'cancelled',
+        ], $this->managerAuth())->assertOk();
+
+        $this->assertSame('cancelled', $payroll->fresh()->status);
+        $this->assertFalse((bool) $payroll->fresh()->loans_settled);
+    }
+
+    /**
      * Verify status transitions are enforced
      */
     public function test_cannot_approve_already_paid_payroll(): void

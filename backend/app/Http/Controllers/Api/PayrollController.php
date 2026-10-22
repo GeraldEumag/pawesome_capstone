@@ -14,6 +14,7 @@ use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 
 class PayrollController extends Controller
 {
@@ -352,59 +353,65 @@ class PayrollController extends Controller
 
         $paymentMethod = $request->input('payment_method', 'Bank Transfer');
 
-        $payroll->update([
-            'status' => 'paid',
-            'payment_date' => $request->input('payment_date', now()),
-            'payment_method' => $paymentMethod,
-            'processed_by' => Auth::id(),
-            'processed_at' => now(),
-        ]);
-
-        // Settle loan/cash-advance installments exactly once — the
-        // loans_settled guard prevents balances being reduced twice.
-        if (!$payroll->loans_settled) {
-            $person = $payroll->user ?? $payroll->employee;
-            if ($person && ((float) $payroll->salary_loan > 0 || (float) $payroll->cash_advance > 0)) {
-                $this->payrollComputation->settleLoanDeductions(
-                    $person,
-                    $payroll->pay_period_start?->toDateString()
-                );
-            }
-            $payroll->loans_settled = true;
-            $payroll->save();
-        }
-
-        $payroll->load(['user', 'employee']);
-        $payeeName = $payroll->user?->name ?? $payroll->employee?->name ?? $payroll->employee_name ?? 'employee';
-
-        // Send notifications
-        WorkflowNotifier::notifyRole(
-            'manager',
-            'Payroll Paid',
-            "Payroll for {$payeeName} has been marked as paid.",
-            'success',
-            'payroll',
-            $payroll->id
-        );
-
-        // Payslip notification only exists for account users — non-account
-        // employee records have no inbox.
-        if ($payroll->user_id) {
-            Notification::create([
-                'user_id' => $payroll->user_id,
-                'title' => 'Payslip Available',
-                'message' => 'Your payroll has been marked as paid. You may now download your payslip.',
-                'type' => 'info',
-                'related_type' => 'payroll',
-                'related_id' => $payroll->id,
+        // Status change, loan settlement, and notifications must commit
+        // atomically — a mid-settlement failure would otherwise leave a
+        // 'paid' row with partially-settled loans and no retry path (the
+        // already-paid guard would 422 every subsequent attempt).
+        return DB::transaction(function () use ($request, $payroll, $paymentMethod) {
+            $payroll->update([
+                'status' => 'paid',
+                'payment_date' => $request->input('payment_date', now()),
+                'payment_method' => $paymentMethod,
+                'processed_by' => Auth::id(),
+                'processed_at' => now(),
             ]);
-        }
 
-        return response()->json([
-            'success' => true,
-            'message' => 'Payroll marked as paid.',
-            'data' => $payroll->load(['user', 'processor']),
-        ]);
+            // Settle loan/cash-advance installments exactly once — the
+            // loans_settled guard prevents balances being reduced twice.
+            if (!$payroll->loans_settled) {
+                $person = $payroll->user ?? $payroll->employee;
+                if ($person && ((float) $payroll->salary_loan > 0 || (float) $payroll->cash_advance > 0)) {
+                    $this->payrollComputation->settleLoanDeductions(
+                        $person,
+                        $payroll->pay_period_start?->toDateString()
+                    );
+                }
+                $payroll->loans_settled = true;
+                $payroll->save();
+            }
+
+            $payroll->load(['user', 'employee']);
+            $payeeName = $payroll->user?->name ?? $payroll->employee?->name ?? $payroll->employee_name ?? 'employee';
+
+            // Send notifications
+            WorkflowNotifier::notifyRole(
+                'manager',
+                'Payroll Paid',
+                "Payroll for {$payeeName} has been marked as paid.",
+                'success',
+                'payroll',
+                $payroll->id
+            );
+
+            // Payslip notification only exists for account users — non-account
+            // employee records have no inbox.
+            if ($payroll->user_id) {
+                Notification::create([
+                    'user_id' => $payroll->user_id,
+                    'title' => 'Payslip Available',
+                    'message' => 'Your payroll has been marked as paid. You may now download your payslip.',
+                    'type' => 'info',
+                    'related_type' => 'payroll',
+                    'related_id' => $payroll->id,
+                ]);
+            }
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Payroll marked as paid.',
+                'data' => $payroll->load(['user', 'processor']),
+            ]);
+        });
     }
 
     /**
@@ -595,7 +602,11 @@ class PayrollController extends Controller
             'cash_advance' => 'nullable|numeric|min:0',
             'gross_pay' => 'nullable|numeric|min:0',
             'net_pay' => 'nullable|numeric|min:0',
-            'status' => 'nullable|in:draft,processing,pending,approved,paid,cancelled',
+            // Terminal/effective statuses are intentionally excluded: approve
+            // and payment have dedicated endpoints that perform side-effects
+            // (processed_by stamping, loan settlement, notifications). Letting
+            // update() set them would bypass all of that.
+            'status' => 'nullable|in:draft,processing,pending,cancelled',
             'payment_date' => 'nullable|date',
             'payment_method' => 'nullable|string|max:50',
             'payment_reference' => 'nullable|string|max:100',
@@ -616,12 +627,6 @@ class PayrollController extends Controller
             }
 
             $validated['pay_period_label'] = Carbon::parse($start)->format('M d') . ' - ' . Carbon::parse($end)->format('M d, Y');
-        }
-
-        // Track approval transition
-        if (isset($validated['status']) && $validated['status'] === 'approved' && $payroll->status !== 'approved') {
-            $validated['approved_by'] = Auth::id();
-            $validated['approved_at'] = now();
         }
 
         $payroll->update($validated);

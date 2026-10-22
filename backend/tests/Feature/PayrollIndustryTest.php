@@ -341,6 +341,55 @@ class PayrollIndustryTest extends TestCase
         $this->assertEquals(2500, (float) DB::table('salary_loans')->where('id', $loanId)->value('balance'));
     }
 
+    /** A failure during release must roll back status AND loan settlement —
+     * otherwise a 'paid' row with unsettled loans can never be retried
+     * (the already-paid guard 422s every subsequent attempt). */
+    public function test_failed_release_rolls_back_status_and_loan_settlement(): void
+    {
+        $user = $this->staffUser();
+        $this->punchAllWorkdays($user);
+
+        $loanId = DB::table('salary_loans')->insertGetId([
+            'user_id' => $user->id,
+            'loan_type' => 'salary_loan',
+            'principal' => 3000,
+            'balance' => 3000,
+            'installment_amount' => 500,
+            'start_period' => '2024-06-01',
+            'status' => 'active',
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        $row = $this->generateRow($user);
+
+        // Force the notification insert inside the release transaction to fail.
+        $shouldFail = true;
+        \App\Models\Notification::saving(function () use (&$shouldFail) {
+            if ($shouldFail) {
+                throw new \RuntimeException('forced notification failure');
+            }
+        });
+
+        $this->postJson("/api/manager/payroll/{$row['id']}/release", [
+            'payment_method' => 'Cash',
+        ], $this->managerAuth())->assertStatus(500);
+
+        // Everything rolled back: still unpaid, loans untouched, retryable.
+        $payroll = Payroll::find($row['id']);
+        $this->assertNotSame('paid', $payroll->status);
+        $this->assertFalse((bool) $payroll->loans_settled);
+        $this->assertEquals(3000, (float) DB::table('salary_loans')->where('id', $loanId)->value('balance'));
+
+        $shouldFail = false;
+        $this->postJson("/api/manager/payroll/{$row['id']}/release", [
+            'payment_method' => 'Cash',
+        ], $this->managerAuth())->assertStatus(200);
+
+        $this->assertEquals(2500, (float) DB::table('salary_loans')->where('id', $loanId)->value('balance'));
+        $this->assertSame('paid', Payroll::find($row['id'])->status);
+    }
+
     /** Payslip reconciles line-by-line with every earnings/deduction field. */
     public function test_payslip_reconciles_line_items(): void
     {

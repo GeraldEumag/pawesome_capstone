@@ -162,3 +162,187 @@ This report establishes baseline test/build health and maps existing verified ev
 
 1. Owner decision: re-issue an adjustment entry for payroll id=1 or document as accepted variance (dev/seed data — arguably no action needed).
 2. If production data exists: a reviewed remediation script recomputing `is_late` for historical punches and flagging affected paid payrolls — separate increment, explicit approval required.
+
+---
+
+## D-11 discrepancy revalidation + correction design — 2026-10-22
+
+Review-only increment. No historical records changed, no commits made.
+
+### Phase 1 — Verified business rules
+
+| Rule | Established behavior (code-verified) | Source |
+|---|---|---|
+| Late definition | `check_in > shift_start + grace` (08:00 + 15 min = 08:15 threshold); `late_minutes` measured **from shift start**, not from grace expiry | `CompanySchedule::lateMinutes` |
+| Late deduction | `total_late_minutes × hourlyRate/60`, `hourlyRate = base_salary/208` (or `employee.hourly_rate`); rounded 2dp at row level; **no cap** | `PayrollComputationService` ~L506 |
+| Incomplete punch | check-in without check-out → `incompletePunchDays` flagged, **never deducted**; late still counts if check_in exists | stats loop ~L293 |
+| Undertime | `check_out < shift_end` → per-minute deduction at hourly rate; also uncapped | `undertimeMinutes`, ~L508 |
+| Exemptions | **None exist** — no per-employee late exemption; `on_leave` rows skip deduction only when no `check_in`; an `on_leave` row *with* a check_in would still accrue late minutes (edge case, untested in prod data) | stats loop |
+| Schedule | Single company-wide shift; per-employee overrides limited to rest-day pattern (`employee_day_offs`); no per-employee shift times | `CompanySchedule` |
+| Payroll lifecycle | `draft` → `pending` (approve) → `paid` (markAsPaid); `cancelled` exists; **paid/cancelled immutable** via `update()` (422) | `Api\PayrollController` |
+| Pre-payment correction | `update()` allows editing all money/attendance fields on draft/pending rows + triggers service recompute | `update()` ~L547 |
+| Generation timing | Validates semi-monthly shape only — **no period-end gate**; duplicate prevention per person+period | `generate()` ~L146 |
+| Attendance correction | `attendance_corrections`: employee requests → manager approves → writes `check_in/out` to attendance. **Does not recompute `is_late`, does not touch payroll** | `Manager\AttendanceCorrectionController::approve` |
+| Post-payment adjustment | **Does not exist** — no reversal/adjustment entity anywhere | full codebase search |
+
+**Unresolved business rules (owner must decide):**
+- Should generation be blocked/warned before `period_end`? Currently allowed → late-arriving punches silently excluded.
+- Should attendance corrections approved after payroll generation trigger a payroll re-check? Currently they silently diverge.
+- Is a late longer than X minutes "absent" instead? Code says no — late is always per-minute regardless of magnitude (378 min late = still "present + late").
+- `is_late` is never recomputed on `Attendance::save()` (explicit code comment) — corrections changing check_in leave the flag stale.
+
+### Phase 2 — Discrepancy revalidated (dev DB `pawesome`, read-only)
+
+| Fact | Evidence |
+|---|---|
+| 2026-10-22 = Thursday (dow=4) — workday | user 73 has **no** `employee_day_offs` → company Mon–Sat applies |
+| `payrolls` id=1 `created_at` | **2026-10-22 13:31:46** |
+| `attendance` id=2 `created_at` | **2026-10-22 14:18:13** — punch **postdates payroll generation by ~47 min** |
+| `attendance` id=2 `check_out` | 14:18:18 — 5-second punch pair, clearly an E2E test artifact (chain4 kiosk test) |
+| `attendance_corrections` for 2026-10-22 | **13 rows**, all `rejected`, all E2E test artifacts (`requested_check_in 08:00`, "E2E manual audit" reasons) |
+
+**Verdict — reclassified:**
+
+- `attendance.is_late=0` on id=2: **confirmed bug artifact** — punch ran under the pre-fix code; under corrected code `is_late=true` would have been stored.
+- `payrolls.late_deductions=0.00` on id=1: **NOT a defect-caused error.** The punch did not exist at generation time (13:31 < 14:18), so 0.00 was correct for the inputs then present. The ₱969.23 figure is only what a recompute *today* would produce — and it would also add ≈ ₱415 undertime (check_out 14:18 vs 17:00 = ~162 min), totalling ≈ ₱1,384 of notional deductions on a test fixture.
+- **Classification: inconclusive as a missed deduction; estimated conditional value only.** No employee was under-deducted — the payroll was accurate at generation; the late-arriving punch has no reconciliation path (the real gap).
+
+**Latent risk identified (supersedes the row-level finding):** generation is permitted mid-period and a paid payroll is never reconciled against attendance arriving afterward. Under the old bug, *any* post-generation or correctly-timed late punch was also invisible to deductions; under the fix, only post-generation punches are.
+
+### Phase 3 — Correction workflow design
+
+**Existing mechanisms (use first):**
+- Pre-generation: `attendance_corrections` approval fixes the punch data itself.
+- Pre-payment: `Api\PayrollController::update()` on draft/pending rows recomputes via the service — adequate for fixing pre-payment errors.
+- **Post-payment: nothing.** A paid payroll cannot be adjusted, reversed, or supplemented — the closed-loop gap.
+
+**Proposed minimal design (not implemented — requires owner approval):**
+
+`payroll_adjustments` table + approval workflow:
+
+| Requirement | Design |
+|---|---|
+| Original preserved | Adjustment is a new signed row (`delta_amount`, `delta_late_minutes`, …); parent payroll row never mutated |
+| Evidence | `attendance_correction_id` link + free-text `reason` + `supporting_payload` JSON (before/after snapshot) |
+| Approval | `requested_by` (manager) → `reviewed_by` (admin/manager — must differ from requester) + `reviewed_at`, `status: pending→approved→applied / rejected` |
+| Preview | `POST /payroll/{id}/adjustments/preview` recomputes the period against current attendance via `PayrollComputationService` and returns the delta — no writes |
+| Duplicate protection | unique key on `(payroll_id, attendance_id, type)` + `idempotency_key`; applied adjustments locked |
+| Transaction | apply = create adjustment row + mark applied + (optionally) carry `applied_to_payroll_id` of next payroll — all in `DB::transaction` with row lock on parent payroll |
+| Semantics distinction | Attendance correction changes the record; payroll adjustment changes the money. Adjustment should *reference* an approved attendance correction, not silently re-derive times |
+| Visibility | Adjustment surfaced on the payslip response (`data.adjustments[]`) so employee/admin sees before/after |
+
+**Simpler acceptable alternative (owner's call):** treat late-arriving attendance as an input to the *next* payroll run (supplementary earnings/deductions row), which avoids touching paid records entirely but leaves the paid row permanently understated — needs an explicit policy decision.
+
+### Phase 4 — Proposed regression tests (when design is approved)
+
+1. `lateMinutes` boundaries: check_in 08:00/08:15 → 0; 08:16 → 16; 14:18 → 378 — **partially covered now** by `HrFinanceWorkflowTest::dtr report filters and computes` + `PayrollIndustryTest`; add exact-boundary (08:15 vs 08:16) cases.
+2. Post-generation punch: generate period, then insert late attendance dated inside it → paid payroll unchanged; adjustment preview reports the delta.
+3. Adjustment lifecycle: propose → preview → approve → apply → re-apply rejected (idempotent); rejected path leaves no residue.
+4. Authorization: requester ≠ approver enforced; cashier/customer 403.
+5. Attendance-correction → payroll linkage: approved correction flags affected draft payrolls; paid payrolls unchanged until explicit adjustment.
+6. Rollback: forced failure mid-apply leaves parent payroll and adjustment row consistent (transaction test).
+7. `is_late` recompute-on-correction: approving a correction that changes check_in refreshes the stored flag (currently stale — fix needed in `AttendanceCorrectionController::approve` regardless of the adjustment workflow).
+
+### Recommendation
+
+**Accept the development-seed discrepancy — do not correct the rows.**
+
+Rationale: every affected record (attendance 1–4, payroll 1, all 13 corrections) is a same-day E2E/manual-verification artifact for a test user; no real employee, no real payroll disbursement, and the stored `late_deductions=0.00` was *accurate at generation time*. Mutating test rows would falsify the audit trail for zero real-world benefit. The mis-stored `is_late=0` should remain as-is: it is honest evidence of the pre-fix behavior.
+
+Ranked next actions:
+1. **Owner decision:** post-payment adjustment workflow (design above) — the genuine closed-loop gap, independent of test data.
+2. **Owner decision:** mid-period generation gate/warning — prevents recurrence of invisible late punches.
+3. Small fix worth doing regardless: recompute `is_late` in `AttendanceCorrectionController::approve` (stale-flag defect, well-scoped).
+4. If a production DB exists: authorized read-only scan for `is_late=0` punches outside grace + paid payrolls covering them.
+5. No historical remediation on dev data.
+
+### Phase status
+
+- Business rules: **verified** (code + DB evidence above)
+- Discrepancy: **revalidated — reclassified from "confirmed missed deduction" to "generation-timing artifact"** (dev-test data)
+- Correction design: **documented, unimplemented — awaiting owner approval**
+- Regression tests: **proposed, unwritten**
+
+---
+
+## Attendance-correction consistency + generation-timing analysis — 2026-10-22 (part 2)
+
+### D-16 — FIXED: stale `is_late`/`status` on approved attendance corrections
+
+- **Root cause:** `AttendanceCorrectionController::approve` wrote `check_in`/`check_out` and saved, but `is_late` and `status` are never recomputed on `Attendance::save()` (explicit model comment — the kiosk owns those fields). A corrected punch inherited whatever flag the original punch set.
+- **Fix:** approval is now wrapped in `DB::transaction` and, when a `check_in` exists after the correction, recomputes `is_late` via `CompanySchedule::lateMinutes()` — the identical rule the barcode kiosk applies at punch time — and syncs `status`: `late` when late; `late`/`absent` → `present` when the corrected punch is on time (a punch disproves absence). `on_leave` is deliberately untouched — leave approval is a separate authority from the punch record.
+- **Scope note:** `is_early_leave` is declared on the model but **no code path ever writes it** — dead flag, left as-is (documented, not expanded into).
+- **Regression tests:** new `tests/Feature/AttendanceCorrectionConsistencyTest.php` — 9 cases / 32 assertions: late→on-time, on-time→late, grace boundary (08:10), absent-row correction, row-creation-when-missing, unauthorized 403, reject preserves record, already-reviewed 422, DTR reflects corrected state (`late_minutes=90`). **PASS — Runtime verified.**
+
+### Payroll generation timing — analysis + documented policy blocker
+
+- `generate()` validates only the semi-monthly period shape; `period_end > today` is allowed. Duplicate prevention (`existingPayroll` skip + `updateOrCreate`) means a late-arriving punch can never enter that person/period's row afterward — except through `update()` on a draft/pending row, which accepts `manual_attendance` and triggers a full service recompute.
+- **Why no gate was implemented:** (a) mid-period generation is demonstrated intentional behavior — the dev `paid` payroll was generated Oct 22 for Oct 16–31 (capstone demo flow); (b) `payroll/compute` already provides the authorized preliminary-calculation path; (c) `update()`+recompute reconciles late attendance *before* payment; (d) blocking generation or gating `approve`/`markAsPaid` on `period_end ≤ today` would break the demonstrated demo flow — the cutoff choice is a business decision, not a defect fix.
+- **Policy decision required from owner:** (1) hard-block `generate` when `period_end` is future, (2) allow but mark results `preliminary` and block `approve`/`markAsPaid` until the period closes, or (3) status quo (rely on pre-payment `update()` reconciliation). Recommendation: option 2 — preserves demo ability to preview, protects money movement. **NOT IMPLEMENTED — awaiting decision.**
+- Finalized-payroll safety is already adequate: `paid`/`cancelled` rows are immutable via `update()` (422) and duplicate-skipped by `generate` — no unsafe path introduced.
+
+### Remaining post-payment gap (unchanged)
+
+`payroll_adjustments` design from the previous section stands — attendance corrections approved after a payroll is `paid` still have no monetary reconciliation path. Owner approval required before implementation.
+
+### Test evidence (executed this session)
+
+| Command | Result |
+|---|---|
+| `--filter="AttendanceCorrectionConsistencyTest"` on `pawesome_test` | **13 passed** / 46 assertions |
+| `--filter="AttendanceCorrectionConsistencyTest\|PayrollEndToEndTest\|PayrollIndustryTest"` | **31 passed** / 241 assertions |
+| Full `php artisan test` on `pawesome_test` | **693 passed / 0 failed** / 3,306 assertions (~129 s) |
+
+### Files changed (uncommitted — left for review)
+
+- `backend/app/Http/Controllers/Manager/AttendanceCorrectionController.php` — transactional approve + `is_late`/`status` recompute
+- `backend/tests/Feature/AttendanceCorrectionConsistencyTest.php` — new, 13 cases
+- `backend/app/Http/Controllers/Api/PayrollController.php` — D-17 lifecycle fix (below)
+- `backend/tests/Feature/PayrollEndToEndTest.php` — +1 case
+- `docs/SYSTEM_AUDIT_REPORT.md` — this section
+
+### Review-round edge cases — 2026-10-22 (part 3)
+
+Three checkpoint items re-verified; one new defect found and fixed:
+
+| Check | Result |
+|---|---|
+| `on_leave` + corrected punch | **Bug in first pass, fixed** — the late branch set `status='late'` unconditionally, clobbering `on_leave`. Now `on_leave` is preserved in both directions; `is_late` still reflects the corrected punch truthfully. **Pre-existing policy issue surfaced:** payroll counts `paidLeaveDays` AND late minutes on an `on_leave` row carrying a `check_in` (stats loop applies the late check to any record with `check_in` regardless of status). Double-counting an approved-leave day is a business-rule question for the owner — flagged, not changed. |
+| Status transition coverage | `early_leave`/`present`/`on_leave` verified preserved; only `late`/`absent` transition to `present` on an on-time corrected punch; any non-`on_leave` status goes `late` when the punch is late. Covered by 4 new tests. |
+| Transaction rollback | Verified by forced-failure test (`Attendance::saving` throws): approve returns 500, attendance row unchanged, correction stays `pending`, `attendance_id` stays NULL — both writes revert atomically. |
+
+### D-17 — FIXED: payroll lifecycle bypass via `update()`
+
+- **Found during** the period-close feasibility review: `PUT /api/manager/payroll/{id}` accepted `status:'paid'` (and `'approved'`, a status `approve()` never even produces — it sets `'pending'`). A direct API call could mark a draft `paid` **skipping `markAsPaid()`'s loan settlement (`loans_settled` guard → loans could be deducted again on a later payroll), `processed_by`/`payment_date` stamping, and all notifications**.
+- **Fix:** `update()` status enum restricted to `draft,processing,pending,cancelled` — terminal/effective statuses only via the dedicated endpoints. `cancelled` retained (no dedicated cancel endpoint exists). The now-unreachable `approved`-transition tracking block was removed.
+- **Regression test:** `PayrollEndToEndTest::update cannot set paid or approved status` — both rejected 422, `cancelled` still works, `loans_settled` untouched. **PASS.**
+- **Period-close policy feasibility:** enforcement points exist cleanly at `approve()` and `markAsPaid()` (`$payroll->pay_period_end` is on the model); with D-17 closed there is no third transition path, so a `period_end ≤ today` guard added at those two methods would fully cover the lifecycle. Implementation still awaits the owner's policy choice (options documented above).
+
+### Final lifecycle security review — 2026-10-22 (part 4)
+
+**Full payroll status write-path enumeration** — every routed writer traced:
+
+| Path | Status writes | Verdict |
+|---|---|---|
+| `POST payroll/generate` | creates `draft` (updateOrCreate, existing skipped) | OK |
+| `POST payroll` (store) | hardcodes `status:'draft'` — no user-supplied status accepted | OK |
+| `POST payroll/compute` | preview only, no writes | OK |
+| `POST payroll/{id}/approve` | `paid`→422; else `pending` + `processed_by/at` | OK |
+| `POST payroll/{id}/release` | `paid`→422; else `paid` + payment metadata + loan settlement | **Was non-atomic → fixed (below)** |
+| `PUT payroll/{id}` | enum `draft,processing,pending,cancelled`; `paid`/`cancelled` rows 422 (cannot reopen) | OK post-D-17 |
+| Legacy `App\Http\Controllers\PayrollController` (`update`/`destroy`/`processPayment`/`generateForPeriod`) | **UNROUTED** — only `payslip`/`myPayroll`/`summary`-adjacent GETs wired | Dead code, no live bypass — retire with owner sign-off |
+
+**D-18 — FIXED: non-atomic `markAsPaid`.** Previously `status:'paid'` committed before `settleLoanDeductions` ran; a mid-settlement or notification failure left a `paid` row with partially-settled loans and `loans_settled=false` — and every retry 422'd on the already-paid guard, making the loans permanently under-settled. Now the entire release (status, settlement, notifications) runs in `DB::transaction` — failure rolls everything back and the endpoint is cleanly retryable. Regression test: `PayrollIndustryTest::failed release rolls back status and loan settlement` (forced `Notification::saving` failure → 500 → status non-paid, balance untouched, `loans_settled=false`, retry settles once). **PASS.**
+
+**Loan-settlement verification:** `loans_settled` guard + `settleLoanDeductions` covered by existing `loan deduction settles once on release` test — double-release 422, balance reduced exactly once. `approve()` is idempotent-safe (re-approving a `pending` row re-stamps `processed_by/at` — harmless).
+
+**Cancelled records:** `update()` 422s on `paid`/`cancelled` rows — cancelled payrolls cannot be reopened through any routed path.
+
+**Documented-not-fixed (minor, owner-visible):**
+- `MyAttendanceCorrectionController::store` computes a `$locked` flag for `status IN ('approved','paid')` payrolls but (a) never uses it (comment admits corrections are allowed regardless) and (b) `'approved'` is never a stored status — `approve()` writes `'pending'`. Vocabulary drift; the lock check would also miss `pending` payrolls covering the corrected date. Dead code + semantic gap — documented.
+- No duplicate-pending-correction guard: an employee can file N pending corrections for one date; approval order determines final state (dev DB shows 13 such artifacts). Human review gate makes this low-risk but noisy.
+- `requested_check_out` has no ordering check vs `requested_check_in` (e.g., in 17:00 / out 09:00) — manager approval is the only guard.
+- `approve()`/`update()` payroll paths are still non-transactional for their notification tail — a notification failure after the status update returns 500 with the state change persisted (advisory data lost, not financial). Lower severity than D-18; could be wrapped in the same pattern if desired.
+
+**Review 3 — `on_leave` + check_in payroll semantics (documented, unchanged):**
+In `PayrollComputationService` (~L259-285 and the monthly-path twin), a record whose `status === 'on_leave'` increments `paidLeaveDays` — and if it carries a `check_in`, the unconditional late block *also* accrues `late_minutes`. Net effect: a paid leave day **plus** a late deduction. Whether "present-but-late during approved leave" should deduct is a business decision — the correction workflow can now produce such rows legitimately (employee worked during leave). **Owner decision required:** should `check_in` on an `on_leave` row (a) keep paid-leave + late deduction (current), (b) convert to a worked day, or (c) keep paid-leave and ignore the punch. Financial implication per occurrence: up to `late_minutes × hourly/60` over-deduction from the employee.
