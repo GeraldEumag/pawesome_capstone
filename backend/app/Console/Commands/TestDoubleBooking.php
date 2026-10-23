@@ -54,7 +54,7 @@ class TestDoubleBooking extends Command
                 'service_id' => 1,
                 'veterinarian_id' => $testVet->id,
                 'scheduled_at' => '2026-05-15 10:00:00',
-                'status' => 'pending',
+                'status' => 'requested',
                 'price' => 100.00,
                 'notes' => 'DB_TEST_1'
             ]);
@@ -68,7 +68,7 @@ class TestDoubleBooking extends Command
                 'service_id' => 2,
                 'veterinarian_id' => $testVet->id,
                 'scheduled_at' => '2026-05-15 10:00:00',
-                'status' => 'pending',
+                'status' => 'requested',
                 'price' => 150.00,
                 'notes' => 'DB_TEST_2'
             ]);
@@ -106,7 +106,7 @@ class TestDoubleBooking extends Command
                 'pet_name' => $testPet->name,
                 'service' => 'Full Grooming',
                 'appointment_date' => '2026-05-15',
-                'status' => 'pending',
+                'status' => 'requested',
                 'notes' => 'DB_TEST_1'
             ]);
             
@@ -118,7 +118,7 @@ class TestDoubleBooking extends Command
                 'pet_name' => $testPet->name,
                 'service' => 'Basic Grooming',
                 'appointment_date' => '2026-05-15',
-                'status' => 'pending',
+                'status' => 'requested',
                 'notes' => 'DB_TEST_2'
             ]);
             
@@ -157,7 +157,7 @@ class TestDoubleBooking extends Command
                 'hotel_room_id' => 1,
                 'check_in' => '2026-05-15',
                 'check_out' => '2026-05-17',
-                'status' => 'pending',
+                'status' => 'requested',
                 'total_amount' => 500.00,
                 'notes' => 'DB_TEST_1'
             ]);
@@ -172,7 +172,7 @@ class TestDoubleBooking extends Command
                 'hotel_room_id' => 1,
                 'check_in' => '2026-05-16',
                 'check_out' => '2026-05-18',
-                'status' => 'pending',
+                'status' => 'requested',
                 'total_amount' => 400.00,
                 'notes' => 'DB_TEST_2'
             ]);
@@ -210,7 +210,7 @@ class TestDoubleBooking extends Command
             // Simulate the conflict check logic from AppointmentController
             $conflictingAppointment = Appointment::where('veterinarian_id', $vetId)
                 ->where('scheduled_at', $appointment->scheduled_at)
-                ->whereIn('status', ['approved', 'scheduled', 'in_progress', 'in_consultation'])
+                ->whereIn('status', ['scheduled', 'checked_in', 'in_consultation', 'in_treatment', 'awaiting_results'])
                 ->where('id', '!=', $appointment->id)
                 ->first();
 
@@ -220,7 +220,7 @@ class TestDoubleBooking extends Command
             }
 
             $appointment->update([
-                'status' => 'approved',
+                'status' => 'scheduled',
                 'veterinarian_id' => $vetId,
             ]);
             
@@ -248,7 +248,7 @@ class TestDoubleBooking extends Command
                 return false;
             }
 
-            $appointment->update(['status' => 'approved']);
+            $appointment->update(['status' => 'scheduled']);
             return true;
         } catch (\Exception $e) {
             $this->error("   ❌ Approval error: {$e->getMessage()}");

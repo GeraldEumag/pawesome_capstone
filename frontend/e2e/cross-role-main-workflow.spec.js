@@ -329,9 +329,9 @@ test("Customer to Receptionist to Veterinary to Manager Reports", async ({ page,
   await loginThroughUi(page, "veterinary", request);
   await visit(page, "/veterinary/appointments", "06-veterinary-appointments", "appointment|vet|patient|pending|approved", "/api/veterinary/appointments");
   await api(request, veterinarySession, "PATCH", `/veterinary/appointments/${approvedAppointment.id}/status`, {
-    data: { status: "in_progress" },
+    data: { status: "in_consultation" },
   });
-  recordAction("Veterinary updates appointment status via API", "PASS", `appointment #${approvedAppointment.id} to in_progress`);
+  recordAction("Veterinary updates appointment status via API", "PASS", `appointment #${approvedAppointment.id} to in_consultation`);
   await visit(page, "/veterinary/appointments", "07-veterinary-updated-appointment", "in progress|in_progress|appointment|vet|patient", "/api/veterinary/appointments");
   await logout(page);
   await apiLogin(request, "veterinary", { refresh: true });

@@ -42,11 +42,14 @@ class UserController extends Controller
             'state' => 'sometimes|string|max:255',
             'zip_code' => 'sometimes|string|max:20',
             'country' => 'sometimes|string|max:255',
-            'date_of_birth' => 'sometimes|date',
+            // Staff accounts must be at least 18 years old; customers may be any age.
+            'date_of_birth' => $request->input('role') === 'customer'
+                ? 'sometimes|date'
+                : ['required', 'date', 'before_or_equal:' . now()->subYears(18)->toDateString()],
             'gender' => 'sometimes|string|in:male,female,other',
             'emergency_contact_person' => 'sometimes|string|max:255',
-            'emergency_contact_number' => 'sometimes|string|max:20',
-            'role' => 'required|string|in:admin,manager,receptionist,super_receptionist,veterinary,cashier,inventory,customer',
+            'emergency_contact_number' => 'sometimes|string|digits:11',
+            'role' => 'required|string|in:admin,manager,receptionist,super_receptionist,veterinary,vet_tech,cashier,inventory,customer',
             'is_active' => 'boolean',
         ]);
 
@@ -169,7 +172,7 @@ class UserController extends Controller
             'name' => 'sometimes|string|max:255',
             'email' => 'sometimes|string|email|max:255|unique:users,email,' . $id,
             'username' => 'sometimes|string|max:255|unique:users,username,' . $id,
-            'role' => 'sometimes|string|in:admin,manager,receptionist,super_receptionist,veterinary,cashier,inventory,customer',
+            'role' => 'sometimes|string|in:admin,manager,receptionist,super_receptionist,veterinary,vet_tech,cashier,inventory,customer',
             'is_active' => 'boolean',
         ]);
 

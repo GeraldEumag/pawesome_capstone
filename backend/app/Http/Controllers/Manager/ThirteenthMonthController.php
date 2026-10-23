@@ -48,7 +48,7 @@ class ThirteenthMonthController extends Controller
         $service = app(PayrollComputationService::class);
         $count   = 0;
 
-        User::whereIn('role', ['manager', 'cashier', 'receptionist', 'veterinary', 'inventory', 'admin'])
+        User::whereIn('role', ['manager', 'cashier', 'receptionist', 'veterinary', 'vet_tech', 'inventory', 'admin'])
             ->where('is_active', true)
             ->whereNotNull('base_salary')
             ->each(function (User $user) use ($service, $year, $month, &$count) {

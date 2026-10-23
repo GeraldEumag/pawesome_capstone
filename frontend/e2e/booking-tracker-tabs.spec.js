@@ -24,7 +24,7 @@ const sampleItems = [
   booking('in-progress-unpaid', {
     kind: 'appointment',
     service_type: 'vet',
-    status: 'in_progress',
+    status: 'in_consultation',
     status_label: 'In Progress',
     payment_status: 'unpaid',
   }),

@@ -17,7 +17,10 @@ use App\Services\BookingAvailabilityService;
 use App\Services\ServiceBillingService;
 use App\Services\ServiceDurationService;
 use App\Services\PaymentVerificationService;
+use App\Services\VisitStartService;
+use App\Support\VeterinaryStatus;
 use App\Models\ActivityLog;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
@@ -27,11 +30,11 @@ use Illuminate\Support\Carbon;
 class AppointmentController extends Controller
 {
     private const ACTIVE_APPOINTMENT_STATUSES = [
-        Appointment::STATUS_IN_PROGRESS,
         Appointment::STATUS_IN_CONSULTATION,
-        Appointment::STATUS_NEEDS_CONFINEMENT,
-        Appointment::STATUS_TREATED,
-        Appointment::STATUS_AWAITING_PAYMENT,
+        Appointment::STATUS_IN_TREATMENT,
+        Appointment::STATUS_AWAITING_RESULTS,
+        Appointment::STATUS_CLINICAL_COMPLETE,
+        Appointment::STATUS_CHECKOUT,
     ];
 
     private function currentCustomer(Request $request): ?Customer
@@ -282,11 +285,9 @@ class AppointmentController extends Controller
                 'pet_id' => $request->pet_id,
                 'service_id' => $request->service_id,
                 'veterinarian_id' => $request->veterinarian_id,
-                'status' => $request->user()?->hasRoleAccess('veterinary', 'vet', 'veterinarian')
-                    ? 'approved'
-                    : ($request->user()?->hasRoleAccess('receptionist', 'admin')
-                        ? 'approved'
-                        : 'pending'),
+                'status' => $request->user()?->hasRoleAccess('veterinary', 'vet', 'veterinarian', 'receptionist', 'admin')
+                    ? Appointment::STATUS_SCHEDULED
+                    : Appointment::STATUS_REQUESTED,
                 'scheduled_at' => $scheduledAtUtc,
                 'notes' => $request->notes,
                 'price' => $lockedService?->price ?? $service?->price ?? 0,
@@ -345,7 +346,7 @@ class AppointmentController extends Controller
             return response()->json(['message' => 'Appointment not found'], 404);
         }
 
-        if (!in_array($appointment->status, ['pending', 'approved', 'scheduled'], true)) {
+        if (!in_array($appointment->status, VeterinaryStatus::ASSIGNABLE, true)) {
             return response()->json([
                 'message' => 'Only pending or not-yet-started appointments can be assigned or reassigned',
                 'current_status' => $appointment->status
@@ -389,7 +390,11 @@ class AppointmentController extends Controller
             }
 
             $lockedAppointment->update([
-                'status' => 'approved',
+                // Requested visits become scheduled; a patient already inside
+                // the clinic keeps their intake status — assignment is not a demotion.
+                'status' => $lockedAppointment->status === Appointment::STATUS_REQUESTED
+                    ? Appointment::STATUS_SCHEDULED
+                    : $lockedAppointment->status,
                 'veterinarian_id' => $request->veterinarian_id,
                 'payment_status' => $lockedAppointment->payment_status === 'paid' ? 'paid' : 'unpaid',
             ]);
@@ -510,7 +515,7 @@ class AppointmentController extends Controller
         if (!$appointment->canBeRescheduled()) {
             return response()->json([
                 'message' => 'Cannot reschedule appointment with status: ' . $appointment->status,
-                'allowed_statuses' => ['pending', 'approved']
+                'allowed_statuses' => ['requested', 'scheduled']
             ], 422);
         }
 
@@ -556,8 +561,12 @@ class AppointmentController extends Controller
         if (!$appointment->canBeCancelled()) {
             return response()->json([
                 'message' => 'Cannot cancel appointment with status: ' . $appointment->status,
-                'allowed_statuses' => ['pending', 'approved', 'scheduled', 'in_progress', 'in_consultation', 'needs_confinement', 'treated', 'awaiting_payment']
+                'allowed_statuses' => array_diff(Appointment::VALID_STATUSES, ['completed', 'cancelled', 'rejected', 'no_show'])
             ], 422);
+        }
+
+        if ($blocked = $this->cancellationBlockedAfterStart($request, $appointment)) {
+            return $blocked;
         }
 
         $validator = Validator::make($request->all(), [
@@ -581,23 +590,45 @@ class AppointmentController extends Controller
         }
 
         $oldStatus = $appointment->status;
-        $appointment->status = 'cancelled';
-        $appointment->cancellation_reason = $reasonResult['reason'];
-        $appointment->save();
+        DB::transaction(function () use ($appointment, $reasonResult) {
+            $appointment->status = 'cancelled';
+            $appointment->cancellation_reason = $reasonResult['reason'];
+            $appointment->save();
 
-        if ($appointment->service_request_id) {
-            ServiceRequest::where('id', $appointment->service_request_id)
-                ->whereNotIn('status', ['completed'])
-                ->update([
-                    'status' => 'cancelled',
-                    'rejection_reason' => $appointment->cancellation_reason,
-                ]);
-        }
+            if ($appointment->service_request_id) {
+                ServiceRequest::where('id', $appointment->service_request_id)
+                    ->whereNotIn('status', ['completed'])
+                    ->update([
+                        'status' => 'cancelled',
+                        'rejection_reason' => $appointment->cancellation_reason,
+                    ]);
+            }
+        });
 
         return response()->json([
             'message' => 'Appointment cancelled successfully',
             'appointment' => $appointment->load(['customer', 'pet', 'service', 'veterinarian']),
         ]);
+    }
+
+    /**
+     * Once clinical work has started, cancelling would discard rendered services
+     * and used stock. Only a manager or admin may void such a visit.
+     */
+    private function cancellationBlockedAfterStart(Request $request, Appointment $appointment): ?JsonResponse
+    {
+        if (!in_array($appointment->status, VeterinaryStatus::CANCEL_RESTRICTED, true)) {
+            return null;
+        }
+
+        if ($request->user()?->hasRoleAccess('manager')) {
+            return null;
+        }
+
+        return response()->json([
+            'message' => 'The consultation has started. Only a manager can cancel it, and services already rendered remain billed.',
+            'current_status' => $appointment->status,
+        ], 403);
     }
 
     /**
@@ -647,9 +678,9 @@ class AppointmentController extends Controller
             return response()->json(['message' => 'Appointment not found'], 404);
         }
 
-        if (!in_array($appointment->status, ['pending', 'approved'])) {
+        if (!in_array($appointment->status, [Appointment::STATUS_REQUESTED, Appointment::STATUS_SCHEDULED])) {
             return response()->json([
-                'message' => 'Can only reject pending or approved appointments',
+                'message' => 'Can only reject requested or scheduled appointments',
                 'current_status' => $appointment->status
             ], 422);
         }
@@ -689,14 +720,6 @@ class AppointmentController extends Controller
             return response()->json(['message' => 'Appointment not found'], 404);
         }
 
-        // Only allow starting approved/scheduled appointments
-        if (!in_array($appointment->status, ['approved', 'scheduled'])) {
-            return response()->json([
-                'message' => 'Only approved or scheduled appointments can be started',
-                'current_status' => $appointment->status
-            ], 422);
-        }
-
         $validator = Validator::make($request->all(), [
             'notes' => 'nullable|string|max:1000',
         ]);
@@ -705,41 +728,117 @@ class AppointmentController extends Controller
             return response()->json(['errors' => $validator->errors()], 422);
         }
 
-        $oldStatus = $appointment->status;
-        $updateData = [
-            'status' => 'in_progress',
-            'started_at' => Carbon::now(),
-        ];
+        $result = VisitStartService::start((int) $id, $request->user(), $request->input('notes'));
 
-        if ($request->has('notes')) {
-            $updateData['notes'] = $appointment->notes . "\n[Started]: " . $request->notes;
+        if ($result['started']) {
+            ActivityLog::log(auth()->id(), 'appointment_started', "Veterinary started appointment #{$appointment->id}", [
+                'category' => 'veterinary',
+                'reference_type' => 'appointment',
+                'reference_id' => $appointment->id,
+            ]);
         }
 
-        $appointment->update($updateData);
+        return response()->json([
+            'message' => 'Appointment started successfully',
+            'appointment' => $result['appointment'],
+            'medical_record' => $result['record'],
+        ]);
+    }
 
-        $medicalRecord = MedicalRecord::firstOrCreate(
-            [
-                'appointment_id' => $appointment->id,
-                'pet_id' => $appointment->pet_id,
-            ],
-            [
-                'veterinarian_id' => $request->user()->id,
-                'visit_date' => Carbon::now(),
-                'chief_complaint' => $appointment->notes,
-                'status' => MedicalRecord::STATUS_DRAFT,
-            ]
-        );
+    /**
+     * Check in an appointment (receptionist / vet tech)
+     *
+     * Marks the patient as physically present. Optionally flags the visit as an
+     * emergency walk-in, which front-loads the vet queue.
+     */
+    public function checkIn(Request $request, $id)
+    {
+        $validator = Validator::make($request->all(), [
+            'is_emergency' => 'sometimes|boolean',
+            'notes' => 'nullable|string|max:1000',
+        ]);
 
-        ActivityLog::log(auth()->id(), 'appointment_started', "Veterinary started appointment #{$appointment->id}", [
-            'category' => 'veterinary',
+        if ($validator->fails()) {
+            return response()->json(['errors' => $validator->errors()], 422);
+        }
+
+        $emergency = $request->boolean('is_emergency');
+        $appointment = DB::transaction(function () use ($id, $request, $emergency) {
+            $locked = Appointment::whereKey($id)->lockForUpdate()->first();
+            if (!$locked) {
+                return null;
+            }
+
+            // Idempotent: an already-checked-in visit keeps its original stamp.
+            if ($locked->checked_in_at !== null
+                || in_array($locked->status, VeterinaryStatus::INTAKE, true)
+                || in_array($locked->status, VeterinaryStatus::STARTED, true)
+                || in_array($locked->status, VeterinaryStatus::POST_CLINICAL, true)) {
+                return $locked;
+            }
+
+            if (!in_array($locked->status, VeterinaryStatus::INTAKE_ELIGIBLE, true)) {
+                return ['error' => 'This appointment cannot be checked in from its current status.'];
+            }
+
+            $locked->update([
+                'status' => Appointment::STATUS_CHECKED_IN,
+                'checked_in_at' => now(),
+                'checked_in_by' => $request->user()->id,
+                'emergency' => $emergency,
+                'notes' => $request->filled('notes')
+                    ? trim($locked->notes . "\nCheck-in: " . $request->input('notes'))
+                    : $locked->notes,
+            ]);
+
+            return $locked;
+        });
+
+        if ($appointment === null) {
+            return response()->json(['message' => 'Appointment not found'], 404);
+        }
+
+        if (is_array($appointment)) {
+            return response()->json(['message' => $appointment['error']], 422);
+        }
+
+        $appointment = $appointment->fresh(['customer', 'pet', 'service', 'veterinarian']);
+
+        ActivityLog::log(auth()->id(), 'appointment_checked_in', "Appointment #{$appointment->id} checked in" . ($emergency ? ' (emergency walk-in)' : ''), [
+            'category' => 'receptionist',
             'reference_type' => 'appointment',
             'reference_id' => $appointment->id,
         ]);
 
+        $notifyTitle = $emergency ? 'Emergency walk-in checked in' : 'Patient checked in';
+        $notifyBody = $emergency
+            ? "Appointment #{$appointment->id} was checked in as an emergency."
+            : "{$appointment->pet?->name} is checked in and waiting for you.";
+        $notifyLevel = $emergency ? 'warning' : 'info';
+
+        if ($appointment->veterinarian_id) {
+            WorkflowNotifier::notifyUser(
+                $appointment->veterinarian_id,
+                $notifyTitle,
+                $notifyBody,
+                $notifyLevel,
+                'appointment',
+                $appointment->id
+            );
+        } else {
+            WorkflowNotifier::notifyRole(
+                'veterinary',
+                $notifyTitle,
+                $notifyBody,
+                $notifyLevel,
+                'appointment',
+                $appointment->id
+            );
+        }
+
         return response()->json([
-            'message' => 'Appointment started successfully',
-            'appointment' => $appointment->load(['customer', 'pet', 'service', 'veterinarian']),
-            'medical_record' => $medicalRecord,
+            'message' => 'Appointment checked in successfully',
+            'appointment' => $appointment,
         ]);
     }
 
@@ -758,8 +857,8 @@ class AppointmentController extends Controller
             return response()->json(['message' => 'Appointment not found'], 404);
         }
 
-        // Only allow updating medical info for appointments in progress
-        if (!in_array($appointment->status, ['in_progress', 'in_consultation', 'needs_confinement', 'treated'])) {
+        // Only allow updating medical info while clinical work is in progress
+        if (!in_array($appointment->status, VeterinaryStatus::STARTED, true)) {
             return response()->json([
                 'message' => 'Can only update medical information for appointments in progress',
                 'current_status' => $appointment->status
@@ -803,79 +902,6 @@ class AppointmentController extends Controller
 
         return response()->json([
             'message' => 'Medical information updated successfully',
-            'appointment' => $appointment->load(['customer', 'pet', 'service', 'veterinarian'])
-        ]);
-    }
-
-    /**
-     * Complete appointment (veterinarian)
-     */
-    public function complete(Request $request, $id)
-    {
-        $appointment = Appointment::find($id);
-        
-        if (!$appointment) {
-            return response()->json(['message' => 'Appointment not found'], 404);
-        }
-
-        if (!$this->canAccessAppointment($request, $appointment)) {
-            return response()->json(['message' => 'Appointment not found'], 404);
-        }
-
-        if (!$appointment->canBeCompleted()) {
-            return response()->json([
-                'message' => 'Only active appointments can be completed',
-                'current_status' => $appointment->status
-            ], 422);
-        }
-
-        if (!$appointment->medicalRecords()->where('status', MedicalRecord::STATUS_FINALIZED)->exists()) {
-            return response()->json([
-                'message' => 'Finalize the consultation medical record before completing this appointment',
-            ], 422);
-        }
-
-        $billingStatus = ServiceBillingService::canCompleteService(ServiceItemUsage::SERVICE_VETERINARY, (int) $appointment->id);
-        $paymentStatus = strtolower((string) ($appointment->payment_status ?? 'unpaid'));
-
-        if ($paymentStatus !== 'paid' || !$billingStatus['can_complete']) {
-            return response()->json([
-                'message' => $paymentStatus !== 'paid'
-                    ? 'Appointment cannot be completed until payment is fully verified.'
-                    : $billingStatus['message'],
-                'payment_status' => $appointment->payment_status,
-                'billing' => $billingStatus,
-            ], 422);
-        }
-
-        $validator = Validator::make($request->all(), [
-            'notes' => 'nullable|string|max:1000',
-        ]);
-
-        if ($validator->fails()) {
-            return response()->json(['errors' => $validator->errors()], 422);
-        }
-
-        $oldStatus = $appointment->status;
-        $updateData = [
-            'status' => 'completed',
-            'completed_at' => Carbon::now(),
-        ];
-
-        if ($request->has('notes')) {
-            $updateData['notes'] = $appointment->notes . "\n[Completion notes]: " . $request->notes;
-        }
-
-        $appointment->update($updateData);
-
-        ActivityLog::log(auth()->id(), 'appointment_completed', "Veterinary completed appointment #{$appointment->id}", [
-            'category' => 'veterinary',
-            'reference_type' => 'appointment',
-            'reference_id' => $appointment->id,
-        ]);
-
-        return response()->json([
-            'message' => 'Appointment marked as completed',
             'appointment' => $appointment->load(['customer', 'pet', 'service', 'veterinarian'])
         ]);
     }
@@ -954,8 +980,13 @@ class AppointmentController extends Controller
             ], 422);
         }
 
+        if ($newStatus === Appointment::STATUS_CANCELLED && ($blocked = $this->cancellationBlockedAfterStart($request, $appointment))) {
+            return $blocked;
+        }
+
         // Cancelling always requires a reason. Predefined reason codes come
         // from the dropdown; 'other' additionally requires an explanation.
+        $reasonResult = ['error' => null, 'reason' => null];
         if ($newStatus === Appointment::STATUS_CANCELLED) {
             $reasonResult = $this->resolveCancellationReason($request);
             if ($reasonResult['error']) {
@@ -987,41 +1018,43 @@ class AppointmentController extends Controller
             }
         }
 
-        if (in_array($newStatus, ['approved', 'scheduled'], true)) {
-            $this->ensureBaseBillingItem($appointment);
-            if (($appointment->payment_status ?? 'unpaid') !== 'paid') {
-                $appointment->payment_status = 'unpaid';
+        DB::transaction(function () use ($appointment, $request, $newStatus, $reasonResult) {
+            if ($newStatus === Appointment::STATUS_SCHEDULED) {
+                $this->ensureBaseBillingItem($appointment);
+                if (($appointment->payment_status ?? 'unpaid') !== 'paid') {
+                    $appointment->payment_status = 'unpaid';
+                }
             }
-        }
 
-        $appointment->status = $newStatus;
+            $appointment->status = $newStatus;
 
-        if ($newStatus === 'rejected') {
-            $appointment->cancellation_reason = $request->input('reason');
-        }
-        if ($newStatus === Appointment::STATUS_CANCELLED) {
-            $appointment->cancellation_reason = $reasonResult['reason'];
-        }
+            if ($newStatus === 'rejected') {
+                $appointment->cancellation_reason = $request->input('reason');
+            }
+            if ($newStatus === Appointment::STATUS_CANCELLED) {
+                $appointment->cancellation_reason = $reasonResult['reason'];
+            }
 
-        // Set completion timestamp if completing
-        if ($newStatus === 'completed') {
-            $appointment->completed_at = Carbon::now();
-        }
+            // Set completion timestamp if completing
+            if ($newStatus === 'completed') {
+                $appointment->completed_at = Carbon::now();
+            }
 
-        $appointment->save();
+            $appointment->save();
 
-        // Keep the originating service request in sync so receptionist queues
-        // and customer tracking reflect the cancellation/rejection.
-        if (in_array($newStatus, ['rejected', 'cancelled'], true) && $appointment->service_request_id) {
-            ServiceRequest::where('id', $appointment->service_request_id)
-                ->whereNotIn('status', ['completed'])
-                ->update([
-                    'status' => $newStatus,
-                    'rejection_reason' => $appointment->cancellation_reason,
-                ]);
-        }
+            // Keep the originating service request in sync so receptionist queues
+            // and customer tracking reflect the cancellation/rejection.
+            if (in_array($newStatus, ['rejected', 'cancelled'], true) && $appointment->service_request_id) {
+                ServiceRequest::where('id', $appointment->service_request_id)
+                    ->whereNotIn('status', ['completed'])
+                    ->update([
+                        'status' => $newStatus,
+                        'rejection_reason' => $appointment->cancellation_reason,
+                    ]);
+            }
+        });
 
-        if (in_array($newStatus, ['approved', 'scheduled'], true) && $appointment->veterinarian_id) {
+        if ($newStatus === Appointment::STATUS_SCHEDULED && $appointment->veterinarian_id) {
             WorkflowNotifier::notifyUser(
                 $appointment->veterinarian_id,
                 'Vet Appointment Scheduled',
@@ -1058,17 +1091,17 @@ class AppointmentController extends Controller
     private function isValidStatusTransition($oldStatus, $newStatus)
     {
         $validTransitions = [
-            'pending' => ['approved', 'scheduled', 'cancelled', 'rejected'],
-            'approved' => ['scheduled', 'in_progress', 'in_consultation', 'treated', 'completed', 'cancelled', 'no_show'],
-            'scheduled' => ['in_progress', 'in_consultation', 'treated', 'completed', 'cancelled', 'no_show'],
-            'in_progress' => ['in_consultation', 'treated', 'awaiting_payment', 'completed', 'cancelled', 'no_show'],
-            'in_consultation' => ['needs_confinement', 'treated', 'awaiting_payment', 'completed', 'cancelled'],
-            'needs_confinement' => ['in_consultation', 'treated', 'awaiting_payment', 'completed', 'cancelled'],
-            'treated' => ['awaiting_payment', 'completed', 'cancelled'],
-            'awaiting_payment' => ['completed', 'cancelled'],
+            'requested' => ['scheduled', 'cancelled', 'rejected'],
+            'scheduled' => ['checked_in', 'in_consultation', 'cancelled', 'no_show', 'rejected'],
+            'checked_in' => ['in_consultation', 'cancelled', 'no_show'],
+            'in_consultation' => ['in_treatment', 'awaiting_results', 'clinical_complete', 'checkout', 'cancelled'],
+            'in_treatment' => ['in_consultation', 'awaiting_results', 'clinical_complete', 'checkout', 'cancelled'],
+            'awaiting_results' => ['in_consultation', 'in_treatment', 'clinical_complete', 'checkout', 'cancelled'],
+            'clinical_complete' => ['checkout', 'completed', 'cancelled'],
+            'checkout' => ['completed', 'cancelled'],
             'completed' => [], // No transitions from completed
             'cancelled' => [], // No transitions from cancelled
-            'rejected' => ['pending'], // Can re-activate rejected appointments
+            'rejected' => ['requested'], // Can re-activate rejected appointments
             'no_show' => [], // No transitions from no_show
         ];
 
@@ -1090,8 +1123,8 @@ class AppointmentController extends Controller
             return response()->json(['message' => 'Appointment not found'], 404);
         }
 
-        // Only allow updates to pending or approved appointments
-        if (!in_array($appointment->status, ['pending', 'approved', 'scheduled'])) {
+        // Only allow updates while the visit is still in booking/intake
+        if (!in_array($appointment->status, VeterinaryStatus::ASSIGNABLE)) {
             return response()->json([
                 'message' => 'Cannot update appointment with status: ' . $appointment->status
             ], 422);
@@ -1177,7 +1210,7 @@ class AppointmentController extends Controller
         
         $appointments = Appointment::where('veterinarian_id', $vetId)
             ->whereDate('scheduled_at', $date)
-            ->whereIn('status', ['pending', 'approved'])
+            ->whereIn('status', VeterinaryStatus::QUEUE)
             ->with(['customer', 'pet', 'service'])
             ->orderBy('scheduled_at')
             ->get();

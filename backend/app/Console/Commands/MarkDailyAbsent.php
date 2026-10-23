@@ -35,7 +35,7 @@ class MarkDailyAbsent extends Command
             // configured day-offs are honored (staff with offs on $checkDate
             // are skipped even if the company is open that weekday).
             User::whereIn('role', [
-                'manager', 'cashier', 'receptionist', 'veterinary',
+                'manager', 'cashier', 'receptionist', 'veterinary', 'vet_tech',
                 'inventory', 'payroll', 'staff', 'groomer',
                 'super_receptionist', 'admin',
             ])->where('is_active', true)->each(function (User $user) use ($checkDate, $dateStr, &$marked) {

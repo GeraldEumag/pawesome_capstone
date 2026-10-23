@@ -5,15 +5,16 @@ namespace App\Helpers;
 class BookingStatusHelper
 {
     // APPOINTMENT STATUSES
-    // Blocking statuses (prevent availability)
+    // Blocking statuses (prevent availability). 'checkout' is excluded — the
+    // clinical slot is released once the visit leaves the consultation room.
     const APPOINTMENT_BLOCKING = [
-        'pending',
-        'approved', 
+        'requested',
         'scheduled',
-        'in_progress',
+        'checked_in',
         'in_consultation',
-        'needs_confinement',
-        'treated'
+        'in_treatment',
+        'awaiting_results',
+        'clinical_complete',
     ];
     
     // Non-blocking statuses (don't prevent availability)

@@ -27,7 +27,6 @@ import {
   faMoneyBillWave,
   faPen,
   faPrint,
-  faRefresh,
   faSearch,
   faSpinner,
   faTable,
@@ -796,16 +795,6 @@ const PayrollManagement = () => {
         </div>
 
         <div className="payroll-hero-actions">
-          <button
-            type="button"
-            className="payroll-btn secondary"
-            onClick={() => fetchPayrolls({ silent: true })}
-            disabled={loading || refreshing}
-          >
-            <FontAwesomeIcon icon={refreshing ? faSpinner : faRefresh} spin={refreshing} />
-            {refreshing ? "Refreshing..." : "Refresh"}
-          </button>
-
           <div style={{ position: "relative" }}>
             <button type="button" className="payroll-btn primary" onClick={() => setShowExportDropdown(!showExportDropdown)}>
               <FontAwesomeIcon icon={faDownload} />

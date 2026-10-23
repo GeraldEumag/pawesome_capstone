@@ -178,13 +178,15 @@ class ServiceBillingController extends Controller
                 'item_ids.*' => 'integer|exists:service_item_usages,id',
                 'payment_method' => 'nullable|string|max:50',
                 'reference_number' => 'nullable|string|max:255',
+                'expected_version_hash' => 'nullable|string|max:64',
             ]);
 
             $result = ServiceBillingService::markItemsAsPaid(
                 $validated['item_ids'],
                 Auth::id(),
                 $validated['payment_method'] ?? null,
-                $validated['reference_number'] ?? null
+                $validated['reference_number'] ?? null,
+                $validated['expected_version_hash'] ?? null
             );
 
             return response()->json($result);

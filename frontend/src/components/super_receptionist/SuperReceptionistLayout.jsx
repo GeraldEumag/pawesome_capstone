@@ -1,6 +1,6 @@
 import { Outlet, useNavigate, useLocation } from "react-router-dom";
 import SuperReceptionistSidebar from "./SuperReceptionistSidebar";
-import { FaRedoAlt, FaUserTie } from "react-icons/fa";
+import { FaUserTie } from "react-icons/fa";
 import DashboardLayout from "../shared/DashboardLayout";
 import "./SuperReceptionistLayout.css";
 
@@ -47,14 +47,6 @@ const SuperReceptionistLayout = () => {
           <strong>Super Receptionist</strong>
           <small>Front Desk · Cashier · Inventory</small>
         </span>
-      </button>
-      <button
-        className="topbar-icon"
-        type="button"
-        title="Refresh"
-        onClick={() => window.location.reload()}
-      >
-        <FaRedoAlt />
       </button>
     </>
   );

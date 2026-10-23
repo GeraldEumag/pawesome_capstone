@@ -619,7 +619,7 @@ class ReceptionistRequestController extends Controller
             // Vet: only update existing appointment if one exists (can't create without vet assignment)
             if ($this->requestIsVet($serviceRequest)) {
                 if (Schema::hasColumn('appointments', 'service_request_id')) {
-                    $appointmentUpdates = ['status' => 'approved'];
+                    $appointmentUpdates = ['status' => 'scheduled'];
                     if ($hasPendingProof) $appointmentUpdates['payment_status'] = 'pending';
                     Appointment::where('service_request_id', $serviceRequest->id)->update($appointmentUpdates);
                 }
@@ -701,6 +701,8 @@ class ReceptionistRequestController extends Controller
             'veterinarian_id' => 'nullable|integer|exists:users,id',
             'receptionist_remarks' => 'nullable|string|max:1000',
             'holiday_override' => 'sometimes|boolean',
+            'request_date' => 'nullable|date',
+            'request_time' => 'nullable|regex:/^\d{1,2}:\d{2}(:\d{2})?$/',
         ]);
 
         // Promotion is atomic: the room reservation, promoted booking row,
@@ -763,7 +765,7 @@ class ReceptionistRequestController extends Controller
                 ]);
             }
 
-            if (!in_array($existingVetAppointment->status, ['pending', 'approved', 'scheduled'], true)) {
+            if (!in_array($existingVetAppointment->status, \App\Support\VeterinaryStatus::ASSIGNABLE, true)) {
                 return response()->json([
                     'message' => 'A veterinarian cannot be reassigned after the appointment has started.',
                 ], 422);
@@ -814,8 +816,13 @@ class ReceptionistRequestController extends Controller
                 return response()->json(['message' => 'The selected pet does not belong to this customer.'], 422);
             }
 
+            // The receptionist may move a stale requested slot at approval
+            // time; the override replaces the customer's requested date/time
+            // and is written back to the request below so every surface shows
+            // the slot the appointment was actually approved for.
             $scheduledAtLocal = Carbon::parse(
-                ($serviceRequest->request_date ?: now(ServiceDurationService::STORE_TIMEZONE)->toDateString()) . ' ' . ($serviceRequest->request_time ?: StoreHours::opensAt()),
+                (($validated['request_date'] ?? null) ?: ($serviceRequest->request_date ?: now(ServiceDurationService::STORE_TIMEZONE)->toDateString()))
+                    . ' ' . (($validated['request_time'] ?? null) ?: ($serviceRequest->request_time ?: StoreHours::opensAt())),
                 ServiceDurationService::STORE_TIMEZONE
             );
             $scheduledAtUtc = $scheduledAtLocal->copy()->setTimezone('UTC');
@@ -848,7 +855,7 @@ class ReceptionistRequestController extends Controller
                 ], 422);
             }
 
-            if ($existingVetAppointment && !in_array($existingVetAppointment->status, ['pending', 'approved', 'scheduled'], true)) {
+            if ($existingVetAppointment && !in_array($existingVetAppointment->status, \App\Support\VeterinaryStatus::ASSIGNABLE, true)) {
                 return response()->json([
                     'message' => 'A veterinarian cannot be assigned after the appointment has started.',
                 ], 422);
@@ -861,7 +868,7 @@ class ReceptionistRequestController extends Controller
                 'service_id' => $service->id,
                 'scheduled_at' => $scheduledAtUtc,
                 'veterinarian_id' => $vet->id,
-                'status' => 'approved',
+                'status' => 'scheduled',
                 'payment_status' => $linkedPaymentStatus,
                 'notes' => $serviceRequest->notes,
                 'price' => $service->price ?? $existingVetAppointment?->price ?? 0,
@@ -869,8 +876,19 @@ class ReceptionistRequestController extends Controller
             ];
 
             if ($existingVetAppointment) {
+                $previousVetId = (int) $existingVetAppointment->veterinarian_id;
                 $existingVetAppointment->update($appointmentData);
                 $appointment = $existingVetAppointment->fresh(['customer', 'pet', 'service', 'veterinarian']);
+
+                if ($previousVetId !== (int) $appointment->veterinarian_id) {
+                    ActivityLog::log(Auth::id() ?? 0, 'veterinarian_reassigned',
+                        "Appointment #{$appointment->id} reassigned from vet #{$previousVetId} to {$appointment->veterinarian?->name}", [
+                            'category' => 'medical',
+                            'reference_type' => 'appointment',
+                            'reference_id' => $appointment->id,
+                            'changes' => ['veterinarian_id' => ['old' => $previousVetId, 'new' => (int) $appointment->veterinarian_id]],
+                        ]);
+                }
             } else {
                 $appointment = Appointment::create($appointmentData);
             }

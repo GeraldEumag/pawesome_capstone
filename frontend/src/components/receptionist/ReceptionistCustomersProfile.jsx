@@ -13,7 +13,6 @@ import {
   faPaw,
   faPhone,
   faPlus,
-  faRefresh,
   faSearch,
   faSpinner,
   faTimes,
@@ -661,16 +660,6 @@ const CustomersProfile = () => {
         </div>
 
         <div className="customer-hero-actions">
-          <button
-            type="button"
-            className="secondary-btn"
-            onClick={loadData}
-            disabled={loading || saving}
-          >
-            <FontAwesomeIcon icon={loading ? faSpinner : faRefresh} spin={loading} />
-            Refresh
-          </button>
-
           <button
             type="button"
             className="primary-btn"

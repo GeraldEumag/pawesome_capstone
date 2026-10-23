@@ -14,6 +14,7 @@ class Prescription extends Model
         'medical_record_id',
         'veterinarian_id',
         'medication_name',
+        'inventory_item_id',
         'generic_name',
         'medication_type',
         'dosage',
@@ -75,6 +76,15 @@ class Prescription extends Model
     public function veterinarian(): BelongsTo
     {
         return $this->belongsTo(User::class, 'veterinarian_id');
+    }
+
+    /**
+     * In-store medication this prescription was written against. Null for
+     * custom medication the clinic does not stock.
+     */
+    public function item(): BelongsTo
+    {
+        return $this->belongsTo(InventoryItem::class, 'inventory_item_id');
     }
 
     /**

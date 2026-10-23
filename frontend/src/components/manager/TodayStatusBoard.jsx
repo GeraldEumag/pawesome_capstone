@@ -42,7 +42,6 @@ const TodayStatusBoard = () => {
           <h3 className="tsb-title">Today's Attendance — {data.date}</h3>
           <small className="tsb-subtitle">Shift: {data.shift_start} – {data.shift_end} · Auto-refreshes every 60s</small>
         </div>
-        <button type="button" className="tsb-refresh" onClick={load}>↻ Refresh</button>
       </div>
 
       <div className="tsb-summary">

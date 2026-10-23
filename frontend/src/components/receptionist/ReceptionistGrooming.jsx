@@ -11,7 +11,6 @@ import {
   faEye,
   faInfoCircle,
   faPaw,
-  faRefresh,
   faSearch,
   faShower,
   faSpinner,
@@ -469,16 +468,6 @@ const Grooming = () => {
           >
             <FontAwesomeIcon icon={faWrench} />
             Manage Services
-          </button>
-
-          <button
-            type="button"
-            className={`secondary-btn ${refreshing ? "loading" : ""}`}
-            onClick={() => fetchAppointments({ silent: true })}
-            disabled={refreshing}
-          >
-            <FontAwesomeIcon icon={refreshing ? faSpinner : faRefresh} />
-            {refreshing ? "Refreshing..." : "Refresh"}
           </button>
 
           <div className="export-dropdown-wrapper" style={{ position: "relative" }}>

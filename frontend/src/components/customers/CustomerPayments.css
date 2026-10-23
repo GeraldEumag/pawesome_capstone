@@ -402,3 +402,80 @@
 .customer-billing-actions .receipt-btn {
   white-space: nowrap;
 }
+
+/* ── Estimate review cards ─────────────────────────────────── */
+.estimate-review-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+}
+
+.estimate-review-card {
+  border: 1px solid var(--color-border, #eadfe6);
+  border-left: 4px solid var(--color-primary, #d6336c);
+  border-radius: 0.75rem;
+  padding: 1rem 1.125rem;
+  background: var(--color-surface, #fff);
+}
+
+.estimate-review-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 0.75rem;
+}
+
+.estimate-review-total {
+  font-weight: 700;
+  font-size: 1.05rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.estimate-review-copy {
+  margin: 0.35rem 0 0.6rem;
+  font-size: 0.85rem;
+  color: var(--color-muted, #8a7f88);
+}
+
+.estimate-review-lines {
+  list-style: none;
+  margin: 0 0 0.75rem;
+  padding: 0;
+}
+
+.estimate-review-lines li {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.75rem;
+  font-size: 0.85rem;
+  padding: 0.25rem 0;
+  border-bottom: 1px dashed var(--color-border, #eadfe6);
+}
+
+.estimate-review-lines li:last-child { border-bottom: none; }
+
+.estimate-review-actions {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.estimate-btn {
+  border: none;
+  border-radius: 0.5rem;
+  padding: 0.5rem 1rem;
+  font-weight: 600;
+  font-size: 0.85rem;
+  cursor: pointer;
+}
+
+.estimate-btn--approve {
+  background: var(--color-primary, #d6336c);
+  color: #fff;
+}
+
+.estimate-btn--reject {
+  background: var(--color-surface-alt, #faf6f8);
+  color: var(--color-muted, #8a7f88);
+  border: 1px solid var(--color-border, #eadfe6);
+}

@@ -13,7 +13,6 @@ import {
   faUserMd,
   faUser,
   faPhone,
-  faSpinner,
   faExclamationTriangle,
   faCheck,
   faTasks,
@@ -26,8 +25,9 @@ import BookingStatusTabs from "../shared/BookingStatusTabs";
 import BookingDateFilter from "../shared/BookingDateFilter";
 import { BOOKING_TABS, DATE_PRESETS, getDateRange, matchesDatePreset, countByTab, countOlderPending, countLater } from "../../utils/bookingTabs";
 import { useBookingViewParams } from "../../hooks/useBookingViewParams";
-import { formatDateOnly } from "../../utils/date";
+import { formatDateOnly, parseDateOnly } from "../../utils/date";
 import RowActionPopover from "../shared/RowActionPopover";
+import DatePickerInput from "../shared/DatePickerInput";
 import "../../styles/bookingModal.css";
 import "./ReceptionistVeterinaryBookings.css";
 
@@ -45,6 +45,8 @@ const ReceptionistVeterinaryBookings = () => {
   const [selectedVet, setSelectedVet] = useState("");
   const [vetAssignments, setVetAssignments] = useState({});
   const [selectedIds, setSelectedIds] = useState(new Set());
+  const [rescheduleDate, setRescheduleDate] = useState("");
+  const [rescheduleTime, setRescheduleTime] = useState("");
 
   // Fetch appointments and veterinarians on mount
   useEffect(() => {
@@ -109,6 +111,8 @@ const ReceptionistVeterinaryBookings = () => {
           doctor,
           appointmentDate: item.appointment_date || item.scheduled_at || item.date || item.booking_date || "",
           appointmentTime: item.appointment_time || item.scheduled_time || item.time || "",
+          requestDate: item.request_date || item.date || "",
+          requestTime: item.request_time || item.time || "",
           duration: "30 mins",
           service: item.service,
           status: item.status,
@@ -156,10 +160,17 @@ const ReceptionistVeterinaryBookings = () => {
   };
 
   // Approve a vet request; a public-holiday date needs explicit staff confirmation.
-  const approveRequest = async (requestId, veterinarianId) => {
+  // `schedule` carries a receptionist reschedule override (date/time) for
+  // requested slots that have already passed or conflict.
+  const approveRequest = async (requestId, veterinarianId, schedule = null) => {
     const send = (holidayOverride) => apiRequest(`/receptionist/requests/${requestId}/approve`, {
       method: "POST",
-      body: JSON.stringify({ veterinarian_id: Number(veterinarianId), holiday_override: holidayOverride }),
+      body: JSON.stringify({
+        veterinarian_id: Number(veterinarianId),
+        holiday_override: holidayOverride,
+        ...(schedule?.date ? { request_date: schedule.date } : {}),
+        ...(schedule?.time ? { request_time: schedule.time } : {}),
+      }),
     });
     try {
       return await send(false);
@@ -170,8 +181,16 @@ const ReceptionistVeterinaryBookings = () => {
     }
   };
 
-  // Approve appointment
-  const handleApprove = async (appointmentId) => {
+  const isScheduleConflict = (err) => Boolean(err.response?.errors?.veterinarian_id);
+
+  const openDetails = (appointment) => {
+    setRescheduleDate(appointment.requestDate || "");
+    setRescheduleTime(appointment.requestTime || "");
+    setSelectedAppointment(appointment);
+  };
+
+  // Approve appointment; `schedule` is the modal's reschedule override.
+  const handleApprove = async (appointmentId, schedule = null) => {
     if (actionLoading) return;
     const appointment = appointments.find((item) => item.rawId === appointmentId);
     const veterinarianId = vetAssignments[appointmentId] || selectedVet || appointment?.veterinarianId;
@@ -191,15 +210,25 @@ const ReceptionistVeterinaryBookings = () => {
 
     try {
       setActionLoading(true);
-      if (!(await approveRequest(appointmentId, veterinarianId))) return;
+      if (!(await approveRequest(appointmentId, veterinarianId, schedule))) return;
 
       await fetchAppointments();
       setSelectedAppointment(null);
       setSelectedVet("");
       setError("");
     } catch (err) {
+      // A passed/conflicting requested slot sends the receptionist to the
+      // details modal where a new date and time can be picked.
+      if (isScheduleConflict(err) && appointment && !schedule) {
+        setRescheduleDate(appointment.requestDate || "");
+        setRescheduleTime(appointment.requestTime || "");
+        setSelectedAppointment(appointment);
+        showWarning("The requested slot is no longer available. Pick a new date and time below to approve.");
+      }
       setError(err.message || "Failed to approve appointment");
-      showError(err.message || "Failed to approve appointment");
+      if (!isScheduleConflict(err) || schedule) {
+        showError(err.message || "Failed to approve appointment");
+      }
     } finally {
       setActionLoading(false);
     }
@@ -648,9 +677,9 @@ const ReceptionistVeterinaryBookings = () => {
                       <FontAwesomeIcon icon={faCheck} />
                     </button>
                   )}
-                  <button 
+                  <button
                     className="action-btn view-btn"
-                    onClick={() => setSelectedAppointment(appointment)}
+                    onClick={() => openDetails(appointment)}
                     title="View Details"
                   >
                     <FontAwesomeIcon icon={faSearch} />
@@ -764,8 +793,95 @@ const ReceptionistVeterinaryBookings = () => {
                     <p>{selectedAppointment.notes || "No notes provided"}</p>
                   </div>
                 </div>
+
+                {selectedAppointment.canAssign && (
+                  <div className="overview-section rveb-approve">
+                    <h3>Approve & Assign</h3>
+                    <div className="rveb-approve-grid">
+                      <div className="rveb-field">
+                        <label>Veterinarian</label>
+                        <select
+                          value={
+                            vetAssignments[selectedAppointment.rawId] ||
+                            selectedAppointment.veterinarianId ||
+                            ""
+                          }
+                          onChange={(event) =>
+                            setVetAssignments((current) => ({
+                              ...current,
+                              [selectedAppointment.rawId]: event.target.value,
+                            }))
+                          }
+                        >
+                          <option value="">
+                            {veterinarians.length ? "Choose vet" : "No active vets"}
+                          </option>
+                          {veterinarians.map((vet) => (
+                            <option key={vet.id} value={vet.id}>{vet.name}</option>
+                          ))}
+                        </select>
+                      </div>
+                      <div className="rveb-field">
+                        <label>Date</label>
+                        <DatePickerInput
+                          selected={parseDateOnly(rescheduleDate)}
+                          onChange={(date) => setRescheduleDate(formatDateOnly(date))}
+                          minDate={new Date()}
+                        />
+                      </div>
+                      <div className="rveb-field">
+                        <label>Time</label>
+                        <input
+                          type="time"
+                          step={1800}
+                          value={rescheduleTime}
+                          onChange={(event) => setRescheduleTime(event.target.value)}
+                        />
+                      </div>
+                    </div>
+                    {(() => {
+                      const requested =
+                        selectedAppointment.requestDate && selectedAppointment.requestTime
+                          ? new Date(
+                              `${selectedAppointment.requestDate}T${selectedAppointment.requestTime}`
+                            )
+                          : null;
+                      const changed =
+                        rescheduleDate !== (selectedAppointment.requestDate || "") ||
+                        rescheduleTime !== (selectedAppointment.requestTime || "");
+                      return (
+                        <>
+                          {requested && requested < new Date() && (
+                            <p className="rveb-slot-warning">
+                              <FontAwesomeIcon icon={faExclamationTriangle} />
+                              The customer's requested slot has already passed — choose a new time.
+                            </p>
+                          )}
+                          <button
+                            className="primary-btn"
+                            onClick={() =>
+                              handleApprove(selectedAppointment.rawId, {
+                                date: rescheduleDate,
+                                time: rescheduleTime,
+                              })
+                            }
+                            disabled={
+                              actionLoading ||
+                              !rescheduleDate ||
+                              !rescheduleTime ||
+                              !(vetAssignments[selectedAppointment.rawId] || selectedAppointment.veterinarianId)
+                            }
+                          >
+                            <FontAwesomeIcon icon={faCheck} />
+                            {changed ? "Approve at new time" : "Approve & Assign"}
+                          </button>
+                        </>
+                      );
+                    })()}
+                  </div>
+                )}
               </div>
-              
+
               <div className="hbk-foot">
                 <button className="secondary-btn" onClick={() => setSelectedAppointment(null)}>
                   Close

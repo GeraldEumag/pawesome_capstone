@@ -137,14 +137,12 @@ const ApiHealthCheck = () => {
             <span>Auto-refresh (30s)</span>
           </label>
           
-          <button
-            className="refresh-btn"
-            onClick={runCheck}
-            disabled={loading}
-          >
-            <FontAwesomeIcon icon={faSync} spin={loading} />
-            {loading ? "Checking..." : "Check Now"}
-          </button>
+          {loading && (
+            <span className="health-check-progress">
+              <FontAwesomeIcon icon={faSync} spin />
+              Checking...
+            </span>
+          )}
         </div>
       </header>
       

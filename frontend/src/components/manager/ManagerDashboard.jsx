@@ -13,7 +13,6 @@ import {
   faHistory,
   faMoneyBill,
   faMoon,
-  faRefresh,
   faSpinner,
   faTableCells,
   faTimes,
@@ -478,18 +477,7 @@ const ManagerDashboard = () => {
 
   const extraActions = (
     <>
-      <button
-        className="manager-icon-btn"
-        onClick={() => fetchDashboardData({ silent: true })}
-        disabled={refreshing || loading}
-        title="Refresh dashboard"
-        type="button"
-      >
-        <FontAwesomeIcon
-          icon={refreshing || loading ? faSpinner : faRefresh}
-          spin={refreshing || loading}
-        />
-      </button>
+      {(refreshing || loading) && <FontAwesomeIcon icon={faSpinner} spin />}
     </>
   );
 

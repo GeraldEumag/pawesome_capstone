@@ -363,20 +363,13 @@ const CashierPaymentVerification = () => {
                   <div className="empty-state-icon"><FontAwesomeIcon icon={faInbox} /></div>
                   <h3>No pending payments</h3>
                   <p>{requests.length === 0 ? "No approved requests pending payment." : "No results match your filters."}</p>
-                  <button type="button" className="refresh-btn" onClick={() => fetchRequests(true)} disabled={refreshing}>
-                    <FontAwesomeIcon icon={faRotateRight} spin={refreshing} />
-                    {refreshing ? "Refreshing…" : "Refresh"}
-                  </button>
                 </div>
               </div>
             ) : (
               <div className="payment-card fade-up">
                 <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: "10px", marginBottom: "16px" }}>
                   <h2 style={{ margin: 0 }}>Pending Payments</h2>
-                  <button type="button" className="refresh-btn" onClick={() => fetchRequests(true)} disabled={refreshing}>
-                    <FontAwesomeIcon icon={faRotateRight} spin={refreshing} />
-                    {refreshing ? "Refreshing…" : "Refresh"}
-                  </button>
+                  {refreshing && <FontAwesomeIcon icon={faRotateRight} spin />}
                 </div>
 
                 {lastUpdated && (

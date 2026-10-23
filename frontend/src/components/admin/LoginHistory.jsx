@@ -247,11 +247,6 @@ const LoginHistory = () => {
     showSuccess("Filters cleared.");
   };
 
-  const refreshData = () => {
-    fetchLogs(currentPage);
-    fetchStatistics();
-    showSuccess("Data refreshed successfully");
-  };
 
   const exportColumns = [
     { key: "id", label: "ID" },
@@ -345,16 +340,6 @@ const LoginHistory = () => {
         </div>
 
         <div className="lh-header-actions">
-          <button
-            type="button"
-            className={`lh-secondary-btn ${refreshing ? "refreshing" : ""}`}
-            onClick={refreshData}
-            disabled={refreshing}
-          >
-            <FontAwesomeIcon icon={refreshing ? faSpinner : faArrowRotateRight} />
-            {refreshing ? "Refreshing..." : "Refresh"}
-          </button>
-
           <div className="lh-export-wrap">
             <button
               type="button"

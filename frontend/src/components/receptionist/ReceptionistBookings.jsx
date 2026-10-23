@@ -18,7 +18,6 @@ import {
   faMoneyBillWave,
   faPaw,
   faPlus,
-  faRefresh,
   faSearch,
   faSpinner,
   faStethoscope,
@@ -1147,16 +1146,6 @@ const ReceptionistBookings = () => {
           >
             <FontAwesomeIcon icon={faWrench} />
             Manage Services
-          </button>
-
-          <button
-            type="button"
-            className={`secondary-btn ${refreshing ? "loading" : ""}`}
-            onClick={() => fetchBookings({ silent: true })}
-            disabled={refreshing}
-          >
-            <FontAwesomeIcon icon={refreshing ? faSpinner : faRefresh} />
-            {refreshing ? "Refreshing..." : "Refresh"}
           </button>
 
           <div className="export-dropdown-wrapper" style={{ position: "relative" }}>

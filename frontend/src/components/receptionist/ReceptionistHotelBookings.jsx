@@ -11,7 +11,6 @@ import {
   faHotel,
   faInfoCircle,
   faPaw,
-  faRefresh,
   faSearch,
   faSpinner,
   faTimes,
@@ -541,19 +540,6 @@ const ReceptionistHotelBookings = () => {
         </div>
 
         <div className="hotel-hero-actions">
-
-          <button
-            type="button"
-            className={`secondary-btn ${refreshing ? "loading" : ""}`}
-            onClick={() => {
-              fetchBookings({ silent: true });
-              fetchRooms();
-            }}
-            disabled={refreshing}
-          >
-            <FontAwesomeIcon icon={refreshing ? faSpinner : faRefresh} />
-            {refreshing ? "Refreshing..." : "Refresh"}
-          </button>
 
           <div className="export-dropdown-wrapper" style={{ position: "relative" }}>
             <button type="button" className="secondary-btn" onClick={() => setShowExportDropdown(!showExportDropdown)}>

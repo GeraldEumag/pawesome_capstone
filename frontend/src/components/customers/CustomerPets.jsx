@@ -257,6 +257,27 @@ const CustomerPets = () => {
   const [selectedPet, setSelectedPet] = useState(null);
   const [medicalHistory, setMedicalHistory] = useState([]);
   const [historyLoading, setHistoryLoading] = useState(false);
+  const [certLoadingId, setCertLoadingId] = useState(null);
+
+  const viewVaccinationCertificate = async (vaccinationId) => {
+    setCertLoadingId(vaccinationId);
+    try {
+      const res = await apiRequest(`/customer/vaccinations/${vaccinationId}/certificate`);
+      const cert = res?.certificate;
+      if (!cert) {
+        setMessage({ type: "error", text: "Certificate unavailable." });
+        return;
+      }
+      setMessage({
+        type: "success",
+        text: `${cert.vaccine_name || "Vaccine"} — Lot ${cert.lot_number || "N/A"}, expires ${cert.expiry_date ? formatDate(cert.expiry_date) : "N/A"}.`,
+      });
+    } catch {
+      setMessage({ type: "error", text: "Could not load the vaccination certificate." });
+    } finally {
+      setCertLoadingId(null);
+    }
+  };
   const [historyError, setHistoryError] = useState("");
 
   const [previewImage, setPreviewImage] = useState(null);
@@ -296,6 +317,7 @@ const CustomerPets = () => {
       record?.handled_by ||
       "Veterinary Staff",
     status: record?.status || "completed",
+    vaccinations: safeArray(record?.vaccinations),
   });
 
   const safeArray = (value) => {
@@ -782,9 +804,6 @@ const CustomerPets = () => {
     setHistoryLoading(false);
   };
 
-  const handleRefresh = () => {
-    fetchPets({ silent: true });
-  };
 
   if (pageLoading) {
     return (
@@ -817,15 +836,6 @@ const CustomerPets = () => {
         >
           <FaPlus />
           Add New Pet
-        </button>
-        <button
-          className={`pets-refresh-btn ${refreshing ? "refreshing" : ""}`}
-          type="button"
-          onClick={handleRefresh}
-          disabled={refreshing}
-        >
-          <FaSyncAlt />
-          {refreshing ? "Refreshing..." : "Refresh"}
         </button>
       </div>
 
@@ -1235,6 +1245,28 @@ const CustomerPets = () => {
                             <strong>{record.nextVisit ? formatDate(record.nextVisit) : "N/A"}</strong>
                           </div>
                         </div>
+
+                        {record.vaccinations?.length > 0 && (
+                          <div className="pet-history-vaccinations">
+                            {record.vaccinations.map((vax) => (
+                              <div className="pet-history-vax" key={vax.id}>
+                                <strong>{vax.vaccine_name}</strong>
+                                <span>
+                                  {vax.lot_number ? `Lot ${vax.lot_number}` : ""}
+                                  {vax.next_due_date ? ` • Next due ${formatDate(vax.next_due_date)}` : ""}
+                                </span>
+                                <button
+                                  type="button"
+                                  className="pets-vax-cert-btn"
+                                  onClick={() => viewVaccinationCertificate(vax.id)}
+                                  disabled={certLoadingId === vax.id}
+                                >
+                                  {certLoadingId === vax.id ? "Loading…" : "Certificate"}
+                                </button>
+                              </div>
+                            ))}
+                          </div>
+                        )}
 
                         {record.notes && (
                           <div className="pet-history-notes">

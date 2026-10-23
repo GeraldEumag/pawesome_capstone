@@ -7,7 +7,6 @@ import {
   faDownload,
   faEdit,
   faEye,
-  faRotateRight,
   faShieldAlt,
   faSpinner,
   faTimes,
@@ -448,16 +447,6 @@ const ManageUsers = () => {
         </div>
 
         <div className="header-actions">
-          <button
-            type="button"
-            className={`mu-secondary-btn ${refreshing ? "refreshing" : ""}`}
-            onClick={() => fetchUsers({ silent: true })}
-            disabled={refreshing}
-          >
-            <FontAwesomeIcon icon={refreshing ? faSpinner : faRotateRight} />
-            {refreshing ? "Refreshing..." : "Refresh"}
-          </button>
-
           <div style={{ position: "relative" }}>
             <button type="button" className="mu-secondary-btn" onClick={() => setShowExportDropdown(!showExportDropdown)}>
               <FontAwesomeIcon icon={faDownload} />

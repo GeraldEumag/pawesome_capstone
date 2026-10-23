@@ -151,13 +151,33 @@ class ServiceBillingService
     /**
      * Mark billing items as paid
      */
-    public static function markItemsAsPaid(array $itemIds, int $verifiedBy, ?string $paymentMethod = null, ?string $referenceNumber = null): array
+    public static function markItemsAsPaid(array $itemIds, int $verifiedBy, ?string $paymentMethod = null, ?string $referenceNumber = null, ?string $expectedVersionHash = null): array
     {
-        return DB::transaction(function () use ($itemIds, $verifiedBy, $paymentMethod, $referenceNumber) {
+        return DB::transaction(function () use ($itemIds, $verifiedBy, $paymentMethod, $referenceNumber, $expectedVersionHash) {
             $items = ServiceItemUsage::whereIn('id', $itemIds)
                 ->where('is_billable', true)
                 ->where('is_paid', false)
                 ->get();
+
+            // Stale-view detection: when the client viewed the invoice at a
+            // specific version hash, reject the payment if the canonical
+            // charges changed since (e.g. a new charge or adjustment landed).
+            if ($expectedVersionHash && Schema::hasTable('visit_invoices')) {
+                $vetServiceIds = $items
+                    ->where('service_type', ServiceItemUsage::SERVICE_VETERINARY)
+                    ->pluck('service_id')
+                    ->unique();
+                foreach ($vetServiceIds as $vetServiceId) {
+                    $appt = Appointment::find($vetServiceId);
+                    if (!$appt) {
+                        continue;
+                    }
+                    $invoice = VisitInvoiceService::sync($appt);
+                    if ($invoice->version_hash !== $expectedVersionHash) {
+                        throw new \Exception('The bill changed since you opened it. Refresh and review the current invoice before collecting payment.');
+                    }
+                }
+            }
 
             $updated = ServiceItemUsage::whereIn('id', $itemIds)
                 ->where('is_billable', true)
@@ -171,6 +191,10 @@ class ServiceBillingService
                     $summaries[] = self::syncServicePaymentState($first->service_type, (int) $first->service_id, [
                         'verified_by' => $verifiedBy,
                     ]);
+
+                    if ($first->service_type === ServiceItemUsage::SERVICE_VETERINARY) {
+                        VisitCompletionService::tryComplete((int) $first->service_id);
+                    }
 
                     $itemKey = sha1($first->service_type . ':' . $first->service_id . ':' . implode(',', $groupedItems->pluck('id')->sort()->values()->all()));
                     PaymentSettlementService::record([
@@ -283,7 +307,7 @@ class ServiceBillingService
             }
         }
 
-        return [
+        $summary = [
             'items' => $items->values(),
             'total_bill' => $totalBill,
             'gross_bill' => $grossBill,
@@ -295,6 +319,25 @@ class ServiceBillingService
             'additional_charges' => $additionalCharges,
             'payment_status' => $nextPaymentStatus,
         ];
+
+        // Keep the visit invoice in lockstep with the canonical charge rows
+        // and expose it to callers as the reconciliation document.
+        if ($serviceType === ServiceItemUsage::SERVICE_VETERINARY
+            && $serviceRecord instanceof \App\Models\Appointment
+            && Schema::hasTable('visit_invoices')) {
+            $invoice = DB::transaction(fn () => VisitInvoiceService::sync($serviceRecord));
+            $summary['invoice'] = [
+                'id' => $invoice->id,
+                'invoice_number' => $invoice->invoice_number,
+                'status' => $invoice->status,
+                'total' => (float) $invoice->total,
+                'amount_paid' => (float) $invoice->amount_paid,
+                'balance_due' => (float) $invoice->balance_due,
+                'version_hash' => $invoice->version_hash,
+            ];
+        }
+
+        return $summary;
     }
 
     /**

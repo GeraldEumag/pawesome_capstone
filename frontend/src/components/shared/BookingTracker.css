@@ -332,7 +332,7 @@
 }
 
 .bt-status-pending,
-.bt-status-awaiting_payment { background: #fef3c7; color: #92400e; }
+.bt-status-requested { background: #fef3c7; color: #92400e; }
 .bt-status-approved,
 .bt-status-scheduled,
 .bt-status-confirmed,
@@ -340,9 +340,14 @@
 .bt-status-checked_in,
 .bt-status-in_progress,
 .bt-status-in_consultation,
+.bt-status-in_treatment,
+.bt-status-awaiting_results,
 .bt-status-needs_confinement { background: #dbeafe; color: #1d4ed8; }
 .bt-status-in_care { background: #e0e7ff; color: #4338ca; }
-.bt-status-treated { background: #ccfbf1; color: #0f766e; }
+.bt-status-treated,
+.bt-status-clinical_complete,
+.bt-status-awaiting_payment,
+.bt-status-checkout { background: #fef3c7; color: #92400e; }
 .bt-status-ready_for_pickup {
   background: #dcfce7;
   color: #15803d;

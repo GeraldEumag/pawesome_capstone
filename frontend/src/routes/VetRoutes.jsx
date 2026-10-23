@@ -18,6 +18,8 @@ const VetCurrentBoarders = lazy(() => import("../components/veterinary/Veterinar
 const VetMedicalConfinements = lazy(() => import("../components/veterinary/VetMedicalConfinements"));
 const MyPayroll = lazy(() => import("../components/shared/MyPayroll"));
 
+const VetIndex = () => <VetAppointments />;
+
 const VetRoutes = () => (
   <Suspense fallback={<VetDashboardSkeleton />}>
     <Routes>
@@ -30,7 +32,7 @@ const VetRoutes = () => (
         }
       >
         {/* Default landing page */}
-        <Route index element={<VetAppointments />} />
+        <Route index element={<VetIndex />} />
 
         {/* Nested routes */}
         <Route path="appointments" element={<VetAppointments />} />

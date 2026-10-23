@@ -203,6 +203,7 @@ class DatabaseIntegrityTest extends TestCase
             'password' => 'password123',
             'password_confirmation' => 'password123',
             'role' => 'admin',
+            'date_of_birth' => '1990-01-15',
         ], $this->withAuth($this->admin, $this->adminToken));
         
         $response->assertStatus(201);
@@ -419,13 +420,13 @@ class DatabaseIntegrityTest extends TestCase
             'pet_id' => $this->pet->id,
             'service_id' => $service->id,
             'veterinarian_id' => $this->veterinary->id,
-            'status' => 'approved',
+            'status' => 'scheduled',
         ]);
 
         // Verify appointment can be retrieved
         $appointment = Appointment::where('customer_id', $this->customerRecord->id)->first();
         $this->assertNotNull($appointment);
-        $this->assertEquals('approved', $appointment->status);
+        $this->assertEquals('scheduled', $appointment->status);
     }
 
     public function test_receptionist_hotel_booking_database_flow(): void
@@ -476,7 +477,7 @@ class DatabaseIntegrityTest extends TestCase
             'veterinarian_id' => $this->veterinary->id,
             'service_id' => Service::factory()->create(['name' => 'Consultation'])->id,
             'scheduled_at' => now(),
-            'status' => 'in_progress',
+            'status' => 'in_consultation',
         ]);
         
         $response = $this->postJson('/api/veterinary/medical-records', [
@@ -579,7 +580,7 @@ class DatabaseIntegrityTest extends TestCase
             'customer_id' => $customerRecord->id,
             'pet_id' => $petId,
             'service_id' => $service->id,
-            'status' => 'pending',
+            'status' => 'requested',
         ]);
     }
 
@@ -780,7 +781,7 @@ class DatabaseIntegrityTest extends TestCase
         $this->assertDatabaseHas('appointments', [
             'pet_id' => $pet1->id,
             'customer_id' => $customerRecord->id,
-            'status' => 'pending',
+            'status' => 'requested',
         ]);
 
         // Verify all data persisted
@@ -795,7 +796,7 @@ class DatabaseIntegrityTest extends TestCase
         $this->assertDatabaseHas('appointments', [
             'pet_id' => $pet1->id,
             'customer_id' => $customerRecord->id,
-            'status' => 'pending',
+            'status' => 'requested',
         ]);
 
         // Verify customer can retrieve their data

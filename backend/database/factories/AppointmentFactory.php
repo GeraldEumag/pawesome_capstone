@@ -21,7 +21,7 @@ class AppointmentFactory extends Factory
             'customer_id' => Customer::factory(),
             'pet_id' => Pet::factory(),
             'service_id' => Service::factory(),
-            'status' => $this->faker->randomElement(['pending', 'approved', 'completed', 'cancelled']),
+            'status' => $this->faker->randomElement(['requested', 'scheduled', 'completed', 'cancelled']),
             'scheduled_at' => $this->faker->dateTimeBetween('now', '+30 days'),
             'price' => $this->faker->randomFloat(2, 50, 500),
             'created_at' => now(),

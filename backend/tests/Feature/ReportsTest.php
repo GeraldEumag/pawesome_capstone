@@ -192,7 +192,7 @@ class ReportsTest extends TestCase
         Pet::factory()->count(7)->create();
         
         Appointment::factory()->count(10)->create(['status' => 'completed']);
-        Appointment::factory()->count(5)->create(['status' => 'pending']);
+        Appointment::factory()->count(5)->create(['status' => 'requested']);
 
         $response = $this->getJson('/api/admin/reports/summary', $this->withAdminAuth());
 

@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
-  faSync,
   faBell,
   faTrash,
   faPlus,
@@ -115,9 +114,6 @@ const AutomatedAlerts = () => {
         <div className="adv-report-controls">
           <button className="adv-btn primary" onClick={() => setShowForm((v) => !v)}>
             <FontAwesomeIcon icon={faPlus} /> New Alert
-          </button>
-          <button className="adv-refresh-btn" onClick={fetchData}>
-            <FontAwesomeIcon icon={faSync} /> Refresh
           </button>
         </div>
       </div>

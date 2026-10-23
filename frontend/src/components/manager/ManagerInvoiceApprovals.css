@@ -1,0 +1,90 @@
+.mgr-approvals-page {
+  padding: 1.25rem;
+}
+
+.mgr-approvals-header h2 {
+  margin: 0;
+}
+
+.mgr-approvals-header p {
+  color: var(--color-muted, #8a7f88);
+  font-size: 0.9rem;
+  margin: 0.25rem 0 1rem;
+}
+
+.mgr-approvals-empty {
+  padding: 2rem;
+  text-align: center;
+  color: var(--color-muted, #8a7f88);
+}
+
+.mgr-approvals-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.mgr-approval-card {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+  border: 1px solid var(--color-border, #eadfe6);
+  border-radius: 0.75rem;
+  padding: 0.875rem 1rem;
+  background: var(--color-surface, #fff);
+}
+
+.mgr-approval-title {
+  display: flex;
+  align-items: baseline;
+  gap: 0.625rem;
+}
+
+.mgr-approval-amount {
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.mgr-approval-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.375rem 1rem;
+  margin-top: 0.25rem;
+  font-size: 0.8rem;
+  color: var(--color-muted, #8a7f88);
+}
+
+.mgr-approval-notes {
+  margin: 0.35rem 0 0;
+  font-size: 0.82rem;
+}
+
+.mgr-approval-actions {
+  display: flex;
+  gap: 0.5rem;
+  flex-shrink: 0;
+}
+
+.mgr-btn {
+  border: none;
+  border-radius: 0.5rem;
+  padding: 0.5rem 1rem;
+  font-weight: 600;
+  font-size: 0.85rem;
+  cursor: pointer;
+}
+
+.mgr-btn--approve {
+  background: var(--color-primary, #d6336c);
+  color: #fff;
+}
+
+.mgr-btn--reject {
+  background: var(--color-surface-alt, #faf6f8);
+  color: var(--color-muted, #8a7f88);
+  border: 1px solid var(--color-border, #eadfe6);
+}

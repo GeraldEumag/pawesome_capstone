@@ -27,6 +27,7 @@ class PawesomeLiveDemoSeeder extends Seeder
             'cashier' => ['name' => 'Cashier', 'role' => 'cashier', 'department' => 'Finance', 'position' => 'Cashier', 'password' => 'password123'],
             'inventory' => ['name' => 'Inventory Manager', 'role' => 'inventory', 'department' => 'Inventory', 'position' => 'Inventory Manager'],
             'vet' => ['name' => 'Veterinarian', 'role' => 'veterinary', 'department' => 'Veterinary', 'position' => 'Veterinarian'],
+            'vettech' => ['name' => 'Veterinary Technician', 'role' => 'vet_tech', 'department' => 'Veterinary', 'position' => 'Veterinary Technician'],
             'customer' => ['name' => 'Customer', 'role' => 'customer', 'department' => null, 'position' => null],
         ];
 

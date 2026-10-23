@@ -28,3 +28,12 @@ Schedule::command('leave:annual-reset')->yearlyOn(1, 1, '00:05');
 
 // Check probationary period endings daily at 08:00
 Schedule::command('staff:check-probationary')->dailyAt('08:00');
+
+// Phase D: daily batch-expiry sweep (90/30-day alerts + expired flagging)
+// and inpatient daily-rate accrual into running visit invoices.
+Schedule::command('inventory:check-expiries')->dailyAt('07:30');
+Schedule::command('confinement:accrue-daily')->dailyAt('07:45');
+
+// Phase E: recall scheduler — vaccine due (30-day look-ahead) and
+// post-discharge follow-up checks (24–48h after release).
+Schedule::command('recalls:send')->dailyAt('08:15');

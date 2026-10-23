@@ -226,9 +226,7 @@ const MyPayroll = ({ roleAccent = "var(--color-primary)", roleLabel = "Employee"
           <h1>My Payroll</h1>
           <p>View your payroll records, download payslips, and track payment status.</p>
         </div>
-        <button className="mp-btn refresh" onClick={fetchPayrolls} disabled={loading}>
-          <FontAwesomeIcon icon={faSpinner} spin={loading} /> Refresh
-        </button>
+        {loading && <FontAwesomeIcon icon={faSpinner} spin />}
       </section>
 
       {/* Summary cards */}

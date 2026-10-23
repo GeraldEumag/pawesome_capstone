@@ -904,21 +904,7 @@ const CashierDashboard = () => {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [showOverview, fetchDashboardData]);
 
-  const extraActions = (
-    <>
-      <button
-        className="btn-secondary"
-        type="button"
-        onClick={() => fetchDashboardData({ silent: true })}
-        title="Refresh"
-      >
-        <FontAwesomeIcon
-          icon={faRotateRight}
-          className={refreshing ? "spin-icon" : ""}
-        />
-      </button>
-    </>
-  );
+  const extraActions = null;
 
   const ROUTE_META = [
     { path: "/cashier", title: "Cashier Dashboard", subtitle: `${greeting}, ${name}. Process transactions and manage cashier sales.` },

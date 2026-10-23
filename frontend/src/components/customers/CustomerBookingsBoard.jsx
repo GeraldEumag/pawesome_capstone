@@ -6,7 +6,6 @@ import {
   FaHotel,
   FaSearch,
   FaStethoscope,
-  FaSyncAlt,
 } from "react-icons/fa";
 import "./CustomerBookingsBoard.css";
 import BookingStatusTabs from "../shared/BookingStatusTabs";
@@ -201,7 +200,6 @@ const CustomerBookingsBoard = ({ serviceFilter = "", embedded = false, renderExt
           <p className="cbb-updated" aria-live="polite">
             Updated {updatedAt ? updatedAt.toLocaleTimeString("en-PH", { hour: "2-digit", minute: "2-digit" }) : "—"}
           </p>
-          <button type="button" className="cbb-btn cbb-btn--ghost" onClick={refresh}><FaSyncAlt aria-hidden="true" /> Refresh</button>
         </div>
       </div>
 

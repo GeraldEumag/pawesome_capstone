@@ -10,7 +10,6 @@ import {
   FaInfoCircle,
   FaPaw,
   FaSpinner,
-  FaSyncAlt,
   FaTimes,
   FaTimesCircle,
   FaUser,
@@ -815,18 +814,7 @@ const ReceptionistApprovals = () => {
         </div>
 
         <div className="approval-hero-actions">
-          <button
-            type="button"
-            className={`secondary-btn ${refreshing ? "loading" : ""}`}
-            onClick={() => {
-              fetchRequests({ silent: true });
-              fetchVeterinarians();
-            }}
-            disabled={refreshing || loading}
-          >
-            {refreshing ? <FaSpinner /> : <FaSyncAlt />}
-            {refreshing ? "Refreshing..." : "Refresh"}
-          </button>
+          {refreshing && <FaSpinner />}
 
           <div className="export-dropdown-wrapper" style={{ position: "relative" }}>
             <button type="button" className="secondary-btn" onClick={() => setShowExportDropdown(!showExportDropdown)}>

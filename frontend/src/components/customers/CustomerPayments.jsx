@@ -10,6 +10,7 @@ import { showAlert, showError, showSuccess } from "../../utils/alert.jsx";
 import { printReceipt } from "../../utils/receiptPrinter";
 import { downloadReceiptPdf } from "../../utils/receiptPdf";
 import PaymentUploadModal from "../shared/PaymentUploadModal";
+import CustomerEstimateReview from "./CustomerEstimateReview";
 
 const formatCurrency = (value) =>
   `₱${Number(value || 0).toLocaleString("en-PH", {
@@ -490,17 +491,13 @@ const CustomerPayments = () => {
 
   return (
     <section className="customer-payments-page">
-      <div className="customer-payments-header customer-payments-actions">
-        <button type="button" className="customer-payments-main-btn" onClick={fetchPayments}>
-          Refresh
-        </button>
-      </div>
-
       {error && (
         <div className="customer-payments-error">
           <strong>Error:</strong> {error}
         </div>
       )}
+
+      <CustomerEstimateReview />
 
       <div className="customer-payments-summary-grid">
         <article className="customer-payment-summary-card">

@@ -18,6 +18,8 @@ class Vaccination extends Model
         'vaccine_type',
         'manufacturer',
         'lot_number',
+        'inventory_batch_id',
+        'vaccine_expiry_date',
         'date_administered',
         'next_due_date',
         'dosage',
@@ -32,6 +34,7 @@ class Vaccination extends Model
     protected $casts = [
         'date_administered' => 'date',
         'next_due_date' => 'date',
+        'vaccine_expiry_date' => 'date',
         'dosage' => 'decimal:3',
         'is_editable' => 'boolean',
     ];
@@ -63,6 +66,11 @@ class Vaccination extends Model
     public function veterinarian(): BelongsTo
     {
         return $this->belongsTo(User::class, 'veterinarian_id');
+    }
+
+    public function inventoryBatch(): BelongsTo
+    {
+        return $this->belongsTo(InventoryBatch::class, 'inventory_batch_id');
     }
 
     /**

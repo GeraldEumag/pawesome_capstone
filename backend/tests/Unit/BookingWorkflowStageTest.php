@@ -36,7 +36,11 @@ class BookingWorkflowStageTest extends TestCase
     {
         $this->assertSame(
             Stage::READY_TO_PICKUP,
-            Stage::forServiceRequest('veterinary', 'approved', 'unpaid', 'awaiting_payment')
+            Stage::forServiceRequest('veterinary', 'approved', 'unpaid', 'checkout')
+        );
+        $this->assertSame(
+            Stage::READY_TO_PICKUP,
+            Stage::forServiceRequest('veterinary', 'approved', 'unpaid', 'clinical_complete')
         );
     }
 

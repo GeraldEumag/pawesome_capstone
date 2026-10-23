@@ -363,8 +363,8 @@ class ChatbotService
             'manager' => [
                 'message' => sprintf(
                     'Manager summary: %d staff accounts, %d active staff, %d appointments today, %d completed appointments, and $%s revenue this month.',
-                    User::whereIn('role', ['receptionist', 'veterinary', 'inventory', 'cashier'])->count(),
-                    User::whereIn('role', ['receptionist', 'veterinary', 'inventory', 'cashier'])->where('is_active', true)->count(),
+                    User::whereIn('role', ['receptionist', 'veterinary', 'vet_tech', 'inventory', 'cashier'])->count(),
+                    User::whereIn('role', ['receptionist', 'veterinary', 'vet_tech', 'inventory', 'cashier'])->where('is_active', true)->count(),
                     Appointment::whereDate('scheduled_at', $today)->count(),
                     Appointment::where('status', 'completed')->count(),
                     number_format((float) Sale::whereMonth('created_at', $today->month)->sum('amount'), 2),

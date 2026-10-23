@@ -20,7 +20,10 @@ class BookingWorkflowStage
 
     private const PAID = ['paid', 'verified', 'completed'];
     private const CANCELLED = ['cancelled', 'canceled', 'rejected'];
-    private const VET_IN_CONSULTATION = ['in_progress', 'in_consultation', 'treated', 'needs_confinement'];
+    private const VET_IN_CONSULTATION = [
+        'checked_in',
+        'in_consultation', 'in_treatment', 'awaiting_results',
+    ];
 
     /**
      * Grooming or vet service request (service_requests row plus its linked appointment).
@@ -42,7 +45,7 @@ class BookingWorkflowStage
 
         if ($isVet && $appointment !== '') {
             if ($appointment === 'completed') return self::COMPLETE;
-            if ($appointment === 'awaiting_payment') return self::READY_TO_PICKUP;
+            if (in_array($appointment, ['clinical_complete', 'checkout'], true)) return self::READY_TO_PICKUP;
             if (in_array($appointment, self::VET_IN_CONSULTATION, true)) return self::ON_GOING;
         }
 

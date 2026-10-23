@@ -15,7 +15,6 @@ import {
   faMoneyBillWave,
   faPlay,
   faPrint,
-  faRotateRight,
   faSpinner,
   faTimes,
   faTriangleExclamation,
@@ -441,16 +440,6 @@ const PayrollReports = () => {
           >
             <FontAwesomeIcon icon={faPlay} />
             Generate Payroll
-          </button>
-
-          <button
-            type="button"
-            className={`payroll-secondary-btn ${refreshing ? "refreshing" : ""}`}
-            onClick={() => loadPayrollData({ silent: true })}
-            disabled={refreshing}
-          >
-            <FontAwesomeIcon icon={refreshing ? faSpinner : faRotateRight} />
-            {refreshing ? "Refreshing..." : "Refresh"}
           </button>
 
           <div className="pr-export-wrap">

@@ -11,7 +11,6 @@ import {
   faDownload,
   faExclamationTriangle,
   faFilter,
-  faRefresh,
   faSearch,
   faSpinner,
   faThumbsDown,
@@ -246,10 +245,6 @@ const ManagerLeave = () => {
           <p>Review, approve, or reject employee leave requests. Track leave types and coverage.</p>
         </div>
         <div className="leave-hero-actions">
-          <button type="button" className="leave-btn secondary" onClick={() => loadLeaves({ silent: true })} disabled={loading || refreshing}>
-            <FontAwesomeIcon icon={refreshing ? faSpinner : faRefresh} spin={refreshing} />
-            Refresh
-          </button>
           <div style={{ position: "relative" }}>
             <button type="button" className="leave-btn primary" onClick={() => setShowExportDropdown(!showExportDropdown)}>
               <FontAwesomeIcon icon={faDownload} />

@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
-  faSync,
   faBalanceScale,
   faChartLine,
   faShoppingCart,
@@ -112,9 +111,6 @@ const ComparativeReporting = () => {
             <p>This month vs last month</p>
           </div>
         </div>
-        <button className="adv-refresh-btn" onClick={fetchData}>
-          <FontAwesomeIcon icon={faSync} /> Refresh
-        </button>
       </div>
 
       <div className="adv-kpi-grid">

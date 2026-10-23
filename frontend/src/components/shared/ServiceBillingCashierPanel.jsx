@@ -35,6 +35,13 @@ const ServiceBillingCashierPanel = () => {
     service_type: "",
     search: ""
   });
+  const [adjustmentForm, setAdjustmentForm] = useState({
+    type: "discount",
+    amount: "",
+    reason_code: "promo",
+    notes: ""
+  });
+  const [adjusting, setAdjusting] = useState(false);
 
   useEffect(() => {
     fetchUnpaidServices();
@@ -89,6 +96,76 @@ const ServiceBillingCashierPanel = () => {
       .reduce((total, item) => total + item.total_price, 0);
   };
 
+  const handleAdjustment = async () => {
+    const amount = Number(adjustmentForm.amount);
+    if (!amount || amount <= 0) {
+      toast.error("Enter an adjustment amount greater than zero");
+      return;
+    }
+    try {
+      setAdjusting(true);
+      const response = await apiRequest(
+        `/cashier/visit-invoices/${selectedService.service_id}/adjustments`,
+        {
+          method: "POST",
+          body: JSON.stringify({
+            type: adjustmentForm.type,
+            amount,
+            reason_code: adjustmentForm.reason_code,
+            notes: adjustmentForm.notes || undefined,
+            expected_version_hash: selectedService.billing.invoice?.version_hash || undefined,
+          }),
+        }
+      );
+      if (response.success) {
+        toast.success(
+          response.requires_approval
+            ? "Adjustment submitted — waiting for manager approval"
+            : "Adjustment applied to the invoice"
+        );
+        setAdjustmentForm({ type: "discount", amount: "", reason_code: "promo", notes: "" });
+        // Refresh the open modal's billing view from the returned invoice.
+        if (response.invoice) {
+          const inv = response.invoice;
+          setSelectedService((prev) =>
+            prev
+              ? {
+                  ...prev,
+                  billing: {
+                    ...prev.billing,
+                    total_bill: inv.total,
+                    total_paid: inv.amount_paid,
+                    balance_due: inv.balance_due,
+                    invoice: {
+                      invoice_number: inv.invoice_number,
+                      status: inv.status,
+                      version_hash: inv.version_hash,
+                    },
+                    items: (inv.lines || []).map((line) => ({
+                      id: line.service_item_usage_id,
+                      description: line.description,
+                      quantity: line.quantity,
+                      unit: "pcs",
+                      unit_price: line.unit_price,
+                      total_price: line.line_total,
+                    })),
+                  },
+                }
+              : prev
+          );
+          setPaymentData((prev) => ({ ...prev, amount: inv.balance_due }));
+        }
+        fetchUnpaidServices();
+      } else {
+        toast.error(response.message || "Failed to apply adjustment");
+      }
+    } catch (error) {
+      toast.error(error.message || "Failed to apply adjustment");
+    } finally {
+      setAdjusting(false);
+    }
+  };
+
   const handlePayment = async () => {
     if (selectedItems.length === 0) {
       toast.error("Please select at least one billing item to pay");
@@ -101,7 +178,8 @@ const ServiceBillingCashierPanel = () => {
       const response = await apiRequest("/billing/items/mark-paid", {
         method: "PATCH",
         body: JSON.stringify({
-          item_ids: selectedItems
+          item_ids: selectedItems,
+          expected_version_hash: selectedService.billing.invoice?.version_hash || undefined
         })
       });
 
@@ -272,8 +350,82 @@ const ServiceBillingCashierPanel = () => {
                 <span>Pet: {selectedService.service?.pet_name}</span>
                 <span>Customer: {selectedService.service?.customer_name}</span>
                 <span>Balance Due: ₱{selectedService.billing.balance_due.toFixed(2)}</span>
+                {selectedService.billing.invoice?.invoice_number && (
+                  <span>Invoice: {selectedService.billing.invoice.invoice_number}</span>
+                )}
               </div>
             </div>
+
+            {selectedService.service_type === "veterinary" && (
+              <div className="invoice-adjustments">
+                <h4>Invoice Adjustment</h4>
+                <div className="form-row">
+                  <div className="form-group">
+                    <label>Type</label>
+                    <select
+                      value={adjustmentForm.type}
+                      onChange={(e) => setAdjustmentForm((prev) => ({ ...prev, type: e.target.value }))}
+                    >
+                      <option value="discount">Discount</option>
+                      <option value="waiver">Waiver</option>
+                      <option value="write_off">Write-off</option>
+                      <option value="credit_note">Credit note</option>
+                    </select>
+                  </div>
+                  <div className="form-group">
+                    <label>Amount</label>
+                    <input
+                      type="number"
+                      min="0"
+                      step="0.01"
+                      value={adjustmentForm.amount}
+                      onChange={(e) => setAdjustmentForm((prev) => ({ ...prev, amount: e.target.value }))}
+                      placeholder="0.00"
+                    />
+                  </div>
+                  <div className="form-group">
+                    <label>Reason</label>
+                    <select
+                      value={adjustmentForm.reason_code}
+                      onChange={(e) => setAdjustmentForm((prev) => ({ ...prev, reason_code: e.target.value }))}
+                    >
+                      <option value="senior_citizen">Senior citizen</option>
+                      <option value="pwd">PWD</option>
+                      <option value="loyalty">Loyalty</option>
+                      <option value="promo">Promo</option>
+                      <option value="staff_error">Staff error</option>
+                      <option value="goodwill">Goodwill</option>
+                      <option value="uncollectible">Uncollectible</option>
+                      <option value="other">Other</option>
+                    </select>
+                  </div>
+                </div>
+                <div className="form-row">
+                  <div className="form-group" style={{ flex: 1 }}>
+                    <label>Notes</label>
+                    <input
+                      type="text"
+                      value={adjustmentForm.notes}
+                      onChange={(e) => setAdjustmentForm((prev) => ({ ...prev, notes: e.target.value }))}
+                      placeholder="Optional details for the audit trail"
+                    />
+                  </div>
+                  <button
+                    type="button"
+                    className="process-payment-btn adjustment-btn"
+                    onClick={handleAdjustment}
+                    disabled={adjusting}
+                  >
+                    {adjusting ? <FontAwesomeIcon icon={faSpinner} spin /> : null}
+                    Apply Adjustment
+                  </button>
+                </div>
+                <p className="adjustment-hint">
+                  Waivers, write-offs and large adjustments require manager approval
+                  before they appear on the invoice.
+                </p>
+              </div>
+            )}
 
             <div className="billing-items">
               <div className="items-header">

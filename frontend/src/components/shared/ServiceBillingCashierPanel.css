@@ -597,3 +597,51 @@
     justify-content: space-between;
   }
 }
+
+/* ── Invoice adjustments ───────────────────────────────────── */
+.invoice-adjustments {
+  margin-top: 1rem;
+  padding: 0.875rem;
+  border: 1px dashed var(--color-border, #eadfe6);
+  border-radius: 0.625rem;
+}
+
+.invoice-adjustments h4 {
+  margin: 0 0 0.625rem;
+  font-size: 0.9rem;
+}
+
+.invoice-adjustments .form-row {
+  display: flex;
+  gap: 0.75rem;
+  align-items: flex-end;
+  margin-bottom: 0.625rem;
+}
+
+.invoice-adjustments .form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.invoice-adjustments label {
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--color-muted, #8a7f88);
+}
+
+.invoice-adjustments input,
+.invoice-adjustments select {
+  padding: 0.45rem 0.6rem;
+  border: 1px solid var(--color-border, #eadfe6);
+  border-radius: 0.5rem;
+  font-size: 0.85rem;
+}
+
+.adjustment-btn { white-space: nowrap; }
+
+.adjustment-hint {
+  margin: 0;
+  font-size: 0.78rem;
+  color: var(--color-muted, #8a7f88);
+}

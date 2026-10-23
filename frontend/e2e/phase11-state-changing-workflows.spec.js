@@ -605,17 +605,11 @@ test("Phase 11 full state-changing workflow validation", async ({ browser, reque
     await api(request, sessions.cashier, "POST", `/cashier/payment-requests/${vetRequest.id}/verify`, {
       data: { type: "service_request", reference_number: paymentReference, cashier_remarks: "PHASE11_TEST veterinary payment verified" },
     });
+    // The visit closes automatically once the cashier verifies payment; the vet has no close action.
     await vetView.page.reload();
-    await vetView.page.getByRole("button", { name: "Complete Appointment" }).waitFor({ state: "visible", timeout: 20000 });
-    const appointmentCompleteResponsePromise = vetView.page.waitForResponse((response) => {
-      const url = new URL(response.url());
-      return url.pathname.endsWith(`/api/veterinary/appointments/${appointment.id}/complete`) && response.request().method() === "POST";
-    });
-    await vetView.page.getByRole("button", { name: "Complete Appointment" }).click();
-    const appointmentCompleteResponse = await appointmentCompleteResponsePromise;
-    const appointmentCompleteBody = await appointmentCompleteResponse.json().catch(() => ({}));
-    expect(appointmentCompleteResponse.ok(), JSON.stringify(appointmentCompleteBody)).toBeTruthy();
-    const completedAppointment = appointmentCompleteBody.appointment || appointmentCompleteBody.data || {};
+    const appointmentDetail = await api(request, sessions.vet, "GET", `/veterinary/appointments/${appointment.id}`);
+    const appointmentCompleteBody = appointmentDetail;
+    const completedAppointment = appointmentDetail.appointment || appointmentDetail.data || {};
     const customerPaid = await getCustomerRequest(request, sessions.customer, vetRequest.id);
     const completedStatus = completedAppointment.status || appointmentCompleteBody.status || consultationResult.status;
     const completionPersisted = completedStatus === "completed" && customerPaid?.payment_status === "paid" && recordResult.status === "finalized";

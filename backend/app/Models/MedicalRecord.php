@@ -32,6 +32,9 @@ class MedicalRecord extends Model
         'respiratory_rate',
         'body_condition_score',
         'status',
+        'finalized_at',
+        'finalized_by',
+        'content_hash',
         'is_editable',
         'locked_at',
         'locked_by',
@@ -40,6 +43,7 @@ class MedicalRecord extends Model
 
     protected $casts = [
         'visit_date' => 'datetime',
+        'finalized_at' => 'datetime',
         'locked_at' => 'datetime',
         'weight_kg' => 'decimal:2',
         'temperature_celsius' => 'decimal:1',
@@ -50,6 +54,38 @@ class MedicalRecord extends Model
     const STATUS_DRAFT = 'draft';
     const STATUS_FINALIZED = 'finalized';
     const STATUS_LOCKED = 'locked';
+
+    /**
+     * Stamp the finalization moment on the draft -> finalized transition, so
+     * every path (direct update, finalize endpoint) records author, time and a
+     * hash of the clinical content.
+     */
+    protected static function boot()
+    {
+        parent::boot();
+
+        static::saving(function (MedicalRecord $record) {
+            if ($record->isDirty('status') && $record->status === self::STATUS_FINALIZED && $record->getOriginal('status') !== self::STATUS_FINALIZED) {
+                $record->finalized_at = now();
+                $record->finalized_by = auth()->id();
+                $record->content_hash = $record->clinicalContentHash();
+            }
+        });
+    }
+
+    public function clinicalContentHash(): string
+    {
+        $content = $this->only(self::CLINICAL_FIELDS);
+
+        return hash('sha256', json_encode($content, JSON_THROW_ON_ERROR));
+    }
+
+    /** Fields covered by the finalization hash. */
+    public const CLINICAL_FIELDS = [
+        'chief_complaint', 'symptoms', 'physical_examination', 'diagnosis', 'secondary_diagnosis',
+        'treatment_plan', 'procedure_notes', 'follow_up_instructions', 'weight_kg', 'temperature_celsius',
+        'heart_rate', 'respiratory_rate', 'body_condition_score', 'notes',
+    ];
 
     /**
      * Relationships
@@ -89,32 +125,42 @@ class MedicalRecord extends Model
         return $this->hasMany(MedicalAttachment::class);
     }
 
+    public function addenda(): HasMany
+    {
+        return $this->hasMany(MedicalRecordAddendum::class)->orderBy('created_at')->orderBy('id');
+    }
+
     /**
      * Access control methods
      */
     public function canBeEditedBy(User $user): bool
     {
-        // Locked records cannot be edited
-        if ($this->status === self::STATUS_LOCKED) {
+        // Finalized and locked records are append-only: corrections go through
+        // an addendum, and no role (admins included) rewrites clinical content.
+        if ($this->status !== self::STATUS_DRAFT) {
             return false;
         }
 
-        // Admins can edit any non-locked record
-        if ($user->hasRoleAccess('admin')) {
-            return true;
-        }
+        // Admins are not clinicians and do not write clinical content.
+        return $user->hasRoleAccess('veterinary', 'vet', 'veterinarian') && $this->veterinarian_id === $user->id;
+    }
 
-        // Only veterinarians can edit
+    /**
+     * Only the veterinarian who authored the record, or the vet assigned to its
+     * visit, may add an addendum. Admins are not clinicians.
+     */
+    public function canReceiveAddendumFrom(User $user): bool
+    {
         if (!$user->hasRoleAccess('veterinary', 'vet', 'veterinarian')) {
             return false;
         }
 
-        // Draft and finalized records can be edited by the creating vet
-        if (in_array($this->status, [self::STATUS_DRAFT, self::STATUS_FINALIZED], true)) {
-            return $this->veterinarian_id === $user->id;
+        if ((int) $this->veterinarian_id === (int) $user->id) {
+            return true;
         }
 
-        return false;
+        return (bool) $this->appointment_id
+            && Appointment::whereKey($this->appointment_id)->where('veterinarian_id', $user->id)->exists();
     }
 
     public function canBeViewedBy(User $user): bool

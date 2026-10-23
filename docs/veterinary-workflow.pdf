@@ -1,0 +1,5362 @@
+%PDF-1.3
+%ºß¬à
+3 0 obj
+<</Type /Page
+/Parent 1 0 R
+/Resources 2 0 R
+/MediaBox [0 0 595.2799999999999727 841.8899999999999864]
+/Contents 4 0 R
+>>
+endobj
+4 0 obj
+<<
+/Length 5622
+>>
+stream
+0.200025 w
+0 G
+BT
+/F2 18 Tf
+20.6999999999999993 TL
+0 g
+54. 775.8899999999999864 Td
+(Veterinary Module Structure, Workflow, and Logic) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 742.4900000000000091 Td
+(This document describes the current Pawesome veterinary module after the recent workflow fixes.) Tj
+ET
+BT
+/F2 15 Tf
+17.25 TL
+0 g
+54. 715.0899999999999181 Td
+(1. High-level architecture) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 685.5899999999999181 Td
+(text) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 672.1899999999999409 Td
+(React veterinary UI) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 658.7899999999999636 Td
+(    /veterinary/*) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 645.3899999999999864 Td
+(        v apiRequest\(\)) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 631.9900000000000091 Td
+(Laravel API) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 618.5899999999999181 Td
+(    /api/veterinary/*) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 605.1899999999999409 Td
+(        v controllers) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 591.7899999999999636 Td
+(Business services) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 578.3899999999998727 Td
+(    ServiceBillingService) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 564.9900000000000091 Td
+(    VeterinaryInventoryService) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 551.5899999999999181 Td
+(    PaymentVerificationService) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 538.1900000000000546 Td
+(    ServiceBillingPaymentService) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 524.7899999999999636 Td
+(    WorkflowNotifier / NotificationService) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 511.3900000000000432 Td
+(        v) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 497.9900000000000659 Td
+(MySQL) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 484.5900000000000887 Td
+(    appointments) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 471.1900000000001114 Td
+(    medical_records) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 457.7900000000001342 Td
+(    medical_confinements) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 444.3900000000001569 Td
+(    service_item_usages) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 430.9900000000001796 Td
+(    service_billing_payment_requests) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 417.5900000000002024 Td
+(    payment_settlements) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 404.1900000000002251 Td
+(    inventory_items / inventory_batches) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 378.7900000000002478 Td
+(The veterinary module connects six related workflows:) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 359.3900000000002706 Td
+(  1. Appointment workflow) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 345.9900000000002933 Td
+(  2. Consultation and medical-record workflow) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 332.590000000000316 Td
+(  3. Billing workflow) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 319.1900000000002819 Td
+(  4. Payment verification workflow) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 305.7900000000003047 Td
+(  5. Inventory usage workflow) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 292.3900000000003274 Td
+(  6. Medical confinement workflow) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 272.9900000000003502 Td
+(Frontend routes are defined in frontend/src/routes/VetRoutes.jsx. Backend veterinary routes are grouped under) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 259.5900000000003729 Td
+(/api/veterinary in backend/routes/api.php.) Tj
+ET
+BT
+/F2 15 Tf
+17.25 TL
+0 g
+54. 232.1900000000003956 Td
+(2. Frontend structure) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 202.6900000000003956 Td
+(All veterinary pages are lazy-loaded and wrapped by ProtectedRoute. The dashboard shell contains the) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 189.2900000000004184 Td
+(navigation layout, while nested routes render each page.) Tj
+ET
+BT
+/F5 8.2 Tf
+9.4299999999999979 TL
+0 g
+54. 169.8900000000004411 Td
+( |  Frontend route  |  Component  |  Purpose  | ) Tj
+ET
+BT
+/F5 8.2 Tf
+9.4299999999999979 TL
+0 g
+54. 158.8900000000004411 Td
+( |  /veterinary  |  VetAppointments  |  Default landing page and appointment queue  | ) Tj
+ET
+BT
+/F5 8.2 Tf
+9.4299999999999979 TL
+0 g
+54. 147.8900000000004411 Td
+( |  /veterinary/appointments  |  VetAppointments  |  Assigned appointments, filters,) Tj
+ET
+BT
+/F5 8.2 Tf
+9.4299999999999979 TL
+0 g
+54. 136.8900000000004411 Td
+(start/cancel/complete actions  | ) Tj
+ET
+BT
+/F5 8.2 Tf
+9.4299999999999979 TL
+0 g
+54. 125.8900000000004411 Td
+( |  /veterinary/appointments/:id/consult  |  VetConsultation  |  Consultation form and medical) Tj
+ET
+BT
+/F5 8.2 Tf
+9.4299999999999979 TL
+0 g
+54. 114.8900000000004411 Td
+(record editor  | ) Tj
+ET
+BT
+/F5 8.2 Tf
+9.4299999999999979 TL
+0 g
+54. 103.8900000000004411 Td
+( |  /veterinary/appointments/:id/billing  |  VetAppointmentBilling  |  Itemized bill and add-on) Tj
+ET
+BT
+/F5 8.2 Tf
+9.4299999999999979 TL
+0 g
+54. 92.8900000000004411 Td
+(charges  | ) Tj
+ET
+BT
+/F5 8.2 Tf
+9.4299999999999979 TL
+0 g
+54. 81.8900000000004411 Td
+( |  /veterinary/appointments/:id/edit  |  VetEditAppointment  |  Edit appointment while still) Tj
+ET
+BT
+/F5 8.2 Tf
+9.4299999999999979 TL
+0 g
+54. 70.8900000000004411 Td
+(editable  | ) Tj
+ET
+BT
+/F1 8 Tf
+9.1999999999999993 TL
+0.392 g
+54. 28. Td
+(Pawesome - Veterinary Module Workflow) Tj
+ET
+BT
+/F1 8 Tf
+9.1999999999999993 TL
+0.392 g
+496.2399999999999523 28. Td
+(Page 1 of 16) Tj
+ET
+endstream
+endobj
+5 0 obj
+<</Type /Page
+/Parent 1 0 R
+/Resources 2 0 R
+/MediaBox [0 0 595.2799999999999727 841.8899999999999864]
+/Contents 6 0 R
+>>
+endobj
+6 0 obj
+<<
+/Length 6999
+>>
+stream
+0.200025 w
+0 G
+BT
+/F5 8.2 Tf
+9.4299999999999979 TL
+0 g
+54. 787.8899999999999864 Td
+( |  /veterinary/medical-confinements  |  VetMedicalConfinements  |  Assigned confinement cases and) Tj
+ET
+BT
+/F5 8.2 Tf
+9.4299999999999979 TL
+0 g
+54. 776.8899999999999864 Td
+(progress notes  | ) Tj
+ET
+BT
+/F5 8.2 Tf
+9.4299999999999979 TL
+0 g
+54. 765.8899999999999864 Td
+( |  /veterinary/current-boarders  |  VeterinaryCurrentBoarders  |  In-patient/current boarder view ) Tj
+ET
+BT
+/F5 8.2 Tf
+9.4299999999999979 TL
+0 g
+54. 754.8899999999999864 Td
+(| ) Tj
+ET
+BT
+/F5 8.2 Tf
+9.4299999999999979 TL
+0 g
+54. 743.8899999999999864 Td
+( |  /veterinary/history  |  VetHistory  |  Completed/cancelled appointment history  | ) Tj
+ET
+BT
+/F5 8.2 Tf
+9.4299999999999979 TL
+0 g
+54. 732.8899999999999864 Td
+( |  /veterinary/customer-profiles  |  VetCustomerProfiles  |  Customers, pets, and medical history ) Tj
+ET
+BT
+/F5 8.2 Tf
+9.4299999999999979 TL
+0 g
+54. 721.8899999999999864 Td
+(| ) Tj
+ET
+BT
+/F5 8.2 Tf
+9.4299999999999979 TL
+0 g
+54. 710.8899999999999864 Td
+( |  /veterinary/reports  |  VetReports  |  Veterinary metrics/reports  | ) Tj
+ET
+BT
+/F5 8.2 Tf
+9.4299999999999979 TL
+0 g
+54. 699.8899999999999864 Td
+( |  /veterinary/receipt  |  VetReceipt  |  Receipt display  | ) Tj
+ET
+BT
+/F5 8.2 Tf
+9.4299999999999979 TL
+0 g
+54. 688.8899999999999864 Td
+( |  /veterinary/services  |  VetServices  |  Veterinary service reference  | ) Tj
+ET
+BT
+/F5 8.2 Tf
+9.4299999999999979 TL
+0 g
+54. 677.8899999999999864 Td
+( |  /veterinary/payroll  |  MyPayroll  |  Shared staff payroll page  | ) Tj
+ET
+BT
+/F5 8.2 Tf
+9.4299999999999979 TL
+0 g
+54. 666.8899999999999864 Td
+( |  /veterinary/profile  |  ProfileSettings  |  Shared staff profile page  | ) Tj
+ET
+BT
+/F2 12.5 Tf
+14.3749999999999982 TL
+0 g
+54. 641.8899999999999864 Td
+(Important frontend behavior) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 615.6399999999999864 Td
+(VetAppointments.jsx is the operational queue.) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 596.2400000000000091 Td
+(  - It fetches GET /api/veterinary/appointments.) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 582.8399999999999181 Td
+(  - It displays assigned appointments only.) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 569.4400000000000546 Td
+(  - It normalizes backend in_consultation to the frontend display state in_progress.) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 556.0399999999999636 Td
+(  - needs_confinement remains clickable and can reopen the consultation.) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 542.6400000000001 Td
+(  - awaiting_payment shows the consultation as complete and exposes a payment-gated Complete button.) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 529.2400000000000091 Td
+(  - The list refreshes so receptionist/cashier-side changes appear without a full page reload.) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 509.8400000000000887 Td
+(VetConsultation.jsx is the main clinical screen.) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 490.4400000000001114 Td
+(  - Loads the appointment.) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 477.0400000000001342 Td
+(  - Finds the medical record for the appointment/pet.) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 463.6400000000001569 Td
+(  - Supports draft and finalized saves.) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 450.2400000000001796 Td
+(  - Supports structured prescriptions.) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 436.8400000000002024 Td
+(  - Supports service add-ons/inventory usage.) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 423.4400000000002251 Td
+(  - Supports medical confinement recommendation.) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 410.0400000000002478 Td
+(  - Calls the consultation completion endpoint after finalization.) Tj
+ET
+BT
+/F2 15 Tf
+17.25 TL
+0 g
+54. 382.6400000000002706 Td
+(3. Backend structure) Tj
+ET
+BT
+/F2 12.5 Tf
+14.3749999999999982 TL
+0 g
+54. 345.1400000000002706 Td
+(Main controllers) Tj
+ET
+BT
+/F5 8.2 Tf
+9.4299999999999979 TL
+0 g
+54. 318.8900000000002137 Td
+( |  Controller  |  Responsibility  | ) Tj
+ET
+BT
+/F5 8.2 Tf
+9.4299999999999979 TL
+0 g
+54. 307.8900000000002137 Td
+( |  Veterinary/DashboardController  |  Dashboard data, assigned appointment list, history, reports,) Tj
+ET
+BT
+/F5 8.2 Tf
+9.4299999999999979 TL
+0 g
+54. 296.8900000000002137 Td
+(receipt  | ) Tj
+ET
+BT
+/F5 8.2 Tf
+9.4299999999999979 TL
+0 g
+54. 285.8900000000002137 Td
+( |  AppointmentController  |  Appointment creation, edit, start, medical fields, completion,) Tj
+ET
+BT
+/F5 8.2 Tf
+9.4299999999999979 TL
+0 g
+54. 274.8900000000002137 Td
+(status/cancellation  | ) Tj
+ET
+BT
+/F5 8.2 Tf
+9.4299999999999979 TL
+0 g
+54. 263.8900000000002137 Td
+( |  Veterinary/ConsultationWorkflowController  |  Consultation start, consultation completion,) Tj
+ET
+BT
+/F5 8.2 Tf
+9.4299999999999979 TL
+0 g
+54. 252.8900000000002137 Td
+(confinement recommendation  | ) Tj
+ET
+BT
+/F5 8.2 Tf
+9.4299999999999979 TL
+0 g
+54. 241.8900000000002137 Td
+( |  Veterinary/MedicalRecordController  |  Medical records, prescriptions, vaccinations, inventory) Tj
+ET
+BT
+/F5 8.2 Tf
+9.4299999999999979 TL
+0 g
+54. 230.8900000000002137 Td
+(usage  | ) Tj
+ET
+BT
+/F5 8.2 Tf
+9.4299999999999979 TL
+0 g
+54. 219.8900000000002137 Td
+( |  MedicalConfinementController  |  Confinement list,) Tj
+ET
+BT
+/F5 8.2 Tf
+9.4299999999999979 TL
+0 g
+54. 208.8900000000002137 Td
+(room/admission/care/progress/discharge/release  | ) Tj
+ET
+BT
+/F5 8.2 Tf
+9.4299999999999979 TL
+0 g
+54. 197.8900000000002137 Td
+( |  Api/ServiceBillingController  |  Billing summary and charge creation  | ) Tj
+ET
+BT
+/F5 8.2 Tf
+9.4299999999999979 TL
+0 g
+54. 186.8900000000002137 Td
+( |  Customer/VeterinaryBillingController  |  Customer-side veterinary invoices and payment requests) Tj
+ET
+BT
+/F5 8.2 Tf
+9.4299999999999979 TL
+0 g
+54. 175.8900000000002137 Td
+( | ) Tj
+ET
+BT
+/F5 8.2 Tf
+9.4299999999999979 TL
+0 g
+54. 164.8900000000002137 Td
+( |  Cashier controllers/services  |  Cashier payment queue and verification  | ) Tj
+ET
+BT
+/F2 12.5 Tf
+14.3749999999999982 TL
+0 g
+54. 139.8900000000002137 Td
+(Main services) Tj
+ET
+BT
+/F5 8.2 Tf
+9.4299999999999979 TL
+0 g
+54. 113.6400000000002137 Td
+( |  Service  |  Responsibility  | ) Tj
+ET
+BT
+/F5 8.2 Tf
+9.4299999999999979 TL
+0 g
+54. 102.6400000000002137 Td
+( |  ServiceBillingService  |  Itemized bill, server-side totals, base service charge, balance,) Tj
+ET
+BT
+/F5 8.2 Tf
+9.4299999999999979 TL
+0 g
+54. 91.6400000000002137 Td
+(payment-state sync  | ) Tj
+ET
+BT
+/F5 8.2 Tf
+9.4299999999999979 TL
+0 g
+54. 80.6400000000002137 Td
+( |  ServiceBillingPaymentService  |  Customer payment requests for veterinary invoices  | ) Tj
+ET
+BT
+/F5 8.2 Tf
+9.4299999999999979 TL
+0 g
+54. 69.6400000000002137 Td
+( |  PaymentVerificationService  |  Cashier proof/cash verification and linked-record) Tj
+ET
+BT
+/F1 8 Tf
+9.1999999999999993 TL
+0.392 g
+54. 28. Td
+(Pawesome - Veterinary Module Workflow) Tj
+ET
+BT
+/F1 8 Tf
+9.1999999999999993 TL
+0.392 g
+496.2399999999999523 28. Td
+(Page 2 of 16) Tj
+ET
+endstream
+endobj
+7 0 obj
+<</Type /Page
+/Parent 1 0 R
+/Resources 2 0 R
+/MediaBox [0 0 595.2799999999999727 841.8899999999999864]
+/Contents 8 0 R
+>>
+endobj
+8 0 obj
+<<
+/Length 5120
+>>
+stream
+0.200025 w
+0 G
+BT
+/F5 8.2 Tf
+9.4299999999999979 TL
+0 g
+54. 787.8899999999999864 Td
+(synchronization  | ) Tj
+ET
+BT
+/F5 8.2 Tf
+9.4299999999999979 TL
+0 g
+54. 776.8899999999999864 Td
+( |  VeterinaryInventoryService  |  Stock deduction/restoration and inventory billing items  | ) Tj
+ET
+BT
+/F5 8.2 Tf
+9.4299999999999979 TL
+0 g
+54. 765.8899999999999864 Td
+( |  WorkflowNotifier  |  In-app/customer/role notifications  | ) Tj
+ET
+BT
+/F5 8.2 Tf
+9.4299999999999979 TL
+0 g
+54. 754.8899999999999864 Td
+( |  PaymentSettlementService  |  Durable settlement ledger used for receipts  | ) Tj
+ET
+BT
+/F5 8.2 Tf
+9.4299999999999979 TL
+0 g
+54. 743.8899999999999864 Td
+( |  ReceiptBreakdown  |  VAT-inclusive receipt breakdown and settled/refunded totals  | ) Tj
+ET
+BT
+/F2 15 Tf
+17.25 TL
+0 g
+54. 718.8899999999999864 Td
+(4. Role and access logic) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 689.3899999999999864 Td
+(The veterinary route group uses:) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 669.9900000000000091 Td
+(php) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 656.5899999999999181 Td
+(auth.api) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 643.1899999999999409 Td
+(throttle:api) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 629.7899999999999636 Td
+(role:veterinary,vet) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 604.3899999999999864 Td
+(Role normalization maps:) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 584.9900000000000091 Td
+(text) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 571.5899999999999181 Td
+(vet          -> veterinary) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 558.1900000000000546 Td
+(veterinarian -> veterinary) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 544.7899999999999636 Td
+(super_admin  -> admin) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 519.3900000000001 Td
+(admin bypasses normal staff-role restrictions, except customer-only routes.) Tj
+ET
+BT
+/F2 12.5 Tf
+14.3749999999999982 TL
+0 g
+54. 491.9900000000000659 Td
+(Data-level scoping) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 465.7400000000000659 Td
+(Middleware is not the only protection. Controllers also scope data:) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 446.3400000000000887 Td
+(  - Regular veterinarians only see appointments where appointments.veterinarian_id equals their user ID.) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 432.9400000000001114 Td
+(  - Medical records can only be accessed for pets connected to that veterinarian's appointments.) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 419.5400000000001342 Td
+(  - A veterinarian's confinement list is restricted to medical_confinements.vet_id.) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 406.1400000000001569 Td
+(  - Admins can see and act on the broader dataset.) Tj
+ET
+BT
+/F2 15 Tf
+17.25 TL
+0 g
+54. 378.7400000000001796 Td
+(5. Database relationships) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 349.2400000000001796 Td
+(text) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 335.8400000000002024 Td
+(customers) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 322.4400000000001683 Td
+(  +--- pets) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 309.040000000000191 Td
+(        +--- appointments) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 295.6400000000002137 Td
+(              +--- medical_records) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 282.2400000000002365 Td
+(              +--- medical_confinements) Tj
+ET
+BT
+/F5 8.2 Tf
+9.4299999999999979 TL
+0 g
+54. 268.8400000000002592 Td
+(               |      +--- progress_notes) Tj
+ET
+BT
+/F5 8.2 Tf
+9.4299999999999979 TL
+0 g
+54. 257.8400000000002592 Td
+(               |      +--- care_logs) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 246.8400000000002592 Td
+(              +--- service_item_usages) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 233.4400000000002819 Td
+(              +--- service_billing_payment_requests) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 220.0400000000003047 Td
+(              +--- payment_settlements) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 200.6400000000003274 Td
+(service_requests) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 187.2400000000003502 Td
+(  +--- appointments) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 173.8400000000003729 Td
+(        +--- billing/payment state is mirrored back when settled) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 154.4400000000003956 Td
+(hotel_rooms) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 141.0400000000004184 Td
+(  +--- medical_confinements) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 121.6400000000004411 Td
+(inventory_items / inventory_batches) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 108.2400000000004638 Td
+(  +--- service_item_usages) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 82.8400000000004866 Td
+(Important columns:) Tj
+ET
+BT
+/F1 8 Tf
+9.1999999999999993 TL
+0.392 g
+54. 28. Td
+(Pawesome - Veterinary Module Workflow) Tj
+ET
+BT
+/F1 8 Tf
+9.1999999999999993 TL
+0.392 g
+496.2399999999999523 28. Td
+(Page 3 of 16) Tj
+ET
+endstream
+endobj
+9 0 obj
+<</Type /Page
+/Parent 1 0 R
+/Resources 2 0 R
+/MediaBox [0 0 595.2799999999999727 841.8899999999999864]
+/Contents 10 0 R
+>>
+endobj
+10 0 obj
+<<
+/Length 5510
+>>
+stream
+0.200025 w
+0 G
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 787.8899999999999864 Td
+(  - appointments.veterinarian_id: assigned vet.) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 774.4900000000000091 Td
+(  - appointments.service_request_id: linked customer booking/request.) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 761.0899999999999181 Td
+(  - medical_records.appointment_id + pet_id: consultation record link.) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 747.6899999999999409 Td
+(  - service_item_usages.service_type = veterinary.) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 734.2899999999999636 Td
+(  - service_item_usages.service_id = appointment.id.) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 720.8899999999999864 Td
+(  - medical_confinements.consultation_id = appointment.id.) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 707.4900000000000091 Td
+(  - medical_confinements.vet_id: assigned veterinarian.) Tj
+ET
+BT
+/F2 15 Tf
+17.25 TL
+0 g
+54. 680.0899999999999181 Td
+(6. Appointment status machine) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 650.5899999999999181 Td
+(text) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 637.1899999999999409 Td
+(pending) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 623.7899999999999636 Td
+(  +--- approved) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 610.3899999999998727 Td
+(  +--- scheduled) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 596.9899999999998954 Td
+(  +--- cancelled) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 583.5899999999999181 Td
+(  +--- rejected) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 564.1899999999999409 Td
+(approved / scheduled) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 550.7899999999999636 Td
+(  +--- in_consultation) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 537.3899999999999864 Td
+(        +--- needs_confinement) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 523.9900000000000091 Td
+(        +--- treated) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 510.5900000000000318 Td
+(        +--- awaiting_payment) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 497.1900000000000546 Td
+(        +--- completed) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 483.7900000000000773 Td
+(        +--- cancelled) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 464.3900000000001 Td
+(needs_confinement) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 450.9900000000001228 Td
+(  +--- in_consultation) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 437.5900000000001455 Td
+(  +--- treated) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 424.1900000000001683 Td
+(  +--- awaiting_payment) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 410.790000000000191 Td
+(  +--- completed) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 397.3900000000002137 Td
+(  +--- cancelled) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 377.9900000000002365 Td
+(treated) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 364.5900000000002592 Td
+(  +--- awaiting_payment) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 351.1900000000002819 Td
+(  +--- completed) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 337.7900000000003047 Td
+(  +--- cancelled) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 318.3900000000003274 Td
+(awaiting_payment) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 304.9900000000003502 Td
+(  +--- completed) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 291.5900000000003729 Td
+(  +--- cancelled) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 272.1900000000003956 Td
+(rejected) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 258.7900000000004184 Td
+(  +--- pending) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 233.3900000000004411 Td
+(in_progress remains a legacy active state. The backend normalizes new starts to in_consultation; the frontend) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 219.9900000000004638 Td
+(displays both as "Ongoing.") Tj
+ET
+BT
+/F2 12.5 Tf
+14.3749999999999982 TL
+0 g
+54. 192.5900000000004866 Td
+(Separate status fields) Tj
+ET
+BT
+/F5 8.2 Tf
+9.4299999999999979 TL
+0 g
+54. 166.3400000000004866 Td
+( |  Field  |  Values  |  Meaning  | ) Tj
+ET
+BT
+/F5 8.2 Tf
+9.4299999999999979 TL
+0 g
+54. 155.3400000000004866 Td
+( |  appointments.status  |  pending, approved, in_consultation, needs_confinement,) Tj
+ET
+BT
+/F5 8.2 Tf
+9.4299999999999979 TL
+0 g
+54. 144.3400000000004866 Td
+(awaiting_payment, completed, etc.  |  Service workflow state  | ) Tj
+ET
+BT
+/F5 8.2 Tf
+9.4299999999999979 TL
+0 g
+54. 133.3400000000004866 Td
+( |  appointments.payment_status  |  unpaid, pending, paid, partial, rejected  |  Financial state  |) Tj
+ET
+BT
+/F5 8.2 Tf
+9.4299999999999979 TL
+0 g
+54. 111.3400000000004866 Td
+( |  medical_records.status  |  draft, finalized, locked  |  Clinical record state  | ) Tj
+ET
+BT
+/F5 8.2 Tf
+9.4299999999999979 TL
+0 g
+54. 100.3400000000004866 Td
+( |  medical_confinements.status  |  recommended, admitted, ready_for_discharge, completed, etc.  | ) Tj
+ET
+BT
+/F5 8.2 Tf
+9.4299999999999979 TL
+0 g
+54. 89.3400000000004866 Td
+(In-patient workflow state  | ) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 72.3400000000004866 Td
+(Payment being verified does not automatically complete the appointment. A finalized medical record and zero) Tj
+ET
+BT
+/F1 8 Tf
+9.1999999999999993 TL
+0.392 g
+54. 28. Td
+(Pawesome - Veterinary Module Workflow) Tj
+ET
+BT
+/F1 8 Tf
+9.1999999999999993 TL
+0.392 g
+496.2399999999999523 28. Td
+(Page 4 of 16) Tj
+ET
+endstream
+endobj
+11 0 obj
+<</Type /Page
+/Parent 1 0 R
+/Resources 2 0 R
+/MediaBox [0 0 595.2799999999999727 841.8899999999999864]
+/Contents 12 0 R
+>>
+endobj
+12 0 obj
+<<
+/Length 4576
+>>
+stream
+0.200025 w
+0 G
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 787.8899999999999864 Td
+(balance are also required.) Tj
+ET
+BT
+/F2 15 Tf
+17.25 TL
+0 g
+54. 760.4900000000000091 Td
+(7. Normal veterinary workflow) Tj
+ET
+BT
+/F2 12.5 Tf
+14.3749999999999982 TL
+0 g
+54. 722.9900000000000091 Td
+(Step 1 - Booking/approval) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 696.7400000000000091 Td
+(Before the vet sees the appointment:) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 677.3399999999999181 Td
+(  1. Customer or staff creates a booking.) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 663.9399999999999409 Td
+(  2. Receptionist approves/schedules it.) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 650.5399999999999636 Td
+(  3. Receptionist assigns a veterinarian through veterinarian_id.) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 637.1399999999999864 Td
+(  4. The appointment appears in the vet's assigned queue.) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 617.7400000000000091 Td
+(The vet dashboard list calls:) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 598.3399999999999181 Td
+(text) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 584.9399999999999409 Td
+(GET /api/veterinary/appointments) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 559.5399999999999636 Td
+(It returns assigned appointments in these statuses:) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 540.1399999999999864 Td
+(text) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 526.7400000000000091 Td
+(approved) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 513.3400000000000318 Td
+(scheduled) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 499.9400000000000546 Td
+(in_progress) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 486.5400000000000773 Td
+(in_consultation) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 473.1400000000001 Td
+(needs_confinement) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 459.7400000000001228 Td
+(treated) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 446.3400000000001455 Td
+(awaiting_payment) Tj
+ET
+BT
+/F2 12.5 Tf
+14.3749999999999982 TL
+0 g
+54. 412.9400000000001683 Td
+(Step 2 - Start appointment) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 386.6900000000001683 Td
+(The Start button calls:) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 367.290000000000191 Td
+(text) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 353.8900000000002137 Td
+(POST /api/veterinary/appointments/{id}/start) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 328.4900000000002365 Td
+(The backend checks:) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 309.0900000000002592 Td
+(  - Appointment exists.) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 295.6900000000002819 Td
+(  - Current vet may access it.) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 282.2900000000003047 Td
+(  - Status is approved or scheduled.) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 268.8900000000003274 Td
+(  - Optional notes are valid.) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 249.4900000000003502 Td
+(Inside one transaction it:) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 230.0900000000003729 Td
+(  1. Sets status = in_consultation.) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 216.6900000000003956 Td
+(  2. Sets started_at.) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 203.2900000000004184 Td
+(  3. Optionally appends start notes.) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 189.8900000000004411 Td
+(  4. Creates or finds the draft MedicalRecord for \(appointment_id, pet_id\).) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 170.4900000000004638 Td
+(The transaction matters because an appointment should not become active without its consultation record.) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 151.0900000000004866 Td
+(There is also a consultation-specific start endpoint:) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 131.6900000000005093 Td
+(text) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 118.2900000000005321 Td
+(POST /api/veterinary/consultations/{id}/start) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 92.8900000000005548 Td
+(That endpoint is more idempotent. It accepts already-active states and does not reset needs_confinement or) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 79.4900000000005775 Td
+(treated.) Tj
+ET
+BT
+/F1 8 Tf
+9.1999999999999993 TL
+0.392 g
+54. 28. Td
+(Pawesome - Veterinary Module Workflow) Tj
+ET
+BT
+/F1 8 Tf
+9.1999999999999993 TL
+0.392 g
+496.2399999999999523 28. Td
+(Page 5 of 16) Tj
+ET
+endstream
+endobj
+13 0 obj
+<</Type /Page
+/Parent 1 0 R
+/Resources 2 0 R
+/MediaBox [0 0 595.2799999999999727 841.8899999999999864]
+/Contents 14 0 R
+>>
+endobj
+14 0 obj
+<<
+/Length 5352
+>>
+stream
+0.200025 w
+0 G
+BT
+/F2 12.5 Tf
+14.3749999999999982 TL
+0 g
+54. 787.8899999999999864 Td
+(Step 3 - Consultation/medical record) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 761.6399999999999864 Td
+(On the consult page, the vet can enter:) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 742.2400000000000091 Td
+(  - Chief complaint) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 728.8399999999999181 Td
+(  - Symptoms/findings) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 715.4399999999999409 Td
+(  - Diagnosis) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 702.0399999999999636 Td
+(  - Treatment plan) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 688.6399999999999864 Td
+(  - Notes) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 675.2400000000000091 Td
+(  - Weight) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 661.8399999999999181 Td
+(  - Temperature) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 648.4399999999999409 Td
+(  - Heart rate) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 635.0399999999999636 Td
+(  - Respiratory rate) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 621.6399999999998727 Td
+(  - Prescriptions) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 608.2399999999998954 Td
+(  - Vaccinations) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 594.8399999999999181 Td
+(  - Service add-ons/inventory usage) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 575.4399999999999409 Td
+(Draft save calls:) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 556.0399999999999636 Td
+(text) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 542.6399999999999864 Td
+(PUT /api/veterinary/medical-records/{id}) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 517.2400000000000091 Td
+(Final save sends status=finalized.) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 497.8400000000000318 Td
+(The record update runs in a transaction covering:) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 478.4400000000000546 Td
+(  - Main medical_records update) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 465.0400000000000773 Td
+(  - Prescription replacement) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 451.6400000000001 Td
+(  - Vaccination insert/update) Tj
+ET
+BT
+/F2 12.5 Tf
+14.3749999999999982 TL
+0 g
+54. 424.2400000000001228 Td
+(Medical-record state) Tj
+ET
+BT
+/F5 8.2 Tf
+9.4299999999999979 TL
+0 g
+54. 397.9900000000001228 Td
+( |  Status  |  Meaning  |  Vet edit behavior  | ) Tj
+ET
+BT
+/F5 8.2 Tf
+9.4299999999999979 TL
+0 g
+54. 386.9900000000001228 Td
+( |  draft  |  Consultation still being written  |  Creating vet can edit  | ) Tj
+ET
+BT
+/F5 8.2 Tf
+9.4299999999999979 TL
+0 g
+54. 375.9900000000001228 Td
+( |  finalized  |  Clinical document is complete  |  Read-only for veterinarians; admin can amend) Tj
+ET
+BT
+/F5 8.2 Tf
+9.4299999999999979 TL
+0 g
+54. 364.9900000000001228 Td
+(non-locked records  | ) Tj
+ET
+BT
+/F5 8.2 Tf
+9.4299999999999979 TL
+0 g
+54. 353.9900000000001228 Td
+( |  locked  |  Strong clinical lock  |  Nobody can edit  | ) Tj
+ET
+BT
+/F5 8.2 Tf
+9.4299999999999979 TL
+0 g
+54. 342.9900000000001228 Td
+( |  deleted  |  Soft delete  |  Only draft records may be deleted  | ) Tj
+ET
+BT
+/F2 12.5 Tf
+14.3749999999999982 TL
+0 g
+54. 317.9900000000001228 Td
+(Step 4 - Optional inventory/service add-ons) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 291.7400000000001228 Td
+(Inventory usage uses:) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 272.3400000000001455 Td
+(text) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 258.9400000000001683 Td
+(POST /api/veterinary/appointments/{id}/inventory-usage) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 233.540000000000191 Td
+(For every submitted item, the service:) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 214.1400000000002137 Td
+(  1. Validates the requested item and quantity.) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 200.7400000000002365 Td
+(  2. Locks the inventory_items row.) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 187.3400000000002592 Td
+(  3. Requires the item to be is_service_consumable.) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 173.9400000000002819 Td
+(  4. Compares the new quantity with the previous usage for this appointment.) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 160.5400000000003047 Td
+(  5. Deducts stock when quantity increased.) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 147.1400000000003274 Td
+(  6. Restores stock when quantity decreased.) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 133.7400000000003502 Td
+(  7. Uses batch/FEFO deduction.) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 120.3400000000003729 Td
+(  8. Creates or updates a service_item_usages row.) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 106.9400000000003956 Td
+(  9. Deletes removed usage rows and restores their stock.) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 93.5400000000004184 Td
+(  10. Synchronizes billing totals.) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 74.1400000000004411 Td
+(All of those writes happen in one transaction. If any item fails validation or stock is insufficient, all stock and) Tj
+ET
+BT
+/F1 8 Tf
+9.1999999999999993 TL
+0.392 g
+54. 28. Td
+(Pawesome - Veterinary Module Workflow) Tj
+ET
+BT
+/F1 8 Tf
+9.1999999999999993 TL
+0.392 g
+496.2399999999999523 28. Td
+(Page 6 of 16) Tj
+ET
+endstream
+endobj
+15 0 obj
+<</Type /Page
+/Parent 1 0 R
+/Resources 2 0 R
+/MediaBox [0 0 595.2799999999999727 841.8899999999999864]
+/Contents 16 0 R
+>>
+endobj
+16 0 obj
+<<
+/Length 4774
+>>
+stream
+0.200025 w
+0 G
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 787.8899999999999864 Td
+(billing changes roll back.) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 768.4900000000000091 Td
+(Low-stock notifications are created only after the transaction commits.) Tj
+ET
+BT
+/F2 12.5 Tf
+14.3749999999999982 TL
+0 g
+54. 741.0899999999999181 Td
+(Step 5 - Optional confinement recommendation) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 714.8399999999999181 Td
+(During an active consultation, the vet can submit:) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 695.4399999999999409 Td
+(text) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 682.0399999999999636 Td
+(POST /api/veterinary/consultations/{id}/recommend-confinement) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 656.6399999999999864 Td
+(Allowed source statuses:) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 637.2400000000000091 Td
+(text) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 623.8399999999999181 Td
+(in_consultation) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 610.4399999999999409 Td
+(in_progress) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 597.0399999999999636 Td
+(treated) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 571.6399999999998727 Td
+(Required fields:) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 552.2400000000000091 Td
+(  - diagnosis) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 538.8399999999999181 Td
+(  - reason_for_confinement) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 525.4400000000000546 Td
+(  - urgency_level) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 506.0400000000000205 Td
+(Optional fields:) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 486.6400000000000432 Td
+(  - expected stay) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 473.2400000000000659 Td
+(  - treatment plan) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 459.8400000000000887 Td
+(  - medication plan) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 446.4400000000001114 Td
+(  - observation instructions) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 433.0400000000001342 Td
+(  - special care instructions) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 419.6400000000001569 Td
+(  - estimated cost) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 400.2400000000001796 Td
+(One transaction then:) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 380.8400000000002024 Td
+(  1. Creates a medical_confinements row with status=recommended.) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 367.4400000000002251 Td
+(  2. Copies customer/pet/vet/diagnosis details.) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 354.0400000000002478 Td
+(  3. Updates the appointment to needs_confinement.) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 340.6400000000002706 Td
+(  4. Copies diagnosis/treatment/medication/reason fields onto the appointment.) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 321.2400000000002365 Td
+(After submission:) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 301.8400000000002592 Td
+(  - Receptionist is notified.) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 288.4400000000002819 Td
+(  - Customer is notified.) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 275.0400000000003047 Td
+(  - The frontend marks the recommendation as submitted.) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 261.6400000000003274 Td
+(  - The appointment can still return to consultation completion.) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 248.2400000000003502 Td
+(  - The appointment and confinement continue as separate workflows.) Tj
+ET
+BT
+/F2 12.5 Tf
+14.3749999999999982 TL
+0 g
+54. 220.8400000000003729 Td
+(Step 6 - Finalize consultation) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 194.5900000000003729 Td
+(When the vet clicks Complete Consultation, the frontend:) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 175.1900000000003956 Td
+(  1. Saves/finalizes the medical record if it is still a draft.) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 161.7900000000004184 Td
+(  2. Calls:) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 142.3900000000004411 Td
+(text) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 128.9900000000004638 Td
+(POST /api/veterinary/consultations/{id}/complete) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 103.5900000000004866 Td
+(The backend requires:) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 84.1900000000005093 Td
+(  - Appointment is active: in_consultation, in_progress, needs_confinement, or treated.) Tj
+ET
+BT
+/F1 8 Tf
+9.1999999999999993 TL
+0.392 g
+54. 28. Td
+(Pawesome - Veterinary Module Workflow) Tj
+ET
+BT
+/F1 8 Tf
+9.1999999999999993 TL
+0.392 g
+496.2399999999999523 28. Td
+(Page 7 of 16) Tj
+ET
+endstream
+endobj
+17 0 obj
+<</Type /Page
+/Parent 1 0 R
+/Resources 2 0 R
+/MediaBox [0 0 595.2799999999999727 841.8899999999999864]
+/Contents 18 0 R
+>>
+endobj
+18 0 obj
+<<
+/Length 4872
+>>
+stream
+0.200025 w
+0 G
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 787.8899999999999864 Td
+(  - Current vet is assigned, or user is admin.) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 774.4900000000000091 Td
+(  - A finalized MedicalRecord exists.) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 755.0899999999999181 Td
+(Inside one transaction it:) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 735.6899999999999409 Td
+(  1. Runs ServiceBillingService::finalizeServiceBill.) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 722.2899999999999636 Td
+(  2. Synchronizes itemized billing totals back onto the appointment.) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 708.8899999999999864 Td
+(  3. Sets status = awaiting_payment.) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 695.4900000000000091 Td
+(  4. Stores diagnosis, treatment notes, prescription, and vet remarks.) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 682.0899999999999181 Td
+(  5. Sets completed_at.) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 662.6899999999999409 Td
+(After commit, it notifies:) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 643.2899999999999636 Td
+(  - Customer: consultation finalized) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 629.8899999999998727 Td
+(  - Cashier role: bill ready for payment) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 610.4899999999998954 Td
+(The key transition is:) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 591.0899999999999181 Td
+(text) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 577.6899999999999409 Td
+(needs_confinement + finalized medical record) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 564.2899999999999636 Td
+(    -> consultation complete) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 550.8899999999999864 Td
+(    -> awaiting_payment) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 525.4900000000000091 Td
+(Recommending confinement therefore does not trap the appointment.) Tj
+ET
+BT
+/F2 15 Tf
+17.25 TL
+0 g
+54. 498.0900000000000318 Td
+(8. Billing logic) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 468.5900000000000318 Td
+(The itemized billing ledger is service_item_usages.) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 449.1900000000000546 Td
+(For veterinary:) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 429.7900000000000773 Td
+(text) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 416.3900000000001 Td
+(service_type = veterinary) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 402.9900000000001228 Td
+(service_id = appointments.id) Tj
+ET
+BT
+/F2 12.5 Tf
+14.3749999999999982 TL
+0 g
+54. 369.5900000000001455 Td
+(Billing item types) Tj
+ET
+BT
+/F5 8.2 Tf
+9.4299999999999979 TL
+0 g
+54. 343.3400000000001455 Td
+( |  Type  |  Meaning  | ) Tj
+ET
+BT
+/F5 8.2 Tf
+9.4299999999999979 TL
+0 g
+54. 332.3400000000001455 Td
+( |  base_service  |  Original consultation/service price  | ) Tj
+ET
+BT
+/F5 8.2 Tf
+9.4299999999999979 TL
+0 g
+54. 321.3400000000001455 Td
+( |  inventory_usage  |  Supplies/medicines used during treatment  | ) Tj
+ET
+BT
+/F5 8.2 Tf
+9.4299999999999979 TL
+0 g
+54. 310.3400000000001455 Td
+( |  manual_charge  |  Staff-entered charge  | ) Tj
+ET
+BT
+/F5 8.2 Tf
+9.4299999999999979 TL
+0 g
+54. 299.3400000000001455 Td
+( |  add_on_service  |  Additional service charge  | ) Tj
+ET
+BT
+/F5 8.2 Tf
+9.4299999999999979 TL
+0 g
+54. 288.3400000000001455 Td
+( |  discount  |  Negative/non-billable adjustment  | ) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 271.3400000000001455 Td
+(Direct inventory_usage billing entries are rejected; stock-backed usage must go through the veterinary inventory) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 257.9400000000001683 Td
+(endpoint.) Tj
+ET
+BT
+/F2 12.5 Tf
+14.3749999999999982 TL
+0 g
+54. 230.540000000000191 Td
+(Base service item) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 204.290000000000191 Td
+(ServiceBillingService::ensureBaseServiceItem\(\) guarantees one base billing row using the appointment's) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 190.8900000000002137 Td
+(authoritative amount:) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 171.4900000000002365 Td
+(text) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 158.0900000000002592 Td
+(total_amount -> price -> consultation_fee) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 132.6900000000002819 Td
+(It locks the appointment row while checking/creating the base item to reduce duplicate creation races.) Tj
+ET
+BT
+/F2 12.5 Tf
+14.3749999999999982 TL
+0 g
+54. 105.2900000000003047 Td
+(Billing formulas) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 79.0400000000003047 Td
+(syncServicePaymentState\(\) calculates:) Tj
+ET
+BT
+/F1 8 Tf
+9.1999999999999993 TL
+0.392 g
+54. 28. Td
+(Pawesome - Veterinary Module Workflow) Tj
+ET
+BT
+/F1 8 Tf
+9.1999999999999993 TL
+0.392 g
+496.2399999999999523 28. Td
+(Page 8 of 16) Tj
+ET
+endstream
+endobj
+19 0 obj
+<</Type /Page
+/Parent 1 0 R
+/Resources 2 0 R
+/MediaBox [0 0 595.2799999999999727 841.8899999999999864]
+/Contents 20 0 R
+>>
+endobj
+20 0 obj
+<<
+/Length 5356
+>>
+stream
+0.200025 w
+0 G
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 787.8899999999999864 Td
+(text) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 774.4900000000000091 Td
+(gross_bill         = sum\(is_billable items\)) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 761.0899999999999181 Td
+(discount_total     = sum\(discount items\)) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 747.6899999999999409 Td
+(total_bill         = max\(0, gross_bill - discounts\)) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 734.2899999999999636 Td
+(total_paid         = sum\(paid billable items\)) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 720.8899999999999864 Td
+(balance_due        = max\(0, total_bill - total_paid\)) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 707.4900000000000091 Td
+(base_amount        = sum\(base_service items\)) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 694.0899999999999181 Td
+(additional_charges = gross_bill - base_amount - discounts) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 668.6899999999999409 Td
+(It writes these back onto the appointment:) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 649.2899999999999636 Td
+(  - base_amount) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 635.8899999999998727 Td
+(  - additional_charges) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 622.4899999999998954 Td
+(  - total_amount) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 609.0899999999999181 Td
+(  - amount_paid) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 595.6899999999999409 Td
+(  - balance_due) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 582.2899999999999636 Td
+(  - payment_status) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 568.8899999999998727 Td
+(  - consultation_fee) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 555.4900000000000091 Td
+(  - price) Tj
+ET
+BT
+/F2 12.5 Tf
+14.3749999999999982 TL
+0 g
+54. 528.0899999999999181 Td
+(Add-charge logic) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 501.839999999999975 Td
+(POST /api/billing/items runs inside a transaction and:) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 482.4399999999999977 Td
+(  1. Locks the appointment row.) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 469.0400000000000205 Td
+(  2. Validates the user's role.) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 455.6400000000000432 Td
+(  3. Ensures the base charge exists.) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 442.2400000000000659 Td
+(  4. Recomputes total server-side.) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 428.8400000000000887 Td
+(  5. Rejects invalid discounts.) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 415.4400000000001114 Td
+(  6. Checks for a recent identical unpaid item to prevent double-submission.) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 402.0400000000001342 Td
+(  7. Inserts the charge.) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 388.6400000000001569 Td
+(  8. Synchronizes totals.) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 375.2400000000001796 Td
+(  9. Marks open veterinary billing payment requests as stale.) Tj
+ET
+BT
+/F2 15 Tf
+17.25 TL
+0 g
+54. 347.8400000000002024 Td
+(9. Payment workflow) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 318.3400000000002592 Td
+(There are two relevant payment paths.) Tj
+ET
+BT
+/F2 12.5 Tf
+14.3749999999999982 TL
+0 g
+54. 290.9400000000002819 Td
+(A. Original appointment/service-request payment) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 264.6900000000002819 Td
+(The original booking payment can be verified through:) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 245.2900000000003047 Td
+(  - The appointment row) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 231.8900000000003274 Td
+(  - Its linked service_request) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 212.4900000000003502 Td
+(PaymentVerificationService::verifyTablePayment\(\) runs in one transaction and locks the payable row.) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 193.0900000000003729 Td
+(For appointments it:) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 173.6900000000003956 Td
+(  1. Rejects unpayable booking statuses: pending, cancelled, rejected, no_show.) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 160.2900000000004184 Td
+(  2. Allows payment statuses: pending, unpaid, rejected.) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 146.8900000000004411 Td
+(  3. Determines whether the collection is cash or digital proof.) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 133.4900000000004638 Td
+(  4. Applies booking-channel rules.) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 120.0900000000004866 Td
+(  5. Writes payment_status=paid, paid_at, verified_by, receipt_number, and reference_number.) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 106.6900000000005093 Td
+(  6. Mirrors the paid state to the linked service_request.) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 93.2900000000005321 Td
+(  7. Marks the base service billing item paid.) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 79.8900000000005548 Td
+(  8. Synchronizes the billing ledger.) Tj
+ET
+BT
+/F1 8 Tf
+9.1999999999999993 TL
+0.392 g
+54. 28. Td
+(Pawesome - Veterinary Module Workflow) Tj
+ET
+BT
+/F1 8 Tf
+9.1999999999999993 TL
+0.392 g
+496.2399999999999523 28. Td
+(Page 9 of 16) Tj
+ET
+endstream
+endobj
+21 0 obj
+<</Type /Page
+/Parent 1 0 R
+/Resources 2 0 R
+/MediaBox [0 0 595.2799999999999727 841.8899999999999864]
+/Contents 22 0 R
+>>
+endobj
+22 0 obj
+<<
+/Length 5195
+>>
+stream
+0.200025 w
+0 G
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 787.8899999999999864 Td
+(  9. Writes a durable PaymentSettlement.) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 774.4900000000000091 Td
+(  10. Returns a ReceiptBreakdown.) Tj
+ET
+BT
+/F2 12.5 Tf
+14.3749999999999982 TL
+0 g
+54. 747.0899999999999181 Td
+(B. Additional veterinary bill payment request) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 720.8399999999999181 Td
+(The customer can request cashier payment or submit GCash/Maya proof through:) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 701.4399999999999409 Td
+(text) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 688.0399999999999636 Td
+(POST /api/customer/billing/veterinary/{id}/cashier-payment) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 674.6399999999999864 Td
+(POST /api/customer/billing/veterinary/{id}/online-payment) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 649.2400000000000091 Td
+(This creates a service_billing_payment_requests snapshot when there is an additional unpaid balance.) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 629.8399999999999181 Td
+(The request stores:) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 610.4399999999999409 Td
+(  - Appointment/customer/pet/service metadata) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 597.0399999999999636 Td
+(  - Full current balance) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 583.6399999999998727 Td
+(  - Payment channel) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 570.2400000000000091 Td
+(  - Payment method/reference/proof) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 556.8399999999999181 Td
+(  - Invoice version hash) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 543.4400000000000546 Td
+(  - Snapshot of unpaid billable items and discounts) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 524.0399999999999636 Td
+(When the cashier verifies it:) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 504.6400000000000432 Td
+(  1. Appointment and payment request are locked.) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 491.2400000000000659 Td
+(  2. Invoice version and amount are revalidated.) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 477.8400000000000887 Td
+(  3. Request is rejected as stale if the bill changed.) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 464.4400000000001114 Td
+(  4. Snapshot items are locked and marked paid.) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 451.0400000000001342 Td
+(  5. Billing totals are synchronized.) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 437.6400000000001569 Td
+(  6. A service_billing_payment settlement is recorded.) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 424.2400000000001796 Td
+(  7. The payment request becomes paid.) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 410.8400000000002024 Td
+(  8. The linked service request is updated when the balance reaches zero.) Tj
+ET
+BT
+/F2 12.5 Tf
+14.3749999999999982 TL
+0 g
+54. 383.4400000000002251 Td
+(Payment states) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 357.1900000000002251 Td
+(text) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 343.7900000000002478 Td
+(unpaid) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 330.3900000000002706 Td
+(  +--- pending   -> submitted proof/payment request) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 316.9900000000002365 Td
+(  +--- paid      -> fully verified and zero balance) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 303.5900000000002592 Td
+(  +--- partial   -> some items paid but balance remains) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 290.1900000000002819 Td
+(  +--- rejected  -> proof rejected) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 264.7900000000003047 Td
+(A direct base-payment verification can leave the appointment as partial if add-on items remain unpaid.) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 251.3900000000003274 Td
+(Completion still requires payment_status=paid and balance_due <= 0.) Tj
+ET
+BT
+/F2 15 Tf
+17.25 TL
+0 g
+54. 223.9900000000003502 Td
+(10. Final appointment completion) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 194.4900000000003502 Td
+(The vet's final Complete action calls:) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 175.0900000000003729 Td
+(text) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 161.6900000000003956 Td
+(POST /api/veterinary/appointments/{id}/complete) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 136.2900000000004184 Td
+(The backend requires all of these:) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 116.8900000000004411 Td
+(  1. Appointment status is completable.) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 103.4900000000004638 Td
+(  2. Finalized medical record exists.) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 90.0900000000004866 Td
+(  3. payment_status === paid.) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 76.6900000000005093 Td
+(  4. Billing balance is zero.) Tj
+ET
+BT
+/F1 8 Tf
+9.1999999999999993 TL
+0.392 g
+54. 28. Td
+(Pawesome - Veterinary Module Workflow) Tj
+ET
+BT
+/F1 8 Tf
+9.1999999999999993 TL
+0.392 g
+491.839999999999975 28. Td
+(Page 10 of 16) Tj
+ET
+endstream
+endobj
+23 0 obj
+<</Type /Page
+/Parent 1 0 R
+/Resources 2 0 R
+/MediaBox [0 0 595.2799999999999727 841.8899999999999864]
+/Contents 24 0 R
+>>
+endobj
+24 0 obj
+<<
+/Length 4111
+>>
+stream
+0.200025 w
+0 G
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 787.8899999999999864 Td
+(Only then does it set:) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 768.4900000000000091 Td
+(text) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 755.0899999999999181 Td
+(status = completed) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 741.6899999999999409 Td
+(completed_at = now\(\)) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 716.2899999999999636 Td
+(This keeps the order strict:) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 696.8899999999999864 Td
+(text) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 683.4900000000000091 Td
+(clinical completion) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 670.0899999999999181 Td
+(    -> billing ready) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 656.6899999999999409 Td
+(    -> payment verified) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 643.2899999999999636 Td
+(    -> appointment completed) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 617.8899999999998727 Td
+(Payment alone does not complete the appointment.) Tj
+ET
+BT
+/F2 15 Tf
+17.25 TL
+0 g
+54. 590.4899999999998954 Td
+(11. Confinement workflow) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 560.9899999999998954 Td
+(The appointment's confinement recommendation creates a separate medical_confinements workflow.) Tj
+ET
+BT
+/F2 12.5 Tf
+14.3749999999999982 TL
+0 g
+54. 533.5899999999999181 Td
+(Confinement statuses) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 507.3399999999999181 Td
+(text) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 493.9399999999999409 Td
+(recommended) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 480.5399999999999636 Td
+(  -> approved_for_admission) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 467.1399999999999864 Td
+(  -> admitted) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 453.7400000000000091 Td
+(  -> under_observation) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 440.3400000000000318 Td
+(  -> under_treatment) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 426.9400000000000546 Td
+(  -> ready_for_discharge) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 413.5400000000000773 Td
+(  -> completed) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 388.1400000000001 Td
+(Other accepted model statuses:) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 368.7400000000001228 Td
+(text) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 355.3400000000001455 Td
+(discharged) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 341.9400000000001683 Td
+(cancelled) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 316.540000000000191 Td
+(The current release endpoint writes completed, while discharged remains an accepted historical/model status.) Tj
+ET
+BT
+/F2 12.5 Tf
+14.3749999999999982 TL
+0 g
+54. 289.1400000000002137 Td
+(Step-by-step confinement flow) Tj
+ET
+BT
+/F2 11.2 Tf
+12.879999999999999 TL
+0 g
+54. 254.8900000000002137 Td
+(1. Vet recommends) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 230.3300000000002683 Td
+(text) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 216.930000000000291 Td
+(POST /api/veterinary/consultations/{id}/recommend-confinement) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 191.5300000000003138 Td
+(Creates:) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 172.1300000000003365 Td
+(text) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 158.7300000000003593 Td
+(medical_confinements.status = recommended) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 145.330000000000382 Td
+(appointments.status = needs_confinement) Tj
+ET
+BT
+/F2 11.2 Tf
+12.879999999999999 TL
+0 g
+54. 111.9300000000004047 Td
+(2. Receptionist assigns room) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 87.3700000000004593 Td
+(text) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 73.970000000000482 Td
+(POST /api/receptionist/medical-confinements/{id}/assign-room) Tj
+ET
+BT
+/F1 8 Tf
+9.1999999999999993 TL
+0.392 g
+54. 28. Td
+(Pawesome - Veterinary Module Workflow) Tj
+ET
+BT
+/F1 8 Tf
+9.1999999999999993 TL
+0.392 g
+491.839999999999975 28. Td
+(Page 11 of 16) Tj
+ET
+endstream
+endobj
+25 0 obj
+<</Type /Page
+/Parent 1 0 R
+/Resources 2 0 R
+/MediaBox [0 0 595.2799999999999727 841.8899999999999864]
+/Contents 26 0 R
+>>
+endobj
+26 0 obj
+<<
+/Length 4241
+>>
+stream
+0.200025 w
+0 G
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 787.8899999999999864 Td
+(Checks:) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 768.4900000000000091 Td
+(  - Status is recommended or approved_for_admission) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 755.0899999999999181 Td
+(  - Room exists) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 741.6899999999999409 Td
+(  - Room is available unless it is already the assigned room) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 722.2899999999999636 Td
+(Sets:) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 702.8899999999999864 Td
+(text) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 689.4900000000000091 Td
+(room_id) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 676.0899999999999181 Td
+(estimated_cost) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 662.6899999999999409 Td
+(status = approved_for_admission) Tj
+ET
+BT
+/F2 11.2 Tf
+12.879999999999999 TL
+0 g
+54. 629.2899999999999636 Td
+(3. Receptionist admits pet) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 604.7299999999999045 Td
+(text) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 591.3299999999999272 Td
+(POST /api/receptionist/medical-confinements/{id}/admit) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 565.92999999999995 Td
+(Requires a room assignment.) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 546.5299999999999727 Td
+(In one transaction:) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 527.1299999999999955 Td
+(  - Confinement becomes admitted) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 513.7300000000000182 Td
+(  - admitted_by and admitted_at are set) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 500.3300000000000409 Td
+(  - Room becomes occupied) Tj
+ET
+BT
+/F2 11.2 Tf
+12.879999999999999 TL
+0 g
+54. 472.9300000000000637 Td
+(4. Vet records treatment) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 448.3700000000000614 Td
+(Veterinary routes can add progress notes and move the patient into:) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 428.9700000000000841 Td
+(text) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 415.5700000000001069 Td
+(under_observation) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 402.1700000000001296 Td
+(under_treatment) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 376.7700000000001523 Td
+(Progress-note creation and any optional status update are committed together.) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 357.3700000000001751 Td
+(Receptionist-side care logs can also be added while the animal is admitted.) Tj
+ET
+BT
+/F2 11.2 Tf
+12.879999999999999 TL
+0 g
+54. 329.9700000000001978 Td
+(5. Vet clears discharge) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 305.4100000000001955 Td
+(text) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 292.0100000000002183 Td
+(POST /api/veterinary/medical-confinements/{id}/clear-for-discharge) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 266.610000000000241 Td
+(Allowed only from:) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 247.2100000000002638 Td
+(text) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 233.8100000000002865 Td
+(admitted) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 220.4100000000003092 Td
+(under_observation) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 207.010000000000332 Td
+(under_treatment) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 181.6100000000003547 Td
+(One transaction:) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 162.2100000000003774 Td
+(  - Sets status=ready_for_discharge) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 148.8100000000004002 Td
+(  - Records who cleared it and when) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 135.4100000000004229 Td
+(  - Creates a discharge_clearance progress note) Tj
+ET
+BT
+/F2 11.2 Tf
+12.879999999999999 TL
+0 g
+54. 108.0100000000004457 Td
+(6. Confinement payment) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 83.4500000000005002 Td
+(Confinement has its own payment state, separate from the appointment:) Tj
+ET
+BT
+/F1 8 Tf
+9.1999999999999993 TL
+0.392 g
+54. 28. Td
+(Pawesome - Veterinary Module Workflow) Tj
+ET
+BT
+/F1 8 Tf
+9.1999999999999993 TL
+0.392 g
+491.839999999999975 28. Td
+(Page 12 of 16) Tj
+ET
+endstream
+endobj
+27 0 obj
+<</Type /Page
+/Parent 1 0 R
+/Resources 2 0 R
+/MediaBox [0 0 595.2799999999999727 841.8899999999999864]
+/Contents 28 0 R
+>>
+endobj
+28 0 obj
+<<
+/Length 6060
+>>
+stream
+0.200025 w
+0 G
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 787.8899999999999864 Td
+(text) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 774.4900000000000091 Td
+(unpaid -> pending -> paid) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 761.0899999999999181 Td
+(                 -> rejected) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 735.6899999999999409 Td
+(The customer may submit GCash/Maya proof. Cashier verification uses the payment type medical_confinement.) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 716.2899999999999636 Td
+(A recommended confinement is not payment-verifiable because it has not reached the operational admission) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 702.8899999999999864 Td
+(flow.) Tj
+ET
+BT
+/F2 11.2 Tf
+12.879999999999999 TL
+0 g
+54. 675.4900000000000091 Td
+(7. Receptionist releases pet) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 650.92999999999995 Td
+(text) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 637.5299999999999727 Td
+(POST /api/receptionist/medical-confinements/{id}/release) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 612.1299999999998818 Td
+(Requires:) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 592.7299999999999045 Td
+(  - status=ready_for_discharge) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 579.3299999999999272 Td
+(  - payment_status=paid) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 559.92999999999995 Td
+(In one transaction:) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 540.5299999999999727 Td
+(  - Confinement becomes completed) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 527.1299999999999955 Td
+(  - discharged_by and discharged_at are set) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 513.7300000000000182 Td
+(  - Room becomes available) Tj
+ET
+BT
+/F2 15 Tf
+17.25 TL
+0 g
+54. 486.3300000000000409 Td
+(12. Transaction and concurrency behavior) Tj
+ET
+BT
+/F5 8.2 Tf
+9.4299999999999979 TL
+0 g
+54. 456.8300000000000409 Td
+( |  Operation  |  Transaction contents  |  Locking  | ) Tj
+ET
+BT
+/F5 8.2 Tf
+9.4299999999999979 TL
+0 g
+54. 445.8300000000000409 Td
+( |  Appointment start  |  Status update + medical record firstOrCreate  |  No explicit appointment) Tj
+ET
+BT
+/F5 8.2 Tf
+9.4299999999999979 TL
+0 g
+54. 434.8300000000000409 Td
+(lock  | ) Tj
+ET
+BT
+/F5 8.2 Tf
+9.4299999999999979 TL
+0 g
+54. 423.8300000000000409 Td
+( |  Consultation start  |  Status/vet assignment + medical record firstOrCreate  |  No explicit) Tj
+ET
+BT
+/F5 8.2 Tf
+9.4299999999999979 TL
+0 g
+54. 412.8300000000000409 Td
+(appointment lock  | ) Tj
+ET
+BT
+/F5 8.2 Tf
+9.4299999999999979 TL
+0 g
+54. 401.8300000000000409 Td
+( |  Consultation complete  |  Billing sync + appointment status/clinical fields  |  Nested) Tj
+ET
+BT
+/F5 8.2 Tf
+9.4299999999999979 TL
+0 g
+54. 390.8300000000000409 Td
+(billing/base-item transaction  | ) Tj
+ET
+BT
+/F5 8.2 Tf
+9.4299999999999979 TL
+0 g
+54. 379.8300000000000409 Td
+( |  Confinement recommendation  |  Confinement insert + appointment update  |  No explicit) Tj
+ET
+BT
+/F5 8.2 Tf
+9.4299999999999979 TL
+0 g
+54. 368.8300000000000409 Td
+(appointment lock  | ) Tj
+ET
+BT
+/F5 8.2 Tf
+9.4299999999999979 TL
+0 g
+54. 357.8300000000000409 Td
+( |  Medical record update  |  Record update + prescription/vaccination changes  |  DB transaction ) Tj
+ET
+BT
+/F5 8.2 Tf
+9.4299999999999979 TL
+0 g
+54. 346.8300000000000409 Td
+(| ) Tj
+ET
+BT
+/F5 8.2 Tf
+9.4299999999999979 TL
+0 g
+54. 335.8300000000000409 Td
+( |  Billing item add  |  Base item + charge + totals + stale payment requests  |  Appointment) Tj
+ET
+BT
+/F5 8.2 Tf
+9.4299999999999979 TL
+0 g
+54. 324.8300000000000409 Td
+(lockForUpdate  | ) Tj
+ET
+BT
+/F5 8.2 Tf
+9.4299999999999979 TL
+0 g
+54. 313.8300000000000409 Td
+( |  Inventory usage  |  Stock changes + usage rows + billing sync  |  Inventory row lockForUpdate ) Tj
+ET
+BT
+/F5 8.2 Tf
+9.4299999999999979 TL
+0 g
+54. 302.8300000000000409 Td
+(| ) Tj
+ET
+BT
+/F5 8.2 Tf
+9.4299999999999979 TL
+0 g
+54. 291.8300000000000409 Td
+( |  Payment verification  |  Payment state + linked service request + billing + settlement  | ) Tj
+ET
+BT
+/F5 8.2 Tf
+9.4299999999999979 TL
+0 g
+54. 280.8300000000000409 Td
+(Payable row lockForUpdate  | ) Tj
+ET
+BT
+/F5 8.2 Tf
+9.4299999999999979 TL
+0 g
+54. 269.8300000000000409 Td
+( |  Billing payment verification  |  Payment request + appointment + item updates + settlement  | ) Tj
+ET
+BT
+/F5 8.2 Tf
+9.4299999999999979 TL
+0 g
+54. 258.8300000000000409 Td
+(Appointment/request/item locks  | ) Tj
+ET
+BT
+/F5 8.2 Tf
+9.4299999999999979 TL
+0 g
+54. 247.8300000000000409 Td
+( |  Confinement admission  |  Confinement status + room occupancy  |  DB transaction  | ) Tj
+ET
+BT
+/F5 8.2 Tf
+9.4299999999999979 TL
+0 g
+54. 236.8300000000000409 Td
+( |  Progress note/status  |  Note insert + optional confinement status  |  DB transaction  | ) Tj
+ET
+BT
+/F5 8.2 Tf
+9.4299999999999979 TL
+0 g
+54. 225.8300000000000409 Td
+( |  Discharge clearance  |  Status + clearance note  |  DB transaction  | ) Tj
+ET
+BT
+/F5 8.2 Tf
+9.4299999999999979 TL
+0 g
+54. 214.8300000000000409 Td
+( |  Release  |  Confinement status + room availability  |  DB transaction  | ) Tj
+ET
+BT
+/F5 8.2 Tf
+9.4299999999999979 TL
+0 g
+54. 203.8300000000000409 Td
+( |  Appointment cancellation  |  Appointment status + linked service-request status  |  DB) Tj
+ET
+BT
+/F5 8.2 Tf
+9.4299999999999979 TL
+0 g
+54. 192.8300000000000409 Td
+(transaction  | ) Tj
+ET
+BT
+/F2 12.5 Tf
+14.3749999999999982 TL
+0 g
+54. 167.8300000000000409 Td
+(Practical meaning) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 141.5800000000000409 Td
+(A transaction means:) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 122.1800000000000637 Td
+(text) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 108.7800000000000864 Td
+(success -> all related writes commit together) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 95.3800000000001091 Td
+(failure -> every write inside the transaction rolls back) Tj
+ET
+BT
+/F1 8 Tf
+9.1999999999999993 TL
+0.392 g
+54. 28. Td
+(Pawesome - Veterinary Module Workflow) Tj
+ET
+BT
+/F1 8 Tf
+9.1999999999999993 TL
+0.392 g
+491.839999999999975 28. Td
+(Page 13 of 16) Tj
+ET
+endstream
+endobj
+29 0 obj
+<</Type /Page
+/Parent 1 0 R
+/Resources 2 0 R
+/MediaBox [0 0 595.2799999999999727 841.8899999999999864]
+/Contents 30 0 R
+>>
+endobj
+30 0 obj
+<<
+/Length 5505
+>>
+stream
+0.200025 w
+0 G
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 787.8899999999999864 Td
+(For example, if billing synchronization fails during consultation completion, the appointment does not remain) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 774.4900000000000091 Td
+(incorrectly moved to awaiting_payment.) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 755.0899999999999181 Td
+(lockForUpdate\(\) means concurrent operations wait for the current transaction before reading/updating the same) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 741.6899999999999409 Td
+(row. This is especially important for billing totals, inventory stock, payment verification, stale payment-request) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 728.2899999999999636 Td
+(checks, and linked service-request mirroring.) Tj
+ET
+BT
+/F2 15 Tf
+17.25 TL
+0 g
+54. 700.8899999999999864 Td
+(13. Receipt logic) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 671.3899999999999864 Td
+(GET /api/veterinary/receipt/{id}:) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 651.9900000000000091 Td
+(  1. Loads the assigned appointment.) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 638.5899999999999181 Td
+(  2. Calls the billing service to get itemized billing.) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 625.1899999999999409 Td
+(  3. Finds paid settlements tied to appointment and service_billing_payment.) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 611.7899999999999636 Td
+(  4. Falls back to the appointment's paid fields for legacy rows without settlement records.) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 598.3899999999998727 Td
+(  5. Calls ReceiptBreakdown::build\(\).) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 584.9900000000000091 Td
+(  6. Returns VAT, subtotal, total, paid amount, refunds/voids, balance, itemized services, and receipt number.) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 565.5899999999999181 Td
+(ReceiptBreakdown treats prices as VAT-inclusive and calculates the net/VAT split. The settlement ledger is) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 552.1900000000000546 Td
+(authoritative for what was actually paid.) Tj
+ET
+BT
+/F2 15 Tf
+17.25 TL
+0 g
+54. 524.7899999999999636 Td
+(14. Notification and audit behavior) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 495.2900000000000205 Td
+(Notifications happen at important workflow points:) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 475.8900000000000432 Td
+(  - Consultation started) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 462.4900000000000659 Td
+(  - Consultation finalized) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 449.0900000000000887 Td
+(  - Cashier billing notification) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 435.6900000000001114 Td
+(  - Confinement recommended) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 422.2900000000001342 Td
+(  - Room assigned) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 408.8900000000001569 Td
+(  - Pet admitted) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 395.4900000000001796 Td
+(  - Progress updated) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 382.0900000000002024 Td
+(  - Ready for discharge) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 368.6900000000002251 Td
+(  - Pet released) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 355.2900000000002478 Td
+(  - Payment verified/rejected) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 341.8900000000002706 Td
+(  - Low inventory) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 322.4900000000002365 Td
+(Some notifications are WorkflowNotifier calls after transactions. Payment-related notification records are) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 309.0900000000002592 Td
+(intentionally inside the payment transaction so they roll back if verification fails.) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 289.6900000000002819 Td
+(ActivityLog records significant staff actions:) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 270.2900000000003047 Td
+(  - Appointment started) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 256.8900000000003274 Td
+(  - Medical information updated) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 243.4900000000003502 Td
+(  - Appointment completed) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 230.0900000000003729 Td
+(  - Status changes) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 216.6900000000003956 Td
+(  - Confinement admitted) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 203.2900000000004184 Td
+(  - Confinement cleared) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 189.8900000000004411 Td
+(  - Confinement released) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 176.4900000000004638 Td
+(  - Payment verified/rejected) Tj
+ET
+BT
+/F2 15 Tf
+17.25 TL
+0 g
+54. 149.0900000000004866 Td
+(15. Current end-to-end sequence) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 119.5900000000004866 Td
+(text) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 106.1900000000005093 Td
+(Customer/receptionist creates booking) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 92.7900000000005321 Td
+(        v) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 79.3900000000005548 Td
+(Receptionist approves/schedules and assigns vet) Tj
+ET
+BT
+/F1 8 Tf
+9.1999999999999993 TL
+0.392 g
+54. 28. Td
+(Pawesome - Veterinary Module Workflow) Tj
+ET
+BT
+/F1 8 Tf
+9.1999999999999993 TL
+0.392 g
+491.839999999999975 28. Td
+(Page 14 of 16) Tj
+ET
+endstream
+endobj
+31 0 obj
+<</Type /Page
+/Parent 1 0 R
+/Resources 2 0 R
+/MediaBox [0 0 595.2799999999999727 841.8899999999999864]
+/Contents 32 0 R
+>>
+endobj
+32 0 obj
+<<
+/Length 5622
+>>
+stream
+0.200025 w
+0 G
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 787.8899999999999864 Td
+(        v) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 774.4900000000000091 Td
+(Vet sees appointment) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 761.0899999999999181 Td
+(        v) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 747.6899999999999409 Td
+(POST appointments/{id}/start) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 734.2899999999999636 Td
+(  - status: in_consultation) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 720.8899999999999864 Td
+(  - draft medical_record created) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 707.4900000000000091 Td
+(        v) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 694.0899999999999181 Td
+(Vet fills record, prescriptions, vitals, inventory usage) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 680.6899999999999409 Td
+(        v) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 667.2899999999999636 Td
+(Optional confinement recommendation) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 653.8899999999998727 Td
+(  - medical_confinements: recommended) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 640.4899999999998954 Td
+(  - appointment: needs_confinement) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 627.0899999999999181 Td
+(        v) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 613.6899999999999409 Td
+(Vet finalizes medical_record) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 600.2899999999999636 Td
+(        v) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 586.8899999999998727 Td
+(POST consultations/{id}/complete) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 573.4899999999998954 Td
+(  - billing synced) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 560.0899999999999181 Td
+(  - appointment: awaiting_payment) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 546.6899999999999409 Td
+(        v) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 533.2899999999999636 Td
+(Customer submits cashier/online payment request) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 519.8899999999999864 Td
+(        v) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 506.4900000000000091 Td
+(Cashier verifies payment) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 493.0900000000000318 Td
+(  - items marked paid) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 479.6900000000000546 Td
+(  - payment settlement recorded) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 466.2900000000000773 Td
+(  - appointment payment synchronized) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 452.8900000000001 Td
+(        v) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 439.4900000000001228 Td
+(Vet clicks Complete) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 426.0900000000001455 Td
+(  - finalized record required) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 412.6900000000001683 Td
+(  - payment_status=paid required) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 399.290000000000191 Td
+(  - balance_due=0 required) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 385.8900000000002137 Td
+(        v) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 372.4900000000002365 Td
+(appointment.status = completed) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 347.0900000000002592 Td
+(The parallel confinement branch continues independently:) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 327.6900000000002819 Td
+(text) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 314.2900000000003047 Td
+(recommended) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 300.8900000000003274 Td
+(  -> room assigned) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 287.4900000000003502 Td
+(  -> admitted) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 274.0900000000003729 Td
+(  -> observation/treatment) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 260.6900000000003956 Td
+(  -> ready_for_discharge) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 247.2900000000004184 Td
+(  -> payment verified) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 233.8900000000004411 Td
+(  -> released/completed) Tj
+ET
+BT
+/F2 15 Tf
+17.25 TL
+0 g
+54. 200.4900000000004638 Td
+(16. Important implementation details) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 170.9900000000004638 Td
+(  - needs_confinement means "a confinement recommendation exists"; it does not mean the appointment itself is) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 157.5900000000004866 Td
+(over.) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 144.1900000000005093 Td
+(  - ready_for_discharge is the canonical backend confinement status. The frontend uses that value.) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 130.7900000000005321 Td
+(  - finalized is the normal completed medical-record state; locked is a stronger legal/audit-style lock.) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 117.3900000000005548 Td
+(  - payment_status=paid alone is not enough to complete an appointment; the itemized balance must also be) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 103.9900000000005775 Td
+(zero.) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 90.5900000000006003 Td
+(  - Customer billing payment requests use an invoice_version hash. If the bill changes, the old request becomes) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 77.190000000000623 Td
+(stale.) Tj
+ET
+BT
+/F1 8 Tf
+9.1999999999999993 TL
+0.392 g
+54. 28. Td
+(Pawesome - Veterinary Module Workflow) Tj
+ET
+BT
+/F1 8 Tf
+9.1999999999999993 TL
+0.392 g
+491.839999999999975 28. Td
+(Page 15 of 16) Tj
+ET
+endstream
+endobj
+33 0 obj
+<</Type /Page
+/Parent 1 0 R
+/Resources 2 0 R
+/MediaBox [0 0 595.2799999999999727 841.8899999999999864]
+/Contents 34 0 R
+>>
+endobj
+34 0 obj
+<<
+/Length 697
+>>
+stream
+0.200025 w
+0 G
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 787.8899999999999864 Td
+(  - The appointment list endpoint includes in_consultation and needs_confinement. The dashboard summary) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 774.4900000000000091 Td
+(endpoint uses a narrower active-status list, so its count cards can undercount those states even though the) Tj
+ET
+BT
+/F1 9.8 Tf
+11.2699999999999996 TL
+0 g
+54. 761.0899999999999181 Td
+(appointment queue itself displays them correctly.) Tj
+ET
+BT
+/F1 8 Tf
+9.1999999999999993 TL
+0.392 g
+54. 28. Td
+(Pawesome - Veterinary Module Workflow) Tj
+ET
+BT
+/F1 8 Tf
+9.1999999999999993 TL
+0.392 g
+491.839999999999975 28. Td
+(Page 16 of 16) Tj
+ET
+endstream
+endobj
+1 0 obj
+<</Type /Pages
+/Kids [3 0 R 5 0 R 7 0 R 9 0 R 11 0 R 13 0 R 15 0 R 17 0 R 19 0 R 21 0 R 23 0 R 25 0 R 27 0 R 29 0 R 31 0 R 33 0 R ]
+/Count 16
+>>
+endobj
+35 0 obj
+<<
+/Type /Font
+/BaseFont /Helvetica
+/Subtype /Type1
+/Encoding /WinAnsiEncoding
+/FirstChar 32
+/LastChar 255
+>>
+endobj
+36 0 obj
+<<
+/Type /Font
+/BaseFont /Helvetica-Bold
+/Subtype /Type1
+/Encoding /WinAnsiEncoding
+/FirstChar 32
+/LastChar 255
+>>
+endobj
+37 0 obj
+<<
+/Type /Font
+/BaseFont /Helvetica-Oblique
+/Subtype /Type1
+/Encoding /WinAnsiEncoding
+/FirstChar 32
+/LastChar 255
+>>
+endobj
+38 0 obj
+<<
+/Type /Font
+/BaseFont /Helvetica-BoldOblique
+/Subtype /Type1
+/Encoding /WinAnsiEncoding
+/FirstChar 32
+/LastChar 255
+>>
+endobj
+39 0 obj
+<<
+/Type /Font
+/BaseFont /Courier
+/Subtype /Type1
+/Encoding /WinAnsiEncoding
+/FirstChar 32
+/LastChar 255
+>>
+endobj
+40 0 obj
+<<
+/Type /Font
+/BaseFont /Courier-Bold
+/Subtype /Type1
+/Encoding /WinAnsiEncoding
+/FirstChar 32
+/LastChar 255
+>>
+endobj
+41 0 obj
+<<
+/Type /Font
+/BaseFont /Courier-Oblique
+/Subtype /Type1
+/Encoding /WinAnsiEncoding
+/FirstChar 32
+/LastChar 255
+>>
+endobj
+42 0 obj
+<<
+/Type /Font
+/BaseFont /Courier-BoldOblique
+/Subtype /Type1
+/Encoding /WinAnsiEncoding
+/FirstChar 32
+/LastChar 255
+>>
+endobj
+43 0 obj
+<<
+/Type /Font
+/BaseFont /Times-Roman
+/Subtype /Type1
+/Encoding /WinAnsiEncoding
+/FirstChar 32
+/LastChar 255
+>>
+endobj
+44 0 obj
+<<
+/Type /Font
+/BaseFont /Times-Bold
+/Subtype /Type1
+/Encoding /WinAnsiEncoding
+/FirstChar 32
+/LastChar 255
+>>
+endobj
+45 0 obj
+<<
+/Type /Font
+/BaseFont /Times-Italic
+/Subtype /Type1
+/Encoding /WinAnsiEncoding
+/FirstChar 32
+/LastChar 255
+>>
+endobj
+46 0 obj
+<<
+/Type /Font
+/BaseFont /Times-BoldItalic
+/Subtype /Type1
+/Encoding /WinAnsiEncoding
+/FirstChar 32
+/LastChar 255
+>>
+endobj
+47 0 obj
+<<
+/Type /Font
+/BaseFont /ZapfDingbats
+/Subtype /Type1
+/FirstChar 32
+/LastChar 255
+>>
+endobj
+48 0 obj
+<<
+/Type /Font
+/BaseFont /Symbol
+/Subtype /Type1
+/FirstChar 32
+/LastChar 255
+>>
+endobj
+2 0 obj
+<<
+/ProcSet [/PDF /Text /ImageB /ImageC /ImageI]
+/Font <<
+/F1 35 0 R
+/F2 36 0 R
+/F3 37 0 R
+/F4 38 0 R
+/F5 39 0 R
+/F6 40 0 R
+/F7 41 0 R
+/F8 42 0 R
+/F9 43 0 R
+/F10 44 0 R
+/F11 45 0 R
+/F12 46 0 R
+/F13 47 0 R
+/F14 48 0 R
+>>
+/XObject <<
+>>
+>>
+endobj
+49 0 obj
+<<
+/Producer (jsPDF 4.2.1)
+/CreationDate (D:20261022194126+08'00')
+>>
+endobj
+50 0 obj
+<<
+/Type /Catalog
+/Pages 1 0 R
+/OpenAction [3 0 R /FitH null]
+/PageLayout /OneColumn
+>>
+endobj
+xref
+0 51
+0000000000 65535 f 
+0000082688 00000 n 
+0000084613 00000 n 
+0000000015 00000 n 
+0000000152 00000 n 
+0000005826 00000 n 
+0000005963 00000 n 
+0000013014 00000 n 
+0000013151 00000 n 
+0000018323 00000 n 
+0000018461 00000 n 
+0000024024 00000 n 
+0000024163 00000 n 
+0000028792 00000 n 
+0000028931 00000 n 
+0000034336 00000 n 
+0000034475 00000 n 
+0000039302 00000 n 
+0000039441 00000 n 
+0000044366 00000 n 
+0000044505 00000 n 
+0000049914 00000 n 
+0000050053 00000 n 
+0000055301 00000 n 
+0000055440 00000 n 
+0000059604 00000 n 
+0000059743 00000 n 
+0000064037 00000 n 
+0000064176 00000 n 
+0000070289 00000 n 
+0000070428 00000 n 
+0000075986 00000 n 
+0000076125 00000 n 
+0000081800 00000 n 
+0000081939 00000 n 
+0000082848 00000 n 
+0000082974 00000 n 
+0000083105 00000 n 
+0000083239 00000 n 
+0000083377 00000 n 
+0000083501 00000 n 
+0000083630 00000 n 
+0000083762 00000 n 
+0000083898 00000 n 
+0000084026 00000 n 
+0000084153 00000 n 
+0000084282 00000 n 
+0000084415 00000 n 
+0000084517 00000 n 
+0000084866 00000 n 
+0000084952 00000 n 
+trailer
+<<
+/Size 51
+/Root 50 0 R
+/Info 49 0 R
+/ID [ <F6AB656DFFBABD348798539650145187> <F6AB656DFFBABD348798539650145187> ]
+>>
+startxref
+85056
+%%EOF

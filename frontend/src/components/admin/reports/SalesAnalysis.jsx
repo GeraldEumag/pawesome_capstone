@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
-  faSync,
   faChartLine,
   faShoppingCart,
   faReceipt,
@@ -95,9 +94,6 @@ const SalesAnalysis = () => {
             <option value="month">Last 30 Days</option>
             <option value="quarter">Last 90 Days</option>
           </select>
-          <button className="adv-refresh-btn" onClick={fetchData}>
-            <FontAwesomeIcon icon={faSync} /> Refresh
-          </button>
         </div>
       </div>
 

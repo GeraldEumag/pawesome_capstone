@@ -11,6 +11,7 @@ use App\Models\ServiceBillingPaymentRequestItem;
 use App\Models\ServiceItemUsage;
 use App\Models\ServiceRequest;
 use App\Models\User;
+use App\Services\VisitCompletionService;
 use App\Support\ReceiptBreakdown;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -255,6 +256,8 @@ class ServiceBillingPaymentService
                 'cash_received' => $cashReceived,
                 'change_amount' => $change,
             ]);
+
+            VisitCompletionService::tryComplete((int) $appointment->id);
 
             if ($appointment->customer?->user_id) {
                 WorkflowNotifier::notifyUser(

@@ -82,10 +82,6 @@ const VetServices = () => {
     fetchServices();
   }, [fetchServices]);
 
-  const handleRefresh = () => {
-    setRefreshing(true);
-    fetchServices(true);
-  };
 
   const handleCreateService = async () => {
     try {
@@ -282,10 +278,7 @@ const VetServices = () => {
           </p>
         </div>
         <div className="vs-header-actions">
-          <button className="vs-btn vs-btn--secondary" onClick={handleRefresh} disabled={refreshing}>
-            <FontAwesomeIcon icon={faRotateRight} className={refreshing ? "vs-spin" : ""} />
-            {refreshing ? "Refreshing..." : "Refresh"}
-          </button>
+          {refreshing && <FontAwesomeIcon icon={faRotateRight} className="vs-spin" />}
           <button className="vs-btn vs-btn--primary" onClick={() => setShowCreateModal(true)}>
             <FontAwesomeIcon icon={faPlus} />
             Create Service

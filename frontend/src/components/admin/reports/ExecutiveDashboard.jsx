@@ -258,9 +258,6 @@ const ExecutiveDashboard = ({ data: initialData = {} }) => {
           />
           <span>Auto-refresh</span>
         </label>
-        <button onClick={fetchData} className="exec-refresh-btn" title="Refresh data">
-          <FontAwesomeIcon icon={faSync} />
-        </button>
         <ExportButton
           data={data}
           disabled={!data?.summary && !data?.revenueTrend && !data?.revenue_trend}

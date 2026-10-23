@@ -2,10 +2,16 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import ReactDOM from "react-dom";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
-  faBarcode, faCheckSquare, faFilter,
-  faPrint, faRotateRight,
-  faSearch, faSave, faSquare, faTag,
-  faTriangleExclamation, faXmark,
+  faBarcode,
+  faCheckSquare,
+  faFilter,
+  faPrint,
+  faSearch,
+  faSave,
+  faSquare,
+  faTag,
+  faTriangleExclamation,
+  faXmark,
 } from "@fortawesome/free-solid-svg-icons";
 import JsBarcode from "jsbarcode";
 import { inventoryApi } from "../../api/inventory.jsx";
@@ -314,16 +320,6 @@ const BarcodeGenerator = () => {
           <p>Generate and print scannable barcode labels for your products.</p>
         </div>
         <div className="bg-hero-actions">
-          <button
-            type="button"
-            className="bg-btn bg-btn--outline"
-            onClick={loadItems}
-            disabled={loading}
-            title="Refresh products"
-          >
-            <FontAwesomeIcon icon={faRotateRight} spin={loading} />
-            Refresh
-          </button>
           <button
             type="button"
             className="bg-btn bg-btn--primary"

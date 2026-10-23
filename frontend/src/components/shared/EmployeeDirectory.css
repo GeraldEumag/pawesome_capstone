@@ -1,7 +1,13 @@
 /* EmployeeDirectory.css — Staff records (non-account employees) */
 
-.ed-root {
+/* Modals portal to document.body (outside .ed-root), so the accent var
+   must be re-declared on the modal container too. */
+.ed-root,
+.ed-modal {
   --ed-accent: #7c3aed;
+}
+
+.ed-root {
   display: flex;
   flex-direction: column;
   gap: 20px;

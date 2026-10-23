@@ -11,6 +11,7 @@ use App\Models\ServiceRequest;
 use App\Models\ServiceBillingPaymentRequest;
 use App\Models\ServiceItemUsage;
 use App\Models\User;
+use App\Models\VisitEstimate;
 use App\Services\ServiceBillingService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
@@ -62,6 +63,18 @@ class VeterinaryBillingPaymentFlowTest extends TestCase
             'total_amount' => 500,
             'amount_paid' => 500,
             'balance_due' => 0,
+        ]);
+
+        // Phase C: treatment charges are gated on an approved estimate. These
+        // billing-flow fixtures pre-approve one with a high ceiling so the
+        // re-approval threshold doesn't interfere with the scenarios.
+        VisitEstimate::create([
+            'appointment_id' => $appointment->id,
+            'status' => 'approved',
+            'subtotal' => 500,
+            'approved_total' => 1000000,
+            'channel' => 'counter',
+            'approved_at' => now(),
         ]);
 
         return [$user, $customer, $pet, $appointment];

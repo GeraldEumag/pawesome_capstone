@@ -21,7 +21,6 @@ import {
   faCalendarCheck,
   faBoxOpen,
   faUserShield,
-  faRotateRight,
   faExclamationTriangle,
   faChartLine,
   faChartPie,
@@ -374,23 +373,7 @@ const AdminDashboard = () => {
     );
   };
 
-  const extraActions = (
-    <>
-      {showOverview && (
-        <button
-          className={`admin-icon-btn admin-refresh-btn ${
-            refreshing ? "refreshing" : ""
-          }`}
-          type="button"
-          onClick={() => fetchDashboardData({ silent: true })}
-          disabled={refreshing}
-          title="Refresh dashboard"
-        >
-          <FontAwesomeIcon icon={refreshing ? faSpinner : faRotateRight} />
-        </button>
-      )}
-    </>
-  );
+  const extraActions = null;
 
   return (
     <DashboardLayout

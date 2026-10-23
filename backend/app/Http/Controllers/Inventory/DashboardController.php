@@ -276,13 +276,16 @@ class DashboardController extends Controller
         }
 
         $today = now()->toDateString();
-        $soon = now()->addDays(30)->toDateString();
+        // Phase D: alert windows are 90-day (watch) and 30-day (urgent).
+        $soon = now()->addDays(90)->toDateString();
+        $todayCarbon = Carbon::parse($today);
         $items = InventoryItem::whereNotNull($dateColumn)
             ->whereDate($dateColumn, '<=', $soon)
             ->orderBy($dateColumn)
             ->get()
-            ->map(function ($item) use ($dateColumn, $today) {
+            ->map(function ($item) use ($dateColumn, $todayCarbon) {
                 $expiryDate = Carbon::parse($item->{$dateColumn});
+                $days = $todayCarbon->diffInDays($expiryDate, false);
 
                 return [
                     'id' => $item->id,
@@ -290,8 +293,10 @@ class DashboardController extends Controller
                     'sku' => $item->sku,
                     'stock' => (int) ($item->stock ?? 0),
                     'expiry_date' => $expiryDate->toDateString(),
-                    'days_until_expiry' => now()->startOfDay()->diffInDays($expiryDate, false),
-                    'status' => $expiryDate->lt(Carbon::parse($today)) ? 'expired' : 'expiring_soon',
+                    'days_until_expiry' => $days,
+                    'status' => $expiryDate->lt($todayCarbon)
+                        ? 'expired'
+                        : ($days <= 30 ? 'expiring_30' : 'expiring_90'),
                 ];
             })
             ->values();
@@ -301,6 +306,11 @@ class DashboardController extends Controller
             'alerts' => $items,
             'data' => $items,
             'count' => $items->count(),
+            'windows' => [
+                'expired' => $items->where('status', 'expired')->count(),
+                'within_30_days' => $items->where('status', 'expiring_30')->count(),
+                'within_90_days' => $items->where('status', 'expiring_90')->count(),
+            ],
         ]);
     }
 
@@ -376,6 +386,75 @@ class DashboardController extends Controller
                 'audits' => $saved,
             ]);
         });
+    }
+
+    /**
+     * Phase D: manager/admin approval for audit variances. Zero-variance
+     * rows are auto-approved at count time; discrepancies stay 'pending'
+     * until a manager approves (or rejects with a reason).
+     */
+    public function approveAudit(Request $request, int $id)
+    {
+        $audit = DB::transaction(function () use ($id, $request) {
+            $locked = InventoryMonthlyAudit::where('id', $id)->lockForUpdate()->firstOrFail();
+            if ($locked->approval_status !== 'pending') {
+                throw ValidationException::withMessages(['audit' => ['Only pending variance audits can be approved.']]);
+            }
+            $locked->update([
+                'approval_status' => 'approved',
+                'approved_by' => $request->user()->id,
+                'approved_at' => now(),
+            ]);
+            return $locked->fresh();
+        });
+
+        \App\Models\ActivityLog::log($request->user()->id, 'inventory_audit_variance_approved',
+            "Approved audit variance on item #{$audit->inventory_item_id} ({$audit->variance})", [
+                'category' => 'inventory',
+                'reference_type' => 'inventory_monthly_audit',
+                'reference_id' => $audit->id,
+            ]);
+
+        return response()->json(['success' => true, 'audit' => $audit]);
+    }
+
+    public function rejectAudit(Request $request, int $id)
+    {
+        $validated = $request->validate(['reason' => 'required|string|max:500']);
+
+        $audit = DB::transaction(function () use ($id, $validated, $request) {
+            $locked = InventoryMonthlyAudit::where('id', $id)->lockForUpdate()->firstOrFail();
+            if ($locked->approval_status !== 'pending') {
+                throw ValidationException::withMessages(['audit' => ['Only pending variance audits can be rejected.']]);
+            }
+            $locked->update([
+                'approval_status' => 'rejected',
+                'reason' => trim($locked->reason . ' [Rejected: ' . $validated['reason'] . ']'),
+                'approved_by' => $request->user()->id,
+                'approved_at' => now(),
+            ]);
+            return $locked->fresh();
+        });
+
+        \App\Models\ActivityLog::log($request->user()->id, 'inventory_audit_variance_rejected',
+            "Rejected audit variance on item #{$audit->inventory_item_id}: {$validated['reason']}", [
+                'category' => 'inventory',
+                'reference_type' => 'inventory_monthly_audit',
+                'reference_id' => $audit->id,
+            ]);
+
+        return response()->json(['success' => true, 'audit' => $audit]);
+    }
+
+    /** Variance audits awaiting manager approval. */
+    public function pendingAuditApprovals()
+    {
+        $audits = InventoryMonthlyAudit::with('item:id,name,sku')
+            ->where('approval_status', 'pending')
+            ->orderBy('audit_month', 'desc')
+            ->get();
+
+        return response()->json(['success' => true, 'audits' => $audits]);
     }
 
     public function monthlyAuditReport(Request $request)

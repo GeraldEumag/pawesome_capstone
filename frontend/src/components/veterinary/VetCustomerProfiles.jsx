@@ -288,10 +288,6 @@ const VetCustomerProfiles = () => {
     };
   }, [customers]);
 
-  const handleRefresh = () => {
-    fetchCustomers({ silent: true });
-    toast.success("Customer profiles refreshed.");
-  };
 
   const getCustomerInitials = (name) => {
     const parts = String(name || "?")
@@ -381,15 +377,7 @@ const VetCustomerProfiles = () => {
           </p>
         </div>
 
-        <button
-          className={`vet-refresh-btn ${refreshing ? "refreshing" : ""}`}
-          type="button"
-          onClick={handleRefresh}
-          disabled={refreshing}
-        >
-          <FontAwesomeIcon icon={faRotateRight} />
-          {refreshing ? "Refreshing..." : "Refresh"}
-        </button>
+        {refreshing && <FontAwesomeIcon icon={faRotateRight} spin />}
       </div>
 
       {error && (

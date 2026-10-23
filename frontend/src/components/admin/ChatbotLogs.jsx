@@ -11,7 +11,6 @@ import {
   faEdit,
   faPlus,
   faRobot,
-  faRotateRight,
   faSave,
   faSpinner,
   faTimes,
@@ -142,11 +141,23 @@ const ChatbotLogs = () => {
     showError(message);
   };
 
+  // MySQL datetime strings ("2026-10-23 07:05:08") carry no timezone — the
+  // server stores UTC, so parse them as UTC, not browser-local time.
+  const parseServerDate = (value) => {
+    if (!value) return null;
+    let v = value;
+    if (typeof v === "string" && /^\d{4}-\d{2}-\d{2} \d{2}:\d{2}/.test(v)) {
+      v = v.replace(" ", "T") + "Z";
+    }
+    const date = new Date(v);
+    return Number.isNaN(date.getTime()) ? null : date;
+  };
+
   const formatDateTime = (value) => {
     if (!value) return "No date";
 
-    const date = new Date(value);
-    if (Number.isNaN(date.getTime())) return value;
+    const date = parseServerDate(value);
+    if (!date) return value;
 
     return date.toLocaleString("en-PH", {
       year: "numeric",
@@ -155,6 +166,43 @@ const ChatbotLogs = () => {
       hour: "numeric",
       minute: "2-digit",
     });
+  };
+
+  const timeOnly = (value) => {
+    const date = parseServerDate(value);
+    if (!date) return "";
+    return date.toLocaleTimeString("en-PH", { hour: "numeric", minute: "2-digit" });
+  };
+
+  const timeAgo = (value) => {
+    if (!value) return "No activity";
+    const date = parseServerDate(value);
+    if (!date) return formatDateTime(value);
+    const diff = Date.now() - date.getTime();
+    const mins = Math.floor(diff / 60000);
+    if (mins < 1) return "Just now";
+    if (mins < 60) return `${mins}m ago`;
+    const hrs = Math.floor(mins / 60);
+    if (hrs < 24) return `${hrs}h ago`;
+    const days = Math.floor(hrs / 24);
+    if (days < 7) return `${days}d ago`;
+    return formatDateTime(value);
+  };
+
+  const dayKey = (value) => {
+    const date = parseServerDate(value);
+    return date ? date.toDateString() : "";
+  };
+
+  const dayLabel = (value) => {
+    const date = parseServerDate(value);
+    if (!date) return "Earlier";
+    const today = new Date();
+    const yesterday = new Date();
+    yesterday.setDate(yesterday.getDate() - 1);
+    if (date.toDateString() === today.toDateString()) return "Today";
+    if (date.toDateString() === yesterday.toDateString()) return "Yesterday";
+    return date.toLocaleDateString("en-PH", { month: "long", day: "numeric", year: "numeric" });
   };
 
   const getUserInitials = (name = "") => {
@@ -648,16 +696,6 @@ const ChatbotLogs = () => {
         </div>
 
         <div className="chatbot-hero-actions">
-          <button
-            className={`refresh-btn ${refreshing ? "refreshing" : ""}`}
-            type="button"
-            onClick={() => loadData({ silent: true })}
-            disabled={refreshing}
-          >
-            <FontAwesomeIcon icon={refreshing ? faSpinner : faRotateRight} />
-            {refreshing ? "Refreshing..." : "Refresh Data"}
-          </button>
-
           <div className="cb-export-wrap">
             <button className="secondary-btn" type="button" onClick={() => setShowExportDropdown(!showExportDropdown)}>
               <FontAwesomeIcon icon={faDownload} />
@@ -824,32 +862,32 @@ const ChatbotLogs = () => {
                   <span>{filteredLogs.length} users</span>
                 </div>
 
-                <div className="management-list">
+                <div className="management-list convo-list">
                   {filteredLogs.map((log) => (
                     <button
                       type="button"
                       key={log.user_id}
-                      className={`management-card clickable ${
+                      className={`convo-card ${
                         selectedUser?.user_id === log.user_id ? "selected" : ""
                       }`}
                       onClick={() => openUserChats(log)}
                     >
-                      <div className="log-user-row">
-                        <span className="log-avatar">{getUserInitials(log.user_name)}</span>
+                      <span className="log-avatar">{getUserInitials(log.user_name)}</span>
 
-                        <div>
+                      <span className="convo-card-body">
+                        <span className="convo-card-top">
                           <strong>{log.user_name}</strong>
-                          <p>{log.total_chats || 0} chatbot interaction(s)</p>
-                        </div>
-
-                        <span className={`pill role-${log.user_role || "user"}`}>
-                          {log.user_role || "user"}
+                          <time>{timeAgo(log.last_chat_date)}</time>
                         </span>
-                      </div>
-
-                      <span className="card-meta">
-                        <FontAwesomeIcon icon={faClock} />
-                        {formatDateTime(log.last_chat_date)}
+                        <span className="convo-card-bottom">
+                          <span className="convo-count">
+                            <FontAwesomeIcon icon={faComments} />
+                            {log.total_chats || 0} message{Number(log.total_chats) === 1 ? "" : "s"}
+                          </span>
+                          <span className={`pill role-${log.user_role || "user"}`}>
+                            {log.user_role || "user"}
+                          </span>
+                        </span>
                       </span>
                     </button>
                   ))}
@@ -898,52 +936,71 @@ const ChatbotLogs = () => {
                     <h3>Loading conversations...</h3>
                   </div>
                 ) : (
-                  <div className="chat-bubble-list">
-                    {userChats.map((chat) => (
-                      <article key={chat.id} className="chat-thread">
-                        <span className="chat-intent">
-                          <span className="chat-chip intent">{chat.intent || "general"}</span>
-                          <span className="chat-chip channel">{chat.channel || "web"}</span>
-                          {formatDateTime(chat.created_at)}
-                        </span>
-
-                        {[
-                          { key: "user", label: "User", text: chat.user_message || "No user message", cls: "user-bubble" },
-                          { key: "bot", label: "Bot", text: chat.bot_response || "No bot response", cls: "bot-bubble" },
-                        ].map((bubble) => {
-                          const bubbleId = `${chat.id}-${bubble.key}`;
-                          const isLong = (bubble.text || "").length > 280;
-                          const isExpanded = expandedBubbles.has(bubbleId);
-                          return (
-                            <div key={bubble.key} className={`bubble ${bubble.cls}`}>
-                              <strong>{bubble.label}</strong>
-                              <p className={isLong && !isExpanded ? "clamped" : ""}>
-                                {bubble.text}
-                              </p>
-                              {isLong && (
-                                <button
-                                  type="button"
-                                  className="bubble-toggle"
-                                  onClick={() =>
-                                    setExpandedBubbles((prev) => {
-                                      const next = new Set(prev);
-                                      if (next.has(bubbleId)) {
-                                        next.delete(bubbleId);
-                                      } else {
-                                        next.add(bubbleId);
-                                      }
-                                      return next;
-                                    })
-                                  }
-                                >
-                                  {isExpanded ? "Show less" : "View full message"}
-                                </button>
-                              )}
+                  <div className="chat-bubble-list chat-canvas">
+                    {userChats.map((chat, idx) => {
+                      const day = dayKey(chat.created_at);
+                      const prevDay = idx > 0 ? dayKey(userChats[idx - 1].created_at) : null;
+                      return (
+                        <React.Fragment key={chat.id}>
+                          {day !== prevDay && (
+                            <div className="chat-day-divider">
+                              <span>{dayLabel(chat.created_at)}</span>
                             </div>
-                          );
-                        })}
-                      </article>
-                    ))}
+                          )}
+
+                          <article className="chat-thread">
+                            <span className="chat-intent">
+                              <span className="chat-chip intent">{chat.intent || "general"}</span>
+                              <span className="chat-chip channel">{chat.channel || "web"}</span>
+                            </span>
+
+                            {[
+                              { key: "user", text: chat.user_message || "No user message", cls: "user-bubble" },
+                              { key: "bot", text: chat.bot_response || "No bot response", cls: "bot-bubble" },
+                            ].map((bubble) => {
+                              const bubbleId = `${chat.id}-${bubble.key}`;
+                              const isLong = (bubble.text || "").length > 280;
+                              const isExpanded = expandedBubbles.has(bubbleId);
+                              const isUser = bubble.cls === "user-bubble";
+                              return (
+                                <div key={bubble.key} className={`bubble-row ${isUser ? "from-user" : "from-bot"}`}>
+                                  <span className={`bubble-avatar ${isUser ? "user" : "bot"}`}>
+                                    {isUser
+                                      ? getUserInitials(selectedUser?.user_name)
+                                      : <FontAwesomeIcon icon={faRobot} />}
+                                  </span>
+                                  <div className={`bubble ${bubble.cls}`}>
+                                    <p className={isLong && !isExpanded ? "clamped" : ""}>
+                                      {bubble.text}
+                                    </p>
+                                    {isLong && (
+                                      <button
+                                        type="button"
+                                        className="bubble-toggle"
+                                        onClick={() =>
+                                          setExpandedBubbles((prev) => {
+                                            const next = new Set(prev);
+                                            if (next.has(bubbleId)) {
+                                              next.delete(bubbleId);
+                                            } else {
+                                              next.add(bubbleId);
+                                            }
+                                            return next;
+                                          })
+                                        }
+                                      >
+                                        {isExpanded ? "Show less" : "View full message"}
+                                      </button>
+                                    )}
+                                    <time className="bubble-time">{timeOnly(chat.created_at)}</time>
+                                  </div>
+                                </div>
+                              );
+                            })}
+                          </article>
+                        </React.Fragment>
+                      );
+                    })}
 
                     {selectedUser && userChats.length === 0 && (
                       <div className="empty-state">

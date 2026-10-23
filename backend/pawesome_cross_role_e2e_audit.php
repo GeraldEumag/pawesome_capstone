@@ -310,9 +310,9 @@ foreach ($apptList as $a) {
     }
 }
 if (!$appointmentId) {
-    // fallback: newest 'approved' or 'scheduled' for this pet
+    // fallback: newest 'scheduled' or intake visit for this pet
     foreach ($apptList as $a) {
-        if (($a['pet_name'] ?? '') === 'Buddy' && in_array($a['status'] ?? '', ['approved', 'scheduled', 'pending'])) {
+        if (($a['pet_name'] ?? '') === 'Buddy' && in_array($a['status'] ?? '', ['scheduled', 'requested', 'checked_in', 'waiting_for_vet'])) {
             $appointmentId = $a['id']; $appt = $a; break;
         }
     }
@@ -429,7 +429,7 @@ if ($invItemVisible) {
 }
 
 // ─────────────────────────────────────────────────────────────────────────
-// 7. VETERINARY COMPLETION
+// 7. VETERINARY CLINICAL COMPLETION → AUTOMATIC VISIT CLOSURE
 // ─────────────────────────────────────────────────────────────────────────
 finalize_vet:
 if (!$appointmentId) {
@@ -448,15 +448,65 @@ if ($finalize['status'] === 200 || $finalize['status'] === 201) {
     addFinding('warn', 'veterinary', 'Veterinarian finalize bill returned ' . $finalize['status'], $finalize['raw']);
 }
 
-// Try vet complete
+// Clinical completion moves the visit to checkout (or clinical_complete when
+// a confinement is still open). There is no veterinarian close action —
+// closure is automatic once the invoice settles.
 delay();
-$complete = apiCall('POST', '/veterinary/appointments/' . $appointmentId . '/complete', $tokens['veterinary'], [
-    'notes' => 'Completed in audit ' . $seed,
+$complete = apiCall('POST', '/veterinary/consultations/' . $appointmentId . '/complete', $tokens['veterinary'], [
+    'diagnosis' => 'Audit diagnosis ' . $seed,
+    'treatment_notes' => 'Completed in audit ' . $seed,
 ]);
 if ($complete['status'] === 200 || $complete['status'] === 201) {
-    addFinding('pass', 'veterinary', 'Veterinarian completed appointment', $complete['json']);
+    addFinding('pass', 'veterinary', 'Veterinarian completed clinical consultation', $complete['json']);
 } else {
-    addFinding('fail', 'veterinary', 'Veterinarian complete appointment failed', ['status' => $complete['status'], 'body' => $complete['raw']]);
+    addFinding('fail', 'veterinary', 'Veterinarian consultation completion failed', ['status' => $complete['status'], 'body' => $complete['raw']]);
+}
+
+// Cashier settles outstanding bill items created during the visit.
+delay();
+$summary = apiCall('GET', '/billing/veterinary/' . $appointmentId . '/summary', $tokens['cashier']);
+$items = $summary['json']['billing']['items'] ?? $summary['json']['items'] ?? [];
+$unpaidIds = [];
+foreach ($items as $it) {
+    if (empty($it['is_paid']) && !empty($it['is_billable']) && isset($it['id'])) {
+        $unpaidIds[] = $it['id'];
+    }
+}
+if ($unpaidIds) {
+    delay();
+    $markPaid = apiCall('PATCH', '/billing/items/mark-paid', $tokens['cashier'], [
+        'item_ids' => $unpaidIds,
+        'payment_method' => 'cash',
+        'reference_number' => 'AUDIT-' . $seed,
+    ]);
+    if ($markPaid['status'] === 200) {
+        addFinding('pass', 'cashier', 'Cashier settled outstanding bill items', ['count' => count($unpaidIds)]);
+    } else {
+        addFinding('fail', 'cashier', 'Cashier mark-paid failed', ['status' => $markPaid['status'], 'body' => $markPaid['raw']]);
+    }
+} else {
+    addFinding('pass', 'cashier', 'No outstanding bill items after consultation');
+}
+
+// The base appointment fee may still need verification.
+delay();
+$pay = apiCall('POST', '/appointments/' . $appointmentId . '/pay', $tokens['cashier'], []);
+if ($pay['status'] === 200 || $pay['status'] === 201) {
+    addFinding('pass', 'cashier', 'Cashier verified appointment payment', $pay['json']);
+} elseif (($pay['status'] ?? 0) === 422) {
+    addFinding('pass', 'cashier', 'Appointment payment already verified', $pay['json'] ?? $pay['raw']);
+} else {
+    addFinding('warn', 'cashier', 'Appointment pay returned ' . $pay['status'], $pay['raw']);
+}
+
+// The visit must have closed automatically once all guards passed.
+delay();
+$apptAfter = apiCall('GET', '/veterinary/appointments/' . $appointmentId, $tokens['veterinary']);
+$finalStatus = $apptAfter['json']['appointment']['status'] ?? $apptAfter['json']['status'] ?? null;
+if ($finalStatus === 'completed') {
+    addFinding('pass', 'veterinary', 'Visit closed automatically after settlement', ['status' => $finalStatus]);
+} else {
+    addFinding('warn', 'veterinary', 'Visit did not auto-close after settlement (status: ' . ($finalStatus ?? 'unknown') . ')', $apptAfter['json'] ?? $apptAfter['raw']);
 }
 
 // ─────────────────────────────────────────────────────────────────────────

@@ -144,7 +144,7 @@ const CustomerMedicalConfinements = () => {
                     className="confinement-action-btn secondary"
                     onClick={() => loadNotes(record)}
                   >
-                    {hasNotesLoaded(record.id) ? "Refresh Notes & Logs" : "View Notes & Care Logs"}
+                    View Notes & Care Logs
                   </button>
                 </div>
 

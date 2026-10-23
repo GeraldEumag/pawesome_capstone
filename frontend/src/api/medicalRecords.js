@@ -56,6 +56,14 @@ export async function lockMedicalRecord(id) {
   });
 }
 
+// Append a dated addendum to a finalized or locked record (append-only)
+export async function addMedicalRecordAddendum(id, body) {
+  return apiRequest(`/veterinary/medical-records/${id}/addenda`, {
+    method: 'POST',
+    body: JSON.stringify({ body }),
+  });
+}
+
 /**
  * Pet-specific medical data
  */

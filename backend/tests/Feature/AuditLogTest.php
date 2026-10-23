@@ -228,7 +228,7 @@ class AuditLogTest extends TestCase
         $this->assertSame($veterinarian->id, $log->user_id);
         $this->assertSame('veterinary', $log->actor_role);
         $this->assertSame('admitted', $log->changes['status']['old']);
-        $this->assertSame('under_observation', $log->changes['status']['new']);
+        $this->assertSame('under_care (observation)', $log->changes['status']['new']);
     }
 
     public function test_audit_log_read_access_is_admin_and_manager_only(): void

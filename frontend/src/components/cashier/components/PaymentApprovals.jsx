@@ -308,10 +308,6 @@ const PaymentApprovals = () => {
           <p>Verify customer payments and process transactions</p>
         </div>
         <div className="pa-header-actions">
-          <button className="pa-btn-secondary" onClick={() => fetchRequests()} disabled={refreshing}>
-            <FontAwesomeIcon icon={refreshing ? faSpinner : faArrowsRotate} spin={refreshing} />
-            {refreshing ? "Refreshing…" : "Refresh"}
-          </button>
           <button className="pa-btn-primary" onClick={exportToCSV} disabled={filteredRequests.length === 0}>
             <FontAwesomeIcon icon={faFileArrowDown} /> Export CSV
           </button>

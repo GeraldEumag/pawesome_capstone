@@ -139,7 +139,7 @@ class BillingIntegrationTest extends Command
             $this->info("✓ Created veterinary appointment #{$appointment->id}");
 
             // Step 2: Start consultation (simulate API call)
-            $appointment->update(['status' => 'in_progress']);
+            $appointment->update(['status' => 'in_consultation']);
             $this->info("✓ Started consultation");
 
             // Step 3: Add billing item with manual inventory deduction
@@ -259,7 +259,7 @@ class BillingIntegrationTest extends Command
                 'request_type' => 'grooming', // Required field
                 'service_type' => 'grooming',
                 'service_name' => 'Basic Grooming',
-                'status' => 'approved',
+                'status' => 'scheduled',
                 'request_date' => now(),
                 'notes' => 'Test grooming appointment'
             ];
@@ -539,9 +539,9 @@ class BillingIntegrationTest extends Command
 
         try {
             // Test veterinary status conditions
-            $vetStatuses = ['scheduled', 'in_progress', 'completed', 'cancelled'];
+            $vetStatuses = ['scheduled', 'in_consultation', 'completed', 'cancelled'];
             foreach ($vetStatuses as $status) {
-                $shouldShow = in_array($status, ['in_progress']);
+                $shouldShow = in_array($status, ['in_consultation']);
                 $this->info("✓ Veterinary status '{$status}' - Billing panel " . ($shouldShow ? 'should' : 'should not') . " show");
             }
 

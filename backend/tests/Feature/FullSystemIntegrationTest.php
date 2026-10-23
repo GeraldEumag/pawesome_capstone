@@ -219,7 +219,7 @@ class FullSystemIntegrationTest extends TestCase
         
         $this->assertDatabaseHas('appointments', [
             'id' => $appointmentId,
-            'status' => 'pending', // Default status on creation
+            'status' => 'requested', // Default status on creation
         ]);
         
         // ============================================
@@ -323,7 +323,7 @@ class FullSystemIntegrationTest extends TestCase
 
         $appointmentModel->update([
             'veterinarian_id' => $this->veterinary->id,
-            'status' => 'in_progress',
+            'status' => 'in_consultation',
         ]);
         
         $medicalRecord = $this->postJson('/api/veterinary/medical-records', [

@@ -6,8 +6,12 @@ use App\Http\Controllers\Controller;
 use App\Models\Appointment;
 use App\Models\Pet;
 use App\Models\User;
+use App\Services\ClinicalAccessLogger;
 use App\Services\ServiceBillingService;
-use App\Support\EmailContent;
+use App\Models\PaymentSettlement;
+use App\Models\ServiceBillingPaymentRequest;
+use App\Support\ReceiptBreakdown;
+use App\Support\VeterinaryStatus;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Auth;
@@ -48,17 +52,17 @@ class DashboardController extends Controller
 
         $todayAssigned = $this->assignedAppointments()
             ->whereDate('scheduled_at', $today)
-            ->whereIn('status', ['approved', 'scheduled', 'in_progress', 'treated', 'awaiting_payment'])
+            ->whereIn('status', VeterinaryStatus::QUEUE)
             ->count();
 
         $pendingAssigned = $this->assignedAppointments()
-            ->where('status', 'pending')
+            ->where('status', Appointment::STATUS_REQUESTED)
             ->count();
 
         $upcomingAssigned = $this->assignedAppointments()
             ->with(['customer', 'pet', 'service', 'veterinarian'])
             ->where('scheduled_at', '>=', $today)
-            ->whereIn('status', ['approved', 'scheduled', 'in_progress', 'treated', 'awaiting_payment'])
+            ->whereIn('status', VeterinaryStatus::QUEUE)
             ->orderBy('scheduled_at')
             ->limit(5)
             ->get();
@@ -66,7 +70,7 @@ class DashboardController extends Controller
         return response()->json([
             'today_appointments' => $todayAssigned,
             'approved_appointments' => $this->assignedAppointments()
-                ->whereIn('status', ['approved', 'scheduled'])
+                ->where('status', Appointment::STATUS_SCHEDULED)
                 ->count(),
             'pending_appointments' => $pendingAssigned,
             'completed_appointments' => $this->assignedAppointments()
@@ -83,7 +87,7 @@ class DashboardController extends Controller
                 ->with('service')
                 ->selectRaw('service_id, count(*) as count')
                 ->whereMonth('scheduled_at', $today->month)
-                ->whereIn('status', ['approved', 'scheduled', 'in_progress', 'treated', 'awaiting_payment', 'completed'])
+                ->whereIn('status', [...VeterinaryStatus::QUEUE, 'completed'])
                 ->groupBy('service_id')
                 ->get(),
         ]);
@@ -93,11 +97,14 @@ class DashboardController extends Controller
     {
         // Regular veterinarians only see appointments assigned to them
         // (i.e., ones that receptionist has approved and assigned);
-        // admin sees the full board.
+        // admin sees the full board. Emergencies first, then earliest
+        // check-in so waiting patients surface ahead of future bookings.
         return response()->json(
             $this->assignedAppointments()
                 ->with(['customer', 'pet', 'service', 'veterinarian'])
-                ->whereIn('status', ['approved', 'scheduled', 'in_progress', 'in_consultation', 'needs_confinement', 'treated', 'awaiting_payment'])
+                ->whereIn('status', VeterinaryStatus::QUEUE)
+                ->orderByDesc('emergency')
+                ->orderBy('checked_in_at')
                 ->orderBy('scheduled_at')
                 ->get()
         );
@@ -116,9 +123,11 @@ class DashboardController extends Controller
 
     public function appointment($id)
     {
-        $appointment = $this->assignedAppointments()
-            ->with(['customer', 'pet', 'service', 'veterinarian'])
-            ->findOrFail($id);
+        // Visit detail is clinical history: readable by any veterinary staff,
+        // with access by non-assigned vets logged. Writes stay assignment-scoped.
+        $appointment = Appointment::with(['customer', 'pet', 'service', 'veterinarian'])->findOrFail($id);
+
+        ClinicalAccessLogger::record(Auth::user(), 'appointment', (int) $appointment->id, (int) $appointment->veterinarian_id === (int) Auth::id());
 
         return response()->json([
             'appointment' => $appointment,
@@ -308,7 +317,48 @@ class DashboardController extends Controller
             ->all();
 
         $totalAmount = (float) ($billing['total_bill'] ?? $appointment->price ?? 0);
-        $vatAmount = EmailContent::vatInclusivePortion($totalAmount);
+
+        $paymentRequestIds = ServiceBillingPaymentRequest::where('appointment_id', $appointment->id)->pluck('id');
+        $settlementQuery = PaymentSettlement::query()
+            ->where(function ($query) use ($appointment, $paymentRequestIds) {
+                $query->where(function ($appointmentQuery) use ($appointment) {
+                    $appointmentQuery->where('settleable_type', 'appointment')
+                        ->where('settleable_id', $appointment->id);
+                });
+
+                if ($paymentRequestIds->isNotEmpty()) {
+                    $query->orWhere(function ($billingQuery) use ($paymentRequestIds) {
+                        $billingQuery->where('settleable_type', 'service_billing_payment')
+                            ->whereIn('settleable_id', $paymentRequestIds);
+                    });
+                }
+            });
+
+        $paidSettlements = (clone $settlementQuery)
+            ->where('status', PaymentSettlement::STATUS_PAID)
+            ->orderBy('paid_at')
+            ->get();
+        $reversedSettlements = (clone $settlementQuery)
+            ->whereIn('status', [PaymentSettlement::STATUS_VOIDED, PaymentSettlement::STATUS_REFUNDED])
+            ->orderBy('paid_at')
+            ->get();
+
+        if ($paidSettlements->isEmpty() && ($appointment->payment_status ?? null) === 'paid') {
+            $paidSettlements = collect([[
+                'method' => $appointment->payment_method,
+                'amount' => (float) ($billing['total_paid'] ?? $totalAmount),
+                'reference_number' => $appointment->reference_number ?? $appointment->payment_reference ?? null,
+                'receipt_number' => $appointment->receipt_number,
+                'paid_at' => $appointment->paid_at,
+            ]]);
+        }
+
+        $breakdown = ReceiptBreakdown::build(
+            $totalAmount,
+            $paidSettlements,
+            (float) ($billing['discount_total'] ?? 0),
+            $reversedSettlements
+        );
 
         return response()->json([
             'receipt' => [
@@ -320,17 +370,17 @@ class DashboardController extends Controller
                 'service_category' => $appointment->service?->category,
                 'vet_name' => $appointment->veterinarian?->name ?? 'Unassigned',
                 'amount' => $baseAmount,
-                'net_amount' => $vatAmount !== null ? round($totalAmount - $vatAmount, 2) : null,
-                'vat_amount' => $vatAmount,
-                'vat_rate' => 0.12,
+                'net_amount' => $breakdown['net_amount'],
+                'vat_amount' => $breakdown['vat_amount'],
+                'vat_rate' => $breakdown['vat_rate'],
                 'subtotal' => $totalAmount,
-                'total' => $totalAmount,
+                'total' => $breakdown['total'],
                 'additional_services' => $additionalServices,
                 'receipt_number' => $appointment->receipt_number,
                 'paid_date' => $appointment->paid_at,
                 'payment_method' => $appointment->payment_method ?? 'cash',
                 'status' => $appointment->payment_status ?? 'pending',
-                'balance_due' => (float) ($billing['balance_due'] ?? 0),
+                'balance_due' => (float) ($billing['balance_due'] ?? $breakdown['balance_due']),
                 'notes' => $appointment->notes,
                 'tax' => $breakdown['vat_amount'],
                 'breakdown' => $breakdown,

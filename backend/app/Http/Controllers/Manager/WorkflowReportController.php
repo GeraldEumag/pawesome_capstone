@@ -71,12 +71,17 @@ class WorkflowReportController extends Controller
 
     public function veterinaryServices(): JsonResponse
     {
+        // Visit status vocabulary: requested → scheduled → checked_in
+        // → in_consultation → clinical_complete → checkout → completed.
         return response()->json([
             'summary' => [
                 'consultations' => Appointment::count(),
-                'scheduled' => Appointment::whereIn('status', ['approved', 'scheduled'])->count(),
-                'in_consultation' => Appointment::whereIn('status', ['in_progress', 'in_consultation'])->count(),
-                'needs_confinement' => Appointment::where('status', 'needs_confinement')->count(),
+                'requested' => Appointment::where('status', 'requested')->count(),
+                'scheduled' => Appointment::where('status', 'scheduled')->count(),
+                'in_intake' => Appointment::whereIn('status', \App\Support\VeterinaryStatus::INTAKE)->count(),
+                'in_consultation' => Appointment::whereIn('status', \App\Support\VeterinaryStatus::STARTED)->count(),
+                'awaiting_checkout' => Appointment::whereIn('status', ['clinical_complete', 'checkout'])->count(),
+                'confinement_recommended' => Appointment::where('confinement_recommended', true)->count(),
                 'completed' => Appointment::where('status', 'completed')->count(),
             ],
             'consultations' => Appointment::with(['customer', 'pet', 'veterinarian', 'medicalConfinements'])

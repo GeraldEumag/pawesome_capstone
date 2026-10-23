@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
-  faSync,
   faChartLine,
   faLightbulb,
   faChartArea,
@@ -120,9 +119,6 @@ const PredictiveAnalytics = () => {
             <option value={60}>60 Days</option>
             <option value={90}>90 Days</option>
           </select>
-          <button className="adv-refresh-btn" onClick={fetchData}>
-            <FontAwesomeIcon icon={faSync} /> Refresh
-          </button>
         </div>
       </div>
 

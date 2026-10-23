@@ -343,3 +343,141 @@
     border-right: none;
   }
 }
+
+/* ── Cashier handoff banner ─────────────────────────────────── */
+
+.vet-billing-page .billing-handoff {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 16px 18px;
+  border-radius: var(--radius-lg, 14px);
+  border: 1px solid var(--color-border, #eadfe6);
+  background: var(--color-surface-card, #ffffff);
+  margin-bottom: 18px;
+}
+
+.vet-billing-page .billing-handoff-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  flex: 0 0 auto;
+  border-radius: 12px;
+  font-size: 1.1rem;
+  background: var(--color-surface-alt, #faf6f8);
+  color: var(--color-text-secondary, #8a7f88);
+}
+
+.vet-billing-page .billing-handoff-copy {
+  flex: 1;
+  min-width: 0;
+}
+
+.vet-billing-page .billing-handoff-copy strong {
+  display: block;
+  font-size: 0.95rem;
+  margin-bottom: 2px;
+}
+
+.vet-billing-page .billing-handoff-copy p {
+  margin: 0;
+  font-size: 0.82rem;
+  color: var(--color-text-secondary, #8a7f88);
+  line-height: 1.45;
+}
+
+.vet-billing-page .billing-handoff--warning {
+  border-color: var(--color-warning-border, #f0d9a8);
+  background: var(--color-warning-bg, #fdf6e8);
+}
+
+.vet-billing-page .billing-handoff--warning .billing-handoff-icon {
+  background: rgba(217, 119, 6, 0.12);
+  color: var(--color-warning-text, #b45309);
+}
+
+.vet-billing-page .billing-handoff--send {
+  border-color: rgba(219, 39, 119, 0.28);
+  background: linear-gradient(135deg, rgba(219, 39, 119, 0.06), rgba(219, 39, 119, 0.02));
+}
+
+.vet-billing-page .billing-handoff--send .billing-handoff-icon {
+  background: rgba(219, 39, 119, 0.12);
+  color: var(--vet-primary, #db2777);
+}
+
+.vet-billing-page .billing-handoff--sent {
+  border-color: var(--color-info-border, #bfd7f5);
+  background: var(--color-info-bg, #eef5ff);
+}
+
+.vet-billing-page .billing-handoff--sent .billing-handoff-icon {
+  background: rgba(29, 91, 176, 0.12);
+  color: var(--color-info-text, #1d5bb0);
+}
+
+.vet-billing-page .billing-handoff--done {
+  border-color: var(--color-success-border, #b7e3c8);
+  background: var(--color-success-bg, #e9f8ef);
+}
+
+.vet-billing-page .billing-handoff--done .billing-handoff-icon {
+  background: rgba(29, 122, 70, 0.12);
+  color: var(--color-success-text, #1d7a46);
+}
+
+.vet-billing-page .billing-send-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 11px 22px;
+  border-radius: 999px;
+  border: none;
+  background: linear-gradient(135deg, var(--vet-primary, #db2777), var(--vet-primary-dark, #be185d));
+  color: #ffffff;
+  font-size: 0.88rem;
+  font-weight: 700;
+  cursor: pointer;
+  white-space: nowrap;
+  box-shadow: 0 6px 18px rgba(219, 39, 119, 0.3);
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.vet-billing-page .billing-send-btn:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 26px rgba(219, 39, 119, 0.4);
+}
+
+.vet-billing-page .billing-send-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.vet-billing-page .billing-send-btn--muted {
+  background: var(--color-surface-card, #ffffff);
+  color: var(--color-text-primary, #4a3a44);
+  border: 1px solid var(--color-border, #eadfe6);
+  box-shadow: none;
+}
+
+.vet-billing-page .billing-send-btn--muted:hover:not(:disabled) {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+}
+
+@media (max-width: 640px) {
+  .vet-billing-page .billing-handoff {
+    flex-direction: column;
+    align-items: stretch;
+    text-align: center;
+  }
+
+  .vet-billing-page .billing-handoff-icon {
+    margin: 0 auto;
+  }
+
+  .vet-billing-page .billing-send-btn {
+    justify-content: center;
+  }
+}

@@ -8,7 +8,6 @@ import {
   faCalendarAlt,
   faNotesMedical,
   faExclamationTriangle,
-  faSync,
   faUser,
 } from "@fortawesome/free-solid-svg-icons";
 
@@ -91,11 +90,6 @@ const VeterinaryCurrentBoarders = () => {
             <FontAwesomeIcon icon={faHotel} /> Pet Hotel Boarders
           </h1>
           <p>View and monitor all pets currently staying at the hotel</p>
-        </div>
-        <div className="header-actions">
-          <button className="btn-primary" onClick={fetchBoarders}>
-            <FontAwesomeIcon icon={faSync} /> Refresh
-          </button>
         </div>
       </div>
 

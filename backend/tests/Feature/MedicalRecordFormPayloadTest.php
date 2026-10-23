@@ -26,7 +26,7 @@ class MedicalRecordFormPayloadTest extends TestCase
             'pet_id' => $pet->id,
             'service_id' => $service->id,
             'veterinarian_id' => $vet->id,
-            'status' => 'approved',
+            'status' => 'scheduled',
             'scheduled_at' => Carbon::now()->addDay(),
         ]);
         $headers = ['Authorization' => 'Bearer ' . $vet->createToken('medical-record-form')->plainTextToken];

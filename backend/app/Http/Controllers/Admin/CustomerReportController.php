@@ -220,20 +220,56 @@ class CustomerReportController extends Controller
         }
 
         $filename = 'customer_reports_' . date('Y-m-d_H-i-s') . '.csv';
-        
-        $callback = function () use ($data) {
+        $preparedBy = optional($request->user())->name ?: 'Authorized Staff';
+        $preparedRole = optional($request->user())->role ?: 'Report Preparer';
+        $docRef = 'CUSTOMER-REPORTS-' . date('Ymd');
+        $recordCount = count($data['data']['customers'] ?? []);
+
+        $callback = function () use ($data, $preparedBy, $preparedRole, $docRef, $recordCount) {
             $file = fopen('php://output', 'w');
-            
+
+            // Wrap long single-cell lines — an oversized column A pushes every
+            // other column off the printed page when the CSV is opened.
+            $putLine = function ($text) use ($file) {
+                foreach (explode("\n", wordwrap((string) $text, 80, "\n", false)) as $line) {
+                    fputcsv($file, [$line]);
+                }
+            };
+
+            // Formal report letterhead and document-control block — mirrors the
+            // structure used by the client-side PDF/CSV/Excel exports.
+            $putLine('Pawesome Retreat Inc.');
+            $putLine('Professional Veterinary & Pet Hotel Services');
+            $putLine('Aldana Street, San Isidro Village, Las Piñas City, Philippines 1740');
+            $putLine('pawesomeretreat24@gmail.com | (02) 8XXX-XXXX');
+            fputcsv($file, []);
+            $putLine('Customer Reports');
+            $putLine('Customer Reports — detailed business report');
+            fputcsv($file, []);
+            fputcsv($file, ['Document Reference', $docRef]);
+            fputcsv($file, ['Reporting Period', 'As of issue date']);
+            fputcsv($file, ['Generated', now()->format('M d, Y h:i A')]);
+            fputcsv($file, ['Prepared By', $preparedBy]);
+            fputcsv($file, ['Prepared Role', $preparedRole]);
+            fputcsv($file, ['Records Included', $recordCount]);
+            fputcsv($file, []);
+            $putLine('REPORT SUMMARY');
+            fputcsv($file, ['Metric', 'Value']);
+            fputcsv($file, ['Records Included', $recordCount]);
+            fputcsv($file, ['Report Status', $recordCount > 0 ? 'Generated' : 'No Records']);
+            fputcsv($file, []);
+            $putLine('DETAILED RECORDS');
+
             // Define CSV headers
             $headers = [
                 'Customer ID', 'Name', 'Email', 'Phone', 'Status',
                 'Total Orders', 'Total Order Amount', 'Total Payments', 'Balance',
                 'Last Order Date', 'Loyalty Points', 'Pets Count'
             ];
-            
+
             // Add CSV headers
             fputcsv($file, $headers);
-            
+
             // Add customer data (sanitize user-controlled text against CSV
             // formula injection — values starting with = + - @ tab/CR would
             // otherwise execute as formulas when opened in Excel)
@@ -253,7 +289,23 @@ class CustomerReportController extends Controller
                     $customer['pets_count'],
                 ]);
             }
-            
+
+            fputcsv($file, []);
+            $putLine('FINDINGS & RECOMMENDATIONS');
+            $putLine("1. Finding: {$recordCount} record(s) are included in the detailed schedule for this report. Review the underlying source records and supporting documentation before approval.");
+            $putLine('2. Recommendation: Retain this report with its source records and obtain the required review and approval signatures.');
+            fputcsv($file, []);
+            $putLine('CERTIFICATION & SIGNATURES');
+            $putLine('I certify that this report presents the records and calculations available to the organization as of the issue date. Supporting records should be retained with this report.');
+            fputcsv($file, []);
+            fputcsv($file, ['Role', 'Name', 'Designation']);
+            fputcsv($file, ['Prepared by', $preparedBy, $preparedRole]);
+            fputcsv($file, ['Reviewed by', '', 'Authorized Reviewer']);
+            fputcsv($file, ['Approved by', '', 'Approving Officer']);
+            fputcsv($file, ['Date Signed: ______________________']);
+            fputcsv($file, []);
+            $putLine("{$docRef} | Pawesome Retreat Inc. | For authorized business use");
+
             fclose($file);
         };
 

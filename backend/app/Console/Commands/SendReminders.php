@@ -48,7 +48,7 @@ class SendReminders extends Command
         $tomorrowStart = Carbon::now()->addDay()->startOfDay();
         $tomorrowEnd = Carbon::now()->addDay()->endOfDay();
 
-        $appointments = Appointment::where('status', 'approved')
+        $appointments = Appointment::where('status', 'scheduled')
             ->whereBetween('scheduled_at', [$tomorrowStart, $tomorrowEnd])
             ->where(function ($query) {
                 // Only get appointments that haven't had a 24h reminder sent

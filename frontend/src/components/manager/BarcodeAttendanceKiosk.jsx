@@ -7,7 +7,6 @@ import {
   faClock,
   faExclamationTriangle,
   faKeyboard,
-  faRefresh,
   faSignIn,
   faSignOut,
   faSpinner,
@@ -211,15 +210,7 @@ const BarcodeAttendanceKiosk = () => {
           <strong>{checkedOutToday}</strong>
           <small>Checked Out</small>
         </div>
-        <button
-          type="button"
-          className="bk-refresh-btn"
-          onClick={(e) => { e.stopPropagation(); loadTodayLog(); }}
-          disabled={logLoading}
-          title="Refresh log"
-        >
-          <FontAwesomeIcon icon={logLoading ? faSpinner : faRefresh} spin={logLoading} />
-        </button>
+        {logLoading && <FontAwesomeIcon icon={faSpinner} spin />}
       </section>
 
       {/* ── Scan Panel ───────────────────────────────────────────── */}

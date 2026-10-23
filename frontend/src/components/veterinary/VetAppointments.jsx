@@ -3,7 +3,6 @@ import { showCancellationReasonPrompt } from "../../utils/alert.jsx";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
   faCalendarAlt,
-  faUser,
   faPaw,
   faStethoscope,
   faEdit,
@@ -17,16 +16,18 @@ import {
   faEye,
   faCircleCheck,
   faPlay,
-  faNotesMedical,
   faFilter,
   faCalendarDay,
   faChartLine,
   faXmark,
   faMoneyBillWave,
+  faClipboardCheck,
 } from "@fortawesome/free-solid-svg-icons";
-import { NavLink, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
 import { apiRequest } from "../../api/client";
+import StandardTable from "../shared/StandardTable";
+import { VET_CANCEL_RESTRICTED_STATUSES, VET_POST_CLINICAL_STATUSES, VET_STARTABLE_STATUSES, VET_STARTED_STATUSES } from "./vetStatus";
 import "./theme.css";
 import "../../styles/bookingModal.css";
 import "./VetAppointments.css";
@@ -44,6 +45,7 @@ const VetAppointments = () => {
   const mountedRef = useRef(true);
   const fetchAbortRef = useRef(null);
   const [appointments, setAppointments] = useState([]);
+  const [historyAppointments, setHistoryAppointments] = useState([]);
   const [selectedAppointment, setSelectedAppointment] = useState(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -52,6 +54,8 @@ const VetAppointments = () => {
   const [filter, setFilter] = useState("all");
   const [searchTerm, setSearchTerm] = useState("");
   const [lastUpdated, setLastUpdated] = useState(new Date());
+  const [sortKey, setSortKey] = useState("scheduledAt");
+  const [sortDirection, setSortDirection] = useState("asc");
 
   const safeArray = (value) => {
     if (Array.isArray(value)) return value;
@@ -99,7 +103,7 @@ const VetAppointments = () => {
   };
 
   const normalizeStatus = (status) => {
-    return String(status || "pending").toLowerCase().replace(/\s+/g, "_");
+    return String(status || "requested").toLowerCase().replace(/\s+/g, "_");
   };
 
   const transformAppointment = useCallback((apt) => {
@@ -171,13 +175,22 @@ const VetAppointments = () => {
         setRefreshing(true);
       }
 
-      const data = await apiRequest("/veterinary/appointments", { signal });
+      const [data, historyData] = await Promise.all([
+        apiRequest("/veterinary/appointments", { signal }),
+        apiRequest("/veterinary/history?status=completed,cancelled&per_page=500", {
+          signal,
+        }).catch(() => null),
+      ]);
       const appointmentsData = safeArray(data);
       const transformedAppointments = appointmentsData.map(transformAppointment);
+      const transformedHistory = safeArray(historyData).map(transformAppointment);
 
       if (!mountedRef.current || signal?.aborted) return;
 
       setAppointments(transformedAppointments);
+      if (historyData !== null) {
+        setHistoryAppointments(transformedHistory);
+      }
       setLastUpdated(new Date());
       setError("");
     } catch (err) {
@@ -218,11 +231,15 @@ const VetAppointments = () => {
 
   const statusOptions = useMemo(
     () => [
-      { key: "all", label: "All" },
-      { key: "pending", label: "Incoming" },
-      { key: "approved", label: "Approved" },
-      { key: "in_progress", label: "Ongoing" },
-      { key: "awaiting_payment", label: "Consultation Done" },
+      { key: "all", label: "All Active" },
+      { key: "requested", label: "Incoming" },
+      { key: "scheduled", label: "Scheduled" },
+      { key: "checked_in", label: "Checked In" },
+      { key: "in_consultation", label: "In Consultation" },
+      { key: "in_treatment", label: "In Treatment" },
+      { key: "awaiting_results", label: "Awaiting Results" },
+      { key: "clinical_complete", label: "Clinical Complete" },
+      { key: "checkout", label: "At Checkout" },
       { key: "completed", label: "Completed" },
       { key: "cancelled", label: "Cancelled" },
     ],
@@ -230,28 +247,26 @@ const VetAppointments = () => {
   );
 
   const statusCounts = useMemo(() => {
-    return appointments.reduce(
-      (acc, appointment) => {
-        acc.all += 1;
-        acc[appointment.status] = (acc[appointment.status] || 0) + 1;
-        return acc;
-      },
-      {
-        all: 0,
-        pending: 0,
-        approved: 0,
-        in_progress: 0,
-        awaiting_payment: 0,
-        completed: 0,
-        cancelled: 0,
-      }
-    );
-  }, [appointments]);
+    const counts = { all: appointments.length };
+
+    appointments.forEach((appointment) => {
+      counts[appointment.status] = (counts[appointment.status] || 0) + 1;
+    });
+    historyAppointments.forEach((appointment) => {
+      counts[appointment.status] = (counts[appointment.status] || 0) + 1;
+    });
+
+    return counts;
+  }, [appointments, historyAppointments]);
 
   const filteredAppointments = useMemo(() => {
     const keyword = searchTerm.trim().toLowerCase();
+    const source =
+      filter === "completed" || filter === "cancelled"
+        ? historyAppointments
+        : appointments;
 
-    return appointments.filter((appointment) => {
+    return source.filter((appointment) => {
       const matchesFilter = filter === "all" || appointment.status === filter;
 
       const searchableText = [
@@ -274,20 +289,38 @@ const VetAppointments = () => {
 
       return matchesFilter && matchesSearch;
     });
-  }, [appointments, filter, searchTerm]);
+  }, [appointments, historyAppointments, filter, searchTerm]);
+
+  const handleSort = useCallback((key, direction) => {
+    setSortKey(key);
+    setSortDirection(direction);
+  }, []);
+
+  const sortedAppointments = useMemo(() => {
+    if (!sortKey) return filteredAppointments;
+    const direction = sortDirection === "desc" ? -1 : 1;
+    return [...filteredAppointments].sort((a, b) => {
+      const va = a[sortKey] ?? "";
+      const vb = b[sortKey] ?? "";
+      return direction * String(va).localeCompare(String(vb), undefined, { numeric: true });
+    });
+  }, [filteredAppointments, sortKey, sortDirection]);
 
   const todayKey = new Date().toISOString().split("T")[0];
 
   const dashboardStats = useMemo(() => {
     const todayCount = appointments.filter((item) => item.dateKey === todayKey).length;
-    const completedCount = appointments.filter((item) => item.status === "completed").length;
-    const pendingCount = appointments.filter((item) => item.status === "pending").length;
-    const approvedCount = appointments.filter((item) => item.status === "approved").length;
-    const ongoingCount = appointments.filter((item) => item.status === "in_progress").length;
-    const awaitingPaymentCount = appointments.filter((item) => item.status === "awaiting_payment").length;
+    const completedCount = historyAppointments.filter(
+      (item) => item.status === "completed"
+    ).length;
+    const pendingCount = appointments.filter((item) => item.status === "requested").length;
+    const approvedCount = appointments.filter((item) => item.status === "scheduled").length;
+    const ongoingCount = appointments.filter((item) => VET_STARTED_STATUSES.includes(item.status)).length;
+    const awaitingPaymentCount = appointments.filter((item) => item.status === "checkout").length;
+    const totalVisits = appointments.length + historyAppointments.length;
     const completionRate =
-      appointments.length > 0
-        ? Math.round((completedCount / appointments.length) * 100)
+      totalVisits > 0
+        ? Math.round((completedCount / totalVisits) * 100)
         : 0;
 
     return {
@@ -299,15 +332,22 @@ const VetAppointments = () => {
       awaitingPaymentCount,
       completionRate,
     };
-  }, [appointments, todayKey]);
+  }, [appointments, historyAppointments, todayKey]);
 
   const getStatusIcon = (status) => {
     switch (status) {
-      case "approved":
+      case "scheduled":
         return faCheckCircle;
-      case "in_progress":
+      case "checked_in":
+        return faCircleCheck;
+      case "in_consultation":
+      case "in_treatment":
         return faPlay;
-      case "awaiting_payment":
+      case "awaiting_results":
+        return faSpinner;
+      case "clinical_complete":
+        return faClipboardCheck;
+      case "checkout":
         return faMoneyBillWave;
       case "completed":
         return faCircleCheck;
@@ -315,7 +355,7 @@ const VetAppointments = () => {
       case "canceled":
       case "rejected":
         return faTimesCircle;
-      case "pending":
+      case "requested":
       default:
         return faClock;
     }
@@ -323,15 +363,24 @@ const VetAppointments = () => {
 
   const getStatusLabel = (status) => {
     switch (status) {
-      case "in_progress":
+      case "requested":
+        return "Requested";
+      case "checked_in":
+        return "Checked In";
       case "in_consultation":
-        return "Ongoing";
-      case "awaiting_payment":
-        return "Consultation Done";
+        return "In Consultation";
+      case "in_treatment":
+        return "In Treatment";
+      case "awaiting_results":
+        return "Awaiting Results";
+      case "clinical_complete":
+        return "Clinical Complete";
+      case "checkout":
+        return "At Checkout";
       case "no_show":
         return "No Show";
       default:
-        return String(status || "Pending")
+        return String(status || "Requested")
           .replace(/_/g, " ")
           .replace(/\b\w/g, (char) => char.toUpperCase());
     }
@@ -346,7 +395,7 @@ const VetAppointments = () => {
     try {
       setActionLoadingId(`${appointmentId}-${nextStatus}`);
 
-      if (nextStatus === "in_progress") {
+      if (nextStatus === "in_consultation") {
         await apiRequest(`/veterinary/appointments/${appointmentId}/start`, {
           method: "POST",
           body: JSON.stringify({ notes: "Appointment started by veterinarian" }),
@@ -364,7 +413,7 @@ const VetAppointments = () => {
       toast.success(`Appointment marked as ${getStatusLabel(nextStatus)}.`);
       await fetchAppointments({ silent: true });
 
-      if (nextStatus === "in_progress") {
+      if (nextStatus === "in_consultation") {
         navigate(`/veterinary/appointments/${appointmentId}/consult`);
       }
     } catch (err) {
@@ -398,31 +447,165 @@ const VetAppointments = () => {
     });
   };
 
-  const completeAppointment = async (appointmentId) => {
-    try {
-      setActionLoadingId(`${appointmentId}-complete`);
-      await apiRequest(`/veterinary/appointments/${appointmentId}/complete`, {
-        method: "POST",
-      });
-      toast.success("Appointment completed and moved to history.");
-      setSelectedAppointment(null);
-      await fetchAppointments({ silent: true });
-    } catch (err) {
-      console.error("Failed to complete appointment:", err);
-      toast.error(
-        err?.response?.data?.message ||
-          err?.message ||
-          "Failed to complete appointment."
-      );
-    } finally {
-      setActionLoadingId(null);
-    }
-  };
+  const appointmentColumns = useMemo(
+    () => [
+      {
+        key: "scheduledAt",
+        label: "Schedule",
+        sortable: true,
+        render: (_value, apt) => (
+          <div className="apt-cell-stack">
+            <strong>{apt.date}</strong>
+            <small>{apt.time}</small>
+          </div>
+        ),
+      },
+      {
+        key: "pet",
+        label: "Patient",
+        sortable: true,
+        render: (_value, apt) => (
+          <div className="apt-cell-stack">
+            <strong>
+              <FontAwesomeIcon icon={faPaw} /> {apt.pet}
+            </strong>
+            <small>
+              {apt.species}
+              {apt.breed ? ` · ${apt.breed}` : ""}
+            </small>
+          </div>
+        ),
+      },
+      {
+        key: "owner",
+        label: "Owner",
+        sortable: true,
+        render: (_value, apt) => (
+          <div className="apt-cell-stack">
+            <strong>{apt.owner}</strong>
+            <small>{apt.ownerPhone}</small>
+          </div>
+        ),
+      },
+      { key: "service", label: "Service" },
+      {
+        key: "status",
+        label: "Status",
+        sortable: true,
+        render: (_value, apt) => {
+          const isUnassignedPending =
+            apt.status === "requested" &&
+            !apt.raw?.veterinarian_id &&
+            apt.raw?.veterinarian_id !== 0;
+          return (
+            <span className={`appointment-status ${apt.status}`}>
+              <FontAwesomeIcon icon={getStatusIcon(apt.status)} />
+              {isUnassignedPending ? "Incoming" : getStatusLabel(apt.status)}
+              {isUnassignedPending && <em className="apt-unassigned">Unassigned</em>}
+            </span>
+          );
+        },
+      },
+      {
+        key: "paymentStatus",
+        label: "Payment",
+        render: (_value, apt) => (
+          <span className={`apt-pay-badge apt-pay-badge--${apt.paymentStatus || "unpaid"}`}>
+            {String(apt.paymentStatus || "unpaid").replace(/_/g, " ")}
+          </span>
+        ),
+      },
+      {
+        key: "actions",
+        label: "Actions",
+        render: (_value, appointment) => {
+          const isCompleted = appointment.status === "completed";
+          const isCancelled = ["cancelled", "canceled", "rejected"].includes(
+            appointment.status
+          );
+          const isUnassignedPending =
+            appointment.status === "requested" &&
+            !appointment.raw?.veterinarian_id &&
+            appointment.raw?.veterinarian_id !== 0;
+          const canStart = VET_STARTABLE_STATUSES.includes(appointment.status);
+          const canConsult = VET_STARTED_STATUSES.includes(appointment.status);
+          const isPostClinical = VET_POST_CLINICAL_STATUSES.includes(
+            appointment.status
+          );
 
-  const handleRefresh = () => {
-    fetchAppointments({ silent: true });
-    toast.success("Appointments refreshed.");
-  };
+          return (
+            <>
+              <button
+                className="action-btn view-btn"
+                type="button"
+                onClick={() => setSelectedAppointment(appointment)}
+              >
+                <FontAwesomeIcon icon={faEye} /> View
+              </button>
+              {!isUnassignedPending && (
+                <>
+                  <button
+                    className="action-btn start-btn"
+                    type="button"
+                    disabled={
+                      !canStart ||
+                      actionLoadingId === `${appointment.id}-in_consultation`
+                    }
+                    onClick={() =>
+                      updateAppointmentStatus(appointment.id, "in_consultation")
+                    }
+                  >
+                    <FontAwesomeIcon icon={faPlay} /> Start
+                  </button>
+                  <button
+                    className="action-btn complete-btn"
+                    type="button"
+                    disabled={!canConsult && !isPostClinical}
+                    title={
+                      isPostClinical && appointment.status !== "completed"
+                        ? "Closes automatically once the cashier verifies payment"
+                        : undefined
+                    }
+                    onClick={() =>
+                      navigate(`/veterinary/appointments/${appointment.id}/consult`)
+                    }
+                  >
+                    <FontAwesomeIcon icon={faCircleCheck} />
+                    {isPostClinical ? "View Consultation" : "Consult"}
+                  </button>
+                  <button
+                    className="action-btn edit-btn"
+                    type="button"
+                    disabled={isPostClinical}
+                    onClick={() =>
+                      navigate(`/veterinary/appointments/${appointment.id}/edit`)
+                    }
+                  >
+                    <FontAwesomeIcon icon={faEdit} /> Edit
+                  </button>
+                  <button
+                    className="action-btn delete-btn"
+                    type="button"
+                    disabled={
+                      isCompleted ||
+                      isCancelled ||
+                      VET_CANCEL_RESTRICTED_STATUSES.includes(appointment.status)
+                    }
+                    onClick={() => cancelAppointment(appointment.id)}
+                  >
+                    <FontAwesomeIcon icon={faTrash} /> Cancel
+                  </button>
+                </>
+              )}
+            </>
+          );
+        },
+      },
+    ],
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [actionLoadingId, navigate]
+  );
+
 
   if (loading) {
     return (
@@ -450,14 +633,7 @@ const VetAppointments = () => {
           <p>Manage veterinary consultations, monitor schedules, and update appointment status.</p>
         </div>
         <div className="appointments-header-actions">
-          <button
-            className={`refresh-appointments-btn${refreshing ? " refreshing" : ""}`}
-            onClick={handleRefresh}
-            disabled={refreshing}
-          >
-            <FontAwesomeIcon icon={faRotateRight} />
-            {refreshing ? "Refreshing..." : "Refresh"}
-          </button>
+          {refreshing && <FontAwesomeIcon icon={faRotateRight} spin />}
         </div>
       </div>
 
@@ -484,7 +660,7 @@ const VetAppointments = () => {
             <FontAwesomeIcon icon={faClock} />
           </div>
           <div>
-            <h3>Pending</h3>
+            <h3>Incoming</h3>
             <div className="today-count">{dashboardStats.pendingCount} waiting</div>
           </div>
         </div>
@@ -494,7 +670,7 @@ const VetAppointments = () => {
             <FontAwesomeIcon icon={faCheckCircle} />
           </div>
           <div>
-            <h3>Approved</h3>
+            <h3>Scheduled</h3>
             <div className="today-count">{dashboardStats.approvedCount} ready</div>
           </div>
         </div>
@@ -557,178 +733,23 @@ const VetAppointments = () => {
         </div>
       </div>
 
-      <div className="appointments-grid">
-        {filteredAppointments.map((appointment) => {
-          const isCompleted = appointment.status === "completed";
-          const isCancelled =
-            appointment.status === "cancelled" ||
-            appointment.status === "canceled" ||
-            appointment.status === "rejected";
-
-          const isUnassignedPending =
-            appointment.status === "pending" &&
-            (!appointment.raw?.veterinarian_id && appointment.raw?.veterinarian_id !== 0);
-
-          const canStart = ["approved", "scheduled"].includes(appointment.status);
-          const canConsult = ["in_progress", "treated"].includes(appointment.status);
-
-          return (
-            <div className="appointment-card" key={appointment.id || `${appointment.pet}-${appointment.time}`}>
-              <div className="appointment-header">
-                <div className="appointment-info">
-                  <h3>
-                    <FontAwesomeIcon icon={faPaw} />
-                    {appointment.pet}
-                  </h3>
-                  <p>
-                    <FontAwesomeIcon icon={faUser} />
-                    {appointment.owner}
-                  </p>
-                </div>
-                <span className={`appointment-status ${appointment.status}`}>
-                  <FontAwesomeIcon icon={getStatusIcon(appointment.status)} />
-                  {isUnassignedPending ? "Incoming" : getStatusLabel(appointment.status)}
-                </span>
-                {isUnassignedPending && (
-                  <span style={{ fontSize: "11px", fontWeight: 600, color: "var(--veterinary-warning)", marginLeft: "8px" }}>
-                    Unassigned
-                  </span>
-                )}
-              </div>
-
-              <div className="appointment-details">
-                <div className="detail-item">
-                  <FontAwesomeIcon icon={faCalendarAlt} />
-                  <div>
-                    <strong>Date &amp; Time</strong>
-                    <p>{appointment.date} at {appointment.time}</p>
-                  </div>
-                </div>
-
-                <div className="detail-item">
-                  <FontAwesomeIcon icon={faStethoscope} />
-                  <div>
-                    <strong>Service</strong>
-                    <p>{appointment.service}</p>
-                  </div>
-                </div>
-
-                <div className="detail-item">
-                  <FontAwesomeIcon icon={faPaw} />
-                  <div>
-                    <strong>Patient</strong>
-                    <p>{appointment.species} • {appointment.breed}</p>
-                  </div>
-                </div>
-
-                {appointment.price && (
-                  <div className="detail-item">
-                    <FontAwesomeIcon icon={faMoneyBillWave} />
-                    <div>
-                      <strong>Price</strong>
-                      <p>₱{Number(appointment.price).toFixed(2)}</p>
-                    </div>
-                  </div>
-                )}
-
-                {appointment.notes && (
-                  <div className="detail-item notes">
-                    <FontAwesomeIcon icon={faNotesMedical} />
-                    <div>
-                      <strong>Notes</strong>
-                      <p>{appointment.notes}</p>
-                    </div>
-                  </div>
-                )}
-              </div>
-
-              <div className="appointment-actions">
-                <button
-                  className="action-btn view-btn"
-                  type="button"
-                  onClick={() => setSelectedAppointment(appointment)}
-                >
-                  <FontAwesomeIcon icon={faEye} /> View
-                </button>
-
-                {!isUnassignedPending && (
-                  <>
-                    <button
-                      className="action-btn start-btn"
-                      type="button"
-                      disabled={!canStart || actionLoadingId === `${appointment.id}-in_progress`}
-                      onClick={() => updateAppointmentStatus(appointment.id, "in_progress")}
-                    >
-                      <FontAwesomeIcon icon={faPlay} /> Start
-                    </button>
-
-                    <button
-                      className="action-btn complete-btn"
-                      type="button"
-                      disabled={!canConsult && appointment.status !== "awaiting_payment"}
-                      onClick={() => navigate(`/veterinary/appointments/${appointment.id}/consult`)}
-                    >
-                      <FontAwesomeIcon icon={faCircleCheck} />
-                      {appointment.status === "awaiting_payment" ? "View Consultation" : "Consult"}
-                    </button>
-
-                    {appointment.status === "awaiting_payment" && (
-                      <button
-                        className="action-btn complete-btn"
-                        type="button"
-                        disabled={
-                          appointment.paymentStatus !== "paid" ||
-                          actionLoadingId === `${appointment.id}-complete`
-                        }
-                        title={
-                          appointment.paymentStatus !== "paid"
-                            ? "Waiting for cashier to verify payment"
-                            : "Mark this appointment as completed"
-                        }
-                        onClick={() => completeAppointment(appointment.id)}
-                      >
-                        <FontAwesomeIcon icon={faCheckCircle} /> Complete
-                      </button>
-                    )}
-
-                    <NavLink
-                      className="action-btn edit-btn"
-                      to={`/veterinary/appointments/${appointment.id}/edit`}
-                      style={{
-                        pointerEvents: ["awaiting_payment", "completed"].includes(appointment.status) ? "none" : "auto",
-                        opacity: ["awaiting_payment", "completed"].includes(appointment.status) ? 0.5 : 1,
-                      }}
-                    >
-                      <FontAwesomeIcon icon={faEdit} /> Edit
-                    </NavLink>
-
-                    <button
-                      className="action-btn delete-btn"
-                      type="button"
-                      disabled={isCompleted || isCancelled || appointment.status === "awaiting_payment"}
-                      onClick={() => cancelAppointment(appointment.id)}
-                    >
-                      <FontAwesomeIcon icon={faTrash} /> Cancel
-                    </button>
-                  </>
-                )}
-              </div>
-            </div>
-          );
-        })}
-      </div>
-
-      {filteredAppointments.length === 0 && (
-        <div className="no-appointments">
-          <FontAwesomeIcon icon={faCalendarAlt} />
-          <h3>No appointments found</h3>
-          <p>
-            {searchTerm
+      <div className="apt-table-wrap">
+        <StandardTable
+          data={sortedAppointments}
+          columns={appointmentColumns}
+          sortKey={sortKey}
+          sortDirection={sortDirection}
+          onSort={handleSort}
+          pageSize={15}
+          compact
+          emptyMessage={
+            searchTerm
               ? "Try another pet name, owner name, service, or status."
-              : "No appointments match the current filter."}
-          </p>
-        </div>
-      )}
+              : "No appointments match the current filter."
+          }
+          rowClassName={(apt) => (apt.raw?.emergency ? "apt-row--emergency" : "")}
+        />
+      </div>
 
       {selectedAppointment && (
         <div className="hbk-overlay" onClick={() => setSelectedAppointment(null)}>
@@ -791,8 +812,8 @@ const VetAppointments = () => {
               <button
                 className="action-btn start-btn"
                 type="button"
-                disabled={!["approved", "scheduled"].includes(selectedAppointment.status)}
-                onClick={() => updateAppointmentStatus(selectedAppointment.id, "in_progress")}
+                disabled={!VET_STARTABLE_STATUSES.includes(selectedAppointment.status)}
+                onClick={() => updateAppointmentStatus(selectedAppointment.id, "in_consultation")}
               >
                 <FontAwesomeIcon icon={faPlay} /> Start
               </button>
@@ -800,31 +821,13 @@ const VetAppointments = () => {
               <button
                 className="action-btn complete-btn"
                 type="button"
-                disabled={!["in_progress", "in_consultation", "treated", "awaiting_payment"].includes(selectedAppointment.status)}
+                disabled={![...VET_STARTED_STATUSES, ...VET_POST_CLINICAL_STATUSES].includes(selectedAppointment.status)}
+                title={["clinical_complete", "checkout"].includes(selectedAppointment.status) ? "Closes automatically once the cashier verifies payment" : undefined}
                 onClick={() => navigate(`/veterinary/appointments/${selectedAppointment.id}/consult`)}
               >
                 <FontAwesomeIcon icon={faCircleCheck} />
-                {selectedAppointment.status === "awaiting_payment" ? "View Consultation" : "Consult"}
+                {VET_POST_CLINICAL_STATUSES.includes(selectedAppointment.status) ? "View Consultation" : "Consult"}
               </button>
-
-              {selectedAppointment.status === "awaiting_payment" && (
-                <button
-                  className="action-btn complete-btn"
-                  type="button"
-                  disabled={
-                    selectedAppointment.paymentStatus !== "paid" ||
-                    actionLoadingId === `${selectedAppointment.id}-complete`
-                  }
-                  title={
-                    selectedAppointment.paymentStatus !== "paid"
-                      ? "Waiting for cashier to verify payment"
-                      : "Mark this appointment as completed"
-                  }
-                  onClick={() => completeAppointment(selectedAppointment.id)}
-                >
-                  <FontAwesomeIcon icon={faCheckCircle} /> Complete
-                </button>
-              )}
 
               <button
                 className="action-btn delete-btn"
@@ -832,7 +835,7 @@ const VetAppointments = () => {
                 disabled={
                   selectedAppointment.status === "completed" ||
                   selectedAppointment.status === "cancelled" ||
-                  selectedAppointment.status === "awaiting_payment"
+                  VET_CANCEL_RESTRICTED_STATUSES.includes(selectedAppointment.status)
                 }
                 onClick={() => cancelAppointment(selectedAppointment.id)}
               >

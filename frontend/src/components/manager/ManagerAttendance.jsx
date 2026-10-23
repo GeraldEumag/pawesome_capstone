@@ -19,7 +19,6 @@ import {
   faList,
   faPenToSquare,
   faPrint,
-  faRefresh,
   faSearch,
   faSpinner,
   faThList,
@@ -629,16 +628,6 @@ const ManagerAttendance = () => {
         </div>
 
         <div className="attendance-hero-actions">
-          <button
-            type="button"
-            className="attendance-btn secondary"
-            onClick={() => loadAttendance({ silent: true })}
-            disabled={loading || refreshing}
-          >
-            <FontAwesomeIcon icon={refreshing ? faSpinner : faRefresh} spin={refreshing} />
-            Refresh
-          </button>
-
           <div style={{ position: "relative" }}>
             <button type="button" className="attendance-btn secondary" onClick={() => setShowExportDropdown(!showExportDropdown)}>
               <FontAwesomeIcon icon={faDownload} />

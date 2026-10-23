@@ -98,9 +98,6 @@ const ReceptionistCheckOutForm = () => {
           <p>Complete check-outs for pets currently staying with us.</p>
         </div>
 
-        <button className="btn-secondary" type="button" onClick={loadBookings}>
-          Refresh
-        </button>
       </div>
 
       <div className="checkout-controls">

@@ -49,6 +49,25 @@ const StockAdjustmentModal = ({ isOpen, onClose, item, onSuccess, initialType, i
   const [unitCost, setUnitCost] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [suppliers, setSuppliers] = useState([]);
+
+  useEffect(() => {
+    if (!isOpen) return;
+    let cancelled = false;
+    inventoryApi
+      .getSuppliers({ active_only: true })
+      .then((res) => {
+        if (cancelled) return;
+        const list = res?.suppliers || res?.data || (Array.isArray(res) ? res : []);
+        setSuppliers(Array.isArray(list) ? list : []);
+      })
+      .catch(() => {
+        if (!cancelled) setSuppliers([]);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [isOpen]);
 
   const currentStock = Number(item?.stock ?? item?.quantity ?? item?.stock_quantity ?? item?.current_stock ?? 0);
   const expiryCategories = ["food", "medicine", "vitamin", "health", "grooming", "shampoo", "treat"];
@@ -280,7 +299,15 @@ const StockAdjustmentModal = ({ isOpen, onClose, item, onSuccess, initialType, i
                 </label>
                 <label>
                   <span>Supplier</span>
-                  <input value={supplier} onChange={(e) => setSupplier(e.target.value)} maxLength={255} placeholder="Supplier name" />
+                  <select value={supplier} onChange={(e) => setSupplier(e.target.value)}>
+                    <option value="">Select supplier</option>
+                    {suppliers.map((s) => (
+                      <option key={s.id} value={s.name}>{s.name}</option>
+                    ))}
+                    {supplier && !suppliers.some((s) => s.name === supplier) && (
+                      <option value={supplier}>{supplier}</option>
+                    )}
+                  </select>
                 </label>
                 <label>
                   <span>Unit cost</span>

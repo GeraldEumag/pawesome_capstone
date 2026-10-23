@@ -10,6 +10,7 @@ use App\Models\ActivityLog;
 use App\Models\ServiceItemUsage;
 use App\Models\ServiceRequest;
 use App\Services\WorkflowNotifier;
+use App\Services\VisitCompletionService;
 use App\Support\BookingChannel;
 
 class PaymentVerificationService
@@ -667,7 +668,7 @@ class PaymentVerificationService
      */
     private const UNVERIFIABLE_STATUSES = [
         'boardings' => ['pending', 'cancelled', 'rejected', 'archived'],
-        'appointments' => ['pending', 'cancelled', 'rejected', 'no_show'],
+        'appointments' => ['requested', 'cancelled', 'rejected', 'no_show'],
         'groomings' => ['pending', 'cancelled', 'rejected'],
         'medical_confinements' => ['recommended', 'cancelled'],
     ];
@@ -809,6 +810,10 @@ class PaymentVerificationService
         $this->markServiceRequestPaidFromLinked($table, $record, $receiptNumber, $referenceNumber);
 
         $billingResult = $this->syncServiceBillingForVerifiedPayment($table, $id, Auth::id(), $receiptNumber);
+
+        if ($table === 'appointments') {
+            VisitCompletionService::tryComplete((int) $id);
+        }
 
         // Re-read post-sync so the settlement records the authoritative total.
         $settled = DB::table($table)->where('id', $id)->first() ?? $record;
@@ -958,6 +963,14 @@ class PaymentVerificationService
         ]);
 
         ServiceBillingService::markBaseServiceAsPaid($serviceType, $record->id, Auth::id(), $receiptNumber);
+
+        // A vet visit settled through its originating service request needs
+        // the same automatic closure as the direct appointment verify path;
+        // tryComplete no-ops unless every guard (finalized record, settled
+        // invoice, no open confinement) already passes.
+        if ($table === 'appointments') {
+            VisitCompletionService::tryComplete((int) $record->id);
+        }
     }
 
     /**

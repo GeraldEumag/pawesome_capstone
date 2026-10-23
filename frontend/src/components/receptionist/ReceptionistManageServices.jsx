@@ -5,7 +5,6 @@ import {
   faEdit,
   faTrash,
   faSave,
-  faSyncAlt,
   faStethoscope,
   faHotel,
   faPaw,

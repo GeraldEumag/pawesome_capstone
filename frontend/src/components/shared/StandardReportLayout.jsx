@@ -56,12 +56,6 @@ const StandardReportLayout = ({
         <FontAwesomeIcon icon={faChartBar} />
       </div>
       <div className="empty-message">{emptyMessage}</div>
-      {onRefresh && (
-        <button className="refresh-btn" onClick={onRefresh}>
-          <FontAwesomeIcon icon={faRotateRight} />
-          Refresh Data
-        </button>
-      )}
     </div>
   );
 

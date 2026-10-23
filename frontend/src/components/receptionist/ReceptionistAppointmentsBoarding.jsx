@@ -15,7 +15,6 @@ import {
   faMoneyBillWave,
   faPaw,
   faPlus,
-  faRefresh,
   faSearch,
   faSignOutAlt,
   faSpinner,
@@ -587,15 +586,6 @@ const ReceptionistAppointmentsBoarding = () => {
           <small>Last updated: {lastUpdated || "Not refreshed yet"}</small>
         </div>
         <div className="hub-hero-actions">
-          <button
-            type="button"
-            className={`hub-hero-btn ${refreshing ? "loading" : ""}`}
-            onClick={() => fetchAll({ silent: true })}
-            disabled={refreshing}
-          >
-            <FontAwesomeIcon icon={refreshing ? faSpinner : faRefresh} spin={refreshing} />
-            {refreshing ? "Refreshing..." : "Refresh"}
-          </button>
           <div className="export-dropdown-wrapper" style={{ position: "relative" }}>
             <button type="button" className="hub-hero-btn ghost" onClick={() => setShowExportDropdown(!showExportDropdown)}>
               <FontAwesomeIcon icon={faDownload} />
@@ -743,9 +733,6 @@ const ReceptionistAppointmentsBoarding = () => {
             </button>
             <button type="button" className="hub-new-btn secondary" onClick={() => setShowServiceManager(true)}>
               <FontAwesomeIcon icon={faWrench} /> Manage Services
-            </button>
-            <button type="button" onClick={() => fetchAll({ silent: true })}>
-              <FontAwesomeIcon icon={faRefresh} /> Refresh
             </button>
             <div className="export-dropdown-wrapper" style={{ position: "relative" }}>
               <button type="button" onClick={() => setShowExportDropdown(!showExportDropdown)}>

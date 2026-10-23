@@ -547,3 +547,77 @@
 @media (max-width: 480px) {
   .vet-bookings .vet-summary-grid { grid-template-columns: 1fr; }
 }
+
+/* Approve & assign (details modal) */
+.vet-bookings .rveb-approve {
+  border-top: 1px dashed var(--vet-border, #e5e7eb);
+  padding-top: 14px;
+  margin-top: 4px;
+}
+
+.vet-bookings .rveb-approve-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 12px;
+  align-items: end;
+}
+
+.vet-bookings .rveb-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.vet-bookings .rveb-field label {
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--vet-text-muted, #6b7280);
+}
+
+.vet-bookings .rveb-field select,
+.vet-bookings .rveb-field input[type="time"],
+.vet-bookings .rveb-field .react-datepicker-wrapper input {
+  width: 100%;
+  padding: 9px 11px;
+  border: 1px solid var(--vet-border, #d1d5db);
+  border-radius: 8px;
+  font-size: 0.85rem;
+  background: #fff;
+}
+
+.vet-bookings .rveb-field select:focus,
+.vet-bookings .rveb-field input[type="time"]:focus {
+  border-color: var(--vet-primary, #ec4899);
+  outline: none;
+}
+
+.vet-bookings .rveb-slot-warning {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 12px 0 0;
+  padding: 9px 12px;
+  border-radius: 8px;
+  background: var(--vet-warning-bg, #fef3c7);
+  color: var(--vet-warning-text, #92400e);
+  font-size: 0.8rem;
+  font-weight: 500;
+}
+
+.vet-bookings .rveb-approve .primary-btn {
+  margin-top: 12px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.vet-bookings .rveb-approve .primary-btn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+@media (max-width: 768px) {
+  .vet-bookings .rveb-approve-grid { grid-template-columns: 1fr; }
+}

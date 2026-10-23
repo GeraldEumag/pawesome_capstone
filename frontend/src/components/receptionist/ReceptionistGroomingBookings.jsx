@@ -12,7 +12,6 @@ import {
   faEye,
   faInfoCircle,
   faPaw,
-  faRefresh,
   faShower,
   faSpinner,
   faTimes,
@@ -386,16 +385,6 @@ const ReceptionistGroomingBookings = () => {
         </div>
 
         <div className="header-actions">
-          <button
-            type="button"
-            className={`secondary-btn ${refreshing ? "loading" : ""}`}
-            onClick={() => fetchAppointments({ silent: true })}
-            disabled={refreshing}
-          >
-            <FontAwesomeIcon icon={faRefresh} spin={refreshing} />
-            {refreshing ? "Refreshing..." : "Refresh"}
-          </button>
-
           <div className="export-dropdown-wrapper" style={{ position: "relative" }}>
             <button type="button" className="secondary-btn" onClick={() => setShowExportDropdown(!showExportDropdown)}>
               <FontAwesomeIcon icon={faDownload} />

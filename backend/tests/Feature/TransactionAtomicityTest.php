@@ -17,6 +17,7 @@ use App\Models\SaleItem;
 use App\Models\ServiceItemUsage;
 use App\Models\Attendance;
 use App\Models\User;
+use App\Models\VisitConsent;
 use App\Services\InventoryService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
@@ -335,7 +336,7 @@ class TransactionAtomicityTest extends TestCase
 
         $this->as('receptionist')->postJson("/api/receptionist/medical-confinements/{$confinement->id}/admit")->assertStatus(500);
 
-        $this->assertSame('approved_for_admission', $confinement->fresh()->status);
+        $this->assertSame('bed_assigned', $confinement->fresh()->status);
         $this->assertSame('reserved', $room->fresh()->status);
     }
 
@@ -347,7 +348,7 @@ class TransactionAtomicityTest extends TestCase
 
         $this->as('receptionist')->postJson("/api/receptionist/medical-confinements/{$confinement->id}/release")->assertOk();
 
-        $this->assertSame('completed', $confinement->fresh()->status);
+        $this->assertSame('discharged', $confinement->fresh()->status);
         $this->assertSame('available', $room->fresh()->status);
     }
 
@@ -429,6 +430,20 @@ class TransactionAtomicityTest extends TestCase
             'reason_for_confinement' => 'Test',
             'status' => 'approved_for_admission',
             'payment_status' => 'unpaid',
+        ]);
+
+        // Phase C: non-emergency confinement admission requires a signed
+        // confinement consent.
+        VisitConsent::create([
+            'consentable_type' => 'medical_confinement',
+            'consentable_id' => $confinement->id,
+            'type' => VisitConsent::TYPE_CONFINEMENT,
+            'title' => 'Confinement consent',
+            'signer_name' => $customer->name ?? 'Owner',
+            'signer_relationship' => 'owner',
+            'channel' => 'counter',
+            'signed_at' => now(),
+            'status' => VisitConsent::STATUS_SIGNED,
         ]);
 
         return [$confinement, $room];

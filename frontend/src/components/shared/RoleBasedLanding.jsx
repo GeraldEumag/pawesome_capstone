@@ -9,6 +9,7 @@ const roleRouteMap = {
   super_receptionist: "/super-receptionist",
   veterinary: "/veterinary",
   vet: "/veterinary",
+  vet_tech: "/veterinary/appointments",
   inventory: "/inventory",
   cashier: "/cashier",
   manager: "/manager",

@@ -34,17 +34,23 @@ const VeterinarySidebar = ({ mobileOpen, onMobileMenuToggle }) => {
     }
   };
 
-  const navItems = [
-    { to: "/veterinary", label: "Dashboard", icon: faGauge, end: true },
-    { to: "/veterinary/appointments", label: "Appointments", icon: faCalendarAlt },
-    { to: "/veterinary/customer-profiles", label: "Customer Profiles", icon: faUsers },
-    { to: "/veterinary/current-boarders", label: "Current Boarders", icon: faHotel },
-    { to: "/veterinary/services", label: "Services", icon: faStethoscope },
-    { to: "/veterinary/history", label: "History", icon: faClockRotateLeft },
-    { to: "/veterinary/reports", label: "Reports", icon: faChartBar },
-    { to: "/veterinary/payroll", label: "My Payroll", icon: faWallet },
-    { to: "/veterinary/profile", label: "Profile", icon: faUser },
-  ];
+  const navItems = role === "vet_tech"
+    ? [
+        { to: "/veterinary/appointments", label: "Appointments", icon: faCalendarAlt },
+        { to: "/veterinary/payroll", label: "My Payroll", icon: faWallet },
+        { to: "/veterinary/profile", label: "Profile", icon: faUser },
+      ]
+    : [
+        { to: "/veterinary", label: "Dashboard", icon: faGauge, end: true },
+        { to: "/veterinary/appointments", label: "Appointments", icon: faCalendarAlt },
+        { to: "/veterinary/customer-profiles", label: "Customer Profiles", icon: faUsers },
+        { to: "/veterinary/current-boarders", label: "Current Boarders", icon: faHotel },
+        { to: "/veterinary/services", label: "Services", icon: faStethoscope },
+        { to: "/veterinary/history", label: "History", icon: faClockRotateLeft },
+        { to: "/veterinary/reports", label: "Reports", icon: faChartBar },
+        { to: "/veterinary/payroll", label: "My Payroll", icon: faWallet },
+        { to: "/veterinary/profile", label: "Profile", icon: faUser },
+      ];
 
   return (
     <aside className={`app-sidebar veterinary-sidebar ${mobileOpen ? "mobile-open" : ""}`}>

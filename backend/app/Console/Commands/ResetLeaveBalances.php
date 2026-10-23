@@ -35,7 +35,7 @@ class ResetLeaveBalances extends Command
 
         // Convert unused SIL to cash bonus for account users
         User::whereIn('role', [
-            'manager', 'cashier', 'receptionist', 'veterinary',
+            'manager', 'cashier', 'receptionist', 'veterinary', 'vet_tech',
             'inventory', 'payroll', 'staff', 'groomer',
             'super_receptionist', 'admin',
         ])->where('is_active', true)->each(function (User $user) use ($prevYear, $newYear, &$count) {

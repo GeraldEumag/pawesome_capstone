@@ -30,6 +30,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'kiosk.pin' => \App\Http\Middleware\KioskPinAuth::class,
             'throttle' => \Illuminate\Routing\Middleware\ThrottleRequests::class,
             'verified' => \App\Http\Middleware\EnsureEmailIsVerified::class,
+            'idempotency' => \App\Http\Middleware\IdempotencyKey::class,
         ]);
         $middleware->redirectGuestsTo(function (Request $request) {
             return $request->is('api/*') ? null : '/login';

@@ -5,11 +5,18 @@ namespace App\Http\Controllers\Veterinary;
 use App\Http\Controllers\Controller;
 use App\Models\MedicalRecord;
 use App\Models\Vaccination;
+use App\Models\InventoryItem;
 use App\Models\Prescription;
 use App\Models\Pet;
 use App\Models\Appointment;
+use App\Models\MedicalRecordAddendum;
+use App\Models\ActivityLog;
+use App\Services\ClinicalAccessLogger;
 use App\Services\VeterinaryInventoryService;
+use App\Services\VisitEstimateService;
+use App\Support\VeterinaryStatus;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\DB;
 
@@ -22,20 +29,32 @@ class MedicalRecordController extends Controller
         $this->veterinaryInventoryService = $veterinaryInventoryService;
     }
 
+    /** Clinical staff may read any patient's history; access by others is logged. */
+    private function vetCanReadPet(Request $request): bool
+    {
+        return $request->user()->hasRoleAccess('veterinary', 'vet', 'veterinarian');
+    }
+
+    /** Writes to a pet's record (creating a record) need an assigned appointment. */
     private function vetCanAccessPet(Request $request, int $petId): bool
     {
         if ($request->user()->hasRoleAccess('admin')) {
             return true;
         }
 
+        return $this->vetAssignedToPet($request->user()->id, $petId);
+    }
+
+    private function vetAssignedToPet(int $userId, int $petId): bool
+    {
         return Appointment::where('pet_id', $petId)
-            ->where('veterinarian_id', $request->user()->id)
+            ->where('veterinarian_id', $userId)
             ->exists();
     }
 
     private function vetCanUseAppointment(Request $request, Appointment $appointment): bool
     {
-        $isActive = in_array($appointment->status, ['in_consultation', 'in_progress', 'treated'], true);
+        $isActive = in_array($appointment->status, VeterinaryStatus::STARTED, true);
 
         if ($request->user()->hasRoleAccess('admin')) {
             return $isActive;
@@ -104,12 +123,18 @@ class MedicalRecordController extends Controller
             'prescriptions',
             'vaccinations',
             'attachments',
-            'lockedBy'
+            'lockedBy',
+            'addenda.author:id,name',
         ])->findOrFail($id);
 
-        if (!$record->canBeViewedBy(request()->user()) || !$this->vetCanAccessPet(request(), $record->pet_id)) {
+        $user = request()->user();
+        if (!$record->canBeViewedBy($user) || !$this->vetCanReadPet(request())) {
             return response()->json(['message' => 'Medical record not found'], 404);
         }
+
+        $assigned = (int) $record->veterinarian_id === (int) $user->id
+            || (int) $record->appointment?->veterinarian_id === (int) $user->id;
+        ClinicalAccessLogger::record($user, 'medical_record', $record->id, $assigned, ['pet_id' => $record->pet_id]);
         
         return response()->json($record);
     }
@@ -138,6 +163,8 @@ class MedicalRecordController extends Controller
             'body_condition_score' => 'nullable|string',
             'notes' => 'nullable|string',
             'status' => 'nullable|in:draft,finalized',
+            'prescriptions' => 'nullable|array',
+            'prescriptions.*.inventory_item_id' => 'nullable|integer|exists:inventory_items,id',
         ]);
 
         if ($validator->fails()) {
@@ -214,6 +241,10 @@ class MedicalRecordController extends Controller
         $record = MedicalRecord::findOrFail($id);
         $user = $request->user();
 
+        if ($record->status !== MedicalRecord::STATUS_DRAFT) {
+            return response()->json(['message' => 'Finalized records cannot be edited. Add an addendum instead.'], 403);
+        }
+
         // Check if user can edit this record
         if (!$record->canBeEditedBy($user) || !$this->vetCanAccessPet($request, $record->pet_id)) {
             return response()->json(['message' => 'You do not have permission to edit this record'], 403);
@@ -236,6 +267,8 @@ class MedicalRecordController extends Controller
             'body_condition_score' => 'nullable|string',
             'notes' => 'nullable|string',
             'status' => 'sometimes|in:draft,finalized',
+            'prescriptions' => 'nullable|array',
+            'prescriptions.*.inventory_item_id' => 'nullable|integer|exists:inventory_items,id',
         ]);
 
         if ($validator->fails()) {
@@ -297,9 +330,9 @@ class MedicalRecordController extends Controller
             return response()->json(['message' => 'You do not have permission to delete this record'], 403);
         }
 
-        // Locked records cannot be deleted
-        if ($record->status === MedicalRecord::STATUS_LOCKED) {
-            return response()->json(['message' => 'Locked records cannot be deleted'], 403);
+        // Locked and finalized records are clinical history and cannot be deleted
+        if ($record->status !== MedicalRecord::STATUS_DRAFT) {
+            return response()->json(['message' => 'Only draft medical records can be deleted'], 403);
         }
 
         $record->delete();
@@ -354,10 +387,62 @@ class MedicalRecordController extends Controller
 
         $record->finalize();
 
+        ActivityLog::log($user->id, 'medical_record_finalized', "Medical record #{$record->id} finalized", [
+            'category' => 'medical',
+            'reference_type' => 'medical_record',
+            'reference_id' => $record->id,
+            'changes' => ['status' => ['old' => MedicalRecord::STATUS_DRAFT, 'new' => MedicalRecord::STATUS_FINALIZED]],
+        ]);
+
         return response()->json([
             'message' => 'Medical record finalized successfully',
             'record' => $record->fresh()
         ]);
+    }
+
+    /**
+     * Append a dated correction to a finalized or locked record. The original
+     * content is never changed; addenda are attributed and append-only.
+     */
+    public function addAddendum(Request $request, $id)
+    {
+        $record = MedicalRecord::findOrFail($id);
+        $user = $request->user();
+
+        if ($record->status === MedicalRecord::STATUS_DRAFT) {
+            return response()->json(['message' => 'Draft records are edited directly. Addenda apply to finalized or locked records.'], 422);
+        }
+
+        if (!$record->canReceiveAddendumFrom($user)) {
+            return response()->json(['message' => 'Only the treating veterinarian can add an addendum to this record'], 403);
+        }
+
+        $validator = Validator::make($request->all(), [
+            'body' => 'required|string|max:5000',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json(['errors' => $validator->errors()], 422);
+        }
+
+        $body = $validator->validated()['body'];
+        $addendum = MedicalRecordAddendum::create([
+            'medical_record_id' => $record->id,
+            'author_id' => $user->id,
+            'body' => $body,
+            'content_hash' => hash('sha256', $record->content_hash . '|' . $body),
+        ]);
+
+        ActivityLog::log($user->id, 'medical_record_addendum_added', "Addendum added to medical record #{$record->id}", [
+            'category' => 'medical',
+            'reference_type' => 'medical_record',
+            'reference_id' => $record->id,
+        ]);
+
+        return response()->json([
+            'message' => 'Addendum added',
+            'addendum' => $addendum->load('author:id,name'),
+        ], 201);
     }
 
     /**
@@ -367,11 +452,13 @@ class MedicalRecordController extends Controller
     {
         $pet = Pet::with(['customer'])->findOrFail($petId);
 
-        if (!$this->vetCanAccessPet(request(), (int) $petId)) {
+        if (!$this->vetCanReadPet(request())) {
             return response()->json(['message' => 'Pet not found'], 404);
         }
+
+        ClinicalAccessLogger::record(request()->user(), 'pet_history', (int) $petId, $this->vetAssignedToPet(request()->user()->id, (int) $petId));
         
-        $records = MedicalRecord::with(['veterinarian', 'prescriptions', 'vaccinations'])
+        $records = MedicalRecord::with(['veterinarian', 'prescriptions', 'vaccinations', 'addenda.author:id,name'])
             ->where('pet_id', $petId)
             ->orderBy('visit_date', 'desc')
             ->get();
@@ -390,8 +477,9 @@ class MedicalRecordController extends Controller
         try {
             $pet = Pet::with(['customer'])->findOrFail($petId);
 
-            // Remove veterinarian access restriction for customer profiles module
-            // to allow viewing all pets
+            // Clinical history is open to all veterinary staff; non-assigned reads are logged.
+            ClinicalAccessLogger::record(request()->user(), 'pet_history', (int) $petId, $this->vetAssignedToPet(request()->user()->id, (int) $petId));
+
             $records = MedicalRecord::with(['veterinarian'])
                 ->where('pet_id', $petId)
                 ->orderBy('visit_date', 'desc')
@@ -417,6 +505,17 @@ class MedicalRecordController extends Controller
                             'id' => $record->veterinarian?->id,
                             'name' => $record->veterinarian?->name ?: 'Veterinary Staff'
                         ],
+                        'vaccinations' => $record->vaccinations->map(function ($v) {
+                            return [
+                                'id' => $v->id,
+                                'vaccine_name' => $v->vaccine_name,
+                                'lot_number' => $v->lot_number,
+                                'expiry_date' => $v->expiry_date,
+                                'site_of_administration' => $v->site_of_administration,
+                                'date_administered' => $v->date_administered,
+                                'next_due_date' => $v->next_due_date,
+                            ];
+                        })->values(),
                         'created_at' => $record->created_at ? $record->created_at->format('Y-m-d') : null
                     ];
                 });
@@ -533,7 +632,7 @@ class MedicalRecordController extends Controller
             }
 
             // Get medical records for this pet
-            $records = MedicalRecord::with(['veterinarian'])
+            $records = MedicalRecord::with(['veterinarian', 'vaccinations.inventoryBatch'])
                 ->where('pet_id', $petId)
                 ->orderBy('visit_date', 'desc')
                 ->get()
@@ -559,6 +658,17 @@ class MedicalRecordController extends Controller
                             'id' => $record->veterinarian?->id,
                             'name' => $record->veterinarian?->name ?: 'Veterinary Staff'
                         ],
+                        'vaccinations' => $record->vaccinations->map(function ($v) {
+                            return [
+                                'id' => $v->id,
+                                'vaccine_name' => $v->vaccine_name,
+                                'lot_number' => $v->lot_number,
+                                'expiry_date' => $v->expiry_date,
+                                'site_of_administration' => $v->site_of_administration,
+                                'date_administered' => $v->date_administered,
+                                'next_due_date' => $v->next_due_date,
+                            ];
+                        })->values(),
                         'created_at' => $record->created_at ? $record->created_at->format('Y-m-d') : null
                     ];
                 });
@@ -610,6 +720,7 @@ class MedicalRecordController extends Controller
             'vaccine_type' => 'nullable|string|in:Core,Non-core,Lifestyle',
             'manufacturer' => 'nullable|string|max:255',
             'lot_number' => 'nullable|string|max:255',
+            'inventory_batch_id' => 'nullable|exists:inventory_batches,id',
             'date_administered' => 'required|date',
             'next_due_date' => 'nullable|date|after:date_administered',
             'dosage' => 'nullable|numeric',
@@ -623,28 +734,110 @@ class MedicalRecordController extends Controller
             return response()->json(['errors' => $validator->errors()], 422);
         }
 
-        $vaccination = Vaccination::create([
-            'pet_id' => $petId,
-            'medical_record_id' => null,
-            'veterinarian_id' => $user->id,
-            'vaccine_name' => $request->vaccine_name,
-            'vaccine_type' => $request->vaccine_type ?? 'Core',
-            'manufacturer' => $request->manufacturer,
-            'lot_number' => $request->lot_number,
-            'date_administered' => $request->date_administered,
-            'next_due_date' => $request->next_due_date,
-            'dosage' => $request->dosage,
-            'dosage_unit' => $request->dosage_unit ?? 'mL',
-            'route_of_administration' => $request->route_of_administration ?? 'Subcutaneous',
-            'site_of_administration' => $request->site_of_administration,
-            'notes' => $request->notes,
-            'status' => 'given',
-        ]);
+        try {
+            $vaccination = \App\Services\VaccinationService::administer([
+                'pet_id' => $petId,
+                'medical_record_id' => null,
+                'veterinarian_id' => $user->id,
+                'vaccine_name' => $request->vaccine_name,
+                'vaccine_type' => $request->vaccine_type ?? 'Core',
+                'manufacturer' => $request->manufacturer,
+                'lot_number' => $request->lot_number,
+                'inventory_batch_id' => $request->inventory_batch_id,
+                'date_administered' => $request->date_administered,
+                'next_due_date' => $request->next_due_date,
+                'dosage' => $request->dosage,
+                'dosage_unit' => $request->dosage_unit ?? 'mL',
+                'route_of_administration' => $request->route_of_administration ?? 'Subcutaneous',
+                'site_of_administration' => $request->site_of_administration,
+                'notes' => $request->notes,
+                'status' => 'given',
+            ]);
+        } catch (\RuntimeException $e) {
+            return response()->json(['errors' => ['inventory_batch_id' => [$e->getMessage()]]], 422);
+        }
 
         return response()->json([
             'message' => 'Vaccination record created successfully',
-            'vaccination' => $vaccination->load(['veterinarian'])
+            'vaccination' => $vaccination->load(['veterinarian', 'inventoryBatch'])
         ], 201);
+    }
+
+    /**
+     * Vaccine lot recall (Phase E): every patient who received a given lot
+     * number or batch — used to call owners back after a batch recall.
+     */
+    public function vaccinationRecall(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'lot_number' => 'required_without:inventory_batch_id|string|max:255',
+            'inventory_batch_id' => 'required_without:lot_number|exists:inventory_batches,id',
+        ]);
+        if ($validator->fails()) {
+            return response()->json(['errors' => $validator->errors()], 422);
+        }
+
+        $query = Vaccination::with(['pet.customer.user:id,name,email', 'veterinarian:id,name', 'inventoryBatch:id,batch_no,expiration_date'])
+            ->orderBy('date_administered');
+
+        if ($request->filled('inventory_batch_id')) {
+            $query->where('inventory_batch_id', (int) $request->inventory_batch_id);
+        } else {
+            $query->where('lot_number', $request->lot_number);
+        }
+
+        $recipients = $query->get()->map(fn ($v) => [
+            'vaccination_id' => $v->id,
+            'vaccine_name' => $v->vaccine_name,
+            'lot_number' => $v->lot_number,
+            'expiry_date' => optional($v->vaccine_expiry_date)->toDateString(),
+            'date_administered' => optional($v->date_administered)->toDateString(),
+            'pet' => ['id' => $v->pet?->id, 'name' => $v->pet?->name],
+            'owner' => [
+                'name' => $v->pet?->customer?->name,
+                'email' => $v->pet?->customer?->user?->email,
+            ],
+            'administered_by' => $v->veterinarian?->name,
+        ]);
+
+        return response()->json([
+            'lot_number' => $request->lot_number,
+            'count' => $recipients->count(),
+            'recipients' => $recipients->values(),
+        ]);
+    }
+
+    /**
+     * Vaccination certificate — shows lot number and expiry (Phase D).
+     */
+    public function vaccinationCertificate(Request $request, $vaccinationId)
+    {
+        $vaccination = Vaccination::with(['pet.customer', 'veterinarian', 'inventoryBatch'])->findOrFail($vaccinationId);
+
+        if (!$this->vetCanAccessPet($request, (int) $vaccination->pet_id)) {
+            return response()->json(['message' => 'Vaccination record not found'], 404);
+        }
+
+        return response()->json([
+            'certificate' => \App\Services\VaccinationService::certificate($vaccination),
+        ]);
+    }
+
+    /**
+     * Customer-side vaccination certificate — ownership-checked by pet.
+     */
+    public function customerVaccinationCertificate(Request $request, $vaccinationId)
+    {
+        $vaccination = Vaccination::with(['pet.customer', 'veterinarian', 'inventoryBatch'])->findOrFail($vaccinationId);
+        $customerId = \App\Models\Customer::where('user_id', $request->user()->id)->value('id');
+
+        if (!$customerId || (int) $vaccination->pet?->customer_id !== (int) $customerId) {
+            return response()->json(['message' => 'Vaccination record not found'], 404);
+        }
+
+        return response()->json([
+            'certificate' => \App\Services\VaccinationService::certificate($vaccination),
+        ]);
     }
 
     /**
@@ -652,10 +845,22 @@ class MedicalRecordController extends Controller
      */
     private function createPrescription(MedicalRecord $record, array $data, $user): Prescription
     {
+        // When the prescription is picked from inventory the item name is
+        // authoritative; custom (non-stocked) medication keeps the typed name.
+        $inventoryItemId = $data['inventory_item_id'] ?? null;
+        $medicationName = $data['medication_name'] ?? '';
+        if ($inventoryItemId) {
+            $item = InventoryItem::find($inventoryItemId);
+            if ($item) {
+                $medicationName = $item->name;
+            }
+        }
+
         return Prescription::create([
             'medical_record_id' => $record->id,
             'veterinarian_id' => $user->id,
-            'medication_name' => $data['medication_name'],
+            'medication_name' => $medicationName,
+            'inventory_item_id' => $inventoryItemId,
             'generic_name' => $data['generic_name'] ?? null,
             'medication_type' => $data['medication_type'] ?? null,
             'dosage' => $data['dosage'] ?? '',
@@ -829,7 +1034,7 @@ class MedicalRecordController extends Controller
      */
     private function addVaccinationToRecord(MedicalRecord $record, array $data, $user): Vaccination
     {
-        return Vaccination::create([
+        return \App\Services\VaccinationService::administer([
             'pet_id' => $record->pet_id,
             'medical_record_id' => $record->id,
             'veterinarian_id' => $user->id,
@@ -837,6 +1042,7 @@ class MedicalRecordController extends Controller
             'vaccine_type' => $data['vaccine_type'] ?? null,
             'manufacturer' => $data['manufacturer'] ?? null,
             'lot_number' => $data['lot_number'] ?? null,
+            'inventory_batch_id' => $data['inventory_batch_id'] ?? null,
             'date_administered' => $data['date_administered'],
             'next_due_date' => $data['next_due_date'] ?? null,
             'dosage' => $data['dosage'] ?? null,

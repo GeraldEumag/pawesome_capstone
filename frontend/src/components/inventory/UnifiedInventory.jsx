@@ -3,8 +3,7 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import StatusDot from "../shared/StatusDot";
 import { exportToCSV as exportCSVUtil, exportToPDF, exportToExcel } from "../../utils/reportExport";
 import {
-  faPlus, faEdit, faSearch, faBox,
-  faSync, faArchive,
+  faPlus, faEdit, faSearch, faBox, faArchive,
   faWarehouse, faBoxes, faBell, faSort, faSortUp, faSortDown,
   faChevronDown, faDownload, faHistory, faInfoCircle,
   faSlidersH, faAdjust, faCamera, faXmark, faTrash,
@@ -615,9 +614,6 @@ const UnifiedInventory = () => {
           </button>
           <button className={`btn btn-filter ${showFilters ? "active" : ""}`} onClick={() => setShowFilters(!showFilters)}>
             <FontAwesomeIcon icon={faSlidersH} /> Filters
-          </button>
-          <button className="btn btn-refresh" onClick={() => fetchInventory()} title="Refresh">
-            <FontAwesomeIcon icon={faSync} />
           </button>
         </div>
       </div>

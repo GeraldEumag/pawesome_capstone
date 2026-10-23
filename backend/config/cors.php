@@ -16,7 +16,7 @@ return [
         '#^https?://(localhost|127\.0\.0\.1)(:\d+)?$#',
     ],
 
-    'allowed_headers' => ['Authorization', 'Content-Type', 'Accept', 'Origin', 'X-Requested-With', 'X-CSRF-TOKEN', 'X-Kiosk-Pin'],
+    'allowed_headers' => ['Authorization', 'Content-Type', 'Accept', 'Origin', 'X-Requested-With', 'X-CSRF-TOKEN', 'X-Kiosk-Pin', 'Idempotency-Key'],
 
     'supports_credentials' => env('CORS_SUPPORTS_CREDENTIALS', true),
 ];

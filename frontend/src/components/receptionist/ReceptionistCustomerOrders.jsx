@@ -12,7 +12,6 @@ import {
   faEye,
   faMoneyBillWave,
   faReceipt,
-  faRefresh,
   faSearch,
   faShoppingCart,
   faSpinner,
@@ -555,16 +554,6 @@ export default function ReceptionistCustomerOrders() {
         </div>
 
         <div className="orders-hero-actions">
-          <button
-            type="button"
-            className={`secondary-btn ${refreshing ? "loading" : ""}`}
-            onClick={() => fetchOrders({ silent: true })}
-            disabled={refreshing || loading}
-          >
-            <FontAwesomeIcon icon={refreshing ? faSpinner : faRefresh} spin={refreshing} />
-            {refreshing ? "Refreshing..." : "Refresh"}
-          </button>
-
           <div className="export-dropdown-wrapper" style={{ position: "relative" }}>
             <button type="button" className="secondary-btn" onClick={() => setShowExportDropdown(!showExportDropdown)}>
               <FontAwesomeIcon icon={faDownload} />

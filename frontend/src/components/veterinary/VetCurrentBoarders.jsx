@@ -207,10 +207,6 @@ const VetCurrentBoarders = () => {
     };
   }, [boarders, todayKey]);
 
-  const handleRefresh = () => {
-    fetchCurrentBoarders({ silent: true });
-    toast.success("Current boarders refreshed.");
-  };
 
   if (loading) {
     return (
@@ -242,15 +238,7 @@ const VetCurrentBoarders = () => {
           </p>
         </div>
 
-        <button
-          className={`vet-boarders-refresh-btn ${refreshing ? "refreshing" : ""}`}
-          type="button"
-          onClick={handleRefresh}
-          disabled={refreshing}
-        >
-          <FontAwesomeIcon icon={faRotateRight} />
-          {refreshing ? "Refreshing..." : "Refresh"}
-        </button>
+        {refreshing && <FontAwesomeIcon icon={faRotateRight} spin />}
       </div>
 
       {error && (

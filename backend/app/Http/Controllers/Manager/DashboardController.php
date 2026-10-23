@@ -18,7 +18,7 @@ class DashboardController extends Controller
     public function overview()
     {
         $today = Carbon::today();
-        $staffRoles = ['receptionist', 'veterinary', 'inventory', 'cashier'];
+        $staffRoles = ['receptionist', 'veterinary', 'vet_tech', 'inventory', 'cashier'];
         
         // Count service requests with different payment statuses
         $paidServiceRevenue = (float) ServiceRequest::where('payment_status', 'paid')->sum('price');
@@ -90,8 +90,8 @@ class DashboardController extends Controller
     public function staff()
     {
         return response()->json([
-            'staff' => User::whereIn('role', ['receptionist', 'veterinary', 'inventory', 'cashier'])->get(),
-            'attendance_today' => User::whereIn('role', ['receptionist', 'veterinary', 'inventory', 'cashier'])
+            'staff' => User::whereIn('role', ['receptionist', 'veterinary', 'vet_tech', 'inventory', 'cashier'])->get(),
+            'attendance_today' => User::whereIn('role', ['receptionist', 'veterinary', 'vet_tech', 'inventory', 'cashier'])
                 ->where('is_active', true)->count(),
         ]);
     }
@@ -109,7 +109,7 @@ class DashboardController extends Controller
     public function people()
     {
         $staffRoles = [
-            'manager', 'cashier', 'receptionist', 'veterinary', 'inventory',
+            'manager', 'cashier', 'receptionist', 'veterinary', 'vet_tech', 'inventory',
             'payroll', 'staff', 'groomer', 'super_receptionist', 'admin',
         ];
 
@@ -209,7 +209,7 @@ class DashboardController extends Controller
     {
         $user = User::findOrFail($id);
 
-        if (!in_array($user->role, ['receptionist', 'veterinary', 'inventory', 'cashier'])) {
+        if (!in_array($user->role, ['receptionist', 'veterinary', 'vet_tech', 'inventory', 'cashier'])) {
             return response()->json(['message' => 'Can only update staff members.'], 403);
         }
 
@@ -259,10 +259,10 @@ class DashboardController extends Controller
                     : 0,
             ],
             'staff_performance' => [
-                'total_staff' => User::whereIn('role', ['receptionist', 'veterinary', 'inventory', 'cashier'])->count(),
-                'active_staff' => User::whereIn('role', ['receptionist', 'veterinary', 'inventory', 'cashier'])
+                'total_staff' => User::whereIn('role', ['receptionist', 'veterinary', 'vet_tech', 'inventory', 'cashier'])->count(),
+                'active_staff' => User::whereIn('role', ['receptionist', 'veterinary', 'vet_tech', 'inventory', 'cashier'])
                     ->where('is_active', true)->count(),
-                'staff_on_leave' => User::whereIn('role', ['receptionist', 'veterinary', 'inventory', 'cashier'])
+                'staff_on_leave' => User::whereIn('role', ['receptionist', 'veterinary', 'vet_tech', 'inventory', 'cashier'])
                     ->where('is_active', false)->count(),
             ],
             'monthly_trends' => [

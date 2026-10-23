@@ -207,11 +207,13 @@ class PortalController extends Controller
 
         $statusLabels = [
             'pending' => 'Pending Approval', 'approved' => 'Approved', 'scheduled' => 'Scheduled',
-            'confirmed' => 'Confirmed', 'rescheduled' => 'Rescheduled', 'in_progress' => 'In Progress',
-            'in_consultation' => 'In Consultation', 'needs_confinement' => 'Needs Confinement',
+            'requested' => 'Requested', 'confirmed' => 'Confirmed', 'rescheduled' => 'Rescheduled',
+            'in_progress' => 'In Progress', 'in_consultation' => 'In Consultation',
+            'in_treatment' => 'In Treatment', 'awaiting_results' => 'Awaiting Results',
+            'clinical_complete' => 'Clinically Complete', 'checkout' => 'At Checkout',
             'awaiting_payment' => 'Awaiting Payment', 'checked_in' => 'Checked In', 'in_care' => 'In Care',
             'ready_for_pickup' => 'Ready for Pickup', 'checked_out' => 'Picked Up',
-            'completed' => 'Completed', 'treated' => 'Treated',
+            'completed' => 'Completed',
             'cancelled' => 'Cancelled', 'rejected' => 'Rejected', 'no_show' => 'No Show',
         ];
 
@@ -233,9 +235,10 @@ class PortalController extends Controller
 
         $boardingSteps = ['pending' => 0, 'approved' => 1, 'scheduled' => 1, 'confirmed' => 1,
             'checked_in' => 2, 'in_care' => 3, 'ready_for_pickup' => 4, 'checked_out' => 5, 'completed' => 5];
-        $appointmentSteps = ['pending' => 0, 'approved' => 1, 'scheduled' => 2, 'confirmed' => 2,
-            'in_progress' => 3, 'checked_in' => 3, 'in_consultation' => 3, 'needs_confinement' => 4,
-            'treated' => 4, 'awaiting_payment' => 4, 'completed' => 5];
+        $appointmentSteps = ['requested' => 0, 'scheduled' => 1, 'confirmed' => 1,
+            'checked_in' => 2,
+            'in_consultation' => 3, 'in_treatment' => 3, 'awaiting_results' => 3,
+            'clinical_complete' => 4, 'checkout' => 4, 'completed' => 5];
         $groomingSteps = ['pending' => 0, 'approved' => 1, 'scheduled' => 2, 'confirmed' => 2,
             'in_progress' => 3, 'checked_in' => 3, 'completed' => 4];
         $requestSteps = ['pending' => 0, 'approved' => 1, 'scheduled' => 2, 'confirmed' => 2,
@@ -317,7 +320,7 @@ class PortalController extends Controller
         }
 
         // Appointments — vet visits
-        $liveOrRecent(Appointment::where('customer_id', $cust->id), ['pending', 'approved', 'scheduled', 'confirmed', 'in_progress', 'checked_in', 'in_consultation', 'needs_confinement', 'treated', 'awaiting_payment', 'completed'])
+        $liveOrRecent(Appointment::where('customer_id', $cust->id), ['requested', 'scheduled', 'checked_in', 'in_consultation', 'in_treatment', 'awaiting_results', 'clinical_complete', 'checkout', 'completed'])
             ->with(['pet', 'service'])
             ->get()
             ->each(function ($a) use ($items, $promotedRequestIds, $makeItem, $appointmentSteps) {
@@ -499,7 +502,7 @@ class PortalController extends Controller
         }
 
         $hasActiveAppointment = $pet->appointments()
-            ->whereIn('status', ['pending', 'pending_review', 'approved', 'scheduled', 'in_progress', 'in_consultation', 'needs_confinement', 'treated'])
+            ->whereIn('status', ['requested', 'scheduled', 'checked_in', 'in_consultation', 'in_treatment', 'awaiting_results', 'clinical_complete', 'checkout'])
             ->whereDate('scheduled_at', '>=', now())
             ->exists();
         $hasActiveGrooming = $pet->groomingAppointments()
@@ -600,7 +603,7 @@ class PortalController extends Controller
                 'customer_id' => $cust->id,
                 'pet_id' => $data['pet_id'],
                 'service_id' => $service->id,
-                'status' => 'pending',
+                'status' => Appointment::STATUS_REQUESTED,
                 'scheduled_at' => $scheduledAtUtc,
                 'price' => $service->price ?? 0,
                 'booking_channel' => \App\Support\BookingChannel::ONLINE,

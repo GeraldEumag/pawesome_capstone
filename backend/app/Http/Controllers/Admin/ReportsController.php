@@ -752,7 +752,7 @@ class ReportsController extends Controller
             'data' => [
                 'summary' => [
                     'completed_appointments' => $completed,
-                    'scheduled_appointments' => (clone $appointments)->whereIn('status', ['approved', 'scheduled'])->count(),
+                    'scheduled_appointments' => (clone $appointments)->whereIn('status', ['requested', 'scheduled'])->count(),
                     'cancelled_appointments' => (clone $appointments)->where('status', 'cancelled')->count(),
                     'no_show_appointments' => (clone $appointments)->where('status', 'no_show')->count(),
                     'services_tracked' => count($serviceBreakdown),
@@ -823,7 +823,7 @@ class ReportsController extends Controller
                         + $this->customerOrdersBase($request)->where('status', 'approved')->count(),
                     'rejected_requests' => $this->serviceRequestsBase($request)->where('status', 'rejected')->count()
                         + $this->customerOrdersBase($request)->where('status', 'rejected')->count(),
-                    'scheduled_services' => $this->appointmentsBase($request)->whereIn('status', ['approved', 'scheduled'])->count(),
+                    'scheduled_services' => $this->appointmentsBase($request)->whereIn('status', ['requested', 'scheduled'])->count(),
                     'bookings_handled' => $this->appointmentsBase($request)->count() + $this->serviceRequestsBase($request)->count(),
                     'orders_approved' => $this->customerOrdersBase($request)->where('status', 'approved')->count(),
                 ],
@@ -1226,7 +1226,7 @@ class ReportsController extends Controller
                 + $this->serviceRequestsBase($request)->where('status', 'completed')->count()
                 + $this->boardingsBase($request)->whereIn('status', ['completed', 'checked_out'])->count()
                 + $this->medicalConfinementsBase($request)->whereIn('status', ['completed', 'discharged'])->count(),
-            'active_appointments' => $this->appointmentsBase($request)->whereIn('status', ['approved', 'scheduled', 'in_consultation', 'in_progress'])->count(),
+            'active_appointments' => $this->appointmentsBase($request)->whereIn('status', \App\Support\VeterinaryStatus::QUEUE)->count(),
             'active_boarding_stays' => $this->boardingsBase($request)->whereIn('status', ['checked_in', 'in_care'])->count(),
             'active_medical_confinements' => $this->medicalConfinementsBase($request)->whereIn('status', ['admitted', 'under_observation', 'under_treatment'])->count(),
             'approved_orders' => $this->customerOrdersBase($request)->where('status', 'approved')->count(),

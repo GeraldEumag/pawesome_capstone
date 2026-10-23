@@ -2,9 +2,14 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import ReactDOM from "react-dom";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
-  faCheckSquare, faFilter, faPrint,
-  faRotateRight, faSearch, faSquare, faTriangleExclamation,
-  faXmark, faUsers,
+  faCheckSquare,
+  faFilter,
+  faPrint,
+  faSearch,
+  faSquare,
+  faTriangleExclamation,
+  faXmark,
+  faUsers,
 } from "@fortawesome/free-solid-svg-icons";
 import JsBarcode from "jsbarcode";
 import { QRCodeSVG } from "qrcode.react";
@@ -299,15 +304,6 @@ const EmployeeIdPrinter = () => {
           <p>Generate and print employee ID cards with scannable barcodes for the attendance kiosk.</p>
         </div>
         <div className="eip-hero-actions">
-          <button
-            type="button"
-            className="eip-btn eip-btn--outline"
-            onClick={loadStaff}
-            disabled={loading}
-          >
-            <FontAwesomeIcon icon={faRotateRight} spin={loading} />
-            Refresh
-          </button>
           <button
             type="button"
             className="eip-btn eip-btn--primary"

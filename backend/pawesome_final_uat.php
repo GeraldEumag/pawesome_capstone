@@ -414,17 +414,17 @@ if ($appointmentId) {
 
         // Verify DB status
         $dbAppt = DB::table('appointments')->where('id', $appointmentId)->first();
-        if ($dbAppt && in_array($dbAppt->status, ['in_progress', 'in progress', 'started'])) {
-            addFinding('pass', 'step5-veterinary', "DB: appointment #$appointmentId status=in_progress");
+        if ($dbAppt && in_array($dbAppt->status, ['in_consultation', 'in_treatment'])) {
+            addFinding('pass', 'step5-veterinary', "DB: appointment #$appointmentId status=in_consultation");
         } else {
-            addFinding('warn', 'step5-veterinary', "DB: appointment status={$dbAppt->status} (expected in_progress)");
+            addFinding('warn', 'step5-veterinary', "DB: appointment status={$dbAppt->status} (expected in_consultation)");
         }
     } else {
         // Try PATCH status
         delay();
-        $r = apiCall('PATCH', "/veterinary/appointments/{$appointmentId}/status", $sessions['veterinary']['token'], ['status' => 'in_progress']);
+        $r = apiCall('PATCH', "/veterinary/appointments/{$appointmentId}/status", $sessions['veterinary']['token'], ['status' => 'in_consultation']);
         if ($r['status'] === 200) {
-            addFinding('pass', 'step5-veterinary', "Veterinary set appointment #$appointmentId to in_progress (PATCH)");
+            addFinding('pass', 'step5-veterinary', "Veterinary set appointment #$appointmentId to in_consultation (PATCH)");
             recordStep(5, 'veterinary', "Start appointment (PATCH)", 'PASS', "appointment #$appointmentId");
         } else {
             addFinding('warn', 'step5-veterinary', "Veterinary start returned {$r['status']}", $r['json']);
@@ -457,31 +457,51 @@ if ($appointmentId) {
         recordStep(5, 'veterinary', "Record treatment", 'PASS', "attempted (HTTP {$r['status']})");
     }
 
-    // Complete the appointment
+    // Finalize the medical record, then complete the consultation clinically.
+    // The visit closes automatically once the cashier settles the invoice —
+    // there is no veterinarian close action.
     delay();
-    $r = apiCall('POST', "/veterinary/appointments/{$appointmentId}/complete", $sessions['veterinary']['token']);
-    if ($r['status'] === 200 || $r['status'] === 201) {
-        addFinding('pass', 'step5-veterinary', "Veterinary completed appointment #$appointmentId");
-        recordStep(5, 'veterinary', "Complete appointment", 'PASS', "appointment #$appointmentId");
+    $medRecord = DB::table('medical_records')->where('appointment_id', $appointmentId)->first();
+    if ($medRecord && ($medRecord->status ?? 'draft') !== 'finalized') {
+        apiCall('POST', "/veterinary/medical-records/{$medRecord->id}/finalize", $sessions['veterinary']['token']);
+    }
 
-        // Verify DB status
+    delay();
+    $r = apiCall('POST', "/veterinary/consultations/{$appointmentId}/complete", $sessions['veterinary']['token'], [
+        'diagnosis' => "UAT: General health check — healthy",
+    ]);
+    if ($r['status'] === 200 || $r['status'] === 201) {
+        addFinding('pass', 'step5-veterinary', "Veterinary completed clinical consultation for appointment #$appointmentId");
+        recordStep(5, 'veterinary', "Complete consultation", 'PASS', "appointment #$appointmentId");
+
+        // Cashier settles outstanding bill items and the base fee
+        delay();
+        $summary = apiCall('GET', "/billing/veterinary/{$appointmentId}/summary", $sessions['cashier']['token']);
+        $unpaidIds = [];
+        foreach (($summary['json']['billing']['items'] ?? $summary['json']['items'] ?? []) as $it) {
+            if (empty($it['is_paid']) && !empty($it['is_billable']) && isset($it['id'])) {
+                $unpaidIds[] = $it['id'];
+            }
+        }
+        if ($unpaidIds) {
+            apiCall('PATCH', '/billing/items/mark-paid', $sessions['cashier']['token'], [
+                'item_ids' => $unpaidIds,
+                'payment_method' => 'cash',
+                'reference_number' => "UAT-{$appointmentId}",
+            ]);
+        }
+        apiCall('POST', "/appointments/{$appointmentId}/pay", $sessions['cashier']['token'], []);
+
+        // Verify DB status — closure is automatic once all guards pass
         $dbAppt = DB::table('appointments')->where('id', $appointmentId)->first();
         if ($dbAppt && $dbAppt->status === 'completed') {
-            addFinding('pass', 'step5-veterinary', "DB: appointment #$appointmentId status=completed");
+            addFinding('pass', 'step5-veterinary', "DB: appointment #$appointmentId status=completed (auto-closed after settlement)");
         } else {
             addFinding('warn', 'step5-veterinary', "DB: appointment status={$dbAppt->status} (expected completed)");
         }
     } else {
-        // Try PATCH
-        delay();
-        $r = apiCall('PATCH', "/veterinary/appointments/{$appointmentId}/status", $sessions['veterinary']['token'], ['status' => 'completed']);
-        if ($r['status'] === 200) {
-            addFinding('pass', 'step5-veterinary', "Veterinary completed appointment #$appointmentId (PATCH)");
-            recordStep(5, 'veterinary', "Complete appointment (PATCH)", 'PASS', "appointment #$appointmentId");
-        } else {
-            addFinding('warn', 'step5-veterinary', "Complete returned {$r['status']}", $r['json']);
-            recordStep(5, 'veterinary', "Complete appointment", 'PASS', "attempted");
-        }
+        addFinding('warn', 'step5-veterinary', "Consultation completion returned {$r['status']}", $r['json']);
+        recordStep(5, 'veterinary', "Complete consultation", 'PASS', "attempted (HTTP {$r['status']})");
     }
 }
 

@@ -820,12 +820,27 @@
   color: #065f46;
 }
 
+.app-dashboard.vet-dashboard .status-badge.in_consultation,
 .app-dashboard.vet-dashboard .status-badge.in_progress,
+.app-dashboard.vet-dashboard .status-badge.in_treatment,
+.app-dashboard.vet-dashboard .status-badge.awaiting_results,
 .app-dashboard.vet-dashboard .status-badge.ongoing {
   background: var(--color-info-bg);
   color: #1e3a8a;
 }
 
+.app-dashboard.vet-dashboard .status-badge.checked_in {
+  background: var(--color-warning-bg);
+  color: #92400e;
+}
+
+.app-dashboard.vet-dashboard .status-badge.clinical_complete,
+.app-dashboard.vet-dashboard .status-badge.checkout {
+  background: var(--color-warning-bg);
+  color: #92400e;
+}
+
+.app-dashboard.vet-dashboard .status-badge.requested,
 .app-dashboard.vet-dashboard .status-badge.pending {
   background: var(--color-warning-bg);
   color: #92400e;

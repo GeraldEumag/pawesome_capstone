@@ -129,12 +129,15 @@ class EmployeeController extends Controller
 
     private function validateData(Request $request, ?int $ignoreId = null): array
     {
+        // Employees must be at least 18 — birthdate on or before this date.
+        $adultCutoff = now()->subYears(18)->toDateString();
+
         return $request->validate([
             'first_name' => 'required|string|max:100',
             'middle_name' => 'nullable|string|max:100',
             'last_name' => 'required|string|max:100',
             'suffix' => 'nullable|string|max:20',
-            'birthdate' => 'nullable|date',
+            'birthdate' => [$ignoreId ? 'nullable' : 'required', 'date', "before_or_equal:{$adultCutoff}"],
             'gender' => 'nullable|string|max:20',
             'civil_status' => 'nullable|string|max:30',
             'phone' => 'nullable|string|max:30',
@@ -144,7 +147,7 @@ class EmployeeController extends Controller
             ],
             'address' => 'nullable|string|max:255',
             'emergency_contact_name' => 'nullable|string|max:150',
-            'emergency_contact_phone' => 'nullable|string|max:30',
+            'emergency_contact_phone' => 'nullable|string|digits:11',
             'position' => 'nullable|string|max:100',
             'department' => 'nullable|string|max:100',
             'hire_date' => 'nullable|date',

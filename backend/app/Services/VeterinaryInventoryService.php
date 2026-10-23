@@ -277,7 +277,7 @@ class VeterinaryInventoryService
                   ->orderByRaw('COALESCE(expiration_date, "9999-12-31") ASC')
                   ->orderBy('received_date', 'asc');
             }])
-            ->select('id', 'name', 'sku', 'description', 'stock', 'category', 'status', 'price', 'reorder_level', 'is_service_consumable', 'requires_expiry_tracking', 'issue_method')
+            ->select('id', 'name', 'sku', 'description', 'stock', 'category', 'status', 'price', 'reorder_level', 'is_service_consumable', 'requires_expiry_tracking', 'issue_method', 'item_class')
             ->orderBy('name')
             ->get()
             ->map(function ($item) {
@@ -292,6 +292,7 @@ class VeterinaryInventoryService
                     'unit' => 'pcs',
                     'category' => $item->category,
                     'type' => $item->category,
+                    'item_class' => $item->item_class,
                     'price' => (float) ($item->price ?? 0),
                     'unit_price' => (float) ($item->price ?? 0),
                     'default_quantity' => 1,

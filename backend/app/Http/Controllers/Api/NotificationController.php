@@ -101,7 +101,7 @@ class NotificationController extends Controller
     {
         $validated = $request->validate([
             'user_id' => 'nullable|exists:users,id',
-            'role' => 'nullable|string|in:admin,customer,receptionist,cashier,veterinary,manager,inventory',
+            'role' => 'nullable|string|in:admin,customer,receptionist,cashier,veterinary,vet_tech,manager,inventory',
             'title' => 'required|string|max:255',
             'message' => 'required|string|max:1000',
             'type' => 'nullable|string|in:info,warning,success,error',

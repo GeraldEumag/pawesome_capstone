@@ -233,12 +233,10 @@ test('Phase 9 continuous cross-role demo workflow', async ({ page, request }) =>
   expect(markPaid.status, `mark-paid: ${JSON.stringify(markPaid.body)}`).toBe(200);
   leg('cashier.settle_items', { appointmentId: appointment.id, itemIds: unpaidIds, reference: `COUNTER-${stamp}` });
 
-  // ── LEG 7 · VET completes the appointment (gates: paid + finalized) ─────
-  const completed = await api(request, vet.token, 'post', `/veterinary/appointments/${appointment.id}/complete`, {
-    data: { notes: `Completed ${stamp}` },
-  });
-  expect(completed.status, `complete: ${JSON.stringify(completed.body)}`).toBe(200);
-  leg('veterinary.complete', { appointmentId: appointment.id });
+  // ── LEG 7 · VISIT closes automatically once payment is settled (no vet action) ─────
+  const visit = await api(request, vet.token, 'get', `/veterinary/appointments/${appointment.id}`);
+  expect(visit.body.appointment?.status, `visit: ${JSON.stringify(visit.body)}`).toBe('completed');
+  leg('veterinary.auto_complete', { appointmentId: appointment.id });
 
   // ── LEG 8 · INVENTORY verifies stock deducted + usage logged ────────────
   const afterItem = await api(request, inventory.token, 'get', `/inventory/items/${usedItem.id}`);

@@ -511,15 +511,7 @@ const ReceptionistDashboard = () => {
           </div>
 
           <div className="hero-action-group">
-            <button
-              type="button"
-              className={`hero-action-btn ${refreshing ? "loading" : ""}`}
-              onClick={() => fetchRequests({ silent: true })}
-              disabled={refreshing}
-            >
-              {refreshing ? <FaSpinner /> : <FaSyncAlt />}
-              {refreshing ? "Refreshing..." : "Refresh"}
-            </button>
+            {refreshing && <FaSpinner />}
 
             <div className="export-dropdown-wrapper" style={{ position: "relative" }}>
               <button type="button" className="hero-action-btn ghost" onClick={() => setShowExportDropdown(!showExportDropdown)}>
@@ -676,11 +668,6 @@ const ReceptionistDashboard = () => {
           </div>
 
           <div className="rd-table-header-actions">
-            <button type="button" onClick={() => fetchRequests({ silent: true })}>
-              <FaSyncAlt />
-              Refresh
-            </button>
-
             <div className="export-dropdown-wrapper" style={{ position: "relative" }}>
               <button type="button" onClick={() => setShowExportDropdown(!showExportDropdown)}>
                 <FaDownload />

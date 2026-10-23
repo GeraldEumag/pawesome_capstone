@@ -18,6 +18,7 @@ class ChatbotController extends Controller
             ->selectRaw('COUNT(*) as total_chats')
             ->selectRaw('MAX(created_at) as last_chat_date')
             ->groupBy('user_id')
+            ->orderByDesc('last_chat_date')
             ->get()
             ->map(function (ChatbotLog $log) {
                 $user = $log->user;
@@ -29,7 +30,9 @@ class ChatbotController extends Controller
                     'user_email' => $user?->email ?? 'n/a',
                     'user_role' => $user?->role ?? 'unknown',
                     'total_chats' => (int) $log->total_chats,
-                    'last_chat_date' => $log->last_chat_date,
+                    'last_chat_date' => $log->last_chat_date
+                        ? \Carbon\Carbon::parse($log->last_chat_date, 'UTC')->toISOString()
+                        : null,
                 ];
             })
             ->values();
@@ -69,7 +72,7 @@ class ChatbotController extends Controller
     {
         $history = ChatbotLog::query()
             ->where('user_id', $user->id)
-            ->latest()
+            ->oldest()
             ->get([
                 'id',
                 'intent',

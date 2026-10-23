@@ -8,6 +8,13 @@ import { showError } from "../../utils/alert.jsx";
 import DatePickerInput from "../../components/shared/DatePickerInput";
 import { formatDateOnly, parseDateOnly } from "../../utils/date";
 
+/** Latest acceptable birthdate for staff — employees must be at least 18. */
+const staffMaxBirthdate = () => {
+  const d = new Date();
+  d.setFullYear(d.getFullYear() - 18);
+  return d;
+};
+
 const CreateUser = () => {
   const navigate = useNavigate();
 
@@ -58,7 +65,11 @@ const CreateUser = () => {
 
     if (!formData.firstName.trim()) newErrors.firstName = "First name is required";
     if (!formData.lastName.trim()) newErrors.lastName = "Last name is required";
-    if (!formData.dateOfBirth) newErrors.dateOfBirth = "Date of birth is required";
+    if (!formData.dateOfBirth) {
+      newErrors.dateOfBirth = "Date of birth is required";
+    } else if (formData.role !== "customer" && formData.dateOfBirth > formatDateOnly(staffMaxBirthdate())) {
+      newErrors.dateOfBirth = "Staff must be at least 18 years old";
+    }
 
     if (!formData.contactNumber.trim()) {
       newErrors.contactNumber = "Contact number is required";
@@ -86,8 +97,8 @@ const CreateUser = () => {
 
     if (!formData.emergencyContactNumber.trim()) {
       newErrors.emergencyContactNumber = "Emergency contact number is required";
-    } else if (!/^\d{10,15}$/.test(formData.emergencyContactNumber.replace(/\s/g, ""))) {
-      newErrors.emergencyContactNumber = "Please enter a valid emergency contact number";
+    } else if (!/^\d{11}$/.test(formData.emergencyContactNumber.trim())) {
+      newErrors.emergencyContactNumber = "Emergency contact number must be exactly 11 digits";
     }
 
     if (!formData.username.trim()) {
@@ -247,7 +258,7 @@ const CreateUser = () => {
                     selected={parseDateOnly(formData.dateOfBirth)}
                     onChange={(date) => handleChange({ target: { name: "dateOfBirth", value: formatDateOnly(date) } })}
                     placeholderText="mm/dd/yyyy"
-                    maxDate={new Date()}
+                    maxDate={formData.role === "customer" ? new Date() : staffMaxBirthdate()}
                     className={errors.dateOfBirth ? "error" : ""}
                   />
                   {errors.dateOfBirth && (
@@ -411,8 +422,10 @@ const CreateUser = () => {
                     name="emergencyContactNumber"
                     value={formData.emergencyContactNumber}
                     onChange={handleChange}
+                    maxLength={11}
+                    inputMode="numeric"
                     className={errors.emergencyContactNumber ? "error" : ""}
-                    placeholder="Enter emergency contact number"
+                    placeholder="e.g. 09171234567"
                   />
                   {errors.emergencyContactNumber && (
                     <span className="error-message">

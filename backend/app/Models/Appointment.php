@@ -25,7 +25,12 @@ class Appointment extends Model
         'amount_paid', 'balance_due', 'receipt_number', 'paid_at', 'verified_by',
         'notes', 'diagnosis', 'treatment_notes', 'prescription',
         'vet_remarks', 'cashier_remarks', 'cancellation_reason', 'service_request_id',
-        'reminder_sent_at', 'booking_channel'
+        'reminder_sent_at', 'booking_channel',
+        'checked_in_at', 'checked_in_by',
+        'clinical_completed_at', 'clinical_completed_by',
+        'checked_out_at', 'checked_out_by',
+        'outcome', 'emergency', 'confinement_recommended',
+        'follow_up_required', 'follow_up_due',
     ];
 
     protected $casts = [
@@ -34,34 +39,44 @@ class Appointment extends Model
         'completed_at' => 'datetime',
         'paid_at' => 'datetime',
         'reminder_sent_at' => 'datetime',
+        'checked_in_at' => 'datetime',
+        'clinical_completed_at' => 'datetime',
+        'checked_out_at' => 'datetime',
+        'follow_up_due' => 'date',
+        'emergency' => 'boolean',
+        'confinement_recommended' => 'boolean',
+        'follow_up_required' => 'boolean',
     ];
 
-    // Status constants for consistency
-    const STATUS_PENDING = 'pending';
-    const STATUS_APPROVED = 'approved';
+    // Patient-care workflow statuses (Phase B vocabulary)
+    const STATUS_REQUESTED = 'requested';
     const STATUS_SCHEDULED = 'scheduled';
-    const STATUS_IN_PROGRESS = 'in_progress';
+    const STATUS_CHECKED_IN = 'checked_in';
     const STATUS_IN_CONSULTATION = 'in_consultation';
-    const STATUS_NEEDS_CONFINEMENT = 'needs_confinement';
-    const STATUS_TREATED = 'treated';
-    const STATUS_AWAITING_PAYMENT = 'awaiting_payment';
+    const STATUS_IN_TREATMENT = 'in_treatment';
+    const STATUS_AWAITING_RESULTS = 'awaiting_results';
+    const STATUS_CLINICAL_COMPLETE = 'clinical_complete';
+    const STATUS_CHECKOUT = 'checkout';
     const STATUS_COMPLETED = 'completed';
     const STATUS_CANCELLED = 'cancelled';
     const STATUS_REJECTED = 'rejected';
     const STATUS_NO_SHOW = 'no_show';
 
+    // Visit outcomes recorded at clinical completion (Phase B+).
+    const OUTCOMES = ['discharged_home', 'admitted', 'referred', 'deceased'];
+
     /**
      * Valid statuses
      */
     public const VALID_STATUSES = [
-        self::STATUS_PENDING,
-        self::STATUS_APPROVED,
+        self::STATUS_REQUESTED,
         self::STATUS_SCHEDULED,
-        self::STATUS_IN_PROGRESS,
+        self::STATUS_CHECKED_IN,
         self::STATUS_IN_CONSULTATION,
-        self::STATUS_NEEDS_CONFINEMENT,
-        self::STATUS_TREATED,
-        self::STATUS_AWAITING_PAYMENT,
+        self::STATUS_IN_TREATMENT,
+        self::STATUS_AWAITING_RESULTS,
+        self::STATUS_CLINICAL_COMPLETE,
+        self::STATUS_CHECKOUT,
         self::STATUS_COMPLETED,
         self::STATUS_CANCELLED,
         self::STATUS_REJECTED,
@@ -92,9 +107,13 @@ class Appointment extends Model
         static::saving(function ($appointment) {
             $appointment->inheritBookingChannelFromRequest();
 
-            // Validate status
+            // Validate status — map legacy vocabulary forward, reject unknowns
             if (!in_array($appointment->status, self::VALID_STATUSES)) {
-                $appointment->status = self::STATUS_PENDING;
+                if ($appointment->status === 'needs_confinement') {
+                    $appointment->confinement_recommended = true;
+                }
+                $mapped = \App\Support\VisitStatusMap::forward($appointment->status, false);
+                $appointment->status = $mapped ?? self::STATUS_REQUESTED;
             }
 
             // Ensure non-negative price
@@ -148,6 +167,11 @@ class Appointment extends Model
         return $this->belongsTo(User::class, 'veterinarian_id');
     }
 
+    public function checkedInBy()
+    {
+        return $this->belongsTo(User::class, 'checked_in_by');
+    }
+
     public function serviceRequest(): BelongsTo
     {
         return $this->belongsTo(ServiceRequest::class, 'service_request_id');
@@ -166,34 +190,26 @@ class Appointment extends Model
     // Check if appointment can be cancelled
     public function canBeCancelled(): bool
     {
-        return in_array($this->status, [
-            self::STATUS_PENDING,
-            self::STATUS_APPROVED,
-            self::STATUS_SCHEDULED,
-            self::STATUS_IN_PROGRESS,
-            self::STATUS_IN_CONSULTATION,
-            self::STATUS_NEEDS_CONFINEMENT,
-            self::STATUS_TREATED,
-            self::STATUS_AWAITING_PAYMENT,
+        return !in_array($this->status, [
+            self::STATUS_COMPLETED,
+            self::STATUS_CANCELLED,
+            self::STATUS_REJECTED,
+            self::STATUS_NO_SHOW,
         ], true);
     }
 
     // Check if appointment can be rescheduled
     public function canBeRescheduled(): bool
     {
-        return in_array($this->status, [self::STATUS_PENDING, self::STATUS_APPROVED]);
+        return in_array($this->status, [self::STATUS_REQUESTED, self::STATUS_SCHEDULED]);
     }
 
     // Check if appointment can be completed
     public function canBeCompleted(): bool
     {
         return in_array($this->status, [
-            self::STATUS_APPROVED,
-            self::STATUS_SCHEDULED,
-            self::STATUS_IN_PROGRESS,
-            self::STATUS_IN_CONSULTATION,
-            self::STATUS_TREATED,
-            self::STATUS_AWAITING_PAYMENT,
+            self::STATUS_CLINICAL_COMPLETE,
+            self::STATUS_CHECKOUT,
         ], true);
     }
 

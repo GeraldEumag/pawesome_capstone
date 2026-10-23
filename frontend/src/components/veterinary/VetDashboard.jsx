@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Outlet, NavLink, useLocation } from "react-router-dom";
+import { Outlet, NavLink, useLocation, Navigate } from "react-router-dom";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { showError } from "../../utils/alert.jsx";
 import { useAuth } from "../../context/AuthContext";
@@ -18,7 +18,6 @@ import {
   faArrowDown,
   faStethoscope,
   faSearch,
-  faRotateRight,
   faNotesMedical,
   faHeartbeat,
   faCircleCheck,
@@ -27,6 +26,7 @@ import {
 } from "@fortawesome/free-solid-svg-icons";
 
 import { apiRequest } from "../../api/client";
+import { VET_STARTABLE_STATUSES } from "./vetStatus";
 import VeterinarySidebar from "./VeterinarySidebar";
 import DashboardLayout from "../shared/DashboardLayout";
 import toast from "react-hot-toast";
@@ -34,7 +34,7 @@ import "./theme.css";
 import "./VetDashboard.css";
 
 const VetDashboard = () => {
-  const { user, updateUser } = useAuth();
+  const { user, role, updateUser } = useAuth();
   const name = user?.name || "Veterinarian";
   const profilePhoto = user?.profile_photo || "";
   const [dashboardData, setDashboardData] = useState(null);
@@ -168,8 +168,8 @@ const VetDashboard = () => {
       }
 
       // Check if appointment can be started
-      if (!['approved', 'scheduled'].includes(appointment.status)) {
-        toast.error(`Cannot start appointment with status: ${appointment.status}. Only approved or scheduled appointments can be started.`);
+      if (!VET_STARTABLE_STATUSES.includes(appointment.status)) {
+        toast.error(`Cannot start appointment with status: ${appointment.status}. The patient must be booked or checked in first.`);
         return;
       }
 
@@ -188,38 +188,6 @@ const VetDashboard = () => {
     }
   };
 
-  const handleCompleteAppointment = async (aptId) => {
-    try {
-      // Find appointment to check its current status
-      const appointment = dashboardData?.upcoming_appointments?.find(apt => apt.id === aptId);
-      if (!appointment) {
-        toast.error("Appointment not found");
-        return;
-      }
-
-      // Check if appointment can be completed
-      const completableStatuses = ['approved', 'scheduled', 'in_progress', 'treated'];
-      if (!completableStatuses.includes(appointment.status)) {
-        toast.error(`Cannot complete appointment with status: ${appointment.status}. Only ${completableStatuses.join(', ')} appointments can be completed.`);
-        return;
-      }
-
-      await apiRequest(`/veterinary/appointments/${aptId}/complete`, {
-        method: "POST",
-        body: JSON.stringify({ notes: "Appointment completed by veterinarian" }),
-      });
-      toast.success(`Appointment #${aptId} completed • Receipt generated`);
-      // Refresh dashboard data
-      const data = await apiRequest("/veterinary/dashboard");
-      setDashboardData(data);
-    } catch (err) {
-      console.error("Failed to complete appointment:", err);
-      const errorMessage = err?.response?.data?.message || err?.message || "Failed to complete appointment";
-      toast.error(errorMessage);
-    }
-  };
-
-  
   const sidebar = <VeterinarySidebar />;
 
   const ROUTE_META = [
@@ -237,6 +205,11 @@ const VetDashboard = () => {
   ];
 
   const pageMeta = ROUTE_META.find((r) => r.path === normalizedPath) || ROUTE_META[0];
+
+  // Vet techs have no dashboard overview — the intake board is their home.
+  if (role === "vet_tech" && showOverview) {
+    return <Navigate to="/veterinary/appointments" replace />;
+  }
 
   return (
     <DashboardLayout
@@ -378,12 +351,6 @@ const VetDashboard = () => {
                           onClick={() => handleStartAppointment(apt.id || idx)}
                         >
                           Start
-                        </button>
-                        <button 
-                          className="btn-secondary btn-sm"
-                          onClick={() => handleCompleteAppointment(apt.id || idx)}
-                        >
-                          Complete
                         </button>
                       </div>
                     </div>

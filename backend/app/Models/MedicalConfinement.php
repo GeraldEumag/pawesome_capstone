@@ -47,6 +47,16 @@ class MedicalConfinement extends Model
         'discharged_by',
         'discharged_at',
         'booking_channel',
+        'ward_bed_id',
+        'care_level',
+        'consent_id',
+        'deposit_amount',
+        'daily_rate',
+        'last_accrual_at',
+        'discharge_outcome',
+        'override_by',
+        'override_reason',
+        'override_at',
     ];
 
     protected $casts = [
@@ -57,19 +67,13 @@ class MedicalConfinement extends Model
         'rejected_at' => 'datetime',
         'estimated_cost' => 'decimal:2',
         'final_amount' => 'decimal:2',
+        'deposit_amount' => 'decimal:2',
+        'daily_rate' => 'decimal:2',
+        'last_accrual_at' => 'datetime',
+        'override_at' => 'datetime',
     ];
 
-    public const VALID_STATUSES = [
-        'recommended',
-        'approved_for_admission',
-        'admitted',
-        'under_observation',
-        'under_treatment',
-        'ready_for_discharge',
-        'discharged',
-        'completed',
-        'cancelled',
-    ];
+    public const VALID_STATUSES = \App\Support\ConfinementStatusMap::VALID;
 
     public const VALID_PAYMENT_STATUSES = [
         'unpaid',
@@ -87,6 +91,9 @@ class MedicalConfinement extends Model
         static::saving(function ($confinement) {
             $confinement->inheritBookingChannelFromRequest();
 
+            // Map legacy writes to the new vocabulary; unknown values fall
+            // back to 'recommended' rather than corrupting the lifecycle.
+            $confinement->status = \App\Support\ConfinementStatusMap::forward((string) $confinement->status);
             if (!in_array($confinement->status, self::VALID_STATUSES, true)) {
                 $confinement->status = 'recommended';
             }
@@ -120,6 +127,21 @@ class MedicalConfinement extends Model
     public function room()
     {
         return $this->belongsTo(HotelRoom::class, 'room_id');
+    }
+
+    public function wardBed()
+    {
+        return $this->belongsTo(WardBed::class, 'ward_bed_id');
+    }
+
+    public function medicationAdministrations()
+    {
+        return $this->hasMany(MedicationAdministrationRecord::class, 'medical_confinement_id');
+    }
+
+    public function consent()
+    {
+        return $this->belongsTo(VisitConsent::class, 'consent_id');
     }
 
     public function careLogs()

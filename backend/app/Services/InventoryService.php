@@ -8,6 +8,7 @@ use App\Models\InventoryLog;
 use App\Models\InventoryMonthlyAudit;
 use App\Models\Notification;
 use App\Models\ActivityLog;
+use App\Models\Supplier;
 use App\Models\User;
 use Illuminate\Validation\ValidationException;
 use Illuminate\Support\Facades\DB;
@@ -75,6 +76,13 @@ class InventoryService
 
         // Set default status
         $validated['status'] = $validated['status'] ?? self::STATUS_ACTIVE;
+
+        // Item-level supplier falls back to the initial batch's supplier so the
+        // product record shows where it was received from.
+        if (empty($validated['supplier']) && !empty($batchData['supplier'] ?? null)) {
+            $validated['supplier'] = $batchData['supplier'];
+            $validated['supplier_id'] ??= Supplier::where('name', $validated['supplier'])->value('id');
+        }
 
         $item = InventoryItem::create($validated);
 
@@ -709,7 +717,7 @@ class InventoryService
         $writtenOff = 0;
 
         if ($item->hasRealBatches()) {
-            $batchDiff = $targetStock - $item->getBatchStock();
+            $batchDiff = $targetStock - $item->getPhysicalBatchStock();
 
             if ($batchDiff > 0) {
                 $batch = $item->batches()->create([
@@ -794,6 +802,12 @@ class InventoryService
                 'actual_stock' => $actualStock,
                 'variance' => $variance,
                 'status' => $status,
+                // Phase D: a physical count that matches is self-approving;
+                // a discrepancy is corrected now but stays pending until a
+                // manager reviews the variance.
+                'approval_status' => $status === 'matched' ? 'auto_approved' : 'pending',
+                'approved_by' => null,
+                'approved_at' => null,
                 'reason' => $reason,
                 'checked_by' => auth()->user()?->name ?? 'System',
             ]
@@ -998,6 +1012,14 @@ class InventoryService
         // unique index treats it as "no barcode" rather than colliding on "").
         if (array_key_exists('barcode', $validated)) {
             $validated['barcode'] = $this->normalizeBarcode($validated['barcode']);
+        }
+
+        // Keep the item's supplier name and supplier_id in step so lists,
+        // filters and product info always show the linked supplier.
+        if (!empty($validated['supplier_id'])) {
+            $validated['supplier'] = Supplier::whereKey($validated['supplier_id'])->value('name');
+        } elseif (!empty($validated['supplier'])) {
+            $validated['supplier_id'] = Supplier::where('name', $validated['supplier'])->value('id');
         }
 
         // Business rule: barcode is required for sellable items.

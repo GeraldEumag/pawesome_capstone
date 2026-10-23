@@ -12,11 +12,15 @@ import {
   faCircleCheck,
   faClock,
   faMoneyBillWave,
+  faPaperPlane,
+  faTriangleExclamation,
+  faCircleInfo,
 } from "@fortawesome/free-solid-svg-icons";
 import toast from "react-hot-toast";
 import { apiRequest } from "../../api/client";
 import PetAvatar from "../shared/PetAvatar";
 import ServiceBillingPanel from "../shared/ServiceBillingPanel";
+import { VET_STARTED_STATUSES, VET_POST_CLINICAL_STATUSES } from "./vetStatus";
 import "./theme.css";
 import "./VetAppointmentBilling.css";
 
@@ -40,20 +44,43 @@ const VetAppointmentBilling = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const [appointment, setAppointment] = useState(null);
+  const [record, setRecord] = useState(null);
+  const [recordLoaded, setRecordLoaded] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [sending, setSending] = useState(false);
   const [billingSummary, setBillingSummary] = useState(null);
+
+  const loadRecord = useCallback(async (apt) => {
+    if (!apt?.pet_id) {
+      setRecordLoaded(true);
+      return;
+    }
+    try {
+      const res = await apiRequest(`/veterinary/pets/${apt.pet_id}/medical-records`);
+      const records = Array.isArray(res) ? res : (Array.isArray(res?.records) ? res.records : []);
+      setRecord(
+        records.find((item) => Number(item.appointment_id) === Number(apt.id)) || null
+      );
+    } catch {
+      setRecord(null);
+    } finally {
+      setRecordLoaded(true);
+    }
+  }, []);
 
   const loadAppointment = useCallback(async () => {
     try {
       setLoading(true);
       const response = await apiRequest(`/veterinary/appointments/${id}`);
-      setAppointment(response?.appointment || response);
+      const apt = response?.appointment || response;
+      setAppointment(apt);
+      await loadRecord(apt);
     } catch (err) {
       toast.error(err.message || "Failed to load appointment.");
     } finally {
       setLoading(false);
     }
-  }, [id]);
+  }, [id, loadRecord]);
 
   useEffect(() => {
     loadAppointment();
@@ -67,6 +94,46 @@ const VetAppointmentBilling = () => {
     const service = appointment?.service;
     return service?.name || appointment?.service_name || "Veterinary Consultation";
   }, [appointment]);
+
+  // ── Handoff state ─────────────────────────────────────────
+  const status = appointment?.status || "";
+  const isStarted = VET_STARTED_STATUSES.includes(status);
+  const recordFinalized = ["finalized", "locked"].includes(record?.status);
+  const sentToCashier = ["clinical_complete", "checkout"].includes(status);
+  const isCompleted = status === "completed";
+  const canSend = isStarted && recordFinalized && recordLoaded;
+
+  const sendToCashier = async () => {
+    try {
+      setSending(true);
+      await apiRequest(
+        `/veterinary/consultations/${appointment.id}/complete`,
+        "POST",
+        {},
+        { headers: { "Idempotency-Key": `vet-complete-${appointment.id}` } }
+      );
+      toast.success(
+        "Bill sent to the cashier. The visit closes automatically once payment is verified."
+      );
+      await loadAppointment();
+    } catch (err) {
+      // A second click after the visit already moved on is not an error.
+      try {
+        const res = await apiRequest(`/veterinary/appointments/${id}`);
+        const fresh = res?.appointment || res;
+        setAppointment(fresh);
+        if (VET_POST_CLINICAL_STATUSES.includes(fresh?.status)) {
+          toast.success("Bill is already with the cashier.");
+          return;
+        }
+      } catch {
+        /* fall through to the error toast */
+      }
+      toast.error(err.message || "Failed to send the bill to the cashier.");
+    } finally {
+      setSending(false);
+    }
+  };
 
   if (loading) {
     return (
@@ -176,7 +243,7 @@ const VetAppointmentBilling = () => {
             <FontAwesomeIcon icon={faCircleCheck} />
             <span>Consultation</span>
             <strong>
-              {["awaiting_payment", "completed"].includes(appointment.status)
+              {VET_POST_CLINICAL_STATUSES.includes(appointment.status)
                 ? "Complete"
                 : String(appointment.status || "").replace(/_/g, " ")}
             </strong>
@@ -188,6 +255,108 @@ const VetAppointmentBilling = () => {
           </article>
         </div>
       </div>
+
+      {/* ── Cashier Handoff ─────────────────────────── */}
+      {isStarted && recordLoaded && !recordFinalized && (
+        <div className="billing-handoff billing-handoff--warning">
+          <div className="billing-handoff-icon">
+            <FontAwesomeIcon icon={faTriangleExclamation} />
+          </div>
+          <div className="billing-handoff-copy">
+            <strong>Finalize the consultation record first</strong>
+            <p>
+              The medical record for this visit is not finalized yet. Save and
+              finalize it on the consultation page before sending the bill to
+              the cashier.
+            </p>
+          </div>
+          <button
+            type="button"
+            className="billing-send-btn billing-send-btn--muted"
+            onClick={() => navigate(`/veterinary/appointments/${id}/consult`)}
+          >
+            <FontAwesomeIcon icon={faFileMedical} />
+            Back to Consultation
+          </button>
+        </div>
+      )}
+
+      {canSend && (
+        <div className="billing-handoff billing-handoff--send">
+          <div className="billing-handoff-icon">
+            <FontAwesomeIcon icon={faPaperPlane} />
+          </div>
+          <div className="billing-handoff-copy">
+            <strong>Review the charges, then send to the cashier</strong>
+            <p>
+              Check the itemized bill below — consultation fee, prescriptions,
+              and any additional charges. Once sent, the customer pays at the
+              cashier and the visit closes automatically.
+            </p>
+          </div>
+          <button
+            type="button"
+            className="billing-send-btn"
+            onClick={sendToCashier}
+            disabled={sending}
+          >
+            {sending ? (
+              <FontAwesomeIcon icon={faSpinner} spin />
+            ) : (
+              <FontAwesomeIcon icon={faPaperPlane} />
+            )}
+            Send to Cashier
+          </button>
+        </div>
+      )}
+
+      {sentToCashier && (
+        <div className="billing-handoff billing-handoff--sent">
+          <div className="billing-handoff-icon">
+            <FontAwesomeIcon icon={faCircleCheck} />
+          </div>
+          <div className="billing-handoff-copy">
+            <strong>Sent to the cashier — awaiting payment</strong>
+            <p>
+              The visit closes automatically once the cashier verifies payment.
+              You can still add late charges below if something was missed.
+            </p>
+          </div>
+          <span className={`billing-badge ${paymentBadge.cls}`}>
+            {paymentBadge.label}
+          </span>
+        </div>
+      )}
+
+      {isCompleted && (
+        <div className="billing-handoff billing-handoff--done">
+          <div className="billing-handoff-icon">
+            <FontAwesomeIcon icon={faCircleCheck} />
+          </div>
+          <div className="billing-handoff-copy">
+            <strong>Visit completed</strong>
+            <p>Payment has been verified and this visit is closed.</p>
+          </div>
+          <span className={`billing-badge ${paymentBadge.cls}`}>
+            {paymentBadge.label}
+          </span>
+        </div>
+      )}
+
+      {!isStarted && !sentToCashier && !isCompleted && (
+        <div className="billing-handoff billing-handoff--muted">
+          <div className="billing-handoff-icon">
+            <FontAwesomeIcon icon={faCircleInfo} />
+          </div>
+          <div className="billing-handoff-copy">
+            <strong>Consultation has not started</strong>
+            <p>
+              The bill can only be sent to the cashier after the veterinarian
+              finalizes the consultation.
+            </p>
+          </div>
+        </div>
+      )}
 
       {/* ── Billing Summary ──────────────────────────── */}
       {billingSummary && (

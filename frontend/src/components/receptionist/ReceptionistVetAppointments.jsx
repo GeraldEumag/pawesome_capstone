@@ -16,12 +16,12 @@ import {
   faSyringe,
   faHeartbeat,
   faPhone,
-  faSpinner,
   faExclamationTriangle,
   faCheck,
   faTasks,
   faTimes,
   faWrench,
+  faDoorOpen,
 } from "@fortawesome/free-solid-svg-icons";
 import { apiRequest } from "../../api/client";
 import ServiceManagerModal from "./ServiceManagerModal";
@@ -98,7 +98,7 @@ const VetAppointments = () => {
           appointmentId: item.appointment_id || item.appointment?.id || null,
           veterinarianId,
           appointmentStatus: item.appointment_status || item.appointment?.status || null,
-          canAssign: ['pending', 'approved', 'scheduled'].includes(item.status) && (!item.appointment_status || ['pending', 'approved', 'scheduled'].includes(item.appointment_status)),
+          canAssign: ['pending', 'approved', 'scheduled'].includes(item.status) && (!item.appointment_status || ['requested', 'scheduled', 'checked_in'].includes(item.appointment_status)),
           petName: item.pet_name || item.pet,
           petType: item.pet_type || "Pet",
           breed: item.breed || "Unknown",
@@ -204,6 +204,38 @@ const VetAppointments = () => {
     } catch (err) {
       setError(err.message || "Failed to cancel appointment");
       showError(err.message || "Failed to cancel appointment");
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  // Check the linked appointment in (front-desk intake)
+  const handleCheckIn = async (appointment, { emergency = false } = {}) => {
+    const linkedId = appointment?.appointmentId;
+    if (!linkedId) {
+      showWarning("This request has no linked appointment to check in yet.");
+      return;
+    }
+
+    const confirmed = await showConfirm(
+      emergency
+        ? `Check in ${appointment.petName} as an EMERGENCY walk-in? This visit will be prioritized at the top of the vet queue.`
+        : `Check in ${appointment.petName}? The patient will be marked as waiting for the vet.`
+    );
+    if (!confirmed) return;
+
+    try {
+      setActionLoading(true);
+      await apiRequest(`/receptionist/appointments/${linkedId}/check-in`, {
+        method: "POST",
+        body: JSON.stringify({ is_emergency: emergency }),
+      });
+      await fetchAppointments();
+      setSelectedAppointment(null);
+      setError("");
+    } catch (err) {
+      setError(err.message || "Failed to check in the patient");
+      showError(err.message || "Failed to check in the patient");
     } finally {
       setActionLoading(false);
     }
@@ -650,6 +682,26 @@ const VetAppointments = () => {
                     >
                       <FontAwesomeIcon icon={faCheck} />
                     </button>
+                  )}
+                  {appointment.appointmentId && ["scheduled", "requested"].includes(appointment.appointmentStatus) && (
+                    <>
+                      <button
+                        className="action-btn approve-btn"
+                        title="Check in patient"
+                        onClick={() => handleCheckIn(appointment)}
+                        disabled={actionLoading}
+                      >
+                        <FontAwesomeIcon icon={faDoorOpen} />
+                      </button>
+                      <button
+                        className="action-btn delete-btn"
+                        title="Emergency walk-in check-in"
+                        onClick={() => handleCheckIn(appointment, { emergency: true })}
+                        disabled={actionLoading}
+                      >
+                        <FontAwesomeIcon icon={faExclamationTriangle} />
+                      </button>
+                    </>
                   )}
                   <button 
                     className="action-btn view-btn"

@@ -26,6 +26,12 @@ import {
 } from "@fortawesome/free-solid-svg-icons";
 import toast from "react-hot-toast";
 import { apiRequest } from "../../api/client";
+import { addMedicalRecordAddendum } from "../../api/medicalRecords";
+import { VET_STARTED_STATUSES } from "./vetStatus";
+import VetEstimatePanel from "./VetEstimatePanel";
+import VetDiagnosticsPanel from "./VetDiagnosticsPanel";
+import VetConsentPanel from "./VetConsentPanel";
+import VetDispensePanel from "./VetDispensePanel";
 import PetAvatar from "../shared/PetAvatar";
 import RowActionPopover from "../shared/RowActionPopover"
 import "./theme.css";
@@ -34,13 +40,14 @@ import "./VetConsultation.css";
 // ── Vet-friendly status label map ────────────────────────────
 const getVetStatusLabel = (status) =>
   ({
-    pending: "Pending",
-    approved: "Approved",
+    requested: "Requested",
     scheduled: "Scheduled",
-    in_progress: "In Progress",
-    in_consultation: "In Progress",
-    needs_confinement: "Needs Confinement",
-    awaiting_payment: "Consultation Complete",
+    checked_in: "Checked In",
+    in_consultation: "In Consultation",
+    in_treatment: "In Treatment",
+    awaiting_results: "Awaiting Results",
+    clinical_complete: "Clinically Complete",
+    checkout: "At Checkout",
     completed: "Completed",
     cancelled: "Cancelled",
     no_show: "No Show",
@@ -59,12 +66,88 @@ const emptyForm = {
 };
 
 const emptyPrescriptionRow = () => ({
+  inventory_item_id: null,
+  custom: false,
   medication_name: "",
   dosage: "",
   frequency: "",
   duration: "",
   instructions: "",
 });
+
+// Dated corrections on a finalized record. Original content is never edited.
+const RecordAddenda = ({ recordId, addenda = [], canAdd, onAdded }) => {
+  const [body, setBody] = useState("");
+  const [submitting, setSubmitting] = useState(false);
+
+  const submit = async () => {
+    if (!body.trim()) {
+      toast.error("Addendum text is required.");
+      return;
+    }
+    try {
+      setSubmitting(true);
+      await addMedicalRecordAddendum(recordId, body.trim());
+      setBody("");
+      toast.success("Addendum added.");
+      onAdded();
+    } catch (err) {
+      toast.error(err.message || "Failed to add addendum.");
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  return (
+    <div className="consult-section-card">
+      <div className="consult-section-header">
+        <div className="consult-section-icon">
+          <FontAwesomeIcon icon={faFileMedical} />
+        </div>
+        <div className="consult-section-title-group">
+          <h3>Addenda</h3>
+          <p>Dated corrections. The finalized record above is never changed.</p>
+        </div>
+      </div>
+
+      {addenda.length === 0 ? (
+        <div className="consult-rx-empty">No addenda recorded.</div>
+      ) : (
+        <ul>
+          {addenda.map((item) => (
+            <li key={item.id}>
+              <strong>{item.author?.name || "Veterinarian"}</strong>{" "}
+              <small>{item.created_at ? new Date(item.created_at).toLocaleString() : ""}</small>
+              <p>{item.body}</p>
+            </li>
+          ))}
+        </ul>
+      )}
+
+      {canAdd && (
+        <>
+          <label className="consult-label">
+            <span>New addendum</span>
+            <textarea
+              value={body}
+              onChange={(e) => setBody(e.target.value)}
+              placeholder="Correction or follow-up detail…"
+            />
+          </label>
+          <button
+            type="button"
+            className="consult-btn consult-btn--secondary"
+            onClick={submit}
+            disabled={submitting}
+          >
+            {submitting ? <FontAwesomeIcon icon={faSpinner} spin /> : <FontAwesomeIcon icon={faSave} />}
+            Add Addendum
+          </button>
+        </>
+      )}
+    </div>
+  );
+};
 
 const VetConsultation = () => {
   const { id } = useParams();
@@ -78,6 +161,7 @@ const VetConsultation = () => {
   // ── Prescription state ──────────────────────────────────────
   const [prescriptions, setPrescriptions] = useState([]);
   const [showPrescriptions, setShowPrescriptions] = useState(false);
+  const [medItems, setMedItems] = useState([]);
 
   // ── Confinement state ───────────────────────────────────────
   const [confinementForm, setConfinementForm] = useState({
@@ -91,13 +175,12 @@ const VetConsultation = () => {
   });
 
   const appointmentStatus = appointment?.status || "";
-  const isStarted = ["in_progress", "in_consultation", "treated"].includes(appointmentStatus);
+  const isStarted = VET_STARTED_STATUSES.includes(appointmentStatus);
   const isFinalized =
     record?.status === "finalized" ||
     record?.status === "locked" ||
-    appointmentStatus === "awaiting_payment" ||
-    appointmentStatus === "completed";
-  const isConsultationComplete = ["awaiting_payment", "completed"].includes(appointmentStatus);
+    ["clinical_complete", "checkout", "completed"].includes(appointmentStatus);
+  const isConsultationComplete = ["clinical_complete", "checkout", "completed"].includes(appointmentStatus);
 
   const serviceLabel = useMemo(() => {
     const service = appointment?.service;
@@ -129,6 +212,8 @@ const VetConsultation = () => {
       if (Array.isArray(medicalRecord.prescriptions) && medicalRecord.prescriptions.length > 0) {
         setPrescriptions(
           medicalRecord.prescriptions.map((p) => ({
+            inventory_item_id: p.inventory_item_id || null,
+            custom: !p.inventory_item_id,
             medication_name: p.medication_name || "",
             dosage: p.dosage || "",
             frequency: p.frequency || "",
@@ -173,6 +258,19 @@ const VetConsultation = () => {
     loadConsultation();
   }, [loadConsultation]);
 
+  // In-store medication list for the prescription picker (custom entries stay allowed)
+  useEffect(() => {
+    let cancelled = false;
+    apiRequest("/veterinary/inventory-items")
+      .then((res) => {
+        if (cancelled) return;
+        const list = Array.isArray(res) ? res : (res?.items || res?.inventory_items || res?.data || []);
+        setMedItems(list);
+      })
+      .catch(() => { /* picker falls back to custom entry only */ });
+    return () => { cancelled = true; };
+  }, []);
+
   // Auto-seed chief complaint from appointment notes when no record exists
   useEffect(() => {
     if (!record && appointment?.notes && !form.chief_complaint) {
@@ -196,6 +294,30 @@ const VetConsultation = () => {
     );
   };
 
+  const selectPrescriptionItem = (index, selectValue) => {
+    if (selectValue === "__custom__") {
+      setPrescriptions((prev) =>
+        prev.map((row, i) =>
+          i === index ? { ...row, custom: true, inventory_item_id: null } : row
+        )
+      );
+      return;
+    }
+    const item = medItems.find((m) => String(m.id) === selectValue);
+    setPrescriptions((prev) =>
+      prev.map((row, i) =>
+        i === index
+          ? {
+              ...row,
+              custom: false,
+              inventory_item_id: item ? item.id : null,
+              medication_name: item ? item.name : row.medication_name,
+            }
+          : row
+      )
+    );
+  };
+
   const removePrescriptionRow = (index) => {
     setPrescriptions((prev) => prev.filter((_, i) => i !== index));
   };
@@ -207,7 +329,16 @@ const VetConsultation = () => {
     appointment_id: appointment?.id,
     visit_date: new Date().toISOString(),
     status,
-    prescriptions: prescriptions.filter((p) => p.medication_name.trim()),
+    prescriptions: prescriptions
+      .filter((p) => p.inventory_item_id || p.medication_name.trim())
+      .map((p) => ({
+        inventory_item_id: p.inventory_item_id || undefined,
+        medication_name: p.medication_name,
+        dosage: p.dosage,
+        frequency: p.frequency,
+        duration: p.duration,
+        instructions: p.instructions,
+      })),
   });
 
   // ── Start consultation ───────────────────────────────────
@@ -267,48 +398,16 @@ const VetConsultation = () => {
     }
   };
 
-  // ── Complete consultation ────────────────────────────────
-  const finalizeAndComplete = async () => {
-    const finalized = await saveRecord("finalized");
+  // ── Finalize record and proceed to billing review ─────────
+  // The vet reviews itemized charges on the billing page, then sends the
+  // bill to the cashier; the visit auto-completes once payment is verified.
+  const finalizeAndReviewBill = async () => {
+    const finalized = ["finalized", "locked"].includes(record?.status)
+      ? record
+      : await saveRecord("finalized");
     if (!finalized) return;
-    try {
-      setSaving(true);
-      await apiRequest(`/veterinary/consultations/${id}/complete`, {
-        method: "POST",
-        body: JSON.stringify({
-          diagnosis: form.diagnosis,
-          treatment_notes: form.treatment_plan,
-          prescription: prescriptions
-            .filter((p) => p.medication_name.trim())
-            .map((p) => `${p.medication_name} ${p.dosage} – ${p.frequency} for ${p.duration}`)
-            .join("; "),
-          vet_remarks: form.notes,
-        }),
-      });
-      toast.success("Consultation complete. Billing is being processed by the cashier.");
-      await loadConsultation();
-    } catch (err) {
-      toast.error(err.message || "Failed to complete consultation.");
-    } finally {
-      setSaving(false);
-    }
-  };
-
-  // ── Complete appointment (after payment is verified) ─────
-  const completeAppointment = async () => {
-    try {
-      setSaving(true);
-      await apiRequest(`/veterinary/appointments/${id}/complete`, {
-        method: "POST",
-      });
-      toast.success("Appointment completed and moved to history.");
-      navigate("/veterinary/appointments");
-    } catch (err) {
-      toast.error(err.message || "Failed to complete appointment.");
-      await loadConsultation();
-    } finally {
-      setSaving(false);
-    }
+    toast.success("Record finalized. Review the bill, then send it to the cashier.");
+    navigate(`/veterinary/appointments/${id}/billing`);
   };
 
   // ── Recommend confinement ────────────────────────────────
@@ -680,19 +779,57 @@ const VetConsultation = () => {
                 {prescriptions.map((row, index) => (
                   <tr key={index}>
                     <td>
-                      <input
-                        type="text"
-                        value={row.medication_name}
-                        onChange={(e) =>
-                          updatePrescriptionRow(
-                            index,
-                            "medication_name",
-                            e.target.value
-                          )
-                        }
-                        disabled={isFinalized}
-                        placeholder="e.g. Amoxicillin"
-                      />
+                      {isFinalized ? (
+                        <span className="consult-rx-med-name">{row.medication_name || "—"}</span>
+                      ) : (
+                        <>
+                          <select
+                            className="consult-rx-select"
+                            value={
+                              row.custom
+                                ? "__custom__"
+                                : row.inventory_item_id
+                                  ? String(row.inventory_item_id)
+                                  : ""
+                            }
+                            onChange={(e) =>
+                              selectPrescriptionItem(index, e.target.value)
+                            }
+                          >
+                            <option value="">Select medicine…</option>
+                            {medItems.map((item) => (
+                              <option key={item.id} value={String(item.id)}>
+                                {item.name}
+                                {item.item_class === "controlled_drug" ? " ⚠ controlled" : ""}
+                                {" — stock "}{item.stock ?? item.available_stock ?? 0}
+                              </option>
+                            ))}
+                            {/* Keep a linked-but-removed item visible */}
+                            {row.inventory_item_id &&
+                              !medItems.some((m) => Number(m.id) === Number(row.inventory_item_id)) && (
+                                <option value={String(row.inventory_item_id)} disabled>
+                                  {row.medication_name || `Item #${row.inventory_item_id}`} (unavailable)
+                                </option>
+                              )}
+                            <option value="__custom__">Not in store — enter manually</option>
+                          </select>
+                          {row.custom && (
+                            <input
+                              type="text"
+                              className="consult-rx-custom-input"
+                              value={row.medication_name}
+                              onChange={(e) =>
+                                updatePrescriptionRow(
+                                  index,
+                                  "medication_name",
+                                  e.target.value
+                                )
+                              }
+                              placeholder="e.g. Amoxicillin"
+                            />
+                          )}
+                        </>
+                      )}
                     </td>
                     <td>
                       <input
@@ -788,6 +925,24 @@ const VetConsultation = () => {
         )}
       </div>
 
+      {/* ── Estimate, Diagnostics & Consents ───────────────── */}
+      {isStarted && (
+        <>
+          <VetEstimatePanel
+            appointmentId={id}
+            disabled={isFinalized}
+            emergency={!!appointment?.emergency}
+          />
+          <VetDiagnosticsPanel
+            appointmentId={id}
+            disabled={isFinalized}
+            canOrder={!isConsultationComplete}
+          />
+          <VetConsentPanel appointmentId={id} disabled={isFinalized} />
+          <VetDispensePanel appointmentId={id} disabled={isFinalized} />
+        </>
+      )}
+
       {/* ── Confinement Recommendation ──────────────── */}
       <div className="consult-section-card">
         <div className="consult-section-header">
@@ -798,7 +953,7 @@ const VetConsultation = () => {
             <h3>Medical Confinement Recommendation</h3>
             <p>Recommend this patient for admission and in-patient care</p>
           </div>
-          {appointmentStatus === "needs_confinement" && (
+          {appointment?.confinement_recommended && (
             <span className="consult-apt-badge consult-apt-badge--submitted">
               Submitted
             </span>
@@ -815,7 +970,7 @@ const VetConsultation = () => {
                   reason_for_confinement: e.target.value,
                 }))
               }
-              disabled={appointmentStatus === "needs_confinement"}
+              disabled={appointment?.confinement_recommended}
             />
           </label>
           <label className="consult-label">
@@ -828,7 +983,7 @@ const VetConsultation = () => {
                   medication_plan: e.target.value,
                 }))
               }
-              disabled={appointmentStatus === "needs_confinement"}
+              disabled={appointment?.confinement_recommended}
             />
           </label>
           <label className="consult-label">
@@ -841,7 +996,7 @@ const VetConsultation = () => {
                   observation_instructions: e.target.value,
                 }))
               }
-              disabled={appointmentStatus === "needs_confinement"}
+              disabled={appointment?.confinement_recommended}
             />
           </label>
           <label className="consult-label">
@@ -854,7 +1009,7 @@ const VetConsultation = () => {
                   special_care_instructions: e.target.value,
                 }))
               }
-              disabled={appointmentStatus === "needs_confinement"}
+              disabled={appointment?.confinement_recommended}
             />
           </label>
         </div>
@@ -873,7 +1028,7 @@ const VetConsultation = () => {
                     urgency_level: e.target.value,
                   }))
                 }
-                disabled={appointmentStatus === "needs_confinement"}
+                disabled={appointment?.confinement_recommended}
               >
                 <option value="low">Low</option>
                 <option value="normal">Normal</option>
@@ -898,7 +1053,7 @@ const VetConsultation = () => {
                     expected_stay_days: e.target.value,
                   }))
                 }
-                disabled={appointmentStatus === "needs_confinement"}
+                disabled={appointment?.confinement_recommended}
                 placeholder="—"
               />
               <span className="consult-vital-unit">days</span>
@@ -922,13 +1077,22 @@ const VetConsultation = () => {
                     estimated_cost: e.target.value,
                   }))
                 }
-                disabled={appointmentStatus === "needs_confinement"}
+                disabled={appointment?.confinement_recommended}
                 placeholder="0.00"
               />
             </div>
           </div>
         </div>
       </div>
+
+      {record && (isFinalized || record.addenda?.length > 0) && (
+        <RecordAddenda
+          recordId={record.id}
+          addenda={record.addenda || []}
+          canAdd={isFinalized}
+          onAdded={loadConsultation}
+        />
+      )}
 
       {/* ── Sticky Actions ──────────────────────────── */}
       <div className="consult-actions">
@@ -949,11 +1113,7 @@ const VetConsultation = () => {
           type="button"
           className="consult-btn consult-btn--secondary"
           onClick={recommendConfinement}
-          disabled={
-            !isStarted ||
-            saving ||
-            appointmentStatus === "needs_confinement"
-          }
+          disabled={!isStarted || saving || appointment?.confinement_recommended}
         >
           <FontAwesomeIcon icon={faHospital} />
           Needs Confinement
@@ -970,42 +1130,27 @@ const VetConsultation = () => {
               <FontAwesomeIcon icon={faFileInvoiceDollar} />
               View Billing
             </button>
-            {appointmentStatus === "awaiting_payment" && (
-              <button
-                type="button"
-                className="consult-btn consult-btn--primary"
-                onClick={completeAppointment}
-                disabled={saving || appointment?.payment_status !== "paid"}
-                title={
-                  appointment?.payment_status !== "paid"
-                    ? "Waiting for cashier to verify the customer's payment"
-                    : "Mark this appointment as completed"
-                }
-              >
-                {saving ? (
-                  <FontAwesomeIcon icon={faSpinner} spin />
-                ) : (
-                  <FontAwesomeIcon icon={faCircleCheck} />
-                )}
+            {["clinical_complete", "checkout"].includes(appointmentStatus) && (
+              <span className="consult-apt-badge">
                 {appointment?.payment_status === "paid"
-                  ? "Complete Appointment"
-                  : "Awaiting Payment"}
-              </button>
+                  ? "Closing visit…"
+                  : "Closes automatically after payment"}
+              </span>
             )}
           </>
         ) : (
           <button
             type="button"
             className="consult-btn consult-btn--primary"
-            onClick={finalizeAndComplete}
+            onClick={finalizeAndReviewBill}
             disabled={!isStarted || saving}
           >
             {saving ? (
               <FontAwesomeIcon icon={faSpinner} spin />
             ) : (
-              <FontAwesomeIcon icon={faCircleCheck} />
+              <FontAwesomeIcon icon={faFileInvoiceDollar} />
             )}
-            Complete Consultation
+            Finalize &amp; Review Bill
           </button>
         )}
       </div>

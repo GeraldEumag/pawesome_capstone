@@ -34,8 +34,11 @@ class BookingAvailabilityService
         'in_stay',
         'in_care',
         'confined',
-        'needs_confinement',
-        'treated',
+        // Phase B appointment statuses (replacing needs_confinement/treated)
+        'requested',
+        'in_treatment',
+        'awaiting_results',
+        'clinical_complete',
     ];
 
     /**

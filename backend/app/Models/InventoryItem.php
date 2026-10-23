@@ -15,6 +15,7 @@ class InventoryItem extends Model
         'sku',
         'name',
         'category',
+        'item_class',
         'brand',
         'generic_name',
         'supplier',
@@ -114,6 +115,29 @@ class InventoryItem extends Model
         });
     }
 
+    /**
+     * Phase D inventory classes — drives pharmacy rules. `category` stays the
+     * merchandising bucket; `item_class` decides whether the item is a
+     * medicine/vaccine/controlled drug and which stock workflows apply.
+     */
+    public const ITEM_CLASSES = [
+        'consumable',
+        'medicine',
+        'vaccine',
+        'retail',
+        'controlled_drug',
+    ];
+
+    public function isControlledDrug(): bool
+    {
+        return $this->item_class === 'controlled_drug';
+    }
+
+    public function isMedicine(): bool
+    {
+        return in_array($this->item_class, ['medicine', 'controlled_drug', 'vaccine'], true);
+    }
+
     public function logs()
     {
         return $this->hasMany(InventoryLog::class);
@@ -159,6 +183,25 @@ class InventoryItem extends Model
     public function getBatchStock(): int
     {
         return $this->activeBatches()->sum('remaining_quantity');
+    }
+
+    /**
+     * Every batch that still physically holds units, including expired ones
+     * awaiting disposal, in FEFO order. Stock reconciliation works on this set
+     * so a removal or audit can't leave expired units behind.
+     */
+    public function physicalBatches()
+    {
+        return $this->batches()
+            ->where('remaining_quantity', '>', 0)
+            ->whereNotIn('status', ['depleted', 'disposed'])
+            ->orderByRaw('COALESCE(expiration_date, "9999-12-31") ASC')
+            ->orderBy('received_date', 'asc');
+    }
+
+    public function getPhysicalBatchStock(): int
+    {
+        return (int) $this->physicalBatches()->sum('remaining_quantity');
     }
 
     /**
@@ -330,7 +373,7 @@ class InventoryItem extends Model
     {
         $remainingToDeduct = $amount;
 
-        foreach ($this->activeBatches()->get() as $batch) {
+        foreach ($this->physicalBatches()->get() as $batch) {
             if ($remainingToDeduct <= 0) break;
 
             $deductFromBatch = min($batch->remaining_quantity, $remainingToDeduct);

@@ -7,7 +7,6 @@ import {
   faMapMarkerAlt,
   faPhone,
   faPlus,
-  faRotateRight,
   faSave,
   faSearch,
   faSpinner,
@@ -196,10 +195,6 @@ const Suppliers = () => {
           <p>Manage supplier profiles used when adding products to inventory.</p>
         </div>
         <div className="suppliers-hero-actions">
-          <button type="button" className="sup-btn secondary" onClick={() => fetchSuppliers(true)} disabled={refreshing}>
-            <FontAwesomeIcon icon={refreshing ? faSpinner : faRotateRight} spin={refreshing} />
-            Refresh
-          </button>
           <button type="button" className="sup-btn primary" onClick={openCreate}>
             <FontAwesomeIcon icon={faPlus} /> New Supplier
           </button>

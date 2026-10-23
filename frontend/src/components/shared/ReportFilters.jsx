@@ -40,7 +40,6 @@ import "./ReportFilters.css";
  * @param {Function} props.onExportExcel - Excel export handler
  * @param {Function} props.onPrint - Print handler
  * @param {boolean} props.loading - Loading state
- * @param {Function} props.onRefresh - Refresh data handler
  * @param {Function} props.onClearFilters - Clear all filters handler
  * @param {boolean} props.showDateRange - Show date range filters (default: true)
  * @param {boolean} props.showStatus - Show status filter (default: true)
@@ -73,7 +72,6 @@ const ReportFilters = ({
   onExportExcel,
   onPrint,
   loading = false,
-  onRefresh,
   onClearFilters,
   showDateRange = true,
   showStatus = true,
@@ -257,22 +255,6 @@ const ReportFilters = ({
           <button className="action-btn clear-btn" onClick={onClearFilters} disabled={loading}>
             <FontAwesomeIcon icon={faTimes} />
             Clear Filters
-          </button>
-        )}
-
-        {onRefresh && (
-          <button className="action-btn refresh-btn" onClick={onRefresh} disabled={loading}>
-            {loading ? (
-              <>
-                <span className="spinner" />
-                Loading...
-              </>
-            ) : (
-              <>
-                <FontAwesomeIcon icon={faSearch} />
-                Refresh
-              </>
-            )}
           </button>
         )}
 

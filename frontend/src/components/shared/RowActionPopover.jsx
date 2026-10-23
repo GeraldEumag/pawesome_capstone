@@ -6,6 +6,7 @@ import "./RowActionPopover.css";
 
 const getTextContent = (node) => {
   if (typeof node === "string" || typeof node === "number") return String(node);
+  if (Array.isArray(node)) return node.map(getTextContent).join(" ");
   if (!isValidElement(node)) return "";
   return React.Children.toArray(node.props.children).map(getTextContent).join(" ");
 };

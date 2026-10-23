@@ -611,6 +611,7 @@ class EmailAuthFlowTest extends TestCase
             'email' => 'newcashier@example.com',
             'password' => 'TempPass123!',
             'role' => 'cashier',
+            'date_of_birth' => '1995-06-20',
         ], $this->bearer($admin))->assertCreated();
 
         $this->deliverPending();

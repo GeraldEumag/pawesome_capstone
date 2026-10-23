@@ -66,10 +66,6 @@ test.describe('Vet Dashboard end-to-end', () => {
         statusUpdateCalled = true;
         return route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ success: true, message: 'Status updated' }) });
       });
-      await page.route('**/api/veterinary/appointments/*/complete', route => {
-        statusUpdateCalled = true;
-        return route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ success: true, message: 'Appointment completed' }) });
-      });
     }
 
     await page.goto(frontendUrl + dashboardPath);

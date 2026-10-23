@@ -60,7 +60,7 @@ class DashboardController extends Controller
                 ];
             });
 
-        $pendingOrders = Appointment::where('status', 'approved')
+        $pendingOrders = Appointment::whereIn('status', [Appointment::STATUS_CLINICAL_COMPLETE, Appointment::STATUS_CHECKOUT])
             ->with(['pet', 'customer'])
             ->limit(5)
             ->get()
@@ -99,7 +99,7 @@ class DashboardController extends Controller
             'today_transactions' => Sale::whereDate('created_at', $today)->count(),
             'monthly_sales' => Sale::whereMonth('created_at', $today->month)->sum('amount'),
             'monthly_transactions' => Sale::whereMonth('created_at', $today->month)->count(),
-            'pending_payments' => Appointment::where('status', 'approved')->count(),
+            'pending_payments' => Appointment::whereIn('status', [Appointment::STATUS_CLINICAL_COMPLETE, Appointment::STATUS_CHECKOUT])->count(),
             'completed_payments' => Sale::where('type', 'appointment')->count(),
             'recent_sales' => Sale::latest()->limit(10)->get(),
             'sales_by_type' => $salesByType,
@@ -802,7 +802,11 @@ class DashboardController extends Controller
                 'asr.payment_reference as linked_reference'
             )
             ->where($excludeLinked)
-            ->whereIn('appointments.status', ['approved', 'scheduled', 'in_consultation', 'needs_confinement', 'awaiting_payment', 'treated'])
+            ->whereIn('appointments.status', [
+                'scheduled', 'checked_in',
+                'in_consultation', 'in_treatment', 'awaiting_results',
+                'clinical_complete', 'checkout',
+            ])
             ->whereIn('appointments.payment_status', ['unpaid', 'pending', 'rejected'])
             ->where(function ($q) {
                 $q->whereNull('appointments.additional_charges')->orWhere('appointments.additional_charges', '<=', 0);
@@ -938,7 +942,7 @@ class DashboardController extends Controller
                         ? url('/api/files/payment-proofs/service-billing-payment/' . $paymentRequest->id . '/view')
                         : null,
                     'request_date' => $paymentRequest->submitted_at ?? $paymentRequest->created_at,
-                    'status' => $appointment?->status ?? 'approved',
+                    'status' => $appointment?->status ?? 'scheduled',
                     'payment_status' => $paymentRequest->status === ServiceBillingPaymentRequest::STATUS_PENDING_VERIFICATION ? 'pending' : 'unpaid',
                     'booking_channel' => $appointment?->booking_channel ?? 'online',
                     'items' => $paymentRequest->items->map(fn ($item) => [

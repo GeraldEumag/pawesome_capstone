@@ -1398,6 +1398,44 @@
   color: var(--color-primary);
 }
 
+.pet-history-vaccinations {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin-top: 0.85rem;
+}
+
+.pet-history-vax {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.6rem 0.85rem;
+  border-radius: var(--radius-md);
+  background: rgba(255, 95, 147, 0.07);
+  font-size: 0.88rem;
+}
+
+.pet-history-vax span {
+  color: var(--color-muted);
+  flex: 1;
+}
+
+.pets-vax-cert-btn {
+  padding: 0.3rem 0.7rem;
+  border: none;
+  border-radius: var(--radius-sm);
+  background: var(--color-primary);
+  color: #fff;
+  font-size: 0.78rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.pets-vax-cert-btn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
 /* DARK MODE */
 
 /* RESPONSIVE */

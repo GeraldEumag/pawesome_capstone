@@ -164,11 +164,6 @@ const ReceptionistCustomerManagement = () => {
           <p>View customer records, pets, and create receptionist bookings.</p>
         </div>
 
-        <div className="header-actions">
-          <button className="secondary-btn" onClick={loadCustomers}>
-            Refresh
-          </button>
-        </div>
       </div>
 
       {error && <div className="alert alert-error">{error}</div>}

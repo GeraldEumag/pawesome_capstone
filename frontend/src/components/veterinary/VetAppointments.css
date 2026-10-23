@@ -509,23 +509,39 @@
   backdrop-filter: blur(10px);
 }
 
-.vet-appointments .appointment-status.pending {
+.vet-appointments .appointment-status.pending,
+.vet-appointments .appointment-status.requested {
   background: rgba(237, 137, 54, 0.1);
   color: var(--veterinary-warning);
   border-color: rgba(237, 137, 54, 0.2);
 }
 
-.vet-appointments .appointment-status.approved {
+.vet-appointments .appointment-status.approved,
+.vet-appointments .appointment-status.scheduled {
   background: rgba(66, 153, 225, 0.1);
   color: var(--veterinary-info);
   border-color: rgba(66, 153, 225, 0.2);
 }
 
+.vet-appointments .appointment-status.checked_in {
+  background: rgba(16, 185, 129, 0.1);
+  color: var(--veterinary-success);
+  border-color: rgba(16, 185, 129, 0.2);
+}
+
+.vet-appointments .appointment-status.in_consultation,
 .vet-appointments .appointment-status.in_progress,
+.vet-appointments .appointment-status.in_treatment,
 .vet-appointments .appointment-status.ongoing {
   background: rgba(255, 95, 147, 0.12);
   color: var(--veterinary-primary);
   border-color: rgba(255, 95, 147, 0.18);
+}
+
+.vet-appointments .appointment-status.awaiting_results {
+  background: rgba(66, 153, 225, 0.1);
+  color: var(--veterinary-info);
+  border-color: rgba(66, 153, 225, 0.2);
 }
 
 .vet-appointments .appointment-status.completed {
@@ -534,7 +550,9 @@
   border-color: rgba(16, 185, 129, 0.2);
 }
 
-.vet-appointments .appointment-status.awaiting_payment {
+.vet-appointments .appointment-status.awaiting_payment,
+.vet-appointments .appointment-status.clinical_complete,
+.vet-appointments .appointment-status.checkout {
   background: rgba(245, 158, 11, 0.1);
   color: var(--color-warning-text);
   border-color: rgba(245, 158, 11, 0.2);
@@ -1087,4 +1105,92 @@
   .vet-appointments .appointments-controls {
     padding: 24px;
   }
+}
+
+/* ── Appointments table (replaces the old card grid) ────────── */
+
+.vet-appointments .apt-table-wrap {
+  margin-top: 4px;
+}
+
+.vet-appointments .apt-table-wrap .standard-table-container {
+  border: 1px solid var(--color-border, #eadfe6);
+  border-radius: var(--radius-lg, 14px);
+  overflow: hidden;
+  background: var(--color-surface-card, #ffffff);
+}
+
+.vet-appointments .apt-cell-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.vet-appointments .apt-cell-stack strong {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.88rem;
+  white-space: nowrap;
+}
+
+.vet-appointments .apt-cell-stack small {
+  font-size: 0.75rem;
+  color: var(--color-text-secondary, #8a7f88);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 180px;
+}
+
+.vet-appointments .apt-unassigned {
+  margin-left: 6px;
+  font-size: 0.68rem;
+  font-style: normal;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--veterinary-warning, #b45309);
+}
+
+.vet-appointments .apt-pay-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 11px;
+  border-radius: 999px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: capitalize;
+  background: var(--color-surface-alt, #f0ebee);
+  color: var(--color-text-secondary, #8a7f88);
+}
+
+.vet-appointments .apt-pay-badge--paid {
+  background: var(--color-success-bg, #e6f6ec);
+  color: var(--color-success-text, #1d7a46);
+}
+
+.vet-appointments .apt-pay-badge--partial,
+.vet-appointments .apt-pay-badge--pending {
+  background: var(--color-warning-bg, #fdf3e0);
+  color: var(--color-warning-text, #8a5a00);
+}
+
+.vet-appointments .apt-pay-badge--unpaid {
+  background: var(--color-danger-bg, #fdeceb);
+  color: var(--color-danger-text, #b3261e);
+}
+
+.vet-appointments .apt-row--emergency td {
+  background: rgba(220, 38, 38, 0.045);
+}
+
+/* Popover action menu inside the table — keep buttons compact. */
+.vet-appointments .apt-table-wrap .row-action-popover-item.action-btn {
+  width: 100%;
+  justify-content: flex-start;
+  border-radius: 8px;
+  box-shadow: none;
+  margin: 0;
 }

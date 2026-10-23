@@ -111,6 +111,16 @@ const EMPTY_FORM = {
   tin_no: "",
 };
 
+/** Sentinel select value for "type your own" entries. */
+const CUSTOM_SELECT = "__custom__";
+
+/** Latest acceptable employee birthdate — staff must be at least 18. */
+const maxAdultBirthdate = () => {
+  const d = new Date();
+  d.setFullYear(d.getFullYear() - 18);
+  return d.toISOString().slice(0, 10);
+};
+
 const FORM_SECTIONS = [
   {
     title: "Personal Information",
@@ -119,7 +129,7 @@ const FORM_SECTIONS = [
       ["last_name", "Last Name", { required: true }],
       ["middle_name", "Middle Name"],
       ["suffix", "Suffix"],
-      ["birthdate", "Birthdate", { type: "date" }],
+      ["birthdate", "Birthdate", { type: "date", required: true, max: maxAdultBirthdate() }],
       ["gender", "Gender", {
         type: "select",
         options: ["", "male", "female", "other"],
@@ -137,14 +147,14 @@ const FORM_SECTIONS = [
       ["email", "Email", { type: "email" }],
       ["address", "Address"],
       ["emergency_contact_name", "Emergency Contact"],
-      ["emergency_contact_phone", "Emergency Phone"],
+      ["emergency_contact_phone", "Emergency Phone", { maxLength: 11, inputMode: "numeric" }],
     ],
   },
   {
     title: "Employment",
     fields: [
-      ["position", "Position"],
-      ["department", "Department"],
+      ["position", "Position", { type: "select", options: ["", "Operations Manager", "System Administrator", "Receptionist", "Super Receptionist", "Cashier", "Inventory Manager", "Veterinarian", "Veterinary Technician", CUSTOM_SELECT] }],
+      ["department", "Department", { type: "select", options: ["", "Operations", "Administration", "Front Desk", "Finance", "Inventory", "Veterinary", CUSTOM_SELECT] }],
       ["hire_date", "Hire Date", { type: "date" }],
       ["employment_status", "Employment Status", {
         type: "select",
@@ -194,6 +204,7 @@ const EmployeeDirectory = ({
   const [showForm, setShowForm] = useState(false);
   const [editing, setEditing] = useState(null);
   const [form, setForm] = useState(EMPTY_FORM);
+  const [customSelects, setCustomSelects] = useState({});
   const [saving, setSaving] = useState(false);
   const [formError, setFormError] = useState("");
   const [detail, setDetail] = useState(null);
@@ -245,6 +256,7 @@ const EmployeeDirectory = ({
   const openCreate = () => {
     setEditing(null);
     setForm(EMPTY_FORM);
+    setCustomSelects({});
     setFormError("");
     setShowForm(true);
   };
@@ -258,6 +270,7 @@ const EmployeeDirectory = ({
       ),
       is_active: emp.is_active,
     });
+    setCustomSelects({});
     setFormError("");
     setShowForm(true);
   };
@@ -276,9 +289,36 @@ const EmployeeDirectory = ({
     });
   };
 
+  // Selects that allow a typed value via the CUSTOM_SELECT sentinel.
+  const listedOptions = (opts) => (opts.options || []).filter((o) => o !== CUSTOM_SELECT);
+  const isCustomValue = (key, opts) =>
+    customSelects[key] || (!!form[key] && !listedOptions(opts).includes(form[key]));
+
+  const handleSelectChange = (key, value) => {
+    if (value === CUSTOM_SELECT) {
+      setCustomSelects((m) => ({ ...m, [key]: true }));
+      setField(key, "");
+    } else {
+      setCustomSelects((m) => ({ ...m, [key]: false }));
+      setField(key, value);
+    }
+  };
+
   const submitForm = async () => {
     if (!form.first_name.trim() || !form.last_name.trim()) {
       setFormError("First name and last name are required.");
+      return;
+    }
+    if (!editing && !form.birthdate) {
+      setFormError("Birthdate is required — employees must be at least 18 years old.");
+      return;
+    }
+    if (form.birthdate && form.birthdate > maxAdultBirthdate()) {
+      setFormError("This person does not meet the minimum age requirement. Employees must be at least 18 years old.");
+      return;
+    }
+    if (form.emergency_contact_phone && !/^\d{11}$/.test(form.emergency_contact_phone.trim())) {
+      setFormError("Emergency contact phone must be exactly 11 digits (e.g. 09171234567).");
       return;
     }
     setSaving(true);
@@ -397,15 +437,7 @@ const EmployeeDirectory = ({
           </p>
         </div>
         <div className="ed-header-actions">
-          <button
-            type="button"
-            className="ed-btn ed-btn-secondary"
-            onClick={() => fetchEmployees({ silent: true })}
-            disabled={refreshing}
-          >
-            <FontAwesomeIcon icon={faRotateRight} spin={refreshing} />
-            Refresh
-          </button>
+          {refreshing && <FontAwesomeIcon icon={faRotateRight} spin />}
           <button type="button" className="ed-btn ed-btn-primary" onClick={openCreate}>
             <FontAwesomeIcon icon={faPlus} />
             Add Employee
@@ -542,16 +574,26 @@ const EmployeeDirectory = ({
                           {opts.required && <em>*</em>}
                         </span>
                         {opts.type === "select" ? (
-                          <select
-                            value={form[key] ?? ""}
-                            onChange={(e) => setField(key, e.target.value)}
-                          >
-                            {(opts.options || []).map((opt) => (
-                              <option key={opt} value={opt}>
-                                {opt === "" ? "—" : fmtLabel(opt)}
-                              </option>
-                            ))}
-                          </select>
+                          <>
+                            <select
+                              value={isCustomValue(key, opts) ? CUSTOM_SELECT : (form[key] ?? "")}
+                              onChange={(e) => handleSelectChange(key, e.target.value)}
+                            >
+                              {(opts.options || []).map((opt) => (
+                                <option key={opt} value={opt}>
+                                  {opt === "" ? "—" : opt === CUSTOM_SELECT ? "Other (specify)" : fmtLabel(opt)}
+                                </option>
+                              ))}
+                            </select>
+                            {isCustomValue(key, opts) && (
+                              <input
+                                type="text"
+                                placeholder={`Specify ${String(label).toLowerCase()}`}
+                                value={form[key] ?? ""}
+                                onChange={(e) => setField(key, e.target.value)}
+                              />
+                            )}
+                          </>
                         ) : opts.type === "checkbox" ? (
                           <input
                             type="checkbox"
@@ -563,11 +605,24 @@ const EmployeeDirectory = ({
                             <input
                               type={opts.type || "text"}
                               step={opts.step}
+                              max={opts.max}
+                              maxLength={opts.maxLength}
+                              inputMode={opts.inputMode}
                               value={form[key] ?? ""}
                               onChange={(e) => setField(key, e.target.value)}
                               readOnly={key === "hourly_rate" && !!form.base_salary}
                               style={key === "hourly_rate" && form.base_salary ? { background: "rgba(255,95,147,0.07)" } : undefined}
                             />
+                            {key === "birthdate" && (
+                              <small style={{ color: "var(--color-primary)", fontSize: "0.75rem" }}>
+                                Must be at least 18 years old
+                              </small>
+                            )}
+                            {key === "emergency_contact_phone" && (
+                              <small style={{ color: "var(--color-primary)", fontSize: "0.75rem" }}>
+                                Must be exactly 11 digits (e.g. 09171234567)
+                              </small>
+                            )}
                             {key === "hourly_rate" && form.base_salary && (
                               <small style={{ color: "var(--color-primary)", fontSize: "0.75rem" }}>
                                 Auto-calculated from salary (÷ 208)

@@ -166,7 +166,7 @@ class LiveChatController extends Controller
         $sessions = LiveChatSession::with(['lastMessage', 'assignedStaff:id,name'])
             ->whereIn('status', ['waiting', 'active'])
             ->orderByRaw("FIELD(status, 'waiting', 'active')")
-            ->orderByDesc('last_message_at')
+            ->orderByRaw('COALESCE(last_message_at, created_at) DESC')
             ->get();
 
         // Also include recently closed (last 30 min) for reference

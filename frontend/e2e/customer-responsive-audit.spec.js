@@ -79,7 +79,7 @@ async function stubCustomerApi(page, { includeStoredOrder = false, includePayabl
         ],
         recent_bookings: [
           { id: 1, pet_name: 'Milo', service_name: 'Grooming', status: 'awaiting_payment', scheduled_at: '2026-10-02' },
-          { id: 2, pet_name: 'Milo', service_name: 'Veterinary', status: 'approved', scheduled_at: '2026-10-01' },
+          { id: 2, pet_name: 'Milo', service_name: 'Veterinary', status: 'scheduled', scheduled_at: '2026-10-01' },
           { id: 3, pet_name: 'Milo', service_name: 'Hotel Boarding', status: 'completed', scheduled_at: '2026-09-28' },
           { id: 4, pet_name: 'Milo', service_name: 'Grooming', status: 'confirmed', scheduled_at: '2026-09-25' },
           { id: 5, pet_name: 'Milo', service_name: 'Veterinary', status: 'completed', scheduled_at: '2026-09-20' },

@@ -11,7 +11,6 @@ import {
   faExclamationTriangle,
   faEye,
   faMoneyBillWave,
-  faRefresh,
   faSave,
   faSearch,
   faSpinner,

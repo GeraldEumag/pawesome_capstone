@@ -398,7 +398,8 @@
   font-weight: 650;
 }
 
-.batch-intake-grid input {
+.batch-intake-grid input,
+.batch-intake-grid select {
   min-width: 0;
   width: 100%;
   min-height: 40px;

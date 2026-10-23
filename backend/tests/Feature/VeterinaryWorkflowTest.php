@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use App\Models\Appointment;
 use App\Models\Customer;
+use App\Models\MedicalConfinement;
 use App\Models\MedicalRecord;
 use App\Models\Pet;
 use App\Models\Service;
@@ -55,13 +56,13 @@ class VeterinaryWorkflowTest extends TestCase
             'pet_id' => $pet->id,
             'service_id' => $service->id,
             'veterinarian_id' => $vet->id,
-            'status' => 'approved',
+            'status' => 'scheduled',
             'scheduled_at' => now()->addHour(),
         ]);
 
         Appointment::factory()->create([
             'veterinarian_id' => $otherVet->id,
-            'status' => 'approved',
+            'status' => 'scheduled',
             'scheduled_at' => now()->addHour(),
         ]);
 
@@ -95,14 +96,14 @@ class VeterinaryWorkflowTest extends TestCase
             ])
             ->assertCreated()
             ->assertJsonPath('appointment.veterinarian_id', $vet->id)
-            ->assertJsonPath('appointment.status', 'approved');
+            ->assertJsonPath('appointment.status', 'scheduled');
 
         $appointmentId = $createResponse->json('appointment.id');
 
         $this->withHeaders($this->authHeader($vet))
             ->postJson("/api/veterinary/appointments/{$appointmentId}/start")
             ->assertOk()
-            ->assertJsonPath('appointment.status', 'in_progress')
+            ->assertJsonPath('appointment.status', 'in_consultation')
             ->assertJsonPath('appointment.started_at', fn ($value) => !empty($value));
 
         $record = MedicalRecord::where('appointment_id', $appointmentId)->firstOrFail();
@@ -129,8 +130,7 @@ class VeterinaryWorkflowTest extends TestCase
 
         $this->withHeaders($this->authHeader($vet))
             ->postJson("/api/veterinary/appointments/{$appointmentId}/complete")
-            ->assertOk()
-            ->assertJsonPath('appointment.status', 'completed');
+            ->assertNotFound();
 
         $initialSchedule = Carbon::now('Asia/Manila')->addDay()->setTime(10, 0);
         $updatedSchedule = Carbon::now('Asia/Manila')->addDays(2)->setTime(10, 0);
@@ -139,7 +139,7 @@ class VeterinaryWorkflowTest extends TestCase
             'pet_id' => $pet->id,
             'service_id' => $service->id,
             'veterinarian_id' => $vet->id,
-            'status' => 'approved',
+            'status' => 'scheduled',
             'scheduled_at' => $initialSchedule->copy()->utc(),
         ]);
 
@@ -155,6 +155,167 @@ class VeterinaryWorkflowTest extends TestCase
         $this->assertDatabaseHas('appointments', [
             'id' => $editableAppointment->id,
             'scheduled_at' => $updatedSchedule->copy()->utc()->format('Y-m-d H:i:s'),
+        ]);
+    }
+
+    public function test_confinement_recommendation_can_still_finalize_bill_and_complete_appointment(): void
+    {
+        $vet = $this->userWithToken('veterinary');
+        $cashier = $this->userWithToken('cashier');
+        $customer = Customer::factory()->create();
+        $pet = Pet::factory()->create(['customer_id' => $customer->id]);
+        $service = Service::factory()->create([
+            'name' => 'Emergency Consultation',
+            'category' => 'Consultation',
+            'price' => 800,
+        ]);
+        $appointment = Appointment::factory()->create([
+            'customer_id' => $customer->id,
+            'pet_id' => $pet->id,
+            'service_id' => $service->id,
+            'veterinarian_id' => $vet->id,
+            'status' => 'scheduled',
+            'scheduled_at' => now()->addHour(),
+            'price' => 800,
+            'booking_channel' => 'walk_in',
+        ]);
+        $headers = $this->authHeader($vet);
+
+        $this->withHeaders($headers)
+            ->postJson("/api/veterinary/appointments/{$appointment->id}/start")
+            ->assertOk()
+            ->assertJsonPath('appointment.status', 'in_consultation');
+
+        $this->withHeaders($headers)
+            ->postJson("/api/veterinary/consultations/{$appointment->id}/recommend-confinement", [
+                'diagnosis' => 'Severe dehydration',
+                'reason_for_confinement' => 'Needs IV fluids and monitoring',
+                'urgency_level' => 'urgent',
+                'expected_stay_days' => 2,
+                'treatment_plan' => 'IV fluids and repeat vitals',
+                'estimated_cost' => 2500,
+            ])
+            ->assertCreated();
+
+        $appointment->refresh();
+        // The visit stays in the active clinical workflow; the recommendation
+        // is carried by the flag, not by a dedicated status.
+        $this->assertSame('in_consultation', $appointment->status);
+        $this->assertTrue((bool) $appointment->confinement_recommended);
+        $this->assertDatabaseHas('medical_confinements', [
+            'consultation_id' => $appointment->id,
+            'vet_id' => $vet->id,
+            'status' => 'recommended',
+        ]);
+
+        $record = MedicalRecord::where('appointment_id', $appointment->id)->firstOrFail();
+        $this->withHeaders($headers)
+            ->putJson("/api/veterinary/medical-records/{$record->id}", [
+                'appointment_id' => $appointment->id,
+                'pet_id' => $pet->id,
+                'visit_date' => now()->toISOString(),
+                'diagnosis' => 'Severe dehydration',
+                'treatment_plan' => 'IV fluids and repeat vitals',
+                'status' => 'finalized',
+            ])
+            ->assertOk()
+            ->assertJsonPath('record.status', 'finalized');
+
+        $this->withHeaders($headers)
+            ->putJson("/api/veterinary/medical-records/{$record->id}", [
+                'appointment_id' => $appointment->id,
+                'pet_id' => $pet->id,
+                'visit_date' => now()->toISOString(),
+                'diagnosis' => 'Changed after finalization',
+                'status' => 'draft',
+            ])
+            ->assertForbidden();
+        $this->assertSame('Severe dehydration', $record->fresh()->diagnosis);
+        $this->assertSame('finalized', $record->fresh()->status);
+
+        $this->withHeaders($headers)
+            ->postJson("/api/veterinary/consultations/{$appointment->id}/complete", [
+                'diagnosis' => 'Severe dehydration',
+                'treatment_notes' => 'IV fluids and repeat vitals',
+            ])
+            ->assertOk()
+            ->assertJsonPath('consultation.status', 'clinical_complete');
+
+        $this->withHeaders($this->authHeader($cashier))
+            ->postJson("/api/appointments/{$appointment->id}/pay")
+            ->assertOk()
+            ->assertJsonPath('appointment.payment_status', 'paid');
+
+        $this->withHeaders($headers)
+            ->getJson("/api/veterinary/receipt/{$appointment->id}")
+            ->assertOk()
+            ->assertJsonPath('receipt.total', 800)
+            ->assertJsonPath('receipt.breakdown.vat_amount', 85.71);
+
+        // Visit stays open while the confinement is still active — payment is
+        // settled, but the open confinement blocks automatic closure.
+        $appointment->refresh();
+        $this->assertSame('clinical_complete', $appointment->status);
+
+        $confinement = MedicalConfinement::where('consultation_id', $appointment->id)->firstOrFail();
+        $confinement->update(['status' => 'ready_for_discharge', 'payment_status' => 'paid']);
+
+        $this->withHeaders($this->authHeader($this->userWithToken('receptionist')))
+            ->postJson("/api/receptionist/medical-confinements/{$confinement->id}/release")
+            ->assertOk();
+
+        $this->assertSame('completed', $appointment->fresh()->status);
+    }
+
+    public function test_veterinary_confinement_list_is_visible_to_clinical_staff_and_cross_vet_access_is_logged(): void
+    {
+        $vet = $this->userWithToken('veterinary');
+        $otherVet = $this->userWithToken('veterinary');
+        $customer = Customer::factory()->create();
+        $pet = Pet::factory()->create(['customer_id' => $customer->id]);
+        $appointment = Appointment::factory()->create([
+            'customer_id' => $customer->id,
+            'pet_id' => $pet->id,
+            'veterinarian_id' => $vet->id,
+        ]);
+        $otherAppointment = Appointment::factory()->create([
+            'customer_id' => $customer->id,
+            'pet_id' => $pet->id,
+            'veterinarian_id' => $otherVet->id,
+        ]);
+
+        $ownConfinement = MedicalConfinement::create([
+            'consultation_id' => $appointment->id,
+            'customer_id' => $customer->id,
+            'pet_id' => $pet->id,
+            'vet_id' => $vet->id,
+            'diagnosis' => 'Own patient',
+            'reason_for_confinement' => 'Observation',
+            'status' => 'recommended',
+        ]);
+        $otherConfinement = MedicalConfinement::create([
+            'consultation_id' => $otherAppointment->id,
+            'customer_id' => $customer->id,
+            'pet_id' => $pet->id,
+            'vet_id' => $otherVet->id,
+            'diagnosis' => 'Other patient',
+            'reason_for_confinement' => 'Observation',
+            'status' => 'recommended',
+        ]);
+
+        $response = $this->withHeaders($this->authHeader($vet))
+            ->getJson('/api/veterinary/medical-confinements')
+            ->assertOk();
+
+        $ids = collect($response->json('medical_confinements'))->pluck('id');
+        $this->assertContains($ownConfinement->id, $ids);
+        $this->assertContains($otherConfinement->id, $ids);
+        $this->assertCount(2, $ids);
+
+        $this->assertDatabaseHas('activity_logs', [
+            'user_id' => $vet->id,
+            'category' => 'clinical_access',
+            'action' => 'clinical_record_viewed',
         ]);
     }
 
@@ -207,24 +368,24 @@ class VeterinaryWorkflowTest extends TestCase
         $vet = $this->userWithToken('vet');
         $appointment = Appointment::factory()->create([
             'veterinarian_id' => $vet->id,
-            'status' => 'approved',
+            'status' => 'scheduled',
             'scheduled_at' => now()->addHour(),
         ]);
 
         $this->withHeaders($this->authHeader($vet))
             ->patchJson("/api/veterinary/appointments/{$appointment->id}/status", [
-                'status' => 'in_progress',
+                'status' => 'in_consultation',
             ])
             ->assertOk()
-            ->assertJsonPath('appointment.status', 'in_progress');
+            ->assertJsonPath('appointment.status', 'in_consultation');
     }
 
-    public function test_veterinary_must_finalize_consultation_before_completion(): void
+    public function test_veterinary_must_finalize_consultation_before_completion_and_cannot_close_visit_directly(): void
     {
         $vet = $this->userWithToken('veterinary');
         $appointment = Appointment::factory()->create([
             'veterinarian_id' => $vet->id,
-            'status' => 'approved',
+            'status' => 'scheduled',
             'scheduled_at' => now()->addHour(),
         ]);
 
@@ -234,22 +395,210 @@ class VeterinaryWorkflowTest extends TestCase
 
         $this->withHeaders($this->authHeader($vet))
             ->postJson("/api/veterinary/appointments/{$appointment->id}/complete")
+            ->assertNotFound();
+
+        $this->withHeaders($this->authHeader($vet))
+            ->postJson("/api/veterinary/consultations/{$appointment->id}/complete")
             ->assertStatus(422)
-            ->assertJsonPath('message', 'Finalize the consultation medical record before completing this appointment');
+            ->assertJsonPath('error', 'Save and finalize the medical record before completing this consultation');
     }
 
-    public function test_veterinary_cannot_access_other_veterinarian_appointment_detail(): void
+    public function test_other_veterinarian_can_read_appointment_detail_but_access_is_logged(): void
     {
         $vet = $this->userWithToken('veterinary');
         $otherVet = $this->userWithToken('veterinary');
         $appointment = Appointment::factory()->create([
             'veterinarian_id' => $otherVet->id,
-            'status' => 'approved',
+            'status' => 'scheduled',
         ]);
 
         $this->withHeaders($this->authHeader($vet))
             ->getJson("/api/veterinary/appointments/{$appointment->id}")
-            ->assertNotFound();
+            ->assertOk();
+
+        $this->assertDatabaseHas('activity_logs', [
+            'user_id' => $vet->id,
+            'category' => 'clinical_access',
+            'reference_type' => 'appointment',
+            'reference_id' => $appointment->id,
+        ]);
+
+        // Writes stay assignment-scoped: the other vet cannot start the visit.
+        $this->withHeaders($this->authHeader($vet))
+            ->postJson("/api/veterinary/consultations/{$appointment->id}/start")
+            ->assertForbidden();
+    }
+
+    public function test_cashier_marking_the_bill_paid_closes_the_visit_automatically(): void
+    {
+        $vet = $this->userWithToken('veterinary');
+        $cashier = $this->userWithToken('cashier');
+        $appointment = Appointment::factory()->create([
+            'veterinarian_id' => $vet->id,
+            'status' => 'in_consultation',
+            'scheduled_at' => now()->addHour(),
+            'price' => 500,
+        ]);
+        $headers = $this->authHeader($vet);
+
+        MedicalRecord::create([
+            'appointment_id' => $appointment->id,
+            'pet_id' => $appointment->pet_id,
+            'veterinarian_id' => $vet->id,
+            'visit_date' => now(),
+            'diagnosis' => 'Routine check',
+            'status' => MedicalRecord::STATUS_FINALIZED,
+        ]);
+
+        $this->withHeaders($headers)
+            ->postJson("/api/veterinary/consultations/{$appointment->id}/complete", ['diagnosis' => 'Routine check'])
+            ->assertOk()
+            ->assertJsonPath('consultation.status', 'checkout');
+
+        $itemIds = collect($this->withHeaders($headers)
+            ->getJson("/api/billing/veterinary/{$appointment->id}/summary")
+            ->assertOk()
+            ->json('billing.items'))
+            ->where('is_paid', false)
+            ->where('is_billable', true)
+            ->pluck('id')
+            ->values()
+            ->all();
+        $this->assertNotEmpty($itemIds);
+
+        $this->withHeaders($this->authHeader($cashier))
+            ->patchJson('/api/billing/items/mark-paid', [
+                'item_ids' => $itemIds,
+                'payment_method' => 'cash',
+                'reference_number' => 'COUNTER-REF-1',
+            ])
+            ->assertOk();
+
+        $this->assertSame('completed', $appointment->fresh()->status);
+    }
+
+    public function test_consultation_start_is_idempotent_and_creates_one_draft_record(): void
+    {
+        $vet = $this->userWithToken('veterinary');
+        $appointment = Appointment::factory()->create([
+            'veterinarian_id' => $vet->id,
+            'status' => 'scheduled',
+            'scheduled_at' => now()->addHour(),
+        ]);
+        $headers = $this->authHeader($vet);
+
+        $this->withHeaders($headers)
+            ->postJson("/api/veterinary/consultations/{$appointment->id}/start")
+            ->assertOk()
+            ->assertJsonPath('consultation.status', 'in_consultation');
+        $startedAt = $appointment->fresh()->started_at;
+
+        $this->withHeaders($headers)
+            ->postJson("/api/veterinary/appointments/{$appointment->id}/start")
+            ->assertOk()
+            ->assertJsonPath('appointment.status', 'in_consultation');
+
+        $this->withHeaders($headers)
+            ->postJson("/api/veterinary/consultations/{$appointment->id}/start")
+            ->assertOk();
+
+        $this->assertSame(1, MedicalRecord::where('appointment_id', $appointment->id)->count());
+        $this->assertEquals($startedAt, $appointment->fresh()->started_at);
+    }
+
+    public function test_second_confinement_recommendation_is_refused_and_only_one_exists(): void
+    {
+        $vet = $this->userWithToken('veterinary');
+        $appointment = Appointment::factory()->create([
+            'veterinarian_id' => $vet->id,
+            'status' => 'in_consultation',
+            'scheduled_at' => now()->addHour(),
+        ]);
+        $headers = $this->authHeader($vet);
+        $payload = [
+            'diagnosis' => 'Fractured radius',
+            'reason_for_confinement' => 'Stabilise limb and monitor',
+            'urgency_level' => 'urgent',
+        ];
+
+        $this->withHeaders($headers)
+            ->postJson("/api/veterinary/consultations/{$appointment->id}/recommend-confinement", $payload)
+            ->assertCreated();
+
+        $this->withHeaders($headers)
+            ->postJson("/api/veterinary/consultations/{$appointment->id}/recommend-confinement", $payload)
+            ->assertStatus(422);
+
+        $this->assertSame(1, MedicalConfinement::where('consultation_id', $appointment->id)->count());
+    }
+
+    public function test_finalized_record_is_append_only_and_addenda_are_attributed(): void
+    {
+        $vet = $this->userWithToken('veterinary');
+        $admin = $this->userWithToken('admin');
+        $appointment = Appointment::factory()->create([
+            'veterinarian_id' => $vet->id,
+            'status' => 'in_consultation',
+            'scheduled_at' => now()->addHour(),
+        ]);
+        $record = MedicalRecord::create([
+            'appointment_id' => $appointment->id,
+            'pet_id' => $appointment->pet_id,
+            'veterinarian_id' => $vet->id,
+            'visit_date' => now(),
+            'diagnosis' => 'Original diagnosis',
+            'status' => MedicalRecord::STATUS_DRAFT,
+        ]);
+        $record->update(['status' => MedicalRecord::STATUS_FINALIZED]);
+        $this->assertNotNull($record->fresh()->content_hash);
+
+        $this->withHeaders($this->authHeader($admin))
+            ->putJson("/api/veterinary/medical-records/{$record->id}", ['diagnosis' => 'Admin rewrite'])
+            ->assertForbidden();
+
+        $this->withHeaders($this->authHeader($vet))
+            ->putJson("/api/veterinary/medical-records/{$record->id}", ['diagnosis' => 'Vet rewrite'])
+            ->assertForbidden();
+
+        $this->assertSame('Original diagnosis', $record->fresh()->diagnosis);
+
+        $this->withHeaders($this->authHeader($admin))
+            ->postJson("/api/veterinary/medical-records/{$record->id}/addenda", ['body' => 'Admin note'])
+            ->assertForbidden();
+
+        $this->withHeaders($this->authHeader($vet))
+            ->postJson("/api/veterinary/medical-records/{$record->id}/addenda", ['body' => 'Dose corrected to 5 mg'])
+            ->assertCreated()
+            ->assertJsonPath('addendum.author.name', $vet->name);
+
+        $this->withHeaders($this->authHeader($vet))
+            ->getJson("/api/veterinary/medical-records/{$record->id}")
+            ->assertOk()
+            ->assertJsonPath('addenda.0.body', 'Dose corrected to 5 mg')
+            ->assertJsonPath('diagnosis', 'Original diagnosis');
+    }
+
+    public function test_cancelling_after_consultation_starts_requires_a_manager(): void
+    {
+        $vet = $this->userWithToken('veterinary');
+        $receptionist = $this->userWithToken('receptionist');
+        $manager = $this->userWithToken('manager');
+        $appointment = Appointment::factory()->create([
+            'veterinarian_id' => $vet->id,
+            'status' => 'in_consultation',
+            'scheduled_at' => now()->addHour(),
+        ]);
+        $body = ['reason' => 'Client changed mind'];
+
+        $this->withHeaders($this->authHeader($receptionist))
+            ->postJson("/api/receptionist/appointments/{$appointment->id}/cancel", $body)
+            ->assertForbidden();
+        $this->assertSame('in_consultation', $appointment->fresh()->status);
+
+        $this->withHeaders($this->authHeader($manager))
+            ->postJson("/api/receptionist/appointments/{$appointment->id}/cancel", $body)
+            ->assertOk();
+        $this->assertSame('cancelled', $appointment->fresh()->status);
     }
 
     public function test_receptionist_approves_vet_request_by_assigning_specific_veterinarian(): void
@@ -284,14 +633,14 @@ class VeterinaryWorkflowTest extends TestCase
             ])
             ->assertOk()
             ->assertJsonPath('appointment.veterinarian_id', $vet->id)
-            ->assertJsonPath('appointment.status', 'approved');
+            ->assertJsonPath('appointment.status', 'scheduled');
 
         $this->assertDatabaseHas('appointments', [
             'customer_id' => $customer->id,
             'pet_id' => $pet->id,
             'service_id' => $service->id,
             'veterinarian_id' => $vet->id,
-            'status' => 'approved',
+            'status' => 'scheduled',
         ]);
 
         $this->assertDatabaseMissing('appointments', [
@@ -349,7 +698,7 @@ class VeterinaryWorkflowTest extends TestCase
             ->assertJsonPath('appointment.veterinarian_id', $otherVet->id);
 
         $appointment->refresh();
-        $appointment->update(['status' => 'in_progress']);
+        $appointment->update(['status' => 'in_consultation']);
         $this->withHeaders($this->authHeader($receptionist))
             ->postJson("/api/receptionist/requests/{$request->id}/approve", [
                 'veterinarian_id' => $vet->id,
@@ -427,7 +776,7 @@ class VeterinaryWorkflowTest extends TestCase
             'customer_id' => $customer->id,
             'pet_id' => $pet->id,
             'veterinarian_id' => $vet->id,
-            'status' => 'approved',
+            'status' => 'scheduled',
         ]);
     }
 
@@ -504,7 +853,7 @@ class VeterinaryWorkflowTest extends TestCase
             'pet_id' => $pet->id,
             'service_id' => $service->id,
             'veterinarian_id' => $assignedVet->id,
-            'status' => 'approved',
+            'status' => 'scheduled',
         ]);
 
         $this->assertDatabaseMissing('appointments', [
@@ -598,13 +947,13 @@ class VeterinaryWorkflowTest extends TestCase
                 'treatment_notes' => 'Routine care',
             ])
             ->assertOk()
-            ->assertJsonPath('consultation.status', 'awaiting_payment');
+            ->assertJsonPath('consultation.status', 'checkout');
 
-        // 4. Vet cannot complete before the cashier verifies payment
+        // 4. The visit stays open until the cashier verifies payment; there is no vet close action
+        $this->assertSame('checkout', Appointment::find($appointmentId)->status);
         $this->withHeaders($this->authHeader($vet))
             ->postJson("/api/veterinary/appointments/{$appointmentId}/complete")
-            ->assertStatus(422)
-            ->assertJsonPath('message', 'Appointment cannot be completed until payment is fully verified.');
+            ->assertNotFound();
 
         // 5. The appointment shows in the cashier payment queue
         $this->withHeaders($this->authHeader($cashier))
@@ -626,11 +975,8 @@ class VeterinaryWorkflowTest extends TestCase
             'settleable_id' => $appointmentId,
         ]);
 
-        // 7. Vet completes the transaction after payment
-        $this->withHeaders($this->authHeader($vet))
-            ->postJson("/api/veterinary/appointments/{$appointmentId}/complete")
-            ->assertOk()
-            ->assertJsonPath('appointment.status', 'completed');
+        // 7. Verifying payment closes the visit automatically
+        $this->assertSame('completed', Appointment::find($appointmentId)->status);
     }
 
     public function test_receptionist_reschedule_rejects_overlap_and_syncs_linked_request(): void
@@ -672,7 +1018,7 @@ class VeterinaryWorkflowTest extends TestCase
             'service_id' => $service->id,
             'service_request_id' => $serviceRequest->id,
             'veterinarian_id' => $vet->id,
-            'status' => 'approved',
+            'status' => 'scheduled',
             'scheduled_at' => Carbon::parse("{$date} 10:00:00", 'Asia/Manila')->utc(),
         ]);
         Appointment::factory()->create([
@@ -680,7 +1026,7 @@ class VeterinaryWorkflowTest extends TestCase
             'pet_id' => $pet->id,
             'service_id' => $service->id,
             'veterinarian_id' => $vet->id,
-            'status' => 'approved',
+            'status' => 'scheduled',
             'scheduled_at' => Carbon::parse("{$date} 11:00:00", 'Asia/Manila')->utc(),
         ]);
 
@@ -736,7 +1082,7 @@ class VeterinaryWorkflowTest extends TestCase
             'pet_id' => $pet->id,
             'service_id' => $service->id,
             'veterinarian_id' => $vet->id,
-            'status' => 'approved',
+            'status' => 'scheduled',
             'scheduled_at' => Carbon::parse("{$date} 10:00:00", 'Asia/Manila')->utc(),
         ]);
         Appointment::factory()->create([
@@ -744,7 +1090,7 @@ class VeterinaryWorkflowTest extends TestCase
             'pet_id' => $pet->id,
             'service_id' => $service->id,
             'veterinarian_id' => $vet->id,
-            'status' => 'approved',
+            'status' => 'scheduled',
             'scheduled_at' => Carbon::parse("{$date} 11:00:00", 'Asia/Manila')->utc(),
         ]);
 
@@ -785,7 +1131,7 @@ class VeterinaryWorkflowTest extends TestCase
             'service_name' => $service->name,
             'request_date' => $date,
             'request_time' => '10:00',
-            'status' => 'approved',
+            'status' => 'scheduled',
             'payment_status' => 'unpaid',
         ]);
 
@@ -813,7 +1159,7 @@ class VeterinaryWorkflowTest extends TestCase
 
         $appointment = Appointment::findOrFail($appointmentId);
         $this->assertSame($secondVet->id, (int) $appointment->veterinarian_id);
-        $appointment->update(['status' => 'in_progress']);
+        $appointment->update(['status' => 'in_consultation']);
 
         $this->withHeaders($headers)
             ->postJson("/api/receptionist/requests/{$request->id}/approve", [
@@ -842,7 +1188,7 @@ class VeterinaryWorkflowTest extends TestCase
             'pet_id' => $pet->id,
             'service_id' => $service->id,
             'veterinarian_id' => $firstVet->id,
-            'status' => 'approved',
+            'status' => 'scheduled',
             'scheduled_at' => $scheduledAt,
         ]);
         $headers = $this->authHeader($receptionist);
@@ -854,7 +1200,7 @@ class VeterinaryWorkflowTest extends TestCase
             ->assertOk()
             ->assertJsonPath('appointment.veterinarian_id', $secondVet->id);
 
-        $appointment->update(['status' => 'in_progress']);
+        $appointment->update(['status' => 'in_consultation']);
         $this->withHeaders($headers)
             ->postJson("/api/receptionist/appointments/{$appointment->id}/approve", [
                 'veterinarian_id' => $firstVet->id,
@@ -883,7 +1229,7 @@ class VeterinaryWorkflowTest extends TestCase
             'pet_id' => $pet->id,
             'service_id' => $service->id,
             'veterinarian_id' => $vet->id,
-            'status' => 'approved',
+            'status' => 'scheduled',
             'scheduled_at' => $firstTime,
         ]);
         Appointment::factory()->create([
@@ -891,7 +1237,7 @@ class VeterinaryWorkflowTest extends TestCase
             'pet_id' => $pet->id,
             'service_id' => $service->id,
             'veterinarian_id' => $vet->id,
-            'status' => 'approved',
+            'status' => 'scheduled',
             'scheduled_at' => $secondTime,
         ]);
         $headers = $this->authHeader($receptionist);

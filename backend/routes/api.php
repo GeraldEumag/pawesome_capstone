@@ -33,6 +33,11 @@ use App\Http\Controllers\Receptionist\WalkInController as ReceptionistWalkInCont
 use App\Http\Controllers\Veterinary\DashboardController as VeterinaryDashboardController;
 use App\Http\Controllers\Veterinary\MedicalRecordController;
 use App\Http\Controllers\Veterinary\ConsultationWorkflowController;
+use App\Http\Controllers\Veterinary\VisitEstimateController as VetVisitEstimateController;
+use App\Http\Controllers\Veterinary\VisitConsentController;
+use App\Http\Controllers\Veterinary\DiagnosticOrderController;
+use App\Http\Controllers\Customer\VisitEstimateController as CustomerVisitEstimateController;
+use App\Http\Controllers\VisitInvoiceController;
 use App\Http\Controllers\MedicalConfinementController;
 use App\Http\Controllers\Manager\WorkflowReportController;
 use App\Http\Controllers\Manager\BarcodeAttendanceController;
@@ -118,7 +123,7 @@ Route::middleware(['auth.api', 'throttle:api', 'role:veterinary,receptionist,adm
 
 Route::middleware(['auth.api', 'throttle:api', 'role:cashier,admin'])->prefix('billing')->group(function () {
     Route::get('/unpaid-services', [ServiceBillingController::class, 'getUnpaidServices']);
-    Route::patch('/items/mark-paid', [ServiceBillingController::class, 'markItemsAsPaid']);
+    Route::patch('/items/mark-paid', [ServiceBillingController::class, 'markItemsAsPaid'])->middleware('idempotency');
 });
 
 Route::prefix('auth')->group(function () {
@@ -309,6 +314,7 @@ Route::middleware(['auth.api', 'throttle:api', 'role:customer'])->prefix('custom
     Route::post('chatbot', [PortalController::class, 'chatbot']);
 
     // Customer History Routes
+    Route::get('vaccinations/{id}/certificate', [\App\Http\Controllers\Veterinary\MedicalRecordController::class, 'customerVaccinationCertificate']);
     Route::get('orders/history', [PortalController::class, 'transactions']);
     Route::get('requests/history', [ServiceRequestController::class, 'customerRequests']);
     Route::get('payments/history', [PortalController::class, 'transactions']);
@@ -316,6 +322,12 @@ Route::middleware(['auth.api', 'throttle:api', 'role:customer'])->prefix('custom
     Route::get('billing/payment-requests/{id}/receipt', [VeterinaryBillingController::class, 'receipt']);
     Route::post('billing/veterinary/{id}/cashier-payment', [VeterinaryBillingController::class, 'requestCashierPayment'])->middleware('verified');
     Route::post('billing/veterinary/{id}/online-payment', [VeterinaryBillingController::class, 'submitOnlinePayment'])->middleware('verified');
+
+    // Visit estimate review (owner approves or rejects from the portal)
+    Route::get('estimates/pending', [CustomerVisitEstimateController::class, 'pending']);
+    Route::get('appointments/{id}/estimate', [CustomerVisitEstimateController::class, 'show']);
+    Route::post('appointments/{id}/estimate/approve', [CustomerVisitEstimateController::class, 'approve'])->middleware('verified');
+    Route::post('appointments/{id}/estimate/reject', [CustomerVisitEstimateController::class, 'reject'])->middleware('verified');
     
     // Customer Service Requests
     Route::post('requests', [ServiceRequestController::class, 'store'])->middleware('verified');
@@ -416,7 +428,11 @@ Route::middleware(['auth.api', 'throttle:api', 'role:cashier'])->prefix('cashier
     Route::post('end-shift', [CashierDashboardController::class, 'endShift']);
     Route::get('shift-report/last', [CashierDashboardController::class, 'getLastShiftReport']);
     Route::post('void', [CashierDashboardController::class, 'voidTransaction']);
-    
+
+    // Visit invoice (veterinary billing document) + adjustment requests
+    Route::get('visit-invoices/{appointmentId}', [VisitInvoiceController::class, 'show']);
+    Route::post('visit-invoices/{appointmentId}/adjustments', [VisitInvoiceController::class, 'requestAdjustment']);
+
     // POS Operations
     Route::post('pos/transaction', [POSController::class, 'processTransaction']);
     
@@ -507,8 +523,8 @@ Route::middleware(['auth.api', 'throttle:api', 'role:receptionist'])->prefix('re
     Route::put('appointments/{id}', [AppointmentController::class, 'update']);
     Route::post('appointments/{id}/approve', [AppointmentController::class, 'approve']);
     Route::post('appointments/{id}/reject', [AppointmentController::class, 'reject']);
+    Route::post('appointments/{id}/check-in', [AppointmentController::class, 'checkIn']);
     Route::post('appointments/{id}/reschedule', [AppointmentController::class, 'reschedule']);
-    Route::post('appointments/{id}/cancel', [AppointmentController::class, 'cancel']);
     Route::get('veterinarians/{id}/schedule', [AppointmentController::class, 'veterinarianSchedule']);
     
     // Service Request actions
@@ -547,6 +563,8 @@ Route::middleware(['auth.api', 'throttle:api', 'role:receptionist'])->prefix('re
     Route::get('boarding-requests/{id}/inventory-usage-history', [BoardingController::class, 'getInventoryUsageHistory']);
     
     // Medical Confinement actions
+    Route::get('ward-beds', [MedicalConfinementController::class, 'wardBeds']);
+    Route::post('medical-confinements/{id}/assign-bed', [MedicalConfinementController::class, 'assignBed']);
     Route::post('medical-confinements/{id}/assign-room', [MedicalConfinementController::class, 'assignRoom']);
     Route::post('medical-confinements/{id}/admit', [MedicalConfinementController::class, 'admit']);
     Route::post('medical-confinements/{id}/care-logs', [MedicalConfinementController::class, 'addCareLog']);
@@ -558,6 +576,10 @@ Route::middleware(['auth.api', 'throttle:api', 'role:receptionist'])->prefix('re
     Route::post('walk-ins', [ReceptionistWalkInController::class, 'store']);
     Route::get('customers/search', [ReceptionistWalkInController::class, 'searchCustomers']);
 });
+
+// Cancellation is shared by receptionist and manager; after consultation starts
+// AppointmentController::cancel only lets a manager or admin through.
+Route::middleware(['auth.api', 'throttle:api', 'role:receptionist,manager,admin'])->post('receptionist/appointments/{id}/cancel', [AppointmentController::class, 'cancel']);
 
 Route::middleware(['auth.api', 'throttle:api'])->get('inventory/public/items', [InventoryDashboardController::class, 'publicItems']);
 
@@ -574,6 +596,12 @@ Route::middleware(['auth.api', 'throttle:api', 'role:admin,inventory'])->prefix(
     Route::get('expiry-alerts', [InventoryDashboardController::class, 'expiryAlerts']);
     Route::get('monthly-audit', [InventoryDashboardController::class, 'monthlyAudit']);
     Route::get('monthly-audit-report', [InventoryDashboardController::class, 'monthlyAuditReport']);
+    // Controlled drugs (Phase D)
+    Route::get('controlled-drugs', [\App\Http\Controllers\ControlledDrugController::class, 'items']);
+    Route::get('controlled-drugs/{itemId}/register', [\App\Http\Controllers\ControlledDrugController::class, 'register']);
+    Route::get('controlled-drug-counts', [\App\Http\Controllers\ControlledDrugController::class, 'counts']);
+    Route::post('controlled-drug-counts', [\App\Http\Controllers\ControlledDrugController::class, 'submitCount']);
+    Route::post('controlled-drug-counts/{id}/verify', [\App\Http\Controllers\ControlledDrugController::class, 'verifyCount']);
     Route::get('audit-analytics', [InventoryDashboardController::class, 'auditAnalytics']);
     Route::get('monthly-audit/discrepancy-reasons', [InventoryDashboardController::class, 'discrepancyReasons']);
     Route::post('reorder-requests', [InventoryDashboardController::class, 'reorderRequest']);
@@ -812,12 +840,57 @@ Route::middleware(['auth.api', 'throttle:api', 'role:manager,admin'])->prefix('m
 
     // DTR Report
     Route::get('reports/dtr', [\App\Http\Controllers\AttendanceController::class, 'dtrReport']);
+
+    // Visit invoice adjustment approvals
+    Route::get('visit-invoice-adjustments/pending', [VisitInvoiceController::class, 'pending']);
+    Route::post('visit-invoice-adjustments/{id}/approve', [VisitInvoiceController::class, 'approve']);
+    Route::post('visit-invoice-adjustments/{id}/reject', [VisitInvoiceController::class, 'reject']);
+    // Phase D: inventory audit variances + controlled-drug oversight
+    Route::get('inventory-audits/pending', [\App\Http\Controllers\Inventory\DashboardController::class, 'pendingAuditApprovals']);
+    Route::post('inventory-audits/{id}/approve', [\App\Http\Controllers\Inventory\DashboardController::class, 'approveAudit']);
+    Route::post('inventory-audits/{id}/reject', [\App\Http\Controllers\Inventory\DashboardController::class, 'rejectAudit']);
+    Route::get('controlled-drugs', [\App\Http\Controllers\ControlledDrugController::class, 'items']);
+    Route::get('controlled-drugs/{itemId}/register', [\App\Http\Controllers\ControlledDrugController::class, 'register']);
+    Route::get('controlled-drug-counts', [\App\Http\Controllers\ControlledDrugController::class, 'counts']);
+    Route::post('controlled-drug-counts/{id}/verify', [\App\Http\Controllers\ControlledDrugController::class, 'verifyCount']);
+    // Manager override release (financial-clearance bypass, logged)
+    Route::post('medical-confinements/{id}/release', [MedicalConfinementController::class, 'release']);
+    // Vaccine lot recall oversight (Phase E)
+    Route::get('vaccination-recall', [\App\Http\Controllers\Veterinary\MedicalRecordController::class, 'vaccinationRecall']);
 });
 
 // Attendance punching is staff-only — customers have no attendance workflow.
-Route::middleware(['auth.api', 'throttle:api', 'role:receptionist,cashier,inventory,veterinary,manager,admin'])->group(function () {
+Route::middleware(['auth.api', 'throttle:api', 'role:receptionist,cashier,inventory,veterinary,vet_tech,manager,admin'])->group(function () {
     Route::post('/attendance/check-in', [AttendanceController::class, 'checkIn']);
     Route::post('/attendance/check-out', [AttendanceController::class, 'checkOut']);
+});
+
+// Intake: receptionist and vet techs check patients in. Kept out of the
+// vet-only group so vet_tech cannot reach clinical actions.
+Route::middleware(['auth.api', 'throttle:api', 'role:receptionist,vet_tech,veterinary'])->prefix('veterinary')->group(function () {
+    Route::post('appointments/{id}/check-in', [AppointmentController::class, 'checkIn']);
+});
+
+Route::middleware(['auth.api', 'throttle:api', 'role:veterinary,vet,vet_tech'])->prefix('veterinary')->group(function () {
+    // Vet techs watch the same appointment board they check patients into.
+    Route::get('appointments', [VeterinaryDashboardController::class, 'appointments']);
+
+    // Specimen handling and result entry on diagnostic orders.
+    Route::post('diagnostics/{id}/collect', [DiagnosticOrderController::class, 'collect']);
+    Route::post('diagnostics/{id}/result', [DiagnosticOrderController::class, 'result']);
+});
+
+// Shared staff-facing visit documents: any clinical/front-desk/cashier/
+// management role can read an estimate, consent list, diagnostic orders and
+// the visit invoice, and staff record counter approvals and signed consents.
+Route::middleware(['auth.api', 'throttle:api', 'role:veterinary,vet_tech,receptionist,cashier,manager,admin'])->prefix('veterinary')->group(function () {
+    Route::get('appointments/{id}/estimate', [VetVisitEstimateController::class, 'show']);
+    Route::post('appointments/{id}/estimate/approve', [VetVisitEstimateController::class, 'approveCounter']);
+    Route::get('appointments/{id}/consents', [VisitConsentController::class, 'index']);
+    Route::post('consents', [VisitConsentController::class, 'store']);
+    Route::post('consents/{id}/revoke', [VisitConsentController::class, 'revoke']);
+    Route::get('appointments/{id}/diagnostics', [DiagnosticOrderController::class, 'index']);
+    Route::get('appointments/{id}/invoice', [VisitInvoiceController::class, 'show']);
 });
 
 Route::middleware(['auth.api', 'throttle:api', 'role:veterinary,vet'])->prefix('veterinary')->group(function () {
@@ -852,21 +925,45 @@ Route::middleware(['auth.api', 'throttle:api', 'role:veterinary,vet'])->prefix('
     
     // Veterinarian appointment actions
     Route::post('appointments/{id}/start', [AppointmentController::class, 'start']);
-    Route::post('appointments/{id}/complete', [AppointmentController::class, 'complete']);
     Route::put('appointments/{id}/medical', [AppointmentController::class, 'updateMedical']);
     Route::match(['put', 'patch'], 'appointments/{id}/status', [AppointmentController::class, 'updateStatus']);
     
     // Consultation actions
-    Route::post('consultations/{id}/start', [ConsultationWorkflowController::class, 'start']);
-    Route::post('consultations/{id}/complete', [ConsultationWorkflowController::class, 'complete']);
-    Route::post('consultations/{id}/recommend-confinement', [ConsultationWorkflowController::class, 'recommendConfinement']);
+    Route::post('consultations/{id}/start', [ConsultationWorkflowController::class, 'start'])->middleware('idempotency');
+    Route::post('consultations/{id}/complete', [ConsultationWorkflowController::class, 'complete'])->middleware('idempotency');
+    Route::post('consultations/{id}/recommend-confinement', [ConsultationWorkflowController::class, 'recommendConfinement'])->middleware('idempotency');
+
+    // Estimates — draft, present, reject (approval lives on the shared staff
+    // group for counter signatures and the customer portal for online visits)
+    Route::put('appointments/{id}/estimate', [VetVisitEstimateController::class, 'saveDraft']);
+    Route::post('appointments/{id}/estimate/present', [VetVisitEstimateController::class, 'present']);
+    Route::post('appointments/{id}/estimate/reject', [VetVisitEstimateController::class, 'reject']);
+
+    // Diagnostic orders — vet places, reviews and cancels; vet_tech collects
+    // and results via the shared vet_tech group above.
+    Route::post('appointments/{id}/diagnostics', [DiagnosticOrderController::class, 'store']);
+    Route::post('diagnostics/{id}/review', [DiagnosticOrderController::class, 'review']);
+    Route::post('diagnostics/{id}/cancel', [DiagnosticOrderController::class, 'cancel']);
     
     // Medical Confinement actions
     Route::post('medical-confinements/{id}/progress-notes', [MedicalConfinementController::class, 'addProgressNote']);
     Route::get('medical-confinements/{id}/progress-notes', [MedicalConfinementController::class, 'progressNotes']);
     Route::post('medical-confinements/{id}/mark-under-observation', [MedicalConfinementController::class, 'markUnderObservation']);
     Route::post('medical-confinements/{id}/mark-under-treatment', [MedicalConfinementController::class, 'markUnderTreatment']);
+    Route::post('medical-confinements/{id}/mark-critical', [MedicalConfinementController::class, 'markCritical']);
     Route::post('medical-confinements/{id}/clear-for-discharge', [MedicalConfinementController::class, 'clearForDischarge']);
+    // Medication administration records (Phase D)
+    Route::get('medical-confinements/{id}/mar', [MedicalConfinementController::class, 'marList']);
+    Route::post('medical-confinements/{id}/mar', [MedicalConfinementController::class, 'marSchedule']);
+    Route::post('medical-confinements/{id}/mar/{marId}/administer', [MedicalConfinementController::class, 'marAdminister']);
+    Route::post('medical-confinements/{id}/mar/{marId}/status', [MedicalConfinementController::class, 'marUpdateStatus']);
+    // Dispensing (Phase D)
+    Route::get('dispensations', [\App\Http\Controllers\Veterinary\DispensationController::class, 'index']);
+    Route::post('dispensations', [\App\Http\Controllers\Veterinary\DispensationController::class, 'store']);
+    Route::post('dispensations/{id}/counsel', [\App\Http\Controllers\Veterinary\DispensationController::class, 'counsel']);
+    // Vaccination lot recall + certificate (Phase D/E)
+    Route::get('vaccination-recall', [MedicalRecordController::class, 'vaccinationRecall']);
+    Route::get('vaccinations/{id}/certificate', [MedicalRecordController::class, 'vaccinationCertificate']);
     
     // Medical Records Management
     Route::get('medical-records', [MedicalRecordController::class, 'index']);
@@ -876,6 +973,7 @@ Route::middleware(['auth.api', 'throttle:api', 'role:veterinary,vet'])->prefix('
     Route::delete('medical-records/{id}', [MedicalRecordController::class, 'destroy']);
     Route::post('medical-records/{id}/lock', [MedicalRecordController::class, 'lock']);
     Route::post('medical-records/{id}/finalize', [MedicalRecordController::class, 'finalize']);
+    Route::post('medical-records/{id}/addenda', [MedicalRecordController::class, 'addAddendum']);
     
     // Veterinary Inventory Usage Routes
     Route::post('appointments/{id}/inventory-usage', [MedicalRecordController::class, 'recordInventoryUsage']);

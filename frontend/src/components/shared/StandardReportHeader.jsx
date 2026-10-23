@@ -1,6 +1,6 @@
 import React from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faRefresh, faDownload } from "@fortawesome/free-solid-svg-icons";
+import { faDownload } from "@fortawesome/free-solid-svg-icons";
 import "./StandardReportHeader.css";
 
 /**
@@ -12,7 +12,6 @@ import "./StandardReportHeader.css";
  * @param {string} props.subtitle - Report page subtitle
  * @param {string} props.icon - FontAwesome icon for the report
  * @param {boolean} props.loading - Loading state
- * @param {Function} props.onRefresh - Refresh data handler
  * @param {Function} props.onExport - Export handler (optional)
  * @param {string} props.lastUpdated - Last updated timestamp
  */
@@ -21,7 +20,6 @@ const StandardReportHeader = ({
   subtitle,
   icon,
   loading = false,
-  onRefresh,
   onExport,
   lastUpdated,
 }) => {
@@ -48,18 +46,6 @@ const StandardReportHeader = ({
           )}
           
           <div className="action-buttons">
-            {onRefresh && (
-              <button 
-                className="action-btn refresh-btn" 
-                onClick={onRefresh} 
-                disabled={loading}
-                title="Refresh data"
-              >
-                <FontAwesomeIcon icon={faRefresh} className={loading ? "spinning" : ""} />
-                <span className="btn-text">Refresh</span>
-              </button>
-            )}
-            
             {onExport && (
               <button 
                 className="action-btn export-btn" 

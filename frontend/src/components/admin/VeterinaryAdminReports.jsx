@@ -11,10 +11,14 @@ const VeterinaryAdminReports = () => (
     icon="veterinary"
     searchPlaceholder="Search veterinary appointments, customers, pets, services, or status..."
     statusOptions={[
+      { value: "requested", label: "Requested" },
       { value: "scheduled", label: "Scheduled" },
+      { value: "checked_in", label: "Checked In" },
       { value: "in_consultation", label: "In Consultation" },
-      { value: "treated", label: "Treated" },
-      { value: "needs_confinement", label: "Needs Confinement" },
+      { value: "in_treatment", label: "In Treatment" },
+      { value: "awaiting_results", label: "Awaiting Results" },
+      { value: "clinical_complete", label: "Clinical Complete" },
+      { value: "checkout", label: "At Checkout" },
       { value: "completed", label: "Completed" },
       { value: "cancelled", label: "Cancelled" },
       { value: "no_show", label: "No Show" },

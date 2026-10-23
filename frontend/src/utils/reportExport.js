@@ -8,6 +8,7 @@ import { sanitizeCsvCell } from "./csvSanitize";
 import { exportFormalReportPDF } from "./formalReportPdf";
 import { getRole, getUserData } from "./auth";
 import { formatDateOnly, parseDateOnly } from "./date";
+import { STORE_INFO } from "./storeInfo";
 
 export const getNestedValue = (row, key) => {
   if (!row || !key) return undefined;
@@ -15,6 +16,146 @@ export const getNestedValue = (row, key) => {
     if (value === null || value === undefined) return undefined;
     return value[part];
   }, row);
+};
+
+const DEFAULT_CERTIFICATION =
+  "I certify that this report presents the records and calculations available to the organization as of the issue date. Supporting records should be retained with this report.";
+
+/**
+ * Long single-cell lines make column A hundreds of characters wide in a
+ * spreadsheet, pushing every other column off the printed page. Wrap them at
+ * word boundaries so no cell exceeds a printable width.
+ */
+const REPORT_LINE_WIDTH = 80;
+
+const wrapReportCell = (value, width = REPORT_LINE_WIDTH) => {
+  const text = String(value ?? "");
+  if (text.length <= width) return [text];
+  const lines = [];
+  let current = "";
+  for (const word of text.split(/\s+/)) {
+    if (!current) {
+      current = word;
+    } else if (`${current} ${word}`.length <= width) {
+      current = `${current} ${word}`;
+    } else {
+      lines.push(current);
+      current = word;
+    }
+  }
+  if (current) lines.push(current);
+  return lines;
+};
+
+/** Expand single-cell rows whose text exceeds the printable width. */
+const expandReportRows = (rows) =>
+  rows.flatMap((row) => {
+    if (row.length !== 1) return [row];
+    return wrapReportCell(row[0]).map((line) => [line]);
+  });
+
+const defaultReportSignatures = (preparedBy, preparedRole) => [
+  { role: "Prepared by", name: preparedBy, caption: preparedRole || "Report Preparer" },
+  { role: "Reviewed by", name: "", caption: "Authorized Reviewer" },
+  { role: "Approved by", name: "", caption: "Approving Officer" },
+];
+
+/**
+ * Resolve the formal-report configuration shared by CSV, Excel, and PDF exports.
+ * Accepts the same option names as exportFormalReportPDF so every format emits
+ * the same letterhead, summary, narrative, and signature content.
+ */
+const resolveFormalReportConfig = ({ data, filename, metadata = {}, title }) => {
+  const resolvedTitle = title || metadata.title || filename.replace(/[_-]+/g, " ");
+  const preparedBy = metadata.preparedBy || getUserData().name || "Authorized Staff";
+  const preparedRole = metadata.preparedRole || getRole() || "Report Preparer";
+  return {
+    title: resolvedTitle,
+    subtitle: metadata.subtitle || `${resolvedTitle} — detailed business report`,
+    docRef:
+      metadata.docRef ||
+      `${filename.toUpperCase().replace(/[^A-Z0-9]+/g, "-").replace(/^-|-$/g, "")}-${formatDateForFilename(new Date()).replace(/-/g, "")}`,
+    periodLabel: metadata.periodLabel || "As of issue date",
+    preparedBy,
+    preparedRole,
+    infoFields: metadata.infoFields || [{ label: "Records Included", value: data.length }],
+    summaryCards: metadata.summaryCards || [
+      { label: "Records Included", value: data.length },
+      { label: "Report Status", value: data.length ? "Generated" : "No Records" },
+    ],
+    tableTitle: metadata.tableTitle || metadata.table?.title || "Detailed Records",
+    findings: metadata.findings || [
+      `${data.length} record(s) are included in the detailed schedule for this report. Review the underlying source records and supporting documentation before approval.`,
+    ],
+    recommendations: metadata.recommendations || [
+      "Retain this report with its source records and obtain the required review and approval signatures.",
+    ],
+    certification: metadata.certification || DEFAULT_CERTIFICATION,
+    signatures: metadata.signatures || defaultReportSignatures(preparedBy, preparedRole),
+  };
+};
+
+/** Letterhead + document-control rows that open every formal export. */
+const buildReportHeaderRows = (config) =>
+  expandReportRows([
+    [STORE_INFO.name],
+    [STORE_INFO.tagline],
+    [STORE_INFO.address.replace(/\n/g, " ")],
+    [`${STORE_INFO.email} | ${STORE_INFO.phone}`],
+    [],
+    [config.title],
+    [config.subtitle],
+    [],
+    ["Document Reference", config.docRef],
+    ["Reporting Period", config.periodLabel],
+    ["Generated", new Date().toLocaleString("en-PH")],
+    ["Prepared By", config.preparedBy],
+    ["Prepared Role", config.preparedRole],
+    ...config.infoFields.map((field) => [field.label, field.value]),
+  ]);
+
+/** Executive-summary card rows (metric/value pairs). */
+const buildReportSummaryRows = (config) => [
+  [],
+  ["REPORT SUMMARY"],
+  ["Metric", "Value"],
+  ...config.summaryCards.map((card) => [card.label, card.value]),
+];
+
+/** Findings, recommendations, certification, and signature rows. */
+const buildReportClosingRows = (config) =>
+  expandReportRows([
+    [],
+    ["FINDINGS & RECOMMENDATIONS"],
+    ...[
+      ...config.findings.map((item) => `Finding: ${item}`),
+      ...config.recommendations.map((item) => `Recommendation: ${item}`),
+    ].map((text, index) => [`${index + 1}. ${text}`]),
+    [],
+    ["CERTIFICATION & SIGNATURES"],
+    [config.certification],
+    [],
+    ["Role", "Name", "Designation"],
+    ...config.signatures.map((signature) => [signature.role, signature.name, signature.caption]),
+    ["Date Signed: ______________________"],
+    [],
+    [`${config.docRef} | ${STORE_INFO.name} | For authorized business use`],
+  ]);
+
+/** Format a table cell for text-based exports (CSV), mirroring the PDF output. */
+const formatCellForTextExport = (column, value) => {
+  if (value === null || value === undefined) return "";
+  if (column.format === "currency") return formatCurrencyForExport(value);
+  if (column.format === "date") return formatDateForExport(value);
+  if (typeof value === "object") return JSON.stringify(value);
+  return value;
+};
+
+export const formalReportRows = {
+  resolveConfig: resolveFormalReportConfig,
+  header: buildReportHeaderRows,
+  summary: buildReportSummaryRows,
+  closing: buildReportClosingRows,
 };
 
 /**
@@ -33,22 +174,19 @@ export const exportToCSV = (data, columns = [], filename = "report", metadata = 
     ? columns.map((column) => typeof column === "string" ? { key: column, label: column } : column)
     : Object.keys(data[0]).map((key) => ({ key, label: key }));
   const headers = exportColumns.map((col) => col.label || col.key);
-  const reportMeta = [
-    [metadata.title || filename.replace(/[_-]+/g, " ")],
-    ...(metadata.periodLabel ? [[`Reporting period: ${metadata.periodLabel}`]] : []),
-    [`Prepared by: ${metadata.preparedBy || getUserData().name || "Authorized Staff"}`],
-    [`Prepared role: ${metadata.preparedRole || getRole() || "Report Preparer"}`],
-    [`Generated: ${new Date().toLocaleString("en-PH")}`],
-    [],
-  ];
+  const config = resolveFormalReportConfig({ data, filename, metadata });
   const escapeCsv = (value) => {
     const safeValue = String(sanitizeCsvCell(value) ?? "");
     return /[",\n\r]/.test(safeValue) ? `"${safeValue.replace(/"/g, '""')}"` : safeValue;
   };
   const rows = [
-    ...reportMeta,
+    ...buildReportHeaderRows(config),
+    ...buildReportSummaryRows(config),
+    [],
+    [config.tableTitle.toUpperCase()],
     headers,
-    ...data.map((row) => exportColumns.map((col) => getNestedValue(row, col.key))),
+    ...data.map((row) => exportColumns.map((col) => formatCellForTextExport(col, getNestedValue(row, col.key)))),
+    ...buildReportClosingRows(config),
   ];
   const csvContent = `\uFEFF${rows.map((row) => row.map(escapeCsv).join(",")).join("\r\n")}`;
   const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
@@ -141,14 +279,7 @@ export const exportToExcel = (data, columns = [], filename = "report", metadata 
     ? columns.map((column) => typeof column === "string" ? { key: column, label: column } : column)
     : Object.keys(data[0]).map((key) => ({ key, label: key }));
   const headers = exportColumns.map((col) => col.label || col.key);
-  const reportMeta = [
-    [metadata.title || filename.replace(/[_-]+/g, " ")],
-    ...(metadata.periodLabel ? [[`Reporting period: ${metadata.periodLabel}`]] : []),
-    [`Prepared by: ${metadata.preparedBy || getUserData().name || "Authorized Staff"}`],
-    [`Prepared role: ${metadata.preparedRole || getRole() || "Report Preparer"}`],
-    [`Generated: ${new Date().toLocaleString("en-PH")}`],
-    [],
-  ];
+  const config = resolveFormalReportConfig({ data, filename, metadata });
   const rows = data.map((row) => exportColumns.map((column) => {
     const value = getNestedValue(row, column.key);
     if (value === null || value === undefined) return "";
@@ -157,8 +288,15 @@ export const exportToExcel = (data, columns = [], filename = "report", metadata 
     if (typeof value === "object") return JSON.stringify(value);
     return typeof value === "string" ? value.replace(/[\t\r\n]+/g, " ") : value;
   }));
-  const worksheet = XLSX.utils.aoa_to_sheet([...reportMeta, headers, ...rows], { cellDates: true });
-  const headerRow = reportMeta.length;
+  const closingRows = buildReportClosingRows(config);
+  const preambleRows = [
+    ...buildReportHeaderRows(config),
+    ...buildReportSummaryRows(config),
+    [],
+    [config.tableTitle.toUpperCase()],
+  ];
+  const worksheet = XLSX.utils.aoa_to_sheet([...preambleRows, headers, ...rows, ...closingRows], { cellDates: true });
+  const headerRow = preambleRows.length;
   const dataStartRow = headerRow + 1;
   exportColumns.forEach((column, columnIndex) => {
     if (column.format !== "currency" && column.format !== "date") return;
@@ -176,12 +314,14 @@ export const exportToExcel = (data, columns = [], filename = "report", metadata 
       cell.z = column.format === "currency" ? '"₱"#,##0.00' : "mmm d, yyyy";
     });
   });
+  const widthRows = [...preambleRows.filter((row) => row.length > 1), headers, ...rows, ...closingRows.filter((row) => row.length > 1)];
   worksheet["!cols"] = exportColumns.map((column, columnIndex) => ({
     width: Math.min(Math.max(
-      String(headers[columnIndex]).length,
-      ...rows.map((row) => String(row[columnIndex] ?? "").length)
+      ...widthRows.map((row) => String(row[columnIndex] ?? "").length),
+      10
     ) + 2, 50),
   }));
+  worksheet["!margins"] = { left: 0.5, right: 0.5, top: 0.6, bottom: 0.6, header: 0.3, footer: 0.3 };
   const workbook = XLSX.utils.book_new();
   const sheetName = String(metadata.sheetName || "Report").replace(/[\\/?*\[\]:]/g, " ").slice(0, 31) || "Report";
   XLSX.utils.book_append_sheet(workbook, worksheet, sheetName);

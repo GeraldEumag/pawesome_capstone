@@ -294,6 +294,72 @@ class InventoryBatchReconciliationTest extends TestCase
     }
 
     /**
+     * A supplier picked on the initial batch shows on the product, and a
+     * linked supplier_id always carries its name onto the item.
+     */
+    public function test_item_supplier_follows_batch_supplier_and_linked_supplier(): void
+    {
+        $supplier = \App\Models\Supplier::create(['name' => 'Acme Pet Supply', 'is_active' => true]);
+        $service = new InventoryService();
+
+        $fromBatch = $service->createItem([
+            'name' => 'Batch Supplier Item', 'sku' => 'SUP-BATCH-1', 'category' => 'Food', 'price' => 100, 'reorder_level' => 1,
+            'is_sellable' => true, 'barcode' => 'SUPBATCH1', 'stock' => 10,
+            'batchData' => ['batch_no' => 'B-1', 'quantity' => 10, 'received_date' => now()->toDateString(), 'supplier' => 'Acme Pet Supply'],
+        ])['item'];
+        $this->assertSame('Acme Pet Supply', $fromBatch->supplier);
+        $this->assertSame($supplier->id, $fromBatch->supplier_id);
+
+        $linked = $service->createItem([
+            'name' => 'Linked Supplier Item', 'sku' => 'SUP-LINK-1', 'category' => 'Food', 'price' => 100, 'reorder_level' => 1,
+            'is_sellable' => true, 'barcode' => 'SUPLINK1', 'stock' => 0,
+            'supplier_id' => $supplier->id,
+        ])['item'];
+        $this->assertSame('Acme Pet Supply', $linked->supplier);
+    }
+
+    /**
+     * Removing stock must write off expired batches too. Otherwise the flat
+     * counter reaches 0 while the expired batch still shows units, and that
+     * batch keeps the product hidden from POS.
+     */
+    public function test_stock_removal_writes_off_expired_batch(): void
+    {
+        $item = $this->makeItem(['stock' => 20, 'category' => 'Health', 'requires_expiry_tracking' => true, 'issue_method' => 'FEFO']);
+        $expired = $item->batches()->create([
+            'batch_no' => 'BATCH-001',
+            'received_date' => now()->subMonth(),
+            'expiration_date' => now()->subDay(),
+            'quantity' => 10,
+            'remaining_quantity' => 10,
+            'status' => 'active',
+        ]);
+        $item->batches()->create([
+            'batch_no' => 'BATCH-002',
+            'received_date' => now()->subDays(3),
+            'expiration_date' => now()->addMonths(6),
+            'quantity' => 10,
+            'remaining_quantity' => 10,
+            'status' => 'active',
+        ]);
+
+        $this->withHeaders($this->inventoryAuth())
+            ->postJson("/api/inventory/items/{$item->id}/adjust-stock", [
+                'type' => 'remove',
+                'quantity' => 20,
+                'reason' => 'Disposed of stock',
+            ])
+            ->assertOk();
+
+        $item->refresh();
+        $this->assertSame(0, (int) $item->stock);
+        $this->assertSame(0, $item->getPhysicalBatchStock());
+        $this->assertSame(0, (int) $expired->fresh()->remaining_quantity);
+        $this->assertSame('depleted', $expired->fresh()->status);
+        $this->assertSame(0, (int) $item->batches()->where('batch_no', 'BATCH-002')->value('remaining_quantity'));
+    }
+
+    /**
      * The repair command reports drift in dry-run and writes RECON batches
      * with --apply.
      */

@@ -21,7 +21,6 @@ import {
   faMoneyBillWave,
   faPenToSquare,
   faPhone,
-  faRefresh,
   faSave,
   faSearch,
   faSpinner,
@@ -722,16 +721,6 @@ const ManagerStaff = () => {
         </div>
 
         <div className="staff-hero-actions">
-          <button
-            type="button"
-            className="staff-btn secondary"
-            onClick={() => loadStaff({ silent: true })}
-            disabled={loading || refreshing}
-          >
-            <FontAwesomeIcon icon={refreshing ? faSpinner : faRefresh} spin={refreshing} />
-            {refreshing ? "Refreshing..." : "Refresh"}
-          </button>
-
           <div style={{ position: "relative" }}>
             <button type="button" className="staff-btn primary" onClick={() => setShowExportDropdown(!showExportDropdown)}>
               <FontAwesomeIcon icon={faDownload} />

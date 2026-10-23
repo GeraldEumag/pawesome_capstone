@@ -38,7 +38,7 @@ class VetCancellationReasonTest extends TestCase
             'service_id' => $service->id,
             'veterinarian_id' => $vet->id,
             'scheduled_at' => now()->addDay(),
-            'status' => 'approved',
+            'status' => 'scheduled',
             'price' => 500,
         ], $overrides));
     }
@@ -56,7 +56,7 @@ class VetCancellationReasonTest extends TestCase
 
         $this->assertDatabaseHas('appointments', [
             'id' => $appointment->id,
-            'status' => 'approved',
+            'status' => 'scheduled',
         ]);
     }
 
@@ -74,7 +74,7 @@ class VetCancellationReasonTest extends TestCase
 
         $this->assertDatabaseHas('appointments', [
             'id' => $appointment->id,
-            'status' => 'approved',
+            'status' => 'scheduled',
         ]);
     }
 

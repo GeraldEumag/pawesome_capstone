@@ -30,29 +30,85 @@ const normalizeList = (result) => {
   return [];
 };
 
-const ACTIVE_STATUSES = ["admitted", "under_observation", "under_treatment"];
+const ACTIVE_STATUSES = ["admitted", "under_care", "under_observation", "under_treatment"];
 
 const STATUS_CONFIG = {
+  recommended: {
+    label: "Recommended",
+    icon: faNotesMedical,
+    className: "conf-badge--default",
+  },
+  consented: {
+    label: "Consented",
+    icon: faCheckCircle,
+    className: "conf-badge--observation",
+  },
+  bed_assigned: {
+    label: "Bed Assigned",
+    icon: faHospital,
+    className: "conf-badge--observation",
+  },
+  approved_for_admission: {
+    label: "Bed Assigned",
+    icon: faCheckCircle,
+    className: "conf-badge--observation",
+  },
   admitted: {
     label: "Admitted",
     icon: faHospital,
     className: "conf-badge--admitted",
   },
+  under_care: {
+    label: "Under Care",
+    icon: faHeartPulse,
+    className: "conf-badge--treatment",
+  },
   under_observation: {
-    label: "Under Observation",
+    label: "Under Care — Observation",
     icon: faEye,
     className: "conf-badge--observation",
   },
   under_treatment: {
-    label: "Under Treatment",
+    label: "Under Care — Treatment",
     icon: faSyringe,
     className: "conf-badge--treatment",
   },
-  cleared_for_discharge: {
-    label: "Cleared for Discharge",
+  ready_for_discharge: {
+    label: "Ready for Discharge",
     icon: faCheckCircle,
     className: "conf-badge--discharged",
   },
+  discharged: {
+    label: "Discharged",
+    icon: faCheckCircle,
+    className: "conf-badge--discharged",
+  },
+  transferred: {
+    label: "Transferred",
+    icon: faHospital,
+    className: "conf-badge--discharged",
+  },
+  deceased: {
+    label: "Deceased",
+    icon: faXmark,
+    className: "conf-badge--default",
+  },
+  completed: {
+    label: "Discharged",
+    icon: faCheckCircle,
+    className: "conf-badge--discharged",
+  },
+  cancelled: {
+    label: "Cancelled",
+    icon: faXmark,
+    className: "conf-badge--default",
+  },
+};
+
+const CARE_LEVEL_LABELS = {
+  observation: "Observation",
+  treatment: "Treatment",
+  critical: "Critical",
 };
 
 const NOTE_TYPES = [
@@ -61,6 +117,7 @@ const NOTE_TYPES = [
   { value: "treatment", label: "Treatment" },
   { value: "medication", label: "Medication" },
   { value: "observation", label: "Observation" },
+  { value: "discharge_clearance", label: "Discharge Clearance" },
 ];
 
 const EMPTY_NOTE = {
@@ -70,13 +127,201 @@ const EMPTY_NOTE = {
   recommendations: "",
 };
 
+const EMPTY_MAR = {
+  inventory_item_id: "",
+  medication_name: "",
+  dose: "",
+  route: "",
+  scheduled_at: "",
+  notes: "",
+};
+
+/**
+ * Medication Administration Record panel — schedule and confirm doses for a
+ * confined patient. Stock only moves on Administer.
+ */
+const MarPanel = ({ confinementId, items, onChanged }) => {
+  const [entries, setEntries] = useState([]);
+  const [form, setForm] = useState(EMPTY_MAR);
+  const [busy, setBusy] = useState(false);
+  const [loading, setLoading] = useState(true);
+
+  const loadMar = async () => {
+    try {
+      const data = await apiRequest(`/veterinary/medical-confinements/${confinementId}/mar`);
+      setEntries(Array.isArray(data?.mar) ? data.mar : []);
+    } catch (err) {
+      showError(err.message || "Failed to load medication records.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => { loadMar(); }, [confinementId]);
+
+  const schedule = async () => {
+    if (!form.inventory_item_id && !form.medication_name.trim()) {
+      showError("Pick an inventory item or enter a medication name.");
+      return;
+    }
+    try {
+      setBusy(true);
+      await apiRequest(`/veterinary/medical-confinements/${confinementId}/mar`, {
+        method: "POST",
+        body: JSON.stringify({
+          inventory_item_id: form.inventory_item_id || undefined,
+          medication_name: form.medication_name || undefined,
+          dose: form.dose || undefined,
+          route: form.route || undefined,
+          scheduled_at: form.scheduled_at || undefined,
+          notes: form.notes || undefined,
+        }),
+      });
+      showSuccess("Medication scheduled.");
+      setForm(EMPTY_MAR);
+      await loadMar();
+      onChanged?.();
+    } catch (err) {
+      showError(err.message || "Failed to schedule medication.");
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const act = async (path, body, successMsg) => {
+    try {
+      setBusy(true);
+      await apiRequest(path, { method: "POST", body: body ? JSON.stringify(body) : undefined });
+      showSuccess(successMsg);
+      await loadMar();
+      onChanged?.();
+    } catch (err) {
+      showError(err.message || "Action failed.");
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  return (
+    <div className="conf-note-form" style={{ marginTop: "12px" }}>
+      <div className="conf-note-form-header">
+        <FontAwesomeIcon icon={faSyringe} />
+        <span>Medication Administration (MAR)</span>
+      </div>
+
+      <div className="conf-form-group">
+        <label>Medication (inventory item)</label>
+        <select
+          value={form.inventory_item_id}
+          onChange={(e) => setForm((f) => ({ ...f, inventory_item_id: e.target.value }))}
+        >
+          <option value="">— Free-text medication —</option>
+          {items.map((item) => (
+            <option key={item.id} value={item.id}>
+              {item.name} (stock: {item.stock ?? item.available_stock ?? 0})
+            </option>
+          ))}
+        </select>
+      </div>
+      {!form.inventory_item_id && (
+        <div className="conf-form-group">
+          <label>Medication name</label>
+          <input
+            type="text"
+            value={form.medication_name}
+            onChange={(e) => setForm((f) => ({ ...f, medication_name: e.target.value }))}
+            placeholder="e.g. Amoxicillin 250mg"
+          />
+        </div>
+      )}
+      <div className="conf-form-group">
+        <label>Dose / Route</label>
+        <div style={{ display: "flex", gap: "8px" }}>
+          <input
+            type="text"
+            placeholder="10mg/kg"
+            value={form.dose}
+            onChange={(e) => setForm((f) => ({ ...f, dose: e.target.value }))}
+          />
+          <input
+            type="text"
+            placeholder="IV / Oral"
+            value={form.route}
+            onChange={(e) => setForm((f) => ({ ...f, route: e.target.value }))}
+          />
+        </div>
+      </div>
+      <div className="conf-form-group">
+        <label>Scheduled at (optional)</label>
+        <input
+          type="datetime-local"
+          value={form.scheduled_at}
+          onChange={(e) => setForm((f) => ({ ...f, scheduled_at: e.target.value }))}
+        />
+      </div>
+      <div className="conf-note-form-footer">
+        <button type="button" className="conf-submit-note-btn" onClick={schedule} disabled={busy}>
+          {busy ? <FontAwesomeIcon icon={faSpinner} className="conf-spin" /> : <FontAwesomeIcon icon={faSyringe} />}
+          Schedule Dose
+        </button>
+      </div>
+
+      {loading ? (
+        <p style={{ opacity: 0.7 }}><FontAwesomeIcon icon={faSpinner} className="conf-spin" /> Loading…</p>
+      ) : entries.length === 0 ? (
+        <p style={{ opacity: 0.7 }}>No medication records yet.</p>
+      ) : (
+        <div>
+          {entries.map((entry) => (
+            <div key={entry.id} className="conf-info-row" style={{ alignItems: "center" }}>
+              <div className="conf-info-icon"><FontAwesomeIcon icon={faSyringe} /></div>
+              <div style={{ flex: 1 }}>
+                <strong>{entry.medication_name}</strong>
+                <p>
+                  {[entry.dose, entry.route].filter(Boolean).join(" • ")}
+                  {entry.scheduled_at && ` • due ${new Date(entry.scheduled_at).toLocaleString()}`}
+                  {" — "}{entry.status}
+                  {entry.administered_at && ` at ${new Date(entry.administered_at).toLocaleString()}`}
+                  {entry.administered_by?.name && ` by ${entry.administered_by.name}`}
+                </p>
+              </div>
+              {entry.status === "scheduled" && (
+                <div style={{ display: "flex", gap: "6px" }}>
+                  <button
+                    type="button"
+                    className="conf-action-btn conf-action-btn--treat"
+                    disabled={busy}
+                    onClick={() => act(`/veterinary/medical-confinements/${confinementId}/mar/${entry.id}/administer`, null, "Administration confirmed — stock deducted.")}
+                  >
+                    Administer
+                  </button>
+                  <button
+                    type="button"
+                    className="conf-action-btn"
+                    disabled={busy}
+                    onClick={() => act(`/veterinary/medical-confinements/${confinementId}/mar/${entry.id}/status`, { status: "skipped" }, "Marked skipped.")}
+                  >
+                    Skip
+                  </button>
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+};
+
 const VetMedicalConfinements = () => {
   const [records, setRecords] = useState([]);
+  const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState("");
   const [actionLoading, setActionLoading] = useState({});
   const [expandedNotes, setExpandedNotes] = useState({});
+  const [expandedMar, setExpandedMar] = useState({});
   const [notes, setNotes] = useState({});
 
   const load = async ({ silent = false } = {}) => {
@@ -99,7 +344,17 @@ const VetMedicalConfinements = () => {
     }
   };
 
-  useEffect(() => { load(); }, []);
+  const loadItems = async () => {
+    try {
+      const data = await apiRequest("/veterinary/inventory-items");
+      const list = Array.isArray(data) ? data : (data?.items || data?.inventory_items || data?.data || []);
+      setItems(list);
+    } catch {
+      // MAR item picker is optional — free-text medications still work.
+    }
+  };
+
+  useEffect(() => { load(); loadItems(); }, []);
 
   const post = async (url, body, successMsg, recordId) => {
     try {
@@ -127,12 +382,19 @@ const VetMedicalConfinements = () => {
     setExpandedNotes((prev) => ({ ...prev, [recordId]: !prev[recordId] }));
   };
 
+  const careLevelOf = (r) =>
+    r.status === "under_care" ? (r.care_level || "observation")
+    : r.status === "under_observation" ? "observation"
+    : r.status === "under_treatment" ? "treatment"
+    : null;
+
   const stats = useMemo(() => ({
     total: records.length,
     admitted: records.filter((r) => r.status === "admitted").length,
-    observation: records.filter((r) => r.status === "under_observation").length,
-    treatment: records.filter((r) => r.status === "under_treatment").length,
-    discharged: records.filter((r) => r.status === "cleared_for_discharge").length,
+    observation: records.filter((r) => careLevelOf(r) === "observation").length,
+    treatment: records.filter((r) => careLevelOf(r) === "treatment").length,
+    critical: records.filter((r) => careLevelOf(r) === "critical").length,
+    discharged: records.filter((r) => r.status === "ready_for_discharge").length,
   }), [records]);
 
   if (loading) {
@@ -165,15 +427,7 @@ const VetMedicalConfinements = () => {
           </p>
         </div>
 
-        <button
-          type="button"
-          className={`conf-refresh-btn${refreshing ? " refreshing" : ""}`}
-          onClick={() => load({ silent: true })}
-          disabled={refreshing}
-        >
-          <FontAwesomeIcon icon={faRotateRight} />
-          {refreshing ? "Refreshing..." : "Refresh"}
-        </button>
+        {refreshing && <FontAwesomeIcon icon={faRotateRight} spin />}
       </div>
 
       {/* Error Banner */}
@@ -194,7 +448,8 @@ const VetMedicalConfinements = () => {
           { label: "Admitted", value: stats.admitted, icon: faHospital, className: "conf-stat--admitted" },
           { label: "Observation", value: stats.observation, icon: faEye, className: "conf-stat--observation" },
           { label: "Treatment", value: stats.treatment, icon: faSyringe, className: "conf-stat--treatment" },
-          { label: "Discharged", value: stats.discharged, icon: faCheckCircle, className: "conf-stat--discharged" },
+          { label: "Critical", value: stats.critical, icon: faHeartPulse, className: "conf-stat--admitted" },
+          { label: "Ready for Discharge", value: stats.discharged, icon: faCheckCircle, className: "conf-stat--discharged" },
         ].map(({ label, value, icon, className }) => (
           <article key={label} className={`conf-stat-card ${className}`}>
             <span className="conf-stat-icon">
@@ -229,9 +484,12 @@ const VetMedicalConfinements = () => {
             };
             const noteForm = notes[record.id] || EMPTY_NOTE;
             const noteExpanded = expandedNotes[record.id];
+            const marExpanded = expandedMar[record.id];
+            const careLevel = careLevelOf(record);
             const isPosting = actionLoading[`${record.id}-/veterinary/medical-confinements/${record.id}/progress-notes`];
             const isObserving = actionLoading[`${record.id}-/veterinary/medical-confinements/${record.id}/mark-under-observation`];
             const isTreating = actionLoading[`${record.id}-/veterinary/medical-confinements/${record.id}/mark-under-treatment`];
+            const isCritical = actionLoading[`${record.id}-/veterinary/medical-confinements/${record.id}/mark-critical`];
             const isDischarging = actionLoading[`${record.id}-/veterinary/medical-confinements/${record.id}/clear-for-discharge`];
 
             return (
@@ -254,6 +512,7 @@ const VetMedicalConfinements = () => {
                   <span className={`conf-badge ${statusCfg.className}`}>
                     <FontAwesomeIcon icon={statusCfg.icon} />
                     {statusCfg.label}
+                    {record.status === "under_care" && careLevel ? ` — ${CARE_LEVEL_LABELS[careLevel]}` : ""}
                   </span>
                 </div>
 
@@ -299,10 +558,10 @@ const VetMedicalConfinements = () => {
                           "Marked under observation.",
                           record.id
                         )}
-                        disabled={isObserving || record.status === "under_observation"}
+                        disabled={isObserving || careLevel === "observation"}
                       >
                         {isObserving ? <FontAwesomeIcon icon={faSpinner} className="conf-spin" /> : <FontAwesomeIcon icon={faEye} />}
-                        Under Observation
+                        Observation
                       </button>
 
                       <button
@@ -314,10 +573,25 @@ const VetMedicalConfinements = () => {
                           "Marked under treatment.",
                           record.id
                         )}
-                        disabled={isTreating || record.status === "under_treatment"}
+                        disabled={isTreating || careLevel === "treatment"}
                       >
                         {isTreating ? <FontAwesomeIcon icon={faSpinner} className="conf-spin" /> : <FontAwesomeIcon icon={faSyringe} />}
-                        Under Treatment
+                        Treatment
+                      </button>
+
+                      <button
+                        type="button"
+                        className="conf-action-btn conf-action-btn--discharge"
+                        onClick={() => post(
+                          `/veterinary/medical-confinements/${record.id}/mark-critical`,
+                          null,
+                          "Marked critical.",
+                          record.id
+                        )}
+                        disabled={isCritical || careLevel === "critical"}
+                      >
+                        {isCritical ? <FontAwesomeIcon icon={faSpinner} className="conf-spin" /> : <FontAwesomeIcon icon={faHeartPulse} />}
+                        Critical
                       </button>
 
                       <button
@@ -335,6 +609,20 @@ const VetMedicalConfinements = () => {
                         Clear for Discharge
                       </button>
                     </div>
+
+                    {/* MAR Toggle */}
+                    <button
+                      type="button"
+                      className="conf-toggle-notes-btn"
+                      onClick={() => setExpandedMar((prev) => ({ ...prev, [record.id]: !prev[record.id] }))}
+                    >
+                      <FontAwesomeIcon icon={faSyringe} />
+                      <span>Medication Administration</span>
+                      <FontAwesomeIcon icon={marExpanded ? faChevronUp : faChevronDown} className="conf-chevron" />
+                    </button>
+                    {marExpanded && (
+                      <MarPanel confinementId={record.id} items={items} onChanged={() => load({ silent: true })} />
+                    )}
 
                     {/* Progress Note Toggle */}
                     <button
@@ -423,11 +711,35 @@ const VetMedicalConfinements = () => {
                   </div>
                 )}
 
-                {/* Discharged Banner */}
-                {!isActive && (
+                {/* Discharge State Banner */}
+                {record.status === "ready_for_discharge" && (
                   <div className="conf-discharged-banner">
                     <FontAwesomeIcon icon={faCheckCircle} />
-                    <span>This patient has been cleared for discharge.</span>
+                    <span>This patient is ready for discharge.</span>
+                  </div>
+                )}
+                {["discharged", "completed"].includes(record.status) && (
+                  <div className="conf-discharged-banner">
+                    <FontAwesomeIcon icon={faCheckCircle} />
+                    <span>This patient has been discharged.</span>
+                  </div>
+                )}
+                {record.status === "transferred" && (
+                  <div className="conf-discharged-banner">
+                    <FontAwesomeIcon icon={faHospital} />
+                    <span>This patient was transferred to another facility.</span>
+                  </div>
+                )}
+                {record.status === "deceased" && (
+                  <div className="conf-discharged-banner">
+                    <FontAwesomeIcon icon={faXmark} />
+                    <span>This patient died in care.</span>
+                  </div>
+                )}
+                {["recommended", "consented", "bed_assigned", "approved_for_admission"].includes(record.status) && (
+                  <div className="conf-discharged-banner">
+                    <FontAwesomeIcon icon={faExclamationTriangle} />
+                    <span>This patient is waiting for admission.</span>
                   </div>
                 )}
               </article>

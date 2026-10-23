@@ -15,7 +15,7 @@ class ScheduleController extends Controller
      * PayrollComputationService::staffEmployees() — customers are never staff.
      */
     private const STAFF_ROLES = [
-        'manager', 'cashier', 'receptionist', 'veterinary',
+        'manager', 'cashier', 'receptionist', 'veterinary', 'vet_tech',
         'inventory', 'payroll', 'staff', 'groomer',
         'super_receptionist', 'admin',
     ];

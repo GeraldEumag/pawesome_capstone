@@ -203,9 +203,6 @@ const getInitials = (name) =>
           <h3>Stock Activity Log</h3>
           <p>Track all inventory changes and adjustments</p>
         </div>
-        <button className="btn-refresh" onClick={refreshLogs} disabled={loading}>
-          {loading ? "Refreshing..." : "Refresh"}
-        </button>
       </div>
 
       {/* Stats Cards */}

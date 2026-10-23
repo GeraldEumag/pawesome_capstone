@@ -10,9 +10,7 @@ import {
   faFileExcel,
   faFilePdf,
   faReceipt,
-  faRotateRight,
   faShoppingCart,
-  faSpinner,
   faTruck,
   faUserTie,
   faStethoscope,
@@ -204,15 +202,6 @@ const AdminLiveReport = ({
             <p>{filteredRows.length} record(s) found from the current filters.</p>
           </div>
 
-          <button
-            type="button"
-            className={`refresh-report-btn ${refreshing ? "refreshing" : ""}`}
-            onClick={() => fetchData({ silent: true })}
-            disabled={refreshing}
-          >
-            <FontAwesomeIcon icon={refreshing ? faSpinner : faRotateRight} />
-            {refreshing ? "Refreshing..." : "Refresh"}
-          </button>
         </div>
 
         <StandardSummaryCards cards={cards} />

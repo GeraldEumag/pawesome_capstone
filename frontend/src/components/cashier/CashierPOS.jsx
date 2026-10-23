@@ -661,10 +661,6 @@ const CashierPOS = ({ initialTab }) => {
               </span>
             )}
 
-            <button className="pos-topbar-btn" onClick={() => { fetchProducts(); fetchServices(); }} title="Refresh products">
-              <FontAwesomeIcon icon={faRotateRight} spin={isRefreshingProducts} />
-            </button>
-
             <button className="pos-topbar-btn" onClick={toggleFullscreen} title={isFullscreen ? "Exit fullscreen" : "Fullscreen"}>
               <FontAwesomeIcon icon={isFullscreen ? faCompress : faExpand} />
             </button>

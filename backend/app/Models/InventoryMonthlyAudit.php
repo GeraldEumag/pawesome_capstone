@@ -13,9 +13,21 @@ class InventoryMonthlyAudit extends Model
         'variance',
         'audit_month',
         'status',
+        'approval_status',
         'reason',
         'checked_by',
+        'approved_by',
+        'approved_at',
     ];
+
+    protected $casts = [
+        'approved_at' => 'datetime',
+    ];
+
+    public function approver()
+    {
+        return $this->belongsTo(User::class, 'approved_by');
+    }
 
     public function item()
     {

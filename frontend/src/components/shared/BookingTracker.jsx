@@ -43,9 +43,10 @@ const ONGOING_STATUSES = new Set([
   "in_care",
   "in_progress",
   "in_consultation",
-  "needs_confinement",
-  "treated",
-  "awaiting_payment",
+  "in_treatment",
+  "awaiting_results",
+  "clinical_complete",
+  "checkout",
 ]);
 
 const getBookingTab = (item) => {
@@ -221,15 +222,7 @@ const BookingTracker = () => {
               </div>
             </div>
             <div className="bt-header-actions">
-              <button
-                type="button"
-                className="bt-icon-btn"
-                onClick={() => fetchItems(false)}
-                aria-label="Refresh bookings"
-                title="Refresh"
-              >
-                <FontAwesomeIcon icon={faRotate} spin={refreshing} />
-              </button>
+              {refreshing && <FontAwesomeIcon icon={faRotate} spin />}
               <button
                 type="button"
                 className="bt-icon-btn"

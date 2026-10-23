@@ -802,9 +802,7 @@ const ServiceManagerModal = ({ onClose }) => {
           <button className="smm-btn-primary" onClick={startCreate} disabled={editingId !== null}>
             <FaPlus /> Add New
           </button>
-          <button className="smm-btn-ghost" onClick={() => fetchItems({ silent: true })} disabled={loading}>
-            <FaSyncAlt className={loading ? "spin" : ""} /> Refresh
-          </button>
+          {loading && <FaSyncAlt className="spin" />}
         </div>
 
         {editingId !== null && (

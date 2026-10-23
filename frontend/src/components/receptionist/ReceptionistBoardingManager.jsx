@@ -6,7 +6,6 @@ import {
   faCalendarAlt,
   faPaw,
   faUser,
-  faRefresh,
   faSpinner,
   faHotel,
   faDoorOpen,
@@ -263,15 +262,6 @@ const ReceptionistBoardingManager = () => {
             Manage Rooms
           </button>
 
-          <button
-            type="button"
-            className={`checkin-secondary-btn ${refreshing ? "loading" : ""}`}
-            onClick={() => loadBookings({ silent: true })}
-            disabled={refreshing || loading}
-          >
-            <FontAwesomeIcon icon={refreshing ? faSpinner : faRefresh} spin={refreshing} />
-            {refreshing ? "Refreshing..." : "Refresh"}
-          </button>
         </div>
       </section>
 

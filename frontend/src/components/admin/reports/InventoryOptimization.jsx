@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
-  faSync,
   faBoxes,
   faExclamationTriangle,
   faChartPie,
@@ -81,9 +80,6 @@ const InventoryOptimization = () => {
             <p>ABC value analysis and reorder recommendations</p>
           </div>
         </div>
-        <button className="adv-refresh-btn" onClick={fetchData}>
-          <FontAwesomeIcon icon={faSync} /> Refresh
-        </button>
       </div>
 
       <div className="adv-kpi-grid">
