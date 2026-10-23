@@ -174,19 +174,22 @@ const ChatbotLogs = () => {
     return date.toLocaleTimeString("en-PH", { hour: "numeric", minute: "2-digit" });
   };
 
-  const timeAgo = (value) => {
+  // Uniform compact timestamp for the summary list — same format every row
+  // so dates stay visually comparable and sortable at a glance.
+  const summaryTimestamp = (value) => {
     if (!value) return "No activity";
     const date = parseServerDate(value);
     if (!date) return formatDateTime(value);
-    const diff = Date.now() - date.getTime();
-    const mins = Math.floor(diff / 60000);
-    if (mins < 1) return "Just now";
-    if (mins < 60) return `${mins}m ago`;
-    const hrs = Math.floor(mins / 60);
-    if (hrs < 24) return `${hrs}h ago`;
-    const days = Math.floor(hrs / 24);
-    if (days < 7) return `${days}d ago`;
-    return formatDateTime(value);
+    const datePart = date.toLocaleDateString("en-PH", {
+      month: "short",
+      day: "numeric",
+      year: "numeric",
+    });
+    const timePart = date.toLocaleTimeString("en-PH", {
+      hour: "numeric",
+      minute: "2-digit",
+    });
+    return `${datePart} · ${timePart}`;
   };
 
   const dayKey = (value) => {
@@ -294,7 +297,15 @@ const ChatbotLogs = () => {
         apiRequest("/admin/services"),
       ]);
 
-      setChatLogs(safeArray(logsData).map(normalizeLog));
+      setChatLogs(
+        safeArray(logsData)
+          .map(normalizeLog)
+          .sort((a, b) => {
+            const timeA = parseServerDate(a.last_chat_date)?.getTime() || 0;
+            const timeB = parseServerDate(b.last_chat_date)?.getTime() || 0;
+            return timeB - timeA;
+          })
+      );
       setChatStats(statsData?.data || null);
       setFaqs(safeArray(faqData).map(normalizeFaq));
       setServices(safeArray(serviceData).map(normalizeService));
@@ -877,7 +888,7 @@ const ChatbotLogs = () => {
                       <span className="convo-card-body">
                         <span className="convo-card-top">
                           <strong>{log.user_name}</strong>
-                          <time>{timeAgo(log.last_chat_date)}</time>
+                          <time>{summaryTimestamp(log.last_chat_date)}</time>
                         </span>
                         <span className="convo-card-bottom">
                           <span className="convo-count">
