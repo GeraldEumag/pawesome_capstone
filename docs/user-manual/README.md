@@ -1,12 +1,21 @@
 # Pawesome User Manual Documentation
 
-## Current state (v0.2, 2026-10-22)
+## Current state (v0.4, 2026-10-25)
 
-`PAWESOME_USER_MANUAL.md` is a **runtime-verified draft**: all principal customer→staff→payment, booking (online, walk-in, hotel), clinical, POS, and user-provisioning chains were executed against the local dev build and 18 genuine screenshots were captured. A third pass (chain3) additionally verified register→verify→reset→login, inactive/role gates, kiosk PIN, manager-filed leave reject, attendance-correction reject, day-offs set, supplier roundtrip, batch receive+dispose, and a full payroll lifecycle on a fixture user. Still not submission-final — some HR/payroll surfaces are partially exercised, email mailbox delivery is unprovable (SMTP accepted, fake domains), and no school template/DOCX export exists yet.
+`PAWESOME_USER_MANUAL_v0.4.md` is the **current release candidate**: the v0.3 plain-language manual re-audited claim-by-claim against the current working tree (HEAD `3e75be0` + uncommitted changes). v0.4 adds the boarding-care lifecycle (Check In / care logs / Ready for Pickup / Check Out), approval confirmation dialogs, the unique payment-reference rule, pet-photo rules (JPG/PNG/WebP <10 MB), counter GCash/Maya collection, cancel-own-request, vet additional billing, the Controlled Drugs register, and three new manager pages (Invoice Approvals, Receipt Scanner, Controlled Drugs). Verification: 98 backend tests / 493 assertions on `pawesome_test` + mocked browser run + source review; details in `audit/` and `REVISION_SUMMARY_v0.4.md`.
+
+Prior versions preserved unchanged: `PAWESOME_USER_MANUAL_v0.3.*` (plain-language rewrite) and `PAWESOME_USER_MANUAL.md`/`.pdf` (v0.2 runtime-verified draft). Still open: 8 screenshot placeholders, several payroll/report pages unexercised, mailbox delivery unproven, no school template confirmed, and the app tree has uncommitted changes worth a final doc check.
 
 ## Files
 
-- `PAWESOME_USER_MANUAL.md` — end-user manual (v0.2)
+- `PAWESOME_USER_MANUAL_v0.4.md` / `.pdf` / `.docx` — current release candidate (v0.4)
+- `REVISION_SUMMARY_v0.4.md` — v0.4 revision table, coverage, test evidence, release decision
+- `audit/BASELINE_AUDIT.md`, `audit/ROLE_FEATURE_MATRIX.md`, `audit/MANUAL_GAP_ANALYSIS.md`, `audit/WORKFLOW_VERIFICATION_MATRIX.md`, `audit/SCREENSHOT_AUDIT.md` — v0.4 internal audit reports
+- `PAWESOME_USER_MANUAL_v0.3.md` — prior end-user revision (v0.3)
+- `PAWESOME_USER_MANUAL_v0.3.pdf` / `.docx` — generated v0.3 outputs
+- `REVISION_SUMMARY.md` — v0.3 revision table and checklist
+- `PAWESOME_USER_MANUAL.md` — v0.2 runtime-verified draft (preserved)
+- `PAWESOME_USER_MANUAL.pdf` — generated PDF of v0.2
 - `audit/repository-inventory.md` — reviewed project structure and evidence boundary
 - `audit/route-and-page-inventory.md` — route/menu inventory (v0.1 source review)
 - `audit/role-permission-matrix.md` — role summary (v0.1 source review)
@@ -40,13 +49,20 @@
 7. Refresh `audit/documentation-qa-report.md`; keep unresolved items marked NOT VERIFIED/CODE-REVIEWED/BLOCKED.
 8. Bump version/date + revision history.
 
-## Generating DOCX/PDF
+## Generating PDF/DOCX
 
-No `pandoc`/LibreOffice in this environment; Markdown is the deliverable. When a converter is available, from `docs/user-manual/`:
+PDF: from the repo root — the script accepts an input markdown and output path (defaults: `PAWESOME_USER_MANUAL.md` → `PAWESOME_USER_MANUAL.pdf`):
 
 ```powershell
-pandoc PAWESOME_USER_MANUAL.md --output PAWESOME_USER_MANUAL.docx
-pandoc PAWESOME_USER_MANUAL.md --output PAWESOME_USER_MANUAL.pdf
+node frontend/.manual-pdf-build.mjs docs/user-manual/PAWESOME_USER_MANUAL_v0.4.md docs/user-manual/PAWESOME_USER_MANUAL_v0.4.pdf
+```
+
+DOCX: built with portable pandoc from the image-injected intermediate the PDF script produces (the plain `.md` references figures by filename, so pandoc needs the injected copy to embed images):
+
+```powershell
+node frontend/.manual-pdf-build.mjs docs/user-manual/PAWESOME_USER_MANUAL_v0.4.md docs/user-manual/PAWESOME_USER_MANUAL_v0.4.pdf
+cd docs/user-manual
+pandoc .manual-injected-PAWESOME_USER_MANUAL_v0.4.md --resource-path . -f gfm --toc --toc-depth=2 -M title="Pawesome User Manual" -o PAWESOME_USER_MANUAL_v0.4.docx
 ```
 
 Open and visually check the export (page size, headings, tables, figure placement, TOC) before delivering.

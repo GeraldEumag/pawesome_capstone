@@ -157,7 +157,7 @@ block in `backend/.env.example`.
 Email sends run as `App\Jobs\SendEmailDelivery` on the `emails` database queue
 (mailables are rendered inside the job, not queued directly). The demo may use
 `QUEUE_CONNECTION=sync` to avoid a worker. Business production requires a
-supervised `php artisan queue:work --queue=emails,default` service (or Redis
+supervised `php artisan queue:work --queue=emails,receipts,default` service (or Redis
 per DEPLOYMENT.md), a scheduler daemon for `email-deliveries:dispatch`/
 `:reconcile` and the other scheduled commands, and monitored failed jobs.
 
