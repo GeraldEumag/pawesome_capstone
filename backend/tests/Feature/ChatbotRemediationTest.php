@@ -410,6 +410,7 @@ class ChatbotRemediationTest extends TestCase
     {
         config([
             'chatbot.ai_enabled' => true,
+            'chatbot.ai_provider' => 'gemini',
             'chatbot.ai_api_key' => 'test-fake-key-123',
             'chatbot.ai_model' => 'gemini-2.0-flash',
             'chatbot.ai_max_tokens' => 321,
@@ -461,6 +462,7 @@ class ChatbotRemediationTest extends TestCase
     {
         config([
             'chatbot.ai_enabled' => true,
+            'chatbot.ai_provider' => 'gemini',
             'chatbot.ai_api_key' => 'test-fake-key-123',
         ]);
 
@@ -480,6 +482,7 @@ class ChatbotRemediationTest extends TestCase
     {
         config([
             'chatbot.ai_enabled' => true,
+            'chatbot.ai_provider' => 'gemini',
             'chatbot.ai_api_key' => 'key',
             'chatbot.ai_timeout' => 12,
             'chatbot.ai_max_tokens' => 77,
