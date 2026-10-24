@@ -23,7 +23,7 @@
 
   /* Light mode: global admin theme pink gradient */
   background: linear-gradient(180deg, var(--color-primary), var(--color-primary-light));
-  color: #ffffff;
+  color: #000;
   box-shadow: 14px 0 38px rgba(255, 95, 147, 0.2);
   border-right: 1px solid rgba(255, 255, 255, 0.28);
 }
@@ -49,7 +49,7 @@
 .sidebar-logo {
   display: flex;
   align-items: center;
-  color: #ffffff;
+  color: #000;
   font-size: 1.05rem;
   font-weight: 800;
   letter-spacing: -0.02em;
@@ -91,7 +91,7 @@
   padding: 0.75rem 0.9rem;
   border-radius: 14px;
 
-  color: rgba(255, 255, 255, 0.9);
+  color: #000;
   text-decoration: none;
   background: transparent;
   border: none;
@@ -110,7 +110,7 @@
 .logout-btn:hover {
   background: rgba(255, 255, 255, 0.18);
   transform: translateX(3px);
-  color: #ffffff;
+  color: #000;
 }
 
 /* Active state with accent bar */
@@ -120,7 +120,7 @@
 .settings-link.active {
   position: relative;
   background: rgba(255, 255, 255, 0.96);
-  color: var(--color-primary);
+  color: #000;
   box-shadow: 0 14px 30px rgba(75, 34, 50, 0.18);
 }
 
@@ -169,7 +169,7 @@
   background: rgba(255, 255, 255, 0.1);
   border: 1px solid rgba(255, 255, 255, 0.2);
   border-radius: 8px;
-  color: rgba(255, 255, 255, 0.9);
+  color: #000;
   font-size: 0.82rem;
   font-weight: 600;
   cursor: pointer;
@@ -178,8 +178,8 @@
 
 .super-back-btn:hover {
   background: rgba(255, 255, 255, 0.2);
-  color: #ffffff;
-  border-color: rgba(255, 255, 255, 0.4);
+  color: #000;
+  border-color: #000;
 }
 
 .super-back-btn svg {
@@ -243,7 +243,7 @@
   border: none;
   border-radius: 12px;
   background: rgba(255, 255, 255, 0.2);
-  color: #ffffff;
+  color: #000;
   font-size: 1.1rem;
   cursor: pointer;
   place-items: center;

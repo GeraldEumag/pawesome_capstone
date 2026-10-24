@@ -18,7 +18,7 @@
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.1em;
-  color: rgba(255, 255, 255, 0.55);
+  color: #000;
   padding: 0.75rem 0.6rem 0.3rem;
 }
 
@@ -39,7 +39,7 @@
 
 /* Active icon gets the primary color since the card turns white */
 .inventory-sidebar .nav-item a.active .nav-icon {
-  color: var(--color-primary, #ff5f93);
+  color: #000;
 }
 
 /* ---- Logo icon badge ---- */
@@ -48,7 +48,7 @@
   height: 36px;
   border-radius: 10px;
   background: rgba(255, 255, 255, 0.25);
-  color: #fff;
+  color: #000;
   display: grid;
   place-items: center;
   font-size: 1rem;

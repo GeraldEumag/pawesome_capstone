@@ -6,7 +6,7 @@
 /* Restore pink gradient — InventorySidebar.css overrides .app-sidebar globally */
 .cashier-sidebar.app-sidebar {
   background: linear-gradient(180deg, var(--color-primary), var(--color-primary-light));
-  color: #ffffff;
+  color: #000;
   box-shadow: 14px 0 38px rgba(255, 95, 147, 0.2);
   border-right: 1px solid rgba(255, 255, 255, 0.28);
 }
@@ -21,22 +21,22 @@
 
 .cashier-sidebar.app-sidebar .nav-item a,
 .cashier-sidebar.app-sidebar .logout-btn {
-  color: rgba(255, 255, 255, 0.9);
+  color: #000;
 }
 
 .cashier-sidebar.app-sidebar .nav-item a:hover,
 .cashier-sidebar.app-sidebar .logout-btn:hover {
   background: rgba(255, 255, 255, 0.18);
-  color: #ffffff;
+  color: #000;
 }
 
 .cashier-sidebar.app-sidebar .nav-item a.active {
   background: rgba(255, 255, 255, 0.96);
-  color: var(--color-primary);
+  color: #000;
 }
 
 .cashier-sidebar.app-sidebar .sidebar-logo {
-  color: #ffffff;
+  color: #000;
 }
 
 /* Icon sizing */

@@ -9,7 +9,6 @@ import DynamicHero from "./DynamicHero";
 import DynamicFeaturedServices from "./DynamicFeaturedServices";
 import DynamicAbout from "./DynamicAbout";
 import { useAuth } from "../../context/AuthContext";
-import { apiRequest, normalizeList } from "../../api/client";
 
 const LandingPage = () => {
   const currentYear = new Date().getFullYear();
@@ -19,9 +18,6 @@ const LandingPage = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const { isAuthenticated, role } = useAuth();
   const { loading, getSection } = useLandingPageContent();
-  const [boardingRooms, setBoardingRooms] = useState([]);
-  const [roomsLoading, setRoomsLoading] = useState(true);
-  const [roomsError, setRoomsError] = useState("");
   const mobileNavRef = useRef(null);
   const mobileMenuButtonRef = useRef(null);
   const mobileMenuCloseRef = useRef(null);
@@ -32,23 +28,6 @@ const LandingPage = () => {
     setActiveModal(serviceType);
     setSearchParams({}, { replace: true });
   }, [isAuthenticated, role, searchParams, setSearchParams]);
-
-  useEffect(() => {
-    let active = true;
-    apiRequest("/public/boarding-rooms")
-      .then((data) => {
-        if (active) setBoardingRooms(normalizeList(data, ["rooms"]));
-      })
-      .catch((error) => {
-        if (active) setRoomsError(error.message || "Room information could not be loaded.");
-      })
-      .finally(() => {
-        if (active) setRoomsLoading(false);
-      });
-    return () => {
-      active = false;
-    };
-  }, []);
 
   const scrollToServices = () => {
     const el = document.getElementById("featured-services-anchor");
@@ -102,7 +81,6 @@ const LandingPage = () => {
 
   const navLinks = [
     { href: "#featured-services-anchor", label: "Services" },
-    { href: "#boarding-rooms-anchor", label: "Pet Hotel" },
     { href: "#about", label: "About" },
     { href: "#contact", label: "Contact" },
   ];
@@ -240,49 +218,6 @@ const LandingPage = () => {
             onBookService={(key) => setActiveModal(key)}
           />
         </div>
-
-        <section id="boarding-rooms-anchor" className="landing-hotel-rooms" aria-labelledby="landing-hotel-rooms-title">
-          <div className="landing-section-header">
-            <span className="landing-eyebrow">Pet Hotel</span>
-            <h2 id="landing-hotel-rooms-title">Boarding Rooms</h2>
-            <p>Explore room types and check date-specific availability in the booking flow.</p>
-          </div>
-          {roomsLoading ? (
-            <p className="landing-hotel-rooms-state" role="status">Loading room information…</p>
-          ) : roomsError ? (
-            <p className="landing-hotel-rooms-state" role="alert">{roomsError}</p>
-          ) : boardingRooms.length === 0 ? (
-            <p className="landing-hotel-rooms-state">Room information is not available yet. Please check back later.</p>
-          ) : (
-            <div className="landing-hotel-rooms-grid">
-              {boardingRooms.map((room) => (
-                <article className="landing-hotel-room-card" key={room.id}>
-                  {room.photo_url ? (
-                    <img className="landing-hotel-room-photo" src={room.photo_url} alt={`${room.room_name} room`} />
-                  ) : (
-                    <div className="landing-hotel-room-photo-empty" aria-label="Room photo not available">
-                      Room photo not available
-                    </div>
-                  )}
-                  <div className="landing-hotel-room-copy">
-                    <h3>{room.room_name}</h3>
-                    <p className="landing-hotel-room-type">{String(room.room_type || "").replaceAll("_", " ")}</p>
-                    <p>{room.description || "Description not provided."}</p>
-                    <p>Daily rate: {new Intl.NumberFormat("en-PH", {
-                      style: "currency",
-                      currency: "PHP",
-                      minimumFractionDigits: 2,
-                    }).format(Number(room.daily_rate || 0))}</p>
-                    {room.max_capacity != null && <p>Capacity: {room.max_capacity}</p>}
-                    <Link className="landing-btn landing-btn-primary" to="/customer/hotel">
-                      Check availability and book
-                    </Link>
-                  </div>
-                </article>
-              ))}
-            </div>
-          )}
-        </section>
 
         <DynamicAbout content={getSection("about")} />
       </main>
