@@ -57,5 +57,25 @@ class RouteServiceProvider extends ServiceProvider
         RateLimiter::for('sensitive', function (Request $request) {
             return Limit::perMinute(10)->by($request->ip());
         });
+
+        // Chatbot AI spend guard: per-user minute + day caps. The bot
+        // replies with a friendly message when the limit is hit (the widget
+        // renders the 429 body as a bot bubble).
+        RateLimiter::for('chatbot', function (Request $request) {
+            $key = (string) ($request->user()?->id ?? $request->ip());
+
+            return [
+                Limit::perMinute(20)->by($key),
+                Limit::perDay(200)->by($key . ':day'),
+            ];
+        });
+
+        // Public landing bot: strict IP caps — no authenticated identity.
+        RateLimiter::for('chatbot-public', function (Request $request) {
+            return [
+                Limit::perMinute(10)->by($request->ip()),
+                Limit::perDay(100)->by($request->ip() . ':day'),
+            ];
+        });
     }
 }

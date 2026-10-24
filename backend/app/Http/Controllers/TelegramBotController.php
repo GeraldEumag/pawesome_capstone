@@ -163,7 +163,7 @@ class TelegramBotController extends Controller
             $message = "👋 Welcome to Pawsitive!\n\n" .
                 "I'm your pet hotel assistant on Telegram.\n\n" .
                 "🔗 To get started, please link your account:\n" .
-                "1. Login to: https://yourdomain.com/dashboard\n" .
+                "1. Login to: " . rtrim((string) config('app.frontend_url'), '/') . "/dashboard\n" .
                     "2. Go to Profile → Link Telegram\n" .
                 "3. Or use: /link <your_token>\n\n" .
                 "Once linked, you can:\n" .
@@ -382,7 +382,7 @@ class TelegramBotController extends Controller
 
         $message = "🔗 *Link Your Account*\n\n" .
             "Option 1: Web Dashboard\n" .
-            "1. Login: https://yourdomain.com/dashboard\n" .
+            "1. Login: " . rtrim((string) config('app.frontend_url'), '/') . "/dashboard\n" .
             "2. Go to Profile → Link Telegram\n\n" .
             "Option 2: Token (coming soon)\n" .
             "Use: /link YOUR_TOKEN\n\n" .

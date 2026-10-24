@@ -122,6 +122,7 @@ export default function LandingChatbot({ hidden = false }) {
         sender: "bot",
         text: data.reply,
         cta: data.cta || null,
+        actions: data.actions || null,
         timestamp: new Date().toISOString(),
       };
       setMessages((prev) => [...prev, botMsg]);
@@ -205,6 +206,17 @@ export default function LandingChatbot({ hidden = false }) {
                       <a href={msg.cta.href} className="lc-cta-btn">
                         {msg.cta.label} →
                       </a>
+                    )}
+                    {msg.actions?.length > 0 && (
+                      <div className="lc-suggestions">
+                        {msg.actions.map((a) => a.href ? (
+                          <a key={a.label} href={a.href} className="lc-cta-btn">{a.label} →</a>
+                        ) : (
+                          <button key={a.label} className="lc-suggestion-chip" onClick={() => sendMessage(a.send || a.label)}>
+                            {a.label}
+                          </button>
+                        ))}
+                      </div>
                     )}
                   </div>
                   <span className="lc-msg-time">{formatTime(msg.timestamp)}</span>

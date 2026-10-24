@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
+import ReactMarkdown from "react-markdown";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
@@ -76,24 +77,41 @@ const normalizeCustomerBotReply = (reply = "", role = "user") => {
 // ── localStorage / sessionStorage helpers ──────────────────────────────────
 const MAX_CACHED_MSGS = 50;
 
-function loadChatCache(role) {
+// Chat transcripts are keyed per USER + role — never per role alone. Two
+// different accounts on the same browser must never share history.
+function loadChatCache(chatKey) {
   try {
-    const raw = localStorage.getItem(`pawesome_chat_${role}`);
+    const raw = localStorage.getItem(`pawesome_chat_${chatKey}`);
     return raw ? JSON.parse(raw) : null;
   } catch { return null; }
 }
 
-function saveChatCache(role, messages, context) {
+function saveChatCache(chatKey, messages, context) {
   try {
-    localStorage.setItem(`pawesome_chat_${role}`, JSON.stringify(messages.slice(-MAX_CACHED_MSGS)));
-    if (context) localStorage.setItem(`pawesome_chat_ctx_${role}`, JSON.stringify(context));
+    localStorage.setItem(`pawesome_chat_${chatKey}`, JSON.stringify(messages.slice(-MAX_CACHED_MSGS)));
+    if (context) localStorage.setItem(`pawesome_chat_ctx_${chatKey}`, JSON.stringify(context));
   } catch { /* storage quota exceeded — ignore */ }
 }
 
-function clearChatCache(role) {
+function clearChatCache(chatKey) {
   try {
-    localStorage.removeItem(`pawesome_chat_${role}`);
-    localStorage.removeItem(`pawesome_chat_ctx_${role}`);
+    localStorage.removeItem(`pawesome_chat_${chatKey}`);
+    localStorage.removeItem(`pawesome_chat_ctx_${chatKey}`);
+  } catch { }
+}
+
+// Remove every pawesome_chat_* key that is not the current user's — covers
+// the legacy role-only keys and any previous user's keys on this browser.
+function sweepForeignChatCaches(keepKey) {
+  try {
+    const doomed = [];
+    for (let i = 0; i < localStorage.length; i++) {
+      const key = localStorage.key(i);
+      if (key && key.startsWith("pawesome_chat") && !key.endsWith(`_${keepKey}`)) {
+        doomed.push(key);
+      }
+    }
+    for (const key of doomed) localStorage.removeItem(key);
   } catch { }
 }
 
@@ -128,14 +146,16 @@ const RoleAwareChatbot = ({
   subtitle = "Shared RBAC chatbot",
   role: propRole,
 }) => {
-  const { role: authRole } = useAuth();
+  const { role: authRole, user } = useAuth();
   const role = propRole || authRole || "user";
+  const chatKey = `${user?.id || user?.email || "anon"}_${role}`;
   const [isOpen, setIsOpen] = useState(mode === "embedded");
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [isBootstrapping, setIsBootstrapping] = useState(true);
   const [error, setError] = useState("");
+  const [lastSubmitted, setLastSubmitted] = useState(null);
   const [workflow, setWorkflow] = useState(null);
   const [sessionContext, setSessionContext] = useState({
     lastIntent: null,
@@ -184,12 +204,13 @@ const RoleAwareChatbot = ({
 
   // ── Welcome / cache restore ───────────────────────────────────────────────
   useEffect(() => {
-    // 1. Try localStorage first — instant, no API call
-    const cached = loadChatCache(role);
+    // Remove other users' transcripts on this browser, then try our own cache
+    sweepForeignChatCaches(chatKey);
+    const cached = loadChatCache(chatKey);
     if (cached?.length > 0) {
       setMessages(cached);
       try {
-        const rawCtx = localStorage.getItem(`pawesome_chat_ctx_${role}`);
+        const rawCtx = localStorage.getItem(`pawesome_chat_ctx_${chatKey}`);
         if (rawCtx) {
           const parsedCtx = JSON.parse(rawCtx);
           // Backfill conversation_id for caches written before session tracking
@@ -225,7 +246,7 @@ const RoleAwareChatbot = ({
   // ── Persist messages to localStorage whenever they change ─────────────────
   useEffect(() => {
     if (!isBootstrapping && messages.length > 0) {
-      saveChatCache(role, messages, sessionContext);
+      saveChatCache(chatKey, messages, sessionContext);
     }
   }, [messages]); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -233,7 +254,7 @@ const RoleAwareChatbot = ({
   useEffect(() => {
     if (!isBootstrapping) {
       try {
-        localStorage.setItem(`pawesome_chat_ctx_${role}`, JSON.stringify(sessionContext));
+        localStorage.setItem(`pawesome_chat_ctx_${chatKey}`, JSON.stringify(sessionContext));
       } catch { }
     }
   }, [sessionContext]); // eslint-disable-line react-hooks/exhaustive-deps
@@ -359,12 +380,13 @@ const RoleAwareChatbot = ({
     setInput("");
     setError("");
     setIsLoading(true);
+    setLastSubmitted(trimmed);
     const sentAt = Date.now();
 
     try {
       const data = await sendChatbotMessage(trimmed, { context: sessionContext });
-      // Keep the typing indicator visible at least ~5s so replies feel deliberate
-      const minWait = 5000 - (Date.now() - sentAt);
+      // Brief minimum display so instant replies don't flicker the typing dots
+      const minWait = 500 - (Date.now() - sentAt);
       if (minWait > 0) await new Promise((r) => setTimeout(r, minWait));
       const replyText = normalizeCustomerBotReply(data.reply, role);
       const richContext = data.rich_content || {};
@@ -384,11 +406,32 @@ const RoleAwareChatbot = ({
         source: data.source || "rule_based",
         timestamp: new Date().toISOString(),
       }]);
+
+      // Tool-produced prefill action: open the booking flow with the
+      // entities the AI extracted (pet/service/date) already filled in.
+      const prefill = normalizeList(data.actions).find((a) => a.type === "prefill_booking");
+      if (prefill?.payload && role === "customer") {
+        startConvBooking("appointment", prefill.payload);
+      }
     } catch (err) {
-      setError(err.message || "Unable to reach the chatbot service.");
+      if (err?.status === 429) {
+        // Per-user/day chat limit — show it as a bot reply, not a raw error.
+        setMessages((prev) => [...prev, {
+          sender: "bot",
+          text: "You're sending messages a bit too quickly — please wait a moment and try again.",
+          timestamp: new Date().toISOString(),
+        }]);
+      } else {
+        setError(err.message || "Unable to reach the chatbot service.");
+      }
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const retryLastMessage = () => {
+    setError("");
+    submitMessage(lastSubmitted);
   };
 
   const onSubmit = (event) => {
@@ -519,7 +562,7 @@ const RoleAwareChatbot = ({
       });
       setMessages((prev) => [...prev, {
         sender: "bot",
-        text: `Hotel booking request submitted for ${data.boarding?.pet?.name || "your pet"} on ${workflowState.form.check_in} (same-day stay, 10 AM - 6 PM). Waiting for receptionist approval.`,
+        text: `Hotel booking request submitted for ${data.boarding?.pet?.name || "your pet"} on ${workflowState.form.check_in} (same-day stay, 10 AM - 6 PM). Waiting for receptionist approval.\n\nReminder: please have your pet's vaccination card ready — reception verifies it before approval.`,
         suggestions: ["Check my booking status"],
       }]);
       closeWorkflow();
@@ -529,8 +572,8 @@ const RoleAwareChatbot = ({
   };
 
   // ── Conversational booking flow (customer) ──────────────────────────────
-  const startConvBooking = async (type) => {
-    setConvFlow({ type, step: "loading", data: {}, options: {}, loading: true, error: "" });
+  const startConvBooking = async (type, prefill = null) => {
+    setConvFlow({ type, step: "loading", data: prefill || {}, options: {}, loading: true, error: "" });
     setMessages((prev) => [...prev, {
       sender: "bot",
       text: type === "appointment"
@@ -567,7 +610,16 @@ const RoleAwareChatbot = ({
         return;
       }
 
-      setConvFlow({ type, step: "select_pet", data: {}, options, loading: false, error: "" });
+      if (prefill) {
+        // Resume at the first missing step for AI-prefilled bookings.
+        const data = { pet_name: options.pets?.find((p) => p.id === prefill.pet_id)?.name, service_name: options.services?.find((s) => s.id === prefill.service_id)?.name, ...prefill };
+        const step = type === "appointment"
+          ? (!data.pet_id ? "select_pet" : !data.service_id ? "select_service" : !data.scheduled_at ? "select_date" : "add_notes")
+          : "select_pet";
+        setConvFlow({ type, step, data, options, loading: false, error: "" });
+      } else {
+        setConvFlow({ type, step: "select_pet", data: {}, options, loading: false, error: "" });
+      }
     } catch (err) {
       setConvFlow(null);
       setMessages((prev) => [...prev, {
@@ -761,7 +813,7 @@ const RoleAwareChatbot = ({
         });
         setMessages((prev) => [...prev, {
           sender: "bot",
-          text: `✅ Hotel stay request submitted!\n\nBooking ID: #${data.boarding?.id || "—"}\nPet: ${convFlow.data.pet_name}\nDate: ${convFlow.data.check_in} (same-day stay, 10 AM - 6 PM)\n\n${CUSTOMER_APPROVAL_NOTICE}`,
+          text: `✅ Hotel stay request submitted!\n\nBooking ID: #${data.boarding?.id || "—"}\nPet: ${convFlow.data.pet_name}\nDate: ${convFlow.data.check_in} (same-day stay, 10 AM - 6 PM)\n\n${CUSTOMER_APPROVAL_NOTICE}\n\nReminder: please have your pet's vaccination card ready — reception verifies it before approval.`,
           timestamp: new Date().toISOString(),
           isBookingSuccess: true,
           suggestions: ["Check my booking status"],
@@ -897,7 +949,7 @@ const RoleAwareChatbot = ({
       conversation_id: newConversationId(),
     });
     // Clear persisted state so next open starts fresh
-    clearChatCache(role);
+    clearChatCache(chatKey);
     saveLiveChatSession(null);
 
     try {
@@ -1240,9 +1292,13 @@ const RoleAwareChatbot = ({
                       {message.senderType === "system" && (
                         <span className="rbac-livechat-system-indicator">System</span>
                       )}
-                      {formatMessage(message.text).map((line, lineIndex) => (
-                        <p key={lineIndex}>{line}</p>
-                      ))}
+                      {message.sender === "bot" && !message.liveChat ? (
+                        <div className="rbac-md"><ReactMarkdown>{message.text}</ReactMarkdown></div>
+                      ) : (
+                        formatMessage(message.text).map((line, lineIndex) => (
+                          <p key={lineIndex}>{line}</p>
+                        ))
+                      )}
                       {message.source === "ai" && message.sender === "bot" && (
                         <span className="rbac-ai-indicator" title="AI-generated response">
                           <FontAwesomeIcon icon={faWandMagicSparkles} /> AI
@@ -1303,7 +1359,16 @@ const RoleAwareChatbot = ({
                     </div>
                   </div>
                 )}
-                {error && <div className="rbac-chatbot-error">{error}</div>}
+                {error && (
+                  <div className="rbac-chatbot-error">
+                    <span>{error}</span>
+                    {lastSubmitted && (
+                      <button type="button" className="rbac-chatbot-retry" onClick={retryLastMessage}>
+                        Retry
+                      </button>
+                    )}
+                  </div>
+                )}
               </>
             )}
             <div ref={messagesEndRef} />

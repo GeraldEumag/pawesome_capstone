@@ -163,6 +163,11 @@ class ChatbotWorkflowController extends Controller
         ]);
 
         $queryText = trim($data['query']);
+        $role = $request->user()?->role ?? 'guest';
+        // Internal fields (reorder level, expiry, status) are stock-management
+        // data — only the roles that own it may see them.
+        $privileged = in_array($role, ['inventory', 'manager', 'admin'], true);
+        $staff = in_array($role, ['receptionist', 'cashier', 'veterinary', 'super_receptionist'], true);
 
         return response()->json(
             InventoryItem::query()
@@ -174,16 +179,40 @@ class ChatbotWorkflowController extends Controller
                 })
                 ->orderBy('name')
                 ->limit(10)
-                ->get(['id', 'sku', 'name', 'stock', 'reorder_level', 'price', 'expiry_date'])
-                ->map(function (InventoryItem $item) {
+                ->get(['id', 'sku', 'name', 'category', 'stock', 'reorder_level', 'price', 'expiry_date', 'status'])
+                ->map(function (InventoryItem $item) use ($privileged, $staff) {
+                    if ($privileged) {
+                        return [
+                            'id' => $item->id,
+                            'sku' => $item->sku,
+                            'name' => $item->name,
+                            'category' => $item->category,
+                            'stock' => $item->stock,
+                            'reorder_level' => $item->reorder_level,
+                            'price' => $item->price,
+                            'expiry_date' => optional($item->expiry_date)->toDateString(),
+                            'status' => $item->status,
+                        ];
+                    }
+
+                    if ($staff) {
+                        return [
+                            'id' => $item->id,
+                            'sku' => $item->sku,
+                            'name' => $item->name,
+                            'category' => $item->category,
+                            'stock' => $item->stock,
+                            'price' => $item->price,
+                        ];
+                    }
+
+                    // Customer / guest-level: availability only, no internals.
                     return [
                         'id' => $item->id,
-                        'sku' => $item->sku,
                         'name' => $item->name,
-                        'stock' => $item->stock,
-                        'reorder_level' => $item->reorder_level,
+                        'category' => $item->category,
                         'price' => $item->price,
-                        'expiry_date' => optional($item->expiry_date)->toDateString(),
+                        'in_stock' => $item->stock > 0,
                     ];
                 })
         );
@@ -324,18 +353,19 @@ class ChatbotWorkflowController extends Controller
         // One-day pricing (same-day boarding)
         $totalAmount = (float) $room->daily_rate;
 
-        // Create boarding record
+        // Create boarding record — same lifecycle as BoardingController::store:
+        // 'pending' until a receptionist approves it, channel from the actor.
         $boarding = Boarding::create([
             'pet_id' => $pet->id,
             'customer_id' => $customer->id,
             'hotel_room_id' => $room->id,
             'check_in' => $data['check_in'],
             'check_out' => $data['check_out'],
-            'status' => 'confirmed',
+            'status' => 'pending',
             'special_requests' => $data['special_requests'] ?? null,
             'total_amount' => $totalAmount,
             'payment_status' => 'unpaid',
-            'booking_channel' => \App\Support\BookingChannel::ONLINE,
+            'booking_channel' => \App\Support\BookingChannel::forUser($request->user()),
         ]);
 
         return response()->json([

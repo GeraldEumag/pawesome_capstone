@@ -15,6 +15,7 @@ use App\Models\Sale;
 use App\Models\Service;
 use App\Models\ServiceRequest;
 use App\Models\User;
+use App\Support\StoreFacts;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
@@ -37,6 +38,7 @@ class PremiumChatbotService
     private AiChatbotService $aiService;
     private array $conversationContext = [];
     private ?User $currentUser = null;
+    private ?array $validatorRejections = null;
     
     public function __construct(
         private readonly RoleScopeService $roleScopeService,
@@ -117,17 +119,42 @@ class PremiumChatbotService
             }
         }
 
-        // AI-eligible intents reach Gemini directly — not gated behind FAQ confidence
+        // AI-eligible intents — grounded context + read-only tools + output
+        // validation. Anything the validator flags is discarded and falls
+        // through to the rule/FAQ path.
         if ($aiEligible && $this->aiService->isEnabled()) {
-            $aiResponse = $this->aiService->generateResponse($message, $role, [], $this->knowledgeBaseService->historyFor($this->currentUser));
+            $context = config('chatbot.context_enabled', true)
+                ? ChatContextBuilder::build($user, $role)
+                : [];
+
+            $aiResponse = $this->aiService->generateResponse(
+                $message, $role, $context,
+                $this->knowledgeBaseService->historyFor($this->currentUser),
+                $user,
+            );
+
+            if ($aiResponse) {
+                $check = ChatbotAnswerValidator::validate($aiResponse['message'], $context);
+                if (!$check['ok']) {
+                    Log::info('Chatbot AI reply rejected by validator', ['violations' => $check['violations']]);
+                    $aiResponse = null;
+                    $this->validatorRejections = $check['violations'];
+                }
+            }
+
             if ($aiResponse) {
                 $response = [
                     'message' => $aiResponse['message'],
                     'suggestions' => $aiResponse['suggestions'] ?? [],
                     'source' => $aiResponse['source'] ?? 'ai',
                     'confidence' => 0.75,
+                    'tools' => $aiResponse['tools'] ?? [],
+                    'action' => $aiResponse['action'] ?? null,
                 ];
                 $formattedResponse = $this->formatResponse($response, $role, $channel, $intent);
+                if (!empty($aiResponse['action'])) {
+                    $formattedResponse['actions'][] = $aiResponse['action'];
+                }
                 $this->storeContext($user?->id, $intent, $message, $formattedResponse, $channel, $sessionContext);
 
                 return $formattedResponse;
@@ -321,10 +348,6 @@ class PremiumChatbotService
             return 'pending_payments';
         }
 
-        if (preg_match('/\b(help|tulong|paano|what can you do|guide|how do i|how to|how can)\b/i', $text)) {
-            return 'help';
-        }
-
         if (preg_match('/\b(low stock|reorder|kulang.*stock|critical stock)\b/i', $text)) {
             return 'low_stock_check';
         }
@@ -341,7 +364,12 @@ class PremiumChatbotService
             return 'pending_approvals';
         }
 
-        if (preg_match('/\b(request|booking|appointment|status|status ng request|grooming request|vet request)\b/i', $text)) {
+        // 'status' alone is too broad ("store status", "status of hours") —
+        // it only routes to the request-status dump when an entity word is
+        // present. Bare entity words keep the existing behavior.
+        $hasStatusWord = (bool) preg_match('/\bstatus\b/i', $text);
+        $hasEntityWord = (bool) preg_match('/\b(request|requests|booking|bookings|appointment|appointments|order|orders|grooming|boarding|payment|bayad)\b/i', $text);
+        if ($hasStatusWord ? $hasEntityWord : (bool) preg_match('/\b(request|booking|appointment|grooming request|vet request)\b/i', $text)) {
             return str_contains($text, 'booking') || str_contains($text, 'appointment')
                 ? 'check_booking_status'
                 : 'check_request_status';
@@ -355,12 +383,18 @@ class PremiumChatbotService
             return 'role_workflow_explanation';
         }
 
+        if (preg_match('/\b(summary|report|reports|system summary|overview|sales|revenue)\b/i', $text)) {
+            return 'system_summary';
+        }
+
         if (preg_match('/\b(contact|staff|reception|cashier|vet|manager|call|email)\b/i', $text)) {
             return 'contact_staff';
         }
 
-        if (preg_match('/\b(summary|report|reports|system summary|overview|sales|revenue)\b/i', $text)) {
-            return 'system_summary';
+        // 'help' / 'how do I' is the catch-all of the system intents — it must
+        // run last so it never shadows a more specific intent above.
+        if (preg_match('/\b(help|tulong|paano|what can you do|guide|how do i|how to|how can)\b/i', $text)) {
+            return 'help';
         }
 
         return 'legacy_general';
@@ -896,13 +930,20 @@ class PremiumChatbotService
      */
     private function enhancedFaqResponse(string $message, string $role, bool $strict = false): ?array
     {
-        $normalizedMessage = $this->normalizeForMatching($message);
+        // Expanded text carries canonical English terms for Taglish input,
+        // so 'magkano grooming?' can hit the pricing FAQ.
+        $normalizedMessage = QueryNormalizer::expand($message);
 
         // Load all active FAQs from cache (10-min TTL), then match in-memory.
         // Invalidated by Admin\ChatbotFaqController on every mutation.
-        $allFaqs = Cache::remember('chatbot_faqs_all', 600, function () {
-            return ChatbotFaq::where('is_active', true)->get();
-        });
+        // Fail-soft: a DB blip must not break the whole message path.
+        try {
+            $allFaqs = Cache::remember('chatbot_faqs_all', 600, function () {
+                return ChatbotFaq::where('is_active', true)->get();
+            });
+        } catch (\Throwable) {
+            return null;
+        }
 
         $faqs = $allFaqs->filter(function ($f) use ($role) {
             $scope = strtolower((string) ($f->scope ?? 'general'));
@@ -975,9 +1016,7 @@ class PremiumChatbotService
 
     private function normalizeForMatching(string $text): string
     {
-        $text = strtolower($text);
-        $text = preg_replace('/[^\p{L}\p{N}\s]/u', ' ', $text);
-        return trim(preg_replace('/\s+/', ' ', $text));
+        return QueryNormalizer::normalize($text);
     }
 
     /**
@@ -1261,15 +1300,13 @@ class PremiumChatbotService
     {
         return [
             'message' => "🚨 **Emergency Support**\n\n" .
-                "If this is a pet emergency:\n\n" .
-                "1️⃣ **Call our 24/7 Hotline:** 📞 +63 (02) 8123-4567\n" .
-                "2️⃣ **Emergency Vet:** Available 24/7\n" .
-                "3️⃣ **Visit us immediately:** 123 Pet Care Ave\n\n" .
-                "⚠️ **For life-threatening emergencies, please proceed directly to our facility or call now!**",
+                "If this is a pet emergency during our operating hours (" . StoreFacts::hours() . "):\n\n" .
+                "1️⃣ **Call us now:** 📞 " . StoreFacts::phone() . "\n" .
+                "2️⃣ **Come to the clinic:** " . StoreFacts::address() . "\n\n" .
+                "⚠️ **Outside operating hours**, please proceed to the nearest 24-hour emergency veterinary facility.",
             'confidence' => 1.0,
             'actions' => [
-                ['label' => '📞 Call Emergency Line', 'type' => 'tel', 'value' => '+630281234567'],
-                ['label' => '📍 Get Directions', 'type' => 'link', 'value' => 'https://maps.google.com'],
+                ['label' => '📞 Call Us', 'type' => 'tel', 'value' => StoreFacts::phone()],
             ],
         ];
     }
@@ -1296,17 +1333,11 @@ class PremiumChatbotService
     {
         return [
             'message' => "📍 **Find Us**\n\n" .
-                "**Pawesome Pet Care Center**\n" .
-                "123 Pet Care Avenue\n" .
-                "Makati City, Metro Manila\n" .
-                "Philippines 1200\n\n" .
-                "🚗 **Parking:** Free customer parking available\n" .
-                "🚌 **Public Transit:** Near Buendia MRT Station\n\n" .
-                "📞 **Phone:** +63 (02) 8123-4567",
+                "**" . StoreFacts::name() . "**\n" .
+                StoreFacts::address() . "\n\n" .
+                "� **Open:** " . StoreFacts::hours() . "\n" .
+                "� **Phone:** " . StoreFacts::phone(),
             'confidence' => 1.0,
-            'actions' => [
-                ['label' => '📍 View on Map', 'type' => 'link', 'value' => 'https://maps.google.com'],
-            ],
         ];
     }
 
@@ -1315,16 +1346,24 @@ class PremiumChatbotService
      */
     private function contactResponse(string $role): array
     {
+        $social = '';
+        if (StoreFacts::facebook() !== '' || StoreFacts::instagram() !== '') {
+            $social = "\n\n**Follow us:**\n";
+            if (StoreFacts::facebook() !== '') {
+                $social .= "📘 Facebook: " . StoreFacts::facebook() . "\n";
+            }
+            if (StoreFacts::instagram() !== '') {
+                $social .= "📸 Instagram: " . StoreFacts::instagram();
+            }
+        }
+
         return [
             'message' => "📞 **Contact Us**\n\n" .
-                "**Main Office:** +63 (02) 8123-4567\n" .
-                "**Emergency Line:** +63 (02) 8987-6543 (24/7)\n" .
-                "**Email:** hello@pawesome.ph\n" .
-                "**Website:** www.pawesome.ph\n\n" .
-                "**Social Media:**\n" .
-                "📘 Facebook: @PawesomePH\n" .
-                "📸 Instagram: @pawesome_pets\n\n" .
-                "💬 _We're here to help! Response time is typically under 1 hour._",
+                "**Phone:** " . StoreFacts::phone() . "\n" .
+                "**Email:** " . StoreFacts::email() . "\n" .
+                "**Address:** " . StoreFacts::address() . "\n" .
+                "**Hours:** " . StoreFacts::hours() .
+                $social,
             'confidence' => 1.0,
         ];
     }
@@ -1339,9 +1378,9 @@ class PremiumChatbotService
                 "Thank you for taking the time to share your thoughts. Your feedback helps us improve our services.\n\n" .
                 "**How to submit feedback:**\n" .
                 "• Reply with your comments here\n" .
-                "• Email us at feedback@pawesome.ph\n" .
-                "• Fill out the form on our website\n\n" .
-                "⭐ **All feedback is reviewed by our management team within 24 hours.**",
+                "• Email us at " . StoreFacts::email() . "\n" .
+                "• Tell our staff during your next visit\n\n" .
+                "⭐ **All feedback is reviewed by our management team.**",
             'confidence' => 1.0,
         ];
     }
@@ -1356,9 +1395,9 @@ class PremiumChatbotService
                 "Your satisfaction is our priority. Please share the details of your concern, and we will address it promptly.\n\n" .
                 "**Escalation Options:**\n" .
                 "1️⃣ **Chat with us:** Share details here\n" .
-                "2️⃣ **Call Manager:** +63 (02) 8123-4568\n" .
-                "3️⃣ **Email:** complaints@pawesome.ph\n\n" .
-                "⚡ **We aim to resolve all issues within 24 hours.**",
+                "2️⃣ **Call us:** " . StoreFacts::phone() . "\n" .
+                "3️⃣ **Email:** " . StoreFacts::email() . "\n\n" .
+                "⚡ **We aim to resolve all issues as quickly as possible.**",
             'confidence' => 1.0,
         ];
     }
@@ -1531,7 +1570,7 @@ class PremiumChatbotService
         }
         
         $message .= "💡 **Note:** Prices may vary based on pet size and specific requirements.\n";
-        $message .= "📞 Call us at +63 (02) 8123-4567 for detailed quotes.";
+        $message .= "📞 Call us at " . StoreFacts::phone() . " for detailed quotes.";
         
         return [
             'message' => $message,
@@ -1589,6 +1628,8 @@ class PremiumChatbotService
                     ? round((microtime(true) - LARAVEL_START) * 1000, 2)
                     : 0,
                 'intent_detected' => $intent,
+                'tools' => $response['tools'] ?? [],
+                'validator_rejected' => $this->validatorRejections,
             ],
         ];
     }
@@ -1717,6 +1758,8 @@ class PremiumChatbotService
                         'conversation_id' => $conversationId,
                         'confidence' => $response['confidence'] ?? null,
                         'source' => $response['source'] ?? null,
+                        'tools' => $response['metadata']['tools'] ?? [],
+                        'validator_rejected' => $this->validatorRejections,
                         'status' => 'success',
                     ],
                 ]);

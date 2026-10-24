@@ -100,11 +100,35 @@ export const setUserData = (data) => {
 
 export const isAuthenticated = () => !!getToken();
 
+const CHAT_STORAGE_PREFIXES = [
+  "pawesome_chat",
+  "pawesome_live_chat",
+  "pawesome_landing",
+];
+
+const sweepChatStorage = () => {
+  try {
+    for (const storage of [localStorage, sessionStorage]) {
+      const doomed = [];
+      for (let i = 0; i < storage.length; i++) {
+        const key = storage.key(i);
+        if (key && CHAT_STORAGE_PREFIXES.some((p) => key.startsWith(p))) {
+          doomed.push(key);
+        }
+      }
+      for (const key of doomed) storage.removeItem(key);
+    }
+  } catch { /* storage unavailable — ignore */ }
+};
+
 export const clearAuth = () => {
   localStorage.removeItem(STANDARD_TOKEN_KEY);
   for (const key of LEGACY_TOKEN_KEYS) localStorage.removeItem(key);
   localStorage.removeItem(ROLE_KEY);
   for (const key of USER_KEYS) localStorage.removeItem(key);
+  // Chat transcripts are user-private — never let them outlive the session
+  // or leak to the next user of this browser.
+  sweepChatStorage();
 };
 
 /* ─── Events ─── */

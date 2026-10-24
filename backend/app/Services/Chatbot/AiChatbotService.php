@@ -64,24 +64,141 @@ class AiChatbotService
     /**
      * Generate AI response using the configured provider.
      */
-    public function generateResponse(string $message, string $role, array $context = [], array $history = []): ?array
+    public function generateResponse(string $message, string $role, array $context = [], array $history = [], ?\App\Models\User $user = null): ?array
     {
         if (!$this->enabled) {
             return null;
         }
 
         $systemPrompt = $this->buildSystemPrompt($role, $context);
-        $aiMessage = $this->chatComplete($systemPrompt, $message, $this->maxTokens, 0.7, $history);
 
-        if ($aiMessage === null) {
+        // Tool-calling path: Groq only, behind the flag, needs a user context.
+        if ($this->provider === 'groq' && config('chatbot.tools_enabled', false) && $user) {
+            $result = $this->chatCompleteWithTools($systemPrompt, $message, $this->maxTokens, 0.7, $history, $user, $role);
+        } else {
+            $text = $this->chatComplete($systemPrompt, $message, $this->maxTokens, 0.7, $history);
+            $result = $text === null ? null : ['text' => $text, 'tools' => [], 'action' => null];
+        }
+
+        if ($result === null) {
             return null;
         }
 
         return [
-            'message' => trim($aiMessage),
-            'suggestions' => $this->extractSuggestions($aiMessage),
-            'source' => 'ai',
+            'message' => trim($result['text']),
+            'suggestions' => $this->extractSuggestions($result['text']),
+            'source' => !empty($result['tools']) ? 'tool' : 'ai',
+            'tools' => $result['tools'],
+            'action' => $result['action'],
         ];
+    }
+
+    /**
+     * Groq function-calling loop: up to 2 tool rounds, tools execute
+     * server-side as the signed-in user (read-only — no mutations).
+     *
+     * @return array{text: string, tools: string[], action: ?array}|null
+     */
+    private function chatCompleteWithTools(string $systemPrompt, string $userMessage, int $maxTokens, float $temperature, array $history, \App\Models\User $user, string $role): ?array
+    {
+        $messages = [['role' => 'system', 'content' => $systemPrompt]];
+        foreach ($history as $turn) {
+            $r = ($turn['role'] ?? '') === 'assistant' ? 'assistant' : 'user';
+            $content = trim((string) ($turn['content'] ?? ''));
+            if ($content !== '') {
+                $messages[] = ['role' => $r, 'content' => mb_substr($content, 0, 1000)];
+            }
+        }
+        $messages[] = ['role' => 'user', 'content' => $userMessage];
+
+        $toolsUsed = [];
+        $action = null;
+
+        for ($round = 0; $round < 2; $round++) {
+            $payload = [
+                'model' => $this->model,
+                'messages' => $messages,
+                'max_tokens' => $maxTokens,
+                'temperature' => $temperature,
+                'tools' => Tools\ChatbotTools::definitions($role),
+                'tool_choice' => 'auto',
+            ];
+
+            $response = $this->providerRequest($payload);
+            if ($response === null) {
+                return null; // fail-soft → caller falls back to rules/FAQ
+            }
+
+            $choice = $response['choices'][0]['message'] ?? [];
+            $toolCalls = $choice['tool_calls'] ?? [];
+
+            if ($toolCalls === []) {
+                $text = trim((string) ($choice['content'] ?? ''));
+                return $text === '' ? null : ['text' => $text, 'tools' => $toolsUsed, 'action' => $action];
+            }
+
+            // Feed the assistant's tool-call turn back, then each tool result.
+            $messages[] = [
+                'role' => 'assistant',
+                'content' => $choice['content'] ?? '',
+                'tool_calls' => $toolCalls,
+            ];
+
+            foreach (array_slice($toolCalls, 0, 3) as $call) {
+                $name = $call['function']['name'] ?? '';
+                $args = json_decode($call['function']['arguments'] ?? '{}', true) ?: [];
+                $toolsUsed[] = $name;
+
+                $result = Tools\ChatbotTools::execute($name, $args, $user, $role);
+                if (($result['action'] ?? null) && !$action) {
+                    $action = $result['action'];
+                }
+
+                $messages[] = [
+                    'role' => 'tool',
+                    'tool_call_id' => $call['id'] ?? '',
+                    'content' => json_encode($result['data'] ?? $result),
+                ];
+            }
+        }
+
+        // After 2 rounds, ask for the final answer without tools.
+        $final = $this->providerRequest([
+            'model' => $this->model,
+            'messages' => $messages,
+            'max_tokens' => $maxTokens,
+            'temperature' => $temperature,
+        ]);
+        $text = trim((string) ($final['choices'][0]['message']['content'] ?? ''));
+
+        return $text === '' ? null : ['text' => $text, 'tools' => $toolsUsed, 'action' => $action];
+    }
+
+    /**
+     * Raw Groq request through the key pool. Returns decoded JSON or null.
+     */
+    private function providerRequest(array $payload): ?array
+    {
+        $count = count($this->apiKeys);
+        $start = (int) Cache::get(self::KEY_INDEX_CACHE, 0);
+
+        for ($n = 0; $n < $count; $n++) {
+            $index = ($start + $n) % $count;
+            $response = Http::withHeaders([
+                'Content-Type' => 'application/json',
+                'Authorization' => 'Bearer ' . $this->apiKeys[$index],
+            ])->timeout($this->timeout)->post("{$this->baseUrl}/chat/completions", $payload);
+
+            if ($response->successful()) {
+                if ($index !== $start) {
+                    Cache::put(self::KEY_INDEX_CACHE, $index, self::KEY_CACHE_TTL);
+                }
+                return $response->json();
+            }
+        }
+
+        Log::warning('Groq chatbot tool request failed on all keys.');
+        return null;
     }
 
     /**
@@ -327,70 +444,11 @@ class AiChatbotService
         }
 
 
-        // Add live context if available (rich format from gatherLiveContext)
+        // Live context — generic renderer so any role-scoped block from
+        // ChatContextBuilder serializes cleanly into the prompt.
         if (!empty($context)) {
-            $prompt .= "\nCURRENT SYSTEM CONTEXT:\n";
-
-            // Hotel information
-            if (isset($context['hotel'])) {
-                $h = $context['hotel'];
-                $prompt .= "🏨 HOTEL:\n";
-                $prompt .= "- Available rooms: " . ($h['rooms_available_count'] ?? 'N/A') . "\n";
-                $prompt .= "- Occupancy rate: " . ($h['occupancy_rate'] ?? 'N/A') . "\n";
-                if (!empty($h['rooms_available_details'])) {
-                    $prompt .= "- Room options:\n";
-                    foreach (array_slice($h['rooms_available_details'], 0, 3) as $room) {
-                        $prompt .= "  • {$room['type']} ({$room['room']}): {$room['rate']}/night, fits {$room['capacity']} pets\n";
-                    }
-                }
-            }
-
-            // Current boarders
-            if (isset($context['current_boarders'])) {
-                $cb = $context['current_boarders'];
-                $prompt .= "\n🐾 CURRENT BOARDERS: " . ($cb['count'] ?? 0) . " pets\n";
-                if (!empty($cb['boarders'])) {
-                    foreach (array_slice($cb['boarders'], 0, 3) as $b) {
-                        $prompt .= "  • {$b['pet_name']} ({$b['pet_species']}) - Room {$b['room']}\n";
-                    }
-                }
-            }
-
-            // Today's appointments
-            if (isset($context['today_appointments'])) {
-                $ta = $context['today_appointments'];
-                $prompt .= "\n📅 TODAY'S APPOINTMENTS: " . ($ta['count'] ?? 0) . "\n";
-                if (!empty($ta['appointments'])) {
-                    foreach (array_slice($ta['appointments'], 0, 3) as $a) {
-                        $prompt .= "  • {$a['time']} - {$a['service']} for {$a['pet']} ({$a['status']})\n";
-                    }
-                }
-            }
-
-            // Services and pricing
-            if (isset($context['services']) && !empty($context['services'])) {
-                $prompt .= "\n💰 SERVICES:\n";
-                foreach (array_slice($context['services'], 0, 2, true) as $category => $services) {
-                    $prompt .= "- " . ucfirst($category) . ":\n";
-                    foreach (array_slice($services, 0, 3) as $svc) {
-                        $prompt .= "  • {$svc['name']}: {$svc['price']}\n";
-                    }
-                }
-            }
-
-            // Financial info
-            if (isset($context['financial'])) {
-                $f = $context['financial'];
-                $prompt .= "\n💵 FINANCIAL:\n";
-                $prompt .= "- Today's revenue: " . ($f['today_revenue'] ?? 'N/A') . "\n";
-            }
-
-            // System info
-            if (isset($context['system'])) {
-                $s = $context['system'];
-                $prompt .= "\n⏰ SYSTEM:\n";
-                $prompt .= "- Current time: " . ($s['current_datetime'] ?? now()->format('l, F j, Y g:i A')) . "\n";
-            }
+            $prompt .= "\nCURRENT CONTEXT (live data scoped to this user's role — do not share beyond it):\n";
+            $prompt .= $this->renderContext($context);
         }
 
         $prompt .= "\n\nSCOPE — answer only for {$storeName}:\n" .
@@ -402,11 +460,43 @@ class AiChatbotService
         $prompt .= "\nGUIDELINES:\n" .
             "- Keep responses concise (2-3 sentences max for simple questions)\n" .
             "- For booking requests, suggest using the booking workflow\n" .
-            "- If you don't know something, say so and suggest contacting support\n" .
+            "- Answer ONLY from the facts and context given — if you don't know, say so and point to reception\n" .
+            "- Never state a request is approved or a payment verified unless the context data says so\n" .
+            "- Reply in the same language the user wrote in, including Taglish\n" .
             "- Use a warm, professional tone appropriate for a pet care business\n" .
             "- Currency is Philippine Peso (₱)";
 
         return $prompt;
+    }
+
+    /**
+     * Render an arbitrary context array as labelled prompt sections.
+     */
+    private function renderContext(mixed $value, string $prefix = '', int $depth = 0): string
+    {
+        if ($depth > 2 || !is_array($value)) {
+            return '';
+        }
+
+        $out = '';
+        foreach ($value as $key => $item) {
+            $label = ucwords(str_replace('_', ' ', (string) $key));
+            if (is_array($item)) {
+                $isList = array_keys($item) === range(0, count($item) - 1);
+                if ($isList) {
+                    $out .= "- {$label}:\n";
+                    foreach (array_slice($item, 0, 8) as $row) {
+                        $out .= '  • ' . (is_array($row) ? json_encode($row, JSON_UNESCAPED_UNICODE) : (string) $row) . "\n";
+                    }
+                } else {
+                    $out .= "- {$label}: " . json_encode($item, JSON_UNESCAPED_UNICODE) . "\n";
+                }
+            } else {
+                $out .= "- {$label}: {$item}\n";
+            }
+        }
+
+        return $out;
     }
 
     /**

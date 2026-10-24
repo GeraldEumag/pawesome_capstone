@@ -4,7 +4,7 @@ namespace App\Console\Commands;
 
 use App\Services\TelegramService;
 use App\Services\NotificationTemplateService;
-use App\Services\Chatbot\ChatbotService;
+use App\Services\Chatbot\PremiumChatbotService;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Config;
@@ -262,7 +262,7 @@ class TestTelegramBot extends Command
         $this->info('2. CHATBOT INTEGRATION TEST');
         $this->newLine();
 
-        $chatbotService = app(ChatbotService::class);
+        $chatbotService = app(PremiumChatbotService::class);
 
         $testMessages = [
             'hello' => 'Greeting',

@@ -64,6 +64,18 @@ class ChatbotController extends Controller
                     ->groupBy('channel')
                     ->orderBy('count', 'desc')
                     ->get(),
+                // Source breakdown (facts|faq|rule|ai|tool) from log metadata
+                'by_source' => $base()
+                    ->selectRaw("COALESCE(JSON_UNQUOTE(JSON_EXTRACT(metadata, '$.source')), 'unknown') as source, COUNT(*) as count")
+                    ->groupBy('source')
+                    ->orderBy('count', 'desc')
+                    ->get(),
+                // Unanswered/fallback questions for FAQ mining
+                'unanswered' => $base()
+                    ->whereIn('intent', ['general', 'unknown'])
+                    ->latest('id')
+                    ->limit(20)
+                    ->get(['id', 'user_message', 'created_at']),
             ],
         ]);
     }

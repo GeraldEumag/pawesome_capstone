@@ -144,4 +144,26 @@ return [
 
     // Conversation memory: how many recent turns to feed the AI.
     'memory_turns' => (int) env('CHATBOT_MEMORY_TURNS', 4),
+
+    /*
+    |--------------------------------------------------------------------------
+    | Feature Flags
+    |--------------------------------------------------------------------------
+    |
+    | Every new behavior ships behind a flag so it can be switched off
+    | without a deploy — the rule/FAQ path keeps working either way.
+    |
+    */
+
+    // Inject role-scoped live system context into the AI prompt.
+    'context_enabled' => env('CHATBOT_CONTEXT_ENABLED', true),
+
+    // Allow the AI to call read-only server-side tools (Groq function calling).
+    'tools_enabled' => env('CHATBOT_TOOLS_ENABLED', true),
+
+    // Let the PUBLIC landing bot use the AI — off by default to control cost.
+    'public_ai_enabled' => env('CHATBOT_PUBLIC_AI_ENABLED', false),
+
+    // Days to keep chatbot_logs rows before chatbot:prune-logs deletes them.
+    'log_retention_days' => (int) env('CHATBOT_LOG_RETENTION_DAYS', 90),
 ];

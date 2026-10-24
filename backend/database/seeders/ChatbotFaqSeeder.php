@@ -74,7 +74,7 @@ class ChatbotFaqSeeder extends Seeder
             ],
             [
                 'question' => 'Can I check on my pet during their stay?',
-                'answer' => 'Absolutely! You can:\n📱 Message us anytime via Telegram for updates\n📸 Request photos of your pet\n📞 Call us during business hours\n💬 Use our chatbot for quick status updates\n\nWe also send daily update messages for stays longer than 3 days.',
+                'answer' => 'Absolutely! You can:\n Request photos of your pet\n📞 Call us during business hours at 270020371\n💬 Ask me here anytime — I can check your boarding status live',
                 'keywords' => ['check', 'update', 'photo', 'status', 'how is my pet'],
                 'scope' => 'general',
                 'is_active' => true,
@@ -116,7 +116,7 @@ class ChatbotFaqSeeder extends Seeder
             ],
             [
                 'question' => 'Do I need to book an appointment?',
-                'answer' => 'Yes, appointments are required for:\n✂️ Grooming services\n🩺 Veterinary consultations\n\nPet hotel/boarding reservations should be made at least 24 hours in advance when possible.\n\nYou can book through:\n🌐 Your Pawesome account\n🤖 Telegram bot\n📞 Phone call during business hours',
+                'answer' => 'Yes, appointments are required for:\n✂️ Grooming services\n🩺 Veterinary consultations\n\nPet hotel/boarding reservations should be made in advance when possible.\n\nYou can book through:\n🌐 Your Pawesome account (or ask me to start a booking)\n📞 Phone call during business hours at 270020371',
                 'keywords' => ['appointment', 'book', 'schedule', 'reservation', 'how to book'],
                 'scope' => 'general',
                 'is_active' => true,
@@ -124,7 +124,7 @@ class ChatbotFaqSeeder extends Seeder
             ],
             [
                 'question' => 'How long does grooming take?',
-                'answer' => 'Typical grooming times:\n\n🐕 Small dogs: 1-2 hours\n🐕 Medium dogs: 2-3 hours\n🐕 Large dogs: 3-4 hours\n🐱 Cats: 1.5-2 hours\n\nWe\'ll notify you via Telegram when your pet is ready for pickup!',
+                'answer' => 'Typical grooming times:\n\n🐕 Small dogs: 1-2 hours\n🐕 Medium dogs: 2-3 hours\n🐕 Large dogs: 3-4 hours\n🐱 Cats: 1.5-2 hours\n\nWe\'ll update you when your pet is ready for pickup — you can also ask me here for a status check.',
                 'keywords' => ['grooming time', 'how long', 'duration', 'groom'],
                 'scope' => 'general',
                 'is_active' => true,
@@ -141,16 +141,16 @@ class ChatbotFaqSeeder extends Seeder
                 'sort_order' => 30,
             ],
             [
-                'question' => 'How can I get Telegram notifications?',
-                'answer' => 'To receive Telegram notifications:\n\n1. Go to your Profile page\n2. Click "Link Telegram Account"\n3. Open Telegram and search for @PawsitiveBot\n4. Click Start in the bot\n5. Return to your profile and confirm the link\n\nYou\'ll then receive instant notifications about your bookings, appointments, and reminders!',
-                'keywords' => ['telegram', 'notifications', 'link', 'bot', 'setup'],
+                'question' => 'How do I get booking updates and notifications?',
+                'answer' => 'You get updates automatically:\n\n🔔 In-app notifications on your dashboard when a booking is approved, scheduled, or updated\n📧 Email receipts after the cashier verifies your payment\n💬 You can also ask me here for a live status check anytime',
+                'keywords' => ['notifications', 'updates', 'notify', 'alert', 'reminder'],
                 'scope' => 'customer',
                 'is_active' => true,
                 'sort_order' => 31,
             ],
             [
                 'question' => 'How do I view my upcoming appointments?',
-                'answer' => 'You can view your appointments:\n\n🌐 On the Customer Dashboard under "My Appointments"\n🤖 By asking me "What are my appointments?"\n📱 Via Telegram bot using /appointments\n\nYou\'ll see all scheduled, confirmed, and past appointments with details.',
+                'answer' => 'You can view your appointments:\n\n🌐 On the Customer Dashboard under "My Appointments"\n🤖 By asking me "What are my appointments?" or "status ng request ko"\n\nYou\'ll see all scheduled, confirmed, and past appointments with details.',
                 'keywords' => ['appointments', 'view', 'upcoming', 'my bookings', 'schedule'],
                 'scope' => 'customer',
                 'is_active' => true,

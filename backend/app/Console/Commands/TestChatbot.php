@@ -5,7 +5,7 @@ namespace App\Console\Commands;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Config;
 use App\Services\Chatbot\AiChatbotService;
-use App\Services\Chatbot\ChatbotService;
+use App\Services\Chatbot\PremiumChatbotService;
 
 class TestChatbot extends Command
 {
@@ -53,7 +53,7 @@ class TestChatbot extends Command
 
         // Check intent routing
         $this->info('4. INTENT ROUTING CHECK (for hello):');
-        $chatbotService = app(ChatbotService::class);
+        $chatbotService = app(PremiumChatbotService::class);
         $intent = 'greeting';
         $aiEligible = Config::get('chatbot.ai_eligible_intents') ?? [];
         $ruleBased = Config::get('chatbot.rule_based_intents') ?? [];

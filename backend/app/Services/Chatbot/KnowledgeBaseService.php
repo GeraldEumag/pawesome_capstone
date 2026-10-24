@@ -138,7 +138,10 @@ class KnowledgeBaseService
                     $history[] = ['role' => 'user', 'content' => $log->user_message];
                 }
                 if ($log->bot_response) {
-                    $history[] = ['role' => 'assistant', 'content' => $log->bot_response];
+                    // Feed the AI short plain-text turns — markdown/emoji dumps
+                    // teach it to emit the same formatting.
+                    $plain = trim(preg_replace('/\s+/', ' ', preg_replace('/[*_#>`•]/u', '', $log->bot_response)));
+                    $history[] = ['role' => 'assistant', 'content' => mb_substr($plain, 0, 400)];
                 }
             }
             return $history;
@@ -148,22 +151,11 @@ class KnowledgeBaseService
     }
 
     /**
-     * Normalize text for matching: lowercase, punctuation-free, collapsed
-     * whitespace, synonym/Taglish expansion from config('chatbot.synonyms').
+     * Normalize text for matching: shared QueryNormalizer (lowercase,
+     * punctuation-free, collapsed whitespace, synonym/Taglish expansion).
      */
     private function normalize(string $text): string
     {
-        $text = strtolower($text);
-        $text = preg_replace('/[^a-z0-9\s]/', ' ', $text);
-        $text = preg_replace('/\s+/', ' ', trim($text));
-
-        $extra = '';
-        foreach ((array) config('chatbot.synonyms', []) as $term => $canonical) {
-            if (preg_match('/\b' . preg_quote($term, '/') . '\b/u', $text)) {
-                $extra .= ' ' . $canonical;
-            }
-        }
-
-        return $text . $extra;
+        return QueryNormalizer::expand($text);
     }
 }

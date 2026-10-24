@@ -287,12 +287,13 @@ Route::middleware(['auth.api', 'throttle:api', 'role:admin,veterinary'])->prefix
 
 Route::middleware(['auth.api', 'throttle:api'])->prefix('chatbot')->group(function () {
     Route::get('welcome', [SharedChatbotController::class, 'welcome']);
-    Route::post('message', [SharedChatbotController::class, 'message']);
+    Route::post('message', [SharedChatbotController::class, 'message'])->middleware('throttle:chatbot');
     Route::get('workflow/booking-options', [ChatbotWorkflowController::class, 'bookingOptions']);
     Route::post('workflow/bookings', [ChatbotWorkflowController::class, 'createBooking'])->middleware('verified');
-    // Inventory role excluded — no legitimate need to enumerate all appointments/customers
+    // Appointment lists are front-desk data — customers see only their own
+    // (controller self-scopes); cashier and veterinary have their own queues.
     Route::post('workflow/appointments/lookup', [ChatbotWorkflowController::class, 'lookupAppointments'])
-        ->middleware('role:customer,receptionist,cashier,manager,admin,veterinary');
+        ->middleware('role:customer,receptionist,manager,admin');
     Route::post('workflow/inventory/search', [ChatbotWorkflowController::class, 'searchInventory']);
     // Hotel booking workflow routes
     Route::get('workflow/hotel-options', [ChatbotWorkflowController::class, 'hotelOptions']);
@@ -1268,7 +1269,7 @@ Route::prefix('files')->group(function () {
 });
 
 // ─── Public Chatbot (no auth — for landing page) ──────────────────────────
-Route::middleware(['throttle:60,1'])->prefix('chatbot/public')->group(function () {
+Route::middleware(['throttle:chatbot-public'])->prefix('chatbot/public')->group(function () {
     Route::get('welcome', [SharedChatbotController::class, 'publicWelcome']);
     Route::post('message', [SharedChatbotController::class, 'publicMessage']);
 });

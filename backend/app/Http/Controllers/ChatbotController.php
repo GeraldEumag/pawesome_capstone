@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Support\StoreFacts;
 use App\Support\StoreHours;
 use App\Models\Service;
 use App\Services\Chatbot\PremiumChatbotService;
@@ -14,12 +15,16 @@ use Illuminate\Support\Facades\Cache;
 class ChatbotController extends Controller
 {
     private PremiumChatbotService $chatbotService;
+    private KnowledgeBaseService $knowledgeBaseService;
+    private \App\Services\Chatbot\AiChatbotService $aiService;
 
     public function __construct(
         RoleScopeService $roleScopeService,
         KnowledgeBaseService $knowledgeBaseService,
     ) {
         $this->chatbotService = new PremiumChatbotService($roleScopeService, $knowledgeBaseService);
+        $this->knowledgeBaseService = $knowledgeBaseService;
+        $this->aiService = new \App\Services\Chatbot\AiChatbotService();
     }
 
     /**
@@ -91,6 +96,8 @@ class ChatbotController extends Controller
 
     /**
      * Public chatbot message for unauthenticated landing page visitors.
+     * Order: FAQ knowledge base → booking redirect → flag-gated AI →
+     * StoreFacts keyword rules → fallback card. No personal data, ever.
      */
     public function publicMessage(Request $request): JsonResponse
     {
@@ -98,10 +105,42 @@ class ChatbotController extends Controller
             'message' => 'required|string|max:2000',
         ]);
 
-        $message = strtolower(trim($data['message']));
+        $raw = trim($data['message']);
+        $message = strtolower($raw);
+
+        // FAQ knowledge base first — same curated answers as logged-in users
+        // (guest scope only sees general/all rows).
+        $faq = $this->knowledgeBaseService->findAnswer($raw, 'guest');
+        if ($faq) {
+            return response()->json([
+                'reply'       => $faq['answer'],
+                'intent'      => 'faq_guest',
+                'suggestions' => array_slice($faq['related'] ?? [], 0, 4) ?: ['How do I book?', 'What are your hours?'],
+                'actions'     => [['label' => 'Create free account', 'href' => '/register']],
+                'source'      => 'faq',
+            ]);
+        }
+
+        // Public AI path — off by default (cost), strict store-only prompt.
+        if (config('chatbot.public_ai_enabled', false) && $this->aiService->isEnabled()) {
+            $aiText = $this->aiService->quickFaqResponse($raw);
+            if ($aiText) {
+                $check = \App\Services\Chatbot\ChatbotAnswerValidator::validate($aiText);
+                if ($check['ok']) {
+                    return response()->json([
+                        'reply'       => $aiText,
+                        'intent'      => 'ai_guest',
+                        'suggestions' => ['What services do you offer?', 'How do I book?'],
+                        'actions'     => [['label' => 'Login to Book', 'href' => '/login']],
+                        'source'      => 'ai',
+                    ]);
+                }
+                \Log::info('Public chatbot AI reply rejected by validator', $check);
+            }
+        }
 
         // Booking intent → redirect to login
-        $bookingKeywords = ['book', 'appointment', 'schedule', 'reserve', 'grooming', 'hotel', 'boarding'];
+        $bookingKeywords = ['book', 'appointment', 'schedule', 'reserve', 'grooming', 'hotel', 'boarding', 'pa-book', 'magpa-schedule'];
         if (collect($bookingKeywords)->some(fn ($kw) => str_contains($message, $kw))) {
             return response()->json([
                 'reply'   => "To book an appointment or hotel stay, you'll need to create a free account or log in first. Once logged in, our assistant will guide you through booking right inside the chat!",
@@ -109,6 +148,17 @@ class ChatbotController extends Controller
                 'cta'     => ['label' => 'Login to Book', 'href' => '/login'],
                 'suggestions' => ['What services do you offer?', 'What are your prices?', 'How do I register?'],
                 'source'  => 'public_rule',
+            ]);
+        }
+
+        // Emergency services — must run BEFORE services, or 'vet' in
+        // "emergency vet needed" gets shadowed by the services list.
+        if (collect(['emergency', 'urgent', '24/7', 'after hours'])->some(fn ($kw) => str_contains($message, $kw))) {
+            return response()->json([
+                'reply'       => "For urgent concerns during operating hours (" . StoreFacts::hours() . "), please call us at " . StoreFacts::phone() . " or come to the clinic at " . StoreFacts::address() . ". Outside operating hours, please proceed to the nearest 24-hour emergency veterinary facility.",
+                'intent'      => 'emergency_guest',
+                'suggestions' => ['What are your hours?', 'How do I register?', 'What services do you offer?'],
+                'source'      => 'public_rule',
             ]);
         }
 
@@ -151,7 +201,7 @@ class ChatbotController extends Controller
         // Location
         if (collect(['where', 'location', 'address', 'find', 'direction'])->some(fn ($kw) => str_contains($message, $kw))) {
             return response()->json([
-                'reply'       => "You can find us at our clinic location. For the exact address, please contact us through our registration page or visit us in person!",
+                'reply'       => "You can find us at:\n🏢 " . StoreFacts::address() . "\n\nWe are open " . StoreFacts::hours() . ".",
                 'intent'      => 'location_guest',
                 'suggestions' => ['What are your hours?', 'How do I register?'],
                 'source'      => 'public_rule',
@@ -161,18 +211,8 @@ class ChatbotController extends Controller
         // Contact information
         if (collect(['contact', 'phone', 'email', 'reach', 'call'])->some(fn ($kw) => str_contains($message, $kw))) {
             return response()->json([
-                'reply'       => "You can reach us at:\n📞 Phone: (555) 123-4567\n📧 Email: info@pawsitive.com\n🏢 Address: 123 Pet Care Lane, Animal City, AC 12345\n\nFor urgent matters during business hours, please call our main line.",
+                'reply'       => "You can reach us at:\n" . StoreFacts::contactsBlock() . "\n\nFor urgent matters during business hours (" . StoreFacts::hours() . "), please call our main line.",
                 'intent'      => 'contact_guest',
-                'suggestions' => ['What are your hours?', 'How do I register?', 'What services do you offer?'],
-                'source'      => 'public_rule',
-            ]);
-        }
-
-        // Emergency services
-        if (collect(['emergency', 'urgent', '24/7', 'after hours'])->some(fn ($kw) => str_contains($message, $kw))) {
-            return response()->json([
-                'reply'       => "Yes, we offer 24/7 emergency veterinary services for existing clients. Please call our emergency hotline at (555) 123-4567 and press 1 for emergencies.",
-                'intent'      => 'emergency_guest',
                 'suggestions' => ['What are your hours?', 'How do I register?', 'What services do you offer?'],
                 'source'      => 'public_rule',
             ]);

@@ -37,3 +37,7 @@ Schedule::command('confinement:accrue-daily')->dailyAt('07:45');
 // Phase E: recall scheduler — vaccine due (30-day look-ahead) and
 // post-discharge follow-up checks (24–48h after release).
 Schedule::command('recalls:send')->dailyAt('08:15');
+
+// Chatbot transcript retention — deletes rows older than
+// chatbot.log_retention_days (default 90).
+Schedule::command('chatbot:prune-logs')->daily();
