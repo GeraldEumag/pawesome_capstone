@@ -218,6 +218,22 @@ export const usePaymentApprovals = (user) => {
     });
   }, [user]);
 
+  // Receipt scanner helpers — detail fetch + re-read trigger.
+  const getReceiptDetail = useCallback(async (receiptId) => {
+    try {
+      return await apiRequest(`/cashier/receipts/${receiptId}`);
+    } catch (err) {
+      console.error("Failed to load receipt scan:", err);
+      return null;
+    }
+  }, []);
+
+  const rereadReceipt = useCallback(async (receiptId) => {
+    const data = await apiRequest(`/cashier/receipts/${receiptId}/reread`, "POST", {});
+    fetchRequests({ silent: true });
+    return data;
+  }, [fetchRequests]);
+
   // Verify single payment
   // cashParams = { cashReceived?: number, change?: number }
   const verifyPayment = useCallback(async (payment, referenceNumber = "", cashParams = {}) => {
@@ -226,16 +242,27 @@ export const usePaymentApprovals = (user) => {
     );
     if (!confirmed) return;
 
+    // Scanned receipts confirm through the receipt endpoint so the unique
+    // payment_references row + correction audit are recorded atomically.
+    const receiptId = payment.receipt?.receipt_id;
+    const useReceiptConfirm = receiptId && referenceNumber.trim();
+
     try {
       setActionLoading(`${paymentKey(payment)}-verify`);
-      const data = await apiRequest(`/cashier/payment-requests/${payment.id}/verify`, "POST", {
-        type: payment.payable_type || payment.type || payment.payment_source || "service_request",
-        cashier_remarks: "Payment verified by cashier",
-        reference_number: referenceNumber.trim(),
-        payment_method: cashParams.paymentMethod || payment.payment_method || "counter",
-        ...(cashParams.cashReceived != null ? { cash_received: cashParams.cashReceived } : {}),
-        ...(cashParams.change       != null ? { change:         cashParams.change       } : {}),
-      });
+      const data = await apiRequest(
+        useReceiptConfirm
+          ? `/cashier/receipts/${receiptId}/confirm`
+          : `/cashier/payment-requests/${payment.id}/verify`,
+        "POST",
+        {
+          type: payment.payable_type || payment.type || payment.payment_source || "service_request",
+          cashier_remarks: "Payment verified by cashier",
+          reference_number: referenceNumber.trim(),
+          payment_method: cashParams.paymentMethod || payment.payment_method || "counter",
+          ...(cashParams.cashReceived != null ? { cash_received: cashParams.cashReceived } : {}),
+          ...(cashParams.change       != null ? { change:         cashParams.change       } : {}),
+        }
+      );
 
       if (data && data.success) {
         printReceipt(data, payment, referenceNumber, cashParams);
@@ -271,13 +298,23 @@ export const usePaymentApprovals = (user) => {
     const cashier_remarks = await showReasonPrompt("Reason for rejecting this payment proof:", "Reject Payment", "Reject", PAYMENT_REJECT_REASONS);
     if (!cashier_remarks) return;
 
+    // Route through the receipt endpoint when a scanned receipt exists so
+    // its status stays in sync with the payment rejection.
+    const receiptId = payment.receipt?.receipt_id;
+
     try {
       setActionLoading(`${paymentKey(payment)}-reject`);
-      const data = await apiRequest(`/cashier/payment-requests/${payment.id}/reject`, "POST", {
-        type: payment.payable_type || payment.type || payment.payment_source || "service_request",
-        cashier_remarks,
-        rejection_reason: cashier_remarks,
-      });
+      const data = await apiRequest(
+        receiptId
+          ? `/cashier/receipts/${receiptId}/reject`
+          : `/cashier/payment-requests/${payment.id}/reject`,
+        "POST",
+        {
+          type: payment.payable_type || payment.type || payment.payment_source || "service_request",
+          cashier_remarks,
+          rejection_reason: cashier_remarks,
+        }
+      );
 
       if (data && data.success) {
         showSuccess(data.message || 'Payment rejected.');
@@ -311,14 +348,13 @@ export const usePaymentApprovals = (user) => {
     for (const id of selectedIds) {
       try {
         const payment = requests.find(r => paymentKey(r) === id);
-        // Actionable states only: a submitted proof ('pending' + proof), a
-        // rejected proof (counter fallback), or a walk-in counter collection.
-        // Online bookings with no proof are never bulk-collectible.
+        // Actionable states only: a submitted proof ('pending' + proof) or a
+        // walk-in counter collection. Online bookings with no proof are never
+        // bulk-collectible; rejected proofs leave the queue until re-upload.
         if (!payment || payment.payable_type === "service_billing_payment") continue;
         const ps = (payment.payment_status || "").toLowerCase();
         const ch = (payment.booking_channel || "").toLowerCase();
-        const actionable = ps === "rejected"
-          || (ps === "pending" && !!payment.payment_proof)
+        const actionable = (ps === "pending" && !!payment.payment_proof)
           || (ch === "walk_in" && ["pending", "unpaid"].includes(ps));
         if (!actionable) continue;
 
@@ -510,5 +546,9 @@ export const usePaymentApprovals = (user) => {
     proofModal,
     openProof,
     closeProof,
+
+    // Receipt scanner
+    getReceiptDetail,
+    rereadReceipt,
   };
 };

@@ -1114,3 +1114,92 @@
   .pa-modal .pw-modal-footer, .pa-modal .pw-modal-header { display: none !important; }
   .pa-receipt { padding: 20px !important; }
 }
+
+/* ── Receipt scanner ── */
+.pa-scan-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 10px;
+  border-radius: 999px;
+  font-size: 0.72rem;
+  font-weight: 600;
+  white-space: nowrap;
+}
+.pa-scan-chip--green   { background: #dcfce7; color: #15803d; }
+.pa-scan-chip--amber   { background: #fef3c7; color: #b45309; }
+.pa-scan-chip--red     { background: #fee2e2; color: #b91c1c; }
+.pa-scan-chip--neutral { background: #f1f5f9; color: #475569; }
+
+.pa-scan-panel {
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  padding: 12px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  background: #f8fafc;
+}
+.pa-scan-panel.pa-scan-chip--amber { border-color: #fbbf24; }
+.pa-scan-panel.pa-scan-chip--red   { border-color: #f87171; }
+
+.pa-scan-panel-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.pa-scan-reader {
+  font-size: 0.7rem;
+  color: #64748b;
+  border: 1px solid #e2e8f0;
+  border-radius: 999px;
+  padding: 2px 8px;
+}
+.pa-scan-reread {
+  margin-left: auto;
+  border: 1px solid #e2e8f0;
+  background: #fff;
+  border-radius: 6px;
+  padding: 4px 10px;
+  font-size: 0.75rem;
+  cursor: pointer;
+  color: #334155;
+}
+.pa-scan-reread:hover:not(:disabled) { background: #f1f5f9; }
+.pa-scan-reread:disabled { opacity: 0.5; cursor: not-allowed; }
+
+.pa-scan-grid { display: flex; flex-direction: column; gap: 4px; }
+.pa-scan-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  font-size: 0.8rem;
+}
+.pa-scan-row > span:first-child { color: #64748b; }
+.pa-scan-row code {
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: 5px;
+  padding: 1px 7px;
+  font-size: 0.8rem;
+}
+
+.pa-scan-note {
+  margin: 0;
+  font-size: 0.78rem;
+  color: #64748b;
+}
+
+.pa-scan-validations {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.pa-scan-validation { font-size: 0.78rem; display: flex; gap: 6px; align-items: baseline; }
+.pa-scan-validation--pass    { color: #15803d; }
+.pa-scan-validation--warning { color: #b45309; }
+.pa-scan-validation--block   { color: #b91c1c; font-weight: 600; }

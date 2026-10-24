@@ -92,6 +92,11 @@ const ManagerSidebar = ({ mobileOpen, onMobileMenuToggle }) => {
             </NavLink>
           </li>
           <li className="nav-item">
+            <NavLink to="/manager/receipt-scanner" onClick={handleNavClick}>
+              Receipt Scanner
+            </NavLink>
+          </li>
+          <li className="nav-item">
             <NavLink to="/manager/controlled-drugs" onClick={handleNavClick}>
               Controlled Drugs
             </NavLink>

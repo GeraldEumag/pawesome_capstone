@@ -322,3 +322,63 @@
   opacity: 1;
   cursor: not-allowed;
 }
+
+/* Scan status panel */
+.pum-scan-panel {
+  text-align: center;
+  padding: 1.25rem 1rem;
+  border-radius: 10px;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+}
+
+.pum-scan-spinner {
+  width: 28px;
+  height: 28px;
+  margin: 0 auto 0.75rem;
+  border: 3px solid #e2e8f0;
+  border-top-color: #ff5f93;
+  border-radius: 50%;
+  animation: pum-scan-spin 0.9s linear infinite;
+}
+
+@keyframes pum-scan-spin {
+  to { transform: rotate(360deg); }
+}
+
+.pum-scan-title {
+  margin: 0 0 0.35rem;
+  font-size: 1rem;
+  font-weight: 700;
+  color: #1f2937;
+}
+
+.pum-scan-body {
+  margin: 0;
+  font-size: 0.85rem;
+  color: #475569;
+  line-height: 1.5;
+}
+
+.pum-scan-ref {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-weight: 700;
+  color: #1f2937;
+  background: #f1f5f9;
+  padding: 0.1rem 0.4rem;
+  border-radius: 4px;
+}
+
+.pum-scan-under_review { border-color: #fde68a; background: #fffbeb; }
+.pum-scan-verified { border-color: #bbf7d0; background: #f0fdf4; }
+.pum-scan-rejected,
+.pum-scan-manual_entry { border-color: #fecaca; background: #fef2f2; }
+
+.pum-scan-manual-row {
+  display: flex;
+  gap: 0.5rem;
+  align-items: stretch;
+}
+
+.pum-scan-manual-row .pum-ref-input { flex: 1; }
+.pum-scan-manual-row .pum-confirm-btn { flex: 0 0 auto; padding: 0 1rem; }

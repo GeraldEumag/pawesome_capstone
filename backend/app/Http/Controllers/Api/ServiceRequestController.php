@@ -17,6 +17,7 @@ use App\Models\BoardingRoom;
 use App\Services\EmailDeliveryService;
 use App\Services\FileStorageService;
 use App\Services\PaymentReferenceGuard;
+use App\Services\Receipts\ReceiptService;
 use App\Services\WorkflowNotifier;
 use App\Services\BookingAvailabilityService;
 use App\Services\BookingWorkflowStage;
@@ -851,8 +852,11 @@ class ServiceRequestController extends Controller
 
         $validated = $request->validate([
             'payment_method' => 'required|in:gcash,maya',
-            'payment_reference' => 'required|string|max:255',
-            'payment_proof' => 'required|file|mimes:jpg,jpeg,png,pdf|max:5120',
+            // Optional — the receipt scanner auto-reads it; the cashier can
+            // also confirm a corrected value at verification time.
+            'payment_reference' => 'nullable|string|max:255',
+            'payment_proof' => 'required|file|mimes:jpg,jpeg,png,webp,pdf|max:5120',
+            'idempotency_key' => 'nullable|string|max:100',
         ]);
 
         $serviceRequest = ServiceRequest::findOrFail($id);
@@ -895,64 +899,80 @@ class ServiceRequestController extends Controller
             'payment_status' => 'pending',
         ];
 
-        $guardResult = PaymentReferenceGuard::withUniqueReference(
-            $validated['payment_reference'],
-            [
-                'ids' => ['service_requests' => [$serviceRequest->id]],
-                'service_request_id' => $serviceRequest->id,
-                'settlements' => [['type' => 'service_request', 'id' => $serviceRequest->id]],
-            ],
-            fn () => response()->json(['message' => 'This payment reference has already been submitted. Check the number or contact the cashier.'], 422),
-            function () use ($request, $paymentData, $serviceRequest, $validated) {
-                if ($request->hasFile('payment_proof')) {
-                    // Replaced (rejected) proofs are retained as payment evidence (deleteOld: false).
-                    FileStorageService::storeAndPersist(
-                        $request->file('payment_proof'), 'payment-proofs', 'private',
-                        fn (string $path) => $serviceRequest->update($paymentData + [
-                            'payment_proof' => $path,
-                        ]),
-                        deleteOld: false,
-                        prefix: 'proof',
-                    );
-                } else {
-                    // Cash payments are verified by the cashier at the counter - no proof file.
-                    $serviceRequest->update($paymentData);
-                }
-
-                // Keep the linked booking's payment state in step with the request -
-                // a resubmitted proof supersedes a prior rejection on either row.
-                $linkedTable = match (ServiceCatalog::bucketFor($serviceRequest->request_type ?? null)) {
-                    'grooming' => 'groomings',
-                    'hotel' => 'boardings',
-                    'vet' => 'appointments',
-                    default => null,
-                };
-                if ($linkedTable && Schema::hasColumn($linkedTable, 'service_request_id')) {
-                    $linkedUpdates = ['payment_status' => 'pending'];
-                    if (Schema::hasColumn($linkedTable, 'payment_method')) {
-                        $linkedUpdates['payment_method'] = $validated['payment_method'];
-                    }
-                    if (Schema::hasColumn($linkedTable, 'payment_reference')) {
-                        $linkedUpdates['payment_reference'] = $validated['payment_reference'];
-                    }
-                    $freshProof = $serviceRequest->fresh()->payment_proof ?? null;
-                    if (Schema::hasColumn($linkedTable, 'payment_proof') && $freshProof) {
-                        $linkedUpdates['payment_proof'] = $freshProof;
-                    }
-                    if (Schema::hasColumn($linkedTable, 'updated_at')) {
-                        $linkedUpdates['updated_at'] = now();
-                    }
-                    DB::table($linkedTable)
-                        ->where('service_request_id', $serviceRequest->id)
-                        ->where('payment_status', '!=', 'paid')
-                        ->update($linkedUpdates);
-                }
-
-                return null;
+        $storeProof = function () use ($request, $paymentData, $serviceRequest, $validated) {
+            if ($request->hasFile('payment_proof')) {
+                // Replaced (rejected) proofs are retained as payment evidence (deleteOld: false).
+                // ReceiptService::storeAndAttach adds a payment_receipts row and
+                // queues the scan job; it is a plain storeAndPersist passthrough
+                // when the scanner is disabled.
+                ReceiptService::storeAndAttach(
+                    $request->file('payment_proof'), 'payment-proofs', 'service_request', (int) $serviceRequest->id,
+                    fn (string $path) => $serviceRequest->update($paymentData + [
+                        'payment_proof' => $path,
+                    ]),
+                    [
+                        'prefix' => 'proof',
+                        'submitted_reference' => $validated['payment_reference'] ?? null,
+                        'idempotency_key' => $validated['idempotency_key'] ?? null,
+                        'uploaded_by' => Auth::id(),
+                    ],
+                );
+            } else {
+                // Cash payments are verified by the cashier at the counter - no proof file.
+                $serviceRequest->update($paymentData);
             }
-        );
-        if ($guardResult instanceof \Illuminate\Http\JsonResponse) {
-            return $guardResult;
+
+            // Keep the linked booking's payment state in step with the request -
+            // a resubmitted proof supersedes a prior rejection on either row.
+            $linkedTable = match (ServiceCatalog::bucketFor($serviceRequest->request_type ?? null)) {
+                'grooming' => 'groomings',
+                'hotel' => 'boardings',
+                'vet' => 'appointments',
+                default => null,
+            };
+            if ($linkedTable && Schema::hasColumn($linkedTable, 'service_request_id')) {
+                $linkedUpdates = ['payment_status' => 'pending'];
+                if (Schema::hasColumn($linkedTable, 'payment_method')) {
+                    $linkedUpdates['payment_method'] = $validated['payment_method'];
+                }
+                if (Schema::hasColumn($linkedTable, 'payment_reference')) {
+                    $linkedUpdates['payment_reference'] = $validated['payment_reference'] ?? null;
+                }
+                $freshProof = $serviceRequest->fresh()->payment_proof ?? null;
+                if (Schema::hasColumn($linkedTable, 'payment_proof') && $freshProof) {
+                    $linkedUpdates['payment_proof'] = $freshProof;
+                }
+                if (Schema::hasColumn($linkedTable, 'updated_at')) {
+                    $linkedUpdates['updated_at'] = now();
+                }
+                DB::table($linkedTable)
+                    ->where('service_request_id', $serviceRequest->id)
+                    ->where('payment_status', '!=', 'paid')
+                    ->update($linkedUpdates);
+            }
+
+            return null;
+        };
+
+        // The unique-reference guard only applies to a typed reference — a
+        // scanner-read reference is deduped at confirm time via
+        // payment_references inside the verification transaction.
+        if (!empty($validated['payment_reference'])) {
+            $guardResult = PaymentReferenceGuard::withUniqueReference(
+                $validated['payment_reference'],
+                [
+                    'ids' => ['service_requests' => [$serviceRequest->id]],
+                    'service_request_id' => $serviceRequest->id,
+                    'settlements' => [['type' => 'service_request', 'id' => $serviceRequest->id]],
+                ],
+                fn () => response()->json(['message' => 'This payment reference has already been submitted. Check the number or contact the cashier.'], 422),
+                $storeProof
+            );
+            if ($guardResult instanceof \Illuminate\Http\JsonResponse) {
+                return $guardResult;
+            }
+        } else {
+            $storeProof();
         }
 
         if (!$isPendingBooking) {
@@ -1036,6 +1056,7 @@ class ServiceRequestController extends Controller
             'request' => $this->formatRequest($serviceRequest),
             'payment_status' => 'pending',
             'proof_url' => "/api/files/payment-proofs/service-request/{$serviceRequest->id}/view",
+            'receipt_poll' => "/customer/receipts/service_request/{$serviceRequest->id}",
         ]);
     }
 

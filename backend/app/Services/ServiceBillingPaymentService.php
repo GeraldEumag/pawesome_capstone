@@ -114,8 +114,8 @@ class ServiceBillingPaymentService
         Customer $customer,
         ?User $actor,
         string $paymentMethod,
-        string $paymentReference,
-        string $paymentProof
+        ?string $paymentReference,
+        ?string $paymentProof
     ): ServiceBillingPaymentRequest {
         return self::createRequest($appointment, $customer, $actor, 'online', $paymentMethod, $paymentReference, $paymentProof);
     }

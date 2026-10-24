@@ -93,14 +93,13 @@ const isServiceBillingCashier = (payment) =>
   payment?.payable_type === "service_billing_payment" && payment?.payment_channel === "cashier";
 
 /*
- * Counter cash is collectible for walk-in bookings, or for any booking whose
- * submitted e-wallet proof was rejected (the counter-fallback rule). The
- * backend enforces the same — this only shapes the displayed action.
+ * Counter cash is collectible for walk-in bookings. A rejected e-wallet
+ * proof leaves the queue entirely — the customer re-uploads a new proof,
+ * which returns the row as a normal pending verification.
  */
 const isCounterCollection = (payment) => {
   const ps = (payment?.payment_status || "").toLowerCase();
   if (payment?.payable_type === "service_billing_payment" && payment?.payment_channel === "cashier") return true;
-  if (ps === "rejected") return true;
   return isWalkIn(payment) && ["unpaid", "pending"].includes(ps);
 };
 
@@ -114,6 +113,25 @@ const isActionable = (payment) => {
 
 const fmt = (n) =>
   Number(n || 0).toLocaleString("en-PH", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
+/* ── Receipt scanner labels ── */
+const SCAN_STATUS_LABEL = {
+  uploaded: "Scanning…",
+  processing: "Scanning…",
+  ready: "Scanned",
+  needs_review: "Needs review",
+  failed: "Scan failed — enter manually",
+  confirmed: "Verified",
+  rejected: "Rejected",
+};
+
+const scanChipClass = (receipt) => {
+  if (!receipt) return "";
+  if (receipt.overall === "red" || receipt.status === "failed") return "pa-scan-chip--red";
+  if (receipt.overall === "amber" || receipt.status === "needs_review") return "pa-scan-chip--amber";
+  if (receipt.overall === "green" || receipt.status === "ready") return "pa-scan-chip--green";
+  return "pa-scan-chip--neutral";
+};
 
 /* ── Main component ── */
 const PaymentApprovals = () => {
@@ -146,6 +164,8 @@ const PaymentApprovals = () => {
     proofModal,
     openProof,
     closeProof,
+    getReceiptDetail,
+    rereadReceipt,
   } = usePaymentApprovals(user);
 
   /* ── Modal local state ── */
@@ -154,6 +174,9 @@ const PaymentApprovals = () => {
   const [cashierMethod, setCashierMethod] = useState("cash");
   const [showReceipt, setShowReceipt]         = useState(false);
   const [receiptData, setReceiptData]         = useState(null);
+  const [receiptDetail, setReceiptDetail]     = useState(null);
+  const [receiptDetailLoading, setReceiptDetailLoading] = useState(false);
+  const [rereading, setRereading]             = useState(false);
 
   const referenceNumberRef = useRef(referenceNumber);
   referenceNumberRef.current = referenceNumber;
@@ -166,14 +189,26 @@ const PaymentApprovals = () => {
       setReferenceNumber("");
       setCashReceived("");
       setCashierMethod("cash");
+      setReceiptDetail(null);
       return;
     }
 
     const payment = proofModal.payment;
     setCashierMethod(isServiceBillingCashier(payment) ? "cash" : (payment?.payment_method || "cash"));
-    if (!isServiceBillingCashier(payment) && payment?.payment_reference) {
-      setReferenceNumber(payment.payment_reference);
+    // Pre-fill: typed customer reference wins, then the scanned extraction.
+    if (!isServiceBillingCashier(payment)) {
+      setReferenceNumber(payment?.payment_reference || payment?.receipt?.extracted_reference || "");
     }
+
+    if (payment?.receipt?.receipt_id) {
+      setReceiptDetailLoading(true);
+      getReceiptDetail(payment.receipt.receipt_id)
+        .then((detail) => setReceiptDetail(detail))
+        .finally(() => setReceiptDetailLoading(false));
+    } else {
+      setReceiptDetail(null);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [proofModal]);
 
   /* Derived cash values */
@@ -272,6 +307,36 @@ const PaymentApprovals = () => {
     setReferenceNumber("");
     setCashReceived("");
   };
+
+  /* Re-read the receipt through the reader chain, then refresh the detail. */
+  const handleReread = async () => {
+    const receiptId = proofModal?.payment?.receipt?.receipt_id;
+    if (!receiptId || rereading) return;
+    setRereading(true);
+    try {
+      const result = await rereadReceipt(receiptId);
+      if (result?.success) {
+        showSuccess(result.message || "Re-read queued.");
+        const detail = await getReceiptDetail(receiptId);
+        setReceiptDetail(detail);
+      } else {
+        showWarning(result?.message || "Could not re-read this receipt.");
+      }
+    } catch (err) {
+      showError(err.message || "Re-read failed.");
+    } finally {
+      setRereading(false);
+    }
+  };
+
+  /* Scan summary for the open modal — validation blocks gate confirmation. */
+  const modalReceipt = proofModal?.payment?.receipt || null;
+  const receiptBlocks = useMemo(() => {
+    const details = receiptDetail?.validations || [];
+    const detailBlocks = details.filter((v) => v.result === "block").length;
+    return detailBlocks || (modalReceipt?.blocks || 0);
+  }, [receiptDetail, modalReceipt]);
+  const scanInProgress = ["uploaded", "processing"].includes(modalReceipt?.status || receiptDetail?.receipt?.status);
 
   const getReceiptOptions = () => {
     const receipt = receiptData;
@@ -530,6 +595,13 @@ const PaymentApprovals = () => {
                         Customer ref: <code>{payment.payment_reference}</code>
                       </div>
                     )}
+                    {payment.receipt?.receipt_id && (
+                      <div className={`pa-scan-chip ${scanChipClass(payment.receipt)}`}>
+                        <FontAwesomeIcon icon={faMagnifyingGlass} />
+                        {" "}{SCAN_STATUS_LABEL[payment.receipt.status] || "Scanned"}
+                        {payment.receipt.reader === "ocr" ? " (OCR)" : payment.receipt.reader ? " (AI)" : ""}
+                      </div>
+                    )}
                     {hasProof && (
                       <button className="pa-proof-btn" onClick={() => openProof(payment.proof_url, payment)}>
                         <FontAwesomeIcon icon={faPaperclip} /> View Proof
@@ -599,8 +671,16 @@ const PaymentApprovals = () => {
                 <button
                   className="pa-btn-verify"
                   onClick={handleVerifyFromModal}
-                  disabled={!!actionLoading || (isCash && !cashReady)}
-                  title={isCash && !cashReady ? "Enter cash amount first" : ""}
+                  disabled={!!actionLoading || (isCash && !cashReady) || (!isCash && receiptBlocks > 0) || (!isCash && scanInProgress && !!modalReceipt)}
+                  title={
+                    isCash && !cashReady
+                      ? "Enter cash amount first"
+                      : !isCash && receiptBlocks > 0
+                        ? "The receipt scan reported blocking issues — reject or resolve them first"
+                        : !isCash && scanInProgress && !!modalReceipt
+                          ? "Receipt is still being scanned"
+                          : ""
+                  }
                 >
                   {actionLoading === `${proofModal?.payment?.id}-verify`
                     ? <><FontAwesomeIcon icon={faSpinner} spin /> Processing…</>
@@ -747,6 +827,79 @@ const PaymentApprovals = () => {
                     )}
                   </div>
 
+                  {/* Receipt scan panel — extraction + validation results */}
+                  {modalReceipt?.receipt_id && (
+                    <div className={`pa-scan-panel ${scanChipClass(modalReceipt)}`}>
+                      <div className="pa-scan-panel-head">
+                        <strong>Receipt scan</strong>
+                        <span className={`pa-scan-chip ${scanChipClass(modalReceipt)}`}>
+                          {SCAN_STATUS_LABEL[receiptDetail?.receipt?.status || modalReceipt.status] || "Scanned"}
+                        </span>
+                        {(receiptDetail?.extraction?.reader || modalReceipt.reader) && (
+                          <span className="pa-scan-reader">
+                            {(receiptDetail?.extraction?.reader || modalReceipt.reader) === "ocr" ? "Local OCR" : "AI reader"}
+                          </span>
+                        )}
+                        {!["confirmed", "rejected"].includes(modalReceipt.status) && (
+                          <button
+                            type="button"
+                            className="pa-scan-reread"
+                            onClick={handleReread}
+                            disabled={rereading || scanInProgress}
+                            title="Run the reader again"
+                          >
+                            <FontAwesomeIcon icon={faArrowsRotate} spin={rereading} /> Re-read
+                          </button>
+                        )}
+                      </div>
+
+                      {scanInProgress && !receiptDetail?.extraction && (
+                        <p className="pa-scan-note">Still reading this receipt — verify only after the scan finishes.</p>
+                      )}
+
+                      {receiptDetail?.extraction && (
+                        <div className="pa-scan-grid">
+                          <div className="pa-scan-row">
+                            <span>Reference</span>
+                            <code>{receiptDetail.extraction.reference_normalized || receiptDetail.extraction.reference_raw || "—"}</code>
+                          </div>
+                          {receiptDetail.extraction.amount != null && (
+                            <div className="pa-scan-row"><span>Amount on receipt</span><span>₱{fmt(receiptDetail.extraction.amount)}</span></div>
+                          )}
+                          {receiptDetail.extraction.paid_at && (
+                            <div className="pa-scan-row"><span>Paid at</span><span>{new Date(receiptDetail.extraction.paid_at).toLocaleString("en-PH")}</span></div>
+                          )}
+                          {receiptDetail.extraction.provider && (
+                            <div className="pa-scan-row"><span>Detected provider</span><span>{receiptDetail.extraction.provider.toUpperCase()}</span></div>
+                          )}
+                          {receiptDetail.extraction.recipient_name && (
+                            <div className="pa-scan-row"><span>Recipient</span><span>{receiptDetail.extraction.recipient_name}</span></div>
+                          )}
+                          {receiptDetail.extraction.status_text && (
+                            <div className="pa-scan-row"><span>Receipt status</span><span>{receiptDetail.extraction.status_text}</span></div>
+                          )}
+                        </div>
+                      )}
+
+                      {modalReceipt.status === "failed" && (
+                        <p className="pa-scan-note">The readers couldn't extract this receipt — enter the reference manually from the image.</p>
+                      )}
+
+                      {(receiptDetail?.validations || []).length > 0 && (
+                        <ul className="pa-scan-validations">
+                          {receiptDetail.validations.map((v, i) => (
+                            <li key={`${v.rule}-${i}`} className={`pa-scan-validation pa-scan-validation--${v.result}`}>
+                              <FontAwesomeIcon
+                                icon={v.result === "pass" ? faCheckCircle : v.result === "warning" ? faTriangleExclamation : faXmark}
+                              />
+                              {" "}{v.detail || v.rule}
+                            </li>
+                          ))}
+                        </ul>
+                      )}
+                    </div>
+                  )}
+
                   {/* Reference input */}
                   <div className="pa-reference-section">
                     {proofModal.payment?.payment_reference && (
@@ -757,7 +910,7 @@ const PaymentApprovals = () => {
                     )}
                     <label htmlFor="paRefNum" className="pa-reference-label">
                       <strong>{getMethodConfig(modalPaymentMethod).label} Reference Number</strong>
-                      <span className="pa-reference-hint">{billingCounterPayment ? "Required for counter e-wallet collection" : "Required — enter from the payment screenshot"}</span>
+                      <span className="pa-reference-hint">{billingCounterPayment ? "Required for counter e-wallet collection" : modalReceipt?.receipt_id ? "Pre-filled from scan — correct if needed" : "Required — enter from the payment screenshot"}</span>
                     </label>
                     <input
                       type="text"

@@ -19,6 +19,7 @@ import ThirteenthMonthPanel from "../components/manager/ThirteenthMonthPanel";
 import GovernmentRemittanceReports from "../components/manager/GovernmentRemittanceReports";
 import DTRReport from "../components/manager/DTRReport";
 import ManagerInvoiceApprovals from "../components/manager/ManagerInvoiceApprovals";
+import ReceiptScannerSettings from "../components/manager/ReceiptScannerSettings";
 import ControlledDrugRegister from "../components/inventory/ControlledDrugRegister";
 // Employee self-service
 import MyLeave from "../components/shared/MyLeave";
@@ -78,6 +79,7 @@ const ManagerRoutes = () => (
       <Route path="remittance-reports" element={<GovernmentRemittanceReports />} />
       <Route path="dtr-report" element={<DTRReport />} />
       <Route path="invoice-approvals" element={<ManagerInvoiceApprovals />} />
+      <Route path="receipt-scanner" element={<ReceiptScannerSettings />} />
       <Route
         path="controlled-drugs"
         element={<ControlledDrugRegister apiPrefix="/manager" canVerify />}

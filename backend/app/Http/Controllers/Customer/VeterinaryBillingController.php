@@ -10,6 +10,7 @@ use App\Models\ServiceBillingPaymentRequest;
 use App\Services\EmailDeliveryService;
 use App\Services\FileStorageService;
 use App\Services\PaymentReferenceGuard;
+use App\Services\Receipts\ReceiptService;
 use App\Services\ServiceBillingPaymentService;
 use App\Services\WorkflowNotifier;
 use Illuminate\Http\JsonResponse;
@@ -78,8 +79,9 @@ class VeterinaryBillingController extends Controller
 
         $validated = $request->validate([
             'payment_method' => 'required|in:gcash,maya',
-            'payment_reference' => 'required|string|min:6|max:255',
-            'payment_proof' => 'required|file|mimes:jpg,jpeg,png,pdf|max:5120',
+            // Optional — the receipt scanner auto-reads it from the proof.
+            'payment_reference' => 'nullable|string|min:6|max:255',
+            'payment_proof' => 'required|file|mimes:jpg,jpeg,png,webp,pdf|max:5120',
         ]);
 
         $appointment = Appointment::where('customer_id', $customer->id)->find($appointmentId);
@@ -92,17 +94,11 @@ class VeterinaryBillingController extends Controller
             ->where('invoice_version', $invoiceVersion)
             ->pluck('id')
             ->all();
-        $guardResult = PaymentReferenceGuard::withUniqueReference(
-            $validated['payment_reference'],
-            [
-                'ids' => ['service_billing_payment_requests' => $paymentRequestIds],
-                'settlements' => array_map(
-                    fn ($id) => ['type' => 'service_billing_payment', 'id' => $id],
-                    $paymentRequestIds
-                ),
-            ],
-            fn () => response()->json(['message' => 'This payment reference has already been submitted. Check the number or contact the cashier.'], 422),
-            fn () => FileStorageService::storeAndPersist(
+
+        $storeProof = function () use ($request, $validated, $appointment, $customer) {
+            // The payment-request row is created inside the persist callback —
+            // the receipt attaches right after via attachStoredProof.
+            $paymentRequest = FileStorageService::storeAndPersist(
                 $request->file('payment_proof'),
                 'payment-proofs/service-billing',
                 'private',
@@ -111,22 +107,56 @@ class VeterinaryBillingController extends Controller
                     $customer,
                     $request->user(),
                     $validated['payment_method'],
-                    $validated['payment_reference'],
+                    $validated['payment_reference'] ?? null,
                     $path
                 ),
                 prefix: 'billing-proof'
-            )
-        );
-        if ($guardResult instanceof JsonResponse) {
-            return $guardResult;
+            );
+
+            ReceiptService::attachStoredProof(
+                'service_billing_payment',
+                (int) $paymentRequest->id,
+                'private',
+                $paymentRequest->payment_proof,
+                [
+                    'submitted_reference' => $validated['payment_reference'] ?? null,
+                    'idempotency_key' => $request->input('idempotency_key'),
+                    'uploaded_by' => $request->user()?->id,
+                ],
+            );
+
+            return $paymentRequest;
+        };
+
+        // Unique-reference guard applies only to a typed reference — scanned
+        // references dedupe at confirm time via payment_references.
+        if (!empty($validated['payment_reference'])) {
+            $guardResult = PaymentReferenceGuard::withUniqueReference(
+                $validated['payment_reference'],
+                [
+                    'ids' => ['service_billing_payment_requests' => $paymentRequestIds],
+                    'settlements' => array_map(
+                        fn ($id) => ['type' => 'service_billing_payment', 'id' => $id],
+                        $paymentRequestIds
+                    ),
+                ],
+                fn () => response()->json(['message' => 'This payment reference has already been submitted. Check the number or contact the cashier.'], 422),
+                $storeProof
+            );
+            if ($guardResult instanceof JsonResponse) {
+                return $guardResult;
+            }
+            $paymentRequest = $guardResult;
+        } else {
+            $paymentRequest = $storeProof();
         }
-        $paymentRequest = $guardResult;
         $this->notifyPaymentRequest($paymentRequest, $customer);
 
         return response()->json([
             'success' => true,
             'message' => 'Online payment proof submitted. The cashier will verify it shortly.',
             'payment_request' => $this->paymentRequestSummary($paymentRequest),
+            'receipt_poll' => "/customer/receipts/service_billing_payment/{$paymentRequest->id}",
         ], 201);
     }
 

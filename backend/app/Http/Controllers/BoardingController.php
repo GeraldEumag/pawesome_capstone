@@ -28,6 +28,7 @@ use App\Services\BookingWorkflowStage;
 use App\Services\ServiceBillingService;
 use App\Services\PaymentVerificationService;
 use App\Services\PaymentReferenceGuard;
+use App\Services\Receipts\ReceiptService;
 use App\Support\BookingChannel;
 use Illuminate\Http\Exceptions\HttpResponseException;
 use Illuminate\Http\JsonResponse;
@@ -1835,8 +1836,10 @@ class BoardingController extends Controller
 
         $validator = Validator::make($request->all(), [
             'payment_method' => 'required|in:gcash,maya',
-            'payment_reference' => 'required|string|max:255',
-            'payment_proof' => 'required|file|mimes:jpg,jpeg,png,pdf|max:5120',
+            // Optional — the receipt scanner auto-reads it from the proof.
+            'payment_reference' => 'nullable|string|max:255',
+            'payment_proof' => 'required|file|mimes:jpg,jpeg,png,webp,pdf|max:5120',
+            'idempotency_key' => 'nullable|string|max:100',
         ]);
 
         if ($validator->fails()) {
@@ -1850,55 +1853,69 @@ class BoardingController extends Controller
         ];
 
         $serviceRequestId = $boarding->service_request_id;
-        $guardResult = PaymentReferenceGuard::withUniqueReference(
-            $request->payment_reference,
-            [
-                'ids' => [
-                    'boardings' => [$boarding->id],
-                    'service_requests' => array_filter([$serviceRequestId]),
+        $storeProof = function () use ($request, $paymentData, $boarding, $serviceRequestId) {
+            // Replaced proofs are retained as payment evidence (deleteOld: false).
+            // storeAndAttach adds a payment_receipts row + queues the scan;
+            // passthrough when the scanner is disabled.
+            ReceiptService::storeAndAttach(
+                $request->file('payment_proof'), 'payment-proofs/boardings', 'boarding', (int) $boarding->id,
+                fn (string $path) => $boarding->update($paymentData + [
+                    'payment_proof' => $path,
+                ]),
+                [
+                    'prefix' => 'boarding_proof',
+                    'submitted_reference' => $request->payment_reference,
+                    'idempotency_key' => $request->input('idempotency_key'),
+                    'uploaded_by' => $request->user()?->id,
                 ],
-                'service_request_id' => $serviceRequestId,
-                'settlements' => array_values(array_filter([
-                    $serviceRequestId ? ['type' => 'service_request', 'id' => $serviceRequestId] : null,
-                    ['type' => 'boarding', 'id' => $boarding->id],
-                ])),
-            ],
-            fn () => response()->json(['message' => 'This payment reference has already been submitted. Check the number or contact the cashier.'], 422),
-            function () use ($request, $paymentData, $boarding, $serviceRequestId) {
-                // Replaced proofs are retained as payment evidence (deleteOld: false).
-                FileStorageService::storeAndPersist(
-                    $request->file('payment_proof'), 'payment-proofs/boardings', 'private',
-                    fn (string $path) => $boarding->update($paymentData + [
-                        'payment_proof' => $path,
-                    ]),
-                    deleteOld: false,
-                    prefix: 'boarding_proof',
-                );
+            );
 
-                // Mirror the resubmission onto the originating service request so the
-                // booking re-enters cashier verification as one consistent row.
-                if ($serviceRequestId) {
-                    $srUpdates = [
-                        'payment_status' => 'pending',
-                        'payment_method' => $request->payment_method,
-                        'payment_reference' => $request->payment_reference,
-                        'updated_at' => now(),
-                    ];
-                    $freshBoarding = $boarding->fresh();
-                    if (Schema::hasColumn('service_requests', 'payment_proof')) {
-                        $srUpdates['payment_proof'] = $freshBoarding->payment_proof;
-                    }
-                    DB::table('service_requests')
-                        ->where('id', $serviceRequestId)
-                        ->where('payment_status', '!=', 'paid')
-                        ->update($srUpdates);
+            // Mirror the resubmission onto the originating service request so the
+            // booking re-enters cashier verification as one consistent row.
+            if ($serviceRequestId) {
+                $srUpdates = [
+                    'payment_status' => 'pending',
+                    'payment_method' => $request->payment_method,
+                    'payment_reference' => $request->payment_reference,
+                    'updated_at' => now(),
+                ];
+                $freshBoarding = $boarding->fresh();
+                if (Schema::hasColumn('service_requests', 'payment_proof')) {
+                    $srUpdates['payment_proof'] = $freshBoarding->payment_proof;
                 }
-
-                return null;
+                DB::table('service_requests')
+                    ->where('id', $serviceRequestId)
+                    ->where('payment_status', '!=', 'paid')
+                    ->update($srUpdates);
             }
-        );
-        if ($guardResult instanceof JsonResponse) {
-            return $guardResult;
+
+            return null;
+        };
+
+        // Unique-reference guard applies only to a typed reference — scanned
+        // references dedupe at confirm time via payment_references.
+        if ($request->filled('payment_reference')) {
+            $guardResult = PaymentReferenceGuard::withUniqueReference(
+                $request->payment_reference,
+                [
+                    'ids' => [
+                        'boardings' => [$boarding->id],
+                        'service_requests' => array_filter([$serviceRequestId]),
+                    ],
+                    'service_request_id' => $serviceRequestId,
+                    'settlements' => array_values(array_filter([
+                        $serviceRequestId ? ['type' => 'service_request', 'id' => $serviceRequestId] : null,
+                        ['type' => 'boarding', 'id' => $boarding->id],
+                    ])),
+                ],
+                fn () => response()->json(['message' => 'This payment reference has already been submitted. Check the number or contact the cashier.'], 422),
+                $storeProof
+            );
+            if ($guardResult instanceof JsonResponse) {
+                return $guardResult;
+            }
+        } else {
+            $storeProof();
         }
 
         if (!$isPendingOnlineBooking) {
@@ -1910,6 +1927,7 @@ class BoardingController extends Controller
                 ? 'Payment proof received. Cashier verification will begin after the booking is approved.'
                 : 'Payment proof submitted for cashier verification',
             'boarding' => $boarding->fresh(['pet', 'customer', 'hotelRoom']),
+            'receipt_poll' => "/customer/receipts/boarding/{$boarding->id}",
         ]);
     }
 

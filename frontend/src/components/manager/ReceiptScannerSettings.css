@@ -1,0 +1,85 @@
+/* ── Receipt Scanner Settings (manager) ── */
+.rss-page { padding: 20px; display: flex; flex-direction: column; gap: 20px; }
+.rss-header h2 { margin: 0 0 4px; }
+.rss-header p { margin: 0; color: #64748b; font-size: 0.85rem; }
+.rss-meta { margin-top: 6px; font-size: 0.78rem; color: #94a3b8; }
+
+.rss-section {
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 16px 18px;
+  background: #fff;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.rss-section h3 { margin: 0; font-size: 1rem; }
+.rss-hint { margin: 0; font-size: 0.8rem; color: #64748b; }
+
+.rss-loading { display: flex; flex-direction: column; align-items: center; gap: 10px; padding: 48px; color: #64748b; }
+
+.rss-metric-cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 12px; }
+.rss-metric {
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  padding: 12px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.rss-metric-value { font-size: 1.3rem; font-weight: 700; }
+.rss-metric-label { font-size: 0.75rem; color: #64748b; }
+
+.rss-table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
+.rss-table th, .rss-table td { text-align: left; padding: 8px 10px; border-bottom: 1px solid #f1f5f9; }
+.rss-table th { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.03em; color: #64748b; }
+
+.rss-provider {
+  border: 1px solid #f1f5f9;
+  border-radius: 10px;
+  padding: 12px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.rss-provider-head { display: flex; align-items: center; justify-content: space-between; }
+.rss-active-toggle { display: flex; align-items: center; gap: 6px; font-size: 0.8rem; color: #475569; }
+
+.rss-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px; }
+.rss-field { display: flex; flex-direction: column; gap: 4px; font-size: 0.75rem; color: #64748b; }
+.rss-input {
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 7px 10px;
+  font-size: 0.85rem;
+  font-family: inherit;
+}
+.rss-input:focus { outline: 2px solid var(--color-primary, #ec4899); outline-offset: -1px; border-color: transparent; }
+.rss-input--narrow { max-width: 110px; }
+
+.rss-icon-btn {
+  border: none;
+  background: none;
+  color: #94a3b8;
+  cursor: pointer;
+  padding: 6px;
+}
+.rss-icon-btn:hover { color: #dc2626; }
+
+.rss-add-btn, .rss-save-btn, .rss-reload-btn {
+  border-radius: 8px;
+  padding: 8px 16px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.rss-add-btn { border: 1px dashed #cbd5e1; background: #fff; color: #475569; align-self: flex-start; }
+.rss-add-btn:hover { background: #f8fafc; }
+.rss-save-btn { border: none; background: var(--color-primary, #ec4899); color: #fff; }
+.rss-save-btn:disabled { opacity: 0.6; cursor: not-allowed; }
+.rss-reload-btn { border: 1px solid #e2e8f0; background: #fff; color: #475569; }
+
+.rss-actions { display: flex; gap: 10px; }

@@ -11,6 +11,7 @@ use App\Models\MedicalProgressNote;
 use App\Services\ClinicalAccessLogger;
 use App\Services\FileStorageService;
 use App\Services\PaymentReferenceGuard;
+use App\Services\Receipts\ReceiptService;
 use App\Models\MedicationAdministrationRecord;
 use App\Models\WardBed;
 use App\Services\MarService;
@@ -275,8 +276,10 @@ class MedicalConfinementController extends Controller
 
         $validator = Validator::make($request->all(), [
             'payment_method' => 'required|in:gcash,maya',
-            'payment_reference' => 'required|string|max:255',
-            'payment_proof' => 'required|file|mimes:jpg,jpeg,png,pdf|max:5120',
+            // Optional — the receipt scanner auto-reads it from the proof.
+            'payment_reference' => 'nullable|string|max:255',
+            'payment_proof' => 'required|file|mimes:jpg,jpeg,png,webp,pdf|max:5120',
+            'idempotency_key' => 'nullable|string|max:100',
         ]);
 
         if ($validator->fails()) {
@@ -289,26 +292,40 @@ class MedicalConfinementController extends Controller
             'payment_status' => 'pending',
         ];
 
-        $guardResult = PaymentReferenceGuard::withUniqueReference(
-            $request->payment_reference,
-            [
-                'ids' => ['medical_confinements' => [$confinement->id]],
-                'settlements' => [['type' => 'medical_confinement', 'id' => $confinement->id]],
-            ],
-            fn () => response()->json(['message' => 'This payment reference has already been submitted. Check the number or contact the cashier.'], 422),
-            function () use ($request, $paymentData, $confinement) {
-                // Replaced proofs are retained as payment evidence (deleteOld: false).
-                return FileStorageService::storeAndPersist(
-                    $request->file('payment_proof'), 'payment-proofs/confinements', 'private',
-                    fn (string $path) => $confinement->update($paymentData + [
-                        'payment_proof' => $path,
-                    ]),
-                    deleteOld: false,
-                );
+        $storeProof = function () use ($request, $paymentData, $confinement) {
+            // Replaced proofs are retained as payment evidence (deleteOld: false).
+            // storeAndAttach adds a payment_receipts row + queues the scan;
+            // passthrough when the scanner is disabled.
+            return ReceiptService::storeAndAttach(
+                $request->file('payment_proof'), 'payment-proofs/confinements', 'medical_confinement', (int) $confinement->id,
+                fn (string $path) => $confinement->update($paymentData + [
+                    'payment_proof' => $path,
+                ]),
+                [
+                    'submitted_reference' => $request->payment_reference,
+                    'idempotency_key' => $request->input('idempotency_key'),
+                    'uploaded_by' => $request->user()?->id,
+                ],
+            );
+        };
+
+        // Unique-reference guard applies only to a typed reference — scanned
+        // references dedupe at confirm time via payment_references.
+        if ($request->filled('payment_reference')) {
+            $guardResult = PaymentReferenceGuard::withUniqueReference(
+                $request->payment_reference,
+                [
+                    'ids' => ['medical_confinements' => [$confinement->id]],
+                    'settlements' => [['type' => 'medical_confinement', 'id' => $confinement->id]],
+                ],
+                fn () => response()->json(['message' => 'This payment reference has already been submitted. Check the number or contact the cashier.'], 422),
+                $storeProof
+            );
+            if ($guardResult instanceof JsonResponse) {
+                return $guardResult;
             }
-        );
-        if ($guardResult instanceof JsonResponse) {
-            return $guardResult;
+        } else {
+            $storeProof();
         }
 
         WorkflowNotifier::notifyRole('cashier', 'Confinement payment proof submitted', "{$confinement->pet_name} has a pending confinement payment proof.", 'info', 'medical_confinement', $confinement->id);
@@ -316,6 +333,7 @@ class MedicalConfinementController extends Controller
         return response()->json([
             'message' => 'Payment proof submitted for cashier verification',
             'medical_confinement' => $confinement->fresh(['consultation', 'customer', 'pet', 'veterinarian', 'room']),
+            'receipt_poll' => "/customer/receipts/medical_confinement/{$confinement->id}",
         ]);
     }
 

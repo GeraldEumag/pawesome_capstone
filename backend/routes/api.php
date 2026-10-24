@@ -18,12 +18,15 @@ use App\Http\Controllers\ChatbotWorkflowController;
 use App\Http\Controllers\LiveChatController;
 use App\Http\Controllers\Customer\PortalController;
 use App\Http\Controllers\Customer\CustomerStoreController;
+use App\Http\Controllers\Customer\ReceiptController as CustomerReceiptController;
 use App\Http\Controllers\Customer\VeterinaryBillingController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\Cashier\DashboardController as CashierDashboardController;
+use App\Http\Controllers\Cashier\ReceiptController as CashierReceiptController;
 use App\Http\Controllers\Cashier\POSController;
 use App\Http\Controllers\Inventory\DashboardController as InventoryDashboardController;
 use App\Http\Controllers\Manager\DashboardController as ManagerDashboardController;
+use App\Http\Controllers\Manager\ReceiptSettingsController as ManagerReceiptSettingsController;
 use App\Http\Controllers\Receptionist\DashboardController as ReceptionistDashboardController;
 use App\Http\Controllers\Receptionist\CustomerOrderController as ReceptionistCustomerOrderController;
 use App\Http\Controllers\Receptionist\ServiceController as ReceptionistServiceController;
@@ -375,6 +378,11 @@ Route::middleware(['auth.api', 'throttle:api', 'role:customer'])->prefix('custom
     Route::get('medical-confinements/{id}/care-logs', [MedicalConfinementController::class, 'careLogs']);
     Route::get('medical-confinements/{id}/medical-notes', [MedicalConfinementController::class, 'progressNotes']);
 
+    // Receipt scanner: scan-status polling + manual reference fallback when
+    // no reader could extract the reference from the uploaded proof.
+    Route::get('receipts/{type}/{id}', [CustomerReceiptController::class, 'status']);
+    Route::post('receipts/{id}/reference', [CustomerReceiptController::class, 'submitReference']);
+
     // Availability Checking Endpoints
     Route::prefix('availability')->group(function () {
         Route::get('veterinary', [AvailabilityController::class, 'veterinary']);
@@ -445,6 +453,13 @@ Route::middleware(['auth.api', 'throttle:api', 'role:cashier'])->prefix('cashier
     // Payment Verification Routes
     Route::post('payment-requests/{id}/verify', [CashierDashboardController::class, 'verifyPayment']);
     Route::post('payment-requests/{id}/reject', [CashierDashboardController::class, 'rejectPayment']);
+
+    // Receipt scanner: extraction review, confirm (inside the verify
+    // transaction), reject, and reader re-run.
+    Route::get('receipts/{id}', [CashierReceiptController::class, 'show']);
+    Route::post('receipts/{id}/confirm', [CashierReceiptController::class, 'confirm']);
+    Route::post('receipts/{id}/reject', [CashierReceiptController::class, 'reject']);
+    Route::post('receipts/{id}/reread', [CashierReceiptController::class, 'reread']);
     
     // Existing Payment Verification Routes
     Route::put('payments/{id}/{type}/verify', [CashierPaymentController::class, 'verify']);
@@ -857,6 +872,11 @@ Route::middleware(['auth.api', 'throttle:api', 'role:manager,admin'])->prefix('m
     Route::post('medical-confinements/{id}/release', [MedicalConfinementController::class, 'release']);
     // Vaccine lot recall oversight (Phase E)
     Route::get('vaccination-recall', [\App\Http\Controllers\Veterinary\MedicalRecordController::class, 'vaccinationRecall']);
+
+    // Receipt scanner configuration + accuracy metrics
+    Route::get('receipt-scanner/settings', [ManagerReceiptSettingsController::class, 'show']);
+    Route::put('receipt-scanner/settings', [ManagerReceiptSettingsController::class, 'update']);
+    Route::get('receipt-scanner/metrics', [ManagerReceiptSettingsController::class, 'metrics']);
 });
 
 // Attendance punching is staff-only — customers have no attendance workflow.
