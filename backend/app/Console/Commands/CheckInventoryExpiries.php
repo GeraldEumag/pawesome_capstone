@@ -4,6 +4,7 @@ namespace App\Console\Commands;
 
 use App\Models\InventoryBatch;
 use App\Models\InventoryItem;
+use App\Models\Notification;
 use App\Models\User;
 use App\Services\NotificationService;
 use Illuminate\Console\Command;
@@ -20,11 +21,11 @@ class CheckInventoryExpiries extends Command
 
     public function handle(): int
     {
-        $staff = User::whereIn('role', ['admin', 'inventory', 'manager'])->pluck('id');
+        $staff = User::whereIn('role', ['admin', 'inventory', 'manager', 'super_receptionist'])->pluck('id');
         $now = now()->startOfDay();
 
         // 1) Flag newly-expired batches (physical quantity kept for counts).
-        $expired = InventoryBatch::where('status', 'active')
+        $expired = InventoryBatch::with('inventoryItem')->where('status', 'active')
             ->whereNotNull('expiration_date')
             ->where('expiration_date', '<', $now)
             ->get();
@@ -37,7 +38,7 @@ class CheckInventoryExpiries extends Command
 
         // 2) 30-day and 90-day alerts (deduped per batch per threshold per day).
         foreach ([30 => '30-day', 90 => '90-day'] as $days => $label) {
-            $batches = InventoryBatch::where('status', 'active')
+            $batches = InventoryBatch::with('inventoryItem')->where('status', 'active')
                 ->where('remaining_quantity', '>', 0)
                 ->whereNotNull('expiration_date')
                 ->whereBetween('expiration_date', [$now, $now->copy()->addDays($days)])
@@ -63,10 +64,19 @@ class CheckInventoryExpiries extends Command
 
     private function notify($staffIds, string $title, string $message, string $level, string $type, int $id): void
     {
+        // Dedupe per record per alert kind — a batch crossing a threshold
+        // notifies once, not every day it stays inside the window.
+        $dedupeKey = "{$type}:{$id}:{$title}";
         foreach ($staffIds as $userId) {
+            $alreadyNotified = Notification::where('user_id', $userId)
+                ->where('data->dedupe_key', $dedupeKey)
+                ->exists();
+            if ($alreadyNotified) {
+                continue;
+            }
             NotificationService::createNotification(
                 $userId, $title, $message, $level, $type, $id,
-                ['dedupe_key' => "{$type}:{$id}:" . now()->toDateString() . ':' . $title]
+                ['dedupe_key' => $dedupeKey]
             );
         }
     }

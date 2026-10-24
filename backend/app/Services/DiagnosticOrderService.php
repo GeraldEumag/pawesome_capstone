@@ -148,6 +148,26 @@ class DiagnosticOrderService
                 'cancel_reason' => $reason,
             ]);
 
+            // Reverse the unpaid invoice charge created at order time — a
+            // cancelled diagnostic must not stay billable. Paid lines are
+            // left for the cashier's adjustment workflow.
+            $usage = \App\Models\ServiceItemUsage::where('appointment_id', $locked->appointment_id)
+                ->where('description', 'Diagnostic: ' . $locked->name)
+                ->where('is_billable', true)
+                ->where('is_paid', false)
+                ->orderByDesc('id')
+                ->first();
+            if ($usage) {
+                $usage->update([
+                    'is_billable' => false,
+                    'notes' => trim(($usage->notes ? $usage->notes . ' ' : '') . '[charge voided — order cancelled]'),
+                ]);
+                ServiceBillingService::syncServicePaymentState(
+                    \App\Models\ServiceItemUsage::SERVICE_VETERINARY,
+                    $locked->appointment_id
+                );
+            }
+
             ActivityLog::log($userId, 'diagnostic_order_cancelled', "Diagnostic order {$locked->code} cancelled", [
                 'category' => 'medical',
                 'reference_type' => 'diagnostic_order',

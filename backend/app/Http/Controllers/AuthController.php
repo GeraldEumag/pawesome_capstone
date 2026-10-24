@@ -137,7 +137,9 @@ class AuthController extends Controller
             'message' => 'Login successful',
             'user' => $user,
             'token' => $token,
-        ])->cookie('auth_token', $token, 4320, '/', null, false, true);
+        ])->cookie('auth_token', $token, 4320, '/', null,
+            (bool) config('session.secure', false), true, false,
+            config('session.same_site', 'lax'));
     }
 
     public function me(Request $request)
@@ -447,7 +449,9 @@ class AuthController extends Controller
         }
 
         return response()->json(['message' => 'Logout successful'])
-            ->cookie('auth_token', '', -1, '/', null, false, true);
+            ->cookie('auth_token', '', -1, '/', null,
+                (bool) config('session.secure', false), true, false,
+                config('session.same_site', 'lax'));
     }
 
     /**

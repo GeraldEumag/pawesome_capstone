@@ -1629,7 +1629,9 @@ class PremiumChatbotService
                     : 0,
                 'intent_detected' => $intent,
                 'tools' => $response['tools'] ?? [],
-                'validator_rejected' => $this->validatorRejections,
+                // Only expose that validation occurred — the violation details
+                // (prices, emails, internal rules) stay server-side in logs.
+                'validator_rejected' => !empty($this->validatorRejections),
             ],
         ];
     }

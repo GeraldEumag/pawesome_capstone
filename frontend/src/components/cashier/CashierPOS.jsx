@@ -468,10 +468,19 @@ const CashierPOS = ({ initialTab }) => {
   }, []);
 
   /* ── Checkout ────────────────────────────────────────── */
+  // One Idempotency-Key per logical sale: generated on first submit, reused
+  // while the previous attempt's outcome is uncertain (timeout/network
+  // failure), rotated only after a confirmed result. Never regenerated per
+  // HTTP retry, never shared between distinct sales.
+  const pendingSaleKeyRef = useRef(null);
+
   const handleCheckout = useCallback(async () => {
     if (!canCheckout) return;
     try {
       setCheckoutLoading(true);
+      if (!pendingSaleKeyRef.current) {
+        pendingSaleKeyRef.current = crypto.randomUUID();
+      }
       const payload = {
         order_type: orderType,
         customer_id: customerId || null,
@@ -495,8 +504,11 @@ const CashierPOS = ({ initialTab }) => {
       };
       const res = await apiRequest(CHECKOUT_ENDPOINT, {
         method: "POST",
+        headers: { "Idempotency-Key": pendingSaleKeyRef.current },
         body: JSON.stringify(payload),
       });
+      // Confirmed result — rotate the key so the next cart is a distinct sale.
+      pendingSaleKeyRef.current = null;
       const receiptData = res?.receipt || {};
       const txId = receiptData.transaction_number
         || res?.transaction?.transaction_number

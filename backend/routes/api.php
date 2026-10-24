@@ -443,7 +443,7 @@ Route::middleware(['auth.api', 'throttle:api', 'role:cashier'])->prefix('cashier
     Route::post('visit-invoices/{appointmentId}/adjustments', [VisitInvoiceController::class, 'requestAdjustment']);
 
     // POS Operations
-    Route::post('pos/transaction', [POSController::class, 'processTransaction']);
+    Route::post('pos/transaction', [POSController::class, 'processTransaction'])->middleware('idempotency');
     
     // Dynamic routes with ID parameters
     Route::get('receipt/{id}', [CashierDashboardController::class, 'generateReceipt']);
@@ -583,6 +583,7 @@ Route::middleware(['auth.api', 'throttle:api', 'role:receptionist'])->prefix('re
     Route::post('medical-confinements/{id}/assign-bed', [MedicalConfinementController::class, 'assignBed']);
     Route::post('medical-confinements/{id}/assign-room', [MedicalConfinementController::class, 'assignRoom']);
     Route::post('medical-confinements/{id}/admit', [MedicalConfinementController::class, 'admit']);
+    Route::post('medical-confinements/{id}/cancel', [MedicalConfinementController::class, 'cancel']);
     Route::post('medical-confinements/{id}/care-logs', [MedicalConfinementController::class, 'addCareLog']);
     Route::get('medical-confinements/{id}/care-logs', [MedicalConfinementController::class, 'careLogs']);
     Route::post('medical-confinements/{id}/release', [MedicalConfinementController::class, 'release']);
@@ -982,6 +983,7 @@ Route::middleware(['auth.api', 'throttle:api', 'role:veterinary,vet'])->prefix('
     Route::get('dispensations', [\App\Http\Controllers\Veterinary\DispensationController::class, 'index']);
     Route::post('dispensations', [\App\Http\Controllers\Veterinary\DispensationController::class, 'store']);
     Route::post('dispensations/{id}/counsel', [\App\Http\Controllers\Veterinary\DispensationController::class, 'counsel']);
+    Route::post('dispensations/{id}/void', [\App\Http\Controllers\Veterinary\DispensationController::class, 'void']);
     // Vaccination lot recall + certificate (Phase D/E)
     Route::get('vaccination-recall', [MedicalRecordController::class, 'vaccinationRecall']);
     Route::get('vaccinations/{id}/certificate', [MedicalRecordController::class, 'vaccinationCertificate']);

@@ -637,7 +637,9 @@ class InventoryService
             }
 
             InventoryLog::create($logData);
-            
+
+            $this->recordControlledMovement($item, $quantity, $reason, $referenceType, $batch->id);
+
             $this->notifyInventoryMovement($item, $quantity, $reason, $referenceType, $referenceId, $stockBefore, $item->stock);
 
             return [
@@ -682,6 +684,8 @@ class InventoryService
             'role' => auth()->user()?->role,
             'user_id' => auth()->id(),
         ]);
+
+        $this->recordControlledMovement($item, $quantity, $reason, $referenceType, null);
 
         $this->notifyInventoryMovement($item, $quantity, $reason, $referenceType, $referenceId, $stockBefore, $item->stock);
 
@@ -1213,6 +1217,8 @@ class InventoryService
         // Update main stock
         $item->decrement('stock', $disposedQuantity);
 
+        $this->recordControlledMovement($item, -$disposedQuantity, "Batch disposed: {$reason}", 'disposal', $batch->id, true);
+
         // Log disposal
         InventoryLog::create([
             'inventory_item_id' => $item->id,
@@ -1233,6 +1239,38 @@ class InventoryService
             'item' => $item->fresh(),
             'disposed_quantity' => $disposedQuantity,
         ];
+    }
+
+    /**
+     * Append a controlled-drug register entry for stock movements that don't
+     * go through DispensingService/MarService — restocks, restorations and
+     * disposals must keep the register balance aligned with physical stock.
+     */
+    private function recordControlledMovement(InventoryItem $item, int $delta, string $reason, string $referenceType, ?int $batchId, bool $wastage = false): void
+    {
+        if (!$item->isControlledDrug()) {
+            return;
+        }
+
+        $performedBy = auth()->id()
+            ?? \App\Models\User::whereIn('role', ['admin', 'inventory'])->orderBy('id')->value('id');
+        if (!$performedBy) {
+            return; // No attributable user (CLI/seed context) — skip rather than break stock flow.
+        }
+
+        $entryType = $wastage
+            ? \App\Models\ControlledDrugEntry::TYPE_WASTAGE
+            : (in_array($referenceType, ['cancellation', 'customer_order', 'boarding', 'sale_void'], true)
+                ? \App\Models\ControlledDrugEntry::TYPE_RETURNED
+                : \App\Models\ControlledDrugEntry::TYPE_RECEIVED);
+
+        ControlledDrugService::record($item, [
+            'entry_type' => $entryType,
+            'quantity_delta' => $delta,
+            'inventory_batch_id' => $batchId,
+            'performed_by' => $performedBy,
+            'notes' => $reason,
+        ]);
     }
 
     /**

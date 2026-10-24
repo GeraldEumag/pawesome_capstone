@@ -24,12 +24,20 @@ class ConfinementAccrualService
     public static function accrueAll(): array
     {
         $results = [];
-        $open = MedicalConfinement::whereIn('status', ['admitted', 'under_care'])
+        // ready_for_discharge pets still occupy the bed, so they keep accruing
+        // until release() runs its final catch-up accrual.
+        $open = MedicalConfinement::whereIn('status', ['admitted', 'under_care', 'ready_for_discharge'])
             ->whereNotNull('consultation_id')
             ->get();
 
         foreach ($open as $confinement) {
-            $results[$confinement->id] = self::accrue($confinement);
+            // Isolate failures — one bad row must not starve accrual for the
+            // rest of the ward.
+            try {
+                $results[$confinement->id] = self::accrue($confinement);
+            } catch (\Throwable $e) {
+                $results[$confinement->id] = ['accrued_days' => 0, 'amount' => 0.0, 'error' => $e->getMessage()];
+            }
         }
 
         return $results;
@@ -43,7 +51,9 @@ class ConfinementAccrualService
     {
         return DB::transaction(function () use ($confinement) {
             $locked = MedicalConfinement::where('id', $confinement->id)->lockForUpdate()->firstOrFail();
-            if (!in_array($locked->status, ['admitted', 'under_care'], true)) {
+            // ready_for_discharge is included so release()'s final catch-up
+            // accrual actually bills the trailing days before discharge.
+            if (!in_array($locked->status, ['admitted', 'under_care', 'ready_for_discharge'], true)) {
                 return ['accrued_days' => 0, 'amount' => 0.0];
             }
 

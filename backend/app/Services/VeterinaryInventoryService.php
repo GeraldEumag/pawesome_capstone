@@ -85,7 +85,10 @@ class VeterinaryInventoryService
                     $stockAfter = $restoreResult['stock_after'];
                 }
 
-                $unitPrice = (float) ($item['unit_price'] ?? $item['charge_amount'] ?? $inventoryItem->price ?? 0);
+                // Pricing is server-authoritative from the inventory catalog —
+                // a client-supplied unit_price/charge_amount must never set
+                // the billable amount (it could zero out the charge).
+                $unitPrice = (float) ($inventoryItem->price ?? 0);
                 $totalPrice = round($newQuantity * $unitPrice, 2);
                 $payload = [
                     'service_type' => ServiceItemUsage::SERVICE_VETERINARY,

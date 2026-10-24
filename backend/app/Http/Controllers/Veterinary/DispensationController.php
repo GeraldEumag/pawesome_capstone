@@ -65,6 +65,26 @@ class DispensationController extends Controller
         }
     }
 
+    /** Void/return a dispensation — restores stock and unbills the charge. */
+    public function void(Request $request, int $id): JsonResponse
+    {
+        $validator = Validator::make($request->all(), ['reason' => 'nullable|string|max:500']);
+        if ($validator->fails()) {
+            return response()->json(['errors' => $validator->errors()], 422);
+        }
+
+        try {
+            $dispensation = DispensingService::void(
+                Dispensation::findOrFail($id),
+                $request->user()->id,
+                $request->input('reason')
+            );
+            return response()->json(['dispensation' => $dispensation]);
+        } catch (\RuntimeException $e) {
+            return response()->json(['error' => $e->getMessage()], 422);
+        }
+    }
+
     /** Mark that the owner/patient was counselled on the medication. */
     public function counsel(Request $request, int $id): JsonResponse
     {

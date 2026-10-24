@@ -151,20 +151,42 @@ class MedicalConfinementController extends Controller
             return response()->json(['errors' => $validator->errors()], 422);
         }
 
-        $bed = WardBed::findOrFail($request->ward_bed_id);
-        $isCurrentBed = (int) $confinement->ward_bed_id === (int) $bed->id;
-        if (!$isCurrentBed && $bed->status !== 'available') {
-            return response()->json(['error' => 'Selected ward bed is not available'], 422);
+        // Bed exclusivity: lock the bed, claim it as occupied at assignment
+        // (not only at admit), and free any previously assigned bed — so two
+        // confinements can never hold the same bed.
+        $result = DB::transaction(function () use ($confinement, $request) {
+            $bed = WardBed::lockForUpdate()->findOrFail($request->ward_bed_id);
+            $isCurrentBed = (int) $confinement->ward_bed_id === (int) $bed->id;
+            if (!$isCurrentBed && $bed->status !== 'available') {
+                return response()->json(['error' => 'Selected ward bed is not available'], 422);
+            }
+
+            if (!$isCurrentBed && $confinement->ward_bed_id) {
+                WardBed::where('id', $confinement->ward_bed_id)->update(['status' => 'available']);
+            }
+
+            $confinement->update([
+                'ward_bed_id' => $bed->id,
+                // daily_rate is server-authoritative from the assigned bed —
+                // a client-supplied rate must never seed the accrual billing.
+                'daily_rate' => (float) $bed->daily_rate,
+                'estimated_cost' => $request->input('estimated_cost', $confinement->estimated_cost),
+                'deposit_amount' => $request->input('deposit_amount', $confinement->deposit_amount),
+                'consent_id' => $request->input('consent_id', $confinement->consent_id),
+                'status' => 'bed_assigned',
+            ]);
+
+            if (!$isCurrentBed) {
+                $bed->update(['status' => 'occupied']);
+            }
+
+            return null;
+        });
+        if ($result) {
+            return $result;
         }
 
-        $confinement->update([
-            'ward_bed_id' => $bed->id,
-            'daily_rate' => $request->input('daily_rate', $confinement->daily_rate ?? $bed->daily_rate),
-            'estimated_cost' => $request->input('estimated_cost', $confinement->estimated_cost),
-            'deposit_amount' => $request->input('deposit_amount', $confinement->deposit_amount),
-            'consent_id' => $request->input('consent_id', $confinement->consent_id),
-            'status' => 'bed_assigned',
-        ]);
+        $bed = WardBed::findOrFail($request->ward_bed_id);
 
         WorkflowNotifier::notifyEmail($confinement->customer_email, 'Medical confinement bed assigned', 'A ward bed has been assigned for your pet medical confinement.', 'info', 'medical_confinement', $confinement->id);
 
@@ -192,17 +214,32 @@ class MedicalConfinementController extends Controller
             return response()->json(['errors' => $validator->errors()], 422);
         }
 
-        $room = HotelRoom::findOrFail($request->room_id);
-        $isCurrentRoom = (int) $confinement->room_id === (int) $room->id;
-        if (!$isCurrentRoom && $room->status !== 'available') {
-            return response()->json(['error' => 'Selected room is not available for admission'], 422);
-        }
+        $result = DB::transaction(function () use ($confinement, $request) {
+            $room = HotelRoom::lockForUpdate()->findOrFail($request->room_id);
+            $isCurrentRoom = (int) $confinement->room_id === (int) $room->id;
+            if (!$isCurrentRoom && $room->status !== 'available') {
+                return response()->json(['error' => 'Selected room is not available for admission'], 422);
+            }
 
-        $confinement->update([
-            'room_id' => $room->id,
-            'estimated_cost' => $request->input('estimated_cost', $confinement->estimated_cost),
-            'status' => 'approved_for_admission',
-        ]);
+            if (!$isCurrentRoom && $confinement->room_id) {
+                HotelRoom::where('id', $confinement->room_id)->update(['status' => 'available']);
+            }
+
+            $confinement->update([
+                'room_id' => $room->id,
+                'estimated_cost' => $request->input('estimated_cost', $confinement->estimated_cost),
+                'status' => 'approved_for_admission',
+            ]);
+
+            if (!$isCurrentRoom) {
+                $room->update(['status' => 'occupied']);
+            }
+
+            return null;
+        });
+        if ($result) {
+            return $result;
+        }
 
         WorkflowNotifier::notifyEmail($confinement->customer_email, 'Medical confinement room assigned', 'A room has been assigned for your pet medical confinement.', 'info', 'medical_confinement', $confinement->id);
 
@@ -234,17 +271,52 @@ class MedicalConfinementController extends Controller
         }
 
         $oldStatus = $confinement->status;
-        // Status + bed/room occupancy must commit together.
-        DB::transaction(function () use ($confinement, $request) {
+        // Status + bed/room occupancy must commit together, and the claim must
+        // be re-verified under lock — two confinements pointing at the same
+        // bed/room cannot both admit.
+        $result = DB::transaction(function () use ($confinement, $request) {
+            $activeStatuses = ['bed_assigned', 'approved_for_admission', 'admitted', 'under_care', 'ready_for_discharge'];
+
+            if ($confinement->ward_bed_id) {
+                $bed = WardBed::where('id', $confinement->ward_bed_id)->lockForUpdate()->first();
+                if ($bed) {
+                    $conflict = MedicalConfinement::where('ward_bed_id', $bed->id)
+                        ->where('id', '!=', $confinement->id)
+                        ->whereIn('status', $activeStatuses)
+                        ->exists();
+                    if ($conflict) {
+                        return response()->json(['error' => 'Ward bed is already held by another confinement'], 422);
+                    }
+                    $bed->update(['status' => 'occupied']);
+                }
+            }
+
+            if ($confinement->room_id) {
+                $room = HotelRoom::where('id', $confinement->room_id)->lockForUpdate()->first();
+                if ($room) {
+                    $conflict = MedicalConfinement::where('room_id', $room->id)
+                        ->where('id', '!=', $confinement->id)
+                        ->whereIn('status', $activeStatuses)
+                        ->exists();
+                    if ($conflict) {
+                        return response()->json(['error' => 'Room is already held by another confinement'], 422);
+                    }
+                    $room->update(['status' => 'occupied']);
+                }
+            }
+
             $confinement->update([
                 'status' => 'admitted',
                 'admitted_by' => $request->user()?->id,
                 'admitted_at' => now(),
                 'last_accrual_at' => now(),
             ]);
-            $confinement->room?->update(['status' => 'occupied']);
-            $confinement->wardBed?->update(['status' => 'occupied']);
+
+            return null;
         });
+        if ($result) {
+            return $result;
+        }
 
         WorkflowNotifier::notifyRole('veterinary', 'Pet admitted for confinement', "{$confinement->pet_name} has been admitted for medical confinement.", 'info', 'medical_confinement', $confinement->id);
         WorkflowNotifier::notifyEmail($confinement->customer_email, 'Pet admitted', "{$confinement->pet_name} has been admitted for medical observation.", 'info', 'medical_confinement', $confinement->id);
@@ -259,6 +331,61 @@ class MedicalConfinementController extends Controller
         return response()->json([
             'message' => 'Pet admitted for medical confinement',
             'medical_confinement' => $confinement->fresh(['consultation', 'customer', 'pet', 'veterinarian', 'room']),
+        ]);
+    }
+
+    /**
+     * Cancel a pre-admission confinement and release its bed/room exactly
+     * once. Admitted patients must go through the discharge workflow — a
+     * confinement with ongoing care or finalized billing cannot be cancelled.
+     */
+    public function cancel(Request $request, $id): JsonResponse
+    {
+        $confinement = MedicalConfinement::findOrFail($id);
+        $cancellable = ['recommended', 'consented', 'bed_assigned', 'approved_for_admission'];
+        if (!in_array(\App\Support\ConfinementStatusMap::forward($confinement->status), $cancellable, true)) {
+            return response()->json([
+                'error' => 'Only confinements not yet admitted can be cancelled — admitted patients must complete the discharge workflow.',
+            ], 422);
+        }
+
+        $validator = Validator::make($request->all(), ['reason' => 'nullable|string|max:500']);
+        if ($validator->fails()) {
+            return response()->json(['errors' => $validator->errors()], 422);
+        }
+
+        $result = DB::transaction(function () use ($confinement, $request, $cancellable) {
+            $locked = MedicalConfinement::where('id', $confinement->id)->lockForUpdate()->firstOrFail();
+            if (!in_array(\App\Support\ConfinementStatusMap::forward($locked->status), $cancellable, true)) {
+                return response()->json(['error' => 'Confinement is no longer in a cancellable state.'], 422);
+            }
+
+            $locked->update(['status' => 'cancelled']);
+            if ($locked->ward_bed_id) {
+                WardBed::where('id', $locked->ward_bed_id)
+                    ->where('status', 'occupied')->update(['status' => 'available']);
+            }
+            if ($locked->room_id) {
+                HotelRoom::where('id', $locked->room_id)
+                    ->where('status', 'occupied')->update(['status' => 'available']);
+            }
+
+            return null;
+        });
+        if ($result) {
+            return $result;
+        }
+
+        ActivityLog::log($request->user()?->id, 'confinement_cancelled', "Medical confinement #{$confinement->id} cancelled", [
+            'category' => 'medical',
+            'reference_type' => 'medical_confinement',
+            'reference_id' => $confinement->id,
+            'metadata' => ['reason' => $request->input('reason')],
+        ]);
+
+        return response()->json([
+            'message' => 'Confinement cancelled and bed released',
+            'medical_confinement' => $confinement->fresh(['consultation', 'customer', 'pet', 'veterinarian', 'room', 'wardBed']),
         ]);
     }
 

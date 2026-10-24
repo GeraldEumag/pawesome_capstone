@@ -292,12 +292,19 @@ class ReceiptService
             $this->autofillReference($receipt, $normalized);
         }
 
-        $receipt->update([
-            'provider' => $provider,
-            'status' => $outcome['overall'] === 'green'
-                ? PaymentReceipt::STATUS_READY
-                : PaymentReceipt::STATUS_NEEDS_REVIEW,
-        ]);
+        // Conditional write: if a cashier confirmed or rejected this receipt
+        // while the scan was in flight, their decision must win — never
+        // downgrade a reviewed receipt back to a scan outcome.
+        $newStatus = $outcome['overall'] === 'green'
+            ? PaymentReceipt::STATUS_READY
+            : PaymentReceipt::STATUS_NEEDS_REVIEW;
+
+        PaymentReceipt::where('id', $receipt->id)
+            ->whereNotIn('status', [PaymentReceipt::STATUS_CONFIRMED, PaymentReceipt::STATUS_REJECTED])
+            ->update([
+                'provider' => $provider,
+                'status' => $newStatus,
+            ]);
     }
 
     /**

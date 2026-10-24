@@ -12,7 +12,9 @@ class ApiTokenAuth
 {
     public function handle(Request $request, Closure $next): Response
     {
-        $token = $request->bearerToken() ?: $request->query('token');
+        // Bearer header only — accepting ?token= query params would leak
+        // credentials into access logs, browser history and referrers.
+        $token = $request->bearerToken();
 
         if (!$token && $request->user()) {
             return $next($request);
@@ -36,7 +38,7 @@ class ApiTokenAuth
 
         // Deactivated accounts must not retain API access via previously issued
         // tokens. The database user record is authoritative — not the token.
-        if (isset($user->is_active) && !$user->is_active) {
+        if (!$user->is_active) {
             return response()->json(['message' => 'Unauthenticated.'], 401);
         }
 

@@ -226,15 +226,15 @@ test.describe('Customer Add Pet modal', () => {
       mimeType: 'text/plain',
       buffer: Buffer.from('not an image'),
     });
-    await expect(dialog.getByRole('alert')).toContainText('Choose a JPG, PNG, or WebP image.');
+    await expect(dialog.getByRole('alert')).toContainText('Photo must be a JPG, PNG, or WebP image');
     await expect(imageInput).toHaveValue('');
 
     await imageInput.setInputFiles({
       name: 'large-pet.png',
       mimeType: 'image/png',
-      buffer: Buffer.alloc(5 * 1024 * 1024 + 1),
+      buffer: Buffer.alloc(10 * 1024 * 1024 + 1),
     });
-    await expect(dialog.getByRole('alert')).toContainText('Pet photos must be 5 MB or smaller.');
+    await expect(dialog.getByRole('alert')).toContainText('image under 10 MB');
     await expect(imageInput).toHaveValue('');
     expect(createRequests).toHaveLength(0);
   });

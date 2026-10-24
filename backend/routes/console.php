@@ -41,3 +41,9 @@ Schedule::command('recalls:send')->dailyAt('08:15');
 // Chatbot transcript retention — deletes rows older than
 // chatbot.log_retention_days (default 90).
 Schedule::command('chatbot:prune-logs')->daily();
+
+// Stored idempotency responses expire after 30 days (enforced lazily in the
+// middleware too — this just keeps the table bounded).
+Schedule::call(fn () => \Illuminate\Support\Facades\DB::table('idempotency_keys')
+    ->where('created_at', '<', now()->subDays(30))->delete())
+    ->name('idempotency:prune-keys')->daily();

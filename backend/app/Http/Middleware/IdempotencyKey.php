@@ -25,15 +25,37 @@ class IdempotencyKey
             return $next($request);
         }
 
+        // The storage column is varchar(128) — an oversized key must be
+        // rejected before the action runs, not fail storage afterwards.
+        if (strlen($key) > 128) {
+            return response()->json([
+                'message' => 'Idempotency-Key must be at most 128 characters.',
+            ], 422);
+        }
+
         $userId = (int) $request->user()->id;
         $route = $request->method() . ' ' . $request->path();
         $requestHash = hash('sha256', $request->getContent());
+
+        // Stored responses expire after 30 days so the table can't grow
+        // unbounded and stale payloads aren't replayed forever.
+        $expiredBefore = now()->subDays(30);
 
         $existing = DB::table('idempotency_keys')
             ->where('user_id', $userId)
             ->where('key', $key)
             ->where('route', $route)
+            ->where('created_at', '>=', $expiredBefore)
             ->first();
+
+        if (!$existing) {
+            DB::table('idempotency_keys')
+                ->where('user_id', $userId)
+                ->where('key', $key)
+                ->where('route', $route)
+                ->where('created_at', '<', $expiredBefore)
+                ->delete();
+        }
 
         if ($existing) {
             if ($existing->request_hash !== $requestHash) {

@@ -191,6 +191,9 @@ class POSController extends Controller
 
             // Process payment
             $cashReceived = $payload['cash_received'] ?? $totalAmount;
+            if ($payload['payment_method'] === 'cash' && $cashReceived + 0.0001 < $totalAmount) {
+                throw new \Exception("Insufficient cash received. Due: {$totalAmount}, Received: {$cashReceived}");
+            }
             $changeAmount = $payload['payment_method'] === 'cash' ? ($cashReceived - $totalAmount) : 0;
 
             $payment = Payment::create([

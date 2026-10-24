@@ -123,10 +123,13 @@ class SendRecalls extends Command
 
             $notificationId = DB::table('notifications')->where('user_id', $user->id)->latest('id')->value('id');
 
+            // due_date must be non-null — NULLs are distinct in MySQL unique
+            // indexes, which would let a concurrent rerun double-notify.
+            // The discharge date is a stable dedupe anchor for this recall.
             DB::table('recall_dispatches')->insertOrIgnore([
                 'kind' => 'post_discharge_check',
                 'ref_id' => $confinement->id,
-                'due_date' => null,
+                'due_date' => $confinement->discharged_at->toDateString(),
                 'user_id' => $user->id,
                 'notification_id' => $notificationId,
                 'sent_at' => now(),

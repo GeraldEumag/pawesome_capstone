@@ -1239,6 +1239,12 @@ class ReceptionistRequestController extends Controller
             Grooming::where('service_request_id', $serviceRequest->id)->update($linkedUpdates);
         }
         if (Schema::hasColumn('boardings', 'service_request_id')) {
+            // Restore deducted add-on stock before flipping status — a bulk
+            // status update would otherwise leak the deducted inventory.
+            $restoreService = new \App\Services\BoardingAddOnInventoryService();
+            foreach (Boarding::where('service_request_id', $serviceRequest->id)->get() as $linkedBoarding) {
+                $restoreService->restoreAddOnInventory($linkedBoarding, 'receptionist');
+            }
             Boarding::where('service_request_id', $serviceRequest->id)->update($linkedUpdates);
         }
         if ($hasPendingProof) {

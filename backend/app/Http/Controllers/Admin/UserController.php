@@ -218,6 +218,12 @@ class UserController extends Controller
         $user->is_active = !$user->is_active;
         $user->save();
 
+        // Deactivation must also revoke issued tokens — defense-in-depth on
+        // top of the ApiTokenAuth is_active check.
+        if (!$user->is_active) {
+            $user->tokens()->delete();
+        }
+
         ActivityLog::log(auth()->id(), 'user_status_toggled', "User #{$user->id} ({$user->email}) " . ($user->is_active ? 'activated' : 'deactivated'), [
             'category' => 'user_management',
             'reference_type' => 'user',

@@ -50,12 +50,11 @@ class GroomingController extends Controller
             'appointment_date' => 'required|date|after_or_equal:' . now(ServiceDurationService::STORE_TIMEZONE)->toDateString(),
             'appointment_time' => 'required|date_format:H:i',
             'notes' => 'nullable|string',
-            'amount' => 'nullable|numeric',
         ]);
 
-        $resolvedAmount = isset($validated['amount']) && is_numeric($validated['amount'])
-            ? (float) $validated['amount']
-            : ServiceCatalog::priceFor($validated['service'], 'grooming');
+        // Price is server-authoritative from the service catalog — a client
+        // supplied amount must never set the billable total.
+        $resolvedAmount = ServiceCatalog::priceFor($validated['service'], 'grooming');
 
         $validated['status'] = 'pending';
         $validated['payment_status'] = 'unpaid';

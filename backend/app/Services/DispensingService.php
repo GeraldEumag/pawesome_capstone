@@ -50,6 +50,23 @@ class DispensingService
                 ? MedicalConfinement::findOrFail($data['medical_confinement_id'])
                 : null;
 
+            // Retry/double-submit guard: an identical dispense by the same
+            // user within 2 minutes is almost certainly a duplicate — the
+            // endpoint has no idempotency key, so this is the last line
+            // against double stock deduction.
+            $recentDuplicate = Dispensation::where('inventory_item_id', $item->id)
+                ->where('quantity', $quantity)
+                ->where('dispensed_by', $dispenserId)
+                ->where('status', Dispensation::STATUS_DISPENSED)
+                ->when($prescription, fn ($q) => $q->where('prescription_id', $prescription->id), fn ($q) => $q->whereNull('prescription_id'))
+                ->when($appointment, fn ($q) => $q->where('appointment_id', $appointment->id), fn ($q) => $q->whereNull('appointment_id'))
+                ->when($confinement, fn ($q) => $q->where('medical_confinement_id', $confinement->id), fn ($q) => $q->whereNull('medical_confinement_id'))
+                ->where('created_at', '>=', now()->subMinutes(2))
+                ->exists();
+            if ($recentDuplicate) {
+                throw new \RuntimeException('Duplicate dispensation — this medication was just dispensed.');
+            }
+
             // deductStock locks the item row, rejects expired batches and
             // applies FEFO — that is the single stock-mutation path.
             $deduction = (new InventoryService())->deductStock(
@@ -97,8 +114,8 @@ class DispensingService
                 ]);
             }
 
-            if ($prescription) {
-                $prescription->useRefill();
+            if ($prescription && !$prescription->useRefill()) {
+                throw new \RuntimeException('Prescription has no refills remaining');
             }
 
             // Bill the dispensed medication to the visit when linked. Written
@@ -138,6 +155,66 @@ class DispensingService
             }
 
             return $dispensation->fresh(['item', 'batch', 'prescription']);
+        });
+    }
+
+    /**
+     * Void/return a dispensation. Restores stock via the centralized service
+     * (so controlled-drug 'returned' register entries fire automatically),
+     * unbills the unpaid invoice charge, gives back the prescription refill,
+     * and marks the row 'returned' — history is never deleted.
+     */
+    public static function void(Dispensation $dispensation, int $userId, ?string $reason = null): Dispensation
+    {
+        return DB::transaction(function () use ($dispensation, $userId, $reason) {
+            $locked = Dispensation::where('id', $dispensation->id)->lockForUpdate()->firstOrFail();
+            if ($locked->status !== Dispensation::STATUS_DISPENSED) {
+                throw new \RuntimeException('Only a dispensed item can be returned or voided');
+            }
+
+            $item = InventoryItem::where('id', $locked->inventory_item_id)->lockForUpdate()->firstOrFail();
+
+            (new InventoryService())->addStock(
+                (int) $item->id,
+                (int) $locked->quantity,
+                'Dispensation #' . $locked->id . ' voided' . ($reason ? ": {$reason}" : ''),
+                'cancellation',
+                $locked->id
+            );
+
+            if ($item->isControlledDrug()) {
+                ControlledDrugService::record($item, [
+                    'entry_type' => ControlledDrugEntry::TYPE_RETURNED,
+                    'quantity_delta' => (int) $locked->quantity,
+                    'inventory_batch_id' => $locked->inventory_batch_id,
+                    'dispensation_id' => $locked->id,
+                    'prescription_id' => $locked->prescription_id,
+                    'appointment_id' => $locked->appointment_id,
+                    'medical_confinement_id' => $locked->medical_confinement_id,
+                    'pet_id' => $locked->pet_id,
+                    'customer_id' => $locked->customer_id,
+                    'performed_by' => $userId,
+                    'notes' => 'Dispensation voided' . ($reason ? ": {$reason}" : ''),
+                ]);
+            }
+
+            if ($locked->prescription_id && ($prescription = Prescription::find($locked->prescription_id))) {
+                $prescription->increment('refills_remaining');
+            }
+
+            // Unbill the unpaid charge — the row stays for audit history.
+            if ($locked->appointment_id) {
+                ServiceItemUsage::where('appointment_id', $locked->appointment_id)
+                    ->where('usage_type', 'dispensed_medication')
+                    ->where('notes', 'Dispensation #' . $locked->id)
+                    ->where('is_paid', false)
+                    ->update(['is_billable' => false]);
+                ServiceBillingService::syncServicePaymentState(ServiceItemUsage::SERVICE_VETERINARY, $locked->appointment_id);
+            }
+
+            $locked->update(['status' => Dispensation::STATUS_RETURNED]);
+
+            return $locked->fresh(['item', 'batch', 'prescription']);
         });
     }
 

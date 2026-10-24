@@ -125,9 +125,13 @@ class LiveChatController extends Controller
         $user = $request->user();
         $afterId = (int) $request->query('after_id', 0);
 
-        // Authorization: customer can only read their own session
+        // Authorization: customers can only read their own session; staff
+        // access is limited to roles that can work the live-chat inbox.
         $isCustomer = $user->role === 'customer';
         if ($isCustomer && (int) $session->customer_id !== (int) $user->id) {
+            return response()->json(['message' => 'Forbidden.'], 403);
+        }
+        if (!$isCustomer && !in_array($user->role, ['receptionist', 'super_receptionist', 'admin'], true)) {
             return response()->json(['message' => 'Forbidden.'], 403);
         }
 

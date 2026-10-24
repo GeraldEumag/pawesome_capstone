@@ -24,9 +24,28 @@ class ChatbotTools
 {
     private const TZ = 'Asia/Manila';
 
+    /**
+     * Effective tool-calling roles for a user role. super_receptionist is a
+     * composite of receptionist + cashier + inventory (same as EnsureRole).
+     */
+    private static function effectiveRoles(string $role): array
+    {
+        return $role === 'super_receptionist'
+            ? ['receptionist', 'cashier', 'inventory']
+            : [$role];
+    }
+
+    /** Names of the tools a role is allowed to call. */
+    private static function allowedNames(string $role): array
+    {
+        return collect(self::definitions($role))
+            ->pluck('function.name')->all();
+    }
+
     /** OpenAI-compatible tool schemas filtered to what the role may call. */
     public static function definitions(string $role): array
     {
+        $allowed = self::effectiveRoles($role);
         $defs = [
             'get_my_requests' => [
                 'roles' => ['customer'],
@@ -75,7 +94,7 @@ class ChatbotTools
         ];
 
         return collect($defs)
-            ->filter(fn ($d) => in_array($role, $d['roles'], true))
+            ->filter(fn ($d) => count(array_intersect($allowed, $d['roles'])) > 0)
             ->map(fn ($d, $name) => ['type' => 'function', 'function' => [
                 'name' => $name,
                 'description' => $d['description'],
@@ -89,6 +108,12 @@ class ChatbotTools
     public static function execute(string $name, array $args, User $user, string $role): array
     {
         try {
+            // Tool names come from model output — re-enforce the role allowlist
+            // so an injected tool call can't reach tools the role can't see.
+            if (!in_array($name, self::allowedNames($role), true)) {
+                return ['data' => ['error' => 'tool_not_allowed']];
+            }
+
             return match ($name) {
                 'get_my_requests' => ['data' => self::myRequests($user)],
                 'get_my_payments' => ['data' => self::myPayments($user)],
@@ -168,7 +193,7 @@ class ChatbotTools
 
     private static function searchInventory(string $query, string $role): array
     {
-        $privileged = in_array($role, ['inventory', 'manager', 'admin'], true);
+        $privileged = count(array_intersect(self::effectiveRoles($role), ['inventory', 'manager', 'admin'])) > 0;
 
         return InventoryItem::where('status', '!=', 'archived')
             ->where(fn ($q) => $q->where('name', 'like', "%{$query}%")

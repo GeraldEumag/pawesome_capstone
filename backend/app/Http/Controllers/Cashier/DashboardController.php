@@ -17,6 +17,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Schema;
 use App\Services\PaymentVerificationService;
+use App\Services\InventoryService;
 use App\Services\ServiceCatalog;
 use App\Support\EmailContent;
 use App\Support\PayableAmountResolver;
@@ -366,19 +367,34 @@ class DashboardController extends Controller
             'cashier_name' => 'required|string',
         ]);
 
-        // Create refund record
-        $refund = Sale::create([
-            'amount' => $validated['amount'] ?? $validated['refund_amount'] ?? 0,
-            'type' => 'refund',
-            'status' => 'completed',
-            'payment_type' => 'refund',
-            'notes' => 'Refund for ' . $validated['transaction_id'] . ': ' . $validated['reason'],
-        ]);
+        $rawId = preg_replace('/^(SALE-|TRX-|ORDER-|SERVICE-)/i', '', $validated['transaction_id']);
+        $refundAmount = (float) ($validated['amount'] ?? $validated['refund_amount'] ?? 0);
 
-        return response()->json([
-            'success' => true,
-            'refund_id' => $refund->id,
-        ]);
+        return DB::transaction(function () use ($rawId, $refundAmount, $validated) {
+            $sale = Sale::lockForUpdate()->find($rawId)
+                ?? Sale::lockForUpdate()->where('transaction_number', $validated['transaction_id'])->first();
+            if (!$sale) {
+                return response()->json(['success' => false, 'message' => 'Transaction not found.'], 404);
+            }
+            if ($refundAmount <= 0 || $refundAmount - (float) $sale->amount > 0.0001) {
+                return response()->json(['success' => false, 'message' => 'Refund amount must be positive and not exceed the sale total.'], 422);
+            }
+
+            // Refunds are recorded as negative-amount rows so that revenue
+            // sums (sum('amount')) net correctly instead of being inflated.
+            $refund = Sale::create([
+                'amount' => -$refundAmount,
+                'type' => 'refund',
+                'status' => 'completed',
+                'payment_type' => 'refund',
+                'notes' => 'Refund for ' . ($sale->transaction_number ?? $sale->id) . ': ' . $validated['reason'],
+            ]);
+
+            return response()->json([
+                'success' => true,
+                'refund_id' => $refund->id,
+            ]);
+        });
     }
 
     public function multiPayment(Request $request)
@@ -390,15 +406,24 @@ class DashboardController extends Controller
             'transaction_id' => 'nullable',
         ]);
 
-        // Create multi-payment record
+        if (abs($validated['cash_amount'] + $validated['card_amount'] - $validated['total_amount']) > 0.0001) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Cash + card amounts must equal the total.',
+            ], 422);
+        }
+
+        // Audit-only record: a split-tender log entry is not a new sale, so it
+        // must not add to revenue sums (amount stays 0).
         $payment = Sale::create([
-            'amount' => $validated['total_amount'],
+            'amount' => 0,
             'type' => 'multi_payment',
             'status' => 'completed',
             'payment_type' => 'multi',
             'cash_amount' => $validated['cash_amount'],
             'card_amount' => $validated['card_amount'],
-            'notes' => isset($validated['transaction_id']) ? 'Split payment for ' . $validated['transaction_id'] : null,
+            'notes' => 'Split payment ' . $validated['total_amount']
+                . (isset($validated['transaction_id']) ? ' for ' . $validated['transaction_id'] : ''),
         ]);
 
         return response()->json([
@@ -580,25 +605,75 @@ class DashboardController extends Controller
         $rawId = $validated['transaction_id'];
         $numericId = preg_replace('/^(SALE-|TRX-|ORDER-|SERVICE-)/i', '', $rawId);
 
-        // Find and void the transaction
-        $transaction = Sale::find($numericId);
-        if (!$transaction) {
+        try {
+            return DB::transaction(function () use ($numericId, $rawId, $validated, $request) {
+                $sale = Sale::with('items', 'payments', 'invoice')->lockForUpdate()->find($numericId)
+                    ?? Sale::with('items', 'payments', 'invoice')->lockForUpdate()
+                        ->where('transaction_number', $rawId)->first();
+                if (!$sale) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'Transaction not found.',
+                    ], 404);
+                }
+
+                if (in_array($sale->status, ['cancelled', 'voided'], true)) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'Transaction is already voided.',
+                    ], 400);
+                }
+
+                // Mirror POSController::voidTransaction — a void must restore
+                // stock, refund payments and cancel the invoice atomically,
+                // not just flip the sale status.
+                foreach ($sale->items as $item) {
+                    if ($item->item_type === 'product' && $item->product_id) {
+                        (new InventoryService())->addStock(
+                            $item->product_id,
+                            $item->quantity,
+                            'Sale Cancellation - ' . $validated['reason'],
+                            'cancellation',
+                            $sale->id
+                        );
+                    }
+                }
+
+                foreach ($sale->payments as $payment) {
+                    $payment->processRefund();
+                }
+
+                if ($sale->invoice) {
+                    $sale->invoice->cancel();
+                }
+
+                $sale->status = 'voided';
+                $sale->void_reason = $validated['reason'];
+                $sale->voided_by = $validated['cashier_name'];
+                $sale->voided_at = now();
+                $sale->save();
+
+                ActivityLog::log($request->user()?->id, 'pos_sale_voided', "POS sale {$sale->transaction_number} voided via dashboard", [
+                    'category' => 'pos',
+                    'reference_type' => 'sale',
+                    'reference_id' => $sale->id,
+                    'metadata' => [
+                        'transaction_number' => $sale->transaction_number,
+                        'reason' => $validated['reason'],
+                    ],
+                ]);
+
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Transaction voided successfully.',
+                ]);
+            });
+        } catch (\Throwable $e) {
             return response()->json([
                 'success' => false,
-                'message' => 'Transaction not found.',
-            ], 404);
+                'message' => 'Void failed: ' . $e->getMessage(),
+            ], 500);
         }
-
-        $transaction->status = 'voided';
-        $transaction->void_reason = $validated['reason'];
-        $transaction->voided_by = $validated['cashier_name'];
-        $transaction->voided_at = now();
-        $transaction->save();
-
-        return response()->json([
-            'success' => true,
-            'message' => 'Transaction voided successfully.',
-        ]);
     }
 
     // Payment Verification Methods
@@ -1224,11 +1299,11 @@ class DashboardController extends Controller
                 'breakdown' => ReceiptBreakdown::forSettleable(
                     'customer_order',
                     (int) $order->id,
-                    $orderTotal,
+                    $totalAmount,
                     0,
                     [
                         'method' => $order->payment_method,
-                        'amount' => $orderTotal,
+                        'amount' => $totalAmount,
                         'reference_number' => $order->payment_reference ?? null,
                         'receipt_number' => $order->receipt_number,
                         'paid_at' => $order->paid_at,

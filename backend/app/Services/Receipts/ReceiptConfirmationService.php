@@ -56,15 +56,34 @@ class ReceiptConfirmationService
             return ['success' => false, 'message' => 'Unsupported receipt payable type.', 'status' => 422];
         }
 
+        // A digital-proof confirm must carry a reference — typed by the
+        // cashier, stored on the payable from upload/scan autofill, or read
+        // by the scanner. Without one the ledger can't dedupe and the row
+        // would be marked paid with no traceable reference.
+        $latestExtraction = $receipt->extractions()->orderByDesc('id')->first();
+        $confirmedReference = trim((string) $request->input('reference_number', ''));
+        if ($confirmedReference === '') {
+            $confirmedReference = (string) ($this->payableReference($receipt)
+                ?? $latestExtraction?->reference_normalized
+                ?? '');
+        }
+        if ($confirmedReference === '') {
+            return [
+                'success' => false,
+                'message' => 'A payment reference number is required to confirm a digital proof.',
+                'status' => 422,
+            ];
+        }
+        $request->merge(['reference_number' => $confirmedReference]);
+
         try {
-            return DB::transaction(function () use ($receipt, $request, $verifyType) {
+            return DB::transaction(function () use ($receipt, $request, $verifyType, $confirmedReference, $latestExtraction) {
                 $result = (new PaymentVerificationService())->verify($verifyType, (int) $receipt->payable_id, $request);
                 if (($result['success'] ?? false) !== true) {
                     return $result;
                 }
 
-                $confirmedReference = trim((string) $request->input('reference_number', ''));
-                $latest = $receipt->extractions()->orderByDesc('id')->first();
+                $latest = $latestExtraction;
 
                 // Persist the unique reference — duplicate insert rolls back the
                 // whole verify transaction.
@@ -138,11 +157,37 @@ class ReceiptConfirmationService
         if (in_array($receipt->status, [PaymentReceipt::STATUS_CONFIRMED, PaymentReceipt::STATUS_REJECTED], true)) {
             return ['success' => false, 'message' => 'Only an unconfirmed receipt can be re-read.', 'status' => 422];
         }
+        if ($receipt->status === PaymentReceipt::STATUS_PROCESSING) {
+            return ['success' => false, 'message' => 'A scan is already in progress for this receipt.', 'status' => 409];
+        }
 
         $receipt->update(['status' => PaymentReceipt::STATUS_UPLOADED]);
         ReceiptService::dispatchScan($receipt->id);
 
         return ['success' => true, 'message' => 'Receipt re-read queued.'];
+    }
+
+    /**
+     * Reference already stored on the payable row (customer-typed or
+     * scanner-autofilled), whichever column exists for that table.
+     */
+    private function payableReference(PaymentReceipt $receipt): ?string
+    {
+        $table = ReceiptService::PAYABLE_TABLES[$receipt->payable_type] ?? null;
+        if (!$table) {
+            return null;
+        }
+
+        foreach (['payment_reference', 'reference_number'] as $column) {
+            if (Schema::hasColumn($table, $column)) {
+                $value = trim((string) (DB::table($table)->where('id', $receipt->payable_id)->value($column) ?? ''));
+                if ($value !== '') {
+                    return $value;
+                }
+            }
+        }
+
+        return null;
     }
 
     /**

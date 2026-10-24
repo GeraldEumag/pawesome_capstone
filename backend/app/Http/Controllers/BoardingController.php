@@ -687,12 +687,13 @@ class BoardingController extends Controller
     {
         $boarding = Boarding::findOrFail($id);
 
+        // Status and payment_status are deliberately NOT updatable here —
+        // lifecycle transitions must go through confirm/cancel/checkIn/reject
+        // so add-on stock restore, room sync and payment gating are enforced.
         $validator = Validator::make($request->all(), [
             'hotel_room_id' => 'nullable|exists:hotel_rooms,id',
             'check_in' => 'nullable|date',
             'check_out' => 'nullable|date|after_or_equal:check_in',
-            'status' => 'nullable|in:pending,approved,scheduled,confirmed,checked_in,in_care,ready_for_pickup,checked_out,completed,cancelled,rejected',
-            'payment_status' => 'nullable|in:unpaid,pending,partial,paid,rejected,refunded',
             'notes' => 'nullable|string',
         ]);
 
@@ -733,8 +734,8 @@ class BoardingController extends Controller
 
         // Enforce same-day check-in/check-out on any update touching dates
         $updateData = $request->only([
-            'hotel_room_id', 'check_in', 'check_out', 'status',
-            'payment_status', 'special_requests', 'emergency_contact',
+            'hotel_room_id', 'check_in', 'check_out',
+            'special_requests', 'emergency_contact',
             'emergency_phone', 'notes'
         ]);
 

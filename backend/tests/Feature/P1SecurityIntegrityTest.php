@@ -123,7 +123,8 @@ class P1SecurityIntegrityTest extends TestCase
             'discount' => 0,
             'total' => 2,
             'payment_method' => 'cash',
-            'cash_received' => 2,
+            // Server total is authoritative (500×2); tender must cover it.
+            'cash_received' => 1000,
         ], $this->bearer($cashier));
 
         $response->assertOk()->assertJsonPath('success', true);

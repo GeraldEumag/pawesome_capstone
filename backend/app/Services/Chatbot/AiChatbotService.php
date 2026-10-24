@@ -184,10 +184,14 @@ class AiChatbotService
 
         for ($n = 0; $n < $count; $n++) {
             $index = ($start + $n) % $count;
-            $response = Http::withHeaders([
-                'Content-Type' => 'application/json',
-                'Authorization' => 'Bearer ' . $this->apiKeys[$index],
-            ])->timeout($this->timeout)->post("{$this->baseUrl}/chat/completions", $payload);
+            try {
+                $response = Http::withHeaders([
+                    'Content-Type' => 'application/json',
+                    'Authorization' => 'Bearer ' . $this->apiKeys[$index],
+                ])->timeout($this->timeout)->post("{$this->baseUrl}/chat/completions", $payload);
+            } catch (\Throwable) {
+                continue;
+            }
 
             if ($response->successful()) {
                 if ($index !== $start) {

@@ -21,7 +21,9 @@ class ServiceBillingController extends Controller
                 'service_type' => 'required|in:veterinary,grooming,boarding',
                 'service_id' => 'required|integer',
                 'pet_id' => 'nullable|integer',
-                'item_type' => 'required|in:base_service,add_on_service,manual_charge,discount',
+                // base_service rows are created only by ensureBaseServiceItem
+                // — a client must not inject a second arbitrary base charge.
+                'item_type' => 'required|in:add_on_service,manual_charge,discount',
                 'description' => 'required|string|max:255',
                 'quantity' => 'required|integer|min:1',
                 'unit' => 'nullable|string|max:50',

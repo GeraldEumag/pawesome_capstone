@@ -37,10 +37,17 @@ class TelegramBotController extends Controller
      */
     public function webhook(Request $request): JsonResponse
     {
+        // Webhook must authenticate whenever the bot is configured — otherwise
+        // forged updates could invoke the bot under a linked user's identity.
+        if ($this->botToken !== '' && empty($this->webhookSecret)) {
+            Log::warning('Telegram webhook rejected: bot configured without webhook secret');
+            return response()->json(['ok' => false, 'error' => 'Webhook not configured'], 503);
+        }
+
         // Verify webhook secret token if configured
         if ($this->webhookSecret) {
             $headerToken = $request->header('X-Telegram-Bot-Api-Secret-Token');
-            if ($headerToken !== $this->webhookSecret) {
+            if (!hash_equals((string) $this->webhookSecret, (string) $headerToken)) {
                 Log::warning('Telegram webhook rejected: invalid secret token', [
                     'ip' => $request->ip(),
                     'header_token' => $headerToken ? 'present' : 'missing',
