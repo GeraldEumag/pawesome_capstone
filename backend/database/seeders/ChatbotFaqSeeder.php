@@ -13,10 +13,10 @@ class ChatbotFaqSeeder extends Seeder
     public function run(): void
     {
         $faqs = [
-            // General FAQs
+            // General FAQs — store facts must match config/store.php
             [
                 'question' => 'What are your business hours?',
-                'answer' => 'We are open Monday to Saturday from 8:00 AM to 6:00 PM. On Sundays, we are open from 9:00 AM to 4:00 PM for boarding pick-up/drop-off only.',
+                'answer' => 'We are open every day from 10:00 AM to 6:00 PM, including weekends and holidays unless otherwise announced.',
                 'keywords' => ['hours', 'open', 'time', 'schedule', 'when'],
                 'scope' => 'general',
                 'is_active' => true,
@@ -24,15 +24,23 @@ class ChatbotFaqSeeder extends Seeder
             ],
             [
                 'question' => 'What is your contact information?',
-                'answer' => 'You can reach us at:\n📞 Phone: (555) 123-4567\n📧 Email: info@pawsitive.com\n🏢 Address: 123 Pet Care Lane, Animal City, AC 12345',
+                'answer' => 'You can reach Pawesome Retreat Inc. at:\n📞 Phone: 270020371\n📧 Email: pawesomeretreat24@gmail.com\n🏢 Address: San Isidro Village, Aldana, Pamplona Uno, Las Piñas, 1740 Metro Manila\n📘 Facebook: facebook.com/PawesomeRetreat\n📸 Instagram: @pawesomeretreat',
                 'keywords' => ['contact', 'phone', 'email', 'address', 'reach'],
                 'scope' => 'general',
                 'is_active' => true,
                 'sort_order' => 2,
             ],
             [
+                'question' => 'Where are you located?',
+                'answer' => 'We are located at San Isidro Village, Aldana, Pamplona Uno, Las Piñas, 1740 Metro Manila. We are open daily from 10:00 AM to 6:00 PM.',
+                'keywords' => ['where', 'location', 'address', 'directions', 'located', 'map'],
+                'scope' => 'general',
+                'is_active' => true,
+                'sort_order' => 2,
+            ],
+            [
                 'question' => 'Do you offer emergency services?',
-                'answer' => 'Yes, we offer 24/7 emergency veterinary services for existing clients. Please call our emergency hotline at (555) 123-4567 and press 1 for emergencies.',
+                'answer' => 'For urgent concerns during operating hours (10:00 AM–6:00 PM daily), please call us at 270020371 or come to the clinic. Outside operating hours, please proceed to the nearest 24-hour emergency veterinary facility.',
                 'keywords' => ['emergency', 'urgent', '24/7', 'after hours', 'critical'],
                 'scope' => 'general',
                 'is_active' => true,
@@ -40,8 +48,8 @@ class ChatbotFaqSeeder extends Seeder
             ],
             [
                 'question' => 'What payment methods do you accept?',
-                'answer' => 'We accept the following payment methods:\n💳 Credit/Debit cards (Visa, Mastercard, Amex)\n💵 Cash\n🏦 Bank transfer\n📱 GCash and PayMaya\nAll services must be paid in full before checkout.',
-                'keywords' => ['payment', 'pay', 'cash', 'card', 'gcash'],
+                'answer' => 'We accept:\n📱 GCash — send to our GCash number and upload the receipt screenshot; our system reads the reference automatically\n📱 Maya — same flow as GCash\n💵 Cash — at the counter for walk-in bookings\n\nOnline payments are verified by our cashier before confirmation.',
+                'keywords' => ['payment', 'pay', 'cash', 'card', 'gcash', 'maya'],
                 'scope' => 'general',
                 'is_active' => true,
                 'sort_order' => 4,
@@ -50,7 +58,7 @@ class ChatbotFaqSeeder extends Seeder
             // Pet Hotel FAQs
             [
                 'question' => 'How much does pet boarding cost?',
-                'answer' => 'Our pet hotel rates vary by room type:\n\n🏠 Standard Room: ₱800/night\n🏡 Deluxe Room: ₱1,200/night\n🏰 Suite Room: ₱1,800/night\n\nAll stays include daily feeding, basic grooming, and playtime. Discounts available for stays longer than 7 days.',
+                'answer' => 'Our pet hotel rates per night:\n\n🐕 Standard Kennel: ₱500\n🐕 Large Kennel: ₱800\n🐱 Cattery Suite: ₱450\n🐱 Deluxe Cattery: ₱700\n🏠 Standard Room: ₱600\n� Deluxe Suite: ₱1,200\n\nRates are shown on the booking page when you choose your dates and room.',
                 'keywords' => ['price', 'cost', 'rate', 'boarding', 'hotel', 'stay', 'how much'],
                 'scope' => 'general',
                 'is_active' => true,
@@ -58,7 +66,7 @@ class ChatbotFaqSeeder extends Seeder
             ],
             [
                 'question' => 'What do I need to bring for pet boarding?',
-                'answer' => 'Please bring:\n✅ Vaccination records (must be up-to-date)\n✅ Your pet\'s regular food (or we can provide for ₱150/day)\n✅ Any required medications with instructions\n✅ A familiar toy or blanket (optional)\n\nWe provide bedding, bowls, and treats. Please do not bring expensive items.',
+                'answer' => 'Please bring:\n✅ Vaccination records — required; upload the card when booking and reception must verify it before approval\n✅ Your pet\'s regular food\n✅ Any required medications with instructions\n✅ A familiar toy or blanket (optional)\n\nWe provide bedding and bowls. Please do not bring expensive items.',
                 'keywords' => ['bring', 'what to bring', 'requirements', 'vaccination', 'documents'],
                 'scope' => 'general',
                 'is_active' => true,
@@ -74,17 +82,33 @@ class ChatbotFaqSeeder extends Seeder
             ],
             [
                 'question' => 'What is your cancellation policy for boarding?',
-                'answer' => 'Our cancellation policy:\n\n✅ 48+ hours before check-in: Full refund\n⚠️ 24-48 hours: 50% refund\n❌ Less than 24 hours: No refund\n\nYou can reschedule without penalty up to 24 hours before your booking.',
+                'answer' => 'You may cancel free of charge up to 24 hours before your check-in date or appointment time. For cancellations inside 24 hours, please contact reception at 270020371.',
                 'keywords' => ['cancel', 'cancellation', 'refund', 'policy', 'reschedule'],
                 'scope' => 'general',
                 'is_active' => true,
                 'sort_order' => 13,
             ],
+            [
+                'question' => 'What are the check-in and check-out times for boarding?',
+                'answer' => 'Boarding check-in and check-out can be done any time during operating hours — 10:00 AM to 6:00 PM daily.',
+                'keywords' => ['check-in', 'check-out', 'checkin', 'checkout', 'pickup', 'drop-off', 'dropoff'],
+                'scope' => 'general',
+                'is_active' => true,
+                'sort_order' => 14,
+            ],
+            [
+                'question' => 'Do I need a vaccination card for boarding?',
+                'answer' => 'Yes. A vaccination card must be uploaded when you book a boarding stay, and reception must verify it before the booking can be approved. Please make sure your pet\'s vaccinations are up-to-date.',
+                'keywords' => ['vaccination', 'vaccine', 'card', 'requirement', 'required'],
+                'scope' => 'general',
+                'is_active' => true,
+                'sort_order' => 15,
+            ],
 
             // Service FAQs
             [
                 'question' => 'What services do you offer?',
-                'answer' => 'We offer a comprehensive range of pet services:\n\n🏨 Pet Hotel & Boarding\n🐕 Dog Grooming (bath, haircut, nail trim)\n🐱 Cat Grooming\n💉 Veterinary Services\n🦴 Pet Training\n🛍️ Pet Supplies Store\n\nBook any service through our website or Telegram bot!',
+                'answer' => 'We offer:\n\n🏨 Pet Hotel & Boarding\n🐕 Dog Grooming (bath, haircut, nail trim)\n🐱 Cat Grooming\n💉 Veterinary Services\n🛍️ Pet Supplies\n\nBook any service through your Pawesome account or ask me to help!',
                 'keywords' => ['services', 'what do you do', 'offerings', 'available'],
                 'scope' => 'general',
                 'is_active' => true,
@@ -92,7 +116,7 @@ class ChatbotFaqSeeder extends Seeder
             ],
             [
                 'question' => 'Do I need to book an appointment?',
-                'answer' => 'Yes, appointments are required for:\n✂️ Grooming services\n🩺 Veterinary consultations\n📚 Training sessions\n\nPet hotel/boarding reservations should be made at least 24 hours in advance when possible.\n\nYou can book through:\n🌐 Our website\n🤖 Telegram bot\n📞 Phone call during business hours',
+                'answer' => 'Yes, appointments are required for:\n✂️ Grooming services\n🩺 Veterinary consultations\n\nPet hotel/boarding reservations should be made at least 24 hours in advance when possible.\n\nYou can book through:\n🌐 Your Pawesome account\n🤖 Telegram bot\n📞 Phone call during business hours',
                 'keywords' => ['appointment', 'book', 'schedule', 'reservation', 'how to book'],
                 'scope' => 'general',
                 'is_active' => true,
@@ -110,7 +134,7 @@ class ChatbotFaqSeeder extends Seeder
             // Customer-specific FAQs
             [
                 'question' => 'How do I book a hotel stay?',
-                'answer' => 'To book a pet hotel stay:\n\n1. Go to the Pet Hotel page on your dashboard\n2. Select your dates and preferred room type\n3. Choose your pet\n4. Complete the booking form\n5. Wait for confirmation\n\nOr simply ask me to help you navigate there!',
+                'answer' => 'To book a pet hotel stay:\n\n1. Go to the Pet Hotel page on your dashboard\n2. Select your dates and preferred room type\n3. Choose your pet\n4. Upload your pet\'s vaccination card\n5. Complete the booking form\n6. Wait for confirmation\n\nOr simply ask me to help you navigate there!',
                 'keywords' => ['book hotel', 'book boarding', 'reserve room', 'how to book'],
                 'scope' => 'customer',
                 'is_active' => true,
@@ -171,7 +195,10 @@ class ChatbotFaqSeeder extends Seeder
         ];
 
         foreach ($faqs as $faq) {
-            ChatbotFaq::firstOrCreate(
+            // Answers are single-quoted PHP strings, so '\n' stays literal —
+            // convert to real newlines before writing.
+            $faq['answer'] = str_replace('\\n', "\n", $faq['answer']);
+            ChatbotFaq::updateOrCreate(
                 ['question' => $faq['question']],
                 $faq
             );

@@ -13,8 +13,22 @@ return [
     */
 
     // AI Chatbot Configuration (Optional - enables AI-powered responses)
-    // Get your free Gemini API key from: https://ai.google.dev
     'ai_enabled' => env('CHATBOT_AI_ENABLED', false),
+
+    // AI provider: 'groq' (OpenAI-compatible, default) or 'gemini'.
+    'ai_provider' => env('CHATBOT_AI_PROVIDER', 'groq'),
+
+    // Groq (https://console.groq.com) — OpenAI-compatible chat completions.
+    'groq_api_key' => env('CHATBOT_GROQ_API_KEY', null),
+    // Optional comma-separated backup keys, tried in order on failure.
+    'groq_api_keys' => array_values(array_unique(array_filter(array_map('trim', array_merge(
+        [(string) env('CHATBOT_GROQ_API_KEY', '')],
+        explode(',', (string) env('CHATBOT_GROQ_API_KEYS', ''))
+    ))))),
+    // Model: openai/gpt-oss-120b (balanced), llama-3.1-8b-instant (cheap/fast),
+    // openai/gpt-oss-120b (larger).
+    'groq_model' => env('CHATBOT_GROQ_MODEL', 'openai/gpt-oss-120b'),
+    'groq_base_url' => env('CHATBOT_GROQ_BASE_URL', 'https://api.groq.com/openai/v1'),
 
     // Google Gemini API Key (free tier available at https://ai.google.dev)
     'ai_api_key' => env('CHATBOT_AI_API_KEY', null),
@@ -82,4 +96,52 @@ return [
     |
     */
     'hybrid_mode' => env('CHATBOT_HYBRID_MODE', 'faq_first'),
+
+    /*
+    |--------------------------------------------------------------------------
+    | FAQ Matching
+    |--------------------------------------------------------------------------
+    |
+    | Synonym/Taglish expansion for KnowledgeBaseService::findAnswer().
+    | A term found in the customer message adds its canonical English words
+    | to the searched text so Tagalog/Taglish phrasing hits English FAQs.
+    |
+    */
+    'synonyms' => [
+        'magkano' => 'price cost rate how much',
+        'presyo' => 'price cost rate',
+        'paano' => 'how',
+        'pano' => 'how',
+        'saan' => 'where location address',
+        'nasaan' => 'where location address',
+        'bayad' => 'payment pay',
+        'bayaran' => 'payment pay',
+        'oras' => 'hours time open schedule',
+        'pwede' => 'can',
+        'puwede' => 'can',
+        'alisin' => 'cancel cancellation',
+        'kansel' => 'cancel cancellation',
+        'bakuna' => 'vaccine vaccination',
+        'turok' => 'vaccine vaccination',
+        'libre' => 'free cancellation',
+        'bukas' => 'open hours',
+        'sarado' => 'close closed hours',
+        'gabi' => 'hours time night',
+        'umaga' => 'hours time morning',
+        'groom' => 'grooming bath',
+        'ligo' => 'grooming bath',
+        'hotel' => 'boarding hotel room stay',
+        'mag book' => 'book booking reserve',
+        'kunin' => 'pickup check-out',
+        'iwan' => 'drop-off check-in boarding',
+        'emergency' => 'emergency urgent',
+        'agad' => 'urgent emergency',
+        'pagkain' => 'food supplies store',
+        'gamot' => 'medicine veterinary medical',
+        'tulong' => 'help support',
+        'salamat' => 'thank',
+    ],
+
+    // Conversation memory: how many recent turns to feed the AI.
+    'memory_turns' => (int) env('CHATBOT_MEMORY_TURNS', 4),
 ];

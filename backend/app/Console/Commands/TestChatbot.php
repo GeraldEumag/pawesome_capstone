@@ -19,9 +19,15 @@ class TestChatbot extends Command
         $this->info('========================================');
         $this->newLine();
 
+        $provider = env('CHATBOT_AI_PROVIDER', 'groq');
+
         // Check raw .env values
         $this->info('1. RAW ENV VALUES FROM .env FILE:');
         $this->line('   CHATBOT_AI_ENABLED=' . env('CHATBOT_AI_ENABLED', 'NOT SET'));
+        $this->line('   CHATBOT_AI_PROVIDER=' . $provider);
+        $groqKey = env('CHATBOT_GROQ_API_KEY');
+        $this->line('   CHATBOT_GROQ_API_KEY=' . ($groqKey ? substr($groqKey, 0, 8) . '...' : 'NOT SET'));
+        $this->line('   CHATBOT_GROQ_MODEL=' . env('CHATBOT_GROQ_MODEL', 'NOT SET (default openai/gpt-oss-120b)'));
         $apiKey = env('CHATBOT_AI_API_KEY');
         $this->line('   CHATBOT_AI_API_KEY=' . ($apiKey ? substr($apiKey, 0, 10) . '...' : 'NOT SET'));
         $this->line('   CHATBOT_AI_MODEL=' . env('CHATBOT_AI_MODEL', 'NOT SET'));
@@ -31,9 +37,11 @@ class TestChatbot extends Command
         // Check config values
         $this->info('2. CONFIG VALUES (after Laravel loads):');
         $this->line('   chatbot.ai_enabled=' . (Config::get('chatbot.ai_enabled') ? 'true' : 'false'));
+        $this->line('   chatbot.ai_provider=' . Config::get('chatbot.ai_provider'));
+        $this->line('   chatbot.groq_api_keys=' . count(Config::get('chatbot.groq_api_keys', [])) . ' key(s) configured');
+        $this->line('   chatbot.groq_model=' . Config::get('chatbot.groq_model'));
         $cfgKey = Config::get('chatbot.ai_api_key');
         $this->line('   chatbot.ai_api_key=' . ($cfgKey ? 'SET (' . strlen($cfgKey) . ' chars)' : 'NOT SET'));
-        $this->line('   chatbot.ai_model=' . Config::get('chatbot.ai_model'));
         $this->line('   chatbot.hybrid_mode=' . Config::get('chatbot.hybrid_mode'));
         $this->newLine();
 
@@ -45,7 +53,7 @@ class TestChatbot extends Command
 
         // Check intent routing
         $this->info('4. INTENT ROUTING CHECK (for hello):');
-        $chatbotService = new ChatbotService();
+        $chatbotService = app(ChatbotService::class);
         $intent = 'greeting';
         $aiEligible = Config::get('chatbot.ai_eligible_intents') ?? [];
         $ruleBased = Config::get('chatbot.rule_based_intents') ?? [];
@@ -60,15 +68,15 @@ class TestChatbot extends Command
         $this->line('   Sending: Hello');
         
         try {
-            $response = $chatbotService->respond('Hello', ['role' => 'manager']);
+            $response = $chatbotService->respond(null, 'Hello', 'cli');
             $this->line('   Response received!');
-            $this->line('   Reply: ' . substr($response['message'], 0, 100) . '...');
-            $this->line('   Source: ' . ($response['source'] ?? 'unknown'));
+            $this->line('   Reply: ' . substr($response['reply'] ?? '', 0, 100) . '...');
+            $this->line('   Source: ' . ($response['metadata']['source'] ?? $response['source'] ?? 'unknown'));
             
-            if (isset($response['source']) && $response['source'] === 'gemini') {
+            if (isset($response['source']) && $response['source'] === 'ai') {
                 $this->info('   ✅ AI IS WORKING!');
             } else {
-                $this->error('   ❌ AI NOT USED (source is not gemini)');
+                $this->error('   ❌ AI NOT USED (source is not ai)');
                 $this->line('   Debug: intent=' . ($response['intent'] ?? 'unknown'));
             }
         } catch (\Exception $e) {
@@ -80,9 +88,10 @@ class TestChatbot extends Command
         $this->info('FIX: Add these lines to your .env file:');
         $this->info('========================================');
         $this->line('CHATBOT_AI_ENABLED=true');
-        $this->line('CHATBOT_AI_API_KEY=YOUR_API_KEY_HERE');
-        $this->line('CHATBOT_AI_MODEL=gemini-1.5-flash');
-        $this->line('CHATBOT_HYBRID_MODE=ai_first');
+        $this->line('CHATBOT_AI_PROVIDER=groq');
+        $this->line('CHATBOT_GROQ_API_KEY=gsk_YOUR_KEY_HERE   # https://console.groq.com');
+        $this->line('CHATBOT_GROQ_MODEL=openai/gpt-oss-120b');
+        $this->line('CHATBOT_HYBRID_MODE=faq_first');
         $this->newLine();
         $this->line('Then run: php artisan config:clear');
         $this->info('========================================');

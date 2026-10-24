@@ -36,6 +36,7 @@ class PremiumChatbotService
 {
     private AiChatbotService $aiService;
     private array $conversationContext = [];
+    private ?User $currentUser = null;
     
     public function __construct(
         private readonly RoleScopeService $roleScopeService,
@@ -84,6 +85,7 @@ class PremiumChatbotService
      */
     public function respond(?User $user, string $message, string $channel = 'web', array $sessionContext = []): array
     {
+        $this->currentUser = $user;
         $role = $this->roleScopeService->normalizeRole($user?->role);
         $config = $this->roleScopeService->getRoleConfig($user);
         $intent = $this->detectSystemIntent($message, $role, $sessionContext);
@@ -117,7 +119,7 @@ class PremiumChatbotService
 
         // AI-eligible intents reach Gemini directly — not gated behind FAQ confidence
         if ($aiEligible && $this->aiService->isEnabled()) {
-            $aiResponse = $this->aiService->generateResponse($message, $role);
+            $aiResponse = $this->aiService->generateResponse($message, $role, [], $this->knowledgeBaseService->historyFor($this->currentUser));
             if ($aiResponse) {
                 $response = [
                     'message' => $aiResponse['message'],
@@ -399,7 +401,7 @@ class PremiumChatbotService
     private function assistantHelp(string $role): array
     {
         $help = match ($role) {
-            'customer' => 'I can check your requests, bookings, payment status, payment history, pets, and guide proof uploads.',
+            'customer' => 'I can check your requests, bookings, payment status, payment history, pets, and guide proof uploads. For direct help, call ' . config('store.phone') . ' or email ' . config('store.email') . '.',
             'receptionist' => 'I can summarize pending approvals, bookings, schedule flow, and customer lookup guidance.',
             'cashier' => 'I can check pending payment proofs, receipt flow, POS guidance, and recent transaction direction.',
             'inventory' => 'I can check stock, low-stock items, item availability, movement guidance, and reorder alerts.',
@@ -1542,6 +1544,9 @@ class PremiumChatbotService
      */
     private function defaultResponse(string $role, string $message): array
     {
+        $store = config('store', []);
+        $contact = trim(($store['phone'] ?? '') . ' / ' . ($store['email'] ?? ''), ' /');
+
         // Try to provide a helpful response even when intent is unclear
         return [
             'message' => "🤔 I want to make sure I help you correctly!\n\n" .
@@ -1550,7 +1555,8 @@ class PremiumChatbotService
                 "• 'What are your prices?'\n" .
                 "• 'I need to book an appointment'\n" .
                 "• 'Check availability for dog food'\n\n" .
-                "Or type **'help'** for a list of things I can assist with!",
+                "Or type **'help'** for a list of things I can assist with!" .
+                ($contact ? "\n\nFor anything urgent, our staff can help at {$contact} or via the live chat in your dashboard." : ''),
             'confidence' => 0.6,
             'suggestions' => [
                 'Show services',

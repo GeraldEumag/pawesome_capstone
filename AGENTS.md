@@ -315,7 +315,10 @@ comes from labels/badges/navigation, never from separate accent colors.
   `payment_method='cash'`); a `pending` row carrying digital proof/method is
   always verified as proof, never downgraded to cash. The cashier queue
   (`Cashier\DashboardController::getPaymentRequests`) only lists rows a
-  cashier can act on and exposes `booking_channel`; appointments read proof
+  cashier can act on and exposes `booking_channel`; rejected payments leave
+  the queue entirely until the customer re-uploads a proof (the verify-time
+  counter-cash capability for rejected online rows remains, but no UI path
+  lists them); appointments read proof
   via the linked SR (`asr.*`, `linked_*` aliases) since the table has no
   `payment_proof`/`payment_method` columns. Hotel SR approval transactionally
   requires `boarding_room_id`, rechecks availability, and creates a
@@ -412,9 +415,10 @@ comes from labels/badges/navigation, never from separate accent colors.
   (`ServiceRequestController::uploadPaymentProof` → linked record;
   `BoardingController::uploadPaymentProof` → parent SR via
   `onlyExistingColumns`). `verify`/`updatePaymentStatus` for linked types now
-  also persist `payment_method`. Cashier queue lists `unpaid`/`rejected`
-  approved SRs for counter collection; `rejected` linked rows emit
-  `payment_method => null` so the UI treats them as counter payments.
+  also persist `payment_method`. Cashier queue lists `unpaid` walk-in
+  approved SRs for counter collection; `rejected` rows are no longer listed
+  (product decision — the customer re-uploads instead of a counter-fallback
+  row lingering in approvals).
   `appointments` has no proof/method columns — appointment payments flow
   through the SR or the counter. E2E-verified: SR#11/GR#7 full
   reject→resubmit→verify cycle (shared receipt `SR-REC-…-11`), GR#4
@@ -520,3 +524,63 @@ comes from labels/badges/navigation, never from separate accent colors.
 | Gate C — Database Readiness | `browser-evidence/database-readiness-audit/PAWESOME_DATABASE_READINESS_REPORT.md` |
 | Gate D — Report Reconciliation | `browser-evidence/report-reconciliation-audit/PAWESOME_REPORT_RECONCILIATION_REPORT.md` |
 | Browser Regression | `browser-evidence/browser-regression/PAWESOME_BROWSER_REGRESSION_REPORT.md` |
+
+## Receipt Scanner (GCash / Maya)
+
+Automatic receipt reading for customer e-wallet proofs — see
+`docs/RECEIPT_SCANNER.md` for the full contract.
+
+- Upload endpoints keep their signatures; `payment_reference` is now
+  optional (scanner auto-fills) and `idempotency_key` + WEBP are accepted.
+  `ReceiptService::storeAndAttach()` wraps `FileStorageService` so file +
+  payable + `payment_receipts` row commit together.
+- Reader chain `RECEIPT_SCANNER_CHAIN=vision,ocr`: Gemini vision first,
+  local Tesseract/`pdftotext` fallback — a broken AI reader never blocks
+  payment (receipt degrades to `failed` → manual entry).
+- Cashier confirms via `POST /api/cashier/receipts/{id}/confirm`, which runs
+  the existing `PaymentVerificationService::verify` inside an outer
+  transaction that also inserts `payment_references`
+  (unique(provider, reference_normalized)) — a duplicate reference rolls
+  the whole verification back.
+- Any `block` `receipt_validations` row disables Confirm; warnings show
+  amber. Manager config + metrics live under
+  `/api/manager/receipt-scanner/*` and `/manager/receipt-scanner`.
+- Tests: `php artisan test --filter=ReceiptScannerTest`
+  (12 tests). Accuracy corpus: `php artisan receipts:evaluate`.
+- Config: `config/receipt_scanner.php`, seeder `ReceiptScannerSeeder`,
+  migration `2026_10_30_000000_create_receipt_scanner_tables.php`.
+
+## Chatbot AI (Groq)
+
+- Provider is selectable via `CHATBOT_AI_PROVIDER` (`groq` default, `gemini`
+  fallback) in `config/chatbot.php`; `AiChatbotService` dispatches between
+  Groq's OpenAI-compatible `chat/completions` and Gemini `generateContent`,
+  both fail-soft to the FAQ/rule layer.
+- Groq keys: `CHATBOT_GROQ_API_KEY` (+ optional `CHATBOT_GROQ_API_KEYS` CSV
+  pool with last-good-key cache), model `CHATBOT_GROQ_MODEL`
+  (default `openai/gpt-oss-120b` — `llama-*` IDs are NOT on this account).
+- Ground truth for the prompt comes from `config/store.php` (`STORE_*` envs):
+  Pawesome Retreat Inc. identity, address, contacts, cancellation, payments,
+  vaccination-card rule; hours read live via `StoreHours` (fail-soft).
+  `chatbot_faqs` rows mirror the same facts — keep them in sync.
+- Tests: `php artisan test --filter=ChatbotGroqTest` (no DB needed).
+  Debug: `php artisan chatbot:test`.
+
+## Chatbot Reliability
+
+- `KnowledgeBaseService::findAnswer()` matches on the REAL columns
+  (`scope` = general|all|<role>, ordered by `sort_order`) — a legacy
+  `role_scope`/`priority` query silently broke all FAQ hits. Matching is
+  keyword-weighted (keywords=2, question words=1) with a best-vs-runner-up
+  margin, plus Taglish synonyms from `config/chatbot.php` → `synonyms`.
+- Conversation memory: `KnowledgeBaseService::historyFor($user)` feeds the
+  last `chatbot.memory_turns` logged turns into the AI call (multi-turn
+  `messages[]` on Groq; appended text on Gemini).
+- Grounding: the system prompt injects live `services` prices + `hotel_rooms`
+  rates (fail-soft) alongside `config/store.php` profile — never hardcode
+  prices in FAQs/prompts.
+- Fallback order: FAQ → AI → rules → clarification card with store contacts
+  (never a dead end).
+- Eval harness: `php artisan chatbot:eval` runs 11 fixture cases (incl.
+  Taglish + off-topic refusal) through `PremiumChatbotService`; add cases
+  when facts change. Tests: `--filter=ChatbotReliabilityTest|ChatbotGroqTest`.

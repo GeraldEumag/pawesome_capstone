@@ -359,9 +359,13 @@ const RoleAwareChatbot = ({
     setInput("");
     setError("");
     setIsLoading(true);
+    const sentAt = Date.now();
 
     try {
       const data = await sendChatbotMessage(trimmed, { context: sessionContext });
+      // Keep the typing indicator visible at least ~5s so replies feel deliberate
+      const minWait = 5000 - (Date.now() - sentAt);
+      if (minWait > 0) await new Promise((r) => setTimeout(r, minWait));
       const replyText = normalizeCustomerBotReply(data.reply, role);
       const richContext = data.rich_content || {};
       setSessionContext((prev) => ({

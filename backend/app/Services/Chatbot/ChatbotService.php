@@ -18,6 +18,7 @@ use Illuminate\Support\Facades\Log;
 class ChatbotService
 {
     private AiChatbotService $aiService;
+    private ?User $currentUser = null;
 
     public function __construct(
         private readonly RoleScopeService $roleScopeService,
@@ -42,6 +43,7 @@ class ChatbotService
 
     public function respond(?User $user, string $message, string $channel = 'web'): array
     {
+        $this->currentUser = $user;
         $role = $this->roleScopeService->normalizeRole($user?->role);
         $config = $this->roleScopeService->getRoleConfig($user);
         $intent = $this->detectIntent($message);
@@ -729,7 +731,7 @@ class ChatbotService
         $context = $this->gatherLiveContext();
 
         // Try AI first
-        $aiResponse = $this->aiService->generateResponse($message, $role, $context);
+        $aiResponse = $this->aiService->generateResponse($message, $role, $context, $this->knowledgeBaseService->historyFor($this->currentUser));
 
         if ($aiResponse) {
             return array_merge($aiResponse, [
@@ -970,7 +972,7 @@ class ChatbotService
         );
 
         // Use AI with full context for intelligent booking assistance
-        $aiResponse = $this->aiService->generateResponse($message, $role, $context);
+        $aiResponse = $this->aiService->generateResponse($message, $role, $context, $this->knowledgeBaseService->historyFor($this->currentUser));
 
         if ($aiResponse) {
             // Add booking-specific actions
