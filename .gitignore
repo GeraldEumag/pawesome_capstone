@@ -82,3 +82,10 @@ tmp-test.txt
 # OS
 Thumbs.db
 desktop.ini
+
+# Playwright run artifacts (generated)
+frontend/test-results/
+playwright-report/
+
+# Manual PDF/DOCX build intermediates (regenerated)
+docs/user-manual/.manual-*
