@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react";
-import { showConfirm, showSuccess, showError } from "../../utils/alert.jsx";
+import { showConfirm, showReasonPrompt, showSuccess, showError, SERVICE_DELETE_REASONS } from "../../utils/alert.jsx";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
   faBook,
@@ -482,10 +482,19 @@ const ChatbotLogs = () => {
   };
 
   const removeService = async (id) => {
-    if (!(await showConfirm("Delete this service?"))) return;
+    const reason = await showReasonPrompt(
+      "Delete this service? Existing booking history will be retained. This action is logged — please state why.",
+      "Delete Service",
+      "Delete Service",
+      SERVICE_DELETE_REASONS
+    );
+    if (reason === null) return;
 
     try {
-      await apiRequest(`/admin/services/${id}`, { method: "DELETE" });
+      await apiRequest(`/admin/services/${id}`, {
+        method: "DELETE",
+        body: JSON.stringify({ reason }),
+      });
       await loadData({ silent: true });
       showMessage("success", "Service deleted.");
     } catch (err) {

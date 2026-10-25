@@ -19,8 +19,8 @@ import ThirteenthMonthPanel from "../components/manager/ThirteenthMonthPanel";
 import GovernmentRemittanceReports from "../components/manager/GovernmentRemittanceReports";
 import DTRReport from "../components/manager/DTRReport";
 import ManagerInvoiceApprovals from "../components/manager/ManagerInvoiceApprovals";
+import ServiceCatalogManager from "../components/shared/catalog/ServiceCatalogManager";
 import ReceiptScannerSettings from "../components/manager/ReceiptScannerSettings";
-import ControlledDrugRegister from "../components/inventory/ControlledDrugRegister";
 // Employee self-service
 import MyLeave from "../components/shared/MyLeave";
 import MyAttendanceCorrection from "../components/shared/MyAttendanceCorrection";
@@ -66,7 +66,16 @@ const ManagerRoutes = () => (
       <Route path="reports" element={<ManagerReports />} />
       {/* Redirect old monitoring aliases to unified Reports page */}
       <Route path="reservations" element={<Navigate to="/manager/reports" replace />} />
-      <Route path="services" element={<Navigate to="/manager/reports" replace />} />
+      <Route
+        path="services"
+        element={
+          <ServiceCatalogManager
+            apiBase="/manager"
+            title="Services & Rooms"
+            subtitle="Manage the service catalog, hotel rooms, and boarding/daycare rooms"
+          />
+        }
+      />
       <Route path="payments" element={<Navigate to="/manager/reports" replace />} />
       <Route path="inventory" element={<Navigate to="/manager/reports" replace />} />
       <Route path="customers" element={<Navigate to="/manager/reports" replace />} />
@@ -80,10 +89,6 @@ const ManagerRoutes = () => (
       <Route path="dtr-report" element={<DTRReport />} />
       <Route path="invoice-approvals" element={<ManagerInvoiceApprovals />} />
       <Route path="receipt-scanner" element={<ReceiptScannerSettings />} />
-      <Route
-        path="controlled-drugs"
-        element={<ControlledDrugRegister apiPrefix="/manager" canVerify />}
-      />
       {/* Employee self-service (accessible to all logged-in staff under /manager/ scope) */}
       <Route path="my-leave" element={<MyLeave />} />
       <Route path="my-attendance" element={<MyAttendanceCorrection />} />

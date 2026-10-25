@@ -1,0 +1,211 @@
+/* ─────────────────────────────────────────────
+   ReceiptDocument — branded online receipt
+   Matches the A4 invoice PDF design language.
+   ───────────────────────────────────────────── */
+
+.rcd-doc {
+  width: 100%;
+  max-width: 520px;
+  margin: 0 auto;
+  background: var(--color-surface-solid, #fff);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  color: var(--color-text);
+  box-shadow: var(--shadow-soft);
+}
+
+/* ── Brand header ── */
+.rcd-header {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 20px 22px;
+  background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary-hover, #ff4f85) 100%);
+  color: #fff;
+}
+
+.rcd-logo {
+  width: 64px;
+  height: 64px;
+  border-radius: 10px;
+  object-fit: contain;
+  background: #fff;
+  padding: 2px;
+  flex-shrink: 0;
+}
+
+.rcd-brand { flex: 1; min-width: 0; }
+
+.rcd-store-name {
+  font-size: 1.05rem;
+  font-weight: 800;
+  letter-spacing: 0.4px;
+}
+
+.rcd-store-line {
+  font-size: 0.72rem;
+  opacity: 0.92;
+  line-height: 1.45;
+}
+
+.rcd-title-block {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 6px;
+}
+
+.rcd-title {
+  font-size: 0.95rem;
+  font-weight: 700;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  text-align: right;
+}
+
+.rcd-status {
+  display: inline-block;
+  padding: 3px 12px;
+  border-radius: var(--radius-pill);
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.8px;
+  background: rgba(255, 255, 255, 0.22);
+  border: 1px solid rgba(255, 255, 255, 0.5);
+}
+
+.rcd-status--success { background: #16a34a; border-color: #16a34a; }
+.rcd-status--warning { background: #d97706; border-color: #d97706; }
+.rcd-status--danger  { background: #dc2626; border-color: #dc2626; }
+.rcd-status--info    { background: #2563eb; border-color: #2563eb; }
+
+/* ── Meta grid ── */
+.rcd-meta {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 10px 18px;
+  padding: 16px 22px;
+  background: var(--color-surface-muted);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.rcd-meta-item {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.rcd-meta-label {
+  font-size: 0.68rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  color: var(--color-text-muted, #64748b);
+}
+
+.rcd-meta-value {
+  font-size: 0.85rem;
+  font-weight: 600;
+  overflow-wrap: break-word;
+}
+
+/* ── Items table ── */
+.rcd-items {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.85rem;
+}
+
+.rcd-th {
+  padding: 9px 14px;
+  text-align: left;
+  font-size: 0.68rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  color: var(--color-text-muted, #64748b);
+  border-bottom: 2px solid var(--color-primary-soft);
+  background: var(--color-surface-muted);
+}
+
+.rcd-th--qty,
+.rcd-th--price,
+.rcd-th--total { text-align: right; }
+
+.rcd-td {
+  padding: 9px 14px;
+  border-bottom: 1px solid var(--color-border);
+  vertical-align: top;
+}
+
+.rcd-td--name { font-weight: 600; }
+.rcd-td--qty,
+.rcd-td--price,
+.rcd-td--total { text-align: right; white-space: nowrap; }
+.rcd-td--total { font-weight: 700; }
+
+.rcd-items tbody tr:nth-child(even) { background: var(--color-surface-muted); }
+
+/* ── Totals ── */
+.rcd-totals {
+  padding: 12px 22px 4px;
+  border-top: 2px solid var(--color-primary-soft);
+}
+
+.rcd-total-row {
+  display: flex;
+  justify-content: space-between;
+  padding: 4px 0;
+  font-size: 0.85rem;
+}
+
+.rcd-total-row span:first-child { color: var(--color-text-muted, #64748b); }
+.rcd-total-row span:last-child  { font-weight: 600; }
+
+.rcd-total-row--grand {
+  margin-top: 8px;
+  padding: 10px 14px;
+  border-radius: var(--radius-sm);
+  background: var(--color-primary-soft);
+  font-size: 1.05rem;
+  font-weight: 800;
+}
+
+.rcd-total-row--grand span { color: var(--color-primary); }
+
+/* ── Payment ── */
+.rcd-payment { padding: 8px 22px 12px; }
+
+/* ── Footer ── */
+.rcd-footer {
+  padding: 16px 22px 20px;
+  text-align: center;
+  background: var(--color-surface-muted);
+  border-top: 1px dashed var(--color-border);
+}
+
+.rcd-footer-icon {
+  color: var(--color-primary);
+  font-size: 1rem;
+  margin-bottom: 6px;
+}
+
+.rcd-footer-text {
+  margin: 0 0 4px;
+  font-size: 0.82rem;
+  font-weight: 600;
+}
+
+.rcd-footer-tagline {
+  margin: 0;
+  font-size: 0.7rem;
+  color: var(--color-text-muted, #64748b);
+  letter-spacing: 0.4px;
+}
+
+/* ── Print ── */
+@media print {
+  .rcd-doc { box-shadow: none; border: 1px solid #ccc; max-width: none; }
+}

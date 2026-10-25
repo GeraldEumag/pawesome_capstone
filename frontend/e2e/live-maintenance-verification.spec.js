@@ -176,10 +176,10 @@ test("live My Leave self-service and Attendance baseline", async ({ browser, req
   await attendanceView.context.close();
 });
 
-test("live service, hotel-room, and holiday deletion audits", async ({ browser, request }) => {
+test("live service, boarding-room, and holiday deletion audits", async ({ browser, request }) => {
   const stamp = runId;
   const serviceName = `E2E Live Service ${stamp}`;
-  const roomName = `E2E Live Hotel Room ${stamp}`;
+  const roomName = `E2E Live Boarding Room ${stamp}`;
   const roomNumber = `E2E${stamp.slice(-9)}`;
 
   const serviceCreated = await api(request, sessions.receptionist, "POST", "/receptionist/services", {
@@ -193,12 +193,12 @@ test("live service, hotel-room, and holiday deletion audits", async ({ browser, 
   const service = responseData(serviceCreated.body, ["data", "service"]);
   expect(service.id).toBeTruthy();
 
-  const roomCreated = await api(request, sessions.receptionist, "POST", "/receptionist/hotel-rooms", {
-    room_number: roomNumber,
-    name: roomName,
-    type: "standard",
-    size: "medium",
-    capacity: 1,
+  const roomCreated = await api(request, sessions.receptionist, "POST", "/receptionist/boarding-rooms", {
+    room_code: roomNumber,
+    room_name: roomName,
+    room_type: "dog_standard",
+    max_capacity: 1,
+    total_rooms: 1,
     daily_rate: 100,
   });
   expect(roomCreated.response.status()).toBe(201);
@@ -246,22 +246,23 @@ test("live service, hotel-room, and holiday deletion audits", async ({ browser, 
   await expect(receptionistView.page.getByRole("button", { name: `Actions for ${serviceName}` })).toHaveCount(0);
   await capture(receptionistView.page, "service-deleted-with-reason");
 
-  await receptionistView.page.getByRole("button", { name: "Hotel Rooms" }).click();
-  const roomCard = receptionistView.page.locator(".room-card").filter({ hasText: roomName });
-  await expect(roomCard).toBeVisible({ timeout: 20000 });
-  await roomCard.locator(".delete-btn").click();
+  await receptionistView.page.getByRole("button", { name: "Rooms", exact: true }).click();
+  const roomRow = receptionistView.page.locator("tr", { hasText: roomName });
+  await expect(roomRow).toBeVisible({ timeout: 20000 });
+  await roomRow.locator(".row-action-popover-trigger").click();
+  await receptionistView.page.locator(".row-action-popover-panel").getByRole("button", { name: "Delete", exact: true }).click();
   const roomReason = `E2E live verification archive ${stamp}`;
   await receptionistView.page.locator("#swal-reason-other").fill(roomReason);
   const roomDeletePromise = receptionistView.page.waitForResponse((response) => {
     const url = new URL(response.url());
-    return url.pathname.endsWith(`/api/receptionist/hotel-rooms/${room.id}`) && response.request().method() === "DELETE";
+    return url.pathname.endsWith(`/api/receptionist/boarding-rooms/${room.id}`) && response.request().method() === "DELETE";
   });
   await receptionistView.page.getByRole("button", { name: "Delete Room", exact: true }).last().click();
   const roomDelete = await roomDeletePromise;
   const roomDeletePayload = roomDelete.request().postDataJSON();
   expect(roomDelete.status()).toBe(200);
   expect(roomDeletePayload.reason).toBe(roomReason);
-  await expect(roomCard).toHaveCount(0);
+  await expect(roomRow).toHaveCount(0);
   await capture(receptionistView.page, "hotel-room-deleted-with-reason");
   await receptionistView.context.close();
 

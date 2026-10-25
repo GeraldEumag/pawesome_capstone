@@ -260,39 +260,67 @@ class WalkInController extends Controller
                 $bookingType = null;
 
                 if ($serviceType === 'hotel') {
-                    $hotelRoomId = $bookingData['hotel_room_id'] ?? $bookingData['room_id'] ?? null;
+                    // room_id = boarding_rooms (modern catalog, preferred);
+                    // hotel_room_id = legacy contract kept for old callers.
+                    $boardingRoomId = $bookingData['room_id'] ?? null;
+                    $hotelRoomId = $bookingData['hotel_room_id'] ?? null;
 
-                    if (!$hotelRoomId) {
+                    if (!$boardingRoomId && !$hotelRoomId) {
                         throw new HttpResponseException(response()->json([
                             'success' => false,
                             'message' => 'A room must be selected for hotel bookings.',
                         ], 422));
                     }
 
-                    $room = \App\Models\HotelRoom::lockForUpdate()->find($hotelRoomId);
-                    if (!$room || $room->status !== 'available') {
-                        throw new HttpResponseException(response()->json([
-                            'success' => false,
-                            'message' => 'Selected room is not available.',
-                        ], 422));
-                    }
-
-                    // Same-day boarding occupies the room for the whole date
                     $date = $bookingData['request_date'];
-                    $blockingCount = Boarding::where('hotel_room_id', $room->id)
-                        ->whereNotIn('status', ['rejected', 'cancelled', 'checked_out', 'completed'])
-                        ->where('check_in', '<=', $date)
-                        ->where('check_out', '>=', $date)
-                        ->count();
-                    if ($blockingCount >= (int) ($room->capacity ?? 1)) {
-                        throw new HttpResponseException(response()->json([
-                            'success' => false,
-                            'message' => 'Selected room is already booked for that date.',
-                        ], 422));
+                    $boardingRoom = null;
+                    $room = null;
+
+                    if ($boardingRoomId) {
+                        $boardingRoom = \App\Models\BoardingRoom::lockForUpdate()->find($boardingRoomId);
+                        if (!$boardingRoom || !$boardingRoom->is_active) {
+                            throw new HttpResponseException(response()->json([
+                                'success' => false,
+                                'message' => 'Selected room is not available.',
+                            ], 422));
+                        }
+                        if (!in_array(strtolower((string) $pet->species), array_map('strtolower', $boardingRoom->allowed_species ?? []), true)) {
+                            throw new HttpResponseException(response()->json([
+                                'success' => false,
+                                'message' => 'Selected room does not accept this pet species.',
+                            ], 422));
+                        }
+                        if (!$boardingRoom->isAvailable($date, $date)) {
+                            throw new HttpResponseException(response()->json([
+                                'success' => false,
+                                'message' => 'Selected room is already booked for that date.',
+                            ], 422));
+                        }
+                    } else {
+                        $room = \App\Models\HotelRoom::lockForUpdate()->find($hotelRoomId);
+                        if (!$room || $room->status !== 'available') {
+                            throw new HttpResponseException(response()->json([
+                                'success' => false,
+                                'message' => 'Selected room is not available.',
+                            ], 422));
+                        }
+
+                        // Same-day boarding occupies the room for the whole date
+                        $blockingCount = Boarding::where('hotel_room_id', $room->id)
+                            ->whereNotIn('status', ['rejected', 'cancelled', 'checked_out', 'completed'])
+                            ->where('check_in', '<=', $date)
+                            ->where('check_out', '>=', $date)
+                            ->count();
+                        if ($blockingCount >= (int) ($room->capacity ?? 1)) {
+                            throw new HttpResponseException(response()->json([
+                                'success' => false,
+                                'message' => 'Selected room is already booked for that date.',
+                            ], 422));
+                        }
                     }
 
                     // Rate always comes from the room record — never the client.
-                    $ratePerDay = (float) $room->daily_rate;
+                    $ratePerDay = (float) ($boardingRoom?->daily_rate ?? $room->daily_rate);
 
                     // Boarding stays occupy the selected date from 10 AM to 6 PM
                     $numberOfDays = 1;
@@ -314,8 +342,9 @@ class WalkInController extends Controller
                         'customer_email' => $customer->email,
                         'check_in' => $bookingData['request_date'],
                         'check_out' => $checkOutDate,
-                        'hotel_room_id' => $hotelRoomId,
-                        'boarding_type' => $bookingData['room_type'] ?? null,
+                        'room_id' => $boardingRoom?->id,
+                        'hotel_room_id' => $room?->id,
+                        'boarding_type' => $bookingData['room_type'] ?? $boardingRoom?->room_type,
                         'total_amount' => $totalAmount,
                         'status' => 'pending',
                         'payment_status' => 'pending',

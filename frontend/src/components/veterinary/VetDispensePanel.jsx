@@ -11,7 +11,6 @@ import { apiRequest } from "../../api/client";
 
 /**
  * Take-home medication dispensing for a visit. Stock moves on Dispense;
- * controlled drugs additionally write the register entry server-side.
  */
 const VetDispensePanel = ({ appointmentId, disabled }) => {
   const [dispensations, setDispensations] = useState([]);
@@ -35,7 +34,7 @@ const VetDispensePanel = ({ appointmentId, disabled }) => {
       setDispensations(Array.isArray(disp?.dispensations) ? disp.dispensations : []);
       const list = Array.isArray(inv) ? inv : (inv?.items || inv?.inventory_items || inv?.data || []);
       // Only pharmacy-relevant classes can be dispensed.
-      setItems(list.filter((i) => !i.item_class || ["medicine", "vaccine", "controlled_drug", "consumable", "retail"].includes(i.item_class)));
+      setItems(list.filter((i) => !i.item_class || ["medicine", "vaccine", "consumable", "retail"].includes(i.item_class)));
     } catch (err) {
       toast.error(err.message || "Failed to load dispensations.");
     } finally {
@@ -111,7 +110,7 @@ const VetDispensePanel = ({ appointmentId, disabled }) => {
               <option value="">Select item…</option>
               {items.map((item) => (
                 <option key={item.id} value={item.id}>
-                  {item.name}{item.item_class === "controlled_drug" ? " ⚠ controlled" : ""} — stock {item.stock ?? item.available_stock ?? 0}
+                  {item.name} — stock {item.stock ?? item.available_stock ?? 0}
                 </option>
               ))}
             </select>

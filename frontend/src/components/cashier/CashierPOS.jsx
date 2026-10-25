@@ -13,8 +13,6 @@ import {
 import { showError } from "../../utils/alert.jsx";
 import { printReceipt } from "../../utils/receiptPrinter";
 import { downloadReceiptPdf } from "../../utils/receiptPdf";
-import { STORE_INFO } from "../../utils/storeInfo";
-import brandLogo from "../../assets/pawesome.jpg";
 import PaymentApprovals from "./components/PaymentApprovals";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
@@ -30,6 +28,7 @@ import {
   faDeleteLeft, faReceipt, faImage,
 } from "@fortawesome/free-solid-svg-icons";
 import QrScanner from "../shared/QrScanner";
+import ReceiptDocument from "../shared/receipt/ReceiptDocument";
 import Modal from "../shared/Modal";
 
 /* ---------- Constants -------------------------------------------- */
@@ -1124,61 +1123,7 @@ const CashierPOS = ({ initialTab }) => {
           }
         >
             <div className="pos-modal-body">
-              <div className="pos-receipt-paper">
-
-                {/* ── Store header ── */}
-                <div className="pos-receipt-hd">
-                  <img src={brandLogo} alt="Pawesome logo" className="pos-receipt-logo" />
-                  <div className="pos-receipt-name">PAWESOME RETREAT INC.</div>
-                  {STORE_INFO.address.split("\n").map((line) => (
-                    <div className="pos-receipt-addr" key={line}>{line}</div>
-                  ))}
-                  <div className="pos-receipt-sub">SALES INVOICE</div>
-                </div>
-
-                {/* ── Transaction info ── */}
-                <div className="pos-receipt-row"><span>Receipt #</span><span>{completedReceipt.transaction_id}</span></div>
-                <div className="pos-receipt-row"><span>Date</span><span>{completedReceipt.date}</span></div>
-                <div className="pos-receipt-row"><span>Customer</span><span>{completedReceipt.customer_name}</span></div>
-                <div className="pos-receipt-row"><span>Payment</span><span>{completedReceipt.payment_method.toUpperCase()}</span></div>
-                {completedReceipt.reference_number && (
-                  <div className="pos-receipt-row"><span>Reference #</span><span>{completedReceipt.reference_number}</span></div>
-                )}
-
-
-                {/* ── Items ── */}
-                {completedReceipt.items.map((item, idx) => {
-                  const unitPrice = item.unit_price || 0;
-                  const lineTotal = Number(item.total_price ?? item.total ?? unitPrice * item.quantity);
-                  return (
-                    <div className="pos-receipt-item" key={idx}>
-                      <div className="pos-receipt-item-name">{item.item_name}</div>
-                      <div className="pos-receipt-item-qty">{item.quantity} x {fmt(unitPrice)}</div>
-                      <div className="pos-receipt-item-price">{fmt(lineTotal)}</div>
-                    </div>
-                  );
-                })}
-
-
-                {/* ── Subtotal / VAT ── */}
-                <div className="pos-receipt-row"><span>Subtotal (incl. VAT)</span><span>{fmt(completedReceipt.total)}</span></div>
-                <div className="pos-receipt-row"><span>VAT 12%</span><span>-{fmt(Math.abs(Number(completedReceipt.vat_amount) || 0))}</span></div>
-                <div className="pos-receipt-total">
-                  <span>TOTAL</span>
-                  <span>{fmt(completedReceipt.total)}</span>
-                </div>
-
-                {/* ── Payment details ── */}
-                <div className="pos-receipt-row"><span>Cash Received</span><span>{fmt(completedReceipt.amount_received)}</span></div>
-                <div className="pos-receipt-row"><span>Change</span><span>{fmt(completedReceipt.change)}</span></div>
-
-
-                {/* ── Footer ── */}
-                <div className="pos-receipt-footer">
-                  Thank you for shopping with us!<br />
-                  Please keep this receipt.
-                </div>
-              </div>
+              <ReceiptDocument {...getReceiptOptions()} />
             </div>
         </Modal>
       )}

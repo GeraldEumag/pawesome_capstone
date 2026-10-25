@@ -16,7 +16,6 @@ import {
   faArrowLeft,
   faBarcode,
   faBuilding,
-  faPrescriptionBottleMedical,
 } from "@fortawesome/free-solid-svg-icons";
 import { showConfirm } from "../../utils/alert.jsx";
 import { useAuth } from "../../context/AuthContext";
@@ -30,7 +29,6 @@ const NAV_SECTIONS = [
       { to: "/inventory/stock", label: "Stock Management", icon: faBoxes },
       { to: "/inventory/suppliers", label: "Suppliers", icon: faBuilding },
       { to: "/inventory/history", label: "History", icon: faHistory },
-      { to: "/inventory/controlled-drugs", label: "Controlled Drugs", icon: faPrescriptionBottleMedical },
       { to: "/inventory/barcodes", label: "Barcode Generator", icon: faBarcode },
     ],
   },

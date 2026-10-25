@@ -800,7 +800,7 @@ const VetConsultation = () => {
                             {medItems.map((item) => (
                               <option key={item.id} value={String(item.id)}>
                                 {item.name}
-                                {item.item_class === "controlled_drug" ? " ⚠ controlled" : ""}
+                                
                                 {" — stock "}{item.stock ?? item.available_stock ?? 0}
                               </option>
                             ))}

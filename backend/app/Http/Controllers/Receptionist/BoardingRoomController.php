@@ -46,6 +46,7 @@ class BoardingRoomController extends Controller
                         'customer_selectable' => $room->customer_selectable,
                         'hotel_category' => $room->hotel_category ?? BoardingRoom::inferCategory($room->room_type),
                         'notes' => $room->notes,
+                        'image_url' => $room->image_url,
                     ];
                 }),
                 'valid_room_types' => [
@@ -87,14 +88,13 @@ class BoardingRoomController extends Controller
                 'room_name' => 'required|string|max:255',
                 'room_type' => 'required|in:' . implode(',', BoardingRoom::VALID_ROOM_TYPES),
                 'hotel_category' => 'nullable|in:dog_hotel,cat_hotel,daycare,other',
-                'allowed_species' => 'required|array',
-                'allowed_species.*' => 'in:dog,cat,bird,fish,reptile,other',
                 'max_capacity' => 'required|integer|min:1',
                 'total_rooms' => 'required|integer|min:1',
                 'daily_rate' => 'required|numeric|min:0',
                 'is_active' => 'sometimes|boolean',
                 'customer_selectable' => 'sometimes|boolean',
                 'notes' => 'nullable|string',
+                'image' => 'sometimes|image|mimes:jpg,jpeg,png,webp|max:5120',
             ]);
 
             if ($validator->fails()) {
@@ -104,14 +104,27 @@ class BoardingRoomController extends Controller
                 ], 422);
             }
 
-            $data = $request->all();
+            $data = $validator->validated();
+            unset($data['image']);
             $data['is_active'] = $data['is_active'] ?? true;
             $data['customer_selectable'] = $data['customer_selectable'] ?? true;
+            $data['allowed_species'] = BoardingRoom::speciesForRoomType($data['room_type']);
             if (empty($data['hotel_category'])) {
                 $data['hotel_category'] = BoardingRoom::inferCategory($data['room_type']);
             }
 
-            $room = BoardingRoom::create($data);
+            $room = $this->persistRoom(new BoardingRoom(), $data, $request);
+
+            ActivityLog::log($request->user()?->id, 'boarding_room_created',
+                "Boarding room #{$room->id} ({$room->room_name}) created", [
+                    'category' => 'rooms',
+                    'reference_type' => BoardingRoom::class,
+                    'reference_id' => $room->id,
+                    'metadata' => [
+                        'room_id' => $room->id,
+                        'room_name' => $room->room_name,
+                    ],
+                ]);
 
             return response()->json([
                 'success' => true,
@@ -141,14 +154,14 @@ class BoardingRoomController extends Controller
                 'room_name' => 'sometimes|string|max:255',
                 'room_type' => 'sometimes|in:' . implode(',', BoardingRoom::VALID_ROOM_TYPES),
                 'hotel_category' => 'nullable|in:dog_hotel,cat_hotel,daycare,other',
-                'allowed_species' => 'sometimes|array',
-                'allowed_species.*' => 'in:dog,cat,bird,fish,reptile,other',
                 'max_capacity' => 'sometimes|integer|min:1',
                 'total_rooms' => 'sometimes|integer|min:1',
                 'daily_rate' => 'sometimes|numeric|min:0',
                 'is_active' => 'sometimes|boolean',
                 'customer_selectable' => 'sometimes|boolean',
                 'notes' => 'nullable|string',
+                'image' => 'sometimes|image|mimes:jpg,jpeg,png,webp|max:5120',
+                'reason' => 'nullable|string|min:3|max:500',
             ]);
 
             if ($validator->fails()) {
@@ -158,11 +171,31 @@ class BoardingRoomController extends Controller
                 ], 422);
             }
 
-            $updateData = $request->all();
-            if (!empty($updateData['room_type']) && empty($updateData['hotel_category'])) {
-                $updateData['hotel_category'] = BoardingRoom::inferCategory($updateData['room_type']);
+            $updateData = $validator->validated();
+            $reason = $updateData['reason'] ?? null;
+            unset($updateData['reason'], $updateData['image']);
+            if (!empty($updateData['room_type'])) {
+                $updateData['allowed_species'] = BoardingRoom::speciesForRoomType($updateData['room_type']);
+                if (empty($updateData['hotel_category'])) {
+                    $updateData['hotel_category'] = BoardingRoom::inferCategory($updateData['room_type']);
+                }
             }
-            $room->update($updateData);
+            $wasActive = (bool) $room->is_active;
+            $room = $this->persistRoom($room, $updateData, $request);
+
+            if ($wasActive && !$room->is_active) {
+                ActivityLog::log($request->user()?->id, 'boarding_room_deactivated',
+                    "Boarding room #{$room->id} ({$room->room_name}) deactivated", [
+                        'category' => 'rooms',
+                        'reference_type' => BoardingRoom::class,
+                        'reference_id' => $room->id,
+                        'metadata' => [
+                            'room_id' => $room->id,
+                            'room_name' => $room->room_name,
+                            'reason' => $reason,
+                        ],
+                    ]);
+            }
 
             return response()->json([
                 'success' => true,
@@ -177,6 +210,32 @@ class BoardingRoomController extends Controller
                 'errors' => $e->getMessage(),
             ], 422);
         }
+    }
+
+    /**
+     * Fill + save a room, storing a replacement photo transactionally
+     * when one was uploaded.
+     */
+    private function persistRoom(BoardingRoom $room, array $data, Request $request): BoardingRoom
+    {
+        $room->fill($data);
+
+        if (!$request->hasFile('image')) {
+            $room->save();
+            return $room;
+        }
+
+        return \App\Services\FileStorageService::storeAndPersist(
+            $request->file('image'),
+            'boarding-room-photos',
+            'public',
+            function ($path) use ($room) {
+                $room->image_path = $path;
+                $room->save();
+                return $room;
+            },
+            $room->getRawOriginal('image_path')
+        );
     }
 
     /**
@@ -198,7 +257,7 @@ class BoardingRoomController extends Controller
                 }
 
                 ActivityLog::log($request->user()?->id, 'boarding_room_deleted',
-                    "Boarding room #{$room->id} ({$room->room_name}) deleted by receptionist", [
+                    "Boarding room #{$room->id} ({$room->room_name}) deleted", [
                         'category' => 'rooms',
                         'reference_type' => BoardingRoom::class,
                         'reference_id' => $room->id,

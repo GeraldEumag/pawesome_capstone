@@ -57,6 +57,11 @@ const ManagerSidebar = ({ mobileOpen, onMobileMenuToggle }) => {
             </NavLink>
           </li>
           <li className="nav-item">
+            <NavLink to="/manager/services" onClick={handleNavClick}>
+              Services &amp; Rooms
+            </NavLink>
+          </li>
+          <li className="nav-item">
             <NavLink to="/manager/staff" onClick={handleNavClick}>
               Staff Management
             </NavLink>
@@ -96,12 +101,6 @@ const ManagerSidebar = ({ mobileOpen, onMobileMenuToggle }) => {
               Receipt Scanner
             </NavLink>
           </li>
-          <li className="nav-item">
-            <NavLink to="/manager/controlled-drugs" onClick={handleNavClick}>
-              Controlled Drugs
-            </NavLink>
-          </li>
-
           <li className="nav-item">
             <NavLink to="/manager/payroll" onClick={handleNavClick}>
               Payroll

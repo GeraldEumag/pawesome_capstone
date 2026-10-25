@@ -9,6 +9,8 @@ import "./CustomerPayments.css";
 import { showAlert, showError, showSuccess } from "../../utils/alert.jsx";
 import { printReceipt } from "../../utils/receiptPrinter";
 import { downloadReceiptPdf } from "../../utils/receiptPdf";
+import Modal from "../shared/Modal";
+import ReceiptDocument from "../shared/receipt/ReceiptDocument";
 import PaymentUploadModal from "../shared/PaymentUploadModal";
 import CustomerEstimateReview from "./CustomerEstimateReview";
 
@@ -72,6 +74,7 @@ const CustomerPayments = () => {
   const [error, setError] = useState("");
   const [onlineBillingPayment, setOnlineBillingPayment] = useState({ open: false, endpoint: "", title: "" });
   const [billingSubmitting, setBillingSubmitting] = useState(null);
+  const [receiptView, setReceiptView] = useState(null);
   const highlightId = searchParams.get("order_id") || searchParams.get("boarding_id");
   const highlightRef = useRef(null);
 
@@ -367,6 +370,7 @@ const CustomerPayments = () => {
 
   const viewReceipt = async (payment, output = "print") => {
     const outputReceipt = async (options) => {
+      if (output === "view") return setReceiptView({ options, payment });
       if (output === "pdf") return await downloadReceiptPdf(options);
       return printReceipt({ ...options, vat: undefined });
     };
@@ -621,6 +625,13 @@ const CustomerPayments = () => {
                             <button
                               type="button"
                               className="receipt-btn"
+                              onClick={() => viewReceipt(payment, "view")}
+                            >
+                              View
+                            </button>
+                            <button
+                              type="button"
+                              className="receipt-btn"
                               onClick={() => viewReceipt(payment, "print")}
                             >
                               {payment.receipt_number ? `Print ${payment.receipt_number}` : "Print Receipt"}
@@ -694,6 +705,24 @@ const CustomerPayments = () => {
           </table>
         </div>
       </div>
+
+      {receiptView && (
+        <Modal
+          onClose={() => setReceiptView(null)}
+          title="Receipt"
+          size="md"
+          className="customer-receipt-modal"
+          footer={
+            <>
+              <button type="button" className="receipt-btn" onClick={() => setReceiptView(null)}>Close</button>
+              <button type="button" className="receipt-btn" onClick={() => downloadReceiptPdf(receiptView.options)}>PDF</button>
+              <button type="button" className="receipt-btn" onClick={() => printReceipt({ ...receiptView.options, vat: undefined })}>Print</button>
+            </>
+          }
+        >
+          <ReceiptDocument {...receiptView.options} />
+        </Modal>
+      )}
 
       <PaymentUploadModal
         open={onlineBillingPayment.open}

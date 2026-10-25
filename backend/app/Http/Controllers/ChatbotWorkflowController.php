@@ -224,9 +224,20 @@ class ChatbotWorkflowController extends Controller
         $user = $request->user();
         $customer = $user ? Customer::where('email', $user->email)->first() : null;
         $pets = $customer ? Pet::where('customer_id', $customer->id)->orderBy('name')->get(['id', 'name', 'species', 'breed']) : [];
-        $rooms = HotelRoom::where('status', 'available')
+        // Boarding/daycare room catalog — the modern room system.
+        $rooms = \App\Models\BoardingRoom::where('is_active', true)
+            ->where('customer_selectable', true)
             ->orderBy('daily_rate')
-            ->get(['id', 'room_number', 'type', 'size', 'daily_rate', 'capacity']);
+            ->get()
+            ->map(fn ($room) => [
+                'id' => $room->id,
+                'room_number' => $room->room_code,
+                'name' => $room->room_name,
+                'type' => $room->room_type,
+                'size' => null,
+                'daily_rate' => $room->daily_rate,
+                'allowed_species' => $room->allowed_species,
+            ]);
 
         return response()->json([
             'pets' => $pets,
@@ -239,7 +250,7 @@ class ChatbotWorkflowController extends Controller
         $data = $request->validate([
             'check_in' => 'required|date',
             'check_out' => 'nullable|date|after_or_equal:check_in',
-            'room_type' => 'nullable|string|in:standard,deluxe,suite',
+            'room_type' => 'nullable|string|in:' . implode(',', \App\Models\BoardingRoom::VALID_ROOM_TYPES),
         ]);
 
         // Same-day boarding: check-out equals check-in (store open 10 AM - 6 PM)
@@ -256,19 +267,16 @@ class ChatbotWorkflowController extends Controller
             ]);
         }
 
-        // Get available rooms for the date
-        $query = HotelRoom::where('status', 'available')
-            ->whereDoesntHave('boardings', function ($q) use ($data) {
-                $q->whereIn('status', self::BLOCKING_BOARDING_STATUSES)
-                    ->where('check_in', '<=', $data['check_out'])
-                    ->where('check_out', '>=', $data['check_in']);
-            });
+        // Available boarding rooms for the date
+        $query = \App\Models\BoardingRoom::where('is_active', true);
 
         if (!empty($data['room_type'])) {
-            $query->where('type', $data['room_type']);
+            $query->where('room_type', $data['room_type']);
         }
 
-        $availableRooms = $query->orderBy('daily_rate')->get();
+        $availableRooms = $query->orderBy('daily_rate')->get()
+            ->filter(fn ($room) => $room->isAvailable($data['check_in'], $data['check_out']))
+            ->values();
 
         return response()->json([
             'check_in' => $data['check_in'],
@@ -284,6 +292,7 @@ class ChatbotWorkflowController extends Controller
 
         $data = $request->validate([
             'pet_id' => 'required|integer',
+            'room_id' => 'nullable|integer|exists:boarding_rooms,id',
             'hotel_room_id' => 'nullable|integer|exists:hotel_rooms,id',
             'check_in' => 'required|date',
             'check_out' => 'nullable|date|after_or_equal:check_in',
@@ -317,9 +326,22 @@ class ChatbotWorkflowController extends Controller
             $customer = Customer::find($pet->customer_id);
         }
 
-        // Find or auto-assign room
+        // Find or auto-assign room — boarding_rooms preferred, hotel_rooms
+        // kept for legacy clients that still send hotel_room_id.
         $room = null;
-        if (!empty($data['hotel_room_id'])) {
+        $boardingRoom = null;
+        if (!empty($data['room_id'])) {
+            $boardingRoom = \App\Models\BoardingRoom::find($data['room_id']);
+            if (!$boardingRoom || !$boardingRoom->is_active) {
+                return response()->json(['message' => 'Selected room is not available.'], 422);
+            }
+            if (!in_array(strtolower((string) $pet->species), array_map('strtolower', $boardingRoom->allowed_species ?? []), true)) {
+                return response()->json(['message' => 'Selected room does not accept this pet species.'], 422);
+            }
+            if (!$boardingRoom->isAvailable($data['check_in'], $data['check_out'])) {
+                return response()->json(['message' => 'Selected room is not available for those dates.'], 422);
+            }
+        } elseif (!empty($data['hotel_room_id'])) {
             $room = HotelRoom::find($data['hotel_room_id']);
             if ($room->status !== 'available') {
                 return response()->json(['message' => 'Selected room is not available.'], 422);
@@ -335,30 +357,30 @@ class ChatbotWorkflowController extends Controller
                 return response()->json(['message' => 'Selected room is not available for those dates.'], 422);
             }
         } else {
-            // Auto-assign first available room
-            $room = HotelRoom::where('status', 'available')
-                ->whereDoesntHave('boardings', function ($q) use ($data) {
-                    $q->whereIn('status', self::BLOCKING_BOARDING_STATUSES)
-                        ->where('check_in', '<=', $data['check_out'])
-                        ->where('check_out', '>=', $data['check_in']);
-                })
+            // Auto-assign first available boarding room for the species
+            $boardingRoom = \App\Models\BoardingRoom::where('is_active', true)
+                ->where('customer_selectable', true)
                 ->orderBy('daily_rate')
-                ->first();
+                ->get()
+                ->first(fn ($r) =>
+                    in_array(strtolower((string) $pet->species), array_map('strtolower', $r->allowed_species ?? []), true)
+                    && $r->isAvailable($data['check_in'], $data['check_out']));
 
-            if (!$room) {
+            if (!$boardingRoom) {
                 return response()->json(['message' => 'No rooms available for the selected dates.'], 422);
             }
         }
 
         // One-day pricing (same-day boarding)
-        $totalAmount = (float) $room->daily_rate;
+        $totalAmount = (float) ($boardingRoom?->daily_rate ?? $room->daily_rate);
 
         // Create boarding record — same lifecycle as BoardingController::store:
         // 'pending' until a receptionist approves it, channel from the actor.
         $boarding = Boarding::create([
             'pet_id' => $pet->id,
             'customer_id' => $customer->id,
-            'hotel_room_id' => $room->id,
+            'room_id' => $boardingRoom?->id,
+            'hotel_room_id' => $room?->id,
             'check_in' => $data['check_in'],
             'check_out' => $data['check_out'],
             'status' => 'pending',

@@ -28,130 +28,16 @@
 }
 
 .vr-status--error { color: #000; }
+
 .vr-status--error span { color: #c00; }
 
 /* ── Paper ── */
-.vr-paper {
-  width: 100%;
-  max-width: 400px;
-  background: #fff;
-  border: 1px solid #ccc;
-  font-family: 'OCR-B 10 BT', 'OCR B', 'Courier New', Courier, monospace;
-  color: #000;
-  font-size: 13px;
-  overflow: hidden;
-}
-
 /* ── Store header ── */
-.vr-hd {
-  padding: 14px 10px 8px;
-  text-align: center;
-}
-
-.vr-logo {
-  display: block;
-  width: auto;
-  height: auto;
-  max-width: 44px;
-  max-height: 44px;
-  object-fit: contain;
-  margin: 0 auto 6px;
-}
-
-.vr-name {
-  font-size: 15px;
-  font-weight: 900;
-  color: #000;
-  margin-bottom: 2px;
-}
-
-.vr-addr,
-.vr-email {
-  font-size: 10px;
-  color: #000;
-  line-height: 1.4;
-}
-
-.vr-title {
-  font-size: 12px;
-  font-weight: 700;
-  color: #000;
-  letter-spacing: 1px;
-  text-transform: uppercase;
-  margin-top: 6px;
-}
-
 /* ── Label / value rows ── */
-.vr-row {
-  display: flex;
-  justify-content: space-between;
-  padding: 3px 10px;
-  font-size: 13px;
-  color: #000;
-}
-
-.vr-row span:first-child { color: #000; }
-.vr-row span:last-child  { font-weight: 600; text-align: right; }
-
 /* ── Section label ── */
-.vr-section-label {
-  font-size: 10px;
-  font-weight: 700;
-  color: #000;
-  letter-spacing: .8px;
-  text-transform: uppercase;
-  padding: 4px 10px;
-}
-
 /* ── Service item ── */
-.vr-item {
-  padding: 3px 10px 5px;
-  font-size: 13px;
-  position: relative;
-}
-
-.vr-item-name {
-  font-weight: 700;
-  color: #000;
-}
-
-.vr-item-desc {
-  font-size: 10px;
-  color: #333;
-  line-height: 1.4;
-  margin-top: 2px;
-}
-
-.vr-item-price {
-  text-align: right;
-  font-weight: 700;
-  color: #000;
-  margin-top: -14px;
-}
-
 /* ── TOTAL row ── */
-.vr-total {
-  display: flex;
-  justify-content: space-between;
-  padding: 6px 10px;
-  font-size: 18px;
-  font-weight: 900;
-  color: #000;
-}
-
 /* ── Footer ── */
-.vr-footer {
-  text-align: center;
-  padding: 8px 10px 12px;
-}
-
-.vr-footer p {
-  margin: 0;
-  font-size: 10.5px;
-  color: #000;
-  line-height: 1.5;
-}
-
 /* ── Action buttons (screen only — NOT captured in PDF/print) ── */
 .vr-actions {
   display: flex;
@@ -201,19 +87,7 @@
     margin: 15mm 20mm;
   }
 
-  body,
-  .vet-receipt {
-    background: #fff !important;
-    padding: 0 !important;
-    margin: 0 !important;
-    display: block !important;
-  }
-
   .vr-actions {
     display: none !important;
-  }
-
-  .vr-paper {
-    max-width: 100% !important;
   }
 }

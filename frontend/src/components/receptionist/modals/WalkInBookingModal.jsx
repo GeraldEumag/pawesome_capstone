@@ -209,7 +209,7 @@ const WalkInBookingModal = ({ serviceType: serviceTypeProp, onClose, onSuccess }
     const requestId = ++roomsRequestRef.current;
     try {
       const query = date ? `?date=${encodeURIComponent(date)}` : "?status=available";
-      const response = await apiRequest(`/receptionist/hotel-rooms${query}`);
+      const response = await apiRequest(`/receptionist/boarding-rooms${query}`);
       // Ignore stale responses — a slower mount fetch must not clobber
       // the result for the date the user actually picked.
       if (requestId === roomsRequestRef.current) {
@@ -222,7 +222,7 @@ const WalkInBookingModal = ({ serviceType: serviceTypeProp, onClose, onSuccess }
 
   const fetchServices = async () => {
     try {
-      const response = await apiRequest("/receptionist/services");
+      const response = await apiRequest("/receptionist/services?active_only=1");
       const allServices = response.data || [];
       // Filter by service type
       const filtered = allServices.filter((s) => {
@@ -416,7 +416,6 @@ const WalkInBookingModal = ({ serviceType: serviceTypeProp, onClose, onSuccess }
             check_out_date: bookingForm.request_date,
             room_type: bookingForm.room_type,
             room_id: bookingForm.room_id,
-            hotel_room_id: bookingForm.room_id,
             rate_per_day: bookingForm.rate_per_day,
             special_requests: bookingForm.special_requests,
           }),
@@ -1035,7 +1034,7 @@ const WalkInBookingModal = ({ serviceType: serviceTypeProp, onClose, onSuccess }
                   setBookingForm({
                     ...bookingForm,
                     room_id: e.target.value,
-                    room_type: r ? r.type : "",
+                    room_type: r ? (r.room_type || r.type) : "",
                     rate_per_day: r ? r.daily_rate : 0
                   });
                 }}
@@ -1043,7 +1042,7 @@ const WalkInBookingModal = ({ serviceType: serviceTypeProp, onClose, onSuccess }
                 <option value="">{bookingForm.request_date ? "Select Room" : "Select a date first"}</option>
                 {hotelRooms.map((room) => (
                   <option key={room.id} value={room.id}>
-                    {room.name} ({room.type}) - ₱{room.daily_rate}/day
+                    {room.room_name || room.name} ({String(room.room_type || room.type || "").replace(/_/g, " ")}) - ₱{room.daily_rate}/day
                   </option>
                 ))}
               </select>
@@ -1289,7 +1288,7 @@ const WalkInBookingModal = ({ serviceType: serviceTypeProp, onClose, onSuccess }
             { label: "Date", value: bookingForm.request_date && parseDateOnly(bookingForm.request_date)
                 ?.toLocaleDateString("en-PH", { weekday: "short", month: "short", day: "numeric", year: "numeric" }) },
             bookingForm.request_time ? { label: "Time", value: bookingForm.request_time } : null,
-            room ? { label: "Room", value: `${room.name} (${room.type})` } : null,
+            room ? { label: "Room", value: `${room.room_name || room.name} (${String(room.room_type || room.type || "").replace(/_/g, " ")})` } : null,
             vet ? { label: "Veterinarian", value: vet.name } : null,
             serviceType === "veterinary" ? { label: "Urgency", value: bookingForm.urgency } : null,
             serviceType === "veterinary" ? { label: "Reason", value: bookingForm.reason } : null,

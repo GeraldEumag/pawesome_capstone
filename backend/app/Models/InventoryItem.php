@@ -118,24 +118,18 @@ class InventoryItem extends Model
     /**
      * Phase D inventory classes — drives pharmacy rules. `category` stays the
      * merchandising bucket; `item_class` decides whether the item is a
-     * medicine/vaccine/controlled drug and which stock workflows apply.
+     * medicine/vaccine and which stock workflows apply.
      */
     public const ITEM_CLASSES = [
         'consumable',
         'medicine',
         'vaccine',
         'retail',
-        'controlled_drug',
     ];
-
-    public function isControlledDrug(): bool
-    {
-        return $this->item_class === 'controlled_drug';
-    }
 
     public function isMedicine(): bool
     {
-        return in_array($this->item_class, ['medicine', 'controlled_drug', 'vaccine'], true);
+        return in_array($this->item_class, ['medicine', 'vaccine'], true);
     }
 
     public function logs()

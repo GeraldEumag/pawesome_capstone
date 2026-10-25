@@ -2,12 +2,33 @@ import jsPDF from "jspdf";
 import { STORE_INFO } from "./storeInfo";
 import brandLogoUrl from "../assets/pawesome.jpg";
 
-const PAGE_WIDTH = 58;
-const PAGE_HEIGHT = 200;
-const LEFT = 4;
-const RIGHT = PAGE_WIDTH - 4;
-const CONTENT_WIDTH = RIGHT - LEFT;
-const BOTTOM = PAGE_HEIGHT - 8;
+/* A4 branded invoice. Same exports + opts contract as before so every
+   caller (POS, transactions, history, customer payments, vet, verification)
+   gets the new layout without changes. Thermal printing lives elsewhere. */
+
+const PAGE_W = 210;
+const PAGE_H = 297;
+const M = 16;
+const RIGHT = PAGE_W - M;
+const CONTENT_W = RIGHT - M;
+const BOTTOM = PAGE_H - 22;
+
+const BRAND = { r: 255, g: 95, b: 147 };
+const BRAND_SOFT = { r: 255, g: 200, b: 221 };
+const BRAND_TINT = { r: 255, g: 247, b: 251 };
+const INK = { r: 31, g: 41, b: 55 };
+const MUTED = { r: 100, g: 116, b: 139 };
+const LINE = { r: 226, g: 232, b: 240 };
+const STATUS_COLOR = {
+  paid: { r: 22, g: 163, b: 74 },
+  completed: { r: 22, g: 163, b: 74 },
+  verified: { r: 22, g: 163, b: 74 },
+  pending: { r: 217, g: 119, b: 6 },
+  cancelled: { r: 220, g: 38, b: 38 },
+  void: { r: 220, g: 38, b: 38 },
+  failed: { r: 220, g: 38, b: 38 },
+  refunded: { r: 37, g: 99, b: 235 },
+};
 
 const cleanText = (value, fallback = "-") => {
   if (value === null || value === undefined || value === "") return fallback;
@@ -45,6 +66,10 @@ const loadBrandLogo = async () => {
   }
 };
 
+const setColor = (doc, c) => doc.setTextColor(c.r, c.g, c.b);
+const fill = (doc, c) => doc.setFillColor(c.r, c.g, c.b);
+const stroke = (doc, c) => doc.setDrawColor(c.r, c.g, c.b);
+
 export const createReceiptPdf = async (opts = {}) => {
   const {
     title = "Invoice",
@@ -68,10 +93,11 @@ export const createReceiptPdf = async (opts = {}) => {
   } = opts;
 
   const brandLogo = await loadBrandLogo();
-  const doc = new jsPDF({ orientation: "p", unit: "mm", format: [PAGE_WIDTH, PAGE_HEIGHT], compress: true });
+  const doc = new jsPDF({ orientation: "p", unit: "mm", format: "a4", compress: true });
   const receiptLabel = cleanText(receiptNumber, "N/A");
   const pdfTitle = cleanText(title, "Invoice");
-  let y = 5;
+  const statusKey = cleanText(paymentStatus, "").toLowerCase();
+  let y = 0;
 
   doc.setProperties({
     title: `${pdfTitle} ${receiptLabel}`,
@@ -79,140 +105,264 @@ export const createReceiptPdf = async (opts = {}) => {
     creator: STORE_INFO.name,
   });
 
-  const addContinuationHeader = () => {
-    doc.addPage([PAGE_WIDTH, PAGE_HEIGHT], "p");
-    let logoHeight = 0;
-    if (brandLogo) {
-      const image = doc.getImageProperties(brandLogo);
-      const scale = Math.min(10 / image.width, 8 / image.height);
-      const logoWidth = image.width * scale;
-      logoHeight = image.height * scale;
-      doc.addImage(brandLogo, "JPEG", (PAGE_WIDTH - logoWidth) / 2, 5, logoWidth, logoHeight);
-    }
-    y = 6 + logoHeight;
+  const drawLogo = (x, yy, size) => {
+    if (!brandLogo) return;
+    doc.setFillColor(255, 255, 255);
+    doc.roundedRect(x, yy, size, size, size * 0.14, size * 0.14, "F");
+    doc.addImage(brandLogo, "JPEG", x, yy, size, size);
+  };
+
+  const drawBrandBand = (height) => {
+    fill(doc, BRAND);
+    doc.rect(0, 0, PAGE_W, height, "F");
+  };
+
+  const drawFirstHeader = () => {
+    drawBrandBand(44);
+    drawLogo(M, 9, 26);
     doc.setFont("helvetica", "bold");
-    doc.setFontSize(8);
-    doc.setTextColor(31, 41, 55);
-    doc.text(`${pdfTitle.toUpperCase()} - CONTINUED`, LEFT, y);
-    y += 5;
+    doc.setFontSize(15);
+    doc.setTextColor(255, 255, 255);
+    doc.text(STORE_INFO.name.toUpperCase(), M + 32, 17);
     doc.setFont("helvetica", "normal");
-    doc.setFontSize(7);
-    doc.text(`Receipt #: ${receiptLabel}`, LEFT, y);
-    y += 5;
-    doc.setDrawColor(203, 213, 225);
-    doc.line(LEFT, y, RIGHT, y);
-    y += 4;
+    doc.setFontSize(8.5);
+    doc.text(cleanText(STORE_INFO.address.replace(/\n/g, ", "), ""), M + 32, 23, { maxWidth: 100 });
+    doc.text(cleanText(`${STORE_INFO.email}  |  ${STORE_INFO.phone}`, ""), M + 32, 29);
+    doc.text(cleanText(STORE_INFO.tagline, ""), M + 32, 35);
+
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(16);
+    doc.setTextColor(255, 255, 255);
+    doc.text(pdfTitle.toUpperCase(), RIGHT, 18, { align: "right" });
+
+    if (statusKey) {
+      const label = statusKey.toUpperCase();
+      const badgeW = Math.max(26, doc.getTextWidth(label) + 10);
+      const sc = STATUS_COLOR[statusKey] || { r: 255, g: 255, b: 255 };
+      fill(doc, sc);
+      doc.roundedRect(RIGHT - badgeW, 24, badgeW, 7, 3.5, 3.5, "F");
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(8);
+      doc.setTextColor(255, 255, 255);
+      doc.text(label, RIGHT - badgeW / 2, 28.6, { align: "center" });
+    }
+    y = 54;
+  };
+
+  const drawContinuationHeader = () => {
+    doc.addPage("a4", "p");
+    drawBrandBand(16);
+    drawLogo(M, 3, 10);
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(9);
+    doc.setTextColor(255, 255, 255);
+    doc.text(`${pdfTitle.toUpperCase()} — CONTINUED`, M + 14, 9.5);
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(8);
+    doc.text(`Receipt #${receiptLabel}`, RIGHT, 9.5, { align: "right" });
+    y = 26;
   };
 
   const ensureSpace = (height) => {
-    if (y + height > BOTTOM) addContinuationHeader();
+    if (y + height > BOTTOM) drawContinuationHeader();
   };
 
-  const centerText = (value, fontSize, style = "normal", lineHeight = 4) => {
-    doc.setFont("helvetica", style);
-    doc.setFontSize(fontSize);
-    const lines = doc.splitTextToSize(cleanText(value, ""), CONTENT_WIDTH);
-    if (!lines.length || !lines[0]) return;
-    ensureSpace(lines.length * lineHeight);
-    doc.setFont("helvetica", style);
-    doc.setFontSize(fontSize);
-    doc.setTextColor(31, 41, 55);
-    doc.text(lines, PAGE_WIDTH / 2, y, { align: "center" });
-    y += lines.length * lineHeight;
-  };
-
-  const drawRule = () => {
-    ensureSpace(3);
-    doc.setDrawColor(203, 213, 225);
-    doc.setLineWidth(0.25);
-    doc.line(LEFT, y, RIGHT, y);
-    y += 3;
-  };
-
-  const drawRow = (label, value) => {
-    if (value === null || value === undefined || value === "") return;
-    doc.setFont("helvetica", "normal");
-    doc.setFontSize(7.5);
-    const leftLines = doc.splitTextToSize(cleanText(label, ""), 21);
-    const rightLines = doc.splitTextToSize(cleanText(value, ""), CONTENT_WIDTH - 22);
-    const rowHeight = Math.max(leftLines.length, rightLines.length, 1) * 3.6;
-    ensureSpace(rowHeight);
-    doc.setFont("helvetica", "normal");
-    doc.setFontSize(7.5);
-    doc.setTextColor(55, 65, 81);
-    doc.text(leftLines, LEFT, y);
+  const drawSectionLabel = (text, x, yy) => {
     doc.setFont("helvetica", "bold");
-    doc.text(rightLines, RIGHT, y, { align: "right" });
-    y += rowHeight + 0.6;
+    doc.setFontSize(7.5);
+    setColor(doc, MUTED);
+    doc.text(text.toUpperCase(), x, yy);
   };
 
-  if (brandLogo) {
-    const logoProperties = doc.getImageProperties(brandLogo);
-    const logoScale = Math.min(18 / logoProperties.width, 14 / logoProperties.height);
-    const logoWidth = logoProperties.width * logoScale;
-    const logoHeight = logoProperties.height * logoScale;
-    doc.addImage(brandLogo, "JPEG", (PAGE_WIDTH - logoWidth) / 2, y, logoWidth, logoHeight);
-    y += logoHeight + 1.5;
-  }
-  centerText(STORE_INFO.name.toUpperCase(), 10, "bold", 4.5);
-  centerText(STORE_INFO.address.replace(/\n/g, ", "), 7, "normal", 3.3);
-  centerText(`${STORE_INFO.email} | ${STORE_INFO.phone}`, 6.5, "normal", 3.2);
-  centerText(pdfTitle.toUpperCase(), 9, "bold", 4);
-  y += 1;
-  drawRule();
+  const drawKeyValue = (label, value, x, yy, width, valueSize = 9) => {
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(7.5);
+    setColor(doc, MUTED);
+    doc.text(label.toUpperCase(), x, yy);
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(valueSize);
+    setColor(doc, INK);
+    const lines = doc.splitTextToSize(cleanText(value, "—"), width);
+    doc.text(lines, x, yy + 4.5);
+    return lines.length;
+  };
 
-  drawRow("Receipt #", receiptLabel);
-  drawRow("Date", date);
-  drawRow("Cashier", cashier);
-  drawRow("Customer", customer);
-  drawRow("Payment", cleanText(paymentMethod).toUpperCase());
-  drawRow("Status", cleanText(paymentStatus).toUpperCase());
-  drawRow("Reference #", referenceNumber);
-  drawRow("Verified by", verifiedBy);
+  const drawFirstHeaderBody = () => {
+    if (!y) y = 54;
+    const cardTop = y;
+    const cardH = 36;
+    fill(doc, BRAND_TINT);
+    stroke(doc, LINE);
+    doc.setLineWidth(0.3);
+    doc.roundedRect(M, cardTop, CONTENT_W, cardH, 2.5, 2.5, "FD");
 
-  if (Array.isArray(items) && items.length > 0) {
-    drawRule();
-    items.forEach((item) => {
+    drawSectionLabel("Billed to", M + 5, cardTop + 7);
+    drawKeyValue("", cleanText(customer, "Walk-in"), M + 5, cardTop + 9, 80, 11);
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(8);
+    setColor(doc, MUTED);
+
+    const metaPairs = [
+      ["Receipt #", receiptLabel],
+      ["Date", date],
+      ["Cashier", cashier],
+      ["Payment", cleanText(paymentMethod, "").toUpperCase()],
+      ["Reference #", referenceNumber],
+      ["Verified by", verifiedBy],
+    ].filter(([, v]) => v !== null && v !== undefined && v !== "");
+
+    const colX = [M + 98, M + 146];
+    metaPairs.forEach(([label, value], i) => {
+      const col = Math.floor(i / 3);
+      const row = i % 3;
+      const xx = colX[col];
+      const yy = cardTop + 7 + row * 9.5;
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(7);
+      setColor(doc, MUTED);
+      doc.text(label.toUpperCase(), xx, yy);
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(8.5);
+      setColor(doc, INK);
+      doc.text(cleanText(value, "—"), xx, yy + 4, { maxWidth: 46 });
+    });
+
+    y = cardTop + cardH + 8;
+  };
+
+  const drawItemsTable = () => {
+    if (!Array.isArray(items) || items.length === 0) return;
+    const cols = { name: M + 4, qty: RIGHT - 78, price: RIGHT - 52, total: RIGHT - 4 };
+    const drawHeader = () => {
+      ensureSpace(10);
+      fill(doc, BRAND_SOFT);
+      doc.rect(M, y, CONTENT_W, 7.5, "F");
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(7.5);
+      setColor(doc, INK);
+      doc.text("ITEM", cols.name, y + 5);
+      doc.text("QTY", cols.qty, y + 5, { align: "right" });
+      doc.text("UNIT PRICE", cols.price, y + 5, { align: "right" });
+      doc.text("TOTAL", cols.total, y + 5, { align: "right" });
+      y += 7.5;
+    };
+    drawHeader();
+
+    items.forEach((item, idx) => {
       const quantity = item.quantity ?? item.qty ?? 1;
       const unitPrice = safeAmount(item.unitPrice ?? item.unit_price ?? item.price);
       const itemTotal = safeAmount(item.total ?? item.total_price ?? unitPrice * safeAmount(quantity));
       doc.setFont("helvetica", "bold");
-      doc.setFontSize(7.5);
-      const nameLines = doc.splitTextToSize(cleanText(item.name ?? item.item_name, "Item"), CONTENT_WIDTH);
-      ensureSpace(nameLines.length * 3.6 + 8);
+      doc.setFontSize(8.5);
+      const nameLines = doc.splitTextToSize(cleanText(item.name ?? item.item_name, "Item"), 92);
+      const rowH = Math.max(nameLines.length * 4.2 + 3, 8);
+      if (y + rowH > BOTTOM) {
+        drawContinuationHeader();
+        drawHeader();
+      }
+      if (idx % 2 === 1) {
+        fill(doc, BRAND_TINT);
+        doc.rect(M, y, CONTENT_W, rowH, "F");
+      }
+      setColor(doc, INK);
+      doc.text(nameLines, cols.name, y + 5);
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(8.5);
+      doc.text(String(quantity), cols.qty, y + 5, { align: "right" });
+      doc.text(formatAmount(unitPrice), cols.price, y + 5, { align: "right" });
       doc.setFont("helvetica", "bold");
-      doc.setFontSize(7.5);
-      doc.setTextColor(31, 41, 55);
-      doc.text(nameLines, LEFT, y);
-      y += nameLines.length * 3.6;
-      drawRow(`${quantity} x ${formatAmount(unitPrice)}`, formatAmount(itemTotal));
+      doc.text(formatAmount(itemTotal), cols.total, y + 5, { align: "right" });
+      y += rowH;
+      stroke(doc, LINE);
+      doc.setLineWidth(0.2);
+      doc.line(M, y, RIGHT, y);
     });
-  }
+    y += 6;
+  };
 
-  drawRule();
-  drawRow(netAmount == null ? "Subtotal" : "Net Amount (ex-VAT)", formatAmount(netAmount ?? subtotal));
-  if (vat !== null && vat !== undefined) drawRow("VAT 12%", formatAmount(Math.abs(safeAmount(vat))));
-  if (safeAmount(discount) > 0) drawRow("Discount", `-${formatAmount(discount)}`);
-  drawRule();
-  ensureSpace(9);
-  doc.setFont("helvetica", "bold");
-  doc.setFontSize(11);
-  doc.setTextColor(17, 24, 39);
-  doc.text("TOTAL", LEFT, y);
-  doc.text(formatAmount(total), RIGHT, y, { align: "right" });
-  y += 7;
-  drawRow("Cash received", amountReceived == null ? "" : formatAmount(amountReceived));
-  drawRow("Change", change == null ? "" : formatAmount(change));
+  const drawTotals = () => {
+    const rows = [
+      [netAmount == null ? "Subtotal" : "Net amount (ex-VAT)", formatAmount(netAmount ?? subtotal)],
+    ];
+    if (vat !== null && vat !== undefined) rows.push(["VAT 12%", formatAmount(Math.abs(safeAmount(vat)))]);
+    if (safeAmount(discount) > 0) rows.push(["Discount", `-${formatAmount(discount)}`]);
 
-  doc.setFont("helvetica", "normal");
-  doc.setFontSize(7);
-  const footerLines = doc.splitTextToSize(cleanText(footerText, ""), CONTENT_WIDTH);
-  ensureSpace(footerLines.length * 3.5 + 6);
-  y += 2;
-  doc.setFont("helvetica", "normal");
-  doc.setFontSize(7);
-  doc.setTextColor(75, 85, 99);
-  doc.text(footerLines, PAGE_WIDTH / 2, y, { align: "center" });
+    const boxW = 84;
+    const boxX = RIGHT - boxW;
+    const rowH = 6.5;
+    ensureSpace(rows.length * rowH + 30);
+
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(8.5);
+    rows.forEach(([label, value]) => {
+      setColor(doc, MUTED);
+      doc.text(label, boxX + 2, y + 4.5);
+      setColor(doc, INK);
+      doc.setFont("helvetica", "bold");
+      doc.text(value, RIGHT - 2, y + 4.5, { align: "right" });
+      doc.setFont("helvetica", "normal");
+      y += rowH;
+    });
+
+    y += 2;
+    fill(doc, BRAND);
+    doc.roundedRect(boxX, y, boxW, 11, 2, 2, "F");
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(10);
+    doc.setTextColor(255, 255, 255);
+    doc.text("TOTAL", boxX + 4, y + 7.2);
+    doc.setFontSize(11);
+    doc.text(formatAmount(total), RIGHT - 4, y + 7.2, { align: "right" });
+    y += 15;
+
+    if (amountReceived != null) {
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(8.5);
+      setColor(doc, MUTED);
+      doc.text("Cash received", boxX + 2, y);
+      setColor(doc, INK);
+      doc.setFont("helvetica", "bold");
+      doc.text(formatAmount(amountReceived), RIGHT - 2, y, { align: "right" });
+      y += 6;
+    }
+    if (change != null) {
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(8.5);
+      setColor(doc, MUTED);
+      doc.text("Change", boxX + 2, y);
+      setColor(doc, INK);
+      doc.setFont("helvetica", "bold");
+      doc.text(formatAmount(change), RIGHT - 2, y, { align: "right" });
+      y += 6;
+    }
+    y += 6;
+  };
+
+  const drawFooter = () => {
+    const lines = doc.splitTextToSize(cleanText(footerText, ""), CONTENT_W - 20);
+    ensureSpace(lines.length * 5 + 16);
+    stroke(doc, BRAND_SOFT);
+    doc.setLineWidth(0.4);
+    doc.setLineDashPattern([1.5, 1.5], 0);
+    doc.line(M, y, RIGHT, y);
+    doc.setLineDashPattern([], 0);
+    y += 7;
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(9);
+    setColor(doc, INK);
+    doc.text(lines, PAGE_W / 2, y, { align: "center" });
+    y += lines.length * 4.5 + 2;
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(7.5);
+    setColor(doc, MUTED);
+    doc.text(cleanText(STORE_INFO.tagline, ""), PAGE_W / 2, y, { align: "center" });
+  };
+
+  drawFirstHeader();
+  drawFirstHeaderBody();
+  drawItemsTable();
+  drawTotals();
+  drawFooter();
 
   const filenameBase = safeFilename(`receipt-${receiptLabel || opts.id || "transaction"}`);
   return { doc, filename: `${filenameBase}.pdf` };

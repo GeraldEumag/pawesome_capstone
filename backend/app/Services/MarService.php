@@ -2,7 +2,6 @@
 
 namespace App\Services;
 
-use App\Models\ControlledDrugEntry;
 use App\Models\InventoryItem;
 use App\Models\MedicationAdministrationRecord;
 use App\Models\MedicalConfinement;
@@ -77,22 +76,6 @@ class MarService
                 );
                 $usedBatchId = $usedBatchId ?? ($deduction['batch_deductions'][0]['batch_id'] ?? null);
 
-                if ($item->isControlledDrug()) {
-                    ControlledDrugService::record($item, [
-                        'entry_type' => ControlledDrugEntry::TYPE_ADMINISTERED,
-                        'quantity_delta' => -$qty,
-                        'inventory_batch_id' => $usedBatchId,
-                        'mar_id' => $locked->id,
-                        'prescription_id' => $locked->prescription_id,
-                        'appointment_id' => $confinement->consultation_id,
-                        'medical_confinement_id' => $confinement->id,
-                        'pet_id' => $confinement->pet_id,
-                        'customer_id' => $confinement->customer_id,
-                        'prescriber_id' => $confinement->vet_id,
-                        'performed_by' => $userId,
-                        'notes' => $locked->medication_name,
-                    ]);
-                }
 
                 // Billable usage lands on the visit invoice — confinement
                 // medication administration is covered by the signed

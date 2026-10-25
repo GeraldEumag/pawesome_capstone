@@ -29,23 +29,24 @@ test.describe('Deletion reason prompts', () => {
     await expect(page.getByText('Delete blocked by test.')).toBeVisible();
   });
 
-  test('hotel-room deletion collects a reason before calling the API', async ({ page }) => {
+  test('boarding-room deletion collects a reason before calling the API', async ({ page }) => {
     await mockLoginAs(page, 'receptionist');
     let payload = null;
     await page.route((url) => apiPath(url, '/api/receptionist/services'), (route) =>
       route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ data: [] }) })
     );
-    await page.route((url) => apiPath(url, '/api/receptionist/hotel-rooms'), (route) =>
-      route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ rooms: [{ id: 72, room_number: 'A-72', name: 'Quiet Suite', type: 'suite', size: 'large', capacity: 2, daily_rate: 900, status: 'available' }] }) })
+    await page.route((url) => apiPath(url, '/api/receptionist/boarding-rooms'), (route) =>
+      route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ rooms: [{ id: 72, room_code: 'QS-72', room_name: 'Quiet Suite', room_type: 'cat_condo', allowed_species: ['cat'], max_capacity: 2, total_rooms: 1, available_rooms: 1, daily_rate: 900, is_active: true }] }) })
     );
-    await page.route((url) => apiPath(url, '/api/receptionist/hotel-rooms/72'), async (route) => {
+    await page.route((url) => apiPath(url, '/api/receptionist/boarding-rooms/72'), async (route) => {
       payload = route.request().postDataJSON();
       await route.fulfill({ status: 422, contentType: 'application/json', body: JSON.stringify({ message: 'Room deletion rejected by test.' }) });
     });
 
     await page.goto('/receptionist/manage-services');
-    await page.getByRole('button', { name: /hotel rooms/i }).click();
-    await page.locator('.room-card .delete-btn').click();
+    await page.getByRole('button', { name: 'Rooms', exact: true }).click();
+    await page.getByRole('button', { name: 'Actions for Quiet Suite' }).click();
+    await page.locator('.row-action-popover-panel').getByRole('button', { name: 'Delete' }).click();
     await page.locator('#swal-reason-other').fill('Room no longer meets facility requirements');
     await page.getByRole('button', { name: 'Delete Room' }).click();
 
@@ -54,26 +55,26 @@ test.describe('Deletion reason prompts', () => {
     await expect(page.getByText('Room deletion rejected by test.')).toBeVisible();
   });
 
-  test('veterinary service deletion submits a required reason to the admin API', async ({ page }) => {
+  test('veterinary service deletion submits a required reason to the veterinary API', async ({ page }) => {
     await mockLoginAs(page, 'veterinary');
     let payload = null;
-    await page.route((url) => apiPath(url, '/api/admin/services'), (route) =>
+    await page.route((url) => apiPath(url, '/api/veterinary/services'), (route) =>
       route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ data: [{ id: 73, name: 'Legacy Consultation', category: 'Consultation', price: 500, is_active: true }] }) })
     );
-    await page.route((url) => apiPath(url, '/api/admin/services/73'), async (route) => {
+    await page.route((url) => apiPath(url, '/api/veterinary/services/73'), async (route) => {
       payload = route.request().postDataJSON();
       await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ success: true, message: 'Service deleted successfully' }) });
     });
 
     await page.goto('/veterinary/services');
     await page.getByRole('button', { name: 'Actions for Legacy Consultation' }).click();
-    await page.getByRole('button', { name: 'Delete service' }).click();
-    await page.getByLabel('Reason for deletion *').fill('Replaced by the current consultation catalog');
+    await page.locator('.row-action-popover-panel').getByRole('button', { name: 'Delete' }).click();
+    await page.locator('#swal-reason-select').selectOption('Replaced by an updated service');
     await page.getByRole('button', { name: 'Delete Service' }).click();
 
     await expect.poll(() => payload).not.toBeNull();
-    expect(payload).toEqual({ reason: 'Replaced by the current consultation catalog' });
-    await expect(page.getByText('Service deleted successfully!')).toBeVisible();
+    expect(payload).toEqual({ reason: 'Replaced by an updated service' });
+    await expect(page.getByText('Deleted successfully.')).toBeVisible();
   });
 
   test('holiday deletion submits a reason and displays backend failures', async ({ page }) => {

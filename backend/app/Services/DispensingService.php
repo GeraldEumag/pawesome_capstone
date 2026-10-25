@@ -4,7 +4,6 @@ namespace App\Services;
 
 use App\Models\Appointment;
 use App\Models\Dispensation;
-use App\Models\ControlledDrugEntry;
 use App\Models\InventoryItem;
 use App\Models\MedicalConfinement;
 use App\Models\Prescription;
@@ -96,23 +95,6 @@ class DispensingService
                 'status' => Dispensation::STATUS_DISPENSED,
             ]);
 
-            if ($item->isControlledDrug()) {
-                ControlledDrugService::record($item, [
-                    'entry_type' => ControlledDrugEntry::TYPE_DISPENSED,
-                    'quantity_delta' => -$quantity,
-                    'inventory_batch_id' => $batchId,
-                    'dispensation_id' => $dispensation->id,
-                    'prescription_id' => $prescription?->id,
-                    'appointment_id' => $appointment?->id,
-                    'medical_confinement_id' => $confinement?->id,
-                    'pet_id' => $dispensation->pet_id,
-                    'customer_id' => $dispensation->customer_id,
-                    'prescriber_id' => $prescription?->veterinarian_id,
-                    'performed_by' => $dispenserId,
-                    'witness_id' => $data['witness_id'] ?? null,
-                    'notes' => $data['notes'] ?? null,
-                ]);
-            }
 
             if ($prescription && !$prescription->useRefill()) {
                 throw new \RuntimeException('Prescription has no refills remaining');

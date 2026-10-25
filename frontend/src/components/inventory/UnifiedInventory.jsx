@@ -10,6 +10,7 @@ import {
 } from "@fortawesome/free-solid-svg-icons";
 import { inventoryApi } from "../../api/inventory.jsx";
 import { normalizeList } from "../../api/client";
+import { resolveAvatarUrl } from "../../utils/avatar";
 import { INVENTORY_ARCHIVE_REASONS, INVENTORY_DELETE_REASONS } from "../../utils/alert.jsx";
 import AddProductModal from "./AddProductModal";
 import Modal from "../shared/Modal";
@@ -820,7 +821,7 @@ const UnifiedInventory = () => {
                                     <td>{batch.unit_cost ? `₱${parseFloat(batch.unit_cost).toFixed(2)}` : "—"}</td>
                                     <td>
                                       {batch.proof_photo ? (
-                                        <a href={batch.proof_photo_url || batch.proof_photo} target="_blank" rel="noopener noreferrer">View</a>
+                                        <a href={resolveAvatarUrl(batch.proof_photo_url || batch.proof_photo)} target="_blank" rel="noopener noreferrer">View</a>
                                       ) : "—"}
                                     </td>
                                     <td><span className={`batch-status ${batch.status}`}>{batch.status}</span></td>
@@ -938,7 +939,7 @@ const UnifiedInventory = () => {
                 {(infoItem.photo_url || infoItem.photo || infoItem.image) ? (
                   <img
                     className="ui-info-avatar ui-info-avatar-img"
-                    src={infoItem.photo_url || infoItem.photo || infoItem.image}
+                    src={resolveAvatarUrl(infoItem.photo_url || infoItem.photo || infoItem.image)}
                     alt={infoItem.name}
                   />
                 ) : (

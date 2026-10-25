@@ -81,6 +81,54 @@ class HotelRoomController extends Controller
     }
 
     /**
+     * Statuses staff may set manually. 'occupied' is excluded — occupancy is
+     * derived from boardings/confinements and must never be set by hand.
+     */
+    private const MANUAL_STATUSES = 'available,maintenance,cleaning,reserved,inactive';
+
+    /**
+     * Get single room details (with current boarding)
+     */
+    public function show($id): JsonResponse
+    {
+        $room = HotelRoom::with(['boardings' => function ($query) {
+            $query->current()->orderBy('check_out', 'asc');
+        }])->findOrFail($id);
+
+        return response()->json([
+            'success' => true,
+            'room' => $room,
+        ]);
+    }
+
+    /**
+     * Set room status — manual statuses only (see MANUAL_STATUSES).
+     */
+    public function setStatus(Request $request, $id): JsonResponse
+    {
+        $validator = Validator::make($request->all(), [
+            'status' => 'required|in:' . self::MANUAL_STATUSES,
+            'reason' => 'nullable|string|min:3|max:500',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'success' => false,
+                'errors' => $validator->errors(),
+            ], 422);
+        }
+
+        $room = HotelRoom::findOrFail($id);
+        $room->update(['status' => $request->status]);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Room status updated',
+            'room' => $room,
+        ]);
+    }
+
+    /**
      * Create new hotel room
      */
     public function store(Request $request): JsonResponse
@@ -90,8 +138,8 @@ class HotelRoomController extends Controller
                 'room_number' => 'required|string|unique:hotel_rooms',
                 'name' => 'required|string|max:255',
                 'description' => 'nullable|string',
-                'type' => 'required|in:standard,deluxe,suite,kennel,cattery',
-                'size' => 'required|in:small,medium,large,suite',
+                'type' => 'required|in:' . implode(',', HotelRoom::VALID_TYPES),
+                'size' => 'required|in:' . implode(',', HotelRoom::VALID_SIZES),
                 'capacity' => 'required|integer|min:1',
                 'daily_rate' => 'required|numeric|min:0',
                 'amenities' => 'nullable|array',
@@ -105,7 +153,18 @@ class HotelRoomController extends Controller
                 ], 422);
             }
 
-            $room = HotelRoom::create($request->all());
+            $room = HotelRoom::create($validator->validated());
+
+            ActivityLog::log($request->user()?->id, 'hotel_room_created',
+                "Hotel room #{$room->id} ({$room->name}) created", [
+                    'category' => 'rooms',
+                    'reference_type' => HotelRoom::class,
+                    'reference_id' => $room->id,
+                    'metadata' => [
+                        'room_id' => $room->id,
+                        'room_name' => $room->name,
+                    ],
+                ]);
 
             return response()->json([
                 'success' => true,
@@ -134,13 +193,14 @@ class HotelRoomController extends Controller
                 'room_number' => 'nullable|string|unique:hotel_rooms,room_number,' . $id,
                 'name' => 'nullable|string|max:255',
                 'description' => 'nullable|string',
-                'type' => 'nullable|in:standard,deluxe,suite,kennel,cattery',
-                'size' => 'nullable|in:small,medium,large,suite',
+                'type' => 'nullable|in:' . implode(',', HotelRoom::VALID_TYPES),
+                'size' => 'nullable|in:' . implode(',', HotelRoom::VALID_SIZES),
                 'capacity' => 'nullable|integer|min:1',
                 'daily_rate' => 'nullable|numeric|min:0',
-                'status' => 'nullable|in:available,occupied,maintenance,cleaning,reserved,inactive',
+                'status' => 'nullable|in:' . self::MANUAL_STATUSES,
                 'amenities' => 'nullable|array',
                 'notes' => 'nullable|string',
+                'reason' => 'nullable|string|min:3|max:500',
             ]);
 
             if ($validator->fails()) {
@@ -150,7 +210,25 @@ class HotelRoomController extends Controller
                 ], 422);
             }
 
-            $room->update($request->all());
+            $data = $validator->validated();
+            $reason = $data['reason'] ?? null;
+            unset($data['reason']);
+
+            $room->update($data);
+
+            if (($data['status'] ?? null) === 'inactive') {
+                ActivityLog::log($request->user()?->id, 'hotel_room_deactivated',
+                    "Hotel room #{$room->id} ({$room->name}) deactivated", [
+                        'category' => 'rooms',
+                        'reference_type' => HotelRoom::class,
+                        'reference_id' => $room->id,
+                        'metadata' => [
+                            'room_id' => $room->id,
+                            'room_name' => $room->name,
+                            'reason' => $reason,
+                        ],
+                    ]);
+            }
 
             return response()->json([
                 'success' => true,
@@ -188,7 +266,7 @@ class HotelRoomController extends Controller
                 }
 
                 ActivityLog::log($request->user()?->id, 'hotel_room_deleted',
-                    "Hotel room #{$room->id} ({$room->name}) deleted by receptionist", [
+                    "Hotel room #{$room->id} ({$room->name}) deleted", [
                         'category' => 'rooms',
                         'reference_type' => HotelRoom::class,
                         'reference_id' => $room->id,

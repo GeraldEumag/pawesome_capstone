@@ -127,7 +127,7 @@ const VetEditAppointment = () => {
       }
 
       try {
-        const adminServicesData = await apiRequest("/admin/services");
+        const adminServicesData = await apiRequest("/veterinary/services?active_only=1");
         servicesList = safeArray(adminServicesData);
       } catch {
         servicesList = [];

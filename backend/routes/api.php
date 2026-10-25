@@ -2,7 +2,6 @@
 
 use App\Http\Controllers\Admin\DashboardController;
 use App\Http\Controllers\Admin\InventoryController;
-use App\Http\Controllers\Admin\ServiceController;
 use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\Admin\CustomersController;
 use App\Http\Controllers\Admin\ChatbotController;
@@ -29,7 +28,6 @@ use App\Http\Controllers\Manager\DashboardController as ManagerDashboardControll
 use App\Http\Controllers\Manager\ReceiptSettingsController as ManagerReceiptSettingsController;
 use App\Http\Controllers\Receptionist\DashboardController as ReceptionistDashboardController;
 use App\Http\Controllers\Receptionist\CustomerOrderController as ReceptionistCustomerOrderController;
-use App\Http\Controllers\Receptionist\ServiceController as ReceptionistServiceController;
 use App\Http\Controllers\Receptionist\HotelRoomController as ReceptionistHotelRoomController;
 use App\Http\Controllers\Receptionist\BoardingRoomController as ReceptionistBoardingRoomController;
 use App\Http\Controllers\Receptionist\WalkInController as ReceptionistWalkInController;
@@ -47,7 +45,6 @@ use App\Http\Controllers\Manager\BarcodeAttendanceController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\BoardingController;
 use App\Http\Controllers\BoardingRoomController;
-use App\Http\Controllers\HotelRoomController;
 use App\Http\Controllers\AppointmentController;
 use App\Http\Controllers\AttendanceController;
 use App\Http\Controllers\AttendanceRecordController;
@@ -57,6 +54,7 @@ use App\Http\Controllers\Api\PayrollController as ApiPayrollController;
 use App\Http\Controllers\GiftCardController;
 use App\Http\Controllers\GroomingController;
 use App\Http\Controllers\Api\AvailabilityController;
+use App\Http\Controllers\Api\ServiceCatalogController;
 use App\Http\Controllers\Api\GroomingController as ApiGroomingController;
 use App\Http\Controllers\PetController;
 use App\Http\Controllers\Api\CashierPaymentController;
@@ -277,12 +275,14 @@ Route::middleware(['auth.api', 'throttle:api', 'role:admin,manager'])->prefix('a
     Route::get('activity-logs/user/{userId}', [ActivityLogController::class, 'userLogs']);
 });
 
-// Services Management (admin + veterinary)
-Route::middleware(['auth.api', 'throttle:api', 'role:admin,veterinary'])->prefix('admin')->group(function () {
-    Route::get('services', [ServiceController::class, 'index']);
-    Route::post('services', [ServiceController::class, 'store']);
-    Route::put('services/{id}', [ServiceController::class, 'update']);
-    Route::delete('services/{id}', [ServiceController::class, 'destroy']);
+// Services Management (admin) — vets use veterinary/services, front-desk
+// roles use receptionist/services and manager/services. All mounts point at
+// the same canonical ServiceCatalogController.
+Route::middleware(['auth.api', 'throttle:api', 'role:admin'])->prefix('admin')->group(function () {
+    Route::get('services', [ServiceCatalogController::class, 'index']);
+    Route::post('services', [ServiceCatalogController::class, 'store']);
+    Route::put('services/{id}', [ServiceCatalogController::class, 'update']);
+    Route::delete('services/{id}', [ServiceCatalogController::class, 'destroy']);
 });
 
 Route::middleware(['auth.api', 'throttle:api'])->prefix('chatbot')->group(function () {
@@ -496,8 +496,7 @@ Route::middleware(['auth.api', 'throttle:api', 'role:receptionist'])->prefix('re
     Route::get('boarding-requests/pending', [BoardingController::class, 'pending']);
     Route::get('medical-confinements/pending-admission', [MedicalConfinementController::class, 'pendingAdmission']);
     Route::get('boarding/inventory-items', [BoardingController::class, 'getAvailableInventoryItems']);
-    Route::get('boarding-rooms', [HotelRoomController::class, 'index']);
-    
+
     // Reports static routes
     Route::get('reports/transactions', [CashierDashboardController::class, 'transactions']);
     Route::get('reports/live', [ReportsController::class, 'reception']);
@@ -559,10 +558,10 @@ Route::middleware(['auth.api', 'throttle:api', 'role:receptionist'])->prefix('re
     Route::post('boarding-requests/{id}/check-out', [BoardingController::class, 'checkOut']);
     
     // Service & Room Management
-    Route::get('services', [ReceptionistServiceController::class, 'index']);
-    Route::post('services', [ReceptionistServiceController::class, 'store']);
-    Route::put('services/{id}', [ReceptionistServiceController::class, 'update']);
-    Route::delete('services/{id}', [ReceptionistServiceController::class, 'destroy']);
+    Route::get('services', [ServiceCatalogController::class, 'index']);
+    Route::post('services', [ServiceCatalogController::class, 'store']);
+    Route::put('services/{id}', [ServiceCatalogController::class, 'update']);
+    Route::delete('services/{id}', [ServiceCatalogController::class, 'destroy']);
 
     Route::get('hotel-rooms', [ReceptionistHotelRoomController::class, 'index']);
     Route::post('hotel-rooms', [ReceptionistHotelRoomController::class, 'store']);
@@ -613,12 +612,6 @@ Route::middleware(['auth.api', 'throttle:api', 'role:admin,inventory'])->prefix(
     Route::get('expiry-alerts', [InventoryDashboardController::class, 'expiryAlerts']);
     Route::get('monthly-audit', [InventoryDashboardController::class, 'monthlyAudit']);
     Route::get('monthly-audit-report', [InventoryDashboardController::class, 'monthlyAuditReport']);
-    // Controlled drugs (Phase D)
-    Route::get('controlled-drugs', [\App\Http\Controllers\ControlledDrugController::class, 'items']);
-    Route::get('controlled-drugs/{itemId}/register', [\App\Http\Controllers\ControlledDrugController::class, 'register']);
-    Route::get('controlled-drug-counts', [\App\Http\Controllers\ControlledDrugController::class, 'counts']);
-    Route::post('controlled-drug-counts', [\App\Http\Controllers\ControlledDrugController::class, 'submitCount']);
-    Route::post('controlled-drug-counts/{id}/verify', [\App\Http\Controllers\ControlledDrugController::class, 'verifyCount']);
     Route::get('audit-analytics', [InventoryDashboardController::class, 'auditAnalytics']);
     Route::get('monthly-audit/discrepancy-reasons', [InventoryDashboardController::class, 'discrepancyReasons']);
     Route::post('reorder-requests', [InventoryDashboardController::class, 'reorderRequest']);
@@ -862,14 +855,10 @@ Route::middleware(['auth.api', 'throttle:api', 'role:manager,admin'])->prefix('m
     Route::get('visit-invoice-adjustments/pending', [VisitInvoiceController::class, 'pending']);
     Route::post('visit-invoice-adjustments/{id}/approve', [VisitInvoiceController::class, 'approve']);
     Route::post('visit-invoice-adjustments/{id}/reject', [VisitInvoiceController::class, 'reject']);
-    // Phase D: inventory audit variances + controlled-drug oversight
+    // Phase D: inventory audit variances
     Route::get('inventory-audits/pending', [\App\Http\Controllers\Inventory\DashboardController::class, 'pendingAuditApprovals']);
     Route::post('inventory-audits/{id}/approve', [\App\Http\Controllers\Inventory\DashboardController::class, 'approveAudit']);
     Route::post('inventory-audits/{id}/reject', [\App\Http\Controllers\Inventory\DashboardController::class, 'rejectAudit']);
-    Route::get('controlled-drugs', [\App\Http\Controllers\ControlledDrugController::class, 'items']);
-    Route::get('controlled-drugs/{itemId}/register', [\App\Http\Controllers\ControlledDrugController::class, 'register']);
-    Route::get('controlled-drug-counts', [\App\Http\Controllers\ControlledDrugController::class, 'counts']);
-    Route::post('controlled-drug-counts/{id}/verify', [\App\Http\Controllers\ControlledDrugController::class, 'verifyCount']);
     // Manager override release (financial-clearance bypass, logged)
     Route::post('medical-confinements/{id}/release', [MedicalConfinementController::class, 'release']);
     // Vaccine lot recall oversight (Phase E)
@@ -1073,20 +1062,44 @@ Route::middleware(['auth.api', 'throttle:api', 'role:admin'])->prefix('admin/cus
 
 Route::middleware(['auth.api', 'throttle:api', 'role:receptionist,admin,manager'])->post('/notifications/booking-status', [NotificationController::class, 'bookingStatus']);
 
-// Hotel Room Management Routes (Admin/Receptionist)
+// Hotel Room Management Routes (Admin/Receptionist) — canonical controller
 Route::middleware(['auth.api', 'throttle:api', 'role:admin,receptionist'])->prefix('hotel-rooms')->group(function () {
-    Route::get('/', [HotelRoomController::class, 'index']);
-    Route::post('/', [HotelRoomController::class, 'store']);
-    Route::get('/{id}', [HotelRoomController::class, 'show']);
-    Route::put('/{id}', [HotelRoomController::class, 'update']);
-    Route::delete('/{id}', [HotelRoomController::class, 'destroy']);
-    Route::post('/{id}/status', [HotelRoomController::class, 'setStatus']);
+    Route::get('/', [ReceptionistHotelRoomController::class, 'index']);
+    Route::post('/', [ReceptionistHotelRoomController::class, 'store']);
+    Route::get('/{id}', [ReceptionistHotelRoomController::class, 'show']);
+    Route::put('/{id}', [ReceptionistHotelRoomController::class, 'update']);
+    Route::delete('/{id}', [ReceptionistHotelRoomController::class, 'destroy']);
+    Route::post('/{id}/status', [ReceptionistHotelRoomController::class, 'setStatus']);
 });
 
-// Manager Hotel Room View-Only Routes
-Route::middleware(['auth.api', 'throttle:api', 'role:manager'])->prefix('manager/hotel-rooms')->group(function () {
-    Route::get('/', [HotelRoomController::class, 'index']);
-    Route::get('/{id}', [HotelRoomController::class, 'show']);
+// Manager Service & Room Management — same canonical controllers as the
+// receptionist mounts; managers get full CRUD like the front desk.
+Route::middleware(['auth.api', 'throttle:api', 'role:manager,admin'])->prefix('manager')->group(function () {
+    Route::get('services', [ServiceCatalogController::class, 'index']);
+    Route::post('services', [ServiceCatalogController::class, 'store']);
+    Route::put('services/{id}', [ServiceCatalogController::class, 'update']);
+    Route::delete('services/{id}', [ServiceCatalogController::class, 'destroy']);
+
+    Route::get('hotel-rooms', [ReceptionistHotelRoomController::class, 'index']);
+    Route::post('hotel-rooms', [ReceptionistHotelRoomController::class, 'store']);
+    Route::get('hotel-rooms/{id}', [ReceptionistHotelRoomController::class, 'show']);
+    Route::put('hotel-rooms/{id}', [ReceptionistHotelRoomController::class, 'update']);
+    Route::delete('hotel-rooms/{id}', [ReceptionistHotelRoomController::class, 'destroy']);
+    Route::post('hotel-rooms/{id}/status', [ReceptionistHotelRoomController::class, 'setStatus']);
+
+    Route::get('boarding-rooms', [ReceptionistBoardingRoomController::class, 'index']);
+    Route::post('boarding-rooms', [ReceptionistBoardingRoomController::class, 'store']);
+    Route::put('boarding-rooms/{id}', [ReceptionistBoardingRoomController::class, 'update']);
+    Route::delete('boarding-rooms/{id}', [ReceptionistBoardingRoomController::class, 'destroy']);
+});
+
+// Veterinary service catalog — restricted to medical categories inside
+// ServiceCatalogController (Service::VET_CATEGORIES).
+Route::middleware(['auth.api', 'throttle:api', 'role:veterinary,admin'])->prefix('veterinary')->group(function () {
+    Route::get('services', [ServiceCatalogController::class, 'index']);
+    Route::post('services', [ServiceCatalogController::class, 'store']);
+    Route::put('services/{id}', [ServiceCatalogController::class, 'update']);
+    Route::delete('services/{id}', [ServiceCatalogController::class, 'destroy']);
 });
 
 // Boarding/Hotel Reservation Routes (Receptionist only)
@@ -1222,7 +1235,7 @@ Route::middleware(['auth.api', 'throttle:api', 'role:receptionist,admin'])->grou
 
 Route::middleware(['auth.api', 'throttle:api'])->group(function () {
     // Public services endpoint (accessible to all authenticated users)
-    Route::get('/services', [ServiceController::class, 'index']);
+    Route::get('/services', [ServiceCatalogController::class, 'publicIndex']);
 });
 
 Route::middleware(['auth.api', 'throttle:api', 'role:receptionist,admin,manager,cashier,veterinary,customer'])->group(function () {

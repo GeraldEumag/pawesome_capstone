@@ -422,7 +422,7 @@ const ReceptionistBookings = () => {
     fetchBookings();
     fetchServices();
     fetchCustomersAndPets();
-    apiRequest("/receptionist/hotel-rooms?status=available")
+    apiRequest("/receptionist/boarding-rooms")
       .then((data) => {
         if (roomsRequestRef.current === 0) {
           setHotelRooms(safeArray(data, "rooms").filter((r) => !r.status || r.status === "available"));
@@ -439,7 +439,7 @@ const ReceptionistBookings = () => {
   useEffect(() => {
     if (bookingFormData.bookingType !== "hotel" || !bookingFormData.appointmentDate) return;
     const requestId = ++roomsRequestRef.current;
-    apiRequest(`/receptionist/hotel-rooms?date=${encodeURIComponent(bookingFormData.appointmentDate)}`)
+    apiRequest(`/receptionist/boarding-rooms?date=${encodeURIComponent(bookingFormData.appointmentDate)}`)
       .then((data) => {
         if (requestId === roomsRequestRef.current) {
           setHotelRooms(safeArray(data, "rooms"));
@@ -588,7 +588,7 @@ const ReceptionistBookings = () => {
         payload = {
           pet_id: bookingFormData.petId,
           customer_id: bookingFormData.customerId,
-          hotel_room_id: bookingFormData.roomId,
+          room_id: bookingFormData.roomId,
           check_in_date: bookingFormData.appointmentDate,
           number_of_days: 1,
           notes: buildBookingNotes(),
@@ -2062,7 +2062,7 @@ const ReceptionistBookings = () => {
                           </option>
                           {hotelRooms.map((room) => (
                             <option key={room.id} value={room.id}>
-                              {room.name || room.room_number || `Room ${room.id}`} ({room.type || room.room_type || "Room"}) - {formatCurrency(room.daily_rate || 0)}/day
+                              {room.room_name || room.name || room.room_number || `Room ${room.id}`} ({room.room_type || room.type || "Room"}) - {formatCurrency(room.daily_rate || 0)}/day
                               {room.status && room.status !== "available" ? ` — ${room.status}` : ""}
                             </option>
                           ))}

@@ -11,8 +11,8 @@ import { apiRequest } from "../../api/client";
 import { formatCurrency } from "../../utils/currency";
 import { STORE_INFO } from "../../utils/storeInfo";
 import { downloadReceiptPdf } from "../../utils/receiptPdf";
+import ReceiptDocument from "../shared/receipt/ReceiptDocument";
 import { showError } from "../../utils/alert.jsx";
-import brandLogo from "../../assets/pawesome.jpg";
 import "./theme.css";
 import "./VetReceipt.css";
 
@@ -165,77 +165,34 @@ const VetReceipt = () => {
     <section className="app-content vet-receipt">
 
       {/* ── Receipt content ── */}
-      <div className="vr-paper" id="receipt-content">
-
-        {/* Store header */}
-        <div className="vr-hd">
-          <img src={brandLogo} alt="Pawesome logo" className="vr-logo" />
-          <div className="vr-name">{STORE_INFO.name.toUpperCase()}</div>
-          {STORE_INFO.address.split("\n").map((line) => (
-            <div className="vr-addr" key={line}>{line}</div>
-          ))}
-          <div className="vr-email">{STORE_INFO.email}</div>
-          <div className="vr-title">SERVICE INVOICE</div>
-        </div>
-
-        {/* Transaction info */}
-        <div className="vr-row"><span>Receipt #</span><span>{receiptData.receipt_number || receiptData.id}</span></div>
-        <div className="vr-row"><span>Date</span><span>{new Date(receiptData.date).toLocaleDateString()}</span></div>
-        <div className="vr-row"><span>Time</span><span>{receiptData.time}</span></div>
-        <div className="vr-row"><span>Type</span><span>{receiptData.service_type?.toUpperCase()}</span></div>
-        <div className="vr-row"><span>Veterinarian</span><span>Dr. {receiptData.vet_name}</span></div>
-
-
-        {/* Patient info */}
-        <div className="vr-row"><span>Pet Name</span><span>{receiptData.pet_name}</span></div>
-        <div className="vr-row"><span>Owner</span><span>{receiptData.owner_name}</span></div>
-        <div className="vr-row"><span>Breed</span><span>{receiptData.pet_breed || "N/A"}</span></div>
-        <div className="vr-row"><span>Age</span><span>{receiptData.pet_age || "N/A"}</span></div>
-
-
-        {/* Service items */}
-        <div className="vr-item">
-          <div className="vr-item-name">{receiptData.service_name}</div>
-          <div className="vr-item-desc">{receiptData.description}</div>
-          <div className="vr-item-price">{formatCurrency(receiptData.service_cost)}</div>
-        </div>
-
-        {receiptData.additional_services.length > 0 && (
-          <>
-    
-            <div className="vr-section-label">ADDITIONAL SERVICES</div>
-            {receiptData.additional_services.map((svc, i) => (
-              <div className="vr-item" key={i}>
-                <div className="vr-item-name">{svc.name}</div>
-                <div className="vr-item-price">{formatCurrency(svc.cost)}</div>
-              </div>
-            ))}
-          </>
-        )}
-
-
-        {/* Totals */}
-        <div className="vr-row"><span>Subtotal (incl. VAT)</span><span>{formatCurrency(receiptData.subtotal)}</span></div>
-        <div className="vr-row"><span>VAT 12%</span><span>-{formatCurrency(Math.abs(Number(receiptData.breakdown?.vat_amount ?? receiptData.tax ?? 0) || 0))}</span></div>
-        <div className="vr-total">
-          <span>TOTAL</span>
-          <span>{formatCurrency(receiptData.total)}</span>
-        </div>
-
-        {/* Payment info */}
-        <div className="vr-row"><span>Payment Method</span><span>{receiptData.payment_method?.toUpperCase()}</span></div>
-        <div className="vr-row"><span>Status</span><span>{receiptData.payment_status?.toUpperCase()}</span></div>
-        {receiptData.paid_date && (
-          <div className="vr-row"><span>Paid on</span><span>{new Date(receiptData.paid_date).toLocaleDateString()}</span></div>
-        )}
-
-
-        {/* Footer */}
-        <div className="vr-footer">
-          <p>Thank you for trusting {STORE_INFO.name}<br />with your pet's health!</p>
-        </div>
-
-      </div>
+      <ReceiptDocument
+        title="Service Invoice"
+        receiptNumber={receiptData.receipt_number || receiptData.id}
+        date={new Date(receiptData.date).toLocaleString("en-PH", { dateStyle: "medium", timeStyle: "short" })}
+        customer={receiptData.owner_name}
+        paymentMethod={receiptData.payment_method}
+        paymentStatus={receiptData.payment_status}
+        referenceNumber={receiptData.reference_number}
+        verifiedBy={receiptData.verified_by}
+        metaRows={[
+          { label: "Veterinarian", value: `Dr. ${receiptData.vet_name}` },
+          { label: "Pet", value: receiptData.pet_name },
+          { label: "Breed", value: receiptData.pet_breed || "N/A" },
+          { label: "Age", value: receiptData.pet_age || "N/A" },
+          { label: "Type", value: receiptData.service_type?.toUpperCase() },
+        ]}
+        items={[
+          { name: `${receiptData.service_name}${receiptData.description ? ` — ${receiptData.description}` : ""}`, quantity: 1, unitPrice: receiptData.service_cost, total: receiptData.service_cost },
+          ...receiptData.additional_services.map((svc) => ({ name: svc.name || "Additional service", quantity: 1, unitPrice: svc.cost, total: svc.cost })),
+        ]}
+        subtotal={receiptData.subtotal}
+        netAmount={receiptData.net_amount}
+        vat={receiptData.breakdown?.vat_amount ?? receiptData.tax}
+        total={receiptData.total}
+        amountReceived={receiptData.cash_received}
+        change={receiptData.change}
+        footerText={`Thank you for trusting ${STORE_INFO.name} with your pet's health!`}
+      />
       {/* ── End receipt content ── */}
 
       {/* Action buttons — screen only, excluded from PDF/print */}

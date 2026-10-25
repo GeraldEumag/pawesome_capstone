@@ -555,7 +555,7 @@ const RoleAwareChatbot = ({
     try {
       const data = await createChatbotHotelBooking({
         pet_id: Number(workflowState.form.hotel_pet_id),
-        hotel_room_id: Number(workflowState.form.hotel_room_id),
+        room_id: Number(workflowState.form.hotel_room_id),
         check_in: workflowState.form.check_in,
         check_out: workflowState.form.check_in,
         special_requests: workflowState.form.special_requests,
@@ -1493,7 +1493,7 @@ const RoleAwareChatbot = ({
                   <select value={workflowState.form.hotel_room_id} onChange={(e) => updateWorkflowForm("hotel_room_id", e.target.value)}>
                     <option value="">Auto-assign available room</option>
                     {normalizeList(workflowState.options.rooms).map((room) => (
-                      <option key={room.id} value={room.id}>{room.room_number} - {room.type} (₱{room.daily_rate}/night)</option>
+                      <option key={room.id} value={room.id}>{room.name || room.room_number} - {String(room.type || "").replace(/_/g, " ")} (₱{room.daily_rate}/night)</option>
                     ))}
                   </select>
                 </label>

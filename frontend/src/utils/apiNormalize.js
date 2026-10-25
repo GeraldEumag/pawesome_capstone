@@ -4,6 +4,8 @@
  * Import these instead of re-declaring per-component helpers.
  */
 
+import { resolveAvatarUrl } from "./avatar";
+
 /* ── List / Array normalization ─────────────────────────────── */
 
 export const normalizeList = (result, keys = []) => {
@@ -195,7 +197,7 @@ export const normProduct = (p, index = 0) => {
     stock_status: stock > 0 ? "in_stock" : "out_of_stock",
     is_available: stock > 0,
     category: String(p?.category || p?.product_category || p?.type || "others").trim().toLowerCase(),
-    image: p?.photo_url || p?.image || p?.image_url || p?.photo || "",
+    image: resolveAvatarUrl(p?.photo_url || p?.image || p?.image_url || p?.photo || "") || "",
     barcode: p?.barcode || p?.sku || p?.item_code || "",
     discount: Number(p?.discount ?? p?.discount_percent ?? 0),
     raw: p,

@@ -376,11 +376,11 @@ const AddProductModal = ({ isOpen, onClose, onSuccess, editItem = null }) => {
         </button>
       )}
       {currentStep < TOTAL_STEPS ? (
-        <button type="button" className="btn-submit" onClick={nextStep}>
+        <button key="next" type="button" className="btn-submit" onClick={nextStep}>
           Next <FontAwesomeIcon icon={faChevronRight} />
         </button>
       ) : (
-        <button type="submit" form="apm-form" className="btn-submit" disabled={loading}>
+        <button key="submit" type="submit" form="apm-form" className="btn-submit" disabled={loading}>
           {loading ? (
             <>
               <span className="spinner"></span>

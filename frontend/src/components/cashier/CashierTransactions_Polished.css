@@ -506,3 +506,8 @@
   color: var(--color-muted, #64748b);
   font-weight: 600;
 }
+
+/* Embedded branded receipt in the transaction detail modal */
+.ctx-receipt-view {
+  margin-bottom: 18px;
+}

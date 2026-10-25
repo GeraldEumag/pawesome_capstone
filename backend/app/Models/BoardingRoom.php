@@ -24,7 +24,15 @@ class BoardingRoom extends Model
         'is_active',
         'customer_selectable',
         'notes',
+        'image_path',
     ];
+
+    protected $appends = ['image_url'];
+
+    public function getImageUrlAttribute(): ?string
+    {
+        return $this->image_path ? \Illuminate\Support\Facades\Storage::disk('public')->url($this->image_path) : null;
+    }
 
     const VALID_ROOM_TYPES = [
         'dog_standard', 'dog_large', 'dog_family',
@@ -41,6 +49,21 @@ class BoardingRoom extends Model
         if (in_array($roomType, ['cat_condo', 'cat_suite'])) return 'cat_hotel';
         if (in_array($roomType, ['daycare_dog', 'daycare_cat', 'daycare_mixed'])) return 'daycare';
         return 'other';
+    }
+
+    /**
+     * Species a room type can house — single source of truth so staff never
+     * pick a species list that contradicts the room type.
+     */
+    public static function speciesForRoomType(string $roomType): array
+    {
+        return match ($roomType) {
+            'dog_standard', 'dog_large', 'dog_family', 'daycare_dog' => ['dog'],
+            'cat_condo', 'cat_suite', 'daycare_cat' => ['cat'],
+            'daycare_mixed' => ['dog', 'cat'],
+            'small_pet' => ['bird', 'fish', 'reptile', 'other'],
+            default => ['other'],
+        };
     }
 
     protected $casts = [

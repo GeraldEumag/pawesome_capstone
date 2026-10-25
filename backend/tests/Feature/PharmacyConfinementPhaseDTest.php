@@ -3,8 +3,6 @@
 namespace Tests\Feature;
 
 use App\Models\Appointment;
-use App\Models\ControlledDrugCount;
-use App\Models\ControlledDrugEntry;
 use App\Models\Customer;
 use App\Models\Dispensation;
 use App\Models\InventoryBatch;
@@ -20,7 +18,6 @@ use App\Models\Vaccination;
 use App\Models\VisitConsent;
 use App\Models\WardBed;
 use App\Services\ConfinementAccrualService;
-use App\Services\ControlledDrugService;
 use App\Services\MarService;
 use App\Services\VaccinationService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -102,17 +99,6 @@ class PharmacyConfinementPhaseDTest extends TestCase
             'payment_status' => 'unpaid',
             'admitted_at' => now(),
         ], $overrides));
-    }
-
-    // ── Inventory classes ──────────────────────────────────────────
-
-    public function test_inventory_item_classes_and_controlled_drug_flag(): void
-    {
-        $drug = $this->makeItem(['item_class' => 'controlled_drug']);
-        $medicine = $this->makeItem(['item_class' => 'medicine']);
-
-        $this->assertTrue($drug->isControlledDrug());
-        $this->assertFalse($medicine->isControlledDrug());
     }
 
     // ── Dispensing ─────────────────────────────────────────────────
@@ -250,89 +236,6 @@ class PharmacyConfinementPhaseDTest extends TestCase
         $this->assertSame('LOT-99127', $cert['vaccine']['lot_number']);
         $this->assertSame($batch->expiration_date->toDateString(), $cert['vaccine']['expiry_date']);
         $this->assertSame('Right shoulder', $cert['vaccine']['site']);
-    }
-
-    // ── Controlled drugs ───────────────────────────────────────────
-
-    public function test_controlled_drug_register_keeps_a_running_balance(): void
-    {
-        $vet = $this->userWithToken('veterinary');
-        $drug = $this->makeItem(['item_class' => 'controlled_drug', 'stock' => 20]);
-        $this->makeBatch($drug);
-
-        ControlledDrugService::record($drug, [
-            'entry_type' => ControlledDrugEntry::TYPE_RECEIVED,
-            'quantity_delta' => 20,
-            'performed_by' => $vet->id,
-        ]);
-
-        // Dispensing a controlled drug appends a register entry under lock.
-        $appointment = $this->makeAppointment($vet);
-        $this->withHeaders($this->authHeader($vet))
-            ->postJson('/api/veterinary/dispensations', [
-                'inventory_item_id' => $drug->id,
-                'appointment_id' => $appointment->id,
-                'quantity' => 5,
-                'witness_id' => $this->userWithToken('inventory')->id,
-            ])
-            ->assertCreated();
-
-        $entries = ControlledDrugEntry::where('inventory_item_id', $drug->id)->orderBy('id')->get();
-        $this->assertCount(2, $entries);
-        $this->assertSame(20, $entries[0]->balance_after);
-        $this->assertSame(-5, $entries[1]->quantity_delta);
-        $this->assertSame(15, $entries[1]->balance_after);
-        $this->assertSame(15, ControlledDrugService::balance($drug->id));
-        $this->assertSame(15, (int) $drug->fresh()->stock);
-    }
-
-    public function test_two_person_count_requires_a_different_witness(): void
-    {
-        $inventory = $this->userWithToken('inventory');
-        $witness = $this->userWithToken('manager');
-        $drug = $this->makeItem(['item_class' => 'controlled_drug', 'stock' => 20]);
-
-        ControlledDrugService::record($drug, [
-            'entry_type' => ControlledDrugEntry::TYPE_RECEIVED,
-            'quantity_delta' => 20,
-            'performed_by' => $inventory->id,
-        ]);
-
-        // Counter records a physical shortfall of 2.
-        $count = $this->withHeaders($this->authHeader($inventory))
-            ->postJson('/api/inventory/controlled-drug-counts', [
-                'inventory_item_id' => $drug->id,
-                'counted_balance' => 18,
-            ])
-            ->assertCreated()
-            ->json('count');
-
-        $this->assertSame('pending_witness', $count['status']);
-        $this->assertSame(-2, $count['variance']);
-
-        // The counter cannot verify their own count.
-        $this->withHeaders($this->authHeader($inventory))
-            ->postJson("/api/inventory/controlled-drug-counts/{$count['id']}/verify", [
-                'reason' => 'Two tablets dropped and crushed',
-            ])
-            ->assertStatus(422);
-
-        // A second person verifies — register + stock reconcile to 18.
-        $this->withHeaders($this->authHeader($witness))
-            ->postJson("/api/manager/controlled-drug-counts/{$count['id']}/verify", [
-                'reason' => 'Two tablets dropped and crushed',
-            ])
-            ->assertOk()
-            ->assertJsonPath('count.status', 'verified');
-
-        $this->assertSame(18, ControlledDrugService::balance($drug->id));
-        $this->assertSame(18, (int) $drug->fresh()->stock);
-        $this->assertDatabaseHas('controlled_drug_register', [
-            'inventory_item_id' => $drug->id,
-            'entry_type' => 'count_correction',
-            'quantity_delta' => -2,
-            'witness_id' => $witness->id,
-        ]);
     }
 
     // ── Monthly audit variance approval ────────────────────────────

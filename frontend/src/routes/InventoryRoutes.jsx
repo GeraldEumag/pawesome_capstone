@@ -12,7 +12,6 @@ import AuditAnalyticsDashboard from "../components/inventory/AuditAnalyticsDashb
 import MyPayroll from "../components/shared/MyPayroll";
 import BarcodeGenerator from "../components/inventory/BarcodeGenerator";
 import Suppliers from "../components/inventory/Suppliers";
-import ControlledDrugRegister from "../components/inventory/ControlledDrugRegister";
 
 const InventoryRoutes = () => (
   <Routes>
@@ -54,14 +53,6 @@ const InventoryRoutes = () => (
         element={
           <ProtectedRoute>
             <AuditAnalyticsDashboard />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="controlled-drugs"
-        element={
-          <ProtectedRoute>
-            <ControlledDrugRegister apiPrefix="/inventory" canVerify />
           </ProtectedRoute>
         }
       />

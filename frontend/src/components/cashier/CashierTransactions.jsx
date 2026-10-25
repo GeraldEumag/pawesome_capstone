@@ -22,6 +22,7 @@ import { formatCurrency } from "../../utils/currency";
 import { posApi } from "../../api/pos";
 import { printReceipt } from "../../utils/receiptPrinter";
 import { downloadReceiptPdf } from "../../utils/receiptPdf";
+import ReceiptDocument from "../shared/receipt/ReceiptDocument";
 import { useNavigate } from "react-router-dom";
 import RowActionPopover from "../shared/RowActionPopover";
 import Modal from "../shared/Modal";
@@ -463,6 +464,12 @@ const CashierTransactions = () => {
                 <div className="loading-overlay" style={{ position: "static" }}>
                   <FontAwesomeIcon icon={faSpinner} spin />
                   <span>Loading details...</span>
+                </div>
+              )}
+
+              {!detailLoading && (
+                <div className="ctx-receipt-view">
+                  <ReceiptDocument {...getReceiptOptions(selectedTransaction)} />
                 </div>
               )}
 

@@ -48,7 +48,7 @@ return [
             'secret' => env('AWS_SECRET_ACCESS_KEY'),
             'region' => env('AWS_DEFAULT_REGION'),
             'bucket' => env('AWS_PRIVATE_BUCKET', env('AWS_BUCKET')),
-            'url' => env('AWS_PRIVATE_URL'),
+            'url' => env('AWS_PRIVATE_URL') ?: null,
             'endpoint' => env('AWS_ENDPOINT'),
             'use_path_style_endpoint' => env('AWS_USE_PATH_STYLE_ENDPOINT', false),
             // On s3/R2, leave visibility unset: R2 and ACL-disabled S3 buckets reject a
@@ -65,7 +65,9 @@ return [
             'secret' => env('AWS_SECRET_ACCESS_KEY'),
             'region' => env('AWS_DEFAULT_REGION'),
             'bucket' => env('AWS_PUBLIC_BUCKET', env('AWS_BUCKET')),
-            'url' => env('AWS_PUBLIC_URL', rtrim(env('APP_URL', 'http://localhost'), '/').'/storage'),
+            // An empty AWS_PUBLIC_URL (e.g. "AWS_PUBLIC_URL=") must fall back
+            // to the local APP_URL/storage — env() treats "" as set.
+            'url' => env('AWS_PUBLIC_URL') ?: rtrim(env('APP_URL', 'http://localhost'), '/').'/storage',
             'endpoint' => env('AWS_ENDPOINT'),
             'use_path_style_endpoint' => env('AWS_USE_PATH_STYLE_ENDPOINT', false),
             'visibility' => $publicDriver === 'local' ? 'public' : null,

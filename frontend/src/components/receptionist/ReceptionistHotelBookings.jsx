@@ -176,7 +176,7 @@ const ReceptionistHotelBookings = () => {
     try {
       const [boardingData, hotelData] = await Promise.all([
         apiRequest("/receptionist/boarding-rooms"),
-        apiRequest("/receptionist/hotel-rooms?status=available"),
+        Promise.resolve({ rooms: [] }),
       ]);
       const boardingRooms = normalizeList(boardingData, ["rooms", "available_rooms"])
         .filter((room) => room.is_active !== false)
