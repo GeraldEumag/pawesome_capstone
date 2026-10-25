@@ -57,6 +57,9 @@ class ReceiptService
             return FileStorageService::storeAndPersist($file, $directory, 'private', $persist, deleteOld: false, prefix: $options['prefix'] ?? null);
         }
 
+        $contents = file_get_contents($file->getRealPath());
+        $sha256 = $contents !== false ? hash('sha256', $contents) : null;
+
         $idempotencyKey = $options['idempotency_key'] ?? null;
         if ($idempotencyKey) {
             $existing = PaymentReceipt::where('payable_type', $payableType)
@@ -64,11 +67,18 @@ class ReceiptService
                 ->where('idempotency_key', $idempotencyKey)
                 ->first();
             if ($existing) {
+                // A retry of the same file reuses its receipt; a different file
+                // must never be silently replaced by the earlier one.
+                if ($sha256 && $existing->sha256 !== $sha256) {
+                    throw ValidationException::withMessages([
+                        'payment_proof' => ['This upload was already submitted with a different file. Please select the file again.'],
+                    ]);
+                }
                 return $persist($existing->disk_path);
             }
         }
 
-        $maxUploads = (int) config('receipt_scanner.max_uploads_per_payable', 5);
+        $maxUploads = (int) config('receipt_scanner.max_uploads_per_payable', 15);
         $count = PaymentReceipt::where('payable_type', $payableType)->where('payable_id', $payableId)->count();
         if ($count >= $maxUploads) {
             throw ValidationException::withMessages([
@@ -76,8 +86,6 @@ class ReceiptService
             ]);
         }
 
-        $contents = file_get_contents($file->getRealPath());
-        $sha256 = $contents !== false ? hash('sha256', $contents) : null;
         $phash = $contents !== false
             ? ReceiptImagePreprocessor::dHash($file->getRealPath(), $file->getMimeType() ?? '')
             : null;
@@ -146,7 +154,7 @@ class ReceiptService
                 return null;
             }
 
-            $maxUploads = (int) config('receipt_scanner.max_uploads_per_payable', 5);
+            $maxUploads = (int) config('receipt_scanner.max_uploads_per_payable', 15);
             if (PaymentReceipt::where('payable_type', $payableType)->where('payable_id', $payableId)->count() >= $maxUploads) {
                 return null;
             }

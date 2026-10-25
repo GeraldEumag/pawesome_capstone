@@ -176,11 +176,14 @@ class ReceiptValidationService
         $statusText = mb_strtolower((string) ($extraction['status_text'] ?? ''));
         $accepted = collect($config?->accepted_status_texts ?? [])->map(fn ($w) => mb_strtolower((string) $w));
         $statusOk = $statusText !== '' && $accepted->contains(fn ($word) => $word !== '' && str_contains($statusText, $word));
+        $statusUnreadable = $statusText === '';
         $results[] = $this->rule(
             'status',
             $statusOk,
-            $statusOk ? 'pass' : 'block',
-            $statusOk ? null : 'Receipt does not show a successful payment status.'
+            $statusUnreadable ? 'warning' : 'block',
+            $statusOk ? null : ($statusUnreadable
+                ? 'No payment status could be read from the receipt — check the image for the transaction status.'
+                : 'Receipt shows a non-successful status ("' . ($extraction['status_text'] ?? '') . '").')
         );
 
         // 10. Confidence — reference read confidence thresholds.

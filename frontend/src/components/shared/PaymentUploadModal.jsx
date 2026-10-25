@@ -67,7 +67,6 @@ const PaymentUploadModal = ({ open, onClose, onSuccess, endpoint, title, referen
     setPreviewUrl(null);
     setReferenceNumber("");
     setBlurWarning(false);
-    setIdempotencyKey(typeof crypto !== "undefined" && crypto.randomUUID ? crypto.randomUUID() : "");
     const method = String(previousPaymentMethod || "").toLowerCase();
     setPaymentMethod(PAYMENT_METHODS.some((option) => option.value === method) ? method : "gcash");
     setError("");
@@ -137,6 +136,7 @@ const PaymentUploadModal = ({ open, onClose, onSuccess, endpoint, title, referen
     const objectUrl = URL.createObjectURL(selected);
     setFile(selected);
     setPreviewUrl(objectUrl);
+    setIdempotencyKey(typeof crypto !== "undefined" && crypto.randomUUID ? crypto.randomUUID() : "");
     setError("");
     setBlurWarning(false);
 

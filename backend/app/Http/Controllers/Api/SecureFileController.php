@@ -144,8 +144,37 @@ class SecureFileController extends Controller
         return response($fileContents)
             ->header('Content-Type', $mimeType)
             ->header('Content-Disposition', $this->inlineDisposition('payment_proof_' . $id . '.' . $extension))
-            ->header('Cache-Control', 'private, max-age=3600') // Cache for 1 hour
+            ->header('Cache-Control', 'private, no-cache') // Same URL serves the latest proof after a re-upload
             ->header('X-Content-Type-Options', 'nosniff'); // Prevent MIME type sniffing
+    }
+
+    /**
+     * Serve one uploaded receipt file by its payment_receipts id (staff only).
+     */
+    public function viewPaymentReceipt(int $id)
+    {
+        $user = Auth::user();
+        if (!$user || !in_array($user->role, ['admin', 'cashier', 'super_receptionist', 'receptionist', 'manager'], true)) {
+            return response()->json(['message' => 'Forbidden'], 403);
+        }
+
+        $receipt = \App\Models\PaymentReceipt::find($id);
+        if (!$receipt || !Storage::disk($receipt->disk)->exists($receipt->disk_path)) {
+            return response()->json(['message' => 'File not found'], 404);
+        }
+
+        $mimeType = $receipt->mime ?: 'application/octet-stream';
+        if (!in_array($mimeType, ['image/jpeg', 'image/png', 'image/webp', 'application/pdf'], true)) {
+            return response()->json(['message' => 'Invalid file type'], 422);
+        }
+
+        $extension = strtolower(pathinfo($receipt->disk_path, PATHINFO_EXTENSION));
+
+        return response(Storage::disk($receipt->disk)->get($receipt->disk_path))
+            ->header('Content-Type', $mimeType)
+            ->header('Content-Disposition', $this->inlineDisposition('payment_receipt_' . $id . '.' . $extension))
+            ->header('Cache-Control', 'private, max-age=3600') // A stored receipt file never changes
+            ->header('X-Content-Type-Options', 'nosniff');
     }
 
     /**

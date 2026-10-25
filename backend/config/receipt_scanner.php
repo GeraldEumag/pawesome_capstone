@@ -39,6 +39,8 @@ return [
         'base_url' => env('RECEIPT_READER_BASE_URL', env('CHATBOT_AI_BASE_URL', 'https://generativelanguage.googleapis.com/v1beta')),
         'timeout' => (int) env('RECEIPT_READER_TIMEOUT', 30),
         'max_tokens' => (int) env('RECEIPT_READER_MAX_TOKENS', 1200),
+        // Extra attempts per key on overload/rate-limit (429, 5xx) or transport errors.
+        'retries' => (int) env('RECEIPT_READER_RETRIES', 2),
     ],
 
     'ocr' => [
@@ -66,7 +68,7 @@ return [
     'date_window_days' => (int) env('RECEIPT_DATE_WINDOW_DAYS', 7),
 
     // Max receipts a single payable may accumulate before uploads are refused.
-    'max_uploads_per_payable' => (int) env('RECEIPT_MAX_UPLOADS_PER_PAYABLE', 5),
+    'max_uploads_per_payable' => (int) env('RECEIPT_MAX_UPLOADS_PER_PAYABLE', 15),
 
     // dHash hamming distance at/below which two images are "similar".
     'phash_max_distance' => (int) env('RECEIPT_PHASH_MAX_DISTANCE', 6),

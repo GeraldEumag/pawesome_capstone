@@ -18,6 +18,7 @@ use Illuminate\Support\Facades\Http;
 class GeminiVisionReader implements ReceiptReaderInterface
 {
     private const KEY_INDEX_CACHE = 'receipt_reader:gemini_key_index';
+    private const RETRYABLE_STATUSES = [429, 500, 502, 503, 504];
 
     /** @var string[] */
     private array $apiKeys;
@@ -26,6 +27,7 @@ class GeminiVisionReader implements ReceiptReaderInterface
     private int $timeout;
     private int $maxTokens;
     private int $keyCacheTtl;
+    private int $retries;
     private string $version;
 
     public function __construct()
@@ -41,6 +43,7 @@ class GeminiVisionReader implements ReceiptReaderInterface
         $this->timeout = (int) ($vision['timeout'] ?? 30);
         $this->maxTokens = (int) ($vision['max_tokens'] ?? 1200);
         $this->keyCacheTtl = (int) ($vision['key_cache_ttl'] ?? 3600);
+        $this->retries = (int) ($vision['retries'] ?? 2);
         $this->version = (string) config('receipt_scanner.reader_version', 'v1');
     }
 
@@ -99,33 +102,24 @@ class GeminiVisionReader implements ReceiptReaderInterface
      */
     private function request(string $apiKey, string $contents, string $mime): array
     {
-        $endpoint = "{$this->baseUrl}/models/{$this->model}:generateContent";
-
-        try {
-            $response = Http::withHeaders([
-                'Content-Type' => 'application/json',
-                'x-goog-api-key' => $apiKey,
-            ])->timeout($this->timeout)->post($endpoint, [
-                'contents' => [[
-                    'role' => 'user',
-                    'parts' => [
-                        ['text' => $this->prompt()],
-                        ['inline_data' => [
-                            'mime_type' => $mime,
-                            'data' => base64_encode($contents),
-                        ]],
-                    ],
-                ]],
-                'generationConfig' => [
-                    'temperature' => 0.1,
-                    'maxOutputTokens' => $this->maxTokens,
-                    'responseMimeType' => 'application/json',
-                    'responseSchema' => $this->responseSchema(),
+        $response = $this->postWithRetry($apiKey, [
+            'contents' => [[
+                'role' => 'user',
+                'parts' => [
+                    ['text' => $this->prompt()],
+                    ['inline_data' => [
+                        'mime_type' => $mime,
+                        'data' => base64_encode($contents),
+                    ]],
                 ],
-            ]);
-        } catch (\Throwable $e) {
-            throw new ReceiptReaderException('request failed: ' . $e->getMessage());
-        }
+            ]],
+            'generationConfig' => [
+                'temperature' => 0.1,
+                'maxOutputTokens' => $this->maxTokens,
+                'responseMimeType' => 'application/json',
+                'responseSchema' => $this->responseSchema(),
+            ],
+        ]);
 
         if (!$response->successful()) {
             throw new ReceiptReaderException("HTTP {$response->status()}");
@@ -144,6 +138,36 @@ class GeminiVisionReader implements ReceiptReaderInterface
         return $decoded;
     }
 
+    /**
+     * Retry overload, rate-limit and transport failures with a short backoff
+     * before giving up on this key (the key pool then tries the next key).
+     */
+    private function postWithRetry(string $apiKey, array $payload): \Illuminate\Http\Client\Response
+    {
+        $endpoint = "{$this->baseUrl}/models/{$this->model}:generateContent";
+
+        for ($attempt = 0; ; $attempt++) {
+            try {
+                $response = Http::withHeaders([
+                    'Content-Type' => 'application/json',
+                    'x-goog-api-key' => $apiKey,
+                ])->timeout($this->timeout)->post($endpoint, $payload);
+            } catch (\Throwable $e) {
+                if ($attempt >= $this->retries) {
+                    throw new ReceiptReaderException('request failed: ' . $e->getMessage());
+                }
+                sleep(2 * ($attempt + 1));
+                continue;
+            }
+
+            $retryable = in_array($response->status(), self::RETRYABLE_STATUSES, true);
+            if (!$retryable || $attempt >= $this->retries) {
+                return $response;
+            }
+            sleep(2 * ($attempt + 1));
+        }
+    }
+
     private function prompt(): string
     {
         return <<<'PROMPT'
@@ -158,6 +182,7 @@ Rules:
 - Report image_quality (good, fair or poor) and note anything cropped or hidden in notes.
 - paid_at must be ISO 8601 interpreted as Asia/Manila local time.
 - amount is the Philippine peso total shown as paid, two decimals, no currency symbol.
+- status_text is the transaction status wording shown on the receipt, copied as printed (for example "Sent via GCash", "Successful", "Paid", "Processing" or "Failed"). It is often a banner or line near the top or bottom, beside a check mark. Return null only when no status wording is visible at all.
 PROMPT;
     }
 

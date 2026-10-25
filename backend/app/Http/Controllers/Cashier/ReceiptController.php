@@ -7,7 +7,6 @@ use App\Models\PaymentReceipt;
 use App\Services\Receipts\ReceiptConfirmationService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
 
 /**
  * Cashier actions on scanned receipts: view extraction + validations,
@@ -15,15 +14,6 @@ use Illuminate\Support\Facades\DB;
  */
 class ReceiptController extends Controller
 {
-    private const PROOF_URL_TYPES = [
-        'service_request' => 'service-request',
-        'boarding' => 'boarding',
-        'grooming' => 'grooming',
-        'appointment' => 'appointment',
-        'medical_confinement' => 'medical_confinement',
-        'service_billing_payment' => 'service-billing-payment',
-    ];
-
     public function show(int $id): JsonResponse
     {
         $receipt = PaymentReceipt::with(['extractions' => fn ($q) => $q->orderByDesc('id'), 'validations'])->find($id);
@@ -130,25 +120,9 @@ class ReceiptController extends Controller
         return response()->json($result, $result['status'] ?? 200);
     }
 
-    private function proofUrl(PaymentReceipt $receipt): ?string
+    private function proofUrl(PaymentReceipt $receipt): string
     {
-        // Proofs are served through the existing per-type secure view route.
-        $routeType = self::PROOF_URL_TYPES[$receipt->payable_type] ?? null;
-        if (!$routeType) {
-            return null;
-        }
-
-        $table = \App\Services\Receipts\ReceiptService::PAYABLE_TABLES[$receipt->payable_type] ?? null;
-        if (!$table) {
-            return null;
-        }
-
-        // Appointment proofs live on the linked service_request row.
-        if ($receipt->payable_type === 'appointment') {
-            $srId = DB::table('appointments')->where('id', $receipt->payable_id)->value('service_request_id');
-            return $srId ? url("/api/files/payment-proofs/service-request/{$srId}/view") : null;
-        }
-
-        return url("/api/files/payment-proofs/{$routeType}/{$receipt->payable_id}/view");
+        // Each receipt serves its own uploaded file, not the payable's latest proof.
+        return url("/api/files/payment-receipts/{$receipt->id}/view");
     }
 }

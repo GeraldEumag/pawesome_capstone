@@ -10,10 +10,13 @@ use App\Models\ReceiptValidation;
 use App\Models\ServiceRequest;
 use App\Models\User;
 use App\Services\Receipts\ProviderReceiptParser;
+use App\Services\Receipts\ReceiptService;
+use App\Services\Receipts\ReceiptValidationService;
 use App\Services\Receipts\ReceiptNormalizer;
 use Carbon\Carbon;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Validation\ValidationException;
 use Illuminate\Support\Facades\Storage;
 use Tests\TestCase;
 
@@ -122,6 +125,116 @@ class ReceiptScannerTest extends TestCase
 
         $this->assertSame('GCASH-9001', $sr->fresh()->payment_reference);
         $this->assertSame('GCASH-9001', PaymentReceipt::latest()->first()->submitted_reference);
+    }
+
+    public function test_each_upload_key_stores_its_own_file_and_reused_key_with_other_file_is_rejected(): void
+    {
+        Storage::fake('private');
+        config()->set('receipt_scanner.chain', []);
+
+        [, $customer] = $this->customerUser();
+        $sr = $this->approvedUnpaidRequest($customer);
+        $png = base64_decode('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==');
+        $persist = fn (string $path) => $sr->update(['payment_proof' => $path]);
+        $store = fn (string $name, string $bytes, string $key) => ReceiptService::storeAndAttach(
+            UploadedFile::fake()->createWithContent($name, $bytes),
+            'payment-proofs', 'service_request', $sr->id, $persist,
+            ['prefix' => 'proof', 'idempotency_key' => $key],
+        );
+
+        $store('first.png', $png, 'key-a');
+        $store('second.png', $png . 'x', 'key-b');
+
+        $receipts = PaymentReceipt::where('payable_type', 'service_request')->where('payable_id', $sr->id)->orderBy('id')->get();
+        $this->assertCount(2, $receipts);
+        $this->assertNotSame($receipts[0]->disk_path, $receipts[1]->disk_path);
+        $this->assertSame($receipts[1]->disk_path, $sr->fresh()->payment_proof);
+
+        $this->expectException(ValidationException::class);
+        $store('other.png', $png . 'yy', 'key-a');
+    }
+
+    public function test_cashier_receipts_serve_their_own_files_and_proof_is_not_cached(): void
+    {
+        Storage::fake('private');
+        $png = base64_decode('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==');
+        Storage::disk('private')->put('payment-proofs/one.png', $png);
+        Storage::disk('private')->put('payment-proofs/two.png', $png . 'x');
+
+        [, $customer] = $this->customerUser();
+        $sr = $this->approvedUnpaidRequest($customer);
+        $sr->update(['payment_proof' => 'payment-proofs/two.png']);
+        $first = $this->receiptFor('service_request', $sr->id, ['disk_path' => 'payment-proofs/one.png']);
+        $second = $this->receiptFor('service_request', $sr->id, ['disk_path' => 'payment-proofs/two.png']);
+        $cashier = $this->cashier();
+
+        $this->withHeaders($this->authHeaders($cashier))
+            ->getJson("/api/cashier/receipts/{$first->id}")
+            ->assertOk()
+            ->assertJsonPath('receipt.proof_url', url("/api/files/payment-receipts/{$first->id}/view"));
+
+        $view = $this->withHeaders($this->authHeaders($cashier))
+            ->get("/api/files/payment-receipts/{$first->id}/view")
+            ->assertOk()
+            ->assertHeader('Content-Type', 'image/png');
+        $this->assertSame($png, $view->getContent());
+
+        $this->withHeaders($this->authHeaders($cashier))
+            ->get("/api/files/payment-receipts/{$second->id}/view")
+            ->assertOk();
+
+        $proof = $this->withHeaders($this->authHeaders($cashier))
+            ->get("/api/files/payment-proofs/service-request/{$sr->id}/view")
+            ->assertOk();
+        $this->assertStringContainsString('no-cache', (string) $proof->headers->get('Cache-Control'));
+    }
+
+    public function test_payable_accepts_fifteen_uploads_then_refuses_the_sixteenth(): void
+    {
+        Storage::fake('private');
+        config()->set('receipt_scanner.chain', []);
+
+        [, $customer] = $this->customerUser();
+        $sr = $this->approvedUnpaidRequest($customer);
+        $png = base64_decode('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==');
+        $store = fn (int $i) => ReceiptService::storeAndAttach(
+            UploadedFile::fake()->createWithContent("r{$i}.png", $png . str_repeat('x', $i)),
+            'payment-proofs', 'service_request', $sr->id, fn (string $path) => $sr->update(['payment_proof' => $path]),
+            ['prefix' => 'proof', 'idempotency_key' => "key-{$i}"],
+        );
+
+        for ($i = 1; $i <= 15; $i++) {
+            $store($i);
+        }
+        $this->assertSame(15, PaymentReceipt::where('payable_id', $sr->id)->count());
+
+        $this->expectException(ValidationException::class);
+        $store(16);
+    }
+
+    public function test_unreadable_status_is_amber_while_non_success_status_is_red(): void
+    {
+        [, $customer] = $this->customerUser();
+        $sr = $this->approvedUnpaidRequest($customer);
+        $receipt = $this->receiptFor('service_request', $sr->id);
+        $extraction = fn (?string $status) => [
+            'is_payment_receipt' => true,
+            'provider' => 'gcash',
+            'reference_normalized' => '8046526004757',
+            'amount' => 100.0,
+            'paid_at' => now()->toIso8601String(),
+            'status_text' => $status,
+            'confidence' => ['reference_number' => 0.95],
+        ];
+        $validator = app(ReceiptValidationService::class);
+
+        $unreadable = $validator->run($receipt, $extraction(null), null);
+        $this->assertSame('warning', collect($unreadable['results'])->firstWhere('rule', 'status')['result']);
+        $this->assertNotSame('red', $unreadable['overall']);
+
+        $processing = $validator->run($receipt, $extraction('Processing'), null);
+        $this->assertSame('block', collect($processing['results'])->firstWhere('rule', 'status')['result']);
+        $this->assertSame('red', $processing['overall']);
     }
 
     /* ── Customer status + manual fallback ── */
@@ -370,6 +483,33 @@ class ReceiptScannerTest extends TestCase
 
         $this->assertSame('1234567890123', $out['reference_number']);
         $this->assertSame('gcash', $out['provider']);
+    }
+
+    public function test_vision_reader_retries_overloaded_responses_on_the_same_key(): void
+    {
+        config()->set('receipt_scanner.vision.api_keys', ['only-key']);
+        config()->set('receipt_scanner.vision.retries', 2);
+        \Illuminate\Support\Facades\Cache::forget('receipt_reader:gemini_key_index');
+
+        \Illuminate\Support\Facades\Http::fakeSequence()
+            ->push(['error' => 'overloaded'], 503)
+            ->push([
+                'candidates' => [['content' => ['parts' => [['text' => json_encode([
+                    'is_payment_receipt' => true,
+                    'provider' => 'gcash',
+                    'reference_number' => '9876543210987',
+                    'confidence' => ['overall' => 0.95],
+                ])]]]]],
+            ], 200);
+
+        $path = tempnam(sys_get_temp_dir(), 'rcpt');
+        file_put_contents($path, 'fake-image-bytes');
+
+        $out = (new \App\Services\Receipts\GeminiVisionReader())->read($path, 'image/png');
+        @unlink($path);
+
+        $this->assertSame('9876543210987', $out['reference_number']);
+        \Illuminate\Support\Facades\Http::assertSentCount(2);
     }
 
     public function test_vision_reader_reports_when_every_key_fails(): void

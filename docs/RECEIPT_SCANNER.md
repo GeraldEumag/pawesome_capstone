@@ -101,7 +101,7 @@ Each scan writes `receipt_validations` rows; any `block` disables Confirm:
 | `amount` | warning | Receipt amount ≠ payable balance |
 | `date` | warning | Receipt outside the acceptance window / unreadable |
 | `recipient` | warning | Recipient doesn't match a configured clinic account |
-| `status` | block | No successful-payment status text found |
+| `status` | block / warning | Block when a non-success status is read (e.g. Processing, Failed); warning when no status text is readable |
 | `confidence` | warning | Below green threshold |
 | `image_quality` | warning | Reader reports a poor-quality image |
 | `reference_agreement` | warning | Typed reference differs from scanned reference |
@@ -124,7 +124,7 @@ RECEIPT_READER_MODEL=                 # falls back to CHATBOT_AI_MODEL
 # RECEIPT_CONFIDENCE_GREEN=0.90
 # RECEIPT_CONFIDENCE_REVIEW=0.70
 # RECEIPT_DATE_WINDOW_DAYS=7
-# RECEIPT_MAX_UPLOADS_PER_PAYABLE=5
+# RECEIPT_MAX_UPLOADS_PER_PAYABLE=15
 # RECEIPT_PHASH_MAX_DISTANCE=6
 ```
 

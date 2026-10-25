@@ -1273,6 +1273,7 @@ Route::middleware(['throttle:api'])->group(function () {
 // Secure File Access Routes (auth required)
 Route::middleware(['auth.api', 'throttle:api'])->prefix('files')->group(function () {
     Route::get('/payment-proofs/{type}/{id}/view', [SecureFileController::class, 'viewPaymentProof']);
+    Route::get('/payment-receipts/{id}/view', [SecureFileController::class, 'viewPaymentReceipt']);
     Route::get('/vaccination-cards/{id}/view', [SecureFileController::class, 'viewVaccinationCard']);
     Route::get('/pet-photos/{petId}/view', [SecureFileController::class, 'viewPetImage']);
     Route::get('/care-logs/{id}/view', [SecureFileController::class, 'viewCareLogPhoto']);
