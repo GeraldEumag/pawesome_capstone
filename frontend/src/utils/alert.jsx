@@ -29,12 +29,23 @@ export const showAlert = async (message, title = "") => {
   });
 };
 
+const staticStatusIcon = (glyph, color) =>
+  `data:image/svg+xml;charset=utf-8,${encodeURIComponent(
+    `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none" stroke="${color}" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><circle cx="32" cy="32" r="28"/>${glyph}</svg>`
+  )}`;
+
+const SUCCESS_ICON = staticStatusIcon('<path d="M20 33l8 8 16-17"/>', "#10b981");
+const ERROR_ICON = staticStatusIcon('<path d="M23 23l18 18M41 23L23 41"/>', "#ef4444");
+const staticStatusOptions = { imageWidth: 64, imageHeight: 64 };
+
 export const showSuccess = async (message, title = "Success") => {
   return Swal.fire({
     ...lightTheme,
+    ...staticStatusOptions,
     title,
     text: message,
-    icon: "success",
+    imageUrl: SUCCESS_ICON,
+    imageAlt: "Success",
     showCancelButton: false,
     confirmButtonText: "OK",
   });
@@ -43,9 +54,11 @@ export const showSuccess = async (message, title = "Success") => {
 export const showError = async (message, title = "Error") => {
   return Swal.fire({
     ...lightTheme,
+    ...staticStatusOptions,
     title,
     text: message,
-    icon: "error",
+    imageUrl: ERROR_ICON,
+    imageAlt: "Error",
     showCancelButton: false,
     confirmButtonText: "OK",
   });
