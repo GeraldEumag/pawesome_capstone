@@ -4,7 +4,7 @@ namespace Tests\Feature;
 
 use App\Models\ChatbotFaq;
 use App\Models\Customer;
-use App\Models\HotelRoom;
+use App\Models\BoardingRoom;
 use App\Models\InventoryItem;
 use App\Models\Pet;
 use App\Models\Service;
@@ -91,8 +91,8 @@ class ChatbotConversationSimulationTest extends TestCase
         InventoryItem::factory()->create(['name' => 'Pet Shampoo', 'sku' => 'SHAMPOO-001', 'stock' => 20, 'price' => 250]);
         
         // Hotel Rooms
-        HotelRoom::factory()->create(['room_number' => '101', 'type' => 'standard', 'daily_rate' => 500]);
-        HotelRoom::factory()->create(['room_number' => '102', 'type' => 'deluxe', 'daily_rate' => 800]);
+        BoardingRoom::factory()->create(['room_code' => 'DOG-101', 'room_type' => 'dog_standard', 'daily_rate' => 500]);
+        BoardingRoom::factory()->create(['room_code' => 'DOG-102', 'room_type' => 'dog_large', 'daily_rate' => 800]);
         
         // Pets for customer
         Pet::factory()->create([

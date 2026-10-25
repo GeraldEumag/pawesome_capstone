@@ -11,6 +11,7 @@ use App\Models\InventoryItem;
 use App\Models\Pet;
 use App\Models\Service;
 use App\Services\BookingAvailabilityService;
+use App\Services\BoardingRoomService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Http\Request;
@@ -286,7 +287,7 @@ class ChatbotWorkflowController extends Controller
         ]);
     }
 
-    public function createHotelBooking(Request $request): JsonResponse
+    public function createHotelBooking(Request $request, BoardingRoomService $boardingRoomService): JsonResponse
     {
         $user = $request->user();
 
@@ -376,23 +377,38 @@ class ChatbotWorkflowController extends Controller
 
         // Create boarding record — same lifecycle as BoardingController::store:
         // 'pending' until a receptionist approves it, channel from the actor.
-        $boarding = Boarding::create([
-            'pet_id' => $pet->id,
-            'customer_id' => $customer->id,
-            'room_id' => $boardingRoom?->id,
-            'hotel_room_id' => $room?->id,
-            'check_in' => $data['check_in'],
-            'check_out' => $data['check_out'],
-            'status' => 'pending',
-            'special_requests' => $data['special_requests'] ?? null,
-            'total_amount' => $totalAmount,
-            'payment_status' => 'unpaid',
-            'booking_channel' => \App\Support\BookingChannel::forUser($request->user()),
-        ]);
+        // Boarding-room bookings also reserve the room in the same transaction.
+        $result = DB::transaction(function () use ($request, $pet, $customer, $room, $boardingRoom, $data, $totalAmount, $boardingRoomService) {
+            $boarding = Boarding::create([
+                'pet_id' => $pet->id,
+                'customer_id' => $customer->id,
+                'hotel_room_id' => $room?->id,
+                'check_in' => $data['check_in'],
+                'check_out' => $data['check_out'],
+                'status' => 'pending',
+                'special_requests' => $data['special_requests'] ?? null,
+                'total_amount' => $totalAmount,
+                'payment_status' => 'unpaid',
+                'booking_channel' => \App\Support\BookingChannel::forUser($request->user()),
+            ]);
+
+            if ($boardingRoom) {
+                $assignment = $boardingRoomService->assignRoomForBoarding($boarding, $boardingRoom->id, $data['check_in'], $data['check_out']);
+                if (!($assignment['success'] ?? false)) {
+                    return ['error' => $assignment['message'] ?? 'Selected room is not available.'];
+                }
+            }
+
+            return ['boarding' => $boarding];
+        });
+
+        if (isset($result['error'])) {
+            return response()->json(['message' => $result['error']], 422);
+        }
 
         return response()->json([
             'message' => 'Hotel booking created successfully.',
-            'boarding' => $boarding->load(['pet', 'customer', 'hotelRoom']),
+            'boarding' => $result['boarding']->load(['pet', 'customer', 'hotelRoom']),
         ], 201);
     }
 }

@@ -3,7 +3,7 @@
 namespace Tests\Feature;
 
 use App\Models\Customer;
-use App\Models\HotelRoom;
+use App\Models\BoardingRoom;
 use App\Models\InventoryItem;
 use App\Models\Pet;
 use App\Models\Service;
@@ -71,7 +71,7 @@ class ChatbotEndToEndTest extends TestCase
         // Create test data for workflows
         Service::factory()->count(3)->create();
         InventoryItem::factory()->count(5)->create(['status' => 'active']);
-        HotelRoom::factory()->count(3)->create(['status' => 'available']);
+        BoardingRoom::factory()->count(3)->create();
     }
 
     protected function withAuth(User $user): array
@@ -350,7 +350,7 @@ class ChatbotEndToEndTest extends TestCase
             '/api/chatbot/workflow/hotel/availability?' . http_build_query([
                 'check_in' => now()->addDay()->format('Y-m-d'),
                 'check_out' => now()->addDays(3)->format('Y-m-d'),
-                'room_type' => 'standard',
+                'room_type' => 'dog_standard',
             ]),
             $this->withAuth($this->customerUser)
         );

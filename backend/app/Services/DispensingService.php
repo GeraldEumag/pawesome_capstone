@@ -164,22 +164,6 @@ class DispensingService
                 $locked->id
             );
 
-            if ($item->isControlledDrug()) {
-                ControlledDrugService::record($item, [
-                    'entry_type' => ControlledDrugEntry::TYPE_RETURNED,
-                    'quantity_delta' => (int) $locked->quantity,
-                    'inventory_batch_id' => $locked->inventory_batch_id,
-                    'dispensation_id' => $locked->id,
-                    'prescription_id' => $locked->prescription_id,
-                    'appointment_id' => $locked->appointment_id,
-                    'medical_confinement_id' => $locked->medical_confinement_id,
-                    'pet_id' => $locked->pet_id,
-                    'customer_id' => $locked->customer_id,
-                    'performed_by' => $userId,
-                    'notes' => 'Dispensation voided' . ($reason ? ": {$reason}" : ''),
-                ]);
-            }
-
             if ($locked->prescription_id && ($prescription = Prescription::find($locked->prescription_id))) {
                 $prescription->increment('refills_remaining');
             }

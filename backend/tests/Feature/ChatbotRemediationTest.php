@@ -3,6 +3,8 @@
 namespace Tests\Feature;
 
 use App\Models\Boarding;
+use App\Models\BoardingRoom;
+use App\Models\BoardingRoomReservation;
 use App\Models\ChatbotFaq;
 use App\Models\ChatbotLog;
 use App\Models\Customer;
@@ -190,35 +192,30 @@ class ChatbotRemediationTest extends TestCase
         );
     }
 
-    public function test_cancelled_and_checked_out_boardings_do_not_block(): void
+    public function test_cancelled_and_checked_out_reservations_do_not_block(): void
     {
-        [$roomA, $pet] = $this->roomWithBoarding('cancelled', '2025-07-10', '2025-07-15');
-        [$roomB] = $this->roomWithBoarding('checked_out', '2025-07-10', '2025-07-15');
+        $pet = Pet::factory()->create(['customer_id' => $this->customer->id, 'species' => 'Dog']);
+        $cancelledRoom = $this->boardingRoom(['room_code' => 'REM-CXL']);
+        $checkedOutRoom = $this->boardingRoom(['room_code' => 'REM-OUT']);
+        $this->reserveRoom($cancelledRoom, 'cancelled', $pet, '2025-07-10', '2025-07-15');
+        $this->reserveRoom($checkedOutRoom, 'checked_out', $pet, '2025-07-10', '2025-07-15');
 
-        $response = $this->postJson('/api/chatbot/workflow/hotel-bookings', [
-            'pet_id' => $pet->id,
-            'hotel_room_id' => $roomA->id,
-            'check_in' => '2025-07-12',
-            'check_out' => '2025-07-18',
-        ], $this->withAuth($this->customerUser));
-
-        $response->assertStatus(201);
-
-        // checked_out room is returned by the availability endpoint
         $avail = $this->getJson(
             '/api/chatbot/workflow/hotel/availability?check_in=2025-07-12&check_out=2025-07-18',
             $this->withAuth($this->customerUser)
         );
-        $this->assertContains(
-            $roomB->id,
-            collect($avail->json('available_rooms'))->pluck('id')
-        );
+        $avail->assertStatus(200);
+        $ids = collect($avail->json('available_rooms'))->pluck('id');
+        $this->assertContains($cancelledRoom->id, $ids);
+        $this->assertContains($checkedOutRoom->id, $ids);
     }
 
     public function test_auto_assignment_skips_occupied_room(): void
     {
-        [$blockedRoom, $pet] = $this->roomWithBoarding('confirmed', '2025-07-10', '2025-07-15');
-        $freeRoom = HotelRoom::factory()->create(['status' => 'available']);
+        $pet = Pet::factory()->create(['customer_id' => $this->customer->id, 'species' => 'Dog']);
+        $blockedRoom = $this->boardingRoom(['room_code' => 'REM-A', 'daily_rate' => 500]);
+        $freeRoom = $this->boardingRoom(['room_code' => 'REM-B', 'daily_rate' => 800]);
+        $this->reserveRoom($blockedRoom, 'scheduled', $pet, '2025-07-10', '2025-07-15');
 
         $response = $this->postJson('/api/chatbot/workflow/hotel-bookings', [
             'pet_id' => $pet->id,
@@ -227,7 +224,50 @@ class ChatbotRemediationTest extends TestCase
         ], $this->withAuth($this->customerUser));
 
         $response->assertStatus(201);
-        $this->assertSame($freeRoom->id, $response->json('boarding.hotel_room_id'));
+        $this->assertDatabaseHas('boarding_room_reservations', [
+            'room_id' => $freeRoom->id,
+            'source_type' => 'pet_hotel',
+            'source_id' => $response->json('boarding.id'),
+            'status' => 'scheduled',
+        ]);
+    }
+
+    private function boardingRoom(array $overrides = []): BoardingRoom
+    {
+        return BoardingRoom::create(array_merge([
+            'room_code' => 'REM-' . uniqid(),
+            'room_name' => 'Remediation Dog Room',
+            'room_type' => 'dog_standard',
+            'hotel_category' => 'dog_hotel',
+            'allowed_species' => ['dog'],
+            'max_capacity' => 1,
+            'total_rooms' => 1,
+            'daily_rate' => 800,
+            'is_active' => true,
+            'customer_selectable' => true,
+        ], $overrides));
+    }
+
+    private function reserveRoom(BoardingRoom $room, string $status, Pet $pet, string $checkIn, string $checkOut): void
+    {
+        $boarding = Boarding::create([
+            'pet_id' => $pet->id,
+            'customer_id' => $this->customer->id,
+            'check_in' => $checkIn,
+            'check_out' => $checkOut,
+            'status' => $status,
+        ]);
+
+        BoardingRoomReservation::create([
+            'room_id' => $room->id,
+            'source_type' => 'pet_hotel',
+            'source_id' => $boarding->id,
+            'pet_id' => $pet->id,
+            'customer_id' => $this->customer->id,
+            'check_in_date' => $checkIn,
+            'check_out_date' => $checkOut,
+            'status' => $status,
+        ]);
     }
 
     private function roomWithBoarding(string $status, string $checkIn, string $checkOut): array
