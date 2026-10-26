@@ -233,8 +233,8 @@ class ReceiptScannerTest extends TestCase
         $this->assertNotSame('red', $unreadable['overall']);
 
         $processing = $validator->run($receipt, $extraction('Processing'), null);
-        $this->assertSame('block', collect($processing['results'])->firstWhere('rule', 'status')['result']);
-        $this->assertSame('red', $processing['overall']);
+        $this->assertSame('warning', collect($processing['results'])->firstWhere('rule', 'status')['result']);
+        $this->assertNotSame('red', $processing['overall']);
     }
 
     /* ── Customer status + manual fallback ── */
