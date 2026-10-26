@@ -97,7 +97,9 @@ Use distinct values and credentials for staging and production:
 | `AWS_PUBLIC_URL` | Verified public custom-domain URL for the public bucket |
 | `PRIVATE_STORAGE_ROOT`, `PUBLIC_STORAGE_ROOT` | Optional key prefix inside each bucket; leave empty for bucket root. Local filesystem paths are never used as S3 keys. |
 | `MAIL_MAILER`, `BREVO_API_KEY`, `BREVO_DOMAIN`, `MAIL_FROM_ADDRESS`, `MAIL_FROM_NAME` | Use Brevo HTTPS API; keep the REST API key in backend service secrets and use a verified sender |
-| `CHATBOT_AI_ENABLED`, `CHATBOT_AI_API_KEY`, `CHATBOT_AI_MODEL`, `CHATBOT_AI_BASE_URL` | Optional, server-side only; use separate staging and production keys |
+| `CHATBOT_AI_ENABLED`, `CHATBOT_AI_API_KEY`, `CHATBOT_AI_MODEL`, `CHATBOT_AI_BASE_URL` | Optional chatbot integration, server-side only; use separate staging and production keys |
+| `OPENROUTER_API_KEY`, optional `OPENROUTER_API_KEYS`, `OPENROUTER_MODEL` | Receipt-scanner vision provider; store the key only in backend service secrets. Free-only default: `openrouter/free`. |
+| `RECEIPT_READER_API_KEY`, optional `RECEIPT_READER_API_KEYS`, `RECEIPT_READER_MODEL` | Optional Gemini receipt reader, enabled via `RECEIPT_SCANNER_CHAIN=gemini`; backend service secrets only. |
 
 Do not set `VITE_*` variables for server credentials. `VITE_API_BASE_URL` is public build-time configuration and belongs in Vercel only.
 

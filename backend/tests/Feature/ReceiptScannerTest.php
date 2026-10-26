@@ -457,19 +457,23 @@ class ReceiptScannerTest extends TestCase
     public function test_vision_reader_fails_over_to_backup_key(): void
     {
         config()->set('receipt_scanner.vision.api_keys', ['dead-key', 'good-key']);
-        config()->set('receipt_scanner.vision.model', 'gemini-3.6-flash');
-        \Illuminate\Support\Facades\Cache::forget('receipt_reader:gemini_key_index');
+        config()->set('receipt_scanner.vision.model', 'openrouter/free');
+        \Illuminate\Support\Facades\Cache::forget('receipt_reader:openrouter_key_index');
 
         \Illuminate\Support\Facades\Http::fake(function ($request) {
-            $key = $request->header('x-goog-api-key')[0] ?? '';
-            if ($key === 'good-key') {
+            $authorization = $request->header('Authorization')[0] ?? '';
+            if ($authorization === 'Bearer good-key') {
                 return \Illuminate\Support\Facades\Http::response([
-                    'candidates' => [['content' => ['parts' => [['text' => json_encode([
-                        'is_payment_receipt' => true,
-                        'provider' => 'gcash',
-                        'reference_number' => '1234567890123',
-                        'confidence' => ['overall' => 0.95],
-                    ])]]]]],
+                    'choices' => [[
+                        'message' => [
+                            'content' => json_encode([
+                                'is_payment_receipt' => true,
+                                'provider' => 'gcash',
+                                'reference_number' => '1234567890123',
+                                'confidence' => ['overall' => 0.95],
+                            ]),
+                        ],
+                    ]],
                 ], 200);
             }
             return \Illuminate\Support\Facades\Http::response(['error' => 'quota exceeded'], 429);
@@ -478,7 +482,7 @@ class ReceiptScannerTest extends TestCase
         $path = tempnam(sys_get_temp_dir(), 'rcpt');
         file_put_contents($path, 'fake-image-bytes');
 
-        $out = (new \App\Services\Receipts\GeminiVisionReader())->read($path, 'image/png');
+        $out = (new \App\Services\Receipts\OpenRouterVisionReader())->read($path, 'image/png');
         @unlink($path);
 
         $this->assertSame('1234567890123', $out['reference_number']);
@@ -489,23 +493,27 @@ class ReceiptScannerTest extends TestCase
     {
         config()->set('receipt_scanner.vision.api_keys', ['only-key']);
         config()->set('receipt_scanner.vision.retries', 2);
-        \Illuminate\Support\Facades\Cache::forget('receipt_reader:gemini_key_index');
+        \Illuminate\Support\Facades\Cache::forget('receipt_reader:openrouter_key_index');
 
         \Illuminate\Support\Facades\Http::fakeSequence()
             ->push(['error' => 'overloaded'], 503)
             ->push([
-                'candidates' => [['content' => ['parts' => [['text' => json_encode([
-                    'is_payment_receipt' => true,
-                    'provider' => 'gcash',
-                    'reference_number' => '9876543210987',
-                    'confidence' => ['overall' => 0.95],
-                ])]]]]],
+                'choices' => [[
+                    'message' => [
+                        'content' => json_encode([
+                            'is_payment_receipt' => true,
+                            'provider' => 'gcash',
+                            'reference_number' => '9876543210987',
+                            'confidence' => ['overall' => 0.95],
+                        ]),
+                    ],
+                ]],
             ], 200);
 
         $path = tempnam(sys_get_temp_dir(), 'rcpt');
         file_put_contents($path, 'fake-image-bytes');
 
-        $out = (new \App\Services\Receipts\GeminiVisionReader())->read($path, 'image/png');
+        $out = (new \App\Services\Receipts\OpenRouterVisionReader())->read($path, 'image/png');
         @unlink($path);
 
         $this->assertSame('9876543210987', $out['reference_number']);
@@ -515,14 +523,14 @@ class ReceiptScannerTest extends TestCase
     public function test_vision_reader_reports_when_every_key_fails(): void
     {
         config()->set('receipt_scanner.vision.api_keys', ['k1', 'k2']);
-        \Illuminate\Support\Facades\Cache::forget('receipt_reader:gemini_key_index');
+        \Illuminate\Support\Facades\Cache::forget('receipt_reader:openrouter_key_index');
         \Illuminate\Support\Facades\Http::fake(fn () => \Illuminate\Support\Facades\Http::response([], 500));
 
         $path = tempnam(sys_get_temp_dir(), 'rcpt');
         file_put_contents($path, 'fake-image-bytes');
 
         try {
-            (new \App\Services\Receipts\GeminiVisionReader())->read($path, 'image/png');
+            (new \App\Services\Receipts\OpenRouterVisionReader())->read($path, 'image/png');
             $this->fail('Expected ReceiptReaderException');
         } catch (\App\Services\Receipts\ReceiptReaderException $e) {
             $this->assertStringContainsString('key#1', $e->getMessage());
@@ -530,5 +538,240 @@ class ReceiptScannerTest extends TestCase
         } finally {
             @unlink($path);
         }
+    }
+
+    public function test_openrouter_reader_sends_image_as_data_url_without_leaking_key_in_url(): void
+    {
+        config()->set('receipt_scanner.vision.api_keys', ['router-test-key']);
+        config()->set('receipt_scanner.vision.model', 'openrouter/free');
+        config()->set('receipt_scanner.vision.base_url', 'https://openrouter.ai/api/v1');
+        config()->set('receipt_scanner.vision.http_referer', 'https://pawesome.example');
+        config()->set('receipt_scanner.vision.app_name', 'Pawesome');
+
+        \Illuminate\Support\Facades\Http::fake([
+            'https://openrouter.ai/api/v1/chat/completions' => \Illuminate\Support\Facades\Http::response([
+                'choices' => [['message' => ['content' => json_encode([
+                    'is_payment_receipt' => true,
+                    'provider' => 'gcash',
+                    'reference_number' => '1234567890123',
+                    'confidence' => ['overall' => 0.95],
+                ])]]],
+            ], 200),
+        ]);
+
+        $path = tempnam(sys_get_temp_dir(), 'rcpt');
+        file_put_contents($path, 'fake-image-bytes');
+
+        try {
+            $output = (new \App\Services\Receipts\OpenRouterVisionReader())->read($path, 'image/png');
+        } finally {
+            @unlink($path);
+        }
+
+        $this->assertSame('1234567890123', $output['reference_number']);
+        \Illuminate\Support\Facades\Http::assertSent(function ($request) {
+            $content = $request['messages'][0]['content'] ?? [];
+            $url = $request->url();
+
+            return $url === 'https://openrouter.ai/api/v1/chat/completions'
+                && !str_contains($url, 'router-test-key')
+                && ($request->header('Authorization')[0] ?? '') === 'Bearer router-test-key'
+                && ($request['model'] ?? null) === 'openrouter/free'
+                && ($content[1]['type'] ?? null) === 'image_url'
+                && str_starts_with($content[1]['image_url']['url'] ?? '', 'data:image/png;base64,')
+                && ($request->header('HTTP-Referer')[0] ?? null) === 'https://pawesome.example'
+                && ($request->header('X-Title')[0] ?? null) === 'Pawesome';
+        });
+    }
+
+    public function test_openrouter_reader_sends_pdf_as_a_file_part(): void
+    {
+        config()->set('receipt_scanner.vision.api_keys', ['router-test-key']);
+        config()->set('receipt_scanner.vision.model', 'openrouter/free');
+        \Illuminate\Support\Facades\Http::fake([
+            'https://openrouter.ai/api/v1/chat/completions' => \Illuminate\Support\Facades\Http::response([
+                'choices' => [['message' => ['content' => json_encode([
+                    'is_payment_receipt' => true,
+                    'provider' => 'maya',
+                    'reference_number' => 'MY-1234567890',
+                ])]]],
+            ], 200),
+        ]);
+
+        $path = tempnam(sys_get_temp_dir(), 'rcpt');
+        file_put_contents($path, 'fake-pdf-bytes');
+
+        try {
+            $output = (new \App\Services\Receipts\OpenRouterVisionReader())->read($path, 'application/pdf');
+        } finally {
+            @unlink($path);
+        }
+
+        $this->assertSame('maya', $output['provider']);
+        \Illuminate\Support\Facades\Http::assertSent(function ($request) {
+            $content = $request['messages'][0]['content'] ?? [];
+
+            return ($request['model'] ?? null) === 'openrouter/free'
+                && ($content[1]['type'] ?? null) === 'file'
+                && ($content[1]['file']['filename'] ?? null) === 'receipt.pdf'
+                && str_starts_with($content[1]['file']['file_data'] ?? '', 'data:application/pdf;base64,');
+        });
+    }
+
+    public function test_openrouter_reader_refuses_paid_model_configuration(): void
+    {
+        config()->set('receipt_scanner.vision.api_keys', ['router-test-key']);
+        config()->set('receipt_scanner.vision.model', 'openai/gpt-4o-mini');
+        \Illuminate\Support\Facades\Http::fake();
+
+        $reader = new \App\Services\Receipts\OpenRouterVisionReader();
+
+        $this->assertFalse($reader->isAvailable());
+        \Illuminate\Support\Facades\Http::assertNothingSent();
+    }
+
+    /* ── Provider switching ── */
+
+    public function test_chain_resolves_gemini_driver_when_configured(): void
+    {
+        config()->set('receipt_scanner.chain', ['gemini', 'ocr']);
+
+        $readers = app(\App\Services\Receipts\ReceiptReaderChain::class)->readers();
+
+        $this->assertInstanceOf(\App\Services\Receipts\GeminiVisionReader::class, $readers[0]);
+        $this->assertInstanceOf(\App\Services\Receipts\LocalOcrReader::class, $readers[1]);
+    }
+
+    public function test_chain_supports_openrouter_then_gemini_fallback_order(): void
+    {
+        config()->set('receipt_scanner.chain', ['vision', 'gemini', 'ocr']);
+
+        $readers = app(\App\Services\Receipts\ReceiptReaderChain::class)->readers();
+
+        $this->assertSame('openrouter', $readers[0]->name());
+        $this->assertSame('gemini', $readers[1]->name());
+        $this->assertSame('ocr', $readers[2]->name());
+    }
+
+    public function test_gemini_reader_sends_generatecontent_with_header_key(): void
+    {
+        config()->set('receipt_scanner.gemini.api_keys', ['gemini-test-key']);
+        config()->set('receipt_scanner.gemini.model', 'gemini-3.6-flash');
+        config()->set('receipt_scanner.gemini.base_url', 'https://generativelanguage.googleapis.com/v1beta');
+        \Illuminate\Support\Facades\Cache::forget('receipt_reader:gemini_key_index');
+
+        \Illuminate\Support\Facades\Http::fake([
+            'https://generativelanguage.googleapis.com/v1beta/models/gemini-3.6-flash:generateContent' => \Illuminate\Support\Facades\Http::response([
+                'candidates' => [['content' => ['parts' => [['text' => json_encode([
+                    'is_payment_receipt' => true,
+                    'provider' => 'gcash',
+                    'reference_number' => '1234567890123',
+                    'confidence' => ['overall' => 0.95],
+                ])]]]]],
+            ], 200),
+        ]);
+
+        $path = tempnam(sys_get_temp_dir(), 'rcpt');
+        file_put_contents($path, 'fake-image-bytes');
+
+        try {
+            $output = (new \App\Services\Receipts\GeminiVisionReader())->read($path, 'image/png');
+        } finally {
+            @unlink($path);
+        }
+
+        $this->assertSame('gemini', (new \App\Services\Receipts\GeminiVisionReader())->name());
+        $this->assertSame('1234567890123', $output['reference_number']);
+        \Illuminate\Support\Facades\Http::assertSent(function ($request) {
+            $part = $request['contents'][0]['parts'][1] ?? [];
+
+            return $request->url() === 'https://generativelanguage.googleapis.com/v1beta/models/gemini-3.6-flash:generateContent'
+                && ($request->header('x-goog-api-key')[0] ?? '') === 'gemini-test-key'
+                && ($part['inline_data']['mime_type'] ?? null) === 'image/png';
+        });
+    }
+
+    public function test_openrouter_reader_sends_free_model_fallback_list_and_drops_paid_entries(): void
+    {
+        config()->set('receipt_scanner.vision.api_keys', ['router-test-key']);
+        config()->set('receipt_scanner.vision.model', 'openrouter/free');
+        config()->set('receipt_scanner.vision.models', [
+            'meta-llama/some-vision:free',
+            'openai/gpt-4o-mini',
+            'google/gemma-3:free',
+        ]);
+
+        \Illuminate\Support\Facades\Http::fake([
+            'https://openrouter.ai/api/v1/chat/completions' => \Illuminate\Support\Facades\Http::response([
+                'choices' => [['message' => ['content' => json_encode([
+                    'is_payment_receipt' => true,
+                    'provider' => 'gcash',
+                    'reference_number' => '1234567890123',
+                ])]]],
+            ], 200),
+        ]);
+
+        $path = tempnam(sys_get_temp_dir(), 'rcpt');
+        file_put_contents($path, 'fake-image-bytes');
+
+        try {
+            $output = (new \App\Services\Receipts\OpenRouterVisionReader())->read($path, 'image/png');
+        } finally {
+            @unlink($path);
+        }
+
+        $this->assertSame('1234567890123', $output['reference_number']);
+        \Illuminate\Support\Facades\Http::assertSent(function ($request) {
+            return ($request['model'] ?? null) === 'openrouter/free'
+                && ($request['models'] ?? null) === [
+                    'openrouter/free',
+                    'meta-llama/some-vision:free',
+                    'google/gemma-3:free',
+                ];
+        });
+    }
+
+    public function test_openrouter_reader_downscales_images_when_gd_available(): void
+    {
+        if (!extension_loaded('gd') || !function_exists('imagecreatefromstring')) {
+            $this->markTestSkipped('GD not available — downscale is a no-op.');
+        }
+
+        config()->set('receipt_scanner.vision.api_keys', ['router-test-key']);
+        config()->set('receipt_scanner.vision.model', 'openrouter/free');
+
+        \Illuminate\Support\Facades\Http::fake([
+            'https://openrouter.ai/api/v1/chat/completions' => \Illuminate\Support\Facades\Http::response([
+                'choices' => [['message' => ['content' => json_encode([
+                    'is_payment_receipt' => true,
+                    'provider' => 'gcash',
+                ])]]],
+            ], 200),
+        ]);
+
+        // 2000px wide PNG → must be re-encoded as <=1024px JPEG.
+        $img = imagecreatetruecolor(2000, 100);
+        ob_start();
+        imagepng($img);
+        $bigPng = ob_get_clean();
+        imagedestroy($img);
+
+        $path = tempnam(sys_get_temp_dir(), 'rcpt');
+        file_put_contents($path, $bigPng);
+
+        try {
+            (new \App\Services\Receipts\OpenRouterVisionReader())->read($path, 'image/png');
+        } finally {
+            @unlink($path);
+        }
+
+        \Illuminate\Support\Facades\Http::assertSent(function ($request) {
+            $dataUrl = $request['messages'][0]['content'][1]['image_url']['url'] ?? '';
+            if (!str_starts_with($dataUrl, 'data:image/jpeg;base64,')) {
+                return false;
+            }
+            $resized = @imagecreatefromstring(base64_decode(substr($dataUrl, strlen('data:image/jpeg;base64,'))));
+            return $resized && imagesx($resized) <= 1024;
+        });
     }
 }

@@ -9,9 +9,10 @@ return [
     |
     | Reads uploaded payment proofs and extracts the reference number plus
     | supporting fields for cashier verification. The 'chain' lists readers
-    | in priority order — 'vision' (Gemini) first, 'ocr' (local Tesseract /
-    | pdftotext) as the offline fallback when the AI service is down or
-    | disabled. Set 'chain' to ['ocr'] for a fully local deployment, or set
+    | in priority order: 'vision'/'openrouter' (OpenRouter, free models only),
+    | 'gemini' (Google Gemini), 'ocr' (local Tesseract/pdftotext). First
+    | success wins; e.g. 'vision,gemini,ocr' tries OpenRouter, then Gemini,
+    | then local OCR. Set 'chain' to ['ocr'] for a fully local deployment, or
     | RECEIPT_SCANNER_ENABLED=false to keep the manual-only flow.
     |
     */
@@ -24,22 +25,39 @@ return [
     ))),
 
     'vision' => [
+        'api_key' => env('OPENROUTER_API_KEY'),
+        // Optional backup keys are tried in order after the primary key fails.
+        'api_keys' => array_values(array_unique(array_filter(array_map('trim', array_merge(
+            [(string) env('OPENROUTER_API_KEY', '')],
+            explode(',', (string) env('OPENROUTER_API_KEYS', ''))
+        ))))),
+        'key_cache_ttl' => (int) env('RECEIPT_READER_KEY_CACHE_TTL', 3600),
+        'model' => env('OPENROUTER_MODEL', 'openrouter/free'),
+        // Optional comma-separated free-model fallbacks tried by OpenRouter in
+        // order after OPENROUTER_MODEL fails. Paid entries are dropped.
+        'models' => array_values(array_filter(array_map('trim',
+            explode(',', (string) env('OPENROUTER_MODELS', ''))))),
+        'base_url' => env('OPENROUTER_BASE_URL', 'https://openrouter.ai/api/v1'),
+        'http_referer' => env('OPENROUTER_HTTP_REFERER', env('APP_URL', '')),
+        'app_name' => env('OPENROUTER_APP_NAME', env('APP_NAME', 'Pawesome')),
+        'timeout' => (int) env('RECEIPT_READER_TIMEOUT', 30),
+        'max_tokens' => (int) env('RECEIPT_READER_MAX_TOKENS', 1200),
+        // Extra attempts per key on overload/rate-limit (429, 5xx) or transport errors.
+        'retries' => (int) env('RECEIPT_READER_RETRIES', 2),
+    ],
+
+    // Google Gemini alternative — enable via RECEIPT_SCANNER_CHAIN=gemini(,ocr).
+    'gemini' => [
         'api_key' => env('RECEIPT_READER_API_KEY', env('CHATBOT_AI_API_KEY')),
-        // Key pool — comma-separated backups tried in order when a key fails
-        // (quota, revoked, expired). RECEIPT_READER_API_KEY is treated as the
-        // first entry, so a single-key .env keeps working unchanged.
         'api_keys' => array_values(array_unique(array_filter(array_map('trim', array_merge(
             [(string) env('RECEIPT_READER_API_KEY', env('CHATBOT_AI_API_KEY'))],
             explode(',', (string) env('RECEIPT_READER_API_KEYS', ''))
         ))))),
-        // Seconds to remember the last working key index so every scan
-        // doesn't re-hit a dead key first.
         'key_cache_ttl' => (int) env('RECEIPT_READER_KEY_CACHE_TTL', 3600),
         'model' => env('RECEIPT_READER_MODEL', env('CHATBOT_AI_MODEL', 'gemini-3.6-flash')),
         'base_url' => env('RECEIPT_READER_BASE_URL', env('CHATBOT_AI_BASE_URL', 'https://generativelanguage.googleapis.com/v1beta')),
         'timeout' => (int) env('RECEIPT_READER_TIMEOUT', 30),
         'max_tokens' => (int) env('RECEIPT_READER_MAX_TOKENS', 1200),
-        // Extra attempts per key on overload/rate-limit (429, 5xx) or transport errors.
         'retries' => (int) env('RECEIPT_READER_RETRIES', 2),
     ],
 

@@ -15,8 +15,9 @@ upload (existing payment-proof endpoints)
             └─ ReceiptService::process()
                  ├─ preprocess (metadata strip, dHash)
                  ├─ reader chain (first success wins):
-                 │    vision → GeminiVisionReader   (Gemini API, images + PDFs)
-                 │    ocr    → LocalOcrReader       (Tesseract CLI / pdftotext)
+                 │    vision/openrouter → OpenRouterVisionReader (OpenRouter, images + PDFs)
+                 │    gemini           → GeminiVisionReader     (Gemini API, images + PDFs)
+                 │    ocr              → LocalOcrReader         (Tesseract CLI / pdftotext)
                  ├─ ProviderReceiptParser (OCR text → shared schema)
                  ├─ ReceiptNormalizer (provider confusion map, pattern bounds)
                  ├─ ReceiptValidationService → receipt_validations rows
@@ -30,12 +31,25 @@ receipt, or disabled scanner never blocks a payment.
 
 `receipt_scanner.chain` drives an ordered fallback inside one scan:
 
-- `vision` — Gemini vision (default). Requires `RECEIPT_READER_API_KEY`
-  (falls back to `CHATBOT_AI_*` keys).
+- `vision` (alias: `openrouter`) — OpenRouter (default). Requires
+  `OPENROUTER_API_KEY`. The model is configurable with `OPENROUTER_MODEL`;
+  the default is `openrouter/free`. The reader only accepts `openrouter/free`
+  or model IDs ending in `:free`, so a paid model cannot be selected
+  accidentally. `OPENROUTER_MODELS` lists additional free models OpenRouter
+  falls back to in order when the primary fails. Images are downscaled to
+  ≤1024px JPEG before upload to fit free models' tight vision/context
+  budgets; PDFs pass through unchanged.
+- `gemini` — Google Gemini `generateContent` (paid alternative). Requires
+  `RECEIPT_READER_API_KEY` (falls back to `CHATBOT_AI_API_KEY`) and
+  `RECEIPT_READER_MODEL`. Select it with `RECEIPT_SCANNER_CHAIN=gemini,ocr`,
+  or run `vision,gemini,ocr` to use OpenRouter first and Gemini as backup.
 - `ocr` — fully local: Tesseract for images, `pdftotext` for digital PDFs.
   Needs no API key or network. Optional install:
   `winget install UB-Mannheim.TesseractOCR`, then set `OCR_TESSERACT_PATH`
   if not on PATH.
+
+Switching providers needs no code change — only the chain order and each
+provider's key in `.env` (then `php artisan config:clear`).
 
 Set `RECEIPT_SCANNER_CHAIN=ocr` for a fully offline deployment (also answers
 the privacy concern — no receipt image leaves the server). `ocr` extractions
@@ -110,15 +124,22 @@ Each scan writes `receipt_validations` rows; any `block` disables Confirm:
 
 ```env
 RECEIPT_SCANNER_ENABLED=true
-RECEIPT_SCANNER_CHAIN=vision,ocr      # or ocr / vision / (empty = attach only)
-RECEIPT_READER_API_KEY=               # falls back to CHATBOT_AI_API_KEY
-# RECEIPT_READER_API_KEYS=key2,key3   # comma-separated backups — tried in
-                                      # order when a key fails (quota/revoked);
-                                      # the last working key is cached so a
-                                      # dead key is not hit first every scan
-RECEIPT_READER_MODEL=                 # falls back to CHATBOT_AI_MODEL
-# RECEIPT_READER_BASE_URL=            # falls back to CHATBOT_AI_BASE_URL
+RECEIPT_SCANNER_CHAIN=vision,ocr      # or gemini,ocr / vision,gemini,ocr / ocr
+OPENROUTER_API_KEY=                   # backend-only secret; never use a VITE_ variable
+# OPENROUTER_API_KEYS=key2,key3       # optional comma-separated backup keys
+OPENROUTER_MODEL=openrouter/free     # or a vision-capable OpenRouter model ending in :free
+# OPENROUTER_MODELS=a:free,b:free    # ordered free-model fallbacks (paid entries dropped)
+# OPENROUTER_BASE_URL=https://openrouter.ai/api/v1
+# OPENROUTER_HTTP_REFERER=https://your-frontend.example
+# OPENROUTER_APP_NAME=Pawesome
+# Gemini provider (only needed when 'gemini' is in the chain)
+# RECEIPT_READER_API_KEY=             # falls back to CHATBOT_AI_API_KEY
+# RECEIPT_READER_API_KEYS=key2,key3   # optional backup keys
+# RECEIPT_READER_MODEL=gemini-3.6-flash
+# RECEIPT_READER_BASE_URL=https://generativelanguage.googleapis.com/v1beta
 # RECEIPT_READER_TIMEOUT=30
+# RECEIPT_READER_MAX_TOKENS=1200
+# RECEIPT_READER_RETRIES=2
 # OCR_TESSERACT_PATH=                 # e.g. C:\Program Files\Tesseract-OCR\tesseract.exe
 # OCR_PDFTOTEXT_PATH=pdftotext
 # RECEIPT_CONFIDENCE_GREEN=0.90
@@ -148,6 +169,9 @@ numbers the thesis accuracy section quotes.
 
 - Uploads keep flowing through `FileStorageService` on the **private** disk;
   proofs are served only via `/api/files/payment-proofs/{type}/{id}/view`.
+- OpenRouter vision sends receipt contents to the configured model provider.
+  Review that provider's data-retention terms and use `RECEIPT_SCANNER_CHAIN=ocr`
+  when receipts must remain entirely on the server.
 - Allowed types: JPG, PNG, WEBP, PDF ≤ 5 MB; Laravel `mimes` + finfo checks.
 - Receipt text is parsed against a fixed schema — extra fields are discarded
   (prompt-injection safe by construction).
@@ -160,6 +184,6 @@ numbers the thesis accuracy section quotes.
 php artisan test --filter=ReceiptScannerTest
 ```
 
-Covers upload→receipt attach, graceful reader failure, customer status/
-ownership, manual fallback, unique-reference confirm, block gating, RBAC,
-and the pure parser/normalizer units.
+Covers upload→receipt attach, OpenRouter image/PDF payloads and key failover,
+graceful reader failure, customer status/ownership, manual fallback,
+unique-reference confirm, block gating, RBAC, and parser/normalizer units.

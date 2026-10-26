@@ -6,13 +6,20 @@ use App\Services\Receipts\Contracts\ReceiptReaderInterface;
 
 /**
  * Resolves the configured reader chain into ordered reader instances.
- * Entries are driver names ('vision', 'ocr') or FQCNs (used by tests to
- * inject fakes). Unavailable readers are skipped, not fatal.
+ * Entries are driver names or FQCNs (used by tests to inject fakes).
+ * Unavailable readers are skipped, not fatal.
+ *
+ * Drivers: 'vision'/'openrouter' — OpenRouter (free models only);
+ * 'gemini' — Google Gemini; 'ocr' — local Tesseract/pdftotext.
+ * Example chains: 'vision,ocr' (default), 'gemini,ocr' (Gemini direct),
+ * 'vision,gemini,ocr' (OpenRouter first, Gemini backup, then local).
  */
 class ReceiptReaderChain
 {
     private const DRIVERS = [
-        'vision' => GeminiVisionReader::class,
+        'vision' => OpenRouterVisionReader::class,
+        'openrouter' => OpenRouterVisionReader::class,
+        'gemini' => GeminiVisionReader::class,
         'ocr' => LocalOcrReader::class,
     ];
 

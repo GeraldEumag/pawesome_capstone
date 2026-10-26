@@ -11,6 +11,9 @@ use Illuminate\Support\Facades\Http;
  * images and PDFs via inline_data. Output is constrained to a fixed JSON
  * schema; text inside the image is treated as data only.
  *
+ * Alternative to OpenRouterVisionReader — select with the 'gemini' driver in
+ * RECEIPT_SCANNER_CHAIN (e.g. gemini,ocr or vision,gemini,ocr).
+ *
  * Multiple API keys are supported (RECEIPT_READER_API_KEYS): on any request
  * failure the next key is tried, and the index of the last working key is
  * cached so a dead key is not hit first on every scan.
@@ -32,7 +35,7 @@ class GeminiVisionReader implements ReceiptReaderInterface
 
     public function __construct()
     {
-        $vision = config('receipt_scanner.vision', []);
+        $vision = config('receipt_scanner.gemini', []);
         $keys = $vision['api_keys'] ?? [];
         if (empty($keys) && !empty($vision['api_key'])) {
             $keys = [$vision['api_key']];
@@ -49,7 +52,7 @@ class GeminiVisionReader implements ReceiptReaderInterface
 
     public function name(): string
     {
-        return 'vision';
+        return 'gemini';
     }
 
     public function version(): string
