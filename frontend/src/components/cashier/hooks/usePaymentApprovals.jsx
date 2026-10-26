@@ -212,6 +212,7 @@ export const usePaymentApprovals = (user) => {
       verifiedBy: cashier,
       amountReceived: cashParams.cashReceived ?? undefined,
       change:         cashParams.change       ?? undefined,
+      note:           cashParams.note         ?? undefined,
       items,
       subtotal: amount,
       total: amount,
@@ -256,7 +257,7 @@ export const usePaymentApprovals = (user) => {
         "POST",
         {
           type: payment.payable_type || payment.type || payment.payment_source || "service_request",
-          cashier_remarks: "Payment verified by cashier",
+          cashier_remarks: cashParams.note || "Payment verified by cashier",
           reference_number: referenceNumber.trim(),
           payment_method: cashParams.paymentMethod || payment.payment_method || "counter",
           ...(cashParams.cashReceived != null ? { cash_received: cashParams.cashReceived } : {}),

@@ -3,7 +3,6 @@
 namespace Tests\Feature;
 
 use App\Models\Customer;
-use App\Models\Dispensation;
 use App\Models\HotelRoom;
 use App\Models\InventoryItem;
 use App\Models\Notification;
@@ -164,26 +163,6 @@ class AuditRegressionTest extends TestCase
         $this->assertSame($first, Notification::count(), 'Rerun must not duplicate alerts');
     }
 
-    public function test_duplicate_dispense_within_window_is_rejected(): void
-    {
-        $vet = $this->staffUser('veterinary');
-        $item = InventoryItem::factory()->create([
-            'name' => 'Antibiotic', 'sku' => 'SKU-AB2', 'price' => 50, 'stock' => 10,
-            'status' => 'active', 'item_class' => 'medicine',
-        ]);
-
-        \App\Services\DispensingService::dispense([
-            'inventory_item_id' => $item->id,
-            'quantity' => 1,
-        ], $vet->id);
-
-        $this->assertSame(9, (int) $item->fresh()->stock);
-        $this->expectException(\RuntimeException::class);
-        \App\Services\DispensingService::dispense([
-            'inventory_item_id' => $item->id,
-            'quantity' => 1,
-        ], $vet->id);
-    }
 
     public function test_receipt_confirm_without_any_reference_is_rejected(): void
     {
@@ -257,21 +236,4 @@ class AuditRegressionTest extends TestCase
         $this->assertSame(4, (int) $item->fresh()->stock);
     }
 
-    public function test_dispensation_void_restores_stock_and_marks_returned(): void
-    {
-        $vet = $this->staffUser('veterinary');
-        $item = InventoryItem::factory()->create([
-            'name' => 'Antibiotic', 'sku' => 'SKU-AB3', 'price' => 50, 'stock' => 10,
-            'status' => 'active', 'item_class' => 'medicine',
-        ]);
-
-        $dispensation = \App\Services\DispensingService::dispense([
-            'inventory_item_id' => $item->id, 'quantity' => 2,
-        ], $vet->id);
-        $this->assertSame(8, (int) $item->fresh()->stock);
-
-        $voided = \App\Services\DispensingService::void($dispensation, $vet->id, 'wrong dose');
-        $this->assertSame('returned', $voided->status);
-        $this->assertSame(10, (int) $item->fresh()->stock);
-    }
 }

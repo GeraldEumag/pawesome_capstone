@@ -4,6 +4,8 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
   faBarcode,
   faCheckSquare,
+  faEye,
+  faEyeSlash,
   faFilter,
   faPrint,
   faSearch,
@@ -14,6 +16,7 @@ import {
   faXmark,
 } from "@fortawesome/free-solid-svg-icons";
 import JsBarcode from "jsbarcode";
+import StandardTable from "../shared/StandardTable";
 import { inventoryApi } from "../../api/inventory.jsx";
 import { normalizeList } from "../../api/client";
 import { showWarning } from "../../utils/alert.jsx";
@@ -47,77 +50,6 @@ const BarcodeSvg = ({ value }) => {
   if (!value) return <span className="bg-no-code">No code</span>;
   return <svg ref={ref} className="bg-barcode-svg" />;
 };
-
-/* ── One product label card ── */
-const LabelCard = React.memo(({ item, selected, onToggle, onPrintOne, onSaveBarcode, saving }) => {
-  const code = (item.barcode || item.sku || "").trim();
-  const usingSkuFallback = !item.barcode && !!item.sku;
-
-  return (
-    <div className={`bg-card ${selected ? "selected" : ""}`}>
-      {/* Selection checkbox */}
-      <button
-        type="button"
-        className="bg-card-check"
-        onClick={() => onToggle(item.id)}
-        aria-label={selected ? "Deselect" : "Select"}
-      >
-        <FontAwesomeIcon icon={selected ? faCheckSquare : faSquare} />
-      </button>
-
-      {/* Print single */}
-      <button
-        type="button"
-        className="bg-card-print-btn"
-        onClick={() => onPrintOne(item)}
-        title="Print this label"
-      >
-        <FontAwesomeIcon icon={faPrint} />
-      </button>
-
-      {/* Label preview */}
-      <div className="bg-label-preview">
-        <BarcodeSvg value={code} />
-
-        <div className="bg-label-meta">
-          <span className="bg-label-name">{item.name}</span>
-          <span className="bg-label-category">{item.category || "—"}</span>
-        </div>
-
-        <div className="bg-label-sku-row">
-          <span className="bg-label-sku">SKU: {item.sku || "—"}</span>
-          <span className="bg-label-price">{formatPrice(item.price)}</span>
-        </div>
-
-        <div className="bg-label-code-row">
-          <span className="bg-label-code">{code || "—"}</span>
-        </div>
-
-        {usingSkuFallback && (
-          <div className="bg-sku-badge-row">
-            <span className="bg-sku-badge">
-              <FontAwesomeIcon icon={faTag} /> Using SKU
-            </span>
-            <button
-              type="button"
-              className="bg-save-barcode-btn"
-              onClick={() => onSaveBarcode(item)}
-              disabled={saving === item.id}
-              title="Save SKU as permanent barcode"
-            >
-              {saving === item.id ? (
-                <span className="bg-spinner" />
-              ) : (
-                <FontAwesomeIcon icon={faSave} />
-              )}
-              {saving === item.id ? "Saving…" : "Save as Barcode"}
-            </button>
-          </div>
-        )}
-      </div>
-    </div>
-  );
-});
 
 /* ── Print sheet — only rendered into the DOM when printing ── */
 const PrintSheet = ({ items }) => (
@@ -172,6 +104,7 @@ const BarcodeGenerator = () => {
   const [error, setError]           = useState("");
   const [search, setSearch]         = useState("");
   const [selected, setSelected]     = useState(new Set());
+  const [revealed, setRevealed]     = useState(new Set());
   const [printItems, setPrintItems] = useState([]);
   const [saving, setSaving]         = useState(null); // item.id being saved
   const [toast, setToast]           = useState("");
@@ -268,6 +201,13 @@ const BarcodeGenerator = () => {
       return next;
     });
 
+  const toggleReveal = (id) =>
+    setRevealed((prev) => {
+      const next = new Set(prev);
+      next.has(id) ? next.delete(id) : next.add(id);
+      return next;
+    });
+
   const selectAll = () => setSelected(new Set(filtered.map((it) => it.id)));
   const deselectAll = () => setSelected(new Set());
   const allSelected = filtered.length > 0 && filtered.every((it) => selected.has(it.id));
@@ -282,8 +222,6 @@ const BarcodeGenerator = () => {
     }
     setPrintItems(toPrint);
   };
-
-  const handlePrintOne = (item) => setPrintItems([item]);
 
   /* ── Save SKU as barcode ── */
   const handleSaveBarcode = async (item) => {
@@ -301,6 +239,81 @@ const BarcodeGenerator = () => {
       setTimeout(() => setToast(""), 3000);
     }
   };
+
+  /* ── Table columns ── */
+  const columns = [
+    {
+      key: "_select",
+      label: "",
+      render: (v, item) => (
+        <button
+          type="button"
+          className={`bg-row-check${selected.has(item.id) ? " checked" : ""}`}
+          onClick={() => toggleOne(item.id)}
+          aria-label={selected.has(item.id) ? "Deselect" : "Select"}
+        >
+          <FontAwesomeIcon icon={selected.has(item.id) ? faCheckSquare : faSquare} />
+        </button>
+      ),
+    },
+    {
+      key: "name",
+      label: "Product",
+      render: (v, item) => (
+        <div className="bg-cell-product">
+          <span className="bg-cell-name">{item.name}</span>
+          <span className="bg-cell-category">{item.category || "—"}</span>
+        </div>
+      ),
+    },
+    { key: "sku", label: "SKU" },
+    {
+      key: "barcode",
+      label: "Barcode",
+      render: (v, item) => {
+        const code = (item.barcode || item.sku || "").trim();
+        if (!code) return "—";
+        const shown = revealed.has(item.id);
+        const usingSkuFallback = !item.barcode && !!item.sku;
+        return (
+          <div className="bg-barcode-cell">
+            <div className="bg-barcode-main">
+            {shown ? (
+              <div className="bg-revealed-barcode">
+                <BarcodeSvg value={code} />
+                <span className="bg-cell-code">{code}</span>
+              </div>
+            ) : (
+              <span className="bg-barcode-hidden">••••••••</span>
+            )}
+            </div>
+            <button
+              type="button"
+              className="bg-reveal-btn"
+              onClick={() => toggleReveal(item.id)}
+              title={shown ? "Hide barcode" : "Show barcode"}
+              aria-label={shown ? "Hide barcode" : "Show barcode"}
+            >
+              <FontAwesomeIcon icon={shown ? faEyeSlash : faEye} />
+            </button>
+            {usingSkuFallback && (
+              <button
+                type="button"
+                className="bg-save-btn"
+                onClick={() => handleSaveBarcode(item)}
+                disabled={saving === item.id}
+                title="Save SKU as permanent barcode"
+              >
+                {saving === item.id ? <span className="bg-spinner" /> : <FontAwesomeIcon icon={faSave} />}
+                {saving === item.id ? "Saving…" : "Save as Barcode"}
+              </button>
+            )}
+          </div>
+        );
+      },
+    },
+    { key: "price", label: "Price", render: (v, item) => formatPrice(item.price) },
+  ];
 
   /* ── Render ── */
   return (
@@ -393,21 +406,15 @@ const BarcodeGenerator = () => {
         </div>
       )}
 
-      {/* ── Label grid ── */}
+      {/* ── Products table ── */}
       {!loading && !error && filtered.length > 0 && (
-        <div className="bg-grid">
-          {filtered.map((item) => (
-            <LabelCard
-              key={item.id}
-              item={item}
-              selected={selected.has(item.id)}
-              onToggle={toggleOne}
-              onPrintOne={handlePrintOne}
-              onSaveBarcode={handleSaveBarcode}
-              saving={saving}
-            />
-          ))}
-        </div>
+        <StandardTable
+          data={filtered}
+          columns={columns}
+          rowClassName={(item) => (selected.has(item.id) ? "bg-row-selected" : "")}
+          emptyMessage="No products found."
+          pageSize={10}
+        />
       )}
     </div>
   );

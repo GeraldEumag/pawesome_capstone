@@ -104,6 +104,30 @@ class ConsultationWorkflowController extends Controller
             // Sync billing totals so cashier sees an accurate bill
             $summary = ServiceBillingService::finalizeServiceBill(ServiceItemUsage::SERVICE_VETERINARY, (int) $appointment->id);
 
+            // Push the whole finalized bill to the cashier queue — one payment
+            // request snapshotting every unpaid charge, created only when a
+            // balance exists and nothing is already awaiting the cashier.
+            $balanceDue = (float) ($summary['billing']['balance_due'] ?? 0);
+            $openRequestExists = \App\Models\ServiceBillingPaymentRequest::where('appointment_id', $appointment->id)
+                ->whereIn('status', \App\Models\ServiceBillingPaymentRequest::OPEN_STATUSES)
+                ->exists();
+            if ($balanceDue > 0 && !$openRequestExists && $appointment->customer) {
+                try {
+                    \App\Services\ServiceBillingPaymentService::createCashierRequest(
+                        $appointment,
+                        $appointment->customer,
+                        $request->user()
+                    );
+                } catch (\Illuminate\Http\Exceptions\HttpResponseException $e) {
+                    // A guard rejected the request — e.g. the original booking
+                    // payment proof is still pending verification. The visit
+                    // still completes; no cashier bill is created.
+                    \Illuminate\Support\Facades\Log::info(
+                        "Cashier payment request skipped for appointment {$appointment->id}: " . $e->getMessage()
+                    );
+                }
+            }
+
             // Clinical work ends here. If a confinement is still open the
             // visit parks in clinical_complete while the inpatient workflow
             // runs in parallel; otherwise it goes straight to checkout.

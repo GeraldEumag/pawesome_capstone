@@ -378,7 +378,6 @@ class VisitInvoiceService
             'settled_at' => $status === VisitInvoice::STATUS_SETTLED ? ($invoice->settled_at ?? now()) : null,
         ]);
 
-        VisitEstimateService::evaluateThreshold(Appointment::find($invoice->invoiceable_id));
     }
 
     private static function nextInvoiceNumber(): string

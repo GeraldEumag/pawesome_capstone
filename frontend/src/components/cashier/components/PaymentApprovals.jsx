@@ -171,6 +171,7 @@ const PaymentApprovals = () => {
   /* ── Modal local state ── */
   const [referenceNumber, setReferenceNumber] = useState("");
   const [cashReceived, setCashReceived]       = useState("");   // string, e.g. "500"
+  const [cashierNote, setCashierNote]         = useState("");
   const [cashierMethod, setCashierMethod] = useState("cash");
   const [showReceipt, setShowReceipt]         = useState(false);
   const [receiptData, setReceiptData]         = useState(null);
@@ -256,8 +257,8 @@ const PaymentApprovals = () => {
         showWarning("Please enter the cash amount received.");
         return;
       }
-      if (cashNum < amountDue) {
-        showWarning(`Cash received (₱${fmt(cashNum)}) is less than the amount due (₱${fmt(amountDue)}).`);
+      if (cashNum < amountDue && !cashierNote.trim()) {
+        showWarning("Payment is short — please add a cashier note explaining why.");
         return;
       }
     } else {
@@ -274,6 +275,7 @@ const PaymentApprovals = () => {
 
     const cashParams = {
       paymentMethod: modalPaymentMethod,
+      note: cashierNote.trim() || null,
       ...(isCashModal ? { cashReceived: cashNum, change: changeAmt } : {}),
     };
 
@@ -292,11 +294,13 @@ const PaymentApprovals = () => {
         paid_at:          new Date().toISOString(),
         verified_by:      user?.name || "Cashier",
         breakdown:        result.breakdown || null,
+        note:             cashierNote.trim() || null,
       });
       closeProof();
       setShowReceipt(true);
       setReferenceNumber("");
       setCashReceived("");
+      setCashierNote("");
     }
   };
 
@@ -306,6 +310,7 @@ const PaymentApprovals = () => {
     closeProof();
     setReferenceNumber("");
     setCashReceived("");
+    setCashierNote("");
   };
 
   /* Re-read the receipt through the reader chain, then refresh the detail. */
@@ -595,7 +600,7 @@ const PaymentApprovals = () => {
                         Customer ref: <code>{payment.payment_reference}</code>
                       </div>
                     )}
-                    {payment.receipt?.receipt_id && (
+                    {payment.receipt?.receipt_id && scanChipClass(payment.receipt) !== "pa-scan-chip--green" && (
                       <div className={`pa-scan-chip ${scanChipClass(payment.receipt)}`}>
                         <FontAwesomeIcon icon={faMagnifyingGlass} />
                         {" "}{SCAN_STATUS_LABEL[payment.receipt.status] || "Scanned"}
@@ -671,7 +676,7 @@ const PaymentApprovals = () => {
                 <button
                   className="pa-btn-verify"
                   onClick={handleVerifyFromModal}
-                  disabled={!!actionLoading || (isCash && !cashReady) || (!isCash && receiptBlocks > 0) || (!isCash && scanInProgress && !!modalReceipt)}
+                  disabled={!!actionLoading || (isCash && (cashNum <= 0 || (cashShort > 0 && !cashierNote.trim()))) || (!isCash && receiptBlocks > 0) || (!isCash && scanInProgress && !!modalReceipt)}
                   title={
                     isCash && !cashReady
                       ? "Enter cash amount first"
@@ -795,6 +800,22 @@ const PaymentApprovals = () => {
                       className="pa-reference-input"
                     />
                   </div>
+
+                  {/* Cashier note — required when the payment is short */}
+                  <div className="pa-reference-section">
+                    <label htmlFor="paCashierNote" className="pa-reference-label">
+                      <strong>Cashier Note</strong>
+                      <span className="pa-reference-hint">{cashShort > 0 ? "Required — payment is short" : "Optional"}</span>
+                    </label>
+                    <textarea
+                      id="paCashierNote"
+                      rows={2}
+                      value={cashierNote}
+                      onChange={(e) => setCashierNote(e.target.value)}
+                      placeholder={cashShort > 0 ? "Explain why the payment is short (required)" : "Note for this payment (optional)"}
+                      className="pa-reference-input pa-note-input"
+                    />
+                  </div>
                 </div>
               ) : (
                 /* ── Digital payment layout (proof image + reference) ── */
@@ -832,9 +853,11 @@ const PaymentApprovals = () => {
                     <div className={`pa-scan-panel ${scanChipClass(modalReceipt)}`}>
                       <div className="pa-scan-panel-head">
                         <strong>Receipt scan</strong>
-                        <span className={`pa-scan-chip ${scanChipClass(modalReceipt)}`}>
-                          {SCAN_STATUS_LABEL[receiptDetail?.receipt?.status || modalReceipt.status] || "Scanned"}
-                        </span>
+                        {scanChipClass(modalReceipt) !== "pa-scan-chip--green" && (
+                          <span className={`pa-scan-chip ${scanChipClass(modalReceipt)}`}>
+                            {SCAN_STATUS_LABEL[receiptDetail?.receipt?.status || modalReceipt.status] || "Scanned"}
+                          </span>
+                        )}
                         {(receiptDetail?.extraction?.reader || modalReceipt.reader) && (
                           <span className="pa-scan-reader">
                             {(receiptDetail?.extraction?.reader || modalReceipt.reader) === "ocr" ? "Local OCR" : "AI reader"}
@@ -885,9 +908,9 @@ const PaymentApprovals = () => {
                         <p className="pa-scan-note">The readers couldn't extract this receipt — enter the reference manually from the image.</p>
                       )}
 
-                      {(receiptDetail?.validations || []).length > 0 && (
+                      {(receiptDetail?.validations || []).some((v) => v.result !== "pass") && (
                         <ul className="pa-scan-validations">
-                          {receiptDetail.validations.map((v, i) => (
+                          {receiptDetail.validations.filter((v) => v.result !== "pass").map((v, i) => (
                             <li key={`${v.rule}-${i}`} className={`pa-scan-validation pa-scan-validation--${v.result}`}>
                               <FontAwesomeIcon
                                 icon={v.result === "pass" ? faCheckCircle : v.result === "warning" ? faTriangleExclamation : faXmark}
@@ -920,6 +943,22 @@ const PaymentApprovals = () => {
                       placeholder={`Enter ${getMethodConfig(modalPaymentMethod).label} reference number`}
                       className="pa-reference-input"
                       autoFocus
+                    />
+                  </div>
+
+                  {/* Cashier note — optional for digital payments */}
+                  <div className="pa-reference-section">
+                    <label htmlFor="paCashierNote" className="pa-reference-label">
+                      <strong>Cashier Note</strong>
+                      <span className="pa-reference-hint">Optional</span>
+                    </label>
+                    <textarea
+                      id="paCashierNote"
+                      rows={2}
+                      value={cashierNote}
+                      onChange={(e) => setCashierNote(e.target.value)}
+                      placeholder="Note for this payment (optional)"
+                      className="pa-reference-input pa-note-input"
                     />
                   </div>
                 </div>
@@ -989,6 +1028,9 @@ const PaymentApprovals = () => {
                 <div className="pa-receipt-row"><span>Reference #</span><span>{receiptData.reference_number}</span></div>
               )}
               <div className="pa-receipt-row"><span>Verified by</span><span>{receiptData.verified_by || "Cashier"}</span></div>
+              {receiptData.note && (
+                <div className="pa-receipt-row"><span>Note</span><span>{receiptData.note}</span></div>
+              )}
 
               {/* VAT-inclusive breakdown — authoritative values from the backend */}
               <div className="pa-receipt-row"><span>Net Amount (ex-VAT)</span><span>₱{fmt(receiptData.breakdown?.net_amount ?? receiptData.net_amount ?? receiptData.amount)}</span></div>

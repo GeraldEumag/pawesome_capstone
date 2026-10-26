@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { FaTimes, FaPaperPlane, FaRedo } from "react-icons/fa";
 import chatbotLogo from "../assets/pawesome-icon.png";
 import { fetchPublicChatbotWelcome, sendPublicChatbotMessage } from "../services/chatbotService";
+import { useDraggable } from "../utils/useDraggable";
 import "./LandingChatbot.css";
 
 const SS_MSGS_KEY = "pawesome_landing_msgs";
@@ -51,6 +52,7 @@ export default function LandingChatbot({ hidden = false }) {
   const [loading, setLoading] = useState(false);
   const [suggestions, setSuggestions] = useState([]);
   const [bootstrapped, setBootstrapped] = useState(false);
+  const { style: dragStyle, dragHandlers, wasDragged } = useDraggable();
   const messagesEndRef = useRef(null);
 
   // Load welcome on first open — restore from sessionStorage if available
@@ -159,7 +161,9 @@ export default function LandingChatbot({ hidden = false }) {
       <button
         className="lc-toggle"
         type="button"
-        onClick={() => setOpen((v) => !v)}
+        style={dragStyle}
+        {...dragHandlers}
+        onClick={() => { if (wasDragged()) return; setOpen((v) => !v); }}
         aria-label="Open Pawesome Assistant"
       >
         <img src={chatbotLogo} alt="Pawesome Chatbot" className="lc-toggle-img" />
@@ -167,7 +171,7 @@ export default function LandingChatbot({ hidden = false }) {
       </button>
 
       {open && (
-        <div className="lc-panel">
+        <div className="lc-panel" style={dragStyle}>
           {/* Header */}
           <div className="lc-header">
             <div className="lc-header-left">

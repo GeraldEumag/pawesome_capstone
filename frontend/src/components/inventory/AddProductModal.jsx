@@ -258,14 +258,13 @@ const AddProductModal = ({ isOpen, onClose, onSuccess, editItem = null }) => {
       if (!formData.sku.trim()) newErrors.sku = "SKU is required";
       if (!formData.category) newErrors.category = "Category is required";
     } else if (step === 2) {
-      if (!formData.quantity || parseInt(formData.quantity) < 0) {
-        newErrors.quantity = "Valid quantity is required";
-      }
       if (!formData.price || parseFloat(formData.price) <= 0) {
         newErrors.price = "Valid price is required";
       }
       if (!editItem) {
-        if (!formData.batch_no.trim()) newErrors.batch_no = "Batch number is required";
+        if (!formData.quantity || parseInt(formData.quantity) < 0) {
+          newErrors.quantity = "Valid quantity is required";
+        }
         if (!formData.batch_quantity || parseInt(formData.batch_quantity) <= 0) {
           newErrors.batch_quantity = "Valid batch quantity is required";
         }
@@ -319,7 +318,7 @@ const AddProductModal = ({ isOpen, onClose, onSuccess, editItem = null }) => {
     // Build batchData for new items
     if (!editItem) {
       data.batchData = {
-        batch_no: formData.batch_no,
+        batch_no: null,
         quantity: parseInt(formData.batch_quantity) || stock,
         manufacturing_date: formData.manufacturing_date || null,
         expiration_date: formData.expiration_date || null,
@@ -733,18 +732,13 @@ const AddProductModal = ({ isOpen, onClose, onSuccess, editItem = null }) => {
                     <h4>Batch Information</h4>
                     <div className="form-grid">
                       <div className="form-group">
-                        <label>
-                          Batch Number <span className="required">*</span>
-                        </label>
+                        <label>Batch Number</label>
                         <input
                           type="text"
-                          name="batch_no"
-                          value={formData.batch_no}
-                          onChange={handleChange}
-                          placeholder="e.g., BATCH-001"
-                          className={errors.batch_no ? "error" : ""}
+                          value="Auto-generated"
+                          disabled
                         />
-                        {errors.batch_no && <span className="error-text">{errors.batch_no}</span>}
+                        <small className="helper-text">Assigned automatically (Batch-001, Batch-002…) for each product.</small>
                       </div>
 
                       <div className="form-group">
@@ -972,7 +966,7 @@ const AddProductModal = ({ isOpen, onClose, onSuccess, editItem = null }) => {
                       <>
                         <div className="review-row">
                           <span className="review-label">Batch No:</span>
-                          <span className="review-value">{formData.batch_no || "—"}</span>
+                          <span className="review-value">{formData.batch_no || "Auto-generated"}</span>
                         </div>
                         <div className="review-row">
                           <span className="review-label">Batch Qty:</span>

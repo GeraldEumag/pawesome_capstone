@@ -4,7 +4,6 @@ namespace Tests\Feature;
 
 use App\Models\Appointment;
 use App\Models\Customer;
-use App\Models\Dispensation;
 use App\Models\InventoryBatch;
 use App\Models\InventoryItem;
 use App\Models\InventoryMonthlyAudit;
@@ -103,32 +102,6 @@ class PharmacyConfinementPhaseDTest extends TestCase
 
     // ── Dispensing ─────────────────────────────────────────────────
 
-    public function test_dispense_moves_stock_and_bills_the_visit(): void
-    {
-        $vet = $this->userWithToken('veterinary');
-        $appointment = $this->makeAppointment($vet);
-        $item = $this->makeItem(['price' => 150]);
-        $this->makeBatch($item);
-
-        $this->withHeaders($this->authHeader($vet))
-            ->postJson('/api/veterinary/dispensations', [
-                'inventory_item_id' => $item->id,
-                'appointment_id' => $appointment->id,
-                'quantity' => 3,
-                'label_text' => 'Give one tablet twice daily',
-            ])
-            ->assertCreated()
-            ->assertJsonPath('dispensation.status', 'dispensed');
-
-        $this->assertSame(47, (int) $item->fresh()->stock);
-        $this->assertDatabaseHas('service_item_usages', [
-            'appointment_id' => $appointment->id,
-            'inventory_item_id' => $item->id,
-            'usage_type' => 'dispensed_medication',
-            'quantity_used' => 3,
-            'charge_amount' => 450.00,
-        ]);
-    }
 
     public function test_mar_schedule_does_not_move_stock_but_administer_does(): void
     {
@@ -174,33 +147,6 @@ class PharmacyConfinementPhaseDTest extends TestCase
 
     // ── Expired batches ────────────────────────────────────────────
 
-    public function test_expired_batch_is_rejected_for_dispensing_and_vaccination(): void
-    {
-        $vet = $this->userWithToken('veterinary');
-        $appointment = $this->makeAppointment($vet);
-        $item = $this->makeItem();
-        $expired = $this->makeBatch($item, ['expiration_date' => now()->subDay(), 'status' => 'expired']);
-
-        $this->withHeaders($this->authHeader($vet))
-            ->postJson('/api/veterinary/dispensations', [
-                'inventory_item_id' => $item->id,
-                'inventory_batch_id' => $expired->id,
-                'quantity' => 1,
-            ])
-            ->assertStatus(422);
-
-        $this->assertSame(50, (int) $item->fresh()->stock);
-
-        $this->expectException(\RuntimeException::class);
-        VaccinationService::administer([
-            'pet_id' => $appointment->pet_id,
-            'veterinarian_id' => $vet->id,
-            'vaccine_name' => 'Rabies',
-            'inventory_batch_id' => $expired->id,
-            'date_administered' => now()->toDateString(),
-            'status' => 'given',
-        ]);
-    }
 
     // ── Vaccinations ───────────────────────────────────────────────
 

@@ -267,7 +267,8 @@ const exportExecutiveExcel = async (report, periodLabel, preparedBy, preparedRol
   );
   narrativeSheet['!cols'] = [{ width: 110 }];
   XLSX.utils.book_append_sheet(workbook, narrativeSheet, 'Narrative & Signatures');
-  XLSX.writeFile(workbook, `Executive_Dashboard_${format(new Date(), 'yyyy-MM-dd')}.xlsx`);
+  const { saveWorkbookAsLandscapeXlsx } = await import('./reportExport');
+  await saveWorkbookAsLandscapeXlsx(workbook, `Executive_Dashboard_${format(new Date(), 'yyyy-MM-dd')}.xlsx`);
 };
 
 /** Export all Executive Dashboard data in one selected format. */

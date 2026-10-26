@@ -213,174 +213,80 @@
 
 .bg-state-msg.error { color: #dc2626; }
 
-/* ── Label grid ── */
-.bg-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-  gap: 1rem;
-}
-
-/* ── Card ── */
-.bg-card {
-  position: relative;
-  background: #fff;
-  border: 2px solid #e2e8f0;
-  border-radius: 14px;
-  padding: 0.9rem;
-  transition: border-color 0.15s, box-shadow 0.15s;
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-}
-
-.bg-card:hover { border-color: rgba(255, 95, 147, 0.35); box-shadow: 0 6px 20px rgba(255, 95, 147, 0.1); }
-.bg-card.selected { border-color: #ff5f93; box-shadow: 0 6px 20px rgba(255, 95, 147, 0.18); }
-
-.bg-card-check {
-  position: absolute;
-  top: 0.6rem;
-  left: 0.6rem;
+/* ── Table cells ── */
+.bg-row-check {
   background: none;
   border: none;
-  cursor: pointer;
-  color: #94a3b8;
+  padding: 0.2rem;
   font-size: 1rem;
-  padding: 0;
-  z-index: 1;
+  color: #cbd5e1;
+  cursor: pointer;
   transition: color 0.15s;
 }
-.bg-card.selected .bg-card-check,
-.bg-card-check:hover { color: #ff5f93; }
+.bg-row-check:hover { color: #ff5f93; }
+.bg-row-check.checked { color: #ff5f93; }
 
-.bg-card-print-btn {
-  position: absolute;
-  top: 0.5rem;
-  right: 0.5rem;
+.bg-row-selected td { background: rgba(255, 95, 147, 0.07) !important; }
+
+.bg-barcode-main { display: flex; align-items: center; gap: 0.5rem; }
+
+.bg-save-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
   background: none;
   border: 1px solid #e2e8f0;
-  border-radius: 6px;
-  color: #64748b;
-  font-size: 0.82rem;
-  padding: 0.3rem 0.5rem;
+  border-radius: 8px;
+  padding: 0.3rem 0.55rem;
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: #ff5f93;
   cursor: pointer;
-  transition: 0.15s;
+  white-space: nowrap;
+  transition: background 0.15s, border-color 0.15s;
 }
-.bg-card-print-btn:hover { background: rgba(255, 95, 147, 0.07); color: #ff5f93; border-color: #ff5f93; }
+.bg-save-btn:hover:not(:disabled) { background: rgba(255, 95, 147, 0.07); border-color: #ff5f93; }
+.bg-save-btn:disabled { opacity: 0.55; cursor: not-allowed; }
 
-/* ── Label preview inside card ── */
-.bg-label-preview {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 0.4rem;
-  padding-top: 1.5rem;
+.bg-cell-product { display: flex; flex-direction: column; gap: 0.1rem; }
+.bg-cell-name { font-weight: 700; color: #0f172a; }
+.bg-cell-category { font-size: 0.75rem; color: #64748b; }
+
+.bg-barcode-cell { display: flex; align-items: center; gap: 0.5rem; }
+.bg-barcode-hidden {
+  font-size: 0.9rem;
+  letter-spacing: 0.15em;
+  color: #94a3b8;
+  user-select: none;
 }
+.bg-reveal-btn {
+  background: none;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  padding: 0.25rem 0.4rem;
+  font-size: 0.85rem;
+  color: #94a3b8;
+  cursor: pointer;
+  transition: color 0.15s, background 0.15s;
+}
+.bg-reveal-btn:hover { background: rgba(255, 95, 147, 0.07); color: #ff5f93; }
+
+.bg-revealed-barcode { display: flex; flex-direction: column; align-items: flex-start; gap: 0.15rem; }
+.bg-cell-code { font-size: 0.68rem; font-family: monospace; color: #334155; word-break: break-all; }
 
 .bg-barcode-svg {
   width: 100%;
-  max-width: 190px;
+  max-width: 160px;
   height: auto;
+  max-height: 40px;
 }
 
 .bg-no-code {
-  font-size: 0.75rem;
+  font-size: 0.8rem;
   color: #94a3b8;
   font-style: italic;
 }
 
-.bg-label-meta {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 0.15rem;
-  width: 100%;
-}
-
-.bg-label-name {
-  font-size: 0.88rem;
-  font-weight: 800;
-  color: #111827;
-  text-align: center;
-  line-height: 1.2;
-  word-break: break-word;
-}
-
-.bg-label-category {
-  font-size: 0.7rem;
-  font-weight: 700;
-  color: #ff5f93;
-  background: rgba(255, 95, 147, 0.1);
-  border-radius: 999px;
-  padding: 0.1rem 0.5rem;
-}
-
-.bg-label-sku-row {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  width: 100%;
-  gap: 0.25rem;
-}
-
-.bg-label-sku { font-size: 0.72rem; color: #64748b; font-weight: 700; }
-.bg-label-price { font-size: 0.78rem; color: #059669; font-weight: 900; }
-
-.bg-label-code-row {
-  display: flex;
-  align-items: center;
-  width: 100%;
-  justify-content: center;
-}
-
-.bg-label-code {
-  font-size: 0.72rem;
-  font-family: monospace;
-  color: #374151;
-  word-break: break-all;
-  text-align: center;
-}
-
-/* ── SKU fallback badge + save button ── */
-.bg-sku-badge-row {
-  display: flex;
-  align-items: center;
-  gap: 0.4rem;
-  flex-wrap: wrap;
-  justify-content: center;
-  padding-top: 0.25rem;
-  border-top: 1px dashed #e2e8f0;
-  width: 100%;
-}
-
-.bg-sku-badge {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.25rem;
-  font-size: 0.65rem;
-  font-weight: 800;
-  color: #92400e;
-  background: #fef3c7;
-  border: 1px solid #fcd34d;
-  border-radius: 999px;
-  padding: 0.15rem 0.5rem;
-}
-
-.bg-save-barcode-btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.3rem;
-  font-size: 0.68rem;
-  font-weight: 800;
-  color: #fff;
-  background: #ff5f93;
-  border: none;
-  border-radius: 999px;
-  padding: 0.2rem 0.6rem;
-  cursor: pointer;
-  transition: 0.15s;
-}
-.bg-save-barcode-btn:hover:not(:disabled) { background: #e0487b; }
-.bg-save-barcode-btn:disabled { opacity: 0.55; cursor: not-allowed; }
 
 /* ── Spinners ── */
 .bg-spinner,

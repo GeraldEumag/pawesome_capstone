@@ -38,6 +38,7 @@ import brandLogo from "../assets/pawesome.jpg";
  * @param {number}  [opts.amountReceived] - Cash received (cash payments)
  * @param {number}  [opts.change]         - Change due
  * @param {string}  [opts.verifiedBy]
+ * @param {string}  [opts.note]         - Cashier note (e.g. short-payment explanation)
  * @param {string}  [opts.footerText]
  */
 export async function printReceipt(opts = {}) {
@@ -76,6 +77,7 @@ function buildReceiptHtml(opts = {}, { includePrintButton = false } = {}) {
     amountReceived,
     change,
     verifiedBy = "",
+    note = "",
     footerText = "Thank you for choosing Pawesome Retreat Inc.!",
   } = opts;
 
@@ -107,6 +109,7 @@ function buildReceiptHtml(opts = {}, { includePrintButton = false } = {}) {
     rw("Payment",    e(paymentMethod.toUpperCase())),
     referenceNumber ? rw("Ref #",     e(referenceNumber))  : "",
     verifiedBy      ? rw("Verified",  e(verifiedBy))       : "",
+    note            ? rw("Note",      e(note))             : "",
   ].filter(Boolean).join("");
 
   // ── Totals block: subtotal, VAT, discount, TOTAL, cash, change ──

@@ -28,10 +28,8 @@ import toast from "react-hot-toast";
 import { apiRequest } from "../../api/client";
 import { addMedicalRecordAddendum } from "../../api/medicalRecords";
 import { VET_STARTED_STATUSES } from "./vetStatus";
-import VetEstimatePanel from "./VetEstimatePanel";
 import VetDiagnosticsPanel from "./VetDiagnosticsPanel";
 import VetConsentPanel from "./VetConsentPanel";
-import VetDispensePanel from "./VetDispensePanel";
 import PetAvatar from "../shared/PetAvatar";
 import RowActionPopover from "../shared/RowActionPopover"
 import "./theme.css";
@@ -928,18 +926,12 @@ const VetConsultation = () => {
       {/* ── Estimate, Diagnostics & Consents ───────────────── */}
       {isStarted && (
         <>
-          <VetEstimatePanel
-            appointmentId={id}
-            disabled={isFinalized}
-            emergency={!!appointment?.emergency}
-          />
           <VetDiagnosticsPanel
             appointmentId={id}
             disabled={isFinalized}
             canOrder={!isConsultationComplete}
           />
           <VetConsentPanel appointmentId={id} disabled={isFinalized} />
-          <VetDispensePanel appointmentId={id} disabled={isFinalized} />
         </>
       )}
 

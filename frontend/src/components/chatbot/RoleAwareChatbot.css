@@ -18,6 +18,8 @@
 /* Toggle Button */
 
 .rbac-chatbot-toggle {
+  cursor: grab;
+  touch-action: none;
   align-items: center;
   background: linear-gradient(135deg, #ff5f93, #ff8db5);
   border: none;

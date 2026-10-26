@@ -180,7 +180,7 @@ class ReceiptValidationService
         $results[] = $this->rule(
             'status',
             $statusOk,
-            $statusUnreadable ? 'warning' : 'block',
+            $statusOk ? 'pass' : 'warning',
             $statusOk ? null : ($statusUnreadable
                 ? 'No payment status could be read from the receipt — check the image for the transaction status.'
                 : 'Receipt shows a non-successful status ("' . ($extraction['status_text'] ?? '') . '").')

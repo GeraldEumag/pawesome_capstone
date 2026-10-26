@@ -11,7 +11,6 @@ use App\Models\Pet;
 use App\Models\Service;
 use App\Models\ServiceItemUsage;
 use App\Models\User;
-use App\Models\VisitEstimate;
 use App\Models\VisitInvoice;
 use App\Models\VisitInvoiceAdjustment;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -58,16 +57,6 @@ class VisitBillingPhaseCTest extends TestCase
         ], $overrides));
     }
 
-    private function draftAndApprove(User $vet, Appointment $appt, array $lines = null): void
-    {
-        $lines = $lines ?? [['description' => 'Consultation', 'quantity' => 1, 'unit_price' => 500]];
-        $this->putJson("/api/veterinary/appointments/{$appt->id}/estimate", ['lines' => $lines], $this->authHeader($vet))
-            ->assertOk();
-        $this->postJson("/api/veterinary/appointments/{$appt->id}/estimate/present", [], $this->authHeader($vet))
-            ->assertOk();
-        $this->postJson("/api/veterinary/appointments/{$appt->id}/estimate/approve", [], $this->authHeader($vet))
-            ->assertOk();
-    }
 
     private function addCharge(User $vet, Appointment $appt, float $price, string $description = 'Charge'): array
     {
@@ -100,124 +89,10 @@ class VisitBillingPhaseCTest extends TestCase
         $response->assertStatus(201);
     }
 
-    public function test_estimate_draft_present_approve_unlocks_charges(): void
-    {
-        $vet = $this->userWithToken('veterinary');
-        $appt = $this->makeAppointment($vet);
 
-        $this->draftAndApprove($vet, $appt, [
-            ['description' => 'Consultation', 'quantity' => 1, 'unit_price' => 500],
-            ['description' => 'X-ray', 'quantity' => 1, 'unit_price' => 800],
-        ]);
 
-        $this->assertSame('approved', VisitEstimate::where('appointment_id', $appt->id)->value('status'));
 
-        $response = $this->postJson('/api/billing/items', [
-            'service_type' => 'veterinary',
-            'service_id' => $appt->id,
-            'item_type' => 'add_on_service',
-            'description' => 'X-ray',
-            'quantity' => 1,
-            'unit_price' => 800,
-        ], $this->authHeader($vet));
-        $response->assertStatus(201);
-    }
 
-    public function test_emergency_visit_bypasses_estimate_gate(): void
-    {
-        $vet = $this->userWithToken('veterinary');
-        $appt = $this->makeAppointment($vet, ['emergency' => true]);
-
-        $response = $this->postJson('/api/billing/items', [
-            'service_type' => 'veterinary',
-            'service_id' => $appt->id,
-            'item_type' => 'add_on_service',
-            'description' => 'Emergency suture',
-            'quantity' => 1,
-            'unit_price' => 300,
-        ], $this->authHeader($vet));
-
-        $response->assertStatus(201);
-    }
-
-    public function test_charges_beyond_threshold_require_reapproval(): void
-    {
-        $vet = $this->userWithToken('veterinary');
-        $appt = $this->makeAppointment($vet);
-
-        $this->draftAndApprove($vet, $appt, [
-            ['description' => 'Plan', 'quantity' => 1, 'unit_price' => 1000],
-        ]);
-
-        // approved_total = 1000, ceiling = 1200 (20%). Push past it.
-        $this->addCharge($vet, $appt, 900, 'Surgery pack');
-
-        $estimate = VisitEstimate::where('appointment_id', $appt->id)->first();
-        $this->assertSame('changes_requested', $estimate->status);
-
-        // Charges are no longer blocked — the status flip is informational.
-        $response = $this->postJson('/api/billing/items', [
-            'service_type' => 'veterinary',
-            'service_id' => $appt->id,
-            'item_type' => 'manual_charge',
-            'description' => 'More work',
-            'quantity' => 1,
-            'unit_price' => 100,
-        ], $this->authHeader($vet));
-        $response->assertStatus(201);
-
-        // Re-approving still returns the estimate to approved.
-        $this->postJson("/api/veterinary/appointments/{$appt->id}/estimate/approve", [], $this->authHeader($vet))
-            ->assertOk();
-        $this->assertSame('approved', $estimate->fresh()->status);
-    }
-
-    public function test_customer_can_approve_presented_estimate_via_portal(): void
-    {
-        $vet = $this->userWithToken('veterinary');
-        $customer = Customer::factory()->create();
-        $customerUser = User::factory()->create(['role' => 'customer', 'is_active' => true]);
-        $customer->update(['user_id' => $customerUser->id]);
-        $customerUser->plain_text_token = $customerUser->createToken('t')->plainTextToken;
-
-        $pet = Pet::factory()->create(['customer_id' => $customer->id]);
-        $service = Service::factory()->create();
-        $appt = Appointment::factory()->create([
-            'customer_id' => $customer->id,
-            'pet_id' => $pet->id,
-            'service_id' => $service->id,
-            'veterinarian_id' => $vet->id,
-            'status' => 'in_consultation',
-            'price' => 500,
-        ]);
-
-        $this->putJson("/api/veterinary/appointments/{$appt->id}/estimate", [
-            'lines' => [['description' => 'Plan', 'quantity' => 1, 'unit_price' => 500]],
-        ], $this->authHeader($vet))->assertOk();
-        $this->postJson("/api/veterinary/appointments/{$appt->id}/estimate/present", [], $this->authHeader($vet))
-            ->assertOk();
-
-        $this->postJson("/api/customer/appointments/{$appt->id}/estimate/approve", [], $this->authHeader($customerUser))
-            ->assertOk();
-
-        $estimate = VisitEstimate::where('appointment_id', $appt->id)->first();
-        $this->assertSame('approved', $estimate->status);
-        $this->assertSame('portal', $estimate->channel);
-        $this->assertSame($customer->id, $estimate->approved_by_customer_id);
-    }
-
-    public function test_customer_cannot_approve_another_customers_estimate(): void
-    {
-        $vet = $this->userWithToken('veterinary');
-        $appt = $this->makeAppointment($vet);
-        $this->draftAndApprove($vet, $appt);
-        // Revert to presented for the check.
-        VisitEstimate::where('appointment_id', $appt->id)->update(['status' => 'presented']);
-
-        $other = $this->userWithToken('customer');
-        $this->postJson("/api/customer/appointments/{$appt->id}/estimate/approve", [], $this->authHeader($other))
-            ->assertStatus(404);
-    }
 
     // ── Diagnostics ──────────────────────────────────────────────
 

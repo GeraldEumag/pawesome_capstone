@@ -13,6 +13,7 @@ import { apiRequest } from "../../api/client";
 import { useAuth } from "../../context/AuthContext";
 import { parseDateOnly } from "../../utils/date";
 import "./BookingTracker.css";
+import { useDraggable } from "../../utils/useDraggable";
 
 const SEEN_KEY = "pawesome_tracker_seen";
 const POLL_MS = 30000;
@@ -113,6 +114,7 @@ const BookingTracker = () => {
 
   const [items, setItems] = useState([]);
   const [open, setOpen] = useState(false);
+  const { style: dragStyle, dragHandlers, wasDragged } = useDraggable();
   const [refreshing, setRefreshing] = useState(false);
   const [hasUpdate, setHasUpdate] = useState(false);
   const [selectedTab, setSelectedTab] = useState("all");
@@ -207,7 +209,7 @@ const BookingTracker = () => {
   return (
     <div className={`bt-widget ${open ? "bt-open" : ""}`}>
       {open && (
-        <div className="bt-panel" role="dialog" aria-modal="false" aria-label="Booking tracker">
+        <div className="bt-panel" style={dragStyle} role="dialog" aria-modal="false" aria-label="Booking tracker">
           <div className="bt-grabber" aria-hidden="true" />
           <header className="bt-header">
             <div className="bt-header-title">
@@ -345,7 +347,9 @@ const BookingTracker = () => {
       <button
         type="button"
         className={`bt-toggle ${urgent ? "bt-urgent" : ""}`}
-        onClick={toggleOpen}
+        style={dragStyle}
+        {...dragHandlers}
+        onClick={() => { if (wasDragged()) return; toggleOpen(); }}
         aria-label={open ? "Close booking tracker" : "Open booking tracker"}
         aria-expanded={open}
       >

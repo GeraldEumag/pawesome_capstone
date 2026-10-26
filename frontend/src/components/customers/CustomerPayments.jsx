@@ -12,7 +12,6 @@ import { downloadReceiptPdf } from "../../utils/receiptPdf";
 import Modal from "../shared/Modal";
 import ReceiptDocument from "../shared/receipt/ReceiptDocument";
 import PaymentUploadModal from "../shared/PaymentUploadModal";
-import CustomerEstimateReview from "./CustomerEstimateReview";
 
 const formatCurrency = (value) =>
   `₱${Number(value || 0).toLocaleString("en-PH", {
@@ -501,7 +500,6 @@ const CustomerPayments = () => {
         </div>
       )}
 
-      <CustomerEstimateReview />
 
       <div className="customer-payments-summary-grid">
         <article className="customer-payment-summary-card">

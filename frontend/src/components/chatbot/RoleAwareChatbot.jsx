@@ -46,6 +46,7 @@ import {
 } from "../../services/liveChatService";
 import { apiRequest, normalizeList } from "../../api/client";
 import botIcon from "../../assets/pawesome-icon.png";
+import { useDraggable } from "../../utils/useDraggable";
 import "./RoleAwareChatbot.css";
 
 const formatMessage = (text) => (text || "").split("\n");
@@ -150,6 +151,7 @@ const RoleAwareChatbot = ({
   const role = propRole || authRole || "user";
   const chatKey = `${user?.id || user?.email || "anon"}_${role}`;
   const [isOpen, setIsOpen] = useState(mode === "embedded");
+  const { style: dragStyle, dragHandlers, wasDragged } = useDraggable();
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
@@ -1174,7 +1176,7 @@ const RoleAwareChatbot = ({
   return (
     <div className={containerClass}>
       {mode === "widget" && !isOpen && (
-        <button type="button" className="rbac-chatbot-toggle" onClick={() => setIsOpen(true)}>
+        <button type="button" className="rbac-chatbot-toggle" style={dragStyle} {...dragHandlers} onClick={() => { if (wasDragged()) return; setIsOpen(true); }}>
           <div className="rbac-toggle-icon-wrap">
             <img src={botIcon} alt="Pawesome Assistant" className="rbac-toggle-bot-img" />
             {liveChatMode?.status === "waiting" && <span className="rbac-toggle-pulse" />}
@@ -1187,7 +1189,7 @@ const RoleAwareChatbot = ({
       )}
 
       {isOpen && (
-        <section className="rbac-chatbot-panel">
+        <section className="rbac-chatbot-panel" style={dragStyle}>
           {/* Header */}
           <header className="rbac-chatbot-header">
             <div className="rbac-chatbot-title-wrap">

@@ -14,6 +14,8 @@
 /* Toggle pill */
 
 .bt-toggle {
+  cursor: grab;
+  touch-action: none;
   align-items: center;
   background: linear-gradient(135deg, var(--color-primary-light), var(--color-primary-soft));
   border: none;

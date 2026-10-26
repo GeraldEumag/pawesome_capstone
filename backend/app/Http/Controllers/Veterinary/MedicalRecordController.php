@@ -13,7 +13,6 @@ use App\Models\MedicalRecordAddendum;
 use App\Models\ActivityLog;
 use App\Services\ClinicalAccessLogger;
 use App\Services\VeterinaryInventoryService;
-use App\Services\VisitEstimateService;
 use App\Support\VeterinaryStatus;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Schema;

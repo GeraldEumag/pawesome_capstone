@@ -16,6 +16,7 @@ import {
   faImage,
 } from "@fortawesome/free-solid-svg-icons";
 import { apiRequest, normalizeList } from "../../../api/client";
+import { resolveAvatarUrl } from "../../../utils/avatar";
 import {
   showReasonPrompt,
   SERVICE_DISABLE_REASONS,

@@ -7,7 +7,6 @@ use App\Models\Appointment;
 use App\Models\DiagnosticOrder;
 use App\Services\DiagnosticOrderService;
 use App\Services\FileStorageService;
-use App\Services\VisitEstimateService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;

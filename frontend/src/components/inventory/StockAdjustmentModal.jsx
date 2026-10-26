@@ -41,7 +41,6 @@ const StockAdjustmentModal = ({ isOpen, onClose, item, onSuccess, initialType, i
   const [quantity, setQuantity] = useState(initialQuantity ? String(initialQuantity) : "");
   const [reason, setReason] = useState("");
   const [customReason, setCustomReason] = useState("");
-  const [batchNo, setBatchNo] = useState("");
   const [receivedDate, setReceivedDate] = useState(formatDateOnly(new Date()));
   const [manufacturingDate, setManufacturingDate] = useState("");
   const [expirationDate, setExpirationDate] = useState("");
@@ -88,7 +87,6 @@ const StockAdjustmentModal = ({ isOpen, onClose, item, onSuccess, initialType, i
     setQuantity(initialQuantity ? String(initialQuantity) : "");
     setReason("");
     setCustomReason("");
-    setBatchNo("");
     setReceivedDate(formatDateOnly(new Date()));
     setManufacturingDate("");
     setExpirationDate("");
@@ -121,7 +119,6 @@ const StockAdjustmentModal = ({ isOpen, onClose, item, onSuccess, initialType, i
     if (!reason) return "Please provide a reason for this adjustment";
     if (reason === "Other" && !customReason.trim()) return "Please specify the reason";
     if (adjustmentType === "add") {
-      if (!batchNo.trim()) return "Batch number is required for stock receiving";
       if (!receivedDate) return "Received date is required";
       if (requiresExpiry && !expirationDate) return "Expiration date is required for this item";
       if (manufacturingDate && manufacturingDate > receivedDate) return "Manufacturing date cannot be after the received date";
@@ -144,7 +141,7 @@ const StockAdjustmentModal = ({ isOpen, onClose, item, onSuccess, initialType, i
       const finalReason = reason === "Other" ? customReason.trim() : reason;
       if (adjustmentType === "add") {
         await inventoryApi.addBatch(item.id, {
-          batch_no: batchNo.trim(),
+          batch_no: null,
           received_date: receivedDate,
           manufacturing_date: manufacturingDate || null,
           expiration_date: expirationDate || null,
@@ -282,8 +279,8 @@ const StockAdjustmentModal = ({ isOpen, onClose, item, onSuccess, initialType, i
               <p>Each receipt is recorded as a separate lot for stock rotation and expiry tracking.</p>
               <div className="batch-intake-grid">
                 <label>
-                  <span>Batch number <span className="required">*</span></span>
-                  <input value={batchNo} onChange={(e) => setBatchNo(e.target.value)} maxLength={50} placeholder="Supplier lot or batch number" />
+                  <span>Batch number</span>
+                  <input value="Auto-generated" disabled />
                 </label>
                 <label>
                   <span>Received date <span className="required">*</span></span>

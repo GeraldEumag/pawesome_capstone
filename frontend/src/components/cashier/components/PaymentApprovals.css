@@ -781,6 +781,7 @@
 
 .pa-reference-input:focus { border-color: #10b981; box-shadow: 0 0 0 3px rgba(16,185,129,.1); }
 .pa-reference-input::placeholder { color: var(--color-muted, #64748b); }
+.pa-note-input { resize: vertical; min-height: 3rem; font-family: inherit; }
 
 .pa-card-reference {
   font-size: 0.78rem;

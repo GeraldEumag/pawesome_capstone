@@ -252,6 +252,10 @@ const ServiceBillingPanel = ({ serviceType, serviceId, petId, onBillingUpdate })
                 </div>
               </div>
             ))}
+            <div className="items-total">
+              <span>Total</span>
+              <span>₱{toMoney(billingSummary.total_bill)}</span>
+            </div>
           </div>
         )}
       </div>

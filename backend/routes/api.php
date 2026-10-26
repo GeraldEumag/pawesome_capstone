@@ -34,10 +34,8 @@ use App\Http\Controllers\Receptionist\WalkInController as ReceptionistWalkInCont
 use App\Http\Controllers\Veterinary\DashboardController as VeterinaryDashboardController;
 use App\Http\Controllers\Veterinary\MedicalRecordController;
 use App\Http\Controllers\Veterinary\ConsultationWorkflowController;
-use App\Http\Controllers\Veterinary\VisitEstimateController as VetVisitEstimateController;
 use App\Http\Controllers\Veterinary\VisitConsentController;
 use App\Http\Controllers\Veterinary\DiagnosticOrderController;
-use App\Http\Controllers\Customer\VisitEstimateController as CustomerVisitEstimateController;
 use App\Http\Controllers\VisitInvoiceController;
 use App\Http\Controllers\MedicalConfinementController;
 use App\Http\Controllers\Manager\WorkflowReportController;
@@ -327,11 +325,6 @@ Route::middleware(['auth.api', 'throttle:api', 'role:customer'])->prefix('custom
     Route::post('billing/veterinary/{id}/cashier-payment', [VeterinaryBillingController::class, 'requestCashierPayment'])->middleware('verified');
     Route::post('billing/veterinary/{id}/online-payment', [VeterinaryBillingController::class, 'submitOnlinePayment'])->middleware('verified');
 
-    // Visit estimate review (owner approves or rejects from the portal)
-    Route::get('estimates/pending', [CustomerVisitEstimateController::class, 'pending']);
-    Route::get('appointments/{id}/estimate', [CustomerVisitEstimateController::class, 'show']);
-    Route::post('appointments/{id}/estimate/approve', [CustomerVisitEstimateController::class, 'approve'])->middleware('verified');
-    Route::post('appointments/{id}/estimate/reject', [CustomerVisitEstimateController::class, 'reject'])->middleware('verified');
     
     // Customer Service Requests
     Route::post('requests', [ServiceRequestController::class, 'store'])->middleware('verified');
@@ -895,8 +888,6 @@ Route::middleware(['auth.api', 'throttle:api', 'role:veterinary,vet,vet_tech'])-
 // management role can read an estimate, consent list, diagnostic orders and
 // the visit invoice, and staff record counter approvals and signed consents.
 Route::middleware(['auth.api', 'throttle:api', 'role:veterinary,vet_tech,receptionist,cashier,manager,admin'])->prefix('veterinary')->group(function () {
-    Route::get('appointments/{id}/estimate', [VetVisitEstimateController::class, 'show']);
-    Route::post('appointments/{id}/estimate/approve', [VetVisitEstimateController::class, 'approveCounter']);
     Route::get('appointments/{id}/consents', [VisitConsentController::class, 'index']);
     Route::post('consents', [VisitConsentController::class, 'store']);
     Route::post('consents/{id}/revoke', [VisitConsentController::class, 'revoke']);
@@ -944,11 +935,6 @@ Route::middleware(['auth.api', 'throttle:api', 'role:veterinary,vet'])->prefix('
     Route::post('consultations/{id}/complete', [ConsultationWorkflowController::class, 'complete'])->middleware('idempotency');
     Route::post('consultations/{id}/recommend-confinement', [ConsultationWorkflowController::class, 'recommendConfinement'])->middleware('idempotency');
 
-    // Estimates — draft, present, reject (approval lives on the shared staff
-    // group for counter signatures and the customer portal for online visits)
-    Route::put('appointments/{id}/estimate', [VetVisitEstimateController::class, 'saveDraft']);
-    Route::post('appointments/{id}/estimate/present', [VetVisitEstimateController::class, 'present']);
-    Route::post('appointments/{id}/estimate/reject', [VetVisitEstimateController::class, 'reject']);
 
     // Diagnostic orders — vet places, reviews and cancels; vet_tech collects
     // and results via the shared vet_tech group above.
@@ -968,11 +954,6 @@ Route::middleware(['auth.api', 'throttle:api', 'role:veterinary,vet'])->prefix('
     Route::post('medical-confinements/{id}/mar', [MedicalConfinementController::class, 'marSchedule']);
     Route::post('medical-confinements/{id}/mar/{marId}/administer', [MedicalConfinementController::class, 'marAdminister']);
     Route::post('medical-confinements/{id}/mar/{marId}/status', [MedicalConfinementController::class, 'marUpdateStatus']);
-    // Dispensing (Phase D)
-    Route::get('dispensations', [\App\Http\Controllers\Veterinary\DispensationController::class, 'index']);
-    Route::post('dispensations', [\App\Http\Controllers\Veterinary\DispensationController::class, 'store']);
-    Route::post('dispensations/{id}/counsel', [\App\Http\Controllers\Veterinary\DispensationController::class, 'counsel']);
-    Route::post('dispensations/{id}/void', [\App\Http\Controllers\Veterinary\DispensationController::class, 'void']);
     // Vaccination lot recall + certificate (Phase D/E)
     Route::get('vaccination-recall', [MedicalRecordController::class, 'vaccinationRecall']);
     Route::get('vaccinations/{id}/certificate', [MedicalRecordController::class, 'vaccinationCertificate']);

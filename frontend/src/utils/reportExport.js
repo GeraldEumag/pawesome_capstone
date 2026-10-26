@@ -4,6 +4,8 @@
  */
 
 import * as XLSX from "xlsx";
+import JSZip from "jszip";
+import { saveAs } from "file-saver";
 import { sanitizeCsvCell } from "./csvSanitize";
 import { exportFormalReportPDF } from "./formalReportPdf";
 import { getRole, getUserData } from "./auth";
@@ -269,7 +271,56 @@ export const exportToPDF = (data, columns, title = "Report", filename = "report"
  * @param {Array} columns - Array of {key, label} objects defining columns
  * @param {string} filename - Output filename without extension
  */
-export const exportToExcel = (data, columns = [], filename = "report", metadata = {}) => {
+const LANDSCAPE_PAGE_SETUP = '<pageSetup paperSize="9" orientation="landscape"/>';
+const PAGE_SETUP_SUCCESSORS = [
+  '<headerFooter', '<drawing', '<legacyDrawing', '<picture', '<oleObjects',
+  '<controls', '<webPublishItems', '<tableParts', '<ignoredErrors', '<extLst', '</worksheet>',
+];
+
+/**
+ * SheetJS CE writes a pageSetup placeholder but never emits the element, so
+ * print orientation cannot be set on the worksheet. Post-processes the
+ * workbook zip instead: injects <pageSetup orientation="landscape"> into each
+ * sheet XML at the schema position after pageMargins/printOptions so Excel
+ * opens and prints every sheet in landscape by default.
+ */
+const injectLandscapePageSetup = (sheetXml) => {
+  if (sheetXml.includes("<pageSetup")) return sheetXml;
+  const marginsStart = sheetXml.indexOf("<pageMargins");
+  if (marginsStart !== -1) {
+    const marginsEnd = sheetXml.indexOf("/>", marginsStart);
+    if (marginsEnd !== -1) {
+      return sheetXml.slice(0, marginsEnd + 2) + LANDSCAPE_PAGE_SETUP + sheetXml.slice(marginsEnd + 2);
+    }
+  }
+  let index = -1;
+  for (const tag of PAGE_SETUP_SUCCESSORS) {
+    const i = sheetXml.indexOf(tag);
+    if (i !== -1 && (index === -1 || i < index)) index = i;
+  }
+  return index === -1 ? sheetXml : sheetXml.slice(0, index) + LANDSCAPE_PAGE_SETUP + sheetXml.slice(index);
+};
+
+/**
+ * Writes the workbook and saves it as .xlsx with every sheet defaulting to
+ * landscape page orientation (Excel print/page-setup metadata).
+ */
+export const saveWorkbookAsLandscapeXlsx = async (workbook, filename) => {
+  const data = XLSX.write(workbook, { type: "array", bookType: "xlsx", cellDates: true });
+  const zip = await JSZip.loadAsync(data);
+  const sheetPaths = Object.keys(zip.files).filter((path) => /^xl\/worksheets\/[^/]+\.xml$/.test(path));
+  for (const path of sheetPaths) {
+    const xml = await zip.file(path).async("string");
+    zip.file(path, injectLandscapePageSetup(xml));
+  }
+  const blob = await zip.generateAsync({
+    type: "blob",
+    mimeType: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+  });
+  saveAs(blob, filename);
+};
+
+export const exportToExcel = async (data, columns = [], filename = "report", metadata = {}) => {
   if (!Array.isArray(data) || data.length === 0) {
     console.warn("No data to export");
     return;
@@ -326,7 +377,7 @@ export const exportToExcel = (data, columns = [], filename = "report", metadata 
   const sheetName = String(metadata.sheetName || "Report").replace(/[\\/?*\[\]:]/g, " ").slice(0, 31) || "Report";
   XLSX.utils.book_append_sheet(workbook, worksheet, sheetName);
 
-  XLSX.writeFile(workbook, `${filename}_${formatDateForFilename(new Date())}.xlsx`, { cellDates: true });
+  await saveWorkbookAsLandscapeXlsx(workbook, `${filename}_${formatDateForFilename(new Date())}.xlsx`);
 };
 
 /**

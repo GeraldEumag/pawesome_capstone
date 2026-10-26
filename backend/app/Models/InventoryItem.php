@@ -386,6 +386,20 @@ class InventoryItem extends Model
     /**
      * Add stock with batch tracking
      */
+        /**
+     * Next sequential batch number for this item: Batch-001, Batch-002, ...
+     * Scoped per product so every product starts at Batch-001.
+     */
+    private function nextBatchNumber(): string
+    {
+        $n = $this->batches()->count();
+        do {
+            $n++;
+            $candidate = 'Batch-' . str_pad((string) $n, 3, '0', STR_PAD_LEFT);
+        } while ($this->batches()->where('batch_no', $candidate)->exists());
+        return $candidate;
+    }
+
     public function addBatchStock(
         int $amount,
         ?string $batchNo = null,
@@ -405,7 +419,7 @@ class InventoryItem extends Model
         }
 
         $batch = $this->batches()->create([
-            'batch_no' => $batchNo ?: 'BATCH-' . strtoupper(uniqid()),
+            'batch_no' => $batchNo ?: $this->nextBatchNumber(),
             'received_date' => $receivedDate ?: now(),
             'manufacturing_date' => $manufacturingDate,
             'expiration_date' => $expirationDate,

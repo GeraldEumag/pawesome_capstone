@@ -742,7 +742,7 @@ class InventoryController extends Controller
                 $item = InventoryItem::lockForUpdate()->findOrFail($id);
                 $requiresExpiry = $item->needsFefo();
                 $validated = $request->validate([
-                    'batch_no' => 'required|string|max:50',
+                    'batch_no' => 'nullable|string|max:50',
                     'received_date' => 'required|date|before_or_equal:today',
                     'manufacturing_date' => 'nullable|date|before_or_equal:received_date',
                     'expiration_date' => ($requiresExpiry ? 'required' : 'nullable') . '|date|after_or_equal:received_date',
@@ -754,7 +754,7 @@ class InventoryController extends Controller
 
                 $batch = $item->addBatchStock(
                     (int) $validated['quantity'],
-                    $validated['batch_no'],
+                    $validated['batch_no'] ?? null,
                     $validated['expiration_date'] ?? null,
                     $validated['notes'] ?? 'Stock received',
                     true,

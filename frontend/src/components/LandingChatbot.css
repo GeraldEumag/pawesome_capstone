@@ -5,6 +5,8 @@
 /* ── Toggle Button ────────────────────────────────────────────── */
 
 .lc-toggle {
+  cursor: grab;
+  touch-action: none;
   position: fixed;
   bottom: 1.8rem;
   right: 1.8rem;
