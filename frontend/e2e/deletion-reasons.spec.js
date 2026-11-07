@@ -67,6 +67,8 @@ test.describe('Deletion reason prompts', () => {
     });
 
     await page.goto('/veterinary/services');
+    // The chatbot FAB overlays the last row's action button at this viewport.
+    await page.addStyleTag({ content: '.rbac-chatbot{display:none!important}' });
     await page.getByRole('button', { name: 'Actions for Legacy Consultation' }).click();
     await page.locator('.row-action-popover-panel').getByRole('button', { name: 'Delete' }).click();
     await page.locator('#swal-reason-select').selectOption('Replaced by an updated service');

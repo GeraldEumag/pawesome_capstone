@@ -2,32 +2,41 @@
   "setup": {
     "backendUrl": "http://127.0.0.1:8000",
     "frontendUrl": "http://127.0.0.1:3000",
-    "browserPreview": "http://127.0.0.1:64422",
-    "testDate": "2026-10-11T17:08:10.888Z",
-    "tester": "Codex automated Playwright"
+    "browserBaseUrl": "http://127.0.0.1:3000",
+    "testDate": "2026-11-05T14:08:09.551Z",
+    "testRunner": "Playwright automation"
   },
   "workflows": [
     {
       "workflow": "Customer to Receptionist Booking Flow",
       "browserSubmitted": false,
-      "dbStatusUpdated": false,
-      "nextRoleSawResult": false,
+      "browserObserved": true,
+      "dbStatusUpdated": true,
+      "nextRoleSawResult": true,
       "consoleNetworkClean": true,
-      "status": "FAIL",
-      "notes": "POST /customer/requests failed: 422 This time is no longer available. Please choose another slot.",
-      "records": {},
-      "screenshots": []
+      "status": "PASS",
+      "notes": "",
+      "records": {
+        "serviceRequestId": 630,
+        "finalStatus": "approved"
+      },
+      "screenshots": [
+        "documentation/screenshots/phase11/customer-request-submitted.png",
+        "documentation/screenshots/phase11/receptionist-request-approval-scheduling.png",
+        "documentation/screenshots/phase11/customer-updated-status.png"
+      ]
     },
     {
       "workflow": "Boarding Tracking Flow",
-      "browserSubmitted": true,
+      "browserSubmitted": false,
+      "browserObserved": true,
       "dbStatusUpdated": true,
       "nextRoleSawResult": true,
       "consoleNetworkClean": true,
       "status": "PASS",
       "notes": "Service-request hotel/boarding approval persisted. Dedicated boarding status progression was not available through stable UI selectors in this automated pass.",
       "records": {
-        "serviceRequestId": 214,
+        "serviceRequestId": 143,
         "finalStatus": "approved"
       },
       "screenshots": [
@@ -36,63 +45,126 @@
       ]
     },
     {
-      "workflow": "Payment Reject with Reason Flow",
+      "workflow": "Legacy Hotel Request Fails Closed",
       "browserSubmitted": false,
+      "browserObserved": false,
       "dbStatusUpdated": false,
       "nextRoleSawResult": false,
       "consoleNetworkClean": true,
-      "status": "FAIL",
-      "notes": "POST /cashier/payment-requests/215/reject failed: 429 Too Many Attempts.",
+      "status": "PASS",
+      "notes": "The alternate hotel service-request route is rejected so customer hotel bookings must use the vaccination-card-gated boarding flow.",
       "records": {},
       "screenshots": []
+    },
+    {
+      "workflow": "Payment Reject with Reason Flow",
+      "browserSubmitted": false,
+      "browserObserved": true,
+      "dbStatusUpdated": true,
+      "nextRoleSawResult": true,
+      "consoleNetworkClean": true,
+      "status": "PASS",
+      "notes": "Reject without reason was blocked or rejected before the explicit reason submission.",
+      "records": {
+        "serviceRequestId": 631,
+        "paymentStatus": "rejected",
+        "rejectionReason": "PHASE11_TEST invalid reference number."
+      },
+      "screenshots": [
+        "documentation/screenshots/phase11/customer-payment-proof-upload.png",
+        "documentation/screenshots/phase11/cashier-rejection-reason.png",
+        "documentation/screenshots/phase11/customer-rejection-reason.png"
+      ]
     },
     {
       "workflow": "Payment Verify and Receipt Flow",
       "browserSubmitted": false,
-      "dbStatusUpdated": false,
-      "nextRoleSawResult": false,
+      "browserObserved": true,
+      "dbStatusUpdated": true,
+      "nextRoleSawResult": true,
       "consoleNetworkClean": true,
-      "status": "FAIL",
-      "notes": "POST /customer/requests failed: 429 Too Many Attempts.",
-      "records": {},
-      "screenshots": []
+      "status": "PASS",
+      "notes": "",
+      "records": {
+        "serviceRequestId": 632,
+        "paymentStatus": "paid",
+        "receiptNumber": "SR-REC-20261105140930-632"
+      },
+      "screenshots": [
+        "documentation/screenshots/phase11/cashier-payment-verification.png",
+        "documentation/screenshots/phase11/customer-paid-receipt.png",
+        "documentation/screenshots/phase11/manager-report-after-transaction.png"
+      ]
     },
     {
       "workflow": "POS and Inventory Stock Deduction Flow",
       "browserSubmitted": false,
-      "dbStatusUpdated": false,
-      "nextRoleSawResult": false,
+      "browserObserved": true,
+      "dbStatusUpdated": true,
+      "nextRoleSawResult": true,
       "consoleNetworkClean": true,
-      "status": "FAIL",
-      "notes": "GET /inventory/items failed: 429 Too Many Attempts.",
-      "records": {},
-      "screenshots": []
+      "status": "PASS",
+      "notes": "",
+      "records": {
+        "itemId": 21,
+        "itemName": "AMOXICILLIN TRIHYDRATE - EPPITREXIL 250MG/5ML SYRUP",
+        "beforeStock": 2,
+        "afterStock": 1,
+        "transactionId": 116
+      },
+      "screenshots": [
+        "documentation/screenshots/phase11/inventory-stock-before.png",
+        "documentation/screenshots/phase11/cashier-pos-success.png",
+        "documentation/screenshots/phase11/inventory-stock-after.png",
+        "documentation/screenshots/phase11/inventory-log.png",
+        "documentation/screenshots/phase11/manager-report-after-pos.png"
+      ]
     },
     {
       "workflow": "Veterinary Consultation Flow",
-      "browserSubmitted": false,
-      "dbStatusUpdated": false,
-      "nextRoleSawResult": false,
+      "browserSubmitted": true,
+      "browserObserved": true,
+      "dbStatusUpdated": true,
+      "nextRoleSawResult": true,
       "consoleNetworkClean": true,
-      "status": "FAIL",
-      "notes": "GET /receptionist/veterinarians/available failed: 429 Too Many Attempts.",
-      "records": {},
-      "screenshots": []
+      "status": "PASS",
+      "notes": "",
+      "records": {
+        "serviceRequestId": 633,
+        "appointmentId": 126,
+        "medicalRecordId": 49,
+        "appointmentStatus": "completed",
+        "paymentStatus": "paid",
+        "medicalRecordStatus": "finalized"
+      },
+      "screenshots": [
+        "documentation/screenshots/phase11/vet-appointment-completed.png",
+        "documentation/screenshots/phase11/customer-vet-status.png"
+      ]
     },
     {
       "workflow": "Generic/Brand Inventory Flow",
       "browserSubmitted": false,
-      "dbStatusUpdated": false,
-      "nextRoleSawResult": false,
+      "browserObserved": true,
+      "dbStatusUpdated": true,
+      "nextRoleSawResult": true,
       "consoleNetworkClean": true,
-      "status": "FAIL",
-      "notes": "POST /inventory/items failed: 429 Too Many Attempts.",
-      "records": {},
-      "screenshots": []
+      "status": "PASS",
+      "notes": "",
+      "records": {
+        "itemId": 878,
+        "itemName": "PHASE11_TEST Medicine 1793887842859",
+        "genericName": "PHASE11_TEST Generic",
+        "brand": "PHASE11_TEST Brand"
+      },
+      "screenshots": [
+        "documentation/screenshots/phase11/inventory-generic-brand.png"
+      ]
     },
     {
       "workflow": "Notifications Flow",
-      "browserSubmitted": true,
+      "browserSubmitted": false,
+      "browserObserved": true,
       "dbStatusUpdated": true,
       "nextRoleSawResult": true,
       "consoleNetworkClean": true,
@@ -108,11 +180,12 @@
     },
     {
       "workflow": "Role Access Negative Tests",
-      "browserSubmitted": true,
+      "browserSubmitted": false,
+      "browserObserved": false,
       "dbStatusUpdated": true,
-      "nextRoleSawResult": false,
+      "nextRoleSawResult": true,
       "consoleNetworkClean": true,
-      "status": "FAIL",
+      "status": "PASS",
       "notes": "",
       "records": {
         "checks": [
@@ -143,83 +216,36 @@
           {
             "role": "vet",
             "endpoint": "/cashier/payment-requests",
-            "status": 200,
-            "blocked": false
+            "status": 403,
+            "blocked": true
           }
         ]
       },
       "screenshots": []
     }
   ],
-  "issues": [
-    {
-      "severity": "High",
-      "module": "Booking",
-      "page": "/customer/services",
-      "error": "POST /customer/requests failed: 422 This time is no longer available. Please choose another slot.",
-      "routeFile": "frontend/e2e/phase11-state-changing-workflows.spec.js",
-      "fixApplied": "No code fix applied by Phase 11 audit",
-      "status": "Open"
-    },
-    {
-      "severity": "High",
-      "module": "Payments",
-      "page": "/cashier/payment-verification",
-      "error": "POST /cashier/payment-requests/215/reject failed: 429 Too Many Attempts.",
-      "routeFile": "frontend/e2e/phase11-state-changing-workflows.spec.js",
-      "fixApplied": "No code fix applied by Phase 11 audit",
-      "status": "Open"
-    },
-    {
-      "severity": "High",
-      "module": "Payments",
-      "page": "/cashier/payment-verification",
-      "error": "POST /customer/requests failed: 429 Too Many Attempts.",
-      "routeFile": "frontend/e2e/phase11-state-changing-workflows.spec.js",
-      "fixApplied": "No code fix applied by Phase 11 audit",
-      "status": "Open"
-    },
-    {
-      "severity": "High",
-      "module": "POS/Inventory",
-      "page": "/cashier/pos",
-      "error": "GET /inventory/items failed: 429 Too Many Attempts.",
-      "routeFile": "frontend/e2e/phase11-state-changing-workflows.spec.js",
-      "fixApplied": "No code fix applied by Phase 11 audit",
-      "status": "Open"
-    },
-    {
-      "severity": "High",
-      "module": "Veterinary",
-      "page": "/veterinary/appointments",
-      "error": "GET /receptionist/veterinarians/available failed: 429 Too Many Attempts.",
-      "routeFile": "frontend/e2e/phase11-state-changing-workflows.spec.js",
-      "fixApplied": "No code fix applied by Phase 11 audit",
-      "status": "Open"
-    },
-    {
-      "severity": "Medium",
-      "module": "Inventory",
-      "page": "/inventory/products",
-      "error": "POST /inventory/items failed: 429 Too Many Attempts.",
-      "routeFile": "frontend/e2e/phase11-state-changing-workflows.spec.js",
-      "fixApplied": "No code fix applied by Phase 11 audit",
-      "status": "Open"
-    },
-    {
-      "severity": "High",
-      "module": "Access Control",
-      "page": "/cashier/payment-requests",
-      "error": "Unexpected status 200",
-      "routeFile": "backend/routes/api.php",
-      "fixApplied": "No code fix applied by Phase 11 audit",
-      "status": "Open"
-    }
-  ],
+  "issues": [],
   "screenshots": [
+    "documentation/screenshots/phase11/customer-request-submitted.png",
+    "documentation/screenshots/phase11/receptionist-request-approval-scheduling.png",
+    "documentation/screenshots/phase11/customer-updated-status.png",
     "documentation/screenshots/phase11/boarding-tracking-receptionist.png",
     "documentation/screenshots/phase11/boarding-tracking-customer.png",
     "documentation/screenshots/phase11/customer-payment-proof-upload.png",
+    "documentation/screenshots/phase11/cashier-rejection-reason.png",
+    "documentation/screenshots/phase11/customer-rejection-reason.png",
+    "documentation/screenshots/phase11/cashier-payment-verification.png",
+    "documentation/screenshots/phase11/customer-paid-receipt.png",
+    "documentation/screenshots/phase11/manager-report-after-transaction.png",
+    "documentation/screenshots/phase11/inventory-stock-before.png",
+    "documentation/screenshots/phase11/cashier-pos-success.png",
+    "documentation/screenshots/phase11/inventory-stock-after.png",
+    "documentation/screenshots/phase11/inventory-log.png",
+    "documentation/screenshots/phase11/manager-report-after-pos.png",
+    "documentation/screenshots/phase11/vet-consultation-started.png",
+    "documentation/screenshots/phase11/vet-appointment-completed.png",
+    "documentation/screenshots/phase11/customer-vet-status.png",
+    "documentation/screenshots/phase11/inventory-generic-brand.png",
     "documentation/screenshots/phase11/notifications-customer.png",
     "documentation/screenshots/phase11/notifications-receptionist.png",
     "documentation/screenshots/phase11/notifications-cashier.png",
@@ -227,135 +253,2703 @@
   ],
   "network": [
     {
-      "status": 429,
-      "method": "GET",
-      "url": "http://localhost:8000/api/notifications?role=customer",
-      "page": "http://127.0.0.1:3000/customer/notifications"
+      "source": "api",
+      "status": 201,
+      "method": "POST",
+      "path": "/api/pets"
     },
     {
-      "status": 429,
-      "method": "GET",
-      "url": "http://localhost:8000/api/notifications",
-      "page": "http://127.0.0.1:3000/customer/notifications"
+      "source": "api",
+      "status": 422,
+      "method": "POST",
+      "path": "/api/customer/requests"
     },
     {
-      "status": 429,
-      "method": "GET",
-      "url": "http://localhost:8000/api/chatbot/welcome",
-      "page": "http://127.0.0.1:3000/customer/notifications"
+      "source": "api",
+      "status": 422,
+      "method": "POST",
+      "path": "/api/customer/requests"
     },
     {
-      "status": 429,
-      "method": "GET",
-      "url": "http://localhost:8000/api/customer/tracking",
-      "page": "http://127.0.0.1:3000/customer/notifications"
+      "source": "api",
+      "status": 422,
+      "method": "POST",
+      "path": "/api/customer/requests"
     },
     {
-      "status": 429,
-      "method": "GET",
-      "url": "http://localhost:8000/api/notifications?role=customer",
-      "page": "http://127.0.0.1:3000/customer/notifications"
+      "source": "api",
+      "status": 422,
+      "method": "POST",
+      "path": "/api/customer/requests"
     },
     {
-      "status": 429,
-      "method": "GET",
-      "url": "http://localhost:8000/api/notifications",
-      "page": "http://127.0.0.1:3000/customer/notifications"
+      "source": "api",
+      "status": 422,
+      "method": "POST",
+      "path": "/api/customer/requests"
     },
     {
-      "status": 429,
-      "method": "GET",
-      "url": "http://localhost:8000/api/chatbot/welcome",
-      "page": "http://127.0.0.1:3000/customer/notifications"
+      "source": "api",
+      "status": 422,
+      "method": "POST",
+      "path": "/api/customer/requests"
     },
     {
-      "status": 429,
-      "method": "GET",
-      "url": "http://localhost:8000/api/customer/tracking",
-      "page": "http://127.0.0.1:3000/customer/notifications"
+      "source": "api",
+      "status": 422,
+      "method": "POST",
+      "path": "/api/customer/requests"
     },
     {
-      "status": 429,
-      "method": "GET",
-      "url": "http://localhost:8000/api/notifications?role=receptionist",
-      "page": "http://127.0.0.1:3000/receptionist/bookings/hotel"
+      "source": "api",
+      "status": 422,
+      "method": "POST",
+      "path": "/api/customer/requests"
     },
     {
+      "source": "api",
+      "status": 422,
+      "method": "POST",
+      "path": "/api/customer/requests"
+    },
+    {
+      "source": "api",
+      "status": 422,
+      "method": "POST",
+      "path": "/api/customer/requests"
+    },
+    {
+      "source": "api",
+      "status": 422,
+      "method": "POST",
+      "path": "/api/customer/requests"
+    },
+    {
+      "source": "api",
+      "status": 422,
+      "method": "POST",
+      "path": "/api/customer/requests"
+    },
+    {
+      "source": "api",
+      "status": 422,
+      "method": "POST",
+      "path": "/api/customer/requests"
+    },
+    {
+      "source": "api",
+      "status": 422,
+      "method": "POST",
+      "path": "/api/customer/requests"
+    },
+    {
+      "source": "api",
+      "status": 422,
+      "method": "POST",
+      "path": "/api/customer/requests"
+    },
+    {
+      "source": "api",
+      "status": 201,
+      "method": "POST",
+      "path": "/api/customer/requests"
+    },
+    {
+      "source": "browser",
+      "status": 200,
+      "method": "GET",
+      "path": "/api/notifications",
+      "page": "/customer/services"
+    },
+    {
+      "source": "browser",
+      "status": 200,
+      "method": "GET",
+      "path": "/api/chatbot/welcome",
+      "page": "/customer/services"
+    },
+    {
+      "source": "browser",
+      "status": 200,
+      "method": "GET",
+      "path": "/api/customer/tracking",
+      "page": "/customer/services"
+    },
+    {
+      "source": "browser",
+      "status": 200,
+      "method": "GET",
+      "path": "/api/settings/public",
+      "page": "/customer/services"
+    },
+    {
+      "source": "browser",
+      "status": 200,
+      "method": "GET",
+      "path": "/api/settings/public",
+      "page": "/customer/services"
+    },
+    {
+      "source": "browser",
+      "status": 200,
+      "method": "GET",
+      "path": "/api/settings/public",
+      "page": "/customer/services"
+    },
+    {
+      "source": "browser",
+      "status": 200,
+      "method": "GET",
+      "path": "/api/settings/public",
+      "page": "/customer/services"
+    },
+    {
+      "source": "browser",
+      "status": 200,
+      "method": "GET",
+      "path": "/api/notifications",
+      "page": "/customer/services"
+    },
+    {
+      "source": "browser",
+      "status": 200,
+      "method": "GET",
+      "path": "/api/chatbot/welcome",
+      "page": "/customer/services"
+    },
+    {
+      "source": "browser",
+      "status": 200,
+      "method": "GET",
+      "path": "/api/customer/tracking",
+      "page": "/customer/services"
+    },
+    {
+      "source": "api",
+      "status": 200,
+      "method": "GET",
+      "path": "/api/receptionist/requests"
+    },
+    {
+      "source": "api",
+      "status": 200,
+      "method": "POST",
+      "path": "/api/receptionist/requests/630/approve"
+    },
+    {
+      "source": "browser",
+      "status": 200,
+      "method": "GET",
+      "path": "/api/notifications",
+      "page": "/receptionist/bookings/hotel"
+    },
+    {
+      "source": "browser",
+      "status": 200,
+      "method": "GET",
+      "path": "/api/settings/public",
+      "page": "/receptionist/bookings/hotel"
+    },
+    {
+      "source": "browser",
+      "status": 200,
+      "method": "GET",
+      "path": "/api/settings/public",
+      "page": "/receptionist/bookings/hotel"
+    },
+    {
+      "source": "browser",
+      "status": 200,
+      "method": "GET",
+      "path": "/api/notifications",
+      "page": "/receptionist/bookings/hotel"
+    },
+    {
+      "source": "browser",
+      "status": 200,
+      "method": "GET",
+      "path": "/api/receptionist/boarding-requests",
+      "page": "/receptionist/bookings/hotel"
+    },
+    {
+      "source": "browser",
+      "status": 200,
+      "method": "GET",
+      "path": "/api/receptionist/boarding-rooms",
+      "page": "/receptionist/bookings/hotel"
+    },
+    {
+      "source": "browser",
+      "status": 200,
+      "method": "GET",
+      "path": "/api/receptionist/boarding-requests",
+      "page": "/receptionist/bookings/hotel"
+    },
+    {
+      "source": "browser",
+      "status": 200,
+      "method": "GET",
+      "path": "/api/receptionist/boarding-rooms",
+      "page": "/receptionist/bookings/hotel"
+    },
+    {
+      "source": "api",
+      "status": 200,
+      "method": "GET",
+      "path": "/api/customer/my-requests"
+    },
+    {
+      "source": "browser",
+      "status": 200,
+      "method": "GET",
+      "path": "/api/notifications",
+      "page": "/customer/services"
+    },
+    {
+      "source": "browser",
+      "status": 200,
+      "method": "GET",
+      "path": "/api/chatbot/welcome",
+      "page": "/customer/services"
+    },
+    {
+      "source": "browser",
+      "status": 200,
+      "method": "GET",
+      "path": "/api/customer/tracking",
+      "page": "/customer/services"
+    },
+    {
+      "source": "browser",
+      "status": 200,
+      "method": "GET",
+      "path": "/api/settings/public",
+      "page": "/customer/services"
+    },
+    {
+      "source": "browser",
+      "status": 200,
+      "method": "GET",
+      "path": "/api/settings/public",
+      "page": "/customer/services"
+    },
+    {
+      "source": "browser",
+      "status": 200,
+      "method": "GET",
+      "path": "/api/settings/public",
+      "page": "/customer/services"
+    },
+    {
+      "source": "browser",
+      "status": 200,
+      "method": "GET",
+      "path": "/api/settings/public",
+      "page": "/customer/services"
+    },
+    {
+      "source": "browser",
+      "status": 200,
+      "method": "GET",
+      "path": "/api/notifications",
+      "page": "/customer/services"
+    },
+    {
+      "source": "browser",
+      "status": 200,
+      "method": "GET",
+      "path": "/api/chatbot/welcome",
+      "page": "/customer/services"
+    },
+    {
+      "source": "browser",
+      "status": 200,
+      "method": "GET",
+      "path": "/api/customer/tracking",
+      "page": "/customer/services"
+    },
+    {
+      "source": "api",
+      "status": 200,
+      "method": "GET",
+      "path": "/api/boarding/rooms/available"
+    },
+    {
+      "source": "api",
+      "status": 201,
+      "method": "POST",
+      "path": "/api/customer/boardings"
+    },
+    {
+      "source": "api",
+      "status": 200,
+      "method": "POST",
+      "path": "/api/receptionist/boarding-requests/143/verify-vaccination"
+    },
+    {
+      "source": "api",
+      "status": 200,
+      "method": "POST",
+      "path": "/api/receptionist/boarding-requests/143/approve"
+    },
+    {
+      "source": "api",
+      "status": 200,
+      "method": "GET",
+      "path": "/api/customer/boardings"
+    },
+    {
+      "source": "browser",
+      "status": 200,
+      "method": "GET",
+      "path": "/api/notifications",
+      "page": "/receptionist/bookings/hotel"
+    },
+    {
+      "source": "browser",
+      "status": 200,
+      "method": "GET",
+      "path": "/api/settings/public",
+      "page": "/receptionist/bookings/hotel"
+    },
+    {
+      "source": "browser",
+      "status": 200,
+      "method": "GET",
+      "path": "/api/settings/public",
+      "page": "/receptionist/bookings/hotel"
+    },
+    {
+      "source": "browser",
+      "status": 200,
+      "method": "GET",
+      "path": "/api/notifications",
+      "page": "/receptionist/bookings/hotel"
+    },
+    {
+      "source": "browser",
+      "status": 200,
+      "method": "GET",
+      "path": "/api/receptionist/boarding-requests",
+      "page": "/receptionist/bookings/hotel"
+    },
+    {
+      "source": "browser",
+      "status": 200,
+      "method": "GET",
+      "path": "/api/receptionist/boarding-rooms",
+      "page": "/receptionist/bookings/hotel"
+    },
+    {
+      "source": "browser",
+      "status": 200,
+      "method": "GET",
+      "path": "/api/receptionist/boarding-requests",
+      "page": "/receptionist/bookings/hotel"
+    },
+    {
+      "source": "browser",
+      "status": 200,
+      "method": "GET",
+      "path": "/api/receptionist/boarding-rooms",
+      "page": "/receptionist/bookings/hotel"
+    },
+    {
+      "source": "browser",
+      "status": 200,
+      "method": "GET",
+      "path": "/api/notifications",
+      "page": "/customer/services"
+    },
+    {
+      "source": "browser",
+      "status": 200,
+      "method": "GET",
+      "path": "/api/chatbot/welcome",
+      "page": "/customer/services"
+    },
+    {
+      "source": "browser",
+      "status": 200,
+      "method": "GET",
+      "path": "/api/customer/tracking",
+      "page": "/customer/services"
+    },
+    {
+      "source": "browser",
+      "status": 200,
+      "method": "GET",
+      "path": "/api/settings/public",
+      "page": "/customer/services"
+    },
+    {
+      "source": "browser",
+      "status": 200,
+      "method": "GET",
+      "path": "/api/settings/public",
+      "page": "/customer/services"
+    },
+    {
+      "source": "browser",
+      "status": 200,
+      "method": "GET",
+      "path": "/api/notifications",
+      "page": "/customer/services"
+    },
+    {
+      "source": "browser",
+      "status": 200,
+      "method": "GET",
+      "path": "/api/chatbot/welcome",
+      "page": "/customer/services"
+    },
+    {
+      "source": "browser",
+      "status": 200,
+      "method": "GET",
+      "path": "/api/customer/tracking",
+      "page": "/customer/services"
+    },
+    {
+      "source": "browser",
+      "status": 200,
+      "method": "GET",
+      "path": "/api/settings/public",
+      "page": "/customer/services"
+    },
+    {
+      "source": "browser",
+      "status": 200,
+      "method": "GET",
+      "path": "/api/settings/public",
+      "page": "/customer/services"
+    },
+    {
+      "source": "api",
+      "status": 422,
+      "method": "POST",
+      "path": "/api/customer/requests"
+    },
+    {
+      "source": "api",
+      "status": 422,
+      "method": "POST",
+      "path": "/api/customer/requests"
+    },
+    {
+      "source": "api",
+      "status": 422,
+      "method": "POST",
+      "path": "/api/customer/requests"
+    },
+    {
+      "source": "api",
+      "status": 422,
+      "method": "POST",
+      "path": "/api/customer/requests"
+    },
+    {
+      "source": "api",
+      "status": 422,
+      "method": "POST",
+      "path": "/api/customer/requests"
+    },
+    {
+      "source": "api",
+      "status": 422,
+      "method": "POST",
+      "path": "/api/customer/requests"
+    },
+    {
+      "source": "api",
+      "status": 422,
+      "method": "POST",
+      "path": "/api/customer/requests"
+    },
+    {
+      "source": "api",
+      "status": 422,
+      "method": "POST",
+      "path": "/api/customer/requests"
+    },
+    {
+      "source": "api",
+      "status": 422,
+      "method": "POST",
+      "path": "/api/customer/requests"
+    },
+    {
+      "source": "api",
+      "status": 201,
+      "method": "POST",
+      "path": "/api/customer/requests"
+    },
+    {
+      "source": "api",
+      "status": 200,
+      "method": "POST",
+      "path": "/api/receptionist/requests/631/approve"
+    },
+    {
+      "source": "api",
+      "status": 200,
+      "method": "POST",
+      "path": "/api/customer/requests/631/payment-proof"
+    },
+    {
+      "source": "browser",
+      "status": 200,
+      "method": "GET",
+      "path": "/api/notifications",
+      "page": "/customer/payments"
+    },
+    {
+      "source": "browser",
+      "status": 200,
+      "method": "GET",
+      "path": "/api/customer/my-requests",
+      "page": "/customer/payments"
+    },
+    {
+      "source": "browser",
+      "status": 200,
+      "method": "GET",
+      "path": "/api/chatbot/welcome",
+      "page": "/customer/payments"
+    },
+    {
+      "source": "browser",
+      "status": 200,
+      "method": "GET",
+      "path": "/api/customer/tracking",
+      "page": "/customer/payments"
+    },
+    {
+      "source": "browser",
+      "status": 200,
+      "method": "GET",
+      "path": "/api/settings/public",
+      "page": "/customer/payments"
+    },
+    {
+      "source": "browser",
+      "status": 200,
+      "method": "GET",
+      "path": "/api/settings/public",
+      "page": "/customer/payments"
+    },
+    {
+      "source": "browser",
+      "status": 200,
+      "method": "GET",
+      "path": "/api/settings/public",
+      "page": "/customer/payments"
+    },
+    {
+      "source": "browser",
+      "status": 200,
+      "method": "GET",
+      "path": "/api/settings/public",
+      "page": "/customer/payments"
+    },
+    {
+      "source": "browser",
+      "status": 200,
+      "method": "GET",
+      "path": "/api/notifications",
+      "page": "/customer/payments"
+    },
+    {
+      "source": "browser",
+      "status": 200,
+      "method": "GET",
+      "path": "/api/customer/my-requests",
+      "page": "/customer/payments"
+    },
+    {
+      "source": "browser",
+      "status": 200,
+      "method": "GET",
+      "path": "/api/chatbot/welcome",
+      "page": "/customer/payments"
+    },
+    {
+      "source": "browser",
+      "status": 200,
+      "method": "GET",
+      "path": "/api/customer/tracking",
+      "page": "/customer/payments"
+    },
+    {
+      "source": "browser",
+      "status": 200,
+      "method": "GET",
+      "path": "/api/customer/store/orders",
+      "page": "/customer/payments"
+    },
+    {
+      "source": "browser",
+      "status": 200,
+      "method": "GET",
+      "path": "/api/customer/store/orders",
+      "page": "/customer/payments"
+    },
+    {
+      "source": "browser",
+      "status": 200,
+      "method": "GET",
+      "path": "/api/customer/boarding-requests",
+      "page": "/customer/payments"
+    },
+    {
+      "source": "browser",
+      "status": 200,
+      "method": "GET",
+      "path": "/api/customer/boarding-requests",
+      "page": "/customer/payments"
+    },
+    {
+      "source": "browser",
+      "status": 200,
+      "method": "GET",
+      "path": "/api/customer/billing",
+      "page": "/customer/payments"
+    },
+    {
+      "source": "browser",
+      "status": 200,
+      "method": "GET",
+      "path": "/api/customer/billing",
+      "page": "/customer/payments"
+    },
+    {
+      "source": "browser",
+      "status": 200,
+      "method": "GET",
+      "path": "/api/customer/payments/history",
+      "page": "/customer/payments"
+    },
+    {
+      "source": "browser",
+      "status": 200,
+      "method": "GET",
+      "path": "/api/customer/payments/history",
+      "page": "/customer/payments"
+    },
+    {
+      "source": "api",
+      "status": 200,
+      "method": "GET",
+      "path": "/api/cashier/payment-requests"
+    },
+    {
+      "source": "api",
+      "status": 200,
+      "method": "POST",
+      "path": "/api/cashier/payment-requests/631/reject"
+    },
+    {
+      "source": "browser",
+      "status": 200,
+      "method": "GET",
+      "path": "/api/cashier/payment-requests",
+      "page": "/cashier/payment-verification"
+    },
+    {
+      "source": "browser",
+      "status": 200,
+      "method": "GET",
+      "path": "/api/cashier/inventory/sellable",
+      "page": "/cashier/payment-verification"
+    },
+    {
+      "source": "browser",
+      "status": 200,
+      "method": "GET",
+      "path": "/api/cashier/pos/services",
+      "page": "/cashier/payment-verification"
+    },
+    {
+      "source": "browser",
+      "status": 200,
+      "method": "GET",
+      "path": "/api/settings/public",
+      "page": "/cashier/payment-verification"
+    },
+    {
+      "source": "browser",
+      "status": 200,
+      "method": "GET",
+      "path": "/api/cashier/customers",
+      "page": "/cashier/payment-verification"
+    },
+    {
+      "source": "browser",
+      "status": 200,
+      "method": "GET",
+      "path": "/api/cashier/payment-requests",
+      "page": "/cashier/payment-verification"
+    },
+    {
+      "source": "browser",
+      "status": 200,
+      "method": "GET",
+      "path": "/api/settings/public",
+      "page": "/cashier/payment-verification"
+    },
+    {
+      "source": "browser",
+      "status": 200,
+      "method": "GET",
+      "path": "/api/cashier/payment-requests",
+      "page": "/cashier/payment-verification"
+    },
+    {
+      "source": "browser",
+      "status": 200,
+      "method": "GET",
+      "path": "/api/cashier/inventory/sellable",
+      "page": "/cashier/payment-verification"
+    },
+    {
+      "source": "browser",
+      "status": 200,
+      "method": "GET",
+      "path": "/api/cashier/pos/services",
+      "page": "/cashier/payment-verification"
+    },
+    {
+      "source": "browser",
+      "status": 200,
+      "method": "GET",
+      "path": "/api/cashier/customers",
+      "page": "/cashier/payment-verification"
+    },
+    {
+      "source": "browser",
+      "status": 200,
+      "method": "GET",
+      "path": "/api/cashier/payment-requests",
+      "page": "/cashier/payment-verification"
+    },
+    {
+      "source": "api",
+      "status": 200,
+      "method": "GET",
+      "path": "/api/customer/my-requests"
+    },
+    {
+      "source": "browser",
+      "status": 200,
+      "method": "GET",
+      "path": "/api/notifications",
+      "page": "/customer/payments"
+    },
+    {
+      "source": "browser",
+      "status": 200,
+      "method": "GET",
+      "path": "/api/customer/my-requests",
+      "page": "/customer/payments"
+    },
+    {
+      "source": "browser",
+      "status": 200,
+      "method": "GET",
+      "path": "/api/chatbot/welcome",
+      "page": "/customer/payments"
+    },
+    {
+      "source": "browser",
+      "status": 200,
+      "method": "GET",
+      "path": "/api/customer/tracking",
+      "page": "/customer/payments"
+    },
+    {
+      "source": "browser",
+      "status": 200,
+      "method": "GET",
+      "path": "/api/settings/public",
+      "page": "/customer/payments"
+    },
+    {
+      "source": "browser",
+      "status": 200,
+      "method": "GET",
+      "path": "/api/settings/public",
+      "page": "/customer/payments"
+    },
+    {
+      "source": "browser",
+      "status": 200,
+      "method": "GET",
+      "path": "/api/notifications",
+      "page": "/customer/payments"
+    },
+    {
+      "source": "browser",
+      "status": 200,
+      "method": "GET",
+      "path": "/api/customer/my-requests",
+      "page": "/customer/payments"
+    },
+    {
+      "source": "browser",
+      "status": 200,
+      "method": "GET",
+      "path": "/api/settings/public",
+      "page": "/customer/payments"
+    },
+    {
+      "source": "browser",
+      "status": 200,
+      "method": "GET",
+      "path": "/api/settings/public",
+      "page": "/customer/payments"
+    },
+    {
+      "source": "browser",
+      "status": 200,
+      "method": "GET",
+      "path": "/api/chatbot/welcome",
+      "page": "/customer/payments"
+    },
+    {
+      "source": "browser",
+      "status": 200,
+      "method": "GET",
+      "path": "/api/customer/tracking",
+      "page": "/customer/payments"
+    },
+    {
+      "source": "browser",
+      "status": 200,
+      "method": "GET",
+      "path": "/api/customer/store/orders",
+      "page": "/customer/payments"
+    },
+    {
+      "source": "browser",
+      "status": 200,
+      "method": "GET",
+      "path": "/api/customer/store/orders",
+      "page": "/customer/payments"
+    },
+    {
+      "source": "browser",
+      "status": 200,
+      "method": "GET",
+      "path": "/api/customer/boarding-requests",
+      "page": "/customer/payments"
+    },
+    {
+      "source": "browser",
+      "status": 200,
+      "method": "GET",
+      "path": "/api/customer/boarding-requests",
+      "page": "/customer/payments"
+    },
+    {
+      "source": "browser",
+      "status": 200,
+      "method": "GET",
+      "path": "/api/customer/billing",
+      "page": "/customer/payments"
+    },
+    {
+      "source": "browser",
+      "status": 200,
+      "method": "GET",
+      "path": "/api/customer/billing",
+      "page": "/customer/payments"
+    },
+    {
+      "source": "browser",
+      "status": 200,
+      "method": "GET",
+      "path": "/api/customer/payments/history",
+      "page": "/customer/payments"
+    },
+    {
+      "source": "browser",
+      "status": 200,
+      "method": "GET",
+      "path": "/api/customer/payments/history",
+      "page": "/customer/payments"
+    },
+    {
+      "source": "api",
+      "status": 422,
+      "method": "POST",
+      "path": "/api/customer/requests"
+    },
+    {
+      "source": "api",
+      "status": 422,
+      "method": "POST",
+      "path": "/api/customer/requests"
+    },
+    {
+      "source": "api",
+      "status": 422,
+      "method": "POST",
+      "path": "/api/customer/requests"
+    },
+    {
+      "source": "api",
+      "status": 422,
+      "method": "POST",
+      "path": "/api/customer/requests"
+    },
+    {
+      "source": "api",
+      "status": 422,
+      "method": "POST",
+      "path": "/api/customer/requests"
+    },
+    {
+      "source": "api",
+      "status": 422,
+      "method": "POST",
+      "path": "/api/customer/requests"
+    },
+    {
+      "source": "api",
+      "status": 422,
+      "method": "POST",
+      "path": "/api/customer/requests"
+    },
+    {
+      "source": "api",
+      "status": 422,
+      "method": "POST",
+      "path": "/api/customer/requests"
+    },
+    {
+      "source": "api",
+      "status": 422,
+      "method": "POST",
+      "path": "/api/customer/requests"
+    },
+    {
+      "source": "api",
+      "status": 422,
+      "method": "POST",
+      "path": "/api/customer/requests"
+    },
+    {
+      "source": "api",
+      "status": 201,
+      "method": "POST",
+      "path": "/api/customer/requests"
+    },
+    {
+      "source": "api",
+      "status": 200,
+      "method": "POST",
+      "path": "/api/receptionist/requests/632/approve"
+    },
+    {
+      "source": "api",
+      "status": 200,
+      "method": "POST",
+      "path": "/api/customer/requests/632/payment-proof"
+    },
+    {
+      "source": "api",
+      "status": 200,
+      "method": "GET",
+      "path": "/api/cashier/payment-requests"
+    },
+    {
+      "source": "api",
+      "status": 200,
+      "method": "POST",
+      "path": "/api/cashier/payment-requests/632/verify"
+    },
+    {
+      "source": "browser",
+      "status": 200,
+      "method": "GET",
+      "path": "/api/cashier/payment-requests",
+      "page": "/cashier/payment-verification"
+    },
+    {
+      "source": "browser",
+      "status": 200,
+      "method": "GET",
+      "path": "/api/cashier/inventory/sellable",
+      "page": "/cashier/payment-verification"
+    },
+    {
+      "source": "browser",
+      "status": 200,
+      "method": "GET",
+      "path": "/api/cashier/pos/services",
+      "page": "/cashier/payment-verification"
+    },
+    {
+      "source": "browser",
+      "status": 200,
+      "method": "GET",
+      "path": "/api/cashier/customers",
+      "page": "/cashier/payment-verification"
+    },
+    {
+      "source": "browser",
+      "status": 200,
+      "method": "GET",
+      "path": "/api/cashier/payment-requests",
+      "page": "/cashier/payment-verification"
+    },
+    {
+      "source": "browser",
+      "status": 200,
+      "method": "GET",
+      "path": "/api/settings/public",
+      "page": "/cashier/payment-verification"
+    },
+    {
+      "source": "browser",
+      "status": 200,
+      "method": "GET",
+      "path": "/api/settings/public",
+      "page": "/cashier/payment-verification"
+    },
+    {
+      "source": "browser",
+      "status": 200,
+      "method": "GET",
+      "path": "/api/cashier/payment-requests",
+      "page": "/cashier/payment-verification"
+    },
+    {
+      "source": "browser",
+      "status": 200,
+      "method": "GET",
+      "path": "/api/cashier/inventory/sellable",
+      "page": "/cashier/payment-verification"
+    },
+    {
+      "source": "browser",
+      "status": 200,
+      "method": "GET",
+      "path": "/api/cashier/pos/services",
+      "page": "/cashier/payment-verification"
+    },
+    {
+      "source": "browser",
+      "status": 200,
+      "method": "GET",
+      "path": "/api/cashier/customers",
+      "page": "/cashier/payment-verification"
+    },
+    {
+      "source": "browser",
+      "status": 200,
+      "method": "GET",
+      "path": "/api/cashier/payment-requests",
+      "page": "/cashier/payment-verification"
+    },
+    {
+      "source": "api",
+      "status": 200,
+      "method": "GET",
+      "path": "/api/customer/my-requests"
+    },
+    {
+      "source": "browser",
+      "status": 200,
+      "method": "GET",
+      "path": "/api/notifications",
+      "page": "/customer/payments"
+    },
+    {
+      "source": "browser",
+      "status": 200,
+      "method": "GET",
+      "path": "/api/customer/my-requests",
+      "page": "/customer/payments"
+    },
+    {
+      "source": "browser",
+      "status": 200,
+      "method": "GET",
+      "path": "/api/chatbot/welcome",
+      "page": "/customer/payments"
+    },
+    {
+      "source": "browser",
+      "status": 200,
+      "method": "GET",
+      "path": "/api/customer/tracking",
+      "page": "/customer/payments"
+    },
+    {
+      "source": "browser",
+      "status": 200,
+      "method": "GET",
+      "path": "/api/settings/public",
+      "page": "/customer/payments"
+    },
+    {
+      "source": "browser",
+      "status": 200,
+      "method": "GET",
+      "path": "/api/settings/public",
+      "page": "/customer/payments"
+    },
+    {
+      "source": "browser",
+      "status": 200,
+      "method": "GET",
+      "path": "/api/settings/public",
+      "page": "/customer/payments"
+    },
+    {
+      "source": "browser",
+      "status": 200,
+      "method": "GET",
+      "path": "/api/settings/public",
+      "page": "/customer/payments"
+    },
+    {
+      "source": "browser",
+      "status": 200,
+      "method": "GET",
+      "path": "/api/notifications",
+      "page": "/customer/payments"
+    },
+    {
+      "source": "browser",
+      "status": 200,
+      "method": "GET",
+      "path": "/api/customer/my-requests",
+      "page": "/customer/payments"
+    },
+    {
+      "source": "browser",
+      "status": 200,
+      "method": "GET",
+      "path": "/api/chatbot/welcome",
+      "page": "/customer/payments"
+    },
+    {
+      "source": "browser",
+      "status": 200,
+      "method": "GET",
+      "path": "/api/customer/tracking",
+      "page": "/customer/payments"
+    },
+    {
+      "source": "browser",
+      "status": 200,
+      "method": "GET",
+      "path": "/api/customer/store/orders",
+      "page": "/customer/payments"
+    },
+    {
+      "source": "browser",
+      "status": 200,
+      "method": "GET",
+      "path": "/api/customer/store/orders",
+      "page": "/customer/payments"
+    },
+    {
+      "source": "browser",
+      "status": 200,
+      "method": "GET",
+      "path": "/api/customer/boarding-requests",
+      "page": "/customer/payments"
+    },
+    {
+      "source": "browser",
+      "status": 200,
+      "method": "GET",
+      "path": "/api/customer/boarding-requests",
+      "page": "/customer/payments"
+    },
+    {
+      "source": "browser",
+      "status": 200,
+      "method": "GET",
+      "path": "/api/customer/billing",
+      "page": "/customer/payments"
+    },
+    {
+      "source": "browser",
+      "status": 200,
+      "method": "GET",
+      "path": "/api/customer/billing",
+      "page": "/customer/payments"
+    },
+    {
+      "source": "browser",
+      "status": 200,
+      "method": "GET",
+      "path": "/api/customer/payments/history",
+      "page": "/customer/payments"
+    },
+    {
+      "source": "browser",
+      "status": 200,
+      "method": "GET",
+      "path": "/api/customer/payments/history",
+      "page": "/customer/payments"
+    },
+    {
+      "source": "browser",
+      "status": 200,
+      "method": "GET",
+      "path": "/api/notifications",
+      "page": "/manager/reports"
+    },
+    {
+      "source": "browser",
+      "status": 200,
+      "method": "GET",
+      "path": "/api/manager/reports/live",
+      "page": "/manager/reports"
+    },
+    {
+      "source": "browser",
+      "status": 200,
+      "method": "GET",
+      "path": "/api/manager/reports/sales",
+      "page": "/manager/reports"
+    },
+    {
+      "source": "browser",
+      "status": 200,
+      "method": "GET",
+      "path": "/api/manager/reports/payments",
+      "page": "/manager/reports"
+    },
+    {
+      "source": "browser",
+      "status": 200,
+      "method": "GET",
+      "path": "/api/settings/public",
+      "page": "/manager/reports"
+    },
+    {
+      "source": "browser",
+      "status": 200,
+      "method": "GET",
+      "path": "/api/settings/public",
+      "page": "/manager/reports"
+    },
+    {
+      "source": "browser",
+      "status": 200,
+      "method": "GET",
+      "path": "/api/manager/reports/inventory",
+      "page": "/manager/reports"
+    },
+    {
+      "source": "browser",
+      "status": 200,
+      "method": "GET",
+      "path": "/api/manager/reports/services",
+      "page": "/manager/reports"
+    },
+    {
+      "source": "browser",
+      "status": 200,
+      "method": "GET",
+      "path": "/api/manager/reports/customers",
+      "page": "/manager/reports"
+    },
+    {
+      "source": "browser",
+      "status": 200,
+      "method": "GET",
+      "path": "/api/manager/staff",
+      "page": "/manager/reports"
+    },
+    {
+      "source": "browser",
+      "status": 200,
+      "method": "GET",
+      "path": "/api/manager/reports/payroll",
+      "page": "/manager/reports"
+    },
+    {
+      "source": "browser",
+      "status": 200,
+      "method": "GET",
+      "path": "/api/notifications",
+      "page": "/manager/reports"
+    },
+    {
+      "source": "browser",
+      "status": 200,
+      "method": "GET",
+      "path": "/api/manager/reports/live",
+      "page": "/manager/reports"
+    },
+    {
+      "source": "browser",
+      "status": 200,
+      "method": "GET",
+      "path": "/api/manager/reports/sales",
+      "page": "/manager/reports"
+    },
+    {
+      "source": "browser",
+      "status": 200,
+      "method": "GET",
+      "path": "/api/manager/reports/payments",
+      "page": "/manager/reports"
+    },
+    {
+      "source": "browser",
+      "status": 200,
+      "method": "GET",
+      "path": "/api/manager/reports/inventory",
+      "page": "/manager/reports"
+    },
+    {
+      "source": "browser",
+      "status": 200,
+      "method": "GET",
+      "path": "/api/manager/reports/services",
+      "page": "/manager/reports"
+    },
+    {
+      "source": "browser",
+      "status": 200,
+      "method": "GET",
+      "path": "/api/manager/reports/customers",
+      "page": "/manager/reports"
+    },
+    {
+      "source": "browser",
+      "status": 200,
+      "method": "GET",
+      "path": "/api/manager/staff",
+      "page": "/manager/reports"
+    },
+    {
+      "source": "browser",
+      "status": 200,
+      "method": "GET",
+      "path": "/api/manager/reports/payroll",
+      "page": "/manager/reports"
+    },
+    {
+      "source": "api",
+      "status": 200,
+      "method": "GET",
+      "path": "/api/inventory/items"
+    },
+    {
+      "source": "api",
+      "status": 422,
+      "method": "POST",
+      "path": "/api/cashier/pos/transaction"
+    },
+    {
+      "source": "api",
+      "status": 422,
+      "method": "POST",
+      "path": "/api/cashier/pos/transaction"
+    },
+    {
+      "source": "api",
+      "status": 422,
+      "method": "POST",
+      "path": "/api/cashier/pos/transaction"
+    },
+    {
+      "source": "api",
+      "status": 422,
+      "method": "POST",
+      "path": "/api/cashier/pos/transaction"
+    },
+    {
+      "source": "api",
+      "status": 422,
+      "method": "POST",
+      "path": "/api/cashier/pos/transaction"
+    },
+    {
+      "source": "api",
+      "status": 200,
+      "method": "POST",
+      "path": "/api/cashier/pos/transaction"
+    },
+    {
+      "source": "browser",
+      "status": 200,
+      "method": "GET",
+      "path": "/api/notifications",
+      "page": "/inventory/products"
+    },
+    {
+      "source": "browser",
+      "status": 200,
+      "method": "GET",
+      "path": "/api/inventory/items",
+      "page": "/inventory/products"
+    },
+    {
+      "source": "browser",
+      "status": 200,
+      "method": "GET",
+      "path": "/api/inventory/items/archived",
+      "page": "/inventory/products"
+    },
+    {
+      "source": "browser",
+      "status": 200,
+      "method": "GET",
+      "path": "/api/chatbot/welcome",
+      "page": "/inventory/products"
+    },
+    {
+      "source": "browser",
+      "status": 200,
+      "method": "GET",
+      "path": "/api/settings/public",
+      "page": "/inventory/products"
+    },
+    {
+      "source": "browser",
+      "status": 200,
+      "method": "GET",
+      "path": "/api/settings/public",
+      "page": "/inventory/products"
+    },
+    {
+      "source": "browser",
+      "status": 200,
+      "method": "GET",
+      "path": "/api/notifications",
+      "page": "/inventory/products"
+    },
+    {
+      "source": "browser",
+      "status": 200,
+      "method": "GET",
+      "path": "/api/inventory/items",
+      "page": "/inventory/products"
+    },
+    {
+      "source": "browser",
+      "status": 200,
+      "method": "GET",
+      "path": "/api/inventory/items/archived",
+      "page": "/inventory/products"
+    },
+    {
+      "source": "browser",
+      "status": 200,
+      "method": "GET",
+      "path": "/api/chatbot/welcome",
+      "page": "/inventory/products"
+    },
+    {
+      "source": "browser",
+      "status": 200,
+      "method": "GET",
+      "path": "/api/cashier/inventory/sellable",
+      "page": "/cashier/pos"
+    },
+    {
+      "source": "browser",
+      "status": 200,
+      "method": "GET",
+      "path": "/api/cashier/pos/services",
+      "page": "/cashier/pos"
+    },
+    {
+      "source": "browser",
+      "status": 200,
+      "method": "GET",
+      "path": "/api/cashier/customers",
+      "page": "/cashier/pos"
+    },
+    {
+      "source": "browser",
+      "status": 200,
+      "method": "GET",
+      "path": "/api/cashier/payment-requests",
+      "page": "/cashier/pos"
+    },
+    {
+      "source": "browser",
+      "status": 200,
+      "method": "GET",
+      "path": "/api/settings/public",
+      "page": "/cashier/pos"
+    },
+    {
+      "source": "browser",
+      "status": 200,
+      "method": "GET",
+      "path": "/api/settings/public",
+      "page": "/cashier/pos"
+    },
+    {
+      "source": "browser",
+      "status": 200,
+      "method": "GET",
+      "path": "/api/cashier/inventory/sellable",
+      "page": "/cashier/pos"
+    },
+    {
+      "source": "browser",
+      "status": 200,
+      "method": "GET",
+      "path": "/api/cashier/pos/services",
+      "page": "/cashier/pos"
+    },
+    {
+      "source": "browser",
+      "status": 200,
+      "method": "GET",
+      "path": "/api/cashier/customers",
+      "page": "/cashier/pos"
+    },
+    {
+      "source": "browser",
+      "status": 200,
+      "method": "GET",
+      "path": "/api/cashier/payment-requests",
+      "page": "/cashier/pos"
+    },
+    {
+      "source": "api",
+      "status": 200,
+      "method": "GET",
+      "path": "/api/inventory/items/21"
+    },
+    {
+      "source": "api",
+      "status": 200,
+      "method": "GET",
+      "path": "/api/inventory/history"
+    },
+    {
+      "source": "browser",
+      "status": 200,
+      "method": "GET",
+      "path": "/api/notifications",
+      "page": "/inventory/products"
+    },
+    {
+      "source": "browser",
+      "status": 200,
+      "method": "GET",
+      "path": "/api/inventory/items",
+      "page": "/inventory/products"
+    },
+    {
+      "source": "browser",
+      "status": 200,
+      "method": "GET",
+      "path": "/api/inventory/items/archived",
+      "page": "/inventory/products"
+    },
+    {
+      "source": "browser",
+      "status": 200,
+      "method": "GET",
+      "path": "/api/chatbot/welcome",
+      "page": "/inventory/products"
+    },
+    {
+      "source": "browser",
+      "status": 200,
+      "method": "GET",
+      "path": "/api/settings/public",
+      "page": "/inventory/products"
+    },
+    {
+      "source": "browser",
+      "status": 200,
+      "method": "GET",
+      "path": "/api/settings/public",
+      "page": "/inventory/products"
+    },
+    {
+      "source": "browser",
+      "status": 200,
+      "method": "GET",
+      "path": "/api/notifications",
+      "page": "/inventory/products"
+    },
+    {
+      "source": "browser",
+      "status": 200,
+      "method": "GET",
+      "path": "/api/inventory/items",
+      "page": "/inventory/products"
+    },
+    {
+      "source": "browser",
+      "status": 200,
+      "method": "GET",
+      "path": "/api/inventory/items/archived",
+      "page": "/inventory/products"
+    },
+    {
+      "source": "browser",
+      "status": 200,
+      "method": "GET",
+      "path": "/api/chatbot/welcome",
+      "page": "/inventory/products"
+    },
+    {
+      "source": "browser",
+      "status": 200,
+      "method": "GET",
+      "path": "/api/notifications",
+      "page": "/inventory/history"
+    },
+    {
+      "source": "browser",
+      "status": 200,
+      "method": "GET",
+      "path": "/api/inventory/logs",
+      "page": "/inventory/history"
+    },
+    {
+      "source": "browser",
+      "status": 200,
+      "method": "GET",
+      "path": "/api/chatbot/welcome",
+      "page": "/inventory/history"
+    },
+    {
+      "source": "browser",
+      "status": 200,
+      "method": "GET",
+      "path": "/api/settings/public",
+      "page": "/inventory/history"
+    },
+    {
+      "source": "browser",
+      "status": 200,
+      "method": "GET",
+      "path": "/api/notifications",
+      "page": "/inventory/history"
+    },
+    {
+      "source": "browser",
+      "status": 200,
+      "method": "GET",
+      "path": "/api/chatbot/welcome",
+      "page": "/inventory/history"
+    },
+    {
+      "source": "browser",
+      "status": 200,
+      "method": "GET",
+      "path": "/api/inventory/logs",
+      "page": "/inventory/history"
+    },
+    {
+      "source": "browser",
+      "status": 200,
+      "method": "GET",
+      "path": "/api/settings/public",
+      "page": "/inventory/history"
+    },
+    {
+      "source": "browser",
+      "status": 200,
+      "method": "GET",
+      "path": "/api/notifications",
+      "page": "/manager/reports"
+    },
+    {
+      "source": "browser",
+      "status": 200,
+      "method": "GET",
+      "path": "/api/manager/reports/live",
+      "page": "/manager/reports"
+    },
+    {
+      "source": "browser",
+      "status": 200,
+      "method": "GET",
+      "path": "/api/manager/reports/sales",
+      "page": "/manager/reports"
+    },
+    {
+      "source": "browser",
+      "status": 200,
+      "method": "GET",
+      "path": "/api/manager/reports/payments",
+      "page": "/manager/reports"
+    },
+    {
+      "source": "browser",
+      "status": 200,
+      "method": "GET",
+      "path": "/api/manager/reports/inventory",
+      "page": "/manager/reports"
+    },
+    {
+      "source": "browser",
+      "status": 200,
+      "method": "GET",
+      "path": "/api/settings/public",
+      "page": "/manager/reports"
+    },
+    {
+      "source": "browser",
+      "status": 200,
+      "method": "GET",
+      "path": "/api/manager/reports/services",
+      "page": "/manager/reports"
+    },
+    {
+      "source": "browser",
+      "status": 200,
+      "method": "GET",
+      "path": "/api/settings/public",
+      "page": "/manager/reports"
+    },
+    {
+      "source": "browser",
+      "status": 200,
+      "method": "GET",
+      "path": "/api/manager/reports/customers",
+      "page": "/manager/reports"
+    },
+    {
+      "source": "browser",
+      "status": 200,
+      "method": "GET",
+      "path": "/api/manager/staff",
+      "page": "/manager/reports"
+    },
+    {
+      "source": "browser",
+      "status": 200,
+      "method": "GET",
+      "path": "/api/manager/reports/payroll",
+      "page": "/manager/reports"
+    },
+    {
+      "source": "browser",
+      "status": 200,
+      "method": "GET",
+      "path": "/api/notifications",
+      "page": "/manager/reports"
+    },
+    {
+      "source": "browser",
+      "status": 200,
+      "method": "GET",
+      "path": "/api/manager/reports/live",
+      "page": "/manager/reports"
+    },
+    {
+      "source": "browser",
+      "status": 200,
+      "method": "GET",
+      "path": "/api/manager/reports/sales",
+      "page": "/manager/reports"
+    },
+    {
+      "source": "browser",
+      "status": 200,
+      "method": "GET",
+      "path": "/api/manager/reports/payments",
+      "page": "/manager/reports"
+    },
+    {
+      "source": "browser",
+      "status": 200,
+      "method": "GET",
+      "path": "/api/manager/reports/inventory",
+      "page": "/manager/reports"
+    },
+    {
+      "source": "browser",
+      "status": 200,
+      "method": "GET",
+      "path": "/api/manager/reports/services",
+      "page": "/manager/reports"
+    },
+    {
+      "source": "browser",
+      "status": 200,
+      "method": "GET",
+      "path": "/api/manager/reports/customers",
+      "page": "/manager/reports"
+    },
+    {
+      "source": "browser",
+      "status": 200,
+      "method": "GET",
+      "path": "/api/manager/staff",
+      "page": "/manager/reports"
+    },
+    {
+      "source": "browser",
+      "status": 200,
+      "method": "GET",
+      "path": "/api/manager/reports/payroll",
+      "page": "/manager/reports"
+    },
+    {
+      "source": "api",
+      "status": 200,
+      "method": "GET",
+      "path": "/api/receptionist/veterinarians/available"
+    },
+    {
+      "source": "api",
+      "status": 422,
+      "method": "POST",
+      "path": "/api/customer/requests"
+    },
+    {
+      "source": "api",
+      "status": 422,
+      "method": "POST",
+      "path": "/api/customer/requests"
+    },
+    {
+      "source": "api",
+      "status": 422,
+      "method": "POST",
+      "path": "/api/customer/requests"
+    },
+    {
+      "source": "api",
+      "status": 422,
+      "method": "POST",
+      "path": "/api/customer/requests"
+    },
+    {
+      "source": "api",
+      "status": 201,
+      "method": "POST",
+      "path": "/api/customer/requests"
+    },
+    {
+      "source": "api",
+      "status": 200,
+      "method": "POST",
+      "path": "/api/receptionist/requests/633/approve"
+    },
+    {
+      "source": "browser",
+      "status": 200,
+      "method": "GET",
+      "path": "/api/settings/public",
+      "page": "/veterinary/appointments/126/consult"
+    },
+    {
+      "source": "browser",
+      "status": 200,
+      "method": "GET",
+      "path": "/api/settings/public",
+      "page": "/veterinary/appointments/126/consult"
+    },
+    {
+      "source": "browser",
+      "status": 200,
+      "method": "GET",
+      "path": "/api/notifications",
+      "page": "/veterinary/appointments/126/consult"
+    },
+    {
+      "source": "browser",
+      "status": 200,
+      "method": "GET",
+      "path": "/api/veterinary/appointments/126",
+      "page": "/veterinary/appointments/126/consult"
+    },
+    {
+      "source": "browser",
+      "status": 200,
+      "method": "GET",
+      "path": "/api/veterinary/inventory-items",
+      "page": "/veterinary/appointments/126/consult"
+    },
+    {
+      "source": "browser",
+      "status": 200,
+      "method": "GET",
+      "path": "/api/chatbot/welcome",
+      "page": "/veterinary/appointments/126/consult"
+    },
+    {
+      "source": "browser",
+      "status": 200,
+      "method": "GET",
+      "path": "/api/notifications",
+      "page": "/veterinary/appointments/126/consult"
+    },
+    {
+      "source": "browser",
+      "status": 200,
+      "method": "GET",
+      "path": "/api/veterinary/appointments/126",
+      "page": "/veterinary/appointments/126/consult"
+    },
+    {
+      "source": "browser",
+      "status": 200,
+      "method": "GET",
+      "path": "/api/veterinary/inventory-items",
+      "page": "/veterinary/appointments/126/consult"
+    },
+    {
+      "source": "browser",
+      "status": 200,
+      "method": "GET",
+      "path": "/api/chatbot/welcome",
+      "page": "/veterinary/appointments/126/consult"
+    },
+    {
+      "source": "browser",
+      "status": 200,
+      "method": "GET",
+      "path": "/api/veterinary/pets/1416/medical-records",
+      "page": "/veterinary/appointments/126/consult"
+    },
+    {
+      "source": "browser",
+      "status": 200,
+      "method": "GET",
+      "path": "/api/veterinary/appointments/126",
+      "page": "/veterinary/appointments/126/consult"
+    },
+    {
+      "source": "browser",
+      "status": 200,
+      "method": "GET",
+      "path": "/api/veterinary/pets/1416/medical-records",
+      "page": "/veterinary/appointments/126/consult"
+    },
+    {
+      "source": "browser",
+      "status": 200,
+      "method": "GET",
+      "path": "/api/veterinary/pets/1416/medical-records",
+      "page": "/veterinary/appointments/126/consult"
+    },
+    {
+      "source": "browser",
+      "status": 200,
+      "method": "POST",
+      "path": "/api/veterinary/consultations/126/start",
+      "page": "/veterinary/appointments/126/consult"
+    },
+    {
+      "source": "browser",
+      "status": 200,
+      "method": "GET",
+      "path": "/api/veterinary/appointments/126/diagnostics",
+      "page": "/veterinary/appointments/126/consult"
+    },
+    {
+      "source": "browser",
+      "status": 200,
+      "method": "GET",
+      "path": "/api/veterinary/appointments/126/consents",
+      "page": "/veterinary/appointments/126/consult"
+    },
+    {
+      "source": "browser",
+      "status": 200,
+      "method": "GET",
+      "path": "/api/veterinary/appointments/126/diagnostics",
+      "page": "/veterinary/appointments/126/consult"
+    },
+    {
+      "source": "browser",
+      "status": 200,
+      "method": "GET",
+      "path": "/api/veterinary/appointments/126/consents",
+      "page": "/veterinary/appointments/126/consult"
+    },
+    {
+      "source": "browser",
+      "status": 200,
+      "method": "PUT",
+      "path": "/api/veterinary/medical-records/49",
+      "page": "/veterinary/appointments/126/consult"
+    },
+    {
+      "source": "browser",
+      "status": 200,
+      "method": "GET",
+      "path": "/api/veterinary/appointments/126",
+      "page": "/veterinary/appointments/126/billing"
+    },
+    {
+      "source": "browser",
+      "status": 200,
+      "method": "GET",
+      "path": "/api/veterinary/appointments/126",
+      "page": "/veterinary/appointments/126/billing"
+    },
+    {
+      "source": "browser",
+      "status": 200,
+      "method": "GET",
+      "path": "/api/veterinary/pets/1416/medical-records",
+      "page": "/veterinary/appointments/126/billing"
+    },
+    {
+      "source": "browser",
+      "status": 200,
+      "method": "GET",
+      "path": "/api/veterinary/pets/1416/medical-records",
+      "page": "/veterinary/appointments/126/billing"
+    },
+    {
+      "source": "browser",
+      "status": 200,
+      "method": "GET",
+      "path": "/api/billing/veterinary/126/summary",
+      "page": "/veterinary/appointments/126/billing"
+    },
+    {
+      "source": "browser",
+      "status": 200,
+      "method": "GET",
+      "path": "/api/billing/veterinary/126/summary",
+      "page": "/veterinary/appointments/126/billing"
+    },
+    {
+      "source": "browser",
+      "status": 200,
+      "method": "POST",
+      "path": "/api/veterinary/consultations/126/complete",
+      "page": "/veterinary/appointments/126/billing"
+    },
+    {
+      "source": "api",
+      "status": 200,
+      "method": "GET",
+      "path": "/api/veterinary/medical-records/49"
+    },
+    {
+      "source": "api",
+      "status": 200,
+      "method": "POST",
+      "path": "/api/customer/requests/633/payment-proof"
+    },
+    {
+      "source": "browser",
+      "status": 200,
+      "method": "GET",
+      "path": "/api/veterinary/appointments/126",
+      "page": "/veterinary/appointments/126/billing"
+    },
+    {
+      "source": "browser",
+      "status": 200,
+      "method": "GET",
+      "path": "/api/notifications",
+      "page": "/veterinary/appointments/126/billing"
+    },
+    {
+      "source": "api",
+      "status": 200,
+      "method": "POST",
+      "path": "/api/cashier/payment-requests/633/verify"
+    },
+    {
+      "source": "browser",
       "status": "REQUEST_FAILED",
       "method": "GET",
-      "url": "http://localhost:8000/api/veterinary/appointments",
-      "page": "http://127.0.0.1:3000/veterinary/appointments",
+      "path": "/api/veterinary/pets/1416/medical-records",
+      "page": "/veterinary/appointments/126/billing",
       "failure": "net::ERR_ABORTED"
+    },
+    {
+      "source": "api",
+      "status": 200,
+      "method": "GET",
+      "path": "/api/veterinary/appointments/126"
+    },
+    {
+      "source": "api",
+      "status": 200,
+      "method": "GET",
+      "path": "/api/customer/my-requests"
+    },
+    {
+      "source": "browser",
+      "status": 200,
+      "method": "GET",
+      "path": "/api/settings/public",
+      "page": "/veterinary/appointments/126/billing"
+    },
+    {
+      "source": "browser",
+      "status": 200,
+      "method": "GET",
+      "path": "/api/settings/public",
+      "page": "/veterinary/appointments/126/billing"
+    },
+    {
+      "source": "browser",
+      "status": 200,
+      "method": "GET",
+      "path": "/api/notifications",
+      "page": "/veterinary/appointments/126/billing"
+    },
+    {
+      "source": "browser",
+      "status": 200,
+      "method": "GET",
+      "path": "/api/veterinary/appointments/126",
+      "page": "/veterinary/appointments/126/billing"
+    },
+    {
+      "source": "browser",
+      "status": 200,
+      "method": "GET",
+      "path": "/api/notifications",
+      "page": "/veterinary/appointments/126/billing"
+    },
+    {
+      "source": "browser",
+      "status": 200,
+      "method": "GET",
+      "path": "/api/veterinary/appointments/126",
+      "page": "/veterinary/appointments/126/billing"
+    },
+    {
+      "source": "browser",
+      "status": 200,
+      "method": "GET",
+      "path": "/api/notifications",
+      "page": "/customer/services"
+    },
+    {
+      "source": "browser",
+      "status": 200,
+      "method": "GET",
+      "path": "/api/chatbot/welcome",
+      "page": "/customer/services"
+    },
+    {
+      "source": "browser",
+      "status": 200,
+      "method": "GET",
+      "path": "/api/customer/tracking",
+      "page": "/customer/services"
+    },
+    {
+      "source": "browser",
+      "status": 200,
+      "method": "GET",
+      "path": "/api/settings/public",
+      "page": "/customer/services"
+    },
+    {
+      "source": "browser",
+      "status": 200,
+      "method": "GET",
+      "path": "/api/settings/public",
+      "page": "/customer/services"
+    },
+    {
+      "source": "browser",
+      "status": 200,
+      "method": "GET",
+      "path": "/api/settings/public",
+      "page": "/customer/services"
+    },
+    {
+      "source": "browser",
+      "status": 200,
+      "method": "GET",
+      "path": "/api/settings/public",
+      "page": "/customer/services"
+    },
+    {
+      "source": "browser",
+      "status": 200,
+      "method": "GET",
+      "path": "/api/notifications",
+      "page": "/customer/services"
+    },
+    {
+      "source": "browser",
+      "status": 200,
+      "method": "GET",
+      "path": "/api/chatbot/welcome",
+      "page": "/customer/services"
+    },
+    {
+      "source": "browser",
+      "status": 200,
+      "method": "GET",
+      "path": "/api/customer/tracking",
+      "page": "/customer/services"
+    },
+    {
+      "source": "browser",
+      "status": 200,
+      "method": "GET",
+      "path": "/api/veterinary/pets/1416/medical-records",
+      "page": "/veterinary/appointments/126/billing"
+    },
+    {
+      "source": "browser",
+      "status": 200,
+      "method": "GET",
+      "path": "/api/veterinary/pets/1416/medical-records",
+      "page": "/veterinary/appointments/126/billing"
+    },
+    {
+      "source": "browser",
+      "status": "REQUEST_FAILED",
+      "method": "GET",
+      "path": "/api/billing/veterinary/126/summary",
+      "page": "/veterinary/appointments/126/billing",
+      "failure": "net::ERR_FAILED"
+    },
+    {
+      "source": "browser",
+      "status": "REQUEST_FAILED",
+      "method": "GET",
+      "path": "/api/billing/veterinary/126/summary",
+      "page": "/veterinary/appointments/126/billing",
+      "failure": "net::ERR_FAILED"
+    },
+    {
+      "source": "api",
+      "status": 201,
+      "method": "POST",
+      "path": "/api/inventory/items"
+    },
+    {
+      "source": "api",
+      "status": 200,
+      "method": "GET",
+      "path": "/api/inventory/items/878"
+    },
+    {
+      "source": "browser",
+      "status": 200,
+      "method": "GET",
+      "path": "/api/notifications",
+      "page": "/inventory/products"
+    },
+    {
+      "source": "browser",
+      "status": 200,
+      "method": "GET",
+      "path": "/api/inventory/items",
+      "page": "/inventory/products"
+    },
+    {
+      "source": "browser",
+      "status": 200,
+      "method": "GET",
+      "path": "/api/inventory/items/archived",
+      "page": "/inventory/products"
+    },
+    {
+      "source": "browser",
+      "status": 200,
+      "method": "GET",
+      "path": "/api/chatbot/welcome",
+      "page": "/inventory/products"
+    },
+    {
+      "source": "browser",
+      "status": 200,
+      "method": "GET",
+      "path": "/api/settings/public",
+      "page": "/inventory/products"
+    },
+    {
+      "source": "browser",
+      "status": 200,
+      "method": "GET",
+      "path": "/api/notifications",
+      "page": "/inventory/products"
+    },
+    {
+      "source": "browser",
+      "status": 200,
+      "method": "GET",
+      "path": "/api/settings/public",
+      "page": "/inventory/products"
+    },
+    {
+      "source": "browser",
+      "status": 200,
+      "method": "GET",
+      "path": "/api/inventory/items",
+      "page": "/inventory/products"
+    },
+    {
+      "source": "browser",
+      "status": 200,
+      "method": "GET",
+      "path": "/api/inventory/items/archived",
+      "page": "/inventory/products"
+    },
+    {
+      "source": "browser",
+      "status": 200,
+      "method": "GET",
+      "path": "/api/chatbot/welcome",
+      "page": "/inventory/products"
+    },
+    {
+      "source": "browser",
+      "status": 200,
+      "method": "GET",
+      "path": "/api/notifications",
+      "page": "/customer/notifications"
+    },
+    {
+      "source": "browser",
+      "status": 200,
+      "method": "GET",
+      "path": "/api/notifications",
+      "page": "/customer/notifications"
+    },
+    {
+      "source": "browser",
+      "status": 200,
+      "method": "GET",
+      "path": "/api/chatbot/welcome",
+      "page": "/customer/notifications"
+    },
+    {
+      "source": "browser",
+      "status": 200,
+      "method": "GET",
+      "path": "/api/customer/tracking",
+      "page": "/customer/notifications"
+    },
+    {
+      "source": "browser",
+      "status": 200,
+      "method": "GET",
+      "path": "/api/settings/public",
+      "page": "/customer/notifications"
+    },
+    {
+      "source": "browser",
+      "status": 200,
+      "method": "GET",
+      "path": "/api/settings/public",
+      "page": "/customer/notifications"
+    },
+    {
+      "source": "browser",
+      "status": 200,
+      "method": "GET",
+      "path": "/api/notifications",
+      "page": "/customer/notifications"
+    },
+    {
+      "source": "browser",
+      "status": 200,
+      "method": "GET",
+      "path": "/api/settings/public",
+      "page": "/customer/notifications"
+    },
+    {
+      "source": "browser",
+      "status": 200,
+      "method": "GET",
+      "path": "/api/settings/public",
+      "page": "/customer/notifications"
+    },
+    {
+      "source": "browser",
+      "status": 200,
+      "method": "GET",
+      "path": "/api/notifications",
+      "page": "/customer/notifications"
+    },
+    {
+      "source": "browser",
+      "status": 200,
+      "method": "GET",
+      "path": "/api/chatbot/welcome",
+      "page": "/customer/notifications"
+    },
+    {
+      "source": "browser",
+      "status": 200,
+      "method": "GET",
+      "path": "/api/customer/tracking",
+      "page": "/customer/notifications"
+    },
+    {
+      "source": "browser",
+      "status": 200,
+      "method": "GET",
+      "path": "/api/settings/public",
+      "page": "/receptionist/bookings/hotel"
+    },
+    {
+      "source": "browser",
+      "status": 200,
+      "method": "GET",
+      "path": "/api/notifications",
+      "page": "/receptionist/bookings/hotel"
+    },
+    {
+      "source": "browser",
+      "status": 200,
+      "method": "GET",
+      "path": "/api/settings/public",
+      "page": "/receptionist/bookings/hotel"
+    },
+    {
+      "source": "browser",
+      "status": 200,
+      "method": "GET",
+      "path": "/api/notifications",
+      "page": "/receptionist/bookings/hotel"
+    },
+    {
+      "source": "browser",
+      "status": 200,
+      "method": "GET",
+      "path": "/api/receptionist/boarding-requests",
+      "page": "/receptionist/bookings/hotel"
+    },
+    {
+      "source": "browser",
+      "status": 200,
+      "method": "GET",
+      "path": "/api/receptionist/boarding-rooms",
+      "page": "/receptionist/bookings/hotel"
+    },
+    {
+      "source": "browser",
+      "status": 200,
+      "method": "GET",
+      "path": "/api/receptionist/boarding-requests",
+      "page": "/receptionist/bookings/hotel"
+    },
+    {
+      "source": "browser",
+      "status": 200,
+      "method": "GET",
+      "path": "/api/receptionist/boarding-rooms",
+      "page": "/receptionist/bookings/hotel"
+    },
+    {
+      "source": "browser",
+      "status": 200,
+      "method": "GET",
+      "path": "/api/cashier/payment-requests",
+      "page": "/cashier/payment-verification"
+    },
+    {
+      "source": "browser",
+      "status": 200,
+      "method": "GET",
+      "path": "/api/cashier/inventory/sellable",
+      "page": "/cashier/payment-verification"
+    },
+    {
+      "source": "browser",
+      "status": 200,
+      "method": "GET",
+      "path": "/api/cashier/pos/services",
+      "page": "/cashier/payment-verification"
+    },
+    {
+      "source": "browser",
+      "status": 200,
+      "method": "GET",
+      "path": "/api/cashier/customers",
+      "page": "/cashier/payment-verification"
+    },
+    {
+      "source": "browser",
+      "status": 200,
+      "method": "GET",
+      "path": "/api/settings/public",
+      "page": "/cashier/payment-verification"
+    },
+    {
+      "source": "browser",
+      "status": 200,
+      "method": "GET",
+      "path": "/api/cashier/payment-requests",
+      "page": "/cashier/payment-verification"
+    },
+    {
+      "source": "browser",
+      "status": 200,
+      "method": "GET",
+      "path": "/api/settings/public",
+      "page": "/cashier/payment-verification"
+    },
+    {
+      "source": "browser",
+      "status": 200,
+      "method": "GET",
+      "path": "/api/cashier/payment-requests",
+      "page": "/cashier/payment-verification"
+    },
+    {
+      "source": "browser",
+      "status": 200,
+      "method": "GET",
+      "path": "/api/cashier/inventory/sellable",
+      "page": "/cashier/payment-verification"
+    },
+    {
+      "source": "browser",
+      "status": 200,
+      "method": "GET",
+      "path": "/api/cashier/pos/services",
+      "page": "/cashier/payment-verification"
+    },
+    {
+      "source": "browser",
+      "status": 200,
+      "method": "GET",
+      "path": "/api/cashier/customers",
+      "page": "/cashier/payment-verification"
+    },
+    {
+      "source": "browser",
+      "status": 200,
+      "method": "GET",
+      "path": "/api/cashier/payment-requests",
+      "page": "/cashier/payment-verification"
+    },
+    {
+      "source": "browser",
+      "status": "REQUEST_FAILED",
+      "method": "GET",
+      "path": "/api/veterinary/appointments",
+      "page": "/veterinary/appointments",
+      "failure": "net::ERR_ABORTED"
+    },
+    {
+      "source": "browser",
+      "status": "REQUEST_FAILED",
+      "method": "GET",
+      "path": "/api/veterinary/history",
+      "page": "/veterinary/appointments",
+      "failure": "net::ERR_ABORTED"
+    },
+    {
+      "source": "browser",
+      "status": 200,
+      "method": "GET",
+      "path": "/api/settings/public",
+      "page": "/veterinary/appointments"
+    },
+    {
+      "source": "browser",
+      "status": 200,
+      "method": "GET",
+      "path": "/api/settings/public",
+      "page": "/veterinary/appointments"
+    },
+    {
+      "source": "browser",
+      "status": 200,
+      "method": "GET",
+      "path": "/api/notifications",
+      "page": "/veterinary/appointments"
+    },
+    {
+      "source": "browser",
+      "status": 200,
+      "method": "GET",
+      "path": "/api/chatbot/welcome",
+      "page": "/veterinary/appointments"
+    },
+    {
+      "source": "browser",
+      "status": 200,
+      "method": "GET",
+      "path": "/api/notifications",
+      "page": "/veterinary/appointments"
+    },
+    {
+      "source": "browser",
+      "status": 200,
+      "method": "GET",
+      "path": "/api/veterinary/appointments",
+      "page": "/veterinary/appointments"
+    },
+    {
+      "source": "browser",
+      "status": 200,
+      "method": "GET",
+      "path": "/api/veterinary/history",
+      "page": "/veterinary/appointments"
+    },
+    {
+      "source": "browser",
+      "status": 200,
+      "method": "GET",
+      "path": "/api/chatbot/welcome",
+      "page": "/veterinary/appointments"
     }
   ],
   "console": [
     {
       "type": "error",
-      "text": "Failed to load resource: the server responded with a status of 429 (Too Many Requests)",
-      "url": "http://127.0.0.1:3000/customer/notifications"
+      "text": "Failed to load resource: net::ERR_FAILED",
+      "url": "http://127.0.0.1:3000/veterinary/appointments/126/billing"
     },
     {
       "type": "error",
-      "text": "Failed to load resource: the server responded with a status of 429 (Too Many Requests)",
-      "url": "http://127.0.0.1:3000/customer/notifications"
+      "text": "Failed to fetch billing data: Error: Cannot reach the server right now. Please check your connection and try again.\n    at apiRequest (http://127.0.0.1:3000/src/api/client.js:161:13)\n    at async http://127.0.0.1:3000/src/components/shared/ServiceBillingPanel.jsx:74:24",
+      "url": "http://127.0.0.1:3000/veterinary/appointments/126/billing"
     },
     {
       "type": "error",
-      "text": "Customer notifications fetch error: Error: Too Many Attempts.\n    at apiRequest (http://127.0.0.1:3000/src/api/client.js:143:21)\n    at async fetchNotifications (http://127.0.0.1:3000/src/components/customers/CustomerNotifications.jsx?t=1791736938432:47:20)",
-      "url": "http://127.0.0.1:3000/customer/notifications"
+      "text": "Failed to load resource: net::ERR_FAILED",
+      "url": "http://127.0.0.1:3000/veterinary/appointments/126/billing"
     },
     {
       "type": "error",
-      "text": "Failed to load resource: the server responded with a status of 429 (Too Many Requests)",
-      "url": "http://127.0.0.1:3000/customer/notifications"
-    },
-    {
-      "type": "error",
-      "text": "Failed to load resource: the server responded with a status of 429 (Too Many Requests)",
-      "url": "http://127.0.0.1:3000/customer/notifications"
-    },
-    {
-      "type": "error",
-      "text": "Failed to load resource: the server responded with a status of 429 (Too Many Requests)",
-      "url": "http://127.0.0.1:3000/customer/notifications"
-    },
-    {
-      "type": "error",
-      "text": "Failed to load resource: the server responded with a status of 429 (Too Many Requests)",
-      "url": "http://127.0.0.1:3000/customer/notifications"
-    },
-    {
-      "type": "error",
-      "text": "Customer notifications fetch error: Error: Too Many Attempts.\n    at apiRequest (http://127.0.0.1:3000/src/api/client.js:143:21)\n    at async fetchNotifications (http://127.0.0.1:3000/src/components/customers/CustomerNotifications.jsx?t=1791736938432:47:20)",
-      "url": "http://127.0.0.1:3000/customer/notifications"
-    },
-    {
-      "type": "error",
-      "text": "Failed to load resource: the server responded with a status of 429 (Too Many Requests)",
-      "url": "http://127.0.0.1:3000/customer/notifications"
-    },
-    {
-      "type": "error",
-      "text": "Failed to load resource: the server responded with a status of 429 (Too Many Requests)",
-      "url": "http://127.0.0.1:3000/customer/notifications"
-    },
-    {
-      "type": "error",
-      "text": "Failed to load resource: the server responded with a status of 429 (Too Many Requests)",
-      "url": "http://127.0.0.1:3000/receptionist/bookings/hotel"
+      "text": "Failed to fetch billing data: Error: Cannot reach the server right now. Please check your connection and try again.\n    at apiRequest (http://127.0.0.1:3000/src/api/client.js:161:13)\n    at async http://127.0.0.1:3000/src/components/shared/ServiceBillingPanel.jsx:74:24",
+      "url": "http://127.0.0.1:3000/veterinary/appointments/126/billing"
     }
   ],
   "createdRecords": [
     {
       "type": "service_request",
-      "id": 214,
+      "id": 630,
+      "label": "grooming/service request"
+    },
+    {
+      "type": "boarding",
+      "id": 143,
       "label": "boarding request"
     },
     {
       "type": "service_request",
-      "id": 215,
+      "id": 631,
       "label": "payment reject request"
+    },
+    {
+      "type": "service_request",
+      "id": 632,
+      "label": "payment verify request"
+    },
+    {
+      "type": "service_request",
+      "id": 633,
+      "label": "veterinary request"
     }
   ],
-  "finalVerdict": "Not Ready -- Critical browser issues remain"
+  "finalVerdict": "Critical API/DB workflow checks passed; release readiness remains open"
 }

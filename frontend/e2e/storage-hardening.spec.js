@@ -1,4 +1,4 @@
-// Storage hardening browser check:
+﻿// Storage hardening browser check:
 // customer uploads payment proof in the UI -> DB + private file verified ->
 // cashier opens the proof in the UI -> cashier rejects -> customer re-uploads ->
 // new proof referenced, rejected proof retained on disk as evidence.
@@ -48,17 +48,24 @@ async function openAs(browser, session, route) {
 }
 
 async function customerUploadsProofInUi(browser, session, requestId, reference, shot) {
-  const { page, context, errors } = await openAs(browser, session, "/customer/bookings");
-  const row = page.locator("tr", { has: page.locator("td.col-id", { hasText: new RegExp(`^#${requestId}$`) }) });
-  await row.locator("button.customer-pay-btn").click();
+  const { page, context, errors } = await openAs(browser, session, "/customer/bookings?range=all&tab=all");
+  // The board loads once; wait for the list to finish, then search by request id.
+  const row = page.locator("tr").filter({ hasText: new RegExp(`#${requestId}(?!\\d)`) });
+  await expect(page.getByRole("tab", { name: /^All \(\d+\)/ })).not.toContainText("(0)", { timeout: 60000 });
+  await page.locator(".cbb-search").fill(String(requestId));
+  await expect(row).toHaveCount(1, { timeout: 30000 });
+  // The chatbot FAB overlays the row actions at this viewport.
+  await page.addStyleTag({ content: ".rbac-chatbot{display:none!important}" });
+  await row.getByRole("button", { name: /pay now|resubmit payment/i }).click();
   await page.locator("#pum-file-input").setInputFiles({ name: `${reference}.png`, mimeType: "image/png", buffer: PNG });
   await page.locator(".pum-ref-input").fill(reference);
+  await expect(page.locator(".pum-confirm-btn")).toBeEnabled({ timeout: 15000 });
   const [upload] = await Promise.all([
-    page.waitForResponse((r) => r.url().includes(`/customer/requests/${requestId}/payment-proof`) && r.request().method() === "POST"),
+    page.waitForResponse((r) => r.url().includes(`/customer/requests/${requestId}/payment-proof`) && r.request().method() === "POST", { timeout: 45000 }),
     page.locator(".pum-confirm-btn").click(),
   ]);
   expect(upload.status(), await upload.text()).toBe(200);
-  await expect(row.locator(".customer-payment-pill")).toHaveText(/pending/i, { timeout: 30000 });
+  await expect(row.locator(".cbb-pay--pending").first()).toHaveText(/verifying payment/i, { timeout: 30000 });
   await page.screenshot({ path: path.join(evidenceDir, shot) });
   await context.close();
   return errors;
@@ -74,13 +81,22 @@ test("payment proof storage lifecycle: customer UI -> DB/file -> cashier UI -> r
 
   // Setup via API: pet + approved grooming request.
   const pet = (await api(request, customer, "post", "/pets", { name: `STORAGE_TEST Pet ${Date.now()}`, species: "Dog" })).pet;
-  const date = new Date(Date.now() + 9 * 86400000).toISOString().slice(0, 10);
-  const created = await api(request, customer, "post", "/customer/requests", {
-    customer_name: customer.user.name, customer_email: customer.user.email,
-    pet_id: pet.id, pet_name: pet.name, request_type: "grooming", service_type: "grooming",
-    service_name: "Standard Grooming", request_date: date, request_time: "10:00",
-    requested_date: date, requested_time: "10:00", price: uniquePrice, notes: "STORAGE_TEST",
-  });
+  let created;
+  let lastErr;
+  for (let attempt = 0; attempt < 120; attempt += 1) {
+    const date = new Date(Date.now() + (9 + attempt) * 86400000).toISOString().slice(0, 10);
+    const slot = `${String(10 + (attempt % 7)).padStart(2, "0")}:00`;
+    try {
+      created = await api(request, customer, "post", "/customer/requests", {
+        customer_name: customer.user.name, customer_email: customer.user.email,
+        pet_id: pet.id, pet_name: pet.name, request_type: "grooming", service_type: "grooming",
+        service_name: "Standard Grooming", request_date: date, request_time: slot,
+        requested_date: date, requested_time: slot, price: uniquePrice, notes: "STORAGE_TEST",
+      });
+      break;
+    } catch (err) { lastErr = err; created = null; }
+  }
+  if (!created) throw lastErr;
   const requestId = created.request.id;
   await api(request, receptionist, "post", `/receptionist/requests/${requestId}/approve`, { receptionist_remarks: "STORAGE_TEST" });
 
@@ -101,7 +117,7 @@ test("payment proof storage lifecycle: customer UI -> DB/file -> cashier UI -> r
   const cashierView = await openAs(browser, cashier, "/cashier/pos");
   const { page } = cashierView;
   await page.locator(".pos-cat-tab--approvals").click();
-  const card = page.locator(".pa-card", { hasText: `₱${uniquePrice.toLocaleString("en-PH")}` }).filter({ hasText: "Standard Grooming" });
+  const card = page.locator(".pa-card").filter({ hasText: `STORAGE-REF-1-${requestId}` });
   await expect(card.first()).toBeVisible({ timeout: 20000 });
   const [proofRes] = await Promise.all([
     page.waitForResponse((r) => r.url().includes(`/api/files/payment-proofs/service-request/${requestId}/view`)),

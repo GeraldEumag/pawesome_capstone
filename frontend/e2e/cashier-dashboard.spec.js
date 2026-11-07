@@ -38,8 +38,8 @@ test.describe('Cashier Dashboard end-to-end', () => {
 
   test('refresh button reloads data', async ({ page }) => {
     await page.goto(frontendUrl + dashboardPath);
-    await page.locator('button:has-text("refresh"), button:has([data-icon="rotate"]), [title*="refresh" i]').first().click().catch(() => {});
-    await expect(page.locator('.cashier-kpi-card, [class*="card"]').first()).toBeVisible();
+    await page.locator('button:has-text("refresh"), button:has([data-icon="rotate"]), [title*="refresh" i]').first().click({ timeout: 5000 }).catch(() => {});
+    await expect(page.locator('.cashier-kpi-card, [class*="card"], [class*="stat"], table').first()).toBeVisible();
   });
 
   test('main navigation works', async ({ page }) => {

@@ -31,8 +31,22 @@ const PNG_BUFFER = Buffer.from(
 );
 const FUTURE = new Date(Date.now() + 13 * 86400000).toISOString().slice(0, 10);
 const CONSULT_DATE = new Date(Date.now() + 14 * 86400000).toISOString().slice(0, 10);
-const CUSTOMER_ID = 5; // customers.id for customer@example.com (users.id=9)
-const PET_ID = 3; // Buddy — owned by customer 5
+let CUSTOMER_ID; // customers.id for the customer account, resolved per run
+let PET_ID; // pet owned by the customer, created per run
+
+test.beforeAll(async ({ request }) => {
+  const cust = await apiLogin(request, "customer");
+  const petRes = await request.post(`${apiUrl}/pets`, {
+    headers: authH(cust.token),
+    data: { name: `E2E Chain2 Pet ${Date.now()}`, species: "Dog" },
+  });
+  const petBody = await petRes.json().catch(() => ({}));
+  expect(petRes.ok(), `fixture pet: ${JSON.stringify(petBody)}`).toBeTruthy();
+  const pet = petBody.pet || petBody;
+  PET_ID = pet.id;
+  CUSTOMER_ID = pet.customer_id || pet.customer?.id || pet.user_id;
+  expect(CUSTOMER_ID, "fixture customer id").toBeTruthy();
+});
 
 test.beforeAll(() => {
   fs.mkdirSync(shotDir, { recursive: true });
@@ -262,11 +276,13 @@ test("veterinary: consultation start -> record finalize -> complete", async ({ r
   const listRes = await request.get(`${apiUrl}/veterinary/consultations`, { headers: authH(vet.token) });
   const listBody = await listRes.json().catch(() => ({}));
   const consultations = listBody.consultations || listBody.appointments || listBody.data || [];
-  const appt = (Array.isArray(consultations) ? consultations : [])
+  const appts = (Array.isArray(consultations) ? consultations : [])
     .filter((a) => a.service_request_id === srId || a.notes === "E2E consult fixture" || a.pet_id === PET_ID || a.pet?.id === PET_ID)
-    .sort((a, b) => b.id - a.id)[0];
+    .sort((a, b) => b.id - a.id);
+  // Prefer the appointment for this run's request over stale pet matches.
+  const appt = appts.find((a) => a.service_request_id === srId) || appts[0];
   expect(appt, "vet appointment for fixture").toBeTruthy();
-  if (["awaiting_payment", "completed"].includes(appt.status)) {
+  if (["awaiting_payment", "completed", "checkout"].includes(appt.status)) {
     record("consult-start", "VERIFIED", `Appointment ${appt.id} already completed (prior run)`);
     record("consult-complete", "VERIFIED", `Appointment ${appt.id} status=${appt.status}`);
     return;
@@ -328,6 +344,7 @@ test("admin creates a staff user -> welcome outbox intent", async ({ request }) 
       password: "E2eTemp!1234",
       role: "receptionist",
       is_active: true,
+      date_of_birth: "1995-01-01",
     },
   });
   const createBody = await createRes.json().catch(() => ({}));

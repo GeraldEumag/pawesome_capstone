@@ -84,8 +84,8 @@ test('landing header collapses to a working mobile drawer at phone width', async
   await page.locator('.landing-hamburger').click();
   const mobileNav = page.locator('.landing-mobile-nav');
   await expect(mobileNav).toHaveClass(/open/);
-  await expect(mobileNav.getByRole('link', { name: 'Login' })).toBeVisible();
-  await expect(mobileNav.getByRole('link', { name: 'Register' })).toBeVisible();
+  await expect(mobileNav.getByRole('link', { name: 'Log In' })).toBeVisible();
+  await expect(mobileNav.getByRole('link', { name: 'Create Account' })).toBeVisible();
   await expectNoHorizontalOverflow(page, 'landing mobile nav at 390px');
 
   await page.locator('.landing-mobile-nav-close').click();

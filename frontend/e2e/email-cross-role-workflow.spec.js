@@ -36,17 +36,44 @@ test('customer → receptionist → cashier → receipt (email chain live)', asy
   const stamp = `P8-${runSeed}`;
 
   // ── CUSTOMER: submit a grooming service request ────────────────────────
-  const created = await api(request, customer.token, 'post', '/customer/requests', {
-    data: {
-      customer_name: `${customer.user.name} ${stamp}`,
-      pet_name: 'Buddy',
-      request_type: 'grooming',
-      service_name: 'Tick and Flea Bath',
-      requested_date: '2026-10-20',
-      requested_time: '10:00',
-      notes: `Phase 8 cross-role email verification ${stamp}`,
-    },
+  // The endpoint requires an owned pet; create one, then probe open slots.
+  const petRes = await api(request, customer.token, 'post', '/pets', {
+    data: { name: `E2E Email Pet ${stamp}`, species: 'Dog' },
   });
+  const pet = petRes.body.pet || petRes.body;
+  let created;
+  let chosen = null;
+  for (let offset = 2; offset <= 150; offset += 1) {
+    const date = new Date(Date.now() + offset * 86400000).toISOString().slice(0, 10);
+    const availability = await api(
+      request, customer.token, 'get',
+      `/customer/availability/grooming?date=${date}&service_name=${encodeURIComponent('Tick and Flea Bath')}`
+    );
+    const free = (availability.body.slots || []).find((s) => s.available);
+    if (free) {
+      chosen = { date, slot: free.time || free.slot || free.requested_time };
+      break;
+    }
+  }
+  expect(chosen, 'no free grooming slot for Tick and Flea Bath within 150 days').toBeTruthy();
+  for (let attempt = 0; attempt < 12; attempt += 1) {
+    const date = attempt === 0 ? chosen.date : new Date(Date.now() + (60 + attempt) * 86400000).toISOString().slice(0, 10);
+    const slot = attempt === 0 ? chosen.slot : `${String(10 + (attempt % 8)).padStart(2, '0')}:00`;
+    created = await api(request, customer.token, 'post', '/customer/requests', {
+      data: {
+        customer_name: `${customer.user.name} ${stamp}`,
+        pet_id: pet.id,
+        pet_name: pet.name,
+        request_type: 'grooming',
+        service_name: 'Tick and Flea Bath',
+        requested_date: date,
+        requested_time: slot,
+        notes: `Phase 8 cross-role email verification ${stamp}`,
+      },
+    });
+    if (created.status === 201) break;
+    if (!/overlap|no longer available|conflict|unavailable|public holiday|store is closed/i.test(JSON.stringify(created.body))) break;
+  }
   expect(created.status, `request create: ${JSON.stringify(created.body)}`).toBe(201);
   const requestId = created.body.request.id;
 

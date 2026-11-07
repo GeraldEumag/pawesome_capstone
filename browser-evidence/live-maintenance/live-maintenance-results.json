@@ -1,0 +1,467 @@
+{
+  "startedAt": "2026-11-05T13:57:13.448Z",
+  "completedAt": "2026-11-05T13:57:47.643Z",
+  "workflows": [
+    {
+      "name": "My Leave self-service",
+      "status": "VERIFIED",
+      "httpStatus": 201,
+      "ownerMatchesAuthenticatedUser": true,
+      "leaveId": 48
+    },
+    {
+      "name": "Attendance live baseline",
+      "status": "NOT_REPRODUCED",
+      "route": "/manager/attendance",
+      "httpStatus": 200,
+      "resultCount": 5,
+      "managerStatus": 200,
+      "adminStatus": 200,
+      "customerStatus": 403,
+      "note": "No original failure action or error details were available; live manager page returned the empty state without an observed UI error."
+    },
+    {
+      "name": "Reasoned service, hotel-room, and holiday deletion",
+      "status": "VERIFIED",
+      "serviceId": 96,
+      "serviceDeleteStatus": 200,
+      "serviceReasonPresent": true,
+      "hotelRoomId": 23,
+      "hotelRoomDeleteStatus": 200,
+      "hotelRoomReasonPresent": true,
+      "holidayId": 29,
+      "holidayDeleteStatus": 200,
+      "holidayReasonPresent": true,
+      "holidayActiveAfterArchive": false
+    },
+    {
+      "name": "Live Supplier CRUD and responsive layout",
+      "status": "VERIFIED",
+      "supplierId": 33,
+      "createStatus": 201,
+      "updateStatus": 200,
+      "emptyStateShown": false,
+      "emptySearchStateShown": true,
+      "viewportResults": [
+        {
+          "width": 1440,
+          "noPageOverflow": true,
+          "controlsSeparated": true,
+          "actionMenuBounded": true,
+          "modalBounded": true
+        },
+        {
+          "width": 1024,
+          "noPageOverflow": true,
+          "controlsSeparated": true,
+          "actionMenuBounded": true,
+          "modalBounded": true
+        },
+        {
+          "width": 768,
+          "noPageOverflow": true,
+          "controlsSeparated": true,
+          "actionMenuBounded": true,
+          "modalBounded": true
+        },
+        {
+          "width": 390,
+          "noPageOverflow": true,
+          "controlsSeparated": true,
+          "actionMenuBounded": true,
+          "modalBounded": true
+        },
+        {
+          "width": 360,
+          "noPageOverflow": true,
+          "controlsSeparated": true,
+          "actionMenuBounded": true,
+          "modalBounded": true
+        }
+      ]
+    }
+  ],
+  "http": [
+    {
+      "source": "browser",
+      "method": "GET",
+      "path": "/api/settings/public",
+      "status": 200
+    },
+    {
+      "source": "browser",
+      "method": "GET",
+      "path": "/api/notifications",
+      "status": 200
+    },
+    {
+      "source": "browser",
+      "method": "GET",
+      "path": "/api/my-leaves",
+      "status": 200
+    },
+    {
+      "source": "browser",
+      "method": "GET",
+      "path": "/api/my-leaves/balance",
+      "status": 200
+    },
+    {
+      "source": "browser",
+      "method": "GET",
+      "path": "/api/notifications",
+      "status": 200
+    },
+    {
+      "source": "browser",
+      "method": "GET",
+      "path": "/api/settings/public",
+      "status": 200
+    },
+    {
+      "source": "browser",
+      "method": "POST",
+      "path": "/api/my-leaves",
+      "status": 201
+    },
+    {
+      "source": "browser",
+      "method": "GET",
+      "path": "/api/my-leaves",
+      "status": 200
+    },
+    {
+      "source": "browser",
+      "method": "GET",
+      "path": "/api/my-leaves/balance",
+      "status": 200
+    },
+    {
+      "source": "browser",
+      "method": "GET",
+      "path": "/api/my-leaves",
+      "status": 200
+    },
+    {
+      "source": "browser",
+      "method": "GET",
+      "path": "/api/my-leaves/balance",
+      "status": 200
+    },
+    {
+      "source": "api-fixture-or-check",
+      "method": "GET",
+      "path": "/api/my-leaves",
+      "status": 200
+    },
+    {
+      "source": "browser",
+      "method": "GET",
+      "path": "/api/settings/public",
+      "status": 200
+    },
+    {
+      "source": "browser",
+      "method": "GET",
+      "path": "/api/settings/public",
+      "status": 200
+    },
+    {
+      "source": "browser",
+      "method": "GET",
+      "path": "/api/notifications",
+      "status": 200
+    },
+    {
+      "source": "browser",
+      "method": "GET",
+      "path": "/api/manager/attendance",
+      "status": 200
+    },
+    {
+      "source": "browser",
+      "method": "GET",
+      "path": "/api/notifications",
+      "status": 200
+    },
+    {
+      "source": "api-fixture-or-check",
+      "method": "GET",
+      "path": "/api/manager/attendance",
+      "status": 200
+    },
+    {
+      "source": "api-fixture-or-check",
+      "method": "GET",
+      "path": "/api/manager/attendance",
+      "status": 200
+    },
+    {
+      "source": "api-fixture-or-check",
+      "method": "GET",
+      "path": "/api/manager/attendance",
+      "status": 403
+    },
+    {
+      "source": "api-fixture-or-check",
+      "method": "POST",
+      "path": "/api/receptionist/services",
+      "status": 201
+    },
+    {
+      "source": "api-fixture-or-check",
+      "method": "POST",
+      "path": "/api/receptionist/boarding-rooms",
+      "status": 201
+    },
+    {
+      "source": "api-fixture-or-check",
+      "method": "GET",
+      "path": "/api/manager/holidays",
+      "status": 200
+    },
+    {
+      "source": "api-fixture-or-check",
+      "method": "POST",
+      "path": "/api/manager/holidays",
+      "status": 201
+    },
+    {
+      "source": "browser",
+      "method": "GET",
+      "path": "/api/settings/public",
+      "status": 200
+    },
+    {
+      "source": "browser",
+      "method": "GET",
+      "path": "/api/settings/public",
+      "status": 200
+    },
+    {
+      "source": "browser",
+      "method": "GET",
+      "path": "/api/notifications",
+      "status": 200
+    },
+    {
+      "source": "browser",
+      "method": "GET",
+      "path": "/api/receptionist/services",
+      "status": 200
+    },
+    {
+      "source": "browser",
+      "method": "GET",
+      "path": "/api/notifications",
+      "status": 200
+    },
+    {
+      "source": "browser",
+      "method": "GET",
+      "path": "/api/receptionist/services",
+      "status": 200
+    },
+    {
+      "source": "browser",
+      "method": "DELETE",
+      "path": "/api/receptionist/services/96",
+      "status": 200
+    },
+    {
+      "source": "browser",
+      "method": "GET",
+      "path": "/api/receptionist/services",
+      "status": 200
+    },
+    {
+      "source": "browser",
+      "method": "GET",
+      "path": "/api/receptionist/boarding-rooms",
+      "status": 200
+    },
+    {
+      "source": "browser",
+      "method": "DELETE",
+      "path": "/api/receptionist/boarding-rooms/23",
+      "status": 200
+    },
+    {
+      "source": "browser",
+      "method": "GET",
+      "path": "/api/receptionist/boarding-rooms",
+      "status": 200
+    },
+    {
+      "source": "browser",
+      "method": "GET",
+      "path": "/api/settings/public",
+      "status": 200
+    },
+    {
+      "source": "browser",
+      "method": "GET",
+      "path": "/api/settings/public",
+      "status": 200
+    },
+    {
+      "source": "browser",
+      "method": "GET",
+      "path": "/api/notifications",
+      "status": 200
+    },
+    {
+      "source": "browser",
+      "method": "GET",
+      "path": "/api/manager/holidays",
+      "status": 200
+    },
+    {
+      "source": "browser",
+      "method": "GET",
+      "path": "/api/notifications",
+      "status": 200
+    },
+    {
+      "source": "browser",
+      "method": "GET",
+      "path": "/api/manager/holidays",
+      "status": 200
+    },
+    {
+      "source": "browser",
+      "method": "DELETE",
+      "path": "/api/manager/holidays/29",
+      "status": 200
+    },
+    {
+      "source": "api-fixture-or-check",
+      "method": "GET",
+      "path": "/api/manager/holidays",
+      "status": 200
+    },
+    {
+      "source": "api-fixture-or-check",
+      "method": "GET",
+      "path": "/api/inventory/suppliers",
+      "status": 200
+    },
+    {
+      "source": "browser",
+      "method": "GET",
+      "path": "/api/settings/public",
+      "status": 200
+    },
+    {
+      "source": "browser",
+      "method": "GET",
+      "path": "/api/notifications",
+      "status": 200
+    },
+    {
+      "source": "browser",
+      "method": "GET",
+      "path": "/api/inventory/suppliers",
+      "status": 200
+    },
+    {
+      "source": "browser",
+      "method": "GET",
+      "path": "/api/chatbot/welcome",
+      "status": 200
+    },
+    {
+      "source": "browser",
+      "method": "GET",
+      "path": "/api/notifications",
+      "status": 200
+    },
+    {
+      "source": "browser",
+      "method": "GET",
+      "path": "/api/settings/public",
+      "status": 200
+    },
+    {
+      "source": "browser",
+      "method": "POST",
+      "path": "/api/inventory/suppliers",
+      "status": 201
+    },
+    {
+      "source": "browser",
+      "method": "GET",
+      "path": "/api/inventory/suppliers",
+      "status": 200
+    },
+    {
+      "source": "browser",
+      "method": "GET",
+      "path": "/api/chatbot/welcome",
+      "status": 200
+    },
+    {
+      "source": "browser",
+      "method": "GET",
+      "path": "/api/inventory/suppliers",
+      "status": 200
+    },
+    {
+      "source": "browser",
+      "method": "GET",
+      "path": "/api/inventory/suppliers",
+      "status": 200
+    },
+    {
+      "source": "browser",
+      "method": "GET",
+      "path": "/api/settings/public",
+      "status": 200
+    },
+    {
+      "source": "browser",
+      "method": "GET",
+      "path": "/api/settings/public",
+      "status": 200
+    },
+    {
+      "source": "browser",
+      "method": "GET",
+      "path": "/api/notifications",
+      "status": 200
+    },
+    {
+      "source": "browser",
+      "method": "GET",
+      "path": "/api/inventory/suppliers",
+      "status": 200
+    },
+    {
+      "source": "browser",
+      "method": "GET",
+      "path": "/api/notifications",
+      "status": 200
+    },
+    {
+      "source": "browser",
+      "method": "PUT",
+      "path": "/api/inventory/suppliers/33",
+      "status": 200
+    },
+    {
+      "source": "browser",
+      "method": "GET",
+      "path": "/api/inventory/suppliers",
+      "status": 200
+    }
+  ],
+  "screenshots": [
+    "my-leave-submitted.png",
+    "attendance-empty-manager.png",
+    "service-deleted-with-reason.png",
+    "hotel-room-deleted-with-reason.png",
+    "holiday-archived-with-reason.png",
+    "suppliers-mobile-populated.png",
+    "suppliers-desktop-updated.png"
+  ]
+}

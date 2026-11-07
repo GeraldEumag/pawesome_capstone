@@ -2,8 +2,8 @@
 
 Status: **PASSED**
 
-Started: 2026-09-25T00:39:21.390Z
-Completed: 2026-09-25T00:43:09.017Z
+Started: 2026-11-05T14:02:21.573Z
+Completed: 2026-11-05T14:04:05.732Z
 Frontend: http://localhost:3000
 Backend API: http://127.0.0.1:8000/api
 
@@ -18,12 +18,12 @@ Backend API: http://127.0.0.1:8000/api
 | Login for veterinary | PASS | vet@example.com |
 | Login for manager | PASS | manager@example.com |
 | Login for admin | PASS | admin@example.com |
-| Customer creates booking/request/order | PASS | service_request #140 |
-| Receptionist approves or schedules | PASS | service_request #140 |
-| Customer uploads payment proof | PASS | service_request #140 |
-| Cashier verifies/rejects payment | PASS | verified service_request #140 |
+| Customer creates booking/request/order | PASS | service_request #628 |
+| Receptionist approves or schedules | PASS | service_request #628 |
+| Customer uploads payment proof | PASS | service_request #628 |
+| Cashier verifies/rejects payment | PASS | verified service_request #628 |
 | Inventory stock/log check | PASS | inventory item #274 |
-| Veterinary appointment status update | PASS | vet appointment #7 completed via current /vet status route |
+| Veterinary appointment status update | PASS | vet appointment #125 started via /veterinary/consultations/{id}/start (direct scheduled -> completed is rejected by the backend) |
 | Manager/Admin reports visibility | PASS | manager and admin overview reports loaded |
 
 ## Evidence Screenshots
@@ -50,9 +50,9 @@ Backend API: http://127.0.0.1:8000/api
 
 ```json
 {
-  "petId": 90,
-  "serviceRequestId": 140,
-  "vetAppointmentId": 7
+  "petId": 1415,
+  "serviceRequestId": 628,
+  "vetAppointmentId": 125
 }
 ```
 
@@ -61,6 +61,7 @@ Backend API: http://127.0.0.1:8000/api
 | Kind | Status | Detail |
 | --- | --- | --- |
 | aborted | ERR_ABORTED | http://localhost:8000/api/veterinary/appointments |
+| aborted | ERR_ABORTED | http://localhost:8000/api/veterinary/history?status=completed,cancelled&per_page=500 |
 
 ## Run Instructions
 

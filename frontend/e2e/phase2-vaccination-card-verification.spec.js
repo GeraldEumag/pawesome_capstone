@@ -1,5 +1,45 @@
 const { test, expect } = require('@playwright/test');
-const { loginAs, mockLoginAs } = require('./test-utils');
+const { loginAs, mockLoginAs, apiLogin } = require('./test-utils');
+
+const apiBase = process.env.E2E_API_URL || 'http://127.0.0.1:8000/api';
+// 1x1 PNG: valid image for the vaccination-card upload.
+const CARD_PNG = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==', 'base64');
+
+function authHeaders(token) {
+  return { Accept: 'application/json', Authorization: `Bearer ${token}` };
+}
+
+// Creates a dog pet and a hotel boarding with a vaccination card for the customer.
+// Probes future dates and rooms, since the shared dev DB fills up across runs.
+async function createBoardingWithCard(request, customer) {
+  const pet = (await (await request.post(`${apiBase}/pets`, {
+    headers: authHeaders(customer.token),
+    data: { name: `P2 Vaccine ${Date.now()}`, species: 'Dog' },
+  })).json()).pet;
+  for (let offset = 40; offset < 120; offset++) {
+    const date = new Date(Date.now() + offset * 86400000).toISOString().slice(0, 10);
+    const rooms = await (await request.get(
+      `${apiBase}/boarding/rooms/available?species=dog&check_in_date=${date}&check_out_date=${date}`,
+      { headers: authHeaders(customer.token) }
+    )).json();
+    const room = (rooms.rooms || []).find((r) => r.available && /^\d+$/.test(String(r.id)));
+    if (!room) continue;
+    const res = await request.post(`${apiBase}/customer/boardings`, {
+      headers: authHeaders(customer.token),
+      multipart: {
+        pet_id: String(pet.id), room_id: String(room.id), check_in_date: date,
+        number_of_days: '1', notes: `P2 vaccination ${Date.now()}`,
+        vaccination_card: { name: 'vaccination-card.png', mimeType: 'image/png', buffer: CARD_PNG },
+      },
+    });
+    if (res.ok()) {
+      const body = await res.json();
+      return { id: (body.boarding || body.data || body).id };
+    }
+  }
+  throw new Error('no boarding room available for the vaccination fixture');
+}
+
 
 test.describe('Phase 2 Vaccination Card Verification', () => {
   test('Customer hotel booking requires a vaccination card upload', async ({ page }) => {
@@ -41,8 +81,8 @@ test.describe('Phase 2 Vaccination Card Verification', () => {
       pet: { name: 'E2E Online Boarding Pet', species: 'Dog' },
       customer_name: 'E2E Owner',
       booking_channel: 'online',
-      check_in: '2026-09-28',
-      check_out: '2026-09-28',
+      check_in: new Date().toISOString().slice(0, 10),
+      check_out: new Date().toISOString().slice(0, 10),
       room_type: 'Standard',
       status: 'pending',
       payment_status: 'unpaid',
@@ -58,7 +98,7 @@ test.describe('Phase 2 Vaccination Card Verification', () => {
       body: JSON.stringify({ rooms: [] }),
     }));
 
-    await page.goto('/receptionist/bookings/hotel');
+    await page.goto('/receptionist/bookings/hotel?range=all&tab=all');
     const row = page.locator('tr.booking-row', { hasText: 'E2E Online Boarding Pet' });
     await expect(row).toBeVisible();
     await row.getByRole('button', { name: /actions for/i }).click();
@@ -76,8 +116,8 @@ test.describe('Phase 2 Vaccination Card Verification', () => {
     // Navigate to walk-ins and open the Hotel / Boarding booking modal
     await page.goto('/receptionist/walk-ins');
     await page.waitForSelector('.walkins-page', { timeout: 10000 });
-    await page.locator('.service-card', { hasText: 'Hotel' }).first().click();
-    await page.waitForSelector('.walkin-modal', { timeout: 10000 });
+    await page.getByRole('button', { name: /New Booking/ }).first().click();
+    await page.waitForSelector('.hbk-modal', { timeout: 10000 });
 
     // Check that vaccination card is optional — the field must either be absent
     // from the walk-in flow or rendered without the required attribute.
@@ -88,16 +128,39 @@ test.describe('Phase 2 Vaccination Card Verification', () => {
     expect(isRequired).toBeNull(); // Should not have required attribute
   });
 
-  test('Historical vaccination card remains accessible', async ({ page }) => {
-    // This test requires an existing booking with vaccination card
-    // Skip for now as we need to create test data first
-    test.skip();
+  test('Historical vaccination card remains accessible', async ({ request }) => {
+    test.setTimeout(180000);
+    const customer = await apiLogin(request, 'customer');
+    const fixture = await createBoardingWithCard(request, customer);
+
+    const owner = await request.get(`${apiBase}/files/vaccination-cards/${fixture.id}/view`, {
+      headers: authHeaders(customer.token),
+    });
+    expect(owner.status()).toBe(200);
+    expect(owner.headers()['content-type']).toMatch(/^image\//);
+
+    const anonymous = await request.get(`${apiBase}/files/vaccination-cards/${fixture.id}/view`, {
+      headers: { Accept: 'application/json' },
+    });
+    expect(anonymous.status()).toBe(401);
   });
 
-  test('Historical verification workflow still works', async ({ page }) => {
-    // This test requires an existing booking with vaccination card
-    // Skip for now as we need to create test data first
-    test.skip();
+  test('Historical verification workflow still works', async ({ request }) => {
+    test.setTimeout(180000);
+    const customer = await apiLogin(request, 'customer');
+    const receptionist = await apiLogin(request, 'receptionist');
+    const fixture = await createBoardingWithCard(request, customer);
+
+    const verify = await request.post(`${apiBase}/receptionist/boarding-requests/${fixture.id}/verify-vaccination`, {
+      headers: authHeaders(receptionist.token),
+    });
+    expect(verify.status(), await verify.text()).toBe(200);
+    expect((await verify.json()).boarding.vaccination_card_verified_at).toBeTruthy();
+
+    const approve = await request.post(`${apiBase}/receptionist/boarding-requests/${fixture.id}/approve`, {
+      headers: authHeaders(receptionist.token),
+    });
+    expect(approve.status(), await approve.text()).toBe(200);
   });
 
   test('Chatbot FAQ shows original verified project content', async ({ page }) => {
@@ -116,12 +179,12 @@ test.describe('Phase 2 Vaccination Card Verification', () => {
 
     // Wait for the bot reply bubble specifically (user messages share .lc-bubble)
     const botBubble = page.locator('.lc-msg-bot .lc-bubble').last();
-    await expect(botBubble).toContainText('(555) 123-4567', { timeout: 15000 });
+    await expect(botBubble).toContainText('270020371', { timeout: 15000 });
 
     // Check that response contains original contact info (not placeholders)
     const chatResponse = await botBubble.textContent();
-    expect(chatResponse).toContain('(555) 123-4567');
-    expect(chatResponse).toContain('info@pawsitive.com');
+    expect(chatResponse).toContain('270020371');
+    expect(chatResponse).toContain('pawesomeretreat24@gmail.com');
     expect(chatResponse).not.toContain('[Please provide');
   });
 });

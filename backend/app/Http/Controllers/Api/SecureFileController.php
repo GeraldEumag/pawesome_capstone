@@ -197,7 +197,12 @@ class SecureFileController extends Controller
         // Authorization
         $isOwner = false;
         if ($user->role === 'customer') {
-            $isOwner = ($record->customer_id == $user->id);
+            // boardings.customer_id references customers.id, not users.id.
+            $customerId = Customer::where('user_id', $user->id)->value('id');
+            $isOwner = $customerId && (
+                (int) $record->customer_id === (int) $customerId
+                || ($record->pet_id && DB::table('pets')->where('id', $record->pet_id)->where('customer_id', $customerId)->exists())
+            );
         }
 
         $canAccess = false;

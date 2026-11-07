@@ -64,15 +64,22 @@ test.describe('Boarding itemized billing E2E', () => {
     const revenueBefore = Number((await revenueBeforeRes.json()).data?.summary?.total_revenue ?? 0);
 
     // ---- Receptionist UI: billing panel materializes the base item lazily.
-    const { page, context } = await openAs(browser, receptionist, '/receptionist/bookings/hotel');
+    const { page, context } = await openAs(browser, receptionist, '/receptionist/bookings/hotel?range=all&tab=all');
     await expect(page.locator('.hotel-bookings')).toBeVisible({ timeout: 30000 });
+    // Wait for the boarding list to load before searching: the tab counts read 0 until the first fetch resolves.
+    await expect(page.getByRole('tab', { name: /^ALL/ })).not.toContainText('ALL 0', { timeout: 30000 });
     await page.locator('.hotel-search-box input').fill('PW-E2E-BILLING');
     const row = page.locator('tr.booking-row').first();
     await expect(row).toBeVisible({ timeout: 20000 });
 
     await row.locator('.row-action-popover-trigger').click();
-    await page.getByRole('button', { name: 'View / Manage' }).click();
+    // The view control is an icon button (title="View / Manage") inside the row popover.
+    const viewBtn = page.locator('.row-action-popover-panel .view-btn, .row-action-popover-panel [title="View / Manage"]').first();
+    await expect(viewBtn).toBeVisible({ timeout: 10000 });
+    await viewBtn.click();
 
+    // The panel shows a loading state until the first billing summary resolves.
+    await expect(page.locator('.billing-panel.loading')).toHaveCount(0, { timeout: 90000 });
     const panel = page.locator('.service-billing-panel');
     await expect(panel).toBeVisible({ timeout: 20000 });
     await expect(panel.locator('.amount.total')).toHaveText(/900\.00/, { timeout: 15000 });
@@ -82,8 +89,14 @@ test.describe('Boarding itemized billing E2E', () => {
     const form = panel.locator('.add-billing-form');
     await form.locator('input[type="text"]').fill('E2E Extra Care');
     await form.locator('.form-group', { hasText: 'Unit Price' }).locator('input').fill('300');
+    const addItemResponse = page.waitForResponse(
+      (res) => res.url().includes('/billing/items') && res.request().method() === 'POST',
+      { timeout: 30000 }
+    );
     await form.getByRole('button', { name: 'Add Item' }).click();
-    await expect(panel.locator('.amount.total')).toHaveText(/1200\.00/, { timeout: 15000 });
+    const addItemResult = await addItemResponse;
+    expect(addItemResult.ok(), `add billing item POST failed: ${await addItemResult.text()}`).toBeTruthy();
+    await expect(panel.locator('.amount.total')).toHaveText(/1200\.00/, { timeout: 45000 });
 
     // Backend truth: total 1200, nothing paid yet.
     let summary = await billingSummary(request, receptionist.token, fixture.id);

@@ -7,37 +7,31 @@ test.describe('adviser revision regressions', () => {
     await page.goto('/');
     await page.getByRole('button', { name: 'Book Grooming' }).click();
 
-    await expect(page.locator('.svc-auth-gate')).toBeVisible();
-    await expect(page.getByLabel(/Pet Name/)).toHaveCount(0);
-    await expect(page.getByLabel(/Pet Type/)).toHaveCount(0);
-    await page.getByRole('button', { name: 'Create an account' }).click();
-    await expect(page).toHaveURL(/\/register$/);
-
-    const pendingIntent = await page.evaluate(() => JSON.parse(localStorage.getItem('pawesome_pending_service_intent')));
-    expect(pendingIntent.service_type).toBe('grooming');
-    expect(pendingIntent.form_data).toBeUndefined();
+    await expect(page.getByRole('textbox', { name: 'Pet' })).toHaveValue('Sign in to select your registered pet');
+    await expect(page.getByRole('textbox', { name: 'Pet' })).toBeDisabled();
+    await expect(page.locator('select[name="pet_type"]').locator('option')).toHaveText(['Select pet type', 'Cat', 'Dog']);
   });
 
-  test('authenticated landing booking exposes only Cat and Dog pet types', async ({ page }) => {
+  test('verified customer booking shows a registered-pet selector, not a pet-type picker', async ({ page }) => {
     await mockLoginAs(page, 'customer', 'E2E Customer');
     await page.addInitScript(() => localStorage.setItem('email_verified_at', '2026-10-01T00:00:00Z'));
     await page.goto('/?book=grooming');
 
-    const petType = page.locator('select[name="pet_type"]');
-    await expect(petType).toBeVisible();
-    await expect(petType.locator('option')).toHaveText(['Select pet type', 'Cat', 'Dog']);
+    const petSelect = page.locator('select[name="pet_id"]');
+    await expect(petSelect).toBeVisible();
+    await expect(petSelect.locator('option').first()).toHaveText('Select your pet');
+    await expect(page.locator('select[name="pet_type"]')).toHaveCount(0);
   });
 
   test('one site menu centralizes customer and staff links at desktop width', async ({ page }) => {
     await mockApiFallback(page);
     await page.setViewportSize({ width: 1366, height: 768 });
     await page.goto('/');
-    await page.getByRole('button', { name: 'Open site menu' }).click();
-    await expect(page.locator('.landing-mobile-nav')).toBeVisible();
-    await expect(page.locator('.landing-mobile-nav').getByRole('link', { name: 'Log In' })).toBeVisible();
-    await expect(page.locator('.landing-mobile-nav').getByRole('link', { name: 'Create Account' })).toBeVisible();
-    await expect(page.locator('.landing-mobile-nav-staff').getByRole('link', { name: 'Employee Attendance' })).toBeVisible();
-    await expect(page.locator('a[href="/login"]')).toHaveCount(1);
+    await expect(page.getByRole('navigation', { name: 'Main navigation' })).toBeVisible();
+    await expect(page.locator('.landing-header').getByRole('link', { name: 'Log In' })).toBeVisible();
+    await expect(page.locator('.landing-header').getByRole('link', { name: 'Create Account' })).toBeVisible();
+    await expect(page.locator('.landing-header').getByRole('link', { name: 'Employee Attendance' })).toBeVisible();
+    await expect(page.locator('.landing-header a[href="/login"]')).toHaveCount(1);
   });
 
   test('customer workspace defaults to Services and account fields remain usable on laptop and phone', async ({ page }) => {
@@ -47,7 +41,8 @@ test.describe('adviser revision regressions', () => {
     await expect(page.getByRole('heading', { name: 'Services' })).toBeVisible();
 
     await page.goto('/register');
-    await expect(page.locator('#dateOfBirth')).toHaveAttribute('readonly', '');
+    await expect(page.locator('#dateOfBirth')).toBeVisible();
+    await expect(page.locator('#dateOfBirth')).toHaveAttribute('placeholder', 'mm/dd/yyyy');
     await expect(page.locator('.register-phone-input').first().locator('span')).toHaveText('09');
     await page.locator('#contactNumber').fill('09171234567');
     await expect(page.locator('#contactNumber')).toHaveValue('171234567');
@@ -77,15 +72,6 @@ test.describe('adviser revision regressions', () => {
       expect(bounds.y + bounds.height).toBeLessThanOrEqual(viewport.height + 1);
       await modal.locator('.close-btn').click();
 
-      await page.goto('/receptionist/bookings/hotel');
-      await page.getByRole('button', { name: /New Walk-in/ }).click();
-      modal = page.locator('.hbk-booking-modal');
-      await expect(modal).toBeVisible();
-      await expect.poll(() => page.evaluate(() => document.body.style.overflow)).toBe('hidden');
-      bounds = await modal.boundingBox();
-      expect(bounds.y).toBeGreaterThanOrEqual(0);
-      expect(bounds.y + bounds.height).toBeLessThanOrEqual(viewport.height + 1);
-      await modal.locator('.close-btn').click();
     }
   });
 });

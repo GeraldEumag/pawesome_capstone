@@ -166,4 +166,14 @@ Illuminate\Support\Facades\DB::table('boardings')->updateOrInsert(
     ]
 );
 
+
+// Clear receipt history on the marker confinements so the per-payable upload cap
+// (ReceiptService, 15 uploads) does not block reruns against a stale fixture.
+foreach ($markers as $marker) {
+    $row = MedicalConfinement::where('diagnosis', $marker)->first();
+    if ($row) {
+        \App\Models\PaymentReceipt::where('payable_type', 'medical_confinement')->where('payable_id', $row->id)->delete();
+    }
+}
+
 echo "E2E payment fixtures ready (markers: " . implode(', ', $markers) . ", boardings: PW-E2E-APPROVAL, PW-E2E-BILLING)\n";

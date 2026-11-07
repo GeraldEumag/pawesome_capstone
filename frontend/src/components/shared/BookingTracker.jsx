@@ -16,6 +16,7 @@ import "./BookingTracker.css";
 import { useDraggable } from "../../utils/useDraggable";
 
 const SEEN_KEY = "pawesome_tracker_seen";
+const SELECTED_TAB_KEY = "pawesome_booking_tracker_tab";
 const POLL_MS = 30000;
 
 const TYPE_META = {
@@ -117,7 +118,14 @@ const BookingTracker = () => {
   const { style: dragStyle, dragHandlers, wasDragged } = useDraggable();
   const [refreshing, setRefreshing] = useState(false);
   const [hasUpdate, setHasUpdate] = useState(false);
-  const [selectedTab, setSelectedTab] = useState("all");
+  const [selectedTab, setSelectedTab] = useState(() => {
+    const saved = sessionStorage.getItem(SELECTED_TAB_KEY);
+    return TRACKER_TABS.some((tab) => tab.key === saved) ? saved : "all";
+  });
+
+  useEffect(() => {
+    sessionStorage.setItem(SELECTED_TAB_KEY, selectedTab);
+  }, [selectedTab]);
 
   const groupedItems = useMemo(() => {
     const groups = Object.fromEntries(TRACKER_TABS.map(({ key }) => [key, []]));

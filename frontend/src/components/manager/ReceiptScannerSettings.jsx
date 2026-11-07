@@ -116,10 +116,14 @@ const ReceiptScannerSettings = () => {
         <h2>Receipt Scanner</h2>
         <p>GCash / Maya receipt reading — provider patterns, clinic accounts, and accuracy.</p>
         {settings && (
-          <p className="rss-meta">
-            Scanner {settings.enabled ? "enabled" : "disabled"} · Reader chain: {(settings.chain || []).join(" → ")}
-            {" "}· Auto-fill threshold {settings.thresholds?.auto_fill} · Review threshold {settings.thresholds?.review}
-          </p>
+          <div className="rss-meta">
+            <span className={`rss-chip ${settings.enabled ? "rss-chip--ok" : "rss-chip--off"}`}>
+              Scanner {settings.enabled ? "enabled" : "disabled"}
+            </span>
+            <span className="rss-chip">Reader chain: {(settings.chain || []).join(" → ")}</span>
+            <span className="rss-chip">Auto-fill ≥ {pct(settings.thresholds?.green)}</span>
+            <span className="rss-chip">Review ≥ {pct(settings.thresholds?.review)}</span>
+          </div>
         )}
       </div>
 
@@ -158,6 +162,7 @@ const ReceiptScannerSettings = () => {
       <section className="rss-section">
         <h3>Provider Patterns</h3>
         <p className="rss-hint">Reference regexes and field labels the readers look for. Labels accept comma-separated values.</p>
+        <div className="rss-provider-grid">
         {providers.map((p, i) => (
           <div key={p.provider} className="rss-provider">
             <div className="rss-provider-head">
@@ -224,6 +229,7 @@ const ReceiptScannerSettings = () => {
             </div>
           </div>
         ))}
+        </div>
       </section>
 
       {/* ── Clinic wallet accounts ── */}

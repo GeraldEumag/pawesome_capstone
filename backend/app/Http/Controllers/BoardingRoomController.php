@@ -100,7 +100,8 @@ class BoardingRoomController extends Controller
             }
 
             $roomsQuery = DB::table('boarding_rooms')
-                ->whereIn('room_type', $allowedRoomTypes);
+                ->whereIn('room_type', $allowedRoomTypes)
+                ->whereNull('deleted_at');
 
             if (Schema::hasColumn('boarding_rooms', 'is_active')) {
                 $roomsQuery->where('is_active', true);

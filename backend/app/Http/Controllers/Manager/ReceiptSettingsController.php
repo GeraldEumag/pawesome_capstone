@@ -124,7 +124,7 @@ class ReceiptSettingsController extends Controller
             ->whereNotNull('reader')
             ->select(
                 'reader',
-                DB::raw('count(*) as reads'),
+                DB::raw('count(*) as read_count'),
                 DB::raw('sum(case when reference_normalized is not null then 1 else 0 end) as with_reference'),
                 DB::raw('round(avg(latency_ms)) as avg_latency_ms')
             )
@@ -132,9 +132,9 @@ class ReceiptSettingsController extends Controller
             ->get()
             ->map(fn ($row) => [
                 'reader' => $row->reader,
-                'reads' => (int) $row->reads,
+                'reads' => (int) $row->read_count,
                 'with_reference' => (int) $row->with_reference,
-                'auto_fill_rate' => $row->reads > 0 ? round($row->with_reference / $row->reads, 4) : null,
+                'auto_fill_rate' => $row->read_count > 0 ? round($row->with_reference / $row->read_count, 4) : null,
                 'avg_latency_ms' => $row->avg_latency_ms !== null ? (int) $row->avg_latency_ms : null,
             ]);
 

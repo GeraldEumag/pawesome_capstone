@@ -74,7 +74,7 @@ test.describe('Report export regression coverage', () => {
     const excelDownload = await downloadFromExecutiveMenu(page, 'Excel');
     expect(excelDownload.suggestedFilename()).toMatch(/\.xlsx$/i);
     const workbook = XLSX.readFile(await excelDownload.path(), { cellDates: true });
-    expect(workbook.SheetNames).toEqual(['Summary', 'Revenue Trend', 'Order Status', 'Alerts & Forecast']);
+    expect(workbook.SheetNames).toEqual(['Summary', 'Revenue Trend', 'Order Status', 'Alerts & Forecast', 'Narrative & Signatures']);
     const summaryRows = XLSX.utils.sheet_to_json(workbook.Sheets.Summary, { header: 1, raw: true });
     const summaryHeaderIndex = summaryRows.findIndex((row) => row[0] === 'Metric' && row[1] === 'Value');
     expect(summaryRows[summaryHeaderIndex + 1]).toEqual(['Revenue for selected period', 4567.89]);
@@ -172,6 +172,6 @@ test.describe('Report export regression coverage', () => {
     expect(csv).toContain('SSS No.');
     expect(csv).toContain('"Ana, Santos"');
     expect(csv).toContain('01-2345678-9');
-    expect(csv).toContain('Reporting period:');
+    expect(csv).toContain('Reporting Period,2026-');
   });
 });

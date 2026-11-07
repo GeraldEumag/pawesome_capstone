@@ -24,6 +24,8 @@ test.describe('Inventory suppliers responsive layout', () => {
       route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(supplierList()) })
     );
     await page.goto('/inventory/suppliers');
+    // The chatbot FAB overlaps right-edge popover triggers at narrow widths.
+    await page.addStyleTag({ content: '.rbac-chatbot{display:none!important}' });
 
     for (const width of [1440, 1024, 768, 390, 360]) {
       await page.setViewportSize({ width, height: 850 });
@@ -51,7 +53,7 @@ test.describe('Inventory suppliers responsive layout', () => {
       const horizontalGap = layout.search.right <= layout.toggle.left || layout.toggle.right <= layout.search.left;
       expect(separateRows || horizontalGap, `search/toggle overlap at ${width}px`).toBeTruthy();
 
-      const tableCard = page.locator('.suppliers-table-card');
+      const tableCard = page.locator('.standard-table-container');
       await tableCard.evaluate((element) => { element.scrollLeft = element.scrollWidth; });
       const actionsTrigger = tableCard.locator('.row-action-popover-trigger');
       await actionsTrigger.scrollIntoViewIfNeeded();

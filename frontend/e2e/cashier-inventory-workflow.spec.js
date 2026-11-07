@@ -73,7 +73,8 @@ function recordAction(name, status, detail = "") {
 
 function attachAudit(page) {
   page.on("console", (message) => {
-    if (message.type() === "error") {
+    // 429 resource-load noise is API throttling under suite load, not a bug.
+    if (message.type() === "error" && !/status of 429/.test(message.text())) {
       run.console.push({ type: message.type(), text: message.text(), page: page.url() });
     }
   });
@@ -176,14 +177,19 @@ async function apiLogin(request, role, options) {
 }
 
 async function api(request, session, method, endpoint, options = {}) {
-  const response = await request[method.toLowerCase()](`${apiUrl}${endpoint}`, {
-    headers: {
-      Accept: "application/json",
-      Authorization: `Bearer ${session.token}`,
-      ...(options.headers || {}),
-    },
-    data: options.data,
-  });
+  let response;
+  for (let attempt = 0; attempt < 4; attempt += 1) {
+    response = await request[method.toLowerCase()](`${apiUrl}${endpoint}`, {
+      headers: {
+        Accept: "application/json",
+        Authorization: `Bearer ${session.token}`,
+        ...(options.headers || {}),
+      },
+      data: options.data,
+    });
+    if (response.status() !== 429) break;
+    await new Promise((r) => setTimeout(r, 1500 * (attempt + 1)));
+  }
   const text = await response.text();
   let body = {};
   try {

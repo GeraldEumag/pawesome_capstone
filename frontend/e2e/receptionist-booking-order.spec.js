@@ -31,7 +31,7 @@ test.describe('Receptionist bookings are listed earliest first', () => {
       body: JSON.stringify({ rooms: [] }),
     }));
 
-    await page.goto(`${frontendUrl}/receptionist/bookings/hotel`);
+    await page.goto(`${frontendUrl}/receptionist/bookings/hotel?range=all&tab=all`);
     const rows = page.locator('.bookings-table tbody tr.booking-row');
     await expect(rows).toHaveCount(2);
     expect(await getFirstColumnText(rows)).toEqual(['Early Stay', 'Later Stay']);
@@ -53,7 +53,7 @@ test.describe('Receptionist bookings are listed earliest first', () => {
       body: JSON.stringify({ veterinarians: [{ id: 1, name: 'Dr. Test' }] }),
     }));
 
-    await page.goto(`${frontendUrl}/receptionist/bookings/veterinary`);
+    await page.goto(`${frontendUrl}/receptionist/bookings/veterinary?range=all&tab=all`);
     const rows = page.locator('.vet-table tbody tr');
     await expect(rows).toHaveCount(2);
     expect(await getFirstColumnText(rows, 2)).toEqual(['Early Vet', 'Later Vet']);
@@ -70,7 +70,7 @@ test.describe('Receptionist bookings are listed earliest first', () => {
       ] }),
     }));
 
-    await page.goto(`${frontendUrl}/receptionist/bookings/grooming`);
+    await page.goto(`${frontendUrl}/receptionist/bookings/grooming?range=all&tab=all`);
     const rows = page.locator('.grooming-table tbody tr');
     await expect(rows).toHaveCount(2);
     expect(await getFirstColumnText(rows)).toEqual(['Early Groom', 'Later Groom']);

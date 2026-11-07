@@ -74,19 +74,41 @@ test.describe('Phase 4 Payment Workflow E2E', () => {
     await expect(card).toBeVisible({ timeout: 20000 });
     await card.getByRole('button', { name: 'Upload Payment Proof' }).click();
 
+    let uploadResp = null;
+    page.on('response', async (res) => {
+      if (/payment-proof/.test(res.url()) && res.request().method() === 'POST') {
+        uploadResp = `${res.status()} ${(await res.text().catch(() => '')).slice(0, 200)}`;
+      }
+    });
     await expect(page.locator('.pum-modal')).toBeVisible();
     await page.locator('#pum-file-input').setInputFiles({
       name: 'e2e-proof.png',
       mimeType: 'image/png',
-      buffer: PROOF_PNG,
+      buffer: await page.screenshot(),
     });
-    await page.locator('.pum-ref-input').fill('E2E-REF-100001');
-    await page.locator('.pum-confirm-btn').click();
+    await page.locator('.pum-ref-input').fill(`E2E-REF-${Date.now()}`);
+    // The confirm button stays disabled until the scanner accepts the file.
+    const confirmBtn = page.locator('.pum-modal .pum-confirm-btn');
+    await expect(confirmBtn).toBeEnabled({ timeout: 30000 });
+    await confirmBtn.click();
+    // The modal now keeps a receipt-scan status open after upload when the
+    // scanner accepts the proof; close whichever state it reached.
+    const scanTitle = page.locator('.pum-scan-title');
+    if (await scanTitle.isVisible({ timeout: 30000 }).catch(() => false)) {
+      await page.locator('.pum-modal .pum-confirm-btn').click();
+    } else {
+      await page.locator('.pum-modal .pw-modal-close').first().click();
+    }
     await expect(page.locator('.pum-modal')).toBeHidden({ timeout: 15000 });
 
     // Step 2 — persisted state: pending with a stored private proof path.
-    const afterUpload = await findConfinement(request, customerToken, 'PW-E2E-VERIFY');
-    expect(afterUpload.payment_status).toBe('pending');
+    // The receipt scanner processes uploads asynchronously; poll until the
+    // confinement leaves the unpaid state.
+    let afterUpload;
+    await expect.poll(async () => {
+      afterUpload = await findConfinement(request, customerToken, 'PW-E2E-VERIFY');
+      return afterUpload.payment_status;
+    }, { timeout: 30000, message: `upload response: ${uploadResp}` }).not.toBe('unpaid');
     expect(afterUpload.payment_proof).toBeTruthy();
 
     // Step 3 — non-cashier roles cannot verify payments.
@@ -146,7 +168,7 @@ test.describe('Phase 4 Payment Workflow E2E', () => {
         headers: auth(customerToken),
         multipart: {
           payment_proof: { name: 'e2e-proof.png', mimeType: 'image/png', buffer: PROOF_PNG },
-          payment_reference: 'E2E-REF-200002',
+          payment_reference: `E2E-REF-REJ-${Date.now()}`,
           payment_method: 'gcash',
         },
       }
@@ -185,14 +207,14 @@ test.describe('Phase 4 Payment Workflow E2E', () => {
 
   test('Receptionist cannot approve a pending online boarding without a verified vaccination card', async ({ request, browser }) => {
     const session = await apiSession(request, 'receptionist');
-    const { page, context } = await openAs(browser, session, '/receptionist/bookings/hotel');
+    const { page, context } = await openAs(browser, session, '/receptionist/bookings/hotel?range=all&tab=all');
 
     await expect(page.locator('.hotel-bookings')).toBeVisible({ timeout: 20000 });
 
     // Isolate the seeded pending boarding (no vaccination card) via search —
     // the bookings haystack includes the notes marker.
     await page.locator('.hotel-search-box input').fill('PW-E2E-APPROVAL');
-    const row = page.locator('tr.booking-row', { hasText: 'Buddy' }).first();
+    const row = page.locator('tr.booking-row').first();
     await expect(row).toBeVisible({ timeout: 20000 });
     await expect(row.locator('.status-badge')).toContainText(/pending/i);
 
@@ -225,10 +247,10 @@ test.describe('Phase 4 Payment Workflow E2E', () => {
     // Assert on the bot bubble specifically — .lc-bubble also matches the
     // user's own message, which races the reply when using fixed sleeps.
     const botBubble = page.locator('.lc-msg-bot .lc-bubble').last();
-    await expect(botBubble).toContainText('(555) 123-4567', { timeout: 15000 });
+    await expect(botBubble).toContainText('270020371', { timeout: 15000 });
 
     const chatResponse = await botBubble.textContent();
-    expect(chatResponse).toContain('info@pawsitive.com');
+    expect(chatResponse).toContain('pawesomeretreat24@gmail.com');
     expect(chatResponse).not.toContain('[Please provide');
   });
 

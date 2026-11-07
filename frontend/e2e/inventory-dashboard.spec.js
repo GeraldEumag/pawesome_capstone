@@ -119,21 +119,23 @@ test.describe('Inventory Dashboard end-to-end', () => {
     // "Loading inventory..." state to clear first.
     await page.locator('text=Loading inventory').waitFor({ state: 'hidden', timeout: 45000 }).catch(() => {});
 
-    // Stock adjust is an icon-only per-row button (title="Adjust Stock").
+    // Stock adjust lives inside each row's actions popover (title="Adjust Stock").
+    await page.getByRole("button", { name: /actions for/i }).first().click().catch(() => {});
     const adjustBtn = page.locator('button:has-text("adjust"), button:has-text("Adjust"), button:has-text("update stock"), button[class*="stock"], button[title*="adjust" i], .btn-icon.adjust').first();
     const actionBtn = page.locator('button:has-text("action"), [data-testid*="action"]').first();
 
     await adjustBtn.waitFor({ state: 'visible', timeout: 30000 }).catch(() => {});
 
-    if (await adjustBtn.isVisible().catch(() => false)) {
+    let hasStockAction = await adjustBtn.isVisible().catch(() => false);
+    if (hasStockAction) {
       await adjustBtn.click();
       await page.waitForTimeout(500);
     } else if (await actionBtn.isVisible().catch(() => false)) {
+      hasStockAction = true;
       await actionBtn.click();
       await page.waitForTimeout(500);
     }
 
-    const hasStockAction = await adjustBtn.isVisible().catch(() => false) || await actionBtn.isVisible().catch(() => false);
     expect(hasStockAction).toBeTruthy();
   });
 

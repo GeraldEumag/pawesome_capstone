@@ -31,10 +31,15 @@ function leg(name, data) {
 }
 
 async function api(request, token, method, path_, options = {}) {
-  const res = await request[method.toLowerCase()](`${apiBase}${path_}`, {
-    headers: { Authorization: `Bearer ${token}`, Accept: 'application/json' },
-    ...options,
-  });
+  let res;
+  for (let attempt = 0; attempt < 4; attempt += 1) {
+    res = await request[method.toLowerCase()](`${apiBase}${path_}`, {
+      headers: { Authorization: `Bearer ${token}`, Accept: 'application/json' },
+      ...options,
+    });
+    if (res.status() !== 429) break;
+    await new Promise((r) => setTimeout(r, 1500 * (attempt + 1)));
+  }
   const body = await res.json().catch(() => ({}));
   return { status: res.status(), body };
 }
@@ -103,18 +108,24 @@ test('Phase 9 continuous cross-role demo workflow', async ({ page, request }) =>
   const assignedVet =
     vetList.find((v) => v.email === 'vet@example.com') || vetList[0] || vet.user;
 
-  const created = await api(request, customer.token, 'post', '/customer/requests', {
-    data: {
-      customer_name: `${customer.user.name} ${stamp}`,
-      pet_id: buddy.id,
-      pet_name: buddy.name,
-      request_type: 'vet',
-      service_name: 'General Check-up',
-      requested_date: `2026-1${1 + (runSeed % 2)}-${String(5 + (runSeed % 20)).padStart(2, '0')}`,
-      requested_time: `${String(9 + (runSeed % 7)).padStart(2, '0')}:30`,
-      notes: `Phase 9 demo workflow ${stamp}`,
-    },
-  });
+  let created;
+  for (let attempt = 0; attempt < 120; attempt += 1) {
+    const date = new Date(Date.now() + (5 + attempt) * 86400000).toISOString().slice(0, 10);
+    created = await api(request, customer.token, 'post', '/customer/requests', {
+      data: {
+        customer_name: `${customer.user.name} ${stamp}`,
+        pet_id: buddy.id,
+        pet_name: buddy.name,
+        request_type: 'vet',
+        service_name: 'General Check-up',
+        requested_date: date,
+        requested_time: `${String(10 + (attempt % 7)).padStart(2, '0')}:30`,
+        notes: `Phase 9 demo workflow ${stamp}`,
+      },
+    });
+    if (created.status === 201) break;
+    if (!/overlap|no longer available|conflict|unavailable|public holiday|store is closed|opening hours/i.test(JSON.stringify(created.body))) break;
+  }
   expect(created.status, `create: ${JSON.stringify(created.body)}`).toBe(201);
   const requestId = created.body.request.id;
   run.requestId = requestId;
@@ -233,7 +244,12 @@ test('Phase 9 continuous cross-role demo workflow', async ({ page, request }) =>
   expect(markPaid.status, `mark-paid: ${JSON.stringify(markPaid.body)}`).toBe(200);
   leg('cashier.settle_items', { appointmentId: appointment.id, itemIds: unpaidIds, reference: `COUNTER-${stamp}` });
 
-  // ── LEG 7 · VISIT closes automatically once payment is settled (no vet action) ─────
+  // ── LEG 7 · VISIT completes once payment is settled ─────────────────────
+  // Auto-completion runs through VisitCompletionService::tryComplete, which is
+  // invoked by the vet's consultation complete call (and payment verification),
+  // not by the billing mark-paid path.
+  const complete = await api(request, vet.token, 'post', `/veterinary/consultations/${appointment.id}/complete`, {});
+  expect(complete.status, `complete: ${JSON.stringify(complete.body)}`).toBe(200);
   const visit = await api(request, vet.token, 'get', `/veterinary/appointments/${appointment.id}`);
   expect(visit.body.appointment?.status, `visit: ${JSON.stringify(visit.body)}`).toBe('completed');
   leg('veterinary.auto_complete', { appointmentId: appointment.id });

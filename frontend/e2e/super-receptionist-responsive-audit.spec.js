@@ -128,9 +128,12 @@ test('Super Receptionist leaves Admin and Cashier POS untouched in the same sess
 
   await navigateWithinApp(page, '/admin');
   await expect(page.locator('.app-dashboard.super-receptionist-layout')).toHaveCount(0);
+  // The forbidden /admin visit bounces back to this role's portal; wait for the
+  // redirect to settle or it clobbers the next in-app navigation.
+  await expect(page).toHaveURL(/\/super-receptionist\//, { timeout: 15000 });
 
   await navigateWithinApp(page, '/cashier/pos');
-  await expect(page.locator('.pos-kiosk').first()).toBeVisible();
+  await expect(page.locator('.pos-kiosk').first()).toBeVisible({ timeout: 15000 });
   await expect(page.locator('.app-dashboard.super-receptionist-layout')).toHaveCount(0);
 });
 

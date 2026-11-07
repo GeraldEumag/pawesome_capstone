@@ -13,7 +13,7 @@ const attendancePayload = {
     email: 'staff@example.test',
     department: 'Front Desk',
     role: 'receptionist',
-    date: '2026-10-13',
+    date: new Date().toISOString().slice(0, 10),
     check_in: '09:00:00',
     check_out: '17:00:00',
     status: 'present',
@@ -33,7 +33,7 @@ test.describe('Manager Attendance response handling', () => {
     await page.goto('/manager/attendance');
 
     await expect(page.getByRole('heading', { name: 'Attendance Management' })).toBeVisible();
-    await expect(page.locator('.attendance-table tbody')).toContainText('Test Staff Member');
+    await expect(page.getByRole('row', { name: /Test Staff Member/ })).toBeVisible();
   });
 
   test('renders a safe empty state when the API returns no attendance rows', async ({ page }) => {

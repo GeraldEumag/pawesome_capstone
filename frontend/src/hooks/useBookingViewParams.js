@@ -1,5 +1,5 @@
 import { useCallback } from "react";
-import { useSearchParams } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 
 const BASE_DEFAULTS = { tab: "all" };
 
@@ -8,35 +8,31 @@ const BASE_DEFAULTS = { tab: "all" };
  * (?tab=to_pay&range=7d). Default values are omitted from the URL.
  */
 export const useBookingViewParams = ({ defaultRange = "today" } = {}) => {
-  const [searchParams, setSearchParams] = useSearchParams();
+  const navigate = useNavigate();
   const DEFAULTS = { ...BASE_DEFAULTS, range: defaultRange };
 
+  const searchParams = new URLSearchParams(window.location.search);
   const tab = searchParams.get("tab") || DEFAULTS.tab;
   const range = searchParams.get("range") || DEFAULTS.range;
 
   const update = useCallback(
     (patch) => {
-      setSearchParams(
-        (current) => {
-          const next = new URLSearchParams(current);
-          // Merge with the CURRENT values — patching one key must not
-          // reset the other (previously a date change wiped the stage tab
-          // and a tab change reset the date to today).
-          const merged = {
-            tab: current.get("tab") || DEFAULTS.tab,
-            range: current.get("range") || DEFAULTS.range,
-            ...patch,
-          };
-          Object.entries(merged).forEach(([key, value]) => {
-            if (value === DEFAULTS[key]) next.delete(key);
-            else next.set(key, value);
-          });
-          return next;
-        },
-        { replace: true }
-      );
+      // Read the URL at call time: two quick updates (date, then stage) must
+      // not overwrite each other with a stale snapshot from the last render.
+      const current = new URLSearchParams(window.location.search);
+      const next = new URLSearchParams(current);
+      const merged = {
+        tab: current.get("tab") || DEFAULTS.tab,
+        range: current.get("range") || DEFAULTS.range,
+        ...patch,
+      };
+      Object.entries(merged).forEach(([key, value]) => {
+        if (value === DEFAULTS[key]) next.delete(key);
+        else next.set(key, value);
+      });
+      navigate({ search: next.toString() }, { replace: true });
     },
-    [setSearchParams, defaultRange]
+    [navigate, defaultRange]
   );
 
   return {

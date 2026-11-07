@@ -52,10 +52,16 @@ async function loginAs(page, role = 'admin') {
   let data = tokenCache.get(cacheKey);
 
   if (!data) {
-    const response = await page.request.post(`${apiBase}/auth/login`, {
-      data: { login: email, password },
-      headers: { Accept: 'application/json' },
-    });
+    let response;
+    for (let attempt = 0; attempt < 2; attempt++) {
+      response = await page.request.post(`${apiBase}/auth/login`, {
+        data: { login: email, password },
+        headers: { Accept: 'application/json' },
+      });
+      if (response.status() !== 429) break;
+      // Throttle window is 60s per account+IP; wait it out once.
+      await new Promise((resolve) => setTimeout(resolve, 61000));
+    }
 
     if (!response.ok()) {
       throw new Error(`Login failed for ${role}: ${response.status()} ${await response.text()}`);
@@ -83,7 +89,10 @@ async function loginAs(page, role = 'admin') {
  * cache with loginAs so repeated spec-level logins never hit the
  * /auth/login 5/min throttle. Returns { token, user }.
  */
+const ROLE_ALIASES = { vet: 'veterinary' };
+
 async function apiLogin(request, role = 'admin', { refresh = false } = {}) {
+  role = ROLE_ALIASES[role] || role;
   const roleUpper = role.toUpperCase();
   const defaults = DEFAULT_CREDENTIALS[role];
   if (!defaults) {
@@ -167,10 +176,38 @@ async function expectDashboardRedirect(page, role) {
   await page.waitForURL(`**${expectedPath}`, { timeout: 10000 });
 }
 
+/**
+ * POST repeatedly across candidate date/time slots until the request is
+ * accepted or all slots are exhausted. The dev DB accumulates bookings across
+ * runs, so fixed slot fixtures collide. `makeData(dateStr, timeStr)` builds
+ * the request body for each candidate; returns { response, date, time, body }.
+ */
+async function postWithSlotProbe(request, url, headers, makeData, { daysAhead = 2, attempts = 60 } = {}) {
+  let response = null;
+  let body = "";
+  let date = "";
+  let time = "";
+  for (let i = 0; i < attempts; i += 1) {
+    date = new Date(Date.now() + (daysAhead + i) * 86400000).toISOString().slice(0, 10);
+    time = `${String(10 + (i % 8)).padStart(2, "0")}:00`;
+    response = await request.post(url, { headers, data: makeData(date, time) });
+    if (response.ok()) return { response, date, time, body: await response.json() };
+    body = await response.text();
+    if (response.status() === 429) {
+      await new Promise((r) => setTimeout(r, 1500));
+      continue;
+    }
+    if (!/overlap|no longer available|conflict|unavailable/i.test(body)) break;
+  }
+  return { response, date, time, body, ok: response?.ok() ?? false };
+}
+
 module.exports = {
+  postWithSlotProbe,
   loginAs,
   apiLogin,
   mockLoginAs,
+  mockApiFallback,
   getDashboardPath,
   expectDashboardRedirect,
   DEFAULT_CREDENTIALS,

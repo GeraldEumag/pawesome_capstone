@@ -1,72 +1,72 @@
 {
   "register": {
     "status": "VERIFIED",
-    "note": "Customer e2e-reg-1792679654846@example.test registered (unverified); welcome/verify intent expected in outbox",
-    "at": "2026-10-22T14:34:20.982Z"
+    "note": "Customer e2e-reg-1793887175259@example.test registered (unverified); welcome/verify intent expected in outbox",
+    "at": "2026-11-05T13:59:36.184Z"
   },
   "email-verify": {
     "status": "VERIFIED",
-    "note": "e2e-reg-1792679654846@example.test verified via planted token (issuance proven by outbox intent; SMTP accepted; mailbox delivery not provable on a fake domain)",
-    "at": "2026-10-22T14:34:25.255Z"
+    "note": "e2e-reg-1793887175259@example.test verified via planted token (issuance proven by outbox intent; SMTP accepted; mailbox delivery not provable on a fake domain)",
+    "at": "2026-11-05T13:59:37.087Z"
   },
   "password-reset": {
     "status": "VERIFIED",
-    "note": "e2e-reg-1792679654846@example.test reset via planted token and logged in with the new password",
-    "at": "2026-10-22T14:34:51.126Z"
+    "note": "e2e-reg-1793887175259@example.test reset via planted token and logged in with the new password",
+    "at": "2026-11-05T13:59:39.363Z"
   },
   "verified-middleware": {
     "status": "VERIFIED",
     "note": "Unverified customer booking POST -> HTTP 403 (expected 403)",
-    "at": "2026-10-22T14:35:06.852Z"
+    "at": "2026-11-05T13:59:40.875Z"
   },
   "inactive-login-block": {
     "status": "VERIFIED",
     "note": "Inactive login -> HTTP 403",
-    "at": "2026-10-22T14:35:56.594Z"
+    "at": "2026-11-05T13:59:41.484Z"
   },
   "role-gates": {
     "status": "VERIFIED",
     "note": "customer->/admin/users HTTP 403; cashier->/manager/payroll HTTP 403",
-    "at": "2026-10-22T14:36:08.792Z"
+    "at": "2026-11-05T13:59:42.049Z"
   },
   "kiosk-wrong-pin": {
     "status": "VERIFIED",
     "note": "Wrong PIN -> HTTP 401",
-    "at": "2026-10-22T14:36:10.232Z"
+    "at": "2026-11-05T13:59:42.246Z"
   },
   "kiosk-unlock": {
     "status": "VERIFIED",
     "note": "Configured PIN -> HTTP 200 success=true",
-    "at": "2026-10-22T14:36:11.490Z"
+    "at": "2026-11-05T13:59:42.459Z"
   },
   "leave-chain": {
     "status": "VERIFIED",
-    "note": "Leave 10 filed by manager for fixture user -> rejected (employee self-file blocked: no leave_balances seeded)",
-    "at": "2026-10-22T14:36:31.317Z"
+    "note": "Leave 49 filed by manager for fixture user -> rejected (employee self-file blocked: no leave_balances seeded)",
+    "at": "2026-11-05T13:59:42.878Z"
   },
   "attendance-correction": {
     "status": "VERIFIED",
-    "note": "Correction 13 filed -> manager rejected",
-    "at": "2026-10-22T14:36:46.584Z"
+    "note": "Correction 24 filed -> manager rejected",
+    "at": "2026-11-05T13:59:43.718Z"
   },
   "day-offs": {
     "status": "VERIFIED",
-    "note": "Day-offs [6,0] set for user 73; clear-to-empty HTTP 200 (cleared)",
-    "at": "2026-10-22T14:36:55.909Z"
+    "note": "Day-offs [6,0] set for user 984; clear-to-empty HTTP 200 (cleared)",
+    "at": "2026-11-05T13:59:44.134Z"
   },
   "supplier-roundtrip": {
     "status": "VERIFIED",
-    "note": "Supplier 8 created -> delete HTTP 200",
-    "at": "2026-10-22T14:37:01.364Z"
+    "note": "Supplier 34 created -> delete HTTP 200",
+    "at": "2026-11-05T13:59:44.528Z"
   },
   "batch-roundtrip": {
     "status": "VERIFIED",
-    "note": "Item 147 stock 50 -> +batch -> 51 -> dispose -> 50 (batch 32)",
-    "at": "2026-10-22T14:37:04.872Z"
+    "note": "Item 147 stock 50 -> +batch -> 51 -> dispose -> 50 (batch 467)",
+    "at": "2026-11-05T13:59:45.544Z"
   },
   "payroll": {
     "status": "VERIFIED",
-    "note": "Payroll 1 for fixture user 73 already at status=paid (prior run)",
-    "at": "2026-10-22T14:37:06.966Z"
+    "note": "Payroll 12 for fixture user 984: approve HTTP 200, release HTTP 200",
+    "at": "2026-11-05T13:59:46.411Z"
   }
 }

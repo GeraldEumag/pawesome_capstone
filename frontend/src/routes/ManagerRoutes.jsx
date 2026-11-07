@@ -18,7 +18,6 @@ import SalaryLoanManagement from "../components/manager/SalaryLoanManagement";
 import ThirteenthMonthPanel from "../components/manager/ThirteenthMonthPanel";
 import GovernmentRemittanceReports from "../components/manager/GovernmentRemittanceReports";
 import DTRReport from "../components/manager/DTRReport";
-import ManagerInvoiceApprovals from "../components/manager/ManagerInvoiceApprovals";
 import ServiceCatalogManager from "../components/shared/catalog/ServiceCatalogManager";
 import ReceiptScannerSettings from "../components/manager/ReceiptScannerSettings";
 // Employee self-service
@@ -87,7 +86,6 @@ const ManagerRoutes = () => (
       <Route path="thirteenth-month" element={<ThirteenthMonthPanel />} />
       <Route path="remittance-reports" element={<GovernmentRemittanceReports />} />
       <Route path="dtr-report" element={<DTRReport />} />
-      <Route path="invoice-approvals" element={<ManagerInvoiceApprovals />} />
       <Route path="receipt-scanner" element={<ReceiptScannerSettings />} />
       {/* Employee self-service (accessible to all logged-in staff under /manager/ scope) */}
       <Route path="my-leave" element={<MyLeave />} />

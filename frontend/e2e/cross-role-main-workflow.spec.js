@@ -252,25 +252,35 @@ async function ensureBuddyPet(request, customerSession) {
 }
 
 async function createVetRequest(request, customerSession, pet) {
-  const offset = 10 + (runSeed % 20);
-  // Shop hours are 10:00–18:00 — keep the seeded time inside the window
-  // (previously 9 + seed%7 could pick 09:30 and fail validation ~1/7 runs).
-  const hour = 10 + (runSeed % 7);
-  const created = await api(request, customerSession, "POST", "/customer/requests", {
-    data: {
-      customer_name: customerSession.user.name || "Demo Customer",
-      customer_email: customerSession.user.email || accounts.customer.email,
-      pet_id: pet.id,
-      pet_name: pet.name,
-      request_type: "vet",
-      service_type: "vet",
-      service_name: "General Check-up",
-      requested_date: futureDate(offset),
-      requested_time: `${String(hour).padStart(2, "0")}:30`,
-      notes: `CROSS_ROLE_MAIN_WORKFLOW vet request ${runSeed}`,
-      price: 500,
-    },
-  });
+  // Dev DB accumulates bookings across runs — probe future slots until one is free.
+  let created;
+  let lastErr;
+  for (let attempt = 0; attempt < 40; attempt += 1) {
+    const offset = 10 + (runSeed % 20) + Math.floor(attempt / 7);
+    const hour = 10 + (attempt % 7);
+    try {
+      created = await api(request, customerSession, "POST", "/customer/requests", {
+        data: {
+          customer_name: customerSession.user.name || "Demo Customer",
+          customer_email: customerSession.user.email || accounts.customer.email,
+          pet_id: pet.id,
+          pet_name: pet.name,
+          request_type: "vet",
+          service_type: "vet",
+          service_name: "General Check-up",
+          requested_date: futureDate(offset),
+          requested_time: `${String(hour).padStart(2, "0")}:30`,
+          notes: `CROSS_ROLE_MAIN_WORKFLOW vet request ${runSeed}`,
+          price: 500,
+        },
+      });
+      break;
+    } catch (err) {
+      lastErr = err;
+      created = null;
+    }
+  }
+  if (!created) throw lastErr;
   return created.request || created.data || created;
 }
 

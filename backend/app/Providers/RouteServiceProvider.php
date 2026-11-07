@@ -41,9 +41,9 @@ class RouteServiceProvider extends ServiceProvider
      */
     protected function configureRateLimiting(): void
     {
-        // Global API rate limit: 60 requests per minute per IP
+        // Global API rate limit: 60 requests per minute per IP (override with API_RATE_LIMIT_PER_MINUTE)
         RateLimiter::for('api', function (Request $request) {
-            return Limit::perMinute(60)->by($request->ip());
+            return Limit::perMinute(config('app.api_rate_limit_per_minute'))->by($request->ip());
         });
 
         // Strict rate limit for authentication endpoints per account and IP.

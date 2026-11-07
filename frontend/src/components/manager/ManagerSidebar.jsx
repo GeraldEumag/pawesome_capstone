@@ -92,11 +92,6 @@ const ManagerSidebar = ({ mobileOpen, onMobileMenuToggle }) => {
             </NavLink>
           </li>
           <li className="nav-item">
-            <NavLink to="/manager/invoice-approvals" onClick={handleNavClick}>
-              Invoice Approvals
-            </NavLink>
-          </li>
-          <li className="nav-item">
             <NavLink to="/manager/receipt-scanner" onClick={handleNavClick}>
               Receipt Scanner
             </NavLink>

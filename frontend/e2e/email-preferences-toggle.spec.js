@@ -26,59 +26,47 @@ async function putPreference(request, token, email) {
 
 test.describe('Customer email-notification preference (live backend)', () => {
   test('toggle persists OFF and ON across reload via the preference API', async ({ page, request }) => {
+    test.setTimeout(240000);
     const { token } = await apiLogin(request, 'customer');
+    // Persisted value is read from the API, not a response listener, so the
+    // check is independent of when the browser's own requests resolve.
+    const readPref = async () => (await (await request.get(`${apiBase}/customer/notification-preferences`, {
+      headers: { Authorization: `Bearer ${token}`, Accept: 'application/json' },
+    })).json()).email;
 
     // Deterministic baseline: preference ON before browser interaction.
     await putPreference(request, token, true);
 
     await loginAs(page, 'customer');
-    const getResponse = page.waitForResponse(
-      (r) => r.url().includes('notification-preferences') && r.request().method() === 'GET'
+    // The profile fetches the preference once on mount. Wait for that GET to settle
+    // before interacting, so a late response can't overwrite a user toggle.
+    const initialGet = page.waitForResponse(
+      (r) => r.url().includes('notification-preferences') && r.request().method() === 'GET',
+      { timeout: 90000 }
     );
     await page.goto(`${frontendUrl}/customer/profile`);
-    const initial = await getResponse;
-    expect((await initial.json()).email).toBe(true);
-
+    await initialGet;
+    await expect(page.getByText('Loading your profile')).toHaveCount(0, { timeout: 60000 });
     const checkbox = emailToggle(page);
-    await expect(checkbox).toBeChecked();
+    await expect(checkbox).toBeChecked({ timeout: 20000 });
 
-    // OFF: toggle → PUT 200 {email:false} → stays off after reload.
-    const [putOff] = await Promise.all([
-      page.waitForResponse(
-        (r) => r.url().includes('notification-preferences') && r.request().method() === 'PUT'
-      ),
-      checkbox.evaluate((el) => el.click()),
-    ]);
-    expect((await putOff.json()).email).toBe(false);
-    await expect(checkbox).not.toBeChecked();
-
-    const reloadGet = page.waitForResponse(
-      (r) => r.url().includes('notification-preferences') && r.request().method() === 'GET'
-    );
-    await page.reload();
-    // Reload refetches the persisted preference — must come back OFF.
-    expect((await (await reloadGet).json()).email).toBe(false);
+    // OFF: toggle, then assert the server persisted it.
+    await checkbox.evaluate((el) => el.click());
+    await expect.poll(readPref, { timeout: 90000 }).toBe(false);
     await expect(checkbox).not.toBeChecked({ timeout: 15000 });
-    const persistedOff = await request.get(`${apiBase}/customer/notification-preferences`, {
-      headers: { Authorization: `Bearer ${token}`, Accept: 'application/json' },
-    });
-    expect((await persistedOff.json()).email).toBe(false);
 
-    // ON: toggle → PUT 200 {email:true} → stays on after reload.
-    const [putOn] = await Promise.all([
-      page.waitForResponse(
-        (r) => r.url().includes('notification-preferences') && r.request().method() === 'PUT'
-      ),
-      checkbox.evaluate((el) => el.click()),
-    ]);
-    expect((await putOn.json()).email).toBe(true);
-    await expect(checkbox).toBeChecked();
-
-    const reloadGetOn = page.waitForResponse(
-      (r) => r.url().includes('notification-preferences') && r.request().method() === 'GET'
-    );
+    // Reload must come back OFF.
     await page.reload();
-    expect((await (await reloadGetOn).json()).email).toBe(true);
+    await expect(page.getByText('Loading your profile')).toHaveCount(0, { timeout: 60000 });
+    await expect(checkbox).not.toBeChecked({ timeout: 20000 });
+
+    // ON: toggle, assert persisted, reload, assert it stays ON.
+    await checkbox.evaluate((el) => el.click());
+    await expect.poll(readPref, { timeout: 90000 }).toBe(true);
     await expect(checkbox).toBeChecked({ timeout: 15000 });
+
+    await page.reload();
+    await expect(page.getByText('Loading your profile')).toHaveCount(0, { timeout: 60000 });
+    await expect(checkbox).toBeChecked({ timeout: 20000 });
   });
 });

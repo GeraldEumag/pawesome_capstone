@@ -87,7 +87,7 @@ test("boarding approval cancel is inert and confirmation submits once", async ({
     }
   );
 
-  await page.goto("/receptionist/bookings/hotel");
+  await page.goto("/receptionist/bookings/hotel?range=all&tab=all");
   const row = page.locator("tr", { hasText: "Pip" });
   await expect(row).toBeVisible();
 

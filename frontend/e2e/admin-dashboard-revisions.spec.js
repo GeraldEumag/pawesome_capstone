@@ -1,4 +1,15 @@
 const { test, expect } = require("@playwright/test");
+
+// The API throttles per account; retry a 429 once the window has passed.
+async function deleteRetry(request, url, options) {
+  let res;
+  for (let attempt = 0; attempt < 3; attempt++) {
+    res = await request.delete(url, options);
+    if (res.status() !== 429) break;
+    await new Promise((r) => setTimeout(r, 20000));
+  }
+  return res;
+}
 const { loginAs, apiLogin } = require("./test-utils");
 
 const API_BASE = process.env.E2E_API_URL || "http://127.0.0.1:8000/api";
@@ -24,7 +35,7 @@ test.describe("Admin dashboard revisions", () => {
         role: "customer",
       },
     });
-    expect(createRes.ok()).toBeTruthy();
+    expect(createRes.ok(), `create temp user: ${createRes.status()} ${await createRes.text()}`).toBeTruthy();
 
     await loginAs(page, "admin");
     await page.goto("/admin/users");
@@ -37,7 +48,7 @@ test.describe("Admin dashboard revisions", () => {
       .locator(".row-action-popover-item", { hasText: "Delete User" })
       .click();
 
-    await expect(page.locator(".mu-modal")).toBeVisible();
+    await expect(page.getByText("Delete this user?")).toBeVisible();
 
     // Reason dropdown is present with the predefined options
     const reasonSelect = page.locator("#mu-delete-reason");
@@ -53,8 +64,8 @@ test.describe("Admin dashboard revisions", () => {
     await expect(detail).toBeVisible();
     await detail.fill("Temporary account created by automated regression test");
 
-    await page.locator(".mu-modal-actions .confirm-btn").click();
-    await expect(page.locator(".mu-modal")).toBeHidden({ timeout: 10000 });
+    await page.locator(".confirm-btn.danger").click();
+    await expect(page.getByText("Delete this user?")).toBeHidden({ timeout: 10000 });
     await expect(row).toHaveCount(0);
   });
 
@@ -81,23 +92,23 @@ test.describe("Admin dashboard revisions", () => {
       Accept: "application/json",
     };
 
-    const missing = await request.delete(`${API_BASE}/admin/users/${targetId}`, { headers, data: {} });
+    const missing = await deleteRetry(request, `${API_BASE}/admin/users/${targetId}`, { headers, data: {} });
     expect(missing.status()).toBe(422);
 
-    const invalid = await request.delete(`${API_BASE}/admin/users/${targetId}`, {
+    const invalid = await deleteRetry(request, `${API_BASE}/admin/users/${targetId}`, {
       headers,
       data: { reason: "not_a_real_reason" },
     });
     expect(invalid.status()).toBe(422);
 
-    const otherNoDetails = await request.delete(`${API_BASE}/admin/users/${targetId}`, {
+    const otherNoDetails = await deleteRetry(request, `${API_BASE}/admin/users/${targetId}`, {
       headers,
       data: { reason: "other" },
     });
     expect(otherNoDetails.status()).toBe(422);
 
     // Cleanup with a valid reason
-    const ok = await request.delete(`${API_BASE}/admin/users/${targetId}`, {
+    const ok = await deleteRetry(request, `${API_BASE}/admin/users/${targetId}`, {
       headers,
       data: { reason: "test_account" },
     });
@@ -138,9 +149,12 @@ test.describe("Admin dashboard revisions", () => {
   test("chatbot logs render compact summary list", async ({ page }) => {
     await loginAs(page, "admin");
     await page.goto("/admin/chatbot");
-    await expect(page.locator(".management-panel").first()).toBeVisible({ timeout: 15000 });
+    await expect(page.locator(".management-panel").first()).toBeVisible({ timeout: 45000 });
+    // Scope to the conversation-summary panel — other panels also render
+    // .empty-state placeholders that may be hidden.
+    const summaryPanel = page.locator(".management-panel").first();
     await expect(
-      page.locator(".management-card.clickable, .empty-state").first()
+      summaryPanel.locator(".convo-card, .empty-state").first()
     ).toBeVisible();
   });
 });

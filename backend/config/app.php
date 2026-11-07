@@ -81,6 +81,10 @@ return [
 
     'locale' => env('APP_LOCALE', 'en'),
 
+    // Per-IP requests per minute for the general API limiter (RouteServiceProvider).
+    // Keep the default in production; E2E runs on a shared dev IP may raise it locally.
+    'api_rate_limit_per_minute' => (int) env('API_RATE_LIMIT_PER_MINUTE', 60),
+
     'fallback_locale' => env('APP_FALLBACK_LOCALE', 'en'),
 
     'faker_locale' => env('APP_FAKER_LOCALE', 'en_US'),

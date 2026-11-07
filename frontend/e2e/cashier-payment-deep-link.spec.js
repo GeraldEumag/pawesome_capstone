@@ -17,10 +17,15 @@ async function login(request, role) {
 }
 
 async function api(request, session, method, endpoint, options = {}) {
-  const res = await request[method](`${apiUrl}${endpoint}`, {
-    headers: { Accept: "application/json", Authorization: `Bearer ${session.token}` },
-    ...options,
-  });
+  let res;
+  for (let attempt = 0; attempt < 4; attempt += 1) {
+    res = await request[method](`${apiUrl}${endpoint}`, {
+      headers: { Accept: "application/json", Authorization: `Bearer ${session.token}` },
+      ...options,
+    });
+    if (res.status() !== 429) break;
+    await new Promise((r) => setTimeout(r, 1500 * (attempt + 1)));
+  }
   const body = await res.json().catch(() => ({}));
   expect(res.ok(), `${method.toUpperCase()} ${endpoint}: ${res.status()} ${JSON.stringify(body)}`).toBeTruthy();
   return body;
@@ -54,9 +59,9 @@ test("cashier payment notification opens Payment Approvals", async ({ browser, r
   // Vary date+time per attempt so a retry after a mid-flow failure — or a
   // slot already held by an unrelated booking — doesn't collide.
   let requestId;
-  for (let attempt = 0; attempt < 6 && !requestId; attempt++) {
-    const date = new Date(Date.now() + (10 + attempt + (Date.now() % 4)) * 86400000).toISOString().slice(0, 10);
-    const time = ["10:00", "11:00", "13:00", "14:00", "15:00", "16:00"][(Date.now() % 6 + attempt) % 6];
+  for (let attempt = 0; attempt < 60 && !requestId; attempt++) {
+    const date = new Date(Date.now() + (10 + attempt) * 86400000).toISOString().slice(0, 10);
+    const time = `${String(10 + (attempt % 8)).padStart(2, "0")}:00`;
     try {
       requestId = (await api(request, customer, "post", "/customer/requests", {
         data: {
@@ -67,7 +72,7 @@ test("cashier payment notification opens Payment Approvals", async ({ browser, r
         },
       })).request.id;
     } catch (e) {
-      if (attempt === 5) throw e;
+      if (attempt === 59 || !/overlaps|no longer available|conflict|public holiday|store is closed|429/i.test(String(e.message))) throw e;
     }
   }
   await api(request, receptionist, "post", `/receptionist/requests/${requestId}/approve`, { data: { receptionist_remarks: "DEEPLINK_TEST" } });
@@ -81,8 +86,11 @@ test("cashier payment notification opens Payment Approvals", async ({ browser, r
   // Cashier clicks the notification from a sidebar page.
   const { page, context } = await openAs(browser, cashier, "/cashier/transactions");
   await page.locator(".pawesome-notification-btn").click();
+  // Under suite load the notifications fetch can take a while — wait for the
+  // loader to clear first, then for the item itself.
+  await page.getByText("Loading notifications").waitFor({ state: "hidden", timeout: 45000 }).catch(() => {});
   const item = page.locator(".pawesome-notification-item", { hasText: `service request #${requestId}` }).first();
-  await expect(item).toBeVisible({ timeout: 20000 });
+  await expect(item).toBeVisible({ timeout: 45000 });
   await item.click();
 
   await expect(page).toHaveURL(/\/cashier\/payment-verification$/);

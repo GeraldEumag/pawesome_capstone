@@ -12,7 +12,7 @@ const managerPages = [
   { path: "/manager/staff", label: "manager-staff", api: "/api/manager/staff" },
   { path: "/manager/attendance", label: "manager-attendance", api: "/api/manager/attendance" },
   { path: "/manager/leave", label: "manager-leave", api: "/api/manager/leaves" },
-  { path: "/manager/schedule", label: "manager-schedule", api: "/api/manager/schedules" },
+  { path: "/manager/schedule", label: "manager-schedule", api: "/api/manager/attendance", redirectsTo: "/manager/attendance" },
   { path: "/manager/payroll", label: "manager-payroll", api: "/api/manager/payroll" },
   // Legacy URL — ManagerRoutes redirects this to /manager/payroll (now a tab).
   { path: "/manager/payroll/computation", label: "manager-payroll-computation", api: "/api/manager/payroll", redirectsTo: "/manager/payroll" },

@@ -196,26 +196,30 @@ test("veterinary: request -> receptionist approve -> appointment visible", async
   const receptionist = await apiLogin(request, "receptionist");
   const vet = await apiLogin(request, "veterinary");
 
-  // Slots fill up across runs — try a few candidate date/time pairs.
+  // Per-run pet (the seeded "Buddy" fixture no longer exists) and a probe
+  // across open slots — the shared dev DB fills up across runs.
+  const petRes = await request.post(`${apiUrl}/pets`, {
+    headers: authH(customer.token),
+    data: { name: `E2E Vet Chain Pet ${Date.now()}`, species: "Dog" },
+  });
+  const vetPet = (await petRes.json()).pet || (await petRes.json());
   let vetSrId = null;
-  const slots = [
-    [new Date(Date.now() + 15 * 86400000).toISOString().slice(0, 10), "14:00"],
-    [new Date(Date.now() + 15 * 86400000).toISOString().slice(0, 10), "10:00"],
-    [new Date(Date.now() + 16 * 86400000).toISOString().slice(0, 10), "15:00"],
-  ];
-  for (const [date, time] of slots) {
+  for (let attempt = 0; attempt < 60 && !vetSrId; attempt++) {
+    const date = new Date(Date.now() + (15 + Math.floor(attempt / 8)) * 86400000).toISOString().slice(0, 10);
+    const time = `${String(10 + (attempt % 8)).padStart(2, "0")}:00`;
     const reqRes = await request.post(`${apiUrl}/customer/requests`, {
       headers: authH(customer.token),
       data: {
         customer_name: customer.user.name, customer_email: customer.user.email,
-        pet_id: 3, pet_name: "Buddy", request_type: "vet", service_type: "vet",
+        pet_id: vetPet.id, pet_name: vetPet.name, request_type: "vet", service_type: "vet",
         service_name: "Consultation", request_date: date, request_time: time,
         requested_date: date, requested_time: time, notes: "E2E manual audit vet chain",
       },
     });
     if (reqRes.ok()) {
       vetSrId = (await reqRes.json()).request?.id;
-      break;
+    } else if (reqRes.status() === 429) {
+      await new Promise((r) => setTimeout(r, 1500));
     }
   }
   expect(vetSrId, "a free vet slot across candidates").toBeTruthy();
@@ -231,7 +235,7 @@ test("veterinary: request -> receptionist approve -> appointment visible", async
   await expect(page.locator(".app-sidebar")).toBeVisible({ timeout: 20000 });
   await page.waitForLoadState("networkidle");
   const bodyText = await page.locator("body").innerText();
-  const found = bodyText.includes("Buddy") || bodyText.includes("Consultation");
+  const found = bodyText.includes(vetPet.name) || bodyText.includes("Consultation");
   await page.screenshot({ path: path.join(shotDir, "UM-016-vet-appointment-approved.png") });
   record(
     "vet-appointment-chain",

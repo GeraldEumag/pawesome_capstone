@@ -3,134 +3,672 @@
     "backendUrl": "http://127.0.0.1:8000",
     "frontendUrl": "http://127.0.0.1:3000",
     "browserPreview": "http://127.0.0.1:64422",
-    "testDate": "2026-09-25T00:21:19.250Z",
+    "testDate": "2026-11-05T14:04:55.595Z",
     "tester": "Codex automated Playwright"
   },
   "roles": [
     {
       "role": "customer",
-      "login": false,
-      "dashboard": false,
-      "dashboardUrl": "",
-      "sidebar": false,
-      "mainPages": [],
+      "login": true,
+      "dashboard": true,
+      "dashboardUrl": "http://127.0.0.1:3000/customer/services",
+      "sidebar": true,
+      "mainPages": [
+        {
+          "path": "/customer/services",
+          "url": "http://127.0.0.1:3000/customer/services",
+          "navigationMode": "clicked",
+          "rendered": true,
+          "screenshot": "documentation/screenshots/phase10/customer-customer-services.png"
+        },
+        {
+          "path": "/customer/pets",
+          "url": "http://127.0.0.1:3000/customer/pets",
+          "navigationMode": "clicked",
+          "rendered": true,
+          "screenshot": "documentation/screenshots/phase10/customer-customer-pets.png"
+        },
+        {
+          "path": "/customer/payments",
+          "url": "http://127.0.0.1:3000/customer/payments",
+          "navigationMode": "opened-directly",
+          "rendered": true,
+          "screenshot": "documentation/screenshots/phase10/customer-customer-payments.png"
+        },
+        {
+          "path": "/customer/notifications",
+          "url": "http://127.0.0.1:3000/customer/notifications",
+          "navigationMode": "clicked",
+          "rendered": true,
+          "screenshot": "documentation/screenshots/phase10/customer-customer-notifications.png"
+        }
+      ],
       "blankPages": [],
-      "consoleErrors": [],
+      "consoleErrors": [
+        {
+          "type": "error",
+          "text": "LOAD CUSTOMER PAYMENTS ERROR: Error: Cannot reach the server right now. Please check your connection and try again.\n    at apiRequest (http://127.0.0.1:3000/src/api/client.js:161:13)\n    at async fetchPayments (http://127.0.0.1:3000/src/components/customers/CustomerPayments.jsx:90:28)",
+          "url": "http://127.0.0.1:3000/customer/notifications"
+        },
+        {
+          "type": "error",
+          "text": "LOAD CUSTOMER PAYMENTS ERROR: Error: Cannot reach the server right now. Please check your connection and try again.\n    at apiRequest (http://127.0.0.1:3000/src/api/client.js:161:13)\n    at async fetchPayments (http://127.0.0.1:3000/src/components/customers/CustomerPayments.jsx:90:28)",
+          "url": "http://127.0.0.1:3000/customer/notifications"
+        },
+        {
+          "type": "error",
+          "text": "Customer notifications fetch error: Error: Cannot reach the server right now. Please check your connection and try again.\n    at apiRequest (http://127.0.0.1:3000/src/api/client.js:161:13)\n    at async fetchNotifications (http://127.0.0.1:3000/src/components/customers/CustomerNotifications.jsx:47:20)",
+          "url": "http://127.0.0.1:3000/customer/notifications"
+        },
+        {
+          "type": "error",
+          "text": "Customer notifications fetch error: Error: Cannot reach the server right now. Please check your connection and try again.\n    at apiRequest (http://127.0.0.1:3000/src/api/client.js:161:13)\n    at async fetchNotifications (http://127.0.0.1:3000/src/components/customers/CustomerNotifications.jsx:47:20)",
+          "url": "http://127.0.0.1:3000/customer/notifications"
+        }
+      ],
       "networkErrors": [
         {
           "status": "REQUEST_FAILED",
           "method": "GET",
           "url": "http://localhost:8000/api/settings/public",
-          "page": "http://localhost:3000/login",
+          "page": "http://127.0.0.1:3000/login",
           "failure": "net::ERR_ABORTED"
         },
         {
           "status": "REQUEST_FAILED",
           "method": "GET",
           "url": "http://localhost:8000/api/settings/public",
-          "page": "http://localhost:3000/login",
+          "page": "http://127.0.0.1:3000/login",
+          "failure": "net::ERR_ABORTED"
+        },
+        {
+          "status": "REQUEST_FAILED",
+          "method": "GET",
+          "url": "http://localhost:8000/api/files/pet-photos/1/view?t=1792255082",
+          "page": "http://127.0.0.1:3000/customer/pets",
+          "failure": "net::ERR_ABORTED"
+        },
+        {
+          "status": "REQUEST_FAILED",
+          "method": "GET",
+          "url": "http://localhost:8000/api/files/pet-photos/1/view?t=1792255082",
+          "page": "http://127.0.0.1:3000/customer/pets",
+          "failure": "net::ERR_ABORTED"
+        },
+        {
+          "status": "REQUEST_FAILED",
+          "method": "GET",
+          "url": "http://localhost:8000/api/settings/public",
+          "page": "http://127.0.0.1:3000/customer/notifications",
+          "failure": "net::ERR_ABORTED"
+        },
+        {
+          "status": "REQUEST_FAILED",
+          "method": "GET",
+          "url": "http://localhost:8000/api/customer/store/orders",
+          "page": "http://127.0.0.1:3000/customer/notifications",
+          "failure": "net::ERR_ABORTED"
+        },
+        {
+          "status": "REQUEST_FAILED",
+          "method": "GET",
+          "url": "http://localhost:8000/api/customer/store/orders",
+          "page": "http://127.0.0.1:3000/customer/notifications",
+          "failure": "net::ERR_ABORTED"
+        },
+        {
+          "status": "REQUEST_FAILED",
+          "method": "GET",
+          "url": "http://localhost:8000/api/notifications",
+          "page": "http://127.0.0.1:3000/customer/notifications",
+          "failure": "net::ERR_ABORTED"
+        },
+        {
+          "status": "REQUEST_FAILED",
+          "method": "GET",
+          "url": "http://localhost:8000/api/notifications",
+          "page": "http://127.0.0.1:3000/customer/notifications",
           "failure": "net::ERR_ABORTED"
         }
       ],
-      "screenshot": "documentation/screenshots/phase10/customer-failure.png",
-      "notes": [
-        "\u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoBeVisible\u001b[2m(\u001b[22m\u001b[2m)\u001b[22m failed\n\nLocator: locator('.swal2-confirm')\nExpected: visible\nTimeout: 15000ms\nError: element(s) not found\n\nCall log:\n\u001b[2m  - Expect \"toBeVisible\" with timeout 15000ms\u001b[22m\n\u001b[2m  - waiting for locator('.swal2-confirm')\u001b[22m\n"
-      ],
-      "status": "FAIL"
+      "screenshot": "documentation/screenshots/phase10/customer-dashboard.png",
+      "notes": [],
+      "status": "WARN"
     },
     {
       "role": "receptionist",
-      "login": false,
-      "dashboard": false,
-      "dashboardUrl": "",
-      "sidebar": false,
-      "mainPages": [],
+      "login": true,
+      "dashboard": true,
+      "dashboardUrl": "http://127.0.0.1:3000/receptionist",
+      "sidebar": true,
+      "mainPages": [
+        {
+          "path": "/receptionist/appointments-boarding",
+          "url": "http://127.0.0.1:3000/receptionist/bookings/hotel",
+          "navigationMode": "opened-directly",
+          "rendered": true,
+          "screenshot": "documentation/screenshots/phase10/receptionist-receptionist-appointments-boarding.png"
+        },
+        {
+          "path": "/receptionist/customers",
+          "url": "http://127.0.0.1:3000/receptionist/customers",
+          "navigationMode": "opened-directly",
+          "rendered": true,
+          "screenshot": "documentation/screenshots/phase10/receptionist-receptionist-customers.png"
+        },
+        {
+          "path": "/receptionist/history",
+          "url": "http://127.0.0.1:3000/receptionist/history",
+          "navigationMode": "clicked",
+          "rendered": true,
+          "screenshot": "documentation/screenshots/phase10/receptionist-receptionist-history.png"
+        },
+        {
+          "path": "/receptionist/reports",
+          "url": "http://127.0.0.1:3000/receptionist/reports",
+          "navigationMode": "clicked",
+          "rendered": true,
+          "screenshot": "documentation/screenshots/phase10/receptionist-receptionist-reports.png"
+        }
+      ],
       "blankPages": [],
-      "consoleErrors": [],
+      "consoleErrors": [
+        {
+          "type": "error",
+          "text": "Report fetch error: Error: Cannot reach the server right now. Please check your connection and try again.\n    at apiRequest (http://127.0.0.1:3000/src/api/client.js:161:13)\n    at async http://127.0.0.1:3000/src/components/receptionist/ReceptionistReports.jsx:147:20\n    at async http://127.0.0.1:3000/src/components/shared/UnifiedReportEngine.jsx:684:7",
+          "url": "http://127.0.0.1:3000/receptionist/reports"
+        },
+        {
+          "type": "error",
+          "text": "Report fetch error: Error: Cannot reach the server right now. Please check your connection and try again.\n    at apiRequest (http://127.0.0.1:3000/src/api/client.js:161:13)\n    at async http://127.0.0.1:3000/src/components/receptionist/ReceptionistReports.jsx:147:20\n    at async http://127.0.0.1:3000/src/components/shared/UnifiedReportEngine.jsx:684:7",
+          "url": "http://127.0.0.1:3000/receptionist/reports"
+        }
+      ],
       "networkErrors": [
         {
           "status": "REQUEST_FAILED",
           "method": "GET",
           "url": "http://localhost:8000/api/settings/public",
-          "page": "http://localhost:3000/login",
+          "page": "http://127.0.0.1:3000/login",
           "failure": "net::ERR_ABORTED"
         },
         {
           "status": "REQUEST_FAILED",
           "method": "GET",
           "url": "http://localhost:8000/api/settings/public",
-          "page": "http://localhost:3000/login",
+          "page": "http://127.0.0.1:3000/login",
+          "failure": "net::ERR_ABORTED"
+        },
+        {
+          "status": "REQUEST_FAILED",
+          "method": "GET",
+          "url": "http://localhost:8000/api/receptionist/boarding-requests",
+          "page": "http://127.0.0.1:3000/receptionist/bookings/hotel",
+          "failure": "net::ERR_ABORTED"
+        },
+        {
+          "status": "REQUEST_FAILED",
+          "method": "GET",
+          "url": "http://localhost:8000/api/receptionist/boarding-rooms",
+          "page": "http://127.0.0.1:3000/receptionist/bookings/hotel",
+          "failure": "net::ERR_ABORTED"
+        },
+        {
+          "status": "REQUEST_FAILED",
+          "method": "GET",
+          "url": "http://localhost:8000/api/notifications?role=receptionist",
+          "page": "http://127.0.0.1:3000/receptionist/bookings/hotel",
+          "failure": "net::ERR_ABORTED"
+        },
+        {
+          "status": "REQUEST_FAILED",
+          "method": "GET",
+          "url": "http://localhost:8000/api/receptionist/boarding-rooms",
+          "page": "http://127.0.0.1:3000/receptionist/bookings/hotel",
+          "failure": "net::ERR_ABORTED"
+        },
+        {
+          "status": "REQUEST_FAILED",
+          "method": "GET",
+          "url": "http://localhost:8000/api/receptionist/boarding-requests",
+          "page": "http://127.0.0.1:3000/receptionist/bookings/hotel",
+          "failure": "net::ERR_ABORTED"
+        },
+        {
+          "status": "REQUEST_FAILED",
+          "method": "GET",
+          "url": "http://localhost:8000/api/settings/public",
+          "page": "http://127.0.0.1:3000/receptionist/bookings/hotel",
+          "failure": "net::ERR_ABORTED"
+        },
+        {
+          "status": "REQUEST_FAILED",
+          "method": "GET",
+          "url": "http://localhost:8000/api/notifications?role=receptionist",
+          "page": "http://127.0.0.1:3000/receptionist/bookings/hotel",
+          "failure": "net::ERR_ABORTED"
+        },
+        {
+          "status": "REQUEST_FAILED",
+          "method": "GET",
+          "url": "http://localhost:8000/api/receptionist/boarding-rooms",
+          "page": "http://127.0.0.1:3000/receptionist/bookings/hotel",
+          "failure": "net::ERR_ABORTED"
+        },
+        {
+          "status": "REQUEST_FAILED",
+          "method": "GET",
+          "url": "http://localhost:8000/api/receptionist/boarding-rooms",
+          "page": "http://127.0.0.1:3000/receptionist/bookings/hotel",
+          "failure": "net::ERR_ABORTED"
+        },
+        {
+          "status": "REQUEST_FAILED",
+          "method": "GET",
+          "url": "http://localhost:8000/api/receptionist/boarding-requests",
+          "page": "http://127.0.0.1:3000/receptionist/bookings/hotel",
+          "failure": "net::ERR_ABORTED"
+        },
+        {
+          "status": "REQUEST_FAILED",
+          "method": "GET",
+          "url": "http://localhost:8000/api/receptionist/boarding-requests",
+          "page": "http://127.0.0.1:3000/receptionist/bookings/hotel",
+          "failure": "net::ERR_ABORTED"
+        },
+        {
+          "status": "REQUEST_FAILED",
+          "method": "GET",
+          "url": "http://localhost:8000/api/receptionist/appointments",
+          "page": "http://127.0.0.1:3000/receptionist/reports",
+          "failure": "net::ERR_ABORTED"
+        },
+        {
+          "status": "REQUEST_FAILED",
+          "method": "GET",
+          "url": "http://localhost:8000/api/receptionist/reports/live",
+          "page": "http://127.0.0.1:3000/receptionist/reports",
+          "failure": "net::ERR_ABORTED"
+        },
+        {
+          "status": "REQUEST_FAILED",
+          "method": "GET",
+          "url": "http://localhost:8000/api/customers",
+          "page": "http://127.0.0.1:3000/receptionist/reports",
+          "failure": "net::ERR_ABORTED"
+        },
+        {
+          "status": "REQUEST_FAILED",
+          "method": "GET",
+          "url": "http://localhost:8000/api/receptionist/customer-orders",
+          "page": "http://127.0.0.1:3000/receptionist/reports",
+          "failure": "net::ERR_ABORTED"
+        },
+        {
+          "status": "REQUEST_FAILED",
+          "method": "GET",
+          "url": "http://localhost:8000/api/receptionist/boarding-requests",
+          "page": "http://127.0.0.1:3000/receptionist/reports",
+          "failure": "net::ERR_ABORTED"
+        },
+        {
+          "status": "REQUEST_FAILED",
+          "method": "GET",
+          "url": "http://localhost:8000/api/receptionist/reports/live",
+          "page": "http://127.0.0.1:3000/receptionist/reports",
+          "failure": "net::ERR_ABORTED"
+        },
+        {
+          "status": "REQUEST_FAILED",
+          "method": "GET",
+          "url": "http://localhost:8000/api/receptionist/customer-orders",
+          "page": "http://127.0.0.1:3000/receptionist/reports",
           "failure": "net::ERR_ABORTED"
         }
       ],
-      "screenshot": "documentation/screenshots/phase10/receptionist-failure.png",
-      "notes": [
-        "\u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoBeVisible\u001b[2m(\u001b[22m\u001b[2m)\u001b[22m failed\n\nLocator: locator('.swal2-confirm')\nExpected: visible\nTimeout: 15000ms\nError: element(s) not found\n\nCall log:\n\u001b[2m  - Expect \"toBeVisible\" with timeout 15000ms\u001b[22m\n\u001b[2m  - waiting for locator('.swal2-confirm')\u001b[22m\n"
-      ],
-      "status": "FAIL"
+      "screenshot": "documentation/screenshots/phase10/receptionist-dashboard.png",
+      "notes": [],
+      "status": "WARN"
     },
     {
       "role": "cashier",
-      "login": false,
-      "dashboard": false,
-      "dashboardUrl": "",
-      "sidebar": false,
-      "mainPages": [],
+      "login": true,
+      "dashboard": true,
+      "dashboardUrl": "http://127.0.0.1:3000/cashier",
+      "sidebar": true,
+      "mainPages": [
+        {
+          "path": "/cashier/pos",
+          "url": "http://127.0.0.1:3000/cashier/pos",
+          "navigationMode": "opened-directly",
+          "rendered": true,
+          "screenshot": "documentation/screenshots/phase10/cashier-cashier-pos.png"
+        },
+        {
+          "path": "/cashier/payment-verification",
+          "url": "http://127.0.0.1:3000/cashier/payment-verification",
+          "navigationMode": "opened-directly",
+          "rendered": true,
+          "screenshot": "documentation/screenshots/phase10/cashier-cashier-payment-verification.png"
+        },
+        {
+          "path": "/cashier/history",
+          "url": "http://127.0.0.1:3000/cashier/history",
+          "navigationMode": "opened-directly",
+          "rendered": true,
+          "screenshot": "documentation/screenshots/phase10/cashier-cashier-history.png"
+        },
+        {
+          "path": "/cashier/reports",
+          "url": "http://127.0.0.1:3000/cashier/reports",
+          "navigationMode": "clicked",
+          "rendered": true,
+          "screenshot": "documentation/screenshots/phase10/cashier-cashier-reports.png"
+        }
+      ],
       "blankPages": [],
-      "consoleErrors": [],
+      "consoleErrors": [
+        {
+          "type": "error",
+          "text": "Failed to load payment requests: Error: Cannot reach the server right now. Please check your connection and try again.\n    at apiRequest (http://127.0.0.1:3000/src/api/client.js:161:13)\n    at async http://127.0.0.1:3000/src/components/cashier/hooks/usePaymentApprovals.jsx:33:20",
+          "url": "http://127.0.0.1:3000/cashier/payment-verification"
+        },
+        {
+          "type": "error",
+          "text": "Failed to load last cashier info: Error: Cannot reach the server right now. Please check your connection and try again.\n    at apiRequest (http://127.0.0.1:3000/src/api/client.js:161:13)\n    at async Promise.all (index 1)\n    at async http://127.0.0.1:3000/src/components/cashier/CashierDashboard.jsx:205:39",
+          "url": "http://127.0.0.1:3000/cashier/reports"
+        },
+        {
+          "type": "error",
+          "text": "Failed to load last cashier info: Error: Cannot reach the server right now. Please check your connection and try again.\n    at apiRequest (http://127.0.0.1:3000/src/api/client.js:161:13)\n    at async Promise.all (index 0)\n    at async http://127.0.0.1:3000/src/components/cashier/CashierDashboard.jsx:205:39",
+          "url": "http://127.0.0.1:3000/cashier/reports"
+        },
+        {
+          "type": "error",
+          "text": "Report fetch error: Error: Cannot reach the server right now. Please check your connection and try again.\n    at apiRequest (http://127.0.0.1:3000/src/api/client.js:161:13)\n    at async http://127.0.0.1:3000/src/components/cashier/CashierReports.jsx:60:22\n    at async http://127.0.0.1:3000/src/components/shared/UnifiedReportEngine.jsx:684:7",
+          "url": "http://127.0.0.1:3000/cashier/reports"
+        },
+        {
+          "type": "error",
+          "text": "Report fetch error: Error: Cannot reach the server right now. Please check your connection and try again.\n    at apiRequest (http://127.0.0.1:3000/src/api/client.js:161:13)\n    at async http://127.0.0.1:3000/src/components/cashier/CashierReports.jsx:60:22\n    at async http://127.0.0.1:3000/src/components/shared/UnifiedReportEngine.jsx:684:7",
+          "url": "http://127.0.0.1:3000/cashier/reports"
+        }
+      ],
       "networkErrors": [
         {
           "status": "REQUEST_FAILED",
           "method": "GET",
           "url": "http://localhost:8000/api/settings/public",
-          "page": "http://localhost:3000/login",
+          "page": "http://127.0.0.1:3000/login",
           "failure": "net::ERR_ABORTED"
         },
         {
           "status": "REQUEST_FAILED",
           "method": "GET",
           "url": "http://localhost:8000/api/settings/public",
-          "page": "http://localhost:3000/login",
+          "page": "http://127.0.0.1:3000/login",
+          "failure": "net::ERR_ABORTED"
+        },
+        {
+          "status": "REQUEST_FAILED",
+          "method": "GET",
+          "url": "http://localhost:8000/api/cashier/payment-requests",
+          "page": "http://127.0.0.1:3000/cashier",
+          "failure": "net::ERR_ABORTED"
+        },
+        {
+          "status": "REQUEST_FAILED",
+          "method": "GET",
+          "url": "http://localhost:8000/api/cashier/pos/services",
+          "page": "http://127.0.0.1:3000/cashier",
+          "failure": "net::ERR_ABORTED"
+        },
+        {
+          "status": "REQUEST_FAILED",
+          "method": "GET",
+          "url": "http://localhost:8000/api/cashier/pos/services",
+          "page": "http://127.0.0.1:3000/cashier",
+          "failure": "net::ERR_ABORTED"
+        },
+        {
+          "status": "REQUEST_FAILED",
+          "method": "GET",
+          "url": "http://localhost:8000/api/cashier/inventory/sellable",
+          "page": "http://127.0.0.1:3000/cashier",
+          "failure": "net::ERR_ABORTED"
+        },
+        {
+          "status": "REQUEST_FAILED",
+          "method": "GET",
+          "url": "http://localhost:8000/api/cashier/customers",
+          "page": "http://127.0.0.1:3000/cashier",
+          "failure": "net::ERR_ABORTED"
+        },
+        {
+          "status": "REQUEST_FAILED",
+          "method": "GET",
+          "url": "http://localhost:8000/api/cashier/customers",
+          "page": "http://127.0.0.1:3000/cashier",
+          "failure": "net::ERR_ABORTED"
+        },
+        {
+          "status": "REQUEST_FAILED",
+          "method": "GET",
+          "url": "http://localhost:8000/api/cashier/payment-requests",
+          "page": "http://127.0.0.1:3000/cashier",
+          "failure": "net::ERR_ABORTED"
+        },
+        {
+          "status": "REQUEST_FAILED",
+          "method": "GET",
+          "url": "http://localhost:8000/api/settings/public",
+          "page": "http://127.0.0.1:3000/cashier/pos",
+          "failure": "net::ERR_ABORTED"
+        },
+        {
+          "status": "REQUEST_FAILED",
+          "method": "GET",
+          "url": "http://localhost:8000/api/settings/public",
+          "page": "http://127.0.0.1:3000/cashier/pos",
+          "failure": "net::ERR_ABORTED"
+        },
+        {
+          "status": "REQUEST_FAILED",
+          "method": "GET",
+          "url": "http://localhost:8000/api/cashier/customers",
+          "page": "http://127.0.0.1:3000/cashier/pos",
+          "failure": "net::ERR_ABORTED"
+        },
+        {
+          "status": "REQUEST_FAILED",
+          "method": "GET",
+          "url": "http://localhost:8000/api/cashier/customers",
+          "page": "http://127.0.0.1:3000/cashier/pos",
+          "failure": "net::ERR_ABORTED"
+        },
+        {
+          "status": "REQUEST_FAILED",
+          "method": "GET",
+          "url": "http://localhost:8000/api/cashier/payment-requests",
+          "page": "http://127.0.0.1:3000/cashier/pos",
+          "failure": "net::ERR_ABORTED"
+        },
+        {
+          "status": "REQUEST_FAILED",
+          "method": "GET",
+          "url": "http://localhost:8000/api/cashier/inventory/sellable",
+          "page": "http://127.0.0.1:3000/cashier/pos",
+          "failure": "net::ERR_ABORTED"
+        },
+        {
+          "status": "REQUEST_FAILED",
+          "method": "GET",
+          "url": "http://localhost:8000/api/cashier/payment-requests",
+          "page": "http://127.0.0.1:3000/cashier/pos",
+          "failure": "net::ERR_ABORTED"
+        },
+        {
+          "status": "REQUEST_FAILED",
+          "method": "GET",
+          "url": "http://localhost:8000/api/cashier/pos/services",
+          "page": "http://127.0.0.1:3000/cashier/pos",
+          "failure": "net::ERR_ABORTED"
+        },
+        {
+          "status": "REQUEST_FAILED",
+          "method": "GET",
+          "url": "http://localhost:8000/api/cashier/payment-requests",
+          "page": "http://127.0.0.1:3000/cashier/payment-verification",
+          "failure": "net::ERR_ABORTED"
+        },
+        {
+          "status": "REQUEST_FAILED",
+          "method": "GET",
+          "url": "http://localhost:8000/api/cashier/inventory/sellable",
+          "page": "http://127.0.0.1:3000/cashier/payment-verification",
+          "failure": "net::ERR_ABORTED"
+        },
+        {
+          "status": "REQUEST_FAILED",
+          "method": "GET",
+          "url": "http://localhost:8000/api/cashier/payment-requests",
+          "page": "http://127.0.0.1:3000/cashier/payment-verification",
+          "failure": "net::ERR_ABORTED"
+        },
+        {
+          "status": "REQUEST_FAILED",
+          "method": "GET",
+          "url": "http://localhost:8000/api/cashier/pos/services",
+          "page": "http://127.0.0.1:3000/cashier/payment-verification",
+          "failure": "net::ERR_ABORTED"
+        },
+        {
+          "status": "REQUEST_FAILED",
+          "method": "GET",
+          "url": "http://localhost:8000/api/cashier/customers",
+          "page": "http://127.0.0.1:3000/cashier/payment-verification",
+          "failure": "net::ERR_ABORTED"
+        },
+        {
+          "status": "REQUEST_FAILED",
+          "method": "GET",
+          "url": "http://localhost:8000/api/settings/public",
+          "page": "http://127.0.0.1:3000/cashier/payment-verification",
+          "failure": "net::ERR_ABORTED"
+        },
+        {
+          "status": "REQUEST_FAILED",
+          "method": "GET",
+          "url": "http://localhost:8000/api/cashier/customers",
+          "page": "http://127.0.0.1:3000/cashier/payment-verification",
+          "failure": "net::ERR_ABORTED"
+        },
+        {
+          "status": "REQUEST_FAILED",
+          "method": "GET",
+          "url": "http://localhost:8000/api/cashier/payment-requests",
+          "page": "http://127.0.0.1:3000/cashier/payment-verification",
+          "failure": "net::ERR_ABORTED"
+        },
+        {
+          "status": "REQUEST_FAILED",
+          "method": "GET",
+          "url": "http://localhost:8000/api/cashier/shift-report/last",
+          "page": "http://127.0.0.1:3000/cashier/reports",
+          "failure": "net::ERR_ABORTED"
+        },
+        {
+          "status": "REQUEST_FAILED",
+          "method": "GET",
+          "url": "http://localhost:8000/api/cashier/handover/last",
+          "page": "http://127.0.0.1:3000/cashier/reports",
+          "failure": "net::ERR_ABORTED"
+        },
+        {
+          "status": "REQUEST_FAILED",
+          "method": "GET",
+          "url": "http://localhost:8000/api/chatbot/welcome",
+          "page": "http://127.0.0.1:3000/cashier/reports",
+          "failure": "net::ERR_ABORTED"
+        },
+        {
+          "status": "REQUEST_FAILED",
+          "method": "GET",
+          "url": "http://localhost:8000/api/cashier/transactions?from=2026-11-01&to=2026-11-30",
+          "page": "http://127.0.0.1:3000/cashier/reports",
+          "failure": "net::ERR_ABORTED"
+        },
+        {
+          "status": "REQUEST_FAILED",
+          "method": "GET",
+          "url": "http://localhost:8000/api/settings/public",
+          "page": "http://127.0.0.1:3000/cashier/reports",
+          "failure": "net::ERR_ABORTED"
+        },
+        {
+          "status": "REQUEST_FAILED",
+          "method": "GET",
+          "url": "http://localhost:8000/api/cashier/transactions?page=1&per_page=25",
+          "page": "http://127.0.0.1:3000/cashier/reports",
+          "failure": "net::ERR_ABORTED"
+        },
+        {
+          "status": "REQUEST_FAILED",
+          "method": "GET",
+          "url": "http://localhost:8000/api/cashier/shift-report/last",
+          "page": "http://127.0.0.1:3000/cashier/reports",
+          "failure": "net::ERR_ABORTED"
+        },
+        {
+          "status": "REQUEST_FAILED",
+          "method": "GET",
+          "url": "http://localhost:8000/api/notifications?role=cashier",
+          "page": "http://127.0.0.1:3000/cashier/reports",
+          "failure": "net::ERR_ABORTED"
+        },
+        {
+          "status": "REQUEST_FAILED",
+          "method": "GET",
+          "url": "http://localhost:8000/api/cashier/transactions?from=2026-11-01&to=2026-11-30",
+          "page": "http://127.0.0.1:3000/cashier/reports",
           "failure": "net::ERR_ABORTED"
         }
       ],
-      "screenshot": "documentation/screenshots/phase10/cashier-failure.png",
-      "notes": [
-        "\u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoBeVisible\u001b[2m(\u001b[22m\u001b[2m)\u001b[22m failed\n\nLocator: locator('.swal2-confirm')\nExpected: visible\nTimeout: 15000ms\nError: element(s) not found\n\nCall log:\n\u001b[2m  - Expect \"toBeVisible\" with timeout 15000ms\u001b[22m\n\u001b[2m  - waiting for locator('.swal2-confirm')\u001b[22m\n"
-      ],
-      "status": "FAIL"
+      "screenshot": "documentation/screenshots/phase10/cashier-dashboard.png",
+      "notes": [],
+      "status": "WARN"
     },
     {
       "role": "inventory",
       "login": true,
       "dashboard": true,
-      "dashboardUrl": "http://localhost:3000/inventory",
+      "dashboardUrl": "http://127.0.0.1:3000/inventory",
       "sidebar": true,
       "mainPages": [
         {
           "path": "/inventory/products",
-          "url": "http://localhost:3000/inventory/products",
+          "url": "http://127.0.0.1:3000/inventory/products",
           "navigationMode": "opened-directly",
           "rendered": true,
           "screenshot": "documentation/screenshots/phase10/inventory-inventory-products.png"
         },
         {
           "path": "/inventory/history",
-          "url": "http://localhost:3000/inventory/history",
+          "url": "http://127.0.0.1:3000/inventory/history",
           "navigationMode": "clicked",
           "rendered": true,
           "screenshot": "documentation/screenshots/phase10/inventory-inventory-history.png"
         },
         {
           "path": "/inventory/reports",
-          "url": "http://localhost:3000/inventory/reports",
+          "url": "http://127.0.0.1:3000/inventory/reports",
           "navigationMode": "clicked",
           "rendered": true,
           "screenshot": "documentation/screenshots/phase10/inventory-inventory-reports.png"
         },
         {
           "path": "/inventory/monthly-audit",
-          "url": "http://localhost:3000/inventory/monthly-audit",
+          "url": "http://127.0.0.1:3000/inventory/monthly-audit",
           "navigationMode": "clicked",
           "rendered": true,
           "screenshot": "documentation/screenshots/phase10/inventory-inventory-monthly-audit.png"
@@ -140,23 +678,13 @@
       "consoleErrors": [
         {
           "type": "error",
-          "text": "Failed to fetch live inventory report data: TypeError: Failed to fetch\n    at apiRequest (http://localhost:3000/src/api/client.js:97:28)\n    at Object.getReports (http://localhost:3000/src/api/inventory.jsx:382:20)\n    at http://localhost:3000/src/components/inventory/InventoryReports.jsx?t=1790276185514:75:116\n    at http://localhost:3000/src/components/inventory/InventoryReports.jsx?t=1790276185514:91:5\n    at commitHookEffectListMount (http://localhost:3000/node_modules/.vite/deps/chunk-UVXKGGW7.js?v=058366b7:16963:34)\n    at invokePassiveEffectMountInDEV (http://localhost:3000/node_modules/.vite/deps/chunk-UVXKGGW7.js?v=058366b7:18374:19)\n    at invokeEffectsInDev (http://localhost:3000/node_modules/.vite/deps/chunk-UVXKGGW7.js?v=058366b7:19754:19)\n    at commitDoubleInvokeEffectsInDEV (http://localhost:3000/node_modules/.vite/deps/chunk-UVXKGGW7.js?v=058366b7:19739:15)\n    at flushPassiveEffectsImpl (http://localhost:3000/node_modules/.vite/deps/chunk-UVXKGGW7.js?v=058366b7:19556:13)\n    at flushPassiveEffects (http://localhost:3000/node_modules/.vite/deps/chunk-UVXKGGW7.js?v=058366b7:19500:22)",
-          "url": "http://localhost:3000/inventory/monthly-audit"
+          "text": "Failed to load monthly audit: Error: Cannot reach the server right now. Please check your connection and try again.\n    at apiRequest (http://127.0.0.1:3000/src/api/client.js:161:13)\n    at async Object.getOrCreateMonthlyAudit (http://127.0.0.1:3000/src/api/inventory.jsx:621:14)\n    at async fetchAuditItems (http://127.0.0.1:3000/src/components/inventory/MonthlyInventoryAudit.jsx:114:19)",
+          "url": "http://127.0.0.1:3000/inventory/monthly-audit"
         },
         {
           "type": "error",
-          "text": "Failed to fetch live inventory report data: TypeError: Failed to fetch\n    at apiRequest (http://localhost:3000/src/api/client.js:97:28)\n    at Object.getReports (http://localhost:3000/src/api/inventory.jsx:382:20)\n    at http://localhost:3000/src/components/inventory/InventoryReports.jsx?t=1790276185514:75:116\n    at http://localhost:3000/src/components/inventory/InventoryReports.jsx?t=1790276185514:91:5\n    at commitHookEffectListMount (http://localhost:3000/node_modules/.vite/deps/chunk-UVXKGGW7.js?v=058366b7:16963:34)\n    at commitPassiveMountOnFiber (http://localhost:3000/node_modules/.vite/deps/chunk-UVXKGGW7.js?v=058366b7:18206:19)\n    at commitPassiveMountEffects_complete (http://localhost:3000/node_modules/.vite/deps/chunk-UVXKGGW7.js?v=058366b7:18179:17)\n    at commitPassiveMountEffects_begin (http://localhost:3000/node_modules/.vite/deps/chunk-UVXKGGW7.js?v=058366b7:18169:15)\n    at commitPassiveMountEffects (http://localhost:3000/node_modules/.vite/deps/chunk-UVXKGGW7.js?v=058366b7:18159:11)\n    at flushPassiveEffectsImpl (http://localhost:3000/node_modules/.vite/deps/chunk-UVXKGGW7.js?v=058366b7:19543:11)",
-          "url": "http://localhost:3000/inventory/monthly-audit"
-        },
-        {
-          "type": "error",
-          "text": "Failed to load monthly audit: TypeError: Failed to fetch\n    at apiRequest (http://localhost:3000/src/api/client.js:97:28)\n    at Object.getOrCreateMonthlyAudit (http://localhost:3000/src/api/inventory.jsx:620:20)\n    at fetchAuditItems (http://localhost:3000/src/components/inventory/MonthlyInventoryAudit.jsx?t=1790276185514:72:38)\n    at http://localhost:3000/src/components/inventory/MonthlyInventoryAudit.jsx?t=1790276185514:118:5\n    at commitHookEffectListMount (http://localhost:3000/node_modules/.vite/deps/chunk-UVXKGGW7.js?v=058366b7:16963:34)\n    at commitPassiveMountOnFiber (http://localhost:3000/node_modules/.vite/deps/chunk-UVXKGGW7.js?v=058366b7:18206:19)\n    at commitPassiveMountEffects_complete (http://localhost:3000/node_modules/.vite/deps/chunk-UVXKGGW7.js?v=058366b7:18179:17)\n    at commitPassiveMountEffects_begin (http://localhost:3000/node_modules/.vite/deps/chunk-UVXKGGW7.js?v=058366b7:18169:15)\n    at commitPassiveMountEffects (http://localhost:3000/node_modules/.vite/deps/chunk-UVXKGGW7.js?v=058366b7:18159:11)\n    at flushPassiveEffectsImpl (http://localhost:3000/node_modules/.vite/deps/chunk-UVXKGGW7.js?v=058366b7:19543:11)",
-          "url": "http://localhost:3000/inventory/monthly-audit"
-        },
-        {
-          "type": "error",
-          "text": "Failed to load monthly audit: TypeError: Failed to fetch\n    at apiRequest (http://localhost:3000/src/api/client.js:97:28)\n    at Object.getOrCreateMonthlyAudit (http://localhost:3000/src/api/inventory.jsx:620:20)\n    at fetchAuditItems (http://localhost:3000/src/components/inventory/MonthlyInventoryAudit.jsx?t=1790276185514:72:38)\n    at http://localhost:3000/src/components/inventory/MonthlyInventoryAudit.jsx?t=1790276185514:118:5\n    at commitHookEffectListMount (http://localhost:3000/node_modules/.vite/deps/chunk-UVXKGGW7.js?v=058366b7:16963:34)\n    at invokePassiveEffectMountInDEV (http://localhost:3000/node_modules/.vite/deps/chunk-UVXKGGW7.js?v=058366b7:18374:19)\n    at invokeEffectsInDev (http://localhost:3000/node_modules/.vite/deps/chunk-UVXKGGW7.js?v=058366b7:19754:19)\n    at commitDoubleInvokeEffectsInDEV (http://localhost:3000/node_modules/.vite/deps/chunk-UVXKGGW7.js?v=058366b7:19739:15)\n    at flushPassiveEffectsImpl (http://localhost:3000/node_modules/.vite/deps/chunk-UVXKGGW7.js?v=058366b7:19556:13)\n    at flushPassiveEffects (http://localhost:3000/node_modules/.vite/deps/chunk-UVXKGGW7.js?v=058366b7:19500:22)",
-          "url": "http://localhost:3000/inventory/monthly-audit"
+          "text": "Failed to load monthly audit: Error: Cannot reach the server right now. Please check your connection and try again.\n    at apiRequest (http://127.0.0.1:3000/src/api/client.js:161:13)\n    at async Object.getOrCreateMonthlyAudit (http://127.0.0.1:3000/src/api/inventory.jsx:621:14)\n    at async fetchAuditItems (http://127.0.0.1:3000/src/components/inventory/MonthlyInventoryAudit.jsx:114:19)",
+          "url": "http://127.0.0.1:3000/inventory/monthly-audit"
         }
       ],
       "networkErrors": [
@@ -164,168 +692,63 @@
           "status": "REQUEST_FAILED",
           "method": "GET",
           "url": "http://localhost:8000/api/settings/public",
-          "page": "http://localhost:3000/login",
+          "page": "http://127.0.0.1:3000/login",
           "failure": "net::ERR_ABORTED"
         },
         {
           "status": "REQUEST_FAILED",
           "method": "GET",
           "url": "http://localhost:8000/api/settings/public",
-          "page": "http://localhost:3000/login",
+          "page": "http://127.0.0.1:3000/login",
+          "failure": "net::ERR_ABORTED"
+        },
+        {
+          "status": "REQUEST_FAILED",
+          "method": "GET",
+          "url": "http://localhost:8000/api/chatbot/welcome",
+          "page": "http://127.0.0.1:3000/inventory",
           "failure": "net::ERR_ABORTED"
         },
         {
           "status": "REQUEST_FAILED",
           "method": "GET",
           "url": "http://localhost:8000/api/notifications?role=inventory",
-          "page": "http://localhost:3000/inventory",
+          "page": "http://127.0.0.1:3000/inventory",
           "failure": "net::ERR_ABORTED"
         },
         {
           "status": "REQUEST_FAILED",
           "method": "GET",
           "url": "http://localhost:8000/api/chatbot/welcome",
-          "page": "http://localhost:3000/inventory",
-          "failure": "net::ERR_ABORTED"
-        },
-        {
-          "status": "REQUEST_FAILED",
-          "method": "GET",
-          "url": "http://localhost:8000/api/chatbot/welcome",
-          "page": "http://localhost:3000/inventory",
+          "page": "http://127.0.0.1:3000/inventory",
           "failure": "net::ERR_ABORTED"
         },
         {
           "status": "REQUEST_FAILED",
           "method": "GET",
           "url": "http://localhost:8000/api/inventory/dashboard",
-          "page": "http://localhost:3000/inventory",
+          "page": "http://127.0.0.1:3000/inventory",
           "failure": "net::ERR_ABORTED"
         },
         {
           "status": "REQUEST_FAILED",
           "method": "GET",
           "url": "http://localhost:8000/api/inventory/dashboard",
-          "page": "http://localhost:3000/inventory",
+          "page": "http://127.0.0.1:3000/inventory",
           "failure": "net::ERR_ABORTED"
         },
         {
           "status": "REQUEST_FAILED",
           "method": "GET",
-          "url": "http://localhost:8000/api/notifications?role=inventory",
-          "page": "http://localhost:3000/inventory",
+          "url": "http://localhost:8000/api/inventory/monthly-audit?month=2026-11",
+          "page": "http://127.0.0.1:3000/inventory/monthly-audit",
           "failure": "net::ERR_ABORTED"
         },
         {
           "status": "REQUEST_FAILED",
           "method": "GET",
-          "url": "http://localhost:8000/api/inventory/logs",
-          "page": "http://localhost:3000/inventory/monthly-audit",
-          "failure": "net::ERR_ABORTED"
-        },
-        {
-          "status": "REQUEST_FAILED",
-          "method": "GET",
-          "url": "http://localhost:8000/api/notifications?role=inventory",
-          "page": "http://localhost:3000/inventory/monthly-audit",
-          "failure": "net::ERR_ABORTED"
-        },
-        {
-          "status": "REQUEST_FAILED",
-          "method": "GET",
-          "url": "http://localhost:8000/api/inventory/items",
-          "page": "http://localhost:3000/inventory/monthly-audit",
-          "failure": "net::ERR_ABORTED"
-        },
-        {
-          "status": "REQUEST_FAILED",
-          "method": "GET",
-          "url": "http://localhost:8000/api/settings/public",
-          "page": "http://localhost:3000/inventory/monthly-audit",
-          "failure": "net::ERR_ABORTED"
-        },
-        {
-          "status": "REQUEST_FAILED",
-          "method": "GET",
-          "url": "http://localhost:8000/api/inventory/items/archived",
-          "page": "http://localhost:3000/inventory/monthly-audit",
-          "failure": "net::ERR_ABORTED"
-        },
-        {
-          "status": "REQUEST_FAILED",
-          "method": "GET",
-          "url": "http://localhost:8000/api/chatbot/welcome",
-          "page": "http://localhost:3000/inventory/monthly-audit",
-          "failure": "net::ERR_ABORTED"
-        },
-        {
-          "status": "REQUEST_FAILED",
-          "method": "GET",
-          "url": "http://localhost:8000/api/inventory/reports",
-          "page": "http://localhost:3000/inventory/monthly-audit",
-          "failure": "net::ERR_ABORTED"
-        },
-        {
-          "status": "REQUEST_FAILED",
-          "method": "GET",
-          "url": "http://localhost:8000/api/inventory/reports",
-          "page": "http://localhost:3000/inventory/monthly-audit",
-          "failure": "net::ERR_ABORTED"
-        },
-        {
-          "status": "REQUEST_FAILED",
-          "method": "GET",
-          "url": "http://localhost:8000/api/settings/public",
-          "page": "http://localhost:3000/inventory/monthly-audit",
-          "failure": "net::ERR_ABORTED"
-        },
-        {
-          "status": "REQUEST_FAILED",
-          "method": "GET",
-          "url": "http://localhost:8000/api/notifications?role=inventory",
-          "page": "http://localhost:3000/inventory/monthly-audit",
-          "failure": "net::ERR_ABORTED"
-        },
-        {
-          "status": "REQUEST_FAILED",
-          "method": "GET",
-          "url": "http://localhost:8000/api/inventory/logs",
-          "page": "http://localhost:3000/inventory/monthly-audit",
-          "failure": "net::ERR_ABORTED"
-        },
-        {
-          "status": "REQUEST_FAILED",
-          "method": "GET",
-          "url": "http://localhost:8000/api/inventory/monthly-audit?month=2026-09",
-          "page": "http://localhost:3000/inventory/monthly-audit",
-          "failure": "net::ERR_ABORTED"
-        },
-        {
-          "status": "REQUEST_FAILED",
-          "method": "GET",
-          "url": "http://localhost:8000/api/inventory/items",
-          "page": "http://localhost:3000/inventory/monthly-audit",
-          "failure": "net::ERR_ABORTED"
-        },
-        {
-          "status": "REQUEST_FAILED",
-          "method": "GET",
-          "url": "http://localhost:8000/api/inventory/monthly-audit?month=2026-09",
-          "page": "http://localhost:3000/inventory/monthly-audit",
-          "failure": "net::ERR_ABORTED"
-        },
-        {
-          "status": "REQUEST_FAILED",
-          "method": "GET",
-          "url": "http://localhost:8000/api/inventory/items/archived",
-          "page": "http://localhost:3000/inventory/monthly-audit",
-          "failure": "net::ERR_ABORTED"
-        },
-        {
-          "status": "REQUEST_FAILED",
-          "method": "GET",
-          "url": "http://localhost:8000/api/chatbot/welcome",
-          "page": "http://localhost:3000/inventory/monthly-audit",
+          "url": "http://localhost:8000/api/inventory/monthly-audit?month=2026-11",
+          "page": "http://127.0.0.1:3000/inventory/monthly-audit",
           "failure": "net::ERR_ABORTED"
         }
       ],
@@ -337,33 +760,33 @@
       "role": "veterinary",
       "login": true,
       "dashboard": true,
-      "dashboardUrl": "http://localhost:3000/veterinary",
+      "dashboardUrl": "http://127.0.0.1:3000/veterinary",
       "sidebar": true,
       "mainPages": [
         {
           "path": "/veterinary/appointments",
-          "url": "http://localhost:3000/veterinary/appointments",
+          "url": "http://127.0.0.1:3000/veterinary/appointments",
           "navigationMode": "clicked",
           "rendered": true,
           "screenshot": "documentation/screenshots/phase10/veterinary-veterinary-appointments.png"
         },
         {
           "path": "/veterinary/reports",
-          "url": "http://localhost:3000/veterinary/reports",
+          "url": "http://127.0.0.1:3000/veterinary/reports",
           "navigationMode": "clicked",
           "rendered": true,
           "screenshot": "documentation/screenshots/phase10/veterinary-veterinary-reports.png"
         },
         {
           "path": "/veterinary/history",
-          "url": "http://localhost:3000/veterinary/history",
+          "url": "http://127.0.0.1:3000/veterinary/history",
           "navigationMode": "clicked",
           "rendered": true,
           "screenshot": "documentation/screenshots/phase10/veterinary-veterinary-history.png"
         },
         {
           "path": "/veterinary/customer-profiles",
-          "url": "http://localhost:3000/veterinary/customer-profiles",
+          "url": "http://127.0.0.1:3000/veterinary/customer-profiles",
           "navigationMode": "clicked",
           "rendered": true,
           "screenshot": "documentation/screenshots/phase10/veterinary-veterinary-customer-profiles.png"
@@ -372,24 +795,24 @@
       "blankPages": [],
       "consoleErrors": [
         {
-          "type": "error",
-          "text": "Failed to fetch customers: TypeError: Failed to fetch\n    at apiRequest (http://localhost:3000/src/api/client.js:97:28)\n    at http://localhost:3000/src/components/veterinary/VetCustomerProfiles.jsx:172:28\n    at http://localhost:3000/src/components/veterinary/VetCustomerProfiles.jsx:192:5\n    at commitHookEffectListMount (http://localhost:3000/node_modules/.vite/deps/chunk-UVXKGGW7.js?v=058366b7:16963:34)\n    at commitPassiveMountOnFiber (http://localhost:3000/node_modules/.vite/deps/chunk-UVXKGGW7.js?v=058366b7:18206:19)\n    at commitPassiveMountEffects_complete (http://localhost:3000/node_modules/.vite/deps/chunk-UVXKGGW7.js?v=058366b7:18179:17)\n    at commitPassiveMountEffects_begin (http://localhost:3000/node_modules/.vite/deps/chunk-UVXKGGW7.js?v=058366b7:18169:15)\n    at commitPassiveMountEffects (http://localhost:3000/node_modules/.vite/deps/chunk-UVXKGGW7.js?v=058366b7:18159:11)\n    at flushPassiveEffectsImpl (http://localhost:3000/node_modules/.vite/deps/chunk-UVXKGGW7.js?v=058366b7:19543:11)\n    at flushPassiveEffects (http://localhost:3000/node_modules/.vite/deps/chunk-UVXKGGW7.js?v=058366b7:19500:22)",
-          "url": "http://localhost:3000/veterinary/customer-profiles"
+          "type": "warning",
+          "text": "The width(-1) and height(-1) of chart should be greater than 0,\n       please check the style of container, or the props width(100%) and height(100%),\n       or add a minWidth(300) or minHeight(200) or use aspect(undefined) to control the\n       height and width.",
+          "url": "http://127.0.0.1:3000/veterinary/reports"
         },
         {
-          "type": "error",
-          "text": "Failed to fetch customers: TypeError: Failed to fetch\n    at apiRequest (http://localhost:3000/src/api/client.js:97:28)\n    at http://localhost:3000/src/components/veterinary/VetCustomerProfiles.jsx:172:28\n    at http://localhost:3000/src/components/veterinary/VetCustomerProfiles.jsx:192:5\n    at commitHookEffectListMount (http://localhost:3000/node_modules/.vite/deps/chunk-UVXKGGW7.js?v=058366b7:16963:34)\n    at invokePassiveEffectMountInDEV (http://localhost:3000/node_modules/.vite/deps/chunk-UVXKGGW7.js?v=058366b7:18374:19)\n    at invokeEffectsInDev (http://localhost:3000/node_modules/.vite/deps/chunk-UVXKGGW7.js?v=058366b7:19754:19)\n    at commitDoubleInvokeEffectsInDEV (http://localhost:3000/node_modules/.vite/deps/chunk-UVXKGGW7.js?v=058366b7:19739:15)\n    at flushPassiveEffectsImpl (http://localhost:3000/node_modules/.vite/deps/chunk-UVXKGGW7.js?v=058366b7:19556:13)\n    at flushPassiveEffects (http://localhost:3000/node_modules/.vite/deps/chunk-UVXKGGW7.js?v=058366b7:19500:22)\n    at http://localhost:3000/node_modules/.vite/deps/chunk-UVXKGGW7.js?v=058366b7:19381:17",
-          "url": "http://localhost:3000/veterinary/customer-profiles"
+          "type": "warning",
+          "text": "The width(-1) and height(-1) of chart should be greater than 0,\n       please check the style of container, or the props width(100%) and height(100%),\n       or add a minWidth(300) or minHeight(200) or use aspect(undefined) to control the\n       height and width.",
+          "url": "http://127.0.0.1:3000/veterinary/reports"
         },
         {
-          "type": "error",
-          "text": "Report fetch error: TypeError: Failed to fetch\n    at apiRequest (http://localhost:3000/src/api/client.js:97:28)\n    at http://localhost:3000/src/components/veterinary/VetReports.jsx?t=1790276185514:84:26\n    at http://localhost:3000/src/components/shared/UnifiedReportEngine.jsx?t=1790276185514:675:13\n    at http://localhost:3000/src/components/shared/UnifiedReportEngine.jsx?t=1790276185514:687:5\n    at commitHookEffectListMount (http://localhost:3000/node_modules/.vite/deps/chunk-UVXKGGW7.js?v=058366b7:16963:34)\n    at commitPassiveMountOnFiber (http://localhost:3000/node_modules/.vite/deps/chunk-UVXKGGW7.js?v=058366b7:18206:19)\n    at commitPassiveMountEffects_complete (http://localhost:3000/node_modules/.vite/deps/chunk-UVXKGGW7.js?v=058366b7:18179:17)\n    at commitPassiveMountEffects_begin (http://localhost:3000/node_modules/.vite/deps/chunk-UVXKGGW7.js?v=058366b7:18169:15)\n    at commitPassiveMountEffects (http://localhost:3000/node_modules/.vite/deps/chunk-UVXKGGW7.js?v=058366b7:18159:11)\n    at flushPassiveEffectsImpl (http://localhost:3000/node_modules/.vite/deps/chunk-UVXKGGW7.js?v=058366b7:19543:11)",
-          "url": "http://localhost:3000/veterinary/customer-profiles"
+          "type": "warning",
+          "text": "The width(-1) and height(-1) of chart should be greater than 0,\n       please check the style of container, or the props width(100%) and height(100%),\n       or add a minWidth(300) or minHeight(200) or use aspect(undefined) to control the\n       height and width.",
+          "url": "http://127.0.0.1:3000/veterinary/reports"
         },
         {
-          "type": "error",
-          "text": "Report fetch error: TypeError: Failed to fetch\n    at apiRequest (http://localhost:3000/src/api/client.js:97:28)\n    at http://localhost:3000/src/components/veterinary/VetReports.jsx?t=1790276185514:84:26\n    at http://localhost:3000/src/components/shared/UnifiedReportEngine.jsx?t=1790276185514:675:13\n    at http://localhost:3000/src/components/shared/UnifiedReportEngine.jsx?t=1790276185514:687:5\n    at commitHookEffectListMount (http://localhost:3000/node_modules/.vite/deps/chunk-UVXKGGW7.js?v=058366b7:16963:34)\n    at invokePassiveEffectMountInDEV (http://localhost:3000/node_modules/.vite/deps/chunk-UVXKGGW7.js?v=058366b7:18374:19)\n    at invokeEffectsInDev (http://localhost:3000/node_modules/.vite/deps/chunk-UVXKGGW7.js?v=058366b7:19754:19)\n    at commitDoubleInvokeEffectsInDEV (http://localhost:3000/node_modules/.vite/deps/chunk-UVXKGGW7.js?v=058366b7:19739:15)\n    at flushPassiveEffectsImpl (http://localhost:3000/node_modules/.vite/deps/chunk-UVXKGGW7.js?v=058366b7:19556:13)\n    at flushPassiveEffects (http://localhost:3000/node_modules/.vite/deps/chunk-UVXKGGW7.js?v=058366b7:19500:22)",
-          "url": "http://localhost:3000/veterinary/customer-profiles"
+          "type": "warning",
+          "text": "The width(-1) and height(-1) of chart should be greater than 0,\n       please check the style of container, or the props width(100%) and height(100%),\n       or add a minWidth(300) or minHeight(200) or use aspect(undefined) to control the\n       height and width.",
+          "url": "http://127.0.0.1:3000/veterinary/reports"
         }
       ],
       "networkErrors": [
@@ -397,119 +820,42 @@
           "status": "REQUEST_FAILED",
           "method": "GET",
           "url": "http://localhost:8000/api/settings/public",
-          "page": "http://localhost:3000/login",
+          "page": "http://127.0.0.1:3000/login",
           "failure": "net::ERR_ABORTED"
         },
         {
           "status": "REQUEST_FAILED",
           "method": "GET",
           "url": "http://localhost:8000/api/settings/public",
-          "page": "http://localhost:3000/login",
+          "page": "http://127.0.0.1:3000/login",
           "failure": "net::ERR_ABORTED"
         },
         {
           "status": "REQUEST_FAILED",
           "method": "GET",
           "url": "http://localhost:8000/api/veterinary/appointments",
-          "page": "http://localhost:3000/veterinary/appointments",
+          "page": "http://127.0.0.1:3000/veterinary/appointments",
+          "failure": "net::ERR_ABORTED"
+        },
+        {
+          "status": "REQUEST_FAILED",
+          "method": "GET",
+          "url": "http://localhost:8000/api/veterinary/history?status=completed,cancelled&per_page=500",
+          "page": "http://127.0.0.1:3000/veterinary/appointments",
           "failure": "net::ERR_ABORTED"
         },
         {
           "status": "REQUEST_FAILED",
           "method": "GET",
           "url": "http://localhost:8000/api/veterinary/appointments",
-          "page": "http://localhost:3000/veterinary/reports",
+          "page": "http://127.0.0.1:3000/veterinary/reports",
           "failure": "net::ERR_ABORTED"
         },
         {
           "status": "REQUEST_FAILED",
           "method": "GET",
-          "url": "http://localhost:8000/api/veterinary/boardings/current-boarders",
-          "page": "http://localhost:3000/veterinary/customer-profiles",
-          "failure": "net::ERR_ABORTED"
-        },
-        {
-          "status": "REQUEST_FAILED",
-          "method": "GET",
-          "url": "http://localhost:8000/api/veterinary/reports?start_date=2026-08-31&from=2026-08-31&end_date=2026-09-29&to=2026-09-29",
-          "page": "http://localhost:3000/veterinary/customer-profiles",
-          "failure": "net::ERR_ABORTED"
-        },
-        {
-          "status": "REQUEST_FAILED",
-          "method": "GET",
-          "url": "http://localhost:8000/api/veterinary/dashboard",
-          "page": "http://localhost:3000/veterinary/customer-profiles",
-          "failure": "net::ERR_ABORTED"
-        },
-        {
-          "status": "REQUEST_FAILED",
-          "method": "GET",
-          "url": "http://localhost:8000/api/veterinary/boardings/current-boarders",
-          "page": "http://localhost:3000/veterinary/customer-profiles",
-          "failure": "net::ERR_ABORTED"
-        },
-        {
-          "status": "REQUEST_FAILED",
-          "method": "GET",
-          "url": "http://localhost:8000/api/veterinary/history?page=1&per_page=25&status=completed%2Ccancelled",
-          "page": "http://localhost:3000/veterinary/customer-profiles",
-          "failure": "net::ERR_ABORTED"
-        },
-        {
-          "status": "REQUEST_FAILED",
-          "method": "GET",
-          "url": "http://localhost:8000/api/veterinary/history?page=1&per_page=25&status=completed%2Ccancelled",
-          "page": "http://localhost:3000/veterinary/customer-profiles",
-          "failure": "net::ERR_ABORTED"
-        },
-        {
-          "status": "REQUEST_FAILED",
-          "method": "GET",
-          "url": "http://localhost:8000/api/chatbot/welcome",
-          "page": "http://localhost:3000/veterinary/customer-profiles",
-          "failure": "net::ERR_ABORTED"
-        },
-        {
-          "status": "REQUEST_FAILED",
-          "method": "GET",
-          "url": "http://localhost:8000/api/veterinary/patients",
-          "page": "http://localhost:3000/veterinary/customer-profiles",
-          "failure": "net::ERR_ABORTED"
-        },
-        {
-          "status": "REQUEST_FAILED",
-          "method": "GET",
-          "url": "http://localhost:8000/api/veterinary/reports?start_date=2026-08-31&from=2026-08-31&end_date=2026-09-29&to=2026-09-29",
-          "page": "http://localhost:3000/veterinary/customer-profiles",
-          "failure": "net::ERR_ABORTED"
-        },
-        {
-          "status": "REQUEST_FAILED",
-          "method": "GET",
-          "url": "http://localhost:8000/api/chatbot/welcome",
-          "page": "http://localhost:3000/veterinary/customer-profiles",
-          "failure": "net::ERR_ABORTED"
-        },
-        {
-          "status": "REQUEST_FAILED",
-          "method": "GET",
-          "url": "http://localhost:8000/api/veterinary/dashboard",
-          "page": "http://localhost:3000/veterinary/customer-profiles",
-          "failure": "net::ERR_ABORTED"
-        },
-        {
-          "status": "REQUEST_FAILED",
-          "method": "GET",
-          "url": "http://localhost:8000/api/notifications?role=veterinary",
-          "page": "http://localhost:3000/veterinary/customer-profiles",
-          "failure": "net::ERR_ABORTED"
-        },
-        {
-          "status": "REQUEST_FAILED",
-          "method": "GET",
-          "url": "http://localhost:8000/api/veterinary/patients",
-          "page": "http://localhost:3000/veterinary/customer-profiles",
+          "url": "http://localhost:8000/api/veterinary/history?status=completed,cancelled&per_page=500",
+          "page": "http://127.0.0.1:3000/veterinary/reports",
           "failure": "net::ERR_ABORTED"
         }
       ],
@@ -519,11 +865,40 @@
     },
     {
       "role": "manager",
-      "login": false,
-      "dashboard": false,
-      "dashboardUrl": "",
-      "sidebar": false,
-      "mainPages": [],
+      "login": true,
+      "dashboard": true,
+      "dashboardUrl": "http://127.0.0.1:3000/manager",
+      "sidebar": true,
+      "mainPages": [
+        {
+          "path": "/manager/reports",
+          "url": "http://127.0.0.1:3000/manager/reports",
+          "navigationMode": "clicked",
+          "rendered": true,
+          "screenshot": "documentation/screenshots/phase10/manager-manager-reports.png"
+        },
+        {
+          "path": "/manager/staff",
+          "url": "http://127.0.0.1:3000/manager/staff",
+          "navigationMode": "clicked",
+          "rendered": true,
+          "screenshot": "documentation/screenshots/phase10/manager-manager-staff.png"
+        },
+        {
+          "path": "/manager/attendance",
+          "url": "http://127.0.0.1:3000/manager/attendance",
+          "navigationMode": "clicked",
+          "rendered": true,
+          "screenshot": "documentation/screenshots/phase10/manager-manager-attendance.png"
+        },
+        {
+          "path": "/manager/history",
+          "url": "http://127.0.0.1:3000/manager/history",
+          "navigationMode": "clicked",
+          "rendered": true,
+          "screenshot": "documentation/screenshots/phase10/manager-manager-history.png"
+        }
+      ],
       "blankPages": [],
       "consoleErrors": [],
       "networkErrors": [
@@ -531,54 +906,178 @@
           "status": "REQUEST_FAILED",
           "method": "GET",
           "url": "http://localhost:8000/api/settings/public",
-          "page": "http://localhost:3000/login",
+          "page": "http://127.0.0.1:3000/login",
           "failure": "net::ERR_ABORTED"
         },
         {
           "status": "REQUEST_FAILED",
           "method": "GET",
           "url": "http://localhost:8000/api/settings/public",
-          "page": "http://localhost:3000/login",
+          "page": "http://127.0.0.1:3000/login",
+          "failure": "net::ERR_ABORTED"
+        },
+        {
+          "status": "REQUEST_FAILED",
+          "method": "GET",
+          "url": "http://localhost:8000/api/manager/people",
+          "page": "http://127.0.0.1:3000/manager/staff",
+          "failure": "net::ERR_ABORTED"
+        },
+        {
+          "status": "REQUEST_FAILED",
+          "method": "GET",
+          "url": "http://localhost:8000/api/manager/people",
+          "page": "http://127.0.0.1:3000/manager/attendance",
+          "failure": "net::ERR_ABORTED"
+        },
+        {
+          "status": "REQUEST_FAILED",
+          "method": "GET",
+          "url": "http://localhost:8000/api/manager/attendance?date=2026-11-05",
+          "page": "http://127.0.0.1:3000/manager/history",
+          "failure": "net::ERR_ABORTED"
+        },
+        {
+          "status": "REQUEST_FAILED",
+          "method": "GET",
+          "url": "http://localhost:8000/api/manager/history?page=1&per_page=25",
+          "page": "http://127.0.0.1:3000/manager/history",
+          "failure": "net::ERR_ABORTED"
+        },
+        {
+          "status": "REQUEST_FAILED",
+          "method": "GET",
+          "url": "http://localhost:8000/api/manager/reports/payments",
+          "page": "http://127.0.0.1:3000/manager/history",
+          "failure": "net::ERR_ABORTED"
+        },
+        {
+          "status": "REQUEST_FAILED",
+          "method": "GET",
+          "url": "http://localhost:8000/api/manager/reports/customers",
+          "page": "http://127.0.0.1:3000/manager/history",
+          "failure": "net::ERR_ABORTED"
+        },
+        {
+          "status": "REQUEST_FAILED",
+          "method": "GET",
+          "url": "http://localhost:8000/api/manager/reports/services",
+          "page": "http://127.0.0.1:3000/manager/history",
+          "failure": "net::ERR_ABORTED"
+        },
+        {
+          "status": "REQUEST_FAILED",
+          "method": "GET",
+          "url": "http://localhost:8000/api/manager/reports/inventory",
+          "page": "http://127.0.0.1:3000/manager/history",
+          "failure": "net::ERR_ABORTED"
+        },
+        {
+          "status": "REQUEST_FAILED",
+          "method": "GET",
+          "url": "http://localhost:8000/api/manager/staff",
+          "page": "http://127.0.0.1:3000/manager/history",
+          "failure": "net::ERR_ABORTED"
+        },
+        {
+          "status": "REQUEST_FAILED",
+          "method": "GET",
+          "url": "http://localhost:8000/api/manager/reports/inventory",
+          "page": "http://127.0.0.1:3000/manager/history",
+          "failure": "net::ERR_ABORTED"
+        },
+        {
+          "status": "REQUEST_FAILED",
+          "method": "GET",
+          "url": "http://localhost:8000/api/manager/reports/live",
+          "page": "http://127.0.0.1:3000/manager/history",
+          "failure": "net::ERR_ABORTED"
+        },
+        {
+          "status": "REQUEST_FAILED",
+          "method": "GET",
+          "url": "http://localhost:8000/api/manager/reports/customers",
+          "page": "http://127.0.0.1:3000/manager/history",
+          "failure": "net::ERR_ABORTED"
+        },
+        {
+          "status": "REQUEST_FAILED",
+          "method": "GET",
+          "url": "http://localhost:8000/api/manager/staff",
+          "page": "http://127.0.0.1:3000/manager/history",
+          "failure": "net::ERR_ABORTED"
+        },
+        {
+          "status": "REQUEST_FAILED",
+          "method": "GET",
+          "url": "http://localhost:8000/api/manager/reports/payroll",
+          "page": "http://127.0.0.1:3000/manager/history",
+          "failure": "net::ERR_ABORTED"
+        },
+        {
+          "status": "REQUEST_FAILED",
+          "method": "GET",
+          "url": "http://localhost:8000/api/manager/reports/services",
+          "page": "http://127.0.0.1:3000/manager/history",
+          "failure": "net::ERR_ABORTED"
+        },
+        {
+          "status": "REQUEST_FAILED",
+          "method": "GET",
+          "url": "http://localhost:8000/api/manager/history?page=1&per_page=25",
+          "page": "http://127.0.0.1:3000/manager/history",
+          "failure": "net::ERR_ABORTED"
+        },
+        {
+          "status": "REQUEST_FAILED",
+          "method": "GET",
+          "url": "http://localhost:8000/api/manager/reports/payroll",
+          "page": "http://127.0.0.1:3000/manager/history",
+          "failure": "net::ERR_ABORTED"
+        },
+        {
+          "status": "REQUEST_FAILED",
+          "method": "GET",
+          "url": "http://localhost:8000/api/manager/reports/sales",
+          "page": "http://127.0.0.1:3000/manager/history",
           "failure": "net::ERR_ABORTED"
         }
       ],
-      "screenshot": "documentation/screenshots/phase10/manager-failure.png",
-      "notes": [
-        "\u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoBeVisible\u001b[2m(\u001b[22m\u001b[2m)\u001b[22m failed\n\nLocator: locator('.swal2-confirm')\nExpected: visible\nTimeout: 15000ms\nError: element(s) not found\n\nCall log:\n\u001b[2m  - Expect \"toBeVisible\" with timeout 15000ms\u001b[22m\n\u001b[2m  - waiting for locator('.swal2-confirm')\u001b[22m\n"
-      ],
-      "status": "FAIL"
+      "screenshot": "documentation/screenshots/phase10/manager-dashboard.png",
+      "notes": [],
+      "status": "WARN"
     },
     {
       "role": "admin",
       "login": true,
       "dashboard": true,
-      "dashboardUrl": "http://localhost:3000/admin",
+      "dashboardUrl": "http://127.0.0.1:3000/admin",
       "sidebar": true,
       "mainPages": [
         {
           "path": "/admin/users",
-          "url": "http://localhost:3000/admin/users",
+          "url": "http://127.0.0.1:3000/admin/users",
           "navigationMode": "clicked",
           "rendered": true,
           "screenshot": "documentation/screenshots/phase10/admin-admin-users.png"
         },
         {
           "path": "/admin/reports",
-          "url": "http://localhost:3000/admin/reports",
+          "url": "http://127.0.0.1:3000/admin/reports",
           "navigationMode": "clicked",
           "rendered": true,
           "screenshot": "documentation/screenshots/phase10/admin-admin-reports.png"
         },
         {
           "path": "/admin/history",
-          "url": "http://localhost:3000/admin/history",
+          "url": "http://127.0.0.1:3000/admin/history",
           "navigationMode": "clicked",
           "rendered": true,
           "screenshot": "documentation/screenshots/phase10/admin-admin-history.png"
         },
         {
           "path": "/admin/settings",
-          "url": "http://localhost:3000/admin/settings",
+          "url": "http://127.0.0.1:3000/admin/settings",
           "navigationMode": "clicked",
           "rendered": true,
           "screenshot": "documentation/screenshots/phase10/admin-admin-settings.png"
@@ -588,53 +1087,13 @@
       "consoleErrors": [
         {
           "type": "error",
-          "text": "Error fetching settings: TypeError: Failed to fetch\n    at apiRequest (http://localhost:3000/src/api/client.js:97:28)\n    at fetchSettings (http://localhost:3000/src/components/admin/AdminSettings.jsx:151:26)\n    at http://localhost:3000/src/components/admin/AdminSettings.jsx:146:5\n    at commitHookEffectListMount (http://localhost:3000/node_modules/.vite/deps/chunk-UVXKGGW7.js?v=058366b7:16963:34)\n    at commitPassiveMountOnFiber (http://localhost:3000/node_modules/.vite/deps/chunk-UVXKGGW7.js?v=058366b7:18206:19)\n    at commitPassiveMountEffects_complete (http://localhost:3000/node_modules/.vite/deps/chunk-UVXKGGW7.js?v=058366b7:18179:17)\n    at commitPassiveMountEffects_begin (http://localhost:3000/node_modules/.vite/deps/chunk-UVXKGGW7.js?v=058366b7:18169:15)\n    at commitPassiveMountEffects (http://localhost:3000/node_modules/.vite/deps/chunk-UVXKGGW7.js?v=058366b7:18159:11)\n    at flushPassiveEffectsImpl (http://localhost:3000/node_modules/.vite/deps/chunk-UVXKGGW7.js?v=058366b7:19543:11)\n    at flushPassiveEffects (http://localhost:3000/node_modules/.vite/deps/chunk-UVXKGGW7.js?v=058366b7:19500:22)",
-          "url": "http://localhost:3000/admin/settings"
+          "text": "Error fetching settings: Error: Cannot reach the server right now. Please check your connection and try again.\n    at apiRequest (http://127.0.0.1:3000/src/api/client.js:161:13)\n    at async fetchSettings (http://127.0.0.1:3000/src/components/admin/AdminSettings.jsx:139:20)",
+          "url": "http://127.0.0.1:3000/admin/settings"
         },
         {
           "type": "error",
-          "text": "Error fetching settings: TypeError: Failed to fetch\n    at apiRequest (http://localhost:3000/src/api/client.js:97:28)\n    at fetchSettings (http://localhost:3000/src/components/admin/AdminSettings.jsx:151:26)\n    at http://localhost:3000/src/components/admin/AdminSettings.jsx:146:5\n    at commitHookEffectListMount (http://localhost:3000/node_modules/.vite/deps/chunk-UVXKGGW7.js?v=058366b7:16963:34)\n    at invokePassiveEffectMountInDEV (http://localhost:3000/node_modules/.vite/deps/chunk-UVXKGGW7.js?v=058366b7:18374:19)\n    at invokeEffectsInDev (http://localhost:3000/node_modules/.vite/deps/chunk-UVXKGGW7.js?v=058366b7:19754:19)\n    at commitDoubleInvokeEffectsInDEV (http://localhost:3000/node_modules/.vite/deps/chunk-UVXKGGW7.js?v=058366b7:19739:15)\n    at flushPassiveEffectsImpl (http://localhost:3000/node_modules/.vite/deps/chunk-UVXKGGW7.js?v=058366b7:19556:13)\n    at flushPassiveEffects (http://localhost:3000/node_modules/.vite/deps/chunk-UVXKGGW7.js?v=058366b7:19500:22)\n    at http://localhost:3000/node_modules/.vite/deps/chunk-UVXKGGW7.js?v=058366b7:19381:17",
-          "url": "http://localhost:3000/admin/settings"
-        },
-        {
-          "type": "error",
-          "text": "Executive Dashboard API Error: TypeError: Failed to fetch\n    at apiRequest (http://localhost:3000/src/api/client.js:97:28)\n    at http://localhost:3000/src/components/admin/reports/ExecutiveDashboard.jsx?t=1790276185514:186:30\n    at http://localhost:3000/src/components/admin/reports/ExecutiveDashboard.jsx?t=1790276185514:203:5\n    at commitHookEffectListMount (http://localhost:3000/node_modules/.vite/deps/chunk-UVXKGGW7.js?v=058366b7:16963:34)\n    at commitPassiveMountOnFiber (http://localhost:3000/node_modules/.vite/deps/chunk-UVXKGGW7.js?v=058366b7:18206:19)\n    at commitPassiveMountEffects_complete (http://localhost:3000/node_modules/.vite/deps/chunk-UVXKGGW7.js?v=058366b7:18179:17)\n    at commitPassiveMountEffects_begin (http://localhost:3000/node_modules/.vite/deps/chunk-UVXKGGW7.js?v=058366b7:18169:15)\n    at commitPassiveMountEffects (http://localhost:3000/node_modules/.vite/deps/chunk-UVXKGGW7.js?v=058366b7:18159:11)\n    at flushPassiveEffectsImpl (http://localhost:3000/node_modules/.vite/deps/chunk-UVXKGGW7.js?v=058366b7:19543:11)\n    at flushPassiveEffects (http://localhost:3000/node_modules/.vite/deps/chunk-UVXKGGW7.js?v=058366b7:19500:22)",
-          "url": "http://localhost:3000/admin/settings"
-        },
-        {
-          "type": "error",
-          "text": "Failed to fetch users: TypeError: Failed to fetch\n    at apiRequest (http://localhost:3000/src/api/client.js:97:28)\n    at fetchUsers (http://localhost:3000/src/components/admin/ManageUsers.jsx?t=1790276185514:133:26)\n    at http://localhost:3000/src/components/admin/ManageUsers.jsx?t=1790276185514:144:5\n    at commitHookEffectListMount (http://localhost:3000/node_modules/.vite/deps/chunk-UVXKGGW7.js?v=058366b7:16963:34)\n    at invokePassiveEffectMountInDEV (http://localhost:3000/node_modules/.vite/deps/chunk-UVXKGGW7.js?v=058366b7:18374:19)\n    at invokeEffectsInDev (http://localhost:3000/node_modules/.vite/deps/chunk-UVXKGGW7.js?v=058366b7:19754:19)\n    at commitDoubleInvokeEffectsInDEV (http://localhost:3000/node_modules/.vite/deps/chunk-UVXKGGW7.js?v=058366b7:19739:15)\n    at flushPassiveEffectsImpl (http://localhost:3000/node_modules/.vite/deps/chunk-UVXKGGW7.js?v=058366b7:19556:13)\n    at flushPassiveEffects (http://localhost:3000/node_modules/.vite/deps/chunk-UVXKGGW7.js?v=058366b7:19500:22)\n    at http://localhost:3000/node_modules/.vite/deps/chunk-UVXKGGW7.js?v=058366b7:19381:17",
-          "url": "http://localhost:3000/admin/settings"
-        },
-        {
-          "type": "error",
-          "text": "Error fetching system info: TypeError: Failed to fetch\n    at apiRequest (http://localhost:3000/src/api/client.js:97:28)\n    at fetchSystemInfo (http://localhost:3000/src/components/admin/AdminSettings.jsx:161:27)\n    at http://localhost:3000/src/components/admin/AdminSettings.jsx:147:5\n    at commitHookEffectListMount (http://localhost:3000/node_modules/.vite/deps/chunk-UVXKGGW7.js?v=058366b7:16963:34)\n    at commitPassiveMountOnFiber (http://localhost:3000/node_modules/.vite/deps/chunk-UVXKGGW7.js?v=058366b7:18206:19)\n    at commitPassiveMountEffects_complete (http://localhost:3000/node_modules/.vite/deps/chunk-UVXKGGW7.js?v=058366b7:18179:17)\n    at commitPassiveMountEffects_begin (http://localhost:3000/node_modules/.vite/deps/chunk-UVXKGGW7.js?v=058366b7:18169:15)\n    at commitPassiveMountEffects (http://localhost:3000/node_modules/.vite/deps/chunk-UVXKGGW7.js?v=058366b7:18159:11)\n    at flushPassiveEffectsImpl (http://localhost:3000/node_modules/.vite/deps/chunk-UVXKGGW7.js?v=058366b7:19543:11)\n    at flushPassiveEffects (http://localhost:3000/node_modules/.vite/deps/chunk-UVXKGGW7.js?v=058366b7:19500:22)",
-          "url": "http://localhost:3000/admin/settings"
-        },
-        {
-          "type": "error",
-          "text": "Executive Dashboard API Error: TypeError: Failed to fetch\n    at apiRequest (http://localhost:3000/src/api/client.js:97:28)\n    at http://localhost:3000/src/components/admin/reports/ExecutiveDashboard.jsx?t=1790276185514:186:30\n    at http://localhost:3000/src/components/admin/reports/ExecutiveDashboard.jsx?t=1790276185514:203:5\n    at commitHookEffectListMount (http://localhost:3000/node_modules/.vite/deps/chunk-UVXKGGW7.js?v=058366b7:16963:34)\n    at invokePassiveEffectMountInDEV (http://localhost:3000/node_modules/.vite/deps/chunk-UVXKGGW7.js?v=058366b7:18374:19)\n    at invokeEffectsInDev (http://localhost:3000/node_modules/.vite/deps/chunk-UVXKGGW7.js?v=058366b7:19754:19)\n    at commitDoubleInvokeEffectsInDEV (http://localhost:3000/node_modules/.vite/deps/chunk-UVXKGGW7.js?v=058366b7:19739:15)\n    at flushPassiveEffectsImpl (http://localhost:3000/node_modules/.vite/deps/chunk-UVXKGGW7.js?v=058366b7:19556:13)\n    at flushPassiveEffects (http://localhost:3000/node_modules/.vite/deps/chunk-UVXKGGW7.js?v=058366b7:19500:22)\n    at http://localhost:3000/node_modules/.vite/deps/chunk-UVXKGGW7.js?v=058366b7:19381:17",
-          "url": "http://localhost:3000/admin/settings"
-        },
-        {
-          "type": "error",
-          "text": "Failed to fetch users: TypeError: Failed to fetch\n    at apiRequest (http://localhost:3000/src/api/client.js:97:28)\n    at fetchUsers (http://localhost:3000/src/components/admin/ManageUsers.jsx?t=1790276185514:133:26)\n    at http://localhost:3000/src/components/admin/ManageUsers.jsx?t=1790276185514:144:5\n    at commitHookEffectListMount (http://localhost:3000/node_modules/.vite/deps/chunk-UVXKGGW7.js?v=058366b7:16963:34)\n    at commitPassiveMountOnFiber (http://localhost:3000/node_modules/.vite/deps/chunk-UVXKGGW7.js?v=058366b7:18206:19)\n    at commitPassiveMountEffects_complete (http://localhost:3000/node_modules/.vite/deps/chunk-UVXKGGW7.js?v=058366b7:18179:17)\n    at commitPassiveMountEffects_begin (http://localhost:3000/node_modules/.vite/deps/chunk-UVXKGGW7.js?v=058366b7:18169:15)\n    at commitPassiveMountEffects (http://localhost:3000/node_modules/.vite/deps/chunk-UVXKGGW7.js?v=058366b7:18159:11)\n    at flushPassiveEffectsImpl (http://localhost:3000/node_modules/.vite/deps/chunk-UVXKGGW7.js?v=058366b7:19543:11)\n    at flushPassiveEffects (http://localhost:3000/node_modules/.vite/deps/chunk-UVXKGGW7.js?v=058366b7:19500:22)",
-          "url": "http://localhost:3000/admin/settings"
-        },
-        {
-          "type": "error",
-          "text": "Error fetching system info: TypeError: Failed to fetch\n    at apiRequest (http://localhost:3000/src/api/client.js:97:28)\n    at fetchSystemInfo (http://localhost:3000/src/components/admin/AdminSettings.jsx:161:27)\n    at http://localhost:3000/src/components/admin/AdminSettings.jsx:147:5\n    at commitHookEffectListMount (http://localhost:3000/node_modules/.vite/deps/chunk-UVXKGGW7.js?v=058366b7:16963:34)\n    at invokePassiveEffectMountInDEV (http://localhost:3000/node_modules/.vite/deps/chunk-UVXKGGW7.js?v=058366b7:18374:19)\n    at invokeEffectsInDev (http://localhost:3000/node_modules/.vite/deps/chunk-UVXKGGW7.js?v=058366b7:19754:19)\n    at commitDoubleInvokeEffectsInDEV (http://localhost:3000/node_modules/.vite/deps/chunk-UVXKGGW7.js?v=058366b7:19739:15)\n    at flushPassiveEffectsImpl (http://localhost:3000/node_modules/.vite/deps/chunk-UVXKGGW7.js?v=058366b7:19556:13)\n    at flushPassiveEffects (http://localhost:3000/node_modules/.vite/deps/chunk-UVXKGGW7.js?v=058366b7:19500:22)\n    at http://localhost:3000/node_modules/.vite/deps/chunk-UVXKGGW7.js?v=058366b7:19381:17",
-          "url": "http://localhost:3000/admin/settings"
-        },
-        {
-          "type": "error",
-          "text": "Admin dashboard fetch error: TypeError: Failed to fetch\n    at apiRequest (http://localhost:3000/src/api/client.js:97:28)\n    at http://localhost:3000/src/components/admin/AdminDashboard.jsx?t=1790279843156:95:13\n    at http://localhost:3000/src/components/admin/AdminDashboard.jsx?t=1790279843156:136:7\n    at commitHookEffectListMount (http://localhost:3000/node_modules/.vite/deps/chunk-UVXKGGW7.js?v=058366b7:16963:34)\n    at invokePassiveEffectMountInDEV (http://localhost:3000/node_modules/.vite/deps/chunk-UVXKGGW7.js?v=058366b7:18374:19)\n    at invokeEffectsInDev (http://localhost:3000/node_modules/.vite/deps/chunk-UVXKGGW7.js?v=058366b7:19754:19)\n    at commitDoubleInvokeEffectsInDEV (http://localhost:3000/node_modules/.vite/deps/chunk-UVXKGGW7.js?v=058366b7:19739:15)\n    at flushPassiveEffectsImpl (http://localhost:3000/node_modules/.vite/deps/chunk-UVXKGGW7.js?v=058366b7:19556:13)\n    at flushPassiveEffects (http://localhost:3000/node_modules/.vite/deps/chunk-UVXKGGW7.js?v=058366b7:19500:22)\n    at http://localhost:3000/node_modules/.vite/deps/chunk-UVXKGGW7.js?v=058366b7:19381:17",
-          "url": "http://localhost:3000/admin/settings"
-        },
-        {
-          "type": "error",
-          "text": "Admin dashboard fetch error: TypeError: Failed to fetch\n    at apiRequest (http://localhost:3000/src/api/client.js:97:28)\n    at http://localhost:3000/src/components/admin/AdminDashboard.jsx?t=1790279843156:95:13\n    at http://localhost:3000/src/components/admin/AdminDashboard.jsx?t=1790279843156:136:7\n    at commitHookEffectListMount (http://localhost:3000/node_modules/.vite/deps/chunk-UVXKGGW7.js?v=058366b7:16963:34)\n    at commitPassiveMountOnFiber (http://localhost:3000/node_modules/.vite/deps/chunk-UVXKGGW7.js?v=058366b7:18206:19)\n    at commitPassiveMountEffects_complete (http://localhost:3000/node_modules/.vite/deps/chunk-UVXKGGW7.js?v=058366b7:18179:17)\n    at commitPassiveMountEffects_begin (http://localhost:3000/node_modules/.vite/deps/chunk-UVXKGGW7.js?v=058366b7:18169:15)\n    at commitPassiveMountEffects (http://localhost:3000/node_modules/.vite/deps/chunk-UVXKGGW7.js?v=058366b7:18159:11)\n    at flushPassiveEffectsImpl (http://localhost:3000/node_modules/.vite/deps/chunk-UVXKGGW7.js?v=058366b7:19543:11)\n    at flushPassiveEffects (http://localhost:3000/node_modules/.vite/deps/chunk-UVXKGGW7.js?v=058366b7:19500:22)",
-          "url": "http://localhost:3000/admin/settings"
+          "text": "Error fetching settings: Error: Cannot reach the server right now. Please check your connection and try again.\n    at apiRequest (http://127.0.0.1:3000/src/api/client.js:161:13)\n    at async fetchSettings (http://127.0.0.1:3000/src/components/admin/AdminSettings.jsx:139:20)",
+          "url": "http://127.0.0.1:3000/admin/settings"
         }
       ],
       "networkErrors": [
@@ -642,203 +1101,91 @@
           "status": "REQUEST_FAILED",
           "method": "GET",
           "url": "http://localhost:8000/api/settings/public",
-          "page": "http://localhost:3000/login",
+          "page": "http://127.0.0.1:3000/login",
           "failure": "net::ERR_ABORTED"
         },
         {
           "status": "REQUEST_FAILED",
           "method": "GET",
           "url": "http://localhost:8000/api/settings/public",
-          "page": "http://localhost:3000/login",
-          "failure": "net::ERR_ABORTED"
-        },
-        {
-          "status": "REQUEST_FAILED",
-          "method": "GET",
-          "url": "http://localhost:8000/api/admin/login-logs",
-          "page": "http://localhost:3000/admin/settings",
-          "failure": "net::ERR_ABORTED"
-        },
-        {
-          "status": "REQUEST_FAILED",
-          "method": "GET",
-          "url": "http://localhost:8000/api/admin/activity-logs",
-          "page": "http://localhost:3000/admin/settings",
-          "failure": "net::ERR_ABORTED"
-        },
-        {
-          "status": "REQUEST_FAILED",
-          "method": "GET",
-          "url": "http://localhost:8000/api/admin/appointments",
-          "page": "http://localhost:3000/admin/settings",
-          "failure": "net::ERR_ABORTED"
-        },
-        {
-          "status": "REQUEST_FAILED",
-          "method": "GET",
-          "url": "http://localhost:8000/api/admin/settings",
-          "page": "http://localhost:3000/admin/settings",
-          "failure": "net::ERR_ABORTED"
-        },
-        {
-          "status": "REQUEST_FAILED",
-          "method": "GET",
-          "url": "http://localhost:8000/api/admin/system-health",
-          "page": "http://localhost:3000/admin/settings",
-          "failure": "net::ERR_ABORTED"
-        },
-        {
-          "status": "REQUEST_FAILED",
-          "method": "GET",
-          "url": "http://localhost:8000/api/admin/chatbot/logs",
-          "page": "http://localhost:3000/admin/settings",
-          "failure": "net::ERR_ABORTED"
-        },
-        {
-          "status": "REQUEST_FAILED",
-          "method": "GET",
-          "url": "http://localhost:8000/api/admin/dashboard",
-          "page": "http://localhost:3000/admin/settings",
-          "failure": "net::ERR_ABORTED"
-        },
-        {
-          "status": "REQUEST_FAILED",
-          "method": "GET",
-          "url": "http://localhost:8000/api/admin/login-logs",
-          "page": "http://localhost:3000/admin/settings",
-          "failure": "net::ERR_ABORTED"
-        },
-        {
-          "status": "REQUEST_FAILED",
-          "method": "GET",
-          "url": "http://localhost:8000/api/admin/settings",
-          "page": "http://localhost:3000/admin/settings",
-          "failure": "net::ERR_ABORTED"
-        },
-        {
-          "status": "REQUEST_FAILED",
-          "method": "GET",
-          "url": "http://localhost:8000/api/admin/dashboard",
-          "page": "http://localhost:3000/admin/settings",
-          "failure": "net::ERR_ABORTED"
-        },
-        {
-          "status": "REQUEST_FAILED",
-          "method": "GET",
-          "url": "http://localhost:8000/api/chatbot/welcome",
-          "page": "http://localhost:3000/admin/settings",
-          "failure": "net::ERR_ABORTED"
-        },
-        {
-          "status": "REQUEST_FAILED",
-          "method": "GET",
-          "url": "http://localhost:8000/api/admin/reports/executive?from=2026-09-25&to=2026-09-25",
-          "page": "http://localhost:3000/admin/settings",
+          "page": "http://127.0.0.1:3000/login",
           "failure": "net::ERR_ABORTED"
         },
         {
           "status": "REQUEST_FAILED",
           "method": "GET",
           "url": "http://localhost:8000/api/admin/reports/cashier",
-          "page": "http://localhost:3000/admin/settings",
+          "page": "http://127.0.0.1:3000/admin/settings",
           "failure": "net::ERR_ABORTED"
         },
         {
           "status": "REQUEST_FAILED",
           "method": "GET",
-          "url": "http://localhost:8000/api/admin/users",
-          "page": "http://localhost:3000/admin/settings",
-          "failure": "net::ERR_ABORTED"
-        },
-        {
-          "status": "REQUEST_FAILED",
-          "method": "GET",
-          "url": "http://localhost:8000/api/admin/users",
-          "page": "http://localhost:3000/admin/settings",
-          "failure": "net::ERR_ABORTED"
-        },
-        {
-          "status": "REQUEST_FAILED",
-          "method": "GET",
-          "url": "http://localhost:8000/api/chatbot/welcome",
-          "page": "http://localhost:3000/admin/settings",
-          "failure": "net::ERR_ABORTED"
-        },
-        {
-          "status": "REQUEST_FAILED",
-          "method": "GET",
-          "url": "http://localhost:8000/api/inventory/logs",
-          "page": "http://localhost:3000/admin/settings",
-          "failure": "net::ERR_ABORTED"
-        },
-        {
-          "status": "REQUEST_FAILED",
-          "method": "GET",
-          "url": "http://localhost:8000/api/admin/system-health",
-          "page": "http://localhost:3000/admin/settings",
-          "failure": "net::ERR_ABORTED"
-        },
-        {
-          "status": "REQUEST_FAILED",
-          "method": "GET",
-          "url": "http://localhost:8000/api/admin/activity-logs",
-          "page": "http://localhost:3000/admin/settings",
-          "failure": "net::ERR_ABORTED"
-        },
-        {
-          "status": "REQUEST_FAILED",
-          "method": "GET",
-          "url": "http://localhost:8000/api/admin/chatbot/logs",
-          "page": "http://localhost:3000/admin/settings",
+          "url": "http://localhost:8000/api/admin/settings",
+          "page": "http://127.0.0.1:3000/admin/settings",
           "failure": "net::ERR_ABORTED"
         },
         {
           "status": "REQUEST_FAILED",
           "method": "GET",
           "url": "http://localhost:8000/api/admin/appointments",
-          "page": "http://localhost:3000/admin/settings",
+          "page": "http://127.0.0.1:3000/admin/settings",
           "failure": "net::ERR_ABORTED"
         },
         {
           "status": "REQUEST_FAILED",
           "method": "GET",
-          "url": "http://localhost:8000/api/admin/reports/executive?from=2026-09-25&to=2026-09-25",
-          "page": "http://localhost:3000/admin/settings",
+          "url": "http://localhost:8000/api/admin/chatbot/logs",
+          "page": "http://127.0.0.1:3000/admin/settings",
+          "failure": "net::ERR_ABORTED"
+        },
+        {
+          "status": "REQUEST_FAILED",
+          "method": "GET",
+          "url": "http://localhost:8000/api/admin/login-logs",
+          "page": "http://127.0.0.1:3000/admin/settings",
+          "failure": "net::ERR_ABORTED"
+        },
+        {
+          "status": "REQUEST_FAILED",
+          "method": "GET",
+          "url": "http://localhost:8000/api/admin/appointments",
+          "page": "http://127.0.0.1:3000/admin/settings",
           "failure": "net::ERR_ABORTED"
         },
         {
           "status": "REQUEST_FAILED",
           "method": "GET",
           "url": "http://localhost:8000/api/inventory/logs",
-          "page": "http://localhost:3000/admin/settings",
+          "page": "http://127.0.0.1:3000/admin/settings",
           "failure": "net::ERR_ABORTED"
         },
         {
           "status": "REQUEST_FAILED",
           "method": "GET",
           "url": "http://localhost:8000/api/admin/reports/cashier",
-          "page": "http://localhost:3000/admin/settings",
+          "page": "http://127.0.0.1:3000/admin/settings",
           "failure": "net::ERR_ABORTED"
         },
         {
           "status": "REQUEST_FAILED",
           "method": "GET",
-          "url": "http://localhost:8000/api/admin/users",
-          "page": "http://localhost:3000/admin/settings",
+          "url": "http://localhost:8000/api/admin/settings",
+          "page": "http://127.0.0.1:3000/admin/settings",
           "failure": "net::ERR_ABORTED"
         },
         {
           "status": "REQUEST_FAILED",
           "method": "GET",
-          "url": "http://localhost:8000/api/admin/users",
-          "page": "http://localhost:3000/admin/settings",
+          "url": "http://localhost:8000/api/admin/activity-logs",
+          "page": "http://127.0.0.1:3000/admin/settings",
           "failure": "net::ERR_ABORTED"
         },
         {
           "status": "REQUEST_FAILED",
           "method": "GET",
-          "url": "http://localhost:8000/api/notifications?role=admin",
-          "page": "http://localhost:3000/admin/settings",
+          "url": "http://localhost:8000/api/inventory/logs",
+          "page": "http://127.0.0.1:3000/admin/settings",
           "failure": "net::ERR_ABORTED"
         }
       ],
@@ -850,40 +1197,40 @@
   "workflows": [
     {
       "workflow": "Customer to Receptionist",
-      "result": "FAIL",
+      "result": "PARTIAL PASS",
       "notes": "Customer service pages and receptionist request hub were browser-visited. Form submission was not attempted in this smoke spec.",
-      "screenshot": "documentation/screenshots/phase10/customer-failure.png"
+      "screenshot": "documentation/screenshots/phase10/customer-dashboard.png"
     },
     {
       "workflow": "Payment",
-      "result": "FAIL",
+      "result": "PARTIAL PASS",
       "notes": "Customer payment page and cashier payment verification page were browser-visited. Payment proof upload was not attempted.",
-      "screenshot": "documentation/screenshots/phase10/cashier-failure.png"
+      "screenshot": "documentation/screenshots/phase10/cashier-dashboard.png"
     },
     {
       "workflow": "POS and Inventory",
-      "result": "FAIL",
+      "result": "PARTIAL PASS",
       "notes": "Cashier POS and inventory management pages were browser-visited. Stock-changing transaction was not attempted by this audit spec.",
       "screenshot": "documentation/screenshots/phase10/inventory-dashboard.png"
     },
     {
       "workflow": "Vet",
-      "result": "FAIL",
+      "result": "PARTIAL PASS",
       "notes": "Receptionist scheduling hub and veterinary appointment pages were browser-visited. Consultation save was not attempted.",
       "screenshot": "documentation/screenshots/phase10/veterinary-dashboard.png"
     },
     {
       "workflow": "Manager reporting",
-      "result": "FAIL",
+      "result": "PASS",
       "notes": "Manager report and operations pages were browser-visited.",
-      "screenshot": "documentation/screenshots/phase10/manager-failure.png"
+      "screenshot": "documentation/screenshots/phase10/manager-dashboard.png"
     }
   ],
   "issues": [
     {
       "severity": "Low",
       "module": "customer",
-      "page": "http://localhost:3000/login",
+      "page": "http://127.0.0.1:3000/login",
       "error": "GET REQUEST_FAILED",
       "routeFile": "http://localhost:8000/api/settings/public",
       "fixApplied": "Classified as navigation-cancelled background request",
@@ -892,7 +1239,79 @@
     {
       "severity": "Low",
       "module": "customer",
-      "page": "http://localhost:3000/login",
+      "page": "http://127.0.0.1:3000/login",
+      "error": "GET REQUEST_FAILED",
+      "routeFile": "http://localhost:8000/api/settings/public",
+      "fixApplied": "Classified as navigation-cancelled background request",
+      "status": "Observed"
+    },
+    {
+      "severity": "Low",
+      "module": "customer",
+      "page": "http://127.0.0.1:3000/customer/pets",
+      "error": "GET REQUEST_FAILED",
+      "routeFile": "http://localhost:8000/api/files/pet-photos/1/view?t=1792255082",
+      "fixApplied": "Classified as navigation-cancelled background request",
+      "status": "Observed"
+    },
+    {
+      "severity": "Low",
+      "module": "customer",
+      "page": "http://127.0.0.1:3000/customer/pets",
+      "error": "GET REQUEST_FAILED",
+      "routeFile": "http://localhost:8000/api/files/pet-photos/1/view?t=1792255082",
+      "fixApplied": "Classified as navigation-cancelled background request",
+      "status": "Observed"
+    },
+    {
+      "severity": "Low",
+      "module": "customer",
+      "page": "http://127.0.0.1:3000/customer/notifications",
+      "error": "GET REQUEST_FAILED",
+      "routeFile": "http://localhost:8000/api/settings/public",
+      "fixApplied": "Classified as navigation-cancelled background request",
+      "status": "Observed"
+    },
+    {
+      "severity": "Low",
+      "module": "customer",
+      "page": "http://127.0.0.1:3000/customer/notifications",
+      "error": "GET REQUEST_FAILED",
+      "routeFile": "http://localhost:8000/api/customer/store/orders",
+      "fixApplied": "Classified as navigation-cancelled background request",
+      "status": "Observed"
+    },
+    {
+      "severity": "Low",
+      "module": "customer",
+      "page": "http://127.0.0.1:3000/customer/notifications",
+      "error": "GET REQUEST_FAILED",
+      "routeFile": "http://localhost:8000/api/customer/store/orders",
+      "fixApplied": "Classified as navigation-cancelled background request",
+      "status": "Observed"
+    },
+    {
+      "severity": "Low",
+      "module": "customer",
+      "page": "http://127.0.0.1:3000/customer/notifications",
+      "error": "GET REQUEST_FAILED",
+      "routeFile": "http://localhost:8000/api/notifications",
+      "fixApplied": "Classified as navigation-cancelled background request",
+      "status": "Observed"
+    },
+    {
+      "severity": "Low",
+      "module": "customer",
+      "page": "http://127.0.0.1:3000/customer/notifications",
+      "error": "GET REQUEST_FAILED",
+      "routeFile": "http://localhost:8000/api/notifications",
+      "fixApplied": "Classified as navigation-cancelled background request",
+      "status": "Observed"
+    },
+    {
+      "severity": "Low",
+      "module": "receptionist",
+      "page": "http://127.0.0.1:3000/login",
       "error": "GET REQUEST_FAILED",
       "routeFile": "http://localhost:8000/api/settings/public",
       "fixApplied": "Classified as navigation-cancelled background request",
@@ -901,7 +1320,7 @@
     {
       "severity": "Low",
       "module": "receptionist",
-      "page": "http://localhost:3000/login",
+      "page": "http://127.0.0.1:3000/login",
       "error": "GET REQUEST_FAILED",
       "routeFile": "http://localhost:8000/api/settings/public",
       "fixApplied": "Classified as navigation-cancelled background request",
@@ -910,7 +1329,169 @@
     {
       "severity": "Low",
       "module": "receptionist",
-      "page": "http://localhost:3000/login",
+      "page": "http://127.0.0.1:3000/receptionist/bookings/hotel",
+      "error": "GET REQUEST_FAILED",
+      "routeFile": "http://localhost:8000/api/receptionist/boarding-requests",
+      "fixApplied": "Classified as navigation-cancelled background request",
+      "status": "Observed"
+    },
+    {
+      "severity": "Low",
+      "module": "receptionist",
+      "page": "http://127.0.0.1:3000/receptionist/bookings/hotel",
+      "error": "GET REQUEST_FAILED",
+      "routeFile": "http://localhost:8000/api/receptionist/boarding-rooms",
+      "fixApplied": "Classified as navigation-cancelled background request",
+      "status": "Observed"
+    },
+    {
+      "severity": "Low",
+      "module": "receptionist",
+      "page": "http://127.0.0.1:3000/receptionist/bookings/hotel",
+      "error": "GET REQUEST_FAILED",
+      "routeFile": "http://localhost:8000/api/notifications?role=receptionist",
+      "fixApplied": "Classified as navigation-cancelled background request",
+      "status": "Observed"
+    },
+    {
+      "severity": "Low",
+      "module": "receptionist",
+      "page": "http://127.0.0.1:3000/receptionist/bookings/hotel",
+      "error": "GET REQUEST_FAILED",
+      "routeFile": "http://localhost:8000/api/receptionist/boarding-rooms",
+      "fixApplied": "Classified as navigation-cancelled background request",
+      "status": "Observed"
+    },
+    {
+      "severity": "Low",
+      "module": "receptionist",
+      "page": "http://127.0.0.1:3000/receptionist/bookings/hotel",
+      "error": "GET REQUEST_FAILED",
+      "routeFile": "http://localhost:8000/api/receptionist/boarding-requests",
+      "fixApplied": "Classified as navigation-cancelled background request",
+      "status": "Observed"
+    },
+    {
+      "severity": "Low",
+      "module": "receptionist",
+      "page": "http://127.0.0.1:3000/receptionist/bookings/hotel",
+      "error": "GET REQUEST_FAILED",
+      "routeFile": "http://localhost:8000/api/settings/public",
+      "fixApplied": "Classified as navigation-cancelled background request",
+      "status": "Observed"
+    },
+    {
+      "severity": "Low",
+      "module": "receptionist",
+      "page": "http://127.0.0.1:3000/receptionist/bookings/hotel",
+      "error": "GET REQUEST_FAILED",
+      "routeFile": "http://localhost:8000/api/notifications?role=receptionist",
+      "fixApplied": "Classified as navigation-cancelled background request",
+      "status": "Observed"
+    },
+    {
+      "severity": "Low",
+      "module": "receptionist",
+      "page": "http://127.0.0.1:3000/receptionist/bookings/hotel",
+      "error": "GET REQUEST_FAILED",
+      "routeFile": "http://localhost:8000/api/receptionist/boarding-rooms",
+      "fixApplied": "Classified as navigation-cancelled background request",
+      "status": "Observed"
+    },
+    {
+      "severity": "Low",
+      "module": "receptionist",
+      "page": "http://127.0.0.1:3000/receptionist/bookings/hotel",
+      "error": "GET REQUEST_FAILED",
+      "routeFile": "http://localhost:8000/api/receptionist/boarding-rooms",
+      "fixApplied": "Classified as navigation-cancelled background request",
+      "status": "Observed"
+    },
+    {
+      "severity": "Low",
+      "module": "receptionist",
+      "page": "http://127.0.0.1:3000/receptionist/bookings/hotel",
+      "error": "GET REQUEST_FAILED",
+      "routeFile": "http://localhost:8000/api/receptionist/boarding-requests",
+      "fixApplied": "Classified as navigation-cancelled background request",
+      "status": "Observed"
+    },
+    {
+      "severity": "Low",
+      "module": "receptionist",
+      "page": "http://127.0.0.1:3000/receptionist/bookings/hotel",
+      "error": "GET REQUEST_FAILED",
+      "routeFile": "http://localhost:8000/api/receptionist/boarding-requests",
+      "fixApplied": "Classified as navigation-cancelled background request",
+      "status": "Observed"
+    },
+    {
+      "severity": "Low",
+      "module": "receptionist",
+      "page": "http://127.0.0.1:3000/receptionist/reports",
+      "error": "GET REQUEST_FAILED",
+      "routeFile": "http://localhost:8000/api/receptionist/appointments",
+      "fixApplied": "Classified as navigation-cancelled background request",
+      "status": "Observed"
+    },
+    {
+      "severity": "Low",
+      "module": "receptionist",
+      "page": "http://127.0.0.1:3000/receptionist/reports",
+      "error": "GET REQUEST_FAILED",
+      "routeFile": "http://localhost:8000/api/receptionist/reports/live",
+      "fixApplied": "Classified as navigation-cancelled background request",
+      "status": "Observed"
+    },
+    {
+      "severity": "Low",
+      "module": "receptionist",
+      "page": "http://127.0.0.1:3000/receptionist/reports",
+      "error": "GET REQUEST_FAILED",
+      "routeFile": "http://localhost:8000/api/customers",
+      "fixApplied": "Classified as navigation-cancelled background request",
+      "status": "Observed"
+    },
+    {
+      "severity": "Low",
+      "module": "receptionist",
+      "page": "http://127.0.0.1:3000/receptionist/reports",
+      "error": "GET REQUEST_FAILED",
+      "routeFile": "http://localhost:8000/api/receptionist/customer-orders",
+      "fixApplied": "Classified as navigation-cancelled background request",
+      "status": "Observed"
+    },
+    {
+      "severity": "Low",
+      "module": "receptionist",
+      "page": "http://127.0.0.1:3000/receptionist/reports",
+      "error": "GET REQUEST_FAILED",
+      "routeFile": "http://localhost:8000/api/receptionist/boarding-requests",
+      "fixApplied": "Classified as navigation-cancelled background request",
+      "status": "Observed"
+    },
+    {
+      "severity": "Low",
+      "module": "receptionist",
+      "page": "http://127.0.0.1:3000/receptionist/reports",
+      "error": "GET REQUEST_FAILED",
+      "routeFile": "http://localhost:8000/api/receptionist/reports/live",
+      "fixApplied": "Classified as navigation-cancelled background request",
+      "status": "Observed"
+    },
+    {
+      "severity": "Low",
+      "module": "receptionist",
+      "page": "http://127.0.0.1:3000/receptionist/reports",
+      "error": "GET REQUEST_FAILED",
+      "routeFile": "http://localhost:8000/api/receptionist/customer-orders",
+      "fixApplied": "Classified as navigation-cancelled background request",
+      "status": "Observed"
+    },
+    {
+      "severity": "Low",
+      "module": "cashier",
+      "page": "http://127.0.0.1:3000/login",
       "error": "GET REQUEST_FAILED",
       "routeFile": "http://localhost:8000/api/settings/public",
       "fixApplied": "Classified as navigation-cancelled background request",
@@ -919,7 +1500,7 @@
     {
       "severity": "Low",
       "module": "cashier",
-      "page": "http://localhost:3000/login",
+      "page": "http://127.0.0.1:3000/login",
       "error": "GET REQUEST_FAILED",
       "routeFile": "http://localhost:8000/api/settings/public",
       "fixApplied": "Classified as navigation-cancelled background request",
@@ -928,7 +1509,295 @@
     {
       "severity": "Low",
       "module": "cashier",
-      "page": "http://localhost:3000/login",
+      "page": "http://127.0.0.1:3000/cashier",
+      "error": "GET REQUEST_FAILED",
+      "routeFile": "http://localhost:8000/api/cashier/payment-requests",
+      "fixApplied": "Classified as navigation-cancelled background request",
+      "status": "Observed"
+    },
+    {
+      "severity": "Low",
+      "module": "cashier",
+      "page": "http://127.0.0.1:3000/cashier",
+      "error": "GET REQUEST_FAILED",
+      "routeFile": "http://localhost:8000/api/cashier/pos/services",
+      "fixApplied": "Classified as navigation-cancelled background request",
+      "status": "Observed"
+    },
+    {
+      "severity": "Low",
+      "module": "cashier",
+      "page": "http://127.0.0.1:3000/cashier",
+      "error": "GET REQUEST_FAILED",
+      "routeFile": "http://localhost:8000/api/cashier/pos/services",
+      "fixApplied": "Classified as navigation-cancelled background request",
+      "status": "Observed"
+    },
+    {
+      "severity": "Low",
+      "module": "cashier",
+      "page": "http://127.0.0.1:3000/cashier",
+      "error": "GET REQUEST_FAILED",
+      "routeFile": "http://localhost:8000/api/cashier/inventory/sellable",
+      "fixApplied": "Classified as navigation-cancelled background request",
+      "status": "Observed"
+    },
+    {
+      "severity": "Low",
+      "module": "cashier",
+      "page": "http://127.0.0.1:3000/cashier",
+      "error": "GET REQUEST_FAILED",
+      "routeFile": "http://localhost:8000/api/cashier/customers",
+      "fixApplied": "Classified as navigation-cancelled background request",
+      "status": "Observed"
+    },
+    {
+      "severity": "Low",
+      "module": "cashier",
+      "page": "http://127.0.0.1:3000/cashier",
+      "error": "GET REQUEST_FAILED",
+      "routeFile": "http://localhost:8000/api/cashier/customers",
+      "fixApplied": "Classified as navigation-cancelled background request",
+      "status": "Observed"
+    },
+    {
+      "severity": "Low",
+      "module": "cashier",
+      "page": "http://127.0.0.1:3000/cashier",
+      "error": "GET REQUEST_FAILED",
+      "routeFile": "http://localhost:8000/api/cashier/payment-requests",
+      "fixApplied": "Classified as navigation-cancelled background request",
+      "status": "Observed"
+    },
+    {
+      "severity": "Low",
+      "module": "cashier",
+      "page": "http://127.0.0.1:3000/cashier/pos",
+      "error": "GET REQUEST_FAILED",
+      "routeFile": "http://localhost:8000/api/settings/public",
+      "fixApplied": "Classified as navigation-cancelled background request",
+      "status": "Observed"
+    },
+    {
+      "severity": "Low",
+      "module": "cashier",
+      "page": "http://127.0.0.1:3000/cashier/pos",
+      "error": "GET REQUEST_FAILED",
+      "routeFile": "http://localhost:8000/api/settings/public",
+      "fixApplied": "Classified as navigation-cancelled background request",
+      "status": "Observed"
+    },
+    {
+      "severity": "Low",
+      "module": "cashier",
+      "page": "http://127.0.0.1:3000/cashier/pos",
+      "error": "GET REQUEST_FAILED",
+      "routeFile": "http://localhost:8000/api/cashier/customers",
+      "fixApplied": "Classified as navigation-cancelled background request",
+      "status": "Observed"
+    },
+    {
+      "severity": "Low",
+      "module": "cashier",
+      "page": "http://127.0.0.1:3000/cashier/pos",
+      "error": "GET REQUEST_FAILED",
+      "routeFile": "http://localhost:8000/api/cashier/customers",
+      "fixApplied": "Classified as navigation-cancelled background request",
+      "status": "Observed"
+    },
+    {
+      "severity": "Low",
+      "module": "cashier",
+      "page": "http://127.0.0.1:3000/cashier/pos",
+      "error": "GET REQUEST_FAILED",
+      "routeFile": "http://localhost:8000/api/cashier/payment-requests",
+      "fixApplied": "Classified as navigation-cancelled background request",
+      "status": "Observed"
+    },
+    {
+      "severity": "Low",
+      "module": "cashier",
+      "page": "http://127.0.0.1:3000/cashier/pos",
+      "error": "GET REQUEST_FAILED",
+      "routeFile": "http://localhost:8000/api/cashier/inventory/sellable",
+      "fixApplied": "Classified as navigation-cancelled background request",
+      "status": "Observed"
+    },
+    {
+      "severity": "Low",
+      "module": "cashier",
+      "page": "http://127.0.0.1:3000/cashier/pos",
+      "error": "GET REQUEST_FAILED",
+      "routeFile": "http://localhost:8000/api/cashier/payment-requests",
+      "fixApplied": "Classified as navigation-cancelled background request",
+      "status": "Observed"
+    },
+    {
+      "severity": "Low",
+      "module": "cashier",
+      "page": "http://127.0.0.1:3000/cashier/pos",
+      "error": "GET REQUEST_FAILED",
+      "routeFile": "http://localhost:8000/api/cashier/pos/services",
+      "fixApplied": "Classified as navigation-cancelled background request",
+      "status": "Observed"
+    },
+    {
+      "severity": "Low",
+      "module": "cashier",
+      "page": "http://127.0.0.1:3000/cashier/payment-verification",
+      "error": "GET REQUEST_FAILED",
+      "routeFile": "http://localhost:8000/api/cashier/payment-requests",
+      "fixApplied": "Classified as navigation-cancelled background request",
+      "status": "Observed"
+    },
+    {
+      "severity": "Low",
+      "module": "cashier",
+      "page": "http://127.0.0.1:3000/cashier/payment-verification",
+      "error": "GET REQUEST_FAILED",
+      "routeFile": "http://localhost:8000/api/cashier/inventory/sellable",
+      "fixApplied": "Classified as navigation-cancelled background request",
+      "status": "Observed"
+    },
+    {
+      "severity": "Low",
+      "module": "cashier",
+      "page": "http://127.0.0.1:3000/cashier/payment-verification",
+      "error": "GET REQUEST_FAILED",
+      "routeFile": "http://localhost:8000/api/cashier/payment-requests",
+      "fixApplied": "Classified as navigation-cancelled background request",
+      "status": "Observed"
+    },
+    {
+      "severity": "Low",
+      "module": "cashier",
+      "page": "http://127.0.0.1:3000/cashier/payment-verification",
+      "error": "GET REQUEST_FAILED",
+      "routeFile": "http://localhost:8000/api/cashier/pos/services",
+      "fixApplied": "Classified as navigation-cancelled background request",
+      "status": "Observed"
+    },
+    {
+      "severity": "Low",
+      "module": "cashier",
+      "page": "http://127.0.0.1:3000/cashier/payment-verification",
+      "error": "GET REQUEST_FAILED",
+      "routeFile": "http://localhost:8000/api/cashier/customers",
+      "fixApplied": "Classified as navigation-cancelled background request",
+      "status": "Observed"
+    },
+    {
+      "severity": "Low",
+      "module": "cashier",
+      "page": "http://127.0.0.1:3000/cashier/payment-verification",
+      "error": "GET REQUEST_FAILED",
+      "routeFile": "http://localhost:8000/api/settings/public",
+      "fixApplied": "Classified as navigation-cancelled background request",
+      "status": "Observed"
+    },
+    {
+      "severity": "Low",
+      "module": "cashier",
+      "page": "http://127.0.0.1:3000/cashier/payment-verification",
+      "error": "GET REQUEST_FAILED",
+      "routeFile": "http://localhost:8000/api/cashier/customers",
+      "fixApplied": "Classified as navigation-cancelled background request",
+      "status": "Observed"
+    },
+    {
+      "severity": "Low",
+      "module": "cashier",
+      "page": "http://127.0.0.1:3000/cashier/payment-verification",
+      "error": "GET REQUEST_FAILED",
+      "routeFile": "http://localhost:8000/api/cashier/payment-requests",
+      "fixApplied": "Classified as navigation-cancelled background request",
+      "status": "Observed"
+    },
+    {
+      "severity": "Low",
+      "module": "cashier",
+      "page": "http://127.0.0.1:3000/cashier/reports",
+      "error": "GET REQUEST_FAILED",
+      "routeFile": "http://localhost:8000/api/cashier/shift-report/last",
+      "fixApplied": "Classified as navigation-cancelled background request",
+      "status": "Observed"
+    },
+    {
+      "severity": "Low",
+      "module": "cashier",
+      "page": "http://127.0.0.1:3000/cashier/reports",
+      "error": "GET REQUEST_FAILED",
+      "routeFile": "http://localhost:8000/api/cashier/handover/last",
+      "fixApplied": "Classified as navigation-cancelled background request",
+      "status": "Observed"
+    },
+    {
+      "severity": "Low",
+      "module": "cashier",
+      "page": "http://127.0.0.1:3000/cashier/reports",
+      "error": "GET REQUEST_FAILED",
+      "routeFile": "http://localhost:8000/api/chatbot/welcome",
+      "fixApplied": "Classified as navigation-cancelled background request",
+      "status": "Observed"
+    },
+    {
+      "severity": "Low",
+      "module": "cashier",
+      "page": "http://127.0.0.1:3000/cashier/reports",
+      "error": "GET REQUEST_FAILED",
+      "routeFile": "http://localhost:8000/api/cashier/transactions?from=2026-11-01&to=2026-11-30",
+      "fixApplied": "Classified as navigation-cancelled background request",
+      "status": "Observed"
+    },
+    {
+      "severity": "Low",
+      "module": "cashier",
+      "page": "http://127.0.0.1:3000/cashier/reports",
+      "error": "GET REQUEST_FAILED",
+      "routeFile": "http://localhost:8000/api/settings/public",
+      "fixApplied": "Classified as navigation-cancelled background request",
+      "status": "Observed"
+    },
+    {
+      "severity": "Low",
+      "module": "cashier",
+      "page": "http://127.0.0.1:3000/cashier/reports",
+      "error": "GET REQUEST_FAILED",
+      "routeFile": "http://localhost:8000/api/cashier/transactions?page=1&per_page=25",
+      "fixApplied": "Classified as navigation-cancelled background request",
+      "status": "Observed"
+    },
+    {
+      "severity": "Low",
+      "module": "cashier",
+      "page": "http://127.0.0.1:3000/cashier/reports",
+      "error": "GET REQUEST_FAILED",
+      "routeFile": "http://localhost:8000/api/cashier/shift-report/last",
+      "fixApplied": "Classified as navigation-cancelled background request",
+      "status": "Observed"
+    },
+    {
+      "severity": "Low",
+      "module": "cashier",
+      "page": "http://127.0.0.1:3000/cashier/reports",
+      "error": "GET REQUEST_FAILED",
+      "routeFile": "http://localhost:8000/api/notifications?role=cashier",
+      "fixApplied": "Classified as navigation-cancelled background request",
+      "status": "Observed"
+    },
+    {
+      "severity": "Low",
+      "module": "cashier",
+      "page": "http://127.0.0.1:3000/cashier/reports",
+      "error": "GET REQUEST_FAILED",
+      "routeFile": "http://localhost:8000/api/cashier/transactions?from=2026-11-01&to=2026-11-30",
+      "fixApplied": "Classified as navigation-cancelled background request",
+      "status": "Observed"
+    },
+    {
+      "severity": "Low",
+      "module": "inventory",
+      "page": "http://127.0.0.1:3000/login",
       "error": "GET REQUEST_FAILED",
       "routeFile": "http://localhost:8000/api/settings/public",
       "fixApplied": "Classified as navigation-cancelled background request",
@@ -937,7 +1806,7 @@
     {
       "severity": "Low",
       "module": "inventory",
-      "page": "http://localhost:3000/login",
+      "page": "http://127.0.0.1:3000/login",
       "error": "GET REQUEST_FAILED",
       "routeFile": "http://localhost:8000/api/settings/public",
       "fixApplied": "Classified as navigation-cancelled background request",
@@ -946,16 +1815,16 @@
     {
       "severity": "Low",
       "module": "inventory",
-      "page": "http://localhost:3000/login",
+      "page": "http://127.0.0.1:3000/inventory",
       "error": "GET REQUEST_FAILED",
-      "routeFile": "http://localhost:8000/api/settings/public",
+      "routeFile": "http://localhost:8000/api/chatbot/welcome",
       "fixApplied": "Classified as navigation-cancelled background request",
       "status": "Observed"
     },
     {
       "severity": "Low",
       "module": "inventory",
-      "page": "http://localhost:3000/inventory",
+      "page": "http://127.0.0.1:3000/inventory",
       "error": "GET REQUEST_FAILED",
       "routeFile": "http://localhost:8000/api/notifications?role=inventory",
       "fixApplied": "Classified as navigation-cancelled background request",
@@ -964,7 +1833,7 @@
     {
       "severity": "Low",
       "module": "inventory",
-      "page": "http://localhost:3000/inventory",
+      "page": "http://127.0.0.1:3000/inventory",
       "error": "GET REQUEST_FAILED",
       "routeFile": "http://localhost:8000/api/chatbot/welcome",
       "fixApplied": "Classified as navigation-cancelled background request",
@@ -973,16 +1842,7 @@
     {
       "severity": "Low",
       "module": "inventory",
-      "page": "http://localhost:3000/inventory",
-      "error": "GET REQUEST_FAILED",
-      "routeFile": "http://localhost:8000/api/chatbot/welcome",
-      "fixApplied": "Classified as navigation-cancelled background request",
-      "status": "Observed"
-    },
-    {
-      "severity": "Low",
-      "module": "inventory",
-      "page": "http://localhost:3000/inventory",
+      "page": "http://127.0.0.1:3000/inventory",
       "error": "GET REQUEST_FAILED",
       "routeFile": "http://localhost:8000/api/inventory/dashboard",
       "fixApplied": "Classified as navigation-cancelled background request",
@@ -991,7 +1851,7 @@
     {
       "severity": "Low",
       "module": "inventory",
-      "page": "http://localhost:3000/inventory",
+      "page": "http://127.0.0.1:3000/inventory",
       "error": "GET REQUEST_FAILED",
       "routeFile": "http://localhost:8000/api/inventory/dashboard",
       "fixApplied": "Classified as navigation-cancelled background request",
@@ -1000,160 +1860,25 @@
     {
       "severity": "Low",
       "module": "inventory",
-      "page": "http://localhost:3000/inventory",
+      "page": "http://127.0.0.1:3000/inventory/monthly-audit",
       "error": "GET REQUEST_FAILED",
-      "routeFile": "http://localhost:8000/api/notifications?role=inventory",
+      "routeFile": "http://localhost:8000/api/inventory/monthly-audit?month=2026-11",
       "fixApplied": "Classified as navigation-cancelled background request",
       "status": "Observed"
     },
     {
       "severity": "Low",
       "module": "inventory",
-      "page": "http://localhost:3000/inventory/monthly-audit",
+      "page": "http://127.0.0.1:3000/inventory/monthly-audit",
       "error": "GET REQUEST_FAILED",
-      "routeFile": "http://localhost:8000/api/inventory/logs",
-      "fixApplied": "Classified as navigation-cancelled background request",
-      "status": "Observed"
-    },
-    {
-      "severity": "Low",
-      "module": "inventory",
-      "page": "http://localhost:3000/inventory/monthly-audit",
-      "error": "GET REQUEST_FAILED",
-      "routeFile": "http://localhost:8000/api/notifications?role=inventory",
-      "fixApplied": "Classified as navigation-cancelled background request",
-      "status": "Observed"
-    },
-    {
-      "severity": "Low",
-      "module": "inventory",
-      "page": "http://localhost:3000/inventory/monthly-audit",
-      "error": "GET REQUEST_FAILED",
-      "routeFile": "http://localhost:8000/api/inventory/items",
-      "fixApplied": "Classified as navigation-cancelled background request",
-      "status": "Observed"
-    },
-    {
-      "severity": "Low",
-      "module": "inventory",
-      "page": "http://localhost:3000/inventory/monthly-audit",
-      "error": "GET REQUEST_FAILED",
-      "routeFile": "http://localhost:8000/api/settings/public",
-      "fixApplied": "Classified as navigation-cancelled background request",
-      "status": "Observed"
-    },
-    {
-      "severity": "Low",
-      "module": "inventory",
-      "page": "http://localhost:3000/inventory/monthly-audit",
-      "error": "GET REQUEST_FAILED",
-      "routeFile": "http://localhost:8000/api/inventory/items/archived",
-      "fixApplied": "Classified as navigation-cancelled background request",
-      "status": "Observed"
-    },
-    {
-      "severity": "Low",
-      "module": "inventory",
-      "page": "http://localhost:3000/inventory/monthly-audit",
-      "error": "GET REQUEST_FAILED",
-      "routeFile": "http://localhost:8000/api/chatbot/welcome",
-      "fixApplied": "Classified as navigation-cancelled background request",
-      "status": "Observed"
-    },
-    {
-      "severity": "Low",
-      "module": "inventory",
-      "page": "http://localhost:3000/inventory/monthly-audit",
-      "error": "GET REQUEST_FAILED",
-      "routeFile": "http://localhost:8000/api/inventory/reports",
-      "fixApplied": "Classified as navigation-cancelled background request",
-      "status": "Observed"
-    },
-    {
-      "severity": "Low",
-      "module": "inventory",
-      "page": "http://localhost:3000/inventory/monthly-audit",
-      "error": "GET REQUEST_FAILED",
-      "routeFile": "http://localhost:8000/api/inventory/reports",
-      "fixApplied": "Classified as navigation-cancelled background request",
-      "status": "Observed"
-    },
-    {
-      "severity": "Low",
-      "module": "inventory",
-      "page": "http://localhost:3000/inventory/monthly-audit",
-      "error": "GET REQUEST_FAILED",
-      "routeFile": "http://localhost:8000/api/settings/public",
-      "fixApplied": "Classified as navigation-cancelled background request",
-      "status": "Observed"
-    },
-    {
-      "severity": "Low",
-      "module": "inventory",
-      "page": "http://localhost:3000/inventory/monthly-audit",
-      "error": "GET REQUEST_FAILED",
-      "routeFile": "http://localhost:8000/api/notifications?role=inventory",
-      "fixApplied": "Classified as navigation-cancelled background request",
-      "status": "Observed"
-    },
-    {
-      "severity": "Low",
-      "module": "inventory",
-      "page": "http://localhost:3000/inventory/monthly-audit",
-      "error": "GET REQUEST_FAILED",
-      "routeFile": "http://localhost:8000/api/inventory/logs",
-      "fixApplied": "Classified as navigation-cancelled background request",
-      "status": "Observed"
-    },
-    {
-      "severity": "Low",
-      "module": "inventory",
-      "page": "http://localhost:3000/inventory/monthly-audit",
-      "error": "GET REQUEST_FAILED",
-      "routeFile": "http://localhost:8000/api/inventory/monthly-audit?month=2026-09",
-      "fixApplied": "Classified as navigation-cancelled background request",
-      "status": "Observed"
-    },
-    {
-      "severity": "Low",
-      "module": "inventory",
-      "page": "http://localhost:3000/inventory/monthly-audit",
-      "error": "GET REQUEST_FAILED",
-      "routeFile": "http://localhost:8000/api/inventory/items",
-      "fixApplied": "Classified as navigation-cancelled background request",
-      "status": "Observed"
-    },
-    {
-      "severity": "Low",
-      "module": "inventory",
-      "page": "http://localhost:3000/inventory/monthly-audit",
-      "error": "GET REQUEST_FAILED",
-      "routeFile": "http://localhost:8000/api/inventory/monthly-audit?month=2026-09",
-      "fixApplied": "Classified as navigation-cancelled background request",
-      "status": "Observed"
-    },
-    {
-      "severity": "Low",
-      "module": "inventory",
-      "page": "http://localhost:3000/inventory/monthly-audit",
-      "error": "GET REQUEST_FAILED",
-      "routeFile": "http://localhost:8000/api/inventory/items/archived",
-      "fixApplied": "Classified as navigation-cancelled background request",
-      "status": "Observed"
-    },
-    {
-      "severity": "Low",
-      "module": "inventory",
-      "page": "http://localhost:3000/inventory/monthly-audit",
-      "error": "GET REQUEST_FAILED",
-      "routeFile": "http://localhost:8000/api/chatbot/welcome",
+      "routeFile": "http://localhost:8000/api/inventory/monthly-audit?month=2026-11",
       "fixApplied": "Classified as navigation-cancelled background request",
       "status": "Observed"
     },
     {
       "severity": "Low",
       "module": "veterinary",
-      "page": "http://localhost:3000/login",
+      "page": "http://127.0.0.1:3000/login",
       "error": "GET REQUEST_FAILED",
       "routeFile": "http://localhost:8000/api/settings/public",
       "fixApplied": "Classified as navigation-cancelled background request",
@@ -1162,7 +1887,7 @@
     {
       "severity": "Low",
       "module": "veterinary",
-      "page": "http://localhost:3000/login",
+      "page": "http://127.0.0.1:3000/login",
       "error": "GET REQUEST_FAILED",
       "routeFile": "http://localhost:8000/api/settings/public",
       "fixApplied": "Classified as navigation-cancelled background request",
@@ -1171,7 +1896,7 @@
     {
       "severity": "Low",
       "module": "veterinary",
-      "page": "http://localhost:3000/veterinary/appointments",
+      "page": "http://127.0.0.1:3000/veterinary/appointments",
       "error": "GET REQUEST_FAILED",
       "routeFile": "http://localhost:8000/api/veterinary/appointments",
       "fixApplied": "Classified as navigation-cancelled background request",
@@ -1180,7 +1905,16 @@
     {
       "severity": "Low",
       "module": "veterinary",
-      "page": "http://localhost:3000/veterinary/reports",
+      "page": "http://127.0.0.1:3000/veterinary/appointments",
+      "error": "GET REQUEST_FAILED",
+      "routeFile": "http://localhost:8000/api/veterinary/history?status=completed,cancelled&per_page=500",
+      "fixApplied": "Classified as navigation-cancelled background request",
+      "status": "Observed"
+    },
+    {
+      "severity": "Low",
+      "module": "veterinary",
+      "page": "http://127.0.0.1:3000/veterinary/reports",
       "error": "GET REQUEST_FAILED",
       "routeFile": "http://localhost:8000/api/veterinary/appointments",
       "fixApplied": "Classified as navigation-cancelled background request",
@@ -1189,124 +1923,16 @@
     {
       "severity": "Low",
       "module": "veterinary",
-      "page": "http://localhost:3000/veterinary/customer-profiles",
+      "page": "http://127.0.0.1:3000/veterinary/reports",
       "error": "GET REQUEST_FAILED",
-      "routeFile": "http://localhost:8000/api/veterinary/boardings/current-boarders",
-      "fixApplied": "Classified as navigation-cancelled background request",
-      "status": "Observed"
-    },
-    {
-      "severity": "Low",
-      "module": "veterinary",
-      "page": "http://localhost:3000/veterinary/customer-profiles",
-      "error": "GET REQUEST_FAILED",
-      "routeFile": "http://localhost:8000/api/veterinary/reports?start_date=2026-08-31&from=2026-08-31&end_date=2026-09-29&to=2026-09-29",
-      "fixApplied": "Classified as navigation-cancelled background request",
-      "status": "Observed"
-    },
-    {
-      "severity": "Low",
-      "module": "veterinary",
-      "page": "http://localhost:3000/veterinary/customer-profiles",
-      "error": "GET REQUEST_FAILED",
-      "routeFile": "http://localhost:8000/api/veterinary/dashboard",
-      "fixApplied": "Classified as navigation-cancelled background request",
-      "status": "Observed"
-    },
-    {
-      "severity": "Low",
-      "module": "veterinary",
-      "page": "http://localhost:3000/veterinary/customer-profiles",
-      "error": "GET REQUEST_FAILED",
-      "routeFile": "http://localhost:8000/api/veterinary/boardings/current-boarders",
-      "fixApplied": "Classified as navigation-cancelled background request",
-      "status": "Observed"
-    },
-    {
-      "severity": "Low",
-      "module": "veterinary",
-      "page": "http://localhost:3000/veterinary/customer-profiles",
-      "error": "GET REQUEST_FAILED",
-      "routeFile": "http://localhost:8000/api/veterinary/history?page=1&per_page=25&status=completed%2Ccancelled",
-      "fixApplied": "Classified as navigation-cancelled background request",
-      "status": "Observed"
-    },
-    {
-      "severity": "Low",
-      "module": "veterinary",
-      "page": "http://localhost:3000/veterinary/customer-profiles",
-      "error": "GET REQUEST_FAILED",
-      "routeFile": "http://localhost:8000/api/veterinary/history?page=1&per_page=25&status=completed%2Ccancelled",
-      "fixApplied": "Classified as navigation-cancelled background request",
-      "status": "Observed"
-    },
-    {
-      "severity": "Low",
-      "module": "veterinary",
-      "page": "http://localhost:3000/veterinary/customer-profiles",
-      "error": "GET REQUEST_FAILED",
-      "routeFile": "http://localhost:8000/api/chatbot/welcome",
-      "fixApplied": "Classified as navigation-cancelled background request",
-      "status": "Observed"
-    },
-    {
-      "severity": "Low",
-      "module": "veterinary",
-      "page": "http://localhost:3000/veterinary/customer-profiles",
-      "error": "GET REQUEST_FAILED",
-      "routeFile": "http://localhost:8000/api/veterinary/patients",
-      "fixApplied": "Classified as navigation-cancelled background request",
-      "status": "Observed"
-    },
-    {
-      "severity": "Low",
-      "module": "veterinary",
-      "page": "http://localhost:3000/veterinary/customer-profiles",
-      "error": "GET REQUEST_FAILED",
-      "routeFile": "http://localhost:8000/api/veterinary/reports?start_date=2026-08-31&from=2026-08-31&end_date=2026-09-29&to=2026-09-29",
-      "fixApplied": "Classified as navigation-cancelled background request",
-      "status": "Observed"
-    },
-    {
-      "severity": "Low",
-      "module": "veterinary",
-      "page": "http://localhost:3000/veterinary/customer-profiles",
-      "error": "GET REQUEST_FAILED",
-      "routeFile": "http://localhost:8000/api/chatbot/welcome",
-      "fixApplied": "Classified as navigation-cancelled background request",
-      "status": "Observed"
-    },
-    {
-      "severity": "Low",
-      "module": "veterinary",
-      "page": "http://localhost:3000/veterinary/customer-profiles",
-      "error": "GET REQUEST_FAILED",
-      "routeFile": "http://localhost:8000/api/veterinary/dashboard",
-      "fixApplied": "Classified as navigation-cancelled background request",
-      "status": "Observed"
-    },
-    {
-      "severity": "Low",
-      "module": "veterinary",
-      "page": "http://localhost:3000/veterinary/customer-profiles",
-      "error": "GET REQUEST_FAILED",
-      "routeFile": "http://localhost:8000/api/notifications?role=veterinary",
-      "fixApplied": "Classified as navigation-cancelled background request",
-      "status": "Observed"
-    },
-    {
-      "severity": "Low",
-      "module": "veterinary",
-      "page": "http://localhost:3000/veterinary/customer-profiles",
-      "error": "GET REQUEST_FAILED",
-      "routeFile": "http://localhost:8000/api/veterinary/patients",
+      "routeFile": "http://localhost:8000/api/veterinary/history?status=completed,cancelled&per_page=500",
       "fixApplied": "Classified as navigation-cancelled background request",
       "status": "Observed"
     },
     {
       "severity": "Low",
       "module": "manager",
-      "page": "http://localhost:3000/login",
+      "page": "http://127.0.0.1:3000/login",
       "error": "GET REQUEST_FAILED",
       "routeFile": "http://localhost:8000/api/settings/public",
       "fixApplied": "Classified as navigation-cancelled background request",
@@ -1315,7 +1941,178 @@
     {
       "severity": "Low",
       "module": "manager",
-      "page": "http://localhost:3000/login",
+      "page": "http://127.0.0.1:3000/login",
+      "error": "GET REQUEST_FAILED",
+      "routeFile": "http://localhost:8000/api/settings/public",
+      "fixApplied": "Classified as navigation-cancelled background request",
+      "status": "Observed"
+    },
+    {
+      "severity": "Low",
+      "module": "manager",
+      "page": "http://127.0.0.1:3000/manager/staff",
+      "error": "GET REQUEST_FAILED",
+      "routeFile": "http://localhost:8000/api/manager/people",
+      "fixApplied": "Classified as navigation-cancelled background request",
+      "status": "Observed"
+    },
+    {
+      "severity": "Low",
+      "module": "manager",
+      "page": "http://127.0.0.1:3000/manager/attendance",
+      "error": "GET REQUEST_FAILED",
+      "routeFile": "http://localhost:8000/api/manager/people",
+      "fixApplied": "Classified as navigation-cancelled background request",
+      "status": "Observed"
+    },
+    {
+      "severity": "Low",
+      "module": "manager",
+      "page": "http://127.0.0.1:3000/manager/history",
+      "error": "GET REQUEST_FAILED",
+      "routeFile": "http://localhost:8000/api/manager/attendance?date=2026-11-05",
+      "fixApplied": "Classified as navigation-cancelled background request",
+      "status": "Observed"
+    },
+    {
+      "severity": "Low",
+      "module": "manager",
+      "page": "http://127.0.0.1:3000/manager/history",
+      "error": "GET REQUEST_FAILED",
+      "routeFile": "http://localhost:8000/api/manager/history?page=1&per_page=25",
+      "fixApplied": "Classified as navigation-cancelled background request",
+      "status": "Observed"
+    },
+    {
+      "severity": "Low",
+      "module": "manager",
+      "page": "http://127.0.0.1:3000/manager/history",
+      "error": "GET REQUEST_FAILED",
+      "routeFile": "http://localhost:8000/api/manager/reports/payments",
+      "fixApplied": "Classified as navigation-cancelled background request",
+      "status": "Observed"
+    },
+    {
+      "severity": "Low",
+      "module": "manager",
+      "page": "http://127.0.0.1:3000/manager/history",
+      "error": "GET REQUEST_FAILED",
+      "routeFile": "http://localhost:8000/api/manager/reports/customers",
+      "fixApplied": "Classified as navigation-cancelled background request",
+      "status": "Observed"
+    },
+    {
+      "severity": "Low",
+      "module": "manager",
+      "page": "http://127.0.0.1:3000/manager/history",
+      "error": "GET REQUEST_FAILED",
+      "routeFile": "http://localhost:8000/api/manager/reports/services",
+      "fixApplied": "Classified as navigation-cancelled background request",
+      "status": "Observed"
+    },
+    {
+      "severity": "Low",
+      "module": "manager",
+      "page": "http://127.0.0.1:3000/manager/history",
+      "error": "GET REQUEST_FAILED",
+      "routeFile": "http://localhost:8000/api/manager/reports/inventory",
+      "fixApplied": "Classified as navigation-cancelled background request",
+      "status": "Observed"
+    },
+    {
+      "severity": "Low",
+      "module": "manager",
+      "page": "http://127.0.0.1:3000/manager/history",
+      "error": "GET REQUEST_FAILED",
+      "routeFile": "http://localhost:8000/api/manager/staff",
+      "fixApplied": "Classified as navigation-cancelled background request",
+      "status": "Observed"
+    },
+    {
+      "severity": "Low",
+      "module": "manager",
+      "page": "http://127.0.0.1:3000/manager/history",
+      "error": "GET REQUEST_FAILED",
+      "routeFile": "http://localhost:8000/api/manager/reports/inventory",
+      "fixApplied": "Classified as navigation-cancelled background request",
+      "status": "Observed"
+    },
+    {
+      "severity": "Low",
+      "module": "manager",
+      "page": "http://127.0.0.1:3000/manager/history",
+      "error": "GET REQUEST_FAILED",
+      "routeFile": "http://localhost:8000/api/manager/reports/live",
+      "fixApplied": "Classified as navigation-cancelled background request",
+      "status": "Observed"
+    },
+    {
+      "severity": "Low",
+      "module": "manager",
+      "page": "http://127.0.0.1:3000/manager/history",
+      "error": "GET REQUEST_FAILED",
+      "routeFile": "http://localhost:8000/api/manager/reports/customers",
+      "fixApplied": "Classified as navigation-cancelled background request",
+      "status": "Observed"
+    },
+    {
+      "severity": "Low",
+      "module": "manager",
+      "page": "http://127.0.0.1:3000/manager/history",
+      "error": "GET REQUEST_FAILED",
+      "routeFile": "http://localhost:8000/api/manager/staff",
+      "fixApplied": "Classified as navigation-cancelled background request",
+      "status": "Observed"
+    },
+    {
+      "severity": "Low",
+      "module": "manager",
+      "page": "http://127.0.0.1:3000/manager/history",
+      "error": "GET REQUEST_FAILED",
+      "routeFile": "http://localhost:8000/api/manager/reports/payroll",
+      "fixApplied": "Classified as navigation-cancelled background request",
+      "status": "Observed"
+    },
+    {
+      "severity": "Low",
+      "module": "manager",
+      "page": "http://127.0.0.1:3000/manager/history",
+      "error": "GET REQUEST_FAILED",
+      "routeFile": "http://localhost:8000/api/manager/reports/services",
+      "fixApplied": "Classified as navigation-cancelled background request",
+      "status": "Observed"
+    },
+    {
+      "severity": "Low",
+      "module": "manager",
+      "page": "http://127.0.0.1:3000/manager/history",
+      "error": "GET REQUEST_FAILED",
+      "routeFile": "http://localhost:8000/api/manager/history?page=1&per_page=25",
+      "fixApplied": "Classified as navigation-cancelled background request",
+      "status": "Observed"
+    },
+    {
+      "severity": "Low",
+      "module": "manager",
+      "page": "http://127.0.0.1:3000/manager/history",
+      "error": "GET REQUEST_FAILED",
+      "routeFile": "http://localhost:8000/api/manager/reports/payroll",
+      "fixApplied": "Classified as navigation-cancelled background request",
+      "status": "Observed"
+    },
+    {
+      "severity": "Low",
+      "module": "manager",
+      "page": "http://127.0.0.1:3000/manager/history",
+      "error": "GET REQUEST_FAILED",
+      "routeFile": "http://localhost:8000/api/manager/reports/sales",
+      "fixApplied": "Classified as navigation-cancelled background request",
+      "status": "Observed"
+    },
+    {
+      "severity": "Low",
+      "module": "admin",
+      "page": "http://127.0.0.1:3000/login",
       "error": "GET REQUEST_FAILED",
       "routeFile": "http://localhost:8000/api/settings/public",
       "fixApplied": "Classified as navigation-cancelled background request",
@@ -1324,7 +2121,7 @@
     {
       "severity": "Low",
       "module": "admin",
-      "page": "http://localhost:3000/login",
+      "page": "http://127.0.0.1:3000/login",
       "error": "GET REQUEST_FAILED",
       "routeFile": "http://localhost:8000/api/settings/public",
       "fixApplied": "Classified as navigation-cancelled background request",
@@ -1333,124 +2130,7 @@
     {
       "severity": "Low",
       "module": "admin",
-      "page": "http://localhost:3000/login",
-      "error": "GET REQUEST_FAILED",
-      "routeFile": "http://localhost:8000/api/settings/public",
-      "fixApplied": "Classified as navigation-cancelled background request",
-      "status": "Observed"
-    },
-    {
-      "severity": "Low",
-      "module": "admin",
-      "page": "http://localhost:3000/admin/settings",
-      "error": "GET REQUEST_FAILED",
-      "routeFile": "http://localhost:8000/api/admin/login-logs",
-      "fixApplied": "Classified as navigation-cancelled background request",
-      "status": "Observed"
-    },
-    {
-      "severity": "Low",
-      "module": "admin",
-      "page": "http://localhost:3000/admin/settings",
-      "error": "GET REQUEST_FAILED",
-      "routeFile": "http://localhost:8000/api/admin/activity-logs",
-      "fixApplied": "Classified as navigation-cancelled background request",
-      "status": "Observed"
-    },
-    {
-      "severity": "Low",
-      "module": "admin",
-      "page": "http://localhost:3000/admin/settings",
-      "error": "GET REQUEST_FAILED",
-      "routeFile": "http://localhost:8000/api/admin/appointments",
-      "fixApplied": "Classified as navigation-cancelled background request",
-      "status": "Observed"
-    },
-    {
-      "severity": "Low",
-      "module": "admin",
-      "page": "http://localhost:3000/admin/settings",
-      "error": "GET REQUEST_FAILED",
-      "routeFile": "http://localhost:8000/api/admin/settings",
-      "fixApplied": "Classified as navigation-cancelled background request",
-      "status": "Observed"
-    },
-    {
-      "severity": "Low",
-      "module": "admin",
-      "page": "http://localhost:3000/admin/settings",
-      "error": "GET REQUEST_FAILED",
-      "routeFile": "http://localhost:8000/api/admin/system-health",
-      "fixApplied": "Classified as navigation-cancelled background request",
-      "status": "Observed"
-    },
-    {
-      "severity": "Low",
-      "module": "admin",
-      "page": "http://localhost:3000/admin/settings",
-      "error": "GET REQUEST_FAILED",
-      "routeFile": "http://localhost:8000/api/admin/chatbot/logs",
-      "fixApplied": "Classified as navigation-cancelled background request",
-      "status": "Observed"
-    },
-    {
-      "severity": "Low",
-      "module": "admin",
-      "page": "http://localhost:3000/admin/settings",
-      "error": "GET REQUEST_FAILED",
-      "routeFile": "http://localhost:8000/api/admin/dashboard",
-      "fixApplied": "Classified as navigation-cancelled background request",
-      "status": "Observed"
-    },
-    {
-      "severity": "Low",
-      "module": "admin",
-      "page": "http://localhost:3000/admin/settings",
-      "error": "GET REQUEST_FAILED",
-      "routeFile": "http://localhost:8000/api/admin/login-logs",
-      "fixApplied": "Classified as navigation-cancelled background request",
-      "status": "Observed"
-    },
-    {
-      "severity": "Low",
-      "module": "admin",
-      "page": "http://localhost:3000/admin/settings",
-      "error": "GET REQUEST_FAILED",
-      "routeFile": "http://localhost:8000/api/admin/settings",
-      "fixApplied": "Classified as navigation-cancelled background request",
-      "status": "Observed"
-    },
-    {
-      "severity": "Low",
-      "module": "admin",
-      "page": "http://localhost:3000/admin/settings",
-      "error": "GET REQUEST_FAILED",
-      "routeFile": "http://localhost:8000/api/admin/dashboard",
-      "fixApplied": "Classified as navigation-cancelled background request",
-      "status": "Observed"
-    },
-    {
-      "severity": "Low",
-      "module": "admin",
-      "page": "http://localhost:3000/admin/settings",
-      "error": "GET REQUEST_FAILED",
-      "routeFile": "http://localhost:8000/api/chatbot/welcome",
-      "fixApplied": "Classified as navigation-cancelled background request",
-      "status": "Observed"
-    },
-    {
-      "severity": "Low",
-      "module": "admin",
-      "page": "http://localhost:3000/admin/settings",
-      "error": "GET REQUEST_FAILED",
-      "routeFile": "http://localhost:8000/api/admin/reports/executive?from=2026-09-25&to=2026-09-25",
-      "fixApplied": "Classified as navigation-cancelled background request",
-      "status": "Observed"
-    },
-    {
-      "severity": "Low",
-      "module": "admin",
-      "page": "http://localhost:3000/admin/settings",
+      "page": "http://127.0.0.1:3000/admin/settings",
       "error": "GET REQUEST_FAILED",
       "routeFile": "http://localhost:8000/api/admin/reports/cashier",
       "fixApplied": "Classified as navigation-cancelled background request",
@@ -1459,70 +2139,16 @@
     {
       "severity": "Low",
       "module": "admin",
-      "page": "http://localhost:3000/admin/settings",
+      "page": "http://127.0.0.1:3000/admin/settings",
       "error": "GET REQUEST_FAILED",
-      "routeFile": "http://localhost:8000/api/admin/users",
+      "routeFile": "http://localhost:8000/api/admin/settings",
       "fixApplied": "Classified as navigation-cancelled background request",
       "status": "Observed"
     },
     {
       "severity": "Low",
       "module": "admin",
-      "page": "http://localhost:3000/admin/settings",
-      "error": "GET REQUEST_FAILED",
-      "routeFile": "http://localhost:8000/api/admin/users",
-      "fixApplied": "Classified as navigation-cancelled background request",
-      "status": "Observed"
-    },
-    {
-      "severity": "Low",
-      "module": "admin",
-      "page": "http://localhost:3000/admin/settings",
-      "error": "GET REQUEST_FAILED",
-      "routeFile": "http://localhost:8000/api/chatbot/welcome",
-      "fixApplied": "Classified as navigation-cancelled background request",
-      "status": "Observed"
-    },
-    {
-      "severity": "Low",
-      "module": "admin",
-      "page": "http://localhost:3000/admin/settings",
-      "error": "GET REQUEST_FAILED",
-      "routeFile": "http://localhost:8000/api/inventory/logs",
-      "fixApplied": "Classified as navigation-cancelled background request",
-      "status": "Observed"
-    },
-    {
-      "severity": "Low",
-      "module": "admin",
-      "page": "http://localhost:3000/admin/settings",
-      "error": "GET REQUEST_FAILED",
-      "routeFile": "http://localhost:8000/api/admin/system-health",
-      "fixApplied": "Classified as navigation-cancelled background request",
-      "status": "Observed"
-    },
-    {
-      "severity": "Low",
-      "module": "admin",
-      "page": "http://localhost:3000/admin/settings",
-      "error": "GET REQUEST_FAILED",
-      "routeFile": "http://localhost:8000/api/admin/activity-logs",
-      "fixApplied": "Classified as navigation-cancelled background request",
-      "status": "Observed"
-    },
-    {
-      "severity": "Low",
-      "module": "admin",
-      "page": "http://localhost:3000/admin/settings",
-      "error": "GET REQUEST_FAILED",
-      "routeFile": "http://localhost:8000/api/admin/chatbot/logs",
-      "fixApplied": "Classified as navigation-cancelled background request",
-      "status": "Observed"
-    },
-    {
-      "severity": "Low",
-      "module": "admin",
-      "page": "http://localhost:3000/admin/settings",
+      "page": "http://127.0.0.1:3000/admin/settings",
       "error": "GET REQUEST_FAILED",
       "routeFile": "http://localhost:8000/api/admin/appointments",
       "fixApplied": "Classified as navigation-cancelled background request",
@@ -1531,16 +2157,34 @@
     {
       "severity": "Low",
       "module": "admin",
-      "page": "http://localhost:3000/admin/settings",
+      "page": "http://127.0.0.1:3000/admin/settings",
       "error": "GET REQUEST_FAILED",
-      "routeFile": "http://localhost:8000/api/admin/reports/executive?from=2026-09-25&to=2026-09-25",
+      "routeFile": "http://localhost:8000/api/admin/chatbot/logs",
       "fixApplied": "Classified as navigation-cancelled background request",
       "status": "Observed"
     },
     {
       "severity": "Low",
       "module": "admin",
-      "page": "http://localhost:3000/admin/settings",
+      "page": "http://127.0.0.1:3000/admin/settings",
+      "error": "GET REQUEST_FAILED",
+      "routeFile": "http://localhost:8000/api/admin/login-logs",
+      "fixApplied": "Classified as navigation-cancelled background request",
+      "status": "Observed"
+    },
+    {
+      "severity": "Low",
+      "module": "admin",
+      "page": "http://127.0.0.1:3000/admin/settings",
+      "error": "GET REQUEST_FAILED",
+      "routeFile": "http://localhost:8000/api/admin/appointments",
+      "fixApplied": "Classified as navigation-cancelled background request",
+      "status": "Observed"
+    },
+    {
+      "severity": "Low",
+      "module": "admin",
+      "page": "http://127.0.0.1:3000/admin/settings",
       "error": "GET REQUEST_FAILED",
       "routeFile": "http://localhost:8000/api/inventory/logs",
       "fixApplied": "Classified as navigation-cancelled background request",
@@ -1549,7 +2193,7 @@
     {
       "severity": "Low",
       "module": "admin",
-      "page": "http://localhost:3000/admin/settings",
+      "page": "http://127.0.0.1:3000/admin/settings",
       "error": "GET REQUEST_FAILED",
       "routeFile": "http://localhost:8000/api/admin/reports/cashier",
       "fixApplied": "Classified as navigation-cancelled background request",
@@ -1558,35 +2202,47 @@
     {
       "severity": "Low",
       "module": "admin",
-      "page": "http://localhost:3000/admin/settings",
+      "page": "http://127.0.0.1:3000/admin/settings",
       "error": "GET REQUEST_FAILED",
-      "routeFile": "http://localhost:8000/api/admin/users",
+      "routeFile": "http://localhost:8000/api/admin/settings",
       "fixApplied": "Classified as navigation-cancelled background request",
       "status": "Observed"
     },
     {
       "severity": "Low",
       "module": "admin",
-      "page": "http://localhost:3000/admin/settings",
+      "page": "http://127.0.0.1:3000/admin/settings",
       "error": "GET REQUEST_FAILED",
-      "routeFile": "http://localhost:8000/api/admin/users",
+      "routeFile": "http://localhost:8000/api/admin/activity-logs",
       "fixApplied": "Classified as navigation-cancelled background request",
       "status": "Observed"
     },
     {
       "severity": "Low",
       "module": "admin",
-      "page": "http://localhost:3000/admin/settings",
+      "page": "http://127.0.0.1:3000/admin/settings",
       "error": "GET REQUEST_FAILED",
-      "routeFile": "http://localhost:8000/api/notifications?role=admin",
+      "routeFile": "http://localhost:8000/api/inventory/logs",
       "fixApplied": "Classified as navigation-cancelled background request",
       "status": "Observed"
     }
   ],
   "screenshots": [
-    "documentation/screenshots/phase10/customer-failure.png",
-    "documentation/screenshots/phase10/receptionist-failure.png",
-    "documentation/screenshots/phase10/cashier-failure.png",
+    "documentation/screenshots/phase10/customer-dashboard.png",
+    "documentation/screenshots/phase10/customer-customer-services.png",
+    "documentation/screenshots/phase10/customer-customer-pets.png",
+    "documentation/screenshots/phase10/customer-customer-payments.png",
+    "documentation/screenshots/phase10/customer-customer-notifications.png",
+    "documentation/screenshots/phase10/receptionist-dashboard.png",
+    "documentation/screenshots/phase10/receptionist-receptionist-appointments-boarding.png",
+    "documentation/screenshots/phase10/receptionist-receptionist-customers.png",
+    "documentation/screenshots/phase10/receptionist-receptionist-history.png",
+    "documentation/screenshots/phase10/receptionist-receptionist-reports.png",
+    "documentation/screenshots/phase10/cashier-dashboard.png",
+    "documentation/screenshots/phase10/cashier-cashier-pos.png",
+    "documentation/screenshots/phase10/cashier-cashier-payment-verification.png",
+    "documentation/screenshots/phase10/cashier-cashier-history.png",
+    "documentation/screenshots/phase10/cashier-cashier-reports.png",
     "documentation/screenshots/phase10/inventory-dashboard.png",
     "documentation/screenshots/phase10/inventory-inventory-products.png",
     "documentation/screenshots/phase10/inventory-inventory-history.png",
@@ -1597,7 +2253,11 @@
     "documentation/screenshots/phase10/veterinary-veterinary-reports.png",
     "documentation/screenshots/phase10/veterinary-veterinary-history.png",
     "documentation/screenshots/phase10/veterinary-veterinary-customer-profiles.png",
-    "documentation/screenshots/phase10/manager-failure.png",
+    "documentation/screenshots/phase10/manager-dashboard.png",
+    "documentation/screenshots/phase10/manager-manager-reports.png",
+    "documentation/screenshots/phase10/manager-manager-staff.png",
+    "documentation/screenshots/phase10/manager-manager-attendance.png",
+    "documentation/screenshots/phase10/manager-manager-history.png",
     "documentation/screenshots/phase10/admin-dashboard.png",
     "documentation/screenshots/phase10/admin-admin-users.png",
     "documentation/screenshots/phase10/admin-admin-reports.png",

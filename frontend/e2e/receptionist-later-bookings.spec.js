@@ -16,19 +16,26 @@ test("a grooming booking on a later date is reachable from receptionist grooming
   const petRes = await request.post(`${apiUrl}/pets`, { headers: cHeaders, data: { name: `E2E Later Pet ${Date.now()}`, species: "Dog" } });
   const petBody = await petRes.json();
   const pet = petBody.pet || petBody;
-  const pick = Math.floor(Math.random() * 300);
-  const date = new Date(Date.now() + (5 + (pick % 40)) * 86400000).toISOString().slice(0, 10);
-  const slot = `${String(10 + (pick % 7)).padStart(2, "0")}:00`;
-  const reqRes = await request.post(`${apiUrl}/customer/requests`, {
-    headers: cHeaders,
-    data: {
-      customer_name: customer.user.name, customer_email: customer.user.email,
-      pet_id: pet.id, pet_name: pet.name, request_type: "grooming", service_type: "grooming",
-      service_name: "Standard Grooming", request_date: date, request_time: slot,
-      requested_date: date, requested_time: slot, notes: "E2E later date",
-    },
-  });
-  expect(reqRes.ok(), "create grooming request").toBeTruthy();
+  // The dev DB accumulates bookings across runs, so probe future slots until one is free.
+  let reqRes;
+  let lastBody = "";
+  for (let attempt = 0; attempt < 60; attempt += 1) {
+    const date = new Date(Date.now() + (5 + attempt) * 86400000).toISOString().slice(0, 10);
+    const slot = `${String(10 + (attempt % 8)).padStart(2, "0")}:00`;
+    reqRes = await request.post(`${apiUrl}/customer/requests`, {
+      headers: cHeaders,
+      data: {
+        customer_name: customer.user.name, customer_email: customer.user.email,
+        pet_id: pet.id, pet_name: pet.name, request_type: "grooming", service_type: "grooming",
+        service_name: "Standard Grooming", request_date: date, request_time: slot,
+        requested_date: date, requested_time: slot, notes: "E2E later date",
+      },
+    });
+    if (reqRes.ok()) break;
+    lastBody = await reqRes.text();
+    if (!/overlaps|no longer available|conflict|public holiday|store is closed/i.test(lastBody)) break;
+  }
+  expect(reqRes.ok(), `create grooming request: ${lastBody}`).toBeTruthy();
   const created = (await reqRes.json()).request;
 
   const context = await browser.newContext({ baseURL: frontendUrl, viewport: { width: 1280, height: 900 } });

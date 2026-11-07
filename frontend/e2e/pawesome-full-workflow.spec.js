@@ -131,15 +131,21 @@ function attachAudit(page) {
 }
 
 async function api(request, session, method, endpoint, options = {}) {
-  const response = await request[method.toLowerCase()](`${apiBase}${endpoint}`, {
-    headers: {
-      Accept: "application/json",
-      Authorization: `Bearer ${session.token}`,
-      ...(options.headers || {}),
-    },
-    data: options.data,
-    multipart: options.multipart,
-  });
+  let response;
+  for (let attempt = 0; attempt < 4; attempt += 1) {
+    response = await request[method.toLowerCase()](`${apiBase}${endpoint}`, {
+      headers: {
+        Accept: "application/json",
+        Authorization: `Bearer ${session.token}`,
+        ...(options.headers || {}),
+      },
+      data: options.data,
+      multipart: options.multipart,
+    });
+    if (response.status() !== 429) break;
+    // Throttle window is 60s per account+IP; the last retry waits it out.
+    await new Promise((r) => setTimeout(r, attempt === 2 ? 61000 : 1500 * (attempt + 1)));
+  }
   const text = await response.text();
   let body;
   try {
@@ -171,7 +177,7 @@ async function loginThroughUi(page, role) {
   if (await ok.isVisible().catch(() => false)) {
     await ok.click();
   }
-  await page.waitForURL(new RegExp(account.route.split("/")[1]), { timeout: 30000 });
+  await page.waitForURL(new RegExp(account.route.split("/")[1]), { timeout: 60000 });
 }
 
 async function openAsRole(browser, role, route, screenshotName) {
@@ -208,7 +214,7 @@ function firstRecord(body, keys) {
 }
 
 test.describe.serial("Pawesome full workflow", () => {
-  test.setTimeout(180000);
+  test.setTimeout(300000);
 
   test.beforeAll(() => {
     ensureEvidenceFolder();
@@ -242,7 +248,7 @@ test.describe.serial("Pawesome full workflow", () => {
     const receptionist = await loginByApi(request, "receptionist");
     const cashier = await loginByApi(request, "cashier");
     const inventory = await loginByApi(request, "inventory");
-    await loginByApi(request, "veterinary");
+    const vetSession = await loginByApi(request, "veterinary");
     const manager = await loginByApi(request, "manager");
     const admin = await loginByApi(request, "admin");
 
@@ -253,21 +259,34 @@ test.describe.serial("Pawesome full workflow", () => {
     const pet = firstRecord(petBody, ["pet", "data"]);
     audit.records.petId = pet.id;
 
-    const serviceBody = await api(request, customer, "POST", "/customer/requests", {
-      data: {
-        customer_name: customer.user?.name || "Customer",
-        customer_email: customer.user?.email || credentials.customer.email,
-        pet_id: pet.id,
-        pet_name: pet.name,
-        request_type: "grooming",
-        service_type: "grooming",
-        service_name: "Basic Bath and Blow Dry Small Breed",
-        requested_date: daysFromNow(8),
-        requested_time: "10:00",
-        notes: `PW-E2E service request ${stamp}`,
-        price: 500,
-      },
-    });
+    let serviceBody;
+    let lastErr;
+    for (let attempt = 0; attempt < 90; attempt += 1) {
+      const gDate = daysFromNow(8 + attempt);
+      // Ask the real availability endpoint for a free slot on this date.
+      const av = await api(request, customer, "GET", `/availability/grooming?date=${gDate}&service_name=${encodeURIComponent("Basic Bath and Blow Dry Small Breed")}`);
+      const free = (av.slots || av.data?.slots || []).find((s) => s.available || s.is_available || s.free);
+      if (!free) continue;
+      try {
+        serviceBody = await api(request, customer, "POST", "/customer/requests", {
+          data: {
+            customer_name: customer.user?.name || "Customer",
+            customer_email: customer.user?.email || credentials.customer.email,
+            pet_id: pet.id,
+            pet_name: pet.name,
+            request_type: "grooming",
+            service_type: "grooming",
+            service_name: "Basic Bath and Blow Dry Small Breed",
+            requested_date: gDate,
+            requested_time: free.time || free.value || free.slot,
+            notes: `PW-E2E service request ${stamp}`,
+            price: 500,
+          },
+        });
+        break;
+      } catch (err) { lastErr = err; serviceBody = null; }
+    }
+    if (!serviceBody) throw lastErr;
     const serviceRequest = firstRecord(serviceBody, ["request", "data"]);
     audit.records.serviceRequestId = serviceRequest.id;
     note("Customer creates booking/request/order", "PASS", `service_request #${serviceRequest.id}`);
@@ -306,13 +325,44 @@ test.describe.serial("Pawesome full workflow", () => {
     note("Inventory stock/log check", "PASS", `inventory item #${item.id}`);
     await openAsRole(browser, "inventory", "/inventory/history", "06-inventory-stock-log-check");
 
-    const vetBody = await api(request, customer, "POST", "/customer/vet", {
-      data: { petId: pet.id, petName: pet.name, service: "checkup", date: daysFromNow(9), concern: `PW-E2E vet appointment ${stamp}` },
+    // Vet appointments are created through a customer veterinary service
+    // request approved with a veterinarian — there is no /customer/vet route.
+    const vets = await api(request, receptionist, "GET", "/receptionist/veterinarians/available");
+    const veterinarian = (vets.veterinarians || vets || []).find((v) => v.email === "vet@example.com") || (vets.veterinarians || vets || [])[0];
+    let vetSr;
+    let lastVetErr;
+    for (let attempt = 0; attempt < 90; attempt += 1) {
+      const apptDate = daysFromNow(9 + attempt);
+      // Ask the real availability endpoint for a free vet slot on this date.
+      const av = await api(request, customer, "GET", `/availability/veterinary?date=${apptDate}&service_name=Consultation`);
+      const free = (av.slots || av.data?.slots || []).find((s) => s.available || s.is_available || s.free);
+      if (!free) continue;
+      const slot = free.time || free.value || free.slot;
+      try {
+        vetSr = await api(request, customer, "POST", "/customer/requests", {
+          data: {
+            customer_name: customer.user?.name || "Customer",
+            customer_email: customer.user?.email || credentials.customer.email,
+            pet_id: pet.id, pet_name: pet.name,
+            request_type: "veterinary", service_type: "veterinary", service_name: "Consultation",
+            requested_date: apptDate, requested_time: slot,
+            notes: `PW-E2E vet appointment ${stamp}`,
+          },
+        });
+        vetSr.apptDate = apptDate;
+        vetSr.apptSlot = slot;
+        break;
+      } catch (err) { lastVetErr = err; vetSr = null; }
+    }
+    if (!vetSr) throw lastVetErr;
+    const vetSrId = (vetSr.request || vetSr.data || vetSr).id;
+    const approveBody = await api(request, receptionist, "POST", `/receptionist/requests/${vetSrId}/approve`, {
+      data: { veterinarian_id: Number(veterinarian.id), request_date: vetSr.apptDate, request_time: vetSr.apptSlot },
     });
-    const vetAppointment = firstRecord(vetBody, ["appointment", "data"]);
-    audit.records.vetAppointmentId = vetAppointment.id;
-    await api(request, receptionist, "PATCH", `/vet/${vetAppointment.id}/status`, { data: { status: "completed" } });
-    note("Veterinary appointment status update", "PASS", `vet appointment #${vetAppointment.id} completed via current /vet status route`);
+    const vetAppointmentId = approveBody.appointment?.id || approveBody.appointment_id;
+    audit.records.vetAppointmentId = vetAppointmentId;
+    await api(request, vetSession, "POST", `/veterinary/consultations/${vetAppointmentId}/start`, {});
+    note("Veterinary appointment status update", "PASS", `vet appointment #${vetAppointmentId} started via /veterinary/consultations/{id}/start (direct scheduled -> completed is rejected by the backend)`);
     await openAsRole(browser, "veterinary", "/veterinary/appointments", "07-veterinary-status-updated");
 
     await api(request, manager, "GET", "/manager/reports/overview");

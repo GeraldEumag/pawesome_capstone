@@ -25,10 +25,39 @@ function record(key, status, note) {
   results[key] = { status, note, at: new Date().toISOString() };
 }
 const authH = (t) => ({ Accept: "application/json", Authorization: `Bearer ${t}` });
-const TEST_USER_ID = 73; // e2e fixture user
-const FIXTURE_EMAIL = "e2e-manual-1792675127052@example.test";
+
+let TEST_USER_ID;
+let FIXTURE_EMAIL;
+
+test.beforeAll(async ({ request }) => {
+  const admin = await apiLogin(request, "admin");
+  const stamp = Date.now();
+  const email = `e2e-manual-${stamp}@example.test`;
+  const res = await request.post(`${apiUrl}/admin/users`, {
+    headers: authH(admin.token),
+    data: {
+      name: "E2E Manual Fixture",
+      email,
+      username: `e2e_fixture_${stamp}`,
+      password: FIXTURE_PW,
+      role: "receptionist",
+      is_active: true,
+      date_of_birth: "1995-01-01",
+    },
+  });
+  const body = await res.json().catch(() => ({}));
+  expect(res.ok(), `fixture user: ${JSON.stringify(body)}`).toBeTruthy();
+  TEST_USER_ID = body.user?.id || body.id;
+  FIXTURE_EMAIL = email;
+  // The kiosk resolves barcodes through users.employee_no, which is assigned on create.
+  FIXTURE_BARCODE = body.user?.employee_no || body.employee_no;
+  expect(FIXTURE_BARCODE, "fixture employee_no for kiosk barcode").toBeTruthy();
+});
+
 const FIXTURE_PW = "E2eTemp!1234";
-const FIXTURE_BARCODE = "PAW-0013"; // employee_no on fixture user 73
+let FIXTURE_BARCODE;
+const TEST_KIOSK_PIN = "E2E-KIOSK-4821";
+let originalKioskPin = ""; // employee_no of the fixture user, assigned in beforeAll
 
 function tinker(expr) {
   return execSync(`php artisan tinker --execute="${expr}"`, {
@@ -42,14 +71,17 @@ test.beforeAll(() => {
   // Provision the kiosk PIN file (same approach as chain3) and seed leave
   // balances for fixture user 73 only — firstOrCreate makes this idempotent.
   const pinFile = path.join(rootDir, ".kiosk-pin.tmp").replace(/\\/g, "/");
-  try {
-    tinker(`file_put_contents('${pinFile}', (string) \\App\\Models\\SystemSetting::get('attendance_kiosk_pin', env('KIOSK_PIN', '')))`);
-  } catch {}
+  // The kiosk rejects every punch unless attendance_kiosk_pin is set. Save the
+  // current value, set a known test PIN, and restore the original in afterAll.
+  originalKioskPin = tinker("echo (string) \\App\\Models\\SystemSetting::get('attendance_kiosk_pin', '')").trim().split("\n").pop();
+  tinker(`\\App\\Models\\SystemSetting::set('attendance_kiosk_pin', '${TEST_KIOSK_PIN}')`);
+  tinker(`file_put_contents('${pinFile}', '${TEST_KIOSK_PIN}')`);
   try {
     tinker(`\\App\\Models\\LeaveBalance::seedForPerson(${TEST_USER_ID}, null, 2026)`);
   } catch {}
 });
 test.afterAll(() => {
+  try { tinker(`\\App\\Models\\SystemSetting::set('attendance_kiosk_pin', '${originalKioskPin.replace(/'/g, "")}')`); } catch {}
   let existing = {};
   try { existing = JSON.parse(fs.readFileSync(resultsPath, "utf8")); } catch {}
   fs.writeFileSync(resultsPath, JSON.stringify({ ...existing, ...results }, null, 2));
@@ -185,7 +217,7 @@ test("kiosk: PIN unlock -> employee barcode punch records attendance", async ({ 
   // the punch path ran — verify the attendance row instead of re-punching.
   const alreadyDone = /already completed/i.test(punchBody.message || "");
   if (!punch.ok() && !alreadyDone) {
-    expect.unreachable(`kiosk punch unexpectedly failed: ${JSON.stringify(punchBody)}`);
+    expect(punch.ok(), `kiosk punch failed: ${JSON.stringify(punchBody)}`).toBeTruthy();
   }
 
   const today = new Date().toISOString().slice(0, 10);

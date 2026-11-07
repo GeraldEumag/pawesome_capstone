@@ -170,13 +170,13 @@ Customer sidebar labels (verified live on 2026-10-22): **Services**, **My Pets**
 **Authorized role:** Verified customer.
 **Prerequisites:** Signed in; an active registered pet; verified email.
 
-1. Open **Services** and select **New Request**.
+1. Open **Services**. The page lists the available service cards.
 2. Choose the service card and select **Book Now**.
 3. In **Pet Grooming** or **Veterinary Appointment**, select your active pet and a service.
 4. Select an available date and time, then add notes or the pet concern.
 5. Review the displayed booking details and price in the review step.
 6. Select **Go back** to correct information, or **Confirm booking** to submit.
-7. Open **My Requests** (or the form's **My Appointments** tab) to review the status.
+7. Open **My Requests** from the sidebar to review the status.
 
 **Expected result:** The request is created in a pending/unpaid state and lands on the requests view. Runtime-verified on 2026-10-22: a grooming request (pet, service, date, 10:00 slot) passed the review modal and confirmed successfully (Figure UM-004).
 
@@ -190,7 +190,7 @@ Customer sidebar labels (verified live on 2026-10-22): **Services**, **My Pets**
 **Authorized role:** Verified customer.
 **Prerequisites:** Signed in, active registered pet, vaccination-card file ready.
 
-1. Open **Services → New Request**, choose Pet Hotel, **Book Now**.
+1. Open **Services**, find the Pet Hotel card, select **Book Now**.
 2. In **Pet Hotel**, select **New Reservation**.
 3. Select your pet and the **Stay Date** (source describes same-day stay).
 4. Select an available room if offered.

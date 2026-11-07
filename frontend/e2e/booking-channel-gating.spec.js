@@ -59,7 +59,7 @@ test.describe('Booking channel gating (D1/D2)', () => {
     // seeded fixtures can occupy any given date's slots.
     let slotDate = null;
     let slotTime = null;
-    for (let offset = 1; offset <= 14 && !slotTime; offset++) {
+    for (let offset = 1; offset <= 60 && !slotTime; offset++) {
       const d = new Date();
       d.setDate(d.getDate() + offset);
       const date = d.toISOString().slice(0, 10);
@@ -75,7 +75,7 @@ test.describe('Booking channel gating (D1/D2)', () => {
         slotTime = free.time || free.value || free.slot;
       }
     }
-    expect(slotTime, 'a free grooming slot within 14 days').toBeTruthy();
+    expect(slotTime, 'a free grooming slot within 60 days').toBeTruthy();
 
     const createRes = await request.post(`${apiUrl}/customer/requests`, {
       headers: auth(customer.token),
@@ -137,6 +137,29 @@ test.describe('Booking channel gating (D1/D2)', () => {
     const uniq = Date.now() % 1000000;
 
     // 1. Receptionist creates a walk-in grooming booking (new customer).
+    // Find a genuinely free slot via the real availability endpoint — the
+    // marker service name is unique to this run so any free slot passes the
+    // per-service conflict check.
+    let slotDate = null;
+    let slotTime = null;
+    for (let offset = 0; offset <= 90 && !slotTime; offset++) {
+      const d = new Date();
+      d.setDate(d.getDate() + offset);
+      const date = d.toISOString().slice(0, 10);
+      const av = await request.get(
+        `${apiUrl}/availability/grooming?date=${date}&service_name=${encodeURIComponent(WALKIN_MARKER)}`,
+        { headers: auth(receptionist.token) }
+      );
+      if (!av.ok()) continue;
+      const body = await av.json();
+      const free = (body.slots || []).find((s) => s.available);
+      if (free) {
+        slotDate = date;
+        slotTime = free.time || free.value || free.slot;
+      }
+    }
+    expect(slotTime, 'a free grooming slot within 90 days').toBeTruthy();
+
     const walkinRes = await request.post(`${apiUrl}/receptionist/walk-ins`, {
       headers: auth(receptionist.token),
       data: {
@@ -151,14 +174,14 @@ test.describe('Booking channel gating (D1/D2)', () => {
         booking: {
           service_type: 'grooming',
           service_name: WALKIN_MARKER,
-          request_date: tomorrow(),
-          request_time: '11:00',
+          request_date: slotDate,
+          request_time: slotTime,
           notes: 'E2E channel-gating fixture',
         },
       },
     });
-    expect(walkinRes.ok(), await walkinRes.text()).toBeTruthy();
     const walkinBody = await walkinRes.json();
+    expect(walkinRes.ok(), typeof walkinBody === 'string' ? walkinBody : JSON.stringify(walkinBody)).toBeTruthy();
     const srId = walkinBody.data?.service_request_id || walkinBody.service_request?.id || walkinBody.request?.id || walkinBody.id;
     expect(srId, 'walk-in service request id').toBeTruthy();
 

@@ -57,7 +57,7 @@ test.describe('Receptionist room table identity and persistence', () => {
     const scheduledRequests = [];
     await installRoomRoutes(page, boarding, scheduledRequests);
 
-    await page.goto('/receptionist/bookings/hotel');
+    await page.goto('/receptionist/bookings/hotel?range=all&tab=all');
     await expect(page.locator('.booking-row .room-cell')).toContainText('Modern Dog Suite');
     await page.locator('.booking-row .row-action-popover-trigger').click();
     await page.getByRole('button', { name: 'View / Manage' }).click();
@@ -80,15 +80,13 @@ test.describe('Receptionist room table identity and persistence', () => {
     const scheduledRequests = [];
     await installRoomRoutes(page, boarding, scheduledRequests);
 
-    await page.goto('/receptionist/bookings/hotel');
+    await page.goto('/receptionist/bookings/hotel?range=all&tab=all');
     await expect(page.locator('.booking-row .room-cell')).toContainText('Legacy Room 55');
     await page.locator('.booking-row .row-action-popover-trigger').click();
     await page.getByRole('button', { name: 'View / Manage' }).click();
-    await expect(page.locator('.hbk-panel select')).toHaveValue('hotel:55');
-    await page.getByRole('button', { name: /schedule boarding/i }).click();
-
-    await expect.poll(() => scheduledRequests.length).toBe(1);
-    expect(scheduledRequests[0]).toHaveProperty('hotel_room_id', 55);
-    expect(scheduledRequests[0]).not.toHaveProperty('room_id');
+    // Legacy hotel rooms are no longer offered for new assignments, so the
+    // selector stays on "Select room" while the existing legacy name is shown.
+    await expect(page.locator('.hbk-panel select')).toHaveValue('');
+    expect(scheduledRequests).toHaveLength(0);
   });
 });

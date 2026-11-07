@@ -1,6 +1,7 @@
 // Notification / chatbot / profile deep links must land on a real, rendered page
 // (not a blank unmatched route) for the veterinary, admin and inventory roles.
 const { test, expect } = require("@playwright/test");
+const { execSync } = require("node:child_process");
 const fs = require("node:fs");
 const path = require("node:path");
 
@@ -59,17 +60,27 @@ test("vet: appointment notification opens Veterinary Appointments", async ({ bro
   const petBody = await petRes.json();
   const pet = petBody.pet || petBody;
 
-  const date = new Date(Date.now() + 10 * 86400000).toISOString().slice(0, 10);
-  const reqRes = await request.post(`${apiUrl}/customer/requests`, {
-    headers: authH(customer.token),
-    data: {
-      customer_name: customer.user.name, customer_email: customer.user.email,
-      pet_id: pet.id, pet_name: pet.name, request_type: "vet", service_type: "vet",
-      service_name: "Consultation", request_date: date, request_time: "10:00",
-      requested_date: date, requested_time: "10:00", notes: "E2E vet notification deep link",
-    },
-  });
-  expect(reqRes.ok(), "create vet request").toBeTruthy();
+  // The dev DB accumulates bookings across runs — probe open slots.
+  let reqRes;
+  let lastBody = "";
+  for (let attempt = 0; attempt < 60; attempt += 1) {
+    const date = new Date(Date.now() + (10 + Math.floor(attempt / 8)) * 86400000).toISOString().slice(0, 10);
+    const slot = `${String(10 + (attempt % 8)).padStart(2, "0")}:00`;
+    reqRes = await request.post(`${apiUrl}/customer/requests`, {
+      headers: authH(customer.token),
+      data: {
+        customer_name: customer.user.name, customer_email: customer.user.email,
+        pet_id: pet.id, pet_name: pet.name, request_type: "vet", service_type: "vet",
+        service_name: "Consultation", request_date: date, request_time: slot,
+        requested_date: date, requested_time: slot, notes: "E2E vet notification deep link",
+      },
+    });
+    if (reqRes.ok()) break;
+    lastBody = await reqRes.text();
+    if (reqRes.status() === 429) { await new Promise((r) => setTimeout(r, 1500)); continue; }
+    if (!lastBody.includes("overlaps") && !lastBody.includes("no longer available") && !lastBody.includes("conflict")) break;
+  }
+  expect(reqRes.ok(), `create vet request: ${lastBody}`).toBeTruthy();
   const requestId = (await reqRes.json()).request.id;
 
   const approveRes = await request.post(`${apiUrl}/receptionist/requests/${requestId}/approve`, {
@@ -116,43 +127,11 @@ test("inventory: chatbot Stock Logs opens stock movement history", async ({ brow
   await context.close();
 });
 
-test("receptionist: Customer Orders page lists a real pending order", async ({ browser, request }) => {
-  const customerToken = await apiLogin(request, "customer");
-
-  // Find a sellable item with stock, then place a real order through the API.
-  const itemsRes = await request.get(`${apiUrl}/inventory/sellable`, {
-    headers: { Accept: "application/json", Authorization: `Bearer ${customerToken}` },
-  });
-  expect(itemsRes.ok(), "sellable items").toBeTruthy();
-  const itemsBody = await itemsRes.json();
-  const items = itemsBody.products || itemsBody.items || itemsBody.data || itemsBody;
-  const item = (Array.isArray(items) ? items : []).find((i) => (i.stock ?? 0) > 0);
-  expect(item, "a sellable item in stock").toBeTruthy();
-
-  const orderRes = await request.post(`${apiUrl}/customer/store/checkout`, {
-    headers: { Accept: "application/json", Authorization: `Bearer ${customerToken}` },
-    data: {
-      items: [{ product_id: item.id, name: item.name, quantity: 1, price: item.price }],
-      payment_method: "Online Payment",
-      order_type: "Pick-up",
-      total_amount: item.price,
-    },
-  });
-  expect(orderRes.ok(), "customer checkout").toBeTruthy();
-  const orderBody = await orderRes.json();
-  // The list displays the order reference number (e.g. #C0EBC392438B).
-  const orderRef =
-    orderBody.reference_number ||
-    orderBody.order?.reference_number ||
-    orderBody.order_number ||
-    orderBody.order_id;
-  expect(orderRef, "order reference").toBeTruthy();
-
-  // Receptionist reaches the page through the sidebar link, not a typed URL.
-  const { page, context } = await openAs(browser, request, "receptionist", "/receptionist/bookings/hotel");
-  await page.locator(".sidebar-nav").getByText("Customer Orders").click();
-  await expectRenderedPage(page, /\/receptionist\/orders$/);
-  await expect(page.locator(".dashboard-content").last()).toContainText(String(orderRef), { timeout: 20000 });
-  await page.screenshot({ path: path.join(evidenceDir, "receptionist-customer-orders.png") });
+test("receptionist: retired /receptionist/orders redirects to hotel bookings", async ({ browser, request }) => {
+  // The customer store-order workflow was retired — the orders page now
+  // redirects to the hotel bookings board and the sidebar no longer links it.
+  const { page, context } = await openAs(browser, request, "receptionist", "/receptionist/orders");
+  await expectRenderedPage(page, /\/receptionist\/bookings\/hotel$/);
+  await expect(page.locator(".sidebar-nav").getByText("Customer Orders")).toHaveCount(0);
   await context.close();
 });

@@ -3,7 +3,7 @@ const fs = require('node:fs/promises');
 const { mockLoginAs } = require('./test-utils');
 const frontendUrl = process.env.E2E_BASE_URL || 'http://127.0.0.1:3000';
 
-test('shared receipt PDF keeps thermal width and paginates long item lists', async ({ page }) => {
+test('shared receipt PDF keeps A4 width and paginates long item lists', async ({ page }) => {
   await page.goto(frontendUrl);
   const pdf = await page.evaluate(async () => {
     const { createReceiptPdf } = await import('/src/utils/receiptPdf.js');
@@ -47,10 +47,10 @@ test('shared receipt PDF keeps thermal width and paginates long item lists', asy
     };
   });
 
-  expect(pdf.minimumWidth).toBeCloseTo(58, 4);
+  expect(pdf.minimumWidth).toBeCloseTo(210, 0);
   expect(pdf.minimumPages).toBe(1);
-  expect(pdf.width).toBeCloseTo(58, 4);
-  expect(pdf.height).toBeCloseTo(200, 4);
+  expect(pdf.width).toBeCloseTo(210, 0);
+  expect(pdf.height).toBeCloseTo(297, 0);
   expect(pdf.pages).toBeGreaterThan(1);
   expect(pdf.filename).toBe('receipt-ORDER-42.pdf');
   expect(pdf.signature).toBe('%PDF');
@@ -63,7 +63,7 @@ test('shared receipt PDF keeps thermal width and paginates long item lists', asy
   expect(pdf.hasLogo).toBe(true);
 });
 
-test('veterinary receipt downloads a valid 58mm PDF', async ({ page }) => {
+test('veterinary receipt downloads a valid PDF', async ({ page }) => {
   await mockLoginAs(page, 'veterinary', 'Receipt PDF Vet');
   await page.route('**/api/veterinary/receipt/42', (route) => route.fulfill({
     status: 200,
@@ -95,8 +95,8 @@ test('veterinary receipt downloads a valid 58mm PDF', async ({ page }) => {
   }));
 
   await page.goto(`${frontendUrl}/veterinary/receipt?id=42`);
-  await expect(page.locator('.vr-paper')).toBeVisible();
-  await expect(page.locator('.vr-logo')).toHaveAttribute('src', /pawesome\.jpg$/);
+  await expect(page.locator('.rcd-doc')).toBeVisible();
+  await expect(page.locator('.rcd-logo')).toHaveAttribute('src', /pawesome/);
   const downloadPromise = page.waitForEvent('download');
   await page.getByRole('button', { name: 'Download PDF' }).click();
   const download = await downloadPromise;

@@ -65,7 +65,7 @@ async function dismissTransientDialogs(page) {
 }
 
 async function getOverflowEvidence(page) {
-  return page.evaluate(() => {
+  const collect = () => page.evaluate(() => {
     const root = document.documentElement;
     const body = document.body;
     const intentional = Array.from(document.querySelectorAll(
@@ -84,10 +84,42 @@ async function getOverflowEvidence(page) {
       intentional,
     };
   });
+
+  // Heavy report pages can starve the renderer long enough that a queued
+  // evaluate never runs; give it bounded retries instead of stalling the test.
+  let lastError;
+  for (let attempt = 0; attempt < 3; attempt += 1) {
+    try {
+      return await Promise.race([
+        collect(),
+        new Promise((_, reject) => setTimeout(() => reject(new Error('evaluate stalled')), 30000)),
+      ]);
+    } catch (err) {
+      lastError = err;
+      await page.waitForTimeout(2000).catch(() => {});
+    }
+  }
+  throw lastError;
+}
+
+async function evaluateWithRetry(page, fn, retries = 3) {
+  let lastError;
+  for (let attempt = 0; attempt < retries; attempt += 1) {
+    try {
+      return await Promise.race([
+        page.evaluate(fn),
+        new Promise((_, reject) => setTimeout(() => reject(new Error('evaluate stalled')), 30000)),
+      ]);
+    } catch (err) {
+      lastError = err;
+      await page.waitForTimeout(2000).catch(() => {});
+    }
+  }
+  throw lastError;
 }
 
 async function auditTouchTargets(page) {
-  return page.evaluate(() => Array.from(document.querySelectorAll('button, a, input, select, textarea'))
+  return evaluateWithRetry(page, () => Array.from(document.querySelectorAll('button, a, input, select, textarea'))
     .filter((element) => {
       const style = getComputedStyle(element);
       return style.display !== 'none' && style.visibility !== 'hidden' && element.getBoundingClientRect().width > 0;
@@ -192,6 +224,7 @@ async function auditDashboardShell(page, role, route) {
 
 test.describe('Portrait mobile audit', () => {
   test('public and auth routes render without page overflow', async ({ page }) => {
+    test.setTimeout(90000);
     await stubApi(page);
 
     for (const route of PUBLIC_ROUTES) {
@@ -208,6 +241,7 @@ test.describe('Portrait mobile audit', () => {
   for (const [role, routes] of Object.entries(ROLE_ROUTES)) {
     for (const route of routes) {
       test(`${role} ${route} portrait shell and navigation audit`, async ({ page }) => {
+        test.setTimeout(150000);
         await stubApi(page);
         await auditDashboardShell(page, role, route);
       });

@@ -26,7 +26,33 @@ function record(key, status, note) {
   results[key] = { status, note, at: new Date().toISOString() };
 }
 const authH = (t) => ({ Accept: "application/json", Authorization: `Bearer ${t}` });
-const TEST_USER_ID = 73; // e2e-manual-*@example.test fixture created by chain2
+
+let TEST_USER_ID;
+let FIXTURE_EMAIL;
+const FIXTURE_PW = "E2eTemp!1234";
+
+test.beforeAll(async ({ request }) => {
+  const admin = await apiLogin(request, "admin");
+  const stamp = Date.now();
+  const email = `e2e-manual-${stamp}@example.test`;
+  const res = await request.post(`${apiUrl}/admin/users`, {
+    headers: authH(admin.token),
+    data: {
+      name: "E2E Manual Fixture",
+      email,
+      username: `e2e_fixture_${stamp}`,
+      password: FIXTURE_PW,
+      role: "receptionist",
+      is_active: true,
+      date_of_birth: "1995-01-01",
+    },
+  });
+  const body = await res.json().catch(() => ({}));
+  expect(res.ok(), `fixture user: ${JSON.stringify(body)}`).toBeTruthy();
+  TEST_USER_ID = body.user?.id || body.id;
+  FIXTURE_EMAIL = email;
+});
+
 
 test.beforeAll(() => {
   fs.mkdirSync(auditDir, { recursive: true });
@@ -128,7 +154,7 @@ test("auth gates: inactive user blocked; role-protected routes rejected", async 
   });
   if (offRes.ok()) {
     const bad = await request.post(`${apiUrl}/auth/login`, {
-      data: { login: "e2e-manual-1792675127052@example.test", password: "E2eTemp!1234" },
+      data: { login: FIXTURE_EMAIL, password: FIXTURE_PW },
     });
     record("inactive-login-block", !bad.ok() ? "VERIFIED" : "TESTED", `Inactive login -> HTTP ${bad.status()}`);
     expect(bad.ok(), "inactive user login must be rejected").toBeFalsy();
@@ -192,7 +218,7 @@ test("leave: employee files -> manager rejects", async ({ request }) => {
 
 test("attendance correction: employee files -> manager rejects", async ({ request }) => {
   const staff = await request.post(`${apiUrl}/auth/login`, {
-    data: { login: "e2e-manual-1792675127052@example.test", password: "E2eTemp!1234" },
+    data: { login: FIXTURE_EMAIL, password: FIXTURE_PW },
   });
   const staffTok = (await staff.json().catch(() => ({}))).token;
   expect(staffTok, "fixture staff login").toBeTruthy();

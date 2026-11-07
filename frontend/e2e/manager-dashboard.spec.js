@@ -38,7 +38,7 @@ test.describe('Manager Dashboard end-to-end', () => {
 
   test('refresh button reloads data', async ({ page }) => {
     await page.goto(frontendUrl + dashboardPath);
-    await page.locator('button:has-text("refresh"), button:has([data-icon="rotate"]), [title*="refresh" i]').first().click().catch(() => {});
+    await page.locator('button:has-text("refresh"), button:has([data-icon="rotate"]), [title*="refresh" i]').first().click({ timeout: 5000 }).catch(() => {});
     await expect(page.locator('.overview-card, [class*="card"]').first()).toBeVisible();
   });
 

@@ -42,8 +42,8 @@ async function createRequest(request, session, pet, type, label) {
   // Slots live on a 30-minute grid within 10:00–18:00; retry random slots since
   // prior runs and seed data may already occupy some of them.
   let body = null;
-  for (let attempt = 0; attempt < 12; attempt += 1) {
-    const daysAhead = 1 + Math.floor(Math.random() * 20);
+  for (let attempt = 0; attempt < 40; attempt += 1) {
+    const daysAhead = 1 + Math.floor(Math.random() * 60);
     const slotIndex = Math.floor(Math.random() * 13); // 10:00,10:30,...,16:00
     const hour = 10 + Math.floor(slotIndex / 2);
     const minute = slotIndex % 2 === 0 ? "00" : "30";
@@ -62,7 +62,7 @@ async function createRequest(request, session, pet, type, label) {
     });
     body = await res.json();
     if (res.ok()) break;
-    if (attempt === 11) {
+    if (attempt === 39) {
       throw new Error(`createRequest failed ${res.status()}: ${JSON.stringify(body).slice(0, 400)}`);
     }
   }
@@ -82,7 +82,7 @@ test.describe("Receptionist revisions", () => {
     const req = await createRequest(request, customer, pet, "vet", "vet-cancel");
 
     await loginAs(page, "receptionist");
-    await page.goto("/receptionist/bookings/veterinary");
+    await page.goto("/receptionist/bookings/veterinary?range=all&tab=all");
     await expect(page.locator("body")).toContainText("Veterinary", { timeout: 15000 });
 
     const row = page.locator("tr", { hasText: req.pet_name || "QA Pet" }).first();
@@ -124,10 +124,10 @@ test.describe("Receptionist revisions", () => {
     expect(cancel2.ok()).toBeTruthy();
 
     await loginAs(page, "receptionist");
-    await page.goto("/receptionist/bookings/grooming");
+    await page.goto("/receptionist/bookings/grooming?range=all&tab=all");
     await expect(page.locator("body")).toContainText("Grooming", { timeout: 15000 });
 
-    const row = page.locator("tr", { hasText: "Rejected" }).last();
+    const row = page.locator("tr", { hasText: pet.name }).filter({ hasText: "Rejected" }).first();
     await row.locator(".row-action-popover-trigger").click();
     await page.locator(".action-btn.view-btn").first().click();
 
@@ -137,7 +137,7 @@ test.describe("Receptionist revisions", () => {
     await expect(modal).toContainText("QA reason: fully booked");
     await page.locator(".hbk-foot .secondary-btn").click();
 
-    const cancelledRow = page.locator("tr", { hasText: "Cancelled" }).last();
+    const cancelledRow = page.locator("tr", { hasText: pet.name }).filter({ hasText: "Cancelled" }).first();
     await cancelledRow.locator(".row-action-popover-trigger").click();
     await page.locator(".action-btn.view-btn").first().click();
     await expect(modal).toContainText("Cancellation Reason");
@@ -255,9 +255,10 @@ test.describe("Receptionist revisions", () => {
     await page.goto("/receptionist/customer-profile");
     await expect(page.locator("body")).toContainText("Customer", { timeout: 15000 });
 
-    const card = page.locator("text=QA Delete Cust", { exact: false }).first();
-    await expect(card).toBeVisible();
+    // The list renders every customer; search narrows it to this run's fixture.
+    await page.getByPlaceholder(/search customer/i).fill(`QA Delete Cust ${stamp}`);
     const row = page.locator("tr, .customer-card, .customer-item", { hasText: `QA Delete Cust ${stamp}` }).first();
+    await expect(row).toBeVisible({ timeout: 20000 });
     await row.locator(".row-action-popover-trigger").click().catch(async () => {
       await row.locator(".action-btn.delete-btn, .delete-btn").first().click();
     });

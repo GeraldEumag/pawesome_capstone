@@ -136,25 +136,19 @@ test.describe('Admin Dashboard end-to-end', () => {
     expect(hasUserManagement).toBeTruthy();
   });
 
-  test('cannot access operational dashboards directly', async ({ page }) => {
-    // Admin should not be doing cashier/vet/receptionist operations
-    const operationalPaths = ['/cashier/pos', '/veterinary/treatment', '/receptionist/bookings'];
+  test('admin can reach every staff portal (all-access role)', async ({ page }) => {
+    // Admin is the all-access staff role — routeRoleMap allows it on every
+    // staff portal, so none of these should bounce back to /admin.
+    const operationalPaths = ['/cashier/pos', '/veterinary/appointments', '/receptionist/bookings/hotel'];
     for (const path of operationalPaths) {
       await page.goto(frontendUrl + path);
-      // ProtectedRoute performs a client-side redirect — wait for it to settle.
-      await page.waitForURL(new RegExp('/admin'), { timeout: 8000 }).catch(() => {});
-      const currentUrl = page.url();
-      // Should either redirect to admin or show forbidden
-      const blockedOrRedirected = currentUrl.includes('/unauthorized') ||
-                      currentUrl.includes('/forbidden') ||
-                      currentUrl.includes(dashboardPath) ||
-                      currentUrl.includes('/admin');
-      expect(blockedOrRedirected).toBeTruthy();
+      await expect(page).not.toHaveURL(/\/admin/, { timeout: 8000 }).catch(() => {});
+      expect(page.url()).toContain(path.split('/').slice(0, 2).join('/'));
     }
   });
 
   test('forbidden pages redirect or block', async ({ page }) => {
-    const forbiddenPaths = ['/cashier', '/veterinary', '/receptionist'];
+    const forbiddenPaths = ['/customer'];
     for (const path of forbiddenPaths) {
       await page.goto(frontendUrl + path);
       await page.waitForURL(new RegExp(dashboardPath), { timeout: 8000 }).catch(() => {});

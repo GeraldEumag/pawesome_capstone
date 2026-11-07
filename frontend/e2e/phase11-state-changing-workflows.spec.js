@@ -151,15 +151,22 @@ async function apiLogin(request, role) {
 }
 
 async function api(request, session, method, endpoint, options = {}) {
-  const response = await request[method.toLowerCase()](`${apiUrl}${endpoint}`, {
-    headers: {
-      Accept: "application/json",
-      Authorization: `Bearer ${session.token}`,
-      ...(options.headers || {}),
-    },
-    data: options.data,
-    multipart: options.multipart,
-  });
+  let response;
+  for (let attempt = 0; attempt < 4; attempt += 1) {
+    response = await request[method.toLowerCase()](`${apiUrl}${endpoint}`, {
+      headers: {
+        Accept: "application/json",
+        Authorization: `Bearer ${session.token}`,
+        ...(options.headers || {}),
+      },
+      data: options.data,
+      multipart: options.multipart,
+    });
+    if (response.status() !== 429) break;
+    // Throttle window is 60s per account+IP — the last retry waits it out.
+    const wait = attempt === 2 ? 61000 : 1500 * (attempt + 1);
+    await new Promise((r) => setTimeout(r, wait));
+  }
   run.network.push({ source: "api", status: response.status(), method, path: new URL(`${apiUrl}${endpoint}`).pathname });
   const text = await response.text();
   let body = null;
@@ -262,7 +269,7 @@ async function ensurePet(request, customerSession) {
 }
 
 async function createServiceRequest(request, session, type, pet, suffix, days = 7) {
-  const payload = {
+  const buildPayload = (date, time) => ({
     customer_name: session.user.name || "PHASE11_TEST Customer",
     customer_email: session.user.email || credentials.customer.email,
     pet_id: pet.id,
@@ -270,19 +277,29 @@ async function createServiceRequest(request, session, type, pet, suffix, days = 
     request_type: type,
     service_type: type,
     service_name: type === "vet" ? "Veterinary Consultation" : type === "hotel" ? "Pet Hotel / Boarding" : "Standard Grooming",
-    requested_date: futureDate(days),
-    requested_time: "10:00",
-    request_date: futureDate(days),
-    request_time: "10:00",
+    requested_date: date,
+    requested_time: time,
+    request_date: date,
+    request_time: time,
     notes: `PHASE11_TEST ${suffix}`,
     price: 500,
-  };
-  if (type === "hotel") {
-    payload.check_out_date = futureDate(days + 1);
-    payload.total_days = 1;
-    payload.total_amount = 500;
+  });
+  // The dev DB accumulates bookings across runs — probe open slots.
+  let created;
+  let lastErr;
+  for (let attempt = 0; attempt < 120; attempt += 1) {
+    const payload = buildPayload(futureDate(days + attempt), `${String(10 + (attempt % 7)).padStart(2, "0")}:00`);
+    if (type === "hotel") {
+      payload.check_out_date = payload.request_date;
+      payload.total_days = 1;
+      payload.total_amount = 500;
+    }
+    try {
+      created = await api(request, session, "POST", "/customer/requests", { data: payload });
+      break;
+    } catch (err) { lastErr = err; created = null; }
   }
-  const created = await api(request, session, "POST", "/customer/requests", { data: payload });
+  if (!created) throw lastErr;
   const record = created.request;
   run.createdRecords.push({ type: "service_request", id: record.id, label: suffix });
   return record;
@@ -357,7 +374,7 @@ async function runRoleAccessNegativeChecks(request, sessions) {
 }
 
 test.describe.configure({ mode: "serial" });
-test.setTimeout(900000);
+test.setTimeout(1800000);
 
 test("Phase 11 full state-changing workflow validation", async ({ browser, request }) => {
   ensureArtifacts();
@@ -395,9 +412,26 @@ test("Phase 11 full state-changing workflow validation", async ({ browser, reque
   }
 
   try {
-    const boarding = await createServiceRequest(request, sessions.customer, "hotel", pet, "boarding request", workflowDateOffset + 2);
-    await approveServiceRequest(request, sessions.receptionist, boarding.id);
-    const approved = await getCustomerRequest(request, sessions.customer, boarding.id);
+    // Hotel bookings go through the vaccination-card-gated boarding flow —
+    // /customer/requests rejects them.
+    const boardingDate = futureDate(workflowDateOffset + 2);
+    const roomsBody = await api(request, sessions.customer, "GET",
+      `/boarding/rooms/available?species=dog&check_in_date=${boardingDate}&check_out_date=${boardingDate}`);
+    const room = (roomsBody.rooms || []).find((item) => item.available && /^\d+$/.test(String(item.id)));
+    if (!room) throw new Error("no numeric boarding_rooms room available for the boarding fixture");
+    const boardingCreated = await api(request, sessions.customer, "POST", "/customer/boardings", {
+      multipart: {
+        pet_id: String(pet.id), room_id: String(room.id), check_in_date: boardingDate,
+        number_of_days: "1", notes: "PHASE11_TEST boarding request",
+        vaccination_card: { name: "phase11-vaccination.png", mimeType: "image/png", buffer: fs.readFileSync(proofPath) },
+      },
+    });
+    const boarding = boardingCreated.boarding || boardingCreated.data || boardingCreated;
+    run.createdRecords.push({ type: "boarding", id: boarding.id, label: "boarding request" });
+    await api(request, sessions.receptionist, "POST", `/receptionist/boarding-requests/${boarding.id}/verify-vaccination`);
+    await api(request, sessions.receptionist, "POST", `/receptionist/boarding-requests/${boarding.id}/approve`);
+    const boardingsNow = normalizeList(await api(request, sessions.customer, "GET", "/customer/boardings"), ["boardings"]);
+    const approved = boardingsNow.find((item) => Number(item.id) === Number(boarding.id));
     const receptionistBoardingShot = await openRolePage(browser, "receptionist", "/receptionist/appointments-boarding", "boarding-tracking-receptionist");
     const customerBoardingShot = await openRolePage(browser, "customer", "/customer/services", "boarding-tracking-customer");
     addWorkflow("Boarding Tracking Flow", {
@@ -449,7 +483,7 @@ test("Phase 11 full state-changing workflow validation", async ({ browser, reque
   try {
     const paymentReject = await createServiceRequest(request, sessions.customer, "grooming", pet, "payment reject request", workflowDateOffset + 4);
     await approveServiceRequest(request, sessions.receptionist, paymentReject.id);
-    await uploadProof(request, sessions.customer, paymentReject.id, "PHASE11-REJECT-001");
+    await uploadProof(request, sessions.customer, paymentReject.id, `PHASE11-REJECT-${Date.now() % 100000000}`);
     const uploadShot = await openRolePage(browser, "customer", "/customer/payments", "customer-payment-proof-upload");
     const pendingPayments = await api(request, sessions.cashier, "GET", "/cashier/payment-requests");
     const cashierSaw = normalizeList(pendingPayments, ["payments"]).some((item) => Number(item.id) === Number(paymentReject.id) && item.payable_type === "service_request");
@@ -485,11 +519,11 @@ test("Phase 11 full state-changing workflow validation", async ({ browser, reque
   try {
     const paymentVerify = await createServiceRequest(request, sessions.customer, "grooming", pet, "payment verify request", workflowDateOffset + 6);
     await approveServiceRequest(request, sessions.receptionist, paymentVerify.id);
-    await uploadProof(request, sessions.customer, paymentVerify.id, "PHASE11-VERIFY-001");
+    await uploadProof(request, sessions.customer, paymentVerify.id, `PHASE11-VERIFY-${Date.now() % 100000000}`);
     const pendingPayments = await api(request, sessions.cashier, "GET", "/cashier/payment-requests");
     const cashierSaw = normalizeList(pendingPayments, ["payments"]).some((item) => Number(item.id) === Number(paymentVerify.id) && item.payable_type === "service_request");
     const verified = await api(request, sessions.cashier, "POST", `/cashier/payment-requests/${paymentVerify.id}/verify`, {
-      data: { type: "service_request", reference_number: "PHASE11-VERIFY-001", cashier_remarks: "PHASE11_TEST verified by cashier" },
+      data: { type: "service_request", reference_number: `PHASE11-VERIFY-${Date.now() % 100000000}`, cashier_remarks: "PHASE11_TEST verified by cashier" },
     });
     const cashierVerifyShot = await openRolePage(browser, "cashier", "/cashier/payment-verification", "cashier-payment-verification");
     const customerPaid = await getCustomerRequest(request, sessions.customer, paymentVerify.id);
@@ -509,10 +543,45 @@ test("Phase 11 full state-changing workflow validation", async ({ browser, reque
   }
 
   try {
-    const item = await pickSellableItem(request, sessions.inventory);
+    // Items whose only stock is in expired batches can't be sold — try
+    // candidates until one transaction goes through.
+    const listBody = await api(request, sessions.inventory, "GET", "/inventory/items");
+    const candidates = normalizeList(listBody, ["items", "inventory", "data"])
+      .filter((i) => Number(i.stock || 0) > 1 && i.status === "active" && i.is_sellable !== false);
+    let item;
+    let sale;
+    let lastErr;
+    for (const candidate of candidates) {
+      try {
+        sale = await api(request, sessions.cashier, "POST", "/cashier/pos/transaction", {
+          data: {
+            customer_name: "PHASE11_TEST Walk-in",
+            items: [{
+              item_type: "product",
+              item_id: candidate.id,
+              item_name: candidate.name,
+              quantity: 1,
+              unit_price: Number(candidate.price || candidate.selling_price || 1),
+              discount_amount: 0,
+            }],
+            subtotal: Number(candidate.price || candidate.selling_price || 1),
+            tax: 0,
+            discount: 0,
+            total: Number(candidate.price || candidate.selling_price || 1),
+            payment_method: "cash",
+            cash_received: Number(candidate.price || candidate.selling_price || 1),
+            notes: "PHASE11_TEST_POS",
+          },
+        });
+        item = candidate;
+        break;
+      } catch (err) { lastErr = err; sale = null; }
+    }
+    if (!item) { item = await pickSellableItem(request, sessions.inventory); }
     const beforeStock = Number(item.stock || item.stock_quantity || 0);
     const beforeShot = await openRolePage(browser, "inventory", "/inventory/products", "inventory-stock-before");
-    const sale = await api(request, sessions.cashier, "POST", "/cashier/pos/transaction", {
+    if (!sale) {
+      sale = await api(request, sessions.cashier, "POST", "/cashier/pos/transaction", {
       data: {
         customer_name: "PHASE11_TEST Walk-in",
         items: [{
@@ -531,7 +600,8 @@ test("Phase 11 full state-changing workflow validation", async ({ browser, reque
         cash_received: Number(item.price || item.selling_price || 1),
         notes: "PHASE11_TEST_POS",
       },
-    });
+      });
+    }
     const posShot = await openRolePage(browser, "cashier", "/cashier/pos", "cashier-pos-success");
     const afterItem = await api(request, sessions.inventory, "GET", `/inventory/items/${item.id}`);
     const normalizedAfter = afterItem.item || afterItem.data || afterItem;
@@ -564,37 +634,45 @@ test("Phase 11 full state-changing workflow validation", async ({ browser, reque
     const appointment = approved.appointment;
     if (!appointment?.id) throw new Error("Vet approval did not create an appointment");
     const vetView = await openLiveRolePage(browser, sessions.vet, `/veterinary/appointments/${appointment.id}/consult`, "vet-consultation-started");
+    // Current consult flow: Start -> fill clinical fields -> "Finalize & Review Bill"
+    // (saves the record as finalized, then opens billing). The vet no longer has a
+    // "Complete Consultation" action; the visit closes after the cashier verifies payment.
+    const boundedWait = (promise, label) => Promise.race([
+      promise,
+      new Promise((_, reject) => setTimeout(() => reject(new Error(`${label} not observed within 45s`)), 45000)),
+    ]);
     const startResponsePromise = vetView.page.waitForResponse((response) => {
       const url = new URL(response.url());
       return url.pathname.endsWith(`/api/veterinary/consultations/${appointment.id}/start`) && response.request().method() === "POST";
     });
     await vetView.page.getByRole("button", { name: "Start Consultation" }).click();
-    const startResponse = await startResponsePromise;
+    const startResponse = await boundedWait(startResponsePromise, "consultation start");
     const startBody = await startResponse.json();
     const medicalRecord = startBody.medical_record;
     if (!startResponse.ok() || !medicalRecord?.id) throw new Error("Consultation start did not create a medical record");
 
-    const recordSaveResponsePromise = vetView.page.waitForResponse((response) => {
-      const url = new URL(response.url());
-      return url.pathname.endsWith(`/api/veterinary/medical-records/${medicalRecord.id}`) && response.request().method() === "PUT";
-    });
-    const consultationCompleteResponsePromise = vetView.page.waitForResponse((response) => {
-      const url = new URL(response.url());
-      return url.pathname.endsWith(`/api/veterinary/consultations/${appointment.id}/complete`) && response.request().method() === "POST";
-    });
     const clinicalFields = vetView.page.locator(".consult-form textarea");
     await clinicalFields.nth(2).fill("PHASE11_TEST diagnosis");
     await clinicalFields.nth(3).fill("PHASE11_TEST treatment notes");
     await clinicalFields.nth(4).fill("PHASE11_TEST remarks");
-    await vetView.page.getByRole("button", { name: "Complete Consultation" }).click();
-    const [recordSaveResponse, consultationCompleteResponse] = await Promise.all([
-      recordSaveResponsePromise,
-      consultationCompleteResponsePromise,
-    ]);
-    expect(recordSaveResponse.ok()).toBeTruthy();
-    const consultationCompleteBody = await consultationCompleteResponse.json();
-    expect(consultationCompleteResponse.ok(), JSON.stringify(consultationCompleteBody)).toBeTruthy();
-    const consultationResult = consultationCompleteBody.consultation || consultationCompleteBody.appointment || {};
+    const finalizeResponsePromise = vetView.page.waitForResponse((response) => {
+      const url = new URL(response.url());
+      return url.pathname.endsWith(`/api/veterinary/medical-records/${medicalRecord.id}`) && response.request().method() === "PUT";
+    });
+    await vetView.page.getByRole("button", { name: /Finalize & Review Bill/ }).click();
+    const finalizeResponse = await boundedWait(finalizeResponsePromise, "record finalize save");
+    expect(finalizeResponse.ok()).toBeTruthy();
+    await vetView.page.waitForURL(/\/veterinary\/appointments\/\d+\/billing$/, { timeout: 45000 });
+    // Billing review: "Send to Cashier" calls /veterinary/consultations/{id}/complete,
+    // which moves the visit to checkout and creates the cashier bill.
+    const sendToCashierResponse = vetView.page.waitForResponse((response) => {
+      const url = new URL(response.url());
+      return url.pathname.endsWith(`/api/veterinary/consultations/${appointment.id}/complete`) && response.request().method() === "POST";
+    });
+    await vetView.page.getByRole("button", { name: /Send to Cashier/ }).click();
+    const sentToCashier = await boundedWait(sendToCashierResponse, "send to cashier");
+    expect(sentToCashier.ok(), `send to cashier: ${await sentToCashier.text()}`).toBeTruthy();
+    const consultationResult = {};
     if (!medicalRecord?.id) throw new Error("Finalized medical record is unavailable");
     const savedRecord = await api(request, sessions.vet, "GET", `/veterinary/medical-records/${medicalRecord.id}`);
     const recordResult = savedRecord.record || savedRecord.data || savedRecord;

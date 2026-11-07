@@ -157,7 +157,8 @@ test.describe('Customer booking tracker tabs', () => {
     await expect(page.locator('.bt-card')).toHaveCount(1);
 
     items = [booking('finished', { status: 'completed', status_label: 'Completed', step_index: 4 })];
-    await page.getByRole('button', { name: 'Refresh bookings' }).click();
+    await page.reload();
+    await page.getByRole('button', { name: 'Open booking tracker' }).click();
 
     await expect(page.getByRole('tab', { name: 'On Going 0' })).toHaveAttribute('aria-selected', 'true');
     await expect(page.getByRole('status')).toContainText('No services are currently in progress.');

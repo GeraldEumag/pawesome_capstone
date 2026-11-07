@@ -1,9 +1,9 @@
 /*
- * Phase 9 — Capstone B full end-to-end demonstration and validation.
+ * Phase 9 � Capstone B full end-to-end demonstration and validation.
  *
- * Serial journeys A–H + security battery against the LIVE dev stack
+ * Serial journeys A�H + security battery against the LIVE dev stack
  * (backend :8000 + frontend :3000). Every state change goes through real
- * API endpoints or the real UI — no direct DB writes. Read-only DB probes
+ * API endpoints or the real UI � no direct DB writes. Read-only DB probes
  * use `php artisan tinker --execute` for persistence evidence.
  *
  * Evidence: browser-evidence/phase9-capstone-b-demo/ (screenshots + JSON
@@ -82,7 +82,7 @@ function auth(token) {
 }
 
 async function api(request, session, method, endpoint, data) {
-  // throttle:api can 429 on the verify/queue routes under serial load — one
+  // throttle:api can 429 on the verify/queue routes under serial load � one
   // bounded retry keeps the demo deterministic without weakening any limits.
   let res, text;
   for (let attempt = 0; attempt < 2; attempt++) {
@@ -100,7 +100,7 @@ async function api(request, session, method, endpoint, data) {
   return { status: res.status(), ok: res.ok(), body };
 }
 
-// One tinker call returns a JSON object — artisan boot is slow on XAMPP,
+// One tinker call returns a JSON object � artisan boot is slow on XAMPP,
 // so every journey batches its probes instead of calling per column.
 function dbMulti(exprs) {
   const php = Object.entries(exprs)
@@ -111,7 +111,7 @@ function dbMulti(exprs) {
     encoding: "utf8",
     stdio: ["ignore", "pipe", "pipe"],
   });
-  // Tinker can print INFO/banner lines after the echoed payload — find the
+  // Tinker can print INFO/banner lines after the echoed payload � find the
   // actual JSON object line instead of trusting the last line.
   const jsonLine = out.split(/\r?\n/).map((l) => l.trim()).filter((l) => l.startsWith("{")).pop();
   if (!jsonLine) throw new Error(`dbMulti: no JSON in tinker output: ${out.slice(-300)}`);
@@ -158,7 +158,7 @@ test.beforeAll(async ({ request }) => {
   }
 });
 
-/* ═══ J1 — Journey A: registration validation + customer UI booking ═══ */
+/* --- J1 � Journey A: registration validation + customer UI booking --- */
 test("J1 registration validation + customer submits booking through UI", async ({ request, browser }) => {
   const { customer } = state.sessions;
 
@@ -208,19 +208,19 @@ test("J1 registration validation + customer submits booking through UI", async (
 
   const serviceSelect = page.locator('select[name="service_name"]');
   state.groomingServiceName = (await serviceSelect.locator("option").nth(1).textContent())
-    .replace(/\s*—\s*₱.*$/, "").trim(); // option label is "Name — ₱price"; API wants the bare name
+    .replace(/\s*�\s*?.*$/, "").trim(); // option label is "Name � ?price"; API wants the bare name
   await serviceSelect.selectOption({ index: 1 });
 
   // Probe availability across days via the same endpoint the form uses.
   let chosenDate = null, chosenTime = null;
-  for (let off = 7; off <= 21 && !chosenTime; off++) {
+  for (let off = 7; off <= 60 && !chosenTime; off++) {
     const date = futureDate(off);
     const av = await api(request, customer, "GET",
       `/customer/availability/grooming?date=${date}&service_name=${encodeURIComponent(state.groomingServiceName)}`);
     const free = (av.body.slots || []).find((s) => s.available);
     if (free) { chosenDate = date; chosenTime = free.time; }
   }
-  expect(chosenTime, "free grooming slot within 21 days").toBeTruthy();
+  expect(chosenTime, "free grooming slot within 60 days").toBeTruthy();
   state.bookingDate = chosenDate;
 
   // DatePicker accepts typed mm/dd/yyyy input.
@@ -233,9 +233,19 @@ test("J1 registration validation + customer submits booking through UI", async (
   await timeSelect.selectOption({ value: chosenTime }); // option value === slot.time; label is "11:30 AM"
   await page.locator('textarea[name="notes"]').fill(`Phase9 demo booking ${RUN}`).catch(() => {});
   await shot(page, "a2-grooming-filled");
+  let createdSrId = null;
+  page.on("response", async (res) => {
+    if (res.url().includes("/customer/requests") && res.request().method() === "POST") {
+      const body = await res.json().catch(() => ({}));
+      createdSrId = (body.request || body.data || body).id || null;
+    }
+  });
   await page.getByRole("button", { name: /submit request/i }).click();
-  // Submit opens BookingReviewModal — confirm performs the real POST.
-  await page.locator(".brm-btn.brm-primary").click();
+  // Submit opens BookingReviewModal � confirm performs the real POST.
+  const confirmBtn = page.locator(".brm-btn.brm-primary");
+  await expect(confirmBtn).toBeVisible({ timeout: 20000 });
+  await confirmBtn.click();
+  await expect.poll(() => createdSrId, { timeout: 20000 }).not.toBeNull();
   await expect(page.getByText(/submitted|waiting for receptionist/i).first()).toBeVisible({ timeout: 25000 });
   await shot(page, "a3-grooming-submitted");
   await context.close();
@@ -243,10 +253,10 @@ test("J1 registration validation + customer submits booking through UI", async (
   // DB-level: the SR exists, belongs to this customer, channel=online, pending.
   const mine = await api(request, customer, "GET", "/customer/my-requests");
   const mineList = listify(mine.body, ["requests"]);
-  const sr = mineList
-    .filter((r) => (r.request_date || r.date || "").startsWith(chosenDate))
-    .find((r) => String(r.pet_id) === String(state.buddy.id) && (r.status || "") === "pending");
-  expect(sr, "customer request persisted and visible").toBeTruthy();
+  const sr = createdSrId
+    ? mineList.find((r) => Number(r.id) === Number(createdSrId))
+    : mineList.find((r) => (r.notes || "").includes(`Phase9 demo booking ${RUN}`) && String(r.pet_id) === String(state.buddy.id));
+  expect(sr, `customer request persisted and visible (id ${createdSrId})`).toBeTruthy();
   state.onlineSrId = sr.id;
 
   const srDb = dbMulti({
@@ -279,7 +289,7 @@ test("J1 registration validation + customer submits booking through UI", async (
   }
 });
 
-/* ═══ J2 — Journey B: receptionist approval + downstream record ═══ */
+/* --- J2 � Journey B: receptionist approval + downstream record --- */
 test("J2 receptionist approval creates linked grooming record", async ({ request, browser }) => {
   const { receptionist, customer } = state.sessions;
   const srId = state.onlineSrId;
@@ -320,29 +330,60 @@ test("J2 receptionist approval creates linked grooming record", async ({ request
   await context.close();
 });
 
-/* ═══ J3 — Journey C: online proof upload → cashier verify → paid ═══ */
+/* --- J3 � Journey C: online proof upload ? cashier verify ? paid --- */
+// Renders a GCash-style receipt as real browser-rendered PNG bytes so the
+// receipt scanner's vision reader can extract it (a blank PNG is correctly
+// flagged "not a payment receipt" and blocks cashier verification).
+async function renderReceiptPng(browser, { reference, amount }) {
+  const rctx = await browser.newContext();
+  const rpage = await rctx.newPage();
+  const paidAt = new Date().toLocaleString("en-PH", { dateStyle: "medium", timeStyle: "short" });
+  await rpage.setContent(`<!doctype html><body style="margin:0;background:#f2f6fb;font-family:Arial,Helvetica,sans-serif">
+    <div style="width:360px;margin:24px auto;background:#ffffff;border:1px solid #cfd8e3;border-radius:10px;overflow:hidden">
+      <div style="background:#0074ff;color:#ffffff;padding:14px 18px;font-size:18px;font-weight:700">GCash</div>
+      <div style="padding:18px;color:#1c2733">
+        <div style="font-size:13px;color:#607080">Express Send - Money Transfer</div>
+        <div style="font-size:30px;font-weight:700;margin:8px 0">PHP ${amount.toFixed(2)}</div>
+        <div style="font-size:14px;margin:14px 0"><b>Status:</b> Completed</div>
+        <div style="font-size:14px;margin:6px 0"><b>Reference Number:</b> ${reference}</div>
+        <div style="font-size:14px;margin:6px 0"><b>Amount:</b> PHP ${amount.toFixed(2)}</div>
+        <div style="font-size:14px;margin:6px 0"><b>Recipient:</b> Pawesome Pet Care</div>
+        <div style="font-size:14px;margin:6px 0"><b>Date:</b> ${paidAt}</div>
+      </div>
+    </div></body>`);
+  const png = await rpage.screenshot({ fullPage: true });
+  await rctx.close();
+  return png;
+}
+
 test("J3 online payment-proof workflow end to end", async ({ request, browser }) => {
   const { customer, cashier } = state.sessions;
   const srId = state.onlineSrId;
 
   // Customer UI upload on the shared grooming bookings board.
-  const { page, context } = await openAs(browser, customer, "/customer/grooming");
+  // The bookings board defaults to upcoming dates; range=all keeps this run's fixture visible.
+  const { page, context } = await openAs(browser, customer, "/customer/bookings?range=all&tab=all");
   await page.waitForLoadState("domcontentloaded");
-  await page.getByRole("button", { name: /my grooming|appointments/i }).first().click();
   const card = page.locator(".cbb-row, .cbb-card").filter({ hasText: `Booking #${srId}` }).first();
   await expect(card).toBeVisible({ timeout: 20000 });
   const payBtn = card.getByRole("button", { name: /pay now|resubmit payment proof/i });
   await expect(payBtn).toBeVisible({ timeout: 20000 });
   await payBtn.click();
   await expect(page.locator(".pum-modal")).toBeVisible({ timeout: 15000 });
-  await page.locator("#pum-file-input").setInputFiles({
-    name: "p9-proof.png", mimeType: "image/png", buffer: PROOF_PNG,
-  });
   const proofRef = `P9REF${RUN.replace(/\D/g, "").padEnd(6, "0")}`;
   state.proofReference = proofRef;
+  const receiptPng = await renderReceiptPng(browser, { reference: proofRef, amount: 350 });
+  await page.locator("#pum-file-input").setInputFiles({
+    name: "p9-proof.png", mimeType: "image/png", buffer: receiptPng,
+  });
   await page.locator(".pum-ref-input").fill(proofRef);
   await shot(page, "c1-proof-upload-modal");
   await page.locator(".pum-confirm-btn").click();
+  // A scanner-enabled upload keeps the modal open on its scan status until closed.
+  // Close it through Done/Close once it appears, then assert it is gone.
+  const scanClose = page.locator(".pum-modal").getByRole("button", { name: /^(Done|Close)$/ }).first();
+  await expect(scanClose).toBeVisible({ timeout: 45000 });
+  await scanClose.click();
   await expect(page.locator(".pum-modal")).toBeHidden({ timeout: 20000 });
   await context.close();
 
@@ -377,7 +418,7 @@ test("J3 online payment-proof workflow end to end", async ({ request, browser })
     scenario: "J3-proof-uploaded",
     record: `service_request#${srId}`,
     initial: "approved/unpaid",
-    expected: "pending verification, method recorded, proof stored — NOT paid",
+    expected: "pending verification, method recorded, proof stored � NOT paid",
     actual: `payment_status=${pendingPs} method=${pendingPm} proof=${hasProof}`,
     db: `service_requests.id=${srId}`,
     downstream: "cashier queue (proof row)",
@@ -389,7 +430,7 @@ test("J3 online payment-proof workflow end to end", async ({ request, browser })
   const cashierView = await openAs(browser, cashier, "/cashier/payment-verification");
   await cashierView.page.waitForLoadState("domcontentloaded");
   await cashierView.page.getByPlaceholder(/search customer/i).fill(customer.user.name.split(" ")[0]);
-  // Scope to THIS run's proof by its unique customer reference — the seeded
+  // Scope to THIS run's proof by its unique customer reference � the seeded
   // customer has many pending proofs in the shared queue.
   const proofCard = cashierView.page.locator(".pa-card", { hasText: proofRef }).first();
   const verifyBtn = proofCard.getByRole("button", { name: /^verify$/i });
@@ -399,14 +440,18 @@ test("J3 online payment-proof workflow end to end", async ({ request, browser })
   await expect(cashierView.page.locator("#paRefNum")).toBeVisible({ timeout: 15000 });
   await cashierView.page.locator("#paRefNum").fill(`P9REF${RUN.replace(/\D/g, "").padEnd(6, "0")}`);
   await shot(cashierView.page, "c3-cashier-verify-modal");
-  // The real proof is the POST to /verify — wait for the response directly
+  // The real proof is the POST to /verify � wait for the response directly
   // rather than asserting on transient toast text.
+  // The vision scan can take a while; the button stays disabled until it clears.
+  const confirmVerify = cashierView.page.locator(".pw-modal-footer button.pa-btn-verify");
+  await expect(confirmVerify).toBeEnabled({ timeout: 90000 });
+  await confirmVerify.click();
+  // verifyPayment() gates on a SweetAlert confirm before the real POST; start
+  // listening just before that click so the wait window is not spent on the scan.
   const verifyRespP = cashierView.page.waitForResponse(
-    (r) => r.url().includes("/payment-requests/") && r.url().includes("/verify") && r.request().method() === "POST",
-    { timeout: 25000 }
+    (r) => r.request().method() === "POST" && /\/payment-requests\/\d+\/verify|\/receipts\/\d+\/confirm/.test(r.url()),
+    { timeout: 60000 }
   );
-  await cashierView.page.locator(".pw-modal-footer button.pa-btn-verify").click();
-  // verifyPayment() gates on a SweetAlert confirm before the real POST.
   await cashierView.page.locator("button.swal2-confirm").click();
   const verifyResp = await verifyRespP;
   const verifyBody = await verifyResp.json().catch(() => ({}));
@@ -433,9 +478,9 @@ test("J3 online payment-proof workflow end to end", async ({ request, browser })
     result: paidPs === "paid" && paidPm === "gcash" ? "PASS" : "FAIL",
   });
   expect(paidPs).toBe("paid");
-  expect(paidPm).toBe("gcash"); // proof method is authoritative — never relabeled 'cash'
+  expect(paidPm).toBe("gcash"); // proof method is authoritative � never relabeled 'cash'
 
-  // Authoritative receipt breakdown: net + VAT ≈ gross.
+  // Authoritative receipt breakdown: net + VAT � gross.
   const receipt = await api(request, customer, "GET", `/customer/requests/${srId}/receipt`);
   const rec = receipt.body?.receipt || receipt.body || {};
   if (receipt.ok && (rec.breakdown || rec.net_amount != null)) {
@@ -456,7 +501,7 @@ test("J3 online payment-proof workflow end to end", async ({ request, browser })
     run.limitations.push("J3: receipt endpoint did not return a breakdown for this request.");
   }
 
-  // Duplicate verification is refused — for both a second proof verify and a
+  // Duplicate verification is refused � for both a second proof verify and a
   // late counter-cash attempt (the row is already paid).
   const dupVerify = await api(request, cashier, "POST", `/cashier/payment-requests/${srId}/verify`, {
     type: "service_request", reference_number: "P9DUPE01", payment_method: "gcash",
@@ -468,14 +513,14 @@ test("J3 online payment-proof workflow end to end", async ({ request, browser })
   expect(lateCash.status).toBe(422);
 });
 
-/* ═══ J4 — Journey D: walk-in counter payment + POS sale + void ═══ */
+/* --- J4 � Journey D: walk-in counter payment + POS sale + void --- */
 test("J4 walk-in counter payment, POS transaction, void", async ({ request, browser }) => {
   const { receptionist, cashier } = state.sessions;
   const uniq = RUN.replace(/\D/g, "");
   const groomingService = state.groomingServiceName || "Full Grooming";
   let walkInDate = null;
   let walkInTime = null;
-  for (let offset = 1; offset <= 30 && !walkInTime; offset++) {
+  for (let offset = 1; offset <= 120 && !walkInTime; offset++) {
     const date = futureDate(offset);
     const availability = await api(
       request,
@@ -516,17 +561,17 @@ test("J4 walk-in counter payment, POS transaction, void", async ({ request, brow
   expect(wCh).toBe("walk_in");
 
   const walkInListView = await openAs(browser, receptionist, "/receptionist/walk-ins");
-  const recentWalkInCard = walkInListView.page.locator(".walkins-recent-card", { hasText: `P9Pet${uniq}` });
+  const recentWalkInCard = walkInListView.page.locator(".recent-item", { hasText: `P9Pet${uniq}` });
   await expect(recentWalkInCard).toBeVisible({ timeout: 20000 });
   await expect(recentWalkInCard).toContainText(new RegExp(`P9Demo Walkin${uniq}`, "i"));
-  await expect(recentWalkInCard).toContainText("Status: pending");
+  await expect(recentWalkInCard.locator(".recent-badge")).toHaveText(/pending/i);
   await shot(walkInListView.page, "d0-receptionist-walkin-persisted-list");
   await walkInListView.context.close();
 
   // Phase-8 observation check: pre-approval the walk-in is pending/NULL-method
   // and absent from the cashier queue; approval flips it to unpaid and it
   // becomes collectible. This matches the queue contract (approved + unpaid
-  // + walk_in) — a design decision, not a defect.
+  // + walk_in) � a design decision, not a defect.
   const preQueue = (await api(request, cashier, "GET", "/cashier/payment-requests")).body;
   const preRow = (preQueue.payments || []).find((p) => String(p.id) === String(srId) && p.type === "service_request");
   correlate({
@@ -575,7 +620,7 @@ test("J4 walk-in counter payment, POS transaction, void", async ({ request, brow
     result: wPs === "paid" && wPm === "cash" ? "PASS" : "FAIL",
   });
 
-  // POS multi-item sale → authoritative receipt → void.
+  // POS multi-item sale ? authoritative receipt ? void.
   const products = (await api(request, cashier, "GET", "/cashier/pos/products")).body;
   const items = listify(products, ["products", "items"]).filter((p) => (p.stock ?? 0) >= 2).slice(0, 2);
   expect(items.length).toBeGreaterThanOrEqual(1);
@@ -594,7 +639,7 @@ test("J4 walk-in counter payment, POS transaction, void", async ({ request, brow
 
   const tx = await api(request, cashier, "GET", `/cashier/pos/transaction/${saleId}`);
   expect(tx.ok).toBeTruthy();
-  // Detail payload is {transaction, receipt} — VAT fields live on the
+  // Detail payload is {transaction, receipt} � VAT fields live on the
   // transaction (subtotal/tax_amount/total_amount) and receipt.breakdown.
   const b = tx.body.receipt?.breakdown || {};
   const t = tx.body.transaction || {};
@@ -603,9 +648,9 @@ test("J4 walk-in counter payment, POS transaction, void", async ({ request, brow
   const tot = Number(b.total ?? t.total_amount ?? 0);
   correlate({
     scenario: "J4-pos-multiitem-receipt",
-    record: `sale#${saleId} (${items.length} items ×2)`,
+    record: `sale#${saleId} (${items.length} items �2)`,
     initial: "cart",
-    expected: "authoritative breakdown; net+vat≈gross; cash settled",
+    expected: "authoritative breakdown; net+vat�gross; cash settled",
     actual: `net=${net} vat=${vat} total=${tot} paid=${b.amount_paid ?? "?"} balance=${b.balance_due ?? "?"}`,
     db: `sales.id=${saleId}, sale_items, payment_settlements`,
     downstream: "inventory stock, cashier transactions, reports",
@@ -613,7 +658,7 @@ test("J4 walk-in counter payment, POS transaction, void", async ({ request, brow
     result: Math.abs(net + vat - tot) <= 0.02 && tot > 0 ? "PASS" : "FAIL",
   });
 
-  // Void through the real endpoint — reason required, second void rejected.
+  // Void through the real endpoint � reason required, second void rejected.
   const noReason = await api(request, cashier, "POST", `/cashier/pos/transaction/${saleId}/void`, {});
   expect(noReason.status).toBe(422);
   const voided = await api(request, cashier, "POST", `/cashier/pos/transaction/${saleId}/void`, {
@@ -646,7 +691,7 @@ test("J4 walk-in counter payment, POS transaction, void", async ({ request, brow
   await txView.context.close();
 });
 
-/* ═══ J5 — Journey E: boarding room lifecycle ═══ */
+/* --- J5 � Journey E: boarding room lifecycle --- */
 test("J5 online boarding reserves room; card verification, conflict, and release", async ({ request, browser }) => {
   const { customer, receptionist } = state.sessions;
   const receptionistRooms = await api(request, receptionist, "GET", "/receptionist/boarding-rooms");
@@ -787,7 +832,7 @@ test("J5 online boarding reserves room; card verification, conflict, and release
     scenario: "J5-reservation-release-on-reject",
     record: `boarding#${boardingA}`,
     initial: `active reservations=${beforeReject}`,
-    expected: "reject releases the online boarding reservation (status→cancelled)",
+    expected: "reject releases the online boarding reservation (status?cancelled)",
     actual: `reject ok=${rejected.ok} active=${j5b.afterReject} reservation=${j5b.reservationStatus} boarding=${j5b.boardingStatus}; conflict=${conflictBody.message || conflictBody.error || conflictResponse.status()}`,
     db: "boarding_room_reservations",
     downstream: "room capacity freed",
@@ -801,7 +846,7 @@ test("J5 online boarding reserves room; card verification, conflict, and release
   await context.close();
 });
 
-/* ═══ J6 — Journey G: inventory guards ═══ */
+/* --- J6 � Journey G: inventory guards --- */
 test("J6 inventory guards: negative adjustment rejected, stock intact", async ({ request, browser }) => {
   const { inventory, admin } = state.sessions;
 
@@ -811,7 +856,7 @@ test("J6 inventory guards: negative adjustment rejected, stock intact", async ({
   expect(item).toBeTruthy();
   const current = Number(item.stock ?? item.quantity ?? 0);
 
-  // Decrement beyond availability → 422 and stock unchanged.
+  // Decrement beyond availability ? 422 and stock unchanged.
   const neg = await api(request, admin, "POST", `/admin/inventory/items/${item.id}/adjust`, {
     adjustment_type: "decrement", quantity: current + 9999, reason: `Phase9 negative-stock probe ${RUN}`,
   });
@@ -820,7 +865,7 @@ test("J6 inventory guards: negative adjustment rejected, stock intact", async ({
     scenario: "J6-negative-stock-blocked",
     record: `inventory_item#${item.id} (${item.name})`,
     initial: `stock=${current}`,
-    expected: "decrement beyond stock → 422, stock unchanged",
+    expected: "decrement beyond stock ? 422, stock unchanged",
     actual: `status=${neg.status} stock=${after}`,
     db: `inventory_items.id=${item.id}`,
     downstream: "POS sellable stock, boarding add-ons",
@@ -828,7 +873,7 @@ test("J6 inventory guards: negative adjustment rejected, stock intact", async ({
     result: neg.status === 422 && Number(after) === current ? "PASS" : "FAIL",
   });
 
-  // Missing reason → 422.
+  // Missing reason ? 422.
   const noReason = await api(request, admin, "POST", `/admin/inventory/items/${item.id}/adjust`, {
     adjustment_type: "decrement", quantity: 1,
   });
@@ -844,7 +889,7 @@ test("J6 inventory guards: negative adjustment rejected, stock intact", async ({
   expect([401, 403]).toContain(xs.status);
 });
 
-/* ═══ J7 — Journey H: manager/admin reporting reconciliation ═══ */
+/* --- J7 � Journey H: manager/admin reporting reconciliation --- */
 test("J7 manager reports reconcile with persisted records", async ({ request, browser }) => {
   const { manager, customer } = state.sessions;
 
@@ -858,7 +903,7 @@ test("J7 manager reports reconcile with persisted records", async ({ request, br
   expect(voidedStatus).toBe("cancelled");
 
   // Manager-level sales list should expose the voided sale distinctly or
-  // exclude it from revenue — verify the row is identifiable via API.
+  // exclude it from revenue � verify the row is identifiable via API.
   const salesReport = await api(request, manager, "GET", "/manager/reports/live");
   correlate({
     scenario: "J7-reporting-persistence",
@@ -885,7 +930,7 @@ test("J7 manager reports reconcile with persisted records", async ({ request, br
   await context.close();
 });
 
-/* ═══ J8 — Phase 4 security + failure battery ═══ */
+/* --- J8 � Phase 4 security + failure battery --- */
 test("J8 security and failure battery", async ({ request }) => {
   const { customer, receptionist } = state.sessions;
 
@@ -932,7 +977,7 @@ test("J8 security and failure battery", async ({ request }) => {
   });
   await check("invalid-proof-upload", { status: badProof.status }, [422]);
 
-  // Duplicate approval is idempotent — it returns the existing linked
+  // Duplicate approval is idempotent � it returns the existing linked
   // records without re-running the promotion (regression-covered).
   const dupApprove = await api(request, receptionist, "POST", `/receptionist/requests/${state.onlineSrId}/approve`, {});
   await check("duplicate-approval", { status: dupApprove.status }, [200, 409, 422]);
@@ -956,7 +1001,7 @@ test("J9 duplicate references are rejected for confinement and veterinary billin
   let appointmentDate = null;
   let appointmentTime = null;
 
-  for (let offset = 2; offset <= 30 && !appointmentTime; offset++) {
+  for (let offset = 2; offset <= 120 && !appointmentTime; offset++) {
     const date = futureDate(offset);
     const availability = await api(
       request,

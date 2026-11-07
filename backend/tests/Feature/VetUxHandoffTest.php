@@ -218,7 +218,9 @@ class VetUxHandoffTest extends TestCase
             'customer_email' => 'owner@example.com',
             'status' => 'pending',
             'payment_status' => 'unpaid',
-            'request_date' => now()->subDay()->toDateString(),
+            'request_date' => collect(range(1, 14))
+                ->map(fn ($days) => now()->subDays($days)->toDateString())
+                ->first(fn ($day) => \App\Models\Holiday::blockedNameOn($day) === null),
             'request_time' => '09:00',
         ]);
 
@@ -229,7 +231,9 @@ class VetUxHandoffTest extends TestCase
             ->assertStatus(422)
             ->assertJsonPath('errors.veterinarian_id.0', 'Choose another available appointment time or veterinarian.');
 
-        $newDate = now()->addDays(3)->toDateString();
+        $newDate = collect(range(3, 30))
+            ->map(fn ($days) => now()->addDays($days)->toDateString())
+            ->first(fn ($day) => \App\Models\Holiday::blockedNameOn($day) === null);
         $newTime = '14:00';
 
         $this->withHeaders($this->authHeader($receptionist))

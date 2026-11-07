@@ -74,7 +74,7 @@ test("public: login page renders", async ({ page }) => {
 test("public: attendance kiosk gate renders", async ({ page }) => {
   watch(page, "kiosk");
   await page.goto("/attendance-kiosk");
-  await page.waitForLoadState("networkidle");
+  await page.waitForLoadState("networkidle", { timeout: 15000 }).catch(() => {});
   await shot(page, "UM-013-attendance-kiosk.png");
   const bodyText = await page.locator("body").innerText();
   record(
@@ -105,7 +105,7 @@ test("customer: workspace pages and sidebar labels", async ({ browser, request }
 
   await page.goto("/customer/pets");
   await expect(page.locator(".app-sidebar")).toBeVisible({ timeout: 20000 });
-  await page.waitForLoadState("networkidle");
+  await page.waitForLoadState("networkidle", { timeout: 15000 }).catch(() => {});
   await shot(page, "UM-003-customer-pets.png");
   record("UM-003-customer-pets", "VERIFIED", "My Pets page rendered");
 
@@ -124,7 +124,7 @@ test("customer: workspace pages and sidebar labels", async ({ browser, request }
 
 test("customer: grooming booking end-to-end via review modal", async ({ browser, request }) => {
   test.setTimeout(120000);
-  const { page, context } = await openAs(browser, request, "customer", "/customer/grooming", "customer-grooming");
+  const { page, context, session } = await openAs(browser, request, "customer", "/customer/grooming", "customer-grooming");
 
   // Pick the first real pet option.
   const petSelect = page.locator('select[name="pet_id"]');
@@ -138,19 +138,32 @@ test("customer: grooming booking end-to-end via review modal", async ({ browser,
   const serviceSelect = page.locator('select[name="service_name"]');
   const serviceOption = serviceSelect.locator('option:not([value=""])').first();
   await expect(serviceOption).toBeAttached({ timeout: 20000 });
-  const serviceName = (await serviceOption.innerText()).trim();
+  const serviceName = (await serviceOption.getAttribute("value")) || (await serviceOption.innerText()).trim();
   await serviceSelect.selectOption({ index: 1 });
 
-  // Date ~7 days out, typed per the picker's MM/dd/yyyy input format.
-  const date = new Date(Date.now() + 7 * 86400000);
-  const dateText = `${String(date.getMonth() + 1).padStart(2, "0")}/${String(date.getDate()).padStart(2, "0")}/${date.getFullYear()}`;
+  // The shared dev DB accumulates bookings weeks ahead, so ask the same
+  // availability endpoint the form uses for a date with open slots, then fill
+  // the picker once — a blind per-day UI probe is too slow to reach free dates.
   const dateInput = page.locator('.grooming-form input[placeholder="mm/dd/yyyy"]');
-  await dateInput.fill(dateText);
-  await dateInput.press("Enter");
-
-  // Wait for availability + time slots, then pick the first available slot.
   const timeSelect = page.locator('select[name="request_time"]');
-  await expect(timeSelect).toBeEnabled({ timeout: 30000 });
+  let slotReady = false;
+  let dateText = "";
+  for (let offset = 7; offset <= 120 && !slotReady; offset += 1) {
+    const date = new Date(Date.now() + offset * 86400000);
+    const iso = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
+    const res = await request.get(
+      `${apiUrl}/customer/availability/grooming?date=${iso}&service_name=${encodeURIComponent(serviceName)}`,
+      { headers: { Authorization: `Bearer ${session.token}` } }
+    );
+    if (!res.ok()) continue;
+    const slots = (await res.json().catch(() => ({}))).slots || [];
+    if (!slots.some((s) => s.available)) continue;
+    dateText = `${String(date.getMonth() + 1).padStart(2, "0")}/${String(date.getDate()).padStart(2, "0")}/${date.getFullYear()}`;
+    await dateInput.fill(dateText);
+    await dateInput.press("Enter");
+    slotReady = await expect(timeSelect).toBeEnabled({ timeout: 10000 }).then(() => true, () => false);
+  }
+  expect(slotReady, "a grooming date with open slots").toBeTruthy();
   const slotOption = timeSelect.locator("option:not([value='']):not([disabled])").first();
   await expect(slotOption).toBeAttached({ timeout: 30000 });
   await timeSelect.selectOption(await slotOption.getAttribute("value"));
@@ -183,7 +196,7 @@ test("receptionist: grooming booking queue shows the submitted request", async (
   test.setTimeout(90000);
   const { page, context } = await openAs(browser, request, "receptionist", "/receptionist/bookings/grooming", "receptionist");
   await expect(page.locator(".app-sidebar")).toBeVisible({ timeout: 20000 });
-  await page.waitForLoadState("networkidle");
+  await page.waitForLoadState("networkidle", { timeout: 15000 }).catch(() => {});
   await shot(page, "UM-005-receptionist-grooming-queue.png");
   const content = await page.locator(".dashboard-content, .app-content, main").last().innerText();
   record(
@@ -205,12 +218,12 @@ test("cashier: dashboard shell, POS, payment approvals", async ({ browser, reque
   record("cashier-dashboard-link-fixed", "VERIFIED", "/cashier/dashboard renders the dashboard overview inside the shell");
 
   await page.goto("/cashier/payment-verification");
-  await page.waitForLoadState("networkidle");
+  await page.waitForLoadState("networkidle", { timeout: 15000 }).catch(() => {});
   await shot(page, "UM-006-cashier-payment-approvals.png");
   record("UM-006-payment-approvals", "VERIFIED", "Payment Approvals tab opened via /cashier/payment-verification");
 
   await page.goto("/cashier/transactions");
-  await page.waitForLoadState("networkidle");
+  await page.waitForLoadState("networkidle", { timeout: 15000 }).catch(() => {});
   record("cashier-transactions", "TESTED", "Transactions page loaded");
 
   await context.close();
@@ -221,7 +234,7 @@ test("cashier: dashboard shell, POS, payment approvals", async ({ browser, reque
 test("inventory: stock management", async ({ browser, request }) => {
   const { page, context } = await openAs(browser, request, "inventory", "/inventory/stock", "inventory");
   await expect(page.locator(".app-sidebar")).toBeVisible({ timeout: 20000 });
-  await page.waitForLoadState("networkidle");
+  await page.waitForLoadState("networkidle", { timeout: 15000 }).catch(() => {});
   await shot(page, "UM-007-inventory-stock.png");
   record("UM-007-inventory-stock", "VERIFIED", "Stock Management rendered");
   await context.close();
@@ -233,7 +246,7 @@ test("veterinary: appointments list", async ({ browser, request }) => {
   test.setTimeout(90000);
   const { page, context } = await openAs(browser, request, "veterinary", "/veterinary/appointments", "veterinary");
   await expect(page.locator(".app-sidebar")).toBeVisible({ timeout: 20000 });
-  await page.waitForLoadState("networkidle");
+  await page.waitForLoadState("networkidle", { timeout: 15000 }).catch(() => {});
   await shot(page, "UM-008-veterinary-appointments.png");
   record(
     "UM-008-vet-appointments",
@@ -248,7 +261,7 @@ test("veterinary: appointments list", async ({ browser, request }) => {
 test("manager: reports workspace", async ({ browser, request }) => {
   const { page, context } = await openAs(browser, request, "manager", "/manager/reports", "manager");
   await expect(page.locator(".app-sidebar")).toBeVisible({ timeout: 20000 });
-  await page.waitForLoadState("networkidle");
+  await page.waitForLoadState("networkidle", { timeout: 15000 }).catch(() => {});
   await shot(page, "UM-009-manager-reports.png");
   record("UM-009-manager-reports", "VERIFIED", "Manager reports page rendered");
   await context.close();
@@ -259,7 +272,7 @@ test("manager: reports workspace", async ({ browser, request }) => {
 test("admin: manage users", async ({ browser, request }) => {
   const { page, context } = await openAs(browser, request, "admin", "/admin/users", "admin");
   await expect(page.locator(".app-sidebar")).toBeVisible({ timeout: 20000 });
-  await page.waitForLoadState("networkidle");
+  await page.waitForLoadState("networkidle", { timeout: 15000 }).catch(() => {});
   await shot(page, "UM-010-admin-manage-users.png");
   record("UM-010-admin-manage-users", "VERIFIED", "Manage Users rendered");
   await context.close();
@@ -267,7 +280,7 @@ test("admin: manage users", async ({ browser, request }) => {
 
 test("super receptionist: composite workspace", async ({ browser, request }) => {
   const { page, context } = await openAs(browser, request, "super_receptionist", "/super-receptionist", "super_receptionist");
-  await page.waitForLoadState("networkidle");
+  await page.waitForLoadState("networkidle", { timeout: 15000 }).catch(() => {});
   await shot(page, "UM-012-super-receptionist.png");
   const url = page.url();
   record(

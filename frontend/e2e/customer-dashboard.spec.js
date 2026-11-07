@@ -20,11 +20,11 @@ test.describe('Customer Services end-to-end', () => {
     await expect(page.locator('.customer-services-page')).toBeVisible();
   });
 
-  test('Services heading and request tabs are visible', async ({ page }) => {
+  test('Services heading and My Requests link are visible', async ({ page }) => {
     await page.goto(frontendUrl + customerPath);
-    await expect(page.getByRole('heading', { name: 'Services' })).toBeVisible();
-    await expect(page.getByRole('button', { name: /New Request/ })).toBeVisible();
-    await expect(page.getByRole('button', { name: /My Requests/ })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Book a Service' })).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Book Now' }).first()).toBeVisible();
+    await expect(page.getByRole('link', { name: /My Requests/ })).toBeVisible();
   });
 
   test('customer service choices remain available as booking entry points', async ({ page }) => {

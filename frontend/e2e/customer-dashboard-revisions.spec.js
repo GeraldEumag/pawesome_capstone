@@ -1,28 +1,40 @@
 const { test, expect } = require("@playwright/test");
-const { loginAs } = require("./test-utils");
+const { loginAs, apiLogin } = require("./test-utils");
 
 // Customer Dashboard revisions — cards clickable, pet breed shown,
 // language selector hidden for customers, chatbot layout usable.
 test.describe("Customer dashboard revisions", () => {
-  test("service card is a single clickable button that navigates once", async ({ page }) => {
+  test("service card has one Book Now action that opens its booking form", async ({ page }) => {
     await loginAs(page, "customer");
     await page.goto("/customer/services");
     const card = page.locator(".cs-card", { hasText: "Grooming" }).first();
     await expect(card).toBeVisible();
-    // Card itself is the button — one click navigates to the grooming flow.
-    await card.click();
+    await card.getByRole("button", { name: "Book Now" }).click();
     await expect(page).toHaveURL(/\/customer\/grooming/);
-    // No nested <button> inside the card (single action surface).
     await page.goto("/customer/services");
-    expect(await card.locator("button").count()).toBe(0);
+    await expect(card.locator("button")).toHaveCount(1);
   });
 
-  test("pet selector shows name, species and breed", async ({ page }) => {
+  test("pet selector shows name, species and breed", async ({ page, request }) => {
+    const { token } = await apiLogin(request, "customer");
+    let created;
+    for (let attempt = 0; attempt < 4; attempt += 1) {
+      created = await request.post(`${process.env.E2E_API_URL || "http://127.0.0.1:8000"}/api/customer/pets`, {
+        headers: { Authorization: `Bearer ${token}`, Accept: "application/json" },
+        data: { name: `E2E Breed ${Date.now()}`, species: "Dog", breed: "Labrador Retriever" },
+      });
+      if (created.status() !== 429) break;
+      await new Promise((r) => setTimeout(r, 1500 * (attempt + 1)));
+    }
+    expect(created.ok(), await created.text()).toBeTruthy();
+    const createdPetName = ((await created.json()).pet || {}).name;
     await loginAs(page, "customer");
     await page.goto("/customer/grooming");
     const select = page.locator('select[name="pet_id"]');
     await expect(select).toBeVisible();
-    await expect.poll(async () => select.locator("option").count()).toBeGreaterThan(1);
+    // Wait for the fixture pet itself to load, not just any option: the pet list
+    // is fetched after the form renders.
+    await expect(select.locator("option", { hasText: createdPetName }).first()).toBeAttached({ timeout: 45000 });
     const labels = await select.locator("option").allInnerTexts();
     // At least one seeded pet carries a breed → "· <breed>" must appear.
     const withBreed = labels.filter((l) => l.includes("·"));

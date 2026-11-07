@@ -99,7 +99,7 @@ test.describe('Shared table row-action popover', () => {
       body: JSON.stringify({ rooms: [] }),
     }));
 
-    await page.goto(`${frontendUrl}/receptionist/bookings/hotel`);
+    await page.goto(`${frontendUrl}/receptionist/bookings/hotel?range=all&tab=all`);
     await expect(page.locator('.bookings-table .pet-avatar-img')).toBeVisible();
     const photoUrl = new URL(petPhotoRequest.url());
     expect(photoUrl.pathname).toBe('/api/files/pet-photos/1/view');
@@ -172,7 +172,7 @@ test.describe('Shared table row-action popover', () => {
       body: JSON.stringify({ rooms: [] }),
     }));
 
-    await page.goto(`${frontendUrl}/receptionist/bookings/hotel`);
+    await page.goto(`${frontendUrl}/receptionist/bookings/hotel?range=all&tab=all`);
     const row = page.locator('.bookings-table tbody tr.booking-row', { hasText: 'E2E Card Boarding' });
     await expect(row).toBeVisible();
     await row.getByRole('button', { name: /actions for/i }).click();
@@ -186,6 +186,11 @@ test.describe('Shared table row-action popover', () => {
     await modal.getByRole('button', { name: 'Verify' }).click();
     await expect(approveButton).toBeEnabled();
     await approveButton.click();
+    // Approval asks for confirmation before submitting.
+    const confirmBtn = page.locator(".swal2-confirm");
+    if (await confirmBtn.isVisible({ timeout: 5000 }).catch(() => false)) {
+      await confirmBtn.click();
+    }
 
     await expect(modal).toHaveCount(0);
     expect(actions).toEqual(['verify', 'approve']);
@@ -213,7 +218,7 @@ test.describe('Shared table row-action popover', () => {
       body: JSON.stringify({ veterinarians: [{ id: 9, name: 'Dr. E2E' }] }),
     }));
 
-    await page.goto(`${frontendUrl}/receptionist/bookings/veterinary`);
+    await page.goto(`${frontendUrl}/receptionist/bookings/veterinary?range=all&tab=all`);
     const trigger = page.getByRole('button', { name: 'Actions for E2E Vet Pet' });
     await trigger.click();
     const panel = page.getByRole('dialog', { name: 'Actions for E2E Vet Pet' });
